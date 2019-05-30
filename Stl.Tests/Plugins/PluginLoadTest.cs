@@ -1,7 +1,5 @@
 using System;
-using Microsoft.Extensions.Logging;
-using Serilog.Extensions.Logging;
-using Serilog;
+using System.IO;
 using Stl.Testing;
 using Xunit;
 using Xunit.Abstractions;
@@ -15,7 +13,8 @@ namespace Stl.Tests.Plugins
         [Fact]
         public void BasicTest()
         {
-            var (log, writer) = Test.CreateLog();
+            var writer = new StringWriter();
+            var log = TestLogger.New(writer);
             using var host = new TestPluginHost(log);
             Out.WriteLine("BachHost created.");
             var messages = writer.ToString();
