@@ -75,7 +75,7 @@ namespace Stl.Async
     {
         public Func<TKey, CancellationToken, ValueTask<TOut>> Computer { get; }
 
-        protected AsyncComputeOnce(Func<TKey, CancellationToken, ValueTask<TOut>> computer) => 
+        public AsyncComputeOnce(Func<TKey, CancellationToken, ValueTask<TOut>> computer) => 
             Computer = computer;
 
         protected override ValueTask<TOut> ComputeAsync(TKey key, CancellationToken cancellationToken = default) => 
