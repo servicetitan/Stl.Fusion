@@ -7,7 +7,7 @@ using System.Runtime.Loader;
 
 namespace Stl.Plugins
 {
-    public class PluginLoader
+    public static class PluginLoader
     {
         public static CompositionHost Load(
             string nameMask = "*.Plugin.dll", 
