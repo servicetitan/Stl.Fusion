@@ -33,6 +33,7 @@ namespace Stl.Reactionist
             get => Result.Error;
             set => Result = new Result<T>(default, value);
         }
+        public bool HasError => Error != null;
 
         public T Value {
             get => Result.Value;
@@ -43,7 +44,11 @@ namespace Stl.Reactionist
             set => Result = (T) value;
         }
 
-        public T UnsafeValue => Result.UnsafeValue;
+        public T UnsafeValue {
+            get => Result.UnsafeValue;
+            set => Result = value;
+        }
+
         public object UnsafeUntypedValue => Result.UnsafeUntypedValue;
 
         public Var(T value = default) => InternalResult = (value, null);

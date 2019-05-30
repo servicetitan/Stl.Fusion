@@ -33,6 +33,7 @@ namespace Stl.Reactionist
         }
 
         public Exception Error => Result.Error;
+        public bool HasError => Error != null;
         public T Value => Result.Value;
         public object UntypedValue => Result.UntypedValue;
         public T UnsafeValue => Result.UnsafeValue;

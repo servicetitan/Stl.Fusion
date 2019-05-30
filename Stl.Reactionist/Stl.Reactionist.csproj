@@ -16,10 +16,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Unused" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Stl\Stl.csproj" />
   </ItemGroup>
 

@@ -2,15 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.ExceptionServices;
+using System.Threading.Tasks;
+using Stl.Internal;
 
-namespace Stl.Reactionist
+namespace Stl
 {
     public interface IResult
     {
         object UnsafeUntypedValue { get; }
         Exception Error { get; }
         object UntypedValue { get; }
-
+        bool HasError { get; }
+        
         void ThrowIfError();
     }
 
@@ -30,8 +33,8 @@ namespace Stl.Reactionist
 
     public interface IMutableResult<T> : IResult<T>
     {
-        new T UnsafeValue { get; }
-        new T Value { get; }
+        new T UnsafeValue { get; set; }
+        new T Value { get; set; }
     }
     
     [DebuggerDisplay("({" + nameof(UnsafeValue) + "}, Error = {" + nameof(Error) + "})")]
@@ -39,6 +42,7 @@ namespace Stl.Reactionist
     {
         public T UnsafeValue { get; }
         public Exception Error { get; }
+        public bool HasError => Error != null;
 
         public T Value {
             get {
@@ -96,6 +100,11 @@ namespace Stl.Reactionist
         // Operators
         
         public static implicit operator T(Result<T> source) => source.Value;
+        public static implicit operator ValueTask<T>(Result<T> source) 
+            => source.HasError 
+                ? new ValueTask<T>(Task.FromException<T>(source.Error))
+                : new ValueTask<T>(source.UnsafeValue);
+
         public static implicit operator Result<T>(T source) => new Result<T>(source, null);
         public static implicit operator Result<T>((T Value, Exception Error) source) => 
             new Result<T>(source.Value, source.Error);

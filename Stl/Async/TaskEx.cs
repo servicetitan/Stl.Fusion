@@ -1,21 +1,24 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Stl.Reactionist.Internal
+namespace Stl.Async
 {
-    public static class TaskExtensions
+    public static class TaskEx
     {
+        public static ValueTask<T> ToValueTask<T>(this Task<T> source) => new ValueTask<T>(source);
+        public static ValueTask ToValueTask(this Task source) => new ValueTask(source);
+
         // Note that this method won't release the token unless it's cancelled!
-        public static Task AsTask(this CancellationToken token, bool throwIfCancelled) => 
+        public static Task ToTask(this CancellationToken token, bool throwIfCancelled) => 
             throwIfCancelled 
                 ? Task.Delay(-1, token) 
                 : Task.Delay(-1, token).ContinueWith(_ => {}, TaskContinuationOptions.OnlyOnCanceled);
 
         // A safer version of the previous method relying on a secondary token
-        public static async Task AsTask(this CancellationToken token, CancellationToken cancellationToken)
+        public static async Task ToTask(this CancellationToken token, CancellationToken cancellationToken)
         {
             using (var lts = CancellationTokenSource.CreateLinkedTokenSource(token, cancellationToken)) {
-                await lts.Token.AsTask(false);
+                await lts.Token.ToTask(false);
                 cancellationToken.ThrowIfCancellationRequested();
             }
         }

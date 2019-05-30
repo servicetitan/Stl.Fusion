@@ -22,6 +22,7 @@ namespace Stl.Reactionist
 
         public object UnsafeUntypedValue => Storage.UnsafeUntypedValue;
         public Exception Error => Storage.Error;
+        public bool HasError => Error != null;
         public object UntypedValue => Storage.UntypedValue;
         public T UnsafeValue => Storage.UnsafeValue;
         public T Value => Storage.Value;
