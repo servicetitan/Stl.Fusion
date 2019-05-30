@@ -3,10 +3,11 @@ using System.Linq;
 using System.Reactive.Linq;
 using Stl.Async;
 using Stl.Testing;
+using Stl.TimeSeries;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Stl.TimeSeries.Tests
+namespace Stl.Tests.TimeSeries
 {
     public class TimeSeriesBasicTest : TestBase
     {

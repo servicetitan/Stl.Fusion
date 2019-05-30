@@ -9,12 +9,18 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.0.1" />
+    <PackageReference Include="Serilog" Version="2.8.0" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="2.0.4" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Stl\Stl.csproj" />
+    <ProjectReference Include="..\Stl.Plugins\Stl.Plugins.csproj" />
+    <ProjectReference Include="..\Stl.Reactionist\Stl.Reactionist.csproj" />
+    <ProjectReference Include="..\Stl.TimeSeries\Stl.TimeSeries.csproj" />
     <ProjectReference Include="..\Stl.Testing\Stl.Testing.csproj" />
   </ItemGroup>
 

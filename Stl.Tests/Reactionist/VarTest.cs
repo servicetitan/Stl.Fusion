@@ -1,11 +1,12 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
+using Stl.Reactionist;
 using Stl.Testing;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Stl.Reactionist.Tests
+namespace Stl.Tests.Reactionist
 {
     public class VarTest : TestBase
     {
