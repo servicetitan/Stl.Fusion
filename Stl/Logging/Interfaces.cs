@@ -1,14 +1,10 @@
-using Microsoft.Extensions.Logging;
+using System;
+using Serilog;
 
 namespace Stl
 {
-    public interface IHasLogger
+    public interface IHasLog
     {
-        ILogger Logger { get; }
-    }
-
-    public interface IHasLoggerFactory
-    {
-        ILoggerFactory LoggerFactory { get; }
+        ILogger Log { get; }
     }
 }

@@ -1,18 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
+using Serilog;
+using Serilog.Core;
 using Stl.Internal;
 
 namespace Stl.Plugins 
 {
-    public abstract class Plugin : IHasLogger, IDisposable
+    public abstract class Plugin : IHasLog, IDisposable
     {
         public bool IsInitialized => Host != null;
         public string Name { get; protected set; }
         public IPluginHost? Host { get; private set; }
-        public ILogger Logger { get; private set; } = NullLogger.Instance;
+        public ILogger Log { get; private set; } = Logger.None;
         public IEnumerable<Type> Dependencies { get; private set; } = Enumerable.Empty<Type>();
         public IEnumerable<InjectionPoint> InjectionPoints { get; private set; }  = Enumerable.Empty<InjectionPoint>();
 
@@ -21,7 +21,7 @@ namespace Stl.Plugins
 
         protected virtual void Dispose(bool disposing)
         {
-            Logger.LogInformation($"Disposing.");
+            Log.Information($"Disposing.");
             var injectionPoints = InjectionPoints;
             InjectionPoints = Enumerable.Empty<InjectionPoint>();
             foreach (var point in injectionPoints)
@@ -39,17 +39,17 @@ namespace Stl.Plugins
             if (IsInitialized)
                 throw Errors.AlreadyInitialized();
             Host = host ?? throw new ArgumentNullException(nameof(host));;
-            Logger = host.LoggerFactory.CreateLogger(GetType());
-            Logger.LogInformation($"Initializing.");
+            Log = host.Log.ForContext(GetType());
+            Log.Information($"Initializing.");
             Dependencies = AcquireDependencies().ToArray();
             var injectionPoints = AcquireInjectionPoints().ToArray();
             foreach (var point in injectionPoints)
                 point.Initialize(this);
             InjectionPoints = injectionPoints;
-            Logger.LogDebug($"Injection points: {string.Join(", ", InjectionPoints)}.");
+            Log.Debug($"Injection points: {string.Join(", ", InjectionPoints)}.");
         }
 
-        protected virtual ILogger AcquireLogger() => Host?.Logger ?? NullLogger.Instance;
+        protected virtual ILogger AcquireLogger() => Host?.Log ?? Logger.None;
         protected virtual IEnumerable<Type> AcquireDependencies() => Enumerable.Empty<Type>();
         protected abstract IEnumerable<InjectionPoint> AcquireInjectionPoints();
         

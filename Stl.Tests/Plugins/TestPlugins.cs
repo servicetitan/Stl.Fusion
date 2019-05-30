@@ -10,8 +10,8 @@ namespace Stl.Tests.Plugins
     {
         protected override IEnumerable<InjectionPoint> AcquireInjectionPoints()
         {
-            yield return new StartupInjectionPoint(() => Logger.LogInformation("Starting."));
-            yield return new ConfigureServicesInjectionPoint(sc => Logger.LogInformation("Configuring services."));
+            yield return new StartupInjectionPoint(() => Log.Information("Starting."));
+            yield return new ConfigureServicesInjectionPoint(sc => Log.Information("Configuring services."));
         }
     }
 

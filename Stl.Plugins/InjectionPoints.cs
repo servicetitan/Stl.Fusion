@@ -11,8 +11,13 @@ namespace Stl.Plugins
 
         public void Inject()
         {
-            using var scope = Logger.BeginScope($"{this}: injection");
-            _action.Invoke();
+            Log.Debug($"{this}: Injecting.");
+            try {
+                _action.Invoke();
+            }
+            finally {
+                Log.Debug($"{this}: Injected.");
+            }
         }
     }
 
@@ -30,8 +35,13 @@ namespace Stl.Plugins
 
         public IServiceCollection Inject(IServiceCollection services)
         {
-            using var scope = Logger.BeginScope($"{this}: injection");
-            return _configureServices.Invoke(services);
+            Log.Debug($"{this}: Injecting.");
+            try {
+                return _configureServices.Invoke(services);
+            }
+            finally {
+                Log.Debug($"{this}: Injected.");
+            }
         }
     }
 }

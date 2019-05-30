@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Composition.Hosting;
 using System.Linq;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
+using Serilog;
+using Serilog.Core;
 using Stl.Internal;
 
 namespace Stl.Plugins
 {
-    public interface IPluginHost : IHasLogger, IHasLoggerFactory, IDisposable
+    public interface IPluginHost : IHasLog, IDisposable
     {
         CompositionHost? CompositionHost { get; }
         // List of plugins ordered by their assembly dependencies; this property is set first
@@ -53,13 +53,7 @@ namespace Stl.Plugins
     public abstract class PluginHostBase<TPlugin> : IPluginHost<TPlugin>
         where TPlugin : Plugin
     {
-        private ILogger? _logger;
-        public ILoggerFactory LoggerFactory { get; protected set; } = NullLoggerFactory.Instance;
-        public ILogger Logger {
-            get => _logger ??= LoggerFactory.CreateLogger(GetType());
-            protected set => _logger = value;
-        }
-
+        public ILogger Log { get; protected set; }
         public CompositionHost? CompositionHost { get; private set; }
         IEnumerable<Plugin> IPluginHost.PartiallyOrderedPlugins => PartiallyOrderedPlugins;
         public IEnumerable<TPlugin> PartiallyOrderedPlugins { get; private set; } = Enumerable.Empty<TPlugin>();
@@ -67,9 +61,12 @@ namespace Stl.Plugins
         public IEnumerable<TPlugin> Plugins { get; private set; } = Enumerable.Empty<TPlugin>();
         public IEnumerable<InjectionPoint> InjectionPoints { get; private set; } = Enumerable.Empty<InjectionPoint>();
 
+        protected PluginHostBase(ILogger? log = null) => 
+            Log = log ?? Logger.None;
+
         protected virtual void Dispose(bool disposing)
         {
-            Logger.LogInformation("Disposing.");
+            Log.Information("Disposing.");
             var plugins = Plugins;
             Plugins = Enumerable.Empty<TPlugin>();
             foreach (var plugin in plugins)
@@ -108,7 +105,7 @@ namespace Stl.Plugins
                     .Distinct();
 
             PartiallyOrderedPlugins = allPlugins.OrderByDependency(GetAssemblyBasedDependencies).ToArray();
-            Logger.LogInformation($"Plugins found: {string.Join(", ", PartiallyOrderedPlugins)}");
+            Log.Information($"Plugins found: {string.Join(", ", PartiallyOrderedPlugins)}");
 
             foreach (var plugin in PartiallyOrderedPlugins)
                 plugin.Initialize(this);
