@@ -14,7 +14,7 @@ namespace Stl.Async
     // but we need something.
     //
     // Thus performance is not a priority for now. 
-    public static partial class AsyncEnumerableExtensions
+    public static partial class AsyncEnumerableEx
     {
         public const int DefaultBufferSize = 16;
 

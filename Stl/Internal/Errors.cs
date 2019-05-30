@@ -5,13 +5,6 @@ namespace Stl.Internal
 {
     public static class Errors
     {
-        public static Exception PromiseIsAlreadyCompleted() =>
-            new InvalidOperationException("Promise is already completed.");
-        
-        public static Exception ResponseIsAlreadyCreated(Type expected, Type actual) =>
-            new InvalidOperationException(
-                $"Can't create response of type '{expected.Name}': response of type '{actual.Name}' is already created.");
-
         public static Exception QueueSizeMustBeGreaterThanZero(string paramName) =>
             new ArgumentOutOfRangeException(paramName, "Queue size must be > 0.");
         public static Exception BufferLengthMustBeGreaterThanOne(string paramName) =>
