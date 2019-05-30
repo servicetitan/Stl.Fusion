@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace Reactionist.Internal
+namespace Stl.Reactionist.Internal
 {
     public struct RefHashSetSlim3<T>
         where T : class

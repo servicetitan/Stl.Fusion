@@ -1,7 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Reactionist.Internal
+namespace Stl.Reactionist.Internal
 {
     public static class TaskExtensions
     {

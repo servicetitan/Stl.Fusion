@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 
-namespace Reactionist.Internal
+namespace Stl.Reactionist.Internal
 {
     public struct OptionalLock : IEquatable<OptionalLock>
     {

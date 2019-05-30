@@ -1,8 +1,8 @@
 using System;
-using Reactionist.Internal;
 using Stl;
+using Stl.Reactionist.Internal;
 
-namespace Reactionist
+namespace Stl.Reactionist
 {
     public interface IReactive
     {

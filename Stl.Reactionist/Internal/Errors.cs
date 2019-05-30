@@ -1,6 +1,6 @@
 using System;
 
-namespace Reactionist.Internal
+namespace Stl.Reactionist.Internal
 {
     public static class Errors
     {

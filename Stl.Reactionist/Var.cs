@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace Reactionist
+namespace Stl.Reactionist
 {
     public interface IVar : IReadOnlyVar, IMutableResult { }
     public interface IVar<T> : IVar, IReadOnlyVar<T>, IMutableResult<T>

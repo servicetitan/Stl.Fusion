@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 
-namespace Reactionist.Internal
+namespace Stl.Reactionist.Internal
 {
     public struct SafeHashSetSlim4<T>
     {

@@ -1,7 +1,7 @@
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Reactionist.Internal
+namespace Stl.Reactionist.Internal
 {
     public static class DependencyInjectionExtensions
     {

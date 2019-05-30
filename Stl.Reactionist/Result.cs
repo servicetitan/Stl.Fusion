@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.ExceptionServices;
 
-namespace Reactionist
+namespace Stl.Reactionist
 {
     public interface IResult
     {

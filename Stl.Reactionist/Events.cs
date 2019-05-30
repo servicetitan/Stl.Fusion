@@ -1,6 +1,6 @@
 using System;
 
-namespace Reactionist
+namespace Stl.Reactionist
 {
     public struct Event : IEquatable<Event>
     {

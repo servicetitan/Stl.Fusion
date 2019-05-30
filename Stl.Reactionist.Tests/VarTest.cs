@@ -5,7 +5,7 @@ using Stl.Testing;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Reactionist.Tests
+namespace Stl.Reactionist.Tests
 {
     public class VarTest : TestBase
     {

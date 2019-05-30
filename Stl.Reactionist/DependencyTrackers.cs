@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using Reactionist.Internal;
 using Stl;
+using Stl.Reactionist.Internal;
 
-namespace Reactionist
+namespace Stl.Reactionist
 {
     public static class DependencyTracking
     {

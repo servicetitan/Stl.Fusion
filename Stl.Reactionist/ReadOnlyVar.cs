@@ -1,7 +1,7 @@
 using System;
 using System.Diagnostics;
 
-namespace Reactionist
+namespace Stl.Reactionist
 {
     public interface IHasInternalResult<T>
     {
