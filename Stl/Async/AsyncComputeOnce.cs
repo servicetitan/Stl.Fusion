@@ -46,9 +46,9 @@ namespace Stl.Async
         protected async ValueTask<TOut> SafeComputeAsync(TKey key, CancellationToken cancellationToken = default)
         {
             var dependents = Dependents.Value;
-            if (dependents.Contains(key))
+            if (dependents?.Contains(key) ?? false)
                 throw Errors.CircularDependency(key);
-            Dependents.Value = dependents.Add(key);
+            Dependents.Value = (dependents ?? ImmutableHashSet<TKey>.Empty).Add(key);
             try {
                 return await ComputeAsync(key, cancellationToken).ConfigureAwait(false);
             }
@@ -73,12 +73,14 @@ namespace Stl.Async
 
     public class AsyncComputeOnce<TKey, TOut> : AsyncComputeOnceBase<TKey, TOut>
     {
-        public Func<TKey, CancellationToken, ValueTask<TOut>> Computer { get; }
+        public Func<AsyncComputeOnce<TKey, TOut>, TKey, CancellationToken, ValueTask<TOut>> Computer { get; }
 
-        public AsyncComputeOnce(Func<TKey, CancellationToken, ValueTask<TOut>> computer) => 
+        public AsyncComputeOnce(Func<AsyncComputeOnce<TKey, TOut>, TKey, CancellationToken, ValueTask<TOut>> computer) => 
             Computer = computer;
+        public AsyncComputeOnce(Func<TKey, CancellationToken, ValueTask<TOut>> computer) => 
+            Computer = (self, key, ct) => computer(key, ct);
 
         protected override ValueTask<TOut> ComputeAsync(TKey key, CancellationToken cancellationToken = default) => 
-            Computer.Invoke(key, cancellationToken);
+            Computer.Invoke(this, key, cancellationToken);
     }
 }

@@ -6,11 +6,11 @@ using Stl.Testing;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Stl.Tests
+namespace Stl.Tests.Async
 {
-    public class AsyncEnumerableTests : TestBase
+    public class AsyncEnumerableTest : TestBase
     {
-        public AsyncEnumerableTests(ITestOutputHelper @out) : base(@out) { }
+        public AsyncEnumerableTest(ITestOutputHelper @out) : base(@out) { }
 
         [Fact]
         public void BasicTest()

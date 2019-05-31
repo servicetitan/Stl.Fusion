@@ -22,8 +22,8 @@ namespace Stl.Tests.Plugins
                 messages.IndexOf("TestPlugin2: Initializing.") <
                 messages.IndexOf("TestPlugin1: Initializing."));
             Assert.True(
-                messages.IndexOf("TestPlugin1: Injecting.") <
-                messages.IndexOf("TestPlugin2: Injecting."));
+                messages.IndexOf("TestPlugin2: Injecting.") <
+                messages.IndexOf("TestPlugin1: Injecting."));
         }
     }
 }

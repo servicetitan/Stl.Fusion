@@ -50,16 +50,29 @@ namespace Stl
             var stack = new Stack<T>(source);
 
             while (stack.TryPop(out var item)) {
-                if (processing.Contains(item))
-                    throw Errors.CircularDependency(item);
                 if (processed.Contains(item))
                     continue;
+                if (processing.Contains(item)) {
+                    processing.Remove(item);
+                    processed.Add(item);
+                    yield return item;
+                    continue;
+                }
                 processing.Add(item);
+                stack.Push(item); // Pushing item in advance assuming there are dependencies
+                var stackSize = stack.Count;
                 foreach (var dependency in dependencySelector(item))
-                    stack.Push(dependency);
-                processing.Remove(item);
-                yield return item;
-                processed.Add(item);
+                    if (!processed.Contains(dependency)) {
+                        if (processing.Contains(dependency))
+                            throw Errors.CircularDependency(item);
+                        stack.Push(dependency);
+                    }
+                if (stackSize == stack.Count) { // No unprocessed dependencies
+                    stack.Pop(); // Popping item pushed in advance
+                    processing.Remove(item);
+                    processed.Add(item);
+                    yield return item;
+                }
             }
         }
     }

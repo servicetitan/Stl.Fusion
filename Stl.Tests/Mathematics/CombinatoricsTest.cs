@@ -7,9 +7,9 @@ using Xunit.Abstractions;
 
 namespace Stl.Tests.Mathematics
 {
-    public class CombinatoricsTests : TestBase
+    public class CombinatoricsTest : TestBase
     {
-        public CombinatoricsTests(ITestOutputHelper @out) : base(@out) { }
+        public CombinatoricsTest(ITestOutputHelper @out) : base(@out) { }
         
         [Fact]
         public void CnkTest()

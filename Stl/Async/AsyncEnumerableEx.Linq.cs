@@ -24,6 +24,40 @@ namespace Stl.Async
                 yield return (index++, item);
         }
 
+        public static async Task<long> Count<T>(
+            this IAsyncEnumerable<T> source, 
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            var count = 0L;
+            await foreach(var item in source.WithCancellation(cancellationToken).ConfigureAwait(false))
+                count++;
+            return count;
+        }
+
+        public static async Task<long> Count<T>(
+            this IAsyncEnumerable<T> source, 
+            Func<T, bool> predicate,
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            var count = 0L;
+            await foreach(var item in source.WithCancellation(cancellationToken).ConfigureAwait(false))
+                if (predicate.Invoke(item))
+                    count++;
+            return count;
+        }
+
+        public static async Task<long> Count<T>(
+            this IAsyncEnumerable<T> source, 
+            Func<T, ValueTask<bool>> predicate,
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            var count = 0L;
+            await foreach(var item in source.WithCancellation(cancellationToken).ConfigureAwait(false))
+                if (await predicate.Invoke(item))
+                    count++;
+            return count;
+        }
+
         public static async IAsyncEnumerable<TNew> Select<T, TNew>(
             this IAsyncEnumerable<T> source, 
             Func<T, TNew> selector,
