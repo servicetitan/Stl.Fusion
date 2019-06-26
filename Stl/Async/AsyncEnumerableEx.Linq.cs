@@ -26,7 +26,7 @@ namespace Stl.Async
 
         public static async Task<long> Count<T>(
             this IAsyncEnumerable<T> source, 
-            [EnumeratorCancellation] CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default)
         {
             var count = 0L;
             await foreach(var item in source.WithCancellation(cancellationToken).ConfigureAwait(false))
@@ -37,7 +37,7 @@ namespace Stl.Async
         public static async Task<long> Count<T>(
             this IAsyncEnumerable<T> source, 
             Func<T, bool> predicate,
-            [EnumeratorCancellation] CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default)
         {
             var count = 0L;
             await foreach(var item in source.WithCancellation(cancellationToken).ConfigureAwait(false))
@@ -49,7 +49,7 @@ namespace Stl.Async
         public static async Task<long> Count<T>(
             this IAsyncEnumerable<T> source, 
             Func<T, ValueTask<bool>> predicate,
-            [EnumeratorCancellation] CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default)
         {
             var count = 0L;
             await foreach(var item in source.WithCancellation(cancellationToken).ConfigureAwait(false))
@@ -122,12 +122,11 @@ namespace Stl.Async
 
         public static IAsyncEnumerable<T> Take<T>(
             this IAsyncEnumerable<T> source, 
-            long count,
-            [EnumeratorCancellation] CancellationToken cancellationToken = default) =>
+            long count) =>
             source
-                .Index(cancellationToken)
-                .TakeWhile(p => p.Index < count, cancellationToken)
-                .Select(p => p.Item, cancellationToken);
+                .Index()
+                .TakeWhile(p => p.Index < count)
+                .Select(p => p.Item);
             
         public static async IAsyncEnumerable<T> SkipWhile<T>(
             this IAsyncEnumerable<T> source, 
@@ -165,14 +164,13 @@ namespace Stl.Async
 
         public static IAsyncEnumerable<T> Skip<T>(
             this IAsyncEnumerable<T> source, 
-            long count,
-            [EnumeratorCancellation] CancellationToken cancellationToken = default) =>
+            long count) =>
             source
-                .Index(cancellationToken)
-                .SkipWhile(p => p.Index < count, cancellationToken)
-                .Select(p => p.Item, cancellationToken);
+                .Index()
+                .SkipWhile(p => p.Index < count)
+                .Select(p => p.Item);
 
-        public static IAsyncEnumerable<TNew> SelectMany<T, TNew>(
+        public static async IAsyncEnumerable<TNew> SelectMany<T, TNew>(
             this IAsyncEnumerable<T> source, Func<T, IAsyncEnumerable<TNew>> selector,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
@@ -207,10 +205,16 @@ namespace Stl.Async
                 }
             }, cancellationToken).Ignore();
 
-            return channel.ToAsyncEnumerable(cancellationToken);
+
+            var enumerable = channel
+                .ToAsyncEnumerable(cancellationToken)
+                .WithCancellation(cancellationToken)
+                .ConfigureAwait(false);
+            await foreach(var item in enumerable)
+                yield return item;
         }
 
-        public static IAsyncEnumerable<TNew> SelectMany<T, TNew>(
+        public static async IAsyncEnumerable<TNew> SelectMany<T, TNew>(
             this IAsyncEnumerable<T> source, Func<T, IEnumerable<TNew>> selector,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
@@ -245,7 +249,13 @@ namespace Stl.Async
                 }
             }, cancellationToken).Ignore();
 
-            return channel.ToAsyncEnumerable(cancellationToken);
+
+            var enumerable = channel
+                .ToAsyncEnumerable(cancellationToken)
+                .WithCancellation(cancellationToken)
+                .ConfigureAwait(false);
+            await foreach(var item in enumerable)
+                yield return item;
         }
 
         public static async IAsyncEnumerable<(T1, T2, bool)> Stitch<T1, T2>(

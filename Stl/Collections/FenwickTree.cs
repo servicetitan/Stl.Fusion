@@ -50,7 +50,7 @@ namespace Stl.Collections
 
         public T GetSum(int index) 
         {
-            var sum = default(T); 
+            var sum = (T) default!; 
             if (index < 0)
                 return sum;
             index++; 

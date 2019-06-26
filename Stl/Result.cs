@@ -9,9 +9,9 @@ namespace Stl
 {
     public interface IResult
     {
-        object UnsafeUntypedValue { get; }
-        Exception Error { get; }
-        object UntypedValue { get; }
+        object? UnsafeUntypedValue { get; }
+        Exception? Error { get; }
+        object? UntypedValue { get; }
         bool HasError { get; }
         
         void ThrowIfError();
@@ -19,8 +19,8 @@ namespace Stl
 
     public interface IMutableResult : IResult
     {
-        new object UntypedValue { get; set; }
-        new Exception Error { get; set; }
+        new object? UntypedValue { get; set; }
+        new Exception? Error { get; set; }
     }
     
     public interface IResult<T> : IResult
@@ -41,7 +41,7 @@ namespace Stl
     public readonly struct Result<T> : IResult<T>, IEquatable<Result<T>>
     {
         public T UnsafeValue { get; }
-        public Exception Error { get; }
+        public Exception? Error { get; }
         public bool HasError => Error != null;
 
         public T Value {
@@ -51,30 +51,33 @@ namespace Stl
                 else {
                     // That's the right way to re-throw an exception and preserve its stack trace
                     ExceptionDispatchInfo.Capture(Error).Throw();
-                    return default; // Never executed, but no way to get rid of this
+                    return default!; // Never executed, but no way to get rid of this
                 }
             }
         }
 
         // ReSharper disable once HeapView.BoxingAllocation
-        public object UntypedValue => Value;
+        public object? UntypedValue => Value;
         // ReSharper disable once HeapView.BoxingAllocation
-        public object UnsafeUntypedValue => UnsafeValue;
+        public object? UnsafeUntypedValue => UnsafeValue;
 
-        public Result(T value, Exception error)
+        public Result(T value, Exception? error)
         {
-            if (error != null) value = default;
+            if (error != null) value = default!;
             UnsafeValue = value;
             Error = error;
         }
         
-        public override string ToString() => Value?.ToString();
+        public override string? ToString() => Value?.ToString();
 
-        public void Deconstruct(out T value, out Exception error)
+// Seems like a bug in nullability type checks for out arguments
+#pragma warning disable CS8614
+        public void Deconstruct(out T value, out Exception? error)
         {
             value = UnsafeValue;
             error = Error;
         }
+#pragma warning restore CS8614
 
         public void ThrowIfError()
         {
@@ -84,7 +87,7 @@ namespace Stl
 
         public Result<TOther> Cast<TOther>() => 
             // ReSharper disable once HeapView.BoxingAllocation
-            new Result<TOther>((TOther) (object) UnsafeValue, Error);
+            new Result<TOther>((TOther) (object) UnsafeValue!, Error);
 
         // Equality
 
@@ -112,8 +115,8 @@ namespace Stl
     
     public static class Result
     {
-        public static Result<T> New<T>(T value, Exception error = null) => new Result<T>(value, error);
+        public static Result<T> New<T>(T value, Exception? error = null) => new Result<T>(value, error);
         public static Result<T> Value<T>(T value) => new Result<T>(value, null);
-        public static Result<T> Error<T>(Exception error) => new Result<T>(default, error);
+        public static Result<T> Error<T>(Exception? error) => new Result<T>(default!, error);
     }
 }

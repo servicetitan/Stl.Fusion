@@ -7,10 +7,10 @@ namespace Stl.Collections
 {
     public class LazyDictionary<TKey, TValue> : IDictionary<TKey, TValue>
     {
-        protected Dictionary<TKey, TValue> _dictionary;
+        protected Dictionary<TKey, TValue>? _dictionary;
         
         public Dictionary<TKey, TValue> Dictionary => 
-            _dictionary ?? (_dictionary = new Dictionary<TKey, TValue>());
+            _dictionary ??= new Dictionary<TKey, TValue>();
 
         public int Count => _dictionary?.Count ?? 0;
         public bool IsReadOnly => false;
@@ -22,7 +22,7 @@ namespace Stl.Collections
         
         public TValue this[TKey key] {
             get => _dictionary != null ? _dictionary[key] : throw new KeyNotFoundException();
-            set => _dictionary[key] = value;
+            set => Dictionary[key] = value;
         }
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -38,7 +38,7 @@ namespace Stl.Collections
         public bool TryGetValue(TKey key, out TValue value)
         {
             if (_dictionary == null) {
-                value = default;
+                value = default!;
                 return false;
             }
             return _dictionary.TryGetValue(key, out value);

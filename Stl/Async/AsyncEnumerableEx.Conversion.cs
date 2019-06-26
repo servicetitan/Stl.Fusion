@@ -39,7 +39,7 @@ namespace Stl.Async
             }
         }
 
-        public static IAsyncEnumerable<T> ToAsyncEnumerable<T>(
+        public static async IAsyncEnumerable<T> ToAsyncEnumerable<T>(
             this IObservable<T> source,
             int bufferSize = DefaultBufferSize,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -68,10 +68,15 @@ namespace Stl.Async
                 // Similarly, might trigger reordering.
                 () => channel.CompletePut());
 
-            return channel.ToAsyncEnumerable(cancellationToken);
+            var enumerable = channel
+                .ToAsyncEnumerable(cancellationToken)
+                .WithCancellation(cancellationToken)
+                .ConfigureAwait(false);
+            await foreach(var item in enumerable)
+                yield return item;
         }
 
-        public static IAsyncEnumerable<T> ToAsyncEnumerable<T>(
+        public static async IAsyncEnumerable<T> ToAsyncEnumerable<T>(
             this IEnumerable<T> source,
             int bufferSize = DefaultBufferSize,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -96,7 +101,13 @@ namespace Stl.Async
                 }
             }, cancellationToken).Ignore();
 
-            return channel.ToAsyncEnumerable(cancellationToken);
+
+            var enumerable = channel
+                .ToAsyncEnumerable(cancellationToken)
+                .WithCancellation(cancellationToken)
+                .ConfigureAwait(false);
+            await foreach(var item in enumerable)
+                yield return item;
         }
 
         public static IObservable<T> ToObservable<T>(this IAsyncEnumerable<T> source)

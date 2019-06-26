@@ -12,9 +12,7 @@ namespace Stl.Async
     public interface IAsyncComputeOnce<in TKey, TValue>
     {
         ValueTask<TValue> GetOrComputeAsync(TKey key, CancellationToken cancellationToken = default);
-        IAsyncEnumerable<TValue> GetOrComputeAsync(
-            IAsyncEnumerable<TKey> keys,
-            [EnumeratorCancellation] CancellationToken cancellationToken = default);
+        IAsyncEnumerable<TValue> GetOrComputeAsync(IAsyncEnumerable<TKey> keys);
     }
 
     public abstract class AsyncComputeOnceBase<TKey, TOut> : IAsyncComputeOnce<TKey, TOut>
@@ -35,9 +33,12 @@ namespace Stl.Async
                 (self: this, cancellationToken)));
         }
 
-        public async IAsyncEnumerable<TOut> GetOrComputeAsync(
+        public IAsyncEnumerable<TOut> GetOrComputeAsync(IAsyncEnumerable<TKey> keys)
+            => GetOrComputeAsync(keys, CancellationToken.None);
+
+        private async IAsyncEnumerable<TOut> GetOrComputeAsync(
             IAsyncEnumerable<TKey> keys, 
-            [EnumeratorCancellation] CancellationToken cancellationToken = default)
+            [EnumeratorCancellation] CancellationToken cancellationToken)
         {
             await foreach (var key in keys)
                 yield return await GetOrComputeAsync(key, cancellationToken).ConfigureAwait(false);
@@ -57,7 +58,7 @@ namespace Stl.Async
             }
         }
 
-        private static ValueTask<TOut> Unwrap((Task<TOut> Task, Result<TOut> Result) entry) =>
+        private static ValueTask<TOut> Unwrap((Task<TOut>? Task, Result<TOut> Result) entry) =>
             entry.Task?.ToValueTask() ?? entry.Result;
             
         private static async Task<TOut> ComputeAndUpdateAsync(
@@ -66,7 +67,7 @@ namespace Stl.Async
             CancellationToken cancellationToken) 
         {
             var r = await self.SafeComputeAsync(key, cancellationToken).ConfigureAwait(false);
-            self.Cache[key] = ((Task<TOut>) null, r);
+            self.Cache[key] = (null!, r);
             return r;
         }
     }
