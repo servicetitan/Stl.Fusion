@@ -11,6 +11,9 @@ namespace Stl.Terraform
 {
     public class TerraformLauncher
     {
+        // AY: Shell is just an example of a tool. It could be used like this,
+        // though for Terraform I was thinking more of a scenario when you inherit
+        // TerraformLauncher from Cmd. 
         private readonly Shell shell;
         private readonly string toolPath;
         private readonly IParameterSerializer parameterSerializer;

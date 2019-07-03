@@ -5,8 +5,12 @@ using System.Reflection;
 
 namespace Stl.ParametersSerializer
 {
+    // AY: Overall, I like the idea of having unified parameter serialization framework.
+    // On a negative side, I feel the design needs some improvements + I'd 
+    // consider at least the integration with System.CommandLine here.
     public class ParameterSerializer :IParameterSerializer 
     {
+        // I guess this method must be virtual.
         public IEnumerable<string> Serialize(IParameters parameters)
         {
             foreach (var propertyInfo in parameters.GetType().GetProperties())
@@ -23,6 +27,7 @@ namespace Stl.ParametersSerializer
             }
         }
 
+        // This one must be protected virtual...
         private string? SerializeParameter(CliParameterAttribute parameterPattern, object propValue)
         {
             if (parameterPattern?.ParameterPattern == null || propValue == null)
@@ -45,6 +50,7 @@ namespace Stl.ParametersSerializer
             }
         }
 
+        // Etc.
         private string? SerializeParameters<TEnum>(string parameterPattern, TEnum propValue) where TEnum : Enum
         {
             var fi = propValue.GetType().GetField(propValue.ToString());
