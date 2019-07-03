@@ -16,7 +16,7 @@ namespace Stl.CommandLine
             CmdPart command, 
             CancellationToken cancellationToken = default)
         {
-            var arguments = GetPrefix() + command.ShellQuote(); 
+            var arguments = GetPrefix() + command.Quote(); 
             return base.RunRawAsync(arguments, cancellationToken);
         }
 

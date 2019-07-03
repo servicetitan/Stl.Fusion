@@ -5,6 +5,11 @@ namespace Stl.Internal
 {
     public static class Errors
     {
+        public static Exception ExpressionDoesNotSpecifyAMember(string expression) =>
+            new ArgumentException("Expression '{expression}' does not specify a member.");
+        public static Exception UnexpectedMemberType(string memberType) =>
+            new InvalidOperationException($"Unexpected member type: {memberType}");
+
         public static Exception QueueSizeMustBeGreaterThanZero(string paramName) =>
             new ArgumentOutOfRangeException(paramName, "Queue size must be > 0.");
         public static Exception BufferLengthMustBeGreaterThanOne(string paramName) =>

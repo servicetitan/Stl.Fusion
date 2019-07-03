@@ -1,5 +1,5 @@
 using System;
-using System.Runtime.InteropServices;
+using System.CommandLine;
 using System.Text;
 using Stl.OS;
 
@@ -9,9 +9,20 @@ namespace Stl.CommandLine
     {
         public static RawCmdPart New(string value) => new RawCmdPart(value);
 
+        // Quotations
+        public static string UnixQuote(string value) => 
+            "'" + value.Replace("'", "'\"'\"'") + "'";
+        public static string WindowsQuote(string value) => 
+            "\"" + value.Replace("^", "^^").Replace("\"", "^\"") + "\"";
+        public static string Quote(string value) =>
+            OSInfo.Kind switch {
+                OSKind.Windows => WindowsQuote(value),
+                _ => UnixQuote(value)
+            };
+
         // ToString is supposed to render the part into a string
-        public ShellQuoteCmdPart ShellQuote() 
-            => new ShellQuoteCmdPart(this);
+        public QuotedCmdPart Quote() 
+            => new QuotedCmdPart(this);
         public OSDependentCmdPart VaryByOS(CmdPart? windowsValue, CmdPart? macOSValue = null)
             => new OSDependentCmdPart(this, windowsValue, macOSValue);
 
@@ -29,9 +40,7 @@ namespace Stl.CommandLine
     public class RawCmdPart : CmdPart
     {
         public string Value { get; }
-
         public RawCmdPart(string value) => Value = value;
-
         public override string ToString() => Value;
     }
 
@@ -92,37 +101,25 @@ namespace Stl.CommandLine
             MacOSValue = macOSValue ?? defaultValue;
         }
 
-        public override string ToString()
-        {
-            switch (OSInfo.Kind) {
-            case OSKind.Windows:
-                return (string) WindowsValue;
-            case OSKind.MacOS:
-                return (string) MacOSValue;
-            default:
-                return (string) DefaultValue;
-            }
-        }
+        public override string ToString() =>
+            OSInfo.Kind switch {
+                OSKind.Windows => (string) WindowsValue,
+                OSKind.MacOS => (string) MacOSValue,
+                _ => (string) DefaultValue
+            };
     }
 
-    public class ShellQuoteCmdPart : CmdPart
+    public class QuotedCmdPart : CmdPart
     {
         public CmdPart Value { get; }
+        public QuotedCmdPart(CmdPart value) => Value = value;
+        public override string ToString() => Quote((string) Value);
+    }
 
-        public ShellQuoteCmdPart(CmdPart value) => Value = value;
-
-        public override string ToString()
-        {
-            switch (OSInfo.Kind) {
-            case OSKind.Windows:
-                return "\"" + 
-                    ((string) Value).Replace("^", "^^").Replace("\"", "^\"") + 
-                    "\"";
-            default:
-                return "'" + 
-                    ((string) Value).Replace("'", "'\"'\"'") + 
-                    "'";
-            }
-        }
+    public class ArgumentCmdPart : CmdPart
+    {
+        public Argument Argument { get; }
+        public ArgumentCmdPart(Argument argument) => Argument = argument;
+//        public override string ToString() => Quote((string) Argument);
     }
 }
