@@ -1,7 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Moq;
-using Stl.OS;
+using Stl.CommandLine;
 using Stl.ParametersSerializer;
 using Stl.Terraform;
 using Stl.Terraform.Parameters;

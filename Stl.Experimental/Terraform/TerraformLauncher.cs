@@ -3,7 +3,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using CliWrap.Models;
-using Stl.OS;
+using Stl.CommandLine;
 using Stl.ParametersSerializer;
 using Stl.Terraform.Parameters;
 

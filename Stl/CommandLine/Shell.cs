@@ -2,7 +2,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using CliWrap.Models;
 
-namespace Stl.OS
+namespace Stl.CommandLine
 {
     public class Shell : Cmd
     {

@@ -1,8 +1,9 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Text;
+using Stl.OS;
 
-namespace Stl.OS 
+namespace Stl.CommandLine 
 {
     public abstract class CmdPart
     {

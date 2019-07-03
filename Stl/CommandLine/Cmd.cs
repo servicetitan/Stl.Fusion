@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using CliWrap;
 using CliWrap.Models;
 
-namespace Stl.OS
+namespace Stl.CommandLine
 {
     public abstract class Cmd
     {

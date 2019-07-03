@@ -3,14 +3,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
-using Stl.OS;
+using Stl.CommandLine;
 using Stl.Terraform;
 using Stl.Terraform.Parameters;
 using Stl.Testing;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Stl.Tests.OS
+namespace Stl.Tests.CommandLine
 {
     public class TerraformLauncherTests : TestBase
     {

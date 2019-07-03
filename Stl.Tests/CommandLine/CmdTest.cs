@@ -1,9 +1,10 @@
+using Stl.CommandLine;
 using Stl.OS;
 using Stl.Testing;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Stl.Tests.OS
+namespace Stl.Tests.CommandLine
 {
     public class ShellTest : TestBase
     {
