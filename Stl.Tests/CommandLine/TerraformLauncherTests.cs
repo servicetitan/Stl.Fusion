@@ -31,9 +31,9 @@ namespace Stl.Tests.CommandLine
                 AutoApprove = true,
                 Variable = new Dictionary<string, string>{{"key1", "value1"}},
                 LockTimeout = 16,
-            });
+            }, "dir");
             executionResult.StandardOutput.Trim().Should()
-                .Be("-backup=Backup -lock-timeout=16s -auto-approve -var key1=value1");
+                .Be("-backup=Backup -lock-timeout=16s -auto-approve -var key1=value1 dir");
         }
     }
 }

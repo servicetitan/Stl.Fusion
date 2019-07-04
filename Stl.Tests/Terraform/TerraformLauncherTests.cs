@@ -31,15 +31,16 @@ namespace Stl.Tests.Terraform
         public async Task Test()
         {
             var applyParameters = new ApplyParameters();
-            var parameters = "parameters";
+            var parameters = new CmdPart[]{"parameters"};
             parameterSerializer.Setup(x => x.Serialize(It.IsAny<IParameters>()))
-                .Returns(new[] {parameters});
-            
-            await terraformLauncher.ApplyAsync(applyParameters);
+                .Returns(parameters);
+            var dirOrPlan = "dir";
+
+            await terraformLauncher.ApplyAsync(applyParameters, dirOrPlan);
             
             parameterSerializer.Verify(x => x.Serialize(applyParameters));
             shell.Verify(x => x.RunAsync(
-                It.Is<CmdPart>(x => x.ToString() == ToolPath + " " + parameters), 
+                It.Is<CmdPart>(x => x.ToString() == "TestPath parameters dir"), 
                 CancellationToken.None));
         }
     }

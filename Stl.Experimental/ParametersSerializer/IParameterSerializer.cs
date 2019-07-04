@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Stl.CommandLine;
 
 namespace Stl.ParametersSerializer
 {
@@ -9,6 +10,6 @@ namespace Stl.ParametersSerializer
         // (which by itself doesn't add much extra value in comparison to IEnumerable<CmdPart>),
         // or talk with me on whether CmdPart is a good idea in general.
         // In short, if you declare this, it breaks consistency.
-        IEnumerable<string> Serialize(IParameters parameters);
+        IEnumerable<CmdPart> Serialize(IParameters parameters);
     }
 }

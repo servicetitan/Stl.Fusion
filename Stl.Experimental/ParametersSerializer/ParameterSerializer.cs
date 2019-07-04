@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Stl.CommandLine;
 
 namespace Stl.ParametersSerializer
 {
@@ -11,7 +12,7 @@ namespace Stl.ParametersSerializer
     public class ParameterSerializer :IParameterSerializer 
     {
         // I guess this method must be virtual.
-        public IEnumerable<string> Serialize(IParameters parameters)
+        public IEnumerable<CmdPart> Serialize(IParameters parameters)
         {
             foreach (var propertyInfo in parameters.GetType().GetProperties())
             {
@@ -28,7 +29,7 @@ namespace Stl.ParametersSerializer
         }
 
         // This one must be protected virtual...
-        private string? SerializeParameter(CliParameterAttribute parameterPattern, object propValue)
+        private CmdPart? SerializeParameter(CliParameterAttribute parameterPattern, object propValue)
         {
             if (parameterPattern?.ParameterPattern == null || propValue == null)
                 return null;
@@ -51,20 +52,20 @@ namespace Stl.ParametersSerializer
         }
 
         // Etc.
-        private string? SerializeParameters<TEnum>(string parameterPattern, TEnum propValue) where TEnum : Enum
+        private CmdPart? SerializeParameters<TEnum>(string parameterPattern, TEnum propValue) where TEnum : Enum
         {
             var fi = propValue.GetType().GetField(propValue.ToString());
             var cliValue = fi.GetCustomAttribute<CliValueAttribute>()?.Value ?? propValue.ToString();
             return parameterPattern.Replace("{value}", cliValue);
         }
 
-        private string? SerializeParameters(string? parameterPattern, string propValue)
+        private CmdPart? SerializeParameters(string? parameterPattern, string propValue)
             => parameterPattern.Replace("{value}", propValue);
         
-        private string? SerializeParameters(string? parameterPattern, bool propValue)
-            => propValue ? parameterPattern : null;
+        private CmdPart? SerializeParameters(string? parameterPattern, bool propValue)
+            => propValue ? parameterPattern : (CmdPart?)null;
         
-        private string? SerializeParameters(CliParameterAttribute parameterPattern, IDictionary<string, string> propDict)
+        private CmdPart? SerializeParameters(CliParameterAttribute parameterPattern, IDictionary<string, string> propDict)
         {
             if (parameterPattern.RepeatPattern == null || parameterPattern.Separator == null)
                 return null;

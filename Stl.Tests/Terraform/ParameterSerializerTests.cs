@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using FluentAssertions;
+using Stl.CommandLine;
 using Stl.ParametersSerializer;
 using Stl.Terraform;
 using Stl.Testing;
@@ -22,7 +23,7 @@ namespace Stl.Tests.Terraform
         public void TestString()
         {
             var actual = parameterSerializer.Serialize(new StringParameter{Parameter = "stringValue"});
-            actual.Should().BeEquivalentTo("-stringParameter=stringValue");
+            actual.Should().BeEquivalentTo((CmdPart)"-stringParameter=stringValue");
         }
         
         [Fact]
@@ -35,9 +36,9 @@ namespace Stl.Tests.Terraform
                 Parameter3 = true,
             });
             actual.Should().BeEquivalentTo(
-                "-stringParameter=stringValue",
-                "-enumParam=first",
-                "-boolParam"
+                (CmdPart)"-stringParameter=stringValue",
+                (CmdPart)"-enumParam=first",
+                (CmdPart)"-boolParam"
                 );
         }
         
@@ -52,28 +53,28 @@ namespace Stl.Tests.Terraform
         public void TestEnumWithCliValue()
         {
             var actual = parameterSerializer.Serialize(new EnumParameter{Parameter = EnumParam.First});
-            actual.Should().BeEquivalentTo("-enumParam=first");
+            actual.Should().BeEquivalentTo((CmdPart)"-enumParam=first");
         }
 
         [Fact]
         public void TestEnumWithoutCliValue()
         {
             var actual = parameterSerializer.Serialize(new EnumParameter{Parameter = EnumParam.Second});
-            actual.Should().BeEquivalentTo("-enumParam=Second");
+            actual.Should().BeEquivalentTo((CmdPart)"-enumParam=Second");
         }
 
         [Fact]
         public void TestIntValue()
         {
             var actual = parameterSerializer.Serialize(new IntParameter{Parameter = 5});
-            actual.Should().BeEquivalentTo("-intParam=5s");
+            actual.Should().BeEquivalentTo((CmdPart)"-intParam=5s");
         }
         
         [Fact]
         public void TestBoolTrue()
         {
             var actual = parameterSerializer.Serialize(new BoolParameter{Parameter = true});
-            actual.Should().BeEquivalentTo("-boolParam");
+            actual.Should().BeEquivalentTo((CmdPart)"-boolParam");
         }
         
         [Fact]
@@ -93,7 +94,8 @@ namespace Stl.Tests.Terraform
                     {"key2", "value2"},
                 }
             });
-            actual.Should().BeEquivalentTo("-var key1=value1 key2=value2");
+            var cmdParts = new CmdPart[]{"-var key1=value1 key2=value2"};
+            actual.Should().BeEquivalentTo(cmdParts);
         }
 
         private class StringParameter : IParameters
