@@ -1,0 +1,34 @@
+using System.Collections.Generic;
+using Stl.CommandLine;
+
+namespace Stl.Terraform 
+{
+    public abstract class TerraformArgumentsBase
+    {
+        /// <summary>  
+        /// Ask for input for variables if not directly set.
+        /// </summary>
+        [CliArgument("-input={0}")]
+        public CliBool? Input { get; set; }
+        
+        /// <summary>  
+        /// Set a variable in the Terraform configuration.
+        /// This flag can be set multiple times. Variable values are interpreted as HCL,
+        /// so list and map values can be specified via this flag.
+        /// </summary>
+        [CliArgument("-var {0:Q}")]
+        public IDictionary<string, string>? Variables { get; set; } = new Dictionary<string, string>();
+
+        /// <summary>  
+        /// Set variables in the Terraform configuration from a variable file.
+        /// If a terraform.tfvars or any .auto.tfvars files are present in the current directory,
+        /// they will be automatically loaded. terraform.tfvars is loaded first and
+        /// the .auto.tfvars files after in alphabetical order.
+        /// Any files specified by -var-file override any values set automatically from files
+        /// in the working directory.
+        /// This flag can be used multiple times.
+        /// </summary>
+        [CliArgument("-var-file={0:Q}")]
+        public CliString VarFile { get; set; }
+    }
+}

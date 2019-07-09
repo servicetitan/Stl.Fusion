@@ -5,6 +5,9 @@ namespace Stl.Internal
 {
     public static class Errors
     {
+        public static Exception UnsupportedFormatString(string format) =>
+            new ArgumentException("Unsupported format string: '{0}'.");
+
         public static Exception ExpressionDoesNotSpecifyAMember(string expression) =>
             new ArgumentException("Expression '{expression}' does not specify a member.");
         public static Exception UnexpectedMemberType(string memberType) =>

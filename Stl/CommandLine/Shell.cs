@@ -6,22 +6,19 @@ namespace Stl.CommandLine
 {
     public class Shell : Cmd
     {
-        public static readonly CmdPart DefaultExecutable = CmdPart.New("bash").VaryByOS("cmd.exe");
-        public static readonly CmdPart DefaultPrefix = CmdPart.New("-c").VaryByOS("/C");
+        public static readonly CliString DefaultExecutable = CliString.New("bash").VaryByOS("cmd.exe");
+        public static readonly CliString DefaultPrefix = CliString.New("-c").VaryByOS("/C");
 
-        protected override CmdPart GetExecutable() => DefaultExecutable;
-        protected virtual CmdPart GetPrefix() => DefaultPrefix;
+        protected override CliString GetExecutable() => DefaultExecutable;
+        protected override CliString GetArgumentsPrefix() => DefaultPrefix;
 
         public virtual Task<ExecutionResult> RunAsync(
-            CmdPart command, 
-            CancellationToken cancellationToken = default)
-        {
-            var arguments = GetPrefix() + command.Quote(); 
-            return base.RunRawAsync(arguments, cancellationToken);
-        }
+            CliString command, 
+            CancellationToken cancellationToken = default) 
+            => base.RunRawAsync(command.Quote(), cancellationToken);
 
         public virtual async Task<string> GetOutputAsync(
-            CmdPart command, 
+            CliString command, 
             CancellationToken cancellationToken = default) 
             => (await RunAsync(command, cancellationToken)).StandardOutput;
     }
