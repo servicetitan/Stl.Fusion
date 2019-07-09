@@ -23,8 +23,11 @@ namespace Stl.CommandLine
         
         public CliString Format(object value, CliArgumentAttribute argumentAttribute = null)
         {
+            //если будет будет много реальзаций у ICliFormatter то прийдеться этот код копировать
             argumentAttribute ??= new CliArgumentAttribute("{0}");
             var formatter = GetFormatter(argumentAttribute);
+            //если передать new CliArgumentAttribute() {FormatterType = typeof(CliFormatter)}
+            //то будет вечный цикл, потому что formatter всегда новый.
             if (formatter != this)
                 return formatter.Format(value, argumentAttribute);
 
@@ -35,11 +38,12 @@ namespace Stl.CommandLine
 
             return value switch {
                 null => "",
+                //не понял почему если занечние == дефолтному то возвращаем пустую строку? 
                 _ when value.ToString() == defaultValue => "",
                 IEnumerable<IFormattable> sequence => CliString.Concat(sequence.Select(Format)),
                 IFormattable _ => Format(value), 
                 _ => Format(FormatStructure(value)), 
-            };
+                          };
         }
 
         protected virtual CliString FormatStructure(object value)
