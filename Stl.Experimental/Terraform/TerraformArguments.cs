@@ -17,7 +17,8 @@ namespace Stl.Terraform
         /// so list and map values can be specified via this flag.
         /// </summary>
         [CliArgument("-var {0:Q}")]
-        public IDictionary<string, string>? Variables { get; set; } = new Dictionary<string, string>();
+        public CliDictionary<CliString, CliString> Variables { get; set; } = 
+            new CliDictionary<CliString, CliString>();
 
         /// <summary>  
         /// Set variables in the Terraform configuration from a variable file.

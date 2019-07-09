@@ -1,9 +1,11 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using CliWrap.Models;
 
 namespace Stl.CommandLine
 {
+    [Serializable]
     public class Shell : Cmd
     {
         public static readonly CliString DefaultExecutable = CliString.New("bash").VaryByOS("cmd.exe");

@@ -2,6 +2,7 @@ using System;
 
 namespace Stl.CommandLine
 {
+    [Serializable]
     [AttributeUsage(AttributeTargets.Property)]
     public class CliArgumentAttribute : Attribute
     {

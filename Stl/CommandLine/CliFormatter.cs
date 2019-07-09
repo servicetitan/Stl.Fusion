@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Reflection;
 
 namespace Stl.CommandLine 
@@ -10,9 +11,10 @@ namespace Stl.CommandLine
         CliString Format(object? value, CliArgumentAttribute argumentAttribute = null);  
     }
 
+    [Serializable]
     public class CliFormatter : ICliFormatter  
     {
-        public IFormatProvider FormatProvider { get; }
+        public IFormatProvider FormatProvider { get; set; }
 
         public CliFormatter(IFormatProvider formatProvider = null) 
             => FormatProvider = formatProvider ?? CultureInfo.InvariantCulture;
@@ -28,11 +30,16 @@ namespace Stl.CommandLine
 
             var template = argumentAttribute.Template;
             var defaultValue = argumentAttribute.DefaultValue;
-            if (value == null || value.ToString() == defaultValue) 
-                return "";
 
-            var formattableValue = value is IFormattable ? value : FormatStructure(value);
-            return string.Format(this, template, formattableValue);
+            CliString Format(object o) => string.Format(this, template, o);
+
+            return value switch {
+                null => "",
+                _ when value.ToString() == defaultValue => "",
+                IEnumerable<IFormattable> sequence => CliString.Concat(sequence.Select(Format)),
+                IFormattable _ => Format(value), 
+                _ => Format(FormatStructure(value)), 
+            };
         }
 
         protected virtual CliString FormatStructure(object value)

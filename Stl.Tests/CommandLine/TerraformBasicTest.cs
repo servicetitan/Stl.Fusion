@@ -24,7 +24,7 @@ namespace Stl.Tests.CommandLine
                 new ApplyArguments {
                     Backup = "Backup",
                     AutoApprove = true,
-                    Variables = new Dictionary<string, string>{{"key1", "value1"}},
+                    Variables = new CliDictionary<CliString, CliString>() {{"key1", "value1"}},
                     LockTimeout = 16,
                 });
             executionResult.StandardOutput.Trim().Should()

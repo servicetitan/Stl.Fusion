@@ -8,6 +8,7 @@ using Stl.OS;
 namespace Stl.CommandLine 
 {
     // Helper type to deal with command line parts
+    [Serializable]
     public struct CliString : IEquatable<CliString>, IFormattable
     {
         private readonly string _value;
@@ -78,7 +79,7 @@ namespace Stl.CommandLine
         public static CliString Concat(CliString head, CliString tail, char delimiter = ' ')
             => string.IsNullOrEmpty(tail.Value)
                 ? head
-                : $"{head}{delimiter}{tail}";
+                : string.IsNullOrEmpty(head.Value) ? tail : $"{head}{delimiter}{tail}";
         public static CliString Concat(params CliString[] parts) 
             => Concat((IEnumerable<CliString>) parts);
         public static CliString Concat(IEnumerable<CliString> parts)
