@@ -19,13 +19,13 @@ namespace Stl.Terraform
         /// <summary>  
         /// Display diffs of formatting changes
         /// </summary>
-        [CliArgument("-diff", "false")]
+        [CliArgument("-diff", DefaultValue = "false")]
         public bool Diff { get; set; }
         
         /// <summary>  
         /// Check if the input is formatted. Exit status will be 0 if all input is properly formatted and non-zero otherwise.
         /// </summary>
-        [CliArgument("-check", "false")]
+        [CliArgument("-check", DefaultValue = "false")]
         public bool Check { get; set; }
     }
 }

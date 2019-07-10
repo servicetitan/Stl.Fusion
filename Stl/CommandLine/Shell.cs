@@ -11,8 +11,14 @@ namespace Stl.CommandLine
         public static readonly CliString DefaultExecutable = CliString.New("bash").VaryByOS("cmd.exe");
         public static readonly CliString DefaultPrefix = CliString.New("-c").VaryByOS("/C");
 
-        protected override CliString GetExecutable() => DefaultExecutable;
-        protected override CliString GetArgumentsPrefix() => DefaultPrefix;
+        public Shell(
+            CliString? executable = null, 
+            CliString? argumentsPrefix = null, 
+            ICliFormatter cliFormatter = null) 
+            : base(
+                executable ?? DefaultExecutable, 
+                argumentsPrefix ?? DefaultPrefix, 
+                cliFormatter) { }
 
         public virtual Task<ExecutionResult> RunAsync(
             CliString command, 

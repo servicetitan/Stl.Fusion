@@ -15,12 +15,12 @@ namespace Stl.CommandLine
         public override string ToString() => ToString(null, null);
         public string ToString(string format, IFormatProvider? provider = null) 
         {
-            if (string.IsNullOrEmpty(format)) format = "N";
+            if (string.IsNullOrEmpty(format)) format = "D";
             provider ??= CultureInfo.InvariantCulture;
             return format.ToUpperInvariant() switch {
                 "V" => Value.AsString(EnumFormat.EnumMemberValue),
                 "N" => Value.AsString(EnumFormat.Name),
-                "D" => Value.AsString(EnumFormat.DisplayName),
+                "D" => Value.AsString(EnumFormat.DisplayName, EnumFormat.Name),
                 "0" => Value.AsString(EnumFormat.DecimalValue),
                 _ => throw Errors.UnsupportedFormatString(format)
             };

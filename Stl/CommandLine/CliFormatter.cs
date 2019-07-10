@@ -33,14 +33,27 @@ namespace Stl.CommandLine
 
             CliString Format(object o) => string.Format(this, template, o);
 
+            value = TrySubstituteValue(value);
             return value switch {
                 null => "",
+                string s => s == defaultValue ? "" : Format(s),
                 _ when value.ToString() == defaultValue => "",
                 IEnumerable<IFormattable> sequence => CliString.Concat(sequence.Select(Format)),
                 IFormattable _ => Format(value), 
                 _ => Format(FormatStructure(value)), 
             };
         }
+
+        protected virtual object TrySubstituteValue(object value) 
+            => value switch {
+                null => (object) null,
+                bool b => new CliBool(b),
+                string s => new CliString(s),
+                // TODO: This is super slow -- fix this; for now it's better to use CliEnum<T> instead
+                Enum e => Activator.CreateInstance(
+                    typeof(CliEnum<>).MakeGenericType(e.GetType()), e),
+                _ => value,
+            };
 
         protected virtual CliString FormatStructure(object value)
         {
@@ -61,6 +74,7 @@ namespace Stl.CommandLine
         protected virtual ICliFormatter GetFormatter(Type formatterType)
             => formatterType.IsAssignableFrom(GetType())
                 ? this
+                // TODO: Slow, we might want to fix this later
                 : (ICliFormatter) Activator.CreateInstance(formatterType, FormatProvider);
     }
 }
