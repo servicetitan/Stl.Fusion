@@ -174,6 +174,7 @@ namespace Stl.Tests.CommandLine
             });
             actual.Value.Should().Be("p p1 s p2");
         }
+
         [Fact]
         public void CombinedTest()
         {
