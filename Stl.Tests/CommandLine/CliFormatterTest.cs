@@ -11,18 +11,18 @@ namespace Stl.Tests.CommandLine
     {
         protected class Arguments
         {
-            [CliArgument("-stringParameter={0}")]
+            [CliArgument("-stringArg={0}")]
             public string? String { get; set; }
 
-            [CliArgument("-enumParam={0}")]
+            [CliArgument("-enumArg={0}")]
             public Gender? Enum { get; set; }
-            [CliArgument("-enum2Param={0:0}")]
+            [CliArgument("-enum2Arg={0:0}")]
             public Gender? Enum2 { get; set; }
 
-            [CliArgument("-intParam={0}s", DefaultValue = "-1")]
+            [CliArgument("-intArg={0}s", DefaultValue = "-1")]
             public int Int { get; set; } = -1;
 
-            [CliArgument("-boolParam", DefaultValue="false")]
+            [CliArgument("-boolArg", DefaultValue="false")]
             public bool? Bool { get; set; }
 
             [CliArgument("-var {0}")]
@@ -51,7 +51,7 @@ namespace Stl.Tests.CommandLine
         public void BoolTest()
         {
             var actual = CliFormatter.Format(new Arguments {Bool = true});
-            actual.Value.Should().Be("-boolParam");
+            actual.Value.Should().Be("-boolArg");
 
             actual = CliFormatter.Format(new Arguments {Bool = false});
             actual.Value.Should().BeEmpty();
@@ -61,7 +61,7 @@ namespace Stl.Tests.CommandLine
         public void StringTest()
         {
             var actual = CliFormatter.Format(new Arguments {String = "v"});
-            actual.Value.Should().Be("-stringParameter=v");
+            actual.Value.Should().Be("-stringArg=v");
 
             actual = CliFormatter.Format(new Arguments{ String = null});
             actual.Value.Should().BeEmpty();
@@ -71,21 +71,21 @@ namespace Stl.Tests.CommandLine
         public void IntTest()
         {
             var actual = CliFormatter.Format(new Arguments {Int = 5});
-            actual.Value.Should().Be("-intParam=5s");
+            actual.Value.Should().Be("-intArg=5s");
         }
         
         [Fact]
         public void EnumTest()
         {
             var actual = CliFormatter.Format(new Arguments {Enum = Gender.Male});
-            actual.Value.Should().Be("-enumParam=male");
+            actual.Value.Should().Be("-enumArg=male");
             actual = CliFormatter.Format(new Arguments {Enum = Gender.Female});
-            actual.Value.Should().Be("-enumParam=Female");
+            actual.Value.Should().Be("-enumArg=Female");
 
             actual = CliFormatter.Format(new Arguments {Enum2 = Gender.Male});
-            actual.Value.Should().Be("-enum2Param=0");
+            actual.Value.Should().Be("-enum2Arg=0");
             actual = CliFormatter.Format(new Arguments {Enum2 = Gender.Female});
-            actual.Value.Should().Be("-enum2Param=1");
+            actual.Value.Should().Be("-enum2Arg=1");
         }
 
         [Fact]
@@ -97,9 +97,9 @@ namespace Stl.Tests.CommandLine
                 Bool = true,
             });
             actual.Value.Should().Be(
-                "-stringParameter=stringValue " +
-                "-enumParam=male " +
-                "-boolParam"
+                "-stringArg=stringValue " +
+                "-enumArg=male " +
+                "-boolArg"
                 );
         }
 
