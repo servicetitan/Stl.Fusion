@@ -27,6 +27,9 @@ namespace Stl.Tests.CommandLine
 
             [CliArgument("-var {0}")]
             public CliDictionary<string, string>? Vars { get; set; }
+
+            [CliArgument("-flag {0:Q}")]
+            public CliList<string>? Flags { get; set; }
         }
         
         protected enum Gender
@@ -89,22 +92,18 @@ namespace Stl.Tests.CommandLine
         }
 
         [Fact]
-        public void MultipleTest()
+        public void ListTest()
         {
             var actual = CliFormatter.Format(new Arguments {
-                String = "stringValue",
-                Enum = Gender.Male,
-                Bool = true,
+                Flags = new CliList<string> { "x", "yy" }
             });
-            actual.Value.Should().Be(
-                "-stringArg=stringValue " +
-                "-enumArg=male " +
-                "-boolArg"
-                );
+            var q1 = CliString.Quote("x"); // Depends on OS, so can't use " or '
+            var q2 = CliString.Quote("yy");
+            actual.Value.Should().Be($"-flag {q1} -flag {q2}");
         }
 
         [Fact]
-        public void CliDictionaryTest()
+        public void DictionaryTest()
         {
             var actual = CliFormatter.Format(new Arguments {
                 Vars = new CliDictionary<string, string> {
@@ -113,6 +112,24 @@ namespace Stl.Tests.CommandLine
                 }
             });
             actual.Value.Should().Be("-var key1=value1 -var key2=value2");
+        }
+
+        
+        [Fact]
+        public void MultipleTest()
+        {
+            var actual = CliFormatter.Format(new Arguments {
+                String = "stringValue",
+                Enum = Gender.Male,
+                Bool = true,
+                Vars = new CliDictionary<string, string>() {{"k", "v"}}
+            });
+            actual.Value.Should().Be(
+                "-stringArg=stringValue " +
+                "-enumArg=male " +
+                "-boolArg " +
+                "-var k=v"
+                );
         }
     }
 }

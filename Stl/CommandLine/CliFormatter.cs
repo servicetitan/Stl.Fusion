@@ -38,8 +38,9 @@ namespace Stl.CommandLine
                 null => "",
                 string s => s == defaultValue ? "" : Format(s),
                 _ when value.ToString() == defaultValue => "",
+                // IFormattable is preferred over IEnumerable<IFormattable>
+                IFormattable _ => Format(value),
                 IEnumerable<IFormattable> sequence => CliString.Concat(sequence.Select(Format)),
-                IFormattable _ => Format(value), 
                 _ => Format(FormatStructure(value)), 
             };
         }
