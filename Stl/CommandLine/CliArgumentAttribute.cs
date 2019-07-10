@@ -8,7 +8,9 @@ namespace Stl.CommandLine
     {
         public string Template { get; } = "{0}";
         public string DefaultValue { get; set; } = "";
+        public bool IsRequired { get; set; }
         public Type FormatterType { get; set; } = null;
+        public double Priority { get; set; } 
 
         public CliArgumentAttribute() { } 
         public CliArgumentAttribute(string template) 

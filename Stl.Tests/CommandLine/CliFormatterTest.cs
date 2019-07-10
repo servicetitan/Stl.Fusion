@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 using FluentAssertions;
 using Stl.CommandLine;
@@ -30,6 +31,18 @@ namespace Stl.Tests.CommandLine
 
             [CliArgument("-flag {0:Q}")]
             public CliList<string>? Flags { get; set; }
+
+            [CliArgument(Priority = 1000)]
+            public CliString Suffix { get; set; } = "";
+        }
+        
+        protected class ArgumentsEx : Arguments
+        {
+            [CliArgument(IsRequired = true)]
+            public string Path { get; set; }
+
+            [CliArgument(Priority = -1000)]
+            public CliString Prefix { get; set; } = "";
         }
         
         protected enum Gender
@@ -114,21 +127,51 @@ namespace Stl.Tests.CommandLine
             actual.Value.Should().Be("-var key1=value1 -var key2=value2");
         }
 
-        
         [Fact]
-        public void MultipleTest()
+        public void RequiredTest()
         {
-            var actual = CliFormatter.Format(new Arguments {
+            Assert.Throws<ArgumentException>(() => {
+                CliFormatter.Format(new ArgumentsEx());
+            });
+            var actual = CliFormatter.Format(new ArgumentsEx {
+                Bool = true,
+                Path = "."
+            });
+            actual.Value.Should().Be("-boolArg .");
+        }
+
+        [Fact]
+        public void PriorityTest()
+        {
+            var actual = CliFormatter.Format(new ArgumentsEx {
+                Bool = true,
+                Path = ".",
+                Prefix = "p",
+                Suffix = "s"
+            });
+            actual.Value.Should().Be("p -boolArg . s");
+        }
+
+        [Fact]
+        public void CombinedTest()
+        {
+            var actual = CliFormatter.Format(new ArgumentsEx() {
                 String = "stringValue",
                 Enum = Gender.Male,
                 Bool = true,
-                Vars = new CliDictionary<string, string>() {{"k", "v"}}
+                Vars = new CliDictionary<string, string>() {{"k", "v"}},
+                Path = "path",
+                Prefix = "prefix", 
+                Suffix = "suffix" 
             });
             actual.Value.Should().Be(
+                "prefix " +
                 "-stringArg=stringValue " +
                 "-enumArg=male " +
                 "-boolArg " +
-                "-var k=v"
+                "-var k=v " +
+                "path " +
+                "suffix"
                 );
         }
     }

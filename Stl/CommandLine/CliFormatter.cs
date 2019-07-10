@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using Stl.Internal;
 
 namespace Stl.CommandLine 
 {
@@ -30,14 +31,16 @@ namespace Stl.CommandLine
 
             var template = argumentAttribute.Template;
             var defaultValue = argumentAttribute.DefaultValue;
+            var isRequired = argumentAttribute.IsRequired;
 
             CliString Format(object o) => string.Format(this, template, o);
+            CliString Default() => isRequired ? throw Errors.MissingCliArgument(template) : "";
 
             value = TrySubstituteValue(value);
             return value switch {
-                null => "",
-                string s => s == defaultValue ? "" : Format(s),
-                _ when value.ToString() == defaultValue => "",
+                null => Default(),
+                string s => s == defaultValue ? Default() : Format(s),
+                _ when value.ToString() == defaultValue => Default(),
                 // IFormattable is preferred over IEnumerable<IFormattable>
                 IFormattable _ => Format(value),
                 IEnumerable<IFormattable> sequence => CliString.Concat(sequence.Select(Format)),
@@ -58,18 +61,23 @@ namespace Stl.CommandLine
 
         protected virtual CliString FormatStructure(object value)
         {
-            var parts = new List<CliString>();
-            var properties = value.GetType().GetProperties(
-                BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
-            foreach (var property in properties) {
-                var propertyArgumentAttribute = property.GetCustomAttribute<CliArgumentAttribute>(true);
-                if (propertyArgumentAttribute == null)
-                    continue;
-                var propertyValue = property.GetValue(value);
-                var part = Format(propertyValue, propertyArgumentAttribute);
-                parts.Add(part);
+            int BaseTypeCount(Type type) {
+                var count = 0;
+                for (; type != null; type = type.BaseType) count++;
+                return count;
             }
-            return CliString.Concat(parts);
+
+            var bindingFlags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy;
+            var properties = (
+                from property in value.GetType().GetProperties(bindingFlags)
+                let attribute = property.GetCustomAttribute<CliArgumentAttribute>(true)
+                where attribute != null
+                orderby attribute.Priority, BaseTypeCount(property.DeclaringType)
+                let propertyValue = property.GetValue(value)
+                let formattedPropertyValue = Format(propertyValue, attribute)
+                select formattedPropertyValue
+                ).ToList();
+            return CliString.Concat(properties);
         }
 
         protected virtual ICliFormatter GetFormatter(Type formatterType)
