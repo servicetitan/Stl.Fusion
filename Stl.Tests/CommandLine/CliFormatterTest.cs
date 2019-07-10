@@ -44,6 +44,15 @@ namespace Stl.Tests.CommandLine
             [CliArgument(Priority = -1000)]
             public CliString Prefix { get; set; } = "";
         }
+
+        protected class NestedArguments
+        {
+            [CliArgument]
+            public ArgumentsEx Arguments { get; set; } = new ArgumentsEx();
+
+            [CliArgument(IsRequired = true)]
+            public string Path { get; set; }
+        }
         
         protected enum Gender
         {
@@ -152,6 +161,19 @@ namespace Stl.Tests.CommandLine
             actual.Value.Should().Be("p -boolArg . s");
         }
 
+        [Fact]
+        public void NestedTest()
+        {
+            var actual = CliFormatter.Format(new NestedArguments() {
+                Arguments = new ArgumentsEx() {
+                    Path = "p1", 
+                    Suffix = "s", 
+                    Prefix = "p"
+                },
+                Path = "p2",
+            });
+            actual.Value.Should().Be("p p1 s p2");
+        }
         [Fact]
         public void CombinedTest()
         {
