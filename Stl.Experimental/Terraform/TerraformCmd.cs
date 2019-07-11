@@ -1,4 +1,4 @@
-﻿using System.Threading;
+using System.Threading;
 using System.Threading.Tasks;
 using CliWrap.Models;
 using Stl.CommandLine;
@@ -28,5 +28,20 @@ namespace Stl.Terraform
             FmtArguments? arguments = null, 
             CancellationToken cancellationToken = default) 
             => RunRawAsync("fmt", arguments, dir, cancellationToken);
+
+        public Task<ExecutionResult> InitAsync(
+            CliString? dir = null,
+            CliString? workingDirectory = null,
+            InitArguments? arguments = null,
+            CancellationToken cancellationToken = default)
+            => RunRawAsync("init", arguments, workingDirectory, dir, cancellationToken);
+
+        public Task<ExecutionResult> DestroyAsync(
+            CliString? dir = null,
+            CliString? workingDirectory= null,
+            DestroyArguments? arguments = null,
+            CancellationToken cancellationToken = default)
+            => RunRawAsync("destroy", arguments ?? new DestroyArguments(),
+                workingDirectory, dir, cancellationToken);
     }
 }
