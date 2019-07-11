@@ -7,47 +7,35 @@ namespace Stl.Terraform
 {
     public class TerraformCmd : Cmd
     {
-        public static readonly CliString DefaultExecutable =
+        public static readonly CliString DefaultExecutable = 
             CliString.New("terraform").VaryByOS("terraform.exe");
 
-        public TerraformCmd(
-            CliString? executable = null,
-            CliString? argumentsPrefix = null,
-            ICliFormatter? cliFormatter = null)
-            : base(
-                executable ?? DefaultExecutable,
-                argumentsPrefix ?? "",
-                cliFormatter)
-        {
-        }
+        public TerraformCmd(CliString? executable = null)
+            : base(executable ?? DefaultExecutable)
+        { }
 
         public Task<ExecutionResult> ApplyAsync(
-            CliString? dir = null,
-            CliString? workingDirectory = null,
+            CliString dir = default,
             ApplyArguments? arguments = null,
             CancellationToken cancellationToken = default)
-            => RunRawAsync("apply", arguments ?? new ApplyArguments(), workingDirectory ,dir, cancellationToken);
+            => RunRawAsync("apply", arguments ?? new ApplyArguments(), dir, cancellationToken);
 
         public Task<ExecutionResult> FmtAsync(
-            CliString? dir = null,
-            CliString? workingDirectory = null,
+            CliString dir = default,
             FmtArguments? arguments = null,
             CancellationToken cancellationToken = default)
-            => RunRawAsync("fmt", arguments, workingDirectory,dir, cancellationToken);
+            => RunRawAsync("fmt", arguments ?? new FmtArguments(), dir, cancellationToken);
 
         public Task<ExecutionResult> InitAsync(
-            CliString? dir = null,
-            CliString? workingDirectory = null,
+            CliString dir = default,
             InitArguments? arguments = null,
             CancellationToken cancellationToken = default)
-            => RunRawAsync("init", arguments, workingDirectory, dir, cancellationToken);
+            => RunRawAsync("init", arguments ?? new InitArguments(), dir, cancellationToken);
 
         public Task<ExecutionResult> DestroyAsync(
-            CliString? dir = null,
-            CliString? workingDirectory= null,
+            CliString dir = default,
             DestroyArguments? arguments = null,
             CancellationToken cancellationToken = default)
-            => RunRawAsync("destroy", arguments ?? new DestroyArguments(),
-                workingDirectory, dir, cancellationToken);
+            => RunRawAsync("destroy", arguments ?? new DestroyArguments(), dir, cancellationToken);
     }
 }

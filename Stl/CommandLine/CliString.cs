@@ -62,7 +62,7 @@ namespace Stl.CommandLine
 
         // Static members
 
-        public static CliString Empty { get; } = new CliString("");
+        public static readonly CliString Empty = new CliString("");
         public static CliString New(string value) 
             => new CliString(value ?? "");
 

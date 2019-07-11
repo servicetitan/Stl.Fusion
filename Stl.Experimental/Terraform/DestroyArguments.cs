@@ -8,6 +8,6 @@ namespace Stl.Terraform
         /// Skip interactive approval of plan before applying.
         /// </summary>
         [CliArgument("-auto-approve", DefaultValue = "false")]
-        public CliBool AutoApprove => true;
+        public bool AutoApprove { get; set; } = true;
     }
 }

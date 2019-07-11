@@ -9,16 +9,13 @@ namespace Stl.CommandLine
     public class Shell : Cmd
     {
         public static readonly CliString DefaultExecutable = CliString.New("bash").VaryByOS("cmd.exe");
-        public static readonly CliString DefaultPrefix = CliString.New("-c").VaryByOS("/C");
+        public static readonly CliString DefaultArgumentPrefix = CliString.New("-c").VaryByOS("/C");
 
-        public Shell(
-            CliString? executable = null, 
-            CliString? argumentsPrefix = null, 
-            ICliFormatter? cliFormatter = null) 
-            : base(
-                executable ?? DefaultExecutable, 
-                argumentsPrefix ?? DefaultPrefix, 
-                cliFormatter) { }
+        public Shell(CliString? executable = null) 
+            : base(executable ?? DefaultExecutable)
+        {
+            ArgumentsPrefix = DefaultArgumentPrefix;
+        }
 
         public virtual Task<ExecutionResult> RunAsync(
             CliString command, 

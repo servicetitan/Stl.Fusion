@@ -7,35 +7,27 @@ namespace Stl.CommandLine
 {
     public abstract class Cmd
     {
-        protected CliString Executable { get; }
-        protected CliString ArgumentsPrefix { get; }
-        protected ICliFormatter CliFormatter { get; }
+        public CliString Executable { get; }
+        public CliString WorkingDirectory { get; set; } = CliString.Empty;
+        public CliString ArgumentsPrefix { get; set; } = CliString.Empty;
+        public ICliFormatter CliFormatter { get; set; } = new CliFormatter();
 
-        protected Cmd(CliString executable, CliString argumentsPrefix = default, ICliFormatter? cliFormatter = null)
-        {
-            Executable = executable;
-            ArgumentsPrefix = argumentsPrefix;
-            CliFormatter = cliFormatter ?? new CliFormatter();
-        }
+        protected Cmd(CliString executable) => Executable = executable;
 
         protected virtual Task<ExecutionResult> RunRawAsync(
             object arguments, CliString tail,
-            CliString workingDirectory,
             CancellationToken cancellationToken = default) 
-            => RunRawAsync(CliFormatter.Format(arguments) + tail, workingDirectory, cancellationToken);
+            => RunRawAsync(CliFormatter.Format(arguments) + tail, cancellationToken);
 
         protected virtual Task<ExecutionResult> RunRawAsync(
-            CliString command, object? arguments, CliString? workingDirectory, CliString? tail, 
+            CliString command, object? arguments, CliString? tail, 
             CancellationToken cancellationToken = default) 
-            => RunRawAsync(command + CliFormatter.Format(arguments) + tail, workingDirectory, cancellationToken);
+            => RunRawAsync(command + CliFormatter.Format(arguments) + tail, cancellationToken);
 
         protected virtual Task<ExecutionResult> RunRawAsync(CliString arguments,
-            CliString? workingDirectory,
             CancellationToken cancellationToken = default)
         {
             var cli = GetCli(cancellationToken);
-            if (workingDirectory.HasValue)
-                cli.SetWorkingDirectory(workingDirectory.Value.Value);
             return cli
                 .SetArguments((ArgumentsPrefix + arguments).Value)
                 .ExecuteAsync();
@@ -50,9 +42,14 @@ namespace Stl.CommandLine
                 .SetStandardInput(standardInput)
                 .ExecuteAsync();
 
-        protected virtual ICli GetCli(CancellationToken cancellationToken) 
-            => Cli.Wrap(Executable.Value)
+        protected virtual ICli GetCli(CancellationToken cancellationToken)
+        {
+            var cli = Cli.Wrap(Executable.Value)
                 .SetCancellationToken(cancellationToken);
+            if (!string.IsNullOrEmpty(WorkingDirectory.Value))
+                cli.SetWorkingDirectory(WorkingDirectory.Value);
+            return cli;
+        }
 
         public override string ToString() => Executable.Value;
     }

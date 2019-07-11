@@ -11,35 +11,38 @@ namespace Stl.Tests.Terraform
 {
     public class TerraformBasicTest : TestBase
     {
-        protected TerraformCmd TerraformEcho { get; } = new TerraformCmd(
-            Shell.DefaultExecutable,
-            Shell.DefaultPrefix + "echo");
-        
+        protected TerraformCmd TerraformEcho { get; } = 
+            new TerraformCmd(Shell.DefaultExecutable) {
+                ArgumentsPrefix = Shell.DefaultArgumentPrefix + "echo",
+            };
+
         public TerraformBasicTest(ITestOutputHelper @out) : base(@out) { }
 
         [Fact]
-        public async Task CliFormatterTest()
+        public async Task ApplyArgumentFormatTest()
         {
             var executionResult = await TerraformEcho.ApplyAsync("dir", 
-                arguments: new ApplyArguments {
+                new ApplyArguments {
                     Backup = "Backup",
                     AutoApprove = true,
                     Variables = new CliDictionary<CliString, CliString>() {{"key1", "value1"}},
                     LockTimeout = 16,
                 });
             executionResult.StandardOutput.Trim().Should()
-                .Be("apply -backup=\"Backup\" -auto-approve " +
-                    "-lock-timeout=16s -var \"key1=value1\" dir");
+                .Be("apply " +
+                    "-var \"key1=value1\" -lock-timeout=16s " +
+                    "-backup=\"Backup\" -auto-approve " +
+                    "dir");
         }
 
         [Fact]
         public async Task FormatterMockTest()
         {
             var formatter = new Mock<ICliFormatter>();
-            var terraformEcho = new TerraformCmd(
-                Shell.DefaultExecutable, 
-                Shell.DefaultPrefix + "echo", 
-                formatter.Object);
+            var terraformEcho = new TerraformCmd(Shell.DefaultExecutable) {
+                ArgumentsPrefix = Shell.DefaultArgumentPrefix + "echo",
+                CliFormatter = formatter.Object,
+            }; 
 
             var applyArguments = new ApplyArguments();
             var formattedArguments = CliString.New("arguments");
