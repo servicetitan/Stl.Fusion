@@ -15,7 +15,7 @@ namespace Stl.Terraform
         /// Skip interactive approval of plan before applying.
         /// </summary>
         [CliArgument("-auto-approve", DefaultValue = "false")]
-        public CliBool AutoApprove { get; set; }
+        public CliBool AutoApprove => true;
         
         /// <summary>  
         /// Path to write updated state file. By default, the -state path will be used.

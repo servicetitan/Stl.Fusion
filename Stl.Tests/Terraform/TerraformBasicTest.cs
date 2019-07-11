@@ -21,7 +21,7 @@ namespace Stl.Tests.Terraform
         public async Task CliFormatterTest()
         {
             var executionResult = await TerraformEcho.ApplyAsync("dir", 
-                new ApplyArguments {
+                arguments: new ApplyArguments {
                     Backup = "Backup",
                     AutoApprove = true,
                     Variables = new CliDictionary<CliString, CliString>() {{"key1", "value1"}},
@@ -48,7 +48,7 @@ namespace Stl.Tests.Terraform
                 .Returns(formattedArguments);
             var dir = "dir";
 
-            var result = (await terraformEcho.ApplyAsync(dir, applyArguments)).StandardOutput.Trim();
+            var result = (await terraformEcho.ApplyAsync(dir, arguments: applyArguments)).StandardOutput.Trim();
 
             result.Should().Be("apply arguments dir");
             formatter.Verify(x => x.Format(applyArguments, It.IsAny<CliArgumentAttribute>()));

@@ -9,7 +9,7 @@ namespace Stl.CommandLine
 {
     public interface ICliFormatter : IFormatProvider
     {
-        CliString Format(object? value, CliArgumentAttribute argumentAttribute = null);  
+        CliString Format(object? value, CliArgumentAttribute? argumentAttribute = null);  
     }
 
     [Serializable]
@@ -17,12 +17,12 @@ namespace Stl.CommandLine
     {
         public IFormatProvider FormatProvider { get; set; }
 
-        public CliFormatter(IFormatProvider formatProvider = null) 
+        public CliFormatter(IFormatProvider? formatProvider = null) 
             => FormatProvider = formatProvider ?? CultureInfo.InvariantCulture;
 
         public object GetFormat(Type formatType) => FormatProvider.GetFormat(formatType);
         
-        public CliString Format(object value, CliArgumentAttribute argumentAttribute = null)
+        public CliString Format(object? value, CliArgumentAttribute? argumentAttribute = null)
         {
             argumentAttribute ??= new CliArgumentAttribute();
             var formatter = GetFormatter(argumentAttribute.FormatterType ?? GetType());
@@ -48,9 +48,9 @@ namespace Stl.CommandLine
             };
         }
 
-        protected virtual object TrySubstituteValue(object value) 
+        protected virtual object? TrySubstituteValue(object? value) 
             => value switch {
-                null => (object) null,
+                null => (object?) null,
                 bool b => new CliBool(b),
                 string s => new CliString(s),
                 // TODO: This is super slow -- fix this; for now it's better to use CliEnum<T> instead

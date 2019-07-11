@@ -12,7 +12,7 @@ namespace Stl.CommandLine
         public CliBool(bool value) => Value = value;
 
         public override string ToString() => ToString(null, null);
-        public string ToString(string format, IFormatProvider? provider = null) 
+        public string ToString(string? format, IFormatProvider? provider = null) 
         {
             if (string.IsNullOrEmpty(format)) format = "V";
             provider ??= CultureInfo.InvariantCulture;

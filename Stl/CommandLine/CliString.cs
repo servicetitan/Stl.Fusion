@@ -11,7 +11,7 @@ namespace Stl.CommandLine
     [Serializable]
     public struct CliString : IEquatable<CliString>, IFormattable
     {
-        private readonly string _value;
+        private readonly string? _value;
         
         // Value is never null; the check is done here b/c structs can be constructed w/o calling .ctor
         public string Value => _value ?? "";
@@ -57,8 +57,8 @@ namespace Stl.CommandLine
         
         public static implicit operator CliString(string source) 
             => new CliString(source);
-        public static CliString operator+(CliString first, CliString second) 
-            => first.Append(second); 
+        public static CliString operator+(CliString first, CliString? second) 
+            => first.Append(second ?? ""); 
 
         // Static members
 

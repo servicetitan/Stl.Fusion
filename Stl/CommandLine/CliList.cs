@@ -14,7 +14,7 @@ namespace Stl.CommandLine
         public CliList() { }
         public CliList(IEnumerable<T> collection) : base(collection) { }
 
-        public IEnumerator<IFormattable> GetEnumerator() 
+        public new IEnumerator<IFormattable> GetEnumerator() 
             => (this as IEnumerable<T>)
                 .Select(x => CliString.New(
                     string.Format(CultureInfo.InvariantCulture, ItemTemplate, x)

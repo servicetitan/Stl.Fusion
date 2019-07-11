@@ -14,7 +14,7 @@ namespace Stl.CommandLine
         public Shell(
             CliString? executable = null, 
             CliString? argumentsPrefix = null, 
-            ICliFormatter cliFormatter = null) 
+            ICliFormatter? cliFormatter = null) 
             : base(
                 executable ?? DefaultExecutable, 
                 argumentsPrefix ?? DefaultPrefix, 
@@ -23,11 +23,12 @@ namespace Stl.CommandLine
         public virtual Task<ExecutionResult> RunAsync(
             CliString command, 
             CancellationToken cancellationToken = default) 
-            => base.RunRawAsync(command.Quote(), cancellationToken);
+            => base.RunRawAsync(command.Quote(), null, cancellationToken);
 
         public virtual async Task<string> GetOutputAsync(
             CliString command, 
             CancellationToken cancellationToken = default) 
-            => (await RunAsync(command, cancellationToken)).StandardOutput;
+            => (await RunAsync(command, cancellationToken).ConfigureAwait(false))
+                .StandardOutput;
     }
 }

@@ -20,24 +20,30 @@ namespace Stl.CommandLine
 
         protected virtual Task<ExecutionResult> RunRawAsync(
             object arguments, CliString tail,
+            CliString workingDirectory,
             CancellationToken cancellationToken = default) 
-            => RunRawAsync(CliFormatter.Format(arguments) + tail, cancellationToken);
+            => RunRawAsync(CliFormatter.Format(arguments) + tail, workingDirectory, cancellationToken);
 
         protected virtual Task<ExecutionResult> RunRawAsync(
-            CliString command, object arguments, CliString tail, 
+            CliString command, object? arguments, CliString? workingDirectory, CliString? tail, 
             CancellationToken cancellationToken = default) 
-            => RunRawAsync(command + CliFormatter.Format(arguments) + tail, cancellationToken);
+            => RunRawAsync(command + CliFormatter.Format(arguments) + tail, workingDirectory, cancellationToken);
 
-        protected virtual Task<ExecutionResult> RunRawAsync(
-            CliString arguments,
-            CancellationToken cancellationToken = default) 
-            => GetCli(cancellationToken)
+        protected virtual Task<ExecutionResult> RunRawAsync(CliString arguments,
+            CliString? workingDirectory,
+            CancellationToken cancellationToken = default)
+        {
+            var cli = GetCli(cancellationToken);
+            if (workingDirectory.HasValue)
+                cli.SetWorkingDirectory(workingDirectory.Value.Value);
+            return cli
                 .SetArguments((ArgumentsPrefix + arguments).Value)
                 .ExecuteAsync();
+        }
 
         protected virtual Task<ExecutionResult> RunRawAsync(
             CliString arguments,
-            string standardInput,
+            string? standardInput,
             CancellationToken cancellationToken = default) 
             => GetCli(cancellationToken)
                 .SetArguments((ArgumentsPrefix + arguments).Value)

@@ -22,7 +22,7 @@ namespace Stl.CommandLine
         public CliDictionary(int capacity, IEqualityComparer<TKey> comparer) : base(capacity, comparer) { }
         protected CliDictionary(SerializationInfo info, StreamingContext context) : base(info, context) { }
 
-        public IEnumerator<IFormattable> GetEnumerator()
+        public new IEnumerator<IFormattable> GetEnumerator()
             => (this as IEnumerable<KeyValuePair<TKey, TValue>>)
                 .Select(x => CliString.New(
                     string.Format(CultureInfo.InvariantCulture, ItemTemplate, x.Key, x.Value)
