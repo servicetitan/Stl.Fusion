@@ -39,7 +39,7 @@ namespace Stl.Tests.CommandLine
         protected class ArgumentsEx : Arguments
         {
             [CliArgument(IsRequired = true)]
-            public string Path { get; set; }
+            public string? Path { get; set; }
 
             [CliArgument(Priority = -1000)]
             public CliString Prefix { get; set; } = "";
@@ -51,7 +51,7 @@ namespace Stl.Tests.CommandLine
             public ArgumentsEx Arguments { get; set; } = new ArgumentsEx();
 
             [CliArgument(IsRequired = true)]
-            public string Path { get; set; }
+            public string? Path { get; set; }
         }
         
         protected enum Gender

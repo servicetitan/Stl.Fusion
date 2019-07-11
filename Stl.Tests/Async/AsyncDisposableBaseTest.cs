@@ -30,7 +30,7 @@ namespace Stl.Tests.Async
             AsyncDisposableWithDelay? copy = null;
             var task = Task.Run(async () => {
                 await Task.Delay(100);
-                Assert.Equal(DisposalState.Disposing, copy.DisposalState);
+                Assert.Equal(DisposalState.Disposing, copy!.DisposalState);
                 Out.WriteLine("Disposing check passed.");
             });
             await using (var instance = new AsyncDisposableWithDelay(TimeSpan.FromMilliseconds(200))) {
@@ -50,7 +50,7 @@ namespace Stl.Tests.Async
             AsyncDisposableWithDelay? copy = null;
             var task = Task.Run(async () => {
                 await Task.Delay(100);
-                Assert.Equal(DisposalState.Disposing, copy.DisposalState);
+                Assert.Equal(DisposalState.Disposing, copy!.DisposalState);
                 Out.WriteLine("Disposing check 2 passed.");
             });
             using (var instance = new AsyncDisposableWithDelay(TimeSpan.FromMilliseconds(200))) {

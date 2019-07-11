@@ -10,17 +10,12 @@ namespace Stl.TimeSeries
     public static class TimeSeries
     {
         public static IAsyncEnumerable<Point<T>> ToTimeSeries<T>(
-            this IObservable<T> source,
-            [EnumeratorCancellation] CancellationToken cancellationToken = default)
-            => source
-                .ToAsyncEnumerable(cancellationToken: cancellationToken)
-                .ToTimeSeries(cancellationToken: cancellationToken);
+            this IObservable<T> source)
+            => source.ToAsyncEnumerable().ToTimeSeries();
 
         public static IAsyncEnumerable<Point<T>> ToTimeSeries<T>(
-            this IAsyncEnumerable<T> source,
-            [EnumeratorCancellation] CancellationToken cancellationToken = default)
-            => source
-                .Select(x => Point.New(Time.Now, x), cancellationToken);
+            this IAsyncEnumerable<T> source)
+            => source.Select(x => Point.New(Time.Now, x));
 
         public static async IAsyncEnumerable<Point<T>> CloseGaps<T>(
             this IAsyncEnumerable<Point<T>> source, TimeSpan maxTimeGap,

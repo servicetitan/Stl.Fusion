@@ -8,7 +8,7 @@ namespace Stl.Terraform
         /// Lock the state file when locking is supported.
         /// </summary>
         [CliArgument("-lock={0}")]
-        public CliBool? Lock { get; set; }
+        public bool? Lock { get; set; }
         
         /// <summary>  
         /// Duration to retry a state lock.
@@ -27,14 +27,14 @@ namespace Stl.Terraform
         /// This has no effect if a plan file is given directly to apply.
         /// </summary>
         [CliArgument("-refresh={0}")]
-        public CliBool? Refresh { get; set; }
+        public bool? Refresh { get; set; }
         
         /// <summary>  
         /// Path to the state file. Defaults to "terraform.tfstate".
         /// Ignored when remote state is used.
         /// </summary>
         [CliArgument("-state={0:Q}")]
-        public CliBool? State { get; set; }
+        public bool? State { get; set; }
         
         /// <summary>  
         /// A Resource Address to target.

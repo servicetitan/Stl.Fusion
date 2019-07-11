@@ -30,11 +30,13 @@ namespace Stl.Tests.Async
                     AsyncEnumerable
                         .Intervals(TimeSpan.Zero)
                         .Index()
+#pragma warning disable 1998
                         .SkipWhile(async p => p.Index < 2)
                         .TakeWhile(async p => p.Index < 5 )
                         .Select(async p => p.Item)
                         .Where(async i => i != 3)
                         .Select(async i => i.ToString())
+#pragma warning restore 1998
                         .ToEnumerable());
 
         }
