@@ -37,5 +37,11 @@ namespace Stl.Terraform
             DestroyArguments? arguments = null,
             CancellationToken cancellationToken = default)
             => RunRawAsync("destroy", arguments ?? new DestroyArguments(), dir, cancellationToken);
+
+        public Task<ExecutionResult> NewWorkspaceAsync(
+            CliString workspaceName,
+            WorkspaceArguments? arguments = null,
+            CancellationToken cancellationToken = default)
+            => RunRawAsync("workspace new", arguments ?? new WorkspaceArguments(), workspaceName, cancellationToken);
     }
 }
