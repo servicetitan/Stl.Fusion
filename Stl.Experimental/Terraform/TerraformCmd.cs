@@ -43,5 +43,11 @@ namespace Stl.Terraform
             WorkspaceArguments? arguments = null,
             CancellationToken cancellationToken = default)
             => RunRawAsync("workspace new", arguments ?? new WorkspaceArguments(), workspaceName, cancellationToken);
+
+        public Task<ExecutionResult> SelectWorkspaceAsync(
+            CliString workspaceName,
+            WorkspaceArguments? arguments = null,
+            CancellationToken cancellationToken = default)
+            => RunRawAsync("workspace select", arguments ?? new WorkspaceArguments(), workspaceName, cancellationToken);
     }
 }
