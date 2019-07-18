@@ -11,6 +11,7 @@ namespace Stl.CommandLine
         public CliString WorkingDirectory { get; set; } = CliString.Empty;
         public CliString ArgumentsPrefix { get; set; } = CliString.Empty;
         public ICliFormatter CliFormatter { get; set; } = new CliFormatter();
+        public bool EnableErrorValidation { get; set; } = true;
 
         protected Cmd(CliString executable) => Executable = executable;
 
@@ -45,7 +46,9 @@ namespace Stl.CommandLine
         protected virtual ICli GetCli(CancellationToken cancellationToken)
         {
             var cli = Cli.Wrap(Executable.Value)
-                .SetCancellationToken(cancellationToken);
+                .SetCancellationToken(cancellationToken)
+                .EnableExitCodeValidation(EnableErrorValidation)
+                .EnableStandardErrorValidation(EnableErrorValidation);
             if (!string.IsNullOrEmpty(WorkingDirectory.Value))
                 cli.SetWorkingDirectory(WorkingDirectory.Value);
             return cli;
