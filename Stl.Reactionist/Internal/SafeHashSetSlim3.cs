@@ -6,10 +6,11 @@ using System.Runtime.CompilerServices;
 namespace Stl.Reactionist.Internal
 {
     public struct SafeHashSetSlim3<T>
+        where T : notnull
     {
         private int _count;
         private (T, T, T) _tuple;
-        private ImmutableHashSet<T> _set;
+        private ImmutableHashSet<T>? _set;
         
         private bool HasSet {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -18,14 +19,14 @@ namespace Stl.Reactionist.Internal
 
         public int Count {
             get {
-                if (HasSet) return _set.Count;
+                if (HasSet) return _set!.Count;
                 return _count;
             }
         }
 
         public bool Contains(T item)
         {
-            if (HasSet) return _set.Contains(item);
+            if (HasSet) return _set!.Contains(item);
             if (_count >= 1 && EqualityComparer<T>.Default.Equals(_tuple.Item1, item)) return true;
             if (_count >= 2 && EqualityComparer<T>.Default.Equals(_tuple.Item2, item)) return true;
             if (_count >= 3 && EqualityComparer<T>.Default.Equals(_tuple.Item3, item)) return true;
@@ -35,7 +36,7 @@ namespace Stl.Reactionist.Internal
         public bool Add(T item)
         {
             if (HasSet) {
-                var set = _set.Add(item);
+                var set = _set!.Add(item);
                 if (set == _set) return false;
                 _set = set;
                 return true;
@@ -78,7 +79,7 @@ namespace Stl.Reactionist.Internal
         public bool Remove(T item)
         {
             if (HasSet) {
-                var set = _set.Remove(item);
+                var set = _set!.Remove(item);
                 if (set == _set) return false;
                 _set = set;
                 return true;
@@ -120,7 +121,7 @@ namespace Stl.Reactionist.Internal
         public IEnumerable<T> Items {
             get {
                 if (HasSet) {
-                    foreach (var item in _set)
+                    foreach (var item in _set!)
                         yield return item;
                     yield break;
                 }
@@ -136,7 +137,7 @@ namespace Stl.Reactionist.Internal
         public void Apply<TState>(TState state, Action<TState, T> action)
         {
             if (HasSet) {
-                foreach (var item in _set)
+                foreach (var item in _set!)
                     action(state, item);
                 return;
             }
@@ -151,7 +152,7 @@ namespace Stl.Reactionist.Internal
         public void Aggregate<TState>(ref TState state, Aggregator<TState, T> aggregator)
         {
             if (HasSet) {
-                foreach (var item in _set)
+                foreach (var item in _set!)
                     aggregator(ref state, item);
                 return;
             }

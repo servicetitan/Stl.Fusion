@@ -29,9 +29,9 @@ namespace Stl.Reactionist
             }
         }
 
-        public Exception Error {
+        public Exception? Error {
             get => Result.Error;
-            set => Result = new Result<T>(default, value);
+            set => Result = new Result<T>(default!, value);
         }
         public bool HasError => Error != null;
 
@@ -39,9 +39,9 @@ namespace Stl.Reactionist
             get => Result.Value;
             set => Result = value;
         }
-        public object UntypedValue {
+        public object? UntypedValue {
             get => Result.UntypedValue;
-            set => Result = (T) value;
+            set => Result = (T) value!;
         }
 
         public T UnsafeValue {
@@ -49,15 +49,15 @@ namespace Stl.Reactionist
             set => Result = value;
         }
 
-        public object UnsafeUntypedValue => Result.UnsafeUntypedValue;
+        public object? UnsafeUntypedValue => Result.UnsafeUntypedValue;
 
         public Var(T value = default) => InternalResult = (value, null);
         public Var(Exception error) => InternalResult = (default, error);
 
-        public override string ToString() => Value?.ToString();
+        public override string? ToString() => Value?.ToString();
 
         public void ThrowIfError() => Result.ThrowIfError();
-        public void Deconstruct(out T value, out Exception error) => Result.Deconstruct(out value, out error);
+        public void Deconstruct(out T value, out Exception? error) => Result.Deconstruct(out value, out error);
         
         // Operators
 

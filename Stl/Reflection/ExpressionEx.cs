@@ -32,7 +32,7 @@ namespace Stl.Reflection
                 PropertyInfo propertyInfo => propertyInfo.PropertyType,
                 FieldInfo fieldInfo => fieldInfo.FieldType,
                 MethodInfo methodInfo => methodInfo.ReturnType,
-                _ => throw Errors.UnexpectedMemberType(memberInfo.ToString())
+                _ => throw Errors.UnexpectedMemberType(memberInfo.ToString()!)
             };
     }
 }

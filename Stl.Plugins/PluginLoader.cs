@@ -14,8 +14,8 @@ namespace Stl.Plugins
             string path = ".",
             Assembly[]? extraAssemblies = null)
         {
-            var bachPath = Assembly.GetExecutingAssembly().Location;
-            var pluginPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(bachPath), path);
+            var myPath = Assembly.GetExecutingAssembly().Location;
+            var pluginPath = Path.Combine(Path.GetDirectoryName(myPath) ?? ".", path);
             var pluginFiles = nameMask
                 .Split(";", StringSplitOptions.RemoveEmptyEntries)
                 .SelectMany(mask => Directory.GetFiles(pluginPath, mask, SearchOption.TopDirectoryOnly))

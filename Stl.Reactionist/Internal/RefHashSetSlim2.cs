@@ -8,7 +8,7 @@ namespace Stl.Reactionist.Internal
         where T : class
     {
         private (T, T) _tuple;
-        private HashSet<T> _set;
+        private HashSet<T>? _set;
         
         private bool HasSet {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -17,7 +17,7 @@ namespace Stl.Reactionist.Internal
         
         public int Count {
             get {
-                if (HasSet) return _set.Count;
+                if (HasSet) return _set!.Count;
                 if (_tuple.Item1 == null) return 0;
                 if (_tuple.Item2 == null) return 1;
                 return 2;
@@ -29,7 +29,7 @@ namespace Stl.Reactionist.Internal
             if (item == null)
                 throw new ArgumentNullException(nameof(item));
             
-            if (HasSet) return _set.Contains(item);
+            if (HasSet) return _set!.Contains(item);
             if (_tuple.Item1 == item) return true;
             if (_tuple.Item2 == item) return true;
             return false;
@@ -40,7 +40,7 @@ namespace Stl.Reactionist.Internal
             if (item == null)
                 throw new ArgumentNullException(nameof(item));
             
-            if (HasSet) return _set.Add(item);
+            if (HasSet) return _set!.Add(item);
             
             // Item 1
             if (_tuple.Item1 == null) {
@@ -68,19 +68,19 @@ namespace Stl.Reactionist.Internal
             if (item == null)
                 throw new ArgumentNullException(nameof(item));
             
-            if (HasSet) return _set.Remove(item);
+            if (HasSet) return _set!.Remove(item);
             
             // Item 1
             if (_tuple.Item1 == null) return false;
             if (_tuple.Item1 == item) {
-                _tuple = (_tuple.Item2, default);
+                _tuple = (_tuple.Item2, default!);
                 return true;
             }
 
             // Item 2
             if (_tuple.Item2 == null) return false;
             if (_tuple.Item2 == item) {
-                _tuple = (_tuple.Item1, default);
+                _tuple = (_tuple.Item1, default!);
                 return true;
             }
 
@@ -90,13 +90,13 @@ namespace Stl.Reactionist.Internal
         public void Clear()
         {
             _set = null;
-            _tuple = default;
+            _tuple = default!;
         }
 
         public IEnumerable<T> Items {
             get {
                 if (HasSet) {
-                    foreach (var item in _set)
+                    foreach (var item in _set!)
                         yield return item;
                     yield break;
                 }
@@ -110,7 +110,7 @@ namespace Stl.Reactionist.Internal
         public void Apply<TState>(TState state, Action<TState, T> action)
         {
             if (HasSet) {
-                foreach (var item in _set)
+                foreach (var item in _set!)
                     action(state, item);
                 return;
             }
@@ -123,7 +123,7 @@ namespace Stl.Reactionist.Internal
         public void Aggregate<TState>(ref TState state, Aggregator<TState, T> aggregator)
         {
             if (HasSet) {
-                foreach (var item in _set)
+                foreach (var item in _set!)
                     aggregator(ref state, item);
                 return;
             }

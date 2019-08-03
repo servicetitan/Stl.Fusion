@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Stl.Internal;
 
@@ -13,7 +14,9 @@ namespace Stl.Async
 
     public abstract class AsyncDisposableBase : IAsyncDisposable, IDisposable
     {
-        public DisposalState DisposalState { get; private set; }
+        private volatile int _disposalState;
+
+        public DisposalState DisposalState => (DisposalState) _disposalState;
 
         public void Dispose()
         {
@@ -32,14 +35,16 @@ namespace Stl.Async
 
         protected async ValueTask DisposeAsync(bool disposing)
         {
-            if (DisposalState != DisposalState.Active)
+            if ((int) DisposalState.Active != Interlocked.CompareExchange(
+                ref _disposalState, 
+                (int) DisposalState.Disposing,
+                (int) DisposalState.Active))
                 return;
             try {
-                DisposalState = DisposalState.Disposing;
                 await DisposeInternalAsync(disposing).ConfigureAwait(false);
             }
             finally {
-                DisposalState = DisposalState.Disposed;
+                Interlocked.Exchange(ref _disposalState, (int) DisposalState.Disposed);
             }
         }
         

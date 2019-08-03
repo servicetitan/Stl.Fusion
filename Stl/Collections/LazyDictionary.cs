@@ -6,6 +6,7 @@ using System.Linq;
 namespace Stl.Collections 
 {
     public class LazyDictionary<TKey, TValue> : IDictionary<TKey, TValue>
+        where TKey : notnull
     {
         protected Dictionary<TKey, TValue>? _dictionary;
         

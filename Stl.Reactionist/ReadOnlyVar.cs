@@ -20,10 +20,10 @@ namespace Stl.Reactionist
         protected Result<T> InternalResult => Storage.InternalResult;
         Result<T> IHasInternalResult<T>.InternalResult => InternalResult;
 
-        public object UnsafeUntypedValue => Storage.UnsafeUntypedValue;
-        public Exception Error => Storage.Error;
+        public object? UnsafeUntypedValue => Storage.UnsafeUntypedValue;
+        public Exception? Error => Storage.Error;
         public bool HasError => Error != null;
-        public object UntypedValue => Storage.UntypedValue;
+        public object? UntypedValue => Storage.UntypedValue;
         public T UnsafeValue => Storage.UnsafeValue;
         public T Value => Storage.Value;
         public Result<T> Result => Storage.Result;
@@ -33,11 +33,12 @@ namespace Stl.Reactionist
             Storage = storage;
             // Zero allocations here; this is to re-emit the events happening w/ Storage as the own ones
             Storage.AddReaction(new Reaction(this,
-                (self, @event) => TriggerReactions(new Event((IReactive) self, @event.Data))));
+                (self, @event) => TriggerReactions(new Event((IReactive?) self, @event.Data))));
         }
 
         public void ThrowIfError() => Storage.ThrowIfError();
-        public void Deconstruct(out T value, out Exception error) => Storage.Deconstruct(out value, out error);
+        public void Deconstruct(out T value, out Exception? error) 
+            => Storage.Deconstruct(out value, out error);
 
         // Operators
 

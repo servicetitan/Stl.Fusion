@@ -8,9 +8,9 @@ namespace Stl.Reactionist
 {
     public static class DependencyTracking
     {
-        private static readonly AsyncLocal<DependencyTrackerBase> CurrentTrackerAsyncLocal = new AsyncLocal<DependencyTrackerBase>();
+        private static readonly AsyncLocal<DependencyTrackerBase?> CurrentTrackerAsyncLocal = new AsyncLocal<DependencyTrackerBase?>();
         
-        public static DependencyTrackerBase CurrentTracker {
+        public static DependencyTrackerBase? CurrentTracker {
             get => CurrentTrackerAsyncLocal.Value;
             internal set => CurrentTrackerAsyncLocal.Value = value;
         }
@@ -21,7 +21,7 @@ namespace Stl.Reactionist
         bool IsActive { get; }
         IEnumerable<ReactiveBase> Dependencies { get; }
 
-        Disposable<(DependencyTrackerBase, DependencyTrackerBase)> Activate();
+        Disposable<(DependencyTrackerBase, DependencyTrackerBase?)> Activate();
         
         void RegisterDependency(ReactiveBase dependency);
         void ClearDependencies();
@@ -36,16 +36,16 @@ namespace Stl.Reactionist
     {
         public virtual bool IsActive { get; protected set; }
 
-        public Disposable<(DependencyTrackerBase, DependencyTrackerBase)> Activate()
+        public Disposable<(DependencyTrackerBase, DependencyTrackerBase?)> Activate()
         {
             var oldTracker = DependencyTracking.CurrentTracker;
             IsActive = true;
             DependencyTracking.CurrentTracker = this;
-            return new Disposable<(DependencyTrackerBase, DependencyTrackerBase)>(
+            return Disposable.New(
                 state => {
                     var (current, old) = state;
                     DependencyTracking.CurrentTracker = old;
-                    current.IsActive = false;
+                    current!.IsActive = false;
                 }, (this, oldTracker));
         }
         

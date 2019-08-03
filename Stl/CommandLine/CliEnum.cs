@@ -27,7 +27,7 @@ namespace Stl.CommandLine
         }
 
         public bool Equals(CliEnum<T> other) => Value.Equals(other.Value);
-        public override bool Equals(object obj) => obj is CliEnum<T> other && Equals(other);
+        public override bool Equals(object? obj) => obj is CliEnum<T> other && Equals(other);
         public override int GetHashCode() => Value.GetHashCode();
         public static bool operator ==(CliEnum<T> left, CliEnum<T> right) => left.Equals(right);
         public static bool operator !=(CliEnum<T> left, CliEnum<T> right) => !left.Equals(right);

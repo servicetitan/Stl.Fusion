@@ -32,14 +32,14 @@ namespace Stl.Reactionist
             }
         }
 
-        public Exception Error => Result.Error;
+        public Exception? Error => Result.Error;
         public bool HasError => Error != null;
         public T Value => Result.Value;
-        public object UntypedValue => Result.UntypedValue;
+        public object? UntypedValue => Result.UntypedValue;
         public T UnsafeValue => Result.UnsafeValue;
-        public object UnsafeUntypedValue => Result.UnsafeUntypedValue;
+        public object? UnsafeUntypedValue => Result.UnsafeUntypedValue;
 
-        public ComputedVar(Func<T> compute, bool isAutoComputed = true, DependencyTrackerBase dependencyTracker = null)
+        public ComputedVar(Func<T> compute, bool isAutoComputed = true, DependencyTrackerBase? dependencyTracker = null)
         {
             Compute = compute;
             IsAutoComputed = isAutoComputed;
@@ -49,7 +49,7 @@ namespace Stl.Reactionist
                 EnsureComputed();
         }
 
-        public override string ToString() => Value?.ToString();
+        public override string? ToString() => Value?.ToString();
 
         public virtual void Invalidate()
         {
@@ -62,8 +62,10 @@ namespace Stl.Reactionist
         }
         
         public void ThrowIfError() => Result.ThrowIfError();
-        public void Deconstruct(out T value, out Exception error) => Result.Deconstruct(out value, out error);
-        
+#pragma warning disable CS8614
+        public void Deconstruct(out T value, out Exception? error) => Result.Deconstruct(out value, out error);
+#pragma warning enable CS8614
+
         // Operators
 
         public static implicit operator T(ComputedVar<T> v) => v.Value;
@@ -98,11 +100,11 @@ namespace Stl.Reactionist
 
     public static class ComputedVar
     {
-        internal static readonly Action<object, Event> InvalidateAction = 
-            (state, @event) => ((IComputedVar) state).Invalidate();
+        internal static readonly Action<object?, Event> InvalidateAction = 
+            (state, @event) => ((IComputedVar) state!).Invalidate();
 
         public static ComputedVar<T> New<T>(
-            Func<T> compute, bool isAutoComputed = true, DependencyTrackerBase dependencyTracker = null) => 
+            Func<T> compute, bool isAutoComputed = true, DependencyTrackerBase? dependencyTracker = null) => 
             new ComputedVar<T>(compute, isAutoComputed, dependencyTracker);
     }
 }

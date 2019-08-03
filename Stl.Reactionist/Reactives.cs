@@ -20,9 +20,9 @@ namespace Stl.Reactionist
         {
             if (!AddReaction(reaction))
                 return default;
-            return new Disposable<(ReactiveBase Self, Reaction Reaction)>(
+            return Disposable.New(
                 state => state.Self.RemoveReaction(state.Reaction),
-                (this, reaction));
+                (Self: this, Reaction: reaction));
         }
         
         protected void RegisterDependency()
@@ -35,7 +35,7 @@ namespace Stl.Reactionist
     public abstract class ReactiveWithReactionsBase : ReactiveBase
     {
         // ReSharper disable once MemberCanBePrivate.Global
-        protected static readonly Aggregator<(Event, Exception), Reaction> TriggerReactionsAggregator = TriggerReactions;
+        protected static readonly Aggregator<(Event, Exception?), Reaction> TriggerReactionsAggregator = TriggerReactions;
 
         private SafeHashSetSlim2<Reaction> _reactions = new SafeHashSetSlim2<Reaction>();
 
@@ -46,7 +46,7 @@ namespace Stl.Reactionist
         
         protected void TriggerReactions(Event @event)
         {
-            var state = (Event: @event, Error: (Exception) null);
+            var state = (Event: @event, Error: (Exception?) null);
             // This is done to minimize / have zero allocations
             _reactions.Aggregate(ref state, TriggerReactionsAggregator);
             if (state.Error != null)
@@ -54,7 +54,7 @@ namespace Stl.Reactionist
         }
 
         // Static method that's called during the aggregation
-        private static void TriggerReactions(ref (Event Event, Exception Error) _state, Reaction reaction)
+        private static void TriggerReactions(ref (Event Event, Exception? Error) _state, Reaction reaction)
         {
             try {
                 reaction.Invoke(_state.Event);

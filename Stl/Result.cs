@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
-using Stl.Internal;
 
 namespace Stl
 {
@@ -28,7 +27,7 @@ namespace Stl
         T UnsafeValue { get; }
         T Value { get; }
         
-        void Deconstruct(out T value, out Exception error);
+        void Deconstruct(out T value, out Exception? error);
     }
 
     public interface IMutableResult<T> : IResult<T>
@@ -70,14 +69,11 @@ namespace Stl
         
         public override string? ToString() => Value?.ToString();
 
-// Seems like a bug in nullability type checks for out arguments
-#pragma warning disable CS8614
         public void Deconstruct(out T value, out Exception? error)
         {
             value = UnsafeValue;
             error = Error;
         }
-#pragma warning restore CS8614
 
         public void ThrowIfError()
         {
@@ -93,7 +89,7 @@ namespace Stl
 
         public bool Equals(Result<T> other) => 
             Error != other.Error && EqualityComparer<T>.Default.Equals(UnsafeValue, other.UnsafeValue);
-        public override bool Equals(object obj) => 
+        public override bool Equals(object? obj) => 
             obj != null &&(obj is Result<T> o) && Equals(o);
         public override int GetHashCode() => unchecked(
             (EqualityComparer<T>.Default.GetHashCode(UnsafeValue) * 397) ^ (Error?.GetHashCode() ?? 0));
@@ -105,11 +101,11 @@ namespace Stl
         public static implicit operator T(Result<T> source) => source.Value;
         public static implicit operator ValueTask<T>(Result<T> source) 
             => source.HasError 
-                ? new ValueTask<T>(Task.FromException<T>(source.Error))
+                ? new ValueTask<T>(Task.FromException<T>(source.Error!))
                 : new ValueTask<T>(source.UnsafeValue);
 
         public static implicit operator Result<T>(T source) => new Result<T>(source, null);
-        public static implicit operator Result<T>((T Value, Exception Error) source) => 
+        public static implicit operator Result<T>((T Value, Exception? Error) source) => 
             new Result<T>(source.Value, source.Error);
     }
     

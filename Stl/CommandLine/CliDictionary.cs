@@ -8,6 +8,7 @@ namespace Stl.CommandLine
 {
     [Serializable]
     public class CliDictionary<TKey, TValue> : Dictionary<TKey, TValue>, IEnumerable<IFormattable>
+        where TKey : notnull
     {
         public static readonly string DefaultItemTemplate = "{0}={1}";
         public string ItemTemplate { get; set; } = DefaultItemTemplate;

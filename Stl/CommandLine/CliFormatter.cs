@@ -20,7 +20,7 @@ namespace Stl.CommandLine
         public CliFormatter(IFormatProvider? formatProvider = null) 
             => FormatProvider = formatProvider ?? CultureInfo.InvariantCulture;
 
-        public object GetFormat(Type formatType) => FormatProvider.GetFormat(formatType);
+        public object? GetFormat(Type? formatType) => FormatProvider.GetFormat(formatType);
         
         public CliString Format(object? value, CliArgumentAttribute? argumentAttribute = null)
         {
@@ -61,7 +61,7 @@ namespace Stl.CommandLine
 
         protected virtual CliString FormatStructure(object value)
         {
-            int BaseTypeCount(Type type) {
+            int BaseTypeCount(Type? type) {
                 var count = 0;
                 for (; type != null; type = type.BaseType) count++;
                 return count;
@@ -84,6 +84,6 @@ namespace Stl.CommandLine
             => formatterType.IsAssignableFrom(GetType())
                 ? this
                 // TODO: Slow, we might want to fix this later
-                : (ICliFormatter) Activator.CreateInstance(formatterType, FormatProvider);
+                : (ICliFormatter) Activator.CreateInstance(formatterType, FormatProvider)!;
     }
 }

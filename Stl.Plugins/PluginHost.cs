@@ -4,7 +4,6 @@ using System.Composition.Hosting;
 using System.Linq;
 using Serilog;
 using Serilog.Core;
-using Stl.Internal;
 
 namespace Stl.Plugins
 {

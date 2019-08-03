@@ -4,6 +4,7 @@ using System.Text;
 namespace Stl.Collections
 {
     public class HDictionary<TKey, TItem> : LazyDictionary<TKey, TItem>
+        where TKey : notnull
         where TItem : HDictionary<TKey, TItem>
     {
         public TKey Key { get; }

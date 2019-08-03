@@ -8,7 +8,7 @@ namespace Stl.Reactionist.Internal
         where T : class
     {
         private T _item;
-        private HashSet<T> _set;
+        private HashSet<T>? _set;
         
         private bool HasSet {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -17,7 +17,7 @@ namespace Stl.Reactionist.Internal
         
         public int Count {
             get {
-                if (HasSet) return _set.Count;
+                if (HasSet) return _set!.Count;
                 if (_item == null) return 0;
                 return 1;
             }
@@ -28,7 +28,7 @@ namespace Stl.Reactionist.Internal
             if (item == null)
                 throw new ArgumentNullException(nameof(item));
             
-            if (HasSet) return _set.Contains(item);
+            if (HasSet) return _set!.Contains(item);
             if (_item == item) return true;
             return false;
         }
@@ -38,7 +38,7 @@ namespace Stl.Reactionist.Internal
             if (item == null)
                 throw new ArgumentNullException(nameof(item));
             
-            if (HasSet) return _set.Add(item);
+            if (HasSet) return _set!.Add(item);
             
             // Item 1
             if (_item == null) {
@@ -50,7 +50,7 @@ namespace Stl.Reactionist.Internal
             _set = new HashSet<T>(ReferenceEqualityComparer<T>.Default) {
                 _item, item
             };
-            _item = default;
+            _item = default!;
             return true;
         }
 
@@ -59,12 +59,12 @@ namespace Stl.Reactionist.Internal
             if (item == null)
                 throw new ArgumentNullException(nameof(item));
             
-            if (HasSet) return _set.Remove(item);
+            if (HasSet) return _set!.Remove(item);
             
             // Item 1
             if (_item == null) return false;
             if (_item == item) {
-                _item = default;
+                _item = default!;
                 return true;
             }
 
@@ -74,13 +74,13 @@ namespace Stl.Reactionist.Internal
         public void Clear()
         {
             _set = null;
-            _item = default;
+            _item = default!;
         }
 
         public IEnumerable<T> Items {
             get {
                 if (HasSet) {
-                    foreach (var item in _set)
+                    foreach (var item in _set!)
                         yield return item;
                     yield break;
                 }
@@ -92,7 +92,7 @@ namespace Stl.Reactionist.Internal
         public void Apply<TState>(TState state, Action<TState, T> action)
         {
             if (HasSet) {
-                foreach (var item in _set)
+                foreach (var item in _set!)
                     action(state, item);
                 return;
             }
@@ -104,7 +104,7 @@ namespace Stl.Reactionist.Internal
         public void Aggregate<TState>(ref TState state, Aggregator<TState, T> aggregator)
         {
             if (HasSet) {
-                foreach (var item in _set)
+                foreach (var item in _set!)
                     aggregator(ref state, item);
                 return;
             }

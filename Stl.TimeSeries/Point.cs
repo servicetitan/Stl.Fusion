@@ -25,7 +25,7 @@ namespace Stl.TimeSeries
         public override string ToString() => $"{Time}: {Value}";
 
         public bool Equals(Point<T> other) => Time.Equals(other.Time) && EqualityComparer<T>.Default.Equals(Value, other.Value);
-        public override bool Equals(object obj) => obj is Point<T> other && Equals(other);
+        public override bool Equals(object? obj) => obj is Point<T> other && Equals(other);
         public override int GetHashCode() => unchecked(
             (Time.GetHashCode() * 397) ^ EqualityComparer<T>.Default.GetHashCode(Value));
         public static bool operator ==(Point<T> left, Point<T> right) => left.Equals(right);

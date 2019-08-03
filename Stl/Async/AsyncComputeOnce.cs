@@ -18,9 +18,11 @@ namespace Stl.Async
     public abstract class AsyncComputeOnceBase<TKey, TOut> : IAsyncComputeOnce<TKey, TOut>
     {
         protected AsyncLocal<ImmutableHashSet<TKey>> Dependents { get; set; }= 
-            new AsyncLocal<ImmutableHashSet<TKey>>(); 
-        protected ConcurrentDictionary<TKey, (Task<TOut>? Task, Result<TOut> Result)> Cache { get; set; }=
-            new ConcurrentDictionary<TKey, (Task<TOut>? Task, Result<TOut> Result)>();
+            new AsyncLocal<ImmutableHashSet<TKey>>();
+        #nullable disable
+        protected ConcurrentDictionary<TKey, (Task<TOut> Task, Result<TOut> Result)> Cache { get; set; } =
+            new ConcurrentDictionary<TKey, (Task<TOut> Task, Result<TOut> Result)>();
+        #nullable enable
 
         protected abstract ValueTask<TOut> ComputeAsync(TKey key, CancellationToken cancellationToken = default);
 
@@ -54,7 +56,7 @@ namespace Stl.Async
                 return await ComputeAsync(key, cancellationToken).ConfigureAwait(false);
             }
             finally {
-                Dependents.Value = Dependents.Value.Remove(key);
+                Dependents.Value = Dependents.Value?.Remove(key) ?? ImmutableHashSet<TKey>.Empty;
             }
         }
 

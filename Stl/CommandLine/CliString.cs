@@ -20,7 +20,7 @@ namespace Stl.CommandLine
         public CliString(string? value) => _value = value;
         
         public override string ToString() => Value;
-        public string ToString(string format, IFormatProvider? provider = null) 
+        public string ToString(string? format, IFormatProvider? provider = null) 
         {
             if (string.IsNullOrEmpty(format)) format = "V";
             provider ??= CultureInfo.InvariantCulture;
@@ -48,7 +48,7 @@ namespace Stl.CommandLine
         // Equality
 
         public bool Equals(CliString other) => string.Equals(Value, other.Value);
-        public override bool Equals(object obj) => obj is CliString other && Equals(other);
+        public override bool Equals(object? obj) => obj is CliString other && Equals(other);
         public override int GetHashCode() => Value.GetHashCode();
         public static bool operator ==(CliString left, CliString right) => left.Equals(right);
         public static bool operator !=(CliString left, CliString right) => !left.Equals(right);

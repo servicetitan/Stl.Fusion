@@ -24,7 +24,7 @@ namespace Stl.CommandLine
         }
 
         public bool Equals(CliBool other) => Value.Equals(other.Value);
-        public override bool Equals(object obj) => obj is CliBool other && Equals(other);
+        public override bool Equals(object? obj) => obj is CliBool other && Equals(other);
         public override int GetHashCode() => Value.GetHashCode();
         public static bool operator ==(CliBool left, CliBool right) => left.Equals(right);
         public static bool operator !=(CliBool left, CliBool right) => !left.Equals(right);

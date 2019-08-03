@@ -16,7 +16,7 @@ namespace Stl.Testing
             private ProxyWriter() {}
             
             public override void Write(char value) => TestOut.Value?.Write(value);
-            public override void Write(string value) => TestOut.Value?.Write(value);
+            public override void Write(string? value) => TestOut.Value?.Write(value);
         }        
 
         public class TestOutWriter : TextWriter
@@ -37,8 +37,10 @@ namespace Stl.Testing
                     Prefix.Append(value);
             }
 
-            public override void Write(string value)
+            public override void Write(string? value)
             {
+                if (value == null)
+                    throw new ArgumentNullException(nameof(value));
                 Prefix.Append(value);
                 if (!(value.Contains(newLine) || newLine.EndsWith(value)))
                     return;
@@ -52,17 +54,18 @@ namespace Stl.Testing
             }
         }        
 
-        public static AsyncLocal<TestOutWriter> TestOut { get; } = new AsyncLocal<TestOutWriter>();
+        public static AsyncLocal<TestOutWriter?> TestOut { get; } = new AsyncLocal<TestOutWriter?>();
         
-        public static Disposable<(TestOutWriter, TextWriter)> Activate(ITestOutputHelper testOut)
+        public static Disposable<(TestOutWriter?, TextWriter)> Activate(ITestOutputHelper testOut)
         {
             var oldTestOut = TestOut.Value;
             var oldConsoleOut = Console.Out;
             Console.SetOut(ProxyWriter.Instance);
             TestOut.Value = new TestOutWriter(testOut);
-            return new Disposable<(TestOutWriter, TextWriter)>(s => {
-                TestOut.Value = oldTestOut;
-                Console.SetOut(oldConsoleOut);
+            return Disposable.New(state => {
+                var (oldTestOut1, oldConsoleOut1) = state;
+                TestOut.Value = oldTestOut1;
+                Console.SetOut(oldConsoleOut1);
             }, (oldTestOut, oldConsoleOut));
         }
         

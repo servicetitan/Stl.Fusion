@@ -41,7 +41,7 @@ namespace Stl.TimeSeries
 
         public bool Equals(Time other) => UnixTime.Equals(other.UnixTime);
         public int CompareTo(Time other) => UnixTime.CompareTo(other.UnixTime);
-        public override bool Equals(object obj) => obj is Time other && Equals(other);
+        public override bool Equals(object? obj) => obj is Time other && Equals(other);
         public override int GetHashCode() => UnixTime.GetHashCode();
 
         public static bool operator ==(Time left, Time right) => left.Equals(right);

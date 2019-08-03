@@ -8,11 +8,11 @@ namespace Stl.Reactionist
         "Handler = {" + nameof(Handler) + "}")]
     public struct Reaction : IEquatable<Reaction>
     {
-        public object State { get; }
-        public Action<object, Event> Handler { get; }
+        public object? State { get; }
+        public Action<object?, Event> Handler { get; }
         
-        public Reaction(Action<object, Event> handler) : this(null, handler) { }
-        public Reaction(object state, Action<object, Event> handler)
+        public Reaction(Action<object?, Event> handler) : this(null, handler) { }
+        public Reaction(object? state, Action<object?, Event> handler)
         {
             State = state;
             Handler = handler;
@@ -25,7 +25,7 @@ namespace Stl.Reactionist
         public bool Equals(Reaction other) =>
             // Reference comparison; it's intentional here!
             State == other.State && Handler == other.Handler;
-        public override bool Equals(object obj) => 
+        public override bool Equals(object? obj) => 
             !ReferenceEquals(null, obj) && (obj is Reaction other && Equals(other));
         public override int GetHashCode() => unchecked( 
             ((State != null ? State.GetHashCode() : 0) * 397) ^ 
