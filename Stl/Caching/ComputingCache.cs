@@ -16,18 +16,12 @@ namespace Stl.Caching
         where TKey : notnull
     {
         protected ICache<TKey, TValue> Cache { get; }
-        protected ILock<TKey> Lock { get; }
+        protected IAsyncLock<TKey> Lock { get; }
 
-        protected ComputingCacheBase(ICache<TKey, TValue> cache)
+        protected ComputingCacheBase(ICache<TKey, TValue> cache, IAsyncLock<TKey>? @lock = null)
         {
             Cache = cache;
-            Lock = new InProcessLock<TKey>();
-        }
-
-        protected ComputingCacheBase(ICache<TKey, TValue> cache, ILock<TKey> @lock)
-        {
-            Cache = cache;
-            Lock = @lock ?? new InProcessLock<TKey>();
+            Lock = @lock ?? new AsyncLock<TKey>(ReentryMode.CheckedFail);
         }
 
         public async ValueTask<TValue> Get(TKey key, CancellationToken cancellationToken = default)
@@ -56,7 +50,7 @@ namespace Stl.Caching
             : base(cache) 
             => Computer = computer;
 
-        public ComputingCache(ICache<TKey, TValue> cache, ILock<TKey> @lock, Func<TKey, CancellationToken, ValueTask<TValue>> computer) 
+        public ComputingCache(ICache<TKey, TValue> cache, IAsyncLock<TKey> @lock, Func<TKey, CancellationToken, ValueTask<TValue>> computer) 
             : base(cache, @lock) 
             => Computer = computer;
 
