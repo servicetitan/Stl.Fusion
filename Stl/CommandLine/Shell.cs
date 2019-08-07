@@ -17,15 +17,15 @@ namespace Stl.CommandLine
             ArgumentsPrefix = DefaultArgumentPrefix;
         }
 
-        public virtual Task<ExecutionResult> RunAsync(
-            CliString command, 
-            CancellationToken cancellationToken = default) 
-            => base.RunRawAsync(command.Quote(), null, cancellationToken);
-
-        public virtual async Task<string> GetOutputAsync(
+        public async Task<string> GetOutputAsync(
             CliString command, 
             CancellationToken cancellationToken = default) 
             => (await RunAsync(command, cancellationToken).ConfigureAwait(false))
                 .StandardOutput;
+
+        public virtual Task<ExecutionResult> RunAsync(
+            CliString command, 
+            CancellationToken cancellationToken = default) 
+            => base.RunRawAsync(command.Quote(), null, cancellationToken);
     }
 }

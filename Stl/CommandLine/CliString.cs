@@ -66,8 +66,9 @@ namespace Stl.CommandLine
         public static CliString New(string value) 
             => new CliString(value ?? "");
 
+        // TODO: Add support for strong quotes (quoting shell substitutions)
         public static CliString UnixQuote(string value) => 
-            "'" + value.Replace("'", "'\"'\"'") + "'";
+            "\"" + value.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
         public static CliString WindowsQuote(string value) => 
             "\"" + value.Replace("^", "^^").Replace("\"", "^\"") + "\"";
         public static CliString Quote(string value) =>

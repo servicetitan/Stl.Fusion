@@ -15,33 +15,32 @@ namespace Stl.CommandLine
 
         protected Cmd(CliString executable) => Executable = executable;
 
-        protected virtual Task<ExecutionResult> RunRawAsync(
-            object arguments, CliString tail,
+        protected Task<ExecutionResult> RunRawAsync(
+            object? arguments, CliString tail = default,
             CancellationToken cancellationToken = default) 
             => RunRawAsync(CliFormatter.Format(arguments) + tail, cancellationToken);
 
-        protected virtual Task<ExecutionResult> RunRawAsync(
-            CliString command, object? arguments, CliString? tail, 
+        protected Task<ExecutionResult> RunRawAsync(
+            CliString command, object? arguments, CliString tail = default, 
             CancellationToken cancellationToken = default) 
             => RunRawAsync(command + CliFormatter.Format(arguments) + tail, cancellationToken);
 
-        protected virtual Task<ExecutionResult> RunRawAsync(CliString arguments,
+        protected Task<ExecutionResult> RunRawAsync(
+            CliString arguments,
             CancellationToken cancellationToken = default)
-        {
-            var cli = GetCli(cancellationToken);
-            return cli
-                .SetArguments((ArgumentsPrefix + arguments).Value)
-                .ExecuteAsync();
-        }
+            => RunRawAsync(arguments, null, cancellationToken);
 
         protected virtual Task<ExecutionResult> RunRawAsync(
             CliString arguments,
             string? standardInput,
-            CancellationToken cancellationToken = default) 
-            => GetCli(cancellationToken)
-                .SetArguments((ArgumentsPrefix + arguments).Value)
-                .SetStandardInput(standardInput)
-                .ExecuteAsync();
+            CancellationToken cancellationToken = default)
+        {
+            var cli = GetCli(cancellationToken)
+                .SetArguments((ArgumentsPrefix + arguments).Value);
+            if (standardInput != null)
+                cli = cli.SetStandardInput(standardInput);
+            return cli.ExecuteAsync();
+        }
 
         protected virtual ICli GetCli(CancellationToken cancellationToken)
         {
@@ -50,7 +49,7 @@ namespace Stl.CommandLine
                 .EnableExitCodeValidation(EnableErrorValidation)
                 .EnableStandardErrorValidation(EnableErrorValidation);
             if (!string.IsNullOrEmpty(WorkingDirectory.Value))
-                cli.SetWorkingDirectory(WorkingDirectory.Value);
+                cli = cli.SetWorkingDirectory(WorkingDirectory.Value);
             return cli;
         }
 
