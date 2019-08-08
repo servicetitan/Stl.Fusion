@@ -12,7 +12,7 @@ namespace Stl.Tests.CommandLine
         [Fact]
         public async void EchoTest()
         {
-            var shell = new Shell();
+            var shell = new Shell() { };
             Assert.Equal("hi", (await shell.GetOutputAsync("echo hi")).Trim());
             
             var expected = "^\"'";

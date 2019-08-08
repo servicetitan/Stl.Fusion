@@ -9,13 +9,13 @@ namespace Stl.CommandLine
     public class Shell : Cmd
     {
         public static readonly CliString DefaultExecutable = CliString.New("bash").VaryByOS("cmd.exe");
-        public static readonly CliString DefaultArgumentPrefix = CliString.New("-c").VaryByOS("/C");
+        public static readonly CliString DefaultPrefix = CliString.New("-c").VaryByOS("/C");
 
-        public Shell(CliString? executable = null) 
+        public CliString Prefix { get; set; } = DefaultPrefix;
+
+        public Shell(CliString? executable = null)
             : base(executable ?? DefaultExecutable)
-        {
-            ArgumentsPrefix = DefaultArgumentPrefix;
-        }
+        { }
 
         public async Task<string> GetOutputAsync(
             CliString command, 
@@ -23,9 +23,25 @@ namespace Stl.CommandLine
             => (await RunAsync(command, cancellationToken).ConfigureAwait(false))
                 .StandardOutput;
 
-        public virtual Task<ExecutionResult> RunAsync(
+        public async Task<string> GetOutputAsync(
             CliString command, 
+            string? standardInput,
             CancellationToken cancellationToken = default) 
-            => base.RunRawAsync(command.Quote(), null, cancellationToken);
+            => (await RunAsync(command, standardInput, cancellationToken).ConfigureAwait(false))
+                .StandardOutput;
+
+        public virtual Task<ExecutionResult> RunAsync(
+            CliString command,
+            CancellationToken cancellationToken = default) 
+            => RunAsync(command, null, cancellationToken);
+
+        public virtual Task<ExecutionResult> RunAsync(
+            CliString command,
+            string? standardInput,
+            CancellationToken cancellationToken = default) 
+            => base.RunRawAsync(command, standardInput, cancellationToken);
+
+        protected override CliString TransformArguments(CliString arguments)
+            => Prefix + arguments.Quote();
     }
 }

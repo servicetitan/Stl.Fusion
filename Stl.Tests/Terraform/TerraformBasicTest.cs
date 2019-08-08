@@ -11,10 +11,7 @@ namespace Stl.Tests.Terraform
 {
     public class TerraformBasicTest : TestBase
     {
-        protected TerraformCmd TerraformEcho { get; } = 
-            new TerraformCmd(Shell.DefaultExecutable) {
-                ArgumentsPrefix = Shell.DefaultArgumentPrefix + "echo",
-            };
+        protected TerraformCmd TerraformEcho { get; } = new TerraformCmd { EchoMode = true };
 
         public TerraformBasicTest(ITestOutputHelper @out) : base(@out) { }
 
@@ -29,7 +26,8 @@ namespace Stl.Tests.Terraform
                     LockTimeout = 16,
                 });
             executionResult.StandardOutput.Trim().Should()
-                .Be("apply " +
+                .Be(TerraformCmd.DefaultExecutable.Value +
+                    " apply " +
                     "-var \"key1=value1\" -lock-timeout=16s " +
                     "-backup=\"Backup\" -auto-approve " +
                     "dir");
@@ -39,10 +37,10 @@ namespace Stl.Tests.Terraform
         public async Task FormatterMockTest()
         {
             var formatter = new Mock<ICliFormatter>();
-            var terraformEcho = new TerraformCmd(Shell.DefaultExecutable) {
-                ArgumentsPrefix = Shell.DefaultArgumentPrefix + "echo",
-                CliFormatter = formatter.Object,
-            }; 
+            var terraformEcho = new TerraformCmd {
+                EchoMode = true,
+                CliFormatter = formatter.Object
+            };
 
             var applyArguments = new ApplyArguments();
             var formattedArguments = CliString.New("arguments");
@@ -53,7 +51,7 @@ namespace Stl.Tests.Terraform
 
             var result = (await terraformEcho.ApplyAsync(dir, arguments: applyArguments)).StandardOutput.Trim();
 
-            result.Should().Be("apply arguments dir");
+            result.Should().Be(TerraformCmd.DefaultExecutable.Value + " apply arguments dir");
             formatter.Verify(x => x.Format(applyArguments, It.IsAny<CliArgumentAttribute>()));
         }
     }

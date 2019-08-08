@@ -9,16 +9,16 @@ namespace Stl.CommandLine
     {
         public CliString Executable { get; }
         public CliString WorkingDirectory { get; set; } = CliString.Empty;
-        public CliString ArgumentsPrefix { get; set; } = CliString.Empty;
         public ICliFormatter CliFormatter { get; set; } = new CliFormatter();
         public bool EnableErrorValidation { get; set; } = true;
+        public bool EchoMode { get; set; }
 
         protected Cmd(CliString executable) => Executable = executable;
 
         protected Task<ExecutionResult> RunRawAsync(
             object? arguments, CliString tail = default,
             CancellationToken cancellationToken = default) 
-            => RunRawAsync(CliFormatter.Format(arguments) + tail, cancellationToken);
+            => RunRawAsync("", arguments, tail, cancellationToken);
 
         protected Task<ExecutionResult> RunRawAsync(
             CliString command, object? arguments, CliString tail = default, 
@@ -35,8 +35,12 @@ namespace Stl.CommandLine
             string? standardInput,
             CancellationToken cancellationToken = default)
         {
+            arguments = TransformArguments(arguments);
+            if (EchoMode)
+                arguments = Shell.DefaultPrefix + ("echo" + (Executable + arguments).Quote()).Quote();
+            
             var cli = GetCli(cancellationToken)
-                .SetArguments((ArgumentsPrefix + arguments).Value);
+                .SetArguments(arguments.Value);
             if (standardInput != null)
                 cli = cli.SetStandardInput(standardInput);
             return cli.ExecuteAsync();
@@ -44,7 +48,7 @@ namespace Stl.CommandLine
 
         protected virtual ICli GetCli(CancellationToken cancellationToken)
         {
-            var cli = Cli.Wrap(Executable.Value)
+            var cli = Cli.Wrap((EchoMode ? Shell.DefaultExecutable : Executable).Value)
                 .SetCancellationToken(cancellationToken)
                 .EnableExitCodeValidation(EnableErrorValidation)
                 .EnableStandardErrorValidation(EnableErrorValidation);
@@ -52,6 +56,9 @@ namespace Stl.CommandLine
                 cli = cli.SetWorkingDirectory(WorkingDirectory.Value);
             return cli;
         }
+
+        protected virtual CliString TransformArguments(CliString arguments)
+            => arguments;
 
         public override string ToString() => Executable.Value;
     }
