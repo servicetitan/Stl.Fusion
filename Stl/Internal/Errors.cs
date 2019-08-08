@@ -7,8 +7,6 @@ namespace Stl.Internal
     {
         public static Exception AlreadyLocked() =>
             new InvalidOperationException($"The lock is already acquired by one of callers of the current method.");
-        public static Exception AlreadyLocked(string? key) =>
-            new InvalidOperationException($"The lock for key {key} is already acquired by one of callers of the current method.");
 
         public static Exception MissingCliArgument(string template) =>
             new ArgumentException($"Required argument with template '{template ?? "(unknown)"}' is missing.");

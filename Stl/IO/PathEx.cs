@@ -1,9 +1,9 @@
 using System;
 using System.Text.RegularExpressions;
 
-namespace Stl.Caching
+namespace Stl.IO
 {
-    public static class FileNameHelper
+    public static class PathEx
     {
         private static readonly Regex NonAlphaOrNumberRegex = 
             new Regex("[^a-z0-9_]+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -16,7 +16,10 @@ namespace Stl.Caching
                 return "(null)";
             prefix ??= key;
             var hash = Convert.ToBase64String(BitConverter.GetBytes(key.GetHashCode()));
-            var name = prefix.Substring(0, maxLength - hash.Length - 1) + "_" + hash;
+            var maxPrefixLength = maxLength - hash.Length - 1;
+            if (prefix.Length > maxLength)
+                prefix = prefix.Substring(0, maxPrefixLength);
+            var name = $"{prefix}_{hash}";
             name = NonAlphaOrNumberRegex.Replace(name, "_");
             return name;
         }

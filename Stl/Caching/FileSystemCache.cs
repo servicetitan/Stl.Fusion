@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Optional;
+using Stl.IO;
 
 namespace Stl.Caching
 {
@@ -48,7 +49,7 @@ namespace Stl.Caching
 
             var dir = Path.GetDirectoryName(fileName);
             Directory.CreateDirectory(dir);
-            return File.OpenWrite(fileName);
+            return File.Open(fileName, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
         }
 
         protected virtual async Task<string?> GetTextAsync(FileStream? fileStream, CancellationToken cancellationToken)
@@ -57,7 +58,7 @@ namespace Stl.Caching
                 return null;
             try {
                 fileStream.Seek(0, SeekOrigin.Begin);
-                using var reader = new StreamReader(fileStream, Encoding.UTF8);
+                using var reader = new StreamReader(fileStream, Encoding.UTF8, leaveOpen: true);
                 var text = await reader.ReadToEndAsync().ConfigureAwait(false);
                 return string.IsNullOrEmpty(text) ? null : text;
             }
@@ -71,7 +72,7 @@ namespace Stl.Caching
             if (fileStream == null)
                 return;
             fileStream.Seek(0, SeekOrigin.Begin);
-            await using var writer = new StreamWriter(fileStream, Encoding.UTF8);
+            await using var writer = new StreamWriter(fileStream, Encoding.UTF8, leaveOpen: true);
             await writer.WriteAsync(text ?? "").ConfigureAwait(false);
             fileStream.SetLength(fileStream.Position);
         }
@@ -92,7 +93,7 @@ namespace Stl.Caching
     {
         protected static readonly string DefaultExtension = ".tmp";
         protected static readonly Func<TKey, string> DefaultKeyToFileNameConverter = 
-            key => FileNameHelper.GetHashedName(key?.ToString());
+            key => PathEx.GetHashedName(key?.ToString());
 
         public string CacheDirectory { get; }
         public string FileExtension { get; }

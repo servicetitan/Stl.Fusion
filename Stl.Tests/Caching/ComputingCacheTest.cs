@@ -9,7 +9,7 @@ using Stl.Testing;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Stl.Tests.Async
+namespace Stl.Tests.Caching
 {
     public class ComputingCacheTest : TestBase
     {

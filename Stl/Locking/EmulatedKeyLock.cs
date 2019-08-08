@@ -17,8 +17,6 @@ namespace Stl.Locking
 
         public bool? IsLockedLocally(TKey key) => _lock.IsLockedLocally();
 
-        public void Prepare() => _lock.Prepare();
-
         public ValueTask<IAsyncDisposable> LockAsync(
             TKey key, CancellationToken cancellationToken = default)
             => _lock.LockAsync(cancellationToken);
