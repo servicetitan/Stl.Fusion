@@ -21,18 +21,19 @@ namespace Stl.Caching
 
         public override async ValueTask<TValue> GetAsync(TKey key, CancellationToken cancellationToken = default)
         {
-            var value = await Cache.TryGetAsync(key, cancellationToken);
+            var value = await Cache.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
             if (value.HasValue)
                 return value.ValueOrDefault();
-            await using var @lock = await Lock.LockAsync(key, cancellationToken);
-            var result = await ComputeAsync(key, cancellationToken);
-            await Cache.SetAsync(key, result, cancellationToken);
+            Lock.Prepare();
+            await using var @lock = await Lock.LockAsync(key, cancellationToken).ConfigureAwait(false);
+            var result = await ComputeAsync(key, cancellationToken).ConfigureAwait(false);
+            await Cache.SetAsync(key, result, cancellationToken).ConfigureAwait(false);
             return result;
         }
 
         public override async ValueTask<Option<TValue>> TryGetAsync(TKey key, CancellationToken cancellationToken = default)
         {
-            var value = await GetAsync(key, default);
+            var value = await GetAsync(key, cancellationToken).ConfigureAwait(false);
             return Option.Some(value);
         }
         

@@ -18,7 +18,7 @@ namespace Stl.Async
         public static async Task ToTask(this CancellationToken token, CancellationToken cancellationToken)
         {
             using (var lts = CancellationTokenSource.CreateLinkedTokenSource(token, cancellationToken)) {
-                await lts.Token.ToTask(false);
+                await lts.Token.ToTask(false).ConfigureAwait(false);
                 cancellationToken.ThrowIfCancellationRequested();
             }
         }

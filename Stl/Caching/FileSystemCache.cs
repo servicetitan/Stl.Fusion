@@ -14,8 +14,8 @@ namespace Stl.Caching
     {
         public override async ValueTask<Option<TValue>> TryGetAsync(TKey key, CancellationToken cancellationToken = default)
         {
-            await using var fileStream = OpenFileAsync(GetFileName(key), false, cancellationToken);
-            var pairs = Deserialize(await GetTextAsync(fileStream, cancellationToken));
+            await using var fileStream = OpenFile(GetFileName(key), false, cancellationToken);
+            var pairs = Deserialize(await GetTextAsync(fileStream, cancellationToken).ConfigureAwait(false));
             return pairs?.GetOption(key) ?? default; 
         }
 
@@ -25,14 +25,14 @@ namespace Stl.Caching
             // i.e. the file is locked for modifications between read & write operations.
             var fileName = GetFileName(key);
             var newText = (string?) null;
-            await using (var fileStream = OpenFileAsync(fileName, true, cancellationToken)) {
-                var originalText = await GetTextAsync(fileStream, cancellationToken);
+            await using (var fileStream = OpenFile(fileName, true, cancellationToken)) {
+                var originalText = await GetTextAsync(fileStream, cancellationToken).ConfigureAwait(false);
                 var pairs = 
                     Deserialize(originalText) 
                     ?? new Dictionary<TKey, TValue>();
                 pairs.SetOption(key, value);
                 newText = Serialize(pairs);
-                await SetTextAsync(fileStream, newText, cancellationToken);
+                await SetTextAsync(fileStream, newText, cancellationToken).ConfigureAwait(false);
             }
             if (newText == null)
                 File.Delete(fileName);
@@ -40,7 +40,7 @@ namespace Stl.Caching
 
         protected abstract string GetFileName(TKey key);
 
-        protected virtual FileStream? OpenFileAsync(string fileName, bool forWrite,
+        protected virtual FileStream? OpenFile(string fileName, bool forWrite,
             CancellationToken cancellationToken)
         {
             if (!forWrite)
@@ -58,7 +58,7 @@ namespace Stl.Caching
             try {
                 fileStream.Seek(0, SeekOrigin.Begin);
                 using var reader = new StreamReader(fileStream, Encoding.UTF8);
-                var text = await reader.ReadToEndAsync();
+                var text = await reader.ReadToEndAsync().ConfigureAwait(false);
                 return string.IsNullOrEmpty(text) ? null : text;
             }
             catch (IOException) {
@@ -72,7 +72,7 @@ namespace Stl.Caching
                 return;
             fileStream.Seek(0, SeekOrigin.Begin);
             await using var writer = new StreamWriter(fileStream, Encoding.UTF8);
-            await writer.WriteAsync(text ?? "");
+            await writer.WriteAsync(text ?? "").ConfigureAwait(false);
             fileStream.SetLength(fileStream.Position);
         }
 

@@ -15,7 +15,7 @@ namespace Stl.Caching
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
             where TKey : notnull
         {
-            await foreach (var key in keys)
+            await foreach (var key in keys.ConfigureAwait(false))
                 yield return await cache.GetAsync(key, cancellationToken).ConfigureAwait(false);
         }
 
@@ -25,7 +25,7 @@ namespace Stl.Caching
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
             where TKey : notnull
         {
-            await foreach (var key in keys)
+            await foreach (var key in keys.ConfigureAwait(false))
                 yield return await cache.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
         }
     }

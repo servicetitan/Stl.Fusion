@@ -29,7 +29,7 @@ namespace Stl.Tests.Async
             await OrderByDependencyTestAsync(computer => new FastComputingCache<char, char>(computer));
         }
 
-        public async Task OrderByDependencyTestAsync(
+        private async Task OrderByDependencyTestAsync(
             Func<
                 Func<char, CancellationToken, ValueTask<char>>, 
                 IReadOnlyCache<char, char>> cacheFactory)
@@ -49,10 +49,12 @@ namespace Stl.Tests.Async
             {
                 var result = new List<char>();
 
-                IReadOnlyCache<char, char> cache = null;
+                IReadOnlyCache<char, char>? cache = null;
                 
                 async ValueTask<char> Compute(char c, CancellationToken ct)
                 {
+                    if (cache == null)
+                        throw new NullReferenceException();
                     foreach (var d in depSelector(c))
                         // ReSharper disable once AccessToModifiedClosure
                         await cache.GetAsync(d).ConfigureAwait(false);

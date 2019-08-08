@@ -32,7 +32,7 @@ namespace Stl.Async
 
         public override async ValueTask<Option<TValue>> TryGetAsync(TKey key, CancellationToken cancellationToken = default)
         {
-            var value = await GetAsync(key, default);
+            var value = await GetAsync(key, cancellationToken).ConfigureAwait(false);
             return Option.Some(value);
         }
 

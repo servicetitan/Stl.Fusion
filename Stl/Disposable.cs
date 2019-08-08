@@ -48,6 +48,6 @@ namespace Stl
         }
 
         public ValueTask DisposeAsync() 
-            => _onDisposeAsync?.Invoke(_state) ?? Task.CompletedTask.ToValueTask();
+            => _onDisposeAsync?.Invoke(_state) ?? ValueTaskEx.Completed;
     }
 }

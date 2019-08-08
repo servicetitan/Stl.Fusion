@@ -11,7 +11,7 @@ namespace Stl.Caching
     {
         public virtual async ValueTask<TValue> GetAsync(TKey key, CancellationToken cancellationToken = default)
         {
-            var value = await TryGetAsync(key, cancellationToken);
+            var value = await TryGetAsync(key, cancellationToken).ConfigureAwait(false);
             if (!value.HasValue)
                 throw new KeyNotFoundException();
             return value.ValueOrDefault();

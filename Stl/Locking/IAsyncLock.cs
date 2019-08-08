@@ -16,6 +16,7 @@ namespace Stl.Locking
         ReentryMode ReentryMode { get; }
         ValueTask<bool> IsLockedAsync();
         bool? IsLockedLocally();
+        void Prepare();
         ValueTask<IAsyncDisposable> LockAsync(CancellationToken cancellationToken = default);
     }
 
@@ -25,6 +26,7 @@ namespace Stl.Locking
         ReentryMode ReentryMode { get; }
         ValueTask<bool> IsLockedAsync(TKey key);
         bool? IsLockedLocally(TKey key);
+        void Prepare();
         ValueTask<IAsyncDisposable> LockAsync(TKey key, CancellationToken cancellationToken = default);
     }
 }
