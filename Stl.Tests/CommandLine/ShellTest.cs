@@ -13,11 +13,12 @@ namespace Stl.Tests.CommandLine
         [Fact]
         public async Task EchoTest()
         {
-            var shell = new Shell() { };
-            Assert.Equal("hi", (await shell.GetOutputAsync("echo hi")).Trim());
+            var shell = new Shell();
             
+            Assert.Equal("hi", (await shell.GetOutputAsync("echo hi")).Trim());
+
             var expected = "^\"'";
-            var command = CliString.New("echo ") + CliString.Quote(expected);
+            var command = "echo" + CmdBuilders.GetEchoArguments(expected);
             Assert.Equal(expected, (await shell.GetOutputAsync(command)).Trim());
         }
     }

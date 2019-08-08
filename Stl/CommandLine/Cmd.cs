@@ -2,6 +2,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using CliWrap;
 using CliWrap.Models;
+using Stl.OS;
 
 namespace Stl.CommandLine
 {
@@ -36,8 +37,10 @@ namespace Stl.CommandLine
             CancellationToken cancellationToken = default)
         {
             arguments = TransformArguments(arguments);
-            if (EchoMode)
-                arguments = Shell.DefaultPrefix + ("echo" + (Executable + arguments).Quote()).Quote();
+            if (EchoMode) {
+                var echoCommand = "echo" + CmdBuilders.GetEchoArguments(Executable + arguments);
+                arguments = CmdBuilders.GetShellArguments(echoCommand);
+            }
             
             var cli = GetCli(cancellationToken)
                 .SetArguments(arguments.Value);

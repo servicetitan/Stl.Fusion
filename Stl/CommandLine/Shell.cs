@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using CliWrap.Models;
+using Stl.OS;
 
 namespace Stl.CommandLine
 {
@@ -42,6 +43,6 @@ namespace Stl.CommandLine
             => base.RunRawAsync(command, standardInput, cancellationToken);
 
         protected override CliString TransformArguments(CliString arguments)
-            => Prefix + arguments.Quote();
+            => CmdBuilders.GetShellArguments(arguments, Prefix);
     }
 }
