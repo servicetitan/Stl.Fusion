@@ -1,27 +1,20 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using Optional;
 
 namespace Stl.Caching
 {
-    public interface ICache<in TKey, TValue>
+    public interface IReadOnlyCache<in TKey, TValue>
         where TKey : notnull
     {
-        ValueTask<Option<TValue>> GetAsync([NotNull] TKey key, CancellationToken cancellationToken = default);
-        ValueTask SetAsync([NotNull] TKey key, Option<TValue> value, CancellationToken cancellationToken = default);
+        ValueTask<TValue> GetAsync(TKey key, CancellationToken cancellationToken = default);
+        ValueTask<Option<TValue>> TryGetAsync(TKey key, CancellationToken cancellationToken = default);
     }
 
-    public static class CacheEx 
+    public interface ICache<in TKey, TValue> : IReadOnlyCache<TKey, TValue>
+        where TKey : notnull
     {
-        public static ValueTask InvalidateAsync<TKey, TValue>(this ICache<TKey, TValue> cache, 
-            TKey key, CancellationToken cancellationToken = default)
-            where TKey : notnull
-            => cache.SetAsync(key, Option.None<TValue>(), cancellationToken);
-
-        public static ValueTask SetAsync<TKey, TValue>(this ICache<TKey, TValue> cache, 
-            TKey key, TValue value, CancellationToken cancellationToken = default)
-            where TKey : notnull
-            => cache.SetAsync(key, Option.Some(value), cancellationToken);
+        ValueTask SetAsync(TKey key, TValue value, CancellationToken cancellationToken = default);
+        ValueTask InvalidateAsync(TKey key, CancellationToken cancellationToken = default);
     }
 }

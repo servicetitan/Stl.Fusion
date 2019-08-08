@@ -1,22 +1,17 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Optional;
 using Optional.Unsafe;
 using Stl.Locking;
 
 namespace Stl.Caching 
 {
-    public interface IComputingCache<in TKey, TValue>
-    {
-        ValueTask<TValue> Get(TKey key, CancellationToken cancellationToken = default);
-        ValueTask InvalidateAsync(TKey key, CancellationToken cancellationToken = default);
-    }
-
-    public abstract class ComputingCacheBase<TKey, TValue> : IComputingCache<TKey, TValue>
+    public abstract class ComputingCacheBase<TKey, TValue> : ReadOnlyCacheBase<TKey, TValue>
         where TKey : notnull
     {
-        protected ICache<TKey, TValue> Cache { get; }
-        protected IAsyncLock<TKey> Lock { get; }
+        public ICache<TKey, TValue> Cache { get; }
+        public IAsyncLock<TKey> Lock { get; }
 
         protected ComputingCacheBase(ICache<TKey, TValue> cache, IAsyncLock<TKey>? @lock = null)
         {
@@ -24,9 +19,9 @@ namespace Stl.Caching
             Lock = @lock ?? new AsyncLock<TKey>(ReentryMode.CheckedFail);
         }
 
-        public async ValueTask<TValue> Get(TKey key, CancellationToken cancellationToken = default)
+        public override async ValueTask<TValue> GetAsync(TKey key, CancellationToken cancellationToken = default)
         {
-            var value = await Cache.GetAsync(key, cancellationToken);
+            var value = await Cache.TryGetAsync(key, cancellationToken);
             if (value.HasValue)
                 return value.ValueOrDefault();
             await using var @lock = await Lock.LockAsync(key, cancellationToken);
@@ -35,9 +30,12 @@ namespace Stl.Caching
             return result;
         }
 
-        public ValueTask InvalidateAsync(TKey key, CancellationToken cancellationToken = default) 
-            => Cache.InvalidateAsync(key, cancellationToken);
-
+        public override async ValueTask<Option<TValue>> TryGetAsync(TKey key, CancellationToken cancellationToken = default)
+        {
+            var value = await GetAsync(key, default);
+            return Option.Some(value);
+        }
+        
         protected abstract ValueTask<TValue> ComputeAsync(TKey key, CancellationToken cancellationToken = default);
     }
 

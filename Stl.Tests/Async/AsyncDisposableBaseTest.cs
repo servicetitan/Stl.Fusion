@@ -25,7 +25,7 @@ namespace Stl.Tests.Async
         public AsyncDisposableTest(ITestOutputHelper @out) : base(@out) { }
 
         [Fact]
-        public async void DisposeAsyncTest()
+        public async Task DisposeAsyncTest()
         {
             AsyncDisposableWithDelay? copy = null;
             var task = Task.Run(async () => {

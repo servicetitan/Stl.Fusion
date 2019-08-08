@@ -4,18 +4,35 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
+using Stl.Caching;
 using Stl.Testing;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace Stl.Tests.Async
 {
-    public class AsyncComputeOnceTest : TestBase
+    public class ComputingCacheTest : TestBase
     {
-        public AsyncComputeOnceTest(ITestOutputHelper @out) : base(@out) { }
+        public ComputingCacheTest(ITestOutputHelper @out) : base(@out) { }
 
         [Fact]
-        public async Task OrderByDependencyTestAsync()
+        public async Task ComputingCache_OrderByDependencyTest()
+        {
+            await OrderByDependencyTestAsync(computer => new ComputingCache<char, char>(
+                new MemoizingCache<char, char>(), 
+                computer));
+        }
+
+        [Fact]
+        public async Task FastComputingCache_OrderByDependencyTest()
+        {
+            await OrderByDependencyTestAsync(computer => new FastComputingCache<char, char>(computer));
+        }
+
+        public async Task OrderByDependencyTestAsync(
+            Func<
+                Func<char, CancellationToken, ValueTask<char>>, 
+                IReadOnlyCache<char, char>> cacheFactory)
         {
             IEnumerable<char> DepSelector1(char c) => 
                 Enumerable
@@ -32,18 +49,19 @@ namespace Stl.Tests.Async
             {
                 var result = new List<char>();
 
-                async ValueTask<char> Compute(
-                    AsyncComputeOnce<char, char> c1, 
-                    char c, CancellationToken ct)
+                IReadOnlyCache<char, char> cache = null;
+                
+                async ValueTask<char> Compute(char c, CancellationToken ct)
                 {
                     foreach (var d in depSelector(c))
-                        await c1.GetOrComputeAsync(d).ConfigureAwait(false);
+                        // ReSharper disable once AccessToModifiedClosure
+                        await cache.GetAsync(d).ConfigureAwait(false);
                     result.Add(c);
                     return c;
                 }
 
-                var c1 = new AsyncComputeOnce<char, char>(Compute);
-                await c1.GetOrComputeAsync(s.ToAsyncEnumerable()).Count();
+                cache = cacheFactory(Compute);
+                await cache.GetManyAsync(s.ToAsyncEnumerable()).Count();
                 return string.Join("", result);
             }
 

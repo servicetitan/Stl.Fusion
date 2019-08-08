@@ -9,47 +9,71 @@ using Optional;
 
 namespace Stl.Caching
 {
-    public abstract class FileSystemCacheBase<TKey, TValue> : ICache<TKey, TValue>
+    public abstract class FileSystemCacheBase<TKey, TValue> : CacheBase<TKey, TValue>
         where TKey : notnull
     {
-        public async ValueTask<Option<TValue>> GetAsync(TKey key, CancellationToken cancellationToken = default)
+        public override async ValueTask<Option<TValue>> TryGetAsync(TKey key, CancellationToken cancellationToken = default)
         {
-            var pairs = Deserialize(await GetTextAsync(GetFileName(key), cancellationToken));
+            await using var fileStream = OpenFileAsync(GetFileName(key), false, cancellationToken);
+            var pairs = Deserialize(await GetTextAsync(fileStream, cancellationToken));
             return pairs?.GetOption(key) ?? default; 
         }
 
-        public async ValueTask SetAsync(TKey key, Option<TValue> value, CancellationToken cancellationToken = default)
+        protected override async ValueTask SetAsync(TKey key, Option<TValue> value, CancellationToken cancellationToken = default)
         {
+            // The logic here is more complex than it seems to make sure the update is atomic,
+            // i.e. the file is locked for modifications between read & write operations.
             var fileName = GetFileName(key);
-            var pairs = 
-                Deserialize(await GetTextAsync(GetFileName(key), cancellationToken)) 
-                ?? new Dictionary<TKey, TValue>();
-            pairs.SetOption(key, value);
-            await SetTextAsync(GetFileName(key), Serialize(pairs), cancellationToken);
+            var newText = (string?) null;
+            await using (var fileStream = OpenFileAsync(fileName, true, cancellationToken)) {
+                var originalText = await GetTextAsync(fileStream, cancellationToken);
+                var pairs = 
+                    Deserialize(originalText) 
+                    ?? new Dictionary<TKey, TValue>();
+                pairs.SetOption(key, value);
+                newText = Serialize(pairs);
+                await SetTextAsync(fileStream, newText, cancellationToken);
+            }
+            if (newText == null)
+                File.Delete(fileName);
         }
 
         protected abstract string GetFileName(TKey key);
 
-        protected virtual async Task<string?> GetTextAsync(string fileName, CancellationToken cancellationToken)
+        protected virtual FileStream? OpenFileAsync(string fileName, bool forWrite,
+            CancellationToken cancellationToken)
         {
-            if (!File.Exists(fileName))
-                return null; // We don't want to throw & catch lots of exceptions
+            if (!forWrite)
+                return File.Exists(fileName) ? File.OpenRead(fileName) : null;
+
+            var dir = Path.GetDirectoryName(fileName);
+            Directory.CreateDirectory(dir);
+            return File.OpenWrite(fileName);
+        }
+
+        protected virtual async Task<string?> GetTextAsync(FileStream? fileStream, CancellationToken cancellationToken)
+        {
+            if (fileStream == null)
+                return null;
             try {
-                return await File.ReadAllTextAsync(fileName, Encoding.UTF8, cancellationToken);
+                fileStream.Seek(0, SeekOrigin.Begin);
+                using var reader = new StreamReader(fileStream, Encoding.UTF8);
+                var text = await reader.ReadToEndAsync();
+                return string.IsNullOrEmpty(text) ? null : text;
             }
             catch (IOException) {
                 return null;
             }
         }
 
-        protected virtual async ValueTask SetTextAsync(string fileName, string? text, CancellationToken cancellationToken)
+        protected virtual async ValueTask SetTextAsync(FileStream? fileStream, string? text, CancellationToken cancellationToken)
         {
-            var dir = Path.GetDirectoryName(fileName);
-            Directory.CreateDirectory(dir);
-            if (text == null)
-                File.Delete(fileName);
-            else
-                await File.WriteAllTextAsync(fileName, text, Encoding.UTF8, cancellationToken);
+            if (fileStream == null)
+                return;
+            fileStream.Seek(0, SeekOrigin.Begin);
+            await using var writer = new StreamWriter(fileStream, Encoding.UTF8);
+            await writer.WriteAsync(text ?? "");
+            fileStream.SetLength(fileStream.Position);
         }
 
         protected virtual Dictionary<TKey, TValue>? Deserialize(string? source) 

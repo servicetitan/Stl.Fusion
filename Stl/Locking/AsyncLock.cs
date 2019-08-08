@@ -98,17 +98,17 @@ namespace Stl.Locking
                 if (!_locks.TryGetValue(key, out var existingLock))
                     continue;
                 if (IsLockedLocally(key) == true)
-                    return CreateReleaser(key, myLock, true);
+                    return CreateDisposable(key, myLock, true);
                 cancellationTask ??= cancellationToken.ToTask(true);
                 await Task.WhenAny(existingLock.Task, cancellationTask);
                 // No need to spin here: the probability of seeing another
                 // lock in TryAdd and not seeing it in TryGetValue is nearly
                 // zero (i.e. it was removed right between these calls).
             }
-            return CreateReleaser(key, myLock, false);
+            return CreateDisposable(key, myLock, false);
         } 
 
-        protected IAsyncDisposable CreateReleaser(TKey key, TaskCompletionSource<Unit> myLock, bool hasLocalLock)
+        protected IAsyncDisposable CreateDisposable(TKey key, TaskCompletionSource<Unit> myLock, bool hasLocalLock)
         {
             // Adding local lock
             if (_localLocks != null) {

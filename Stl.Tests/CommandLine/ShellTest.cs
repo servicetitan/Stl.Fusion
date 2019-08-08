@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Stl.CommandLine;
 using Stl.Testing;
 using Xunit;
@@ -10,7 +11,7 @@ namespace Stl.Tests.CommandLine
         public ShellTest(ITestOutputHelper @out) : base(@out) { }
 
         [Fact]
-        public async void EchoTest()
+        public async Task EchoTest()
         {
             var shell = new Shell() { };
             Assert.Equal("hi", (await shell.GetOutputAsync("echo hi")).Trim());
