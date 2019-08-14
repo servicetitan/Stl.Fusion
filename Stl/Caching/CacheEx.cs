@@ -3,14 +3,14 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Optional;
-using Optional.Unsafe;
+using Stl.Collections;
 
 namespace Stl.Caching
 {
     public static class CacheEx 
     {
         public static async IAsyncEnumerable<TValue> GetManyAsync<TKey, TValue>(
-            this IReadOnlyCache<TKey, TValue> cache, 
+            this IAsyncKeyResolver<TKey, TValue> cache, 
             IAsyncEnumerable<TKey> keys,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
             where TKey : notnull
@@ -20,7 +20,7 @@ namespace Stl.Caching
         }
 
         public static async IAsyncEnumerable<Option<TValue>> TryGetManyAsync<TKey, TValue>(
-            this IReadOnlyCache<TKey, TValue> cache, 
+            this IAsyncKeyResolver<TKey, TValue> cache, 
             IAsyncEnumerable<TKey> keys,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
             where TKey : notnull

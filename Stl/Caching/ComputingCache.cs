@@ -3,11 +3,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using Optional;
 using Optional.Unsafe;
+using Stl.Collections;
 using Stl.Locking;
 
 namespace Stl.Caching 
 {
-    public abstract class ComputingCacheBase<TKey, TValue> : ReadOnlyCacheBase<TKey, TValue>
+    public abstract class ComputingCacheBase<TKey, TValue> : AsyncKeyResolverBase<TKey, TValue>
         where TKey : notnull
     {
         public ICache<TKey, TValue> Cache { get; }

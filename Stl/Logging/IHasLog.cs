@@ -1,4 +1,3 @@
-using System;
 using Serilog;
 
 namespace Stl

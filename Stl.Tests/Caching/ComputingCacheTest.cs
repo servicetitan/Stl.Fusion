@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
 using Stl.Caching;
+using Stl.Collections;
 using Stl.Testing;
 using Xunit;
 using Xunit.Abstractions;
@@ -32,7 +33,7 @@ namespace Stl.Tests.Caching
         private async Task OrderByDependencyTestAsync(
             Func<
                 Func<char, CancellationToken, ValueTask<char>>, 
-                IReadOnlyCache<char, char>> cacheFactory)
+                IAsyncKeyResolver<char, char>> cacheFactory)
         {
             IEnumerable<char> DepSelector1(char c) => 
                 Enumerable
@@ -49,7 +50,7 @@ namespace Stl.Tests.Caching
             {
                 var result = new List<char>();
 
-                IReadOnlyCache<char, char>? cache = null;
+                IAsyncKeyResolver<char, char>? cache = null;
                 
                 async ValueTask<char> Compute(char c, CancellationToken ct)
                 {

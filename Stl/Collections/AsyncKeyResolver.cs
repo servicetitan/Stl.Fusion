@@ -3,10 +3,16 @@ using System.Threading;
 using System.Threading.Tasks;
 using Optional;
 using Optional.Unsafe;
-using Stl.Collections;
 
 namespace Stl.Collections
 {
+    public interface IAsyncKeyResolver<in TKey, TValue>
+        where TKey : notnull
+    {
+        ValueTask<TValue> GetAsync(TKey key, CancellationToken cancellationToken = default);
+        ValueTask<Option<TValue>> TryGetAsync(TKey key, CancellationToken cancellationToken = default);
+    }
+
     public abstract class AsyncKeyResolverBase<TKey, TValue> : IAsyncKeyResolver<TKey, TValue>
         where TKey : notnull
     {

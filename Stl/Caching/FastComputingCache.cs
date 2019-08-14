@@ -1,17 +1,15 @@
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Optional;
-using Stl.Caching;
+using Stl.Collections;
 using Stl.Internal;
 
 namespace Stl.Async
 {
-    public abstract class FastComputingCacheBase<TKey, TValue> : ReadOnlyCacheBase<TKey, TValue>
+    public abstract class FastComputingCacheBase<TKey, TValue> : AsyncKeyResolverBase<TKey, TValue>
         where TKey : notnull
     {
         protected AsyncLocal<ImmutableHashSet<TKey>> Dependents { get; set; }= 
