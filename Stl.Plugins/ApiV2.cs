@@ -2,7 +2,7 @@ using System;
 
 namespace Stl.Plugins
 {
-    public interface IPluginHost2 : IHasLog, IServiceProvider, IDisposable
+    public interface IPluginHost2 : IServiceProvider, IDisposable
     {
     }
 
