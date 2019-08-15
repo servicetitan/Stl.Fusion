@@ -1,9 +1,9 @@
-using System;
 using System.IO;
 using System.Linq;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
+using Serilog;
 using Stl.Plugins;
-using Stl.Plugins.Metadata;
 using Stl.Testing;
 using Xunit;
 using Xunit.Abstractions;
@@ -15,15 +15,17 @@ namespace Stl.Tests.Plugins
         public PluginTest(ITestOutputHelper @out) : base(@out) { }
         
         [Fact]
-        public void BasicTest()
+        public void CombinedTest()
         {
             var writer = new StringWriter();
             var log = TestLogger.New(writer);
+            var loggerFactory = new LoggerFactory().AddSerilog(log);
 
-            var pluginEnumerator = new PluginEnumerator() {
+            var pluginFinderLogger = loggerFactory.CreateLogger<PluginFinder>();
+            var pluginEnumerator = new PluginFinder(pluginFinderLogger) {
                 PluginTypes = { typeof(ITestPlugin), typeof(ITestPluginEx) }
             };
-            var pluginSetInfo = pluginEnumerator.GetPluginSetInfo();
+            var pluginSetInfo = pluginEnumerator.FindPlugins();
             pluginSetInfo.Exports.Count.Should().Be(2);
 
             var containerBuilder = new PluginContainerBuilder(pluginSetInfo);
@@ -38,6 +40,14 @@ namespace Stl.Tests.Plugins
             testPluginsEx.Length.Should().Be(1);
             testPluginsEx.Select(p => p.GetVersion())
                 .Should().BeEquivalentTo("1.0");
+
+            // Checking whether caching works
+            writer.Clear();
+            var pluginEnumerator2 = new PluginFinder(pluginFinderLogger) {
+                PluginTypes = { typeof(ITestPlugin), typeof(ITestPluginEx) }
+            };
+            var pluginSetInfo2 = pluginEnumerator.FindPlugins();
+            writer.GetContentAndClear().Should().ContainAll("Cached plugin set info found");
         }
     }
 }

@@ -1,36 +1,51 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Caching;
 using Stl.IO;
+using Stl.Plugins.Internal;
 using Stl.Plugins.Metadata;
 
 namespace Stl.Plugins 
 {
-    public interface IPluginEnumerator
+    public interface IPluginFinder
     {
-        PluginSetInfo GetPluginSetInfo();
+        PluginSetInfo FindPlugins();
     }
 
-    public class PluginEnumerator : CachingPluginEnumeratorBase
+    public class PluginFinder : CachingPluginFinderBase
     {
         public string PluginDir { get; set; } = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? ".";
         public string AssemblyNamePattern { get; set; } = "*.dll";
-        public HashSet<Type> PluginTypes { get; } = new HashSet<Type>();
+        public HashSet<Type> PluginTypes { get; set; } = new HashSet<Type>();
+        public bool UseCache { get; set; } = true;
+        public string CacheDir { get; set; }
+
+        public PluginFinder(ILogger? logger = null)
+            : base(logger)
+        {
+            CacheDir = PathEx.GetApplicationTempDirectory();
+        }
 
         protected override ICache<string, string> CreateCache()
-            => new FileSystemCache<string, string>(GetCacheDir());
-
-        protected virtual string GetCacheDir()
         {
-            var assembly = Assembly.GetEntryAssembly() ?? Assembly.GetCallingAssembly();
-            var subdirectory = PathEx.GetHashedName($"{assembly.FullName}_{assembly.Location}");
-            return System.IO.Path.Combine(System.IO.Path.GetTempPath(), subdirectory);
+            if (!UseCache) {
+                Logger.LogDebug($"Cache isn't used.");
+                return new FakeCache<string, string>();
+            }
+            var cache = new FileSystemCache<string, string>(GetCacheDir());
+            Logger.LogDebug($"Cache directory: {cache.CacheDirectory}");
+            return cache;
         }
+
+        protected virtual string GetCacheDir() => CacheDir;
 
         protected override string GetCacheKey()
         {

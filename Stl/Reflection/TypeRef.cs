@@ -1,11 +1,13 @@
 using System;
+using System.ComponentModel;
 using Newtonsoft.Json;
 using Stl.Internal;
 
 namespace Stl.Reflection 
 {
     [Serializable]
-    [JsonConverter(typeof(TypeRefConverter))]
+    [JsonConverter(typeof(TypeRefJsonConverter))]
+    [TypeConverter(typeof(TypeRefTypeConverter))]
     public struct TypeRef : IEquatable<TypeRef>, IComparable<TypeRef>
     {
         private const int UnknownHashCode = 0;
@@ -46,12 +48,13 @@ namespace Stl.Reflection
 
         public override int GetHashCode()
         {
-            if (_hashCode == UnknownHashCode) {
-                _hashCode =  AssemblyQualifiedName?.GetHashCode() ?? UnknownHashCode;
-                if (_hashCode == UnknownHashCode)
-                    _hashCode = UnknownHashCodeSubstitute;
-            }
-            return _hashCode;
+            if (_hashCode != UnknownHashCode)
+                return _hashCode;
+            var hashCode =  AssemblyQualifiedName?.GetHashCode() ?? UnknownHashCodeSubstitute;
+            if (hashCode == UnknownHashCode)
+                hashCode = UnknownHashCodeSubstitute;
+            _hashCode = hashCode;
+            return hashCode;
         }
 
         public int CompareTo(TypeRef other) 

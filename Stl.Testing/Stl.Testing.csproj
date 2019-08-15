@@ -11,11 +11,11 @@
     <PackageReference Include="Enums.NET" Version="2.3.2" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.0.0-preview8.19405.4" />
     <PackageReference Include="morelinq" Version="3.1.1" />
     <PackageReference Include="Optional" Version="4.0.0" />
     <PackageReference Include="Serilog" Version="2.8.0" />
-    <PackageReference Include="Serilog.Extensions.Logging" Version="2.0.4" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="3.0.0-dev-10240" />
     <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
     <PackageReference Include="Serilog.Sinks.Observable" Version="2.0.3-dev-00712" />
     <PackageReference Include="Serilog.Sinks.TextWriter" Version="2.1.0" />
