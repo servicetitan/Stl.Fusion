@@ -26,7 +26,7 @@ namespace Stl.Tests
 
 
             string OBD(string s, Func<char, IEnumerable<char>> depSelector) => 
-                string.Join("", s.OrderByDependency(depSelector).Select(c => c.ToString()));
+                s.OrderByDependency(depSelector).ToDelimitedString("");
 
             Assert.Equal("", OBD("", DepSelector1));
             Assert.Equal("01", OBD("1", DepSelector1));

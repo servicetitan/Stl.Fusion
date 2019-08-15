@@ -39,7 +39,7 @@ namespace Stl.Tests.Mathematics
         {
             var source = new [] {"A", "B", "C", "D"}.AsMemory();
             foreach (var subset in Combinatorics.Subsets(source, true)) {
-                Out.WriteLine(string.Join(", ", subset.ToArray()));
+                Out.WriteLine(subset.ToArray().ToDelimitedString());
             }
         }
 
@@ -51,7 +51,7 @@ namespace Stl.Tests.Mathematics
                 Out.WriteLine($"{k} of {n} {(exactlyK ? "(exactly)" : "")}:");
                 var allKofN = Combinatorics.KOfN(n, k, exactlyK);
                 foreach (var subset in allKofN)
-                    Out.WriteLine("  " + string.Join(", ", subset.ToArray()));
+                    Out.WriteLine("  " + subset.ToDelimitedString());
                 if (exactlyK) {
                     var expected = (int) Combinatorics.Cnk(n, k);
                     Assert.Equal(expected, allKofN.Count());

@@ -24,7 +24,7 @@ namespace Stl.Collections
         public BinaryHeap(IEnumerable<T> source, IComparer<T>? comparer = null) : this(comparer) => 
             _heap = source.OrderBy(i => i, _comparer).ToList();
 
-        public override string ToString() => $"{GetType().Name} of [{string.Join(", ", this)}]";
+        public override string ToString() => $"{GetType().Name} of [{this.ToDelimitedString()}]";
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         public IEnumerator<T> GetEnumerator()

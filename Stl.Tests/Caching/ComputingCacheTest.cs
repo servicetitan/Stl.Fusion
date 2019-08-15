@@ -65,7 +65,7 @@ namespace Stl.Tests.Caching
 
                 cache = cacheFactory(Compute);
                 await cache.GetManyAsync(s.ToAsyncEnumerable()).Count();
-                return string.Join("", result);
+                return result.ToDelimitedString("");
             }
 
             Assert.Equal("", await OBD("", DepSelector1));

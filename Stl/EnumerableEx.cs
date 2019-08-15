@@ -83,6 +83,9 @@ namespace Stl
 
         // Enumerable extensions
 
+        public static string ToDelimitedString<T>(this IEnumerable<T> source, string? delimiter = null)
+            => string.Join(delimiter ?? ", ", source);
+
         public static IEnumerable<T> Concat<T>(params IEnumerable<T>[] sequences)
         {
             if (sequences.Length == 0)
