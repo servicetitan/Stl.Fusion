@@ -39,15 +39,18 @@ namespace Stl.Plugins
         {
             var files = ( 
                 from name in GetPluginAssemblyNames()
-                let modifyDate = File.GetLastWriteTimeUtc(Path.Combine(PluginDir, name))
-                select (name, modifyDate.ToString(CultureInfo.InvariantCulture))
+                let modifyDate = File.GetLastWriteTime(Path.Combine(PluginDir, name))
+                select (name, modifyDate.ToFileTime())
                 ).ToArray();
             return files.ToDelimitedString();
         }
 
-        protected virtual IEnumerable<string> GetPluginAssemblyNames() 
-            => Directory.EnumerateFiles(
-                PluginDir, AssemblyNamePattern, SearchOption.TopDirectoryOnly);
+        protected virtual string[] GetPluginAssemblyNames() 
+            => Directory
+                .EnumerateFiles(
+                    PluginDir, AssemblyNamePattern, SearchOption.TopDirectoryOnly)
+                .OrderBy(name => name)
+                .ToArray();
 
 #pragma warning disable 1998
         protected override async Task<PluginSetInfo> CreatePluginSetInfoAsync()
