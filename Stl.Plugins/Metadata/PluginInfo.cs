@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Immutable;
+using System.Linq;
 using Stl.Reflection;
 
 namespace Stl.Plugins.Metadata
@@ -12,6 +14,15 @@ namespace Stl.Plugins.Metadata
         {
             Type = type;
             BaseTypes = baseTypes;
+        }
+
+        public PluginInfo(Type type)
+        {
+            Type = type;
+            var baseTypes = type.GetAllBaseTypes().ToList();
+            baseTypes.AddRange(type.GetInterfaces());
+            var baseTypeRefs = baseTypes.Select(t => (TypeRef) t).ToArray();
+            BaseTypes = ImmutableHashSet.Create(baseTypeRefs);
         }
 
         public override string ToString() => $"{GetType().Name}({Type})";

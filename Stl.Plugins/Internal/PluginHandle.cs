@@ -5,28 +5,40 @@ using Stl.Plugins.Metadata;
 
 namespace Stl.Plugins.Internal
 {
-    public abstract class PluginHandle
+    public interface IPluginHandle
     {
-        public abstract object UntypedPlugin { get; }
+        object UntypedPlugin { get; }
+    }
+
+    public interface IPluginHandle<out TPlugin> : IPluginHandle
+        where TPlugin : notnull
+    {
+        TPlugin Plugin { get; }
     }
     
-    public class PluginHandle<TPlugin> : PluginHandle
+    public class PluginHandle<TPlugin> : IPluginHandle<TPlugin>
+        where TPlugin : notnull
     {
         private readonly Lazy<TPlugin> _lazyPlugin;
 
         public TPlugin Plugin => _lazyPlugin.Value;
         // ReSharper disable once HeapView.BoxingAllocation
-        public override object UntypedPlugin => Plugin;
+        public object UntypedPlugin => Plugin;
 
         public PluginHandle(IServiceProvider services)
         {
             var pluginSetInfo = services.GetService<PluginSetInfo>();
-            if (!pluginSetInfo.Plugins.ContainsKey(typeof(TPlugin)))
-                throw Errors.UnknownPluginImplementationType(typeof(TPlugin).Name);
+            var pluginType = typeof(TPlugin);
+            if (!pluginSetInfo.Plugins.ContainsKey(pluginType))
+                throw Errors.UnknownPluginImplementationType(pluginType.Name);
             _lazyPlugin = new Lazy<TPlugin>(
                 () => {
-                    var plugin = Activator.CreateInstance(typeof(TPlugin), services);
-                    return (TPlugin) plugin; 
+                    var rightConstructor = pluginType.GetConstructor(
+                        new [] {typeof(IServiceProvider)});
+                    var plugin = rightConstructor != null
+                        ? Activator.CreateInstance(pluginType, services)
+                        : Activator.CreateInstance(pluginType);
+                    return (TPlugin) plugin!; 
                 }, LazyThreadSafetyMode.ExecutionAndPublication);
         }
     }

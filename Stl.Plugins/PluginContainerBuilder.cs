@@ -23,6 +23,7 @@ namespace Stl.Plugins
         {
             services.AddSingleton(PluginSetInfo);
             services.AddSingleton<IPluginCache, PluginCache>();
+            services.AddSingleton(typeof(IPluginHandle<>), typeof(PluginHandle<>));
         }
 
         public virtual IServiceProvider BuildContainer()

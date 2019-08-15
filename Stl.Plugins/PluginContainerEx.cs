@@ -11,7 +11,10 @@ namespace Stl.Plugins
     public static class PluginContainerEx
     {
         internal static object GetPluginImplementation(this IServiceProvider services, Type pluginType) 
-            => services.GetService<PluginCache>().GetOrCreate(pluginType);
+            => services
+                .GetService<IPluginCache>()
+                .GetOrCreate(pluginType)
+                .UntypedPlugin;
 
         public static IEnumerable<object> GetPlugins(this IServiceProvider services, TypeRef type)
             => services.GetPlugins(type.Resolve());

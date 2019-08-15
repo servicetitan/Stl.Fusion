@@ -1,6 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.Loader;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using Stl.Caching;
+using Stl.IO;
 using Stl.Plugins.Metadata;
 using Stl.Reflection;
 
@@ -11,36 +19,56 @@ namespace Stl.Plugins
         PluginSetInfo GetPluginSetInfo();
     }
 
-    public class PluginEnumerator : IPluginEnumerator
+    public class PluginEnumerator : CachingPluginEnumeratorBase
     {
-        public Regex AssemblyNamePattern { get; set; } = new Regex(".*\\.dll");
-        public HashSet<TypeRef> PluginTypes { get; } = new HashSet<TypeRef>();
+        public string PluginDir { get; set; } = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? ".";
+        public string AssemblyNamePattern { get; set; } = "*.dll";
+        public HashSet<Type> PluginTypes { get; } = new HashSet<Type>();
 
-        public virtual PluginSetInfo GetPluginSetInfo()
+        protected override ICache<string, string> CreateCache()
+            => new FileSystemCache<string, string>(GetCacheDir());
+
+        protected virtual string GetCacheDir()
         {
-            throw new NotImplementedException();
+            var assembly = Assembly.GetEntryAssembly() ?? Assembly.GetCallingAssembly();
+            var subdirectory = PathEx.GetHashedName($"{assembly.FullName}_{assembly.Location}");
+            return System.IO.Path.Combine(System.IO.Path.GetTempPath(), subdirectory);
         }
 
-        public PluginEnumerator AddPluginTypes(params TypeRef[] types)
+        protected override string GetCacheKey()
         {
-            foreach (var type in types)
-                AddPluginType(type);
-            return this;
+            var files = ( 
+                from name in GetPluginAssemblyNames()
+                let modifyDate = File.GetLastWriteTimeUtc(Path.Combine(PluginDir, name))
+                select (name, modifyDate.ToString(CultureInfo.InvariantCulture))
+                ).ToArray();
+            return files.ToDelimitedString();
         }
 
-        public PluginEnumerator AddPluginType<TPlugin>()
-            => AddPluginType(typeof(TPlugin));
+        protected virtual IEnumerable<string> GetPluginAssemblyNames() 
+            => Directory.EnumerateFiles(
+                PluginDir, AssemblyNamePattern, SearchOption.TopDirectoryOnly);
 
-        public PluginEnumerator AddPluginType(TypeRef type)
+#pragma warning disable 1998
+        protected override async Task<PluginSetInfo> CreatePluginSetInfoAsync()
+#pragma warning restore 1998
         {
-            PluginTypes.Add(type);
-            return this;
+            var pluginTypes = new HashSet<Type>();
+            var context = GetAssemblyLoadContext();
+            foreach (var name in GetPluginAssemblyNames()) {
+                var assembly = context.LoadFromAssemblyPath(Path.Combine(PluginDir, name));
+                var pluginAttributes = assembly.GetCustomAttributes<PluginAttribute>().ToArray();
+                foreach (var pluginAttribute in pluginAttributes) {
+                    var pluginType = pluginAttribute.Type;
+                    if (pluginType.IsAbstract || pluginType.IsNotPublic)
+                        continue;
+                    pluginTypes.Add(pluginType);
+                }
+            }
+            return new PluginSetInfo(PluginTypes, pluginTypes);
         }
 
-        public PluginEnumerator SetAssemblyNamePattern(Regex assemblyNamePattern)
-        {
-            AssemblyNamePattern = assemblyNamePattern;
-            return this;
-        }
+        protected virtual AssemblyLoadContext GetAssemblyLoadContext() 
+            => AssemblyLoadContext.Default;
     }
 }

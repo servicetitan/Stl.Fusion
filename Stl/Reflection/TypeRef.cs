@@ -17,6 +17,7 @@ namespace Stl.Reflection
         public string AssemblyQualifiedName { get; }
         public string Name => AssemblyQualifiedName.Substring(0, AssemblyQualifiedName.IndexOf(','));
 
+        public TypeRef(Type type) : this(type.AssemblyQualifiedName!) { }
         public TypeRef(string assemblyQualifiedName)
         {
             AssemblyQualifiedName = assemblyQualifiedName;
@@ -37,8 +38,7 @@ namespace Stl.Reflection
         #region Equality & Comparison
 
         public bool Equals(TypeRef other) 
-            => _hashCode != UnknownHashCode 
-                && _hashCode == other._hashCode 
+            => GetHashCode() == other.GetHashCode() 
                 && AssemblyQualifiedName == other.AssemblyQualifiedName;
 
         public override bool Equals(object? obj) 

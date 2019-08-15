@@ -64,7 +64,7 @@ namespace Stl.Reactionist
         public void ThrowIfError() => Result.ThrowIfError();
 #pragma warning disable CS8614
         public void Deconstruct(out T value, out Exception? error) => Result.Deconstruct(out value, out error);
-#pragma warning enable CS8614
+#pragma warning restore CS8614
 
         // Operators
 

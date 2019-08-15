@@ -1,28 +1,40 @@
 using System;
-using System.Collections.Generic;
-using System.Composition;
-using Microsoft.Extensions.Logging;
+using FluentAssertions;
 using Stl.Plugins;
+using Stl.Tests.Plugins;
+
+[assembly: Plugin(typeof(TestPlugin1))]
+[assembly: Plugin(typeof(TestPlugin2))]
 
 namespace Stl.Tests.Plugins
 {
-    public abstract class TestPlugin : Plugin
+
+    public interface ITestPlugin
     {
-        protected override IEnumerable<InjectionPoint> AcquireInjectionPoints()
-        {
-            yield return new StartupInjectionPoint(() => Log.Information("Starting."));
-            yield return new ConfigureServicesInjectionPoint(sc => Log.Information("Configuring services."));
-        }
+        string GetName();
     }
 
-    [Export(typeof(TestPlugin))]
+    public interface ITestPluginEx : ITestPlugin
+    {
+        string GetVersion();
+    }
+
+    public abstract class TestPlugin : ITestPlugin
+    {
+        public virtual string GetName() => GetType().Name;
+    }
+
     public class TestPlugin1 : TestPlugin
     {
-        protected override IEnumerable<Type> AcquireDependencies() => new [] { typeof(TestPlugin2) };
     }
     
-    [Export(typeof(TestPlugin))]
-    public class TestPlugin2 : TestPlugin
+    public class TestPlugin2 : TestPlugin1, ITestPluginEx
     {
+        public virtual string GetVersion() => "1.0";
+
+        public TestPlugin2(IServiceProvider services)
+        {
+            services.Should().NotBeNull();
+        }
     }
 }
