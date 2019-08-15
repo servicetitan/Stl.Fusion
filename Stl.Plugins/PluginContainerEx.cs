@@ -8,25 +8,25 @@ namespace Stl.Plugins
 {
     public static class PluginContainerEx
     {
-        internal static object GetPluginImplementation(this IServiceProvider services, Type pluginType) 
+        internal static object GetPluginInstance(this IServiceProvider services, Type implementationType) 
             => services
                 .GetService<IPluginCache>()
-                .GetOrCreate(pluginType)
+                .GetOrCreate(implementationType)
                 .UntypedInstance;
 
         public static IEnumerable<TPlugin> GetPlugins<TPlugin>(this IServiceProvider services) 
             => services
                 .GetService<IPluginHandle<TPlugin>>()
-                .Implementations;
+                .Instances;
 
-        public static IEnumerable<object> GetPlugins(this IServiceProvider services, TypeRef type)
-            => services.GetPlugins(type.Resolve());
+        public static IEnumerable<object> GetPlugins(this IServiceProvider services, TypeRef pluginType)
+            => services.GetPlugins(pluginType.Resolve());
 
-        public static IEnumerable<object> GetPlugins(this IServiceProvider services, Type type)
+        public static IEnumerable<object> GetPlugins(this IServiceProvider services, Type pluginType)
         {
             var pluginHandle = (IPluginHandle) services.GetService(
-                typeof(IPluginHandle<>).MakeGenericType(type));
-            return pluginHandle.UntypedImplementations;
+                typeof(IPluginHandle<>).MakeGenericType(pluginType));
+            return pluginHandle.UntypedInstances;
         }
     }
 }

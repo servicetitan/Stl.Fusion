@@ -10,19 +10,19 @@ namespace Stl.Plugins
 {
     public interface IPluginHandle
     {
-        IEnumerable<object> UntypedImplementations { get; }
+        IEnumerable<object> UntypedInstances { get; }
     }
 
     public interface IPluginHandle<out TPlugin> : IPluginHandle
     {
-        IEnumerable<TPlugin> Implementations { get; }
+        IEnumerable<TPlugin> Instances { get; }
     }
 
     public class PluginHandle<TPlugin> : IPluginHandle<TPlugin>
     {
-        private readonly Lazy<TPlugin[]> _lazyPlugins; 
-        public IEnumerable<object> UntypedImplementations => Implementations.Cast<object>();
-        public IEnumerable<TPlugin> Implementations => _lazyPlugins.Value;
+        private readonly Lazy<TPlugin[]> _lazyInstances; 
+        public IEnumerable<object> UntypedInstances => Instances.Cast<object>();
+        public IEnumerable<TPlugin> Instances => _lazyInstances.Value;
 
         public PluginHandle(IServiceProvider services)
         {
@@ -30,10 +30,10 @@ namespace Stl.Plugins
             var pluginType = typeof(TPlugin);
             if (!pluginSetInfo.Exports.Contains(pluginType))
                 throw Errors.UnknownPluginType(pluginType.Name);
-            _lazyPlugins = new Lazy<TPlugin[]>(
+            _lazyInstances = new Lazy<TPlugin[]>(
                 () => pluginSetInfo
                     .ImplementationsByBaseType[pluginType]
-                    .Select(t => (TPlugin) services.GetPluginImplementation(t.Resolve()))
+                    .Select(t => (TPlugin) services.GetPluginInstance(t.Resolve()))
                     .ToArray(), 
                 LazyThreadSafetyMode.ExecutionAndPublication);
         }
