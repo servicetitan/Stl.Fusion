@@ -22,10 +22,10 @@ namespace Stl.Tests.Plugins
             var loggerFactory = new LoggerFactory().AddSerilog(log);
 
             var pluginFinderLogger = loggerFactory.CreateLogger<PluginFinder>();
-            var pluginEnumerator = new PluginFinder(pluginFinderLogger) {
+            var pluginFinder = new PluginFinder(pluginFinderLogger) {
                 PluginTypes = { typeof(ITestPlugin), typeof(ITestPluginEx) }
             };
-            var pluginSetInfo = pluginEnumerator.FindPlugins();
+            var pluginSetInfo = pluginFinder.FindPlugins();
             pluginSetInfo.Exports.Count.Should().Be(2);
 
             var containerBuilder = new PluginContainerBuilder(pluginSetInfo);
@@ -43,10 +43,10 @@ namespace Stl.Tests.Plugins
 
             // Checking whether caching works
             writer.Clear();
-            var pluginEnumerator2 = new PluginFinder(pluginFinderLogger) {
+            var pluginFinder2 = new PluginFinder(pluginFinderLogger) {
                 PluginTypes = { typeof(ITestPlugin), typeof(ITestPluginEx) }
             };
-            var pluginSetInfo2 = pluginEnumerator.FindPlugins();
+            var pluginSetInfo2 = pluginFinder2.FindPlugins();
             writer.GetContentAndClear().Should().ContainAll("Cached plugin set info found");
         }
     }
