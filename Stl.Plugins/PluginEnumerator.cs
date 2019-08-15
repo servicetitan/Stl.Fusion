@@ -1,16 +1,13 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Stl.Caching;
 using Stl.IO;
 using Stl.Plugins.Metadata;
-using Stl.Reflection;
 
 namespace Stl.Plugins 
 {
