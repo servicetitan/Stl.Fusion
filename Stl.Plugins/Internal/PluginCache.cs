@@ -5,23 +5,23 @@ namespace Stl.Plugins.Internal
 {
     public interface IPluginCache
     {
-        IPluginImplementationHandle GetOrCreate(Type pluginImplementationType);
+        IPluginInstanceHandle GetOrCreate(Type pluginImplementationType);
     }
 
     public class PluginCache : IPluginCache
     {
         private readonly IServiceProvider _services;
-        private readonly ConcurrentDictionary<Type, IPluginImplementationHandle> _cache =
-            new ConcurrentDictionary<Type, IPluginImplementationHandle>();
+        private readonly ConcurrentDictionary<Type, IPluginInstanceHandle> _cache =
+            new ConcurrentDictionary<Type, IPluginInstanceHandle>();
 
         public PluginCache(IServiceProvider services) => _services = services;
 
-        public IPluginImplementationHandle GetOrCreate(Type pluginImplementationType)
+        public IPluginInstanceHandle GetOrCreate(Type pluginImplementationType)
             => _cache.GetOrAdd(
                 pluginImplementationType, 
                 (pit, self) => {
-                    var handleType = typeof(IPluginImplementationHandle<>).MakeGenericType(pit);
-                    return (IPluginImplementationHandle) self._services.GetService(handleType);
+                    var handleType = typeof(IPluginInstanceHandle<>).MakeGenericType(pit);
+                    return (IPluginInstanceHandle) self._services.GetService(handleType);
                 }, this);
     }
 }

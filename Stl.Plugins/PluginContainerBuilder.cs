@@ -23,7 +23,7 @@ namespace Stl.Plugins
         {
             services.AddSingleton(PluginSetInfo);
             services.AddSingleton<IPluginCache, PluginCache>();
-            services.AddSingleton(typeof(IPluginImplementationHandle<>), typeof(PluginImplementationHandle<>));
+            services.AddSingleton(typeof(IPluginInstanceHandle<>), typeof(PluginInstanceHandle<>));
             services.AddSingleton(typeof(IPluginHandle<>), typeof(PluginHandle<>));
         }
 
