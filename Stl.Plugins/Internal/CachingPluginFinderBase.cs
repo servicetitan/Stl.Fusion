@@ -8,7 +8,7 @@ using Optional.Unsafe;
 using Stl.Caching;
 using Stl.Plugins.Metadata;
 
-namespace Stl.Plugins 
+namespace Stl.Plugins.Internal 
 {
     public abstract class CachingPluginFinderBase : IPluginFinder
     {

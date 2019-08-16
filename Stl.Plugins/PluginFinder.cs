@@ -1,13 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Caching;
 using Stl.IO;
 using Stl.Plugins.Internal;
@@ -24,7 +22,6 @@ namespace Stl.Plugins
     {
         public string PluginDir { get; set; } = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? ".";
         public string AssemblyNamePattern { get; set; } = "*.dll";
-        public HashSet<Type> PluginTypes { get; set; } = new HashSet<Type>();
         public bool UseCache { get; set; } = true;
         public string CacheDir { get; set; }
 
@@ -68,7 +65,7 @@ namespace Stl.Plugins
         protected override async Task<PluginSetInfo> CreatePluginSetInfoAsync()
 #pragma warning restore 1998
         {
-            var pluginTypes = new HashSet<Type>();
+            var plugins = new HashSet<Type>();
             var context = GetAssemblyLoadContext();
             foreach (var name in GetPluginAssemblyNames()) {
                 var assembly = context.LoadFromAssemblyPath(Path.Combine(PluginDir, name));
@@ -77,10 +74,10 @@ namespace Stl.Plugins
                     var pluginType = pluginAttribute.Type;
                     if (pluginType.IsAbstract || pluginType.IsNotPublic)
                         continue;
-                    pluginTypes.Add(pluginType);
+                    plugins.Add(pluginType);
                 }
             }
-            return new PluginSetInfo(PluginTypes, pluginTypes);
+            return new PluginSetInfo(plugins);
         }
 
         protected virtual AssemblyLoadContext GetAssemblyLoadContext() 

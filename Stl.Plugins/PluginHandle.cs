@@ -2,9 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using Microsoft.Extensions.DependencyInjection;
 using Stl.Plugins.Internal;
-using Stl.Plugins.Metadata;
 
 namespace Stl.Plugins
 {
@@ -24,16 +22,18 @@ namespace Stl.Plugins
         public IEnumerable<object> UntypedInstances => Instances.Cast<object>();
         public IEnumerable<TPlugin> Instances => _lazyInstances.Value;
 
-        public PluginHandle(IServiceProvider services)
+        public PluginHandle(
+            IPluginContainerConfiguration configuration, 
+            IPluginCache pluginCache)
         {
-            var pluginSetInfo = services.GetService<PluginSetInfo>();
             var pluginType = typeof(TPlugin);
-            if (!pluginSetInfo.Exports.Contains(pluginType))
+            if (!configuration.Interfaces.Contains(pluginType))
                 throw Errors.UnknownPluginType(pluginType.Name);
             _lazyInstances = new Lazy<TPlugin[]>(
-                () => pluginSetInfo
-                    .ImplementationsByBaseType[pluginType]
-                    .Select(t => (TPlugin) services.GetPluginInstance(t.Resolve()))
+                () => configuration
+                    .Implementations
+                    .TypesByBaseType[pluginType]
+                    .Select(t => (TPlugin) pluginCache.GetOrCreate(t.Resolve()).UntypedInstance)
                     .ToArray(), 
                 LazyThreadSafetyMode.ExecutionAndPublication);
         }

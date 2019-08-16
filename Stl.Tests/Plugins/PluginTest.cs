@@ -22,13 +22,17 @@ namespace Stl.Tests.Plugins
             var loggerFactory = new LoggerFactory().AddSerilog(log);
 
             var pluginFinderLogger = loggerFactory.CreateLogger<PluginFinder>();
-            var pluginFinder = new PluginFinder(pluginFinderLogger) {
-                PluginTypes = { typeof(ITestPlugin), typeof(ITestPluginEx) }
-            };
+            var pluginFinder = new PluginFinder(pluginFinderLogger);
             var pluginSetInfo = pluginFinder.FindPlugins();
-            pluginSetInfo.Exports.Count.Should().Be(2);
+            pluginSetInfo.Plugins.Count.Should().Be(2);
+            pluginSetInfo.Plugins[typeof(TestPlugin1)].Capabilities.Count.Should().Be(0);
+            pluginSetInfo.Plugins[typeof(TestPlugin2)].Capabilities.Count.Should().Be(2);
 
-            var containerBuilder = new PluginContainerBuilder(pluginSetInfo);
+            var containerBuilder = new PluginContainerBuilder() {
+                Configuration = new PluginContainerConfiguration(
+                    pluginSetInfo, 
+                    typeof(ITestPlugin), typeof(ITestPluginEx)), 
+            };
             var services = containerBuilder.BuildContainer();
             
             var testPlugins = services.GetPlugins<ITestPlugin>().ToArray();
@@ -43,10 +47,9 @@ namespace Stl.Tests.Plugins
 
             // Checking whether caching works
             writer.Clear();
-            var pluginFinder2 = new PluginFinder(pluginFinderLogger) {
-                PluginTypes = { typeof(ITestPlugin), typeof(ITestPluginEx) }
-            };
+            var pluginFinder2 = new PluginFinder(pluginFinderLogger);
             var pluginSetInfo2 = pluginFinder2.FindPlugins();
+            pluginSetInfo2.Plugins.Count.Should().Be(2);
             writer.GetContentAndClear().Should().ContainAll("Cached plugin set info found");
         }
     }

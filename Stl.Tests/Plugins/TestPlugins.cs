@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Immutable;
 using FluentAssertions;
 using Stl.Plugins;
+using Stl.Plugins.Extensions;
 using Stl.Tests.Plugins;
 
 [assembly: Plugin(typeof(TestPlugin1))]
@@ -28,9 +30,11 @@ namespace Stl.Tests.Plugins
     {
     }
     
-    public class TestPlugin2 : TestPlugin1, ITestPluginEx
+    public class TestPlugin2 : TestPlugin1, ITestPluginEx, IHasCapabilities
     {
         public virtual string GetVersion() => "1.0";
+        public ImmutableHashSet<string> Capabilities { get; } =
+            ImmutableHashSet.Create("Client", "Server");
 
         public TestPlugin2(IServiceProvider services)
         {

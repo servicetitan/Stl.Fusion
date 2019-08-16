@@ -1,27 +1,25 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Plugins.Internal;
-using Stl.Plugins.Metadata;
 
 namespace Stl.Plugins
 {
     public interface IPluginContainerBuilder
     {
-        PluginSetInfo PluginSetInfo { get; }
+        PluginContainerConfiguration Configuration { get; set; }
         void ConfigureServices(IServiceCollection services);
         IServiceProvider BuildContainer();
     }
 
     public class PluginContainerBuilder : IPluginContainerBuilder
     {
-        public PluginSetInfo PluginSetInfo { get; }
-
-        public PluginContainerBuilder(PluginSetInfo pluginSetInfo) 
-            => PluginSetInfo = pluginSetInfo;
+        public PluginContainerConfiguration Configuration { get; set; } = 
+            PluginContainerConfiguration.Empty;
 
         public virtual void ConfigureServices(IServiceCollection services)
         {
-            services.AddSingleton(PluginSetInfo);
+            services.AddSingleton<IPluginContainerConfiguration>(Configuration);
+            services.AddSingleton<IPluginFactory, PluginFactory>();
             services.AddSingleton<IPluginCache, PluginCache>();
             services.AddSingleton(typeof(IPluginInstanceHandle<>), typeof(PluginInstanceHandle<>));
             services.AddSingleton(typeof(IPluginHandle<>), typeof(PluginHandle<>));
