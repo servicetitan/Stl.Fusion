@@ -14,14 +14,14 @@ namespace Stl.Plugins.Metadata
         public ImmutableArray<TypeRef> Ancestors { get; }
         public ImmutableArray<TypeRef> Interfaces { get; }
         public ImmutableHashSet<TypeRef> CastableTo { get; }
-        public ImmutableHashSet<string> Capabilities { get; }
+        public ImmutableDictionary<string, object> Capabilities { get; }
 
         [JsonConstructor]
         public PluginInfo(TypeRef type, 
             ImmutableArray<TypeRef> ancestors, 
             ImmutableArray<TypeRef> interfaces, 
             ImmutableHashSet<TypeRef> castableTo,
-            ImmutableHashSet<string> capabilities)
+            ImmutableDictionary<string, object> capabilities)
         {
             Type = type;
             Ancestors = ancestors;
@@ -39,7 +39,7 @@ namespace Stl.Plugins.Metadata
                 type.GetInterfaces().Select(t => (TypeRef) t).ToArray());
             CastableTo = ImmutableHashSet.Create(
                 Ancestors.AddRange(Interfaces).Add(type).ToArray());
-            Capabilities = ImmutableHashSet<string>.Empty;
+            Capabilities = ImmutableDictionary<string, object>.Empty;
 
             if (typeof(IHasCapabilities).IsAssignableFrom(type)) {
                 var tmpPlugin = pluginFactory.Create(type);

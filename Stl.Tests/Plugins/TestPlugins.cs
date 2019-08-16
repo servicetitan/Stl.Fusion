@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using FluentAssertions;
 using Stl.Plugins;
@@ -33,8 +34,11 @@ namespace Stl.Tests.Plugins
     public class TestPlugin2 : TestPlugin1, ITestPluginEx, IHasCapabilities
     {
         public virtual string GetVersion() => "1.0";
-        public ImmutableHashSet<string> Capabilities { get; } =
-            ImmutableHashSet.Create("Client", "Server");
+        public ImmutableDictionary<string, object> Capabilities { get; } =
+            new Dictionary<string, object>() {
+                {"Client", true},
+                {"Server", false}
+            }.ToImmutableDictionary();
 
         public TestPlugin2(IServiceProvider services)
         {

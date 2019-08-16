@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using FluentAssertions;
@@ -25,8 +26,13 @@ namespace Stl.Tests.Plugins
             var pluginFinder = new PluginFinder(pluginFinderLogger);
             var pluginSetInfo = pluginFinder.FindPlugins();
             pluginSetInfo.Plugins.Count.Should().Be(2);
+            
+            // Capabilities test
             pluginSetInfo.Plugins[typeof(TestPlugin1)].Capabilities.Count.Should().Be(0);
-            pluginSetInfo.Plugins[typeof(TestPlugin2)].Capabilities.Count.Should().Be(2);
+            var testPlugin2Caps = pluginSetInfo.Plugins[typeof(TestPlugin2)].Capabilities;
+            testPlugin2Caps.Count.Should().Be(2);
+            testPlugin2Caps.GetValueOrDefault("Client").Should().Be(true);
+            testPlugin2Caps.GetValueOrDefault("Server").Should().Be(false);
 
             var containerBuilder = new PluginContainerBuilder() {
                 Configuration = new PluginContainerConfiguration(

@@ -4,6 +4,6 @@ namespace Stl.Plugins.Extensions
 {
     public interface IHasCapabilities
     {
-        ImmutableHashSet<string> Capabilities { get; }
+        ImmutableDictionary<string, object> Capabilities { get; }
     }
 }
