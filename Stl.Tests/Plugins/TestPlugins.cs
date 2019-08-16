@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using FluentAssertions;
 using Stl.Plugins;
-using Stl.Plugins.Extensions;
 using Stl.Tests.Plugins;
 
 [assembly: Plugin(typeof(TestPlugin1))]
