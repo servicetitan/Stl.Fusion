@@ -12,6 +12,6 @@ namespace Stl.Caching
             => ValueTaskEx.New(Option.None<TValue>());
 
         protected override ValueTask SetAsync(TKey key, Option<TValue> value, CancellationToken cancellationToken = default) 
-            => ValueTaskEx.Completed;
+            => ValueTaskEx.CompletedTask;
     }
 }

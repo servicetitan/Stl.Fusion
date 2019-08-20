@@ -79,7 +79,7 @@ namespace Stl.Locking
                     if (reentryCount == 0)
                         myLock1.SetResult(default); // Must be done after setting _lock to null
                 }
-                return ValueTaskEx.Completed;
+                return ValueTaskEx.CompletedTask;
             }, (this, myLock));
         }
     }
@@ -163,7 +163,7 @@ namespace Stl.Locking
                 Debug.Assert(reentryCount >= 0);
                 if (reentryCount == 0)
                     myLock2.SetResult(default); // Must be done after TryRemove
-                return ValueTaskEx.Completed;
+                return ValueTaskEx.CompletedTask;
             }, (this, key, myLock));
         }
     }

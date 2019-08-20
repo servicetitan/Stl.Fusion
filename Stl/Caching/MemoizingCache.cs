@@ -27,7 +27,7 @@ namespace Stl.Caching
                 _dictionary[key] = value.ValueOrDefault();
             else
                 _dictionary.TryRemove(key, out _);
-            return ValueTaskEx.Completed;
+            return ValueTaskEx.CompletedTask;
         }
     }
 }
