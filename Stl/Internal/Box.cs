@@ -3,6 +3,7 @@ namespace Stl.Internal
     public abstract class Box
     {
         public abstract object? UntypedValue { get; }
+        public static Box<T> New<T>(T value) => new Box<T>(value);
     }
 
     public class Box<T> : Box
