@@ -12,6 +12,12 @@ namespace Stl.Plugins.Metadata
 {
     public class PluginSetInfo
     {
+        public static PluginSetInfo Empty { get; } = 
+            new PluginSetInfo(
+                ImmutableDictionary<TypeRef, PluginInfo>.Empty,
+                ImmutableDictionary<TypeRef, ImmutableHashSet<TypeRef>>.Empty, 
+                ImmutableDictionary<TypeRef, ImmutableArray<TypeRef>>.Empty);
+
         public ImmutableDictionary<TypeRef, PluginInfo> Plugins { get; }
         public ImmutableDictionary<TypeRef, ImmutableHashSet<TypeRef>> TypesByBaseType { get; }
         public ImmutableDictionary<TypeRef, ImmutableArray<TypeRef>> TypesByBaseTypeOrderedByDependency { get; }
@@ -39,10 +45,11 @@ namespace Stl.Plugins.Metadata
                 // singleton inside BuildContainer call below.
                 Plugins = ImmutableDictionary<TypeRef, PluginInfo>.Empty;
                 TypesByBaseType = ImmutableDictionary<TypeRef, ImmutableHashSet<TypeRef>>.Empty;
+                TypesByBaseTypeOrderedByDependency = ImmutableDictionary<TypeRef, ImmutableArray<TypeRef>>.Empty;
                 return;
             }
 
-            HashSet<Assembly> GetAllDependencies(Assembly assembly, HashSet<Assembly> result = null)
+            HashSet<Assembly> GetAllDependencies(Assembly assembly, HashSet<Assembly>? result = null)
             {
                 result ??= new HashSet<Assembly>();
                 foreach (var referenceName in assembly.GetReferencedAssemblies()) {

@@ -51,13 +51,13 @@ namespace Stl.Plugins.Metadata
             Capabilities = ImmutableDictionary<string, object>.Empty;
             Dependencies = ImmutableHashSet<TypeRef>.Empty;
 
-            var tmpPlugin = constructionInfo.TemporaryPluginFactory.Create(type);
+            var tmpPlugin = constructionInfo.TemporaryPluginFactory!.Create(type);
             if (tmpPlugin is IHasCapabilities hc)
                 Capabilities = hc.Capabilities;
             if (tmpPlugin is IHasDependencies hd)
                 Dependencies = hd.Dependencies.Select(t => (TypeRef) t).ToImmutableHashSet();
             
-            var assemblyDependencies = constructionInfo.AssemblyDependencies[type.Assembly];
+            var assemblyDependencies = constructionInfo.AssemblyDependencies![type.Assembly];
             AllDependencies = constructionInfo.Plugins
                 .Where(p => p != type && assemblyDependencies.Contains(p.Assembly))
                 .Select(t => (TypeRef) t)

@@ -64,7 +64,8 @@ namespace Stl.Plugins.Internal
             => JsonConvert.SerializeObject(source, GetJsonSerializerSettings());
 
         protected virtual PluginSetInfo Deserialize(string source) 
-            => JsonConvert.DeserializeObject<PluginSetInfo>(source, GetJsonSerializerSettings());
+            => JsonConvert.DeserializeObject<PluginSetInfo>(source, GetJsonSerializerSettings())
+                ?? PluginSetInfo.Empty;
 
         protected abstract ICache<string, string> CreateCache();
         protected abstract string? GetCacheKey();
