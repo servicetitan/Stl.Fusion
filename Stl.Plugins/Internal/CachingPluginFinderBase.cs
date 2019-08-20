@@ -13,8 +13,9 @@ namespace Stl.Plugins.Internal
     public abstract class CachingPluginFinderBase : IPluginFinder
     {
         private readonly Lazy<ICache<string, string>> _lazyCache;
-        protected ICache<string, string> Cache => _lazyCache.Value;
         protected ILogger Logger { get; }
+
+        public ICache<string, string> Cache => _lazyCache.Value;
 
         protected CachingPluginFinderBase(ILogger? logger = null)
         {

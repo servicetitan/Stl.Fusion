@@ -46,7 +46,8 @@ namespace Stl.Plugins
         {
             var pluginSetInfo = Configuration.Implementations;
             return (
-                from pluginImplType in pluginSetInfo.TypesByBaseType[typeof(TPlugin)]
+                from pluginImplType in 
+                    pluginSetInfo.TypesByBaseTypeOrderedByDependency[typeof(TPlugin)]
                 let pluginInfo = pluginSetInfo.Plugins[pluginImplType]
                 select pluginInfo
                 ).Where(predicate)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -104,6 +105,17 @@ namespace Stl.Caching
             CacheDirectory = cacheDirectory;
             FileExtension = extension ?? DefaultExtension;
             KeyToFileNameConverter = keyToFileNameConverter ?? DefaultKeyToFileNameConverter;
+        }
+
+        public void Clear()
+        {
+            if (!Directory.Exists(CacheDirectory))
+                return;
+            var names = Directory.EnumerateFiles(
+                CacheDirectory, "*" + FileExtension,
+                SearchOption.TopDirectoryOnly);
+            foreach (var name in names) 
+                File.Delete(name);
         }
 
         protected override string GetFileName(TKey key) 

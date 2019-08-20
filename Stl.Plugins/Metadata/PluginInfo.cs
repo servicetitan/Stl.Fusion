@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using Newtonsoft.Json;
@@ -9,27 +10,36 @@ namespace Stl.Plugins.Metadata
 {
     public class PluginInfo
     {
-        public TypeRef Type { get; }
-        public ImmutableArray<TypeRef> Ancestors { get; }
-        public ImmutableArray<TypeRef> Interfaces { get; }
-        public ImmutableHashSet<TypeRef> CastableTo { get; }
-        public ImmutableDictionary<string, object> Capabilities { get; }
+        public TypeRef Type { get; protected set; }
+        public ImmutableArray<TypeRef> Ancestors { get; protected set; }
+        public ImmutableArray<TypeRef> Interfaces { get; protected set; }
+        public ImmutableHashSet<TypeRef> CastableTo { get; protected set; }
+        public ImmutableDictionary<string, object> Capabilities { get; protected set; }
+        public ImmutableHashSet<TypeRef> Dependencies { get; protected set; }
+        public ImmutableHashSet<TypeRef> AllDependencies { get; protected set; }
+        public int OrderByDependencyIndex { get; protected internal set; }
 
         [JsonConstructor]
         public PluginInfo(TypeRef type, 
             ImmutableArray<TypeRef> ancestors, 
             ImmutableArray<TypeRef> interfaces, 
             ImmutableHashSet<TypeRef> castableTo,
-            ImmutableDictionary<string, object> capabilities)
+            ImmutableDictionary<string, object> capabilities,
+            ImmutableHashSet<TypeRef> dependencies,
+            ImmutableHashSet<TypeRef> allDependencies,
+            int orderByDependencyIndex)
         {
             Type = type;
             Ancestors = ancestors;
             Interfaces = interfaces;
             CastableTo = castableTo;
             Capabilities = capabilities;
+            Dependencies = dependencies;
+            AllDependencies = allDependencies;
+            OrderByDependencyIndex = orderByDependencyIndex;
         }
 
-        public PluginInfo(Type type, IPluginFactory pluginFactory)
+        public PluginInfo(Type type, PluginSetConstructionInfo constructionInfo)
         {
             Type = type;
             Ancestors = ImmutableArray.Create(
@@ -39,12 +49,20 @@ namespace Stl.Plugins.Metadata
             CastableTo = ImmutableHashSet.Create(
                 Ancestors.AddRange(Interfaces).Add(type).ToArray());
             Capabilities = ImmutableDictionary<string, object>.Empty;
+            Dependencies = ImmutableHashSet<TypeRef>.Empty;
 
-            if (typeof(IHasCapabilities).IsAssignableFrom(type)) {
-                var tmpPlugin = pluginFactory.Create(type);
-                if (tmpPlugin is IHasCapabilities hc)
-                    Capabilities = hc.Capabilities;
-            }
+            var tmpPlugin = constructionInfo.TemporaryPluginFactory.Create(type);
+            if (tmpPlugin is IHasCapabilities hc)
+                Capabilities = hc.Capabilities;
+            if (tmpPlugin is IHasDependencies hd)
+                Dependencies = hd.Dependencies.Select(t => (TypeRef) t).ToImmutableHashSet();
+            
+            var assemblyDependencies = constructionInfo.AssemblyDependencies[type.Assembly];
+            AllDependencies = constructionInfo.Plugins
+                .Where(p => p != type && assemblyDependencies.Contains(p.Assembly))
+                .Select(t => (TypeRef) t)
+                .Concat(Dependencies)
+                .ToImmutableHashSet();
         }
 
         public override string ToString() => $"{GetType().Name}({Type})";

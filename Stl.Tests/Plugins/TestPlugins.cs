@@ -26,11 +26,12 @@ namespace Stl.Tests.Plugins
         public virtual string GetName() => GetType().Name;
     }
 
-    public class TestPlugin1 : TestPlugin
+    public class TestPlugin1 : TestPlugin, IHasDependencies
     {
+        public IEnumerable<Type> Dependencies { get; } = new [] { typeof(TestPlugin2) };
     }
     
-    public class TestPlugin2 : TestPlugin1, ITestPluginEx, IHasCapabilities
+    public class TestPlugin2 : TestPlugin, ITestPluginEx, IHasCapabilities
     {
         public virtual string GetVersion() => "1.0";
         public ImmutableDictionary<string, object> Capabilities { get; } =

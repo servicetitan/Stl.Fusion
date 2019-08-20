@@ -1,10 +1,14 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using Concurrent.FastReflection.NetStandard;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Serilog;
+using Stl.Caching;
 using Stl.Plugins;
+using Stl.Reflection;
 using Stl.Testing;
 using Xunit;
 using Xunit.Abstractions;
@@ -22,26 +26,45 @@ namespace Stl.Tests.Plugins
             var log = TestLogger.New(writer);
             var loggerFactory = new LoggerFactory().AddSerilog(log);
 
-            // PluginFinder
-            var pluginFinderLogger = loggerFactory.CreateLogger<PluginFinder>();
-            var pluginFinder = new PluginFinder(pluginFinderLogger);
+            RunCombinedTestPass(loggerFactory, true);
+            writer.GetContentAndClear().Should().ContainAll("populating");
+            RunCombinedTestPass(loggerFactory);
+            writer.GetContentAndClear().Should().ContainAll("Cached plugin set info found");
+        }
+
+        private void RunCombinedTestPass(ILoggerFactory loggerFactory, bool mustClearCache = false)
+        { 
+            var logger = loggerFactory.CreateLogger<PluginFinder>();
+            var pluginFinder = new PluginFinder(logger);
+            if (mustClearCache) {
+                var fsc = (FileSystemCache<string, string>) pluginFinder.Cache;
+                fsc.Clear();
+            }
+
             var pluginSetInfo = pluginFinder.FindPlugins();
             pluginSetInfo.Plugins.Count.Should().Be(2);
-            
+
             // Capabilities extraction
-            pluginSetInfo.Plugins[typeof(TestPlugin1)].Capabilities.Count.Should().Be(0);
+            var testPlugin1Caps = pluginSetInfo.Plugins[typeof(TestPlugin1)].Capabilities;
+            testPlugin1Caps.Count.Should().Be(0);
             var testPlugin2Caps = pluginSetInfo.Plugins[typeof(TestPlugin2)].Capabilities;
             testPlugin2Caps.Count.Should().Be(2);
             testPlugin2Caps.GetValueOrDefault("Client").Should().Be(true);
             testPlugin2Caps.GetValueOrDefault("Server").Should().Be(false);
 
+            // Dependencies extraction
+            var testPlugin1Deps = pluginSetInfo.Plugins[typeof(TestPlugin1)].AllDependencies;
+            testPlugin1Deps.Should().BeEquivalentTo((TypeRef) typeof(TestPlugin2));
+            var testPlugin2Deps = pluginSetInfo.Plugins[typeof(TestPlugin2)].AllDependencies;
+            testPlugin2Deps.Count.Should().Be(0);
+
             var containerBuilder = new PluginContainerBuilder() {
                 Configuration = new PluginContainerConfiguration(
-                    pluginSetInfo, 
-                    typeof(ITestPlugin), typeof(ITestPluginEx)), 
+                    pluginSetInfo,
+                    typeof(ITestPlugin), typeof(ITestPluginEx)),
             };
             var services = containerBuilder.BuildContainer();
-            
+
             // GetPlugins -- simple form (all plugins)
             var testPlugins = services.GetPlugins<ITestPlugin>().ToArray();
             testPlugins.Length.Should().Be(2);
@@ -64,13 +87,6 @@ namespace Stl.Tests.Plugins
                 .Should().BeEquivalentTo("TestPlugin2");
             services.GetPlugins<ITestPlugin>(_ => false).Count().Should().Be(0);
             services.GetPlugins<ITestPlugin>(_ => true).Count().Should().Be(2);
-
-            // Caching of PluginSetInfo
-            writer.Clear();
-            var pluginFinder2 = new PluginFinder(pluginFinderLogger);
-            var pluginSetInfo2 = pluginFinder2.FindPlugins();
-            pluginSetInfo2.Plugins.Count.Should().Be(2);
-            writer.GetContentAndClear().Should().ContainAll("Cached plugin set info found");
         }
     }
 }
