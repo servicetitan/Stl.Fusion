@@ -6,6 +6,7 @@ namespace Stl.Extensibility
     public interface ICallChain<TState> : IDisposable
     {
         TState State { get; set; }
+        int Position { get; }
         void InvokeNext();
     }
     
@@ -13,6 +14,7 @@ namespace Stl.Extensibility
     {
         public IEnumerator<Action<ICallChain<TState>>>? Tail { get; private set; }
         public TState State { get; set; }
+        public int Position { get; private set; }
 
         public CallChain(IEnumerable<Action<ICallChain<TState>>> sequence, TState initialState)
             : this(sequence.GetEnumerator(), initialState) 
@@ -36,6 +38,7 @@ namespace Stl.Extensibility
             var tail = Tail;
             if (tail == null)
                 return;
+            Position++;
             if (!tail.MoveNext()) {
                 tail.Dispose();
                 Tail = null;
@@ -48,18 +51,19 @@ namespace Stl.Extensibility
     public class CallChain<T, TState> : ICallChain<TState>
     {
         public IEnumerator<T>? Tail { get; private set; }
-        public Action<T, ICallChain<TState>> Handler { get; }
         public TState State { get; set; }
+        public Action<T, ICallChain<TState>> Handler { get; }
+        public int Position { get; private set; }
 
-        public CallChain(IEnumerable<T> sequence, Action<T, ICallChain<TState>> handler, TState initialState)
-            : this(sequence.GetEnumerator(), handler, initialState) 
+        public CallChain(IEnumerable<T> sequence, TState initialState, Action<T, ICallChain<TState>> handler)
+            : this(sequence.GetEnumerator(), initialState, handler) 
         { }
 
-        public CallChain(IEnumerator<T> tail, Action<T, ICallChain<TState>> handler, TState initialState)
+        public CallChain(IEnumerator<T> tail, TState initialState, Action<T, ICallChain<TState>> handler)
         {
             Tail = tail;
-            Handler = handler;
             State = initialState;
+            Handler = handler;
         }
 
         public void Dispose()
@@ -74,6 +78,7 @@ namespace Stl.Extensibility
             var tail = Tail;
             if (tail == null)
                 return;
+            Position++;
             if (!tail.MoveNext()) {
                 tail.Dispose();
                 Tail = null;

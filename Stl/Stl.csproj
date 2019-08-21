@@ -23,6 +23,7 @@
     <PackageReference Include="Enums.NET" Version="2.3.2" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.0.0-preview8.19405.4" />
     <PackageReference Include="morelinq" Version="3.2.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="3.0.0-preview8.19405.4" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3-beta1" />
     <PackageReference Include="Optional" Version="5.0.0-alpha" />
     <PackageReference Include="System.CommandLine.Experimental" Version="0.3.0-alpha.19405.1" />
