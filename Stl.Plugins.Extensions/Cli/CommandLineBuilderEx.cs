@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.CommandLine.Builder;
 using System.Linq;
 using Stl.Extensibility;
-using Stl.Plugins;
 
-namespace Stl.Bootstrap.Cli
+namespace Stl.Plugins.Extensions.Cli
 {
     public static class CommandLineBuilderEx
     {

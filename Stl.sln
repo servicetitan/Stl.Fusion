@@ -17,7 +17,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Plugins", "Stl.Plugins\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Experimental", "Stl.Experimental\Stl.Experimental.csproj", "{F2827F09-AD57-4EAA-8F5A-153121CCBDFD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Bootstrap", "Stl.Bootstrap\Stl.Bootstrap.csproj", "{A6C8E7D0-1659-4694-9B0E-505180C27476}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Plugins.Extensions", "Stl.Plugins.Extensions\Stl.Plugins.Extensions.csproj", "{A6C8E7D0-1659-4694-9B0E-505180C27476}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -72,13 +72,18 @@ namespace Stl.Extensibility
         public override string ToString() 
             => $"{GetType().Name}(Handler={Handler}), Tail=[{Tail.Length} item(s)]";
 
-        public override Task InvokeNextAsync(CancellationToken cancellationToken)
+        public override async Task InvokeNextAsync(CancellationToken cancellationToken)
         {
-            if (Tail.Length == 0)
-                return Task.CompletedTask;
-            var item = Tail.Span[0];
-            Tail = Tail.Slice(1); 
-            return Handler!.Invoke(item, (TSelf) this, cancellationToken);
+            // It's "while" (not "if") solely to make sure that if Handler
+            // somehow doesn't call InvokeNextAsync, it automatically happens
+            // later here (and in this case w/o recursion). I decided it's 
+            // safer to always "exhaust" the Tail here vs increasing a chance
+            // of investigating an issue that's really hard to find.
+            while (Tail.Length != 0) {
+                var item = Tail.Span[0];
+                Tail = Tail.Slice(1); 
+                await Handler!.Invoke(item, (TSelf) this, cancellationToken);
+            }
         }
     }
 
