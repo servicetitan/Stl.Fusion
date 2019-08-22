@@ -3,8 +3,6 @@ using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Invocation;
 using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
