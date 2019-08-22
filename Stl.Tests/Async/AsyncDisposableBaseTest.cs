@@ -29,11 +29,11 @@ namespace Stl.Tests.Async
         {
             AsyncDisposableWithDelay? copy = null;
             var task = Task.Run(async () => {
-                await Task.Delay(100);
+                await Task.Delay(200);
                 Assert.Equal(DisposalState.Disposing, copy!.DisposalState);
                 Out.WriteLine("Disposing check passed.");
             });
-            await using (var instance = new AsyncDisposableWithDelay(TimeSpan.FromMilliseconds(200))) {
+            await using (var instance = new AsyncDisposableWithDelay(TimeSpan.FromMilliseconds(400))) {
                 Assert.Equal(DisposalState.Active, instance.DisposalState);
                 Out.WriteLine("Active.");
                 copy = instance;
@@ -49,11 +49,11 @@ namespace Stl.Tests.Async
         {
             AsyncDisposableWithDelay? copy = null;
             var task = Task.Run(async () => {
-                await Task.Delay(100);
+                await Task.Delay(200);
                 Assert.Equal(DisposalState.Disposing, copy!.DisposalState);
                 Out.WriteLine("Disposing check 2 passed.");
             });
-            using (var instance = new AsyncDisposableWithDelay(TimeSpan.FromMilliseconds(200))) {
+            using (var instance = new AsyncDisposableWithDelay(TimeSpan.FromMilliseconds(400))) {
                 Assert.Equal(DisposalState.Active, instance.DisposalState);
                 Out.WriteLine("Active.");
                 copy = instance;
@@ -62,7 +62,7 @@ namespace Stl.Tests.Async
             Assert.Equal(DisposalState.Disposing, copy.DisposalState);
             Out.WriteLine("Disposing check 1 passed.");
             task.Wait();
-            Thread.Sleep(300);
+            Thread.Sleep(600);
             Assert.Equal(DisposalState.Disposed, copy.DisposalState);
             Out.WriteLine("Dispose completed.");
         }

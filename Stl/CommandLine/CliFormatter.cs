@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using Stl.Internal;
+using Stl.OS;
 
 namespace Stl.CommandLine 
 {
@@ -15,6 +16,10 @@ namespace Stl.CommandLine
     [Serializable]
     public class CliFormatter : ICliFormatter  
     {
+        // Workaround against BadImageFormatException in CliFormatter.TrySubstituteValue code
+        private static readonly Type CliEnumGenericType = 
+            new CliEnum<OSKind>().GetType().GetGenericTypeDefinition();
+
         public IFormatProvider FormatProvider { get; set; }
 
         public CliFormatter(IFormatProvider? formatProvider = null) 
@@ -50,13 +55,12 @@ namespace Stl.CommandLine
 
         protected virtual object? TrySubstituteValue(object? value) 
             => value switch {
-                null => (object?) null,
+                null => null,
                 bool b => new CliBool(b),
                 string s => new CliString(s),
-                // TODO: This is super slow -- fix this; for now it's better to use CliEnum<T> instead
                 Enum e => Activator.CreateInstance(
-                    typeof(CliEnum<>).MakeGenericType(e.GetType()), e),
-                _ => value,
+                    CliEnumGenericType.MakeGenericType(e.GetType()), e),
+                _ => value
             };
 
         protected virtual CliString FormatStructure(object value)

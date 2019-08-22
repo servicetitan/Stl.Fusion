@@ -16,28 +16,36 @@ namespace Stl.Caching
     {
         public override async ValueTask<Option<TValue>> TryGetAsync(TKey key, CancellationToken cancellationToken = default)
         {
-            await using var fileStream = OpenFile(GetFileName(key), false, cancellationToken);
-            var pairs = Deserialize(await GetTextAsync(fileStream, cancellationToken).ConfigureAwait(false));
-            return pairs?.GetOption(key) ?? default; 
+            try {
+                await using var fileStream = OpenFile(GetFileName(key), false, cancellationToken);
+                var pairs = Deserialize(await GetTextAsync(fileStream, cancellationToken).ConfigureAwait(false));
+                return pairs?.GetOption(key) ?? default;
+            }
+            catch (IOException) {
+                return default;
+            }
         }
 
         protected override async ValueTask SetAsync(TKey key, Option<TValue> value, CancellationToken cancellationToken = default)
         {
-            // The logic here is more complex than it seems to make sure the update is atomic,
-            // i.e. the file is locked for modifications between read & write operations.
-            var fileName = GetFileName(key);
-            var newText = (string?) null;
-            await using (var fileStream = OpenFile(fileName, true, cancellationToken)) {
-                var originalText = await GetTextAsync(fileStream, cancellationToken).ConfigureAwait(false);
-                var pairs = 
-                    Deserialize(originalText) 
-                    ?? new Dictionary<TKey, TValue>();
-                pairs.SetOption(key, value);
-                newText = Serialize(pairs);
-                await SetTextAsync(fileStream, newText, cancellationToken).ConfigureAwait(false);
+            try {
+                // The logic here is more complex than it seems to make sure the update is atomic,
+                // i.e. the file is locked for modifications between read & write operations.
+                var fileName = GetFileName(key);
+                var newText = (string?) null;
+                await using (var fileStream = OpenFile(fileName, true, cancellationToken)) {
+                    var originalText = await GetTextAsync(fileStream, cancellationToken).ConfigureAwait(false);
+                    var pairs = 
+                        Deserialize(originalText) 
+                        ?? new Dictionary<TKey, TValue>();
+                    pairs.SetOption(key, value);
+                    newText = Serialize(pairs);
+                    await SetTextAsync(fileStream, newText, cancellationToken).ConfigureAwait(false);
+                }
+                if (newText == null)
+                    File.Delete(fileName);
             }
-            if (newText == null)
-                File.Delete(fileName);
+            catch (IOException) {}
         }
 
         protected abstract string GetFileName(TKey key);
