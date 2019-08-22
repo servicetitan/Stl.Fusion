@@ -25,7 +25,7 @@ namespace Stl.Plugins.Internal
         public object UntypedInstance => Instance;
 
         public PluginInstanceHandle(
-            IPluginContainerConfiguration configuration, 
+            IPluginConfiguration configuration, 
             IPluginFactory factory)
         {
             var implementations = configuration.Implementations;

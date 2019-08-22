@@ -6,27 +6,27 @@ using Stl.Reflection;
 
 namespace Stl.Plugins 
 {
-    public interface IPluginContainerConfiguration
+    public interface IPluginConfiguration
     {
         PluginSetInfo Implementations { get; }
         ImmutableArray<TypeRef> Interfaces { get; }
     }
 
-    public class PluginContainerConfiguration : IPluginContainerConfiguration
+    public class PluginConfiguration : IPluginConfiguration
     {
-        public static PluginContainerConfiguration Empty { get; } =
-            new PluginContainerConfiguration(new PluginSetInfo(Enumerable.Empty<Type>()));
+        public static PluginConfiguration Empty { get; } =
+            new PluginConfiguration(new PluginSetInfo(Enumerable.Empty<Type>()));
 
         public PluginSetInfo Implementations { get; }
         public ImmutableArray<TypeRef> Interfaces { get; }
 
-        public PluginContainerConfiguration(PluginSetInfo implementations, ImmutableArray<TypeRef> interfaces)
+        public PluginConfiguration(PluginSetInfo implementations, ImmutableArray<TypeRef> interfaces)
         {
             Implementations = implementations;
             Interfaces = interfaces;
         }
 
-        public PluginContainerConfiguration(PluginSetInfo implementations, params TypeRef[] interfaces)
+        public PluginConfiguration(PluginSetInfo implementations, params TypeRef[] interfaces)
         {
             Implementations = implementations;
             Interfaces = ImmutableArray.Create(interfaces);

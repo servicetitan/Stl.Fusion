@@ -22,14 +22,14 @@ namespace Stl.Plugins
     public class PluginHandle<TPlugin> : IPluginHandle<TPlugin>
     {
         private readonly Lazy<TPlugin[]> _lazyInstances;
-        protected IPluginContainerConfiguration Configuration { get; }
+        protected IPluginConfiguration Configuration { get; }
         protected IPluginCache PluginCache { get; }
 
         public IEnumerable<object> UntypedInstances => Instances.Cast<object>();
         public IEnumerable<TPlugin> Instances => _lazyInstances.Value;
 
         public PluginHandle(
-            IPluginContainerConfiguration configuration, 
+            IPluginConfiguration configuration, 
             IPluginCache pluginCache)
         {
             Configuration = configuration;

@@ -23,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Stl.Bootstrap\Stl.Bootstrap.csproj" />
     <ProjectReference Include="..\Stl\Stl.csproj" />
     <ProjectReference Include="..\Stl.Experimental\Stl.Experimental.csproj" />
     <ProjectReference Include="..\Stl.Plugins\Stl.Plugins.csproj" />

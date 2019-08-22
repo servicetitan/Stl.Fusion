@@ -72,8 +72,8 @@ namespace Stl.Plugins.Metadata
                 .OrderByDependency(a => 
                     ci.AssemblyDependencies.GetValueOrDefault(a) ?? Enumerable.Empty<Assembly>())
                 .ToArray();
-            ci.TemporaryPluginFactory = new PluginContainerBuilder()
-                .BuildContainer()
+            ci.TemporaryPluginFactory = new PluginHostBuilder()
+                .Build()
                 .GetService<IPluginFactory>();
 
             var dPlugins = new Dictionary<TypeRef, PluginInfo>();

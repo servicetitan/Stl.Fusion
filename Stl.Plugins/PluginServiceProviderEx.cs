@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Plugins.Internal;
 using Stl.Plugins.Metadata;
-using Stl.Reflection;
 
 namespace Stl.Plugins
 {
-    public static class PluginContainerEx
+    public static class PluginServiceProviderEx
     {
         internal static object GetPluginInstance(
             this IServiceProvider services, Type implementationType) 
