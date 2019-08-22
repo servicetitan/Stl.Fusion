@@ -17,90 +17,52 @@ namespace Stl.Tests.Extensibility
         public CallChainTest(ITestOutputHelper @out) : base(@out) { }
 
         [Fact]
-        public void DelegateChainTest()
-        {
-            var actions = new[] {
-                (Action<ICallChain<int>>) (c => {
-                    c.State.Should().Be(0);
-                    c.State += 1;
-                    c.State.Should().Be(1);
-                    c.InvokeNext();
-                }),
-                c => {
-                    c.State.Should().Be(1);
-                    c.State += 2;
-                    c.State.Should().Be(3);
-                    c.InvokeNext();
-                },
-            };
-            actions.ChainInvoke(0).Should().Be(3);
-        }
-
-        [Fact]
         public void SimpleChainTest()
         {
-            void Add(int n, ICallChain<int> chain)
+            void Add(int n, ChainInvocation<int, int> chain)
             {
                 chain.State += n;
                 chain.InvokeNext();
             }
-            new int[] {}.ChainInvoke(0, Add).Should().Be(0);
-            new [] {10}.ChainInvoke(1, Add).Should().Be(11);
-            new[] {1, 2, 3}.ChainInvoke(0, Add).Should().Be(6);
+            ChainInvocation.New(new int[0], 0, Add).Invoke().State.Should().Be(0);
+            ChainInvocation.New(new [] {10}, 1, Add).Invoke().State.Should().Be(11);
+            ChainInvocation.New(new [] {1, 2, 3}, 0, Add).Invoke().State.Should().Be(6);
         }
         
         [Fact]
         public void StatelessChainTest()
         {
-            void Increment(Box<int> box, ICallChain<Unit> chain)
+            void Increment(Box<int> box, ChainInvocation<Box<int>, Unit> chain)
             {
                 box.Value += 1;
                 chain.InvokeNext();
             }
             const int chainLength = 10; 
             var boxes = Enumerable.Range(0, chainLength).Select(i => Box.New(0)).ToArray();
-            boxes.ChainInvoke(Increment);
+            ChainInvocation.New(boxes, Increment).Invoke();
             boxes.Sum(b => b.Value).Should().Be(chainLength);
         }
         
         [Fact]
-        public async Task DelegateChainTestAsync()
-        {
-            var actions = new[] {
-                (Func<IAsyncCallChain<int>, CancellationToken, Task>) (async (c, ct) => {
-                    c.State.Should().Be(0);
-                    c.State += 1;
-                    c.State.Should().Be(1);
-                    await c.InvokeNextAsync(ct);
-                }),
-                async (c, ct) => {
-                    c.State.Should().Be(1);
-                    c.State += 2;
-                    c.State.Should().Be(3);
-                    await c.InvokeNextAsync(ct);
-                },
-            };
-            (await actions.ChainInvokeAsync(0)).Should().Be(3);
-        }
-
-        [Fact]
         public async Task SimpleChainTestAsync()
         {
-            async Task AddAsync(int n, IAsyncCallChain<int> chain, CancellationToken ct)
+            async Task AddAsync(int n, AsyncChainInvocation<int, int> chain, CancellationToken ct)
             {
                 chain.State += n;
                 await chain.InvokeNextAsync(ct);
             }
-            (await new int[] {}.ChainInvokeAsync(0, AddAsync)).Should().Be(0);
-            (await new [] {10}.ChainInvokeAsync(1, AddAsync)).Should().Be(11);
-            (await new[] {1, 2, 3}.ChainInvokeAsync(0, AddAsync)).Should().Be(6);
+            (await AsyncChainInvocation.New(new int[0], 0, AddAsync).InvokeAsync()).State
+                .Should().Be(0);
+            (await AsyncChainInvocation.New(new [] {10}, 1, AddAsync).InvokeAsync()).State
+                .Should().Be(11);
+            (await AsyncChainInvocation.New(new [] {1, 2, 3}, 0, AddAsync).InvokeAsync()).State
+                .Should().Be(6);
         }
-        
         
         [Fact]
         public async Task StatelessChainTestAsync()
         {
-            async Task IncrementAsync(Box<int> box, IAsyncCallChain<Unit> chain, CancellationToken ct)
+            async Task IncrementAsync(Box<int> box, AsyncChainInvocation<Box<int>, Unit> chain, CancellationToken ct)
             {
                 box.Value += 1;
                 await Task.Yield();
@@ -112,9 +74,8 @@ namespace Stl.Tests.Extensibility
             // even for very long chains
             const int chainLength = 100000; 
             var boxes = Enumerable.Range(0, chainLength).Select(i => Box.New(0)).ToArray();
-            await boxes.ChainInvokeAsync(IncrementAsync);
+            await AsyncChainInvocation.New(boxes, IncrementAsync).InvokeAsync();
             boxes.Sum(b => b.Value).Should().Be(chainLength);
         }
-        
     }
 }

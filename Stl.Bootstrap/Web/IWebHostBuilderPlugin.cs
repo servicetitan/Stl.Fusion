@@ -1,17 +1,16 @@
 using Microsoft.AspNetCore.Hosting;
 using Stl.Extensibility;
-using Stl.Plugins;
 
 namespace Stl.Bootstrap.Web 
 {
     public interface IWebHostBuilderPlugin
     {
-        IWebHostBuilder Configure(ICallChain<WebHostBuilderPluginConfigureInvocation> chain);
+        void Configure(WebHostBuilderPluginConfigureInvocation invocation);
     }
 
-    public class WebHostBuilderPluginConfigureInvocation : 
-        PluginInvocation<IWebHostBuilderPlugin, WebHostBuilderPluginConfigureInvocation>
+    public class WebHostBuilderPluginConfigureInvocation 
+        : ChainInvocationBase<IWebHostBuilderPlugin, WebHostBuilderPluginConfigureInvocation>
     {
-        public IWebHostBuilder Builder { get; set; }
+        public IWebHostBuilder Builder { get; set; } = default!;
     }
 }

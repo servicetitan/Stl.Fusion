@@ -1,9 +1,7 @@
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.AspNetCore.Hosting;
 using Stl.Extensibility;
-using Stl.Plugins;
 
 namespace Stl.Bootstrap.Web
 {
@@ -11,14 +9,11 @@ namespace Stl.Bootstrap.Web
     {
         public static IWebHostBuilder UsePlugins(
             this IWebHostBuilder builder,
-            IEnumerable<IWebHostBuilderPlugin> plugins)
-        {
-            var invocation =  new WebHostBuilderPluginConfigureInvocation() {
+            IEnumerable<IWebHostBuilderPlugin> plugins) 
+            => new WebHostBuilderPluginConfigureInvocation() {
+                Tail = plugins.ToArray(),
+                Handler = (plugin, invocation1) => plugin.Configure(invocation1),
                 Builder = builder,
-                Plugins = plugins.ToImmutableArray(),
-            };
-            invocation.Invoke((plugin, chain) => plugin.Configure(chain));
-            return invocation.Builder;
-        }
+            }.Invoke().Builder;
     }
 }

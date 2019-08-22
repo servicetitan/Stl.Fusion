@@ -2,6 +2,7 @@ using System;
 using System.Collections.Immutable;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -35,11 +36,12 @@ namespace Stl.Bootstrap.Cli
 
         public async Task<int> RunAsync(string[] args)
         {
-            var invocation =  new CliHostPluginConfigureInvocation() {
-                Plugins = Plugins.GetPlugins<ICliHostPlugin>().ToImmutableArray(),
+            var invocation = new CliHostPluginConfigureInvocation() {
+                Tail = Plugins.GetPlugins<ICliHostPlugin>().ToArray(),
+                Handler = (plugin, invocation1) => plugin.Configure(invocation1) 
             };
-            invocation.Invoke((plugin, chain) => plugin.Configure(chain));
-            var result = await invocation.RootCommand.InvokeAsync(args, CoreServices.GetService<IConsole>());
+            var rootCommand = invocation.Invoke().RootCommand;
+            var result = await rootCommand.InvokeAsync(args, CoreServices.GetService<IConsole>());
             return result;
         }
 
