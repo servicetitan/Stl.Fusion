@@ -10,43 +10,59 @@ namespace Stl.Extensibility
         public static Invoker<T, TState> New<T, TState>(
             ReadOnlyMemory<T> tail,
             TState initialState,
-            Action<T, Invoker<T, TState>> handler) 
+            Action<T, Invoker<T, TState>> handler,
+            InvocationOrder order = InvocationOrder.Straight,
+            Action<Exception, T, Invoker<T, TState>>? errorHandler = null)
             => new Invoker<T, TState>() {
                 Tail = tail,
-                Handler = handler,
                 State = initialState,
+                Handler = handler,
+                Order = order,
+                ErrorHandler = errorHandler,
             };
 
         public static Invoker<T, Unit> New<T>(
             ReadOnlyMemory<T> tail,
-            Action<T, Invoker<T, Unit>> handler) 
+            Action<T, Invoker<T, Unit>> handler, 
+            InvocationOrder order = InvocationOrder.Straight,
+            Action<Exception, T, Invoker<T, Unit>>? errorHandler = null)
             => new Invoker<T, Unit>() {
                 Tail = tail,
                 Handler = handler,
+                Order = order,
+                ErrorHandler = errorHandler,
             };
 
         public static Invoker<T, TState> New<T, TState>(
             T[] tail,
             TState initialState,
-            Action<T, Invoker<T, TState>> handler) 
+            Action<T, Invoker<T, TState>> handler, 
+            InvocationOrder order = InvocationOrder.Straight,
+            Action<Exception, T, Invoker<T, TState>>? errorHandler = null)
             => new Invoker<T, TState>() {
                 Tail = tail,
-                Handler = handler,
                 State = initialState,
+                Handler = handler,
+                Order = order,
+                ErrorHandler = errorHandler,
             };
 
         public static Invoker<T, Unit> New<T>(
             T[] tail,
-            Action<T, Invoker<T, Unit>> handler) 
+            Action<T, Invoker<T, Unit>> handler, 
+            InvocationOrder order = InvocationOrder.Straight,
+            Action<Exception, T, Invoker<T, Unit>>? errorHandler = null)
             => new Invoker<T, Unit>() {
                 Tail = tail,
                 Handler = handler,
+                Order = order,
+                ErrorHandler = errorHandler,
             };
 
-        public static TSelf Invoke<TSelf>(this TSelf self)
+        public static TSelf Run<TSelf>(this TSelf self)
             where TSelf : InvokerBase
         {
-            self.Run();
+            self.Invoke();
             return self;
         }
     }
@@ -66,7 +82,7 @@ namespace Stl.Extensibility
         public bool IsRunning { get; protected set; }
         public abstract bool HasErrorHandler { get; }
 
-        public abstract void Run();
+        public abstract void Invoke();
 
         protected void AssertNotRunning()
         {
@@ -107,7 +123,7 @@ namespace Stl.Extensibility
         public override string ToString() 
             => $"{GetType().Name}(Handler={Handler}), Tail=[{Tail.Length} item(s)]";
 
-        public override void Run()
+        public override void Invoke()
         {
             var oldIsRunning = IsRunning;
             IsRunning = true;

@@ -12,45 +12,61 @@ namespace Stl.Extensibility
         public static AsyncInvoker<T, TState> New<T, TState>(
             ReadOnlyMemory<T> tail,
             TState initialState,
-            Func<T, AsyncInvoker<T, TState>, CancellationToken, Task> handler) 
+            Func<T, AsyncInvoker<T, TState>, CancellationToken, Task> handler, 
+            InvocationOrder order = InvocationOrder.Straight,
+            Action<Exception, T, AsyncInvoker<T, TState>>? errorHandler = null)
             => new AsyncInvoker<T, TState>() {
                 Tail = tail,
-                Handler = handler,
                 State = initialState,
+                Handler = handler,
+                Order = order,
+                ErrorHandler = errorHandler,
             };
 
         public static AsyncInvoker<T, Unit> New<T>(
             ReadOnlyMemory<T> tail,
-            Func<T, AsyncInvoker<T, Unit>, CancellationToken, Task> handler) 
+            Func<T, AsyncInvoker<T, Unit>, CancellationToken, Task> handler, 
+            InvocationOrder order = InvocationOrder.Straight,
+            Action<Exception, T, AsyncInvoker<T, Unit>>? errorHandler = null)
             => new AsyncInvoker<T, Unit>() {
                 Tail = tail,
                 Handler = handler,
+                Order = order,
+                ErrorHandler = errorHandler,
             };
 
         public static AsyncInvoker<T, TState> New<T, TState>(
             T[] tail,
             TState initialState,
-            Func<T, AsyncInvoker<T, TState>, CancellationToken, Task> handler) 
+            Func<T, AsyncInvoker<T, TState>, CancellationToken, Task> handler,
+            InvocationOrder order = InvocationOrder.Straight,
+            Action<Exception, T, AsyncInvoker<T, TState>>? errorHandler = null)
             => new AsyncInvoker<T, TState>() {
                 Tail = tail,
-                Handler = handler,
                 State = initialState,
+                Handler = handler,
+                Order = order,
+                ErrorHandler = errorHandler,
             };
 
         public static AsyncInvoker<T, Unit> New<T>(
             T[] tail,
-            Func<T, AsyncInvoker<T, Unit>, CancellationToken, Task> handler) 
+            Func<T, AsyncInvoker<T, Unit>, CancellationToken, Task> handler, 
+            InvocationOrder order = InvocationOrder.Straight,
+            Action<Exception, T, AsyncInvoker<T, Unit>>? errorHandler = null)
             => new AsyncInvoker<T, Unit>() {
                 Tail = tail,
                 Handler = handler,
+                Order = order,
+                ErrorHandler = errorHandler,
             };
 
-        public static async Task<TSelf> InvokeAsync<TSelf>(
+        public static async Task<TSelf> RunAsync<TSelf>(
             this TSelf self, 
             CancellationToken cancellationToken = default)
             where TSelf : AsyncInvokerBase
         {
-            await self.RunAsync(cancellationToken);
+            await self.InvokeAsync(cancellationToken);
             return self;
         }
     }
@@ -70,7 +86,7 @@ namespace Stl.Extensibility
         public bool IsRunning { get; protected set; }
         public abstract bool HasErrorHandler { get; }
 
-        public abstract Task RunAsync(CancellationToken cancellationToken);
+        public abstract Task InvokeAsync(CancellationToken cancellationToken);
 
         protected void AssertNotRunning()
         {
@@ -111,7 +127,7 @@ namespace Stl.Extensibility
         public override string ToString() 
             => $"{GetType().Name}(Handler={Handler}), Tail=[{Tail.Length} item(s)]";
 
-        public override async Task RunAsync(CancellationToken cancellationToken)
+        public override async Task InvokeAsync(CancellationToken cancellationToken)
         {
             var oldIsRunning = IsRunning;
             IsRunning = true;

@@ -16,7 +16,7 @@ namespace Stl.Plugins.Extensions.Web
                 Tail = plugins.Cast<IWebHostPlugin>().Reverse().ToArray(),
                 Handler = (plugin, invocation1) => plugin.Use(invocation1),
                 Builder = builder,
-            }.Invoke().Builder;
+            }.Run().Builder;
 
         public static IWebHostBuilder UsePlugins<TPlugin>(
             this IWebHostBuilder builder,

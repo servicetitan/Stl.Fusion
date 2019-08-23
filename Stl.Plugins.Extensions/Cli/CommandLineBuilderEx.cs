@@ -16,7 +16,7 @@ namespace Stl.Plugins.Extensions.Cli
                 Tail = plugins.Cast<ICliPlugin>().Reverse().ToArray(),
                 Handler = (plugin, invocation1) => plugin.Use(invocation1),
                 Builder = builder,
-            }.Invoke().Builder;
+            }.Run().Builder;
 
         public static CommandLineBuilder UsePlugins<TPlugin>(
             this CommandLineBuilder builder,
