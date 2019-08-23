@@ -8,7 +8,7 @@ namespace Stl.Plugins.Extensions.Web
         void Use(WebHostPluginInvocation invocation);
     }
 
-    public class WebHostPluginInvocation : ChainInvocationBase<IWebHostPlugin, WebHostPluginInvocation>
+    public class WebHostPluginInvocation : InvokerBase<IWebHostPlugin, WebHostPluginInvocation>
     {
         public IWebHostBuilder Builder { get; set; } = default!;
     }

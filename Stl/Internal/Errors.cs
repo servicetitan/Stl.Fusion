@@ -5,6 +5,9 @@ namespace Stl.Internal
 {
     public static class Errors
     {
+        public static Exception InvokerIsAlreadyRunning() =>
+            new InvalidOperationException("Can't perform this action while invocation is already in progress.");
+
         public static Exception AlreadyLocked() =>
             new InvalidOperationException($"The lock is already acquired by one of callers of the current method.");
 

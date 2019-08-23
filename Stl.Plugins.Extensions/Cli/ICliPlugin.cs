@@ -8,7 +8,7 @@ namespace Stl.Plugins.Extensions.Cli
         void Use(CliPluginInvocation invocation);
     }
 
-    public class CliPluginInvocation : ChainInvocationBase<ICliPlugin, CliPluginInvocation>
+    public class CliPluginInvocation : InvokerBase<ICliPlugin, CliPluginInvocation>
     {
         public CommandLineBuilder Builder { get; set; } = default!;
     }
