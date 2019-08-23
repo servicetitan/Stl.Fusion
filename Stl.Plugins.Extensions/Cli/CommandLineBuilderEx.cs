@@ -13,7 +13,8 @@ namespace Stl.Plugins.Extensions.Cli
             IEnumerable<TPlugin> plugins)
             where TPlugin : ICliPlugin
             => new CliPluginInvocation() {
-                Tail = plugins.Cast<ICliPlugin>().Reverse().ToArray(),
+                Tail = plugins.Cast<ICliPlugin>().ToArray(),
+                Order = InvocationOrder.Reverse,
                 Handler = (plugin, invocation1) => plugin.Use(invocation1),
                 Builder = builder,
             }.Run().Builder;

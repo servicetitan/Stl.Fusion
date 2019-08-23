@@ -13,7 +13,8 @@ namespace Stl.Plugins.Extensions.Web
             IEnumerable<TPlugin> plugins)
             where TPlugin : IWebHostPlugin
             => new WebHostPluginInvocation() {
-                Tail = plugins.Cast<IWebHostPlugin>().Reverse().ToArray(),
+                Tail = plugins.Cast<IWebHostPlugin>().ToArray(),
+                Order = InvocationOrder.Reverse,
                 Handler = (plugin, invocation1) => plugin.Use(invocation1),
                 Builder = builder,
             }.Run().Builder;
