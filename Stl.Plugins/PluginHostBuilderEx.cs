@@ -5,36 +5,36 @@ namespace Stl.Plugins
 {
     public static class PluginHostBuilderEx
     {
-        public static THost ConfigureServices<THost>(this THost host, 
+        public static TBuilder ConfigureServices<TBuilder>(this TBuilder builder, 
             Func<IServiceCollection, IServiceCollection> configurator)
-            where THost : IPluginHostBuilder
+            where TBuilder : IPluginHostBuilder
         {
-            host.Services = configurator.Invoke(host.Services);
-            return host;
+            builder.Services = configurator.Invoke(builder.Services);
+            return builder;
         }
         
-        public static THost UseDefaultServices<THost>(this THost host)
-            where THost : IPluginHostBuilder
+        public static TBuilder UseDefaultServices<TBuilder>(this TBuilder builder)
+            where TBuilder : IPluginHostBuilder
         {
-            host.Implementation.UseDefaultServices();
-            return host;
+            builder.Implementation.UseDefaultServices();
+            return builder;
         }
         
-        public static THost UsePluginConfiguration<THost>(this THost host, 
+        public static TBuilder UsePluginConfiguration<TBuilder>(this TBuilder builder, 
             IPluginConfiguration pluginConfiguration)
-            where THost : IPluginHostBuilder
+            where TBuilder : IPluginHostBuilder
         {
-            host.PluginConfiguration = pluginConfiguration;
-            return host;
+            builder.PluginConfiguration = pluginConfiguration;
+            return builder;
         }
         
-        public static THost AddPluginTypes<THost>(this THost host, 
+        public static TBuilder AddPluginTypes<TBuilder>(this TBuilder builder, 
             params Type[] pluginTypes)
-            where THost : IPluginHostBuilder
+            where TBuilder : IPluginHostBuilder
         {
             foreach (var pluginType in pluginTypes)
-                host.PluginTypes.Add(pluginType);
-            return host;
+                builder.PluginTypes.Add(pluginType);
+            return builder;
         }
     }
 }
