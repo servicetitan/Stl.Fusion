@@ -17,10 +17,9 @@ namespace Stl.Async
         // A safer version of the previous method relying on a secondary token
         public static async Task ToTask(this CancellationToken token, CancellationToken cancellationToken)
         {
-            using (var lts = CancellationTokenSource.CreateLinkedTokenSource(token, cancellationToken)) {
-                await lts.Token.ToTask(false).ConfigureAwait(false);
-                cancellationToken.ThrowIfCancellationRequested();
-            }
+            using var lts = CancellationTokenSource.CreateLinkedTokenSource(token, cancellationToken);
+            await lts.Token.ToTask(false).ConfigureAwait(false);
+            cancellationToken.ThrowIfCancellationRequested();
         }
     }
 }
