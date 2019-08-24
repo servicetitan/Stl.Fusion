@@ -74,9 +74,7 @@ namespace Stl.Tests.Plugins
             testPlugin2Deps.Count.Should().Be(0);
 
             var host = new PluginHostBuilder()
-                .UsePluginConfiguration(new PluginConfiguration(
-                    pluginSetInfo,
-                    typeof(ITestPlugin), typeof(ITestPluginEx)))
+                .UsePluginConfiguration(new PluginConfiguration(pluginSetInfo))
                 .Build();
 
             RunPluginHostTests(host);

@@ -62,8 +62,7 @@ namespace Stl.Plugins
                     Services.AddSingleton<IPluginConfiguration>(services => {
                         var pluginFinder = services.GetService<IPluginFinder>();
                         var pluginSetInfo = pluginFinder.FindPlugins();
-                        var pluginTypes = PluginTypes.Select(t => (TypeRef) t).ToArray();
-                        return new PluginConfiguration(pluginSetInfo, pluginTypes);
+                        return new PluginConfiguration(pluginSetInfo);
                     });
                 }
             }

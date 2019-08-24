@@ -26,14 +26,12 @@ namespace Stl.Plugins
             Interfaces = interfaces;
         }
 
-        public PluginConfiguration(PluginSetInfo implementations, params TypeRef[] interfaces)
-        {
-            Implementations = implementations;
-            Interfaces = ImmutableArray.Create(interfaces);
-        }
+        public PluginConfiguration(PluginSetInfo implementations)
+            : this(implementations, implementations.TypesByBaseType.Keys.ToImmutableArray())
+        { }
 
         public override string ToString() => $"{GetType().Name} " +
-            $"of [{Interfaces.ToDelimitedString()}] plugin interfaces(s) " +
-            $"and {Implementations.Plugins} implementation(s)";
+            $"of {Interfaces.Length} plugin interfaces(s) " +
+            $"and {Implementations.Plugins.Count} implementation(s)";
     }
 }

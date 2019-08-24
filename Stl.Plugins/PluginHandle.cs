@@ -34,9 +34,6 @@ namespace Stl.Plugins
         {
             Configuration = configuration;
             PluginCache = pluginCache;
-            var pluginType = typeof(TPlugin);
-            if (!configuration.Interfaces.Contains(pluginType))
-                throw Errors.UnknownPluginType(pluginType.Name);
             _lazyInstances = new Lazy<TPlugin[]>(
                 () => GetInstances(_ => true).ToArray(), 
                 LazyThreadSafetyMode.ExecutionAndPublication);
@@ -44,6 +41,8 @@ namespace Stl.Plugins
 
         public IEnumerable<object> GetUntypedInstances(Func<PluginInfo, bool> predicate)
         {
+            if (!Configuration.Interfaces.Contains(typeof(TPlugin)))
+                return Enumerable.Empty<object>();
             var pluginSetInfo = Configuration.Implementations;
             return (
                 from pluginImplType in 

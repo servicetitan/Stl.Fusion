@@ -8,7 +8,7 @@ namespace Stl.Async
         {
             if (source.IsCanceled)
                 target.SetCanceled();
-            else if (source.IsFaulted)
+            else if (source.Exception != null)
                 target.SetException(source.Exception);
             else
                 target.SetResult(source.Result);
@@ -18,7 +18,7 @@ namespace Stl.Async
         {
             if (source.IsCanceled)
                 target.TrySetCanceled();
-            else if (source.IsFaulted)
+            else if (source.Exception != null)
                 target.TrySetException(source.Exception);
             else
                 target.TrySetResult(source.Result);
