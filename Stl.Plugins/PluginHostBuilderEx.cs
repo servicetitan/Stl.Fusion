@@ -1,5 +1,6 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
+using Stl.Plugins.Metadata;
 
 namespace Stl.Plugins 
 {
@@ -20,11 +21,11 @@ namespace Stl.Plugins
             return builder;
         }
         
-        public static TBuilder UsePluginConfiguration<TBuilder>(this TBuilder builder, 
-            IPluginConfiguration pluginConfiguration)
+        public static TBuilder UsePlugins<TBuilder>(this TBuilder builder, 
+            PluginSetInfo plugins)
             where TBuilder : IPluginHostBuilder
         {
-            builder.PluginConfiguration = pluginConfiguration;
+            builder.Plugins = plugins;
             return builder;
         }
         

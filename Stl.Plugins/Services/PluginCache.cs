@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 
-namespace Stl.Plugins.Internal
+namespace Stl.Plugins.Services
 {
     public interface IPluginCache
     {

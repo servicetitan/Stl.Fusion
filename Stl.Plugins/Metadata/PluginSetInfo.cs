@@ -6,6 +6,7 @@ using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using Stl.Plugins.Internal;
+using Stl.Plugins.Services;
 using Stl.Reflection;
 
 namespace Stl.Plugins.Metadata 
@@ -18,17 +19,17 @@ namespace Stl.Plugins.Metadata
                 ImmutableDictionary<TypeRef, ImmutableHashSet<TypeRef>>.Empty, 
                 ImmutableDictionary<TypeRef, ImmutableArray<TypeRef>>.Empty);
 
-        public ImmutableDictionary<TypeRef, PluginInfo> Plugins { get; }
+        public ImmutableDictionary<TypeRef, PluginInfo> InfoByType { get; }
         public ImmutableDictionary<TypeRef, ImmutableHashSet<TypeRef>> TypesByBaseType { get; }
         public ImmutableDictionary<TypeRef, ImmutableArray<TypeRef>> TypesByBaseTypeOrderedByDependency { get; }
 
         [JsonConstructor]
         public PluginSetInfo(
-            ImmutableDictionary<TypeRef, PluginInfo> plugins, 
+            ImmutableDictionary<TypeRef, PluginInfo> infoByType, 
             ImmutableDictionary<TypeRef, ImmutableHashSet<TypeRef>> typesByBaseType,
             ImmutableDictionary<TypeRef, ImmutableArray<TypeRef>> typesByBaseTypeOrderedByDependency)
         {
-            Plugins = plugins;
+            InfoByType = infoByType;
             TypesByBaseType = typesByBaseType;
             TypesByBaseTypeOrderedByDependency = typesByBaseTypeOrderedByDependency;
         }
@@ -43,7 +44,7 @@ namespace Stl.Plugins.Metadata
                 // Otherwise the initializer for PluginContainerConfiguration.Empty
                 // will fail due to recursion here & attempt to register null as a
                 // singleton inside BuildContainer call below.
-                Plugins = ImmutableDictionary<TypeRef, PluginInfo>.Empty;
+                InfoByType = ImmutableDictionary<TypeRef, PluginInfo>.Empty;
                 TypesByBaseType = ImmutableDictionary<TypeRef, ImmutableHashSet<TypeRef>>.Empty;
                 TypesByBaseTypeOrderedByDependency = ImmutableDictionary<TypeRef, ImmutableArray<TypeRef>>.Empty;
                 return;
@@ -95,7 +96,7 @@ namespace Stl.Plugins.Metadata
             for (var i = 0; i < orderedPlugins.Length; i++) 
                 orderedPlugins[i].OrderByDependencyIndex = i;
 
-            Plugins = dPlugins.ToImmutableDictionary();
+            InfoByType = dPlugins.ToImmutableDictionary();
             TypesByBaseType = dTypesByBaseType.ToImmutableDictionary();
             TypesByBaseTypeOrderedByDependency = dTypesByBaseType
                 .Select(p => new KeyValuePair<TypeRef, ImmutableArray<TypeRef>>(
@@ -107,6 +108,6 @@ namespace Stl.Plugins.Metadata
         }
 
         public override string ToString() 
-            => $"{GetType().Name} of [{Plugins.Values.ToDelimitedString()}]";
+            => $"{GetType().Name} of [{InfoByType.Values.ToDelimitedString()}]";
     }
 }

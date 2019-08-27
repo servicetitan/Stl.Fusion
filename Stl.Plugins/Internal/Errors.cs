@@ -14,7 +14,7 @@ namespace Stl.Plugins.Internal
         public static Exception CantCreatePluginInstance(string pluginTypeName)
             => throw new InvalidOperationException($"Can't create \"{pluginTypeName}\" instance.");
 
-        public static Exception CantUsePluginConfigurationWithPluginTypes()
-            => throw new InvalidOperationException($"Can't use both PluginConfiguration and PluginTypes.");
+        public static Exception CantUsePluginsTogetherWithPluginTypes()
+            => throw new InvalidOperationException($"Can't use both Plugins and PluginTypes.");
     }
 }

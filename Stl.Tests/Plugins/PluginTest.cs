@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using Serilog;
 using Stl.Caching;
 using Stl.Plugins;
+using Stl.Plugins.Services;
 using Stl.Reflection;
 using Stl.Testing;
 using Xunit;
@@ -56,25 +57,25 @@ namespace Stl.Tests.Plugins
                 fsc.Clear();
             }
 
-            var pluginSetInfo = pluginFinder.FindPlugins();
-            pluginSetInfo.Plugins.Count.Should().BeGreaterOrEqualTo(2);
+            var plugins = pluginFinder.FindPlugins();
+            plugins.InfoByType.Count.Should().BeGreaterOrEqualTo(2);
 
             // Capabilities extraction
-            var testPlugin1Caps = pluginSetInfo.Plugins[typeof(TestPlugin1)].Capabilities;
+            var testPlugin1Caps = plugins.InfoByType[typeof(TestPlugin1)].Capabilities;
             testPlugin1Caps.Count.Should().Be(0);
-            var testPlugin2Caps = pluginSetInfo.Plugins[typeof(TestPlugin2)].Capabilities;
+            var testPlugin2Caps = plugins.InfoByType[typeof(TestPlugin2)].Capabilities;
             testPlugin2Caps.Count.Should().Be(2);
             testPlugin2Caps.GetValueOrDefault("Client").Should().Be(true);
             testPlugin2Caps.GetValueOrDefault("Server").Should().Be(false);
 
             // Dependencies extraction
-            var testPlugin1Deps = pluginSetInfo.Plugins[typeof(TestPlugin1)].AllDependencies;
+            var testPlugin1Deps = plugins.InfoByType[typeof(TestPlugin1)].AllDependencies;
             testPlugin1Deps.Should().BeEquivalentTo((TypeRef) typeof(TestPlugin2));
-            var testPlugin2Deps = pluginSetInfo.Plugins[typeof(TestPlugin2)].AllDependencies;
+            var testPlugin2Deps = plugins.InfoByType[typeof(TestPlugin2)].AllDependencies;
             testPlugin2Deps.Count.Should().Be(0);
 
             var host = new PluginHostBuilder()
-                .UsePluginConfiguration(new PluginConfiguration(pluginSetInfo))
+                .UsePlugins(plugins)
                 .Build();
 
             RunPluginHostTests(host);

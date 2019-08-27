@@ -11,7 +11,7 @@ using Stl.IO;
 using Stl.Plugins.Internal;
 using Stl.Plugins.Metadata;
 
-namespace Stl.Plugins 
+namespace Stl.Plugins.Services 
 {
     public interface IPluginFinder
     {

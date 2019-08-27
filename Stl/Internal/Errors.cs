@@ -8,9 +8,6 @@ namespace Stl.Internal
         public static Exception InvokerIsAlreadyRunning() =>
             new InvalidOperationException("Can't perform this action while invocation is already in progress.");
 
-        public static Exception AlreadyLocked() =>
-            new InvalidOperationException($"The lock is already acquired by one of callers of the current method.");
-
         public static Exception MissingCliArgument(string template) =>
             new ArgumentException($"Required argument with template '{template ?? "(unknown)"}' is missing.");
         public static Exception UnsupportedFormatString(string format) =>
@@ -43,12 +40,17 @@ namespace Stl.Internal
                 return new InvalidOperationException($"Invalid disposal state: {disposalState}.");
             }
         }
+        public static Exception CircularDependency<T>(T item) => 
+            new InvalidOperationException($"Circular dependency on {item} found.");
 
+        public static Exception AlreadyLocked() =>
+            new InvalidOperationException($"The lock is already acquired by one of callers of the current method.");
         public static Exception AlreadyInitialized() =>
             new InvalidOperationException("Already initialized.");
         public static Exception ThisValueCanBeSetJustOnce() =>
             new InvalidOperationException($"This value can be set just once.");
-        public static Exception CircularDependency<T>(T item) => 
-            new InvalidOperationException($"Circular dependency on {item} found.");
+
+        public static Exception CannotActivate(Type type) =>
+            new InvalidOperationException($"Can't find the constructor to activate type '{type.Name}'.");
     }
 }

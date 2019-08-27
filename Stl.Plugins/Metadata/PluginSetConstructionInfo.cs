@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Stl.Plugins.Services;
 
-namespace Stl.Plugins.Internal
+namespace Stl.Plugins.Metadata
 {
     public class PluginSetConstructionInfo
     {

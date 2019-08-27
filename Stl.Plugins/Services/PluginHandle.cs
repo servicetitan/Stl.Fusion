@@ -5,7 +5,7 @@ using System.Threading;
 using Stl.Plugins.Internal;
 using Stl.Plugins.Metadata;
 
-namespace Stl.Plugins
+namespace Stl.Plugins.Services
 {
     public interface IPluginHandle
     {
@@ -22,17 +22,15 @@ namespace Stl.Plugins
     public class PluginHandle<TPlugin> : IPluginHandle<TPlugin>
     {
         private readonly Lazy<TPlugin[]> _lazyInstances;
-        protected IPluginConfiguration Configuration { get; }
+        protected PluginSetInfo Plugins { get; }
         protected IPluginCache PluginCache { get; }
 
         public IEnumerable<object> UntypedInstances => Instances.Cast<object>();
         public IEnumerable<TPlugin> Instances => _lazyInstances.Value;
 
-        public PluginHandle(
-            IPluginConfiguration configuration, 
-            IPluginCache pluginCache)
+        public PluginHandle(PluginSetInfo plugins, IPluginCache pluginCache)
         {
-            Configuration = configuration;
+            Plugins = plugins;
             PluginCache = pluginCache;
             _lazyInstances = new Lazy<TPlugin[]>(
                 () => GetInstances(_ => true).ToArray(), 
@@ -41,13 +39,10 @@ namespace Stl.Plugins
 
         public IEnumerable<object> GetUntypedInstances(Func<PluginInfo, bool> predicate)
         {
-            if (!Configuration.Interfaces.Contains(typeof(TPlugin)))
-                return Enumerable.Empty<object>();
-            var pluginSetInfo = Configuration.Implementations;
             return (
                 from pluginImplType in 
-                    pluginSetInfo.TypesByBaseTypeOrderedByDependency[typeof(TPlugin)]
-                let pluginInfo = pluginSetInfo.Plugins[pluginImplType]
+                    Plugins.TypesByBaseTypeOrderedByDependency[typeof(TPlugin)]
+                let pluginInfo = Plugins.InfoByType[pluginImplType]
                 select pluginInfo
                 ).Where(predicate)
                 .Select(p => PluginCache.GetOrCreate(p.Type.Resolve()).UntypedInstance);

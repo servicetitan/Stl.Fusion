@@ -1,19 +1,19 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Extensibility;
 using Stl.Plugins.Internal;
-using Stl.Reflection;
+using Stl.Plugins.Metadata;
+using Stl.Plugins.Services;
 
 namespace Stl.Plugins
 {
     public interface IPluginHostBuilder
     {
-        IPluginConfiguration PluginConfiguration { get; set; }
         HashSet<Type> PluginTypes { get; set; }
+        PluginSetInfo Plugins { get; set; }
         IServiceCollection Services { get; set; }
         IPluginHostBuilderImpl Implementation { get; }
 
@@ -30,7 +30,7 @@ namespace Stl.Plugins
     public class PluginHostBuilder : IPluginHostBuilder, IPluginHostBuilderImpl
     {
         public HashSet<Type> PluginTypes { get; set; } = new HashSet<Type>();
-        public IPluginConfiguration PluginConfiguration { get; set; } = Plugins.PluginConfiguration.Empty;
+        public PluginSetInfo Plugins { get; set; } = PluginSetInfo.Empty;
         public IServiceCollection Services { get; set; } = new ServiceCollection();
         public IPluginHostBuilderImpl Implementation => this;
 
@@ -47,22 +47,22 @@ namespace Stl.Plugins
             if (!Services.HasService(typeof(ILogger<>)))
                 Services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
 
-            if (!Services.HasService<IPluginConfiguration>()) {
-                var hasPluginConfiguration = PluginConfiguration.Interfaces.Length != 0;
+            if (!Services.HasService<PluginSetInfo>()) {
+                var hasPluginConfiguration = Plugins.InfoByType.Count != 0;
                 if (hasPluginConfiguration) {
-                    // Plugin configuration is known, so no need to look for plugins
+                    // Plugin set is known, so no need to look for plugins
                     if (PluginTypes.Count > 0)
-                        throw Errors.CantUsePluginConfigurationWithPluginTypes();
-                    Services.AddSingleton(PluginConfiguration);
+                        throw Errors.CantUsePluginsTogetherWithPluginTypes();
+                    Services.AddSingleton(Plugins);
                 }
                 else {
-                    // Plugin configuration isn't known, so we need IPluginFinder
+                    // Plugin set isn't known, so we need IPluginFinder
                     if (!Services.HasService<IPluginFinder>())
                         Services.AddSingleton<IPluginFinder, PluginFinder>();
-                    Services.AddSingleton<IPluginConfiguration>(services => {
+                    Services.AddSingleton(services => {
                         var pluginFinder = services.GetService<IPluginFinder>();
-                        var pluginSetInfo = pluginFinder.FindPlugins();
-                        return new PluginConfiguration(pluginSetInfo);
+                        var plugins = pluginFinder.FindPlugins();
+                        return plugins;
                     });
                 }
             }

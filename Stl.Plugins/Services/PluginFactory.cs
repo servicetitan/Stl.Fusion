@@ -1,6 +1,7 @@
 using System;
+using Stl.Plugins.Internal;
 
-namespace Stl.Plugins.Internal
+namespace Stl.Plugins.Services
 {
     public interface IPluginFactory
     {

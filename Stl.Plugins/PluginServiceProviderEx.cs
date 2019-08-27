@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Plugins.Internal;
 using Stl.Plugins.Metadata;
+using Stl.Plugins.Services;
 
 namespace Stl.Plugins
 {

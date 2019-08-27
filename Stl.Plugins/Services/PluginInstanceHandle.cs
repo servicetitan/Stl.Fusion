@@ -1,8 +1,9 @@
 using System;
 using System.Threading;
-using Microsoft.Extensions.DependencyInjection;
+using Stl.Plugins.Internal;
+using Stl.Plugins.Metadata;
 
-namespace Stl.Plugins.Internal
+namespace Stl.Plugins.Services
 {
     public interface IPluginInstanceHandle : IDisposable
     {
@@ -24,13 +25,10 @@ namespace Stl.Plugins.Internal
         // ReSharper disable once HeapView.BoxingAllocation
         public object UntypedInstance => Instance;
 
-        public PluginInstanceHandle(
-            IPluginConfiguration configuration, 
-            IPluginFactory factory)
+        public PluginInstanceHandle(PluginSetInfo plugins, IPluginFactory factory)
         {
-            var implementations = configuration.Implementations;
             var pluginImplType = typeof(TPluginImpl);
-            if (!implementations.Plugins.ContainsKey(pluginImplType))
+            if (!plugins.InfoByType.ContainsKey(pluginImplType))
                 throw Errors.UnknownPluginImplementationType(pluginImplType.Name);
             _lazyInstance = new Lazy<TPluginImpl>(
                 () => (TPluginImpl) factory.Create(pluginImplType)!, 

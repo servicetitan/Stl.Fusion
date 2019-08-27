@@ -43,7 +43,7 @@ namespace Stl.Plugins.Extensions.Hosting
             new TaskCompletionSource<IWebHost>();
 
         public CancellationToken CancellationToken { get; protected set; } = default;
-        public IServiceProvider Plugins { get; protected set; } = ServiceProviderEx.Unavailable;
+        public IServiceProvider Plugins { get; protected set; } = ServiceProviderEx.Empty;
         public IServiceProvider? Services { get; protected set; }
         public IWebHost? WebHost { get; protected set; }
         public Task<IWebHost> WebHostReadyTask => _webHostReadyTcs.Task;
