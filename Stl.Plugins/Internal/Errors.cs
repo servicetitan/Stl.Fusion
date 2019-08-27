@@ -9,8 +9,5 @@ namespace Stl.Plugins.Internal
             => throw new KeyNotFoundException($"Unknown plugin implementation type: '{pluginType.Name}'.");
         public static Exception PluginDisabled(Type pluginType)
             => throw new InvalidOperationException($"Plugin '{pluginType.Name}' is disabled.");
-
-        public static Exception CantUsePluginsTogetherWithPluginTypes()
-            => throw new InvalidOperationException($"Can't use Plugins and PluginTypes together.");
     }
 }

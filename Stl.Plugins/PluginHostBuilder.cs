@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -7,6 +8,7 @@ using Stl.Extensibility;
 using Stl.Plugins.Internal;
 using Stl.Plugins.Metadata;
 using Stl.Plugins.Services;
+using Stl.Reflection;
 
 namespace Stl.Plugins
 {
@@ -15,6 +17,7 @@ namespace Stl.Plugins
         HashSet<Type> PluginTypes { get; set; }
         PluginSetInfo Plugins { get; set; }
         IServiceCollection Services { get; set; }
+        bool RunAutoStart { get; set; }
         IPluginHostBuilderImpl Implementation { get; }
 
         IServiceProvider Build();
@@ -32,6 +35,7 @@ namespace Stl.Plugins
         public HashSet<Type> PluginTypes { get; set; } = new HashSet<Type>();
         public PluginSetInfo Plugins { get; set; } = PluginSetInfo.Empty;
         public IServiceCollection Services { get; set; } = new ServiceCollection();
+        public bool RunAutoStart { get; set; } = true;
         public IPluginHostBuilderImpl Implementation => this;
 
         void IPluginHostBuilderImpl.UseDefaultServices() => UseDefaultServices();
@@ -51,8 +55,6 @@ namespace Stl.Plugins
                 var hasPluginConfiguration = Plugins.InfoByType.Count != 0;
                 if (hasPluginConfiguration) {
                     // Plugin set is known, so no need to look for plugins
-                    if (PluginTypes.Count > 0)
-                        throw Errors.CantUsePluginsTogetherWithPluginTypes();
                     Services.AddSingleton(Plugins);
                 }
                 else {
@@ -66,6 +68,13 @@ namespace Stl.Plugins
                     });
                 }
             }
+            // Adding filter that makes sure only plugins castable to the
+            // requested ones are exposed.
+            if (PluginTypes.Count > 0) {
+                var hPluginTypes = PluginTypes.Select(t => (TypeRef) t).ToHashSet();
+                this.AddPluginFilter(p => p.CastableTo.Any(c => hPluginTypes.Contains(c)));
+            }
+
             if (!Services.HasService<IPluginFactory>())
                 Services.AddSingleton<IPluginFactory, PluginFactory>();
             if (!Services.HasService<IPluginCache>())
@@ -80,7 +89,17 @@ namespace Stl.Plugins
         {
             UseDefaultServices();
             var factory = new DefaultServiceProviderFactory();
-            return factory.CreateServiceProvider(Services);
+            var plugins = factory.CreateServiceProvider(Services);
+            if (RunAutoStart) {
+                var autoStartPlugins = plugins.GetPlugins<IHasAutoStart>().ToArray();
+                var invoker = Invoker.New(
+                    autoStartPlugins, 
+                    (plugin, _) => plugin.AutoStart(), 
+                    InvocationOrder.Reverse
+                    );
+                invoker.Run();
+            }
+            return plugins;
         }
     }
 }

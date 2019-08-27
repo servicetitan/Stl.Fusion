@@ -5,10 +5,10 @@ namespace Stl.Plugins.Extensions.Cli
 {
     public interface ICliPlugin
     {
-        void Use(CliPluginInvocation invocation);
+        void Use(CliPluginInvoker invoker);
     }
 
-    public class CliPluginInvocation : InvokerBase<ICliPlugin, CliPluginInvocation>
+    public class CliPluginInvoker : InvokerBase<ICliPlugin, CliPluginInvoker>
     {
         public CommandLineBuilder Builder { get; set; } = default!;
     }

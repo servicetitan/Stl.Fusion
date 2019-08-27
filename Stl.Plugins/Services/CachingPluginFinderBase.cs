@@ -27,7 +27,7 @@ namespace Stl.Plugins.Services
         public PluginSetInfo FindPlugins() 
             => Task.Run(GetPluginSetInfoAsync).Result;
 
-        // This method is async solely becasuse ICache API is async
+        // This method is async solely because ICache API is async
         protected virtual async Task<PluginSetInfo> GetPluginSetInfoAsync()
         {
             var cacheKey = GetCacheKey();

@@ -30,7 +30,7 @@ namespace Stl.Tests.Plugins.Extensions
                 .ConfigureServices(services => services
                     .AddSingleton(loggerFactory)
                     .AddSingleton<IConsole>(testConsole))
-                .AddPluginTypes(typeof(TestCliPlugin))
+                .UsePluginTypes(typeof(TestCliPlugin))
                 .Build();
 
             var parser = new CommandLineBuilder()

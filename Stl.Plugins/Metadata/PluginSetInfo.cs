@@ -74,6 +74,7 @@ namespace Stl.Plugins.Metadata
                     ci.AssemblyDependencies.GetValueOrDefault(a) ?? Enumerable.Empty<Assembly>())
                 .ToArray();
             ci.TemporaryPluginFactory = new PluginHostBuilder()
+                .SetRunAutoStart(false)
                 .Build()
                 .GetService<IPluginFactory>();
 

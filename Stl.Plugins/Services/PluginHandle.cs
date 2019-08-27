@@ -42,9 +42,11 @@ namespace Stl.Plugins.Services
 
         public IEnumerable<object> GetUntypedInstances(Func<PluginInfo, bool> predicate)
         {
+            var pluginImplTypes = Plugins.TypesByBaseTypeOrderedByDependency.GetValueOrDefault(typeof(TPlugin));
+            if (pluginImplTypes == null)
+                return Enumerable.Empty<object>();
             return 
-                from pluginImplType in 
-                    Plugins.TypesByBaseTypeOrderedByDependency[typeof(TPlugin)]
+                from pluginImplType in pluginImplTypes
                 let pluginInfo = Plugins.InfoByType[pluginImplType]
                 where predicate(pluginInfo) && PluginFilters.All(f => f.IsEnabled(pluginInfo))
                 select PluginCache.GetOrCreate(pluginInfo.Type.Resolve()).UntypedInstance;

@@ -12,7 +12,7 @@ namespace Stl.Plugins.Extensions.Cli
             this CommandLineBuilder builder,
             IEnumerable<TPlugin> plugins)
             where TPlugin : ICliPlugin
-            => new CliPluginInvocation() {
+            => new CliPluginInvoker() {
                 Tail = plugins.Cast<ICliPlugin>().ToArray(),
                 Order = InvocationOrder.Reverse,
                 Handler = (plugin, invocation1) => plugin.Use(invocation1),

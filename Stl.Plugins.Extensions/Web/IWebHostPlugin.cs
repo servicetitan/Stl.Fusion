@@ -5,10 +5,10 @@ namespace Stl.Plugins.Extensions.Web
 {
     public interface IWebHostPlugin
     {
-        void Use(WebHostPluginInvocation invocation);
+        void Use(WebHostPluginInvoker invoker);
     }
 
-    public class WebHostPluginInvocation : InvokerBase<IWebHostPlugin, WebHostPluginInvocation>
+    public class WebHostPluginInvoker : InvokerBase<IWebHostPlugin, WebHostPluginInvoker>
     {
         public IWebHostBuilder Builder { get; set; } = default!;
     }

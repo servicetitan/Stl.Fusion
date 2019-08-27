@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using Microsoft.AspNetCore.Hosting;
 
 namespace Stl.Plugins.Extensions.Hosting
 {
@@ -13,8 +14,16 @@ namespace Stl.Plugins.Extensions.Hosting
             return builder;
         }
 
+        public static TBuilder ConfigureWebHost<TBuilder>(this TBuilder builder, 
+            Func<IWebHostBuilder, IWebHostBuilder> configurator)
+            where TBuilder : IAppHostBuilder
+        {
+            builder.WebHostBuilder = configurator.Invoke(builder.WebHostBuilder);
+            return builder;
+        }
+
         public static THost Build<THost>(this IAppHostBuilder<THost> builder)
-            where THost : IAppHost
+            where THost : class, IAppHost
         {
             var host = builder.Implementation.CreateHost();
             var implementation = host.Implementation;
@@ -24,7 +33,7 @@ namespace Stl.Plugins.Extensions.Hosting
 
         public static THost BuildAndStart<THost>(this IAppHostBuilder<THost> builder,
             string arguments, CancellationToken cancellationToken = default)
-            where THost : IAppHost
+            where THost : class, IAppHost
         {
             var host = builder.Build();
             host.Implementation.Start(arguments, cancellationToken);

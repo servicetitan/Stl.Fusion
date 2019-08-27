@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Stl.Caching;
 using Stl.IO;
-using Stl.Plugins.Internal;
 using Stl.Plugins.Metadata;
 
 namespace Stl.Plugins.Services 

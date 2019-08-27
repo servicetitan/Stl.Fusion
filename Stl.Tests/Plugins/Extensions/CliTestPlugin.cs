@@ -21,16 +21,16 @@ namespace Stl.Tests.Plugins.Extensions
             Console = host.GetService<IConsole>();
         }
 
-        public abstract void Use(CliPluginInvocation invocation);
+        public abstract void Use(CliPluginInvoker invoker);
     }
 
     public class TestCliPluginAdd : TestCliPlugin
     {
         public TestCliPluginAdd(IServiceProvider host) : base(host) { }
 
-        public override void Use(CliPluginInvocation invocation)
+        public override void Use(CliPluginInvoker invoker)
         {
-            var builder = invocation.Builder;
+            var builder = invoker.Builder;
 
             var testCommand = new Command("add") {
                 Handler = CommandHandler.Create((int a, int b) => {
@@ -51,9 +51,9 @@ namespace Stl.Tests.Plugins.Extensions
     {
         public TestCliPluginMul(IServiceProvider host) : base(host) { }
 
-        public override void Use(CliPluginInvocation invocation)
+        public override void Use(CliPluginInvoker invoker)
         {
-            var builder = invocation.Builder;
+            var builder = invoker.Builder;
 
             var testCommand = new Command("mul") {
                 Handler = CommandHandler.Create((int a, int b) => {

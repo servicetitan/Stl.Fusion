@@ -51,7 +51,12 @@ namespace Stl.Plugins.Metadata
             Capabilities = ImmutableDictionary<string, object>.Empty;
             Dependencies = ImmutableHashSet<TypeRef>.Empty;
 
-            var tmpPlugin = constructionInfo.TemporaryPluginFactory!.Create(type);
+            object? tmpPlugin = null;
+            try {
+                tmpPlugin = constructionInfo.TemporaryPluginFactory!.Create(type);
+            }
+            catch (InvalidOperationException) {} // To ignore plugins we can't construct
+
             if (tmpPlugin is IHasCapabilities hc)
                 Capabilities = hc.Capabilities;
             if (tmpPlugin is IHasDependencies hd)

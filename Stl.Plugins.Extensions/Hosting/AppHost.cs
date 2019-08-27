@@ -13,12 +13,13 @@ using Stl.Plugins.Extensions.Web;
 
 namespace Stl.Plugins.Extensions.Hosting
 {
-    public interface IAppHost
+    public interface IAppHost : IDisposable
     {
         CancellationToken CancellationToken { get; }
         IServiceProvider Plugins { get; }
-        IServiceProvider? Services { get; }
-        IWebHost? WebHost { get; }
+        IServiceProvider Services { get; }
+        IWebHost WebHost { get; }
+        bool IsWebHostReady { get; }
         
         Task<IWebHost> WebHostReadyTask { get; }
         Task<int> ResultReadyTask { get; }
@@ -41,17 +42,37 @@ namespace Stl.Plugins.Extensions.Hosting
             new TaskCompletionSource<int>();
         private readonly TaskCompletionSource<IWebHost> _webHostReadyTcs = 
             new TaskCompletionSource<IWebHost>();
+        private readonly Lazy<IWebHost> _lazyWebHost;
+        private readonly Lazy<IServiceProvider> _lazyServices;
 
+        protected IWebHostBuilder? WebHostBuilder { get; set; }
         public CancellationToken CancellationToken { get; protected set; } = default;
         public IServiceProvider Plugins { get; protected set; } = ServiceProviderEx.Empty;
-        public IServiceProvider? Services { get; protected set; }
-        public IWebHost? WebHost { get; protected set; }
+        public IServiceProvider Services => _lazyServices.Value;
+        public IWebHost WebHost => _lazyWebHost.Value;
+        public bool IsWebHostReady => _webHostReadyTcs.Task.IsCompletedSuccessfully;
         public Task<IWebHost> WebHostReadyTask => _webHostReadyTcs.Task;
         public Task<int> ResultReadyTask => _resultReadyTcs.Task;
 
         public IAppHostImpl Implementation => this;
         void IAppHostImpl.BuildFrom(IAppHostBuilder builder) => BuildFrom(builder);
         void IAppHostImpl.BuildWebHost() => BuildWebHost();
+        
+        protected AppHostBase()
+        {
+            _lazyWebHost = new Lazy<IWebHost>(
+                BuildWebHost, LazyThreadSafetyMode.ExecutionAndPublication);
+            _lazyServices = new Lazy<IServiceProvider>(
+                () => WebHost.Services, LazyThreadSafetyMode.PublicationOnly);
+        }
+
+        public void Dispose()
+        {
+            if (Plugins is IDisposable plugins && !ReferenceEquals(plugins, ServiceProviderEx.Empty))
+                plugins.Dispose();
+            if (IsWebHostReady)
+                WebHost.Dispose();
+        }
 
         public virtual void Start(string arguments, CancellationToken cancellationToken = default)
         {
@@ -66,22 +87,25 @@ namespace Stl.Plugins.Extensions.Hosting
                 _resultReadyTcs.TrySetFromTask(resultReadyTask);
             }, null, CancellationToken.None); // No cancellation = intentional
 
+            // Making sure we cancel WebHostReadyTask when CLI part completes 
             var webHostReadyTask = WebHostReadyTask;
-            // Making sure we cancel _webHostReadyTcs when CLI part completes 
             Task.WhenAny(resultReadyTask, webHostReadyTask).ContinueWith((t, _) => {
-                if (resultReadyTask.IsCompleted) {
-                    if (!webHostReadyTask.IsCompleted)
-                        _webHostReadyTcs.TrySetCanceled();
-                };
+                if (resultReadyTask.IsCompleted && !webHostReadyTask.IsCompleted)
+                    _webHostReadyTcs.TrySetCanceled();
             }, null, CancellationToken.None); // No cancellation = intentional
         }
 
-        protected virtual void BuildFrom(IAppHostBuilder builder) 
-            => Plugins = BuildPlugins(builder);
+        protected virtual void BuildFrom(IAppHostBuilder builder)
+        {
+            WebHostBuilder = builder.WebHostBuilder;
+            Plugins = BuildPlugins(builder);
+            // The rest is supposed to be done by ICliPlugin or IHasAutoStart plugins,
+            // so nothing else is needed.
+        }
 
         protected virtual IServiceProvider BuildPlugins(IAppHostBuilder builder)
         {
-            var pluginHostBuilder = builder.PluginHostBuilder.AddPluginTypes(GetPluginTypes());
+            var pluginHostBuilder = builder.PluginHostBuilder.UsePluginTypes(GetPluginTypes());
             pluginHostBuilder = ConfigurePlugins(pluginHostBuilder);
             return pluginHostBuilder.Build();
         }
@@ -110,27 +134,41 @@ namespace Stl.Plugins.Extensions.Hosting
         protected virtual CommandLineBuilder ConfigureCliBuilder(CommandLineBuilder builder)
             => builder.UseDefaults();
 
-        protected virtual void BuildWebHost()
+        protected virtual IWebHost BuildWebHost()
         {
-            var builder = CreateWebHostBuilder().UsePlugins<IWebHostPlugin>(Plugins);
+            var builder = WebHostBuilder!.UsePlugins<IWebHostPlugin>(Plugins);
             builder = ConfigureWebHostBuilder(builder);
             var webHost = builder.Build();
-            SetWebHost(webHost);
+            try {
+                // Task.Run is used here solely to make sure the exception from
+                // StartAsync (if any) is re-thrown when Result is accessed. 
+                Task.Run(async () => {
+                        await webHost!.StartAsync(CancellationToken).ConfigureAwait(false);
+                        return true;
+                    })
+                    .Result.Ignore();
+                // Fine to call SetResult here (i.e. before Lazy eval completion),
+                // since Lazy will anyway run this method just once.
+                _webHostReadyTcs.SetResult(webHost);
+                return webHost;
+            }
+            catch (Exception) {
+                // If SetResult fails here, the task completion source was
+                // cancelled b/c the result was set.
+                webHost?.Dispose();
+                throw;
+            }
         }
-
-        protected virtual IWebHostBuilder CreateWebHostBuilder() => new WebHostBuilder();
 
         protected virtual IWebHostBuilder ConfigureWebHostBuilder(IWebHostBuilder builder)
             => builder
                 .ConfigureServices(services => {
                     services.AddSingleton<IAppHost>(this);
                 });
+    }
 
-        protected virtual void SetWebHost(IWebHost webHost)
-        {
-            WebHost = webHost;
-            Services = webHost.Services;
-            _webHostReadyTcs.SetResult(webHost);
-        }
+    public abstract class AppHostBase<TSelf, TPlugin> : AppHostBase<TSelf>
+    {
+        protected override Type[] GetPluginTypes() => new [] {typeof(TPlugin)};
     }
 }

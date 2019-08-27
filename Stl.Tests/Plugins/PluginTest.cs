@@ -24,7 +24,7 @@ namespace Stl.Tests.Plugins
         public void PluginHostBuilderTest()
         {
             var host = new PluginHostBuilder()
-                .AddPluginTypes(typeof(ITestPlugin))
+                .UsePluginTypes(typeof(ITestPlugin))
                 .Build();
 
             RunPluginHostTests(host);
@@ -34,12 +34,12 @@ namespace Stl.Tests.Plugins
         public void PluginFilterTest()
         {
             var host = new PluginHostBuilder()
-                .AddPluginTypes(typeof(ITestPlugin))
+                .UsePluginTypes(typeof(ITestPlugin))
                 .Build();
             host.GetPlugins<ITestPlugin>().Count().Should().Be(2);
 
             host = new PluginHostBuilder()
-                .AddPluginTypes(typeof(ITestPlugin))
+                .UsePluginTypes(typeof(ITestPlugin))
                 .AddPluginFilter(p => p.Type != typeof(TestPlugin2))
                 .Build();
             host.GetPlugins<ITestPlugin>().Count().Should().Be(1);
@@ -86,6 +86,7 @@ namespace Stl.Tests.Plugins
 
             var host = new PluginHostBuilder()
                 .UsePlugins(plugins)
+                .UsePluginTypes(typeof(ITestPlugin))
                 .Build();
 
             RunPluginHostTests(host);

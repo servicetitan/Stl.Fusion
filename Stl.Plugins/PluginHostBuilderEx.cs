@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Plugins.Metadata;
 using Stl.Plugins.Services;
@@ -30,12 +31,11 @@ namespace Stl.Plugins
             return builder;
         }
         
-        public static TBuilder AddPluginTypes<TBuilder>(this TBuilder builder, 
+        public static TBuilder UsePluginTypes<TBuilder>(this TBuilder builder, 
             params Type[] pluginTypes)
             where TBuilder : IPluginHostBuilder
         {
-            foreach (var pluginType in pluginTypes)
-                builder.PluginTypes.Add(pluginType);
+            builder.PluginTypes = new HashSet<Type>(pluginTypes);
             return builder;
         }
 
@@ -44,6 +44,13 @@ namespace Stl.Plugins
             where TBuilder : IPluginHostBuilder
         {
             builder.Services.AddSingleton<IPluginFilter>(new PredicatePluginFilter(predicate));
+            return builder;
+        }
+
+        public static TBuilder SetRunAutoStart<TBuilder>(this TBuilder builder, bool runAutoStart)
+            where TBuilder : IPluginHostBuilder
+        {
+            builder.RunAutoStart = runAutoStart;
             return builder;
         }
     }
