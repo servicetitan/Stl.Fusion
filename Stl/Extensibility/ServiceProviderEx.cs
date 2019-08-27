@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,11 +18,11 @@ namespace Stl.Extensibility
             var ctors = type.GetConstructors()
                 .OrderByDescending(ci => ci.GetParameters().Length)
                 .ToList();
+
             var primaryCtor = ctors
-                .Where(ci => ci.GetCustomAttribute<ServiceConstructorAttribute>() != null)
-                .ToList();
-            if (primaryCtor.Count > 0)
-                ctors = primaryCtor;
+                .SingleOrDefault(ci => ci.GetCustomAttribute<ServiceConstructorAttribute>() != null);
+            if (primaryCtor != null)
+                return services.Activate(type, primaryCtor);
 
             foreach (var ctor in ctors)
                 if (services.TryActivate(type, ctor, out var result))
@@ -38,7 +39,7 @@ namespace Stl.Extensibility
         }
 
         public static bool TryActivate(this IServiceProvider services, 
-            Type type, ConstructorInfo constructorInfo, out object result)
+            Type type, ConstructorInfo constructorInfo, [NotNullWhen(true)] out object? result)
         {
             var args = constructorInfo.GetParameters();
             var argValues = new object[args.Length];

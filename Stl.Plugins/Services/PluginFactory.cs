@@ -1,5 +1,5 @@
 using System;
-using Stl.Plugins.Internal;
+using Stl.Extensibility;
 
 namespace Stl.Plugins.Services
 {
@@ -16,15 +16,6 @@ namespace Stl.Plugins.Services
             => Services = services;
 
         public object Create(Type pluginType)
-        {
-            var preferredCtor = pluginType.GetConstructor(
-                new [] {typeof(IServiceProvider)});
-            var instance = preferredCtor != null
-                ? Activator.CreateInstance(pluginType, Services)
-                : Activator.CreateInstance(pluginType);
-            if (instance == null)
-                throw Errors.CantCreatePluginInstance(pluginType.Name);
-            return instance;
-        }
+            => Services.Activate(pluginType);
     }
 }
