@@ -47,10 +47,10 @@ namespace Stl.Plugins
             return builder;
         }
 
-        public static TBuilder SetRunAutoStart<TBuilder>(this TBuilder builder, bool runAutoStart)
+        public static TBuilder SetAutoStart<TBuilder>(this TBuilder builder, bool runAutoStart)
             where TBuilder : IPluginHostBuilder
         {
-            builder.RunAutoStart = runAutoStart;
+            builder.AutoStart = runAutoStart;
             return builder;
         }
     }

@@ -62,9 +62,11 @@ namespace Stl.Plugins.Metadata
             if (tmpPlugin is IHasDependencies hd)
                 Dependencies = hd.Dependencies.Select(t => (TypeRef) t).ToImmutableHashSet();
             
-            var assemblyDependencies = constructionInfo.AssemblyDependencies![type.Assembly];
+            var allAssemblyRefs = constructionInfo.AllAssemblyRefs![type.Assembly];
             AllDependencies = constructionInfo.Plugins
-                .Where(p => p != type && assemblyDependencies.Contains(p.Assembly))
+                .Where(p => p != type && (
+                    allAssemblyRefs.Contains(p.Assembly) || 
+                    CastableTo.Contains(p)))
                 .Select(t => (TypeRef) t)
                 .Concat(Dependencies)
                 .ToImmutableHashSet();

@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Extensibility;
-using Stl.Plugins.Internal;
+using Stl.Internal;
 using Stl.Plugins.Metadata;
 using Stl.Plugins.Services;
 using Stl.Reflection;
@@ -17,10 +17,10 @@ namespace Stl.Plugins
         HashSet<Type> PluginTypes { get; set; }
         PluginSetInfo Plugins { get; set; }
         IServiceCollection Services { get; set; }
-        bool RunAutoStart { get; set; }
+        bool AutoStart { get; set; }
         IPluginHostBuilderImpl Implementation { get; }
 
-        IServiceProvider Build();
+        IPluginHost Build();
     }
 
     // This interface is used to hide the methods with
@@ -35,17 +35,19 @@ namespace Stl.Plugins
         public HashSet<Type> PluginTypes { get; set; } = new HashSet<Type>();
         public PluginSetInfo Plugins { get; set; } = PluginSetInfo.Empty;
         public IServiceCollection Services { get; set; } = new ServiceCollection();
-        public bool RunAutoStart { get; set; } = true;
+        public bool AutoStart { get; set; } = true;
         public IPluginHostBuilderImpl Implementation => this;
+        protected IPluginHost Host { get; set; }
 
         void IPluginHostBuilderImpl.UseDefaultServices() => UseDefaultServices();
         protected virtual void UseDefaultServices()
         {
-            if (Services.HasService<IPluginHostBuilder>())
+            // IPluginHost acts as a tagging service here indicating UseDefaultServices
+            // was already called earlier
+            if (Services.HasService<IPluginHost>())
                 return;
-            // It's a tagging service indicating Configure was called earlier
-            Services.AddSingleton<IPluginHostBuilder>(_ => null!);
-            
+
+            Services.AddSingleton(_ => Host);
             if (!Services.HasService<ILoggerFactory>())
                 Services.AddSingleton<ILoggerFactory, NullLoggerFactory>();
             if (!Services.HasService(typeof(ILogger<>)))
@@ -85,21 +87,17 @@ namespace Stl.Plugins
                 Services.AddSingleton(typeof(IPluginHandle<>), typeof(PluginHandle<>));
         }
 
-        public virtual IServiceProvider Build()
+        public virtual IPluginHost Build()
         {
+            if (Host != null)
+                throw Errors.AlreadyInvoked(nameof(Build));
             UseDefaultServices();
             var factory = new DefaultServiceProviderFactory();
             var plugins = factory.CreateServiceProvider(Services);
-            if (RunAutoStart) {
-                var autoStartPlugins = plugins.GetPlugins<IHasAutoStart>().ToArray();
-                var invoker = Invoker.New(
-                    autoStartPlugins, 
-                    (plugin, _) => plugin.AutoStart(), 
-                    InvocationOrder.Reverse
-                    );
-                invoker.Run();
-            }
-            return plugins;
+            Host = new PluginHost(plugins);
+            if (AutoStart)
+                Host.Start();
+            return Host;
         }
     }
 }

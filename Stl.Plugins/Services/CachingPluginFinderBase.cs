@@ -20,8 +20,7 @@ namespace Stl.Plugins.Services
         protected CachingPluginFinderBase(ILogger? logger = null)
         {
             Logger = logger ?? NullLogger.Instance;
-            _lazyCache = new Lazy<ICache<string, string>>(
-                CreateCache, LazyThreadSafetyMode.ExecutionAndPublication);
+            _lazyCache = new Lazy<ICache<string, string>>(CreateCache);
         }
 
         public PluginSetInfo FindPlugins() 

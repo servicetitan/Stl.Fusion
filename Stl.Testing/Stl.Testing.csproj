@@ -1,16 +1,16 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <LangVersion>8</LangVersion>
     <Nullable>enable</Nullable>
     <WarningsAsErrors>true</WarningsAsErrors>
+    <OutputType>Library</OutputType>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Enums.NET" Version="2.3.2" />
     <PackageReference Include="FluentAssertions" Version="5.8.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.0.0-preview8.19405.4" />
     <PackageReference Include="morelinq" Version="3.2.0" />
     <PackageReference Include="Optional" Version="5.0.0-alpha" />
     <PackageReference Include="Serilog" Version="2.9.0-dev-01119" />

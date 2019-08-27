@@ -5,6 +5,7 @@
     <LangVersion>8</LangVersion>
     <Nullable>enable</Nullable>
     <WarningsAsErrors>true</WarningsAsErrors>
+    <OutputType>Library</OutputType>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">

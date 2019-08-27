@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <WarningsAsErrors>true</WarningsAsErrors>
     <RootNamespace>Stl</RootNamespace>
+    <OutputType>Library</OutputType>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">

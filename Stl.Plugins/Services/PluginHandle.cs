@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Linq;
 using System.Threading;
 using Stl.Plugins.Internal;
@@ -35,21 +36,44 @@ namespace Stl.Plugins.Services
             Plugins = plugins;
             PluginCache = pluginCache;
             PluginFilters = pluginFilters;
-            _lazyInstances = new Lazy<TPlugin[]>(
-                () => GetInstances(_ => true).ToArray(), 
-                LazyThreadSafetyMode.ExecutionAndPublication);
+            _lazyInstances = new Lazy<TPlugin[]>(() => GetInstances(_ => true).ToArray());
         }
 
         public IEnumerable<object> GetUntypedInstances(Func<PluginInfo, bool> predicate)
         {
-            var pluginImplTypes = Plugins.TypesByBaseTypeOrderedByDependency.GetValueOrDefault(typeof(TPlugin));
+            var requestedType = typeof(TPlugin);
+            var pluginImplTypes = Plugins.TypesByBaseTypeOrderedByDependency.GetValueOrDefault(requestedType);
             if (pluginImplTypes == null)
                 return Enumerable.Empty<object>();
-            return 
+
+            var pluginInfos = (
                 from pluginImplType in pluginImplTypes
-                let pluginInfo = Plugins.InfoByType[pluginImplType]
-                where predicate(pluginInfo) && PluginFilters.All(f => f.IsEnabled(pluginInfo))
-                select PluginCache.GetOrCreate(pluginInfo.Type.Resolve()).UntypedInstance;
+                let pi = Plugins.InfoByType[pluginImplType]
+                where predicate(pi) && PluginFilters.All(f => f.IsEnabled(pi))
+                select pi);
+
+            if (typeof(ISingletonPlugin).IsAssignableFrom(requestedType)) {
+                var lPluginInfos = pluginInfos.ToList();
+                if (lPluginInfos.Count == 0)
+                    return lPluginInfos;
+                // Let's check if we can unambiguously identify a plugin
+                // instance to return here. We assume this single instance
+                // is dependent on every other instance.
+                var singletonPluginInfo = lPluginInfos[^1];
+                foreach (var pluginInfo in lPluginInfos) {
+                    if (pluginInfo == singletonPluginInfo)
+                        continue;
+                    if (!singletonPluginInfo.AllDependencies.Contains(pluginInfo.Type))
+                        throw Errors.MultipleSingletonPluginImplementationsFound(
+                            requestedType, 
+                            singletonPluginInfo.Type.Resolve(), 
+                            pluginInfo.Type.Resolve());
+                }
+                pluginInfos = Enumerable.Repeat(singletonPluginInfo, 1);
+            }
+
+            return pluginInfos
+                .Select(pi => PluginCache.GetOrCreate(pi.Type.Resolve()).UntypedInstance);
         }
 
         public IEnumerable<TPlugin> GetInstances(Func<PluginInfo, bool> predicate)

@@ -44,6 +44,17 @@ namespace Stl.Tests.Plugins
                 .Build();
             host.GetPlugins<ITestPlugin>().Count().Should().Be(1);
         }
+
+        [Fact]
+        public void SingletonPluginTest()
+        {
+            var host = new PluginHostBuilder()
+                .UsePluginTypes(typeof(ITestPlugin))
+                .Build();
+
+            host.GetPlugins<ITestPlugin>().Count().Should().Be(2);
+            host.GetPlugins<ITestSingletonPlugin>().Count().Should().Be(1);
+        }
         
         [Fact]
         public void CombinedTest()

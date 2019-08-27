@@ -62,19 +62,19 @@ namespace Stl.Plugins.Metadata
             }
 
             var hAssemblies = ci.Plugins.Select(t => t.Assembly).ToHashSet();
-            ci.AssemblyDependencies = hAssemblies
+            ci.AllAssemblyRefs = hAssemblies
                 .Select(a => (
                     Assembly: a, 
-                    Dependencies: GetAllDependencies(a)
+                    Refs: GetAllDependencies(a)
                         .Where(a => hAssemblies.Contains(a))
                         .ToHashSet()))
-                .ToDictionary(p => p.Assembly, p => p.Dependencies);
+                .ToDictionary(p => p.Assembly, p => p.Refs);
             ci.Assemblies = hAssemblies
                 .OrderByDependency(a => 
-                    ci.AssemblyDependencies.GetValueOrDefault(a) ?? Enumerable.Empty<Assembly>())
+                    ci.AllAssemblyRefs.GetValueOrDefault(a) ?? Enumerable.Empty<Assembly>())
                 .ToArray();
             ci.TemporaryPluginFactory = new PluginHostBuilder()
-                .SetRunAutoStart(false)
+                .SetAutoStart(false)
                 .Build()
                 .GetService<IPluginFactory>();
 

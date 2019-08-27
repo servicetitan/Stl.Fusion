@@ -39,8 +39,7 @@ namespace Stl.Plugins.Services
             if (pluginFilters.Any(f => !f.IsEnabled(pluginInfo)))
                 throw Errors.PluginDisabled(pluginType);
             _lazyInstance = new Lazy<TPluginImpl>(
-                () => (TPluginImpl) pluginFactory.Create(pluginType)!, 
-                LazyThreadSafetyMode.ExecutionAndPublication);
+                () => (TPluginImpl) pluginFactory.Create(pluginType)!);
         }
 
         protected virtual void Dispose(bool disposing)

@@ -16,6 +16,10 @@ namespace Stl.Tests.Plugins
         string GetName();
     }
 
+    public interface ITestSingletonPlugin : ITestPlugin, ISingletonPlugin
+    {
+    }
+
     public interface ITestPluginEx : ITestPlugin
     {
         string GetVersion();
@@ -26,12 +30,12 @@ namespace Stl.Tests.Plugins
         public virtual string GetName() => GetType().Name;
     }
 
-    public class TestPlugin1 : TestPlugin, IHasDependencies
+    public class TestPlugin1 : TestPlugin, IHasDependencies, ITestSingletonPlugin
     {
         public IEnumerable<Type> Dependencies { get; } = new [] { typeof(TestPlugin2) };
     }
     
-    public class TestPlugin2 : TestPlugin, ITestPluginEx, IHasCapabilities
+    public class TestPlugin2 : TestPlugin, ITestPluginEx, IHasCapabilities, ITestSingletonPlugin
     {
         public virtual string GetVersion() => "1.0";
         public ImmutableDictionary<string, object> Capabilities { get; } =
