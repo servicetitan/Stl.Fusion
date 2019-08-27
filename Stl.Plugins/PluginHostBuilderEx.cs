@@ -1,6 +1,7 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Plugins.Metadata;
+using Stl.Plugins.Services;
 
 namespace Stl.Plugins 
 {
@@ -35,6 +36,14 @@ namespace Stl.Plugins
         {
             foreach (var pluginType in pluginTypes)
                 builder.PluginTypes.Add(pluginType);
+            return builder;
+        }
+
+        public static TBuilder AddPluginFilter<TBuilder>(this TBuilder builder, 
+            Func<PluginInfo, bool> predicate)
+            where TBuilder : IPluginHostBuilder
+        {
+            builder.Services.AddSingleton<IPluginFilter>(new PredicatePluginFilter(predicate));
             return builder;
         }
     }

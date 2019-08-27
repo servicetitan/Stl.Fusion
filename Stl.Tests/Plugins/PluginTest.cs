@@ -23,16 +23,26 @@ namespace Stl.Tests.Plugins
         [Fact]
         public void PluginHostBuilderTest()
         {
-            var writer = new StringWriter();
-            var log = TestLogger.New(writer);
-            var loggerFactory = new LoggerFactory().AddSerilog(log);
-
             var host = new PluginHostBuilder()
-                .ConfigureServices(s => s.AddSingleton(loggerFactory))
-                .AddPluginTypes(typeof(ITestPlugin), typeof(ITestPluginEx))
+                .AddPluginTypes(typeof(ITestPlugin))
                 .Build();
 
             RunPluginHostTests(host);
+        }
+        
+        [Fact]
+        public void PluginFilterTest()
+        {
+            var host = new PluginHostBuilder()
+                .AddPluginTypes(typeof(ITestPlugin))
+                .Build();
+            host.GetPlugins<ITestPlugin>().Count().Should().Be(2);
+
+            host = new PluginHostBuilder()
+                .AddPluginTypes(typeof(ITestPlugin))
+                .AddPluginFilter(p => p.Type != typeof(TestPlugin2))
+                .Build();
+            host.GetPlugins<ITestPlugin>().Count().Should().Be(1);
         }
         
         [Fact]

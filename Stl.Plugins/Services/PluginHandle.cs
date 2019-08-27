@@ -24,14 +24,17 @@ namespace Stl.Plugins.Services
         private readonly Lazy<TPlugin[]> _lazyInstances;
         protected PluginSetInfo Plugins { get; }
         protected IPluginCache PluginCache { get; }
+        protected IEnumerable<IPluginFilter> PluginFilters { get; }
 
         public IEnumerable<object> UntypedInstances => Instances.Cast<object>();
         public IEnumerable<TPlugin> Instances => _lazyInstances.Value;
 
-        public PluginHandle(PluginSetInfo plugins, IPluginCache pluginCache)
+        public PluginHandle(PluginSetInfo plugins, 
+            IPluginCache pluginCache, IEnumerable<IPluginFilter> pluginFilters)
         {
             Plugins = plugins;
             PluginCache = pluginCache;
+            PluginFilters = pluginFilters;
             _lazyInstances = new Lazy<TPlugin[]>(
                 () => GetInstances(_ => true).ToArray(), 
                 LazyThreadSafetyMode.ExecutionAndPublication);
@@ -39,13 +42,12 @@ namespace Stl.Plugins.Services
 
         public IEnumerable<object> GetUntypedInstances(Func<PluginInfo, bool> predicate)
         {
-            return (
+            return 
                 from pluginImplType in 
                     Plugins.TypesByBaseTypeOrderedByDependency[typeof(TPlugin)]
                 let pluginInfo = Plugins.InfoByType[pluginImplType]
-                select pluginInfo
-                ).Where(predicate)
-                .Select(p => PluginCache.GetOrCreate(p.Type.Resolve()).UntypedInstance);
+                where predicate(pluginInfo) && PluginFilters.All(f => f.IsEnabled(pluginInfo))
+                select PluginCache.GetOrCreate(pluginInfo.Type.Resolve()).UntypedInstance;
         }
 
         public IEnumerable<TPlugin> GetInstances(Func<PluginInfo, bool> predicate)

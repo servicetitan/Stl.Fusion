@@ -1,7 +1,11 @@
 using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
 using System.Threading;
 using Stl.Plugins.Internal;
 using Stl.Plugins.Metadata;
+using Stl.Reflection;
 
 namespace Stl.Plugins.Services
 {
@@ -25,13 +29,17 @@ namespace Stl.Plugins.Services
         // ReSharper disable once HeapView.BoxingAllocation
         public object UntypedInstance => Instance;
 
-        public PluginInstanceHandle(PluginSetInfo plugins, IPluginFactory factory)
+        public PluginInstanceHandle(PluginSetInfo plugins, 
+            IPluginFactory pluginFactory, IEnumerable<IPluginFilter> pluginFilters)
         {
-            var pluginImplType = typeof(TPluginImpl);
-            if (!plugins.InfoByType.ContainsKey(pluginImplType))
-                throw Errors.UnknownPluginImplementationType(pluginImplType.Name);
+            var pluginType = typeof(TPluginImpl);
+            var pluginInfo = plugins.InfoByType.GetValueOrDefault(pluginType); 
+            if (pluginInfo == null)
+                throw Errors.UnknownPluginImplementationType(pluginType);
+            if (pluginFilters.Any(f => !f.IsEnabled(pluginInfo)))
+                throw Errors.PluginDisabled(pluginType);
             _lazyInstance = new Lazy<TPluginImpl>(
-                () => (TPluginImpl) factory.Create(pluginImplType)!, 
+                () => (TPluginImpl) pluginFactory.Create(pluginType)!, 
                 LazyThreadSafetyMode.ExecutionAndPublication);
         }
 

@@ -67,7 +67,7 @@ namespace Stl.Tests.Extensibility
 
             var b = (B) services.Activate(typeof(B));
             b.X.Should().Be("S");
-            b.Y.Should().BeNull();
+            b.Y.Should().BeEmpty();
 
             ((Action) (() => {
                 var c = (C) services.Activate(typeof(C)); 
