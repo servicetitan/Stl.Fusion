@@ -23,7 +23,7 @@ namespace Stl.Plugins
         protected virtual void Dispose(bool disposing)
         {
             var plugins = Plugins;
-            Plugins = null;
+            Plugins = null!;
             if (plugins is IDisposable disposable)
                 disposable.Dispose();
         }

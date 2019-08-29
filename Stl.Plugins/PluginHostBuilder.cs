@@ -37,7 +37,7 @@ namespace Stl.Plugins
         public IServiceCollection Services { get; set; } = new ServiceCollection();
         public bool AutoStart { get; set; } = true;
         public IPluginHostBuilderImpl Implementation => this;
-        protected IPluginHost Host { get; set; }
+        protected IPluginHost? Host { get; set; }
 
         void IPluginHostBuilderImpl.UseDefaultServices() => UseDefaultServices();
         protected virtual void UseDefaultServices()
