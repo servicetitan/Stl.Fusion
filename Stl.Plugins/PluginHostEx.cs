@@ -6,39 +6,39 @@ using Stl.Plugins.Services;
 
 namespace Stl.Plugins
 {
-    public static class PluginServiceProviderEx
+    public static class PluginHostEx
     {
         internal static object GetPluginInstance(
-            this IServiceProvider services, Type implementationType) 
-            => services
+            this IPluginHost plugins, Type implementationType) 
+            => plugins
                 .GetService<IPluginCache>()
                 .GetOrCreate(implementationType)
                 .UntypedInstance;
 
         public static IEnumerable<TPlugin> GetPlugins<TPlugin>(
-            this IServiceProvider services) 
-            => services
+            this IPluginHost plugins) 
+            => plugins
                 .GetService<IPluginHandle<TPlugin>>()
                 .Instances;
 
         public static IEnumerable<TPlugin> GetPlugins<TPlugin>(
-            this IServiceProvider services, Func<PluginInfo, bool> predicate) 
-            => services
+            this IPluginHost plugins, Func<PluginInfo, bool> predicate) 
+            => plugins
                 .GetService<IPluginHandle<TPlugin>>()
                 .GetInstances(predicate);
 
         public static IEnumerable<object> GetPlugins(
-            this IServiceProvider services, Type pluginType)
+            this IPluginHost plugins, Type pluginType)
         {
-            var pluginHandle = (IPluginHandle) services.GetService(
+            var pluginHandle = (IPluginHandle) plugins.GetService(
                 typeof(IPluginHandle<>).MakeGenericType(pluginType));
             return pluginHandle.UntypedInstances;
         }
 
         public static IEnumerable<object> GetPlugins(
-            this IServiceProvider services, Type pluginType, Func<PluginInfo, bool> predicate)
+            this IServiceProvider plugins, Type pluginType, Func<PluginInfo, bool> predicate)
         {
-            var pluginHandle = (IPluginHandle) services.GetService(
+            var pluginHandle = (IPluginHandle) plugins.GetService(
                 typeof(IPluginHandle<>).MakeGenericType(pluginType));
             return pluginHandle.GetUntypedInstances(predicate);
         }

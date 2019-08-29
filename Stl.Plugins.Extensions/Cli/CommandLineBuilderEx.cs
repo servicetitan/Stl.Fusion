@@ -21,8 +21,8 @@ namespace Stl.Plugins.Extensions.Cli
 
         public static CommandLineBuilder UsePlugins<TPlugin>(
             this CommandLineBuilder builder,
-            IServiceProvider pluginHost)
+            IPluginHost plugins)
             where TPlugin : ICliPlugin
-            => builder.UsePlugins(pluginHost.GetPlugins<TPlugin>());
+            => builder.UsePlugins(plugins.GetPlugins<TPlugin>());
     }
 }

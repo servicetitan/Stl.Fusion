@@ -21,8 +21,8 @@ namespace Stl.Plugins.Extensions.Web
 
         public static IWebHostBuilder UsePlugins<TPlugin>(
             this IWebHostBuilder builder,
-            IServiceProvider pluginHost)
+            IPluginHost plugins)
             where TPlugin : IWebHostPlugin
-            => builder.UsePlugins(pluginHost.GetPlugins<TPlugin>());
+            => builder.UsePlugins(plugins.GetPlugins<TPlugin>());
     }
 }

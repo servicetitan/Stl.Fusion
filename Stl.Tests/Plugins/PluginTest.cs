@@ -103,7 +103,7 @@ namespace Stl.Tests.Plugins
             RunPluginHostTests(host);
         }
 
-        private static void RunPluginHostTests(IServiceProvider host)
+        private static void RunPluginHostTests(IPluginHost host)
         {
             // GetPlugins -- simple form (all plugins)
             var testPlugins = host.GetPlugins<ITestPlugin>().ToArray();

@@ -19,7 +19,7 @@ namespace Stl.Internal
 
         public bool IsReadOnly { get; private set; }
 
-        public SetOnce(T value) : this() => Value = value;
+        public SetOnce(T defaultValue) : this() => _value = defaultValue;
         public override string ToString() => $"{Value}";
 
         // Equality
