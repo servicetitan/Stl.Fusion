@@ -33,6 +33,7 @@ namespace Stl.Tests.Plugins
     public class TestPlugin1 : TestPlugin, IHasDependencies, ITestSingletonPlugin
     {
         public IEnumerable<Type> Dependencies { get; } = new [] { typeof(TestPlugin2) };
+        public TestPlugin1(IPluginInfoQuery query) { }
     }
     
     public class TestPlugin2 : TestPlugin, ITestPluginEx, IHasCapabilities, ITestSingletonPlugin
@@ -44,6 +45,7 @@ namespace Stl.Tests.Plugins
                 {"Server", false}
             }.ToImmutableDictionary();
 
+        public TestPlugin2(IPluginInfoQuery query) { }
         public TestPlugin2(IServiceProvider services)
         {
             services.Should().NotBeNull();

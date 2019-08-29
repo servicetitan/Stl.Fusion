@@ -73,7 +73,12 @@ namespace Stl.Plugins.Metadata
                 .OrderByDependency(a => 
                     ci.AllAssemblyRefs.GetValueOrDefault(a) ?? Enumerable.Empty<Assembly>())
                 .ToArray();
-            ci.TemporaryPluginFactory = new PluginHostBuilder()
+            ci.PluginFactory = new PluginHostBuilder()
+                .ConfigureServices(services => {
+                    services.AddSingleton<IPluginInfoQuery>(new PluginInfoQuery());
+                    services.AddSingleton<IPluginFactory>(s => new QueryingPluginFactory(s));
+                    return services;
+                })
                 .SetAutoStart(false)
                 .Build()
                 .GetService<IPluginFactory>();

@@ -10,6 +10,6 @@ namespace Stl.Plugins.Metadata
         public Type[]? Plugins { get; set; }
         public Assembly[]? Assemblies { get; set; }
         public Dictionary<Assembly, HashSet<Assembly>>? AllAssemblyRefs { get; set; }  
-        public IPluginFactory? TemporaryPluginFactory { get; set; }
+        public IPluginFactory? PluginFactory { get; set; }
     }
 }

@@ -53,9 +53,15 @@ namespace Stl.Plugins.Metadata
 
             object? tmpPlugin = null;
             try {
-                tmpPlugin = constructionInfo.TemporaryPluginFactory!.Create(type);
+                tmpPlugin = constructionInfo.PluginFactory!.Create(type);
             }
-            catch (InvalidOperationException) {} // To ignore plugins we can't construct
+            catch (Exception) {
+                // There might be plugins we can't construct -- mainly,
+                // b/c their constructors aren't written properly to support
+                // temporary plugin factory.
+                // All we can do here is to ignore this exception & assume
+                // these plugins can't provide capabilities and dependencies.
+            } 
 
             if (tmpPlugin is IHasCapabilities hc)
                 Capabilities = hc.Capabilities;

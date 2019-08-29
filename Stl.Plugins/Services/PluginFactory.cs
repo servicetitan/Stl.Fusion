@@ -15,7 +15,7 @@ namespace Stl.Plugins.Services
         public PluginFactory(IServiceProvider services) 
             => Services = services;
 
-        public object Create(Type pluginType)
+        public virtual object Create(Type pluginType)
             => Services.Activate(pluginType);
     }
 }
