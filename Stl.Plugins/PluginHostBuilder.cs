@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Extensibility;
@@ -48,26 +49,23 @@ namespace Stl.Plugins
                 return;
 
             Services.AddSingleton(_ => Host);
-            if (!Services.HasService<ILoggerFactory>())
-                Services.AddSingleton<ILoggerFactory, NullLoggerFactory>();
-            if (!Services.HasService(typeof(ILogger<>)))
-                Services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
+            Services.TryAdd(ServiceDescriptor.Singleton<ILoggerFactory, NullLoggerFactory>());
+            Services.TryAdd(ServiceDescriptor.Singleton(typeof(ILogger<>), typeof(Logger<>)));
 
             if (!Services.HasService<PluginSetInfo>()) {
-                var hasPluginConfiguration = Plugins.InfoByType.Count != 0;
-                if (hasPluginConfiguration) {
+                var hasPluginSetInfo = Plugins.InfoByType.Count != 0;
+                if (hasPluginSetInfo) {
                     // Plugin set is known, so no need to look for plugins
-                    Services.AddSingleton(Plugins);
+                    Services.TryAdd(ServiceDescriptor.Singleton(Plugins));
                 }
                 else {
                     // Plugin set isn't known, so we need IPluginFinder
-                    if (!Services.HasService<IPluginFinder>())
-                        Services.AddSingleton<IPluginFinder, PluginFinder>();
-                    Services.AddSingleton(services => {
+                    Services.TryAdd(ServiceDescriptor.Singleton<IPluginFinder, PluginFinder>());
+                    Services.TryAdd(ServiceDescriptor.Singleton(services => {
                         var pluginFinder = services.GetService<IPluginFinder>();
                         var plugins = pluginFinder.FindPlugins();
                         return plugins;
-                    });
+                    }));
                 }
             }
             // Adding filter that makes sure only plugins castable to the
@@ -77,14 +75,12 @@ namespace Stl.Plugins
                 this.AddPluginFilter(p => p.CastableTo.Any(c => hPluginTypes.Contains(c)));
             }
 
-            if (!Services.HasService<IPluginFactory>())
-                Services.AddSingleton<IPluginFactory, PluginFactory>();
-            if (!Services.HasService<IPluginCache>())
-                Services.AddSingleton<IPluginCache, PluginCache>();
-            if (!Services.HasService(typeof(IPluginInstanceHandle<>)))
-                Services.AddSingleton(typeof(IPluginInstanceHandle<>), typeof(PluginInstanceHandle<>));
-            if (!Services.HasService(typeof(IPluginHandle<>)))
-                Services.AddSingleton(typeof(IPluginHandle<>), typeof(PluginHandle<>));
+            Services.TryAdd(ServiceDescriptor.Singleton<IPluginFactory, PluginFactory>());
+            Services.TryAdd(ServiceDescriptor.Singleton<IPluginCache, PluginCache>());
+            Services.TryAdd(ServiceDescriptor.Singleton(
+                typeof(IPluginInstanceHandle<>), typeof(PluginInstanceHandle<>)));
+            Services.TryAdd(ServiceDescriptor.Singleton(
+                typeof(IPluginHandle<>), typeof(PluginHandle<>)));
         }
 
         public virtual IPluginHost Build()

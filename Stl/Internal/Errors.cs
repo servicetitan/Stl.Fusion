@@ -54,6 +54,6 @@ namespace Stl.Internal
             new InvalidOperationException($"This value can be set just once.");
 
         public static Exception CannotActivate(Type type) =>
-            new InvalidOperationException($"Can't find the constructor to activate type '{type.Name}'.");
+            new InvalidOperationException($"Cannot find the right constructor to activate type '{type.Name}'.");
     }
 }

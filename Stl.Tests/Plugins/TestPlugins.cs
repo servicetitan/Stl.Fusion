@@ -34,6 +34,7 @@ namespace Stl.Tests.Plugins
     {
         public IEnumerable<Type> Dependencies { get; } = new [] { typeof(TestPlugin2) };
         public TestPlugin1(IPluginInfoQuery query) { }
+        public TestPlugin1() { }
     }
     
     public class TestPlugin2 : TestPlugin, ITestPluginEx, IHasCapabilities, ITestSingletonPlugin
