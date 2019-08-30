@@ -49,23 +49,23 @@ namespace Stl.Plugins
                 return;
 
             Services.AddSingleton(_ => Host);
-            Services.TryAdd(ServiceDescriptor.Singleton<ILoggerFactory, NullLoggerFactory>());
-            Services.TryAdd(ServiceDescriptor.Singleton(typeof(ILogger<>), typeof(Logger<>)));
+            Services.TryAddSingleton<ILoggerFactory, NullLoggerFactory>();
+            Services.TryAddSingleton(typeof(ILogger<>), typeof(Logger<>));
 
             if (!Services.HasService<PluginSetInfo>()) {
                 var hasPluginSetInfo = Plugins.InfoByType.Count != 0;
                 if (hasPluginSetInfo) {
                     // Plugin set is known, so no need to look for plugins
-                    Services.TryAdd(ServiceDescriptor.Singleton(Plugins));
+                    Services.TryAddSingleton(Plugins);
                 }
                 else {
                     // Plugin set isn't known, so we need IPluginFinder
-                    Services.TryAdd(ServiceDescriptor.Singleton<IPluginFinder, PluginFinder>());
-                    Services.TryAdd(ServiceDescriptor.Singleton(services => {
+                    Services.TryAddSingleton<IPluginFinder, PluginFinder>();
+                    Services.TryAddSingleton(services => {
                         var pluginFinder = services.GetService<IPluginFinder>();
                         var plugins = pluginFinder.FindPlugins();
                         return plugins;
-                    }));
+                    });
                 }
             }
             // Adding filter that makes sure only plugins castable to the
@@ -75,12 +75,10 @@ namespace Stl.Plugins
                 this.AddPluginFilter(p => p.CastableTo.Any(c => hPluginTypes.Contains(c)));
             }
 
-            Services.TryAdd(ServiceDescriptor.Singleton<IPluginFactory, PluginFactory>());
-            Services.TryAdd(ServiceDescriptor.Singleton<IPluginCache, PluginCache>());
-            Services.TryAdd(ServiceDescriptor.Singleton(
-                typeof(IPluginInstanceHandle<>), typeof(PluginInstanceHandle<>)));
-            Services.TryAdd(ServiceDescriptor.Singleton(
-                typeof(IPluginHandle<>), typeof(PluginHandle<>)));
+            Services.TryAddSingleton<IPluginFactory, PluginFactory>();
+            Services.TryAddSingleton<IPluginCache, PluginCache>();
+            Services.TryAddSingleton(typeof(IPluginInstanceHandle<>), typeof(PluginInstanceHandle<>));
+            Services.TryAddSingleton(typeof(IPluginHandle<>), typeof(PluginHandle<>));
         }
 
         public virtual IPluginHost Build()
