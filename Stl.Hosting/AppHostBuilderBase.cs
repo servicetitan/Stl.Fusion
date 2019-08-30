@@ -33,9 +33,10 @@ namespace Stl.Hosting
         IConfiguration PluginHostConfiguration { get; set; }
         IPluginHostBuilder PluginHostBuilder { get; set; }
         IPluginHost PluginHost { get; set; }
+        ReadOnlyMemory<string> HostArguments { get; set; }
         IHost? Host { get; set; }
 
-        void BuildHost(string[] arguments);
+        void BuildHost();
     }
 
     public abstract class AppHostBuilderBase : HasOptionsBase, IAppHostBuilder, IAppHostBuildState
@@ -65,7 +66,7 @@ namespace Stl.Hosting
         }
 
         public IAppHostBuildState BuildState => this;
-        void IAppHostBuildState.BuildHost(string[] hostArguments) => BuildHost(hostArguments);
+        void IAppHostBuildState.BuildHost() => BuildHost();
 
         ReadOnlyMemory<string> IAppHostBuildState.Arguments {
             get => GetOption<ReadOnlyMemory<string>>(nameof(IAppHostBuildState.Arguments));
@@ -86,6 +87,10 @@ namespace Stl.Hosting
         IPluginHost IAppHostBuildState.PluginHost {
             get => GetOption<IPluginHost?>(nameof(IAppHostBuildState.PluginHost))!;
             set => SetOption(nameof(IAppHostBuildState.PluginHost), value);
+        }
+        ReadOnlyMemory<string> IAppHostBuildState.HostArguments {
+            get => GetOption<ReadOnlyMemory<string>>(nameof(IAppHostBuildState.HostArguments));
+            set => SetOption(nameof(IAppHostBuildState.HostArguments), value);
         }
         IHost? IAppHostBuildState.Host {
             get => GetOption<IHost?>(nameof(IAppHostBuildState.Host));
@@ -183,11 +188,11 @@ namespace Stl.Hosting
             cliProcessor.Run(BuildState.Arguments.ToArray());
         }
 
-        protected virtual void BuildHost(string[] hostArguments)
+        protected virtual void BuildHost()
         {
             var plugins = BuildState.PluginHost;
             var hostPlugin = plugins.GetSingletonPlugin<IPrimaryHostPlugin>();
-            BuildState.Host = hostPlugin.BuildHost(hostArguments);
+            BuildState.Host = hostPlugin.BuildHost();
         }
 
         protected virtual IEnumerable<string> GetPluginHostConfigurationFileNames()

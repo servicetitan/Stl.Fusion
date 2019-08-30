@@ -20,14 +20,13 @@ namespace Stl.Hosting.Plugins
 {
     public interface IPrimaryHostPlugin : ISingletonPlugin
     {
-        IHost BuildHost(string[] hostArguments);
+        IHost BuildHost();
     }
 
     public class PrimaryHostPlugin : IPrimaryHostPlugin, IAppHostBuilderPlugin
     {
         protected IPluginHost Plugins { get; set; } = null!;
         protected IAppHostBuilder AppHostBuilder { get; set; } = null!;
-        protected string[] HostArguments { get; set; } = {};
         protected IHostBuilder HostBuilder { get; set; } = null!;
 
         public PrimaryHostPlugin() { }
@@ -37,9 +36,8 @@ namespace Stl.Hosting.Plugins
             AppHostBuilder = appHostBuilder;
         }
 
-        public virtual IHost BuildHost(string[] hostArguments)
+        public virtual IHost BuildHost()
         {
-            HostArguments = hostArguments;
             HostBuilder = CreateHostBuilder();
             ConfigureServiceProviderFactory();
             ConfigureHostConfiguration();
@@ -50,7 +48,7 @@ namespace Stl.Hosting.Plugins
         }
 
         protected virtual IHostBuilder CreateHostBuilder()
-            => CreateDefaultBuilder(HostArguments);
+            => CreateDefaultBuilder(AppHostBuilder.BuildState.HostArguments.ToArray());
 
         protected virtual void ConfigureServiceProviderFactory() 
             => HostBuilder.UseServiceProviderFactory(new AutofacServiceProviderFactory());

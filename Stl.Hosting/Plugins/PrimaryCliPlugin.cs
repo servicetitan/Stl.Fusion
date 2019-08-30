@@ -3,6 +3,7 @@ using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Invocation;
 using System.Linq;
+using System.Reflection;
 using Stl.Hosting.Plugins;
 using Stl.Plugins;
 using Stl.Plugins.Extensions.Cli;
@@ -40,32 +41,57 @@ namespace Stl.Hosting.Plugins
 
         protected virtual void ConfigureCliBuilder()
         {
-            CliBuilder.Command.Handler = CommandHandler.Create<ParseResult>(BuildHostCommandHandler);
-            CliBuilder.Command.AddOption(CreateOverridesOption());
-            CliBuilder.Command.AddOption(CreateBindOption());
-        }
-
-        protected virtual void BuildHostCommandHandler(ParseResult parseResult)
-        {
-            var commandResult = parseResult.CommandResult;
-            var overrides = commandResult.ValueForOption<string[]>("-o") ?? Array.Empty<string>();
-            var binds = commandResult.ValueForOption<string[]>("-b") ?? Array.Empty<string>();
-            if (binds.Length > 0)
-                AppHostBuilder.WebHostUrls = binds;
-            var hostArguments = GetHostArguments(overrides);
-            AppHostBuilder.BuildState.BuildHost(hostArguments);
+            AddOverridesOption();
+            AddBindOption();
+            CliBuilder.Command.Handler = CommandHandler.Create(
+                () => AppHostBuilder.BuildState.BuildHost());
         }
 
         protected virtual string[] GetHostArguments(string[] overrides) 
             => overrides.Select(s => "--" + s).ToArray();
 
-        protected virtual Option CreateOverridesOption() 
-            => new Option(new[] {"-o", "--overrides"}) {
+        protected virtual void AddOverridesOption()
+        {
+            var option = new Option(
+                new[] {"-o", "--override"}, 
+                "Configuration property override; use '-o property1=value1 -o property2=value2' notation") {
                 Argument = new Argument<string[]>(),
             };
-        protected virtual Option CreateBindOption() 
-            => new Option(new[] {"-b", "--bind"}) {
+            if (CliBuilder.Command.Children.GetByAlias(option.Name) != null)
+                return;
+            CliBuilder.AddOption(option);
+            AddMiddleware(async (ctx, next) => {
+                var value = ctx.ParseResult.RootCommandResult.ValueForOption<string[]>(option.Name);
+                if (value != null && value.Length > 0)
+                    AppHostBuilder.BuildState.HostArguments = GetHostArguments(value);
+                await next(ctx);
+            }, -10100);
+        }
+
+        protected virtual void AddBindOption()
+        {
+            var option = new Option(
+                new[] {"-b", "--bind"}, 
+                "Web server bind address; you can use multiple bind options") {
                 Argument = new Argument<string[]>(),
             };
+            if (CliBuilder.Command.Children.GetByAlias(option.Name) != null)
+                return;
+            CliBuilder.AddOption(option);
+            AddMiddleware(async (ctx, next) => {
+                var value = ctx.ParseResult.RootCommandResult.ValueForOption<string[]>(option.Name);
+                if (value != null && value.Length > 0)
+                    AppHostBuilder.WebHostUrls = value;
+                await next(ctx);
+            }, -10090);
+        }
+
+        protected void AddMiddleware(InvocationMiddleware middleware, int order)
+        {
+            var methodInfo = CliBuilder.GetType().GetMethod(
+                nameof(AddMiddleware), 
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            methodInfo.Invoke(CliBuilder, new object[] { middleware, order });
+        }
     }
 }
