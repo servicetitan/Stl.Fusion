@@ -29,7 +29,7 @@ namespace Stl.Hosting
     public interface IAppHostBuildState 
     { 
         ReadOnlyMemory<string> Arguments { get; set; }
-        string Environment { get; set; }
+        string EnvironmentName { get; set; }
         IConfiguration PluginHostConfiguration { get; set; }
         IPluginHostBuilder PluginHostBuilder { get; set; }
         IPluginHost PluginHost { get; set; }
@@ -71,9 +71,9 @@ namespace Stl.Hosting
             get => GetOption<ReadOnlyMemory<string>>(nameof(IAppHostBuildState.Arguments));
             set => SetOption(nameof(IAppHostBuildState.Arguments), value);
         }
-        string IAppHostBuildState.Environment {
-            get => GetOption<string>(nameof(IAppHostBuildState.Environment)) ?? Environments.Production;
-            set => SetOption(nameof(IAppHostBuildState.Environment), value);
+        string IAppHostBuildState.EnvironmentName {
+            get => GetOption<string>(nameof(IAppHostBuildState.EnvironmentName)) ?? Environments.Production;
+            set => SetOption(nameof(IAppHostBuildState.EnvironmentName), value);
         }
         IConfiguration IAppHostBuildState.PluginHostConfiguration {
             get => GetOption<IConfiguration?>(nameof(IAppHostBuildState.PluginHostConfiguration))!;
@@ -102,7 +102,7 @@ namespace Stl.Hosting
             
             var state = BuildState;
             state.Arguments = Array.Empty<string>();
-            state.Environment = Environments.Production;
+            state.EnvironmentName = Environments.Production;
         }
 
         protected string GetDefaultEnvironmentVarPrefix()
@@ -135,7 +135,7 @@ namespace Stl.Hosting
                 .AddEnvironmentVariables(EnvironmentVarPrefix)
                 .Build();
             
-            BuildState.Environment = baseCfg[HostDefaults.EnvironmentKey] ?? Environments.Production;
+            BuildState.EnvironmentName = baseCfg[HostDefaults.EnvironmentKey] ?? Environments.Production;
 
             var cfg = new ConfigurationBuilder()
                 .AddConfiguration(baseCfg);
@@ -193,7 +193,7 @@ namespace Stl.Hosting
         protected virtual IEnumerable<string> GetPluginHostConfigurationFileNames()
         {
             yield return "pluginSettings.json";
-            yield return $"pluginSettings.{BuildState.Environment}.json"; 
+            yield return $"pluginSettings.{BuildState.EnvironmentName}.json"; 
         }
     }
 }

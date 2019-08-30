@@ -67,11 +67,15 @@ namespace Stl.Hosting.Plugins
         protected virtual IEnumerable<string> GetHostConfigurationFileNames()
         {
             yield return "settings.json";
-            yield return $"settings.{AppHostBuilder.BuildState.Environment}.json"; 
+            yield return $"settings.{AppHostBuilder.BuildState.EnvironmentName}.json"; 
         }
 
         protected virtual void ConfigureServices()
             => HostBuilder.ConfigureServices((ctx, services) => {
+                var env = ctx.HostingEnvironment;
+                // We have to update EnvironmentName here, since earlier we didn't read
+                // exactly the same configuration (+ command line options weren't parsed yet).
+                AppHostBuilder.BuildState.EnvironmentName = env.EnvironmentName;
                 services.AddOptions();
                 services.AddSingleton(Plugins);
                 services.CopySingleton<IAppHostBuilder>(Plugins);
