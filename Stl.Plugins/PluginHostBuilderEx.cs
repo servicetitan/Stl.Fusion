@@ -8,6 +8,14 @@ namespace Stl.Plugins
 {
     public static class PluginHostBuilderEx
     {
+        public static TBuilder UseServiceProviderFactory<TBuilder>(this TBuilder builder,
+            Func<IServiceCollection, IServiceProvider> serviceProviderFactory)
+            where TBuilder : IPluginHostBuilder
+        {
+            builder.ServiceProviderFactory = serviceProviderFactory;
+            return builder;
+        }
+        
         public static TBuilder ConfigureServices<TBuilder>(this TBuilder builder, 
             Func<IServiceCollection, IServiceCollection> configurator)
             where TBuilder : IPluginHostBuilder

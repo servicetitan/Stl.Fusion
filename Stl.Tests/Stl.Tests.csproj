@@ -10,6 +10,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Autofac" Version="4.9.4" />
+    <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="5.0.0-rc1" />
     <PackageReference Include="FluentAssertions" Version="5.8.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.3.0-preview-20190808-03" />
     <PackageReference Include="Moq" Version="4.12.0" />
@@ -27,6 +29,7 @@
     <ProjectReference Include="..\Stl.Experimental\Stl.Experimental.csproj" />
     <ProjectReference Include="..\Stl.Plugins\Stl.Plugins.csproj" />
     <ProjectReference Include="..\Stl.Plugins.Extensions\Stl.Plugins.Extensions.csproj" />
+    <ProjectReference Include="..\Stl.Hosting\Stl.Hosting.csproj" />
     <ProjectReference Include="..\Stl.Reactionist\Stl.Reactionist.csproj" />
     <ProjectReference Include="..\Stl.TimeSeries\Stl.TimeSeries.csproj" />
     <ProjectReference Include="..\Stl.Testing\Stl.Testing.csproj" />

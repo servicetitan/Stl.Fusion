@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Plugins.Metadata;
 using Stl.Plugins.Services;
@@ -15,8 +16,14 @@ namespace Stl.Plugins
                 .GetOrCreate(implementationType)
                 .UntypedInstance;
 
-        public static IEnumerable<TPlugin> GetPlugins<TPlugin>(
-            this IPluginHost plugins) 
+        public static TPlugin GetSingletonPlugin<TPlugin>(this IPluginHost plugins)
+            where TPlugin : ISingletonPlugin
+            => plugins.GetPlugins<TPlugin>().Single();
+
+        public static object GetSingletonPlugin(this IPluginHost plugins, Type pluginType)
+            => plugins.GetPlugins(pluginType).Single();
+
+        public static IEnumerable<TPlugin> GetPlugins<TPlugin>(this IPluginHost plugins) 
             => plugins
                 .GetService<IPluginHandle<TPlugin>>()
                 .Instances;

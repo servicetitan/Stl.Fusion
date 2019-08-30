@@ -18,6 +18,7 @@ namespace Stl.Plugins
         HashSet<Type> PluginTypes { get; set; }
         PluginSetInfo Plugins { get; set; }
         IServiceCollection Services { get; set; }
+        Func<IServiceCollection, IServiceProvider> ServiceProviderFactory { get; set; }
         bool AutoStart { get; set; }
         IPluginHostBuilderImpl Implementation { get; }
 
@@ -36,6 +37,8 @@ namespace Stl.Plugins
         public HashSet<Type> PluginTypes { get; set; } = new HashSet<Type>();
         public PluginSetInfo Plugins { get; set; } = PluginSetInfo.Empty;
         public IServiceCollection Services { get; set; } = new ServiceCollection();
+        public Func<IServiceCollection, IServiceProvider> ServiceProviderFactory { get; set; } = 
+            services => new DefaultServiceProviderFactory().CreateServiceProvider(services);
         public bool AutoStart { get; set; } = true;
         public IPluginHostBuilderImpl Implementation => this;
         protected IPluginHost? Host { get; set; }
@@ -86,8 +89,7 @@ namespace Stl.Plugins
             if (Host != null)
                 throw Errors.AlreadyInvoked(nameof(Build));
             UseDefaultServices();
-            var factory = new DefaultServiceProviderFactory();
-            var plugins = factory.CreateServiceProvider(Services);
+            var plugins = ServiceProviderFactory(Services);
             Host = new PluginHost(plugins);
             if (AutoStart)
                 Host.Start();
