@@ -10,7 +10,7 @@ namespace Stl.Plugins.Services
         public QueryingPluginFactory(IServiceProvider services) : base(services) 
             => Query = services.GetService<IPluginInfoQuery>();
 
-        public override object Create(Type pluginType)
+        public override object? Create(Type pluginType)
         {
             var ctor = pluginType.GetConstructor(new [] {typeof(IPluginInfoQuery)});
             if (ctor == null)

@@ -91,7 +91,7 @@ namespace Stl.Hosting.Plugins
             var methodInfo = CliBuilder.GetType().GetMethod(
                 nameof(AddMiddleware), 
                 BindingFlags.Instance | BindingFlags.NonPublic);
-            methodInfo.Invoke(CliBuilder, new object[] { middleware, order });
+            methodInfo!.Invoke(CliBuilder, new object[] { middleware, order });
         }
     }
 }
