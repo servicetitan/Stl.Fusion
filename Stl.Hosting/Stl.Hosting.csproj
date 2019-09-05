@@ -14,7 +14,6 @@
     <PackageReference Include="Autofac.Extras.AggregateService" Version="4.1.0" />
     <PackageReference Include="Enums.NET" Version="2.3.2" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3-beta1" />
-    <PackageReference Include="Optional" Version="5.0.0-alpha" />
     <PackageReference Include="System.Reactive" Version="4.2.0-preview.625" />
   </ItemGroup>
 

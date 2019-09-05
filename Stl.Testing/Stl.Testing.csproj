@@ -12,7 +12,6 @@
     <PackageReference Include="Enums.NET" Version="2.3.2" />
     <PackageReference Include="FluentAssertions" Version="5.8.0" />
     <PackageReference Include="morelinq" Version="3.2.0" />
-    <PackageReference Include="Optional" Version="5.0.0-alpha" />
     <PackageReference Include="Serilog" Version="2.9.0-dev-01119" />
     <PackageReference Include="Serilog.Extensions.Logging" Version="3.0.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="3.1.2-dev-00811" />
