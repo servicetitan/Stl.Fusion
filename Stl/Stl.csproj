@@ -32,8 +32,4 @@
     <PackageReference Include="System.Reactive" Version="4.2.0-preview.625" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Immutable" />
-  </ItemGroup>
-
 </Project>
