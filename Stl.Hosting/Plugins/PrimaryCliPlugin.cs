@@ -52,7 +52,7 @@ namespace Stl.Hosting.Plugins
 
         protected virtual void AddOverridesOption()
         {
-            var option = new Option(
+            var option = new System.CommandLine.Option(
                 new[] {"-o", "--override"}, 
                 "Configuration property override; use '-o property1=value1 -o property2=value2' notation") {
                 Argument = new Argument<string[]>(),
@@ -70,7 +70,7 @@ namespace Stl.Hosting.Plugins
 
         protected virtual void AddBindOption()
         {
-            var option = new Option(
+            var option = new System.CommandLine.Option(
                 new[] {"-b", "--bind"}, 
                 "Web server bind address; you can use multiple bind options") {
                 Argument = new Argument<string[]>(),

@@ -1,6 +1,5 @@
 using System.Threading;
 using System.Threading.Tasks;
-using Optional;
 using Stl.Async;
 
 namespace Stl.Caching 

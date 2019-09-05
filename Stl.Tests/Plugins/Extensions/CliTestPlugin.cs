@@ -37,10 +37,10 @@ namespace Stl.Tests.Plugins.Extensions
                     Console.Out.WriteLine($"Add: {a + b}");
                 }),
             };
-            testCommand.AddOption(new Option("--a") {
+            testCommand.AddOption(new System.CommandLine.Option("--a") {
                 Argument = new Argument<int>(),
             });
-            testCommand.AddOption(new Option("--b") {
+            testCommand.AddOption(new System.CommandLine.Option("--b") {
                 Argument = new Argument<int>(),
             });
             builder.AddCommand(testCommand);
@@ -60,10 +60,10 @@ namespace Stl.Tests.Plugins.Extensions
                     Console.Out.WriteLine($"Mul: {a * b}");
                 }),
             };
-            testCommand.AddOption(new Option("--a") {
+            testCommand.AddOption(new System.CommandLine.Option("--a") {
                 Argument = new Argument<int>(),
             });
-            testCommand.AddOption(new Option("--b") {
+            testCommand.AddOption(new System.CommandLine.Option("--b") {
                 Argument = new Argument<int>(),
             });
             builder.AddCommand(testCommand);

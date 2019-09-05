@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Optional;
-using Optional.Unsafe;
 
 namespace Stl
 {
@@ -71,23 +69,21 @@ namespace Stl
 
         // collection.SetOption(key, value) methods -- set or remove value
 
-        public static bool SetOption<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key,
-            Option<TValue> value)
+        public static bool SetOption<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, Option<TValue> value)
             where TKey : notnull
         {
             if (!value.HasValue)
                 return dictionary.Remove(key);
-            dictionary[key] = value.ValueOrDefault();
+            dictionary[key] = value.UnsafeValue;
             return true;
         }
 
-        public static bool SetOption<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, TKey key,
-            Option<TValue> value)
+        public static bool SetOption<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, TKey key, Option<TValue> value)
             where TKey : notnull
         {
             if (!value.HasValue)
                 return dictionary.Remove(key);
-            dictionary[key] = value.ValueOrDefault();
+            dictionary[key] = value.UnsafeValue;
             return true;
         }
     }

@@ -55,5 +55,8 @@ namespace Stl.Internal
 
         public static Exception CannotActivate(Type type) =>
             new InvalidOperationException($"Cannot find the right constructor to activate type '{type.Name}'.");
+
+        public static Exception OptionIsNone() =>
+            new InvalidOperationException("Option is None.");
     }
 }

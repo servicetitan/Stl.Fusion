@@ -1,8 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Optional;
-using Optional.Unsafe;
 using Stl.Collections;
 using Stl.Locking;
 
@@ -24,7 +22,7 @@ namespace Stl.Caching
         {
             var value = await Cache.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
             if (value.HasValue)
-                return value.ValueOrDefault();
+                return value.UnsafeValue;
             await using var @lock = await Lock.LockAsync(key, cancellationToken).ConfigureAwait(false);
             var result = await ComputeAsync(key, cancellationToken).ConfigureAwait(false);
             await Cache.SetAsync(key, result, cancellationToken).ConfigureAwait(false);

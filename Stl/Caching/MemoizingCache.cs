@@ -1,8 +1,6 @@
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
-using Optional;
-using Optional.Unsafe;
 using Stl.Async;
 
 namespace Stl.Caching
@@ -24,7 +22,7 @@ namespace Stl.Caching
         protected override ValueTask SetAsync(TKey key, Option<TValue> value, CancellationToken cancellationToken = default)
         {
             if (value.HasValue)
-                _dictionary[key] = value.ValueOrDefault();
+                _dictionary[key] = value.UnsafeValue;
             else
                 _dictionary.TryRemove(key, out _);
             return ValueTaskEx.CompletedTask;

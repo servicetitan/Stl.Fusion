@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
-using Optional.Unsafe;
 using Stl.Caching;
 using Stl.Plugins.Metadata;
 
@@ -40,7 +39,7 @@ namespace Stl.Plugins.Services
             if (result.HasValue) {
                 Logger.LogInformation("Cached plugin set info found.");
                 try {
-                    pluginSetInfo = Deserialize(result.ValueOrDefault());
+                    pluginSetInfo = Deserialize(result.UnsafeValue);
                     return pluginSetInfo;
                 }
                 catch (Exception e) {

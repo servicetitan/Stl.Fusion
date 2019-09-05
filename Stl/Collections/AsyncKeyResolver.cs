@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Optional;
-using Optional.Unsafe;
 
 namespace Stl.Collections
 {
@@ -21,7 +19,7 @@ namespace Stl.Collections
             var value = await TryGetAsync(key, cancellationToken).ConfigureAwait(false);
             if (!value.HasValue)
                 throw new KeyNotFoundException();
-            return value.ValueOrDefault();
+            return value.UnsafeValue;
         }
 
         public abstract ValueTask<Option<TValue>> TryGetAsync(TKey key, CancellationToken cancellationToken = default);
