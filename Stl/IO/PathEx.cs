@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Stl.Strings;
+using Path = System.IO.Path;
 
 namespace Stl.IO
 {

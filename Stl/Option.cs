@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text.Json.Serialization;
 using Stl.Internal;
 
 namespace Stl
@@ -8,7 +9,7 @@ namespace Stl
     public interface IOption
     {
         bool HasValue { get; }
-        object? UntypedUnsafeValue { get; }
+        [JsonIgnore] object? UntypedUnsafeValue { get; }
         object? UntypedValue { get; }
     }
 
@@ -18,10 +19,10 @@ namespace Stl
     {
         public bool HasValue { get; }
         public T UnsafeValue { get; }
-        public T Value { get { AssertHasValue(); return UnsafeValue; } }
-        object? IOption.UntypedUnsafeValue => UnsafeValue;
-        object? IOption.UntypedValue => Value;
-        private string DebugValue => ToString();
+        [JsonIgnore] public T Value { get { AssertHasValue(); return UnsafeValue; } }
+        [JsonIgnore] object? IOption.UntypedUnsafeValue => UnsafeValue;
+        [JsonIgnore] object? IOption.UntypedValue => Value;
+        [JsonIgnore] private string DebugValue => ToString();
 
         public static Option<T> None => default;
         public static Option<T> Some(T value) => new Option<T>(true, value);

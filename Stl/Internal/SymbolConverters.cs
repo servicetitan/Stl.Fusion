@@ -2,18 +2,18 @@ using System;
 using System.ComponentModel;
 using System.Globalization;
 using Newtonsoft.Json;
-using Stl.Reflection;
+using Stl.Strings;
 
 namespace Stl.Internal
 {
-    public class TypeRefTypeConverter : TypeConverter 
+    public class SymbolTypeConverter : TypeConverter 
     {
         public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) 
             => sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
 
         public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) {  
             if (destinationType == typeof(string))
-                return ((TypeRef) value).AssemblyQualifiedName.Value;
+                return ((Symbol) value).Value;
             return base.ConvertTo(context, culture, value, destinationType);
         }
 
@@ -21,27 +21,27 @@ namespace Stl.Internal
         {
             if (value is string s)
                 // ReSharper disable once HeapView.BoxingAllocation
-                return new TypeRef(s);
+                return new Symbol(s);
             return base.ConvertFrom(context, culture, value);
         }
     }
     
-    public class TypeRefJsonConverter : JsonConverter
+    public class SymbolJsonConverter : JsonConverter
     {
         public override bool CanConvert(Type objectType) 
-            => objectType == typeof(TypeRef);
+            => objectType == typeof(Symbol);
 
         public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
         {
-            var typeRef = (TypeRef) value!;
-            writer.WriteValue(typeRef.AssemblyQualifiedName.Value);
+            var typeRef = (Symbol) value!;
+            writer.WriteValue(typeRef.Value);
         }
 
         public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
         {
-            var assemblyQualifiedName = (string) reader.Value!;
+            var value = (string) reader.Value!;
             // ReSharper disable once HeapView.BoxingAllocation
-            return new TypeRef(assemblyQualifiedName);
+            return new Symbol(value);
         }
     }
 }

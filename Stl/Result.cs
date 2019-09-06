@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.ExceptionServices;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Stl
@@ -41,8 +42,9 @@ namespace Stl
     {
         public T UnsafeValue { get; }
         public Exception? Error { get; }
-        public bool HasError => Error != null;
+        [JsonIgnore] public bool HasError => Error != null;
 
+        [JsonIgnore] 
         public T Value {
             get {
                 if (Error == null)
@@ -56,9 +58,9 @@ namespace Stl
         }
 
         // ReSharper disable once HeapView.BoxingAllocation
-        public object? UntypedValue => Value;
+        [JsonIgnore] public object? UntypedValue => Value;
         // ReSharper disable once HeapView.BoxingAllocation
-        public object? UnsafeUntypedValue => UnsafeValue;
+        [JsonIgnore] public object? UnsafeUntypedValue => UnsafeValue;
 
         public Result(T value, Exception? error)
         {
