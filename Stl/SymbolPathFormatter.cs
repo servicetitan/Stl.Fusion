@@ -1,16 +1,16 @@
 using System.Text;
 
-namespace Stl.Strings
+namespace Stl
 {
-    public interface IPathFormatter
+    public interface ISymbolPathFormatter
     {
-        string ToString(Path source);
-        Path Parse(string source);
+        string ToString(SymbolPath source);
+        SymbolPath Parse(string source);
     }
     
-    public class PathFormatter : IPathFormatter
+    public class SymbolPathFormatter : ISymbolPathFormatter
     {
-        public static IPathFormatter Default { get; } = new PathFormatter('/');
+        public static ISymbolPathFormatter Default { get; } = new SymbolPathFormatter('/');
         
         public char DelimiterChar { get; }
         public char EscapeChar { get; }
@@ -19,7 +19,7 @@ namespace Stl.Strings
         protected string EscapedDelimiter { get; }
         protected string EscapedEscape { get; }
 
-        public PathFormatter(char delimiter, char escape = '\\')
+        public SymbolPathFormatter(char delimiter, char escape = '\\')
         {
             DelimiterChar = delimiter;
             EscapeChar = escape;
@@ -29,7 +29,7 @@ namespace Stl.Strings
             EscapedEscape = $"{Escape}{Escape}";
         }
 
-        public string ToString(Path source)
+        public string ToString(SymbolPath source)
         {
             var sb = new StringBuilder();
             var needsDelimiter = false;
@@ -45,9 +45,9 @@ namespace Stl.Strings
             return sb.ToString();
         }
 
-        public Path Parse(string source)
+        public SymbolPath Parse(string source)
         {
-            var path = (Path?) null;
+            var path = (SymbolPath?) null;
             var sb = new StringBuilder();
             var escape = false;
             foreach (var c in source) {
@@ -59,7 +59,7 @@ namespace Stl.Strings
                     escape = true;
                 }
                 else if (c == DelimiterChar) {
-                    path = new Path(path, sb.ToString());
+                    path = new SymbolPath(path, sb.ToString());
                     sb.Clear();
                 }
                 else {
@@ -68,7 +68,7 @@ namespace Stl.Strings
             }
             if (escape)
                 sb.Append(EscapeChar);
-            path = new Path(path, sb.ToString());
+            path = new SymbolPath(path, sb.ToString());
             return path;
         }
     }

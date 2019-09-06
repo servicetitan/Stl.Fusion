@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using Stl.Internal;
 
@@ -50,6 +51,14 @@ namespace Stl
         // Useful methods
 
         public T ValueOr(T other) => HasValue ? UnsafeValue : other;
+        public T ValueOr(Func<T> other) => HasValue ? UnsafeValue : other.Invoke();
+        [return: MaybeNull]
+        public Option<TCast?> CastAs<TCast>()
+            where TCast : class
+            => HasValue ? Option<TCast?>.Some(UnsafeValue as TCast) : default;
+        public Option<TCast> Cast<TCast>()
+            where TCast : T
+            => HasValue ? Option<TCast>.Some((TCast) UnsafeValue!) : default;
 
         // Equality
 
@@ -76,5 +85,11 @@ namespace Stl
     {
         public static Option<T> None<T>() => default;
         public static Option<T> Some<T>(T value) => Option<T>.Some(value);
+        public static Option<T> From<T>(T value)
+            where T : class
+            => value != null ? Some<T>(value) : default; 
+        public static Option<T> From<T>(T? value)
+            where T : struct
+            => value.HasValue ? Some<T>(value.GetValueOrDefault()) : default; 
     }
 }

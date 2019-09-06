@@ -1,4 +1,4 @@
-namespace Stl.Strings
+namespace Stl
 {
     public static class StringEx
     {

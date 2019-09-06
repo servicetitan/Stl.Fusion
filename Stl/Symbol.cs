@@ -4,7 +4,7 @@ using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Stl.Internal;
 
-namespace Stl.Strings
+namespace Stl
 {
     [Serializable]
     [JsonConverter(typeof(SymbolJsonConverter))]

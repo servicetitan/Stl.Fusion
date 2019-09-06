@@ -1,25 +1,23 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Stl.Internal;
 
-namespace Stl.Strings
+namespace Stl
 {
     [Serializable]
     [JsonConverter(typeof(SymbolPathJsonConverter))]
     [TypeConverter(typeof(SymbolPathTypeConverter))]
-    public sealed class Path : IEquatable<Path>, IComparable<Path>, ISerializable
+    public sealed class SymbolPath : IEquatable<SymbolPath>, IComparable<SymbolPath>, ISerializable
     {
         internal int HashCode { get; }
         public int SegmentCount { get; }
-        public Path? Head { get; }
+        public SymbolPath? Head { get; }
         public Symbol Tail { get; }
-        public string Value => PathFormatter.Default.ToString(this);
+        public string Value => SymbolPathFormatter.Default.ToString(this);
 
-        public Path(Path? head, Symbol tail)
+        public SymbolPath(SymbolPath? head, Symbol tail)
         {
             Head = head;
             Tail = tail;
@@ -27,20 +25,20 @@ namespace Stl.Strings
             HashCode = ComputeHashCode();
         }
 
-        public Path(Symbol[] segments)
+        public SymbolPath(Symbol[] segments)
         {
             if (segments.Length == 0) 
                 throw new ArgumentOutOfRangeException(nameof(segments));
-            Path? head = null;
+            SymbolPath? head = null;
             for (var index = 0; index < segments.Length - 1; index++) 
-                head = new Path(head, segments[index]);
+                head = new SymbolPath(head, segments[index]);
             Head = head;
             Tail = segments[^1];
             SegmentCount = (Head?.SegmentCount ?? 0) + 1;
             HashCode = ComputeHashCode();
         }
 
-        public Path(string value)
+        public SymbolPath(string value)
         {
             var parsed = Parse(value);
             Head = parsed.Head;
@@ -49,25 +47,25 @@ namespace Stl.Strings
             HashCode = parsed.HashCode;
         }
         
-        public static Path Parse(string value) => PathFormatter.Default.Parse(value);
+        public static SymbolPath Parse(string value) => SymbolPathFormatter.Default.Parse(value);
 
         public override string ToString() => $"{GetType().Name}({Value})";
 
         // Conversion
 
-        public static implicit operator Path(string source) => Parse(source);
-        public static implicit operator Path((Path Head, Symbol Tail) source) => new Path(source.Head, source.Tail);
-        public static explicit operator string(Path source) => source.Value;
+        public static implicit operator SymbolPath(string source) => Parse(source);
+        public static implicit operator SymbolPath((SymbolPath Head, Symbol Tail) source) => new SymbolPath(source.Head, source.Tail);
+        public static explicit operator string(SymbolPath source) => source.Value;
 
         // Equality & comparison
         
-        public bool Equals(Path other) 
+        public bool Equals(SymbolPath other) 
             => HashCode == other.HashCode && Tail == other.Tail && Head == other.Head;
         public override bool Equals(object? obj) 
-            => ReferenceEquals(this, obj) || obj is Path other && Equals(other);
+            => ReferenceEquals(this, obj) || obj is SymbolPath other && Equals(other);
         public override int GetHashCode() => HashCode;
         
-        public int CompareTo(Path? other)
+        public int CompareTo(SymbolPath? other)
         {
             if (other == null)
                 return 1;
@@ -82,7 +80,7 @@ namespace Stl.Strings
         public Symbol[] GetSegments(bool reversed = false) 
         {
             var result = new Symbol[SegmentCount];
-            Path? current = this;
+            SymbolPath? current = this;
             if (reversed) {
                 var index = 0;
                 while (current != null) {
@@ -103,7 +101,7 @@ namespace Stl.Strings
 
         // Serialization
 
-        private Path(SerializationInfo info, StreamingContext context)
+        private SymbolPath(SerializationInfo info, StreamingContext context)
         {
             var parsed = Parse(info.GetString(nameof(Value)) ?? "");
             Head = parsed.Head;

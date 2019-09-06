@@ -2,7 +2,6 @@ using System;
 using System.ComponentModel;
 using System.Globalization;
 using Newtonsoft.Json;
-using Stl.Strings;
 
 namespace Stl.Internal
 {
@@ -13,7 +12,7 @@ namespace Stl.Internal
 
         public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) {  
             if (destinationType == typeof(string))
-                return ((Path) value).Value;
+                return ((SymbolPath) value).Value;
             return base.ConvertTo(context, culture, value, destinationType);
         }
 
@@ -21,7 +20,7 @@ namespace Stl.Internal
         {
             if (value is string s)
                 // ReSharper disable once HeapView.BoxingAllocation
-                return Path.Parse(s);
+                return SymbolPath.Parse(s);
             return base.ConvertFrom(context, culture, value);
         }
     }
@@ -29,11 +28,11 @@ namespace Stl.Internal
     public class SymbolPathJsonConverter : JsonConverter
     {
         public override bool CanConvert(Type objectType) 
-            => objectType == typeof(Path);
+            => objectType == typeof(SymbolPath);
 
         public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
         {
-            var typeRef = (Path) value!;
+            var typeRef = (SymbolPath) value!;
             writer.WriteValue(typeRef.Value);
         }
 
@@ -41,7 +40,7 @@ namespace Stl.Internal
         {
             var value = (string) reader.Value!;
             // ReSharper disable once HeapView.BoxingAllocation
-            return Path.Parse(value);
+            return SymbolPath.Parse(value);
         }
     }
 }
