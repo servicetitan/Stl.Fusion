@@ -4,7 +4,7 @@ using Stl.Testing;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Stl.Tests.Strings
+namespace Stl.Tests
 {
     public class SymbolPathTest : TestBase
     {

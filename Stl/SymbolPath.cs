@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Stl.Internal;
@@ -11,6 +13,8 @@ namespace Stl
     [TypeConverter(typeof(SymbolPathTypeConverter))]
     public sealed class SymbolPath : IEquatable<SymbolPath>, IComparable<SymbolPath>, ISerializable
     {
+        public static SymbolPath? Empty { get; } = (SymbolPath?) null;
+
         internal int HashCode { get; }
         public int SegmentCount { get; }
         public SymbolPath? Head { get; }
@@ -47,20 +51,28 @@ namespace Stl
             HashCode = parsed.HashCode;
         }
         
+        public SymbolPath Concat(Symbol tail) 
+            => new SymbolPath(this, tail);
+        public SymbolPath Concat(SymbolPath other) 
+            => other.GetSegments().Aggregate(this, (current, tail) => current.Concat(tail));
+
         public static SymbolPath Parse(string value) => SymbolPathFormatter.Default.Parse(value);
 
         public override string ToString() => $"{GetType().Name}({Value})";
 
-        // Conversion
+        // Conversion & operators
 
         public static implicit operator SymbolPath(string source) => Parse(source);
         public static implicit operator SymbolPath((SymbolPath Head, Symbol Tail) source) => new SymbolPath(source.Head, source.Tail);
         public static explicit operator string(SymbolPath source) => source.Value;
+        public static SymbolPath operator +(SymbolPath first, Symbol second) => first.Concat(second);
+        public static SymbolPath operator +(SymbolPath first, SymbolPath second) => first.Concat(second);
 
         // Equality & comparison
         
-        public bool Equals(SymbolPath other) 
-            => HashCode == other.HashCode && Tail == other.Tail && Head == other.Head;
+        public bool Equals(SymbolPath? other) 
+            => other != null && HashCode == other.HashCode 
+                && Tail == other.Tail && (Head?.Equals(other.Head) ?? other.Head == null);
         public override bool Equals(object? obj) 
             => ReferenceEquals(this, obj) || obj is SymbolPath other && Equals(other);
         public override int GetHashCode() => HashCode;
