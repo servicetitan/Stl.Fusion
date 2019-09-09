@@ -85,11 +85,10 @@ namespace Stl
     {
         public static Option<T> None<T>() => default;
         public static Option<T> Some<T>(T value) => Option<T>.Some(value);
-        public static Option<T> From<T>(T value)
-            where T : class
-            => value != null ? Some<T>(value) : default; 
-        public static Option<T> From<T>(T? value)
+        public static Option<T> FromClass<T>(T value)
+            => ReferenceEquals(value, null) ? Some(value) : default; 
+        public static Option<T> FromStruct<T>(T? value)
             where T : struct
-            => value.HasValue ? Some<T>(value.GetValueOrDefault()) : default; 
+            => value.HasValue ? Some(value.GetValueOrDefault()) : default; 
     }
 }
