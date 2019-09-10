@@ -65,6 +65,9 @@ namespace Stl
         public static implicit operator SymbolPath(string source) => Parse(source);
         public static implicit operator SymbolPath((SymbolPath Head, Symbol Tail) source) => new SymbolPath(source.Head, source.Tail);
         public static explicit operator string(SymbolPath source) => source.Value;
+
+        // Operators
+
         public static SymbolPath operator +(SymbolPath first, Symbol second) => first.Concat(second);
         public static SymbolPath operator +(SymbolPath first, SymbolPath second) => first.Concat(second);
 

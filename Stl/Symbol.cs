@@ -26,7 +26,11 @@ namespace Stl
         
         public static implicit operator Symbol(string source) => new Symbol(source);
         public static implicit operator string(Symbol source) => source.Value;
-        
+
+        // Operators
+
+        public static Symbol operator +(Symbol left, Symbol right) => new Symbol(left.Value + right.Value);
+
         // Equality & comparison
 
         public bool Equals(Symbol other) => HashCode == other.HashCode && Value == other.Value;
@@ -36,7 +40,7 @@ namespace Stl
 
         public static bool operator ==(Symbol left, Symbol right) => left.Equals(right);
         public static bool operator !=(Symbol left, Symbol right) => !left.Equals(right);
-        
+
         // Serialization
 
         private Symbol(SerializationInfo info, StreamingContext context)
