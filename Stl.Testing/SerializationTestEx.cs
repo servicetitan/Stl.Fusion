@@ -15,6 +15,14 @@ namespace Stl.Testing
             return box.Value;
         }
         
+        public static (T, string) PassThroughJsonConvertWithOutput<T>(this T value)
+        {
+            var box = Box.New(value);
+            var json = JsonConvert.SerializeObject(box);
+            box = JsonConvert.DeserializeObject<Box<T>>(json);
+            return (box.Value, json);
+        }
+        
         public static T PassThroughBinaryFormatter<T>(this T value)
         {
             var box = Box.New(value);

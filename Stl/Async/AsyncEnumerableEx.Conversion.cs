@@ -49,7 +49,7 @@ namespace Stl.Async
             source.Subscribe(
                 // Ok to do that: PutAsync continuation (if any)
                 // will complete on the thread pool.
-                item => channel.PutAsync((item, null), cancellationToken).Ignore(), 
+                item => channel.PutAsync((item, null), cancellationToken).ToUnitFunc(), 
                 e => Task.Run(async () => {
                     // Might trigger event reordering due to race between
                     // PutAsync continuations & this method, but that's
@@ -64,7 +64,7 @@ namespace Stl.Async
                     finally {
                         channel.CompletePut();
                     }
-                }, cancellationToken).Ignore(),
+                }, cancellationToken).ToUnitFunc(),
                 // Similarly, might trigger reordering.
                 () => channel.CompletePut());
 
@@ -99,7 +99,7 @@ namespace Stl.Async
                 finally {
                     channel.CompletePut();
                 }
-            }, cancellationToken).Ignore();
+            }, cancellationToken).ToUnitFunc();
 
 
             var enumerable = channel

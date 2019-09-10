@@ -63,7 +63,7 @@ namespace Stl
         // Equality
 
         public bool Equals(Option<T> other) 
-            => HasValue == other.HasValue && EqualityComparer<T>.Default.Equals(Value, other.Value);
+            => HasValue == other.HasValue && EqualityComparer<T>.Default.Equals(UnsafeValue, other.UnsafeValue);
         public override bool Equals(object? obj) 
             => obj is Option<T> other && Equals(other);
         public override int GetHashCode() 

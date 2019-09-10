@@ -147,16 +147,16 @@ namespace Stl.Tests.Extensibility
             Action action;
 
             action = () => AsyncInvoker.New(new [] {"a", "e"}, "", Concat1Async)
-                .RunAsync().Result.Ignore();
+                .RunAsync().Result.ToUnitFunc();
             action.Should().Throw<ArgumentException>();
             action = () => AsyncInvoker.New(new [] {"a", "e"}, "", Concat1Async, InvocationOrder.Reverse)
-                .RunAsync().Result.Ignore();
+                .RunAsync().Result.ToUnitFunc();
             action.Should().Throw<ArgumentException>();
             action = () => AsyncInvoker.New(new [] {"a", "e"}, "", Concat2Async)
-                .RunAsync().Result.Ignore();
+                .RunAsync().Result.ToUnitFunc();
             action.Should().Throw<ArgumentException>();
             action = () => AsyncInvoker.New(new [] {"a", "e"}, "", Concat2Async, InvocationOrder.Reverse)
-                .RunAsync().Result.Ignore();
+                .RunAsync().Result.ToUnitFunc();
             action.Should().Throw<ArgumentException>();
 
             var errorHandlerCalled = false;
@@ -166,14 +166,14 @@ namespace Stl.Tests.Extensibility
             action = () => {
                 errorHandlerCalled = false;
                 AsyncInvoker.New(new[] {"a", "e"}, "", Concat1Async, InvocationOrder.Straight, ErrorHandler)
-                    .RunAsync().Result.Ignore();
+                    .RunAsync().Result.ToUnitFunc();
                 errorHandlerCalled.Should().BeTrue();
             };
             action.Should().NotThrow();
             action = () => {
                 errorHandlerCalled = false;
                 AsyncInvoker.New(new[] {"a", "e"}, "", Concat1Async, InvocationOrder.Reverse, ErrorHandler)
-                    .RunAsync().Result.Ignore();
+                    .RunAsync().Result.ToUnitFunc();
                 errorHandlerCalled.Should().BeTrue();
             };
             action.Should().NotThrow();

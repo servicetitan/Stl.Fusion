@@ -75,9 +75,9 @@ namespace Stl.Tests.Caching
             Assert.Equal("0123", await OBD("231", DepSelector1));
             
             await Assert.ThrowsAsync<InvalidOperationException>(async () => 
-                (await OBD("0", BadDepSelector1)).Ignore());
+                (await OBD("0", BadDepSelector1)).ToUnitFunc());
             await Assert.ThrowsAsync<InvalidOperationException>(async () => 
-                (await OBD("0", BadDepSelector2)).Ignore());
+                (await OBD("0", BadDepSelector2)).ToUnitFunc());
         }
     }
 }
