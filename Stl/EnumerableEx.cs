@@ -8,7 +8,9 @@ namespace Stl
     public static class EnumerableEx
     {
         // Regular static methods
-        
+
+        public static IEnumerable<T> One<T>(T value) => Enumerable.Repeat(value, 1);
+
         public static IEnumerable<T> Concat<T>(params IEnumerable<T>[] sequences)
         {
             if (sequences.Length == 0)
