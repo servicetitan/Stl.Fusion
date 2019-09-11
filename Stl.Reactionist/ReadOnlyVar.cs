@@ -36,9 +36,10 @@ namespace Stl.Reactionist
                 (self, @event) => TriggerReactions(new Event((IReactive?) self, @event.Data))));
         }
 
-        public void ThrowIfError() => Storage.ThrowIfError();
         public void Deconstruct(out T value, out Exception? error) 
             => Storage.Deconstruct(out value, out error);
+
+        public void ThrowIfError() => Storage.ThrowIfError();
 
         // Operators
 

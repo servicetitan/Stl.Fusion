@@ -56,9 +56,11 @@ namespace Stl.Reactionist
 
         public override string? ToString() => Value?.ToString();
 
-        public void ThrowIfError() => Result.ThrowIfError();
-        public void Deconstruct(out T value, out Exception? error) => Result.Deconstruct(out value, out error);
+        public void Deconstruct(out T value, out Exception? error) 
+            => Result.Deconstruct(out value, out error);
         
+        public void ThrowIfError() => Result.ThrowIfError();
+
         // Operators
 
         public static implicit operator T(Var<T> v) => v.Value;

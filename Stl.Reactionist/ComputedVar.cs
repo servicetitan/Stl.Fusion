@@ -60,11 +60,11 @@ namespace Stl.Reactionist
             if (IsAutoComputed)
                 EnsureComputed();
         }
-        
+
+        public void Deconstruct(out T value, out Exception? error) 
+            => Result.Deconstruct(out value, out error);
+
         public void ThrowIfError() => Result.ThrowIfError();
-#pragma warning disable CS8614
-        public void Deconstruct(out T value, out Exception? error) => Result.Deconstruct(out value, out error);
-#pragma warning restore CS8614
 
         // Operators
 
