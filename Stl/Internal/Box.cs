@@ -1,5 +1,5 @@
 using System;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace Stl.Internal
 {
@@ -7,6 +7,7 @@ namespace Stl.Internal
     public abstract class Box
     {
         [JsonIgnore] public abstract object? UntypedValue { get; }
+
         public static Box<T> New<T>(T value) => new Box<T>(value);
     }
 
@@ -17,6 +18,7 @@ namespace Stl.Internal
         // ReSharper disable once HeapView.BoxingAllocation
         [JsonIgnore] public override object? UntypedValue => Value;
 
+        [JsonConstructor]
         public Box(T value = default) => Value = value;
         public override string ToString() => $"{GetType().Name}({Value})";
     }

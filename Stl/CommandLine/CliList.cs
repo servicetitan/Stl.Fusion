@@ -16,6 +16,7 @@ namespace Stl.CommandLine
 
         public new IEnumerator<IFormattable> GetEnumerator() 
             => (this as IEnumerable<T>)
+                // ReSharper disable once HeapView.BoxingAllocation
                 .Select(x => CliString.New(
                     string.Format(CultureInfo.InvariantCulture, ItemTemplate, x)
                 ) as IFormattable)

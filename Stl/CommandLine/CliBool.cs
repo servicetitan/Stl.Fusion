@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using Newtonsoft.Json;
 using Stl.Internal;
 
 namespace Stl.CommandLine 
@@ -9,6 +10,7 @@ namespace Stl.CommandLine
     {
         public bool Value { get; }
 
+        [JsonConstructor]
         public CliBool(bool value) => Value = value;
 
         public override string ToString() => ToString(null, null);

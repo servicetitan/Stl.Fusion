@@ -1,6 +1,7 @@
 using System;
 using System.Globalization;
 using EnumsNET;
+using Newtonsoft.Json;
 using Stl.Internal;
 
 namespace Stl.CommandLine
@@ -11,6 +12,7 @@ namespace Stl.CommandLine
     {
         public T Value { get; }
 
+        [JsonConstructor]
         public CliEnum(T value) => Value = value;
         public override string ToString() => ToString(null, null);
         public string ToString(string? format, IFormatProvider? provider = null) 

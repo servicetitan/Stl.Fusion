@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 using Stl.Internal;
 using Stl.OS;
 
@@ -18,6 +18,7 @@ namespace Stl.CommandLine
         public string Value => _value ?? "";
         [JsonIgnore] public string QuotedValue => Quote(Value).Value;
         
+        [JsonConstructor]
         public CliString(string? value) => _value = value;
         
         public override string ToString() => Value;

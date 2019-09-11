@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 using Stl.Internal;
 
 namespace Stl
@@ -10,7 +10,7 @@ namespace Stl
     public interface IOption
     {
         bool HasValue { get; }
-        [JsonIgnore] object? UntypedUnsafeValue { get; }
+        object? UntypedUnsafeValue { get; }
         object? UntypedValue { get; }
     }
 
@@ -28,10 +28,11 @@ namespace Stl
         public static Option<T> None => default;
         public static Option<T> Some(T value) => new Option<T>(true, value);
 
-        private Option(bool hasValue, T value)
+        [JsonConstructor]
+        private Option(bool hasValue, T unsafeValue)
         {
             HasValue = hasValue;
-            UnsafeValue = value;
+            UnsafeValue = unsafeValue;
         }
 
         public override string ToString() 

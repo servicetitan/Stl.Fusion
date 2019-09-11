@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.ExceptionServices;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace Stl
 {
@@ -62,10 +62,11 @@ namespace Stl
         // ReSharper disable once HeapView.BoxingAllocation
         [JsonIgnore] public object? UnsafeUntypedValue => UnsafeValue;
 
-        public Result(T value, Exception? error)
+        [JsonConstructor]
+        public Result(T unsafeValue, Exception? error)
         {
-            if (error != null) value = default!;
-            UnsafeValue = value;
+            if (error != null) unsafeValue = default!;
+            UnsafeValue = unsafeValue;
             Error = error;
         }
         
