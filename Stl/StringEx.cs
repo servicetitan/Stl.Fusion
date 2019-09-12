@@ -1,7 +1,14 @@
+using Newtonsoft.Json;
+
 namespace Stl
 {
     public static class StringEx
     {
+        public static string ManyToOne(string[] values)
+            => JsonConvert.SerializeObject(values);
+        public static string[] OneToMany(string value) 
+            => JsonConvert.DeserializeObject<string[]>(value);
+
         public static int GetDeterministicHashCode(this string source)
         {
             unchecked {

@@ -7,6 +7,20 @@ namespace Stl.Testing
 {
     public static class SerializationTestEx
     {
+        public static T PassThroughAllSerializers<T>(this T value)
+        {
+            var v = value.PassThroughJsonConvert();
+            v = v.PassThroughBinaryFormatter();
+            return v;
+        }
+
+        public static (T, string) PassThroughAllSerializersWithOutput<T>(this T value)
+        {
+            var (v, json) = value.PassThroughJsonConvertWithOutput(); 
+            v = v.PassThroughBinaryFormatter();
+            return (v, json);
+        }
+
         public static T PassThroughJsonConvert<T>(this T value)
         {
             var box = Box.New(value);

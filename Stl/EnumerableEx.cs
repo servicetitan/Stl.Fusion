@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Stl.Internal;
@@ -22,6 +23,16 @@ namespace Stl
         }
 
         // Extensions
+
+        public static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(
+            this IEnumerable<KeyValuePair<TKey, TValue>> source)
+            where TKey : notnull
+            => source.ToDictionary(p => p.Key, p => p.Value);
+
+        public static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(
+            this IEnumerable<(TKey Key, TValue Value)> source)
+            where TKey : notnull
+            => source.ToDictionary(p => p.Key, p => p.Value);
 
         public static string ToDelimitedString<T>(this IEnumerable<T> source, string? delimiter = null)
             => string.Join(delimiter ?? ", ", source);
