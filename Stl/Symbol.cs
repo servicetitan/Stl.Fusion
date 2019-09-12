@@ -17,7 +17,7 @@ namespace Stl
         public Symbol(string value)
         {
             Value = value;
-            HashCode = value.GetHashCode();
+            HashCode = value?.GetHashCode() ?? 0;
         }
         
         public override string ToString() => $"{GetType().Name}({Value})";
@@ -35,9 +35,8 @@ namespace Stl
 
         public bool Equals(Symbol other) => HashCode == other.HashCode && Value == other.Value;
         public override bool Equals(object? obj) => obj is Symbol other && Equals(other);
-        public override int GetHashCode() => HashCode * 397;
+        public override int GetHashCode() => HashCode;
         public int CompareTo(Symbol other) => string.CompareOrdinal(Value, other.Value);
-
         public static bool operator ==(Symbol left, Symbol right) => left.Equals(right);
         public static bool operator !=(Symbol left, Symbol right) => !left.Equals(right);
 
