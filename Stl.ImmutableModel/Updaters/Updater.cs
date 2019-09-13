@@ -1,13 +1,17 @@
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 
-namespace Stl.ImmutableModel
+namespace Stl.ImmutableModel.Updaters
 {
     public interface IUpdater
     {
         INode UntypedModel { get; }
         IUpdateableIndex UntypedIndex { get; }
-        UpdateInfo Update(Func<IUpdateableIndex, (IUpdateableIndex NewIndex, ChangeSet ChangeSet)> updater);
+        Task<UpdateInfo> UpdateAsync(
+            Func<IUpdateableIndex, (IUpdateableIndex NewIndex, ChangeSet ChangeSet)> updater,
+            CancellationToken cancellationToken = default);
         event Action<UpdateInfo> Updated;
     }
     
@@ -17,7 +21,9 @@ namespace Stl.ImmutableModel
     {
         TModel Model { get; }
         TIndex Index { get; }
-        new UpdateInfo<TIndex, TModel> Update(Func<TIndex, (TIndex NewIndex, ChangeSet ChangeSet)> updater);
+        Task<UpdateInfo<TIndex, TModel>> UpdateAsync(
+            Func<TIndex, (TIndex NewIndex, ChangeSet ChangeSet)> updater,
+            CancellationToken cancellationToken = default);
         new event Action<UpdateInfo<TIndex, TModel>> Updated;
     }
     
@@ -38,18 +44,25 @@ namespace Stl.ImmutableModel
             add => Updated += value;
             remove => Updated -= value;
         }
-        public event Action<UpdateInfo<TIndex, TModel>> Updated;
+        public event Action<UpdateInfo<TIndex, TModel>>? Updated;
 
         [JsonConstructor]
-        public UpdaterBase(TIndex index) => _index = index;
+        protected UpdaterBase(TIndex index) => _index = index;
 
-        public UpdateInfo Update(Func<IUpdateableIndex, (IUpdateableIndex NewIndex, ChangeSet ChangeSet)> updater)
-            => Update(source => {
-                var result = updater.Invoke(source);
-                return ((TIndex) result.NewIndex, result.ChangeSet);
-            });
+        public async Task<UpdateInfo> UpdateAsync(
+            Func<IUpdateableIndex, (IUpdateableIndex NewIndex, ChangeSet ChangeSet)> updater,
+            CancellationToken cancellationToken = default)
+        {
+            var result = await UpdateAsync(source => {
+                var r = updater.Invoke(source);
+                return ((TIndex) r.NewIndex, r.ChangeSet);
+            }, cancellationToken);
+            return result;
+        }
 
-        public abstract UpdateInfo<TIndex, TModel> Update(Func<TIndex, (TIndex NewIndex, ChangeSet ChangeSet)> updater);
+        public abstract Task<UpdateInfo<TIndex, TModel>> UpdateAsync(
+            Func<TIndex, (TIndex NewIndex, ChangeSet ChangeSet)> updater,
+            CancellationToken cancellationToken = default);
 
         protected virtual void OnUpdated(UpdateInfo<TIndex, TModel> updateInfo)
             => Updated?.Invoke(updateInfo);

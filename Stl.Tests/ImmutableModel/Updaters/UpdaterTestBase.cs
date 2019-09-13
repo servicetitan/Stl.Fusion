@@ -1,20 +1,22 @@
+using System.Threading.Tasks;
 using Stl.ImmutableModel;
 using FluentAssertions;
+using Stl.ImmutableModel.Updaters;
 using Stl.Testing;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Stl.Tests.ImmutableModel
+namespace Stl.Tests.ImmutableModel.Updaters
 {
-    public class UpdaterTest : TestBase
+    public abstract class UpdaterTestBase : TestBase
     {
-        public UpdaterTest(ITestOutputHelper @out) : base(@out) { }
+        protected UpdaterTestBase(ITestOutputHelper @out) : base(@out) { }
 
         [Fact]
-        public void BasicTest()
+        public async Task BasicTestAsync()
         {
             var index = IndexTest.BuildModel();
-            var updater = SimpleUpdater.New(index, index.Model);
+            var updater = CreateUpdater(index);
 
             updater.Updated += info => {
                 Out.WriteLine($"Model updated. Changes:");
@@ -22,7 +24,7 @@ namespace Stl.Tests.ImmutableModel
                     Out.WriteLine($"- {key}: {kind}");
             };
 
-            var info = updater.Update(idx => {
+            var info = await updater.UpdateAsync(idx => {
                 var vm1 = idx.Resolve<VirtualMachine>("./cluster1/vm1");
                 return idx.Update(vm1, vm1.With(VirtualMachine.CapabilitiesSymbol, "caps1a"));
             });
@@ -33,10 +35,12 @@ namespace Stl.Tests.ImmutableModel
                 .Should().Equals("caps1a");
             info.ChangeSet.Changes.Count.Equals(3);
 
-            info = updater.Update(idx => {
+            info = await updater.UpdateAsync(idx => {
                 var cluster1 = idx.Resolve<Cluster>("./cluster1");
                 return idx.Update(cluster1, cluster1.WithRemoved("vm1"));
             });
         }
+
+        protected abstract IUpdater<Index<ModelRoot>, ModelRoot> CreateUpdater(Index<ModelRoot> index);
     }
 }

@@ -1,7 +1,7 @@
 using System;
 using Newtonsoft.Json;
 
-namespace Stl.ImmutableModel
+namespace Stl.ImmutableModel.Updaters
 {
     [Serializable]
     public class UpdateInfo
@@ -22,14 +22,6 @@ namespace Stl.ImmutableModel
             UntypedNewIndex = untypedNewIndex;
             ChangeSet = changeSet;
         }
-
-        public static UpdateInfo<TIndex, TModel> New<TIndex, TModel>(
-            TIndex oldIndex, 
-            TIndex newIndex, 
-            ChangeSet changeSet) 
-            where TIndex : class, IUpdateableIndex<TModel>
-            where TModel : class, INode
-            => new UpdateInfo<TIndex, TModel>(oldIndex, newIndex, changeSet);
     }
 
     public class UpdateInfo<TIndex, TModel> : UpdateInfo

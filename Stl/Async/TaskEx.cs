@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -21,5 +22,7 @@ namespace Stl.Async
             await lts.Token.ToTask(false).ConfigureAwait(false);
             cancellationToken.ThrowIfCancellationRequested();
         }
+        
+        public static Task SuppressExceptions(this Task task) => task.ContinueWith(t => { });
     }
 }

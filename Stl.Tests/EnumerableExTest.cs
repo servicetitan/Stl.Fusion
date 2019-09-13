@@ -35,9 +35,9 @@ namespace Stl.Tests
             Assert.Equal("0123", OBD("231", DepSelector1));
             
             Assert.Throws<InvalidOperationException>(() => 
-                OBD("0", BadDepSelector1).ToUnitFunc());
+                OBD("0", BadDepSelector1).Ignore());
             Assert.Throws<InvalidOperationException>(() => 
-                OBD("0", BadDepSelector2).ToUnitFunc());
+                OBD("0", BadDepSelector2).Ignore());
         }
     }
 }

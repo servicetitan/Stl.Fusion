@@ -1,8 +1,9 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 
-namespace Stl.ImmutableModel 
+namespace Stl.ImmutableModel.Updaters 
 {
     [Serializable]
     public class SimpleUpdater<TIndex, TModel> : UpdaterBase<TIndex, TModel>
@@ -12,19 +13,22 @@ namespace Stl.ImmutableModel
         [JsonConstructor]
         public SimpleUpdater(TIndex index) : base(index) { }
 
-        public override UpdateInfo<TIndex, TModel> Update(Func<TIndex, (TIndex NewIndex, ChangeSet ChangeSet)> updater)
+        public override Task<UpdateInfo<TIndex, TModel>> UpdateAsync(
+            Func<TIndex, (TIndex NewIndex, ChangeSet ChangeSet)> updater,
+            CancellationToken cancellationToken = default)
         {
             TIndex oldIndex, newIndex;
             ChangeSet changeSet;
             while (true) {
+                cancellationToken.ThrowIfCancellationRequested();
                 oldIndex = Index;
                 (newIndex, changeSet) = updater.Invoke(oldIndex);
                 if (Interlocked.CompareExchange(ref _index, newIndex, oldIndex) == oldIndex)
                     break;
             }
-            var updateInfo = UpdateInfo.New<TIndex, TModel>(oldIndex, newIndex, changeSet);
+            var updateInfo = new UpdateInfo<TIndex, TModel>(oldIndex, newIndex, changeSet);
             OnUpdated(updateInfo);
-            return updateInfo;
+            return Task.FromResult(updateInfo);
         }
     }
 

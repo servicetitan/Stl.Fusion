@@ -7,7 +7,7 @@ namespace Stl
     public static class IgnoreEx
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void ToUnitFunc<T>(this T instance) { }
+        public static void Ignore<T>(this T instance) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Unit IgnoreAsUnit<T>(this T instance) => default;

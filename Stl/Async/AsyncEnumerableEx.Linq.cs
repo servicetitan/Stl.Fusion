@@ -193,7 +193,7 @@ namespace Stl.Async
                                     .ConfigureAwait(false);
                                 channel.CompletePut();
                             }
-                        }, cancellationToken).ToUnitFunc();
+                        }, cancellationToken).Ignore();
                     }
                 }
                 catch (Exception e) {
@@ -203,7 +203,7 @@ namespace Stl.Async
                         .ConfigureAwait(false);
                     channel.CompletePut();
                 }
-            }, cancellationToken).ToUnitFunc();
+            }, cancellationToken).Ignore();
 
 
             var enumerable = channel
@@ -237,7 +237,7 @@ namespace Stl.Async
                                     .ConfigureAwait(false);
                                 channel.CompletePut();
                             }
-                        }, cancellationToken).ToUnitFunc();
+                        }, cancellationToken).Ignore();
                     }
                 }
                 catch (Exception e) {
@@ -247,7 +247,7 @@ namespace Stl.Async
                         .ConfigureAwait(false);
                     channel.CompletePut();
                 }
-            }, cancellationToken).ToUnitFunc();
+            }, cancellationToken).Ignore();
 
 
             var enumerable = channel
