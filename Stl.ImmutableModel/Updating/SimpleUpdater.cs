@@ -7,18 +7,17 @@ using Stl.ImmutableModel.Indexing;
 namespace Stl.ImmutableModel.Updating 
 {
     [Serializable]
-    public class SimpleUpdater<TIndex, TModel> : UpdaterBase<TIndex, TModel>
-        where TIndex : class, IUpdateableIndex<TModel>
+    public class SimpleUpdater<TModel> : UpdaterBase<TModel>
         where TModel : class, INode
     {
         [JsonConstructor]
-        public SimpleUpdater(TIndex index) : base(index) { }
+        public SimpleUpdater(IUpdateableIndex<TModel> index) : base(index) { }
 
-        public override Task<UpdateInfo<TIndex, TModel>> UpdateAsync(
-            Func<TIndex, (TIndex NewIndex, ChangeSet ChangeSet)> updater,
+        public override Task<UpdateInfo<TModel>> UpdateAsync(
+            Func<IUpdateableIndex<TModel>, (IUpdateableIndex<TModel> NewIndex, ChangeSet ChangeSet)> updater,
             CancellationToken cancellationToken = default)
         {
-            TIndex oldIndex, newIndex;
+            IUpdateableIndex<TModel> oldIndex, newIndex;
             ChangeSet changeSet;
             while (true) {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -27,7 +26,7 @@ namespace Stl.ImmutableModel.Updating
                 if (Interlocked.CompareExchange(ref _index, newIndex, oldIndex) == oldIndex)
                     break;
             }
-            var updateInfo = new UpdateInfo<TIndex, TModel>(oldIndex, newIndex, changeSet);
+            var updateInfo = new UpdateInfo<TModel>(oldIndex, newIndex, changeSet);
             OnUpdated(updateInfo);
             return Task.FromResult(updateInfo);
         }
@@ -35,14 +34,8 @@ namespace Stl.ImmutableModel.Updating
 
     public static class SimpleUpdater
     {
-        public static SimpleUpdater<TIndex, TModel> New<TIndex, TModel>(TIndex index, TModel model)
-            where TIndex : class, IUpdateableIndex<TModel>
-            where TModel : class, INode
-        {
-            if (model != index.Model)
-                // "model" argument is here solely to let type inference work
-                throw new ArgumentOutOfRangeException(nameof(model));
-            return new SimpleUpdater<TIndex, TModel>(index);
-        }
+        public static SimpleUpdater<TModel> New<TModel>(IUpdateableIndex<TModel> index)
+            where TModel : class, INode 
+            => new SimpleUpdater<TModel>(index);
     }
 }

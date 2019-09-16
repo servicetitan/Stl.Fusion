@@ -25,7 +25,7 @@ namespace Stl
         protected void ThrowIfDisposed()
         {
             if (IsDisposed)
-                throw Errors.ObjectDisposed();
+                throw Errors.AlreadyDisposed();
         }
 
         protected abstract void DisposeInternal(bool disposing);

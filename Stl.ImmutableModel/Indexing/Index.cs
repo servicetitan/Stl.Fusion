@@ -2,6 +2,7 @@ using System;
 using System.Collections.Immutable;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
+using Stl.ImmutableModel.Updating;
 using Stl.Serialization;
 
 namespace Stl.ImmutableModel.Indexing
@@ -21,13 +22,14 @@ namespace Stl.ImmutableModel.Indexing
     }
 
     [Serializable]
-    public class Index : IIndex, INotifyDeserialized
+    public abstract class Index : IIndex, INotifyDeserialized
     {
         public static Index<TModel> New<TModel>(TModel model) 
             where TModel : class, INode 
             => new Index<TModel>(model);
 
-        public INode UntypedModel { get; protected set; }
+        INode IIndex.UntypedModel => UntypedModel;
+        protected abstract INode UntypedModel { get; }
 
         [field: NonSerialized]
         protected ImmutableDictionary<INode, SymbolPath> NodeToPath { get; set; } = null!;
@@ -36,12 +38,7 @@ namespace Stl.ImmutableModel.Indexing
         [field: NonSerialized]
         protected ImmutableDictionary<DomainKey, INode> DomainKeyToNode { get; set; } = null!;
 
-        [JsonConstructor]
-        public Index(INode untypedModel)
-        {
-            UntypedModel = untypedModel;
-            Reindex();
-        }
+        protected Index() { }
 
         public virtual SymbolPath? TryGetPath(INode node)
             => NodeToPath.TryGetValue(node, out var path) ? path : null;
@@ -61,7 +58,7 @@ namespace Stl.ImmutableModel.Indexing
 
         protected virtual void AddNode(SymbolPath path, INode node, ref ChangeSet changeSet)
         {
-            changeSet = changeSet.Add(node.DomainKey, ChangeKind.Added);
+            changeSet = changeSet.Add(node.DomainKey, NodeChangeType.Added);
             NodeToPath = NodeToPath.Add(node, path);
             PathToNode = PathToNode.Add(path, node);
             DomainKeyToNode = DomainKeyToNode.Add(node.DomainKey, node);
@@ -72,7 +69,7 @@ namespace Stl.ImmutableModel.Indexing
 
         protected virtual void RemoveNode(SymbolPath path, INode node, ref ChangeSet changeSet)
         {
-            changeSet = changeSet.Add(node.DomainKey, ChangeKind.Removed);
+            changeSet = changeSet.Add(node.DomainKey, NodeChangeType.Removed);
             NodeToPath = NodeToPath.Remove(node);
             PathToNode = PathToNode.Remove(path);
             DomainKeyToNode = DomainKeyToNode.Remove(node.DomainKey);
@@ -82,9 +79,9 @@ namespace Stl.ImmutableModel.Indexing
         }
 
         protected virtual void ReplaceNode(SymbolPath path, INode source, INode target, 
-            ref ChangeSet changeSet, ChangeKind changeKind = ChangeKind.SubtreeChanged)
+            ref ChangeSet changeSet, NodeChangeType changeType = NodeChangeType.SubtreeChanged)
         {
-            changeSet = changeSet.Add(source.DomainKey, changeKind);
+            changeSet = changeSet.Add(source.DomainKey, changeType);
             NodeToPath = NodeToPath.Remove(source).Add(target, path);
             PathToNode = PathToNode.SetItem(path, target);
             DomainKeyToNode = DomainKeyToNode.Remove(source.DomainKey).Add(target.DomainKey, target);
@@ -109,9 +106,14 @@ namespace Stl.ImmutableModel.Indexing
     public class Index<TModel> : Index, IIndex<TModel>
         where TModel : class, INode
     {
-        [JsonIgnore] public TModel Model => (TModel) UntypedModel;
+        protected override INode UntypedModel => Model;
+        public TModel Model { get; }
 
         [JsonConstructor]
-        public Index(TModel untypedModel) : base(untypedModel) { }
+        public Index(TModel model)
+        {
+            Model = model;
+            Reindex();
+        }
     }
 }

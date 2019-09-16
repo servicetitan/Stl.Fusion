@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using Stl.Internal;
@@ -33,6 +34,14 @@ namespace Stl
             this IEnumerable<(TKey Key, TValue Value)> source)
             where TKey : notnull
             => source.ToDictionary(p => p.Key, p => p.Value);
+
+        public static bool TryRemove<TKey, TValue>(
+            this ConcurrentDictionary<TKey, TValue> dictionary, 
+            TKey key, TValue value)
+            where TKey : notnull
+            // Based on:
+            // - https://devblogs.microsoft.com/pfxteam/little-known-gems-atomic-conditional-removals-from-concurrentdictionary/
+            => ((ICollection<KeyValuePair<TKey, TValue>>) dictionary).Remove(KeyValuePair.New(key, value));
 
         public static string ToDelimitedString<T>(this IEnumerable<T> source, string? delimiter = null)
             => string.Join(delimiter ?? ", ", source);

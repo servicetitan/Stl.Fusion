@@ -2,6 +2,7 @@ using FluentAssertions;
 using Stl.Comparison;
 using Stl.ImmutableModel;
 using Stl.ImmutableModel.Indexing;
+using Stl.ImmutableModel.Updating;
 using Stl.Testing;
 using Xunit;
 using Xunit.Abstractions;

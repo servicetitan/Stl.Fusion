@@ -28,9 +28,18 @@ namespace Stl.Internal
         public static Exception EnqueueCompleted() =>
             new InvalidOperationException("EnqueueCompleted == true.");
 
-        public static Exception ObjectDisposed() =>
+        public static Exception CircularDependency<T>(T item) => 
+            new InvalidOperationException($"Circular dependency on {item} found.");
+
+        public static Exception CannotActivate(Type type) =>
+            new InvalidOperationException($"Cannot find the right constructor to activate type '{type.Name}'.");
+
+        public static Exception OptionIsNone() =>
+            new InvalidOperationException("Option is None.");
+
+        public static Exception AlreadyDisposed() =>
             new ObjectDisposedException(null, "The object is already disposed.");
-        public static Exception ObjectDisposedOrDisposing(DisposalState disposalState = DisposalState.Disposed)
+        public static Exception AlreadyDisposedOrDisposing(DisposalState disposalState = DisposalState.Disposed)
         {
             switch (disposalState) {
             case DisposalState.Disposing:
@@ -41,9 +50,9 @@ namespace Stl.Internal
                 return new InvalidOperationException($"Invalid disposal state: {disposalState}.");
             }
         }
-        public static Exception CircularDependency<T>(T item) => 
-            new InvalidOperationException($"Circular dependency on {item} found.");
 
+        public static Exception KeyAlreadyExists() =>
+            new ArgumentException("Specified key already exists.");
         public static Exception AlreadyInvoked(string methodName) =>
             new InvalidOperationException($"'{methodName}' can be invoked just once.");
         public static Exception AlreadyInitialized() =>
@@ -52,11 +61,5 @@ namespace Stl.Internal
             new InvalidOperationException($"The lock is already acquired by one of callers of the current method.");
         public static Exception ThisValueCanBeSetJustOnce() =>
             new InvalidOperationException($"This value can be set just once.");
-
-        public static Exception CannotActivate(Type type) =>
-            new InvalidOperationException($"Cannot find the right constructor to activate type '{type.Name}'.");
-
-        public static Exception OptionIsNone() =>
-            new InvalidOperationException("Option is None.");
     }
 }

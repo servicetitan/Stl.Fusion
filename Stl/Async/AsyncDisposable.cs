@@ -54,7 +54,7 @@ namespace Stl.Async
         protected void ThrowIfDisposedOrDisposing()
         {
             if (DisposalState != DisposalState.Active)
-                throw Errors.ObjectDisposedOrDisposing();
+                throw Errors.AlreadyDisposedOrDisposing();
         }
     }
 }

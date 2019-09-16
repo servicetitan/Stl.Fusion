@@ -1,9 +1,11 @@
 using System;
 using Newtonsoft.Json;
 using Stl.Comparison;
+using Stl.ImmutableModel.Indexing;
 using Stl.ImmutableModel.Internal;
+using Index = Stl.ImmutableModel.Indexing.Index;
 
-namespace Stl.ImmutableModel.Indexing
+namespace Stl.ImmutableModel.Updating
 {
     public interface IUpdateableIndex : IIndex
     {
@@ -15,14 +17,15 @@ namespace Stl.ImmutableModel.Indexing
     { }
 
     [Serializable]
-    public class UpdatableIndex : Index, IUpdateableIndex
+    public abstract class UpdatableIndex : Index, IUpdateableIndex
     {
-        public static UpdatableIndex<TModel> New<TModel>(TModel model) 
+        public new static UpdatableIndex<TModel> New<TModel>(TModel model) 
             where TModel : class, INode 
             => new UpdatableIndex<TModel>(model);
 
-        [JsonConstructor]
-        public UpdatableIndex(INode untypedModel) : base(untypedModel) { }
+        protected UpdatableIndex() : base() { }
+
+        protected abstract void SetUntypedModel(INode model);
 
         public virtual (IUpdateableIndex Index, ChangeSet ChangeSet) BaseUpdate(
             INode source, INode target)
@@ -55,7 +58,7 @@ namespace Stl.ImmutableModel.Indexing
                 tail = path.Tail;
                 path = path.Head;
             }
-            UntypedModel = target;
+            SetUntypedModel(target);
         }
 
         private void CompareAndUpdateNode(SymbolPath path, INode source, INode target, ref ChangeSet changeSet)
@@ -69,7 +72,7 @@ namespace Stl.ImmutableModel.Indexing
             if (c.AreEqual)
                 return;
 
-            var changeKind = ChangeKind.SubtreeChanged;
+            var changeKind = NodeChangeType.SubtreeChanged;
             foreach (var (key, item) in c.LeftOnly) {
                 if (item is INode n)
                     RemoveNode(path + key, n, ref changeSet);
@@ -89,7 +92,7 @@ namespace Stl.ImmutableModel.Indexing
                     if (tItem is INode tn)
                         AddNode(path + key, tn, ref changeSet);
                     else
-                        changeKind |= ChangeKind.Changed;
+                        changeKind |= NodeChangeType.Changed;
                 }
             }
             ReplaceNode(path, source, target, ref changeSet, changeKind);
@@ -100,10 +103,17 @@ namespace Stl.ImmutableModel.Indexing
     public class UpdatableIndex<TModel> : UpdatableIndex, IUpdateableIndex<TModel>
         where TModel : class, INode
     {
-        [JsonIgnore] public TModel Model => (TModel) UntypedModel;
+        protected override INode UntypedModel => Model;
+        public TModel Model { get; protected set; }
 
         [JsonConstructor]
-        public UpdatableIndex(TModel untypedModel) : base(untypedModel) { }
+        public UpdatableIndex(TModel model)
+        {
+            Model = model;
+            Reindex();
+        }
+
+        protected override void SetUntypedModel(INode model) => Model = (TModel) model;
     }
 
 }

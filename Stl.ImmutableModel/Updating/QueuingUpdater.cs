@@ -8,25 +8,22 @@ using Stl.ImmutableModel.Indexing;
 namespace Stl.ImmutableModel.Updating 
 {
     [Serializable]
-    public class QueueingUpdater<TIndex, TModel> : UpdaterBase<TIndex, TModel>, IAsyncDisposable
-        where TIndex : class, IUpdateableIndex<TModel>
+    public class QueueingUpdater<TModel> : UpdaterBase<TModel>, IAsyncDisposable
         where TModel : class, INode
     {
         protected AsyncChannel<(
-            Func<TIndex, (TIndex NewIndex, ChangeSet ChangeSet)> Updater,
+            Func<IUpdateableIndex<TModel>, (IUpdateableIndex<TModel> NewIndex, ChangeSet ChangeSet)> Updater,
             CancellationToken CancellationToken,
-            TaskCompletionSource<UpdateInfo<TIndex, TModel>> Result)> UpdateQueue { get; set; } = 
+            TaskCompletionSource<UpdateInfo<TModel>> Result)> UpdateQueue { get; set; } = 
             new AsyncChannel<(
-                Func<TIndex, (TIndex NewIndex, ChangeSet ChangeSet)> Updater, 
+                Func<IUpdateableIndex<TModel>, (IUpdateableIndex<TModel> NewIndex, ChangeSet ChangeSet)> Updater, 
                 CancellationToken CancellationToken,
-                TaskCompletionSource<UpdateInfo<TIndex, TModel>> Result)>(64);
+                TaskCompletionSource<UpdateInfo<TModel>> Result)>(64);
         protected Task QueueProcessorTask { get; set; }
 
         [JsonConstructor]
-        public QueueingUpdater(TIndex index) : base(index)
-        {
-            QueueProcessorTask = Task.Run(QueueProcessor);
-        }
+        public QueueingUpdater(IUpdateableIndex<TModel> index) : base(index) 
+            => QueueProcessorTask = Task.Run(QueueProcessor);
 
         public virtual async ValueTask DisposeAsync()
         {
@@ -52,17 +49,17 @@ namespace Stl.ImmutableModel.Updating
                 }
                 var (newIndex, changeSet) = r.Value;
                 _index = newIndex;
-                var updateInfo = new UpdateInfo<TIndex, TModel>(oldIndex, newIndex, changeSet);
+                var updateInfo = new UpdateInfo<TModel>(oldIndex, newIndex, changeSet);
                 OnUpdated(updateInfo);
                 result.SetResult(updateInfo);
             }
         }
 
-        public override async Task<UpdateInfo<TIndex, TModel>> UpdateAsync(
-            Func<TIndex, (TIndex NewIndex, ChangeSet ChangeSet)> updater,
+        public override async Task<UpdateInfo<TModel>> UpdateAsync(
+            Func<IUpdateableIndex<TModel>, (IUpdateableIndex<TModel> NewIndex, ChangeSet ChangeSet)> updater,
             CancellationToken cancellationToken = default)
         {
-            var result = new TaskCompletionSource<UpdateInfo<TIndex, TModel>>();
+            var result = new TaskCompletionSource<UpdateInfo<TModel>>();
             await UpdateQueue
                 .PutAsync((updater, cancellationToken, result), cancellationToken)
                 .ConfigureAwait(false);
@@ -72,14 +69,8 @@ namespace Stl.ImmutableModel.Updating
 
     public static class QueuingUpdater
     {
-        public static QueueingUpdater<TIndex, TModel> New<TIndex, TModel>(TIndex index, TModel model)
-            where TIndex : class, IUpdateableIndex<TModel>
-            where TModel : class, INode
-        {
-            if (model != index.Model)
-                // "model" argument is here solely to let type inference work
-                throw new ArgumentOutOfRangeException(nameof(model));
-            return new QueueingUpdater<TIndex, TModel>(index);
-        }
+        public static QueueingUpdater<TModel> New<TModel>(IUpdateableIndex<TModel> index)
+            where TModel : class, INode 
+            => new QueueingUpdater<TModel>(index);
     }
 }

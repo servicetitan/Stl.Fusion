@@ -25,17 +25,16 @@ namespace Stl.ImmutableModel.Updating
         }
     }
 
-    public class UpdateInfo<TIndex, TModel> : UpdateInfo
-        where TIndex : class, IUpdateableIndex<TModel>
+    public class UpdateInfo<TModel> : UpdateInfo
         where TModel : class, INode
     {
-        [JsonIgnore] public TIndex OldIndex => (TIndex) UntypedOldIndex;
-        [JsonIgnore] public TIndex NewIndex => (TIndex) UntypedNewIndex;
+        [JsonIgnore] public IUpdateableIndex<TModel> OldIndex => (IUpdateableIndex<TModel>) UntypedOldIndex;
+        [JsonIgnore] public IUpdateableIndex<TModel> NewIndex => (IUpdateableIndex<TModel>) UntypedNewIndex;
         [JsonIgnore] public TModel OldModel => (TModel) UntypedOldModel;
         [JsonIgnore] public TModel NewModel => (TModel) UntypedNewModel;
 
         [JsonConstructor]
-        public UpdateInfo(TIndex oldIndex, TIndex newIndex, ChangeSet changeSet)  
+        public UpdateInfo(IUpdateableIndex<TModel> oldIndex, IUpdateableIndex<TModel> newIndex, ChangeSet changeSet)  
             : base(oldIndex, newIndex, changeSet) { }
     }
 }

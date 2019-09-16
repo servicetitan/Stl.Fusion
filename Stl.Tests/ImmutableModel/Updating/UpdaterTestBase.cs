@@ -1,6 +1,7 @@
+using System.Reactive;
+using FluentAssertions;
 using System.Threading.Tasks;
 using Stl.ImmutableModel;
-using FluentAssertions;
 using Stl.ImmutableModel.Indexing;
 using Stl.ImmutableModel.Updating;
 using Stl.Testing;
@@ -19,12 +20,14 @@ namespace Stl.Tests.ImmutableModel.Updating
         {
             var index = IndexTest.BuildModel();
             var updater = CreateUpdater(index);
+            using var ct = ChangeTracker.New(updater);
 
-            updater.Updated += info => {
-                Out.WriteLine($"Model updated. Changes:");
-                foreach (var (key, kind) in info.ChangeSet.Changes)
-                    Out.WriteLine($"- {key}: {kind}");
-            };
+            using var o = ct[index.Model.DomainKey, NodeChangeType.Any].Subscribe(
+                Observer.Create<UpdateInfo<ModelRoot>>(updateInfo => {
+                    Out.WriteLine($"Model updated. Changes:");
+                    foreach (var (key, kind) in updateInfo.ChangeSet.Changes)
+                        Out.WriteLine($"- {key}: {kind}");
+                }));
 
             var info = await updater.UpdateAsync(idx => {
                 var vm1 = idx.Resolve<VirtualMachine>("./cluster1/vm1");
@@ -43,6 +46,6 @@ namespace Stl.Tests.ImmutableModel.Updating
             });
         }
 
-        protected abstract IUpdater<UpdatableIndex<ModelRoot>, ModelRoot> CreateUpdater(UpdatableIndex<ModelRoot> index);
+        protected abstract IUpdater<ModelRoot> CreateUpdater(IUpdateableIndex<ModelRoot> index);
     }
 }

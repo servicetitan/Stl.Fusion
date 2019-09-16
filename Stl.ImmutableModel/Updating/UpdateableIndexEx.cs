@@ -1,4 +1,6 @@
-namespace Stl.ImmutableModel.Indexing
+using Stl.ImmutableModel.Indexing;
+
+namespace Stl.ImmutableModel.Updating
 {
     public static class UpdateableIndexEx 
     {

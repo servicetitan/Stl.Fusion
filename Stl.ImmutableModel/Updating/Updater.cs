@@ -2,7 +2,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Stl.ImmutableModel.Indexing;
 
 namespace Stl.ImmutableModel.Updating
 {
@@ -16,39 +15,37 @@ namespace Stl.ImmutableModel.Updating
         event Action<UpdateInfo> Updated;
     }
     
-    public interface IUpdater<TIndex, TModel> : IUpdater
-        where TIndex : class, IUpdateableIndex<TModel>
+    public interface IUpdater<TModel> : IUpdater
         where TModel : class, INode
     {
         TModel Model { get; }
-        TIndex Index { get; }
-        Task<UpdateInfo<TIndex, TModel>> UpdateAsync(
-            Func<TIndex, (TIndex NewIndex, ChangeSet ChangeSet)> updater,
+        IUpdateableIndex<TModel> Index { get; }
+        Task<UpdateInfo<TModel>> UpdateAsync(
+            Func<IUpdateableIndex<TModel>, (IUpdateableIndex<TModel> NewIndex, ChangeSet ChangeSet)> updater,
             CancellationToken cancellationToken = default);
-        new event Action<UpdateInfo<TIndex, TModel>> Updated;
+        new event Action<UpdateInfo<TModel>> Updated;
     }
     
     [Serializable]
-    public abstract class UpdaterBase<TIndex, TModel> : IUpdater<TIndex, TModel>
-        where TIndex : class, IUpdateableIndex<TModel>
+    public abstract class UpdaterBase<TModel> : IUpdater<TModel>
         where TModel : class, INode
     {
-        protected volatile TIndex _index;
+        protected volatile IUpdateableIndex<TModel> _index;
 
-        [JsonIgnore] public IUpdateableIndex UntypedIndex => _index;
-        public TIndex Index => _index;
+        IUpdateableIndex IUpdater.UntypedIndex => _index;
+        public IUpdateableIndex<TModel> Index => _index;
 
-        [JsonIgnore] public INode UntypedModel => Model;
+        INode IUpdater.UntypedModel => Model;
         [JsonIgnore] public TModel Model => Index.Model;
 
         event Action<UpdateInfo> IUpdater.Updated {
             add => Updated += value;
             remove => Updated -= value;
         }
-        public event Action<UpdateInfo<TIndex, TModel>>? Updated;
+        public event Action<UpdateInfo<TModel>>? Updated;
 
         [JsonConstructor]
-        protected UpdaterBase(TIndex index) => _index = index;
+        protected UpdaterBase(IUpdateableIndex<TModel> index) => _index = index;
 
         public async Task<UpdateInfo> UpdateAsync(
             Func<IUpdateableIndex, (IUpdateableIndex NewIndex, ChangeSet ChangeSet)> updater,
@@ -56,16 +53,16 @@ namespace Stl.ImmutableModel.Updating
         {
             var result = await UpdateAsync(source => {
                 var r = updater.Invoke(source);
-                return ((TIndex) r.NewIndex, r.ChangeSet);
+                return ((IUpdateableIndex<TModel>) r.NewIndex, r.ChangeSet);
             }, cancellationToken);
             return result;
         }
 
-        public abstract Task<UpdateInfo<TIndex, TModel>> UpdateAsync(
-            Func<TIndex, (TIndex NewIndex, ChangeSet ChangeSet)> updater,
+        public abstract Task<UpdateInfo<TModel>> UpdateAsync(
+            Func<IUpdateableIndex<TModel>, (IUpdateableIndex<TModel> NewIndex, ChangeSet ChangeSet)> updater,
             CancellationToken cancellationToken = default);
 
-        protected virtual void OnUpdated(UpdateInfo<TIndex, TModel> updateInfo)
+        protected virtual void OnUpdated(UpdateInfo<TModel> updateInfo)
             => Updated?.Invoke(updateInfo);
     }
 }

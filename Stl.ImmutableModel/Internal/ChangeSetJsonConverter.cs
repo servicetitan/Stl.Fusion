@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using Newtonsoft.Json;
 using Stl;
+using Stl.ImmutableModel.Updating;
 
 namespace Stl.ImmutableModel.Internal
 {
@@ -19,7 +20,7 @@ namespace Stl.ImmutableModel.Internal
 
         public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
         {
-            var value = (Dictionary<DomainKey, ChangeKind>) reader.Value!;
+            var value = (Dictionary<DomainKey, NodeChangeType>) reader.Value!;
             // ReSharper disable once HeapView.BoxingAllocation
             return new ChangeSet(value.ToImmutableDictionary());
         }
