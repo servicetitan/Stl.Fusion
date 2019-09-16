@@ -1,12 +1,14 @@
 using System.Threading.Tasks;
 using Stl.ImmutableModel;
 using FluentAssertions;
-using Stl.ImmutableModel.Updaters;
+using Stl.ImmutableModel.Indexing;
+using Stl.ImmutableModel.Updating;
 using Stl.Testing;
+using Stl.Tests.ImmutableModel.Indexing;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Stl.Tests.ImmutableModel.Updaters
+namespace Stl.Tests.ImmutableModel.Updating
 {
     public abstract class UpdaterTestBase : TestBase
     {
@@ -41,6 +43,6 @@ namespace Stl.Tests.ImmutableModel.Updaters
             });
         }
 
-        protected abstract IUpdater<Index<ModelRoot>, ModelRoot> CreateUpdater(Index<ModelRoot> index);
+        protected abstract IUpdater<UpdatableIndex<ModelRoot>, ModelRoot> CreateUpdater(UpdatableIndex<ModelRoot> index);
     }
 }

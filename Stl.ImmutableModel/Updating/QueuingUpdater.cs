@@ -3,8 +3,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Stl.Async;
+using Stl.ImmutableModel.Indexing;
 
-namespace Stl.ImmutableModel.Updaters 
+namespace Stl.ImmutableModel.Updating 
 {
     [Serializable]
     public class QueueingUpdater<TIndex, TModel> : UpdaterBase<TIndex, TModel>, IAsyncDisposable

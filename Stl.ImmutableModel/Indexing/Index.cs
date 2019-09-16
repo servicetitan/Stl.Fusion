@@ -2,12 +2,9 @@ using System;
 using System.Collections.Immutable;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
-using Stl;
-using Stl.Internal;
 using Stl.Serialization;
-using Errors = Stl.ImmutableModel.Internal.Errors;
 
-namespace Stl.ImmutableModel
+namespace Stl.ImmutableModel.Indexing
 {
     public interface IIndex
     {
@@ -17,23 +14,14 @@ namespace Stl.ImmutableModel
         INode? TryGetNode(DomainKey domainKey);
     }
 
-    public interface IUpdateableIndex : IIndex
-    {
-        (IUpdateableIndex Index, ChangeSet ChangeSet) BaseUpdate(INode source, INode target);
-    }
-
     public interface IIndex<out TModel> : IIndex
         where TModel : class, INode
     {
         TModel Model { get; }
     }
 
-    public interface IUpdateableIndex<out TModel> : IIndex<TModel>, IUpdateableIndex
-        where TModel : class, INode
-    { }
-
     [Serializable]
-    public class Index : IUpdateableIndex, INotifyDeserialized
+    public class Index : IIndex, INotifyDeserialized
     {
         public static Index<TModel> New<TModel>(TModel model) 
             where TModel : class, INode 
@@ -62,75 +50,13 @@ namespace Stl.ImmutableModel
         public virtual INode? TryGetNode(DomainKey domainKey)
             => DomainKeyToNode.TryGetValue(domainKey, out var node) ? node : null;
 
-        public virtual (IUpdateableIndex Index, ChangeSet ChangeSet) BaseUpdate(
-            INode source, INode target)
+        protected virtual void Reindex()
         {
-            if (source == target)
-                return (this, ChangeSet.Empty);
-
-            if (source.Key != target.Key)
-                throw Errors.InvalidUpdateKeyMismatch();
-            
-            var clone = (Index) MemberwiseClone();
-            var changeSet = new ChangeSet();
-            clone.UpdateNode(source, target, ref changeSet);
-            return (clone, changeSet);
-        }
-
-        protected virtual void UpdateNode(INode source, INode target, ref ChangeSet changeSet)
-        {
-            SymbolPath? path = this.GetPath(source);
-            CompareNode(path, source, target, ref changeSet);
-
-            var tail = path.Tail;
-            path = path.Head;
-            while (path != null) {
-                var sourceParent = this.GetNode(path);
-                var targetParent = sourceParent.DualWith(tail, Option.Some((object?) target));
-                ReplaceNode(path, sourceParent, targetParent, ref changeSet);
-                source = sourceParent;
-                target = targetParent;
-                tail = path.Tail;
-                path = path.Head;
-            }
-            UntypedModel = target;
-        }
-
-        private void CompareNode(SymbolPath path, INode source, INode target, ref ChangeSet changeSet)
-        {
-            if (source == target)
-                return;
-
-            var sPairs = source.DualGetItems().ToDictionary();
-            var tPairs = target.DualGetItems().ToDictionary();
-            var c = DictionaryComparison.New(sPairs, tPairs);
-            if (c.AreEqual)
-                return;
-
-            var changeKind = ChangeKind.SubtreeChanged;
-            foreach (var (key, item) in c.LeftOnly) {
-                if (item is INode n)
-                    RemoveNode(path + key, n, ref changeSet);
-            }
-            foreach (var (key, item) in c.RightOnly) {
-                if (item is INode n)
-                    AddNode(path + key, n, ref changeSet);
-            }
-            foreach (var (key, sItem, tItem) in c.SharedUnequal) {
-                if (sItem is INode sn) {
-                    if (tItem is INode tn)
-                        CompareNode(path + key, sn, tn, ref changeSet);
-                    else
-                        RemoveNode(path + key, sn, ref changeSet);
-                }
-                else {
-                    if (tItem is INode tn)
-                        AddNode(path + key, tn, ref changeSet);
-                    else
-                        changeKind |= ChangeKind.Changed;
-                }
-            }
-            ReplaceNode(path, source, target, ref changeSet, changeKind);
+            NodeToPath = ImmutableDictionary<INode, SymbolPath>.Empty;
+            PathToNode = ImmutableDictionary<SymbolPath, INode>.Empty;
+            DomainKeyToNode = ImmutableDictionary<DomainKey, INode>.Empty;
+            var changeSet = ChangeSet.Empty;
+            AddNode(new SymbolPath(UntypedModel.Key), UntypedModel, ref changeSet);
         }
 
         protected virtual void AddNode(SymbolPath path, INode node, ref ChangeSet changeSet)
@@ -164,15 +90,6 @@ namespace Stl.ImmutableModel
             DomainKeyToNode = DomainKeyToNode.Remove(source.DomainKey).Add(target.DomainKey, target);
         }
 
-        protected void Reindex()
-        {
-            NodeToPath = ImmutableDictionary<INode, SymbolPath>.Empty;
-            PathToNode = ImmutableDictionary<SymbolPath, INode>.Empty;
-            DomainKeyToNode = ImmutableDictionary<DomainKey, INode>.Empty;
-            var changeSet = ChangeSet.Empty;
-            AddNode(new SymbolPath(UntypedModel.Key), UntypedModel, ref changeSet);
-        }
-
         // Serialization
         
         // Complex, b/c JSON.NET doesn't allow [OnDeserialized] methods to be virtual
@@ -189,7 +106,7 @@ namespace Stl.ImmutableModel
     }
 
     [Serializable]
-    public class Index<TModel> : Index, IUpdateableIndex<TModel>
+    public class Index<TModel> : Index, IIndex<TModel>
         where TModel : class, INode
     {
         [JsonIgnore] public TModel Model => (TModel) UntypedModel;

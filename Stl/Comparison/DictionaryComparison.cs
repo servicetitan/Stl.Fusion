@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Stl.Internal
+namespace Stl.Comparison
 {
     public static class DictionaryComparison
     {

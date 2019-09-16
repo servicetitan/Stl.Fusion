@@ -1,5 +1,6 @@
 using System;
 using Newtonsoft.Json;
+using Stl.ImmutableModel.Indexing;
 
 namespace Stl.ImmutableModel
 {

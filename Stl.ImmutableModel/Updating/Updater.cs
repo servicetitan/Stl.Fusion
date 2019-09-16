@@ -2,8 +2,9 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Stl.ImmutableModel.Indexing;
 
-namespace Stl.ImmutableModel.Updaters
+namespace Stl.ImmutableModel.Updating
 {
     public interface IUpdater
     {

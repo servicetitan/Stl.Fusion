@@ -1,12 +1,12 @@
-using Stl.ImmutableModel;
-using Stl.ImmutableModel.Internal;
 using FluentAssertions;
-using Stl.Internal;
+using Stl.Comparison;
+using Stl.ImmutableModel;
+using Stl.ImmutableModel.Indexing;
 using Stl.Testing;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Stl.Tests.ImmutableModel
+namespace Stl.Tests.ImmutableModel.Indexing
 {
     public class IndexTest : TestBase
     {
@@ -91,7 +91,7 @@ namespace Stl.Tests.ImmutableModel
             ProcessNode(root.Key.Value, root);
         }
 
-        internal static Index<ModelRoot> BuildModel()
+        internal static UpdatableIndex<ModelRoot> BuildModel()
         {
             var vm1 = new VirtualMachine("vm1")
                 .With(VirtualMachine.CapabilitiesSymbol, "caps1");
@@ -102,7 +102,7 @@ namespace Stl.Tests.ImmutableModel
             var root = new ModelRoot(".")
                 .WithAdded(cluster);
             
-            var idx = Index.New(root);
+            var idx = UpdatableIndex.New(root);
             TestIntegrity(idx);
             return idx;
         }

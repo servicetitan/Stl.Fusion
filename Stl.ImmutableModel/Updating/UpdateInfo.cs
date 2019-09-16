@@ -1,7 +1,8 @@
 using System;
 using Newtonsoft.Json;
+using Stl.ImmutableModel.Indexing;
 
-namespace Stl.ImmutableModel.Updaters
+namespace Stl.ImmutableModel.Updating
 {
     [Serializable]
     public class UpdateInfo
