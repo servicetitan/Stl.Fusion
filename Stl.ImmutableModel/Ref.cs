@@ -14,7 +14,7 @@ namespace Stl.ImmutableModel
         public Ref(DomainKey domainKey) => DomainKey = domainKey;
         public Ref(Type domain, Key key) => DomainKey = (domain, key);
 
-        public override string ToString() => $"{GetType()}({DomainKey.Domain}, {DomainKey.Key})";
+        public override string ToString() => $"{GetType().Name}({DomainKey.Domain}, {DomainKey.Key})";
 
         public TNode Resolve(IIndex index) => index.GetNode<TNode>(DomainKey);
 

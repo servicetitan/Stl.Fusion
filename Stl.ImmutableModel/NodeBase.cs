@@ -20,7 +20,7 @@ namespace Stl.ImmutableModel
 
         protected NodeBase(Key key) => Key = key;
 
-        public override string ToString() => $"{GetType()}({Key})";
+        public override string ToString() => $"{GetType().Name}({Key})";
         
         // Serialization
 

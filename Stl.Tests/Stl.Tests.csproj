@@ -15,6 +15,7 @@
     <PackageReference Include="FluentAssertions" Version="5.8.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.3.0-preview-20190808-03" />
     <PackageReference Include="Moq" Version="4.12.0" />
+    <PackageReference Include="morelinq" Version="3.2.0" />
     <PackageReference Include="Serilog" Version="2.9.0-dev-01119" />
     <PackageReference Include="Serilog.Extensions.Logging" Version="3.0.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="3.1.2-dev-00811" />
@@ -32,7 +33,7 @@
     <ProjectReference Include="..\Stl.Plugins\Stl.Plugins.csproj" />
     <ProjectReference Include="..\Stl.Plugins.Extensions\Stl.Plugins.Extensions.csproj" />
     <ProjectReference Include="..\Stl.Hosting\Stl.Hosting.csproj" />
-    <ProjectReference Include="..\Stl.TimeSeries\Stl.TimeSeries.csproj" />
+    <ProjectReference Include="..\Stl.Time\Stl.Time.csproj" />
     <ProjectReference Include="..\Stl.Testing\Stl.Testing.csproj" />
   </ItemGroup>
 

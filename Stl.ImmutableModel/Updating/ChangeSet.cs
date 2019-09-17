@@ -43,7 +43,7 @@ namespace Stl.ImmutableModel.Updating
             _changes = changes;
         }
 
-        public override string ToString() => $"{GetType()}({Changes.Count} change(s))";
+        public override string ToString() => $"{GetType().Name}({Changes.Count} change(s))";
 
         public ChangeSet Add(DomainKey domainKey, NodeChangeType changeType)
         {

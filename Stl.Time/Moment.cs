@@ -1,0 +1,71 @@
+﻿using System;
+using System.ComponentModel;
+using System.Globalization;
+using Newtonsoft.Json;
+using Stl.Time.Internal;
+
+namespace Stl.Time
+{
+    [Serializable]
+    [JsonConverter(typeof(MomentJsonConverter))]
+    [TypeConverter(typeof(MomentTypeConverter))]
+    public readonly struct Moment : IEquatable<Moment>, IComparable<Moment>
+    {
+        public static Moment Now => Clock.Current.Now;
+
+        public TimeSpan UnixTime { get; }
+
+        public Moment(TimeSpan value) => UnixTime = value;
+        public Moment(DateTime value) => UnixTime = value.ToUniversalTime() - DateTime.UnixEpoch;
+        public Moment(DateTimeOffset value) => UnixTime = value.ToUniversalTime() - DateTimeOffset.UnixEpoch;
+
+        #region Parse functions
+        
+        public static Moment Parse(string source) => DateTime.Parse(source, CultureInfo.InvariantCulture);
+        public static Moment Parse(ReadOnlySpan<char> source) => DateTime.Parse(source, CultureInfo.InvariantCulture);
+        public static bool TryParse(string source, out Moment result)
+        {
+            var success = DateTime.TryParse(source, CultureInfo.InvariantCulture, DateTimeStyles.None, out var r);
+            result = r;
+            return success;
+        }
+        public static bool TryParse(ReadOnlySpan<char> source, out Moment result)
+        {
+            var success = DateTime.TryParse(source, CultureInfo.InvariantCulture, DateTimeStyles.None, out var r);
+            result = r;
+            return success;
+        }
+
+        #endregion
+
+        // Conversion
+
+        public static implicit operator Moment(DateTime source) => new Moment(source);
+        public static implicit operator Moment(DateTimeOffset source) => new Moment(source);
+        public static implicit operator DateTime(Moment source) => source.ToDateTime();
+        public static implicit operator DateTimeOffset(Moment source) => source.ToDateTimeOffset();
+
+        public DateTime ToDateTime() => DateTime.UnixEpoch + UnixTime;
+        public DateTimeOffset ToDateTimeOffset() => DateTimeOffset.UnixEpoch + UnixTime;
+        public override string ToString() => ToDateTime().ToString(CultureInfo.InvariantCulture);
+
+        // Equality
+        
+        public bool Equals(Moment other) => UnixTime.Equals(other.UnixTime);
+        public int CompareTo(Moment other) => UnixTime.CompareTo(other.UnixTime);
+        public override bool Equals(object? obj) => obj is Moment other && Equals(other);
+        public override int GetHashCode() => UnixTime.GetHashCode();
+        public static bool operator ==(Moment left, Moment right) => left.Equals(right);
+        public static bool operator !=(Moment left, Moment right) => !left.Equals(right);
+        
+        // Operations
+        
+        public static bool operator >(Moment t1, Moment t2) => t1 > t2;
+        public static bool operator >=(Moment t1, Moment t2) => t1 >= t2;
+        public static bool operator <(Moment t1, Moment t2) => t1 < t2;
+        public static bool operator <=(Moment t1, Moment t2) => t1 <= t2;
+        public static Moment operator +(Moment d1, TimeSpan d2) => new Moment(d1.UnixTime + d2);
+        public static Moment operator -(Moment d1, TimeSpan d2) => new Moment(d1.UnixTime - d2);
+        public static TimeSpan operator -(Moment d1, Moment d2) => d1.UnixTime - d2.UnixTime;
+    }
+}

@@ -19,7 +19,7 @@ namespace Stl.ImmutableModel
             Key = key;
         }
 
-        public override string ToString() => $"{GetType()}({Domain}, {Key})";
+        public override string ToString() => $"{GetType().Name}({Domain}, {Key})";
 
         // Conversion
 
