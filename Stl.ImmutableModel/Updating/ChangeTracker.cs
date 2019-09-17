@@ -66,6 +66,8 @@ namespace Stl.ImmutableModel.Updating
 
         private IObservable<UpdateInfo<TModel>> GetObservable(DomainKey key, NodeChangeType changeTypeMask)
         {
+            if (_observers == null)
+                throw Errors.AlreadyDisposed();
             return Observable.Create<UpdateInfo<TModel>>(o => {
                 _observers.AddOrUpdate(key, 
                     (p, state) => 

@@ -30,7 +30,7 @@ namespace Stl.ImmutableModel
         IUpdateableIndex IModelProvider.UntypedIndex => Index;
         INode IModelProvider.UntypedModel => Model;
 
-        public bool OwnsTracker { get; }
+        public bool OwnsTracker { get; private set; }
         public IChangeTracker<TModel> ChangeTracker { get; }
         public IUpdateableIndex<TModel> Index => Updater.Index;
         public TModel Model => Index.Model;
@@ -52,8 +52,10 @@ namespace Stl.ImmutableModel
 
         public void Dispose()
         {
-            if (OwnsTracker)
+            if (OwnsTracker) {
+                OwnsTracker = false;
                 ChangeTracker.Dispose();
+            }
         }
     }
 
