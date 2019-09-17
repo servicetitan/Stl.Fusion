@@ -5,10 +5,11 @@ namespace Stl.ImmutableModel.Updating
     [Flags]
     public enum NodeChangeType
     {
-        Changed = 0x1,
-        Added = 0x2,
-        Removed = 0x4,
-        SubtreeChanged = 0x10,
-        Any = Changed | Added | Removed | SubtreeChanged,
+        InstanceChanged = 0x1,
+        Created = 0x3,
+        Removed = 0x5,
+        PropertyChanged = 0x9,
+        SubtreeChanged = 0x11,
+        Any = InstanceChanged | Created | Removed | PropertyChanged | SubtreeChanged,
     }
 }

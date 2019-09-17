@@ -3,11 +3,15 @@ using Stl.ImmutableModel.Updating;
 
 namespace Stl.ImmutableModel
 {
+    // It's intentional these types don't expose IUpdater:
+    // the providers are supposed to provide the access to
+    // read-only models + an API for tracking the changes there,
+    // but not the way to update the models.
+
     public interface IModelProvider : IDisposable
     {
         INode UntypedModel { get; }
         IUpdateableIndex UntypedIndex { get; }
-        IUpdater UntypedUpdater { get; }
         IChangeTracker UntypedChangeTracker { get; }
     }
 
@@ -16,7 +20,6 @@ namespace Stl.ImmutableModel
     {
         TModel Model { get; }
         IUpdateableIndex<TModel> Index { get; }
-        IUpdater<TModel> Updater { get; } 
         IChangeTracker<TModel> ChangeTracker { get; }
     }
 
@@ -24,15 +27,21 @@ namespace Stl.ImmutableModel
         where TModel : class, INode
     {
         IChangeTracker IModelProvider.UntypedChangeTracker => ChangeTracker;
-        IUpdater IModelProvider.UntypedUpdater => Updater;
         IUpdateableIndex IModelProvider.UntypedIndex => Index;
         INode IModelProvider.UntypedModel => Model;
 
         public bool OwnsTracker { get; }
         public IChangeTracker<TModel> ChangeTracker { get; }
-        public IUpdater<TModel> Updater { get; }
         public IUpdateableIndex<TModel> Index => Updater.Index;
         public TModel Model => Index.Model;
+        protected IUpdater<TModel> Updater { get; }
+
+        public ModelProvider(IUpdater<TModel> updater)
+        {
+            OwnsTracker = true;
+            ChangeTracker = new ChangeTracker<TModel>(updater);
+            Updater = updater;
+        }
 
         public ModelProvider(IChangeTracker<TModel> changeTracker, bool ownsTracker = true)
         {
@@ -50,6 +59,10 @@ namespace Stl.ImmutableModel
 
     public static class ModelProvider
     {
+        public static ModelProvider<TModel> New<TModel>(IUpdater<TModel> updater)
+            where TModel : class, INode
+            => new ModelProvider<TModel>(updater);
+
         public static ModelProvider<TModel> New<TModel>(IChangeTracker<TModel> changeTracker, bool ownsTracker = true)
             where TModel : class, INode
             => new ModelProvider<TModel>(changeTracker, ownsTracker);

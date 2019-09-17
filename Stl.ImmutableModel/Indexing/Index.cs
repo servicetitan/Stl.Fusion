@@ -58,7 +58,7 @@ namespace Stl.ImmutableModel.Indexing
 
         protected virtual void AddNode(SymbolPath path, INode node, ref ChangeSet changeSet)
         {
-            changeSet = changeSet.Add(node.DomainKey, NodeChangeType.Added);
+            changeSet = changeSet.Add(node.DomainKey, NodeChangeType.Created);
             NodeToPath = NodeToPath.Add(node, path);
             PathToNode = PathToNode.Add(path, node);
             DomainKeyToNode = DomainKeyToNode.Add(node.DomainKey, node);

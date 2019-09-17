@@ -61,41 +61,56 @@ namespace Stl.ImmutableModel.Updating
             SetUntypedModel(target);
         }
 
-        private void CompareAndUpdateNode(SymbolPath path, INode source, INode target, ref ChangeSet changeSet)
+        private NodeChangeType CompareAndUpdateNode(SymbolPath path, INode source, INode target, ref ChangeSet changeSet)
         {
             if (source == target)
-                return;
+                return 0;
 
+            var changeType = (NodeChangeType) 0;
             var sPairs = source.DualGetItems().ToDictionary();
             var tPairs = target.DualGetItems().ToDictionary();
             var c = DictionaryComparison.New(sPairs, tPairs);
             if (c.AreEqual)
-                return;
+                return changeType;
 
-            var changeKind = NodeChangeType.SubtreeChanged;
             foreach (var (key, item) in c.LeftOnly) {
-                if (item is INode n)
+                if (item is INode n) {
                     RemoveNode(path + key, n, ref changeSet);
+                    changeType |= NodeChangeType.SubtreeChanged;
+                }
             }
             foreach (var (key, item) in c.RightOnly) {
-                if (item is INode n)
+                if (item is INode n) {
                     AddNode(path + key, n, ref changeSet);
+                    changeType |= NodeChangeType.SubtreeChanged;
+                }
             }
             foreach (var (key, sItem, tItem) in c.SharedUnequal) {
                 if (sItem is INode sn) {
-                    if (tItem is INode tn)
-                        CompareAndUpdateNode(path + key, sn, tn, ref changeSet);
-                    else
+                    if (tItem is INode tn) {
+                        var ct = CompareAndUpdateNode(path + key, sn, tn, ref changeSet);
+                        if (ct == 0)
+                            throw Stl.Internal.Errors.InternalError(
+                                "CompareAndUpdate returned 0 for SharedUnequal item.");
+                        changeType |= NodeChangeType.SubtreeChanged;
+                    }
+                    else {
                         RemoveNode(path + key, sn, ref changeSet);
+                        changeType |= NodeChangeType.SubtreeChanged;
+                    }
                 }
                 else {
-                    if (tItem is INode tn)
+                    if (tItem is INode tn) {
                         AddNode(path + key, tn, ref changeSet);
-                    else
-                        changeKind |= NodeChangeType.Changed;
+                        changeType |= NodeChangeType.SubtreeChanged;
+                    }
+                    else {
+                        changeType |= NodeChangeType.PropertyChanged;
+                    }
                 }
             }
-            ReplaceNode(path, source, target, ref changeSet, changeKind);
+            ReplaceNode(path, source, target, ref changeSet, changeType);
+            return changeType;
         }
     }
 

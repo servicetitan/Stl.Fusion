@@ -61,5 +61,8 @@ namespace Stl.Internal
             new InvalidOperationException($"The lock is already acquired by one of callers of the current method.");
         public static Exception ThisValueCanBeSetJustOnce() =>
             new InvalidOperationException($"This value can be set just once.");
+
+        public static Exception InternalError(string message) =>
+            new SystemException(message);
     }
 }
