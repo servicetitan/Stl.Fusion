@@ -6,9 +6,9 @@ using Stl.Time.Internal;
 namespace Stl.Time.Clocks
 {
     [Serializable]
-    public class UnusableClock : IClock
+    public sealed class UnusableClock : IClock
     {
-        public static readonly UnusableClock Instance = new UnusableClock();
+        public static readonly IClock Instance = new UnusableClock();
 
         public Moment Now => throw Errors.UnusableClock();
         
@@ -16,12 +16,9 @@ namespace Stl.Time.Clocks
 
         public Moment ToRealTime(Moment localTime) => throw Errors.UnusableClock(); 
         public Moment ToLocalTime(Moment realTime) => throw Errors.UnusableClock();
-        public TimeSpan ToRealDuration(TimeSpan localDuration) => throw Errors.UnusableClock();
-        public TimeSpan ToLocalDuration(TimeSpan realDuration) => throw Errors.UnusableClock();
+        public CancellationToken SettingsChangedToken => default;
 
-        public Task Delay(TimeSpan duration, CancellationToken cancellationToken = default) 
+        public Task Delay(Moment dueAt, CancellationToken cancellationToken = default) 
             => throw Errors.UnusableClock();
-        public IObservable<long> Interval(TimeSpan period) => throw Errors.UnusableClock();
-        public IObservable<long> Timer(TimeSpan dueIn) => throw Errors.UnusableClock();
     }
 }

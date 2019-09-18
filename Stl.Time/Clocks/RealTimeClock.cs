@@ -1,27 +1,29 @@
 using System;
-using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Stl.Time.Clocks
 {
     [Serializable]
-    public class RealTimeClock : IClock
+    public sealed class RealTimeClock : IClock
     {
-        public static readonly RealTimeClock Instance = new RealTimeClock();
+        public static readonly IClock Instance = new RealTimeClock();
+        public static Moment Now => Instance.Now;
 
-        public Moment Now => DateTime.UtcNow;
+        Moment IClock.Now => DateTime.UtcNow;
         
         public override string ToString() => $"{GetType().Name}()";
 
         public Moment ToRealTime(Moment localTime) => localTime; 
         public Moment ToLocalTime(Moment realTime) => realTime;
-        public TimeSpan ToRealDuration(TimeSpan localDuration) => localDuration;
-        public TimeSpan ToLocalDuration(TimeSpan realDuration) => realDuration;
+        public CancellationToken SettingsChangedToken => CancellationToken.None;
 
-        public Task Delay(TimeSpan duration, CancellationToken cancellationToken = default) 
-            => Task.Delay(duration, cancellationToken);
-        public IObservable<long> Interval(TimeSpan period) => Observable.Interval(period);
-        public IObservable<long> Timer(TimeSpan dueIn) => Observable.Timer(dueIn);
+        public Task Delay(Moment dueAt, CancellationToken cancellationToken = default)
+        {
+            var delta = dueAt - Now;
+            if (delta < TimeSpan.Zero)
+                delta = TimeSpan.Zero;
+            return Task.Delay(delta, cancellationToken);
+        }
     }
 }

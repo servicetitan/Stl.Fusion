@@ -59,6 +59,8 @@ namespace Stl.Internal
             new InvalidOperationException("Already initialized.");
         public static Exception AlreadyLocked() =>
             new InvalidOperationException($"The lock is already acquired by one of callers of the current method.");
+        public static Exception AlreadyUsed() =>
+            new InvalidOperationException("The object was already used somewhere else.");
         public static Exception ThisValueCanBeSetJustOnce() =>
             new InvalidOperationException($"This value can be set just once.");
 

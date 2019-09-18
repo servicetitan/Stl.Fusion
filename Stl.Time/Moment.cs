@@ -64,8 +64,8 @@ namespace Stl.Time
         public static bool operator >=(Moment t1, Moment t2) => t1 >= t2;
         public static bool operator <(Moment t1, Moment t2) => t1 < t2;
         public static bool operator <=(Moment t1, Moment t2) => t1 <= t2;
-        public static Moment operator +(Moment d1, TimeSpan d2) => new Moment(d1.UnixTime + d2);
-        public static Moment operator -(Moment d1, TimeSpan d2) => new Moment(d1.UnixTime - d2);
-        public static TimeSpan operator -(Moment d1, Moment d2) => d1.UnixTime - d2.UnixTime;
+        public static Moment operator +(Moment t1, TimeSpan t2) => new Moment(t1.UnixTime + t2);
+        public static Moment operator -(Moment t1, TimeSpan t2) => new Moment(t1.UnixTime - t2);
+        public static TimeSpan operator -(Moment t1, Moment t2) => t1.UnixTime - t2.UnixTime;
     }
 }

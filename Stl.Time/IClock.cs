@@ -10,11 +10,8 @@ namespace Stl.Time
         
         Moment ToRealTime(Moment localTime);
         Moment ToLocalTime(Moment realTime);
-        TimeSpan ToRealDuration(TimeSpan localDuration);
-        TimeSpan ToLocalDuration(TimeSpan realDuration);
 
-        Task Delay(TimeSpan duration, CancellationToken cancellationToken = default);
-        IObservable<long> Interval(TimeSpan period);
-        IObservable<long> Timer(TimeSpan dueIn);
+        CancellationToken SettingsChangedToken { get; }
+        Task Delay(Moment dueAt, CancellationToken cancellationToken = default);
     }
 }

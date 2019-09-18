@@ -23,6 +23,18 @@ namespace Stl.Async
             cancellationToken.ThrowIfCancellationRequested();
         }
         
-        public static Task SuppressExceptions(this Task task) => task.ContinueWith(t => { });
+        public static Task SuppressExceptions(this Task task) 
+            => task.ContinueWith(t => { });
+        public static Task<T> SuppressExceptions<T>(this Task<T> task) 
+            => task.ContinueWith(t => t.IsCompletedSuccessfully ? t.Result : default);
+        
+        public static Task SuppressCancellation(this Task task)
+            => task.ContinueWith(t => {
+                if (t.IsCompletedSuccessfully || t.IsCanceled)
+                    return;
+                throw t.Exception!;
+            });
+        public static Task<T> SuppressCancellation<T>(this Task<T> task)
+            => task.ContinueWith(t => !t.IsCanceled ? t.Result : default);
     }
 }
