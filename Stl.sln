@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Reactionist", "Stl.Reac
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Testing", "Stl.Testing\Stl.Testing.csproj", "{04AD45A4-582B-49CB-B7DF-A6442CCB3C13}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.TimeSeries", "Stl.TimeSeries\Stl.TimeSeries.csproj", "{10E07A87-F859-49F7-8ED9-BF4E4AC75F9A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Time", "Stl.Time\Stl.Time.csproj", "{10E07A87-F859-49F7-8ED9-BF4E4AC75F9A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Plugins", "Stl.Plugins\Stl.Plugins.csproj", "{E84DBDB6-4E0D-4736-AF7C-B6C3BA20C2E7}"
 EndProject
@@ -20,6 +20,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Plugins.Extensions", "Stl.Plugins.Extensions\Stl.Plugins.Extensions.csproj", "{A6C8E7D0-1659-4694-9B0E-505180C27476}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Hosting", "Stl.Hosting\Stl.Hosting.csproj", "{A346AAA9-DC3F-43AA-854B-B63A1B68B677}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.ImmutableModel", "Stl.ImmutableModel\Stl.ImmutableModel.csproj", "{B4D50716-B550-4E07-849B-408E5C6DCA5F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -142,5 +144,17 @@ Global
 		{A346AAA9-DC3F-43AA-854B-B63A1B68B677}.Release|x64.Build.0 = Release|Any CPU
 		{A346AAA9-DC3F-43AA-854B-B63A1B68B677}.Release|x86.ActiveCfg = Release|Any CPU
 		{A346AAA9-DC3F-43AA-854B-B63A1B68B677}.Release|x86.Build.0 = Release|Any CPU
+		{B4D50716-B550-4E07-849B-408E5C6DCA5F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B4D50716-B550-4E07-849B-408E5C6DCA5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B4D50716-B550-4E07-849B-408E5C6DCA5F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B4D50716-B550-4E07-849B-408E5C6DCA5F}.Debug|x64.Build.0 = Debug|Any CPU
+		{B4D50716-B550-4E07-849B-408E5C6DCA5F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B4D50716-B550-4E07-849B-408E5C6DCA5F}.Debug|x86.Build.0 = Debug|Any CPU
+		{B4D50716-B550-4E07-849B-408E5C6DCA5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B4D50716-B550-4E07-849B-408E5C6DCA5F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B4D50716-B550-4E07-849B-408E5C6DCA5F}.Release|x64.ActiveCfg = Release|Any CPU
+		{B4D50716-B550-4E07-849B-408E5C6DCA5F}.Release|x64.Build.0 = Release|Any CPU
+		{B4D50716-B550-4E07-849B-408E5C6DCA5F}.Release|x86.ActiveCfg = Release|Any CPU
+		{B4D50716-B550-4E07-849B-408E5C6DCA5F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

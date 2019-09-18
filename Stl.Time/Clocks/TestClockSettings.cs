@@ -24,7 +24,7 @@ namespace Stl.Time.Clocks
             _changedTokenSource = new CancellationTokenSource();
         }
 
-        public void Changed() => _changedTokenSource.Cancel();
+        public void Changed() => _changedTokenSource!.Cancel();
 
         public void Dispose()
         {

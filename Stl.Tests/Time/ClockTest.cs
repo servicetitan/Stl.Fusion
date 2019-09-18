@@ -54,6 +54,8 @@ namespace Stl.Tests.Time
 
             var firedAt = clock.Timer(1000).Select(i => clock.Now).ToEnumerable().Single();
             ShouldEqual(firedAt, clockStart + TimeSpan.FromSeconds(1), epsilon10);
+
+            await Task.Yield(); // Just to suppress warning.
         }
 
         [Fact]
