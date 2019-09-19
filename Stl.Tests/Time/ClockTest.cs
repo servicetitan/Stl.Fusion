@@ -1,8 +1,10 @@
 using System;
 using System.Linq;
 using System.Reactive.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
+using Stl.Async;
 using Stl.Testing;
 using Stl.Time;
 using Stl.Time.Clocks;
@@ -29,7 +31,7 @@ namespace Stl.Tests.Time
             ShouldEqual(clockStart, clock.ToLocalTime(realStart), epsilon10);
             ShouldEqual(clockStart, realStart + TimeSpan.FromSeconds(1), epsilon);
 
-            await clock.Delay(TimeSpan.FromSeconds(5));
+            await clock.DelayAsync(TimeSpan.FromSeconds(5));
             ShouldEqual(realStart + TimeSpan.FromSeconds(0.5), RealTimeClock.Now, epsilon);
             ShouldEqual(clockStart + TimeSpan.FromSeconds(5), clock.Now, epsilon10);
             Out.WriteLine(clock.Now.ToString());
@@ -38,7 +40,7 @@ namespace Stl.Tests.Time
             ShouldEqual(clockStart + TimeSpan.FromSeconds(6), clock.Now, epsilon10);
 
             clock.SpeedupBy(0.1);
-            await clock.Delay(TimeSpan.FromSeconds(0.5));
+            await clock.DelayAsync(TimeSpan.FromSeconds(0.5));
             ShouldEqual(realStart + TimeSpan.FromSeconds(1), RealTimeClock.Now, epsilon);
             ShouldEqual(clockStart + TimeSpan.FromSeconds(6.5), clock.Now, epsilon10);
         }
@@ -111,6 +113,46 @@ namespace Stl.Tests.Time
                 ShouldEqual(TimeSpan.FromMilliseconds(10), d, epsilon);
 
             await speedupTask;
+        }
+
+        [Fact]
+        public async Task SpecialValuesTest()
+        {
+            async Task Test(IClock clock1)
+            {
+                // Negative value (but not infinity)
+                await ((Func<Task>) (async () => {
+                    var cts = new CancellationTokenSource(100);
+                    await clock1.DelayAsync(-2, cts.Token);
+                })).Should().ThrowAsync<ArgumentOutOfRangeException>();
+                await ((Func<Task>) (async () => {
+                    var cts = new CancellationTokenSource(100);
+                    await clock1.DelayAsync(TimeSpan.FromMilliseconds(-2), cts.Token);
+                })).Should().ThrowAsync<ArgumentOutOfRangeException>();
+
+                // Infinity
+                await ((Func<Task>) (async () => {
+                    var cts = new CancellationTokenSource(100);
+                    await clock1.DelayAsync(Timeout.Infinite, cts.Token).SuppressCancellation();
+                })).Should().CompleteWithinAsync(TimeSpan.FromMilliseconds(200));
+                await ((Func<Task>) (async () => {
+                    var cts = new CancellationTokenSource(100);
+                    await clock1.DelayAsync(Timeout.InfiniteTimeSpan, cts.Token).SuppressCancellation();
+                })).Should().CompleteWithinAsync(TimeSpan.FromMilliseconds(200));
+
+                // Zero
+                await ((Func<Task>) (async () => {
+                    var cts = new CancellationTokenSource(1000);
+                    await clock1.DelayAsync(0, cts.Token).SuppressCancellation();
+                })).Should().CompleteWithinAsync(TimeSpan.FromMilliseconds(100));
+                await ((Func<Task>) (async () => {
+                    var cts = new CancellationTokenSource(1000);
+                    await clock1.DelayAsync(TimeSpan.Zero, cts.Token).SuppressCancellation();
+                })).Should().CompleteWithinAsync(TimeSpan.FromMilliseconds(100));
+            }
+
+            await Test(RealTimeClock.Instance);
+            await Test(new TestClock());
         }
 
         protected static void ShouldEqual(TimeSpan a, TimeSpan b, TimeSpan epsilon)
