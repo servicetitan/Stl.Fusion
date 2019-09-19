@@ -7,16 +7,16 @@ namespace Stl.ImmutableModel.Updating
     [Serializable]
     public class UpdateInfo
     {
-        public IUpdateableIndex UntypedOldIndex { get; }
-        public IUpdateableIndex UntypedNewIndex { get; }
+        public IUpdatableIndex UntypedOldIndex { get; }
+        public IUpdatableIndex UntypedNewIndex { get; }
         [JsonIgnore] public INode UntypedOldModel => UntypedOldIndex.UntypedModel;
         [JsonIgnore] public INode UntypedNewModel => UntypedNewIndex.UntypedModel;
         public ChangeSet ChangeSet { get; }
 
         [JsonConstructor]
         public UpdateInfo(
-            IUpdateableIndex untypedOldIndex, 
-            IUpdateableIndex untypedNewIndex, 
+            IUpdatableIndex untypedOldIndex, 
+            IUpdatableIndex untypedNewIndex, 
             ChangeSet changeSet)
         {
             UntypedOldIndex = untypedOldIndex;
@@ -28,13 +28,13 @@ namespace Stl.ImmutableModel.Updating
     public class UpdateInfo<TModel> : UpdateInfo
         where TModel : class, INode
     {
-        [JsonIgnore] public IUpdateableIndex<TModel> OldIndex => (IUpdateableIndex<TModel>) UntypedOldIndex;
-        [JsonIgnore] public IUpdateableIndex<TModel> NewIndex => (IUpdateableIndex<TModel>) UntypedNewIndex;
+        [JsonIgnore] public IUpdatableIndex<TModel> OldIndex => (IUpdatableIndex<TModel>) UntypedOldIndex;
+        [JsonIgnore] public IUpdatableIndex<TModel> NewIndex => (IUpdatableIndex<TModel>) UntypedNewIndex;
         [JsonIgnore] public TModel OldModel => (TModel) UntypedOldModel;
         [JsonIgnore] public TModel NewModel => (TModel) UntypedNewModel;
 
         [JsonConstructor]
-        public UpdateInfo(IUpdateableIndex<TModel> oldIndex, IUpdateableIndex<TModel> newIndex, ChangeSet changeSet)  
+        public UpdateInfo(IUpdatableIndex<TModel> oldIndex, IUpdatableIndex<TModel> newIndex, ChangeSet changeSet)  
             : base(oldIndex, newIndex, changeSet) { }
     }
 }

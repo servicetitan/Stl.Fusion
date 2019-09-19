@@ -46,6 +46,6 @@ namespace Stl.Tests.ImmutableModel.Updating
             });
         }
 
-        protected abstract IUpdater<ModelRoot> CreateUpdater(IUpdateableIndex<ModelRoot> index);
+        protected abstract IUpdater<ModelRoot> CreateUpdater(IUpdatableIndex<ModelRoot> index);
     }
 }

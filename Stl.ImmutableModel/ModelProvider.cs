@@ -11,7 +11,7 @@ namespace Stl.ImmutableModel
     public interface IModelProvider : IDisposable
     {
         INode UntypedModel { get; }
-        IUpdateableIndex UntypedIndex { get; }
+        IUpdatableIndex UntypedIndex { get; }
         IChangeTracker UntypedChangeTracker { get; }
     }
 
@@ -19,7 +19,7 @@ namespace Stl.ImmutableModel
         where TModel : class, INode
     {
         TModel Model { get; }
-        IUpdateableIndex<TModel> Index { get; }
+        IUpdatableIndex<TModel> Index { get; }
         IChangeTracker<TModel> ChangeTracker { get; }
     }
 
@@ -27,12 +27,12 @@ namespace Stl.ImmutableModel
         where TModel : class, INode
     {
         IChangeTracker IModelProvider.UntypedChangeTracker => ChangeTracker;
-        IUpdateableIndex IModelProvider.UntypedIndex => Index;
+        IUpdatableIndex IModelProvider.UntypedIndex => Index;
         INode IModelProvider.UntypedModel => Model;
 
         public bool OwnsTracker { get; private set; }
         public IChangeTracker<TModel> ChangeTracker { get; }
-        public IUpdateableIndex<TModel> Index => Updater.Index;
+        public IUpdatableIndex<TModel> Index => Updater.Index;
         public TModel Model => Index.Model;
         protected IUpdater<TModel> Updater { get; }
 

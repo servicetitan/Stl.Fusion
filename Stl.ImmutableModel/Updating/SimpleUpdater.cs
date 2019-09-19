@@ -11,13 +11,13 @@ namespace Stl.ImmutableModel.Updating
         where TModel : class, INode
     {
         [JsonConstructor]
-        public SimpleUpdater(IUpdateableIndex<TModel> index) : base(index) { }
+        public SimpleUpdater(IUpdatableIndex<TModel> index) : base(index) { }
 
         public override Task<UpdateInfo<TModel>> UpdateAsync(
-            Func<IUpdateableIndex<TModel>, (IUpdateableIndex<TModel> NewIndex, ChangeSet ChangeSet)> updater,
+            Func<IUpdatableIndex<TModel>, (IUpdatableIndex<TModel> NewIndex, ChangeSet ChangeSet)> updater,
             CancellationToken cancellationToken = default)
         {
-            IUpdateableIndex<TModel> oldIndex, newIndex;
+            IUpdatableIndex<TModel> oldIndex, newIndex;
             ChangeSet changeSet;
             while (true) {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -34,7 +34,7 @@ namespace Stl.ImmutableModel.Updating
 
     public static class SimpleUpdater
     {
-        public static SimpleUpdater<TModel> New<TModel>(IUpdateableIndex<TModel> index)
+        public static SimpleUpdater<TModel> New<TModel>(IUpdatableIndex<TModel> index)
             where TModel : class, INode 
             => new SimpleUpdater<TModel>(index);
     }

@@ -7,17 +7,17 @@ using Index = Stl.ImmutableModel.Indexing.Index;
 
 namespace Stl.ImmutableModel.Updating
 {
-    public interface IUpdateableIndex : IIndex
+    public interface IUpdatableIndex : IIndex
     {
-        (IUpdateableIndex Index, ChangeSet ChangeSet) BaseUpdate(INode source, INode target);
+        (IUpdatableIndex Index, ChangeSet ChangeSet) BaseUpdate(INode source, INode target);
     }
 
-    public interface IUpdateableIndex<out TModel> : IIndex<TModel>, IUpdateableIndex
+    public interface IUpdatableIndex<out TModel> : IIndex<TModel>, IUpdatableIndex
         where TModel : class, INode
     { }
 
     [Serializable]
-    public abstract class UpdatableIndex : Index, IUpdateableIndex
+    public abstract class UpdatableIndex : Index, IUpdatableIndex
     {
         public new static UpdatableIndex<TModel> New<TModel>(TModel model) 
             where TModel : class, INode 
@@ -27,7 +27,7 @@ namespace Stl.ImmutableModel.Updating
 
         protected abstract void SetUntypedModel(INode model);
 
-        public virtual (IUpdateableIndex Index, ChangeSet ChangeSet) BaseUpdate(
+        public virtual (IUpdatableIndex Index, ChangeSet ChangeSet) BaseUpdate(
             INode source, INode target)
         {
             if (source == target)
@@ -115,7 +115,7 @@ namespace Stl.ImmutableModel.Updating
     }
 
     [Serializable]
-    public class UpdatableIndex<TModel> : UpdatableIndex, IUpdateableIndex<TModel>
+    public class UpdatableIndex<TModel> : UpdatableIndex, IUpdatableIndex<TModel>
         where TModel : class, INode
     {
         protected override INode UntypedModel => Model;
