@@ -23,8 +23,6 @@ namespace Stl.Time.Clocks
             }
         }
 
-        public CancellationToken SettingsChangedToken => Settings.ChangedToken;
-
         public TestClock(TestClockSettings settings) 
             => _settings = settings;
         public TestClock(TimeSpan localOffset = default, TimeSpan realOffset = default, double multiplier = 1) 
@@ -46,9 +44,9 @@ namespace Stl.Time.Clocks
         public async Task Delay(Moment dueAt, CancellationToken cancellationToken = default)
         {
             while (true) {
-                var s = Settings;
-                var settingsChangedToken = SettingsChangedToken;
-                var delta = s.ToRealTime(dueAt) - RealTimeClock.Now;
+                var settings = Settings;
+                var settingsChangedToken = settings.ChangedToken;
+                var delta = settings.ToRealTime(dueAt) - RealTimeClock.Now;
                 if (delta < TimeSpan.Zero)
                     delta = TimeSpan.Zero;
                 Debug.WriteLine(delta);

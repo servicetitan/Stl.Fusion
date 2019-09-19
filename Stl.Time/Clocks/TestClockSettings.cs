@@ -8,9 +8,11 @@ namespace Stl.Time.Clocks
     public sealed class TestClockSettings : IDisposable
     {
         private CancellationTokenSource? _changedTokenSource;
+        
         public TimeSpan LocalOffset { get; }
         public TimeSpan RealOffset { get; }
         public double Multiplier { get; }
+
         [JsonIgnore] public Moment Now => ToLocalTime(RealTimeClock.Now);
         [JsonIgnore] public bool IsUsable => _changedTokenSource != null && _changedTokenSource.IsCancellationRequested == false;
         [JsonIgnore] public CancellationToken ChangedToken => _changedTokenSource?.Token ?? default;
