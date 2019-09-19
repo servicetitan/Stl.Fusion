@@ -35,6 +35,7 @@ namespace Stl.Time.Clocks
         // Operations
 
         public Moment Now => ToLocalTime(RealTimeClock.Now);
+        public Moment HighResolutionNow => ToLocalTime(RealTimeClock.HighResolutionNow);
 
         public Moment ToRealTime(Moment localTime) => Settings.ToRealTime(localTime);
         public Moment ToLocalTime(Moment realTime) => Settings.ToLocalTime(realTime);

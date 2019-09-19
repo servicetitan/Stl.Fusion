@@ -14,8 +14,9 @@ namespace Stl.Time.Clocks
         public double Multiplier { get; }
 
         [JsonIgnore] public Moment Now => ToLocalTime(RealTimeClock.Now);
-        [JsonIgnore] public bool IsUsable => _changedTokenSource != null && _changedTokenSource.IsCancellationRequested == false;
+        [JsonIgnore] public Moment HighResolutionNow => ToLocalTime(RealTimeClock.HighResolutionNow);
         [JsonIgnore] public CancellationToken ChangedToken => _changedTokenSource?.Token ?? default;
+        [JsonIgnore] public bool IsUsable => _changedTokenSource != null && _changedTokenSource.IsCancellationRequested == false;
 
         [JsonConstructor]
         public TestClockSettings(TimeSpan localOffset = default, TimeSpan realOffset = default, double multiplier = 1)

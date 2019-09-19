@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -7,10 +8,15 @@ namespace Stl.Time.Clocks
     [Serializable]
     public sealed class RealTimeClock : IClock
     {
+        private static readonly DateTime StopwatchZero = DateTime.UtcNow;
+        private static readonly Stopwatch Stopwatch = Stopwatch.StartNew();
+
         public static readonly IClock Instance = new RealTimeClock();
         public static Moment Now => Instance.Now;
+        public static Moment HighResolutionNow => Instance.HighResolutionNow;
 
         Moment IClock.Now => DateTime.UtcNow;
+        Moment IClock.HighResolutionNow => (StopwatchZero + Stopwatch.Elapsed).ToMoment();
         
         public override string ToString() => $"{GetType().Name}()";
 

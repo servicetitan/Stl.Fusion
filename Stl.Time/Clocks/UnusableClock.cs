@@ -11,7 +11,8 @@ namespace Stl.Time.Clocks
         public static readonly IClock Instance = new UnusableClock();
 
         public Moment Now => throw Errors.UnusableClock();
-        
+        public Moment HighResolutionNow => throw Errors.UnusableClock();
+
         public override string ToString() => $"{GetType().Name}()";
 
         public Moment ToRealTime(Moment localTime) => throw Errors.UnusableClock(); 

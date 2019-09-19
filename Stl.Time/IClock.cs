@@ -7,6 +7,7 @@ namespace Stl.Time
     public interface IClock
     {
         Moment Now { get; }
+        Moment HighResolutionNow { get; }
         
         Moment ToRealTime(Moment localTime);
         Moment ToLocalTime(Moment realTime);
