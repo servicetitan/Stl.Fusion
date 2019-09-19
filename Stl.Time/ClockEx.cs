@@ -9,13 +9,6 @@ namespace Stl.Time
 {
     public static class ClockEx
     {
-        public static Disposable<IClock> Activate(this IClock clock)
-        {
-            var oldClock = Clock.Current;
-            Clock.Current = clock;
-            return Disposable.New(oldClock1 => Clock.Current = oldClock1, oldClock);
-        }
-
         public static Task Delay(this IClock clock, TimeSpan dueIn, CancellationToken cancellationToken = default)
             => clock.Delay(clock.Now + dueIn, cancellationToken);
         public static Task Delay(this IClock clock, long dueInMilliseconds, CancellationToken cancellationToken = default)

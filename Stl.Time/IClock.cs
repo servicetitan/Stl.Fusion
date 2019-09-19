@@ -10,6 +10,8 @@ namespace Stl.Time
         
         Moment ToRealTime(Moment localTime);
         Moment ToLocalTime(Moment realTime);
+        TimeSpan ToRealTime(TimeSpan localDuration);
+        TimeSpan ToLocalTime(TimeSpan realDuration);
 
         CancellationToken SettingsChangedToken { get; }
         Task Delay(Moment dueAt, CancellationToken cancellationToken = default);

@@ -89,10 +89,8 @@ namespace Stl.ImmutableModel.Updating
                 if (sItem is INode sn) {
                     if (tItem is INode tn) {
                         var ct = CompareAndUpdateNode(path + key, sn, tn, ref changeSet);
-                        if (ct == 0)
-                            throw Stl.Internal.Errors.InternalError(
-                                "CompareAndUpdate returned 0 for SharedUnequal item.");
-                        changeType |= NodeChangeType.SubtreeChanged;
+                        if (ct != 0) // 0 = instance is changed, but it passes equality test
+                            changeType |= NodeChangeType.SubtreeChanged;
                     }
                     else {
                         RemoveNode(path + key, sn, ref changeSet);

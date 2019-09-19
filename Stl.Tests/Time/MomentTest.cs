@@ -2,6 +2,7 @@ using System;
 using FluentAssertions;
 using Stl.Testing;
 using Stl.Time;
+using Stl.Time.Clocks;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -14,7 +15,7 @@ namespace Stl.Tests.Time
         [Fact]
         public void BasicTest()
         {
-            var m = Moment.Now;
+            var m = RealTimeClock.Now;
             var m1 = (Moment) m.ToDateTimeOffset();
             m1.Should().Equals(m);
             m1 = (Moment) m.ToDateTime();

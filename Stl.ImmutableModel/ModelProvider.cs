@@ -36,18 +36,14 @@ namespace Stl.ImmutableModel
         public TModel Model => Index.Model;
         protected IUpdater<TModel> Updater { get; }
 
-        public ModelProvider(IUpdater<TModel> updater)
-        {
-            OwnsTracker = true;
-            ChangeTracker = new ChangeTracker<TModel>(updater);
-            Updater = updater;
-        }
+        public ModelProvider(IUpdater<TModel> updater) 
+            : this(updater, new ChangeTracker<TModel>(updater), true) { }
 
-        public ModelProvider(IChangeTracker<TModel> changeTracker, bool ownsTracker = true)
+        public ModelProvider(IUpdater<TModel> updater, IChangeTracker<TModel> changeTracker, bool ownsTracker = true)
         {
-            OwnsTracker = ownsTracker;
+            Updater = updater;
             ChangeTracker = changeTracker;
-            Updater = ChangeTracker.Updater;
+            OwnsTracker = ownsTracker;
         }
 
         public void Dispose()
@@ -65,8 +61,8 @@ namespace Stl.ImmutableModel
             where TModel : class, INode
             => new ModelProvider<TModel>(updater);
 
-        public static ModelProvider<TModel> New<TModel>(IChangeTracker<TModel> changeTracker, bool ownsTracker = true)
+        public static ModelProvider<TModel> New<TModel>(IUpdater<TModel> updater, IChangeTracker<TModel> changeTracker, bool ownsTracker = true)
             where TModel : class, INode
-            => new ModelProvider<TModel>(changeTracker, ownsTracker);
+            => new ModelProvider<TModel>(updater, changeTracker, ownsTracker);
     }
 }

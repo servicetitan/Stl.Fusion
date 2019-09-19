@@ -16,6 +16,9 @@ namespace Stl.Time.Clocks
 
         public Moment ToRealTime(Moment localTime) => localTime; 
         public Moment ToLocalTime(Moment realTime) => realTime;
+        public TimeSpan ToRealTime(TimeSpan localDuration) => localDuration;
+        public TimeSpan ToLocalTime(TimeSpan realDuration) => realDuration;
+
         public CancellationToken SettingsChangedToken => CancellationToken.None;
 
         public Task Delay(Moment dueAt, CancellationToken cancellationToken = default)

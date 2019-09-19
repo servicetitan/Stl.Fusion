@@ -21,7 +21,7 @@ namespace Stl.Tests.Time
             var epsilon = TimeSpan.FromSeconds(0.05);
             var epsilon10 = epsilon * 10;
             using var clock = new TestClock().SpeedupBy(10).OffsetBy(1000);
-            var realStart = Moment.Now;
+            var realStart = RealTimeClock.Now;
             var clockStart = clock.Now;
 
             ShouldEqual(realStart, DateTime.Now.ToMoment(), epsilon);
@@ -30,7 +30,7 @@ namespace Stl.Tests.Time
             ShouldEqual(clockStart, realStart + TimeSpan.FromSeconds(1), epsilon);
 
             await clock.Delay(TimeSpan.FromSeconds(5));
-            ShouldEqual(realStart + TimeSpan.FromSeconds(0.5), Moment.Now, epsilon);
+            ShouldEqual(realStart + TimeSpan.FromSeconds(0.5), RealTimeClock.Now, epsilon);
             ShouldEqual(clockStart + TimeSpan.FromSeconds(5), clock.Now, epsilon10);
             Out.WriteLine(clock.Now.ToString());
 
@@ -39,7 +39,7 @@ namespace Stl.Tests.Time
 
             clock.SpeedupBy(0.1);
             await clock.Delay(TimeSpan.FromSeconds(0.5));
-            ShouldEqual(realStart + TimeSpan.FromSeconds(1), Moment.Now, epsilon);
+            ShouldEqual(realStart + TimeSpan.FromSeconds(1), RealTimeClock.Now, epsilon);
             ShouldEqual(clockStart + TimeSpan.FromSeconds(6.5), clock.Now, epsilon10);
         }
 
@@ -49,7 +49,7 @@ namespace Stl.Tests.Time
             var epsilon = TimeSpan.FromSeconds(0.05);
             var epsilon10 = epsilon * 10;
             using var clock = new TestClock().SpeedupBy(10).OffsetBy(1000);
-            var realStart = Moment.Now;
+            var realStart = RealTimeClock.Now;
             var clockStart = clock.Now;
 
             var firedAt = clock.Timer(1000).Select(i => clock.Now).ToEnumerable().Single();
@@ -64,7 +64,7 @@ namespace Stl.Tests.Time
             var epsilon = TimeSpan.FromSeconds(0.05);
             var epsilon10 = epsilon * 10;
             using var clock = new TestClock().SpeedupBy(10).OffsetBy(1000);
-            var realStart = Moment.Now;
+            var realStart = RealTimeClock.Now;
             var clockStart = clock.Now;
 
             var m = 100.0;
@@ -87,7 +87,7 @@ namespace Stl.Tests.Time
         {
             var epsilon = TimeSpan.FromSeconds(0.03);
             using var clock = new TestClock();
-            var realStart = Moment.Now;
+            var realStart = RealTimeClock.Now;
             var clockStart = clock.Now;
 
             var m = 10.0;

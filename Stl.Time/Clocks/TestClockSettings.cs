@@ -50,8 +50,11 @@ namespace Stl.Time.Clocks
 
         public Moment ToLocalTime(Moment realTime) 
             => new Moment(LocalOffset + (realTime.UnixTime + RealOffset) * Multiplier);
-
         public Moment ToRealTime(Moment localTime) 
             => new Moment((localTime.UnixTime - LocalOffset) / Multiplier - RealOffset);
+        public TimeSpan ToLocalTime(TimeSpan realDuration) 
+            => realDuration * Multiplier;
+        public TimeSpan ToRealTime(TimeSpan localDuration) 
+            => localDuration / Multiplier;
     }
 }

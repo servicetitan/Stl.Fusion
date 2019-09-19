@@ -11,8 +11,6 @@ namespace Stl.Time
     [TypeConverter(typeof(MomentTypeConverter))]
     public readonly struct Moment : IEquatable<Moment>, IComparable<Moment>
     {
-        public static Moment Now => Clock.Current.Now;
-
         public TimeSpan UnixTime { get; }
 
         public Moment(TimeSpan value) => UnixTime = value;

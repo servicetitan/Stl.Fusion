@@ -37,8 +37,11 @@ namespace Stl.Time.Clocks
         // Operations
 
         public Moment Now => ToLocalTime(RealTimeClock.Now);
+
         public Moment ToRealTime(Moment localTime) => Settings.ToRealTime(localTime);
         public Moment ToLocalTime(Moment realTime) => Settings.ToLocalTime(realTime);
+        public TimeSpan ToRealTime(TimeSpan localDuration) => Settings.ToLocalTime(localDuration);
+        public TimeSpan ToLocalTime(TimeSpan realDuration) => Settings.ToRealTime(realDuration);
 
         public async Task Delay(Moment dueAt, CancellationToken cancellationToken = default)
         {

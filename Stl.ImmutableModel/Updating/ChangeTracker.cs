@@ -9,30 +9,26 @@ namespace Stl.ImmutableModel.Updating
 {
     public interface IChangeTracker : IDisposable
     {
-        IUpdater UntypedUpdater { get; }
         IObservable<UpdateInfo> this[DomainKey key, NodeChangeType changeTypeMask] { get; }
     }
 
     public interface IChangeTracker<TModel> : IChangeTracker
         where TModel : class, INode
     {
-        IUpdater<TModel> Updater { get; }
         new IObservable<UpdateInfo<TModel>> this[DomainKey key, NodeChangeType changeTypeMask] { get; }
     }
 
     public sealed class ChangeTracker<TModel> : IChangeTracker<TModel>
         where TModel : class, INode
     {
+        private readonly IUpdater<TModel> _updater;
         private ConcurrentDictionary<DomainKey, ImmutableDictionary<IObserver<UpdateInfo<TModel>>, NodeChangeType>>? _observers =
             new ConcurrentDictionary<DomainKey, ImmutableDictionary<IObserver<UpdateInfo<TModel>>, NodeChangeType>>();
 
-        IUpdater IChangeTracker.UntypedUpdater => Updater;
-        public IUpdater<TModel> Updater { get; }
-
         public ChangeTracker(IUpdater<TModel> updater)
         {
-            Updater = updater;
-            Updater.Updated += OnUpdated;
+            _updater = updater;
+            _updater.Updated += OnUpdated;
         }
 
         public void Dispose()
@@ -41,7 +37,7 @@ namespace Stl.ImmutableModel.Updating
             if (observers == null)
                 return;
             _observers = null;
-            Updater.Updated -= OnUpdated;
+            _updater.Updated -= OnUpdated;
             foreach (var (_, d) in observers)
             foreach (var (o, _) in d)
                 o.OnCompleted();
