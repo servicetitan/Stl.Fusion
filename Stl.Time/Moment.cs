@@ -12,6 +12,9 @@ namespace Stl.Time
     public readonly struct Moment : IEquatable<Moment>, IComparable<Moment>
     {
         public TimeSpan UnixTime { get; }
+        public static readonly Moment MaxValue = new Moment(TimeSpan.MaxValue); 
+        public static readonly Moment MinValue = new Moment(TimeSpan.MinValue); 
+        public static readonly Moment Zero = new Moment(TimeSpan.Zero); 
 
         public Moment(TimeSpan value) => UnixTime = value;
         public Moment(DateTime value) => UnixTime = value.ToUniversalTime() - DateTime.UnixEpoch;

@@ -22,7 +22,7 @@ namespace Stl.Time.Clocks
 
         public CancellationToken SettingsChangedToken => default;
 
-        public Task Delay(Moment dueAt, CancellationToken cancellationToken = default) 
+        public Task DelayAsync(TimeSpan dueIn, CancellationToken cancellationToken = default) 
             => throw Errors.UnusableClock();
     }
 }

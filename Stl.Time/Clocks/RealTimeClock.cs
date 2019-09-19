@@ -27,12 +27,7 @@ namespace Stl.Time.Clocks
 
         public CancellationToken SettingsChangedToken => CancellationToken.None;
 
-        public Task Delay(Moment dueAt, CancellationToken cancellationToken = default)
-        {
-            var delta = dueAt - Now;
-            if (delta < TimeSpan.Zero)
-                delta = TimeSpan.Zero;
-            return Task.Delay(delta, cancellationToken);
-        }
+        public Task DelayAsync(TimeSpan dueIn, CancellationToken cancellationToken = default) 
+            => Task.Delay(dueIn, cancellationToken);
     }
 }

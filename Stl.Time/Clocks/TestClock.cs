@@ -42,14 +42,22 @@ namespace Stl.Time.Clocks
         public TimeSpan ToRealTime(TimeSpan localDuration) => Settings.ToLocalTime(localDuration);
         public TimeSpan ToLocalTime(TimeSpan realDuration) => Settings.ToRealTime(realDuration);
 
-        public async Task Delay(Moment dueAt, CancellationToken cancellationToken = default)
+        public async Task DelayAsync(TimeSpan dueIn, CancellationToken cancellationToken = default) 
         {
+            var isInfinite = dueIn == Timeout.InfiniteTimeSpan;
+            if (dueIn < TimeSpan.Zero && !isInfinite)
+                throw new ArgumentOutOfRangeException(nameof(dueIn));
+
+            TestClockSettings? settings = Settings;
+            var dueAt = settings.HighResolutionNow + dueIn;
             while (true) {
-                var settings = Settings;
+                settings ??= Settings;
                 var settingsChangedToken = settings.ChangedToken;
-                var delta = settings.ToRealTime(dueAt) - RealTimeClock.Now;
+                var delta = settings.ToRealTime(dueAt) - RealTimeClock.HighResolutionNow;
                 if (delta < TimeSpan.Zero)
                     delta = TimeSpan.Zero;
+                if (isInfinite)
+                    delta = Timeout.InfiniteTimeSpan;
                 Debug.WriteLine(delta);
                 if (cancellationToken == default) {
                     await Task.Delay(delta, settingsChangedToken).SuppressCancellation().ConfigureAwait(false);
@@ -63,6 +71,7 @@ namespace Stl.Time.Clocks
                     if (!settingsChangedToken.IsCancellationRequested)
                         break;
                 }
+                settings = null;
             }
         }
     }
