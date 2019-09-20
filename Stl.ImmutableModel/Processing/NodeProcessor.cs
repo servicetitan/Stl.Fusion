@@ -117,10 +117,18 @@ namespace Stl.ImmutableModel.Processing
                         changes.Add(new NodeChangeInfo<TModel>(updateInfo, node, path, changeType));
                 }
             }
-            foreach (var nodeChange in changes.OrderBy(c => c.Path.SegmentCount))
+            foreach (var nodeChange in OrderChanges(changes))
                 ProcessNodeChange(nodeChange);
             return default;
         }
+
+        protected virtual IEnumerable<NodeChangeInfo<TModel>> OrderChanges(List<NodeChangeInfo<TModel>> changes) 
+            => changes.OrderBy(c => (
+                // Removals go fist, then creations, and finally, other changes
+                (int) c.ChangeType,
+                // For newly created nodes, we start from the ones closer to the root;
+                // for other nodes, we start from the deepest ones.
+                c.ChangeType.HasFlag(NodeChangeType.Created) ? c.Path.SegmentCount : -c.Path.SegmentCount));
 
         protected virtual void ProcessNodeChange(NodeChangeInfo<TModel> nodeChangeInfo)
         {
