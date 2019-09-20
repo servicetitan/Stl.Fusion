@@ -88,6 +88,26 @@ namespace Stl
             var result = Head.CompareTo(other.Head);
             return result != 0 ? result : Tail.CompareTo(other.Tail);
         }
+
+        // Other operations
+
+        public bool StartsWith(SymbolPath? prefix)
+        {
+            if (prefix == null)
+                return true;
+            var segmentCountDiff = SegmentCount - prefix.SegmentCount;
+            if (segmentCountDiff < 0)
+                return false;
+
+            SymbolPath? path = this;
+            for (; segmentCountDiff > 0; segmentCountDiff--)
+                path = path!.Head;
+            for (; path != null; path = path!.Head, prefix = prefix!.Head) {
+                if (path!.Tail != prefix!.Tail)
+                    return false;
+            }
+            return true;
+        }
         
         // Enumeration
         

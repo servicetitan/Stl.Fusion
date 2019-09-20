@@ -2,14 +2,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 
-namespace Stl.Hosting
+namespace Stl.Hosting.HostedServices
 {
-    public sealed class HostedService<TImpl> : IHostedService
+    public sealed class HostedServiceWrapper<TImpl> : IHostedService
         where TImpl : IHostedService
     {
         public TImpl Implementation { get; }
 
-        public HostedService(TImpl implementation) => Implementation = implementation;
+        public HostedServiceWrapper(TImpl implementation) => Implementation = implementation;
 
         public Task StartAsync(CancellationToken cancellationToken) 
             => Implementation.StartAsync(cancellationToken);

@@ -1,5 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Stl.Async;
+using Stl.Hosting.HostedServices;
 using Stl.Plugins;
 
 namespace Stl.Hosting
@@ -11,7 +13,7 @@ namespace Stl.Hosting
             where TService : class, IHostedService
         {
             services.AddSingleton<TService>();
-            services.AddHostedService<HostedService<TService>>();
+            services.AddHostedService<HostedServiceWrapper<TService>>();
             return services;
         }
         
@@ -20,7 +22,16 @@ namespace Stl.Hosting
             where TService : class, IHasAutoStart
         {
             services.AddSingleton<TService>();
-            services.AddHostedService<HasAutoStart<TService>>();
+            services.AddHostedService<HasAutoStartWrapper<TService>>();
+            return services;
+        }
+        
+        public static IServiceCollection AddAsyncProcessSingleton<TService>(
+            this IServiceCollection services)
+            where TService : class, IAsyncProcess
+        {
+            services.AddSingleton<TService>();
+            services.AddHostedService<AsyncProcessWrapper<TService>>();
             return services;
         }
     }

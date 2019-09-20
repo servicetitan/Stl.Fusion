@@ -1,4 +1,6 @@
 using System.Reactive;
+using System.Reactive.Linq;
+using System.Reactive.Threading.Tasks;
 using FluentAssertions;
 using System.Threading.Tasks;
 using Stl.ImmutableModel;
@@ -20,14 +22,18 @@ namespace Stl.Tests.ImmutableModel.Updating
         {
             var index = IndexTest.BuildModel();
             var updater = CreateUpdater(index);
-            using var ct = ChangeTracker.New(updater);
+            using var changeTracker = ChangeTracker.New(updater);
 
-            using var o = ct[index.Model.DomainKey, NodeChangeType.Any].Subscribe(
+            using var o = changeTracker.ChangesIncluding(index.Model.DomainKey, NodeChangeType.Any).Subscribe(
                 Observer.Create<UpdateInfo<ModelRoot>>(updateInfo => {
                     Out.WriteLine($"Model updated. Changes:");
                     foreach (var (key, kind) in updateInfo.ChangeSet.Changes)
                         Out.WriteLine($"- {key}: {kind}");
                 }));
+            var c1task = changeTracker.AllChanges
+                .Select((_, i) => i).ToTask();
+            var c2task = changeTracker.ChangesIncluding(index.Model.DomainKey, NodeChangeType.Any)
+                .Select((_, i) => i).ToTask();
 
             var info = await updater.UpdateAsync(idx => {
                 var vm1 = idx.Resolve<VirtualMachine>("./cluster1/vm1");
@@ -44,6 +50,9 @@ namespace Stl.Tests.ImmutableModel.Updating
                 var cluster1 = idx.Resolve<Cluster>("./cluster1");
                 return idx.Update(cluster1, cluster1.WithRemoved("vm1"));
             });
+
+            changeTracker.Dispose();
+            (await c1task).Should().Equals(await c2task);
         }
 
         protected abstract IUpdater<ModelRoot> CreateUpdater(IUpdatableIndex<ModelRoot> index);

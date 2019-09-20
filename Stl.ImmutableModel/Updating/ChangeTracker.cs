@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using System.Threading;
 using Stl.Internal;
 
@@ -9,44 +10,54 @@ namespace Stl.ImmutableModel.Updating
 {
     public interface IChangeTracker : IDisposable
     {
-        IObservable<UpdateInfo> this[DomainKey key, NodeChangeType changeTypeMask] { get; }
+        IObservable<UpdateInfo> AllChanges { get; }
+        IObservable<UpdateInfo> ChangesIncluding(DomainKey key, NodeChangeType changeTypeMask);
     }
 
     public interface IChangeTracker<TModel> : IChangeTracker
         where TModel : class, INode
     {
-        new IObservable<UpdateInfo<TModel>> this[DomainKey key, NodeChangeType changeTypeMask] { get; }
+        new IObservable<UpdateInfo<TModel>> AllChanges { get; }
+        new IObservable<UpdateInfo<TModel>> ChangesIncluding(DomainKey key, NodeChangeType changeTypeMask);
     }
 
     public sealed class ChangeTracker<TModel> : IChangeTracker<TModel>
         where TModel : class, INode
     {
+        private bool _isDisposed;
         private readonly IUpdater<TModel> _updater;
-        private ConcurrentDictionary<DomainKey, ImmutableDictionary<IObserver<UpdateInfo<TModel>>, NodeChangeType>>? _observers =
+        private readonly Subject<UpdateInfo<TModel>> _allChanges;
+        private readonly ConcurrentDictionary<DomainKey, ImmutableDictionary<IObserver<UpdateInfo<TModel>>, NodeChangeType>> _observers =
             new ConcurrentDictionary<DomainKey, ImmutableDictionary<IObserver<UpdateInfo<TModel>>, NodeChangeType>>();
+
+        IObservable<UpdateInfo> IChangeTracker.AllChanges => _allChanges;
+        public IObservable<UpdateInfo<TModel>> AllChanges => _allChanges;
 
         public ChangeTracker(IUpdater<TModel> updater)
         {
             _updater = updater;
             _updater.Updated += OnUpdated;
+            _allChanges = new Subject<UpdateInfo<TModel>>();
         }
 
         public void Dispose()
         {
-            var observers = _observers;
-            if (observers == null)
+            if (_isDisposed)
                 return;
-            _observers = null;
+            _isDisposed = true;
             _updater.Updated -= OnUpdated;
-            foreach (var (_, d) in observers)
+            _allChanges.OnCompleted();
+            foreach (var (_, d) in _observers)
             foreach (var (o, _) in d)
                 o.OnCompleted();
+            _allChanges.Dispose();
         }
 
         private void OnUpdated(UpdateInfo<TModel> updateInfo)
         {
             if (_observers == null)
                 throw Errors.AlreadyDisposed();
+            _allChanges.OnNext(updateInfo);
             var changes = updateInfo.ChangeSet.Changes;
             foreach (var (key, changeType) in changes) {
                 if (_observers.TryGetValue(key, out var d)) {
@@ -57,10 +68,8 @@ namespace Stl.ImmutableModel.Updating
             }
         }
 
-        IObservable<UpdateInfo> IChangeTracker.this[DomainKey key, NodeChangeType changeTypeMask] => GetObservable(key, changeTypeMask);
-        public IObservable<UpdateInfo<TModel>> this[DomainKey key, NodeChangeType changeTypeMask] => GetObservable(key, changeTypeMask);
-
-        private IObservable<UpdateInfo<TModel>> GetObservable(DomainKey key, NodeChangeType changeTypeMask)
+        IObservable<UpdateInfo> IChangeTracker.ChangesIncluding(DomainKey key, NodeChangeType changeTypeMask) => ChangesIncluding(key, changeTypeMask);
+        public IObservable<UpdateInfo<TModel>> ChangesIncluding(DomainKey key, NodeChangeType changeTypeMask)
         {
             if (_observers == null)
                 throw Errors.AlreadyDisposed();
