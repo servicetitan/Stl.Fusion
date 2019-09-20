@@ -10,15 +10,15 @@ namespace Stl.ImmutableModel.Updating
 {
     public interface IChangeTracker : IDisposable
     {
-        IObservable<UpdateInfo> AllChanges { get; }
-        IObservable<UpdateInfo> ChangesIncluding(DomainKey key, NodeChangeType changeTypeMask);
+        IObservable<UpdateInfo> UntypedAllChanges { get; }
+        IObservable<UpdateInfo> UntypedChangesIncluding(DomainKey key, NodeChangeType changeTypeMask);
     }
 
     public interface IChangeTracker<TModel> : IChangeTracker
         where TModel : class, INode
     {
-        new IObservable<UpdateInfo<TModel>> AllChanges { get; }
-        new IObservable<UpdateInfo<TModel>> ChangesIncluding(DomainKey key, NodeChangeType changeTypeMask);
+        IObservable<UpdateInfo<TModel>> AllChanges { get; }
+        IObservable<UpdateInfo<TModel>> ChangesIncluding(DomainKey key, NodeChangeType changeTypeMask);
     }
 
     public sealed class ChangeTracker<TModel> : IChangeTracker<TModel>
@@ -30,7 +30,7 @@ namespace Stl.ImmutableModel.Updating
         private readonly ConcurrentDictionary<DomainKey, ImmutableDictionary<IObserver<UpdateInfo<TModel>>, NodeChangeType>> _observers =
             new ConcurrentDictionary<DomainKey, ImmutableDictionary<IObserver<UpdateInfo<TModel>>, NodeChangeType>>();
 
-        IObservable<UpdateInfo> IChangeTracker.AllChanges => _allChanges;
+        IObservable<UpdateInfo> IChangeTracker.UntypedAllChanges => _allChanges;
         public IObservable<UpdateInfo<TModel>> AllChanges => _allChanges;
 
         public ChangeTracker(IUpdater<TModel> updater)
@@ -68,7 +68,7 @@ namespace Stl.ImmutableModel.Updating
             }
         }
 
-        IObservable<UpdateInfo> IChangeTracker.ChangesIncluding(DomainKey key, NodeChangeType changeTypeMask) => ChangesIncluding(key, changeTypeMask);
+        IObservable<UpdateInfo> IChangeTracker.UntypedChangesIncluding(DomainKey key, NodeChangeType changeTypeMask) => ChangesIncluding(key, changeTypeMask);
         public IObservable<UpdateInfo<TModel>> ChangesIncluding(DomainKey key, NodeChangeType changeTypeMask)
         {
             if (_observers == null)

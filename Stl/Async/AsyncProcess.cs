@@ -6,15 +6,16 @@ namespace Stl.Async
 {
     public interface IAsyncProcess : IAsyncDisposable
     {
+        CancellationToken StoppingToken { get; }
         Task? RunningTask { get; }
         Task RunAsync();
     }
 
     public abstract class AsyncProcessBase : AsyncDisposableBase, IAsyncProcess
     {
-        private readonly CancellationTokenSource _stopTokenSource = new CancellationTokenSource();
-        protected CancellationToken StopToken => _stopTokenSource.Token;
+        protected CancellationTokenSource StoppingTokenSource { get; } = new CancellationTokenSource();
         
+        public CancellationToken StoppingToken => StoppingTokenSource.Token;
         public Task? RunningTask { get; private set; }
 
         public Task RunAsync()
@@ -27,7 +28,9 @@ namespace Stl.Async
 
         protected override ValueTask DisposeInternalAsync(bool disposing)
         {
-            _stopTokenSource.Cancel();
+            if (!StoppingTokenSource.IsCancellationRequested)
+                StoppingTokenSource.Cancel();
+            StoppingTokenSource.Dispose();
             return base.DisposeInternalAsync(disposing);
         }
     }
