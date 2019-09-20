@@ -17,8 +17,8 @@ namespace Stl.Time.Clocks
 
         public Moment ToRealTime(Moment localTime) => throw Errors.UnusableClock(); 
         public Moment ToLocalTime(Moment realTime) => throw Errors.UnusableClock();
-        public TimeSpan ToRealTime(TimeSpan localDuration) => throw Errors.UnusableClock();
-        public TimeSpan ToLocalTime(TimeSpan realDuration) => throw Errors.UnusableClock();
+        public TimeSpan ToRealDuration(TimeSpan localDuration) => throw Errors.UnusableClock();
+        public TimeSpan ToLocalDuration(TimeSpan realDuration) => throw Errors.UnusableClock();
 
         public CancellationToken SettingsChangedToken => default;
 

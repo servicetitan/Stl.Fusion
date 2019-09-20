@@ -11,8 +11,8 @@ namespace Stl.Time
         
         Moment ToRealTime(Moment localTime);
         Moment ToLocalTime(Moment realTime);
-        TimeSpan ToRealTime(TimeSpan localDuration);
-        TimeSpan ToLocalTime(TimeSpan realDuration);
+        TimeSpan ToRealDuration(TimeSpan localDuration);
+        TimeSpan ToLocalDuration(TimeSpan realDuration);
 
         Task DelayAsync(TimeSpan dueIn, CancellationToken cancellationToken = default);
     }

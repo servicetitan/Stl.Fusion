@@ -37,8 +37,8 @@ namespace Stl.ImmutableModel.Processing
     {
         protected ConcurrentDictionary<DomainKey, NodeProcessingInfo<TModel>> Processes { get; } =
             new ConcurrentDictionary<DomainKey, NodeProcessingInfo<TModel>>();
-        protected ConcurrentDictionary<Task, NodeProcessingInfo<TModel>> DyingProcesses { get; } =
-            new ConcurrentDictionary<Task, NodeProcessingInfo<TModel>>();
+        protected ConcurrentDictionary<NodeProcessingInfo<TModel>, Unit> DyingProcesses { get; } =
+            new ConcurrentDictionary<NodeProcessingInfo<TModel>, Unit>();
 
         public IModelProvider<TModel> ModelProvider { get; }
         public IUpdater<TModel> Updater { get; }
@@ -59,7 +59,13 @@ namespace Stl.ImmutableModel.Processing
 
         protected override async Task RunInternalAsync()
         {
-            await ModelProvider.ChangeTracker.AllChanges.Select(ProcessChange).ToTask(StoppingToken).SuppressCancellation();
+            var allChanges = ModelProvider.ChangeTracker.AllChanges.Publish(); 
+            var processorTask = ModelProvider.ChangeTracker.AllChanges.Select(ProcessChange).ToTask(StoppingToken).SuppressCancellation();
+            using (allChanges.Connect()) {
+                await OnReadyAsync().ConfigureAwait(false);
+                await processorTask.ConfigureAwait(false);
+            }
+
             // If we're here, there are two opitons:
             // - StopToken is cancelled 
             // - AllChanges sequence is exhausted b/c ChangeTracker was disposed.
@@ -75,18 +81,18 @@ namespace Stl.ImmutableModel.Processing
 
             // 4. We wait till both Processes and DyingProcesses deplete
             while (true) {
-                var (domainKey, npi) = Processes.FirstOrDefault();
-                if (npi == null)
+                var (domainKey, info) = Processes.FirstOrDefault();
+                if (info == null)
                     break;
-                await npi?.Task;
+                await info.CompletionSource.Task.ConfigureAwait(false);
                 Processes.TryRemove(domainKey, out _);
             }
             while (true) {
-                var (task, _) = DyingProcesses.FirstOrDefault();
-                if (task == null)
+                var (info, _) = DyingProcesses.FirstOrDefault();
+                if (info == null)
                     break;
-                await task;
-                DyingProcesses.TryRemove(task, out _);
+                await info.CompletionSource.Task.ConfigureAwait(false);
+                DyingProcesses.TryRemove(info, out _);
             }
         }
 
@@ -123,50 +129,43 @@ namespace Stl.ImmutableModel.Processing
         protected virtual void ProcessNodeChange(NodeChangeInfo<TModel> nodeChangeInfo)
         {
             var domainKey = nodeChangeInfo.Node.DomainKey;
-            var npi = Processes.GetValueOrDefault(domainKey);
-            if (npi == null) {
-                if (!nodeChangeInfo.ChangeType.HasFlag(NodeChangeType.Created))
-                    HandleMissingProcess(nodeChangeInfo);
-                var nodeRemovedCts = new CancellationTokenSource();
-                npi = new NodeProcessingInfo<TModel> {
-                    Processor = this,
-                    NodeDomainKey = domainKey,
-                    NodePath = nodeChangeInfo.Path,
-                    Changes = new Subject<NodeChangeInfo<TModel>>(),
-                    NodeRemovedCts = nodeRemovedCts,
-                    ProcessStoppedOrNodeRemovedCts = CancellationTokenSource.CreateLinkedTokenSource(
-                        StoppingToken, nodeRemovedCts.Token)
-                };
-                npi.Task = Task.Run(() => ProcessNodeAsync(npi));
-                if (!Processes.TryAdd(domainKey, npi))
+            var info = Processes.GetValueOrDefault(domainKey);
+            if (info == null) {
+                var isNewlyCreatedNode = nodeChangeInfo.ChangeType.HasFlag(NodeChangeType.Created);
+                info = new NodeProcessingInfo<TModel>(this, domainKey, nodeChangeInfo.Path, isNewlyCreatedNode);
+                if (!Processes.TryAdd(domainKey, info))
                     throw Errors.InternalError($"The task is already added to {nameof(Processes)}.");
-                npi.Task.ContinueWith((task, state) => {
-                    var npi1 = (NodeProcessingInfo<TModel>) state;
-                    var self = (NodeProcessorBase<TModel>) npi1.Processor;
-                    // This is the "termination tail" for every process.
-                    self.Processes.TryRemove(npi1.NodeDomainKey, out _);
-                    self.DyingProcesses.TryRemove(npi1.Task, out _);
-                    npi1.Dispose();
-                }, npi);
+                Task.Run(() => ProcessNodeAsync(info)).ContinueWith((task, state) => {
+                    var info1 = (NodeProcessingInfo<TModel>) state!;
+                    var self = (NodeProcessorBase<TModel>) info1.Processor;
+                    try {
+                        // This is the "termination tail" for every process.
+                        self.Processes.TryRemove(info1.NodeDomainKey, out _);
+                        self.DyingProcesses.TryRemove(info1, out _);
+                        info1.Dispose();
+                    }
+                    finally {
+                        info1.CompletionSource.SetResult(default);
+                    }
+                }, info);
             }
             if (nodeChangeInfo.ChangeType.HasFlag(NodeChangeType.Removed)) {
                 // To avoid race conditions, wwe have to move the process to DyingProcesses first
-                if (Processes.TryRemove(npi.NodeDomainKey, out _))
-                    DyingProcesses.TryAdd(npi.Task, npi);
+                if (Processes.TryRemove(info.NodeDomainKey, out _))
+                    DyingProcesses.TryAdd(info, default);
                 // And now it's safe to trigger the events that might cause process termination
-                npi.Changes.OnNext(nodeChangeInfo);
-                npi.Changes.OnCompleted();
-                npi.NodeRemovedCts.Cancel();
+                info.Changes.OnNext(nodeChangeInfo);
+                info.Changes.OnCompleted();
+                info.NodeRemovedTokenSource.Cancel();
                 return;
             }
-            npi.Changes.OnNext(nodeChangeInfo);
+            info.Changes.OnNext(nodeChangeInfo);
         }
 
-        protected abstract Task ProcessNodeAsync(INodeProcessingInfo<TModel> nodeProcessingInfo);
+        protected abstract Task ProcessNodeAsync(INodeProcessingInfo<TModel> info);
 
-        protected virtual void HandleMissingProcess(NodeChangeInfo<TModel> nodeChangeInfo) 
-            => throw Errors.InternalError(
-                "Node change event is triggered for a node w/o associated process.");
+        protected virtual Task OnReadyAsync() 
+            => Task.CompletedTask;
     }
 
     public class NodeProcessor<TModel> : NodeProcessorBase<TModel>
@@ -182,8 +181,8 @@ namespace Stl.ImmutableModel.Processing
             : base(modelProvider, updater, rootKey) 
             => Implementation = implementation;
 
-        protected override Task ProcessNodeAsync(INodeProcessingInfo<TModel> nodeProcessingInfo) 
-            => Implementation.Invoke(nodeProcessingInfo);
+        protected override Task ProcessNodeAsync(INodeProcessingInfo<TModel> info) 
+            => Implementation.Invoke(info);
     }
 
     public static class ModelProcessor

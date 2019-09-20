@@ -22,8 +22,8 @@ namespace Stl.Time.Clocks
 
         public Moment ToRealTime(Moment localTime) => localTime; 
         public Moment ToLocalTime(Moment realTime) => realTime;
-        public TimeSpan ToRealTime(TimeSpan localDuration) => localDuration;
-        public TimeSpan ToLocalTime(TimeSpan realDuration) => realDuration;
+        public TimeSpan ToRealDuration(TimeSpan localDuration) => localDuration;
+        public TimeSpan ToLocalDuration(TimeSpan realDuration) => realDuration;
 
         public CancellationToken SettingsChangedToken => CancellationToken.None;
 

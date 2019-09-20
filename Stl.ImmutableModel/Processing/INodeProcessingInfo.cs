@@ -10,6 +10,7 @@ namespace Stl.ImmutableModel.Processing
 
         DomainKey NodeDomainKey { get; }
         SymbolPath NodePath { get; }
+        bool IsNewlyCreatedNode { get; }
         CancellationToken ProcessStoppingToken { get; }
         CancellationToken NodeRemovedToken { get; }
         CancellationToken ProcessStoppingOrNodeRemovedToken { get; }
