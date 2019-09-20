@@ -12,15 +12,14 @@ namespace Stl.ImmutableModel.Processing.Internal
         public INodeProcessor<TModel> Processor { get; set; }
         public DomainKey NodeDomainKey { get; set; }
         public SymbolPath NodePath { get; set; }
-        public bool IsNewlyCreatedNode { get; set; }
-        public Subject<NodeChangeInfo<TModel>> Changes { get; set; }  
         public CancellationTokenSource NodeRemovedTokenSource { get; set; }
         public CancellationTokenSource ProcessStoppedOrNodeRemovedTokenSource { get; set; }
         public TaskCompletionSource<Unit> CompletionSource { get; set; }
+        public Exception? Error { get; set; }
+        public bool IsStartedForAlreadyExistingNode { get; set; }
+        public bool IsDormant { get; set; }
 
         INodeProcessor INodeProcessingInfo.UntypedProcessor => Processor;
-        IObservable<NodeChangeInfo> INodeProcessingInfo.UntypedChanges => Changes;
-        IObservable<NodeChangeInfo<TModel>> INodeProcessingInfo<TModel>.Changes => Changes;
         CancellationToken INodeProcessingInfo.ProcessStoppingToken => Processor.StoppingToken;
         CancellationToken INodeProcessingInfo.NodeRemovedToken => NodeRemovedTokenSource.Token;
         CancellationToken INodeProcessingInfo.ProcessStoppingOrNodeRemovedToken => ProcessStoppedOrNodeRemovedTokenSource.Token;
@@ -29,13 +28,12 @@ namespace Stl.ImmutableModel.Processing.Internal
             INodeProcessor<TModel> processor, 
             DomainKey nodeDomainKey, 
             SymbolPath nodePath,
-            bool isNewlyCreatedNode)
+            bool isStartedForAlreadyExistingNode)
         {
             Processor = processor;
             NodeDomainKey = nodeDomainKey;
             NodePath = nodePath;
-            IsNewlyCreatedNode = isNewlyCreatedNode;
-            Changes = new Subject<NodeChangeInfo<TModel>>();
+            IsStartedForAlreadyExistingNode = isStartedForAlreadyExistingNode;
             NodeRemovedTokenSource = new CancellationTokenSource();
             ProcessStoppedOrNodeRemovedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(
                 processor.StoppingToken, NodeRemovedTokenSource.Token);
@@ -44,7 +42,6 @@ namespace Stl.ImmutableModel.Processing.Internal
 
         protected virtual void Dispose(bool disposing)
         {
-            Changes?.Dispose();
             NodeRemovedTokenSource?.Dispose();
             ProcessStoppedOrNodeRemovedTokenSource?.Dispose();
         }

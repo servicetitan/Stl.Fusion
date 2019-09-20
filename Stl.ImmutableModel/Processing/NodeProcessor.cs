@@ -75,11 +75,7 @@ namespace Stl.ImmutableModel.Processing
             if (!StoppingTokenSource.IsCancellationRequested)
                 StoppingTokenSource.Cancel();
             
-            // 2. We indicate there are no more events in Changes sequence
-            foreach (var (_, processInfo) in Processes)
-                processInfo.Changes.OnCompleted();
-
-            // 4. We wait till both Processes and DyingProcesses deplete
+            // 2. We wait till both Processes and DyingProcesses deplete
             while (true) {
                 var (domainKey, info) = Processes.FirstOrDefault();
                 if (info == null)
@@ -131,35 +127,49 @@ namespace Stl.ImmutableModel.Processing
             var domainKey = nodeChangeInfo.Node.DomainKey;
             var info = Processes.GetValueOrDefault(domainKey);
             if (info == null) {
-                var isNewlyCreatedNode = nodeChangeInfo.ChangeType.HasFlag(NodeChangeType.Created);
-                info = new NodeProcessingInfo<TModel>(this, domainKey, nodeChangeInfo.Path, isNewlyCreatedNode);
-                if (!Processes.TryAdd(domainKey, info))
-                    throw Errors.InternalError($"The task is already added to {nameof(Processes)}.");
-                Task.Run(() => ProcessNodeAsync(info)).ContinueWith((task, state) => {
-                    var info1 = (NodeProcessingInfo<TModel>) state!;
-                    var self = (NodeProcessorBase<TModel>) info1.Processor;
-                    try {
-                        // This is the "termination tail" for every process.
-                        self.Processes.TryRemove(info1.NodeDomainKey, out _);
-                        self.DyingProcesses.TryRemove(info1, out _);
-                        info1.Dispose();
-                    }
-                    finally {
-                        info1.CompletionSource.SetResult(default);
-                    }
-                }, info);
+                info = new NodeProcessingInfo<TModel>(
+                    this, domainKey, nodeChangeInfo.Path, 
+                    !nodeChangeInfo.ChangeType.HasFlag(NodeChangeType.Created));
+                var existingInfo = Processes.GetOrAdd(domainKey, info);
+                if (existingInfo != info) {
+                    // Some other thread just created the task somehow
+                    info.Dispose();
+                    info = existingInfo;
+                }
+                else
+                    Task.Run(() => WrapProcessNodeAsync(info));
             }
             if (nodeChangeInfo.ChangeType.HasFlag(NodeChangeType.Removed)) {
-                // To avoid race conditions, wwe have to move the process to DyingProcesses first
+                // To avoid race conditions, we have to move the process to DyingProcesses first
                 if (Processes.TryRemove(info.NodeDomainKey, out _))
                     DyingProcesses.TryAdd(info, default);
                 // And now it's safe to trigger the events that might cause process termination
-                info.Changes.OnNext(nodeChangeInfo);
-                info.Changes.OnCompleted();
                 info.NodeRemovedTokenSource.Cancel();
-                return;
             }
-            info.Changes.OnNext(nodeChangeInfo);
+        }
+
+        protected virtual async Task WrapProcessNodeAsync(NodeProcessingInfo<TModel> info)
+        {
+            try {
+                await ProcessNodeAsync(info).ConfigureAwait(false);
+            }
+            catch (Exception e) {
+                info.Error = e;
+            }
+            finally {
+                // The "termination tail"
+                if (!info.ProcessStoppedOrNodeRemovedTokenSource.IsCancellationRequested) {
+                    // Let's wait for the "official" cancellation first - we can't
+                    // remove the process from Processes just yet, b/c otherwise
+                    // it will be re-created on the next event.
+                    info.IsDormant = true;
+                    await info.ProcessStoppedOrNodeRemovedTokenSource.Token.ToTask(false).ConfigureAwait(false);
+                }
+                Processes.TryRemove(info.NodeDomainKey, out _);
+                DyingProcesses.TryRemove(info, out _);
+                info.Dispose();
+                info.CompletionSource.SetResult(default);
+            }
         }
 
         protected abstract Task ProcessNodeAsync(INodeProcessingInfo<TModel> info);
