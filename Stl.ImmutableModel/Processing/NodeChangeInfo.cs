@@ -5,30 +5,28 @@ using Stl.ImmutableModel.Updating;
 namespace Stl.ImmutableModel.Processing
 {
     [Serializable]
-    public abstract class NodeChangeInfo
+    public struct NodeChangeInfo
     {
-        [JsonIgnore] public abstract UpdateInfo UntypedUpdateInfo { get; }
+        public UpdateInfo UpdateInfo { get; }
         public INode Node { get; }
         public SymbolPath Path { get; }
         public NodeChangeType ChangeType { get; }
 
-        protected NodeChangeInfo(INode node, SymbolPath path, NodeChangeType changeType)
+        [JsonConstructor]
+        public NodeChangeInfo(UpdateInfo updateInfo, INode node, SymbolPath path, NodeChangeType changeType)
         {
+            UpdateInfo = updateInfo;
             Node = node;
             Path = path;
             ChangeType = changeType;
         }
-    }
 
-    public class NodeChangeInfo<TModel> : NodeChangeInfo
-        where TModel : class, INode
-    {
-        public UpdateInfo<TModel> UpdateInfo { get; }
-        public override UpdateInfo UntypedUpdateInfo => UpdateInfo;
-
-        [JsonConstructor]
-        public NodeChangeInfo(UpdateInfo<TModel> updateInfo, INode node, SymbolPath path, NodeChangeType changeType) 
-            : base(node, path, changeType) 
-            => UpdateInfo = updateInfo;
+        public void Deconstruct(out UpdateInfo updateInfo, out INode node, out SymbolPath path, out NodeChangeType changeType)
+        {
+            updateInfo = UpdateInfo;
+            node = Node;
+            path = Path;
+            changeType = ChangeType;
+        }
     }
 }

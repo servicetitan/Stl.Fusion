@@ -1,66 +1,53 @@
-
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
-using System.Reactive.Subjects;
 using System.Reactive.Threading.Tasks;
-using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
-using Stl.Extensibility;
 using Stl.ImmutableModel.Indexing;
 using Stl.ImmutableModel.Processing.Internal;
 using Stl.ImmutableModel.Updating;
-using Stl.Internal;
 
 namespace Stl.ImmutableModel.Processing
 {
+    // These types are intentionally non-generic: this allows
+    // the same NodeProcessor to be used in different models.
     public interface INodeProcessor : IAsyncProcess
     {
-        IModelProvider UntypedModelProvider { get; }
-        IUpdater UntypedUpdater { get; }
-        DomainKey RootKey { get; }
+        IModelProvider ModelProvider { get; }
+        IUpdater Updater { get; }
     }
 
-    public interface INodeProcessor<TModel> : INodeProcessor
-        where TModel : class, INode
+    public abstract class NodeProcessorBase : AsyncProcessBase, INodeProcessor
     {
-        IModelProvider<TModel> ModelProvider { get; }
-        IUpdater<TModel> Updater { get; }
-    }
+        protected ConcurrentDictionary<DomainKey, NodeProcessingInfo> Processes { get; } =
+            new ConcurrentDictionary<DomainKey, NodeProcessingInfo>();
+        protected ConcurrentDictionary<NodeProcessingInfo, Unit> DyingProcesses { get; } =
+            new ConcurrentDictionary<NodeProcessingInfo, Unit>();
 
-    public abstract class NodeProcessorBase<TModel> : AsyncProcessBase, INodeProcessor<TModel>
-        where TModel : class, INode
-    {
-        protected ConcurrentDictionary<DomainKey, NodeProcessingInfo<TModel>> Processes { get; } =
-            new ConcurrentDictionary<DomainKey, NodeProcessingInfo<TModel>>();
-        protected ConcurrentDictionary<NodeProcessingInfo<TModel>, Unit> DyingProcesses { get; } =
-            new ConcurrentDictionary<NodeProcessingInfo<TModel>, Unit>();
-
-        public IModelProvider<TModel> ModelProvider { get; }
-        public IUpdater<TModel> Updater { get; }
-        public DomainKey RootKey { get; }
-
-        IModelProvider INodeProcessor.UntypedModelProvider => ModelProvider;
-        IUpdater INodeProcessor.UntypedUpdater => Updater;
+        public IModelProvider ModelProvider { get; }
+        public IUpdater Updater { get; }
 
         protected NodeProcessorBase(
-            IModelProvider<TModel> modelProvider, 
-            IUpdater<TModel> updater, 
-            DomainKey rootKey)
+            IModelProvider modelProvider, 
+            IUpdater updater)
         {
             ModelProvider = modelProvider;
             Updater = updater;
-            RootKey = rootKey;
         }
+
+        protected abstract Task ProcessNodeAsync(INodeProcessingInfo info);
+        protected virtual Task OnReadyAsync() => Task.CompletedTask;
+        protected virtual bool IsSupportedUpdate(UpdateInfo updateInfo) => true;
+        protected virtual bool IsSupportedChange(in NodeChangeInfo nodeChangeInfo) => true; 
 
         protected override async Task RunInternalAsync()
         {
-            var allChanges = ModelProvider.ChangeTracker.AllChanges.Publish(); 
-            var processorTask = ModelProvider.ChangeTracker.AllChanges.Select(ProcessChange).ToTask(StoppingToken).SuppressCancellation();
+            var allChanges = ModelProvider.UntypedChangeTracker.UntypedAllChanges.Publish(); 
+            var processorTask = allChanges.Select(ProcessChange).ToTask(StoppingToken).SuppressCancellation();
             using (allChanges.Connect()) {
                 await OnReadyAsync().ConfigureAwait(false);
                 await processorTask.ConfigureAwait(false);
@@ -92,37 +79,34 @@ namespace Stl.ImmutableModel.Processing
             }
         }
 
-        protected Unit ProcessChange(UpdateInfo<TModel> updateInfo)
+        protected Unit ProcessChange(UpdateInfo updateInfo)
         {
-            var newIndex = updateInfo.NewIndex;
-            var oldIndex = updateInfo.OldIndex;
-            var rootNode = newIndex.GetNode(RootKey);
-            var rootPath = newIndex.GetPath(rootNode);
-            if (!updateInfo.ChangeSet.Changes.ContainsKey(rootNode.DomainKey))
-                // Some other subtree is changed.
+            if (!IsSupportedUpdate(updateInfo))
                 return default;
-
-            var changes = new List<NodeChangeInfo<TModel>>();
+            var newIndex = updateInfo.UntypedNewIndex;
+            var oldIndex = updateInfo.UntypedOldIndex;
+            var changes = new List<NodeChangeInfo>();
             foreach (var (domainKey, changeType) in updateInfo.ChangeSet.Changes) {
+                INode node;
+                SymbolPath path;
                 if (changeType.HasFlag(NodeChangeType.Removed)) {
-                    var node = oldIndex.GetNode(domainKey);
-                    var path = oldIndex.GetPath(node);
-                    if (path.StartsWith(rootPath))
-                        changes.Add(new NodeChangeInfo<TModel>(updateInfo, node, path, changeType));
+                    node = oldIndex.GetNode(domainKey);
+                    path = oldIndex.GetPath(node);
                 }
                 else {
-                    var node = newIndex.GetNode(domainKey);
-                    var path = newIndex.GetPath(node);
-                    if (path.StartsWith(rootPath))
-                        changes.Add(new NodeChangeInfo<TModel>(updateInfo, node, path, changeType));
+                    node = newIndex.GetNode(domainKey);
+                    path = newIndex.GetPath(node);
                 }
+                var nodeChangeInfo = new NodeChangeInfo(updateInfo, node, path, changeType);
+                if (IsSupportedChange(nodeChangeInfo))
+                    changes.Add(nodeChangeInfo);
             }
             foreach (var nodeChange in OrderChanges(changes))
                 ProcessNodeChange(nodeChange);
             return default;
         }
 
-        protected virtual IEnumerable<NodeChangeInfo<TModel>> OrderChanges(List<NodeChangeInfo<TModel>> changes) 
+        protected virtual IEnumerable<NodeChangeInfo> OrderChanges(List<NodeChangeInfo> changes) 
             => changes.OrderBy(c => (
                 // Removals go fist, then creations, and finally, other changes
                 (int) c.ChangeType,
@@ -130,33 +114,33 @@ namespace Stl.ImmutableModel.Processing
                 // for other nodes, we start from the deepest ones.
                 c.ChangeType.HasFlag(NodeChangeType.Created) ? c.Path.SegmentCount : -c.Path.SegmentCount));
 
-        protected virtual void ProcessNodeChange(NodeChangeInfo<TModel> nodeChangeInfo)
+        protected virtual void ProcessNodeChange(NodeChangeInfo nodeChangeInfo)
         {
             var domainKey = nodeChangeInfo.Node.DomainKey;
-            var info = Processes.GetValueOrDefault(domainKey);
-            if (info == null) {
-                info = new NodeProcessingInfo<TModel>(
+            var nodeProcessingInfo = Processes.GetValueOrDefault(domainKey);
+            if (nodeProcessingInfo == null) {
+                nodeProcessingInfo = new NodeProcessingInfo(
                     this, domainKey, nodeChangeInfo.Path, 
                     !nodeChangeInfo.ChangeType.HasFlag(NodeChangeType.Created));
-                var existingInfo = Processes.GetOrAdd(domainKey, info);
-                if (existingInfo != info) {
+                var existingInfo = Processes.GetOrAdd(domainKey, nodeProcessingInfo);
+                if (existingInfo != nodeProcessingInfo) {
                     // Some other thread just created the task somehow
-                    info.Dispose();
-                    info = existingInfo;
+                    nodeProcessingInfo.Dispose();
+                    nodeProcessingInfo = existingInfo;
                 }
                 else
-                    Task.Run(() => WrapProcessNodeAsync(info));
+                    Task.Run(() => WrapProcessNodeAsync(nodeProcessingInfo));
             }
             if (nodeChangeInfo.ChangeType.HasFlag(NodeChangeType.Removed)) {
                 // To avoid race conditions, we have to move the process to DyingProcesses first
-                if (Processes.TryRemove(info.NodeDomainKey, out _))
-                    DyingProcesses.TryAdd(info, default);
+                if (Processes.TryRemove(nodeProcessingInfo.NodeDomainKey, out _))
+                    DyingProcesses.TryAdd(nodeProcessingInfo, default);
                 // And now it's safe to trigger the events that might cause process termination
-                info.NodeRemovedTokenSource.Cancel();
+                nodeProcessingInfo.NodeRemovedTokenSource.Cancel();
             }
         }
 
-        protected virtual async Task WrapProcessNodeAsync(NodeProcessingInfo<TModel> info)
+        protected virtual async Task WrapProcessNodeAsync(NodeProcessingInfo info)
         {
             try {
                 await ProcessNodeAsync(info).ConfigureAwait(false);
@@ -179,38 +163,32 @@ namespace Stl.ImmutableModel.Processing
                 info.CompletionSource.SetResult(default);
             }
         }
-
-        protected abstract Task ProcessNodeAsync(INodeProcessingInfo<TModel> info);
-
-        protected virtual Task OnReadyAsync() 
-            => Task.CompletedTask;
     }
 
-    public class NodeProcessor<TModel> : NodeProcessorBase<TModel>
-        where TModel : class, INode
+    public class NodeProcessor : NodeProcessorBase
     {
-        public Func<INodeProcessingInfo<TModel>, Task> Implementation { get; }
+        public Func<INodeProcessingInfo, Task> Implementation { get; }
+        public Func<UpdateInfo, bool>? IsSupportedUpdatePredicate { get; }
+        public Func<NodeChangeInfo, bool>? IsSupportedChangePredicate { get; }
 
         public NodeProcessor(
-            IModelProvider<TModel> modelProvider, 
-            IUpdater<TModel> updater, 
-            DomainKey rootKey, 
-            Func<INodeProcessingInfo<TModel>, Task> implementation) 
-            : base(modelProvider, updater, rootKey) 
-            => Implementation = implementation;
+            IModelProvider modelProvider, 
+            IUpdater updater, 
+            Func<INodeProcessingInfo, Task> implementation,
+            Func<UpdateInfo, bool>? isSupportedUpdatePredicate = null,
+            Func<NodeChangeInfo, bool>? isSupportedChangePredicate = null) 
+            : base(modelProvider, updater)
+        {
+            Implementation = implementation;
+            IsSupportedUpdatePredicate = isSupportedUpdatePredicate;
+            IsSupportedChangePredicate = isSupportedChangePredicate;
+        }
 
-        protected override Task ProcessNodeAsync(INodeProcessingInfo<TModel> info) 
+        protected override Task ProcessNodeAsync(INodeProcessingInfo info) 
             => Implementation.Invoke(info);
-    }
-
-    public static class ModelProcessor
-    {
-        public static NodeProcessor<TModel> New<TModel>(
-            IModelProvider<TModel> modelProvider, 
-            IUpdater<TModel> updater, 
-            DomainKey rootKey, 
-            Func<INodeProcessingInfo<TModel>, Task> implementation) 
-            where TModel : class, INode
-            => new NodeProcessor<TModel>(modelProvider, updater, rootKey, implementation);
+        protected override bool IsSupportedUpdate(UpdateInfo updateInfo) 
+            => IsSupportedUpdatePredicate?.Invoke(updateInfo) ?? true;
+        protected override bool IsSupportedChange(in NodeChangeInfo nodeChangeInfo) 
+            => IsSupportedChangePredicate?.Invoke(nodeChangeInfo) ?? true;
     }
 }

@@ -1,15 +1,13 @@
 using System;
 using System.Reactive;
-using System.Reactive.Subjects;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Stl.ImmutableModel.Processing.Internal
 {
-    public class NodeProcessingInfo<TModel> : INodeProcessingInfo<TModel>, IDisposable
-        where TModel : class, INode
+    public class NodeProcessingInfo : INodeProcessingInfo, IDisposable
     { 
-        public INodeProcessor<TModel> Processor { get; set; }
+        public INodeProcessor NodeProcessor { get; set; }
         public DomainKey NodeDomainKey { get; set; }
         public SymbolPath NodePath { get; set; }
         public CancellationTokenSource NodeRemovedTokenSource { get; set; }
@@ -19,18 +17,17 @@ namespace Stl.ImmutableModel.Processing.Internal
         public bool IsStartedForAlreadyExistingNode { get; set; }
         public bool IsDormant { get; set; }
 
-        INodeProcessor INodeProcessingInfo.UntypedProcessor => Processor;
-        CancellationToken INodeProcessingInfo.ProcessStoppingToken => Processor.StoppingToken;
+        CancellationToken INodeProcessingInfo.ProcessStoppingToken => NodeProcessor.StoppingToken;
         CancellationToken INodeProcessingInfo.NodeRemovedToken => NodeRemovedTokenSource.Token;
         CancellationToken INodeProcessingInfo.ProcessStoppingOrNodeRemovedToken => ProcessStoppedOrNodeRemovedTokenSource.Token;
 
         public NodeProcessingInfo(
-            INodeProcessor<TModel> processor, 
+            INodeProcessor processor, 
             DomainKey nodeDomainKey, 
             SymbolPath nodePath,
             bool isStartedForAlreadyExistingNode)
         {
-            Processor = processor;
+            NodeProcessor = processor;
             NodeDomainKey = nodeDomainKey;
             NodePath = nodePath;
             IsStartedForAlreadyExistingNode = isStartedForAlreadyExistingNode;
