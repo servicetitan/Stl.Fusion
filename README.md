@@ -7,6 +7,7 @@ STL stands for, obviously, "ServiceTitan Library" :)
 * All Stl projects are currently targeting .NET Core 3.0.
 * The "big" `Stl` project is supposed to contain the most generic and most useful abstractions;
 * Everything else is supposed to be in Stl.* projects, which target specific problems (e.g. `Stl.Time`).
+* All the tests are currently located in `Stl.Tests` project - with subfolders & namespaces matching sub-projects & namespaces in Stl. Likely, that's temporary - eventually these tests are supposed to move to a set of dedicated test projects (one test project per one Stl project).
 
 ### Coding Style
 It's based on standard coding conventions for C# with a few exceptions:
@@ -90,3 +91,77 @@ And finally there are a few useful types residing right in the `Stl` namespace:
 * `Disposable` - a struct-based `IDisposable` implementation invoking the specified delegate on disposal.
 * `KeyValuePair` - `New<TKey, TValue>(key, value)` (why it's missing in .NET Core?) & `ToKeyValuePair(this (TKey Key, TValue Value) pair)`
 * `EnumerableEx` - `One`, `Concat(params IEnumerable<T> sequences)`, a pair of `ToDictionary` overloads, atomic `concurrentDictionary.TryRemove(key, value`), and finally, `sequence.ToDelimitedString(string demimiler = ", ")`.
+
+
+### Stl.Testing project
+
+Various testing-related helpers.
+
+TODO: Write a dedicated page for this project.
+
+
+### Stl.Experimental project
+
+Various experimental stuff that might go into other Stl proejcts later.
+
+Currently there is just `TerraformCmd` - an implementation of Terraform command line API:
+
+```csharp
+var r = await TerraformCmd.ApplyAsync();
+r.ExitCode.Should().Be(0);
+r.StandardOutput.Should().Contain("Apply complete!");
+```
+
+### Stl.Time project
+
+* `Moment`: a `DateTime`-like abstraction storing Unix epoch time (as `TimeSpan`). Freely convertable to `DateTime` and `DateTimeOffset`, serializable, more compact than a regular `DateTime`, and since it always stores time in UTC, there is no any ambiguity on what kind of time it stores. In short, it's a bit more compact & faster version of `DateTime` without any problems it has. The intended use case are mostly HPC scenarios involving time (e.g. metric stream processing).
+* `IClock` - a robust clock abstraction. The nice part is that it supports `DelayAsync` & a few other methods through it (see `ClockEx.Timer`, `Interval`), so if you use it in tests & switch to `TestClock` there, you'll be able to speed up / slow down & rewind time. Moreover, note that `TestClock.DelayAsync` implementation is designed to _instantly_ react to test clock changes, i.e. if you'll rewind your test clocks to +1 year, all the `DelayAsync` calls that are supposed to complete by this moment will complete instantly.
+
+See `ClockTest` for some examples of how it works.
+
+
+### Stl.Plugins project
+
+An apllication extensiblity framework similar to MEF, but aiming to solve a few fundamental problems it has:
+* Plugins / extensions must "live" in any IoC container implementing `IServiceCollection` and `IServiceProvider` from `Microsoft.DependencyInjection.Abstractions`
+* The plugin discovery / scan results must be cached & re-used on any subsequent creation of plugin container. The only operation triggering plugin assembly load should be the creation of a plugin stored there (or a plugin that depends on it).
+
+TODO: Write a dedicated page for this project.
+
+
+### Stl.Plugins.Extensions project
+
+A few useful extensions to Stl.Plugins targeting the most generic plugin-based extensibility scenarios:
+* `ICliPlugin` + `commandLineBuilder.UsePlugins<TPlugin>(IEnumerable<TPlugin> plugins)  where TPlugin : ICliPlugin`
+* `IHostPlugin` + `hostBuilder.UsePlugins<TPlugin>(IEnumerable<TPlugin> plugins)  where TPlugin : IHostPlugin`
+* `IWebHostPlugin` + `webHostBuilder.UsePlugins<TPlugin>(IEnumerable<TPlugin> plugins)  where TPlugin : IWebHostPlugin`
+
+See the source code / usage of these methods to see how it works.
+
+
+### Stl.Hosting project
+
+Provides a generic plugin-based host (app bootstrapper) enabling plugins to:
+* Inject & process their own console commands & arguments via `CommandLineBuilder`
+* Tune the host in ~ arbitrary way via `IHostBuilder` 
+* Tune the web host in ~ arbitrary way via `IWebHostBuilder`
+* Inject plugin services to any of available `IServiceCollections`
+
+Used by Bach. See `BachHost` (in fact, a tiny class) to understand how it's intended to be used.
+
+
+### Stl.ImmutableModel project
+
+A framework allowing to define & use immutable models. Used by Bach. 
+
+`Bach.ExampleAddon` is probably the only good example of how it's supposed to be used. + Tests in `Stl.Tests.ImmutableModel`.
+
+TODO: Write a dedicated page for this project.
+
+
+### Stl.Reactionist project
+
+These are my experiments with mobX-style observables; originally I thought to use this in Bach models, but ended up switching to `Stl.ImmutableModel`-based abstractions there.
+
+TODO: Write more robust description + decide whether to even keep this.
+
