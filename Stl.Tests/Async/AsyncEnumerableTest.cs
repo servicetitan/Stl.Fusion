@@ -18,7 +18,7 @@ namespace Stl.Tests.Async
                 Assert.Equal(
                     new [] {"2", "4"}, 
                     AsyncEnumerable
-                        .Intervals(TimeSpan.Zero)
+                        .Interval(TimeSpan.Zero)
                         .Skip(2)
                         .Take(3)
                         .Where(i => i != 3)
@@ -28,7 +28,7 @@ namespace Stl.Tests.Async
                 Assert.Equal(
                     new [] {"2", "4"}, 
                     AsyncEnumerable
-                        .Intervals(TimeSpan.Zero)
+                        .Interval(TimeSpan.Zero)
                         .Index()
 #pragma warning disable 1998
                         .SkipWhile(async p => p.Index < 2)
@@ -49,7 +49,7 @@ namespace Stl.Tests.Async
             async Task<int> Test() {
                 await Task.Delay(100);
                 return AsyncEnumerable
-                    .Intervals(TimeSpan.Zero)
+                    .Interval(TimeSpan.Zero)
                     .Select(i => {
                         if (i > 2) failed = true;
                         return i;
