@@ -38,7 +38,7 @@ namespace Stl.IO
         {
             if (string.IsNullOrEmpty(appId))
                 appId = Assembly.GetEntryAssembly()?.GetName()?.Name ?? "unknown";
-            var subdirectory = PathEx.GetHashedName($"{appId}_{GetApplicationDirectory()}");
+            var subdirectory = GetHashedName($"{appId}_{GetApplicationDirectory()}");
             return Path.Combine(Path.GetTempPath(), subdirectory);
         }
     }
