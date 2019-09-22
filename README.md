@@ -147,7 +147,7 @@ Provides a generic plugin-based host (app bootstrapper) enabling plugins to:
 * Tune the web host in ~ arbitrary way via `IWebHostBuilder`
 * Inject plugin services to any of available `IServiceCollections`
 
-Used by Bach. See `BachHost` (in fact, a tiny class) to understand how it's intended to be used.
+Used by Bach. See `BachHostBuilder` (in fact, a tiny class) to understand how it's intended to be used.
 
 
 ### Stl.ImmutableModel project
