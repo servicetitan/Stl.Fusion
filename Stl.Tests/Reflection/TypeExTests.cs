@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
@@ -18,7 +17,7 @@ namespace Stl.Tests.Reflection
         public void GetAllBaseTypesTest()
         {
             var baseTypes = GetType().GetAllBaseTypes().ToArray();
-            baseTypes.Should().BeSameAs(new[] {typeof(TestBase), typeof(object)});
+            baseTypes.Should().BeEquivalentTo(typeof(TestBase), typeof(object));
         }
 
         [Fact]
