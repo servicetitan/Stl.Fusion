@@ -1,4 +1,4 @@
-namespace Stl.Time.Clocks 
+namespace Stl.Time.Testing 
 {
     public interface ITestClock : IClock
     {

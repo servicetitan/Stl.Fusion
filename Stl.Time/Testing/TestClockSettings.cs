@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using Newtonsoft.Json;
 
-namespace Stl.Time.Clocks
+namespace Stl.Time.Testing
 {
     [Serializable]
     public sealed class TestClockSettings : IDisposable

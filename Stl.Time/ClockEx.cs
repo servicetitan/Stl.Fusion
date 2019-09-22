@@ -3,7 +3,7 @@ using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
-using Stl.Time.Clocks;
+using Stl.Time.Testing;
 
 namespace Stl.Time
 {

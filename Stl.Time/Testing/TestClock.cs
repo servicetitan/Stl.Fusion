@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 using Stl.Async;
 using Stl.Internal;
 
-namespace Stl.Time.Clocks
+namespace Stl.Time.Testing
 {
     public sealed class TestClock : ITestClock, IDisposable
     {

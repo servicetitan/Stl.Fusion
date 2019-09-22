@@ -7,7 +7,7 @@ using FluentAssertions;
 using Stl.Async;
 using Stl.Testing;
 using Stl.Time;
-using Stl.Time.Clocks;
+using Stl.Time.Testing;
 using Xunit;
 using Xunit.Abstractions;
 

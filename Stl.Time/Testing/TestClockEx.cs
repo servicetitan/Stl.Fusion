@@ -1,6 +1,6 @@
 using System;
 
-namespace Stl.Time.Clocks 
+namespace Stl.Time.Testing 
 {
     public static class TestClockEx
     {

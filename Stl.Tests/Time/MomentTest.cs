@@ -2,7 +2,7 @@ using System;
 using FluentAssertions;
 using Stl.Testing;
 using Stl.Time;
-using Stl.Time.Clocks;
+using Stl.Time.Testing;
 using Xunit;
 using Xunit.Abstractions;
 

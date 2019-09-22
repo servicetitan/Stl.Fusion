@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Stl.Time.Clocks
+namespace Stl.Time
 {
     [Serializable]
     public sealed class RealTimeClock : IClock
