@@ -16,23 +16,23 @@ namespace Stl.ImmutableModel.Indexing
             => (T) index.TryGetNode(path)!;
         
         [return: MaybeNull]
-        public static T TryGetNode<T>(this IIndex index, DomainKey domainKey)
+        public static T TryGetNode<T>(this IIndex index, Key key)
             where T : class, INode
-            => (T) index.TryGetNode(domainKey)!;
+            => (T) index.TryGetNode(key)!;
         
         public static INode GetNode(this IIndex index, SymbolPath path)
             => index.TryGetNode(path) ?? throw new KeyNotFoundException();
         
-        public static INode GetNode(this IIndex index, DomainKey domainKey)
-            => index.TryGetNode(domainKey) ?? throw new KeyNotFoundException();
+        public static INode GetNode(this IIndex index, Key key)
+            => index.TryGetNode(key) ?? throw new KeyNotFoundException();
         
         public static T GetNode<T>(this IIndex index, SymbolPath path)
             where T : class, INode
             => (T) index.GetNode(path);
 
-        public static T GetNode<T>(this IIndex index, DomainKey domainKey)
+        public static T GetNode<T>(this IIndex index, Key key)
             where T : class, INode
-            => (T) index.GetNode(domainKey);
+            => (T) index.GetNode(key);
 
         // (Try)Resolve also resolve properties via path 
 

@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Threading.Tasks;
+using Stl.ImmutableModel.Indexing;
 using Stl.ImmutableModel.Updating;
 using Stl.Reflection;
 
@@ -24,7 +25,9 @@ namespace Stl.ImmutableModel.Processing
 
         protected virtual string GetMethodName(INodeProcessingInfo info)
         {
-            var type = info.NodeDomainKey.Domain;
+            var index = info.NodeProcessor.ModelProvider.UntypedIndex;
+            var node = index.GetNode(info.NodeKey);
+            var type = node.GetType();
             return $"Process{type.ToMethodName()}NodeAsync";
         }
 

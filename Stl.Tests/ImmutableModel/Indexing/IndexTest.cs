@@ -24,16 +24,16 @@ namespace Stl.Tests.ImmutableModel.Indexing
             idx.Resolve(".").Should().Equals(idx.Model);
             
             var cluster1 = idx.Resolve<Cluster>("./cluster1");
-            cluster1.Key.Value.Should().Be("cluster1");
+            cluster1.LocalKey.Value.Should().Be("cluster1");
             idx.GetPath(cluster1).Value.Should().Be("./cluster1");
             
             var vm1 = idx.Resolve<VirtualMachine>("./cluster1/vm1");
-            vm1.Key.Value.Should().Be("vm1");
+            vm1.LocalKey.Value.Should().Be("vm1");
             cluster1["vm1"].Should().Equals(vm1);
             idx.GetPath(vm1).Value.Should().Be("./cluster1/vm1");
 
             var vm2 = idx.Resolve<VirtualMachine>("./cluster1/vm2");
-            vm2.Key.Value.Should().Be("vm2");
+            vm2.LocalKey.Value.Should().Be("vm2");
             cluster1["vm2"].Should().Equals(vm2);
             idx.GetPath(vm2).Value.Should().Be("./cluster1/vm2");
 
@@ -41,8 +41,8 @@ namespace Stl.Tests.ImmutableModel.Indexing
                 .Should().Equals("caps1");
             idx.Resolve(idx.GetPath(vm2) + new Symbol(VirtualMachine.CapabilitiesSymbol))
                 .Should().Equals("caps2");
-            idx.GetNode<VirtualMachine>((typeof(VirtualMachine), vm1.Key)).Should().Equals(vm1);
-            idx.GetNode<VirtualMachine>((typeof(VirtualMachine), vm2.Key)).Should().Equals(vm2);
+            idx.GetNode<VirtualMachine>((typeof(VirtualMachine), vm1.LocalKey)).Should().Equals(vm1);
+            idx.GetNode<VirtualMachine>((typeof(VirtualMachine), vm2.LocalKey)).Should().Equals(vm2);
         }
 
         [Fact]
@@ -82,14 +82,14 @@ namespace Stl.Tests.ImmutableModel.Indexing
             {
                 index.GetPath(node).Should().Equals(path);
                 index.GetNode(path).Should().Equals(node);
-                index.GetNode(node.DomainKey).Should().Equals(node);
+                index.GetNode(node.Key).Should().Equals(node);
 
                 foreach (var (k, n) in node.DualGetNodeItems())
                     ProcessNode(path + k, n);
             }
 
             var root = index.UntypedModel;
-            ProcessNode(root.Key.Value, root);
+            ProcessNode(root.LocalKey.Value, root);
         }
 
         internal static UpdatableIndex<ModelRoot> BuildModel()

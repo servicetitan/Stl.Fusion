@@ -12,7 +12,7 @@ namespace Stl.ImmutableModel.Indexing
         INode UntypedModel { get; }
         SymbolPath? TryGetPath(INode node);
         INode? TryGetNode(SymbolPath path);
-        INode? TryGetNode(DomainKey domainKey);
+        INode? TryGetNode(Key key);
     }
 
     public interface IIndex<out TModel> : IIndex
@@ -36,7 +36,7 @@ namespace Stl.ImmutableModel.Indexing
         [field: NonSerialized]
         protected ImmutableDictionary<SymbolPath, INode> PathToNode { get; set; } = null!;
         [field: NonSerialized]
-        protected ImmutableDictionary<DomainKey, INode> DomainKeyToNode { get; set; } = null!;
+        protected ImmutableDictionary<Key, INode> DomainKeyToNode { get; set; } = null!;
 
         protected Index() { }
 
@@ -44,24 +44,24 @@ namespace Stl.ImmutableModel.Indexing
             => NodeToPath.TryGetValue(node, out var path) ? path : null;
         public virtual INode? TryGetNode(SymbolPath path)
             => PathToNode.TryGetValue(path, out var node) ? node : null;
-        public virtual INode? TryGetNode(DomainKey domainKey)
-            => DomainKeyToNode.TryGetValue(domainKey, out var node) ? node : null;
+        public virtual INode? TryGetNode(Key key)
+            => DomainKeyToNode.TryGetValue(key, out var node) ? node : null;
 
         protected virtual void Reindex()
         {
             NodeToPath = ImmutableDictionary<INode, SymbolPath>.Empty;
             PathToNode = ImmutableDictionary<SymbolPath, INode>.Empty;
-            DomainKeyToNode = ImmutableDictionary<DomainKey, INode>.Empty;
+            DomainKeyToNode = ImmutableDictionary<Key, INode>.Empty;
             var changeSet = ChangeSet.Empty;
-            AddNode(new SymbolPath(UntypedModel.Key), UntypedModel, ref changeSet);
+            AddNode(new SymbolPath(UntypedModel.LocalKey), UntypedModel, ref changeSet);
         }
 
         protected virtual void AddNode(SymbolPath path, INode node, ref ChangeSet changeSet)
         {
-            changeSet = changeSet.Add(node.DomainKey, NodeChangeType.Created);
+            changeSet = changeSet.Add(node.Key, NodeChangeType.Created);
             NodeToPath = NodeToPath.Add(node, path);
             PathToNode = PathToNode.Add(path, node);
-            DomainKeyToNode = DomainKeyToNode.Add(node.DomainKey, node);
+            DomainKeyToNode = DomainKeyToNode.Add(node.Key, node);
 
             foreach (var (key, child) in node.DualGetNodeItems()) 
                 AddNode(path + key, child, ref changeSet);
@@ -69,10 +69,10 @@ namespace Stl.ImmutableModel.Indexing
 
         protected virtual void RemoveNode(SymbolPath path, INode node, ref ChangeSet changeSet)
         {
-            changeSet = changeSet.Add(node.DomainKey, NodeChangeType.Removed);
+            changeSet = changeSet.Add(node.Key, NodeChangeType.Removed);
             NodeToPath = NodeToPath.Remove(node);
             PathToNode = PathToNode.Remove(path);
-            DomainKeyToNode = DomainKeyToNode.Remove(node.DomainKey);
+            DomainKeyToNode = DomainKeyToNode.Remove(node.Key);
 
             foreach (var (key, child) in node.DualGetNodeItems()) 
                 RemoveNode(path + key, child, ref changeSet);
@@ -81,10 +81,10 @@ namespace Stl.ImmutableModel.Indexing
         protected virtual void ReplaceNode(SymbolPath path, INode source, INode target, 
             ref ChangeSet changeSet, NodeChangeType changeType = NodeChangeType.SubtreeChanged)
         {
-            changeSet = changeSet.Add(source.DomainKey, changeType);
+            changeSet = changeSet.Add(source.Key, changeType);
             NodeToPath = NodeToPath.Remove(source).Add(target, path);
             PathToNode = PathToNode.SetItem(path, target);
-            DomainKeyToNode = DomainKeyToNode.Remove(source.DomainKey).Add(target.DomainKey, target);
+            DomainKeyToNode = DomainKeyToNode.Remove(source.Key).Add(target.Key, target);
         }
 
         // Serialization

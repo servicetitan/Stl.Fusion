@@ -8,17 +8,17 @@ namespace Stl.ImmutableModel.Internal
     [Serializable]
     public class ChangeSetDeserializationHelper
     {
-        private Dictionary<DomainKey, NodeChangeType>? _dictionary;
+        private Dictionary<Key, NodeChangeType>? _dictionary;
         [NonSerialized] 
-        private volatile ImmutableDictionary<DomainKey, NodeChangeType>? _immutableDictionary;
+        private volatile ImmutableDictionary<Key, NodeChangeType>? _immutableDictionary;
 
         public ChangeSetDeserializationHelper() { }
-        public ChangeSetDeserializationHelper(Dictionary<DomainKey, NodeChangeType> dictionary)
+        public ChangeSetDeserializationHelper(Dictionary<Key, NodeChangeType> dictionary)
         {
             _dictionary = dictionary;
         }
 
-        public ImmutableDictionary<DomainKey, NodeChangeType>? GetImmutableDictionary()
+        public ImmutableDictionary<Key, NodeChangeType>? GetImmutableDictionary()
         {
             if (_immutableDictionary != null) return _immutableDictionary;
             lock (this) {

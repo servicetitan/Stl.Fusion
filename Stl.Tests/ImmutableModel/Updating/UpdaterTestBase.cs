@@ -24,7 +24,7 @@ namespace Stl.Tests.ImmutableModel.Updating
             var updater = CreateUpdater(index);
             using var changeTracker = ChangeTracker.New(updater);
 
-            using var o = changeTracker.ChangesIncluding(index.Model.DomainKey, NodeChangeType.Any).Subscribe(
+            using var o = changeTracker.ChangesIncluding(index.Model.Key, NodeChangeType.Any).Subscribe(
                 Observer.Create<UpdateInfo<ModelRoot>>(updateInfo => {
                     Out.WriteLine($"Model updated. Changes:");
                     foreach (var (key, kind) in updateInfo.ChangeSet.Changes)
@@ -32,7 +32,7 @@ namespace Stl.Tests.ImmutableModel.Updating
                 }));
             var c1task = changeTracker.AllChanges
                 .Select((_, i) => i).ToTask();
-            var c2task = changeTracker.ChangesIncluding(index.Model.DomainKey, NodeChangeType.Any)
+            var c2task = changeTracker.ChangesIncluding(index.Model.Key, NodeChangeType.Any)
                 .Select((_, i) => i).ToTask();
 
             var info = await updater.UpdateAsync(idx => {

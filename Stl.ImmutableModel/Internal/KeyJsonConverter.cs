@@ -1,7 +1,7 @@
 using System;
 using Newtonsoft.Json;
 
-namespace Stl.ImmutableModel.Internal
+namespace Stl.ImmutableModel.Internal 
 {
     public class KeyJsonConverter : JsonConverter
     {
@@ -10,7 +10,7 @@ namespace Stl.ImmutableModel.Internal
 
         public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
         {
-            var typeRef = (Key) value!;
+            var typeRef = (LocalKey) value!;
             writer.WriteValue(typeRef.Value);
         }
 

@@ -22,4 +22,5 @@ namespace Stl.ImmutableModel.Internal
                 return new Key(s);
             return base.ConvertFrom(context, culture, value);
         }
-    }}
+    }
+}

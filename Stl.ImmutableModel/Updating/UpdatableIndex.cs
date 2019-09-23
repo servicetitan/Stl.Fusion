@@ -33,7 +33,7 @@ namespace Stl.ImmutableModel.Updating
             if (source == target)
                 return (this, ChangeSet.Empty);
 
-            if (source.Key != target.Key)
+            if (source.LocalKey != target.LocalKey)
                 throw Errors.InvalidUpdateKeyMismatch();
             
             var clone = (UpdatableIndex) MemberwiseClone();

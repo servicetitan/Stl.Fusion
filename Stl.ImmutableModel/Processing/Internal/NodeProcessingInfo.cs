@@ -8,7 +8,7 @@ namespace Stl.ImmutableModel.Processing.Internal
     public class NodeProcessingInfo : INodeProcessingInfo, IDisposable
     { 
         public INodeProcessor NodeProcessor { get; set; }
-        public DomainKey NodeDomainKey { get; set; }
+        public Key NodeKey { get; set; }
         public SymbolPath NodePath { get; set; }
         public CancellationTokenSource NodeRemovedTokenSource { get; set; }
         public CancellationTokenSource ProcessStoppedOrNodeRemovedTokenSource { get; set; }
@@ -23,12 +23,12 @@ namespace Stl.ImmutableModel.Processing.Internal
 
         public NodeProcessingInfo(
             INodeProcessor processor, 
-            DomainKey nodeDomainKey, 
+            Key nodeKey, 
             SymbolPath nodePath,
             bool isStartedForAlreadyExistingNode)
         {
             NodeProcessor = processor;
-            NodeDomainKey = nodeDomainKey;
+            NodeKey = nodeKey;
             NodePath = nodePath;
             IsStartedForAlreadyExistingNode = isStartedForAlreadyExistingNode;
             NodeRemovedTokenSource = new CancellationTokenSource();

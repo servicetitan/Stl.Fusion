@@ -11,14 +11,14 @@ namespace Stl.ImmutableModel.Updating
     public interface IChangeTracker : IDisposable
     {
         IObservable<UpdateInfo> UntypedAllChanges { get; }
-        IObservable<UpdateInfo> UntypedChangesIncluding(DomainKey key, NodeChangeType changeTypeMask);
+        IObservable<UpdateInfo> UntypedChangesIncluding(Key key, NodeChangeType changeTypeMask);
     }
 
     public interface IChangeTracker<TModel> : IChangeTracker
         where TModel : class, INode
     {
         IObservable<UpdateInfo<TModel>> AllChanges { get; }
-        IObservable<UpdateInfo<TModel>> ChangesIncluding(DomainKey key, NodeChangeType changeTypeMask);
+        IObservable<UpdateInfo<TModel>> ChangesIncluding(Key key, NodeChangeType changeTypeMask);
     }
 
     public sealed class ChangeTracker<TModel> : IChangeTracker<TModel>
@@ -27,8 +27,8 @@ namespace Stl.ImmutableModel.Updating
         private bool _isDisposed;
         private readonly IUpdater<TModel> _updater;
         private readonly Subject<UpdateInfo<TModel>> _allChanges;
-        private readonly ConcurrentDictionary<DomainKey, ImmutableDictionary<IObserver<UpdateInfo<TModel>>, NodeChangeType>> _observers =
-            new ConcurrentDictionary<DomainKey, ImmutableDictionary<IObserver<UpdateInfo<TModel>>, NodeChangeType>>();
+        private readonly ConcurrentDictionary<Key, ImmutableDictionary<IObserver<UpdateInfo<TModel>>, NodeChangeType>> _observers =
+            new ConcurrentDictionary<Key, ImmutableDictionary<IObserver<UpdateInfo<TModel>>, NodeChangeType>>();
 
         IObservable<UpdateInfo> IChangeTracker.UntypedAllChanges => _allChanges;
         public IObservable<UpdateInfo<TModel>> AllChanges => _allChanges;
@@ -68,8 +68,8 @@ namespace Stl.ImmutableModel.Updating
             }
         }
 
-        IObservable<UpdateInfo> IChangeTracker.UntypedChangesIncluding(DomainKey key, NodeChangeType changeTypeMask) => ChangesIncluding(key, changeTypeMask);
-        public IObservable<UpdateInfo<TModel>> ChangesIncluding(DomainKey key, NodeChangeType changeTypeMask)
+        IObservable<UpdateInfo> IChangeTracker.UntypedChangesIncluding(Key key, NodeChangeType changeTypeMask) => ChangesIncluding(key, changeTypeMask);
+        public IObservable<UpdateInfo<TModel>> ChangesIncluding(Key key, NodeChangeType changeTypeMask)
         {
             if (_observers == null)
                 throw Errors.AlreadyDisposed();

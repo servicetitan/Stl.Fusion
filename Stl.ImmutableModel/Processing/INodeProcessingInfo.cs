@@ -6,7 +6,7 @@ namespace Stl.ImmutableModel.Processing
     public interface INodeProcessingInfo
     {
         INodeProcessor NodeProcessor { get; }
-        DomainKey NodeDomainKey { get; }
+        Key NodeKey { get; }
         SymbolPath NodePath { get; }
         CancellationToken ProcessStoppingToken { get; }
         CancellationToken NodeRemovedToken { get; }

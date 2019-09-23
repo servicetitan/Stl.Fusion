@@ -23,8 +23,8 @@ namespace Stl.ImmutableModel.Processing
 
     public abstract class NodeProcessorBase : AsyncProcessBase, INodeProcessor
     {
-        protected ConcurrentDictionary<DomainKey, NodeProcessingInfo> Processes { get; } =
-            new ConcurrentDictionary<DomainKey, NodeProcessingInfo>();
+        protected ConcurrentDictionary<Key, NodeProcessingInfo> Processes { get; } =
+            new ConcurrentDictionary<Key, NodeProcessingInfo>();
         protected ConcurrentDictionary<NodeProcessingInfo, Unit> DyingProcesses { get; } =
             new ConcurrentDictionary<NodeProcessingInfo, Unit>();
 
@@ -116,7 +116,7 @@ namespace Stl.ImmutableModel.Processing
 
         protected virtual void ProcessNodeChange(NodeChangeInfo nodeChangeInfo)
         {
-            var domainKey = nodeChangeInfo.Node.DomainKey;
+            var domainKey = nodeChangeInfo.Node.Key;
             var nodeProcessingInfo = Processes.GetValueOrDefault(domainKey);
             if (nodeProcessingInfo == null) {
                 nodeProcessingInfo = new NodeProcessingInfo(
@@ -133,7 +133,7 @@ namespace Stl.ImmutableModel.Processing
             }
             if (nodeChangeInfo.ChangeType.HasFlag(NodeChangeType.Removed)) {
                 // To avoid race conditions, we have to move the process to DyingProcesses first
-                if (Processes.TryRemove(nodeProcessingInfo.NodeDomainKey, out _))
+                if (Processes.TryRemove(nodeProcessingInfo.NodeKey, out _))
                     DyingProcesses.TryAdd(nodeProcessingInfo, default);
                 // And now it's safe to trigger the events that might cause process termination
                 nodeProcessingInfo.NodeRemovedTokenSource.Cancel();
@@ -157,7 +157,7 @@ namespace Stl.ImmutableModel.Processing
                     info.IsDormant = true;
                     await info.ProcessStoppedOrNodeRemovedTokenSource.Token.ToTask(false).ConfigureAwait(false);
                 }
-                Processes.TryRemove(info.NodeDomainKey, out _);
+                Processes.TryRemove(info.NodeKey, out _);
                 DyingProcesses.TryRemove(info, out _);
                 info.Dispose();
                 info.CompletionSource.SetResult(default);

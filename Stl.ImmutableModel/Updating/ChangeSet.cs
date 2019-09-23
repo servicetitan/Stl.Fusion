@@ -15,17 +15,17 @@ namespace Stl.ImmutableModel.Updating
 //    [JsonConverter(typeof(ChangeSetJsonConverter))]
     public readonly struct ChangeSet : IEquatable<ChangeSet>, ISerializable
     {
-        public static ChangeSet Empty { get; } = new ChangeSet(ImmutableDictionary<DomainKey, NodeChangeType>.Empty);
+        public static ChangeSet Empty { get; } = new ChangeSet(ImmutableDictionary<Key, NodeChangeType>.Empty);
 
         private readonly ChangeSetDeserializationHelper? _deserializationHelper;
-        private readonly ImmutableDictionary<DomainKey, NodeChangeType>? _changes;
+        private readonly ImmutableDictionary<Key, NodeChangeType>? _changes;
 
-        public ImmutableDictionary<DomainKey, NodeChangeType> Changes {
+        public ImmutableDictionary<Key, NodeChangeType> Changes {
             get {
                 if (_changes != null)
                     return _changes;
                 var changes = _deserializationHelper?.GetImmutableDictionary()
-                    ?? ImmutableDictionary<DomainKey, NodeChangeType>.Empty;
+                    ?? ImmutableDictionary<Key, NodeChangeType>.Empty;
                 // Tricky: the struct is readonly (and ideally, must be);
                 // the code below tries to overwrite it to fix the deserialization
                 // + make sure the conversion from Dictionary to ImmutableDictionary
@@ -37,7 +37,7 @@ namespace Stl.ImmutableModel.Updating
         }
 
         [JsonConstructor]
-        public ChangeSet(ImmutableDictionary<DomainKey, NodeChangeType> changes)
+        public ChangeSet(ImmutableDictionary<Key, NodeChangeType> changes)
         {
             _deserializationHelper = null;
             _changes = changes;
@@ -45,10 +45,10 @@ namespace Stl.ImmutableModel.Updating
 
         public override string ToString() => $"{GetType().Name}({Changes.Count} change(s))";
 
-        public ChangeSet Add(DomainKey domainKey, NodeChangeType changeType)
+        public ChangeSet Add(Key key, NodeChangeType changeType)
         {
-            changeType = Changes.GetValueOrDefault(domainKey) | changeType;
-            return changeType == 0 ? this : new ChangeSet(Changes.SetItem(domainKey, changeType));
+            changeType = Changes.GetValueOrDefault(key) | changeType;
+            return changeType == 0 ? this : new ChangeSet(Changes.SetItem(key, changeType));
         }
 
         public ChangeSet Merge(ChangeSet other)
@@ -74,9 +74,9 @@ namespace Stl.ImmutableModel.Updating
             switch (changes) {
                 case JObject j:
                     _deserializationHelper = null;
-                    _changes = j.ToObject<Dictionary<DomainKey, NodeChangeType>>().ToImmutableDictionary();
+                    _changes = j.ToObject<Dictionary<Key, NodeChangeType>>().ToImmutableDictionary();
                     break;
-                case Dictionary<DomainKey, NodeChangeType> d: 
+                case Dictionary<Key, NodeChangeType> d: 
                     _deserializationHelper = new ChangeSetDeserializationHelper(d);
                     _changes = null;
                     break;

@@ -1,28 +1,24 @@
 using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
 using Newtonsoft.Json;
-using Stl;
-using Stl.ImmutableModel.Updating;
 
 namespace Stl.ImmutableModel.Internal
 {
-    public class ChangeSetJsonConverter : JsonConverter
+    public class LocalKeyJsonConverter : JsonConverter
     {
         public override bool CanConvert(Type objectType) 
-            => objectType == typeof(ChangeSet);
+            => objectType == typeof(LocalKey);
 
         public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
         {
-            var typeRef = (ChangeSet) value!;
-            writer.WriteValue(typeRef.Changes.ToDictionary());
+            var typeRef = (LocalKey) value!;
+            writer.WriteValue(typeRef.Value);
         }
 
         public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
         {
-            var value = (Dictionary<Key, NodeChangeType>) reader.Value!;
+            var value = (string) reader.Value!;
             // ReSharper disable once HeapView.BoxingAllocation
-            return new ChangeSet(value.ToImmutableDictionary());
+            return new LocalKey(value);
         }
     }
 }
