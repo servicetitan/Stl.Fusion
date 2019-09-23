@@ -7,16 +7,16 @@ namespace Stl.ImmutableModel
 {
     public interface INode
     {
+        LocalKey LocalKey { get; }
         Key Key { get; }
-        DomainKey DomainKey { get; }
     }
 
     [Serializable]
     [JsonConverter(typeof(NodeJsonConverter))]
     public abstract class NodeBase: INode, ISerializable
     {
-        public Key Key { get; protected set; }
-        public virtual DomainKey DomainKey => (GetType(), Key);
+        public LocalKey LocalKey => Key.Path.Tail;
+        public virtual Key Key { get; protected set; }
 
         protected NodeBase(Key key) => Key = key;
 

@@ -7,15 +7,15 @@ namespace Stl.ImmutableModel
     {
         // "With" overloads
         
-        public static TNode With<TNode, T>(this TNode node, Key key, Option<T> item)
+        public static TNode With<TNode, T>(this TNode node, LocalKey localKey, Option<T> item)
             where TNode : class, ICollectionNode<T>
-            => (TNode) node.BaseWith(key, item);
+            => (TNode) node.BaseWith(localKey, item);
 
-        public static TNode With<TNode, T>(this TNode node, params (Key Key, Option<T> Item)[] changes)
+        public static TNode With<TNode, T>(this TNode node, params (LocalKey LocalKey, Option<T> Item)[] changes)
             where TNode : class, ICollectionNode<T>
             => (TNode) node.BaseWith(changes);
 
-        public static TNode With<TNode, T>(this TNode node, IEnumerable<(Key Key, Option<T> Item)> changes)
+        public static TNode With<TNode, T>(this TNode node, IEnumerable<(LocalKey LocalKey, Option<T> Item)> changes)
             where TNode : class, ICollectionNode<T>
             => (TNode) node.BaseWith(changes);
         
@@ -24,44 +24,44 @@ namespace Stl.ImmutableModel
         public static TNode WithAdded<TNode, T>(this TNode node, T item)
             where TNode : class, ICollectionNode<T>
             where T : class, INode
-            => (TNode) node.BaseWith(item.Key, Option.Some(item));
+            => (TNode) node.BaseWith(item.LocalKey, Option.Some(item));
 
         public static TNode WithAdded<TNode, T>(this TNode node, params T[] items)
             where TNode : class, ICollectionNode<T>
             where T : class, INode
-            => (TNode) node.BaseWith(items.Select(i => (i.Key, Option.Some(i))));
+            => (TNode) node.BaseWith(items.Select(i => (Key: i.LocalKey, Option.Some(i))));
 
         public static TNode WithAdded<TNode, T>(this TNode node, IEnumerable<T> items)
             where TNode : class, ICollectionNode<T>
             where T : class, INode
-            => (TNode) node.BaseWith(items.Select(i => (i.Key, Option.Some(i))));
+            => (TNode) node.BaseWith(items.Select(i => (Key: i.LocalKey, Option.Some(i))));
         
         // WithRemoved overloads
         
         public static TNode WithRemoved<TNode, T>(this TNode node, T item)
             where TNode : class, ICollectionNode<T>
             where T : class, INode
-            => (TNode) node.BaseWith(item.Key, default);
+            => (TNode) node.BaseWith(item.LocalKey, default);
 
         public static TNode WithRemoved<TNode, T>(this TNode node, params T[] items)
             where TNode : class, ICollectionNode<T>
             where T : class, INode
-            => (TNode) node.BaseWith(items.Select(i => (i.Key, Option<T>.None)));
+            => (TNode) node.BaseWith(items.Select(i => (Key: i.LocalKey, Option<T>.None)));
 
         public static TNode WithRemoved<TNode, T>(this TNode node, IEnumerable<T> items)
             where TNode : class, ICollectionNode<T>
             where T : class, INode
-            => (TNode) node.BaseWith(items.Select(i => (i.Key, Option<T>.None)));
+            => (TNode) node.BaseWith(items.Select(i => (Key: i.LocalKey, Option<T>.None)));
 
-        public static TNode WithRemoved<TNode>(this TNode node, Key key)
+        public static TNode WithRemoved<TNode>(this TNode node, LocalKey localKey)
             where TNode : class, ICollectionNode
-            => (TNode) node.BaseWith(key, default);
+            => (TNode) node.BaseWith(localKey, default);
 
-        public static TNode WithRemoved<TNode>(this TNode node, params Key[] keys)
+        public static TNode WithRemoved<TNode>(this TNode node, params LocalKey[] keys)
             where TNode : class, ICollectionNode
             => (TNode) node.BaseWith(keys.Select(k => (k, Option<object?>.None)));
 
-        public static TNode WithRemoved<TNode>(this TNode node, IEnumerable<Key> keys)
+        public static TNode WithRemoved<TNode>(this TNode node, IEnumerable<LocalKey> keys)
             where TNode : class, ICollectionNode
             => (TNode) node.BaseWith(keys.Select(k => (k, Option<object?>.None)));
     }

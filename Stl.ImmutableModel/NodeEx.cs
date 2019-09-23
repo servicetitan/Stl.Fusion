@@ -34,7 +34,7 @@ namespace Stl.ImmutableModel
         public static TNode DualWith<TNode>(this TNode node, Symbol key, Option<object?> value)
             where TNode : class, INode
             => (TNode) (node switch {
-                ICollectionNode c => (INode) c.BaseWith(new Key(key), value),
+                ICollectionNode c => (INode) c.BaseWith(new LocalKey(key), value),
                 ISimpleNode s => s.With(key, value.Value),
                 _ => throw new ArgumentOutOfRangeException(nameof(node)),
             });
@@ -42,7 +42,7 @@ namespace Stl.ImmutableModel
         public static TNode DualWith<TNode>(this TNode node, IEnumerable<(Symbol Key, Option<object?> Value)> changes)
             where TNode : class, INode
             => (TNode) (node switch {
-                ICollectionNode c => (INode) c.BaseWith(changes.Select(p => (new Key(p.Key), p.Value))),
+                ICollectionNode c => (INode) c.BaseWith(changes.Select(p => (new LocalKey(p.Key), p.Value))),
                 ISimpleNode s => s.BaseWith(changes.Select(p => (p.Key, p.Value.Value))),
                 _ => throw new ArgumentOutOfRangeException(nameof(node)),
             });
