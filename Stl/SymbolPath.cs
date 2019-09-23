@@ -28,6 +28,19 @@ namespace Stl
             HashCode = ComputeHashCode();
         }
 
+        public SymbolPath(string[] segments)
+        {
+            if (segments.Length == 0) 
+                throw new ArgumentOutOfRangeException(nameof(segments));
+            SymbolPath? head = null;
+            for (var index = 0; index < segments.Length - 1; index++) 
+                head = new SymbolPath(head, segments[index]);
+            Head = head;
+            Tail = segments[^1];
+            SegmentCount = (Head?.SegmentCount ?? 0) + 1;
+            HashCode = ComputeHashCode();
+        }
+
         public SymbolPath(Symbol[] segments)
         {
             if (segments.Length == 0) 
@@ -68,6 +81,7 @@ namespace Stl
         // Operators
 
         public static SymbolPath operator +(SymbolPath first, Symbol second) => first.Concat(second);
+        public static SymbolPath operator +(SymbolPath first, string second) => first.Concat(new Symbol(second));
         public static SymbolPath operator +(SymbolPath first, SymbolPath second) => first.Concat(second);
 
         // Equality & comparison

@@ -41,8 +41,8 @@ namespace Stl.Tests.ImmutableModel.Indexing
                 .Should().Equals("caps1");
             idx.Resolve(idx.GetPath(vm2) + new Symbol(VirtualMachine.CapabilitiesSymbol))
                 .Should().Equals("caps2");
-            idx.GetNode<VirtualMachine>((typeof(VirtualMachine), vm1.LocalKey)).Should().Equals(vm1);
-            idx.GetNode<VirtualMachine>((typeof(VirtualMachine), vm2.LocalKey)).Should().Equals(vm2);
+            idx.GetNode<VirtualMachine>(vm1.Key).Should().Equals(vm1);
+            idx.GetNode<VirtualMachine>(vm2.Key).Should().Equals(vm2);
         }
 
         [Fact]
@@ -51,7 +51,7 @@ namespace Stl.Tests.ImmutableModel.Indexing
             var idx = BuildModel();
             var cluster1 = idx.Resolve<Cluster>("./cluster1");
             var vm2 = cluster1["vm2"];
-            var vm3 = new VirtualMachine("vm3")
+            var vm3 = new VirtualMachine(vm2.Key.Path.Head + "vm3")
                 .With(VirtualMachine.CapabilitiesSymbol, "caps3");
             
             var cluster1a = cluster1.WithRemoved(vm2).WithAdded(vm3);
@@ -94,13 +94,13 @@ namespace Stl.Tests.ImmutableModel.Indexing
 
         internal static UpdatableIndex<ModelRoot> BuildModel()
         {
-            var vm1 = new VirtualMachine("vm1")
+            var vm1 = new VirtualMachine(new Key("./cluster1/vm1"))
                 .With(VirtualMachine.CapabilitiesSymbol, "caps1");
-            var vm2 = new VirtualMachine("vm2")
+            var vm2 = new VirtualMachine(new Key("./cluster1/vm2"))
                 .With(VirtualMachine.CapabilitiesSymbol, "caps2");
-            var cluster = new Cluster("cluster1")
+            var cluster = new Cluster(new Key("cluster1"))
                 .WithAdded(vm1, vm2);
-            var root = new ModelRoot(".")
+            var root = new ModelRoot(new Key("."))
                 .WithAdded(cluster);
             
             var idx = UpdatableIndex.New(root);

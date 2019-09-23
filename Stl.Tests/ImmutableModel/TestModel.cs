@@ -7,14 +7,14 @@ namespace Stl.Tests.ImmutableModel
     [Serializable]
     public class ModelRoot : CollectionNodeBase<Cluster>
     {
-        public ModelRoot(LocalKey localKey) : base(localKey) { }
+        public ModelRoot(Key key) : base(key) { }
         public ModelRoot(SerializationInfo info, StreamingContext context) : base(info, context) { }
     }
 
     [Serializable]
     public class Cluster : CollectionNodeBase<VirtualMachine>
     {
-        public Cluster(LocalKey localKey) : base(localKey) { }
+        public Cluster(Key key) : base(key) { }
         public Cluster(SerializationInfo info, StreamingContext context) : base(info, context) { }
     }
 
@@ -24,7 +24,7 @@ namespace Stl.Tests.ImmutableModel
         public static readonly Symbol CapabilitiesSymbol = new Symbol(nameof(Capabilities));
         public string Capabilities => (string) this[CapabilitiesSymbol]!;
 
-        public VirtualMachine(LocalKey localKey) : base(localKey)
+        public VirtualMachine(Key key) : base(key)
         {
             Items = Items.Add(CapabilitiesSymbol, "");
         }
