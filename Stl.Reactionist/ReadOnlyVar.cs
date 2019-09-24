@@ -20,13 +20,16 @@ namespace Stl.Reactionist
         protected Result<T> InternalResult => Storage.InternalResult;
         Result<T> IHasInternalResult<T>.InternalResult => InternalResult;
 
-        public object? UnsafeUntypedValue => Storage.UnsafeUntypedValue;
         public Exception? Error => Storage.Error;
         public bool HasError => Error != null;
-        public object? UntypedValue => Storage.UntypedValue;
         public T UnsafeValue => Storage.UnsafeValue;
         public T Value => Storage.Value;
         public Result<T> Result => Storage.Result;
+
+        // ReSharper disable once HeapView.BoxingAllocation
+        object? IResult.Value => Storage.Value;
+        // ReSharper disable once HeapView.BoxingAllocation
+        object? IResult.UnsafeValue => Storage.UnsafeValue;
 
         public ReadOnlyVar(IVar<T> storage)
         {

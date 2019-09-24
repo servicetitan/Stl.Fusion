@@ -8,6 +8,8 @@ namespace Stl.Reactionist
     public interface IVar<T> : IVar, IReadOnlyVar<T>, IMutableResult<T>
     {
         new Result<T> Result { get; set; }
+        new T UnsafeValue { get; set; }
+        new T Value { get; set; }
     }
 
     [DebuggerDisplay("{" + nameof(InternalResult) + "}")]
@@ -35,21 +37,23 @@ namespace Stl.Reactionist
         }
         public bool HasError => Error != null;
 
-        public T Value {
-            get => Result.Value;
-            set => Result = value;
-        }
-        public object? UntypedValue {
-            get => Result.UntypedValue;
-            set => Result = (T) value!;
-        }
-
         public T UnsafeValue {
             get => Result.UnsafeValue;
             set => Result = value;
         }
 
-        public object? UnsafeUntypedValue => Result.UnsafeUntypedValue;
+        public T Value {
+            get => Result.Value;
+            set => Result = value;
+        }
+
+        object? IMutableResult.Value {
+            // ReSharper disable once HeapView.BoxingAllocation
+            get => Value;
+            set => Value = (T) value!;
+        }
+        object? IResult.Value => Value;
+        object? IResult.UnsafeValue => Result.UnsafeValue;
 
         public Var(T value = default) => InternalResult = (value, null);
         public Var(Exception error) => InternalResult = (default, error);

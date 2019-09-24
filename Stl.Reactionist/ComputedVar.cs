@@ -35,9 +35,12 @@ namespace Stl.Reactionist
         public Exception? Error => Result.Error;
         public bool HasError => Error != null;
         public T Value => Result.Value;
-        public object? UntypedValue => Result.UntypedValue;
         public T UnsafeValue => Result.UnsafeValue;
-        public object? UnsafeUntypedValue => Result.UnsafeUntypedValue;
+
+        // ReSharper disable once HeapView.BoxingAllocation
+        object? IResult.Value => Result.Value;
+        // ReSharper disable once HeapView.BoxingAllocation
+        object? IResult.UnsafeValue => Result.UnsafeValue;
 
         public ComputedVar(Func<T> compute, bool isAutoComputed = true, DependencyTrackerBase? dependencyTracker = null)
         {

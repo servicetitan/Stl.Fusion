@@ -9,9 +9,9 @@ namespace Stl
 {
     public interface IResult
     {
-        object? UnsafeUntypedValue { get; }
+        object? UnsafeValue { get; }
         Exception? Error { get; }
-        object? UntypedValue { get; }
+        object? Value { get; }
         bool HasError { get; }
         
         void ThrowIfError();
@@ -19,14 +19,14 @@ namespace Stl
 
     public interface IMutableResult : IResult
     {
-        new object? UntypedValue { get; set; }
+        new object? Value { get; set; }
         new Exception? Error { get; set; }
     }
     
     public interface IResult<T> : IResult
     {
-        T UnsafeValue { get; }
-        T Value { get; }
+        new T UnsafeValue { get; }
+        new T Value { get; }
         
         void Deconstruct(out T value, out Exception? error);
     }
@@ -58,9 +58,9 @@ namespace Stl
         }
 
         // ReSharper disable once HeapView.BoxingAllocation
-        [JsonIgnore] public object? UntypedValue => Value;
+        object? IResult.Value => Value;
         // ReSharper disable once HeapView.BoxingAllocation
-        [JsonIgnore] public object? UnsafeUntypedValue => UnsafeValue;
+        object? IResult.UnsafeValue => UnsafeValue;
 
         [JsonConstructor]
         public Result(T unsafeValue, Exception? error)
