@@ -88,16 +88,16 @@ namespace Stl.ImmutableModel.Processing
             var changes = new List<NodeChangeInfo>();
             foreach (var (domainKey, changeType) in updateInfo.ChangeSet.Changes) {
                 INode node;
-                SymbolList list;
+                SymbolList path;
                 if (changeType.HasFlag(NodeChangeType.Removed)) {
                     node = oldIndex.GetNode(domainKey);
-                    list = oldIndex.GetPath(node);
+                    path = oldIndex.GetPath(node);
                 }
                 else {
                     node = newIndex.GetNode(domainKey);
-                    list = newIndex.GetPath(node);
+                    path = newIndex.GetPath(node);
                 }
-                var nodeChangeInfo = new NodeChangeInfo(updateInfo, node, list, changeType);
+                var nodeChangeInfo = new NodeChangeInfo(updateInfo, node, path, changeType);
                 if (IsSupportedChange(nodeChangeInfo))
                     changes.Add(nodeChangeInfo);
             }
@@ -112,7 +112,7 @@ namespace Stl.ImmutableModel.Processing
                 (int) c.ChangeType,
                 // For newly created nodes, we start from the ones closer to the root;
                 // for other nodes, we start from the deepest ones.
-                c.ChangeType.HasFlag(NodeChangeType.Created) ? c.Path.SegmentCount : -c.Path.SegmentCount));
+                c.ChangeType.HasFlag(NodeChangeType.Created) ? c.NodePath.SegmentCount : -c.NodePath.SegmentCount));
 
         protected virtual void ProcessNodeChange(NodeChangeInfo nodeChangeInfo)
         {
@@ -120,7 +120,7 @@ namespace Stl.ImmutableModel.Processing
             var nodeProcessingInfo = Processes.GetValueOrDefault(domainKey);
             if (nodeProcessingInfo == null) {
                 nodeProcessingInfo = new NodeProcessingInfo(
-                    this, domainKey, nodeChangeInfo.Path, 
+                    this, domainKey, nodeChangeInfo.NodePath, 
                     !nodeChangeInfo.ChangeType.HasFlag(NodeChangeType.Created));
                 var existingInfo = Processes.GetOrAdd(domainKey, nodeProcessingInfo);
                 if (existingInfo != nodeProcessingInfo) {
