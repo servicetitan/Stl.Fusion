@@ -9,7 +9,7 @@ namespace Stl.ImmutableModel.Indexing
 {
     public interface IIndex
     {
-        INode UntypedModel { get; }
+        INode Model { get; }
         SymbolList? TryGetPath(INode node);
         INode? TryGetNode(Key key);
         INode? TryGetNodeByPath(SymbolList list);
@@ -18,7 +18,7 @@ namespace Stl.ImmutableModel.Indexing
     public interface IIndex<out TModel> : IIndex
         where TModel : class, INode
     {
-        TModel Model { get; }
+        new TModel Model { get; }
     }
 
     [Serializable]
@@ -28,7 +28,7 @@ namespace Stl.ImmutableModel.Indexing
             where TModel : class, INode 
             => new Index<TModel>(model);
 
-        INode IIndex.UntypedModel => UntypedModel;
+        INode IIndex.Model => UntypedModel;
         protected abstract INode UntypedModel { get; }
 
         [field: NonSerialized]

@@ -25,7 +25,7 @@ namespace Stl.ImmutableModel.Updating
 
         protected UpdatableIndex() : base() { }
 
-        protected abstract void SetUntypedModel(INode model);
+        protected abstract void SetModel(INode model);
 
         public virtual (IUpdatableIndex Index, ChangeSet ChangeSet) BaseUpdate(
             INode source, INode target)
@@ -58,7 +58,7 @@ namespace Stl.ImmutableModel.Updating
                 tail = path.Tail;
                 path = path.Head;
             }
-            SetUntypedModel(target);
+            SetModel(target);
         }
 
         private NodeChangeType CompareAndUpdateNode(SymbolList list, INode source, INode target, ref ChangeSet changeSet)
@@ -126,7 +126,6 @@ namespace Stl.ImmutableModel.Updating
             Reindex();
         }
 
-        protected override void SetUntypedModel(INode model) => Model = (TModel) model;
+        protected override void SetModel(INode model) => Model = (TModel) model;
     }
-
 }

@@ -9,6 +9,8 @@ namespace Stl.ImmutableModel
         IEnumerable<TKey> Keys { get; }
 
         bool ContainsKey(TKey key);
+        // Makes sense to keep "Untyped" part here, since otherwise
+        // it causes generic method resolution conflicts on TKey argument
         bool TryGetValueUntyped(TKey key, out object? value);
     }
 

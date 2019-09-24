@@ -11,7 +11,7 @@ namespace Stl.ImmutableModel
         public static IEnumerable<KeyValuePair<Symbol, object?>> DualGetItems(this INode node) 
             => node switch {
                 ICollectionNode c => c.Keys.Select(localKey =>
-                    new KeyValuePair<Symbol, object?>(localKey, c.GetUntyped(localKey).UnsafeValue)),
+                    new KeyValuePair<Symbol, object?>(localKey, c.GetValueUntyped(localKey).UnsafeValue)),
                 ISimpleNode s => s,
                 _ => throw new ArgumentOutOfRangeException(nameof(node))
             };
@@ -24,10 +24,10 @@ namespace Stl.ImmutableModel
             }
         }
 
-        public static Option<object?> DualGetUntyped(this INode node, Symbol localKey)
+        public static Option<object?> DualGetValueUntyped(this INode node, Symbol localKey)
             => node switch {
-                ICollectionNode c => c.GetUntyped(localKey),
-                ISimpleNode s => s.GetUntyped(localKey),
+                ICollectionNode c => c.GetValueUntyped(localKey),
+                ISimpleNode s => s.GetValueUntyped(localKey),
                 _ => throw new ArgumentOutOfRangeException(nameof(node))
             };
         

@@ -41,12 +41,12 @@ namespace Stl.ImmutableModel.Processing
 
         protected abstract Task ProcessNodeAsync(INodeProcessingInfo info);
         protected virtual Task OnReadyAsync() => Task.CompletedTask;
-        protected virtual bool IsSupportedUpdate(UpdateInfo updateInfo) => true;
+        protected virtual bool IsSupportedUpdate(IUpdateInfo updateInfo) => true;
         protected virtual bool IsSupportedChange(in NodeChangeInfo nodeChangeInfo) => true; 
 
         protected override async Task RunInternalAsync()
         {
-            var allChanges = ModelProvider.UntypedChangeTracker.UntypedAllChanges.Publish(); 
+            var allChanges = ModelProvider.ChangeTracker.AllChanges.Publish(); 
             var processorTask = allChanges.Select(ProcessChange).ToTask(StoppingToken).SuppressCancellation();
             using (allChanges.Connect()) {
                 await OnReadyAsync().ConfigureAwait(false);
@@ -79,12 +79,12 @@ namespace Stl.ImmutableModel.Processing
             }
         }
 
-        protected Unit ProcessChange(UpdateInfo updateInfo)
+        protected Unit ProcessChange(IUpdateInfo updateInfo)
         {
             if (!IsSupportedUpdate(updateInfo))
                 return default;
-            var newIndex = updateInfo.UntypedNewIndex;
-            var oldIndex = updateInfo.UntypedOldIndex;
+            var newIndex = updateInfo.NewIndex;
+            var oldIndex = updateInfo.OldIndex;
             var changes = new List<NodeChangeInfo>();
             foreach (var (domainKey, changeType) in updateInfo.ChangeSet.Changes) {
                 INode node;
@@ -168,14 +168,14 @@ namespace Stl.ImmutableModel.Processing
     public class NodeProcessor : NodeProcessorBase
     {
         public Func<INodeProcessingInfo, Task> Implementation { get; }
-        public Func<UpdateInfo, bool>? IsSupportedUpdatePredicate { get; }
+        public Func<IUpdateInfo, bool>? IsSupportedUpdatePredicate { get; }
         public Func<NodeChangeInfo, bool>? IsSupportedChangePredicate { get; }
 
         public NodeProcessor(
             IModelProvider modelProvider, 
             IUpdater updater, 
             Func<INodeProcessingInfo, Task> implementation,
-            Func<UpdateInfo, bool>? isSupportedUpdatePredicate = null,
+            Func<IUpdateInfo, bool>? isSupportedUpdatePredicate = null,
             Func<NodeChangeInfo, bool>? isSupportedChangePredicate = null) 
             : base(modelProvider, updater)
         {
@@ -186,7 +186,7 @@ namespace Stl.ImmutableModel.Processing
 
         protected override Task ProcessNodeAsync(INodeProcessingInfo info) 
             => Implementation.Invoke(info);
-        protected override bool IsSupportedUpdate(UpdateInfo updateInfo) 
+        protected override bool IsSupportedUpdate(IUpdateInfo updateInfo) 
             => IsSupportedUpdatePredicate?.Invoke(updateInfo) ?? true;
         protected override bool IsSupportedChange(in NodeChangeInfo nodeChangeInfo) 
             => IsSupportedChangePredicate?.Invoke(nodeChangeInfo) ?? true;

@@ -91,7 +91,7 @@ namespace Stl.Tests.ImmutableModel.Indexing
                     ProcessNode(path + k, n);
             }
 
-            var root = index.UntypedModel;
+            var root = index.Model;
             ProcessNode(SymbolList.Root, root);
         }
 

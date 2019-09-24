@@ -7,19 +7,19 @@ namespace Stl.ImmutableModel.Updating
 {
     public interface IUpdater
     {
-        INode UntypedModel { get; }
-        IUpdatableIndex UntypedIndex { get; }
-        Task<UpdateInfo> UpdateAsync(
+        INode Model { get; }
+        IUpdatableIndex Index { get; }
+        Task<IUpdateInfo> UpdateAsync(
             Func<IUpdatableIndex, (IUpdatableIndex NewIndex, ChangeSet ChangeSet)> updater,
             CancellationToken cancellationToken = default);
-        event Action<UpdateInfo> Updated;
+        event Action<IUpdateInfo> Updated;
     }
     
     public interface IUpdater<TModel> : IUpdater
         where TModel : class, INode
     {
-        TModel Model { get; }
-        IUpdatableIndex<TModel> Index { get; }
+        new TModel Model { get; }
+        new IUpdatableIndex<TModel> Index { get; }
         Task<UpdateInfo<TModel>> UpdateAsync(
             Func<IUpdatableIndex<TModel>, (IUpdatableIndex<TModel> NewIndex, ChangeSet ChangeSet)> updater,
             CancellationToken cancellationToken = default);
@@ -30,24 +30,24 @@ namespace Stl.ImmutableModel.Updating
     public abstract class UpdaterBase<TModel> : IUpdater<TModel>
         where TModel : class, INode
     {
-        protected volatile IUpdatableIndex<TModel> _index;
+        protected volatile IUpdatableIndex<TModel> IndexField;
 
-        IUpdatableIndex IUpdater.UntypedIndex => _index;
-        public IUpdatableIndex<TModel> Index => _index;
+        IUpdatableIndex IUpdater.Index => IndexField;
+        public IUpdatableIndex<TModel> Index => IndexField;
 
-        INode IUpdater.UntypedModel => Model;
+        INode IUpdater.Model => Model;
         [JsonIgnore] public TModel Model => Index.Model;
 
-        event Action<UpdateInfo> IUpdater.Updated {
+        event Action<IUpdateInfo> IUpdater.Updated {
             add => Updated += value;
             remove => Updated -= value;
         }
         public event Action<UpdateInfo<TModel>>? Updated;
 
         [JsonConstructor]
-        protected UpdaterBase(IUpdatableIndex<TModel> index) => _index = index;
+        protected UpdaterBase(IUpdatableIndex<TModel> index) => IndexField = index;
 
-        public async Task<UpdateInfo> UpdateAsync(
+        public async Task<IUpdateInfo> UpdateAsync(
             Func<IUpdatableIndex, (IUpdatableIndex NewIndex, ChangeSet ChangeSet)> updater,
             CancellationToken cancellationToken = default)
         {

@@ -10,31 +10,31 @@ namespace Stl.ImmutableModel
 
     public interface IModelProvider : IDisposable
     {
-        INode UntypedModel { get; }
-        IUpdatableIndex UntypedIndex { get; }
-        IChangeTracker UntypedChangeTracker { get; }
+        INode Model { get; }
+        IUpdatableIndex Index { get; }
+        IChangeTracker ChangeTracker { get; }
     }
 
     public interface IModelProvider<TModel> : IModelProvider
         where TModel : class, INode
     {
-        TModel Model { get; }
-        IUpdatableIndex<TModel> Index { get; }
-        IChangeTracker<TModel> ChangeTracker { get; }
+        new TModel Model { get; }
+        new IUpdatableIndex<TModel> Index { get; }
+        new IChangeTracker<TModel> ChangeTracker { get; }
     }
 
     public class ModelProvider<TModel> : IModelProvider<TModel>
         where TModel : class, INode
     {
-        IChangeTracker IModelProvider.UntypedChangeTracker => ChangeTracker;
-        IUpdatableIndex IModelProvider.UntypedIndex => Index;
-        INode IModelProvider.UntypedModel => Model;
+        INode IModelProvider.Model => Model;
+        IUpdatableIndex IModelProvider.Index => Index;
+        IChangeTracker IModelProvider.ChangeTracker => ChangeTracker;
 
+        protected IUpdater<TModel> Updater { get; }
         public bool OwnsTracker { get; private set; }
         public IChangeTracker<TModel> ChangeTracker { get; }
         public IUpdatableIndex<TModel> Index => Updater.Index;
         public TModel Model => Index.Model;
-        protected IUpdater<TModel> Updater { get; }
 
         public ModelProvider(IUpdater<TModel> updater) 
             : this(updater, new ChangeTracker<TModel>(updater), true) { }

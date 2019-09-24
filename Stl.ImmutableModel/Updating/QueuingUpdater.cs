@@ -47,7 +47,7 @@ namespace Stl.ImmutableModel.Updating
                     continue;
                 }
                 var (newIndex, changeSet) = r.Value;
-                _index = newIndex;
+                IndexField = newIndex;
                 var updateInfo = new UpdateInfo<TModel>(oldIndex, newIndex, changeSet);
                 OnUpdated(updateInfo);
                 result.SetResult(updateInfo);

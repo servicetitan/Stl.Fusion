@@ -10,15 +10,15 @@ namespace Stl.ImmutableModel.Updating
 {
     public interface IChangeTracker : IDisposable
     {
-        IObservable<UpdateInfo> UntypedAllChanges { get; }
-        IObservable<UpdateInfo> UntypedChangesIncluding(Key key, NodeChangeType changeTypeMask);
+        IObservable<IUpdateInfo> AllChanges { get; }
+        IObservable<IUpdateInfo> ChangesIncluding(Key key, NodeChangeType changeTypeMask);
     }
 
     public interface IChangeTracker<TModel> : IChangeTracker
         where TModel : class, INode
     {
-        IObservable<UpdateInfo<TModel>> AllChanges { get; }
-        IObservable<UpdateInfo<TModel>> ChangesIncluding(Key key, NodeChangeType changeTypeMask);
+        new IObservable<UpdateInfo<TModel>> AllChanges { get; }
+        new IObservable<UpdateInfo<TModel>> ChangesIncluding(Key key, NodeChangeType changeTypeMask);
     }
 
     public sealed class ChangeTracker<TModel> : IChangeTracker<TModel>
@@ -30,7 +30,7 @@ namespace Stl.ImmutableModel.Updating
         private readonly ConcurrentDictionary<Key, ImmutableDictionary<IObserver<UpdateInfo<TModel>>, NodeChangeType>> _observers =
             new ConcurrentDictionary<Key, ImmutableDictionary<IObserver<UpdateInfo<TModel>>, NodeChangeType>>();
 
-        IObservable<UpdateInfo> IChangeTracker.UntypedAllChanges => _allChanges;
+        IObservable<IUpdateInfo> IChangeTracker.AllChanges => _allChanges;
         public IObservable<UpdateInfo<TModel>> AllChanges => _allChanges;
 
         public ChangeTracker(IUpdater<TModel> updater)
@@ -68,7 +68,7 @@ namespace Stl.ImmutableModel.Updating
             }
         }
 
-        IObservable<UpdateInfo> IChangeTracker.UntypedChangesIncluding(Key key, NodeChangeType changeTypeMask) => ChangesIncluding(key, changeTypeMask);
+        IObservable<IUpdateInfo> IChangeTracker.ChangesIncluding(Key key, NodeChangeType changeTypeMask) => ChangesIncluding(key, changeTypeMask);
         public IObservable<UpdateInfo<TModel>> ChangesIncluding(Key key, NodeChangeType changeTypeMask)
         {
             if (_observers == null)

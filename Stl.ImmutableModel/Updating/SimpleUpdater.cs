@@ -23,7 +23,7 @@ namespace Stl.ImmutableModel.Updating
                 cancellationToken.ThrowIfCancellationRequested();
                 oldIndex = Index;
                 (newIndex, changeSet) = updater.Invoke(oldIndex);
-                if (Interlocked.CompareExchange(ref _index, newIndex, oldIndex) == oldIndex)
+                if (Interlocked.CompareExchange(ref IndexField, newIndex, oldIndex) == oldIndex)
                     break;
             }
             var updateInfo = new UpdateInfo<TModel>(oldIndex, newIndex, changeSet);
