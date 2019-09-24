@@ -9,7 +9,7 @@ namespace Stl.ImmutableModel.Updating
 {
     public interface IUpdatableIndex : IIndex
     {
-        (IUpdatableIndex Index, ChangeSet ChangeSet) BaseUpdate(INode source, INode target);
+        (IUpdatableIndex Index, ModelChangeSet ChangeSet) BaseUpdate(INode source, INode target);
     }
 
     public interface IUpdatableIndex<out TModel> : IIndex<TModel>, IUpdatableIndex
@@ -27,22 +27,22 @@ namespace Stl.ImmutableModel.Updating
 
         protected abstract void SetModel(INode model);
 
-        public virtual (IUpdatableIndex Index, ChangeSet ChangeSet) BaseUpdate(
+        public virtual (IUpdatableIndex Index, ModelChangeSet ChangeSet) BaseUpdate(
             INode source, INode target)
         {
             if (source == target)
-                return (this, ChangeSet.Empty);
+                return (this, ModelChangeSet.Empty);
 
             if (source.LocalKey != target.LocalKey)
                 throw Errors.InvalidUpdateKeyMismatch();
             
             var clone = (UpdatableIndex) MemberwiseClone();
-            var changeSet = new ChangeSet();
+            var changeSet = new ModelChangeSet();
             clone.UpdateNode(source, target, ref changeSet);
             return (clone, changeSet);
         }
 
-        protected virtual void UpdateNode(INode source, INode target, ref ChangeSet changeSet)
+        protected virtual void UpdateNode(INode source, INode target, ref ModelChangeSet changeSet)
         {
             SymbolList? path = this.GetPath(source);
             CompareAndUpdateNode(path, source, target, ref changeSet);
@@ -61,7 +61,7 @@ namespace Stl.ImmutableModel.Updating
             SetModel(target);
         }
 
-        private NodeChangeType CompareAndUpdateNode(SymbolList list, INode source, INode target, ref ChangeSet changeSet)
+        private NodeChangeType CompareAndUpdateNode(SymbolList list, INode source, INode target, ref ModelChangeSet changeSet)
         {
             if (source == target)
                 return 0;

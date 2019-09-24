@@ -18,7 +18,7 @@ namespace Stl.ImmutableModel.Processing
     public interface INodeProcessor : IAsyncProcess
     {
         IModelProvider ModelProvider { get; }
-        IUpdater Updater { get; }
+        IModelUpdater ModelUpdater { get; }
     }
 
     public abstract class NodeProcessorBase : AsyncProcessBase, INodeProcessor
@@ -29,19 +29,19 @@ namespace Stl.ImmutableModel.Processing
             new ConcurrentDictionary<NodeProcessingInfo, Unit>();
 
         public IModelProvider ModelProvider { get; }
-        public IUpdater Updater { get; }
+        public IModelUpdater ModelUpdater { get; }
 
         protected NodeProcessorBase(
             IModelProvider modelProvider, 
-            IUpdater updater)
+            IModelUpdater modelUpdater)
         {
             ModelProvider = modelProvider;
-            Updater = updater;
+            ModelUpdater = modelUpdater;
         }
 
         protected abstract Task ProcessNodeAsync(INodeProcessingInfo info);
         protected virtual Task OnReadyAsync() => Task.CompletedTask;
-        protected virtual bool IsSupportedUpdate(IUpdateInfo updateInfo) => true;
+        protected virtual bool IsSupportedUpdate(IModelUpdateInfo updateInfo) => true;
         protected virtual bool IsSupportedChange(in NodeChangeInfo nodeChangeInfo) => true; 
 
         protected override async Task RunInternalAsync()
@@ -79,14 +79,14 @@ namespace Stl.ImmutableModel.Processing
             }
         }
 
-        protected Unit ProcessChange(IUpdateInfo updateInfo)
+        protected Unit ProcessChange(IModelUpdateInfo updateInfo)
         {
             if (!IsSupportedUpdate(updateInfo))
                 return default;
             var newIndex = updateInfo.NewIndex;
             var oldIndex = updateInfo.OldIndex;
             var changes = new List<NodeChangeInfo>();
-            foreach (var (domainKey, changeType) in updateInfo.ChangeSet.Changes) {
+            foreach (var (domainKey, changeType) in updateInfo.ChangeSet) {
                 INode node;
                 SymbolList path;
                 if (changeType.HasFlag(NodeChangeType.Removed)) {
@@ -168,16 +168,16 @@ namespace Stl.ImmutableModel.Processing
     public class NodeProcessor : NodeProcessorBase
     {
         public Func<INodeProcessingInfo, Task> Implementation { get; }
-        public Func<IUpdateInfo, bool>? IsSupportedUpdatePredicate { get; }
+        public Func<IModelUpdateInfo, bool>? IsSupportedUpdatePredicate { get; }
         public Func<NodeChangeInfo, bool>? IsSupportedChangePredicate { get; }
 
         public NodeProcessor(
             IModelProvider modelProvider, 
-            IUpdater updater, 
+            IModelUpdater modelUpdater, 
             Func<INodeProcessingInfo, Task> implementation,
-            Func<IUpdateInfo, bool>? isSupportedUpdatePredicate = null,
+            Func<IModelUpdateInfo, bool>? isSupportedUpdatePredicate = null,
             Func<NodeChangeInfo, bool>? isSupportedChangePredicate = null) 
-            : base(modelProvider, updater)
+            : base(modelProvider, modelUpdater)
         {
             Implementation = implementation;
             IsSupportedUpdatePredicate = isSupportedUpdatePredicate;
@@ -186,7 +186,7 @@ namespace Stl.ImmutableModel.Processing
 
         protected override Task ProcessNodeAsync(INodeProcessingInfo info) 
             => Implementation.Invoke(info);
-        protected override bool IsSupportedUpdate(IUpdateInfo updateInfo) 
+        protected override bool IsSupportedUpdate(IModelUpdateInfo updateInfo) 
             => IsSupportedUpdatePredicate?.Invoke(updateInfo) ?? true;
         protected override bool IsSupportedChange(in NodeChangeInfo nodeChangeInfo) 
             => IsSupportedChangePredicate?.Invoke(nodeChangeInfo) ?? true;

@@ -1,4 +1,6 @@
 using System;
+using System.Threading.Tasks;
+using Stl.Async;
 using Stl.ImmutableModel.Updating;
 
 namespace Stl.ImmutableModel
@@ -8,11 +10,11 @@ namespace Stl.ImmutableModel
     // read-only models + an API for tracking the changes there,
     // but not the way to update the models.
 
-    public interface IModelProvider : IDisposable
+    public interface IModelProvider : IAsyncDisposable
     {
         INode Model { get; }
         IUpdatableIndex Index { get; }
-        IChangeTracker ChangeTracker { get; }
+        IModelChangeTracker ChangeTracker { get; }
     }
 
     public interface IModelProvider<TModel> : IModelProvider
@@ -20,49 +22,35 @@ namespace Stl.ImmutableModel
     {
         new TModel Model { get; }
         new IUpdatableIndex<TModel> Index { get; }
-        new IChangeTracker<TModel> ChangeTracker { get; }
+        new IModelChangeTracker<TModel> ChangeTracker { get; }
     }
 
-    public class ModelProvider<TModel> : IModelProvider<TModel>
+    public class ModelProvider<TModel> : AsyncDisposableBase, IModelProvider<TModel>
         where TModel : class, INode
     {
-        INode IModelProvider.Model => Model;
-        IUpdatableIndex IModelProvider.Index => Index;
-        IChangeTracker IModelProvider.ChangeTracker => ChangeTracker;
+        protected IModelUpdater<TModel> Updater { get; }
 
-        protected IUpdater<TModel> Updater { get; }
-        public bool OwnsTracker { get; private set; }
-        public IChangeTracker<TModel> ChangeTracker { get; }
+        INode IModelProvider.Model => Updater.Model;
+        IUpdatableIndex IModelProvider.Index => Updater.Index;
+        IModelChangeTracker IModelProvider.ChangeTracker => Updater.ChangeTracker;
+
+        public TModel Model => Updater.Model;
         public IUpdatableIndex<TModel> Index => Updater.Index;
-        public TModel Model => Index.Model;
+        public IModelChangeTracker<TModel> ChangeTracker => Updater.ChangeTracker;
 
-        public ModelProvider(IUpdater<TModel> updater) 
-            : this(updater, new ChangeTracker<TModel>(updater), true) { }
-
-        public ModelProvider(IUpdater<TModel> updater, IChangeTracker<TModel> changeTracker, bool ownsTracker = true)
+        public ModelProvider(IModelUpdater<TModel> updater)
         {
             Updater = updater;
-            ChangeTracker = changeTracker;
-            OwnsTracker = ownsTracker;
         }
 
-        public void Dispose()
-        {
-            if (OwnsTracker) {
-                OwnsTracker = false;
-                ChangeTracker.Dispose();
-            }
-        }
+        protected override ValueTask DisposeInternalAsync(bool disposing) 
+            => Updater.DisposeAsync();
     }
 
     public static class ModelProvider
     {
-        public static ModelProvider<TModel> New<TModel>(IUpdater<TModel> updater)
+        public static ModelProvider<TModel> New<TModel>(IModelUpdater<TModel> modelUpdater)
             where TModel : class, INode
-            => new ModelProvider<TModel>(updater);
-
-        public static ModelProvider<TModel> New<TModel>(IUpdater<TModel> updater, IChangeTracker<TModel> changeTracker, bool ownsTracker = true)
-            where TModel : class, INode
-            => new ModelProvider<TModel>(updater, changeTracker, ownsTracker);
+            => new ModelProvider<TModel>(modelUpdater);
     }
 }

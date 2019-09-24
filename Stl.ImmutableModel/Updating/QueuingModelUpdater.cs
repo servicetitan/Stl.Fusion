@@ -7,27 +7,30 @@ using Stl.Async;
 namespace Stl.ImmutableModel.Updating 
 {
     [Serializable]
-    public class QueuingUpdater<TModel> : UpdaterBase<TModel>, IAsyncDisposable
+    public class QueuingModelUpdater<TModel> : ModelUpdaterBase<TModel>
         where TModel : class, INode
     {
         protected AsyncChannel<(
-            Func<IUpdatableIndex<TModel>, (IUpdatableIndex<TModel> NewIndex, ChangeSet ChangeSet)> Updater,
+            Func<IUpdatableIndex<TModel>, (IUpdatableIndex<TModel> NewIndex, ModelChangeSet ChangeSet)> Updater,
             CancellationToken CancellationToken,
-            TaskCompletionSource<UpdateInfo<TModel>> Result)> UpdateQueue { get; set; } = 
+            TaskCompletionSource<ModelUpdateInfo<TModel>> Result)> UpdateQueue { get; set; } = 
             new AsyncChannel<(
-                Func<IUpdatableIndex<TModel>, (IUpdatableIndex<TModel> NewIndex, ChangeSet ChangeSet)> Updater, 
+                Func<IUpdatableIndex<TModel>, (IUpdatableIndex<TModel> NewIndex, ModelChangeSet ChangeSet)> Updater, 
                 CancellationToken CancellationToken,
-                TaskCompletionSource<UpdateInfo<TModel>> Result)>(64);
+                TaskCompletionSource<ModelUpdateInfo<TModel>> Result)>(64);
         protected Task QueueProcessorTask { get; set; }
 
         [JsonConstructor]
-        public QueuingUpdater(IUpdatableIndex<TModel> index) : base(index) 
+        public QueuingModelUpdater(IUpdatableIndex<TModel> index) : base(index) 
             => QueueProcessorTask = Task.Run(QueueProcessor);
 
-        public virtual async ValueTask DisposeAsync()
+        protected override async ValueTask DisposeInternalAsync(bool disposing)
         {
+            // Await for completion of all pending updates
             UpdateQueue.CompletePut();
             await QueueProcessorTask.SuppressExceptions().ConfigureAwait(false);
+            // And release the rest of resources
+            await base.DisposeInternalAsync(disposing).ConfigureAwait(false);
         }
 
         protected virtual async Task QueueProcessor()
@@ -48,17 +51,17 @@ namespace Stl.ImmutableModel.Updating
                 }
                 var (newIndex, changeSet) = r.Value;
                 IndexField = newIndex;
-                var updateInfo = new UpdateInfo<TModel>(oldIndex, newIndex, changeSet);
+                var updateInfo = new ModelUpdateInfo<TModel>(oldIndex, newIndex, changeSet);
                 OnUpdated(updateInfo);
                 result.SetResult(updateInfo);
             }
         }
 
-        public override async Task<UpdateInfo<TModel>> UpdateAsync(
-            Func<IUpdatableIndex<TModel>, (IUpdatableIndex<TModel> NewIndex, ChangeSet ChangeSet)> updater,
+        public override async Task<ModelUpdateInfo<TModel>> UpdateAsync(
+            Func<IUpdatableIndex<TModel>, (IUpdatableIndex<TModel> NewIndex, ModelChangeSet ChangeSet)> updater,
             CancellationToken cancellationToken = default)
         {
-            var result = new TaskCompletionSource<UpdateInfo<TModel>>();
+            var result = new TaskCompletionSource<ModelUpdateInfo<TModel>>();
             await UpdateQueue
                 .PutAsync((updater, cancellationToken, result), cancellationToken)
                 .ConfigureAwait(false);
@@ -66,10 +69,10 @@ namespace Stl.ImmutableModel.Updating
         }
     }
 
-    public static class QueuingUpdater
+    public static class QueuingModelUpdater
     {
-        public static QueuingUpdater<TModel> New<TModel>(IUpdatableIndex<TModel> index)
+        public static QueuingModelUpdater<TModel> New<TModel>(IUpdatableIndex<TModel> index)
             where TModel : class, INode 
-            => new QueuingUpdater<TModel>(index);
+            => new QueuingModelUpdater<TModel>(index);
     }
 }

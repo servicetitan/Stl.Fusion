@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.CommandLine;
+using System.Linq;
 using System.Text.RegularExpressions;
 using Autofac.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
@@ -16,21 +17,28 @@ namespace Stl.Hosting
 {
     public interface IAppHostBuilder
     {
+        string AppName { get; }
         string BaseDirectory { get; set; }
         string EnvironmentVarPrefix { get; set; }
         string PluginHostLoggingSectionName { get; set; }
         string LoggingSectionName { get; set; }
         ReadOnlyMemory<string> WebHostUrls { get; set; }
+
+        bool IsTestHost { get; }
         IAppHostBuildState BuildState { get; }
 
         IHost? Build(string[]? arguments = null);
+    }
+
+    public interface ITestAppHostBuilder
+    {
+        ReadOnlyMemory<Type> TestPluginTypes { get; set; }
     }
 
     public interface IAppHostBuildState 
     { 
         ReadOnlyMemory<string> Arguments { get; set; }
         string EnvironmentName { get; set; }
-        IConfiguration PluginHostConfiguration { get; set; }
         IPluginHostBuilder PluginHostBuilder { get; set; }
         IPluginHost PluginHost { get; set; }
         ReadOnlyMemory<string> HostArguments { get; set; }
@@ -39,10 +47,13 @@ namespace Stl.Hosting
         void BuildHost();
     }
 
-    public abstract class AppHostBuilderBase : HasOptionsBase, IAppHostBuilder, IAppHostBuildState
+    public abstract class AppHostBuilderBase : HasOptionsBase, 
+        IAppHostBuilder, ITestAppHostBuilder, IAppHostBuildState
     {
         public abstract string AppName { get; }
-        public abstract Type[] PluginTypes { get; }
+        public abstract Type[] CorePluginTypes { get; }
+        public abstract Type[] NonTestPluginTypes { get; }
+        public bool IsTestHost => TestPluginTypes.Length != 0;
 
         public string BaseDirectory {
             get => this.GetOption<string>(nameof(BaseDirectory)) ?? "";
@@ -61,24 +72,20 @@ namespace Stl.Hosting
             set => SetOption(nameof(LoggingSectionName), value);
         }
         public ReadOnlyMemory<string> WebHostUrls {
-            get => this.GetOption<ReadOnlyMemory<string>>(nameof(WebHostUrls));
-            set => SetOption(nameof(WebHostUrls), value);
+            get => this.GetOption<string[]>(nameof(WebHostUrls));
+            set => SetOption(nameof(WebHostUrls), value.ToArray());
         }
 
         public IAppHostBuildState BuildState => this;
         void IAppHostBuildState.BuildHost() => BuildHost();
 
         ReadOnlyMemory<string> IAppHostBuildState.Arguments {
-            get => this.GetOption<ReadOnlyMemory<string>>(nameof(IAppHostBuildState.Arguments));
-            set => SetOption(nameof(IAppHostBuildState.Arguments), value);
+            get => this.GetOption<string[]>(nameof(IAppHostBuildState.Arguments));
+            set => SetOption(nameof(IAppHostBuildState.Arguments), value.ToArray());
         }
         string IAppHostBuildState.EnvironmentName {
             get => this.GetOption<string>(nameof(IAppHostBuildState.EnvironmentName)) ?? Environments.Production;
             set => SetOption(nameof(IAppHostBuildState.EnvironmentName), value);
-        }
-        IConfiguration IAppHostBuildState.PluginHostConfiguration {
-            get => this.GetOption<IConfiguration?>(nameof(IAppHostBuildState.PluginHostConfiguration))!;
-            set => SetOption(nameof(IAppHostBuildState.PluginHostConfiguration), value);
         }
         IPluginHostBuilder IAppHostBuildState.PluginHostBuilder {
             get => this.GetOption<IPluginHostBuilder?>(nameof(IAppHostBuildState.PluginHostBuilder))!;
@@ -89,12 +96,23 @@ namespace Stl.Hosting
             set => SetOption(nameof(IAppHostBuildState.PluginHost), value);
         }
         ReadOnlyMemory<string> IAppHostBuildState.HostArguments {
-            get => this.GetOption<ReadOnlyMemory<string>>(nameof(IAppHostBuildState.HostArguments));
-            set => SetOption(nameof(IAppHostBuildState.HostArguments), value);
+            get => this.GetOption<string[]>(nameof(IAppHostBuildState.HostArguments));
+            set => SetOption(nameof(IAppHostBuildState.HostArguments), value.ToArray());
         }
         IHost? IAppHostBuildState.Host {
             get => this.GetOption<IHost?>(nameof(IAppHostBuildState.Host));
             set => SetOption(nameof(IAppHostBuildState.Host), value);
+        }
+
+        // ITestAppHostBuilder properties (protected + explicit)
+
+        ReadOnlyMemory<Type> ITestAppHostBuilder.TestPluginTypes {
+            get => TestPluginTypes;
+            set => TestPluginTypes = value;
+        }
+        protected ReadOnlyMemory<Type> TestPluginTypes {
+            get => this.GetOption<Type[]>(nameof(TestPluginTypes));
+            set => SetOption(nameof(TestPluginTypes), value.ToArray());
         }
 
         protected AppHostBuilderBase()
@@ -122,8 +140,9 @@ namespace Stl.Hosting
             var state = BuildState;
             if (arguments != null)
                 state.Arguments = arguments;
-            state.PluginHostConfiguration = BuildPluginHostConfiguration();
             state.PluginHostBuilder = CreatePluginHostBuilder();
+            ConfigurePluginHostConfiguration();
+            ConfigurePluginHostLogging();
             ConfigurePluginHostServiceProviderFactory();
             ConfigurePluginHostUsePlugins();
             ConfigurePluginHostServices();
@@ -133,40 +152,56 @@ namespace Stl.Hosting
             return state.Host;
         }
 
-        protected virtual IConfiguration BuildPluginHostConfiguration()
+        protected virtual void ConfigurePluginHostConfiguration()
         {
-            var baseCfg = new ConfigurationBuilder()
-                .SetBasePath(BaseDirectory)
-                .AddEnvironmentVariables(EnvironmentVarPrefix)
-                .Build();
+            BuildState.PluginHostBuilder.ConfigureHostConfiguration(cfg => {
+                var baseCfg = new ConfigurationBuilder()
+                    .SetBasePath(BaseDirectory)
+                    .AddEnvironmentVariables(EnvironmentVarPrefix)
+                    .Build();
             
-            BuildState.EnvironmentName = baseCfg[HostDefaults.EnvironmentKey] ?? Environments.Production;
+                BuildState.EnvironmentName = baseCfg[HostDefaults.EnvironmentKey] ?? Environments.Production;
 
-            var cfg = new ConfigurationBuilder()
-                .AddConfiguration(baseCfg);
-            foreach (var fileName in GetPluginHostConfigurationFileNames())
-                cfg.AddFile(fileName);
-
-            return cfg.Build();
+                cfg.AddConfiguration(baseCfg);
+                foreach (var fileName in GetPluginHostConfigurationFileNames())
+                    cfg.AddFile(fileName);
+            });
         }
 
         protected virtual IPluginHostBuilder CreatePluginHostBuilder() 
             => new PluginHostBuilder();
 
+        protected virtual void ConfigurePluginHostLogging()
+        {
+            BuildState.PluginHostBuilder.ConfigureLogging((builder, logging) => {
+                var cfg = builder.Configuration;
+                var section = cfg.GetSection(PluginHostLoggingSectionName);
+                logging.AddConfiguration(section);
+                logging.AddConsole();
+                logging.AddDebug();
+                logging.AddEventSourceLogger();
+            });
+        }
+
         protected virtual void ConfigurePluginHostServiceProviderFactory()
-            => BuildState.PluginHostBuilder.UseServiceProviderFactory(services => {
+            => BuildState.PluginHostBuilder.UseServiceProviderFactory((builder, services) => {
                 var f = new AutofacServiceProviderFactory();
-                var builder = f.CreateBuilder(services);
-                return f.CreateServiceProvider(builder);
+                var containerBuilder = f.CreateBuilder(services);
+                return f.CreateServiceProvider(containerBuilder);
             });
 
         protected virtual void ConfigurePluginHostUsePlugins()
-            => BuildState.PluginHostBuilder.UsePluginTypes(PluginTypes);
+        {
+            var pluginTypes = CorePluginTypes
+                .Concat(IsTestHost ? TestPluginTypes.ToArray() : NonTestPluginTypes)
+                .ToArray();
+            BuildState.PluginHostBuilder.UsePluginTypes(pluginTypes);
+        }
 
         protected virtual void ConfigurePluginHostServices()
         {
-            var cfg = BuildState.PluginHostConfiguration;
-            BuildState.PluginHostBuilder.ConfigureServices(services => {
+            BuildState.PluginHostBuilder.ConfigureServices((builder, services) => {
+                var cfg = builder.Configuration;
                 services.TryAddSingleton(cfg);
                 services.TryAddSingleton<IAppHostBuilder>(this);
                 services.AddLogging(logging => {
@@ -177,7 +212,6 @@ namespace Stl.Hosting
                     logging.AddEventSourceLogger();
                 });
                 services.TryAddSingleton<IConsole, SystemConsole>();
-                return services;
             });
         }
 

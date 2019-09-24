@@ -65,7 +65,7 @@ namespace Stl.Tests.ImmutableModel.Indexing
 
             var (changeSet1, json) = changeSet.PassThroughAllSerializersWithOutput();
             Out.WriteLine($"JSON: {json}");
-            var c = DictionaryComparison.New(changeSet.Changes, changeSet1.Changes);
+            var c = DictionaryComparison.New(changeSet, changeSet1);
             c.AreEqual.Should().BeTrue();
 
             var cluster1ax = idx.GetNode<Cluster>(Key.Parse("cluster1"));

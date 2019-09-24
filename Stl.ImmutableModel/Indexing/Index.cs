@@ -52,11 +52,11 @@ namespace Stl.ImmutableModel.Indexing
             KeyToNode = ImmutableDictionary<Key, INode>.Empty;
             PathToNode = ImmutableDictionary<SymbolList, INode>.Empty;
             NodeToPath = ImmutableDictionary<INode, SymbolList>.Empty;
-            var changeSet = ChangeSet.Empty;
+            var changeSet = ModelChangeSet.Empty;
             AddNode(SymbolList.Root, UntypedModel, ref changeSet);
         }
 
-        protected virtual void AddNode(SymbolList list, INode node, ref ChangeSet changeSet)
+        protected virtual void AddNode(SymbolList list, INode node, ref ModelChangeSet changeSet)
         {
             changeSet = changeSet.Add(node.Key, NodeChangeType.Created);
             KeyToNode = KeyToNode.Add(node.Key, node);
@@ -67,7 +67,7 @@ namespace Stl.ImmutableModel.Indexing
                 AddNode(list + key, child, ref changeSet);
         }
 
-        protected virtual void RemoveNode(SymbolList list, INode node, ref ChangeSet changeSet)
+        protected virtual void RemoveNode(SymbolList list, INode node, ref ModelChangeSet changeSet)
         {
             changeSet = changeSet.Add(node.Key, NodeChangeType.Removed);
             KeyToNode = KeyToNode.Remove(node.Key);
@@ -79,7 +79,7 @@ namespace Stl.ImmutableModel.Indexing
         }
 
         protected virtual void ReplaceNode(SymbolList list, INode source, INode target, 
-            ref ChangeSet changeSet, NodeChangeType changeType = NodeChangeType.SubtreeChanged)
+            ref ModelChangeSet changeSet, NodeChangeType changeType = NodeChangeType.SubtreeChanged)
         {
             changeSet = changeSet.Add(source.Key, changeType);
             KeyToNode = KeyToNode.Remove(source.Key).Add(target.Key, target);

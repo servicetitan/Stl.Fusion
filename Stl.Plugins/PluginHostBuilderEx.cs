@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Stl.Plugins.Internal;
 using Stl.Plugins.Metadata;
 using Stl.Plugins.Services;
 
@@ -8,19 +11,35 @@ namespace Stl.Plugins
 {
     public static class PluginHostBuilderEx
     {
-        public static TBuilder UseServiceProviderFactory<TBuilder>(this TBuilder builder,
-            Func<IServiceCollection, IServiceProvider> serviceProviderFactory)
+        public static TBuilder ConfigureHostConfiguration<TBuilder>(this TBuilder builder,
+            Action<IConfigurationBuilder> configurationBuilder)
             where TBuilder : IPluginHostBuilder
         {
-            builder.ServiceProviderFactory = serviceProviderFactory;
+            var cfgBuilder = builder.Implementation.CreateConfigurationBuilder();
+            configurationBuilder.Invoke(cfgBuilder);
+            builder.Configuration = cfgBuilder.Build();
             return builder;
         }
-        
-        public static TBuilder ConfigureServices<TBuilder>(this TBuilder builder, 
-            Func<IServiceCollection, IServiceCollection> configurator)
+
+        public static TBuilder ConfigureLogging<TBuilder>(this TBuilder builder,
+            Action<TBuilder, ILoggingBuilder> loggingBuilder)
+            where TBuilder : IPluginHostBuilder
+            => builder.ConfigureServices((builder1, services) 
+                => loggingBuilder.Invoke(builder1, new LoggingBuilder(services)));
+
+        public static TBuilder UseServiceProviderFactory<TBuilder>(this TBuilder builder,
+            Func<TBuilder, IServiceCollection, IServiceProvider> serviceProviderFactory)
             where TBuilder : IPluginHostBuilder
         {
-            builder.Services = configurator.Invoke(builder.Services);
+            builder.ServiceProviderFactory = services => serviceProviderFactory.Invoke(builder, services);
+            return builder;
+        }
+
+        public static TBuilder ConfigureServices<TBuilder>(this TBuilder builder, 
+            Action<TBuilder, IServiceCollection> configurator)
+            where TBuilder : IPluginHostBuilder
+        {
+            configurator.Invoke(builder, builder.Services);
             return builder;
         }
         

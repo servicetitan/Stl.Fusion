@@ -21,13 +21,13 @@ namespace Stl.Tests.ImmutableModel.Updating
         public async Task BasicTestAsync()
         {
             var index = IndexTest.BuildModel();
-            var updater = CreateUpdater(index);
-            using var changeTracker = ChangeTracker.New(updater);
+            await using var updater = CreateModelUpdater(index);
+            var changeTracker = updater.ChangeTracker;
 
             using var o = changeTracker.ChangesIncluding(index.Model.Key, NodeChangeType.Any).Subscribe(
-                Observer.Create<UpdateInfo<ModelRoot>>(updateInfo => {
+                Observer.Create<ModelUpdateInfo<ModelRoot>>(updateInfo => {
                     Out.WriteLine($"Model updated. Changes:");
-                    foreach (var (key, kind) in updateInfo.ChangeSet.Changes)
+                    foreach (var (key, kind) in updateInfo.ChangeSet.Items)
                         Out.WriteLine($"- {key}: {kind}");
                 }));
             var c1task = changeTracker.AllChanges
@@ -43,7 +43,7 @@ namespace Stl.Tests.ImmutableModel.Updating
 
             updater.Index.GetNode<VirtualMachine>(Key.Parse("cluster1|vm1")).Capabilities
                 .Should().Equals("caps1a");
-            info.ChangeSet.Changes.Count.Equals(3);
+            info.ChangeSet.Count.Equals(3);
 
             info = await updater.UpdateAsync(idx => {
                 var cluster1 = idx.GetNode<Cluster>(Key.Parse("cluster1"));
@@ -54,6 +54,6 @@ namespace Stl.Tests.ImmutableModel.Updating
             (await c1task).Should().Equals(await c2task);
         }
 
-        protected abstract IUpdater<ModelRoot> CreateUpdater(IUpdatableIndex<ModelRoot> index);
+        protected abstract IModelUpdater<ModelRoot> CreateModelUpdater(IUpdatableIndex<ModelRoot> index);
     }
 }

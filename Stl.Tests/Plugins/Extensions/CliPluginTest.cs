@@ -27,7 +27,7 @@ namespace Stl.Tests.Plugins.Extensions
             var testConsole = new TestConsole();
 
             var host = new PluginHostBuilder()
-                .ConfigureServices(services => services
+                .ConfigureServices((builder, services) => services
                     .AddSingleton(loggerFactory)
                     .AddSingleton<IConsole>(testConsole))
                 .UsePluginTypes(typeof(TestCliPlugin))

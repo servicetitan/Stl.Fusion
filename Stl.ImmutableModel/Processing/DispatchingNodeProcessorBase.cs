@@ -8,8 +8,8 @@ namespace Stl.ImmutableModel.Processing
 {
     public abstract class DispatchingNodeProcessorBase : NodeProcessorBase
     {
-        protected DispatchingNodeProcessorBase(IModelProvider modelProvider, IUpdater updater) 
-            : base(modelProvider, updater) { }
+        protected DispatchingNodeProcessorBase(IModelProvider modelProvider, IModelUpdater modelUpdater) 
+            : base(modelProvider, modelUpdater) { }
 
         protected override async Task ProcessNodeAsync(INodeProcessingInfo info)
         {

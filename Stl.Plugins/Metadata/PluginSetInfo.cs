@@ -74,10 +74,9 @@ namespace Stl.Plugins.Metadata
                     ci.AllAssemblyRefs.GetValueOrDefault(a) ?? Enumerable.Empty<Assembly>())
                 .ToArray();
             ci.PluginFactory = new PluginHostBuilder()
-                .ConfigureServices(services => {
+                .ConfigureServices((builder, services) => {
                     services.AddSingleton<IPluginInfoQuery>(new PluginInfoQuery());
                     services.AddSingleton<IPluginFactory>(s => new QueryingPluginFactory(s));
-                    return services;
                 })
                 .SetAutoStart(false)
                 .Build()

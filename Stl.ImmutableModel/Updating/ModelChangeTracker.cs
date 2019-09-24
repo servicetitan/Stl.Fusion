@@ -8,44 +8,47 @@ using Stl.Internal;
 
 namespace Stl.ImmutableModel.Updating
 {
-    public interface IChangeTracker : IDisposable
+    public interface IModelChangeTracker : IDisposable
     {
-        IObservable<IUpdateInfo> AllChanges { get; }
-        IObservable<IUpdateInfo> ChangesIncluding(Key key, NodeChangeType changeTypeMask);
+        IObservable<IModelUpdateInfo> AllChanges { get; }
+        IObservable<IModelUpdateInfo> ChangesIncluding(Key key, NodeChangeType changeTypeMask);
     }
 
-    public interface IChangeTracker<TModel> : IChangeTracker
+    public interface IModelChangeTracker<TModel> : IModelChangeTracker
         where TModel : class, INode
     {
-        new IObservable<UpdateInfo<TModel>> AllChanges { get; }
-        new IObservable<UpdateInfo<TModel>> ChangesIncluding(Key key, NodeChangeType changeTypeMask);
+        new IObservable<ModelUpdateInfo<TModel>> AllChanges { get; }
+        new IObservable<ModelUpdateInfo<TModel>> ChangesIncluding(Key key, NodeChangeType changeTypeMask);
     }
 
-    public sealed class ChangeTracker<TModel> : IChangeTracker<TModel>
+    public interface IModelChangeNotify
+    {
+        void OnModelUpdated(IModelUpdateInfo updateInfo);
+    }
+
+    public interface IModelChangeNotify<TModel> : IModelChangeNotify
+        where TModel : class, INode
+    {
+        void OnModelUpdated(ModelUpdateInfo<TModel> updateInfo);
+    }
+
+    public sealed class ModelChangeTracker<TModel> : IModelChangeTracker<TModel>, IModelChangeNotify<TModel>
         where TModel : class, INode
     {
         private bool _isDisposed;
-        private readonly IUpdater<TModel> _updater;
-        private readonly Subject<UpdateInfo<TModel>> _allChanges;
-        private readonly ConcurrentDictionary<Key, ImmutableDictionary<IObserver<UpdateInfo<TModel>>, NodeChangeType>> _observers =
-            new ConcurrentDictionary<Key, ImmutableDictionary<IObserver<UpdateInfo<TModel>>, NodeChangeType>>();
+        private readonly Subject<ModelUpdateInfo<TModel>> _allChanges =
+            new Subject<ModelUpdateInfo<TModel>>();
+        private readonly ConcurrentDictionary<Key, ImmutableDictionary<IObserver<ModelUpdateInfo<TModel>>, NodeChangeType>> _observers =
+            new ConcurrentDictionary<Key, ImmutableDictionary<IObserver<ModelUpdateInfo<TModel>>, NodeChangeType>>();
 
-        IObservable<IUpdateInfo> IChangeTracker.AllChanges => _allChanges;
-        public IObservable<UpdateInfo<TModel>> AllChanges => _allChanges;
-
-        public ChangeTracker(IUpdater<TModel> updater)
-        {
-            _updater = updater;
-            _updater.Updated += OnUpdated;
-            _allChanges = new Subject<UpdateInfo<TModel>>();
-        }
+        IObservable<IModelUpdateInfo> IModelChangeTracker.AllChanges => _allChanges;
+        public IObservable<ModelUpdateInfo<TModel>> AllChanges => _allChanges;
 
         public void Dispose()
         {
             if (_isDisposed)
                 return;
             _isDisposed = true;
-            _updater.Updated -= OnUpdated;
             _allChanges.OnCompleted();
             foreach (var (_, d) in _observers)
             foreach (var (o, _) in d)
@@ -53,12 +56,14 @@ namespace Stl.ImmutableModel.Updating
             _allChanges.Dispose();
         }
 
-        private void OnUpdated(UpdateInfo<TModel> updateInfo)
+        public void OnModelUpdated(IModelUpdateInfo updateInfo) 
+            => OnModelUpdated((ModelUpdateInfo<TModel>) updateInfo);
+        void IModelChangeNotify<TModel>.OnModelUpdated(ModelUpdateInfo<TModel> updateInfo)
         {
             if (_observers == null)
                 throw Errors.AlreadyDisposed();
             _allChanges.OnNext(updateInfo);
-            var changes = updateInfo.ChangeSet.Changes;
+            var changes = updateInfo.ChangeSet;
             foreach (var (key, changeType) in changes) {
                 if (_observers.TryGetValue(key, out var d)) {
                     foreach (var (o, changeTypeMask) in d)
@@ -68,15 +73,15 @@ namespace Stl.ImmutableModel.Updating
             }
         }
 
-        IObservable<IUpdateInfo> IChangeTracker.ChangesIncluding(Key key, NodeChangeType changeTypeMask) => ChangesIncluding(key, changeTypeMask);
-        public IObservable<UpdateInfo<TModel>> ChangesIncluding(Key key, NodeChangeType changeTypeMask)
+        IObservable<IModelUpdateInfo> IModelChangeTracker.ChangesIncluding(Key key, NodeChangeType changeTypeMask) => ChangesIncluding(key, changeTypeMask);
+        public IObservable<ModelUpdateInfo<TModel>> ChangesIncluding(Key key, NodeChangeType changeTypeMask)
         {
             if (_observers == null)
                 throw Errors.AlreadyDisposed();
-            return Observable.Create<UpdateInfo<TModel>>(o => {
+            return Observable.Create<ModelUpdateInfo<TModel>>(o => {
                 _observers.AddOrUpdate(key, 
                     (p, state) => 
-                        ImmutableDictionary<IObserver<UpdateInfo<TModel>>, NodeChangeType>.Empty
+                        ImmutableDictionary<IObserver<ModelUpdateInfo<TModel>>, NodeChangeType>.Empty
                             .Add(state.Observer, state.ChangeType),
                     (p, d, state) => 
                         d.Add(state.Observer, state.ChangeType),
@@ -102,12 +107,5 @@ namespace Stl.ImmutableModel.Updating
                 }, (Self: this, Key: key, Observer: o));
             });
         }
-    }
-
-    public static class ChangeTracker
-    {
-        public static ChangeTracker<TModel> New<TModel>(IUpdater<TModel> updater)
-            where TModel : class, INode
-            => new ChangeTracker<TModel>(updater);
     }
 }

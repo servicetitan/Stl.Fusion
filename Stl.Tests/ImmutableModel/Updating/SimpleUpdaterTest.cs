@@ -8,7 +8,7 @@ namespace Stl.Tests.ImmutableModel.Updating
     {
         public SimpleUpdaterTest(ITestOutputHelper @out) : base(@out) { }
 
-        protected override IUpdater<ModelRoot> CreateUpdater(IUpdatableIndex<ModelRoot> index) 
-            => SimpleUpdater.New(index);
+        protected override IModelUpdater<ModelRoot> CreateModelUpdater(IUpdatableIndex<ModelRoot> index) 
+            => SimpleModelUpdater.New(index);
     }
 }

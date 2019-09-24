@@ -3,16 +3,16 @@ using Newtonsoft.Json;
 
 namespace Stl.ImmutableModel.Updating
 {
-    public interface IUpdateInfo
+    public interface IModelUpdateInfo
     {
-        ChangeSet ChangeSet { get; }
+        ModelChangeSet ChangeSet { get; }
         IUpdatableIndex OldIndex { get; }
         IUpdatableIndex NewIndex { get; }
         INode OldModel { get; }
         INode NewModel { get; }
     }
 
-    public interface IUpdateInfo<out TModel> : IUpdateInfo
+    public interface IModelUpdateInfo<out TModel> : IModelUpdateInfo
         where TModel : class, INode
     {
         new IUpdatableIndex<TModel> OldIndex { get; }
@@ -22,22 +22,22 @@ namespace Stl.ImmutableModel.Updating
     }
 
     [Serializable]
-    public class UpdateInfo<TModel> : IUpdateInfo<TModel>
+    public class ModelUpdateInfo<TModel> : IModelUpdateInfo<TModel>
         where TModel : class, INode
     {
-        IUpdatableIndex IUpdateInfo.OldIndex => OldIndex;
-        IUpdatableIndex IUpdateInfo.NewIndex => NewIndex;
-        INode IUpdateInfo.OldModel => OldModel;
-        INode IUpdateInfo.NewModel => NewModel;
+        IUpdatableIndex IModelUpdateInfo.OldIndex => OldIndex;
+        IUpdatableIndex IModelUpdateInfo.NewIndex => NewIndex;
+        INode IModelUpdateInfo.OldModel => OldModel;
+        INode IModelUpdateInfo.NewModel => NewModel;
 
-        public ChangeSet ChangeSet { get; }
+        public ModelChangeSet ChangeSet { get; }
         public IUpdatableIndex<TModel> OldIndex { get; }
         public IUpdatableIndex<TModel> NewIndex { get; }
         [JsonIgnore] public TModel OldModel => OldIndex.Model;
         [JsonIgnore] public TModel NewModel => NewIndex.Model;
 
         [JsonConstructor]
-        public UpdateInfo(IUpdatableIndex<TModel> oldIndex, IUpdatableIndex<TModel> newIndex, ChangeSet changeSet) 
+        public ModelUpdateInfo(IUpdatableIndex<TModel> oldIndex, IUpdatableIndex<TModel> newIndex, ModelChangeSet changeSet) 
         {
             ChangeSet = changeSet;
             OldIndex = oldIndex;

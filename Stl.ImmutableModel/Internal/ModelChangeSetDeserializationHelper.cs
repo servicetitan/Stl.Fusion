@@ -6,14 +6,14 @@ using Stl.ImmutableModel.Updating;
 namespace Stl.ImmutableModel.Internal
 {
     [Serializable]
-    public class ChangeSetDeserializationHelper
+    public class ModelChangeSetDeserializationHelper
     {
         private Dictionary<Key, NodeChangeType>? _dictionary;
         [NonSerialized] 
         private volatile ImmutableDictionary<Key, NodeChangeType>? _immutableDictionary;
 
-        public ChangeSetDeserializationHelper() { }
-        public ChangeSetDeserializationHelper(Dictionary<Key, NodeChangeType> dictionary)
+        public ModelChangeSetDeserializationHelper() { }
+        public ModelChangeSetDeserializationHelper(Dictionary<Key, NodeChangeType> dictionary)
         {
             _dictionary = dictionary;
         }

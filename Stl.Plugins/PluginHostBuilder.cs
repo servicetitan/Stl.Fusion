@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
@@ -17,6 +18,7 @@ namespace Stl.Plugins
     {
         HashSet<Type> PluginTypes { get; set; }
         PluginSetInfo Plugins { get; set; }
+        IConfiguration Configuration { get; set; }
         IServiceCollection Services { get; set; }
         Func<IServiceCollection, IServiceProvider> ServiceProviderFactory { get; set; }
         bool AutoStart { get; set; }
@@ -29,19 +31,27 @@ namespace Stl.Plugins
     // similar names exposed via PluginHostBuilderEx 
     public interface IPluginHostBuilderImpl
     {
+        IConfigurationBuilder CreateConfigurationBuilder();
         void UseDefaultServices();
     }
 
     public class PluginHostBuilder : IPluginHostBuilder, IPluginHostBuilderImpl
     {
+        protected static readonly ConfigurationRoot EmptyConfiguration = 
+            new ConfigurationRoot(new List<IConfigurationProvider>());
+
         public HashSet<Type> PluginTypes { get; set; } = new HashSet<Type>();
         public PluginSetInfo Plugins { get; set; } = PluginSetInfo.Empty;
         public IServiceCollection Services { get; set; } = new ServiceCollection();
+        public IConfiguration Configuration { get; set; } = EmptyConfiguration;
         public Func<IServiceCollection, IServiceProvider> ServiceProviderFactory { get; set; } = 
             services => new DefaultServiceProviderFactory().CreateServiceProvider(services);
         public bool AutoStart { get; set; } = true;
         public IPluginHostBuilderImpl Implementation => this;
         protected IPluginHost? Host { get; set; }
+
+        IConfigurationBuilder IPluginHostBuilderImpl.CreateConfigurationBuilder() => CreateConfigurationBuilder();
+        protected IConfigurationBuilder CreateConfigurationBuilder() => new ConfigurationBuilder();
 
         void IPluginHostBuilderImpl.UseDefaultServices() => UseDefaultServices();
         protected virtual void UseDefaultServices()
