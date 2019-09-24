@@ -10,8 +10,8 @@ namespace Stl
     public interface IOption
     {
         bool HasValue { get; }
-        object? UntypedUnsafeValue { get; }
-        object? UntypedValue { get; }
+        object? UnsafeValue { get; }
+        object? Value { get; }
     }
 
     [Serializable]
@@ -21,9 +21,12 @@ namespace Stl
         public bool HasValue { get; }
         public T UnsafeValue { get; }
         [JsonIgnore] public T Value { get { AssertHasValue(); return UnsafeValue; } }
-        [JsonIgnore] object? IOption.UntypedUnsafeValue => UnsafeValue;
-        [JsonIgnore] object? IOption.UntypedValue => Value;
-        [JsonIgnore] private string DebugValue => ToString();
+        private string DebugValue => ToString();
+
+        // ReSharper disable once HeapView.BoxingAllocation
+        object? IOption.UnsafeValue => UnsafeValue;
+        // ReSharper disable once HeapView.BoxingAllocation
+        object? IOption.Value => Value;
 
         public static Option<T> None => default;
         public static Option<T> Some(T value) => new Option<T>(true, value);
