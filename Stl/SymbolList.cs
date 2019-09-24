@@ -91,11 +91,11 @@ namespace Stl
             if (segmentCountDiff < 0)
                 return false;
 
-            SymbolList? path = this;
+            SymbolList? list = this;
             for (; segmentCountDiff > 0; segmentCountDiff--)
-                path = path!.Head;
-            for (; path != null; path = path!.Head, prefix = prefix!.Head) {
-                if (path!.Tail != prefix!.Tail)
+                list = list!.Head;
+            for (; list != null; list = list!.Head, prefix = prefix!.Head) {
+                if (list!.Tail != prefix!.Tail)
                     return false;
             }
             return true;

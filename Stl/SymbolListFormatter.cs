@@ -47,7 +47,7 @@ namespace Stl
 
         public SymbolList Parse(string source)
         {
-            var path = (SymbolList?) null;
+            var list = (SymbolList?) null;
             var sb = new StringBuilder();
             var escape = false;
             foreach (var c in source) {
@@ -59,7 +59,7 @@ namespace Stl
                     escape = true;
                 }
                 else if (c == DelimiterChar) {
-                    path = new SymbolList(path, sb.ToString());
+                    list = new SymbolList(list, sb.ToString());
                     sb.Clear();
                 }
                 else {
@@ -68,8 +68,8 @@ namespace Stl
             }
             if (escape)
                 sb.Append(EscapeChar);
-            path = new SymbolList(path, sb.ToString());
-            return path;
+            list = new SymbolList(list, sb.ToString());
+            return list;
         }
     }
 }
