@@ -3,20 +3,31 @@ using Newtonsoft.Json;
 
 namespace Stl.Internal
 {
-    [Serializable]
-    public abstract class Box
+    public interface IBox
     {
-        [JsonIgnore] public abstract object? UntypedValue { get; }
+        object? Value { get; set; }
+    }
 
+    public interface IBox<T> : IBox
+    {
+        new T Value { get; set; }
+    }
+
+    public static class Box
+    {
         public static Box<T> New<T>(T value) => new Box<T>(value);
     }
 
     [Serializable]
-    public class Box<T> : Box
+    public class Box<T> : IBox<T>
     {
         public T Value { get; set; }
-        // ReSharper disable once HeapView.BoxingAllocation
-        [JsonIgnore] public override object? UntypedValue => Value;
+
+        object? IBox.Value {
+            // ReSharper disable once HeapView.BoxingAllocation
+            get => Value;
+            set => Value = (T) value!;
+        }
 
         [JsonConstructor]
         public Box(T value = default) => Value = value;
