@@ -22,7 +22,7 @@ namespace Stl.Tests
         [InlineData("a/\\", new[] {"a", "\\"}, "a/\\\\")]
         public void CombinedTest(string value, string[] segments, string? expectedValue = null)
         {
-            var p = SymbolPath.Parse(value);
+            var p = SymbolList.Parse(value);
             p.SegmentCount.Should().Be(segments.Length);
             p.GetSegments().Should().BeEquivalentTo(segments.Select(s => (Symbol) s));
             p.Value.Should().Be(expectedValue ?? value);

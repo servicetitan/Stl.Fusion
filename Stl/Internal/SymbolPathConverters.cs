@@ -13,7 +13,7 @@ namespace Stl.Internal
 
         public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) {  
             if (destinationType == typeof(string))
-                return ((SymbolPath) value).Value;
+                return ((SymbolList) value).Value;
             return base.ConvertTo(context, culture, value, destinationType);
         }
 
@@ -21,7 +21,7 @@ namespace Stl.Internal
         {
             if (value is string s)
                 // ReSharper disable once HeapView.BoxingAllocation
-                return SymbolPath.Parse(s);
+                return SymbolList.Parse(s);
             return base.ConvertFrom(context, culture, value);
         }
     }
@@ -29,11 +29,11 @@ namespace Stl.Internal
     public class SymbolPathJsonConverter : JsonConverter
     {
         public override bool CanConvert(Type objectType) 
-            => objectType == typeof(SymbolPath);
+            => objectType == typeof(SymbolList);
 
         public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
         {
-            var typeRef = (SymbolPath) value!;
+            var typeRef = (SymbolList) value!;
             writer.WriteValue(typeRef.Value);
         }
 
@@ -41,7 +41,7 @@ namespace Stl.Internal
         {
             var value = (string) reader.Value!;
             // ReSharper disable once HeapView.BoxingAllocation
-            return SymbolPath.Parse(value);
+            return SymbolList.Parse(value);
         }
     }
 }

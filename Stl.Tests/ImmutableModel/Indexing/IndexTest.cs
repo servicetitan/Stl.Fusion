@@ -22,7 +22,7 @@ namespace Stl.Tests.ImmutableModel.Indexing
             idx = tmpIdx;
 
             idx.GetNode(Key.Parse("@")).Should().Equals(idx.Model);
-            idx.GetNodeByPath(SymbolPath.Root).Should().Equals(idx.Model);
+            idx.GetNodeByPath(SymbolList.Root).Should().Equals(idx.Model);
             
             var cluster1 = idx.GetNode<Cluster>(Key.Parse("cluster1"));
             cluster1.LocalKey.Value.Should().Be("cluster1");
@@ -54,7 +54,7 @@ namespace Stl.Tests.ImmutableModel.Indexing
             var idx = BuildModel();
             var cluster1 = idx.GetNode<Cluster>(Key.Parse("cluster1"));
             var vm2 = cluster1["vm2"];
-            var vm3 = new VirtualMachine(vm2.Key.Path.Head! + "vm3")
+            var vm3 = new VirtualMachine(vm2.Key.Parts.Head! + "vm3")
                 .With(VirtualMachine.CapabilitiesSymbol, "caps3");
             
             var cluster1a = cluster1.WithRemoved(vm2).WithAdded(vm3);
@@ -81,7 +81,7 @@ namespace Stl.Tests.ImmutableModel.Indexing
 
         internal static void TestIntegrity(IIndex index)
         {
-            void ProcessNode(SymbolPath path, INode node)
+            void ProcessNode(SymbolList path, INode node)
             {
                 index.GetPath(node).Should().Equals(path);
                 index.GetNodeByPath(path).Should().Equals(node);
@@ -92,7 +92,7 @@ namespace Stl.Tests.ImmutableModel.Indexing
             }
 
             var root = index.UntypedModel;
-            ProcessNode(SymbolPath.Root, root);
+            ProcessNode(SymbolList.Root, root);
         }
 
         internal static UpdatableIndex<ModelRoot> BuildModel()

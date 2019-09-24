@@ -44,7 +44,7 @@ namespace Stl.ImmutableModel.Updating
 
         protected virtual void UpdateNode(INode source, INode target, ref ChangeSet changeSet)
         {
-            SymbolPath? path = this.GetPath(source);
+            SymbolList? path = this.GetPath(source);
             CompareAndUpdateNode(path, source, target, ref changeSet);
 
             var tail = path.Tail;
@@ -61,7 +61,7 @@ namespace Stl.ImmutableModel.Updating
             SetUntypedModel(target);
         }
 
-        private NodeChangeType CompareAndUpdateNode(SymbolPath path, INode source, INode target, ref ChangeSet changeSet)
+        private NodeChangeType CompareAndUpdateNode(SymbolList list, INode source, INode target, ref ChangeSet changeSet)
         {
             if (source == target)
                 return 0;
@@ -75,31 +75,31 @@ namespace Stl.ImmutableModel.Updating
 
             foreach (var (key, item) in c.LeftOnly) {
                 if (item is INode n) {
-                    RemoveNode(path + key, n, ref changeSet);
+                    RemoveNode(list + key, n, ref changeSet);
                     changeType |= NodeChangeType.SubtreeChanged;
                 }
             }
             foreach (var (key, item) in c.RightOnly) {
                 if (item is INode n) {
-                    AddNode(path + key, n, ref changeSet);
+                    AddNode(list + key, n, ref changeSet);
                     changeType |= NodeChangeType.SubtreeChanged;
                 }
             }
             foreach (var (key, sItem, tItem) in c.SharedUnequal) {
                 if (sItem is INode sn) {
                     if (tItem is INode tn) {
-                        var ct = CompareAndUpdateNode(path + key, sn, tn, ref changeSet);
+                        var ct = CompareAndUpdateNode(list + key, sn, tn, ref changeSet);
                         if (ct != 0) // 0 = instance is changed, but it passes equality test
                             changeType |= NodeChangeType.SubtreeChanged;
                     }
                     else {
-                        RemoveNode(path + key, sn, ref changeSet);
+                        RemoveNode(list + key, sn, ref changeSet);
                         changeType |= NodeChangeType.SubtreeChanged;
                     }
                 }
                 else {
                     if (tItem is INode tn) {
-                        AddNode(path + key, tn, ref changeSet);
+                        AddNode(list + key, tn, ref changeSet);
                         changeType |= NodeChangeType.SubtreeChanged;
                     }
                     else {
@@ -107,7 +107,7 @@ namespace Stl.ImmutableModel.Updating
                     }
                 }
             }
-            ReplaceNode(path, source, target, ref changeSet, changeType);
+            ReplaceNode(list, source, target, ref changeSet, changeType);
             return changeType;
         }
     }

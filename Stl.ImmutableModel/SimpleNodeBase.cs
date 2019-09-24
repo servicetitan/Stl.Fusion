@@ -8,7 +8,7 @@ namespace Stl.ImmutableModel
     public interface ISimpleNode : INode, IReadOnlyDictionaryPlus<Symbol, object?>
     {
         ISimpleNode BaseWith(Symbol property, object? value);
-        ISimpleNode BaseWith(IEnumerable<(Symbol Property, object? Value)> changes);
+        ISimpleNode BaseWith(IEnumerable<(Symbol PropertyKey, object? Value)> changes);
     }
 
     [Serializable]
@@ -19,7 +19,7 @@ namespace Stl.ImmutableModel
 
         public ISimpleNode BaseWith(Symbol property, object? value)
             => Update<SimpleNodeBase>(property, Option.Some(value));
-        public ISimpleNode BaseWith(IEnumerable<(Symbol Property, object? Value)> changes)
-            => Update<SimpleNodeBase>(changes.Select(p => (p.Property, Option.Some(p.Value))));
+        public ISimpleNode BaseWith(IEnumerable<(Symbol PropertyKey, object? Value)> changes)
+            => Update<SimpleNodeBase>(changes.Select(p => (p.PropertyKey, Option.Some(p.Value))));
     }
 }

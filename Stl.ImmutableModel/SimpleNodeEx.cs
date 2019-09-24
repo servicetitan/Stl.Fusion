@@ -6,15 +6,15 @@ namespace Stl.ImmutableModel
     {
         // "With" overloads
         
-        public static TNode With<TNode>(this TNode node, Symbol property, object? value)
+        public static TNode With<TNode>(this TNode node, Symbol propertyKey, object? value)
             where TNode : class, ISimpleNode
-            => (TNode) node.BaseWith(property, value);
+            => (TNode) node.BaseWith(propertyKey, value);
 
-        public static TNode With<TNode, T>(this TNode node, params (Symbol Property, object? Value)[] changes)
+        public static TNode With<TNode, T>(this TNode node, params (Symbol PropertyKey, object? Value)[] changes)
             where TNode : class, ISimpleNode
             => (TNode) node.BaseWith(changes);
 
-        public static TNode With<TNode, T>(this TNode node, IEnumerable<(Symbol Property, object? Value)> changes)
+        public static TNode With<TNode, T>(this TNode node, IEnumerable<(Symbol PropertyKey, object? Value)> changes)
             where TNode : class, ISimpleNode
             => (TNode) node.BaseWith(changes);
     }

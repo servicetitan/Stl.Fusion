@@ -10,18 +10,18 @@ namespace Stl
     [Serializable]
     [JsonConverter(typeof(SymbolPathJsonConverter))]
     [TypeConverter(typeof(SymbolPathTypeConverter))]
-    public sealed class SymbolPath : IEquatable<SymbolPath>, IComparable<SymbolPath>, ISerializable
+    public sealed class SymbolList : IEquatable<SymbolList>, IComparable<SymbolList>, ISerializable
     {
-        public static readonly SymbolPath? Null = null;
-        public static readonly SymbolPath Root = new SymbolPath(Null, Symbol.Empty);
+        public static readonly SymbolList? Null = null;
+        public static readonly SymbolList Root = new SymbolList(Null, Symbol.Empty);
 
         internal int HashCode { get; }
         public int SegmentCount { get; }
-        public SymbolPath? Head { get; }
+        public SymbolList? Head { get; }
         public Symbol Tail { get; }
-        public string Value => SymbolPathFormatter.Default.ToString(this);
+        public string Value => SymbolListFormatter.Default.ToString(this);
 
-        public SymbolPath(SymbolPath? head, Symbol tail)
+        public SymbolList(SymbolList? head, Symbol tail)
         {
             Head = head;
             Tail = tail;
@@ -29,49 +29,49 @@ namespace Stl
             HashCode = ComputeHashCode();
         }
 
-        public SymbolPath(params Symbol[] segments)
+        public SymbolList(params Symbol[] segments)
         {
             if (segments.Length == 0) 
                 throw new ArgumentOutOfRangeException(nameof(segments));
-            SymbolPath? head = null;
+            SymbolList? head = null;
             for (var index = 0; index < segments.Length - 1; index++) 
-                head = new SymbolPath(head, segments[index]);
+                head = new SymbolList(head, segments[index]);
             Head = head;
             Tail = segments[^1];
             SegmentCount = (Head?.SegmentCount ?? 0) + 1;
             HashCode = ComputeHashCode();
         }
 
-        public SymbolPath Concat(Symbol tail) 
-            => new SymbolPath(this, tail);
-        public SymbolPath Concat(SymbolPath other) 
+        public SymbolList Concat(Symbol tail) 
+            => new SymbolList(this, tail);
+        public SymbolList Concat(SymbolList other) 
             => other.GetSegments().Aggregate(this, (current, tail) => current.Concat(tail));
 
-        public static SymbolPath Parse(string value) => SymbolPathFormatter.Default.Parse(value);
+        public static SymbolList Parse(string value) => SymbolListFormatter.Default.Parse(value);
 
         public override string ToString() => $"{GetType().Name}({Value})";
 
         // Conversion & operators
 
-        public static implicit operator SymbolPath((SymbolPath Head, Symbol Tail) source) => new SymbolPath(source.Head, source.Tail);
-        public static explicit operator string(SymbolPath source) => source.Value;
+        public static implicit operator SymbolList((SymbolList Head, Symbol Tail) source) => new SymbolList(source.Head, source.Tail);
+        public static explicit operator string(SymbolList source) => source.Value;
 
         // Operators
 
-        public static SymbolPath operator +(SymbolPath first, Symbol second) => first.Concat(second);
-        public static SymbolPath operator +(SymbolPath first, string second) => first.Concat(new Symbol(second));
-        public static SymbolPath operator +(SymbolPath first, SymbolPath second) => first.Concat(second);
+        public static SymbolList operator +(SymbolList first, Symbol second) => first.Concat(second);
+        public static SymbolList operator +(SymbolList first, string second) => first.Concat(new Symbol(second));
+        public static SymbolList operator +(SymbolList first, SymbolList second) => first.Concat(second);
 
         // Equality & comparison
         
-        public bool Equals(SymbolPath? other) 
+        public bool Equals(SymbolList? other) 
             => other != null && HashCode == other.HashCode 
                 && Tail == other.Tail && (Head?.Equals(other.Head) ?? other.Head == null);
         public override bool Equals(object? obj) 
-            => ReferenceEquals(this, obj) || obj is SymbolPath other && Equals(other);
+            => ReferenceEquals(this, obj) || obj is SymbolList other && Equals(other);
         public override int GetHashCode() => HashCode;
         
-        public int CompareTo(SymbolPath? other)
+        public int CompareTo(SymbolList? other)
         {
             if (other == null)
                 return 1;
@@ -83,7 +83,7 @@ namespace Stl
 
         // Other operations
 
-        public bool StartsWith(SymbolPath? prefix)
+        public bool StartsWith(SymbolList? prefix)
         {
             if (prefix == null)
                 return true;
@@ -91,7 +91,7 @@ namespace Stl
             if (segmentCountDiff < 0)
                 return false;
 
-            SymbolPath? path = this;
+            SymbolList? path = this;
             for (; segmentCountDiff > 0; segmentCountDiff--)
                 path = path!.Head;
             for (; path != null; path = path!.Head, prefix = prefix!.Head) {
@@ -106,7 +106,7 @@ namespace Stl
         public Symbol[] GetSegments(bool reversed = false) 
         {
             var result = new Symbol[SegmentCount];
-            SymbolPath? current = this;
+            SymbolList? current = this;
             if (reversed) {
                 var index = 0;
                 while (current != null) {
@@ -127,7 +127,7 @@ namespace Stl
 
         // Serialization
 
-        private SymbolPath(SerializationInfo info, StreamingContext context)
+        private SymbolList(SerializationInfo info, StreamingContext context)
         {
             var parsed = Parse(info.GetString(nameof(Value)) ?? "");
             Head = parsed.Head;

@@ -15,14 +15,14 @@ namespace Stl.ImmutableModel.Updating
             where TIndex : IUpdatableIndex
             => index.Update(source, source.DualWith(key, value));
         
-        public static (TIndex Index, ChangeSet ChangeSet) Update<TIndex>(this TIndex index, SymbolPath path, Option<object?> value)
+        public static (TIndex Index, ChangeSet ChangeSet) Update<TIndex>(this TIndex index, SymbolList list, Option<object?> value)
             where TIndex : IUpdatableIndex
         {
-            if (path.Head == null)
+            if (list.Head == null)
                 // Root update
-                return index.Update(index.GetNodeByPath(path), (INode) value.Value!);
-            var source = index.GetNodeByPath(path.Head);
-            var target = source.DualWith(path.Tail, value);
+                return index.Update(index.GetNodeByPath(list), (INode) value.Value!);
+            var source = index.GetNodeByPath(list.Head);
+            var target = source.DualWith(list.Tail, value);
             return index.Update(source, target);
         }
     }

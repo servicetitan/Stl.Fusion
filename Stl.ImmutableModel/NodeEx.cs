@@ -6,10 +6,12 @@ namespace Stl.ImmutableModel
 {
     public static class NodeEx
     {
+        // Dual* methods
+
         public static IEnumerable<KeyValuePair<Symbol, object?>> DualGetItems(this INode node) 
             => node switch {
-                ICollectionNode c => c.Keys.Select(k =>
-                    new KeyValuePair<Symbol, object?>(k.Symbol, c.GetUntyped(k).UnsafeValue)),
+                ICollectionNode c => c.Keys.Select(localKey =>
+                    new KeyValuePair<Symbol, object?>(localKey, c.GetUntyped(localKey).UnsafeValue)),
                 ISimpleNode s => s,
                 _ => throw new ArgumentOutOfRangeException(nameof(node))
             };
@@ -22,28 +24,26 @@ namespace Stl.ImmutableModel
             }
         }
 
-        // Dual* methods
-
-        public static Option<object?> DualGetUntyped(this INode node, Symbol key)
+        public static Option<object?> DualGetUntyped(this INode node, Symbol localKey)
             => node switch {
-                ICollectionNode c => c.GetUntyped(key),
-                ISimpleNode s => s.GetUntyped(key),
+                ICollectionNode c => c.GetUntyped(localKey),
+                ISimpleNode s => s.GetUntyped(localKey),
                 _ => throw new ArgumentOutOfRangeException(nameof(node))
             };
         
-        public static TNode DualWith<TNode>(this TNode node, Symbol key, Option<object?> value)
+        public static TNode DualWith<TNode>(this TNode node, Symbol localKey, Option<object?> value)
             where TNode : class, INode
             => (TNode) (node switch {
-                ICollectionNode c => (INode) c.BaseWith(new LocalKey(key), value),
-                ISimpleNode s => s.With(key, value.Value),
+                ICollectionNode c => (INode) c.BaseWith(localKey, value),
+                ISimpleNode s => s.With(localKey, value.Value),
                 _ => throw new ArgumentOutOfRangeException(nameof(node)),
             });
 
-        public static TNode DualWith<TNode>(this TNode node, IEnumerable<(Symbol Key, Option<object?> Value)> changes)
+        public static TNode DualWith<TNode>(this TNode node, IEnumerable<(Symbol LocalKey, Option<object?> Value)> changes)
             where TNode : class, INode
             => (TNode) (node switch {
-                ICollectionNode c => (INode) c.BaseWith(changes.Select(p => (new LocalKey(p.Key), p.Value))),
-                ISimpleNode s => s.BaseWith(changes.Select(p => (p.Key, p.Value.Value))),
+                ICollectionNode c => (INode) c.BaseWith(changes.Select(p => (p.LocalKey, p.Value))),
+                ISimpleNode s => s.BaseWith(changes.Select(p => (p.LocalKey, p.Value.Value))),
                 _ => throw new ArgumentOutOfRangeException(nameof(node)),
             });
     }

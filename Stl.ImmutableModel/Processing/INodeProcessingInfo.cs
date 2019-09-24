@@ -7,7 +7,7 @@ namespace Stl.ImmutableModel.Processing
     {
         INodeProcessor NodeProcessor { get; }
         Key NodeKey { get; }
-        SymbolPath NodePath { get; }
+        SymbolList NodePath { get; }
         CancellationToken ProcessStoppingToken { get; }
         CancellationToken NodeRemovedToken { get; }
         CancellationToken ProcessStoppingOrNodeRemovedToken { get; }

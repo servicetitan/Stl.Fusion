@@ -9,7 +9,7 @@ namespace Stl.ImmutableModel.Processing.Internal
     { 
         public INodeProcessor NodeProcessor { get; set; }
         public Key NodeKey { get; set; }
-        public SymbolPath NodePath { get; set; }
+        public SymbolList NodePath { get; set; }
         public CancellationTokenSource NodeRemovedTokenSource { get; set; }
         public CancellationTokenSource ProcessStoppedOrNodeRemovedTokenSource { get; set; }
         public TaskCompletionSource<Unit> CompletionSource { get; set; }
@@ -24,7 +24,7 @@ namespace Stl.ImmutableModel.Processing.Internal
         public NodeProcessingInfo(
             INodeProcessor processor, 
             Key nodeKey, 
-            SymbolPath nodePath,
+            SymbolList nodePath,
             bool isStartedForAlreadyExistingNode)
         {
             NodeProcessor = processor;

@@ -9,23 +9,23 @@ namespace Stl.ImmutableModel.Processing
     {
         public UpdateInfo UpdateInfo { get; }
         public INode Node { get; }
-        public SymbolPath Path { get; }
+        public SymbolList Path { get; }
         public NodeChangeType ChangeType { get; }
 
         [JsonConstructor]
-        public NodeChangeInfo(UpdateInfo updateInfo, INode node, SymbolPath path, NodeChangeType changeType)
+        public NodeChangeInfo(UpdateInfo updateInfo, INode node, SymbolList list, NodeChangeType changeType)
         {
             UpdateInfo = updateInfo;
             Node = node;
-            Path = path;
+            Path = list;
             ChangeType = changeType;
         }
 
-        public void Deconstruct(out UpdateInfo updateInfo, out INode node, out SymbolPath path, out NodeChangeType changeType)
+        public void Deconstruct(out UpdateInfo updateInfo, out INode node, out SymbolList list, out NodeChangeType changeType)
         {
             updateInfo = UpdateInfo;
             node = Node;
-            path = Path;
+            list = Path;
             changeType = ChangeType;
         }
     }

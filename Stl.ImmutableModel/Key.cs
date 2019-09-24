@@ -11,40 +11,39 @@ namespace Stl.ImmutableModel
     [JsonConverter(typeof(KeyJsonConverter))]
     public readonly struct Key : IEquatable<Key>, ISerializable
     {
-        public SymbolPath Path { get; }
-        public string Value => Path.Value;
-        public LocalKey LocalKey => Path.Tail;
+        public SymbolList Parts { get; }
+        public string Value => Parts.Value;
 
-        public Key(SymbolPath path) => Path = path;
+        public Key(SymbolList list) => Parts = list;
 
-        public override string ToString() => $"{GetType().Name}({Path})";
+        public override string ToString() => $"{GetType().Name}({Parts})";
 
         // Conversion
 
-        public static Key Parse(string value) => new Key(SymbolPath.Parse(value));
+        public static Key Parse(string value) => new Key(SymbolList.Parse(value));
 
-        public void Deconstruct(out SymbolPath? head, out Symbol tail)
+        public void Deconstruct(out SymbolList? head, out Symbol tail)
         {
-            head = Path.Head;
-            tail = Path.Tail;
+            head = Parts.Head;
+            tail = Parts.Tail;
         }
 
-        public static implicit operator Key(SymbolPath source)
-            => new Key(source);
-        public static implicit operator Key((SymbolPath Head, Symbol Tail) source) 
+        public static implicit operator Key(SymbolList parts)
+            => new Key(parts);
+        public static implicit operator Key((SymbolList Head, Symbol Tail) source) 
             => new Key(source.Head + source.Tail);
-        public static implicit operator Key((Key Head, LocalKey Tail) source) 
-            => new Key(source.Head.Path + source.Tail.Symbol);
+        public static implicit operator Key((Key Head, Symbol Tail) source) 
+            => new Key(source.Head.Parts + source.Tail);
 
         // Operators
         
-        public static Key operator +(Key head, LocalKey tail) => new Key(head.Path + tail.Symbol);
+        public static Key operator +(Key head, Symbol tail) => new Key(head.Parts + tail);
 
         // Equality
 
-        public bool Equals(Key other) => Path.Equals(other.Path);
+        public bool Equals(Key other) => Parts.Equals(other.Parts);
         public override bool Equals(object? obj) => obj is Key other && Equals(other);
-        public override int GetHashCode() => Path.GetHashCode();
+        public override int GetHashCode() => Parts.GetHashCode();
         public static bool operator ==(Key left, Key right) => left.Equals(right);
         public static bool operator !=(Key left, Key right) => !left.Equals(right);
 
@@ -52,12 +51,12 @@ namespace Stl.ImmutableModel
 
         private Key(SerializationInfo info, StreamingContext context)
         {
-            Path = SymbolPath.Parse(info.GetString(nameof(Path))!);
+            Parts = SymbolList.Parse(info.GetString(nameof(Parts))!);
         }
 
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
         {
-            info.AddValue(nameof(Path), Path.Value);
+            info.AddValue(nameof(Parts), Parts.Value);
         }
     }
 }

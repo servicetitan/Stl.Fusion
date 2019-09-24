@@ -88,16 +88,16 @@ namespace Stl.ImmutableModel.Processing
             var changes = new List<NodeChangeInfo>();
             foreach (var (domainKey, changeType) in updateInfo.ChangeSet.Changes) {
                 INode node;
-                SymbolPath path;
+                SymbolList list;
                 if (changeType.HasFlag(NodeChangeType.Removed)) {
                     node = oldIndex.GetNode(domainKey);
-                    path = oldIndex.GetPath(node);
+                    list = oldIndex.GetPath(node);
                 }
                 else {
                     node = newIndex.GetNode(domainKey);
-                    path = newIndex.GetPath(node);
+                    list = newIndex.GetPath(node);
                 }
-                var nodeChangeInfo = new NodeChangeInfo(updateInfo, node, path, changeType);
+                var nodeChangeInfo = new NodeChangeInfo(updateInfo, node, list, changeType);
                 if (IsSupportedChange(nodeChangeInfo))
                     changes.Add(nodeChangeInfo);
             }

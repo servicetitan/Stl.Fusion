@@ -10,8 +10,8 @@ namespace Stl.ImmutableModel.Internal
 
         public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
         {
-            var typeRef = (LocalKey) value!;
-            writer.WriteValue(typeRef.Value);
+            var key = (Key) value!;
+            writer.WriteValue(key.Value);
         }
 
         public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
