@@ -53,7 +53,7 @@ namespace Stl.ImmutableModel.Processing
                 await processorTask.ConfigureAwait(false);
             }
 
-            // If we're here, there are two opitons:
+            // If we're here, there are two options:
             // - StopToken is cancelled 
             // - AllChanges sequence is exhausted b/c ChangeTracker was disposed.
             // We should handle both cases properly. So:
