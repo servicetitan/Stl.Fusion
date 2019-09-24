@@ -14,7 +14,7 @@ namespace Stl.Plugins
             => plugins
                 .GetService<IPluginCache>()
                 .GetOrCreate(implementationType)
-                .UntypedInstance;
+                .Instance;
 
         public static TPlugin GetSingletonPlugin<TPlugin>(this IPluginHost plugins)
             where TPlugin : ISingletonPlugin
@@ -39,7 +39,7 @@ namespace Stl.Plugins
         {
             var pluginHandle = (IPluginHandle) plugins.GetService(
                 typeof(IPluginHandle<>).MakeGenericType(pluginType));
-            return pluginHandle.UntypedInstances;
+            return pluginHandle.Instances;
         }
 
         public static IEnumerable<object> GetPlugins(
@@ -47,7 +47,7 @@ namespace Stl.Plugins
         {
             var pluginHandle = (IPluginHandle) plugins.GetService(
                 typeof(IPluginHandle<>).MakeGenericType(pluginType));
-            return pluginHandle.GetUntypedInstances(predicate);
+            return pluginHandle.GetInstances(predicate);
         }
     }
 }

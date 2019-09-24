@@ -10,14 +10,14 @@ namespace Stl.Plugins.Services
 {
     public interface IPluginHandle
     {
-        IEnumerable<object> UntypedInstances { get; }
-        IEnumerable<object> GetUntypedInstances(Func<PluginInfo, bool> predicate); 
+        IEnumerable<object> Instances { get; }
+        IEnumerable<object> GetInstances(Func<PluginInfo, bool> predicate); 
     }
 
     public interface IPluginHandle<out TPlugin> : IPluginHandle
     {
-        IEnumerable<TPlugin> Instances { get; }
-        IEnumerable<TPlugin> GetInstances(Func<PluginInfo, bool> predicate); 
+        new IEnumerable<TPlugin> Instances { get; }
+        new IEnumerable<TPlugin> GetInstances(Func<PluginInfo, bool> predicate); 
     }
 
     public class PluginHandle<TPlugin> : IPluginHandle<TPlugin>
@@ -27,7 +27,7 @@ namespace Stl.Plugins.Services
         protected IPluginCache PluginCache { get; }
         protected IEnumerable<IPluginFilter> PluginFilters { get; }
 
-        public IEnumerable<object> UntypedInstances => Instances.Cast<object>();
+        IEnumerable<object> IPluginHandle.Instances => Instances.Cast<object>();
         public IEnumerable<TPlugin> Instances => _lazyInstances.Value;
 
         public PluginHandle(PluginSetInfo plugins, 
@@ -36,10 +36,15 @@ namespace Stl.Plugins.Services
             Plugins = plugins;
             PluginCache = pluginCache;
             PluginFilters = pluginFilters;
-            _lazyInstances = new Lazy<TPlugin[]>(() => GetInstances(_ => true).ToArray());
+            _lazyInstances = new Lazy<TPlugin[]>(
+                () => GetInstances(_ => true).Cast<TPlugin>().ToArray());
         }
 
-        public IEnumerable<object> GetUntypedInstances(Func<PluginInfo, bool> predicate)
+        IEnumerable<object> IPluginHandle.GetInstances(Func<PluginInfo, bool> predicate) 
+            => GetInstances(predicate);
+        IEnumerable<TPlugin> IPluginHandle<TPlugin>.GetInstances(Func<PluginInfo, bool> predicate)
+            => GetInstances(predicate).Cast<TPlugin>();
+        protected IEnumerable<object> GetInstances(Func<PluginInfo, bool> predicate)
         {
             var requestedType = typeof(TPlugin);
             var pluginImplTypes = Plugins.TypesByBaseTypeOrderedByDependency.GetValueOrDefault(requestedType);
@@ -73,10 +78,7 @@ namespace Stl.Plugins.Services
             }
 
             return pluginInfos
-                .Select(pi => PluginCache.GetOrCreate(pi.Type.Resolve()).UntypedInstance);
+                .Select(pi => PluginCache.GetOrCreate(pi.Type.Resolve()).Instance);
         }
-
-        public IEnumerable<TPlugin> GetInstances(Func<PluginInfo, bool> predicate)
-            => GetUntypedInstances(predicate).Cast<TPlugin>();
     }
 }

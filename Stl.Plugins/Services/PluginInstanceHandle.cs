@@ -11,13 +11,13 @@ namespace Stl.Plugins.Services
 {
     public interface IPluginInstanceHandle : IDisposable
     {
-        object UntypedInstance { get; }
+        object Instance { get; }
     }
 
     public interface IPluginInstanceHandle<out TPluginImpl> : IPluginInstanceHandle
         where TPluginImpl : notnull
     {
-        TPluginImpl Instance { get; }
+        new TPluginImpl Instance { get; }
     }
     
     public class PluginInstanceHandle<TPluginImpl> : IPluginInstanceHandle<TPluginImpl>
@@ -27,7 +27,7 @@ namespace Stl.Plugins.Services
         public TPluginImpl Instance => 
             (_lazyInstance ?? throw new ObjectDisposedException(GetType().Name)).Value;
         // ReSharper disable once HeapView.BoxingAllocation
-        public object UntypedInstance => Instance;
+        object IPluginInstanceHandle.Instance => Instance;
 
         public PluginInstanceHandle(PluginSetInfo plugins, 
             IPluginFactory pluginFactory, IEnumerable<IPluginFilter> pluginFilters)

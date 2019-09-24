@@ -8,8 +8,8 @@ namespace Stl.Extensibility
     public interface IHasOptions : IEnumerable<KeyValuePair<object, object>>
     {
         // Shouldn't store any options with null values
-        void SetOptionUntyped(object key, object? value);
-        object? GetOptionUntyped(object key);
+        void SetOption(object key, object? value);
+        object? GetOption(object key);
         void SetOption<TValue>(object key, TValue value);
         [return: MaybeNull] TValue GetOption<TValue>(object key);
         bool HasOption(object key);
@@ -23,7 +23,7 @@ namespace Stl.Extensibility
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         public IEnumerator<KeyValuePair<object, object>> GetEnumerator() => Options.GetEnumerator();
 
-        void IHasOptions.SetOptionUntyped(object key, object? value) => SetOptionUntyped(key, value);
+        void IHasOptions.SetOption(object key, object? value) => SetOptionUntyped(key, value);
         protected void SetOptionUntyped(object key, object? value)
         {
             if (value == null)
@@ -32,7 +32,7 @@ namespace Stl.Extensibility
                 Options[key] = value;
         }
 
-        object? IHasOptions.GetOptionUntyped(object key) => GetOptionUntyped(key);
+        object? IHasOptions.GetOption(object key) => GetOptionUntyped(key);
         protected object? GetOptionUntyped(object key) => Options.TryGetValue(key, out var value) ? value : null;
 
         void IHasOptions.SetOption<TValue>(object key, TValue value) => SetOption(key, value);
