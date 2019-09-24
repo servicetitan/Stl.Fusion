@@ -28,7 +28,7 @@ namespace Stl
             HashCode = ComputeHashCode();
         }
 
-        public SymbolPath(string[] segments)
+        public SymbolPath(params Symbol[] segments)
         {
             if (segments.Length == 0) 
                 throw new ArgumentOutOfRangeException(nameof(segments));
@@ -41,28 +41,6 @@ namespace Stl
             HashCode = ComputeHashCode();
         }
 
-        public SymbolPath(Symbol[] segments)
-        {
-            if (segments.Length == 0) 
-                throw new ArgumentOutOfRangeException(nameof(segments));
-            SymbolPath? head = null;
-            for (var index = 0; index < segments.Length - 1; index++) 
-                head = new SymbolPath(head, segments[index]);
-            Head = head;
-            Tail = segments[^1];
-            SegmentCount = (Head?.SegmentCount ?? 0) + 1;
-            HashCode = ComputeHashCode();
-        }
-
-        public SymbolPath(string value)
-        {
-            var parsed = Parse(value);
-            Head = parsed.Head;
-            Tail = parsed.Tail;
-            SegmentCount = parsed.SegmentCount;
-            HashCode = parsed.HashCode;
-        }
-        
         public SymbolPath Concat(Symbol tail) 
             => new SymbolPath(this, tail);
         public SymbolPath Concat(SymbolPath other) 

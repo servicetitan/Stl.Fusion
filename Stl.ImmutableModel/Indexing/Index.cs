@@ -53,7 +53,7 @@ namespace Stl.ImmutableModel.Indexing
             PathToNode = ImmutableDictionary<SymbolPath, INode>.Empty;
             DomainKeyToNode = ImmutableDictionary<Key, INode>.Empty;
             var changeSet = ChangeSet.Empty;
-            AddNode(new SymbolPath(UntypedModel.LocalKey), UntypedModel, ref changeSet);
+            AddNode(UntypedModel.Key.Path, UntypedModel, ref changeSet);
         }
 
         protected virtual void AddNode(SymbolPath path, INode node, ref ChangeSet changeSet)

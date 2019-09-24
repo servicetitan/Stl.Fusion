@@ -16,7 +16,7 @@ namespace Stl.ImmutableModel.Internal
             var node = (INode) value!;
             var nodeInfo = value == null ? null : new NodeInfo() {
                 Type = node.GetType().AssemblyQualifiedName,
-                Key = node.LocalKey.Value,
+                Key = node.Key.Value,
                 Items = node.DualGetItems().ToDictionary(p => p.Key.Value, p => p.Value),
             };
             serializer.Serialize(writer, nodeInfo);
@@ -39,7 +39,7 @@ namespace Stl.ImmutableModel.Internal
                 children.Add((key, Option.Some(value)));
             }
             // ReSharper disable once HeapView.BoxingAllocation
-            var node = (INode) Activator.CreateInstance(objectType, new LocalKey(nodeInfo.Key!))!;
+            var node = (INode) Activator.CreateInstance(objectType, Key.Parse(nodeInfo.Key!))!;
             return node.DualWith(children);
         }
     }

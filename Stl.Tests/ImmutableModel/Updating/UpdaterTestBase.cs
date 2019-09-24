@@ -42,7 +42,7 @@ namespace Stl.Tests.ImmutableModel.Updating
             IndexTest.TestIntegrity(updater.Index);
 
             updater.Index.Resolve<string>(
-                new SymbolPath("./cluster1/vm1") + VirtualMachine.CapabilitiesSymbol)
+                SymbolPath.Parse("./cluster1/vm1") + VirtualMachine.CapabilitiesSymbol)
                 .Should().Equals("caps1a");
             info.ChangeSet.Changes.Count.Equals(3);
 
