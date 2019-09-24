@@ -11,8 +11,8 @@ namespace Stl.ImmutableModel.Indexing
     {
         INode UntypedModel { get; }
         SymbolPath? TryGetPath(INode node);
-        INode? TryGetNode(SymbolPath path);
         INode? TryGetNode(Key key);
+        INode? TryGetNodeByPath(SymbolPath path);
     }
 
     public interface IIndex<out TModel> : IIndex
@@ -42,7 +42,7 @@ namespace Stl.ImmutableModel.Indexing
 
         public virtual SymbolPath? TryGetPath(INode node)
             => NodeToPath.TryGetValue(node, out var path) ? path : null;
-        public virtual INode? TryGetNode(SymbolPath path)
+        public virtual INode? TryGetNodeByPath(SymbolPath path)
             => PathToNode.TryGetValue(path, out var node) ? node : null;
         public virtual INode? TryGetNode(Key key)
             => DomainKeyToNode.TryGetValue(key, out var node) ? node : null;
@@ -53,7 +53,7 @@ namespace Stl.ImmutableModel.Indexing
             PathToNode = ImmutableDictionary<SymbolPath, INode>.Empty;
             DomainKeyToNode = ImmutableDictionary<Key, INode>.Empty;
             var changeSet = ChangeSet.Empty;
-            AddNode(UntypedModel.Key.Path, UntypedModel, ref changeSet);
+            AddNode(SymbolPath.Root, UntypedModel, ref changeSet);
         }
 
         protected virtual void AddNode(SymbolPath path, INode node, ref ChangeSet changeSet)

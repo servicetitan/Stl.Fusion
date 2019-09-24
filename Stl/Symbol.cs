@@ -11,6 +11,8 @@ namespace Stl
     [TypeConverter(typeof(SymbolTypeConverter))]
     public readonly struct Symbol : IEquatable<Symbol>, IComparable<Symbol>, ISerializable
     {
+        public static readonly Symbol Empty = new Symbol("");
+
         internal int HashCode { get; }
         public string Value { get; }
 

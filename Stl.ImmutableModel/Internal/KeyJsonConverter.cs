@@ -18,7 +18,7 @@ namespace Stl.ImmutableModel.Internal
         {
             var value = (string) reader.Value!;
             // ReSharper disable once HeapView.BoxingAllocation
-            return new Key(value);
+            return Key.Parse(value);
         }
     }
 }

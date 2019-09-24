@@ -12,7 +12,8 @@ namespace Stl
     [TypeConverter(typeof(SymbolPathTypeConverter))]
     public sealed class SymbolPath : IEquatable<SymbolPath>, IComparable<SymbolPath>, ISerializable
     {
-        public static SymbolPath? Empty { get; } = (SymbolPath?) null;
+        public static readonly SymbolPath? Null = null;
+        public static readonly SymbolPath Root = new SymbolPath(Null, Symbol.Empty);
 
         internal int HashCode { get; }
         public int SegmentCount { get; }
@@ -52,7 +53,6 @@ namespace Stl
 
         // Conversion & operators
 
-        public static implicit operator SymbolPath(string source) => Parse(source);
         public static implicit operator SymbolPath((SymbolPath Head, Symbol Tail) source) => new SymbolPath(source.Head, source.Tail);
         public static explicit operator string(SymbolPath source) => source.Value;
 

@@ -50,7 +50,7 @@ namespace Stl.ImmutableModel.Updating
             var tail = path.Tail;
             path = path.Head;
             while (path != null) {
-                var sourceParent = this.GetNode(path);
+                var sourceParent = this.GetNodeByPath(path);
                 var targetParent = sourceParent.DualWith(tail, Option.Some((object?) target));
                 ReplaceNode(path, sourceParent, targetParent, ref changeSet);
                 source = sourceParent;

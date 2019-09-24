@@ -21,25 +21,28 @@ namespace Stl.Tests.ImmutableModel.Indexing
             Out.WriteLine($"JSON: {json}");
             idx = tmpIdx;
 
-            idx.Resolve(".").Should().Equals(idx.Model);
+            idx.GetNode(Key.Parse("@")).Should().Equals(idx.Model);
+            idx.GetNodeByPath(SymbolPath.Root).Should().Equals(idx.Model);
             
-            var cluster1 = idx.Resolve<Cluster>("./cluster1");
+            var cluster1 = idx.GetNode<Cluster>(Key.Parse("cluster1"));
             cluster1.LocalKey.Value.Should().Be("cluster1");
-            idx.GetPath(cluster1).Value.Should().Be("./cluster1");
+            idx.GetPath(cluster1).Value.Should().Be("/cluster1");
             
-            var vm1 = idx.Resolve<VirtualMachine>("./cluster1/vm1");
+            var vm1 = idx.GetNode<VirtualMachine>(Key.Parse("cluster1/vm1"));
             vm1.LocalKey.Value.Should().Be("vm1");
             cluster1["vm1"].Should().Equals(vm1);
-            idx.GetPath(vm1).Value.Should().Be("./cluster1/vm1");
+            idx.GetPath(vm1).Value.Should().Be("/cluster1/vm1");
+            idx.GetNodeByPath(idx.GetPath(vm1)).Should().Equals(vm1);
 
-            var vm2 = idx.Resolve<VirtualMachine>("./cluster1/vm2");
+            var vm2 = idx.GetNode<VirtualMachine>(Key.Parse("cluster1/vm2"));
             vm2.LocalKey.Value.Should().Be("vm2");
             cluster1["vm2"].Should().Equals(vm2);
-            idx.GetPath(vm2).Value.Should().Be("./cluster1/vm2");
+            idx.GetPath(vm2).Value.Should().Be("/cluster1/vm2");
+            idx.GetNodeByPath(idx.GetPath(vm2)).Should().Equals(vm2);
 
-            idx.Resolve(idx.GetPath(vm1) + new Symbol(VirtualMachine.CapabilitiesSymbol))
+            idx.GetNodeByPath<VirtualMachine>(idx.GetPath(vm1)).Capabilities
                 .Should().Equals("caps1");
-            idx.Resolve(idx.GetPath(vm2) + new Symbol(VirtualMachine.CapabilitiesSymbol))
+            idx.GetNodeByPath<VirtualMachine>(idx.GetPath(vm2)).Capabilities
                 .Should().Equals("caps2");
             idx.GetNode<VirtualMachine>(vm1.Key).Should().Equals(vm1);
             idx.GetNode<VirtualMachine>(vm2.Key).Should().Equals(vm2);
@@ -49,7 +52,7 @@ namespace Stl.Tests.ImmutableModel.Indexing
         public void UpdateTest()
         {
             var idx = BuildModel();
-            var cluster1 = idx.Resolve<Cluster>("./cluster1");
+            var cluster1 = idx.GetNode<Cluster>(Key.Parse("cluster1"));
             var vm2 = cluster1["vm2"];
             var vm3 = new VirtualMachine(vm2.Key.Path.Head! + "vm3")
                 .With(VirtualMachine.CapabilitiesSymbol, "caps3");
@@ -65,13 +68,13 @@ namespace Stl.Tests.ImmutableModel.Indexing
             var c = DictionaryComparison.New(changeSet.Changes, changeSet1.Changes);
             c.AreEqual.Should().BeTrue();
 
-            var cluster1ax = idx.Resolve<Cluster>("./cluster1");
+            var cluster1ax = idx.GetNode<Cluster>(Key.Parse("cluster1"));
             cluster1ax.Should().Equals(cluster1a);
             cluster1ax.Should().NotEqual(cluster1);
 
-            var vm3a = idx.Resolve<VirtualMachine>("./cluster1/vm3");
+            var vm3a = idx.GetNode<VirtualMachine>(Key.Parse("cluster1/vm3"));
             vm3a.Should().Equal(vm3);
-            idx.GetPath(vm3).Value.Should().Be("./cluster1/vm3");
+            idx.GetPath(vm3).Value.Should().Be("/cluster1/vm3");
 
             // TODO: Add more tests.
         }
@@ -81,7 +84,7 @@ namespace Stl.Tests.ImmutableModel.Indexing
             void ProcessNode(SymbolPath path, INode node)
             {
                 index.GetPath(node).Should().Equals(path);
-                index.GetNode(path).Should().Equals(node);
+                index.GetNodeByPath(path).Should().Equals(node);
                 index.GetNode(node.Key).Should().Equals(node);
 
                 foreach (var (k, n) in node.DualGetNodeItems())
@@ -89,18 +92,18 @@ namespace Stl.Tests.ImmutableModel.Indexing
             }
 
             var root = index.UntypedModel;
-            ProcessNode(root.LocalKey.Value, root);
+            ProcessNode(SymbolPath.Root, root);
         }
 
         internal static UpdatableIndex<ModelRoot> BuildModel()
         {
-            var vm1 = new VirtualMachine(new Key("./cluster1/vm1"))
+            var vm1 = new VirtualMachine(Key.Parse("cluster1/vm1"))
                 .With(VirtualMachine.CapabilitiesSymbol, "caps1");
-            var vm2 = new VirtualMachine(new Key("./cluster1/vm2"))
+            var vm2 = new VirtualMachine(Key.Parse("cluster1/vm2"))
                 .With(VirtualMachine.CapabilitiesSymbol, "caps2");
-            var cluster = new Cluster(new Key("cluster1"))
+            var cluster = new Cluster(Key.Parse("cluster1"))
                 .WithAdded(vm1, vm2);
-            var root = new ModelRoot(new Key("."))
+            var root = new ModelRoot(Key.Parse("@"))
                 .WithAdded(cluster);
             
             var idx = UpdatableIndex.New(root);

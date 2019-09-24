@@ -20,8 +20,8 @@ namespace Stl.ImmutableModel.Updating
         {
             if (path.Head == null)
                 // Root update
-                return index.Update(index.GetNode(path), (INode) value.Value!);
-            var source = index.GetNode(path.Head);
+                return index.Update(index.GetNodeByPath(path), (INode) value.Value!);
+            var source = index.GetNodeByPath(path.Head);
             var target = source.DualWith(path.Tail, value);
             return index.Update(source, target);
         }

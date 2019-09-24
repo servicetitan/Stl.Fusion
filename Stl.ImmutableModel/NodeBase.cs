@@ -27,7 +27,7 @@ namespace Stl.ImmutableModel
         protected NodeBase(SerializationInfo info, StreamingContext context)
             : base()
         {
-            Key = new Key(info.GetString(nameof(Key)) ?? "");
+            Key = Key.Parse(info.GetString(nameof(Key)) ?? "");
         }
 
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context) 

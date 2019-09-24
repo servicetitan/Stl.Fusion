@@ -19,7 +19,7 @@ namespace Stl.ImmutableModel.Internal
         {
             if (value is string s)
                 // ReSharper disable once HeapView.BoxingAllocation
-                return new Key(s);
+                return Key.Parse(s);
             return base.ConvertFrom(context, culture, value);
         }
     }
