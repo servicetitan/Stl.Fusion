@@ -12,14 +12,14 @@ namespace Stl.Tests
 
         [Theory]
         [InlineData("a", new[] {"a"}, null)]
-        [InlineData("a/b", new[] {"a", "b"}, null)]
-        [InlineData("a\\/b", new[] {"a/b"}, null)]
-        [InlineData("a\\\\/b", new[] {"a\\", "b"}, null)]
-        [InlineData("a\\\\/b\\", new[] {"a\\", "b\\"}, "a\\\\/b\\\\")]
-        [InlineData("a\\\\/b\\\\", new[] {"a\\", "b\\"}, null)]
+        [InlineData("a|b", new[] {"a", "b"}, null)]
+        [InlineData("a\\|b", new[] {"a|b"}, null)]
+        [InlineData("a\\\\|b", new[] {"a\\", "b"}, null)]
+        [InlineData("a\\\\|b\\", new[] {"a\\", "b\\"}, "a\\\\|b\\\\")]
+        [InlineData("a\\\\|b\\\\", new[] {"a\\", "b\\"}, null)]
         [InlineData("a\\\\", new[] {"a\\"}, null)]
         [InlineData("a\\", new[] {"a\\"}, "a\\\\")]
-        [InlineData("a/\\", new[] {"a", "\\"}, "a/\\\\")]
+        [InlineData("a|\\", new[] {"a", "\\"}, "a|\\\\")]
         public void CombinedTest(string value, string[] segments, string? expectedValue = null)
         {
             var p = SymbolList.Parse(value);

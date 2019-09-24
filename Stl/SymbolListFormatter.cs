@@ -10,7 +10,7 @@ namespace Stl
     
     public class SymbolListFormatter : ISymbolListFormatter
     {
-        public static ISymbolListFormatter Default { get; } = new SymbolListFormatter('/');
+        public static ISymbolListFormatter Default { get; } = new SymbolListFormatter('|');
         
         public char DelimiterChar { get; }
         public char EscapeChar { get; }
