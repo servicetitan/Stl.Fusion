@@ -45,23 +45,23 @@ namespace Stl.Hosting
         public abstract Type[] PluginTypes { get; }
 
         public string BaseDirectory {
-            get => GetOption<string>(nameof(BaseDirectory)) ?? "";
+            get => this.GetOption<string>(nameof(BaseDirectory)) ?? "";
             set => SetOption(nameof(BaseDirectory), value);
         }
         public string EnvironmentVarPrefix {
-            get => GetOption<string>(nameof(EnvironmentVarPrefix)) ?? "";
+            get => this.GetOption<string>(nameof(EnvironmentVarPrefix)) ?? "";
             set => SetOption(nameof(EnvironmentVarPrefix), value);
         }
         public string PluginHostLoggingSectionName {
-            get => GetOption<string>(nameof(PluginHostLoggingSectionName)) ?? "";
+            get => this.GetOption<string>(nameof(PluginHostLoggingSectionName)) ?? "";
             set => SetOption(nameof(PluginHostLoggingSectionName), value);
         }
         public string LoggingSectionName {
-            get => GetOption<string>(nameof(LoggingSectionName)) ?? "";
+            get => this.GetOption<string>(nameof(LoggingSectionName)) ?? "";
             set => SetOption(nameof(LoggingSectionName), value);
         }
         public ReadOnlyMemory<string> WebHostUrls {
-            get => GetOption<ReadOnlyMemory<string>>(nameof(WebHostUrls));
+            get => this.GetOption<ReadOnlyMemory<string>>(nameof(WebHostUrls));
             set => SetOption(nameof(WebHostUrls), value);
         }
 
@@ -69,31 +69,31 @@ namespace Stl.Hosting
         void IAppHostBuildState.BuildHost() => BuildHost();
 
         ReadOnlyMemory<string> IAppHostBuildState.Arguments {
-            get => GetOption<ReadOnlyMemory<string>>(nameof(IAppHostBuildState.Arguments));
+            get => this.GetOption<ReadOnlyMemory<string>>(nameof(IAppHostBuildState.Arguments));
             set => SetOption(nameof(IAppHostBuildState.Arguments), value);
         }
         string IAppHostBuildState.EnvironmentName {
-            get => GetOption<string>(nameof(IAppHostBuildState.EnvironmentName)) ?? Environments.Production;
+            get => this.GetOption<string>(nameof(IAppHostBuildState.EnvironmentName)) ?? Environments.Production;
             set => SetOption(nameof(IAppHostBuildState.EnvironmentName), value);
         }
         IConfiguration IAppHostBuildState.PluginHostConfiguration {
-            get => GetOption<IConfiguration?>(nameof(IAppHostBuildState.PluginHostConfiguration))!;
+            get => this.GetOption<IConfiguration?>(nameof(IAppHostBuildState.PluginHostConfiguration))!;
             set => SetOption(nameof(IAppHostBuildState.PluginHostConfiguration), value);
         }
         IPluginHostBuilder IAppHostBuildState.PluginHostBuilder {
-            get => GetOption<IPluginHostBuilder?>(nameof(IAppHostBuildState.PluginHostBuilder))!;
+            get => this.GetOption<IPluginHostBuilder?>(nameof(IAppHostBuildState.PluginHostBuilder))!;
             set => SetOption(nameof(IAppHostBuildState.PluginHostBuilder), value);
         }
         IPluginHost IAppHostBuildState.PluginHost {
-            get => GetOption<IPluginHost?>(nameof(IAppHostBuildState.PluginHost))!;
+            get => this.GetOption<IPluginHost?>(nameof(IAppHostBuildState.PluginHost))!;
             set => SetOption(nameof(IAppHostBuildState.PluginHost), value);
         }
         ReadOnlyMemory<string> IAppHostBuildState.HostArguments {
-            get => GetOption<ReadOnlyMemory<string>>(nameof(IAppHostBuildState.HostArguments));
+            get => this.GetOption<ReadOnlyMemory<string>>(nameof(IAppHostBuildState.HostArguments));
             set => SetOption(nameof(IAppHostBuildState.HostArguments), value);
         }
         IHost? IAppHostBuildState.Host {
-            get => GetOption<IHost?>(nameof(IAppHostBuildState.Host));
+            get => this.GetOption<IHost?>(nameof(IAppHostBuildState.Host));
             set => SetOption(nameof(IAppHostBuildState.Host), value);
         }
 

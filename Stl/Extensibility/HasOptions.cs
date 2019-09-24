@@ -10,43 +10,45 @@ namespace Stl.Extensibility
         // Shouldn't store any options with null values
         void SetOption(object key, object? value);
         object? GetOption(object key);
-        void SetOption<TValue>(object key, TValue value);
-        [return: MaybeNull] TValue GetOption<TValue>(object key);
         bool HasOption(object key);
         void LockOptions();
     }
 
+    public static class HasOptionsEx
+    {
+        [return: MaybeNull]
+        public static TValue GetOption<TValue>(this IHasOptions hasOptions, object key) 
+            // ReSharper disable once HeapView.BoxingAllocation
+            => (TValue) (hasOptions.GetOption(key) ?? default(TValue)!);
+        public static void SetOption<TValue>(this IHasOptions hasOptions, object key, TValue value) 
+            => hasOptions.SetOption(key, value);
+    }
+
     public abstract class HasOptionsBase : IHasOptions
     {
-        protected IDictionary<object, object> Options { get; private set; } = new Dictionary<object, object>();
+        protected IDictionary<object, object> Options { get; private set; } = 
+            new Dictionary<object, object>();
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         public IEnumerator<KeyValuePair<object, object>> GetEnumerator() => Options.GetEnumerator();
 
-        void IHasOptions.SetOption(object key, object? value) => SetOptionUntyped(key, value);
-        protected void SetOptionUntyped(object key, object? value)
+        // The intent is to keep these methods exposed only via IHasOptions
+        bool IHasOptions.HasOption(object key) => HasOption(key);
+        object? IHasOptions.GetOption(object key) => GetOption(key); 
+        void IHasOptions.SetOption(object key, object? value) => SetOption(key, value); 
+        void IHasOptions.LockOptions() => LockOptions();
+
+        // And via protected members
+        protected bool HasOption(object key) => Options.ContainsKey(key);
+        protected void SetOption(object key, object? value)
         {
             if (value == null)
                 Options.Remove(key);
             else 
                 Options[key] = value;
         }
-
-        object? IHasOptions.GetOption(object key) => GetOptionUntyped(key);
-        protected object? GetOptionUntyped(object key) => Options.TryGetValue(key, out var value) ? value : null;
-
-        void IHasOptions.SetOption<TValue>(object key, TValue value) => SetOption(key, value);
-        protected void SetOption<TValue>(object key, TValue value) => SetOptionUntyped(key, value);
-
-        [return: MaybeNull] 
-        TValue IHasOptions.GetOption<TValue>(object key) => GetOption<TValue>(key);
-        [return: MaybeNull] 
-        protected TValue GetOption<TValue>(object key) => (TValue) (GetOptionUntyped(key) ?? default(TValue)!);
-
-        bool IHasOptions.HasOption(object key) => HasOption(key);
-        protected bool HasOption(object key) => Options.ContainsKey(key);
-
-        void IHasOptions.LockOptions() => LockOptions();
+        protected object? GetOption(object key) 
+            => Options.TryGetValue(key, out var value) ? value : null;
         protected void LockOptions() => Options = new ReadOnlyDictionary<object, object>(Options); 
     }
 }
