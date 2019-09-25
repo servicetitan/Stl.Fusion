@@ -27,6 +27,7 @@ It's based on standard coding conventions for C# with a few exceptions:
   * `ValueTaskEx`: `CompletedTask`, `TrueTask`, `FalseTask`, `New<T>(T value)`.
   * The rest is less important.
   * `AsyncDisposable` - a struct-based `IAsyncDisposable` implementation invoking the specified delegate on disposal.
+  * `AsyncCounter` - a helper type allowing to await for the moment when its `Count` reaches zero; the same happens on its disposal. The type is useful when you need to e.g. implement an `IAsyncDisposable` and await for completion of all started tasks there. `SimpleModelUpdater` uses it for exactly this purpose.
 
 * Caching:
   * `ICache<TKey, TValue>` + its implementations (the simplest async cache w/o any kind of implicit expiration)
@@ -85,8 +86,8 @@ And finally there are a few useful types residing right in the `Stl` namespace:
 * `Option<T>` - an option type implementation. Initially I used `Optional` NuGet package, but ended up realizing there is almost nothing there, so it's more logical to simply re-implement it right in Stl.
 * `Result<T>` and related types (`IResult<T>`, `IResult`, `IMutableResult<T>`, `IMutableResult`) - stores either a result of type `T` or an error.
 * `Symbol` - a `struct` storing `(string Value, int ValueHashCode)`. Useful when you store lots of such strings in dictionaries, i.e. when the hash code has to be computed frequently.
-* `SymbolPath` - ~ like a functional list of `Symbol`s, i.e. stores the `(Symbol Head, SymbolPath Tail, int PathHashCode)`. A good abstraction for scenarios where you want to search by these paths in dictionaries and build them dynamically. E.g. when you extend a path, no string concatenation happens, + its hash is computed from hashes of `Head` and `Tail` (i.e. already cached hashes).
-* Both `Symbol` and `SymbolPath` are used in `Stl.ImmutableModel`, though the abstractions seems to be useful in other places - that's why they're in Stl. The location in Stl root is arguable though, i.e. maybe I'll move them to `Stl.Strings` eventually.
+* `SymbolList` - ~ like a functional list of `Symbol`s, i.e. stores the `(Symbol Head, SymbolList Tail, int PathHashCode)`. A good abstraction for scenarios where you want to search by these paths in dictionaries and build them dynamically. E.g. when you extend a path, no string concatenation happens, + its hash is computed from hashes of `Head` and `Tail` (i.e. already cached hashes).
+* Both `Symbol` and `SymbolList` are used in `Stl.ImmutableModel`, though the abstractions seems to be useful in other places - that's why they're in Stl. The location in Stl root is arguable though, i.e. maybe I'll move them to `Stl.Strings` eventually.
 * `IgnoreEx` - `whatever.Ignore()` (returns void), `.IgnoreAsUnit()` (returns `Unit`), and `.ToUnitFunc()` extension methods
 * `Disposable` - a struct-based `IDisposable` implementation invoking the specified delegate on disposal.
 * `KeyValuePair` - `New<TKey, TValue>(key, value)` (why it's missing in .NET Core?) & `ToKeyValuePair(this (TKey Key, TValue Value) pair)`
