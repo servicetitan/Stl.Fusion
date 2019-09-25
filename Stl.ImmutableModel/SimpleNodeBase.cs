@@ -9,6 +9,7 @@ namespace Stl.ImmutableModel
     {
         ISimpleNode BaseWith(Symbol property, object? value);
         ISimpleNode BaseWith(IEnumerable<(Symbol PropertyKey, object? Value)> changes);
+        ISimpleNode BaseWithout(Symbol property);
     }
 
     [Serializable]
@@ -21,5 +22,7 @@ namespace Stl.ImmutableModel
             => Update<SimpleNodeBase>(property, Option.Some(value));
         public ISimpleNode BaseWith(IEnumerable<(Symbol PropertyKey, object? Value)> changes)
             => Update<SimpleNodeBase>(changes.Select(p => (p.PropertyKey, Option.Some(p.Value))));
+        public ISimpleNode BaseWithout(Symbol property) 
+            => Update<SimpleNodeBase>(property, Option.None<object?>());
     }
 }
