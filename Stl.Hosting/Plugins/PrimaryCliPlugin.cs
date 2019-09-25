@@ -4,6 +4,7 @@ using System.CommandLine.Builder;
 using System.CommandLine.Invocation;
 using System.Linq;
 using System.Reflection;
+using Microsoft.Extensions.DependencyInjection;
 using Stl.Hosting.Plugins;
 using Stl.Plugins;
 using Stl.Plugins.Extensions.Cli;
@@ -36,7 +37,8 @@ namespace Stl.Hosting.Plugins
             ConfigureCliBuilder();
             // Now letting plugins to kick in
             CliBuilder.UsePlugins<ICliPlugin>(Plugins);
-            CliBuilder.Build().Invoke(arguments);
+            var console = Plugins.GetService<IConsole>();
+            CliBuilder.Build().Invoke(arguments, console);
         }
 
         protected virtual void ConfigureCliBuilder()

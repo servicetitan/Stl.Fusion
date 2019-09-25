@@ -142,9 +142,9 @@ namespace Stl.Hosting
                 state.Arguments = arguments;
             state.PluginHostBuilder = CreatePluginHostBuilder();
             ConfigurePluginHostConfiguration();
-            ConfigurePluginHostLogging();
             ConfigurePluginHostServiceProviderFactory();
-            ConfigurePluginHostUsePlugins();
+            ConfigurePluginHostPluginTypes();
+            ConfigurePluginHostLogging();
             ConfigurePluginHostServices();
             state.PluginHost = state.PluginHostBuilder.Build();
             ProcessCommandLine();
@@ -171,18 +171,6 @@ namespace Stl.Hosting
         protected virtual IPluginHostBuilder CreatePluginHostBuilder() 
             => new PluginHostBuilder();
 
-        protected virtual void ConfigurePluginHostLogging()
-        {
-            BuildState.PluginHostBuilder.ConfigureLogging((builder, logging) => {
-                var cfg = builder.Configuration;
-                var section = cfg.GetSection(PluginHostLoggingSectionName);
-                logging.AddConfiguration(section);
-                logging.AddConsole();
-                logging.AddDebug();
-                logging.AddEventSourceLogger();
-            });
-        }
-
         protected virtual void ConfigurePluginHostServiceProviderFactory()
             => BuildState.PluginHostBuilder.UseServiceProviderFactory((builder, services) => {
                 var f = new AutofacServiceProviderFactory();
@@ -190,12 +178,30 @@ namespace Stl.Hosting
                 return f.CreateServiceProvider(containerBuilder);
             });
 
-        protected virtual void ConfigurePluginHostUsePlugins()
+        protected virtual void ConfigurePluginHostPluginTypes()
         {
             var pluginTypes = CorePluginTypes
                 .Concat(IsTestHost ? TestPluginTypes.ToArray() : NonTestPluginTypes)
                 .ToArray();
             BuildState.PluginHostBuilder.UsePluginTypes(pluginTypes);
+        }
+
+        protected virtual void ConfigurePluginHostLogging()
+        {
+            BuildState.PluginHostBuilder.ConfigureServices((builder, services) => {
+                services.AddLogging(logging => {
+                    if (IsTestHost) {
+                        logging.AddDebug();
+                        return;
+                    }
+                    var cfg = builder.Configuration;
+                    var loggingCfg = cfg.GetSection(PluginHostLoggingSectionName);
+                    logging.AddConfiguration(loggingCfg);
+                    logging.AddConsole();
+                    logging.AddDebug();
+                    logging.AddEventSourceLogger();
+                });
+            });
         }
 
         protected virtual void ConfigurePluginHostServices()
@@ -204,14 +210,10 @@ namespace Stl.Hosting
                 var cfg = builder.Configuration;
                 services.TryAddSingleton(cfg);
                 services.TryAddSingleton<IAppHostBuilder>(this);
-                services.AddLogging(logging => {
-                    var loggingConfiguration = cfg.GetSection(PluginHostLoggingSectionName);
-                    logging.AddConfiguration(loggingConfiguration);
-                    logging.AddConsole();
-                    logging.AddDebug();
-                    logging.AddEventSourceLogger();
-                });
-                services.TryAddSingleton<IConsole, SystemConsole>();
+                if (IsTestHost)
+                    services.TryAddSingleton<IConsole, TestConsole>();
+                else
+                    services.TryAddSingleton<IConsole, SystemConsole>();
             });
         }
 

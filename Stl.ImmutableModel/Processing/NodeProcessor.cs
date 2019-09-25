@@ -158,29 +158,14 @@ namespace Stl.ImmutableModel.Processing
         }
     }
 
-    public class NodeProcessor : NodeProcessorBase
+    public abstract class NodeProcessorBase<TModel> : NodeProcessorBase
+        where TModel : class, INode
     {
-        public Func<INodeProcessingInfo, Task> Implementation { get; }
-        public Func<IModelUpdateInfo, bool>? IsSupportedUpdatePredicate { get; }
-        public Func<NodeChangeInfo, bool>? IsSupportedChangePredicate { get; }
+        public new IModelProvider<TModel> ModelProvider { get; }
 
-        public NodeProcessor(
-            IModelProvider modelProvider, 
-            Func<INodeProcessingInfo, Task> implementation,
-            Func<IModelUpdateInfo, bool>? isSupportedUpdatePredicate = null,
-            Func<NodeChangeInfo, bool>? isSupportedChangePredicate = null) 
-            : base(modelProvider)
+        protected NodeProcessorBase(IModelProvider<TModel> modelProvider) : base(modelProvider)
         {
-            Implementation = implementation;
-            IsSupportedUpdatePredicate = isSupportedUpdatePredicate;
-            IsSupportedChangePredicate = isSupportedChangePredicate;
+            ModelProvider = modelProvider;
         }
-
-        protected override Task ProcessNodeAsync(INodeProcessingInfo info) 
-            => Implementation.Invoke(info);
-        protected override bool IsSupportedUpdate(IModelUpdateInfo updateInfo) 
-            => IsSupportedUpdatePredicate?.Invoke(updateInfo) ?? true;
-        protected override bool IsSupportedChange(in NodeChangeInfo nodeChangeInfo) 
-            => IsSupportedChangePredicate?.Invoke(nodeChangeInfo) ?? true;
     }
 }

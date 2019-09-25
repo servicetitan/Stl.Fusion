@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Stl.Plugins.Internal;
 using Stl.Plugins.Metadata;
 using Stl.Plugins.Services;
 
@@ -20,12 +18,6 @@ namespace Stl.Plugins
             builder.Configuration = cfgBuilder.Build();
             return builder;
         }
-
-        public static TBuilder ConfigureLogging<TBuilder>(this TBuilder builder,
-            Action<TBuilder, ILoggingBuilder> loggingBuilder)
-            where TBuilder : IPluginHostBuilder
-            => builder.ConfigureServices((builder1, services) 
-                => loggingBuilder.Invoke(builder1, new LoggingBuilder(services)));
 
         public static TBuilder UseServiceProviderFactory<TBuilder>(this TBuilder builder,
             Func<TBuilder, IServiceCollection, IServiceProvider> serviceProviderFactory)

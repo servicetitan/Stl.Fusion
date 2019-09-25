@@ -32,4 +32,15 @@ namespace Stl.ImmutableModel.Processing
 
         protected virtual Task ProcessUnknownNodeAsync(INodeProcessingInfo info) => Task.CompletedTask;
     }
+
+    public abstract class DispatchingNodeProcessorBase<TModel> : DispatchingNodeProcessorBase
+        where TModel : class, INode
+    {
+        public new IModelProvider<TModel> ModelProvider { get; }
+
+        protected DispatchingNodeProcessorBase(IModelProvider<TModel> modelProvider) : base(modelProvider)
+        {
+            ModelProvider = modelProvider;
+        }
+    }
 }

@@ -10,7 +10,7 @@ namespace Stl.ImmutableModel
     // read-only models + an API for tracking the changes there,
     // but not the way to update the models.
 
-    public interface IModelProvider : IAsyncDisposable
+    public interface IModelProvider
     {
         INode Model { get; }
         IUpdatableIndex Index { get; }
@@ -25,7 +25,7 @@ namespace Stl.ImmutableModel
         new IModelChangeTracker<TModel> ChangeTracker { get; }
     }
 
-    public class ModelProvider<TModel> : AsyncDisposableBase, IModelProvider<TModel>
+    public class ModelProvider<TModel> : IModelProvider<TModel>
         where TModel : class, INode
     {
         protected IModelUpdater<TModel> Updater { get; }
@@ -42,9 +42,6 @@ namespace Stl.ImmutableModel
         {
             Updater = updater;
         }
-
-        protected override ValueTask DisposeInternalAsync(bool disposing) 
-            => Updater.DisposeAsync();
     }
 
     public static class ModelProvider

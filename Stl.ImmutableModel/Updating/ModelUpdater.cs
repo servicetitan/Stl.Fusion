@@ -6,7 +6,7 @@ using Stl.Async;
 
 namespace Stl.ImmutableModel.Updating
 {
-    public interface IModelUpdater : IModelProvider
+    public interface IModelUpdater : IModelProvider, IAsyncDisposable
     {
         Task<IModelUpdateInfo> UpdateAsync(
             Func<IUpdatableIndex, (IUpdatableIndex NewIndex, ModelChangeSet ChangeSet)> updater,
