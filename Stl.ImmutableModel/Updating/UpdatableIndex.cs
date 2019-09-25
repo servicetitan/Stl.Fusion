@@ -67,11 +67,17 @@ namespace Stl.ImmutableModel.Updating
                 return 0;
 
             var changeType = (NodeChangeType) 0;
+            if (source.GetType() != target.GetType())
+                changeType |= NodeChangeType.TypeChanged;
+
             var sPairs = source.DualGetItems().ToDictionary();
             var tPairs = target.DualGetItems().ToDictionary();
             var c = DictionaryComparison.New(sPairs, tPairs);
-            if (c.AreEqual)
+            if (c.AreEqual) {
+                if (changeType != 0)
+                    ReplaceNode(list, source, target, ref changeSet, changeType);
                 return changeType;
+            }
 
             foreach (var (key, item) in c.LeftOnly) {
                 if (item is INode n) {

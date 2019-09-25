@@ -18,7 +18,6 @@ namespace Stl.ImmutableModel.Processing
     public interface INodeProcessor : IAsyncProcess
     {
         IModelProvider ModelProvider { get; }
-        IModelChangeTracker ChangeTracker { get; }
     }
 
     public interface INodeProcessor<TModel> : INodeProcessor
@@ -35,6 +34,7 @@ namespace Stl.ImmutableModel.Processing
             new ConcurrentDictionary<NodeProcessingInfo, Unit>();
 
         public IModelProvider ModelProvider { get; }
+        public IUpdatableIndex Index => ModelProvider.Index;
         public IModelChangeTracker ChangeTracker => ModelProvider.ChangeTracker;
 
         protected NodeProcessorBase(IModelProvider modelProvider) 
@@ -199,6 +199,8 @@ namespace Stl.ImmutableModel.Processing
         where TModel : class, INode
     {
         public new IModelProvider<TModel> ModelProvider { get; }
+        public new IUpdatableIndex<TModel> Index => ModelProvider.Index;
+        public new IModelChangeTracker<TModel> ChangeTracker => ModelProvider.ChangeTracker;
 
         protected NodeProcessorBase(IModelProvider<TModel> modelProvider) : base(modelProvider) 
             => ModelProvider = modelProvider;

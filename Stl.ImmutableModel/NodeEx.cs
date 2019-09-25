@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -46,5 +47,26 @@ namespace Stl.ImmutableModel
                 ISimpleNode s => s.BaseWith(changes.Select(p => (p.LocalKey, p.Value.Value))),
                 _ => throw new ArgumentOutOfRangeException(nameof(node)),
             });
+
+        // GetRoots
+
+        public static IEnumerable<TNode> GetRoots<TNode>(this INode root, bool includeRoot = false)
+            where TNode : class, INode
+        {
+            var roots = new Dictionary<Key, TNode>();
+
+            void Process(INode node, bool includeNode)
+            {
+                if (node is TNode n && includeNode) {
+                    roots.Add(n.Key, n);
+                    return;
+                }
+                foreach (var (_, subNode) in node.DualGetNodeItems())
+                    Process(subNode, true);
+            }
+
+            Process(root, includeRoot);
+            return roots.Values;
+        }
     }
 }

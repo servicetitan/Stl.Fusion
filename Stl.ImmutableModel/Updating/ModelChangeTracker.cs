@@ -56,9 +56,9 @@ namespace Stl.ImmutableModel.Updating
             _allChanges.Dispose();
         }
 
-        public void OnModelUpdated(IModelUpdateInfo updateInfo) 
+        void IModelChangeNotify.OnModelUpdated(IModelUpdateInfo updateInfo) 
             => OnModelUpdated((ModelUpdateInfo<TModel>) updateInfo);
-        void IModelChangeNotify<TModel>.OnModelUpdated(ModelUpdateInfo<TModel> updateInfo)
+        public void OnModelUpdated(ModelUpdateInfo<TModel> updateInfo)
         {
             if (_observers == null)
                 throw Errors.AlreadyDisposed();

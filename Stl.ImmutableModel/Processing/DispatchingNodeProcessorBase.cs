@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Threading.Tasks;
 using Stl.ImmutableModel.Indexing;
+using Stl.ImmutableModel.Updating;
 using Stl.Reflection;
 
 namespace Stl.ImmutableModel.Processing 
@@ -36,6 +37,8 @@ namespace Stl.ImmutableModel.Processing
         where TModel : class, INode
     {
         public new IModelProvider<TModel> ModelProvider { get; }
+        public new IUpdatableIndex<TModel> Index => ModelProvider.Index;
+        public new IModelChangeTracker<TModel> ChangeTracker => ModelProvider.ChangeTracker;
 
         protected DispatchingNodeProcessorBase(IModelProvider<TModel> modelProvider) : base(modelProvider)
         {
