@@ -10,9 +10,10 @@ using Stl.Serialization;
 
 namespace Stl.ImmutableModel.Indexing
 {
-    public interface IIndex : IEnumerable<(INode Node, SymbolList Path)>
+    public interface IIndex
     {
         INode Model { get; }
+        IEnumerable<(INode Node, SymbolList Path)> Entries { get; }
         INode? TryGetNode(Key key);
         INode? TryGetNodeByPath(SymbolList list);
         SymbolList? TryGetPath(INode node);
@@ -41,11 +42,11 @@ namespace Stl.ImmutableModel.Indexing
         [field: NonSerialized]
         protected ImmutableDictionary<INode, SymbolList> NodeToPath { get; set; } = null!;
 
-        protected Index() { }
+        [JsonIgnore]
+        public IEnumerable<(INode Node, SymbolList Path)> Entries 
+            => NodeToPath.Select(p => (p.Key, p.Value));
 
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        public IEnumerator<(INode Node, SymbolList Path)> GetEnumerator() 
-            => NodeToPath.Select(p => (p.Key, p.Value)).GetEnumerator();
+        protected Index() { }
 
         public INode? TryGetNode(Key key)
             => KeyToNode.TryGetValue(key, out var node) ? node : null;

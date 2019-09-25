@@ -24,7 +24,7 @@ namespace Stl.ImmutableModel.Processing
     public interface INodeProcessor<TModel> : INodeProcessor
         where TModel : class, INode
     {
-        IModelProvider<TModel> ModelProvider { get; }
+        new IModelProvider<TModel> ModelProvider { get; }
     }
 
     public abstract class NodeProcessorBase : AsyncProcessBase, INodeProcessor
@@ -88,9 +88,9 @@ namespace Stl.ImmutableModel.Processing
 
             var modelUpdateInfoType = typeof(ModelUpdateInfo<>).MakeGenericType(modelType);
             var modelUpdateInfo = (IModelUpdateInfo) Activator.CreateInstance(
-                modelUpdateInfoType, index, index, ModelChangeSet.Empty);
+                modelUpdateInfoType, index, index, ModelChangeSet.Empty)!;
             
-            var changes = index
+            var changes = index.Entries
                 .Select(item => new NodeChangeInfo(modelUpdateInfo, item.Node, item.Path, 0))
                 .Where(info => IsSupportedChange(info))
                 .ToList();
