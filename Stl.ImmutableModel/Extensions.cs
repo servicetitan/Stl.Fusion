@@ -6,7 +6,7 @@ namespace Stl.ImmutableModel
 {
     public static class Extensions
     {
-        // GetExtension
+        // GetExtension(s)
 
         public static object? GetExtension(this ISimpleNode node, Type extensionType)
         {
@@ -22,12 +22,14 @@ namespace Stl.ImmutableModel
             return default!;
         }
 
-        public static IEnumerable<KeyValuePair<Symbol, object?>> GetExtensions(this ISimpleNode node)
+        // GetAllExtensions
+
+        public static IEnumerable<(Symbol PropertyKey, object? Value)> GetAllExtensions(
+            this ISimpleNode node)
         {
-            foreach (var pair in node) {
-                if (pair.Key.Value.StartsWith(ExtensionKeyProvider.ExtensionPrefix))
-                    yield return pair;
-            }
+            foreach (var (k, v) in node)
+                if (k.Value.StartsWith(ExtensionKeyProvider.ExtensionPrefix))
+                    yield return (k, v);
         }
 
         // WithExtension
@@ -75,5 +77,14 @@ namespace Stl.ImmutableModel
         public static TNode WithoutExtension<TNode, TExtension>(this TNode node)
             where TNode : class, ISimpleNode
             => node.WithoutExtension(typeof(TExtension));
+
+        // WithAllExtensions
+
+        public static ISimpleNode WithAllExtensions(this ISimpleNode target, ISimpleNode source)
+            => target.BaseWith(source.GetAllExtensions());
+
+        public static TNode WithAllExtensions<TNode>(this TNode target, ISimpleNode source)
+            where TNode : class, ISimpleNode
+            => (TNode) WithAllExtensions((ISimpleNode) target, source);
     }
 }
