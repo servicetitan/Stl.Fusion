@@ -2,7 +2,12 @@ using System;
 
 namespace Stl.Extensibility
 {
-    public class Factory<T>
+    public interface IFactory<out T>
+    {
+        T Create();
+    }
+
+    public class Factory<T> : IFactory<T>
     {
         public readonly Func<T> Delegate;
 

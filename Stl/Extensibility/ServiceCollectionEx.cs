@@ -20,5 +20,21 @@ namespace Stl.Extensibility
             this IServiceCollection target, IServiceProvider source)
             where T : class
             => target.AddSingleton(source.GetService<T>());
+
+        public static IServiceCollection AddFactorySingleton<TService, TFactory>(
+            this IServiceCollection services)
+            where TService : class
+            where TFactory : class, IFactory<TService>
+            => services
+                .AddSingleton<IFactory<TService>, TFactory>()
+                .AddSingleton(c => c.GetService<IFactory<TService>>().Create());
+
+        public static IServiceCollection AddFactoryScoped<TService, TFactory>(
+            this IServiceCollection services)
+            where TService : class
+            where TFactory : class, IFactory<TService>
+            => services
+                .AddScoped<IFactory<TService>, TFactory>()
+                .AddScoped(c => c.GetService<IFactory<TService>>().Create());
     }
 }

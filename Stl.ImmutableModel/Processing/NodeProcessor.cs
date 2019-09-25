@@ -18,6 +18,13 @@ namespace Stl.ImmutableModel.Processing
     public interface INodeProcessor : IAsyncProcess
     {
         IModelProvider ModelProvider { get; }
+        IModelChangeTracker ChangeTracker { get; }
+    }
+
+    public interface INodeProcessor<TModel> : INodeProcessor
+        where TModel : class, INode
+    {
+        IModelProvider<TModel> ModelProvider { get; }
     }
 
     public abstract class NodeProcessorBase : AsyncProcessBase, INodeProcessor
@@ -28,6 +35,7 @@ namespace Stl.ImmutableModel.Processing
             new ConcurrentDictionary<NodeProcessingInfo, Unit>();
 
         public IModelProvider ModelProvider { get; }
+        public IModelChangeTracker ChangeTracker => ModelProvider.ChangeTracker;
 
         protected NodeProcessorBase(IModelProvider modelProvider) 
             => ModelProvider = modelProvider;
@@ -39,10 +47,11 @@ namespace Stl.ImmutableModel.Processing
 
         protected override async Task RunInternalAsync()
         {
-            var allChanges = ModelProvider.ChangeTracker.AllChanges.Publish(); 
+            var allChanges = ChangeTracker.AllChanges.Publish(); 
             var processorTask = allChanges.Select(ProcessChange).ToTask(StoppingToken).SuppressCancellation();
             using (allChanges.Connect()) {
                 await OnReadyAsync().ConfigureAwait(false);
+                StartProcessesForExistingNodes();
                 await processorTask.ConfigureAwait(false);
             }
 
@@ -72,7 +81,24 @@ namespace Stl.ImmutableModel.Processing
             }
         }
 
-        protected Unit ProcessChange(IModelUpdateInfo updateInfo)
+        protected virtual void StartProcessesForExistingNodes()
+        {
+            var modelType = ModelProvider.GetModelType();
+            var index = ModelProvider.Index;
+
+            var modelUpdateInfoType = typeof(ModelUpdateInfo<>).MakeGenericType(modelType);
+            var modelUpdateInfo = (IModelUpdateInfo) Activator.CreateInstance(
+                modelUpdateInfoType, index, index, ModelChangeSet.Empty);
+            
+            var changes = index
+                .Select(item => new NodeChangeInfo(modelUpdateInfo, item.Node, item.Path, 0))
+                .Where(info => IsSupportedChange(info))
+                .ToList();
+            foreach (var nodeChange in OrderChanges(changes))
+                ProcessNodeChange(nodeChange);
+        }
+
+        protected virtual Unit ProcessChange(IModelUpdateInfo updateInfo)
         {
             if (!IsSupportedUpdate(updateInfo))
                 return default;
@@ -101,20 +127,26 @@ namespace Stl.ImmutableModel.Processing
 
         protected virtual IEnumerable<NodeChangeInfo> OrderChanges(List<NodeChangeInfo> changes) 
             => changes.OrderBy(c => (
-                // Removals go fist, then creations, and finally, other changes
+                // Removals go fist, then creations, and finally, all other changes
                 (int) c.ChangeType,
                 // For newly created nodes, we start from the ones closer to the root;
                 // for other nodes, we start from the deepest ones.
-                c.ChangeType.HasFlag(NodeChangeType.Created) ? c.NodePath.SegmentCount : -c.NodePath.SegmentCount));
+                c.ChangeType.HasFlag(NodeChangeType.Created) 
+                    ? c.NodePath.SegmentCount 
+                    : -c.NodePath.SegmentCount));
 
         protected virtual void ProcessNodeChange(NodeChangeInfo nodeChangeInfo)
         {
             var domainKey = nodeChangeInfo.Node.Key;
             var nodeProcessingInfo = Processes.GetValueOrDefault(domainKey);
+            var nodeChangeType = nodeChangeInfo.ChangeType;
             if (nodeProcessingInfo == null) {
+                if (nodeChangeType.HasFlag(NodeChangeType.Removed))
+                    // Nothing to do: node is removed & the process isn't running
+                    return;
                 nodeProcessingInfo = new NodeProcessingInfo(
                     this, domainKey, nodeChangeInfo.NodePath, 
-                    !nodeChangeInfo.ChangeType.HasFlag(NodeChangeType.Created));
+                    !nodeChangeType.HasFlag(NodeChangeType.Created));
                 var existingInfo = Processes.GetOrAdd(domainKey, nodeProcessingInfo);
                 if (existingInfo != nodeProcessingInfo) {
                     // Some other thread just created the task somehow
@@ -124,7 +156,7 @@ namespace Stl.ImmutableModel.Processing
                 else
                     Task.Run(() => WrapProcessNodeAsync(nodeProcessingInfo));
             }
-            if (nodeChangeInfo.ChangeType.HasFlag(NodeChangeType.Removed)) {
+            if (nodeChangeType.HasFlag(NodeChangeType.Removed)) {
                 // To avoid race conditions, we have to move the process to DyingProcesses first
                 if (Processes.TryRemove(nodeProcessingInfo.NodeKey, out _))
                     DyingProcesses.TryAdd(nodeProcessingInfo, default);
@@ -142,19 +174,24 @@ namespace Stl.ImmutableModel.Processing
                 info.Error = e;
             }
             finally {
-                // The "termination tail"
-                if (!info.ProcessStoppedOrNodeRemovedTokenSource.IsCancellationRequested) {
-                    // Let's wait for the "official" cancellation first - we can't
-                    // remove the process from Processes just yet, b/c otherwise
-                    // it will be re-created on the next event.
-                    info.IsDormant = true;
-                    await info.ProcessStoppedOrNodeRemovedTokenSource.Token.ToTask(false).ConfigureAwait(false);
-                }
-                Processes.TryRemove(info.NodeKey, out _);
-                DyingProcesses.TryRemove(info, out _);
-                info.Dispose();
-                info.CompletionSource.SetResult(default);
+                await CompleteProcessNodeAsync(info);
             }
+        }
+
+        protected async Task CompleteProcessNodeAsync(NodeProcessingInfo info)
+        {
+            // The "termination tail"
+            if (!info.ProcessStoppedOrNodeRemovedTokenSource.IsCancellationRequested) {
+                // Let's wait for the "official" cancellation first - we can't
+                // remove the process from Processes just yet, b/c otherwise
+                // it will be re-created on the next event.
+                info.IsDormant = true;
+                await info.ProcessStoppedOrNodeRemovedTokenSource.Token.ToTask(false).ConfigureAwait(false);
+            }
+            Processes.TryRemove(info.NodeKey, out _);
+            DyingProcesses.TryRemove(info, out _);
+            info.Dispose();
+            info.CompletionSource.SetResult(default);
         }
     }
 
@@ -163,9 +200,7 @@ namespace Stl.ImmutableModel.Processing
     {
         public new IModelProvider<TModel> ModelProvider { get; }
 
-        protected NodeProcessorBase(IModelProvider<TModel> modelProvider) : base(modelProvider)
-        {
-            ModelProvider = modelProvider;
-        }
+        protected NodeProcessorBase(IModelProvider<TModel> modelProvider) : base(modelProvider) 
+            => ModelProvider = modelProvider;
     }
 }

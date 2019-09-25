@@ -1,5 +1,8 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Stl.ImmutableModel.Updating;
@@ -7,7 +10,7 @@ using Stl.Serialization;
 
 namespace Stl.ImmutableModel.Indexing
 {
-    public interface IIndex
+    public interface IIndex : IEnumerable<(INode Node, SymbolList Path)>
     {
         INode Model { get; }
         INode? TryGetNode(Key key);
@@ -40,11 +43,15 @@ namespace Stl.ImmutableModel.Indexing
 
         protected Index() { }
 
-        public virtual INode? TryGetNode(Key key)
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        public IEnumerator<(INode Node, SymbolList Path)> GetEnumerator() 
+            => NodeToPath.Select(p => (p.Key, p.Value)).GetEnumerator();
+
+        public INode? TryGetNode(Key key)
             => KeyToNode.TryGetValue(key, out var node) ? node : null;
-        public virtual INode? TryGetNodeByPath(SymbolList list)
+        public INode? TryGetNodeByPath(SymbolList list)
             => PathToNode.TryGetValue(list, out var node) ? node : null;
-        public virtual SymbolList? TryGetPath(INode node)
+        public SymbolList? TryGetPath(INode node)
             => NodeToPath.TryGetValue(node, out var path) ? path : null;
 
         protected virtual void Reindex()

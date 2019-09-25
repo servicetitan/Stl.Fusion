@@ -15,6 +15,7 @@ namespace Stl.ImmutableModel
         INode Model { get; }
         IUpdatableIndex Index { get; }
         IModelChangeTracker ChangeTracker { get; }
+        Type GetModelType();
     }
 
     public interface IModelProvider<TModel> : IModelProvider
@@ -38,10 +39,9 @@ namespace Stl.ImmutableModel
         public IUpdatableIndex<TModel> Index => Updater.Index;
         public IModelChangeTracker<TModel> ChangeTracker => Updater.ChangeTracker;
 
-        public ModelProvider(IModelUpdater<TModel> updater)
-        {
-            Updater = updater;
-        }
+        public ModelProvider(IModelUpdater<TModel> updater) => Updater = updater;
+
+        public Type GetModelType() => typeof(TModel);
     }
 
     public static class ModelProvider

@@ -24,8 +24,7 @@ namespace Stl.ImmutableModel.Processing
 
         protected virtual string GetMethodName(INodeProcessingInfo info)
         {
-            var index = info.NodeProcessor.ModelProvider.Index;
-            var node = index.GetNode(info.NodeKey);
+            var node = ModelProvider.Index.GetNode(info.NodeKey);
             var type = node.GetType();
             return $"Process{type.ToMethodName()}NodeAsync";
         }

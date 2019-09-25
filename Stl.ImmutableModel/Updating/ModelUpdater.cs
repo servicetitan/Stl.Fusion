@@ -53,6 +53,8 @@ namespace Stl.ImmutableModel.Updating
             return ValueTaskEx.CompletedTask;
         }
 
+        public Type GetModelType() => typeof(TModel);
+
         public async Task<IModelUpdateInfo> UpdateAsync(
             Func<IUpdatableIndex, (IUpdatableIndex NewIndex, ModelChangeSet ChangeSet)> updater,
             CancellationToken cancellationToken = default)
