@@ -5,7 +5,7 @@ using Xunit.Abstractions;
 
 namespace Stl.Testing
 {
-    public class TestConsole2 : IConsole
+    public class TestOutputConsole : IConsole
     {
         IStandardStreamWriter IStandardOut.Out => Out;
         IStandardStreamWriter IStandardError.Error => Error;
@@ -16,7 +16,7 @@ namespace Stl.Testing
         public bool IsErrorRedirected { get; set; }
         public bool IsInputRedirected { get; set; }
 
-        public TestConsole2(ITestOutputHelper? testOutput = null)
+        public TestOutputConsole(ITestOutputHelper? testOutput = null)
         {
             if (testOutput != null) {
                 var wrapper = new TestOutputWriter(testOutput);
@@ -27,7 +27,7 @@ namespace Stl.Testing
 
         public override string ToString() => Out.ToString();
 
-        public TestConsole2 Clear()
+        public TestOutputConsole Clear()
         {
             Out.Clear();
             Error.Clear();

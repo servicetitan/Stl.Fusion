@@ -24,7 +24,7 @@ namespace Stl.Tests.Plugins.Extensions
             var writer = new StringWriter();
             var log = TestLogger.New(writer);
             var loggerFactory = new LoggerFactory().AddSerilog(log);
-            var testConsole = new TestConsole2();
+            var testConsole = new TestOutputConsole();
 
             var host = new PluginHostBuilder()
                 .ConfigureServices((builder, services) => services
