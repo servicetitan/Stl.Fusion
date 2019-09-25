@@ -24,7 +24,7 @@ namespace Stl.Tests.Plugins.Extensions
             var writer = new StringWriter();
             var log = TestLogger.New(writer);
             var loggerFactory = new LoggerFactory().AddSerilog(log);
-            var testConsole = new TestConsole();
+            var testConsole = new TestConsole2();
 
             var host = new PluginHostBuilder()
                 .ConfigureServices((builder, services) => services
@@ -37,13 +37,13 @@ namespace Stl.Tests.Plugins.Extensions
                 .UsePlugins<TestCliPlugin>(host)
                 .Build();
 
+            testConsole.Clear();
             parser.Invoke("add --a 1 --b 2").Equals(0);
-            var output = testConsole.Out?.ToString()?.Trim() ?? "";
-            output.Trim().Should().Contain("Add: 3");
+            testConsole.Should().Contain("Add: 3");
 
+            testConsole.Clear();
             parser.Invoke("mul --a 1 --b 2").Equals(0);
-            output = testConsole.Out?.ToString()?.Trim() ?? "";
-            output.Trim().Should().Contain("Mul: 2");
+            testConsole.Should().Contain("Mul: 2");
         }
     }
 }

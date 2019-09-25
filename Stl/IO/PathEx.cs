@@ -34,12 +34,15 @@ namespace Stl.IO
             return Path.GetDirectoryName(assembly?.Location) ?? Environment.CurrentDirectory;
         }
 
-        public static string GetApplicationTempDirectory(string appId = "")
+        public static string GetApplicationTempDirectory(string appId = "", bool createIfAbsents = false)
         {
             if (string.IsNullOrEmpty(appId))
                 appId = Assembly.GetEntryAssembly()?.GetName()?.Name ?? "unknown";
             var subdirectory = GetHashedName($"{appId}_{GetApplicationDirectory()}");
-            return Path.Combine(Path.GetTempPath(), subdirectory);
+            var path = Path.Combine(Path.GetTempPath(), subdirectory);
+            if (!Directory.Exists(path))
+                Directory.CreateDirectory(path);
+            return path;
         }
     }
 }

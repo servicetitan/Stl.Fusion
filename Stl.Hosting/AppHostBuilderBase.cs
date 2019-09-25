@@ -4,6 +4,7 @@ using System.CommandLine;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Autofac.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -12,6 +13,8 @@ using Microsoft.Extensions.Logging;
 using Stl.Extensibility;
 using Stl.Hosting.Plugins;
 using Stl.Plugins;
+using Stl.Time;
+using Stl.Time.Testing;
 
 namespace Stl.Hosting
 {
@@ -33,6 +36,21 @@ namespace Stl.Hosting
     public interface ITestAppHostBuilder
     {
         ReadOnlyMemory<Type> TestPluginTypes { get; set; }
+        
+        event Action<IPluginHostBuilder> PreConfigurePluginHost;
+        event Action<IPluginHostBuilder> PostConfigurePluginHost;
+        event Action<IHostBuilder> PreConfigureHost;
+        event Action<IHostBuilder> PostConfigureHost;
+        event Action<IWebHostBuilder> PreConfigureWebHost;
+        event Action<IWebHostBuilder> PostConfigureWebHost;
+
+        void OnPreConfigurePluginHost(IPluginHostBuilder pluginHostBuilder);
+        void OnPostConfigurePluginHost(IPluginHostBuilder pluginHostBuilder);
+        void OnPreConfigureHost(IHostBuilder hostBuilder);
+        void OnPostConfigureHost(IHostBuilder hostBuilder);
+        void OnPreConfigureWebHost(IWebHostBuilder webHostBuilder);
+        void OnPostConfigureWebHost(IWebHostBuilder webHostBuilder);
+        
     }
 
     public interface IAppHostBuildState 
@@ -104,16 +122,64 @@ namespace Stl.Hosting
             set => SetOption(nameof(IAppHostBuildState.Host), value);
         }
 
-        // ITestAppHostBuilder properties (protected + explicit)
+        #region ITestAppHostBuilder properties (protected + explicit)
+
+        protected ReadOnlyMemory<Type> TestPluginTypes {
+            get => this.GetOption<Type[]>(nameof(TestPluginTypes));
+            set => SetOption(nameof(TestPluginTypes), value.ToArray());
+        }
+
+        protected event Action<IPluginHostBuilder>? PreConfigurePluginHost;
+        protected event Action<IPluginHostBuilder>? PostConfigurePluginHost;
+        protected event Action<IHostBuilder>? PreConfigureHost;
+        protected event Action<IHostBuilder>? PostConfigureHost;
+        protected event Action<IWebHostBuilder>? PreConfigureWebHost;
+        protected event Action<IWebHostBuilder>? PostConfigureWebHost;
 
         ReadOnlyMemory<Type> ITestAppHostBuilder.TestPluginTypes {
             get => TestPluginTypes;
             set => TestPluginTypes = value;
         }
-        protected ReadOnlyMemory<Type> TestPluginTypes {
-            get => this.GetOption<Type[]>(nameof(TestPluginTypes));
-            set => SetOption(nameof(TestPluginTypes), value.ToArray());
+
+        event Action<IPluginHostBuilder> ITestAppHostBuilder.PreConfigurePluginHost {
+            add => PreConfigurePluginHost += value;
+            remove => PreConfigurePluginHost -= value;
         }
+        event Action<IPluginHostBuilder> ITestAppHostBuilder.PostConfigurePluginHost {
+            add => PostConfigurePluginHost += value;
+            remove => PostConfigurePluginHost -= value;
+        }
+        event Action<IHostBuilder> ITestAppHostBuilder.PreConfigureHost {
+            add => PreConfigureHost += value;
+            remove => PreConfigureHost -= value;
+        }
+        event Action<IHostBuilder> ITestAppHostBuilder.PostConfigureHost {
+            add => PostConfigureHost += value;
+            remove => PostConfigureHost -= value;
+        }
+        event Action<IWebHostBuilder> ITestAppHostBuilder.PreConfigureWebHost {
+            add => PreConfigureWebHost += value;
+            remove => PreConfigureWebHost -= value;
+        }
+        event Action<IWebHostBuilder> ITestAppHostBuilder.PostConfigureWebHost {
+            add => PostConfigureWebHost += value;
+            remove => PostConfigureWebHost -= value;
+        }
+
+        void ITestAppHostBuilder.OnPreConfigurePluginHost(IPluginHostBuilder pluginHostBuilder) 
+            => PreConfigurePluginHost?.Invoke(pluginHostBuilder);
+        void ITestAppHostBuilder.OnPostConfigurePluginHost(IPluginHostBuilder pluginHostBuilder)
+            => PostConfigurePluginHost?.Invoke(pluginHostBuilder);
+        void ITestAppHostBuilder.OnPreConfigureHost(IHostBuilder hostBuilder)
+            => PreConfigureHost?.Invoke(hostBuilder);
+        void ITestAppHostBuilder.OnPostConfigureHost(IHostBuilder hostBuilder)
+            => PostConfigureHost?.Invoke(hostBuilder);
+        void ITestAppHostBuilder.OnPreConfigureWebHost(IWebHostBuilder webHostBuilder)
+            => PreConfigureWebHost?.Invoke(webHostBuilder);
+        void ITestAppHostBuilder.OnPostConfigureWebHost(IWebHostBuilder webHostBuilder)
+            => PostConfigureWebHost?.Invoke(webHostBuilder);
+
+        #endregion
 
         protected AppHostBuilderBase()
         {
@@ -140,12 +206,16 @@ namespace Stl.Hosting
             var state = BuildState;
             if (arguments != null)
                 state.Arguments = arguments;
+            var testAppHostBuilder = IsTestHost ? (ITestAppHostBuilder) this : null;
+            
             state.PluginHostBuilder = CreatePluginHostBuilder();
             ConfigurePluginHostConfiguration();
             ConfigurePluginHostServiceProviderFactory();
             ConfigurePluginHostPluginTypes();
+            testAppHostBuilder?.OnPreConfigurePluginHost(state.PluginHostBuilder);
             ConfigurePluginHostLogging();
             ConfigurePluginHostServices();
+            testAppHostBuilder?.OnPostConfigurePluginHost(state.PluginHostBuilder);
             state.PluginHost = state.PluginHostBuilder.Build();
             ProcessCommandLine();
             LockOptions();
@@ -160,7 +230,11 @@ namespace Stl.Hosting
                     .AddEnvironmentVariables(EnvironmentVarPrefix)
                     .Build();
             
-                BuildState.EnvironmentName = baseCfg[HostDefaults.EnvironmentKey] ?? Environments.Production;
+                BuildState.EnvironmentName = baseCfg[HostDefaults.EnvironmentKey] 
+                    ?? Environments.Production;
+                
+                if (IsTestHost)
+                    return;
 
                 cfg.AddConfiguration(baseCfg);
                 foreach (var fileName in GetPluginHostConfigurationFileNames())
@@ -210,10 +284,15 @@ namespace Stl.Hosting
                 var cfg = builder.Configuration;
                 services.TryAddSingleton(cfg);
                 services.TryAddSingleton<IAppHostBuilder>(this);
-                if (IsTestHost)
-                    services.TryAddSingleton<IConsole, TestConsole>();
-                else
-                    services.TryAddSingleton<IConsole, SystemConsole>();
+                services.TryAddSingleton<IConsole, SystemConsole>();
+                if (IsTestHost) {
+                    var testClock = new TestClock();
+                    services.AddSingleton(testClock);
+                    services.AddSingleton((IClock) testClock);
+                }
+                else {
+                    services.AddSingleton(RealTimeClock.Instance);
+                }
             });
         }
 

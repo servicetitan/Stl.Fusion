@@ -12,6 +12,7 @@ using Stl.Hosting.Plugins;
 using Stl.Plugins;
 using Stl.Plugins.Extensions.Hosting;
 using Stl.Plugins.Extensions.Web;
+using Stl.Time;
 using static Microsoft.Extensions.Hosting.Host;
 
 [assembly: Plugin(typeof(PrimaryHostPlugin))]
@@ -27,6 +28,8 @@ namespace Stl.Hosting.Plugins
     {
         protected IPluginHost Plugins { get; set; } = null!;
         protected IAppHostBuilder AppHostBuilder { get; set; } = null!;
+        protected ITestAppHostBuilder? TestAppHostBuilder => 
+            AppHostBuilder.IsTestHost ? (ITestAppHostBuilder) AppHostBuilder : null;
         protected IHostBuilder HostBuilder { get; set; } = null!;
 
         public PrimaryHostPlugin() { }
@@ -41,9 +44,11 @@ namespace Stl.Hosting.Plugins
             HostBuilder = CreateHostBuilder();
             ConfigureServiceProviderFactory();
             ConfigureHostConfiguration();
+            TestAppHostBuilder?.OnPreConfigureHost(HostBuilder);
             ConfigureServices();
             ConfigureWebHost();
             UseHostPlugins();
+            TestAppHostBuilder?.OnPostConfigureHost(HostBuilder);
             return HostBuilder.Build();
         }
 
@@ -58,6 +63,8 @@ namespace Stl.Hosting.Plugins
                 config
                     .SetBasePath(AppHostBuilder.BaseDirectory)
                     .AddEnvironmentVariables(AppHostBuilder.EnvironmentVarPrefix);
+                if (AppHostBuilder.IsTestHost)
+                    return;
                 foreach (var fileName in GetHostConfigurationFileNames())
                     config.AddFile(fileName);
             });
@@ -77,6 +84,7 @@ namespace Stl.Hosting.Plugins
                 services.AddOptions();
                 services.AddSingleton(Plugins);
                 services.CopySingleton<IAppHostBuilder>(Plugins);
+                services.CopySingleton<IClock>(Plugins);
                 services.CopySingleton<IConsole>(Plugins);
                 services.AddLogging(logging => ConfigureLogging(ctx, logging));
                 services.AddControllersWithViews();
@@ -86,6 +94,10 @@ namespace Stl.Hosting.Plugins
         {
             var cfg = ctx.Configuration;
             var section = cfg.GetSection(AppHostBuilder.LoggingSectionName);
+            if (AppHostBuilder.IsTestHost) {
+                logging.AddDebug();
+                return;
+            }
             logging.AddConfiguration(section);
             logging.AddConsole();
             logging.AddDebug();
@@ -97,9 +109,11 @@ namespace Stl.Hosting.Plugins
 
         protected virtual void ConfigureWebHost(IWebHostBuilder webHostBuilder)
         {
+            TestAppHostBuilder?.OnPreConfigureWebHost(webHostBuilder);
             ConfigureWebServer(webHostBuilder);
             webHostBuilder.Configure(ConfigureWebApp);
             UseWebHostPlugins(webHostBuilder);
+            TestAppHostBuilder?.OnPostConfigureWebHost(webHostBuilder);
         }
 
         protected virtual void ConfigureWebServer(IWebHostBuilder webHostBuilder) 

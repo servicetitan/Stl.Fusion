@@ -19,6 +19,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Stl.Plugins\Stl.Plugins.csproj" />
     <ProjectReference Include="..\Stl.Plugins.Extensions\Stl.Plugins.Extensions.csproj" />
+    <ProjectReference Include="..\Stl.Time\Stl.Time.csproj" />
     <ProjectReference Include="..\Stl\Stl.csproj" />
   </ItemGroup>
 
