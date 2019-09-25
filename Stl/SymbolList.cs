@@ -8,8 +8,8 @@ using Stl.Internal;
 namespace Stl
 {
     [Serializable]
-    [JsonConverter(typeof(SymbolPathJsonConverter))]
-    [TypeConverter(typeof(SymbolPathTypeConverter))]
+    [JsonConverter(typeof(SymbolListJsonConverter))]
+    [TypeConverter(typeof(SymbolListTypeConverter))]
     public sealed class SymbolList : IEquatable<SymbolList>, IComparable<SymbolList>, ISerializable
     {
         public static readonly SymbolList? Null = null;
@@ -19,7 +19,7 @@ namespace Stl
         public int SegmentCount { get; }
         public SymbolList? Head { get; }
         public Symbol Tail { get; }
-        public string Value => SymbolListFormatter.Default.ToString(this);
+        public string FormattedValue => SymbolListFormatter.Default.ToString(this);
 
         public SymbolList(SymbolList? head, Symbol tail)
         {
@@ -47,14 +47,15 @@ namespace Stl
         public SymbolList Concat(SymbolList other) 
             => other.GetSegments().Aggregate(this, (current, tail) => current.Concat(tail));
 
-        public static SymbolList Parse(string value) => SymbolListFormatter.Default.Parse(value);
+        public static SymbolList Parse(string formattedValue) 
+            => SymbolListFormatter.Default.Parse(formattedValue);
 
-        public override string ToString() => $"{GetType().Name}({Value})";
+        public override string ToString() => $"{GetType().Name}({FormattedValue})";
 
         // Conversion & operators
 
         public static implicit operator SymbolList((SymbolList Head, Symbol Tail) source) => new SymbolList(source.Head, source.Tail);
-        public static explicit operator string(SymbolList source) => source.Value;
+        public static explicit operator string(SymbolList source) => source.FormattedValue;
 
         // Operators
 
@@ -129,14 +130,14 @@ namespace Stl
 
         private SymbolList(SerializationInfo info, StreamingContext context)
         {
-            var parsed = Parse(info.GetString(nameof(Value)) ?? "");
+            var parsed = Parse(info.GetString(nameof(FormattedValue)) ?? "");
             Head = parsed.Head;
             Tail = parsed.Tail;
             HashCode = parsed.HashCode;
         }
 
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context) 
-            => info.AddValue(nameof(Value), Value);
+            => info.AddValue(nameof(FormattedValue), FormattedValue);
         
         // Private methods
         

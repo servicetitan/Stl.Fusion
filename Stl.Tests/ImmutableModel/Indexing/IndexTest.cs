@@ -26,18 +26,18 @@ namespace Stl.Tests.ImmutableModel.Indexing
             
             var cluster1 = idx.GetNode<Cluster>(Key.Parse("cluster1"));
             cluster1.LocalKey.Value.Should().Be("cluster1");
-            idx.GetPath(cluster1).Value.Should().Be("|cluster1");
+            idx.GetPath(cluster1).FormattedValue.Should().Be("|cluster1");
             
             var vm1 = idx.GetNode<VirtualMachine>(Key.Parse("cluster1|vm1"));
             vm1.LocalKey.Value.Should().Be("vm1");
             cluster1["vm1"].Should().Equals(vm1);
-            idx.GetPath(vm1).Value.Should().Be("|cluster1|vm1");
+            idx.GetPath(vm1).FormattedValue.Should().Be("|cluster1|vm1");
             idx.GetNodeByPath(idx.GetPath(vm1)).Should().Equals(vm1);
 
             var vm2 = idx.GetNode<VirtualMachine>(Key.Parse("cluster1|vm2"));
             vm2.LocalKey.Value.Should().Be("vm2");
             cluster1["vm2"].Should().Equals(vm2);
-            idx.GetPath(vm2).Value.Should().Be("|cluster1|vm2");
+            idx.GetPath(vm2).FormattedValue.Should().Be("|cluster1|vm2");
             idx.GetNodeByPath(idx.GetPath(vm2)).Should().Equals(vm2);
 
             idx.GetNodeByPath<VirtualMachine>(idx.GetPath(vm1)).Capabilities
@@ -74,7 +74,7 @@ namespace Stl.Tests.ImmutableModel.Indexing
 
             var vm3a = idx.GetNode<VirtualMachine>(Key.Parse("cluster1|vm3"));
             vm3a.Should().Equal(vm3);
-            idx.GetPath(vm3).Value.Should().Be("|cluster1|vm3");
+            idx.GetPath(vm3).FormattedValue.Should().Be("|cluster1|vm3");
 
             // TODO: Add more tests.
         }

@@ -1,9 +1,8 @@
 using System;
 using System.ComponentModel;
 using System.Globalization;
-using Newtonsoft.Json;
 
-namespace Stl.Internal
+namespace Stl.Internal 
 {
     // Used by JSON.NET to serialize dictionary keys of this type
     public class SymbolTypeConverter : TypeConverter 
@@ -23,25 +22,6 @@ namespace Stl.Internal
                 // ReSharper disable once HeapView.BoxingAllocation
                 return new Symbol(s);
             return base.ConvertFrom(context, culture, value);
-        }
-    }
-    
-    public class SymbolJsonConverter : JsonConverter
-    {
-        public override bool CanConvert(Type objectType) 
-            => objectType == typeof(Symbol);
-
-        public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
-        {
-            var typeRef = (Symbol) value!;
-            writer.WriteValue(typeRef.Value);
-        }
-
-        public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
-        {
-            var value = (string) reader.Value!;
-            // ReSharper disable once HeapView.BoxingAllocation
-            return new Symbol(value);
         }
     }
 }

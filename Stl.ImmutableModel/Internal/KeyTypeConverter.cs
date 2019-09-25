@@ -11,7 +11,7 @@ namespace Stl.ImmutableModel.Internal
 
         public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) {  
             if (destinationType == typeof(string))
-                return ((Key) value).Value;
+                return ((Key) value).FormattedValue;
             return base.ConvertTo(context, culture, value, destinationType);
         }
 

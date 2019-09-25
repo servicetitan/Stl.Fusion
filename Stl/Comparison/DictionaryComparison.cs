@@ -29,6 +29,18 @@ namespace Stl.Comparison
         public bool AreEqual => SharedEqual.Count == Left.Count && AreCountsEqual;
 
         public DictionaryComparison(
+            IEnumerable<(TKey, TValue)> left, 
+            IEnumerable<(TKey, TValue)> right, 
+            IEqualityComparer<TValue>? valueComparer = null) 
+            : this(left.ToDictionary(), right.ToDictionary(), valueComparer) { }
+
+        public DictionaryComparison(
+            IEnumerable<KeyValuePair<TKey, TValue>> left, 
+            IEnumerable<KeyValuePair<TKey, TValue>> right,
+            IEqualityComparer<TValue>? valueComparer = null) 
+            : this(left.ToDictionary(), right.ToDictionary(), valueComparer) { }
+
+        public DictionaryComparison(
             IReadOnlyDictionary<TKey, TValue> left, 
             IReadOnlyDictionary<TKey, TValue> right,
             IEqualityComparer<TValue>? valueComparer = null)
@@ -36,11 +48,7 @@ namespace Stl.Comparison
             Left = left;
             Right = right;
             ValueComparer = valueComparer ?? EqualityComparer<TValue>.Default;
-            Compare();
-        }
 
-        private void Compare()
-        {
             foreach (var lPair in Left) {
                 if (Right.TryGetValue(lPair.Key, out var rValue)) {
                     if (ValueComparer.Equals(lPair.Value, rValue))

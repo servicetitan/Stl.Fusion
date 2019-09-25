@@ -1,24 +1,25 @@
 using System;
 using Newtonsoft.Json;
+using Stl.Reflection;
 
-namespace Stl.ImmutableModel.Internal 
+namespace Stl.Internal
 {
-    public class KeyJsonConverter : JsonConverter
+    public class TypeRefJsonConverter : JsonConverter
     {
         public override bool CanConvert(Type objectType) 
-            => objectType == typeof(Key);
+            => objectType == typeof(TypeRef);
 
         public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
         {
-            var key = (Key) value!;
-            writer.WriteValue(key.FormattedValue);
+            var typeRef = (TypeRef) value!;
+            writer.WriteValue(typeRef.AssemblyQualifiedName.Value);
         }
 
         public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
         {
-            var value = (string) reader.Value!;
+            var assemblyQualifiedName = (string) reader.Value!;
             // ReSharper disable once HeapView.BoxingAllocation
-            return Key.Parse(value);
+            return new TypeRef(assemblyQualifiedName);
         }
     }
 }

@@ -18,7 +18,6 @@ namespace Stl.ImmutableModel.Processing
     public interface INodeProcessor : IAsyncProcess
     {
         IModelProvider ModelProvider { get; }
-        IModelUpdater ModelUpdater { get; }
     }
 
     public abstract class NodeProcessorBase : AsyncProcessBase, INodeProcessor
@@ -29,15 +28,9 @@ namespace Stl.ImmutableModel.Processing
             new ConcurrentDictionary<NodeProcessingInfo, Unit>();
 
         public IModelProvider ModelProvider { get; }
-        public IModelUpdater ModelUpdater { get; }
 
-        protected NodeProcessorBase(
-            IModelProvider modelProvider, 
-            IModelUpdater modelUpdater)
-        {
-            ModelProvider = modelProvider;
-            ModelUpdater = modelUpdater;
-        }
+        protected NodeProcessorBase(IModelProvider modelProvider) 
+            => ModelProvider = modelProvider;
 
         protected abstract Task ProcessNodeAsync(INodeProcessingInfo info);
         protected virtual Task OnReadyAsync() => Task.CompletedTask;
@@ -173,11 +166,10 @@ namespace Stl.ImmutableModel.Processing
 
         public NodeProcessor(
             IModelProvider modelProvider, 
-            IModelUpdater modelUpdater, 
             Func<INodeProcessingInfo, Task> implementation,
             Func<IModelUpdateInfo, bool>? isSupportedUpdatePredicate = null,
             Func<NodeChangeInfo, bool>? isSupportedChangePredicate = null) 
-            : base(modelProvider, modelUpdater)
+            : base(modelProvider)
         {
             Implementation = implementation;
             IsSupportedUpdatePredicate = isSupportedUpdatePredicate;

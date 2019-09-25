@@ -1,15 +1,14 @@
 using System.Reflection;
 using System.Threading.Tasks;
 using Stl.ImmutableModel.Indexing;
-using Stl.ImmutableModel.Updating;
 using Stl.Reflection;
 
 namespace Stl.ImmutableModel.Processing 
 {
     public abstract class DispatchingNodeProcessorBase : NodeProcessorBase
     {
-        protected DispatchingNodeProcessorBase(IModelProvider modelProvider, IModelUpdater modelUpdater) 
-            : base(modelProvider, modelUpdater) { }
+        protected DispatchingNodeProcessorBase(IModelProvider modelProvider) 
+            : base(modelProvider) { }
 
         protected override async Task ProcessNodeAsync(INodeProcessingInfo info)
         {

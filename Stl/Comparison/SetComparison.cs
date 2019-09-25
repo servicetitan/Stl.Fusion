@@ -32,6 +32,9 @@ namespace Stl.Comparison
         public bool AreCountsEqual => Left.Count == Right.Count;
         public bool AreEqual => Shared.Count == Left.Count && AreCountsEqual;
 
+        public SetComparison(IEnumerable<T> left, IEnumerable<T> right) 
+            : this(left.ToHashSet(), right.ToHashSet()) { }
+
         public SetComparison(ISet<T> left, ISet<T> right)
         {
             Left = left;

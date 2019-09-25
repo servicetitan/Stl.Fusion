@@ -12,15 +12,18 @@ namespace Stl.ImmutableModel
     public readonly struct Key : IEquatable<Key>, ISerializable
     {
         public SymbolList Parts { get; }
-        public string Value => Parts.Value;
+        public string FormattedValue => Parts.FormattedValue;
 
         public Key(SymbolList list) => Parts = list;
+        public Key(SymbolList? head, Symbol tail) => Parts = new SymbolList(head, tail);
+        public Key(params Symbol[] segments) => Parts = new SymbolList(segments);
 
-        public override string ToString() => $"{GetType().Name}({Parts})";
+        public override string ToString() => $"{GetType().Name}({FormattedValue})";
 
         // Conversion
 
-        public static Key Parse(string value) => new Key(SymbolList.Parse(value));
+        public static Key Parse(string formattedValue) 
+            => new Key(SymbolList.Parse(formattedValue));
 
         public void Deconstruct(out SymbolList? head, out Symbol tail)
         {
@@ -56,7 +59,7 @@ namespace Stl.ImmutableModel
 
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
         {
-            info.AddValue(nameof(Parts), Parts.Value);
+            info.AddValue(nameof(Parts), Parts.FormattedValue);
         }
     }
 }

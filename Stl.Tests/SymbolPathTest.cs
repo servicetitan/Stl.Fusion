@@ -6,9 +6,9 @@ using Xunit.Abstractions;
 
 namespace Stl.Tests
 {
-    public class SymbolPathTest : TestBase
+    public class SymbolListTest : TestBase
     {
-        public SymbolPathTest(ITestOutputHelper @out) : base(@out) { }
+        public SymbolListTest(ITestOutputHelper @out) : base(@out) { }
 
         [Theory]
         [InlineData("a", new[] {"a"}, null)]
@@ -25,7 +25,7 @@ namespace Stl.Tests
             var p = SymbolList.Parse(value);
             p.SegmentCount.Should().Be(segments.Length);
             p.GetSegments().Should().BeEquivalentTo(segments.Select(s => (Symbol) s));
-            p.Value.Should().Be(expectedValue ?? value);
+            p.FormattedValue.Should().Be(expectedValue ?? value);
 
             p.PassThroughJsonConvert().Should().Be(p);
             p.PassThroughBinaryFormatter().Should().Be(p);

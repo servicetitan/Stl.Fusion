@@ -34,7 +34,7 @@ namespace Stl.ImmutableModel
             => GetObjectData(info, context);
         protected virtual void GetObjectData(SerializationInfo info, StreamingContext context)
         {
-            info.AddValue(nameof(Key), Key.Value);
+            info.AddValue(nameof(Key), Key.FormattedValue);
         }
     }
 }
