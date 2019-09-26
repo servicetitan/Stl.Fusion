@@ -1,12 +1,20 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Stl.ImmutableModel
 {
+    // It's intentional this type supports IEnumerable<(TKey Key, object? Value)> rather than
+    // IEnumerable<KeyValuePair<TKey Key, object? Value>> - if the second one is supported,
+    // implementing it in types that also implement IEnumerable<KeyValuePair<TKey Key, TValue Value>>
+    // wouldn't be possible.
+    // Technically it doesn't make any big difference: ValueTuple here is easily castable to
+    // KeyValuePair and vice versa.
     public interface IReadOnlyDictionaryPlus<TKey>
         where TKey : notnull
     {
         IEnumerable<TKey> Keys { get; }
+        IEnumerable<KeyValuePair<TKey, object?>> Items { get; }
 
         bool ContainsKey(TKey key);
         // Makes sense to keep "Untyped" part here, since otherwise
@@ -28,6 +36,8 @@ namespace Stl.ImmutableModel
         public int Count => _source.Count;
         public IEnumerable<TKey> Keys => _source.Keys;
         public IEnumerable<TValue> Values => _source.Values;
+        IEnumerable<KeyValuePair<TKey, object?>> IReadOnlyDictionaryPlus<TKey>.Items 
+            => this.Select(p => KeyValuePair.New(p.Key, (object?) p.Value));
         public TValue this[TKey key] => _source[key];
 
         public ReadOnlyDictionaryPlus(IReadOnlyDictionary<TKey, TValue> source) => _source = source;
@@ -46,7 +56,11 @@ namespace Stl.ImmutableModel
             return false;
         }
 
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() => _source.GetEnumerator();
+        // Enumerators
+
+        IEnumerator IEnumerable.GetEnumerator() 
+            => GetEnumerator();
+        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() 
+            => _source.GetEnumerator();
     }
 }

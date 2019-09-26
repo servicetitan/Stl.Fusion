@@ -24,6 +24,8 @@ namespace Stl.ImmutableModel.Updating
         public NodeChangeType this[Key key] => Items[key];
         public IEnumerable<Key> Keys => Items.Keys;
         public IEnumerable<NodeChangeType> Values => Items.Values;
+        IEnumerable<KeyValuePair<Key, object?>> IReadOnlyDictionaryPlus<Key>.Items
+            => Items.Select(p => KeyValuePair.New(p.Key, (object?) p.Value));
 
         public ImmutableDictionary<Key, NodeChangeType> Items {
             get {
@@ -60,8 +62,9 @@ namespace Stl.ImmutableModel.Updating
 
         // IReadOnlyDictionaryPlus<Key, NodeChangeType> methods 
 
-        public IEnumerator<KeyValuePair<Key, NodeChangeType>> GetEnumerator() => Items.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        public IEnumerator<KeyValuePair<Key, NodeChangeType>> GetEnumerator() 
+            => Items.GetEnumerator();
 
         public bool ContainsKey(Key key) => Items.ContainsKey(key);
         

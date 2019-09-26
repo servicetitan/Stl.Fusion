@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Stl.ImmutableModel.Indexing;
 
 namespace Stl.ImmutableModel
 {
@@ -10,8 +11,7 @@ namespace Stl.ImmutableModel
 
         public static IEnumerable<KeyValuePair<Symbol, object?>> DualGetItems(this INode node) 
             => node switch {
-                ICollectionNode c => c.Keys.Select(localKey =>
-                    new KeyValuePair<Symbol, object?>(localKey, c.GetValueUntyped(localKey).UnsafeValue)),
+                ICollectionNode c => c.Items,
                 ISimpleNode s => s,
                 _ => throw new ArgumentOutOfRangeException(nameof(node))
             };
@@ -47,7 +47,7 @@ namespace Stl.ImmutableModel
                 _ => throw new ArgumentOutOfRangeException(nameof(node)),
             });
 
-        // GetRoots
+        // Other GetXxx
 
         public static IEnumerable<TNode> GetRoots<TNode>(this INode root, bool includeRoot = false)
             where TNode : class, INode

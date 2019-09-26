@@ -13,15 +13,13 @@ namespace Stl.ImmutableModel
         IReadOnlyDictionaryPlus<TKey, TValue>, INotifyDeserialized
         where TKey : notnull
     {
-        private (TKey Key, object? Value)[]? _deserializingItems; 
-        
-        [field: NonSerialized]
-        protected ImmutableDictionary<TKey, TValue> Items { get; set; } = 
-            ImmutableDictionary<TKey, TValue>.Empty;
+        private (TKey Key, object? Value)[]? _deserializingItems;
 
-        public int Count => Items.Count;
-        public IEnumerable<TKey> Keys => Items.Keys;
-        public IEnumerable<TValue> Values => Items.Values;
+        [field: NonSerialized]
+        public ImmutableDictionary<TKey, TValue> Items { get; protected set; } = ImmutableDictionary<TKey, TValue>.Empty;
+        IEnumerable<KeyValuePair<TKey, object?>> IReadOnlyDictionaryPlus<TKey>.Items 
+            => Items.Select(p => KeyValuePair.New(p.Key, (object?) p.Value));
+
         public TValue this[TKey key] => Items[key];
 
         protected ImmutableDictionaryNodeBase(Key key) : base(key) { }
@@ -52,12 +50,25 @@ namespace Stl.ImmutableModel
             return clone;
         }
 
-        public bool ContainsKey(TKey key) => Items.ContainsKey(key);
+        // Enumerators
 
-        public bool TryGetValue(TKey key, out TValue value) => Items.TryGetValue(key, out value);
-        public bool TryGetValueUntyped(TKey key, out object? value)
+        IEnumerator IEnumerable.GetEnumerator() 
+            => Items.GetEnumerator();
+        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() 
+            => Items.GetEnumerator();
+
+        // IReadOnlyXxx members -- all are implemented explicitly
+
+        int IReadOnlyCollection<KeyValuePair<TKey, TValue>>.Count => Items.Count;
+        IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => Items.Keys;
+        IEnumerable<TKey> IReadOnlyDictionaryPlus<TKey>.Keys => Items.Keys;
+        IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => Items.Values;
+        bool IReadOnlyDictionary<TKey, TValue>.ContainsKey(TKey key) => Items.ContainsKey(key);
+        bool IReadOnlyDictionaryPlus<TKey>.ContainsKey(TKey key) => Items.ContainsKey(key);
+        bool IReadOnlyDictionary<TKey, TValue>.TryGetValue(TKey key, out TValue value) => Items.TryGetValue(key, out value);
+        bool IReadOnlyDictionaryPlus<TKey>.TryGetValueUntyped(TKey key, out object? value)
         {
-            if (TryGetValue(key, out var v)) {
+            if (Items.TryGetValue(key, out var v)) {
                 // ReSharper disable once HeapView.BoxingAllocation
                 value = v;
                 return true;
@@ -65,9 +76,6 @@ namespace Stl.ImmutableModel
             value = null;
             return false;
         }
-
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() => Items.GetEnumerator();
 
         // Serialization
 
@@ -93,7 +101,6 @@ namespace Stl.ImmutableModel
                 if (value is INotifyDeserialized d)
                     d.OnDeserialized(context);
         }
-
 
         protected override void GetObjectData(SerializationInfo info, StreamingContext context)
         {

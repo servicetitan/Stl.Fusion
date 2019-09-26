@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Runtime.Serialization;
 
@@ -7,6 +8,7 @@ namespace Stl.ImmutableModel
 {
     public interface ISimpleNode : INode, IReadOnlyDictionaryPlus<Symbol, object?>
     {
+        new ImmutableDictionary<Symbol, object?> Items { get; }
         ISimpleNode BaseWith(Symbol property, object? value);
         ISimpleNode BaseWith(IEnumerable<(Symbol PropertyKey, object? Value)> changes);
         ISimpleNode BaseWithout(Symbol property);

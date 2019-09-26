@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Runtime.Serialization;
 
@@ -13,6 +14,7 @@ namespace Stl.ImmutableModel
     
     public interface ICollectionNode<T> : ICollectionNode, IReadOnlyDictionaryPlus<Symbol, T>
     {
+        new ImmutableDictionary<Symbol, T> Items { get; }
         ICollectionNode<T> BaseWith(Symbol localKey, Option<T> item);
         ICollectionNode<T> BaseWith(IEnumerable<(Symbol LocalKey, Option<T> Item)> changes);
     }
@@ -22,7 +24,6 @@ namespace Stl.ImmutableModel
     {
         protected CollectionNodeBase(Key key) : base(key) { }
         protected CollectionNodeBase(SerializationInfo info, StreamingContext context) : base(info, context) { }
-
 
         // Typed Update version
         public ICollectionNode<T> BaseWith(Symbol localKey, Option<T> item)
