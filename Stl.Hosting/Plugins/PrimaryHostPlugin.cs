@@ -44,11 +44,11 @@ namespace Stl.Hosting.Plugins
             HostBuilder = CreateHostBuilder();
             ConfigureServiceProviderFactory();
             ConfigureHostConfiguration();
-            TestAppHostBuilder?.OnPreConfigureHost(HostBuilder);
+            TestAppHostBuilder?.Implementation?.InvokePreBuilders(HostBuilder);
             ConfigureServices();
             ConfigureWebHost();
             UseHostPlugins();
-            TestAppHostBuilder?.OnPostConfigureHost(HostBuilder);
+            TestAppHostBuilder?.Implementation?.InvokePostBuilders(HostBuilder);
             return HostBuilder.Build();
         }
 
@@ -109,11 +109,11 @@ namespace Stl.Hosting.Plugins
 
         protected virtual void ConfigureWebHost(IWebHostBuilder webHostBuilder)
         {
-            TestAppHostBuilder?.OnPreConfigureWebHost(webHostBuilder);
+            TestAppHostBuilder?.Implementation?.InvokePreBuilders(webHostBuilder);
             ConfigureWebServer(webHostBuilder);
             webHostBuilder.Configure(ConfigureWebApp);
             UseWebHostPlugins(webHostBuilder);
-            TestAppHostBuilder?.OnPostConfigureWebHost(webHostBuilder);
+            TestAppHostBuilder?.Implementation?.InvokePostBuilders(webHostBuilder);
         }
 
         protected virtual void ConfigureWebServer(IWebHostBuilder webHostBuilder) 

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.CommandLine;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -33,26 +34,6 @@ namespace Stl.Hosting
         IHost? Build(string[]? arguments = null);
     }
 
-    public interface ITestAppHostBuilder
-    {
-        ReadOnlyMemory<Type> TestPluginTypes { get; set; }
-        
-        event Action<IPluginHostBuilder> PreConfigurePluginHost;
-        event Action<IPluginHostBuilder> PostConfigurePluginHost;
-        event Action<IHostBuilder> PreConfigureHost;
-        event Action<IHostBuilder> PostConfigureHost;
-        event Action<IWebHostBuilder> PreConfigureWebHost;
-        event Action<IWebHostBuilder> PostConfigureWebHost;
-
-        void OnPreConfigurePluginHost(IPluginHostBuilder pluginHostBuilder);
-        void OnPostConfigurePluginHost(IPluginHostBuilder pluginHostBuilder);
-        void OnPreConfigureHost(IHostBuilder hostBuilder);
-        void OnPostConfigureHost(IHostBuilder hostBuilder);
-        void OnPreConfigureWebHost(IWebHostBuilder webHostBuilder);
-        void OnPostConfigureWebHost(IWebHostBuilder webHostBuilder);
-        
-    }
-
     public interface IAppHostBuildState 
     { 
         ReadOnlyMemory<string> Arguments { get; set; }
@@ -65,8 +46,10 @@ namespace Stl.Hosting
         void BuildHost();
     }
 
+
     public abstract class AppHostBuilderBase : HasOptionsBase, 
-        IAppHostBuilder, ITestAppHostBuilder, IAppHostBuildState
+        IAppHostBuilder, IAppHostBuildState,
+        ITestAppHostBuilder, ITestAppHostBuilderImpl
     {
         public abstract string AppName { get; }
         public abstract Type[] CorePluginTypes { get; }
@@ -122,62 +105,60 @@ namespace Stl.Hosting
             set => SetOption(nameof(IAppHostBuildState.Host), value);
         }
 
-        #region ITestAppHostBuilder properties (protected + explicit)
-
-        protected ReadOnlyMemory<Type> TestPluginTypes {
-            get => this.GetOption<Type[]>(nameof(TestPluginTypes));
-            set => SetOption(nameof(TestPluginTypes), value.ToArray());
-        }
-
-        protected event Action<IPluginHostBuilder>? PreConfigurePluginHost;
-        protected event Action<IPluginHostBuilder>? PostConfigurePluginHost;
-        protected event Action<IHostBuilder>? PreConfigureHost;
-        protected event Action<IHostBuilder>? PostConfigureHost;
-        protected event Action<IWebHostBuilder>? PreConfigureWebHost;
-        protected event Action<IWebHostBuilder>? PostConfigureWebHost;
+        #region ITestAppHostBuilder & ITestAppHostBuilderImpl
 
         ReadOnlyMemory<Type> ITestAppHostBuilder.TestPluginTypes {
             get => TestPluginTypes;
             set => TestPluginTypes = value;
         }
-
-        event Action<IPluginHostBuilder> ITestAppHostBuilder.PreConfigurePluginHost {
-            add => PreConfigurePluginHost += value;
-            remove => PreConfigurePluginHost -= value;
-        }
-        event Action<IPluginHostBuilder> ITestAppHostBuilder.PostConfigurePluginHost {
-            add => PostConfigurePluginHost += value;
-            remove => PostConfigurePluginHost -= value;
-        }
-        event Action<IHostBuilder> ITestAppHostBuilder.PreConfigureHost {
-            add => PreConfigureHost += value;
-            remove => PreConfigureHost -= value;
-        }
-        event Action<IHostBuilder> ITestAppHostBuilder.PostConfigureHost {
-            add => PostConfigureHost += value;
-            remove => PostConfigureHost -= value;
-        }
-        event Action<IWebHostBuilder> ITestAppHostBuilder.PreConfigureWebHost {
-            add => PreConfigureWebHost += value;
-            remove => PreConfigureWebHost -= value;
-        }
-        event Action<IWebHostBuilder> ITestAppHostBuilder.PostConfigureWebHost {
-            add => PostConfigureWebHost += value;
-            remove => PostConfigureWebHost -= value;
+        protected ReadOnlyMemory<Type> TestPluginTypes {
+            get => this.GetOption<Type[]>(nameof(TestPluginTypes));
+            set => SetOption(nameof(TestPluginTypes), value.ToArray());
         }
 
-        void ITestAppHostBuilder.OnPreConfigurePluginHost(IPluginHostBuilder pluginHostBuilder) 
-            => PreConfigurePluginHost?.Invoke(pluginHostBuilder);
-        void ITestAppHostBuilder.OnPostConfigurePluginHost(IPluginHostBuilder pluginHostBuilder)
-            => PostConfigurePluginHost?.Invoke(pluginHostBuilder);
-        void ITestAppHostBuilder.OnPreConfigureHost(IHostBuilder hostBuilder)
-            => PreConfigureHost?.Invoke(hostBuilder);
-        void ITestAppHostBuilder.OnPostConfigureHost(IHostBuilder hostBuilder)
-            => PostConfigureHost?.Invoke(hostBuilder);
-        void ITestAppHostBuilder.OnPreConfigureWebHost(IWebHostBuilder webHostBuilder)
-            => PreConfigureWebHost?.Invoke(webHostBuilder);
-        void ITestAppHostBuilder.OnPostConfigureWebHost(IWebHostBuilder webHostBuilder)
-            => PostConfigureWebHost?.Invoke(webHostBuilder);
+        ITestAppHostBuilderImpl ITestAppHostBuilder.Implementation => this;
+        protected ImmutableDictionary<Type,ImmutableList<Action<object>>> PreBuilders 
+            = ImmutableDictionary<Type, ImmutableList<Action<object>>>.Empty;
+        protected ImmutableDictionary<Type, ImmutableList<Action<object>>> PostBuilders 
+            = ImmutableDictionary<Type, ImmutableList<Action<object>>>.Empty;
+
+        protected static ImmutableDictionary<Type, ImmutableList<Action<object>>> AddBuilder<TBuilder>(
+            ImmutableDictionary<Type, ImmutableList<Action<object>>> builders,
+            Action<TBuilder> builder)
+            where TBuilder : class
+        {
+            var key = typeof(TBuilder);
+            if (!builders.TryGetValue(key, out var list))
+                list = ImmutableList<Action<object>>.Empty;
+            return builders.SetItem(key, list.Add(b => builder.Invoke((TBuilder) b)));
+        }
+
+        protected static void InvokeBuilders<TBuilder>(
+            ImmutableDictionary<Type, ImmutableList<Action<object>>> builders,
+            TBuilder builder)
+            where TBuilder : class
+        {
+            var list = builders.GetValueOrDefault(typeof(TBuilder)) ?? ImmutableList<Action<object>>.Empty;
+            foreach (var action in list) {
+                action.Invoke(builder);
+            }
+        }
+
+        ITestAppHostBuilder ITestAppHostBuilder.InjectPreBuilder<TBuilder>(Action<TBuilder> preBuilder) 
+        {
+            PreBuilders = AddBuilder(PreBuilders, preBuilder);
+            return this;
+        }
+        ITestAppHostBuilder ITestAppHostBuilder.InjectPostBuilder<TBuilder>(Action<TBuilder> postBuilder) 
+        {
+            PostBuilders = AddBuilder(PostBuilders, postBuilder);
+            return this;
+        }
+
+        void ITestAppHostBuilderImpl.InvokePreBuilders<TBuilder>(TBuilder builder)
+            => InvokeBuilders(PreBuilders, builder);
+        void ITestAppHostBuilderImpl.InvokePostBuilders<TBuilder>(TBuilder builder)
+            => InvokeBuilders(PreBuilders, builder);
 
         #endregion
 
@@ -212,10 +193,10 @@ namespace Stl.Hosting
             ConfigurePluginHostConfiguration();
             ConfigurePluginHostServiceProviderFactory();
             ConfigurePluginHostPluginTypes();
-            testAppHostBuilder?.OnPreConfigurePluginHost(state.PluginHostBuilder);
+            testAppHostBuilder?.Implementation?.InvokePreBuilders(state.PluginHostBuilder);
             ConfigurePluginHostLogging();
             ConfigurePluginHostServices();
-            testAppHostBuilder?.OnPostConfigurePluginHost(state.PluginHostBuilder);
+            testAppHostBuilder?.Implementation?.InvokePostBuilders(state.PluginHostBuilder);
             state.PluginHost = state.PluginHostBuilder.Build();
             ProcessCommandLine();
             LockOptions();
