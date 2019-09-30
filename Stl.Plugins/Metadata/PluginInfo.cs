@@ -1,9 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using Newtonsoft.Json;
-using Stl.Plugins.Internal;
 using Stl.Reflection;
 
 namespace Stl.Plugins.Metadata
