@@ -10,6 +10,6 @@ namespace Stl.ImmutableModel.Updating
         PropertyChanged = 0x4,
         TypeChanged = 0x8,
         SubtreeChanged = 0x10,
-        Any = Created | Removed | PropertyChanged | SubtreeChanged,
+        Any = Created | Removed | PropertyChanged | TypeChanged | SubtreeChanged,
     }
 }

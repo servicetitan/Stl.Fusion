@@ -1,4 +1,3 @@
-using Stl.ImmutableModel.Indexing;
 using Stl.ImmutableModel.Updating;
 using Xunit.Abstractions;
 
