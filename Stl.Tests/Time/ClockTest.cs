@@ -20,7 +20,7 @@ namespace Stl.Tests.Time
         [Fact]
         public async Task BasicTest()
         {
-            var epsilon = TimeSpan.FromSeconds(0.05);
+            var epsilon = TimeSpan.FromSeconds(0.1);
             var epsilon10 = epsilon * 10;
             using var clock = new TestClock().SpeedupBy(10).OffsetBy(1000);
             var realStart = RealTimeClock.Now;

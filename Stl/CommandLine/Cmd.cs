@@ -2,7 +2,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using CliWrap;
 using CliWrap.Models;
-using Stl.OS;
 
 namespace Stl.CommandLine
 {
@@ -16,6 +15,15 @@ namespace Stl.CommandLine
 
         protected Cmd(CliString executable) => Executable = executable;
 
+        public Disposable<(Cmd, bool)> OpenErrorValidationScope(bool enableErrorValidation)
+        {
+            var oldValue = EnableErrorValidation;
+            EnableErrorValidation = enableErrorValidation;
+            return Disposable.New(
+                state => state.Self.EnableErrorValidation = state.OldValue, 
+                (Self: this, OldValue: oldValue));
+        } 
+        
         protected Task<ExecutionResult> RunRawAsync(
             object? arguments, CliString tail = default,
             CancellationToken cancellationToken = default) 
