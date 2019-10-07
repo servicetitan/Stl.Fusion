@@ -20,6 +20,12 @@ namespace Stl.Terraform
             CancellationToken cancellationToken = default)
             => RunRawAsync("apply", arguments ?? new ApplyArguments(), dir, cancellationToken);
 
+        public Task<ExecutionResult> ImportAsync(
+            CliString dir = default,
+            ImportArguments? arguments = null,
+            CancellationToken cancellationToken = default)
+            => RunRawAsync("import", arguments ?? new ImportArguments(), dir, cancellationToken);
+
         public Task<ExecutionResult> FmtAsync(
             CliString dir = default,
             FmtArguments? arguments = null,

@@ -7,12 +7,14 @@ namespace Stl.IO
 {
     public static class PathEx
     {
-        private static readonly Regex NonAlphaOrNumberRegex = 
+        private static readonly Regex NonAlphaOrNumberRe = 
             new Regex("[^a-z0-9_]+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex TrailingUnderscoresRe = 
+            new Regex("_+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         public static string GetHashedName(string? key, string? prefix = null, int maxLength = 40)
         {
-            if (maxLength < 16 || maxLength > 128)
+            if (maxLength < 8 || maxLength > 128)
                 throw new ArgumentOutOfRangeException(nameof(maxLength));
             if (key == null)
                 return "(null)";
@@ -22,7 +24,8 @@ namespace Stl.IO
             if (prefix.Length > maxLength)
                 prefix = prefix.Substring(0, maxPrefixLength);
             var name = $"{prefix}_{hash}";
-            name = NonAlphaOrNumberRegex.Replace(name, "_");
+            name = NonAlphaOrNumberRe.Replace(name, "_");
+            name = TrailingUnderscoresRe.Replace(name, "");
             return name;
         }
 

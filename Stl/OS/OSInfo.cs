@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.InteropServices;
 
 namespace Stl.OS
@@ -11,18 +12,22 @@ namespace Stl.OS
 
     public static class OSInfo
     {
-        public static OSKind Kind { get; }
+        public static readonly OSKind Kind;
+        public static readonly string HostName;
 
         static OSInfo()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
                 Kind = OSKind.Windows;
+                HostName = Environment.GetEnvironmentVariable("COMPUTERNAME") ?? "";
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
                 Kind = OSKind.MacOS;
+                HostName = Environment.GetEnvironmentVariable("HOSTNAME") ?? "";
             }
             else {
                 Kind = OSKind.Unix;
+                HostName = Environment.GetEnvironmentVariable("HOSTNAME") ?? "";
             }
         }
     }

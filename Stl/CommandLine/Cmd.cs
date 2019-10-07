@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
 using CliWrap;
@@ -9,6 +10,8 @@ namespace Stl.CommandLine
     {
         public CliString Executable { get; }
         public CliString WorkingDirectory { get; set; } = CliString.Empty;
+        public ImmutableDictionary<string, string> EnvironmentVariables { get; set; } = 
+            ImmutableDictionary<string, string>.Empty;
         public ICliFormatter CliFormatter { get; set; } = new CliFormatter();
         public bool EnableErrorValidation { get; set; } = true;
         public bool EchoMode { get; set; }
@@ -54,6 +57,8 @@ namespace Stl.CommandLine
                 .SetArguments(arguments.Value);
             if (standardInput != null)
                 cli = cli.SetStandardInput(standardInput);
+            foreach (var (key, value) in EnvironmentVariables)
+                cli = cli.SetEnvironmentVariable(key, value);
             return cli.ExecuteAsync();
         }
 

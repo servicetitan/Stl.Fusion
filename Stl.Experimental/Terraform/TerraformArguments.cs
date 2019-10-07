@@ -1,10 +1,12 @@
-using System.Collections.Generic;
 using Stl.CommandLine;
 
 namespace Stl.Terraform 
 {
     public abstract class TerraformArgumentsBase
     {
+        [CliArgument("-no-color", DefaultValue = "false")]
+        public CliBool? NoColor { get; set; } = true;
+
         /// <summary>  
         /// Ask for input for variables if not directly set.
         /// </summary>
