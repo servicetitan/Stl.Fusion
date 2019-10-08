@@ -2,12 +2,5 @@ using Stl.CommandLine;
 
 namespace Stl.Terraform
 {
-    public class DestroyArguments
-    {
-        /// <summary>  
-        /// Skip interactive approval of plan before applying.
-        /// </summary>
-        [CliArgument("-auto-approve", DefaultValue = "false")]
-        public bool AutoApprove { get; set; } = true;
-    }
+    public class DestroyArguments : ApplyLikeArgumentsBase { }
 }

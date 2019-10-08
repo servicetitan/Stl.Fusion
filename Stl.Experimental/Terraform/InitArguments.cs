@@ -1,6 +1,4 @@
 namespace Stl.Terraform
 {
-    public class InitArguments
-    {
-    }
+    public class InitArguments { }
 }

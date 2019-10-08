@@ -5,37 +5,37 @@ using Newtonsoft.Json;
 namespace Stl.Time
 {
     [Serializable]
-    public readonly struct Event<T> : IEquatable<Event<T>>, IHasHappenedAt
+    public readonly struct Event<T> : IEquatable<Event<T>>
     {
         public T Value { get; }
-        public Moment HappenedAt { get; }
+        public Moment Moment { get; }
 
         [JsonConstructor]
-        public Event(T value, Moment happenedAt)
+        public Event(T value, Moment moment)
         {
             Value = value;
-            HappenedAt = happenedAt;
+            Moment = moment;
         }
-
-        public override string ToString() => $"{GetType().Name}({Value} @ {HappenedAt})";
 
         // Conversion
         
-        public void Deconstruct(out T value, out Moment happenedAt)
+        public override string ToString() => $"({Value} @ {Moment})";
+
+        public void Deconstruct(out T value, out Moment moment)
         {
             value = Value;
-            happenedAt = HappenedAt;
+            moment = Moment;
         }
 
-        public static implicit operator Event<T>((T Value, Moment HappenedAt) source) => new Event<T>(source.Value, source.HappenedAt);
-        public static implicit operator (T Value, Moment HappenedAt) (Event<T> source) => (source.Value, source.HappenedAt);
+        public static implicit operator Event<T>((T Value, Moment Moment) source) => new Event<T>(source.Value, source.Moment);
+        public static implicit operator (T Value, Moment Moment) (Event<T> source) => (source.Value, source.Moment);
 
         // Equality
         
-        public bool Equals(Event<T> other) => HappenedAt == other.HappenedAt && EqualityComparer<T>.Default.Equals(Value, other.Value);
+        public bool Equals(Event<T> other) => Moment == other.Moment && EqualityComparer<T>.Default.Equals(Value, other.Value);
         public override bool Equals(object? obj) => obj is Event<T> other && Equals(other);
-        public override int GetHashCode() => unchecked(
-            (HappenedAt.GetHashCode() * 397) ^ EqualityComparer<T>.Default.GetHashCode(Value));
+        public override int GetHashCode() 
+            => unchecked((Moment.GetHashCode() * 397) ^ EqualityComparer<T>.Default.GetHashCode(Value));
         public static bool operator ==(Event<T> left, Event<T> right) => left.Equals(right);
         public static bool operator !=(Event<T> left, Event<T> right) => !left.Equals(right);
     }

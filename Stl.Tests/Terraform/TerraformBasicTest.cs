@@ -28,6 +28,7 @@ namespace Stl.Tests.Terraform
             executionResult.StandardOutput.Trim().Should()
                 .Be(TerraformCmd.DefaultExecutable.Value +
                     " apply " +
+                    "-no-color " + 
                     "-var \"key1=value1\" -lock-timeout=16s " +
                     "-backup=\"Backup\" -auto-approve " +
                     "dir");

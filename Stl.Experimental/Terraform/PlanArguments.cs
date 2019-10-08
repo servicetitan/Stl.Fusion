@@ -2,7 +2,7 @@ using Stl.CommandLine;
 
 namespace Stl.Terraform 
 {
-    public class PlanArguments : ApplyLikeArgumentsBase
+    public class PlanArguments : PlanLikeArgumentsBase
     {
         /// <summary>  
         /// The path to save the generated execution plan.
