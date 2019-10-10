@@ -37,7 +37,7 @@ namespace Stl.ImmutableModel.Processing
         where TModel : class, INode
     {
         public new IModelProvider<TModel> ModelProvider { get; }
-        public new IUpdatableIndex<TModel> Index => ModelProvider.Index;
+        public new IIndex<TModel> Index => ModelProvider.Index;
         public new IModelChangeTracker<TModel> ChangeTracker => ModelProvider.ChangeTracker;
 
         protected DispatchingNodeProcessorBase(IModelProvider<TModel> modelProvider) : base(modelProvider)

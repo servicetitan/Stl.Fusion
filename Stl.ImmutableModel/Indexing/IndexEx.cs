@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using Stl.ImmutableModel.Updating;
 
 namespace Stl.ImmutableModel.Indexing
 {
@@ -45,5 +46,29 @@ namespace Stl.ImmutableModel.Indexing
         public static T GetNodeByPath<T>(this IIndex index, SymbolList list)
             where T : class, INode
             => (T) index.GetNodeByPath(list);
+
+        // Update
+
+        public static (TIndex Index, ModelChangeSet ChangeSet) Update<TIndex>(this TIndex index, INode source, INode target)
+            where TIndex : IIndex
+        {
+            var (i, cs) = index.BaseUpdate(source, target);
+            return ((TIndex) i, cs);
+        }
+
+        public static (TIndex Index, ModelChangeSet ChangeSet) Update<TIndex>(this TIndex index, INode source, Symbol key, Option<object?> value)
+            where TIndex : IIndex
+            => index.Update(source, source.DualWith(key, value));
+        
+        public static (TIndex Index, ModelChangeSet ChangeSet) Update<TIndex>(this TIndex index, SymbolList list, Option<object?> value)
+            where TIndex : IIndex
+        {
+            if (list.Head == null)
+                // Root update
+                return index.Update(index.GetNodeByPath(list), (INode) value.Value!);
+            var source = index.GetNodeByPath(list.Head);
+            var target = source.DualWith(list.Tail, value);
+            return index.Update(source, target);
+        }
     }
 }

@@ -54,6 +54,6 @@ namespace Stl.Tests.ImmutableModel.Updating
             (await c1task).Should().Equals(await c2task);
         }
 
-        protected abstract IModelUpdater<ModelRoot> CreateModelUpdater(IUpdatableIndex<ModelRoot> index);
+        protected abstract IModelUpdater<ModelRoot> CreateModelUpdater(IIndex<ModelRoot> index);
     }
 }

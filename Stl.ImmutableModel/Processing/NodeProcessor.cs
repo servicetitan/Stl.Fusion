@@ -34,7 +34,7 @@ namespace Stl.ImmutableModel.Processing
             new ConcurrentDictionary<NodeProcessingInfo, Unit>();
 
         public IModelProvider ModelProvider { get; }
-        public IUpdatableIndex Index => ModelProvider.Index;
+        public IIndex Index => ModelProvider.Index;
         public IModelChangeTracker ChangeTracker => ModelProvider.ChangeTracker;
 
         protected NodeProcessorBase(IModelProvider modelProvider) 
@@ -199,7 +199,7 @@ namespace Stl.ImmutableModel.Processing
         where TModel : class, INode
     {
         public new IModelProvider<TModel> ModelProvider { get; }
-        public new IUpdatableIndex<TModel> Index => ModelProvider.Index;
+        public new IIndex<TModel> Index => ModelProvider.Index;
         public new IModelChangeTracker<TModel> ChangeTracker => ModelProvider.ChangeTracker;
 
         protected NodeProcessorBase(IModelProvider<TModel> modelProvider) : base(modelProvider) 

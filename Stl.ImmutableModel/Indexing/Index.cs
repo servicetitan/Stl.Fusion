@@ -1,10 +1,11 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
+using Stl.Comparison;
+using Stl.ImmutableModel.Internal;
 using Stl.ImmutableModel.Updating;
 using Stl.Serialization;
 
@@ -17,6 +18,7 @@ namespace Stl.ImmutableModel.Indexing
         INode? TryGetNode(Key key);
         INode? TryGetNodeByPath(SymbolList list);
         SymbolList? TryGetPath(INode node);
+        (IIndex Index, ModelChangeSet ChangeSet) BaseUpdate(INode source, INode target);
     }
 
     public interface IIndex<out TModel> : IIndex
@@ -32,8 +34,8 @@ namespace Stl.ImmutableModel.Indexing
             where TModel : class, INode 
             => new Index<TModel>(model);
 
-        INode IIndex.Model => UntypedModel;
-        protected abstract INode UntypedModel { get; }
+        INode IIndex.Model => Model;
+        protected INode Model { get; private set; }
 
         [field: NonSerialized]
         protected ImmutableDictionary<Key, INode> KeyToNode { get; set; } = null!;
@@ -46,8 +48,6 @@ namespace Stl.ImmutableModel.Indexing
         public IEnumerable<(INode Node, SymbolList Path)> Entries 
             => NodeToPath.Select(p => (p.Key, p.Value));
 
-        protected Index() { }
-
         public INode? TryGetNode(Key key)
             => KeyToNode.TryGetValue(key, out var node) ? node : null;
         public INode? TryGetNodeByPath(SymbolList list)
@@ -55,13 +55,14 @@ namespace Stl.ImmutableModel.Indexing
         public SymbolList? TryGetPath(INode node)
             => NodeToPath.TryGetValue(node, out var path) ? path : null;
 
-        protected virtual void Reindex()
+        protected virtual void SetModel(INode model)
         {
+            Model = model;
             KeyToNode = ImmutableDictionary<Key, INode>.Empty;
             PathToNode = ImmutableDictionary<SymbolList, INode>.Empty;
             NodeToPath = ImmutableDictionary<INode, SymbolList>.Empty;
             var changeSet = ModelChangeSet.Empty;
-            AddNode(SymbolList.Root, UntypedModel, ref changeSet);
+            AddNode(SymbolList.Root, Model, ref changeSet);
         }
 
         protected virtual void AddNode(SymbolList list, INode node, ref ModelChangeSet changeSet)
@@ -95,6 +96,96 @@ namespace Stl.ImmutableModel.Indexing
             NodeToPath = NodeToPath.Remove(source).Add(target, list);
         }
 
+        public virtual (IIndex Index, ModelChangeSet ChangeSet) BaseUpdate(
+            INode source, INode target)
+        {
+            if (source == target)
+                return (this, ModelChangeSet.Empty);
+
+            if (source.LocalKey != target.LocalKey)
+                throw Errors.InvalidUpdateKeyMismatch();
+            
+            var clone = (Index) MemberwiseClone();
+            var changeSet = new ModelChangeSet();
+            clone.UpdateNode(source, target, ref changeSet);
+            return (clone, changeSet);
+        }
+
+        protected virtual void UpdateNode(INode source, INode target, ref ModelChangeSet changeSet)
+        {
+            SymbolList? path = this.GetPath(source);
+            CompareAndUpdateNode(path, source, target, ref changeSet);
+
+            var tail = path.Tail;
+            path = path.Head;
+            while (path != null) {
+                var sourceParent = this.GetNodeByPath(path);
+                var targetParent = sourceParent.DualWith(tail, Option.Some((object?) target));
+                ReplaceNode(path, sourceParent, targetParent, ref changeSet);
+                source = sourceParent;
+                target = targetParent;
+                tail = path.Tail;
+                path = path.Head;
+            }
+            SetModel(target);
+        }
+
+        private NodeChangeType CompareAndUpdateNode(SymbolList list, INode source, INode target, ref ModelChangeSet changeSet)
+        {
+            if (source == target)
+                return 0;
+
+            var changeType = (NodeChangeType) 0;
+            if (source.GetType() != target.GetType())
+                changeType |= NodeChangeType.TypeChanged;
+
+            var sPairs = source.DualGetItems().ToDictionary();
+            var tPairs = target.DualGetItems().ToDictionary();
+            var c = DictionaryComparison.New(sPairs, tPairs);
+            if (c.AreEqual) {
+                if (changeType != 0)
+                    ReplaceNode(list, source, target, ref changeSet, changeType);
+                return changeType;
+            }
+
+            foreach (var (key, item) in c.LeftOnly) {
+                if (item is INode n) {
+                    RemoveNode(list + key, n, ref changeSet);
+                    changeType |= NodeChangeType.SubtreeChanged;
+                }
+            }
+            foreach (var (key, item) in c.RightOnly) {
+                if (item is INode n) {
+                    AddNode(list + key, n, ref changeSet);
+                    changeType |= NodeChangeType.SubtreeChanged;
+                }
+            }
+            foreach (var (key, sItem, tItem) in c.SharedUnequal) {
+                if (sItem is INode sn) {
+                    if (tItem is INode tn) {
+                        var ct = CompareAndUpdateNode(list + key, sn, tn, ref changeSet);
+                        if (ct != 0) // 0 = instance is changed, but it passes equality test
+                            changeType |= NodeChangeType.SubtreeChanged;
+                    }
+                    else {
+                        RemoveNode(list + key, sn, ref changeSet);
+                        changeType |= NodeChangeType.SubtreeChanged;
+                    }
+                }
+                else {
+                    if (tItem is INode tn) {
+                        AddNode(list + key, tn, ref changeSet);
+                        changeType |= NodeChangeType.SubtreeChanged;
+                    }
+                    else {
+                        changeType |= NodeChangeType.PropertyChanged;
+                    }
+                }
+            }
+            ReplaceNode(list, source, target, ref changeSet, changeType);
+            return changeType;
+        }
+
         // Serialization
         
         // Complex, b/c JSON.NET doesn't allow [OnDeserialized] methods to be virtual
@@ -102,11 +193,11 @@ namespace Stl.ImmutableModel.Indexing
         void INotifyDeserialized.OnDeserialized(StreamingContext context) => OnDeserialized(context);
         protected virtual void OnDeserialized(StreamingContext context)
         {
-            if (UntypedModel is INotifyDeserialized d)
+            if (Model is INotifyDeserialized d)
                 d.OnDeserialized(context);
             if (KeyToNode == null) 
                 // Regular serialization, not JSON.NET
-                Reindex();
+                SetModel(Model);
         }
     }
 
@@ -114,14 +205,19 @@ namespace Stl.ImmutableModel.Indexing
     public class Index<TModel> : Index, IIndex<TModel>
         where TModel : class, INode
     {
-        protected override INode UntypedModel => Model;
-        public TModel Model { get; }
+        public new TModel Model { get; private set; }
+
+        // This constructor is to be used by descendants,
+        // since the public one also triggers indexing.
+        protected Index() { }
 
         [JsonConstructor]
-        public Index(TModel model)
+        public Index(TModel model) => SetModel(model);
+
+        protected override void SetModel(INode model)
         {
-            Model = model;
-            Reindex();
+            Model = (TModel) model;
+            base.SetModel(model);
         }
     }
 }

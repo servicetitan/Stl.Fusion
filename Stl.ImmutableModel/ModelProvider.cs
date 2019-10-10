@@ -1,6 +1,5 @@
 using System;
-using System.Threading.Tasks;
-using Stl.Async;
+using Stl.ImmutableModel.Indexing;
 using Stl.ImmutableModel.Updating;
 
 namespace Stl.ImmutableModel
@@ -13,7 +12,7 @@ namespace Stl.ImmutableModel
     public interface IModelProvider
     {
         INode Model { get; }
-        IUpdatableIndex Index { get; }
+        IIndex Index { get; }
         IModelChangeTracker ChangeTracker { get; }
         Type GetModelType();
     }
@@ -22,7 +21,7 @@ namespace Stl.ImmutableModel
         where TModel : class, INode
     {
         new TModel Model { get; }
-        new IUpdatableIndex<TModel> Index { get; }
+        new IIndex<TModel> Index { get; }
         new IModelChangeTracker<TModel> ChangeTracker { get; }
     }
 
@@ -32,11 +31,11 @@ namespace Stl.ImmutableModel
         protected IModelUpdater<TModel> Updater { get; }
 
         INode IModelProvider.Model => Updater.Model;
-        IUpdatableIndex IModelProvider.Index => Updater.Index;
+        IIndex IModelProvider.Index => Updater.Index;
         IModelChangeTracker IModelProvider.ChangeTracker => Updater.ChangeTracker;
 
         public TModel Model => Updater.Model;
-        public IUpdatableIndex<TModel> Index => Updater.Index;
+        public IIndex<TModel> Index => Updater.Index;
         public IModelChangeTracker<TModel> ChangeTracker => Updater.ChangeTracker;
 
         public ModelProvider(IModelUpdater<TModel> updater) => Updater = updater;

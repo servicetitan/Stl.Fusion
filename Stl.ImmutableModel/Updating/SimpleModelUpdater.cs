@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Stl.Async;
+using Stl.ImmutableModel.Indexing;
 
 namespace Stl.ImmutableModel.Updating 
 {
@@ -13,7 +14,7 @@ namespace Stl.ImmutableModel.Updating
         protected AsyncCounter UpdateCounter { get; } = new AsyncCounter();
 
         [JsonConstructor]
-        public SimpleModelUpdater(IUpdatableIndex<TModel> index) : base(index) { }
+        public SimpleModelUpdater(IIndex<TModel> index) : base(index) { }
 
         protected override async ValueTask DisposeInternalAsync(bool disposing)
         {
@@ -24,11 +25,11 @@ namespace Stl.ImmutableModel.Updating
         }
 
         public override Task<ModelUpdateInfo<TModel>> UpdateAsync(
-            Func<IUpdatableIndex<TModel>, (IUpdatableIndex<TModel> NewIndex, ModelChangeSet ChangeSet)> updater,
+            Func<IIndex<TModel>, (IIndex<TModel> NewIndex, ModelChangeSet ChangeSet)> updater,
             CancellationToken cancellationToken = default)
         {
             using var _ = UpdateCounter.Use();
-            IUpdatableIndex<TModel> oldIndex, newIndex;
+            IIndex<TModel> oldIndex, newIndex;
             ModelChangeSet changeSet;
             while (true) {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -45,7 +46,7 @@ namespace Stl.ImmutableModel.Updating
 
     public static class SimpleModelUpdater
     {
-        public static SimpleModelUpdater<TModel> New<TModel>(IUpdatableIndex<TModel> index)
+        public static SimpleModelUpdater<TModel> New<TModel>(IIndex<TModel> index)
             where TModel : class, INode 
             => new SimpleModelUpdater<TModel>(index);
     }

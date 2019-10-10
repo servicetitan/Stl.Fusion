@@ -95,7 +95,7 @@ namespace Stl.Tests.ImmutableModel.Indexing
             ProcessNode(SymbolList.Root, root);
         }
 
-        internal static UpdatableIndex<ModelRoot> BuildModel()
+        internal static Index<ModelRoot> BuildModel()
         {
             var vm1 = new VirtualMachine(Key.Parse("cluster1|vm1"))
                 .With(VirtualMachine.CapabilitiesSymbol, "caps1");
@@ -106,7 +106,7 @@ namespace Stl.Tests.ImmutableModel.Indexing
             var root = new ModelRoot(Key.Parse("@"))
                 .WithAdded(cluster);
             
-            var idx = UpdatableIndex.New(root);
+            var idx = Index.New(root);
             TestIntegrity(idx);
             return idx;
         }
