@@ -10,7 +10,7 @@ namespace Stl.ImmutableModel.Updating
     public interface IModelUpdater : IModelProvider, IAsyncDisposable
     {
         Task<IModelUpdateInfo> UpdateAsync(
-            Func<IIndex, (IIndex NewIndex, ModelChangeSet ChangeSet)> updater,
+            Func<IModelIndex, (IModelIndex NewIndex, ModelChangeSet ChangeSet)> updater,
             CancellationToken cancellationToken = default);
     }
     
@@ -18,32 +18,32 @@ namespace Stl.ImmutableModel.Updating
         where TModel : class, INode
     {
         Task<ModelUpdateInfo<TModel>> UpdateAsync(
-            Func<IIndex<TModel>, (IIndex<TModel> NewIndex, ModelChangeSet ChangeSet)> updater,
+            Func<IModelIndex<TModel>, (IModelIndex<TModel> NewIndex, ModelChangeSet ChangeSet)> updater,
             CancellationToken cancellationToken = default);
     }
-    
+
     [Serializable]
     public abstract class ModelUpdaterBase<TModel> : AsyncDisposableBase, IModelUpdater<TModel>
         where TModel : class, INode
     {
-        protected volatile IIndex<TModel> IndexField;
+        protected volatile IModelIndex<TModel> CurrentModelIndex;
         protected IModelChangeNotify<TModel> ChangeTrackerNotifier;
 
-        IIndex IModelProvider.Index => IndexField;
+        IModelIndex IModelProvider.Index => CurrentModelIndex;
         IModelChangeTracker IModelProvider.ChangeTracker => ChangeTracker;
         INode IModelProvider.Model => Model;
 
-        public IIndex<TModel> Index => IndexField;
+        public IModelIndex<TModel> Index => CurrentModelIndex;
         [JsonIgnore] public IModelChangeTracker<TModel> ChangeTracker { get; }
         [JsonIgnore] public TModel Model => Index.Model;
 
-        protected ModelUpdaterBase(IIndex<TModel> index) 
+        protected ModelUpdaterBase(IModelIndex<TModel> index) 
             : this(index, new ModelChangeTracker<TModel>())
         { }
 
-        protected ModelUpdaterBase(IIndex<TModel> index, IModelChangeTracker<TModel> changeTracker)
+        protected ModelUpdaterBase(IModelIndex<TModel> index, IModelChangeTracker<TModel> changeTracker)
         {
-            IndexField = index;
+            CurrentModelIndex = index;
             ChangeTracker = changeTracker;
             ChangeTrackerNotifier = (IModelChangeNotify<TModel>) changeTracker;
         }
@@ -57,18 +57,18 @@ namespace Stl.ImmutableModel.Updating
         public Type GetModelType() => typeof(TModel);
 
         public async Task<IModelUpdateInfo> UpdateAsync(
-            Func<IIndex, (IIndex NewIndex, ModelChangeSet ChangeSet)> updater,
+            Func<IModelIndex, (IModelIndex NewIndex, ModelChangeSet ChangeSet)> updater,
             CancellationToken cancellationToken = default)
         {
             var result = await UpdateAsync(source => {
                 var r = updater.Invoke(source);
-                return ((IIndex<TModel>) r.NewIndex, r.ChangeSet);
+                return ((IModelIndex<TModel>) r.NewIndex, r.ChangeSet);
             }, cancellationToken);
             return result;
         }
 
         public abstract Task<ModelUpdateInfo<TModel>> UpdateAsync(
-            Func<IIndex<TModel>, (IIndex<TModel> NewIndex, ModelChangeSet ChangeSet)> updater,
+            Func<IModelIndex<TModel>, (IModelIndex<TModel> NewIndex, ModelChangeSet ChangeSet)> updater,
             CancellationToken cancellationToken = default);
 
         protected virtual void OnUpdated(ModelUpdateInfo<TModel> updateInfo)

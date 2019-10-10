@@ -15,7 +15,7 @@ namespace Stl.ImmutableModel
 
         public override string ToString() => $"{GetType().Name}({Key})";
 
-        public TNode Resolve(IIndex index) => index.GetNode<TNode>(Key);
+        public TNode Resolve(IModelIndex index) => index.GetNode<TNode>(Key);
 
         // Conversion
 

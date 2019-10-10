@@ -1,10 +1,11 @@
 using System;
+using Newtonsoft.Json;
 using Stl.ImmutableModel.Indexing;
 using Stl.ImmutableModel.Updating;
 
 namespace Stl.ImmutableModel
 {
-    // It's intentional these types don't expose IUpdater:
+    // It's intentional these types don't expose IModelUpdater:
     // the providers are supposed to provide the access to
     // read-only models + an API for tracking the changes there,
     // but not the way to update the models.
@@ -12,7 +13,7 @@ namespace Stl.ImmutableModel
     public interface IModelProvider
     {
         INode Model { get; }
-        IIndex Index { get; }
+        IModelIndex Index { get; }
         IModelChangeTracker ChangeTracker { get; }
         Type GetModelType();
     }
@@ -21,23 +22,28 @@ namespace Stl.ImmutableModel
         where TModel : class, INode
     {
         new TModel Model { get; }
-        new IIndex<TModel> Index { get; }
+        new IModelIndex<TModel> Index { get; }
         new IModelChangeTracker<TModel> ChangeTracker { get; }
     }
 
+    [Serializable]
     public class ModelProvider<TModel> : IModelProvider<TModel>
         where TModel : class, INode
     {
-        protected IModelUpdater<TModel> Updater { get; }
-
         INode IModelProvider.Model => Updater.Model;
-        IIndex IModelProvider.Index => Updater.Index;
+        IModelIndex IModelProvider.Index => Updater.Index;
         IModelChangeTracker IModelProvider.ChangeTracker => Updater.ChangeTracker;
 
+        // TODO: Turn this into a protected field, but keep JSON serialization working 
+        public IModelUpdater<TModel> Updater { get; }
+        [System.Text.Json.Serialization.JsonIgnore]
         public TModel Model => Updater.Model;
-        public IIndex<TModel> Index => Updater.Index;
+        [System.Text.Json.Serialization.JsonIgnore]
+        public IModelIndex<TModel> Index => Updater.Index;
+        [System.Text.Json.Serialization.JsonIgnore]
         public IModelChangeTracker<TModel> ChangeTracker => Updater.ChangeTracker;
 
+        [JsonConstructor]
         public ModelProvider(IModelUpdater<TModel> updater) => Updater = updater;
 
         public Type GetModelType() => typeof(TModel);

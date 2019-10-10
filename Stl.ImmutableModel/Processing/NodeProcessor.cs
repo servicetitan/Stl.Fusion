@@ -34,7 +34,7 @@ namespace Stl.ImmutableModel.Processing
             new ConcurrentDictionary<NodeProcessingInfo, Unit>();
 
         public IModelProvider ModelProvider { get; }
-        public IIndex Index => ModelProvider.Index;
+        public IModelIndex ModelIndex => ModelProvider.Index;
         public IModelChangeTracker ChangeTracker => ModelProvider.ChangeTracker;
 
         protected NodeProcessorBase(IModelProvider modelProvider) 
@@ -102,8 +102,8 @@ namespace Stl.ImmutableModel.Processing
         {
             if (!IsSupportedUpdate(updateInfo))
                 return default;
-            var newIndex = updateInfo.NewIndex;
-            var oldIndex = updateInfo.OldIndex;
+            var newIndex = updateInfo.NewModelIndex;
+            var oldIndex = updateInfo.OldModelIndex;
             var changes = new List<NodeChangeInfo>();
             foreach (var (domainKey, changeType) in updateInfo.ChangeSet) {
                 INode node;
@@ -199,7 +199,7 @@ namespace Stl.ImmutableModel.Processing
         where TModel : class, INode
     {
         public new IModelProvider<TModel> ModelProvider { get; }
-        public new IIndex<TModel> Index => ModelProvider.Index;
+        public new IModelIndex<TModel> ModelIndex => ModelProvider.Index;
         public new IModelChangeTracker<TModel> ChangeTracker => ModelProvider.ChangeTracker;
 
         protected NodeProcessorBase(IModelProvider<TModel> modelProvider) : base(modelProvider) 

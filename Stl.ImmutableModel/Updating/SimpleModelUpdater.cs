@@ -14,7 +14,7 @@ namespace Stl.ImmutableModel.Updating
         protected AsyncCounter UpdateCounter { get; } = new AsyncCounter();
 
         [JsonConstructor]
-        public SimpleModelUpdater(IIndex<TModel> index) : base(index) { }
+        public SimpleModelUpdater(IModelIndex<TModel> index) : base(index) { }
 
         protected override async ValueTask DisposeInternalAsync(bool disposing)
         {
@@ -25,20 +25,20 @@ namespace Stl.ImmutableModel.Updating
         }
 
         public override Task<ModelUpdateInfo<TModel>> UpdateAsync(
-            Func<IIndex<TModel>, (IIndex<TModel> NewIndex, ModelChangeSet ChangeSet)> updater,
+            Func<IModelIndex<TModel>, (IModelIndex<TModel> NewIndex, ModelChangeSet ChangeSet)> updater,
             CancellationToken cancellationToken = default)
         {
             using var _ = UpdateCounter.Use();
-            IIndex<TModel> oldIndex, newIndex;
+            IModelIndex<TModel> oldModelIndex, newModelIndex;
             ModelChangeSet changeSet;
             while (true) {
                 cancellationToken.ThrowIfCancellationRequested();
-                oldIndex = Index;
-                (newIndex, changeSet) = updater.Invoke(oldIndex);
-                if (Interlocked.CompareExchange(ref IndexField, newIndex, oldIndex) == oldIndex)
+                oldModelIndex = Index;
+                (newModelIndex, changeSet) = updater.Invoke(oldModelIndex);
+                if (Interlocked.CompareExchange(ref CurrentModelIndex, newModelIndex, oldModelIndex) == oldModelIndex)
                     break;
             }
-            var updateInfo = new ModelUpdateInfo<TModel>(oldIndex, newIndex, changeSet);
+            var updateInfo = new ModelUpdateInfo<TModel>(oldModelIndex, newModelIndex, changeSet);
             OnUpdated(updateInfo);
             return Task.FromResult(updateInfo);
         }
@@ -46,7 +46,7 @@ namespace Stl.ImmutableModel.Updating
 
     public static class SimpleModelUpdater
     {
-        public static SimpleModelUpdater<TModel> New<TModel>(IIndex<TModel> index)
+        public static SimpleModelUpdater<TModel> New<TModel>(IModelIndex<TModel> index)
             where TModel : class, INode 
             => new SimpleModelUpdater<TModel>(index);
     }

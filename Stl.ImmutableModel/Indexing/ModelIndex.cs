@@ -11,31 +11,31 @@ using Stl.Serialization;
 
 namespace Stl.ImmutableModel.Indexing
 {
-    public interface IIndex
+    public interface IModelIndex
     {
         INode Model { get; }
         IEnumerable<(INode Node, SymbolList Path)> Entries { get; }
         INode? TryGetNode(Key key);
         INode? TryGetNodeByPath(SymbolList list);
         SymbolList? TryGetPath(INode node);
-        (IIndex Index, ModelChangeSet ChangeSet) BaseUpdate(INode source, INode target);
+        (IModelIndex Index, ModelChangeSet ChangeSet) BaseWith(INode source, INode target);
     }
 
-    public interface IIndex<out TModel> : IIndex
+    public interface IModelIndex<out TModel> : IModelIndex
         where TModel : class, INode
     {
         new TModel Model { get; }
     }
 
     [Serializable]
-    public abstract class Index : IIndex, INotifyDeserialized
+    public abstract class ModelIndex : IModelIndex, INotifyDeserialized
     {
-        public static Index<TModel> New<TModel>(TModel model) 
+        public static ModelIndex<TModel> New<TModel>(TModel model) 
             where TModel : class, INode 
-            => new Index<TModel>(model);
+            => new ModelIndex<TModel>(model);
 
-        INode IIndex.Model => Model;
-        protected INode Model { get; private set; }
+        INode IModelIndex.Model => Model;
+        protected INode Model { get; private set; } = null!;
 
         [field: NonSerialized]
         protected ImmutableDictionary<Key, INode> KeyToNode { get; set; } = null!;
@@ -96,7 +96,7 @@ namespace Stl.ImmutableModel.Indexing
             NodeToPath = NodeToPath.Remove(source).Add(target, list);
         }
 
-        public virtual (IIndex Index, ModelChangeSet ChangeSet) BaseUpdate(
+        public virtual (IModelIndex Index, ModelChangeSet ChangeSet) BaseWith(
             INode source, INode target)
         {
             if (source == target)
@@ -105,7 +105,7 @@ namespace Stl.ImmutableModel.Indexing
             if (source.LocalKey != target.LocalKey)
                 throw Errors.InvalidUpdateKeyMismatch();
             
-            var clone = (Index) MemberwiseClone();
+            var clone = (ModelIndex) MemberwiseClone();
             var changeSet = new ModelChangeSet();
             clone.UpdateNode(source, target, ref changeSet);
             return (clone, changeSet);
@@ -202,17 +202,17 @@ namespace Stl.ImmutableModel.Indexing
     }
 
     [Serializable]
-    public class Index<TModel> : Index, IIndex<TModel>
+    public class ModelIndex<TModel> : ModelIndex, IModelIndex<TModel>
         where TModel : class, INode
     {
-        public new TModel Model { get; private set; }
+        public new TModel Model { get; private set; } = null!;
 
         // This constructor is to be used by descendants,
         // since the public one also triggers indexing.
-        protected Index() { }
+        protected ModelIndex() { }
 
         [JsonConstructor]
-        public Index(TModel model) => SetModel(model);
+        public ModelIndex(TModel model) => SetModel(model);
 
         protected override void SetModel(INode model)
         {

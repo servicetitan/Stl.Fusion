@@ -7,8 +7,8 @@ namespace Stl.ImmutableModel.Updating
     public interface IModelUpdateInfo
     {
         ModelChangeSet ChangeSet { get; }
-        IIndex OldIndex { get; }
-        IIndex NewIndex { get; }
+        IModelIndex OldModelIndex { get; }
+        IModelIndex NewModelIndex { get; }
         INode OldModel { get; }
         INode NewModel { get; }
     }
@@ -16,8 +16,8 @@ namespace Stl.ImmutableModel.Updating
     public interface IModelUpdateInfo<out TModel> : IModelUpdateInfo
         where TModel : class, INode
     {
-        new IIndex<TModel> OldIndex { get; }
-        new IIndex<TModel> NewIndex { get; }
+        new IModelIndex<TModel> OldModelIndex { get; }
+        new IModelIndex<TModel> NewModelIndex { get; }
         new TModel OldModel { get; }
         new TModel NewModel { get; }
     }
@@ -26,23 +26,23 @@ namespace Stl.ImmutableModel.Updating
     public class ModelUpdateInfo<TModel> : IModelUpdateInfo<TModel>
         where TModel : class, INode
     {
-        IIndex IModelUpdateInfo.OldIndex => OldIndex;
-        IIndex IModelUpdateInfo.NewIndex => NewIndex;
+        IModelIndex IModelUpdateInfo.OldModelIndex => OldModelIndex;
+        IModelIndex IModelUpdateInfo.NewModelIndex => NewModelIndex;
         INode IModelUpdateInfo.OldModel => OldModel;
         INode IModelUpdateInfo.NewModel => NewModel;
 
         public ModelChangeSet ChangeSet { get; }
-        public IIndex<TModel> OldIndex { get; }
-        public IIndex<TModel> NewIndex { get; }
-        [JsonIgnore] public TModel OldModel => OldIndex.Model;
-        [JsonIgnore] public TModel NewModel => NewIndex.Model;
+        public IModelIndex<TModel> OldModelIndex { get; }
+        public IModelIndex<TModel> NewModelIndex { get; }
+        [JsonIgnore] public TModel OldModel => OldModelIndex.Model;
+        [JsonIgnore] public TModel NewModel => NewModelIndex.Model;
 
         [JsonConstructor]
-        public ModelUpdateInfo(IIndex<TModel> oldIndex, IIndex<TModel> newIndex, ModelChangeSet changeSet) 
+        public ModelUpdateInfo(IModelIndex<TModel> oldModelIndex, IModelIndex<TModel> newModelIndex, ModelChangeSet changeSet) 
         {
             ChangeSet = changeSet;
-            OldIndex = oldIndex;
-            NewIndex = newIndex;
+            OldModelIndex = oldModelIndex;
+            NewModelIndex = newModelIndex;
         }
     }
 }

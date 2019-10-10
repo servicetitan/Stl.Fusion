@@ -59,7 +59,7 @@ namespace Stl.Tests.ImmutableModel.Indexing
             
             var cluster1a = cluster1.WithRemoved(vm2).WithAdded(vm3);
             cluster1a["vm3"].Should().Equals(vm3);
-            var (idx1, changeSet) = idx.Update(cluster1, cluster1a);
+            var (idx1, changeSet) = idx.With(cluster1, cluster1a);
             idx = idx1;
             TestIntegrity(idx);
 
@@ -79,7 +79,7 @@ namespace Stl.Tests.ImmutableModel.Indexing
             // TODO: Add more tests.
         }
 
-        internal static void TestIntegrity(IIndex index)
+        internal static void TestIntegrity(IModelIndex index)
         {
             void ProcessNode(SymbolList path, INode node)
             {
@@ -95,7 +95,7 @@ namespace Stl.Tests.ImmutableModel.Indexing
             ProcessNode(SymbolList.Root, root);
         }
 
-        internal static Index<ModelRoot> BuildModel()
+        internal static ModelIndex<ModelRoot> BuildModel()
         {
             var vm1 = new VirtualMachine(Key.Parse("cluster1|vm1"))
                 .With(VirtualMachine.CapabilitiesSymbol, "caps1");
@@ -106,7 +106,7 @@ namespace Stl.Tests.ImmutableModel.Indexing
             var root = new ModelRoot(Key.Parse("@"))
                 .WithAdded(cluster);
             
-            var idx = Index.New(root);
+            var idx = ModelIndex.New(root);
             TestIntegrity(idx);
             return idx;
         }
