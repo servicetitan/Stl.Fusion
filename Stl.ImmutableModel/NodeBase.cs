@@ -5,12 +5,6 @@ using Stl.ImmutableModel.Internal;
 
 namespace Stl.ImmutableModel
 {
-    public interface INode
-    {
-        Key Key { get; }
-        Symbol LocalKey { get; }
-    }
-
     [Serializable]
     [JsonConverter(typeof(NodeJsonConverter))]
     public abstract class NodeBase: INode, ISerializable

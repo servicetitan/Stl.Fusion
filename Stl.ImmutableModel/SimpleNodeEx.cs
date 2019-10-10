@@ -17,11 +17,5 @@ namespace Stl.ImmutableModel
         public static TNode With<TNode, T>(this TNode node, IEnumerable<(Symbol PropertyKey, object? Value)> changes)
             where TNode : class, ISimpleNode
             => (TNode) node.BaseWith(changes);
-
-        // "Without" overloads
-        
-        public static TNode Without<TNode>(this TNode node, Symbol propertyKey)
-            where TNode : class, ISimpleNode
-            => (TNode) node.BaseWithout(propertyKey);
     }
 }

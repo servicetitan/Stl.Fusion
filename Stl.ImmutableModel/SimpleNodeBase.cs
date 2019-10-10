@@ -1,30 +1,31 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Runtime.Serialization;
 
 namespace Stl.ImmutableModel 
 {
-    public interface ISimpleNode : INode, IReadOnlyDictionaryPlus<Symbol, object?>
-    {
-        new ImmutableDictionary<Symbol, object?> Items { get; }
-        ISimpleNode BaseWith(Symbol property, object? value);
-        ISimpleNode BaseWith(IEnumerable<(Symbol PropertyKey, object? Value)> changes);
-        ISimpleNode BaseWithout(Symbol property);
-    }
-
     [Serializable]
-    public abstract class SimpleNodeBase : ImmutableDictionaryNodeBase<Symbol, object?>, ISimpleNode
+    public abstract class SimpleNodeBase : ImmutableDictionaryNodeBase<Symbol, object?>, 
+        IExtendableNode
     {
         protected SimpleNodeBase(Key key) : base(key) { }
         protected SimpleNodeBase(SerializationInfo info, StreamingContext context) : base(info, context) { }
 
         public ISimpleNode BaseWith(Symbol property, object? value)
-            => Update<SimpleNodeBase>(property, Option.Some(value));
+            => BaseWith<SimpleNodeBase>(property, Option.Some(value));
         public ISimpleNode BaseWith(IEnumerable<(Symbol PropertyKey, object? Value)> changes)
-            => Update<SimpleNodeBase>(changes.Select(p => (p.PropertyKey, Option.Some(p.Value))));
+            => BaseWith<SimpleNodeBase>(changes.Select(p => (p.PropertyKey, Option.Some(p.Value))));
         public ISimpleNode BaseWithout(Symbol property) 
-            => Update<SimpleNodeBase>(property, Option.None<object?>());
+            => BaseWith<SimpleNodeBase>(property, Option.None<object?>());
+
+        public IExtendableNode BaseWithExt(Symbol extension, object? value) 
+            => BaseWith<SimpleNodeBase>(extension,
+                // Explicit type spec. is needed to suppress nullability diff. warning
+                value != null ? Option.Some<object?>(value) : default);
+        public IExtendableNode BaseWithAllExt(IEnumerable<(Symbol Extension, object? Value)> extensions)
+            => BaseWith<SimpleNodeBase>(extensions.Select(p => 
+                // Explicit type spec. is needed to suppress nullability diff. warning
+                (p.Extension, p.Value != null ? Option.Some<object?>(p.Value) : default)!)); 
     }
 }

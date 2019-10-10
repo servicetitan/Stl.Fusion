@@ -24,7 +24,7 @@ namespace Stl.ImmutableModel
 
         protected ImmutableDictionaryNodeBase(Key key) : base(key) { }
 
-        protected TSelf Update<TSelf>(TKey key, Option<TValue> value)
+        protected TSelf BaseWith<TSelf>(TKey key, Option<TValue> value)
             where TSelf : ImmutableDictionaryNodeBase<TKey, TValue> 
         {
             var clone = (TSelf) MemberwiseClone();
@@ -36,7 +36,7 @@ namespace Stl.ImmutableModel
             return clone;
         }
 
-        protected TSelf Update<TSelf>(IEnumerable<(TKey Key, Option<TValue> Value)> changes)
+        protected TSelf BaseWith<TSelf>(IEnumerable<(TKey Key, Option<TValue> Value)> changes)
             where TSelf : ImmutableDictionaryNodeBase<TKey, TValue> 
         {
             var clone = (TSelf) MemberwiseClone();
