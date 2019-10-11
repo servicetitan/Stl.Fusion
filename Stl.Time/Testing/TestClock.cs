@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Reactive.PlatformServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -34,6 +35,8 @@ namespace Stl.Time.Testing
         
         // Operations
 
+        DateTimeOffset ISystemClock.UtcNow => Now;
+        DateTimeOffset Microsoft.Extensions.Internal.ISystemClock.UtcNow => Now;
         public Moment Now => ToLocalTime(RealTimeClock.Now);
         public Moment HighResolutionNow => ToLocalTime(RealTimeClock.HighResolutionNow);
 

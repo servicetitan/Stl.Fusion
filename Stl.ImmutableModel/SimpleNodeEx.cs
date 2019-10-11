@@ -10,11 +10,11 @@ namespace Stl.ImmutableModel
             where TNode : class, ISimpleNode
             => (TNode) node.BaseWith(propertyKey, value);
 
-        public static TNode With<TNode, T>(this TNode node, params (Symbol PropertyKey, object? Value)[] changes)
+        public static TNode With<TNode>(this TNode node, params (Symbol PropertyKey, object? Value)[] changes)
             where TNode : class, ISimpleNode
             => (TNode) node.BaseWith(changes);
 
-        public static TNode With<TNode, T>(this TNode node, IEnumerable<(Symbol PropertyKey, object? Value)> changes)
+        public static TNode With<TNode>(this TNode node, IEnumerable<(Symbol PropertyKey, object? Value)> changes)
             where TNode : class, ISimpleNode
             => (TNode) node.BaseWith(changes);
     }

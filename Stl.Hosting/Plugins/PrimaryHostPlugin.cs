@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.CommandLine;
+using System.Reactive.PlatformServices;
 using Autofac.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -85,6 +86,8 @@ namespace Stl.Hosting.Plugins
                 services.AddSingleton(Plugins);
                 services.CopySingleton<IAppHostBuilder>(Plugins);
                 services.CopySingleton<IClock>(Plugins);
+                services.CopySingleton<ISystemClock>(Plugins);
+                services.CopySingleton<Microsoft.Extensions.Internal.ISystemClock>(Plugins);
                 services.CopySingleton<IConsole>(Plugins);
                 services.AddLogging(logging => ConfigureLogging(ctx, logging));
                 services.AddControllersWithViews();

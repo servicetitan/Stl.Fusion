@@ -1,10 +1,11 @@
 using System;
+using System.Reactive.PlatformServices;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Stl.Time
 {
-    public interface IClock
+    public interface IClock : ISystemClock, Microsoft.Extensions.Internal.ISystemClock
     {
         Moment Now { get; }
         Moment HighResolutionNow { get; }

@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.CommandLine;
 using System.Linq;
+using System.Reactive.PlatformServices;
 using System.Text.RegularExpressions;
 using Autofac.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -266,14 +266,15 @@ namespace Stl.Hosting
                 services.TryAddSingleton(cfg);
                 services.TryAddSingleton<IAppHostBuilder>(this);
                 services.TryAddSingleton<IConsole, SystemConsole>();
+                var clock = RealTimeClock.Instance;;
                 if (IsTestHost) {
                     var testClock = new TestClock();
                     services.AddSingleton(testClock);
-                    services.AddSingleton((IClock) testClock);
+                    clock = testClock;
                 }
-                else {
-                    services.AddSingleton(RealTimeClock.Instance);
-                }
+                services.AddSingleton(clock);
+                services.AddSingleton((ISystemClock) clock);
+                services.AddSingleton((Microsoft.Extensions.Internal.ISystemClock) clock);
             });
         }
 

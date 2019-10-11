@@ -1,10 +1,11 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
     <PropertyGroup>
         <TargetFramework>netcoreapp3.0</TargetFramework>
         <LangVersion>8</LangVersion>
         <Nullable>enable</Nullable>
         <WarningsAsErrors>true</WarningsAsErrors>
+        <OutputType>Library</OutputType>
     </PropertyGroup>
 
     <ItemGroup>
