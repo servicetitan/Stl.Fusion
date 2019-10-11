@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Stl.Reflection;
 
 namespace Stl.ImmutableModel.Internal
 {
@@ -32,8 +34,15 @@ namespace Stl.ImmutableModel.Internal
                 var key = new Symbol(k);
                 var value = v;
                 if (v is JObject jObject) {
-                    var typeName = jObject[nameof(NodeInfo.Type)]!.Value<string>();
-                    var type = Type.GetType(typeName, true, false);
+                    var jToken = jObject[nameof(NodeInfo.Type)];
+                    Type type;
+                    if (jToken != null && jToken.Type == JTokenType.String) {
+                        var typeName = jToken!.Value<string>();
+                        type = new TypeRef(typeName).Resolve();
+                    }
+                    else {
+                        type = objectType.GetProperty(k)!.PropertyType;
+                    }
                     value = serializer.Deserialize(jObject.CreateReader(), type);
                 }
                 children.Add((key, Option.Some(value)));
