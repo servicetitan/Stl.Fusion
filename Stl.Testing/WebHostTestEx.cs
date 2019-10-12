@@ -2,7 +2,7 @@ using System;
 
 namespace Stl.Testing
 {
-    public static class WebHostTestEx
+    public static class WebTestEx
     {
         public static readonly Random Random = new Random();
 

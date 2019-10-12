@@ -5,14 +5,14 @@ using Stl.ImmutableModel;
 namespace Stl.Tests.ImmutableModel
 {
     [Serializable]
-    public class ModelRoot : CollectionNodeBase<Cluster>
+    public class ModelRoot : CollectionNode<Cluster>
     {
         public ModelRoot(Key key) : base(key) { }
         public ModelRoot(SerializationInfo info, StreamingContext context) : base(info, context) { }
     }
 
     [Serializable]
-    public class Cluster : CollectionNodeBase<VirtualMachine>
+    public class Cluster : CollectionNode<VirtualMachine>
     {
         public Cluster(Key key) : base(key) { }
         public Cluster(SerializationInfo info, StreamingContext context) : base(info, context) { }

@@ -11,6 +11,9 @@ namespace Stl.ImmutableModel
     [JsonConverter(typeof(KeyJsonConverter))]
     public readonly struct Key : IEquatable<Key>, ISerializable
     {
+        // Must be the one that's never used for sure!
+        public static readonly Key Unspecified = 
+            new Key(SymbolList.Parse($"(Unspecified)|{Guid.NewGuid():N}"));
         public static readonly Key Root = new Key(SymbolList.Root);
 
         public SymbolList Parts { get; }
