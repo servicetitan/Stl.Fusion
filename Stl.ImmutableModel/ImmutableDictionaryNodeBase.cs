@@ -50,6 +50,14 @@ namespace Stl.ImmutableModel
             return clone;
         }
 
+        protected TSelf BaseWithCleared<TSelf>()
+            where TSelf : ImmutableDictionaryNodeBase<TKey, TValue> 
+        {
+            var clone = (TSelf) MemberwiseClone();
+            clone.Items = clone.Items.Clear();
+            return clone;
+        }
+
         // Enumerators
 
         IEnumerator IEnumerable.GetEnumerator() 

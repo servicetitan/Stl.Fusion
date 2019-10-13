@@ -19,6 +19,7 @@ namespace Stl.ImmutableModel
     {
         ICollectionNode BaseWith(Symbol localKey, Option<object?> item);
         ICollectionNode BaseWith(IEnumerable<(Symbol LocalKey, Option<object?> Item)> changes);
+        ICollectionNode BaseWithCleared();
     }
     
     public interface ICollectionNode<T> : ICollectionNode, IReadOnlyDictionaryPlus<Symbol, T>

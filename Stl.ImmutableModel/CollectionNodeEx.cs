@@ -64,5 +64,11 @@ namespace Stl.ImmutableModel
         public static TNode WithRemoved<TNode>(this TNode node, IEnumerable<Symbol> keys)
             where TNode : class, ICollectionNode
             => (TNode) node.BaseWith(keys.Select(k => (k, Option<object?>.None)));
+
+        // WithCleared overloads
+
+        public static TNode WithCleared<TNode>(this TNode node)
+            where TNode : class, ICollectionNode
+            => (TNode) node.BaseWithCleared();
     }
 }

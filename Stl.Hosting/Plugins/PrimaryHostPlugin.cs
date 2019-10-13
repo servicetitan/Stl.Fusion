@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.CommandLine;
+using System.Reactive;
 using System.Reactive.PlatformServices;
 using Autofac.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Builder;

@@ -29,4 +29,11 @@ namespace Stl.ImmutableModel
         public static bool operator ==(Ref<TNode> left, Ref<TNode> right) => left.Equals(right);
         public static bool operator !=(Ref<TNode> left, Ref<TNode> right) => !left.Equals(right);
     }
+
+    public static class Ref
+    {
+        public static Ref<TNode> New<TNode>(TNode node)
+            where TNode : class, INode
+            => new Ref<TNode>(node.Key);
+    }
 }
