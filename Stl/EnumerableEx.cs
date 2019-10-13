@@ -41,7 +41,8 @@ namespace Stl
             where TKey : notnull
             // Based on:
             // - https://devblogs.microsoft.com/pfxteam/little-known-gems-atomic-conditional-removals-from-concurrentdictionary/
-            => ((ICollection<KeyValuePair<TKey, TValue>>) dictionary).Remove(KeyValuePair.New(key, value));
+            => ((ICollection<KeyValuePair<TKey, TValue>>) dictionary).Remove(
+                KeyValuePair.Create(key, value));
 
         public static string ToDelimitedString<T>(this IEnumerable<T> source, string? delimiter = null)
             => string.Join(delimiter ?? ", ", source);

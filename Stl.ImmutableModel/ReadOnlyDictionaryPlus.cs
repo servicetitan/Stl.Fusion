@@ -37,7 +37,7 @@ namespace Stl.ImmutableModel
         public IEnumerable<TKey> Keys => _source.Keys;
         public IEnumerable<TValue> Values => _source.Values;
         IEnumerable<KeyValuePair<TKey, object?>> IReadOnlyDictionaryPlus<TKey>.Items 
-            => this.Select(p => KeyValuePair.New(p.Key, (object?) p.Value));
+            => this.Select(p => KeyValuePair.Create(p.Key, (object?) p.Value));
         public TValue this[TKey key] => _source[key];
 
         public ReadOnlyDictionaryPlus(IReadOnlyDictionary<TKey, TValue> source) => _source = source;

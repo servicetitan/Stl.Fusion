@@ -4,6 +4,7 @@ using System.CommandLine.Builder;
 using System.CommandLine.Invocation;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Hosting.Plugins;
 using Stl.Plugins;
@@ -38,13 +39,21 @@ namespace Stl.Hosting.Plugins
             // Now letting plugins to kick in
             CliBuilder.UsePlugins<ICliPlugin>(Plugins);
             var console = Plugins.GetService<IConsole>();
-            CliBuilder.Build().Invoke(arguments, console);
+            var cliParser = CliBuilder.Build();
+            var result = cliParser.Invoke(arguments, console);
+            var cliException = AppHostBuilder.BuildState.CliException;
+            if (cliException != null)
+                ExceptionDispatchInfo.Capture(cliException).Throw();
         }
+
+        protected virtual void OnCliException(Exception exception, InvocationContext context) 
+            => AppHostBuilder.BuildState.CliException = exception;
 
         protected virtual void ConfigureCliBuilder()
         {
             AddOverridesOption();
             AddBindOption();
+            CliBuilder.UseExceptionHandler(OnCliException);
             CliBuilder.Command.Handler = CommandHandler.Create(
                 () => AppHostBuilder.BuildState.BuildHost());
         }

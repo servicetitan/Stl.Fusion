@@ -48,6 +48,9 @@ namespace Stl.Time
 
         public DateTime ToDateTime() => DateTime.UnixEpoch + UnixTime;
         public DateTimeOffset ToDateTimeOffset() => DateTimeOffset.UnixEpoch + UnixTime;
+        public double ToUnixEpoch() => UnixTime.TotalSeconds;
+        public long ToIntegerUnixEpoch() => (long) Math.Floor(UnixTime.TotalSeconds);
+
         public override string ToString() => ToDateTime().ToString(CultureInfo.InvariantCulture);
 
         // Equality

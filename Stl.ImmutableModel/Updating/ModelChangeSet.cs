@@ -25,7 +25,7 @@ namespace Stl.ImmutableModel.Updating
         public IEnumerable<Key> Keys => Items.Keys;
         public IEnumerable<NodeChangeType> Values => Items.Values;
         IEnumerable<KeyValuePair<Key, object?>> IReadOnlyDictionaryPlus<Key>.Items
-            => Items.Select(p => KeyValuePair.New(p.Key, (object?) p.Value));
+            => Items.Select(p => KeyValuePair.Create(p.Key, (object?) p.Value));
 
         public ImmutableDictionary<Key, NodeChangeType> Items {
             get {

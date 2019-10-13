@@ -42,6 +42,7 @@ namespace Stl.Hosting
         IPluginHost PluginHost { get; set; }
         ReadOnlyMemory<string> HostArguments { get; set; }
         IHost? Host { get; set; }
+        Exception? CliException { get; set; }
 
         void BuildHost();
     }
@@ -103,6 +104,10 @@ namespace Stl.Hosting
         IHost? IAppHostBuildState.Host {
             get => this.GetOption<IHost?>(nameof(IAppHostBuildState.Host));
             set => SetOption(nameof(IAppHostBuildState.Host), value);
+        }
+        Exception? IAppHostBuildState.CliException {
+            get => this.GetOption<Exception?>(nameof(IAppHostBuildState.CliException));
+            set => SetOption(nameof(IAppHostBuildState.CliException), value);
         }
 
         #region ITestAppHostBuilder & ITestAppHostBuilderImpl

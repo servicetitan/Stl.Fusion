@@ -18,7 +18,7 @@ namespace Stl.ImmutableModel
         [field: NonSerialized]
         public ImmutableDictionary<TKey, TValue> Items { get; protected set; } = ImmutableDictionary<TKey, TValue>.Empty;
         IEnumerable<KeyValuePair<TKey, object?>> IReadOnlyDictionaryPlus<TKey>.Items 
-            => Items.Select(p => KeyValuePair.New(p.Key, (object?) p.Value));
+            => Items.Select(p => KeyValuePair.Create(p.Key, (object?) p.Value));
 
         public TValue this[TKey key] => Items[key];
 
