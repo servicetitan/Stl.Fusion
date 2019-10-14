@@ -64,10 +64,10 @@ namespace Stl.Time
         
         // Operations
         
-        public static bool operator >(Moment t1, Moment t2) => t1 > t2;
-        public static bool operator >=(Moment t1, Moment t2) => t1 >= t2;
-        public static bool operator <(Moment t1, Moment t2) => t1 < t2;
-        public static bool operator <=(Moment t1, Moment t2) => t1 <= t2;
+        public static bool operator >(Moment t1, Moment t2) => t1.UnixTime > t2.UnixTime;
+        public static bool operator >=(Moment t1, Moment t2) => t1.UnixTime >= t2.UnixTime;
+        public static bool operator <(Moment t1, Moment t2) => t1.UnixTime < t2.UnixTime;
+        public static bool operator <=(Moment t1, Moment t2) => t1.UnixTime <= t2.UnixTime;
         public static Moment operator +(Moment t1, TimeSpan t2) => new Moment(t1.UnixTime + t2);
         public static Moment operator -(Moment t1, TimeSpan t2) => new Moment(t1.UnixTime - t2);
         public static TimeSpan operator -(Moment t1, Moment t2) => t1.UnixTime - t2.UnixTime;

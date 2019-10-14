@@ -10,7 +10,7 @@ namespace Stl.ImmutableModel
         IImmutableDictionaryBasedCollectionNode<T>
     {
         public CollectionNode(Key key) : base(key) { }
-        public CollectionNode(SerializationInfo info, StreamingContext context) : base(info, context) { }
+        protected CollectionNode(SerializationInfo info, StreamingContext context) : base(info, context) { }
 
         public ICollectionNode<T> BaseWith(Symbol localKey, Option<T> item)
             => BaseWith<CollectionNode<T>>(localKey, item);
