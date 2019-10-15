@@ -6,7 +6,7 @@ using CliWrap.Models;
 
 namespace Stl.CommandLine
 {
-    public abstract class Cmd
+    public class Cmd
     {
         public CliString Executable { get; }
         public CliString WorkingDirectory { get; set; } = CliString.Empty;
@@ -16,7 +16,7 @@ namespace Stl.CommandLine
         public bool EnableErrorValidation { get; set; } = true;
         public bool EchoMode { get; set; }
 
-        protected Cmd(CliString executable) => Executable = executable;
+        public Cmd(CliString executable) => Executable = executable;
 
         public Disposable<(Cmd, bool)> OpenErrorValidationScope(bool enableErrorValidation)
         {
