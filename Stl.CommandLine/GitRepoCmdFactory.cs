@@ -17,9 +17,11 @@ namespace Stl.CommandLine
         public string DefaultRevision = "master";
         
         protected string RepositoryPath { get; }
-        protected string BasePath { get; }
+        protected string FilesPath { get; }
         protected string CommonPath { get; }
+        protected string CommonBinPath { get; }
         protected string OSSpecificPath { get; }
+        protected string OSSpecificBinPath { get; }
         protected string RepositoryUrl { get; }
         protected string Revision { get; }
         protected bool AlwaysFetch { get; }
@@ -31,9 +33,11 @@ namespace Stl.CommandLine
         public GitRepoCmdFactory(string repositoryPath, string repositoryUrl, string? revision, bool alwaysFetch = true)
         {
             RepositoryPath = repositoryPath;
-            BasePath = Path.Combine(RepositoryPath);
-            CommonPath = Path.Combine(BasePath, "Common");
-            OSSpecificPath = Path.Combine(BasePath, OSInfo.Kind.ToString());
+            FilesPath = Path.Combine(RepositoryPath, "Files");
+            CommonPath = Path.Combine(FilesPath, "Common");
+            CommonBinPath = Path.Combine(CommonPath, "bin");
+            OSSpecificPath = Path.Combine(FilesPath, OSInfo.Kind.ToString());
+            OSSpecificBinPath = Path.Combine(OSSpecificPath, "bin");
             RepositoryUrl = repositoryUrl;
             Revision = revision ?? DefaultRevision;
             AlwaysFetch = alwaysFetch;
@@ -41,15 +45,15 @@ namespace Stl.CommandLine
 
         protected override void PopulateFactories(Dictionary<object, Func<ICmd>> factories)
         {
-            CliString OSSpecificPath(CliString exe) => Path.Combine(this.OSSpecificPath, exe.Value);
-            CliString CommonPath(CliString exe) => Path.Combine(this.CommonPath, exe.Value);
+            CliString OSSpecificBinPath(CliString exe) => Path.Combine(this.OSSpecificBinPath, exe.Value);
+            CliString CommonBinPath(CliString exe) => Path.Combine(this.CommonBinPath, exe.Value);
 
             AddFactory(factories, () => new ShellCmd(), "shell", "sh");
             AddFactory(factories, () => new GitCmd(), "git");
             AddFactory(factories, () => new Python2Cmd(), "python2", "py2");
             AddFactory(factories, () => new Python3Cmd(), "python3", "py3");
-            AddFactory(factories, () => new TerraformCmd(OSSpecificPath(TerraformCmd.DefaultExecutable)), "terraform", "tf");
-            AddFactory(factories, () => new AnsibleCmd(CommonPath(AnsibleCmd.DefaultAnsiblePath)), "ansible", "a");
+            AddFactory(factories, () => new TerraformCmd(OSSpecificBinPath(TerraformCmd.DefaultExecutable)), "terraform", "tf");
+            AddFactory(factories, () => new AnsibleCmd(CommonBinPath(AnsibleCmd.DefaultAnsiblePath)), "ansible", "a");
         }
 
         protected override async Task InitializeImplAsync()
