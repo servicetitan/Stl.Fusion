@@ -10,7 +10,7 @@ namespace Stl.CommandLine
 {
     // Helper type to deal with command line parts
     [Serializable]
-    public struct CliString : IEquatable<CliString>, IFormattable
+    public readonly struct CliString : IEquatable<CliString>, IFormattable
     {
         private readonly string? _value;
         

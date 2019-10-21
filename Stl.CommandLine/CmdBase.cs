@@ -3,22 +3,41 @@ using System.Threading;
 using System.Threading.Tasks;
 using CliWrap;
 using CliWrap.Models;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Stl.CommandLine
 {
-    public class Cmd
+    public interface ICmd
+    {
+        CliString Executable { get; }
+        CliString WorkingDirectory { get; set; }
+        ImmutableDictionary<string, string> EnvironmentVariables { get; set; }
+        ICliFormatter CliFormatter { get; set; }
+        ILogger Log { get; set; }
+        bool EnableErrorValidation { get; set; }
+        bool EchoMode { get; set; }
+
+        Disposable<(CmdBase, bool)> OpenErrorValidationScope(bool enableErrorValidation);
+        Task<ExecutionResult> RunRawAsync(
+            CliString arguments, string? standardInput,
+            CancellationToken cancellationToken = default);
+    }
+    
+    public abstract class CmdBase : ICmd
     {
         public CliString Executable { get; }
         public CliString WorkingDirectory { get; set; } = CliString.Empty;
         public ImmutableDictionary<string, string> EnvironmentVariables { get; set; } = 
             ImmutableDictionary<string, string>.Empty;
         public ICliFormatter CliFormatter { get; set; } = new CliFormatter();
+        public ILogger Log { get; set; } = NullLogger.Instance;
         public bool EnableErrorValidation { get; set; } = true;
         public bool EchoMode { get; set; }
 
-        public Cmd(CliString executable) => Executable = executable;
+        public CmdBase(CliString executable) => Executable = executable;
 
-        public Disposable<(Cmd, bool)> OpenErrorValidationScope(bool enableErrorValidation)
+        public Disposable<(CmdBase, bool)> OpenErrorValidationScope(bool enableErrorValidation)
         {
             var oldValue = EnableErrorValidation;
             EnableErrorValidation = enableErrorValidation;
@@ -42,6 +61,8 @@ namespace Stl.CommandLine
             CancellationToken cancellationToken = default)
             => RunRawAsync(arguments, null, cancellationToken);
 
+        Task<ExecutionResult> ICmd.RunRawAsync(CliString arguments, string? standardInput, CancellationToken cancellationToken) 
+            => RunRawAsync(arguments, standardInput, cancellationToken);
         protected virtual Task<ExecutionResult> RunRawAsync(
             CliString arguments,
             string? standardInput,
@@ -49,8 +70,8 @@ namespace Stl.CommandLine
         {
             arguments = TransformArguments(arguments);
             if (EchoMode) {
-                var echoCommand = "echo" + CmdBuilders.GetEchoArguments(Executable + arguments);
-                arguments = CmdBuilders.GetShellArguments(echoCommand);
+                var echoCommand = "echo" + CmdHelpers.GetEchoArguments(Executable + arguments);
+                arguments = CmdHelpers.GetShellArguments(echoCommand);
             }
             
             var cli = GetCli(cancellationToken)
@@ -59,12 +80,13 @@ namespace Stl.CommandLine
                 cli = cli.SetStandardInput(standardInput);
             foreach (var (key, value) in EnvironmentVariables)
                 cli = cli.SetEnvironmentVariable(key, value);
+            Log?.LogDebug($"Running: {WorkingDirectory}: {Executable} {arguments}");
             return cli.ExecuteAsync();
         }
 
         protected virtual ICli GetCli(CancellationToken cancellationToken)
         {
-            var cli = Cli.Wrap((EchoMode ? Shell.DefaultExecutable : Executable).Value)
+            var cli = Cli.Wrap((EchoMode ? ShellCmd.DefaultExecutable : Executable).Value)
                 .SetCancellationToken(cancellationToken)
                 .EnableExitCodeValidation(EnableErrorValidation)
                 .EnableStandardErrorValidation(EnableErrorValidation);

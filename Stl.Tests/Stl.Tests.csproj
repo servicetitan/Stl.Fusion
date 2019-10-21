@@ -29,7 +29,7 @@
     <ProjectReference Include="..\Stl\Stl.csproj" />
     <ProjectReference Include="..\Stl.Reactionist\Stl.Reactionist.csproj" />
     <ProjectReference Include="..\Stl.ImmutableModel\Stl.ImmutableModel.csproj" />
-    <ProjectReference Include="..\Stl.Experimental\Stl.Experimental.csproj" />
+    <ProjectReference Include="..\Stl.CommandLine\Stl.CommandLine.csproj" />
     <ProjectReference Include="..\Stl.Plugins\Stl.Plugins.csproj" />
     <ProjectReference Include="..\Stl.Plugins.Extensions\Stl.Plugins.Extensions.csproj" />
     <ProjectReference Include="..\Stl.Hosting\Stl.Hosting.csproj" />

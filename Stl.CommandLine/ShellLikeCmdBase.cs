@@ -1,22 +1,15 @@
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 using CliWrap.Models;
 
 namespace Stl.CommandLine
 {
-    [Serializable]
-    public class Shell : Cmd
+    public abstract class ShellLikeCmdBase : CmdBase
     {
-        public static readonly CliString DefaultExecutable = CliString.New("bash").VaryByOS("cmd.exe");
-        public static readonly CliString DefaultPrefix = CliString.New("-c").VaryByOS("/C");
+        protected ShellLikeCmdBase(CliString executable) : base(executable) { }
 
-        public CliString Prefix { get; set; } = DefaultPrefix;
-
-        public Shell(CliString? executable = null)
-            : base(executable ?? DefaultExecutable)
-        { }
-
+        protected virtual CliString GetPrefix() => CliString.Empty;
+        
         public async Task<string> GetOutputAsync(
             CliString command, 
             CancellationToken cancellationToken = default) 
@@ -42,6 +35,6 @@ namespace Stl.CommandLine
             => base.RunRawAsync(command, standardInput, cancellationToken);
 
         protected override CliString TransformArguments(CliString arguments)
-            => CmdBuilders.GetShellArguments(arguments, Prefix);
+            => GetPrefix() + arguments;
     }
 }

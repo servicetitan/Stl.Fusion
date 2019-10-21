@@ -7,7 +7,7 @@ using Stl.Internal;
 namespace Stl.CommandLine
 {
     [Serializable]
-    public struct CliEnum<T> : IEquatable<CliEnum<T>>, IFormattable 
+    public readonly struct CliEnum<T> : IEquatable<CliEnum<T>>, IFormattable 
         where T: struct, Enum
     {
         public T Value { get; }

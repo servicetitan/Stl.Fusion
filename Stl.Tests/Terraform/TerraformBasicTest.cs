@@ -2,7 +2,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using Stl.CommandLine;
-using Stl.Terraform;
+using Stl.CommandLine.Terraform;
 using Stl.Testing;
 using Xunit;
 using Xunit.Abstractions;

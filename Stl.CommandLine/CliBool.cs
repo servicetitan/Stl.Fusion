@@ -6,7 +6,7 @@ using Stl.Internal;
 namespace Stl.CommandLine 
 {
     [Serializable]
-    public struct CliBool : IEquatable<CliBool>, IFormattable
+    public readonly struct CliBool : IEquatable<CliBool>, IFormattable
     {
         public bool Value { get; }
 

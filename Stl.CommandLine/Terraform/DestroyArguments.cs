@@ -1,6 +1,6 @@
 using Stl.CommandLine;
 
-namespace Stl.Terraform
+namespace Stl.CommandLine.Terraform
 {
     public class DestroyArguments : ApplyLikeArgumentsBase { }
 }

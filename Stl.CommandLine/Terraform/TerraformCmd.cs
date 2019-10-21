@@ -1,14 +1,12 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 using CliWrap.Models;
-using Stl.CommandLine;
 
-namespace Stl.Terraform
+namespace Stl.CommandLine.Terraform
 {
-    public class TerraformCmd : Cmd
+    public class TerraformCmd : CmdBase
     {
-        public static readonly CliString DefaultExecutable = 
-            CliString.New("terraform").VaryByOS("terraform.exe");
+        public static readonly CliString DefaultExecutable = CliString.New("terraform" + CmdHelpers.ExeExtension);
 
         public TerraformCmd(CliString? executable = null)
             : base(executable ?? DefaultExecutable)
