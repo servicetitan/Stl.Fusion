@@ -85,7 +85,7 @@ namespace Stl.CommandLine
                 }
                 if (mustFetch) {
                     await git
-                        .RunAsync("fetch origin" + new CliString(Revision))
+                        .RunAsync("fetch origin")
                         .ConfigureAwait(false);
                     await git
                         .RunAsync("checkout" + new CliString(Revision))
