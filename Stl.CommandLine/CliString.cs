@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using Stl.Internal;
 using Stl.OS;
@@ -12,6 +13,9 @@ namespace Stl.CommandLine
     [Serializable]
     public readonly struct CliString : IEquatable<CliString>, IFormattable
     {
+        private static readonly Regex WhitespaceRe = 
+            new Regex("\\s", RegexOptions.Compiled | RegexOptions.Singleline); 
+
         private readonly string? _value;
         
         // Value is never null; the check is done here b/c structs can be constructed w/o calling .ctor
@@ -69,16 +73,23 @@ namespace Stl.CommandLine
             => new CliString(value ?? "");
 
         // TODO: Add support for strong quotes (quoting shell substitutions)
-        public static CliString UnixQuote(string value) => 
-            "\"" + value.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
-        public static CliString WindowsQuote(string value) => 
-            "\"" + value.Replace("^", "^^").Replace("\"", "^\"") + "\"";
-        public static CliString Quote(string value) =>
-            OSInfo.Kind switch {
+        public static CliString UnixQuote(string value)
+            => "\"" + value.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
+        public static CliString WindowsQuote(string value) 
+            => "\"" + value.Replace("^", "^^").Replace("\"", "^\"") + "\"";
+        public static CliString Quote(string value) 
+            => OSInfo.Kind switch {
                 OSKind.Windows => WindowsQuote(value),
                 _ => UnixQuote(value)
             };
-
+        public static CliString QuoteIfNeeded(string value)
+        {
+            if (WhitespaceRe.IsMatch(value))
+                return Quote(value);
+            var quoted = Quote(value).Value;
+            return quoted.Substring(1, quoted.Length - 2) != value ? quoted : value;
+        }
+            
         public static CliString Concat(CliString head, CliString tail, char delimiter = ' ')
             => string.IsNullOrEmpty(tail.Value)
                 ? head

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Reactive;
@@ -7,9 +8,30 @@ using System.Threading.Tasks;
 
 namespace Stl.CommandLine
 {
-    public interface ICmdFactory
+    public class CmdDescriptor
+    {
+        public Type Type { get; }
+        public Func<ICmd> Factory { get; }
+        public string Name { get; }
+        public ReadOnlyMemory<string> Aliases { get; }
+
+        public static CmdDescriptor New<TCmd>(Func<TCmd> factory, string name, params string[] aliases)
+            where TCmd : class, ICmd
+            => new CmdDescriptor(typeof(TCmd), factory, name, aliases);
+
+        public CmdDescriptor(Type type, Func<ICmd> factory, string name, params string[] aliases)
+        {
+            Type = type;
+            Name = name;
+            Aliases = aliases;
+            Factory = factory;
+        }
+    }
+
+    public interface ICmdFactory : IEnumerable<CmdDescriptor>
     {
         bool IsInitialized { get; }
+
         TCmd New<TCmd>() where TCmd : ICmd;
         ICmd New(string cmdName);
 
@@ -20,39 +42,54 @@ namespace Stl.CommandLine
     public abstract class CmdFactoryBase : ICmdFactory
     {
         private volatile TaskCompletionSource<Unit>? _initializingTcs;
-        private readonly Lazy<ImmutableDictionary<object, Func<ICmd>>> _lazyFactories;
+        private readonly Lazy<ImmutableList<CmdDescriptor>> _lazyCommands;
+        private readonly Lazy<ImmutableDictionary<object, CmdDescriptor>> _lazyCommandByKey;
 
         public bool IsInitialized => _initializingTcs?.Task.IsCompleted ?? false;
-        protected ImmutableDictionary<object, Func<ICmd>> Factories => _lazyFactories.Value;
+        protected ImmutableList<CmdDescriptor> Commands => _lazyCommands.Value;
+        protected ImmutableDictionary<object, CmdDescriptor> CommandByKey => _lazyCommandByKey.Value;
 
         protected CmdFactoryBase()
         {
-            _lazyFactories = new Lazy<ImmutableDictionary<object, Func<ICmd>>>(() => {
+            _lazyCommands = new Lazy<ImmutableList<CmdDescriptor>>(() => {
                 Initialize();
-                var factories = new Dictionary<object, Func<ICmd>>();
-                PopulateFactories(factories);
-                return factories.ToImmutableDictionary();
+                var commands = new List<CmdDescriptor>();
+                PopulateCommands(commands);
+                return commands.ToImmutableList();
+            });
+            _lazyCommandByKey = new Lazy<ImmutableDictionary<object, CmdDescriptor>>(() => {
+                var d = new Dictionary<object, CmdDescriptor>();
+                foreach (var cmdDescriptor in Commands) {
+                    d[cmdDescriptor.Type] = cmdDescriptor;
+                    d[cmdDescriptor.Name] = cmdDescriptor;
+                    foreach (var alias in cmdDescriptor.Aliases.Span)
+                        d[alias] = cmdDescriptor;
+                }
+                return d.ToImmutableDictionary();
             });
         }
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        public IEnumerator<CmdDescriptor> GetEnumerator() => Commands.GetEnumerator();
 
         public virtual TCmd New<TCmd>()
             where TCmd : ICmd
         {
-            var cmd = Factories[typeof(TCmd)].Invoke();
+            var cmd = CommandByKey[typeof(TCmd)].Factory.Invoke();
             ConfigureCmd(cmd);
             return (TCmd) cmd;
         }
 
         public virtual ICmd New(string cmdName)
         {
-            var cmd = Factories[cmdName].Invoke();
+            var cmd = CommandByKey[cmdName].Factory.Invoke();
             ConfigureCmd(cmd);
             return cmd;
         }
 
         protected virtual ICmd ConfigureCmd(ICmd cmd) => cmd;
         protected abstract Task InitializeImplAsync();
-        protected abstract void PopulateFactories(Dictionary<object, Func<ICmd>> factories);
+        protected abstract void PopulateCommands(List<CmdDescriptor> commands);
 
         public virtual void Initialize()
         {
@@ -87,17 +124,6 @@ namespace Stl.CommandLine
                 tcs.SetException(e);
                 throw;
             }
-        }
-
-        protected static void AddFactory<TCmd>(
-            Dictionary<object, Func<ICmd>> factories, 
-            Func<TCmd> factory, 
-            params string[] cmdNames)
-            where TCmd : ICmd
-        {
-            factories[typeof(TCmd)] = () => (ICmd) factory.Invoke();
-            foreach (var cmdName in cmdNames) 
-                factories[cmdName] = () => (ICmd) factory.Invoke();
         }
     }
 }

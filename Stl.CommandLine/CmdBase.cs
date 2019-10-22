@@ -15,10 +15,9 @@ namespace Stl.CommandLine
         ImmutableDictionary<string, string> EnvironmentVariables { get; set; }
         ICliFormatter CliFormatter { get; set; }
         ILogger Log { get; set; }
-        bool EnableErrorValidation { get; set; }
+        CmdResultChecks ResultChecks { get; set; }
         bool EchoMode { get; set; }
 
-        Disposable<(CmdBase, bool)> OpenErrorValidationScope(bool enableErrorValidation);
         Task<ExecutionResult> RunRawAsync(
             CliString arguments, string? standardInput,
             CancellationToken cancellationToken = default);
@@ -32,20 +31,11 @@ namespace Stl.CommandLine
             ImmutableDictionary<string, string>.Empty;
         public ICliFormatter CliFormatter { get; set; } = new CliFormatter();
         public ILogger Log { get; set; } = NullLogger.Instance;
-        public bool EnableErrorValidation { get; set; } = true;
+        public CmdResultChecks ResultChecks { get; set; } = CmdResultChecks.NonZeroExitCode;
         public bool EchoMode { get; set; }
 
         public CmdBase(CliString executable) => Executable = executable;
 
-        public Disposable<(CmdBase, bool)> OpenErrorValidationScope(bool enableErrorValidation)
-        {
-            var oldValue = EnableErrorValidation;
-            EnableErrorValidation = enableErrorValidation;
-            return Disposable.New(
-                state => state.Self.EnableErrorValidation = state.OldValue, 
-                (Self: this, OldValue: oldValue));
-        } 
-        
         protected Task<ExecutionResult> RunRawAsync(
             object? arguments, CliString tail = default,
             CancellationToken cancellationToken = default) 
@@ -88,8 +78,8 @@ namespace Stl.CommandLine
         {
             var cli = Cli.Wrap((EchoMode ? ShellCmd.DefaultExecutable : Executable).Value)
                 .SetCancellationToken(cancellationToken)
-                .EnableExitCodeValidation(EnableErrorValidation)
-                .EnableStandardErrorValidation(EnableErrorValidation);
+                .EnableExitCodeValidation(ResultChecks.HasFlag(CmdResultChecks.NonZeroExitCode))
+                .EnableStandardErrorValidation(ResultChecks.HasFlag(CmdResultChecks.NonEmptyStandardError));
             if (!string.IsNullOrEmpty(WorkingDirectory.Value))
                 cli = cli.SetWorkingDirectory(WorkingDirectory.Value);
             return cli;
