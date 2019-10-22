@@ -12,6 +12,14 @@ namespace Stl.Extensibility
         public static IServiceProvider Empty { get; } =
             new DefaultServiceProviderFactory().CreateServiceProvider(new ServiceCollection());
 
+        public static T Activate<T>(this IServiceProvider services)
+            where T : class
+            => (T) services.Activate(typeof(T));
+
+        public static T Activate<T>(this IServiceProvider services, ConstructorInfo constructorInfo)
+            where T : class
+            => (T) services.Activate(typeof(T), constructorInfo);
+
         // The current impl. is super slow; use with caution.
         public static object Activate(this IServiceProvider services, Type type)
         {

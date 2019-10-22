@@ -37,11 +37,20 @@ namespace Stl.CommandLine
 
         public virtual TCmd New<TCmd>()
             where TCmd : ICmd
-            => (TCmd) Factories[typeof(TCmd)].Invoke();
+        {
+            var cmd = Factories[typeof(TCmd)].Invoke();
+            ConfigureCmd(cmd);
+            return (TCmd) cmd;
+        }
 
-        public virtual ICmd New(string cmdName) 
-            => Factories[cmdName].Invoke();
+        public virtual ICmd New(string cmdName)
+        {
+            var cmd = Factories[cmdName].Invoke();
+            ConfigureCmd(cmd);
+            return cmd;
+        }
 
+        protected virtual ICmd ConfigureCmd(ICmd cmd) => cmd;
         protected abstract Task InitializeImplAsync();
         protected abstract void PopulateFactories(Dictionary<object, Func<ICmd>> factories);
 

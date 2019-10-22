@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Stl.Extensibility
 {
@@ -20,6 +21,16 @@ namespace Stl.Extensibility
             this IServiceCollection target, IServiceProvider source)
             where T : class
             => target.AddSingleton(source.GetService<T>());
+
+        public static IServiceCollection TryCopySingleton<T>(
+            this IServiceCollection target, IServiceProvider source)
+            where T : class
+        {
+            var service = source.GetService<T>();
+            if (service != null)
+                target.TryAddSingleton(service);
+            return target;
+        }
 
         public static IServiceCollection AddFactorySingleton<TService, TFactory>(
             this IServiceCollection services)

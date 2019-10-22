@@ -61,16 +61,16 @@ namespace Stl.Tests.Extensibility
             var services = new DefaultServiceProviderFactory()
                 .CreateServiceProvider(serviceCollection);
 
-            var a = (A) services.Activate(typeof(A));
+            var a = services.Activate<A>();
             a.X.Should().Be("S");
             a.Y.Should().Be("S");
 
-            var b = (B) services.Activate(typeof(B));
+            var b = services.Activate<B>();
             b.X.Should().Be("S");
             b.Y.Should().BeEmpty();
 
             ((Action) (() => {
-                var c = (C) services.Activate(typeof(C)); 
+                var c = services.Activate<C>(); 
             })).Should().Throw<InvalidOperationException>();
         }
     }
