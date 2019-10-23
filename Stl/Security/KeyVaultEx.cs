@@ -10,7 +10,7 @@ namespace Stl.Security
         public static async ValueTask<string> GetSecretAsync(this IKeyVault keyVault, string key)
             => (await keyVault.TryGetSecretAsync(key)) ?? throw new KeyNotFoundException();
 
-        public static IKeyVault WithPrefix(this IKeyVault keyVault, string prefix, string delimiter = ".")
+        public static IKeyVault GetSection(this IKeyVault keyVault, string prefix, string delimiter = ":")
             => keyVault.WithRawPrefix(prefix + delimiter);
         public static IKeyVault WithRawPrefix(this IKeyVault keyVault, string rawPrefix)
             => new PrefixScopedKeyVault(keyVault, rawPrefix);

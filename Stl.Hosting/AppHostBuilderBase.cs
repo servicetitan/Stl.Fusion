@@ -215,16 +215,17 @@ namespace Stl.Hosting
                     .SetBasePath(BaseDirectory)
                     .AddEnvironmentVariables(EnvironmentVarPrefix)
                     .Build();
-            
-                BuildState.EnvironmentName = baseCfg[HostDefaults.EnvironmentKey] 
-                    ?? Environments.Production;
-                
-                if (IsTestHost)
-                    return;
 
+                BuildState.EnvironmentName = IsTestHost
+                    ? Environments.Development
+                    : baseCfg[HostDefaults.EnvironmentKey] ?? Environments.Production;
+
+                cfg.SetBasePath(BaseDirectory);
+                cfg.AddEnvironmentVariables($"{EnvironmentVarPrefix}{BuildState.EnvironmentName}_");
                 cfg.AddConfiguration(baseCfg);
-                foreach (var fileName in GetPluginHostConfigurationFileNames())
-                    cfg.AddFile(fileName);
+                if (!IsTestHost)
+                    foreach (var fileName in GetPluginHostConfigurationFileNames())
+                        cfg.AddFile(fileName);
             });
         }
 

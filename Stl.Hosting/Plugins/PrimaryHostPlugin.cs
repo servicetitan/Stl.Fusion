@@ -61,14 +61,14 @@ namespace Stl.Hosting.Plugins
             => HostBuilder.UseServiceProviderFactory(new AutofacServiceProviderFactory());
 
         protected virtual void ConfigureHostConfiguration()
-            => HostBuilder.ConfigureHostConfiguration(config => {
-                config
-                    .SetBasePath(AppHostBuilder.BaseDirectory)
-                    .AddEnvironmentVariables(AppHostBuilder.EnvironmentVarPrefix);
-                if (AppHostBuilder.IsTestHost)
-                    return;
-                foreach (var fileName in GetHostConfigurationFileNames())
-                    config.AddFile(fileName);
+            => HostBuilder.ConfigureHostConfiguration(cfg => {
+                var b = AppHostBuilder;
+                cfg.SetBasePath(b.BaseDirectory);
+                cfg.AddEnvironmentVariables($"{b.EnvironmentVarPrefix}{b.BuildState.EnvironmentName}_");
+                cfg.AddEnvironmentVariables(b.EnvironmentVarPrefix);
+                if (!b.IsTestHost)
+                    foreach (var fileName in GetHostConfigurationFileNames())
+                        cfg.AddFile(fileName);
             });
 
         protected virtual IEnumerable<string> GetHostConfigurationFileNames()
