@@ -81,7 +81,7 @@ namespace Stl.CommandLine
                 .SetCancellationToken(cancellationToken)
                 .EnableExitCodeValidation(ResultChecks.HasFlag(CmdResultChecks.NonZeroExitCode))
                 .EnableStandardErrorValidation(ResultChecks.HasFlag(CmdResultChecks.NonEmptyStandardError));
-            if (WorkingDirectory.IsEmpty())
+            if (!WorkingDirectory.IsEmpty())
                 cli = cli.SetWorkingDirectory(WorkingDirectory);
             return cli;
         }

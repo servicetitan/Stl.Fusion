@@ -34,7 +34,7 @@ namespace Stl.CommandLine.Git
                 if (!Directory.Exists(TargetPath))
                     Directory.CreateDirectory(TargetPath);
                 await git
-                    .RunAsync("clone" + CliString.Quote(SourceUrl) + CliString.Quote(TargetPath), cancellationToken)
+                    .RunAsync("clone" + CliString.Quote(SourceUrl) + ".", cancellationToken)
                     .ConfigureAwait(false);
                 await git
                     .RunAsync("checkout" + new CliString(SourceRevision), cancellationToken)
