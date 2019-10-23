@@ -10,8 +10,7 @@
 
     <ItemGroup>
         <PackageReference Include="Enums.NET" Version="2.3.2" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.0.0-preview8.19405.4" />
-        <PackageReference Include="System.Reactive" Version="4.2.0-preview.625" />
+        <PackageReference Include="System.Reactive" Version="4.2.0" />
     </ItemGroup>
 
     <ItemGroup>

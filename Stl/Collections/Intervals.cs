@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 
-namespace Stl.Testing 
+namespace Stl.Collections 
 {
-    public static class Delays
+    public static class Intervals
     {
         public static IEnumerable<TimeSpan> Fixed(TimeSpan delay)
         {
@@ -11,9 +11,11 @@ namespace Stl.Testing
                 yield return delay;
         }
             
-        public static IEnumerable<TimeSpan> Exponential(TimeSpan delay, double factor)
+        public static IEnumerable<TimeSpan> Exponential(TimeSpan delay, double factor, TimeSpan? maxDelay = null)
         {
             while (true) {
+                if (maxDelay.HasValue && delay > maxDelay.GetValueOrDefault())
+                    delay = maxDelay.GetValueOrDefault();
                 yield return delay;
                 delay *= factor;
             }

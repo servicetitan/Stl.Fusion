@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.IO;
+using Stl.Locking;
 
 namespace Stl.CommandLine.Git
 {
@@ -25,10 +26,8 @@ namespace Stl.CommandLine.Git
 
         public async Task FetchAsync(CancellationToken cancellationToken = default)
         {
-            // First we make sure we aren't doing this concurrently with some other
-            // GitFetcher (prob. running in a different process)
-            var fileLock = new FileLock(TargetPath + ".lock");
-            await using var _ = await fileLock.AcquireAsync(cancellationToken)
+            await using var _ = await FileLock
+                .LockAsync(TargetPath + ".lock", cancellationToken)
                 .ConfigureAwait(false);
             
             var git = GitCmdFactory.Invoke();
