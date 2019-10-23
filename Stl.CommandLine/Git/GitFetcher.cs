@@ -27,20 +27,22 @@ namespace Stl.CommandLine.Git
         {
             var git = GitCmdFactory.Invoke();
             git.ResultChecks = CmdResultChecks.NonZeroExitCode;
-            git.WorkingDirectory = TargetPath;
 
             var gitFolder = TargetPath & ".git";
             if (!Directory.Exists(gitFolder)) {
                 if (!Directory.Exists(TargetPath))
                     Directory.CreateDirectory(TargetPath);
+                git.WorkingDirectory = ""; // It has to be non-target path on cloning
                 await git
                     .RunAsync("clone" + CliString.Quote(SourceUrl) + CliString.Quote(TargetPath), cancellationToken)
                     .ConfigureAwait(false);
+                git.WorkingDirectory = TargetPath;
                 await git
                     .RunAsync("checkout" + new CliString(SourceRevision), cancellationToken)
                     .ConfigureAwait(false);
             } 
             else {
+                git.WorkingDirectory = TargetPath;
                 var mustFetch = AlwaysFetch;
                 if (!AlwaysFetch) {
                     using (git.ChangeResultChecks(0)) {

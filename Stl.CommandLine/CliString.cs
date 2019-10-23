@@ -70,8 +70,8 @@ namespace Stl.CommandLine
         public static implicit operator PathString(CliString source) 
             => new PathString(source.Value);
 
-        public static CliString operator +(CliString first, CliString? second) 
-            => first.Append(second ?? "");
+        public static CliString operator +(CliString first, CliString second) 
+            => first.Append(second);
         public static CliString operator |(CliString first, CliString second) 
             => PathString.JoinOrTakeSecond(first.Value, second.Value); 
         public static CliString operator &(CliString first, CliString second) 
