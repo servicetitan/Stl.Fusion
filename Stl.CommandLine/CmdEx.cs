@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using System.Text.RegularExpressions;
+using Stl.IO;
 
 namespace Stl.CommandLine 
 {
@@ -13,21 +15,6 @@ namespace Stl.CommandLine
             return Disposable.New(
                 state => state.Cmd.ResultChecks = state.OldValue, 
                 (Cmd: cmd, OldValue: oldValue));
-        }
-
-        public static void SetRelativeWorkingDirectory(this ICmd cmd, string workingDirectory)
-        {
-            if (string.IsNullOrEmpty(workingDirectory))
-                return;
-            if (Path.IsPathFullyQualified(workingDirectory)) {
-                cmd.WorkingDirectory = workingDirectory;
-                return;
-            }
-            if (!string.IsNullOrEmpty(cmd.WorkingDirectory.Value)) {
-                cmd.WorkingDirectory = Path.Combine(cmd.WorkingDirectory.Value, workingDirectory);
-                return;
-            }
-            cmd.WorkingDirectory = Path.Combine(Environment.CurrentDirectory, workingDirectory);
         }
     }
 }

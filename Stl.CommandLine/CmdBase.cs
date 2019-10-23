@@ -5,13 +5,14 @@ using CliWrap;
 using CliWrap.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Stl.IO;
 
 namespace Stl.CommandLine
 {
     public interface ICmd
     {
-        CliString Executable { get; }
-        CliString WorkingDirectory { get; set; }
+        PathString Executable { get; }
+        PathString WorkingDirectory { get; set; }
         ImmutableDictionary<string, string> EnvironmentVariables { get; set; }
         ICliFormatter CliFormatter { get; set; }
         ILogger Log { get; set; }
@@ -25,8 +26,8 @@ namespace Stl.CommandLine
     
     public abstract class CmdBase : ICmd
     {
-        public CliString Executable { get; }
-        public CliString WorkingDirectory { get; set; } = CliString.Empty;
+        public PathString Executable { get; }
+        public PathString WorkingDirectory { get; set; } = PathString.Empty;
         public ImmutableDictionary<string, string> EnvironmentVariables { get; set; } = 
             ImmutableDictionary<string, string>.Empty;
         public ICliFormatter CliFormatter { get; set; } = new CliFormatter();
@@ -34,7 +35,7 @@ namespace Stl.CommandLine
         public CmdResultChecks ResultChecks { get; set; } = CmdResultChecks.NonZeroExitCode;
         public bool EchoMode { get; set; }
 
-        public CmdBase(CliString executable) => Executable = executable;
+        public CmdBase(PathString executable) => Executable = executable;
 
         protected Task<ExecutionResult> RunRawAsync(
             object? arguments, CliString tail = default,
@@ -60,7 +61,7 @@ namespace Stl.CommandLine
         {
             arguments = TransformArguments(arguments);
             if (EchoMode) {
-                var echoCommand = "echo" + CmdHelpers.GetEchoArguments(Executable + arguments);
+                var echoCommand = "echo" + CmdHelpers.GetEchoArguments(CliString.New(Executable) + arguments);
                 arguments = CmdHelpers.GetShellArguments(echoCommand);
             }
             
@@ -80,14 +81,14 @@ namespace Stl.CommandLine
                 .SetCancellationToken(cancellationToken)
                 .EnableExitCodeValidation(ResultChecks.HasFlag(CmdResultChecks.NonZeroExitCode))
                 .EnableStandardErrorValidation(ResultChecks.HasFlag(CmdResultChecks.NonEmptyStandardError));
-            if (!string.IsNullOrEmpty(WorkingDirectory.Value))
-                cli = cli.SetWorkingDirectory(WorkingDirectory.Value);
+            if (WorkingDirectory.IsEmpty())
+                cli = cli.SetWorkingDirectory(WorkingDirectory);
             return cli;
         }
 
         protected virtual CliString TransformArguments(CliString arguments)
             => arguments;
 
-        public override string ToString() => Executable.Value;
+        public override string ToString() => Executable;
     }
 }

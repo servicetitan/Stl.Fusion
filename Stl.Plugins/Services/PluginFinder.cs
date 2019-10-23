@@ -19,10 +19,10 @@ namespace Stl.Plugins.Services
 
     public class PluginFinder : CachingPluginFinderBase
     {
-        public string PluginDir { get; set; } = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? ".";
+        public PathString PluginDir { get; set; } = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? ".";
         public string AssemblyNamePattern { get; set; } = "*.dll";
         public bool UseCache { get; set; } = true;
-        public string CacheDir { get; set; }
+        public PathString CacheDir { get; set; }
 
         public PluginFinder(ILogger? logger = null)
             : base(logger)
@@ -47,16 +47,17 @@ namespace Stl.Plugins.Services
         {
             var files = ( 
                 from name in GetPluginAssemblyNames()
-                let modifyDate = File.GetLastWriteTime(Path.Combine(PluginDir, name))
+                let modifyDate = File.GetLastWriteTime(name)
                 select (name, modifyDate.ToFileTime())
                 ).ToArray();
             return files.ToDelimitedString();
         }
 
-        protected virtual string[] GetPluginAssemblyNames() 
+        protected virtual PathString[] GetPluginAssemblyNames() 
             => Directory
                 .EnumerateFiles(
                     PluginDir, AssemblyNamePattern, SearchOption.TopDirectoryOnly)
+                .Select(PathString.New)
                 .OrderBy(name => name)
                 .ToArray();
 
@@ -67,7 +68,7 @@ namespace Stl.Plugins.Services
             var plugins = new HashSet<Type>();
             var context = GetAssemblyLoadContext();
             foreach (var name in GetPluginAssemblyNames()) {
-                var assembly = context.LoadFromAssemblyPath(Path.Combine(PluginDir, name));
+                var assembly = context.LoadFromAssemblyPath(name);
                 var pluginAttributes = assembly.GetCustomAttributes<PluginAttribute>().ToArray();
                 foreach (var pluginAttribute in pluginAttributes) {
                     var pluginType = pluginAttribute.Type;

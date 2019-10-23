@@ -38,11 +38,11 @@ namespace Stl.Tests.Caching
             await Assert.ThrowsAsync<KeyNotFoundException>(async () => await cache.GetAsync(1));
         }
 
-        private static string GetCacheDir(string id = "", Assembly? assembly = null)
+        private static PathString GetCacheDir(string id = "", Assembly? assembly = null)
         {
             assembly ??= Assembly.GetCallingAssembly();
             var subdirectory = PathEx.GetHashedName($"{id}_{assembly.FullName}_{assembly.Location}");
-            return Path.Combine(Path.GetTempPath(), subdirectory);
+            return Path.GetTempPath() & subdirectory;
         }
     }
 }

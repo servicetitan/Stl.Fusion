@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Stl.IO;
 
 namespace Stl.CommandLine.Git
 {
@@ -10,10 +11,10 @@ namespace Stl.CommandLine.Git
         public bool AlwaysFetch { get; set; } = false;
         public string SourceUrl { get; set; }
         public string SourceRevision { get; set; }
-        public string TargetPath { get; set; }
+        public PathString TargetPath { get; set; }
         public Func<GitCmd> GitCmdFactory { get; set; }
 
-        public GitFetcher(string sourceUrl, string sourceRevision, string targetPath, 
+        public GitFetcher(string sourceUrl, string sourceRevision, PathString targetPath, 
             Func<GitCmd>? gitCmdFactory = null)
         {
             SourceUrl = sourceUrl;
@@ -28,12 +29,12 @@ namespace Stl.CommandLine.Git
             git.ResultChecks = CmdResultChecks.NonZeroExitCode;
             git.WorkingDirectory = TargetPath;
 
-            var gitFolder = Path.Combine(TargetPath, ".git");
+            var gitFolder = TargetPath & ".git";
             if (!Directory.Exists(gitFolder)) {
                 if (!Directory.Exists(TargetPath))
                     Directory.CreateDirectory(TargetPath);
                 await git
-                    .RunAsync("clone" + new CliString(SourceUrl).Quote() + ".", cancellationToken)
+                    .RunAsync("clone" + CliString.Quote(SourceUrl) + CliString.Quote(TargetPath), cancellationToken)
                     .ConfigureAwait(false);
                 await git
                     .RunAsync("checkout" + new CliString(SourceRevision), cancellationToken)

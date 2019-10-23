@@ -12,7 +12,7 @@ namespace Stl.IO
         private static readonly Regex TrailingUnderscoresRe = 
             new Regex("_+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-        public static string GetHashedName(string? key, string? prefix = null, int maxLength = 40)
+        public static PathString GetHashedName(string? key, string? prefix = null, int maxLength = 40)
         {
             if (maxLength < 8 || maxLength > 128)
                 throw new ArgumentOutOfRangeException(nameof(maxLength));
@@ -29,7 +29,7 @@ namespace Stl.IO
             return name;
         }
 
-        public static string GetApplicationDirectory()
+        public static PathString GetApplicationDirectory()
         {
             var assembly = Assembly.GetEntryAssembly();
             if (assembly?.GetName()?.Name?.StartsWith("testhost") ?? false) // Unit tests
@@ -37,12 +37,12 @@ namespace Stl.IO
             return Path.GetDirectoryName(assembly?.Location) ?? Environment.CurrentDirectory;
         }
 
-        public static string GetApplicationTempDirectory(string appId = "", bool createIfAbsents = false)
+        public static PathString GetApplicationTempDirectory(string appId = "", bool createIfAbsents = false)
         {
             if (string.IsNullOrEmpty(appId))
                 appId = Assembly.GetEntryAssembly()?.GetName()?.Name ?? "unknown";
             var subdirectory = GetHashedName($"{appId}_{GetApplicationDirectory()}");
-            var path = Path.Combine(Path.GetTempPath(), subdirectory);
+            var path = Path.GetTempPath() & subdirectory;
             if (!Directory.Exists(path))
                 Directory.CreateDirectory(path);
             return path;

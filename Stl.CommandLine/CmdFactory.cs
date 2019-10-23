@@ -5,6 +5,8 @@ using System.Collections.Immutable;
 using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
+using Stl.CommandLine.Git;
+using Stl.CommandLine.Python;
 
 namespace Stl.CommandLine
 {
@@ -72,6 +74,17 @@ namespace Stl.CommandLine
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         public IEnumerator<CmdDescriptor> GetEnumerator() => Commands.GetEnumerator();
 
+        protected virtual void PopulateCommands(List<CmdDescriptor> commands)
+        {
+            // Just a shortcut
+            void Add(CmdDescriptor cmdDescriptor) => commands.Add(cmdDescriptor);
+
+            Add(CmdDescriptor.New(() => new ShellCmd(), "shell", "sh"));
+            Add(CmdDescriptor.New(() => new GitCmd(), "git"));
+            Add(CmdDescriptor.New(() => new Python2Cmd(), "python2", "py2"));
+            Add(CmdDescriptor.New(() => new Python3Cmd(), "python3", "py3"));
+        }
+
         public virtual TCmd New<TCmd>()
             where TCmd : ICmd
         {
@@ -88,8 +101,6 @@ namespace Stl.CommandLine
         }
 
         protected virtual ICmd ConfigureCmd(ICmd cmd) => cmd;
-        protected abstract Task InitializeImplAsync();
-        protected abstract void PopulateCommands(List<CmdDescriptor> commands);
 
         public virtual void Initialize()
         {
@@ -125,5 +136,7 @@ namespace Stl.CommandLine
                 throw;
             }
         }
+
+        protected abstract Task InitializeImplAsync();
     }
 }
