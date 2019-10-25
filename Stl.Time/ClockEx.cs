@@ -1,8 +1,11 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
+using Stl.Collections;
 
 namespace Stl.Time
 {
@@ -39,22 +42,30 @@ namespace Stl.Time
                 }
             });
         }
+        public static IAsyncEnumerable<long> TimerAsync(this IClock clock, long delayInMilliseconds)
+            => clock.Timer(delayInMilliseconds).ToAsyncEnumerable();
+        public static IAsyncEnumerable<long> TimerAsync(this IClock clock, TimeSpan dueIn)
+            => clock.Timer(dueIn).ToAsyncEnumerable();
 
-        public static IObservable<long> Interval(this IClock clock, long delayInMilliseconds)
-            => clock.Interval(TimeSpan.FromMilliseconds(delayInMilliseconds));
-        public static IObservable<long> Interval(this IClock clock, TimeSpan dueIn)
+        public static IObservable<long> Interval(this IClock clock, long intervalInMilliseconds)
+            => clock.Interval(TimeSpan.FromMilliseconds(intervalInMilliseconds));
+        public static IObservable<long> Interval(this IClock clock, TimeSpan interval) 
+            => clock is RealTimeClock 
+                ? Observable.Interval(interval) // Perf. optimization 
+                : clock.Interval(Intervals.Fixed(interval));
+        public static IObservable<long> Interval(this IClock clock, IEnumerable<TimeSpan> intervals)
         {
-            if (clock is RealTimeClock)
-                return Observable.Interval(dueIn); // Perf. optimization
+            var e = intervals.GetEnumerator();
             return Observable.Create<long>(async (observer, ct) => {
                 var completed = false;
                 try {
-                    var dueAt = clock.Now + dueIn;
-                    for (var index = 0L;; index++, dueAt += dueIn) {
+                    var index = 0L;
+                    while (e.MoveNext()) {
+                        var dueAt = clock.Now + e.Current;
                         await clock.DelayAsync(dueAt, ct).SuppressCancellation().ConfigureAwait(false);
                         if (ct.IsCancellationRequested)
                             break;
-                        observer.OnNext(index);
+                        observer.OnNext(index++);
                     }
                     completed = true;
                     observer.OnCompleted();
@@ -63,7 +74,16 @@ namespace Stl.Time
                     if (!completed)
                         observer.OnError(e);
                 }
+                finally {
+                    e.Dispose();
+                }
             });
         }
+        public static IAsyncEnumerable<long> IntervalAsync(this IClock clock, long intervalInMilliseconds)
+            => clock.Interval(intervalInMilliseconds).ToAsyncEnumerable();
+        public static IAsyncEnumerable<long> IntervalAsync(this IClock clock, TimeSpan interval) 
+            => clock.Interval(interval).ToAsyncEnumerable();
+        public static IAsyncEnumerable<long> IntervalAsync(this IClock clock, IEnumerable<TimeSpan> intervals)
+            => clock.Interval(intervals).ToAsyncEnumerable();
     }
 }

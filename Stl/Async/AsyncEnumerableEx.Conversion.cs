@@ -2,7 +2,6 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Reactive.Linq;
-using System.Reactive.Subjects;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Threading;
@@ -47,24 +46,19 @@ namespace Stl.Async
             using var lease = LeaseChannelMemory<T>(bufferSize);
             var channel = new AsyncChannel<(T Item, ExceptionDispatchInfo? Error)>(lease.Memory);
             source.Subscribe(
-                // Ok to do that: PutAsync continuation (if any)
-                // will complete on the thread pool.
-                item => channel.PutAsync((item, null), cancellationToken).Ignore(), 
-                e => Task.Run(async () => {
+                item => channel
+                    // Ok to do that: PutAsync continuation (if any)
+                    // will complete on the thread pool.
+                    .PutAsync((item, null), cancellationToken)
+                    .Ignore(),
+                e => channel
                     // Might trigger event reordering due to race between
                     // PutAsync continuations & this method, but that's
                     // the best we can do here anyway. The best way
                     // to address that is to have a larger buffer.
-                    try {
-                        await channel
-                        .PutAsync((default!, ExceptionDispatchInfo.Capture(e)), cancellationToken)
-                        .ConfigureAwait(false);
-
-                    }
-                    finally {
-                        channel.CompletePut();
-                    }
-                }, cancellationToken).Ignore(),
+                    .PutAsync((default!, ExceptionDispatchInfo.Capture(e)), CancellationToken.None)
+                    .AsTask()
+                    .ContinueWith(_ => channel.CompletePut(), CancellationToken.None),
                 // Similarly, might trigger reordering.
                 () => channel.CompletePut());
 

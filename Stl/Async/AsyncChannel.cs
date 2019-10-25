@@ -192,17 +192,7 @@ namespace Stl.Async
                 _pullHappened = tcs;
             }
 
-            var cancelDelay = new CancellationTokenSource();
-            var cancelAny = CancellationTokenSource.CreateLinkedTokenSource(
-                cancellationToken, cancelDelay.Token);
-            try {
-                var delayTask = Task.Delay(Timeout.Infinite, cancelAny.Token);
-                await Task.WhenAny(tcs.Task, delayTask).ConfigureAwait(false);
-            }
-            finally {
-                cancelDelay.Cancel(); // To make sure the delay task is gone
-            }
-            cancellationToken.ThrowIfCancellationRequested();
+            await Task.WhenAny(tcs.Task, cancellationToken.ToTask(true)).ConfigureAwait(false);
         }
 
         private async Task WaitForEnqueueAsync(CancellationToken cancellationToken = default)
@@ -217,17 +207,7 @@ namespace Stl.Async
                 _putHappened = tcs;
             }
 
-            var cancelDelay = new CancellationTokenSource();
-            var cancelAny = CancellationTokenSource.CreateLinkedTokenSource(
-                cancellationToken, cancelDelay.Token);
-            try {
-                var delayTask = Task.Delay(Timeout.Infinite, cancelAny.Token);
-                await Task.WhenAny(tcs.Task, delayTask).ConfigureAwait(false);
-            }
-            finally {
-                cancelDelay.Cancel(); // To make sure the delay task is gone
-            }
-            cancellationToken.ThrowIfCancellationRequested();
+            await Task.WhenAny(tcs.Task, cancellationToken.ToTask(true)).ConfigureAwait(false);
         }
     }
 }

@@ -61,7 +61,6 @@ namespace Stl.Time.Testing
                     delta = TimeSpan.Zero;
                 if (isInfinite)
                     delta = Timeout.InfiniteTimeSpan;
-                Debug.WriteLine(delta);
                 if (cancellationToken == default) {
                     await Task.Delay(delta, settingsChangedToken).SuppressCancellation().ConfigureAwait(false);
                     if (!settingsChangedToken.IsCancellationRequested)

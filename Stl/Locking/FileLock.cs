@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
@@ -52,14 +53,20 @@ namespace Stl.Locking
             using var retryInterval = RetryIntervals.GetEnumerator();
             var fs = (FileStream?) null;
             while (true) {
+                var error = (Exception?) null;
                 try {
                     fs = File.OpenWrite(Path);
                 }
-                catch (IOException) {}
-                catch (UnauthorizedAccessException) {}
+                catch (IOException e) {
+                    error = e;
+                }
+                catch (UnauthorizedAccessException e) {
+                    error = e;
+                }
                 if (fs != null)
                     break;
-                retryInterval.MoveNext();
+                if (!retryInterval.MoveNext())
+                    ExceptionDispatchInfo.Throw(error!);
                 await Task.Delay(retryInterval.Current, cancellationToken)
                     .ConfigureAwait(false);
             }

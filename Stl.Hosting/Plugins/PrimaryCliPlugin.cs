@@ -43,7 +43,7 @@ namespace Stl.Hosting.Plugins
             var result = cliParser.Invoke(arguments, console);
             var cliException = AppHostBuilder.BuildState.CliException;
             if (cliException != null)
-                ExceptionDispatchInfo.Capture(cliException).Throw();
+                ExceptionDispatchInfo.Throw(cliException);
         }
 
         protected virtual void OnCliException(Exception exception, InvocationContext context) 
