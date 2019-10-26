@@ -1,3 +1,4 @@
+using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -31,7 +32,7 @@ namespace Stl.Async
             => task.ContinueWith(t => {
                 if (t.IsCompletedSuccessfully || t.IsCanceled)
                     return;
-                throw t.Exception!;
+                ExceptionDispatchInfo.Throw(t.Exception!);
             });
         public static Task<T> SuppressCancellation<T>(this Task<T> task)
             => task.ContinueWith(t => !t.IsCanceled ? t.Result : default);
