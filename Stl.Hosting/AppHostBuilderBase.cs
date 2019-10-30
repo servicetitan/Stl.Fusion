@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.CommandLine;
+using System.CommandLine.Builder;
+using System.CommandLine.Invocation;
 using System.Linq;
 using System.Reactive.PlatformServices;
 using System.Text.RegularExpressions;
@@ -16,6 +18,7 @@ using Stl.Hosting.Plugins;
 using Stl.Plugins;
 using Stl.Time;
 using Stl.Time.Testing;
+using CliOption = System.CommandLine.Option;
 
 namespace Stl.Hosting
 {
@@ -30,8 +33,14 @@ namespace Stl.Hosting
 
         bool IsTestHost { get; }
         IAppHostBuildState BuildState { get; }
+        IAppHostBuilderImpl Implementation { get; }
 
         IHost? Build(string[]? arguments = null);
+    }
+
+    public interface IAppHostBuilderImpl
+    {
+        CliOption GetArgumentConfigurationOverridesOption();
     }
 
     public interface IAppHostBuildState 
@@ -47,9 +56,8 @@ namespace Stl.Hosting
         void BuildHost();
     }
 
-
     public abstract class AppHostBuilderBase : HasOptionsBase, 
-        IAppHostBuilder, IAppHostBuildState,
+        IAppHostBuilder, IAppHostBuilderImpl, IAppHostBuildState,
         ITestAppHostBuilder, ITestAppHostBuilderImpl
     {
         public abstract string AppName { get; }
@@ -77,9 +85,6 @@ namespace Stl.Hosting
             get => this.GetOption<string[]>(nameof(WebHostUrls));
             set => SetOption(nameof(WebHostUrls), value.ToArray());
         }
-
-        public IAppHostBuildState BuildState => this;
-        void IAppHostBuildState.BuildHost() => BuildHost();
 
         ReadOnlyMemory<string> IAppHostBuildState.Arguments {
             get => this.GetOption<string[]>(nameof(IAppHostBuildState.Arguments));
@@ -109,6 +114,11 @@ namespace Stl.Hosting
             get => this.GetOption<Exception?>(nameof(IAppHostBuildState.CliException));
             set => SetOption(nameof(IAppHostBuildState.CliException), value);
         }
+
+        void IAppHostBuildState.BuildHost() => BuildHost();
+
+        public IAppHostBuildState BuildState => this;
+        public IAppHostBuilderImpl Implementation => this;
 
         #region ITestAppHostBuilder & ITestAppHostBuilderImpl
 
@@ -211,8 +221,13 @@ namespace Stl.Hosting
         protected virtual void ConfigurePluginHostConfiguration()
         {
             BuildState.PluginHostBuilder.ConfigureHostConfiguration(cfg => {
+                var argumentCfgOverrides = ParseArgumentConfigurationOverrides()
+                    .Select(p => KeyValuePair.Create(p.Key, p.Value))
+                    .ToList();
+
                 var baseCfg = new ConfigurationBuilder()
                     .SetBasePath(BaseDirectory)
+                    .AddInMemoryCollection(argumentCfgOverrides)
                     .AddEnvironmentVariables(EnvironmentVarPrefix)
                     .Build();
 
@@ -228,6 +243,42 @@ namespace Stl.Hosting
                         cfg.AddFile(fileName);
             });
         }
+
+        protected virtual IEnumerable<(string Key, string Value)> ParseArgumentConfigurationOverrides()
+        {
+            var cliBuilder = new CommandLineBuilder().UseDefaults();
+            cliBuilder.UseExceptionHandler((e, ctx) => {});
+            var option = GetArgumentConfigurationOverridesOption();
+            cliBuilder.AddOption(option);
+            var cliParser = cliBuilder.Build();
+            
+            var result = cliParser.Parse(BuildState.Arguments.ToArray());
+            var values = result.RootCommandResult.ValueForOption<string[]>(option.Name);
+            if (values == null || values.Length == 0)
+                yield break;
+
+            var aliases = new Dictionary<string, (string Key, string Value)>() {
+                {"dev", (HostDefaults.EnvironmentKey, Environments.Development)},
+                {"prod", (HostDefaults.EnvironmentKey, Environments.Production)},
+            };
+            
+            foreach (var v in values) {
+                var p = v.Split('=', 2);
+                if (p.Length == 2)
+                    yield return (p[0], p[1]);
+                if (aliases.TryGetValue(p[0], out var value))
+                    yield return value;
+            }
+        }
+
+        CliOption IAppHostBuilderImpl.GetArgumentConfigurationOverridesOption() 
+            => GetArgumentConfigurationOverridesOption();
+        protected virtual CliOption GetArgumentConfigurationOverridesOption() 
+            => new CliOption(
+                new[] {"-o", "--override"}, 
+                "Configuration property override; use '-o property1=value1 -o property2=value2' notation") {
+                    Argument = new Argument<string[]>(),
+                };
 
         protected virtual IPluginHostBuilder CreatePluginHostBuilder() 
             => new PluginHostBuilder();

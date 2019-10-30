@@ -64,6 +64,11 @@ namespace Stl.Hosting.Plugins
             => HostBuilder.ConfigureHostConfiguration(cfg => {
                 var b = AppHostBuilder;
                 cfg.SetBasePath(b.BaseDirectory);
+                cfg.AddInMemoryCollection(new [] {
+                    // That's to make sure environment name isn't overriden by any of
+                    // configuration sources provided further.
+                    KeyValuePair.Create(HostDefaults.EnvironmentKey, b.BuildState.EnvironmentName),
+                });
                 cfg.AddEnvironmentVariables($"{b.EnvironmentVarPrefix}{b.BuildState.EnvironmentName}_");
                 cfg.AddEnvironmentVariables(b.EnvironmentVarPrefix);
                 if (!b.IsTestHost)
@@ -79,10 +84,6 @@ namespace Stl.Hosting.Plugins
 
         protected virtual void ConfigureServices()
             => HostBuilder.ConfigureServices((ctx, services) => {
-                var env = ctx.HostingEnvironment;
-                // We have to update EnvironmentName here, since earlier we didn't read
-                // exactly the same configuration (+ command line options weren't parsed yet).
-                AppHostBuilder.BuildState.EnvironmentName = env.EnvironmentName;
                 services.AddOptions();
                 services.AddSingleton(Plugins);
                 services.CopySingleton<IAppHostBuilder>(Plugins);

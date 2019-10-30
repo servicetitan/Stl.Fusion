@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Stl.Plugins;
 using Stl.Plugins.Extensions.Cli;
 using Stl.Tests.Plugins.Extensions;
+using CliOption = System.CommandLine.Option;
 
 [assembly: Plugin(typeof(TestCliPluginAdd))]
 [assembly: Plugin(typeof(TestCliPluginMul))]
@@ -37,10 +38,10 @@ namespace Stl.Tests.Plugins.Extensions
                     Console.Out.WriteLine($"Add: {a + b}");
                 }),
             };
-            testCommand.AddOption(new System.CommandLine.Option("--a") {
+            testCommand.AddOption(new CliOption("--a") {
                 Argument = new Argument<int>(),
             });
-            testCommand.AddOption(new System.CommandLine.Option("--b") {
+            testCommand.AddOption(new CliOption("--b") {
                 Argument = new Argument<int>(),
             });
             builder.AddCommand(testCommand);
@@ -60,10 +61,10 @@ namespace Stl.Tests.Plugins.Extensions
                     Console.Out.WriteLine($"Mul: {a * b}");
                 }),
             };
-            testCommand.AddOption(new System.CommandLine.Option("--a") {
+            testCommand.AddOption(new CliOption("--a") {
                 Argument = new Argument<int>(),
             });
-            testCommand.AddOption(new System.CommandLine.Option("--b") {
+            testCommand.AddOption(new CliOption("--b") {
                 Argument = new Argument<int>(),
             });
             builder.AddCommand(testCommand);

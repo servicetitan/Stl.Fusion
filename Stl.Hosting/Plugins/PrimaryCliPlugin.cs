@@ -2,13 +2,13 @@ using System;
 using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Invocation;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Hosting.Plugins;
 using Stl.Plugins;
 using Stl.Plugins.Extensions.Cli;
+using CliOption = System.CommandLine.Option;
 
 [assembly: Plugin(typeof(PrimaryCliPlugin))]
 
@@ -58,30 +58,17 @@ namespace Stl.Hosting.Plugins
                 () => AppHostBuilder.BuildState.BuildHost());
         }
 
-        protected virtual string[] GetHostArguments(string[] overrides) 
-            => overrides.Select(s => "--" + s).ToArray();
-
         protected virtual void AddOverridesOption()
         {
-            var option = new System.CommandLine.Option(
-                new[] {"-o", "--override"}, 
-                "Configuration property override; use '-o property1=value1 -o property2=value2' notation") {
-                Argument = new Argument<string[]>(),
-            };
+            var option = AppHostBuilder.Implementation.GetArgumentConfigurationOverridesOption();
             if (CliBuilder.Command.Children.GetByAlias(option.Name) != null)
                 return;
             CliBuilder.AddOption(option);
-            AddMiddleware(async (ctx, next) => {
-                var value = ctx.ParseResult.RootCommandResult.ValueForOption<string[]>(option.Name);
-                if (value != null && value.Length > 0)
-                    AppHostBuilder.BuildState.HostArguments = GetHostArguments(value);
-                await next(ctx);
-            }, -10100);
         }
 
         protected virtual void AddBindOption()
         {
-            var option = new System.CommandLine.Option(
+            var option = new CliOption(
                 new[] {"-b", "--bind"}, 
                 "Web server bind address; you can use multiple bind options") {
                 Argument = new Argument<string[]>(),
