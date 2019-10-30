@@ -56,7 +56,7 @@ namespace Stl.Reactionist
         object? IResult.UnsafeValue => Result.UnsafeValue;
 
         public Var(T value = default) => InternalResult = (value, null);
-        public Var(Exception error) => InternalResult = (default, error);
+        public Var(Exception error) => InternalResult = (default(T)!, error);
 
         public override string? ToString() => Value?.ToString();
 

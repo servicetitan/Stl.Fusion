@@ -86,7 +86,7 @@ namespace Stl.Reactionist
                 result = Compute();
             }
             catch (Exception error) {
-                result = (default, error);
+                result = (default(T)!, error);
             }
             finally {
                 deactivator.Dispose();
