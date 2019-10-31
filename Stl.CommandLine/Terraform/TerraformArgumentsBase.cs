@@ -10,7 +10,7 @@ namespace Stl.CommandLine.Terraform
         /// <summary>  
         /// Ask for input for variables if not directly set.
         /// </summary>
-        [CliArgument("-input={0}")]
+        [CliArgument("-input={0}", DefaultValue = "false")]
         public CliBool? Input { get; set; }
         
         /// <summary>  
