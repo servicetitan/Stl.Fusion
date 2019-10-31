@@ -21,16 +21,24 @@ namespace Stl.Tests.Terraform
             var executionResult = await TerraformEcho.ApplyAsync("dir", 
                 new ApplyArguments {
                     Backup = "Backup",
-                    AutoApprove = true,
+                    AutoApprove = false,
                     Variables = new CliDictionary<CliString, CliString>() {{"key1", "value1"}},
                     LockTimeout = 16,
                 });
             executionResult.StandardOutput.Trim().Should()
                 .Be(TerraformCmd.DefaultExecutable.Value +
                     " apply " +
-                    "-no-color " + 
                     "-var \"key1=value1\" -lock-timeout=16s " +
-                    "-backup=\"Backup\" -auto-approve " +
+                    "-backup=\"Backup\" " +
+                    "dir");
+
+            executionResult = await TerraformEcho.ApplyAsync(
+                "dir", new ApplyArguments { NoColor = true });
+            executionResult.StandardOutput.Trim().Should()
+                .Be(TerraformCmd.DefaultExecutable.Value +
+                    " apply " +
+                    "-no-color " +
+                    "-auto-approve " +
                     "dir");
         }
 

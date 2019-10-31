@@ -43,16 +43,33 @@ namespace Stl.CommandLine.Terraform
             CancellationToken cancellationToken = default)
             => RunRawAsync("destroy", arguments ?? new DestroyArguments(), dir, cancellationToken);
 
-        public Task<ExecutionResult> NewWorkspaceAsync(
+        public Task<ExecutionResult> WorkspaceNewAsync(
             CliString workspaceName,
-            WorkspaceArguments? arguments = null,
+            CliString dirName = default,
+            WorkspaceNewArguments? arguments = null,
             CancellationToken cancellationToken = default)
-            => RunRawAsync("workspace new", arguments ?? new WorkspaceArguments(), workspaceName, cancellationToken);
+            => RunRawAsync("workspace new", arguments ?? new WorkspaceNewArguments(), workspaceName + dirName, cancellationToken);
 
-        public Task<ExecutionResult> SelectWorkspaceAsync(
+        public Task<ExecutionResult> DeleteWorkspaceAsync(
             CliString workspaceName,
-            WorkspaceArguments? arguments = null,
+            CliString dirName = default,
+            WorkspaceDeleteArguments? arguments = null,
             CancellationToken cancellationToken = default)
-            => RunRawAsync("workspace select", arguments ?? new WorkspaceArguments(), workspaceName, cancellationToken);
+            => RunRawAsync("workspace delete", arguments ?? new WorkspaceDeleteArguments(), workspaceName + dirName, cancellationToken);
+
+        public Task<ExecutionResult> WorkspaceSelectAsync(
+            CliString workspaceName,
+            CliString dirName = default,
+            CancellationToken cancellationToken = default)
+            => RunRawAsync("workspace select", null, workspaceName + dirName, cancellationToken);
+
+        public Task<ExecutionResult> WorkspaceListAsync(
+            CliString dirName = default,
+            CancellationToken cancellationToken = default)
+            => RunRawAsync("workspace list", null, dirName, cancellationToken);
+
+        public Task<ExecutionResult> WorkspaceShowAsync(
+            CancellationToken cancellationToken = default)
+            => RunRawAsync("workspace show", null, default, cancellationToken);
     }
 }

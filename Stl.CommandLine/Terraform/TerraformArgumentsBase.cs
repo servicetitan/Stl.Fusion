@@ -5,13 +5,13 @@ namespace Stl.CommandLine.Terraform
     public abstract class TerraformArgumentsBase
     {
         [CliArgument("-no-color", DefaultValue = "false")]
-        public CliBool? NoColor { get; set; } = true;
+        public bool NoColor { get; set; }
 
         /// <summary>  
         /// Ask for input for variables if not directly set.
         /// </summary>
-        [CliArgument("-input={0}", DefaultValue = "false")]
-        public CliBool? Input { get; set; }
+        [CliArgument("-input={0}", DefaultValue = "true")]
+        public bool Input { get; set; } = true;
         
         /// <summary>  
         /// Set a variable in the Terraform configuration.
