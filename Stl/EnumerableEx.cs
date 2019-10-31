@@ -25,6 +25,12 @@ namespace Stl
 
         // Extensions
 
+        public static IEnumerable<T> AsEnumerable<T>(this ReadOnlyMemory<T> source)
+        {
+            for (var i = 0; i < source.Length; i++)
+                yield return source.Span[i];
+        }
+
         public static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(
             this IEnumerable<KeyValuePair<TKey, TValue>> source)
             where TKey : notnull

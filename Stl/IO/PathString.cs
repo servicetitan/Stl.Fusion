@@ -60,10 +60,13 @@ namespace Stl.IO
         public PathString ChangeExtension(string newExtension) => Path.ChangeExtension(Value, newExtension);
         public PathString RelativeTo(PathString relativeTo) => Path.GetRelativePath(relativeTo, Value);
 
-        public static PathString JoinOrTakeSecond(string s1, string s2) => Path.Combine(s1, s2);
+        public static PathString JoinOrTakeSecond(string s1, string s2) 
+            => Path.Combine(s1, s2);
         public static PathString Join(string s1, string s2) 
-            => Path.IsPathFullyQualified(s2) 
-                ? throw new ArgumentOutOfRangeException(s2)
-                : Path.Join(s1, s2);
+            => string.IsNullOrEmpty(s2) 
+                ? s1 
+                : Path.IsPathFullyQualified(s2) 
+                    ? throw new ArgumentOutOfRangeException(s2)
+                    : Path.Join(s1, s2);
     }
 }

@@ -14,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Stl.Extensibility;
+using Stl.Hosting.Internal;
 using Stl.Hosting.Plugins;
 using Stl.Plugins;
 using Stl.Time;
@@ -52,6 +53,7 @@ namespace Stl.Hosting
         ReadOnlyMemory<string> HostArguments { get; set; }
         IHost? Host { get; set; }
         Exception? CliException { get; set; }
+        int? CliExitCode { get; set; }
 
         void BuildHost();
     }
@@ -113,6 +115,10 @@ namespace Stl.Hosting
         Exception? IAppHostBuildState.CliException {
             get => this.GetOption<Exception?>(nameof(IAppHostBuildState.CliException));
             set => SetOption(nameof(IAppHostBuildState.CliException), value);
+        }
+        int? IAppHostBuildState.CliExitCode {
+            get => this.GetOption<int?>(nameof(IAppHostBuildState.CliExitCode));
+            set => SetOption(nameof(IAppHostBuildState.CliExitCode), value);
         }
 
         void IAppHostBuildState.BuildHost() => BuildHost();
@@ -213,7 +219,7 @@ namespace Stl.Hosting
             ConfigurePluginHostServices();
             testAppHostBuilder?.Implementation?.InvokePostBuilders(state.PluginHostBuilder);
             state.PluginHost = state.PluginHostBuilder.Build();
-            ProcessCommandLine();
+            state.CliExitCode = ProcessCommandLine();
             LockOptions();
             return state.Host;
         }
@@ -252,7 +258,8 @@ namespace Stl.Hosting
             cliBuilder.AddOption(option);
             var cliParser = cliBuilder.Build();
             
-            var result = cliParser.Parse(BuildState.Arguments.ToArray());
+            var arguments = BuildState.ParsableArguments();
+            var result = cliParser.Parse(arguments);
             var values = result.RootCommandResult.ValueForOption<string[]>(option.Name);
             if (values == null || values.Length == 0)
                 yield break;
@@ -335,11 +342,11 @@ namespace Stl.Hosting
             });
         }
 
-        protected virtual void ProcessCommandLine()
+        protected virtual int ProcessCommandLine()
         {
             var plugins = BuildState.PluginHost;
-            var cliProcessor = plugins.GetSingletonPlugin<IPrimaryCliPlugin>();
-            cliProcessor.Run(BuildState.Arguments.ToArray());
+            var primaryCliPlugin = plugins.GetSingletonPlugin<IPrimaryCliPlugin>();
+            return primaryCliPlugin.ProcessCommandLine();
         }
 
         protected virtual void BuildHost()

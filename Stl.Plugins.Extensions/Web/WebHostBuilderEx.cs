@@ -10,18 +10,18 @@ namespace Stl.Plugins.Extensions.Web
         public static IWebHostBuilder UsePlugins<TPlugin>(
             this IWebHostBuilder builder,
             IEnumerable<TPlugin> plugins)
-            where TPlugin : IWebHostPlugin
+            where TPlugin : class, IWebHostPlugin
             => new WebHostPluginInvoker() {
                 Tail = plugins.Cast<IWebHostPlugin>().ToArray(),
                 Order = InvocationOrder.Reverse,
-                Handler = (plugin, invocation1) => plugin.Use(invocation1),
+                Handler = (plugin, invocation1) => plugin?.Use(invocation1),
                 Builder = builder,
             }.Run().Builder;
 
         public static IWebHostBuilder UsePlugins<TPlugin>(
             this IWebHostBuilder builder,
             IPluginHost plugins)
-            where TPlugin : IWebHostPlugin
+            where TPlugin : class, IWebHostPlugin
             => builder.UsePlugins(plugins.GetPlugins<TPlugin>());
     }
 }

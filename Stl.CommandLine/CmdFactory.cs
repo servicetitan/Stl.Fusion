@@ -13,7 +13,7 @@ namespace Stl.CommandLine
     public class CmdDescriptor
     {
         public Type Type { get; }
-        public Func<ICmd> Factory { get; }
+        public Func<ICmd> Factory { get; private set; }
         public string Name { get; }
         public ReadOnlyMemory<string> Aliases { get; }
 
@@ -27,6 +27,17 @@ namespace Stl.CommandLine
             Name = name;
             Aliases = aliases;
             Factory = factory;
+        }
+
+        public CmdDescriptor AddConfigurator(Func<ICmd, ICmd> configurator)
+        {
+            var clone = (CmdDescriptor) MemberwiseClone();
+            clone.Factory = () => {
+                var cmd = Factory.Invoke();
+                cmd = configurator.Invoke(cmd);
+                return cmd;
+            }; 
+            return clone;
         }
     }
 
@@ -77,7 +88,8 @@ namespace Stl.CommandLine
         protected virtual void PopulateCommands(List<CmdDescriptor> commands)
         {
             // Just a shortcut
-            void Add(CmdDescriptor cmdDescriptor) => commands.Add(cmdDescriptor);
+            void Add(CmdDescriptor cmdDescriptor) 
+                => commands.Add(cmdDescriptor.AddConfigurator(ConfigureCmd));
 
             Add(CmdDescriptor.New(() => new ShellCmd(), "shell", "sh"));
             Add(CmdDescriptor.New(() => new GitCmd(), "git"));
@@ -86,19 +98,11 @@ namespace Stl.CommandLine
         }
 
         public virtual TCmd New<TCmd>()
-            where TCmd : ICmd
-        {
-            var cmd = CommandByKey[typeof(TCmd)].Factory.Invoke();
-            ConfigureCmd(cmd);
-            return (TCmd) cmd;
-        }
+            where TCmd : ICmd 
+            => (TCmd) CommandByKey[typeof(TCmd)].Factory.Invoke();
 
-        public virtual ICmd New(string cmdName)
-        {
-            var cmd = CommandByKey[cmdName].Factory.Invoke();
-            ConfigureCmd(cmd);
-            return cmd;
-        }
+        public virtual ICmd New(string cmdName) 
+            => CommandByKey[cmdName].Factory.Invoke();
 
         protected virtual ICmd ConfigureCmd(ICmd cmd) => cmd;
 
