@@ -3,18 +3,22 @@
 .vscode/
 .idea/
 *.user
+.history
+.DS_Store
 
 # Binaries for programs and plugins
 bin/
 obj/
 csx/
+build/
+*/build/
+out/
 .exe
 .exe~
 .dll
 .so
 .dylib
 cmake-build-*
-
 
 # Test binary, build with `go test -c`
 [Tt]est[Rr]esult*
@@ -29,3 +33,12 @@ node_modules/
 
 # Log files & folders
 .log
+
+# Terraform files
+.terraform/
+*.tfstate*
+terraform.tfstate
+terraform.tfvars
+
+# Go best practices dictate that libraries should not include the vendor directory
+vendor
