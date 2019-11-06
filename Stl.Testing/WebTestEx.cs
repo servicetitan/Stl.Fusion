@@ -1,18 +1,17 @@
-using System;
+using System.Threading;
 
 namespace Stl.Testing
 {
     public static class WebTestEx
     {
-        public static readonly Random Random = new Random();
+        private static volatile int _lastUsedPortOffset = 0;
 
         public static string GetRandomLocalUrl() => $"http://localhost:{GetRandomPort()}";
 
         public static int GetRandomPort()
         {
-            lock (Random) {
-                return Random.Next(10000) + 40000;
-            }
+            var portOffset = Interlocked.Increment(ref _lastUsedPortOffset);
+            return 25000 + (portOffset % 25000);
         }
     }
 }
