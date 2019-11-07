@@ -28,7 +28,7 @@ namespace Stl.Tests.Collections
             var zList = lease.List;
 
             foreach (var i in list) zList.Add(i);
-            zList.Should().Equal(list);
+            zList.ToArray().Should().Equal(list);
 
             for (var _ = 0; _ < 5; _++) {
                 if (zList.Count == 0)
@@ -38,16 +38,16 @@ namespace Stl.Tests.Collections
                 var item = zList[idx];
                 zList.RemoveAt(idx);
                 list.RemoveAt(idx);
-                zList.Should().Equal(list);
+                zList.ToArray().Should().Equal(list);
 
                 idx = _rnd.Next(list.Count);
                 zList.Insert(idx, item);
                 list.Insert(idx, item);
-                zList.Should().Equal(list);
+                zList.ToArray().Should().Equal(list);
 
                 idx = _rnd.Next(list.Count);
                 zList[idx] = zList[idx];
-                zList.Should().Equal(list);
+                zList.ToArray().Should().Equal(list);
             }
         }
     }

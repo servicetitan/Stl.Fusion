@@ -6,15 +6,16 @@ using Stl.Internal;
 
 namespace Stl.Collections
 {
-    // The list that typically requires zero allocations;
+    // List-like struct that typically requires zero allocations
+    // (it relies on MemoryPool<T>.Shared & disposes its buffer);
     // it is supposed to be used as a temp. buffer in various
     // enumeration scenarios. 
-    public struct ZList<T> : IList<T>
+    public ref struct ZList<T>
     {
         public static Lease Rent(int capacity = MinCapacity) 
             => new Lease(new ZList<T>(capacity));
 
-        public struct Lease : IDisposable
+        public ref struct Lease
         {
             public ZList<T> List;
 
@@ -27,7 +28,7 @@ namespace Stl.Collections
             }
         }
 
-        public struct Enumerator : IEnumerator<T>
+        public ref struct Enumerator
         {
             private ZList<T> _list;
             private int _index;
@@ -40,7 +41,6 @@ namespace Stl.Collections
 
             public bool MoveNext() => ++_index < _list.Count;
             public void Reset() => _index = -1;
-            object? IEnumerator.Current => Current;
             public T Current => _list[_index];
             public void Dispose() { }
         }
@@ -52,7 +52,7 @@ namespace Stl.Collections
         public Memory<T> Buffer => _lease.Memory;
         public int Capacity => Buffer.Length;
         public int Count { get; private set; }
-        public bool IsReadOnly => false;
+        public Span<T> Span => _lease.Memory.Span.Slice(0, Count);
 
         public T this[int index] {
             get => index < Count ? Buffer.Span[index] : throw new IndexOutOfRangeException();
@@ -70,9 +70,8 @@ namespace Stl.Collections
             Count = 0;
         }
 
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
         Enumerator GetEnumerator() => new Enumerator(this); 
+        public T[] ToArray() => Span.ToArray();
 
         public void Add(T item)
         {
@@ -143,14 +142,5 @@ namespace Stl.Collections
 
         public void CopyTo(T[] array, int arrayIndex) 
             => Buffer.Span.CopyTo(array.AsSpan().Slice(arrayIndex));
-
-        // These methods aren't supported b/c otherwise
-        // ZList<T> should have "where T : IEquatable<T>" constraint
-        public bool Contains(T item) 
-            => throw new NotSupportedException();
-        public bool Remove(T item)
-            => throw new NotSupportedException();
-        public int IndexOf(T item)
-            => throw new NotSupportedException();
     }
 }
