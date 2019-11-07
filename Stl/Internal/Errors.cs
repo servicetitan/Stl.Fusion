@@ -6,6 +6,15 @@ namespace Stl.Internal
 {
     public static class Errors
     {
+        public static Exception MustBeUnfrozen() =>
+            new InvalidOperationException("The object must be unfrozen.");
+        public static Exception MustBeUnfrozen(string paramName) =>
+            new ArgumentException("The object must be unfrozen.", paramName);
+        public static Exception MustBeFrozen() =>
+            new InvalidOperationException("The object must be frozen.");
+        public static Exception MustBeFrozen(string paramName) =>
+            new ArgumentException("The object must be frozen.", paramName);
+
         public static Exception InvokerIsAlreadyRunning() =>
             new InvalidOperationException("Can't perform this action while invocation is already in progress.");
 
