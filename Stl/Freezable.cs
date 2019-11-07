@@ -24,6 +24,7 @@ namespace Stl
         {
             if (!freezable.IsFrozen) throw Errors.MustBeFrozen();
         }
+
         public static void ThrowIfUnfrozen(this IFreezable freezable, string paramName)
         {
             if (!freezable.IsFrozen) throw Errors.MustBeFrozen(paramName);
@@ -33,7 +34,8 @@ namespace Stl
         {
             if (freezable.IsFrozen) throw Errors.MustBeUnfrozen();
         }
-        public static void ThrowIfFrozen(this IFreezable freezable, string? paramName = null)
+
+        public static void ThrowIfFrozen(this IFreezable freezable, string paramName)
         {
             if (freezable.IsFrozen) throw Errors.MustBeUnfrozen(paramName);
         }

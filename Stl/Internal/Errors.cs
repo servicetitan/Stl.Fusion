@@ -28,6 +28,10 @@ namespace Stl.Internal
         public static Exception UnexpectedMemberType(string memberType) =>
             new InvalidOperationException($"Unexpected member type: {memberType}");
 
+
+        public static Exception ZListIsTooLong() =>
+            new InvalidOperationException("ZList<T> is too long.");
+
         public static Exception QueueSizeMustBeGreaterThanZero(string paramName) =>
             new ArgumentOutOfRangeException(paramName, "Queue size must be > 0.");
         public static Exception BufferLengthMustBeGreaterThanOne(string paramName) =>
