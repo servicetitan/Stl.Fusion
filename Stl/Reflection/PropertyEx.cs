@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 
 namespace Stl.Reflection
 {
@@ -10,6 +13,39 @@ namespace Stl.Reflection
             new ConcurrentDictionary<(Type, Symbol, bool), Delegate>();
         private static readonly ConcurrentDictionary<(Type, Symbol, bool), Delegate> _setterCache =
             new ConcurrentDictionary<(Type, Symbol, bool), Delegate>();
+        private static readonly ConcurrentDictionary<(Type, Delegate, BindingFlags), ReadOnlyMemory<Symbol>> _findPropertiesCache =
+            new ConcurrentDictionary<(Type, Delegate, BindingFlags), ReadOnlyMemory<Symbol>>();
+
+        // Note that predicate is used as cache key here, so you shouldn't pass
+        // closure predicates into this method!  
+        public static ReadOnlyMemory<Symbol> FindProperties(this Type type, Func<PropertyInfo, bool> predicate, 
+            BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
+        {
+            var key = (type, predicate, bindingFlags);
+            if (_findPropertiesCache.TryGetValue(key, out var r))
+                return r;
+            lock (_findPropertiesCache) {
+                if (_findPropertiesCache.TryGetValue(key, out r))
+                    return r;
+                r = (
+                    from property in type.GetProperties(bindingFlags) 
+                    where predicate.Invoke(property) 
+                    select new Symbol(property.Name)
+                    ).ToArray();
+                _findPropertiesCache[key] = r;
+                return r;
+            }
+        }
+
+        public static T Get<T>(object target, Symbol propertyName) 
+            => GetGetter<T>(target.GetType(), propertyName).Invoke(target);
+        public static object GetUntyped(object target, Symbol propertyName) 
+            => GetGetter<object>(target.GetType(), propertyName, true).Invoke(target);
+
+        public static void Set<T>(object target, Symbol propertyName, T value) 
+            => GetSetter<T>(target.GetType(), propertyName).Invoke(target, value);
+        public static void SetUntyped(object target, Symbol propertyName, object value) 
+            => GetSetter<object>(target.GetType(), propertyName, true).Invoke(target, value);
 
         public static Func<object, TProperty> GetGetter<TProperty>(this Type type, Symbol propertyName, bool isValueUntyped = false)
             => (Func<object, TProperty>) GetGetter(type, propertyName, isValueUntyped);

@@ -1,6 +1,8 @@
 using System;
+using System.Reflection;
 using System.Threading.Tasks;
 using FluentAssertions;
+using FluentAssertions.Common;
 using Stl.Async;
 using Stl.Reflection;
 using Xunit;
@@ -9,9 +11,25 @@ namespace Stl.Tests.Reflection
 {
     public class PropertyExTest
     {
-        public Task TaskProperty { get; set; }
+        public Task TaskProperty { get; set; } = Task.CompletedTask;
         public bool BoolProperty { get; set; }
         
+        [Fact]
+        public void FindPropertiesTest()
+        {
+            var type = GetType();
+            var boolPropertyName = new Symbol(nameof(BoolProperty));
+            var taskPropertyName = new Symbol(nameof(TaskProperty));
+
+            type.FindProperties(_ => true, 
+                    BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+                .ToArray().Should().BeEquivalentTo(new [] {boolPropertyName, taskPropertyName});
+            type.FindProperties(p => p.DeclaringType == type)
+                .ToArray().Should().BeEquivalentTo(new [] {boolPropertyName, taskPropertyName});
+            type.FindProperties(p => typeof(Task).IsAssignableFrom(p.PropertyType))
+                .ToArray().Should().BeEquivalentTo(new [] {taskPropertyName});
+        }
+
         [Fact]
         public void BoolPropertyTest()
         {
@@ -44,6 +62,11 @@ namespace Stl.Tests.Reflection
             BoolProperty.Should().BeFalse();
             untypedSetter.Invoke(this, true);
             BoolProperty.Should().BeTrue();
+
+            PropertyEx.Set(this, propertyName, false);
+            PropertyEx.Get<bool>(this, propertyName).Should().BeFalse();
+            PropertyEx.SetUntyped(this, propertyName, true);
+            PropertyEx.GetUntyped(this, propertyName).Should().Be(true);
         }
         
         [Fact]
