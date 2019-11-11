@@ -2,6 +2,7 @@ using System;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Stl.ImmutableModel.Internal;
+using Stl.ImmutableModel.Reflection;
 
 namespace Stl.ImmutableModel
 {
@@ -10,12 +11,26 @@ namespace Stl.ImmutableModel
     public abstract class NodeBase: INode, ISerializable
     {
         public virtual Key Key { get; protected set; }
-        public Symbol LocalKey => Key.Parts.Tail;
-
+        public bool IsFrozen { get; protected set; }
+        
         protected NodeBase(Key key) => Key = key;
 
         public override string ToString() => $"{GetType().Name}({Key})";
+
+        // IFreezable
         
+        public virtual void Freeze()
+        {
+            IsFrozen = true;
+        }
+
+        public virtual IFreezable BaseDefrost()
+        {
+            var clone = (NodeBase) MemberwiseClone();
+            clone.IsFrozen = false;
+            return clone;
+        }
+
         // Serialization
 
         protected NodeBase(SerializationInfo info, StreamingContext context)

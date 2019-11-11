@@ -1,11 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Stl.ImmutableModel.Reflection;
 
 namespace Stl.ImmutableModel
 {
     public static class NodeEx
     {
+        public static NodeTypeInfo GetNodeType(this INode node) 
+            => NodeTypeInfo.Get(node.GetType());
+        
         // Dual* methods
 
         public static IEnumerable<KeyValuePair<Symbol, object?>> DualGetItems(this INode node) 

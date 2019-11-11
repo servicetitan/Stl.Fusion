@@ -9,6 +9,6 @@ namespace Stl.ImmutableModel
         IExtendableNode BaseWithAllExt(IEnumerable<(Symbol Extension, object? Value)> extensions);
     }
 
-    public interface IExtensionNode : ISimpleNode
+    public interface IExtensionNode : INode
     { }
 }

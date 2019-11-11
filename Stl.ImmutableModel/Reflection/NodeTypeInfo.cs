@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
@@ -16,7 +17,10 @@ namespace Stl.ImmutableModel.Reflection
 
         public Type Type { get; }
         public NodeKind Kind { get; protected set; }
-        public IReadOnlyDictionary<Symbol, INodePropertyInfo> NativeProperties { get; protected set; }
+        public IReadOnlyDictionary<Symbol, INodePropertyInfo> Properties { get; protected set; } =
+            ImmutableDictionary<Symbol, INodePropertyInfo>.Empty;
+        public IReadOnlyDictionary<Symbol, INodePropertyInfo> NodeProperties { get; protected set; } =
+            ImmutableDictionary<Symbol, INodePropertyInfo>.Empty;
 
         public static NodeTypeInfo Get(Type type)
         {
@@ -42,8 +46,6 @@ namespace Stl.ImmutableModel.Reflection
         {
             Type = type;
             Kind = typeof(ICollectionNode).IsAssignableFrom(type) ? NodeKind.Collection : NodeKind.Simple;
-            NativeProperties = new ReadOnlyDictionary<Symbol, INodePropertyInfo>(
-                new Dictionary<Symbol, INodePropertyInfo>());
         }
     }
 }

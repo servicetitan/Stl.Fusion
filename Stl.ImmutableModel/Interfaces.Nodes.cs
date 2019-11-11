@@ -1,11 +1,12 @@
 using System.Collections.Generic;
+using Stl.ImmutableModel.Reflection;
 
 namespace Stl.ImmutableModel
 {
-    public interface INode
+    public interface INode : IFreezable
     {
         Key Key { get; }
-        Symbol LocalKey { get; }
+        Symbol LocalKey => Key.Parts.Tail;
     }
 
     public interface ISimpleNode : INode, IReadOnlyDictionaryPlus<Symbol, object?>
