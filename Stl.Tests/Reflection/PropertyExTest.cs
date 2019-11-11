@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using FluentAssertions;
 using FluentAssertions.Common;
+using FluentAssertions.Execution;
 using Stl.Async;
 using Stl.Reflection;
 using Xunit;
@@ -50,6 +51,15 @@ namespace Stl.Tests.Reflection
             var setter = type.GetSetter<bool>(propertyName);
             var untypedSetter = type.GetSetter<object>(propertyName, true);
 
+            if (getter == null || untypedGetter == null || setter == null || untypedSetter == null) {
+                getter.Should().NotBeNull();
+                untypedGetter.Should().NotBeNull();
+                setter.Should().NotBeNull();
+                untypedSetter.Should().NotBeNull();
+                throw new AssertionFailedException(
+                    "We shouldn't get here - this throw is solely to suppress later nullability warnings.");
+            }
+
             BoolProperty = false;
             getter.Invoke(this).Should().BeFalse();
             untypedGetter.Invoke(this).Should().Equals(false);
@@ -87,6 +97,15 @@ namespace Stl.Tests.Reflection
             var untypedGetter = type.GetGetter<object>(propertyName, true);
             var setter = type.GetSetter<Task>(propertyName);
             var untypedSetter = type.GetSetter<object>(propertyName, true);
+
+            if (getter == null || untypedGetter == null || setter == null || untypedSetter == null) {
+                getter.Should().NotBeNull();
+                untypedGetter.Should().NotBeNull();
+                setter.Should().NotBeNull();
+                untypedSetter.Should().NotBeNull();
+                throw new AssertionFailedException(
+                    "We shouldn't get here - this throw is solely to suppress later nullability warnings.");
+            }
 
             var falseTask = Task.FromResult(false);
             var trueTask = Task.FromResult(true);

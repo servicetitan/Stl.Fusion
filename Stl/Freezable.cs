@@ -5,7 +5,7 @@ namespace Stl
     public interface IFreezable 
     {
         bool IsFrozen { get; }
-        void Freeze();
+        void Freeze(); // Must freeze every reachable IFreezable too!
 
         IFreezable BaseDefrost();
     }
