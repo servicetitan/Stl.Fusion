@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
+using Stl.ImmutableModel.Reflection;
 
 namespace Stl.ImmutableModel 
 {
@@ -9,6 +10,8 @@ namespace Stl.ImmutableModel
     public abstract class SimpleNodeBase : ImmutableDictionaryNodeBase<Symbol, object?>, 
         IExtendableNode
     {
+        internal static NodeTypeInfo CreateNodeTypeInfo(Type type) => new SimpleNodeTypeInfo(type);
+
         protected SimpleNodeBase(Key key) : base(key) { }
         protected SimpleNodeBase(SerializationInfo info, StreamingContext context) : base(info, context) { }
 
@@ -26,6 +29,6 @@ namespace Stl.ImmutableModel
         public IExtendableNode BaseWithAllExt(IEnumerable<(Symbol Extension, object? Value)> extensions)
             => BaseWith<SimpleNodeBase>(extensions.Select(p => 
                 // Explicit type spec. is needed to suppress nullability diff. warning
-                (p.Extension, p.Value != null ? Option.Some<object?>(p.Value) : default)!)); 
+                (p.Extension, p.Value != null ? Option.Some<object?>(p.Value) : default)!));
     }
 }

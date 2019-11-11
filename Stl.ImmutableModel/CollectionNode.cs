@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
+using Stl.ImmutableModel.Reflection;
 
 namespace Stl.ImmutableModel 
 {
@@ -9,6 +10,8 @@ namespace Stl.ImmutableModel
     public class CollectionNode<T> : ImmutableDictionaryNodeBase<Symbol, T>, 
         IImmutableDictionaryBasedCollectionNode<T>
     {
+        internal static NodeTypeInfo CreateNodeTypeInfo(Type type) => new CollectionNodeTypeInfo(type);
+
         public CollectionNode(Key key) : base(key) { }
         protected CollectionNode(SerializationInfo info, StreamingContext context) : base(info, context) { }
 

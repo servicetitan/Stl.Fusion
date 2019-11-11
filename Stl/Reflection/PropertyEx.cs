@@ -138,7 +138,8 @@ namespace Stl.Reflection
             }
         }
 
-        private static PropertyInfo? GetProperty(Type type, Symbol propertyName) 
+        // Prefers public properties over private ones
+        public static PropertyInfo? GetProperty(Type type, Symbol propertyName) 
             => type.GetProperty(propertyName, 
                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.IgnoreCase | BindingFlags.FlattenHierarchy)
                ?? type.GetProperty(propertyName, 
