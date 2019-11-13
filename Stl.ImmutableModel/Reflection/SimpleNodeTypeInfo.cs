@@ -22,7 +22,7 @@ namespace Stl.ImmutableModel.Reflection
                     continue;
                 var propertyName = new Symbol(property.Name);
                 var propertyInfoType = typeof(NodePropertyInfo<>).MakeGenericType(property.PropertyType);
-                var propertyInfo = (INodePropertyInfo) Activator.CreateInstance(propertyInfoType, type, propertyName);
+                var propertyInfo = (INodePropertyInfo) Activator.CreateInstance(propertyInfoType, type, propertyName)!;
                 properties.Add(propertyName, propertyInfo);
             }
             var nodeProperties = properties

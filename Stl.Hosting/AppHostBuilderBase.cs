@@ -220,7 +220,7 @@ namespace Stl.Hosting
             testAppHostBuilder?.Implementation?.InvokePostBuilders(state.PluginHostBuilder);
             state.PluginHost = state.PluginHostBuilder.Build();
             state.CliExitCode = ProcessCommandLine();
-            LockOptions();
+            Freeze();
             return state.Host;
         }
 

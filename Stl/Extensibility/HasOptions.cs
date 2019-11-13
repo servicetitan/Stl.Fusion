@@ -1,54 +1,51 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Stl.Extensibility
 {
-    public interface IHasOptions : IEnumerable<KeyValuePair<object, object>>
+    public interface IHasOptions : IFreezable, IEnumerable<KeyValuePair<Symbol, object>>
     {
-        // Shouldn't store any options with null values
-        void SetOption(object key, object? value);
-        object? GetOption(object key);
-        bool HasOption(object key);
-        void LockOptions();
+        // Shouldn't store any options with null values; passing null = removing the option
+        bool HasOption(Symbol key);
+        object? GetOption(Symbol key);
+        void SetOption(Symbol key, object? value);
     }
 
-    public static class HasOptionsEx
+    public abstract class HasOptionsBase : FreezableBase, IHasOptions
     {
-        [return: MaybeNull]
-        public static TValue GetOption<TValue>(this IHasOptions hasOptions, object key) 
-            // ReSharper disable once HeapView.BoxingAllocation
-            => (TValue) (hasOptions.GetOption(key) ?? default(TValue)!);
-        public static void SetOption<TValue>(this IHasOptions hasOptions, object key, TValue value) 
-            => hasOptions.SetOption(key, value);
-    }
-
-    public abstract class HasOptionsBase : IHasOptions
-    {
-        protected IDictionary<object, object> Options { get; private set; } = 
-            new Dictionary<object, object>();
+        protected IDictionary<Symbol, object> Options { get; private set; } = 
+            new Dictionary<Symbol, object>();
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        public IEnumerator<KeyValuePair<object, object>> GetEnumerator() => Options.GetEnumerator();
+        public IEnumerator<KeyValuePair<Symbol, object>> GetEnumerator() => Options.GetEnumerator();
 
         // The intent is to keep these methods exposed only via IHasOptions
-        bool IHasOptions.HasOption(object key) => HasOption(key);
-        object? IHasOptions.GetOption(object key) => GetOption(key); 
-        void IHasOptions.SetOption(object key, object? value) => SetOption(key, value); 
-        void IHasOptions.LockOptions() => LockOptions();
+        bool IHasOptions.HasOption(Symbol key) => HasOption(key);
+        protected bool HasOption(Symbol key) => Options.ContainsKey(key);
+        
+        object? IHasOptions.GetOption(Symbol key) => GetOption(key); 
+        protected object? GetOption(Symbol key) 
+            => Options.TryGetValue(key, out var value) ? value : null;
 
-        // And via protected members
-        protected bool HasOption(object key) => Options.ContainsKey(key);
-        protected void SetOption(object key, object? value)
+        void IHasOptions.SetOption(Symbol key, object? value) => SetOption(key, value); 
+        protected void SetOption(Symbol key, object? value)
         {
+            this.ThrowIfFrozen();
             if (value == null)
                 Options.Remove(key);
             else 
                 Options[key] = value;
         }
-        protected object? GetOption(object key) 
-            => Options.TryGetValue(key, out var value) ? value : null;
-        protected void LockOptions() => Options = new ReadOnlyDictionary<object, object>(Options); 
+
+        public override void Freeze()
+        {
+            if (IsFrozen) return;
+            foreach (var optionValue in Options.Values)
+                if (optionValue is IFreezable freezable)
+                    freezable.Freeze();
+            Options = new ReadOnlyDictionary<Symbol, object>(Options);
+            base.Freeze();
+        }
     }
 }

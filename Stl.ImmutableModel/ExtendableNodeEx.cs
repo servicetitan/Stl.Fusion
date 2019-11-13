@@ -1,14 +1,12 @@
 using System;
 using System.Collections.Generic;
-using Stl.ImmutableModel.Internal;
+using Stl.Reflection;
 
 namespace Stl.ImmutableModel
 {
     public static class ExtendableNodeEx
     {
-        public static readonly string PropertyKeyPrefix = "@Ext_";
-
-        public static Symbol GetExtensionKey(Type type) => ExtensionKeyCache.Get(type);
+        public static Symbol GetExtensionKey(Type type) => type.ToSymbol();
 
         // GetExtension(s)
 
@@ -32,7 +30,7 @@ namespace Stl.ImmutableModel
             this IExtendableNode node)
         {
             foreach (var (k, v) in node.Items)
-                if (k.Value.StartsWith(PropertyKeyPrefix))
+                if (k.Value.StartsWith(TypeEx.SymbolPrefix))
                     yield return (k, v);
         }
 

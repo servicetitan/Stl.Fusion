@@ -6,7 +6,7 @@ namespace Stl.ImmutableModel
     public interface INode : IFreezable
     {
         Key Key { get; }
-        Symbol LocalKey => Key.Parts.Tail;
+        Symbol LocalKey { get; }
     }
 
     public interface ISimpleNode : INode, IReadOnlyDictionaryPlus<Symbol, object?>

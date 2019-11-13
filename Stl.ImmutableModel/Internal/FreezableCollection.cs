@@ -66,4 +66,5 @@ namespace Stl.ImmutableModel.Internal
                 return c.Remove(item);
             return false;
         }
+    }
 }

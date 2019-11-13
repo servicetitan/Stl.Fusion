@@ -1,15 +1,23 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Stl.Internal;
 
 namespace Stl.Reflection
 {
     public static class TypeEx
     {
+        public static readonly string SymbolPrefix = "@";
+
         private static readonly Regex MethodNameRe = new Regex("[^\\w\\d]+", RegexOptions.Compiled);
         private static readonly Regex MethodNameTailRe = new Regex("_+$", RegexOptions.Compiled);
         private static readonly Regex GenericMethodNameTailRe = new Regex("_\\d+$", RegexOptions.Compiled);
+        private static readonly ConcurrentDictionary<(Type, bool, bool), Symbol> ToMethodNameCache =
+            new ConcurrentDictionary<(Type, bool, bool), Symbol>();
+        private static readonly ConcurrentDictionary<Type, Symbol> ToSymbolCache =
+            new ConcurrentDictionary<Type, Symbol>();
 
         public static IEnumerable<Type> GetAllBaseTypes(this Type type)
         {
@@ -22,18 +30,27 @@ namespace Stl.Reflection
 
         public static string ToMethodName(this Type type, bool useFullName = false, bool useFullArgumentNames = false)
         {
-            var name = useFullName ? type.FullName : type.Name;
-            if (type.IsGenericType && !type.IsGenericTypeDefinition) {
-                name = type.GetGenericTypeDefinition().ToMethodName(useFullName);
-                name = GenericMethodNameTailRe.Replace(name, "");
-                var argumentNames = type.GetGenericArguments()
-                    .Select(t => t.ToMethodName(useFullArgumentNames, useFullArgumentNames));
-                name = string.Join('_', EnumerableEx.One(name).Concat(argumentNames));
-            }
-
-            name = MethodNameRe.Replace(name, "_");
-            name = MethodNameTailRe.Replace(name, "");
-            return name;
+            var key = (type, useFullName, useFullArgumentNames);
+            return ToMethodNameCache.GetOrAdd(key, key1 => {
+                var (type1, useFullName1, useFullArgumentNames1) = key1;
+                var name = useFullName1 ? type1.FullName : type1.Name;
+                if (type1.IsGenericType && !type1.IsGenericTypeDefinition) {
+                    name = type1.GetGenericTypeDefinition().ToMethodName(useFullName1);
+                    name = GenericMethodNameTailRe.Replace(name, "");
+                    var argumentNames = type1.GetGenericArguments()
+                        .Select(t => t.ToMethodName(useFullArgumentNames1, useFullArgumentNames1));
+                    name = string.Join('_', EnumerableEx.One(name).Concat(argumentNames));
+                }
+                name = MethodNameRe.Replace(name, "_");
+                name = MethodNameTailRe.Replace(name, "");
+                return name;
+            });
         }
+
+        public static Symbol ToSymbol(this Type type, bool withPrefix = true) 
+            => withPrefix
+                ? ToSymbolCache.GetOrAdd(type, type1 =>
+                    new Symbol(SymbolPrefix + type1.ToMethodName(true, true)))
+                : (Symbol) type.ToMethodName(true, true);
     }
 }

@@ -1,4 +1,5 @@
-using Stl.Internal;
+using System;
+using Newtonsoft.Json;
 
 namespace Stl
 {
@@ -10,34 +11,24 @@ namespace Stl
         IFreezable BaseDefrost();
     }
 
-    public static class FreezableEx
+    public abstract class FreezableBase: IFreezable
     {
-        // This method isn't a part of the interface mainly because otherwise
-        // it's going to be a virtual generic method (i.e. w/ super slow invocation).
-        public static T Defrost<T>(this T freezable) 
-            where T : IFreezable 
-            => (T) freezable.BaseDefrost(); 
-
-        // ThrowIfXxx
-
-        public static void ThrowIfUnfrozen(this IFreezable freezable)
+        [JsonIgnore]
+        [field: NonSerialized]
+        public bool IsFrozen { get; private set; }
+        
+        public virtual void Freeze()
         {
-            if (!freezable.IsFrozen) throw Errors.MustBeFrozen();
+            // The implementors of this method should
+            // recursively freeze the children first!
+            IsFrozen = true;
         }
 
-        public static void ThrowIfUnfrozen(this IFreezable freezable, string paramName)
+        public virtual IFreezable BaseDefrost()
         {
-            if (!freezable.IsFrozen) throw Errors.MustBeFrozen(paramName);
-        }
-
-        public static void ThrowIfFrozen(this IFreezable freezable)
-        {
-            if (freezable.IsFrozen) throw Errors.MustBeUnfrozen();
-        }
-
-        public static void ThrowIfFrozen(this IFreezable freezable, string paramName)
-        {
-            if (freezable.IsFrozen) throw Errors.MustBeUnfrozen(paramName);
+            var clone = (FreezableBase) MemberwiseClone();
+            clone.IsFrozen = false;
+            return clone;
         }
     }
 }

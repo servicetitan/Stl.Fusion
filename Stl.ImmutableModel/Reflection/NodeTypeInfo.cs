@@ -36,7 +36,7 @@ namespace Stl.ImmutableModel.Reflection
                     .FirstOrDefault();
                 if (mi == null)
                     throw Errors.CannotCreateNodeTypeInfo(type);
-                r = (NodeTypeInfo) mi.Invoke(null, new object?[] {type});
+                r = (NodeTypeInfo) mi.Invoke(null, new object?[] {type})!;
                 _cache[type] = r;
                 return r;
             }
