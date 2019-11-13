@@ -11,9 +11,8 @@ namespace Stl.ImmutableModel
     [JsonConverter(typeof(KeyJsonConverter))]
     public readonly struct Key : IEquatable<Key>, ISerializable
     {
-        // Must be the one that's never used for sure!
         public static readonly Key Unspecified = 
-            new Key(SymbolList.Parse($"(Unspecified)|{Guid.NewGuid():N}"));
+            new Key(SymbolList.Parse($"(Unspecified-tImsNKaVdeLdCHEacpkHppBFvg9mbRrz)"));
         public static readonly Key Root = new Key(SymbolList.Root);
 
         public SymbolList Parts { get; }
@@ -32,7 +31,7 @@ namespace Stl.ImmutableModel
 
         public void Deconstruct(out SymbolList? head, out Symbol tail)
         {
-            head = Parts.Head;
+            head = Parts.Prefix;
             tail = Parts.Tail;
         }
 

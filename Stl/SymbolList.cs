@@ -17,15 +17,17 @@ namespace Stl
 
         internal int HashCode { get; }
         public int SegmentCount { get; }
-        public SymbolList? Head { get; }
+        public SymbolList? Prefix { get; }
         public Symbol Tail { get; }
+        public Symbol Head { get; }
         public string FormattedValue => SymbolListFormatter.Default.ToString(this);
 
-        public SymbolList(SymbolList? head, Symbol tail)
+        public SymbolList(SymbolList? prefix, Symbol tail)
         {
-            Head = head;
+            Prefix = prefix;
             Tail = tail;
-            SegmentCount = (Head?.SegmentCount ?? 0) + 1;
+            Head = Prefix?.Head ?? Tail;
+            SegmentCount = (Prefix?.SegmentCount ?? 0) + 1;
             HashCode = ComputeHashCode();
         }
 
@@ -33,12 +35,13 @@ namespace Stl
         {
             if (segments.Length == 0) 
                 throw new ArgumentOutOfRangeException(nameof(segments));
-            SymbolList? head = null;
+            SymbolList? prefix = null;
             for (var index = 0; index < segments.Length - 1; index++) 
-                head = new SymbolList(head, segments[index]);
-            Head = head;
+                prefix = new SymbolList(prefix, segments[index]);
+            Prefix = prefix;
             Tail = segments[^1];
-            SegmentCount = (Head?.SegmentCount ?? 0) + 1;
+            Head = Prefix?.Head ?? Tail;
+            SegmentCount = (Prefix?.SegmentCount ?? 0) + 1;
             HashCode = ComputeHashCode();
         }
 
@@ -54,7 +57,7 @@ namespace Stl
 
         // Conversion & operators
 
-        public static implicit operator SymbolList((SymbolList Head, Symbol Tail) source) => new SymbolList(source.Head, source.Tail);
+        public static implicit operator SymbolList((SymbolList Prefix, Symbol Tail) source) => new SymbolList(source.Prefix, source.Tail);
         public static explicit operator string(SymbolList source) => source.FormattedValue;
 
         // Operators
@@ -67,7 +70,7 @@ namespace Stl
         
         public bool Equals(SymbolList? other) 
             => other != null && HashCode == other.HashCode 
-                && Tail == other.Tail && (Head?.Equals(other.Head) ?? other.Head == null);
+                && Tail == other.Tail && (Prefix?.Equals(other.Prefix) ?? other.Prefix == null);
         public override bool Equals(object? obj) 
             => ReferenceEquals(this, obj) || obj is SymbolList other && Equals(other);
         public override int GetHashCode() => HashCode;
@@ -76,9 +79,9 @@ namespace Stl
         {
             if (other == null)
                 return 1;
-            if (Head == null)
-                return other.Head == null ? Tail.CompareTo(other.Tail) : -1;
-            var result = Head.CompareTo(other.Head);
+            if (Prefix == null)
+                return other.Prefix == null ? Tail.CompareTo(other.Tail) : -1;
+            var result = Prefix.CompareTo(other.Prefix);
             return result != 0 ? result : Tail.CompareTo(other.Tail);
         }
 
@@ -94,8 +97,8 @@ namespace Stl
 
             SymbolList? list = this;
             for (; segmentCountDiff > 0; segmentCountDiff--)
-                list = list!.Head;
-            for (; list != null; list = list!.Head, prefix = prefix!.Head) {
+                list = list!.Prefix;
+            for (; list != null; list = list!.Prefix, prefix = prefix!.Prefix) {
                 if (list!.Tail != prefix!.Tail)
                     return false;
             }
@@ -112,14 +115,14 @@ namespace Stl
                 var index = 0;
                 while (current != null) {
                     result[index++] = current.Tail;
-                    current = current.Head;
+                    current = current.Prefix;
                 }
             }
             else {
                 var index = SegmentCount - 1;
                 while (current != null) {
                     result[index--] = current.Tail;
-                    current = current.Head;
+                    current = current.Prefix;
                 }
             }
 
@@ -131,7 +134,7 @@ namespace Stl
         private SymbolList(SerializationInfo info, StreamingContext context)
         {
             var parsed = Parse(info.GetString(nameof(FormattedValue)) ?? "");
-            Head = parsed.Head;
+            Prefix = parsed.Prefix;
             Tail = parsed.Tail;
             HashCode = parsed.HashCode;
         }
@@ -141,6 +144,6 @@ namespace Stl
         
         // Private methods
         
-        private int ComputeHashCode() => unchecked ((Head?.HashCode ?? 0) * 397 ^ Tail.HashCode);
+        private int ComputeHashCode() => unchecked ((Prefix?.HashCode ?? 0) * 397 ^ Tail.HashCode);
     }
 }

@@ -27,23 +27,23 @@ namespace Stl.ImmutableModel.Reflection
             MayItemBeFreezable = ItemType.MayCastSucceed(typeof(IFreezable));
         }
 
-        public override void GetChildFreezables(INode node, ZList<IFreezable> target)
+        public override void FindChildFreezables(INode node, ListBuffer<IFreezable> output)
         {
             if (!MayItemBeFreezable) return;
             var collectionNode = (ICollectionNode) node;
             foreach (var value in collectionNode.Values) {
                 if (value is IFreezable f)
-                    target.Add(f);
+                    output.Add(f);
             }
         }
 
-        public override void GetChildNodes(INode node, ZList<INode> target)
+        public override void FindChildNodes(INode node, ListBuffer<INode> output)
         {
             if (!MayItemBeNode) return;
             var collectionNode = (ICollectionNode) node;
             foreach (var value in collectionNode.Values) {
                 if (value is INode n)
-                    target.Add(n);
+                    output.Add(n);
             }
         }
     }

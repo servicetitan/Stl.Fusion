@@ -19,6 +19,9 @@ namespace Stl.Collections
             ImmutableDictionary<TKey, TValue>.Empty;
         private static readonly ImmutableDictionary<TKey, (DictionaryEntryChangeType ChangeType, TValue Value)> EmptyChanges = 
             ImmutableDictionary<TKey, (DictionaryEntryChangeType ChangeType, TValue Value)>.Empty;
+        
+        public static readonly ChangeTrackingDictionary<TKey, TValue> Empty 
+            = new ChangeTrackingDictionary<TKey, TValue>(EmptyDictionary);
 
         public readonly ImmutableDictionary<TKey, TValue> Base;
         public readonly ImmutableDictionary<TKey, TValue> Dictionary;

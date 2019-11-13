@@ -5,7 +5,8 @@ namespace Stl.ImmutableModel
 {
     public interface INode : IFreezable
     {
-        Key Key { get; }
+        Key Key { get; set; }
+        bool HasKey { get; }
         Symbol LocalKey { get; }
     }
 
@@ -20,7 +21,7 @@ namespace Stl.ImmutableModel
         
         object? this[Symbol key] { get; set; }
         bool ContainsKey(Symbol key);
-        bool TryGetValueUntyped(Symbol key, out object? value);
+        bool TryGetValue(Symbol key, out object? value);
         void Add(Symbol key, object? value);
         bool Remove(Symbol key);
     }

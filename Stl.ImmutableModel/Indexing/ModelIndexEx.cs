@@ -10,7 +10,7 @@ namespace Stl.ImmutableModel.Indexing
 
         public static INode? GetParent(this IModelIndex index, INode node)
         {
-            var parentPath = index.GetPath(node).Head;
+            var parentPath = index.GetPath(node).Prefix;
             return parentPath == null ? null : index.GetNodeByPath(parentPath);
         }
 
@@ -63,10 +63,10 @@ namespace Stl.ImmutableModel.Indexing
         public static (TIndex Index, ModelChangeSet ChangeSet) With<TIndex>(this TIndex index, SymbolList list, Option<object?> value)
             where TIndex : IModelIndex
         {
-            if (list.Head == null)
+            if (list.Prefix == null)
                 // Root update
                 return index.With(index.GetNodeByPath(list), (INode) value.Value!);
-            var source = index.GetNodeByPath(list.Head);
+            var source = index.GetNodeByPath(list.Prefix);
             var target = source.DualWith(list.Tail, value);
             return index.With(source, target);
         }

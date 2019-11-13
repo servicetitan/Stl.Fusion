@@ -54,7 +54,7 @@ namespace Stl.Tests.ImmutableModel.Indexing
             var idx = BuildModel();
             var cluster1 = idx.GetNode<Cluster>(Key.Parse("cluster1"));
             var vm2 = cluster1["vm2"];
-            var vm3 = new VirtualMachine(vm2.Key.Parts.Head! + "vm3")
+            var vm3 = new VirtualMachine(vm2.Key.Parts.Prefix! + "vm3")
                 .With(VirtualMachine.CapabilitiesSymbol, "caps3");
             
             var cluster1a = cluster1.WithRemoved(vm2).WithAdded(vm3);

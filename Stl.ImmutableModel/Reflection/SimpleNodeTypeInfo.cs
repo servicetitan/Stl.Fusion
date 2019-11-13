@@ -39,7 +39,7 @@ namespace Stl.ImmutableModel.Reflection
                 properties.Where(p => p.Value.MayBeFreezable).ToDictionary());
         }
 
-        public override void GetChildFreezables(INode node, ZList<IFreezable> target)
+        public override void FindChildFreezables(INode node, ListBuffer<IFreezable> output)
         {
             var simpleNode = (ISimpleNode) node;
             foreach (var (key, propertyInfo) in FreezableProperties) {
@@ -48,17 +48,17 @@ namespace Stl.ImmutableModel.Reflection
                     continue;
                 var value = getter.Invoke(simpleNode);
                 if (value is IFreezable f)
-                    target.Add(f);
+                    output.Add(f);
             }
 
             var hasOptions = (IHasOptions) simpleNode;
             foreach (var (_, option) in hasOptions) {
                 if (option is IFreezable f)
-                    target.Add(f);
+                    output.Add(f);
             }
         }
 
-        public override void GetChildNodes(INode node, ZList<INode> target)
+        public override void FindChildNodes(INode node, ListBuffer<INode> output)
         {
             var simpleNode = (ISimpleNode) node;
             foreach (var (key, propertyInfo) in NodeProperties) {
@@ -67,13 +67,13 @@ namespace Stl.ImmutableModel.Reflection
                     continue;
                 var value = getter.Invoke(simpleNode);
                 if (value is INode n)
-                    target.Add(n);
+                    output.Add(n);
             }
 
             var hasOptions = (IHasOptions) simpleNode;
             foreach (var (_, option) in hasOptions) {
                 if (option is INode n)
-                    target.Add(n);
+                    output.Add(n);
             }
         }
     }

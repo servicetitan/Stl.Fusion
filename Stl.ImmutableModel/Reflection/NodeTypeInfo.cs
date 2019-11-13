@@ -45,7 +45,7 @@ namespace Stl.ImmutableModel.Reflection
             Kind = typeof(ICollectionNode).IsAssignableFrom(type) ? NodeKind.Collection : NodeKind.Simple;
         }
 
-        public abstract void GetChildFreezables(INode node, ZList<IFreezable> target);
-        public abstract void GetChildNodes(INode node, ZList<INode> target);
+        public abstract void FindChildFreezables(INode node, ListBuffer<IFreezable> output);
+        public abstract void FindChildNodes(INode node, ListBuffer<INode> output);
     }
 }

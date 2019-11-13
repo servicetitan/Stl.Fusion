@@ -1,7 +1,5 @@
 using System;
 using System.Buffers;
-using System.Collections;
-using System.Collections.Generic;
 using Stl.Internal;
 
 namespace Stl.Collections
@@ -10,38 +8,38 @@ namespace Stl.Collections
     // (it relies on MemoryPool<T>.Shared & disposes its buffer);
     // it is supposed to be used as a temp. buffer in various
     // enumeration scenarios. 
-    public ref struct ZList<T>
+    public ref struct ListBuffer<T>
     {
         public static Lease Rent(int capacity = MinCapacity) 
-            => new Lease(new ZList<T>(capacity));
+            => new Lease(new ListBuffer<T>(capacity));
 
         public ref struct Lease
         {
-            public ZList<T> List;
+            public ListBuffer<T> Buffer;
 
-            internal Lease(ZList<T> list) => List = list;
+            internal Lease(ListBuffer<T> buffer) => Buffer = buffer;
 
             public void Dispose()
             {
-                List._lease?.Dispose();
-                List._lease = null!;
+                Buffer._lease?.Dispose();
+                Buffer._lease = null!;
             }
         }
 
         public ref struct Enumerator
         {
-            private ZList<T> _list;
+            private ListBuffer<T> _buffer;
             private int _index;
 
-            public Enumerator(ZList<T> list) : this()
+            public Enumerator(ListBuffer<T> buffer) : this()
             {
                 _index = -1;
-                _list = list;
+                _buffer = buffer;
             }
 
-            public bool MoveNext() => ++_index < _list.Count;
+            public bool MoveNext() => ++_index < _buffer.Count;
             public void Reset() => _index = -1;
-            public T Current => _list[_index];
+            public T Current => _buffer[_index];
             public void Dispose() { }
         }
 
@@ -62,7 +60,7 @@ namespace Stl.Collections
             }
         }
 
-        private ZList(int capacity)
+        private ListBuffer(int capacity)
         {
             if (capacity < MinCapacity)
                 capacity = MinCapacity;

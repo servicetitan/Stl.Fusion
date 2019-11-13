@@ -7,6 +7,9 @@ namespace Stl.ImmutableModel.Internal
         public static Exception InvalidUpdateKeyMismatch() =>
             new ArgumentException("Invalid update: source.Key != target.Key.");
 
+        public static Exception KeyIsNotSetYet() =>
+            new InvalidOperationException("Key isn't set yet.");
+
         public static Exception PropertyNotFound(Type type, string propertyName) =>
             new InvalidOperationException(
                 $"Type '{type.FullName}' doesn't have '{propertyName}' property.");

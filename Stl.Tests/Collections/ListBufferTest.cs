@@ -6,7 +6,7 @@ using Xunit;
 
 namespace Stl.Tests.Collections
 {
-    public class ZListTest
+    public class ListBufferTest
     {
         private readonly Random _rnd = new Random();
 
@@ -24,8 +24,8 @@ namespace Stl.Tests.Collections
 
         private void Test<T>(List<T> list)
         {
-            using var lease = ZList<T>.Rent();
-            var zList = lease.List;
+            using var lease = ListBuffer<T>.Rent();
+            var zList = lease.Buffer;
 
             foreach (var i in list) zList.Add(i);
             zList.ToArray().Should().Equal(list);

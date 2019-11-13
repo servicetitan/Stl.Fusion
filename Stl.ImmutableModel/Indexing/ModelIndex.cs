@@ -117,7 +117,7 @@ namespace Stl.ImmutableModel.Indexing
             CompareAndUpdateNode(path, source, target, ref changeSet);
 
             var tail = path.Tail;
-            path = path.Head;
+            path = path.Prefix;
             while (path != null) {
                 var sourceParent = this.GetNodeByPath(path);
                 var targetParent = sourceParent.DualWith(tail, Option.Some((object?) target));
@@ -125,7 +125,7 @@ namespace Stl.ImmutableModel.Indexing
                 source = sourceParent;
                 target = targetParent;
                 tail = path.Tail;
-                path = path.Head;
+                path = path.Prefix;
             }
             SetModel(target);
         }
