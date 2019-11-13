@@ -3,12 +3,18 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
+using Stl.Collections;
+using Stl.Extensibility;
 using Stl.Internal;
 
 namespace Stl.ImmutableModel.Reflection
 {
     public class SimpleNodeTypeInfo : NodeTypeInfo
     {
+        public IReadOnlyDictionary<Symbol, INodePropertyInfo> Properties { get; }
+        public IReadOnlyDictionary<Symbol, INodePropertyInfo> NodeProperties { get; }
+        public IReadOnlyDictionary<Symbol, INodePropertyInfo> FreezableProperties { get; }
+
         public SimpleNodeTypeInfo(Type type) : base(type)
         {
             if (Kind != NodeKind.Simple)
@@ -25,12 +31,50 @@ namespace Stl.ImmutableModel.Reflection
                 var propertyInfo = (INodePropertyInfo) Activator.CreateInstance(propertyInfoType, type, propertyName)!;
                 properties.Add(propertyName, propertyInfo);
             }
-            var nodeProperties = properties
-                .Where(p => typeof(INode).IsAssignableFrom(p.Value.PropertyInfo.PropertyType))
-                .ToDictionary();
-            
+
             Properties = new ReadOnlyDictionary<Symbol, INodePropertyInfo>(properties);
-            NodeProperties = new ReadOnlyDictionary<Symbol, INodePropertyInfo>(nodeProperties);
+            NodeProperties = new ReadOnlyDictionary<Symbol, INodePropertyInfo>(
+                properties.Where(p => p.Value.MayBeNode).ToDictionary());
+            FreezableProperties = new ReadOnlyDictionary<Symbol, INodePropertyInfo>(
+                properties.Where(p => p.Value.MayBeFreezable).ToDictionary());
+        }
+
+        public override void GetChildFreezables(INode node, ZList<IFreezable> target)
+        {
+            var simpleNode = (ISimpleNode) node;
+            foreach (var (key, propertyInfo) in FreezableProperties) {
+                var getter = (Func<ISimpleNode, object>?) propertyInfo.UntypedGetter;
+                if (getter == null)
+                    continue;
+                var value = getter.Invoke(simpleNode);
+                if (value is IFreezable f)
+                    target.Add(f);
+            }
+
+            var hasOptions = (IHasOptions) simpleNode;
+            foreach (var (_, option) in hasOptions) {
+                if (option is IFreezable f)
+                    target.Add(f);
+            }
+        }
+
+        public override void GetChildNodes(INode node, ZList<INode> target)
+        {
+            var simpleNode = (ISimpleNode) node;
+            foreach (var (key, propertyInfo) in NodeProperties) {
+                var getter = (Func<ISimpleNode, object>?) propertyInfo.UntypedGetter;
+                if (getter == null)
+                    continue;
+                var value = getter.Invoke(simpleNode);
+                if (value is INode n)
+                    target.Add(n);
+            }
+
+            var hasOptions = (IHasOptions) simpleNode;
+            foreach (var (_, option) in hasOptions) {
+                if (option is INode n)
+                    target.Add(n);
+            }
         }
     }
 }

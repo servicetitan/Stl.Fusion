@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
+using Stl.Collections;
 using Stl.ImmutableModel.Internal;
 using Stl.Reflection;
 
@@ -17,10 +18,6 @@ namespace Stl.ImmutableModel.Reflection
 
         public Type Type { get; }
         public NodeKind Kind { get; protected set; }
-        public IReadOnlyDictionary<Symbol, INodePropertyInfo> Properties { get; protected set; } =
-            ImmutableDictionary<Symbol, INodePropertyInfo>.Empty;
-        public IReadOnlyDictionary<Symbol, INodePropertyInfo> NodeProperties { get; protected set; } =
-            ImmutableDictionary<Symbol, INodePropertyInfo>.Empty;
 
         public static NodeTypeInfo Get(Type type)
         {
@@ -47,5 +44,8 @@ namespace Stl.ImmutableModel.Reflection
             Type = type;
             Kind = typeof(ICollectionNode).IsAssignableFrom(type) ? NodeKind.Collection : NodeKind.Simple;
         }
+
+        public abstract void GetChildFreezables(INode node, ZList<IFreezable> target);
+        public abstract void GetChildNodes(INode node, ZList<INode> target);
     }
 }

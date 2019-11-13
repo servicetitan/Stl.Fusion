@@ -1,34 +1,56 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Serialization;
+using Stl.Collections;
 using Stl.ImmutableModel.Reflection;
 
 namespace Stl.ImmutableModel 
 {
     [Serializable]
-    public abstract class SimpleNodeBase : ImmutableDictionaryNodeBase<Symbol, object?>, 
-        IExtendableNode
+    public abstract class SimpleNodeBase : NodeBase, ISimpleNode 
     {
         internal static NodeTypeInfo CreateNodeTypeInfo(Type type) => new SimpleNodeTypeInfo(type);
 
+        private Dictionary<Symbol, object>? _options = null;
+        private Dictionary<Symbol, object> Options => 
+            _options ??= new Dictionary<Symbol, object>?();
+
         protected SimpleNodeBase(Key key) : base(key) { }
-        protected SimpleNodeBase(SerializationInfo info, StreamingContext context) : base(info, context) { }
 
-        public ISimpleNode BaseWith(Symbol property, object? value)
-            => BaseWith<SimpleNodeBase>(property, Option.Some(value));
-        public ISimpleNode BaseWith(IEnumerable<(Symbol PropertyKey, object? Value)> changes)
-            => BaseWith<SimpleNodeBase>(changes.Select(p => (p.PropertyKey, Option.Some(p.Value))));
-        public ISimpleNode BaseWithout(Symbol property) 
-            => BaseWith<SimpleNodeBase>(property, Option.None<object?>());
+        public override void Freeze()
+        {
+            if (IsFrozen) return;
 
-        public IExtendableNode BaseWithExt(Symbol extension, object? value) 
-            => BaseWith<SimpleNodeBase>(extension,
-                // Explicit type spec. is needed to suppress nullability diff. warning
-                value != null ? Option.Some<object?>(value) : default);
-        public IExtendableNode BaseWithAllExt(IEnumerable<(Symbol Extension, object? Value)> extensions)
-            => BaseWith<SimpleNodeBase>(extensions.Select(p => 
-                // Explicit type spec. is needed to suppress nullability diff. warning
-                (p.Extension, p.Value != null ? Option.Some<object?>(p.Value) : default)!));
+            // Freezing child freezables
+            using var lease = ZList<IFreezable>.Rent();
+            var children = lease.List;
+            this.GetNodeType().GetChildFreezables(this, children);
+            foreach (var child in children)
+                child.Freeze();
+            
+            base.Freeze();
+        }
+
+        // IHasOptions implementation
+
+        IEnumerator IEnumerable.GetEnumerator() 
+            => ((IEnumerator?) _options?.GetEnumerator()) 
+                ?? Enumerable.Empty<object>().GetEnumerator();
+        IEnumerator<KeyValuePair<Symbol, object>> IEnumerable<KeyValuePair<Symbol, object>>.GetEnumerator() 
+            => ((IEnumerator<KeyValuePair<Symbol, object>>?) _options?.GetEnumerator()) 
+                ?? Enumerable.Empty<KeyValuePair<Symbol, object>>().GetEnumerator();
+
+        public bool HasOption(Symbol key) => _options?.ContainsKey(key) ?? false;
+        public object? GetOption(Symbol key) => _options?.GetValueOrDefault(key);
+        
+        public void SetOption(Symbol key, object? value)
+        {
+            this.ThrowIfFrozen();
+            if (value == null)
+                _options?.Remove(key);
+            else
+                Options[key] = value;
+        }
     }
 }

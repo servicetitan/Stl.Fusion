@@ -70,7 +70,7 @@ namespace Stl.Collections
             Count = 0;
         }
 
-        Enumerator GetEnumerator() => new Enumerator(this); 
+        public Enumerator GetEnumerator() => new Enumerator(this); 
         public T[] ToArray() => Span.ToArray();
 
         public void Add(T item)

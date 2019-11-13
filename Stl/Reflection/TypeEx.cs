@@ -28,6 +28,23 @@ namespace Stl.Reflection
             }
         }
 
+        public static bool MayCastSucceed(this Type castFrom, Type castTo)
+        {
+            if (castTo.IsSealed || castTo.IsValueType)
+                // AnyBase(SealedType) -> SealedType
+                return castFrom.IsAssignableFrom(castTo);
+            if (castFrom.IsSealed || castFrom.IsValueType)
+                // SealedType -> AnyBase(SealedType)
+                return castTo.IsAssignableFrom(castFrom);
+            if (castTo.IsInterface || castFrom.IsInterface)
+                // Not super obvious, but true
+                return true;
+            
+            // Both types are classes, so the cast may succeed
+            // only if one of them is a base of another
+            return castTo.IsAssignableFrom(castFrom) || castFrom.IsAssignableFrom(castTo);
+        }
+
         public static string ToMethodName(this Type type, bool useFullName = false, bool useFullArgumentNames = false)
         {
             var key = (type, useFullName, useFullArgumentNames);

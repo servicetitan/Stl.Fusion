@@ -11,6 +11,9 @@ namespace Stl.ImmutableModel.Reflection
         Type Type { get; }
         Symbol PropertyName { get; }
         PropertyInfo PropertyInfo { get; }
+        public bool MayBeNode { get; } 
+        public bool MayBeFreezable { get; } 
+
         MethodInfo? GetterInfo { get; }
         MethodInfo? SetterInfo { get; }
         Delegate? Getter { get; }
@@ -32,6 +35,9 @@ namespace Stl.ImmutableModel.Reflection
         public Type Type { get; }
         public Symbol PropertyName { get; }
         public PropertyInfo PropertyInfo { get; }
+        public bool MayBeNode { get; }
+        public bool MayBeFreezable { get; }
+
         public MethodInfo? GetterInfo { get; }
         public MethodInfo? SetterInfo { get; }
         Delegate? INodePropertyInfo.Getter => Getter;
@@ -49,6 +55,9 @@ namespace Stl.ImmutableModel.Reflection
             PropertyName = propertyName;
             PropertyInfo = PropertyEx.GetProperty(type, propertyName) 
                            ?? throw Errors.PropertyNotFound(type, propertyName);
+            MayBeNode = type.MayCastSucceed(typeof(NodeBase));
+            MayBeFreezable = type.MayCastSucceed(typeof(IFreezable));
+
             GetterInfo = PropertyInfo.GetGetMethod();
             SetterInfo = PropertyInfo.GetSetMethod();
             Getter = (Func<ISimpleNode, T>?) type.GetGetter(propertyName, false);
