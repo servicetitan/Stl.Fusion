@@ -10,7 +10,7 @@ namespace Stl.ImmutableModel
     [Serializable]
     public class CollectionNode<T> : NodeBase, ICollectionNode<T>
     {
-        internal static NodeTypeInfo CreateNodeTypeInfo(Type type) => new CollectionNodeTypeInfo(type);
+        internal static NodeTypeDef CreateNodeTypeInfo(Type type) => new CollectionNodeTypeDef(type);
 
         protected ChangeTrackingDictionary<Symbol, T> Items = ChangeTrackingDictionary<Symbol, T>.Empty;
 

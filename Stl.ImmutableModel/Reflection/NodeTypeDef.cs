@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 using Stl.Collections;
@@ -11,15 +9,15 @@ using Stl.Reflection;
 
 namespace Stl.ImmutableModel.Reflection
 {
-    public abstract class NodeTypeInfo
+    public abstract class NodeTypeDef
     {
-        private static readonly ConcurrentDictionary<Type, NodeTypeInfo> _cache =
-            new ConcurrentDictionary<Type, NodeTypeInfo>();
+        private static readonly ConcurrentDictionary<Type, NodeTypeDef> _cache =
+            new ConcurrentDictionary<Type, NodeTypeDef>();
 
         public Type Type { get; }
         public NodeKind Kind { get; protected set; }
 
-        public static NodeTypeInfo Get(Type type)
+        public static NodeTypeDef Get(Type type)
         {
             if (_cache.TryGetValue(type, out var r))
                 return r;
@@ -33,13 +31,13 @@ namespace Stl.ImmutableModel.Reflection
                     .FirstOrDefault();
                 if (mi == null)
                     throw Errors.CannotCreateNodeTypeInfo(type);
-                r = (NodeTypeInfo) mi.Invoke(null, new object?[] {type})!;
+                r = (NodeTypeDef) mi.Invoke(null, new object?[] {type})!;
                 _cache[type] = r;
                 return r;
             }
         }
 
-        protected NodeTypeInfo(Type type)
+        protected NodeTypeDef(Type type)
         {
             Type = type;
             Kind = typeof(ICollectionNode).IsAssignableFrom(type) ? NodeKind.Collection : NodeKind.Simple;
@@ -47,5 +45,14 @@ namespace Stl.ImmutableModel.Reflection
 
         public abstract void FindChildFreezables(INode node, ListBuffer<IFreezable> output);
         public abstract void FindChildNodes(INode node, ListBuffer<INode> output);
+
+        public abstract IEnumerable<KeyValuePair<Symbol, object?>> GetAllItems(INode node);
+        public abstract bool TryGetItem<T>(INode node, Symbol localKey, out T value);
+        public abstract bool TryGetItem(INode node, Symbol localKey, out object? value);
+        public abstract T GetItem<T>(INode node, Symbol localKey);
+        public abstract object? GetItem(INode node, Symbol localKey);
+        public abstract void SetItem<T>(INode node, Symbol localKey, T value);
+        public abstract void SetItem(INode node, Symbol localKey, object? value);
+        public abstract void RemoveItem(INode node, Symbol localKey);
     }
 }

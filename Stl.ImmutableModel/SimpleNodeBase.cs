@@ -10,10 +10,10 @@ namespace Stl.ImmutableModel
     [Serializable]
     public abstract class SimpleNodeBase : NodeBase, ISimpleNode 
     {
-        internal static NodeTypeInfo CreateNodeTypeInfo(Type type) => new SimpleNodeTypeInfo(type);
+        internal static NodeTypeDef CreateNodeTypeInfo(Type type) => new SimpleNodeTypeDef(type);
 
         private Dictionary<Symbol, object>? _options;
-        private Dictionary<Symbol, object> Options => _options ??= new Dictionary<Symbol, object>?();
+        private Dictionary<Symbol, object> Options => _options ??= new Dictionary<Symbol, object>();
 
         public override void Freeze()
         {
@@ -22,7 +22,7 @@ namespace Stl.ImmutableModel
             // First we freeze child freezables
             using var lease = ListBuffer<IFreezable>.Rent();
             var children = lease.Buffer;
-            this.GetNodeType().FindChildFreezables(this, children);
+            this.GetDefinition().FindChildFreezables(this, children);
             foreach (var child in children)
                 child.Freeze();
             
@@ -44,6 +44,7 @@ namespace Stl.ImmutableModel
         
         public void SetOption(Symbol key, object? value)
         {
+            key.ThrowIfInvalidOptionsKey();
             if (value == null) {
                 this.ThrowIfFrozen();
                 _options?.Remove(key);

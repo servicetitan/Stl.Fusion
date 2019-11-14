@@ -12,7 +12,7 @@ using Stl.ImmutableModel.Internal;
 namespace Stl.ImmutableModel.Updating
 {
     [Serializable]
-    public readonly struct ModelChangeSet : IReadOnlyDictionaryPlus<Key, NodeChangeType>,
+    public readonly struct ModelChangeSet : IReadOnlyDictionary<Key, NodeChangeType>,
         IEquatable<ModelChangeSet>, ISerializable 
     {
         public static ModelChangeSet Empty { get; } = new ModelChangeSet(ImmutableDictionary<Key, NodeChangeType>.Empty);
@@ -24,8 +24,6 @@ namespace Stl.ImmutableModel.Updating
         public NodeChangeType this[Key key] => Items[key];
         public IEnumerable<Key> Keys => Items.Keys;
         public IEnumerable<NodeChangeType> Values => Items.Values;
-        IEnumerable<KeyValuePair<Key, object?>> IReadOnlyDictionaryPlus<Key>.Items
-            => Items.Select(p => KeyValuePair.Create(p.Key, (object?) p.Value));
 
         public ImmutableDictionary<Key, NodeChangeType> Items {
             get {

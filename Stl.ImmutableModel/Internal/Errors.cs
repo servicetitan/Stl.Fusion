@@ -17,5 +17,9 @@ namespace Stl.ImmutableModel.Internal
         public static Exception CannotCreateNodeTypeInfo(Type type) =>
             new InvalidOperationException(
                 $"Can't find '{nameof(SimpleNodeBase.CreateNodeTypeInfo)} method for type '{type.FullName}'.");
+
+        public static Exception InvalidOptionsKey() =>
+            new ArgumentOutOfRangeException(
+                $"Invalid option key. Valid key must start with '@' character.");
     }
 }

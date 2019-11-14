@@ -19,7 +19,7 @@ namespace Stl.ImmutableModel.Internal
             var nodeInfo = value == null ? null : new NodeInfo() {
                 Type = node.GetType().AssemblyQualifiedName,
                 Key = node.Key.FormattedValue,
-                Items = node.DualGetItems().ToDictionary(p => p.Key.Value, p => p.Value),
+                Items = node.GetDefinition().GetAllItems(node).ToDictionary(p => p.Key.Value, p => p.Value),
             };
             serializer.Serialize(writer, nodeInfo);
         }
@@ -47,9 +47,13 @@ namespace Stl.ImmutableModel.Internal
                 }
                 children.Add((key, Option.Some(value)));
             }
-            // ReSharper disable once HeapView.BoxingAllocation
-            var node = (INode) Activator.CreateInstance(objectType, Key.Parse(nodeInfo.Key!))!;
-            return node.DualWith(children);
+            var nodeCtor = (Func<INode>) objectType.GetConstructorDelegate();
+            var node = nodeCtor.Invoke();
+            var nodeTypeDef = node.GetDefinition();
+            node.Key = Key.Parse(nodeInfo.Key!)!;
+            foreach (var (localKey, value) in children)
+                nodeTypeDef.SetItem(node, localKey, value);
+            return node;
         }
     }
 }
