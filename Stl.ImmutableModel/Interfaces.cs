@@ -24,6 +24,7 @@ namespace Stl.ImmutableModel
         bool TryGetValue(Symbol key, out object? value);
         void Add(Symbol key, object? value);
         bool Remove(Symbol key);
+        void Clear();
     }
     
     public interface ICollectionNode<T> : ICollectionNode, IDictionary<Symbol, T>

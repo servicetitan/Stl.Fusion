@@ -19,7 +19,7 @@ namespace Stl.ImmutableModel
             using var bufferLease = ListBuffer<INode>.Rent();
             var buffer = bufferLease.Buffer;
 
-            root.GetDefinition().FindChildNodes(root, buffer);
+            root.GetDefinition().GetNodeItems(root, buffer);
             foreach (var node in buffer)
                 FindChildren(node, output, true);
         }

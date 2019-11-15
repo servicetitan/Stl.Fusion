@@ -8,7 +8,7 @@ namespace Stl
         bool IsFrozen { get; }
         void Freeze(); // Must freeze every reachable IFreezable too!
 
-        IFreezable BaseDefrost();
+        IFreezable BaseDefrost(bool deep = false);
     }
 
     public abstract class FreezableBase: IFreezable
@@ -24,7 +24,7 @@ namespace Stl
             IsFrozen = true;
         }
 
-        public virtual IFreezable BaseDefrost()
+        public virtual IFreezable BaseDefrost(bool deep = false)
         {
             var clone = (FreezableBase) MemberwiseClone();
             clone.IsFrozen = false;

@@ -10,8 +10,16 @@ namespace Stl.ImmutableModel.Reflection
     public class CollectionNodeTypeDef : NodeTypeDef
     {
         public Type ItemType { get; }
-        public bool MayItemBeNode { get; } 
+
+        public bool IsItemFreezable { get; }
+        public bool IsItemNode { get; }
+        public bool IsItemSimpleNode { get; }
+        public bool IsItemCollectionNode { get; }
+
         public bool MayItemBeFreezable { get; } 
+        public bool MayItemBeNode { get; } 
+        public bool MayItemBeSimpleNode { get; } 
+        public bool MayItemBeCollectionNode { get; } 
 
         public CollectionNodeTypeDef(Type type) : base(type)
         {
@@ -24,34 +32,51 @@ namespace Stl.ImmutableModel.Reflection
                 .Single(t => t.IsConstructedGenericType && t.GetGenericTypeDefinition() == tGenericCollectionNode);
             ItemType = tCollectionInterface.GetGenericArguments().Single();
 
-            MayItemBeNode = ItemType.MayCastSucceed(typeof(NodeBase));
+            IsItemFreezable = typeof(IFreezable).IsAssignableFrom(ItemType);
+            IsItemNode = typeof(NodeBase).IsAssignableFrom(ItemType);
+            IsItemSimpleNode = typeof(SimpleNodeBase).IsAssignableFrom(ItemType);
+            IsItemCollectionNode = typeof(CollectionNodeBase).IsAssignableFrom(ItemType);
+            
             MayItemBeFreezable = ItemType.MayCastSucceed(typeof(IFreezable));
-        }
-
-        public override void FindChildFreezables(INode node, ListBuffer<IFreezable> output)
-        {
-            if (!MayItemBeFreezable) return;
-            var collectionNode = (ICollectionNode) node;
-            foreach (var value in collectionNode.Values) {
-                if (value is IFreezable f)
-                    output.Add(f);
-            }
-        }
-
-        public override void FindChildNodes(INode node, ListBuffer<INode> output)
-        {
-            if (!MayItemBeNode) return;
-            var collectionNode = (ICollectionNode) node;
-            foreach (var value in collectionNode.Values) {
-                if (value is INode n)
-                    output.Add(n);
-            }
+            MayItemBeNode = ItemType.MayCastSucceed(typeof(NodeBase));
+            MayItemBeSimpleNode = ItemType.MayCastSucceed(typeof(SimpleNodeBase));
+            MayItemBeCollectionNode = ItemType.MayCastSucceed(typeof(CollectionNodeBase));
         }
 
         public override IEnumerable<KeyValuePair<Symbol, object?>> GetAllItems(INode node)
         {
             var collectionNode = (ICollectionNode) node;
             return collectionNode.Items;
+        }
+
+        public override void GetFreezableItems(INode node, ListBuffer<KeyValuePair<Symbol, IFreezable>> output)
+        {
+            if (!IsItemFreezable) return;
+            var collectionNode = (ICollectionNode) node;
+            foreach (var (key, value) in collectionNode.Items) {
+                if (value is IFreezable f)
+                    output.Add(KeyValuePair.Create(key, f));
+            }
+        }
+
+        public override void GetNodeItems(INode node, ListBuffer<KeyValuePair<Symbol, INode>> output)
+        {
+            if (!IsItemNode) return;
+            var collectionNode = (ICollectionNode) node;
+            foreach (var (key, value) in collectionNode.Items) {
+                if (value is INode n)
+                    output.Add(KeyValuePair.Create(key, n));
+            }
+        }
+
+        public override void GetCollectionNodeItems(INode node, ListBuffer<KeyValuePair<Symbol, ICollectionNode>> output)
+        {
+            if (!IsItemCollectionNode) return;
+            var collectionNode = (ICollectionNode) node;
+            foreach (var (key, value) in collectionNode.Items) {
+                if (value is ICollectionNode n)
+                    output.Add(KeyValuePair.Create(key, n));
+            }
         }
 
         public override bool TryGetItem<T>(INode node, Symbol localKey, out T value)

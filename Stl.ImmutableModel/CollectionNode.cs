@@ -8,7 +8,30 @@ using Stl.ImmutableModel.Reflection;
 namespace Stl.ImmutableModel 
 {
     [Serializable]
-    public class CollectionNode<T> : NodeBase, ICollectionNode<T>
+    public abstract class CollectionNodeBase : NodeBase, ICollectionNode
+    {
+        // That's just a tagging base type for all collection nodes; 
+        // it doesn't expose any public members - you have to cast
+        // the instance to ICollectionNode to access these.
+
+        IEnumerable<Symbol> ICollectionNode.Keys => throw new NotImplementedException();
+        IEnumerable<object?> ICollectionNode.Values => throw new NotImplementedException();
+        IEnumerable<KeyValuePair<Symbol, object?>> ICollectionNode.Items => throw new NotImplementedException();
+
+        object? ICollectionNode.this[Symbol key] {
+            get => throw new NotImplementedException();
+            set => throw new NotImplementedException();
+        }
+
+        bool ICollectionNode.ContainsKey(Symbol key) => throw new NotImplementedException();
+        bool ICollectionNode.TryGetValue(Symbol key, out object? value) => throw new NotImplementedException();
+        void ICollectionNode.Add(Symbol key, object? value) => throw new NotImplementedException();
+        bool ICollectionNode.Remove(Symbol key) => throw new NotImplementedException();
+        void ICollectionNode.Clear() => throw new NotImplementedException();
+    }
+
+    [Serializable]
+    public class CollectionNode<T> : CollectionNodeBase, ICollectionNode<T>
     {
         internal static NodeTypeDef CreateNodeTypeInfo(Type type) => new CollectionNodeTypeDef(type);
 

@@ -15,19 +15,46 @@ namespace Stl.ImmutableModel
         private Dictionary<Symbol, object>? _options;
         private Dictionary<Symbol, object> Options => _options ??= new Dictionary<Symbol, object>();
 
+        // IFreezable implementation
+
         public override void Freeze()
         {
             if (IsFrozen) return;
 
             // First we freeze child freezables
-            using var lease = ListBuffer<IFreezable>.Rent();
-            var children = lease.Buffer;
-            this.GetDefinition().FindChildFreezables(this, children);
-            foreach (var child in children)
-                child.Freeze();
+            using var lease = ListBuffer<KeyValuePair<Symbol, IFreezable>>.Rent();
+            var buffer = lease.Buffer;
+            this.GetDefinition().GetFreezableItems(this, buffer);
+            foreach (var (key, freezable) in buffer)
+                freezable.Freeze();
             
             // And freeze itself in the end
             base.Freeze();
+        }
+
+        public override IFreezable BaseDefrost(bool deep = false)
+        {
+            var clone = (SimpleNodeBase) base.BaseDefrost(deep);
+            var nodeTypeDef = clone.GetDefinition();
+
+            if (deep) {
+                // Defrost every freezable
+                using var lease = ListBuffer<KeyValuePair<Symbol, IFreezable>>.Rent();
+                var buffer = lease.Buffer;
+                nodeTypeDef.GetFreezableItems(clone, buffer);
+                foreach (var (key, f) in buffer)
+                    nodeTypeDef.SetItem(clone, key, f.Defrost());
+            }
+            else {
+                // Defrost every collection (for convenience)
+                using var lease = ListBuffer<KeyValuePair<Symbol, ICollectionNode>>.Rent();
+                var buffer = lease.Buffer;
+                nodeTypeDef.GetCollectionNodeItems(clone, buffer);
+                foreach (var (key, c) in buffer)
+                    nodeTypeDef.SetItem(clone, key, c.Defrost());
+            }
+
+            return clone;
         }
 
         // IHasOptions implementation

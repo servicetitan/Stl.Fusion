@@ -13,6 +13,7 @@ namespace Stl.ImmutableModel.Reflection
     {
         public IReadOnlyDictionary<Symbol, INodePropertyDef> Properties { get; }
         public IReadOnlyDictionary<Symbol, INodePropertyDef> NodeProperties { get; }
+        public IReadOnlyDictionary<Symbol, INodePropertyDef> CollectionNodeProperties { get; }
         public IReadOnlyDictionary<Symbol, INodePropertyDef> FreezableProperties { get; }
 
         public SimpleNodeTypeDef(Type type) : base(type)
@@ -37,47 +38,11 @@ namespace Stl.ImmutableModel.Reflection
 
             Properties = new ReadOnlyDictionary<Symbol, INodePropertyDef>(properties);
             NodeProperties = new ReadOnlyDictionary<Symbol, INodePropertyDef>(
-                properties.Where(p => p.Value.MayBeNode).ToDictionary());
+                properties.Where(p => p.Value.IsNode).ToDictionary());
+            CollectionNodeProperties = new ReadOnlyDictionary<Symbol, INodePropertyDef>(
+                properties.Where(p => p.Value.IsCollectionNode).ToDictionary());
             FreezableProperties = new ReadOnlyDictionary<Symbol, INodePropertyDef>(
-                properties.Where(p => p.Value.MayBeFreezable).ToDictionary());
-        }
-
-        public override void FindChildFreezables(INode node, ListBuffer<IFreezable> output)
-        {
-            var simpleNode = (ISimpleNode) node;
-            foreach (var (key, propertyInfo) in FreezableProperties) {
-                var getter = (Func<ISimpleNode, object>?) propertyInfo.UntypedGetter;
-                if (getter == null)
-                    continue;
-                var value = getter.Invoke(simpleNode);
-                if (value is IFreezable f)
-                    output.Add(f);
-            }
-
-            var hasOptions = (IHasOptions) simpleNode;
-            foreach (var (_, option) in hasOptions) {
-                if (option is IFreezable f)
-                    output.Add(f);
-            }
-        }
-
-        public override void FindChildNodes(INode node, ListBuffer<INode> output)
-        {
-            var simpleNode = (ISimpleNode) node;
-            foreach (var (key, propertyInfo) in NodeProperties) {
-                var getter = (Func<ISimpleNode, object>?) propertyInfo.UntypedGetter;
-                if (getter == null)
-                    continue;
-                var value = getter.Invoke(simpleNode);
-                if (value is INode n)
-                    output.Add(n);
-            }
-
-            var hasOptions = (IHasOptions) simpleNode;
-            foreach (var (_, option) in hasOptions) {
-                if (option is INode n)
-                    output.Add(n);
-            }
+                properties.Where(p => p.Value.IsFreezable).ToDictionary());
         }
 
         public override IEnumerable<KeyValuePair<Symbol, object?>> GetAllItems(INode node)
@@ -94,6 +59,63 @@ namespace Stl.ImmutableModel.Reflection
             var hasOptions = (IHasOptions) simpleNode;
             foreach (var (key, option) in hasOptions)
                 yield return KeyValuePair.Create(key, option);
+        }
+
+        public override void GetFreezableItems(INode node, ListBuffer<KeyValuePair<Symbol, IFreezable>> output)
+        {
+            var simpleNode = (ISimpleNode) node;
+            foreach (var (key, propertyInfo) in FreezableProperties) {
+                var getter = (Func<ISimpleNode, object>?) propertyInfo.UntypedGetter;
+                if (getter == null)
+                    continue;
+                var value = getter.Invoke(simpleNode);
+                if (value is IFreezable f)
+                    output.Add(KeyValuePair.Create(key, f));
+            }
+
+            var hasOptions = (IHasOptions) simpleNode;
+            foreach (var (key, option) in hasOptions) {
+                if (option is IFreezable f)
+                    output.Add(KeyValuePair.Create(key, f));
+            }
+        }
+
+        public override void GetNodeItems(INode node, ListBuffer<KeyValuePair<Symbol, INode>> output)
+        {
+            var simpleNode = (ISimpleNode) node;
+            foreach (var (key, propertyInfo) in NodeProperties) {
+                var getter = (Func<ISimpleNode, object>?) propertyInfo.UntypedGetter;
+                if (getter == null)
+                    continue;
+                var value = getter.Invoke(simpleNode);
+                if (value is INode n)
+                    output.Add(KeyValuePair.Create<Symbol, INode>(key, n));
+            }
+
+            var hasOptions = (IHasOptions) simpleNode;
+            foreach (var (key, option) in hasOptions) {
+                if (option is INode n)
+                    output.Add(KeyValuePair.Create<Symbol, INode>(key, n));
+            }
+        }
+
+        public override void GetCollectionNodeItems(INode node, ListBuffer<KeyValuePair<Symbol, ICollectionNode>> output)
+        {
+            var simpleNode = (ISimpleNode) node;
+            foreach (var (key, propertyInfo) in CollectionNodeProperties) {
+                var getter = (Func<ISimpleNode, object>?) propertyInfo.UntypedGetter;
+                if (getter == null)
+                    continue;
+                var value = getter.Invoke(simpleNode);
+                if (value is ICollectionNode n)
+                    output.Add(KeyValuePair.Create<Symbol, ICollectionNode>(key, n));
+            }
+
+            var hasOptions = (IHasOptions) simpleNode;
+            foreach (var (key, option) in hasOptions) {
+                if (option is ICollectionNode n)
+                    output.Add(KeyValuePair.Create<Symbol, ICollectionNode>(key, n));
+            }
         }
 
         public override bool TryGetItem<T>(INode node, Symbol localKey, out T value)

@@ -10,6 +10,10 @@ namespace Stl.ImmutableModel.Reflection
         Type Type { get; }
         Symbol PropertyName { get; }
         PropertyInfo PropertyInfo { get; }
+        public bool IsNode { get; } 
+        public bool IsSimpleNode { get; } 
+        public bool IsCollectionNode { get; } 
+        public bool IsFreezable { get; } 
         public bool MayBeNode { get; } 
         public bool MayBeFreezable { get; } 
 
@@ -34,8 +38,16 @@ namespace Stl.ImmutableModel.Reflection
         public Type Type { get; }
         public Symbol PropertyName { get; }
         public PropertyInfo PropertyInfo { get; }
-        public bool MayBeNode { get; }
+
+        public bool IsFreezable { get; }
+        public bool IsNode { get; }
+        public bool IsSimpleNode { get; }
+        public bool IsCollectionNode { get; }
+
         public bool MayBeFreezable { get; }
+        public bool MayBeNode { get; }
+        public bool MayBeSimpleNode { get; }
+        public bool MayBeCollectionNode { get; }
 
         public MethodInfo? GetterInfo { get; }
         public MethodInfo? SetterInfo { get; }
@@ -54,8 +66,16 @@ namespace Stl.ImmutableModel.Reflection
             PropertyName = propertyName;
             PropertyInfo = PropertyEx.GetProperty(type, propertyName) 
                            ?? throw Errors.PropertyNotFound(type, propertyName);
-            MayBeNode = type.MayCastSucceed(typeof(NodeBase));
+
+            IsFreezable = typeof(IFreezable).IsAssignableFrom(type); 
+            IsNode = typeof(NodeBase).IsAssignableFrom(type); 
+            IsSimpleNode = typeof(SimpleNodeBase).IsAssignableFrom(type); 
+            IsCollectionNode = typeof(CollectionNodeBase).IsAssignableFrom(type); 
+
             MayBeFreezable = type.MayCastSucceed(typeof(IFreezable));
+            MayBeNode = type.MayCastSucceed(typeof(NodeBase));
+            MayBeSimpleNode = type.MayCastSucceed(typeof(SimpleNodeBase));
+            MayBeCollectionNode = type.MayCastSucceed(typeof(CollectionNodeBase));
 
             GetterInfo = PropertyInfo.GetGetMethod();
             SetterInfo = PropertyInfo.GetSetMethod();
