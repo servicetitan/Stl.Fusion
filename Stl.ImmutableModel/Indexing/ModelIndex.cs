@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
+using Stl.Collections;
 using Stl.Comparison;
 using Stl.ImmutableModel.Internal;
 using Stl.ImmutableModel.Updating;
@@ -65,35 +66,45 @@ namespace Stl.ImmutableModel.Indexing
             AddNode(SymbolList.Root, Model, ref changeSet);
         }
 
-        protected virtual void AddNode(SymbolList list, INode node, ref ModelChangeSet changeSet)
+        protected virtual void AddNode(SymbolList path, INode node, ref ModelChangeSet changeSet)
         {
             changeSet = changeSet.Add(node.Key, NodeChangeType.Created);
             KeyToNode = KeyToNode.Add(node.Key, node);
-            PathToNode = PathToNode.Add(list, node);
-            NodeToPath = NodeToPath.Add(node, list);
+            PathToNode = PathToNode.Add(path, node);
+            NodeToPath = NodeToPath.Add(node, path);
 
-            foreach (var (key, child) in node.DualGetNodeItems()) 
-                AddNode(list + key, child, ref changeSet);
+            var nodeTypeDef = node.GetDefinition();
+            using var lease = ListBuffer<KeyValuePair<Symbol, INode>>.Rent();
+            var buffer = lease.Buffer;
+            nodeTypeDef.GetNodeItems(node, buffer);
+
+            foreach (var (key, child) in buffer) 
+                AddNode(path + key, child, ref changeSet);
         }
 
-        protected virtual void RemoveNode(SymbolList list, INode node, ref ModelChangeSet changeSet)
+        protected virtual void RemoveNode(SymbolList path, INode node, ref ModelChangeSet changeSet)
         {
             changeSet = changeSet.Add(node.Key, NodeChangeType.Removed);
             KeyToNode = KeyToNode.Remove(node.Key);
-            PathToNode = PathToNode.Remove(list);
+            PathToNode = PathToNode.Remove(path);
             NodeToPath = NodeToPath.Remove(node);
 
-            foreach (var (key, child) in node.DualGetNodeItems()) 
-                RemoveNode(list + key, child, ref changeSet);
+            var nodeTypeDef = node.GetDefinition();
+            using var lease = ListBuffer<KeyValuePair<Symbol, INode>>.Rent();
+            var buffer = lease.Buffer;
+            nodeTypeDef.GetNodeItems(node, buffer);
+
+            foreach (var (key, child) in buffer) 
+                RemoveNode(path + key, child, ref changeSet);
         }
 
-        protected virtual void ReplaceNode(SymbolList list, INode source, INode target, 
+        protected virtual void ReplaceNode(SymbolList path, INode source, INode target, 
             ref ModelChangeSet changeSet, NodeChangeType changeType = NodeChangeType.SubtreeChanged)
         {
             changeSet = changeSet.Add(source.Key, changeType);
             KeyToNode = KeyToNode.Remove(source.Key).Add(target.Key, target);
-            PathToNode = PathToNode.SetItem(list, target);
-            NodeToPath = NodeToPath.Remove(source).Add(target, list);
+            PathToNode = PathToNode.SetItem(path, target);
+            NodeToPath = NodeToPath.Remove(source).Add(target, path);
         }
 
         public virtual (IModelIndex Index, ModelChangeSet ChangeSet) BaseWith(
@@ -120,7 +131,8 @@ namespace Stl.ImmutableModel.Indexing
             path = path.Prefix;
             while (path != null) {
                 var sourceParent = this.GetNodeByPath(path);
-                var targetParent = sourceParent.DualWith(tail, Option.Some((object?) target));
+                var targetParent = sourceParent.Defrost();
+                targetParent.GetDefinition().SetItem(targetParent, tail, target);
                 ReplaceNode(path, sourceParent, targetParent, ref changeSet);
                 source = sourceParent;
                 target = targetParent;
@@ -139,8 +151,8 @@ namespace Stl.ImmutableModel.Indexing
             if (source.GetType() != target.GetType())
                 changeType |= NodeChangeType.TypeChanged;
 
-            var sPairs = source.DualGetItems().ToDictionary();
-            var tPairs = target.DualGetItems().ToDictionary();
+            var sPairs = source.GetDefinition().GetAllItems(source).ToDictionary();
+            var tPairs = target.GetDefinition().GetAllItems(target).ToDictionary();
             var c = DictionaryComparison.New(sPairs, tPairs);
             if (c.AreEqual) {
                 if (changeType != 0)
