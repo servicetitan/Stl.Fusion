@@ -55,7 +55,7 @@ namespace Stl.ImmutableModel
 
         object? ICollectionNode.this[Symbol key] {
             get => this[key];
-            set => this[key] = (T) value;
+            set => this[key] = (T) value!;
         }
         public T this[Symbol key] {
             get => Items[key];
@@ -86,7 +86,7 @@ namespace Stl.ImmutableModel
             Items = ChangeTrackingDictionary<Symbol, T>.Empty; 
         }
 
-        void ICollectionNode.Add(Symbol key, object? value) => Add(key, (T) value);
+        void ICollectionNode.Add(Symbol key, object? value) => Add(key, (T) value!);
         public void Add(KeyValuePair<Symbol, T> item) 
             => Add(item.Key, item.Value);
         public void Add(Symbol key, T value) 
@@ -116,6 +116,15 @@ namespace Stl.ImmutableModel
 
         public void CopyTo(KeyValuePair<Symbol, T>[] array, int arrayIndex)
             => Items.ToArray().CopyTo(array, arrayIndex);
+
+        // IFreezable
+
+        public override IFreezable BaseDefrost(bool deep = false)
+        {
+            var clone = (CollectionNode<T>) base.BaseDefrost(deep);
+            clone.DiscardChangeHistory();
+            return clone;
+        }
 
         // IHasChangeHistory<T>
 

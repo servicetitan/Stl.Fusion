@@ -47,7 +47,7 @@ namespace Stl.ImmutableModel.Internal
                 }
                 children.Add((key, Option.Some(value)));
             }
-            var nodeCtor = (Func<INode>) objectType.GetConstructorDelegate();
+            var nodeCtor = (Func<INode>) objectType.GetConstructorDelegate()!;
             var node = nodeCtor.Invoke();
             var nodeTypeDef = node.GetDefinition();
             node.Key = Key.Parse(nodeInfo.Key!)!;

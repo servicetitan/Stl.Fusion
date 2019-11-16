@@ -58,12 +58,14 @@ namespace Stl.ImmutableModel.Indexing
 
         protected virtual void SetModel(INode model)
         {
+            model.Freeze();
             Model = model;
             KeyToNode = ImmutableDictionary<Key, INode>.Empty;
             PathToNode = ImmutableDictionary<SymbolList, INode>.Empty;
             NodeToPath = ImmutableDictionary<INode, SymbolList>.Empty;
             var changeSet = ModelChangeSet.Empty;
             AddNode(SymbolList.Root, Model, ref changeSet);
+            model.DiscardChangeHistory();
         }
 
         protected virtual void AddNode(SymbolList path, INode node, ref ModelChangeSet changeSet)

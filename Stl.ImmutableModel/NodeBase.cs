@@ -13,7 +13,7 @@ namespace Stl.ImmutableModel
         private Key? _key;
 
         public Key Key {
-            get => _key ?? throw Errors.KeyIsNotSetYet();
+            get => _key ?? throw Errors.NodeHasNoKey();
             set {
                 this.ThrowIfFrozen(); 
                 _key = value;
@@ -33,6 +33,14 @@ namespace Stl.ImmutableModel
                 node.Key = Key + localKey;
             }
             return value;
+        }
+
+        // IFreezable
+
+        public override void Freeze()
+        {
+            if (!HasKey) throw Errors.NodeHasNoKey();
+            base.Freeze();
         }
 
         // IHasChangeHistory

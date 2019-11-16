@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.Serialization;
 using Stl.ImmutableModel;
 
 namespace Stl.Tests.ImmutableModel
@@ -15,7 +14,7 @@ namespace Stl.Tests.ImmutableModel
     [Serializable]
     public class VirtualMachine : SimpleNodeBase
     {
-        private string _capabilities;
+        private string _capabilities = "";
 
         public string Capabilities {
             get => _capabilities;

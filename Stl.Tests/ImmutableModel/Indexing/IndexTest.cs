@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using FluentAssertions;
+using Stl.Collections;
 using Stl.Comparison;
 using Stl.ImmutableModel;
 using Stl.ImmutableModel.Indexing;
@@ -54,10 +56,14 @@ namespace Stl.Tests.ImmutableModel.Indexing
             var idx = BuildModel();
             var cluster1 = idx.GetNode<Cluster>(Key.Parse("cluster1"));
             var vm2 = cluster1["vm2"];
-            var vm3 = new VirtualMachine(vm2.Key.Parts.Prefix! + "vm3")
-                .With(VirtualMachine.CapabilitiesSymbol, "caps3");
+            var vm3 = new VirtualMachine() {
+                Key = vm2.Key.Parts.Prefix! + "vm3",
+                Capabilities = "caps3",
+            };
             
-            var cluster1a = cluster1.WithRemoved(vm2).WithAdded(vm3);
+            var cluster1a = cluster1.Defrost();
+            cluster1a.Remove(vm2);
+            cluster1a.Add(vm3);
             cluster1a["vm3"].Should().Equals(vm3);
             var (idx1, changeSet) = idx.With(cluster1, cluster1a);
             idx = idx1;
@@ -87,7 +93,11 @@ namespace Stl.Tests.ImmutableModel.Indexing
                 index.GetNodeByPath(path).Should().Equals(node);
                 index.GetNode(node.Key).Should().Equals(node);
 
-                foreach (var (k, n) in node.DualGetNodeItems())
+                var nodeTypeDef = node.GetDefinition();
+                using var lease = ListBuffer<KeyValuePair<Symbol, INode>>.Rent();
+                var buffer = lease.Buffer;
+                nodeTypeDef.GetNodeItems(node, buffer);
+                foreach (var (k, n) in buffer)
                     ProcessNode(path + k, n);
             }
 
@@ -97,14 +107,25 @@ namespace Stl.Tests.ImmutableModel.Indexing
 
         internal static ModelIndex<ModelRoot> BuildModel()
         {
-            var vm1 = new VirtualMachine(Key.Parse("cluster1|vm1"))
-                .With(VirtualMachine.CapabilitiesSymbol, "caps1");
-            var vm2 = new VirtualMachine(Key.Parse("cluster1|vm2"))
-                .With(VirtualMachine.CapabilitiesSymbol, "caps2");
-            var cluster = new Cluster(Key.Parse("cluster1"))
-                .WithAdded(vm1, vm2);
-            var root = new ModelRoot(Key.Parse("@"))
-                .WithAdded(cluster);
+            var vm1 = new VirtualMachine() {
+                Key = Key.Parse("cluster1|vm1"),
+                Capabilities = "caps1",
+            };
+            var vm2 = new VirtualMachine() {
+                Key = Key.Parse("cluster1|vm2"),
+                Capabilities = "caps2",
+            };
+            
+            var cluster = new Cluster() {
+                Key = Key.Parse("cluster1"),
+            };
+            cluster.Add(vm1);
+            cluster.Add(vm2);
+
+            var root = new ModelRoot() {
+                Key = Key.Parse("@"),
+            };
+            root.Add(cluster);
             
             var idx = ModelIndex.New(root);
             TestIntegrity(idx);

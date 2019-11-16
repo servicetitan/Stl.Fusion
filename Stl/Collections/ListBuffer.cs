@@ -1,5 +1,6 @@
 using System;
 using System.Buffers;
+using System.Collections.Generic;
 using Stl.Internal;
 
 namespace Stl.Collections
@@ -69,7 +70,15 @@ namespace Stl.Collections
         }
 
         public Enumerator GetEnumerator() => new Enumerator(this); 
+        
         public T[] ToArray() => Span.ToArray();
+        public List<T> ToList()
+        {
+            var list = new List<T>(Count);
+            foreach (var item in Span)
+                list.Add(item);
+            return list;
+        }
 
         public void Add(T item)
         {

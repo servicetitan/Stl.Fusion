@@ -55,5 +55,23 @@ namespace Stl.ImmutableModel.Reflection
         public abstract void SetItem<T>(INode node, Symbol localKey, T value);
         public abstract void SetItem(INode node, Symbol localKey, object? value);
         public abstract void RemoveItem(INode node, Symbol localKey);
+
+        // Useful helpers
+
+        public void GetClosestChildNodesByType<TChild>(INode node, ListBuffer<TChild> output, bool includeSelf = false)
+            where TChild : class, INode
+        {
+            if (node is TChild n && includeSelf) {
+                output.Add(n);
+                return;
+            }
+
+            using var bufferLease = ListBuffer<KeyValuePair<Symbol, INode>>.Rent();
+            var buffer = bufferLease.Buffer;
+
+            node.GetDefinition().GetNodeItems(node, buffer);
+            foreach (var (key, value) in buffer)
+                GetClosestChildNodesByType(value, output, true);
+        }
     }
 }

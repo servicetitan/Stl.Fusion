@@ -28,11 +28,6 @@ namespace Stl.Internal
         public static Exception UnexpectedMemberType(string memberType) =>
             new InvalidOperationException($"Unexpected member type: {memberType}");
 
-        public static Exception MoreThanOneTypeMapsToTheSameLocalKey(
-            Type type, Type otherType, in Symbol localKey) =>
-            new ArgumentException($"More than one type maps to the same local key: " +
-                $"'{type.FullName}', '{otherType.FullName}' -> {localKey}");
-
         public static Exception ZListIsTooLong() =>
             new InvalidOperationException("ZList<T> is too long.");
 

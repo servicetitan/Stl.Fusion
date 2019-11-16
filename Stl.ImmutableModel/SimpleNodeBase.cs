@@ -43,7 +43,7 @@ namespace Stl.ImmutableModel
                 var buffer = lease.Buffer;
                 nodeTypeDef.GetFreezableItems(clone, buffer);
                 foreach (var (key, f) in buffer)
-                    nodeTypeDef.SetItem(clone, key, f.Defrost());
+                    nodeTypeDef.SetItem(clone, key, f.Defrost(true));
             }
             else {
                 // Defrost every collection (for convenience)

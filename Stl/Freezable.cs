@@ -11,6 +11,7 @@ namespace Stl
         IFreezable BaseDefrost(bool deep = false);
     }
 
+    [Serializable]
     public abstract class FreezableBase: IFreezable
     {
         [JsonIgnore]

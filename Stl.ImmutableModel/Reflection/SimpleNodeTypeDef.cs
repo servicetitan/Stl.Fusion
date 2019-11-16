@@ -53,12 +53,12 @@ namespace Stl.ImmutableModel.Reflection
                 if (getter == null)
                     continue;
                 var value = getter.Invoke(simpleNode);
-                yield return KeyValuePair.Create(key, value);
+                yield return KeyValuePair.Create(key, value)!;
             }
 
             var hasOptions = (IHasOptions) simpleNode;
             foreach (var (key, option) in hasOptions)
-                yield return KeyValuePair.Create(key, option);
+                yield return KeyValuePair.Create(key, option)!;
         }
 
         public override void GetFreezableItems(INode node, ListBuffer<KeyValuePair<Symbol, IFreezable>> output)
@@ -120,7 +120,7 @@ namespace Stl.ImmutableModel.Reflection
 
         public override bool TryGetItem<T>(INode node, Symbol localKey, out T value)
         {
-            value = default;
+            value = default!;
             var simpleNode = (ISimpleNode) node;
             if (localKey.IsValidOptionsKey()) {
                 if (!simpleNode.HasOption(localKey))
