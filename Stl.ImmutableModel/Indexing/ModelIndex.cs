@@ -125,7 +125,9 @@ namespace Stl.ImmutableModel.Indexing
         protected virtual void UpdateNode(INode source, INode target, ref ModelChangeSet changeSet)
         {
             SymbolList? path = this.GetPath(source);
+            target.Freeze();
             CompareAndUpdateNode(path, source, target, ref changeSet);
+            target.DiscardChangeHistory();
 
             var tail = path.Tail;
             path = path.Prefix;
@@ -133,7 +135,9 @@ namespace Stl.ImmutableModel.Indexing
                 var sourceParent = this.GetNodeByPath(path);
                 var targetParent = sourceParent.Defrost();
                 targetParent.GetDefinition().SetItem(targetParent, tail, target);
+                targetParent.Freeze();
                 ReplaceNode(path, sourceParent, targetParent, ref changeSet);
+                targetParent.DiscardChangeHistory();
                 source = sourceParent;
                 target = targetParent;
                 tail = path.Tail;

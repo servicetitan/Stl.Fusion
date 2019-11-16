@@ -37,7 +37,9 @@ namespace Stl.Tests.ImmutableModel.Updating
 
             var info = await updater.UpdateAsync(idx => {
                 var vm1 = idx.GetNode<VirtualMachine>(Key.Parse("cluster1|vm1"));
-                return idx.With(vm1, vm1.With(VirtualMachine.CapabilitiesSymbol, "caps1a"));
+                var vm1c = vm1.Defrost();
+                vm1c.Capabilities = "caps1a"; 
+                return idx.With(vm1, vm1c);
             });
             IndexTest.TestIntegrity(updater.Index);
 
@@ -47,7 +49,9 @@ namespace Stl.Tests.ImmutableModel.Updating
 
             info = await updater.UpdateAsync(idx => {
                 var cluster1 = idx.GetNode<Cluster>(Key.Parse("cluster1"));
-                return idx.With(cluster1, cluster1.WithRemoved("vm1"));
+                var cluster1c = cluster1.Defrost();
+                cluster1c.Remove("vm1");
+                return idx.With(cluster1, cluster1c);
             });
 
             changeTracker.Dispose();

@@ -1,4 +1,8 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using Stl.Collections;
+using Stl.ImmutableModel.Indexing;
 using Stl.ImmutableModel.Internal;
 
 namespace Stl.ImmutableModel
@@ -30,5 +34,16 @@ namespace Stl.ImmutableModel
             }
             return value;
         }
+
+        // IHasChangeHistory
+
+        (object? BaseState, object? CurrentState, IEnumerable<(Symbol LocalKey, DictionaryEntryChangeType ChangeType, object? Value)> Changes) 
+            IHasChangeHistory.GetChangeHistory() 
+            => GetChangeHistoryUntyped();
+        protected virtual (object? BaseState, object? CurrentState, IEnumerable<(Symbol LocalKey, DictionaryEntryChangeType ChangeType, object? Value)> Changes) GetChangeHistoryUntyped()
+            => (null, null, Enumerable.Empty<(Symbol LocalKey, DictionaryEntryChangeType ChangeType, object? Value)>());
+
+        void IHasChangeHistory.DiscardChangeHistory() => DiscardChangeHistory();
+        protected virtual void DiscardChangeHistory() {}
     }
 }

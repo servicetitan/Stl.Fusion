@@ -1,8 +1,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using Stl.Collections;
+using Stl.ImmutableModel.Indexing;
 using Stl.ImmutableModel.Reflection;
 
 namespace Stl.ImmutableModel 
@@ -114,5 +116,19 @@ namespace Stl.ImmutableModel
 
         public void CopyTo(KeyValuePair<Symbol, T>[] array, int arrayIndex)
             => Items.ToArray().CopyTo(array, arrayIndex);
+
+        // IHasChangeHistory<T>
+
+        (object? BaseState, object? CurrentState, ImmutableDictionary<Symbol, (DictionaryEntryChangeType ChangeType, T Value)> Changes) IHasChangeHistory<T>.GetChangeHistory()
+            => GetChangeHistory();
+        protected virtual (object? BaseState, object? CurrentState, ImmutableDictionary<Symbol, (DictionaryEntryChangeType ChangeType, T Value)> Changes) GetChangeHistory() 
+            => (Items.Base, Items.Dictionary, Items.Changes);
+
+        protected override (object? BaseState, object? CurrentState, IEnumerable<(Symbol LocalKey, DictionaryEntryChangeType ChangeType, object? Value)> Changes) GetChangeHistoryUntyped()
+            => (Items.Base, Items.Dictionary, 
+                Items.Changes.Select(p => (p.Key, p.Value.ChangeType, (object?) p.Value.Value)));
+
+        protected override void DiscardChangeHistory()
+            => Items = new ChangeTrackingDictionary<Symbol,T>(Items.Dictionary);
     }
 }

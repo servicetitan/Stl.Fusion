@@ -1,9 +1,10 @@
 using System.Collections.Generic;
 using Stl.Extensibility;
+using Stl.ImmutableModel.Indexing;
 
 namespace Stl.ImmutableModel
 {
-    public interface INode : IFreezable
+    public interface INode : IFreezable, IHasChangeHistory
     {
         Key Key { get; set; }
         bool HasKey { get; }
@@ -27,6 +28,6 @@ namespace Stl.ImmutableModel
         void Clear();
     }
     
-    public interface ICollectionNode<T> : ICollectionNode, IDictionary<Symbol, T>
+    public interface ICollectionNode<T> : ICollectionNode, IDictionary<Symbol, T>, IHasChangeHistory<T>
     {}
 }
