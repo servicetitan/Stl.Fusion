@@ -11,16 +11,18 @@ namespace Stl.ImmutableModel
     [JsonConverter(typeof(KeyJsonConverter))]
     public readonly struct Key : IEquatable<Key>, ISerializable
     {
-        public static readonly Key Unspecified = 
-            new Key(SymbolList.Parse($"(Unspecified-tImsNKaVdeLdCHEacpkHppBFvg9mbRrz)"));
-        public static readonly Key Root = new Key(SymbolList.Root);
+        public static readonly Key Undefined = default;
+        public static readonly Key DefaultRootKey = Parse("@");
+        
+        private readonly SymbolList? _parts;
 
-        public SymbolList Parts { get; }
+        public SymbolList Parts => _parts ?? SymbolList.Empty;
+
         public string FormattedValue => Parts.FormattedValue;
 
-        public Key(SymbolList list) => Parts = list;
-        public Key(SymbolList? head, Symbol tail) => Parts = new SymbolList(head, tail);
-        public Key(params Symbol[] segments) => Parts = new SymbolList(segments);
+        public Key(SymbolList list) => _parts = list;
+        public Key(SymbolList? head, Symbol tail) => _parts = new SymbolList(head, tail);
+        public Key(params Symbol[] segments) => _parts = new SymbolList(segments);
 
         public override string ToString() => $"{GetType().Name}({FormattedValue})";
 
@@ -58,7 +60,7 @@ namespace Stl.ImmutableModel
 
         private Key(SerializationInfo info, StreamingContext context)
         {
-            Parts = SymbolList.Parse(info.GetString(nameof(Parts))!);
+            _parts = SymbolList.Parse(info.GetString(nameof(Parts))!);
         }
 
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)

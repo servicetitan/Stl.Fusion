@@ -1,25 +1,27 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json;
 using Stl.Collections;
 using Stl.ImmutableModel.Indexing;
-using Stl.ImmutableModel.Internal;
 
 namespace Stl.ImmutableModel
 {
+    [JsonObject]
     [Serializable]
     public abstract class NodeBase: FreezableBase, INode
     {
-        private Key? _key;
+        private Key _key;
 
         public Key Key {
-            get => _key ?? throw Errors.NodeHasNoKey();
+            get => _key;
             set {
                 this.ThrowIfFrozen(); 
                 _key = value;
             }
         }
-        public bool HasKey => _key != null;
+
+        [JsonIgnore]
         public Symbol LocalKey => Key.Parts.Tail;
 
         public override string ToString() => $"{GetType().Name}({Key})";
@@ -27,7 +29,7 @@ namespace Stl.ImmutableModel
         protected T PrepareValue<T>(Symbol localKey, T value)
         {
             this.ThrowIfFrozen();
-            if (value is INode node && !node.HasKey) {
+            if (value is INode node && !node.Key.IsUndefined()) {
                 // We automatically provide keys for INode properties (or collection items)
                 // by extending the owner's key with property name suffix 
                 node.Key = Key + localKey;
@@ -39,7 +41,7 @@ namespace Stl.ImmutableModel
 
         public override void Freeze()
         {
-            if (!HasKey) throw Errors.NodeHasNoKey();
+            Key.ThrowIfUndefined(); 
             base.Freeze();
         }
 

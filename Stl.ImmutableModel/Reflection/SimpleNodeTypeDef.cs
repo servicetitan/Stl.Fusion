@@ -57,7 +57,7 @@ namespace Stl.ImmutableModel.Reflection
             }
 
             var hasOptions = (IHasOptions) simpleNode;
-            foreach (var (key, option) in hasOptions)
+            foreach (var (key, option) in hasOptions.GetAllOptions())
                 yield return KeyValuePair.Create(key, option)!;
         }
 
@@ -74,7 +74,7 @@ namespace Stl.ImmutableModel.Reflection
             }
 
             var hasOptions = (IHasOptions) simpleNode;
-            foreach (var (key, option) in hasOptions) {
+            foreach (var (key, option) in hasOptions.GetAllOptions()) {
                 if (option is IFreezable f)
                     output.Add(KeyValuePair.Create(key, f));
             }
@@ -93,7 +93,7 @@ namespace Stl.ImmutableModel.Reflection
             }
 
             var hasOptions = (IHasOptions) simpleNode;
-            foreach (var (key, option) in hasOptions) {
+            foreach (var (key, option) in hasOptions.GetAllOptions()) {
                 if (option is INode n)
                     output.Add(KeyValuePair.Create<Symbol, INode>(key, n));
             }
@@ -112,7 +112,7 @@ namespace Stl.ImmutableModel.Reflection
             }
 
             var hasOptions = (IHasOptions) simpleNode;
-            foreach (var (key, option) in hasOptions) {
+            foreach (var (key, option) in hasOptions.GetAllOptions()) {
                 if (option is ICollectionNode n)
                     output.Add(KeyValuePair.Create<Symbol, ICollectionNode>(key, n));
             }

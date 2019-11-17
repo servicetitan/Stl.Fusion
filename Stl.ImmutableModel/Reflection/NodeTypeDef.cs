@@ -26,12 +26,12 @@ namespace Stl.ImmutableModel.Reflection
                     return r;
                 var bases = EnumerableEx.One(type).Concat(type.GetAllBaseTypes());
                 var bindingFlags = BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
-                var mi = bases
-                    .Select(t => t.GetMethod(nameof(SimpleNodeBase.CreateNodeTypeInfo), bindingFlags))
-                    .FirstOrDefault();
-                if (mi == null)
-                    throw Errors.CannotCreateNodeTypeInfo(type);
-                r = (NodeTypeDef) mi.Invoke(null, new object?[] {type})!;
+                var methodInfo = bases
+                    .Select(t => t.GetMethod(nameof(SimpleNodeBase.CreateNodeTypeDef), bindingFlags))
+                    .FirstOrDefault(mi => mi != null);
+                if (methodInfo == null)
+                    throw Errors.CannotCreateNodeTypeDef(type);
+                r = (NodeTypeDef) methodInfo.Invoke(null, new object?[] {type})!;
                 _cache[type] = r;
                 return r;
             }

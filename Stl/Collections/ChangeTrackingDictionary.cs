@@ -1,7 +1,11 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Runtime.Serialization;
+using Newtonsoft.Json;
+using Stl.Serialization;
 
 namespace Stl.Collections
 {
@@ -12,7 +16,9 @@ namespace Stl.Collections
         Removed = 2,
     }
 
-    public struct ChangeTrackingDictionary<TKey, TValue> : IImmutableDictionary<TKey, TValue>
+    [Serializable]
+    [JsonObject]
+    public struct ChangeTrackingDictionary<TKey, TValue> : IImmutableDictionary<TKey, TValue>, ISerializable
         where TKey : notnull
     {
         private static readonly ImmutableDictionary<TKey, TValue> EmptyDictionary = 
@@ -27,11 +33,16 @@ namespace Stl.Collections
         public readonly ImmutableDictionary<TKey, TValue> Dictionary;
         public readonly ImmutableDictionary<TKey, (DictionaryEntryChangeType ChangeType, TValue Value)> Changes;
 
+        [JsonIgnore]
         public int Count => Dictionary.Count;
-        public TValue this[TKey key] => Dictionary[key];
+        [JsonIgnore]
         public IEnumerable<TKey> Keys => Dictionary.Keys;
+        [JsonIgnore]
         public IEnumerable<TValue> Values => Dictionary.Values;
-        
+
+        public TValue this[TKey key] => Dictionary[key];
+
+        [JsonConstructor]
         public ChangeTrackingDictionary(
             ImmutableDictionary<TKey, TValue> @base, 
             ImmutableDictionary<TKey, TValue>? dictionary = null, 
@@ -40,6 +51,26 @@ namespace Stl.Collections
             Base = @base;
             Dictionary = dictionary ?? @base;
             Changes = changes ?? EmptyChanges;
+        }
+
+        private ChangeTrackingDictionary(SerializationInfo info, StreamingContext context)
+        {
+            Base = info
+                .GetValue<Dictionary<TKey, TValue>?>(nameof(Base))
+                ?.ToImmutableDictionary() ?? ImmutableDictionary<TKey, TValue>.Empty;
+            Dictionary = info
+                .GetValue<Dictionary<TKey, TValue>?>(nameof(Dictionary))
+                ?.ToImmutableDictionary() ?? ImmutableDictionary<TKey, TValue>.Empty;
+            Changes = info
+                .GetValue<Dictionary<TKey, (DictionaryEntryChangeType ChangeType, TValue Value)>?>(nameof(Changes))
+                ?.ToImmutableDictionary() ?? ImmutableDictionary<TKey, (DictionaryEntryChangeType ChangeType, TValue Value)>.Empty;
+        }
+
+        public void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            info.AddValue(nameof(Base), Base.ToDictionary());
+            info.AddValue(nameof(Dictionary), Dictionary.ToDictionary());
+            info.AddValue(nameof(Changes), Changes.ToDictionary());
         }
 
         IEnumerator IEnumerable.GetEnumerator() => Dictionary.GetEnumerator();

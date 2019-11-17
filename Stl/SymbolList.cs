@@ -13,7 +13,7 @@ namespace Stl
     public sealed class SymbolList : IEquatable<SymbolList>, IComparable<SymbolList>, ISerializable
     {
         public static readonly SymbolList? Null = null;
-        public static readonly SymbolList Root = new SymbolList(Null, Symbol.Empty);
+        public static readonly SymbolList Empty = new SymbolList(Null, Symbol.Empty);
 
         internal int HashCode { get; }
         public int SegmentCount { get; }
@@ -35,7 +35,7 @@ namespace Stl
         {
             if (segments.Length == 0) 
                 throw new ArgumentOutOfRangeException(nameof(segments));
-            SymbolList? prefix = null;
+            var prefix = Null;
             for (var index = 0; index < segments.Length - 1; index++) 
                 prefix = new SymbolList(prefix, segments[index]);
             Prefix = prefix;

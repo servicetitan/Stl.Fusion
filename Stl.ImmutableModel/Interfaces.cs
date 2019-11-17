@@ -7,7 +7,6 @@ namespace Stl.ImmutableModel
     public interface INode : IFreezable, IHasChangeHistory
     {
         Key Key { get; set; }
-        bool HasKey { get; }
         Symbol LocalKey { get; }
     }
 

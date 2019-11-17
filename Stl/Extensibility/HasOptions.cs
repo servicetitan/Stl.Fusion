@@ -1,12 +1,12 @@
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
 namespace Stl.Extensibility
 {
-    public interface IHasOptions : IFreezable, IEnumerable<KeyValuePair<Symbol, object>>
+    public interface IHasOptions : IFreezable
     {
         // Shouldn't store any options with null values; passing null = removing the option
+        IEnumerable<KeyValuePair<Symbol, object>> GetAllOptions();
         bool HasOption(Symbol key);
         object? GetOption(Symbol key);
         void SetOption(Symbol key, object? value);
@@ -17,8 +17,7 @@ namespace Stl.Extensibility
         protected IDictionary<Symbol, object> Options { get; private set; } = 
             new Dictionary<Symbol, object>();
 
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        public IEnumerator<KeyValuePair<Symbol, object>> GetEnumerator() => Options.GetEnumerator();
+        public IEnumerable<KeyValuePair<Symbol, object>> GetAllOptions() => Options;
 
         // The intent is to keep these methods exposed only via IHasOptions
         bool IHasOptions.HasOption(Symbol key) => HasOption(key);

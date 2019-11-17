@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using Newtonsoft.Json;
 using Stl.Collections;
 using Stl.ImmutableModel.Indexing;
 using Stl.ImmutableModel.Reflection;
@@ -12,6 +13,8 @@ namespace Stl.ImmutableModel
     [Serializable]
     public abstract class CollectionNodeBase : NodeBase, ICollectionNode
     {
+        internal static NodeTypeDef CreateNodeTypeDef(Type type) => new CollectionNodeTypeDef(type);
+
         // That's just a tagging base type for all collection nodes; 
         // it doesn't expose any public members - you have to cast
         // the instance to ICollectionNode to access these.
@@ -33,13 +36,15 @@ namespace Stl.ImmutableModel
     }
 
     [Serializable]
+    [JsonObject]
     public class CollectionNode<T> : CollectionNodeBase, ICollectionNode<T>
     {
-        internal static NodeTypeDef CreateNodeTypeInfo(Type type) => new CollectionNodeTypeDef(type);
-
+        [JsonProperty(PropertyName = "@Items")]
         protected ChangeTrackingDictionary<Symbol, T> Items = ChangeTrackingDictionary<Symbol, T>.Empty;
 
+        [JsonIgnore]
         public int Count => Items.Count;
+        [JsonIgnore]
         public bool IsReadOnly => IsFrozen;
 
         IEnumerable<Symbol> ICollectionNode.Keys 

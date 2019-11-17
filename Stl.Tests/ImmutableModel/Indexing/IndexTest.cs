@@ -4,7 +4,6 @@ using Stl.Collections;
 using Stl.Comparison;
 using Stl.ImmutableModel;
 using Stl.ImmutableModel.Indexing;
-using Stl.ImmutableModel.Updating;
 using Stl.Testing;
 using Xunit;
 using Xunit.Abstractions;
@@ -24,7 +23,7 @@ namespace Stl.Tests.ImmutableModel.Indexing
             idx = tmpIdx;
 
             idx.GetNode(Key.Parse("@")).Should().Equals(idx.Model);
-            idx.GetNodeByPath(SymbolList.Root).Should().Equals(idx.Model);
+            idx.GetNodeByPath(SymbolList.Empty).Should().Equals(idx.Model);
             
             var cluster1 = idx.GetNode<Cluster>(Key.Parse("cluster1"));
             cluster1.LocalKey.Value.Should().Be("cluster1");
@@ -79,7 +78,7 @@ namespace Stl.Tests.ImmutableModel.Indexing
             cluster1ax.Should().NotEqual(cluster1);
 
             var vm3a = idx.GetNode<VirtualMachine>(Key.Parse("cluster1|vm3"));
-            vm3a.Should().Equal(vm3);
+            vm3a.Should().Equals(vm3);
             idx.GetPath(vm3).FormattedValue.Should().Be("|cluster1|vm3");
 
             // TODO: Add more tests.
@@ -102,7 +101,7 @@ namespace Stl.Tests.ImmutableModel.Indexing
             }
 
             var root = index.Model;
-            ProcessNode(SymbolList.Root, root);
+            ProcessNode(SymbolList.Empty, root);
         }
 
         internal static ModelIndex<ModelRoot> BuildModel()

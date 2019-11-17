@@ -1,17 +1,19 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json;
 using Stl.Collections;
 using Stl.ImmutableModel.Reflection;
 
 namespace Stl.ImmutableModel 
 {
     [Serializable]
+    [JsonObject]
     public abstract class SimpleNodeBase : NodeBase, ISimpleNode 
     {
-        internal static NodeTypeDef CreateNodeTypeInfo(Type type) => new SimpleNodeTypeDef(type);
+        internal static NodeTypeDef CreateNodeTypeDef(Type type) => new SimpleNodeTypeDef(type);
 
+        [JsonProperty(PropertyName = "@Options")]
         private Dictionary<Symbol, object>? _options;
         private Dictionary<Symbol, object> Options => _options ??= new Dictionary<Symbol, object>();
 
@@ -59,12 +61,8 @@ namespace Stl.ImmutableModel
 
         // IHasOptions implementation
 
-        IEnumerator IEnumerable.GetEnumerator() 
-            => ((IEnumerator?) _options?.GetEnumerator()) 
-                ?? Enumerable.Empty<object>().GetEnumerator();
-        IEnumerator<KeyValuePair<Symbol, object>> IEnumerable<KeyValuePair<Symbol, object>>.GetEnumerator() 
-            => ((IEnumerator<KeyValuePair<Symbol, object>>?) _options?.GetEnumerator()) 
-                ?? Enumerable.Empty<KeyValuePair<Symbol, object>>().GetEnumerator();
+        public IEnumerable<KeyValuePair<Symbol, object>> GetAllOptions() 
+            => _options ?? Enumerable.Empty<KeyValuePair<Symbol, object>>();
 
         public bool HasOption(Symbol key) => _options?.ContainsKey(key) ?? false;
         public object? GetOption(Symbol key) => _options?.GetValueOrDefault(key);

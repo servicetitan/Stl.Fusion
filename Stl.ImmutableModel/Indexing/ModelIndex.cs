@@ -64,7 +64,7 @@ namespace Stl.ImmutableModel.Indexing
             PathToNode = ImmutableDictionary<SymbolList, INode>.Empty;
             NodeToPath = ImmutableDictionary<INode, SymbolList>.Empty;
             var changeSet = ModelChangeSet.Empty;
-            AddNode(SymbolList.Root, Model, ref changeSet);
+            AddNode(SymbolList.Empty, Model, ref changeSet);
             model.DiscardChangeHistory();
         }
 
