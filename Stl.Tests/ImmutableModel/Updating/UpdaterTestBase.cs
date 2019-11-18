@@ -37,7 +37,7 @@ namespace Stl.Tests.ImmutableModel.Updating
 
             var info = await updater.UpdateAsync(idx => {
                 var vm1 = idx.GetNode<VirtualMachine>(Key.Parse("cluster1|vm1"));
-                var vm1c = vm1.Defrost();
+                var vm1c = vm1.ToUnfrozen();
                 vm1c.Capabilities = "caps1a"; 
                 return idx.With(vm1, vm1c);
             });
@@ -49,7 +49,7 @@ namespace Stl.Tests.ImmutableModel.Updating
 
             info = await updater.UpdateAsync(idx => {
                 var cluster1 = idx.GetNode<Cluster>(Key.Parse("cluster1"));
-                var cluster1c = cluster1.Defrost();
+                var cluster1c = cluster1.ToUnfrozen();
                 cluster1c.Remove("vm1");
                 return idx.With(cluster1, cluster1c);
             });

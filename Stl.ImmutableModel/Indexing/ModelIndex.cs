@@ -143,7 +143,7 @@ namespace Stl.ImmutableModel.Indexing
             path = path.Prefix;
             while (path != null) {
                 var sourceParent = this.GetNodeByPath(path);
-                var targetParent = sourceParent.Defrost();
+                var targetParent = sourceParent.ToUnfrozen();
                 targetParent.GetDefinition().SetItem(targetParent, tail, (object?) target);
                 targetParent.Freeze();
                 ReplaceNode(path, sourceParent, targetParent, ref changeSet);

@@ -122,9 +122,9 @@ namespace Stl.ImmutableModel
 
         // IFreezable
 
-        public override IFreezable BaseDefrost(bool deep = false)
+        public override IFreezable BaseToUnfrozen(bool deep = false)
         {
-            var clone = (CollectionNode<T>) base.BaseDefrost(deep);
+            var clone = (CollectionNode<T>) base.BaseToUnfrozen(deep);
             clone.DiscardChangeHistory();
             return clone;
         }

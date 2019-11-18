@@ -6,9 +6,9 @@ namespace Stl
     {
         // This method isn't a part of the interface mainly because otherwise
         // it's going to be a virtual generic method (i.e. w/ super slow invocation).
-        public static T Defrost<T>(this T freezable, bool deep = false) 
+        public static T ToUnfrozen<T>(this T freezable, bool deep = false) 
             where T : IFreezable 
-            => (T) freezable.BaseDefrost(deep); 
+            => (T) freezable.BaseToUnfrozen(deep); 
 
         // ThrowIfXxx
 

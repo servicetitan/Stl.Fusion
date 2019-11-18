@@ -60,7 +60,7 @@ namespace Stl.Tests.ImmutableModel.Indexing
                 Capabilities = "caps3",
             };
             
-            var cluster1a = cluster1.Defrost();
+            var cluster1a = cluster1.ToUnfrozen();
             cluster1a.Remove(vm2);
             cluster1a.Add(vm3);
             cluster1a["vm3"].Should().Equals(vm3);

@@ -38,9 +38,9 @@ namespace Stl.ImmutableModel
             base.Freeze();
         }
 
-        public override IFreezable BaseDefrost(bool deep = false)
+        public override IFreezable BaseToUnfrozen(bool deep = false)
         {
-            var clone = (SimpleNodeBase) base.BaseDefrost(deep);
+            var clone = (SimpleNodeBase) base.BaseToUnfrozen(deep);
             var nodeTypeDef = clone.GetDefinition();
 
             if (deep) {
@@ -49,7 +49,7 @@ namespace Stl.ImmutableModel
                 try {
                     nodeTypeDef.GetFreezableItems(clone, ref buffer);
                     foreach (var (key, f) in buffer)
-                        nodeTypeDef.SetItem(clone, key, (object?) f.Defrost(true));
+                        nodeTypeDef.SetItem(clone, key, (object?) f.ToUnfrozen(true));
                 }
                 finally {
                     buffer.Release();
@@ -61,7 +61,7 @@ namespace Stl.ImmutableModel
                 try {
                     nodeTypeDef.GetCollectionNodeItems(clone, ref buffer);
                     foreach (var (key, c) in buffer)
-                        nodeTypeDef.SetItem(clone, key, (object?) c.Defrost());
+                        nodeTypeDef.SetItem(clone, key, (object?) c.ToUnfrozen());
                 }
                 finally {
                     buffer.Release();
