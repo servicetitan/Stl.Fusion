@@ -76,12 +76,16 @@ namespace Stl.ImmutableModel.Indexing
             NodeToPath = NodeToPath.Add(node, path);
 
             var nodeTypeDef = node.GetDefinition();
-            using var lease = ListBuffer<KeyValuePair<Symbol, INode>>.Rent();
-            var buffer = lease.Buffer;
-            nodeTypeDef.GetNodeItems(node, buffer);
+            var buffer = ListBuffer<KeyValuePair<Symbol, INode>>.Lease();
+            try {
+                nodeTypeDef.GetNodeItems(node, ref buffer);
 
-            foreach (var (key, child) in buffer) 
-                AddNode(path + key, child, ref changeSet);
+                foreach (var (key, child) in buffer) 
+                    AddNode(path + key, child, ref changeSet);
+            }
+            finally {
+                buffer.Release();
+            }
         }
 
         protected virtual void RemoveNode(SymbolList path, INode node, ref ModelChangeSet changeSet)
@@ -92,12 +96,16 @@ namespace Stl.ImmutableModel.Indexing
             NodeToPath = NodeToPath.Remove(node);
 
             var nodeTypeDef = node.GetDefinition();
-            using var lease = ListBuffer<KeyValuePair<Symbol, INode>>.Rent();
-            var buffer = lease.Buffer;
-            nodeTypeDef.GetNodeItems(node, buffer);
+            var buffer = ListBuffer<KeyValuePair<Symbol, INode>>.Lease();
+            try {
+                nodeTypeDef.GetNodeItems(node, ref buffer);
 
-            foreach (var (key, child) in buffer) 
-                RemoveNode(path + key, child, ref changeSet);
+                foreach (var (key, child) in buffer) 
+                    RemoveNode(path + key, child, ref changeSet);
+            }
+            finally {
+                buffer.Release();
+            }
         }
 
         protected virtual void ReplaceNode(SymbolList path, INode source, INode target, 
@@ -136,7 +144,7 @@ namespace Stl.ImmutableModel.Indexing
             while (path != null) {
                 var sourceParent = this.GetNodeByPath(path);
                 var targetParent = sourceParent.Defrost();
-                targetParent.GetDefinition().SetItem(targetParent, tail, target);
+                targetParent.GetDefinition().SetItem(targetParent, tail, (object?) target);
                 targetParent.Freeze();
                 ReplaceNode(path, sourceParent, targetParent, ref changeSet);
                 targetParent.DiscardChangeHistory();

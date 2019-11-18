@@ -11,33 +11,33 @@ using Stl.ImmutableModel.Reflection;
 namespace Stl.ImmutableModel 
 {
     [Serializable]
-    public abstract class CollectionNodeBase : NodeBase, ICollectionNode
+    public abstract class CollectionNodeBase : NodeBase
     {
+        // Ideally it should implement ICollectionNode, but this means
+        // this type has to either really implement its methods and pass
+        // the calls to its protected abstract implementations (which
+        // will just make these calls slower), or has to provide
+        // fake implementation throwing ~ NotImplementedException
+        // in assumption that it's anyway re-implemented in the
+        // descendant -- which gives zero value + pollutes debugger
+        // view b/c all of the properties implemented here will be shown
+        // there (as a property that thrown an exception on attempt to
+        // get its value).
+        //
+        // Long story short, since this is an abstract type, it's totally
+        // fine to leave the implementation of ICollectionNode to
+        // the descendant - the cast will always work anyway, the only
+        // con is that static cast from this type won't work:
+        // ICollectionNode icn = (CollectionNodeBase) someCollection;
+        // - but who cares :) It's a rare case + dynamic cast will work
+        // anyway.
+
         internal static NodeTypeDef CreateNodeTypeDef(Type type) => new CollectionNodeTypeDef(type);
-
-        // That's just a tagging base type for all collection nodes; 
-        // it doesn't expose any public members - you have to cast
-        // the instance to ICollectionNode to access these.
-
-        IEnumerable<Symbol> ICollectionNode.Keys => throw new NotImplementedException();
-        IEnumerable<object?> ICollectionNode.Values => throw new NotImplementedException();
-        IEnumerable<KeyValuePair<Symbol, object?>> ICollectionNode.Items => throw new NotImplementedException();
-
-        object? ICollectionNode.this[Symbol key] {
-            get => throw new NotImplementedException();
-            set => throw new NotImplementedException();
-        }
-
-        bool ICollectionNode.ContainsKey(Symbol key) => throw new NotImplementedException();
-        bool ICollectionNode.TryGetValue(Symbol key, out object? value) => throw new NotImplementedException();
-        void ICollectionNode.Add(Symbol key, object? value) => throw new NotImplementedException();
-        bool ICollectionNode.Remove(Symbol key) => throw new NotImplementedException();
-        void ICollectionNode.Clear() => throw new NotImplementedException();
     }
 
     [Serializable]
     [JsonObject]
-    public class CollectionNode<T> : CollectionNodeBase, ICollectionNode<T>
+    public partial class CollectionNode<T> : CollectionNodeBase, ICollectionNode<T>
     {
         [JsonProperty(PropertyName = "@Items")]
         protected ChangeTrackingDictionary<Symbol, T> Items = ChangeTrackingDictionary<Symbol, T>.Empty;
@@ -53,10 +53,8 @@ namespace Stl.ImmutableModel
             => Items.Values.Select(v => (object?) v);
         IEnumerable<KeyValuePair<Symbol, object?>> ICollectionNode.Items 
             => Items.Select(p => KeyValuePair.Create(p.Key, (object?) p.Value));
-        // Methods returning ICollection<...> can't be implemented over ImmutableDictionary<...>
-        // w/o a significant perf degrade, so... 
-        ICollection<Symbol> IDictionary<Symbol, T>.Keys => throw new NotSupportedException();
-        ICollection<T> IDictionary<Symbol, T>.Values => throw new NotSupportedException();
+        ICollection<Symbol> IDictionary<Symbol, T>.Keys => new KeyCollection(this);
+        ICollection<T> IDictionary<Symbol, T>.Values => new ValueCollection(this);
 
         object? ICollectionNode.this[Symbol key] {
             get => this[key];

@@ -24,30 +24,34 @@ namespace Stl.Tests.Collections
 
         private void Test<T>(List<T> list)
         {
-            using var lease = ListBuffer<T>.Rent();
-            var zList = lease.Buffer;
+            var buffer = ListBuffer<T>.Lease();
+            try {
+                foreach (var i in list) 
+                    buffer.Add(i);
+                buffer.ToArray().Should().Equal(list);
 
-            foreach (var i in list) zList.Add(i);
-            zList.ToArray().Should().Equal(list);
+                for (var _ = 0; _ < 5; _++) {
+                    if (buffer.Count == 0)
+                        break;
 
-            for (var _ = 0; _ < 5; _++) {
-                if (zList.Count == 0)
-                    break;
+                    var idx = _rnd.Next(list.Count);
+                    var item = buffer[idx];
+                    buffer.RemoveAt(idx);
+                    list.RemoveAt(idx);
+                    buffer.ToArray().Should().Equal(list);
 
-                var idx = _rnd.Next(list.Count);
-                var item = zList[idx];
-                zList.RemoveAt(idx);
-                list.RemoveAt(idx);
-                zList.ToArray().Should().Equal(list);
+                    idx = _rnd.Next(list.Count);
+                    buffer.Insert(idx, item);
+                    list.Insert(idx, item);
+                    buffer.ToArray().Should().Equal(list);
 
-                idx = _rnd.Next(list.Count);
-                zList.Insert(idx, item);
-                list.Insert(idx, item);
-                zList.ToArray().Should().Equal(list);
-
-                idx = _rnd.Next(list.Count);
-                zList[idx] = zList[idx];
-                zList.ToArray().Should().Equal(list);
+                    idx = _rnd.Next(list.Count);
+                    buffer[idx] = buffer[idx];
+                    buffer.ToArray().Should().Equal(list);
+                }
+            }
+            finally {
+                buffer.Release();
             }
         }
     }

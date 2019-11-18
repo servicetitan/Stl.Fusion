@@ -55,17 +55,5 @@ namespace Stl.ImmutableModel.Indexing
             var (i, cs) = index.BaseWith(source, target);
             return ((TIndex) i, cs);
         }
-
-        public static (TIndex Index, ModelChangeSet ChangeSet) With<TIndex>(this TIndex index, SymbolList path, Option<object?> value)
-            where TIndex : IModelIndex
-        {
-            if (path.Prefix == null)
-                // Root update
-                return index.With(index.GetNodeByPath(path), (INode) value.Value!);
-            var source = index.GetNodeByPath(path.Prefix);
-            var target = source.Defrost();
-            target.GetDefinition().SetItem(target, path.Tail, value);
-            return index.With(source, target);
-        }
     }
 }

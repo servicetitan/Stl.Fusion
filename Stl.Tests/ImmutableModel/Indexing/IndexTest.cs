@@ -18,9 +18,9 @@ namespace Stl.Tests.ImmutableModel.Indexing
         public void IndexingTest()
         {
             var idx = BuildModel();
-            var (tmpIdx, json) = idx.PassThroughAllSerializersWithOutput();
-            Out.WriteLine($"JSON: {json}");
-            idx = tmpIdx;
+//            var (tmpIdx, json) = idx.PassThroughAllSerializersWithOutput();
+//            Out.WriteLine($"JSON: {json}");
+//            idx = tmpIdx;
 
             idx.GetNode(Key.Parse("@")).Should().Equals(idx.Model);
             idx.GetNodeByPath(SymbolList.Empty).Should().Equals(idx.Model);
@@ -93,11 +93,15 @@ namespace Stl.Tests.ImmutableModel.Indexing
                 index.GetNode(node.Key).Should().Equals(node);
 
                 var nodeTypeDef = node.GetDefinition();
-                using var lease = ListBuffer<KeyValuePair<Symbol, INode>>.Rent();
-                var buffer = lease.Buffer;
-                nodeTypeDef.GetNodeItems(node, buffer);
-                foreach (var (k, n) in buffer)
-                    ProcessNode(path + k, n);
+                var buffer = ListBuffer<KeyValuePair<Symbol, INode>>.Lease();
+                try {
+                    nodeTypeDef.GetNodeItems(node, ref buffer);
+                    foreach (var (k, n) in buffer)
+                        ProcessNode(path + k, n);
+                }
+                finally {
+                    buffer.Release();
+                }
             }
 
             var root = index.Model;

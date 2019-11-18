@@ -29,7 +29,7 @@ namespace Stl.ImmutableModel
         protected T PrepareValue<T>(Symbol localKey, T value)
         {
             this.ThrowIfFrozen();
-            if (value is INode node && !node.Key.IsUndefined()) {
+            if (value is INode node && node.Key.IsUndefined()) {
                 // We automatically provide keys for INode properties (or collection items)
                 // by extending the owner's key with property name suffix 
                 node.Key = Key + localKey;

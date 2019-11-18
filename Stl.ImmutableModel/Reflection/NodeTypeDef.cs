@@ -44,9 +44,9 @@ namespace Stl.ImmutableModel.Reflection
         }
 
         public abstract IEnumerable<KeyValuePair<Symbol, object?>> GetAllItems(INode node);
-        public abstract void GetFreezableItems(INode node, ListBuffer<KeyValuePair<Symbol, IFreezable>> output);
-        public abstract void GetNodeItems(INode node, ListBuffer<KeyValuePair<Symbol, INode>> output);
-        public abstract void GetCollectionNodeItems(INode node, ListBuffer<KeyValuePair<Symbol, ICollectionNode>> output);
+        public abstract void GetFreezableItems(INode node, ref ListBuffer<KeyValuePair<Symbol, IFreezable>> output);
+        public abstract void GetNodeItems(INode node, ref ListBuffer<KeyValuePair<Symbol, INode>> output);
+        public abstract void GetCollectionNodeItems(INode node, ref ListBuffer<KeyValuePair<Symbol, ICollectionNode>> output);
         
         public abstract bool TryGetItem<T>(INode node, Symbol localKey, out T value);
         public abstract bool TryGetItem(INode node, Symbol localKey, out object? value);
@@ -58,7 +58,7 @@ namespace Stl.ImmutableModel.Reflection
 
         // Useful helpers
 
-        public void GetClosestChildNodesByType<TChild>(INode node, ListBuffer<TChild> output, bool includeSelf = false)
+        public void GetClosestChildNodesByType<TChild>(INode node, ref ListBuffer<TChild> output, bool includeSelf = false)
             where TChild : class, INode
         {
             if (node is TChild n && includeSelf) {
@@ -66,12 +66,15 @@ namespace Stl.ImmutableModel.Reflection
                 return;
             }
 
-            using var bufferLease = ListBuffer<KeyValuePair<Symbol, INode>>.Rent();
-            var buffer = bufferLease.Buffer;
-
-            node.GetDefinition().GetNodeItems(node, buffer);
-            foreach (var (key, value) in buffer)
-                GetClosestChildNodesByType(value, output, true);
+            var buffer = ListBuffer<KeyValuePair<Symbol, INode>>.Lease();
+            try {
+                node.GetDefinition().GetNodeItems(node, ref buffer);
+                foreach (var (key, value) in buffer)
+                    GetClosestChildNodesByType(value, ref output, true);
+            }
+            finally {
+                buffer.Release();
+            }
         }
     }
 }

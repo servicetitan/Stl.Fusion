@@ -24,11 +24,15 @@ namespace Stl.ImmutableModel
             if (IsFrozen) return;
 
             // First we freeze child freezables
-            using var lease = ListBuffer<KeyValuePair<Symbol, IFreezable>>.Rent();
-            var buffer = lease.Buffer;
-            this.GetDefinition().GetFreezableItems(this, buffer);
-            foreach (var (key, freezable) in buffer)
-                freezable.Freeze();
+            var buffer = ListBuffer<KeyValuePair<Symbol, IFreezable>>.Lease();
+            try {
+                this.GetDefinition().GetFreezableItems(this, ref buffer);
+                foreach (var (key, freezable) in buffer)
+                    freezable.Freeze();
+            }
+            finally {
+                buffer.Release();
+            }
             
             // And freeze itself in the end
             base.Freeze();
@@ -41,19 +45,27 @@ namespace Stl.ImmutableModel
 
             if (deep) {
                 // Defrost every freezable
-                using var lease = ListBuffer<KeyValuePair<Symbol, IFreezable>>.Rent();
-                var buffer = lease.Buffer;
-                nodeTypeDef.GetFreezableItems(clone, buffer);
-                foreach (var (key, f) in buffer)
-                    nodeTypeDef.SetItem(clone, key, f.Defrost(true));
+                var buffer = ListBuffer<KeyValuePair<Symbol, IFreezable>>.Lease();
+                try {
+                    nodeTypeDef.GetFreezableItems(clone, ref buffer);
+                    foreach (var (key, f) in buffer)
+                        nodeTypeDef.SetItem(clone, key, (object?) f.Defrost(true));
+                }
+                finally {
+                    buffer.Release();
+                }
             }
             else {
                 // Defrost every collection (for convenience)
-                using var lease = ListBuffer<KeyValuePair<Symbol, ICollectionNode>>.Rent();
-                var buffer = lease.Buffer;
-                nodeTypeDef.GetCollectionNodeItems(clone, buffer);
-                foreach (var (key, c) in buffer)
-                    nodeTypeDef.SetItem(clone, key, c.Defrost());
+                var buffer = ListBuffer<KeyValuePair<Symbol, ICollectionNode>>.Lease();
+                try {
+                    nodeTypeDef.GetCollectionNodeItems(clone, ref buffer);
+                    foreach (var (key, c) in buffer)
+                        nodeTypeDef.SetItem(clone, key, (object?) c.Defrost());
+                }
+                finally {
+                    buffer.Release();
+                }
             }
 
             return clone;

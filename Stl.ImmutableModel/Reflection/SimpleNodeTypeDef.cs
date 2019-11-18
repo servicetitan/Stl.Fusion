@@ -61,7 +61,7 @@ namespace Stl.ImmutableModel.Reflection
                 yield return KeyValuePair.Create(key, option)!;
         }
 
-        public override void GetFreezableItems(INode node, ListBuffer<KeyValuePair<Symbol, IFreezable>> output)
+        public override void GetFreezableItems(INode node, ref ListBuffer<KeyValuePair<Symbol, IFreezable>> output)
         {
             var simpleNode = (ISimpleNode) node;
             foreach (var (key, propertyInfo) in FreezableProperties) {
@@ -80,7 +80,7 @@ namespace Stl.ImmutableModel.Reflection
             }
         }
 
-        public override void GetNodeItems(INode node, ListBuffer<KeyValuePair<Symbol, INode>> output)
+        public override void GetNodeItems(INode node, ref ListBuffer<KeyValuePair<Symbol, INode>> output)
         {
             var simpleNode = (ISimpleNode) node;
             foreach (var (key, propertyInfo) in NodeProperties) {
@@ -99,7 +99,7 @@ namespace Stl.ImmutableModel.Reflection
             }
         }
 
-        public override void GetCollectionNodeItems(INode node, ListBuffer<KeyValuePair<Symbol, ICollectionNode>> output)
+        public override void GetCollectionNodeItems(INode node, ref ListBuffer<KeyValuePair<Symbol, ICollectionNode>> output)
         {
             var simpleNode = (ISimpleNode) node;
             foreach (var (key, propertyInfo) in CollectionNodeProperties) {

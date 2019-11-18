@@ -1,6 +1,7 @@
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Stl.Internal;
 
 namespace Stl.Collections
@@ -11,53 +12,21 @@ namespace Stl.Collections
     // enumeration scenarios. 
     public ref struct ListBuffer<T>
     {
-        public static Lease Rent(int capacity = MinCapacity) 
-            => new Lease(new ListBuffer<T>(capacity));
-
-        public ref struct Lease
-        {
-            public ListBuffer<T> Buffer;
-
-            internal Lease(ListBuffer<T> buffer) => Buffer = buffer;
-
-            public void Dispose()
-            {
-                Buffer._lease?.Dispose();
-                Buffer._lease = null!;
-            }
-        }
-
-        public ref struct Enumerator
-        {
-            private ListBuffer<T> _buffer;
-            private int _index;
-
-            public Enumerator(ListBuffer<T> buffer) : this()
-            {
-                _index = -1;
-                _buffer = buffer;
-            }
-
-            public bool MoveNext() => ++_index < _buffer.Count;
-            public void Reset() => _index = -1;
-            public T Current => _buffer[_index];
-            public void Dispose() { }
-        }
-
         public const int MinCapacity = 16;
         private static readonly MemoryPool<T> Pool = MemoryPool<T>.Shared;
 
         private IMemoryOwner<T> _lease;
-        public Memory<T> Buffer => _lease.Memory;
-        public int Capacity => Buffer.Length;
+        public Memory<T> BufferMemory => _lease.Memory;
+        public Span<T> BufferSpan { get; private set; }
+        public Span<T> Span => BufferSpan.Slice(0, Count);
         public int Count { get; private set; }
-        public Span<T> Span => _lease.Memory.Span.Slice(0, Count);
+        public int Capacity => BufferSpan.Length;
 
         public T this[int index] {
-            get => index < Count ? Buffer.Span[index] : throw new IndexOutOfRangeException();
+            get => index < Count ? BufferSpan[index] : throw new IndexOutOfRangeException();
             set {
                 if (index >= Count) throw new IndexOutOfRangeException();
-                Buffer.Span[index] = value;
+                BufferSpan[index] = value;
             }
         }
 
@@ -66,10 +35,20 @@ namespace Stl.Collections
             if (capacity < MinCapacity)
                 capacity = MinCapacity;
             _lease = Pool.Rent(capacity);
+            BufferSpan = _lease.Memory.Span;
             Count = 0;
         }
 
-        public Enumerator GetEnumerator() => new Enumerator(this); 
+        public static ListBuffer<T> Lease(int capacity = MinCapacity) 
+            => new ListBuffer<T>(capacity);
+
+        public void Release()
+        {
+            _lease?.Dispose();
+            _lease = null!;
+        }
+
+        public Span<T>.Enumerator GetEnumerator() => Span.GetEnumerator(); 
         
         public T[] ToArray() => Span.ToArray();
         public List<T> ToList()
@@ -89,8 +68,7 @@ namespace Stl.Collections
                     throw Errors.ZListIsTooLong();
                 Resize(newCapacity);
             }
-            this[Count++] = item;
-
+            BufferSpan[Count++] = item;
         }
 
         public void Insert(int index, T item)
@@ -105,7 +83,7 @@ namespace Stl.Collections
             var copyLength = Count - index;
             if (copyLength < 0)
                 throw new ArgumentOutOfRangeException(nameof(index));
-            var span = Buffer.Span.Slice(0, ++Count);
+            var span = BufferSpan.Slice(0, ++Count);
             var source = span.Slice(index, copyLength);
             var target = span.Slice(index + 1);
             source.CopyTo(target);
@@ -117,7 +95,7 @@ namespace Stl.Collections
             var copyLength = Count - index - 1;
             if (copyLength < 0)
                 throw new ArgumentOutOfRangeException(nameof(index));
-            var span = Buffer.Span.Slice(0, Count--);
+            var span = BufferSpan.Slice(0, Count--);
             var source = span.Slice(index + 1, copyLength);
             var target = span.Slice(index);
             source.CopyTo(target);
@@ -125,8 +103,7 @@ namespace Stl.Collections
 
         public void Clear()
         {
-            _lease.Dispose();
-            _lease = Pool.Rent(MinCapacity);
+            ChangeLease(Pool.Rent(MinCapacity));
             Count = 0;
         }
 
@@ -143,11 +120,20 @@ namespace Stl.Collections
                 span = span.Slice(0, capacity);
             }
             span.CopyTo(newLease.Memory.Span);
-            _lease.Dispose();
-            _lease = newLease;
+            ChangeLease(newLease);
         }
 
         public void CopyTo(T[] array, int arrayIndex) 
-            => Buffer.Span.CopyTo(array.AsSpan().Slice(arrayIndex));
+            => BufferSpan.CopyTo(array.AsSpan().Slice(arrayIndex));
+
+        // Private methods
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void ChangeLease(IMemoryOwner<T> newLease)
+        {
+            _lease.Dispose();
+            _lease = newLease;
+            BufferSpan = _lease.Memory.Span;
+        }
     }
 }
