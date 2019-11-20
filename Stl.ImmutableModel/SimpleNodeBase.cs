@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Stl.Collections;
 using Stl.ImmutableModel.Reflection;
@@ -16,6 +17,9 @@ namespace Stl.ImmutableModel
         [JsonProperty(PropertyName = "@Options")]
         private Dictionary<Symbol, object>? _options;
         private Dictionary<Symbol, object> Options => _options ??= new Dictionary<Symbol, object>();
+
+        protected SimpleNodeBase() { }
+        protected SimpleNodeBase(SerializationInfo info, StreamingContext context) : base(info, context) { }
 
         // IFreezable implementation
 

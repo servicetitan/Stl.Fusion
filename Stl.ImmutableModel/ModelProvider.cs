@@ -36,11 +36,11 @@ namespace Stl.ImmutableModel
 
         // TODO: Turn this into a protected field, but keep JSON serialization working 
         public IModelUpdater<TModel> Updater { get; }
-        [System.Text.Json.Serialization.JsonIgnore]
+        [JsonIgnore]
         public TModel Model => Updater.Model;
-        [System.Text.Json.Serialization.JsonIgnore]
+        [JsonIgnore]
         public IModelIndex<TModel> Index => Updater.Index;
-        [System.Text.Json.Serialization.JsonIgnore]
+        [JsonIgnore]
         public IModelChangeTracker<TModel> ChangeTracker => Updater.ChangeTracker;
 
         [JsonConstructor]

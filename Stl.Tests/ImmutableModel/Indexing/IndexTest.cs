@@ -18,9 +18,9 @@ namespace Stl.Tests.ImmutableModel.Indexing
         public void IndexingTest()
         {
             var idx = BuildModel();
-//            var (tmpIdx, json) = idx.PassThroughAllSerializersWithOutput();
-//            Out.WriteLine($"JSON: {json}");
-//            idx = tmpIdx;
+            var (tmpIdx, json) = idx.PassThroughAllSerializersWithOutput();
+            Out.WriteLine($"JSON: {json}");
+            idx = tmpIdx;
 
             idx.GetNode(Key.Parse("@")).Should().Equals(idx.Model);
             idx.GetNodeByPath(SymbolList.Empty).Should().Equals(idx.Model);

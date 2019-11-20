@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Stl.Collections;
 using Stl.ImmutableModel.Indexing;
@@ -33,18 +34,17 @@ namespace Stl.ImmutableModel
         // anyway.
 
         internal static NodeTypeDef CreateNodeTypeDef(Type type) => new CollectionNodeTypeDef(type);
+
+        protected CollectionNodeBase() { }
+        protected CollectionNodeBase(SerializationInfo info, StreamingContext context) : base(info, context) { }
     }
 
     [Serializable]
-    [JsonObject]
     public partial class CollectionNode<T> : CollectionNodeBase, ICollectionNode<T>
     {
-        [JsonProperty(PropertyName = "@Items")]
         protected ChangeTrackingDictionary<Symbol, T> Items = ChangeTrackingDictionary<Symbol, T>.Empty;
 
-        [JsonIgnore]
         public int Count => Items.Count;
-        [JsonIgnore]
         public bool IsReadOnly => IsFrozen;
 
         IEnumerable<Symbol> ICollectionNode.Keys 
@@ -64,6 +64,10 @@ namespace Stl.ImmutableModel
             get => Items[key];
             set => Items = Items.SetItem(key, PrepareValue(key, value));
         }
+
+
+        public CollectionNode() { }
+        protected CollectionNode(SerializationInfo info, StreamingContext context) : base(info, context) { }
 
         IEnumerator IEnumerable.GetEnumerator() => Items.GetEnumerator();
         public IEnumerator<KeyValuePair<Symbol, T>> GetEnumerator() => Items.GetEnumerator();

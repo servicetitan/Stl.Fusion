@@ -1,15 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Stl.Collections;
 using Stl.ImmutableModel.Indexing;
 
 namespace Stl.ImmutableModel
 {
-    [JsonObject]
     [Serializable]
-    public abstract class NodeBase: FreezableBase, INode
+    public abstract class NodeBase: FreezableBase, INode, ISerializable
     {
         private Key _key;
 
@@ -37,6 +38,32 @@ namespace Stl.ImmutableModel
             return value;
         }
 
+        // ISerializable
+
+        protected NodeBase() { }
+        protected NodeBase(SerializationInfo info, StreamingContext context)
+        {
+            var nodeTypeDef = this.GetDefinition();
+            Key = Key.Parse(info.GetString(nameof(Key))!);
+            foreach (var entry in info) {
+                if (entry.Name == nameof(Key))
+                    continue;
+                if (entry.Value is JObject jObject) {
+                    var value = jObject.ToObject<object>();
+                    nodeTypeDef.SetItem(this, (Symbol) entry.Name, value);
+                    continue;
+                }
+                nodeTypeDef.SetItem(this, (Symbol) entry.Name, entry.Value);
+            }
+        }
+        
+        public void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            var nodeTypeDef = this.GetDefinition();
+            info.AddValue(nameof(Key), Key.FormattedValue);
+            foreach (var (key, value) in nodeTypeDef.GetAllItems(this)) 
+                info.AddValue(key.Value, value);
+        }
         // IFreezable
 
         public override void Freeze()
