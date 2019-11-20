@@ -11,6 +11,7 @@ using Stl.ImmutableModel.Internal;
 
 namespace Stl.ImmutableModel.Updating
 {
+    [JsonObject]
     public readonly struct ModelChangeSet : IReadOnlyDictionary<Key, NodeChangeType>, IEquatable<ModelChangeSet>
     {
         public static ModelChangeSet Empty { get; } = new ModelChangeSet(ImmutableDictionary<Key, NodeChangeType>.Empty);

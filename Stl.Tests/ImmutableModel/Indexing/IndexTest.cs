@@ -68,7 +68,7 @@ namespace Stl.Tests.ImmutableModel.Indexing
             idx = idx1;
             TestIntegrity(idx);
 
-            var (changeSet1, json) = changeSet.PassThroughAllSerializersWithOutput();
+            var (changeSet1, json) = changeSet.PassThroughJsonConvertWithOutput();
             Out.WriteLine($"JSON: {json}");
             var c = DictionaryComparison.New(changeSet, changeSet1);
             c.AreEqual.Should().BeTrue();

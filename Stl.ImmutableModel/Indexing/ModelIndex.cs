@@ -127,7 +127,7 @@ namespace Stl.ImmutableModel.Indexing
                 throw Errors.InvalidUpdateKeyMismatch();
             
             var clone = (ModelIndex) MemberwiseClone();
-            var changeSet = new ModelChangeSet();
+            var changeSet = ModelChangeSet.Empty;
             clone.UpdateNode(source, target, ref changeSet);
             return (clone, changeSet);
         }
