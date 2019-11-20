@@ -8,18 +8,16 @@ using Stl.ImmutableModel.Reflection;
 
 namespace Stl.ImmutableModel 
 {
-    [Serializable]
     [JsonObject]
     public abstract class SimpleNodeBase : NodeBase, ISimpleNode 
     {
         internal static NodeTypeDef CreateNodeTypeDef(Type type) => new SimpleNodeTypeDef(type);
 
-        [JsonProperty(PropertyName = "@Options")]
+        [JsonProperty(
+            PropertyName = "@Options", 
+            DefaultValueHandling = DefaultValueHandling.Ignore)]
         private Dictionary<Symbol, object>? _options;
         private Dictionary<Symbol, object> Options => _options ??= new Dictionary<Symbol, object>();
-
-        protected SimpleNodeBase() { }
-        protected SimpleNodeBase(SerializationInfo info, StreamingContext context) : base(info, context) { }
 
         // IFreezable implementation
 

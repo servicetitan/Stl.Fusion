@@ -18,7 +18,7 @@ namespace Stl.Tests.ImmutableModel.Indexing
         public void IndexingTest()
         {
             var idx = BuildModel();
-            var (tmpIdx, json) = idx.PassThroughAllSerializersWithOutput();
+            var (tmpIdx, json) = idx.PassThroughJsonConvertWithOutput();
             Out.WriteLine($"JSON: {json}");
             idx = tmpIdx;
 

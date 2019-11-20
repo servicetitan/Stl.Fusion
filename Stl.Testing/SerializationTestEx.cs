@@ -10,8 +10,7 @@ namespace Stl.Testing
     {
         public static JsonSerializerSettings JsonSerializerSettings = new JsonSerializerSettings() {
             Formatting = Formatting.Indented,
-            TypeNameHandling = TypeNameHandling.All,
-            ContractResolver = new PreferSerializableContractResolver(),
+//            ContractResolver = new PreferSerializableContractResolver(),
         }; 
 
         public static T PassThroughAllSerializers<T>(this T value)

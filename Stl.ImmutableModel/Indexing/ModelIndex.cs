@@ -29,7 +29,7 @@ namespace Stl.ImmutableModel.Indexing
     }
 
     [Serializable]
-    public abstract class ModelIndex : IModelIndex, INotifyDeserialized
+    public abstract class ModelIndex : IModelIndex
     {
         public static ModelIndex<TModel> New<TModel>(TModel model) 
             where TModel : class, INode 
@@ -216,11 +216,8 @@ namespace Stl.ImmutableModel.Indexing
         
         // Complex, b/c JSON.NET doesn't allow [OnDeserialized] methods to be virtual
         [OnDeserialized] protected void OnDeserializedHandler(StreamingContext context) => OnDeserialized(context);
-        void INotifyDeserialized.OnDeserialized(StreamingContext context) => OnDeserialized(context);
         protected virtual void OnDeserialized(StreamingContext context)
         {
-            if (Model is INotifyDeserialized d)
-                d.OnDeserialized(context);
             if (KeyToNode == null) 
                 // Regular serialization, not JSON.NET
                 SetModel(Model);

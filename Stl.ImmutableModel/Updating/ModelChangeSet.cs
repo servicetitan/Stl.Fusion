@@ -11,50 +11,24 @@ using Stl.ImmutableModel.Internal;
 
 namespace Stl.ImmutableModel.Updating
 {
-    [Serializable]
-    public readonly struct ModelChangeSet : IReadOnlyDictionary<Key, NodeChangeType>,
-        IEquatable<ModelChangeSet>, ISerializable 
+    public readonly struct ModelChangeSet : IReadOnlyDictionary<Key, NodeChangeType>, IEquatable<ModelChangeSet>
     {
         public static ModelChangeSet Empty { get; } = new ModelChangeSet(ImmutableDictionary<Key, NodeChangeType>.Empty);
 
-        private readonly ModelChangeSetDeserializationHelper? _deserializationHelper;
-        private readonly ImmutableDictionary<Key, NodeChangeType>? _items;
-
+        [JsonIgnore]
         public int Count => Items.Count;
-        public NodeChangeType this[Key key] => Items[key];
+        [JsonIgnore]
         public IEnumerable<Key> Keys => Items.Keys;
+        [JsonIgnore]
         public IEnumerable<NodeChangeType> Values => Items.Values;
 
-        public ImmutableDictionary<Key, NodeChangeType> Items {
-            get {
-                if (_items != null)
-                    return _items;
-                var items = _deserializationHelper?.GetImmutableDictionary()
-                    ?? ImmutableDictionary<Key, NodeChangeType>.Empty;
-                // Tricky: the struct is readonly (and ideally, must be);
-                // the code below tries to overwrite it to fix the deserialization
-                // + make sure the conversion from Dictionary to ImmutableDictionary
-                // happens just once.
-                ref var r = ref Unsafe.AsRef(this);
-                r = new ModelChangeSet(items);
-                return items;
-            }
-        }
+        public NodeChangeType this[Key key] => Items[key];
 
-        // The attribute isn't actually needed, since the type already impl. IReadOnlyDictionary.
-        // But just in case...
+        public ImmutableDictionary<Key, NodeChangeType> Items { get; }
+
         [JsonConstructor] 
-        public ModelChangeSet(IDictionary<Key, NodeChangeType> items)
-        {
-            _deserializationHelper = null;
-            _items = items.ToImmutableDictionary();
-        }
-
-        public ModelChangeSet(ImmutableDictionary<Key, NodeChangeType> items)
-        {
-            _deserializationHelper = null;
-            _items = items;
-        }
+        public ModelChangeSet(ImmutableDictionary<Key, NodeChangeType> items) 
+            => Items = items;
 
         public override string ToString() => $"{GetType().Name}({Items.Count} item(s))";
 
@@ -100,19 +74,5 @@ namespace Stl.ImmutableModel.Updating
         public override int GetHashCode() => Items.GetHashCode();
         public static bool operator ==(ModelChangeSet left, ModelChangeSet right) => left.Equals(right);
         public static bool operator !=(ModelChangeSet left, ModelChangeSet right) => !left.Equals(right);
-
-        // Serialization
-
-        private ModelChangeSet(SerializationInfo info, StreamingContext context)
-        {
-            var d = (Dictionary<Key, NodeChangeType>) info.GetValue(nameof(Items), typeof(object))!;
-            _deserializationHelper = new ModelChangeSetDeserializationHelper(d);
-            _items = null;
-        }
-
-        void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
-        {
-            info.AddValue(nameof(Items), Items.ToDictionary());
-        }
     }
 }

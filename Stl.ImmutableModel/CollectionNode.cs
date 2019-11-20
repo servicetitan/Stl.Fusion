@@ -11,7 +11,6 @@ using Stl.ImmutableModel.Reflection;
 
 namespace Stl.ImmutableModel 
 {
-    [Serializable]
     public abstract class CollectionNodeBase : NodeBase
     {
         // Ideally it should implement ICollectionNode, but this means
@@ -34,17 +33,23 @@ namespace Stl.ImmutableModel
         // anyway.
 
         internal static NodeTypeDef CreateNodeTypeDef(Type type) => new CollectionNodeTypeDef(type);
-
-        protected CollectionNodeBase() { }
-        protected CollectionNodeBase(SerializationInfo info, StreamingContext context) : base(info, context) { }
     }
 
-    [Serializable]
+    [JsonObject]
     public partial class CollectionNode<T> : CollectionNodeBase, ICollectionNode<T>
     {
+        [JsonIgnore]
         protected ChangeTrackingDictionary<Symbol, T> Items = ChangeTrackingDictionary<Symbol, T>.Empty;
 
+        [JsonProperty("@Items")]
+        private ImmutableDictionary<Symbol, T> JsonObjectItems {
+            get => Items.Dictionary;
+            set => Items = new ChangeTrackingDictionary<Symbol, T>(value);
+        }
+
+        [JsonIgnore]
         public int Count => Items.Count;
+        [JsonIgnore]
         public bool IsReadOnly => IsFrozen;
 
         IEnumerable<Symbol> ICollectionNode.Keys 
@@ -64,10 +69,6 @@ namespace Stl.ImmutableModel
             get => Items[key];
             set => Items = Items.SetItem(key, PrepareValue(key, value));
         }
-
-
-        public CollectionNode() { }
-        protected CollectionNode(SerializationInfo info, StreamingContext context) : base(info, context) { }
 
         IEnumerator IEnumerable.GetEnumerator() => Items.GetEnumerator();
         public IEnumerator<KeyValuePair<Symbol, T>> GetEnumerator() => Items.GetEnumerator();

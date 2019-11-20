@@ -16,9 +16,8 @@ namespace Stl.Collections
         Removed = 2,
     }
 
-    [Serializable]
     [JsonObject]
-    public struct ChangeTrackingDictionary<TKey, TValue> : IImmutableDictionary<TKey, TValue>, ISerializable
+    public struct ChangeTrackingDictionary<TKey, TValue> : IImmutableDictionary<TKey, TValue>
         where TKey : notnull
     {
         private static readonly ImmutableDictionary<TKey, TValue> EmptyDictionary = 
@@ -51,26 +50,6 @@ namespace Stl.Collections
             Base = @base;
             Dictionary = dictionary ?? @base;
             Changes = changes ?? EmptyChanges;
-        }
-
-        private ChangeTrackingDictionary(SerializationInfo info, StreamingContext context)
-        {
-            Base = info
-                .GetValue<Dictionary<TKey, TValue>?>(nameof(Base))
-                ?.ToImmutableDictionary() ?? ImmutableDictionary<TKey, TValue>.Empty;
-            Dictionary = info
-                .GetValue<Dictionary<TKey, TValue>?>(nameof(Dictionary))
-                ?.ToImmutableDictionary() ?? ImmutableDictionary<TKey, TValue>.Empty;
-            Changes = info
-                .GetValue<Dictionary<TKey, (DictionaryEntryChangeType ChangeType, TValue Value)>?>(nameof(Changes))
-                ?.ToImmutableDictionary() ?? ImmutableDictionary<TKey, (DictionaryEntryChangeType ChangeType, TValue Value)>.Empty;
-        }
-
-        public void GetObjectData(SerializationInfo info, StreamingContext context)
-        {
-            info.AddValue(nameof(Base), Base.ToDictionary());
-            info.AddValue(nameof(Dictionary), Dictionary.ToDictionary());
-            info.AddValue(nameof(Changes), Changes.ToDictionary());
         }
 
         IEnumerator IEnumerable.GetEnumerator() => Dictionary.GetEnumerator();
