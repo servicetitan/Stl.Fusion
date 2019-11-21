@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using Stl.Reflection;
+using Stl.Text;
 
 namespace Stl.Extensibility 
 {

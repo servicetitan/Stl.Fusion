@@ -2,6 +2,7 @@ using System;
 using System.Reflection;
 using Stl.ImmutableModel.Internal;
 using Stl.Reflection;
+using Stl.Text;
 
 namespace Stl.ImmutableModel.Reflection
 {

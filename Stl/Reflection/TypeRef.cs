@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Stl.Internal;
+using Stl.Text;
 
 namespace Stl.Reflection 
 {

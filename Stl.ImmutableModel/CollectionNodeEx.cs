@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Stl.Text;
 
 namespace Stl.ImmutableModel 
 {

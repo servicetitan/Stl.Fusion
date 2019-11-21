@@ -1,4 +1,5 @@
 using System.Threading;
+using Stl.Text;
 
 namespace Stl.ImmutableModel.Processing
 {

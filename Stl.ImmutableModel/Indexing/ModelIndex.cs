@@ -9,6 +9,7 @@ using Stl.Comparison;
 using Stl.ImmutableModel.Internal;
 using Stl.ImmutableModel.Updating;
 using Stl.Serialization;
+using Stl.Text;
 
 namespace Stl.ImmutableModel.Indexing
 {

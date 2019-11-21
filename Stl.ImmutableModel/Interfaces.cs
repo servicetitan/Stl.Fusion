@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Stl.Extensibility;
 using Stl.ImmutableModel.Indexing;
+using Stl.Text;
 
 namespace Stl.ImmutableModel
 {

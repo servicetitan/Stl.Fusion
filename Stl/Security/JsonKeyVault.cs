@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using Stl.Async;
+using Stl.Text;
 
 namespace Stl.Security
 {

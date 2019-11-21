@@ -5,6 +5,7 @@ using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Stl.Collections;
 using Stl.ImmutableModel.Reflection;
+using Stl.Text;
 
 namespace Stl.ImmutableModel 
 {

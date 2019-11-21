@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Stl.Collections;
 using Stl.ImmutableModel.Indexing;
+using Stl.Text;
 
 namespace Stl.ImmutableModel
 {

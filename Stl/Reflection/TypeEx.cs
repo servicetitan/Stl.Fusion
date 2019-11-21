@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Stl.Internal;
+using Stl.Text;
 
 namespace Stl.Reflection
 {

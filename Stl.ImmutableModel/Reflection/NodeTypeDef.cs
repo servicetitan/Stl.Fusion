@@ -6,6 +6,7 @@ using System.Reflection;
 using Stl.Collections;
 using Stl.ImmutableModel.Internal;
 using Stl.Reflection;
+using Stl.Text;
 
 namespace Stl.ImmutableModel.Reflection
 {

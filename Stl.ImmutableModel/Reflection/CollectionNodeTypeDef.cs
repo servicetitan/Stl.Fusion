@@ -4,6 +4,7 @@ using System.Linq;
 using Stl.Collections;
 using Stl.Internal;
 using Stl.Reflection;
+using Stl.Text;
 
 namespace Stl.ImmutableModel.Reflection
 {

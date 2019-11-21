@@ -5,6 +5,7 @@ using Stl.Comparison;
 using Stl.ImmutableModel;
 using Stl.ImmutableModel.Indexing;
 using Stl.Testing;
+using Stl.Text;
 using Xunit;
 using Xunit.Abstractions;
 

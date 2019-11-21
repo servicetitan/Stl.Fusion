@@ -1,4 +1,4 @@
-namespace Stl 
+namespace Stl.Text 
 {
     public static class SymbolListEx
     {

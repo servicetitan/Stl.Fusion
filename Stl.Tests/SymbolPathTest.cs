@@ -1,6 +1,7 @@
 using System.Linq;
 using FluentAssertions;
 using Stl.Testing;
+using Stl.Text;
 using Xunit;
 using Xunit.Abstractions;
 

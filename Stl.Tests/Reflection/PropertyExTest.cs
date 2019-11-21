@@ -6,6 +6,7 @@ using FluentAssertions.Common;
 using FluentAssertions.Execution;
 using Stl.Async;
 using Stl.Reflection;
+using Stl.Text;
 using Xunit;
 
 namespace Stl.Tests.Reflection

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Stl.ImmutableModel.Updating;
+using Stl.Text;
 
 namespace Stl.ImmutableModel.Indexing
 {

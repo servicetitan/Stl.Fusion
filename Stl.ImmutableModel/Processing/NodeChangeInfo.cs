@@ -1,6 +1,7 @@
 using System;
 using Newtonsoft.Json;
 using Stl.ImmutableModel.Updating;
+using Stl.Text;
 
 namespace Stl.ImmutableModel.Processing
 {

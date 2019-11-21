@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace Stl
+namespace Stl.Text
 {
     public interface ISymbolListFormatter
     {

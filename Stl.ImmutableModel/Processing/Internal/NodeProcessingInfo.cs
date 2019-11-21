@@ -2,6 +2,7 @@ using System;
 using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
+using Stl.Text;
 
 namespace Stl.ImmutableModel.Processing.Internal
 {

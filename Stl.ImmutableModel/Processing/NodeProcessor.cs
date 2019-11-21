@@ -10,6 +10,7 @@ using Stl.Async;
 using Stl.ImmutableModel.Indexing;
 using Stl.ImmutableModel.Processing.Internal;
 using Stl.ImmutableModel.Updating;
+using Stl.Text;
 
 namespace Stl.ImmutableModel.Processing
 {

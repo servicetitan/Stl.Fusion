@@ -1,4 +1,5 @@
 using Stl.ImmutableModel.Internal;
+using Stl.Text;
 
 namespace Stl.ImmutableModel
 {

@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.Globalization;
+using Stl.Text;
 
 namespace Stl.Internal 
 {
