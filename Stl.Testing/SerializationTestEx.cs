@@ -31,7 +31,7 @@ namespace Stl.Testing
         {
             var box = Box.New(value);
             var json = JsonConvert.SerializeObject(box, JsonSerializerSettings);
-            box = JsonConvert.DeserializeObject<Box<T>>(json, JsonSerializerSettings);
+            box = JsonConvert.DeserializeObject<Box<T>>(json, JsonSerializerSettings)!;
             return box.Value;
         }
         
@@ -39,7 +39,7 @@ namespace Stl.Testing
         {
             var box = Box.New(value);
             var json = JsonConvert.SerializeObject(box, JsonSerializerSettings);
-            box = JsonConvert.DeserializeObject<Box<T>>(json, JsonSerializerSettings);
+            box = JsonConvert.DeserializeObject<Box<T>>(json, JsonSerializerSettings)!;
             return (box.Value, json);
         }
         

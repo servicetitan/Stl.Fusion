@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Runtime.Serialization;
 using System.Text;
 using Stl.Text;
@@ -28,8 +29,8 @@ namespace Stl.ImmutableModel
 
         public abstract bool Equals(KeyBase other);
         public override int GetHashCode() => CachedHashCode;
-        public static bool operator ==(KeyBase left, KeyBase right) => left?.Equals(right) ?? right == null;
-        public static bool operator !=(KeyBase left, KeyBase right) => !(left?.Equals(right) ?? right == null);
+        public static bool operator ==(KeyBase left, KeyBase right) => left?.Equals(right) ?? ReferenceEquals(right, null);
+        public static bool operator !=(KeyBase left, KeyBase right) => !(left?.Equals(right) ?? ReferenceEquals(right, null));
 
         // Serialization
 

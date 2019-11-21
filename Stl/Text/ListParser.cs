@@ -14,33 +14,37 @@ namespace Stl.Text
             Escape = escape;
         }
 
-        public void FormatItem(StringBuilder output, in ReadOnlySpan<char> item, bool isFirst)
+        public void FormatItem(StringBuilder output, in ReadOnlySpan<char> item, ref int itemIndex)
         {
-            if (!isFirst)
+            if (itemIndex != 0)
                 output.Append(Delimiter);
             foreach (var c in item) {
                 if (c == Delimiter || c == Escape)
                     output.Append(Escape);
                 output.Append(c);
             }
+            ++itemIndex;
         }
 
-        public ReadOnlySpan<char> ParseItem(ref ReadOnlySpan<char> source)
+        public bool ParseItem(ref ReadOnlySpan<char> source, ref int itemIndex, StringBuilder output)
         {
-            var escape = false;
+            itemIndex++;
             for (var index = 0; index < source.Length; index++) {
                 var c = source[index];
-                if (escape)
-                    escape = false;
-                else if (c == Escape)
-                    escape = true;
-                else if (c == Delimiter) {
-                    var item = source[..index]; 
-                    source = source[(index + 1)..];
-                    return item;
+                if (c == Escape) {
+                    if (++index >= source.Length) {
+                        output.Append(Escape);
+                        break;
+                    }
                 }
+                else if (c == Delimiter) {
+                    source = source[(index + 1)..];
+                    return true;
+                }
+                output.Append(source[index]);
             }
-            return ReadOnlySpan<char>.Empty;
+            source = source[..0];
+            return itemIndex == 1 || output.Length > 0;
         }
     }
 }

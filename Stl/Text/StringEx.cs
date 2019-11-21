@@ -13,11 +13,9 @@ namespace Stl.Text
         public static string ManyToOne(IEnumerable<string> values)
         {
             var sb = new StringBuilder();
-            var isFirst = true;
-            foreach (var value in values) {
-                OneToManyParser.FormatItem(sb, value, isFirst);
-                isFirst = false;
-            }
+            var index = 0;
+            foreach (var value in values)
+                OneToManyParser.FormatItem(sb, value, ref index);
             return sb.ToString();
         }
 
@@ -25,11 +23,15 @@ namespace Stl.Text
         {
             if (value == "")
                 return Array.Empty<string>();
-            var remainder = value.AsSpan();
+            var tail = value.AsSpan();
             var buffer = ListBuffer<string>.Lease();
             try {
-                while (remainder.Length > 0)
-                    buffer.Add(OneToManyParser.ParseItem(ref remainder).ToString());
+                var index = 0;
+                var item = new StringBuilder();
+                while (OneToManyParser.ParseItem(ref tail, ref index, item)) {
+                    buffer.Add(item.ToString());
+                    item.Clear();
+                }
                 return buffer.ToArray();
             }
             finally {
