@@ -123,14 +123,10 @@ namespace Stl.Text
             ItemIndex = itemIndex;
         }
 
-        public bool ClearAndTryParseNext()
+        public bool TryParseNext(bool clearItemBuilder = true)
         {
-            ItemBuilder.Clear();
-            return TryParseNext();
-        }
-
-        public bool TryParseNext()
-        {
+            if (clearItemBuilder)
+                ItemBuilder.Clear();
             ItemIndex++;
             var startLength = ItemBuilder.Length;
             for (var index = 0; index < Source.Length; index++) {
@@ -169,23 +165,23 @@ namespace Stl.Text
             return ItemIndex == 1 || ItemBuilder.Length > 0;
         }
 
-        public void ParseNext()
+        public void ParseNext(bool clearItemBuilder = true)
         {
-            if (!TryParseNext())
+            if (!TryParseNext(clearItemBuilder))
                 throw Errors.InvalidListFormat();
         }
 
         public List<string> ParseAll()
         {
             var result = new List<string>();
-            while (ClearAndTryParseNext())
+            while (TryParseNext())
                 result.Add(Item);
             return result;
         }
 
         public void ParseAll(ListBuffer<string> listBuffer)
         {
-            while (ClearAndTryParseNext())
+            while (TryParseNext())
                 listBuffer.Add(Item);
         }
     }

@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Stl.Internal;
 using Stl.Text;
 
@@ -22,7 +24,8 @@ namespace Stl.ImmutableModel
 
         public abstract KeyBase Parse(ref ListParser parser);
 
-        protected KeyBase? ParseContinuation(ref ListParser parser) 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected static KeyBase? ParseContinuation(ref ListParser parser) 
             => KeyParser.Parse(ref parser);
     }
 
@@ -33,7 +36,9 @@ namespace Stl.ImmutableModel
         static KeyParser()
         {
             _instance = new KeyParser(ImmutableDictionary<string, IKeyParser>.Empty);
+            RegisterKeyType<UndefinedKey>();
             RegisterKeyType<StringKey>();
+            RegisterKeyType<PropertyKey>();
         }
 
         public static void RegisterKeyType<TKey>()
@@ -64,6 +69,7 @@ namespace Stl.ImmutableModel
             return _instance.ParseImpl(ref parser);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static KeyBase? Parse(ref ListParser parser)
             => _instance.ParseImpl(ref parser);
 
@@ -75,22 +81,31 @@ namespace Stl.ImmutableModel
         private KeyParser(IReadOnlyDictionary<string, IKeyParser> parsers)
         {
             _parsers = parsers;
-            _stringKeyParser = parsers[StringKey.Tag];
+            parsers.TryGetValue(StringKey.Tag, out _stringKeyParser!);
         }
 
         private KeyBase? ParseImpl(ref ListParser parser)
         {
-            if (parser.Source.IsEmpty || !parser.ClearAndTryParseNext())
-                return null;
             var prevSource = parser.Source;
+            if (parser.Source.IsEmpty || !parser.TryParseNext())
+                return null;
             var item = parser.Item;
             
-            if (item.Length == 0 || item[0] != KeyBase.TagPrefix || prevSource[0] == parser.Escape) {
-                var continuation = Parse(ref parser);
-                return new StringKey(item, continuation);
-            } 
+            if (item.Length == 0)
+                return new StringKey(item, Parse(ref parser));
 
-            return _parsers[item].Parse(ref parser);
+            var isEscaped = prevSource[0] == parser.Escape;
+            if (!isEscaped) {
+                var c0 = item[0];
+                if (c0 == KeyBase.TagPrefix)
+                    return _parsers[item].Parse(ref parser);
+                if (c0 == LongKey.NumberPrefix) {
+                    var value = long.Parse(item.Substring(1), CultureInfo.InvariantCulture);
+                    return new LongKey(value, Parse(ref parser));
+                }
+            }
+
+            return new StringKey(item, Parse(ref parser));
         }
     }
 }

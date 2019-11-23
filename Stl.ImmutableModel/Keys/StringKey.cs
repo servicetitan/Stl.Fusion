@@ -1,9 +1,11 @@
+using System;
+using Stl.ImmutableModel.Internal;
 using Stl.Text;
 using Symbol = Stl.Text.Symbol;
 
 namespace Stl.ImmutableModel 
 {
-    public sealed class StringKey : KeyBase
+    public sealed class StringKey : KeyBase, IEquatable<StringKey>
     {
         public static readonly string Tag = GetTypeTag(typeof(StringKey));
         public Symbol Symbol { get; }
@@ -15,12 +17,23 @@ namespace Stl.ImmutableModel
 
         public override void FormatTo(ref ListFormatter formatter)
         {
-            formatter.AppendWithEscape(Symbol.Value);
-            base.FormatTo(ref formatter);
+            var value = Symbol.Value;
+            if (value.Length > 0 && value[0] == TagPrefix || value[0] == LongKey.NumberPrefix)
+                formatter.AppendWithEscape(value);
+            else
+                formatter.Append(value);
+            Continuation?.FormatTo(ref formatter);
         }
 
-        public override bool Equals(KeyBase other) 
-            => other is StringKey k2 && Symbol.Equals(k2.Symbol);
+        public bool Equals(StringKey? other) => !ReferenceEquals(other, null) 
+            && Symbol.Equals(other.Symbol) 
+            && Equals(Continuation, other.Continuation);
+        public override bool Equals(KeyBase? other) => Equals(other as StringKey);
+        public override bool Equals(object? other) => Equals(other as StringKey);
+        public override int GetHashCode() => HashCode;
+
+        public static implicit operator StringKey(string value) => new StringKey(value);
+        public static implicit operator StringKey(Symbol symbol) => new StringKey(symbol);
 
         // Parser
 
@@ -32,7 +45,8 @@ namespace Stl.ImmutableModel
 
             public override KeyBase Parse(ref ListParser parser)
             {
-                parser.ParseNext();
+                if (!parser.TryParseNext())
+                    throw Errors.InvalidKeyFormat();
                 var value = parser.Item;
                 var continuation = ParseContinuation(ref parser);
                 return new StringKey(value, continuation);

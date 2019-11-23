@@ -45,7 +45,7 @@ namespace Stl.Text
         {
             var parser = ListFormat.CreateParser(source);
             var list = (SymbolList?) null;
-            while (parser.ClearAndTryParseNext())
+            while (parser.TryParseNext())
                 list = new SymbolList(list, parser.Item);
             return list ?? SymbolList.Empty;
         }

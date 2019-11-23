@@ -1,4 +1,5 @@
 using System;
+using Stl.ImmutableModel.Internal;
 using Stl.Reflection;
 using Stl.Text;
 
@@ -6,6 +7,9 @@ namespace Stl.ImmutableModel
 {
     public abstract class KeyBase : IEquatable<KeyBase>
     {
+        public static readonly UndefinedKey Undefined = new UndefinedKey(); 
+        public static readonly StringKey DefaultRootKey = new StringKey("@"); 
+
         protected internal static readonly ListFormat ListFormat = ListFormat.Default;
         protected internal static readonly char TagPrefix = '@';
 
@@ -16,25 +20,34 @@ namespace Stl.ImmutableModel
 
         protected KeyBase(int ownHashCode, KeyBase? continuation = null)
         {
+            if (continuation is UndefinedKey)
+                throw Errors.ContinuationCannotBeUndefinedKey(nameof(continuation));
             HashCode = unchecked(ownHashCode + 347 * continuation?.HashCode ?? 0);
             Continuation = continuation;
         }
 
-        public override string ToString() => $"{GetType().Name}({Format()})";
+        // Operations
+
+        public override string ToString() => Format();
 
         public string Format()
         {
-            var listFormatter = ListFormat.CreateFormatter();
-            FormatTo(ref listFormatter);
-            listFormatter.AppendEnd();
-            return listFormatter.Output;
+            var formatter = ListFormat.CreateFormatter();
+            FormatTo(ref formatter);
+            formatter.AppendEnd();
+            return formatter.Output;
         }
 
-        public virtual void FormatTo(ref ListFormatter formatter) 
-            => Continuation?.FormatTo(ref formatter);
+        public abstract void FormatTo(ref ListFormatter formatter); 
 
-        public static KeyBase Parse(string source) => KeyParser.Parse(source);
-        public static KeyBase Parse(in ReadOnlySpan<char> source) => KeyParser.Parse(source);
+        public static KeyBase Parse(string source) 
+            => KeyParser.Parse(source) ?? throw new NullReferenceException();
+        public static KeyBase Parse(in ReadOnlySpan<char> source) 
+            => KeyParser.Parse(source) ?? throw new NullReferenceException();
+
+        public static StringKey operator &(Symbol prefix, KeyBase? suffix) => new StringKey(prefix, suffix);
+
+        // Protected
 
         protected static string GetTypeTag(Type type)
         {
@@ -49,7 +62,8 @@ namespace Stl.ImmutableModel
 
         // Equality
 
-        public abstract bool Equals(KeyBase other);
+        public override bool Equals(object? other) => throw new NotImplementedException();
+        public abstract bool Equals(KeyBase? other);
         public override int GetHashCode() => HashCode;
         public static bool operator ==(KeyBase left, KeyBase right) => left?.Equals(right) ?? ReferenceEquals(right, null);
         public static bool operator !=(KeyBase left, KeyBase right) => !(left?.Equals(right) ?? ReferenceEquals(right, null));

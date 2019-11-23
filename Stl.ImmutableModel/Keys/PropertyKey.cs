@@ -1,10 +1,11 @@
 using System;
+using Stl.ImmutableModel.Internal;
 using Stl.Text;
 using Symbol = Stl.Text.Symbol;
 
 namespace Stl.ImmutableModel 
 {
-    public sealed class PropertyKey : KeyBase
+    public sealed class PropertyKey : KeyBase, IEquatable<PropertyKey>
     {
         public static readonly string Tag = GetTypeTag(typeof(PropertyKey));  
         public Symbol Symbol { get; }
@@ -18,11 +19,15 @@ namespace Stl.ImmutableModel
         {
             formatter.Append(Tag);
             formatter.Append(Symbol.Value);
-            base.FormatTo(ref formatter);
+            Continuation?.FormatTo(ref formatter);
         }
 
-        public override bool Equals(KeyBase other) 
-            => other is StringKey k2 && Symbol.Equals(k2.Symbol);
+        public bool Equals(PropertyKey? other) => !ReferenceEquals(other, null) 
+            && Symbol.Equals(other.Symbol)
+            && Equals(Continuation, other.Continuation);
+        public override bool Equals(KeyBase? other) => Equals(other as PropertyKey);
+        public override bool Equals(object? other) => Equals(other as PropertyKey);
+        public override int GetHashCode() => HashCode;
 
         // Parser
 
@@ -34,10 +39,11 @@ namespace Stl.ImmutableModel
 
             public override KeyBase Parse(ref ListParser parser)
             {
-                parser.ParseNext();
+                if (!parser.TryParseNext())
+                    throw Errors.InvalidKeyFormat();
                 var value = parser.Item;
                 var continuation = ParseContinuation(ref parser);
-                return new StringKey(value, continuation);
+                return new PropertyKey(value, continuation);
             }
         }
     }

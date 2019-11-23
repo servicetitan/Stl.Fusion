@@ -21,5 +21,11 @@ namespace Stl.ImmutableModel.Internal
         public static Exception InvalidOptionsKey() =>
             new ArgumentOutOfRangeException(
                 $"Invalid option key. Valid key must start with '@' character.");
+
+        public static Exception InvalidKeyFormat() =>
+            new FormatException("Invalid key format.");
+
+        public static Exception ContinuationCannotBeUndefinedKey(string paramName) =>
+            new ArgumentOutOfRangeException(paramName, "Continuation cannot be UndefinedKey.");
     }
 }
