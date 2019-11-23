@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using Stl.Collections;
+using Stl.Internal;
 
 namespace Stl.Text 
 {
@@ -122,13 +123,13 @@ namespace Stl.Text
             ItemIndex = itemIndex;
         }
 
-        public bool ClearAndParseNext()
+        public bool ClearAndTryParseNext()
         {
             ItemBuilder.Clear();
-            return ParseNext();
+            return TryParseNext();
         }
 
-        public bool ParseNext()
+        public bool TryParseNext()
         {
             ItemIndex++;
             var startLength = ItemBuilder.Length;
@@ -168,17 +169,23 @@ namespace Stl.Text
             return ItemIndex == 1 || ItemBuilder.Length > 0;
         }
 
+        public void ParseNext()
+        {
+            if (!TryParseNext())
+                throw Errors.InvalidListFormat();
+        }
+
         public List<string> ParseAll()
         {
             var result = new List<string>();
-            while (ClearAndParseNext())
+            while (ClearAndTryParseNext())
                 result.Add(Item);
             return result;
         }
 
         public void ParseAll(ListBuffer<string> listBuffer)
         {
-            while (ClearAndParseNext())
+            while (ClearAndTryParseNext())
                 listBuffer.Add(Item);
         }
     }

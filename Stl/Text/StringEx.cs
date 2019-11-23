@@ -26,7 +26,7 @@ namespace Stl.Text
             var parser = OneToManyListFormat.CreateParser(value);
             var buffer = ListBuffer<string>.Lease();
             try {
-                while (parser.ClearAndParseNext()) {
+                while (parser.ClearAndTryParseNext()) {
                     buffer.Add(parser.Item);
                 }
                 return buffer.ToArray();

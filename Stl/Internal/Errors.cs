@@ -30,6 +30,8 @@ namespace Stl.Internal
 
         public static Exception ZListIsTooLong() =>
             new InvalidOperationException("ZList<T> is too long.");
+        public static Exception InvalidListFormat() =>
+            new FormatException("Invalid list format.");
 
         public static Exception QueueSizeMustBeGreaterThanZero(string paramName) =>
             new ArgumentOutOfRangeException(paramName, "Queue size must be > 0.");

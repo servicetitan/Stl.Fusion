@@ -1,11 +1,13 @@
 using System;
+using Stl.Reflection;
 using Stl.Text;
 
 namespace Stl.ImmutableModel 
 {
     public abstract class KeyBase : IEquatable<KeyBase>
     {
-        protected internal static ListFormat ListFormat = ListFormat.Default; 
+        protected internal static readonly ListFormat ListFormat = ListFormat.Default;
+        protected internal static readonly char TagPrefix = '@';
 
         protected int HashCode { get; }
         public KeyBase? Continuation { get; }
@@ -24,14 +26,26 @@ namespace Stl.ImmutableModel
         {
             var listFormatter = ListFormat.CreateFormatter();
             FormatTo(ref listFormatter);
+            listFormatter.AppendEnd();
             return listFormatter.Output;
         }
 
-        public virtual void FormatTo(ref ListFormatter listFormatter) 
-            => Continuation?.FormatTo(ref listFormatter);
+        public virtual void FormatTo(ref ListFormatter formatter) 
+            => Continuation?.FormatTo(ref formatter);
 
-        public static KeyBase Parse(string source)
-            => KeyParser.Instance.Parse(source);
+        public static KeyBase Parse(string source) => KeyParser.Parse(source);
+        public static KeyBase Parse(in ReadOnlySpan<char> source) => KeyParser.Parse(source);
+
+        protected static string GetTypeTag(Type type)
+        {
+            var tagName = type.ToMethodName();
+            if (tagName.Length > 0)
+                tagName = tagName.Substring(0, 1).ToLowerInvariant() + tagName.Substring(1);
+            if (tagName.EndsWith("Key"))
+                tagName = tagName.Substring(0, tagName.Length - 3);
+
+            return TagPrefix + tagName;
+        }
 
         // Equality
 
