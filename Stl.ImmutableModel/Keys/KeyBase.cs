@@ -65,7 +65,7 @@ namespace Stl.ImmutableModel
         public override bool Equals(object? other) => throw new NotImplementedException();
         public abstract bool Equals(KeyBase? other);
         public override int GetHashCode() => HashCode;
-        public static bool operator ==(KeyBase left, KeyBase right) => left?.Equals(right) ?? ReferenceEquals(right, null);
-        public static bool operator !=(KeyBase left, KeyBase right) => !(left?.Equals(right) ?? ReferenceEquals(right, null));
+        public static bool operator ==(KeyBase? left, KeyBase? right) => left?.Equals(right) ?? ReferenceEquals(right, null);
+        public static bool operator !=(KeyBase? left, KeyBase? right) => !(left?.Equals(right) ?? ReferenceEquals(right, null));
     }
 }

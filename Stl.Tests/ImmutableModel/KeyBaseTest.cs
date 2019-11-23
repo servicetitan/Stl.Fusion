@@ -12,7 +12,7 @@ namespace Stl.Tests.ImmutableModel
         [Fact]
         public void KeyComparisonTest()
         {
-            var keys = new KeyBase[] {
+            var keys = new KeyBase?[] {
                 KeyBase.Parse("k1"),
                 KeyBase.Parse("k1|k2"),
                 KeyBase.Parse("\\@whatever"),
@@ -27,13 +27,15 @@ namespace Stl.Tests.ImmutableModel
                 KeyBase.Parse("k1|#1"),
                 KeyBase.DefaultRootKey,
                 KeyBase.Undefined,
+                null,
             };
 
             for (var i = 0; i < keys.Length; i++) {
                 var k1 = keys[i];
                 for (var j = 0; j < keys.Length; j++) {
                     var k2 = keys[j];
-                    k2 = KeyBase.Parse(k2.Format()); // Intentional
+                    if (k2 != null)
+                        k2 = KeyBase.Parse(k2.Format()); // Intentional
                     var keysEqual = k1 == k2;
                     var keysMustBeEqual = i == j;
                     Out.WriteLine($"{k1} == {k2} -> {keysEqual} (expected: {keysMustBeEqual})");
