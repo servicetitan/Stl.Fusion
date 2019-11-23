@@ -8,29 +8,26 @@ namespace Stl.Text
 {
     public static class StringEx
     {
-        private static readonly ListParser OneToManyParser = new ListParser('|'); 
+        private static readonly ListFormatHelper OneToManyFormatHelper = new ListFormatHelper('|'); 
 
         public static string ManyToOne(IEnumerable<string> values)
         {
-            var sb = new StringBuilder();
-            var index = 0;
+            var formatter = OneToManyFormatHelper.CreateFormatter();
             foreach (var value in values)
-                OneToManyParser.FormatItem(sb, value, ref index);
-            return sb.ToString();
+                formatter.AddItem(value);
+            formatter.AddEnd();
+            return formatter.Output;
         }
 
         public static string[] OneToMany(string value)
         {
             if (value == "")
                 return Array.Empty<string>();
-            var tail = value.AsSpan();
+            var parser = OneToManyFormatHelper.CreateParser(value);
             var buffer = ListBuffer<string>.Lease();
             try {
-                var index = 0;
-                var item = new StringBuilder();
-                while (OneToManyParser.ParseItem(ref tail, ref index, item)) {
-                    buffer.Add(item.ToString());
-                    item.Clear();
+                while (parser.ClearAndParseItem()) {
+                    buffer.Add(parser.Item);
                 }
                 return buffer.ToArray();
             }
