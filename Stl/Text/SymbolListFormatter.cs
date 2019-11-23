@@ -19,7 +19,7 @@ namespace Stl.Text
         public string Escape { get; }
         protected string EscapedDelimiter { get; }
         protected string EscapedEscape { get; }
-        protected ListFormatHelper ListFormatHelper { get; }
+        protected ListFormat ListFormat { get; }
 
         public SymbolListFormatter(char delimiter, char escape = '\\')
         {
@@ -29,25 +29,24 @@ namespace Stl.Text
             Escape = escape.ToString();
             EscapedDelimiter = $"{Escape}{Delimiter}";
             EscapedEscape = $"{Escape}{Escape}";
-            ListFormatHelper = new ListFormatHelper(delimiter, escape);
+            ListFormat = new ListFormat(delimiter, escape);
         }
 
         public string ToString(SymbolList source)
         {
-            var formatter = ListFormatHelper.CreateFormatter();
+            var formatter = ListFormat.CreateFormatter();
             foreach (var segment in source.GetSegments())
-                formatter.AddItem(segment.Value);
-            formatter.AddEnd();
+                formatter.Append(segment.Value);
+            formatter.AppendEnd();
             return formatter.Output;
         }
 
         public SymbolList Parse(string source)
         {
-            var parser = ListFormatHelper.CreateParser(source);
+            var parser = ListFormat.CreateParser(source);
             var list = (SymbolList?) null;
-            while (parser.ClearAndParseItem()) {
+            while (parser.ClearAndParseNext())
                 list = new SymbolList(list, parser.Item);
-            }
             return list ?? SymbolList.Empty;
         }
     }

@@ -1,12 +1,11 @@
 using System;
-using System.Text;
 using Stl.Text;
 
 namespace Stl.ImmutableModel 
 {
     public abstract class KeyBase : IEquatable<KeyBase>
     {
-        protected internal static ListFormatHelper FormatHelper = ListFormatHelper.Default; 
+        protected internal static ListFormat ListFormat = ListFormat.Default; 
 
         protected int HashCode { get; }
         public KeyBase? Continuation { get; }
@@ -23,7 +22,7 @@ namespace Stl.ImmutableModel
 
         public string Format()
         {
-            var listFormatter = FormatHelper.CreateFormatter();
+            var listFormatter = ListFormat.CreateFormatter();
             FormatTo(ref listFormatter);
             return listFormatter.Output;
         }

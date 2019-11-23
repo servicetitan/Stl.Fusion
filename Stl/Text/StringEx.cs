@@ -8,14 +8,14 @@ namespace Stl.Text
 {
     public static class StringEx
     {
-        private static readonly ListFormatHelper OneToManyFormatHelper = new ListFormatHelper('|'); 
+        private static readonly ListFormat OneToManyListFormat = new ListFormat('|'); 
 
         public static string ManyToOne(IEnumerable<string> values)
         {
-            var formatter = OneToManyFormatHelper.CreateFormatter();
+            var formatter = OneToManyListFormat.CreateFormatter();
             foreach (var value in values)
-                formatter.AddItem(value);
-            formatter.AddEnd();
+                formatter.Append(value);
+            formatter.AppendEnd();
             return formatter.Output;
         }
 
@@ -23,10 +23,10 @@ namespace Stl.Text
         {
             if (value == "")
                 return Array.Empty<string>();
-            var parser = OneToManyFormatHelper.CreateParser(value);
+            var parser = OneToManyListFormat.CreateParser(value);
             var buffer = ListBuffer<string>.Lease();
             try {
-                while (parser.ClearAndParseItem()) {
+                while (parser.ClearAndParseNext()) {
                     buffer.Add(parser.Item);
                 }
                 return buffer.ToArray();

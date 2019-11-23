@@ -5,13 +5,16 @@ using Stl.Text;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Stl.Tests
+namespace Stl.Tests.Text
 {
     public class SymbolListTest : TestBase
     {
         public SymbolListTest(ITestOutputHelper @out) : base(@out) { }
 
         [Theory]
+        [InlineData("", new[] {""}, null)]
+        [InlineData("\\", new[] {"\\"}, "\\\\")]
+        [InlineData("\\[\\]", new [] {""}, "")]
         [InlineData("a", new[] {"a"}, null)]
         [InlineData("a|b", new[] {"a", "b"}, null)]
         [InlineData("a\\|b", new[] {"a|b"}, null)]

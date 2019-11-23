@@ -14,7 +14,7 @@ namespace Stl.ImmutableModel
 
         public override void FormatTo(ref ListFormatter listFormatter)
         {
-            listFormatter.AddItemWithExtraEscape(Value.Value);
+            listFormatter.AppendWithEscape(Value.Value);
             base.FormatTo(ref listFormatter);
         }
 

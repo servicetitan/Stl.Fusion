@@ -67,7 +67,7 @@ namespace Stl.ImmutableModel
 
         public KeyBase Parse(in ReadOnlySpan<char> source)
         {
-            var listParser = KeyBase.FormatHelper.CreateParser(source);
+            var listParser = KeyBase.ListFormat.CreateParser(source);
             return Parse(ref listParser);
         }
 
