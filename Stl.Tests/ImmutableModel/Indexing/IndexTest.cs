@@ -7,7 +7,6 @@ using Stl.ImmutableModel;
 using Stl.ImmutableModel.Indexing;
 using Stl.ImmutableModel.Reflection;
 using Stl.Testing;
-using Stl.Text;
 using Xunit;
 using Xunit.Abstractions;
 
