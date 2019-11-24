@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using FluentAssertions;
 using Stl.Collections;
 using Stl.Comparison;
@@ -30,6 +31,19 @@ namespace Stl.Tests.ImmutableModel.Indexing
             var cluster1 = idx.GetNode<Cluster>(Key.Parse("cluster1"));
             cluster1.Key.Format().Should().Be("cluster1");
             idx.GetNodeLink(cluster1).Should().Be(new NodeLink(idx.Model.Key, cluster1.Key));
+
+            cluster1.Capabilities.Should().Equals("huge");
+            cluster1.NotAProperty.Should().Equals("true");
+            
+            var clusterDef = cluster1.GetDefinition();
+            clusterDef.Properties.Count.Should().Be(1);
+            clusterDef.NodeProperties.Count.Should().Be(0);
+
+            Out.WriteLine($"All of {cluster1} items:");
+            var cluster1Items = clusterDef.GetAllItems(cluster1).ToList();
+            foreach (var (itemKey, value) in cluster1Items)
+                Out.WriteLine($"- {itemKey} -> {value}");
+            cluster1Items.Count.Should().Be(5);
             
             var vm1 = idx.GetNode<VirtualMachine>(Key.Parse("vm1|cluster1"));
             vm1.Key.Format().Should().Be("vm1|cluster1");
@@ -124,7 +138,11 @@ namespace Stl.Tests.ImmutableModel.Indexing
             
             var cluster = new Cluster() {
                 Key = Key.Parse("cluster1"),
+                Capabilities = "huge",
+                NotAProperty = "true"
             };
+            cluster.SetOption("@o1", "v1");
+            cluster.SetOption("@o2", "v2");
             cluster.Add(vm1);
             cluster.Add(vm2);
 

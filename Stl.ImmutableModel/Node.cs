@@ -3,15 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
 using Stl.Collections;
+using Stl.ImmutableModel.Indexing;
 using Stl.ImmutableModel.Reflection;
 using Stl.Text;
 
-namespace Stl.ImmutableModel 
+namespace Stl.ImmutableModel
 {
     [JsonObject]
-    public abstract class SimpleNodeBase : NodeBase, ISimpleNode 
+    public class Node: FreezableBase, INode
     {
-        internal static NodeTypeDef CreateNodeTypeDef(Type type) => new SimpleNodeTypeDef(type);
+        internal static NodeTypeDef CreateNodeTypeDef(Type type) => new NodeTypeDef(type);
+
+        private Key _key = null!;
 
         [JsonProperty(
             PropertyName = "@Options", 
@@ -19,11 +22,22 @@ namespace Stl.ImmutableModel
         private Dictionary<Symbol, object>? _options;
         private Dictionary<Symbol, object> Options => _options ??= new Dictionary<Symbol, object>();
 
+        public Key Key {
+            get => _key;
+            set {
+                this.ThrowIfFrozen(); 
+                _key = value;
+            }
+        }
+
+        public override string ToString() => $"{GetType().Name}({Key})";
+
         // IFreezable implementation
 
         public override void Freeze()
         {
             if (IsFrozen) return;
+            Key.ThrowIfUndefined(); 
 
             // First we freeze child freezables
             var buffer = ListBuffer<KeyValuePair<ItemKey, IFreezable>>.Lease();
@@ -42,7 +56,7 @@ namespace Stl.ImmutableModel
 
         public override IFreezable BaseToUnfrozen(bool deep = false)
         {
-            var clone = (SimpleNodeBase) base.BaseToUnfrozen(deep);
+            var clone = (Node) base.BaseToUnfrozen(deep);
             var nodeTypeDef = clone.GetDefinition();
 
             if (deep) {
@@ -91,6 +105,41 @@ namespace Stl.ImmutableModel
             else {
                 Options[key] = PrepareOptionValue(key, value);
             }
+        }
+
+        // IHasChangeHistory
+
+        (object? BaseState, object? CurrentState, IEnumerable<(Key Key, DictionaryEntryChangeType ChangeType, object? Value)> Changes) 
+            IHasChangeHistory.GetChangeHistory() 
+            => GetChangeHistoryUntyped();
+        protected virtual (object? BaseState, object? CurrentState, IEnumerable<(Key Key, DictionaryEntryChangeType ChangeType, object? Value)> Changes) GetChangeHistoryUntyped()
+            => (null, null, Enumerable.Empty<(Key Key, DictionaryEntryChangeType ChangeType, object? Value)>());
+
+        void IHasChangeHistory.DiscardChangeHistory() => DiscardChangeHistory();
+        protected virtual void DiscardChangeHistory() {}
+
+        // Protected & private members
+
+        protected T PreparePropertyValue<T>(Symbol propertyName, T value)
+        {
+            this.ThrowIfFrozen();
+            if (value is INode node && node.Key.IsUndefined()) {
+                // We automatically provide keys for INode properties (or collection items)
+                // by extending the owner's key with property name suffix 
+                node.Key = new PropertyKey(propertyName, Key);
+            }
+            return value;
+        }
+
+        protected T PrepareOptionValue<T>(Symbol optionName, T value)
+        {
+            this.ThrowIfFrozen();
+            if (value is INode node && node.Key.IsUndefined()) {
+                // We automatically provide keys for INode properties (or collection items)
+                // by extending the owner's key with property name suffix 
+                node.Key = new OptionKey(optionName, Key);
+            }
+            return value;
         }
     }
 }

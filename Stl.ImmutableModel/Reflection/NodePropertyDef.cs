@@ -11,12 +11,13 @@ namespace Stl.ImmutableModel.Reflection
         Type Type { get; }
         Symbol Name { get; }
         PropertyInfo PropertyInfo { get; }
-        public bool IsNode { get; } 
-        public bool IsSimpleNode { get; } 
-        public bool IsCollectionNode { get; } 
-        public bool IsFreezable { get; } 
-        public bool MayBeNode { get; } 
-        public bool MayBeFreezable { get; } 
+
+        bool IsFreezable { get; }
+        bool IsNode { get; }
+        bool IsCollectionNode { get; }
+        bool MayBeFreezable { get; } 
+        bool MayBeNode { get; }
+        bool MayBeCollectionNode { get; }
 
         MethodInfo? GetterInfo { get; }
         MethodInfo? SetterInfo { get; }
@@ -28,10 +29,10 @@ namespace Stl.ImmutableModel.Reflection
 
     public interface INodePropertyDef<T> : INodePropertyDef
     {
-        new Func<ISimpleNode, T>? Getter { get; }
-        new Func<ISimpleNode, object?>? UntypedGetter { get; }
-        new Action<ISimpleNode, T>? Setter { get; }
-        new Action<ISimpleNode, object?>? UntypedSetter { get; }
+        new Func<INode, T>? Getter { get; }
+        new Func<INode, object?>? UntypedGetter { get; }
+        new Action<INode, T>? Setter { get; }
+        new Action<INode, object?>? UntypedSetter { get; }
     }
     
     public class NodePropertyDef<T> : INodePropertyDef<T>
@@ -42,12 +43,9 @@ namespace Stl.ImmutableModel.Reflection
 
         public bool IsFreezable { get; }
         public bool IsNode { get; }
-        public bool IsSimpleNode { get; }
         public bool IsCollectionNode { get; }
-
         public bool MayBeFreezable { get; }
         public bool MayBeNode { get; }
-        public bool MayBeSimpleNode { get; }
         public bool MayBeCollectionNode { get; }
 
         public MethodInfo? GetterInfo { get; }
@@ -56,10 +54,10 @@ namespace Stl.ImmutableModel.Reflection
         Delegate? INodePropertyDef.UntypedGetter => UntypedGetter;
         Delegate? INodePropertyDef.Setter => Setter;
         Delegate? INodePropertyDef.UntypedSetter => UntypedSetter;
-        public Func<ISimpleNode, T>? Getter { get; }
-        public Func<ISimpleNode, object?>? UntypedGetter { get; }
-        public Action<ISimpleNode, T>? Setter { get; }
-        public Action<ISimpleNode, object?>? UntypedSetter { get; }
+        public Func<INode, T>? Getter { get; }
+        public Func<INode, object?>? UntypedGetter { get; }
+        public Action<INode, T>? Setter { get; }
+        public Action<INode, object?>? UntypedSetter { get; }
 
         public NodePropertyDef(Type type, Symbol propertyName)
         {
@@ -67,23 +65,21 @@ namespace Stl.ImmutableModel.Reflection
             Name = propertyName;
             PropertyInfo = PropertyEx.GetProperty(type, propertyName) 
                            ?? throw Errors.PropertyNotFound(type, propertyName);
+            var propertyType = PropertyInfo.PropertyType;
 
-            IsFreezable = typeof(IFreezable).IsAssignableFrom(type); 
-            IsNode = typeof(NodeBase).IsAssignableFrom(type); 
-            IsSimpleNode = typeof(SimpleNodeBase).IsAssignableFrom(type); 
-            IsCollectionNode = typeof(CollectionNodeBase).IsAssignableFrom(type); 
-
-            MayBeFreezable = type.MayCastSucceed(typeof(IFreezable));
-            MayBeNode = type.MayCastSucceed(typeof(NodeBase));
-            MayBeSimpleNode = type.MayCastSucceed(typeof(SimpleNodeBase));
-            MayBeCollectionNode = type.MayCastSucceed(typeof(CollectionNodeBase));
+            IsFreezable = typeof(IFreezable).IsAssignableFrom(propertyType); 
+            IsNode = typeof(Node).IsAssignableFrom(propertyType); 
+            IsCollectionNode = typeof(CollectionNodeBase).IsAssignableFrom(propertyType); 
+            MayBeFreezable = propertyType.MayCastSucceed(typeof(IFreezable));
+            MayBeNode = propertyType.MayCastSucceed(typeof(Node));
+            MayBeCollectionNode = propertyType.MayCastSucceed(typeof(CollectionNodeBase));
 
             GetterInfo = PropertyInfo.GetGetMethod();
             SetterInfo = PropertyInfo.GetSetMethod();
-            Getter = (Func<ISimpleNode, T>?) type.GetGetter(propertyName, false);
-            UntypedGetter = (Func<ISimpleNode, object?>?) type.GetGetter(propertyName, true);
-            Setter = (Action<ISimpleNode, T>?) type.GetSetter(propertyName, false);
-            UntypedSetter = (Action<ISimpleNode, object?>?) type.GetSetter(propertyName, true);
+            Getter = (Func<INode, T>?) type.GetGetter(propertyName, false);
+            UntypedGetter = (Func<INode, object?>?) type.GetGetter(propertyName, true);
+            Setter = (Action<INode, T>?) type.GetSetter(propertyName, false);
+            UntypedSetter = (Action<INode, object?>?) type.GetSetter(propertyName, true);
         }
     }
 }

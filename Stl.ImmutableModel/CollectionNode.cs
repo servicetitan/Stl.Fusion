@@ -3,16 +3,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Stl.Collections;
 using Stl.ImmutableModel.Indexing;
 using Stl.ImmutableModel.Reflection;
-using Stl.Text;
 
 namespace Stl.ImmutableModel 
 {
-    public abstract class CollectionNodeBase : NodeBase
+    public abstract class CollectionNodeBase : Node
     {
         // Ideally it should implement ICollectionNode, but this means
         // this type has to either really implement its methods and pass
@@ -33,7 +31,7 @@ namespace Stl.ImmutableModel
         // - but who cares :) It's a rare case + dynamic cast will work
         // anyway.
 
-        internal static NodeTypeDef CreateNodeTypeDef(Type type) => new CollectionNodeTypeDef(type);
+        internal new static NodeTypeDef CreateNodeTypeDef(Type type) => new CollectionNodeTypeDef(type);
     }
 
     [JsonObject]
@@ -68,7 +66,7 @@ namespace Stl.ImmutableModel
         }
         public T this[Key key] {
             get => Items[key];
-            set => Items = Items.SetItem(key, PrepareValue(key, value));
+            set => Items = Items.SetItem(key, PrepareItemValue(key, value));
         }
 
         IEnumerator IEnumerable.GetEnumerator() => Items.GetEnumerator();
@@ -99,7 +97,7 @@ namespace Stl.ImmutableModel
         public void Add(KeyValuePair<Key, T> item) 
             => Add(item.Key, item.Value);
         public void Add(Key key, T value) 
-            => Items = Items.Add(key, PrepareValue(key, value));
+            => Items = Items.Add(key, PrepareItemValue(key, value));
 
         public bool Remove(Key key)
         {
@@ -151,7 +149,7 @@ namespace Stl.ImmutableModel
 
         // Other protected & private methods
 
-        protected T PrepareValue(Key key, T value)
+        protected T PrepareItemValue(Key key, T value)
         {
             this.ThrowIfFrozen();
             if (value is INode node && node.Key.IsUndefined()) {

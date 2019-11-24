@@ -4,7 +4,6 @@ using System.Linq;
 using Stl.Collections;
 using Stl.Internal;
 using Stl.Reflection;
-using Stl.Text;
 
 namespace Stl.ImmutableModel.Reflection
 {
@@ -24,36 +23,38 @@ namespace Stl.ImmutableModel.Reflection
 
         public CollectionNodeTypeDef(Type type) : base(type)
         {
-            if (Kind != NodeKind.Collection)
-                throw Errors.InternalError("This constructor should be invoked only for ICollectionNode types.");
+            if (!IsCollectionNode)
+                throw Errors.InternalError("This constructor should be invoked only for collection node types.");
             
-            // Figuring out 
+            // Figuring out item type & other stuff 
             var tGenericCollectionNode = typeof(ICollectionNode<>);
             var tCollectionInterface = type.GetInterfaces()
                 .Single(t => t.IsConstructedGenericType && t.GetGenericTypeDefinition() == tGenericCollectionNode);
             ItemType = tCollectionInterface.GetGenericArguments().Single();
 
             IsItemFreezable = typeof(IFreezable).IsAssignableFrom(ItemType);
-            IsItemNode = typeof(NodeBase).IsAssignableFrom(ItemType);
-            IsItemSimpleNode = typeof(SimpleNodeBase).IsAssignableFrom(ItemType);
+            IsItemNode = typeof(Node).IsAssignableFrom(ItemType);
+            IsItemSimpleNode = typeof(Node).IsAssignableFrom(ItemType);
             IsItemCollectionNode = typeof(CollectionNodeBase).IsAssignableFrom(ItemType);
             
             MayItemBeFreezable = ItemType.MayCastSucceed(typeof(IFreezable));
-            MayItemBeNode = ItemType.MayCastSucceed(typeof(NodeBase));
-            MayItemBeSimpleNode = ItemType.MayCastSucceed(typeof(SimpleNodeBase));
+            MayItemBeNode = ItemType.MayCastSucceed(typeof(Node));
+            MayItemBeSimpleNode = ItemType.MayCastSucceed(typeof(Node));
             MayItemBeCollectionNode = ItemType.MayCastSucceed(typeof(CollectionNodeBase));
         }
 
         public override IEnumerable<KeyValuePair<ItemKey, object?>> GetAllItems(INode node)
         {
             var collectionNode = (ICollectionNode) node;
-            return collectionNode.Items
-                .Select(p => KeyValuePair.Create((ItemKey) p.Key, p.Value));
+            var collectionItems = collectionNode.Items.Select(p => KeyValuePair.Create((ItemKey) p.Key, p.Value));
+            return base.GetAllItems(node).Concat(collectionItems);
         }
 
         public override void GetFreezableItems(INode node, ref ListBuffer<KeyValuePair<ItemKey, IFreezable>> output)
         {
+            base.GetFreezableItems(node, ref output);
             if (!IsItemFreezable) return;
+
             var collectionNode = (ICollectionNode) node;
             foreach (var (key, value) in collectionNode.Items) {
                 if (value is IFreezable f)
@@ -63,7 +64,9 @@ namespace Stl.ImmutableModel.Reflection
 
         public override void GetNodeItems(INode node, ref ListBuffer<KeyValuePair<ItemKey, INode>> output)
         {
+            base.GetNodeItems(node, ref output);
             if (!IsItemNode) return;
+
             var collectionNode = (ICollectionNode) node;
             foreach (var (key, value) in collectionNode.Items) {
                 if (value is INode n)
@@ -73,7 +76,9 @@ namespace Stl.ImmutableModel.Reflection
 
         public override void GetCollectionNodeItems(INode node, ref ListBuffer<KeyValuePair<ItemKey, ICollectionNode>> output)
         {
+            base.GetCollectionNodeItems(node, ref output);
             if (!IsItemCollectionNode) return;
+
             var collectionNode = (ICollectionNode) node;
             foreach (var (key, value) in collectionNode.Items) {
                 if (value is ICollectionNode n)
@@ -83,42 +88,62 @@ namespace Stl.ImmutableModel.Reflection
 
         public override bool TryGetItem<T>(INode node, ItemKey itemKey, out T value)
         {
+            if (itemKey.IsSymbol)
+                return base.TryGetItem(node, itemKey, out value);
             var collectionNode = (IDictionary<Key, T>) node;
             return collectionNode.TryGetValue(itemKey.AsKey(), out value);
         }
 
         public override bool TryGetItem(INode node, ItemKey itemKey, out object? value)
         {
+            if (itemKey.IsSymbol)
+                return base.TryGetItem(node, itemKey, out value);
             var collectionNode = (ICollectionNode) node;
             return collectionNode.TryGetValue(itemKey.AsKey(), out value);
         }
 
         public override T GetItem<T>(INode node, ItemKey itemKey)
         {
+            if (itemKey.IsSymbol)
+                return base.GetItem<T>(node, itemKey);
             var collectionNode = (IDictionary<Key, T>) node;
             return collectionNode[itemKey.AsKey()];
         }
 
         public override object? GetItem(INode node, ItemKey itemKey)
         {
+            if (itemKey.IsSymbol)
+                return base.GetItem(node, itemKey);
             var collectionNode = (ICollectionNode) node;
             return collectionNode[itemKey.AsKey()];
         }
 
         public override void SetItem<T>(INode node, ItemKey itemKey, T value)
         {
+            if (itemKey.IsSymbol) {
+                base.SetItem(node, itemKey, value);
+                return;
+            }
             var collectionNode = (IDictionary<Key, T>) node;
             collectionNode[itemKey.AsKey()] = value;
         }
 
         public override void SetItem(INode node, ItemKey itemKey, object? value)
         {
+            if (itemKey.IsSymbol) {
+                base.SetItem(node, itemKey, value);
+                return;
+            }
             var collectionNode = (ICollectionNode) node;
             collectionNode[itemKey.AsKey()] = value;
         }
 
         public override void RemoveItem(INode node, ItemKey itemKey)
         {
+            if (itemKey.IsSymbol) {
+                base.RemoveItem(node, itemKey);
+                return;
+            }
             var collectionNode = (ICollectionNode) node;
             collectionNode.Remove(itemKey.AsKey());
         }

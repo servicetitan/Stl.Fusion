@@ -16,7 +16,7 @@ namespace Stl.ImmutableModel.Internal
 
         public static Exception CannotCreateNodeTypeDef(Type type) =>
             new InvalidOperationException(
-                $"Can't find '{nameof(SimpleNodeBase.CreateNodeTypeDef)} method for type '{type.FullName}'.");
+                $"Can't find '{nameof(Node.CreateNodeTypeDef)} method for type '{type.FullName}'.");
 
         public static Exception InvalidOptionsKey() =>
             new ArgumentOutOfRangeException(

@@ -1,17 +1,13 @@
 using System.Collections.Generic;
 using Stl.Extensibility;
 using Stl.ImmutableModel.Indexing;
-using Stl.Text;
 
 namespace Stl.ImmutableModel
 {
-    public interface INode : IFreezable, IHasChangeHistory
+    public interface INode : IFreezable, IHasOptions, IHasChangeHistory
     {
         Key Key { get; set; }
     }
-
-    public interface ISimpleNode : INode, IHasOptions
-    {}
 
     public interface ICollectionNode : INode
     {
