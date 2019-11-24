@@ -44,82 +44,83 @@ namespace Stl.ImmutableModel.Reflection
             MayItemBeCollectionNode = ItemType.MayCastSucceed(typeof(CollectionNodeBase));
         }
 
-        public override IEnumerable<KeyValuePair<Symbol, object?>> GetAllItems(INode node)
+        public override IEnumerable<KeyValuePair<ItemKey, object?>> GetAllItems(INode node)
         {
             var collectionNode = (ICollectionNode) node;
-            return collectionNode.Items;
+            return collectionNode.Items
+                .Select(p => KeyValuePair.Create((ItemKey) p.Key, p.Value));
         }
 
-        public override void GetFreezableItems(INode node, ref ListBuffer<KeyValuePair<Symbol, IFreezable>> output)
+        public override void GetFreezableItems(INode node, ref ListBuffer<KeyValuePair<ItemKey, IFreezable>> output)
         {
             if (!IsItemFreezable) return;
             var collectionNode = (ICollectionNode) node;
             foreach (var (key, value) in collectionNode.Items) {
                 if (value is IFreezable f)
-                    output.Add(KeyValuePair.Create(key, f));
+                    output.Add(KeyValuePair.Create((ItemKey) key, f));
             }
         }
 
-        public override void GetNodeItems(INode node, ref ListBuffer<KeyValuePair<Symbol, INode>> output)
+        public override void GetNodeItems(INode node, ref ListBuffer<KeyValuePair<ItemKey, INode>> output)
         {
             if (!IsItemNode) return;
             var collectionNode = (ICollectionNode) node;
             foreach (var (key, value) in collectionNode.Items) {
                 if (value is INode n)
-                    output.Add(KeyValuePair.Create(key, n));
+                    output.Add(KeyValuePair.Create((ItemKey) key, n));
             }
         }
 
-        public override void GetCollectionNodeItems(INode node, ref ListBuffer<KeyValuePair<Symbol, ICollectionNode>> output)
+        public override void GetCollectionNodeItems(INode node, ref ListBuffer<KeyValuePair<ItemKey, ICollectionNode>> output)
         {
             if (!IsItemCollectionNode) return;
             var collectionNode = (ICollectionNode) node;
             foreach (var (key, value) in collectionNode.Items) {
                 if (value is ICollectionNode n)
-                    output.Add(KeyValuePair.Create(key, n));
+                    output.Add(KeyValuePair.Create((ItemKey) key, n));
             }
         }
 
-        public override bool TryGetItem<T>(INode node, Symbol localKey, out T value)
+        public override bool TryGetItem<T>(INode node, ItemKey itemKey, out T value)
         {
-            var collectionNode = (IDictionary<Symbol, T>) node;
-            return collectionNode.TryGetValue(localKey, out value);
+            var collectionNode = (IDictionary<Key, T>) node;
+            return collectionNode.TryGetValue(itemKey.AsKey(), out value);
         }
 
-        public override bool TryGetItem(INode node, Symbol localKey, out object? value)
+        public override bool TryGetItem(INode node, ItemKey itemKey, out object? value)
         {
             var collectionNode = (ICollectionNode) node;
-            return collectionNode.TryGetValue(localKey, out value);
+            return collectionNode.TryGetValue(itemKey.AsKey(), out value);
         }
 
-        public override T GetItem<T>(INode node, Symbol localKey)
+        public override T GetItem<T>(INode node, ItemKey itemKey)
         {
-            var collectionNode = (IDictionary<Symbol, T>) node;
-            return collectionNode[localKey];
+            var collectionNode = (IDictionary<Key, T>) node;
+            return collectionNode[itemKey.AsKey()];
         }
 
-        public override object? GetItem(INode node, Symbol localKey)
-        {
-            var collectionNode = (ICollectionNode) node;
-            return collectionNode[localKey];
-        }
-
-        public override void SetItem<T>(INode node, Symbol localKey, T value)
-        {
-            var collectionNode = (IDictionary<Symbol, T>) node;
-            collectionNode[localKey] = value;
-        }
-
-        public override void SetItem(INode node, Symbol localKey, object? value)
+        public override object? GetItem(INode node, ItemKey itemKey)
         {
             var collectionNode = (ICollectionNode) node;
-            collectionNode[localKey] = value;
+            return collectionNode[itemKey.AsKey()];
         }
 
-        public override void RemoveItem(INode node, Symbol localKey)
+        public override void SetItem<T>(INode node, ItemKey itemKey, T value)
+        {
+            var collectionNode = (IDictionary<Key, T>) node;
+            collectionNode[itemKey.AsKey()] = value;
+        }
+
+        public override void SetItem(INode node, ItemKey itemKey, object? value)
         {
             var collectionNode = (ICollectionNode) node;
-            collectionNode.Remove(localKey);
+            collectionNode[itemKey.AsKey()] = value;
+        }
+
+        public override void RemoveItem(INode node, ItemKey itemKey)
+        {
+            var collectionNode = (ICollectionNode) node;
+            collectionNode.Remove(itemKey.AsKey());
         }
     }
 }

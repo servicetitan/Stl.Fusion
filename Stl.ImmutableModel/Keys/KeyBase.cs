@@ -1,11 +1,15 @@
 using System;
+using System.ComponentModel;
+using Newtonsoft.Json;
 using Stl.ImmutableModel.Internal;
 using Stl.Reflection;
 using Stl.Text;
 
 namespace Stl.ImmutableModel 
 {
-    public abstract class KeyBase : IEquatable<KeyBase>
+    [JsonConverter(typeof(KeyJsonConverter))]
+    [TypeConverter(typeof(KeyTypeConverter))]
+    public abstract class Key : IEquatable<Key>
     {
         public static readonly UndefinedKey Undefined = new UndefinedKey(); 
         public static readonly StringKey DefaultRootKey = new StringKey("@"); 
@@ -14,11 +18,11 @@ namespace Stl.ImmutableModel
         protected internal static readonly char TagPrefix = '@';
 
         protected int HashCode { get; }
-        public KeyBase? Continuation { get; }
+        public Key? Continuation { get; }
         public bool IsComposite => !ReferenceEquals(Continuation, null);
         public int Size => (Continuation?.Size ?? 0) + 1;
 
-        protected KeyBase(int ownHashCode, KeyBase? continuation = null)
+        protected Key(int ownHashCode, Key? continuation = null)
         {
             if (continuation is UndefinedKey)
                 throw Errors.ContinuationCannotBeUndefinedKey(nameof(continuation));
@@ -26,7 +30,7 @@ namespace Stl.ImmutableModel
             Continuation = continuation;
         }
 
-        // Operations
+        // Format & Parse
 
         public override string ToString() => Format();
 
@@ -40,12 +44,25 @@ namespace Stl.ImmutableModel
 
         public abstract void FormatTo(ref ListFormatter formatter); 
 
-        public static KeyBase Parse(string source) 
+        public static Key Parse(string source) 
             => KeyParser.Parse(source) ?? throw new NullReferenceException();
-        public static KeyBase Parse(in ReadOnlySpan<char> source) 
+        public static Key Parse(in ReadOnlySpan<char> source) 
             => KeyParser.Parse(source) ?? throw new NullReferenceException();
 
-        public static StringKey operator &(Symbol prefix, KeyBase? suffix) => new StringKey(prefix, suffix);
+        // Operators
+
+        public static StringKey operator &(Symbol prefix, Key? suffix) => new StringKey(prefix, suffix);
+
+        // Equality
+
+        public override bool Equals(object? other) => throw new NotImplementedException();
+        public abstract bool Equals(Key? other);
+        public override int GetHashCode() 
+            => HashCode;
+        public static bool operator ==(Key? left, Key? right) 
+            => left?.Equals(right) ?? ReferenceEquals(right, null);
+        public static bool operator !=(Key? left, Key? right) 
+            => !(left?.Equals(right) ?? ReferenceEquals(right, null));
 
         // Protected
 
@@ -59,13 +76,5 @@ namespace Stl.ImmutableModel
 
             return TagPrefix + tagName;
         }
-
-        // Equality
-
-        public override bool Equals(object? other) => throw new NotImplementedException();
-        public abstract bool Equals(KeyBase? other);
-        public override int GetHashCode() => HashCode;
-        public static bool operator ==(KeyBase? left, KeyBase? right) => left?.Equals(right) ?? ReferenceEquals(right, null);
-        public static bool operator !=(KeyBase? left, KeyBase? right) => !(left?.Equals(right) ?? ReferenceEquals(right, null));
     }
 }

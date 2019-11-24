@@ -5,35 +5,29 @@ using Symbol = Stl.Text.Symbol;
 
 namespace Stl.ImmutableModel 
 {
-    public sealed class StringKey : Key, IEquatable<StringKey>
+    public sealed class OptionKey : Key, IEquatable<OptionKey>
     {
-        public static readonly string Tag = GetTypeTag(typeof(StringKey));
+        public static readonly string Tag = GetTypeTag(typeof(OptionKey));  
         public Symbol Symbol { get; }
         public string Value => Symbol.Value;
 
-        public StringKey(Symbol value, Key? continuation = null) 
+        public OptionKey(Symbol value, Key? continuation = null) 
             : base(value.GetHashCode(), continuation) 
             => Symbol = value;
 
         public override void FormatTo(ref ListFormatter formatter)
         {
-            var value = Symbol.Value;
-            if (value.Length > 0 && value[0] == TagPrefix || value[0] == LongKey.NumberPrefix)
-                formatter.AppendWithEscape(value);
-            else
-                formatter.Append(value);
+            formatter.Append(Tag);
+            formatter.Append(Symbol.Value);
             Continuation?.FormatTo(ref formatter);
         }
 
-        public bool Equals(StringKey? other) => !ReferenceEquals(other, null) 
-            && Symbol.Equals(other.Symbol) 
+        public bool Equals(OptionKey? other) => !ReferenceEquals(other, null) 
+            && Symbol.Equals(other.Symbol)
             && Equals(Continuation, other.Continuation);
-        public override bool Equals(Key? other) => Equals(other as StringKey);
-        public override bool Equals(object? other) => Equals(other as StringKey);
+        public override bool Equals(Key? other) => Equals(other as OptionKey);
+        public override bool Equals(object? other) => Equals(other as OptionKey);
         public override int GetHashCode() => HashCode;
-
-        public static implicit operator StringKey(string value) => new StringKey(value);
-        public static implicit operator StringKey(Symbol symbol) => new StringKey(symbol);
 
         // Parser
 
@@ -49,7 +43,7 @@ namespace Stl.ImmutableModel
                     throw Errors.InvalidKeyFormat();
                 var value = parser.Item;
                 var continuation = ParseContinuation(ref parser);
-                return new StringKey(value, continuation);
+                return new OptionKey(value, continuation);
             }
         }
     }

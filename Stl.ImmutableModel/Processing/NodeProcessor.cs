@@ -92,7 +92,7 @@ namespace Stl.ImmutableModel.Processing
                 modelUpdateInfoType, index, index, ModelChangeSet.Empty)!;
             
             var changes = index.Entries
-                .Select(item => new NodeChangeInfo(modelUpdateInfo, item.Node, item.Path, 0))
+                .Select(item => new NodeChangeInfo(modelUpdateInfo, item.Node, item.NodeLink, 0))
                 .Where(info => IsSupportedChange(info))
                 .ToList();
             foreach (var nodeChange in OrderChanges(changes))
@@ -108,16 +108,16 @@ namespace Stl.ImmutableModel.Processing
             var changes = new List<NodeChangeInfo>();
             foreach (var (domainKey, changeType) in updateInfo.ChangeSet) {
                 INode node;
-                SymbolList path;
+                NodeLink nodeLink;
                 if (changeType.HasFlag(NodeChangeType.Removed)) {
                     node = oldIndex.GetNode(domainKey);
-                    path = oldIndex.GetPath(node);
+                    nodeLink = oldIndex.GetNodeLink(node);
                 }
                 else {
                     node = newIndex.GetNode(domainKey);
-                    path = newIndex.GetPath(node);
+                    nodeLink = newIndex.GetNodeLink(node);
                 }
-                var nodeChangeInfo = new NodeChangeInfo(updateInfo, node, path, changeType);
+                var nodeChangeInfo = new NodeChangeInfo(updateInfo, node, nodeLink, changeType);
                 if (IsSupportedChange(nodeChangeInfo))
                     changes.Add(nodeChangeInfo);
             }
@@ -127,14 +127,8 @@ namespace Stl.ImmutableModel.Processing
         }
 
         protected virtual IEnumerable<NodeChangeInfo> OrderChanges(List<NodeChangeInfo> changes) 
-            => changes.OrderBy(c => (
-                // Removals go fist, then creations, and finally, all other changes
-                (int) c.ChangeType,
-                // For newly created nodes, we start from the ones closer to the root;
-                // for other nodes, we start from the deepest ones.
-                c.ChangeType.HasFlag(NodeChangeType.Created) 
-                    ? c.NodePath.SegmentCount 
-                    : -c.NodePath.SegmentCount));
+            // Removals go fist, then creations, and finally, all other changes
+            => changes.OrderBy(c => (int) c.ChangeType);
 
         protected virtual void ProcessNodeChange(NodeChangeInfo nodeChangeInfo)
         {
@@ -146,7 +140,7 @@ namespace Stl.ImmutableModel.Processing
                     // Nothing to do: node is removed & the process isn't running
                     return;
                 nodeProcessingInfo = new NodeProcessingInfo(
-                    this, domainKey, nodeChangeInfo.NodePath, 
+                    this, domainKey, nodeChangeInfo.NodeLink, 
                     !nodeChangeType.HasFlag(NodeChangeType.Created));
                 var existingInfo = Processes.GetOrAdd(domainKey, nodeProcessingInfo);
                 if (existingInfo != nodeProcessingInfo) {

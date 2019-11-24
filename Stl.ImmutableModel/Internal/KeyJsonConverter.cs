@@ -11,14 +11,13 @@ namespace Stl.ImmutableModel.Internal
         public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
         {
             var key = (Key) value!;
-            writer.WriteValue(key.FormattedValue);
+            writer.WriteValue(key.Format());
         }
 
-        public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
+        public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
         {
             var value = (string) reader.Value!;
-            // ReSharper disable once HeapView.BoxingAllocation
-            return Key.Parse(value);
+            return KeyParser.Parse(value);
         }
     }
 }

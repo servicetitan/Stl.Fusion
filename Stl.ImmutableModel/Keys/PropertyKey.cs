@@ -5,13 +5,13 @@ using Symbol = Stl.Text.Symbol;
 
 namespace Stl.ImmutableModel 
 {
-    public sealed class PropertyKey : KeyBase, IEquatable<PropertyKey>
+    public sealed class PropertyKey : Key, IEquatable<PropertyKey>
     {
         public static readonly string Tag = GetTypeTag(typeof(PropertyKey));  
         public Symbol Symbol { get; }
         public string Value => Symbol.Value;
 
-        public PropertyKey(Symbol value, KeyBase? continuation = null) 
+        public PropertyKey(Symbol value, Key? continuation = null) 
             : base(value.GetHashCode(), continuation) 
             => Symbol = value;
 
@@ -25,7 +25,7 @@ namespace Stl.ImmutableModel
         public bool Equals(PropertyKey? other) => !ReferenceEquals(other, null) 
             && Symbol.Equals(other.Symbol)
             && Equals(Continuation, other.Continuation);
-        public override bool Equals(KeyBase? other) => Equals(other as PropertyKey);
+        public override bool Equals(Key? other) => Equals(other as PropertyKey);
         public override bool Equals(object? other) => Equals(other as PropertyKey);
         public override int GetHashCode() => HashCode;
 
@@ -37,7 +37,7 @@ namespace Stl.ImmutableModel
         {
             public Parser(string tag) : base(tag) { }
 
-            public override KeyBase Parse(ref ListParser parser)
+            public override Key Parse(ref ListParser parser)
             {
                 if (!parser.TryParseNext())
                     throw Errors.InvalidKeyFormat();

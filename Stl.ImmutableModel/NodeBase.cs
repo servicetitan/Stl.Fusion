@@ -13,7 +13,7 @@ namespace Stl.ImmutableModel
     [JsonObject]
     public abstract class NodeBase: FreezableBase, INode
     {
-        private Key _key;
+        private Key _key = null!;
 
         public Key Key {
             get => _key;
@@ -23,21 +23,7 @@ namespace Stl.ImmutableModel
             }
         }
 
-        [JsonIgnore]
-        public Symbol LocalKey => Key.Parts.Tail;
-
         public override string ToString() => $"{GetType().Name}({Key})";
-
-        protected T PrepareValue<T>(Symbol localKey, T value)
-        {
-            this.ThrowIfFrozen();
-            if (value is INode node && node.Key.IsUndefined()) {
-                // We automatically provide keys for INode properties (or collection items)
-                // by extending the owner's key with property name suffix 
-                node.Key = Key + localKey;
-            }
-            return value;
-        }
 
         // IFreezable
 
@@ -49,13 +35,37 @@ namespace Stl.ImmutableModel
 
         // IHasChangeHistory
 
-        (object? BaseState, object? CurrentState, IEnumerable<(Symbol LocalKey, DictionaryEntryChangeType ChangeType, object? Value)> Changes) 
+        (object? BaseState, object? CurrentState, IEnumerable<(Key Key, DictionaryEntryChangeType ChangeType, object? Value)> Changes) 
             IHasChangeHistory.GetChangeHistory() 
             => GetChangeHistoryUntyped();
-        protected virtual (object? BaseState, object? CurrentState, IEnumerable<(Symbol LocalKey, DictionaryEntryChangeType ChangeType, object? Value)> Changes) GetChangeHistoryUntyped()
-            => (null, null, Enumerable.Empty<(Symbol LocalKey, DictionaryEntryChangeType ChangeType, object? Value)>());
+        protected virtual (object? BaseState, object? CurrentState, IEnumerable<(Key Key, DictionaryEntryChangeType ChangeType, object? Value)> Changes) GetChangeHistoryUntyped()
+            => (null, null, Enumerable.Empty<(Key Key, DictionaryEntryChangeType ChangeType, object? Value)>());
 
         void IHasChangeHistory.DiscardChangeHistory() => DiscardChangeHistory();
         protected virtual void DiscardChangeHistory() {}
+
+        // Protected & private members
+
+        protected T PreparePropertyValue<T>(Symbol propertyName, T value)
+        {
+            this.ThrowIfFrozen();
+            if (value is INode node && node.Key.IsUndefined()) {
+                // We automatically provide keys for INode properties (or collection items)
+                // by extending the owner's key with property name suffix 
+                node.Key = new PropertyKey(propertyName, Key);
+            }
+            return value;
+        }
+
+        protected T PrepareOptionValue<T>(Symbol optionName, T value)
+        {
+            this.ThrowIfFrozen();
+            if (value is INode node && node.Key.IsUndefined()) {
+                // We automatically provide keys for INode properties (or collection items)
+                // by extending the owner's key with property name suffix 
+                node.Key = new OptionKey(optionName, Key);
+            }
+            return value;
+        }
     }
 }

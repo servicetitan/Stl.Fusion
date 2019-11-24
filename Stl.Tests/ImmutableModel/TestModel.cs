@@ -16,7 +16,7 @@ namespace Stl.Tests.ImmutableModel
 
         public string Capabilities {
             get => _capabilities;
-            set => _capabilities = PrepareValue(nameof(Capabilities), value);
+            set => _capabilities = PreparePropertyValue(nameof(Capabilities), value);
         }
     }
 }

@@ -8,7 +8,6 @@ namespace Stl.ImmutableModel
     public interface INode : IFreezable, IHasChangeHistory
     {
         Key Key { get; set; }
-        Symbol LocalKey { get; }
     }
 
     public interface ISimpleNode : INode, IHasOptions
@@ -16,18 +15,18 @@ namespace Stl.ImmutableModel
 
     public interface ICollectionNode : INode
     {
-        IEnumerable<Symbol> Keys { get; }
+        IEnumerable<Key> Keys { get; }
         IEnumerable<object?> Values { get; }
-        IEnumerable<KeyValuePair<Symbol, object?>> Items { get; }
+        IEnumerable<KeyValuePair<Key, object?>> Items { get; }
         
-        object? this[Symbol key] { get; set; }
-        bool ContainsKey(Symbol key);
-        bool TryGetValue(Symbol key, out object? value);
-        void Add(Symbol key, object? value);
-        bool Remove(Symbol key);
+        object? this[Key key] { get; set; }
+        bool ContainsKey(Key key);
+        bool TryGetValue(Key key, out object? value);
+        void Add(Key key, object? value);
+        bool Remove(Key key);
         void Clear();
     }
     
-    public interface ICollectionNode<T> : ICollectionNode, IDictionary<Symbol, T>, IHasChangeHistory<T>
+    public interface ICollectionNode<T> : ICollectionNode, IDictionary<Key, T>, IHasChangeHistory<T>
     {}
 }

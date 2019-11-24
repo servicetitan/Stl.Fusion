@@ -1,34 +1,51 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Stl.ImmutableModel.Updating;
-using Stl.Text;
 
 namespace Stl.ImmutableModel.Indexing
 {
     public static class ModelIndexEx
     {
-        // GetParent
+        // GetXxx
 
         public static INode? GetParent(this IModelIndex index, INode node)
         {
-            var parentPath = index.GetPath(node).Prefix;
-            return parentPath == null ? null : index.GetNodeByPath(parentPath);
+            var itemRef = index.GetNodeLink(node);
+            return itemRef.IsNull ? null : index.GetNode(itemRef.ParentKey);
         }
 
-        // GetPath
+        public static IEnumerable<INode> GetParents(this IModelIndex index, INode node, bool includeSelf = false)
+        {
+            if (includeSelf)
+                yield return node;
+            INode? n = node;
+            while ((n = index.GetParent(n)) != null)
+                yield return n;
+        }
 
-        public static SymbolList GetPath(this IModelIndex index, INode node) 
-            => index.TryGetPath(node) ?? throw new KeyNotFoundException();
+        public static int GetDepth(this IModelIndex index, INode node)
+        {
+            var depth = 0;
+            INode? n = node;
+            while ((n = index.GetParent(n)) != null) 
+                depth++;
+            return depth;
+        }
+
+        // GetNodeLink
+
+        public static NodeLink GetNodeLink(this IModelIndex index, INode node) 
+            => index.TryGetNodeLink(node) ?? throw new KeyNotFoundException();
         
-        // GetNode[ByPath] (non-generic)
+        // GetNode (non-generic)
 
         public static INode GetNode(this IModelIndex index, Key key)
             => index.TryGetNode(key) ?? throw new KeyNotFoundException();
 
-        public static INode GetNodeByPath(this IModelIndex index, SymbolList list)
-            => index.TryGetNodeByPath(list) ?? throw new KeyNotFoundException();
+        public static INode GetNode(this IModelIndex index, NodeLink nodeLink)
+            => index.TryGetNode(nodeLink) ?? throw new KeyNotFoundException();
 
-        // [Try]GetNode[ByPath]<T>
+        // [Try]GetNode<T>
 
         [return: MaybeNull]
         public static T TryGetNode<T>(this IModelIndex index, Key key)
@@ -36,17 +53,17 @@ namespace Stl.ImmutableModel.Indexing
             => (T) index.TryGetNode(key)!;
 
         [return: MaybeNull]
-        public static T TryGetNodeByPath<T>(this IModelIndex index, SymbolList list)
+        public static T TryGetNode<T>(this IModelIndex index, NodeLink nodeLink)
             where T : class, INode
-            => (T) index.TryGetNodeByPath(list)!;
+            => (T) index.TryGetNode(nodeLink)!;
 
         public static T GetNode<T>(this IModelIndex index, Key key)
             where T : class, INode
             => (T) index.GetNode(key);
 
-        public static T GetNodeByPath<T>(this IModelIndex index, SymbolList list)
+        public static T GetNode<T>(this IModelIndex index, NodeLink nodeLink)
             where T : class, INode
-            => (T) index.GetNodeByPath(list);
+            => (T) index.GetNode(nodeLink);
 
         // With
 

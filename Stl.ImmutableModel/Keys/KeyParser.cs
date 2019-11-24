@@ -13,7 +13,7 @@ namespace Stl.ImmutableModel
     public interface IKeyParser
     {
         string Tag { get; }
-        KeyBase Parse(ref ListParser parser);
+        Key Parse(ref ListParser parser);
     }
 
     public abstract class KeyParserBase : IKeyParser
@@ -22,10 +22,10 @@ namespace Stl.ImmutableModel
 
         protected KeyParserBase(string tag) => Tag = tag; 
 
-        public abstract KeyBase Parse(ref ListParser parser);
+        public abstract Key Parse(ref ListParser parser);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected static KeyBase? ParseContinuation(ref ListParser parser) 
+        protected static Key? ParseContinuation(ref ListParser parser) 
             => KeyParser.Parse(ref parser);
     }
 
@@ -39,15 +39,16 @@ namespace Stl.ImmutableModel
             RegisterKeyType<UndefinedKey>();
             RegisterKeyType<StringKey>();
             RegisterKeyType<PropertyKey>();
+            RegisterKeyType<OptionKey>();
         }
 
         public static void RegisterKeyType<TKey>()
-            where TKey : KeyBase 
+            where TKey : Key 
             => RegisterKeyType(typeof(TKey));
 
         public static void RegisterKeyType(Type keyType)
         {
-            if (!typeof(KeyBase).IsAssignableFrom(keyType))
+            if (!typeof(Key).IsAssignableFrom(keyType))
                 throw new ArgumentOutOfRangeException(nameof(keyType));
 
             var createParserMethodName = nameof(StringKey.CreateParser);
@@ -63,14 +64,14 @@ namespace Stl.ImmutableModel
             _instance = new KeyParser(new ReadOnlyDictionary<string, IKeyParser>(parsers));
         }
 
-        public static KeyBase? Parse(in ReadOnlySpan<char> source)
+        public static Key? Parse(in ReadOnlySpan<char> source)
         {
-            var parser = KeyBase.ListFormat.CreateParser(source);
+            var parser = Key.ListFormat.CreateParser(source);
             return _instance.ParseImpl(ref parser);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static KeyBase? Parse(ref ListParser parser)
+        public static Key? Parse(ref ListParser parser)
             => _instance.ParseImpl(ref parser);
 
         private readonly IReadOnlyDictionary<string, IKeyParser> _parsers;
@@ -84,20 +85,20 @@ namespace Stl.ImmutableModel
             parsers.TryGetValue(StringKey.Tag, out _stringKeyParser!);
         }
 
-        private KeyBase? ParseImpl(ref ListParser parser)
+        private Key? ParseImpl(ref ListParser parser)
         {
             var prevSource = parser.Source;
             if (parser.Source.IsEmpty || !parser.TryParseNext())
                 return null;
             var item = parser.Item;
             
-            if (item.Length == 0)
+            if (item.Length <= 1)
                 return new StringKey(item, Parse(ref parser));
 
             var isEscaped = prevSource[0] == parser.Escape;
             if (!isEscaped) {
                 var c0 = item[0];
-                if (c0 == KeyBase.TagPrefix)
+                if (c0 == Key.TagPrefix)
                     return _parsers[item].Parse(ref parser);
                 if (c0 == LongKey.NumberPrefix) {
                     var value = long.Parse(item.Substring(1), CultureInfo.InvariantCulture);

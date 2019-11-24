@@ -9,7 +9,7 @@ namespace Stl.ImmutableModel.Reflection
     public interface INodePropertyDef
     {
         Type Type { get; }
-        Symbol PropertyName { get; }
+        Symbol Name { get; }
         PropertyInfo PropertyInfo { get; }
         public bool IsNode { get; } 
         public bool IsSimpleNode { get; } 
@@ -37,7 +37,7 @@ namespace Stl.ImmutableModel.Reflection
     public class NodePropertyDef<T> : INodePropertyDef<T>
     {
         public Type Type { get; }
-        public Symbol PropertyName { get; }
+        public Symbol Name { get; }
         public PropertyInfo PropertyInfo { get; }
 
         public bool IsFreezable { get; }
@@ -64,7 +64,7 @@ namespace Stl.ImmutableModel.Reflection
         public NodePropertyDef(Type type, Symbol propertyName)
         {
             Type = type;
-            PropertyName = propertyName;
+            Name = propertyName;
             PropertyInfo = PropertyEx.GetProperty(type, propertyName) 
                            ?? throw Errors.PropertyNotFound(type, propertyName);
 

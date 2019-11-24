@@ -31,7 +31,7 @@ namespace Stl.ImmutableModel.Reflection
                 // Must have both getter & setter
                 if (property.GetGetMethod(false) == null || property.GetSetMethod(false) == null)
                     continue;
-                var propertyName = new Symbol(property.Name);
+                var propertyName = (Symbol) property.Name;
                 var propertyInfoType = typeof(NodePropertyDef<>).MakeGenericType(property.PropertyType);
                 var propertyInfo = (INodePropertyDef) Activator.CreateInstance(propertyInfoType, type, propertyName)!;
                 properties.Add(propertyName, propertyInfo);
@@ -46,158 +46,165 @@ namespace Stl.ImmutableModel.Reflection
                 properties.Where(p => p.Value.IsFreezable).ToDictionary());
         }
 
-        public override IEnumerable<KeyValuePair<Symbol, object?>> GetAllItems(INode node)
+        public override IEnumerable<KeyValuePair<ItemKey, object?>> GetAllItems(INode node)
         {
             var simpleNode = (ISimpleNode) node;
-            foreach (var (key, propertyInfo) in Properties) {
-                var getter = (Func<ISimpleNode, object>?) propertyInfo.UntypedGetter;
+            foreach (var (name, propertyDef) in Properties) {
+                var getter = (Func<ISimpleNode, object>?) propertyDef.UntypedGetter;
                 if (getter == null)
                     continue;
                 var value = getter.Invoke(simpleNode);
-                yield return KeyValuePair.Create(key, value)!;
+                yield return KeyValuePair.Create((ItemKey) name, value)!;
             }
 
             var hasOptions = (IHasOptions) simpleNode;
             foreach (var (key, option) in hasOptions.GetAllOptions())
-                yield return KeyValuePair.Create(key, option)!;
+                yield return KeyValuePair.Create((ItemKey) key, option)!;
         }
 
-        public override void GetFreezableItems(INode node, ref ListBuffer<KeyValuePair<Symbol, IFreezable>> output)
+        public override void GetFreezableItems(INode node, ref ListBuffer<KeyValuePair<ItemKey, IFreezable>> output)
         {
             var simpleNode = (ISimpleNode) node;
-            foreach (var (key, propertyInfo) in FreezableProperties) {
-                var getter = (Func<ISimpleNode, object>?) propertyInfo.UntypedGetter;
+            foreach (var (name, propertyDef) in FreezableProperties) {
+                var getter = (Func<ISimpleNode, object>?) propertyDef.UntypedGetter;
                 if (getter == null)
                     continue;
                 var value = getter.Invoke(simpleNode);
                 if (value is IFreezable f)
-                    output.Add(KeyValuePair.Create(key, f));
+                    output.Add(KeyValuePair.Create((ItemKey) name, f));
             }
 
             var hasOptions = (IHasOptions) simpleNode;
             foreach (var (key, option) in hasOptions.GetAllOptions()) {
                 if (option is IFreezable f)
-                    output.Add(KeyValuePair.Create(key, f));
+                    output.Add(KeyValuePair.Create((ItemKey) key, f));
             }
         }
 
-        public override void GetNodeItems(INode node, ref ListBuffer<KeyValuePair<Symbol, INode>> output)
+        public override void GetNodeItems(INode node, ref ListBuffer<KeyValuePair<ItemKey, INode>> output)
         {
             var simpleNode = (ISimpleNode) node;
-            foreach (var (key, propertyInfo) in NodeProperties) {
-                var getter = (Func<ISimpleNode, object>?) propertyInfo.UntypedGetter;
+            foreach (var (name, propertyDef) in NodeProperties) {
+                var getter = (Func<ISimpleNode, object>?) propertyDef.UntypedGetter;
                 if (getter == null)
                     continue;
                 var value = getter.Invoke(simpleNode);
                 if (value is INode n)
-                    output.Add(KeyValuePair.Create<Symbol, INode>(key, n));
+                    output.Add(KeyValuePair.Create((ItemKey) name, n));
             }
 
             var hasOptions = (IHasOptions) simpleNode;
             foreach (var (key, option) in hasOptions.GetAllOptions()) {
                 if (option is INode n)
-                    output.Add(KeyValuePair.Create<Symbol, INode>(key, n));
+                    output.Add(KeyValuePair.Create((ItemKey) key, n));
             }
         }
 
-        public override void GetCollectionNodeItems(INode node, ref ListBuffer<KeyValuePair<Symbol, ICollectionNode>> output)
+        public override void GetCollectionNodeItems(INode node, ref ListBuffer<KeyValuePair<ItemKey, ICollectionNode>> output)
         {
             var simpleNode = (ISimpleNode) node;
-            foreach (var (key, propertyInfo) in CollectionNodeProperties) {
-                var getter = (Func<ISimpleNode, object>?) propertyInfo.UntypedGetter;
+            foreach (var (name, propertyDef) in CollectionNodeProperties) {
+                var getter = (Func<ISimpleNode, object>?) propertyDef.UntypedGetter;
                 if (getter == null)
                     continue;
                 var value = getter.Invoke(simpleNode);
                 if (value is ICollectionNode n)
-                    output.Add(KeyValuePair.Create<Symbol, ICollectionNode>(key, n));
+                    output.Add(KeyValuePair.Create((ItemKey) name, n));
             }
 
             var hasOptions = (IHasOptions) simpleNode;
             foreach (var (key, option) in hasOptions.GetAllOptions()) {
                 if (option is ICollectionNode n)
-                    output.Add(KeyValuePair.Create<Symbol, ICollectionNode>(key, n));
+                    output.Add(KeyValuePair.Create((ItemKey) key, n));
             }
         }
 
-        public override bool TryGetItem<T>(INode node, Symbol localKey, out T value)
+        public override bool TryGetItem<T>(INode node, ItemKey itemKey, out T value)
         {
             value = default!;
             var simpleNode = (ISimpleNode) node;
-            if (localKey.IsValidOptionsKey()) {
-                if (!simpleNode.HasOption(localKey))
+            var symbol = itemKey.AsSymbol(); 
+            if (symbol.IsValidOptionsKey()) {
+                if (!simpleNode.HasOption(symbol))
                     return false;
-                value = simpleNode.GetOption<T>(localKey);
+                value = simpleNode.GetOption<T>(symbol);
                 return true;
             }
-            var getter = (Func<ISimpleNode, T>?) Properties[localKey].Getter!;
+            var getter = (Func<ISimpleNode, T>?) Properties[symbol].Getter!;
             if (getter == null)
                 return false;
             value = getter.Invoke(simpleNode);
             return true;
         }
 
-        public override bool TryGetItem(INode node, Symbol localKey, out object? value)
+        public override bool TryGetItem(INode node, ItemKey itemKey, out object? value)
         {
             value = null;
             var simpleNode = (ISimpleNode) node;
-            if (localKey.IsValidOptionsKey()) {
-                if (!simpleNode.HasOption(localKey))
+            var symbol = itemKey.AsSymbol(); 
+            if (symbol.IsValidOptionsKey()) {
+                if (!simpleNode.HasOption(symbol))
                     return false;
-                value = simpleNode.GetOption(localKey);
+                value = simpleNode.GetOption(symbol);
                 return true;
             }
-            var getter = (Func<ISimpleNode, object?>?) Properties[localKey].UntypedGetter!;
+            var getter = (Func<ISimpleNode, object?>?) Properties[symbol].UntypedGetter!;
             if (getter == null)
                 return false;
             value = getter.Invoke(simpleNode);
             return true;
         }
 
-        public override T GetItem<T>(INode node, Symbol localKey)
+        public override T GetItem<T>(INode node, ItemKey itemKey)
         {
             var simpleNode = (ISimpleNode) node;
-            if (localKey.IsValidOptionsKey())
-                return simpleNode.GetOption<T>(localKey);
-            var getter = (Func<ISimpleNode, T>) Properties[localKey].Getter!;
+            var symbol = itemKey.AsSymbol(); 
+            if (symbol.IsValidOptionsKey())
+                return simpleNode.GetOption<T>(symbol);
+            var getter = (Func<ISimpleNode, T>) Properties[symbol].Getter!;
             return getter.Invoke(simpleNode);
         }
 
-        public override object? GetItem(INode node, Symbol localKey)
+        public override object? GetItem(INode node, ItemKey itemKey)
         {
             var simpleNode = (ISimpleNode) node;
-            if (localKey.IsValidOptionsKey())
-                return simpleNode.GetOption(localKey);
-            var getter = (Func<ISimpleNode, object?>) Properties[localKey].UntypedGetter!;
+            var symbol = itemKey.AsSymbol(); 
+            if (symbol.IsValidOptionsKey())
+                return simpleNode.GetOption(symbol);
+            var getter = (Func<ISimpleNode, object?>) Properties[symbol].UntypedGetter!;
             return getter.Invoke(simpleNode);
         }
 
-        public override void SetItem<T>(INode node, Symbol localKey, T value)
+        public override void SetItem<T>(INode node, ItemKey itemKey, T value)
         {
             var simpleNode = (ISimpleNode) node;
-            if (localKey.IsValidOptionsKey()) {
-                simpleNode.SetOption(localKey, value);
+            var symbol = itemKey.AsSymbol(); 
+            if (symbol.IsValidOptionsKey()) {
+                simpleNode.SetOption(symbol, value);
                 return;
             }
-            var setter = (Action<ISimpleNode, T>) Properties[localKey].Setter!;
+            var setter = (Action<ISimpleNode, T>) Properties[symbol].Setter!;
             setter.Invoke(simpleNode, value);
         }
 
-        public override void SetItem(INode node, Symbol localKey, object? value)
+        public override void SetItem(INode node, ItemKey itemKey, object? value)
         {
             var simpleNode = (ISimpleNode) node;
-            if (localKey.IsValidOptionsKey()) {
-                simpleNode.SetOption(localKey, value);
+            var symbol = itemKey.AsSymbol(); 
+            if (symbol.IsValidOptionsKey()) {
+                simpleNode.SetOption(symbol, value);
                 return;
             }
-            var setter = (Action<ISimpleNode, object?>) Properties[localKey].UntypedSetter!;
+            var setter = (Action<ISimpleNode, object?>) Properties[symbol].UntypedSetter!;
             setter.Invoke(simpleNode, value);
         }
 
-        public override void RemoveItem(INode node, Symbol localKey)
+        public override void RemoveItem(INode node, ItemKey itemKey)
         {
-            localKey.ThrowIfInvalidOptionsKey();
+            var symbol = itemKey.AsSymbol(); 
+            symbol.ThrowIfInvalidOptionsKey();
             var simpleNode = (ISimpleNode) node;
-            simpleNode.SetOption(localKey, null);
+            simpleNode.SetOption(symbol, null);
         }
     }
 }

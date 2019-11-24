@@ -1,5 +1,6 @@
 using System;
 using Newtonsoft.Json;
+using Stl.ImmutableModel.Indexing;
 using Stl.ImmutableModel.Updating;
 using Stl.Text;
 
@@ -10,23 +11,23 @@ namespace Stl.ImmutableModel.Processing
     {
         public IModelUpdateInfo ModelUpdateInfo { get; }
         public INode Node { get; }
-        public SymbolList NodePath { get; }
+        public NodeLink NodeLink { get; }
         public NodeChangeType ChangeType { get; }
 
         [JsonConstructor]
-        public NodeChangeInfo(IModelUpdateInfo modelUpdateInfo, INode node, SymbolList nodePath, NodeChangeType changeType)
+        public NodeChangeInfo(IModelUpdateInfo modelUpdateInfo, INode node, NodeLink nodeLink, NodeChangeType changeType)
         {
             ModelUpdateInfo = modelUpdateInfo;
             Node = node;
-            NodePath = nodePath;
+            NodeLink = nodeLink;
             ChangeType = changeType;
         }
 
-        public void Deconstruct(out IModelUpdateInfo modelUpdateInfo, out INode node, out SymbolList nodePath, out NodeChangeType changeType)
+        public void Deconstruct(out IModelUpdateInfo modelUpdateInfo, out INode node, out NodeLink nodeLink, out NodeChangeType changeType)
         {
             modelUpdateInfo = ModelUpdateInfo;
             node = Node;
-            nodePath = NodePath;
+            nodeLink = NodeLink;
             changeType = ChangeType;
         }
     }

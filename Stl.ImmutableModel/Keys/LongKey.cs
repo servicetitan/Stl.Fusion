@@ -5,7 +5,7 @@ using Stl.Text;
 
 namespace Stl.ImmutableModel 
 {
-    public sealed class LongKey : KeyBase, IEquatable<LongKey>
+    public sealed class LongKey : Key, IEquatable<LongKey>
     {
         internal static readonly char NumberPrefix ='#';
         internal static readonly string NumberPrefixString = NumberPrefix.ToString();
@@ -13,7 +13,7 @@ namespace Stl.ImmutableModel
         public static readonly string Tag = TagPrefix + NumberPrefixString;
         public long Value { get; }
 
-        public LongKey(long value, KeyBase? continuation = null) 
+        public LongKey(long value, Key? continuation = null) 
             : base(value.GetHashCode(), continuation) 
             => Value = value;
 
@@ -27,7 +27,7 @@ namespace Stl.ImmutableModel
         public bool Equals(LongKey? other) => !ReferenceEquals(other, null) 
             && Value.Equals(other.Value) 
             && Equals(Continuation, other.Continuation);
-        public override bool Equals(KeyBase? other) => Equals(other as LongKey);
+        public override bool Equals(Key? other) => Equals(other as LongKey);
         public override bool Equals(object? other) => Equals(other as LongKey);
         public override int GetHashCode() => HashCode;
 
@@ -41,7 +41,7 @@ namespace Stl.ImmutableModel
         {
             public Parser(string tag) : base(tag) { }
 
-            public override KeyBase Parse(ref ListParser parser)
+            public override Key Parse(ref ListParser parser)
             {
                 if (!parser.TryParseNext())
                     throw Errors.InvalidKeyFormat();

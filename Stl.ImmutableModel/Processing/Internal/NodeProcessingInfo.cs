@@ -2,6 +2,7 @@ using System;
 using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
+using Stl.ImmutableModel.Indexing;
 using Stl.Text;
 
 namespace Stl.ImmutableModel.Processing.Internal
@@ -10,7 +11,7 @@ namespace Stl.ImmutableModel.Processing.Internal
     { 
         public INodeProcessor NodeProcessor { get; set; }
         public Key NodeKey { get; set; }
-        public SymbolList NodePath { get; set; }
+        public NodeLink NodeLink { get; set; }
         public CancellationTokenSource NodeRemovedTokenSource { get; set; }
         public CancellationTokenSource ProcessStoppedOrNodeRemovedTokenSource { get; set; }
         public TaskCompletionSource<Unit> CompletionSource { get; set; }
@@ -25,12 +26,12 @@ namespace Stl.ImmutableModel.Processing.Internal
         public NodeProcessingInfo(
             INodeProcessor processor, 
             Key nodeKey, 
-            SymbolList nodePath,
+            NodeLink nodeLink,
             bool isStartedForAlreadyExistingNode)
         {
             NodeProcessor = processor;
             NodeKey = nodeKey;
-            NodePath = nodePath;
+            NodeLink = nodeLink;
             IsStartedForAlreadyExistingNode = isStartedForAlreadyExistingNode;
             NodeRemovedTokenSource = new CancellationTokenSource();
             ProcessStoppedOrNodeRemovedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(

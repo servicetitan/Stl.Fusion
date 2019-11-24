@@ -36,21 +36,21 @@ namespace Stl.Tests.ImmutableModel.Updating
                 .Select((_, i) => i).ToTask();
 
             var info = await updater.UpdateAsync(idx => {
-                var vm1 = idx.GetNode<VirtualMachine>(Key.Parse("cluster1|vm1"));
+                var vm1 = idx.GetNode<VirtualMachine>(Key.Parse("vm1|cluster1"));
                 var vm1c = vm1.ToUnfrozen();
                 vm1c.Capabilities = "caps1a"; 
                 return idx.With(vm1, vm1c);
             });
             IndexTest.TestIntegrity(updater.Index);
 
-            updater.Index.GetNode<VirtualMachine>(Key.Parse("cluster1|vm1")).Capabilities
+            updater.Index.GetNode<VirtualMachine>(Key.Parse("vm1|cluster1")).Capabilities
                 .Should().Equals("caps1a");
             info.ChangeSet.Count.Equals(3);
 
             info = await updater.UpdateAsync(idx => {
                 var cluster1 = idx.GetNode<Cluster>(Key.Parse("cluster1"));
                 var cluster1c = cluster1.ToUnfrozen();
-                cluster1c.Remove("vm1");
+                cluster1c.Remove(Key.Parse("vm1|cluster1"));
                 return idx.With(cluster1, cluster1c);
             });
 

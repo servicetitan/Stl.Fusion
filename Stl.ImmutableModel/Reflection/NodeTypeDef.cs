@@ -6,7 +6,6 @@ using System.Reflection;
 using Stl.Collections;
 using Stl.ImmutableModel.Internal;
 using Stl.Reflection;
-using Stl.Text;
 
 namespace Stl.ImmutableModel.Reflection
 {
@@ -44,18 +43,18 @@ namespace Stl.ImmutableModel.Reflection
             Kind = typeof(ICollectionNode).IsAssignableFrom(type) ? NodeKind.Collection : NodeKind.Simple;
         }
 
-        public abstract IEnumerable<KeyValuePair<Symbol, object?>> GetAllItems(INode node);
-        public abstract void GetFreezableItems(INode node, ref ListBuffer<KeyValuePair<Symbol, IFreezable>> output);
-        public abstract void GetNodeItems(INode node, ref ListBuffer<KeyValuePair<Symbol, INode>> output);
-        public abstract void GetCollectionNodeItems(INode node, ref ListBuffer<KeyValuePair<Symbol, ICollectionNode>> output);
+        public abstract IEnumerable<KeyValuePair<ItemKey, object?>> GetAllItems(INode node);
+        public abstract void GetFreezableItems(INode node, ref ListBuffer<KeyValuePair<ItemKey, IFreezable>> output);
+        public abstract void GetNodeItems(INode node, ref ListBuffer<KeyValuePair<ItemKey, INode>> output);
+        public abstract void GetCollectionNodeItems(INode node, ref ListBuffer<KeyValuePair<ItemKey, ICollectionNode>> output);
         
-        public abstract bool TryGetItem<T>(INode node, Symbol localKey, out T value);
-        public abstract bool TryGetItem(INode node, Symbol localKey, out object? value);
-        public abstract T GetItem<T>(INode node, Symbol localKey);
-        public abstract object? GetItem(INode node, Symbol localKey);
-        public abstract void SetItem<T>(INode node, Symbol localKey, T value);
-        public abstract void SetItem(INode node, Symbol localKey, object? value);
-        public abstract void RemoveItem(INode node, Symbol localKey);
+        public abstract bool TryGetItem<T>(INode node, ItemKey itemKey, out T value);
+        public abstract bool TryGetItem(INode node, ItemKey itemKey, out object? value);
+        public abstract T GetItem<T>(INode node, ItemKey itemKey);
+        public abstract object? GetItem(INode node, ItemKey itemKey);
+        public abstract void SetItem<T>(INode node, ItemKey itemKey, T value);
+        public abstract void SetItem(INode node, ItemKey itemKey, object? value);
+        public abstract void RemoveItem(INode node, ItemKey itemKey);
 
         // Useful helpers
 
@@ -67,7 +66,7 @@ namespace Stl.ImmutableModel.Reflection
                 return;
             }
 
-            var buffer = ListBuffer<KeyValuePair<Symbol, INode>>.Lease();
+            var buffer = ListBuffer<KeyValuePair<ItemKey, INode>>.Lease();
             try {
                 node.GetDefinition().GetNodeItems(node, ref buffer);
                 foreach (var (key, value) in buffer)

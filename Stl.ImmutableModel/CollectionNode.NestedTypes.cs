@@ -8,7 +8,7 @@ namespace Stl.ImmutableModel
 {
     public partial class CollectionNode<T>
     {
-        public class KeyCollection : ICollection<Symbol>
+        public class KeyCollection : ICollection<Key>
         {
             private readonly CollectionNode<T> _source;
 
@@ -18,14 +18,14 @@ namespace Stl.ImmutableModel
             public KeyCollection(CollectionNode<T> source) => _source = source;
 
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-            public IEnumerator<Symbol> GetEnumerator() => _source.Items.Keys.GetEnumerator();
+            public IEnumerator<Key> GetEnumerator() => _source.Items.Keys.GetEnumerator();
 
-            public void CopyTo(Symbol[] array, int arrayIndex)
+            public void CopyTo(Key[] array, int arrayIndex)
                 => _source.Items.Keys.ToArray().CopyTo(array, arrayIndex);
 
-            public bool Contains(Symbol item) => throw new NotSupportedException();
-            public void Add(Symbol item) => throw new NotSupportedException();
-            public bool Remove(Symbol item) => throw new NotSupportedException();
+            public bool Contains(Key item) => throw new NotSupportedException();
+            public void Add(Key item) => throw new NotSupportedException();
+            public bool Remove(Key item) => throw new NotSupportedException();
             public void Clear() => throw new NotSupportedException();
         }
         

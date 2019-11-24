@@ -4,7 +4,7 @@ using Stl.Text;
 
 namespace Stl.ImmutableModel 
 {
-    public sealed class UndefinedKey : KeyBase, IEquatable<UndefinedKey>
+    public sealed class UndefinedKey : Key, IEquatable<UndefinedKey>
     {
         public static readonly string Tag = GetTypeTag(typeof(UndefinedKey));
 
@@ -14,7 +14,7 @@ namespace Stl.ImmutableModel
             => formatter.Append(Tag);
 
         public bool Equals(UndefinedKey? other) => !ReferenceEquals(other, null);
-        public override bool Equals(KeyBase? other) => Equals(other as UndefinedKey);
+        public override bool Equals(Key? other) => Equals(other as UndefinedKey);
         public override bool Equals(object? other) => Equals(other as UndefinedKey);
         public override int GetHashCode() => HashCode;
 
@@ -26,11 +26,11 @@ namespace Stl.ImmutableModel
         {
             public Parser(string tag) : base(tag) { }
 
-            public override KeyBase Parse(ref ListParser parser)
+            public override Key Parse(ref ListParser parser)
             {
                 if (parser.TryParseNext())
                     throw Errors.InvalidKeyFormat();
-                return KeyBase.Undefined;
+                return Key.Undefined;
             }
         }
     }

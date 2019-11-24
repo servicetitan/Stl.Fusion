@@ -40,12 +40,12 @@ namespace Stl.ImmutableModel
     public partial class CollectionNode<T> : CollectionNodeBase, ICollectionNode<T>
     {
         [JsonIgnore]
-        protected ChangeTrackingDictionary<Symbol, T> Items = ChangeTrackingDictionary<Symbol, T>.Empty;
+        protected ChangeTrackingDictionary<Key, T> Items = ChangeTrackingDictionary<Key, T>.Empty;
 
         [JsonProperty("@Items")]
-        private ImmutableDictionary<Symbol, T> JsonObjectItems {
+        private ImmutableDictionary<Key, T> JsonObjectItems {
             get => Items.Dictionary;
-            set => Items = new ChangeTrackingDictionary<Symbol, T>(value);
+            set => Items = new ChangeTrackingDictionary<Key, T>(value);
         }
 
         [JsonIgnore]
@@ -53,31 +53,31 @@ namespace Stl.ImmutableModel
         [JsonIgnore]
         public bool IsReadOnly => IsFrozen;
 
-        IEnumerable<Symbol> ICollectionNode.Keys 
+        IEnumerable<Key> ICollectionNode.Keys 
             => Items.Keys;
         IEnumerable<object?> ICollectionNode.Values 
             => Items.Values.Select(v => (object?) v);
-        IEnumerable<KeyValuePair<Symbol, object?>> ICollectionNode.Items 
+        IEnumerable<KeyValuePair<Key, object?>> ICollectionNode.Items 
             => Items.Select(p => KeyValuePair.Create(p.Key, (object?) p.Value));
-        ICollection<Symbol> IDictionary<Symbol, T>.Keys => new KeyCollection(this);
-        ICollection<T> IDictionary<Symbol, T>.Values => new ValueCollection(this);
+        ICollection<Key> IDictionary<Key, T>.Keys => new KeyCollection(this);
+        ICollection<T> IDictionary<Key, T>.Values => new ValueCollection(this);
 
-        object? ICollectionNode.this[Symbol key] {
+        object? ICollectionNode.this[Key key] {
             get => this[key];
             set => this[key] = (T) value!;
         }
-        public T this[Symbol key] {
+        public T this[Key key] {
             get => Items[key];
             set => Items = Items.SetItem(key, PrepareValue(key, value));
         }
 
         IEnumerator IEnumerable.GetEnumerator() => Items.GetEnumerator();
-        public IEnumerator<KeyValuePair<Symbol, T>> GetEnumerator() => Items.GetEnumerator();
+        public IEnumerator<KeyValuePair<Key, T>> GetEnumerator() => Items.GetEnumerator();
 
-        public bool ContainsKey(Symbol key) => Items.ContainsKey(key);
-        public bool Contains(KeyValuePair<Symbol, T> item) => Items.Contains(item);
+        public bool ContainsKey(Key key) => Items.ContainsKey(key);
+        public bool Contains(KeyValuePair<Key, T> item) => Items.Contains(item);
 
-        bool ICollectionNode.TryGetValue(Symbol key, out object? value)
+        bool ICollectionNode.TryGetValue(Key key, out object? value)
         {
             if (TryGetValue(key, out var v)) {
                 value = v;
@@ -86,22 +86,22 @@ namespace Stl.ImmutableModel
             value = null;
             return false;
         }
-        public bool TryGetValue(Symbol key, out T value) 
+        public bool TryGetValue(Key key, out T value) 
             => Items.TryGetValue(key, out value);
 
         public void Clear()
         {
             this.ThrowIfFrozen();
-            Items = ChangeTrackingDictionary<Symbol, T>.Empty; 
+            Items = ChangeTrackingDictionary<Key, T>.Empty; 
         }
 
-        void ICollectionNode.Add(Symbol key, object? value) => Add(key, (T) value!);
-        public void Add(KeyValuePair<Symbol, T> item) 
+        void ICollectionNode.Add(Key key, object? value) => Add(key, (T) value!);
+        public void Add(KeyValuePair<Key, T> item) 
             => Add(item.Key, item.Value);
-        public void Add(Symbol key, T value) 
+        public void Add(Key key, T value) 
             => Items = Items.Add(key, PrepareValue(key, value));
 
-        public bool Remove(Symbol key)
+        public bool Remove(Key key)
         {
             this.ThrowIfFrozen();
             var newItems = Items.Remove(key);
@@ -111,7 +111,7 @@ namespace Stl.ImmutableModel
             return true;
         }
 
-        public bool Remove(KeyValuePair<Symbol, T> item)
+        public bool Remove(KeyValuePair<Key, T> item)
         {
             this.ThrowIfFrozen();
             var (key, value) = item;
@@ -123,7 +123,7 @@ namespace Stl.ImmutableModel
             return true;
         }
 
-        public void CopyTo(KeyValuePair<Symbol, T>[] array, int arrayIndex)
+        public void CopyTo(KeyValuePair<Key, T>[] array, int arrayIndex)
             => Items.ToArray().CopyTo(array, arrayIndex);
 
         // IFreezable
@@ -137,16 +137,29 @@ namespace Stl.ImmutableModel
 
         // IHasChangeHistory<T>
 
-        (object? BaseState, object? CurrentState, ImmutableDictionary<Symbol, (DictionaryEntryChangeType ChangeType, T Value)> Changes) IHasChangeHistory<T>.GetChangeHistory()
+        (object? BaseState, object? CurrentState, ImmutableDictionary<Key, (DictionaryEntryChangeType ChangeType, T Value)> Changes) IHasChangeHistory<T>.GetChangeHistory()
             => GetChangeHistory();
-        protected virtual (object? BaseState, object? CurrentState, ImmutableDictionary<Symbol, (DictionaryEntryChangeType ChangeType, T Value)> Changes) GetChangeHistory() 
+        protected virtual (object? BaseState, object? CurrentState, ImmutableDictionary<Key, (DictionaryEntryChangeType ChangeType, T Value)> Changes) GetChangeHistory() 
             => (Items.Base, Items.Dictionary, Items.Changes);
 
-        protected override (object? BaseState, object? CurrentState, IEnumerable<(Symbol LocalKey, DictionaryEntryChangeType ChangeType, object? Value)> Changes) GetChangeHistoryUntyped()
+        protected override (object? BaseState, object? CurrentState, IEnumerable<(Key Key, DictionaryEntryChangeType ChangeType, object? Value)> Changes) GetChangeHistoryUntyped()
             => (Items.Base, Items.Dictionary, 
                 Items.Changes.Select(p => (p.Key, p.Value.ChangeType, (object?) p.Value.Value)));
 
         protected override void DiscardChangeHistory()
-            => Items = new ChangeTrackingDictionary<Symbol,T>(Items.Dictionary);
+            => Items = new ChangeTrackingDictionary<Key,T>(Items.Dictionary);
+
+        // Other protected & private methods
+
+        protected T PrepareValue(Key key, T value)
+        {
+            this.ThrowIfFrozen();
+            if (value is INode node && node.Key.IsUndefined()) {
+                // We automatically provide keys for INode properties (or collection items)
+                // by extending the owner's key with property name suffix 
+                node.Key = key;
+            }
+            return value;
+        }
     }
 }
