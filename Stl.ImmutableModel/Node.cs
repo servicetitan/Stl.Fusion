@@ -14,7 +14,7 @@ namespace Stl.ImmutableModel
     {
         internal static NodeTypeDef CreateNodeTypeDef(Type type) => new NodeTypeDef(type);
 
-        private Key _key = null!;
+        private Key _key = Key.Undefined;
 
         [JsonProperty(
             PropertyName = "@Options", 
@@ -37,7 +37,7 @@ namespace Stl.ImmutableModel
         public override void Freeze()
         {
             if (IsFrozen) return;
-            Key.ThrowIfUndefined(); 
+            Key.ThrowIfNullOrUndefined(); 
 
             // First we freeze child freezables
             var buffer = ListBuffer<KeyValuePair<ItemKey, IFreezable>>.Lease();
@@ -123,7 +123,7 @@ namespace Stl.ImmutableModel
         protected T PreparePropertyValue<T>(Symbol propertyName, T value)
         {
             this.ThrowIfFrozen();
-            if (value is INode node && node.Key.IsUndefined()) {
+            if (value is INode node && node.Key.IsNullOrUndefined()) {
                 // We automatically provide keys for INode properties (or collection items)
                 // by extending the owner's key with property name suffix 
                 node.Key = new PropertyKey(propertyName, Key);
@@ -134,7 +134,7 @@ namespace Stl.ImmutableModel
         protected T PrepareOptionValue<T>(Symbol optionName, T value)
         {
             this.ThrowIfFrozen();
-            if (value is INode node && node.Key.IsUndefined()) {
+            if (value is INode node && node.Key.IsNullOrUndefined()) {
                 // We automatically provide keys for INode properties (or collection items)
                 // by extending the owner's key with property name suffix 
                 node.Key = new OptionKey(optionName, Key);

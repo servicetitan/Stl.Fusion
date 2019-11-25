@@ -57,6 +57,21 @@ namespace Stl.ImmutableModel.Indexing
         public NodeLink? TryGetNodeLink(INode node)
             => NodeToNodeLink.TryGetValue(node, out var path) ? (NodeLink?) path : null;
 
+        public virtual (IModelIndex Index, ModelChangeSet ChangeSet) BaseWith(
+            INode source, INode target)
+        {
+            if (source == target)
+                return (this, ModelChangeSet.Empty);
+
+            if (source.Key != target.Key)
+                throw Errors.InvalidUpdateKeyMismatch();
+            
+            var clone = (ModelIndex) MemberwiseClone();
+            var changeSet = ModelChangeSet.Empty;
+            clone.UpdateNode(source, target, ref changeSet);
+            return (clone, changeSet);
+        }
+
         protected virtual void SetModel(INode model)
         {
             model.Freeze();
@@ -67,6 +82,28 @@ namespace Stl.ImmutableModel.Indexing
             var changeSet = ModelChangeSet.Empty;
             AddNode(NodeLink.Null, Model, ref changeSet);
             model.DiscardChangeHistory();
+        }
+
+        protected virtual void UpdateNode(INode source, INode target, ref ModelChangeSet changeSet)
+        {
+            var nodeLink = this.GetNodeLink(source);
+            target.Freeze();
+            CompareAndUpdateNode(nodeLink, source, target, ref changeSet);
+            target.DiscardChangeHistory();
+
+            while (!nodeLink.IsNull) {
+                var sourceParent = this.GetNode(nodeLink.ParentKey);
+                var targetParent = sourceParent.ToUnfrozen();
+                var nodeTypeDef = targetParent.GetDefinition();
+                nodeTypeDef.SetItem(targetParent, nodeLink.ItemKey, (object?) target);
+                targetParent.Freeze();
+                nodeLink = this.GetNodeLink(sourceParent);
+                ReplaceNode(nodeLink, sourceParent, targetParent, ref changeSet);
+                targetParent.DiscardChangeHistory();
+                source = sourceParent;
+                target = targetParent;
+            }
+            SetModel(target);
         }
 
         protected virtual void AddNode(NodeLink nodeLink, INode node, ref ModelChangeSet changeSet)
@@ -118,43 +155,6 @@ namespace Stl.ImmutableModel.Indexing
             KeyToNode = KeyToNode.Remove(source.Key).Add(target.Key, target);
             NodeLinkToNode = NodeLinkToNode.SetItem(nodeLink, target);
             NodeToNodeLink = NodeToNodeLink.Remove(source).Add(target, nodeLink);
-        }
-
-        public virtual (IModelIndex Index, ModelChangeSet ChangeSet) BaseWith(
-            INode source, INode target)
-        {
-            if (source == target)
-                return (this, ModelChangeSet.Empty);
-
-            if (source.Key != target.Key)
-                throw Errors.InvalidUpdateKeyMismatch();
-            
-            var clone = (ModelIndex) MemberwiseClone();
-            var changeSet = ModelChangeSet.Empty;
-            clone.UpdateNode(source, target, ref changeSet);
-            return (clone, changeSet);
-        }
-
-        protected virtual void UpdateNode(INode source, INode target, ref ModelChangeSet changeSet)
-        {
-            var nodeLink = this.GetNodeLink(source);
-            target.Freeze();
-            CompareAndUpdateNode(nodeLink, source, target, ref changeSet);
-            target.DiscardChangeHistory();
-
-            while (!nodeLink.IsNull) {
-                var sourceParent = this.GetNode(nodeLink.ParentKey);
-                var targetParent = sourceParent.ToUnfrozen();
-                var nodeTypeDef = targetParent.GetDefinition();
-                nodeTypeDef.SetItem(targetParent, nodeLink.ItemKey, (object?) target);
-                targetParent.Freeze();
-                nodeLink = this.GetNodeLink(sourceParent);
-                ReplaceNode(nodeLink, sourceParent, targetParent, ref changeSet);
-                targetParent.DiscardChangeHistory();
-                source = sourceParent;
-                target = targetParent;
-            }
-            SetModel(target);
         }
 
         private NodeChangeType CompareAndUpdateNode(NodeLink sourceLink, INode source, INode target, ref ModelChangeSet changeSet)

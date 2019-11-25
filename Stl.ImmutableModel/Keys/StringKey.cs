@@ -18,7 +18,7 @@ namespace Stl.ImmutableModel
         public override void FormatTo(ref ListFormatter formatter)
         {
             var value = Symbol.Value;
-            if (value.Length > 0 && value[0] == TagPrefix || value[0] == LongKey.NumberPrefix)
+            if (value.Length > 1 && value[0] == TagPrefix || value[0] == LongKey.NumberPrefix)
                 formatter.AppendWithEscape(value);
             else
                 formatter.Append(value);
