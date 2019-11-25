@@ -52,6 +52,7 @@ namespace Stl.ImmutableModel
         // Operators
 
         public static StringKey operator &(Symbol prefix, Key? suffix) => new StringKey(prefix, suffix);
+        public static TypeKey operator &(Type prefix, Key? suffix) => new TypeKey(prefix, suffix);
 
         // Equality
 

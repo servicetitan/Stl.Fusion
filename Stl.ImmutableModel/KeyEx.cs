@@ -9,8 +9,13 @@ namespace Stl.ImmutableModel
         public static bool IsNullOrUndefined(this Key? key) => ReferenceEquals(key, null) || Key.Undefined.Equals(key);
         
         public static Key ThrowIfUndefined(this Key key) 
-            => key.IsUndefined() ? throw Errors.KeyIsUndefined(nameof(key)) : key;    
+            => key.IsUndefined() 
+                ? throw Errors.KeyIsUndefined(nameof(key)) 
+                : key;    
+        
         public static Key ThrowIfNullOrUndefined(this Key? key) 
-            => key.IsNull() ? throw Errors.KeyIsNull(nameof(key)) : key.ThrowIfUndefined();
+            => ReferenceEquals(key, null) 
+                ? throw Errors.KeyIsNull(nameof(key)) 
+                : key.ThrowIfUndefined();
     }
 }

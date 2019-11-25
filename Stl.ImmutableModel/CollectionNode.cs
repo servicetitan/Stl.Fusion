@@ -32,6 +32,9 @@ namespace Stl.ImmutableModel
         // anyway.
 
         internal new static NodeTypeDef CreateNodeTypeDef(Type type) => new CollectionNodeTypeDef(type);
+
+        protected CollectionNodeBase() { }
+        protected CollectionNodeBase(Key key) : base(key) { }
     }
 
     [JsonObject]
@@ -50,9 +53,11 @@ namespace Stl.ImmutableModel
         public int Count => Items.Count;
         [JsonIgnore]
         public bool IsReadOnly => IsFrozen;
+        [JsonIgnore]
+        public IEnumerable<Key> Keys => Items.Keys;
+        [JsonIgnore]
+        public IEnumerable<T> Values => Items.Values;
 
-        IEnumerable<Key> ICollectionNode.Keys 
-            => Items.Keys;
         IEnumerable<object?> ICollectionNode.Values 
             => Items.Values.Select(v => (object?) v);
         IEnumerable<KeyValuePair<Key, object?>> ICollectionNode.Items 
@@ -68,6 +73,9 @@ namespace Stl.ImmutableModel
             get => Items[key];
             set => Items = Items.SetItem(key, PrepareItemValue(key, value));
         }
+
+        public CollectionNode() { }
+        public CollectionNode(Key key) : base(key) { }
 
         IEnumerator IEnumerable.GetEnumerator() => Items.GetEnumerator();
         public IEnumerator<KeyValuePair<Key, T>> GetEnumerator() => Items.GetEnumerator();

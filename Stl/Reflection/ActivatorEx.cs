@@ -6,17 +6,17 @@ namespace Stl.Reflection
 {
     public static class ActivatorEx
     {
-        private static readonly ConcurrentDictionary<Type, Delegate?> _ctorDelegate0Cache =
+        private static readonly ConcurrentDictionary<Type, Delegate?> CtorDelegate0Cache =
             new ConcurrentDictionary<Type, Delegate?>();
-        private static readonly ConcurrentDictionary<(Type, Type), Delegate?> _ctorDelegate1Cache =
+        private static readonly ConcurrentDictionary<(Type, Type), Delegate?> CtorDelegate1Cache =
             new ConcurrentDictionary<(Type, Type), Delegate?>();
-        private static readonly ConcurrentDictionary<(Type, Type, Type), Delegate?> _ctorDelegate2Cache =
+        private static readonly ConcurrentDictionary<(Type, Type, Type), Delegate?> CtorDelegate2Cache =
             new ConcurrentDictionary<(Type, Type, Type), Delegate?>();
-        private static readonly ConcurrentDictionary<(Type, Type, Type, Type), Delegate?> _ctorDelegate3Cache =
+        private static readonly ConcurrentDictionary<(Type, Type, Type, Type), Delegate?> CtorDelegate3Cache =
             new ConcurrentDictionary<(Type, Type, Type, Type), Delegate?>();
 
         public static Delegate? GetConstructorDelegate(this Type type) 
-            => _ctorDelegate0Cache.GetOrAdd(type, tObject => {
+            => CtorDelegate0Cache.GetOrAdd(type, tObject => {
                 var argTypes = new Type[0];
                 var ctor = tObject.GetConstructor(argTypes);
                 if (ctor == null) return null;
@@ -26,7 +26,7 @@ namespace Stl.Reflection
             });
 
         public static Delegate? GetConstructorDelegate(this Type type, Type argument1)
-            => _ctorDelegate1Cache.GetOrAdd((type, argument1), key => {
+            => CtorDelegate1Cache.GetOrAdd((type, argument1), key => {
                 var (tObject, tArg1) = key;
                 var ctor = tObject.GetConstructor(new[] {tArg1});
                 if (ctor == null) return null;
@@ -39,7 +39,7 @@ namespace Stl.Reflection
             });
 
         public static Delegate? GetConstructorDelegate(this Type type, Type argument1, Type argument2)
-            => _ctorDelegate2Cache.GetOrAdd((type, argument1, argument2), key => {
+            => CtorDelegate2Cache.GetOrAdd((type, argument1, argument2), key => {
                 var (tObject, tArg1, tArg2) = key;
                 var ctor = tObject.GetConstructor(new[] {tArg1, tArg2});
                 if (ctor == null) return null;
@@ -53,7 +53,7 @@ namespace Stl.Reflection
             });
 
         public static Delegate? GetConstructorDelegate(this Type type, Type argument1, Type argument2, Type argument3)
-            => _ctorDelegate3Cache.GetOrAdd((type, argument1, argument2, argument3), key => {
+            => CtorDelegate3Cache.GetOrAdd((type, argument1, argument2, argument3), key => {
                 var (tObject, tArg1, tArg2, tArg3) = key;
                 var ctor = tObject.GetConstructor(new[] {tArg1, tArg2, tArg3});
                 if (ctor == null) return null;

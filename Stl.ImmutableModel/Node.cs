@@ -30,6 +30,9 @@ namespace Stl.ImmutableModel
             }
         }
 
+        public Node() { }
+        public Node(Key key) => Key = key.ThrowIfNullOrUndefined();
+
         public override string ToString() => $"{GetType().Name}({Key})";
 
         // IFreezable implementation

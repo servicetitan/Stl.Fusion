@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using Stl.ImmutableModel.Updating;
 
 namespace Stl.ImmutableModel.Indexing
@@ -8,12 +10,16 @@ namespace Stl.ImmutableModel.Indexing
     {
         // GetXxx
 
+        public static INode? GetParent(this IModelIndex index, Key key)
+            => index.GetParent(index.GetNode(key));
         public static INode? GetParent(this IModelIndex index, INode node)
         {
             var itemRef = index.GetNodeLink(node);
             return itemRef.IsNull ? null : index.GetNode(itemRef.ParentKey);
         }
 
+        public static IEnumerable<INode> GetParents(this IModelIndex index, Key key, bool includeSelf = false)
+            => index.GetParents(index.GetNode(key), includeSelf);
         public static IEnumerable<INode> GetParents(this IModelIndex index, INode node, bool includeSelf = false)
         {
             if (includeSelf)
@@ -21,15 +27,6 @@ namespace Stl.ImmutableModel.Indexing
             INode? n = node;
             while ((n = index.GetParent(n)) != null)
                 yield return n;
-        }
-
-        public static int GetDepth(this IModelIndex index, INode node)
-        {
-            var depth = 0;
-            INode? n = node;
-            while ((n = index.GetParent(n)) != null) 
-                depth++;
-            return depth;
         }
 
         // GetNodeLink
