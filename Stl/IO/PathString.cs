@@ -60,6 +60,10 @@ namespace Stl.IO
         public PathString ChangeExtension(string newExtension) => Path.ChangeExtension(Value, newExtension);
         public PathString RelativeTo(PathString relativeTo) => Path.GetRelativePath(relativeTo, Value);
 
+        public PathString Normalize() => Value
+            .Replace('\\', Path.DirectorySeparatorChar)
+            .Replace('/', Path.DirectorySeparatorChar);
+
         public static PathString JoinOrTakeSecond(string s1, string s2) 
             => Path.Combine(s1, s2);
         public static PathString Join(string s1, string s2) 

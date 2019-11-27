@@ -329,16 +329,17 @@ namespace Stl.Hosting
                 var cfg = builder.Configuration;
                 services.TryAddSingleton(cfg);
                 services.TryAddSingleton<IAppHostBuilder>(this);
+                services.TryAddSingleton<IRegistry>(c => new Registry());
                 services.TryAddSingleton<IConsole, SystemConsole>();
                 var clock = RealTimeClock.Instance;;
                 if (IsTestHost) {
                     var testClock = new TestClock();
-                    services.AddSingleton(testClock);
+                    services.TryAddSingleton(testClock);
                     clock = testClock;
                 }
-                services.AddSingleton(clock);
-                services.AddSingleton((ISystemClock) clock);
-                services.AddSingleton((Microsoft.Extensions.Internal.ISystemClock) clock);
+                services.TryAddSingleton(clock);
+                services.TryAddSingleton((ISystemClock) clock);
+                services.TryAddSingleton((Microsoft.Extensions.Internal.ISystemClock) clock);
             });
         }
 

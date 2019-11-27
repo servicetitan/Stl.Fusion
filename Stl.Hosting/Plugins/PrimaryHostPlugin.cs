@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Stl.Extensibility;
@@ -85,12 +86,13 @@ namespace Stl.Hosting.Plugins
         protected virtual void ConfigureServices()
             => HostBuilder.ConfigureServices((ctx, services) => {
                 services.AddOptions();
-                services.AddSingleton(Plugins);
-                services.CopySingleton<IAppHostBuilder>(Plugins);
-                services.CopySingleton<IClock>(Plugins);
-                services.CopySingleton<ISystemClock>(Plugins);
-                services.CopySingleton<Microsoft.Extensions.Internal.ISystemClock>(Plugins);
-                services.CopySingleton<IConsole>(Plugins);
+                services.TryAddSingleton(Plugins);
+                services.TryCopySingleton<IAppHostBuilder>(Plugins);
+                services.TryCopySingleton<IRegistry>(Plugins);
+                services.TryCopySingleton<IClock>(Plugins);
+                services.TryCopySingleton<ISystemClock>(Plugins);
+                services.TryCopySingleton<Microsoft.Extensions.Internal.ISystemClock>(Plugins);
+                services.TryCopySingleton<IConsole>(Plugins);
                 services.AddLogging(logging => ConfigureLogging(ctx, logging));
                 services.AddControllersWithViews();
             });
