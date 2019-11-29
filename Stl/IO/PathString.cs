@@ -64,6 +64,15 @@ namespace Stl.IO
         public PathString Normalize() => Value
             .Replace('\\', Path.DirectorySeparatorChar)
             .Replace('/', Path.DirectorySeparatorChar);
+        
+        public PathString ToAbsolute(PathString? basePath = null)
+        {
+            if (basePath != null)
+                return Path.GetFullPath(Value, basePath.Value);
+            if (!IsFullyQualified())
+                throw Errors.PathIsRelative(null);
+            return Path.GetFullPath(Value);
+        }
 
         public static PathString JoinOrTakeSecond(string s1, string s2) 
             => Path.Combine(s1, s2);

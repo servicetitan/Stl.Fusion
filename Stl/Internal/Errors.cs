@@ -54,6 +54,9 @@ namespace Stl.Internal
         public static Exception TaskIsNotCompleted() =>
             new InvalidOperationException("Task is supposed to be completed, but it's not.");
 
+        public static Exception PathIsRelative(string? paramName) =>
+            new ArgumentException("Path is relative.", paramName);
+
         public static Exception AlreadyDisposed() =>
             new ObjectDisposedException(null, "The object is already disposed.");
         public static Exception AlreadyDisposedOrDisposing(DisposalState disposalState = DisposalState.Disposed)
@@ -83,5 +86,6 @@ namespace Stl.Internal
 
         public static Exception InternalError(string message) =>
             new SystemException(message);
+
     }
 }
