@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,6 +16,7 @@ namespace Stl.CommandLine
         PathString WorkingDirectory { get; set; }
         ImmutableDictionary<string, string> EnvironmentVariables { get; set; }
         ICliFormatter CliFormatter { get; set; }
+        Func<CliString, CliString>? ArgumentTransformer { get; set; }
         ILogger Log { get; set; }
         CmdResultChecks ResultChecks { get; set; }
         bool EchoMode { get; set; }
@@ -31,6 +33,7 @@ namespace Stl.CommandLine
         public ImmutableDictionary<string, string> EnvironmentVariables { get; set; } = 
             ImmutableDictionary<string, string>.Empty;
         public ICliFormatter CliFormatter { get; set; } = new CliFormatter();
+        public Func<CliString, CliString>? ArgumentTransformer { get; set; } = null;
         public ILogger Log { get; set; } = NullLogger.Instance;
         public CmdResultChecks ResultChecks { get; set; } = CmdResultChecks.NonZeroExitCode;
         public bool EchoMode { get; set; }
@@ -87,7 +90,7 @@ namespace Stl.CommandLine
         }
 
         protected virtual CliString TransformArguments(CliString arguments)
-            => arguments;
+            => ArgumentTransformer?.Invoke(arguments) ?? arguments;
 
         public override string ToString() => Executable;
     }

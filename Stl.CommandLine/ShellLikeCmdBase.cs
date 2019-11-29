@@ -35,6 +35,6 @@ namespace Stl.CommandLine
             => base.RunRawAsync(command, standardInput, cancellationToken);
 
         protected override CliString TransformArguments(CliString arguments)
-            => GetPrefix() + arguments;
+            => base.TransformArguments(GetPrefix() + arguments);
     }
 }

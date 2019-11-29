@@ -18,6 +18,10 @@ namespace Stl.CommandLine
         protected override CliString GetPrefix() => Prefix;
 
         protected override CliString TransformArguments(CliString arguments)
-            => CmdHelpers.GetShellArguments(arguments, Prefix);
+        {
+            // Shouldn't call base method b/c it also adds Prefix (but differently)
+            var shellArguments = CmdHelpers.GetShellArguments(arguments, Prefix);
+            return ArgumentTransformer?.Invoke(shellArguments) ?? shellArguments;
+        }
     }
 }
