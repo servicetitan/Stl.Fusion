@@ -16,6 +16,7 @@ namespace Stl.IO
         private readonly string? _value;
 
         public string Value => _value ?? "";
+        public int Length => Value.Length;
 
         [JsonConstructor]
         public PathString(string? value) => _value = value;

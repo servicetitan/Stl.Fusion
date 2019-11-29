@@ -1,6 +1,7 @@
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Stl.Internal;
 
 namespace Stl.Async
 {
@@ -23,6 +24,9 @@ namespace Stl.Async
             cancellationToken.ThrowIfCancellationRequested();
         }
         
+        public static T ResultOrThrow<T>(this Task<T> task) =>
+            task.IsCompleted ? task.Result : throw Errors.TaskIsNotCompleted();
+
         public static Task SuppressExceptions(this Task task) 
             => task.ContinueWith(t => { });
         public static Task<T> SuppressExceptions<T>(this Task<T> task) 

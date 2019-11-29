@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Stl.Internal;
 
 namespace Stl.Async
 {
@@ -9,5 +10,8 @@ namespace Stl.Async
         public static ValueTask<bool> FalseTask { get;  } = New(false);
         
         public static ValueTask<T> New<T>(T value) => new ValueTask<T>(value);
+
+        public static T ResultOrThrow<T>(this ValueTask<T> task) =>
+            task.IsCompleted ? task.Result : throw Errors.TaskIsNotCompleted();
     }
 }

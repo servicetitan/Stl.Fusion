@@ -51,6 +51,9 @@ namespace Stl.Internal
         public static Exception OptionIsNone() =>
             new InvalidOperationException("Option is None.");
 
+        public static Exception TaskIsNotCompleted() =>
+            new InvalidOperationException("Task is supposed to be completed, but it's not.");
+
         public static Exception AlreadyDisposed() =>
             new ObjectDisposedException(null, "The object is already disposed.");
         public static Exception AlreadyDisposedOrDisposing(DisposalState disposalState = DisposalState.Disposed)
