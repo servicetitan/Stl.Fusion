@@ -38,7 +38,7 @@ namespace Stl.Hosting.Plugins
         {
             var buildState = AppHostBuilder.BuildState;
             var arguments = buildState.ParsableArguments();
-            var console = Plugins.GetService<IConsole>();
+            var console = Plugins.GetRequiredService<IConsole>();
 
             // Creating & configuring CLI builder
             CliBuilder = new CommandLineBuilder().UseDefaults();

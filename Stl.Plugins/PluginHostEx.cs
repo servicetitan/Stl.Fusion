@@ -12,7 +12,7 @@ namespace Stl.Plugins
         internal static object GetPluginInstance(
             this IPluginHost plugins, Type implementationType) 
             => plugins
-                .GetService<IPluginCache>()
+                .GetRequiredService<IPluginCache>()
                 .GetOrCreate(implementationType)
                 .Instance;
 
@@ -25,19 +25,19 @@ namespace Stl.Plugins
 
         public static IEnumerable<TPlugin> GetPlugins<TPlugin>(this IPluginHost plugins) 
             => plugins
-                .GetService<IPluginHandle<TPlugin>>()
+                .GetRequiredService<IPluginHandle<TPlugin>>()
                 .Instances;
 
         public static IEnumerable<TPlugin> GetPlugins<TPlugin>(
             this IPluginHost plugins, Func<PluginInfo, bool> predicate) 
             => plugins
-                .GetService<IPluginHandle<TPlugin>>()
+                .GetRequiredService<IPluginHandle<TPlugin>>()
                 .GetInstances(predicate);
 
         public static IEnumerable<object> GetPlugins(
             this IPluginHost plugins, Type pluginType)
         {
-            var pluginHandle = (IPluginHandle) plugins.GetService(
+            var pluginHandle = (IPluginHandle) plugins.GetRequiredService(
                 typeof(IPluginHandle<>).MakeGenericType(pluginType));
             return pluginHandle.Instances;
         }
@@ -45,7 +45,7 @@ namespace Stl.Plugins
         public static IEnumerable<object> GetPlugins(
             this IServiceProvider plugins, Type pluginType, Func<PluginInfo, bool> predicate)
         {
-            var pluginHandle = (IPluginHandle) plugins.GetService(
+            var pluginHandle = (IPluginHandle) plugins.GetRequiredService(
                 typeof(IPluginHandle<>).MakeGenericType(pluginType));
             return pluginHandle.GetInstances(predicate);
         }

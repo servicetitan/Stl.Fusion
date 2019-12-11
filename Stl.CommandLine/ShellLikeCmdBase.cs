@@ -4,7 +4,7 @@ using CliWrap.Models;
 
 namespace Stl.CommandLine
 {
-    public abstract class ShellLikeCmdBase : CmdBase
+    public abstract class ShellLikeCmdBase : ProcessCmdBase
     {
         protected ShellLikeCmdBase(CliString executable) : base(executable) { }
 

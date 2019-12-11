@@ -8,7 +8,7 @@ namespace Stl.Plugins.Services
         public IPluginInfoQuery Query { get; } 
 
         public QueryingPluginFactory(IServiceProvider services) : base(services) 
-            => Query = services.GetService<IPluginInfoQuery>();
+            => Query = services.GetRequiredService<IPluginInfoQuery>();
 
         public override object? Create(Type pluginType)
         {

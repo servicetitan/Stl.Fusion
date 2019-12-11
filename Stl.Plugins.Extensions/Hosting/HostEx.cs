@@ -6,6 +6,6 @@ namespace Stl.Plugins.Extensions.Hosting
     public static class HostEx
     {
         public static IPluginHost Plugins(this IHost host)
-            => host.Services.GetService<IPluginHost>();
+            => host.Services.GetRequiredService<IPluginHost>();
     }
 }

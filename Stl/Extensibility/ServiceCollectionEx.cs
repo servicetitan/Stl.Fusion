@@ -15,12 +15,12 @@ namespace Stl.Extensibility
         public static IServiceCollection CopySingleton(
             this IServiceCollection target,
             IServiceProvider source, Type type)
-            => target.AddSingleton(type, source.GetService(type));
+            => target.AddSingleton(type, source.GetRequiredService(type));
         
         public static IServiceCollection CopySingleton<T>(
             this IServiceCollection target, IServiceProvider source)
             where T : class
-            => target.AddSingleton(source.GetService<T>());
+            => target.AddSingleton(source.GetRequiredService<T>());
 
         public static IServiceCollection TryCopySingleton<T>(
             this IServiceCollection target, IServiceProvider source)
@@ -38,7 +38,7 @@ namespace Stl.Extensibility
             where TFactory : class, IFactory<TService>
             => services
                 .AddSingleton<IFactory<TService>, TFactory>()
-                .AddSingleton(c => c.GetService<IFactory<TService>>().Create());
+                .AddSingleton(c => c.GetRequiredService<IFactory<TService>>().Create());
 
         public static IServiceCollection AddFactoryScoped<TService, TFactory>(
             this IServiceCollection services)
@@ -46,6 +46,6 @@ namespace Stl.Extensibility
             where TFactory : class, IFactory<TService>
             => services
                 .AddScoped<IFactory<TService>, TFactory>()
-                .AddScoped(c => c.GetService<IFactory<TService>>().Create());
+                .AddScoped(c => c.GetRequiredService<IFactory<TService>>().Create());
     }
 }

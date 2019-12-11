@@ -5,7 +5,7 @@ using Stl.IO;
 
 namespace Stl.CommandLine.Terraform
 {
-    public class TerraformCmd : CmdBase
+    public class TerraformCmd : ProcessCmdBase
     {
         public static readonly PathString DefaultExecutable = CliString.New("terraform" + CmdHelpers.ExeExtension);
 

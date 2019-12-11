@@ -80,7 +80,7 @@ namespace Stl.Plugins.Metadata
                 })
                 .SetAutoStart(false)
                 .Build()
-                .GetService<IPluginFactory>();
+                .GetRequiredService<IPluginFactory>();
 
             var dPlugins = new Dictionary<TypeRef, PluginInfo>();
             var dTypesByBaseType = new Dictionary<TypeRef, ImmutableHashSet<TypeRef>>();

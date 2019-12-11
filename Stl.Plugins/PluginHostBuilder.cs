@@ -75,7 +75,7 @@ namespace Stl.Plugins
                     // Plugin set isn't known, so we need IPluginFinder
                     Services.TryAddSingleton<IPluginFinder, PluginFinder>();
                     Services.TryAddSingleton(services => {
-                        var pluginFinder = services.GetService<IPluginFinder>();
+                        var pluginFinder = services.GetRequiredService<IPluginFinder>();
                         var plugins = pluginFinder.FindPlugins();
                         return plugins;
                     });

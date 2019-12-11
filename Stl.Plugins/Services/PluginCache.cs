@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Stl.Plugins.Services
 {
@@ -21,7 +22,7 @@ namespace Stl.Plugins.Services
                 pluginImplementationType, 
                 (pit, self) => {
                     var handleType = typeof(IPluginInstanceHandle<>).MakeGenericType(pit);
-                    return (IPluginInstanceHandle) self._services.GetService(handleType);
+                    return (IPluginInstanceHandle) self._services.GetRequiredService(handleType);
                 }, this);
     }
 }

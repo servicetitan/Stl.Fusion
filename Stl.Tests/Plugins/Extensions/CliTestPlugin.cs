@@ -19,7 +19,7 @@ namespace Stl.Tests.Plugins.Extensions
 
         public TestCliPlugin(IServiceProvider host)
         {
-            Console = host.GetService<IConsole>();
+            Console = host.GetRequiredService<IConsole>();
         }
 
         public abstract void Use(CliPluginInvoker invoker);

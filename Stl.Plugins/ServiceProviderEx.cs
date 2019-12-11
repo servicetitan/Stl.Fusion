@@ -6,6 +6,6 @@ namespace Stl.Plugins
     public static class ServiceProviderEx
     {
         public static IPluginHost Plugins(this IServiceProvider services)
-            => services.GetService<IPluginHost>();
+            => services.GetRequiredService<IPluginHost>();
     }
 }
