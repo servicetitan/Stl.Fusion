@@ -24,7 +24,7 @@ namespace Stl.CommandLine
 
         protected ProcessCmdBase(PathString executable) => Executable = executable;
 
-        public override string ToString() => $"{GetType().Name}({Executable} @ {WorkingDirectory})";
+        public override string ToString() => $"{GetType().Name}(\"{Executable}\" @ \"{WorkingDirectory}\")";
 
         protected override Task<ExecutionResult> RunRawAsyncImpl(
             CliString arguments, string? standardInput, 

@@ -26,7 +26,7 @@ namespace Stl.Tests.Terraform
                     LockTimeout = 16,
                 });
             executionResult.StandardOutput.Trim().Should()
-                .Be(TerraformCmd.DefaultExecutable.Value +
+                .Be(TerraformEcho  +
                     " apply " +
                     "-var \"key1=value1\" -lock-timeout=16s " +
                     "-backup=\"Backup\" " +
@@ -35,7 +35,7 @@ namespace Stl.Tests.Terraform
             executionResult = await TerraformEcho.ApplyAsync(
                 "dir", new ApplyArguments { NoColor = true });
             executionResult.StandardOutput.Trim().Should()
-                .Be(TerraformCmd.DefaultExecutable.Value +
+                .Be(TerraformEcho +
                     " apply " +
                     "-no-color " +
                     "-auto-approve " +
@@ -60,7 +60,7 @@ namespace Stl.Tests.Terraform
 
             var result = (await terraformEcho.ApplyAsync(dir, arguments: applyArguments)).StandardOutput.Trim();
 
-            result.Should().Be(TerraformCmd.DefaultExecutable.Value + " apply arguments dir");
+            result.Should().Be(terraformEcho + " apply arguments dir");
             formatter.Verify(x => x.Format(applyArguments, It.IsAny<CliArgumentAttribute>()));
         }
     }
