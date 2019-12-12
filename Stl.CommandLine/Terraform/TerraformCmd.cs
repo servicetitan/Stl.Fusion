@@ -57,11 +57,7 @@ namespace Stl.CommandLine.Terraform
             var oldEnv = EnvironmentVariables;
             EnvironmentVariables = oldEnv.SetItem("TF_WORKSPACE", "default");
             try {
-                return await RunRawAsync(
-                        "init", 
-                        arguments ?? new InitArguments(), 
-                        dir, 
-                        cancellationToken)
+                return await RunRawAsync("init", arguments ?? new InitArguments(), dir, cancellationToken)
                     .ConfigureAwait(false);
             }
             finally {
