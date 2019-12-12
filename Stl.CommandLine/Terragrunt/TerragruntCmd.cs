@@ -1,4 +1,5 @@
-﻿using Stl.IO;
+﻿using System.Collections.Immutable;
+using Stl.IO;
 
 namespace Stl.CommandLine.Terragrunt
 {
@@ -6,9 +7,7 @@ namespace Stl.CommandLine.Terragrunt
     {
         public static readonly PathString DefaultExecutable = CliString.New("terragrunt" + CmdHelpers.ExeExtension);
 
-        public TerragruntCmd(PathString? executable = null)
-            : base(executable ?? DefaultExecutable)
-        { }
+        public TerragruntCmd(PathString? executable = null) : base(executable ?? DefaultExecutable) { }
 
         public TerragruntCmd EnableLog(PathString logPath, string level = "TRACE")
         {

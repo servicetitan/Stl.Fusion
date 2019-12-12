@@ -11,7 +11,10 @@ namespace Stl.CommandLine.Terraform
 
         public TerraformCmd(PathString? executable = null)
             : base(executable ?? DefaultExecutable)
-        { }
+        {
+            EnvironmentVariables = EnvironmentVariables
+                .SetItem("TF_VAR_is_bach_activated", "true");
+        }
 
         public TerraformCmd EnableLog(PathString logPath, string level = "TRACE")
         {
