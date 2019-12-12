@@ -15,7 +15,7 @@ namespace Stl.CommandLine
         ImmutableDictionary<string, string> EnvironmentVariables { get; set; }
     }
 
-    public abstract class ProcessCmdBase : CmdBase
+    public abstract class ProcessCmdBase : CmdBase, IProcessCmd
     {
         public PathString Executable { get; }
         public PathString WorkingDirectory { get; set; } = PathString.Empty;
