@@ -17,12 +17,10 @@ namespace Stl.CommandLine
 
     public abstract class ProcessCmdBase : CmdBase, IProcessCmd
     {
-        protected static readonly ImmutableDictionary<string, string> DefaultEnvironmentVariables =
-            ImmutableDictionary<string, string>.Empty.SetItem("BACH_Activated", "1");
-        
         public PathString Executable { get; }
         public PathString WorkingDirectory { get; set; } = PathString.Empty;
-        public ImmutableDictionary<string, string> EnvironmentVariables { get; set; } = DefaultEnvironmentVariables;
+        public ImmutableDictionary<string, string> EnvironmentVariables { get; set; } = 
+            ImmutableDictionary<string, string>.Empty;
 
         protected ProcessCmdBase(PathString executable) => Executable = executable;
 
