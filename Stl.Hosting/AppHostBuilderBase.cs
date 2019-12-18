@@ -12,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Hosting.Internal;
 using Microsoft.Extensions.Logging;
 using Stl.Extensibility;
 using Stl.Hosting.Internal;
@@ -329,6 +330,10 @@ namespace Stl.Hosting
                 var cfg = builder.Configuration;
                 services.TryAddSingleton(cfg);
                 services.TryAddSingleton<IAppHostBuilder>(this);
+                services.TryAddSingleton<IHostEnvironment>(c => new HostingEnvironment() {
+                    // Yes, we add this type solely to provide environment name for plugins
+                    EnvironmentName = BuildState.EnvironmentName,
+                });
                 services.TryAddSingleton<IRegistry>(c => new Registry());
                 services.TryAddSingleton<IConsole, SystemConsole>();
                 var clock = RealTimeClock.Instance;;
