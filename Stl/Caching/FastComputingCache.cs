@@ -23,7 +23,7 @@ namespace Stl.Async
             if (Cache.TryGetValue(key, out var cached))
                 return Unwrap(cached);
             return Unwrap(Cache.GetOrAdd(key, 
-                (k, s) => (ComputeAndUpdateAsync(s.self, k, s.cancellationToken), default!), 
+                (k, s) => (ComputeAndUpdateAsync(s.self, k, s.cancellationToken), default)!, 
                 (self: this, cancellationToken)));
         }
 
@@ -56,7 +56,7 @@ namespace Stl.Async
             CancellationToken cancellationToken) 
         {
             var r = await self.SafeComputeAsync(key, cancellationToken).ConfigureAwait(false);
-            self.Cache[key] = (null!, r);
+            self.Cache[key] = (null, r)!;
             return r;
         }
     }
