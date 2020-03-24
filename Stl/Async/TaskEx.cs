@@ -1,3 +1,6 @@
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,7 +33,7 @@ namespace Stl.Async
         public static Task SuppressExceptions(this Task task) 
             => task.ContinueWith(t => { });
         public static Task<T> SuppressExceptions<T>(this Task<T> task) 
-            => task.ContinueWith(t => t.IsCompletedSuccessfully ? t.Result : default);
+            => task.ContinueWith(t => t.IsCompletedSuccessfully ? t.Result : default!);
         
         public static Task SuppressCancellation(this Task task)
             => task.ContinueWith(t => {
@@ -39,6 +42,6 @@ namespace Stl.Async
                 ExceptionDispatchInfo.Throw(t.Exception!);
             });
         public static Task<T> SuppressCancellation<T>(this Task<T> task)
-            => task.ContinueWith(t => !t.IsCanceled ? t.Result : default);
+            => task.ContinueWith(t => !t.IsCanceled ? t.Result : default!);
     }
 }

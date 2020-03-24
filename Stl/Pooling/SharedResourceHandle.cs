@@ -7,17 +7,17 @@ namespace Stl.Pooling
     {
         public TKey Key { get; }
         public TResource Resource { get; }
-        public bool IsValid => _disposer != null;
-        private readonly Action<TKey, TResource>? _disposer;
+        public bool IsValid => _releaser != null;
+        private readonly Action<TKey, TResource>? _releaser;
         
-        public SharedResourceHandle(TKey key, TResource resource, Action<TKey, TResource>? disposer)
+        public SharedResourceHandle(TKey key, TResource resource, Action<TKey, TResource>? releaser)
         {
             Key = key;
             Resource = resource;
-            _disposer = disposer;
+            _releaser = releaser;
         }
 
-        public void Dispose() => _disposer?.Invoke(Key, Resource);
+        public void Dispose() => _releaser?.Invoke(Key, Resource);
 
         public void Deconstruct(out TKey key, out TResource resource)
         {
@@ -30,12 +30,12 @@ namespace Stl.Pooling
         // Equality
 
         public bool Equals(SharedResourceHandle<TKey, TResource> other) 
-            => Equals(_disposer, other._disposer) 
+            => Equals(_releaser, other._releaser) 
                 && EqualityComparer<TKey>.Default.Equals(Key, other.Key) 
                 && EqualityComparer<TResource>.Default.Equals(Resource, other.Resource);
 
         public override bool Equals(object? obj) => obj is SharedResourceHandle<TKey, TResource> other && Equals(other);
-        public override int GetHashCode() => HashCode.Combine(_disposer, Key, Resource);
+        public override int GetHashCode() => HashCode.Combine(_releaser, Key, Resource);
         public static bool operator ==(SharedResourceHandle<TKey, TResource> left, SharedResourceHandle<TKey, TResource> right) => left.Equals(right);
         public static bool operator !=(SharedResourceHandle<TKey, TResource> left, SharedResourceHandle<TKey, TResource> right) => !left.Equals(right);
     }
