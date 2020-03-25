@@ -10,24 +10,32 @@ namespace Stl.IO
     {
         private static readonly Regex NonAlphaOrNumberRe = 
             new Regex("[^a-z0-9_]+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex LeadingUnderscoresRe = 
+            new Regex("^_+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static readonly Regex TrailingUnderscoresRe = 
             new Regex("_+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-        public static PathString GetHashedName(string? key, string? prefix = null, int maxLength = 40)
+        public static PathString GetHashedName(
+            string key, string? prefix = null, 
+            int maxLength = 40, bool alwaysHash = false)
         {
             if (maxLength < 8 || maxLength > 128)
                 throw new ArgumentOutOfRangeException(nameof(maxLength));
-            if (key == null)
-                return "(null)";
-            prefix ??= key;
-            var hash = Convert.ToBase64String(BitConverter.GetBytes(key.GetDeterministicHashCode()));
-            var maxPrefixLength = maxLength - hash.Length - 1;
-            if (prefix.Length > maxLength)
-                prefix = prefix.Substring(0, maxPrefixLength);
-            var name = $"{prefix}_{hash}";
-            name = NonAlphaOrNumberRe.Replace(name, "_");
-            name = TrailingUnderscoresRe.Replace(name, "");
-            return name;
+
+            var result = prefix ?? key;
+            result = NonAlphaOrNumberRe.Replace(result, "_");
+            result = TrailingUnderscoresRe.Replace(result, "");
+
+            var mustAddHash = alwaysHash || result != key;
+            if (mustAddHash || result.Length > maxLength) {
+                var hash = Convert.ToBase64String(BitConverter.GetBytes(key.GetDeterministicHashCode()));
+                hash = NonAlphaOrNumberRe.Replace(hash, "_");
+                hash = LeadingUnderscoresRe.Replace(hash, "");
+                hash = TrailingUnderscoresRe.Replace(hash, "");
+                result = $"{result.Substring(0, maxLength - hash.Length - 1)}_{hash}";
+            }
+
+            return result;
         }
 
         public static PathString GetApplicationDirectory()

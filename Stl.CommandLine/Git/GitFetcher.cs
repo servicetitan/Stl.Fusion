@@ -30,7 +30,7 @@ namespace Stl.CommandLine.Git
 
         public async Task FetchAsync(CancellationToken cancellationToken = default)
         {
-            await using var _ = await FileLock
+            using var _ = await FileLock
                 .LockAsync(TargetPath + ".lock", cancellationToken)
                 .ConfigureAwait(false);
             

@@ -17,6 +17,10 @@ namespace Stl.Locking
         private readonly AsyncLocal<Box<int>>? _localLocks;
         
         public ReentryMode ReentryMode { get; }
+        public bool IsLocked => _lock != null; 
+        public bool? IsLockedLocally => _localLocks == null 
+            ? (bool?) null 
+            : _localLocks.Value?.Value > 0;
 
         public AsyncLock(ReentryMode reentryMode)
         {
@@ -26,20 +30,16 @@ namespace Stl.Locking
                 : null;
         }
 
-        public ValueTask<bool> IsLockedAsync() => new ValueTask<bool>(_lock != null); 
-        
-        public bool? IsLockedLocally() => _localLocks == null ? (bool?) null : _localLocks.Value?.Value > 0;
-
-        public ValueTask<IAsyncDisposable> LockAsync(CancellationToken cancellationToken = default)
+        public ValueTask<IDisposable> LockAsync(CancellationToken cancellationToken = default)
         {
             // This has to be done in non-async method, otherwise the Value
             // that's set below won't "propagate" back to the calling async method.
             if (_localLocks != null)
-                _localLocks.Value ??= new Box<int>();
+                _localLocks.Value ??= new Box<int>()!;
             return InternalLockAsync(cancellationToken);
         }
 
-        public async ValueTask<IAsyncDisposable> InternalLockAsync(CancellationToken cancellationToken = default)
+        public async ValueTask<IDisposable> InternalLockAsync(CancellationToken cancellationToken = default)
         {
             var localLocks = _localLocks?.Value;
             var myLock = new TaskCompletionSource<Unit>();
@@ -57,7 +57,7 @@ namespace Stl.Locking
             return CreateDisposable(myLock, localLocks!);
         }
 
-        protected IAsyncDisposable CreateDisposable(
+        protected IDisposable CreateDisposable(
             TaskCompletionSource<Unit> myLock, Box<int> localLocks)
         {
             if (localLocks != null) {
@@ -67,7 +67,7 @@ namespace Stl.Locking
             }
 
             // ReSharper disable once HeapView.BoxingAllocation
-            return AsyncDisposable.New(state => {
+            return Disposable.New(state => {
                 var (self, myLock1) = state;
                 var oldLock = Interlocked.CompareExchange(ref self._lock, null, myLock1);
                 if (oldLock == myLock1) {
@@ -79,7 +79,6 @@ namespace Stl.Locking
                     if (reentryCount == 0)
                         myLock1.SetResult(default); // Must be done after setting _lock to null
                 }
-                return ValueTaskEx.CompletedTask;
             }, (this, myLock));
         }
     }
@@ -92,6 +91,7 @@ namespace Stl.Locking
         private readonly AsyncLocal<Dictionary<TKey, int>>? _localLocks;
 
         public ReentryMode ReentryMode { get; }
+        public int AcquiredLockCount => _locks.Count;
 
         public AsyncLock(ReentryMode reentryMode)
         {
@@ -101,23 +101,24 @@ namespace Stl.Locking
                 : null;
         }
 
-        public ValueTask<bool> IsLockedAsync(TKey key)
-            => new ValueTask<bool>(_locks.ContainsKey(key));
+        public bool IsLocked(TKey key) => _locks.ContainsKey(key);
 
         public bool? IsLockedLocally(TKey key)
-            => _localLocks == null ? (bool?) null : (_localLocks.Value?.ContainsKey(key) ?? false);
+            => _localLocks == null 
+                ? (bool?) null 
+                : _localLocks.Value?.ContainsKey(key) ?? false;
 
-        public ValueTask<IAsyncDisposable> LockAsync(
+        public ValueTask<IDisposable> LockAsync(
             TKey key, CancellationToken cancellationToken = default)
         {
             // This has to be done in non-async method, otherwise the Value
             // that's set below won't "propagate" back to the calling async method.
             if (_localLocks != null)
-                _localLocks.Value ??= new Dictionary<TKey, int>();
+                _localLocks.Value ??= new Dictionary<TKey, int>()!;
             return InternalLockAsync(key, cancellationToken);
         }
 
-        private async ValueTask<IAsyncDisposable> InternalLockAsync(
+        private async ValueTask<IDisposable> InternalLockAsync(
             TKey key, CancellationToken cancellationToken = default)
         {
             var localLocks = _localLocks?.Value;
@@ -140,7 +141,7 @@ namespace Stl.Locking
             return CreateDisposable(key, myLock, localLocks!);
         }
 
-        protected IAsyncDisposable CreateDisposable(TKey key, 
+        protected IDisposable CreateDisposable(TKey key, 
             TaskCompletionSource<Unit> myLock, Dictionary<TKey, int> localLocks)
         {
             if (localLocks != null) {
@@ -151,7 +152,7 @@ namespace Stl.Locking
             }
 
             // ReSharper disable once HeapView.BoxingAllocation
-            return AsyncDisposable.New(state => {
+            return Disposable.New(state => {
                 var (self, key2, myLock2) = state;
                 // Removing local lock
                 var reentryCount = 0;
@@ -161,9 +162,10 @@ namespace Stl.Locking
                     localLocks1[key2] = reentryCount;
                 }
                 Debug.Assert(reentryCount >= 0);
-                if (reentryCount == 0)
-                    myLock2.SetResult(default); // Must be done after TryRemove
-                return ValueTaskEx.CompletedTask;
+                if (reentryCount == 0) {
+                    myLock2.SetResult(default); // Must be done before TryRemove
+                    self._locks.TryRemove(key2, myLock2);
+                }
             }, (this, key, myLock));
         }
     }

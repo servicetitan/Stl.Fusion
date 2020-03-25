@@ -10,14 +10,14 @@ namespace Stl.Locking
         private readonly IAsyncLock _lock;
 
         public ReentryMode ReentryMode => _lock.ReentryMode;
+        public int AcquiredLockCount => _lock.IsLocked ? 1 : 0;
 
         public FakeKeyLock(IAsyncLock @lock) => _lock = @lock;
 
-        public ValueTask<bool> IsLockedAsync(TKey key) => _lock.IsLockedAsync();
+        public bool IsLocked(TKey key) => _lock.IsLocked;
+        public bool? IsLockedLocally(TKey key) => _lock.IsLockedLocally;
 
-        public bool? IsLockedLocally(TKey key) => _lock.IsLockedLocally();
-
-        public ValueTask<IAsyncDisposable> LockAsync(
+        public ValueTask<IDisposable> LockAsync(
             TKey key, CancellationToken cancellationToken = default)
             => _lock.LockAsync(cancellationToken);
     }

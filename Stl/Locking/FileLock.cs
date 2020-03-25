@@ -18,6 +18,18 @@ namespace Stl.Locking
         public ReentryMode ReentryMode => ReentryMode.UncheckedDeadlock;
         public PathString Path { get; }
         public IEnumerable<TimeSpan> RetryIntervals { get; }
+        public bool IsLocked {
+            get {
+                try {
+                    using var _ = File.OpenWrite(Path);
+                    return false; 
+                }
+                catch (IOException) {}
+                catch (UnauthorizedAccessException) {}
+                return true; 
+            }
+        }
+        public bool? IsLockedLocally => false;
 
         public FileLock(PathString path, IEnumerable<TimeSpan>? retryIntervals = null)
         {
@@ -25,20 +37,7 @@ namespace Stl.Locking
             RetryIntervals = retryIntervals ?? DefaultRetryIntervals;
         }
 
-        public ValueTask<bool> IsLockedAsync()
-        {
-            try {
-                using var _ = File.OpenWrite(Path);
-                return ValueTaskEx.FalseTask; 
-            }
-            catch (IOException) {}
-            catch (UnauthorizedAccessException) {}
-            return ValueTaskEx.TrueTask; 
-        }
-
-        public bool? IsLockedLocally() => throw new NotSupportedException();
-
-        public async ValueTask<IAsyncDisposable> LockAsync(CancellationToken cancellationToken = default)
+        public async ValueTask<IDisposable> LockAsync(CancellationToken cancellationToken = default)
         {
             try {
                 if (!File.Exists(Path))
@@ -73,9 +72,9 @@ namespace Stl.Locking
             return fs;
         }
 
-        public static ValueTask<IAsyncDisposable> LockAsync(PathString path, CancellationToken cancellationToken = default)
+        public static ValueTask<IDisposable> LockAsync(PathString path, CancellationToken cancellationToken = default)
             => LockAsync(path, null, cancellationToken);
-        public static ValueTask<IAsyncDisposable> LockAsync(PathString path, IEnumerable<TimeSpan>? retryIntervals = null, CancellationToken cancellationToken = default)
+        public static ValueTask<IDisposable> LockAsync(PathString path, IEnumerable<TimeSpan>? retryIntervals = null, CancellationToken cancellationToken = default)
         {
             var fileLock = new FileLock(path, retryIntervals);
             return fileLock.LockAsync(cancellationToken);
