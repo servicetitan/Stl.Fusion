@@ -1,23 +1,26 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using Stl.Async;
 
 namespace Stl.Pooling
 {
-    public readonly struct SharedResourceHandle<TKey, TResource> : IDisposable, IEquatable<SharedResourceHandle<TKey, TResource>>
+    public readonly struct SharedResourceHandle<TKey, TResource> : IAsyncDisposable, IEquatable<SharedResourceHandle<TKey, TResource>>
     {
         public TKey Key { get; }
         public TResource Resource { get; }
         public bool IsValid => _releaser != null;
-        private readonly Action<TKey, TResource>? _releaser;
+        private readonly Func<TKey, TResource, ValueTask>? _releaser;
         
-        public SharedResourceHandle(TKey key, TResource resource, Action<TKey, TResource>? releaser)
+        public SharedResourceHandle(TKey key, TResource resource, Func<TKey, TResource, ValueTask>? releaser)
         {
             Key = key;
             Resource = resource;
             _releaser = releaser;
         }
 
-        public void Dispose() => _releaser?.Invoke(Key, Resource);
+        public ValueTask DisposeAsync() 
+            => _releaser?.Invoke(Key, Resource) ?? ValueTaskEx.CompletedTask;
 
         public void Deconstruct(out TKey key, out TResource resource)
         {

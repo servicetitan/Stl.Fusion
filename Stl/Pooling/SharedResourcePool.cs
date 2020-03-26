@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
@@ -19,20 +20,20 @@ namespace Stl.Pooling
     {
         protected const string AsyncLockFailureMessage = "AsyncLock doesn't work properly.";
 
-        private readonly Action<TKey, TResource> _releaseResource;
+        private readonly Func<TKey, TResource, ValueTask> _cachedReleaser;
         protected AsyncLock<TKey> Locks { get; }
         protected ConcurrentDictionary<TKey, (TResource? Resource, int Count)> Resources { get; }
         protected ConcurrentDictionary<TKey, CancellationTokenSource> ResourceDisposeCancellers { get; } 
-        protected bool AllowConcurrentDispose { get; } = false;
+        protected bool UseConcurrentDispose { get; } = false;
 
         protected SharedResourcePoolBase(
             ReentryMode lockReentryMode = ReentryMode.UncheckedDeadlock,
-            bool allowConcurrentDispose = false)
+            bool useConcurrentDispose = false)
         {
-            _releaseResource = ReleaseResource; // That's just to avoid closure allocation on every call
+            _cachedReleaser = ReleaseResourceAsync; // That's just to avoid closure allocation on every call
             Resources = new ConcurrentDictionary<TKey, (TResource? Resource, int Count)>();
             ResourceDisposeCancellers = new ConcurrentDictionary<TKey, CancellationTokenSource>();
-            AllowConcurrentDispose = allowConcurrentDispose;
+            UseConcurrentDispose = useConcurrentDispose;
             Locks = new AsyncLock<TKey>(lockReentryMode);
         }
 
@@ -45,7 +46,7 @@ namespace Stl.Pooling
                     return new SharedResourceHandle<TKey, TResource>();
                 if (!Resources.TryAdd(key, (resource, 1)!))
                     throw Errors.InternalError(AsyncLockFailureMessage);
-                return new SharedResourceHandle<TKey, TResource>(key, resource, _releaseResource);
+                return new SharedResourceHandle<TKey, TResource>(key, resource, _cachedReleaser);
             }
             var newPair = (pair.Resource, pair.Count + 1);
             if (!Resources.TryUpdate(key, newPair, pair))
@@ -54,12 +55,12 @@ namespace Stl.Pooling
                 ResourceDisposeCancellers.TryRemove(key, out var cts);
                 cts?.Cancel();
             }
-            return new SharedResourceHandle<TKey, TResource>(key, pair.Resource!, _releaseResource);
+            return new SharedResourceHandle<TKey, TResource>(key, pair.Resource!, _cachedReleaser);
         }
 
-        protected void ReleaseResource(TKey key, TResource resource)
+        protected async ValueTask ReleaseResourceAsync(TKey key, TResource resource)
         {
-            Task.Run(async () => {
+            try {
                 var delayedDisposeCts = (CancellationTokenSource?) null;
                 // ReSharper disable once MethodSupportsCancellation
                 using (await Locks.LockAsync(key).ConfigureAwait(false)) {
@@ -73,12 +74,15 @@ namespace Stl.Pooling
                     if (!Resources.TryUpdate(key, newPair, pair))
                         throw Errors.InternalError(AsyncLockFailureMessage);
                 }
+                // This can be done outside of the lock 
                 if (delayedDisposeCts != null)
-                    // Better to do this outside of lock; "fire & forget"-style launch is fine here as well. 
-#pragma warning disable 4014
-                    DelayedDisposeAsync(key, resource, delayedDisposeCts.Token);
-#pragma warning restore 4014
-            });
+                    await DelayedDisposeAsync(key, resource, delayedDisposeCts.Token)
+                        .SuppressCancellation()
+                        .ConfigureAwait(false);
+            }
+            catch (Exception e) {
+                Debug.WriteLine($"Exception inside Dispose / Dispose async: {e}");
+            }
         }
 
         protected async Task DelayedDisposeAsync(TKey key, TResource resource, CancellationToken cancellationToken)
@@ -90,15 +94,14 @@ namespace Stl.Pooling
                     throw Errors.InternalError(AsyncLockFailureMessage);
                 if (ResourceDisposeCancellers.TryGetValue(key, out var cts))
                     ResourceDisposeCancellers.TryRemove(key, cts);
-                if (!AllowConcurrentDispose)
+                if (!UseConcurrentDispose)
                     // It happens inside the lock in this case
                     await DisposeResourceAsync(key, resource).ConfigureAwait(false);
             }
-            if (AllowConcurrentDispose)
-                // Happens outside of the lock; "fire & forget"-style launch is fine here as well. 
-#pragma warning disable 4014
-                DisposeResourceAsync(key, resource);
-#pragma warning restore 4014
+            // This can be done outside of the lock 
+            if (UseConcurrentDispose)
+                // ReSharper disable once MethodSupportsCancellation
+                Task.Run(() => DisposeResourceAsync(key, resource)).Ignore();
         }
 
         protected abstract ValueTask<TResource?> CreateResourceAsync(TKey key, CancellationToken cancellationToken);
@@ -119,7 +122,7 @@ namespace Stl.Pooling
             Func<TKey, TResource,ValueTask> resourceDisposer,
             Func<TKey, TResource, CancellationToken, ValueTask>? resourceDisposeDelayer = null,
             ReentryMode lockReentryMode = ReentryMode.UncheckedDeadlock,
-            bool allowConcurrentDispose = false) : base(lockReentryMode, allowConcurrentDispose)
+            bool useConcurrentDispose = false) : base(lockReentryMode, useConcurrentDispose)
         {
             _resourceFactory = resourceFactory;
             _resourceDisposer = resourceDisposer;

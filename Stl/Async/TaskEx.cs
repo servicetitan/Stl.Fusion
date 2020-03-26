@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +11,11 @@ namespace Stl.Async
 {
     public static class TaskEx
     {
+        public static T ResultOrThrow<T>(this Task<T> task) =>
+            task.IsCompleted ? task.Result : throw Errors.TaskIsNotCompleted();
+
+        // ToXxx
+
         public static ValueTask<T> ToValueTask<T>(this Task<T> source) => new ValueTask<T>(source);
         public static ValueTask ToValueTask(this Task source) => new ValueTask(source);
 
@@ -27,8 +33,7 @@ namespace Stl.Async
             cancellationToken.ThrowIfCancellationRequested();
         }
         
-        public static T ResultOrThrow<T>(this Task<T> task) =>
-            task.IsCompleted ? task.Result : throw Errors.TaskIsNotCompleted();
+        // SuppressXxx
 
         public static Task SuppressExceptions(this Task task) 
             => task.ContinueWith(t => { });
@@ -43,5 +48,33 @@ namespace Stl.Async
             });
         public static Task<T> SuppressCancellation<T>(this Task<T> task)
             => task.ContinueWith(t => !t.IsCanceled ? t.Result : default!);
+
+        // WhileRunning
+
+        public static async Task WhileRunning(this Task dependency, Func<CancellationToken, Task> dependentTaskFactory)
+        {
+            var cts = new CancellationTokenSource();
+            var dependentTask = dependentTaskFactory.Invoke(cts.Token);
+            try {
+                await dependency.ConfigureAwait(false);
+            }
+            finally {
+                cts.Cancel();
+                await dependentTask.SuppressCancellation().ConfigureAwait(false);
+            }
+        }
+
+        public static async Task<T> WhileRunning<T>(this Task<T> dependency, Func<CancellationToken, Task> dependentTaskFactory)
+        {
+            var cts = new CancellationTokenSource();
+            var dependentTask = dependentTaskFactory.Invoke(cts.Token);
+            try {
+                return await dependency.ConfigureAwait(false);
+            }
+            finally {
+                cts.Cancel();
+                await dependentTask.SuppressCancellation().ConfigureAwait(false);
+            }
+        }
     }
 }
