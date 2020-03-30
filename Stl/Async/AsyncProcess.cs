@@ -26,12 +26,13 @@ namespace Stl.Async
 
         protected abstract Task RunInternalAsync();
 
-        protected override ValueTask DisposeInternalAsync(bool disposing)
+        protected override async ValueTask DisposeInternalAsync(bool disposing)
         {
             if (!StoppingTokenSource.IsCancellationRequested)
                 StoppingTokenSource.Cancel();
+            await (RunningTask ?? Task.CompletedTask).ConfigureAwait(false);
             StoppingTokenSource.Dispose();
-            return base.DisposeInternalAsync(disposing);
+            await base.DisposeInternalAsync(disposing);
         }
     }
 }
