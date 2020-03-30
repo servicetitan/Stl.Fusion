@@ -20,7 +20,11 @@ namespace Stl.Async
 
         public Task RunAsync()
         {
-            RunningTask = RunInternalAsync().SuppressCancellation();
+            lock (StoppingTokenSource) {
+                if (RunningTask == null)
+                    // ReSharper disable once MethodSupportsCancellation
+                    RunningTask = Task.Run(RunInternalAsync).SuppressCancellation();
+            }
             return RunningTask;
         }
 
