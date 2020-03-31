@@ -37,8 +37,8 @@ namespace Stl.ImmutableModel.Updating
         protected virtual async Task QueueProcessor()
         {
             while (true) {
-                var ((updater, cancellationToken, result), isDequeued) = await UpdateQueue.PullAsync();
-                if (!isDequeued)
+                var (isPulled, (updater, cancellationToken, result)) = await UpdateQueue.PullAsync();
+                if (!isPulled)
                     return;
                 if (cancellationToken.IsCancellationRequested) {
                     result.SetCanceled();

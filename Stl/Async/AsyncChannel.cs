@@ -13,8 +13,8 @@ namespace Stl.Async
         bool IsPutCompleted { get; }
         bool CompletePut();
         ValueTask PutAsync(T item, CancellationToken cancellationToken = default);
-        ValueTask<(T Item, bool IsDequeued)> PullAsync(CancellationToken cancellationToken = default);
-        ValueTask<(T Item, bool IsDequeued)> PullJustLastAsync(CancellationToken cancellationToken = default);
+        ValueTask<Option<T>> PullAsync(CancellationToken cancellationToken = default);
+        ValueTask<Option<T>> PullJustLastAsync(CancellationToken cancellationToken = default);
         ValueTask PutAsync(ReadOnlyMemory<T> source, CancellationToken cancellationToken = default);
         ValueTask<int> PullAsync(Memory<T> source, CancellationToken cancellationToken = default);
     }
@@ -130,7 +130,7 @@ namespace Stl.Async
             }
         }
 
-        public async ValueTask<(T Item, bool IsDequeued)> PullAsync(CancellationToken cancellationToken = default)
+        public async ValueTask<Option<T>> PullAsync(CancellationToken cancellationToken = default)
         {
             while (true) {
                 if (IsEmpty)
@@ -138,18 +138,18 @@ namespace Stl.Async
                 lock (Lock) {
                     if (CountNoLock == 0) {
                         if (IsPutCompleted)
-                            return (default, false)!;
+                            return Option<T>.None;
                         continue;
                     }
                     var item = _buffer.Span[_readPosition];
                     _readPosition = (_readPosition + 1) % _buffer.Length;
                     _pullHappened?.TrySetResult(true);
-                    return (item, true);
+                    return item!;
                 }
             }
         }
 
-        public async ValueTask<(T Item, bool IsDequeued)> PullJustLastAsync(CancellationToken cancellationToken = default)
+        public async ValueTask<Option<T>> PullJustLastAsync(CancellationToken cancellationToken = default)
         {
             while (true) {
                 if (IsEmpty)
@@ -157,13 +157,13 @@ namespace Stl.Async
                 lock (Lock) {
                     if (CountNoLock == 0) {
                         if (IsPutCompleted)
-                            return (default, false)!;
+                            return Option<T>.None;
                         continue;
                     }
                     var item = _buffer.Span[(_writePosition - 1 + _buffer.Length) % _buffer.Length];
                     _readPosition = _writePosition;
                     _pullHappened?.TrySetResult(true);
-                    return (item, true);
+                    return item!;
                 }
             }
         }

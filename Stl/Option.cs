@@ -49,7 +49,7 @@ namespace Stl
 
         public static implicit operator Option<T>((bool HasValue, T Value) source) 
             => new Option<T>(source.HasValue, source.Value);
-        public static explicit operator Option<T>(T source) => new Option<T>(true, source);
+        public static implicit operator Option<T>(T source) => new Option<T>(true, source);
         public static explicit operator T(Option<T> source) => source.Value;
 
         // Useful methods
