@@ -15,7 +15,7 @@ namespace Stl.ImmutableModel.Indexing
         public static INode? GetParent(this IModelIndex index, INode node)
         {
             var itemRef = index.GetNodeLink(node);
-            return itemRef.IsNull ? null : index.GetNode(itemRef.ParentKey);
+            return itemRef.ParentKey == null ? null : index.GetNode(itemRef.ParentKey);
         }
 
         public static IEnumerable<INode> GetParents(this IModelIndex index, Key key, bool includeSelf = false)

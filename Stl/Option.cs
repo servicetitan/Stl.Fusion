@@ -41,10 +41,10 @@ namespace Stl
         public override string ToString() 
             => HasValue ? $"Some({Value})" : "None";
 
-        public void Deconstruct(out bool hasValue, out T value)
+        public void Deconstruct(out bool hasValue, [MaybeNull] out T value)
         {
             hasValue = HasValue;
-            value = Value;
+            value = UnsafeValue;
         }
 
         public static implicit operator Option<T>((bool HasValue, T Value) source) 

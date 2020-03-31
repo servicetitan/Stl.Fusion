@@ -9,7 +9,6 @@ using Stl.Comparison;
 using Stl.ImmutableModel.Internal;
 using Stl.ImmutableModel.Reflection;
 using Stl.ImmutableModel.Updating;
-using Stl.Text;
 
 namespace Stl.ImmutableModel.Indexing
 {
@@ -80,7 +79,7 @@ namespace Stl.ImmutableModel.Indexing
             NodeLinkToNode = ImmutableDictionary<NodeLink, INode>.Empty;
             NodeToNodeLink = ImmutableDictionary<INode, NodeLink>.Empty;
             var changeSet = ModelChangeSet.Empty;
-            AddNode(NodeLink.Null, Model, ref changeSet);
+            AddNode(NodeLink.None, Model, ref changeSet);
             model.DiscardChangeHistory();
         }
 
@@ -91,7 +90,7 @@ namespace Stl.ImmutableModel.Indexing
             CompareAndUpdateNode(nodeLink, source, target, ref changeSet);
             target.DiscardChangeHistory();
 
-            while (!nodeLink.IsNull) {
+            while (nodeLink.ParentKey != null) {
                 var sourceParent = this.GetNode(nodeLink.ParentKey);
                 var targetParent = sourceParent.ToUnfrozen();
                 var nodeTypeDef = targetParent.GetDefinition();

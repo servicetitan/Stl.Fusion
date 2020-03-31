@@ -25,7 +25,7 @@ namespace Stl.Tests.ImmutableModel.Indexing
             idx = tmpIdx;
 
             idx.GetNode(Key.Parse("@")).Should().Equals(idx.Model);
-            idx.GetNode(NodeLink.Null).Should().Equals(idx.Model);
+            idx.GetNode(NodeLink.None).Should().Equals(idx.Model);
             
             var cluster1 = idx.GetNode<Cluster>(Key.Parse("cluster1"));
             cluster1.Key.Format().Should().Be("cluster1");
@@ -121,7 +121,7 @@ namespace Stl.Tests.ImmutableModel.Indexing
             }
 
             var root = index.Model;
-            ProcessNode(NodeLink.Null, root);
+            ProcessNode(NodeLink.None, root);
         }
 
         internal static ModelIndex<ModelRoot> BuildModel()

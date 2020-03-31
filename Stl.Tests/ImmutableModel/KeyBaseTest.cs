@@ -28,7 +28,6 @@ namespace Stl.Tests.ImmutableModel
                 Key.Parse("k1|\\#1"),
                 Key.Parse("k1|#1"),
                 Key.DefaultRootKey,
-                Key.Undefined,
                 null,
             };
 

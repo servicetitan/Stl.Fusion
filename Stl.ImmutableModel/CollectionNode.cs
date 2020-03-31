@@ -160,7 +160,7 @@ namespace Stl.ImmutableModel
         protected T PrepareItemValue(Key key, T value)
         {
             this.ThrowIfFrozen();
-            if (value is INode node && node.Key.IsNullOrUndefined()) {
+            if (value is INode node && node.Key.IsNull()) {
                 // We automatically provide keys for INode properties (or collection items)
                 // by extending the owner's key with property name suffix 
                 node.Key = key;

@@ -36,7 +36,6 @@ namespace Stl.ImmutableModel
         static KeyParser()
         {
             _instance = new KeyParser(ImmutableDictionary<string, IKeyParser>.Empty);
-            RegisterKeyType<UndefinedKey>();
             RegisterKeyType<StringKey>();
             RegisterKeyType<TypeKey>();
             RegisterKeyType<PropertyKey>();

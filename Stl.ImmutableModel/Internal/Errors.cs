@@ -9,8 +9,6 @@ namespace Stl.ImmutableModel.Internal
 
         public static Exception KeyIsNull(string paramName) =>
             new ArgumentNullException(paramName, "Key is null (likely, it wasn't ever set).");
-        public static Exception KeyIsUndefined(string paramName) =>
-            new ArgumentOutOfRangeException(paramName, "Key is undefined (likely, it wasn't ever set).");
 
         public static Exception PropertyNotFound(Type type, string propertyName) =>
             new InvalidOperationException(

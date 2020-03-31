@@ -11,7 +11,7 @@ namespace Stl.ImmutableModel
     [TypeConverter(typeof(KeyTypeConverter))]
     public abstract class Key : IEquatable<Key>
     {
-        public static readonly UndefinedKey Undefined = new UndefinedKey(); 
+        public static readonly string NullKeyFormat = "";
         public static readonly StringKey DefaultRootKey = new StringKey("@"); 
 
         protected internal static readonly ListFormat ListFormat = ListFormat.Default;
@@ -24,23 +24,13 @@ namespace Stl.ImmutableModel
 
         protected Key(int ownHashCode, Key? continuation = null)
         {
-            if (continuation is UndefinedKey)
-                throw Errors.ContinuationCannotBeUndefinedKey(nameof(continuation));
             HashCode = unchecked(ownHashCode + 347 * continuation?.HashCode ?? 0);
             Continuation = continuation;
         }
 
         // Format & Parse
 
-        public override string ToString() => Format();
-
-        public string Format()
-        {
-            var formatter = ListFormat.CreateFormatter();
-            FormatTo(ref formatter);
-            formatter.AppendEnd();
-            return formatter.Output;
-        }
+        public override string ToString() => this.Format();
 
         public abstract void FormatTo(ref ListFormatter formatter); 
 
