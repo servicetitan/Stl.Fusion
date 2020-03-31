@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Internal;
@@ -13,6 +14,7 @@ namespace Stl.Async
         bool CompletePut();
         ValueTask PutAsync(T item, CancellationToken cancellationToken = default);
         ValueTask<(T Item, bool IsDequeued)> PullAsync(CancellationToken cancellationToken = default);
+        ValueTask<(T Item, bool IsDequeued)> PullJustLastAsync(CancellationToken cancellationToken = default);
         ValueTask PutAsync(ReadOnlyMemory<T> source, CancellationToken cancellationToken = default);
         ValueTask<int> PullAsync(Memory<T> source, CancellationToken cancellationToken = default);
     }
@@ -39,13 +41,18 @@ namespace Stl.Async
         public bool IsPutCompleted { get; private set; }
         
         private int CountNoLock {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get {
                 var diff = _writePosition - _readPosition;
                 return diff >= 0 ? diff : diff + _buffer.Length;
             }
         }
 
-        private int FreeCountNoLock => Size - CountNoLock;
+        private int FreeCountNoLock {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => Size - CountNoLock;
+        }
+
         private object Lock => this;
         
         public AsyncChannel(int size)
@@ -131,11 +138,30 @@ namespace Stl.Async
                 lock (Lock) {
                     if (CountNoLock == 0) {
                         if (IsPutCompleted)
-                            return (default!, false);
+                            return (default, false)!;
                         continue;
                     }
                     var item = _buffer.Span[_readPosition];
                     _readPosition = (_readPosition + 1) % _buffer.Length;
+                    _pullHappened?.TrySetResult(true);
+                    return (item, true);
+                }
+            }
+        }
+
+        public async ValueTask<(T Item, bool IsDequeued)> PullJustLastAsync(CancellationToken cancellationToken = default)
+        {
+            while (true) {
+                if (IsEmpty)
+                    await WaitForEnqueueAsync(cancellationToken).ConfigureAwait(false);
+                lock (Lock) {
+                    if (CountNoLock == 0) {
+                        if (IsPutCompleted)
+                            return (default, false)!;
+                        continue;
+                    }
+                    var item = _buffer.Span[(_writePosition - 1 + _buffer.Length) % _buffer.Length];
+                    _readPosition = _writePosition;
                     _pullHappened?.TrySetResult(true);
                     return (item, true);
                 }
