@@ -58,14 +58,14 @@ namespace Stl.Internal
             new ArgumentException("Path is relative.", paramName);
 
         public static Exception AlreadyDisposed() =>
-            new ObjectDisposedException(null, "The object is already disposed.");
+            new ObjectDisposedException("unknown", "The object is already disposed.");
         public static Exception AlreadyDisposedOrDisposing(DisposalState disposalState = DisposalState.Disposed)
         {
             switch (disposalState) {
             case DisposalState.Disposing:
-                return new ObjectDisposedException(null, "The object is disposing.");
+                return new ObjectDisposedException("unknown", "The object is disposing.");
             case DisposalState.Disposed:
-                return new ObjectDisposedException(null, "The object is already disposed.");
+                return new ObjectDisposedException("unknown", "The object is already disposed.");
             default:
                 return new InvalidOperationException($"Invalid disposal state: {disposalState}.");
             }

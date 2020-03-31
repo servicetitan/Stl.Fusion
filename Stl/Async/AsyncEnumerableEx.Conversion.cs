@@ -56,7 +56,7 @@ namespace Stl.Async
                     // PutAsync continuations & this method, but that's
                     // the best we can do here anyway. The best way
                     // to address that is to have a larger buffer.
-                    .PutAsync((default!, ExceptionDispatchInfo.Capture(e)), CancellationToken.None)
+                    .PutAsync((default, ExceptionDispatchInfo.Capture(e))!, CancellationToken.None)
                     .AsTask()
                     .ContinueWith(_ => channel.CompletePut(), CancellationToken.None),
                 // Similarly, might trigger reordering.
@@ -87,7 +87,7 @@ namespace Stl.Async
                 }
                 catch (Exception e) {
                     await channel
-                        .PutAsync((default!, ExceptionDispatchInfo.Capture(e)), cancellationToken)
+                        .PutAsync((default, ExceptionDispatchInfo.Capture(e))!, cancellationToken)
                         .ConfigureAwait(false);
                 }
                 finally {

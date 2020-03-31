@@ -187,7 +187,7 @@ namespace Stl.Async
                             catch (Exception e) {
                                 // Catching errors from the subsequence
                                 await channel
-                                    .PutAsync((default!, ExceptionDispatchInfo.Capture(e)), cancellationToken)
+                                    .PutAsync((default, ExceptionDispatchInfo.Capture(e))!, cancellationToken)
                                     .ConfigureAwait(false);
                                 channel.CompletePut();
                             }
@@ -197,7 +197,7 @@ namespace Stl.Async
                 catch (Exception e) {
                     // Catching errors from the main sequence 
                     await channel
-                        .PutAsync((default!, ExceptionDispatchInfo.Capture(e)), cancellationToken)
+                        .PutAsync((default, ExceptionDispatchInfo.Capture(e))!, cancellationToken)
                         .ConfigureAwait(false);
                     channel.CompletePut();
                 }
@@ -231,7 +231,7 @@ namespace Stl.Async
                             catch (Exception e) {
                                 // Catching errors from the subsequence
                                 await channel
-                                    .PutAsync((default!, ExceptionDispatchInfo.Capture(e)), cancellationToken)
+                                    .PutAsync((default, ExceptionDispatchInfo.Capture(e))!, cancellationToken)
                                     .ConfigureAwait(false);
                                 channel.CompletePut();
                             }
@@ -241,7 +241,7 @@ namespace Stl.Async
                 catch (Exception e) {
                     // Catching errors from the main sequence 
                     await channel
-                        .PutAsync((default!, ExceptionDispatchInfo.Capture(e)), cancellationToken)
+                        .PutAsync((default, ExceptionDispatchInfo.Capture(e))!, cancellationToken)
                         .ConfigureAwait(false);
                     channel.CompletePut();
                 }

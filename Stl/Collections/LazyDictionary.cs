@@ -42,7 +42,7 @@ namespace Stl.Collections
                 value = default!;
                 return false;
             }
-            return _dictionary.TryGetValue(key, out value);
+            return _dictionary.TryGetValue(key, out value!);
         }
 
         // ICollection
