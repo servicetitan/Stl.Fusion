@@ -21,7 +21,7 @@ namespace Stl.Pooling
         protected const string AsyncLockFailureMessage = "AsyncLock doesn't work properly.";
 
         private readonly Func<TKey, TResource, ValueTask> _cachedReleaser;
-        protected AsyncLock<TKey> Locks { get; }
+        protected AsyncLockSet<TKey> LocksSet { get; }
         protected ConcurrentDictionary<TKey, (TResource? Resource, int Count)> Resources { get; }
         protected ConcurrentDictionary<TKey, CancellationTokenSource> ResourceDisposeCancellers { get; } 
         protected bool UseConcurrentDispose { get; } = false;
@@ -34,12 +34,12 @@ namespace Stl.Pooling
             Resources = new ConcurrentDictionary<TKey, (TResource? Resource, int Count)>();
             ResourceDisposeCancellers = new ConcurrentDictionary<TKey, CancellationTokenSource>();
             UseConcurrentDispose = useConcurrentDispose;
-            Locks = new AsyncLock<TKey>(lockReentryMode);
+            LocksSet = new AsyncLockSet<TKey>(lockReentryMode);
         }
 
         public async Task<SharedResourceHandle<TKey, TResource>> TryAcquireAsync(TKey key, CancellationToken cancellationToken = default)
         {
-            using var @lock = await Locks.LockAsync(key, cancellationToken).ConfigureAwait(false);
+            using var @lock = await LocksSet.LockAsync(key, cancellationToken).ConfigureAwait(false);
             if (!Resources.TryGetValue(key, out var pair)) {
                 var resource = await CreateResourceAsync(key, cancellationToken).ConfigureAwait(false);
                 if (resource == null)
@@ -63,7 +63,7 @@ namespace Stl.Pooling
             try {
                 var delayedDisposeCts = (CancellationTokenSource?) null;
                 // ReSharper disable once MethodSupportsCancellation
-                using (await Locks.LockAsync(key).ConfigureAwait(false)) {
+                using (await LocksSet.LockAsync(key).ConfigureAwait(false)) {
                     if (!Resources.TryGetValue(key, out var pair))
                         return;
                     var newPair = (pair.Resource, Count: pair.Count - 1 );
@@ -88,7 +88,7 @@ namespace Stl.Pooling
         protected async Task DelayedDisposeAsync(TKey key, TResource resource, CancellationToken cancellationToken)
         {
             await DisposeResourceDelayAsync(key, resource, cancellationToken);
-            using (await Locks.LockAsync(key, cancellationToken).ConfigureAwait(false)) {
+            using (await LocksSet.LockAsync(key, cancellationToken).ConfigureAwait(false)) {
                 cancellationToken.ThrowIfCancellationRequested();
                 if (!Resources.TryRemove(key, (resource, 0)!))
                     throw Errors.InternalError(AsyncLockFailureMessage);

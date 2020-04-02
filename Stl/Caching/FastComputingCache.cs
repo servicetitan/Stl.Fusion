@@ -3,10 +3,10 @@ using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
-using Stl.Collections;
+using Stl.Async;
 using Stl.Internal;
 
-namespace Stl.Async
+namespace Stl.Caching
 {
     public abstract class FastComputingCacheBase<TKey, TValue> : AsyncKeyResolverBase<TKey, TValue>
         where TKey : notnull

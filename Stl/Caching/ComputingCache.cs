@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Stl.Collections;
 using Stl.Locking;
 
 namespace Stl.Caching 
@@ -10,12 +9,12 @@ namespace Stl.Caching
         where TKey : notnull
     {
         public ICache<TKey, TValue> Cache { get; }
-        public IAsyncLock<TKey> Lock { get; }
+        public IAsyncLockSet<TKey> LockSet { get; }
 
-        protected ComputingCacheBase(ICache<TKey, TValue> cache, IAsyncLock<TKey>? @lock = null)
+        protected ComputingCacheBase(ICache<TKey, TValue> cache, IAsyncLockSet<TKey>? lockSet = null)
         {
             Cache = cache;
-            Lock = @lock ?? new AsyncLock<TKey>(ReentryMode.CheckedFail);
+            LockSet = lockSet ?? new AsyncLockSet<TKey>(ReentryMode.CheckedFail);
         }
 
         public override async ValueTask<TValue> GetAsync(TKey key, CancellationToken cancellationToken = default)
@@ -23,7 +22,7 @@ namespace Stl.Caching
             var value = await Cache.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
             if (value.HasValue)
                 return value.UnsafeValue;
-            using var @lock = await Lock.LockAsync(key, cancellationToken).ConfigureAwait(false);
+            using var @lock = await LockSet.LockAsync(key, cancellationToken).ConfigureAwait(false);
             var result = await ComputeAsync(key, cancellationToken).ConfigureAwait(false);
             await Cache.SetAsync(key, result, cancellationToken).ConfigureAwait(false);
             return result;
@@ -47,8 +46,8 @@ namespace Stl.Caching
             : base(cache) 
             => Computer = computer;
 
-        public ComputingCache(ICache<TKey, TValue> cache, IAsyncLock<TKey> @lock, Func<TKey, CancellationToken, ValueTask<TValue>> computer) 
-            : base(cache, @lock) 
+        public ComputingCache(ICache<TKey, TValue> cache, IAsyncLockSet<TKey> lockSet, Func<TKey, CancellationToken, ValueTask<TValue>> computer) 
+            : base(cache, lockSet) 
             => Computer = computer;
 
         protected override ValueTask<TValue> ComputeAsync(TKey key, CancellationToken cancellationToken = default) 

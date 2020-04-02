@@ -21,7 +21,7 @@ It's based on standard coding conventions for C# with a few exceptions:
 ### Stl project:
 
 * Async:
-  * `AsyncChannel<T>` is one-way asynchronous channel suppporting both streaming and non-streaming `Push` and `Pull` operations.
+  * `AsyncChannel<T>` is one-way asynchronous channel that supports both streaming and non-streaming `Push` and `Pull` operations.
   * `AsyncEnumerable` and `AsyncEnumerableEx` provide some missing extension methods for `IAsyncEnumerable<T>` - `Interval`, converstion to/from `IObservable<T>`, some LINQ methods, etc.; these classes exist mainly to close some of the existing gaps in `IAsyncEnumerable<T>` API / support in .NET Core.
   * `TaskEx`: typically conversion methods, e.g. `ToValueTask` (for tasks), `ToTask` (for `CancallationToken`) + `SuppressExceptions` and `SuppressCancellation` (for tasks).
   * `ValueTaskEx`: `CompletedTask`, `TrueTask`, `FalseTask`, `New<T>(T value)`.

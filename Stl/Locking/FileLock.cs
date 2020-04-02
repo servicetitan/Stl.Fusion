@@ -4,7 +4,6 @@ using System.IO;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
-using Stl.Async;
 using Stl.Collections;
 using Stl.IO;
 

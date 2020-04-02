@@ -18,14 +18,4 @@ namespace Stl.Locking
         bool? IsLockedLocally { get; }
         ValueTask<IDisposable> LockAsync(CancellationToken cancellationToken = default);
     }
-
-    public interface IAsyncLock<in TKey>
-        where TKey : notnull
-    {
-        ReentryMode ReentryMode { get; }
-        int AcquiredLockCount { get; }
-        bool IsLocked(TKey key);
-        bool? IsLockedLocally(TKey key);
-        ValueTask<IDisposable> LockAsync(TKey key, CancellationToken cancellationToken = default);
-    }
 }

@@ -21,8 +21,8 @@ namespace Stl.Caching
 
         protected override ValueTask SetAsync(TKey key, Option<TValue> value, CancellationToken cancellationToken = default)
         {
-            if (value.HasValue)
-                _dictionary[key] = value.UnsafeValue;
+            if (value.IsSome(out var v))
+                _dictionary[key] = v;
             else
                 _dictionary.TryRemove(key, out _);
             return ValueTaskEx.CompletedTask;

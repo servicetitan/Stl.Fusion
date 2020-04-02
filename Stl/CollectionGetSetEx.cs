@@ -72,18 +72,18 @@ namespace Stl
         public static bool SetOption<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, Option<TValue> value)
             where TKey : notnull
         {
-            if (!value.HasValue)
+            if (!value.IsSome(out var v))
                 return dictionary.Remove(key);
-            dictionary[key] = value.UnsafeValue;
+            dictionary[key] = v;
             return true;
         }
 
         public static bool SetOption<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, TKey key, Option<TValue> value)
             where TKey : notnull
         {
-            if (!value.HasValue)
+            if (!value.IsSome(out var v))
                 return dictionary.Remove(key);
-            dictionary[key] = value.UnsafeValue;
+            dictionary[key] = v;
             return true;
         }
     }

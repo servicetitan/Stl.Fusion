@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Stl.Locking 
 {
-    public class FakeKeyLock<TKey> : IAsyncLock<TKey>
+    public class AsyncLockBasedLockSet<TKey> : IAsyncLockSet<TKey>
         where TKey : notnull
     {
         private readonly IAsyncLock _lock;
@@ -12,7 +12,7 @@ namespace Stl.Locking
         public ReentryMode ReentryMode => _lock.ReentryMode;
         public int AcquiredLockCount => _lock.IsLocked ? 1 : 0;
 
-        public FakeKeyLock(IAsyncLock @lock) => _lock = @lock;
+        public AsyncLockBasedLockSet(IAsyncLock @lock) => _lock = @lock;
 
         public bool IsLocked(TKey key) => _lock.IsLocked;
         public bool? IsLockedLocally(TKey key) => _lock.IsLockedLocally;

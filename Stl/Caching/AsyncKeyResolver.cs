@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Stl.Collections
+namespace Stl.Caching
 {
     public interface IAsyncKeyResolver<in TKey, TValue>
         where TKey : notnull
