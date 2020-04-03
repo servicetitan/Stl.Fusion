@@ -2,6 +2,8 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
@@ -9,12 +11,15 @@ using Stl.Locking;
 
 namespace Stl.Tests.Purifier
 {
-    public class TestRepository<TKey, TEntity> : IRepository<TKey, TEntity>
+    public class TestRepository<TKey, TEntity> : IQueryableRepository<TKey, TEntity>
         where TKey : notnull
         where TEntity : IHasKey<TKey>
     {
         protected readonly ConcurrentDictionary<TKey, TEntity> Entities = new ConcurrentDictionary<TKey, TEntity>(); 
         protected readonly AsyncLockSet<TKey> LockSet = new AsyncLockSet<TKey>(ReentryMode.UncheckedDeadlock);
+
+        protected IEnumerable<TEntity> GetEntities() => Entities.Values;
+        public IQueryable<TEntity> All => GetEntities().AsQueryable();
 
         public ValueTask<Option<TEntity>> TryGetAsync(TKey key, CancellationToken cancellationToken = default)
         {
@@ -61,6 +66,7 @@ namespace Stl.Tests.Purifier
             }
         }
 
-        protected virtual ValueTask DelayAsync(ChangeKind changeKind, TKey key) => ValueTaskEx.CompletedTask;
+        protected virtual ValueTask DelayAsync(ChangeKind changeKind, [AllowNull] TKey key) 
+            => ValueTaskEx.CompletedTask;
     }
 }

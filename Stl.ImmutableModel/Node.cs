@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using Newtonsoft.Json;
@@ -22,6 +23,7 @@ namespace Stl.ImmutableModel
         private Dictionary<Symbol, object> Options => _options ??= new Dictionary<Symbol, object>();
 
         protected abstract Key UntypedKey { get; set; }
+        [NotMapped]
         public Key Key {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => UntypedKey; 
@@ -147,6 +149,7 @@ namespace Stl.ImmutableModel
     {
         private TKey _key = default!;
 
+        [NotMapped]
         public new TKey Key {
             get => _key;
             set {

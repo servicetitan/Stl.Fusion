@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using Newtonsoft.Json;
 using Stl.Collections;
@@ -37,22 +38,22 @@ namespace Stl.ImmutableModel
     [JsonObject]
     public abstract partial class CollectionNode<T> : CollectionNodeBase, ICollectionNode<T>
     {
-        [JsonIgnore]
+        [JsonIgnore, NotMapped]
         protected ChangeTrackingDictionary<Key, T> Items = ChangeTrackingDictionary<Key, T>.Empty;
 
-        [JsonProperty("@Items")]
+        [JsonProperty("@Items"), NotMapped]
         private ImmutableDictionary<Key, T> JsonObjectItems {
             get => Items.Dictionary;
             set => Items = new ChangeTrackingDictionary<Key, T>(value);
         }
 
-        [JsonIgnore]
+        [JsonIgnore, NotMapped]
         public int Count => Items.Count;
-        [JsonIgnore]
+        [JsonIgnore, NotMapped]
         public bool IsReadOnly => IsFrozen;
-        [JsonIgnore]
+        [JsonIgnore, NotMapped]
         public IEnumerable<Key> Keys => Items.Keys;
-        [JsonIgnore]
+        [JsonIgnore, NotMapped]
         public IEnumerable<T> Values => Items.Values;
 
         IEnumerable<object?> ICollectionNode.Values 
@@ -168,6 +169,7 @@ namespace Stl.ImmutableModel
     {
         private TKey _key = default!;
 
+        [NotMapped]
         public new TKey Key {
             get => _key;
             set {
