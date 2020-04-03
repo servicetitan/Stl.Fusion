@@ -16,11 +16,11 @@ namespace Stl.Tests.Purifier
         protected readonly ConcurrentDictionary<TKey, TEntity> Entities = new ConcurrentDictionary<TKey, TEntity>(); 
         protected readonly AsyncLockSet<TKey> LockSet = new AsyncLockSet<TKey>(ReentryMode.UncheckedDeadlock);
 
-        public async ValueTask<Option<TEntity>> TryGetAsync(TKey key, CancellationToken cancellationToken = default)
+        public ValueTask<Option<TEntity>> TryGetAsync(TKey key, CancellationToken cancellationToken = default)
         {
             if (Entities.TryGetValue(key, out var value))
-                return value;
-            return Option<TEntity>.None; 
+                return ValueTaskEx.New(Option<TEntity>.Some(value));
+            return ValueTaskEx.New(Option<TEntity>.None); 
         }
 
         public async ValueTask<TEntity> GetAsync(TKey key, CancellationToken cancellationToken = default)
