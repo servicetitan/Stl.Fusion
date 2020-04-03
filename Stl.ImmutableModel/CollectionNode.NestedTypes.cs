@@ -2,11 +2,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Stl.Text;
 
 namespace Stl.ImmutableModel
 {
-    public partial class CollectionNode<T>
+    public abstract partial class CollectionNode<T>
     {
         public class KeyCollection : ICollection<Key>
         {

@@ -7,10 +7,10 @@ namespace Stl.Tests.ImmutableModel
         string Capabilities { get; set; }
     }
 
-    public class ModelRoot : CollectionNode<Cluster>
+    public class ModelRoot : CollectionNode<Key, Cluster>
     { }
 
-    public class Cluster : CollectionNode<VirtualMachine>, IHasCapabilities
+    public class Cluster : CollectionNode<Key, VirtualMachine>, IHasCapabilities
     {
         private string _capabilities = "";
 
@@ -23,7 +23,7 @@ namespace Stl.Tests.ImmutableModel
         }
     }
 
-    public class VirtualMachine : Node, IHasCapabilities
+    public class VirtualMachine : Node<Key>, IHasCapabilities
     {
         private string _capabilities = "";
 

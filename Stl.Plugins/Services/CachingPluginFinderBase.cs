@@ -34,12 +34,12 @@ namespace Stl.Plugins.Services
                 Logger.LogInformation("Plugin cache is disabled (cache key is null).");
                 return await CreatePluginSetInfoAsync();
             }
-            var result = await Cache.TryGetAsync(cacheKey).ConfigureAwait(false);
             PluginSetInfo pluginSetInfo;
-            if (result.HasValue) {
+            var result = await Cache.TryGetAsync(cacheKey).ConfigureAwait(false);
+            if (result.IsSome(out var v)) {
                 Logger.LogInformation("Cached plugin set info found.");
                 try {
-                    pluginSetInfo = Deserialize(result.UnsafeValue);
+                    pluginSetInfo = Deserialize(v);
                     return pluginSetInfo;
                 }
                 catch (Exception e) {

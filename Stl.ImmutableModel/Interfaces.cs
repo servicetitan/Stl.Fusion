@@ -9,6 +9,12 @@ namespace Stl.ImmutableModel
         Key Key { get; set; }
     }
 
+    public interface INode<TKey> : INode
+        where TKey : Key
+    {
+        new TKey Key { get; set; } 
+    }
+
     public interface ICollectionNode : INode
     {
         IEnumerable<Key> Keys { get; }

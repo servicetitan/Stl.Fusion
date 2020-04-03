@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Newtonsoft.Json;
 using Stl.Collections;
 using Stl.ImmutableModel.Indexing;
@@ -10,11 +11,9 @@ using Stl.Text;
 namespace Stl.ImmutableModel
 {
     [JsonObject]
-    public class Node: FreezableBase, INode
+    public abstract class Node: FreezableBase, INode
     {
         internal static NodeTypeDef CreateNodeTypeDef(Type type) => new NodeTypeDef(type);
-
-        private Key _key = null!;
 
         [JsonProperty(
             PropertyName = "@Options", 
@@ -22,16 +21,13 @@ namespace Stl.ImmutableModel
         private Dictionary<Symbol, object>? _options;
         private Dictionary<Symbol, object> Options => _options ??= new Dictionary<Symbol, object>();
 
+        protected abstract Key UntypedKey { get; set; }
         public Key Key {
-            get => _key;
-            set {
-                this.ThrowIfFrozen(); 
-                _key = value;
-            }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => UntypedKey; 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            set => UntypedKey = value;
         }
-
-        public Node() { }
-        public Node(Key key) => Key = key;
 
         public override string ToString() => $"{GetType().Name}({Key})";
 
@@ -144,5 +140,27 @@ namespace Stl.ImmutableModel
             }
             return value;
         }
+    }
+
+    public class Node<TKey> : Node, INode<TKey>
+        where TKey : Key
+    {
+        private TKey _key = default!;
+
+        public new TKey Key {
+            get => _key;
+            set {
+                this.ThrowIfFrozen(); 
+                _key = value;
+            }
+        }
+
+        protected override Key UntypedKey {
+            get => Key;
+            set => Key = (TKey) value;
+        }
+
+        public Node() { }
+        public Node(TKey key) => Key = key;
     }
 }

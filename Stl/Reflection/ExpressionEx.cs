@@ -14,17 +14,17 @@ namespace Stl.Reflection
                 throw new ArgumentNullException(nameof (expression));
             var memberExpression = expression.Body as MemberExpression;
 
-            (Type memberType, string memberName) TypeAndName() => 
-                (memberExpression.Member.ReturnType(), memberExpression.Member.Name);
+            (Type memberType, string memberName) TypeAndName(MemberExpression me) => 
+                (me.Member.ReturnType(), me.Member.Name);
 
             if (memberExpression != null)
-                return TypeAndName();
+                return TypeAndName(memberExpression);
             if (!(expression.Body is UnaryExpression body))
                 throw Errors.ExpressionDoesNotSpecifyAMember(expression.ToString());
             memberExpression = body.Operand as MemberExpression;
             if (memberExpression == null)
                 throw Errors.ExpressionDoesNotSpecifyAMember(expression.ToString());
-            return TypeAndName();
+            return TypeAndName(memberExpression);
         }
 
         public static Type ReturnType(this MemberInfo memberInfo) =>

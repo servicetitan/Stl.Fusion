@@ -32,13 +32,10 @@ namespace Stl.ImmutableModel
         // anyway.
 
         internal new static NodeTypeDef CreateNodeTypeDef(Type type) => new CollectionNodeTypeDef(type);
-
-        protected CollectionNodeBase() { }
-        protected CollectionNodeBase(Key key) : base(key) { }
     }
 
     [JsonObject]
-    public partial class CollectionNode<T> : CollectionNodeBase, ICollectionNode<T>
+    public abstract partial class CollectionNode<T> : CollectionNodeBase, ICollectionNode<T>
     {
         [JsonIgnore]
         protected ChangeTrackingDictionary<Key, T> Items = ChangeTrackingDictionary<Key, T>.Empty;
@@ -73,9 +70,6 @@ namespace Stl.ImmutableModel
             get => Items[key];
             set => Items = Items.SetItem(key, PrepareItemValue(key, value));
         }
-
-        public CollectionNode() { }
-        public CollectionNode(Key key) : base(key) { }
 
         IEnumerator IEnumerable.GetEnumerator() => Items.GetEnumerator();
         public IEnumerator<KeyValuePair<Key, T>> GetEnumerator() => Items.GetEnumerator();
@@ -167,5 +161,27 @@ namespace Stl.ImmutableModel
             }
             return value;
         }
+    }
+
+    public class CollectionNode<TKey, T> : CollectionNode<T>
+        where TKey : Key
+    {
+        private TKey _key = default!;
+
+        public new TKey Key {
+            get => _key;
+            set {
+                this.ThrowIfFrozen(); 
+                _key = value;
+            }
+        }
+
+        protected override Key UntypedKey {
+            get => Key;
+            set => Key = (TKey) value;
+        }
+
+        public CollectionNode() { }
+        public CollectionNode(TKey key) => Key = key;
     }
 }
