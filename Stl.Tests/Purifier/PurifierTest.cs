@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
@@ -34,15 +35,31 @@ namespace Stl.Tests.Purifier
             var count = await DbContext.Users.CountAsync();
             count.Should().Be(0);
 
-            var u = new User() {
+            var u1 = new User() {
                 Id = 1,
                 Name = "AY"
             };
-            await DbContext.Users.AddAsync(u);
+            var p1 = new Post() {
+                Id = 2,
+                Title = "Test",
+                Author = u1,
+            };
+            u1.Posts.Add(p1.Key, p1);
+            await DbContext.Users.AddAsync(u1);
+            await DbContext.Posts.AddAsync(p1);
             await DbContext.SaveChangesAsync();
 
-            count = await DbContext.Users.CountAsync();
-            count.Should().Be(1);
+            DbContext = CreateDbContext();
+            (await DbContext.Users.CountAsync()).Should().Be(1);
+            (await DbContext.Posts.CountAsync()).Should().Be(1);
+            u1 = await DbContext.Users.FindAsync(u1.Id);
+            u1.Name.Should().Be("AY");
+            p1 = await DbContext.Posts
+                .Where(p => p.Id == p.Id)
+                .Include(p => p.Author)
+                .SingleAsync();
+            p1.Author.Id.Should().Be(u1.Id);
+            // u.Posts.Count().Should().Be(1);
         }
     }
 }

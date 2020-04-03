@@ -6,6 +6,7 @@ namespace Stl.Tests.Purifier.Model
     public class TestDbContext : DbContext
     {
         public DbSet<User> Users { get; protected set; } = null!;
+        public DbSet<Post> Posts { get; protected set; } = null!;
         
         public TestDbContext(DbContextOptions options) : base(options)
         {
