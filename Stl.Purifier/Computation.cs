@@ -20,24 +20,23 @@ namespace Stl.Purifier
     {
         IFunction Func { get; }
         object Key { get; }
+        object? Value { get; }
         ComputationState State { get; }
         public event Action<IComputation>? Invalidated;
 
-        ValueTask<Option<object>> TryGetValue();
         bool Invalidate();
     }
 
     public interface IComputed<TValue> : IComputed, IEquatable<IComputed<TValue>>
     {
-        new ValueTask<Option<TValue>> TryGetValue();
-    }
+        new TValue Value { get; }
+    }                           
 
     public interface IComputed<TKey, TValue> : IComputed<TValue>, IEquatable<IComputed<TKey, TValue>>
         where TKey : notnull
     {
         new IFunction<TKey, TValue> Func { get; }
         new TKey Key { get; }
-        new ValueTask<Option<TValue>> TryGetValue();
     }
 
     public interface IComputation : IComputed, IEquatable<IComputation>
@@ -55,21 +54,34 @@ namespace Stl.Purifier
         IEquatable<ComputationBase<TKey, TValue>> 
         where TKey : notnull
     {
+        private int _state;
+        private TValue _value;
         private HashSetSlim2<IComputation> _dependenciesHashSet;
         private IMemoryOwner<IComputation>? _dependencies;
         private int _dependencyCount;
-        private int _state;
 
         protected object Lock => this;
+
+        #region "Untyped" versions of properties
 
         IFunction IComputed.Func => Func;
         // ReSharper disable once HeapView.BoxingAllocation
         object IComputed.Key => Key;
+        // ReSharper disable once HeapView.BoxingAllocation
+        object? IComputed.Value => Value;
         public IFunction<TKey, TValue> Func { get; }
-        public TKey Key { get; }
-        public ComputationState State => (ComputationState) _state;
-        public event Action<IComputation>? Invalidated;
 
+        #endregion
+        
+        public ComputationState State => (ComputationState) _state;
+        public TKey Key { get; }
+
+        public TValue Value {
+            get {
+                AssertStateIs(ComputationState.Computed);
+                return _value;
+            }
+        }
         public ReadOnlySpan<IComputation> Dependencies {
             get {
                 if (_dependencies == null)
@@ -77,6 +89,8 @@ namespace Stl.Purifier
                 return _dependencies.Memory.Span.Slice(0, _dependencyCount);
             }
         }
+
+        public event Action<IComputation>? Invalidated;
 
         protected ComputationBase(IFunction<TKey, TValue> func, TKey key)
         {
@@ -86,10 +100,6 @@ namespace Stl.Purifier
 
         public override string ToString() 
             => $"{GetType().Name}(Func: {Func}, Key: {Key}, State: {State})";
-
-        async ValueTask<Option<object>> IComputed.TryGetValue() 
-            => await TryGetValue().ConfigureAwait(false);
-        public abstract ValueTask<Option<TValue>> TryGetValue();
 
         public void AddDependency(IComputation dependency)
         {
@@ -104,14 +114,15 @@ namespace Stl.Purifier
             if (!TryChangeState(ComputationState.Computed))
                 throw Errors.WrongComputationState(ComputationState.Computing, State);
 
-            OnComputed(value);
-
+            _value = value;
             _dependencyCount = _dependenciesHashSet.Count;
             if (_dependencyCount != 0) {
                 _dependencies = MemoryPool<IComputation>.Shared.Rent(_dependenciesHashSet.Count);
                 _dependenciesHashSet.CopyTo(_dependencies.Memory.Span);
                 _dependenciesHashSet.Clear();
             }
+
+            OnComputed();
         }
 
         public bool Invalidate()
@@ -137,7 +148,7 @@ namespace Stl.Purifier
 
         // Protected & private methods
 
-        protected abstract void OnComputed(TValue value);
+        protected virtual void OnComputed() { }
         protected virtual void OnInvalidate() { }
 
         protected bool TryChangeState(ComputationState newState)

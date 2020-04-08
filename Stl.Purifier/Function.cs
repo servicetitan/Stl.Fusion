@@ -6,11 +6,18 @@ using Stl.Locking;
 
 namespace Stl.Purifier
 {
-    public interface IFunction : IAsyncDisposable { }
-    public interface IFunction<in TKey, TValue> : IFunction
+    public interface IFunction : IAsyncDisposable
+    {
+        ValueTask<IComputed> InvokeAsync(object key, 
+            IComputation? dependentComputation = null,
+            CancellationToken cancellationToken = default);
+
+        bool Invalidate(object key);
+    }
+    public interface IFunction<TKey, TValue> : IFunction
         where TKey : notnull
     {
-        ValueTask<TValue> InvokeAsync(TKey key,
+        ValueTask<IComputed<TKey, TValue>> InvokeAsync(TKey key,
             IComputation? dependentComputation = null,
             CancellationToken cancellationToken = default);
 
@@ -30,41 +37,36 @@ namespace Stl.Purifier
             OnInvalidateHandler = c => RemoveComputation((IComputation<TKey, TValue>) c);
         }
 
-        public async ValueTask<TValue> InvokeAsync(TKey key, 
+        async ValueTask<IComputed> IFunction.InvokeAsync(object key, 
+            IComputation? dependentComputation = null,
+            CancellationToken cancellationToken = default) 
+            => await InvokeAsync((TKey) key, dependentComputation, cancellationToken).ConfigureAwait(false);
+
+        public async ValueTask<IComputed<TKey, TValue>> InvokeAsync(TKey key, 
             IComputation? dependentComputation = null,
             CancellationToken cancellationToken = default)
         {
             // Read-Lock-RetryRead-Compute-Store pattern
 
             var maybeComputation = TryGetComputation(key);
-            if (maybeComputation.IsSome(out var computation)) {
-                var maybeValue = await computation.TryGetValue().ConfigureAwait(false);
-                if (maybeValue.IsSome(out var value)) {
-                    dependentComputation?.AddDependency(computation);
-                    return value;
-                }
-                computation.Invalidate();
-            }
+            if (maybeComputation.IsSome(out var computation))
+                return computation;
 
             using var @lock = await Locks.LockAsync(key, cancellationToken).ConfigureAwait(false);
             
             maybeComputation = TryGetComputation(key);
-            if (maybeComputation.IsSome(out computation)) {
-                var maybeValue = await computation.TryGetValue().ConfigureAwait(false);
-                if (maybeValue.IsSome(out var value)) {
-                    dependentComputation?.AddDependency(computation);
-                    return value;
-                }
-                computation.Invalidate();
-            }
+            if (maybeComputation.IsSome(out computation))
+                return computation;
 
-            var computed = await ComputeAsync(key, cancellationToken).ConfigureAwait(false);
-            computation = computed.Computation;
+            computation = await ComputeAsync(key, cancellationToken).ConfigureAwait(false);
             computation.Invalidated += OnInvalidateHandler;
             dependentComputation?.AddDependency(computation);
             StoreComputation(computation);
-            return computed.Value;
+            return computation;
         }
+
+        bool IFunction.Invalidate(object key) 
+            => Invalidate((TKey) key);
 
         public bool Invalidate(TKey key)
         {
@@ -79,7 +81,6 @@ namespace Stl.Purifier
         protected abstract Option<IComputation<TKey, TValue>> TryGetComputation(TKey key);
         protected abstract void StoreComputation(IComputation<TKey, TValue> computedComputation);
         protected abstract void RemoveComputation(IComputation<TKey, TValue> computedComputation);
-        protected abstract ValueTask<(IComputation<TKey, TValue> Computation, TValue Value)> 
-            ComputeAsync(TKey key, CancellationToken cancellationToken);
+        protected abstract ValueTask<IComputation<TKey, TValue>> ComputeAsync(TKey key, CancellationToken cancellationToken);
     }
 }
