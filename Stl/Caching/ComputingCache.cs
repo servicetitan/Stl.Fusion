@@ -21,14 +21,14 @@ namespace Stl.Caching
         {
             // Read-Lock-RetryRead-Compute-Store pattern
 
-            var valueOpt = await Cache.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
-            if (valueOpt.IsSome(out var value))
+            var maybeValue = await Cache.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
+            if (maybeValue.IsSome(out var value))
                 return value;
 
             using var @lock = await Locks.LockAsync(key, cancellationToken).ConfigureAwait(false);
             
-            valueOpt = await Cache.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
-            if (valueOpt.IsSome(out value))
+            maybeValue = await Cache.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
+            if (maybeValue.IsSome(out value))
                 return value;
             
             var result = await ComputeAsync(key, cancellationToken).ConfigureAwait(false);

@@ -9,8 +9,8 @@ namespace Stl.Caching
     {
         public virtual async ValueTask<TValue> GetAsync(TKey key, CancellationToken cancellationToken = default)
         {
-            var valueOpt = await TryGetAsync(key, cancellationToken).ConfigureAwait(false);
-            if (valueOpt.IsSome(out var value))
+            var maybeValue = await TryGetAsync(key, cancellationToken).ConfigureAwait(false);
+            if (maybeValue.IsSome(out var value))
                 return value;
             throw new KeyNotFoundException();
         }
