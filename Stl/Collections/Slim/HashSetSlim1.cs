@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace Stl.Reactionist.Internal
+namespace Stl.Collections.Slim
 {
     public struct HashSetSlim1<T>
         where T : notnull
@@ -104,6 +104,29 @@ namespace Stl.Reactionist.Internal
             }
             if (_count < 1) return;
             aggregator(ref state, _item);
+        }
+        
+        public void Aggregate<TState>(TState state, Func<TState, T, TState> aggregator)
+        {
+            if (HasSet) {
+                foreach (var item in _set!)
+                    state = aggregator(state, item);
+                return;
+            }
+            if (_count < 1) return;
+            state = aggregator(state, _item);
+        }
+
+        public void CopyTo(Span<T> target)
+        {
+            var index = 0;
+            if (HasSet) {
+                foreach (var item in _set!)
+                    target[index++] = item;
+                return;
+            }
+            if (_count < 1) return;
+            target[index++] = _item;
         }
     }
 }

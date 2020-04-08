@@ -12,7 +12,8 @@ namespace Stl.Collections
     // enumeration scenarios. 
     public ref struct ListBuffer<T>
     {
-        public const int MinCapacity = 16;
+        public const int MinCapacity = 1;
+        public const int DefaultCapacity = 16;
         private static readonly MemoryPool<T> Pool = MemoryPool<T>.Shared;
 
         private IMemoryOwner<T> _lease;
@@ -39,7 +40,7 @@ namespace Stl.Collections
             Count = 0;
         }
 
-        public static ListBuffer<T> Lease(int capacity = MinCapacity) 
+        public static ListBuffer<T> Lease(int capacity = DefaultCapacity) 
             => new ListBuffer<T>(capacity);
 
         public void Release()

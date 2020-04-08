@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace Stl.Reactionist.Internal
+namespace Stl.Collections.Slim
 {
     public sealed class ReferenceEqualityComparer<T> : IEqualityComparer<T>
         where T : class

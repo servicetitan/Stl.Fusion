@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Stl;
+using Stl.Collections.Slim;
 using Stl.Reactionist.Internal;
 
 namespace Stl.Reactionist

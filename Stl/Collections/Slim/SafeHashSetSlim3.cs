@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 
-namespace Stl.Reactionist.Internal
+namespace Stl.Collections.Slim
 {
-    public struct SafeHashSetSlim2<T>
+    public struct SafeHashSetSlim3<T>
         where T : notnull
     {
         private int _count;
-        private (T, T) _tuple;
+        private (T, T, T) _tuple;
         private ImmutableHashSet<T>? _set;
         
         private bool HasSet {
@@ -29,6 +29,7 @@ namespace Stl.Reactionist.Internal
             if (HasSet) return _set!.Contains(item);
             if (_count >= 1 && EqualityComparer<T>.Default.Equals(_tuple.Item1, item)) return true;
             if (_count >= 2 && EqualityComparer<T>.Default.Equals(_tuple.Item2, item)) return true;
+            if (_count >= 3 && EqualityComparer<T>.Default.Equals(_tuple.Item3, item)) return true;
             return false;
         }
 
@@ -57,9 +58,18 @@ namespace Stl.Reactionist.Internal
             }
             if (EqualityComparer<T>.Default.Equals(_tuple.Item2, item)) return true;
 
+            // Item 3
+            if (_count < 3) {
+                _tuple.Item3 = item;
+                _count++;
+                return true;
+            }
+            if (EqualityComparer<T>.Default.Equals(_tuple.Item3, item)) return true;
+
             _set = ImmutableHashSet<T>.Empty
                 .Add(_tuple.Item1)
                 .Add(_tuple.Item2)
+                .Add(_tuple.Item3)
                 .Add(item);
             _tuple = default;
             _count = -1;
@@ -78,7 +88,7 @@ namespace Stl.Reactionist.Internal
             // Item 1
             if (_count < 1) return false;
             if (EqualityComparer<T>.Default.Equals(_tuple.Item1, item)) {
-                _tuple = (_tuple.Item2, default);
+                _tuple = (_tuple.Item2, _tuple.Item3, default)!;
                 _count--;
                 return true;
             }
@@ -86,7 +96,15 @@ namespace Stl.Reactionist.Internal
             // Item 2
             if (_count < 2) return false;
             if (EqualityComparer<T>.Default.Equals(_tuple.Item2, item)) {
-                _tuple = (_tuple.Item1, default);
+                _tuple = (_tuple.Item1, _tuple.Item3, default)!;
+                return true;
+            }
+
+            // Item 3
+            if (_count < 3) return false;
+            if (EqualityComparer<T>.Default.Equals(_tuple.Item3, item)) {
+                _tuple = (_tuple.Item1, _tuple.Item2, default)!;
+                _count--;
                 return true;
             }
 
@@ -111,6 +129,8 @@ namespace Stl.Reactionist.Internal
                 yield return _tuple.Item1;
                 if (_count < 2) yield break;
                 yield return _tuple.Item2;
+                if (_count < 3) yield break;
+                yield return _tuple.Item3;
             }
         }
         
@@ -125,6 +145,8 @@ namespace Stl.Reactionist.Internal
             action(state, _tuple.Item1);
             if (_count < 2) return;
             action(state, _tuple.Item2);
+            if (_count < 3) return;
+            action(state, _tuple.Item3);
         }
         
         public void Aggregate<TState>(ref TState state, Aggregator<TState, T> aggregator)
@@ -138,6 +160,39 @@ namespace Stl.Reactionist.Internal
             aggregator(ref state, _tuple.Item1);
             if (_count < 2) return;
             aggregator(ref state, _tuple.Item2);
+            if (_count < 3) return;
+            aggregator(ref state, _tuple.Item3);
+        }
+        
+        public void Aggregate<TState>(TState state, Func<TState, T, TState> aggregator)
+        {
+            if (HasSet) {
+                foreach (var item in _set!)
+                    state = aggregator(state, item);
+                return;
+            }
+            if (_count < 1) return;
+            state = aggregator(state, _tuple.Item1);
+            if (_count < 2) return;
+            state = aggregator(state, _tuple.Item2);
+            if (_count < 3) return;
+            state = aggregator(state, _tuple.Item3);
+        }
+
+        public void CopyTo(Span<T> target)
+        {
+            var index = 0;
+            if (HasSet) {
+                foreach (var item in _set!)
+                    target[index++] = item;
+                return;
+            }
+            if (_count < 1) return;
+            target[index++] = _tuple.Item1;
+            if (_count < 2) return;
+            target[index++] = _tuple.Item2;
+            if (_count < 3) return;
+            target[index++] = _tuple.Item3;
         }
     }
 }

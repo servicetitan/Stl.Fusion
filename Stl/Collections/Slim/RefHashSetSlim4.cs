@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace Stl.Reactionist.Internal
+namespace Stl.Collections.Slim
 {
     public struct RefHashSetSlim4<T>
         where T : class
@@ -91,28 +91,28 @@ namespace Stl.Reactionist.Internal
             // Item 1
             if (_tuple.Item1 == null) return false;
             if (_tuple.Item1 == item) {
-                _tuple = (_tuple.Item2, _tuple.Item3, _tuple.Item4, default!);
+                _tuple = (_tuple.Item2, _tuple.Item3, _tuple.Item4, default!)!;
                 return true;
             }
 
             // Item 2
             if (_tuple.Item2 == null) return false;
             if (_tuple.Item2 == item) {
-                _tuple = (_tuple.Item1, _tuple.Item3, _tuple.Item4, default!);
+                _tuple = (_tuple.Item1, _tuple.Item3, _tuple.Item4, default!)!;
                 return true;
             }
 
             // Item 3
             if (_tuple.Item3 == null) return false;
             if (_tuple.Item3 == item) {
-                _tuple = (_tuple.Item1, _tuple.Item2, _tuple.Item4, default!);
+                _tuple = (_tuple.Item1, _tuple.Item2, _tuple.Item4, default!)!;
                 return true;
             }
 
             // Item 4
             if (_tuple.Item4 == null) return false;
             if (_tuple.Item4 == item) {
-                _tuple = (_tuple.Item1, _tuple.Item2, _tuple.Item3, default!);
+                _tuple = (_tuple.Item1, _tuple.Item2, _tuple.Item3, default!)!;
                 return true;
             }
             
@@ -175,6 +175,41 @@ namespace Stl.Reactionist.Internal
             aggregator(ref state, _tuple.Item3);
             if (_tuple.Item4 == null) return;
             aggregator(ref state, _tuple.Item4);
+        }
+        
+        public void Aggregate<TState>(TState state, Func<TState, T, TState> aggregator)
+        {
+            if (HasSet) {
+                foreach (var item in _set!)
+                    state = aggregator(state, item);
+                return;
+            }
+            if (_tuple.Item1 == null) return;
+            state = aggregator(state, _tuple.Item1);
+            if (_tuple.Item2 == null) return;
+            state = aggregator(state, _tuple.Item2);
+            if (_tuple.Item3 == null) return;
+            state = aggregator(state, _tuple.Item3);
+            if (_tuple.Item4 == null) return;
+            state = aggregator(state, _tuple.Item4);
+        }
+
+        public void CopyTo(Span<T> target)
+        {
+            var index = 0;
+            if (HasSet) {
+                foreach (var item in _set!)
+                    target[index++] = item;
+                return;
+            }
+            if (_tuple.Item1 == null) return;
+            target[index++] = _tuple.Item1;
+            if (_tuple.Item2 == null) return;
+            target[index++] = _tuple.Item2;
+            if (_tuple.Item3 == null) return;
+            target[index++] = _tuple.Item3;
+            if (_tuple.Item4 == null) return;
+            target[index++] = _tuple.Item4;
         }
     }
 }

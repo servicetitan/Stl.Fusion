@@ -16,7 +16,7 @@ namespace Stl.Tests.Purifier
         where TEntity : IHasKey<TKey>
     {
         protected readonly ConcurrentDictionary<TKey, TEntity> Entities = new ConcurrentDictionary<TKey, TEntity>(); 
-        protected readonly AsyncLockSet<TKey> LockSet = new AsyncLockSet<TKey>(ReentryMode.UncheckedDeadlock);
+        protected readonly AsyncLockSet<TKey> Locks = new AsyncLockSet<TKey>(ReentryMode.UncheckedDeadlock);
 
         protected IEnumerable<TEntity> GetEntities() => Entities.Values;
         public IQueryable<TEntity> All => GetEntities().AsQueryable();
@@ -41,7 +41,7 @@ namespace Stl.Tests.Purifier
             CancellationToken cancellationToken = default)
         {
             var key = maybeEntity.Key;
-            using var _ = await LockSet.LockAsync(key, cancellationToken).ConfigureAwait(false);
+            using var _ = await Locks.LockAsync(key, cancellationToken).ConfigureAwait(false);
 
             var hasValidator = changeValidator != ChangeValidators<TKey, TEntity>.None;
             if (hasValidator) {

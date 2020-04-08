@@ -5,7 +5,7 @@ using Stl.Async;
 
 namespace Stl.Caching
 {
-    public class MemoizingCache<TKey, TValue> : CacheBase<TKey, TValue>
+    public class MemoizingCache<TKey, TValue> : AsyncCacheBase<TKey, TValue>
         where TKey : notnull
     {
         private readonly ConcurrentDictionary<TKey, TValue> _dictionary = new ConcurrentDictionary<TKey, TValue>();

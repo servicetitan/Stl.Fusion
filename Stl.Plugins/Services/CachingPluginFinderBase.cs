@@ -11,15 +11,15 @@ namespace Stl.Plugins.Services
 {
     public abstract class CachingPluginFinderBase : IPluginFinder
     {
-        private readonly Lazy<ICache<string, string>> _lazyCache;
+        private readonly Lazy<IAsyncCache<string, string>> _lazyCache;
         protected ILogger Logger { get; }
 
-        public ICache<string, string> Cache => _lazyCache.Value;
+        public IAsyncCache<string, string> Cache => _lazyCache.Value;
 
         protected CachingPluginFinderBase(ILogger? logger = null)
         {
             Logger = logger ?? NullLogger.Instance;
-            _lazyCache = new Lazy<ICache<string, string>>(CreateCache);
+            _lazyCache = new Lazy<IAsyncCache<string, string>>(CreateCache);
         }
 
         public PluginSetInfo FindPlugins() 
@@ -65,7 +65,7 @@ namespace Stl.Plugins.Services
             => JsonConvert.DeserializeObject<PluginSetInfo>(source, GetJsonSerializerSettings())
                 ?? PluginSetInfo.Empty;
 
-        protected abstract ICache<string, string> CreateCache();
+        protected abstract IAsyncCache<string, string> CreateCache();
         protected abstract string? GetCacheKey();
         protected abstract Task<PluginSetInfo> CreatePluginSetInfoAsync();
     }

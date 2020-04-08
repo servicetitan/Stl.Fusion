@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace Stl.Caching
 {
-    public abstract class CacheBase<TKey, TValue> : AsyncKeyResolverBase<TKey, TValue>, ICache<TKey, TValue>
+    public abstract class AsyncCacheBase<TKey, TValue> : AsyncKeyResolverBase<TKey, TValue>, IAsyncCache<TKey, TValue>
         where TKey : notnull
     {
         public ValueTask SetAsync(TKey key, TValue value, CancellationToken cancellationToken = default)

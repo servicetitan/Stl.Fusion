@@ -2,12 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace Stl.Reactionist.Internal
+namespace Stl.Collections.Slim
 {
-    public struct HashSetSlim2<T>
-        where T : notnull
+    public struct RefHashSetSlim2<T>
+        where T : class
     {
-        private int _count;
         private (T, T) _tuple;
         private HashSet<T>? _set;
         
@@ -19,63 +18,69 @@ namespace Stl.Reactionist.Internal
         public int Count {
             get {
                 if (HasSet) return _set!.Count;
-                return _count;
+                if (_tuple.Item1 == null) return 0;
+                if (_tuple.Item2 == null) return 1;
+                return 2;
             }
         }
 
         public bool Contains(T item)
         {
+            if (item == null)
+                throw new ArgumentNullException(nameof(item));
+            
             if (HasSet) return _set!.Contains(item);
-            if (_count >= 1 && EqualityComparer<T>.Default.Equals(_tuple.Item1, item)) return true;
-            if (_count >= 2 && EqualityComparer<T>.Default.Equals(_tuple.Item2, item)) return true;
+            if (_tuple.Item1 == item) return true;
+            if (_tuple.Item2 == item) return true;
             return false;
         }
 
         public bool Add(T item)
         {
+            if (item == null)
+                throw new ArgumentNullException(nameof(item));
+            
             if (HasSet) return _set!.Add(item);
             
             // Item 1
-            if (_count < 1) {
+            if (_tuple.Item1 == null) {
                 _tuple.Item1 = item;
-                _count++;
                 return true;
             }
-            if (EqualityComparer<T>.Default.Equals(_tuple.Item1, item)) return true;
+            if (_tuple.Item1 == item) return false;
 
             // Item 2
-            if (_count < 2) {
+            if (_tuple.Item2 == null) {
                 _tuple.Item2 = item;
-                _count++;
                 return true;
             }
-            if (EqualityComparer<T>.Default.Equals(_tuple.Item2, item)) return true;
+            if (_tuple.Item2 == item) return false;
 
-            _set = new HashSet<T> {
+            _set = new HashSet<T>(ReferenceEqualityComparer<T>.Default) {
                 _tuple.Item1, _tuple.Item2, item
             };
             _tuple = default;
-            _count = -1;
             return true;
         }
 
         public bool Remove(T item)
         {
+            if (item == null)
+                throw new ArgumentNullException(nameof(item));
+            
             if (HasSet) return _set!.Remove(item);
             
             // Item 1
-            if (_count < 1) return false;
-            if (EqualityComparer<T>.Default.Equals(_tuple.Item1, item)) {
-                _tuple = (_tuple.Item2, default);
-                _count--;
+            if (_tuple.Item1 == null) return false;
+            if (_tuple.Item1 == item) {
+                _tuple = (_tuple.Item2, default!)!;
                 return true;
             }
 
             // Item 2
-            if (_count < 2) return false;
-            if (EqualityComparer<T>.Default.Equals(_tuple.Item2, item)) {
-                _tuple = (_tuple.Item1, default);
-                _count--;
+            if (_tuple.Item2 == null) return false;
+            if (_tuple.Item2 == item) {
+                _tuple = (_tuple.Item1, default!)!;
                 return true;
             }
 
@@ -85,8 +90,7 @@ namespace Stl.Reactionist.Internal
         public void Clear()
         {
             _set = null;
-            _tuple = default;
-            _count = 0;
+            _tuple = default!;
         }
 
         public IEnumerable<T> Items {
@@ -96,9 +100,9 @@ namespace Stl.Reactionist.Internal
                         yield return item;
                     yield break;
                 }
-                if (_count < 1) yield break;
+                if (_tuple.Item1 == null) yield break;
                 yield return _tuple.Item1;
-                if (_count < 2) yield break;
+                if (_tuple.Item2 == null) yield break;
                 yield return _tuple.Item2;
             }
         }
@@ -110,9 +114,9 @@ namespace Stl.Reactionist.Internal
                     action(state, item);
                 return;
             }
-            if (_count < 1) return;
+            if (_tuple.Item1 == null) return;
             action(state, _tuple.Item1);
-            if (_count < 2) return;
+            if (_tuple.Item2 == null) return;
             action(state, _tuple.Item2);
         }
         
@@ -123,10 +127,37 @@ namespace Stl.Reactionist.Internal
                     aggregator(ref state, item);
                 return;
             }
-            if (_count < 1) return;
+            if (_tuple.Item1 == null) return;
             aggregator(ref state, _tuple.Item1);
-            if (_count < 2) return;
+            if (_tuple.Item2 == null) return;
             aggregator(ref state, _tuple.Item2);
+        }
+        
+        public void Aggregate<TState>(TState state, Func<TState, T, TState> aggregator)
+        {
+            if (HasSet) {
+                foreach (var item in _set!)
+                    state = aggregator(state, item);
+                return;
+            }
+            if (_tuple.Item1 == null) return;
+            state = aggregator(state, _tuple.Item1);
+            if (_tuple.Item2 == null) return;
+            state = aggregator(state, _tuple.Item2);
+        }
+
+        public void CopyTo(Span<T> target)
+        {
+            var index = 0;
+            if (HasSet) {
+                foreach (var item in _set!)
+                    target[index++] = item;
+                return;
+            }
+            if (_tuple.Item1 == null) return;
+            target[index++] = _tuple.Item1;
+            if (_tuple.Item2 == null) return;
+            target[index++] = _tuple.Item2;
         }
     }
 }

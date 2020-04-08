@@ -30,11 +30,11 @@ namespace Stl.Plugins.Services
             CacheDir = PathEx.GetApplicationTempDirectory();
         }
 
-        protected override ICache<string, string> CreateCache()
+        protected override IAsyncCache<string, string> CreateCache()
         {
             if (!UseCache) {
                 Logger.LogDebug($"Cache isn't used.");
-                return new FakeCache<string, string>();
+                return new ZeroCapacityCache<string, string>();
             }
             var cache = new FileSystemCache<string, string>(GetCacheDir());
             Logger.LogDebug($"Cache directory: {cache.CacheDirectory}");

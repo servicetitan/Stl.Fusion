@@ -1,5 +1,6 @@
 using System;
 using Stl;
+using Stl.Collections.Slim;
 using Stl.Reactionist.Internal;
 
 namespace Stl.Reactionist

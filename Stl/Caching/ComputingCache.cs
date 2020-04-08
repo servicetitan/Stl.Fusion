@@ -8,21 +8,29 @@ namespace Stl.Caching
     public abstract class ComputingCacheBase<TKey, TValue> : AsyncKeyResolverBase<TKey, TValue>
         where TKey : notnull
     {
-        public ICache<TKey, TValue> Cache { get; }
-        public IAsyncLockSet<TKey> LockSet { get; }
+        public IAsyncCache<TKey, TValue> Cache { get; }
+        public IAsyncLockSet<TKey> Locks { get; }
 
-        protected ComputingCacheBase(ICache<TKey, TValue> cache, IAsyncLockSet<TKey>? lockSet = null)
+        protected ComputingCacheBase(IAsyncCache<TKey, TValue> cache, IAsyncLockSet<TKey>? lockSet = null)
         {
             Cache = cache;
-            LockSet = lockSet ?? new AsyncLockSet<TKey>(ReentryMode.CheckedFail);
+            Locks = lockSet ?? new AsyncLockSet<TKey>(ReentryMode.CheckedFail);
         }
 
         public override async ValueTask<TValue> GetAsync(TKey key, CancellationToken cancellationToken = default)
         {
-            var value = await Cache.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
-            if (value.HasValue)
-                return value.UnsafeValue;
-            using var @lock = await LockSet.LockAsync(key, cancellationToken).ConfigureAwait(false);
+            // Read-Lock-RetryRead-Compute-Store pattern
+
+            var valueOpt = await Cache.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
+            if (valueOpt.IsSome(out var value))
+                return value;
+
+            using var @lock = await Locks.LockAsync(key, cancellationToken).ConfigureAwait(false);
+            
+            valueOpt = await Cache.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
+            if (valueOpt.IsSome(out value))
+                return value;
+            
             var result = await ComputeAsync(key, cancellationToken).ConfigureAwait(false);
             await Cache.SetAsync(key, result, cancellationToken).ConfigureAwait(false);
             return result;
@@ -42,11 +50,11 @@ namespace Stl.Caching
     {
         private Func<TKey, CancellationToken, ValueTask<TValue>> Computer { get; }
 
-        public ComputingCache(ICache<TKey, TValue> cache, Func<TKey, CancellationToken, ValueTask<TValue>> computer) 
+        public ComputingCache(IAsyncCache<TKey, TValue> cache, Func<TKey, CancellationToken, ValueTask<TValue>> computer) 
             : base(cache) 
             => Computer = computer;
 
-        public ComputingCache(ICache<TKey, TValue> cache, IAsyncLockSet<TKey> lockSet, Func<TKey, CancellationToken, ValueTask<TValue>> computer) 
+        public ComputingCache(IAsyncCache<TKey, TValue> cache, IAsyncLockSet<TKey> lockSet, Func<TKey, CancellationToken, ValueTask<TValue>> computer) 
             : base(cache, lockSet) 
             => Computer = computer;
 

@@ -9,7 +9,7 @@ using Stl.IO;
 
 namespace Stl.Caching
 {
-    public abstract class FileSystemCacheBase<TKey, TValue> : CacheBase<TKey, TValue>
+    public abstract class FileSystemCacheBase<TKey, TValue> : AsyncCacheBase<TKey, TValue>
         where TKey : notnull
     {
         public override async ValueTask<Option<TValue>> TryGetAsync(TKey key, CancellationToken cancellationToken = default)

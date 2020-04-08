@@ -11,7 +11,7 @@ namespace Stl.Caching
     public abstract class FastComputingCacheBase<TKey, TValue> : AsyncKeyResolverBase<TKey, TValue>
         where TKey : notnull
     {
-        protected AsyncLocal<ImmutableHashSet<TKey>> Dependents { get; set; }= 
+        protected AsyncLocal<ImmutableHashSet<TKey>> AccessedKeys { get; set; }= 
             new AsyncLocal<ImmutableHashSet<TKey>>();
         protected ConcurrentDictionary<TKey, (Task<TValue> Task, Result<TValue> Result)> Cache { get; set; } =
             new ConcurrentDictionary<TKey, (Task<TValue> Task, Result<TValue> Result)>();
@@ -35,15 +35,15 @@ namespace Stl.Caching
 
         protected async ValueTask<TValue> SafeComputeAsync(TKey key, CancellationToken cancellationToken = default)
         {
-            var dependents = Dependents.Value;
-            if (dependents?.Contains(key) ?? false)
+            var accessedKeys = AccessedKeys.Value;
+            if (accessedKeys?.Contains(key) ?? false)
                 throw Errors.CircularDependency(key);
-            Dependents.Value = (dependents ?? ImmutableHashSet<TKey>.Empty).Add(key);
+            AccessedKeys.Value = (accessedKeys ?? ImmutableHashSet<TKey>.Empty).Add(key);
             try {
                 return await ComputeAsync(key, cancellationToken).ConfigureAwait(false);
             }
             finally {
-                Dependents.Value = Dependents.Value?.Remove(key) ?? ImmutableHashSet<TKey>.Empty;
+                AccessedKeys.Value = AccessedKeys.Value?.Remove(key) ?? ImmutableHashSet<TKey>.Empty;
             }
         }
 

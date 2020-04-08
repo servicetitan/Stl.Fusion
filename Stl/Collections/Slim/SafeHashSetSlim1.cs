@@ -1,70 +1,75 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 
-namespace Stl.Reactionist.Internal
+namespace Stl.Collections.Slim
 {
-    public struct RefHashSetSlim1<T>
-        where T : class
+    public struct SafeHashSetSlim1<T>
+        where T : notnull
     {
+        private int _count;
         private T _item;
-        private HashSet<T>? _set;
+        private ImmutableHashSet<T>? _set;
         
         private bool HasSet {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _set != null;
         }
-        
+
         public int Count {
             get {
                 if (HasSet) return _set!.Count;
-                if (_item == null) return 0;
-                return 1;
+                return _count;
             }
         }
 
         public bool Contains(T item)
         {
-            if (item == null)
-                throw new ArgumentNullException(nameof(item));
-            
             if (HasSet) return _set!.Contains(item);
-            if (_item == item) return true;
+            if (_count >= 1 && EqualityComparer<T>.Default.Equals(_item, item)) return true;
             return false;
         }
 
         public bool Add(T item)
         {
-            if (item == null)
-                throw new ArgumentNullException(nameof(item));
-            
-            if (HasSet) return _set!.Add(item);
-            
-            // Item 1
-            if (_item == null) {
-                _item = item;
+            if (HasSet) {
+                var set = _set!.Add(item);
+                if (set == _set) return false;
+                _set = set;
                 return true;
             }
-            if (_item == item) return false;
+            
+            // Item 1
+            if (_count < 1) {
+                _item = item;
+                _count++;
+                return true;
+            }
+            if (EqualityComparer<T>.Default.Equals(_item, item)) return true;
 
-            _set = new HashSet<T>(ReferenceEqualityComparer<T>.Default) {
-                _item, item
-            };
+            _set = ImmutableHashSet<T>.Empty
+                .Add(_item)
+                .Add(item);
             _item = default!;
+            _count = -1;
             return true;
         }
 
         public bool Remove(T item)
         {
-            if (item == null)
-                throw new ArgumentNullException(nameof(item));
-            
-            if (HasSet) return _set!.Remove(item);
+            if (HasSet) {
+                var set = _set!.Remove(item);
+                if (set == _set) return false;
+                _set = set;
+                return true;
+            }
             
             // Item 1
-            if (_item == null) return false;
-            if (_item == item) {
+            if (_count < 1) return false;
+            if (EqualityComparer<T>.Default.Equals(_item, item)) {
                 _item = default!;
+                _count--;
                 return true;
             }
 
@@ -75,6 +80,7 @@ namespace Stl.Reactionist.Internal
         {
             _set = null;
             _item = default!;
+            _count = 0;
         }
 
         public IEnumerable<T> Items {
@@ -84,7 +90,7 @@ namespace Stl.Reactionist.Internal
                         yield return item;
                     yield break;
                 }
-                if (_item == null) yield break;
+                if (_count < 1) yield break;
                 yield return _item;
             }
         }
@@ -96,10 +102,9 @@ namespace Stl.Reactionist.Internal
                     action(state, item);
                 return;
             }
-            if (_item == null) return;
+            if (_count < 1) return;
             action(state, _item);
         }
-        
         
         public void Aggregate<TState>(ref TState state, Aggregator<TState, T> aggregator)
         {
@@ -108,8 +113,31 @@ namespace Stl.Reactionist.Internal
                     aggregator(ref state, item);
                 return;
             }
-            if (_item == null) return;
+            if (_count < 1) return;
             aggregator(ref state, _item);
+        }
+        
+        public void Aggregate<TState>(TState state, Func<TState, T, TState> aggregator)
+        {
+            if (HasSet) {
+                foreach (var item in _set!)
+                    state = aggregator(state, item);
+                return;
+            }
+            if (_count < 1) return;
+            state = aggregator(state, _item);
+        }
+
+        public void CopyTo(Span<T> target)
+        {
+            var index = 0;
+            if (HasSet) {
+                foreach (var item in _set!)
+                    target[index++] = item;
+                return;
+            }
+            if (_count < 1) return;
+            target[index++] = _item;
         }
     }
 }

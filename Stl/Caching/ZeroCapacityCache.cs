@@ -4,7 +4,7 @@ using Stl.Async;
 
 namespace Stl.Caching 
 {
-    public class FakeCache<TKey, TValue> : CacheBase<TKey, TValue>
+    public class ZeroCapacityCache<TKey, TValue> : AsyncCacheBase<TKey, TValue>
         where TKey : notnull
     {
         public override ValueTask<Option<TValue>> TryGetAsync(TKey key, CancellationToken cancellationToken = default)
