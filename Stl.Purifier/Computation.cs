@@ -1,9 +1,11 @@
 using System;
 using System.Buffers;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reactive;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using System.Threading.Tasks;
 using Stl.Collections.Slim;
 using Stl.Purifier.Internal;
 
@@ -13,6 +15,7 @@ namespace Stl.Purifier
     {
         Computing = 0,
         Computed,
+        Invalidating,
         Invalidated,
     }
 
@@ -41,26 +44,26 @@ namespace Stl.Purifier
 
     public interface IComputation : IComputed, IEquatable<IComputation>
     {
-        ReadOnlySpan<IComputation> Dependencies { get; }
         public void AddDependency(IComputation dependency);
+        public void RemoveDependency(IComputation dependency);
+        public void AddDependant(IComputation dependant);
     }
 
     public interface IComputation<TKey, TValue> : IComputation, IComputed<TKey, TValue>, IEquatable<IComputation<TKey, TValue>>
         where TKey : notnull
     {
+        void Computed(TValue value);
     }
 
     public abstract class ComputationBase<TKey, TValue> : IComputation<TKey, TValue>,
         IEquatable<ComputationBase<TKey, TValue>> 
         where TKey : notnull
     {
-        private int _state;
-        private TValue _value;
-        private HashSetSlim2<IComputation> _dependenciesHashSet;
-        private IMemoryOwner<IComputation>? _dependencies;
-        private int _dependencyCount;
-
-        protected object Lock => this;
+        private volatile int _state;
+        private TValue _value = default!;
+        // TODO: Replace ConcurrentDictionary w/ more efficient structure
+        protected ConcurrentDictionary<IComputation, Unit>? Dependencies { get; set; }
+        protected ConcurrentDictionary<IComputation, Unit>? Dependants { get; set; }
 
         #region "Untyped" versions of properties
 
@@ -82,75 +85,69 @@ namespace Stl.Purifier
                 return _value;
             }
         }
-        public ReadOnlySpan<IComputation> Dependencies {
-            get {
-                if (_dependencies == null)
-                    return ReadOnlySpan<IComputation>.Empty;
-                return _dependencies.Memory.Span.Slice(0, _dependencyCount);
-            }
-        }
-
         public event Action<IComputation>? Invalidated;
 
         protected ComputationBase(IFunction<TKey, TValue> func, TKey key)
         {
             Func = func;
             Key = key;
+            Dependencies = new ConcurrentDictionary<IComputation, Unit>(
+                ReferenceEqualityComparer<IComputation>.Default);
+            // Dependants = null for now -- it's set in Computed 
         }
 
         public override string ToString() 
             => $"{GetType().Name}(Func: {Func}, Key: {Key}, State: {State})";
 
-        public void AddDependency(IComputation dependency)
-        {
-            lock (Lock) {
-                AssertStateIs(ComputationState.Computing);
-                _dependenciesHashSet.Add(dependency);
-            }
-        }
+        public void AddDependency(IComputation dependency) 
+            => Dependencies?.AddOrUpdate(dependency, d => default, (d, _) => default);
+
+        public void RemoveDependency(IComputation dependency) 
+            => Dependencies?.Remove(dependency, out _);
+
+        public void AddDependant(IComputation dependant) 
+            => Dependants?.AddOrUpdate(dependant, d => default, (d, _) => default);
 
         public void Computed(TValue value)
         {
             if (!TryChangeState(ComputationState.Computed))
                 throw Errors.WrongComputationState(ComputationState.Computing, State);
-
             _value = value;
-            _dependencyCount = _dependenciesHashSet.Count;
-            if (_dependencyCount != 0) {
-                _dependencies = MemoryPool<IComputation>.Shared.Rent(_dependenciesHashSet.Count);
-                _dependenciesHashSet.CopyTo(_dependencies.Memory.Span);
-                _dependenciesHashSet.Clear();
-            }
-
+            Dependants = new ConcurrentDictionary<IComputation, Unit>(
+                ReferenceEqualityComparer<IComputation>.Default);
             OnComputed();
         }
 
         public bool Invalidate()
         {
-            if (!TryChangeState(ComputationState.Invalidated))
+            if (!TryChangeState(ComputationState.Invalidating))
                 return false;
 
-            OnInvalidate();
+            var dependants = Dependants;
+            Dependants = null;
+            var dependencies = Dependencies;
+            Dependencies = null;
+            foreach (var d in dependants?.Keys ?? Enumerable.Empty<IComputation>())
+                d.RemoveDependency(this);
 
-            foreach (var d in Dependencies)
-                d.Invalidate();
+            Interlocked.Exchange(ref _state, (int) ComputationState.Invalidated);
+
+            OnInvalidated(dependencies?.Keys ?? Enumerable.Empty<IComputation>());
             Invalidated?.Invoke(this);
-
-            var dependencies = _dependencies;
-            if (dependencies != null) {
-                (_dependencies, _dependencyCount) = (null, 0);
-                dependencies.Memory.Span.Fill(null!);
-                dependencies.Dispose();
-            }
-
             return true;
         }
 
         // Protected & private methods
 
         protected virtual void OnComputed() { }
-        protected virtual void OnInvalidate() { }
 
+        protected virtual void OnInvalidated(IEnumerable<IComputation> dependencies)
+        {
+            foreach (var d in dependencies)
+                d.Invalidate();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected bool TryChangeState(ComputationState newState)
         {
             var oldState = (int) newState - 1;

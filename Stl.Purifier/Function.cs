@@ -9,7 +9,7 @@ namespace Stl.Purifier
     public interface IFunction : IAsyncDisposable
     {
         ValueTask<IComputed> InvokeAsync(object key, 
-            IComputation? dependentComputation = null,
+            IComputation? dependant = null,
             CancellationToken cancellationToken = default);
 
         bool Invalidate(object key);
@@ -18,7 +18,7 @@ namespace Stl.Purifier
         where TKey : notnull
     {
         ValueTask<IComputed<TKey, TValue>> InvokeAsync(TKey key,
-            IComputation? dependentComputation = null,
+            IComputation? dependant = null,
             CancellationToken cancellationToken = default);
 
         bool Invalidate(TKey key);
@@ -38,12 +38,12 @@ namespace Stl.Purifier
         }
 
         async ValueTask<IComputed> IFunction.InvokeAsync(object key, 
-            IComputation? dependentComputation = null,
-            CancellationToken cancellationToken = default) 
-            => await InvokeAsync((TKey) key, dependentComputation, cancellationToken).ConfigureAwait(false);
+            IComputation? dependant,
+            CancellationToken cancellationToken) 
+            => await InvokeAsync((TKey) key, dependant, cancellationToken).ConfigureAwait(false);
 
         public async ValueTask<IComputed<TKey, TValue>> InvokeAsync(TKey key, 
-            IComputation? dependentComputation = null,
+            IComputation? dependant = null,
             CancellationToken cancellationToken = default)
         {
             // Read-Lock-RetryRead-Compute-Store pattern
@@ -60,7 +60,10 @@ namespace Stl.Purifier
 
             computation = await ComputeAsync(key, cancellationToken).ConfigureAwait(false);
             computation.Invalidated += OnInvalidateHandler;
-            dependentComputation?.AddDependency(computation);
+            if (dependant != null) {
+                dependant.AddDependency(computation);
+                computation.AddDependant(dependant);
+            }
             StoreComputation(computation);
             return computation;
         }

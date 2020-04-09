@@ -8,5 +8,8 @@ namespace Stl.Purifier.Internal
             ComputationState expectedState, ComputationState state)
             => new InvalidOperationException(
                 $"Wrong Computation.State: expected {expectedState}, was {state}.");
+        public static Exception WrongComputationState(ComputationState state)
+            => new InvalidOperationException(
+                $"Wrong Computation.State: {state}.");
     }
 }
