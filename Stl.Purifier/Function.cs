@@ -1,89 +1,94 @@
 using System;
+using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
-using Stl.Async;
-using Stl.Locking;
+using Stl.Concurrency;
+using Stl.OS;
+using Stl.Reflection;
 
 namespace Stl.Purifier
 {
-    public interface IFunction : IAsyncDisposable
-    {
-        ValueTask<IComputed> InvokeAsync(object key, 
-            IComputation? dependant = null,
-            CancellationToken cancellationToken = default);
-
-        bool Invalidate(object key);
-    }
-    public interface IFunction<TKey, TValue> : IFunction
+    public class Function<TKey, TValue> : FunctionBase<TKey, TValue>
         where TKey : notnull
     {
-        ValueTask<IComputed<TKey, TValue>> InvokeAsync(TKey key,
-            IComputation? dependant = null,
-            CancellationToken cancellationToken = default);
+        public static readonly int DefaultCapacity = 509; // Ideally, a prime number
+        public static readonly int DefaultCounterThreshold = 16;
+        public static readonly int PruneFactorLog2 = 2;
+        public static int DefaultConcurrencyLevel => HardwareInfo.ProcessorCount;
 
-        bool Invalidate(TKey key);
-    }
+        protected ConcurrentCounter PruneCounter { get; }
+        protected ConcurrentDictionary<TKey, WeakReference<IComputation<TKey, TValue>>> Computations { get; }
 
-    public abstract class FunctionBase<TKey, TValue> : AsyncDisposableBase,
-        IFunction<TKey, TValue>
-        where TKey : notnull
-    {
-        protected Action<IComputation> OnInvalidateHandler { get; set; }
-        protected AsyncLockSet<TKey> Locks { get; } 
-            = new AsyncLockSet<TKey>(ReentryMode.CheckedFail);
-
-        protected FunctionBase()
+        public Function() : this(DefaultConcurrencyLevel, DefaultCapacity) { }
+        public Function(int concurrencyLevel, int capacity)
         {
-            OnInvalidateHandler = c => RemoveComputation((IComputation<TKey, TValue>) c);
+            PruneCounter = new ConcurrentCounter(DefaultCounterThreshold, concurrencyLevel);
+            Computations = new ConcurrentDictionary<TKey, WeakReference<IComputation<TKey, TValue>>>(concurrencyLevel, capacity);
         }
 
-        async ValueTask<IComputed> IFunction.InvokeAsync(object key, 
-            IComputation? dependant,
-            CancellationToken cancellationToken) 
-            => await InvokeAsync((TKey) key, dependant, cancellationToken).ConfigureAwait(false);
-
-        public async ValueTask<IComputed<TKey, TValue>> InvokeAsync(TKey key, 
-            IComputation? dependant = null,
-            CancellationToken cancellationToken = default)
+        protected override Option<IComputation<TKey, TValue>> TryGetComputation(TKey key)
         {
-            // Read-Lock-RetryRead-Compute-Store pattern
+            MaybePrune(key.GetHashCode());
+            if (Computations.TryGetValue(key, out var wr))
+                if (wr.TryGetTarget(out var value))
+                    return Option<IComputation<TKey, TValue>>.Some(value);
+                else
+                    Computations.TryRemove(key, wr);
+            return Option<IComputation<TKey, TValue>>.None;
+        }
 
-            var maybeComputation = TryGetComputation(key);
-            if (maybeComputation.IsSome(out var computation))
-                return computation;
+        protected override void StoreComputation(IComputation<TKey, TValue> computation)
+        {
+            var key = computation.Key;
+            MaybePrune(key.GetHashCode());
+            var wr = new WeakReference<IComputation<TKey, TValue>>(computation);
+            Computations.AddOrUpdate(
+                key, 
+                (key1, wr1) => wr1, 
+                (key1, _, wr1) => wr1,
+                wr);
+        }
 
-            using var @lock = await Locks.LockAsync(key, cancellationToken).ConfigureAwait(false);
-            
-            maybeComputation = TryGetComputation(key);
-            if (maybeComputation.IsSome(out computation))
-                return computation;
+        protected override void RemoveComputation(IComputation<TKey, TValue> computation)
+        {
+            var key = computation.Key;
+            MaybePrune(key.GetHashCode());
+            if (!Computations.TryGetValue(key, out var wr))
+                return;
+            if (wr.TryGetTarget(out var value) && !ReferenceEquals(value, computation))
+                return;
+            // Weak reference is either empty (to be pruned)
+            // or pointing to the right computation object
+            Computations.TryRemove(key, wr);
+        }
 
-            computation = await ComputeAsync(key, cancellationToken).ConfigureAwait(false);
-            computation.Invalidated += OnInvalidateHandler;
-            if (dependant != null) {
-                dependant.AddDependency(computation);
-                computation.AddDependant(dependant);
+        protected override async ValueTask<IComputation<TKey, TValue>> ComputeAsync(TKey key, CancellationToken cancellationToken)
+        {
+            var result = new Computation<TKey, TValue>(this, key);
+            // TODO: Set it to current, call compute
+            return result;
+        }
+
+        protected void MaybePrune(int random)
+        {
+            if (!PruneCounter.Increment(random))
+                return;
+            var pruneThreshold = Computations.GetCapacity() << PruneFactorLog2;
+            if (PruneCounter.ApproximateValue > pruneThreshold) lock (Lock) {
+                // Double check locking
+                if (PruneCounter.ApproximateValue > pruneThreshold) {
+                    PruneCounter.ApproximateValue = 0;
+                    Task.Run(Prune);
+                }
             }
-            StoreComputation(computation);
-            return computation;
         }
 
-        bool IFunction.Invalidate(object key) 
-            => Invalidate((TKey) key);
-
-        public bool Invalidate(TKey key)
+        public void Prune()
         {
-            var maybeComputation = TryGetComputation(key);
-            if (maybeComputation.IsSome(out var computation))
-                return computation.Invalidate();
-            return false;
+            PruneCounter.ApproximateValue = 0;
+            foreach (var (key, value) in Computations)
+                if (!value.TryGetTarget(out var _))
+                    Computations.TryRemove(key, value);
         }
-
-        // Protected & private
-
-        protected abstract Option<IComputation<TKey, TValue>> TryGetComputation(TKey key);
-        protected abstract void StoreComputation(IComputation<TKey, TValue> computedComputation);
-        protected abstract void RemoveComputation(IComputation<TKey, TValue> computedComputation);
-        protected abstract ValueTask<IComputation<TKey, TValue>> ComputeAsync(TKey key, CancellationToken cancellationToken);
     }
 }

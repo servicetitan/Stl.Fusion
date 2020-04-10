@@ -24,7 +24,7 @@ namespace Stl.Purifier
         IFunction Func { get; }
         object Key { get; }
         object? Value { get; }
-        ComputationState State { get; }
+        bool IsValid { get; }
         public event Action<IComputation>? Invalidated;
 
         bool Invalidate();
@@ -44,6 +44,7 @@ namespace Stl.Purifier
 
     public interface IComputation : IComputed, IEquatable<IComputation>
     {
+        ComputationState State { get; }
         public void AddDependency(IComputation dependency);
         public void RemoveDependency(IComputation dependency);
         public void AddDependant(IComputation dependant);
@@ -55,8 +56,8 @@ namespace Stl.Purifier
         void Computed(TValue value);
     }
 
-    public abstract class ComputationBase<TKey, TValue> : IComputation<TKey, TValue>,
-        IEquatable<ComputationBase<TKey, TValue>> 
+    public class Computation<TKey, TValue> : IComputation<TKey, TValue>,
+        IEquatable<Computation<TKey, TValue>> 
         where TKey : notnull
     {
         private volatile int _state;
@@ -76,6 +77,7 @@ namespace Stl.Purifier
 
         #endregion
         
+        public bool IsValid => State == ComputationState.Computed;
         public ComputationState State => (ComputationState) _state;
         public TKey Key { get; }
 
@@ -87,7 +89,7 @@ namespace Stl.Purifier
         }
         public event Action<IComputation>? Invalidated;
 
-        protected ComputationBase(IFunction<TKey, TValue> func, TKey key)
+        public Computation(IFunction<TKey, TValue> func, TKey key)
         {
             Func = func;
             Key = key;
@@ -164,18 +166,18 @@ namespace Stl.Purifier
         // Equality
 
         public override bool Equals(object? other) 
-            => Equals(other as ComputationBase<TKey, TValue>);
+            => Equals(other as Computation<TKey, TValue>);
         public bool Equals(IComputed? other) 
-            => Equals(other as ComputationBase<TKey, TValue>);
+            => Equals(other as Computation<TKey, TValue>);
         public bool Equals(IComputed<TValue>? other) 
-            => Equals(other as ComputationBase<TKey, TValue>);
+            => Equals(other as Computation<TKey, TValue>);
         public bool Equals(IComputed<TKey, TValue>? other) 
-            => Equals(other as ComputationBase<TKey, TValue>);
+            => Equals(other as Computation<TKey, TValue>);
         public bool Equals(IComputation? other) 
-            => Equals(other as ComputationBase<TKey, TValue>);
+            => Equals(other as Computation<TKey, TValue>);
         public bool Equals(IComputation<TKey, TValue>? other) 
-            => Equals(other as ComputationBase<TKey, TValue>);
-        public bool Equals(ComputationBase<TKey, TValue>? other) => 
+            => Equals(other as Computation<TKey, TValue>);
+        public bool Equals(Computation<TKey, TValue>? other) => 
             !ReferenceEquals(null, other) 
                 && ReferenceEquals(Func, other.Func)
                 && EqualityComparer<TKey>.Default.Equals(Key, other.Key);
@@ -183,7 +185,7 @@ namespace Stl.Purifier
         public override int GetHashCode() 
             => HashCode.Combine(Func, EqualityComparer<TKey>.Default.GetHashCode(Key));
         
-        public static bool operator ==(ComputationBase<TKey, TValue>? left, ComputationBase<TKey, TValue>? right) => Equals(left, right);
-        public static bool operator !=(ComputationBase<TKey, TValue>? left, ComputationBase<TKey, TValue>? right) => !Equals(left, right);
+        public static bool operator ==(Computation<TKey, TValue>? left, Computation<TKey, TValue>? right) => Equals(left, right);
+        public static bool operator !=(Computation<TKey, TValue>? left, Computation<TKey, TValue>? right) => !Equals(left, right);
     }
 }
