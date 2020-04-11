@@ -1,19 +1,21 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Stl.OS;
 
 namespace Stl.Concurrency
 {
     public sealed class ConcurrentCounter
     {
-        public static readonly int DefaultCounterCount = Environment.ProcessorCount;
+        public static readonly int DefaultApproximationStep = 16;
+        public static int DefaultConcurrencyLevel => HardwareInfo.ProcessorCount;
 
-        private readonly int _updateThreshold;
+        private readonly int _approximationStep;
         private readonly int[] _counters; 
         private long _approximateValue = 0;  
 
-        public int CounterCount => _counters.Length;
-        public int UpdateThreshold => _updateThreshold;
+        public int ConcurrencyLevel => _counters.Length;
+        public int ApproximationStep => _approximationStep;
 
         public long ApproximateValue {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -36,44 +38,42 @@ namespace Stl.Concurrency
             }
         }
 
-        public ConcurrentCounter(int updateThreshold) 
-            : this(updateThreshold, DefaultCounterCount) 
-        { }
-
-        public ConcurrentCounter(int updateThreshold, int counterCount)
+        public ConcurrentCounter() 
+            : this(DefaultApproximationStep) { }
+        public ConcurrentCounter(int approximationStep) 
+            : this(approximationStep, DefaultConcurrencyLevel) { }
+        public ConcurrentCounter(int approximationStep, int concurrencyLevel)
         {
-            if (counterCount < 1)
-                throw new ArgumentOutOfRangeException(nameof(counterCount));
-            if (updateThreshold < 1)
-                throw new ArgumentOutOfRangeException(nameof(updateThreshold));
-            _counters = new int[counterCount];
-            _updateThreshold = updateThreshold;
+            if (concurrencyLevel < 1)
+                throw new ArgumentOutOfRangeException(nameof(concurrencyLevel));
+            if (approximationStep < 1)
+                throw new ArgumentOutOfRangeException(nameof(approximationStep));
+            _counters = new int[concurrencyLevel];
+            _approximationStep = approximationStep;
         }
 
-        public bool Increment(int random)
+        public Option<long> Increment(int random)
         {
-            var t = _updateThreshold;
-            ref var counter = ref _counters[random % CounterCount];
+            var t = _approximationStep;
+            ref var counter = ref _counters[random % ConcurrencyLevel];
             var value = Interlocked.Increment(ref counter);
             if (value >= t) {
                 Interlocked.Add(ref counter, -t);
-                Interlocked.Add(ref _approximateValue, t);
-                return true;
+                return Interlocked.Add(ref _approximateValue, t);
             }
-            return false;
+            return Option<long>.None;
         }
 
-        public bool Decrement(int random)
+        public Option<long> Decrement(int random)
         {
-            var t = _updateThreshold;
-            ref var counter = ref _counters[random % CounterCount];
+            var t = _approximationStep;
+            ref var counter = ref _counters[random % ConcurrencyLevel];
             var value = Interlocked.Decrement(ref counter);
             if (value < 0) {
                 Interlocked.Add(ref counter, t);
-                Interlocked.Add(ref _approximateValue, -t);
-                return true;
+                return Interlocked.Add(ref _approximateValue, -t);
             }
-            return false;
+            return Option<long>.None;
         }
     }
 }
