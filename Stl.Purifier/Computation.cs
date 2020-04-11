@@ -1,5 +1,4 @@
 using System;
-using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,6 +23,7 @@ namespace Stl.Purifier
         IFunction Func { get; }
         object Key { get; }
         object? Value { get; }
+        long Tag { get; } // ~ Unique for the specific (Func, Key) pair
         bool IsValid { get; }
         public event Action<IComputation>? Invalidated;
 
@@ -80,6 +80,7 @@ namespace Stl.Purifier
         public bool IsValid => State == ComputationState.Computed;
         public ComputationState State => (ComputationState) _state;
         public TKey Key { get; }
+        public long Tag { get; }
 
         public TValue Value {
             get {
@@ -87,12 +88,15 @@ namespace Stl.Purifier
                 return _value;
             }
         }
+
+        
         public event Action<IComputation>? Invalidated;
 
-        public Computation(IFunction<TKey, TValue> func, TKey key)
+        public Computation(IFunction<TKey, TValue> func, TKey key, long tag)
         {
             Func = func;
             Key = key;
+            Tag = tag;
             Dependencies = new ConcurrentDictionary<IComputation, Unit>(
                 ReferenceEqualityComparer<IComputation>.Default);
             // Dependants = null for now -- it's set in Computed 
