@@ -14,14 +14,23 @@ namespace Stl.Purifier
 
         bool Invalidate(object key);
     }
-    public interface IFunction<TKey, TValue> : IFunction
+
+    public interface IFunction<in TKey> : IFunction
+        where TKey : notnull
+    {
+        ValueTask<IComputed> InvokeAsync(TKey key,
+            IComputation? dependant = null,
+            CancellationToken cancellationToken = default);
+
+        bool Invalidate(TKey key);
+    }
+    
+    public interface IFunction<TKey, TValue> : IFunction<TKey>
         where TKey : notnull
     {
         ValueTask<IComputed<TKey, TValue>> InvokeAsync(TKey key,
             IComputation? dependant = null,
             CancellationToken cancellationToken = default);
-
-        bool Invalidate(TKey key);
     }
 
     public abstract class FunctionBase<TKey, TValue> : AsyncDisposableBase,
@@ -48,6 +57,11 @@ namespace Stl.Purifier
             IComputation? dependant,
             CancellationToken cancellationToken) 
             => await InvokeAsync((TKey) key, dependant, cancellationToken).ConfigureAwait(false);
+
+        async ValueTask<IComputed> IFunction<TKey>.InvokeAsync(TKey key, 
+            IComputation? dependant, 
+            CancellationToken cancellationToken) 
+            => await InvokeAsync(key, dependant, cancellationToken).ConfigureAwait(false);
 
         public async ValueTask<IComputed<TKey, TValue>> InvokeAsync(TKey key, 
             IComputation? dependant = null,

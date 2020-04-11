@@ -20,7 +20,7 @@ namespace Stl.Purifier
 
     public interface IComputed : IEquatable<IComputed>
     {
-        IFunction Func { get; }
+        IFunction Function { get; }
         object Key { get; }
         object? Value { get; }
         long Tag { get; } // ~ Unique for the specific (Func, Key) pair
@@ -38,7 +38,7 @@ namespace Stl.Purifier
     public interface IComputed<TKey, TValue> : IComputed<TValue>, IEquatable<IComputed<TKey, TValue>>
         where TKey : notnull
     {
-        new IFunction<TKey, TValue> Func { get; }
+        new IFunction<TKey, TValue> Function { get; }
         new TKey Key { get; }
     }
 
@@ -68,20 +68,19 @@ namespace Stl.Purifier
 
         #region "Untyped" versions of properties
 
-        IFunction IComputed.Func => Func;
+        IFunction IComputed.Function => Function;
         // ReSharper disable once HeapView.BoxingAllocation
         object IComputed.Key => Key;
         // ReSharper disable once HeapView.BoxingAllocation
         object? IComputed.Value => Value;
-        public IFunction<TKey, TValue> Func { get; }
 
         #endregion
         
+        public IFunction<TKey, TValue> Function { get; }
         public bool IsValid => State == ComputationState.Computed;
         public ComputationState State => (ComputationState) _state;
         public TKey Key { get; }
         public long Tag { get; }
-
         public TValue Value {
             get {
                 AssertStateIs(ComputationState.Computed);
@@ -89,12 +88,11 @@ namespace Stl.Purifier
             }
         }
 
-        
         public event Action<IComputation>? Invalidated;
 
-        public Computation(IFunction<TKey, TValue> func, TKey key, long tag)
+        public Computation(IFunction<TKey, TValue> function, TKey key, long tag)
         {
-            Func = func;
+            Function = function;
             Key = key;
             Tag = tag;
             Dependencies = new ConcurrentDictionary<IComputation, Unit>(
@@ -103,7 +101,7 @@ namespace Stl.Purifier
         }
 
         public override string ToString() 
-            => $"{GetType().Name}(Func: {Func}, Key: {Key}, State: {State})";
+            => $"{GetType().Name}({Function}({Key}), Tag: #{Tag}, State: {State})";
 
         public void AddDependency(IComputation dependency) 
             => Dependencies?.AddOrUpdate(dependency, d => default, (d, _) => default);
@@ -183,11 +181,11 @@ namespace Stl.Purifier
             => Equals(other as Computation<TKey, TValue>);
         public bool Equals(Computation<TKey, TValue>? other) => 
             !ReferenceEquals(null, other) 
-                && ReferenceEquals(Func, other.Func)
+                && ReferenceEquals(Function, other.Function)
                 && EqualityComparer<TKey>.Default.Equals(Key, other.Key);
 
         public override int GetHashCode() 
-            => HashCode.Combine(Func, EqualityComparer<TKey>.Default.GetHashCode(Key));
+            => HashCode.Combine(Function, EqualityComparer<TKey>.Default.GetHashCode(Key));
         
         public static bool operator ==(Computation<TKey, TValue>? left, Computation<TKey, TValue>? right) => Equals(left, right);
         public static bool operator !=(Computation<TKey, TValue>? left, Computation<TKey, TValue>? right) => !Equals(left, right);
