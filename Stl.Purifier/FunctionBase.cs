@@ -9,110 +9,106 @@ namespace Stl.Purifier
     public interface IFunction : IAsyncDisposable
     {
         ValueTask<IComputed> InvokeAsync(object key, 
-            IComputation? dependant = null,
+            IComputed? usedBy = null,
             CancellationToken cancellationToken = default);
-
-        bool Invalidate(object key);
+        IComputed? TryGetCached(object key, 
+            IComputed? usedBy = null);
     }
 
-    public interface IFunction<in TKey> : IFunction
+    public interface IFunction<TKey> : IFunction
         where TKey : notnull
     {
-        ValueTask<IComputed> InvokeAsync(TKey key,
-            IComputation? dependant = null,
+        ValueTask<IKeyedComputed<TKey>> InvokeAsync(TKey key,
+            IComputed? usedBy = null,
             CancellationToken cancellationToken = default);
-
-        bool Invalidate(TKey key);
+        IKeyedComputed<TKey>? TryGetCached(TKey key, 
+            IComputed? usedBy = null);
     }
     
     public interface IFunction<TKey, TValue> : IFunction<TKey>
         where TKey : notnull
     {
-        ValueTask<IComputed<TKey, TValue>> InvokeAsync(TKey key,
-            IComputation? dependant = null,
+        new ValueTask<IComputed<TKey, TValue>> InvokeAsync(TKey key,
+            IComputed? usedBy = null,
             CancellationToken cancellationToken = default);
+        new IComputed<TKey, TValue>? TryGetCached(TKey key, 
+            IComputed? usedBy = null);
     }
 
     public abstract class FunctionBase<TKey, TValue> : AsyncDisposableBase,
         IFunction<TKey, TValue>
         where TKey : notnull
     {
-        protected Action<IComputation> OnInvalidateHandler { get; set; }
-        protected IComputationRegistry<(IFunction, TKey)> ComputationRegistry { get; }
+        protected Action<IComputed> OnInvalidateHandler { get; set; }
+        protected IComputedRegistry<(IFunction, TKey)> ComputedRegistry { get; }
         protected IAsyncLockSet<(IFunction, TKey)> Locks { get; }
         protected object Lock => Locks;
 
         public FunctionBase(
-            IComputationRegistry<(IFunction, TKey)>? computationRegistry,
+            IComputedRegistry<(IFunction, TKey)>? computedRegistry,
             IAsyncLockSet<(IFunction, TKey)>? locks = null)
         {                                                             
-            computationRegistry ??= new ComputationRegistry<(IFunction, TKey)>();
+            computedRegistry ??= new ComputedRegistry<(IFunction, TKey)>();
             locks ??= new AsyncLockSet<(IFunction, TKey)>(ReentryMode.CheckedFail);
-            ComputationRegistry = computationRegistry; 
+            ComputedRegistry = computedRegistry; 
             Locks = locks;
-            OnInvalidateHandler = c => RemoveComputation((IComputation<TKey, TValue>) c);
+            OnInvalidateHandler = c => Unregister((IComputed<TKey, TValue>) c);
         }
 
         async ValueTask<IComputed> IFunction.InvokeAsync(object key, 
-            IComputation? dependant,
+            IComputed? usedBy,
             CancellationToken cancellationToken) 
-            => await InvokeAsync((TKey) key, dependant, cancellationToken).ConfigureAwait(false);
+            => await InvokeAsync((TKey) key, usedBy, cancellationToken).ConfigureAwait(false);
 
-        async ValueTask<IComputed> IFunction<TKey>.InvokeAsync(TKey key, 
-            IComputation? dependant, 
+        async ValueTask<IKeyedComputed<TKey>> IFunction<TKey>.InvokeAsync(TKey key, 
+            IComputed? usedBy, 
             CancellationToken cancellationToken) 
-            => await InvokeAsync(key, dependant, cancellationToken).ConfigureAwait(false);
+            => await InvokeAsync(key, usedBy, cancellationToken).ConfigureAwait(false);
 
         public async ValueTask<IComputed<TKey, TValue>> InvokeAsync(TKey key, 
-            IComputation? dependant = null,
+            IComputed? usedBy = null,
             CancellationToken cancellationToken = default)
         {
             // Read-Lock-RetryRead-Compute-Store pattern
 
-            var maybeComputation = TryGetComputation(key);
-            if (maybeComputation.IsSome(out var computation))
-                return computation;
+            var value = TryGetCached(key, usedBy);
+            if (!value.IsNull())
+                return value;
 
             using var @lock = await Locks.LockAsync((this, key), cancellationToken).ConfigureAwait(false);
             
-            maybeComputation = TryGetComputation(key);
-            if (maybeComputation.IsSome(out computation))
-                return computation;
+            value = TryGetCached(key, usedBy);
+            if (!value.IsNull())
+                return value;
 
-            computation = await ComputeAsync(key, cancellationToken).ConfigureAwait(false);
-            computation.Invalidated += OnInvalidateHandler;
-            if (dependant != null) {
-                dependant.AddDependency(computation);
-                computation.AddDependant(dependant);
-            }
-            StoreComputation(computation);
-            return computation;
+            value = await ComputeAsync(key, cancellationToken).ConfigureAwait(false);
+            value.Invalidated += OnInvalidateHandler;
+            usedBy?.AddUsedValue(value);
+            Register(value);
+            return value;
         }
 
-        bool IFunction.Invalidate(object key) 
-            => Invalidate((TKey) key);
-        public bool Invalidate(TKey key)
+        IComputed? IFunction.TryGetCached(object key, IComputed? usedBy) 
+            => TryGetCached((TKey) key);
+        IKeyedComputed<TKey>? IFunction<TKey>.TryGetCached(TKey key, IComputed? usedBy) 
+            => TryGetCached(key);
+        public IComputed<TKey, TValue>? TryGetCached(TKey key, IComputed? usedBy = null)
         {
-            var maybeComputation = TryGetComputation(key);
-            if (maybeComputation.IsSome(out var computation))
-                return computation.Invalidate();
-            return false;
+            var value = ComputedRegistry.TryGet((this, key)) as IComputed<TKey, TValue>;
+            if (!value.IsNull())
+                usedBy?.AddUsedValue(value);
+            return value;
         }
 
         // Protected & private
 
-        protected abstract ValueTask<IComputation<TKey, TValue>> ComputeAsync(
+        protected abstract ValueTask<IComputed<TKey, TValue>> ComputeAsync(
             TKey key, CancellationToken cancellationToken);
 
-        protected Option<IComputation<TKey, TValue>> TryGetComputation(TKey key) 
-            => ComputationRegistry.TryGetComputation((this, key)).IsSome(out var c)
-                ? Option.Some((IComputation<TKey, TValue>) c)
-                : Option<IComputation<TKey, TValue>>.None;
+        protected void Register(IComputed<TKey, TValue> computed) 
+            => ComputedRegistry.Store((this, computed.Key), computed);
 
-        protected void StoreComputation(IComputation<TKey, TValue> computation) 
-            => ComputationRegistry.StoreComputation((this, computation.Key), computation);
-
-        protected void RemoveComputation(IComputation<TKey, TValue> computation) 
-            => ComputationRegistry.RemoveComputation((this, computation.Key), computation);
+        protected void Unregister(IComputed<TKey, TValue> computed) 
+            => ComputedRegistry.Remove((this, computed.Key), computed);
     }
 }

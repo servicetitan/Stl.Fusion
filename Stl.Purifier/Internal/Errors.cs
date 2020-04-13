@@ -4,12 +4,12 @@ namespace Stl.Purifier.Internal
 {
     public static class Errors
     {
-        public static Exception WrongComputationState(
-            ComputationState expectedState, ComputationState state)
+        public static Exception WrongComputedState(
+            ComputedState expectedState, ComputedState state)
             => new InvalidOperationException(
-                $"Wrong Computation.State: expected {expectedState}, was {state}.");
-        public static Exception WrongComputationState(ComputationState state)
+                $"Wrong Computed.State: expected {expectedState}, was {state}.");
+        public static Exception WrongComputedState(ComputedState state)
             => new InvalidOperationException(
-                $"Wrong Computation.State: {state}.");
+                $"Wrong Computed.State: {state}.");
     }
 }

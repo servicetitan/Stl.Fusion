@@ -24,6 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Stl.Time\Stl.Time.csproj" />
     <ProjectReference Include="..\Stl\Stl.csproj" />
   </ItemGroup>
 

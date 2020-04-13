@@ -15,22 +15,22 @@ namespace Stl.Purifier
         public Function(
             Func<TKey, ValueTask<TValue>> implementation,
             ConcurrentIdGenerator<long> tagGenerator,
-            IComputationRegistry<(IFunction, TKey)>? computationRegistry,
+            IComputedRegistry<(IFunction, TKey)>? computedRegistry,
             IAsyncLockSet<(IFunction, TKey)>? locks = null) 
-            : base(computationRegistry, locks)
+            : base(computedRegistry, locks)
         {
             Implementation = implementation;
             TagGenerator = tagGenerator;
         }
 
-        protected override async ValueTask<IComputation<TKey, TValue>> ComputeAsync(TKey key, CancellationToken cancellationToken)
+        protected override async ValueTask<IComputed<TKey, TValue>> ComputeAsync(TKey key, CancellationToken cancellationToken)
         {
             var workerId = HashCode.Combine(this, key);
             var tag = TagGenerator.Next(workerId);
-            var computation = new Computation<TKey, TValue>(this, key, tag);
+            var computed = new Computed<TKey, TValue>(this, key, tag);
             var value = await Implementation.Invoke(key).ConfigureAwait(false);
-            computation.Computed(value);
-            return computation;
+            computed.SetValue(value);
+            return computed;
         }
     }
 }

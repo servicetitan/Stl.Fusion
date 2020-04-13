@@ -17,11 +17,20 @@ namespace Stl.Collections
         private static readonly MemoryPool<T> Pool = MemoryPool<T>.Shared;
 
         private IMemoryOwner<T> _lease;
+        private int _count;
+
         public Memory<T> BufferMemory => _lease.Memory;
         public Span<T> BufferSpan { get; private set; }
         public Span<T> Span => BufferSpan.Slice(0, Count);
-        public int Count { get; private set; }
         public int Capacity => BufferSpan.Length;
+        public int Count {
+            get => _count;
+            set {
+                if (value < 0 || value > Capacity)
+                    throw new ArgumentOutOfRangeException(nameof(value));
+                _count = value;
+            }
+        }
 
         public T this[int index] {
             get => index < Count ? BufferSpan[index] : throw new IndexOutOfRangeException();
@@ -36,12 +45,14 @@ namespace Stl.Collections
             if (capacity < MinCapacity)
                 capacity = MinCapacity;
             _lease = Pool.Rent(capacity);
+            _count = 0;
             BufferSpan = _lease.Memory.Span;
-            Count = 0;
         }
 
         public static ListBuffer<T> Lease(int capacity = DefaultCapacity) 
             => new ListBuffer<T>(capacity);
+        public static ListBuffer<T> LeaseAndSetCount(int count) 
+            => new ListBuffer<T>(count) {Count = count};
 
         public void Release()
         {

@@ -7,7 +7,8 @@ namespace Stl.ImmutableModel
     public static class KeyEx
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsNull([NotNullWhen(false)] this Key? key) => ReferenceEquals(key, null);
+        public static bool IsNull([NotNullWhen(false)] this Key? key) 
+            => ReferenceEquals(key, null);
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Key ThrowIfNull(this Key? key) 
