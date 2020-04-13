@@ -129,7 +129,7 @@ namespace Stl.Purifier
             }
         }
 
-        public void AddUsedBy(IComputed usedBy)
+        void IComputed.AddUsedBy(IComputed usedBy)
         {
             var usedByRef = ((IKeyedComputed<TKey>) usedBy).ToRef();
             lock (Lock) {
