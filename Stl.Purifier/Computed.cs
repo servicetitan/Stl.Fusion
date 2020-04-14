@@ -31,6 +31,8 @@ namespace Stl.Purifier
         void AddUsed(IComputed used);
         void RemoveUsed(IComputed used);
         void AddUsedBy(IComputed usedBy); // Should be called only from AddUsedValue
+        
+        TResult Apply<TArg, TResult>(IComputedApplyHandler<TArg, TResult> handler, TArg arg);
     }
 
     public interface IComputed<TOut> : IComputed, IResult<TOut>, 
@@ -191,6 +193,11 @@ namespace Stl.Purifier
                 dependencies.Release();
             }
         }
+
+        // Apply methods
+
+        public TResult Apply<TArg, TResult>(IComputedApplyHandler<TArg, TResult> handler, TArg arg) 
+            => handler.Apply<TIn, TOut>(this, arg);
 
         // IResult<T> methods
 

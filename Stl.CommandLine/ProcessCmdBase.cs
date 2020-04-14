@@ -1,8 +1,8 @@
 using System.Collections.Immutable;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using CliWrap;
-using CliWrap.Models;
 using Microsoft.Extensions.Logging;
 using Stl.IO;
 
@@ -26,28 +26,30 @@ namespace Stl.CommandLine
 
         public override string ToString() => $"{GetType().Name}(\"{Executable}\" @ \"{WorkingDirectory}\")";
 
-        protected override Task<ExecutionResult> RunRawAsyncImpl(
+        protected override async Task<CmdResult> RunRawAsyncImpl(
             CliString arguments, string? standardInput, 
             CancellationToken cancellationToken)
         {
-            var cli = GetCli(cancellationToken)
-                .SetArguments(arguments.Value);
+            var outputBuilder = new StringBuilder();
+            var errorBuilder = new StringBuilder();
+
+            var command = Cli.Wrap((EchoMode ? ShellCmd.DefaultExecutable : Executable).Value)
+                .WithValidation(ResultValidation)
+                .WithArguments(arguments.Value)
+                .WithStandardOutputPipe(PipeTarget.ToStringBuilder(outputBuilder))
+                .WithStandardErrorPipe(PipeTarget.ToStringBuilder(errorBuilder));
             if (standardInput != null)
-                cli = cli.SetStandardInput(standardInput);
-            foreach (var (key, value) in EnvironmentVariables)
-                cli = cli.SetEnvironmentVariable(key, value);
-            return cli.ExecuteAsync();
+                command = command.WithStandardInputPipe(PipeSource.FromString(standardInput));
+            if (!WorkingDirectory.IsEmpty())
+                command = command.WithWorkingDirectory(WorkingDirectory);
+            if (!EnvironmentVariables.IsEmpty)
+                command = command.WithEnvironmentVariables(EnvironmentVariables);
+            command = Configure(command);
+            
+            var result = await command.ExecuteAsync();
+            return new CmdResult(command, result, outputBuilder, errorBuilder);
         }
 
-        protected virtual ICli GetCli(CancellationToken cancellationToken)
-        {
-            var cli = Cli.Wrap((EchoMode ? ShellCmd.DefaultExecutable : Executable).Value)
-                .SetCancellationToken(cancellationToken)
-                .EnableExitCodeValidation(ResultChecks.HasFlag(CmdResultChecks.NonZeroExitCode))
-                .EnableStandardErrorValidation(ResultChecks.HasFlag(CmdResultChecks.NonEmptyStandardError));
-            if (!WorkingDirectory.IsEmpty())
-                cli = cli.SetWorkingDirectory(WorkingDirectory);
-            return cli;
-        }
+        protected virtual Command Configure(Command command) => command;
     }
 }

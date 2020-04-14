@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Concurrent;
-using System.CommandLine.Invocation;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -11,7 +10,7 @@ using Stl.Locking;
 
 namespace Stl.Purifier.Autofac
 {
-    public class FunctionInterceptor : IInterceptor
+    public class ComputedInterceptor : IInterceptor
     {
         private readonly MethodInfo _createTypedHandlerMethod;
         private readonly Func<MethodInfo, IInvocation, Action<IInvocation>?> _createHandler;
@@ -19,18 +18,18 @@ namespace Stl.Purifier.Autofac
             new ConcurrentDictionary<MethodInfo, Action<IInvocation>?>();
 
         protected ConcurrentIdGenerator<long> TagGenerator { get; }
-        protected IComputedRegistry<(IFunction, ArrayKey)> ComputedRegistry { get; }
-        protected IAsyncLockSet<(IFunction, ArrayKey)>? Locks { get; }                      
+        protected IComputedRegistry<(IFunction, InvocationInput)> ComputedRegistry { get; }
+        protected IAsyncLockSet<(IFunction, InvocationInput)>? Locks { get; }                      
 
-        public FunctionInterceptor(
+        public ComputedInterceptor(
             ConcurrentIdGenerator<long> tagGenerator,
-            IComputedRegistry<(IFunction, ArrayKey)> computedRegistry,
-            IAsyncLockSet<(IFunction, ArrayKey)>? locks = null) 
+            IComputedRegistry<(IFunction, InvocationInput)> computedRegistry,
+            IAsyncLockSet<(IFunction, InvocationInput)>? locks = null) 
         {
-            locks ??= new AsyncLockSet<(IFunction, ArrayKey)>(ReentryMode.CheckedFail);
+            locks ??= new AsyncLockSet<(IFunction, InvocationInput)>(ReentryMode.CheckedFail);
             _createHandler = CreateHandler;
             _createTypedHandlerMethod = GetType()
-                .GetMethods()
+                .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
                 .Single(m => m.Name == nameof(CreateTypedHandler));
             
             TagGenerator = tagGenerator;
@@ -50,33 +49,32 @@ namespace Stl.Purifier.Autofac
         private Action<IInvocation>? CreateHandler(MethodInfo key, IInvocation initialInvocation)
         {
             var methodInfo = initialInvocation.GetConcreteMethodInvocationTarget();
-            var extMethodInfo = ExtendedMethodInfo.Create(methodInfo);
-            if (extMethodInfo == null)
+            var method = InterceptedMethodInfo.Create(methodInfo);
+            if (method == null)
                 return null;
 
             return (Action<IInvocation>) _createTypedHandlerMethod
-                .MakeGenericMethod(extMethodInfo.OutputType)
-                .Invoke(this, new [] {(object) initialInvocation, extMethodInfo})!;
+                .MakeGenericMethod(method.OutputType)
+                .Invoke(this, new [] {(object) initialInvocation, method})!;
         }
 
         protected virtual Action<IInvocation> CreateTypedHandler<TOut>(
-            IInvocation initialInvocation, ExtendedMethodInfo method)
+            IInvocation initialInvocation, InterceptedMethodInfo method)
         {
             var function = new InterceptedFunction<TOut>(method, TagGenerator, ComputedRegistry, Locks);
             return invocation => {
                 // Preparing for invocation by processing invocation arguments:
-                // - Put IInvocationProceedInfo there
                 // - Get CancellationToken from there
                 var method = function.Method;
                 var arguments = invocation.Arguments;
-                arguments[method.ProceedInfoArgumentIndex] = invocation.CaptureProceedInfo();
                 var cancellationToken = CancellationToken.None;
                 if (method.CancellationTokenArgumentIndex >= 0)
                     cancellationToken = (CancellationToken) arguments[method.CancellationTokenArgumentIndex];
+                var proceedInfo = invocation.CaptureProceedInfo();
                 var usedBy = Computed.Current;
 
                 // Invoking the function
-                var key = new ArrayKey(arguments, method.UsedArgumentBitmap);
+                var key = new InvocationInput(arguments, method.UsedArgumentBitmap, proceedInfo);
                 var valueTask = function.InvokeAsync(key, usedBy, cancellationToken);
 
                 if (invocation.ReturnValue != null)

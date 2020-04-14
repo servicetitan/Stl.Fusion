@@ -1,4 +1,5 @@
 using System;
+using System.Reactive.Subjects;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Purifier.Internal;
@@ -8,48 +9,69 @@ namespace Stl.Purifier
 {
     public static class ComputedBehavior
     {
-        public static IObservable<IComputedWithTypedInput<TKey>> AutoRecompute<TKey>(
-            this IComputedWithTypedInput<TKey> computed, 
+        internal sealed class AutoRecomputeApplyHandler : IComputedApplyHandler<(TimeSpan, IClock), SubjectBase<IComputed>>
+        {
+            public static readonly AutoRecomputeApplyHandler Instance = new AutoRecomputeApplyHandler();
+            
+            public SubjectBase<IComputed> Apply<TIn, TOut>(IComputed<TIn, TOut> computed, (TimeSpan, IClock) arg) 
+                where TIn : notnull
+            {
+                var (delay, clock) = arg;
+                var stop = new CancellationTokenSource();
+                var subject = new SubjectWithDisposer<IComputed, CancellationTokenSource>(
+                    stop, stop1 => stop1.Cancel());
+
+                async void OnInvalidated(IComputed c) {
+                    var stopToken = stop!.Token;
+                    var error = (Exception?) null;
+                    try {
+                        var prevComputed = (IComputed<TIn, TOut>) c;
+                        var (function, input) = (prevComputed.Function, prevComputed.Input);
+                        if (delay > TimeSpan.Zero)
+                            await clock!.DelayAsync(delay, stopToken).ConfigureAwait(false);
+                        else
+                            await Task.Yield();
+                        var nextComputed = await function
+                                .InvokeAsync(input, null, stopToken)
+                                .ConfigureAwait(false);
+                        if (!subject!.IsDisposed)
+                            subject!.OnNext(nextComputed);
+                        nextComputed.Invalidated += OnInvalidated;
+                    }
+                    catch (TaskCanceledException e) {
+                        error = e;
+                        if (!subject!.IsDisposed)
+                            subject?.OnCompleted();
+                    }
+                    catch (OperationCanceledException e) {
+                        error = e;
+                        if (!subject!.IsDisposed)
+                            subject!.OnCompleted();
+                    }
+                    catch (Exception e) {
+                        error = e;
+                        if (!subject!.IsDisposed)
+                            subject!.OnError(e);
+                    }
+                    finally {
+                        if (error != null)
+                            stop.Dispose();
+                    }
+                };
+
+                subject.OnNext(computed);
+                computed.Invalidated += OnInvalidated;
+                return subject; 
+            }
+        }
+
+        public static SubjectBase<IComputed> AutoRecompute(
+            this IComputed computed, 
             TimeSpan delay = default,
             IClock? clock = null)
-            where TKey : notnull
         {
             clock ??= RealTimeClock.Instance;
-            var stop = new CancellationTokenSource();
-            var subject = new SubjectWithDisposer<IComputedWithTypedInput<TKey>, CancellationTokenSource>(
-                stop, stop1 => stop1.Cancel());
-
-            async void OnInvalidated(IComputed c) {
-                var stopToken = stop!.Token;
-                var error = (Exception?) null;
-                try {
-                    var computed1 = (IComputedWithTypedInput<TKey>) c;
-                    var (function, input) = (computed1.Function, computed1.Input);
-                    if (delay > TimeSpan.Zero)
-                        await clock!.DelayAsync(delay, stopToken).ConfigureAwait(false);
-                    else
-                        await Task.Yield();
-                    computed1 = await function.InvokeAsync(input, null, stopToken).ConfigureAwait(false);
-                    subject!.OnNext(computed1);
-                    computed1.Invalidated += OnInvalidated;
-                }
-                catch (TaskCanceledException e) {
-                    error = e;
-                    subject!.OnCompleted();
-                }
-                catch (Exception e) {
-                    error = e;
-                    subject!.OnError(e);
-                }
-                finally {
-                    if (error != null)
-                        stop.Dispose();
-                }
-            };
-
-            subject.OnNext(computed);
-            computed.Invalidated += OnInvalidated;
-            return subject; 
+            return computed.Apply(AutoRecomputeApplyHandler.Instance, (delay, clock));
         }
     }
 }

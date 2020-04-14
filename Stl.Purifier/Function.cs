@@ -23,6 +23,8 @@ namespace Stl.Purifier
             TagGenerator = tagGenerator;
         }
 
+        public override string ToString() => $"{GetType().Name}({Implementation})";
+
         protected override async ValueTask<IComputed<TIn, TOut>> ComputeAsync(TIn input, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -36,7 +38,11 @@ namespace Stl.Purifier
                 }
             }
             catch (TaskCanceledException) {
-                // That's the only exception that "propagates" as-is
+                // This exception "propagates" as-is
+                throw;
+            }
+            catch (OperationCanceledException) {
+                // This exception "propagates" as-is
                 throw;
             }
             catch (Exception e) { 

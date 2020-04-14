@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Invocation;
+using System.CommandLine.IO;
 using System.Linq;
 using System.Reactive.PlatformServices;
 using System.Text.RegularExpressions;

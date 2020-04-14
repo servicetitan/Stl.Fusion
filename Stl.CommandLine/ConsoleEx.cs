@@ -1,5 +1,6 @@
 using System;
 using System.CommandLine;
+using System.CommandLine.IO;
 
 namespace Stl.CommandLine
 {

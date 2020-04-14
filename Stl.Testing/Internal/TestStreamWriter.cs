@@ -1,4 +1,5 @@
 using System.CommandLine;
+using System.CommandLine.IO;
 using System.IO;
 using System.Text;
 using FluentAssertions.Primitives;

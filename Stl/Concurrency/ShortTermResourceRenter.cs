@@ -53,7 +53,7 @@ namespace Stl.Concurrency
 
         public Lease Rent(int workerId)
         {
-            var index = workerId % ConcurrencyLevel;
+            var index = (workerId & int.MaxValue) % ConcurrencyLevel;
             var @lock = _locks[index];
             Monitor.Enter(@lock);
             return new Lease(this, index);

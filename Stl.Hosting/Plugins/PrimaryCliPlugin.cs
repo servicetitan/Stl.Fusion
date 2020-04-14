@@ -2,6 +2,7 @@ using System;
 using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
@@ -51,7 +52,7 @@ namespace Stl.Hosting.Plugins
             var cliParseResult = cliParser.Parse(arguments);
 
             // Invoking commands
-            var exitCode = cliParser.Invoke(cliParseResult, console);
+            var exitCode = cliParseResult.Invoke(console);
             var cliException = buildState.CliException;
             if (cliException != null)
                 ExceptionDispatchInfo.Throw(cliException);

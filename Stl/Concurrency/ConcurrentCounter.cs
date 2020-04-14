@@ -55,7 +55,7 @@ namespace Stl.Concurrency
         public Option<long> Increment(int random)
         {
             var t = _approximationStep;
-            ref var counter = ref _counters[random % ConcurrencyLevel];
+            ref var counter = ref _counters[(random & int.MaxValue) % ConcurrencyLevel];
             var value = Interlocked.Increment(ref counter);
             if (value >= t) {
                 Interlocked.Add(ref counter, -t);
@@ -67,7 +67,7 @@ namespace Stl.Concurrency
         public Option<long> Decrement(int random)
         {
             var t = _approximationStep;
-            ref var counter = ref _counters[random % ConcurrencyLevel];
+            ref var counter = ref _counters[(random & int.MaxValue) % ConcurrencyLevel];
             var value = Interlocked.Decrement(ref counter);
             if (value < 0) {
                 Interlocked.Add(ref counter, t);

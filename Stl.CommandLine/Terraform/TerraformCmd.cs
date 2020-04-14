@@ -1,6 +1,6 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
-using CliWrap.Models;
+using CliWrap;
 using Stl.IO;
 
 namespace Stl.CommandLine.Terraform
@@ -32,25 +32,25 @@ namespace Stl.CommandLine.Terraform
             return this;
         }
 
-        public Task<ExecutionResult> ApplyAsync(
+        public Task<CmdResult> ApplyAsync(
             CliString dir = default,
             ApplyArguments? arguments = null,
             CancellationToken cancellationToken = default)
             => RunRawAsync("apply", arguments ?? new ApplyArguments(), dir, cancellationToken);
 
-        public Task<ExecutionResult> ImportAsync(
+        public Task<CmdResult> ImportAsync(
             CliString dir = default,
             ImportArguments? arguments = null,
             CancellationToken cancellationToken = default)
             => RunRawAsync("import", arguments ?? new ImportArguments(), dir, cancellationToken);
 
-        public Task<ExecutionResult> FmtAsync(
+        public Task<CmdResult> FmtAsync(
             CliString dir = default,
             FmtArguments? arguments = null,
             CancellationToken cancellationToken = default)
             => RunRawAsync("fmt", arguments ?? new FmtArguments(), dir, cancellationToken);
 
-        public async Task<ExecutionResult> InitAsync(
+        public async Task<CmdResult> InitAsync(
             CliString dir = default,
             InitArguments? arguments = null,
             CancellationToken cancellationToken = default)
@@ -68,46 +68,46 @@ namespace Stl.CommandLine.Terraform
             }
         }
 
-        public Task<ExecutionResult> DestroyAsync(
+        public Task<CmdResult> DestroyAsync(
             CliString dir = default,
             DestroyArguments? arguments = null,
             CancellationToken cancellationToken = default)
             => RunRawAsync("destroy", arguments ?? new DestroyArguments(), dir, cancellationToken);
 
-        public Task<ExecutionResult> WorkspaceNewAsync(
+        public Task<CmdResult> WorkspaceNewAsync(
             CliString workspaceName,
             CliString dirName = default,
             WorkspaceNewArguments? arguments = null,
             CancellationToken cancellationToken = default)
             => RunRawAsync("workspace new", arguments ?? new WorkspaceNewArguments(), workspaceName + dirName, cancellationToken);
 
-        public Task<ExecutionResult> WorkspaceDeleteAsync(
+        public Task<CmdResult> WorkspaceDeleteAsync(
             CliString workspaceName,
             CliString dirName = default,
             WorkspaceDeleteArguments? arguments = null,
             CancellationToken cancellationToken = default)
             => RunRawAsync("workspace delete", arguments ?? new WorkspaceDeleteArguments(), workspaceName + dirName, cancellationToken);
 
-        public Task<ExecutionResult> WorkspaceSelectAsync(
+        public Task<CmdResult> WorkspaceSelectAsync(
             CliString workspaceName,
             CliString dirName = default,
             CancellationToken cancellationToken = default)
             => RunRawAsync("workspace select", null, workspaceName + dirName, cancellationToken);
 
-        public Task<ExecutionResult> WorkspaceListAsync(
+        public Task<CmdResult> WorkspaceListAsync(
             CliString dirName = default,
             CancellationToken cancellationToken = default)
             => RunRawAsync("workspace list", null, dirName, cancellationToken);
 
-        public Task<ExecutionResult> WorkspaceShowAsync(
+        public Task<CmdResult> WorkspaceShowAsync(
             CancellationToken cancellationToken = default)
             => RunRawAsync("workspace show", null, default, cancellationToken);
 
         public async Task WorkspaceChangeAsync(string workspaceName, bool reset = false)
         {
             // This makes sure this method doesn't change ResultChecks 
-            using var _ = this.ChangeResultChecks(0);
-            ExecutionResult r;
+            using var _ = this.ChangeResultValidation(0);
+            CmdResult r;
             if (reset) {
                 r = await WorkspaceDeleteAsync(
                     workspaceName, default, 
@@ -116,7 +116,7 @@ namespace Stl.CommandLine.Terraform
                     }).ConfigureAwait(false);
             }
             r = await WorkspaceSelectAsync(workspaceName).ConfigureAwait(false);
-            ResultChecks = CmdResultChecks.NonZeroExitCode;
+            ResultValidation = CommandResultValidation.ZeroExitCode;
             if (r.ExitCode != 0) 
                 r = await WorkspaceNewAsync(workspaceName).ConfigureAwait(false);
             r = await WorkspaceSelectAsync(workspaceName).ConfigureAwait(false);

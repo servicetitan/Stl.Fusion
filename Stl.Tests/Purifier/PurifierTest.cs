@@ -1,12 +1,23 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Autofac;
+using Autofac.Extensions.DependencyInjection;
+using Autofac.Extras.DynamicProxy;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Stl.Concurrency;
+using Stl.Purifier;
+using Stl.Purifier.Autofac;
 using Stl.Testing;
+using Stl.Testing.Internal;
 using Stl.Tests.Purifier.Model;
+using Stl.Tests.Purifier.Services;
 using Xunit;
 using Xunit.Abstractions;
+using Xunit.DependencyInjection.Logging;
 
 namespace Stl.Tests.Purifier
 {
@@ -28,6 +39,40 @@ namespace Stl.Tests.Purifier
             => new TestDbContext(new DbContextOptionsBuilder()
                 .LogTo(Out.WriteLine, LogLevel.Information)
                 .Options);
+
+        public IServiceProvider CreateServices()
+        {
+            var builder = new ContainerBuilder();
+            // Logging
+            builder.RegisterType<LoggerFactory>()
+                .As<ILoggerFactory>()
+                .SingleInstance();
+            builder.RegisterGeneric(typeof(Logger<>))
+                .As(typeof(ILogger<>))
+                .SingleInstance();
+            builder.Register(c => new XunitTestOutputLoggerProvider(new SimpleTestOutputHelperAccessor(Out)))
+                .As<ILoggerProvider>()
+                .SingleInstance();
+            // Interceptors
+            builder.Register(c => new ConcurrentIdGenerator<long>(i => {
+                var id = i * 10000;
+                return () => ++id;
+            }));
+            builder.RegisterType<ComputedRegistry<(IFunction, InvocationInput)>>()
+                .As<IComputedRegistry<(IFunction, InvocationInput)>>();
+            builder.RegisterType<ComputedInterceptor>();
+            // Services
+            builder.RegisterType<TimeProvider>()
+                .As<ITimeProvider>()
+                .SingleInstance();
+            builder.RegisterType<TimeProvider>()
+                .As<ITimeProviderEx>()
+                .EnableInterfaceInterceptors()
+                .InterceptedBy(typeof(ComputedInterceptor))
+                .SingleInstance();
+            var container = builder.Build();
+            return new AutofacServiceProvider(container);
+        }
 
         [Fact]
         public async Task BasicTest()
@@ -60,6 +105,22 @@ namespace Stl.Tests.Purifier
                 .SingleAsync();
             p1.Author.Id.Should().Be(u1.Id);
             // u.Posts.Count().Should().Be(1);
+        }
+
+        [Fact]
+        public async Task BasicContainerTest()
+        {
+            var c = CreateServices().GetRequiredService<ILifetimeScope>();
+            var tp = c.Resolve<ITimeProvider>();                                                      
+            var tpe = c.Resolve<ITimeProviderEx>();
+            var cNow = await tpe.GetTimeAsync();
+            using (var o = cNow.AutoRecompute()) {
+                using var _ = o.Subscribe(c => Out.WriteLine($"-> {c.Value}"));
+                await Task.Delay(2000);
+            }
+            Out.WriteLine("Disposed.");
+            await Task.Delay(2000);
+            Out.WriteLine("Finished.");
         }
     }
 }

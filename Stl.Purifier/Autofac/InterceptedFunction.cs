@@ -4,35 +4,38 @@ using System.Threading.Tasks;
 using Castle.DynamicProxy;
 using Stl.Concurrency;
 using Stl.Locking;
+using Stl.Purifier.Autofac.Internal;
 
 namespace Stl.Purifier.Autofac
 {
-    public class InterceptedFunction<TOut> : FunctionBase<ArrayKey, TOut>
+    public class InterceptedFunction<TOut> : FunctionBase<InvocationInput, TOut>
     {
-        public ExtendedMethodInfo Method { get; }
+        public InterceptedMethodInfo Method { get; }
         protected ConcurrentIdGenerator<long> TagGenerator { get; }
 
         public InterceptedFunction(
-            ExtendedMethodInfo method,
+            InterceptedMethodInfo method,
             ConcurrentIdGenerator<long> tagGenerator,
-            IComputedRegistry<(IFunction, ArrayKey)> computedRegistry,
-            IAsyncLockSet<(IFunction, ArrayKey)>? locks = null) 
+            IComputedRegistry<(IFunction, InvocationInput)> computedRegistry,
+            IAsyncLockSet<(IFunction, InvocationInput)>? locks = null) 
             : base(computedRegistry, locks)
         {
             Method = method;
             TagGenerator = tagGenerator;
         }
 
-        protected override async ValueTask<IComputed<ArrayKey, TOut>> ComputeAsync(ArrayKey input, CancellationToken cancellationToken)
+        public override string ToString() => $"{GetType().Name}({Method})";
+
+        protected override async ValueTask<IComputed<InvocationInput, TOut>> ComputeAsync(InvocationInput input, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
             var workerId = HashCode.Combine(this, input);
             var tag = TagGenerator.Next(workerId);
-            var output = new Computed<ArrayKey, TOut>(this, input, tag);
+            var output = new Computed<InvocationInput, TOut>(this, input, tag);
             try {
                 using (Computed.ChangeCurrent(output)) {
                     var method = Method;
-                    var proceedInfo = (IInvocationProceedInfo) input.Arguments[method.ProceedInfoArgumentIndex];
+                    var proceedInfo = input.ProceedInfo;
                     var invocation = proceedInfo.GetInvocation();
                     proceedInfo.Invoke();
                     var returnValue = invocation.ReturnValue;
@@ -63,7 +66,11 @@ namespace Stl.Purifier.Autofac
                 }
             }
             catch (TaskCanceledException) {
-                // That's the only exception that "propagates" as-is
+                // This exception "propagates" as-is
+                throw;
+            }
+            catch (OperationCanceledException) {
+                // This exception "propagates" as-is
                 throw;
             }
             catch (Exception e) { 

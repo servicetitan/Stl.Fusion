@@ -1,23 +1,23 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.0</TargetFramework>
-    <LangVersion>8</LangVersion>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <LangVersion>default</LangVersion>
     <Nullable>enable</Nullable>
     <WarningsAsErrors>true</WarningsAsErrors>
     <OutputType>Library</OutputType>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Enums.NET" Version="2.3.2" />
-    <PackageReference Include="FluentAssertions" Version="5.9.0" />
+    <PackageReference Include="Enums.NET" Version="3.0.3" />
+    <PackageReference Include="FluentAssertions" Version="5.10.3" />
     <PackageReference Include="Moq" Version="4.13.1" />
-    <PackageReference Include="Serilog" Version="2.9.1-dev-01141" />
-    <PackageReference Include="Serilog.Extensions.Logging" Version="3.0.2-dev-10260" />
-    <PackageReference Include="Serilog.Sinks.Console" Version="3.1.2-dev-00824" />
+    <PackageReference Include="Serilog" Version="2.9.1-dev-01154" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="3.0.2-dev-10272" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="4.0.0-dev-00839" />
     <PackageReference Include="Serilog.Sinks.Observable" Version="2.0.3-dev-00712" />
     <PackageReference Include="Serilog.Sinks.TextWriter" Version="2.1.0" />
-    <PackageReference Include="System.Reactive" Version="4.2.0" />
+    <PackageReference Include="System.Reactive" Version="4.4.1" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="Xunit.DependencyInjection.Logging" Version="2.1.0" />
   </ItemGroup>

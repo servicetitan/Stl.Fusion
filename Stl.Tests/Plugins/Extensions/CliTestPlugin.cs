@@ -2,6 +2,7 @@ using System;
 using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Invocation;
+using System.CommandLine.IO;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Plugins;
 using Stl.Plugins.Extensions.Cli;

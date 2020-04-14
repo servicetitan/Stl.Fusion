@@ -1,6 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
-using CliWrap.Models;
+using CliWrap;
 
 namespace Stl.CommandLine
 {
@@ -23,12 +23,12 @@ namespace Stl.CommandLine
             => (await RunAsync(command, standardInput, cancellationToken).ConfigureAwait(false))
                 .StandardOutput;
 
-        public virtual Task<ExecutionResult> RunAsync(
+        public virtual Task<CmdResult> RunAsync(
             CliString command,
             CancellationToken cancellationToken = default) 
             => RunAsync(command, null, cancellationToken);
 
-        public virtual Task<ExecutionResult> RunAsync(
+        public virtual Task<CmdResult> RunAsync(
             CliString command,
             string? standardInput,
             CancellationToken cancellationToken = default) 

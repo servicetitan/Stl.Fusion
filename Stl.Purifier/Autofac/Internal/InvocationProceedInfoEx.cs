@@ -4,7 +4,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using Castle.DynamicProxy;
 
-namespace Stl.Purifier.Autofac
+namespace Stl.Purifier.Autofac.Internal
 {
     public static class InvocationProceedInfoEx
     {

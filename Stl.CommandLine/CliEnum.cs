@@ -20,10 +20,10 @@ namespace Stl.CommandLine
             if (string.IsNullOrEmpty(format)) format = "D";
             provider ??= CultureInfo.InvariantCulture;
             return format.ToUpperInvariant() switch {
-                "V" => Value.AsString(EnumFormat.EnumMemberValue),
-                "N" => Value.AsString(EnumFormat.Name),
-                "D" => Value.AsString(EnumFormat.DisplayName, EnumFormat.Name),
-                "0" => Value.AsString(EnumFormat.DecimalValue),
+                "V" => Value.AsString(EnumFormat.EnumMemberValue)!,
+                "N" => Value.AsString(EnumFormat.Name)!,
+                "D" => Value.AsString(EnumFormat.DisplayName, EnumFormat.Name)!,
+                "0" => Value.AsString(EnumFormat.DecimalValue)!,
                 _ => throw Errors.UnsupportedFormatString(format)
             };
         }

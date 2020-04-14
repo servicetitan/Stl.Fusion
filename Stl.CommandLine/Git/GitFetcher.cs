@@ -4,6 +4,7 @@ using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using CliWrap;
 using CliWrap.Exceptions;
 using Stl.Async;
 using Stl.IO;
@@ -37,7 +38,7 @@ namespace Stl.CommandLine.Git
             async Task TryAsync()
             {
                 var git = GitCmdFactory.Invoke();
-                git.ResultChecks = CmdResultChecks.NonZeroExitCode;
+                git.ResultValidation = CommandResultValidation.ZeroExitCode;
 
                 var gitFolder = TargetPath & ".git";
                 if (!Directory.Exists(gitFolder)) {
@@ -56,7 +57,7 @@ namespace Stl.CommandLine.Git
                     git.WorkingDirectory = TargetPath;
                     var mustFetch = AlwaysFetch;
                     if (!AlwaysFetch) {
-                        using (git.ChangeResultChecks(0)) {
+                        using (git.ChangeResultValidation(0)) {
                             var r = await git
                                 .RunAsync("rev-parse --short=10 HEAD", cancellationToken)
                                 .ConfigureAwait(false);
@@ -81,7 +82,9 @@ namespace Stl.CommandLine.Git
             try {
                 await TryAsync().ConfigureAwait(false);
             }
-            catch (ExitCodeValidationException) {
+            catch (CommandExecutionException e) {
+                if (!e.Message.Contains("non-zero exit code"))
+                    throw;
                 Directory.Delete(TargetPath, true);
                 await TryAsync().ConfigureAwait(false);
             }

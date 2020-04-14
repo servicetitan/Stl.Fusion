@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using CliWrap.Models;
+using CliWrap;
 
 namespace Stl.CommandLine 
 {
@@ -13,13 +13,13 @@ namespace Stl.CommandLine
         public ProxyCmd(Func<TTargetCmd> targetCmdFactory) 
             => TargetCmdFactory = targetCmdFactory;
 
-        protected override Task<ExecutionResult> RunRawAsyncImpl(
+        protected override Task<CmdResult> RunRawAsyncImpl(
             CliString arguments, string? standardInput, 
             CancellationToken cancellationToken)
         {
             var targetCmd = TargetCmdFactory.Invoke();
             targetCmd.EchoMode = EchoMode;
-            targetCmd.ResultChecks = ResultChecks;
+            targetCmd.ResultValidation = ResultValidation;
             return targetCmd.RunRawAsync(arguments, standardInput, cancellationToken);
         }
     }

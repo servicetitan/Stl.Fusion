@@ -1,4 +1,5 @@
 using System.CommandLine;
+using System.CommandLine.IO;
 using FluentAssertions.Primitives;
 using Stl.Testing.Internal;
 using Xunit.Abstractions;

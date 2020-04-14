@@ -6,19 +6,18 @@ using Castle.DynamicProxy;
 
 namespace Stl.Purifier.Autofac
 {
-    public class ExtendedMethodInfo
+    public class InterceptedMethodInfo
     {
         public MethodInfo Method { get; private set; } = null!;
         public Type OutputType { get; private set; } = null!;
         public bool ReturnsValueTask { get; private set; }
         public bool ReturnsComputed { get; private set; }
         public int CancellationTokenArgumentIndex { get; private set; } = -1;
-        public int ProceedInfoArgumentIndex { get; private set; } = -1;
         public int UsedArgumentBitmap { get; private set; } = int.MaxValue;
 
-        private ExtendedMethodInfo() {}
+        private InterceptedMethodInfo() {}
 
-        public static ExtendedMethodInfo? Create(MethodInfo method)
+        public static InterceptedMethodInfo? Create(MethodInfo method)
         {
             var returnType = method.ReturnType;
             if (!returnType.IsGenericType)
@@ -40,7 +39,7 @@ namespace Stl.Purifier.Autofac
                 }
             }
 
-            var r = new ExtendedMethodInfo {
+            var r = new InterceptedMethodInfo {
                 Method = method,
                 OutputType = outputType,
                 ReturnsValueTask = returnsValueTask,
@@ -48,18 +47,13 @@ namespace Stl.Purifier.Autofac
             };
             var index = 0;
             foreach (var p in method.GetParameters()) {
-                if (typeof(IInvocationProceedInfo).IsAssignableFrom(p.ParameterType))
-                    r.ProceedInfoArgumentIndex = index;
                 if (typeof(CancellationToken).IsAssignableFrom(p.ParameterType))
                     r.CancellationTokenArgumentIndex = index;
                 index++;
             }
-            if (r.ProceedInfoArgumentIndex >= 0)
-                r.UsedArgumentBitmap ^= 1 << r.ProceedInfoArgumentIndex;
             if (r.CancellationTokenArgumentIndex >= 0)
                 r.UsedArgumentBitmap ^= 1 << r.CancellationTokenArgumentIndex;
-
-            return r.ProceedInfoArgumentIndex < 0 ? null : r;
+            return r;
         }
     }
 }

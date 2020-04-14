@@ -1,16 +1,23 @@
 using System;
+using Castle.DynamicProxy;
 
 namespace Stl.Purifier.Autofac
 {
-    public readonly struct ArrayKey : IEquatable<ArrayKey>
+    public readonly struct InvocationInput : IEquatable<InvocationInput>
     {
         public object[] Arguments { get; }
         public int UsedArgumentBitmap { get; }
+        public IInvocationProceedInfo ProceedInfo { get; }
         public int HashCode { get; }
 
-        public ArrayKey(object[] arguments, int usedArgumentBitmap = int.MaxValue)
+        public InvocationInput(object[] arguments, int usedArgumentBitmap, IInvocationProceedInfo proceedInfo)
         {
+            if (arguments.Length > 30)
+                throw new ArgumentOutOfRangeException(nameof(arguments));
+            Arguments = arguments;
             UsedArgumentBitmap = usedArgumentBitmap;
+            ProceedInfo = proceedInfo;
+
             var hashCode = 0;
             for (var i = 0; i < arguments.Length; i++, usedArgumentBitmap >>= 1) {
                 if ((usedArgumentBitmap & 1) == 0)
@@ -20,14 +27,12 @@ namespace Stl.Purifier.Autofac
                     hashCode = hashCode * 347 + (item?.GetHashCode() ?? 0);
                 }
             }
-
             HashCode = hashCode;
-            Arguments = arguments;
         }
 
         public override string ToString() => $"[{string.Join(", ", Arguments)}]";
 
-        public bool Equals(ArrayKey other)
+        public bool Equals(InvocationInput other)
         {
             if (HashCode != other.HashCode)
                 return false;
@@ -47,9 +52,9 @@ namespace Stl.Purifier.Autofac
         }
 
         public override bool Equals(object? obj) 
-            => obj is ArrayKey other && Equals(other);
+            => obj is InvocationInput other && Equals(other);
         public override int GetHashCode() => HashCode;
-        public static bool operator ==(ArrayKey left, ArrayKey right) => left.Equals(right);
-        public static bool operator !=(ArrayKey left, ArrayKey right) => !left.Equals(right);
+        public static bool operator ==(InvocationInput left, InvocationInput right) => left.Equals(right);
+        public static bool operator !=(InvocationInput left, InvocationInput right) => !left.Equals(right);
     }
 }

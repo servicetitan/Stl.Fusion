@@ -34,12 +34,12 @@ namespace Stl.CommandLine
             if (formatter != this)
                 return formatter.Format(value, argumentAttribute);
 
-            var template = argumentAttribute.Template;
+            var template = argumentAttribute.Template!;
             var defaultValue = argumentAttribute.DefaultValue;
             var isRequired = argumentAttribute.IsRequired;
 
-            CliString Format(object o) => string.Format(this, template, o);
-            CliString Default() => isRequired ? throw Errors.MissingCliArgument(template) : "";
+            CliString Format(object o) => string.Format(this, template!, o);
+            CliString Default() => isRequired ? throw Errors.MissingCliArgument(template!) : "";
 
             value = TrySubstituteValue(value);
             return value switch {

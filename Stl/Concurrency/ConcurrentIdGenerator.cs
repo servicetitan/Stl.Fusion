@@ -24,7 +24,7 @@ namespace Stl.Concurrency
 
         public T Next(int workerId)
         {
-            var generator = _generators[workerId % ConcurrencyLevel];
+            var generator = _generators[(workerId & int.MaxValue) % ConcurrencyLevel];
             lock (generator)
                 return generator.Invoke();
         }
