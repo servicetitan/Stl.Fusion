@@ -6,30 +6,46 @@ using Stl.Locking;
 
 namespace Stl.Purifier
 {
-    public class Function<TKey, TValue> : FunctionBase<TKey, TValue>
-        where TKey : notnull
+    public class Function<TIn, TOut> : FunctionBase<TIn, TOut>
+        where TIn : notnull
     {
-        protected Func<TKey, ValueTask<TValue>> Implementation { get; }
+        protected Func<TIn, CancellationToken, ValueTask<TOut>> Implementation { get; }
         protected ConcurrentIdGenerator<long> TagGenerator { get; }
 
         public Function(
-            Func<TKey, ValueTask<TValue>> implementation,
+            Func<TIn, CancellationToken, ValueTask<TOut>> implementation,
             ConcurrentIdGenerator<long> tagGenerator,
-            IComputedRegistry<(IFunction, TKey)>? computedRegistry,
-            IAsyncLockSet<(IFunction, TKey)>? locks = null) 
+            IComputedRegistry<(IFunction, TIn)> computedRegistry,
+            IAsyncLockSet<(IFunction, TIn)>? locks = null) 
             : base(computedRegistry, locks)
         {
             Implementation = implementation;
             TagGenerator = tagGenerator;
         }
 
-        protected override async ValueTask<IComputed<TKey, TValue>> ComputeAsync(TKey key, CancellationToken cancellationToken)
+        protected override async ValueTask<IComputed<TIn, TOut>> ComputeAsync(TIn input, CancellationToken cancellationToken)
         {
-            var workerId = HashCode.Combine(this, key);
+            cancellationToken.ThrowIfCancellationRequested();
+            var workerId = HashCode.Combine(this, input);
             var tag = TagGenerator.Next(workerId);
-            var computed = new Computed<TKey, TValue>(this, key, tag);
-            var value = await Implementation.Invoke(key).ConfigureAwait(false);
-            computed.SetValue(value);
+            var computed = new Computed<TIn, TOut>(this, input, tag);
+            try {
+                using (Computed.ChangeCurrent(computed)) {
+                    var value = await Implementation.Invoke(input, cancellationToken).ConfigureAwait(false);
+                    computed.TrySetOutput(value!);
+                }
+            }
+            catch (TaskCanceledException) {
+                // That's the only exception that "propagates" as-is
+                throw;
+            }
+            catch (Exception e) { 
+                computed.TrySetOutput(Result.Error<TOut>(e));
+                // Weird case: if the output is already set, all we can
+                // is to ignore the exception we've just caught;
+                // throwing it further will probably make it just worse,
+                // since the the caller have to take this scenario into acc.
+            }
             return computed;
         }
     }

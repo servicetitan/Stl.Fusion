@@ -87,7 +87,7 @@ namespace Stl.ImmutableModel.Updating
                         d.Add(state.Observer, state.ChangeType),
                     (Self: this, Observer: o, ChangeType: changeTypeMask));
                 // ReSharper disable once HeapView.BoxingAllocation
-                return Disposable.New(state => {
+                return Disposable.New((Self: this, Key: key, Observer: o), state => {
                     var spinWait = new SpinWait();
                     while (true) {
                         if (_observers.TryGetValue(state.Key, out var d)) {
@@ -104,7 +104,7 @@ namespace Stl.ImmutableModel.Updating
                             // No need to call OnCompleted, since someone else removed the observer
                             break;
                     }
-                }, (Self: this, Key: key, Observer: o));
+                });
             });
         }
     }

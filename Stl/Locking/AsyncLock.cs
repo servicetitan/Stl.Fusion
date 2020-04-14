@@ -65,7 +65,7 @@ namespace Stl.Locking
             }
 
             // ReSharper disable once HeapView.BoxingAllocation
-            return Disposable.New(state => {
+            return Disposable.New((this, myLock), state => {
                 var (self, myLock1) = state;
                 var oldLock = Interlocked.CompareExchange(ref self._lock, null, myLock1);
                 if (oldLock == myLock1) {
@@ -77,7 +77,7 @@ namespace Stl.Locking
                     if (reentryCount == 0)
                         myLock1.SetResult(default); // Must be done after setting _lock to null
                 }
-            }, (this, myLock));
+            });
         }
     }
 }

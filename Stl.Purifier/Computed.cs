@@ -1,9 +1,6 @@
 using System;
-using System.Buffers;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reactive;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Stl.Collections;
@@ -16,76 +13,89 @@ namespace Stl.Purifier
     {
         Computing = 0,
         Computed,
-        Invalidating,
         Invalidated,
     }
 
-    public interface IComputed : IEquatable<IComputed>
+    public interface IComputed : IResult, IEquatable<IComputed>
     {
         IFunction Function { get; }
-        object Key { get; }
-        object? Value { get; }
+        object Input { get; }
+        IResult Output { get; }
+        Type OutputType { get; }
         long Tag { get; } // ~ Unique for the specific (Func, Key) pair
         ComputedState State { get; }
         bool IsValid { get; }
         public event Action<IComputed> Invalidated;
 
         bool Invalidate();
-        void AddUsedValue(IComputed usedValue);
-        void RemoveUsedValue(IComputed usedValue);
+        void AddUsed(IComputed used);
+        void RemoveUsed(IComputed used);
         void AddUsedBy(IComputed usedBy); // Should be called only from AddUsedValue
     }
 
-    public interface IComputed<TValue> : IComputed, IEquatable<IComputed<TValue>>
+    public interface IComputed<TOut> : IComputed, IResult<TOut>, 
+        IEquatable<IComputed<TOut>>
     {
-        new TValue Value { get; }
-        void SetValue(TValue value);
+        bool TrySetOutput(Result<TOut> output);
+        void SetOutput(Result<TOut> output);
     }
     
-    public interface IKeyedComputed<TKey> : IComputed, IEquatable<IKeyedComputed<TKey>>
-        where TKey : notnull
+    public interface IComputedWithTypedInput<TIn> : IComputed, 
+        IEquatable<IComputedWithTypedInput<TIn>>
+        where TIn : notnull
     {
-        new TKey Key { get; }
-        new IFunction<TKey> Function { get; }
+        new TIn Input { get; }
+        new IFunction<TIn> Function { get; }
     }
 
-    public interface IComputed<TKey, TValue> : IComputed<TValue>, IKeyedComputed<TKey>, IEquatable<IComputed<TKey, TValue>>
-        where TKey : notnull
+    public interface IComputed<TIn, TOut> : IComputed<TOut>, IComputedWithTypedInput<TIn>, 
+        IEquatable<IComputed<TIn, TOut>>
+        where TIn : notnull
     { }
 
-    public class Computed<TKey, TValue> : IComputed<TKey, TValue>,
-        IEquatable<Computed<TKey, TValue>> 
-        where TKey : notnull
+    public class Computed<TIn, TOut> : IComputed<TIn, TOut>,
+        IEquatable<Computed<TIn, TOut>> 
+        where TIn : notnull
     {
         private volatile int _state;
-        private TValue _value = default!;
+        private Result<TOut> _output = default!;
         private RefHashSetSlim2<IComputed> _usedValues;
-        private HashSetSlim2<ComputedRef<TKey>> _usedBy;
+        private HashSetSlim2<ComputedRef<TIn>> _usedBy;
         private event Action<IComputed>? _invalidated;
         private object Lock => this;
-
-        #region "Untyped" versions of properties
-
-        IFunction IComputed.Function => Function;
-        IFunction<TKey> IKeyedComputed<TKey>.Function => Function;
-        // ReSharper disable once HeapView.BoxingAllocation
-        object IComputed.Key => Key;
-        // ReSharper disable once HeapView.BoxingAllocation
-        object? IComputed.Value => Value;
-
-        #endregion
         
-        public IFunction<TKey, TValue> Function { get; }
+        public IFunction<TIn, TOut> Function { get; }
         public bool IsValid => State == ComputedState.Computed;
         public ComputedState State => (ComputedState) _state;
-        public TKey Key { get; }
+        public TIn Input { get; }
         public long Tag { get; }
-        public TValue Value {
+
+        public Type OutputType => typeof(TOut);
+        public Result<TOut> Output {
             get {
                 AssertStateIsNot(ComputedState.Computing);
-                return _value;
+                return _output;
             }
         }
+
+        // IResult<T> properties
+        public Exception? Error => Output.Error;
+        public bool HasValue => Output.HasValue;
+        public bool HasError => Output.HasError;
+        public TOut UnsafeValue => Output.UnsafeValue;
+        public TOut Value => Output.Value;
+
+        // "Untyped" versions of properties
+        IFunction IComputed.Function => Function;
+        IFunction<TIn> IComputedWithTypedInput<TIn>.Function => Function;
+        // ReSharper disable once HeapView.BoxingAllocation
+        object IComputed.Input => Input;
+        // ReSharper disable once HeapView.BoxingAllocation
+        IResult IComputed.Output => Output;
+        // ReSharper disable once HeapView.BoxingAllocation
+        object? IResult.UnsafeValue => Output.UnsafeValue;
+        // ReSharper disable once HeapView.BoxingAllocation
+        object? IResult.Value => Output.Value;        
 
         public event Action<IComputed> Invalidated {
             add {
@@ -103,62 +113,66 @@ namespace Stl.Purifier
             }
         }
 
-        public Computed(IFunction<TKey, TValue> function, TKey key, long tag)
+        public Computed(IFunction<TIn, TOut> function, TIn input, long tag)
         {
             Function = function;
-            Key = key;
+            Input = input;
             Tag = tag;
         }
 
         public override string ToString() 
-            => $"{GetType().Name}({Function}({Key}), Tag: #{Tag}, State: {State})";
+            => $"{GetType().Name}({Function}({Input}), Tag: #{Tag}, State: {State})";
 
-        public void AddUsedValue(IComputed usedValue)
+        public void AddUsed(IComputed used)
         {
             lock (Lock) {
                 AssertStateIs(ComputedState.Computing);
-                usedValue.AddUsedBy(this);
-                _usedValues.Add(usedValue);
+                used.AddUsedBy(this);
+                _usedValues.Add(used);
             }
         }
 
-        public void RemoveUsedValue(IComputed usedValue)
+        public void RemoveUsed(IComputed used)
         {
             lock (Lock) {
-                _usedValues.Remove(usedValue);
+                _usedValues.Remove(used);
             }
         }
 
         void IComputed.AddUsedBy(IComputed usedBy)
         {
-            var usedByRef = ((IKeyedComputed<TKey>) usedBy).ToRef();
+            var usedByRef = ((IComputedWithTypedInput<TIn>) usedBy).ToRef();
             lock (Lock) {
                 AssertStateIs(ComputedState.Computed);
                 _usedBy.Add(usedByRef);
             }
         }
 
-        public void SetValue(TValue value)
+        public bool TrySetOutput(Result<TOut> output)
         {
-            lock (Lock) {
-                if (!TryChangeState(ComputedState.Computed))
-                    throw Errors.WrongComputedState(ComputedState.Computing, State);
-                _value = value;
-            }
+            if (!TryChangeState(ComputedState.Computed))
+                return false;
+            lock (Lock)
+                _output = output;
+            return true;
+        }
+
+        public void SetOutput(Result<TOut> output)
+        {
+            if (!TrySetOutput(output))
+                throw Errors.WrongComputedState(ComputedState.Computing, State);
         }
 
         public bool Invalidate()
         {
-            if (!TryChangeState(ComputedState.Invalidating))
+            if (!TryChangeState(ComputedState.Invalidated))
                 return false;
             ListBuffer<IComputed> dependencies = default;
             try {
                 lock (Lock) {
                     _usedBy.Apply(this, 
-                        (self, dRef) => dRef.TryResolve()?.RemoveUsedValue(self));
+                        (self, dRef) => dRef.TryResolve()?.RemoveUsed(self));
                     _usedBy.Clear();
-
-                    Interlocked.Exchange(ref _state, (int) ComputedState.Invalidated);
 
                     dependencies = ListBuffer<IComputed>.LeaseAndSetCount(_usedValues.Count);
                     _usedValues.CopyTo(dependencies.Span);
@@ -168,7 +182,8 @@ namespace Stl.Purifier
                 for (var i = 0; i < dependencies.Span.Length; i++) {
                     ref var d = ref dependencies.Span[i];
                     d.Invalidate();
-                    d = null!; // Just in case buffers aren't cleaned up when you return them back
+                    // Just in case buffers aren't cleaned up when you return them back
+                    d = null!; 
                 }
                 return true;
             }
@@ -176,6 +191,16 @@ namespace Stl.Purifier
                 dependencies.Release();
             }
         }
+
+        // IResult<T> methods
+
+        public void Deconstruct(out TOut value, out Exception? error) 
+            => Output.Deconstruct(out value, out error);
+        public bool IsValue([MaybeNullWhen(false)] out TOut value)
+            => Output.IsValue(out value);
+        public bool IsValue([MaybeNullWhen(false)] out TOut value, [MaybeNullWhen(true)] out Exception error) 
+            => Output.IsValue(out value, out error!);
+        public void ThrowIfError() => Output.ThrowIfError();
 
         // Protected & private methods
 
@@ -204,24 +229,50 @@ namespace Stl.Purifier
         // Equality
 
         bool IEquatable<IComputed>.Equals(IComputed? other) 
-            => Equals(other as Computed<TKey, TValue>);
-        bool IEquatable<IComputed<TValue>>.Equals(IComputed<TValue>? other) 
-            => Equals(other as Computed<TKey, TValue>);
-        bool IEquatable<IKeyedComputed<TKey>>.Equals(IKeyedComputed<TKey>? other) 
-            => Equals(other as Computed<TKey, TValue>);
-        bool IEquatable<IComputed<TKey, TValue>>.Equals(IComputed<TKey, TValue>? other) 
-            => Equals(other as Computed<TKey, TValue>);
+            => Equals(other as Computed<TIn, TOut>);
+        bool IEquatable<IComputed<TOut>>.Equals(IComputed<TOut>? other) 
+            => Equals(other as Computed<TIn, TOut>);
+        bool IEquatable<IComputedWithTypedInput<TIn>>.Equals(IComputedWithTypedInput<TIn>? other) 
+            => Equals(other as Computed<TIn, TOut>);
+        bool IEquatable<IComputed<TIn, TOut>>.Equals(IComputed<TIn, TOut>? other) 
+            => Equals(other as Computed<TIn, TOut>);
         public override bool Equals(object? other) 
-            => Equals(other as Computed<TKey, TValue>);
-        public bool Equals(Computed<TKey, TValue>? other) => 
+            => Equals(other as Computed<TIn, TOut>);
+        public bool Equals(Computed<TIn, TOut>? other) => 
             !ReferenceEquals(null, other) 
                 && ReferenceEquals(Function, other.Function)
-                && EqualityComparer<TKey>.Default.Equals(Key, other.Key);
+                && EqualityComparer<TIn>.Default.Equals(Input, other.Input);
 
         public override int GetHashCode() 
-            => HashCode.Combine(Function, EqualityComparer<TKey>.Default.GetHashCode(Key));
+            => HashCode.Combine(Function, EqualityComparer<TIn>.Default.GetHashCode(Input));
         
-        public static bool operator ==(Computed<TKey, TValue>? left, Computed<TKey, TValue>? right) => Equals(left, right);
-        public static bool operator !=(Computed<TKey, TValue>? left, Computed<TKey, TValue>? right) => !Equals(left, right);
+        public static bool operator ==(Computed<TIn, TOut>? left, Computed<TIn, TOut>? right) => Equals(left, right);
+        public static bool operator !=(Computed<TIn, TOut>? left, Computed<TIn, TOut>? right) => !Equals(left, right);
+    }
+
+    public static class Computed
+    {
+        private static readonly AsyncLocal<IComputed?> CurrentLocal = new AsyncLocal<IComputed?>();
+        
+        public static IComputed? Current => CurrentLocal.Value;
+
+        public static IComputed<T> Return<T>(T value)
+        {
+            var current = Current;
+            if (current is IComputed<T> c) {
+                c.SetOutput(value);
+                return c;
+            }
+            if (current == null)
+                throw Errors.NoCurrentComputed();
+            throw Errors.CurrentComputedIsOfIncompatibleType(typeof(T), current.OutputType);
+        }
+
+        public static Disposable<IComputed?> ChangeCurrent(IComputed? newCurrent)
+        {
+            var oldCurrent = Current;
+            CurrentLocal.Value = newCurrent;
+            return Disposable.New(oldCurrent, oldCurrent1 => CurrentLocal.Value = oldCurrent1);
+        }
     }
 }

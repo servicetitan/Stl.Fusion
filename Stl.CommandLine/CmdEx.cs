@@ -13,8 +13,8 @@ namespace Stl.CommandLine
             var oldValue = cmd.ResultChecks;
             cmd.ResultChecks = newResultChecks;
             return Disposable.New(
-                state => state.Cmd.ResultChecks = state.OldValue, 
-                (Cmd: cmd, OldValue: oldValue));
+                (Cmd: cmd, OldValue: oldValue),
+                state => state.Cmd.ResultChecks = state.OldValue);
         }
     }
 }

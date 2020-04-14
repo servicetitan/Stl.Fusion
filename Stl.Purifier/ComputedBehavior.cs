@@ -1,39 +1,55 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Stl.Async;
+using Stl.Purifier.Internal;
 using Stl.Time;
 
 namespace Stl.Purifier
 {
     public static class ComputedBehavior
     {
-        public static IKeyedComputed<TKey> AutoRecompute<TKey>(this IKeyedComputed<TKey> computed, 
-            TimeSpan delay = default, 
-            IClock? clock = null,
-            CancellationToken cancellationToken = default)
+        public static IObservable<IComputedWithTypedInput<TKey>> AutoRecompute<TKey>(
+            this IComputedWithTypedInput<TKey> computed, 
+            TimeSpan delay = default,
+            IClock? clock = null)
             where TKey : notnull
         {
             clock ??= RealTimeClock.Instance;
-            computed.Invalidated += async c => {
-                if (cancellationToken.IsCancellationRequested)
-                    return;
-                var kc = (IKeyedComputed<TKey>) c;
-                var (function, key) = (kc.Function, kc.Key);
-                if (delay > TimeSpan.Zero)
-                    await clock.DelayAsync(delay, cancellationToken)
-                        .SuppressCancellation()
-                        .ConfigureAwait(false);
-                else
-                    await Task.Yield();
-                if (cancellationToken.IsCancellationRequested)
-                    return;
-                kc = await function.InvokeAsync(key, null, cancellationToken).AsTask()
-                    .SuppressCancellation()
-                    .ConfigureAwait(false);
-                kc?.AutoRecompute(delay, clock, cancellationToken);
+            var stop = new CancellationTokenSource();
+            var subject = new SubjectWithDisposer<IComputedWithTypedInput<TKey>, CancellationTokenSource>(
+                stop, stop1 => stop1.Cancel());
+
+            async void OnInvalidated(IComputed c) {
+                var stopToken = stop!.Token;
+                var error = (Exception?) null;
+                try {
+                    var computed1 = (IComputedWithTypedInput<TKey>) c;
+                    var (function, input) = (computed1.Function, computed1.Input);
+                    if (delay > TimeSpan.Zero)
+                        await clock!.DelayAsync(delay, stopToken).ConfigureAwait(false);
+                    else
+                        await Task.Yield();
+                    computed1 = await function.InvokeAsync(input, null, stopToken).ConfigureAwait(false);
+                    subject!.OnNext(computed1);
+                    computed1.Invalidated += OnInvalidated;
+                }
+                catch (TaskCanceledException e) {
+                    error = e;
+                    subject!.OnCompleted();
+                }
+                catch (Exception e) {
+                    error = e;
+                    subject!.OnError(e);
+                }
+                finally {
+                    if (error != null)
+                        stop.Dispose();
+                }
             };
-            return computed; 
+
+            subject.OnNext(computed);
+            computed.Invalidated += OnInvalidated;
+            return subject; 
         }
     }
 }

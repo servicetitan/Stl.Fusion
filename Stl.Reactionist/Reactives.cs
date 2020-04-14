@@ -22,8 +22,8 @@ namespace Stl.Reactionist
             if (!AddReaction(reaction))
                 return default;
             return Disposable.New(
-                state => state.Self.RemoveReaction(state.Reaction),
-                (Self: this, Reaction: reaction));
+                (Self: this, Reaction: reaction),
+                state => state.Self.RemoveReaction(state.Reaction));
         }
         
         protected void RegisterDependency()

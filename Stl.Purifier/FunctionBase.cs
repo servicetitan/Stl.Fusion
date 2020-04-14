@@ -45,10 +45,9 @@ namespace Stl.Purifier
         protected object Lock => Locks;
 
         public FunctionBase(
-            IComputedRegistry<(IFunction, TIn)>? computedRegistry,
+            IComputedRegistry<(IFunction, TIn)> computedRegistry,
             IAsyncLockSet<(IFunction, TIn)>? locks = null)
         {                                                             
-            computedRegistry ??= new ComputedRegistry<(IFunction, TIn)>();
             locks ??= new AsyncLockSet<(IFunction, TIn)>(ReentryMode.CheckedFail);
             ComputedRegistry = computedRegistry; 
             Locks = locks;

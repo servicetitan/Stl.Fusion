@@ -25,11 +25,11 @@ namespace Stl.Testing
             var oldConsoleOut = Console.Out;
             Console.SetOut(TextWriter);
             TestOutput.Value = new TestOutputWriter(testOutput);
-            return Disposable.New(state => {
+            return Disposable.New((oldTestOut, oldConsoleOut), state => {
                 var (oldTestOut1, oldConsoleOut1) = state;
                 TestOutput.Value = oldTestOut1;
                 Console.SetOut(oldConsoleOut1);
-            }, (oldTestOut, oldConsoleOut));
+            });
         }
         
     }

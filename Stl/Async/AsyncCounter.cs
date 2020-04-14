@@ -54,7 +54,7 @@ namespace Stl.Async
         public Disposable<AsyncCounter> Use()
         {
             Increment();
-            return Disposable.New(counter => counter.Decrement(), this);
+            return Disposable.New(this, counter => counter.Decrement());
         }
     }
 }

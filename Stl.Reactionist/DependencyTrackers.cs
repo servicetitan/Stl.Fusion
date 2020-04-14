@@ -43,11 +43,12 @@ namespace Stl.Reactionist
             IsActive = true;
             DependencyTracking.CurrentTracker = this;
             return Disposable.New(
+                (this, oldTracker),
                 state => {
                     var (current, old) = state;
                     DependencyTracking.CurrentTracker = old;
                     current!.IsActive = false;
-                }, (this, oldTracker));
+                });
         }
         
         public virtual void AddReactionToAllDependencies(Reaction reaction) => 

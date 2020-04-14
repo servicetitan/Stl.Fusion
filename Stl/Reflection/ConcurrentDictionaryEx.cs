@@ -9,16 +9,16 @@ namespace Stl.Reflection
         private static class Cache<TKey, TValue>
             where TKey : notnull
         {
-            public static Func<ConcurrentDictionary<TKey, TValue>, int> CapacityReader;
+            public static readonly Func<ConcurrentDictionary<TKey, TValue>, int> CapacityReader;
 
             static Cache()
             {
                 var eSrc = Expression.Parameter(typeof(ConcurrentDictionary<TKey, TValue>), "source");
-                var eTables = Expression.Field(eSrc, "_tables");
-                var eBuckets = Expression.Field(eTables, "_buckets");
-                var eCapacity = Expression.PropertyOrField(eBuckets, "Length");
+                var body = Expression.PropertyOrField(
+                    Expression.Field(Expression.Field(eSrc, "_tables"), "_buckets"), 
+                    "Length");
                 CapacityReader = (Func<ConcurrentDictionary<TKey, TValue>, int>)
-                    Expression.Lambda(eCapacity, eSrc).Compile();
+                    Expression.Lambda(body, eSrc).Compile();
             }
         }
 

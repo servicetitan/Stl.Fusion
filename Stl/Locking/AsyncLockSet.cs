@@ -79,7 +79,7 @@ namespace Stl.Locking
             }
 
             // ReSharper disable once HeapView.BoxingAllocation
-            return Disposable.New(state => {
+            return Disposable.New((this, key, myLock), state => {
                 var (self, key2, myLock2) = state;
                 // Removing local lock
                 var reentryCount = 0;
@@ -93,7 +93,7 @@ namespace Stl.Locking
                     myLock2.SetResult(default); // Must be done before TryRemove
                     self._locks.TryRemove(key2, myLock2);
                 }
-            }, (this, key, myLock));
+            });
         }
     }
 }

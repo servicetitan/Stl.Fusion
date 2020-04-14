@@ -5,21 +5,21 @@ namespace Stl
     public static class Disposable
     {
         public static Disposable<Action> New(Action onDispose)
-            => new Disposable<Action>(action => action.Invoke(), onDispose);
+            => new Disposable<Action>(onDispose, action => action.Invoke());
 
-        public static Disposable<TState> New<TState>(Action<TState> onDispose, TState state)
-            => new Disposable<TState>(onDispose, state);
+        public static Disposable<TState> New<TState>(TState state, Action<TState> onDispose)
+            => new Disposable<TState>(state, onDispose);
     }
 
     public readonly struct Disposable<TState> : IDisposable
     {
-        private readonly Action<TState> _onDispose;
         private readonly TState _state;
+        private readonly Action<TState> _onDispose;
 
-        public Disposable(Action<TState> onDispose, TState state)
+        public Disposable(TState state, Action<TState> onDispose)
         {
-            _onDispose = onDispose;
             _state = state;
+            _onDispose = onDispose;
         }
 
         public void Dispose()
