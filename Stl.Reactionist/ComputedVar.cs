@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Stl.Reactionist
 {
@@ -33,7 +34,8 @@ namespace Stl.Reactionist
         }
 
         public Exception? Error => Result.Error;
-        public bool HasError => Error != null;
+        public bool HasValue => Result.HasValue;
+        public bool HasError => Result.HasError;
         public T Value => Result.Value;
         public T UnsafeValue => Result.UnsafeValue;
 
@@ -66,7 +68,10 @@ namespace Stl.Reactionist
 
         public void Deconstruct(out T value, out Exception? error) 
             => Result.Deconstruct(out value, out error);
-
+        public bool IsValue([MaybeNullWhen(false)] out T value) 
+            => Result.IsValue(out value);
+        public bool IsValue([MaybeNullWhen(false)] out T value, [MaybeNullWhen(true)] out Exception error) 
+            => Result.IsValue(out value, out error!);
         public void ThrowIfError() => Result.ThrowIfError();
 
         // Operators

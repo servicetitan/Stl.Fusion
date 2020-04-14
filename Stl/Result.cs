@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Stl.Async;
 
 namespace Stl
 {
@@ -12,6 +15,7 @@ namespace Stl
         object? UnsafeValue { get; }
         Exception? Error { get; }
         object? Value { get; }
+        bool HasValue { get; }
         bool HasError { get; }
         
         void ThrowIfError();
@@ -29,6 +33,8 @@ namespace Stl
         new T Value { get; }
         
         void Deconstruct(out T value, out Exception? error);
+        bool IsValue([MaybeNullWhen(false)] out T value);
+        bool IsValue([MaybeNullWhen(false)] out T value, [MaybeNullWhen(true)] out Exception error);
     }
 
     public interface IMutableResult<T> : IResult<T>
@@ -42,7 +48,16 @@ namespace Stl
     {
         public T UnsafeValue { get; }
         public Exception? Error { get; }
-        [JsonIgnore] public bool HasError => Error != null;
+
+        [JsonIgnore] public bool HasValue {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => Error == null;
+        }
+
+        [JsonIgnore] public bool HasError {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => Error != null;
+        }
 
         [JsonIgnore] 
         public T Value {
@@ -63,10 +78,10 @@ namespace Stl
         object? IResult.UnsafeValue => UnsafeValue;
 
         [JsonConstructor]
-        public Result(T unsafeValue, Exception? error)
+        public Result(T value, Exception? error)
         {
-            if (error != null) unsafeValue = default!;
-            UnsafeValue = unsafeValue;
+            if (error != null) value = default!;
+            UnsafeValue = value;
             Error = error;
         }
         
@@ -76,6 +91,20 @@ namespace Stl
         {
             value = UnsafeValue;
             error = Error;
+        }
+
+        public bool IsValue([MaybeNullWhen(false)] out T value)
+        {
+            value = HasError ? default! : UnsafeValue;
+            return !HasError;
+        }
+
+        public bool IsValue([MaybeNullWhen(false)] out T value, [MaybeNullWhen(true)] out Exception error)
+        {
+            error = Error!;
+            var hasValue = error == null;
+            value = hasValue ? UnsafeValue : default!;
+            return hasValue;
         }
 
         public void ThrowIfError()
@@ -103,9 +132,9 @@ namespace Stl
         
         public static implicit operator T(Result<T> source) => source.Value;
         public static implicit operator ValueTask<T>(Result<T> source) 
-            => source.HasError 
-                ? new ValueTask<T>(Task.FromException<T>(source.Error!))
-                : new ValueTask<T>(source.UnsafeValue);
+            => source.IsValue(out var value, out var error)  
+                ? ValueTaskEx.FromResult(value)
+                : ValueTaskEx.FromException<T>(error);
 
         public static implicit operator Result<T>(T source) => new Result<T>(source, null);
         public static implicit operator Result<T>((T Value, Exception? Error) source) => 

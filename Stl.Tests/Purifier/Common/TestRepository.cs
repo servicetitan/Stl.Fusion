@@ -24,8 +24,8 @@ namespace Stl.Tests.Purifier
         public ValueTask<Option<TEntity>> TryGetAsync(TKey key, CancellationToken cancellationToken = default)
         {
             if (Entities.TryGetValue(key, out var value))
-                return ValueTaskEx.New(Option<TEntity>.Some(value));
-            return ValueTaskEx.New(Option<TEntity>.None); 
+                return ValueTaskEx.FromResult(Option<TEntity>.Some(value));
+            return ValueTaskEx.FromResult(Option<TEntity>.None); 
         }
 
         public async ValueTask<TEntity> GetAsync(TKey key, CancellationToken cancellationToken = default)

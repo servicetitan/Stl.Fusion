@@ -41,6 +41,6 @@ namespace Stl.Security
         }
 
         public ValueTask<string?> TryGetSecretAsync(string key) 
-            => ValueTaskEx.New(TryGetSecret(key));
+            => ValueTaskEx.FromResult(TryGetSecret(key));
     }
 }

@@ -11,8 +11,8 @@ namespace Stl.Purifier
             => ReferenceEquals(computed, null);
 
         public static ComputedRef<TKey> ToRef<TKey>(
-            this IKeyedComputed<TKey> target)
+            this IComputedWithTypedInput<TKey> target)
             where TKey : notnull
-            => new ComputedRef<TKey>(target.Function, target.Key, target.Tag);
+            => new ComputedRef<TKey>(target.Function, target.Input, target.Tag);
     }
 }

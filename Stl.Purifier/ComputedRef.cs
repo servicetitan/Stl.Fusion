@@ -28,7 +28,7 @@ namespace Stl.Purifier
 
         // Operations
 
-        public IKeyedComputed<TKey>? TryResolve()
+        public IComputedWithTypedInput<TKey>? TryResolve()
         {
             var computed = Function.TryGetCached(Key);
             return computed.IsNull() || computed.Tag != Tag 

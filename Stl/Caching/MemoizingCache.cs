@@ -11,10 +11,10 @@ namespace Stl.Caching
         private readonly ConcurrentDictionary<TKey, TValue> _dictionary = new ConcurrentDictionary<TKey, TValue>();
 
         public override ValueTask<TValue> GetAsync(TKey key, CancellationToken cancellationToken = default)
-            => ValueTaskEx.New(_dictionary[key]);
+            => ValueTaskEx.FromResult(_dictionary[key]);
 
         public override ValueTask<Option<TValue>> TryGetAsync(TKey key, CancellationToken cancellationToken = default)
-            => ValueTaskEx.New(
+            => ValueTaskEx.FromResult(
                 _dictionary.TryGetValue(key, out var value) 
                     ? Option.Some(value) 
                     : default);

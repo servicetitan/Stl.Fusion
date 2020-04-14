@@ -13,6 +13,6 @@ namespace Stl.Security
         public string? TryGetSecret(string key) 
             => Vault[key];
         public ValueTask<string?> TryGetSecretAsync(string key) 
-            => ValueTaskEx.New(TryGetSecret(key));
+            => ValueTaskEx.FromResult(TryGetSecret(key));
     }
 }

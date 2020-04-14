@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Stl.Reactionist
 {
@@ -35,16 +36,17 @@ namespace Stl.Reactionist
             get => Result.Error;
             set => Result = new Result<T>(default!, value);
         }
-        public bool HasError => Error != null;
+        public bool HasValue => Result.HasValue;
+        public bool HasError => Result.HasError;
 
         public T UnsafeValue {
             get => Result.UnsafeValue;
-            set => Result = value;
+            set => Result = value!;
         }
 
         public T Value {
             get => Result.Value;
-            set => Result = value;
+            set => Result = value!;
         }
 
         object? IMutableResult.Value {
@@ -52,7 +54,9 @@ namespace Stl.Reactionist
             get => Value;
             set => Value = (T) value!;
         }
+        // ReSharper disable once HeapView.BoxingAllocation
         object? IResult.Value => Value;
+        // ReSharper disable once HeapView.BoxingAllocation
         object? IResult.UnsafeValue => Result.UnsafeValue;
 
         public Var(T value = default) => InternalResult = (value, null);
@@ -62,7 +66,10 @@ namespace Stl.Reactionist
 
         public void Deconstruct(out T value, out Exception? error) 
             => Result.Deconstruct(out value, out error);
-        
+        public bool IsValue([MaybeNullWhen(false)] out T value) 
+            => Result.IsValue(out value);
+        public bool IsValue([MaybeNullWhen(false)] out T value, [MaybeNullWhen(true)] out Exception error) 
+            => Result.IsValue(out value, out error!);
         public void ThrowIfError() => Result.ThrowIfError();
 
         // Operators

@@ -8,7 +8,7 @@ namespace Stl.Caching
         where TKey : notnull
     {
         public override ValueTask<Option<TValue>> TryGetAsync(TKey key, CancellationToken cancellationToken = default)
-            => ValueTaskEx.New(Option.None<TValue>());
+            => ValueTaskEx.FromResult(Option.None<TValue>());
 
         protected override ValueTask SetAsync(TKey key, Option<TValue> value, CancellationToken cancellationToken = default) 
             => ValueTaskEx.CompletedTask;

@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Stl.Reactionist
 {
@@ -20,11 +21,12 @@ namespace Stl.Reactionist
         protected Result<T> InternalResult => Storage.InternalResult;
         Result<T> IHasInternalResult<T>.InternalResult => InternalResult;
 
+        public Result<T> Result => Storage.Result;
         public Exception? Error => Storage.Error;
-        public bool HasError => Error != null;
+        public bool HasValue => Storage.HasValue;
+        public bool HasError => Storage.HasError;
         public T UnsafeValue => Storage.UnsafeValue;
         public T Value => Storage.Value;
-        public Result<T> Result => Storage.Result;
 
         // ReSharper disable once HeapView.BoxingAllocation
         object? IResult.Value => Storage.Value;
@@ -41,7 +43,10 @@ namespace Stl.Reactionist
 
         public void Deconstruct(out T value, out Exception? error) 
             => Storage.Deconstruct(out value, out error);
-
+        public bool IsValue([MaybeNullWhen(false)] out T value) 
+            => Storage.IsValue(out value);
+        public bool IsValue([MaybeNullWhen(false)] out T value, [MaybeNullWhen(true)] out Exception error) 
+            => Storage.IsValue(out value, out error!);
         public void ThrowIfError() => Storage.ThrowIfError();
 
         // Operators
