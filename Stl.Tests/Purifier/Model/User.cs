@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Stl.Tests.Purifier.Model
 {
@@ -7,7 +6,6 @@ namespace Stl.Tests.Purifier.Model
     {
         private string _name = "";
         private string _email = "";
-        private PostCollection _posts = new PostCollection();
 
         [Required, MaxLength(120)]
         public string Name {
@@ -19,12 +17,6 @@ namespace Stl.Tests.Purifier.Model
         public string Email {
             get => _email;
             set => _name = PreparePropertyValue(nameof(Email), value);
-        }
-
-        [NotMapped]
-        public PostCollection Posts {
-            get => _posts;
-            set => _posts = PreparePropertyValue(nameof(Posts), value);
         }
     }
 }

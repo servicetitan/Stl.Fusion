@@ -16,9 +16,6 @@ namespace Stl.Tests.Purifier.Model
             ct.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
         }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder options)
-            => options.UseInMemoryDatabase(GetType().FullName);
-
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             var user = modelBuilder.Entity<User>();

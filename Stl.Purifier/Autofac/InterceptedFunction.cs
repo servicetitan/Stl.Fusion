@@ -1,14 +1,13 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Castle.DynamicProxy;
 using Stl.Concurrency;
 using Stl.Locking;
 using Stl.Purifier.Autofac.Internal;
 
 namespace Stl.Purifier.Autofac
 {
-    public class InterceptedFunction<TOut> : FunctionBase<InvocationInput, TOut>
+    public class InterceptedFunction<TOut> : FunctionBase<InterceptedInput, TOut>
     {
         public InterceptedMethodInfo Method { get; }
         protected ConcurrentIdGenerator<long> TagGenerator { get; }
@@ -16,8 +15,8 @@ namespace Stl.Purifier.Autofac
         public InterceptedFunction(
             InterceptedMethodInfo method,
             ConcurrentIdGenerator<long> tagGenerator,
-            IComputedRegistry<(IFunction, InvocationInput)> computedRegistry,
-            IAsyncLockSet<(IFunction, InvocationInput)>? locks = null) 
+            IComputedRegistry<(IFunction, InterceptedInput)> computedRegistry,
+            IAsyncLockSet<(IFunction, InterceptedInput)>? locks = null) 
             : base(computedRegistry, locks)
         {
             Method = method;
@@ -26,12 +25,12 @@ namespace Stl.Purifier.Autofac
 
         public override string ToString() => $"{GetType().Name}({Method})";
 
-        protected override async ValueTask<IComputed<InvocationInput, TOut>> ComputeAsync(InvocationInput input, CancellationToken cancellationToken)
+        protected override async ValueTask<IComputed<InterceptedInput, TOut>> ComputeAsync(InterceptedInput input, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
             var workerId = HashCode.Combine(this, input);
             var tag = TagGenerator.Next(workerId);
-            var output = new Computed<InvocationInput, TOut>(this, input, tag);
+            var output = new Computed<InterceptedInput, TOut>(this, input, tag);
             try {
                 using (Computed.ChangeCurrent(output)) {
                     var method = Method;

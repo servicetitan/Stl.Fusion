@@ -40,9 +40,7 @@ namespace Stl.Tests.Purifier.Services
         {
             if (!(Computed.Current is IComputed<Moment> c))
                 throw new InvalidOperationException("Wrong Computed.Current.");
-#pragma warning disable 4014
             Task.Delay(250).ContinueWith(t => c.Invalidate());
-#pragma warning restore 4014
             var now = await GetTimeAsync().ConfigureAwait(false);
             return Computed.Return(now);
         }

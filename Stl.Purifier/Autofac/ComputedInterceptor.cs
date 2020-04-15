@@ -18,15 +18,15 @@ namespace Stl.Purifier.Autofac
             new ConcurrentDictionary<MethodInfo, Action<IInvocation>?>();
 
         protected ConcurrentIdGenerator<long> TagGenerator { get; }
-        protected IComputedRegistry<(IFunction, InvocationInput)> ComputedRegistry { get; }
-        protected IAsyncLockSet<(IFunction, InvocationInput)>? Locks { get; }                      
+        protected IComputedRegistry<(IFunction, InterceptedInput)> ComputedRegistry { get; }
+        protected IAsyncLockSet<(IFunction, InterceptedInput)>? Locks { get; }                      
 
         public ComputedInterceptor(
             ConcurrentIdGenerator<long> tagGenerator,
-            IComputedRegistry<(IFunction, InvocationInput)> computedRegistry,
-            IAsyncLockSet<(IFunction, InvocationInput)>? locks = null) 
+            IComputedRegistry<(IFunction, InterceptedInput)> computedRegistry,
+            IAsyncLockSet<(IFunction, InterceptedInput)>? locks = null) 
         {
-            locks ??= new AsyncLockSet<(IFunction, InvocationInput)>(ReentryMode.CheckedFail);
+            locks ??= new AsyncLockSet<(IFunction, InterceptedInput)>(ReentryMode.CheckedFail);
             _createHandler = CreateHandler;
             _createTypedHandlerMethod = GetType()
                 .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
@@ -74,7 +74,7 @@ namespace Stl.Purifier.Autofac
                 var usedBy = Computed.Current;
 
                 // Invoking the function
-                var key = new InvocationInput(arguments, method.UsedArgumentBitmap, proceedInfo);
+                var key = new InterceptedInput(invocation.InvocationTarget, arguments, method.UsedArgumentsBitmap, proceedInfo);
                 var valueTask = function.InvokeAsync(key, usedBy, cancellationToken);
 
                 if (invocation.ReturnValue != null)

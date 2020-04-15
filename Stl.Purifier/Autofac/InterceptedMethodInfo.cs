@@ -13,7 +13,7 @@ namespace Stl.Purifier.Autofac
         public bool ReturnsValueTask { get; private set; }
         public bool ReturnsComputed { get; private set; }
         public int CancellationTokenArgumentIndex { get; private set; } = -1;
-        public int UsedArgumentBitmap { get; private set; } = int.MaxValue;
+        public int UsedArgumentsBitmap { get; private set; } = int.MaxValue;
 
         private InterceptedMethodInfo() {}
 
@@ -52,7 +52,7 @@ namespace Stl.Purifier.Autofac
                 index++;
             }
             if (r.CancellationTokenArgumentIndex >= 0)
-                r.UsedArgumentBitmap ^= 1 << r.CancellationTokenArgumentIndex;
+                r.UsedArgumentsBitmap ^= 1 << r.CancellationTokenArgumentIndex;
             return r;
         }
     }
