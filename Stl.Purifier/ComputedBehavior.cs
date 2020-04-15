@@ -9,21 +9,19 @@ namespace Stl.Purifier
 {
     public static class ComputedBehavior
     {
-        internal sealed class AutoRecomputeApplyHandler : IComputedApplyHandler<(TimeSpan, IClock), SubjectBase<IComputed>>
+        internal sealed class AutoRecomputeApplyHandler : IComputedApplyHandler<(TimeSpan, IClock, Action<IComputed>?), Disposable<CancellationTokenSource>>
         {
+            private static readonly TimeSpan CancellationTokenDisposeDelay = TimeSpan.FromSeconds(5); 
             public static readonly AutoRecomputeApplyHandler Instance = new AutoRecomputeApplyHandler();
             
-            public SubjectBase<IComputed> Apply<TIn, TOut>(IComputed<TIn, TOut> computed, (TimeSpan, IClock) arg) 
+            public Disposable<CancellationTokenSource> Apply<TIn, TOut>(IComputed<TIn, TOut> computed, (TimeSpan, IClock, Action<IComputed>?) arg) 
                 where TIn : notnull
             {
-                var (delay, clock) = arg;
+                var (delay, clock, handler) = arg;
                 var stop = new CancellationTokenSource();
-                var subject = new SubjectWithDisposer<IComputed, CancellationTokenSource>(
-                    stop, stop1 => stop1.Cancel());
+                var stopToken = stop.Token;
 
                 async void OnInvalidated(IComputed c) {
-                    var stopToken = stop!.Token;
-                    var error = (Exception?) null;
                     try {
                         var prevComputed = (IComputed<TIn, TOut>) c;
                         var (function, input) = (prevComputed.Function, prevComputed.Input);
@@ -32,46 +30,48 @@ namespace Stl.Purifier
                         else
                             await Task.Yield();
                         var nextComputed = await function
-                                .InvokeAsync(input, null, stopToken)
-                                .ConfigureAwait(false);
-                        if (!subject!.IsDisposed)
-                            subject!.OnNext(nextComputed);
+                            .InvokeAsync(input, null, stopToken)
+                            .ConfigureAwait(false);
+                        handler?.Invoke(nextComputed);
                         nextComputed.Invalidated += OnInvalidated;
                     }
-                    catch (TaskCanceledException e) {
-                        error = e;
-                        if (!subject!.IsDisposed)
-                            subject?.OnCompleted();
-                    }
-                    catch (OperationCanceledException e) {
-                        error = e;
-                        if (!subject!.IsDisposed)
-                            subject!.OnCompleted();
-                    }
-                    catch (Exception e) {
-                        error = e;
-                        if (!subject!.IsDisposed)
-                            subject!.OnError(e);
+                    catch (OperationCanceledException) { }
+                };
+                computed.Invalidated += OnInvalidated;
+                return Disposable.New(stop, cts => {
+                    try {
+                        cts.Cancel(true);
                     }
                     finally {
-                        if (error != null)
-                            stop.Dispose();
+                        var ctsCopy = cts;
+                        Task.Run(async () => {
+                            await Task.Delay(CancellationTokenDisposeDelay, CancellationToken.None).ConfigureAwait(false);
+                            ctsCopy.Dispose();
+                        }, CancellationToken.None);
                     }
-                };
-
-                subject.OnNext(computed);
-                computed.Invalidated += OnInvalidated;
-                return subject; 
-            }
+                }); 
+            }                               
         }
 
-        public static SubjectBase<IComputed> AutoRecompute(
+        public static Disposable<CancellationTokenSource> AutoRecompute(
+            this IComputed computed, 
+            Action<IComputed>? handler = null)
+            => computed.AutoRecompute(default, null, handler);
+
+        public static Disposable<CancellationTokenSource> AutoRecompute(
             this IComputed computed, 
             TimeSpan delay = default,
-            IClock? clock = null)
+            Action<IComputed>? handler = null)
+            => computed.AutoRecompute(delay, null, handler);
+
+        public static Disposable<CancellationTokenSource> AutoRecompute(
+            this IComputed computed, 
+            TimeSpan delay = default,
+            IClock? clock = null,
+            Action<IComputed>? handler = null)
         {
             clock ??= RealTimeClock.Instance;
-            return computed.Apply(AutoRecomputeApplyHandler.Instance, (delay, clock));
+            return computed.Apply(AutoRecomputeApplyHandler.Instance, (delay, clock, handler));
         }
     }
 }

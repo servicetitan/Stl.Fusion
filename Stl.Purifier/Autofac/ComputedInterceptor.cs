@@ -71,7 +71,7 @@ namespace Stl.Purifier.Autofac
                 if (method.CancellationTokenArgumentIndex >= 0)
                     cancellationToken = (CancellationToken) arguments[method.CancellationTokenArgumentIndex];
                 var proceedInfo = invocation.CaptureProceedInfo();
-                var usedBy = Computed.Current;
+                var usedBy = Computed.UntypedCurrent;
 
                 // Invoking the function
                 var key = new InterceptedInput(invocation.InvocationTarget, arguments, method.UsedArgumentsBitmap, proceedInfo);

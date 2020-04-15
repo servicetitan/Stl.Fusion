@@ -16,7 +16,7 @@ namespace Stl.Purifier
         Invalidated,
     }
 
-    public interface IComputed : IResult, IEquatable<IComputed>
+    public interface IComputed : IResult
     {
         IFunction Function { get; }
         object Input { get; }
@@ -29,39 +29,35 @@ namespace Stl.Purifier
 
         bool Invalidate();
         void AddUsed(IComputed used);
-        void RemoveUsed(IComputed used);
         void AddUsedBy(IComputed usedBy); // Should be called only from AddUsedValue
+        void RemoveUsedBy(IComputed usedBy);
         
         TResult Apply<TArg, TResult>(IComputedApplyHandler<TArg, TResult> handler, TArg arg);
     }
 
-    public interface IComputed<TOut> : IComputed, IResult<TOut>, 
-        IEquatable<IComputed<TOut>>
+    public interface IComputed<TOut> : IComputed, IResult<TOut>
     {
         bool TrySetOutput(Result<TOut> output);
         void SetOutput(Result<TOut> output);
     }
     
-    public interface IComputedWithTypedInput<TIn> : IComputed, 
-        IEquatable<IComputedWithTypedInput<TIn>>
+    public interface IComputedWithTypedInput<TIn> : IComputed 
         where TIn : notnull
     {
         new TIn Input { get; }
         new IFunction<TIn> Function { get; }
     }
 
-    public interface IComputed<TIn, TOut> : IComputed<TOut>, IComputedWithTypedInput<TIn>, 
-        IEquatable<IComputed<TIn, TOut>>
+    public interface IComputed<TIn, TOut> : IComputed<TOut>, IComputedWithTypedInput<TIn> 
         where TIn : notnull
     { }
 
-    public class Computed<TIn, TOut> : IComputed<TIn, TOut>,
-        IEquatable<Computed<TIn, TOut>> 
+    public class Computed<TIn, TOut> : IComputed<TIn, TOut>
         where TIn : notnull
     {
         private volatile int _state;
         private Result<TOut> _output = default!;
-        private RefHashSetSlim2<IComputed> _usedValues;
+        private RefHashSetSlim2<IComputed> _used;
         private HashSetSlim2<ComputedRef<TIn>> _usedBy;
         private event Action<IComputed>? _invalidated;
         private object Lock => this;
@@ -125,19 +121,12 @@ namespace Stl.Purifier
         public override string ToString() 
             => $"{GetType().Name}({Function}({Input}), Tag: #{Tag}, State: {State})";
 
-        public void AddUsed(IComputed used)
+        void IComputed.AddUsed(IComputed used)
         {
             lock (Lock) {
                 AssertStateIs(ComputedState.Computing);
                 used.AddUsedBy(this);
-                _usedValues.Add(used);
-            }
-        }
-
-        public void RemoveUsed(IComputed used)
-        {
-            lock (Lock) {
-                _usedValues.Remove(used);
+                _used.Add(used);
             }
         }
 
@@ -147,6 +136,14 @@ namespace Stl.Purifier
             lock (Lock) {
                 AssertStateIs(ComputedState.Computed);
                 _usedBy.Add(usedByRef);
+            }
+        }
+
+        void IComputed.RemoveUsedBy(IComputed usedBy)
+        {
+            var usedByRef = ((IComputedWithTypedInput<TIn>) usedBy).ToRef();
+            lock (Lock) {
+                _usedBy.Remove(usedByRef);
             }
         }
 
@@ -169,28 +166,26 @@ namespace Stl.Purifier
         {
             if (!TryChangeState(ComputedState.Invalidated))
                 return false;
-            ListBuffer<IComputed> dependencies = default;
+            ListBuffer<ComputedRef<TIn>> usedBy = default;
             try {
                 lock (Lock) {
-                    _usedBy.Apply(this, 
-                        (self, dRef) => dRef.TryResolve()?.RemoveUsed(self));
+                    usedBy = ListBuffer<ComputedRef<TIn>>.LeaseAndSetCount(_usedBy.Count);
+                    _usedBy.CopyTo(usedBy.Span);
                     _usedBy.Clear();
-
-                    dependencies = ListBuffer<IComputed>.LeaseAndSetCount(_usedValues.Count);
-                    _usedValues.CopyTo(dependencies.Span);
-                    _usedValues.Clear();
+                    _used.Apply(this, (self, c) => c.RemoveUsedBy(self));
+                    _used.Clear();
                 }
                 _invalidated?.Invoke(this);
-                for (var i = 0; i < dependencies.Span.Length; i++) {
-                    ref var d = ref dependencies.Span[i];
-                    d.Invalidate();
+                for (var i = 0; i < usedBy.Span.Length; i++) {
+                    ref var d = ref usedBy.Span[i];
+                    d.TryResolve()?.Invalidate();
                     // Just in case buffers aren't cleaned up when you return them back
-                    d = null!; 
+                    d = default!; 
                 }
                 return true;
             }
             finally {
-                dependencies.Release();
+                usedBy.Release();
             }
         }
 
@@ -232,52 +227,41 @@ namespace Stl.Purifier
             if (State == unexpectedState)
                 throw Errors.WrongComputedState(State);
         }
-
-        // Equality
-
-        bool IEquatable<IComputed>.Equals(IComputed? other) 
-            => Equals(other as Computed<TIn, TOut>);
-        bool IEquatable<IComputed<TOut>>.Equals(IComputed<TOut>? other) 
-            => Equals(other as Computed<TIn, TOut>);
-        bool IEquatable<IComputedWithTypedInput<TIn>>.Equals(IComputedWithTypedInput<TIn>? other) 
-            => Equals(other as Computed<TIn, TOut>);
-        bool IEquatable<IComputed<TIn, TOut>>.Equals(IComputed<TIn, TOut>? other) 
-            => Equals(other as Computed<TIn, TOut>);
-        public override bool Equals(object? other) 
-            => Equals(other as Computed<TIn, TOut>);
-        public bool Equals(Computed<TIn, TOut>? other) => 
-            !ReferenceEquals(null, other) 
-                && ReferenceEquals(Function, other.Function)
-                && EqualityComparer<TIn>.Default.Equals(Input, other.Input);
-
-        public override int GetHashCode() 
-            => HashCode.Combine(Function, EqualityComparer<TIn>.Default.GetHashCode(Input));
-        
-        public static bool operator ==(Computed<TIn, TOut>? left, Computed<TIn, TOut>? right) => Equals(left, right);
-        public static bool operator !=(Computed<TIn, TOut>? left, Computed<TIn, TOut>? right) => !Equals(left, right);
     }
 
     public static class Computed
     {
         private static readonly AsyncLocal<IComputed?> CurrentLocal = new AsyncLocal<IComputed?>();
         
-        public static IComputed? Current => CurrentLocal.Value;
+        public static IComputed? UntypedCurrent => CurrentLocal.Value;
+
+        public static IComputed<T> Current<T>()
+        {
+            var untypedCurrent = UntypedCurrent;
+            if (untypedCurrent is IComputed<T> c)
+                return c;
+            if (untypedCurrent == null)
+                throw Errors.ComputedCurrentIsNull();
+            throw Errors.ComputedCurrentIsOfIncompatibleType(typeof(IComputed<T>));
+        }
 
         public static IComputed<T> Return<T>(T value)
         {
-            var current = Current;
-            if (current is IComputed<T> c) {
-                c.SetOutput(value);
-                return c;
-            }
-            if (current == null)
-                throw Errors.NoCurrentComputed();
-            throw Errors.CurrentComputedIsOfIncompatibleType(typeof(T), current.OutputType);
+            var computed = Current<T>();
+            computed.SetOutput(value!);
+            return computed;
+        }
+
+        public static IComputed<T> TryReturn<T>(T value)
+        {
+            var computed = Current<T>();
+            computed.TrySetOutput(value!);
+            return computed;
         }
 
         public static Disposable<IComputed?> ChangeCurrent(IComputed? newCurrent)
         {
-            var oldCurrent = Current;
+            var oldCurrent = UntypedCurrent;
             CurrentLocal.Value = newCurrent;
             return Disposable.New(oldCurrent, oldCurrent1 => CurrentLocal.Value = oldCurrent1);
         }

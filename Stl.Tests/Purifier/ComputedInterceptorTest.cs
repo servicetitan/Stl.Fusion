@@ -15,32 +15,57 @@ namespace Stl.Tests.Purifier
         public ComputedInterceptorTest(ITestOutputHelper @out) : base(@out) { }
 
         [Fact]
-        public async Task BasicTest()
+        public async Task AutoRecomputeTest()
         {
             var c = CreateServices().GetRequiredService<ILifetimeScope>();
-            var tp = c.Resolve<ITimeProvider>();                                                      
-            var tpe = c.Resolve<ITimeProviderEx>();
-            var cNow = await tpe.GetTimeAsync();
-            using (var o = cNow.AutoRecompute()) {
-                using var _ = o.Subscribe(c => Out.WriteLine($"-> {c.Value}"));
+            var timeProvider = c.Resolve<ITimeProvider>();
+            var cTimer = await timeProvider.GetTimerAsync(TimeSpan.Zero);
+
+            var count = 0;
+            void Handler(IComputed computed)
+            {
+                Out.WriteLine($"{++count} -> {computed.Value}");
+            }
+
+            using (var o = cTimer.AutoRecompute(Handler)) {
                 await Task.Delay(2000);
             }
             Out.WriteLine("Disposed.");
-            await Task.Delay(2000);
-            Out.WriteLine("Finished.");
+            var lastCount = count;
+            await Task.Delay(1000);
+            count.Should().Be(lastCount);
         }
 
         [Fact]
-        public async Task CachingTest()
+        public async Task CachingTest1()
         {
             var c = CreateServices().GetRequiredService<ILifetimeScope>();
-            var tpe = c.Resolve<ITimeProviderEx>();
-            var cNowOld = tpe.GetTimeAsync();
+            var timeProvider = c.Resolve<ITimeProvider>();
+            var cNowOld = timeProvider.GetTimeAsync();
             await Task.Delay(500);
-            var cNow1 = await tpe.GetTimeAsync();
+            var cNow1 = await timeProvider.GetTimeAsync();
             cNow1.Should().NotBe(cNowOld);
-            var cNow2 = await tpe.GetTimeAsync();
+            var cNow2 = await timeProvider.GetTimeAsync();
             cNow2.Should().Be(cNow1);
+        }
+
+        [Fact]
+        public async Task CachingTest2()
+        {
+            var c = CreateServices().GetRequiredService<ILifetimeScope>();
+            var timeProvider = c.Resolve<ITimeProvider>();
+            var cTimer1 = timeProvider.GetTimerAsync(TimeSpan.FromSeconds(1));
+            var cTimer2 = timeProvider.GetTimerAsync(TimeSpan.FromSeconds(2));
+            cTimer1.Should().NotBe(cTimer2);
+            var cTimer1a = timeProvider.GetTimerAsync(TimeSpan.FromSeconds(1));
+            var cTimer2a = timeProvider.GetTimerAsync(TimeSpan.FromSeconds(2));
+            cTimer1.Should().Be(cTimer1a);
+            cTimer2.Should().Be(cTimer2a);
+            await Task.Delay(500);
+            cTimer1a = timeProvider.GetTimerAsync(TimeSpan.FromSeconds(1));
+            cTimer2a = timeProvider.GetTimerAsync(TimeSpan.FromSeconds(2));
+            cTimer1.Should().NotBe(cTimer1a);
+            cTimer2.Should().NotBe(cTimer2a);
         }
     }
 }

@@ -23,7 +23,11 @@ namespace Stl.Purifier.Autofac
             TagGenerator = tagGenerator;
         }
 
-        public override string ToString() => $"{GetType().Name}({Method})";
+        public override string ToString()
+        {
+            var mi = Method.Method;
+            return $"{GetType().Name}({mi.DeclaringType!.Name}.{mi.Name})";
+        }
 
         protected override async ValueTask<IComputed<TOut>> ComputeAsync(InterceptedInput input, CancellationToken cancellationToken)
         {
@@ -63,10 +67,6 @@ namespace Stl.Purifier.Autofac
                         }
                     }
                 }
-            }
-            catch (TaskCanceledException) {
-                // This exception "propagates" as-is
-                throw;
             }
             catch (OperationCanceledException) {
                 // This exception "propagates" as-is

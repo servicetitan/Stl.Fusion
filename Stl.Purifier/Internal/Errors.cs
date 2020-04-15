@@ -12,11 +12,10 @@ namespace Stl.Purifier.Internal
             => new InvalidOperationException(
                 $"Wrong Computed.State: {state}.");
 
-        public static Exception NoCurrentComputed()
-            => new NullReferenceException($"Computed.Current == null.");
-        public static Exception CurrentComputedIsOfIncompatibleType(Type expectedType, Type actualType)
-            => new NullReferenceException(
-                $"Computed.Current.Value type is {actualType.Name}, " +
-                $"but expected type is {expectedType.Name}.");
+        public static Exception ComputedCurrentIsNull()
+            => new NullReferenceException($"Computed.UntypedCurrent == null.");
+        public static Exception ComputedCurrentIsOfIncompatibleType(Type expectedType)
+            => new InvalidCastException(
+                $"Computed.UntypedCurrent can't be converted to '{expectedType.Name}'.");
     }
 }

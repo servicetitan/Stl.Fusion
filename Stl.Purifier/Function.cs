@@ -37,10 +37,6 @@ namespace Stl.Purifier
                     computed.TrySetOutput(value!);
                 }
             }
-            catch (TaskCanceledException) {
-                // This exception "propagates" as-is
-                throw;
-            }
             catch (OperationCanceledException) {
                 // This exception "propagates" as-is
                 throw;

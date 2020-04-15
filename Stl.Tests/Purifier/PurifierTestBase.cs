@@ -109,10 +109,7 @@ namespace Stl.Tests.Purifier
             // Services
             builder.RegisterType<TimeProvider>()
                 .As<ITimeProvider>()
-                .SingleInstance();
-            builder.RegisterType<TimeProvider>()
-                .As<ITimeProviderEx>()
-                .EnableInterfaceInterceptors()
+                .EnableClassInterceptors()
                 .InterceptedBy(typeof(ComputedInterceptor))
                 .SingleInstance();
         }
