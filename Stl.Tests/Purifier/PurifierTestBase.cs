@@ -98,11 +98,12 @@ namespace Stl.Tests.Purifier
         {
             // Interceptors
             builder.Register(c => new ConcurrentIdGenerator<long>(i => {
-                var id = i * 10000;
-                return () => ++id;
-            }));
+                    var id = i * 10000;
+                    return () => ++id;
+                })).SingleInstance();
             builder.RegisterType<ComputedRegistry<(IFunction, InterceptedInput)>>()
-                .As<IComputedRegistry<(IFunction, InterceptedInput)>>();
+                .As<IComputedRegistry<(IFunction, InterceptedInput)>>()
+                .SingleInstance();
             builder.RegisterType<ComputedInterceptor>();
 
             // Services

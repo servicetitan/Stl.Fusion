@@ -15,23 +15,23 @@ namespace Stl.Purifier
             IComputed? usedBy = null);
     }
 
-    public interface IFunction<TIn> : IFunction
+    public interface IFunction<in TIn> : IFunction
         where TIn : notnull
     {
-        ValueTask<IComputedWithTypedInput<TIn>> InvokeAsync(TIn input,
+        ValueTask<IComputed> InvokeAsync(TIn input,
             IComputed? usedBy = null,
             CancellationToken cancellationToken = default);
-        IComputedWithTypedInput<TIn>? TryGetCached(TIn input, 
+        IComputed? TryGetCached(TIn input, 
             IComputed? usedBy = null);
     }
     
-    public interface IFunction<TInput, TOut> : IFunction<TInput>
-        where TInput : notnull
+    public interface IFunction<in TIn, TOut> : IFunction<TIn>
+        where TIn : notnull
     {
-        new ValueTask<IComputed<TInput, TOut>> InvokeAsync(TInput input,
+        new ValueTask<IComputed<TOut>> InvokeAsync(TIn input,
             IComputed? usedBy = null,
             CancellationToken cancellationToken = default);
-        new IComputed<TInput, TOut>? TryGetCached(TInput input, 
+        new IComputed<TOut>? TryGetCached(TIn input, 
             IComputed? usedBy = null);
     }
 
@@ -59,12 +59,12 @@ namespace Stl.Purifier
             CancellationToken cancellationToken) 
             => await InvokeAsync((TIn) input, usedBy, cancellationToken).ConfigureAwait(false);
 
-        async ValueTask<IComputedWithTypedInput<TIn>> IFunction<TIn>.InvokeAsync(TIn input, 
+        async ValueTask<IComputed> IFunction<TIn>.InvokeAsync(TIn input, 
             IComputed? usedBy, 
             CancellationToken cancellationToken) 
             => await InvokeAsync(input, usedBy, cancellationToken).ConfigureAwait(false);
 
-        public async ValueTask<IComputed<TIn, TOut>> InvokeAsync(TIn input, 
+        public async ValueTask<IComputed<TOut>> InvokeAsync(TIn input, 
             IComputed? usedBy = null,
             CancellationToken cancellationToken = default)
         {
@@ -83,15 +83,15 @@ namespace Stl.Purifier
             result = await ComputeAsync(input, cancellationToken).ConfigureAwait(false);
             result.Invalidated += OnInvalidateHandler;
             usedBy?.AddUsed(result);
-            Register(result);
+            Register((IComputed<TIn, TOut>) result);
             return result;
         }
 
         IComputed? IFunction.TryGetCached(object input, IComputed? usedBy) 
             => TryGetCached((TIn) input);
-        IComputedWithTypedInput<TIn>? IFunction<TIn>.TryGetCached(TIn input, IComputed? usedBy) 
+        IComputed? IFunction<TIn>.TryGetCached(TIn input, IComputed? usedBy) 
             => TryGetCached(input);
-        public IComputed<TIn, TOut>? TryGetCached(TIn input, IComputed? usedBy = null)
+        public IComputed<TOut>? TryGetCached(TIn input, IComputed? usedBy = null)
         {
             var value = ComputedRegistry.TryGet((this, input)) as IComputed<TIn, TOut>;
             if (!value.IsNull())
@@ -101,7 +101,7 @@ namespace Stl.Purifier
 
         // Protected & private
 
-        protected abstract ValueTask<IComputed<TIn, TOut>> ComputeAsync(
+        protected abstract ValueTask<IComputed<TOut>> ComputeAsync(
             TIn input, CancellationToken cancellationToken);
 
         protected void Register(IComputed<TIn, TOut> computed) 

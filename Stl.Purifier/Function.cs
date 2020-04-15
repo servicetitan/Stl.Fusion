@@ -25,7 +25,7 @@ namespace Stl.Purifier
 
         public override string ToString() => $"{GetType().Name}({Implementation})";
 
-        protected override async ValueTask<IComputed<TIn, TOut>> ComputeAsync(TIn input, CancellationToken cancellationToken)
+        protected override async ValueTask<IComputed<TOut>> ComputeAsync(TIn input, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
             var workerId = HashCode.Combine(this, input);

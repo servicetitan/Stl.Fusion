@@ -25,7 +25,7 @@ namespace Stl.Purifier.Autofac
 
         public override string ToString() => $"{GetType().Name}({Method})";
 
-        protected override async ValueTask<IComputed<InterceptedInput, TOut>> ComputeAsync(InterceptedInput input, CancellationToken cancellationToken)
+        protected override async ValueTask<IComputed<TOut>> ComputeAsync(InterceptedInput input, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
             var workerId = HashCode.Combine(this, input);
