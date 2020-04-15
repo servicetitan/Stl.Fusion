@@ -71,13 +71,13 @@ namespace Stl.Purifier
             // Read-Lock-RetryRead-Compute-Store pattern
 
             var result = TryGetCached(input, usedBy);
-            if (!result.IsNull())
+            if (result != null)
                 return result;
 
             using var @lock = await Locks.LockAsync((this, input), cancellationToken).ConfigureAwait(false);
             
             result = TryGetCached(input, usedBy);
-            if (!result.IsNull())
+            if (result != null)
                 return result;
 
             result = await ComputeAsync(input, cancellationToken).ConfigureAwait(false);
@@ -94,7 +94,7 @@ namespace Stl.Purifier
         public IComputed<TOut>? TryGetCached(TIn input, IComputed? usedBy = null)
         {
             var value = ComputedRegistry.TryGet((this, input)) as IComputed<TIn, TOut>;
-            if (!value.IsNull())
+            if (value != null)
                 usedBy?.AddUsed(value);
             return value;
         }

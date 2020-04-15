@@ -31,9 +31,7 @@ namespace Stl.Purifier
         public IComputed? TryResolve()
         {
             var computed = Function.TryGetCached(Key);
-            return computed.IsNull() || computed.Tag != Tag 
-                ? null 
-                : computed;
+            return computed == null || computed.Tag != Tag ? null : computed;
         }
 
         // Equality

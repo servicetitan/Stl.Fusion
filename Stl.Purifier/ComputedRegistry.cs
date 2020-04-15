@@ -64,7 +64,7 @@ namespace Stl.Purifier
             MaybePrune(keyHash);
             if (Storage.TryGetValue(key, out var handle)) {
                 var value = (IComputed?) handle.Target;
-                if (!value.IsNull())
+                if (value != null)
                     return value;
                 if (Storage.TryRemove(key, handle))
                     GCHandlePool.Release(handle, keyHash);
@@ -95,7 +95,7 @@ namespace Stl.Purifier
             if (!Storage.TryGetValue(key, out var handle))
                 return;
             var target = (IComputed?) handle.Target;
-            if (target.IsNull() || ReferenceEquals(target, value)) {
+            if (target == null || ReferenceEquals(target, value)) {
                 // gcHandle.Target == null (is gone, i.e. to be pruned)
                 // or pointing to the right computation object
                 if (Storage.TryRemove(key, handle))
