@@ -37,6 +37,7 @@ namespace Stl.Purifier
 
     public interface IComputed<TOut> : IComputed, IResult<TOut>
     {
+        new Result<TOut> Output { get; }
         bool TrySetOutput(Result<TOut> output);
         void SetOutput(Result<TOut> output);
     }

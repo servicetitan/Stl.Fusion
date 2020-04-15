@@ -9,15 +9,15 @@ namespace Stl.Purifier
 {
     public static class ComputedBehavior
     {
-        internal sealed class AutoRecomputeApplyHandler : IComputedApplyHandler<(TimeSpan, IClock, Action<IComputed>?), Disposable<CancellationTokenSource>>
+        internal sealed class TrackChangesApplyHandler : IComputedApplyHandler<(TimeSpan, IClock, Delegate?), Disposable<CancellationTokenSource>>
         {
-            private static readonly TimeSpan CancellationTokenDisposeDelay = TimeSpan.FromSeconds(5); 
-            public static readonly AutoRecomputeApplyHandler Instance = new AutoRecomputeApplyHandler();
+            public static readonly TrackChangesApplyHandler Instance = new TrackChangesApplyHandler();
             
-            public Disposable<CancellationTokenSource> Apply<TIn, TOut>(IComputed<TIn, TOut> computed, (TimeSpan, IClock, Action<IComputed>?) arg) 
+            public Disposable<CancellationTokenSource> Apply<TIn, TOut>(IComputed<TIn, TOut> computed, (TimeSpan, IClock, Delegate?) arg) 
                 where TIn : notnull
             {
-                var (delay, clock, handler) = arg;
+                var (delay, clock, untypedHandler) = arg;
+                var handler = (Action<IComputed<TOut>, Result<TOut>>?) untypedHandler;
                 var stop = new CancellationTokenSource();
                 var stopToken = stop.Token;
 
@@ -29,10 +29,12 @@ namespace Stl.Purifier
                             await clock!.DelayAsync(delay, stopToken).ConfigureAwait(false);
                         else
                             await Task.Yield();
-                        var nextComputed = await function
+                        var prevOutput = prevComputed.Output;
+                        prevComputed = null!;
+                        var nextComputed = (IComputed<TOut>) await function
                             .InvokeAsync(input, null, stopToken)
                             .ConfigureAwait(false);
-                        handler?.Invoke(nextComputed);
+                        handler?.Invoke(nextComputed, prevOutput);
                         nextComputed.Invalidated += OnInvalidated;
                     }
                     catch (OperationCanceledException) { }
@@ -43,35 +45,36 @@ namespace Stl.Purifier
                         cts.Cancel(true);
                     }
                     finally {
-                        var ctsCopy = cts;
-                        Task.Run(async () => {
-                            await Task.Delay(CancellationTokenDisposeDelay, CancellationToken.None).ConfigureAwait(false);
-                            ctsCopy.Dispose();
-                        }, CancellationToken.None);
+                        cts.Dispose();
+                        // var ctsCopy = cts;
+                        // Task.Run(async () => {
+                        //     await Task.Delay(CancellationTokenDisposeDelay, CancellationToken.None).ConfigureAwait(false);
+                        //     ctsCopy.Dispose();
+                        // }, CancellationToken.None);
                     }
                 }); 
             }                               
         }
 
-        public static Disposable<CancellationTokenSource> AutoRecompute(
-            this IComputed computed, 
-            Action<IComputed>? handler = null)
-            => computed.AutoRecompute(default, null, handler);
+        public static Disposable<CancellationTokenSource> TrackChanges<T>(
+            this IComputed<T> computed, 
+            Action<IComputed<T>, Result<T>>? handler = null)
+            => computed.TrackChanges(default, null, handler);
 
-        public static Disposable<CancellationTokenSource> AutoRecompute(
-            this IComputed computed, 
+        public static Disposable<CancellationTokenSource> TrackChanges<T>(
+            this IComputed<T> computed, 
             TimeSpan delay = default,
-            Action<IComputed>? handler = null)
-            => computed.AutoRecompute(delay, null, handler);
+            Action<IComputed<T>, Result<T>>? handler = null)
+            => computed.TrackChanges(delay, null, handler);
 
-        public static Disposable<CancellationTokenSource> AutoRecompute(
-            this IComputed computed, 
+        public static Disposable<CancellationTokenSource> TrackChanges<T>(
+            this IComputed<T> computed, 
             TimeSpan delay = default,
             IClock? clock = null,
-            Action<IComputed>? handler = null)
+            Action<IComputed<T>, Result<T>>? handler = null)
         {
             clock ??= RealTimeClock.Instance;
-            return computed.Apply(AutoRecomputeApplyHandler.Instance, (delay, clock, handler));
+            return computed.Apply(TrackChangesApplyHandler.Instance, (delay, clock, handler));
         }
     }
 }

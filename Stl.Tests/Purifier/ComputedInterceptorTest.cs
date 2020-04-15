@@ -5,6 +5,7 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Purifier;
 using Stl.Tests.Purifier.Services;
+using Stl.Time;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -17,30 +18,30 @@ namespace Stl.Tests.Purifier
         [Fact]
         public async Task AutoRecomputeTest()
         {
-            var c = CreateServices().GetRequiredService<ILifetimeScope>();
-            var timeProvider = c.Resolve<ITimeProvider>();
+            var timeProvider = Container.Resolve<ITimeProvider>();
             var cTimer = await timeProvider.GetTimerAsync(TimeSpan.Zero);
 
             var count = 0;
-            void Handler(IComputed computed)
+            void Handler(IComputed<Moment> computed, Result<Moment> old)
             {
                 Out.WriteLine($"{++count} -> {computed.Value}");
             }
 
-            using (var o = cTimer.AutoRecompute(Handler)) {
+            using (var o = cTimer.TrackChanges(Handler)) {
                 await Task.Delay(2000);
             }
-            Out.WriteLine("Disposed.");
             var lastCount = count;
+            Out.WriteLine("Disposed.");
+
             await Task.Delay(1000);
             count.Should().Be(lastCount);
+            count.Should().BeGreaterThan(5);
         }
 
         [Fact]
         public async Task CachingTest1()
         {
-            var c = CreateServices().GetRequiredService<ILifetimeScope>();
-            var timeProvider = c.Resolve<ITimeProvider>();
+            var timeProvider = Container.Resolve<ITimeProvider>();
             var cNowOld = timeProvider.GetTimeAsync();
             await Task.Delay(500);
             var cNow1 = await timeProvider.GetTimeAsync();
@@ -52,8 +53,7 @@ namespace Stl.Tests.Purifier
         [Fact]
         public async Task CachingTest2()
         {
-            var c = CreateServices().GetRequiredService<ILifetimeScope>();
-            var timeProvider = c.Resolve<ITimeProvider>();
+            var timeProvider = Container.Resolve<ITimeProvider>();
             var cTimer1 = timeProvider.GetTimerAsync(TimeSpan.FromSeconds(1));
             var cTimer2 = timeProvider.GetTimerAsync(TimeSpan.FromSeconds(2));
             cTimer1.Should().NotBe(cTimer2);
