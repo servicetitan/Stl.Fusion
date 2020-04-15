@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Threading.Tasks;
+using Stl.Async;
 using Stl.Collections;
 using Stl.Collections.Slim;
 using Stl.Purifier.Internal;
@@ -28,6 +30,8 @@ namespace Stl.Purifier
         public event Action<IComputed> Invalidated;
 
         bool Invalidate();
+        ValueTask<IComputed> RecomputeAsync(CancellationToken cancellationToken = default);
+
         void AddUsed(IComputed used);
         void AddUsedBy(IComputed usedBy); // Should be called only from AddUsedValue
         void RemoveUsedBy(IComputed usedBy);
@@ -40,6 +44,8 @@ namespace Stl.Purifier
         new Result<TOut> Output { get; }
         bool TrySetOutput(Result<TOut> output);
         void SetOutput(Result<TOut> output);
+
+        new ValueTask<IComputed<TOut>> RecomputeAsync(CancellationToken cancellationToken = default);
     }
     
     public interface IComputedWithTypedInput<TIn> : IComputed 
@@ -189,6 +195,13 @@ namespace Stl.Purifier
                 usedBy.Release();
             }
         }
+
+        async ValueTask<IComputed> IComputed.RecomputeAsync(CancellationToken cancellationToken) 
+            => await RecomputeAsync(cancellationToken).ConfigureAwait(false);
+        public ValueTask<IComputed<TOut>> RecomputeAsync(CancellationToken cancellationToken)
+            => IsValid 
+                ? ValueTaskEx.FromResult((IComputed<TOut>) this) 
+                : Function.InvokeAsync(Input, null, cancellationToken);
 
         // Apply methods
 

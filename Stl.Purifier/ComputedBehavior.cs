@@ -24,16 +24,11 @@ namespace Stl.Purifier
                 async void OnInvalidated(IComputed c) {
                     try {
                         var prevComputed = (IComputed<TIn, TOut>) c;
-                        var (function, input) = (prevComputed.Function, prevComputed.Input);
                         if (delay > TimeSpan.Zero)
                             await clock!.DelayAsync(delay, stopToken).ConfigureAwait(false);
-                        else
-                            await Task.Yield();
+                        var nextComputed = await prevComputed.RecomputeAsync(stopToken).ConfigureAwait(false);
                         var prevOutput = prevComputed.Output;
                         prevComputed = null!;
-                        var nextComputed = (IComputed<TOut>) await function
-                            .InvokeAsync(input, null, stopToken)
-                            .ConfigureAwait(false);
                         handler?.Invoke(nextComputed, prevOutput);
                         nextComputed.Invalidated += OnInvalidated;
                     }
