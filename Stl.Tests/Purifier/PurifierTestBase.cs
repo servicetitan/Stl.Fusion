@@ -64,7 +64,7 @@ namespace Stl.Tests.Purifier
                 logging.AddProvider(testOutputLoggerProvider);
             });
 
-            // DBContext
+            // DbContext & related services
             var testType = GetType();
             var appTempDir = PathEx.GetApplicationTempDirectory("", true);
             var dbPath = appTempDir & PathEx.GetHashedName($"{testType.Name}_{testType.Namespace}.db");
@@ -73,7 +73,7 @@ namespace Stl.Tests.Purifier
 
             services
                 .AddEntityFrameworkSqlite()
-                .AddDbContext<TestDbContext>(builder => {
+                .AddDbContextPool<TestDbContext>(builder => {
                     builder.UseSqlite(
                         $"Data Source={dbPath}",
                         sqlite => { });
@@ -92,6 +92,8 @@ namespace Stl.Tests.Purifier
                         logger.AddProvider(testOutputLoggerProvider);
                     }));
                 });
+
+            services.AddSingleton<ITestDbContextPool, TestDbContextPool>();
         }
 
         protected virtual void ConfigureServices(ref ContainerBuilder builder)
@@ -109,6 +111,13 @@ namespace Stl.Tests.Purifier
             // Services
             builder.RegisterType<TimeProvider>()
                 .As<ITimeProvider>()
+                .EnableClassInterceptors()
+                .InterceptedBy(typeof(ComputedInterceptor))
+                .SingleInstance();
+
+            // Services
+            builder.RegisterType<UserProvider>()
+                .As<IUserProvider>()
                 .EnableClassInterceptors()
                 .InterceptedBy(typeof(ComputedInterceptor))
                 .SingleInstance();

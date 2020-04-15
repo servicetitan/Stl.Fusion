@@ -19,6 +19,11 @@ namespace Stl.Purifier.Autofac
 
         public static InterceptedMethodInfo? Create(MethodInfo method)
         {
+            var attribute = method.GetCustomAttribute<ComputedAttribute>(true);
+            var isEnabled = attribute?.IsEnabled ?? true;
+            if (!isEnabled)
+                return null;
+
             var returnType = method.ReturnType;
             if (!returnType.IsGenericType)
                 return null;

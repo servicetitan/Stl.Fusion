@@ -4,6 +4,7 @@ using Autofac;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Stl.Tests.Purifier.Model;
+using Stl.Tests.Purifier.Services;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -45,6 +46,17 @@ namespace Stl.Tests.Purifier
                 .SingleAsync();
             p1.Author.Id.Should().Be(u1.Id);
             // u.Posts.Count().Should().Be(1);
+        }
+
+        [Fact]
+        public async Task DeleteTest()
+        {
+            var userProvider = Container.Resolve<IUserProvider>();
+            var u = new User() {
+                Id = 1000,
+                Name = "Doesn't exist"
+            };
+            (await userProvider.DeleteAsync(u)).Should().BeFalse();
         }
     }
 }
