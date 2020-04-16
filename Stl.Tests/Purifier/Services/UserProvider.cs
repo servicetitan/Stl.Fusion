@@ -107,6 +107,9 @@ namespace Stl.Tests.Purifier.Services
 
         protected virtual async void OnChanged(User user, bool countChanged = true)
         {
+            if (GetType() == typeof(UserProvider))
+                // No caching interceptors, so nothing to do
+                return;
             var u = await TryGetAsync(user.Id, default, CallOptions.Invalidate).ConfigureAwait(false);
             if (u != default)
                 Log.LogDebug($"Invalidated: {user}");
