@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Autofac;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
 using Stl.Async;
 using Stl.Concurrency;
 using Stl.OS;
@@ -19,11 +20,12 @@ using Xunit.Abstractions;
 
 namespace Stl.Tests.Purifier
 {
-    public class PerformanceTest : PurifierTestBase, IAsyncLifetime
+    public abstract class PerformanceTestBase : PurifierTestBase, IAsyncLifetime
     {
         public int UserCount = 100;
 
-        public PerformanceTest(ITestOutputHelper @out) : base(@out) 
+        protected PerformanceTestBase(ITestOutputHelper @out, PurifierTestOptions? options = null) 
+            : base(@out, options)
             => IsLoggingEnabled = false;
 
         public override async Task InitializeAsync()
@@ -54,18 +56,26 @@ namespace Stl.Tests.Purifier
                 // No scope disposal, but it's fine for the test, I guess
             });
 
-            await Test("Caching providers", cachingProviderPool, 
+            var extraAction = (Action<User>) (user => { });
+            await Test("Caching providers", cachingProviderPool, extraAction, 
                 threadCount, iterationCount);
-            await Test("Non-caching providers", nonCachingProviderPool, 
-                threadCount, iterationCount / 100);
+            await Test("Non-caching providers", nonCachingProviderPool, extraAction, 
+                threadCount, iterationCount / 300);
+
+            extraAction = user => JsonConvert.SerializeObject(user);
+            await Test("Caching providers + serialization", cachingProviderPool, extraAction, 
+                threadCount, iterationCount / 10);
+            await Test("Non-caching providers + serialization", nonCachingProviderPool, extraAction, 
+                threadCount, iterationCount / 300);
         }
 
-        private async Task Test(string title, IPool<IUserProvider> userProviderPool, 
+        private async Task Test(string title, 
+            IPool<IUserProvider> userProviderPool, Action<User> extraAction, 
             int threadCount, int iterationCount, bool isWarmup = false)
         {
             if (!isWarmup)
                 // Warmup
-                await Test(title, userProviderPool, threadCount, iterationCount / 100, true);
+                await Test(title, userProviderPool, extraAction, threadCount, iterationCount / 100, true);
 
             async Task Mutator(CancellationToken cancellationToken)
             {
@@ -79,13 +89,14 @@ namespace Stl.Tests.Purifier
                     var userId = (long) rnd.Next(UserCount);
                     var user = await users.TryGetAsync(userId, cancellationToken)
                         .ConfigureAwait(false);
+                    user = user!.ToUnfrozen();
                     user!.Email = $"{++count}@counter.org";
                     await users.UpdateAsync(user, cancellationToken).ConfigureAwait(false);
                     await Task.Delay(10, cancellationToken).ConfigureAwait(false);
                 }
             }
 
-            async Task<long> Thread(int iterationCount)
+            async Task<long> Reader(int iterationCount)
             {
                 using var lease = userProviderPool.Rent();
                 var users = lease.Resource;
@@ -96,6 +107,7 @@ namespace Stl.Tests.Purifier
                     var user = await users.TryGetAsync(userId).ConfigureAwait(false);
                     if (user!.Id == userId)
                         count++;
+                    extraAction.Invoke(user!);
                 }
                 return count;
             }
@@ -117,7 +129,7 @@ namespace Stl.Tests.Purifier
             var mutatorTask = Task.Run(() => Mutator(stopCts.Token)); 
             var tasks = Enumerable
                 .Range(0, threadCount)
-                .Select(_ => Task.Run(() => Thread(iterationCount)))
+                .Select(_ => Task.Run(() => Reader(iterationCount)))
                 .ToArray();
             var results = await Task.WhenAll(tasks);
             var elapsed = RealTimeClock.HighResolutionNow - startTime;
@@ -131,5 +143,19 @@ namespace Stl.Tests.Purifier
             results.Length.Should().Be(threadCount);
             results.All(r => r == iterationCount).Should().BeTrue();
         }
+    }
+
+    public class PerformanceTest_Sqlite : PerformanceTestBase
+    {
+        public PerformanceTest_Sqlite(ITestOutputHelper @out) 
+            : base(@out, new PurifierTestOptions() { UseInMemoryDatabase = false })
+        { }
+    }
+
+    public class PerformanceTest_InMemoryDb : PerformanceTestBase
+    {
+        public PerformanceTest_InMemoryDb(ITestOutputHelper @out) 
+            : base(@out, new PurifierTestOptions() { UseInMemoryDatabase = true })
+        { }
     }
 }

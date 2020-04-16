@@ -5,6 +5,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Purifier;
@@ -40,18 +42,23 @@ namespace Stl.Tests.Purifier.Services
             using var lease = DbContextPool.Rent();
             var dbContext = lease.Item;
             var existingUser = (User?) null;
-            await using (var tx = await dbContext.Database.BeginTransactionAsync(cancellationToken)) {
-                var userId = user.Id;
-                if (orUpdate) {
-                    existingUser = await dbContext.Users.FindAsync(new [] {(object) userId}, cancellationToken);
-                    if (existingUser != null)
-                        dbContext.Users.Update(user);
-                }
-                if (existingUser == null)
-                    dbContext.Users.Add(user);
-                await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-                await tx.CommitAsync(cancellationToken);
+
+            var supportTransactions = !dbContext.Database.IsInMemory();
+            await using var tx = supportTransactions 
+                ? await dbContext.Database.BeginTransactionAsync(cancellationToken)
+                : (IDbContextTransaction?) null;
+
+            var userId = user.Id;
+            if (orUpdate) {
+                existingUser = await dbContext.Users.FindAsync(new [] {(object) userId}, cancellationToken);
+                if (existingUser != null)
+                    dbContext.Users.Update(user);
             }
+            if (existingUser == null)
+                dbContext.Users.Add(user);
+            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+            await (tx?.CommitAsync(cancellationToken) ?? Task.CompletedTask);
             OnChanged(user, existingUser == null);
         }
 
@@ -87,9 +94,11 @@ namespace Stl.Tests.Purifier.Services
         {
             using var lease = DbContextPool.Rent();
             var dbContext = lease.Item;
-            return await dbContext.Users
+            var user = await dbContext.Users
                 .FindAsync(new[] {(object) userId}, cancellationToken)
                 .ConfigureAwait(false);
+            user.Freeze();
+            return user;
         }
 
         public ValueTask<long> CountAsync(CancellationToken cancellationToken = default) 

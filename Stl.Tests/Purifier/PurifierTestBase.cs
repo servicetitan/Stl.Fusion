@@ -6,11 +6,9 @@ using System.Threading.Tasks;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Autofac.Extras.DynamicProxy;
-using EnumsNET;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Serilog;
 using Stl.Concurrency;
 using Stl.IO;
 using Stl.Locking;
@@ -25,15 +23,22 @@ using Xunit.DependencyInjection.Logging;
 
 namespace Stl.Tests.Purifier
 {
+    public class PurifierTestOptions
+    {
+        public bool UseInMemoryDatabase { get; set; }
+    }
+
     public class PurifierTestBase : TestBase
     {
+        public PurifierTestOptions Options { get; }
         public bool IsLoggingEnabled { get; set; } = true;
         public IServiceProvider Services { get; }
         public ILifetimeScope Container { get; }
         public TestDbContext DbContext => Container.Resolve<TestDbContext>();
 
-        public PurifierTestBase(ITestOutputHelper @out) : base(@out)
+        public PurifierTestBase(ITestOutputHelper @out, PurifierTestOptions? options = null) : base(@out)
         {
+            Options = options ?? new PurifierTestOptions();
             Services = CreateServices();
             Container = Services.GetRequiredService<ILifetimeScope>();
         }
@@ -96,11 +101,18 @@ namespace Stl.Tests.Purifier
             if (File.Exists(dbPath))
                 File.Delete(dbPath);
 
-            services
-                .AddEntityFrameworkSqlite()
-                .AddDbContextPool<TestDbContext>(builder => {
-                    builder.UseSqlite($"Data Source={dbPath}", sqlite => { });
-                });
+            if (Options.UseInMemoryDatabase)
+                services
+                    .AddEntityFrameworkInMemoryDatabase()
+                    .AddDbContextPool<TestDbContext>(builder => {
+                        builder.UseInMemoryDatabase(dbPath);
+                    });
+            else
+                services
+                    .AddEntityFrameworkSqlite()
+                    .AddDbContextPool<TestDbContext>(builder => {
+                        builder.UseSqlite($"Data Source={dbPath}", sqlite => { });
+                    });
 
             services.AddSingleton<ITestDbContextPool, TestDbContextPool>();
         }
