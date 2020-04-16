@@ -47,7 +47,7 @@ namespace Stl.Tests.Purifier
         {
             var users = Services.GetRequiredService<IUserProvider>();
             var threadCount = HardwareInfo.ProcessorCount * 10;
-            var iterationCount = 10000;
+            var iterationCount = Options.UseInMemoryDatabase ? 50_000 : 10_000;
 
             var cachingProviderPool = new ConcurrentPool<IUserProvider>(() => users);
             var nonCachingProviderPool = new ConcurrentPool<IUserProvider>(() => {

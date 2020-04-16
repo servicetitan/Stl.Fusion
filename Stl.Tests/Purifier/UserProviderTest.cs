@@ -74,10 +74,10 @@ namespace Stl.Tests.Purifier
                     var norrisName = norris?.Name ?? "(none)";
                     var cNow = await time.GetTimeAsync(ct).ConfigureAwait(false);
                     return $"@ {cNow.Value}: {norrisName}";  
-                }, default, CallOptions.Capture);
+                }, default, CallAction.CaptureComputed);
                 c = capture.Captured!;
             }
-            c.TrackChanges((cNext, _) => Out.WriteLine(cNext.Value));
+            c.AutoRecompute((cNext, rPrev, invalidatedBy) => Out.WriteLine(cNext.Value));
 
             for (var i = 1; i <= 10; i += 1) {
                 norris.Name = $"Chuck Norris Lvl{i}";

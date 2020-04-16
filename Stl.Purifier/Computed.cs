@@ -27,18 +27,14 @@ namespace Stl.Purifier
         long Tag { get; } // ~ Unique for the specific (Func, Key) pair
         ComputedState State { get; }
         bool IsValid { get; }
-        public event Action<IComputed> Invalidated;
+        public event Action<IComputed, object?> Invalidated;
 
-        bool Invalidate();
+        bool Invalidate(object? invalidatedBy = null);
         ValueTask<IComputed> RenewAsync(CancellationToken cancellationToken = default);
 
-        void AddUsed(IComputed used);
-        void AddUsedBy(IComputed usedBy); // Should be called only from AddUsedValue
-        void RemoveUsedBy(IComputed usedBy);
-        
         TResult Apply<TArg, TResult>(IComputedApplyHandler<TArg, TResult> handler, TArg arg);
     }
-
+    
     public interface IComputed<TOut> : IComputed, IResult<TOut>
     {
         new Result<TOut> Output { get; }
@@ -59,14 +55,15 @@ namespace Stl.Purifier
         where TIn : notnull
     { }
 
-    public class Computed<TIn, TOut> : IComputed<TIn, TOut>
+    public class Computed<TIn, TOut> : IComputed<TIn, TOut>, IComputedImpl
         where TIn : notnull
     {
         private volatile int _state;
         private Result<TOut> _output = default!;
-        private RefHashSetSlim2<IComputed> _used;
+        private RefHashSetSlim2<IComputedImpl> _used;
         private HashSetSlim2<ComputedRef<TIn>> _usedBy;
-        private event Action<IComputed>? _invalidated;
+        private event Action<IComputed, object?>? _invalidated;
+        private object? _invalidatedBy;
         private object Lock => this;
         
         public IFunction<TIn, TOut> Function { get; }
@@ -102,13 +99,13 @@ namespace Stl.Purifier
         // ReSharper disable once HeapView.BoxingAllocation
         object? IResult.Value => Output.Value;        
 
-        public event Action<IComputed> Invalidated {
+        public event Action<IComputed, object?> Invalidated {
             add {
                 lock (Lock) {
                     if (State != ComputedState.Invalidated)
                         _invalidated += value;
                     else
-                        value?.Invoke(this);
+                        value?.Invoke(this, _invalidatedBy);
                 }
             }
             remove {
@@ -128,7 +125,7 @@ namespace Stl.Purifier
         public override string ToString() 
             => $"{GetType().Name}({Function}({Input}), Tag: #{Tag}, State: {State})";
 
-        void IComputed.AddUsed(IComputed used)
+        void IComputedImpl.AddUsed(IComputedImpl used)
         {
             lock (Lock) {
                 AssertStateIs(ComputedState.Computing);
@@ -137,7 +134,7 @@ namespace Stl.Purifier
             }
         }
 
-        void IComputed.AddUsedBy(IComputed usedBy)
+        void IComputedImpl.AddUsedBy(IComputedImpl usedBy)
         {
             var usedByRef = ((IComputedWithTypedInput<TIn>) usedBy).ToRef();
             lock (Lock) {
@@ -146,7 +143,7 @@ namespace Stl.Purifier
             }
         }
 
-        void IComputed.RemoveUsedBy(IComputed usedBy)
+        void IComputedImpl.RemoveUsedBy(IComputedImpl usedBy)
         {
             var usedByRef = ((IComputedWithTypedInput<TIn>) usedBy).ToRef();
             lock (Lock) {
@@ -169,23 +166,24 @@ namespace Stl.Purifier
                 throw Errors.WrongComputedState(ComputedState.Computing, State);
         }
 
-        public bool Invalidate()
+        public bool Invalidate(object? invalidatedBy = null)
         {
             if (!TryChangeState(ComputedState.Invalidated))
                 return false;
             ListBuffer<ComputedRef<TIn>> usedBy = default;
             try {
                 lock (Lock) {
+                    _invalidatedBy = invalidatedBy;
                     usedBy = ListBuffer<ComputedRef<TIn>>.LeaseAndSetCount(_usedBy.Count);
                     _usedBy.CopyTo(usedBy.Span);
                     _usedBy.Clear();
                     _used.Apply(this, (self, c) => c.RemoveUsedBy(self));
                     _used.Clear();
                 }
-                _invalidated?.Invoke(this);
+                _invalidated?.Invoke(this, invalidatedBy);
                 for (var i = 0; i < usedBy.Span.Length; i++) {
                     ref var d = ref usedBy.Span[i];
-                    d.TryResolve()?.Invalidate();
+                    d.TryResolve()?.Invalidate(invalidatedBy);
                     // Just in case buffers aren't cleaned up when you return them back
                     d = default!; 
                 }

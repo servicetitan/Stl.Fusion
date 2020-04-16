@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
 using Stl.Locking;
+using Stl.Purifier.Internal;
 
 namespace Stl.Purifier
 {
@@ -39,7 +40,7 @@ namespace Stl.Purifier
         IFunction<TIn, TOut>
         where TIn : notnull
     {
-        protected Action<IComputed> OnInvalidateHandler { get; set; }
+        protected Action<IComputed, object?> OnInvalidateHandler { get; set; }
         protected IComputedRegistry<(IFunction, TIn)> ComputedRegistry { get; }
         protected IAsyncLockSet<(IFunction, TIn)> Locks { get; }
         protected object Lock => Locks;
@@ -51,7 +52,7 @@ namespace Stl.Purifier
             locks ??= new AsyncLockSet<(IFunction, TIn)>(ReentryMode.CheckedFail);
             ComputedRegistry = computedRegistry; 
             Locks = locks;
-            OnInvalidateHandler = c => Unregister((IComputed<TIn, TOut>) c);
+            OnInvalidateHandler = (c, _) => Unregister((IComputed<TIn, TOut>) c);
         }
 
         async ValueTask<IComputed> IFunction.InvokeAsync(object input, 
@@ -82,7 +83,7 @@ namespace Stl.Purifier
 
             result = await ComputeAsync(input, cancellationToken).ConfigureAwait(false);
             result.Invalidated += OnInvalidateHandler;
-            usedBy?.AddUsed(result);
+            ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) result);
             Register((IComputed<TIn, TOut>) result);
             return result;
         }
@@ -95,7 +96,7 @@ namespace Stl.Purifier
         {
             var value = ComputedRegistry.TryGet((this, input)) as IComputed<TIn, TOut>;
             if (value != null)
-                usedBy?.AddUsed(value);
+                ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) value);
             return value;
         }
 

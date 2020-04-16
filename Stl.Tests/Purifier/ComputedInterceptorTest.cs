@@ -22,12 +22,12 @@ namespace Stl.Tests.Purifier
             var cTimer = await timeProvider.GetTimerAsync(TimeSpan.Zero);
 
             var count = 0;
-            void Handler(IComputed<Moment> computed, Result<Moment> old)
+            void Handler(IComputed<Moment> computed, Result<Moment> old, object? invalidatedBy)
             {
                 Out.WriteLine($"{++count} -> {computed.Value}");
             }
 
-            using (var o = cTimer.TrackChanges(Handler)) {
+            using (var o = cTimer.AutoRecompute(Handler)) {
                 await Task.Delay(2000);
             }
             var lastCount = count;

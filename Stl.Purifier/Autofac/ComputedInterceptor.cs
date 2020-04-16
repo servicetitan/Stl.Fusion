@@ -79,9 +79,9 @@ namespace Stl.Purifier.Autofac
                 var callOptions = input.CallOptions;
 
                 // Special flow: CallOptions.CachedOnly & Invalidate 
-                if ((callOptions & CallOptions.CachedOnly) != 0) {
+                if ((callOptions.Action & CallAction.TryGetCached) != 0) {
                     var computed = function.TryGetCached(input);
-                    if ((callOptions & CallOptions.Invalidate) == CallOptions.Invalidate)
+                    if ((callOptions.Action & CallAction.Invalidate) == CallAction.Invalidate)
                         computed?.Invalidate();
                     if (method.ReturnsComputed) {
                         if (method.ReturnsValueTask)

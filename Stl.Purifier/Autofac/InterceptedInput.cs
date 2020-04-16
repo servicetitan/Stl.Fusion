@@ -19,8 +19,8 @@ namespace Stl.Purifier.Autofac
                 : default;
         public CallOptions CallOptions =>
             Method.CallOptionsArgumentIndex >= 0
-                ? (CallOptions) Arguments[Method.CallOptionsArgumentIndex]
-                : default;
+                ? ((CallOptions?) Arguments[Method.CallOptionsArgumentIndex] ?? CallOptions.Default)
+                : CallOptions.Default;
 
         public InterceptedInput(InterceptedMethod method, IInvocation invocation)
         {
@@ -60,10 +60,10 @@ namespace Stl.Purifier.Autofac
             if (method.CallOptionsArgumentIndex >= 0) {
                 var currentCallOptions = (CallOptions) arguments[method.CallOptionsArgumentIndex];
                 // Comparison w/ the existing one to avoid boxing when possible
-                if (currentCallOptions != default) {
+                if (currentCallOptions != null) {
                     // ReSharper disable once HeapView.BoxingAllocation
-                    arguments[method.CallOptionsArgumentIndex] = (CallOptions) 0;
-                    if ((currentCallOptions & CallOptions.Capture) != 0)
+                    arguments[method.CallOptionsArgumentIndex] = null!;
+                    if ((currentCallOptions.Action & CallAction.CaptureComputed) != 0)
                         ComputedCapture.TryCapture(computed);
                 }
             }

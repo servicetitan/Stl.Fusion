@@ -89,8 +89,8 @@ namespace Stl.Tests.Purifier.Services
         }
 
         public ValueTask<User?> TryGetAsync(long userId, CancellationToken cancellationToken)
-            => TryGetAsync(userId, cancellationToken, default);
-        protected virtual async ValueTask<User?> TryGetAsync(long userId, CancellationToken cancellationToken, CallOptions callOptions)
+            => TryGetAsync(userId, cancellationToken, null);
+        protected virtual async ValueTask<User?> TryGetAsync(long userId, CancellationToken cancellationToken, CallOptions? callOptions)
         {
             using var lease = DbContextPool.Rent();
             var dbContext = lease.Item;
@@ -102,8 +102,8 @@ namespace Stl.Tests.Purifier.Services
         }
 
         public ValueTask<long> CountAsync(CancellationToken cancellationToken = default) 
-            => CountAsync(cancellationToken, default);
-        protected virtual async ValueTask<long> CountAsync(CancellationToken cancellationToken, CallOptions callOptions)
+            => CountAsync(cancellationToken, null);
+        protected virtual async ValueTask<long> CountAsync(CancellationToken cancellationToken, CallOptions? callOptions)
         {
             using var lease = DbContextPool.Rent();
             var dbContext = lease.Item;
@@ -119,11 +119,11 @@ namespace Stl.Tests.Purifier.Services
             if (GetType() == typeof(UserProvider))
                 // No caching interceptors, so nothing to do
                 return;
-            var u = await TryGetAsync(user.Id, default, CallOptions.Invalidate).ConfigureAwait(false);
+            var u = await TryGetAsync(user.Id, default, CallAction.Invalidate).ConfigureAwait(false);
             if (u != default)
                 Log.LogDebug($"Invalidated: {user}");
             if (countChanged) {
-                var c = await CountAsync(default, CallOptions.Invalidate);
+                var c = await CountAsync(default, CallAction.Invalidate);
                 if (c != default)
                     Log.LogDebug($"Invalidated: Users.Count");
             }
