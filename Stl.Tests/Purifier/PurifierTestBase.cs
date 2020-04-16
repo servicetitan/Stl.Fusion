@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
@@ -9,6 +10,7 @@ using EnumsNET;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Serilog;
 using Stl.Concurrency;
 using Stl.IO;
 using Stl.Purifier;
@@ -18,6 +20,7 @@ using Stl.Testing.Internal;
 using Stl.Tests.Purifier.Model;
 using Stl.Tests.Purifier.Services;
 using Xunit.Abstractions;
+using Xunit.DependencyInjection;
 using Xunit.DependencyInjection.Logging;
 
 namespace Stl.Tests.Purifier
@@ -43,25 +46,44 @@ namespace Stl.Tests.Purifier
         {
             // IServiceCollection-based services
             var services = (IServiceCollection) new ServiceCollection();
-            ConfigureServices(ref services);
+            ConfigureServices(services);
 
             // Native Autofac services
             var builder = new AutofacServiceProviderFactory().CreateBuilder(services);
-            ConfigureServices(ref builder);
+            ConfigureServices(builder);
 
             var container = builder.Build();
             return new AutofacServiceProvider(container);
         }
 
-        protected virtual void ConfigureServices(ref IServiceCollection services)
+        protected virtual void ConfigureServices(IServiceCollection services)
         {
-            var testOutputLoggerProvider = new XunitTestOutputLoggerProvider(
-                new SimpleTestOutputHelperAccessor(Out));
+
+            services.AddSingleton(Out);
 
             // Logging
             services.AddLogging(logging => {
+                var debugCategories = new HashSet<string> {
+                    "Stl.Tests.Purifier",
+                    // DbLoggerCategory.Database.Transaction.Name,
+                    // DbLoggerCategory.Database.Connection.Name,
+                    // DbLoggerCategory.Database.Command.Name,
+                    // DbLoggerCategory.Query.Name,
+                    // DbLoggerCategory.Update.Name,
+                };
+
+                bool LogFilter(string category, LogLevel level)
+                    => debugCategories.Any(category.StartsWith) && level >= LogLevel.Debug;
+
+                logging.ClearProviders();
+                logging.SetMinimumLevel(LogLevel.Information);
+                logging.AddFilter(LogFilter);
                 logging.AddDebug();
-                logging.AddProvider(testOutputLoggerProvider);
+                // XUnit logging requires weird setup b/c otherwise it filters out
+                // everything below LogLevel.Information 
+                logging.AddProvider(new XunitTestOutputLoggerProvider(
+                    new SimpleTestOutputHelperAccessor(Out), 
+                    LogFilter));
             });
 
             // DbContext & related services
@@ -74,29 +96,13 @@ namespace Stl.Tests.Purifier
             services
                 .AddEntityFrameworkSqlite()
                 .AddDbContextPool<TestDbContext>(builder => {
-                    builder.UseSqlite(
-                        $"Data Source={dbPath}",
-                        sqlite => { });
-                    builder.UseLoggerFactory(LoggerFactory.Create(logger => {
-                        var categories = new HashSet<string> {
-                            DbLoggerCategory.Database.Transaction.Name,
-                            DbLoggerCategory.Database.Connection.Name,
-                            // DbLoggerCategory.Database.Command.Name,
-                            DbLoggerCategory.Query.Name,
-                            DbLoggerCategory.Update.Name,
-                        };
-                        logger.AddFilter((category, level) =>
-                            categories.Contains(category)
-                            && level >= LogLevel.Debug);
-                        logger.AddDebug();
-                        logger.AddProvider(testOutputLoggerProvider);
-                    }));
+                    builder.UseSqlite($"Data Source={dbPath}", sqlite => { });
                 });
 
             services.AddSingleton<ITestDbContextPool, TestDbContextPool>();
         }
 
-        protected virtual void ConfigureServices(ref ContainerBuilder builder)
+        protected virtual void ConfigureServices(ContainerBuilder builder)
         {
             // Interceptors
             builder.Register(c => new ConcurrentIdGenerator<long>(i => {
@@ -106,6 +112,7 @@ namespace Stl.Tests.Purifier
             builder.RegisterType<ComputedRegistry<(IFunction, InterceptedInput)>>()
                 .As<IComputedRegistry<(IFunction, InterceptedInput)>>()
                 .SingleInstance();
+            builder.Register(c => ArgumentComparerProvider.Default);
             builder.RegisterType<ComputedInterceptor>();
 
             // Services

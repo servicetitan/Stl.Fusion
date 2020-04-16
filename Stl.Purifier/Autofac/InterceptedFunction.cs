@@ -9,11 +9,11 @@ namespace Stl.Purifier.Autofac
 {
     public class InterceptedFunction<TOut> : FunctionBase<InterceptedInput, TOut>
     {
-        public InterceptedMethodInfo Method { get; }
+        public InterceptedMethod Method { get; }
         protected ConcurrentIdGenerator<long> TagGenerator { get; }
 
         public InterceptedFunction(
-            InterceptedMethodInfo method,
+            InterceptedMethod method,
             ConcurrentIdGenerator<long> tagGenerator,
             IComputedRegistry<(IFunction, InterceptedInput)> computedRegistry,
             IAsyncLockSet<(IFunction, InterceptedInput)>? locks = null) 
@@ -25,46 +25,42 @@ namespace Stl.Purifier.Autofac
 
         public override string ToString()
         {
-            var mi = Method.Method;
+            var mi = Method.MethodInfo;
             return $"{GetType().Name}({mi.DeclaringType!.Name}.{mi.Name})";
         }
 
         protected override async ValueTask<IComputed<TOut>> ComputeAsync(InterceptedInput input, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var workerId = HashCode.Combine(this, input);
-            var tag = TagGenerator.Next(workerId);
+            
+            var tag = TagGenerator.Next(input.HashCode);
             var output = new Computed<InterceptedInput, TOut>(this, input, tag);
             try {
-                using (Computed.ChangeCurrent(output)) {
-                    var method = Method;
-                    var proceedInfo = input.ProceedInfo;
-                    var invocation = proceedInfo.GetInvocation();
-                    proceedInfo.Invoke();
-                    var returnValue = invocation.ReturnValue;
-                    if (method.ReturnsValueTask) {
-                        if (method.ReturnsComputed) {
-                            var task = (ValueTask<IComputed<TOut>>) returnValue;
-                            await task.ConfigureAwait(false);
-                            // No need to set output, b/c it is already set
-                        }
-                        else {
-                            var task = (ValueTask<TOut>) returnValue;
-                            var value = await task.ConfigureAwait(false);
-                            output.TrySetOutput(value!);
-                        }
+                using var _ = Computed.ChangeCurrent(output);
+                var returnValue = input.InvokeOriginalFunction(output, cancellationToken);
+                var method = Method;
+                if (method.ReturnsValueTask) {
+                    if (method.ReturnsComputed) {
+                        var task = (ValueTask<IComputed<TOut>>) returnValue;
+                        await task.ConfigureAwait(false);
+                        // No need to set output, b/c it is already set
                     }
                     else {
-                        if (method.ReturnsComputed) {
-                            var task = (Task<IComputed<TOut>>) returnValue;
-                            await task.ConfigureAwait(false);
-                            // No need to set output, b/c it is already set
-                        }
-                        else {
-                            var task = (Task<TOut>) returnValue;
-                            var value = await task.ConfigureAwait(false);
-                            output.TrySetOutput(value!);
-                        }
+                        var task = (ValueTask<TOut>) returnValue;
+                        var value = await task.ConfigureAwait(false);
+                        output.TrySetOutput(value!);
+                    }
+                }
+                else {
+                    if (method.ReturnsComputed) {
+                        var task = (Task<IComputed<TOut>>) returnValue;
+                        await task.ConfigureAwait(false);
+                        // No need to set output, b/c it is already set
+                    }
+                    else {
+                        var task = (Task<TOut>) returnValue;
+                        var value = await task.ConfigureAwait(false);
+                        output.TrySetOutput(value!);
                     }
                 }
             }
@@ -79,6 +75,14 @@ namespace Stl.Purifier.Autofac
                 // throwing it further will probably make it just worse,
                 // since the the caller have to take this scenario into acc.
             }
+            return output;
+        }
+
+        public override IComputed<TOut>? TryGetCached(InterceptedInput input, IComputed? usedBy = null)
+        {
+            var output = base.TryGetCached(input, usedBy);
+            if (output != null && (input.CallOptions & CallOptions.Capture) != 0)
+                ComputedCapture.TryCapture(output);
             return output;
         }
     }

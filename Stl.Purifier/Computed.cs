@@ -246,12 +246,12 @@ namespace Stl.Purifier
     public static class Computed
     {
         private static readonly AsyncLocal<IComputed?> CurrentLocal = new AsyncLocal<IComputed?>();
-        
-        public static IComputed? UntypedCurrent => CurrentLocal.Value;
+
+        public static IComputed? Current() => CurrentLocal.Value;
 
         public static IComputed<T> Current<T>()
         {
-            var untypedCurrent = UntypedCurrent;
+            var untypedCurrent = Current();
             if (untypedCurrent is IComputed<T> c)
                 return c;
             if (untypedCurrent == null)
@@ -275,7 +275,7 @@ namespace Stl.Purifier
 
         public static Disposable<IComputed?> ChangeCurrent(IComputed? newCurrent)
         {
-            var oldCurrent = UntypedCurrent;
+            var oldCurrent = Current();
             CurrentLocal.Value = newCurrent;
             return Disposable.New(oldCurrent, oldCurrent1 => CurrentLocal.Value = oldCurrent1);
         }

@@ -91,7 +91,7 @@ namespace Stl.Purifier
             => TryGetCached((TIn) input);
         IComputed? IFunction<TIn>.TryGetCached(TIn input, IComputed? usedBy) 
             => TryGetCached(input);
-        public IComputed<TOut>? TryGetCached(TIn input, IComputed? usedBy = null)
+        public virtual IComputed<TOut>? TryGetCached(TIn input, IComputed? usedBy = null)
         {
             var value = ComputedRegistry.TryGet((this, input)) as IComputed<TIn, TOut>;
             if (value != null)

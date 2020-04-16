@@ -31,13 +31,13 @@ namespace Stl.Plugins.Services
             var cacheKey = GetCacheKey();
             if (cacheKey == null) {
                 // Caching is off
-                Logger.LogInformation("Plugin cache is disabled (cache key is null).");
+                Logger.LogDebug("Plugin cache is disabled (cache key is null).");
                 return await CreatePluginSetInfoAsync();
             }
             PluginSetInfo pluginSetInfo;
             var result = await Cache.TryGetAsync(cacheKey).ConfigureAwait(false);
             if (result.IsSome(out var v)) {
-                Logger.LogInformation("Cached plugin set info found.");
+                Logger.LogDebug("Cached plugin set info found.");
                 try {
                     pluginSetInfo = Deserialize(v);
                     return pluginSetInfo;
@@ -46,10 +46,10 @@ namespace Stl.Plugins.Services
                     Logger.LogError(e, "Couldn't deserialize cached plugin set info.");
                 }
             }
-            Logger.LogInformation("Cached plugin set info is not available; populating...");
+            Logger.LogDebug("Cached plugin set info is not available; populating...");
             pluginSetInfo = await CreatePluginSetInfoAsync();
             await Cache.SetAsync(cacheKey, Serialize(pluginSetInfo)).ConfigureAwait(false);
-            Logger.LogInformation("Plugin set info is populated and cached.");
+            Logger.LogDebug("Plugin set info is populated and cached.");
             return pluginSetInfo;
         }
 

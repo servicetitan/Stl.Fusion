@@ -28,7 +28,7 @@ namespace Stl.Tests.Purifier.Services
         public Moment GetTime()
         {
             var now = RealTimeClock.Now;
-            Log.LogInformation($"GetTime() -> {now}");
+            Log.LogDebug($"GetTime() -> {now}");
             return now;
         }
 
