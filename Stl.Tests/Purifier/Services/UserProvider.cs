@@ -39,7 +39,7 @@ namespace Stl.Tests.Purifier.Services
         {
             using var lease = DbContextPool.Rent();
             var dbContext = lease.Item;
-            var existingUser = (User) null;
+            var existingUser = (User?) null;
             await using (var tx = await dbContext.Database.BeginTransactionAsync(cancellationToken)) {
                 var userId = user.Id;
                 if (orUpdate) {

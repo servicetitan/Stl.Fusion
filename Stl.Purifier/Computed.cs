@@ -30,7 +30,7 @@ namespace Stl.Purifier
         public event Action<IComputed> Invalidated;
 
         bool Invalidate();
-        ValueTask<IComputed> RecomputeAsync(CancellationToken cancellationToken = default);
+        ValueTask<IComputed> RenewAsync(CancellationToken cancellationToken = default);
 
         void AddUsed(IComputed used);
         void AddUsedBy(IComputed usedBy); // Should be called only from AddUsedValue
@@ -45,7 +45,7 @@ namespace Stl.Purifier
         bool TrySetOutput(Result<TOut> output);
         void SetOutput(Result<TOut> output);
 
-        new ValueTask<IComputed<TOut>> RecomputeAsync(CancellationToken cancellationToken = default);
+        new ValueTask<IComputed<TOut>> RenewAsync(CancellationToken cancellationToken = default);
     }
     
     public interface IComputedWithTypedInput<TIn> : IComputed 
@@ -196,9 +196,9 @@ namespace Stl.Purifier
             }
         }
 
-        async ValueTask<IComputed> IComputed.RecomputeAsync(CancellationToken cancellationToken) 
-            => await RecomputeAsync(cancellationToken).ConfigureAwait(false);
-        public ValueTask<IComputed<TOut>> RecomputeAsync(CancellationToken cancellationToken)
+        async ValueTask<IComputed> IComputed.RenewAsync(CancellationToken cancellationToken) 
+            => await RenewAsync(cancellationToken).ConfigureAwait(false);
+        public ValueTask<IComputed<TOut>> RenewAsync(CancellationToken cancellationToken)
             => IsValid 
                 ? ValueTaskEx.FromResult((IComputed<TOut>) this) 
                 : Function.InvokeAsync(Input, null, cancellationToken);

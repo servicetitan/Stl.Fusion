@@ -23,8 +23,7 @@
     <PackageReference Include="Concurrent.FastReflection.NetStandard" Version="1.2.1.1" />
     <PackageReference Include="Enums.NET" Version="3.0.3" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Include="System.CommandLine.Experimental" Version="0.3.0-alpha.19577.1" />
-    <PackageReference Include="System.CommandLine.Rendering" Version="0.3.0-alpha.20213.1" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.20214.1" />
     <PackageReference Include="System.Reactive" Version="4.4.1" />
   </ItemGroup>
 

@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using Serilog;
 using Stl.Concurrency;
 using Stl.IO;
+using Stl.Locking;
 using Stl.Purifier;
 using Stl.Purifier.Autofac;
 using Stl.Testing;
@@ -104,16 +105,25 @@ namespace Stl.Tests.Purifier
 
         protected virtual void ConfigureServices(ContainerBuilder builder)
         {
-            // Interceptors
+            // Computed/Function related
             builder.Register(c => new ConcurrentIdGenerator<long>(i => {
                     var id = i * 10000;
                     return () => ++id;
                 })).SingleInstance();
-            builder.RegisterType<ComputedRegistry<(IFunction, InterceptedInput)>>()
-                .As<IComputedRegistry<(IFunction, InterceptedInput)>>()
+            builder.RegisterGeneric(typeof(ComputedRegistry<>))
+                .As(typeof(IComputedRegistry<>))
                 .SingleInstance();
-            builder.Register(c => ArgumentComparerProvider.Default);
-            builder.RegisterType<ComputedInterceptor>();
+            builder.RegisterGeneric(typeof(AsyncLockSet<>))
+                .As(typeof(IAsyncLockSet<>))
+                .SingleInstance();
+            builder.Register(c => ArgumentComparerProvider.Default)
+                .SingleInstance();
+            builder.RegisterType<ComputedInterceptor>()
+                .SingleInstance();
+            builder.RegisterType<CustomFunction>()
+                .EnableClassInterceptors()
+                .InterceptedBy(typeof(ComputedInterceptor))
+                .SingleInstance();
 
             // Services
             builder.RegisterType<TimeProvider>()
@@ -121,8 +131,6 @@ namespace Stl.Tests.Purifier
                 .EnableClassInterceptors()
                 .InterceptedBy(typeof(ComputedInterceptor))
                 .SingleInstance();
-
-            // Services
             builder.RegisterType<UserProvider>()
                 .As<IUserProvider>()
                 .EnableClassInterceptors()

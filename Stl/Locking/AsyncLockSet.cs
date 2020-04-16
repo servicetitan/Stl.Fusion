@@ -20,6 +20,7 @@ namespace Stl.Locking
         public ReentryMode ReentryMode { get; }
         public int AcquiredLockCount => _locks.Count;
 
+        public AsyncLockSet() : this(ReentryMode.CheckedFail) { }
         public AsyncLockSet(ReentryMode reentryMode)
         {
             ReentryMode = reentryMode;

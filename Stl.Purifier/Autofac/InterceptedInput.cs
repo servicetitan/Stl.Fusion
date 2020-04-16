@@ -62,7 +62,7 @@ namespace Stl.Purifier.Autofac
                 // Comparison w/ the existing one to avoid boxing when possible
                 if (currentCallOptions != default) {
                     // ReSharper disable once HeapView.BoxingAllocation
-                    arguments[method.CancellationTokenArgumentIndex] = (CallOptions) 0;
+                    arguments[method.CallOptionsArgumentIndex] = (CallOptions) 0;
                     if ((currentCallOptions & CallOptions.Capture) != 0)
                         ComputedCapture.TryCapture(computed);
                 }

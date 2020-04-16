@@ -39,7 +39,7 @@ namespace Stl.Tests.Plugins.Extensions
                 .Build();
 
             testConsole.Clear();
-            parser.Invoke("add --a 1 --b 2").Equals(0);
+            parser.Invoke("add --a:1 --b:2").Equals(0);
             testConsole.Should().Contain("Add: 3");
 
             testConsole.Clear();

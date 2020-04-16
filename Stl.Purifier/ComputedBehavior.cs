@@ -26,7 +26,7 @@ namespace Stl.Purifier
                         var prevComputed = (IComputed<TIn, TOut>) c;
                         if (delay > TimeSpan.Zero)
                             await clock!.DelayAsync(delay, stopToken).ConfigureAwait(false);
-                        var nextComputed = await prevComputed.RecomputeAsync(stopToken).ConfigureAwait(false);
+                        var nextComputed = await prevComputed.RenewAsync(stopToken).ConfigureAwait(false);
                         var prevOutput = prevComputed.Output;
                         prevComputed = null!;
                         handler?.Invoke(nextComputed, prevOutput);

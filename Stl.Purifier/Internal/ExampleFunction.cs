@@ -1,18 +1,21 @@
 using System;
+using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Stl.Concurrency;
 using Stl.Locking;
 
-namespace Stl.Purifier
+namespace Stl.Purifier.Internal
 {
-    public class Function<TIn, TOut> : FunctionBase<TIn, TOut>
+    // Unused, left here solely as an example of simpler impl. 
+    internal class ExampleFunction<TIn, TOut> : FunctionBase<TIn, TOut>
         where TIn : notnull
     {
         protected Func<TIn, CancellationToken, ValueTask<TOut>> Implementation { get; }
         protected ConcurrentIdGenerator<long> TagGenerator { get; }
 
-        public Function(
+        public ExampleFunction(
             Func<TIn, CancellationToken, ValueTask<TOut>> implementation,
             ConcurrentIdGenerator<long> tagGenerator,
             IComputedRegistry<(IFunction, TIn)> computedRegistry,
@@ -49,6 +52,32 @@ namespace Stl.Purifier
                 // since the the caller have to take this scenario into acc.
             }
             return computed;
+        }
+    }
+
+    internal static class ExampleFunction
+    {
+        public static ExampleFunction<Unit, TOut> New<TOut>(
+            Func<CancellationToken, ValueTask<TOut>> implementation,
+            IServiceProvider services)
+        {
+            return new ExampleFunction<Unit, TOut>((u, ct) => implementation(ct),
+                services.GetRequiredService<ConcurrentIdGenerator<long>>(),
+                services.GetRequiredService<IComputedRegistry<(IFunction, Unit)>>(),
+                services.GetRequiredService<IAsyncLockSet<(IFunction, Unit)>>()
+            );
+        }
+
+        public static ExampleFunction<TIn, TOut> New<TIn, TOut>(
+            Func<TIn, CancellationToken, ValueTask<TOut>> implementation,
+            IServiceProvider services)
+            where TIn : notnull
+        {
+            return new ExampleFunction<TIn, TOut>(implementation,
+                services.GetRequiredService<ConcurrentIdGenerator<long>>(),
+                services.GetRequiredService<IComputedRegistry<(IFunction, TIn)>>(),
+                services.GetRequiredService<IAsyncLockSet<(IFunction, TIn)>>()
+            );
         }
     }
 }
