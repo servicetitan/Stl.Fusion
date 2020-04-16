@@ -21,13 +21,13 @@ using Stl.Testing.Internal;
 using Stl.Tests.Purifier.Model;
 using Stl.Tests.Purifier.Services;
 using Xunit.Abstractions;
-using Xunit.DependencyInjection;
 using Xunit.DependencyInjection.Logging;
 
 namespace Stl.Tests.Purifier
 {
     public class PurifierTestBase : TestBase
     {
+        public bool IsLoggingEnabled { get; set; } = true;
         public IServiceProvider Services { get; }
         public ILifetimeScope Container { get; }
         public TestDbContext DbContext => Container.Resolve<TestDbContext>();
@@ -41,7 +41,7 @@ namespace Stl.Tests.Purifier
         public virtual Task InitializeAsync() 
             => DbContext.Database.EnsureCreatedAsync();
         public virtual Task DisposeAsync() 
-            => Task.CompletedTask;
+            => Task.CompletedTask.ContinueWith(_ => Container?.Dispose()); 
 
         protected virtual IServiceProvider CreateServices()
         {
@@ -74,7 +74,9 @@ namespace Stl.Tests.Purifier
                 };
 
                 bool LogFilter(string category, LogLevel level)
-                    => debugCategories.Any(category.StartsWith) && level >= LogLevel.Debug;
+                    => IsLoggingEnabled && 
+                        debugCategories.Any(category.StartsWith) 
+                        && level >= LogLevel.Debug;
 
                 logging.ClearProviders();
                 logging.SetMinimumLevel(LogLevel.Information);
@@ -136,6 +138,9 @@ namespace Stl.Tests.Purifier
                 .EnableClassInterceptors()
                 .InterceptedBy(typeof(ComputedInterceptor))
                 .SingleInstance();
+            builder.RegisterType<UserProvider>()
+                .As<UserProvider>()
+                .InstancePerLifetimeScope();
         }
     }
 }

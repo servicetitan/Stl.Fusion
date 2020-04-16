@@ -49,6 +49,9 @@ namespace Stl.Locking
                     break;
                 if (localLocks?.Value > 0)
                     return CreateDisposable(myLock, localLocks);
+                if (existingLock.Task.IsCompleted)
+                    // Task.WhenAny will return immediately, so let's save a bit
+                    continue; 
                 cancellationTask ??= cancellationToken.ToTask(true);
                 await Task.WhenAny(existingLock.Task, cancellationTask).ConfigureAwait(false);
             }
@@ -75,7 +78,8 @@ namespace Stl.Locking
                         reentryCount = --localLocks1.Value;
                     Debug.Assert(reentryCount >= 0);
                     if (reentryCount == 0)
-                        myLock1.SetResult(default); // Must be done after setting _lock to null
+                        // Must be done after setting _lock to null
+                        myLock1.SetResult(default); 
                 }
             });
         }

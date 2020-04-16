@@ -41,15 +41,20 @@ namespace Stl.Locking
         {
             // This has to be done in non-async method, otherwise the Value
             // that's set below won't "propagate" back to the calling async method.
-            if (_localLocks != null)
-                _localLocks.Value ??= new Dictionary<TKey, int>()!;
-            return InternalLockAsync(key, cancellationToken);
+            if (_localLocks == null)
+                return InternalLockAsync(key, null, cancellationToken);
+            
+            var localLocks = _localLocks.Value;
+            if (localLocks == null) {
+                localLocks = new Dictionary<TKey, int>();
+                _localLocks.Value = localLocks;
+            }
+            return InternalLockAsync(key, localLocks, cancellationToken);
         }
 
         private async ValueTask<IDisposable> InternalLockAsync(
-            TKey key, CancellationToken cancellationToken = default)
+            TKey key, Dictionary<TKey, int>? localLocks, CancellationToken cancellationToken = default)
         {
-            var localLocks = _localLocks?.Value;
             var myLock = new TaskCompletionSource<Unit>();
             var cancellationTask = (Task?) null;
             while (true) {
@@ -60,6 +65,9 @@ namespace Stl.Locking
                     continue;
                 if (localLocks?.ContainsKey(key) == true)
                     return CreateDisposable(key, myLock, localLocks);
+                if (existingLock.Task.IsCompleted)
+                    // Task.WhenAny will return immediately, so let's save a bit
+                    continue; 
                 cancellationTask ??= cancellationToken.ToTask(true);
                 await Task.WhenAny(existingLock.Task, cancellationTask).ConfigureAwait(false);
                 // No need to spin here: the probability of seeing another
@@ -91,8 +99,9 @@ namespace Stl.Locking
                 }
                 Debug.Assert(reentryCount >= 0);
                 if (reentryCount == 0) {
-                    myLock2.SetResult(default); // Must be done before TryRemove
                     self._locks.TryRemove(key2, myLock2);
+                    // Must be done at the very end 
+                    myLock2.SetResult(default); 
                 }
             });
         }

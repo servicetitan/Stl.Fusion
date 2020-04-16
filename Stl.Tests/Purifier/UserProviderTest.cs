@@ -82,7 +82,7 @@ namespace Stl.Tests.Purifier
             for (var i = 1; i <= 10; i += 1) {
                 norris.Name = $"Chuck Norris Lvl{i}";
                 await users.UpdateAsync(norris);
-                await Task.Delay(500);
+                await Task.Delay(100);
             }
 
             c = await c.RenewAsync();
