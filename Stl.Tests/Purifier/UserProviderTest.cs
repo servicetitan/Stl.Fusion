@@ -72,9 +72,9 @@ namespace Stl.Tests.Purifier
                 await customFunction.Invoke(async ct => {
                     var norris = await users.TryGetAsync(int.MaxValue, ct).ConfigureAwait(false);
                     var norrisName = norris?.Name ?? "(none)";
-                    var cNow = await time.GetTimeAsync(ct).ConfigureAwait(false);
-                    return $"@ {cNow.Value}: {norrisName}";  
-                }, default, CallAction.CaptureComputed);
+                    var now = await time.GetTimeAsync().ConfigureAwait(false);
+                    return $"@ {now}: {norrisName}";  
+                }, default);
                 c = capture.Captured!;
             }
             c.AutoRecompute((cNext, rPrev, invalidatedBy) => Out.WriteLine(cNext.Value));

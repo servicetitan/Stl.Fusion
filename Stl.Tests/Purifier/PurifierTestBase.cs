@@ -14,6 +14,7 @@ using Stl.IO;
 using Stl.Locking;
 using Stl.Purifier;
 using Stl.Purifier.Autofac;
+using Stl.Reflection;
 using Stl.Testing;
 using Stl.Testing.Internal;
 using Stl.Tests.Purifier.Model;
@@ -34,6 +35,7 @@ namespace Stl.Tests.Purifier
         public bool IsLoggingEnabled { get; set; } = true;
         public IServiceProvider Services { get; }
         public ILifetimeScope Container { get; }
+        public ILogger Log { get; }
         public TestDbContext DbContext => Container.Resolve<TestDbContext>();
 
         public PurifierTestBase(ITestOutputHelper @out, PurifierTestOptions? options = null) : base(@out)
@@ -41,6 +43,7 @@ namespace Stl.Tests.Purifier
             Options = options ?? new PurifierTestOptions();
             Services = CreateServices();
             Container = Services.GetRequiredService<ILifetimeScope>();
+            Log = (ILogger) Container.Resolve(typeof(ILogger<>).MakeGenericType(GetType()));
         }
 
         public virtual Task InitializeAsync() 

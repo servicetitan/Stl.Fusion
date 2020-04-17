@@ -81,7 +81,7 @@ namespace Stl.Purifier.Autofac
         public override IComputed<TOut>? TryGetCached(InterceptedInput input, IComputed? usedBy = null)
         {
             var output = base.TryGetCached(input, usedBy);
-            if (output != null && (input.CallOptions.Action & CallAction.CaptureComputed) != 0)
+            if (output != null)
                 ComputedCapture.TryCapture(output);
             return output;
         }

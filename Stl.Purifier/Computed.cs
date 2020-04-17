@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Stl.Async;
 using Stl.Collections;
 using Stl.Collections.Slim;
+using Stl.Purifier.Autofac;
 using Stl.Purifier.Internal;
 
 namespace Stl.Purifier
@@ -273,7 +274,11 @@ namespace Stl.Purifier
 
         public static Disposable<IComputed?> ChangeCurrent(IComputed? newCurrent)
         {
+            if (newCurrent != null)
+                ComputedCapture.TryCapture(newCurrent);
             var oldCurrent = Current();
+            if (oldCurrent == newCurrent)
+                return Disposable.New(oldCurrent, _ => { });
             CurrentLocal.Value = newCurrent;
             return Disposable.New(oldCurrent, oldCurrent1 => CurrentLocal.Value = oldCurrent1);
         }

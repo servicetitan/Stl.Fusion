@@ -1,9 +1,12 @@
 using System;
+using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 using Autofac;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Stl.Purifier;
+using Stl.Purifier.Autofac;
 using Stl.Tests.Purifier.Services;
 using Stl.Time;
 using Xunit;
@@ -15,11 +18,18 @@ namespace Stl.Tests.Purifier
     {
         public ComputedInterceptorTest(ITestOutputHelper @out) : base(@out) { }
 
+        private async ValueTask<IComputed<T>> GetComputed<T>(Func<ValueTask<T>> accessor)
+        {
+            using var capture = ComputedCapture.New<T>();
+            await accessor.Invoke().ConfigureAwait(false);
+            return capture.Captured!;
+        }
+
         [Fact]
         public async Task AutoRecomputeTest()
         {
-            var timeProvider = Container.Resolve<ITimeProvider>();
-            var cTimer = await timeProvider.GetTimerAsync(TimeSpan.Zero);
+            var time = Container.Resolve<ITimeProvider>();
+            var cTimer = await GetComputed(() => time.GetTimerAsync(TimeSpan.Zero));
 
             var count = 0;
             void Handler(IComputed<Moment> computed, Result<Moment> old, object? invalidatedBy)
@@ -41,31 +51,35 @@ namespace Stl.Tests.Purifier
         [Fact]
         public async Task CachingTest1()
         {
-            var timeProvider = Container.Resolve<ITimeProvider>();
-            var cNowOld = timeProvider.GetTimeAsync();
+            var time = Container.Resolve<ITimeProvider>();
+
+            var cNowOld = time.GetTimeAsync();
             await Task.Delay(500);
-            var cNow1 = await timeProvider.GetTimeAsync();
+            var cNow1 = await GetComputed(() => time.GetTimeAsync());
             cNow1.Should().NotBe(cNowOld);
-            var cNow2 = await timeProvider.GetTimeAsync();
+            var cNow2 = await GetComputed(() => time.GetTimeAsync());
             cNow2.Should().Be(cNow1);
         }
 
         [Fact]
         public async Task CachingTest2()
         {
-            var timeProvider = Container.Resolve<ITimeProvider>();
-            var cTimer1 = timeProvider.GetTimerAsync(TimeSpan.FromSeconds(1));
-            var cTimer2 = timeProvider.GetTimerAsync(TimeSpan.FromSeconds(2));
-            cTimer1.Should().NotBe(cTimer2);
-            var cTimer1a = timeProvider.GetTimerAsync(TimeSpan.FromSeconds(1));
-            var cTimer2a = timeProvider.GetTimerAsync(TimeSpan.FromSeconds(2));
-            cTimer1.Should().Be(cTimer1a);
-            cTimer2.Should().Be(cTimer2a);
+            // Need to fix the test so that it starts right after time invalidation
+            var time = Container.Resolve<ITimeProvider>();
+
+            var cTimer1 = await GetComputed(() => time.GetTimerAsync(TimeSpan.FromSeconds(1)));
+            var cTimer2 = await GetComputed(() => time.GetTimerAsync(TimeSpan.FromSeconds(2)));
+            cTimer1.Should().NotBeSameAs(cTimer2);
+            var cTimer1a = await GetComputed(() => time.GetTimerAsync(TimeSpan.FromSeconds(1)));
+            var cTimer2a = await GetComputed(() => time.GetTimerAsync(TimeSpan.FromSeconds(2)));
+            cTimer1.Should().BeSameAs(cTimer1a);
+            cTimer2.Should().BeSameAs(cTimer2a);
             await Task.Delay(500);
-            cTimer1a = timeProvider.GetTimerAsync(TimeSpan.FromSeconds(1));
-            cTimer2a = timeProvider.GetTimerAsync(TimeSpan.FromSeconds(2));
-            cTimer1.Should().NotBe(cTimer1a);
-            cTimer2.Should().NotBe(cTimer2a);
+
+            cTimer1a = await GetComputed(() => time.GetTimerAsync(TimeSpan.FromSeconds(1)));
+            cTimer2a = await GetComputed(() => time.GetTimerAsync(TimeSpan.FromSeconds(2)));
+            cTimer1.Should().NotBeSameAs(cTimer1a);
+            cTimer2.Should().NotBeSameAs(cTimer2a);
         }
     }
 }

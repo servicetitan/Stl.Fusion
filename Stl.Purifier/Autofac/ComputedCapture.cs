@@ -11,8 +11,12 @@ namespace Stl.Purifier.Autofac
 
         private bool _isDisposed;
         private ComputedCapture? _previous;
-        
-        public IComputed? Captured { get; private set; }
+        private volatile IComputed? _captured;
+
+        public IComputed? Captured {
+            get => _captured;
+            private set => Interlocked.Exchange(ref _captured, value);
+        }
 
         public static ComputedCapture<T> New<T>() => new ComputedCapture<T>();
         public static ComputedCapture New() => new ComputedCapture();
@@ -35,10 +39,10 @@ namespace Stl.Purifier.Autofac
         public static bool TryCapture(IComputed captured)
         {
             var current = Current;
-            if (current == null || current.Captured != null)
+            if (current == null)
                 return false;
-            current.Captured = captured;
-            return true;
+            var previous = Interlocked.CompareExchange(ref current._captured, captured, null);
+            return previous == null;
         }
     }
 

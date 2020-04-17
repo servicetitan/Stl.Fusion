@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -42,7 +43,7 @@ namespace Stl.Tests.Purifier
             await Task.WhenAll(tasks);
         }
 
-        [Fact]
+        [Fact, Category("Performance")]
         public async Task ComputedPerformanceTest()
         {
             var users = Services.GetRequiredService<IUserProvider>();

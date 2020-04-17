@@ -16,9 +16,9 @@ namespace Stl.Purifier.Autofac
 
         static CallOptions()
         {
-            var allActions = CallAction.CaptureComputed | CallAction.TryGetCached |  CallAction.Invalidate;
+            var allActions = CallAction.TryGetCached |  CallAction.Invalidate;
             var cache = new Dictionary<CallAction, CallOptions>();
-            for (var i = 0; i < (int) allActions; i++) {
+            for (var i = 0; i <= (int) allActions; i++) {
                 var action = (CallAction) i;
                 cache[action] = new CallOptions(action, null);
             }

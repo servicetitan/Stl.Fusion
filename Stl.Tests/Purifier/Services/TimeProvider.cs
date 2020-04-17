@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Async;
 using Stl.Purifier;
+using Stl.Purifier.Autofac;
 using Stl.Time;
 
 namespace Stl.Tests.Purifier.Services
@@ -12,18 +13,16 @@ namespace Stl.Tests.Purifier.Services
     public interface ITimeProvider
     {
         Moment GetTime();
-        ValueTask<IComputed<Moment>> GetTimeAsync(CancellationToken cancellationToken = default);
-        ValueTask<IComputed<Moment>> GetTimerAsync(TimeSpan offset, CancellationToken cancellationToken = default);
+        ValueTask<Moment> GetTimeAsync();
+        ValueTask<Moment> GetTimerAsync(TimeSpan offset);
     }
 
     public class TimeProvider : ITimeProvider
     {
         protected ILogger Log { get; }
 
-        public TimeProvider(ILogger<TimeProvider>? log = null)
-        {
-            Log = log as ILogger ?? NullLogger.Instance;
-        }
+        public TimeProvider(ILogger<TimeProvider>? log = null) 
+            => Log = log as ILogger ?? NullLogger.Instance;
 
         public Moment GetTime()
         {
@@ -32,20 +31,22 @@ namespace Stl.Tests.Purifier.Services
             return now;
         }
 
-        public virtual ValueTask<IComputed<Moment>> GetTimeAsync(CancellationToken cancellationToken)
+        public virtual ValueTask<Moment> GetTimeAsync()
         {
-            var computed = Computed.Current<Moment>();
-#pragma warning disable 4014
-            Task.Delay(250).ContinueWith(t => computed.Invalidate());
-#pragma warning restore 4014
-            computed.SetOutput(GetTime());
-            return ValueTaskEx.FromResult(computed);
+            var computed = Computed.Current();
+            Task.Run(async () => {
+                await Task.Delay(250).ConfigureAwait(false);
+                computed!.Invalidate(
+                    "Sorry, you were programmed to live for just 250ms :( " +
+                    "Hopefully you enjoyed it.");
+            });
+            return ValueTaskEx.FromResult(GetTime());
         }
 
-        public virtual async ValueTask<IComputed<Moment>> GetTimerAsync(TimeSpan offset, CancellationToken cancellationToken)
+        public virtual async ValueTask<Moment> GetTimerAsync(TimeSpan offset)
         {
-            var cNow = await GetTimeAsync(cancellationToken).ConfigureAwait(false);
-            return Computed.Return(cNow.Value + offset);
+            var now = await GetTimeAsync().ConfigureAwait(false);
+            return now + offset;
         }
     }
 }
