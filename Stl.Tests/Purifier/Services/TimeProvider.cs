@@ -38,7 +38,7 @@ namespace Stl.Tests.Purifier.Services
                 await Task.Delay(250).ConfigureAwait(false);
                 computed!.Invalidate(
                     "Sorry, you were programmed to live for just 250ms :( " +
-                    "Hopefully you enjoyed it.");
+                    "Hopefully you enjoyed your life.");
             });
             return ValueTaskEx.FromResult(GetTime());
         }
