@@ -34,12 +34,13 @@ namespace Stl.Tests.Purifier.Services
         public virtual ValueTask<Moment> GetTimeAsync()
         {
             var computed = Computed.Current();
-            Task.Run(async () => {
-                await Task.Delay(250).ConfigureAwait(false);
-                computed!.Invalidate(
-                    "Sorry, you were programmed to live for just 250ms :( " +
-                    "Hopefully you enjoyed your life.");
-            });
+            if (computed != null) // Otherwise there is no interception / it's a regular class
+                Task.Run(async () => {
+                    await Task.Delay(250).ConfigureAwait(false);
+                    computed.Invalidate(
+                        "Sorry, you were programmed to live for just 250ms :( " +
+                        "Hopefully you enjoyed your life.");
+                });
             return ValueTaskEx.FromResult(GetTime());
         }
 
