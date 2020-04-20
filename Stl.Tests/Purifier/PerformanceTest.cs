@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -23,7 +22,7 @@ namespace Stl.Tests.Purifier
 {
     public abstract class PerformanceTestBase : PurifierTestBase, IAsyncLifetime
     {
-        public int UserCount = 100;
+        public int UserCount = 500;
 
         protected PerformanceTestBase(ITestOutputHelper @out, PurifierTestOptions? options = null) 
             : base(@out, options)
@@ -47,8 +46,12 @@ namespace Stl.Tests.Purifier
         public async Task ComputedPerformanceTest()
         {
             var users = Services.GetRequiredService<IUserProvider>();
-            var threadCount = HardwareInfo.ProcessorCount * 10;
-            var iterationCount = Options.UseInMemoryDatabase ? 50_000 : 10_000;
+            var useImdb = Options.UseInMemoryDatabase;
+            var opCountPerCore = useImdb ? 500_000 : 200_000;
+            var threadsPerCore = useImdb ? 10 : 50; 
+            var threadCount = HardwareInfo.ProcessorCount * threadsPerCore;
+            var cachingIterationCount = opCountPerCore / threadsPerCore;
+            var nonCachingIterationCount = cachingIterationCount / (useImdb ? 100 : 400);
 
             var cachingProviderPool = new ConcurrentPool<IUserProvider>(() => users);
             var nonCachingProviderPool = new ConcurrentPool<IUserProvider>(() => {
@@ -59,15 +62,15 @@ namespace Stl.Tests.Purifier
 
             var extraAction = (Action<User>) (user => { });
             await Test("Caching providers", cachingProviderPool, extraAction, 
-                threadCount, iterationCount);
+                threadCount, cachingIterationCount);
             await Test("Non-caching providers", nonCachingProviderPool, extraAction, 
-                threadCount, iterationCount / 300);
+                threadCount, nonCachingIterationCount);
 
             extraAction = user => JsonConvert.SerializeObject(user);
             await Test("Caching providers + serialization", cachingProviderPool, extraAction, 
-                threadCount, iterationCount / 10);
+                threadCount, cachingIterationCount / 2);
             await Test("Non-caching providers + serialization", nonCachingProviderPool, extraAction, 
-                threadCount, iterationCount / 300);
+                threadCount, nonCachingIterationCount);
         }
 
         private async Task Test(string title, 
