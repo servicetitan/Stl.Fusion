@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using Stl.Async;
 using Stl.Collections;
 using Stl.Collections.Slim;
-using Stl.Purifier.Autofac;
 using Stl.Purifier.Internal;
 
 namespace Stl.Purifier
@@ -28,10 +27,11 @@ namespace Stl.Purifier
         long Tag { get; } // ~ Unique for the specific (Func, Key) pair
         ComputedState State { get; }
         bool IsValid { get; }
-        public event Action<IComputed, object?> Invalidated;
+        event Action<IComputed, object?> Invalidated;
 
         bool Invalidate(object? invalidatedBy = null);
-        ValueTask<IComputed> RenewAsync(CancellationToken cancellationToken = default);
+        ValueTask<IComputed?> RenewAsync(CancellationToken cancellationToken = default);
+        ValueTask<IComputed?> RenewAsync(ComputeContext context, CancellationToken cancellationToken = default);
 
         TResult Apply<TArg, TResult>(IComputedApplyHandler<TArg, TResult> handler, TArg arg);
     }
@@ -42,7 +42,8 @@ namespace Stl.Purifier
         bool TrySetOutput(Result<TOut> output);
         void SetOutput(Result<TOut> output);
 
-        new ValueTask<IComputed<TOut>> RenewAsync(CancellationToken cancellationToken = default);
+        new ValueTask<IComputed<TOut>?> RenewAsync(CancellationToken cancellationToken = default);
+        new ValueTask<IComputed<TOut>?> RenewAsync(ComputeContext context, CancellationToken cancellationToken = default);
     }
     
     public interface IComputedWithTypedInput<TIn> : IComputed 
@@ -129,7 +130,16 @@ namespace Stl.Purifier
         void IComputedImpl.AddUsed(IComputedImpl used)
         {
             lock (Lock) {
-                AssertStateIs(ComputedState.Computing);
+                switch (State) {
+                case ComputedState.Computing:
+                    break; // Expected state
+                case ComputedState.Computed:
+                    throw Errors.WrongComputedState(State);
+                case ComputedState.Invalidated:
+                    return; // Already invalidated, so nothing to do here
+                default:
+                    throw new ArgumentOutOfRangeException();
+                }
                 used.AddUsedBy(this);
                 _used.Add(used);
             }
@@ -139,7 +149,17 @@ namespace Stl.Purifier
         {
             var usedByRef = ((IComputedWithTypedInput<TIn>) usedBy).ToRef();
             lock (Lock) {
-                AssertStateIs(ComputedState.Computed);
+                switch (State) {
+                case ComputedState.Computing:
+                    throw Errors.WrongComputedState(State);
+                case ComputedState.Computed:
+                    break; // Expected state
+                case ComputedState.Invalidated:
+                    usedBy.Invalidate(_invalidatedBy);
+                    return; 
+                default:
+                    throw new ArgumentOutOfRangeException();
+                }
                 _usedBy.Add(usedByRef);
             }
         }
@@ -195,12 +215,16 @@ namespace Stl.Purifier
             }
         }
 
-        async ValueTask<IComputed> IComputed.RenewAsync(CancellationToken cancellationToken) 
+        async ValueTask<IComputed?> IComputed.RenewAsync(CancellationToken cancellationToken) 
+            => await RenewAsync(null!, cancellationToken).ConfigureAwait(false);
+        async ValueTask<IComputed?> IComputed.RenewAsync(ComputeContext context, CancellationToken cancellationToken) 
             => await RenewAsync(cancellationToken).ConfigureAwait(false);
-        public ValueTask<IComputed<TOut>> RenewAsync(CancellationToken cancellationToken)
+        public ValueTask<IComputed<TOut>?> RenewAsync(CancellationToken cancellationToken)
+            => RenewAsync(null!, cancellationToken);
+        public ValueTask<IComputed<TOut>?> RenewAsync(ComputeContext context, CancellationToken cancellationToken)
             => IsValid 
-                ? ValueTaskEx.FromResult((IComputed<TOut>) this) 
-                : Function.InvokeAsync(Input, null, cancellationToken);
+                ? ValueTaskEx.FromResult((IComputed<TOut>?) this) 
+                : Function.InvokeAsync(Input, null, context, cancellationToken);
 
         // Apply methods
 
@@ -222,8 +246,18 @@ namespace Stl.Purifier
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected bool TryChangeState(ComputedState newState)
         {
-            var oldState = (int) newState - 1;
-            return oldState == Interlocked.CompareExchange(ref _state, (int) newState, oldState);
+            var newStateInt = (int) newState;
+            while (true) {
+                var oldState = _state;
+                if (oldState >= newStateInt)
+                    return false;
+                if (oldState == Interlocked.CompareExchange(ref _state, newStateInt, oldState))
+                    return true;
+                // No SpinWait / something similar is needed here, since
+                // each iteration in this loop means the state was updated
+                // by another thread, and since the new value can only be
+                // higher, the max. # of iterations here is 2.
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -246,11 +280,11 @@ namespace Stl.Purifier
     {
         private static readonly AsyncLocal<IComputed?> CurrentLocal = new AsyncLocal<IComputed?>();
 
-        public static IComputed? Current() => CurrentLocal.Value;
+        public static IComputed? GetCurrent() => CurrentLocal.Value;
 
-        public static IComputed<T> Current<T>()
+        public static IComputed<T> GetCurrent<T>()
         {
-            var untypedCurrent = Current();
+            var untypedCurrent = GetCurrent();
             if (untypedCurrent is IComputed<T> c)
                 return c;
             if (untypedCurrent == null)
@@ -260,23 +294,21 @@ namespace Stl.Purifier
 
         public static IComputed<T> Return<T>(T value)
         {
-            var computed = Current<T>();
+            var computed = GetCurrent<T>();
             computed.SetOutput(value!);
             return computed;
         }
 
         public static IComputed<T> TryReturn<T>(T value)
         {
-            var computed = Current<T>();
+            var computed = GetCurrent<T>();
             computed.TrySetOutput(value!);
             return computed;
         }
 
         public static Disposable<IComputed?> ChangeCurrent(IComputed? newCurrent)
         {
-            if (newCurrent != null)
-                ComputedCapture.TryCapture(newCurrent);
-            var oldCurrent = Current();
+            var oldCurrent = GetCurrent();
             if (oldCurrent == newCurrent)
                 return Disposable.New(oldCurrent, _ => { });
             CurrentLocal.Value = newCurrent;

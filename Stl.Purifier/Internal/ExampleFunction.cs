@@ -19,8 +19,9 @@ namespace Stl.Purifier.Internal
             Func<TIn, CancellationToken, ValueTask<TOut>> implementation,
             ConcurrentIdGenerator<long> tagGenerator,
             IComputedRegistry<(IFunction, TIn)> computedRegistry,
+            IRetryComputePolicy? retryComputePolicy = null,
             IAsyncLockSet<(IFunction, TIn)>? locks = null) 
-            : base(computedRegistry, locks)
+            : base(computedRegistry, retryComputePolicy, locks)
         {
             Implementation = implementation;
             TagGenerator = tagGenerator;
@@ -64,7 +65,8 @@ namespace Stl.Purifier.Internal
             return new ExampleFunction<Unit, TOut>((u, ct) => implementation(ct),
                 services.GetRequiredService<ConcurrentIdGenerator<long>>(),
                 services.GetRequiredService<IComputedRegistry<(IFunction, Unit)>>(),
-                services.GetRequiredService<IAsyncLockSet<(IFunction, Unit)>>()
+                services.GetService<IRetryComputePolicy>(),
+                services.GetService<IAsyncLockSet<(IFunction, Unit)>>()
             );
         }
 
@@ -76,7 +78,8 @@ namespace Stl.Purifier.Internal
             return new ExampleFunction<TIn, TOut>(implementation,
                 services.GetRequiredService<ConcurrentIdGenerator<long>>(),
                 services.GetRequiredService<IComputedRegistry<(IFunction, TIn)>>(),
-                services.GetRequiredService<IAsyncLockSet<(IFunction, TIn)>>()
+                services.GetService<IRetryComputePolicy>(),
+                services.GetService<IAsyncLockSet<(IFunction, TIn)>>()
             );
         }
     }

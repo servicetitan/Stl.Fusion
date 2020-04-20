@@ -15,7 +15,6 @@ namespace Stl.Purifier.Autofac
         protected static readonly IReadOnlyDictionary<Type, ArgumentComparer> DefaultComparers = 
             new Dictionary<Type, ArgumentComparer>() {
                 {typeof(CancellationToken), ArgumentComparer.Ignore},
-                {typeof(CallOptions), ArgumentComparer.Ignore},
             };
 
         public static readonly ArgumentComparerProvider Default = new ArgumentComparerProvider();

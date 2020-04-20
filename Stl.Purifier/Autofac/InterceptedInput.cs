@@ -17,10 +17,6 @@ namespace Stl.Purifier.Autofac
             Method.CancellationTokenArgumentIndex >= 0
                 ? (CancellationToken) Arguments[Method.CancellationTokenArgumentIndex]
                 : default;
-        public CallOptions CallOptions =>
-            Method.CallOptionsArgumentIndex >= 0
-                ? ((CallOptions?) Arguments[Method.CallOptionsArgumentIndex] ?? CallOptions.Default)
-                : CallOptions.Default;
 
         public InterceptedInput(InterceptedMethod method, IInvocation invocation)
         {
@@ -56,14 +52,6 @@ namespace Stl.Purifier.Autofac
                 if (currentCancellationToken != cancellationToken)
                     // ReSharper disable once HeapView.BoxingAllocation
                     arguments[method.CancellationTokenArgumentIndex] = cancellationToken;
-            }
-            if (method.CallOptionsArgumentIndex >= 0) {
-                var currentCallOptions = (CallOptions) arguments[method.CallOptionsArgumentIndex];
-                // Comparison w/ the existing one to avoid boxing when possible
-                if (currentCallOptions != null) {
-                    // ReSharper disable once HeapView.BoxingAllocation
-                    arguments[method.CallOptionsArgumentIndex] = null!;
-                }
             }
 
             ProceedInfo.Invoke();

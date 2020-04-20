@@ -29,8 +29,8 @@ namespace Stl.Purifier
                         var nextComputed = await prevComputed.RenewAsync(stopToken).ConfigureAwait(false);
                         var prevOutput = prevComputed.Output;
                         prevComputed = null!;
-                        handler?.Invoke(nextComputed, prevOutput, invalidatedBy);
-                        nextComputed.Invalidated += OnInvalidated;
+                        handler?.Invoke(nextComputed!, prevOutput, invalidatedBy);
+                        nextComputed!.Invalidated += OnInvalidated;
                     }
                     catch (OperationCanceledException) { }
                 };

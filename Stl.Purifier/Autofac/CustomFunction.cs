@@ -13,13 +13,13 @@ namespace Stl.Purifier.Autofac
             Func<TIn, CancellationToken, ValueTask<IComputed<TOut>>> fn,
             TIn input,
             CancellationToken cancellationToken = default,
-            CallOptions? callOptions = null)
+            ComputeContext? callOptions = null)
             => fn.Invoke(input, cancellationToken);
 
         public virtual ValueTask<IComputed<TOut>> Invoke<TOut>(
             Func<CancellationToken, ValueTask<IComputed<TOut>>> fn,
             CancellationToken cancellationToken = default,
-            CallOptions? callOptions = null)
+            ComputeContext? callOptions = null)
             => fn.Invoke(cancellationToken);
 
         // Returning TOut  
@@ -28,13 +28,13 @@ namespace Stl.Purifier.Autofac
             Func<TIn, CancellationToken, ValueTask<TOut>> fn,
             TIn input,
             CancellationToken cancellationToken = default,
-            CallOptions? callOptions = null)
+            ComputeContext? callOptions = null)
             => fn.Invoke(input, cancellationToken);
 
         public virtual ValueTask<TOut> Invoke<TOut>(
             Func<CancellationToken, ValueTask<TOut>> fn,
             CancellationToken cancellationToken = default,
-            CallOptions? callOptions = null)
+            ComputeContext? callOptions = null)
             => fn.Invoke(cancellationToken);
     }
 }

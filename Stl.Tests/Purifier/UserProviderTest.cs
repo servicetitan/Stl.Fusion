@@ -33,6 +33,7 @@ namespace Stl.Tests.Purifier
             (await users.CountAsync()).Should().Be(userCount);
 
             await users.CreateAsync(u);
+            await Task.Delay(10);
             var u1 = await users.TryGetAsync(u.Id);
             u1.Should().NotBeNull();
             u1.Should().NotBeSameAs(u);
@@ -45,6 +46,7 @@ namespace Stl.Tests.Purifier
             
             u.Name = "Jackie Chan";
             await users.UpdateAsync(u);
+            await Task.Delay(10);
             var u3 = await users.TryGetAsync(u.Id);
             u3.Should().NotBeNull();
             u3.Should().NotBeSameAs(u2);
@@ -67,7 +69,7 @@ namespace Stl.Tests.Purifier
             await users.CreateAsync(norris, true);
 
             IComputed<string> c;
-            using (var capture = ComputedCapture.New<string>()) {
+            using (var cc = ComputeContext.New(ComputeOptions.Capture)) {
                 // ReSharper disable once HeapView.CanAvoidClosure
                 await customFunction.Invoke(async ct => {
                     var norris = await users.TryGetAsync(int.MaxValue, ct).ConfigureAwait(false);
@@ -75,7 +77,7 @@ namespace Stl.Tests.Purifier
                     var now = await time.GetTimeAsync().ConfigureAwait(false);
                     return $"@ {now}: {norrisName}";  
                 }, default);
-                c = capture.Captured!;
+                c = cc.GetCapturedComputed<string>()!;
             }
             c.AutoRecompute((cNext, rPrev, invalidatedBy) => Out.WriteLine(cNext.Value));
 
@@ -85,8 +87,8 @@ namespace Stl.Tests.Purifier
                 await Task.Delay(100);
             }
 
-            c = await c.RenewAsync();
-            c.Value.Should().EndWith("Lvl10");
+            c = (await c.RenewAsync())!;
+            c!.Value.Should().EndWith("Lvl10");
         }
     }
 }

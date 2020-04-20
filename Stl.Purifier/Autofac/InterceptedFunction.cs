@@ -16,8 +16,9 @@ namespace Stl.Purifier.Autofac
             InterceptedMethod method,
             ConcurrentIdGenerator<long> tagGenerator,
             IComputedRegistry<(IFunction, InterceptedInput)> computedRegistry,
+            IRetryComputePolicy? retryComputePolicy = null,
             IAsyncLockSet<(IFunction, InterceptedInput)>? locks = null) 
-            : base(computedRegistry, locks)
+            : base(computedRegistry, retryComputePolicy, locks)
         {
             Method = method;
             TagGenerator = tagGenerator;
@@ -26,10 +27,11 @@ namespace Stl.Purifier.Autofac
         public override string ToString()
         {
             var mi = Method.MethodInfo;
-            return $"{GetType().Name}({mi.DeclaringType!.Name}.{mi.Name})";
+            return $"Intercepted:{mi.DeclaringType!.Name}.{mi.Name}";
         }
 
-        protected override async ValueTask<IComputed<TOut>> ComputeAsync(InterceptedInput input, CancellationToken cancellationToken)
+        protected override async ValueTask<IComputed<TOut>> ComputeAsync(
+            InterceptedInput input, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
             
@@ -75,14 +77,6 @@ namespace Stl.Purifier.Autofac
                 // throwing it further will probably make it just worse,
                 // since the the caller have to take this scenario into acc.
             }
-            return output;
-        }
-
-        public override IComputed<TOut>? TryGetCached(InterceptedInput input, IComputed? usedBy = null)
-        {
-            var output = base.TryGetCached(input, usedBy);
-            if (output != null)
-                ComputedCapture.TryCapture(output);
             return output;
         }
     }

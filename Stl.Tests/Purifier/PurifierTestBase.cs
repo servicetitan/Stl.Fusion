@@ -133,6 +133,8 @@ namespace Stl.Tests.Purifier
             builder.RegisterGeneric(typeof(AsyncLockSet<>))
                 .As(typeof(IAsyncLockSet<>))
                 .SingleInstance();
+            builder.Register(c => RetryComputePolicy.Default)
+                .SingleInstance();
             builder.Register(c => ArgumentComparerProvider.Default)
                 .SingleInstance();
             builder.RegisterType<ComputedInterceptor>()

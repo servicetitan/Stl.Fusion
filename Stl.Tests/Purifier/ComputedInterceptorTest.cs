@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 using Autofac;
@@ -18,11 +19,12 @@ namespace Stl.Tests.Purifier
     {
         public ComputedInterceptorTest(ITestOutputHelper @out) : base(@out) { }
 
-        private async ValueTask<IComputed<T>> GetComputed<T>(Func<ValueTask<T>> accessor)
+        private async ValueTask<IComputed<T>?> GetComputed<T>(Func<ValueTask<T>> producer)
         {
-            using var capture = ComputedCapture.New<T>();
-            await accessor.Invoke().ConfigureAwait(false);
-            return capture.Captured!;
+            using var cc = ComputeContext.New(ComputeOptions.Capture);
+            await producer.Invoke().ConfigureAwait(false);
+            var result = cc.GetCapturedComputed<T>();
+            return result;
         }
 
         [Fact]
@@ -37,7 +39,7 @@ namespace Stl.Tests.Purifier
                 Out.WriteLine($"{++count} -> {computed.Value}");
             }
 
-            using (var o = cTimer.AutoRecompute(Handler)) {
+            using (var o = cTimer!.AutoRecompute(Handler)) {
                 await Task.Delay(2000);
             }
             var lastCount = count;
@@ -68,8 +70,11 @@ namespace Stl.Tests.Purifier
             var time = Container.Resolve<ITimeProvider>();
 
             var cTimer1 = await GetComputed(() => time.GetTimerAsync(TimeSpan.FromSeconds(1)));
+            cTimer1.Should().NotBeNull();
             var cTimer2 = await GetComputed(() => time.GetTimerAsync(TimeSpan.FromSeconds(2)));
+            cTimer2.Should().NotBeNull();
             cTimer1.Should().NotBeSameAs(cTimer2);
+
             var cTimer1a = await GetComputed(() => time.GetTimerAsync(TimeSpan.FromSeconds(1)));
             var cTimer2a = await GetComputed(() => time.GetTimerAsync(TimeSpan.FromSeconds(2)));
             cTimer1.Should().BeSameAs(cTimer1a);

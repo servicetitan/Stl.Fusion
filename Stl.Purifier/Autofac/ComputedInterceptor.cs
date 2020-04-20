@@ -24,15 +24,18 @@ namespace Stl.Purifier.Autofac
         protected ConcurrentIdGenerator<long> TagGenerator { get; }
         protected IComputedRegistry<(IFunction, InterceptedInput)> ComputedRegistry { get; }
         protected IArgumentComparerProvider ArgumentComparerProvider { get; }
+        protected IRetryComputePolicy RetryComputePolicy { get; }
         protected IAsyncLockSet<(IFunction, InterceptedInput)>? Locks { get; }                      
 
         public ComputedInterceptor(
             ConcurrentIdGenerator<long> tagGenerator,
             IComputedRegistry<(IFunction, InterceptedInput)> computedRegistry,
             IArgumentComparerProvider? argumentComparerProvider = null,
+            IRetryComputePolicy? retryComputePolicy = null,
             IAsyncLockSet<(IFunction, InterceptedInput)>? locks = null) 
         {
             locks ??= new AsyncLockSet<(IFunction, InterceptedInput)>(ReentryMode.CheckedFail);
+            retryComputePolicy ??= Purifier.RetryComputePolicy.Default;
             argumentComparerProvider ??= Autofac.ArgumentComparerProvider.Default;
 
             _createHandler = CreateHandler;
@@ -44,6 +47,7 @@ namespace Stl.Purifier.Autofac
             TagGenerator = tagGenerator;
             ComputedRegistry = computedRegistry;
             ArgumentComparerProvider = argumentComparerProvider;
+            RetryComputePolicy = retryComputePolicy;
             Locks = locks;
         }
 
@@ -71,52 +75,25 @@ namespace Stl.Purifier.Autofac
         protected virtual Action<IInvocation> CreateTypedHandler<TOut>(
             IInvocation initialInvocation, InterceptedMethod method)
         {
-            var function = new InterceptedFunction<TOut>(method, TagGenerator, ComputedRegistry, Locks);
+            var function = new InterceptedFunction<TOut>(method, 
+                TagGenerator, ComputedRegistry, RetryComputePolicy, Locks);
             return invocation => {
                 // ReSharper disable once VariableHidesOuterVariable
                 var method = function.Method;
                 var input = new InterceptedInput(method, invocation);
-                var callOptions = input.CallOptions;
-
-                // Special flow: CallOptions.CachedOnly & Invalidate 
-                if ((callOptions.Action & CallAction.TryGetCached) != 0) {
-                    var computed = function.TryGetCached(input);
-                    if ((callOptions.Action & CallAction.Invalidate) == CallAction.Invalidate)
-                        computed?.Invalidate();
-                    if (method.ReturnsComputed) {
-                        if (method.ReturnsValueTask)
-                            // ReSharper disable once HeapView.BoxingAllocation
-                            invocation.ReturnValue = ValueTaskEx.FromResult(computed);
-                        else
-                            invocation.ReturnValue = Task.FromResult(computed);
-                    }
-                    else {
-                        var value = computed != null ? computed.UnsafeValue : default;
-                        if (method.ReturnsValueTask)
-                            // ReSharper disable once HeapView.BoxingAllocation
-                            invocation.ReturnValue = ValueTaskEx.FromResult(value!);
-                        else
-                            invocation.ReturnValue = Task.FromResult(value);
-                    }
-                    return;
-                }
 
                 // Invoking the function
                 var cancellationToken = input.CancellationToken;
-                var usedBy = Computed.Current();
-                var valueTask = function.InvokeAsync(input, usedBy, cancellationToken);
+                var usedBy = Computed.GetCurrent();
+                var valueTask = function.InvokeAsync(input, usedBy, null, cancellationToken);
 
-                if (invocation.ReturnValue != null)
-                    // It's a real invocation (cache miss),
-                    // + likely, a complete evaluation of the async flow,
-                    // i.e. a very rare case when no any extra work is needed. 
-                    return;
-
-                // Either no real invocation (cache hit),
-                // or activation of async flow (e.g. on async lock inside
-                // InvokeAsync). We don't know the result here yet,
-                // but we have a ValueTask<IComputed<TOut>> allowing us 
-                // to set invocation.ReturnValue to the correct one.
+                // Technically, invocation.ReturnValue could be
+                // already set here - e.g. when it was a cache miss,
+                // and real invocation's async flow (which could complete
+                // synchronously) had already completed.
+                // But we can't return it, because valueTask's async flow
+                // might be still ongoing. So no matter what, we have to
+                // replace the return value with valueTask.Result. 
                 if (method.ReturnsComputed) {
                     if (method.ReturnsValueTask)
                         // ReSharper disable once HeapView.BoxingAllocation
@@ -125,7 +102,13 @@ namespace Stl.Purifier.Autofac
                         invocation.ReturnValue = valueTask.AsTask();
                 }
                 else {
-                    var strippedResultTask = valueTask.AsTask().ContinueWith(t => t.Result.Value, cancellationToken);
+                    var strippedResultTask = valueTask.AsTask().ContinueWith(
+                        task => {
+                            var result = task.Result;
+                            // result might be null e.g. when ComputeContext.Options
+                            // has ComputeOptions.TryGetCached flag 
+                            return result == null ? default : result.Value;
+                        }, cancellationToken);
                     if (method.ReturnsValueTask)
                         // ReSharper disable once HeapView.BoxingAllocation
                         invocation.ReturnValue = new ValueTask<TOut>(strippedResultTask);
@@ -177,8 +160,6 @@ namespace Stl.Purifier.Autofac
                 var parameterType = p.ParameterType;
                 if (typeof(CancellationToken).IsAssignableFrom(parameterType))
                     r.CancellationTokenArgumentIndex = i;
-                if (typeof(CallOptions).IsAssignableFrom(parameterType))
-                    r.CallOptionsArgumentIndex = i;
             }
 
             return r;

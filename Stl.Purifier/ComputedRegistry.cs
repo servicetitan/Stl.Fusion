@@ -74,6 +74,8 @@ namespace Stl.Purifier
 
         public void Store(TKey key, IComputed value)
         {
+            if (!value.IsValid) // It could be invalidated on the way here :)
+                return;
             var keyHash = key.GetHashCode();
             MaybePrune(keyHash);
             Storage.AddOrUpdate(

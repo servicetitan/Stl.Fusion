@@ -7,7 +7,7 @@ namespace Stl.Concurrency
 {
     public class ConcurrentPool<T> : IPool<T>
     {
-        public static int DefaultCapacity => HardwareInfo.ProcessorCount * 16;
+        public static int DefaultCapacity => HardwareInfo.ProcessorCount * 32;
 
         private readonly ConcurrentCounter _count;
         private readonly ConcurrentBag<T> _pool;

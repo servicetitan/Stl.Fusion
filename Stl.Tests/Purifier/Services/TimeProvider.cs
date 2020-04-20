@@ -33,7 +33,7 @@ namespace Stl.Tests.Purifier.Services
 
         public virtual ValueTask<Moment> GetTimeAsync()
         {
-            var computed = Computed.Current();
+            var computed = Computed.GetCurrent();
             if (computed != null) // Otherwise there is no interception / it's a regular class
                 Task.Run(async () => {
                     await Task.Delay(250).ConfigureAwait(false);

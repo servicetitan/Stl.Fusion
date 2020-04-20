@@ -74,7 +74,7 @@ namespace Stl.Tests.Purifier.Services
         [Computed(false)] // Needed b/c the signature fits for interception!
         public virtual async Task<bool> DeleteAsync(User user, CancellationToken cancellationToken = default)
         {
-            Computed.Current().Should().BeNull();
+            Computed.GetCurrent().Should().BeNull();
             using var lease = DbContextPool.Rent();
             var dbContext = lease.Item;
             dbContext.Users.Remove(user);
@@ -88,9 +88,7 @@ namespace Stl.Tests.Purifier.Services
             }
         }
 
-        public ValueTask<User?> TryGetAsync(long userId, CancellationToken cancellationToken)
-            => TryGetAsync(userId, cancellationToken, null);
-        protected virtual async ValueTask<User?> TryGetAsync(long userId, CancellationToken cancellationToken, CallOptions? callOptions)
+        public virtual async ValueTask<User?> TryGetAsync(long userId, CancellationToken cancellationToken = default)
         {
             using var lease = DbContextPool.Rent();
             var dbContext = lease.Item;
@@ -101,9 +99,7 @@ namespace Stl.Tests.Purifier.Services
             return user;
         }
 
-        public ValueTask<long> CountAsync(CancellationToken cancellationToken = default) 
-            => CountAsync(cancellationToken, null);
-        protected virtual async ValueTask<long> CountAsync(CancellationToken cancellationToken, CallOptions? callOptions)
+        public virtual async ValueTask<long> CountAsync(CancellationToken cancellationToken = default) 
         {
             using var lease = DbContextPool.Rent();
             var dbContext = lease.Item;
@@ -119,11 +115,13 @@ namespace Stl.Tests.Purifier.Services
             if (GetType() == typeof(UserProvider))
                 // No caching interceptors, so nothing to do
                 return;
-            var u = await TryGetAsync(user.Id, default, CallAction.Invalidate).ConfigureAwait(false);
+
+            using var _ = ComputeContext.New(ComputeOptions.Invalidate);
+            var u = await TryGetAsync(user.Id).ConfigureAwait(false);
             if (u != default)
                 Log.LogDebug($"Invalidated: {user}");
             if (countChanged) {
-                var c = await CountAsync(default, CallAction.Invalidate);
+                var c = await CountAsync().ConfigureAwait(false);
                 if (c != default)
                     Log.LogDebug($"Invalidated: Users.Count");
             }
