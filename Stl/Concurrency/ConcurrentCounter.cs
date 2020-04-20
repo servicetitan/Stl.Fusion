@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Stl.Mathematics;
 using Stl.OS;
 
 namespace Stl.Concurrency
@@ -13,6 +14,7 @@ namespace Stl.Concurrency
         private readonly int _approximationStep;
         private readonly int[] _counters; 
         private long _approximateValue = 0;  
+        private int _concurrencyMask;
 
         public int ConcurrencyLevel => _counters.Length;
         public int ApproximationStep => _approximationStep;
@@ -48,14 +50,16 @@ namespace Stl.Concurrency
                 throw new ArgumentOutOfRangeException(nameof(concurrencyLevel));
             if (approximationStep < 1)
                 throw new ArgumentOutOfRangeException(nameof(approximationStep));
+            concurrencyLevel = (int) (Bits.Msb((ulong) concurrencyLevel) << 1);
             _counters = new int[concurrencyLevel];
             _approximationStep = approximationStep;
+            _concurrencyMask = concurrencyLevel - 1;
         }
 
         public Option<long> Increment(int random)
         {
             var t = _approximationStep;
-            ref var counter = ref _counters[(random & int.MaxValue) % ConcurrencyLevel];
+            ref var counter = ref _counters[random & _concurrencyMask];
             var value = Interlocked.Increment(ref counter);
             if (value >= t) {
                 Interlocked.Add(ref counter, -t);
@@ -67,7 +71,7 @@ namespace Stl.Concurrency
         public Option<long> Decrement(int random)
         {
             var t = _approximationStep;
-            ref var counter = ref _counters[(random & int.MaxValue) % ConcurrencyLevel];
+            ref var counter = ref _counters[random & _concurrencyMask];
             var value = Interlocked.Decrement(ref counter);
             if (value < 0) {
                 Interlocked.Add(ref counter, t);
