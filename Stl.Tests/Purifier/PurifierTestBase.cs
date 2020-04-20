@@ -123,7 +123,7 @@ namespace Stl.Tests.Purifier
         protected virtual void ConfigureServices(ContainerBuilder builder)
         {
             // Computed/Function related
-            builder.Register(c => new ConcurrentIdGenerator<long>(i => {
+            builder.Register(c => new ConcurrentIdGenerator<int>(i => {
                     var id = i * 10000;
                     return () => ++id;
                 })).SingleInstance();

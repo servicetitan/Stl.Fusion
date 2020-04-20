@@ -7,7 +7,7 @@ namespace Stl.Concurrency
 {
     public sealed class ConcurrentIdGenerator<T>
     {
-        public static int DefaultConcurrencyLevel => HardwareInfo.ProcessorCount << 2;
+        public static int DefaultConcurrencyLevel => HardwareInfo.ProcessorCount;
 
         private readonly Func<T>[] _generators;
 

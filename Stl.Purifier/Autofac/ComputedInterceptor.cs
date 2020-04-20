@@ -21,14 +21,14 @@ namespace Stl.Purifier.Autofac
         private readonly ConcurrentDictionary<MethodInfo, Action<IInvocation>?> _handlerCache = 
             new ConcurrentDictionary<MethodInfo, Action<IInvocation>?>();
 
-        protected ConcurrentIdGenerator<long> TagGenerator { get; }
+        protected ConcurrentIdGenerator<int> TagGenerator { get; }
         protected IComputedRegistry<(IFunction, InterceptedInput)> ComputedRegistry { get; }
         protected IArgumentComparerProvider ArgumentComparerProvider { get; }
         protected IRetryComputePolicy RetryComputePolicy { get; }
         protected IAsyncLockSet<(IFunction, InterceptedInput)>? Locks { get; }                      
 
         public ComputedInterceptor(
-            ConcurrentIdGenerator<long> tagGenerator,
+            ConcurrentIdGenerator<int> tagGenerator,
             IComputedRegistry<(IFunction, InterceptedInput)> computedRegistry,
             IArgumentComparerProvider? argumentComparerProvider = null,
             IRetryComputePolicy? retryComputePolicy = null,
@@ -85,36 +85,33 @@ namespace Stl.Purifier.Autofac
                 // Invoking the function
                 var cancellationToken = input.CancellationToken;
                 var usedBy = Computed.GetCurrent();
-                var valueTask = function.InvokeAsync(input, usedBy, null, cancellationToken);
 
-                // Technically, invocation.ReturnValue could be
-                // already set here - e.g. when it was a cache miss,
-                // and real invocation's async flow (which could complete
-                // synchronously) had already completed.
-                // But we can't return it, because valueTask's async flow
-                // might be still ongoing. So no matter what, we have to
-                // replace the return value with valueTask.Result. 
+                // Unusual return type
                 if (method.ReturnsComputed) {
+                    var computedTask = function.InvokeAsync(input, usedBy, null, cancellationToken);
+                    // Technically, invocation.ReturnValue could be
+                    // already set here - e.g. when it was a cache miss,
+                    // and real invocation's async flow (which could complete
+                    // synchronously) had already completed.
+                    // But we can't return it, because valueTask's async flow
+                    // might be still ongoing. So no matter what, we have to
+                    // replace the return value with valueTask.Result. 
                     if (method.ReturnsValueTask)
                         // ReSharper disable once HeapView.BoxingAllocation
-                        invocation.ReturnValue = valueTask;
-                    else
-                        invocation.ReturnValue = valueTask.AsTask();
+                        invocation.ReturnValue = new ValueTask<IComputed<TOut>>(computedTask!);
+                    else                                                        
+                        invocation.ReturnValue = computedTask;
+                    return;
                 }
-                else {
-                    var strippedResultTask = valueTask.AsTask().ContinueWith(
-                        task => {
-                            var result = task.Result;
-                            // result might be null e.g. when ComputeContext.Options
-                            // has ComputeOptions.TryGetCached flag 
-                            return result == null ? default : result.Value;
-                        }, cancellationToken);
-                    if (method.ReturnsValueTask)
-                        // ReSharper disable once HeapView.BoxingAllocation
-                        invocation.ReturnValue = new ValueTask<TOut>(strippedResultTask);
-                    else
-                        invocation.ReturnValue = strippedResultTask;
-                }
+
+                // InvokeAndStripAsync allows to get rid of one extra allocation
+                // of a task stripping the result of regular InvokeAsync.
+                var task = function.InvokeAndStripAsync(input, usedBy, null, cancellationToken);
+                if (method.ReturnsValueTask)
+                    // ReSharper disable once HeapView.BoxingAllocation
+                    invocation.ReturnValue = new ValueTask<TOut>(task);
+                else
+                    invocation.ReturnValue = task;
             };
         }
 

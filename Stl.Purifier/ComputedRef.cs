@@ -8,9 +8,9 @@ namespace Stl.Purifier
     {
         public IFunction<TIn> Function { get; }
         public TIn Key { get; }
-        public long Tag { get; }
+        public int Tag { get; }
 
-        public ComputedRef(IFunction<TIn> function, TIn key, long tag)
+        public ComputedRef(IFunction<TIn> function, TIn key, int tag)
         {
             Function = function;
             Key = key;

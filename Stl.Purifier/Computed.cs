@@ -8,6 +8,7 @@ using Stl.Async;
 using Stl.Collections;
 using Stl.Collections.Slim;
 using Stl.Purifier.Internal;
+using Stl.Time;
 
 namespace Stl.Purifier
 {
@@ -24,7 +25,8 @@ namespace Stl.Purifier
         object Input { get; }
         IResult Output { get; }
         Type OutputType { get; }
-        long Tag { get; } // ~ Unique for the specific (Func, Key) pair
+        int Tag { get; } // ~ Unique for the specific (Func, Key) pair
+        int LastAccessTime { get; } // In ClickTime.Clicks
         ComputedState State { get; }
         bool IsValid { get; }
         event Action<IComputed, object?> Invalidated;
@@ -33,6 +35,7 @@ namespace Stl.Purifier
         ValueTask<IComputed?> RenewAsync(CancellationToken cancellationToken = default);
         ValueTask<IComputed?> RenewAsync(ComputeContext context, CancellationToken cancellationToken = default);
 
+        void Touch();
         TResult Apply<TArg, TResult>(IComputedApplyHandler<TArg, TResult> handler, TArg arg);
     }
     
@@ -61,6 +64,7 @@ namespace Stl.Purifier
         where TIn : notnull
     {
         private volatile int _state;
+        private volatile int _lastAccessTime;
         private Result<TOut> _output = default!;
         private RefHashSetSlim2<IComputedImpl> _used;
         private HashSetSlim2<ComputedRef<TIn>> _usedBy;
@@ -72,7 +76,11 @@ namespace Stl.Purifier
         public bool IsValid => State == ComputedState.Computed;
         public ComputedState State => (ComputedState) _state;
         public TIn Input { get; }
-        public long Tag { get; }
+        public int Tag { get; }
+        public int LastAccessTime {
+            get => _lastAccessTime;
+            protected set => Interlocked.Exchange(ref _lastAccessTime, value);
+        }
 
         public Type OutputType => typeof(TOut);
         public Result<TOut> Output {
@@ -117,11 +125,12 @@ namespace Stl.Purifier
             }
         }
 
-        public Computed(IFunction<TIn, TOut> function, TIn input, long tag)
+        public Computed(IFunction<TIn, TOut> function, TIn input, int tag)
         {
             Function = function;
             Input = input;
             Tag = tag;
+            _lastAccessTime = ClickTime.Clicks;
         }
 
         public override string ToString() 
@@ -221,10 +230,13 @@ namespace Stl.Purifier
             => await RenewAsync(cancellationToken).ConfigureAwait(false);
         public ValueTask<IComputed<TOut>?> RenewAsync(CancellationToken cancellationToken)
             => RenewAsync(null!, cancellationToken);
-        public ValueTask<IComputed<TOut>?> RenewAsync(ComputeContext context, CancellationToken cancellationToken)
-            => IsValid 
-                ? ValueTaskEx.FromResult((IComputed<TOut>?) this) 
-                : Function.InvokeAsync(Input, null, context, cancellationToken);
+        public async ValueTask<IComputed<TOut>?> RenewAsync(ComputeContext context, CancellationToken cancellationToken)
+            => IsValid ? this : await Function.InvokeAsync(Input, null, context, cancellationToken);
+
+        // Touch
+
+        public void Touch() 
+            => Interlocked.Exchange(ref _lastAccessTime, ClickTime.Clicks);
 
         // Apply methods
 

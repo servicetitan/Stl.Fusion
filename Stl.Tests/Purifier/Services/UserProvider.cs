@@ -1,11 +1,8 @@
-using System;
-using System.Collections.Immutable;
-using System.Runtime.CompilerServices;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -20,8 +17,8 @@ namespace Stl.Tests.Purifier.Services
         Task CreateAsync(User user, bool orUpdate = false, CancellationToken cancellationToken = default);
         Task UpdateAsync(User user, CancellationToken cancellationToken = default);
         Task<bool> DeleteAsync(User user, CancellationToken cancellationToken = default);
-        ValueTask<User?> TryGetAsync(long userId, CancellationToken cancellationToken = default);
-        ValueTask<long> CountAsync(CancellationToken cancellationToken = default);
+        Task<User?> TryGetAsync(long userId, CancellationToken cancellationToken = default);
+        Task<long> CountAsync(CancellationToken cancellationToken = default);
     }
 
     public class UserProvider : IUserProvider 
@@ -88,8 +85,9 @@ namespace Stl.Tests.Purifier.Services
             }
         }
 
-        public virtual async ValueTask<User?> TryGetAsync(long userId, CancellationToken cancellationToken = default)
+        public virtual async Task<User?> TryGetAsync(long userId, CancellationToken cancellationToken = default)
         {
+            // Debug.WriteLine($"TryGetAsync {userId}");
             using var lease = DbContextPool.Rent();
             var dbContext = lease.Item;
             var user = await dbContext.Users
@@ -99,7 +97,7 @@ namespace Stl.Tests.Purifier.Services
             return user;
         }
 
-        public virtual async ValueTask<long> CountAsync(CancellationToken cancellationToken = default) 
+        public virtual async Task<long> CountAsync(CancellationToken cancellationToken = default) 
         {
             using var lease = DbContextPool.Rent();
             var dbContext = lease.Item;

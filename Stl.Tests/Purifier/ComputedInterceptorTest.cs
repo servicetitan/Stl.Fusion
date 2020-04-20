@@ -19,7 +19,7 @@ namespace Stl.Tests.Purifier
     {
         public ComputedInterceptorTest(ITestOutputHelper @out) : base(@out) { }
 
-        private async ValueTask<IComputed<T>?> GetComputed<T>(Func<ValueTask<T>> producer)
+        private async Task<IComputed<T>?> GetComputed<T>(Func<Task<T>> producer)
         {
             using var cc = ComputeContext.New(ComputeOptions.Capture);
             await producer.Invoke().ConfigureAwait(false);

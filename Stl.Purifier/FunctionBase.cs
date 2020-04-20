@@ -9,7 +9,7 @@ namespace Stl.Purifier
 {
     public interface IFunction : IAsyncDisposable
     {
-        ValueTask<IComputed?> InvokeAsync(object input, 
+        Task<IComputed?> InvokeAsync(object input, 
             IComputed? usedBy = null,
             ComputeContext? context = null,
             CancellationToken cancellationToken = default);
@@ -20,7 +20,7 @@ namespace Stl.Purifier
     public interface IFunction<in TIn> : IFunction
         where TIn : notnull
     {
-        ValueTask<IComputed?> InvokeAsync(TIn input,
+        Task<IComputed?> InvokeAsync(TIn input,
             IComputed? usedBy = null,
             ComputeContext? context = null,
             CancellationToken cancellationToken = default);
@@ -31,7 +31,11 @@ namespace Stl.Purifier
     public interface IFunction<in TIn, TOut> : IFunction<TIn>
         where TIn : notnull
     {
-        new ValueTask<IComputed<TOut>?> InvokeAsync(TIn input,
+        new Task<IComputed<TOut>?> InvokeAsync(TIn input,
+            IComputed? usedBy = null,
+            ComputeContext? context = null,
+            CancellationToken cancellationToken = default);
+        Task<TOut> InvokeAndStripAsync(TIn input,
             IComputed? usedBy = null,
             ComputeContext? context = null,
             CancellationToken cancellationToken = default);
@@ -62,19 +66,19 @@ namespace Stl.Purifier
             OnInvalidateHandler = (c, _) => Unregister((IComputed<TIn, TOut>) c);
         }
 
-        async ValueTask<IComputed?> IFunction.InvokeAsync(object input, 
+        async Task<IComputed?> IFunction.InvokeAsync(object input, 
             IComputed? usedBy,
             ComputeContext? context,
             CancellationToken cancellationToken) 
             => await InvokeAsync((TIn) input, usedBy, context, cancellationToken).ConfigureAwait(false);
 
-        async ValueTask<IComputed?> IFunction<TIn>.InvokeAsync(TIn input, 
+        async Task<IComputed?> IFunction<TIn>.InvokeAsync(TIn input, 
             IComputed? usedBy, 
             ComputeContext? context,
             CancellationToken cancellationToken) 
             => await InvokeAsync(input, usedBy, context, cancellationToken).ConfigureAwait(false);
 
-        public async ValueTask<IComputed<TOut>?> InvokeAsync(TIn input, 
+        public async Task<IComputed<TOut>?> InvokeAsync(TIn input, 
             IComputed? usedBy = null,
             ComputeContext? context = null,
             CancellationToken cancellationToken = default)
@@ -114,6 +118,48 @@ namespace Stl.Purifier
             ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) result);
             Register((IComputed<TIn, TOut>) result);
             return result;
+        }
+
+        public async Task<TOut> InvokeAndStripAsync(TIn input, 
+            IComputed? usedBy = null,
+            ComputeContext? context = null,
+            CancellationToken cancellationToken = default)
+        {
+            using var contextUseScope = context.Use();
+            context = contextUseScope.Context;
+
+            // Read-Lock-RetryRead-Compute-Store pattern
+
+            var result = TryGetCached(input, usedBy);
+            context.TryCaptureValue(result);
+            if (result != null || (context.Options & ComputeOptions.TryGetCached) != 0) {
+                if ((context.Options & ComputeOptions.Invalidate) == ComputeOptions.Invalidate)
+                    result?.Invalidate();
+                return result.Strip();
+            }
+
+            using var @lock = await Locks.LockAsync((this, input), cancellationToken).ConfigureAwait(false);
+            
+            result = TryGetCached(input, usedBy);
+            context.TryCaptureValue(result);
+            if (result != null || (context.Options & ComputeOptions.TryGetCached) != 0) {
+                if ((context.Options & ComputeOptions.Invalidate) == ComputeOptions.Invalidate)
+                    result?.Invalidate();
+                return result.Strip();
+            }
+
+            for (var tryIndex = 0;; tryIndex++) {
+                result = await ComputeAsync(input, cancellationToken).ConfigureAwait(false);
+                if (result.IsValid)
+                    break;
+                if (!RetryComputePolicy.MustRetry(result, tryIndex))
+                    break;
+            }
+            context.TryCaptureValue(result);
+            result.Invalidated += OnInvalidateHandler;
+            ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) result);
+            Register((IComputed<TIn, TOut>) result);
+            return result.Strip();
         }
 
         IComputed? IFunction.TryGetCached(object input, IComputed? usedBy) 

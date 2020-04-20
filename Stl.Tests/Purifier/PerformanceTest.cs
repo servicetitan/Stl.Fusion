@@ -48,7 +48,7 @@ namespace Stl.Tests.Purifier
             var users = Services.GetRequiredService<IUserProvider>();
             var useImdb = Options.UseInMemoryDatabase;
             var opCountPerCore = useImdb ? 500_000 : 200_000;
-            var threadsPerCore = useImdb ? 10 : 50; 
+            var threadsPerCore = useImdb ? 2 : 20; 
             var threadCount = HardwareInfo.ProcessorCount * threadsPerCore;
             var cachingIterationCount = opCountPerCore / threadsPerCore;
             var nonCachingIterationCount = cachingIterationCount / (useImdb ? 100 : 400);
@@ -83,7 +83,7 @@ namespace Stl.Tests.Purifier
 
             async Task Mutator(CancellationToken cancellationToken)
             {
-                // return;
+                return;
                 using var lease = userProviderPool.Rent();
                 var users = lease.Resource;
                 var rnd = new Random();

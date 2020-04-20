@@ -13,8 +13,8 @@ namespace Stl.Tests.Purifier.Services
     public interface ITimeProvider
     {
         Moment GetTime();
-        ValueTask<Moment> GetTimeAsync();
-        ValueTask<Moment> GetTimerAsync(TimeSpan offset);
+        Task<Moment> GetTimeAsync();
+        Task<Moment> GetTimerAsync(TimeSpan offset);
     }
 
     public class TimeProvider : ITimeProvider
@@ -31,7 +31,7 @@ namespace Stl.Tests.Purifier.Services
             return now;
         }
 
-        public virtual ValueTask<Moment> GetTimeAsync()
+        public virtual Task<Moment> GetTimeAsync()
         {
             var computed = Computed.GetCurrent();
             if (computed != null) // Otherwise there is no interception / it's a regular class
@@ -41,10 +41,10 @@ namespace Stl.Tests.Purifier.Services
                         "Sorry, you were programmed to live for just 250ms :( " +
                         "Hopefully you enjoyed your life.");
                 });
-            return ValueTaskEx.FromResult(GetTime());
+            return Task.FromResult(GetTime());
         }
 
-        public virtual async ValueTask<Moment> GetTimerAsync(TimeSpan offset)
+        public virtual async Task<Moment> GetTimerAsync(TimeSpan offset)
         {
             var now = await GetTimeAsync().ConfigureAwait(false);
             return now + offset;

@@ -13,11 +13,11 @@ namespace Stl.Purifier.Internal
         where TIn : notnull
     {
         protected Func<TIn, CancellationToken, ValueTask<TOut>> Implementation { get; }
-        protected ConcurrentIdGenerator<long> TagGenerator { get; }
+        protected ConcurrentIdGenerator<int> TagGenerator { get; }
 
         public ExampleFunction(
             Func<TIn, CancellationToken, ValueTask<TOut>> implementation,
-            ConcurrentIdGenerator<long> tagGenerator,
+            ConcurrentIdGenerator<int> tagGenerator,
             IComputedRegistry<(IFunction, TIn)> computedRegistry,
             IRetryComputePolicy? retryComputePolicy = null,
             IAsyncLockSet<(IFunction, TIn)>? locks = null) 
@@ -63,7 +63,7 @@ namespace Stl.Purifier.Internal
             IServiceProvider services)
         {
             return new ExampleFunction<Unit, TOut>((u, ct) => implementation(ct),
-                services.GetRequiredService<ConcurrentIdGenerator<long>>(),
+                services.GetRequiredService<ConcurrentIdGenerator<int>>(),
                 services.GetRequiredService<IComputedRegistry<(IFunction, Unit)>>(),
                 services.GetService<IRetryComputePolicy>(),
                 services.GetService<IAsyncLockSet<(IFunction, Unit)>>()
@@ -76,7 +76,7 @@ namespace Stl.Purifier.Internal
             where TIn : notnull
         {
             return new ExampleFunction<TIn, TOut>(implementation,
-                services.GetRequiredService<ConcurrentIdGenerator<long>>(),
+                services.GetRequiredService<ConcurrentIdGenerator<int>>(),
                 services.GetRequiredService<IComputedRegistry<(IFunction, TIn)>>(),
                 services.GetService<IRetryComputePolicy>(),
                 services.GetService<IAsyncLockSet<(IFunction, TIn)>>()
