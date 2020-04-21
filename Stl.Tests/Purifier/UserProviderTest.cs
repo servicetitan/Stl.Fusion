@@ -53,25 +53,23 @@ namespace Stl.Tests.Purifier
                 Id = int.MaxValue,
                 Name = "Chuck Norris",
             }, true);
-            await Task.Delay(10);
 
             var userCount = await users.CountAsync(); 
+
             var u = new User() {
                 Id = 1000,
                 Name = "Bruce Lee"
             };
-
+            // This delete won't do anything, since the user doesn't exist
             (await users.DeleteAsync(u)).Should().BeFalse();
-            await Task.Delay(10);
-            
+            // Thus count shouldn't change
             (await users.CountAsync()).Should().Be(userCount);
-
+            // But after this line the could should change
             await users.CreateAsync(u);
-            await Task.Delay(10);
 
             var u1 = await users.TryGetAsync(u.Id);
             u1.Should().NotBeNull();
-            u1.Should().NotBeSameAs(u);
+            u1.Should().NotBeSameAs(u); // Because it's fetched
             u1!.Id.Should().Be(u.Id);
             u1.Name.Should().Be(u.Name);
             (await users.CountAsync()).Should().Be(++userCount);
@@ -80,8 +78,8 @@ namespace Stl.Tests.Purifier
             u2.Should().BeSameAs(u1);
             
             u.Name = "Jackie Chan";
-            await users.UpdateAsync(u);
-            await Task.Delay(10);
+            await users.UpdateAsync(u); // u.Name change 
+
             var u3 = await users.TryGetAsync(u.Id);
             u3.Should().NotBeNull();
             u3.Should().NotBeSameAs(u2);
@@ -97,25 +95,25 @@ namespace Stl.Tests.Purifier
             var time = Container.Resolve<ITimeProvider>();
             var customFunction = Container.Resolve<CustomFunction>();
 
-            var norris = new User() {
+            var u = new User() {
                 Id = int.MaxValue,
                 Name = "Chuck Norris",
             };
-            await users.CreateAsync(norris, true);
+            await users.CreateAsync(u, true);
 
             var cText = await Computed.CaptureAsync(
                 () => customFunction.InvokeAsync(async ct => {
                     var norris = await users.TryGetAsync(int.MaxValue, ct).ConfigureAwait(false);
                     var now = await time.GetTimeAsync().ConfigureAwait(false);
-                    return $"@ {now.ToString("hh:mm:ss.fff")}: {norris?.Name ?? "(none)"}";  
+                    return $"@ {now:hh:mm:ss.fff}: {norris?.Name ?? "(none)"}";  
                 }, CancellationToken.None));
             
             cText!.AutoRecompute((cNext, rPrev, invalidatedBy) 
                 => Log.LogInformation(cNext.Value));
 
             for (var i = 1; i <= 10; i += 1) {
-                norris.Name = $"Chuck Norris Lvl{i}";
-                await users.UpdateAsync(norris);
+                u.Name = $"Chuck Norris Lvl{i}";
+                await users.UpdateAsync(u);
                 await Task.Delay(100);
             }
 

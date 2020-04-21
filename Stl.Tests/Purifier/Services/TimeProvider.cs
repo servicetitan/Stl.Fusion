@@ -3,15 +3,14 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Purifier;
-using Stl.Time;
 
 namespace Stl.Tests.Purifier.Services
 {
     public interface ITimeProvider
     {
-        Moment GetTime();
-        Task<Moment> GetTimeAsync();
-        Task<Moment> GetTimeOffsetAsync(TimeSpan offset);
+        DateTime GetTime();
+        Task<DateTime> GetTimeAsync();
+        Task<DateTime> GetTimeOffsetAsync(TimeSpan offset);
     }
 
     public class TimeProvider : ITimeProvider
@@ -21,14 +20,14 @@ namespace Stl.Tests.Purifier.Services
         public TimeProvider(ILogger<TimeProvider>? log = null) 
             => Log = log as ILogger ?? NullLogger.Instance;
 
-        public Moment GetTime()
+        public DateTime GetTime()
         {
-            var now = RealTimeClock.Now;
+            var now = DateTime.Now;
             Log.LogDebug($"GetTime() -> {now}");
             return now;
         }
 
-        public virtual Task<Moment> GetTimeAsync()
+        public virtual Task<DateTime> GetTimeAsync()
         {
             var computed = Computed.GetCurrent();
             if (computed != null) // Otherwise there is no interception / it's a regular class
@@ -41,7 +40,7 @@ namespace Stl.Tests.Purifier.Services
             return Task.FromResult(GetTime());
         }
 
-        public virtual async Task<Moment> GetTimeOffsetAsync(TimeSpan offset)
+        public virtual async Task<DateTime> GetTimeOffsetAsync(TimeSpan offset)
         {
             var now = await GetTimeAsync().ConfigureAwait(false);
             return now + offset;

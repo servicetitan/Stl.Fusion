@@ -83,8 +83,7 @@ namespace Stl.Tests.Purifier
             int threadCount, int iterationCount, bool isWarmup = false)
         {
             if (!isWarmup)
-                // Warmup
-                await Test(title, userProviderPool, extraAction, threadCount, iterationCount / 100, true);
+                await Test(title, userProviderPool, extraAction, threadCount, iterationCount / 10, true);
 
             async Task Mutator(string name, CancellationToken cancellationToken)
             {
