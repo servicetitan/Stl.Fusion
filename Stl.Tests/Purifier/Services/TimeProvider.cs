@@ -1,11 +1,8 @@
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Stl.Async;
 using Stl.Purifier;
-using Stl.Purifier.Autofac;
 using Stl.Time;
 
 namespace Stl.Tests.Purifier.Services
@@ -14,7 +11,7 @@ namespace Stl.Tests.Purifier.Services
     {
         Moment GetTime();
         Task<Moment> GetTimeAsync();
-        Task<Moment> GetTimerAsync(TimeSpan offset);
+        Task<Moment> GetTimeOffsetAsync(TimeSpan offset);
     }
 
     public class TimeProvider : ITimeProvider
@@ -44,7 +41,7 @@ namespace Stl.Tests.Purifier.Services
             return Task.FromResult(GetTime());
         }
 
-        public virtual async Task<Moment> GetTimerAsync(TimeSpan offset)
+        public virtual async Task<Moment> GetTimeOffsetAsync(TimeSpan offset)
         {
             var now = await GetTimeAsync().ConfigureAwait(false);
             return now + offset;

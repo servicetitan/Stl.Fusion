@@ -8,10 +8,12 @@ namespace Stl.Async
     {
         private TaskCompletionSource<Unit>? _zeroTcs = null; 
         private readonly object _lock;
+        private readonly TaskCreationOptions _taskCreationOptions;
         public int Count { get; private set; }
         
-        public AsyncCounter()
+        public AsyncCounter(TaskCreationOptions taskCreationOptions = TaskCreationOptions.RunContinuationsAsynchronously)
         {
+            _taskCreationOptions = taskCreationOptions;
             _lock = this;
         }
 
@@ -34,7 +36,7 @@ namespace Stl.Async
                     throw Errors.AlreadyDisposedOrDisposing(DisposalState);
                 Count += 1;
                 if (Count == 1)
-                    _zeroTcs = new TaskCompletionSource<Unit>();
+                    _zeroTcs = new TaskCompletionSource<Unit>(_taskCreationOptions);
             }
         }
 

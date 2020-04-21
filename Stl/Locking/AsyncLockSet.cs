@@ -16,14 +16,19 @@ namespace Stl.Locking
         private readonly ConcurrentDictionary<TKey, TaskCompletionSource<Unit>> _locks =
             new ConcurrentDictionary<TKey, TaskCompletionSource<Unit>>();
         private readonly AsyncLocal<Dictionary<TKey, int>>? _localLocks;
+        private readonly TaskCreationOptions _taskCreationOptions;
 
         public ReentryMode ReentryMode { get; }
         public int AcquiredLockCount => _locks.Count;
 
-        public AsyncLockSet() : this(ReentryMode.CheckedFail) { }
-        public AsyncLockSet(ReentryMode reentryMode)
+        public AsyncLockSet(
+            TaskCreationOptions taskCreationOptions = TaskCreationOptions.RunContinuationsAsynchronously) 
+            : this(ReentryMode.CheckedFail, taskCreationOptions) { }
+        public AsyncLockSet(ReentryMode reentryMode, 
+            TaskCreationOptions taskCreationOptions = TaskCreationOptions.RunContinuationsAsynchronously)
         {
             ReentryMode = reentryMode;
+            _taskCreationOptions = taskCreationOptions;
             _localLocks = ReentryMode != ReentryMode.UncheckedDeadlock
                 ? new AsyncLocal<Dictionary<TKey, int>>()
                 : null;
@@ -55,7 +60,7 @@ namespace Stl.Locking
         private async ValueTask<IDisposable> InternalLockAsync(
             TKey key, Dictionary<TKey, int>? localLocks, CancellationToken cancellationToken = default)
         {
-            var myLock = new TaskCompletionSource<Unit>();
+            var myLock = new TaskCompletionSource<Unit>(_taskCreationOptions);
             var cancellationTask = (Task?) null;
             while (true) {
                 cancellationToken.ThrowIfCancellationRequested();

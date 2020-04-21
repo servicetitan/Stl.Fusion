@@ -36,7 +36,7 @@ namespace Stl.ImmutableModel.Processing.Internal
             NodeRemovedTokenSource = new CancellationTokenSource();
             ProcessStoppedOrNodeRemovedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(
                 processor.StoppingToken, NodeRemovedTokenSource.Token);
-            CompletionSource = new TaskCompletionSource<Unit>();
+            CompletionSource = new TaskCompletionSource<Unit>(TaskCreationOptions.RunContinuationsAsynchronously);
         }
 
         protected virtual void Dispose(bool disposing)

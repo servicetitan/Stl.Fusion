@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,6 +12,14 @@ namespace Stl.Async
 {
     public static class TaskEx
     {
+        private static readonly Task<Unit> UnitTask = Task.FromResult(Unit.Default);
+        
+        // FromXxx
+
+        public static Task<Unit> FromUnit() => UnitTask;
+
+        // ResultOrThrow
+
         public static T ResultOrThrow<T>(this Task<T> task) =>
             task.IsCompleted ? task.Result : throw Errors.TaskIsNotCompleted();
 

@@ -22,30 +22,39 @@ namespace Stl.Tests.Purifier
 
             var u1 = new User() {
                 Id = 1,
-                Name = "AY"
+                Name = "realDonaldTrump"
             };
-            var p1 = new Post() {
+
+            var c1 = new Chat() {
                 Id = 2,
-                Title = "Test",
                 Author = u1,
+                Title = "Chinese Corona"
             };
-            await DbContext.Users.AddAsync(u1);
-            await DbContext.Posts.AddAsync(p1);
+
+            var m1 = new Message() {
+                Id = 3,
+                Text = "Covfefe",
+                Author = u1,
+                Chat = c1,
+
+            };
+
+            DbContext.AddRange(u1, c1, m1);
             await DbContext.SaveChangesAsync();
 
             using var scope = Container.BeginLifetimeScope();
             using var dbContext = scope.Resolve<TestDbContext>();
 
             (await dbContext.Users.CountAsync()).Should().Be(1);
-            (await dbContext.Posts.CountAsync()).Should().Be(1);
+            (await dbContext.Messages.CountAsync()).Should().Be(1);
             u1 = await dbContext.Users.FindAsync(u1.Id);
-            u1.Name.Should().Be("AY");
-            p1 = await dbContext.Posts
+            u1.Name.Should().Be("realDonaldTrump");
+            
+            m1 = await dbContext.Messages
                 .Where(p => p.Id == p.Id)
                 .Include(p => p.Author)
                 .SingleAsync();
-            p1.Author.Id.Should().Be(u1.Id);
-            // u.Posts.Count().Should().Be(1);
+            m1.Author.Id.Should().Be(u1.Id);
         }
     }
 }

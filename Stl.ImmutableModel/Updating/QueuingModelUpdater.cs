@@ -62,7 +62,8 @@ namespace Stl.ImmutableModel.Updating
             Func<IModelIndex<TModel>, (IModelIndex<TModel> NewIndex, ModelChangeSet ChangeSet)> updater,
             CancellationToken cancellationToken = default)
         {
-            var result = new TaskCompletionSource<ModelUpdateInfo<TModel>>();
+            var result = new TaskCompletionSource<ModelUpdateInfo<TModel>>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
             await UpdateQueue
                 .PutAsync((updater, cancellationToken, result), cancellationToken)
                 .ConfigureAwait(false);

@@ -1,17 +1,18 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace Stl.Tests.Purifier.Model
 {
-    public class Post : LongKeyedEntity
+    public class Message : LongKeyedEntity
     {
-        private string _title = "";
         private string _text = "";
+        private DateTime _date;
         private User _author = default!;
+        private Chat _chat = default!;
 
-        [Required, MaxLength(120)]
-        public string Title {
-            get => _title;
-            set => _title = PreparePropertyValue(nameof(Title), value);
+        public DateTime Date {
+            get => _date;
+            set => _date = PreparePropertyValue(nameof(Date), value);
         }
 
         [Required, MaxLength(1_000_000)]
@@ -20,9 +21,16 @@ namespace Stl.Tests.Purifier.Model
             set => _text = PreparePropertyValue(nameof(Text), value);
         }
 
+        [Required]
         public User Author {
             get => _author;
             set => _author = PreparePropertyValue(nameof(Author), value);
+        }
+
+        [Required]
+        public Chat Chat {
+            get => _chat;
+            set => _chat = PreparePropertyValue(nameof(Chat), value);
         }
     }
 }

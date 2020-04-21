@@ -13,6 +13,7 @@ namespace Stl.Locking
     {
         private volatile TaskCompletionSource<Unit>? _lock;
         private readonly AsyncLocal<Box<int>>? _localLocks;
+        private readonly TaskCreationOptions _taskCreationOptions;
         
         public ReentryMode ReentryMode { get; }
         public bool IsLocked => _lock != null; 
@@ -20,9 +21,11 @@ namespace Stl.Locking
             ? (bool?) null 
             : _localLocks.Value?.Value > 0;
 
-        public AsyncLock(ReentryMode reentryMode)
+        public AsyncLock(ReentryMode reentryMode, 
+            TaskCreationOptions taskCreationOptions = TaskCreationOptions.RunContinuationsAsynchronously)
         {
             ReentryMode = reentryMode;
+            _taskCreationOptions = taskCreationOptions;
             _localLocks = ReentryMode != ReentryMode.UncheckedDeadlock 
                 ? new AsyncLocal<Box<int>>() 
                 : null;
@@ -40,7 +43,7 @@ namespace Stl.Locking
         public async ValueTask<IDisposable> InternalLockAsync(CancellationToken cancellationToken = default)
         {
             var localLocks = _localLocks?.Value;
-            var myLock = new TaskCompletionSource<Unit>();
+            var myLock = new TaskCompletionSource<Unit>(_taskCreationOptions);
             var cancellationTask = (Task?) null;
             while (true) {
                 cancellationToken.ThrowIfCancellationRequested();

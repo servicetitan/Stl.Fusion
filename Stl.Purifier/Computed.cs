@@ -292,6 +292,8 @@ namespace Stl.Purifier
     {
         private static readonly AsyncLocal<IComputed?> CurrentLocal = new AsyncLocal<IComputed?>();
 
+        // GetCurrent & ChangeCurrent
+
         public static IComputed? GetCurrent() => CurrentLocal.Value;
 
         public static IComputed<T> GetCurrent<T>()
@@ -304,20 +306,6 @@ namespace Stl.Purifier
             throw Errors.ComputedCurrentIsOfIncompatibleType(typeof(IComputed<T>));
         }
 
-        public static IComputed<T> Return<T>(T value)
-        {
-            var computed = GetCurrent<T>();
-            computed.SetOutput(value!);
-            return computed;
-        }
-
-        public static IComputed<T> TryReturn<T>(T value)
-        {
-            var computed = GetCurrent<T>();
-            computed.TrySetOutput(value!);
-            return computed;
-        }
-
         public static Disposable<IComputed?> ChangeCurrent(IComputed? newCurrent)
         {
             var oldCurrent = GetCurrent();
@@ -325,6 +313,24 @@ namespace Stl.Purifier
                 return Disposable.New(oldCurrent, _ => { });
             CurrentLocal.Value = newCurrent;
             return Disposable.New(oldCurrent, oldCurrent1 => CurrentLocal.Value = oldCurrent1);
+        }
+
+        // Capture & invalidate
+
+        public static async Task<IComputed<T>?> Capture<T>(Func<Task<T>> producer)
+        {
+            using var cc = ComputeContext.New(ComputeOptions.Capture);
+            await producer.Invoke().ConfigureAwait(false);
+            var result = cc.GetCapturedComputed<T>();
+            return result;
+        }
+
+        public static async Task<IComputed<T>?> Invalidate<T>(Func<Task<T>> producer, object? invalidatedBy = null)
+        {
+            using var cc = ComputeContext.New(ComputeOptions.Invalidate, invalidatedBy);
+            await producer.Invoke().ConfigureAwait(false);
+            var result = cc.GetCapturedComputed<T>();
+            return result;
         }
     }
 }

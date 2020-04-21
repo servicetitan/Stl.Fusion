@@ -1,6 +1,8 @@
+using System.Threading;
 using System.Threading.Tasks;
 using Autofac;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Stl.Purifier;
 using Stl.Purifier.Autofac;
 using Stl.Tests.Purifier.Model;
@@ -15,6 +17,34 @@ namespace Stl.Tests.Purifier
         public UserProviderTest(ITestOutputHelper @out) : base(@out) { }
 
         [Fact]
+        public async Task InvalidateEverythingTest()
+        {
+            var users = Container.Resolve<IUserProvider>();
+            // We need at least 1 user to see count invalidation messages
+            await users.CreateAsync(new User() {
+                Id = int.MaxValue,
+                Name = "Chuck Norris",
+            }, true);
+            await Task.Delay(10);
+
+            var u1 = await users.TryGetAsync(int.MaxValue);
+            var c1 = await Computed.Capture(() => users.CountAsync());
+            
+            await users.Invalidate();
+            await Task.Delay(10);
+
+            var u2 = await users.TryGetAsync(int.MaxValue);
+            var c2 = await Computed.Capture(() => users.CountAsync());
+            
+            u2.Should().NotBeSameAs(u1);
+            u2!.Id.Should().Be(u1!.Id);
+            u2.Name.Should().Be(u1.Name);
+
+            c2.Should().NotBeSameAs(c1);
+            c2!.Value.Should().Be(c1!.Value); 
+        }
+
+        [Fact]
         public async Task InvalidationTest()
         {
             var users = Container.Resolve<IUserProvider>();
@@ -23,17 +53,22 @@ namespace Stl.Tests.Purifier
                 Id = int.MaxValue,
                 Name = "Chuck Norris",
             }, true);
+            await Task.Delay(10);
 
             var userCount = await users.CountAsync(); 
             var u = new User() {
                 Id = 1000,
                 Name = "Bruce Lee"
             };
+
             (await users.DeleteAsync(u)).Should().BeFalse();
+            await Task.Delay(10);
+            
             (await users.CountAsync()).Should().Be(userCount);
 
             await users.CreateAsync(u);
             await Task.Delay(10);
+
             var u1 = await users.TryGetAsync(u.Id);
             u1.Should().NotBeNull();
             u1.Should().NotBeSameAs(u);
@@ -68,18 +103,15 @@ namespace Stl.Tests.Purifier
             };
             await users.CreateAsync(norris, true);
 
-            IComputed<string> c;
-            using (var cc = ComputeContext.New(ComputeOptions.Capture)) {
-                // ReSharper disable once HeapView.CanAvoidClosure
-                await customFunction.Invoke(async ct => {
+            var cText = await Computed.Capture(
+                () => customFunction.InvokeAsync(async ct => {
                     var norris = await users.TryGetAsync(int.MaxValue, ct).ConfigureAwait(false);
-                    var norrisName = norris?.Name ?? "(none)";
                     var now = await time.GetTimeAsync().ConfigureAwait(false);
-                    return $"@ {now}: {norrisName}";  
-                }, default);
-                c = cc.GetCapturedComputed<string>()!;
-            }
-            c.AutoRecompute((cNext, rPrev, invalidatedBy) => Out.WriteLine(cNext.Value));
+                    return $"@ {now.ToString("hh:mm:ss.fff")}: {norris?.Name ?? "(none)"}";  
+                }, CancellationToken.None));
+            
+            cText!.AutoRecompute((cNext, rPrev, invalidatedBy) 
+                => Log.LogInformation(cNext.Value));
 
             for (var i = 1; i <= 10; i += 1) {
                 norris.Name = $"Chuck Norris Lvl{i}";
@@ -87,8 +119,8 @@ namespace Stl.Tests.Purifier
                 await Task.Delay(100);
             }
 
-            c = (await c.RenewAsync())!;
-            c!.Value.Should().EndWith("Lvl10");
+            cText = (await cText!.RenewAsync())!;
+            cText!.Value.Should().EndWith("Lvl10");
         }
     }
 }

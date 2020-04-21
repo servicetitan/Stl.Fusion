@@ -51,7 +51,12 @@ namespace Stl.Time
         public double ToUnixEpoch() => UnixTime.TotalSeconds;
         public long ToIntegerUnixEpoch() => (long) Math.Floor(UnixTime.TotalSeconds);
 
-        public override string ToString() => ToDateTime().ToString(CultureInfo.InvariantCulture);
+        public override string ToString() 
+            => ToDateTime().ToString(CultureInfo.InvariantCulture);
+        public string ToString(string format) 
+            => ToDateTime().ToString(format, CultureInfo.InvariantCulture);
+        public string ToString(string format, CultureInfo cultureInfo) 
+            => ToDateTime().ToString(format, cultureInfo);
 
         // Equality
         

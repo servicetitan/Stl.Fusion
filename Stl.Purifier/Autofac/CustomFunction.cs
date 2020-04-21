@@ -9,32 +9,28 @@ namespace Stl.Purifier.Autofac
     {
         // Returning IComputed<TOut>
 
-        public virtual ValueTask<IComputed<TOut>> Invoke<TIn, TOut>(
-            Func<TIn, CancellationToken, ValueTask<IComputed<TOut>>> fn,
+        public virtual Task<IComputed<TOut>> InvokeAsync<TIn, TOut>(
+            Func<TIn, CancellationToken, Task<IComputed<TOut>>> fn,
             TIn input,
-            CancellationToken cancellationToken = default,
-            ComputeContext? callOptions = null)
+            CancellationToken cancellationToken = default)
             => fn.Invoke(input, cancellationToken);
 
-        public virtual ValueTask<IComputed<TOut>> Invoke<TOut>(
-            Func<CancellationToken, ValueTask<IComputed<TOut>>> fn,
-            CancellationToken cancellationToken = default,
-            ComputeContext? callOptions = null)
+        public virtual Task<IComputed<TOut>> InvokeAsync<TOut>(
+            Func<CancellationToken, Task<IComputed<TOut>>> fn,
+            CancellationToken cancellationToken = default)
             => fn.Invoke(cancellationToken);
 
         // Returning TOut  
 
-        public virtual ValueTask<TOut> Invoke<TIn, TOut>(
-            Func<TIn, CancellationToken, ValueTask<TOut>> fn,
+        public virtual Task<TOut> InvokeAsync<TIn, TOut>(
+            Func<TIn, CancellationToken, Task<TOut>> fn,
             TIn input,
-            CancellationToken cancellationToken = default,
-            ComputeContext? callOptions = null)
+            CancellationToken cancellationToken = default)
             => fn.Invoke(input, cancellationToken);
 
-        public virtual ValueTask<TOut> Invoke<TOut>(
-            Func<CancellationToken, ValueTask<TOut>> fn,
-            CancellationToken cancellationToken = default,
-            ComputeContext? callOptions = null)
+        public virtual Task<TOut> InvokeAsync<TOut>(
+            Func<CancellationToken, Task<TOut>> fn,
+            CancellationToken cancellationToken = default)
             => fn.Invoke(cancellationToken);
     }
 }

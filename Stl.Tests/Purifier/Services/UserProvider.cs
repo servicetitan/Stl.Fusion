@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -6,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Stl.Async;
 using Stl.Purifier;
 using Stl.Purifier.Autofac;
 using Stl.Tests.Purifier.Model;
@@ -19,6 +21,7 @@ namespace Stl.Tests.Purifier.Services
         Task<bool> DeleteAsync(User user, CancellationToken cancellationToken = default);
         Task<User?> TryGetAsync(long userId, CancellationToken cancellationToken = default);
         Task<long> CountAsync(CancellationToken cancellationToken = default);
+        Task Invalidate();
     }
 
     public class UserProvider : IUserProvider 
@@ -88,6 +91,7 @@ namespace Stl.Tests.Purifier.Services
         public virtual async Task<User?> TryGetAsync(long userId, CancellationToken cancellationToken = default)
         {
             // Debug.WriteLine($"TryGetAsync {userId}");
+            await Everything();
             using var lease = DbContextPool.Rent();
             var dbContext = lease.Item;
             var user = await dbContext.Users
@@ -99,6 +103,7 @@ namespace Stl.Tests.Purifier.Services
 
         public virtual async Task<long> CountAsync(CancellationToken cancellationToken = default) 
         {
+            await Everything();
             using var lease = DbContextPool.Rent();
             var dbContext = lease.Item;
             var count = await dbContext.Users.LongCountAsync(cancellationToken).ConfigureAwait(false);
@@ -107,6 +112,11 @@ namespace Stl.Tests.Purifier.Services
         }
 
         // Change handling
+
+        public virtual Task Invalidate() 
+            => Computed.Invalidate(Everything);
+
+        protected virtual Task<Unit> Everything() => TaskEx.FromUnit();
 
         protected virtual async void OnChanged(User user, bool countChanged = true)
         {

@@ -1,4 +1,5 @@
 using System;
+using System.Reactive;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,8 +25,9 @@ namespace Stl.Async
         private readonly Memory<T> _buffer;
         private int _readPosition;
         private int _writePosition;
-        private TaskCompletionSource<bool> _pullHappened = new TaskCompletionSource<bool>();
-        private TaskCompletionSource<bool> _putHappened = new TaskCompletionSource<bool>();
+        private readonly TaskCreationOptions _taskCreationOptions;
+        private TaskCompletionSource<Unit> _pullHappened;
+        private TaskCompletionSource<Unit> _putHappened;
 
         public int Size { get; }
         public int FreeCount => Size - Count;
@@ -55,20 +57,19 @@ namespace Stl.Async
 
         private object Lock => this;
         
-        public AsyncChannel(int size)
-        {
-            if (size <= 0)
-                throw Errors.QueueSizeMustBeGreaterThanZero(nameof(size));
-            Size = size;
-            _buffer = new T[size + 1]; // To make sure that "buffer is full" != "buffer is empty"
-        }
+        public AsyncChannel(int size, TaskCreationOptions taskCreationOptions = default)
+            : this(new T[size + 1], taskCreationOptions)
+        { }
 
-        public AsyncChannel(Memory<T> buffer) // Might be used w/ System.Buffers
+        public AsyncChannel(Memory<T> buffer, TaskCreationOptions taskCreationOptions = default)
         {
             if (buffer.Length <= 1)
                 throw Errors.BufferLengthMustBeGreaterThanOne(nameof(buffer));
             Size = buffer.Length - 1; // To make sure that "buffer is full" != "buffer is empty"
-            _buffer = buffer;  
+            _buffer = buffer;
+            _taskCreationOptions = taskCreationOptions;
+            _pullHappened = new TaskCompletionSource<Unit>(_taskCreationOptions);
+            _putHappened = new TaskCompletionSource<Unit>(_taskCreationOptions);
         }
 
         public bool CompletePut()
@@ -79,7 +80,7 @@ namespace Stl.Async
                 if (IsPutCompleted)
                     return false;
                 IsPutCompleted = true;
-                _putHappened?.TrySetResult(true);
+                _putHappened?.TrySetResult(default);
                 return true;
             }
         }
@@ -96,7 +97,7 @@ namespace Stl.Async
                         continue;
                     _buffer.Span[_writePosition] = item;
                     _writePosition = (_writePosition + 1) % _buffer.Span.Length;
-                    _putHappened?.TrySetResult(true);
+                    _putHappened?.TrySetResult(default);
                     return;
                 }
             }
@@ -125,7 +126,7 @@ namespace Stl.Async
                         source = source.Slice(chunk2Length);
                     }
                     _writePosition = (_writePosition + chunkLength) % _buffer.Length;
-                    _putHappened?.TrySetResult(true);
+                    _putHappened?.TrySetResult(default);
                 }
             }
         }
@@ -143,7 +144,7 @@ namespace Stl.Async
                     }
                     var item = _buffer.Span[_readPosition];
                     _readPosition = (_readPosition + 1) % _buffer.Length;
-                    _pullHappened?.TrySetResult(true);
+                    _pullHappened?.TrySetResult(default);
                     return item!;
                 }
             }
@@ -162,7 +163,7 @@ namespace Stl.Async
                     }
                     var item = _buffer.Span[(_writePosition - 1 + _buffer.Length) % _buffer.Length];
                     _readPosition = _writePosition;
-                    _pullHappened?.TrySetResult(true);
+                    _pullHappened?.TrySetResult(default);
                     return item!;
                 }
             }
@@ -200,7 +201,7 @@ namespace Stl.Async
                     }
                     readLength += chunkLength;
                     _readPosition = (_readPosition + chunkLength) % _buffer.Length;
-                    _pullHappened?.TrySetResult(true);
+                    _pullHappened?.TrySetResult(default);
                 }
             }
             return readLength;
@@ -208,13 +209,13 @@ namespace Stl.Async
 
         private async Task WaitForDequeueAsync(CancellationToken cancellationToken = default)
         {
-            TaskCompletionSource<bool> tcs; 
+            TaskCompletionSource<Unit> tcs; 
             lock (Lock) {
                 cancellationToken.ThrowIfCancellationRequested();
                 tcs = _pullHappened;
                 if (tcs.Task.IsCompleted && FreeCountNoLock > 0)
                     return;
-                tcs = new TaskCompletionSource<bool>();
+                tcs = new TaskCompletionSource<Unit>(_taskCreationOptions);
                 _pullHappened = tcs;
             }
 
@@ -223,13 +224,13 @@ namespace Stl.Async
 
         private async Task WaitForEnqueueAsync(CancellationToken cancellationToken = default)
         {
-            TaskCompletionSource<bool> tcs; 
+            TaskCompletionSource<Unit> tcs; 
             lock (Lock) {
                 cancellationToken.ThrowIfCancellationRequested();
                 tcs = _putHappened;
                 if (tcs.Task.IsCompleted && (CountNoLock > 0 || IsPutCompleted))
                     return;
-                tcs = new TaskCompletionSource<bool>();
+                tcs = new TaskCompletionSource<Unit>(_taskCreationOptions);
                 _putHappened = tcs;
             }
 
