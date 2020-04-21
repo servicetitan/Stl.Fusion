@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Autofac;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Stl.Purifier;
 using Stl.Tests.Purifier.Services;
 using Stl.Time;
@@ -22,7 +23,7 @@ namespace Stl.Tests.Purifier
 
             var count = 0;
             void OnInvalidated(IComputed<DateTime> @new, Result<DateTime> old, object? invalidatedBy) 
-                => Out.WriteLine($"{++count} -> {@new.Value}");
+                => Log.LogInformation($"{++count} -> {@new.Value:hh:mm:ss:fff}");
 
             using (var o = cTimer!.AutoRecompute(OnInvalidated)) {
                 await Task.Delay(2000);
@@ -40,15 +41,15 @@ namespace Stl.Tests.Purifier
         {
             var time = Container.Resolve<ITimeProvider>();
 
-            var c1 = time.GetTimeAsync();
+            var c1 = await Computed.CaptureAsync(() => time.GetTimeAsync());
             
             // Wait for time invalidation
             await Task.Delay(500);
             
             var c2a = await Computed.CaptureAsync(() => time.GetTimeAsync());
-            c2a.Should().NotBe(c1);
+            c2a.Should().NotBeSameAs(c1);
             var c2b = await Computed.CaptureAsync(() => time.GetTimeAsync());
-            c2b.Should().Be(c2a);
+            c2b.Should().BeSameAs(c2a);
         }
 
         [Fact]

@@ -108,8 +108,8 @@ namespace Stl.Tests.Purifier
                     return $"@ {now:hh:mm:ss.fff}: {norris?.Name ?? "(none)"}";  
                 }, CancellationToken.None));
             
-            cText!.AutoRecompute((cNext, rPrev, invalidatedBy) 
-                => Log.LogInformation(cNext.Value));
+            using var _ = cText!.AutoRecompute(
+                (cNext, rPrev, invalidatedBy) => Log.LogInformation(cNext.Value));
 
             for (var i = 1; i <= 10; i += 1) {
                 u.Name = $"Chuck Norris Lvl{i}";

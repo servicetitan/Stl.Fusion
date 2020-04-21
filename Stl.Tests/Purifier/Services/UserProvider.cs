@@ -91,7 +91,7 @@ namespace Stl.Tests.Purifier.Services
         public virtual async Task<User?> TryGetAsync(long userId, CancellationToken cancellationToken = default)
         {
             // Debug.WriteLine($"TryGetAsync {userId}");
-            await Everything();
+            await Everything().ConfigureAwait(false);
             using var lease = DbContextPool.Rent();
             var dbContext = lease.Item;
             var user = await dbContext.Users
@@ -103,7 +103,7 @@ namespace Stl.Tests.Purifier.Services
 
         public virtual async Task<long> CountAsync(CancellationToken cancellationToken = default) 
         {
-            await Everything();
+            await Everything().ConfigureAwait(false);
             using var lease = DbContextPool.Rent();
             var dbContext = lease.Item;
             var count = await dbContext.Users.LongCountAsync(cancellationToken).ConfigureAwait(false);
