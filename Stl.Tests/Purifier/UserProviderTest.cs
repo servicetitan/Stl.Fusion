@@ -28,13 +28,13 @@ namespace Stl.Tests.Purifier
             await Task.Delay(10);
 
             var u1 = await users.TryGetAsync(int.MaxValue);
-            var c1 = await Computed.Capture(() => users.CountAsync());
+            var c1 = await Computed.CaptureAsync(() => users.CountAsync());
             
             await users.Invalidate();
             await Task.Delay(10);
 
             var u2 = await users.TryGetAsync(int.MaxValue);
-            var c2 = await Computed.Capture(() => users.CountAsync());
+            var c2 = await Computed.CaptureAsync(() => users.CountAsync());
             
             u2.Should().NotBeSameAs(u1);
             u2!.Id.Should().Be(u1!.Id);
@@ -103,7 +103,7 @@ namespace Stl.Tests.Purifier
             };
             await users.CreateAsync(norris, true);
 
-            var cText = await Computed.Capture(
+            var cText = await Computed.CaptureAsync(
                 () => customFunction.InvokeAsync(async ct => {
                     var norris = await users.TryGetAsync(int.MaxValue, ct).ConfigureAwait(false);
                     var now = await time.GetTimeAsync().ConfigureAwait(false);

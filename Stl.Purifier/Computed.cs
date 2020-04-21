@@ -317,7 +317,7 @@ namespace Stl.Purifier
 
         // Capture & invalidate
 
-        public static async Task<IComputed<T>?> Capture<T>(Func<Task<T>> producer)
+        public static async Task<IComputed<T>?> CaptureAsync<T>(Func<Task<T>> producer)
         {
             using var cc = ComputeContext.New(ComputeOptions.Capture);
             await producer.Invoke().ConfigureAwait(false);
@@ -325,7 +325,7 @@ namespace Stl.Purifier
             return result;
         }
 
-        public static async Task<IComputed<T>?> Invalidate<T>(Func<Task<T>> producer, object? invalidatedBy = null)
+        public static async Task<IComputed<T>?> InvalidateAsync<T>(Func<Task<T>> producer, object? invalidatedBy = null)
         {
             using var cc = ComputeContext.New(ComputeOptions.Invalidate, invalidatedBy);
             await producer.Invoke().ConfigureAwait(false);

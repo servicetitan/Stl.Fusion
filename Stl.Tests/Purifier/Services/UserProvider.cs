@@ -114,7 +114,7 @@ namespace Stl.Tests.Purifier.Services
         // Change handling
 
         public virtual Task Invalidate() 
-            => Computed.Invalidate(Everything);
+            => Computed.InvalidateAsync(Everything);
 
         protected virtual Task<Unit> Everything() => TaskEx.FromUnit();
 
