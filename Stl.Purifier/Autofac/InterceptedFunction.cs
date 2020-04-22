@@ -37,10 +37,13 @@ namespace Stl.Purifier.Autofac
             
             var tag = TagGenerator.Next(input.HashCode);
             var output = new Computed<InterceptedInput, TOut>(this, input, tag);
+            var method = Method;
+            var keepAliveTime = method.KeepAliveTime;
+            if (keepAliveTime.HasValue)
+                output.KeepAliveTime = keepAliveTime.GetValueOrDefault();
             try {
                 using var _ = Computed.ChangeCurrent(output);
                 var resultTask = input.InvokeOriginalFunction(output, cancellationToken);
-                var method = Method;
                 if (method.ReturnsComputed) {
                     if (method.ReturnsValueTask) {
                         var task = (ValueTask<IComputed<TOut>>) resultTask;

@@ -1,15 +1,11 @@
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using Stl.Async;
 using Stl.Collections;
 using Stl.Collections.Slim;
 using Stl.Purifier.Internal;
-using Stl.Time;
 
 namespace Stl.Purifier
 {
@@ -27,10 +23,11 @@ namespace Stl.Purifier
         IResult Output { get; }
         Type OutputType { get; }
         int Tag { get; } // ~ Unique for the specific (Func, Key) pair
-        int LastAccessTime { get; } // In ClickTime.Clicks
         ComputedState State { get; }
         bool IsValid { get; }
         event Action<IComputed, object?> Invalidated;
+        int LastAccessTime { get; set; } // In ClickTime.Clicks
+        int KeepAliveTime { get; set; } // In ClickTime.Clicks
 
         bool Invalidate(object? invalidatedBy = null);
         ValueTask<IComputed?> RenewAsync(CancellationToken cancellationToken = default);
@@ -65,14 +62,15 @@ namespace Stl.Purifier
         where TIn : notnull
     {
         private volatile int _state;
-        private volatile int _lastAccessTime;
         private Result<TOut> _output = default!;
         private RefHashSetSlim2<IComputedImpl> _used;
         private HashSetSlim2<ComputedRef<TIn>> _usedBy;
         private event Action<IComputed, object?>? _invalidated;
         private object? _invalidatedBy;
+        private volatile int _lastAccessTime;
+        private int _keepAliveTime;
         private object Lock => this;
-        
+
         public IFunction<TIn, TOut> Function { get; }
         public bool IsValid => State == ComputedState.Computed;
         public ComputedState State => (ComputedState) _state;
@@ -80,7 +78,15 @@ namespace Stl.Purifier
         public int Tag { get; }
         public int LastAccessTime {
             get => _lastAccessTime;
-            protected set => Interlocked.Exchange(ref _lastAccessTime, value);
+            set => Interlocked.Exchange(ref _lastAccessTime, value);
+        }
+
+        public int KeepAliveTime {
+            get => _keepAliveTime;
+            set {
+                AssertStateIs(ComputedState.Computing);
+                _keepAliveTime = value;
+            }
         }
 
         public Type OutputType => typeof(TOut);
@@ -131,6 +137,7 @@ namespace Stl.Purifier
             Function = function;
             Input = input;
             Tag = tag;
+            _keepAliveTime = Computed.DefaultKeepAliveTime;
             _lastAccessTime = ClickTime.Clicks;
         }
 
@@ -291,6 +298,7 @@ namespace Stl.Purifier
 
     public static class Computed
     {
+        public static readonly int DefaultKeepAliveTime = ClickTime.SecondsToClicks(1);
         private static readonly AsyncLocal<IComputed?> CurrentLocal = new AsyncLocal<IComputed?>();
 
         // GetCurrent & ChangeCurrent

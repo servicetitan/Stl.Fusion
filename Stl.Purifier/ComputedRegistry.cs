@@ -23,10 +23,8 @@ namespace Stl.Purifier
         where TKey : notnull
     {
         public static readonly int DefaultInitialCapacity = 509; // Ideally, a prime number
-        public static readonly int DefaultExpirationTime = ClickTime.TimeSpanToClicks(TimeSpan.FromSeconds(1));
         private volatile int _pruneCounterThreshold;
 
-        public int ExpirationTime { get; }
         protected ConcurrentDictionary<TKey, Entry> Storage { get; }
         protected GCHandlePool GCHandlePool { get; }
         protected ConcurrentCounter PruneCounter { get; }
@@ -37,14 +35,12 @@ namespace Stl.Purifier
         protected object Lock => Storage; 
 
         public ComputedRegistry() 
-            : this(DefaultExpirationTime, DefaultInitialCapacity) { }
+            : this(DefaultInitialCapacity) { }
         public ComputedRegistry(
-            int expirationTime, 
             int initialCapacity, 
             ConcurrentCounter? pruneCounter = null, 
             GCHandlePool? gcHandlePool = null)
         {
-            ExpirationTime = expirationTime;
             pruneCounter ??= new ConcurrentCounter();
             gcHandlePool ??= new GCHandlePool(GCHandleType.Weak);
             if (gcHandlePool.HandleType != GCHandleType.Weak)
@@ -148,14 +144,14 @@ namespace Stl.Purifier
         public void Prune()
         {
             PruneCounter.PreciseValue = 0;
-            var minLastAccessTime = ClickTime.Clicks - ExpirationTime;
+            var now = ClickTime.Clicks;
             foreach (var (key, entry) in Storage) {
                 if (!entry.Handle.IsAllocated) {
                     Storage.TryRemove(key, entry);
                     continue;
                 }
                 var computed = entry.Computed;
-                if (computed != null && computed.LastAccessTime < minLastAccessTime)
+                if (computed != null && (computed.LastAccessTime + computed.KeepAliveTime) < now)
                     Storage.TryUpdate(key, new Entry(null, entry.Handle), entry);
             }
         }

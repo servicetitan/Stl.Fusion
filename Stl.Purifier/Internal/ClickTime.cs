@@ -31,7 +31,9 @@ namespace Stl.Purifier.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static TimeSpan ClicksToTimeSpan(int clicks) 
             => new TimeSpan(clicks * TicksPerClick);
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double ClicksToSeconds(int clicks) 
+            => new TimeSpan(clicks * TicksPerClick).TotalSeconds;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Moment ClicksToMoment(int clicks) 
             => Start + new TimeSpan(clicks * TicksPerClick);
@@ -39,7 +41,9 @@ namespace Stl.Purifier.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int TimeSpanToClicks(TimeSpan timeSpan) 
             => (int) (timeSpan.Ticks / TicksPerClick);
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int SecondsToClicks(double seconds) 
+            => (int) (TimeSpan.FromSeconds(seconds).Ticks / TicksPerClick);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int MomentToClicks(Moment moment) 
             => TimeSpanToClicks(moment - Start);

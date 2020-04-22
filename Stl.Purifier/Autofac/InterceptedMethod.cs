@@ -11,5 +11,6 @@ namespace Stl.Purifier.Autofac
         public bool ReturnsComputed { get; set; }
         public ArgumentComparer[] ArgumentComparers { get; set; } = null!;
         public int CancellationTokenArgumentIndex { get; set; } = -1;
+        public int? KeepAliveTime { get; set; }
     }
 }

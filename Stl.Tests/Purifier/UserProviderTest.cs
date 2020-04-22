@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Autofac;
@@ -5,6 +6,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Stl.Purifier;
 using Stl.Purifier.Autofac;
+using Stl.Purifier.Internal;
 using Stl.Tests.Purifier.Model;
 using Stl.Tests.Purifier.Services;
 using Xunit;
@@ -117,6 +119,18 @@ namespace Stl.Tests.Purifier
 
             cText = (await cText!.RenewAsync())!;
             cText!.Value.Should().EndWith("Lvl10");
+        }
+
+        [Fact]
+        public async Task KeepAliveTimeTest()
+        {
+            var users = Container.Resolve<IUserProvider>();
+
+            var cUser0 = await Computed.CaptureAsync(() => users.TryGetAsync(0));
+            var cCount = await Computed.CaptureAsync(() => users.CountAsync());
+
+            cUser0!.KeepAliveTime.Should().Be(Computed.DefaultKeepAliveTime);
+            cCount!.KeepAliveTime.Should().Be(ClickTime.SecondsToClicks(5));
         }
     }
 }

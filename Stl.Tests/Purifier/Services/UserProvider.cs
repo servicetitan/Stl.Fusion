@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using System.Reactive;
 using System.Threading;
@@ -99,10 +100,11 @@ namespace Stl.Tests.Purifier.Services
             var user = await dbContext.Users
                 .FindAsync(new[] {(object) userId}, cancellationToken)
                 .ConfigureAwait(false);
-            user.Freeze();
+            user?.Freeze();
             return user;
         }
 
+        [Computed(KeepAliveTime = 5)]
         public virtual async Task<long> CountAsync(CancellationToken cancellationToken = default) 
         {
             await Everything().ConfigureAwait(false);

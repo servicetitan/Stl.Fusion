@@ -8,6 +8,7 @@ using Castle.DynamicProxy;
 using Stl.Async;
 using Stl.Concurrency;
 using Stl.Locking;
+using Stl.Purifier.Internal;
 
 namespace Stl.Purifier.Autofac
 {
@@ -117,8 +118,8 @@ namespace Stl.Purifier.Autofac
 
         protected virtual InterceptedMethod? CreateInterceptedMethod(MethodInfo methodInfo)
         {
-            var attribute = methodInfo.GetCustomAttribute<ComputedAttribute>(true);
-            var isEnabled = attribute?.IsEnabled ?? true;
+            var attr = methodInfo.GetCustomAttribute<ComputedAttribute>(true);
+            var isEnabled = attr?.IsEnabled ?? true;
             if (!isEnabled)
                 return null;
 
@@ -142,6 +143,12 @@ namespace Stl.Purifier.Autofac
                 }
             }
 
+            var attrKeepAliveTime = attr?.KeepAliveTime ?? Double.MinValue;
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
+            var keepAliveTime = attrKeepAliveTime != double.MinValue
+                ? (int?) ClickTime.SecondsToClicks(attrKeepAliveTime)
+                : null;
+
             var parameters = methodInfo.GetParameters();
             var r = new InterceptedMethod {
                 MethodInfo = methodInfo,
@@ -149,6 +156,7 @@ namespace Stl.Purifier.Autofac
                 ReturnsValueTask = returnsValueTask,
                 ReturnsComputed = returnsComputed,
                 ArgumentComparers = new ArgumentComparer[parameters.Length],
+                KeepAliveTime = keepAliveTime,  
             };
 
             for (var i = 0; i < parameters.Length; i++) {
