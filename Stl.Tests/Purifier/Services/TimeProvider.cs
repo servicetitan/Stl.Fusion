@@ -16,9 +16,13 @@ namespace Stl.Tests.Purifier.Services
     public class TimeProvider : ITimeProvider
     {
         protected ILogger Log { get; }
+        protected bool IsCaching { get; }
 
-        public TimeProvider(ILogger<TimeProvider>? log = null) 
-            => Log = log as ILogger ?? NullLogger.Instance;
+        public TimeProvider(ILogger<TimeProvider>? log = null)
+        {
+            Log = log as ILogger ?? NullLogger.Instance;
+            IsCaching = GetType().Name.EndsWith("Proxy");
+        }
 
         public DateTime GetTime()
         {
@@ -29,14 +33,16 @@ namespace Stl.Tests.Purifier.Services
 
         public virtual Task<DateTime> GetTimeAsync()
         {
-            var computed = Computed.GetCurrent();
-            if (computed != null) // Otherwise there is no interception / it's a regular class
+            if (IsCaching) {
+                // Self-invalidation
+                var cResult = Computed.GetCurrent();
                 Task.Run(async () => {
                     await Task.Delay(250).ConfigureAwait(false);
-                    computed.Invalidate(
+                    cResult!.Invalidate(
                         "Sorry, you were programmed to live for just 250ms :( " +
                         "Hopefully you enjoyed your life.");
                 });
+            }
             return Task.FromResult(GetTime());
         }
 

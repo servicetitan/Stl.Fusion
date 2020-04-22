@@ -20,5 +20,9 @@ namespace Stl.Purifier.Internal
         public static Exception ComputedCapturedIsOfIncompatibleType(Type expectedType)
             => new InvalidCastException(
                 $"Computed.Captured() can't be converted to '{expectedType.Name}'.");
+
+        public static Exception TaskMustBeAlreadyCompleted()
+            => new InvalidOperationException(
+                "Task must be already completed at this point.");
     }
 }

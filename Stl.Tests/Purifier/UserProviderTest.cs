@@ -25,13 +25,11 @@ namespace Stl.Tests.Purifier
                 Id = int.MaxValue,
                 Name = "Chuck Norris",
             }, true);
-            await Task.Delay(10);
 
             var u1 = await users.TryGetAsync(int.MaxValue);
             var c1 = await Computed.CaptureAsync(() => users.CountAsync());
             
-            await users.Invalidate();
-            await Task.Delay(10);
+            users.Invalidate();
 
             var u2 = await users.TryGetAsync(int.MaxValue);
             var c2 = await Computed.CaptureAsync(() => users.CountAsync());

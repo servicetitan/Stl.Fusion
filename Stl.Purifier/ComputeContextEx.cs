@@ -4,14 +4,14 @@ namespace Stl.Purifier
 {
     public static class ComputeContextEx
     {
-        public static ComputedContextUseScope Use(this ComputeContext? context)
+        public static ComputeContextUseScope Use(this ComputeContext? context)
         {
             if (context != null)
-                return new ComputedContextUseScope(context, false);
+                return new ComputeContextUseScope(context, false);
             context = ComputeContext.CurrentLocal.Value;
             if (context != null && context.TrySetIsUsed())
-                return new ComputedContextUseScope(context, true);
-            return new ComputedContextUseScope(ComputeContext.Default, false);
+                return new ComputeContextUseScope(context, true);
+            return new ComputeContextUseScope(ComputeContext.Default, false);
         }
     }
 }

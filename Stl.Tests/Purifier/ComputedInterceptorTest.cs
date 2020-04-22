@@ -19,17 +19,18 @@ namespace Stl.Tests.Purifier
         public async Task AutoRecomputeTest()
         {
             var time = Container.Resolve<ITimeProvider>();
-            var cTimer = await Computed.CaptureAsync(() => time.GetTimeOffsetAsync(TimeSpan.Zero));
+            var c = await Computed.CaptureAsync(
+                () => time.GetTimeOffsetAsync(TimeSpan.FromSeconds(1)));
 
             var count = 0;
             void OnInvalidated(IComputed<DateTime> @new, Result<DateTime> old, object? invalidatedBy) 
                 => Log.LogInformation($"{++count} -> {@new.Value:hh:mm:ss:fff}");
 
-            using (var o = cTimer!.AutoRecompute(OnInvalidated)) {
+            using (var _ = c!.AutoRecompute(OnInvalidated)) {
                 await Task.Delay(2000);
             }
             var lastCount = count;
-            Out.WriteLine("Disposed.");
+            Out.WriteLine("Completed AutoRecompute.");
 
             await Task.Delay(1000);
             count.Should().Be(lastCount);

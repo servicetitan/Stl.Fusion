@@ -21,13 +21,14 @@ namespace Stl.Tests.Purifier.Services
         Task<bool> DeleteAsync(User user, CancellationToken cancellationToken = default);
         Task<User?> TryGetAsync(long userId, CancellationToken cancellationToken = default);
         Task<long> CountAsync(CancellationToken cancellationToken = default);
-        Task Invalidate();
+        void Invalidate();
     }
 
     public class UserProvider : IUserProvider 
     {
         protected ILogger Log { get; }
         protected ITestDbContextPool DbContextPool { get; }
+        protected bool IsCaching { get; }
 
         public UserProvider(
             ITestDbContextPool dbContextPool,
@@ -35,6 +36,7 @@ namespace Stl.Tests.Purifier.Services
         {
             Log = log as ILogger ?? NullLogger.Instance;
             DbContextPool = dbContextPool;
+            IsCaching = GetType().Name.EndsWith("Proxy");
         }
 
         public virtual async Task CreateAsync(User user, bool orUpdate = false, CancellationToken cancellationToken = default)
@@ -113,24 +115,24 @@ namespace Stl.Tests.Purifier.Services
 
         // Change handling
 
-        public virtual Task Invalidate() 
-            => Computed.InvalidateAsync(Everything);
-
         protected virtual Task<Unit> Everything() => TaskEx.FromUnit();
 
-        protected virtual async void OnChanged(User user, bool countChanged = true)
+        public virtual void Invalidate()
         {
-            if (GetType() == typeof(UserProvider))
-                // No caching interceptors, so nothing to do
-                return;
+            Computed.Invalidate(Everything);
+            Log.LogDebug($"Invalidated everything.");
+        }
 
-            using var _ = ComputeContext.New(ComputeOptions.Invalidate);
-            var u = await TryGetAsync(user.Id).ConfigureAwait(false);
-            if (u != default)
-                Log.LogDebug($"Invalidated: {user}");
+        protected virtual void OnChanged(User user, bool countChanged = true)
+        {
+            if (!IsCaching)
+                return;
+            var cUser = Computed.Invalidate(() => TryGetAsync(user.Id)); 
+            if (cUser != null)
+                Log.LogDebug($"Invalidated: User.Id={user.Id}");
             if (countChanged) {
-                var c = await CountAsync().ConfigureAwait(false);
-                if (c != default)
+                var cCount = Computed.Invalidate(() => CountAsync());
+                if (cCount != null)
                     Log.LogDebug($"Invalidated: Users.Count");
             }
         }

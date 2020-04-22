@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -319,18 +320,30 @@ namespace Stl.Purifier
 
         public static async Task<IComputed<T>?> CaptureAsync<T>(Func<Task<T>> producer)
         {
-            using var cc = ComputeContext.New(ComputeOptions.Capture);
+            using var ccs = ComputeContext.New(ComputeOptions.Capture).Activate();
             await producer.Invoke().ConfigureAwait(false);
-            var result = cc.GetCapturedComputed<T>();
+            var result = ccs.Context.GetCapturedComputed<T>();
             return result;
         }
 
-        public static async Task<IComputed<T>?> InvalidateAsync<T>(Func<Task<T>> producer, object? invalidatedBy = null)
+        public static IComputed<T>? Invalidate<T>(Func<Task<T>> producer, object? invalidatedBy = null)
         {
-            using var cc = ComputeContext.New(ComputeOptions.Invalidate, invalidatedBy);
-            await producer.Invoke().ConfigureAwait(false);
-            var result = cc.GetCapturedComputed<T>();
-            return result;
+            using var ccs = ComputeContext.New(ComputeOptions.Invalidate, invalidatedBy).Activate();
+            var task = producer.Invoke();
+            if (!task.IsCompleted)
+                // The flow is essentially synchronous in this case, so...
+                throw Errors.TaskMustBeAlreadyCompleted();
+            return ccs.Context.GetCapturedComputed<T>();
+        }
+
+        public static IComputed<T>? TryGetCached<T>(Func<Task<T>> producer)
+        {
+            using var ccs = ComputeContext.New(ComputeOptions.TryGetCached).Activate();
+            var task = producer.Invoke();
+            if (!task.IsCompleted)
+                // The flow is essentially synchronous in this case, so...
+                throw Errors.TaskMustBeAlreadyCompleted();
+            return ccs.Context.GetCapturedComputed<T>();
         }
     }
 }

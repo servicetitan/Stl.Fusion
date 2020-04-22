@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Stl.Purifier.Internal;
 
 namespace Stl.Purifier
 {
-    public class ComputeContext : IDisposable
+    public class ComputeContext
     {
         internal static readonly AsyncLocal<ComputeContext?> CurrentLocal = new AsyncLocal<ComputeContext?>();
         private static readonly Dictionary<ComputeOptions, ComputeContext> Cache;
@@ -17,7 +17,6 @@ namespace Stl.Purifier
 
         public ComputeOptions Options { get; }
         public object? InvalidatedBy { get; }
-        protected ComputeContext? PreviousContext { get; }
         protected bool IsDisposed { get; set; }
         protected bool IsUsed => _isUsed != 0;
 
@@ -26,8 +25,7 @@ namespace Stl.Purifier
             var canUseCache = (options & ComputeOptions.Capture) == 0 & invalidatedBy == null;
             var context = canUseCache 
                 ? Cache[options] 
-                : new ComputeContext(options, invalidatedBy, CurrentLocal.Value); 
-            CurrentLocal.Value = context;
+                : new ComputeContext(options, invalidatedBy); 
             return context;
         }
 
@@ -43,22 +41,15 @@ namespace Stl.Purifier
             Default = New(default);
         }
 
-        protected ComputeContext(ComputeOptions options, object? invalidatedBy, ComputeContext? previousContext)
+        protected ComputeContext(ComputeOptions options, object? invalidatedBy)
         {
             Options = options;
             InvalidatedBy = invalidatedBy;
-            PreviousContext = previousContext;
-        }
-
-        public virtual void Dispose()
-        {
-            if (IsDisposed)
-                return;
-            IsDisposed = true;
-            CurrentLocal.Value = PreviousContext;
         }
 
         public override string ToString() => $"{GetType().Name}({Options}, {InvalidatedBy ?? "null"})";
+
+        public ComputeContextScope Activate() => new ComputeContextScope(this);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void TryCaptureValue(IComputed? value)
@@ -81,9 +72,7 @@ namespace Stl.Purifier
     internal class CachedComputeContext : ComputeContext
     {
         internal CachedComputeContext(ComputeOptions options)
-            : base(options, null, null) 
+            : base(options, null) 
         { }
-
-        public override void Dispose() { }
     }
 }
