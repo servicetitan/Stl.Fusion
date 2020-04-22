@@ -28,12 +28,13 @@ namespace Stl.Tests.Purifier
             using (var _ = c!.AutoRecompute(OnInvalidated)) {
                 await Task.Delay(2000);
             }
-            var lastCount = count;
             Out.WriteLine("Completed AutoRecompute.");
+            await Task.Delay(300);
+            var lastCount = count;
 
             await Task.Delay(1000);
             count.Should().Be(lastCount);
-            count.Should().BeGreaterThan(5);
+            count.Should().BeGreaterThan(6);
         }
 
         [Fact]
