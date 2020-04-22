@@ -1,7 +1,4 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reactive;
 using System.Runtime.ExceptionServices;
 using System.Threading;
@@ -17,11 +14,6 @@ namespace Stl.Async
         // FromXxx
 
         public static Task<Unit> FromUnit() => UnitTask;
-
-        // ResultOrThrow
-
-        public static T ResultOrThrow<T>(this Task<T> task) =>
-            task.IsCompleted ? task.Result : throw Errors.TaskIsNotCompleted();
 
         // ToXxx
 
@@ -115,5 +107,13 @@ namespace Stl.Async
                 await dependentTask.SuppressCancellation().ConfigureAwait(false);
             }
         }
+
+        // AssertXxx
+
+        public static Task AssertCompleted(this Task task) 
+            => !task.IsCompleted ? throw Errors.TaskIsNotCompleted() : task;
+        
+        public static Task<T> AssertCompleted<T>(this Task<T> task) 
+            => !task.IsCompleted ? throw Errors.TaskIsNotCompleted() : task;
     }
 }

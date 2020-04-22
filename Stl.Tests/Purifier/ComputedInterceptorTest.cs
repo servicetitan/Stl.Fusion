@@ -5,7 +5,6 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Stl.Purifier;
 using Stl.Tests.Purifier.Services;
-using Stl.Time;
 using Xunit;
 using Xunit.Abstractions;
 

@@ -52,7 +52,7 @@ namespace Stl.Internal
             new InvalidOperationException("Option is None.");
 
         public static Exception TaskIsNotCompleted() =>
-            new InvalidOperationException("Task is supposed to be completed, but it's not.");
+            new InvalidOperationException("Task is expected to be completed at this point, but it's not.");
 
         public static Exception PathIsRelative(string? paramName) =>
             new ArgumentException("Path is relative.", paramName);

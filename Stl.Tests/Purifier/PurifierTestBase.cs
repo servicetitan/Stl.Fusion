@@ -150,6 +150,11 @@ namespace Stl.Tests.Purifier
                 .SingleInstance();
 
             // Services
+            builder.RegisterType<SimplestProvider>()
+                .As<ISimplestProvider>()
+                .EnableClassInterceptors()
+                .InterceptedBy(typeof(ComputedInterceptor))
+                .SingleInstance();
             builder.RegisterType<TimeProvider>()
                 .As<ITimeProvider>()
                 .EnableClassInterceptors()

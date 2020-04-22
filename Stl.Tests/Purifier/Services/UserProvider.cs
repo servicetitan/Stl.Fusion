@@ -62,7 +62,7 @@ namespace Stl.Tests.Purifier.Services
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
             await (tx?.CommitAsync(cancellationToken) ?? Task.CompletedTask);
-            OnChanged(user, existingUser == null);
+            Invalidate(user, existingUser == null);
         }
 
         public virtual async Task UpdateAsync(User user, CancellationToken cancellationToken = default)
@@ -71,7 +71,7 @@ namespace Stl.Tests.Purifier.Services
             var dbContext = lease.Item;
             dbContext.Users.Update(user);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            OnChanged(user, false);
+            Invalidate(user, false);
         }
 
         [Computed(false)] // Needed b/c the signature fits for interception!
@@ -83,7 +83,7 @@ namespace Stl.Tests.Purifier.Services
             dbContext.Users.Remove(user);
             try {
                 await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-                OnChanged(user);
+                Invalidate(user);
                 return true;
             }
             catch (DbUpdateConcurrencyException) {
@@ -125,7 +125,7 @@ namespace Stl.Tests.Purifier.Services
             Log.LogDebug($"Invalidated everything.");
         }
 
-        protected virtual void OnChanged(User user, bool countChanged = true)
+        protected virtual void Invalidate(User user, bool countChanged = true)
         {
             if (!IsCaching)
                 return;

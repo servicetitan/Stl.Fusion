@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Stl.Async;
 using Stl.Collections;
 using Stl.Collections.Slim;
 using Stl.Purifier.Internal;
@@ -338,9 +339,8 @@ namespace Stl.Purifier
         {
             using var ccs = ComputeContext.New(ComputeOptions.Invalidate, invalidatedBy).Activate();
             var task = producer.Invoke();
-            if (!task.IsCompleted)
-                // The flow is essentially synchronous in this case, so...
-                throw Errors.TaskMustBeAlreadyCompleted();
+            // The flow is essentially synchronous in this case, so...
+            task.AssertCompleted();
             return ccs.Context.GetCapturedComputed<T>();
         }
 
@@ -348,9 +348,8 @@ namespace Stl.Purifier
         {
             using var ccs = ComputeContext.New(ComputeOptions.TryGetCached).Activate();
             var task = producer.Invoke();
-            if (!task.IsCompleted)
-                // The flow is essentially synchronous in this case, so...
-                throw Errors.TaskMustBeAlreadyCompleted();
+            // The flow is essentially synchronous in this case, so...
+            task.AssertCompleted();
             return ccs.Context.GetCapturedComputed<T>();
         }
     }
