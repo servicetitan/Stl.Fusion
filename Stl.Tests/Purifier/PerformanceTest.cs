@@ -67,7 +67,6 @@ namespace Stl.Tests.Purifier
             Out.WriteLine("With Stl.Purifier:");
             await Test("Standard test", cachingProviderPool, withoutSerialization, 
                 readerCount, cachingIterationCount);
-            return;
             await Test("Standard test + serialization", cachingProviderPool, withSerialization, 
                 readerCount, cachingIterationCount / 3);
 
