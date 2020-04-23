@@ -22,7 +22,7 @@ namespace Stl.Tests.Purifier
 {
     public abstract class PerformanceTestBase : PurifierTestBase, IAsyncLifetime
     {
-        public int UserCount = 300;
+        public int UserCount = 1000;
 
         protected PerformanceTestBase(ITestOutputHelper @out, PurifierTestOptions? options = null) 
             : base(@out, options)
