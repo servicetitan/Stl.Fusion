@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 
 namespace Stl.Purifier
 {
-    public static class ComputedEx
+    public static partial class ComputedEx
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ComputedRef<TKey> ToRef<TKey>(

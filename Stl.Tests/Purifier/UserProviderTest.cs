@@ -108,7 +108,7 @@ namespace Stl.Tests.Purifier
                     return $"@ {now:hh:mm:ss.fff}: {norris?.Name ?? "(none)"}";  
                 }, CancellationToken.None));
             
-            using var _ = cText!.AutoRecompute(
+            using var _ = cText!.AutoRenew(
                 (cNext, rPrev, invalidatedBy) => Log.LogInformation(cNext.Value));
 
             for (var i = 1; i <= 10; i += 1) {

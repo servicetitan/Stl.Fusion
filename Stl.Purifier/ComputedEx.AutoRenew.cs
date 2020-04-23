@@ -1,17 +1,15 @@
 using System;
-using System.Reactive.Subjects;
 using System.Threading;
-using System.Threading.Tasks;
 using Stl.Purifier.Internal;
 using Stl.Time;
 
 namespace Stl.Purifier
 {
-    public static class ComputedBehavior
+    public static partial class ComputedEx
     {
-        internal sealed class TrackChangesApplyHandler : IComputedApplyHandler<(TimeSpan, IClock, Delegate?), Disposable<CancellationTokenSource>>
+        internal sealed class AutoRenewApplyHandler : IComputedApplyHandler<(TimeSpan, IClock, Delegate?), Disposable<CancellationTokenSource>>
         {
-            public static readonly TrackChangesApplyHandler Instance = new TrackChangesApplyHandler();
+            public static readonly AutoRenewApplyHandler Instance = new AutoRenewApplyHandler();
             
             public Disposable<CancellationTokenSource> Apply<TIn, TOut>(IComputed<TIn, TOut> computed, (TimeSpan, IClock, Delegate?) arg) 
                 where TIn : notnull
@@ -53,25 +51,25 @@ namespace Stl.Purifier
             }                               
         }
 
-        public static Disposable<CancellationTokenSource> AutoRecompute<T>(
+        public static Disposable<CancellationTokenSource> AutoRenew<T>(
             this IComputed<T> computed, 
             Action<IComputed<T>, Result<T>, object?>? recomputed = null)
-            => computed.AutoRecompute(default, null, recomputed);
+            => computed.AutoRenew(default, null, recomputed);
 
-        public static Disposable<CancellationTokenSource> AutoRecompute<T>(
+        public static Disposable<CancellationTokenSource> AutoRenew<T>(
             this IComputed<T> computed, 
             TimeSpan delay = default,
             Action<IComputed<T>, Result<T>, object?>? recomputed = null)
-            => computed.AutoRecompute(delay, null, recomputed);
+            => computed.AutoRenew(delay, null, recomputed);
 
-        public static Disposable<CancellationTokenSource> AutoRecompute<T>(
+        public static Disposable<CancellationTokenSource> AutoRenew<T>(
             this IComputed<T> computed, 
             TimeSpan delay = default,
             IClock? clock = null,
             Action<IComputed<T>, Result<T>, object?>? recomputed = null)
         {
             clock ??= RealTimeClock.Instance;
-            return computed.Apply(TrackChangesApplyHandler.Instance, (delay, clock, recomputed));
+            return computed.Apply(AutoRenewApplyHandler.Instance, (delay, clock, recomputed));
         }
     }
 }

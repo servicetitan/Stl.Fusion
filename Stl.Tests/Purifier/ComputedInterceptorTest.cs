@@ -25,7 +25,7 @@ namespace Stl.Tests.Purifier
             void OnInvalidated(IComputed<DateTime> @new, Result<DateTime> old, object? invalidatedBy) 
                 => Log.LogInformation($"{++count} -> {@new.Value:hh:mm:ss:fff}");
 
-            using (var _ = c!.AutoRecompute(OnInvalidated)) {
+            using (var _ = c!.AutoRenew(OnInvalidated)) {
                 await Task.Delay(2000);
             }
             var lastCount = count;
