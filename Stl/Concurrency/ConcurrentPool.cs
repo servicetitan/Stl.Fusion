@@ -44,7 +44,7 @@ namespace Stl.Concurrency
         {
             if (_count.ApproximateValue >= Capacity)
                 return false;
-            _count.Increment(resource!.GetHashCode());
+            _count.Increment(resource!.GetHashCode(), out var _);
             _pool.Add(resource);
             return true;
         }

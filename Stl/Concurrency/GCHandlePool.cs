@@ -63,7 +63,7 @@ namespace Stl.Concurrency
                 random = handle.GetHashCode();
             handle.Target = null;
             _handles.Add(handle);
-            _counter.Increment(random);
+            _counter.Increment(random, out var _);
             return true;
         }
 
