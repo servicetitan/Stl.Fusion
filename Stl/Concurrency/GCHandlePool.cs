@@ -43,7 +43,7 @@ namespace Stl.Concurrency
             if (_handles.TryTake(out var handle)) {
                 if (random == 0)
                     random = handle.GetHashCode();
-                _counter.Decrement(random);
+                _counter.Decrement(random, out var _);
                 if (target != null)
                     handle.Target = target;
                 return handle;

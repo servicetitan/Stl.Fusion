@@ -1,8 +1,8 @@
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using Stl.Time;
 
 namespace Stl.Purifier.Internal
 {
@@ -13,16 +13,18 @@ namespace Stl.Purifier.Internal
         // 1/20 of a second allows to run this timer for ~ 3.4 years
         private const long ClicksPerSecond = 20;
         private const long TicksPerClick = TimeSpan.TicksPerSecond / ClicksPerSecond;
-        private static volatile int _clicks;  
+        private static volatile int _clicks;
+        private static readonly Stopwatch Stopwatch;
 
-        public static readonly Moment Start;
+        public static readonly DateTime Start;
         public static int Clicks => _clicks;
-        public static Moment Now => ClicksToMoment(_clicks);
+        public static DateTime Now => ClicksToDateTime(_clicks);
 
         static ClickTime()
         {
-            Start = ReadTime();
+            Start = DateTime.Now;
             _clicks = 0;
+            Stopwatch = Stopwatch.StartNew();
             BeginUpdates();
         }
 
@@ -35,7 +37,7 @@ namespace Stl.Purifier.Internal
         public static double ClicksToSeconds(int clicks) 
             => new TimeSpan(clicks * TicksPerClick).TotalSeconds;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Moment ClicksToMoment(int clicks) 
+        public static DateTime ClicksToDateTime(int clicks) 
             => Start + new TimeSpan(clicks * TicksPerClick);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -45,17 +47,14 @@ namespace Stl.Purifier.Internal
         public static int SecondsToClicks(double seconds) 
             => (int) (TimeSpan.FromSeconds(seconds).Ticks / TicksPerClick);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int MomentToClicks(Moment moment) 
+        public static int DateTimeToClicks(DateTime moment) 
             => TimeSpanToClicks(moment - Start);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static Moment ReadTime() => RealTimeClock.HighResolutionNow; 
 
         // Manual update; you normally shouldn't call it 
         public static void Update()
         {
-            var newOffset = (int) ((ReadTime() - Start).Ticks / TicksPerClick);
-            Interlocked.Exchange(ref _clicks, newOffset);
+            var clicks = (int) (Stopwatch.ElapsedTicks / TicksPerClick);
+            Interlocked.Exchange(ref _clicks, clicks);
         }
 
         private static async void BeginUpdates()

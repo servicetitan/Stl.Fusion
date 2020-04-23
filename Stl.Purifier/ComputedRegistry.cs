@@ -2,10 +2,12 @@ using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Reflection.Metadata;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Concurrency;
+using Stl.OS;
 using Stl.Purifier.Internal;
 using Stl.Reflection;
 
@@ -22,30 +24,30 @@ namespace Stl.Purifier
     public sealed class ComputedRegistry<TKey> : IComputedRegistry<TKey>, IDisposable
         where TKey : notnull
     {
-        public static readonly int DefaultInitialCapacity = 509; // Ideally, a prime number
+        public static readonly int DefaultInitialCapacity = 7919; // Ideally, a prime number
+        public static int DefaultConcurrencyLevel => HardwareInfo.ProcessorCount;
 
         private readonly ConcurrentDictionary<TKey, Entry> _storage;
         private readonly GCHandlePool _gcHandlePool;
-        private readonly ConcurrentCounter _pruneCounter;
+        private readonly StochasticCounter _opCounter;
         private volatile int _pruneCounterThreshold;
         private Task? _pruneTask = null;
         private object Lock => _storage; 
 
         public ComputedRegistry() 
-            : this(DefaultInitialCapacity) { }
+            : this(DefaultConcurrencyLevel, DefaultInitialCapacity) { }
         public ComputedRegistry(
+            int concurrencyLevel, 
             int initialCapacity, 
-            ConcurrentCounter? pruneCounter = null, 
             GCHandlePool? gcHandlePool = null)
         {
-            pruneCounter ??= new ConcurrentCounter();
             gcHandlePool ??= new GCHandlePool(GCHandleType.Weak);
             if (gcHandlePool.HandleType != GCHandleType.Weak)
                 throw new ArgumentOutOfRangeException(
                     $"{nameof(gcHandlePool)}.{nameof(_gcHandlePool.HandleType)}");
             _gcHandlePool = gcHandlePool;
-            _pruneCounter = pruneCounter;
-            _storage = new ConcurrentDictionary<TKey, Entry>(pruneCounter.ConcurrencyLevel, initialCapacity);
+            _opCounter = new StochasticCounter(16);
+            _storage = new ConcurrentDictionary<TKey, Entry>(concurrencyLevel, initialCapacity);
             UpdatePruneCounterThreshold(); 
         }
 
@@ -55,7 +57,7 @@ namespace Stl.Purifier
         public IComputed? TryGet(TKey key)
         {
             var keyHash = key.GetHashCode();
-            MaybePrune(keyHash);
+            OnOperation(keyHash);
             if (_storage.TryGetValue(key, out var entry)) {
                 var value = entry.Computed;
                 if (value != null) {
@@ -80,7 +82,7 @@ namespace Stl.Purifier
             if (!value.IsValid) // It could be invalidated on the way here :)
                 return;
             var keyHash = key.GetHashCode();
-            MaybePrune(keyHash);
+            OnOperation(keyHash);
             _storage.AddOrUpdate(
                 key, 
                 (key1, s) => new Entry(s.Value, s.This._gcHandlePool.Acquire(s.Value, s.KeyHash)), 
@@ -97,7 +99,7 @@ namespace Stl.Purifier
         public void Remove(TKey key, IComputed value)
         {
             var keyHash = key.GetHashCode();
-            MaybePrune(keyHash);
+            OnOperation(keyHash);
             if (!_storage.TryGetValue(key, out var entry))
                 return;
             var target = entry.Handle.Target;
@@ -109,28 +111,24 @@ namespace Stl.Purifier
             }
         }
 
-        public void MaybePrune(int random)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void OnOperation(int random)
         {
-            if (!_pruneCounter.Increment(random, out var pruneCounterValue))
+            if (!_opCounter.Increment(random, out var opCounterValue))
                 return;
-            if (pruneCounterValue > _pruneCounterThreshold) lock (Lock) {
-                // Double check locking
-                if (_pruneCounter.ApproximateValue <= _pruneCounterThreshold)
-                    return;
-                _pruneCounter.ApproximateValue = 0;
-                if (_pruneTask != null)
-                    _pruneTask = Task.Run(Prune);
-            }
+            if (opCounterValue > _pruneCounterThreshold)
+                TryPrune();
         }
 
-        private void UpdatePruneCounterThreshold()
+        private void TryPrune()
         {
             lock (Lock) {
-                // Should be called inside Lock
-                var currentThreshold = (long) _pruneCounterThreshold;
-                var capacity = (long) _storage.GetCapacity();
-                var nextThreshold = (int) Math.Min(int.MaxValue >> 1, Math.Max(capacity << 1, currentThreshold << 1));
-                _pruneCounterThreshold = nextThreshold;
+                // Double check locking
+                if (_opCounter.ApproximateValue <= _pruneCounterThreshold)
+                    return;
+                _opCounter.ApproximateValue = 0;
+                if (_pruneTask != null)
+                    _pruneTask = Task.Run(Prune);
             }
         }
 
@@ -149,8 +147,19 @@ namespace Stl.Purifier
 
             lock (Lock) {
                 UpdatePruneCounterThreshold();
-                _pruneCounter.PreciseValue = 0;
+                _opCounter.ApproximateValue = 0;
                 _pruneTask = null;
+            }
+        }
+
+        private void UpdatePruneCounterThreshold()
+        {
+            lock (Lock) {
+                // Should be called inside Lock
+                var currentThreshold = (long) _pruneCounterThreshold;
+                var capacity = (long) _storage.GetCapacity();
+                var nextThreshold = (int) Math.Min(int.MaxValue >> 1, Math.Max(capacity << 1, currentThreshold << 1));
+                _pruneCounterThreshold = nextThreshold;
             }
         }
 

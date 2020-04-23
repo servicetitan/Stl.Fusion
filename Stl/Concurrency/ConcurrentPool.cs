@@ -9,7 +9,7 @@ namespace Stl.Concurrency
     {
         public static int DefaultCapacity => HardwareInfo.ProcessorCount * 32;
 
-        private readonly ConcurrentCounter _count;
+        private readonly StochasticCounter _count;
         private readonly ConcurrentBag<T> _pool;
         private readonly Func<T> _itemFactory;
 
@@ -19,12 +19,10 @@ namespace Stl.Concurrency
             : this(itemFactory, DefaultCapacity) { }
         public ConcurrentPool(Func<T> itemFactory, int capacity) 
             : this(itemFactory, capacity, ConcurrentCounter.DefaultApproximationStep) { }
-        public ConcurrentPool(Func<T> itemFactory, int capacity, int counterApproximationStep) 
-            : this(itemFactory, capacity, counterApproximationStep, ConcurrentCounter.DefaultConcurrencyLevel) { }
-        public ConcurrentPool(Func<T> itemFactory, int capacity, int counterApproximationStep, int counterConcurrencyLevel)
+        public ConcurrentPool(Func<T> itemFactory, int capacity, int counterApproximationFactor)
         {
             Capacity = capacity;
-            _count = new ConcurrentCounter(counterApproximationStep, counterConcurrencyLevel);
+            _count = new StochasticCounter(counterApproximationFactor);
             _pool = new ConcurrentBag<T>();
             _itemFactory = itemFactory ?? throw new ArgumentNullException(nameof(itemFactory));
         }
@@ -32,11 +30,11 @@ namespace Stl.Concurrency
         public ResourceLease<T> Rent()
         {
             if (_pool.TryTake(out var item)) {
-                _count.Decrement(item!.GetHashCode());
+                _count.Decrement(item!.GetHashCode(), out var _);
                 return new ResourceLease<T>(item, this);
             }
             if (_count.ApproximateValue != 0)
-                _count.PreciseValue = 0;
+                _count.ApproximateValue = 0;
             return new ResourceLease<T>(_itemFactory.Invoke(), this);
         }
 

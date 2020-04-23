@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using Castle.DynamicProxy;
 
@@ -13,10 +14,12 @@ namespace Stl.Purifier.Autofac
         // Shortcuts
         public object Target => Invocation.InvocationTarget;
         public object[] Arguments => Invocation.Arguments;
-        public CancellationToken CancellationToken =>
-            Method.CancellationTokenArgumentIndex >= 0
+        public CancellationToken CancellationToken {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => Method.CancellationTokenArgumentIndex >= 0
                 ? (CancellationToken) Arguments[Method.CancellationTokenArgumentIndex]
                 : default;
+        }
 
         public InterceptedInput(InterceptedMethod method, IInvocation invocation)
         {
@@ -27,11 +30,8 @@ namespace Stl.Purifier.Autofac
             var argumentComparers = method.ArgumentComparers;
             var hashCode = method.InvocationTargetComparer.GetHashCode(invocation.InvocationTarget);
             var arguments = Invocation.Arguments;
-            for (var i = 0; i < arguments.Length; i++) {
-                unchecked {
-                    hashCode = hashCode * 347 + argumentComparers[i].GetHashCode(arguments[i]);
-                }
-            }
+            for (var i = 0; i < arguments.Length; i++)
+                hashCode ^= argumentComparers[i].GetHashCode(arguments[i]);
             HashCode = hashCode;
         }
 
@@ -74,7 +74,9 @@ namespace Stl.Purifier.Autofac
             if (arguments.Length != other.Arguments.Length)
                 return false;
             var argumentComparers = Method.ArgumentComparers;
-            for (var i = 0; i < arguments.Length; i++) {
+            // Backward direction is intended: tail arguments
+            // are more likely to differ.
+            for (var i = arguments.Length - 1; i >= 0; i--) {
                 if (!argumentComparers[i].Equals(arguments[i], otherArguments[i]))
                     return false;
             }

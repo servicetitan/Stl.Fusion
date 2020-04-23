@@ -72,19 +72,6 @@ namespace Stl.Concurrency
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Option<long> Increment(int random)
-        {
-            var t = _approximationStep;
-            ref var counter = ref _counters[random & _concurrencyMask];
-            var value = Interlocked.Increment(ref counter);
-            if (value >= t) {
-                Interlocked.Add(ref counter, -t);
-                return Interlocked.Add(ref _approximateValue, t);
-            }
-            return Option<long>.None;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Decrement(int random, out long approximateValue)
         {
             var t = _approximationStep;
@@ -97,19 +84,6 @@ namespace Stl.Concurrency
             }
             approximateValue = 0;
             return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Option<long> Decrement(int random)
-        {
-            var t = _approximationStep;
-            ref var counter = ref _counters[random & _concurrencyMask];
-            var value = Interlocked.Decrement(ref counter);
-            if (value < 0) {
-                Interlocked.Add(ref counter, t);
-                return Interlocked.Add(ref _approximateValue, -t);
-            }
-            return Option<long>.None;
         }
     }
 }
