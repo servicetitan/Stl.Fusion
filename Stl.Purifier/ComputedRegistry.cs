@@ -19,20 +19,17 @@ namespace Stl.Purifier
         void Remove(TKey key, IComputed value);
     }
 
-    public class ComputedRegistry<TKey> : IComputedRegistry<TKey>, IDisposable
+    public sealed class ComputedRegistry<TKey> : IComputedRegistry<TKey>, IDisposable
         where TKey : notnull
     {
         public static readonly int DefaultInitialCapacity = 509; // Ideally, a prime number
-        private volatile int _pruneCounterThreshold;
 
-        protected ConcurrentDictionary<TKey, Entry> Storage { get; }
-        protected GCHandlePool GCHandlePool { get; }
-        protected ConcurrentCounter PruneCounter { get; }
-        protected int PruneCounterThreshold {
-            get => _pruneCounterThreshold;
-            set => Interlocked.Exchange(ref _pruneCounterThreshold, value);
-        }
-        protected object Lock => Storage; 
+        private readonly ConcurrentDictionary<TKey, Entry> _storage;
+        private readonly GCHandlePool _gcHandlePool;
+        private readonly ConcurrentCounter _pruneCounter;
+        private volatile int _pruneCounterThreshold;
+        private Task? _pruneTask = null;
+        private object Lock => _storage; 
 
         public ComputedRegistry() 
             : this(DefaultInitialCapacity) { }
@@ -45,27 +42,21 @@ namespace Stl.Purifier
             gcHandlePool ??= new GCHandlePool(GCHandleType.Weak);
             if (gcHandlePool.HandleType != GCHandleType.Weak)
                 throw new ArgumentOutOfRangeException(
-                    $"{nameof(gcHandlePool)}.{nameof(GCHandlePool.HandleType)}");
-            GCHandlePool = gcHandlePool;
-            PruneCounter = pruneCounter;
-            Storage = new ConcurrentDictionary<TKey, Entry>(pruneCounter.ConcurrencyLevel, initialCapacity);
-            UpdatePruneCounterThreshold(Storage.GetCapacity()); 
+                    $"{nameof(gcHandlePool)}.{nameof(_gcHandlePool.HandleType)}");
+            _gcHandlePool = gcHandlePool;
+            _pruneCounter = pruneCounter;
+            _storage = new ConcurrentDictionary<TKey, Entry>(pruneCounter.ConcurrencyLevel, initialCapacity);
+            UpdatePruneCounterThreshold(); 
         }
 
-        protected virtual void Dispose(bool disposing) 
-            => GCHandlePool.Dispose();
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
+        public void Dispose() 
+            => _gcHandlePool.Dispose();
 
         public IComputed? TryGet(TKey key)
         {
             var keyHash = key.GetHashCode();
             MaybePrune(keyHash);
-            if (Storage.TryGetValue(key, out var entry)) {
+            if (_storage.TryGetValue(key, out var entry)) {
                 var value = entry.Computed;
                 if (value != null) {
                     value.Touch();
@@ -74,11 +65,11 @@ namespace Stl.Purifier
                 value = (IComputed?) entry.Handle.Target;
                 if (value != null) {                        
                     value.Touch();
-                    Storage.TryUpdate(key, new Entry(value, entry.Handle), entry);
+                    _storage.TryUpdate(key, new Entry(value, entry.Handle), entry);
                     return value;
                 }
-                if (Storage.TryRemove(key, entry))
-                    GCHandlePool.Release(entry.Handle, keyHash);
+                if (_storage.TryRemove(key, entry))
+                    _gcHandlePool.Release(entry.Handle, keyHash);
             }
             // Debug.WriteLine($"Cache miss: {key}");
             return null;
@@ -90,9 +81,9 @@ namespace Stl.Purifier
                 return;
             var keyHash = key.GetHashCode();
             MaybePrune(keyHash);
-            Storage.AddOrUpdate(
+            _storage.AddOrUpdate(
                 key, 
-                (key1, s) => new Entry(s.Value, s.This.GCHandlePool.Acquire(s.Value, s.KeyHash)), 
+                (key1, s) => new Entry(s.Value, s.This._gcHandlePool.Acquire(s.Value, s.KeyHash)), 
                 (key1, entry, s) => {
                     // Not sure how we can reach this point,
                     // but if we are here somehow, let's reuse the handle.
@@ -107,56 +98,63 @@ namespace Stl.Purifier
         {
             var keyHash = key.GetHashCode();
             MaybePrune(keyHash);
-            if (!Storage.TryGetValue(key, out var entry))
+            if (!_storage.TryGetValue(key, out var entry))
                 return;
             var target = entry.Handle.Target;
             if (target == null || ReferenceEquals(target, value)) {
                 // gcHandle.Target == null (is gone, i.e. to be pruned)
                 // or pointing to the right computation object
-                if (Storage.TryRemove(key, entry))
-                    GCHandlePool.Release(entry.Handle, keyHash);
+                if (_storage.TryRemove(key, entry))
+                    _gcHandlePool.Release(entry.Handle, keyHash);
             }
         }
 
         public void MaybePrune(int random)
         {
-            if (!PruneCounter.Increment(random, out var pruneCounterValue))
+            if (!_pruneCounter.Increment(random, out var pruneCounterValue))
                 return;
-            var pruneCounterThreshold = PruneCounterThreshold;
-            if (pruneCounterValue > pruneCounterThreshold) lock (Lock) {
+            if (pruneCounterValue > _pruneCounterThreshold) lock (Lock) {
                 // Double check locking
-                if (PruneCounter.ApproximateValue > pruneCounterThreshold) {
-                    UpdatePruneCounterThreshold(pruneCounterThreshold);
-                    PruneCounter.PreciseValue = 0;
-                    Task.Run(Prune);
-                }
+                if (_pruneCounter.ApproximateValue <= _pruneCounterThreshold)
+                    return;
+                _pruneCounter.ApproximateValue = 0;
+                if (_pruneTask != null)
+                    _pruneTask = Task.Run(Prune);
             }
         }
 
-        protected virtual void UpdatePruneCounterThreshold(int pruneCounterThreshold)
+        private void UpdatePruneCounterThreshold()
         {
-            var nextThreshold = pruneCounterThreshold << 1;
-            if (nextThreshold < pruneCounterThreshold)
-                nextThreshold = int.MaxValue;
-            PruneCounterThreshold = Math.Min(Storage.GetCapacity(), nextThreshold);
+            lock (Lock) {
+                // Should be called inside Lock
+                var currentThreshold = (long) _pruneCounterThreshold;
+                var capacity = (long) _storage.GetCapacity();
+                var nextThreshold = (int) Math.Min(int.MaxValue >> 1, Math.Max(capacity << 1, currentThreshold << 1));
+                _pruneCounterThreshold = nextThreshold;
+            }
         }
 
-        public void Prune()
+        private void Prune()
         {
-            PruneCounter.PreciseValue = 0;
             var now = ClickTime.Clicks;
-            foreach (var (key, entry) in Storage) {
+            foreach (var (key, entry) in _storage) {
                 if (!entry.Handle.IsAllocated) {
-                    Storage.TryRemove(key, entry);
+                    _storage.TryRemove(key, entry);
                     continue;
                 }
                 var computed = entry.Computed;
                 if (computed != null && (computed.LastAccessTime + computed.KeepAliveTime) < now)
-                    Storage.TryUpdate(key, new Entry(null, entry.Handle), entry);
+                    _storage.TryUpdate(key, new Entry(null, entry.Handle), entry);
+            }
+
+            lock (Lock) {
+                UpdatePruneCounterThreshold();
+                _pruneCounter.PreciseValue = 0;
+                _pruneTask = null;
             }
         }
 
-        protected readonly struct Entry : IEquatable<Entry>
+        private readonly struct Entry : IEquatable<Entry>
         {
             public readonly IComputed? Computed;
             public readonly GCHandle Handle;
