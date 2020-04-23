@@ -149,19 +149,22 @@ namespace Stl.Purifier.Autofac
                 ? (int?) ClickTime.SecondsToClicks(attrKeepAliveTime)
                 : null;
 
+            var invocationTargetType = methodInfo.ReflectedType;
             var parameters = methodInfo.GetParameters();
             var r = new InterceptedMethod {
                 MethodInfo = methodInfo,
                 OutputType = outputType,
                 ReturnsValueTask = returnsValueTask,
                 ReturnsComputed = returnsComputed,
+                InvocationTargetComparer = ArgumentComparerProvider.GetInvocationTargetComparer(
+                    methodInfo, invocationTargetType!),
                 ArgumentComparers = new ArgumentComparer[parameters.Length],
                 KeepAliveTime = keepAliveTime,  
             };
 
             for (var i = 0; i < parameters.Length; i++) {
                 var p = parameters[i];
-                r.ArgumentComparers[i] = ArgumentComparerProvider.GetComparer(methodInfo, p);
+                r.ArgumentComparers[i] = ArgumentComparerProvider.GetArgumentComparer(methodInfo, p);
                 var parameterType = p.ParameterType;
                 if (typeof(CancellationToken).IsAssignableFrom(parameterType))
                     r.CancellationTokenArgumentIndex = i;

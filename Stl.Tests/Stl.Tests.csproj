@@ -34,7 +34,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Stl.Purifier\Stl.Purifier.csproj" />
     <ProjectReference Include="..\Stl\Stl.csproj" />
-    <ProjectReference Include="..\Stl.Reactionist\Stl.Reactionist.csproj" />
     <ProjectReference Include="..\Stl.ImmutableModel\Stl.ImmutableModel.csproj" />
     <ProjectReference Include="..\Stl.CommandLine\Stl.CommandLine.csproj" />
     <ProjectReference Include="..\Stl.Plugins\Stl.Plugins.csproj" />

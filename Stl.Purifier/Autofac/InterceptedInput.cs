@@ -25,7 +25,7 @@ namespace Stl.Purifier.Autofac
             ProceedInfo = invocation.CaptureProceedInfo();
 
             var argumentComparers = method.ArgumentComparers;
-            var hashCode = Invocation.InvocationTarget.GetHashCode();
+            var hashCode = method.InvocationTargetComparer.GetHashCode(invocation.InvocationTarget);
             var arguments = Invocation.Arguments;
             for (var i = 0; i < arguments.Length; i++) {
                 unchecked {
@@ -65,13 +65,14 @@ namespace Stl.Purifier.Autofac
         {
             if (HashCode != other.HashCode)
                 return false;
-            if (Target != other.Target || Method != other.Method)
+            if (!Method.InvocationTargetComparer.Equals(Target, other.Target))
                 return false;
             var arguments = Arguments;
             var otherArguments = other.Arguments;
-            if (arguments == otherArguments)
-                // Quick return if it's the same input
-                return true;
+            // if (arguments == otherArguments)
+            //     return true;
+            if (arguments.Length != other.Arguments.Length)
+                return false;
             var argumentComparers = Method.ArgumentComparers;
             for (var i = 0; i < arguments.Length; i++) {
                 if (!argumentComparers[i].Equals(arguments[i], otherArguments[i]))

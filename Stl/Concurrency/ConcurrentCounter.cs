@@ -11,13 +11,13 @@ namespace Stl.Concurrency
         public static readonly int DefaultApproximationStep = 16;
         public static int DefaultConcurrencyLevel => HardwareInfo.ProcessorCount;
 
-        private readonly int _approximationStep;
-        private readonly int[] _counters; 
+        private readonly long _approximationStep;
+        private readonly long[] _counters; 
         private long _approximateValue = 0;  
-        private int _concurrencyMask;
+        private readonly long _concurrencyMask;
 
         public int ConcurrencyLevel => _counters.Length;
-        public int ApproximationStep => _approximationStep;
+        public int ApproximationStep => (int) _approximationStep;
 
         public long ApproximateValue {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -51,9 +51,23 @@ namespace Stl.Concurrency
             if (approximationStep < 1)
                 throw new ArgumentOutOfRangeException(nameof(approximationStep));
             concurrencyLevel = (int) (Bits.Msb((ulong) concurrencyLevel) << 1);
-            _counters = new int[concurrencyLevel];
+            _counters = new long[concurrencyLevel];
             _approximationStep = approximationStep;
             _concurrencyMask = concurrencyLevel - 1;
+        }
+
+        public bool Increment(int random, out long approximateValue)
+        {
+            var t = _approximationStep;
+            ref var counter = ref _counters[random & _concurrencyMask];
+            var value = Interlocked.Increment(ref counter);
+            if (value >= t) {
+                Interlocked.Add(ref counter, -t);
+                approximateValue = Interlocked.Add(ref _approximateValue, t);
+                return true;
+            }
+            approximateValue = 0;
+            return false;
         }
 
         public Option<long> Increment(int random)
@@ -66,6 +80,20 @@ namespace Stl.Concurrency
                 return Interlocked.Add(ref _approximateValue, t);
             }
             return Option<long>.None;
+        }
+
+        public bool Decrement(int random, out long approximateValue)
+        {
+            var t = _approximationStep;
+            ref var counter = ref _counters[random & _concurrencyMask];
+            var value = Interlocked.Decrement(ref counter);
+            if (value < 0) {
+                Interlocked.Add(ref counter, t);
+                approximateValue = Interlocked.Add(ref _approximateValue, -t);
+                return true;
+            }
+            approximateValue = 0;
+            return false;
         }
 
         public Option<long> Decrement(int random)

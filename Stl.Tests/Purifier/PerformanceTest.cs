@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using Autofac;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Stl.Async;
 using Stl.Concurrency;
@@ -23,7 +22,7 @@ namespace Stl.Tests.Purifier
 {
     public abstract class PerformanceTestBase : PurifierTestBase, IAsyncLifetime
     {
-        public int UserCount = 1000;
+        public int UserCount = 300;
 
         protected PerformanceTestBase(ITestOutputHelper @out, PurifierTestOptions? options = null) 
             : base(@out, options)
@@ -68,6 +67,7 @@ namespace Stl.Tests.Purifier
             Out.WriteLine("With Stl.Purifier:");
             await Test("Standard test", cachingProviderPool, withoutSerialization, 
                 readerCount, cachingIterationCount);
+            return;
             await Test("Standard test + serialization", cachingProviderPool, withSerialization, 
                 readerCount, cachingIterationCount / 3);
 

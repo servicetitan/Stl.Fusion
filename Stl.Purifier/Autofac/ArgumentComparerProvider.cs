@@ -7,7 +7,8 @@ namespace Stl.Purifier.Autofac
 {
     public interface IArgumentComparerProvider
     {
-        ArgumentComparer GetComparer(MethodInfo methodInfo, ParameterInfo parameterInfo);
+        ArgumentComparer GetInvocationTargetComparer(MethodInfo methodInfo, Type invocationTargetType);
+        ArgumentComparer GetArgumentComparer(MethodInfo methodInfo, ParameterInfo parameterInfo);
     }
 
     public class ArgumentComparerProvider : IArgumentComparerProvider
@@ -33,9 +34,36 @@ namespace Stl.Purifier.Autofac
             _comparers = comparers;
         }
 
-        public virtual ArgumentComparer GetComparer(MethodInfo methodInfo, ParameterInfo parameterInfo)
-            => _comparers.TryGetValue(parameterInfo.ParameterType, out var comparer)
-                ? comparer
-                : ArgumentComparer.Default;
+        public ArgumentComparer GetInvocationTargetComparer(MethodInfo methodInfo, Type invocationTargetType) 
+            => GetArgumentComparer(invocationTargetType);
+
+        public virtual ArgumentComparer GetArgumentComparer(MethodInfo methodInfo, ParameterInfo parameterInfo)
+            => GetArgumentComparer(parameterInfo.ParameterType);
+
+        public virtual ArgumentComparer GetArgumentComparer(Type type, bool isInvocationTarget = false)
+        {
+            if (_comparers.TryGetValue(type, out var comparer))
+                return comparer;
+            var bType = type.BaseType;
+            while (bType != null) {
+                if (_comparers.TryGetValue(bType, out comparer))
+                    return comparer;
+                bType = bType.BaseType;
+            }
+            var cType = (Type?) null;
+            var cComparer = (ArgumentComparer?) null;
+            foreach (var iType in type.GetInterfaces()) {
+                if (_comparers.TryGetValue(iType, out comparer)) {
+                    if (cType == null || iType.IsAssignableFrom(cType)) {
+                        // We're looking for the most specific type here
+                        cType = iType;
+                        cComparer = comparer;
+                    }
+                }
+            }
+            return cComparer ?? (isInvocationTarget 
+                ? ArgumentComparer.ByRef
+                : ArgumentComparer.Default);
+        }
     }
 }

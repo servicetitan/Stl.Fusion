@@ -120,7 +120,7 @@ namespace Stl.Purifier
 
         public void MaybePrune(int random)
         {
-            if (!PruneCounter.Increment(random).IsSome(out var pruneCounterValue))
+            if (!PruneCounter.Increment(random, out var pruneCounterValue))
                 return;
             var pruneCounterThreshold = PruneCounterThreshold;
             if (pruneCounterValue > pruneCounterThreshold) lock (Lock) {

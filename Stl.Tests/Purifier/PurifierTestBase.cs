@@ -15,7 +15,6 @@ using Stl.Locking;
 using Stl.OS;
 using Stl.Purifier;
 using Stl.Purifier.Autofac;
-using Stl.Reflection;
 using Stl.Testing;
 using Stl.Testing.Internal;
 using Stl.Tests.Purifier.Model;
@@ -128,9 +127,7 @@ namespace Stl.Tests.Purifier
                     var id = i * 10000;
                     return () => ++id;
                 })).SingleInstance();
-            builder.Register(c => new ConcurrentCounter(
-                    ConcurrentCounter.DefaultApproximationStep, 
-                    HardwareInfo.ProcessorCount << 4))
+            builder.Register(c => new ConcurrentCounter(64, HardwareInfo.ProcessorCount * 2))
                 .InstancePerDependency();
             builder.RegisterGeneric(typeof(ComputedRegistry<>))
                 .As(typeof(IComputedRegistry<>))
