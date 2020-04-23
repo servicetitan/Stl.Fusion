@@ -46,7 +46,7 @@ namespace Stl.Purifier
                 throw new ArgumentOutOfRangeException(
                     $"{nameof(gcHandlePool)}.{nameof(_gcHandlePool.HandleType)}");
             _gcHandlePool = gcHandlePool;
-            _opCounter = new StochasticCounter(16);
+            _opCounter = new StochasticCounter();
             _storage = new ConcurrentDictionary<TKey, Entry>(concurrencyLevel, initialCapacity);
             UpdatePruneCounterThreshold(); 
         }
@@ -56,8 +56,8 @@ namespace Stl.Purifier
 
         public IComputed? TryGet(TKey key)
         {
-            var keyHash = key.GetHashCode();
-            OnOperation(keyHash);
+            var random = key.GetHashCode() + ClickTime.Clicks;
+            OnOperation(random);
             if (_storage.TryGetValue(key, out var entry)) {
                 var value = entry.Computed;
                 if (value != null) {
@@ -71,7 +71,7 @@ namespace Stl.Purifier
                     return value;
                 }
                 if (_storage.TryRemove(key, entry))
-                    _gcHandlePool.Release(entry.Handle, keyHash);
+                    _gcHandlePool.Release(entry.Handle, random);
             }
             // Debug.WriteLine($"Cache miss: {key}");
             return null;
@@ -81,11 +81,11 @@ namespace Stl.Purifier
         {
             if (!value.IsValid) // It could be invalidated on the way here :)
                 return;
-            var keyHash = key.GetHashCode();
-            OnOperation(keyHash);
+            var random = key.GetHashCode() + ClickTime.Clicks;
+            OnOperation(random);
             _storage.AddOrUpdate(
                 key, 
-                (key1, s) => new Entry(s.Value, s.This._gcHandlePool.Acquire(s.Value, s.KeyHash)), 
+                (key1, s) => new Entry(s.Value, s.This._gcHandlePool.Acquire(s.Value, s.Random)), 
                 (key1, entry, s) => {
                     // Not sure how we can reach this point,
                     // but if we are here somehow, let's reuse the handle.
@@ -93,13 +93,13 @@ namespace Stl.Purifier
                     handle.Target = s.Value;
                     return new Entry(s.Value, handle);
                 },
-                (This: this, Value: value, KeyHash: keyHash));
+                (This: this, Value: value, Random: random));
         }
 
         public void Remove(TKey key, IComputed value)
         {
-            var keyHash = key.GetHashCode();
-            OnOperation(keyHash);
+            var random = key.GetHashCode() + ClickTime.Clicks;
+            OnOperation(random);
             if (!_storage.TryGetValue(key, out var entry))
                 return;
             var target = entry.Handle.Target;
@@ -107,7 +107,7 @@ namespace Stl.Purifier
                 // gcHandle.Target == null (is gone, i.e. to be pruned)
                 // or pointing to the right computation object
                 if (_storage.TryRemove(key, entry))
-                    _gcHandlePool.Release(entry.Handle, keyHash);
+                    _gcHandlePool.Release(entry.Handle, random);
             }
         }
 
