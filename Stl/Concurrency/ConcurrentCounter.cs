@@ -56,6 +56,7 @@ namespace Stl.Concurrency
             _concurrencyMask = concurrencyLevel - 1;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Increment(int random, out long approximateValue)
         {
             var t = _approximationStep;
@@ -70,6 +71,7 @@ namespace Stl.Concurrency
             return false;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Option<long> Increment(int random)
         {
             var t = _approximationStep;
@@ -82,6 +84,7 @@ namespace Stl.Concurrency
             return Option<long>.None;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Decrement(int random, out long approximateValue)
         {
             var t = _approximationStep;
@@ -96,6 +99,7 @@ namespace Stl.Concurrency
             return false;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Option<long> Decrement(int random)
         {
             var t = _approximationStep;

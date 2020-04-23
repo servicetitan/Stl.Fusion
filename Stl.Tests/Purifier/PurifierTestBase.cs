@@ -127,7 +127,7 @@ namespace Stl.Tests.Purifier
                     var id = i * 10000;
                     return () => ++id;
                 })).SingleInstance();
-            builder.Register(c => new ConcurrentCounter(64, HardwareInfo.ProcessorCount * 2))
+            builder.Register(c => new ConcurrentCounter(16, HardwareInfo.ProcessorCount * 4))
                 .InstancePerDependency();
             builder.RegisterGeneric(typeof(ComputedRegistry<>))
                 .As(typeof(IComputedRegistry<>))

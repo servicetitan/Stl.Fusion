@@ -47,7 +47,7 @@ namespace Stl.Tests.Purifier
         {
             var users = Services.GetRequiredService<IUserProvider>();
             var useImdb = Options.UseInMemoryDatabase;
-            var opCountPerCore = 2_000_000;
+            var opCountPerCore = 5_000_000;
             var readersPerCore = 4; 
             var readerCount = HardwareInfo.ProcessorCount * readersPerCore;
             var cachingIterationCount = opCountPerCore / readersPerCore;
