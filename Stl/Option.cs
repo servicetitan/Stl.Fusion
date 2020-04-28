@@ -96,9 +96,7 @@ namespace Stl
             => HasValue == other.HasValue && EqualityComparer<T>.Default.Equals(UnsafeValue, other.UnsafeValue);
         public override bool Equals(object? obj) 
             => obj is Option<T> other && Equals(other);
-        public override int GetHashCode() 
-            => unchecked ((HasValue.GetHashCode() * 397) ^ EqualityComparer<T>.Default.GetHashCode(Value));
-
+        public override int GetHashCode() => HashCode.Combine(HasValue, Value); 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(Option<T> left, Option<T> right) => left.Equals(right);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

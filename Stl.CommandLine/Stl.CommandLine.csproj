@@ -17,6 +17,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="CliWrap" Version="3.0.2" />
     <PackageReference Include="Enums.NET" Version="3.0.3" />
     <PackageReference Include="System.Reactive" Version="4.4.1" />
   </ItemGroup>

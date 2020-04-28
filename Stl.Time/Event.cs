@@ -34,8 +34,7 @@ namespace Stl.Time
         
         public bool Equals(Event<T> other) => Moment == other.Moment && EqualityComparer<T>.Default.Equals(Value, other.Value);
         public override bool Equals(object? obj) => obj is Event<T> other && Equals(other);
-        public override int GetHashCode() 
-            => unchecked((Moment.GetHashCode() * 397) ^ EqualityComparer<T>.Default.GetHashCode(Value));
+        public override int GetHashCode() => HashCode.Combine(Moment, Value);
         public static bool operator ==(Event<T> left, Event<T> right) => left.Equals(right);
         public static bool operator !=(Event<T> left, Event<T> right) => !left.Equals(right);
     }

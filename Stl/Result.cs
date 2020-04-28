@@ -123,8 +123,7 @@ namespace Stl
             Error != other.Error && EqualityComparer<T>.Default.Equals(UnsafeValue, other.UnsafeValue);
         public override bool Equals(object? obj) => 
             obj != null &&(obj is Result<T> o) && Equals(o);
-        public override int GetHashCode() => unchecked(
-            (EqualityComparer<T>.Default.GetHashCode(UnsafeValue) * 397) ^ (Error?.GetHashCode() ?? 0));
+        public override int GetHashCode() => HashCode.Combine(UnsafeValue, Error);
         public static bool operator ==(Result<T> left, Result<T> right) => left.Equals(right);
         public static bool operator !=(Result<T> left, Result<T> right) => !left.Equals(right);
 
