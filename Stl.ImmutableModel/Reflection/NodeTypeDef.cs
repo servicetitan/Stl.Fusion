@@ -157,7 +157,7 @@ namespace Stl.ImmutableModel.Reflection
             if (symbol.IsValidOptionsKey()) {
                 if (!node.HasOption(symbol))
                     return false;
-                value = node.GetOption<T>(symbol);
+                value = node.GetOption<T>(symbol)!;
                 return true;
             }
             var getter = (Func<INode, T>?) Properties[symbol].Getter!;
@@ -188,7 +188,7 @@ namespace Stl.ImmutableModel.Reflection
         {
             var symbol = itemKey.AsSymbol(); 
             if (symbol.IsValidOptionsKey())
-                return node.GetOption<T>(symbol);
+                return node.GetOption<T>(symbol)!;
             var getter = (Func<INode, T>) Properties[symbol].Getter!;
             return getter.Invoke(node);
         }

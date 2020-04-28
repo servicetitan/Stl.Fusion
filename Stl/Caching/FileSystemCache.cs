@@ -65,7 +65,7 @@ namespace Stl.Caching
                 return null;
             try {
                 fileStream.Seek(0, SeekOrigin.Begin);
-                using var reader = new StreamReader(fileStream, Encoding.UTF8, leaveOpen: true);
+                using var reader = new StreamReader(fileStream, Encoding.UTF8, true, -1, true);
                 var text = await reader.ReadToEndAsync().ConfigureAwait(false);
                 return string.IsNullOrEmpty(text) ? null : text;
             }
@@ -79,7 +79,7 @@ namespace Stl.Caching
             if (fileStream == null)
                 return;
             fileStream.Seek(0, SeekOrigin.Begin);
-            await using var writer = new StreamWriter(fileStream, Encoding.UTF8, leaveOpen: true);
+            await using var writer = new StreamWriter(fileStream, Encoding.UTF8, -1, true);
             await writer.WriteAsync(text ?? "").ConfigureAwait(false);
             fileStream.SetLength(fileStream.Position);
         }
