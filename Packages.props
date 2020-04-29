@@ -66,8 +66,6 @@
     <PackageReference Update="System.Runtime.Loader" Version="4.3.0" />
     <PackageReference Update="System.ServiceModel.Primitives" Version="4.7.0" />
     <PackageReference Update="System.Text.Json" Version="4.7.1" />
-    <PackageReference Update="protobuf-net" Version="2.4.6" />
-    <PackageReference Update="Z.EntityFramework.Plus.EFCore" Version="3.0.48" />
     <PackageReference Update="xunit" Version="2.4.1" />
     <PackageReference Update="xunit.analyzers" Version="0.10.0" />
     <PackageReference Update="Xunit.DependencyInjection.Logging" Version="2.1.0" />
