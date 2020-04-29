@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using Stl.Mathematics;
 using Stl.OS;
-using Stl.Purifier.Internal;
+using Stl.Time;
 
 namespace Stl.Concurrency
 {
@@ -47,7 +47,7 @@ namespace Stl.Concurrency
         public unsafe bool Increment(int random, out long approximateValue)
         {
             fixed (uint* pMasks = _approximationMasks) {
-                if ((pMasks[31 & ClickTime.Clicks] & (uint) random) != 0) {
+                if ((pMasks[31 & IntMoment.Clock.EpochOffsetUnits] & (uint) random) != 0) {
                     approximateValue = 0;
                     return false;
                 }
@@ -61,7 +61,7 @@ namespace Stl.Concurrency
         public unsafe bool Decrement(int random, out long approximateValue)
         {
             fixed (uint* pMasks = _approximationMasks) {
-                if ((pMasks[31 & ClickTime.Clicks] & (uint) random) != 0) {
+                if ((pMasks[31 & IntMoment.Clock.EpochOffsetUnits] & (uint) random) != 0) {
                     approximateValue = 0;
                     return false;
                 }

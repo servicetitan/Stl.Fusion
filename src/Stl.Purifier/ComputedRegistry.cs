@@ -7,6 +7,7 @@ using Stl.Concurrency;
 using Stl.OS;
 using Stl.Purifier.Internal;
 using Stl.Reflection;
+using Stl.Time;
 
 namespace Stl.Purifier
 {
@@ -53,7 +54,7 @@ namespace Stl.Purifier
 
         public IComputed? TryGet(TKey key)
         {
-            var random = key.GetHashCode() + ClickTime.Clicks;
+            var random = key.GetHashCode() + IntMoment.Clock.EpochOffsetUnits;
             OnOperation(random);
             if (_storage.TryGetValue(key, out var entry)) {
                 var value = entry.Computed;
@@ -78,7 +79,7 @@ namespace Stl.Purifier
         {
             if (!value.IsValid) // It could be invalidated on the way here :)
                 return;
-            var random = key.GetHashCode() + ClickTime.Clicks;
+            var random = key.GetHashCode() + IntMoment.Clock.EpochOffsetUnits;
             OnOperation(random);
             _storage.AddOrUpdate(
                 key, 
@@ -95,7 +96,7 @@ namespace Stl.Purifier
 
         public void Remove(TKey key, IComputed value)
         {
-            var random = key.GetHashCode() + ClickTime.Clicks;
+            var random = key.GetHashCode() + IntMoment.Clock.EpochOffsetUnits;
             OnOperation(random);
             if (!_storage.TryGetValue(key, out var entry))
                 return;
@@ -131,15 +132,19 @@ namespace Stl.Purifier
 
         private void Prune()
         {
-            var now = ClickTime.Clicks;
+            var now = IntMoment.Clock.EpochOffsetUnits;
             foreach (var (key, entry) in _storage) {
                 if (!entry.Handle.IsAllocated) {
                     _storage.TryRemove(key, entry);
                     continue;
                 }
                 var computed = entry.Computed;
-                if (computed != null && (computed.LastAccessTime + computed.KeepAliveTime) < now)
-                    _storage.TryUpdate(key, new Entry(null, entry.Handle), entry);
+                if (computed == null)
+                    continue;
+                var expirationTime = computed.LastAccessTime.EpochOffsetUnits + computed.KeepAliveTime;
+                if (expirationTime >= now)
+                    continue;
+                _storage.TryUpdate(key, new Entry(null, entry.Handle), entry);
             }
 
             lock (Lock) {

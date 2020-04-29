@@ -33,7 +33,7 @@ namespace Stl.Tests.Purifier
 
             await Task.Delay(1000);
             count.Should().Be(lastCount);
-            count.Should().BeGreaterThan(6);
+            count.Should().BeGreaterThan(4);
         }
 
         [Fact]

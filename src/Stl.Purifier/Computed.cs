@@ -7,6 +7,7 @@ using Stl.Async;
 using Stl.Collections;
 using Stl.Collections.Slim;
 using Stl.Purifier.Internal;
+using Stl.Time;
 
 namespace Stl.Purifier
 {
@@ -27,8 +28,8 @@ namespace Stl.Purifier
         ComputedState State { get; }
         bool IsValid { get; }
         event Action<IComputed, object?> Invalidated;
-        int LastAccessTime { get; set; } // In ClickTime.Clicks
-        int KeepAliveTime { get; set; } // In ClickTime.Clicks
+        IntMoment LastAccessTime { get; set; }
+        int KeepAliveTime { get; set; } // In IntMoment Units
 
         bool Invalidate(object? invalidatedBy = null);
         ValueTask<IComputed?> RenewAsync(CancellationToken cancellationToken = default);
@@ -77,9 +78,9 @@ namespace Stl.Purifier
         public ComputedState State => (ComputedState) _state;
         public TIn Input { get; }
         public int Tag { get; }
-        public int LastAccessTime {
-            get => _lastAccessTime;
-            set => Interlocked.Exchange(ref _lastAccessTime, value);
+        public IntMoment LastAccessTime {
+            get => new IntMoment(_lastAccessTime);
+            set => Interlocked.Exchange(ref _lastAccessTime, value.EpochOffsetUnits);
         }
 
         public int KeepAliveTime {
@@ -139,7 +140,7 @@ namespace Stl.Purifier
             Input = input;
             Tag = tag;
             _keepAliveTime = Computed.DefaultKeepAliveTime;
-            _lastAccessTime = ClickTime.Clicks;
+            _lastAccessTime = IntMoment.Clock.EpochOffsetUnits;
         }
 
         public override string ToString() 
@@ -245,7 +246,7 @@ namespace Stl.Purifier
         // Touch
 
         public void Touch() 
-            => Interlocked.Exchange(ref _lastAccessTime, ClickTime.Clicks);
+            => Interlocked.Exchange(ref _lastAccessTime, IntMoment.Clock.EpochOffsetUnits);
 
         // Apply methods
 
@@ -299,7 +300,7 @@ namespace Stl.Purifier
 
     public static class Computed
     {
-        public static readonly int DefaultKeepAliveTime = ClickTime.SecondsToClicks(1);
+        public static readonly int DefaultKeepAliveTime = IntMoment.SecondsToUnits(1);
         private static readonly AsyncLocal<IComputed?> CurrentLocal = new AsyncLocal<IComputed?>();
 
         // GetCurrent & ChangeCurrent

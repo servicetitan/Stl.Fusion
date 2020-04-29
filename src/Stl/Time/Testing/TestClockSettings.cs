@@ -52,9 +52,9 @@ namespace Stl.Time.Testing
         // Other operations
 
         public Moment ToLocalTime(Moment realTime) 
-            => new Moment(LocalOffset + (realTime.UnixTime + RealOffset) * Multiplier);
+            => new Moment(LocalOffset + (realTime.EpochOffset + RealOffset) * Multiplier);
         public Moment ToRealTime(Moment localTime) 
-            => new Moment((localTime.UnixTime - LocalOffset) / Multiplier - RealOffset);
+            => new Moment((localTime.EpochOffset - LocalOffset) / Multiplier - RealOffset);
         public TimeSpan ToLocalDuration(TimeSpan realDuration) 
             => realDuration * Multiplier;
         public TimeSpan ToRealDuration(TimeSpan localDuration) 

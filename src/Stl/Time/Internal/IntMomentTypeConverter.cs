@@ -4,14 +4,14 @@ using System.Globalization;
 
 namespace Stl.Time.Internal
 {
-    public class MomentTypeConverter : TypeConverter 
+    public class IntMomentTypeConverter : TypeConverter 
     {
         public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) 
             => sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
 
         public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) {  
             if (destinationType == typeof(string))
-                return ((Moment) value).ToString();
+                return ((IntMoment) value).ToString();
             return base.ConvertTo(context, culture, value, destinationType);
         }
 
@@ -19,7 +19,7 @@ namespace Stl.Time.Internal
         {
             if (value is string s)
                 // ReSharper disable once HeapView.BoxingAllocation
-                return Moment.Parse(s);
+                return IntMoment.Parse(s);
             return base.ConvertFrom(context, culture, value);
         }
     }

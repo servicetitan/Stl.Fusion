@@ -9,6 +9,7 @@ using Stl.Purifier.Autofac;
 using Stl.Purifier.Internal;
 using Stl.Tests.Purifier.Model;
 using Stl.Tests.Purifier.Services;
+using Stl.Time;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -130,7 +131,7 @@ namespace Stl.Tests.Purifier
             var cCount = await Computed.CaptureAsync(() => users.CountAsync());
 
             cUser0!.KeepAliveTime.Should().Be(Computed.DefaultKeepAliveTime);
-            cCount!.KeepAliveTime.Should().Be(ClickTime.SecondsToClicks(5));
+            cCount!.KeepAliveTime.Should().Be(IntMoment.SecondsToUnits(5));
         }
     }
 }

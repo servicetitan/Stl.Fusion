@@ -32,7 +32,7 @@ namespace Stl.Time.Testing
             var s = clock.Settings;
             var realNow = RealTimeClock.Now; 
             var localNow = s.ToLocalTime(realNow);
-            clock.Settings = (localNow.UnixTime, -realNow.UnixTime, multiplier * s.Multiplier);
+            clock.Settings = (localNow.EpochOffset, -realNow.EpochOffset, multiplier * s.Multiplier);
             return clock;
         }
     }

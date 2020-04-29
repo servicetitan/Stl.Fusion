@@ -9,6 +9,7 @@ using Stl.Async;
 using Stl.Concurrency;
 using Stl.Locking;
 using Stl.Purifier.Internal;
+using Stl.Time;
 
 namespace Stl.Purifier.Autofac
 {
@@ -146,7 +147,7 @@ namespace Stl.Purifier.Autofac
             var attrKeepAliveTime = attr?.KeepAliveTime ?? Double.MinValue;
             // ReSharper disable once CompareOfFloatsByEqualityOperator
             var keepAliveTime = attrKeepAliveTime != double.MinValue
-                ? (int?) ClickTime.SecondsToClicks(attrKeepAliveTime)
+                ? (int?) IntMoment.SecondsToUnits(attrKeepAliveTime)
                 : null;
 
             var invocationTargetType = methodInfo.ReflectedType;
