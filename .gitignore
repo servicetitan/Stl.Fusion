@@ -11,7 +11,6 @@
 [Bb]in/
 [oO]bj/
 [tT]mp/
-[Bb]uild/
 cmake-build-*
 
 # Output of the go coverage tool, specifically when used with LiteIDE

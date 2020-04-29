@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+  
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <RootNamespace>Stl.Build</RootNamespace>
+    <IsPackable>False</IsPackable>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <Nullable>annotations</Nullable>
+    <RestoreSources>
+      $(RestoreSources);
+      https://api.nuget.org/v3/index.json;
+      https://www.myget.org/F/servicetitan/auth/9a28cbf7-f775-434a-884a-bf1127033860/api/v3/index.json;
+      $(SolutionDir)\artifacts\nupkg;
+    </RestoreSources>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <UpToDateCheckInput Include="..\version.json" />
+  </ItemGroup>
+
+</Project>
