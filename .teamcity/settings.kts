@@ -51,7 +51,7 @@ object VcsRoot : GitVcsRoot({
     """.trimIndent()
     authMethod = password {
         userName = "ServiceTitanTeamCity"
-        password = "credentialsJSON:be7b2ad3-34a5-498a-8171-ac8addd775c7"
+        password = "credentialsJSON:9ebdf487-5e00-43e0-8df7-828468702cd8"
     }
 })
 
