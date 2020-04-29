@@ -1,0 +1,53 @@
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <SolutionDir Condition="$(SolutionDir) == ''">$(MSBuildThisFileDirectory.TrimEnd('\').TrimEnd('/'))\</SolutionDir>
+    <NoLogo>true</NoLogo>
+    <Authors>ServiceTitan</Authors>
+    <Company>ServiceTitan</Company>
+    <Description>Stl package</Description>
+    <ApplicationIcon>$(MSBuildThisFileDirectory)\docs\img\icon.ico</ApplicationIcon>
+    <PackageIconUrl>https://github.com/servicetitan/Stl/master/docs/img/icon.ico</PackageIconUrl>
+    <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
+    <NoPackageAnalysis>true</NoPackageAnalysis>
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <WarningsAsErrors>true</WarningsAsErrors>
+    <Features>strict;pdb-path-determinism</Features>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <OutputPath>$(SolutionDir)artifacts\</OutputPath>
+    <PackageProjectUrl>https://github.com/servicetitan/Stl</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/servicetitan/Stl</RepositoryUrl>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageTags>ServiceTitan Library</PackageTags>
+    <PackageOutputPath>$(SolutionDir)artifacts\nupkg</PackageOutputPath>
+    <!-- Coverlet bug with SourceLink workaround  https://github.com/tonerdo/coverlet/issues/363 and https://github.com/dotnet/sourcelink/issues/91 -->
+    <!-- Rider doesn't support deterministic build with SourceMap -->
+    <!-- embedded not recommended yet for libs and nupkg, track this in https://github.com/dotnet/sdk/issues/2679 -->
+    <!-- also embedded doesn't work with dotnet pack without nuspec or IncludeBuildOutput = false -->
+    <DebugType>portable</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <!-- NU5105: The package version uses SemVer 2.0.0 or components of SemVer 1.0.0 that are not supported on legacy clients -->
+    <!-- NU5048: The 'PackageIconUrl'/'iconUrl' element is deprecated -->
+    <NoWarn>$(NoWarn);NU5105;NU5048;</NoWarn>
+    <GenerateFullPaths Condition="'$(TERM_PROGRAM)' == 'vscode'">true</GenerateFullPaths>
+  </PropertyGroup>
+
+  <!-- Rider doesn't support deterministic build with SourceMap -->
+  <PropertyGroup Condition="'$(IDEA_INITIAL_DIRECTORY)' == ''">
+    <Deterministic>true</Deterministic>
+    <DeterministicSourcePaths>true</DeterministicSourcePaths>
+    <ContinuousIntegrationBuild>false</ContinuousIntegrationBuild>
+    <PathMap>'$(SolutionDir)'=/_/</PathMap>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <DefineConstants>DEBUG</DefineConstants>
+    <UseSourceLink>false</UseSourceLink>
+  </PropertyGroup>
+  <!-- From https://github.com/dotnet/roslyn/issues/37379 -->
+  <ItemGroup Condition="$(DeterministicSourcePaths) == 'true'">
+    <SourceRoot Include="$(MSBuildThisFileDirectory)/"/>
+  </ItemGroup>
+</Project>

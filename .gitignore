@@ -6,29 +6,19 @@
 .history
 .DS_Store
 
-# Binaries for programs and plugins
-bin/
-obj/
-csx/
-build/
-*/build/
-out/
-.exe
-.exe~
-.dll
-.so
-.dylib
+# Build artifacts
+[Aa]rtifacts/
+[Bb]in/
+[oO]bj/
+[tT]mp/
+[Bb]uild/
 cmake-build-*
-
-# Test binary, build with `go test -c`
-[Tt]est[Rr]esult*
-.test
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 .out
 
 # Package folders
-packages/
+[Pp]ackages/
 node_modules/
 
 # Log files & folders
@@ -39,6 +29,3 @@ node_modules/
 *.tfstate*
 terraform.tfstate
 terraform.tfvars
-
-# Go best practices dictate that libraries should not include the vendor directory
-vendor

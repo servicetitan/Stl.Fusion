@@ -1,5 +1,27 @@
 # STL
-STL stands for, obviously, "ServiceTitan Library" :)
+
+Just in case it's unclear, "STL" stands for "ServiceTitan Library" :)
+
+## How to?
+
+build:
+```
+dotnet run --project build/_build.csproj -- rebuild
+```
+
+test:
+```
+dotnet run --project build/_build.csproj -- test
+```
+
+create nuget packages:
+```
+dotnet run --project build/_build.csproj -- pack
+```
+
+## CI
+
+TeamCity builds located [here](https://teamcity.servicetitan.com/project.html?projectId=STL)
 
 ## Conventions
 

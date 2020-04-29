@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <OutputType>Library</OutputType>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Stl\Stl.csproj" />
+    <ProjectReference Include="..\..\src\Stl.Testing\Stl.Testing.csproj" />
+    <ProjectReference Include="..\..\src\Stl.Purifier\Stl.Purifier.csproj" />
+    <ProjectReference Include="..\..\src\Stl.ImmutableModel\Stl.ImmutableModel.csproj" />
+    <ProjectReference Include="..\..\src\Stl.CommandLine\Stl.CommandLine.csproj" />
+    <ProjectReference Include="..\..\src\Stl.Plugins\Stl.Plugins.csproj" />
+    <ProjectReference Include="..\..\src\Stl.Plugins.Extensions\Stl.Plugins.Extensions.csproj" />
+    <ProjectReference Include="..\..\src\Stl.Hosting\Stl.Hosting.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="obj\project.assets.json" />
+    <_ContentIncludedByDefault Remove="obj\project.packagespec.json" />
+    <_ContentIncludedByDefault Remove="obj\Stl.Tests.csproj.nuget.dgspec.json" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+  <PropertyGroup>
+    <BaseIntermediateOutputPath>$(SolutionDir)\artifacts\obj\$(MSBuildProjectName)</BaseIntermediateOutputPath>
+    <OutputPath>$(SolutionDir)\artifacts\tests</OutputPath>
+    <!-- x CA1034 - Do not nest type -->
+    <!-- x CA1822	- Member can be marked as static -->
+    <!-- VSTHRD200 - Use Async suffix for async methods -->
+    <!-- RCS1090: Call 'ConfigureAwait(false)' -->
+    <!-- x CS8604:  Possible null reference argument -->
+    <NoWarn>VSTHRD200;RCS1090;</NoWarn>
+    <IsPackable>false</IsPackable>
+    <Nullable>annotations</Nullable>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <!-- Copy all references to output folder (important for coverage tools) -->
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Moq" />
+    <PackageReference Include="AutoFixture" />
+    <PackageReference Include="AutoFixture.Xunit2" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="FluentAssertions" />
+
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.analyzers" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+  </ItemGroup>
+</Project>

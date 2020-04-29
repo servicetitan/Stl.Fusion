@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="latest" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="Nupkg Versions">
+    <PackageReference Update="AutoMapper" Version="9.0.0" />
+    <PackageReference Update="Autofac" Version="5.1.4" />
+    <PackageReference Update="Autofac.Extensions.DependencyInjection" Version="6.0.0" />
+    <PackageReference Update="Autofac.Extras.DynamicProxy" Version="5.0.0" />
+    <PackageReference Update="AutoFixture" Version="4.11.0" />
+    <PackageReference Update="AutoFixture.Xunit2" Version="4.11.0" />
+    <PackageReference Update="Bullseye" Version="3.3.0" />
+    <PackageReference Update="Castle.Core" Version="4.4.0" />
+    <PackageReference Update="Castle.Core.AsyncInterceptor" Version="1.7.0" />
+    <PackageReference Update="CliWrap" Version="3.0.2" />
+    <PackageReference Update="Concurrent.FastReflection.NetStandard" Version="1.0.1" />
+    <PackageReference Update="Enums.NET" Version="3.0.3" />
+    <PackageReference Update="FluentAssertions" Version="5.10.3" />
+    <PackageReference Update="LibGit2Sharp" Version="0.26.2" />
+    <PackageReference Update="Microsoft.AspNetCore.Hosting.Abstractions" Version="2.2.0" />
+    <PackageReference Update="Microsoft.AspNetCore.Http" Version="2.2.2" />
+    <PackageReference Update="Microsoft.Bcl.AsyncInterfaces" Version="1.1.0" />
+    <PackageReference Update="Microsoft.Build" Version="16.5.0" />
+    <PackageReference Update="Microsoft.Build.Framework" Version="16.5.0" />
+    <PackageReference Update="Microsoft.Build.Tasks.Core" Version="16.5.0" />
+    <PackageReference Update="Microsoft.Build.Utilities.Core" Version="16.5.0" />
+    <PackageReference Update="Microsoft.Bcl.HashCode" Version="1.1.0" />
+    <PackageReference Update="Microsoft.Data.SqlClient" Version="1.1.2" />
+    <PackageReference Update="Microsoft.Extensions.Caching.Abstractions" Version="3.1.3" />
+    <PackageReference Update="Microsoft.Extensions.Configuration.Abstractions" Version="3.1.3" />
+    <PackageReference Update="Microsoft.Extensions.Configuration" Version="3.1.3" />
+    <PackageReference Update="Microsoft.Extensions.DependencyInjection" Version="3.1.3" />
+    <PackageReference Update="Microsoft.Extensions.DependencyInjection.Abstractions" Version="3.1.3" />
+    <PackageReference Update="Microsoft.Extensions.Hosting.Abstractions" Version="3.1.3" />
+    <PackageReference Update="Microsoft.Extensions.Logging.Abstractions" Version="3.1.3" />
+    <PackageReference Update="Microsoft.EntityFrameworkCore" Version="3.1.3" />
+    <PackageReference Update="Microsoft.EntityFrameworkCore.Abstractions" Version="3.1.3" />
+    <PackageReference Update="Microsoft.EntityFrameworkCore.Design" Version="3.1.3" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" />
+    <PackageReference Update="Microsoft.EntityFrameworkCore.InMemory" Version="3.1.3" />
+    <PackageReference Update="Microsoft.EntityFrameworkCore.Relational" Version="3.1.3" />
+    <PackageReference Update="Microsoft.EntityFrameworkCore.Sqlite" Version="3.1.3" />
+    <PackageReference Update="Microsoft.EntityFrameworkCore.SqlServer" Version="3.1.3" />
+    <PackageReference Update="Microsoft.EntityFrameworkCore.Tools" Version="3.1.3" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" />
+    <PackageReference Update="Microsoft.Extensions.Configuration" Version="3.1.3" />
+    <PackageReference Update="Microsoft.Extensions.Logging" Version="3.1.3" />
+    <PackageReference Update="Microsoft.Extensions.Logging.Abstractions" Version="3.1.3" />
+    <PackageReference Update="Microsoft.NET.Test.Sdk" Version="16.6.1" />
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
+    <PackageReference Update="Moq" Version="4.14.1" />
+    <PackageReference Update="MsgPack.Cli" Version="1.0.1" />
+    <PackageReference Update="Nerdbank.GitVersioning" Version="3.1.91" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
+    <PackageReference Update="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Update="Npgsql.EntityFrameworkCore.PostgreSQL" Version="3.1.3" />
+    <PackageReference Update="Polly" Version="7.2.0" />
+    <PackageReference Update="Refit" Version="5.1.67" />
+    <PackageReference Update="Serilog" Version="2.9.0" />
+    <PackageReference Update="Serilog.Extensions.Logging" Version="3.0.1" />
+    <PackageReference Update="Serilog.Sinks.Console" Version="3.1.1" />
+    <PackageReference Update="Serilog.Sinks.Observable" Version="2.0.2" />
+    <PackageReference Update="Serilog.Sinks.TextWriter" Version="2.1.0" />
+    <PackageReference Update="StackExchange.Redis" Version="2.1.30" />
+    <PackageReference Update="System.Collections.Immutable" Version="1.7.0" />
+    <PackageReference Update="System.CommandLine" Version="2.0.0-beta1.20214.1" />
+    <PackageReference Update="System.IO.Abstractions" Version="11.0.2" />
+    <PackageReference Update="System.IO.Abstractions.TestingHelpers" Version="11.0.2" />
+    <PackageReference Update="System.Reactive" Version="4.4.1" />
+    <PackageReference Update="System.Reflection.Emit.Lightweight" Version="4.7.0" />
+    <PackageReference Update="System.Runtime.Loader" Version="4.3.0" />
+    <PackageReference Update="System.ServiceModel.Primitives" Version="4.7.0" />
+    <PackageReference Update="System.Text.Json" Version="4.7.1" />
+    <PackageReference Update="protobuf-net" Version="2.4.6" />
+    <PackageReference Update="Z.EntityFramework.Plus.EFCore" Version="3.0.48" />
+    <PackageReference Update="xunit" Version="2.4.1" />
+    <PackageReference Update="xunit.analyzers" Version="0.10.0" />
+    <PackageReference Update="Xunit.DependencyInjection.Logging" Version="2.1.0" />
+    <PackageReference Update="xunit.runner.visualstudio" Version="2.4.1" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
+  </ItemGroup>
+</Project>

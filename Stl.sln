@@ -3,25 +3,23 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl", "Stl\Stl.csproj", "{9637C3C9-794B-44B2-9A91-96E4B5837516}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl", "src\Stl\Stl.csproj", "{9637C3C9-794B-44B2-9A91-96E4B5837516}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Tests", "Stl.Tests\Stl.Tests.csproj", "{E6FDC8B7-93ED-4364-B617-961DEBFCDC0C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Tests", "tests\Stl.Tests\Stl.Tests.csproj", "{E6FDC8B7-93ED-4364-B617-961DEBFCDC0C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Testing", "Stl.Testing\Stl.Testing.csproj", "{04AD45A4-582B-49CB-B7DF-A6442CCB3C13}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Testing", "src\Stl.Testing\Stl.Testing.csproj", "{04AD45A4-582B-49CB-B7DF-A6442CCB3C13}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Time", "Stl.Time\Stl.Time.csproj", "{10E07A87-F859-49F7-8ED9-BF4E4AC75F9A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Plugins", "src\Stl.Plugins\Stl.Plugins.csproj", "{E84DBDB6-4E0D-4736-AF7C-B6C3BA20C2E7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Plugins", "Stl.Plugins\Stl.Plugins.csproj", "{E84DBDB6-4E0D-4736-AF7C-B6C3BA20C2E7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Plugins.Extensions", "src\Stl.Plugins.Extensions\Stl.Plugins.Extensions.csproj", "{A6C8E7D0-1659-4694-9B0E-505180C27476}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Plugins.Extensions", "Stl.Plugins.Extensions\Stl.Plugins.Extensions.csproj", "{A6C8E7D0-1659-4694-9B0E-505180C27476}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Hosting", "src\Stl.Hosting\Stl.Hosting.csproj", "{A346AAA9-DC3F-43AA-854B-B63A1B68B677}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Hosting", "Stl.Hosting\Stl.Hosting.csproj", "{A346AAA9-DC3F-43AA-854B-B63A1B68B677}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.ImmutableModel", "src\Stl.ImmutableModel\Stl.ImmutableModel.csproj", "{B4D50716-B550-4E07-849B-408E5C6DCA5F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.ImmutableModel", "Stl.ImmutableModel\Stl.ImmutableModel.csproj", "{B4D50716-B550-4E07-849B-408E5C6DCA5F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.CommandLine", "src\Stl.CommandLine\Stl.CommandLine.csproj", "{34B065C1-B704-4E5D-B376-6178A5672998}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.CommandLine", "Stl.CommandLine\Stl.CommandLine.csproj", "{34B065C1-B704-4E5D-B376-6178A5672998}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Purifier", "Stl.Purifier\Stl.Purifier.csproj", "{E8373553-8367-4C29-B9AE-0C334FF87791}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Purifier", "src\Stl.Purifier\Stl.Purifier.csproj", "{E8373553-8367-4C29-B9AE-0C334FF87791}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -72,18 +70,6 @@ Global
 		{04AD45A4-582B-49CB-B7DF-A6442CCB3C13}.Release|x64.Build.0 = Release|Any CPU
 		{04AD45A4-582B-49CB-B7DF-A6442CCB3C13}.Release|x86.ActiveCfg = Release|Any CPU
 		{04AD45A4-582B-49CB-B7DF-A6442CCB3C13}.Release|x86.Build.0 = Release|Any CPU
-		{10E07A87-F859-49F7-8ED9-BF4E4AC75F9A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{10E07A87-F859-49F7-8ED9-BF4E4AC75F9A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{10E07A87-F859-49F7-8ED9-BF4E4AC75F9A}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{10E07A87-F859-49F7-8ED9-BF4E4AC75F9A}.Debug|x64.Build.0 = Debug|Any CPU
-		{10E07A87-F859-49F7-8ED9-BF4E4AC75F9A}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{10E07A87-F859-49F7-8ED9-BF4E4AC75F9A}.Debug|x86.Build.0 = Debug|Any CPU
-		{10E07A87-F859-49F7-8ED9-BF4E4AC75F9A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{10E07A87-F859-49F7-8ED9-BF4E4AC75F9A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{10E07A87-F859-49F7-8ED9-BF4E4AC75F9A}.Release|x64.ActiveCfg = Release|Any CPU
-		{10E07A87-F859-49F7-8ED9-BF4E4AC75F9A}.Release|x64.Build.0 = Release|Any CPU
-		{10E07A87-F859-49F7-8ED9-BF4E4AC75F9A}.Release|x86.ActiveCfg = Release|Any CPU
-		{10E07A87-F859-49F7-8ED9-BF4E4AC75F9A}.Release|x86.Build.0 = Release|Any CPU
 		{E84DBDB6-4E0D-4736-AF7C-B6C3BA20C2E7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E84DBDB6-4E0D-4736-AF7C-B6C3BA20C2E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E84DBDB6-4E0D-4736-AF7C-B6C3BA20C2E7}.Debug|x64.ActiveCfg = Debug|Any CPU
