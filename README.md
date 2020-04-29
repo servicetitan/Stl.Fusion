@@ -4,35 +4,59 @@ Just in case it's unclear, "STL" stands for "ServiceTitan Library" :)
 
 ## How to?
 
-build:
+help:
+
+```sh
+dotnet run --project build -- --help
 ```
-dotnet run --project build/_build.csproj -- rebuild
+
+force build:
+
+```sh
+dotnet run --project build -- rebuild
 ```
 
 test:
+
+```sh
+dotnet run --project build -- test
 ```
-dotnet run --project build/_build.csproj -- test
+
+test & coverage:
+
+```sh
+dotnet run --project build -- coverage
+```
+
+test & coverage:
+
+```sh
+dotnet run --project build -- coverage
 ```
 
 create nuget packages:
-```
-dotnet run --project build/_build.csproj -- pack
+
+```sh
+dotnet run --project build -- -c Release pack
 ```
 
 ## CI
 
-TeamCity builds located [here](https://teamcity.servicetitan.com/project.html?projectId=STL)
+TeamCity builds located [here](https://teamcity.servicetitan.com/project.html?projectId=BAP_ServiceTitanLibrary)
 
 ## Conventions
 
 ### Layout
+
 * All Stl projects are currently targeting .NET Core 3.0.
 * The "big" `Stl` project is supposed to contain the most generic and most useful abstractions;
 * Everything else is supposed to be in Stl.* projects, which target specific problems (e.g. `Stl.Time`).
 * All the tests are currently located in `Stl.Tests` project - with subfolders & namespaces matching sub-projects & namespaces in Stl. Likely, that's temporary - eventually these tests are supposed to move to a set of dedicated test projects (one test project per one Stl project).
 
 ### Coding Style
+
 It's based on standard coding conventions for C# with a few exceptions:
+
 * It's fine to use "Ex" suffix instead of "Extensions" for static classes with extension methods - e.g. use `EnumerableEx` instead of `EnumerableExtensions`. Such names are shorter + they open the door for adding non-extension static methods to the same types as well, which is frequently quite desirable (e.g. `EnumerableEx.One`).
 * "`{}`" might be omitted for statements like `for` and `if` - this seems to be more in line with other language changes now (e.g. expression method bodies).
 * If it improves readability, it's ok to put "`=>`" on the next line for expression method bodies (i.e. have "`=> DoSomething(...);`" on a separate line).
@@ -72,8 +96,8 @@ It's based on standard coding conventions for C# with a few exceptions:
   * Various types aiming to support specific extensibility scenarios.
   * `Factory<T>` is just a useful type to inject into DI containers
   * `IHasOptions<T>` supports one of common extensibility scenarios (options, where each option is defined by key & value; keys are typically types).
-  * `Invoker` and `AsyncInvoker` provide an abstraction similar to `IEnumerable<T>.Aggregate`, but allowing each handler to not only update the state, but also modify the rest of the chain by both chaning it directly & invoking it recursively. The typical use case is plugin invocation, i.e. when you have a list of plugins ordered by dependency & want to invoke them in such a way that plugins in the beginning of the chain: 
-  **a)** invoke the rest of plugins directly (so they can run some logig prior and after the invocation), and 
+  * `Invoker` and `AsyncInvoker` provide an abstraction similar to `IEnumerable<T>.Aggregate`, but allowing each handler to not only update the state, but also modify the rest of the chain by both chaning it directly & invoking it recursively. The typical use case is plugin invocation, i.e. when you have a list of plugins ordered by dependency & want to invoke them in such a way that plugins in the beginning of the chain:
+  **a)** invoke the rest of plugins directly (so they can run some logig prior and after the invocation), and
   **b)** can simply edit the rest of the chain (to e.g. suppress certain plugins completely).
   See e.g. `HostBuilderEx.UsePlugins` method to see how invokers can be used.
   * `ServiceCollectionEx` provides `HasService<T>` and `CopySingleton<T>` methods.
@@ -105,6 +129,7 @@ It's based on standard coding conventions for C# with a few exceptions:
   * `INotifyDeserialized` is ~ a hacky way to solve notification order problem for `[OnDeserialized]` notifications: they are sent out of order, though in many cases you want some nested structures to be notified (and thus fully deserialized) first. So one of ways to make sure this happens is to manually notify them from the parent - which can be done by checking on whether they do support this interface or not. Long story short: avoid using it unless you see no other way to solve the problem.
 
 And finally there are a few useful types residing right in the `Stl` namespace:
+
 * `Option<T>` - an option type implementation. Initially I used `Optional` NuGet package, but ended up realizing there is almost nothing there, so it's more logical to simply re-implement it right in Stl.
 * `Result<T>` and related types (`IResult<T>`, `IResult`, `IMutableResult<T>`, `IMutableResult`) - stores either a result of type `T` or an error.
 * `Symbol` - a `struct` storing `(string Value, int ValueHashCode)`. Useful when you store lots of such strings in dictionaries, i.e. when the hash code has to be computed frequently.
@@ -115,13 +140,11 @@ And finally there are a few useful types residing right in the `Stl` namespace:
 * `KeyValuePair` - `New<TKey, TValue>(key, value)` (why it's missing in .NET Core?) & `ToKeyValuePair(this (TKey Key, TValue Value) pair)`
 * `EnumerableEx` - `One`, `Concat(params IEnumerable<T> sequences)`, a pair of `ToDictionary` overloads, atomic `concurrentDictionary.TryRemove(key, value`), and finally, `sequence.ToDelimitedString(string demimiler = ", ")`.
 
-
 ### Stl.Testing project
 
 Various testing-related helpers.
 
 TODO: Write a dedicated page for this project.
-
 
 ### Stl.Experimental project
 
@@ -142,49 +165,46 @@ r.StandardOutput.Should().Contain("Apply complete!");
 
 See `ClockTest` for some examples of how it works.
 
-
 ### Stl.Plugins project
 
 An apllication extensiblity framework similar to MEF, but aiming to solve a few fundamental problems it has:
+
 * Plugins / extensions must "live" in any IoC container implementing `IServiceCollection` and `IServiceProvider` from `Microsoft.DependencyInjection.Abstractions`
 * The plugin discovery / scan results must be cached & re-used on any subsequent creation of plugin container. The only operation triggering plugin assembly load should be the creation of a plugin stored there (or a plugin that depends on it).
 
 TODO: Write a dedicated page for this project.
 
-
 ### Stl.Plugins.Extensions project
 
 A few useful extensions to Stl.Plugins targeting the most generic plugin-based extensibility scenarios:
+
 * `ICliPlugin` + `commandLineBuilder.UsePlugins<TPlugin>(IEnumerable<TPlugin> plugins)  where TPlugin : ICliPlugin`
 * `IHostPlugin` + `hostBuilder.UsePlugins<TPlugin>(IEnumerable<TPlugin> plugins)  where TPlugin : IHostPlugin`
 * `IWebHostPlugin` + `webHostBuilder.UsePlugins<TPlugin>(IEnumerable<TPlugin> plugins)  where TPlugin : IWebHostPlugin`
 
 See the source code / usage of these methods to see how it works.
 
-
 ### Stl.Hosting project
 
 Provides a generic plugin-based host (app bootstrapper) enabling plugins to:
+
 * Inject & process their own console commands & arguments via `CommandLineBuilder`
-* Tune the host in ~ arbitrary way via `IHostBuilder` 
+* Tune the host in ~ arbitrary way via `IHostBuilder`
 * Tune the web host in ~ arbitrary way via `IWebHostBuilder`
 * Inject plugin services to any of available `IServiceCollections`
 
 Used by Bach. See `BachHostBuilder` (in fact, a tiny class) to understand how it's intended to be used.
 
-
 ### Stl.ImmutableModel project
 
-A framework allowing to define & use immutable models. Used by Bach. 
+A framework allowing to define & use immutable models. Used by Bach.
 
 `Bach.ExampleAddon` is probably the only good example of how it's supposed to be used. + Tests in `Stl.Tests.ImmutableModel`.
 
 TODO: Write a dedicated page for this project.
-
 
 ### Stl.Reactionist project
 
 These are my experiments with mobX-style observables; originally I thought to use this in Bach models, but ended up switching to `Stl.ImmutableModel`-based abstractions there.
 
 TODO: Write more robust description + decide whether to even keep this.
-

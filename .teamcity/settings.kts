@@ -80,8 +80,7 @@ object Compile : BuildType({
         }
     }
     requirements {
-        equals("env.OS", "Windows_NT")
-        exists("DotNetCoreSDK3.1.201_Path")
+        exists("DotNetCoreSDK3.1_Path")
     }
     triggers {
         vcs {
@@ -116,7 +115,7 @@ object Tests : BuildType({
     }
     steps {
         script {
-            scriptContent = "dotnet run --project build/_build.csproj -- coverage publish-datadog --datadog-team backend-platform --datadog-name platform-dotnet"
+            scriptContent = "dotnet run --project build/_build.csproj -- coverage"
         }
     }
     dependencies {
@@ -139,8 +138,7 @@ object Tests : BuildType({
         }
     }
     requirements {
-        equals("env.OS", "Windows_NT")
-        exists("DotNetCoreSDK3.1.201_Path")
+        exists("DotNetCoreSDK3.1_Path")
     }
     features {
         pullRequests {
@@ -181,7 +179,7 @@ object Publish : BuildType({
     }
     steps {
         script {
-            scriptContent = "dotnet run --project build/_build.csproj -- restore publish publish-datadog --datadog-team backend-platform --datadog-name platform-dotnet"
+            scriptContent = "dotnet run --project build -- -c Release rebuild publish"
         }
     }
     dependencies {
@@ -199,7 +197,6 @@ object Publish : BuildType({
         }
     }
     requirements {
-        equals("env.OS", "Windows_NT")
-        exists("DotNetCoreSDK3.1.201_Path")
+        exists("DotNetCoreSDK3.1_Path")
     }
 })
