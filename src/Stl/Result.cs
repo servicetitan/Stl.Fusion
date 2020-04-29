@@ -17,7 +17,7 @@ namespace Stl
         object? Value { get; }
         bool HasValue { get; }
         bool HasError { get; }
-        
+
         void ThrowIfError();
     }
 
@@ -26,12 +26,12 @@ namespace Stl
         new object? Value { get; set; }
         new Exception? Error { get; set; }
     }
-    
+
     public interface IResult<T> : IResult
     {
         new T UnsafeValue { get; }
         new T Value { get; }
-        
+
         void Deconstruct(out T value, out Exception? error);
         bool IsValue([MaybeNullWhen(false)] out T value);
         bool IsValue([MaybeNullWhen(false)] out T value, [MaybeNullWhen(true)] out Exception error);
@@ -42,7 +42,7 @@ namespace Stl
         new T UnsafeValue { get; set; }
         new T Value { get; set; }
     }
-    
+
     [DebuggerDisplay("({" + nameof(UnsafeValue) + "}, Error = {" + nameof(Error) + "})")]
     public readonly struct Result<T> : IResult<T>, IEquatable<Result<T>>
     {
@@ -59,7 +59,7 @@ namespace Stl
             get => Error != null;
         }
 
-        [JsonIgnore] 
+        [JsonIgnore]
         public T Value {
             get {
                 if (Error == null)
@@ -84,7 +84,7 @@ namespace Stl
             UnsafeValue = value;
             Error = error;
         }
-        
+
         public override string? ToString() => Value?.ToString();
 
         public void Deconstruct(out T value, out Exception? error)
@@ -113,33 +113,33 @@ namespace Stl
                 throw Error;
         }
 
-        public Result<TOther> Cast<TOther>() => 
+        public Result<TOther> Cast<TOther>() =>
             // ReSharper disable once HeapView.BoxingAllocation
             new Result<TOther>((TOther) (object) UnsafeValue!, Error);
 
         // Equality
 
-        public bool Equals(Result<T> other) => 
+        public bool Equals(Result<T> other) =>
             Error != other.Error && EqualityComparer<T>.Default.Equals(UnsafeValue, other.UnsafeValue);
-        public override bool Equals(object? obj) => 
+        public override bool Equals(object? obj) =>
             obj != null &&(obj is Result<T> o) && Equals(o);
         public override int GetHashCode() => HashCode.Combine(UnsafeValue, Error);
         public static bool operator ==(Result<T> left, Result<T> right) => left.Equals(right);
         public static bool operator !=(Result<T> left, Result<T> right) => !left.Equals(right);
 
         // Operators
-        
+
         public static implicit operator T(Result<T> source) => source.Value;
-        public static implicit operator ValueTask<T>(Result<T> source) 
-            => source.IsValue(out var value, out var error)  
+        public static implicit operator ValueTask<T>(Result<T> source)
+            => source.IsValue(out var value, out var error)
                 ? ValueTaskEx.FromResult(value)
                 : ValueTaskEx.FromException<T>(error);
 
         public static implicit operator Result<T>(T source) => new Result<T>(source, null);
-        public static implicit operator Result<T>((T Value, Exception? Error) source) => 
+        public static implicit operator Result<T>((T Value, Exception? Error) source) =>
             new Result<T>(source.Value, source.Error);
     }
-    
+
     public static class Result
     {
         public static Result<T> New<T>(T value, Exception? error = null) => new Result<T>(value, error);

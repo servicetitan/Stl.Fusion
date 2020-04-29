@@ -13,7 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Stl\Stl.csproj" />
-    <ProjectReference Include="..\..\src\Stl.Testing\Stl.Testing.csproj" />
+    <ProjectReference Include="..\Stl.Testing\Stl.Testing.csproj" />
     <ProjectReference Include="..\..\src\Stl.Purifier\Stl.Purifier.csproj" />
     <ProjectReference Include="..\..\src\Stl.ImmutableModel\Stl.ImmutableModel.csproj" />
     <ProjectReference Include="..\..\src\Stl.CommandLine\Stl.CommandLine.csproj" />

@@ -1,7 +1,7 @@
-using Microsoft.AspNetCore.Hosting;
 using Stl.Extensibility;
+using Microsoft.AspNetCore.Hosting;
 
-namespace Stl.Plugins.Extensions.Web 
+namespace Stl.Plugins.Extensions.Web
 {
     public interface IWebHostPlugin
     {

@@ -16,11 +16,10 @@ using Stl.Plugins;
 using Stl.Plugins.Extensions.Hosting;
 using Stl.Plugins.Extensions.Web;
 using Stl.Time;
-using static Microsoft.Extensions.Hosting.Host;
 
 [assembly: Plugin(typeof(PrimaryHostPlugin))]
 
-namespace Stl.Hosting.Plugins 
+namespace Stl.Hosting.Plugins
 {
     public interface IPrimaryHostPlugin : ISingletonPlugin
     {
@@ -31,7 +30,7 @@ namespace Stl.Hosting.Plugins
     {
         protected IPluginHost Plugins { get; set; } = null!;
         protected IAppHostBuilder AppHostBuilder { get; set; } = null!;
-        protected ITestAppHostBuilder? TestAppHostBuilder => 
+        protected ITestAppHostBuilder? TestAppHostBuilder =>
             AppHostBuilder.IsTestHost ? (ITestAppHostBuilder) AppHostBuilder : null;
         protected IHostBuilder HostBuilder { get; set; } = null!;
 
@@ -56,9 +55,9 @@ namespace Stl.Hosting.Plugins
         }
 
         protected virtual IHostBuilder CreateHostBuilder()
-            => CreateDefaultBuilder(AppHostBuilder.BuildState.HostArguments.ToArray());
+            => Host.CreateDefaultBuilder(AppHostBuilder.BuildState.HostArguments.ToArray());
 
-        protected virtual void ConfigureServiceProviderFactory() 
+        protected virtual void ConfigureServiceProviderFactory()
             => HostBuilder.UseServiceProviderFactory(new AutofacServiceProviderFactory());
 
         protected virtual void ConfigureHostConfiguration()
@@ -80,7 +79,7 @@ namespace Stl.Hosting.Plugins
         protected virtual IEnumerable<string> GetHostConfigurationFileNames()
         {
             yield return "settings.json";
-            yield return $"settings.{AppHostBuilder.BuildState.EnvironmentName}.json"; 
+            yield return $"settings.{AppHostBuilder.BuildState.EnvironmentName}.json";
         }
 
         protected virtual void ConfigureServices()
@@ -111,7 +110,7 @@ namespace Stl.Hosting.Plugins
             logging.AddEventSourceLogger();
         }
 
-        protected virtual void ConfigureWebHost() 
+        protected virtual void ConfigureWebHost()
             => HostBuilder.ConfigureWebHostDefaults(ConfigureWebHost);
 
         protected virtual void ConfigureWebHost(IWebHostBuilder webHostBuilder)
@@ -123,7 +122,7 @@ namespace Stl.Hosting.Plugins
             TestAppHostBuilder?.Implementation?.InvokePostBuilders(webHostBuilder);
         }
 
-        protected virtual void ConfigureWebServer(IWebHostBuilder webHostBuilder) 
+        protected virtual void ConfigureWebServer(IWebHostBuilder webHostBuilder)
             => webHostBuilder
                 .UseKestrel()
                 .UseUrls(AppHostBuilder.WebHostUrls.ToArray());
@@ -149,7 +148,7 @@ namespace Stl.Hosting.Plugins
         protected virtual void UseHostPlugins()
             => HostBuilder.UsePlugins<IHostPlugin>(Plugins);
 
-        protected virtual void UseWebHostPlugins(IWebHostBuilder webHostBuilder) 
+        protected virtual void UseWebHostPlugins(IWebHostBuilder webHostBuilder)
             => webHostBuilder.UsePlugins<IWebHostPlugin>(Plugins);
     }
 }

@@ -2,24 +2,18 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <OutputType>Library</OutputType>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="FluentAssertions" />
-    <PackageReference Include="Moq" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="System.CommandLine" />
     <PackageReference Include="Serilog" />
     <PackageReference Include="Serilog.Extensions.Logging" />
     <PackageReference Include="Serilog.Sinks.Console" />
     <PackageReference Include="Serilog.Sinks.Observable" />
     <PackageReference Include="Serilog.Sinks.TextWriter" />
-    <PackageReference Include="xunit" />
-    <PackageReference Include="Xunit.DependencyInjection.Logging" />
-    <PackageReference Include="xunit.runner.visualstudio" />
   </ItemGroup>
-  
+
   <ItemGroup>
-    <ProjectReference Include="..\Stl\Stl.csproj" />
+    <ProjectReference Include="..\..\src\Stl\Stl.csproj" />
   </ItemGroup>
-  
+
 </Project>
