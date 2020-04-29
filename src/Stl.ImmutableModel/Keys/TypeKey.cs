@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Concurrent;
-using System.Globalization;
 using Stl.ImmutableModel.Internal;
 using Stl.Reflection;
 using Stl.Text;
@@ -20,7 +19,7 @@ namespace Stl.ImmutableModel
             => Value = value;
 
         public static TypeKey New<T>() => New(typeof(T));
-        public static TypeKey New(Type type) => Cache.GetOrAdd(type, t => new TypeKey(t));
+        public static TypeKey New(Type type) => Cache.GetOrAddChecked(type, t => new TypeKey(t));
 
         public override void FormatTo(ref ListFormatter formatter)
         {

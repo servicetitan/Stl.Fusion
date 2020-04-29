@@ -9,6 +9,7 @@ using Stl.Async;
 using Stl.Concurrency;
 using Stl.Locking;
 using Stl.Purifier.Internal;
+using Stl.Reflection;
 using Stl.Time;
 
 namespace Stl.Purifier.Autofac
@@ -55,7 +56,7 @@ namespace Stl.Purifier.Autofac
 
         public void Intercept(IInvocation invocation)
         {
-            var handler = _handlerCache.GetOrAdd(invocation.Method, _createHandler, invocation);
+            var handler = _handlerCache.GetOrAddChecked(invocation.Method, _createHandler, invocation);
             if (handler == null)
                 invocation.Proceed();
             else 
@@ -65,7 +66,7 @@ namespace Stl.Purifier.Autofac
         private Action<IInvocation>? CreateHandler(MethodInfo key, IInvocation initialInvocation)
         {
             var methodInfo = initialInvocation.GetConcreteMethodInvocationTarget();
-            var method = _interceptedMethodCache.GetOrAdd(methodInfo, _createInterceptedMethod);
+            var method = _interceptedMethodCache.GetOrAddChecked(methodInfo, _createInterceptedMethod);
             if (method == null)
                 return null;
 

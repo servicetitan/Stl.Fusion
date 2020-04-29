@@ -16,7 +16,7 @@ namespace Stl.Reflection
             new ConcurrentDictionary<(Type, Type, Type, Type), Delegate?>();
 
         public static Delegate? GetConstructorDelegate(this Type type) 
-            => CtorDelegate0Cache.GetOrAdd(type, tObject => {
+            => CtorDelegate0Cache.GetOrAddChecked(type, tObject => {
                 var argTypes = new Type[0];
                 var ctor = tObject.GetConstructor(argTypes);
                 if (ctor == null) return null;
@@ -26,7 +26,7 @@ namespace Stl.Reflection
             });
 
         public static Delegate? GetConstructorDelegate(this Type type, Type argument1)
-            => CtorDelegate1Cache.GetOrAdd((type, argument1), key => {
+            => CtorDelegate1Cache.GetOrAddChecked((type, argument1), key => {
                 var (tObject, tArg1) = key;
                 var ctor = tObject.GetConstructor(new[] {tArg1});
                 if (ctor == null) return null;
@@ -39,7 +39,7 @@ namespace Stl.Reflection
             });
 
         public static Delegate? GetConstructorDelegate(this Type type, Type argument1, Type argument2)
-            => CtorDelegate2Cache.GetOrAdd((type, argument1, argument2), key => {
+            => CtorDelegate2Cache.GetOrAddChecked((type, argument1, argument2), key => {
                 var (tObject, tArg1, tArg2) = key;
                 var ctor = tObject.GetConstructor(new[] {tArg1, tArg2});
                 if (ctor == null) return null;
@@ -53,7 +53,7 @@ namespace Stl.Reflection
             });
 
         public static Delegate? GetConstructorDelegate(this Type type, Type argument1, Type argument2, Type argument3)
-            => CtorDelegate3Cache.GetOrAdd((type, argument1, argument2, argument3), key => {
+            => CtorDelegate3Cache.GetOrAddChecked((type, argument1, argument2, argument3), key => {
                 var (tObject, tArg1, tArg2, tArg3) = key;
                 var ctor = tObject.GetConstructor(new[] {tArg1, tArg2, tArg3});
                 if (ctor == null) return null;

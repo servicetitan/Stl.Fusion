@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using Microsoft.Extensions.DependencyInjection;
+using Stl.Reflection;
 
 namespace Stl.Plugins.Services
 {
@@ -18,7 +19,7 @@ namespace Stl.Plugins.Services
         public PluginCache(IServiceProvider services) => _services = services;
 
         public IPluginInstanceHandle GetOrCreate(Type pluginImplementationType)
-            => _cache.GetOrAdd(
+            => _cache.GetOrAddChecked(
                 pluginImplementationType, 
                 (pit, self) => {
                     var handleType = typeof(IPluginInstanceHandle<>).MakeGenericType(pit);

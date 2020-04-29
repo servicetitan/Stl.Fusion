@@ -35,7 +35,7 @@ namespace Stl.Purifier.Autofac
         }
 
         public ArgumentComparer GetInvocationTargetComparer(MethodInfo methodInfo, Type invocationTargetType) 
-            => GetArgumentComparer(invocationTargetType);
+            => GetArgumentComparer(invocationTargetType, true);
 
         public virtual ArgumentComparer GetArgumentComparer(MethodInfo methodInfo, ParameterInfo parameterInfo)
             => GetArgumentComparer(parameterInfo.ParameterType);
@@ -61,9 +61,21 @@ namespace Stl.Purifier.Autofac
                     }
                 }
             }
-            return cComparer ?? (isInvocationTarget 
-                ? ArgumentComparer.ByRef
-                : ArgumentComparer.Default);
+
+            if (comparer != null)
+                return comparer;
+            if (isInvocationTarget)
+                return ArgumentComparer.ByRef;
+            var equatableType = typeof(IEquatable<>).MakeGenericType(type);
+            if (equatableType.IsAssignableFrom(type)) {
+                var eacType = typeof(EquatableArgumentComparer<>).MakeGenericType(type);
+                var eac = (EquatableArgumentComparer) eacType
+                    .GetField(nameof(EquatableArgumentComparer<int>.Instance))
+                    .GetValue(null);
+                if (eac.IsAvailable)
+                    return eac;
+            }
+            return ArgumentComparer.Default;
         }
     }
 }
