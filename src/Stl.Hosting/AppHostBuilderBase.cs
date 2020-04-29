@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.CommandLine;
 using System.CommandLine.Builder;
-using System.CommandLine.Invocation;
+using Microsoft.AspNetCore.Hosting;
 using System.CommandLine.IO;
 using System.Linq;
 using System.Reactive.PlatformServices;
@@ -46,8 +46,8 @@ namespace Stl.Hosting
         CliOption GetArgumentConfigurationOverridesOption();
     }
 
-    public interface IAppHostBuildState 
-    { 
+    public interface IAppHostBuildState
+    {
         ReadOnlyMemory<string> Arguments { get; set; }
         string EnvironmentName { get; set; }
         IPluginHostBuilder PluginHostBuilder { get; set; }
@@ -60,7 +60,7 @@ namespace Stl.Hosting
         void BuildHost();
     }
 
-    public abstract class AppHostBuilderBase : HasOptionsBase, 
+    public abstract class AppHostBuilderBase : HasOptionsBase,
         IAppHostBuilder, IAppHostBuilderImpl, IAppHostBuildState,
         ITestAppHostBuilder, ITestAppHostBuilderImpl
     {
@@ -140,9 +140,9 @@ namespace Stl.Hosting
         }
 
         ITestAppHostBuilderImpl ITestAppHostBuilder.Implementation => this;
-        protected ImmutableDictionary<Type,ImmutableList<Action<object>>> PreBuilders 
+        protected ImmutableDictionary<Type,ImmutableList<Action<object>>> PreBuilders
             = ImmutableDictionary<Type, ImmutableList<Action<object>>>.Empty;
-        protected ImmutableDictionary<Type, ImmutableList<Action<object>>> PostBuilders 
+        protected ImmutableDictionary<Type, ImmutableList<Action<object>>> PostBuilders
             = ImmutableDictionary<Type, ImmutableList<Action<object>>>.Empty;
 
         protected static ImmutableDictionary<Type, ImmutableList<Action<object>>> AddBuilder<TBuilder>(
@@ -167,12 +167,12 @@ namespace Stl.Hosting
             }
         }
 
-        ITestAppHostBuilder ITestAppHostBuilder.InjectPreBuilder<TBuilder>(Action<TBuilder> preBuilder) 
+        ITestAppHostBuilder ITestAppHostBuilder.InjectPreBuilder<TBuilder>(Action<TBuilder> preBuilder)
         {
             PreBuilders = AddBuilder(PreBuilders, preBuilder);
             return this;
         }
-        ITestAppHostBuilder ITestAppHostBuilder.InjectPostBuilder<TBuilder>(Action<TBuilder> postBuilder) 
+        ITestAppHostBuilder ITestAppHostBuilder.InjectPostBuilder<TBuilder>(Action<TBuilder> postBuilder)
         {
             PostBuilders = AddBuilder(PostBuilders, postBuilder);
             return this;
@@ -192,7 +192,7 @@ namespace Stl.Hosting
             PluginHostLoggingSectionName = "Logging";
             LoggingSectionName = "Logging";
             WebHostUrls = new [] {"http://localhost:32100"};
-            
+
             var state = BuildState;
             state.Arguments = Array.Empty<string>();
             state.EnvironmentName = Environments.Production;
@@ -200,7 +200,7 @@ namespace Stl.Hosting
 
         protected string GetDefaultEnvironmentVarPrefix()
         {
-            var nonAlphaRegex = new Regex("[^A-Z]+", 
+            var nonAlphaRegex = new Regex("[^A-Z]+",
                 RegexOptions.Multiline | RegexOptions.IgnoreCase);
             return $"{nonAlphaRegex.Replace(AppName.ToUpperInvariant(), "")}_";
         }
@@ -211,7 +211,7 @@ namespace Stl.Hosting
             if (arguments != null)
                 state.Arguments = arguments;
             var testAppHostBuilder = IsTestHost ? (ITestAppHostBuilder) this : null;
-            
+
             state.PluginHostBuilder = CreatePluginHostBuilder();
             ConfigurePluginHostConfiguration();
             ConfigurePluginHostServiceProviderFactory();
@@ -259,7 +259,7 @@ namespace Stl.Hosting
             var option = GetArgumentConfigurationOverridesOption();
             cliBuilder.AddOption(option);
             var cliParser = cliBuilder.Build();
-            
+
             var arguments = BuildState.ParsableArguments();
             var result = cliParser.Parse(arguments);
             var values = result.RootCommandResult.ValueForOption<string[]>(option.Name);
@@ -270,7 +270,7 @@ namespace Stl.Hosting
                 {"dev", (HostDefaults.EnvironmentKey, Environments.Development)},
                 {"prod", (HostDefaults.EnvironmentKey, Environments.Production)},
             };
-            
+
             foreach (var v in values) {
                 var p = v.Split('=', 2);
                 if (p.Length == 2)
@@ -280,16 +280,16 @@ namespace Stl.Hosting
             }
         }
 
-        CliOption IAppHostBuilderImpl.GetArgumentConfigurationOverridesOption() 
+        CliOption IAppHostBuilderImpl.GetArgumentConfigurationOverridesOption()
             => GetArgumentConfigurationOverridesOption();
-        protected virtual CliOption GetArgumentConfigurationOverridesOption() 
+        protected virtual CliOption GetArgumentConfigurationOverridesOption()
             => new CliOption(
-                new[] {"-o", "--override"}, 
+                new[] {"-o", "--override"},
                 "Configuration property override; use '-o property1=value1 -o property2=value2' notation") {
                     Argument = new Argument<string[]>(),
                 };
 
-        protected virtual IPluginHostBuilder CreatePluginHostBuilder() 
+        protected virtual IPluginHostBuilder CreatePluginHostBuilder()
             => new PluginHostBuilder();
 
         protected virtual void ConfigurePluginHostServiceProviderFactory()
@@ -366,7 +366,7 @@ namespace Stl.Hosting
         protected virtual IEnumerable<string> GetPluginHostConfigurationFileNames()
         {
             yield return "pluginSettings.json";
-            yield return $"pluginSettings.{BuildState.EnvironmentName}.json"; 
+            yield return $"pluginSettings.{BuildState.EnvironmentName}.json";
         }
     }
 }

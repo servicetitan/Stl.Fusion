@@ -4,13 +4,11 @@
   <PropertyGroup>
     <BaseIntermediateOutputPath>$(SolutionDir)\artifacts\obj\$(MSBuildProjectName)</BaseIntermediateOutputPath>
     <OutputPath>$(SolutionDir)\artifacts\tests</OutputPath>
-    <!-- x CA1034 - Do not nest type -->
-    <!-- x CA1822	- Member can be marked as static -->
     <!-- VSTHRD200 - Use Async suffix for async methods -->
     <!-- RCS1090: Call 'ConfigureAwait(false)' -->
-    <!-- x CS8604:  Possible null reference argument -->
     <NoWarn>VSTHRD200;RCS1090;</NoWarn>
     <IsPackable>false</IsPackable>
+    <IsPublishable>false</IsPublishable>
     <Nullable>annotations</Nullable>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <!-- Copy all references to output folder (important for coverage tools) -->
@@ -24,8 +22,10 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="FluentAssertions" />
 
+
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.analyzers" />
     <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Xunit.DependencyInjection.Logging" />
   </ItemGroup>
 </Project>

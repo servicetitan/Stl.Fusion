@@ -1,25 +1,47 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26124.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30021.99
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl", "src\Stl\Stl.csproj", "{9637C3C9-794B-44B2-9A91-96E4B5837516}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl", "src\Stl\Stl.csproj", "{9637C3C9-794B-44B2-9A91-96E4B5837516}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Tests", "tests\Stl.Tests\Stl.Tests.csproj", "{E6FDC8B7-93ED-4364-B617-961DEBFCDC0C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl.Tests", "tests\Stl.Tests\Stl.Tests.csproj", "{E6FDC8B7-93ED-4364-B617-961DEBFCDC0C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Testing", "src\Stl.Testing\Stl.Testing.csproj", "{04AD45A4-582B-49CB-B7DF-A6442CCB3C13}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl.Plugins", "src\Stl.Plugins\Stl.Plugins.csproj", "{E84DBDB6-4E0D-4736-AF7C-B6C3BA20C2E7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Plugins", "src\Stl.Plugins\Stl.Plugins.csproj", "{E84DBDB6-4E0D-4736-AF7C-B6C3BA20C2E7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl.Plugins.Extensions", "src\Stl.Plugins.Extensions\Stl.Plugins.Extensions.csproj", "{A6C8E7D0-1659-4694-9B0E-505180C27476}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Plugins.Extensions", "src\Stl.Plugins.Extensions\Stl.Plugins.Extensions.csproj", "{A6C8E7D0-1659-4694-9B0E-505180C27476}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl.Hosting", "src\Stl.Hosting\Stl.Hosting.csproj", "{A346AAA9-DC3F-43AA-854B-B63A1B68B677}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Hosting", "src\Stl.Hosting\Stl.Hosting.csproj", "{A346AAA9-DC3F-43AA-854B-B63A1B68B677}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl.ImmutableModel", "src\Stl.ImmutableModel\Stl.ImmutableModel.csproj", "{B4D50716-B550-4E07-849B-408E5C6DCA5F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.ImmutableModel", "src\Stl.ImmutableModel\Stl.ImmutableModel.csproj", "{B4D50716-B550-4E07-849B-408E5C6DCA5F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl.CommandLine", "src\Stl.CommandLine\Stl.CommandLine.csproj", "{34B065C1-B704-4E5D-B376-6178A5672998}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.CommandLine", "src\Stl.CommandLine\Stl.CommandLine.csproj", "{34B065C1-B704-4E5D-B376-6178A5672998}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl.Purifier", "src\Stl.Purifier\Stl.Purifier.csproj", "{E8373553-8367-4C29-B9AE-0C334FF87791}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Purifier", "src\Stl.Purifier\Stl.Purifier.csproj", "{E8373553-8367-4C29-B9AE-0C334FF87791}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_root", "_root", "{35F39E26-0FDB-44CB-B856-F996C1615A3D}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		CHANGELOG.md = CHANGELOG.md
+		Directory.Build.props = Directory.Build.props
+		Directory.Build.targets = Directory.Build.targets
+		NuGet.Config = NuGet.Config
+		Packages.props = Packages.props
+		README.md = README.md
+		version.json = version.json
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{A50B98CF-9AA1-4622-B2AD-5E17610115A7}"
+	ProjectSection(SolutionItems) = preProject
+		src\Directory.Build.props = src\Directory.Build.props
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{42AAD69E-3038-4793-8A6D-ACF1093E5F09}"
+	ProjectSection(SolutionItems) = preProject
+		tests\Directory.Build.props = tests\Directory.Build.props
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl.Testing", "tests\Stl.Testing\Stl.Testing.csproj", "{5E15E5ED-618F-4B81-90B8-F72859C2E835}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,9 +51,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{9637C3C9-794B-44B2-9A91-96E4B5837516}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -58,18 +77,6 @@ Global
 		{E6FDC8B7-93ED-4364-B617-961DEBFCDC0C}.Release|x64.Build.0 = Release|Any CPU
 		{E6FDC8B7-93ED-4364-B617-961DEBFCDC0C}.Release|x86.ActiveCfg = Release|Any CPU
 		{E6FDC8B7-93ED-4364-B617-961DEBFCDC0C}.Release|x86.Build.0 = Release|Any CPU
-		{04AD45A4-582B-49CB-B7DF-A6442CCB3C13}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{04AD45A4-582B-49CB-B7DF-A6442CCB3C13}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{04AD45A4-582B-49CB-B7DF-A6442CCB3C13}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{04AD45A4-582B-49CB-B7DF-A6442CCB3C13}.Debug|x64.Build.0 = Debug|Any CPU
-		{04AD45A4-582B-49CB-B7DF-A6442CCB3C13}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{04AD45A4-582B-49CB-B7DF-A6442CCB3C13}.Debug|x86.Build.0 = Debug|Any CPU
-		{04AD45A4-582B-49CB-B7DF-A6442CCB3C13}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{04AD45A4-582B-49CB-B7DF-A6442CCB3C13}.Release|Any CPU.Build.0 = Release|Any CPU
-		{04AD45A4-582B-49CB-B7DF-A6442CCB3C13}.Release|x64.ActiveCfg = Release|Any CPU
-		{04AD45A4-582B-49CB-B7DF-A6442CCB3C13}.Release|x64.Build.0 = Release|Any CPU
-		{04AD45A4-582B-49CB-B7DF-A6442CCB3C13}.Release|x86.ActiveCfg = Release|Any CPU
-		{04AD45A4-582B-49CB-B7DF-A6442CCB3C13}.Release|x86.Build.0 = Release|Any CPU
 		{E84DBDB6-4E0D-4736-AF7C-B6C3BA20C2E7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E84DBDB6-4E0D-4736-AF7C-B6C3BA20C2E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E84DBDB6-4E0D-4736-AF7C-B6C3BA20C2E7}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -142,5 +149,34 @@ Global
 		{E8373553-8367-4C29-B9AE-0C334FF87791}.Release|x64.Build.0 = Release|Any CPU
 		{E8373553-8367-4C29-B9AE-0C334FF87791}.Release|x86.ActiveCfg = Release|Any CPU
 		{E8373553-8367-4C29-B9AE-0C334FF87791}.Release|x86.Build.0 = Release|Any CPU
+		{5E15E5ED-618F-4B81-90B8-F72859C2E835}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E15E5ED-618F-4B81-90B8-F72859C2E835}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5E15E5ED-618F-4B81-90B8-F72859C2E835}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{5E15E5ED-618F-4B81-90B8-F72859C2E835}.Debug|x64.Build.0 = Debug|Any CPU
+		{5E15E5ED-618F-4B81-90B8-F72859C2E835}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{5E15E5ED-618F-4B81-90B8-F72859C2E835}.Debug|x86.Build.0 = Debug|Any CPU
+		{5E15E5ED-618F-4B81-90B8-F72859C2E835}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5E15E5ED-618F-4B81-90B8-F72859C2E835}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5E15E5ED-618F-4B81-90B8-F72859C2E835}.Release|x64.ActiveCfg = Release|Any CPU
+		{5E15E5ED-618F-4B81-90B8-F72859C2E835}.Release|x64.Build.0 = Release|Any CPU
+		{5E15E5ED-618F-4B81-90B8-F72859C2E835}.Release|x86.ActiveCfg = Release|Any CPU
+		{5E15E5ED-618F-4B81-90B8-F72859C2E835}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{9637C3C9-794B-44B2-9A91-96E4B5837516} = {A50B98CF-9AA1-4622-B2AD-5E17610115A7}
+		{E6FDC8B7-93ED-4364-B617-961DEBFCDC0C} = {42AAD69E-3038-4793-8A6D-ACF1093E5F09}
+		{E84DBDB6-4E0D-4736-AF7C-B6C3BA20C2E7} = {A50B98CF-9AA1-4622-B2AD-5E17610115A7}
+		{A6C8E7D0-1659-4694-9B0E-505180C27476} = {A50B98CF-9AA1-4622-B2AD-5E17610115A7}
+		{A346AAA9-DC3F-43AA-854B-B63A1B68B677} = {A50B98CF-9AA1-4622-B2AD-5E17610115A7}
+		{B4D50716-B550-4E07-849B-408E5C6DCA5F} = {A50B98CF-9AA1-4622-B2AD-5E17610115A7}
+		{34B065C1-B704-4E5D-B376-6178A5672998} = {A50B98CF-9AA1-4622-B2AD-5E17610115A7}
+		{E8373553-8367-4C29-B9AE-0C334FF87791} = {A50B98CF-9AA1-4622-B2AD-5E17610115A7}
+		{5E15E5ED-618F-4B81-90B8-F72859C2E835} = {42AAD69E-3038-4793-8A6D-ACF1093E5F09}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B50610D6-2B28-4258-98A2-A0B486FD5907}
 	EndGlobalSection
 EndGlobal
