@@ -12,6 +12,7 @@ using Stl.Async;
 using Stl.Concurrency;
 using Stl.OS;
 using Stl.Pooling;
+using Stl.Testing;
 using Stl.Tests.Purifier.Model;
 using Stl.Tests.Purifier.Services;
 using Stl.Time;
@@ -45,6 +46,9 @@ namespace Stl.Tests.Purifier
         [Fact, Category("Performance")]
         public async Task ComputedPerformanceTest()
         {
+            if (TestRunnerInfo.IsBuildAgent())
+                return; // Shouldn't run this test on build agents
+
             var users = Services.GetRequiredService<IUserProvider>();
             var useImdb = Options.UseInMemoryDatabase;
             var opCountPerCore = 2_000_000;

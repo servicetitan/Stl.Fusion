@@ -1,0 +1,220 @@
+# https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference
+root = true
+
+[*]
+charset = utf-8
+
+# YAML Files
+[*.{yml,yaml}]
+indent_size = 2
+
+# Markdown Files
+[*.md]
+trim_trailing_whitespace = false
+
+[*.cs, *.js, *.tsx]
+indent_size = 4
+indent_style = space
+trim_trailing_whitespace = true
+insert_final_newline = true
+end_of_line = lf
+
+[*.cs]
+# Indentation options
+# https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference#indent
+
+csharp_indent_case_contents = true
+csharp_indent_block_contents = true
+csharp_indent_braces = false
+csharp_indent_switch_labels = true
+
+
+# New line preferences
+# https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference#c-formatting-settings
+
+csharp_new_line_before_catch = true
+csharp_new_line_before_finally = true
+csharp_new_line_before_else = true
+csharp_new_line_before_members_in_object_initializers = false
+csharp_new_line_before_open_brace = types,methods,local_functions
+csharp_new_line_between_query_expression_clauses = true
+
+# Organize usings
+# https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference#usings
+
+dotnet_sort_system_directives_first = true
+
+
+# Expression-level preferences
+# https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference#expression_level
+
+dotnet_style_object_initializer = true:suggestion
+dotnet_style_collection_initializer = true:suggestion
+dotnet_style_explicit_tuple_names = true:suggestion
+dotnet_style_prefer_inferred_tuple_names = true:suggestion
+dotnet_style_prefer_inferred_anonymous_type_member_names = true:suggestion
+dotnet_style_prefer_auto_properties = true:suggestion
+dotnet_style_prefer_is_null_check_over_reference_equality_method = true:suggestion
+dotnet_style_prefer_conditional_expression_over_assignment = false:suggestion
+dotnet_style_prefer_conditional_expression_over_return = false:suggestion
+csharp_prefer_simple_default_expression = true:suggestion
+csharp_prefer_braces = true:suggestion
+
+# Expression-bodied members
+csharp_style_expression_bodied_methods = true:none
+csharp_style_expression_bodied_constructors = true:none
+csharp_style_expression_bodied_operators = true:suggestion
+csharp_style_expression_bodied_properties = true:suggestion
+csharp_style_expression_bodied_indexers = true:suggestion
+csharp_style_expression_bodied_accessors = true:suggestion
+
+# Pattern matching
+csharp_style_pattern_matching_over_is_with_cast_check = true:suggestion
+csharp_style_pattern_matching_over_as_with_null_check = true:suggestion
+csharp_style_inlined_variable_declaration = true:suggestion
+
+
+# Null checking preferences
+# https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference#null_checking
+csharp_style_throw_expression = true:none
+csharp_style_conditional_delegate_call = true:suggestion
+
+
+# Spacing options
+# https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference#spacing
+
+csharp_space_after_colon_in_inheritance_clause = true
+csharp_space_after_cast = false
+csharp_space_after_comma = true
+csharp_space_after_dot = false
+csharp_space_after_keywords_in_control_flow_statements = true
+csharp_space_before_colon_in_inheritance_clause = true
+csharp_space_between_method_call_empty_parameter_list_parentheses = false
+csharp_space_after_semicolon_in_for_statement = true
+csharp_space_around_binary_operators = before_and_after
+csharp_space_around_declaration_statements = do_not_ignore
+csharp_space_before_colon_in_inheritance_clause = true
+csharp_space_before_comma = false
+csharp_space_before_dot = false
+csharp_space_before_open_square_brackets = false
+csharp_space_before_semicolon_in_for_statement = false
+csharp_space_between_empty_square_brackets = false
+csharp_space_between_method_call_empty_parameter_list_parentheses = false
+csharp_space_between_method_call_name_and_opening_parenthesis = false
+csharp_space_between_method_call_parameter_list_parentheses = false
+csharp_space_between_method_declaration_empty_parameter_list_parentheses = false
+csharp_space_between_method_declaration_name_and_open_parenthesis = false
+csharp_space_between_method_declaration_parameter_list_parentheses = false
+csharp_space_between_parentheses = false
+csharp_space_between_square_brackets = false
+
+# Wrapping options
+# https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference#wrapping
+
+csharp_preserve_single_line_blocks = true
+csharp_preserve_single_line_statements = false
+
+
+# Language keywords instead of framework type names for type references
+# https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference#language_keywords
+dotnet_style_predefined_type_for_locals_parameters_members = true:warning
+dotnet_style_predefined_type_for_member_access = true:warning
+
+# Style - qualification options
+# https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference#this_and_me
+dotnet_style_qualification_for_field = false:suggestion
+dotnet_style_qualification_for_property = false:suggestion
+dotnet_style_qualification_for_method = false:suggestion
+dotnet_style_qualification_for_event = false:suggestion
+
+# Modifier preferences
+# https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference#normalize_modifiers
+dotnet_style_require_accessibility_modifiers = always:warning
+csharp_preferred_modifier_order = public,private,protected,internal,static,extern,new,virtual,abstract,sealed,override,readonly,unsafe,volatile,async
+visual_basic_preferred_modifier_order = Partial,Default,Private,Protected,Public,Friend,NotOverridable,Overridable,MustOverride,Overloads,Overrides,MustInherit,NotInheritable,Static,Shared,Shadows,ReadOnly,WriteOnly,Dim,Const,WithEvents,Widening,Narrowing,Custom,Async
+dotnet_style_readonly_field = true:warning
+
+
+# Parentheses preferences
+# https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference#parentheses
+dotnet_style_parentheses_in_arithmetic_binary_operators = always_for_clarity:suggestion
+dotnet_style_parentheses_in_relational_binary_operators = always_for_clarity:suggestion
+dotnet_style_parentheses_in_other_binary_operators = always_for_clarity:suggestion
+dotnet_style_parentheses_in_other_operators = never_if_unnecessary:suggestion
+
+# only use var when it's obvious what the variable type is
+csharp_style_var_for_built_in_types = true:silent
+csharp_style_var_when_type_is_apparent = true:silent
+csharp_style_var_elsewhere = true:silent
+
+# supported (?)
+max_line_length = 120
+
+# Naming Conventions
+# https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-naming-conventions
+
+# Style Definitions
+dotnet_naming_style.pascal_case_style.capitalization    = pascal_case
+
+dotnet_naming_style.camel_case_style.capitalization     = camel_case
+
+dotnet_naming_style.I_prefix_style.required_prefix      = I
+dotnet_naming_style.I_prefix_style.capitalization       = pascal_case
+
+dotnet_naming_style.T_prefix_style.required_prefix      = T
+dotnet_naming_style.T_prefix_style.capitalization       = pascal_case
+
+# Use PascalCase for readonly static fields
+dotnet_naming_rule.readonly_fields_should_be_pascal_case.severity  = warning
+dotnet_naming_rule.readonly_fields_should_be_pascal_case.symbols   = readonly_fields
+dotnet_naming_rule.readonly_fields_should_be_pascal_case.style     = pascal_case_style
+dotnet_naming_symbols.readonly_fields.applicable_kinds             = field
+dotnet_naming_symbols.readonly_fields.applicable_accessibilities   = *
+dotnet_naming_symbols.readonly_fields.required_modifiers           = readonly, static
+
+# Use PascalCase for constant fields
+dotnet_naming_rule.constant_fields_should_be_pascal_case.severity  = warning
+dotnet_naming_rule.constant_fields_should_be_pascal_case.symbols   = constant_fields
+dotnet_naming_rule.constant_fields_should_be_pascal_case.style     = pascal_case_style
+dotnet_naming_symbols.constant_fields.applicable_kinds             = field
+dotnet_naming_symbols.constant_fields.applicable_accessibilities   = *
+dotnet_naming_symbols.constant_fields.required_modifiers           = const
+
+
+# Use PascalCase for public fields
+dotnet_naming_rule.pascal_case_for_public_fields.severity          = warning
+dotnet_naming_rule.pascal_case_for_public_fields.symbols           = public_fields
+dotnet_naming_rule.pascal_case_for_public_fields.style             = pascal_case_style
+dotnet_naming_symbols.public_fields.applicable_kinds               = field
+dotnet_naming_symbols.public_fields.applicable_accessibilities     = public
+
+
+# Interfaces must be PascalCase and have an I prefix
+dotnet_naming_rule.interfaces_start_with_I.severity                = warning
+dotnet_naming_rule.interfaces_start_with_I.symbols                 = any_interface
+dotnet_naming_rule.interfaces_start_with_I.style                   = I_prefix_style
+dotnet_naming_symbols.any_interface.applicable_accessibilities     = *
+dotnet_naming_symbols.any_interface.applicable_kinds               = interface
+
+# Classes, structs, methods, enums, events, properties, namespaces, delegates must be PascalCase
+dotnet_naming_rule.general_naming.severity                         = warning
+dotnet_naming_rule.general_naming.symbols                          = general
+dotnet_naming_rule.general_naming.style                            = pascal_case_style
+dotnet_naming_symbols.general.applicable_kinds                     = class,struct,enum,property,method,event,namespace,delegate
+dotnet_naming_symbols.general.applicable_accessibilities           = *
+
+# Allow underscore for private fields
+dotnet_naming_rule.private_fields_with_underscore.symbols  = private_fields
+dotnet_naming_rule.private_fields_with_underscore.style    = prefix_underscore
+dotnet_naming_rule.private_fields_with_underscore.severity = suggestion
+dotnet_naming_symbols.private_fields.applicable_kinds           = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+dotnet_naming_style.prefix_underscore.capitalization = camel_case
+dotnet_naming_style.prefix_underscore.required_prefix = _
+
+# Type params must be PascalCase and have an T prefix
+dotnet_naming_rule.typeparam_start_with_T.severity                = warning
+dotnet_naming_rule.typeparam_start_with_T.symbols                 = any_typeparam
+dotnet_naming_rule.typeparam_start_with_T.style                   = T_prefix_style
+dotnet_naming_symbols.any_typeparam.applicable_accessibilities    = *
+dotnet_naming_symbols.any_typeparam.applicable_kinds              = type_parameter

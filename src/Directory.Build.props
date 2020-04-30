@@ -7,7 +7,7 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <PublishConfiguration>Release</PublishConfiguration>
     <IsPackable>True</IsPackable>
-    <!-- VSTHRD200 - Use Async suffix for async methods See issue: https://github.com/Microsoft/vs-threading/issues/431 -->
+    <!-- VSTHRD200: Use Async suffix for async methods See issue: https://github.com/Microsoft/vs-threading/issues/431 -->
     <!-- RCS1047: Non-asynchronous method name should not end with 'Async' -->
     <!-- RCS1090: Call 'ConfigureAwait(false). -->
     <NoWarn>$(NoWarn);VSTHRD200;RCS1047;RCS1090;</NoWarn>
@@ -23,4 +23,3 @@
     <PackageReference Include="Microsoft.SourceLink.GitHub" />
   </ItemGroup>
 </Project>
-
