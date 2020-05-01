@@ -49,19 +49,19 @@ namespace Stl.Fusion
     {
         protected Action<IComputed, object?> OnInvalidateHandler { get; set; }
         protected IComputedRegistry<(IFunction, TIn)> ComputedRegistry { get; }
-        protected IRetryComputePolicy RetryComputePolicy { get; }
+        protected IComputeRetryPolicy ComputeRetryPolicy { get; }
         protected IAsyncLockSet<(IFunction, TIn)> Locks { get; }
         protected object Lock => Locks;
 
         public FunctionBase(
             IComputedRegistry<(IFunction, TIn)> computedRegistry,
-            IRetryComputePolicy? retryComputePolicy = null,
+            IComputeRetryPolicy? computeRetryPolicy = null,
             IAsyncLockSet<(IFunction, TIn)>? locks = null)
         {
-            retryComputePolicy ??= Fusion.RetryComputePolicy.Default;
+            computeRetryPolicy ??= Fusion.ComputeRetryPolicy.Default;
             locks ??= new AsyncLockSet<(IFunction, TIn)>(ReentryMode.CheckedFail);
             ComputedRegistry = computedRegistry;
-            RetryComputePolicy = retryComputePolicy; 
+            ComputeRetryPolicy = computeRetryPolicy; 
             Locks = locks;
             OnInvalidateHandler = (c, _) => Unregister((IComputed<TIn, TOut>) c);
         }
@@ -110,7 +110,7 @@ namespace Stl.Fusion
                 result = await ComputeAsync(input, cancellationToken).ConfigureAwait(false);
                 if (result.IsValid)
                     break;
-                if (!RetryComputePolicy.MustRetry(result, tryIndex))
+                if (!ComputeRetryPolicy.MustRetry(result, tryIndex))
                     break;
             }
             context.TryCaptureValue(result);
@@ -152,7 +152,7 @@ namespace Stl.Fusion
                 result = await ComputeAsync(input, cancellationToken).ConfigureAwait(false);
                 if (result.IsValid)
                     break;
-                if (!RetryComputePolicy.MustRetry(result, tryIndex))
+                if (!ComputeRetryPolicy.MustRetry(result, tryIndex))
                     break;
             }
             context.TryCaptureValue(result);

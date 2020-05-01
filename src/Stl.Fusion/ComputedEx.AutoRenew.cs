@@ -7,14 +7,18 @@ namespace Stl.Fusion
 {
     public static partial class ComputedEx
     {
-        internal sealed class AutoRenewApplyHandler : IComputedApplyHandler<(TimeSpan, IClock, Delegate?), Disposable<CancellationTokenSource>>
+        internal sealed class AutoRenewApplyHandler : IComputedApplyHandler<
+            (TimeSpan, IClock, Delegate?, Delegate?), 
+            Disposable<(IComputed, CancellationTokenSource, Delegate?)>>
         {
             public static readonly AutoRenewApplyHandler Instance = new AutoRenewApplyHandler();
             
-            public Disposable<CancellationTokenSource> Apply<TIn, TOut>(IComputed<TIn, TOut> computed, (TimeSpan, IClock, Delegate?) arg) 
+            public Disposable<(IComputed, CancellationTokenSource, Delegate?)> Apply<TIn, TOut>(
+                IComputed<TIn, TOut> computed, 
+                (TimeSpan, IClock, Delegate?, Delegate?) arg) 
                 where TIn : notnull
             {
-                var (delay, clock, untypedHandler) = arg;
+                var (delay, clock, untypedHandler, untypedCompletedHandler) = arg;
                 var handler = (Action<IComputed<TOut>, Result<TOut>, object?>?) untypedHandler;
                 var stop = new CancellationTokenSource();
                 var stopToken = stop.Token;
@@ -35,41 +39,43 @@ namespace Stl.Fusion
                     catch (OperationCanceledException) { }
                 };
                 computed.Invalidated += OnInvalidated;
-                return Disposable.New(stop, cts => {
-                    try {
-                        cts.Cancel(true);
-                    }
-                    finally {
-                        cts.Dispose();
-                        // var ctsCopy = cts;
-                        // Task.Run(async () => {
-                        //     await Task.Delay(CancellationTokenDisposeDelay, CancellationToken.None).ConfigureAwait(false);
-                        //     ctsCopy.Dispose();
-                        // }, CancellationToken.None);
-                    }
-                }); 
+                return Disposable.New(
+                    (Computed: (IComputed) computed, CancellationTokenSource: stop, CompletedHandler: untypedCompletedHandler), 
+                    state => {
+                        try {
+                            state.CancellationTokenSource.Cancel();
+                        }
+                        finally {
+                            state.CancellationTokenSource.Dispose();
+                            if (untypedCompletedHandler is Action<IComputed<TOut>> completedHandler)
+                                completedHandler.Invoke(computed);
+                        }
+                    }); 
             }                               
         }
 
-        public static Disposable<CancellationTokenSource> AutoRenew<T>(
+        public static Disposable<(IComputed, CancellationTokenSource, Delegate?)> AutoRenew<T>(
             this IComputed<T> computed, 
-            Action<IComputed<T>, Result<T>, object?>? recomputed = null)
-            => computed.AutoRenew(default, null, recomputed);
+            Action<IComputed<T>, Result<T>, object?>? recomputed = null,
+            Action<IComputed<T>>? completed = null)
+            => computed.AutoRenew(default, null, recomputed, completed);
 
-        public static Disposable<CancellationTokenSource> AutoRenew<T>(
+        public static Disposable<(IComputed, CancellationTokenSource, Delegate?)> AutoRenew<T>(
             this IComputed<T> computed, 
             TimeSpan delay = default,
-            Action<IComputed<T>, Result<T>, object?>? recomputed = null)
-            => computed.AutoRenew(delay, null, recomputed);
+            Action<IComputed<T>, Result<T>, object?>? recomputed = null,
+            Action<IComputed<T>>? completed = null)
+            => computed.AutoRenew(delay, null, recomputed, completed);
 
-        public static Disposable<CancellationTokenSource> AutoRenew<T>(
+        public static Disposable<(IComputed, CancellationTokenSource, Delegate?)> AutoRenew<T>(
             this IComputed<T> computed, 
             TimeSpan delay = default,
             IClock? clock = null,
-            Action<IComputed<T>, Result<T>, object?>? recomputed = null)
+            Action<IComputed<T>, Result<T>, object?>? recomputed = null,
+            Action<IComputed<T>>? completed = null)
         {
             clock ??= RealTimeClock.Instance;
-            return computed.Apply(AutoRenewApplyHandler.Instance, (delay, clock, recomputed));
+            return computed.Apply(AutoRenewApplyHandler.Instance, (delay, clock, recomputed, completed));
         }
     }
 }

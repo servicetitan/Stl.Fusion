@@ -133,7 +133,7 @@ namespace Stl.Tests.Fusion
             builder.RegisterGeneric(typeof(AsyncLockSet<>))
                 .As(typeof(IAsyncLockSet<>))
                 .SingleInstance();
-            builder.Register(c => RetryComputePolicy.Default)
+            builder.Register(c => ComputeRetryPolicy.Default)
                 .SingleInstance();
             builder.Register(c => ArgumentComparerProvider.Default)
                 .SingleInstance();

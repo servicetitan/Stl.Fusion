@@ -19,7 +19,7 @@ namespace Stl.Fusion.Internal
             Func<TIn, CancellationToken, ValueTask<TOut>> implementation,
             ConcurrentIdGenerator<int> tagGenerator,
             IComputedRegistry<(IFunction, TIn)> computedRegistry,
-            IRetryComputePolicy? retryComputePolicy = null,
+            IComputeRetryPolicy? retryComputePolicy = null,
             IAsyncLockSet<(IFunction, TIn)>? locks = null) 
             : base(computedRegistry, retryComputePolicy, locks)
         {
@@ -65,7 +65,7 @@ namespace Stl.Fusion.Internal
             return new ExampleFunction<Unit, TOut>((u, ct) => implementation(ct),
                 services.GetRequiredService<ConcurrentIdGenerator<int>>(),
                 services.GetRequiredService<IComputedRegistry<(IFunction, Unit)>>(),
-                services.GetService<IRetryComputePolicy>(),
+                services.GetService<IComputeRetryPolicy>(),
                 services.GetService<IAsyncLockSet<(IFunction, Unit)>>()
             );
         }
@@ -78,7 +78,7 @@ namespace Stl.Fusion.Internal
             return new ExampleFunction<TIn, TOut>(implementation,
                 services.GetRequiredService<ConcurrentIdGenerator<int>>(),
                 services.GetRequiredService<IComputedRegistry<(IFunction, TIn)>>(),
-                services.GetService<IRetryComputePolicy>(),
+                services.GetService<IComputeRetryPolicy>(),
                 services.GetService<IAsyncLockSet<(IFunction, TIn)>>()
             );
         }

@@ -27,18 +27,18 @@ namespace Stl.Fusion.Autofac
         protected ConcurrentIdGenerator<int> TagGenerator { get; }
         protected IComputedRegistry<(IFunction, InterceptedInput)> ComputedRegistry { get; }
         protected IArgumentComparerProvider ArgumentComparerProvider { get; }
-        protected IRetryComputePolicy RetryComputePolicy { get; }
+        protected IComputeRetryPolicy ComputeRetryPolicy { get; }
         protected IAsyncLockSet<(IFunction, InterceptedInput)>? Locks { get; }                      
 
         public ComputedInterceptor(
             ConcurrentIdGenerator<int> tagGenerator,
             IComputedRegistry<(IFunction, InterceptedInput)> computedRegistry,
             IArgumentComparerProvider? argumentComparerProvider = null,
-            IRetryComputePolicy? retryComputePolicy = null,
+            IComputeRetryPolicy? computeRetryPolicy = null,
             IAsyncLockSet<(IFunction, InterceptedInput)>? locks = null) 
         {
             locks ??= new AsyncLockSet<(IFunction, InterceptedInput)>(ReentryMode.CheckedFail);
-            retryComputePolicy ??= Fusion.RetryComputePolicy.Default;
+            computeRetryPolicy ??= Fusion.ComputeRetryPolicy.Default;
             argumentComparerProvider ??= Autofac.ArgumentComparerProvider.Default;
 
             _createHandler = CreateHandler;
@@ -50,7 +50,7 @@ namespace Stl.Fusion.Autofac
             TagGenerator = tagGenerator;
             ComputedRegistry = computedRegistry;
             ArgumentComparerProvider = argumentComparerProvider;
-            RetryComputePolicy = retryComputePolicy;
+            ComputeRetryPolicy = computeRetryPolicy;
             Locks = locks;
         }
 
@@ -79,7 +79,7 @@ namespace Stl.Fusion.Autofac
             IInvocation initialInvocation, InterceptedMethod method)
         {
             var function = new InterceptedFunction<TOut>(method, 
-                TagGenerator, ComputedRegistry, RetryComputePolicy, Locks);
+                TagGenerator, ComputedRegistry, ComputeRetryPolicy, Locks);
             return invocation => {
                 // ReSharper disable once VariableHidesOuterVariable
                 var method = function.Method;

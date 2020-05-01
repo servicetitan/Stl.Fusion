@@ -16,7 +16,7 @@ namespace Stl.Fusion.Autofac
             InterceptedMethod method,
             ConcurrentIdGenerator<int> tagGenerator,
             IComputedRegistry<(IFunction, InterceptedInput)> computedRegistry,
-            IRetryComputePolicy? retryComputePolicy = null,
+            IComputeRetryPolicy? retryComputePolicy = null,
             IAsyncLockSet<(IFunction, InterceptedInput)>? locks = null) 
             : base(computedRegistry, retryComputePolicy, locks)
         {

@@ -1,18 +1,18 @@
 namespace Stl.Fusion
 {
-    public interface IRetryComputePolicy
+    public interface IComputeRetryPolicy
     {
         bool MustRetry(IComputed computed, int tryIndex);
     }
 
-    public class RetryComputePolicy : IRetryComputePolicy
+    public class ComputeRetryPolicy : IComputeRetryPolicy
     {
-        public static readonly IRetryComputePolicy Default = 
-            new RetryComputePolicy(3);
+        public static readonly IComputeRetryPolicy Default = 
+            new ComputeRetryPolicy(3);
 
         public int MaxTryCount { get; }
 
-        public RetryComputePolicy(int maxAttemptCount) 
+        public ComputeRetryPolicy(int maxAttemptCount) 
             => MaxTryCount = maxAttemptCount;
 
         public bool MustRetry(IComputed computed, int tryIndex) 
