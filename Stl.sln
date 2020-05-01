@@ -17,7 +17,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl.ImmutableModel", "src\S
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl.CommandLine", "src\Stl.CommandLine\Stl.CommandLine.csproj", "{34B065C1-B704-4E5D-B376-6178A5672998}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl.Purifier", "src\Stl.Purifier\Stl.Purifier.csproj", "{E8373553-8367-4C29-B9AE-0C334FF87791}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl.Fusion", "src\Stl.Fusion\Stl.Fusion.csproj", "{E8373553-8367-4C29-B9AE-0C334FF87791}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_root", "_root", "{35F39E26-0FDB-44CB-B856-F996C1615A3D}"
 	ProjectSection(SolutionItems) = preProject

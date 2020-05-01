@@ -12,9 +12,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Stl.Fusion\Stl.Fusion.csproj" />
     <ProjectReference Include="..\..\src\Stl\Stl.csproj" />
     <ProjectReference Include="..\Stl.Testing\Stl.Testing.csproj" />
-    <ProjectReference Include="..\..\src\Stl.Purifier\Stl.Purifier.csproj" />
     <ProjectReference Include="..\..\src\Stl.ImmutableModel\Stl.ImmutableModel.csproj" />
     <ProjectReference Include="..\..\src\Stl.CommandLine\Stl.CommandLine.csproj" />
     <ProjectReference Include="..\..\src\Stl.Plugins\Stl.Plugins.csproj" />
