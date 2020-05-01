@@ -3,7 +3,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Stl.Concurrency;
 using Stl.Locking;
-using Stl.Fusion.Autofac.Internal;
 
 namespace Stl.Fusion.Autofac
 {

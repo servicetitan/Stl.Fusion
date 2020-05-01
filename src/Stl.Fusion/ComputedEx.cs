@@ -5,10 +5,16 @@ namespace Stl.Fusion
     public static partial class ComputedEx
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ComputedRef<TKey> ToRef<TKey>(
+        public static ComputedRef ToRef<TKey>(
             this IComputedWithTypedInput<TKey> target)
-            where TKey : notnull
-            => new ComputedRef<TKey>(target.Function, target.Input, target.Tag);
+            where TKey : class
+            => new ComputedRef(target.Function, target.Input);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static TaggedComputedRef ToTaggedRef<TKey>(
+            this IComputedWithTypedInput<TKey> target)
+            where TKey : class
+            => new TaggedComputedRef(target.Function, target.Input, target.Tag);
 
         // Internal methods
 

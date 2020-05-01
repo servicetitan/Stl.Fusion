@@ -50,23 +50,23 @@ namespace Stl.Fusion
     }
     
     public interface IComputedWithTypedInput<TIn> : IComputed 
-        where TIn : notnull
+        where TIn : class
     {
         new TIn Input { get; }
         new IFunction<TIn> Function { get; }
     }
 
     public interface IComputed<TIn, TOut> : IComputed<TOut>, IComputedWithTypedInput<TIn> 
-        where TIn : notnull
+        where TIn : class
     { }
 
     public class Computed<TIn, TOut> : IComputed<TIn, TOut>, IComputedImpl
-        where TIn : notnull
+        where TIn : class
     {
         private volatile int _state;
         private Result<TOut> _output = default!;
         private RefHashSetSlim2<IComputedImpl> _used;
-        private HashSetSlim2<ComputedRef<TIn>> _usedBy;
+        private HashSetSlim2<TaggedComputedRef> _usedBy;
         private event Action<IComputed, object?>? _invalidated;
         private object? _invalidatedBy;
         private volatile int _lastAccessTime;
@@ -166,7 +166,7 @@ namespace Stl.Fusion
 
         void IComputedImpl.AddUsedBy(IComputedImpl usedBy)
         {
-            var usedByRef = ((IComputedWithTypedInput<TIn>) usedBy).ToRef();
+            var usedByRef = ((IComputedWithTypedInput<TIn>) usedBy).ToTaggedRef();
             lock (Lock) {
                 switch (State) {
                 case ComputedState.Computing:
@@ -185,7 +185,7 @@ namespace Stl.Fusion
 
         void IComputedImpl.RemoveUsedBy(IComputedImpl usedBy)
         {
-            var usedByRef = ((IComputedWithTypedInput<TIn>) usedBy).ToRef();
+            var usedByRef = ((IComputedWithTypedInput<TIn>) usedBy).ToTaggedRef();
             lock (Lock) {
                 _usedBy.Remove(usedByRef);
             }
@@ -210,11 +210,11 @@ namespace Stl.Fusion
         {
             if (!TryChangeState(ComputedState.Invalidated))
                 return false;
-            ListBuffer<ComputedRef<TIn>> usedBy = default;
+            ListBuffer<TaggedComputedRef> usedBy = default;
             try {
                 lock (Lock) {
                     _invalidatedBy = invalidatedBy;
-                    usedBy = ListBuffer<ComputedRef<TIn>>.LeaseAndSetCount(_usedBy.Count);
+                    usedBy = ListBuffer<TaggedComputedRef>.LeaseAndSetCount(_usedBy.Count);
                     _usedBy.CopyTo(usedBy.Span);
                     _usedBy.Clear();
                     _used.Apply(this, (self, c) => c.RemoveUsedBy(self));

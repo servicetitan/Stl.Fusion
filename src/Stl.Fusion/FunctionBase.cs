@@ -29,7 +29,7 @@ namespace Stl.Fusion
     }
     
     public interface IFunction<in TIn, TOut> : IFunction<TIn>
-        where TIn : notnull
+        where TIn : class
     {
         new Task<IComputed<TOut>?> InvokeAsync(TIn input,
             IComputed? usedBy = null,
@@ -45,7 +45,7 @@ namespace Stl.Fusion
 
     public abstract class FunctionBase<TIn, TOut> : AsyncDisposableBase,
         IFunction<TIn, TOut>
-        where TIn : notnull
+        where TIn : class
     {
         protected Action<IComputed, object?> OnInvalidateHandler { get; set; }
         protected IComputedRegistry<(IFunction, TIn)> ComputedRegistry { get; }

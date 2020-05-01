@@ -16,7 +16,7 @@ namespace Stl.Fusion
             public Disposable<(IComputed, CancellationTokenSource, Delegate?)> Apply<TIn, TOut>(
                 IComputed<TIn, TOut> computed, 
                 (TimeSpan, IClock, Delegate?, Delegate?) arg) 
-                where TIn : notnull
+                where TIn : class
             {
                 var (delay, clock, untypedHandler, untypedCompletedHandler) = arg;
                 var handler = (Action<IComputed<TOut>, Result<TOut>, object?>?) untypedHandler;

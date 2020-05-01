@@ -5,7 +5,7 @@ using Castle.DynamicProxy;
 
 namespace Stl.Fusion.Autofac
 {
-    public readonly struct InterceptedInput : IEquatable<InterceptedInput>
+    public class InterceptedInput : IEquatable<InterceptedInput>
     {
         public readonly InterceptedMethod Method;
         public readonly IInvocation Invocation;
