@@ -28,12 +28,6 @@ test & coverage:
 dotnet run --project build -- coverage
 ```
 
-test & coverage:
-
-```sh
-dotnet run --project build -- coverage
-```
-
 create nuget packages:
 
 ```sh
