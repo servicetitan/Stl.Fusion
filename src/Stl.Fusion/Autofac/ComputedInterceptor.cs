@@ -5,10 +5,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Castle.DynamicProxy;
-using Stl.Async;
 using Stl.Concurrency;
-using Stl.Locking;
-using Stl.Fusion.Internal;
 using Stl.Reflection;
 using Stl.Time;
 
@@ -25,21 +22,20 @@ namespace Stl.Fusion.Autofac
             new ConcurrentDictionary<MethodInfo, Action<IInvocation>?>();
 
         protected ConcurrentIdGenerator<int> TagGenerator { get; }
-        protected IComputedRegistry<(IFunction, InterceptedInput)> ComputedRegistry { get; }
+        protected IComputedRegistry ComputedRegistry { get; }
         protected IArgumentComparerProvider ArgumentComparerProvider { get; }
         protected IComputeRetryPolicy ComputeRetryPolicy { get; }
-        protected IAsyncLockSet<(IFunction, InterceptedInput)>? Locks { get; }                      
 
         public ComputedInterceptor(
-            ConcurrentIdGenerator<int> tagGenerator,
-            IComputedRegistry<(IFunction, InterceptedInput)> computedRegistry,
+            ConcurrentIdGenerator<int>? tagGenerator = null,
+            IComputedRegistry? computedRegistry = null,
             IArgumentComparerProvider? argumentComparerProvider = null,
-            IComputeRetryPolicy? computeRetryPolicy = null,
-            IAsyncLockSet<(IFunction, InterceptedInput)>? locks = null) 
+            IComputeRetryPolicy? computeRetryPolicy = null) 
         {
-            locks ??= new AsyncLockSet<(IFunction, InterceptedInput)>(ReentryMode.CheckedFail);
             computeRetryPolicy ??= Fusion.ComputeRetryPolicy.Default;
             argumentComparerProvider ??= Autofac.ArgumentComparerProvider.Default;
+            computedRegistry ??= Fusion.ComputedRegistry.Default;
+            tagGenerator ??= ConcurrentIdGenerator.DefaultInt32;
 
             _createHandler = CreateHandler;
             _createInterceptedMethod = CreateInterceptedMethod;
@@ -51,7 +47,6 @@ namespace Stl.Fusion.Autofac
             ComputedRegistry = computedRegistry;
             ArgumentComparerProvider = argumentComparerProvider;
             ComputeRetryPolicy = computeRetryPolicy;
-            Locks = locks;
         }
 
         public void Intercept(IInvocation invocation)
@@ -79,7 +74,7 @@ namespace Stl.Fusion.Autofac
             IInvocation initialInvocation, InterceptedMethod method)
         {
             var function = new InterceptedFunction<TOut>(method, 
-                TagGenerator, ComputedRegistry, ComputeRetryPolicy, Locks);
+                TagGenerator, ComputedRegistry, ComputeRetryPolicy);
             return invocation => {
                 // ReSharper disable once VariableHidesOuterVariable
                 var method = function.Method;

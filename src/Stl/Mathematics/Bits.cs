@@ -18,9 +18,13 @@ namespace Stl.Mathematics
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsPowerOf2(ulong n) => 0 == (n & (n - 1));
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsPowerOf2(uint n) => 0 == (n & (n - 1));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ulong Lsb(ulong n) => n & (~n + 1);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static uint Lsb(uint n) => n & (~n + 1);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ulong Msb(ulong n)
@@ -33,15 +37,52 @@ namespace Stl.Mathematics
             n |= n >> 32;
             return n ^ (n >> 1);
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static uint Msb(uint n)
+        {
+            n |= n >> 1;
+            n |= n >> 2;
+            n |= n >> 4;
+            n |= n >> 8;
+            n |= n >> 16;
+            return n ^ (n >> 1);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ulong GreaterOrEqualPowerOf2(ulong n)
+        {
+            var msb = Msb(n);
+            return msb == n ? n : msb << 1;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static uint GreaterOrEqualPowerOf2(uint n)
+        {
+            var msb = Msb(n);
+            return msb == n ? n : msb << 1;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int MsbIndex(ulong n) => Index(Msb(n)); // Log2 as well
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int MsbIndex(uint n) => Index(Msb(n)); // Log2 as well
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int LsbIndex(ulong n) => Index(Lsb(n)); 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int LsbIndex(uint n) => Index(Lsb(n)); 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Count(ulong n)
+        {
+            var count = 0;
+            while (n != 0) {
+                count++;
+                n &= (n - 1);
+            }
+            return count;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int Count(uint n)
         {
             var count = 0;
             while (n != 0) {
@@ -61,6 +102,8 @@ namespace Stl.Mathematics
                 }
             }
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int Index(uint n) => Index((ulong) n);
     }
 }
 

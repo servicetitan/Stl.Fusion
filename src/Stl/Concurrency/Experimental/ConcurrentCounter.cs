@@ -4,12 +4,12 @@ using System.Threading;
 using Stl.Mathematics;
 using Stl.OS;
 
-namespace Stl.Concurrency
+namespace Stl.Concurrency.Experimental
 {
     public sealed class ConcurrentCounter
     {
         public static readonly int DefaultApproximationStep = 16;
-        public static int DefaultConcurrencyLevel => HardwareInfo.ProcessorCount;
+        public static int DefaultConcurrencyLevel => HardwareInfo.ProcessorCountPo2;
 
         private readonly long _approximationStep;
         private readonly long[] _counters; 

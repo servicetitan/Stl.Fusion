@@ -29,7 +29,7 @@ namespace Stl.Concurrency
             if (approximationFactor < 1)
                 throw new ArgumentOutOfRangeException(nameof(approximationFactor));
             approximationFactor *= HardwareInfo.ProcessorCount;
-            ApproximationStep = (int) (Bits.Msb((ulong) approximationFactor) << 1);
+            ApproximationStep = (int) Bits.GreaterOrEqualPowerOf2((uint) approximationFactor);
             ApproximationStepLog2 = Bits.MsbIndex((ulong) ApproximationStep);
             _approximationMask = (uint) ApproximationStep - 1;
         }

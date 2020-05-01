@@ -4,28 +4,29 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Stl.Concurrency;
+using Stl.Locking;
 using Stl.OS;
-using Stl.Fusion.Internal;
 using Stl.Reflection;
 using Stl.Time;
 
 namespace Stl.Fusion
 {
-    public interface IComputedRegistry<in TKey>
-        where TKey : notnull
+    public interface IComputedRegistry
     {
-        IComputed? TryGet(TKey key);
-        void Store(TKey key, IComputed value);
-        void Remove(TKey key, IComputed value);
+        IComputed? TryGet(ComputedInput key);
+        void Store(IComputed value);
+        void Remove(IComputed value);
+        IAsyncLockSet<ComputedInput> GetLocksFor(IFunction function);
     }
 
-    public sealed class ComputedRegistry<TKey> : IComputedRegistry<TKey>, IDisposable
-        where TKey : notnull
+    public sealed class ComputedRegistry : IComputedRegistry, IDisposable
     {
         public static readonly int DefaultInitialCapacity = 7919; // Ideally, a prime number
         public static int DefaultConcurrencyLevel => HardwareInfo.ProcessorCount;
+        public static readonly ComputedRegistry Default = new ComputedRegistry();
 
-        private readonly ConcurrentDictionary<TKey, Entry> _storage;
+        private readonly ConcurrentDictionary<ComputedInput, Entry> _storage;
+        private readonly Func<IFunction, IAsyncLockSet<ComputedInput>> _locksProvider; 
         private readonly GCHandlePool _gcHandlePool;
         private readonly StochasticCounter _opCounter;
         private volatile int _pruneCounterThreshold;
@@ -36,25 +37,32 @@ namespace Stl.Fusion
             : this(DefaultConcurrencyLevel, DefaultInitialCapacity) { }
         public ComputedRegistry(
             int concurrencyLevel, 
-            int initialCapacity, 
+            int initialCapacity,
+            Func<IFunction, IAsyncLockSet<ComputedInput>>? locksProvider = null,
             GCHandlePool? gcHandlePool = null)
         {
+            if (locksProvider == null) {
+                var locks = new AsyncLockSet<ComputedInput>(ReentryMode.CheckedFail);
+                locksProvider = _ => locks;
+            }
             gcHandlePool ??= new GCHandlePool(GCHandleType.Weak);
             if (gcHandlePool.HandleType != GCHandleType.Weak)
                 throw new ArgumentOutOfRangeException(
                     $"{nameof(gcHandlePool)}.{nameof(_gcHandlePool.HandleType)}");
+
+            _locksProvider = locksProvider;
             _gcHandlePool = gcHandlePool;
             _opCounter = new StochasticCounter();
-            _storage = new ConcurrentDictionary<TKey, Entry>(concurrencyLevel, initialCapacity);
+            _storage = new ConcurrentDictionary<ComputedInput, Entry>(concurrencyLevel, initialCapacity);
             UpdatePruneCounterThreshold(); 
         }
 
         public void Dispose() 
             => _gcHandlePool.Dispose();
 
-        public IComputed? TryGet(TKey key)
+        public IComputed? TryGet(ComputedInput key)
         {
-            var random = key.GetHashCode() + IntMoment.Clock.EpochOffsetUnits;
+            var random = key.HashCode + IntMoment.Clock.EpochOffsetUnits;
             OnOperation(random);
             if (_storage.TryGetValue(key, out var entry)) {
                 var value = entry.Computed;
@@ -75,11 +83,12 @@ namespace Stl.Fusion
             return null;
         }
 
-        public void Store(TKey key, IComputed value)
+        public void Store(IComputed value)
         {
             if (!value.IsValid) // It could be invalidated on the way here :)
                 return;
-            var random = key.GetHashCode() + IntMoment.Clock.EpochOffsetUnits;
+            var key = value.Input;
+            var random = key.HashCode + IntMoment.Clock.EpochOffsetUnits;
             OnOperation(random);
             _storage.AddOrUpdate(
                 key, 
@@ -94,9 +103,10 @@ namespace Stl.Fusion
                 (This: this, Value: value, Random: random));
         }
 
-        public void Remove(TKey key, IComputed value)
+        public void Remove(IComputed value)
         {
-            var random = key.GetHashCode() + IntMoment.Clock.EpochOffsetUnits;
+            var key = value.Input;
+            var random = key.HashCode + IntMoment.Clock.EpochOffsetUnits;
             OnOperation(random);
             if (!_storage.TryGetValue(key, out var entry))
                 return;
@@ -108,6 +118,11 @@ namespace Stl.Fusion
                     _gcHandlePool.Release(entry.Handle, random);
             }
         }
+
+        public IAsyncLockSet<ComputedInput> GetLocksFor(IFunction function) 
+            => _locksProvider.Invoke(function);
+
+        // Private members
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void OnOperation(int random)

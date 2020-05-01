@@ -7,7 +7,7 @@ namespace Stl.Concurrency
 {
     public class ConcurrentPool<T> : IPool<T>
     {
-        public static int DefaultCapacity => HardwareInfo.ProcessorCount * 32;
+        public static int DefaultCapacity => HardwareInfo.ProcessorCount << 5;
 
         private readonly StochasticCounter _count;
         private readonly ConcurrentBag<T> _pool;
@@ -18,7 +18,7 @@ namespace Stl.Concurrency
         public ConcurrentPool(Func<T> itemFactory) 
             : this(itemFactory, DefaultCapacity) { }
         public ConcurrentPool(Func<T> itemFactory, int capacity) 
-            : this(itemFactory, capacity, ConcurrentCounter.DefaultApproximationStep) { }
+            : this(itemFactory, capacity, StochasticCounter.DefaultApproximationFactor) { }
         public ConcurrentPool(Func<T> itemFactory, int capacity, int counterApproximationFactor)
         {
             Capacity = capacity;

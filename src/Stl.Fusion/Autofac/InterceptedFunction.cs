@@ -2,7 +2,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Concurrency;
-using Stl.Locking;
 
 namespace Stl.Fusion.Autofac
 {
@@ -14,10 +13,9 @@ namespace Stl.Fusion.Autofac
         public InterceptedFunction(
             InterceptedMethod method,
             ConcurrentIdGenerator<int> tagGenerator,
-            IComputedRegistry<(IFunction, InterceptedInput)> computedRegistry,
-            IComputeRetryPolicy? retryComputePolicy = null,
-            IAsyncLockSet<(IFunction, InterceptedInput)>? locks = null) 
-            : base(computedRegistry, retryComputePolicy, locks)
+            IComputedRegistry computedRegistry,
+            IComputeRetryPolicy? retryComputePolicy = null) 
+            : base(computedRegistry, retryComputePolicy)
         {
             Method = method;
             TagGenerator = tagGenerator;

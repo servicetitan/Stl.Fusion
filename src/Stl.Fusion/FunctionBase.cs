@@ -39,21 +39,19 @@ namespace Stl.Fusion
         where TIn : ComputedInput
     {
         protected Action<IComputed, object?> OnInvalidateHandler { get; set; }
-        protected IComputedRegistry<(IFunction, TIn)> ComputedRegistry { get; }
+        protected IComputedRegistry ComputedRegistry { get; }
         protected IComputeRetryPolicy ComputeRetryPolicy { get; }
-        protected IAsyncLockSet<(IFunction, TIn)> Locks { get; }
+        protected IAsyncLockSet<ComputedInput> Locks { get; }
         protected object Lock => Locks;
 
         public FunctionBase(
-            IComputedRegistry<(IFunction, TIn)> computedRegistry,
-            IComputeRetryPolicy? computeRetryPolicy = null,
-            IAsyncLockSet<(IFunction, TIn)>? locks = null)
+            IComputedRegistry computedRegistry,
+            IComputeRetryPolicy? computeRetryPolicy = null)
         {
             computeRetryPolicy ??= Fusion.ComputeRetryPolicy.Default;
-            locks ??= new AsyncLockSet<(IFunction, TIn)>(ReentryMode.CheckedFail);
             ComputedRegistry = computedRegistry;
             ComputeRetryPolicy = computeRetryPolicy; 
-            Locks = locks;
+            Locks = computedRegistry.GetLocksFor(this);
             OnInvalidateHandler = (c, _) => Unregister((IComputed<TIn, TOut>) c);
         }
 
@@ -81,7 +79,7 @@ namespace Stl.Fusion
                 return result!;
             }
 
-            using var @lock = await Locks.LockAsync((this, input), cancellationToken).ConfigureAwait(false);
+            using var @lock = await Locks.LockAsync(input, cancellationToken).ConfigureAwait(false);
             
             result = TryGetCached(input, usedBy);
             context.TryCaptureValue(result);
@@ -129,7 +127,7 @@ namespace Stl.Fusion
                 return result.Strip();
             }
 
-            using var @lock = await Locks.LockAsync((this, input), cancellationToken).ConfigureAwait(false);
+            using var @lock = await Locks.LockAsync(input, cancellationToken).ConfigureAwait(false);
             
             result = TryGetCached(input, usedBy);
             context.TryCaptureValue(result);
@@ -157,7 +155,7 @@ namespace Stl.Fusion
             => TryGetCached((TIn) input, null);
         public virtual IComputed<TOut>? TryGetCached(TIn input, IComputed? usedBy)
         {
-            var value = ComputedRegistry.TryGet((this, input)) as IComputed<TIn, TOut>;
+            var value = ComputedRegistry.TryGet(input) as IComputed<TIn, TOut>;
             if (value != null)
                 ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) value);
             return value;
@@ -169,9 +167,9 @@ namespace Stl.Fusion
             TIn input, CancellationToken cancellationToken);
 
         protected void Register(IComputed<TIn, TOut> computed) 
-            => ComputedRegistry.Store((this, computed.Input), computed);
+            => ComputedRegistry.Store(computed);
 
         protected void Unregister(IComputed<TIn, TOut> computed) 
-            => ComputedRegistry.Remove((this, computed.Input), computed);
+            => ComputedRegistry.Remove(computed);
     }
 }

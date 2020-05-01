@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading;
 using Stl.OS;
 
-namespace Stl.Concurrency
+namespace Stl.Concurrency.Experimental
 {
     public sealed class ShortTermResourceRenter<T>
     {

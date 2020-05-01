@@ -122,47 +122,19 @@ namespace Stl.Tests.Fusion
 
         protected virtual void ConfigureServices(ContainerBuilder builder)
         {
-            // Computed/Function related
-            builder.Register(c => new ConcurrentIdGenerator<int>(i => {
-                    var id = i * 10000;
-                    return () => ++id;
-                })).SingleInstance();
-            builder.RegisterGeneric(typeof(ComputedRegistry<>))
-                .As(typeof(IComputedRegistry<>))
-                .SingleInstance();
-            builder.RegisterGeneric(typeof(AsyncLockSet<>))
-                .As(typeof(IAsyncLockSet<>))
-                .SingleInstance();
-            builder.Register(c => ComputeRetryPolicy.Default)
-                .SingleInstance();
-            builder.Register(c => ArgumentComparerProvider.Default)
-                .SingleInstance();
-            builder.RegisterType<ComputedInterceptor>()
-                .SingleInstance();
-            builder.RegisterType<CustomFunction>()
-                .EnableClassInterceptors()
-                .InterceptedBy(typeof(ComputedInterceptor))
-                .SingleInstance();
+            builder.AddFusion();
 
-            // Services
+            // Computed providers
             builder.RegisterType<SimplestProvider>()
-                .As<ISimplestProvider>()
-                .EnableClassInterceptors()
-                .InterceptedBy(typeof(ComputedInterceptor))
-                .SingleInstance();
+                .As<ISimplestProvider>().ComputedProvider();
             builder.RegisterType<TimeProvider>()
-                .As<ITimeProvider>()
-                .EnableClassInterceptors()
-                .InterceptedBy(typeof(ComputedInterceptor))
-                .SingleInstance();
+                .As<ITimeProvider>().ComputedProvider();
             builder.RegisterType<UserProvider>()
-                .As<IUserProvider>()
-                .EnableClassInterceptors()
-                .InterceptedBy(typeof(ComputedInterceptor))
-                .SingleInstance();
+                .As<IUserProvider>().ComputedProvider();
+
+            // Regular services 
             builder.RegisterType<UserProvider>()
-                .As<UserProvider>()
-                .InstancePerLifetimeScope();
+                .As<UserProvider>().InstancePerLifetimeScope();
         }
     }
 }
