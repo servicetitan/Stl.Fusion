@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
 using Autofac;
@@ -11,6 +12,7 @@ using Xunit.Abstractions;
 
 namespace Stl.Tests.Fusion
 {
+    [Category(nameof(TimeSensitiveTests))]
     public class ComputedInterceptorTest : PurifierTestBase, IAsyncLifetime
     {
         public ComputedInterceptorTest(ITestOutputHelper @out) : base(@out) { }
@@ -23,21 +25,18 @@ namespace Stl.Tests.Fusion
                 () => time.GetTimeOffsetAsync(TimeSpan.FromSeconds(1)));
 
             var count = 0L;
-            void OnInvalidated(IComputed<DateTime> @new, Result<DateTime> old, object? invalidatedBy)
-            {
-                var cnt = Interlocked.Increment(ref count);
-                Log.LogInformation($"{cnt} -> {@new.Value:hh:mm:ss:fff}");
-            }
+            void OnInvalidated(IComputed<DateTime> @new, Result<DateTime> old, object? invalidatedBy) 
+                => Log.LogInformation($"{++count} -> {@new.Value:hh:mm:ss:fff}");
 
             using (var _ = c!.AutoRenew(OnInvalidated)) {
                 await Task.Delay(2000);
             }
-            var lastCount = Interlocked.Read(ref count);
+            var lastCount = count;
             Out.WriteLine("Completed AutoRecompute.");
 
             await Task.Delay(1000);
-            Interlocked.Read(ref count).Should().Be(lastCount);
-            Interlocked.Read(ref count).Should().BeGreaterThan(4);
+            count.Should().Be(lastCount);
+            count.Should().BeGreaterThan(4);
         }
 
         [Fact]
