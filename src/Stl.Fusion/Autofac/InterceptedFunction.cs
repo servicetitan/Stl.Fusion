@@ -35,7 +35,7 @@ namespace Stl.Fusion.Autofac
             cancellationToken.ThrowIfCancellationRequested();
             
             var tag = TagGenerator.Next(input.HashCode);
-            var output = new Computed<InterceptedInput, TOut>(this, input, tag);
+            var output = new Computed<InterceptedInput, TOut>(input, tag);
             var method = Method;
             var keepAliveTime = method.KeepAliveTime;
             if (keepAliveTime.HasValue)

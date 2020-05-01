@@ -83,7 +83,7 @@ namespace Stl.Fusion.Autofac
             return invocation => {
                 // ReSharper disable once VariableHidesOuterVariable
                 var method = function.Method;
-                var input = new InterceptedInput(method, invocation);
+                var input = new InterceptedInput(function, method, invocation);
 
                 // Invoking the function
                 var cancellationToken = input.CancellationToken;

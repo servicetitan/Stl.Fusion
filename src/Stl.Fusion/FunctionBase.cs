@@ -9,43 +9,34 @@ namespace Stl.Fusion
 {
     public interface IFunction : IAsyncDisposable
     {
-        Task<IComputed?> InvokeAsync(object input, 
-            IComputed? usedBy = null,
-            ComputeContext? context = null,
+        Task<IComputed?> InvokeAsync(ComputedInput input, 
+            IComputed? usedBy,
+            ComputeContext? context,
             CancellationToken cancellationToken = default);
-        IComputed? TryGetCached(object input, 
-            IComputed? usedBy = null);
+        Task InvokeAndStripAsync(ComputedInput input,
+            IComputed? usedBy,
+            ComputeContext? context,
+            CancellationToken cancellationToken = default);
+        IComputed? TryGetCached(ComputedInput input, IComputed? usedBy);
     }
 
-    public interface IFunction<in TIn> : IFunction
-        where TIn : notnull
+    public interface IFunction<in TIn, TOut> : IFunction
+        where TIn : ComputedInput
     {
-        Task<IComputed?> InvokeAsync(TIn input,
-            IComputed? usedBy = null,
-            ComputeContext? context = null,
-            CancellationToken cancellationToken = default);
-        IComputed? TryGetCached(TIn input, 
-            IComputed? usedBy = null);
-    }
-    
-    public interface IFunction<in TIn, TOut> : IFunction<TIn>
-        where TIn : class
-    {
-        new Task<IComputed<TOut>?> InvokeAsync(TIn input,
-            IComputed? usedBy = null,
-            ComputeContext? context = null,
+        Task<IComputed<TOut>?> InvokeAsync(TIn input,
+            IComputed? usedBy,
+            ComputeContext? context,
             CancellationToken cancellationToken = default);
         Task<TOut> InvokeAndStripAsync(TIn input,
-            IComputed? usedBy = null,
-            ComputeContext? context = null,
+            IComputed? usedBy,
+            ComputeContext? context,
             CancellationToken cancellationToken = default);
-        new IComputed<TOut>? TryGetCached(TIn input, 
-            IComputed? usedBy = null);
+        IComputed<TOut>? TryGetCached(TIn input, IComputed? usedBy);
     }
 
     public abstract class FunctionBase<TIn, TOut> : AsyncDisposableBase,
         IFunction<TIn, TOut>
-        where TIn : class
+        where TIn : ComputedInput
     {
         protected Action<IComputed, object?> OnInvalidateHandler { get; set; }
         protected IComputedRegistry<(IFunction, TIn)> ComputedRegistry { get; }
@@ -66,21 +57,15 @@ namespace Stl.Fusion
             OnInvalidateHandler = (c, _) => Unregister((IComputed<TIn, TOut>) c);
         }
 
-        async Task<IComputed?> IFunction.InvokeAsync(object input, 
+        async Task<IComputed?> IFunction.InvokeAsync(ComputedInput input, 
             IComputed? usedBy,
             ComputeContext? context,
             CancellationToken cancellationToken) 
             => await InvokeAsync((TIn) input, usedBy, context, cancellationToken).ConfigureAwait(false);
 
-        async Task<IComputed?> IFunction<TIn>.InvokeAsync(TIn input, 
-            IComputed? usedBy, 
-            ComputeContext? context,
-            CancellationToken cancellationToken) 
-            => await InvokeAsync(input, usedBy, context, cancellationToken).ConfigureAwait(false);
-
         public async Task<IComputed<TOut>?> InvokeAsync(TIn input, 
-            IComputed? usedBy = null,
-            ComputeContext? context = null,
+            IComputed? usedBy,
+            ComputeContext? context,
             CancellationToken cancellationToken = default)
         {
             using var contextUseScope = context.Use();
@@ -120,9 +105,15 @@ namespace Stl.Fusion
             return result;
         }
 
+        Task IFunction.InvokeAndStripAsync(ComputedInput input,  
+            IComputed? usedBy, 
+            ComputeContext? context, 
+            CancellationToken cancellationToken) 
+            => InvokeAndStripAsync((TIn) input, usedBy, context, cancellationToken);
+
         public async Task<TOut> InvokeAndStripAsync(TIn input, 
-            IComputed? usedBy = null,
-            ComputeContext? context = null,
+            IComputed? usedBy,
+            ComputeContext? context,
             CancellationToken cancellationToken = default)
         {
             using var contextUseScope = context.Use();
@@ -162,11 +153,9 @@ namespace Stl.Fusion
             return result.Strip();
         }
 
-        IComputed? IFunction.TryGetCached(object input, IComputed? usedBy) 
-            => TryGetCached((TIn) input);
-        IComputed? IFunction<TIn>.TryGetCached(TIn input, IComputed? usedBy) 
-            => TryGetCached(input);
-        public virtual IComputed<TOut>? TryGetCached(TIn input, IComputed? usedBy = null)
+        IComputed? IFunction.TryGetCached(ComputedInput input, IComputed? usedBy) 
+            => TryGetCached((TIn) input, null);
+        public virtual IComputed<TOut>? TryGetCached(TIn input, IComputed? usedBy)
         {
             var value = ComputedRegistry.TryGet((this, input)) as IComputed<TIn, TOut>;
             if (value != null)

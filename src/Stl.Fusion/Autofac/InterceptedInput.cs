@@ -5,12 +5,11 @@ using Castle.DynamicProxy;
 
 namespace Stl.Fusion.Autofac
 {
-    public class InterceptedInput : IEquatable<InterceptedInput>
+    public class InterceptedInput : ComputedInput, IEquatable<InterceptedInput>
     {
         public readonly InterceptedMethod Method;
         public readonly IInvocation Invocation;
         public readonly IInvocationProceedInfo ProceedInfo;
-        public readonly int HashCode;
         // Shortcuts
         public object Target => Invocation.InvocationTarget;
         public object[] Arguments => Invocation.Arguments;
@@ -21,21 +20,25 @@ namespace Stl.Fusion.Autofac
                 : default;
         }
 
-        public InterceptedInput(InterceptedMethod method, IInvocation invocation)
+        public InterceptedInput(IFunction function, InterceptedMethod method, IInvocation invocation)
+            : base(function)
         {
             Method = method;
             Invocation = invocation;
             ProceedInfo = invocation.CaptureProceedInfo();
 
             var argumentComparers = method.ArgumentComparers;
-            var hashCode = method.InvocationTargetComparer.GetHashCodeFunc(invocation.InvocationTarget);
+            var hashCode = System.HashCode.Combine(
+                HashCode,
+                method.InvocationTargetComparer.GetHashCodeFunc(invocation.InvocationTarget));
             var arguments = Invocation.Arguments;
             for (var i = 0; i < arguments.Length; i++)
                 hashCode ^= argumentComparers[i].GetHashCodeFunc(arguments[i]);
             HashCode = hashCode;
         }
 
-        public override string ToString() => $"[{string.Join(", ", Arguments)}]";
+        public override string ToString() 
+            => $"{Function}({string.Join(", ", Arguments)})";
 
         public object InvokeOriginalFunction(IComputed computed, CancellationToken cancellationToken)
         {
@@ -57,7 +60,6 @@ namespace Stl.Fusion.Autofac
             ProceedInfo.Invoke();
             return Invocation.ReturnValue;
         }
-
 
         // Equality
 
@@ -82,9 +84,9 @@ namespace Stl.Fusion.Autofac
             }
             return true;
         }
+        public override bool Equals(ComputedInput obj) => obj is InterceptedInput other && Equals(other);
         public override bool Equals(object? obj) => obj is InterceptedInput other && Equals(other);
+        // ReSharper disable once NonReadonlyMemberInGetHashCode
         public override int GetHashCode() => HashCode;
-        public static bool operator ==(InterceptedInput left, InterceptedInput right) => left.Equals(right);
-        public static bool operator !=(InterceptedInput left, InterceptedInput right) => !left.Equals(right);
     }
 }

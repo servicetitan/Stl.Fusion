@@ -1,6 +1,5 @@
 using System;
 using System.ComponentModel;
-using System.Threading;
 using System.Threading.Tasks;
 using Autofac;
 using FluentAssertions;
@@ -29,14 +28,14 @@ namespace Stl.Tests.Fusion
                 => Log.LogInformation($"{++count} -> {@new.Value:hh:mm:ss:fff}");
 
             using (var _ = c!.AutoRenew(OnInvalidated)) {
-                await Task.Delay(2000);
+                await Task.Delay(3000);
             }
             var lastCount = count;
             Out.WriteLine("Completed AutoRecompute.");
 
             await Task.Delay(1000);
             count.Should().Be(lastCount);
-            count.Should().BeGreaterThan(4);
+            count.Should().BeGreaterThan(3);
         }
 
         [Fact]

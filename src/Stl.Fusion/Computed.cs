@@ -20,8 +20,7 @@ namespace Stl.Fusion
 
     public interface IComputed : IResult
     {
-        IFunction Function { get; }
-        object Input { get; }
+        ComputedInput Input { get; }
         IResult Output { get; }
         Type OutputType { get; }
         int Tag { get; } // ~ Unique for the specific (Func, Key) pair
@@ -49,34 +48,33 @@ namespace Stl.Fusion
         new ValueTask<IComputed<TOut>?> RenewAsync(ComputeContext context, CancellationToken cancellationToken = default);
     }
     
-    public interface IComputedWithTypedInput<TIn> : IComputed 
-        where TIn : class
+    public interface IComputedWithTypedInput<out TIn> : IComputed 
+        where TIn : ComputedInput
     {
         new TIn Input { get; }
-        new IFunction<TIn> Function { get; }
     }
 
-    public interface IComputed<TIn, TOut> : IComputed<TOut>, IComputedWithTypedInput<TIn> 
-        where TIn : class
+    public interface IComputed<out TIn, TOut> : IComputed<TOut>, IComputedWithTypedInput<TIn> 
+        where TIn : ComputedInput
     { }
 
     public class Computed<TIn, TOut> : IComputed<TIn, TOut>, IComputedImpl
-        where TIn : class
+        where TIn : ComputedInput
     {
         private volatile int _state;
         private Result<TOut> _output = default!;
         private RefHashSetSlim2<IComputedImpl> _used;
-        private HashSetSlim2<TaggedComputedRef> _usedBy;
+        private HashSetSlim2<(ComputedInput Input, int Tag)> _usedBy;
         private event Action<IComputed, object?>? _invalidated;
         private object? _invalidatedBy;
         private volatile int _lastAccessTime;
         private int _keepAliveTime;
         private object Lock => this;
 
-        public IFunction<TIn, TOut> Function { get; }
         public bool IsValid => State == ComputedState.Computed;
         public ComputedState State => (ComputedState) _state;
         public TIn Input { get; }
+        public IFunction<TIn, TOut> Function => (IFunction<TIn, TOut>) Input.Function; 
         public int Tag { get; }
         public IntMoment LastAccessTime {
             get => new IntMoment(_lastAccessTime);
@@ -107,10 +105,7 @@ namespace Stl.Fusion
         public TOut Value => Output.Value;
 
         // "Untyped" versions of properties
-        IFunction IComputed.Function => Function;
-        IFunction<TIn> IComputedWithTypedInput<TIn>.Function => Function;
-        // ReSharper disable once HeapView.BoxingAllocation
-        object IComputed.Input => Input;
+        ComputedInput IComputed.Input => Input;
         // ReSharper disable once HeapView.BoxingAllocation
         IResult IComputed.Output => Output;
         // ReSharper disable once HeapView.BoxingAllocation
@@ -134,9 +129,8 @@ namespace Stl.Fusion
             }
         }
 
-        public Computed(IFunction<TIn, TOut> function, TIn input, int tag)
+        public Computed(TIn input, int tag)
         {
-            Function = function;
             Input = input;
             Tag = tag;
             _keepAliveTime = Computed.DefaultKeepAliveTime;
@@ -144,7 +138,7 @@ namespace Stl.Fusion
         }
 
         public override string ToString() 
-            => $"{GetType().Name}({Function}({Input}), Tag: #{Tag}, State: {State})";
+            => $"{GetType().Name}({Input}, Tag: #{Tag}, State: {State})";
 
         void IComputedImpl.AddUsed(IComputedImpl used)
         {
@@ -166,7 +160,6 @@ namespace Stl.Fusion
 
         void IComputedImpl.AddUsedBy(IComputedImpl usedBy)
         {
-            var usedByRef = ((IComputedWithTypedInput<TIn>) usedBy).ToTaggedRef();
             lock (Lock) {
                 switch (State) {
                 case ComputedState.Computing:
@@ -179,15 +172,14 @@ namespace Stl.Fusion
                 default:
                     throw new ArgumentOutOfRangeException();
                 }
-                _usedBy.Add(usedByRef);
+                _usedBy.Add((usedBy.Input, usedBy.Tag));
             }
         }
 
         void IComputedImpl.RemoveUsedBy(IComputedImpl usedBy)
         {
-            var usedByRef = ((IComputedWithTypedInput<TIn>) usedBy).ToTaggedRef();
             lock (Lock) {
-                _usedBy.Remove(usedByRef);
+                _usedBy.Remove((usedBy.Input, usedBy.Tag));
             }
         }
 
@@ -210,11 +202,11 @@ namespace Stl.Fusion
         {
             if (!TryChangeState(ComputedState.Invalidated))
                 return false;
-            ListBuffer<TaggedComputedRef> usedBy = default;
+            ListBuffer<(ComputedInput Input, int Tag)> usedBy = default;
             try {
                 lock (Lock) {
                     _invalidatedBy = invalidatedBy;
-                    usedBy = ListBuffer<TaggedComputedRef>.LeaseAndSetCount(_usedBy.Count);
+                    usedBy = ListBuffer<(ComputedInput, int)>.LeaseAndSetCount(_usedBy.Count);
                     _usedBy.CopyTo(usedBy.Span);
                     _usedBy.Clear();
                     _used.Apply(this, (self, c) => c.RemoveUsedBy(self));
@@ -223,7 +215,7 @@ namespace Stl.Fusion
                 _invalidated?.Invoke(this, invalidatedBy);
                 for (var i = 0; i < usedBy.Span.Length; i++) {
                     ref var d = ref usedBy.Span[i];
-                    d.TryResolve()?.Invalidate(invalidatedBy);
+                    d.Input.TryGetCachedComputed(d.Tag)?.Invalidate(invalidatedBy);
                     // Just in case buffers aren't cleaned up when you return them back
                     d = default!; 
                 }
