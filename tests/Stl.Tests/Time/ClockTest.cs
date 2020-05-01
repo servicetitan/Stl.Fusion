@@ -13,6 +13,7 @@ using Xunit.Abstractions;
 
 namespace Stl.Tests.Time
 {
+    [Collection(nameof(TimeSensitiveTests))]
     public class ClockTest : TestBase
     {
         public ClockTest(ITestOutputHelper @out) : base(@out) { }
@@ -20,7 +21,7 @@ namespace Stl.Tests.Time
         [Fact]
         public async Task BasicTest()
         {
-            var epsilon = TimeSpan.FromSeconds(0.5);
+            var epsilon = TimeSpan.FromSeconds(1);
             var epsilon10 = epsilon * 10;
             using var clock = new TestClock().SpeedupBy(10).OffsetBy(1000);
             var realStart = RealTimeClock.Now;
@@ -48,7 +49,7 @@ namespace Stl.Tests.Time
         [Fact]
         public async Task TimerTest1()
         {
-            var epsilon = TimeSpan.FromSeconds(0.05);
+            var epsilon = TimeSpan.FromSeconds(0.1);
             var epsilon10 = epsilon * 10;
             using var clock = new TestClock().SpeedupBy(10).OffsetBy(1000);
             var realStart = RealTimeClock.Now;
@@ -63,7 +64,7 @@ namespace Stl.Tests.Time
         [Fact]
         public async Task TimerTest2()
         {
-            var epsilon = TimeSpan.FromSeconds(0.05);
+            var epsilon = TimeSpan.FromSeconds(0.1);
             var epsilon10 = epsilon * 10;
             using var clock = new TestClock().SpeedupBy(10).OffsetBy(1000);
             var realStart = RealTimeClock.Now;
@@ -87,7 +88,7 @@ namespace Stl.Tests.Time
         [Fact]
         public async Task IntervalTest()
         {
-            var epsilon = TimeSpan.FromSeconds(0.03);
+            var epsilon = TimeSpan.FromSeconds(0.1);
             using var clock = new TestClock();
             var realStart = RealTimeClock.Now;
             var clockStart = clock.Now;

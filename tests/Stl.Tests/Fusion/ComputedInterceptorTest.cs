@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Autofac;
 using FluentAssertions;
@@ -21,19 +22,22 @@ namespace Stl.Tests.Fusion
             var c = await Computed.CaptureAsync(
                 () => time.GetTimeOffsetAsync(TimeSpan.FromSeconds(1)));
 
-            var count = 0;
-            void OnInvalidated(IComputed<DateTime> @new, Result<DateTime> old, object? invalidatedBy) 
-                => Log.LogInformation($"{++count} -> {@new.Value:hh:mm:ss:fff}");
+            var count = 0L;
+            void OnInvalidated(IComputed<DateTime> @new, Result<DateTime> old, object? invalidatedBy)
+            {
+                var cnt = Interlocked.Increment(ref count);
+                Log.LogInformation($"{cnt} -> {@new.Value:hh:mm:ss:fff}");
+            }
 
             using (var _ = c!.AutoRenew(OnInvalidated)) {
                 await Task.Delay(2000);
             }
-            var lastCount = count;
+            var lastCount = Interlocked.Read(ref count);
             Out.WriteLine("Completed AutoRecompute.");
 
             await Task.Delay(1000);
-            count.Should().Be(lastCount);
-            count.Should().BeGreaterThan(4);
+            Interlocked.Read(ref count).Should().Be(lastCount);
+            Interlocked.Read(ref count).Should().BeGreaterThan(4);
         }
 
         [Fact]
