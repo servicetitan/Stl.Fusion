@@ -5,15 +5,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
-using Autofac.Extras.DynamicProxy;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Stl.Concurrency;
 using Stl.IO;
-using Stl.Locking;
-using Stl.OS;
-using Stl.Fusion;
 using Stl.Fusion.Autofac;
 using Stl.Testing;
 using Stl.Testing.Internal;
@@ -24,23 +19,23 @@ using Xunit.DependencyInjection.Logging;
 
 namespace Stl.Tests.Fusion
 {
-    public class PurifierTestOptions
+    public class FusionTestOptions
     {
         public bool UseInMemoryDatabase { get; set; }
     }
 
-    public class PurifierTestBase : TestBase
+    public class FusionTestBase : TestBase
     {
-        public PurifierTestOptions Options { get; }
+        public FusionTestOptions Options { get; }
         public bool IsLoggingEnabled { get; set; } = true;
         public IServiceProvider Services { get; }
         public ILifetimeScope Container { get; }
         public ILogger Log { get; }
         public TestDbContext DbContext => Container.Resolve<TestDbContext>();
 
-        public PurifierTestBase(ITestOutputHelper @out, PurifierTestOptions? options = null) : base(@out)
+        public FusionTestBase(ITestOutputHelper @out, FusionTestOptions? options = null) : base(@out)
         {
-            Options = options ?? new PurifierTestOptions();
+            Options = options ?? new FusionTestOptions();
             Services = CreateServices();
             Container = Services.GetRequiredService<ILifetimeScope>();
             Log = (ILogger) Container.Resolve(typeof(ILogger<>).MakeGenericType(GetType()));
@@ -73,7 +68,7 @@ namespace Stl.Tests.Fusion
             // Logging
             services.AddLogging(logging => {
                 var debugCategories = new HashSet<string> {
-                    "Stl.Tests.Purifier",
+                    "Stl.Tests.Fusion",
                     // DbLoggerCategory.Database.Transaction.Name,
                     // DbLoggerCategory.Database.Connection.Name,
                     // DbLoggerCategory.Database.Command.Name,

@@ -10,7 +10,7 @@ using Xunit.Abstractions;
 
 namespace Stl.Tests.Fusion
 {
-    public class DbContextTest : PurifierTestBase, IAsyncLifetime
+    public class DbContextTest : FusionTestBase, IAsyncLifetime
     {
         public DbContextTest(ITestOutputHelper @out) : base(@out) { }
 

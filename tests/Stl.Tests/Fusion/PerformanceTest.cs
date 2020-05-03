@@ -21,11 +21,11 @@ using Xunit.Abstractions;
 
 namespace Stl.Tests.Fusion
 {
-    public abstract class PerformanceTestBase : PurifierTestBase, IAsyncLifetime
+    public abstract class PerformanceTestBase : FusionTestBase, IAsyncLifetime
     {
         public int UserCount = 1000;
 
-        protected PerformanceTestBase(ITestOutputHelper @out, PurifierTestOptions? options = null) 
+        protected PerformanceTestBase(ITestOutputHelper @out, FusionTestOptions? options = null) 
             : base(@out, options)
             => IsLoggingEnabled = false;
 
@@ -162,14 +162,14 @@ namespace Stl.Tests.Fusion
     public class PerformanceTest_Sqlite : PerformanceTestBase
     {
         public PerformanceTest_Sqlite(ITestOutputHelper @out) 
-            : base(@out, new PurifierTestOptions() { UseInMemoryDatabase = false })
+            : base(@out, new FusionTestOptions() { UseInMemoryDatabase = false })
         { }
     }
 
     public class PerformanceTest_InMemoryDb : PerformanceTestBase
     {
         public PerformanceTest_InMemoryDb(ITestOutputHelper @out) 
-            : base(@out, new PurifierTestOptions() { UseInMemoryDatabase = true })
+            : base(@out, new FusionTestOptions() { UseInMemoryDatabase = true })
         { }
     }
 }
