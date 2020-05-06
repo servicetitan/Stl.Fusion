@@ -4,7 +4,7 @@ using Stl.Text;
 
 namespace Stl.Extensibility
 {
-    public interface IHasOptions : IFreezable
+    public interface IHasOptions
     {
         // Shouldn't store any options with null values; passing null = removing the option
         IEnumerable<KeyValuePair<Symbol, object>> GetAllOptions();

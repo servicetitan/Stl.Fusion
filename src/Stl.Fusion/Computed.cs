@@ -14,7 +14,7 @@ namespace Stl.Fusion
     public enum ComputedState
     {
         Computing = 0,
-        Computed,
+        Consistent,
         Invalidated,
     }
 
@@ -25,14 +25,14 @@ namespace Stl.Fusion
         Type OutputType { get; }
         int Tag { get; } // ~ Unique for the specific (Func, Key) pair
         ComputedState State { get; }
-        bool IsValid { get; }
+        bool IsConsistent { get; }
         event Action<IComputed, object?> Invalidated;
         IntMoment LastAccessTime { get; set; }
         int KeepAliveTime { get; set; } // In IntMoment Units
 
         bool Invalidate(object? invalidatedBy = null);
-        ValueTask<IComputed?> RenewAsync(CancellationToken cancellationToken = default);
-        ValueTask<IComputed?> RenewAsync(ComputeContext context, CancellationToken cancellationToken = default);
+        ValueTask<IComputed?> UpdateAsync(CancellationToken cancellationToken = default);
+        ValueTask<IComputed?> UpdateAsync(ComputeContext context, CancellationToken cancellationToken = default);
 
         void Touch();
         TResult Apply<TArg, TResult>(IComputedApplyHandler<TArg, TResult> handler, TArg arg);
@@ -44,8 +44,8 @@ namespace Stl.Fusion
         bool TrySetOutput(Result<TOut> output);
         void SetOutput(Result<TOut> output);
 
-        new ValueTask<IComputed<TOut>?> RenewAsync(CancellationToken cancellationToken = default);
-        new ValueTask<IComputed<TOut>?> RenewAsync(ComputeContext context, CancellationToken cancellationToken = default);
+        new ValueTask<IComputed<TOut>?> UpdateAsync(CancellationToken cancellationToken = default);
+        new ValueTask<IComputed<TOut>?> UpdateAsync(ComputeContext context, CancellationToken cancellationToken = default);
     }
     
     public interface IComputedWithTypedInput<out TIn> : IComputed 
@@ -71,7 +71,7 @@ namespace Stl.Fusion
         private int _keepAliveTime;
         private object Lock => this;
 
-        public bool IsValid => State == ComputedState.Computed;
+        public bool IsConsistent => State == ComputedState.Consistent;
         public ComputedState State => (ComputedState) _state;
         public TIn Input { get; }
         public IFunction<TIn, TOut> Function => (IFunction<TIn, TOut>) Input.Function; 
@@ -146,7 +146,7 @@ namespace Stl.Fusion
                 switch (State) {
                 case ComputedState.Computing:
                     break; // Expected state
-                case ComputedState.Computed:
+                case ComputedState.Consistent:
                     throw Errors.WrongComputedState(State);
                 case ComputedState.Invalidated:
                     return; // Already invalidated, so nothing to do here
@@ -164,7 +164,7 @@ namespace Stl.Fusion
                 switch (State) {
                 case ComputedState.Computing:
                     throw Errors.WrongComputedState(State);
-                case ComputedState.Computed:
+                case ComputedState.Consistent:
                     break; // Expected state
                 case ComputedState.Invalidated:
                     usedBy.Invalidate(_invalidatedBy);
@@ -185,7 +185,7 @@ namespace Stl.Fusion
 
         public bool TrySetOutput(Result<TOut> output)
         {
-            if (!TryChangeState(ComputedState.Computed))
+            if (!TryChangeState(ComputedState.Consistent))
                 return false;
             lock (Lock)
                 _output = output;
@@ -226,14 +226,14 @@ namespace Stl.Fusion
             }
         }
 
-        async ValueTask<IComputed?> IComputed.RenewAsync(CancellationToken cancellationToken) 
-            => await RenewAsync(null!, cancellationToken).ConfigureAwait(false);
-        async ValueTask<IComputed?> IComputed.RenewAsync(ComputeContext context, CancellationToken cancellationToken) 
-            => await RenewAsync(cancellationToken).ConfigureAwait(false);
-        public ValueTask<IComputed<TOut>?> RenewAsync(CancellationToken cancellationToken)
-            => RenewAsync(null!, cancellationToken);
-        public async ValueTask<IComputed<TOut>?> RenewAsync(ComputeContext context, CancellationToken cancellationToken)
-            => IsValid ? this : await Function.InvokeAsync(Input, null, context, cancellationToken);
+        async ValueTask<IComputed?> IComputed.UpdateAsync(CancellationToken cancellationToken) 
+            => await UpdateAsync(null!, cancellationToken).ConfigureAwait(false);
+        async ValueTask<IComputed?> IComputed.UpdateAsync(ComputeContext context, CancellationToken cancellationToken) 
+            => await UpdateAsync(cancellationToken).ConfigureAwait(false);
+        public ValueTask<IComputed<TOut>?> UpdateAsync(CancellationToken cancellationToken)
+            => UpdateAsync(null!, cancellationToken);
+        public async ValueTask<IComputed<TOut>?> UpdateAsync(ComputeContext context, CancellationToken cancellationToken)
+            => IsConsistent ? this : await Function.InvokeAsync(Input, null, context, cancellationToken);
 
         // Touch
 

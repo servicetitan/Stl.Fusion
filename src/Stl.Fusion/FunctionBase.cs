@@ -91,7 +91,7 @@ namespace Stl.Fusion
 
             for (var tryIndex = 0;; tryIndex++) {
                 result = await ComputeAsync(input, cancellationToken).ConfigureAwait(false);
-                if (result.IsValid)
+                if (result.IsConsistent)
                     break;
                 if (!ComputeRetryPolicy.MustRetry(result, tryIndex))
                     break;
@@ -139,7 +139,7 @@ namespace Stl.Fusion
 
             for (var tryIndex = 0;; tryIndex++) {
                 result = await ComputeAsync(input, cancellationToken).ConfigureAwait(false);
-                if (result.IsValid)
+                if (result.IsConsistent)
                     break;
                 if (!ComputeRetryPolicy.MustRetry(result, tryIndex))
                     break;

@@ -85,7 +85,7 @@ namespace Stl.Fusion
 
         public void Store(IComputed value)
         {
-            if (!value.IsValid) // It could be invalidated on the way here :)
+            if (!value.IsConsistent) // It could be invalidated on the way here :)
                 return;
             var key = value.Input;
             var random = key.HashCode + IntMoment.Clock.EpochOffsetUnits;

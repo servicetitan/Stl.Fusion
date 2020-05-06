@@ -108,7 +108,7 @@ namespace Stl.Tests.Fusion
                     return $"@ {now:hh:mm:ss.fff}: {norris?.Name ?? "(none)"}";  
                 }, CancellationToken.None));
             
-            using var _ = cText!.AutoRenew(
+            using var _ = cText!.AutoUpdate(
                 (cNext, rPrev, invalidatedBy) => Log.LogInformation(cNext.Value));
 
             for (var i = 1; i <= 10; i += 1) {
@@ -117,7 +117,7 @@ namespace Stl.Tests.Fusion
                 await Task.Delay(100);
             }
 
-            cText = (await cText!.RenewAsync())!;
+            cText = (await cText!.UpdateAsync())!;
             cText!.Value.Should().EndWith("Lvl10");
         }
 

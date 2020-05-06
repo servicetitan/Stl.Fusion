@@ -2,7 +2,6 @@ using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using Newtonsoft.Json;
 using Stl.Internal;
-using Stl.Serialization;
 
 namespace Stl.Testing
 {

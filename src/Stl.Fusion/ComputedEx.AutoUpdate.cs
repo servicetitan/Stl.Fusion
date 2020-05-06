@@ -7,11 +7,11 @@ namespace Stl.Fusion
 {
     public static partial class ComputedEx
     {
-        internal sealed class AutoRenewApplyHandler : IComputedApplyHandler<
+        internal sealed class AutoUpdateApplyHandler : IComputedApplyHandler<
             (TimeSpan, IClock, Delegate?, Delegate?), 
             Disposable<(IComputed, CancellationTokenSource, Delegate?)>>
         {
-            public static readonly AutoRenewApplyHandler Instance = new AutoRenewApplyHandler();
+            public static readonly AutoUpdateApplyHandler Instance = new AutoUpdateApplyHandler();
             
             public Disposable<(IComputed, CancellationTokenSource, Delegate?)> Apply<TIn, TOut>(
                 IComputed<TIn, TOut> computed, 
@@ -30,7 +30,7 @@ namespace Stl.Fusion
                             await clock!.DelayAsync(delay, stopToken).ConfigureAwait(false);
                         else
                             stopToken.ThrowIfCancellationRequested();
-                        var nextComputed = await prevComputed.RenewAsync(stopToken).ConfigureAwait(false);
+                        var nextComputed = await prevComputed.UpdateAsync(stopToken).ConfigureAwait(false);
                         var prevOutput = prevComputed.Output;
                         prevComputed = null!;
                         handler?.Invoke(nextComputed!, prevOutput, invalidatedBy);
@@ -54,20 +54,20 @@ namespace Stl.Fusion
             }                               
         }
 
-        public static Disposable<(IComputed, CancellationTokenSource, Delegate?)> AutoRenew<T>(
+        public static Disposable<(IComputed, CancellationTokenSource, Delegate?)> AutoUpdate<T>(
             this IComputed<T> computed, 
             Action<IComputed<T>, Result<T>, object?>? recomputed = null,
             Action<IComputed<T>>? completed = null)
-            => computed.AutoRenew(default, null, recomputed, completed);
+            => computed.AutoUpdate(default, null, recomputed, completed);
 
-        public static Disposable<(IComputed, CancellationTokenSource, Delegate?)> AutoRenew<T>(
+        public static Disposable<(IComputed, CancellationTokenSource, Delegate?)> AutoUpdate<T>(
             this IComputed<T> computed, 
             TimeSpan delay = default,
             Action<IComputed<T>, Result<T>, object?>? recomputed = null,
             Action<IComputed<T>>? completed = null)
-            => computed.AutoRenew(delay, null, recomputed, completed);
+            => computed.AutoUpdate(delay, null, recomputed, completed);
 
-        public static Disposable<(IComputed, CancellationTokenSource, Delegate?)> AutoRenew<T>(
+        public static Disposable<(IComputed, CancellationTokenSource, Delegate?)> AutoUpdate<T>(
             this IComputed<T> computed, 
             TimeSpan delay = default,
             IClock? clock = null,
@@ -75,7 +75,7 @@ namespace Stl.Fusion
             Action<IComputed<T>>? completed = null)
         {
             clock ??= RealTimeClock.Instance;
-            return computed.Apply(AutoRenewApplyHandler.Instance, (delay, clock, recomputed, completed));
+            return computed.Apply(AutoUpdateApplyHandler.Instance, (delay, clock, recomputed, completed));
         }
     }
 }

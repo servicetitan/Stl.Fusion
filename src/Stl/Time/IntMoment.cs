@@ -26,8 +26,6 @@ namespace Stl.Time
             private static readonly Stopwatch Stopwatch;
             private static volatile int _epochOffsetUnits;
 
-            public static IntMoment Now => new IntMoment(_epochOffsetUnits);
-            public static TimeSpan EpochOffset => UnitsToTimeSpan(_epochOffsetUnits);
             public static int EpochOffsetUnits => _epochOffsetUnits;
 
             static Clock()
@@ -58,7 +56,8 @@ namespace Stl.Time
 
         public static readonly IntMoment MaxValue = new IntMoment(int.MaxValue); 
         public static readonly IntMoment MinValue = new IntMoment(int.MinValue); 
-        public static readonly IntMoment Zero = new IntMoment(0); 
+        public static readonly IntMoment Zero = new IntMoment(0);
+        public static IntMoment Now => new IntMoment(Clock.EpochOffsetUnits);
         
         public int EpochOffsetUnits { get; }
         public TimeSpan EpochOffset => UnitsToTimeSpan(EpochOffsetUnits);

@@ -117,7 +117,7 @@ namespace Stl.Tests.Fusion.Services
 
         // Change handling
 
-        protected virtual Task<Unit> Everything() => TaskEx.FromUnit();
+        protected virtual Task<Unit> Everything() => TaskEx.UnitTask;
 
         public virtual void Invalidate()
         {

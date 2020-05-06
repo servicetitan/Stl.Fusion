@@ -9,12 +9,10 @@ namespace Stl.Async
 {
     public static class TaskEx
     {
-        private static readonly Task<Unit> UnitTask = Task.FromResult(Unit.Default);
+        public static readonly Task<Unit> UnitTask = Task.FromResult(Unit.Default);
+        public static readonly Task<bool> TrueTask = Task.FromResult(true);
+        public static readonly Task<bool> FalseTask = Task.FromResult(false);
         
-        // FromXxx
-
-        public static Task<Unit> FromUnit() => UnitTask;
-
         // ToXxx
 
         public static ValueTask<T> ToValueTask<T>(this Task<T> source) => new ValueTask<T>(source);

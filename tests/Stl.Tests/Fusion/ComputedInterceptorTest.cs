@@ -27,7 +27,7 @@ namespace Stl.Tests.Fusion
             void OnInvalidated(IComputed<DateTime> @new, Result<DateTime> old, object? invalidatedBy) 
                 => Log.LogInformation($"{++count} -> {@new.Value:hh:mm:ss:fff}");
 
-            using (var _ = c!.AutoRenew(OnInvalidated)) {
+            using (var _ = c!.AutoUpdate(OnInvalidated)) {
                 await Task.Delay(3000);
             }
             var lastCount = count;

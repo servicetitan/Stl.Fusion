@@ -1,19 +1,21 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Stl.Mathematics;
 using Stl.OS;
+using Stl.Security;
 
 namespace Stl.Concurrency
 {
-    public sealed class ConcurrentIdGenerator<T>
+    public sealed class ConcurrentIdGenerator<T> : IGenerator<T>
     {
         private readonly Func<T>[] _generators;
 
         public int ConcurrencyLevel => _generators.Length;
         public int ConcurrencyLevelMask { get; }
 
- public ConcurrentIdGenerator(Func<int, Func<T>> generatorFactory)
+        public ConcurrentIdGenerator(Func<int, Func<T>> generatorFactory)
             : this(generatorFactory, ConcurrentIdGenerator.DefaultConcurrencyLevel) { }
         public ConcurrentIdGenerator(Func<int, Func<T>> generatorFactory, int concurrencyLevel)
             : this(Enumerable.Range(0, concurrencyLevel).Select(generatorFactory)) { }
@@ -27,9 +29,11 @@ namespace Stl.Concurrency
             ConcurrencyLevelMask = generators.Length - 1;
         }
 
-        public T Next(int workerId)
+        public T Next() => Next(Thread.CurrentThread.ManagedThreadId);
+
+        public T Next(int random)
         {
-            var generator = _generators[workerId & ConcurrencyLevelMask];
+            var generator = _generators[random & ConcurrencyLevelMask];
             lock (generator)
                 return generator.Invoke();
         }
@@ -47,10 +51,12 @@ namespace Stl.Concurrency
                 concurrencyLevel = DefaultConcurrencyLevel;
             concurrencyLevel = (int) Bits.GreaterOrEqualPowerOf2((uint) concurrencyLevel);
             return new ConcurrentIdGenerator<int>(i => {
-                var count = 0;
+                var count = (uint) 0;
                 return () => {
-                    count += concurrencyLevel;
-                    return count | i;
+                    unchecked {
+                        count += (uint) concurrencyLevel;
+                        return (int) (count ^ i);
+                    }
                 };
             });
         }
@@ -61,10 +67,12 @@ namespace Stl.Concurrency
                 concurrencyLevel = DefaultConcurrencyLevel;
             concurrencyLevel = (int) Bits.GreaterOrEqualPowerOf2((uint) concurrencyLevel);
             return new ConcurrentIdGenerator<long>(i => {
-                var count = 0L;
+                var count = (ulong) 0;
                 return () => {                  
-                    count += concurrencyLevel;
-                    return count | (long) i;
+                    unchecked {
+                        count += (ulong) concurrencyLevel;
+                        return (long) (count ^ (ulong) i);
+                    }
                 };
             });
         }

@@ -2,13 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Stl.Mathematics;
 using Stl.OS;
 
 namespace Stl.Concurrency.Experimental
 {
     public sealed class ShortTermResourceRenter<T>
     {
-        public static int DefaultConcurrencyLevel => HardwareInfo.ProcessorCount;
+        public static int DefaultConcurrencyLevel => HardwareInfo.ProcessorCountPo2;
 
         public readonly struct Lease : IDisposable
         {
@@ -34,6 +35,7 @@ namespace Stl.Concurrency.Experimental
         private readonly T[] _resources; 
 
         public int ConcurrencyLevel => _locks.Length;
+        public int ConcurrencyLevelMask { get; }
 
         public ShortTermResourceRenter(Func<int, T> resourceFactory)
             : this(resourceFactory, DefaultConcurrencyLevel) { }
@@ -45,15 +47,19 @@ namespace Stl.Concurrency.Experimental
         {
             if (resources.Length <= 0)
                 throw new ArgumentOutOfRangeException(nameof(resources));
+            if (!Bits.IsPowerOf2((uint) resources.Length))
+                throw new ArgumentOutOfRangeException(nameof(resources));
+            ConcurrencyLevelMask = resources.Length - 1;
             _resources = resources;
             _locks = new object[resources.Length];
             for (var i = 0; i < _locks.Length; i++)
                 _locks[i] = new object();
         }
 
-        public Lease Rent(int workerId)
+        public Lease Rent() => Rent(Thread.CurrentThread.ManagedThreadId);
+        public Lease Rent(int random)
         {
-            var index = (workerId & int.MaxValue) % ConcurrencyLevel;
+            var index = random & ConcurrencyLevelMask;
             var @lock = _locks[index];
             Monitor.Enter(@lock);
             return new Lease(this, index);
