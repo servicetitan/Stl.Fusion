@@ -18,7 +18,6 @@
     <PackageReference Update="Concurrent.FastReflection.NetStandard" Version="1.0.1" />
     <PackageReference Update="Enums.NET" Version="3.0.3" />
     <PackageReference Update="FluentAssertions" Version="5.10.3" />
-    <PackageReference Update="Microsoft.AspNetCore.Http" Version="$(AspNetCoreVersion)" />
     <PackageReference Update="Microsoft.Data.SqlClient" Version="1.1.2" />
     <PackageReference Update="Microsoft.Extensions.Caching.Abstractions" Version="$(AspNetCoreVersion)" />
     <PackageReference Update="Microsoft.Extensions.Configuration.Abstractions" Version="$(AspNetCoreVersion)" />

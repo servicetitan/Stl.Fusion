@@ -1,19 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
-  <!-- Uncomment this if you remove aspnetcore parts -->
-  <!--<Project Sdk="Microsoft.NET.Sdk">-->
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <!-- don't forget remove this lines too -->
-    <TypeScriptCompilerBlocked>true</TypeScriptCompilerBlocked>
     <OutputType>Library</OutputType>
+    <TypeScriptCompilerBlocked>true</TypeScriptCompilerBlocked>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Autofac.Extensions.DependencyInjection" />
-    <PackageReference Include="Microsoft.Extensions.Logging" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
-    <!--<PackageReference Include="Microsoft.Extensions.Hosting" />-->
   </ItemGroup>
 
   <ItemGroup>
