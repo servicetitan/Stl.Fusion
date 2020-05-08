@@ -83,14 +83,14 @@ namespace Stl.Tests.Async
         [Fact]
         public async Task ConcurrentTest()
         {
-            var bigTasks = Enumerable.Range(0, 2000).Select(async seed => {
+            var bigTasks = Enumerable.Range(0, 1000).Select(async seed => {
                 await Task.Yield();
                 var rnd = new Random(seed);
-                var tasks = new List<Task>();
+                var tasks = new List<Task<int>>();
                 AsyncEventSource<int> s;
                 await using (s = new AsyncEventSource<int>()) {
-                    var maxI = rnd.Next(2000);
-                    tasks.Add(CheckSequential(s, maxI));
+                    var maxI = rnd.Next(1000);
+                    tasks.Add(CheckSequential(s, maxI, false));
                     for (var i = 0; i <= maxI; i++) {
                         if (rnd.Next(3) == 0)
                             tasks.Add(CheckSequentialRandomStop(i, s));
@@ -99,26 +99,29 @@ namespace Stl.Tests.Async
                 }
                 s.IsCompleted.Should().BeTrue();
                 await Task.WhenAll(tasks);
-                tasks.All(t => t.IsCompletedSuccessfully).Should().BeTrue();
+                return tasks.Sum(t => t.Result);
             }).ToArray();
             await Task.WhenAll(bigTasks);
-            bigTasks.All(t => t.IsCompletedSuccessfully).Should().BeTrue();
+            var sum = bigTasks.Sum(t => t.Result);
+            Out.WriteLine($"Sum: {sum}");
+            sum.Should().BeGreaterThan(1000000);
         }
 
-        private async Task CheckSequential(IAsyncEnumerable<int> asyncSequence, int maxI)
+        private async Task<int> CheckSequential(IAsyncEnumerable<int> asyncSequence, int maxI, bool output = true)
         {
             var lastI = (int?) null;
             await foreach (var i in asyncSequence) {
                 if (lastI.HasValue)
                     i.Should().Be(lastI.Value + 1);
-                else 
+                else if (output) 
                     Out.WriteLine($"First i: {i}");
                 lastI = i;
             }
             lastI?.Should().Be(maxI);
+            return lastI ?? 0;
         }
 
-        private async Task CheckSequentialRandomStop(int seed, IAsyncEnumerable<int> asyncSequence)
+        private async Task<int> CheckSequentialRandomStop(int seed, IAsyncEnumerable<int> asyncSequence)
         {
             var rnd = new Random(seed);
             var lastI = (int?) null;
@@ -129,6 +132,7 @@ namespace Stl.Tests.Async
                 if (rnd.Next(20) == 0)
                     break;
             }
+            return lastI ?? 0;
         }
     }
 }
