@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Stl.Fusion.Publish
+namespace Stl.Fusion.Channels
 {
     public interface IChannelHandler<TMessage>
     {

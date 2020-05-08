@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
+using Stl.Fusion.Channels;
 using Stl.Fusion.Publish.Internal;
 using Stl.Fusion.Publish.Messages;
 using Stl.OS;

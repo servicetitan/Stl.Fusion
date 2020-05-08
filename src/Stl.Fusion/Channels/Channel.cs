@@ -6,7 +6,7 @@ using Stl.Collections;
 using Stl.Collections.Slim;
 using Stl.Text;
 
-namespace Stl.Fusion.Publish
+namespace Stl.Fusion.Channels
 {
     public interface IChannel<TMessage> : IAsyncDisposable
     {

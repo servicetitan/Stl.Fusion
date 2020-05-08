@@ -7,7 +7,7 @@ using Stl.Async;
 using Stl.OS;
 using Stl.Text;
 
-namespace Stl.Fusion.Publish
+namespace Stl.Fusion.Channels
 {
     public interface IChannelRegistry<TMessage> : IAsyncDisposable
     {
