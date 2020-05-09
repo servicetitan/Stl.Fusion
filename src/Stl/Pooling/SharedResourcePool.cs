@@ -60,8 +60,8 @@ namespace Stl.Pooling
 
         protected async ValueTask ReleaseResourceAsync(TKey key, TResource resource)
         {
+            var delayedDisposeCts = (CancellationTokenSource?) null;
             try {
-                var delayedDisposeCts = (CancellationTokenSource?) null;
                 // ReSharper disable once MethodSupportsCancellation
                 using (await LocksSet.LockAsync(key).ConfigureAwait(false)) {
                     if (!Resources.TryGetValue(key, out var pair))
@@ -82,6 +82,9 @@ namespace Stl.Pooling
             }
             catch (Exception e) {
                 Debug.WriteLine($"Exception inside Dispose / Dispose async: {e}");
+            }
+            finally {
+                delayedDisposeCts?.Dispose();
             }
         }
 

@@ -19,7 +19,7 @@ namespace Stl.ImmutableModel.Processing.Internal
         public bool IsStartedForAlreadyExistingNode { get; set; }
         public bool IsDormant { get; set; }
 
-        CancellationToken INodeProcessingInfo.ProcessStoppingToken => NodeProcessor.StoppingToken;
+        CancellationToken INodeProcessingInfo.ProcessStoppingToken => NodeProcessor.StopToken;
         CancellationToken INodeProcessingInfo.NodeRemovedToken => NodeRemovedTokenSource.Token;
         CancellationToken INodeProcessingInfo.ProcessStoppingOrNodeRemovedToken => ProcessStoppedOrNodeRemovedTokenSource.Token;
 
@@ -35,7 +35,7 @@ namespace Stl.ImmutableModel.Processing.Internal
             IsStartedForAlreadyExistingNode = isStartedForAlreadyExistingNode;
             NodeRemovedTokenSource = new CancellationTokenSource();
             ProcessStoppedOrNodeRemovedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(
-                processor.StoppingToken, NodeRemovedTokenSource.Token);
+                processor.StopToken, NodeRemovedTokenSource.Token);
             CompletionSource = new TaskCompletionSource<Unit>(TaskCreationOptions.RunContinuationsAsynchronously);
         }
 

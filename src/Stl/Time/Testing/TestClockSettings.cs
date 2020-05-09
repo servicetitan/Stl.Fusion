@@ -15,8 +15,8 @@ namespace Stl.Time.Testing
 
         [JsonIgnore] public Moment Now => ToLocalTime(RealTimeClock.Now);
         [JsonIgnore] public Moment HighResolutionNow => ToLocalTime(RealTimeClock.HighResolutionNow);
-        [JsonIgnore] public CancellationToken ChangedToken => _changedTokenSource?.Token ?? default;
-        [JsonIgnore] public bool IsUsable => _changedTokenSource != null && _changedTokenSource.IsCancellationRequested == false;
+        [JsonIgnore] public CancellationToken ChangedToken { get; }
+        [JsonIgnore] public bool IsUsable => !(_changedTokenSource?.IsCancellationRequested ?? true);
 
         [JsonConstructor]
         public TestClockSettings(TimeSpan localOffset = default, TimeSpan realOffset = default, double multiplier = 1)
@@ -25,9 +25,13 @@ namespace Stl.Time.Testing
             RealOffset = realOffset;
             Multiplier = multiplier;
             _changedTokenSource = new CancellationTokenSource();
+            ChangedToken = _changedTokenSource.Token;
         }
 
-        public void Changed() => _changedTokenSource!.Cancel();
+        public void Changed()
+        {
+            _changedTokenSource?.Cancel();
+        }
 
         public void Dispose()
         {

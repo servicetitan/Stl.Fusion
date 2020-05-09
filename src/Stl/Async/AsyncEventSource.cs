@@ -40,23 +40,28 @@ namespace Stl.Async
         public bool IsCompleted => _state.IsCompleted;
 
         // This method is not thread-safe!
-        public async ValueTask PublishAsync(TEvent value)
+        public async ValueTask PublishAsync(TEvent value, CancellationToken cancellationToken = default)
         {
             var state = SwapState(false).AssertNotCompleted();
             state.FireTcs.SetResult(value!);
-            if (state.ObserverCount != 0)
-                await state.ReadyTcs.Task.ConfigureAwait(false);
+            if (state.ObserverCount != 0) {
+                await state.ReadyTcs.Task
+                    .WithFakeCancellation(cancellationToken)
+                    .ConfigureAwait(false);
+            }
         }
 
         // This method is not thread-safe!
-        public async ValueTask<bool> CompleteAsync()
+        public async ValueTask<bool> CompleteAsync(CancellationToken cancellationToken = default)
         {
             var state = SwapState(true);
             if (state.IsCompleted)
                 return false;
             state.FireTcs.SetResult(Option<TEvent>.None);
             if (state.ObserverCount != 0)
-                await state.ReadyTcs.Task.ConfigureAwait(false);
+                await state.ReadyTcs.Task
+                    .WithFakeCancellation(cancellationToken)
+                    .ConfigureAwait(false);
             return true;
         }
 
@@ -73,10 +78,12 @@ namespace Stl.Async
             while (true) {
                 if (state.IsCompleted)
                     yield break;
+                cancellationToken.ThrowIfCancellationRequested();
                 var eOption = await state.FireTcs.Task.ConfigureAwait(false);
                 if (!eOption.IsSome(out var e))
                     yield break;
                 try {
+                    cancellationToken.ThrowIfCancellationRequested();
                     Interlocked.Increment(ref state.ObserverCount);
                     yield return e;
                 }
@@ -86,6 +93,7 @@ namespace Stl.Async
                     else
                         await state.ReadyTcs.Task.ConfigureAwait(false);
                 }
+                cancellationToken.ThrowIfCancellationRequested();
                 state = await state.NextStateTcs.Task.ConfigureAwait(false);
             }
         }

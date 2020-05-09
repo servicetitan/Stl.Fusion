@@ -13,6 +13,7 @@ namespace Stl.Fusion.Publish.Internal
         public ComputedInput Input => Publication.Computed.Input;
         public readonly PublicationFactory Factory;
         public readonly CancellationTokenSource StopCts;
+        public readonly CancellationToken StopToken;
         public Task PublishTask = null!;
         public volatile CancellationTokenSource? StopDelayedUnpublishCts;
         public object Lock => this; 
@@ -23,6 +24,7 @@ namespace Stl.Fusion.Publish.Internal
             PublicationImpl = (IPublicationImpl) publication;
             Factory = factory;
             StopCts = new CancellationTokenSource();
+            StopToken = StopCts.Token;
         }
     }
 }

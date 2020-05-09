@@ -6,36 +6,44 @@ namespace Stl.Async
 {
     public interface IAsyncProcess : IAsyncDisposable
     {
-        CancellationToken StoppingToken { get; }
+        CancellationToken StopToken { get; }
         Task? RunningTask { get; }
         Task RunAsync();
     }
 
     public abstract class AsyncProcessBase : AsyncDisposableBase, IAsyncProcess
     {
-        protected CancellationTokenSource StoppingTokenSource { get; } = new CancellationTokenSource();
-        
-        public CancellationToken StoppingToken => StoppingTokenSource.Token;
+        protected CancellationTokenSource StopTokenSource { get; }
+        protected object Lock => StopTokenSource;
+        public CancellationToken StopToken { get; }
         public Task? RunningTask { get; private set; }
+
+        protected AsyncProcessBase()
+        {
+            StopTokenSource = new CancellationTokenSource();
+            StopToken = StopTokenSource.Token;
+        }
 
         public Task RunAsync()
         {
-            lock (StoppingTokenSource) {
+            lock (Lock) {
                 if (RunningTask == null)
                     // ReSharper disable once MethodSupportsCancellation
-                    RunningTask = Task.Run(RunInternalAsync).SuppressCancellation();
+                    RunningTask = Task
+                        .Run(() => RunInternalAsync(StopToken))
+                        .SuppressCancellation();
             }
             return RunningTask;
         }
 
-        protected abstract Task RunInternalAsync();
+        protected abstract Task RunInternalAsync(CancellationToken cancellationToken);
 
         protected override async ValueTask DisposeInternalAsync(bool disposing)
         {
-            if (!StoppingTokenSource.IsCancellationRequested)
-                StoppingTokenSource.Cancel();
+            if (!StopTokenSource.IsCancellationRequested)
+                StopTokenSource.Cancel();
             await (RunningTask ?? Task.CompletedTask).ConfigureAwait(false);
-            StoppingTokenSource.Dispose();
+            StopTokenSource?.Dispose();
             await base.DisposeInternalAsync(disposing);
         }
     }

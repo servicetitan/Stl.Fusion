@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Reactive.Threading.Tasks;
+using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
 using Stl.ImmutableModel.Indexing;
@@ -46,10 +47,10 @@ namespace Stl.ImmutableModel.Processing
         protected virtual bool IsSupportedUpdate(IModelUpdateInfo updateInfo) => true;
         protected virtual bool IsSupportedChange(in NodeChangeInfo nodeChangeInfo) => true; 
 
-        protected override async Task RunInternalAsync()
+        protected override async Task RunInternalAsync(CancellationToken cancellationToken)
         {
             var allChanges = ChangeTracker.AllChanges.Publish(); 
-            var processorTask = allChanges.Select(ProcessChange).ToTask(StoppingToken).SuppressCancellation();
+            var processorTask = allChanges.Select(ProcessChange).ToTask(cancellationToken).SuppressCancellation();
             using (allChanges.Connect()) {
                 await OnReadyAsync().ConfigureAwait(false);
                 StartProcessesForExistingNodes();
@@ -62,8 +63,8 @@ namespace Stl.ImmutableModel.Processing
             // We should handle both cases properly. So:
             
             // 1. We cancel the main token (~ process stopping event)
-            if (!StoppingTokenSource.IsCancellationRequested)
-                StoppingTokenSource.Cancel();
+            if (!StopTokenSource.IsCancellationRequested)
+                StopTokenSource.Cancel();
             
             // 2. We wait till both Processes and DyingProcesses deplete
             while (true) {

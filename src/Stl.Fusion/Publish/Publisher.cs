@@ -2,9 +2,10 @@ using System;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using Stl.Async;
-using Stl.Fusion.Channels;
+using Stl.Channels;
 using Stl.Fusion.Publish.Internal;
 using Stl.Fusion.Publish.Messages;
 using Stl.OS;
@@ -24,46 +25,49 @@ namespace Stl.Fusion.Publish
 
     public interface IPublisherImpl : IPublisher
     {
-        IChannelRegistry<Message> ChannelRegistry { get; }
-        Task<bool> SubscribeAsync(IChannel<Message> channel, IPublication publication, bool notify, CancellationToken cancellationToken = default);
-        Task<bool> UnsubscribeAsync(IChannel<Message> channel, IPublication publication, bool notify, CancellationToken cancellationToken = default);
+        IChannelHub<Message> ChannelHub { get; }
+        Task<bool> SubscribeAsync(Channel<Message> channel, IPublication publication, bool notify, CancellationToken cancellationToken = default);
+        Task<bool> UnsubscribeAsync(Channel<Message> channel, IPublication publication, bool notify, CancellationToken cancellationToken = default);
         bool BeginDelayedUnpublish(IPublication publication);
         void EndDelayedUnpublish(IPublication publication);
     }
 
-    public abstract class PublisherBase : AsyncDisposableBase, IPublisherImpl, IChannelHandler<Message>
+    public abstract class PublisherBase : AsyncDisposableBase, IPublisherImpl
     {
         protected ConcurrentDictionary<(ComputedInput Input, PublicationFactory Factory), PublicationInfo> Publications { get; } 
         protected ConcurrentDictionary<Symbol, PublicationInfo> PublicationsById { get; }
-        protected ConcurrentDictionary<IChannel<Message>, ChannelInfo> Channels { get; }
+        protected ConcurrentDictionary<Channel<Message>, ChannelProcessor> ChannelProcessors { get; }
         protected IGenerator<Symbol> PublicationIdGenerator { get; }
         protected bool OwnsChannelRegistry { get; }
-        protected Action<IChannel<Message>> OnRegisteredCached { get; } 
+        protected Action<Channel<Message>> OnChannelAttachedCached { get; } 
+        protected Func<Channel<Message>, ValueTask> OnChannelDetachedCached { get; } 
 
         public Symbol Id { get; }
-        public IChannelRegistry<Message> ChannelRegistry { get; }
+        public IChannelHub<Message> ChannelHub { get; }
         public PublicationFactory DefaultPublicationFactory { get; }
 
         protected PublisherBase(Symbol id, 
-            IChannelRegistry<Message> channelRegistry,
+            IChannelHub<Message> channelHub,
             IGenerator<Symbol> publicationIdGenerator,
             bool ownsChannelRegistry = true,
             PublicationFactory? defaultPublicationFactory = null)
         {
             defaultPublicationFactory ??= PublicationFactoryEx.Updating;
             Id = id;
-            ChannelRegistry = channelRegistry;
+            ChannelHub = channelHub;
             OwnsChannelRegistry = ownsChannelRegistry;
             PublicationIdGenerator = publicationIdGenerator;
             DefaultPublicationFactory = defaultPublicationFactory;
-            OnRegisteredCached = OnRegistered;
+            OnChannelAttachedCached = OnChannelAttached;
+            OnChannelDetachedCached = OnChannelDetachedAsync;
 
             var concurrencyLevel = HardwareInfo.ProcessorCount << 2;
             var capacity = 7919;
             Publications = new ConcurrentDictionary<(ComputedInput Input, PublicationFactory Factory), PublicationInfo>(concurrencyLevel, capacity);
             PublicationsById = new ConcurrentDictionary<Symbol, PublicationInfo>(concurrencyLevel, capacity);
-            Channels = new ConcurrentDictionary<IChannel<Message>, ChannelInfo>(concurrencyLevel, capacity);
-            ChannelRegistry.Registered += OnRegisteredCached;
+            ChannelProcessors = new ConcurrentDictionary<Channel<Message>, ChannelProcessor>(concurrencyLevel, capacity);
+            ChannelHub.Attached += OnChannelAttachedCached;
+            ChannelHub.Detached += OnChannelDetachedCached;
         }
 
         public virtual IPublication Publish(IComputed computed, PublicationFactory? publicationFactory = null)
@@ -101,7 +105,7 @@ namespace Stl.Fusion.Publish
         protected virtual async Task PublishAndUnpublishAsync(PublicationInfo info)
         {
             try {
-                await info.PublicationImpl.PublishAsync(info.StopCts.Token).ConfigureAwait(false);
+                await info.PublicationImpl.PublishAsync(info.StopToken).ConfigureAwait(false);
             }
             // ReSharper disable once EmptyGeneralCatchClause
             catch {}
@@ -139,7 +143,7 @@ namespace Stl.Fusion.Publish
                 return false;
             if (info.State == PublicationState.Unpublished)
                 return false;
-            var cts = new CancellationTokenSource();
+            using var cts = new CancellationTokenSource();
             EndDelayedUnpublish(info);
             if (Interlocked.CompareExchange(ref info.StopDelayedUnpublishCts, cts, null) != null) {
                 cts.Dispose();
@@ -169,51 +173,41 @@ namespace Stl.Fusion.Publish
 
         // Channel-related
 
-        protected virtual void OnRegistered(IChannel<Message> channel)
+        protected virtual void OnChannelAttached(Channel<Message> channel)
         {
-            var channelInfo = new ChannelInfo(channel, this);
-            if (!Channels.TryAdd(channel, channelInfo))
+            var channelProcessor = new ChannelProcessor(channel, this);
+            if (!ChannelProcessors.TryAdd(channel, channelProcessor))
                 return;
-            channel.AddHandler(this);
+            channelProcessor.RunAsync().ContinueWith(_ => {
+                // Since ChannelProcessor is AsyncProcessorBase desc.,
+                // its disposal will shut down RunAsync as well,
+                // so "subscribing" to RunAsync completion is the
+                // same as subscribing to its disposal.
+                ChannelProcessors.TryRemove(channel, channelProcessor);
+            });
         }
 
-        Task IChannelHandler<Message>.OnMessageReceivedAsync(IChannel<Message> channel, Message message, CancellationToken cancellationToken) 
-            => OnMessageReceivedAsync(channel, message, cancellationToken);
-        protected virtual Task OnMessageReceivedAsync(IChannel<Message> channel, Message message, CancellationToken cancellationToken)
+        protected virtual ValueTask OnChannelDetachedAsync(Channel<Message> channel)
         {
-            switch (message) {
-            case SubscribeMessage sm:
-                if (sm.PublisherId != Id)
-                    break;
-                var publication = TryGet(sm.PublicationId);
-                if (publication == null)
-                    break;
-                return SubscribeAsync(channel, publication, true, cancellationToken);
-            case UnsubscribeMessage um:
-                if (um.PublisherId != Id)
-                    break;
-                publication = TryGet(um.PublicationId);
-                if (publication == null)
-                    break;
-                return UnsubscribeAsync(channel, publication, true, cancellationToken);
-            }
-            return Task.CompletedTask;
+            if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
+                return ValueTaskEx.CompletedTask;
+            return channelProcessor.DisposeAsync();
         }
 
-        Task<bool> IPublisherImpl.SubscribeAsync(IChannel<Message> channel, IPublication publication, bool notify, CancellationToken cancellationToken) 
+        Task<bool> IPublisherImpl.SubscribeAsync(Channel<Message> channel, IPublication publication, bool notify, CancellationToken cancellationToken) 
             => SubscribeAsync(channel, publication, notify, cancellationToken);
-        protected Task<bool> SubscribeAsync(IChannel<Message> channel, IPublication publication, bool notify, CancellationToken cancellationToken = default)
+        protected Task<bool> SubscribeAsync(Channel<Message> channel, IPublication publication, bool notify, CancellationToken cancellationToken = default)
         {
             ThrowIfDisposedOrDisposing();
-            if (!Channels.TryGetValue(channel, out var channelInfo))
+            if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
                 return TaskEx.FalseTask;
             if (publication.Publisher != this || publication.State == PublicationState.Unpublished)
                 return TaskEx.FalseTask;
             var publicationId = publication.Id;
-            if (!channelInfo.Subscriptions.TryAdd(publicationId, default))
+            if (!channelProcessor.Subscriptions.TryAdd(publicationId, default))
                 return TaskEx.FalseTask;
-            if (!publication.AddHandler(channelInfo)) {
-                channelInfo.Subscriptions.TryRemove(publicationId, default);
+            if (!publication.AddHandler(channelProcessor)) {
+                channelProcessor.Subscriptions.TryRemove(publicationId, default);
                 return TaskEx.FalseTask;
             }
             if (notify) {
@@ -221,67 +215,36 @@ namespace Stl.Fusion.Publish
                     PublisherId = Id,
                     PublicationId = publicationId,
                 };
-                return channel.SendAsync(message, cancellationToken).ContinueWith(_ => true, cancellationToken);
+                return channel.Writer.WriteAsync(message, cancellationToken)
+                    .AsTask().ContinueWith(_ => true, CancellationToken.None);
             }
             return TaskEx.TrueTask;
         }
 
-        Task<bool> IPublisherImpl.UnsubscribeAsync(IChannel<Message> channel, IPublication publication, bool notify, CancellationToken cancellationToken) 
+        Task<bool> IPublisherImpl.UnsubscribeAsync(Channel<Message> channel, IPublication publication, bool notify, CancellationToken cancellationToken) 
             => UnsubscribeAsync(channel, publication, notify, cancellationToken);
-        protected Task<bool> UnsubscribeAsync(IChannel<Message> channel, IPublication publication, bool notify, CancellationToken cancellationToken = default)
+        protected Task<bool> UnsubscribeAsync(Channel<Message> channel, IPublication publication, bool notify, CancellationToken cancellationToken = default)
         {
-            if (!Channels.TryGetValue(channel, out var channelInfo))
+            if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
                 return TaskEx.FalseTask;
             var publicationId = publication.Id;
-            if (!channelInfo.Subscriptions.TryRemove(publicationId, default))
+            if (!channelProcessor.Subscriptions.TryRemove(publicationId, default))
                 return TaskEx.FalseTask;
-            publication.RemoveHandler(channelInfo);
+            publication.RemoveHandler(channelProcessor);
             if (notify) {
                 var message = new UnsubscribeMessage() {
                     PublisherId = Id,
                     PublicationId = publicationId,
                 };
-                return channel.SendAsync(message, cancellationToken).ContinueWith(_ => true, cancellationToken);
+                return channel.Writer.WriteAsync(message, cancellationToken)
+                    .AsTask().ContinueWith(_ => true, CancellationToken.None);
             }
             return TaskEx.TrueTask;
         }
 
-        void IChannelHandler<Message>.OnDisconnected(IChannel<Message> channel) 
-            => OnDisconnected(channel);
-        protected virtual void OnDisconnected(IChannel<Message> channel)
-        {
-            if (!Channels.TryGetValue(channel, out var channelInfo))
-                return;
-            channel.RemoveHandler(this);
-            Task.Run(async () => {
-                // We can unsubscribe asynchronously
-                var subscriptions = channelInfo.Subscriptions;
-                for (var i = 0; i < 2; i++) {
-                    while (!subscriptions.IsEmpty) {
-                        var tasks = subscriptions
-                            .Take(HardwareInfo.ProcessorCount * 4)
-                            .ToList()
-                            .Select(p => Task.Run(async () => {
-                                var (publicationId, _) = (p.Key, p.Value);
-                                var publication = TryGet(publicationId);
-                                if (publication != null)
-                                    await UnsubscribeAsync(channel, publication, false).ConfigureAwait(false);
-                            }));
-                        await Task.WhenAll(tasks).ConfigureAwait(false);
-                    }
-                    // We repeat this twice in case some subscriptions were
-                    // still processing after removal of channel's handler.
-                    // Since we don't know for sure how long it might take,
-                    // we optimistically assume 10 seconds is enough for this.
-                    await Task.Delay(TimeSpan.FromSeconds(10));
-                }
-                Channels.TryRemove(channel, channelInfo);
-            });
-        }
-
         protected override async ValueTask DisposeInternalAsync(bool disposing)
         {
-            ChannelRegistry.Registered -= OnRegisteredCached;
+            ChannelHub.Attached -= OnChannelAttachedCached;
             var publications = PublicationsById;
             while (!publications.IsEmpty) {
                 var tasks = publications
@@ -294,7 +257,7 @@ namespace Stl.Fusion.Publish
                 await Task.WhenAll(tasks).ConfigureAwait(false);
             }
             if (OwnsChannelRegistry)
-                await ChannelRegistry.DisposeAsync().ConfigureAwait(false);
+                await ChannelHub.DisposeAsync().ConfigureAwait(false);
             await base.DisposeInternalAsync(disposing).ConfigureAwait(false);
         }
     }

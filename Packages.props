@@ -55,6 +55,7 @@
     <PackageReference Update="System.Reactive" Version="4.4.1" />
     <PackageReference Update="System.Runtime.Loader" Version="4.3.0" />
     <PackageReference Update="System.Text.Json" Version="4.7.1" />
+    <PackageReference Update="System.Threading.Channels" Version="4.7.0" />
     <PackageReference Update="xunit" Version="2.4.1" />
     <PackageReference Update="xunit.analyzers" Version="0.10.0" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
     <PackageReference Update="Xunit.DependencyInjection.Logging" Version="2.1.0" />
