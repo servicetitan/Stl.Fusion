@@ -13,8 +13,8 @@ namespace Stl.Async
 
     public abstract class AsyncProcessBase : AsyncDisposableBase, IAsyncProcess
     {
+        private object Lock => StopTokenSource;
         protected CancellationTokenSource StopTokenSource { get; }
-        protected object Lock => StopTokenSource;
         public CancellationToken StopToken { get; }
         public Task? RunningTask { get; private set; }
 

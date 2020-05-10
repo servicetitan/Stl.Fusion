@@ -7,7 +7,14 @@ using Stl.Internal;
 
 namespace Stl.Async
 {
-    public class AsyncEventSource<TEvent> : IAsyncDisposable, IAsyncEnumerable<TEvent>
+    public class AsyncEventSource<TEvent> : AsyncEventSource<TEvent, Unit>
+    {
+        public AsyncEventSource(Action<AsyncEventSource<TEvent, Unit>, int, bool>? onObserverCountChanged = null) 
+            : base(default, onObserverCountChanged) 
+        { }
+    }
+
+    public class AsyncEventSource<TEvent, TTag> : IAsyncDisposable, IAsyncEnumerable<TEvent>
     {
         private class State
         {
@@ -15,7 +22,7 @@ namespace Stl.Async
             public readonly TaskCompletionSource<Option<TEvent>> FireTcs;
             public readonly TaskCompletionSource<Unit> ReadyTcs;
             public readonly TaskCompletionSource<State> NextStateTcs;
-            public volatile int ObserverCount;
+            public volatile int ObservingObserverCount;
 
             public State()
             {
@@ -32,40 +39,54 @@ namespace Stl.Async
                 => IsCompleted ? throw Errors.AlreadyCompleted() : this;
         }
 
-        private static readonly Task<Option<TEvent>> NoEventTask = Task.FromResult(Option<TEvent>.None);
-        
+        private readonly Action<AsyncEventSource<TEvent, TTag>, int, bool>? _onObserverCountChanged; 
         private volatile State _state = new State();
-        private volatile int _observerCount = 0;
-
+        private volatile int _observerCount;
+        public TTag Tag { get; }
         public bool IsCompleted => _state.IsCompleted;
+        public bool HasObservers => _observerCount != 0;
+        public int ObserverCount => _observerCount;
 
-        // This method is not thread-safe!
-        public async ValueTask PublishAsync(TEvent value, CancellationToken cancellationToken = default)
+        public AsyncEventSource(
+            TTag tag, 
+            Action<AsyncEventSource<TEvent, TTag>, int, bool>? onObserverCountChanged)
         {
-            var state = SwapState(false).AssertNotCompleted();
+            Tag = tag;
+            _onObserverCountChanged = onObserverCountChanged;
+        }
+
+        public override string ToString() 
+            => $"{GetType().Name}({ObserverCount} observer(s), {nameof(IsCompleted)} = {IsCompleted})";
+
+        public async ValueTask NextAsync(TEvent value, bool failIfCompleted = true)
+        {
+            var state = SwapState(false);
+            if (failIfCompleted)
+                state.AssertNotCompleted();
             state.FireTcs.SetResult(value!);
-            if (state.ObserverCount != 0) {
-                await state.ReadyTcs.Task
-                    .WithFakeCancellation(cancellationToken)
-                    .ConfigureAwait(false);
+            if (state.ObservingObserverCount != 0) {
+                await state.ReadyTcs.Task.ConfigureAwait(false);
             }
         }
 
-        // This method is not thread-safe!
-        public async ValueTask<bool> CompleteAsync(CancellationToken cancellationToken = default)
+        // Just a shortcut for NextAsync + CompleteAsync
+        public async ValueTask LastAsync(TEvent value, bool failIfCompleted = true)
+        {
+            await NextAsync(value, failIfCompleted).ConfigureAwait(failIfCompleted);
+            await CompleteAsync();
+        }
+
+        public async ValueTask<bool> CompleteAsync()
         {
             var state = SwapState(true);
             if (state.IsCompleted)
                 return false;
             state.FireTcs.SetResult(Option<TEvent>.None);
-            if (state.ObserverCount != 0)
-                await state.ReadyTcs.Task
-                    .WithFakeCancellation(cancellationToken)
-                    .ConfigureAwait(false);
+            if (state.ObservingObserverCount != 0)
+                await state.ReadyTcs.Task.ConfigureAwait(false);
             return true;
         }
 
-        // This method is not thread-safe!
         public async ValueTask DisposeAsync() 
             => await CompleteAsync().ConfigureAwait(false);
 
@@ -75,26 +96,34 @@ namespace Stl.Async
 #pragma warning restore 8425
         {
             var state = _state;
-            while (true) {
-                if (state.IsCompleted)
-                    yield break;
-                cancellationToken.ThrowIfCancellationRequested();
-                var eOption = await state.FireTcs.Task.ConfigureAwait(false);
-                if (!eOption.IsSome(out var e))
-                    yield break;
-                try {
+            var observerCount = Interlocked.Increment(ref _observerCount);
+            _onObserverCountChanged?.Invoke(this, observerCount, true);
+            try {
+                while (true) {
+                    if (state.IsCompleted)
+                        yield break;
                     cancellationToken.ThrowIfCancellationRequested();
-                    Interlocked.Increment(ref state.ObserverCount);
-                    yield return e;
+                    var eOption = await state.FireTcs.Task.ConfigureAwait(false);
+                    if (!eOption.IsSome(out var e))
+                        yield break;
+                    try {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        Interlocked.Increment(ref state.ObservingObserverCount);
+                        yield return e;
+                    }
+                    finally {
+                        if (0 == Interlocked.Decrement(ref state.ObservingObserverCount))
+                            state.ReadyTcs.TrySetResult(default);
+                        else
+                            await state.ReadyTcs.Task.ConfigureAwait(false);
+                    }
+                    cancellationToken.ThrowIfCancellationRequested();
+                    state = await state.NextStateTcs.Task.ConfigureAwait(false);
                 }
-                finally {
-                    if (0 == Interlocked.Decrement(ref state.ObserverCount))
-                        state.ReadyTcs.TrySetResult(default);
-                    else
-                        await state.ReadyTcs.Task.ConfigureAwait(false);
-                }
-                cancellationToken.ThrowIfCancellationRequested();
-                state = await state.NextStateTcs.Task.ConfigureAwait(false);
+            }
+            finally {
+                observerCount = Interlocked.Decrement(ref _observerCount);
+                _onObserverCountChanged?.Invoke(this, observerCount, false);
             }
         }
 

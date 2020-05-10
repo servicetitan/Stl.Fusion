@@ -20,16 +20,14 @@ namespace Stl.Fusion.Publish
         Symbol Id { get; }
         IPublication Publish(IComputed computed, PublicationFactory? publicationFactory = null);
         IPublication? TryGet(Symbol publicationId);
-        Task UnpublishAsync(IPublication publication);
     }
 
     public interface IPublisherImpl : IPublisher
     {
         IChannelHub<Message> ChannelHub { get; }
-        Task<bool> SubscribeAsync(Channel<Message> channel, IPublication publication, bool notify, CancellationToken cancellationToken = default);
-        Task<bool> UnsubscribeAsync(Channel<Message> channel, IPublication publication, bool notify, CancellationToken cancellationToken = default);
-        bool BeginDelayedUnpublish(IPublication publication);
-        void EndDelayedUnpublish(IPublication publication);
+        bool Subscribe(Channel<Message> channel, IPublication publication, bool notify);
+        ValueTask<bool> UnsubscribeAsync(Channel<Message> channel, IPublication publication);
+        void OnPublicationDisposed(IPublication publication);
     }
 
     public abstract class PublisherBase : AsyncDisposableBase, IPublisherImpl
@@ -75,9 +73,8 @@ namespace Stl.Fusion.Publish
             ThrowIfDisposedOrDisposing();
             publicationFactory ??= DefaultPublicationFactory;
             var spinWait = new SpinWait();
-            PublicationInfo pInfo;
             while (true) {
-                 pInfo = Publications.GetOrAddChecked(
+                 var pInfo = Publications.GetOrAddChecked(
                     (computed.Input, Factory: publicationFactory), 
                     (key, arg) => {
                         var (this1, computed1) = arg;
@@ -85,97 +82,40 @@ namespace Stl.Fusion.Publish
                         var publication1 = key.Factory.Invoke(this1, computed1, publicationId);
                         var pInfo1 = new PublicationInfo(publication1, key.Factory);
                         this1.PublicationsById[publicationId] = pInfo1;
-                        pInfo1.PublishTask = this1.PublishAndUnpublishAsync(pInfo1);
+                        pInfo1.PublicationImpl.RunAsync();
                         return pInfo1;
                     }, (this, computed));
                 var publication = pInfo.Publication;
-                if (publication.HasHandlers || BeginDelayedUnpublish(publication))
-                    break;
-                // Couldn't begin delayed dispose means it is already disposing / disposed
+                if (publication.Touch())
+                    return publication;
                 spinWait.SpinOnce();
             }
-            // Here we know that either:
-            // a) a few moments ago there were handlers, so publication will stay alive for at least as much as 
-            //    the new one will (with zero handlers, for which BeginDelayedDispose is called) 
-            // b) or we "bumped up" its lifetime by calling BeginDelayedDispose - this happens when it's
-            //    either a new publication, or an old one, but with zero handlers
-            return pInfo.Publication;                          
-        }
-
-        protected virtual async Task PublishAndUnpublishAsync(PublicationInfo info)
-        {
-            try {
-                await info.PublicationImpl.PublishAsync(info.StopToken).ConfigureAwait(false);
-            }
-            // ReSharper disable once EmptyGeneralCatchClause
-            catch {}
-            // TODO: Add assertion / logging for State == Unpublished ?
-            info.StopCts?.Dispose();
-            info.StopDelayedUnpublishCts?.Dispose();
-            Publications.TryRemove((info.Input, info.Factory), info);
-            PublicationsById.TryRemove(info.Id, info);
         }
 
         public virtual IPublication? TryGet(Symbol publicationId) 
             => PublicationsById.TryGetValue(publicationId, out var info) ? info.Publication : null;
 
-        public virtual async Task UnpublishAsync(IPublication publication)
+        void IPublisherImpl.OnPublicationDisposed(IPublication publication) 
+            => OnPublicationDisposed(publication);
+        protected virtual void OnPublicationDisposed(IPublication publication)
         {
-            if (!PublicationsById.TryGetValue(publication.Id, out var info))
+            if (publication.Publisher != this)
+                throw new ArgumentOutOfRangeException(nameof(publication));
+            if (!PublicationsById.TryGetValue(publication.Id, out var publicationInfo))
                 return;
-            if (info.State == PublicationState.Unpublished)
-                return;
-            try {
-                info.StopCts.Cancel();
-            }
-            // ReSharper disable once EmptyGeneralCatchClause
-            catch { }
-            try {
-                await info.PublishTask.ConfigureAwait(false);
-            }
-            // ReSharper disable once EmptyGeneralCatchClause
-            catch { }
+            Publications.TryRemove((publicationInfo.Input, publicationInfo.Factory), publicationInfo);
+            PublicationsById.TryRemove(publicationInfo.Id, publicationInfo);
         }
 
-        public virtual bool BeginDelayedUnpublish(IPublication publication)
-        {
-            if (!PublicationsById.TryGetValue(publication.Id, out var info))
-                return false;
-            if (info.State == PublicationState.Unpublished)
-                return false;
-            using var cts = new CancellationTokenSource();
-            EndDelayedUnpublish(info);
-            if (Interlocked.CompareExchange(ref info.StopDelayedUnpublishCts, cts, null) != null) {
-                cts.Dispose();
-                return true; // Someone else just did the same, which is fine too
-            }
-            // We want to just start this task here.
-            // No try-catch because the callee is supposed to
-            // suppress OperationCancelledException.
-            info.PublicationImpl.DelayedUnpublishAsync(cts.Token);
-            return true;
-        }
-
-        public virtual void EndDelayedUnpublish(IPublication publication)
-        {
-            if (PublicationsById.TryGetValue(publication.Id, out var info))
-                EndDelayedUnpublish(info);
-        }
-
-        protected void EndDelayedUnpublish(PublicationInfo info)
-        {
-            var cts = Interlocked.Exchange(ref info.StopDelayedUnpublishCts, null);
-            info.StopDelayedUnpublishCts = null;
-            // ReSharper disable once EmptyGeneralCatchClause
-            try { cts?.Cancel(); } catch {}
-            cts?.Dispose();
-        }
 
         // Channel-related
 
+        protected virtual ChannelProcessor CreateChannelProcessor(Channel<Message> channel) 
+            => new ChannelProcessor(channel, this);
+
         protected virtual void OnChannelAttached(Channel<Message> channel)
         {
-            var channelProcessor = new ChannelProcessor(channel, this);
+            var channelProcessor = CreateChannelProcessor(channel);
             if (!ChannelProcessors.TryAdd(channel, channelProcessor))
                 return;
             channelProcessor.RunAsync().ContinueWith(_ => {
@@ -194,52 +134,25 @@ namespace Stl.Fusion.Publish
             return channelProcessor.DisposeAsync();
         }
 
-        Task<bool> IPublisherImpl.SubscribeAsync(Channel<Message> channel, IPublication publication, bool notify, CancellationToken cancellationToken) 
-            => SubscribeAsync(channel, publication, notify, cancellationToken);
-        protected Task<bool> SubscribeAsync(Channel<Message> channel, IPublication publication, bool notify, CancellationToken cancellationToken = default)
+        bool IPublisherImpl.Subscribe(Channel<Message> channel, IPublication publication, bool notify) 
+            => Subscribe(channel, publication, notify);
+        protected bool Subscribe(Channel<Message> channel, IPublication publication, bool notify)
         {
             ThrowIfDisposedOrDisposing();
             if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
-                return TaskEx.FalseTask;
+                return false;
             if (publication.Publisher != this || publication.State == PublicationState.Unpublished)
-                return TaskEx.FalseTask;
-            var publicationId = publication.Id;
-            if (!channelProcessor.Subscriptions.TryAdd(publicationId, default))
-                return TaskEx.FalseTask;
-            if (!publication.AddHandler(channelProcessor)) {
-                channelProcessor.Subscriptions.TryRemove(publicationId, default);
-                return TaskEx.FalseTask;
-            }
-            if (notify) {
-                var message = new SubscribeMessage() {
-                    PublisherId = Id,
-                    PublicationId = publicationId,
-                };
-                return channel.Writer.WriteAsync(message, cancellationToken)
-                    .AsTask().ContinueWith(_ => true, CancellationToken.None);
-            }
-            return TaskEx.TrueTask;
+                return false;
+            return channelProcessor.Subscribe(publication, notify);
         }
 
-        Task<bool> IPublisherImpl.UnsubscribeAsync(Channel<Message> channel, IPublication publication, bool notify, CancellationToken cancellationToken) 
-            => UnsubscribeAsync(channel, publication, notify, cancellationToken);
-        protected Task<bool> UnsubscribeAsync(Channel<Message> channel, IPublication publication, bool notify, CancellationToken cancellationToken = default)
+        ValueTask<bool> IPublisherImpl.UnsubscribeAsync(Channel<Message> channel, IPublication publication) 
+            => UnsubscribeAsync(channel, publication);
+        protected ValueTask<bool> UnsubscribeAsync(Channel<Message> channel, IPublication publication)
         {
             if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
-                return TaskEx.FalseTask;
-            var publicationId = publication.Id;
-            if (!channelProcessor.Subscriptions.TryRemove(publicationId, default))
-                return TaskEx.FalseTask;
-            publication.RemoveHandler(channelProcessor);
-            if (notify) {
-                var message = new UnsubscribeMessage() {
-                    PublisherId = Id,
-                    PublicationId = publicationId,
-                };
-                return channel.Writer.WriteAsync(message, cancellationToken)
-                    .AsTask().ContinueWith(_ => true, CancellationToken.None);
-            }
-            return TaskEx.TrueTask;
+                return ValueTaskEx.FalseTask;
+            return channelProcessor.UnsubscribeAsync(publication);
         }
 
         protected override async ValueTask DisposeInternalAsync(bool disposing)
@@ -252,7 +165,7 @@ namespace Stl.Fusion.Publish
                     .ToList()
                     .Select(p => Task.Run(async () => {
                         var (_, publicationInfo) = (p.Key, p.Value);
-                        await UnpublishAsync(publicationInfo.Publication).ConfigureAwait(false);
+                        await publicationInfo.Publication.DisposeAsync().ConfigureAwait(false);
                     }));
                 await Task.WhenAll(tasks).ConfigureAwait(false);
             }

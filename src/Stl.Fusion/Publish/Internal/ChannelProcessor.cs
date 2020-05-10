@@ -12,19 +12,19 @@ using Stl.Text;
 
 namespace Stl.Fusion.Publish.Internal
 {
-    public class ChannelProcessor : AsyncProcessBase, IPublicationHandler
+    public class ChannelProcessor : AsyncProcessBase
     {
         public readonly Channel<Message> Channel;
         public readonly IPublisher Publisher;
         public readonly IPublisherImpl PublisherImpl;
-        public readonly ConcurrentDictionary<Symbol, Unit> Subscriptions; 
+        public readonly ConcurrentDictionary<Symbol, (Task SubscriptionTask, CancellationTokenSource StopCts)> Subscriptions; 
 
         public ChannelProcessor(Channel<Message> channel, IPublisher publisher)
         {
             Channel = channel;
             Publisher = publisher;
             PublisherImpl = (IPublisherImpl) publisher;
-            Subscriptions = new ConcurrentDictionary<Symbol, Unit>();
+            Subscriptions = new ConcurrentDictionary<Symbol, (Task, CancellationTokenSource)>();
         }
 
         protected override async Task RunInternalAsync(CancellationToken cancellationToken)
@@ -51,37 +51,96 @@ namespace Stl.Fusion.Publish.Internal
                 var publication = Publisher.TryGet(sm.PublicationId);
                 if (publication == null)
                     break;
-                return PublisherImpl.SubscribeAsync(Channel, publication, true, cancellationToken);
+                PublisherImpl.Subscribe(Channel, publication, true);
+                break;
             case UnsubscribeMessage um:
                 if (um.PublisherId != Publisher.Id)
                     break;
                 publication = Publisher.TryGet(um.PublicationId);
                 if (publication == null)
                     break;
-                return PublisherImpl.UnsubscribeAsync(Channel, publication, true, cancellationToken);
+                var _ = PublisherImpl.UnsubscribeAsync(Channel, publication);
+                break;
             }
             return Task.CompletedTask;
-        }
-
-        Task IPublicationHandler.OnStateChangedAsync(
-            IPublication publication, PublicationState previousState, Message? message,
-            CancellationToken cancellationToken) 
-            => OnStateChangedAsync(publication, previousState, message, cancellationToken);
-
-        protected async Task OnStateChangedAsync(
-            IPublication publication, PublicationState previousState, Message? message,
-            CancellationToken cancellationToken)
-        {
-            if (message == null)
-                return; 
-            var writer = Channel.Writer;
-            await writer.WriteAsync(message, cancellationToken).ConfigureAwait(false);
         }
 
         protected override async ValueTask DisposeInternalAsync(bool disposing)
         {
             await base.DisposeInternalAsync(disposing);
             await RemoveSubscriptionsAsync().ConfigureAwait(false);
+        }
+
+        public virtual bool Subscribe(IPublication publication, bool notify)
+        {
+            var publicationId = publication.Id;
+            if (Subscriptions.TryGetValue(publicationId, out var _))
+                return false;
+            var tcs = new TaskCompletionSource<Unit>();
+            var cts = new CancellationTokenSource();
+            if (!Subscriptions.TryAdd(publicationId, (tcs.Task, cts))) {
+                cts?.Dispose();
+                return false;
+            }
+            var _ = ProcessSubscriptionAsync(publication, notify, tcs, cts.Token);
+            return true;
+        }
+
+        public virtual async ValueTask<bool> UnsubscribeAsync(IPublication publication)
+        {
+            var publicationId = publication.Id;
+            if (!Subscriptions.TryRemove(publicationId, out var info))
+                return false;
+            info.StopCts.Cancel();
+            await info.SubscriptionTask.ConfigureAwait(false);
+            return true;
+        }
+
+        protected virtual async Task ProcessSubscriptionAsync(IPublication publication, bool notify, TaskCompletionSource<Unit> completionTcs, CancellationToken cancellationToken)
+        {
+            try {
+                var writer = Channel.Writer;
+                try {
+                    if (notify)
+                        await NotifySubscribeAsync(publication, cancellationToken).ConfigureAwait(false);
+                    await foreach (var e in publication.WithCancellation(cancellationToken).ConfigureAwait(false)) {
+                        var message = e.Message;
+                        if (message != null)
+                            await writer.WriteAsync(message, cancellationToken).ConfigureAwait(false);
+                    }
+                }
+                finally {
+                    if (notify && await writer.WaitToWriteAsync(cancellationToken))
+                        await NotifyUnsubscribeAsync(publication, cancellationToken).ConfigureAwait(false);
+                }
+            }
+            catch (OperationCanceledException) {
+                // Legit termination
+            }
+            catch {
+                // TODO: Add logging
+            }
+            finally {
+                completionTcs.SetResult(default);
+            }
+        }
+
+        protected virtual ValueTask NotifySubscribeAsync(IPublication publication, CancellationToken cancellationToken)
+        {
+            var message = new SubscribeMessage() {
+                PublisherId = publication.Publisher.Id,
+                PublicationId = publication.Id,
+            };
+            return Channel.Writer.WriteAsync(message, cancellationToken);
+        }
+
+        protected virtual ValueTask NotifyUnsubscribeAsync(IPublication publication, CancellationToken cancellationToken)
+        {
+            var message = new UnsubscribeMessage() {
+                PublisherId = publication.Publisher.Id,
+                PublicationId = publication.Id,
+            };
+            return Channel.Writer.WriteAsync(message, cancellationToken);
         }
 
         protected virtual async Task RemoveSubscriptionsAsync()
@@ -97,7 +156,7 @@ namespace Stl.Fusion.Publish.Internal
                             var (publicationId, _) = (p.Key, p.Value);
                             var publication = Publisher.TryGet(publicationId);
                             if (publication != null)
-                                await PublisherImpl.UnsubscribeAsync(Channel, publication, false).ConfigureAwait(false);
+                                await PublisherImpl.UnsubscribeAsync(Channel, publication).ConfigureAwait(false);
                         }));
                     await Task.WhenAll(tasks).ConfigureAwait(false);
                 }

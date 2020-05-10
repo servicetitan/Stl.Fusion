@@ -24,13 +24,13 @@ namespace Stl.Tests.Async
             AsyncEventSource<int> s;
             await using (s = new AsyncEventSource<int>()) {
                 tasks.Add(CheckSequential(s, maxN));
-                await s.PublishAsync(n++);
+                await s.NextAsync(n++);
                 await Task.Delay(10);
                 tasks.Add(CheckSequential(s, maxN));
-                await s.PublishAsync(n++);
+                await s.NextAsync(n++);
                 await Task.Delay(10);
                 tasks.Add(CheckSequential(s, maxN));
-                await s.PublishAsync(n++);
+                await s.NextAsync(n++);
             }
             s.IsCompleted.Should().BeTrue();
             await Task.WhenAll(tasks);
@@ -46,13 +46,13 @@ namespace Stl.Tests.Async
             AsyncEventSource<int> s;
             await using (s = new AsyncEventSource<int>()) {
                 tasks.Add(CheckSequential(s, maxN));
-                await s.PublishAsync(n++);
+                await s.NextAsync(n++);
                 await Task.Yield();
                 tasks.Add(CheckSequential(s, maxN));
-                await s.PublishAsync(n++);
+                await s.NextAsync(n++);
                 await Task.Yield();
                 tasks.Add(CheckSequential(s, maxN));
-                await s.PublishAsync(n++);
+                await s.NextAsync(n++);
             }
             s.IsCompleted.Should().BeTrue();
             await Task.WhenAll(tasks);
@@ -69,11 +69,11 @@ namespace Stl.Tests.Async
             AsyncEventSource<int> s;
             await using (s = new AsyncEventSource<int>()) {
                 tasks.Add(Task.Run(() => CheckSequential(s, maxN)));
-                await s.PublishAsync(n++);
+                await s.NextAsync(n++);
                 // tasks.Add(Task.Run(() => CheckSequential(s, maxN)));
-                await s.PublishAsync(n++);
+                await s.NextAsync(n++);
                 // tasks.Add(Task.Run(() => CheckSequential(s, maxN)));
-                await s.PublishAsync(n++);
+                await s.NextAsync(n++);
             }
             s.IsCompleted.Should().BeTrue();
             await Task.WhenAll(tasks);
@@ -83,18 +83,18 @@ namespace Stl.Tests.Async
         [Fact]
         public async Task ConcurrentTest()
         {
-            var bigTasks = Enumerable.Range(0, 1000).Select(async seed => {
+            var bigTasks = Enumerable.Range(0, 2000).Select(async seed => {
                 await Task.Yield();
                 var rnd = new Random(seed);
                 var tasks = new List<Task<int>>();
                 AsyncEventSource<int> s;
                 await using (s = new AsyncEventSource<int>()) {
-                    var maxI = rnd.Next(1000);
+                    var maxI = rnd.Next(2000);
                     tasks.Add(CheckSequential(s, maxI, false));
                     for (var i = 0; i <= maxI; i++) {
                         if (rnd.Next(3) == 0)
                             tasks.Add(CheckSequentialRandomStop(i, s));
-                        await s.PublishAsync(i);
+                        await s.NextAsync(i);
                     }
                 }
                 s.IsCompleted.Should().BeTrue();
