@@ -30,7 +30,7 @@ namespace Stl.Fusion.Publish
         void OnPublicationDisposed(IPublication publication);
     }
 
-    public abstract class PublisherBase : AsyncDisposableBase, IPublisherImpl
+    public class Publisher : AsyncDisposableBase, IPublisherImpl
     {
         protected ConcurrentDictionary<(ComputedInput Input, Type PublicationType), IPublication> Publications { get; } 
         protected ConcurrentDictionary<Symbol, IPublication> PublicationsById { get; }
@@ -45,7 +45,7 @@ namespace Stl.Fusion.Publish
         public IPublicationFactory PublicationFactory { get; }
         public Type DefaultPublicationType { get; }
 
-        protected PublisherBase(Symbol id, 
+        public Publisher(Symbol id, 
             IChannelHub<Message> channelHub,
             IGenerator<Symbol> publicationIdGenerator,
             bool ownsChannelRegistry = true,

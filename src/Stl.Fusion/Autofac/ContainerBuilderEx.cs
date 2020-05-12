@@ -1,7 +1,12 @@
 using Autofac;
 using Autofac.Builder;
 using Autofac.Extras.DynamicProxy;
+using Stl.Channels;
 using Stl.Concurrency;
+using Stl.Fusion.Publish;
+using Stl.Fusion.Publish.Messages;
+using Stl.Security;
+using Stl.Text;
 
 namespace Stl.Fusion.Autofac
 {
@@ -21,6 +26,25 @@ namespace Stl.Fusion.Autofac
                 .SingleInstance();
             builder.RegisterType<CustomFunction>()
                 .ComputedProvider();
+            return builder;
+        }
+
+        public static ContainerBuilder AddFusionPublisher(this ContainerBuilder builder, 
+            Symbol publisherId, 
+            IGenerator<Symbol>? publicationIdGenerator = null) 
+        {
+            IGenerator<Symbol> PublicationIdGeneratorResolver(IComponentContext c) 
+                => publicationIdGenerator ?? c.Resolve<IGenerator<Symbol>>();
+
+            builder.RegisterType<ChannelHub<Message>>()
+                .As<IChannelHub<Message>>();
+            builder.Register(c => new Publisher(
+                    publisherId, 
+                    c.Resolve<IChannelHub<Message>>(),
+                    PublicationIdGeneratorResolver(c), 
+                    false))
+                .As<IPublisher>()
+                .SingleInstance();
             return builder;
         }
 

@@ -10,10 +10,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Stl.IO;
 using Stl.Fusion.Autofac;
+using Stl.Security;
 using Stl.Testing;
 using Stl.Testing.Internal;
 using Stl.Tests.Fusion.Model;
 using Stl.Tests.Fusion.Services;
+using Stl.Text;
 using Xunit.Abstractions;
 using Xunit.DependencyInjection.Logging;
 
@@ -117,7 +119,12 @@ namespace Stl.Tests.Fusion
 
         protected virtual void ConfigureServices(ContainerBuilder builder)
         {
+            var publicationIdGenerator = new TransformingGenerator<string, Symbol>(
+                new RandomStringGenerator(), 
+                s => new Symbol($"p-{s}"));
+
             builder.AddFusion();
+            builder.AddFusionPublisher("publisher", publicationIdGenerator);
 
             // Computed providers
             builder.RegisterType<SimplestProvider>()
