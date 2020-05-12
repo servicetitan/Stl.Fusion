@@ -4,7 +4,7 @@ using Stl.Fusion.Internal;
 using Stl.Reflection;
 using Stl.Text;
 
-namespace Stl.Fusion.Publish
+namespace Stl.Fusion.Publish.Internal
 {
     public interface IPublicationFactory
     {

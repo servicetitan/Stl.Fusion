@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reactive;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using Stl.Async;
 using Stl.Fusion.Publish.Messages;
@@ -19,7 +20,7 @@ namespace Stl.Fusion.Publish
         Unpublished,
     }
 
-    public interface IPublication : IAsyncEnumerable<PublicationStateChange>, IAsyncDisposable
+    public interface IPublication : IAsyncEnumerable<PublicationStateChanged>, IAsyncDisposable
     {
         Type PublicationType { get; }
         IPublisher Publisher { get; }
@@ -38,7 +39,9 @@ namespace Stl.Fusion.Publish
     }
 
     public interface IPublicationImpl : IPublication, IAsyncProcess
-    { }
+    {
+        Task RunSubscriptionAsync(Channel<Message> channel, bool notify, CancellationToken cancellationToken);
+    }
 
     public interface IPublicationImpl<T> : IPublicationImpl, IPublication<T> { }
 
@@ -49,7 +52,7 @@ namespace Stl.Fusion.Publish
         private volatile object? _lastInvalidatedBy;
 
         protected readonly Action<IComputed, object?> InvalidatedHandler; 
-        protected readonly AsyncEventSource<PublicationStateChange> StateChangeEventSource;
+        protected readonly AsyncEventSource<PublicationStateChanged> StateChangeEventSource;
         protected volatile TaskCompletionSource<object?> InvalidatedTcs = null!;
         protected volatile int LastTouchTime;
         protected bool IsExpired;
@@ -70,14 +73,14 @@ namespace Stl.Fusion.Publish
         protected PublicationBase(Type publicationType, IPublisher publisher, IComputed<T> computed, Symbol id)
         {
             InvalidatedHandler = (_, invalidatedBy) => InvalidatedTcs?.SetResult(invalidatedBy);         
-            StateChangeEventSource = new AsyncEventSource<PublicationStateChange>(ObserverCountChanged);
+            StateChangeEventSource = new AsyncEventSource<PublicationStateChanged>(ObserverCountChanged);
             PublicationType = publicationType;
             Publisher = publisher;
             Id = id;
             ChangeStateUnsafe(computed, PublicationState.Consistent);
         }
 
-        public IAsyncEnumerator<PublicationStateChange> GetAsyncEnumerator(CancellationToken cancellationToken = default) 
+        public IAsyncEnumerator<PublicationStateChanged> GetAsyncEnumerator(CancellationToken cancellationToken = default) 
             => StateChangeEventSource.GetAsyncEnumerator(cancellationToken);
 
         public bool Touch()
@@ -162,6 +165,8 @@ namespace Stl.Fusion.Publish
             PublisherImpl.OnPublicationDisposed(this);
         }
 
+        // Lifetime events
+
         protected abstract bool OnInvalidated(); 
 
         protected virtual Task<bool> OnUpdatePendingAsync(CancellationToken cancellationToken)
@@ -172,7 +177,7 @@ namespace Stl.Fusion.Publish
 
         // Expiration
 
-        protected virtual void ObserverCountChanged(AsyncEventSource<PublicationStateChange, Unit> source, 
+        protected virtual void ObserverCountChanged(AsyncEventSource<PublicationStateChanged, Unit> source, 
             int observerCount, bool isAdded)
         {
             if (observerCount == 0)
@@ -219,23 +224,62 @@ namespace Stl.Fusion.Publish
             return lastUseTime + TimeSpan.FromSeconds(30); 
         }
 
-        // State change
+        // Subscription
+
+        Task IPublicationImpl.RunSubscriptionAsync(Channel<Message> channel, bool notify, CancellationToken cancellationToken) 
+            => RunSubscriptionAsync(channel, notify, cancellationToken);
+        protected virtual async Task RunSubscriptionAsync(Channel<Message> channel, bool notify, CancellationToken cancellationToken)
+        {
+            var writer = channel.Writer;
+            try {
+                if (notify)
+                    await NotifySubscribeAsync(channel, cancellationToken).ConfigureAwait(false);
+                await foreach (var e in this.WithCancellation(cancellationToken).ConfigureAwait(false)) {
+                    var message = e.Message;
+                    if (message != null)
+                        await writer.WriteAsync(message, cancellationToken).ConfigureAwait(false);
+                }
+            }
+            finally {
+                if (notify && await writer.WaitToWriteAsync(cancellationToken))
+                    await NotifyUnsubscribeAsync(channel, cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        protected virtual ValueTask NotifySubscribeAsync(Channel<Message> channel, CancellationToken cancellationToken)
+        {
+            var message = new SubscribeMessage() {
+                PublisherId = Publisher.Id,
+                PublicationId = Id,
+            };
+            return channel.Writer.WriteAsync(message, cancellationToken);
+        }
+
+        protected virtual ValueTask NotifyUnsubscribeAsync(Channel<Message> channel, CancellationToken cancellationToken)
+        {
+            var message = new UnsubscribeMessage() {
+                PublisherId = Publisher.Id,
+                PublicationId = Id,
+            };
+            return channel.Writer.WriteAsync(message, cancellationToken);
+        }
+
+        // State change & other low-level stuff
 
         protected virtual ValueTask ChangeStateAsync(IComputed<T> nextComputed, PublicationState nextState)
         {
-            PublicationStateChange publicationStateChange;
+            PublicationStateChanged eventInfo;
             lock (Lock) {
-                var previousState = _state;
                 ChangeStateUnsafe(nextComputed, nextState);
-                var message = CreateMessageUnsafe();
-                publicationStateChange = new PublicationStateChange(this, previousState, message);
+                var message = CreateStateChangedMessageUnsafe();
+                eventInfo = new PublicationStateChanged(this, message);
             }
             return nextState != PublicationState.Unpublished 
-                ? StateChangeEventSource.NextAsync(publicationStateChange) 
-                : StateChangeEventSource.LastAsync(publicationStateChange);
+                ? StateChangeEventSource.NextAsync(eventInfo) 
+                : StateChangeEventSource.LastAsync(eventInfo);
         }
 
-        protected virtual Message? CreateMessageUnsafe()
+        protected virtual Message? CreateStateChangedMessageUnsafe()
         {
             // Can be invoked from Lock-protected sections only
             var message = (Message?) null;

@@ -5,6 +5,7 @@ using System.Reactive;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using Castle.Core.Internal;
 using Stl.Async;
 using Stl.Fusion.Publish.Messages;
 using Stl.OS;
@@ -17,7 +18,8 @@ namespace Stl.Fusion.Publish.Internal
         public readonly Channel<Message> Channel;
         public readonly IPublisher Publisher;
         public readonly IPublisherImpl PublisherImpl;
-        public readonly ConcurrentDictionary<Symbol, (Task SubscriptionTask, CancellationTokenSource StopCts)> Subscriptions; 
+        public readonly ConcurrentDictionary<Symbol, (Task SubscriptionTask, CancellationTokenSource StopCts)> Subscriptions;
+        protected object Lock => Subscriptions;  
 
         public ChannelProcessor(Channel<Message> channel, IPublisher publisher)
         {
@@ -74,16 +76,26 @@ namespace Stl.Fusion.Publish.Internal
         public virtual bool Subscribe(IPublication publication, bool notify)
         {
             var publicationId = publication.Id;
-            if (Subscriptions.TryGetValue(publicationId, out var _))
+            if (Subscriptions.TryGetValue(publicationId, out _))
                 return false;
-            var tcs = new TaskCompletionSource<Unit>();
-            var cts = new CancellationTokenSource();
-            if (!Subscriptions.TryAdd(publicationId, (tcs.Task, cts))) {
-                cts?.Dispose();
-                return false;
+            lock (Lock) {
+                // Double check locking
+                if (Subscriptions.TryGetValue(publicationId, out var _))
+                    return false;
+                var publicationImpl = (IPublicationImpl) publication;
+                var stopCts = new CancellationTokenSource();
+                try {
+                    var subscriptionTask = publicationImpl
+                        .RunSubscriptionAsync(Channel, notify, stopCts.Token)
+                        .SuppressExceptions(); // TODO: Add exception logging?
+                    Subscriptions[publicationId] = (subscriptionTask, stopCts);
+                }
+                catch {
+                    stopCts?.Dispose();
+                    throw;
+                }
+                return true;
             }
-            var _ = ProcessSubscriptionAsync(publication, notify, tcs, cts.Token);
-            return true;
         }
 
         public virtual async ValueTask<bool> UnsubscribeAsync(IPublication publication)
@@ -91,56 +103,10 @@ namespace Stl.Fusion.Publish.Internal
             var publicationId = publication.Id;
             if (!Subscriptions.TryRemove(publicationId, out var info))
                 return false;
-            info.StopCts.Cancel();
-            await info.SubscriptionTask.ConfigureAwait(false);
+            var (subscriptionTask, stopCts) = info;
+            stopCts.Cancel();
+            await subscriptionTask.ConfigureAwait(false);
             return true;
-        }
-
-        protected virtual async Task ProcessSubscriptionAsync(IPublication publication, bool notify, TaskCompletionSource<Unit> completionTcs, CancellationToken cancellationToken)
-        {
-            try {
-                var writer = Channel.Writer;
-                try {
-                    if (notify)
-                        await NotifySubscribeAsync(publication, cancellationToken).ConfigureAwait(false);
-                    await foreach (var e in publication.WithCancellation(cancellationToken).ConfigureAwait(false)) {
-                        var message = e.Message;
-                        if (message != null)
-                            await writer.WriteAsync(message, cancellationToken).ConfigureAwait(false);
-                    }
-                }
-                finally {
-                    if (notify && await writer.WaitToWriteAsync(cancellationToken))
-                        await NotifyUnsubscribeAsync(publication, cancellationToken).ConfigureAwait(false);
-                }
-            }
-            catch (OperationCanceledException) {
-                // Legit termination
-            }
-            catch {
-                // TODO: Add logging
-            }
-            finally {
-                completionTcs.SetResult(default);
-            }
-        }
-
-        protected virtual ValueTask NotifySubscribeAsync(IPublication publication, CancellationToken cancellationToken)
-        {
-            var message = new SubscribeMessage() {
-                PublisherId = publication.Publisher.Id,
-                PublicationId = publication.Id,
-            };
-            return Channel.Writer.WriteAsync(message, cancellationToken);
-        }
-
-        protected virtual ValueTask NotifyUnsubscribeAsync(IPublication publication, CancellationToken cancellationToken)
-        {
-            var message = new UnsubscribeMessage() {
-                PublisherId = publication.Publisher.Id,
-                PublicationId = publication.Id,
-            };
-            return Channel.Writer.WriteAsync(message, cancellationToken);
         }
 
         protected virtual async Task RemoveSubscriptionsAsync()

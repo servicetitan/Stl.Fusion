@@ -52,7 +52,7 @@ namespace Stl.Fusion.Publish
             IPublicationFactory? publicationFactory = null,
             Type? defaultPublicationType = null)
         {
-            publicationFactory ??= Fusion.Publish.PublicationFactory.Instance;
+            publicationFactory ??= Internal.PublicationFactory.Instance;
             defaultPublicationType ??= typeof(UpdatingPublication<>);
             Id = id;
             ChannelHub = channelHub;
