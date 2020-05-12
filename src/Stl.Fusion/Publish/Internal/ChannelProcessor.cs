@@ -87,11 +87,17 @@ namespace Stl.Fusion.Publish.Internal
                 try {
                     var subscriptionTask = publicationImpl
                         .RunSubscriptionAsync(Channel, notify, stopCts.Token)
-                        .SuppressExceptions(); // TODO: Add exception logging?
+                        .SuppressExceptions() // TODO: Add exception logging?
+                        .ContinueWith(_ => UnsubscribeAsync(publication), CancellationToken.None);
                     Subscriptions[publicationId] = (subscriptionTask, stopCts);
                 }
                 catch {
-                    stopCts?.Dispose();
+                    try {
+                        stopCts.Cancel();
+                    }
+                    finally {
+                        stopCts?.Dispose();
+                    }
                     throw;
                 }
                 return true;
@@ -104,7 +110,14 @@ namespace Stl.Fusion.Publish.Internal
             if (!Subscriptions.TryRemove(publicationId, out var info))
                 return false;
             var (subscriptionTask, stopCts) = info;
-            stopCts.Cancel();
+            if (!stopCts.IsCancellationRequested) {
+                try {
+                    stopCts.Cancel();
+                }
+                catch {
+                    // We don't care about any exceptions here
+                }
+            }
             await subscriptionTask.ConfigureAwait(false);
             return true;
         }
