@@ -18,15 +18,16 @@ namespace Stl.Fusion.Publish
     public interface IPublisher
     {
         Symbol Id { get; }
+        IChannelHub<Message> ChannelHub { get; }
+
         IPublication Publish(IComputed computed, Type? publicationType = null);
         IPublication? TryGet(Symbol publicationId);
+        bool Subscribe(Channel<Message> channel, IPublication publication, bool notify);
+        ValueTask<bool> UnsubscribeAsync(Channel<Message> channel, IPublication publication);
     }
 
     public interface IPublisherImpl : IPublisher
     {
-        IChannelHub<Message> ChannelHub { get; }
-        bool Subscribe(Channel<Message> channel, IPublication publication, bool notify);
-        ValueTask<bool> UnsubscribeAsync(Channel<Message> channel, IPublication publication);
         void OnPublicationDisposed(IPublication publication);
     }
 
@@ -53,7 +54,7 @@ namespace Stl.Fusion.Publish
             Type? defaultPublicationType = null)
         {
             publicationFactory ??= Internal.PublicationFactory.Instance;
-            defaultPublicationType ??= typeof(UpdatingPublication<>);
+            defaultPublicationType ??= typeof(Publication<>);
             Id = id;
             ChannelHub = channelHub;
             OwnsChannelRegistry = ownsChannelRegistry;
@@ -111,6 +112,22 @@ namespace Stl.Fusion.Publish
             PublicationsById.TryRemove(p.Id, p);
         }
 
+        public bool Subscribe(Channel<Message> channel, IPublication publication, bool notify)
+        {
+            ThrowIfDisposedOrDisposing();
+            if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
+                return false;
+            if (publication.Publisher != this || publication.State == PublicationState.Disposed)
+                return false;
+            return channelProcessor.Subscribe(publication, notify);
+        }
+
+        public ValueTask<bool> UnsubscribeAsync(Channel<Message> channel, IPublication publication)
+        {
+            if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
+                return ValueTaskEx.FalseTask;
+            return channelProcessor.UnsubscribeAsync(publication);
+        }
 
         // Channel-related
 
@@ -138,30 +155,10 @@ namespace Stl.Fusion.Publish
             return channelProcessor.DisposeAsync();
         }
 
-        bool IPublisherImpl.Subscribe(Channel<Message> channel, IPublication publication, bool notify) 
-            => Subscribe(channel, publication, notify);
-        protected bool Subscribe(Channel<Message> channel, IPublication publication, bool notify)
-        {
-            ThrowIfDisposedOrDisposing();
-            if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
-                return false;
-            if (publication.Publisher != this || publication.State == PublicationState.Disposed)
-                return false;
-            return channelProcessor.Subscribe(publication, notify);
-        }
-
-        ValueTask<bool> IPublisherImpl.UnsubscribeAsync(Channel<Message> channel, IPublication publication) 
-            => UnsubscribeAsync(channel, publication);
-        protected ValueTask<bool> UnsubscribeAsync(Channel<Message> channel, IPublication publication)
-        {
-            if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
-                return ValueTaskEx.FalseTask;
-            return channelProcessor.UnsubscribeAsync(publication);
-        }
-
         protected override async ValueTask DisposeInternalAsync(bool disposing)
         {
             ChannelHub.Attached -= OnChannelAttachedCached;
+            ChannelHub.Detached -= OnChannelDetachedCached;
             var publications = PublicationsById;
             while (!publications.IsEmpty) {
                 var tasks = publications

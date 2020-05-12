@@ -44,12 +44,12 @@ namespace Stl.Fusion.Publish
 
     public interface IPublicationImpl<T> : IPublicationImpl, IPublication<T> { }
 
-    public abstract class PublicationBase<T> : AsyncProcessBase, IPublicationImpl<T>
+    public class Publication<T> : AsyncProcessBase, IPublicationImpl<T>
     {
+        // Fields
         private volatile IComputed<T> _computed = null!;
         private volatile PublicationState _state;
         private volatile object? _lastInvalidatedBy;
-
         protected readonly Action<IComputed, object?> InvalidatedHandler; 
         protected readonly AsyncEventSource<PublicationStateChangedEvent> StateChangedEventSource;
         protected volatile TaskCompletionSource<object?> InvalidatedTcs = null!;
@@ -57,6 +57,7 @@ namespace Stl.Fusion.Publish
         protected bool IsExpired;
         protected object Lock => InvalidatedHandler;
 
+        // Properties
         public Type PublicationType { get; }
         public IPublisher Publisher { get; }
         public Symbol Id { get; }
@@ -67,10 +68,7 @@ namespace Stl.Fusion.Publish
         public IntMoment LastUseTime => StateChangedEvents.HasObservers ? IntMoment.Now : new IntMoment(LastTouchTime);
         public IAsyncEventSource<PublicationStateChangedEvent> StateChangedEvents => StateChangedEventSource;
 
-
-        protected IPublisherImpl PublisherImpl => (IPublisherImpl) Publisher; // Just a shortcut
-
-        protected PublicationBase(Type publicationType, IPublisher publisher, IComputed<T> computed, Symbol id)
+        public Publication(Type publicationType, IPublisher publisher, IComputed<T> computed, Symbol id)
         {
             InvalidatedHandler = (_, invalidatedBy) => InvalidatedTcs?.SetResult(invalidatedBy);         
             StateChangedEventSource = new AsyncEventSource<PublicationStateChangedEvent>(ObserverCountChanged);
@@ -152,11 +150,13 @@ namespace Stl.Fusion.Publish
             lock (Lock) {
                 IsExpired = true;
             }
+            
             if (State != PublicationState.Disposed)
                 await ChangeStateAsync(Computed, PublicationState.Disposed).ConfigureAwait(false);
             await StateChangedEventSource.DisposeAsync(); // Same as CompleteAsync;
             await base.DisposeInternalAsync(disposing).ConfigureAwait(false);
-            PublisherImpl.OnPublicationDisposed(this);
+            if (Publisher is IPublisherImpl pi)
+                pi.OnPublicationDisposed(this);
         }
 
         // Expiration
@@ -170,13 +170,15 @@ namespace Stl.Fusion.Publish
 
         protected virtual async Task ExpireAsync(CancellationToken cancellationToken)
         {
+            // return;
             try {
                 var start = IntMoment.Now;
                 var lastUseTime = LastUseTime;
                 while (true) {
                     var nextCheckTime = GetNextExpirationCheckTime(start, lastUseTime);
                     var delay = TimeSpan.FromTicks(IntMoment.TicksPerUnit * Math.Min(0, nextCheckTime - IntMoment.Now));
-                    await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
+                    if (delay > TimeSpan.Zero)
+                        await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
                     var newLastUseTime = LastUseTime;
                     if (newLastUseTime == lastUseTime) {
                         lock (Lock) {
@@ -216,8 +218,10 @@ namespace Stl.Fusion.Publish
         {
             var writer = channel.Writer;
             try {
-                if (notify)
+                if (notify) {
+                    Touch(); // In case the next call takes a while 
                     await NotifySubscribeAsync(channel, cancellationToken).ConfigureAwait(false);
+                }
                 await foreach (var e in StateChangedEvents.WithCancellation(cancellationToken).ConfigureAwait(false)) {
                     var message = e.Message;
                     if (message != null)
@@ -225,8 +229,22 @@ namespace Stl.Fusion.Publish
                 }
             }
             finally {
-                if (notify && await writer.WaitToWriteAsync(cancellationToken))
-                    await NotifyUnsubscribeAsync(channel, cancellationToken).ConfigureAwait(false);
+                var cts = (CancellationTokenSource?) null;
+                try {
+                    if (cancellationToken.IsCancellationRequested) {
+                        cts = new CancellationTokenSource();
+                        cts.CancelAfter(10_000);
+                        cancellationToken = cts.Token;
+                    }
+                    if (notify && await writer.WaitToWriteAsync(cancellationToken))
+                        await NotifyUnsubscribeAsync(channel, cancellationToken).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) {
+                    // Ignore: it's totally fine to see it here
+                }
+                finally {
+                    cts?.Dispose();
+                }
             }
         }
 
@@ -279,7 +297,7 @@ namespace Stl.Fusion.Publish
             case PublicationState.Invalidated:
                 e = new PublicationInvalidatedEvent(this, new InvalidatedMessage() {
                     Tag = Computed.Tag,
-                });
+                }, IntMoment.Now + TimeSpan.FromSeconds(0.1));
                 break;
             case PublicationState.Disposed:
                 e = new PublicationDisposedEvent(this, new DisposedMessage());
@@ -307,9 +325,9 @@ namespace Stl.Fusion.Publish
         }
     }
 
-    public class UpdatingPublication<T> : PublicationBase<T>
+    public class NonUpdatingPublication<T> : Publication<T>
     {
-        public UpdatingPublication(Type publicationType, IPublisher publisher, IComputed<T> computed, Symbol id) 
+        public NonUpdatingPublication(Type publicationType, IPublisher publisher, IComputed<T> computed, Symbol id) 
             : base(publicationType, publisher, computed, id)              
         { }
 
@@ -317,15 +335,8 @@ namespace Stl.Fusion.Publish
         {
             var e = base.CreateStateChangedEventUnsafe();
             if (e is PublicationInvalidatedEvent ie)
-                ie.VoteForNextUpdateTime(TimeSpan.FromSeconds(0.1));
+                ie.NextUpdateTime = IntMoment.MaxValue;
             return e;
         }
-    }
-
-    public class NonUpdatingPublication<T> : PublicationBase<T>
-    {
-        public NonUpdatingPublication(Type publicationType, IPublisher publisher, IComputed<T> computed, Symbol id) 
-            : base(publicationType, publisher, computed, id) 
-        { }
     }
 }

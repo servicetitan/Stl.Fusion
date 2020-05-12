@@ -1,11 +1,9 @@
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
-using System.Reactive;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
-using Castle.Core.Internal;
 using Stl.Async;
 using Stl.Fusion.Publish.Messages;
 using Stl.OS;

@@ -109,12 +109,12 @@ namespace Stl.Async
                 while (true) {
                     if (state.IsCompleted)
                         yield break;
-                    cancellationToken.ThrowIfCancellationRequested();
-                    var eOption = await state.FireTcs.Task.ConfigureAwait(false);
+                    var eOption = await state.FireTcs
+                        .WithCancellation(cancellationToken)
+                        .ConfigureAwait(false);
                     if (!eOption.IsSome(out var e))
                         yield break;
                     try {
-                        cancellationToken.ThrowIfCancellationRequested();
                         Interlocked.Increment(ref state.ObservingObserverCount);
                         yield return e;
                     }
@@ -122,10 +122,14 @@ namespace Stl.Async
                         if (0 == Interlocked.Decrement(ref state.ObservingObserverCount))
                             state.ReadyTcs.TrySetResult(default);
                         else
-                            await state.ReadyTcs.Task.ConfigureAwait(false);
+                            await state.ReadyTcs
+                                .WithCancellation(cancellationToken)
+                                .ConfigureAwait(false);
                     }
-                    cancellationToken.ThrowIfCancellationRequested();
-                    state = await state.NextStateTcs.Task.ConfigureAwait(false);
+                    // TODO: NB: NextStateTcs is unnecessary - get rid of it.
+                    state = await state.NextStateTcs
+                        .WithCancellation(cancellationToken)
+                        .ConfigureAwait(false);
                 }
             }
             finally {

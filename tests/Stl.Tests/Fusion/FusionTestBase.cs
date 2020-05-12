@@ -2,14 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Stl.Channels;
 using Stl.IO;
 using Stl.Fusion.Autofac;
+using Stl.Fusion.Publish;
 using Stl.Security;
 using Stl.Testing;
 using Stl.Testing.Internal;
@@ -18,6 +21,7 @@ using Stl.Tests.Fusion.Services;
 using Stl.Text;
 using Xunit.Abstractions;
 using Xunit.DependencyInjection.Logging;
+using PublishMessage=Stl.Fusion.Publish.Messages.Message;
 
 namespace Stl.Tests.Fusion
 {
@@ -34,6 +38,8 @@ namespace Stl.Tests.Fusion
         public ILifetimeScope Container { get; }
         public ILogger Log { get; }
         public TestDbContext DbContext => Container.Resolve<TestDbContext>();
+        public IPublisher Publisher => Container.Resolve<IPublisher>();
+        public IChannelHub<PublishMessage> ChannelHub => Publisher.ChannelHub; // Publisher should be resolved first!
 
         public FusionTestBase(ITestOutputHelper @out, FusionTestOptions? options = null) : base(@out)
         {
@@ -90,7 +96,7 @@ namespace Stl.Tests.Fusion
                 // XUnit logging requires weird setup b/c otherwise it filters out
                 // everything below LogLevel.Information 
                 logging.AddProvider(new XunitTestOutputLoggerProvider(
-                    new SimpleTestOutputHelperAccessor(Out), 
+                    new TestOutputHelperAccessor(Out), 
                     LogFilter));
             });
 
@@ -138,5 +144,8 @@ namespace Stl.Tests.Fusion
             builder.RegisterType<UserProvider>()
                 .As<UserProvider>().InstancePerLifetimeScope();
         }
+        public virtual TestChannelPair<PublishMessage> CreateChannelPair(
+            string name, bool dumpMessages = true) 
+            => new TestChannelPair<PublishMessage>(name, 16, dumpMessages ? Out : null);
     }
 }

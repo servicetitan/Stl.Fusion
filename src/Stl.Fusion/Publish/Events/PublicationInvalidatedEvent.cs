@@ -9,7 +9,11 @@ namespace Stl.Fusion.Publish.Events
     public class PublicationInvalidatedEvent : PublicationStateChangedEvent
     {
         private volatile int _nextUpdateTimeUnits;
-        public IntMoment NextUpdateTime => new IntMoment(_nextUpdateTimeUnits);
+
+        public IntMoment NextUpdateTime {
+            get => new IntMoment(_nextUpdateTimeUnits);
+            set => Interlocked.Exchange(ref _nextUpdateTimeUnits, value.EpochOffsetUnits);
+        }
 
         public PublicationInvalidatedEvent(IPublication publication, Message? message)
             : this(publication, message, IntMoment.MaxValue) { }
