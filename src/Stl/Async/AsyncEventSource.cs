@@ -7,6 +7,13 @@ using Stl.Internal;
 
 namespace Stl.Async
 {
+    public interface IAsyncEventSource<out TEvent> : IAsyncEnumerable<TEvent>
+    {
+        bool IsCompleted { get; }
+        bool HasObservers { get; }
+        int ObserverCount { get; }
+    }
+
     public class AsyncEventSource<TEvent> : AsyncEventSource<TEvent, Unit>
     {
         public AsyncEventSource(Action<AsyncEventSource<TEvent, Unit>, int, bool>? onObserverCountChanged = null) 
@@ -14,7 +21,7 @@ namespace Stl.Async
         { }
     }
 
-    public class AsyncEventSource<TEvent, TTag> : IAsyncDisposable, IAsyncEnumerable<TEvent>
+    public class AsyncEventSource<TEvent, TTag> : IAsyncDisposable, IAsyncEventSource<TEvent>
     {
         private class State
         {

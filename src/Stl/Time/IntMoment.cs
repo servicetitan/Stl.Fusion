@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Stl.Time.Internal;
 
@@ -16,7 +15,7 @@ namespace Stl.Time
     public readonly struct IntMoment : IEquatable<IntMoment>, IComparable<IntMoment>
     {
         public const int UnitsPerSecond = 20;
-        public const int TicksPerUnit = (int) (TimeSpan.TicksPerSecond / UnitsPerSecond);
+        public const long TicksPerUnit = TimeSpan.TicksPerSecond / UnitsPerSecond;
 
         public static class Clock
         {

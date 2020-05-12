@@ -145,7 +145,7 @@ namespace Stl.Fusion.Publish
             ThrowIfDisposedOrDisposing();
             if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
                 return false;
-            if (publication.Publisher != this || publication.State == PublicationState.Unpublished)
+            if (publication.Publisher != this || publication.State == PublicationState.Disposed)
                 return false;
             return channelProcessor.Subscribe(publication, notify);
         }
