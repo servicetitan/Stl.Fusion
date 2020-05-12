@@ -21,6 +21,7 @@ namespace Stl.Fusion.Publish
 
     public interface IPublication : IAsyncEnumerable<PublicationStateChange>, IAsyncDisposable
     {
+        Type PublicationType { get; }
         IPublisher Publisher { get; }
         Symbol Id { get; }
         IComputed Computed { get; }
@@ -54,6 +55,7 @@ namespace Stl.Fusion.Publish
         protected bool IsExpired;
         protected object Lock => InvalidatedHandler;
 
+        public Type PublicationType { get; }
         public IPublisher Publisher { get; }
         public Symbol Id { get; }
         IComputed IPublication.Computed => _computed;
@@ -65,10 +67,11 @@ namespace Stl.Fusion.Publish
 
         protected IPublisherImpl PublisherImpl => (IPublisherImpl) Publisher; // Just a shortcut
 
-        protected PublicationBase(IPublisher publisher, IComputed<T> computed, Symbol id)
+        protected PublicationBase(Type publicationType, IPublisher publisher, IComputed<T> computed, Symbol id)
         {
             InvalidatedHandler = (_, invalidatedBy) => InvalidatedTcs?.SetResult(invalidatedBy);         
             StateChangeEventSource = new AsyncEventSource<PublicationStateChange>(ObserverCountChanged);
+            PublicationType = publicationType;
             Publisher = publisher;
             Id = id;
             ChangeStateUnsafe(computed, PublicationState.Consistent);
@@ -278,8 +281,8 @@ namespace Stl.Fusion.Publish
 
     public class UpdatingPublication<T> : PublicationBase<T>
     {
-        public UpdatingPublication(IPublisher publisher, IComputed<T> computed, Symbol id) 
-            : base(publisher, computed, id) 
+        public UpdatingPublication(Type publicationType, IPublisher publisher, IComputed<T> computed, Symbol id) 
+            : base(publicationType, publisher, computed, id)              
         { }
 
         protected override bool OnInvalidated() => true;
@@ -287,8 +290,8 @@ namespace Stl.Fusion.Publish
 
     public class NonUpdatingPublication<T> : PublicationBase<T>
     {
-        public NonUpdatingPublication(IPublisher publisher, IComputed<T> computed, Symbol id) 
-            : base(publisher, computed, id) 
+        public NonUpdatingPublication(Type publicationType, IPublisher publisher, IComputed<T> computed, Symbol id) 
+            : base(publicationType, publisher, computed, id) 
         { }
 
         protected override bool OnInvalidated() => false;

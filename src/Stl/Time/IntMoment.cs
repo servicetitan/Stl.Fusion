@@ -15,8 +15,8 @@ namespace Stl.Time
     [TypeConverter(typeof(IntMomentTypeConverter))]
     public readonly struct IntMoment : IEquatable<IntMoment>, IComparable<IntMoment>
     {
-        public const long UnitsPerSecond = 20;
-        public const long TicksPerUnit = TimeSpan.TicksPerSecond / UnitsPerSecond;
+        public const int UnitsPerSecond = 20;
+        public const int TicksPerUnit = (int) (TimeSpan.TicksPerSecond / UnitsPerSecond);
 
         public static class Clock
         {
@@ -44,13 +44,21 @@ namespace Stl.Time
                 Interlocked.Exchange(ref _epochOffsetUnits, clicks);
             }
 
-            private static async void BeginUpdates()
+            private static void BeginUpdates()
             {
-                var interval = new TimeSpan(TicksPerUnit / 2);
-                while (true) {
-                    await Task.Delay(interval).ConfigureAwait(false);
-                    Update();
-                }
+                // Dedicated thread is preferable here, since
+                // we need to adjust its priority.
+                var t = new Thread(() => {
+                    var interval = new TimeSpan(TicksPerUnit / 2);
+                    while (true) {
+                        Thread.Sleep(interval);
+                        Update();
+                    }
+                }, 64_000) {
+                    Priority = ThreadPriority.Highest, 
+                    IsBackground = true
+                };
+                t.Start();
             }
         }
 

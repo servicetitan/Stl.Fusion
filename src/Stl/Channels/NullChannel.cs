@@ -26,7 +26,7 @@ namespace Stl.Channels
 
         private class NullChannelWriter : ChannelWriter<TMessage>
         {
-            public override bool TryComplete(Exception error = null) 
+            public override bool TryComplete(Exception? error = null) 
                 => false;
 
             public override bool TryWrite(TMessage item) 

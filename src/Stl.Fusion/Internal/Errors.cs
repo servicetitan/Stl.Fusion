@@ -21,8 +21,7 @@ namespace Stl.Fusion.Internal
             => new InvalidCastException(
                 $"Computed.Captured() can't be converted to '{expectedType.Name}'.");
 
-        public static Exception TaskMustBeAlreadyCompleted()
-            => new InvalidOperationException(
-                "Task must be already completed at this point.");
+        public static Exception PublicationTypeMustBeOpenGenericType(string paramName)
+            => new ArgumentOutOfRangeException(paramName, "Publication type must be open generic type.");
     }
 }

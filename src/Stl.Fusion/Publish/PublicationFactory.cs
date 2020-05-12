@@ -6,63 +6,60 @@ using Stl.Text;
 
 namespace Stl.Fusion.Publish
 {
-    public delegate IPublication PublicationFactory(IPublisher publisher, IComputed computed, Symbol publicationId);
-
-    public static class PublicationFactoryEx
+    public interface IPublicationFactory
     {
-        private static readonly ConcurrentDictionary<Type, PublicationFactory> _cache =
-            new ConcurrentDictionary<Type, PublicationFactory>();
-        private static readonly Func<Type, PublicationFactory> _createHandler = Create;
+        public IPublication Create(Type publicationType, IPublisher publisher, IComputed computed, Symbol publicationId);
+    }
 
-        public static PublicationFactory For<TPublication>()
-            => _cache.GetOrAddChecked(typeof(TPublication), _createHandler);
-        public static PublicationFactory For(Type publicationType)
-            => _cache.GetOrAddChecked(publicationType, _createHandler);
-        public static readonly PublicationFactory Updating = 
-            For(typeof(UpdatingPublication<>)); 
-        public static readonly PublicationFactory NonUpdating = 
-            For(typeof(NonUpdatingPublication<>)); 
+    public sealed class PublicationFactory : IPublicationFactory
+    {
+        private delegate IPublication Constructor(IPublisher publisher, IComputed computed, Symbol publicationId);
 
-        private static PublicationFactory Create(Type publicationType)
+        private static readonly ConcurrentDictionary<Type, Constructor> ConstructorCache =
+            new ConcurrentDictionary<Type, Constructor>();
+        private static readonly Func<Type, Constructor> CreateCache = Create;
+
+        public static PublicationFactory Instance { get; } = new PublicationFactory();
+        
+        private PublicationFactory() { }
+
+        public IPublication Create(Type publicationType, IPublisher publisher, IComputed computed, Symbol publicationId) 
+            => ConstructorCache
+                .GetOrAddChecked(publicationType, CreateCache)
+                .Invoke(publisher, computed, publicationId);
+
+        private static Constructor Create(Type publicationType)
         {
-            if (!publicationType.IsGenericTypeDefinition) {
-                // Publication type is a specific one, so we assume it's "untyped" publication impl.
-
-                IPublication RegularFactory(IPublisher publisher, IComputed computed, Symbol publicationId)
-                    => (IPublication) publicationType.CreateInstance(publisher, computed, publicationId);
-
-                return RegularFactory;
-            }
-
-            // Publication type is a generic one, so we assume it's "typed" publication impl.
+            if (!publicationType.IsGenericTypeDefinition)
+                throw Errors.PublicationTypeMustBeOpenGenericType(nameof(publicationType));
                 
             var handler = new FactoryApplyHandler(publicationType);
                 
-            IPublication GenericFactory(IPublisher publisher, IComputed computed, Symbol publicationId) 
+            IPublication Factory(IPublisher publisher, IComputed computed, Symbol publicationId) 
                 => computed.Apply(handler, (publisher, publicationId));
 
-            return GenericFactory;
+            return Factory;
         }
 
         private class FactoryApplyHandler : IComputedApplyHandler<(IPublisher Publisher, Symbol PublicationId), IPublication>
         {
-            private readonly Type _publicationGenericType;
-            private readonly ConcurrentDictionary<Type, Type> _publicationTypeCache =
+            private readonly Type _publicationType;
+            private readonly ConcurrentDictionary<Type, Type> _closedTypeCache =
                 new ConcurrentDictionary<Type, Type>();
 
-            public FactoryApplyHandler(Type type) => _publicationGenericType = type;
+            public FactoryApplyHandler(Type publicationType) => _publicationType = publicationType;
 
             public IPublication Apply<TIn, TOut>(
                 IComputed<TIn, TOut> computed, 
                 (IPublisher Publisher, Symbol PublicationId) arg) 
                 where TIn : ComputedInput
             {
-                var publisherType = _publicationTypeCache.GetOrAddChecked(
+                var closedType = _closedTypeCache.GetOrAddChecked(
                     typeof(TOut), 
                     (tArg, tGeneric) => tGeneric.MakeGenericType(tArg), 
-                    _publicationGenericType);
-                return (IPublication) publisherType.CreateInstance(
-                    arg.Publisher, (IComputed<TOut>) computed, arg.PublicationId);
+                    _publicationType);
+                return (IPublication) closedType.CreateInstance(
+                    _publicationType, arg.Publisher, (IComputed<TOut>) computed, arg.PublicationId);
             }
         }
     }

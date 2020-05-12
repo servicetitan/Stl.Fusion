@@ -18,7 +18,7 @@ namespace Stl.Fusion.Publish
     public interface IPublisher
     {
         Symbol Id { get; }
-        IPublication Publish(IComputed computed, PublicationFactory? publicationFactory = null);
+        IPublication Publish(IComputed computed, Type? publicationType = null);
         IPublication? TryGet(Symbol publicationId);
     }
 
@@ -32,8 +32,8 @@ namespace Stl.Fusion.Publish
 
     public abstract class PublisherBase : AsyncDisposableBase, IPublisherImpl
     {
-        protected ConcurrentDictionary<(ComputedInput Input, PublicationFactory Factory), PublicationInfo> Publications { get; } 
-        protected ConcurrentDictionary<Symbol, PublicationInfo> PublicationsById { get; }
+        protected ConcurrentDictionary<(ComputedInput Input, Type PublicationType), IPublication> Publications { get; } 
+        protected ConcurrentDictionary<Symbol, IPublication> PublicationsById { get; }
         protected ConcurrentDictionary<Channel<Message>, ChannelProcessor> ChannelProcessors { get; }
         protected IGenerator<Symbol> PublicationIdGenerator { get; }
         protected bool OwnsChannelRegistry { get; }
@@ -42,58 +42,62 @@ namespace Stl.Fusion.Publish
 
         public Symbol Id { get; }
         public IChannelHub<Message> ChannelHub { get; }
-        public PublicationFactory DefaultPublicationFactory { get; }
+        public IPublicationFactory PublicationFactory { get; }
+        public Type DefaultPublicationType { get; }
 
         protected PublisherBase(Symbol id, 
             IChannelHub<Message> channelHub,
             IGenerator<Symbol> publicationIdGenerator,
             bool ownsChannelRegistry = true,
-            PublicationFactory? defaultPublicationFactory = null)
+            IPublicationFactory? publicationFactory = null,
+            Type? defaultPublicationType = null)
         {
-            defaultPublicationFactory ??= PublicationFactoryEx.Updating;
+            publicationFactory ??= Fusion.Publish.PublicationFactory.Instance;
+            defaultPublicationType ??= typeof(UpdatingPublication<>);
             Id = id;
             ChannelHub = channelHub;
             OwnsChannelRegistry = ownsChannelRegistry;
             PublicationIdGenerator = publicationIdGenerator;
-            DefaultPublicationFactory = defaultPublicationFactory;
-            OnChannelAttachedCached = OnChannelAttached;
-            OnChannelDetachedCached = OnChannelDetachedAsync;
+            PublicationFactory = publicationFactory;
+            DefaultPublicationType = defaultPublicationType;
 
             var concurrencyLevel = HardwareInfo.ProcessorCount << 2;
             var capacity = 7919;
-            Publications = new ConcurrentDictionary<(ComputedInput Input, PublicationFactory Factory), PublicationInfo>(concurrencyLevel, capacity);
-            PublicationsById = new ConcurrentDictionary<Symbol, PublicationInfo>(concurrencyLevel, capacity);
+            Publications = new ConcurrentDictionary<(ComputedInput, Type), IPublication>(concurrencyLevel, capacity);
+            PublicationsById = new ConcurrentDictionary<Symbol, IPublication>(concurrencyLevel, capacity);
             ChannelProcessors = new ConcurrentDictionary<Channel<Message>, ChannelProcessor>(concurrencyLevel, capacity);
+
+            OnChannelAttachedCached = OnChannelAttached;
+            OnChannelDetachedCached = OnChannelDetachedAsync;
+            ChannelHub.Detached += OnChannelDetachedCached; // Must go first
             ChannelHub.Attached += OnChannelAttachedCached;
-            ChannelHub.Detached += OnChannelDetachedCached;
         }
 
-        public virtual IPublication Publish(IComputed computed, PublicationFactory? publicationFactory = null)
+        public virtual IPublication Publish(IComputed computed, Type? publicationType = null)
         {
             ThrowIfDisposedOrDisposing();
-            publicationFactory ??= DefaultPublicationFactory;
+            publicationType ??= DefaultPublicationType;
             var spinWait = new SpinWait();
             while (true) {
-                 var pInfo = Publications.GetOrAddChecked(
-                    (computed.Input, Factory: publicationFactory), 
+                 var p = Publications.GetOrAddChecked(
+                    (computed.Input, PublicationType: publicationType), 
                     (key, arg) => {
                         var (this1, computed1) = arg;
-                        var publicationId = this1.PublicationIdGenerator.Next();
-                        var publication1 = key.Factory.Invoke(this1, computed1, publicationId);
-                        var pInfo1 = new PublicationInfo(publication1, key.Factory);
-                        this1.PublicationsById[publicationId] = pInfo1;
-                        pInfo1.PublicationImpl.RunAsync();
-                        return pInfo1;
+                        var publicationType1 = key.PublicationType;
+                        var id = this1.PublicationIdGenerator.Next();
+                        var p1 = this1.PublicationFactory.Create(publicationType1, this1, computed1, id);
+                        this1.PublicationsById[id] = p1;
+                        ((IPublicationImpl) p1).RunAsync();
+                        return p1;
                     }, (this, computed));
-                var publication = pInfo.Publication;
-                if (publication.Touch())
-                    return publication;
+                if (p.Touch())
+                    return p;
                 spinWait.SpinOnce();
             }
         }
 
         public virtual IPublication? TryGet(Symbol publicationId) 
-            => PublicationsById.TryGetValue(publicationId, out var info) ? info.Publication : null;
+            => PublicationsById.TryGetValue(publicationId, out var p) ? p : null;
 
         void IPublisherImpl.OnPublicationDisposed(IPublication publication) 
             => OnPublicationDisposed(publication);
@@ -101,10 +105,10 @@ namespace Stl.Fusion.Publish
         {
             if (publication.Publisher != this)
                 throw new ArgumentOutOfRangeException(nameof(publication));
-            if (!PublicationsById.TryGetValue(publication.Id, out var publicationInfo))
+            if (!PublicationsById.TryGetValue(publication.Id, out var p))
                 return;
-            Publications.TryRemove((publicationInfo.Input, publicationInfo.Factory), publicationInfo);
-            PublicationsById.TryRemove(publicationInfo.Id, publicationInfo);
+            Publications.TryRemove((p.Computed.Input, p.PublicationType), p);
+            PublicationsById.TryRemove(p.Id, p);
         }
 
 
@@ -164,8 +168,8 @@ namespace Stl.Fusion.Publish
                     .Take(HardwareInfo.ProcessorCount * 4)
                     .ToList()
                     .Select(p => Task.Run(async () => {
-                        var (_, publicationInfo) = (p.Key, p.Value);
-                        await publicationInfo.Publication.DisposeAsync().ConfigureAwait(false);
+                        var (_, publication) = (p.Key, p.Value);
+                        await publication.DisposeAsync().ConfigureAwait(false);
                     }));
                 await Task.WhenAll(tasks).ConfigureAwait(false);
             }
