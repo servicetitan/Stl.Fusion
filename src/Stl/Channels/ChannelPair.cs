@@ -4,8 +4,8 @@ namespace Stl.Channels
 {
     public class ChannelPair<T>
     {
-        public Channel<T> Channel1 { get; protected set; }
-        public Channel<T> Channel2 { get; protected set; }
+        public Channel<T> Channel1 { get; protected set; } = null!;
+        public Channel<T> Channel2 { get; protected set; } = null!;
 
         protected ChannelPair() { }
         public ChannelPair(Channel<T> channel1, Channel<T> channel2)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reactive;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Internal;
@@ -28,26 +29,29 @@ namespace Stl.Async
             public readonly bool IsCompleted;
             public readonly TaskCompletionSource<Option<TEvent>> FireTcs;
             public readonly TaskCompletionSource<Unit> ReadyTcs;
-            public readonly TaskCompletionSource<State> NextStateTcs;
-            public volatile int ObservingObserverCount;
+            public volatile State? NextState;
+            public volatile int ObserverCount;
 
-            public State()
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public State(
+                TaskCreationOptions fireTaskCreationOptions, 
+                TaskCreationOptions readyTaskCreationOptions)
             {
-                FireTcs = new TaskCompletionSource<Option<TEvent>>(
-                    TaskCreationOptions.RunContinuationsAsynchronously);
-                ReadyTcs = new TaskCompletionSource<Unit>();
-                NextStateTcs = new TaskCompletionSource<State>();
+                FireTcs = new TaskCompletionSource<Option<TEvent>>(fireTaskCreationOptions);
+                ReadyTcs = new TaskCompletionSource<Unit>(readyTaskCreationOptions);
             }
 
-            public State(State previousState, bool complete) : this() 
-                => IsCompleted = previousState.IsCompleted | complete;
-
-            public State AssertNotCompleted() 
-                => IsCompleted ? throw Errors.AlreadyCompleted() : this;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public State(State previousState, bool complete)
+            {
+                IsCompleted = previousState.IsCompleted | complete;
+                FireTcs = new TaskCompletionSource<Option<TEvent>>(previousState.FireTcs.Task.CreationOptions);
+                ReadyTcs = new TaskCompletionSource<Unit>(previousState.ReadyTcs.Task.CreationOptions);
+            } 
         }
 
         private readonly Action<AsyncEventSource<TEvent, TTag>, int, bool>? _onObserverCountChanged; 
-        private volatile State _state = new State();
+        private volatile State _state;
         private volatile int _observerCount;
         public TTag Tag { get; }
         public bool IsCompleted => _state.IsCompleted;
@@ -56,9 +60,12 @@ namespace Stl.Async
 
         public AsyncEventSource(
             TTag tag, 
-            Action<AsyncEventSource<TEvent, TTag>, int, bool>? onObserverCountChanged)
+            Action<AsyncEventSource<TEvent, TTag>, int, bool>? onObserverCountChanged,
+            TaskCreationOptions fireTaskCreationOptions = TaskCreationOptions.RunContinuationsAsynchronously,
+            TaskCreationOptions readyTaskCreationOption = TaskCreationOptions.None)
         {
             Tag = tag;
+            _state = new State(fireTaskCreationOptions, readyTaskCreationOption);
             _onObserverCountChanged = onObserverCountChanged;
         }
 
@@ -67,16 +74,17 @@ namespace Stl.Async
 
         public async ValueTask NextAsync(TEvent value, bool failIfCompleted = true)
         {
-            var state = SwapState(false);
-            if (failIfCompleted)
-                state.AssertNotCompleted();
-            state.FireTcs.SetResult(value!);
-            if (state.ObservingObserverCount != 0) {
-                await state.ReadyTcs.Task.ConfigureAwait(false);
+            var state = SwapState(value!);
+            if (state.IsCompleted) {
+                if (failIfCompleted)
+                    throw Errors.AlreadyCompleted();
+                return;
             }
+            await WaitAllObserversReadyAsync(state).ConfigureAwait(false);
         }
 
         // Just a shortcut for NextAsync + CompleteAsync
+
         public async ValueTask LastAsync(TEvent value, bool failIfCompleted = true)
         {
             await NextAsync(value, failIfCompleted).ConfigureAwait(failIfCompleted);
@@ -85,13 +93,53 @@ namespace Stl.Async
 
         public async ValueTask<bool> CompleteAsync()
         {
-            var state = SwapState(true);
+            var state = SwapState(Option.None<TEvent>());
             if (state.IsCompleted)
                 return false;
-            state.FireTcs.SetResult(Option<TEvent>.None);
-            if (state.ObservingObserverCount != 0)
-                await state.ReadyTcs.Task.ConfigureAwait(false);
+            await WaitAllObserversReadyAsync(state).ConfigureAwait(false);
             return true;
+        }
+
+        private Task WaitAllObserversReadyAsync(State state)
+        {
+            // Please don't modify this code unless you fully understands how it works!
+            var spinWait = new SpinWait();
+            var readyTcs = state.ReadyTcs;
+            while (true) {
+                // Increment is to make sure no one will trigger readyTcs (except us)
+                if (1 != Interlocked.Increment(ref state.ObserverCount)) {
+                    // It wasn't zero, i.e. there were other subscribers
+                    if (0 == Interlocked.Decrement(ref state.ObserverCount)) {
+                        // We just decremented it to 0, so we have to complete it
+                        readyTcs.TrySetResult(default);
+                        return Task.CompletedTask;
+                    }
+                    // It wasn't 0 after the decrement, so someone else will
+                    // complete readyTcs for sure; we should return its task than.
+                    return readyTcs.Task;
+                }
+                try {
+                    // We know there were no other subscribers when we incremented it,
+                    // which might mean that:
+                    // 1) Either someone already signaled it
+                    if (readyTcs.Task.IsCompleted)
+                        return Task.CompletedTask;
+                    // 2) Or there were no subscribers at all
+                    if (0 == Interlocked.CompareExchange(ref _observerCount, 0, 0)) {
+                        readyTcs.TrySetResult(default);
+                        return Task.CompletedTask;
+                    }
+                    // 3) Or there were subscribers, but either none of them got into
+                    // state.ObserverCount increment-decrement section yet,
+                    // or they were exiting the enumerator & couldn't decrement
+                    // yet. In both these cases we should just retry w/ spin wait.
+                }
+                finally {
+                    // We should keep increments & decrements balanced
+                    Interlocked.Decrement(ref state.ObserverCount);
+                }
+                spinWait.SpinOnce();
+            }
         }
 
         public async ValueTask DisposeAsync() 
@@ -102,34 +150,46 @@ namespace Stl.Async
             CancellationToken cancellationToken = default)
 #pragma warning restore 8425
         {
-            var state = _state;
+            // Please don't modify this code unless you fully understands how it works!
             var observerCount = Interlocked.Increment(ref _observerCount);
             _onObserverCountChanged?.Invoke(this, observerCount, true);
+            var isFirst = true;
+            var state = _state;
             try {
-                while (true) {
-                    if (state.IsCompleted)
-                        yield break;
-                    var eOption = await state.FireTcs
-                        .WithCancellation(cancellationToken)
-                        .ConfigureAwait(false);
-                    if (!eOption.IsSome(out var e))
-                        yield break;
+                while (!state.IsCompleted) {
+                    Interlocked.Increment(ref state.ObserverCount);
                     try {
-                        Interlocked.Increment(ref state.ObservingObserverCount);
+                        // Note that inside this block state.ReadyTcs state is stable:
+                        // it is either completed or not, and no one else may complete
+                        // it except us.
+                        if (isFirst) {
+                            // Is the first state we process, and since we read state
+                            // before incrementing state.ObserverCount (we can't do it
+                            // differently :) ), there is a chance it was completed
+                            // somewhere in between.
+                            if (state.ReadyTcs.Task.IsCompleted) {
+                                // It was completed, so all we need to do is to switch
+                                // to the next state.
+                                continue;
+                            }
+                            isFirst = false;
+                        }
+                        var eOption = await state.FireTcs
+                            .WithCancellation(cancellationToken)
+                            .ConfigureAwait(false);
+                        if (!eOption.IsSome(out var e))
+                            yield break;
                         yield return e;
                     }
                     finally {
-                        if (0 == Interlocked.Decrement(ref state.ObservingObserverCount))
+                        if (0 == Interlocked.Decrement(ref state.ObserverCount))
                             state.ReadyTcs.TrySetResult(default);
                         else
                             await state.ReadyTcs
                                 .WithCancellation(cancellationToken)
                                 .ConfigureAwait(false);
+                        state = state.NextState!;
                     }
-                    // TODO: NB: NextStateTcs is unnecessary - get rid of it.
-                    state = await state.NextStateTcs
-                        .WithCancellation(cancellationToken)
-                        .ConfigureAwait(false);
                 }
             }
             finally {
@@ -138,13 +198,16 @@ namespace Stl.Async
             }
         }
 
-        private State SwapState(bool complete)
+        private State SwapState(Option<TEvent> eventOpt)
         {
             while (true) {
                 var state = _state;
-                var nextState = new State(state, complete);
+                if (state.IsCompleted)
+                    return state;
+                var nextState = new State(state, !eventOpt.HasValue);
                 if (state == Interlocked.CompareExchange(ref _state, nextState, state)) {
-                    state.NextStateTcs.SetResult(nextState);
+                    Interlocked.Exchange(ref state.NextState, nextState);
+                    state.FireTcs.SetResult(eventOpt);
                     return state;
                 }
             }
