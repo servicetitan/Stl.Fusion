@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
 using Stl.Fusion.Internal;
-using Stl.Fusion.Publish;
+using Stl.Fusion;
 using Stl.Time;
 
 namespace Stl.Fusion

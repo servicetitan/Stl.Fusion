@@ -1,39 +1,50 @@
 using System.Threading.Channels;
-using System.Threading.Tasks;
 using Stl.Channels;
 using Xunit.Abstractions;
 
 namespace Stl.Testing
 {
-    public class TestChannelPair<T>
+    public class TestChannelPair<T> : ChannelPair<T>
     {
         public string Name { get; }
-        public Channel<T> ConsumerChannel { get; } 
-        public Channel<T> TestChannel { get; }
+        public ITestOutputHelper? Out { get; }
 
-        public TestChannelPair(string name, int capacity = 16, ITestOutputHelper? copyOutputTo = null)
+        public TestChannelPair(string name, ITestOutputHelper? @out = null, int capacity = 16)
         {
             Name = name;
-            var cp = ChannelPair.CreateTwisted(
-                Channel.CreateBounded<T>(capacity), 
-                Channel.CreateBounded<T>(capacity));
-            ConsumerChannel = cp.Channel1;
-            TestChannel = cp.Channel2;
-
-            if (copyOutputTo != null) {
-                var tp = ChannelPair.CreateTwisted(
-                    Channel.CreateBounded<T>(capacity), 
-                    Channel.CreateBounded<T>(capacity));
-                var middleChannel = TestChannel;
-                var endChannel = tp.Channel1;
-                TestChannel = tp.Channel2;
-
-                Task.Run(() => middleChannel.Reader.TransformAsync(endChannel, true,
+            Out = @out;
+            var options = new BoundedChannelOptions(capacity) {
+                FullMode = BoundedChannelFullMode.Wait,
+                AllowSynchronousContinuations = false,
+                SingleReader = false,
+                SingleWriter = false,
+            };
+            if (Out == null) {
+                var cp = ChannelPair.CreateTwisted(
+                    Channel.CreateBounded<T>(options), 
+                    Channel.CreateBounded<T>(options));
+                Channel1 = cp.Channel1;
+                Channel2 = cp.Channel2;
+            }
+            else {
+                var cp1 = ChannelPair.CreateTwisted(
+                    Channel.CreateBounded<T>(options),
+                    Channel.CreateBounded<T>(options));
+                var cp2 = ChannelPair.CreateTwisted(
+                    Channel.CreateBounded<T>(options),
+                    Channel.CreateBounded<T>(options));
+                var _ = cp1.Channel2.ConnectAsync(cp2.Channel1, true,
                     m => {
-                        copyOutputTo.WriteLine($"{Name}: {m}");
+                        Out.WriteLine($"{Name}.Channel1 -> {m}");
                         return m;
-                    }));
-                Task.Run(() => endChannel.Reader.CopyAsync(middleChannel, true));
+                    },
+                    m => {
+                        Out.WriteLine($"{Name}.Channel2 -> {m}");
+                        return m;
+                    }
+                );
+                Channel1 = cp1.Channel1;
+                Channel2 = cp2.Channel2;
             }
         }
     }

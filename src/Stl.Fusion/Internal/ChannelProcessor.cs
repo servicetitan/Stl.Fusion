@@ -5,21 +5,21 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Stl.Async;
-using Stl.Fusion.Publish.Messages;
+using Stl.Fusion.Messages;
 using Stl.OS;
 using Stl.Text;
 
-namespace Stl.Fusion.Publish.Internal
+namespace Stl.Fusion.Internal
 {
     public class ChannelProcessor : AsyncProcessBase
     {
-        public readonly Channel<Message> Channel;
+        public readonly Channel<PublicationMessage> Channel;
         public readonly IPublisher Publisher;
         public readonly IPublisherImpl PublisherImpl;
         public readonly ConcurrentDictionary<Symbol, (Task SubscriptionTask, CancellationTokenSource StopCts)> Subscriptions;
         protected object Lock => Subscriptions;  
 
-        public ChannelProcessor(Channel<Message> channel, IPublisher publisher)
+        public ChannelProcessor(Channel<PublicationMessage> channel, IPublisher publisher)
         {
             Channel = channel;
             Publisher = publisher;
@@ -42,7 +42,7 @@ namespace Stl.Fusion.Publish.Internal
             }
         }
 
-        protected virtual Task OnMessageAsync(Message message, CancellationToken cancellationToken)
+        protected virtual Task OnMessageAsync(PublicationMessage message, CancellationToken cancellationToken)
         {
             switch (message) {
             case SubscribeMessage sm:

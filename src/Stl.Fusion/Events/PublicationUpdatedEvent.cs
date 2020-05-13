@@ -1,11 +1,11 @@
 using System.Diagnostics;
-using Stl.Fusion.Publish.Messages;
+using Stl.Fusion.Messages;
 
-namespace Stl.Fusion.Publish.Events
+namespace Stl.Fusion.Events
 {
     public class PublicationUpdatedEvent : PublicationStateChangedEvent
     {
-        public PublicationUpdatedEvent(IPublication publication, Message? message) 
+        public PublicationUpdatedEvent(IPublication publication, PublicationMessage? message) 
             : base(publication, message)
         {
             Debug.Assert(publication.State == PublicationState.Updated);

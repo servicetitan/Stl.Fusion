@@ -1,6 +1,6 @@
 using Stl.Time;
 
-namespace Stl.Fusion.Publish.Events
+namespace Stl.Fusion.Events
 {
     public abstract class PublicationEvent
     {

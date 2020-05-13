@@ -1,8 +1,13 @@
+using System;
+using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using Autofac;
 using FluentAssertions;
 using Stl.Channels;
 using Stl.Fusion;
+using Stl.Fusion.Messages;
+using Stl.Testing;
 using Stl.Tests.Fusion.Services;
 using Xunit;
 using Xunit.Abstractions;
@@ -17,23 +22,41 @@ namespace Stl.Tests.Fusion
         public async Task BasicTest()
         {
             var cp = CreateChannelPair("c1");
-            var _ = cp.TestChannel.Reader.ConsumeSilentAsync();
-            ChannelHub.Attach(cp.ConsumerChannel).Should().BeTrue();
+            ChannelHub.Attach(cp.Channel1).Should().BeTrue();
+            var cReader = cp.Channel2.Reader;
 
             var sp = Container.Resolve<ISimplestProvider>();
             sp.SetValue("");
 
             var p1 = await Computed.PublishAsync(Publisher, () => sp.GetValueAsync());
             p1.Should().NotBeNull();
-            Publisher.Subscribe(cp.ConsumerChannel, p1, true).Should().BeTrue();
+
+            Publisher.Subscribe(cp.Channel1, p1, true).Should().BeTrue();
+            await Task.Delay(1000);
+            var m = await cReader.AssertReadAsync();
+            m.Should().BeOfType<SubscribeMessage>();
             
-            await Task.Delay(100);
             sp.SetValue("1");
-            await Task.Delay(200);
+            m = await cReader.AssertReadAsync();
+            m.Should().BeOfType<InvalidatedMessage>();
+            m.PublisherId.Should().Be(Publisher.Id);
+            m.PublicationId.Should().Be(p1.Id);
+                
+            m = await cReader.AssertReadAsync();
+            m.Should().BeOfType<UpdatedMessage<string>>()
+                .Which.Output.Value.Should().Be("1");
+            
             sp.SetValue("12");
-            await Task.Delay(200);
-            await Publisher.UnsubscribeAsync(cp.ConsumerChannel, p1);
-            await Task.Delay(500);
+            m = await cReader.AssertReadAsync();
+            m.Should().BeOfType<InvalidatedMessage>();
+            m = await cReader.AssertReadAsync();
+            m.Should().BeOfType<UpdatedMessage<string>>()
+                .Which.Output.Value.Should().Be("12");
+
+            await Publisher.UnsubscribeAsync(cp.Channel1, p1);
+            m = await cReader.AssertReadAsync();
+            m.Should().BeOfType<UnsubscribeMessage>();
         }
+
     }
 }

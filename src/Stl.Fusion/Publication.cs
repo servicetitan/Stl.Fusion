@@ -1,16 +1,15 @@
 using System;
-using System.Collections.Generic;
 using System.Reactive;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Stl.Async;
-using Stl.Fusion.Publish.Events;
-using Stl.Fusion.Publish.Messages;
+using Stl.Fusion.Events;
+using Stl.Fusion.Messages;
 using Stl.Text;
 using Stl.Time;
 
-namespace Stl.Fusion.Publish
+namespace Stl.Fusion
 {
     public enum PublicationState
     {
@@ -39,7 +38,7 @@ namespace Stl.Fusion.Publish
 
     public interface IPublicationImpl : IPublication, IAsyncProcess
     {
-        Task RunSubscriptionAsync(Channel<Message> channel, bool notify, CancellationToken cancellationToken);
+        Task RunSubscriptionAsync(Channel<PublicationMessage> channel, bool notify, CancellationToken cancellationToken);
     }
 
     public interface IPublicationImpl<T> : IPublicationImpl, IPublication<T> { }
@@ -212,9 +211,11 @@ namespace Stl.Fusion.Publish
 
         // Subscription
 
-        Task IPublicationImpl.RunSubscriptionAsync(Channel<Message> channel, bool notify, CancellationToken cancellationToken) 
+        Task IPublicationImpl.RunSubscriptionAsync(
+            Channel<PublicationMessage> channel, bool notify, CancellationToken cancellationToken) 
             => RunSubscriptionAsync(channel, notify, cancellationToken);
-        protected virtual async Task RunSubscriptionAsync(Channel<Message> channel, bool notify, CancellationToken cancellationToken)
+        protected virtual async Task RunSubscriptionAsync(
+            Channel<PublicationMessage> channel, bool notify, CancellationToken cancellationToken)
         {
             var writer = channel.Writer;
             try {
@@ -248,7 +249,8 @@ namespace Stl.Fusion.Publish
             }
         }
 
-        protected virtual ValueTask NotifySubscribeAsync(Channel<Message> channel, CancellationToken cancellationToken)
+        protected virtual ValueTask NotifySubscribeAsync(
+            Channel<PublicationMessage> channel, CancellationToken cancellationToken)
         {
             var message = new SubscribeMessage() {
                 PublisherId = Publisher.Id,
@@ -257,7 +259,8 @@ namespace Stl.Fusion.Publish
             return channel.Writer.WriteAsync(message, cancellationToken);
         }
 
-        protected virtual ValueTask NotifyUnsubscribeAsync(Channel<Message> channel, CancellationToken cancellationToken)
+        protected virtual ValueTask NotifyUnsubscribeAsync(
+            Channel<PublicationMessage> channel, CancellationToken cancellationToken)
         {
             var message = new UnsubscribeMessage() {
                 PublisherId = Publisher.Id,

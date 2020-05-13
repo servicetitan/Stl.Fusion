@@ -12,7 +12,8 @@ using Microsoft.Extensions.Logging;
 using Stl.Channels;
 using Stl.IO;
 using Stl.Fusion.Autofac;
-using Stl.Fusion.Publish;
+using Stl.Fusion;
+using Stl.Fusion.Messages;
 using Stl.Security;
 using Stl.Testing;
 using Stl.Testing.Internal;
@@ -21,7 +22,6 @@ using Stl.Tests.Fusion.Services;
 using Stl.Text;
 using Xunit.Abstractions;
 using Xunit.DependencyInjection.Logging;
-using PublishMessage=Stl.Fusion.Publish.Messages.Message;
 
 namespace Stl.Tests.Fusion
 {
@@ -39,7 +39,7 @@ namespace Stl.Tests.Fusion
         public ILogger Log { get; }
         public TestDbContext DbContext => Container.Resolve<TestDbContext>();
         public IPublisher Publisher => Container.Resolve<IPublisher>();
-        public IChannelHub<PublishMessage> ChannelHub => Publisher.ChannelHub; // Publisher should be resolved first!
+        public IChannelHub<PublicationMessage> ChannelHub => Publisher.ChannelHub; // Publisher should be resolved first!
 
         public FusionTestBase(ITestOutputHelper @out, FusionTestOptions? options = null) : base(@out)
         {
@@ -144,8 +144,8 @@ namespace Stl.Tests.Fusion
             builder.RegisterType<UserProvider>()
                 .As<UserProvider>().InstancePerLifetimeScope();
         }
-        public virtual TestChannelPair<PublishMessage> CreateChannelPair(
-            string name, bool dumpMessages = true) 
-            => new TestChannelPair<PublishMessage>(name, 16, dumpMessages ? Out : null);
+        public virtual TestChannelPair<PublicationMessage> CreateChannelPair(
+            string name, bool dump = true) 
+            => new TestChannelPair<PublicationMessage>(name, dump ? Out : null);
     }
 }

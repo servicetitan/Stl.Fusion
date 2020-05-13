@@ -6,24 +6,24 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using Stl.Async;
 using Stl.Channels;
-using Stl.Fusion.Publish.Internal;
-using Stl.Fusion.Publish.Messages;
+using Stl.Fusion.Internal;
+using Stl.Fusion.Messages;
 using Stl.OS;
 using Stl.Reflection;
 using Stl.Security;
 using Stl.Text;
 
-namespace Stl.Fusion.Publish
+namespace Stl.Fusion
 {
     public interface IPublisher
     {
         Symbol Id { get; }
-        IChannelHub<Message> ChannelHub { get; }
+        IChannelHub<PublicationMessage> ChannelHub { get; }
 
         IPublication Publish(IComputed computed, Type? publicationType = null);
         IPublication? TryGet(Symbol publicationId);
-        bool Subscribe(Channel<Message> channel, IPublication publication, bool notify);
-        ValueTask<bool> UnsubscribeAsync(Channel<Message> channel, IPublication publication);
+        bool Subscribe(Channel<PublicationMessage> channel, IPublication publication, bool notify);
+        ValueTask<bool> UnsubscribeAsync(Channel<PublicationMessage> channel, IPublication publication);
     }
 
     public interface IPublisherImpl : IPublisher
@@ -35,19 +35,19 @@ namespace Stl.Fusion.Publish
     {
         protected ConcurrentDictionary<(ComputedInput Input, Type PublicationType), IPublication> Publications { get; } 
         protected ConcurrentDictionary<Symbol, IPublication> PublicationsById { get; }
-        protected ConcurrentDictionary<Channel<Message>, ChannelProcessor> ChannelProcessors { get; }
+        protected ConcurrentDictionary<Channel<PublicationMessage>, ChannelProcessor> ChannelProcessors { get; }
         protected IGenerator<Symbol> PublicationIdGenerator { get; }
         protected bool OwnsChannelRegistry { get; }
-        protected Action<Channel<Message>> OnChannelAttachedCached { get; } 
-        protected Func<Channel<Message>, ValueTask> OnChannelDetachedCached { get; } 
+        protected Action<Channel<PublicationMessage>> OnChannelAttachedCached { get; } 
+        protected Func<Channel<PublicationMessage>, ValueTask> OnChannelDetachedCached { get; } 
 
         public Symbol Id { get; }
-        public IChannelHub<Message> ChannelHub { get; }
+        public IChannelHub<PublicationMessage> ChannelHub { get; }
         public IPublicationFactory PublicationFactory { get; }
         public Type DefaultPublicationType { get; }
 
         public Publisher(Symbol id, 
-            IChannelHub<Message> channelHub,
+            IChannelHub<PublicationMessage> channelHub,
             IGenerator<Symbol> publicationIdGenerator,
             bool ownsChannelRegistry = true,
             IPublicationFactory? publicationFactory = null,
@@ -66,7 +66,7 @@ namespace Stl.Fusion.Publish
             var capacity = 7919;
             Publications = new ConcurrentDictionary<(ComputedInput, Type), IPublication>(concurrencyLevel, capacity);
             PublicationsById = new ConcurrentDictionary<Symbol, IPublication>(concurrencyLevel, capacity);
-            ChannelProcessors = new ConcurrentDictionary<Channel<Message>, ChannelProcessor>(concurrencyLevel, capacity);
+            ChannelProcessors = new ConcurrentDictionary<Channel<PublicationMessage>, ChannelProcessor>(concurrencyLevel, capacity);
 
             OnChannelAttachedCached = OnChannelAttached;
             OnChannelDetachedCached = OnChannelDetachedAsync;
@@ -112,7 +112,7 @@ namespace Stl.Fusion.Publish
             PublicationsById.TryRemove(p.Id, p);
         }
 
-        public bool Subscribe(Channel<Message> channel, IPublication publication, bool notify)
+        public bool Subscribe(Channel<PublicationMessage> channel, IPublication publication, bool notify)
         {
             ThrowIfDisposedOrDisposing();
             if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
@@ -122,7 +122,7 @@ namespace Stl.Fusion.Publish
             return channelProcessor.Subscribe(publication, notify);
         }
 
-        public ValueTask<bool> UnsubscribeAsync(Channel<Message> channel, IPublication publication)
+        public ValueTask<bool> UnsubscribeAsync(Channel<PublicationMessage> channel, IPublication publication)
         {
             if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
                 return ValueTaskEx.FalseTask;
@@ -131,10 +131,10 @@ namespace Stl.Fusion.Publish
 
         // Channel-related
 
-        protected virtual ChannelProcessor CreateChannelProcessor(Channel<Message> channel) 
+        protected virtual ChannelProcessor CreateChannelProcessor(Channel<PublicationMessage> channel) 
             => new ChannelProcessor(channel, this);
 
-        protected virtual void OnChannelAttached(Channel<Message> channel)
+        protected virtual void OnChannelAttached(Channel<PublicationMessage> channel)
         {
             var channelProcessor = CreateChannelProcessor(channel);
             if (!ChannelProcessors.TryAdd(channel, channelProcessor))
@@ -148,7 +148,7 @@ namespace Stl.Fusion.Publish
             });
         }
 
-        protected virtual ValueTask OnChannelDetachedAsync(Channel<Message> channel)
+        protected virtual ValueTask OnChannelDetachedAsync(Channel<PublicationMessage> channel)
         {
             if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
                 return ValueTaskEx.CompletedTask;

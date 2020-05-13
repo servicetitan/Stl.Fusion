@@ -3,8 +3,8 @@ using Autofac.Builder;
 using Autofac.Extras.DynamicProxy;
 using Stl.Channels;
 using Stl.Concurrency;
-using Stl.Fusion.Publish;
-using Stl.Fusion.Publish.Messages;
+using Stl.Fusion;
+using Stl.Fusion.Messages;
 using Stl.Security;
 using Stl.Text;
 
@@ -36,11 +36,11 @@ namespace Stl.Fusion.Autofac
             IGenerator<Symbol> PublicationIdGeneratorResolver(IComponentContext c) 
                 => publicationIdGenerator ?? c.Resolve<IGenerator<Symbol>>();
 
-            builder.RegisterType<ChannelHub<Message>>()
-                .As<IChannelHub<Message>>();
+            builder.RegisterType<ChannelHub<PublicationMessage>>()
+                .As<IChannelHub<PublicationMessage>>();
             builder.Register(c => new Publisher(
                     publisherId, 
-                    c.Resolve<IChannelHub<Message>>(),
+                    c.Resolve<IChannelHub<PublicationMessage>>(),
                     PublicationIdGeneratorResolver(c), 
                     false))
                 .As<IPublisher>()

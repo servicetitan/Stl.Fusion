@@ -1,10 +1,10 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
-using Stl.Fusion.Publish.Messages;
+using Stl.Fusion.Messages;
 using Stl.Time;
 
-namespace Stl.Fusion.Publish.Events
+namespace Stl.Fusion.Events
 {
     public class PublicationInvalidatedEvent : PublicationStateChangedEvent
     {
@@ -15,9 +15,9 @@ namespace Stl.Fusion.Publish.Events
             set => Interlocked.Exchange(ref _nextUpdateTimeUnits, value.EpochOffsetUnits);
         }
 
-        public PublicationInvalidatedEvent(IPublication publication, Message? message)
+        public PublicationInvalidatedEvent(IPublication publication, PublicationMessage? message)
             : this(publication, message, IntMoment.MaxValue) { }
-        public PublicationInvalidatedEvent(IPublication publication, Message? message, IntMoment nextUpdateTime)
+        public PublicationInvalidatedEvent(IPublication publication, PublicationMessage? message, IntMoment nextUpdateTime)
             : base(publication, message)
         {
             _nextUpdateTimeUnits = nextUpdateTime.EpochOffsetUnits;

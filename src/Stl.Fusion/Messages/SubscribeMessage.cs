@@ -1,6 +1,6 @@
 using System;
 
-namespace Stl.Fusion.Publish.Messages
+namespace Stl.Fusion.Messages
 {
     [Serializable]
     public class SubscribeMessage : PublicationMessage { }
