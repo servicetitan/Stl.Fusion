@@ -1,15 +1,18 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Stl.Async;
 using Stl.Testing;
+using Stl.Time;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace Stl.Tests.Async
 {
+    [Category(nameof(TimeSensitiveTests))]
     public class AsyncEventSourceTest : TestBase
     {
         public AsyncEventSourceTest(ITestOutputHelper @out) : base(@out) { }
@@ -79,16 +82,20 @@ namespace Stl.Tests.Async
             tasks.All(t => t.IsCompletedSuccessfully).Should().BeTrue();
         }
 
-        [Fact]
-        public async Task ConcurrentTest()
+        [Theory]
+        [InlineData(1000)]
+        [InlineData(1001)]
+        [InlineData(1002)]
+        public async Task ConcurrentTest(int iterationCount)
         {
-            var bigTasks = Enumerable.Range(0, 2000).Select(async seed => {
+            var start = RealTimeClock.HighResolutionNow;
+            var bigTasks = Enumerable.Range(0, iterationCount).Select(async seed => {
                 await Task.Yield();
                 var rnd = new Random(seed);
                 var tasks = new List<Task<int>>();
                 AsyncEventSource<int> s;
                 await using (s = new AsyncEventSource<int>()) {
-                    var maxI = rnd.Next(2000);
+                    var maxI = rnd.Next(1000);
                     tasks.Add(CheckSequential(s, maxI, false));
                     for (var i = 0; i <= maxI; i++) {
                         if (rnd.Next(3) == 0)
@@ -101,8 +108,12 @@ namespace Stl.Tests.Async
                 return tasks.Sum(t => t.Result);
             }).ToArray();
             await Task.WhenAll(bigTasks);
+            var duration = RealTimeClock.HighResolutionNow - start;
             var sum = bigTasks.Sum(t => t.Result);
-            Out.WriteLine($"Sum: {sum}");
+
+            Out.WriteLine($"Sum:      {sum}");
+            Out.WriteLine($"Duration: {duration.TotalMilliseconds:f3}ms");
+
             sum.Should().BeGreaterThan(1000000);
         }
 
