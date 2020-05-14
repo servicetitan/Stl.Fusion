@@ -12,12 +12,15 @@
     <PackageReference Update="Autofac.Extras.DynamicProxy" Version="5.0.0" />
     <PackageReference Update="AutoFixture" Version="4.11.0" />
     <PackageReference Update="AutoFixture.Xunit2" Version="4.11.0" />
+    <PackageReference Update="Butterfly.Web.RedHttpServer" Version="2.1.0" />
     <PackageReference Update="Castle.Core" Version="4.4.0" />
     <PackageReference Update="Castle.Core.AsyncInterceptor" Version="1.7.0" />
     <PackageReference Update="CliWrap" Version="3.0.2" />
     <PackageReference Update="Concurrent.FastReflection.NetStandard" Version="1.0.1" />
     <PackageReference Update="Enums.NET" Version="3.0.3" />
     <PackageReference Update="FluentAssertions" Version="5.10.3" />
+    <PackageReference Update="MediatR" Version="8.0.1" />
+    <PackageReference Update="MediatR.Extensions.Microsoft.DependencyInjection" Version="8.0.0" />
     <PackageReference Update="Microsoft.Data.SqlClient" Version="1.1.2" />
     <PackageReference Update="Microsoft.Extensions.Caching.Abstractions" Version="$(AspNetCoreVersion)" />
     <PackageReference Update="Microsoft.Extensions.Configuration.Abstractions" Version="$(AspNetCoreVersion)" />
@@ -52,6 +55,8 @@
     <PackageReference Update="System.CommandLine" Version="2.0.0-beta1.20214.1" />
     <PackageReference Update="System.IO.Abstractions" Version="11.0.2" />
     <PackageReference Update="System.IO.Abstractions.TestingHelpers" Version="11.0.2" />
+    <PackageReference Update="System.Net.WebSockets" Version="4.3.0" />
+    <PackageReference Update="System.Net.WebSockets.Client" Version="4.3.2" />
     <PackageReference Update="System.Reactive" Version="4.4.1" />
     <PackageReference Update="System.Runtime.Loader" Version="4.3.0" />
     <PackageReference Update="System.Text.Json" Version="4.7.1" />

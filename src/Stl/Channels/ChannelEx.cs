@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using Stl.Serialization;
 
 namespace Stl.Channels
 {
@@ -75,13 +76,17 @@ namespace Stl.Channels
                 Task.Run(() => channel2.Reader.TransformAsync(channel1, tryComplete, adapter21, cancellationToken), CancellationToken.None)
             );
 
-        public static async Task ConsumeAsync<T>(this ChannelReader<T> reader, CancellationToken cancellationToken = default)
+        public static async Task ConsumeAsync<T>(
+            this ChannelReader<T> reader, 
+            CancellationToken cancellationToken = default)
         {
             while (await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
                 reader.TryRead(out var v);
         }
 
-        public static async Task ConsumeSilentAsync<T>(this ChannelReader<T> reader, CancellationToken cancellationToken = default)
+        public static async Task ConsumeSilentAsync<T>(
+            this ChannelReader<T> reader, 
+            CancellationToken cancellationToken = default)
         {
             try {
                 while (await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
@@ -90,6 +95,29 @@ namespace Stl.Channels
             catch {
                 // Silent means silent :)
             }
+        }
+
+        public static Channel<T> WithSerializer<T, TSerialized>(
+            this Channel<TSerialized> downstreamChannel,
+            ISerializer<T, TSerialized> serializer, 
+            BoundedChannelOptions? channelOptions = null,
+            CancellationToken cancellationToken = default)
+        {
+            channelOptions ??= new BoundedChannelOptions(16) {
+                FullMode = BoundedChannelFullMode.Wait,
+                SingleReader = true,
+                SingleWriter = true,
+                AllowSynchronousContinuations = true,
+            };
+            var pair = ChannelPair.CreateTwisted(
+                Channel.CreateBounded<T>(channelOptions),
+                Channel.CreateBounded<T>(channelOptions));
+
+            downstreamChannel.ConnectAsync(
+                pair.Channel1, true,
+                serializer.Deserialize, serializer.Serialize,
+                cancellationToken);
+            return pair.Channel2;
         }
     }
 }

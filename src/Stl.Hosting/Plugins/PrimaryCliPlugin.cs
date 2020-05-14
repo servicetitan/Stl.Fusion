@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Invocation;
@@ -99,10 +100,11 @@ namespace Stl.Hosting.Plugins
 
         protected void AddMiddleware(InvocationMiddleware middleware, int order)
         {
-            var methodInfo = CliBuilder.GetType().GetMethod(
-                nameof(AddMiddleware), 
-                BindingFlags.Instance | BindingFlags.NonPublic);
-            methodInfo!.Invoke(CliBuilder, new object[] { middleware, order });
+            var middlewareListField = CliBuilder.GetType().GetField(
+                "_middlewareList", BindingFlags.Instance | BindingFlags.NonPublic);
+            var fieldValue = middlewareListField!.GetValue(CliBuilder);
+            var middlewareList = (List<(InvocationMiddleware, int)>) fieldValue!; 
+            middlewareList.Add((middleware, order));
         }
     }
 }

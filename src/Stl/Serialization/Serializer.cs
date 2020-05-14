@@ -2,18 +2,18 @@ using Newtonsoft.Json;
 
 namespace Stl.Serialization
 {
-    public interface ISerializer<TNative, TSerialized>
+    public interface ISerializer<T, TSerialized>
     {
-        TSerialized Serialize(TNative native);
-        TNative Deserialize(TSerialized serialized);
+        TSerialized Serialize(T native);
+        T Deserialize(TSerialized serialized);
     }
 
-    public class PassThroughSerializer<TNative, TSerialized> : ISerializer<TNative, TSerialized>
+    public class PassThroughSerializer<T, TSerialized> : ISerializer<T, TSerialized>
     {
         // ReSharper disable once HeapView.BoxingAllocation
-        public TSerialized Serialize(TNative native) => (TSerialized) (object) native!;
+        public TSerialized Serialize(T native) => (TSerialized) (object) native!;
         // ReSharper disable once HeapView.BoxingAllocation
-        public TNative Deserialize(TSerialized serialized) => (TNative) (object) serialized!;
+        public T Deserialize(TSerialized serialized) => (T) (object) serialized!;
     }
 
     public class PassThroughSerializer<TNative> : ISerializer<TNative, object>
@@ -31,6 +31,7 @@ namespace Stl.Serialization
         {
             settings ??= new JsonSerializerSettings() {
                 TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
+                TypeNameHandling = TypeNameHandling.All,
             };
             Settings = settings;
         }

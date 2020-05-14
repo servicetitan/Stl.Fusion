@@ -28,9 +28,8 @@ namespace Stl.Async
         {
             lock (Lock) {
                 if (RunningTask == null)
-                    // ReSharper disable once MethodSupportsCancellation
                     RunningTask = Task
-                        .Run(() => RunInternalAsync(StopToken))
+                        .Run(() => RunInternalAsync(StopToken), CancellationToken.None)
                         .SuppressCancellation();
             }
             return RunningTask;

@@ -111,13 +111,16 @@ namespace Stl.Hosting.Plugins
         }
 
         protected virtual void ConfigureWebHost()
-            => HostBuilder.ConfigureWebHostDefaults(ConfigureWebHost);
+            => HostBuilder.ConfigureWebHost(ConfigureWebHost);
 
         protected virtual void ConfigureWebHost(IWebHostBuilder webHostBuilder)
         {
             TestAppHostBuilder?.Implementation?.InvokePreBuilders(webHostBuilder);
             ConfigureWebServer(webHostBuilder);
-            webHostBuilder.Configure(ConfigureWebApp);
+            webHostBuilder.Configure((context, builder) => {
+                ConfigureWebApp(context, builder);
+                AppHostBuilder.UsePlugins<IConfigureWebAppPlugin>(context, builder, Plugins);
+            });
             UseWebHostPlugins(webHostBuilder);
             TestAppHostBuilder?.Implementation?.InvokePostBuilders(webHostBuilder);
         }
@@ -140,6 +143,7 @@ namespace Stl.Hosting.Plugins
             app.UseStaticFiles();
             app.UseRouting();
             app.UseAuthorization();
+            // app.UseMvcWithDefaultRoute();
             app.UseEndpoints(endpoints => {
                 endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
             });
