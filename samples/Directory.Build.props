@@ -8,8 +8,6 @@
     <IsPackable>false</IsPackable>
     <IsPublishable>false</IsPublishable>
     <Nullable>enable</Nullable>
-    <TargetFramework>netstandard2.1</TargetFramework>
-    <RazorLangVersion>3.0</RazorLangVersion>
   </PropertyGroup>
 
 </Project>

@@ -4,6 +4,8 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.AspNetCore.StaticFiles.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Red;
@@ -30,10 +32,14 @@ namespace Stl.Samples.Blazor
                 var server = new RedHttpServer();
                 server.ConfigureApplication = app => {
                     var wwwRootFileProvider = new PhysicalFileProvider(wwwRoot);
+                    var contentTypeProvider = new FileExtensionContentTypeProvider();
                     app.UseStaticFiles(new StaticFileOptions {
                         FileProvider = wwwRootFileProvider,
+                        ContentTypeProvider = contentTypeProvider,
+                        DefaultContentType = "application/octet-stream",
                         ServeUnknownFileTypes = true,
                     });
+                    app.UseDefaultFiles();
                 };
                 await server.RunAsync();
                 break;
