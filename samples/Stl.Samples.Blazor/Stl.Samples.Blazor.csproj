@@ -30,5 +30,27 @@
   <ItemGroup>
     <None Include="$(ProjectDir)\wwwroot\**" CopyToOutputDirectory="PreserveNewest" LinkBase="wwwroot\"/>
   </ItemGroup>
+
+  <Target Name="CreateCmdFiles" AfterTargets="CopyFilesToOutputDirectory">
+    <PropertyGroup>
+      <DevServerCmdPath>$(TargetDir)DevServer.cmd</DevServerCmdPath>
+      <ChromeDebugCmdPath>$(TargetDir)ChromeDebug.cmd</ChromeDebugCmdPath>
+      <DebugMeCmdPath>$(TargetDir)DebugMe.cmd</DebugMeCmdPath>
+      <DevServerCmdContent>
+        &#64;dotnet &quot;$(_BlazorDevServerDll)&quot; serve --applicationpath &quot;$(TargetPath)&quot;
+      </DevServerCmdContent>
+      <ChromeDebugCmdContent>
+        &#64;start &quot;Chrome&quot; chrome.exe --remote-debugging-port=9222 --user-data-dir=&quot;$(Temp)\blazor-chrome-debug&quot; http://localhost:5000/
+      </ChromeDebugCmdContent>
+      <DebugMeCmdContent>
+&#64;echo off 
+start &quot;Blazor DevServer&quot; cmd /C &quot;$(DevServerCmdPath)&quot;
+call &quot;$(ChromeDebugCmdPath)&quot;
+      </DebugMeCmdContent>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(DevServerCmdPath)" Lines="$(DevServerCmdContent)" Overwrite="true" />
+    <WriteLinesToFile File="$(ChromeDebugCmdPath)" Lines="$(ChromeDebugCmdContent)" Overwrite="true" />
+    <WriteLinesToFile File="$(DebugMeCmdPath)" Lines="$(DebugMeCmdContent)" Overwrite="true" />
+  </Target>
   
 </Project>
