@@ -1,10 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
+<!--    <TargetFramework>netcoreapp3.1</TargetFramework>-->
     <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
   </PropertyGroup>
   
   <ItemGroup>
+    <PackageReference Include="Butterfly.Web.RedHttpServer" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Build" PrivateAssets="all" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" PrivateAssets="all" />
@@ -17,6 +19,14 @@
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       <CopyToPublishDirectory>Never</CopyToPublishDirectory>
     </Content>
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Stl\Stl.csproj" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <None Include="$(ProjectDir)\wwwroot\**" CopyToOutputDirectory="PreserveNewest" LinkBase="wwwroot\"/>
   </ItemGroup>
   
 </Project>
