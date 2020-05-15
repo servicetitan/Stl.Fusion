@@ -14,13 +14,9 @@
   <ItemGroup>
     <Content Update="runtimeconfig.template.json">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
     </Content>
   </ItemGroup>
   
-  <ItemGroup>
-    <EmbeddedResource Include="runtimeconfig.template.json" />
-  </ItemGroup>
-
 </Project>
