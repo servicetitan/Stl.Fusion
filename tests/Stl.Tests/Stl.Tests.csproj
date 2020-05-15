@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Stl.Testing\Stl.Testing.csproj" />
+    <ProjectReference Include="..\..\src\Stl.Testing\Stl.Testing.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion\Stl.Fusion.csproj" />
     <ProjectReference Include="..\..\src\Stl\Stl.csproj" />
     <ProjectReference Include="..\..\src\Stl.ImmutableModel\Stl.ImmutableModel.csproj" />
