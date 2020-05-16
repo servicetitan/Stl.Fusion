@@ -43,7 +43,7 @@ namespace Stl.Fusion.Autofac
                     publisherId, 
                     c.Resolve<IChannelHub<PublicationMessage>>(),
                     PublicationIdGeneratorResolver(c), 
-                    false))
+                    ownsChannelHub: false))
                 .As<IPublisher>()
                 .SingleInstance();
             return builder;

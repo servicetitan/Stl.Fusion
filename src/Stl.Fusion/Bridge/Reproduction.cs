@@ -18,13 +18,12 @@ namespace Stl.Fusion.Bridge
     public interface IReproduction<T> : IReproduction
     {
         new IComputed<T> Computed { get; }
+
+        bool Update(IComputed<T> origin, TaggedResult<T> taggerOutput);
     }
 
     public interface IReproductionImpl : IReproduction, IFunction { }
-    public interface IReproductionImpl<T> : IReproduction<T>, IFunction<ReproductionInput, T>, IReproductionImpl
-    {
-        void Update(TaggedResult<T> taggerOutput);
-    } 
+    public interface IReproductionImpl<T> : IReproduction<T>, IFunction<ReproductionInput, T>, IReproductionImpl { } 
 
     public class Reproduction<T> : AsyncDisposableBase, IReproductionImpl<T>
     {
@@ -47,19 +46,19 @@ namespace Stl.Fusion.Bridge
             PublisherId = publisherId;
             PublicationId = publicationId;
             Input = new ReproductionInput(this);
+            NextUpdateTcs = CreateNextUpdateTcs();
             _computed = new Computed<ReproductionInput, T>(Input, initialOutput.Result, initialOutput.Tag);
         }
 
-        public bool Update(IComputed origin, TaggedResult<T> newOutput)
+        public bool Update(IComputed<T> origin, TaggedResult<T> newOutput)
         {
-            var typedOrigin = (Computed<ReproductionInput, T>) origin;
             var spinWait = new SpinWait();
-            while (_computed == typedOrigin) {
+            while (_computed == origin) {
                 var newComputed = new Computed<ReproductionInput, T>(Input, newOutput.Result, newOutput.Tag);
-                if (typedOrigin == Interlocked.CompareExchange(ref _computed, newComputed, typedOrigin)) {
-                    var nextUpdateTcs = Interlocked.Exchange(ref NextUpdateTcs, new TaskCompletionSource<IComputed>());
+                if (origin == Interlocked.CompareExchange(ref _computed, newComputed, origin)) {
+                    var nextUpdateTcs = Interlocked.Exchange(ref NextUpdateTcs, CreateNextUpdateTcs());
                     try {
-                        typedOrigin.Invalidate();
+                        origin.Invalidate();
                     }
                     finally {
                         nextUpdateTcs.SetResult(newComputed);
@@ -96,6 +95,9 @@ namespace Stl.Fusion.Bridge
             => TryGetCached(input, usedBy);
 
         #endregion
+
+        protected virtual TaskCompletionSource<IComputed> CreateNextUpdateTcs() 
+            => new TaskCompletionSource<IComputed>();
 
         protected Task<IComputed<T>?> InvokeAsync(ReproductionInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)

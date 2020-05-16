@@ -41,6 +41,7 @@ namespace Stl.Fusion.Bridge
             ChannelHub = channelHub;
             OwnsChannelHub = ownsChannelHub;
             Reproductions = new ConcurrentDictionary<Symbol, IReproduction>();
+            ChannelProcessors = new ConcurrentDictionary<Channel<PublicationMessage>, ReproducerChannelProcessor>();
             
             OnChannelAttachedCached = OnChannelAttached;
             OnChannelDetachedAsyncCached = OnChannelDetachedAsync;
@@ -77,7 +78,7 @@ namespace Stl.Fusion.Bridge
             Reproductions.TryRemove(reproduction.PublicationId, reproduction);
         }
 
-        protected override ValueTask DisposeInternalAsync(bool disposing)
+        protected override async ValueTask DisposeInternalAsync(bool disposing)
         {
             ChannelHub.Attached -= OnChannelAttachedCached; // Must go first
             ChannelHub.Detached -= OnChannelDetachedAsyncCached;
@@ -92,7 +93,7 @@ namespace Stl.Fusion.Bridge
                     });
                 await Task.WhenAll(tasks).ConfigureAwait(false);
             }
-            return base.DisposeInternalAsync(disposing);
+            await base.DisposeInternalAsync(disposing).ConfigureAwait(false);
         }
     }
 }
