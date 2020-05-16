@@ -6,14 +6,14 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using Stl.Async;
 using Stl.Channels;
-using Stl.Fusion.Internal;
-using Stl.Fusion.Messages;
+using Stl.Fusion.Bridge.Internal;
+using Stl.Fusion.Bridge.Messages;
 using Stl.OS;
 using Stl.Reflection;
 using Stl.Security;
 using Stl.Text;
 
-namespace Stl.Fusion
+namespace Stl.Fusion.Bridge
 {
     public interface IPublisher
     {

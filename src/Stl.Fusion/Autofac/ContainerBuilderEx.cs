@@ -4,7 +4,8 @@ using Autofac.Extras.DynamicProxy;
 using Stl.Channels;
 using Stl.Concurrency;
 using Stl.Fusion;
-using Stl.Fusion.Messages;
+using Stl.Fusion.Bridge;
+using Stl.Fusion.Bridge.Messages;
 using Stl.Security;
 using Stl.Text;
 

@@ -1,10 +1,10 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
-using Stl.Fusion.Messages;
+using Stl.Fusion.Bridge.Messages;
 using Stl.Time;
 
-namespace Stl.Fusion.Events
+namespace Stl.Fusion.Bridge.Events
 {
     public class PublicationInvalidatedEvent : PublicationStateChangedEvent
     {

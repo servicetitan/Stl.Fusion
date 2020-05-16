@@ -1,7 +1,7 @@
 using System.Diagnostics;
-using Stl.Fusion.Messages;
+using Stl.Fusion.Bridge.Messages;
 
-namespace Stl.Fusion.Events
+namespace Stl.Fusion.Bridge.Events
 {
     public class PublicationDisposedEvent : PublicationStateChangedEvent
     {

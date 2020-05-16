@@ -5,11 +5,11 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Stl.Async;
-using Stl.Fusion.Messages;
+using Stl.Fusion.Bridge.Messages;
 using Stl.OS;
 using Stl.Text;
 
-namespace Stl.Fusion.Internal
+namespace Stl.Fusion.Bridge.Internal
 {
     public class ChannelProcessor : AsyncProcessBase
     {

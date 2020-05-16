@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Stl.Text;
 
-namespace Stl.Fusion
+namespace Stl.Fusion.Bridge
 {
     public static class PublisherEx
     {

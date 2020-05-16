@@ -4,12 +4,12 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Stl.Async;
-using Stl.Fusion.Events;
-using Stl.Fusion.Messages;
+using Stl.Fusion.Bridge.Events;
+using Stl.Fusion.Bridge.Messages;
 using Stl.Text;
 using Stl.Time;
 
-namespace Stl.Fusion
+namespace Stl.Fusion.Bridge
 {
     public enum PublicationState
     {

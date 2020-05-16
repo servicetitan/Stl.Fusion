@@ -2,7 +2,7 @@ using System;
 using Newtonsoft.Json;
 using Stl.Text;
 
-namespace Stl.Fusion.Messages
+namespace Stl.Fusion.Bridge.Messages
 {
     [Serializable]
     public abstract class PublicationMessage

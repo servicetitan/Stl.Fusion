@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
 using Red;
 using Stl.Channels;
-using Stl.Fusion.Messages;
+using Stl.Fusion.Bridge.Messages;
 using Stl.Hosting.Plugins;
 using Stl.Net;
 using Stl.Plugins;

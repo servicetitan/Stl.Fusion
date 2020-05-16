@@ -2,7 +2,7 @@ using System.Threading.Tasks;
 using Autofac;
 using FluentAssertions;
 using Stl.Fusion;
-using Stl.Fusion.Messages;
+using Stl.Fusion.Bridge.Messages;
 using Stl.Testing;
 using Stl.Tests.Fusion.Services;
 using Xunit;

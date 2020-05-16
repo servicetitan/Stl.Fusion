@@ -1,6 +1,6 @@
 using System;
 
-namespace Stl.Fusion.Messages
+namespace Stl.Fusion.Bridge.Messages
 {
     [Serializable]
     public class UpdatedMessage<T> : PublicationMessage
