@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Stl.Async;
 using Stl.Collections;
 using Stl.Collections.Slim;
+using Stl.Fusion.Bridge;
 using Stl.Fusion.Internal;
 using Stl.Time;
 
@@ -41,6 +42,7 @@ namespace Stl.Fusion
     public interface IComputed<TOut> : IComputed, IResult<TOut>
     {
         new Result<TOut> Output { get; }
+        TaggedResult<TOut> TaggedOutput { get; }
         bool TrySetOutput(Result<TOut> output);
         void SetOutput(Result<TOut> output);
 
@@ -96,6 +98,7 @@ namespace Stl.Fusion
                 return _output;
             }
         }
+        public TaggedResult<TOut> TaggedOutput => new TaggedResult<TOut>(Output, Tag);
 
         // IResult<T> properties
         public Exception? Error => Output.Error;
@@ -132,6 +135,16 @@ namespace Stl.Fusion
         public Computed(TIn input, int tag)
         {
             Input = input;
+            Tag = tag;
+            _keepAliveTime = Computed.DefaultKeepAliveTime;
+            _lastAccessTime = IntMoment.Clock.EpochOffsetUnits;
+        }
+
+        public Computed(TIn input, Result<TOut> output, int tag)
+        {
+            Input = input;
+            _state = (int) ComputedState.Consistent;
+            _output = output;
             Tag = tag;
             _keepAliveTime = Computed.DefaultKeepAliveTime;
             _lastAccessTime = IntMoment.Clock.EpochOffsetUnits;
@@ -212,7 +225,12 @@ namespace Stl.Fusion
                     _used.Apply(this, (self, c) => c.RemoveUsedBy(self));
                     _used.Clear();
                 }
-                _invalidated?.Invoke(this, invalidatedBy);
+                try {
+                    _invalidated?.Invoke(this, invalidatedBy);
+                }
+                catch {
+                    // We should never throw errors during the invalidation
+                }
                 for (var i = 0; i < usedBy.Span.Length; i++) {
                     ref var d = ref usedBy.Span[i];
                     d.Input.TryGetCachedComputed(d.Tag)?.Invalidate(invalidatedBy);

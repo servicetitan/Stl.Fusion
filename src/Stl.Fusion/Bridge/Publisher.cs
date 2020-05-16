@@ -19,6 +19,7 @@ namespace Stl.Fusion.Bridge
     {
         Symbol Id { get; }
         IChannelHub<PublicationMessage> ChannelHub { get; }
+        bool OwnsChannelHub { get; }
 
         IPublication Publish(IComputed computed, Type? publicationType = null);
         IPublication? TryGet(Symbol publicationId);
@@ -35,29 +36,29 @@ namespace Stl.Fusion.Bridge
     {
         protected ConcurrentDictionary<(ComputedInput Input, Type PublicationType), IPublication> Publications { get; } 
         protected ConcurrentDictionary<Symbol, IPublication> PublicationsById { get; }
-        protected ConcurrentDictionary<Channel<PublicationMessage>, ChannelProcessor> ChannelProcessors { get; }
+        protected ConcurrentDictionary<Channel<PublicationMessage>, PublisherChannelProcessor> ChannelProcessors { get; }
         protected IGenerator<Symbol> PublicationIdGenerator { get; }
-        protected bool OwnsChannelRegistry { get; }
         protected Action<Channel<PublicationMessage>> OnChannelAttachedCached { get; } 
-        protected Func<Channel<PublicationMessage>, ValueTask> OnChannelDetachedCached { get; } 
+        protected Func<Channel<PublicationMessage>, ValueTask> OnChannelDetachedAsyncCached { get; } 
 
         public Symbol Id { get; }
         public IChannelHub<PublicationMessage> ChannelHub { get; }
+        public bool OwnsChannelHub { get; }
         public IPublicationFactory PublicationFactory { get; }
         public Type DefaultPublicationType { get; }
 
         public Publisher(Symbol id, 
             IChannelHub<PublicationMessage> channelHub,
             IGenerator<Symbol> publicationIdGenerator,
-            bool ownsChannelRegistry = true,
             IPublicationFactory? publicationFactory = null,
-            Type? defaultPublicationType = null)
+            Type? defaultPublicationType = null,
+            bool ownsChannelHub = true)
         {
             publicationFactory ??= Internal.PublicationFactory.Instance;
             defaultPublicationType ??= typeof(Publication<>);
             Id = id;
             ChannelHub = channelHub;
-            OwnsChannelRegistry = ownsChannelRegistry;
+            OwnsChannelHub = ownsChannelHub;
             PublicationIdGenerator = publicationIdGenerator;
             PublicationFactory = publicationFactory;
             DefaultPublicationType = defaultPublicationType;
@@ -66,11 +67,11 @@ namespace Stl.Fusion.Bridge
             var capacity = 7919;
             Publications = new ConcurrentDictionary<(ComputedInput, Type), IPublication>(concurrencyLevel, capacity);
             PublicationsById = new ConcurrentDictionary<Symbol, IPublication>(concurrencyLevel, capacity);
-            ChannelProcessors = new ConcurrentDictionary<Channel<PublicationMessage>, ChannelProcessor>(concurrencyLevel, capacity);
+            ChannelProcessors = new ConcurrentDictionary<Channel<PublicationMessage>, PublisherChannelProcessor>(concurrencyLevel, capacity);
 
             OnChannelAttachedCached = OnChannelAttached;
-            OnChannelDetachedCached = OnChannelDetachedAsync;
-            ChannelHub.Detached += OnChannelDetachedCached; // Must go first
+            OnChannelDetachedAsyncCached = OnChannelDetachedAsync;
+            ChannelHub.Detached += OnChannelDetachedAsyncCached; // Must go first
             ChannelHub.Attached += OnChannelAttachedCached;
         }
 
@@ -131,8 +132,8 @@ namespace Stl.Fusion.Bridge
 
         // Channel-related
 
-        protected virtual ChannelProcessor CreateChannelProcessor(Channel<PublicationMessage> channel) 
-            => new ChannelProcessor(channel, this);
+        protected virtual PublisherChannelProcessor CreateChannelProcessor(Channel<PublicationMessage> channel) 
+            => new PublisherChannelProcessor(channel, this);
 
         protected virtual void OnChannelAttached(Channel<PublicationMessage> channel)
         {
@@ -157,20 +158,31 @@ namespace Stl.Fusion.Bridge
 
         protected override async ValueTask DisposeInternalAsync(bool disposing)
         {
-            ChannelHub.Attached -= OnChannelAttachedCached;
-            ChannelHub.Detached -= OnChannelDetachedCached;
+            ChannelHub.Attached -= OnChannelAttachedCached; // Must go first
+            ChannelHub.Detached -= OnChannelDetachedAsyncCached;
+            var channelProcessors = ChannelProcessors;
+            while (!channelProcessors.IsEmpty) {
+                var tasks = channelProcessors
+                    .Take(HardwareInfo.ProcessorCount * 4)
+                    .ToList()
+                    .Select(p => {
+                        var (_, channelProcessor) = (p.Key, p.Value);
+                        return channelProcessor.DisposeAsync().AsTask();
+                    });
+                await Task.WhenAll(tasks).ConfigureAwait(false);
+            }
             var publications = PublicationsById;
             while (!publications.IsEmpty) {
                 var tasks = publications
                     .Take(HardwareInfo.ProcessorCount * 4)
                     .ToList()
-                    .Select(p => Task.Run(async () => {
+                    .Select(p => {
                         var (_, publication) = (p.Key, p.Value);
-                        await publication.DisposeAsync().ConfigureAwait(false);
-                    }));
+                        return publication.DisposeAsync().AsTask();
+                    });
                 await Task.WhenAll(tasks).ConfigureAwait(false);
             }
-            if (OwnsChannelRegistry)
+            if (OwnsChannelHub)
                 await ChannelHub.DisposeAsync().ConfigureAwait(false);
             await base.DisposeInternalAsync(disposing).ConfigureAwait(false);
         }

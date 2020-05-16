@@ -11,7 +11,7 @@ using Stl.Text;
 
 namespace Stl.Fusion.Bridge.Internal
 {
-    public class ChannelProcessor : AsyncProcessBase
+    public class PublisherChannelProcessor : AsyncProcessBase
     {
         public readonly Channel<PublicationMessage> Channel;
         public readonly IPublisher Publisher;
@@ -19,7 +19,7 @@ namespace Stl.Fusion.Bridge.Internal
         public readonly ConcurrentDictionary<Symbol, (Task SubscriptionTask, CancellationTokenSource StopCts)> Subscriptions;
         protected object Lock => Subscriptions;  
 
-        public ChannelProcessor(Channel<PublicationMessage> channel, IPublisher publisher)
+        public PublisherChannelProcessor(Channel<PublicationMessage> channel, IPublisher publisher)
         {
             Channel = channel;
             Publisher = publisher;
