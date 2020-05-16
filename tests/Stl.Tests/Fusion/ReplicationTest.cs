@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Autofac;
 using FluentAssertions;
@@ -34,6 +35,27 @@ namespace Stl.Tests.Fusion
             r1c = await r1.NextUpdateAsync();
             r1c.Value.Should().Be("1");
             r1.Computed.Should().Be(r1c);
+        }
+
+        [Fact]
+        public async Task TimerTest()
+        {
+            var tp = Container.Resolve<ITimeProvider>();
+            var cp = CreateChannelPair("channel");
+            Publisher.ChannelHub.Attach(cp.Channel1).Should().BeTrue();
+            Replicator.ChannelHub.Attach(cp.Channel2).Should().BeTrue();
+
+            var pub = await Computed.PublishAsync(Publisher, () => tp.GetTimeAsync());
+            var rep = Replicator.GetOrAdd<DateTime>(pub!.Publisher.Id, pub.Id);
+
+            var count = 0;
+            using var _ = rep.Computed.AutoUpdate((c, o, _) => {
+                Out.WriteLine($"{c.Value}");
+                count++;
+            });
+
+            await Task.Delay(2000);
+            count.Should().BeGreaterThan(4);
         }
     }
 }
