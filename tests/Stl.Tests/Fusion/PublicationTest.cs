@@ -18,7 +18,7 @@ namespace Stl.Tests.Fusion
         public async Task BasicTest()
         {
             var cp = CreateChannelPair("c1");
-            ChannelHub.Attach(cp.Channel1).Should().BeTrue();
+            Publisher.ChannelHub.Attach(cp.Channel1).Should().BeTrue();
             var cReader = cp.Channel2.Reader;
 
             var sp = Container.Resolve<ISimplestProvider>();

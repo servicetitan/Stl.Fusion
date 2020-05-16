@@ -3,10 +3,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using Stl.Async;
 using Stl.Collections;
 using Stl.Collections.Slim;
-using Stl.Fusion.Bridge;
 using Stl.Fusion.Internal;
 using Stl.Time;
 
@@ -32,8 +30,8 @@ namespace Stl.Fusion
         int KeepAliveTime { get; set; } // In IntMoment Units
 
         bool Invalidate(object? invalidatedBy = null);
-        ValueTask<IComputed?> UpdateAsync(CancellationToken cancellationToken = default);
-        ValueTask<IComputed?> UpdateAsync(ComputeContext context, CancellationToken cancellationToken = default);
+        ValueTask<IComputed> UpdateAsync(CancellationToken cancellationToken = default);
+        ValueTask<IComputed> UpdateAsync(ComputeContext context, CancellationToken cancellationToken = default);
 
         void Touch();
         TResult Apply<TArg, TResult>(IComputedApplyHandler<TArg, TResult> handler, TArg arg);
@@ -46,8 +44,8 @@ namespace Stl.Fusion
         bool TrySetOutput(Result<TOut> output);
         void SetOutput(Result<TOut> output);
 
-        new ValueTask<IComputed<TOut>?> UpdateAsync(CancellationToken cancellationToken = default);
-        new ValueTask<IComputed<TOut>?> UpdateAsync(ComputeContext context, CancellationToken cancellationToken = default);
+        new ValueTask<IComputed<TOut>> UpdateAsync(CancellationToken cancellationToken = default);
+        new ValueTask<IComputed<TOut>> UpdateAsync(ComputeContext context, CancellationToken cancellationToken = default);
     }
     
     public interface IComputedWithTypedInput<out TIn> : IComputed 
@@ -64,9 +62,10 @@ namespace Stl.Fusion
         where TIn : ComputedInput
     {
         private volatile int _state;
-        private Result<TOut> _output = default!;
-        private RefHashSetSlim2<IComputedImpl> _used;
-        private HashSetSlim2<(ComputedInput Input, int Tag)> _usedBy;
+        private Result<TOut> _output;
+        private RefHashSetSlim2<IComputedImpl> _used = default;
+        private HashSetSlim2<(ComputedInput Input, int Tag)> _usedBy = default;
+        // ReSharper disable once InconsistentNaming
         private event Action<IComputed, object?>? _invalidated;
         private object? _invalidatedBy;
         private volatile int _lastAccessTime;
@@ -140,10 +139,10 @@ namespace Stl.Fusion
             _lastAccessTime = IntMoment.Clock.EpochOffsetUnits;
         }
 
-        public Computed(TIn input, Result<TOut> output, int tag)
+        public Computed(TIn input, Result<TOut> output, int tag, bool isConsistent = true)
         {
             Input = input;
-            _state = (int) ComputedState.Consistent;
+            _state = (int) (isConsistent ? ComputedState.Consistent : ComputedState.Invalidated);
             _output = output;
             Tag = tag;
             _keepAliveTime = Computed.DefaultKeepAliveTime;
@@ -244,13 +243,13 @@ namespace Stl.Fusion
             }
         }
 
-        async ValueTask<IComputed?> IComputed.UpdateAsync(CancellationToken cancellationToken) 
+        async ValueTask<IComputed> IComputed.UpdateAsync(CancellationToken cancellationToken) 
             => await UpdateAsync(null!, cancellationToken).ConfigureAwait(false);
-        async ValueTask<IComputed?> IComputed.UpdateAsync(ComputeContext context, CancellationToken cancellationToken) 
+        async ValueTask<IComputed> IComputed.UpdateAsync(ComputeContext context, CancellationToken cancellationToken) 
             => await UpdateAsync(cancellationToken).ConfigureAwait(false);
-        public ValueTask<IComputed<TOut>?> UpdateAsync(CancellationToken cancellationToken)
+        public ValueTask<IComputed<TOut>> UpdateAsync(CancellationToken cancellationToken)
             => UpdateAsync(null!, cancellationToken);
-        public async ValueTask<IComputed<TOut>?> UpdateAsync(ComputeContext context, CancellationToken cancellationToken)
+        public async ValueTask<IComputed<TOut>> UpdateAsync(ComputeContext context, CancellationToken cancellationToken)
             => IsConsistent ? this : await Function.InvokeAsync(Input, null, context, cancellationToken);
 
         // Touch
@@ -261,7 +260,7 @@ namespace Stl.Fusion
         // Apply methods
 
         public TResult Apply<TArg, TResult>(IComputedApplyHandler<TArg, TResult> handler, TArg arg) 
-            => handler.Apply<TIn, TOut>(this, arg);
+            => handler.Apply(this, arg);
 
         // IResult<T> methods
 

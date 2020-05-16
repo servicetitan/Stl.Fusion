@@ -13,17 +13,17 @@ namespace Stl.Fusion.Bridge.Internal
 {
     public class PublisherChannelProcessor : AsyncProcessBase
     {
-        public readonly Channel<PublicationMessage> Channel;
         public readonly IPublisher Publisher;
         public readonly IPublisherImpl PublisherImpl;
+        public readonly Channel<PublicationMessage> Channel;
         public readonly ConcurrentDictionary<Symbol, (Task SubscriptionTask, CancellationTokenSource StopCts)> Subscriptions;
         protected object Lock => Subscriptions;  
 
-        public PublisherChannelProcessor(Channel<PublicationMessage> channel, IPublisher publisher)
+        public PublisherChannelProcessor(IPublisher publisher, Channel<PublicationMessage> channel)
         {
-            Channel = channel;
             Publisher = publisher;
             PublisherImpl = (IPublisherImpl) publisher;
+            Channel = channel;
             Subscriptions = new ConcurrentDictionary<Symbol, (Task, CancellationTokenSource)>();
         }
 
@@ -51,7 +51,7 @@ namespace Stl.Fusion.Bridge.Internal
                 var publication = Publisher.TryGet(sm.PublicationId);
                 if (publication == null)
                     break;
-                PublisherImpl.Subscribe(Channel, publication, true);
+                PublisherImpl.Subscribe(Channel, publication, sm.IsUpdateRequested);
                 break;
             case UnsubscribeMessage um:
                 if (um.PublisherId != Publisher.Id)
@@ -65,13 +65,7 @@ namespace Stl.Fusion.Bridge.Internal
             return Task.CompletedTask;
         }
 
-        protected override async ValueTask DisposeInternalAsync(bool disposing)
-        {
-            await base.DisposeInternalAsync(disposing);
-            await RemoveSubscriptionsAsync().ConfigureAwait(false);
-        }
-
-        public virtual bool Subscribe(IPublication publication, bool notify)
+        public virtual bool Subscribe(IPublication publication, bool sendUpdate)
         {
             var publicationId = publication.Id;
             if (Subscriptions.TryGetValue(publicationId, out _))
@@ -84,7 +78,7 @@ namespace Stl.Fusion.Bridge.Internal
                 var stopCts = new CancellationTokenSource();
                 try {
                     var subscriptionTask = publicationImpl
-                        .RunSubscriptionAsync(Channel, notify, stopCts.Token)
+                        .RunSubscriptionAsync(Channel, sendUpdate, stopCts.Token)
                         .SuppressExceptions() // TODO: Add exception logging?
                         .ContinueWith(_ => UnsubscribeAsync(publication), CancellationToken.None);
                     Subscriptions[publicationId] = (subscriptionTask, stopCts);
@@ -143,6 +137,13 @@ namespace Stl.Fusion.Bridge.Internal
                 // we optimistically assume 10 seconds is enough for this.
                 await Task.Delay(TimeSpan.FromSeconds(10));
             }
+        }
+
+        protected override async ValueTask DisposeInternalAsync(bool disposing)
+        {
+            await base.DisposeInternalAsync(disposing);
+            await RemoveSubscriptionsAsync().ConfigureAwait(false);
+            PublisherImpl.OnChannelProcessorDisposed(this);
         }
     }
 }

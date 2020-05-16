@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Channels;
@@ -18,30 +19,38 @@ namespace Stl.Fusion.Bridge
         IChannelHub<PublicationMessage> ChannelHub { get; }
         bool OwnsChannelHub { get; }
 
-        IReplica<T> TryAddOrGet<T>(Symbol publisherId, Symbol publicationId, TaggedResult<T> initialOutput);
+        IReplica<T> GetOrAdd<T>(Symbol publisherId, Symbol publicationId, TaggedResult<T> initialOutput, bool isConsistent = true);
         IReplica? TryGet(Symbol publicationId);
     }
 
     public interface IReplicatorImpl : IReplicator
     {
-        void OnReproductionDisposed(IReplica replica);
+        void OnReplicaDisposed(IReplica replica);
+        void OnChannelProcessorDisposed(ReplicatorChannelProcessor replicatorChannelProcessor);
     }
 
     public class Replicator : AsyncDisposableBase, IReplicatorImpl
     {
-        private ConcurrentDictionary<Symbol, IReplica> Replicas { get; }
+        protected ConcurrentDictionary<Symbol, IReplica> Replicas { get; }
         protected ConcurrentDictionary<Channel<PublicationMessage>, ReplicatorChannelProcessor> ChannelProcessors { get; }
+        protected ConcurrentDictionary<Symbol, ReplicatorChannelProcessor> ChannelProcessorsById { get; }
         protected Action<Channel<PublicationMessage>> OnChannelAttachedCached { get; } 
         protected Func<Channel<PublicationMessage>, ValueTask> OnChannelDetachedAsyncCached { get; } 
 
         public IChannelHub<PublicationMessage> ChannelHub { get; }
+        public Func<Channel<PublicationMessage>, Symbol> PublisherIdProvider { get; }
         public bool OwnsChannelHub { get; }
 
-        public Replicator(IChannelHub<PublicationMessage> channelHub, bool ownsChannelHub = true)
+        public Replicator(
+            IChannelHub<PublicationMessage> channelHub,
+            Func<Channel<PublicationMessage>, Symbol> publisherIdProvider,
+            bool ownsChannelHub = true)
         {
             ChannelHub = channelHub;
+            PublisherIdProvider = publisherIdProvider;
             OwnsChannelHub = ownsChannelHub;
             Replicas = new ConcurrentDictionary<Symbol, IReplica>();
+            ChannelProcessorsById = new ConcurrentDictionary<Symbol, ReplicatorChannelProcessor>();
             ChannelProcessors = new ConcurrentDictionary<Channel<PublicationMessage>, ReplicatorChannelProcessor>();
             
             OnChannelAttachedCached = OnChannelAttached;
@@ -50,14 +59,19 @@ namespace Stl.Fusion.Bridge
             ChannelHub.Attached += OnChannelAttachedCached;
         }
 
-        public virtual IReplica<T> TryAddOrGet<T>(Symbol publisherId, Symbol publicationId, TaggedResult<T> initialOutput)
+        public virtual IReplica<T> GetOrAdd<T>(Symbol publisherId, Symbol publicationId, TaggedResult<T> initialOutput, bool isConsistent = true)
         {
             var spinWait = new SpinWait();
             IReplica? replica; 
             while (!Replicas.TryGetValue(publicationId, out replica)) {
-                replica = new Replica<T>(this, publisherId, publicationId, initialOutput);
-                if (Replicas.TryAdd(publicationId, replica))
+                replica = new Replica<T>(this, publisherId, publicationId, initialOutput, isConsistent);
+                if (Replicas.TryAdd(publicationId, replica)) {
+                    if (ChannelProcessorsById.TryGetValue(publisherId, out var channelProcessor)) {
+                        // We intend to just start the task here
+                        channelProcessor.SubscribeAsync(replica, !isConsistent, default); 
+                    }
                     break;
+                }
                 spinWait.SpinOnce();
             }
             return (IReplica<T>) replica;
@@ -68,9 +82,16 @@ namespace Stl.Fusion.Bridge
 
         protected virtual void OnChannelAttached(Channel<PublicationMessage> channel)
         {
-            var channelProcessor = CreateChannelProcessor(channel);
+            var publisherId = PublisherIdProvider.Invoke(channel);
+            var channelProcessor = CreateChannelProcessor(channel, publisherId);
             if (!ChannelProcessors.TryAdd(channel, channelProcessor))
                 return;
+            while (!ChannelProcessorsById.TryAdd(publisherId, channelProcessor)) {
+                if (ChannelProcessorsById.TryRemove(publisherId, out var oldChannelProcessor)) {
+                    // We intend to just start the task here
+                    oldChannelProcessor.DisposeAsync();  
+                }
+            }
             channelProcessor.RunAsync().ContinueWith(_ => {
                 // Since ChannelProcessor is AsyncProcessorBase desc.,
                 // its disposal will shut down RunAsync as well,
@@ -84,20 +105,27 @@ namespace Stl.Fusion.Bridge
         {
             if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
                 return ValueTaskEx.CompletedTask;
+            ChannelProcessorsById.TryRemove(channelProcessor.PublisherId, channelProcessor);
             return channelProcessor.DisposeAsync();
         }
 
-        protected virtual ReplicatorChannelProcessor CreateChannelProcessor(Channel<PublicationMessage> channel) 
-            => new ReplicatorChannelProcessor(channel, this);
+        protected virtual ReplicatorChannelProcessor CreateChannelProcessor(
+            Channel<PublicationMessage> channel, Symbol publisherId) 
+            => new ReplicatorChannelProcessor(this, channel, publisherId);
 
-        void IReplicatorImpl.OnReproductionDisposed(IReplica replica) 
-            => OnReproductionDisposed(replica);
-        protected virtual void OnReproductionDisposed(IReplica replica)
+        void IReplicatorImpl.OnReplicaDisposed(IReplica replica) 
+            => OnReplicaDisposed(replica);
+        protected virtual void OnReplicaDisposed(IReplica replica)
         {
             if (replica.Replicator != this)
                 throw new ArgumentOutOfRangeException(nameof(replica));
             Replicas.TryRemove(replica.PublicationId, replica);
         }
+
+        void IReplicatorImpl.OnChannelProcessorDisposed(ReplicatorChannelProcessor channelProcessor) 
+            => OnChannelProcessorDisposed(channelProcessor);
+        protected virtual void OnChannelProcessorDisposed(ReplicatorChannelProcessor channelProcessor) 
+            => ChannelProcessorsById.TryRemove(channelProcessor.PublisherId, channelProcessor);
 
         protected override async ValueTask DisposeInternalAsync(bool disposing)
         {

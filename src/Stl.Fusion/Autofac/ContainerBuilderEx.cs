@@ -1,9 +1,10 @@
+using System;
+using System.Threading.Channels;
 using Autofac;
 using Autofac.Builder;
 using Autofac.Extras.DynamicProxy;
 using Stl.Channels;
 using Stl.Concurrency;
-using Stl.Fusion;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Messages;
 using Stl.Security;
@@ -30,21 +31,28 @@ namespace Stl.Fusion.Autofac
             return builder;
         }
 
-        public static ContainerBuilder AddFusionPublisher(this ContainerBuilder builder, 
+        public static ContainerBuilder AddFusionPublisher(
+            this ContainerBuilder builder, 
             Symbol publisherId, 
             IGenerator<Symbol>? publicationIdGenerator = null) 
         {
             IGenerator<Symbol> PublicationIdGeneratorResolver(IComponentContext c) 
                 => publicationIdGenerator ?? c.Resolve<IGenerator<Symbol>>();
 
-            builder.RegisterType<ChannelHub<PublicationMessage>>()
-                .As<IChannelHub<PublicationMessage>>();
-            builder.Register(c => new Publisher(
-                    publisherId, 
-                    c.Resolve<IChannelHub<PublicationMessage>>(),
-                    PublicationIdGeneratorResolver(c), 
-                    ownsChannelHub: false))
+            var channelHub = new ChannelHub<PublicationMessage>();
+            builder.Register(c => new Publisher(publisherId, channelHub, PublicationIdGeneratorResolver(c))) 
                 .As<IPublisher>()
+                .SingleInstance();
+            return builder;
+        }
+
+        public static ContainerBuilder AddFusionReplicator(
+            this ContainerBuilder builder,
+            Func<Channel<PublicationMessage>, Symbol> publisherIdProvider) 
+        {
+            var channelHub = new ChannelHub<PublicationMessage>();
+            builder.Register(c => new Replicator(channelHub, publisherIdProvider))
+                .As<IReplicator>()
                 .SingleInstance();
             return builder;
         }

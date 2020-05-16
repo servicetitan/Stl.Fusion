@@ -23,13 +23,14 @@ namespace Stl.Fusion.Bridge
 
         IPublication Publish(IComputed computed, Type? publicationType = null);
         IPublication? TryGet(Symbol publicationId);
-        bool Subscribe(Channel<PublicationMessage> channel, IPublication publication, bool notify);
+        bool Subscribe(Channel<PublicationMessage> channel, IPublication publication, bool sendUpdate);
         ValueTask<bool> UnsubscribeAsync(Channel<PublicationMessage> channel, IPublication publication);
     }
 
     public interface IPublisherImpl : IPublisher
     {
         void OnPublicationDisposed(IPublication publication);
+        void OnChannelProcessorDisposed(PublisherChannelProcessor channelProcessor);
     }
 
     public class Publisher : AsyncDisposableBase, IPublisherImpl
@@ -113,14 +114,19 @@ namespace Stl.Fusion.Bridge
             PublicationsById.TryRemove(p.Id, p);
         }
 
-        public bool Subscribe(Channel<PublicationMessage> channel, IPublication publication, bool notify)
+        void IPublisherImpl.OnChannelProcessorDisposed(PublisherChannelProcessor channelProcessor) 
+            => OnChannelProcessorDisposed(channelProcessor);
+        protected virtual void OnChannelProcessorDisposed(PublisherChannelProcessor channelProcessor)
+        { }
+
+        public bool Subscribe(Channel<PublicationMessage> channel, IPublication publication, bool sendUpdate)
         {
             ThrowIfDisposedOrDisposing();
             if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
                 return false;
             if (publication.Publisher != this || publication.State == PublicationState.Disposed)
                 return false;
-            return channelProcessor.Subscribe(publication, notify);
+            return channelProcessor.Subscribe(publication, sendUpdate);
         }
 
         public ValueTask<bool> UnsubscribeAsync(Channel<PublicationMessage> channel, IPublication publication)
@@ -133,7 +139,7 @@ namespace Stl.Fusion.Bridge
         // Channel-related
 
         protected virtual PublisherChannelProcessor CreateChannelProcessor(Channel<PublicationMessage> channel) 
-            => new PublisherChannelProcessor(channel, this);
+            => new PublisherChannelProcessor(this, channel);
 
         protected virtual void OnChannelAttached(Channel<PublicationMessage> channel)
         {

@@ -9,7 +9,7 @@ namespace Stl.Fusion
 {
     public interface IFunction : IAsyncDisposable
     {
-        Task<IComputed?> InvokeAsync(ComputedInput input, 
+        Task<IComputed> InvokeAsync(ComputedInput input, 
             IComputed? usedBy,
             ComputeContext? context,
             CancellationToken cancellationToken = default);
@@ -23,7 +23,7 @@ namespace Stl.Fusion
     public interface IFunction<in TIn, TOut> : IFunction
         where TIn : ComputedInput
     {
-        Task<IComputed<TOut>?> InvokeAsync(TIn input,
+        Task<IComputed<TOut>> InvokeAsync(TIn input,
             IComputed? usedBy,
             ComputeContext? context,
             CancellationToken cancellationToken = default);
@@ -55,13 +55,13 @@ namespace Stl.Fusion
             OnInvalidateHandler = (c, _) => Unregister((IComputed<TIn, TOut>) c);
         }
 
-        async Task<IComputed?> IFunction.InvokeAsync(ComputedInput input, 
+        async Task<IComputed> IFunction.InvokeAsync(ComputedInput input, 
             IComputed? usedBy,
             ComputeContext? context,
             CancellationToken cancellationToken) 
             => await InvokeAsync((TIn) input, usedBy, context, cancellationToken).ConfigureAwait(false);
 
-        public async Task<IComputed<TOut>?> InvokeAsync(TIn input, 
+        public async Task<IComputed<TOut>> InvokeAsync(TIn input, 
             IComputed? usedBy,
             ComputeContext? context,
             CancellationToken cancellationToken = default)

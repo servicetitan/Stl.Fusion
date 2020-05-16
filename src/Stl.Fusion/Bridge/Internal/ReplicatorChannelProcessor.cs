@@ -1,9 +1,11 @@
+using System;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Stl.Async;
 using Stl.Extensibility;
 using Stl.Fusion.Bridge.Messages;
+using Stl.Text;
 
 namespace Stl.Fusion.Bridge.Internal
 {
@@ -18,16 +20,31 @@ namespace Stl.Fusion.Bridge.Internal
                 => arg.Item1.OnUpdatedMessageAsync((UpdatedMessage<T>) target, arg.Item2);
         }
 
-        public readonly Channel<PublicationMessage> Channel;
         public readonly IReplicator Replicator;
         public readonly IReplicatorImpl ReplicatorImpl;
+        public readonly Channel<PublicationMessage> Channel;
+        public readonly Symbol PublisherId;
         protected object Lock => new object();  
 
-        public ReplicatorChannelProcessor(Channel<PublicationMessage> channel, IReplicator replicator)
+        public ReplicatorChannelProcessor(IReplicator replicator, Channel<PublicationMessage> channel, Symbol publisherId)
         {
-            Channel = channel;
             Replicator = replicator;
             ReplicatorImpl = (IReplicatorImpl) replicator;
+            Channel = channel;
+            PublisherId = publisherId;
+        }
+
+        public ValueTask SubscribeAsync(IReplica replica, bool requestUpdate, CancellationToken cancellationToken)
+        {
+            if (replica.Replicator != Replicator || replica.PublisherId != PublisherId)
+                throw new ArgumentOutOfRangeException(nameof(replica));
+            
+            var subscribeMessage = new SubscribeMessage() {
+                PublisherId = PublisherId,
+                PublicationId = replica.PublicationId,
+                IsUpdateRequested = requestUpdate,
+            };
+            return Channel.Writer.WriteAsync(subscribeMessage, cancellationToken);
         }
 
         protected override async Task RunInternalAsync(CancellationToken cancellationToken)
@@ -72,9 +89,24 @@ namespace Stl.Fusion.Bridge.Internal
 
         protected virtual Task OnUpdatedMessageAsync<T>(UpdatedMessage<T> message, CancellationToken cancellationToken)
         {
-            var initialOutput = new TaggedResult<T>(message.Output, message.Tag);
-            Replicator.TryAddOrGet(message.PublisherId, message.PublicationId, initialOutput);
+            var output = new TaggedResult<T>(message.Output, message.Tag);
+            var replica = Replicator.GetOrAdd(message.PublisherId, message.PublicationId, output);
+            var computed = replica.Computed;
+            if (!computed.IsConsistent || computed.Tag == 0 || computed.Tag == message.FromTag) {
+                if (computed.Tag == message.Tag && computed.IsConsistent)
+                    // Nothing to do
+                    return Task.CompletedTask;
+                var replicaImpl = (IReplicaImpl<T>) replica;
+                replicaImpl.Update(computed, output);
+            }
             return Task.CompletedTask;
         }
+
+        protected override async ValueTask DisposeInternalAsync(bool disposing)
+        {
+            await base.DisposeInternalAsync(disposing);
+            ReplicatorImpl.OnChannelProcessorDisposed(this);
+        }
+
     }
 }

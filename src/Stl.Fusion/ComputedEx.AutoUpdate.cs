@@ -33,7 +33,7 @@ namespace Stl.Fusion
                         var nextComputed = await prevComputed.UpdateAsync(stopToken).ConfigureAwait(false);
                         var prevOutput = prevComputed.Output;
                         prevComputed = null!;
-                        handler?.Invoke(nextComputed!, prevOutput, invalidatedBy);
+                        handler?.Invoke(nextComputed, prevOutput, invalidatedBy);
                         nextComputed!.Invalidated += OnInvalidated;
                     }
                     catch (OperationCanceledException) { }

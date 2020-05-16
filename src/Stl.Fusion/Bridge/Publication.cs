@@ -38,7 +38,7 @@ namespace Stl.Fusion.Bridge
 
     public interface IPublicationImpl : IPublication, IAsyncProcess
     {
-        Task RunSubscriptionAsync(Channel<PublicationMessage> channel, bool notify, CancellationToken cancellationToken);
+        Task RunSubscriptionAsync(Channel<PublicationMessage> channel, bool sendUpdate, CancellationToken cancellationToken);
     }
 
     public interface IPublicationImpl<T> : IPublicationImpl, IPublication<T> { }
@@ -212,16 +212,16 @@ namespace Stl.Fusion.Bridge
         // Subscription
 
         Task IPublicationImpl.RunSubscriptionAsync(
-            Channel<PublicationMessage> channel, bool notify, CancellationToken cancellationToken) 
-            => RunSubscriptionAsync(channel, notify, cancellationToken);
+            Channel<PublicationMessage> channel, bool sendUpdate, CancellationToken cancellationToken) 
+            => RunSubscriptionAsync(channel, sendUpdate, cancellationToken);
         protected virtual async Task RunSubscriptionAsync(
-            Channel<PublicationMessage> channel, bool notify, CancellationToken cancellationToken)
+            Channel<PublicationMessage> channel, bool sendUpdate, CancellationToken cancellationToken)
         {
             var writer = channel.Writer;
             try {
-                if (notify) {
+                if (sendUpdate) {
                     Touch(); // In case the next call takes a while 
-                    await NotifySubscribeAsync(channel, cancellationToken).ConfigureAwait(false);
+                    await SendUpdateAsync(channel, cancellationToken).ConfigureAwait(false);
                 }
                 await foreach (var e in StateChangedEvents.WithCancellation(cancellationToken).ConfigureAwait(false)) {
                     var message = e.Message;
@@ -237,8 +237,6 @@ namespace Stl.Fusion.Bridge
                         cts.CancelAfter(10_000);
                         cancellationToken = cts.Token;
                     }
-                    if (notify && await writer.WaitToWriteAsync(cancellationToken))
-                        await NotifyUnsubscribeAsync(channel, cancellationToken).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException) {
                     // Ignore: it's totally fine to see it here
@@ -249,24 +247,21 @@ namespace Stl.Fusion.Bridge
             }
         }
 
-        protected virtual ValueTask NotifySubscribeAsync(
+        protected virtual async ValueTask SendUpdateAsync(
             Channel<PublicationMessage> channel, CancellationToken cancellationToken)
         {
-            var message = new SubscribeMessage() {
+            var computed = Computed;
+            if (!computed.IsConsistent)
+                computed = await computed.UpdateAsync(cancellationToken).ConfigureAwait(false);
+            
+            var message = new UpdatedMessage<T>() {
                 PublisherId = Publisher.Id,
                 PublicationId = Id,
+                Output = computed.Output,
+                Tag = computed.Tag,
+                FromTag = 0,
             };
-            return channel.Writer.WriteAsync(message, cancellationToken);
-        }
-
-        protected virtual ValueTask NotifyUnsubscribeAsync(
-            Channel<PublicationMessage> channel, CancellationToken cancellationToken)
-        {
-            var message = new UnsubscribeMessage() {
-                PublisherId = Publisher.Id,
-                PublicationId = Id,
-            };
-            return channel.Writer.WriteAsync(message, cancellationToken);
+            await channel.Writer.WriteAsync(message, cancellationToken).ConfigureAwait(false);
         }
 
         // State change & other low-level stuff
@@ -276,8 +271,9 @@ namespace Stl.Fusion.Bridge
         {
             PublicationStateChangedEvent e;
             lock (Lock) {
+                var prevComputed = _computed;
                 ChangeStateUnsafe(nextComputed, nextState);
-                e = CreateStateChangedEventUnsafe();
+                e = CreateStateChangedEventUnsafe(prevComputed);
             }
             if (nextState != PublicationState.Disposed) 
                 await StateChangedEventSource.NextAsync(e).ConfigureAwait(false); 
@@ -286,7 +282,7 @@ namespace Stl.Fusion.Bridge
             return e;
         }
 
-        protected virtual PublicationStateChangedEvent CreateStateChangedEventUnsafe()
+        protected virtual PublicationStateChangedEvent CreateStateChangedEventUnsafe(IComputed<T> prevComputed)
         {
             // Can be invoked from Lock-protected sections only
             PublicationStateChangedEvent e;
@@ -295,6 +291,7 @@ namespace Stl.Fusion.Bridge
                 e = new PublicationUpdatedEvent(this, new UpdatedMessage<T>() {
                     Output = Computed.Output,
                     Tag = Computed.Tag,
+                    FromTag = prevComputed?.Tag ?? 0,
                 });
                 break;
             case PublicationState.Invalidated:
@@ -309,9 +306,10 @@ namespace Stl.Fusion.Bridge
                 throw new ArgumentOutOfRangeException();
             }
 
-            if (e.Message is PublicationMessage pm) {
-                pm.PublisherId = Publisher.Id;
-                pm.PublicationId = Id;
+            var message = e.Message;
+            if (message != null) {
+                message.PublisherId = Publisher.Id;
+                message.PublicationId = Id;
             }
             return e;
         }
@@ -334,9 +332,9 @@ namespace Stl.Fusion.Bridge
             : base(publicationType, publisher, computed, id)              
         { }
 
-        protected override PublicationStateChangedEvent CreateStateChangedEventUnsafe()
+        protected override PublicationStateChangedEvent CreateStateChangedEventUnsafe(IComputed<T> prevComputed)
         {
-            var e = base.CreateStateChangedEventUnsafe();
+            var e = base.CreateStateChangedEventUnsafe(prevComputed);
             if (e is PublicationInvalidatedEvent ie)
                 ie.NextUpdateTime = IntMoment.MaxValue;
             return e;

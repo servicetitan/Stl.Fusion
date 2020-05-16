@@ -13,22 +13,25 @@ namespace Stl.Fusion.Bridge
         Symbol PublisherId { get; }
         Symbol PublicationId { get; }
         IComputed Computed { get; }
-        Task<IComputed> NextUpdateTask { get; }
+        Task<IComputed> NextUpdateAsync(CancellationToken cancellationToken = default);
     }
 
     public interface IReplica<T> : IReplica
     {
         new IComputed<T> Computed { get; }
-        bool Update(IComputed<T> origin, TaggedResult<T> taggerOutput);
+        new Task<IComputed<T>> NextUpdateAsync(CancellationToken cancellationToken = default);
     }
 
     public interface IReplicaImpl : IReplica, IFunction { }
-    public interface IReplicaImpl<T> : IReplica<T>, IFunction<ReplicaInput, T>, IReplicaImpl { } 
+    public interface IReplicaImpl<T> : IReplica<T>, IFunction<ReplicaInput, T>, IReplicaImpl
+    {
+        bool Update(IComputed<T> origin, TaggedResult<T> taggedOutput);
+    } 
 
     public class Replica<T> : AsyncDisposableBase, IReplicaImpl<T>
     {
         private volatile IComputed<T> _computed;
-        protected volatile TaskCompletionSource<IComputed> NextUpdateTcs;
+        protected volatile TaskCompletionSource<IComputed<T>> NextUpdateTcs;
         protected readonly ReplicaInput Input;
 
         public IReplicator Replicator { get; }
@@ -36,26 +39,33 @@ namespace Stl.Fusion.Bridge
         public Symbol PublicationId { get; }
         public IComputed<T> Computed => _computed;
         IComputed IReplica.Computed => _computed;
-        public Task<IComputed> NextUpdateTask => NextUpdateTcs.Task;
         protected object Lock => this;
 
         public Replica(IReplicator replicator, 
             Symbol publisherId, Symbol publicationId, 
-            TaggedResult<T> initialOutput)
+            TaggedResult<T> initialOutput,
+            bool isConsistent = true)
         {
             Replicator = replicator;
             PublisherId = publisherId;
             PublicationId = publicationId;
             Input = new ReplicaInput(this);
             NextUpdateTcs = CreateNextUpdateTcs();
-            _computed = new Computed<ReplicaInput, T>(Input, initialOutput.Result, initialOutput.Tag);
+            _computed = new Computed<ReplicaInput, T>(Input, initialOutput.Result, initialOutput.Tag, isConsistent);
         }
 
-        public bool Update(IComputed<T> origin, TaggedResult<T> newOutput)
+        async Task<IComputed> IReplica.NextUpdateAsync(CancellationToken cancellationToken) 
+            => await NextUpdateAsync(cancellationToken);
+        public Task<IComputed<T>> NextUpdateAsync(CancellationToken cancellationToken) 
+            => NextUpdateTcs.Task.WithFakeCancellation(cancellationToken);
+
+        bool IReplicaImpl<T>.Update(IComputed<T> origin, TaggedResult<T> taggedOutput) 
+            => Update(origin, taggedOutput);
+        protected virtual bool Update(IComputed<T> origin, TaggedResult<T> taggedOutput)
         {
             var spinWait = new SpinWait();
             while (_computed == origin) {
-                var newComputed = new Computed<ReplicaInput, T>(Input, newOutput.Result, newOutput.Tag);
+                var newComputed = new Computed<ReplicaInput, T>(Input, taggedOutput.Result, taggedOutput.Tag);
                 if (origin == Interlocked.CompareExchange(ref _computed, newComputed, origin)) {
                     var nextUpdateTcs = Interlocked.Exchange(ref NextUpdateTcs, CreateNextUpdateTcs());
                     try {
@@ -97,8 +107,8 @@ namespace Stl.Fusion.Bridge
 
         #endregion
 
-        protected virtual TaskCompletionSource<IComputed> CreateNextUpdateTcs() 
-            => new TaskCompletionSource<IComputed>();
+        protected virtual TaskCompletionSource<IComputed<T>> CreateNextUpdateTcs() 
+            => new TaskCompletionSource<IComputed<T>>();
 
         protected Task<IComputed<T>?> InvokeAsync(ReplicaInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)
@@ -107,7 +117,7 @@ namespace Stl.Fusion.Bridge
             var computed = reproductionImpl.Computed;
             if (computed.IsConsistent)
                 return Task.FromResult(computed)!;
-            return NextUpdateTask.ContinueWith((_, arg) => {
+            return NextUpdateTcs.Task.ContinueWith((_, arg) => {
                 var reproductionImpl1 = (IReplicaImpl<T>) arg;
                 return reproductionImpl1.Computed;
             }, reproductionImpl, cancellationToken)!;
@@ -120,7 +130,7 @@ namespace Stl.Fusion.Bridge
             var computed = reproductionImpl.Computed;
             if (computed.IsConsistent)
                 return computed.Value;
-            await NextUpdateTask;
+            await NextUpdateTcs.Task;
             return reproductionImpl.Computed.Value;
         }
 
@@ -132,7 +142,7 @@ namespace Stl.Fusion.Bridge
 
         protected override ValueTask DisposeInternalAsync(bool disposing)
         {
-            ((IReplicatorImpl) Replicator).OnReproductionDisposed(this);
+            ((IReplicatorImpl) Replicator).OnReplicaDisposed(this);
             return base.DisposeInternalAsync(disposing);
         }
     }

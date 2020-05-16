@@ -40,7 +40,7 @@ namespace Stl.Tests.Fusion
         public ILogger Log { get; }
         public TestDbContext DbContext => Container.Resolve<TestDbContext>();
         public IPublisher Publisher => Container.Resolve<IPublisher>();
-        public IChannelHub<PublicationMessage> ChannelHub => Publisher.ChannelHub; // Publisher should be resolved first!
+        public IReplicator Replicator => Container.Resolve<IReplicator>();
 
         public FusionTestBase(ITestOutputHelper @out, FusionTestOptions? options = null) : base(@out)
         {
@@ -131,7 +131,8 @@ namespace Stl.Tests.Fusion
                 s => new Symbol($"p-{s}"));
 
             builder.AddFusion();
-            builder.AddFusionPublisher("publisher", publicationIdGenerator);
+            builder.AddFusionPublisher("p", publicationIdGenerator);
+            builder.AddFusionReplicator(_ => "p");
 
             // Computed providers
             builder.RegisterType<SimplestProvider>()
