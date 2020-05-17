@@ -19,12 +19,14 @@ namespace Stl.Fusion.Bridge
         IChannelHub<PublicationMessage> ChannelHub { get; }
         bool OwnsChannelHub { get; }
 
-        IReplica<T> GetOrAdd<T>(Symbol publisherId, Symbol publicationId, TaggedResult<T> initialOutput, bool isConsistent = true);
+        IReplica<T> GetOrAdd<T>(Symbol publisherId, Symbol publicationId, 
+            TaggedResult<T> initialOutput, bool isConsistent = true, bool requestUpdate = false);
         IReplica? TryGet(Symbol publicationId);
     }
 
     public interface IReplicatorImpl : IReplicator
     {
+        bool TrySubscribe(IReplica replica, bool requestUpdate);
         void OnReplicaDisposed(IReplica replica);
         void OnChannelProcessorDisposed(ReplicatorChannelProcessor replicatorChannelProcessor);
     }
@@ -59,19 +61,15 @@ namespace Stl.Fusion.Bridge
             ChannelHub.Attached += OnChannelAttachedCached;
         }
 
-        public virtual IReplica<T> GetOrAdd<T>(Symbol publisherId, Symbol publicationId, TaggedResult<T> initialOutput, bool isConsistent = true)
+        public virtual IReplica<T> GetOrAdd<T>(Symbol publisherId, Symbol publicationId, 
+            TaggedResult<T> initialOutput, bool isConsistent = true, bool requestUpdate = false)
         {
             var spinWait = new SpinWait();
             IReplica? replica; 
             while (!Replicas.TryGetValue(publicationId, out replica)) {
-                replica = new Replica<T>(this, publisherId, publicationId, initialOutput, isConsistent);
-                if (Replicas.TryAdd(publicationId, replica)) {
-                    if (ChannelProcessorsById.TryGetValue(publisherId, out var channelProcessor)) {
-                        // We intend to just start the task here
-                        channelProcessor.SubscribeAsync(replica, !isConsistent, default); 
-                    }
-                    break;
-                }
+                replica = new Replica<T>(this, publisherId, publicationId, initialOutput, isConsistent, requestUpdate);
+                if (Replicas.TryAdd(publicationId, replica))
+                    TrySubscribe(replica, requestUpdate);
                 spinWait.SpinOnce();
             }
             return (IReplica<T>) replica;
@@ -112,6 +110,19 @@ namespace Stl.Fusion.Bridge
         protected virtual ReplicatorChannelProcessor CreateChannelProcessor(
             Channel<PublicationMessage> channel, Symbol publisherId) 
             => new ReplicatorChannelProcessor(this, channel, publisherId);
+
+        bool IReplicatorImpl.TrySubscribe(IReplica replica, bool requestUpdate) 
+            => TrySubscribe(replica, requestUpdate);
+        protected virtual bool TrySubscribe(IReplica replica, bool requestUpdate)
+        {
+            if (replica.Replicator != this)
+                throw new ArgumentOutOfRangeException(nameof(replica));
+            if (!ChannelProcessorsById.TryGetValue(replica.PublisherId, out var channelProcessor))
+                return false;
+            // We intend to just start the task here
+            channelProcessor.SubscribeAsync(replica, requestUpdate, default);
+            return true;
+        }
 
         void IReplicatorImpl.OnReplicaDisposed(IReplica replica) 
             => OnReplicaDisposed(replica);

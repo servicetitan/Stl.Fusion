@@ -32,7 +32,7 @@ namespace Stl.Tests.Fusion
             r1.Computed.Should().Be(r1c);
 
             sp.SetValue("1");
-            r1c = await r1.NextUpdateAsync();
+            r1c = await r1.RequestUpdateAsync();
             r1c.Value.Should().Be("1");
             r1.Computed.Should().Be(r1c);
         }

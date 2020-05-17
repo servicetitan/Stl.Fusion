@@ -29,7 +29,7 @@ namespace Stl.Fusion
             return computed == null ? computed : computed.Tag == tag ? computed : null;
         }
 
-        public Task<IComputed?> GetComputedAsync(IComputed? usedBy = null, 
+        public Task<IComputed> GetComputedAsync(IComputed? usedBy = null, 
             ComputeContext? context = null, 
             CancellationToken cancellationToken = default) 
             => Function.InvokeAsync(this, usedBy, context, cancellationToken);

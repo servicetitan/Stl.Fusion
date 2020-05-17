@@ -5,16 +5,21 @@ namespace Stl.Fusion.Bridge.Internal
 {
     public class ReplicaInput : ComputedInput, IEquatable<ReplicaInput>
     {
-        protected internal IReplicaImpl ReplicaImpl { get; }
-        // Shortcuts
+        protected internal readonly IReplicaImpl ReplicaImpl;
+        protected internal IReplicatorImpl ReplicatorImpl => (IReplicatorImpl) Replicator;
+        
+        public Symbol PublisherId { get; }
+        public Symbol PublicationId { get; }
         public IReplicator Replicator => ReplicaImpl.Replicator;
-        public Symbol PublisherId => ReplicaImpl.PublisherId;
-        public Symbol PublicationId => ReplicaImpl.PublicationId;
         public IReplica Replica => ReplicaImpl;
 
-        public ReplicaInput(IReplicaImpl replicaImpl) 
-            : base(replicaImpl) 
-            => ReplicaImpl = replicaImpl;
+        public ReplicaInput(IReplicaImpl replicaImpl, Symbol publisherId, Symbol publicationId) 
+            : base(replicaImpl)
+        {
+            ReplicaImpl = replicaImpl;
+            PublisherId = publisherId;
+            PublicationId = publicationId;
+        }
 
         public override string ToString() 
             => $"{GetType().Name}({Replica.PublicationId})";

@@ -155,10 +155,10 @@ namespace Stl.Fusion
             => TryGetCached((TIn) input, null);
         public virtual IComputed<TOut>? TryGetCached(TIn input, IComputed? usedBy)
         {
-            var value = ComputedRegistry.TryGet(input) as IComputed<TIn, TOut>;
-            if (value != null)
-                ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) value);
-            return value;
+            var result = ComputedRegistry.TryGet(input) as IComputed<TIn, TOut>;
+            if (result != null)
+                ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) result);
+            return result;
         }
 
         // Protected & private

@@ -44,6 +44,7 @@ namespace Stl.Concurrency
         public static int DefaultConcurrencyLevel => HardwareInfo.ProcessorCountPo2 << 1;
         public static readonly ConcurrentIdGenerator<int> DefaultInt32 = NewInt32();
         public static readonly ConcurrentIdGenerator<long> DefaultInt64 = NewInt64();
+        public static readonly ConcurrentIdGenerator<LTag> DefaultLTag = NewLTag();
 
         public static ConcurrentIdGenerator<int> NewInt32(int concurrencyLevel = -1)
         {
@@ -72,6 +73,29 @@ namespace Stl.Concurrency
                     unchecked {
                         count += (ulong) concurrencyLevel;
                         return (long) (count ^ (ulong) i);
+                    }
+                };
+            });
+        }
+
+        public static ConcurrentIdGenerator<LTag> NewLTag(int concurrencyLevel = -1)
+        {
+            if (concurrencyLevel < 0)
+                concurrencyLevel = DefaultConcurrencyLevel;
+            concurrencyLevel = (int) Bits.GreaterOrEqualPowerOf2((uint) concurrencyLevel);
+            return new ConcurrentIdGenerator<LTag>(i => {
+                var count = (long) 0;
+                return () => {                  
+                    unchecked {
+                        count += (long) concurrencyLevel;
+                        if (count <= 0) {
+                            // We want to return only strictly positive LTags (w/o IsSpecial flag)
+                            if (count == 0)
+                                count = 1;
+                            else
+                                count -= long.MinValue - 1;
+                        }
+                        return count;
                     }
                 };
             });

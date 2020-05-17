@@ -36,8 +36,9 @@ namespace Stl.Fusion.Bridge.Internal
 
         public ValueTask SubscribeAsync(IReplica replica, bool requestUpdate, CancellationToken cancellationToken)
         {
-            if (replica.Replicator != Replicator || replica.PublisherId != PublisherId)
-                throw new ArgumentOutOfRangeException(nameof(replica));
+            // No checks, since they're done by the only caller of this method
+            // if (replica.Replicator != Replicator || replica.PublisherId != PublisherId)
+            //     throw new ArgumentOutOfRangeException(nameof(replica));
             
             var subscribeMessage = new SubscribeMessage() {
                 PublisherId = PublisherId,
@@ -97,7 +98,7 @@ namespace Stl.Fusion.Bridge.Internal
                     // Nothing to do
                     return Task.CompletedTask;
                 var replicaImpl = (IReplicaImpl<T>) replica;
-                replicaImpl.Update(computed, output);
+                replicaImpl.ApplyUpdate(computed, output);
             }
             return Task.CompletedTask;
         }
