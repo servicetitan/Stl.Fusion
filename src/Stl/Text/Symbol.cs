@@ -22,7 +22,7 @@ namespace Stl.Text
             HashCode = value?.GetHashCode() ?? 0;
         }
         
-        public override string ToString() => $"{GetType().Name}({Value})";
+        public override string ToString() => $"`{Value}`";
         
         // Conversion
         

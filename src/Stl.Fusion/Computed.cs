@@ -22,7 +22,7 @@ namespace Stl.Fusion
         ComputedInput Input { get; }
         IResult Output { get; }
         Type OutputType { get; }
-        int Tag { get; } // ~ Unique for the specific (Func, Key) pair
+        LTag LTag { get; } // ~ Unique for the specific (Func, Key) pair
         ComputedState State { get; }
         bool IsConsistent { get; }
         event Action<IComputed, object?> Invalidated;
@@ -40,7 +40,7 @@ namespace Stl.Fusion
     public interface IComputed<TOut> : IComputed, IResult<TOut>
     {
         new Result<TOut> Output { get; }
-        TaggedResult<TOut> TaggedOutput { get; }
+        LTagged<Result<TOut>> LTaggedOutput { get; }
         bool TrySetOutput(Result<TOut> output);
         void SetOutput(Result<TOut> output);
 
@@ -64,7 +64,7 @@ namespace Stl.Fusion
         private volatile int _state;
         private Result<TOut> _output;
         private RefHashSetSlim2<IComputedImpl> _used = default;
-        private HashSetSlim2<(ComputedInput Input, int Tag)> _usedBy = default;
+        private HashSetSlim2<(ComputedInput Input, LTag LTag)> _usedBy = default;
         // ReSharper disable once InconsistentNaming
         private event Action<IComputed, object?>? _invalidated;
         private object? _invalidatedBy;
@@ -76,7 +76,7 @@ namespace Stl.Fusion
         public ComputedState State => (ComputedState) _state;
         public TIn Input { get; }
         public IFunction<TIn, TOut> Function => (IFunction<TIn, TOut>) Input.Function; 
-        public int Tag { get; }
+        public LTag LTag { get; }
         public IntMoment LastAccessTime {
             get => new IntMoment(_lastAccessTime);
             set => Interlocked.Exchange(ref _lastAccessTime, value.EpochOffsetUnits);
@@ -97,7 +97,7 @@ namespace Stl.Fusion
                 return _output;
             }
         }
-        public TaggedResult<TOut> TaggedOutput => new TaggedResult<TOut>(Output, Tag);
+        public LTagged<Result<TOut>> LTaggedOutput => (Output, LTag);
 
         // IResult<T> properties
         public Exception? Error => Output.Error;
@@ -131,26 +131,26 @@ namespace Stl.Fusion
             }
         }
 
-        public Computed(TIn input, int tag)
+        public Computed(TIn input, LTag lTag)
         {
             Input = input;
-            Tag = tag;
+            LTag = lTag;
             _keepAliveTime = Computed.DefaultKeepAliveTime;
             _lastAccessTime = IntMoment.Clock.EpochOffsetUnits;
         }
 
-        public Computed(TIn input, Result<TOut> output, int tag, bool isConsistent = true)
+        public Computed(TIn input, Result<TOut> output, LTag lTag, bool isConsistent = true)
         {
             Input = input;
             _state = (int) (isConsistent ? ComputedState.Consistent : ComputedState.Invalidated);
             _output = output;
-            Tag = tag;
+            LTag = lTag;
             _keepAliveTime = Computed.DefaultKeepAliveTime;
             _lastAccessTime = IntMoment.Clock.EpochOffsetUnits;
         }
 
         public override string ToString() 
-            => $"{GetType().Name}({Input}, Tag: #{Tag}, State: {State})";
+            => $"{GetType().Name}({Input} {LTag}, State: {State})";
 
         void IComputedImpl.AddUsed(IComputedImpl used)
         {
@@ -184,14 +184,14 @@ namespace Stl.Fusion
                 default:
                     throw new ArgumentOutOfRangeException();
                 }
-                _usedBy.Add((usedBy.Input, usedBy.Tag));
+                _usedBy.Add((usedBy.Input, usedBy.LTag));
             }
         }
 
         void IComputedImpl.RemoveUsedBy(IComputedImpl usedBy)
         {
             lock (Lock) {
-                _usedBy.Remove((usedBy.Input, usedBy.Tag));
+                _usedBy.Remove((usedBy.Input, usedBy.LTag));
             }
         }
 
@@ -214,11 +214,11 @@ namespace Stl.Fusion
         {
             if (!TryChangeState(ComputedState.Invalidated))
                 return false;
-            ListBuffer<(ComputedInput Input, int Tag)> usedBy = default;
+            ListBuffer<(ComputedInput Input, LTag LTag)> usedBy = default;
             try {
                 lock (Lock) {
                     _invalidatedBy = invalidatedBy;
-                    usedBy = ListBuffer<(ComputedInput, int)>.LeaseAndSetCount(_usedBy.Count);
+                    usedBy = ListBuffer<(ComputedInput, LTag)>.LeaseAndSetCount(_usedBy.Count);
                     _usedBy.CopyTo(usedBy.Span);
                     _usedBy.Clear();
                     _used.Apply(this, (self, c) => c.RemoveUsedBy(self));
@@ -232,7 +232,7 @@ namespace Stl.Fusion
                 }
                 for (var i = 0; i < usedBy.Span.Length; i++) {
                     ref var d = ref usedBy.Span[i];
-                    d.Input.TryGetCachedComputed(d.Tag)?.Invalidate(invalidatedBy);
+                    d.Input.TryGetCachedComputed(d.LTag)?.Invalidate(invalidatedBy);
                     // Just in case buffers aren't cleaned up when you return them back
                     d = default!; 
                 }
@@ -297,7 +297,6 @@ namespace Stl.Fusion
             if (State != expectedState)
                 throw Errors.WrongComputedState(expectedState, State);
         }
-
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected void AssertStateIsNot(ComputedState unexpectedState)

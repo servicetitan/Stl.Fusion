@@ -29,7 +29,7 @@ namespace Stl.Fusion.Bridge
     public interface IReplicaImpl : IReplica, IFunction { }
     public interface IReplicaImpl<T> : IReplica<T>, IFunction<ReplicaInput, T>, IReplicaImpl
     {
-        bool ApplyUpdate(IComputedReplica<T> origin, TaggedResult<T> taggedOutput);
+        bool ApplyUpdate(IComputedReplica<T> origin, LTagged<Result<T>> output, bool isConsistent);
     } 
 
     public class Replica<T> : AsyncDisposableBase, IReplicaImpl<T>
@@ -38,24 +38,30 @@ namespace Stl.Fusion.Bridge
         protected IComputedReplica<T> ComputedField;
         protected TaskCompletionSource<IComputedReplica<T>>? UpdateRequestTcs = null;
 
-        IComputedReplica IReplica.Computed => ComputedField;
-        public IComputedReplica<T> Computed => ComputedField;
-        public IReplicator Replicator => Input.Replicator;
+        public IReplicator Replicator { get; }
         public Symbol PublisherId => Input.PublisherId;
         public Symbol PublicationId => Input.PublicationId;
+        IComputedReplica IReplica.Computed => ComputedField;
+        public IComputedReplica<T> Computed => ComputedField;
         public bool IsUpdateRequested => UpdateRequestTcs != null;
-        protected object Lock => this;
+        protected object Lock => new object();
 
         public Replica(
             IReplicator replicator, Symbol publisherId, Symbol publicationId, 
-            TaggedResult<T> initialOutput, bool isConsistent = true, bool isUpdateRequested = false)
+            LTagged<Result<T>> initialOutput, bool isConsistent = true, bool isUpdateRequested = false)
         {
+            Replicator = replicator;
             Input = new ReplicaInput(this, publisherId, publicationId);
-            ComputedField = new ComputedReplica<T>(Input, initialOutput.Result, initialOutput.Tag, isConsistent);
             if (isUpdateRequested)
                 // ReSharper disable once VirtualMemberCallInConstructor
                 UpdateRequestTcs = CreateUpdateRequestTcs();
+            // ReSharper disable once VirtualMemberCallInConstructor
+            ApplyUpdate(null, initialOutput, isConsistent);
         }
+
+        protected virtual IComputedReplica<T> CreateComputedReplica(
+            LTagged<Result<T>> initialOutput, bool isConsistent) 
+            => new ComputedReplica<T>(Input, initialOutput.Value, initialOutput.LTag, isConsistent);
 
         async Task<IComputedReplica> IReplica.RequestUpdateAsync(CancellationToken cancellationToken) 
             => await RequestUpdateAsync(cancellationToken);
@@ -64,7 +70,7 @@ namespace Stl.Fusion.Bridge
             var requestUpdate = false;
             TaskCompletionSource<IComputedReplica<T>>? updateRequestTcs;
             lock (Lock) {
-                updateRequestTcs = UpdateRequestTcs ?? new TaskCompletionSource<IComputedReplica<T>>();
+                updateRequestTcs = UpdateRequestTcs ?? CreateUpdateRequestTcs();
                 if (updateRequestTcs != UpdateRequestTcs) {
                     requestUpdate = true;
                     UpdateRequestTcs = updateRequestTcs;
@@ -75,21 +81,21 @@ namespace Stl.Fusion.Bridge
             return updateRequestTcs.Task.WithFakeCancellation(cancellationToken);
         }
 
-        bool IReplicaImpl<T>.ApplyUpdate(IComputedReplica<T> expectedComputed, TaggedResult<T> taggedOutput) 
-            => ApplyUpdate(expectedComputed, taggedOutput);
-        protected virtual bool ApplyUpdate(IComputedReplica<T> expectedComputed, TaggedResult<T> taggedOutput)
+        bool IReplicaImpl<T>.ApplyUpdate(IComputedReplica<T>? expectedComputed, LTagged<Result<T>> output, bool isConsistent) 
+            => ApplyUpdate(expectedComputed, output, isConsistent);
+        protected virtual bool ApplyUpdate(IComputedReplica<T>? expectedComputed, LTagged<Result<T>> output, bool isConsistent)
         {
             TaskCompletionSource<IComputedReplica<T>>? updateRequestTcs;
             IComputedReplica<T> newComputed;
             lock (Lock) {
                 if (ComputedField != expectedComputed)
                     return false;
-                updateRequestTcs = UpdateRequestTcs;
-                newComputed = new ComputedReplica<T>(Input, taggedOutput.Result, taggedOutput.Tag);
+                (updateRequestTcs, UpdateRequestTcs) = (UpdateRequestTcs, null);
+                newComputed = new ComputedReplica<T>(Input, output.Value, output.LTag, isConsistent);
                 ComputedField = newComputed;
             }
             try {
-                expectedComputed.Invalidate();
+                expectedComputed?.Invalidate();
             }
             finally {
                 updateRequestTcs?.TrySetResult(newComputed);
@@ -103,18 +109,24 @@ namespace Stl.Fusion.Bridge
         protected async Task<IComputed<T>> InvokeAsync(ReplicaInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)
         {
+            if (input != Input)
+                // This "Function" supports just a single input == Input
+                throw new ArgumentOutOfRangeException(nameof(input));
+
             using var contextUseScope = context.Use();
             context = contextUseScope.Context;
 
-            var result = TryGetCached(input, usedBy);
-            context.TryCaptureValue(result);
-            if (result != null || (context.Options & ComputeOptions.TryGetCached) != 0) {
+            var result = Computed;
+            if ((context.Options & ComputeOptions.TryGetCached) != 0) {
+                context.TryCaptureValue(result);
                 if ((context.Options & ComputeOptions.Invalidate) == ComputeOptions.Invalidate)
                     result?.Invalidate();
+                ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) result);
                 return result!;
             }
 
-            result = await RequestUpdateAsync(cancellationToken).ConfigureAwait(false);
+            if (!result.IsConsistent)
+                result = await RequestUpdateAsync(cancellationToken).ConfigureAwait(false);
             context.TryCaptureValue(result);
             ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) result);
             return result;
@@ -123,18 +135,24 @@ namespace Stl.Fusion.Bridge
         protected async Task<T> InvokeAndStripAsync(ReplicaInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)
         {
+            if (input != Input)
+                // This "Function" supports just a single input == Input
+                throw new ArgumentOutOfRangeException(nameof(input));
+
             using var contextUseScope = context.Use();
             context = contextUseScope.Context;
 
-            var result = TryGetCached(input, usedBy);
-            context.TryCaptureValue(result);
-            if (result != null || (context.Options & ComputeOptions.TryGetCached) != 0) {
+            var result = Computed;
+            if ((context.Options & ComputeOptions.TryGetCached) != 0) {
+                context.TryCaptureValue(result);
                 if ((context.Options & ComputeOptions.Invalidate) == ComputeOptions.Invalidate)
                     result?.Invalidate();
+                ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) result);
                 return result.Strip();
             }
 
-            result = await RequestUpdateAsync(cancellationToken).ConfigureAwait(false);
+            if (!result.IsConsistent)
+                result = await RequestUpdateAsync(cancellationToken).ConfigureAwait(false);
             context.TryCaptureValue(result);
             ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) result);
             return result.Strip();

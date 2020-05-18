@@ -20,7 +20,7 @@ namespace Stl.Fusion.Bridge
         bool OwnsChannelHub { get; }
 
         IReplica<T> GetOrAdd<T>(Symbol publisherId, Symbol publicationId, 
-            TaggedResult<T> initialOutput, bool isConsistent = true, bool requestUpdate = false);
+            LTagged<Result<T>> initialOutput, bool isConsistent = true, bool requestUpdate = false);
         IReplica? TryGet(Symbol publicationId);
     }
 
@@ -36,8 +36,8 @@ namespace Stl.Fusion.Bridge
         protected ConcurrentDictionary<Symbol, IReplica> Replicas { get; }
         protected ConcurrentDictionary<Channel<PublicationMessage>, ReplicatorChannelProcessor> ChannelProcessors { get; }
         protected ConcurrentDictionary<Symbol, ReplicatorChannelProcessor> ChannelProcessorsById { get; }
-        protected Action<Channel<PublicationMessage>> OnChannelAttachedCached { get; } 
-        protected Func<Channel<PublicationMessage>, ValueTask> OnChannelDetachedAsyncCached { get; } 
+        protected Action<Channel<PublicationMessage>> OnChannelAttachedHandler { get; } 
+        protected Func<Channel<PublicationMessage>, ValueTask> OnChannelDetachedAsyncHandler { get; } 
 
         public IChannelHub<PublicationMessage> ChannelHub { get; }
         public Func<Channel<PublicationMessage>, Symbol> PublisherIdProvider { get; }
@@ -55,14 +55,14 @@ namespace Stl.Fusion.Bridge
             ChannelProcessorsById = new ConcurrentDictionary<Symbol, ReplicatorChannelProcessor>();
             ChannelProcessors = new ConcurrentDictionary<Channel<PublicationMessage>, ReplicatorChannelProcessor>();
             
-            OnChannelAttachedCached = OnChannelAttached;
-            OnChannelDetachedAsyncCached = OnChannelDetachedAsync;
-            ChannelHub.Detached += OnChannelDetachedAsyncCached; // Must go first
-            ChannelHub.Attached += OnChannelAttachedCached;
+            OnChannelAttachedHandler = OnChannelAttached;
+            OnChannelDetachedAsyncHandler = OnChannelDetachedAsync;
+            ChannelHub.Detached += OnChannelDetachedAsyncHandler; // Must go first
+            ChannelHub.Attached += OnChannelAttachedHandler;
         }
 
         public virtual IReplica<T> GetOrAdd<T>(Symbol publisherId, Symbol publicationId, 
-            TaggedResult<T> initialOutput, bool isConsistent = true, bool requestUpdate = false)
+            LTagged<Result<T>> initialOutput, bool isConsistent = true, bool requestUpdate = false)
         {
             var spinWait = new SpinWait();
             IReplica? replica; 
@@ -140,8 +140,8 @@ namespace Stl.Fusion.Bridge
 
         protected override async ValueTask DisposeInternalAsync(bool disposing)
         {
-            ChannelHub.Attached -= OnChannelAttachedCached; // Must go first
-            ChannelHub.Detached -= OnChannelDetachedAsyncCached;
+            ChannelHub.Attached -= OnChannelAttachedHandler; // Must go first
+            ChannelHub.Detached -= OnChannelDetachedAsyncHandler;
             var channelProcessors = ChannelProcessors;
             while (!channelProcessors.IsEmpty) {
                 var tasks = channelProcessors

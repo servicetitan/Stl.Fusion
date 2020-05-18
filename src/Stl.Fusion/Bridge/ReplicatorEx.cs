@@ -9,11 +9,12 @@ namespace Stl.Fusion.Bridge
     {
         private static readonly Exception ReplicaHasBeenNeverUpdatedError = Errors.ReplicaHasBeenNeverUpdated();
         
-        public static IReplica<T> GetOrAdd<T>(this IReplicator replicator, Symbol publisherId, Symbol publicationId)
+        public static IReplica<T> GetOrAdd<T>(this IReplicator replicator, 
+            Symbol publisherId, Symbol publicationId, bool requestUpdate = false)
         {
             var output = new Result<T>(default!, ReplicaHasBeenNeverUpdatedError);
-            var taggedOutput = new TaggedResult<T>(output, 0);
-            return replicator.GetOrAdd(publisherId, publicationId, taggedOutput, false); 
+            var initialOutput = new LTagged<Result<T>>(output, LTag.Default);
+            return replicator.GetOrAdd(publisherId, publicationId, initialOutput, false, requestUpdate); 
         }
 
         public static IReplica Get(this IReplicator replicator, Symbol publicationId) 

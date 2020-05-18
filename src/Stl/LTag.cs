@@ -1,10 +1,11 @@
 using System;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using Newtonsoft.Json;
-using Stl.Concurrency.Internal;
+using Stl.Internal;
 using Stl.Mathematics;
 
-namespace Stl.Concurrency
+namespace Stl
 {
     [Serializable]
     [JsonConverter(typeof(LTagJsonConverter))]
@@ -17,9 +18,12 @@ namespace Stl.Concurrency
         public readonly long Value;
         public bool IsSpecial => Value <= 0;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public LTag(long value) => Value = value;
 
-        public static implicit operator LTag(long value) => new LTag(value);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator LTag(long value) => new LTag(value);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator long(LTag value) => value.Value;
 
         public override string ToString()
@@ -52,10 +56,15 @@ namespace Stl.Concurrency
 
         // Equality
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Equals(LTag other) => Value == other.Value;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override bool Equals(object? obj) => obj is LTag other && Equals(other);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode() => Value.GetHashCode();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(LTag left, LTag right) => left.Equals(right);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(LTag left, LTag right) => !left.Equals(right);
     }
 }

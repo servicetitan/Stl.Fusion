@@ -21,7 +21,7 @@ namespace Stl.Fusion.Bridge
         IChannelHub<PublicationMessage> ChannelHub { get; }
         bool OwnsChannelHub { get; }
 
-        IPublication Publish(IComputed computed, Type? publicationType = null);
+        IPublication Publish(IComputed computed);
         IPublication? TryGet(Symbol publicationId);
         bool Subscribe(Channel<PublicationMessage> channel, IPublication publication, bool sendUpdate);
         ValueTask<bool> UnsubscribeAsync(Channel<PublicationMessage> channel, IPublication publication);
@@ -29,70 +29,67 @@ namespace Stl.Fusion.Bridge
 
     public interface IPublisherImpl : IPublisher
     {
+        bool Subscribe(Channel<PublicationMessage> channel, IPublication publication, SubscribeMessage subscribeMessage);
         void OnPublicationDisposed(IPublication publication);
         void OnChannelProcessorDisposed(PublisherChannelProcessor channelProcessor);
     }
 
     public class Publisher : AsyncDisposableBase, IPublisherImpl
     {
-        protected ConcurrentDictionary<(ComputedInput Input, Type PublicationType), IPublication> Publications { get; } 
+        protected ConcurrentDictionary<ComputedInput, IPublication> Publications { get; } 
         protected ConcurrentDictionary<Symbol, IPublication> PublicationsById { get; }
         protected ConcurrentDictionary<Channel<PublicationMessage>, PublisherChannelProcessor> ChannelProcessors { get; }
         protected IGenerator<Symbol> PublicationIdGenerator { get; }
-        protected Action<Channel<PublicationMessage>> OnChannelAttachedCached { get; } 
-        protected Func<Channel<PublicationMessage>, ValueTask> OnChannelDetachedAsyncCached { get; } 
+        protected Action<Channel<PublicationMessage>> OnChannelAttachedHandler { get; } 
+        protected Func<Channel<PublicationMessage>, ValueTask> OnChannelDetachedAsyncHandler { get; }
+        protected IPublicationFactory PublicationFactory { get; }
+        protected Type PublicationType { get; }
 
         public Symbol Id { get; }
         public IChannelHub<PublicationMessage> ChannelHub { get; }
         public bool OwnsChannelHub { get; }
-        public IPublicationFactory PublicationFactory { get; }
-        public Type DefaultPublicationType { get; }
 
         public Publisher(Symbol id, 
             IChannelHub<PublicationMessage> channelHub,
             IGenerator<Symbol> publicationIdGenerator,
-            IPublicationFactory? publicationFactory = null,
-            Type? defaultPublicationType = null,
+            Type? publicationType = null,
             bool ownsChannelHub = true)
         {
-            publicationFactory ??= Internal.PublicationFactory.Instance;
-            defaultPublicationType ??= typeof(Publication<>);
+            publicationType ??= typeof(Publication<>);
             Id = id;
             ChannelHub = channelHub;
             OwnsChannelHub = ownsChannelHub;
             PublicationIdGenerator = publicationIdGenerator;
-            PublicationFactory = publicationFactory;
-            DefaultPublicationType = defaultPublicationType;
+            PublicationFactory = Internal.PublicationFactory.Instance;
+            PublicationType = publicationType;
 
             var concurrencyLevel = HardwareInfo.ProcessorCount << 2;
             var capacity = 7919;
-            Publications = new ConcurrentDictionary<(ComputedInput, Type), IPublication>(concurrencyLevel, capacity);
+            Publications = new ConcurrentDictionary<ComputedInput, IPublication>(concurrencyLevel, capacity);
             PublicationsById = new ConcurrentDictionary<Symbol, IPublication>(concurrencyLevel, capacity);
             ChannelProcessors = new ConcurrentDictionary<Channel<PublicationMessage>, PublisherChannelProcessor>(concurrencyLevel, capacity);
 
-            OnChannelAttachedCached = OnChannelAttached;
-            OnChannelDetachedAsyncCached = OnChannelDetachedAsync;
-            ChannelHub.Detached += OnChannelDetachedAsyncCached; // Must go first
-            ChannelHub.Attached += OnChannelAttachedCached;
+            OnChannelAttachedHandler = OnChannelAttached;
+            OnChannelDetachedAsyncHandler = OnChannelDetachedAsync;
+            ChannelHub.Detached += OnChannelDetachedAsyncHandler; // Must go first
+            ChannelHub.Attached += OnChannelAttachedHandler;
         }
 
-        public virtual IPublication Publish(IComputed computed, Type? publicationType = null)
+        public virtual IPublication Publish(IComputed computed)
         {
             ThrowIfDisposedOrDisposing();
-            publicationType ??= DefaultPublicationType;
             var spinWait = new SpinWait();
             while (true) {
                  var p = Publications.GetOrAddChecked(
-                    (computed.Input, PublicationType: publicationType), 
-                    (key, arg) => {
-                        var (this1, computed1) = arg;
-                        var publicationType1 = key.PublicationType;
-                        var id = this1.PublicationIdGenerator.Next();
-                        var p1 = this1.PublicationFactory.Create(publicationType1, this1, computed1, id);
-                        this1.PublicationsById[id] = p1;
-                        ((IPublicationImpl) p1).RunAsync();
-                        return p1;
-                    }, (this, computed));
+                     computed.Input,
+                     (key, arg) => {
+                         var (this1, computed1) = arg;
+                         var id = this1.PublicationIdGenerator.Next();
+                         var p1 = this1.PublicationFactory.Create(this1.PublicationType, this1, computed1, id);
+                         this1.PublicationsById[id] = p1;
+                         ((IPublicationImpl) p1).RunAsync();
+                         return p1;
+                     }, (this, computed));
                 if (p.Touch())
                     return p;
                 spinWait.SpinOnce();
@@ -110,7 +107,7 @@ namespace Stl.Fusion.Bridge
                 throw new ArgumentOutOfRangeException(nameof(publication));
             if (!PublicationsById.TryGetValue(publication.Id, out var p))
                 return;
-            Publications.TryRemove((p.Computed.Input, p.PublicationType), p);
+            Publications.TryRemove(publication.State.Computed.Input, p);
             PublicationsById.TryRemove(p.Id, p);
         }
 
@@ -121,15 +118,29 @@ namespace Stl.Fusion.Bridge
 
         public bool Subscribe(Channel<PublicationMessage> channel, IPublication publication, bool sendUpdate)
         {
+            var message = new SubscribeMessage() {
+                PublisherId = Id,
+                PublicationId = Id,
+                ReplicaLTag = LTag.Default,
+                ReplicaIsConsistent = false,
+                IsUpdateRequested = sendUpdate,
+            };
+            return Subscribe(channel, publication, message);
+        }
+
+        bool IPublisherImpl.Subscribe(Channel<PublicationMessage> channel, IPublication publication, SubscribeMessage subscribeMessage) 
+            => Subscribe(channel, publication, subscribeMessage);
+        protected virtual bool Subscribe(Channel<PublicationMessage> channel, IPublication publication, SubscribeMessage subscribeMessage)
+        {
             ThrowIfDisposedOrDisposing();
             if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
                 return false;
-            if (publication.Publisher != this || publication.State == PublicationState.Disposed)
+            if (publication.Publisher != this || publication.State.IsDisposed)
                 return false;
-            return channelProcessor.Subscribe(publication, sendUpdate);
+            return channelProcessor.Subscribe(publication, subscribeMessage);
         }
 
-        public ValueTask<bool> UnsubscribeAsync(Channel<PublicationMessage> channel, IPublication publication)
+        public virtual ValueTask<bool> UnsubscribeAsync(Channel<PublicationMessage> channel, IPublication publication)
         {
             if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
                 return ValueTaskEx.FalseTask;
@@ -164,8 +175,8 @@ namespace Stl.Fusion.Bridge
 
         protected override async ValueTask DisposeInternalAsync(bool disposing)
         {
-            ChannelHub.Attached -= OnChannelAttachedCached; // Must go first
-            ChannelHub.Detached -= OnChannelDetachedAsyncCached;
+            ChannelHub.Attached -= OnChannelAttachedHandler; // Must go first
+            ChannelHub.Detached -= OnChannelDetachedAsyncHandler;
             var channelProcessors = ChannelProcessors;
             while (!channelProcessors.IsEmpty) {
                 var tasks = channelProcessors

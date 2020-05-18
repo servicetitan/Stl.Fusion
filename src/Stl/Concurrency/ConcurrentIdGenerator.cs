@@ -95,7 +95,7 @@ namespace Stl.Concurrency
                             else
                                 count -= long.MinValue - 1;
                         }
-                        return count;
+                        return new LTag(count);
                     }
                 };
             });

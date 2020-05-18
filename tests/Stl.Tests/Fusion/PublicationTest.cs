@@ -34,19 +34,20 @@ namespace Stl.Tests.Fusion
             
             sp.SetValue("1");
             m = await cReader.AssertReadAsync();
-            m.Should().BeOfType<InvalidatedMessage>();
+            m.Should().BeOfType<StateChangeMessage<string>>()
+                .Which.NewIsConsistent.Should().BeFalse();
             m.PublisherId.Should().Be(Publisher.Id);
             m.PublicationId.Should().Be(p1!.Id);
                 
             m = await cReader.AssertReadAsync();
-            m.Should().BeOfType<UpdatedMessage<string>>()
+            m.Should().BeOfType<StateChangeMessage<string>>()
                 .Which.Output.Value.Should().Be("1");
             
             sp.SetValue("12");
             m = await cReader.AssertReadAsync();
-            m.Should().BeOfType<InvalidatedMessage>();
-            m = await cReader.AssertReadAsync();
-            m.Should().BeOfType<UpdatedMessage<string>>()
+            m.Should().BeOfType<StateChangeMessage<string>>()
+                .Which.NewIsConsistent.Should().BeFalse();
+            m.Should().BeOfType<StateChangeMessage<string>>()
                 .Which.Output.Value.Should().Be("12");
 
             await Publisher.UnsubscribeAsync(cp.Channel1, p1);

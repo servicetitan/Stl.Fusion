@@ -9,6 +9,7 @@ namespace Stl.Fusion.Bridge.Messages
     {
         public Symbol PublisherId { get; set; }
         public Symbol PublicationId { get; set; }
+        public long MessageIndex { get; set; }
 
         public override string ToString()
         {

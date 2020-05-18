@@ -3,16 +3,17 @@ using System;
 namespace Stl.Fusion.Bridge.Messages
 {
     [Serializable]
-    public abstract class UpdatedMessage : PublicationMessage
+    public abstract class StateChangeMessage : ReplicaMessage
     {
-        public int FromTag { get; set; }
-        public int Tag { get; set; }
+        public bool HasOutput { get; set; }
+        public LTag NewLTag { get; set; }
+        public bool NewIsConsistent { get; set; }
 
         public abstract Type GetResultType();
     }
 
     [Serializable]
-    public class UpdatedMessage<T> : UpdatedMessage
+    public class StateChangeMessage<T> : StateChangeMessage
     {
         public Result<T> Output { get; set; }
 

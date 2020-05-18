@@ -11,13 +11,13 @@ namespace Stl.Fusion.Bridge.Internal
 {
     public class ReplicatorChannelProcessor : AsyncProcessBase
     {
-        protected static readonly HandlerProvider<(ReplicatorChannelProcessor, CancellationToken), Task> OnUpdatedMessageAsyncHandlers =
+        protected static readonly HandlerProvider<(ReplicatorChannelProcessor, CancellationToken), Task> OnStateChangeMessageAsyncHandlers =
             new HandlerProvider<(ReplicatorChannelProcessor, CancellationToken), Task>(typeof(UpdatedMessageHandler<>));
 
         protected class UpdatedMessageHandler<T> : HandlerProvider<(ReplicatorChannelProcessor, CancellationToken), Task>.IHandler<T>
         {
             public Task Handle(object target, (ReplicatorChannelProcessor, CancellationToken) arg) 
-                => arg.Item1.OnUpdatedMessageAsync((UpdatedMessage<T>) target, arg.Item2);
+                => arg.Item1.OnStateChangedMessageAsync((StateChangeMessage<T>) target, arg.Item2);
         }
 
         public readonly IReplicator Replicator;
@@ -66,40 +66,36 @@ namespace Stl.Fusion.Bridge.Internal
         protected virtual Task OnMessageAsync(PublicationMessage message, CancellationToken cancellationToken)
         {
             switch (message) {
-            case InvalidatedMessage im:
-                var replica = Replicator.TryGet(im.PublicationId);
-                if (replica != null) {
-                    var computed = replica.Computed;
-                    if (computed.Tag == im.Tag)
-                        computed.Invalidate(this);
-                }
-                break;
-            case UpdatedMessage um:
+            case StateChangeMessage scm:
                 // Fast dispatch to OnUpdatedMessageAsync<T> 
-                return OnUpdatedMessageAsyncHandlers[um.GetResultType()].Handle(um, (this, cancellationToken));
+                return OnStateChangeMessageAsyncHandlers[scm.GetResultType()].Handle(scm, (this, cancellationToken));
             case DisposedMessage dm:
-                replica = Replicator.TryGet(dm.PublicationId);
+                var replica = Replicator.TryGet(dm.PublicationId);
                 return replica?.DisposeAsync().AsTask() ?? Task.CompletedTask;
-            case SubscribeMessage _:
-            case UnsubscribeMessage _:
-                // Subscribe & unsubscribe messages are ignored
-                break;
             }
             return Task.CompletedTask;
         }
 
-        protected virtual Task OnUpdatedMessageAsync<T>(UpdatedMessage<T> message, CancellationToken cancellationToken)
+        protected virtual Task OnStateChangedMessageAsync<T>(StateChangeMessage<T> message, CancellationToken cancellationToken)
         {
-            var output = new TaggedResult<T>(message.Output, message.Tag);
-            var replica = Replicator.GetOrAdd(message.PublisherId, message.PublicationId, output);
+            var lTaggedOutput = new LTagged<Result<T>>(message.Output, message.NewLTag);
+            var replica = Replicator.GetOrAdd(message.PublisherId, message.PublicationId, lTaggedOutput);
+            if (!(replica is IReplicaImpl<T> replicaImpl))
+                // Weird case: somehow replica is of different type
+                return Task.CompletedTask; 
+
             var computed = replica.Computed;
-            if (!computed.IsConsistent || computed.Tag == 0 || computed.Tag == message.FromTag) {
-                if (computed.Tag == message.Tag && computed.IsConsistent)
-                    // Nothing to do
-                    return Task.CompletedTask;
-                var replicaImpl = (IReplicaImpl<T>) replica;
-                replicaImpl.ApplyUpdate(computed, output);
+            if (message.NewLTag != computed.LTag) {
+                // LTags don't match => this is update + maybe invalidation
+                replicaImpl.ApplyUpdate(computed, lTaggedOutput, message.NewIsConsistent);
+                return Task.CompletedTask; // Wrong type
             }
+
+            // LTags are equal, so it could be only invalidation
+            if (message.NewIsConsistent == false)
+                // There is a check that invalidation can happen only once, so...
+                computed.Invalidate(Replicator);
+
             return Task.CompletedTask;
         }
 
@@ -108,6 +104,5 @@ namespace Stl.Fusion.Bridge.Internal
             await base.DisposeInternalAsync(disposing);
             ReplicatorImpl.OnChannelProcessorDisposed(this);
         }
-
     }
 }

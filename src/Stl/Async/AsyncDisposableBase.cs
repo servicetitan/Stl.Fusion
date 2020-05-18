@@ -23,9 +23,8 @@ namespace Stl.Async
             // Completes when either DisposeAsync turns DisposeState to Disposing,
             // or if it's already in non-Active state.
             // The rest of disposal is supposed to be asynchronous.
-#pragma warning disable 4014
-            DisposeAsync(true);
-#pragma warning restore 4014
+            if (this is IAsyncDisposable ad)
+                ad.DisposeAsync();
         }
 
         public ValueTask DisposeAsync()
@@ -33,7 +32,7 @@ namespace Stl.Async
             return DisposeAsync(true);
         }
 
-        protected async ValueTask DisposeAsync(bool disposing)
+        protected virtual async ValueTask DisposeAsync(bool disposing)
         {
             if ((int) DisposalState.Active != Interlocked.CompareExchange(
                 ref _disposalState, 

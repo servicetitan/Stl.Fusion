@@ -1,7 +1,7 @@
 using System;
 using Newtonsoft.Json;
 
-namespace Stl.Concurrency.Internal
+namespace Stl.Internal
 {
     public class LTagJsonConverter : JsonConverter
     {

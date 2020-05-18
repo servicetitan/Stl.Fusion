@@ -8,17 +8,17 @@ namespace Stl.Fusion.Autofac
     public class InterceptedFunction<TOut> : FunctionBase<InterceptedInput, TOut>
     {
         public InterceptedMethod Method { get; }
-        protected ConcurrentIdGenerator<int> TagGenerator { get; }
+        protected ConcurrentIdGenerator<LTag> LTagGenerator { get; }
 
         public InterceptedFunction(
             InterceptedMethod method,
-            ConcurrentIdGenerator<int> tagGenerator,
+            ConcurrentIdGenerator<LTag> lTagGenerator,
             IComputedRegistry computedRegistry,
             IComputeRetryPolicy? retryComputePolicy = null) 
             : base(computedRegistry, retryComputePolicy)
         {
             Method = method;
-            TagGenerator = tagGenerator;
+            LTagGenerator = lTagGenerator;
         }
 
         public override string ToString()
@@ -32,7 +32,7 @@ namespace Stl.Fusion.Autofac
         {
             cancellationToken.ThrowIfCancellationRequested();
             
-            var tag = TagGenerator.Next(input.HashCode);
+            var tag = LTagGenerator.Next(input.HashCode);
             var output = new Computed<InterceptedInput, TOut>(input, tag);
             var method = Method;
             var keepAliveTime = method.KeepAliveTime;

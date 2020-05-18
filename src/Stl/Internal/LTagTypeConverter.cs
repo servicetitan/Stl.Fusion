@@ -2,7 +2,7 @@ using System;
 using System.ComponentModel;
 using System.Globalization;
 
-namespace Stl.Concurrency.Internal
+namespace Stl.Internal
 {
     public class LTagTypeConverter : TypeConverter 
     {

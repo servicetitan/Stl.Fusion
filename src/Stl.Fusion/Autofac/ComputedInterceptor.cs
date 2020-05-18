@@ -21,13 +21,13 @@ namespace Stl.Fusion.Autofac
         private readonly ConcurrentDictionary<MethodInfo, Action<IInvocation>?> _handlerCache = 
             new ConcurrentDictionary<MethodInfo, Action<IInvocation>?>();
 
-        protected ConcurrentIdGenerator<int> TagGenerator { get; }
+        protected ConcurrentIdGenerator<LTag> LTagGenerator { get; }
         protected IComputedRegistry ComputedRegistry { get; }
         protected IArgumentComparerProvider ArgumentComparerProvider { get; }
         protected IComputeRetryPolicy ComputeRetryPolicy { get; }
 
         public ComputedInterceptor(
-            ConcurrentIdGenerator<int>? tagGenerator = null,
+            ConcurrentIdGenerator<LTag>? lTagGenerator = null,
             IComputedRegistry? computedRegistry = null,
             IArgumentComparerProvider? argumentComparerProvider = null,
             IComputeRetryPolicy? computeRetryPolicy = null) 
@@ -35,7 +35,7 @@ namespace Stl.Fusion.Autofac
             computeRetryPolicy ??= Fusion.ComputeRetryPolicy.Default;
             argumentComparerProvider ??= Autofac.ArgumentComparerProvider.Default;
             computedRegistry ??= Fusion.ComputedRegistry.Default;
-            tagGenerator ??= ConcurrentIdGenerator.DefaultInt32;
+            lTagGenerator ??= ConcurrentIdGenerator.DefaultLTag;
 
             _createHandler = CreateHandler;
             _createInterceptedMethod = CreateInterceptedMethod;
@@ -43,7 +43,7 @@ namespace Stl.Fusion.Autofac
                 .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
                 .Single(m => m.Name == nameof(CreateTypedHandler));
             
-            TagGenerator = tagGenerator;
+            LTagGenerator = lTagGenerator;
             ComputedRegistry = computedRegistry;
             ArgumentComparerProvider = argumentComparerProvider;
             ComputeRetryPolicy = computeRetryPolicy;
@@ -74,7 +74,7 @@ namespace Stl.Fusion.Autofac
             IInvocation initialInvocation, InterceptedMethod method)
         {
             var function = new InterceptedFunction<TOut>(method, 
-                TagGenerator, ComputedRegistry, ComputeRetryPolicy);
+                LTagGenerator, ComputedRegistry, ComputeRetryPolicy);
             return invocation => {
                 // ReSharper disable once VariableHidesOuterVariable
                 var method = function.Method;

@@ -71,9 +71,9 @@ namespace Stl.Tests.Channels
                 new JsonNetSerializer<PublicationMessage>());
 
             // Actual test
-            await mChannel.Writer.WriteAsync(new InvalidatedMessage());
+            await mChannel.Writer.WriteAsync(new StateChangeMessage<int>() { MessageIndex = 100 });
             var m = await mChannel.Reader.AssertReadAsync();
-            m.Should().BeOfType<InvalidatedMessage>();
+            m.Should().BeOfType<StateChangeMessage<int>>().Which.MessageIndex.Should().Be(100);
             await mChannel.Writer.WriteAsync(new DisposedMessage());
             await mChannel.Reader.AssertCompletedAsync();
         }
@@ -98,9 +98,9 @@ namespace Stl.Tests.Channels
                 new JsonNetSerializer<PublicationMessage>());
 
             // Actual test
-            await mChannel.Writer.WriteAsync(new InvalidatedMessage());
+            await mChannel.Writer.WriteAsync(new StateChangeMessage<int>() { MessageIndex = 100 });
             var m = await mChannel.Reader.AssertReadAsync();
-            m.Should().BeOfType<InvalidatedMessage>();
+            m.Should().BeOfType<StateChangeMessage<int>>().Which.MessageIndex.Should().Be(100);
             await mChannel.Writer.WriteAsync(new DisposedMessage());
             await mChannel.Reader.AssertCompletedAsync();
             // await mChannel.Reader.AssertCompletedAsync(TimeSpan.FromMinutes(10));

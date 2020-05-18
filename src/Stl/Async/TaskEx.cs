@@ -9,6 +9,7 @@ namespace Stl.Async
 {
     public static class TaskEx
     {
+        public static readonly Task InfiniteTask;
         public static readonly Task<Unit> InfiniteUnitTask;
         public static readonly TaskCompletionSource<Unit> UnitTaskCompletionSource;
         public static readonly Task<Unit> UnitTask = Task.FromResult(Unit.Default);
@@ -18,6 +19,7 @@ namespace Stl.Async
         static TaskEx()
         {
             InfiniteUnitTask = new TaskCompletionSource<Unit>().Task;
+            InfiniteTask = InfiniteUnitTask;
             var unitTcs = new TaskCompletionSource<Unit>();
             unitTcs.SetResult(default);
             UnitTaskCompletionSource = unitTcs;

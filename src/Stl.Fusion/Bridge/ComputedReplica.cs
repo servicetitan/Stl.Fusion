@@ -17,7 +17,8 @@ namespace Stl.Fusion.Bridge
         IReplica IComputedReplica.Replica => Input.Replica;
         public IReplica<T> Replica => (IReplica<T>) Input.Replica;
 
-        public ComputedReplica(ReplicaInput input, int tag) : base(input, tag) { }
-        public ComputedReplica(ReplicaInput input, Result<T> output, int tag, bool isConsistent = true) : base(input, output, tag, isConsistent) { }
+        public ComputedReplica(ReplicaInput input, LTag lTag) : base(input, lTag) { }
+        public ComputedReplica(ReplicaInput input, Result<T> output, LTag lTag, bool isConsistent = true) 
+            : base(input, output, lTag, isConsistent) { }
     }
 }
