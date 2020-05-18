@@ -3,6 +3,6 @@ using System;
 namespace Stl.Fusion.Bridge.Messages
 {
     [Serializable]
-    public class DisposedMessage : PublicationMessage
+    public class PublicationDisposedMessage : PublicationMessage
     { }
 }

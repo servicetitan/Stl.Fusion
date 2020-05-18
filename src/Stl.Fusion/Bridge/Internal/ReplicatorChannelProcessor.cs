@@ -17,7 +17,7 @@ namespace Stl.Fusion.Bridge.Internal
         protected class UpdatedMessageHandler<T> : HandlerProvider<(ReplicatorChannelProcessor, CancellationToken), Task>.IHandler<T>
         {
             public Task Handle(object target, (ReplicatorChannelProcessor, CancellationToken) arg) 
-                => arg.Item1.OnStateChangedMessageAsync((StateChangeMessage<T>) target, arg.Item2);
+                => arg.Item1.OnStateChangedMessageAsync((PublicationStateChangedMessage<T>) target, arg.Item2);
         }
 
         public readonly IReplicator Replicator;
@@ -62,24 +62,27 @@ namespace Stl.Fusion.Bridge.Internal
                 }
             }
             finally {
-                await DisposeAsync().ConfigureAwait(false);
+                // Awaiting for disposal here = cyclic task dependency;
+                // we should just ensure it starts right when this method
+                // completes.
+                var _ = DisposeAsync();
             }
         }
 
         protected virtual Task OnMessageAsync(PublicationMessage message, CancellationToken cancellationToken)
         {
             switch (message) {
-            case StateChangeMessage scm:
+            case PublicationStateChangedMessage scm:
                 // Fast dispatch to OnUpdatedMessageAsync<T> 
                 return OnStateChangeMessageAsyncHandlers[scm.GetResultType()].Handle(scm, (this, cancellationToken));
-            case DisposedMessage dm:
+            case PublicationDisposedMessage dm:
                 var replica = Replicator.TryGet(dm.PublicationId);
                 return replica?.DisposeAsync().AsTask() ?? Task.CompletedTask;
             }
             return Task.CompletedTask;
         }
 
-        protected virtual Task OnStateChangedMessageAsync<T>(StateChangeMessage<T> message, CancellationToken cancellationToken)
+        protected virtual Task OnStateChangedMessageAsync<T>(PublicationStateChangedMessage<T> message, CancellationToken cancellationToken)
         {
             var lTaggedOutput = new LTagged<Result<T>>(message.Output, message.NewLTag);
             var replica = Replicator.GetOrAdd(message.PublisherId, message.PublicationId, lTaggedOutput);

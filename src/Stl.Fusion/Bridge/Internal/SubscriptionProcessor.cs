@@ -4,6 +4,7 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using Stl.Async;
 using Stl.Fusion.Bridge.Messages;
+using Stl.Locking;
 
 namespace Stl.Fusion.Bridge.Internal
 {
@@ -12,7 +13,7 @@ namespace Stl.Fusion.Bridge.Internal
         protected bool ReplicaIsConsistent;
         protected LTag ReplicaLTag; 
         protected long MessageIndex = 1;
-        protected object Lock => this;
+        protected AsyncLock AsyncLock;
 
         public IPublisher Publisher => Publication.Publisher;
         public readonly IPublicationImpl Publication;
@@ -27,6 +28,7 @@ namespace Stl.Fusion.Bridge.Internal
             SubscribeMessage = subscribeMessage;
             ReplicaLTag = subscribeMessage.ReplicaLTag;
             ReplicaIsConsistent = subscribeMessage.ReplicaIsConsistent;
+            AsyncLock = new AsyncLock(ReentryMode.CheckedFail, TaskCreationOptions.None);
         }
 
         public abstract ValueTask OnMessageAsync(ReplicaMessage message, CancellationToken cancellationToken);
@@ -74,16 +76,19 @@ namespace Stl.Fusion.Bridge.Internal
             }
             finally {
                 publicationUseScope.Dispose();
-                await DisposeAsync().ConfigureAwait(false);
+                // Awaiting for disposal here = cyclic task dependency;
+                // we should just ensure it starts right when this method
+                // completes.
+                var _ = DisposeAsync();
             }
         }
 
         public override async ValueTask OnMessageAsync(ReplicaMessage message, CancellationToken cancellationToken)
         {
+            using var _ = await AsyncLock.LockAsync(cancellationToken);
+
             var state = Publication.State;
-            lock (Lock) {
-                (ReplicaLTag, ReplicaIsConsistent) = (message.ReplicaLTag, message.ReplicaIsConsistent);
-            }
+            (ReplicaLTag, ReplicaIsConsistent) = (message.ReplicaLTag, message.ReplicaIsConsistent);
             switch (message) {
             case SubscribeMessage sm:
                 await Publication.UpdateAsync(cancellationToken).ConfigureAwait(false);
@@ -94,27 +99,27 @@ namespace Stl.Fusion.Bridge.Internal
             }
         }
 
-        public virtual ValueTask TrySendUpdateAsync(
+        public virtual async ValueTask TrySendUpdateAsync(
             IPublicationState<T> state, bool isUpdateRequested, CancellationToken cancellationToken)
         {
-            if (state.IsDisposed)
-                return SendAsync(new DisposedMessage(), cancellationToken);
+            if (state.IsDisposed) {
+                await SendAsync(new PublicationDisposedMessage(), cancellationToken).ConfigureAwait(false);
+                return;
+            }
             
+            using var _ = await AsyncLock.LockAsync(cancellationToken);
+
             var computed = state.Computed;
             var computedIsConsistent = computed.IsConsistent; // May change at any moment to false, so...
             var computedVersion = (computed.LTag, computedIsConsistent);
 
-            LTag replicaLTag;
-            bool replicaIsConsistent;
-            lock (Lock) {
-                (replicaLTag, replicaIsConsistent) = (ReplicaLTag, ReplicaIsConsistent);
-            }
+            var (replicaLTag, replicaIsConsistent) = (ReplicaLTag, ReplicaIsConsistent);
             var replicaVersion = (replicaLTag, replicaIsConsistent);
             var isUpdated = replicaVersion != computedVersion;
             if (!(isUpdated || isUpdateRequested))
-                return ValueTaskEx.CompletedTask;
+                return;
 
-            var message = new StateChangeMessage<T>() {
+            var message = new PublicationStateChangedMessage<T>() {
                 ReplicaLTag = replicaLTag,
                 ReplicaIsConsistent = replicaIsConsistent,
                 NewLTag = computed.LTag,
@@ -125,7 +130,7 @@ namespace Stl.Fusion.Bridge.Internal
                 message.Output = computed.Output;
             }
             
-            return SendAsync(message, cancellationToken);
+            await SendAsync(message, cancellationToken).ConfigureAwait(false);
         }
 
         protected virtual async ValueTask SendAsync(PublicationMessage? message, CancellationToken cancellationToken)
@@ -133,11 +138,16 @@ namespace Stl.Fusion.Bridge.Internal
             if (message == null)
                 return;
 
+            using var _ = await AsyncLock.LockAsync(cancellationToken);
+
             message.MessageIndex = Interlocked.Increment(ref MessageIndex);
             message.PublisherId = Publisher.Id;
             message.PublicationId = Publication.Id;
 
             await Channel.Writer.WriteAsync(message, cancellationToken).ConfigureAwait(false);
+
+            if (message is PublicationStateChangedMessage scm)
+                (ReplicaLTag, ReplicaIsConsistent) = (scm.NewLTag, scm.NewIsConsistent);
         }
     }
 }

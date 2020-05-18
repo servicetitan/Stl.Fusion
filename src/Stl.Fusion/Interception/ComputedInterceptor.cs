@@ -6,10 +6,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using Castle.DynamicProxy;
 using Stl.Concurrency;
+using Stl.Fusion.Interception.Internal;
 using Stl.Reflection;
 using Stl.Time;
 
-namespace Stl.Fusion.Autofac
+namespace Stl.Fusion.Interception
 {
     public class ComputedInterceptor : IInterceptor
     {
@@ -33,7 +34,7 @@ namespace Stl.Fusion.Autofac
             IComputeRetryPolicy? computeRetryPolicy = null) 
         {
             computeRetryPolicy ??= Fusion.ComputeRetryPolicy.Default;
-            argumentComparerProvider ??= Autofac.ArgumentComparerProvider.Default;
+            argumentComparerProvider ??= Interception.ArgumentComparerProvider.Default;
             computedRegistry ??= Fusion.ComputedRegistry.Default;
             lTagGenerator ??= ConcurrentIdGenerator.DefaultLTag;
 

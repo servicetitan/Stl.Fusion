@@ -3,7 +3,7 @@ using System;
 namespace Stl.Fusion.Bridge.Messages
 {
     [Serializable]
-    public abstract class StateChangeMessage : ReplicaMessage
+    public abstract class PublicationStateChangedMessage : ReplicaMessage
     {
         public bool HasOutput { get; set; }
         public LTag NewLTag { get; set; }
@@ -13,7 +13,7 @@ namespace Stl.Fusion.Bridge.Messages
     }
 
     [Serializable]
-    public class StateChangeMessage<T> : StateChangeMessage
+    public class PublicationStateChangedMessage<T> : PublicationStateChangedMessage
     {
         public Result<T> Output { get; set; }
 

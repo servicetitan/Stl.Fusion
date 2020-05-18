@@ -4,7 +4,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using Castle.DynamicProxy;
 
-namespace Stl.Fusion.Autofac.Internal
+namespace Stl.Fusion.Interception.Internal
 {
     public static class InvocationProceedInfoEx
     {

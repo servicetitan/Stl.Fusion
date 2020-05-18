@@ -6,11 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Autofac" />
-    <PackageReference Include="Autofac.Extensions.DependencyInjection" />
-    <PackageReference Include="Autofac.Extras.DynamicProxy" />
     <PackageReference Include="Castle.Core" />
-    <PackageReference Include="Castle.Core.AsyncInterceptor" />
   </ItemGroup>
 
   <ItemGroup>

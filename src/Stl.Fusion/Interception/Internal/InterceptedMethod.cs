@@ -1,7 +1,7 @@
 using System;
 using System.Reflection;
 
-namespace Stl.Fusion.Autofac
+namespace Stl.Fusion.Interception.Internal
 {
     public class InterceptedMethod
     {

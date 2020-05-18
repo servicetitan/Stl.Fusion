@@ -11,7 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Stl.Channels;
 using Stl.IO;
-using Stl.Fusion.Autofac;
+using Stl.Fusion.Interception;
 using Stl.Fusion;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Messages;
@@ -71,7 +71,6 @@ namespace Stl.Tests.Fusion
 
         protected virtual void ConfigureServices(IServiceCollection services)
         {
-
             services.AddSingleton(Out);
 
             // Logging
@@ -122,30 +121,28 @@ namespace Stl.Tests.Fusion
                     });
 
             services.AddSingleton<ITestDbContextPool, TestDbContextPool>();
-        }
 
-        protected virtual void ConfigureServices(ContainerBuilder builder)
-        {
+            // Core fusion services
             var publicationIdGenerator = new TransformingGenerator<string, Symbol>(
                 new RandomStringGenerator(), 
                 s => new Symbol($"p-{s}"));
 
-            builder.AddFusion();
-            builder.AddFusionPublisher("p", publicationIdGenerator);
-            builder.AddFusionReplicator(_ => "p");
+            services.AddFusion();
+            services.AddFusionPublisher("p", publicationIdGenerator);
+            services.AddFusionReplicator(_ => "p");
 
             // Computed providers
-            builder.RegisterType<SimplestProvider>()
-                .As<ISimplestProvider>().ComputedProvider();
-            builder.RegisterType<TimeProvider>()
-                .As<ITimeProvider>().ComputedProvider();
-            builder.RegisterType<UserProvider>()
-                .As<IUserProvider>().ComputedProvider();
+            services.AddComputedProvider<ISimplestProvider, SimplestProvider>();
+            services.AddComputedProvider<ITimeProvider, TimeProvider>();
+            services.AddComputedProvider<IUserProvider, UserProvider>();
 
-            // Regular services 
-            builder.RegisterType<UserProvider>()
-                .As<UserProvider>().InstancePerLifetimeScope();
+            // Regular services
+            services.AddScoped<UserProvider, UserProvider>();
         }
+
+        public virtual void ConfigureServices(ContainerBuilder builder)
+        { }
+
         public virtual TestChannelPair<PublicationMessage> CreateChannelPair(
             string name, bool dump = true) 
             => new TestChannelPair<PublicationMessage>(name, dump ? Out : null);

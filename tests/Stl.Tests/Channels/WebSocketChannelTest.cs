@@ -71,10 +71,10 @@ namespace Stl.Tests.Channels
                 new JsonNetSerializer<PublicationMessage>());
 
             // Actual test
-            await mChannel.Writer.WriteAsync(new StateChangeMessage<int>() { MessageIndex = 100 });
+            await mChannel.Writer.WriteAsync(new PublicationStateChangedMessage<int>() { MessageIndex = 100 });
             var m = await mChannel.Reader.AssertReadAsync();
-            m.Should().BeOfType<StateChangeMessage<int>>().Which.MessageIndex.Should().Be(100);
-            await mChannel.Writer.WriteAsync(new DisposedMessage());
+            m.Should().BeOfType<PublicationStateChangedMessage<int>>().Which.MessageIndex.Should().Be(100);
+            await mChannel.Writer.WriteAsync(new PublicationDisposedMessage());
             await mChannel.Reader.AssertCompletedAsync();
         }
 
@@ -98,10 +98,10 @@ namespace Stl.Tests.Channels
                 new JsonNetSerializer<PublicationMessage>());
 
             // Actual test
-            await mChannel.Writer.WriteAsync(new StateChangeMessage<int>() { MessageIndex = 100 });
+            await mChannel.Writer.WriteAsync(new PublicationStateChangedMessage<int>() { MessageIndex = 100 });
             var m = await mChannel.Reader.AssertReadAsync();
-            m.Should().BeOfType<StateChangeMessage<int>>().Which.MessageIndex.Should().Be(100);
-            await mChannel.Writer.WriteAsync(new DisposedMessage());
+            m.Should().BeOfType<PublicationStateChangedMessage<int>>().Which.MessageIndex.Should().Be(100);
+            await mChannel.Writer.WriteAsync(new PublicationDisposedMessage());
             await mChannel.Reader.AssertCompletedAsync();
             // await mChannel.Reader.AssertCompletedAsync(TimeSpan.FromMinutes(10));
 
@@ -116,7 +116,7 @@ namespace Stl.Tests.Channels
                 new JsonNetSerializer<PublicationMessage>());
             await Task.Run(async () => {
                 await foreach (var m in mChannel.Reader.ReadAllAsync()) {
-                    if (m is DisposedMessage)
+                    if (m is PublicationDisposedMessage)
                         break;
                     await mChannel.Writer.WriteAsync(m);
                 }

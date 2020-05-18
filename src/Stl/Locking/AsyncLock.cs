@@ -40,7 +40,7 @@ namespace Stl.Locking
             return InternalLockAsync(cancellationToken);
         }
 
-        public async ValueTask<IDisposable> InternalLockAsync(CancellationToken cancellationToken = default)
+        protected async ValueTask<IDisposable> InternalLockAsync(CancellationToken cancellationToken = default)
         {
             var localLocks = _localLocks?.Value;
             var myLock = new TaskCompletionSource<Unit>(_taskCreationOptions);

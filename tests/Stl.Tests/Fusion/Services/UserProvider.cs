@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Async;
 using Stl.Fusion;
-using Stl.Fusion.Autofac;
+using Stl.Fusion.Interception;
 using Stl.Tests.Fusion.Model;
 
 namespace Stl.Tests.Fusion.Services

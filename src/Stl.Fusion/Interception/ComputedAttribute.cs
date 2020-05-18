@@ -1,6 +1,6 @@
 using System;
 
-namespace Stl.Fusion.Autofac
+namespace Stl.Fusion.Interception
 {
     [AttributeUsage(AttributeTargets.Method)]
     public class ComputedAttribute : Attribute

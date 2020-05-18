@@ -5,7 +5,7 @@ using Autofac;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Stl.Fusion;
-using Stl.Fusion.Autofac;
+using Stl.Fusion.Interception;
 using Stl.Tests.Fusion.Model;
 using Stl.Tests.Fusion.Services;
 using Stl.Time;

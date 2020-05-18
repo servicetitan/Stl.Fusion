@@ -98,7 +98,10 @@ namespace Stl.Fusion.Bridge
                 await ExpireAsync(cancellationToken).ConfigureAwait(false);
             } 
             finally {
-                await DisposeAsync().ConfigureAwait(false);
+                // Awaiting for disposal here = cyclic task dependency;
+                // we should just ensure it starts right when this method
+                // completes.
+                var _ = DisposeAsync();
             }
         }
 
@@ -109,7 +112,7 @@ namespace Stl.Fusion.Bridge
 
             IntMoment GetNextExpirationCheckTime(IntMoment start, IntMoment lastUseTime)
             {
-                return lastUseTime + TimeSpan.FromMinutes(5); // Good for debugging 
+                // return lastUseTime + TimeSpan.FromMinutes(5); // Good for debugging 
                 var now = IntMoment.Now;
                 var lifetime = now.EpochOffsetUnits - start.EpochOffsetUnits;
                 if (lifetime < IntMoment.UnitsPerSecond * 60) // 1 minute

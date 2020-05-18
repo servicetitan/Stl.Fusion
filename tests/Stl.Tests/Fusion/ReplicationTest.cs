@@ -55,6 +55,7 @@ namespace Stl.Tests.Fusion
 
             var pub = await Computed.PublishAsync(Publisher, () => tp.GetTimeAsync());
             var rep = Replicator.GetOrAdd<DateTime>(pub!.Publisher.Id, pub.Id);
+            await rep.RequestUpdateAsync();
 
             var count = 0;
             using var _ = rep.Computed.AutoUpdate((c, o, _) => {

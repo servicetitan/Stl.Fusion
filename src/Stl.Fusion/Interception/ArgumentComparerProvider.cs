@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Threading;
 
-namespace Stl.Fusion.Autofac
+namespace Stl.Fusion.Interception
 {
     public interface IArgumentComparerProvider
     {
@@ -18,7 +18,7 @@ namespace Stl.Fusion.Autofac
                 {typeof(CancellationToken), ArgumentComparer.Ignore},
             };
 
-        public static readonly ArgumentComparerProvider Default = new ArgumentComparerProvider();
+        public static readonly IArgumentComparerProvider Default = new ArgumentComparerProvider();
 
         private readonly Dictionary<Type, ArgumentComparer> _comparers;
 

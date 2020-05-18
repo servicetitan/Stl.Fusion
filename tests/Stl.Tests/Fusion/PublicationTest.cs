@@ -10,12 +10,12 @@ using Xunit.Abstractions;
 
 namespace Stl.Tests.Fusion
 {
-    public class PublicationTest : FusionTestBase, IAsyncLifetime
+    public class PublisherTest : FusionTestBase, IAsyncLifetime
     {
-        public PublicationTest(ITestOutputHelper @out) : base(@out) { }
+        public PublisherTest(ITestOutputHelper @out) : base(@out) { }
 
         [Fact]
-        public async Task BasicTest()
+        public async Task CommunicationTest()
         {
             var cp = CreateChannelPair("c1");
             Publisher.ChannelHub.Attach(cp.Channel1).Should().BeTrue();
@@ -28,32 +28,34 @@ namespace Stl.Tests.Fusion
             p1.Should().NotBeNull();
 
             (await Publisher.SubscribeAsync(cp.Channel1, p1!, true)).Should().BeTrue();
-            await Task.Delay(1000);
             var m = await cReader.AssertReadAsync();
-            m.Should().BeOfType<SubscribeMessage>();
+            m.Should().BeOfType<PublicationStateChangedMessage<string>>()
+                .Which.Output.Value.Should().Be("");
+            await cReader.AssertCannotReadAsync();
             
             sp.SetValue("1");
             m = await cReader.AssertReadAsync();
-            m.Should().BeOfType<StateChangeMessage<string>>()
+            m.Should().BeOfType<PublicationStateChangedMessage<string>>()
                 .Which.NewIsConsistent.Should().BeFalse();
             m.PublisherId.Should().Be(Publisher.Id);
             m.PublicationId.Should().Be(p1!.Id);
-                
-            m = await cReader.AssertReadAsync();
-            m.Should().BeOfType<StateChangeMessage<string>>()
-                .Which.Output.Value.Should().Be("1");
+            await cReader.AssertCannotReadAsync();
             
             sp.SetValue("12");
+            // No auto-update after invalidation
+            await cReader.AssertCannotReadAsync();
+
+            (await Publisher.SubscribeAsync(cp.Channel1, p1!, true)).Should().BeTrue();
             m = await cReader.AssertReadAsync();
-            m.Should().BeOfType<StateChangeMessage<string>>()
-                .Which.NewIsConsistent.Should().BeFalse();
-            m.Should().BeOfType<StateChangeMessage<string>>()
+            m.Should().BeOfType<PublicationStateChangedMessage<string>>()
+                .Which.NewIsConsistent.Should().BeTrue();
+            m.Should().BeOfType<PublicationStateChangedMessage<string>>()
                 .Which.Output.Value.Should().Be("12");
+            await cReader.AssertCannotReadAsync();
 
-            await Publisher.UnsubscribeAsync(cp.Channel1, p1);
+            await p1.DisposeAsync();
             m = await cReader.AssertReadAsync();
-            m.Should().BeOfType<UnsubscribeMessage>();
+            m.Should().BeOfType<PublicationDisposedMessage>();
         }
-
     }
 }

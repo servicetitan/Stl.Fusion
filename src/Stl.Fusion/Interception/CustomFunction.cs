@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Stl.Fusion.Autofac
+namespace Stl.Fusion.Interception
 {
     // ReSharper disable once ClassWithVirtualMembersNeverInherited.Global
     public class CustomFunction

@@ -32,7 +32,6 @@ namespace Stl.Fusion
                             stopToken.ThrowIfCancellationRequested();
                         var nextComputed = await prevComputed.UpdateAsync(stopToken).ConfigureAwait(false);
                         var prevOutput = prevComputed.Output;
-                        prevComputed = null!;
                         handler?.Invoke(nextComputed, prevOutput, invalidatedBy);
                         nextComputed!.Invalidated += OnInvalidated;
                     }

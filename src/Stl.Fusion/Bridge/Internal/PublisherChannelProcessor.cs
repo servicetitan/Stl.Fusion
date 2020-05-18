@@ -38,7 +38,10 @@ namespace Stl.Fusion.Bridge.Internal
                 }
             }
             finally {
-                await DisposeAsync().ConfigureAwait(false);
+                // Awaiting for disposal here = cyclic task dependency;
+                // we should just ensure it starts right when this method
+                // completes.
+                var _ = DisposeAsync();
             }
         }
 

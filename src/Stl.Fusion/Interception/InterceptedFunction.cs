@@ -2,8 +2,9 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Concurrency;
+using Stl.Fusion.Interception.Internal;
 
-namespace Stl.Fusion.Autofac
+namespace Stl.Fusion.Interception
 {
     public class InterceptedFunction<TOut> : FunctionBase<InterceptedInput, TOut>
     {

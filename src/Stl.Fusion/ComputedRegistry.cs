@@ -23,7 +23,7 @@ namespace Stl.Fusion
     {
         public static readonly int DefaultInitialCapacity = 7919; // Ideally, a prime number
         public static int DefaultConcurrencyLevel => HardwareInfo.ProcessorCount;
-        public static readonly ComputedRegistry Default = new ComputedRegistry();
+        public static readonly IComputedRegistry Default = new ComputedRegistry();
 
         private readonly ConcurrentDictionary<ComputedInput, Entry> _storage;
         private readonly Func<IFunction, IAsyncLockSet<ComputedInput>> _locksProvider; 

@@ -2,8 +2,9 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Castle.DynamicProxy;
+using Stl.Fusion.Interception.Internal;
 
-namespace Stl.Fusion.Autofac
+namespace Stl.Fusion.Interception
 {
     public class InterceptedInput : ComputedInput, IEquatable<InterceptedInput>
     {
