@@ -27,7 +27,7 @@ namespace Stl.Tests.Fusion
             var p1 = await Computed.PublishAsync(Publisher, () => sp.GetValueAsync());
             p1.Should().NotBeNull();
 
-            Publisher.Subscribe(cp.Channel1, p1!, true).Should().BeTrue();
+            (await Publisher.SubscribeAsync(cp.Channel1, p1!, true)).Should().BeTrue();
             await Task.Delay(1000);
             var m = await cReader.AssertReadAsync();
             m.Should().BeOfType<SubscribeMessage>();

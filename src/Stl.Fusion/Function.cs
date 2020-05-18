@@ -40,17 +40,17 @@ namespace Stl.Fusion
     {
         protected Action<IComputed, object?> OnInvalidateHandler { get; set; }
         protected IComputedRegistry ComputedRegistry { get; }
-        protected IComputeRetryPolicy ComputeRetryPolicy { get; }
+        protected IComputeRetryPolicy RetryPolicy { get; }
         protected IAsyncLockSet<ComputedInput> Locks { get; }
         protected object Lock => Locks;
 
         public FunctionBase(
             IComputedRegistry computedRegistry,
-            IComputeRetryPolicy? computeRetryPolicy = null)
+            IComputeRetryPolicy? retryPolicy = null)
         {
-            computeRetryPolicy ??= Fusion.ComputeRetryPolicy.Default;
+            retryPolicy ??= Fusion.ComputeRetryPolicy.Default;
             ComputedRegistry = computedRegistry;
-            ComputeRetryPolicy = computeRetryPolicy; 
+            RetryPolicy = retryPolicy; 
             Locks = computedRegistry.GetLocksFor(this);
             OnInvalidateHandler = (c, _) => Unregister((IComputed<TIn, TOut>) c);
         }
@@ -93,7 +93,7 @@ namespace Stl.Fusion
                 result = await ComputeAsync(input, cancellationToken).ConfigureAwait(false);
                 if (result.IsConsistent)
                     break;
-                if (!ComputeRetryPolicy.MustRetry(result, tryIndex))
+                if (!RetryPolicy.MustRetry(result, tryIndex))
                     break;
             }
             context.TryCaptureValue(result);
@@ -141,7 +141,7 @@ namespace Stl.Fusion
                 result = await ComputeAsync(input, cancellationToken).ConfigureAwait(false);
                 if (result.IsConsistent)
                     break;
-                if (!ComputeRetryPolicy.MustRetry(result, tryIndex))
+                if (!RetryPolicy.MustRetry(result, tryIndex))
                     break;
             }
             context.TryCaptureValue(result);

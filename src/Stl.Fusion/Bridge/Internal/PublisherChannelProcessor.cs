@@ -51,7 +51,7 @@ namespace Stl.Fusion.Bridge.Internal
                 var publication = Publisher.TryGet(sm.PublicationId);
                 if (publication == null)
                     break;
-                PublisherImpl.Subscribe(Channel, publication, sm);
+                PublisherImpl.SubscribeAsync(Channel, publication, sm, cancellationToken);
                 break;
             case UnsubscribeMessage um:
                 if (um.PublisherId != Publisher.Id)
@@ -59,32 +59,37 @@ namespace Stl.Fusion.Bridge.Internal
                 publication = Publisher.TryGet(um.PublicationId);
                 if (publication == null)
                     break;
-                var _ = PublisherImpl.UnsubscribeAsync(Channel, publication);
+                var _ = PublisherImpl.UnsubscribeAsync(Channel, publication, cancellationToken);
                 break;
             }
             return Task.CompletedTask;
         }
 
-        public virtual bool Subscribe(IPublication publication, SubscribeMessage subscribeMessage)
+        public virtual async ValueTask<bool> SubscribeAsync(
+            IPublication publication, SubscribeMessage subscribeMessage, CancellationToken cancellationToken)
         {
             var publicationId = publication.Id;
-            if (Subscriptions.TryGetValue(publicationId, out _))
-                return false;
-            SubscriptionProcessor subscriptionProcessor;
+            if (Subscriptions.TryGetValue(publicationId, out var subscriptionProcessor))
+                goto subscriptionExists;
             lock (Lock) {
                 // Double check locking
-                if (Subscriptions.TryGetValue(publicationId, out var _))
-                    return false;
+                if (Subscriptions.TryGetValue(publicationId, out subscriptionProcessor))
+                    goto subscriptionExists;
                 var publicationImpl = (IPublicationImpl) publication;
                 subscriptionProcessor = publicationImpl.CreateSubscriptionProcessor(Channel, subscribeMessage);
                 Subscriptions[publicationId] = subscriptionProcessor;
             }
-            subscriptionProcessor.RunAsync()
-                .ContinueWith(_ => UnsubscribeAsync(publication), CancellationToken.None);
+            var _ = subscriptionProcessor.RunAsync()
+                .ContinueWith(_ => UnsubscribeAsync(publication, default), CancellationToken.None);
+            return true;
+        subscriptionExists:
+            await subscriptionProcessor.OnMessageAsync(subscribeMessage, cancellationToken)
+                .ConfigureAwait(false);
             return true;
         }
 
-        public virtual async ValueTask<bool> UnsubscribeAsync(IPublication publication)
+        public virtual async ValueTask<bool> UnsubscribeAsync(
+            IPublication publication, CancellationToken cancellationToken)
         {
             var publicationId = publication.Id;
             if (!Subscriptions.TryRemove(publicationId, out var subscriptionProcessor))

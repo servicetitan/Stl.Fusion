@@ -28,6 +28,8 @@ namespace Stl.Fusion.Bridge.Internal
             ReplicaLTag = subscribeMessage.ReplicaLTag;
             ReplicaIsConsistent = subscribeMessage.ReplicaIsConsistent;
         }
+
+        public abstract ValueTask OnMessageAsync(ReplicaMessage message, CancellationToken cancellationToken);
     }
 
     public class SubscriptionProcessor<T> : SubscriptionProcessor
@@ -76,6 +78,22 @@ namespace Stl.Fusion.Bridge.Internal
             }
         }
 
+        public override async ValueTask OnMessageAsync(ReplicaMessage message, CancellationToken cancellationToken)
+        {
+            var state = Publication.State;
+            lock (Lock) {
+                (ReplicaLTag, ReplicaIsConsistent) = (message.ReplicaLTag, message.ReplicaIsConsistent);
+            }
+            switch (message) {
+            case SubscribeMessage sm:
+                await Publication.UpdateAsync(cancellationToken).ConfigureAwait(false);
+                state = Publication.State;
+                await TrySendUpdateAsync(state, SubscribeMessage.IsUpdateRequested, cancellationToken)
+                    .ConfigureAwait(false);
+                break;
+            }
+        }
+
         public virtual ValueTask TrySendUpdateAsync(
             IPublicationState<T> state, bool isUpdateRequested, CancellationToken cancellationToken)
         {
@@ -90,7 +108,6 @@ namespace Stl.Fusion.Bridge.Internal
             bool replicaIsConsistent;
             lock (Lock) {
                 (replicaLTag, replicaIsConsistent) = (ReplicaLTag, ReplicaIsConsistent);
-                (ReplicaLTag, ReplicaIsConsistent) = computedVersion;
             }
             var replicaVersion = (replicaLTag, replicaIsConsistent);
             var isUpdated = replicaVersion != computedVersion;
@@ -119,6 +136,7 @@ namespace Stl.Fusion.Bridge.Internal
             message.MessageIndex = Interlocked.Increment(ref MessageIndex);
             message.PublisherId = Publisher.Id;
             message.PublicationId = Publication.Id;
+
             await Channel.Writer.WriteAsync(message, cancellationToken).ConfigureAwait(false);
         }
     }

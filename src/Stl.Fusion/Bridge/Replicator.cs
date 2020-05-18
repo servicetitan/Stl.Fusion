@@ -26,6 +26,8 @@ namespace Stl.Fusion.Bridge
 
     public interface IReplicatorImpl : IReplicator
     {
+        IComputeRetryPolicy RetryPolicy { get; }
+
         bool TrySubscribe(IReplica replica, bool requestUpdate);
         void OnReplicaDisposed(IReplica replica);
         void OnChannelProcessorDisposed(ReplicatorChannelProcessor replicatorChannelProcessor);
@@ -41,15 +43,19 @@ namespace Stl.Fusion.Bridge
 
         public IChannelHub<PublicationMessage> ChannelHub { get; }
         public Func<Channel<PublicationMessage>, Symbol> PublisherIdProvider { get; }
+        public IComputeRetryPolicy RetryPolicy { get; }
         public bool OwnsChannelHub { get; }
 
         public Replicator(
             IChannelHub<PublicationMessage> channelHub,
             Func<Channel<PublicationMessage>, Symbol> publisherIdProvider,
+            IComputeRetryPolicy? retryPolicy = null,
             bool ownsChannelHub = true)
         {
+            retryPolicy ??= ComputeRetryPolicy.Default;
             ChannelHub = channelHub;
             PublisherIdProvider = publisherIdProvider;
+            RetryPolicy = retryPolicy;
             OwnsChannelHub = ownsChannelHub;
             Replicas = new ConcurrentDictionary<Symbol, IReplica>();
             ChannelProcessorsById = new ConcurrentDictionary<Symbol, ReplicatorChannelProcessor>();

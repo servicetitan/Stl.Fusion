@@ -109,6 +109,7 @@ namespace Stl.Fusion.Bridge
 
             IntMoment GetNextExpirationCheckTime(IntMoment start, IntMoment lastUseTime)
             {
+                return lastUseTime + TimeSpan.FromMinutes(5); // Good for debugging 
                 var now = IntMoment.Now;
                 var lifetime = now.EpochOffsetUnits - start.EpochOffsetUnits;
                 if (lifetime < IntMoment.UnitsPerSecond * 60) // 1 minute
@@ -122,7 +123,7 @@ namespace Stl.Fusion.Bridge
                 var lastUseTime = GetLastUseTime();
                 while (true) {
                     var nextCheckTime = GetNextExpirationCheckTime(start, lastUseTime);
-                    var delay = TimeSpan.FromTicks(IntMoment.TicksPerUnit * Math.Min(0, nextCheckTime - IntMoment.Now));
+                    var delay = TimeSpan.FromTicks(IntMoment.TicksPerUnit * Math.Max(0, nextCheckTime - IntMoment.Now));
                     if (delay > TimeSpan.Zero)
                         await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
                     var newLastUseTime = GetLastUseTime();
@@ -142,16 +143,16 @@ namespace Stl.Fusion.Bridge
         protected virtual SubscriptionProcessor CreateSubscriptionProcessor(Channel<PublicationMessage> channel, SubscribeMessage subscribeMessage)
             => new SubscriptionProcessor<T>(this, channel, subscribeMessage);
 
-        protected override ValueTask DisposeAsync(bool disposing)
+        protected override Task DisposeAsync(bool disposing)
         {
             // We override this method to make sure State is the first thing
             // to reflect the disposal. 
             var state = StateField;
             if (state.IsDisposed)
-                return ValueTaskEx.CompletedTask;
+                return Task.CompletedTask;
             var newState = CreatePublicationState(state.Computed, true);
             if (!ChangeState(newState, state))
-                return ValueTaskEx.CompletedTask;
+                return Task.CompletedTask;
             return base.DisposeAsync(disposing);
         }
 

@@ -39,10 +39,13 @@ namespace Stl.Fusion.Bridge.Internal
             // No checks, since they're done by the only caller of this method
             // if (replica.Replicator != Replicator || replica.PublisherId != PublisherId)
             //     throw new ArgumentOutOfRangeException(nameof(replica));
-            
+
+            var computed = replica.Computed;
             var subscribeMessage = new SubscribeMessage() {
                 PublisherId = PublisherId,
                 PublicationId = replica.PublicationId,
+                ReplicaLTag = computed.LTag,
+                ReplicaIsConsistent = computed.IsConsistent,
                 IsUpdateRequested = requestUpdate,
             };
             return Channel.Writer.WriteAsync(subscribeMessage, cancellationToken);
@@ -84,19 +87,24 @@ namespace Stl.Fusion.Bridge.Internal
                 // Weird case: somehow replica is of different type
                 return Task.CompletedTask; 
 
-            var computed = replica.Computed;
-            if (message.NewLTag != computed.LTag) {
-                // LTags don't match => this is update + maybe invalidation
-                replicaImpl.ApplyUpdate(computed, lTaggedOutput, message.NewIsConsistent);
-                return Task.CompletedTask; // Wrong type
+            try {
+                var computed = replica.Computed;
+                if (message.NewLTag != computed.LTag) {
+                    // LTags don't match => this is update + maybe invalidation
+                    replicaImpl.ChangeState(computed, lTaggedOutput, message.NewIsConsistent);
+                    return Task.CompletedTask; // Wrong type
+                }
+
+                // LTags are equal, so it could be only invalidation
+                if (message.NewIsConsistent == false)
+                    // There is a check that invalidation can happen only once, so...
+                    computed.Invalidate(Replicator);
+
+                return Task.CompletedTask;
             }
-
-            // LTags are equal, so it could be only invalidation
-            if (message.NewIsConsistent == false)
-                // There is a check that invalidation can happen only once, so...
-                computed.Invalidate(Replicator);
-
-            return Task.CompletedTask;
+            finally {
+                replicaImpl.CompleteUpdateRequest();
+            }
         }
 
         protected override async ValueTask DisposeInternalAsync(bool disposing)

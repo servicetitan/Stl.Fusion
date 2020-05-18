@@ -1,4 +1,5 @@
 using System;
+using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
@@ -16,27 +17,29 @@ namespace Stl.Fusion.Bridge
         IComputedReplica Computed { get; }
         bool IsUpdateRequested { get; }
 
-        Task<IComputedReplica> RequestUpdateAsync(CancellationToken cancellationToken = default);
+        Task RequestUpdateAsync(CancellationToken cancellationToken = default);
     }
 
     public interface IReplica<T> : IReplica
     {
         new IComputedReplica<T> Computed { get; }
         
-        new Task<IComputedReplica<T>> RequestUpdateAsync(CancellationToken cancellationToken = default);
+        new Task RequestUpdateAsync(CancellationToken cancellationToken = default);
     }
 
     public interface IReplicaImpl : IReplica, IFunction { }
     public interface IReplicaImpl<T> : IReplica<T>, IFunction<ReplicaInput, T>, IReplicaImpl
     {
-        bool ApplyUpdate(IComputedReplica<T> origin, LTagged<Result<T>> output, bool isConsistent);
+        bool ChangeState(IComputedReplica<T> expected, LTagged<Result<T>> output, bool isConsistent);
+        void CompleteUpdateRequest();
     } 
 
     public class Replica<T> : AsyncDisposableBase, IReplicaImpl<T>
     {
         protected readonly ReplicaInput Input;
-        protected IComputedReplica<T> ComputedField;
-        protected TaskCompletionSource<IComputedReplica<T>>? UpdateRequestTcs = null;
+        protected IComputedReplica<T> ComputedField = null!;
+        protected volatile TaskCompletionSource<Unit>? UpdateRequestTcs = null;
+        protected IReplicatorImpl ReplicatorImpl => (IReplicatorImpl) Replicator;
 
         public IReplicator Replicator { get; }
         public Symbol PublisherId => Input.PublisherId;
@@ -44,7 +47,6 @@ namespace Stl.Fusion.Bridge
         IComputedReplica IReplica.Computed => ComputedField;
         public IComputedReplica<T> Computed => ComputedField;
         public bool IsUpdateRequested => UpdateRequestTcs != null;
-        protected object Lock => new object();
 
         public Replica(
             IReplicator replicator, Symbol publisherId, Symbol publicationId, 
@@ -56,55 +58,54 @@ namespace Stl.Fusion.Bridge
                 // ReSharper disable once VirtualMemberCallInConstructor
                 UpdateRequestTcs = CreateUpdateRequestTcs();
             // ReSharper disable once VirtualMemberCallInConstructor
-            ApplyUpdate(null, initialOutput, isConsistent);
+            ChangeState(null, initialOutput, isConsistent);
         }
 
         protected virtual IComputedReplica<T> CreateComputedReplica(
             LTagged<Result<T>> initialOutput, bool isConsistent) 
             => new ComputedReplica<T>(Input, initialOutput.Value, initialOutput.LTag, isConsistent);
 
-        async Task<IComputedReplica> IReplica.RequestUpdateAsync(CancellationToken cancellationToken) 
-            => await RequestUpdateAsync(cancellationToken);
-        public virtual Task<IComputedReplica<T>> RequestUpdateAsync(CancellationToken cancellationToken = default)
+        Task IReplica.RequestUpdateAsync(CancellationToken cancellationToken) 
+            => RequestUpdateAsync(cancellationToken);
+        public virtual Task RequestUpdateAsync(CancellationToken cancellationToken = default)
         {
-            var requestUpdate = false;
-            TaskCompletionSource<IComputedReplica<T>>? updateRequestTcs;
-            lock (Lock) {
-                updateRequestTcs = UpdateRequestTcs ?? CreateUpdateRequestTcs();
-                if (updateRequestTcs != UpdateRequestTcs) {
-                    requestUpdate = true;
-                    UpdateRequestTcs = updateRequestTcs;
+            var updateRequestTcs = UpdateRequestTcs;
+            if (updateRequestTcs == null) {
+                var newUpdateRequestTcs = CreateUpdateRequestTcs();
+                updateRequestTcs = Interlocked.CompareExchange(ref UpdateRequestTcs, newUpdateRequestTcs, null);
+                if (updateRequestTcs == null) {
+                    updateRequestTcs = newUpdateRequestTcs;
+                    Input.ReplicatorImpl.TrySubscribe(this, true);
                 }
             }
-            if (requestUpdate)
-                Input.ReplicatorImpl.TrySubscribe(this, true);
             return updateRequestTcs.Task.WithFakeCancellation(cancellationToken);
         }
 
-        bool IReplicaImpl<T>.ApplyUpdate(IComputedReplica<T>? expectedComputed, LTagged<Result<T>> output, bool isConsistent) 
-            => ApplyUpdate(expectedComputed, output, isConsistent);
-        protected virtual bool ApplyUpdate(IComputedReplica<T>? expectedComputed, LTagged<Result<T>> output, bool isConsistent)
+        bool IReplicaImpl<T>.ChangeState(IComputedReplica<T>? expected, LTagged<Result<T>> output, bool isConsistent) 
+            => ChangeState(expected, output, isConsistent);
+        protected virtual bool ChangeState(IComputedReplica<T>? expected, LTagged<Result<T>> output, bool isConsistent)
         {
-            TaskCompletionSource<IComputedReplica<T>>? updateRequestTcs;
-            IComputedReplica<T> newComputed;
-            lock (Lock) {
-                if (ComputedField != expectedComputed)
-                    return false;
-                (updateRequestTcs, UpdateRequestTcs) = (UpdateRequestTcs, null);
-                newComputed = new ComputedReplica<T>(Input, output.Value, output.LTag, isConsistent);
-                ComputedField = newComputed;
-            }
-            try {
-                expectedComputed?.Invalidate();
-            }
-            finally {
-                updateRequestTcs?.TrySetResult(newComputed);
-            }
+            var computed = ComputedField;
+            if (computed != expected)
+                return false;
+            var newComputed = new ComputedReplica<T>(Input, output.Value, output.LTag, isConsistent);
+            computed = Interlocked.CompareExchange(ref ComputedField, newComputed, expected);
+            if (computed != expected)
+                return false;
+            expected?.Invalidate();
             return true;
         }
 
-        protected virtual TaskCompletionSource<IComputedReplica<T>> CreateUpdateRequestTcs() 
-            => new TaskCompletionSource<IComputedReplica<T>>();
+        void IReplicaImpl<T>.CompleteUpdateRequest() 
+            => CompleteUpdateRequest();
+        protected virtual void CompleteUpdateRequest()
+        {
+            var updateRequestTcs = Interlocked.Exchange(ref UpdateRequestTcs, null);
+            updateRequestTcs?.TrySetResult(default);
+        }
+
+        protected virtual TaskCompletionSource<Unit> CreateUpdateRequestTcs() 
+            => new TaskCompletionSource<Unit>();
 
         protected async Task<IComputed<T>> InvokeAsync(ReplicaInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)
@@ -120,13 +121,20 @@ namespace Stl.Fusion.Bridge
             if ((context.Options & ComputeOptions.TryGetCached) != 0) {
                 context.TryCaptureValue(result);
                 if ((context.Options & ComputeOptions.Invalidate) == ComputeOptions.Invalidate)
-                    result?.Invalidate();
+                    result.Invalidate();
                 ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) result);
                 return result!;
             }
 
-            if (!result.IsConsistent)
-                result = await RequestUpdateAsync(cancellationToken).ConfigureAwait(false);
+            var retryPolicy = ReplicatorImpl.RetryPolicy;
+            for (var tryIndex = 0;; tryIndex++) {
+                await RequestUpdateAsync(cancellationToken).ConfigureAwait(false);
+                result = Computed;
+                if (result.IsConsistent)
+                    break;
+                if (!retryPolicy.MustRetry(result, tryIndex))
+                    break;
+            }
             context.TryCaptureValue(result);
             ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) result);
             return result;
@@ -146,13 +154,20 @@ namespace Stl.Fusion.Bridge
             if ((context.Options & ComputeOptions.TryGetCached) != 0) {
                 context.TryCaptureValue(result);
                 if ((context.Options & ComputeOptions.Invalidate) == ComputeOptions.Invalidate)
-                    result?.Invalidate();
+                    result.Invalidate();
                 ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) result);
                 return result.Strip();
             }
 
-            if (!result.IsConsistent)
-                result = await RequestUpdateAsync(cancellationToken).ConfigureAwait(false);
+            var retryPolicy = ReplicatorImpl.RetryPolicy;
+            for (var tryIndex = 0;; tryIndex++) {
+                await RequestUpdateAsync(cancellationToken).ConfigureAwait(false);
+                result = Computed;
+                if (result.IsConsistent)
+                    break;
+                if (!retryPolicy.MustRetry(result, tryIndex))
+                    break;
+            }
             context.TryCaptureValue(result);
             ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) result);
             return result.Strip();

@@ -15,7 +15,7 @@ namespace Stl.Async
             var tcs = new TaskCompletionSource<T>(taskCreationOptions);
             if (throwIfCancelled)
                 token.Register(arg => {
-                    var tcs1 = (TaskCompletionSource<Unit>) arg;
+                    var tcs1 = (TaskCompletionSource<T>) arg;
                     tcs1.SetCanceled();
                 }, tcs);
             else

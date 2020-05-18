@@ -23,13 +23,19 @@ namespace Stl.Fusion.Bridge
 
         IPublication Publish(IComputed computed);
         IPublication? TryGet(Symbol publicationId);
-        bool Subscribe(Channel<PublicationMessage> channel, IPublication publication, bool sendUpdate);
-        ValueTask<bool> UnsubscribeAsync(Channel<PublicationMessage> channel, IPublication publication);
+        ValueTask<bool> SubscribeAsync(
+            Channel<PublicationMessage> channel, IPublication publication, 
+            bool sendUpdate, CancellationToken cancellationToken = default);
+        ValueTask<bool> UnsubscribeAsync(
+            Channel<PublicationMessage> channel, IPublication publication, 
+            CancellationToken cancellationToken = default);
     }
 
     public interface IPublisherImpl : IPublisher
     {
-        bool Subscribe(Channel<PublicationMessage> channel, IPublication publication, SubscribeMessage subscribeMessage);
+        ValueTask<bool> SubscribeAsync(
+            Channel<PublicationMessage> channel, IPublication publication, 
+            SubscribeMessage subscribeMessage, CancellationToken cancellationToken);
         void OnPublicationDisposed(IPublication publication);
         void OnChannelProcessorDisposed(PublisherChannelProcessor channelProcessor);
     }
@@ -116,7 +122,9 @@ namespace Stl.Fusion.Bridge
         protected virtual void OnChannelProcessorDisposed(PublisherChannelProcessor channelProcessor)
         { }
 
-        public bool Subscribe(Channel<PublicationMessage> channel, IPublication publication, bool sendUpdate)
+        public ValueTask<bool> SubscribeAsync(
+            Channel<PublicationMessage> channel, IPublication publication, 
+            bool sendUpdate, CancellationToken cancellationToken)
         {
             var message = new SubscribeMessage() {
                 PublisherId = Id,
@@ -125,26 +133,32 @@ namespace Stl.Fusion.Bridge
                 ReplicaIsConsistent = false,
                 IsUpdateRequested = sendUpdate,
             };
-            return Subscribe(channel, publication, message);
+            return SubscribeAsync(channel, publication, message, cancellationToken);
         }
 
-        bool IPublisherImpl.Subscribe(Channel<PublicationMessage> channel, IPublication publication, SubscribeMessage subscribeMessage) 
-            => Subscribe(channel, publication, subscribeMessage);
-        protected virtual bool Subscribe(Channel<PublicationMessage> channel, IPublication publication, SubscribeMessage subscribeMessage)
+        ValueTask<bool> IPublisherImpl.SubscribeAsync(
+            Channel<PublicationMessage> channel, IPublication publication, 
+            SubscribeMessage subscribeMessage, CancellationToken cancellationToken) 
+            => SubscribeAsync(channel, publication, subscribeMessage, cancellationToken);
+        protected virtual ValueTask<bool> SubscribeAsync(
+            Channel<PublicationMessage> channel, IPublication publication, 
+            SubscribeMessage subscribeMessage, CancellationToken cancellationToken)
         {
             ThrowIfDisposedOrDisposing();
             if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
-                return false;
+                return ValueTaskEx.FalseTask;
             if (publication.Publisher != this || publication.State.IsDisposed)
-                return false;
-            return channelProcessor.Subscribe(publication, subscribeMessage);
+                return ValueTaskEx.FalseTask;
+            return channelProcessor.SubscribeAsync(publication, subscribeMessage, cancellationToken);
         }
 
-        public virtual ValueTask<bool> UnsubscribeAsync(Channel<PublicationMessage> channel, IPublication publication)
+        public virtual ValueTask<bool> UnsubscribeAsync(
+            Channel<PublicationMessage> channel, IPublication publication, 
+            CancellationToken cancellationToken = default)
         {
             if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
                 return ValueTaskEx.FalseTask;
-            return channelProcessor.UnsubscribeAsync(publication);
+            return channelProcessor.UnsubscribeAsync(publication, cancellationToken);
         }
 
         // Channel-related

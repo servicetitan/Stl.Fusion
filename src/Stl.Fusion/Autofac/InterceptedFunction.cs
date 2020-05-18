@@ -14,8 +14,8 @@ namespace Stl.Fusion.Autofac
             InterceptedMethod method,
             ConcurrentIdGenerator<LTag> lTagGenerator,
             IComputedRegistry computedRegistry,
-            IComputeRetryPolicy? retryComputePolicy = null) 
-            : base(computedRegistry, retryComputePolicy)
+            IComputeRetryPolicy? retryPolicy = null) 
+            : base(computedRegistry, retryPolicy)
         {
             Method = method;
             LTagGenerator = lTagGenerator;

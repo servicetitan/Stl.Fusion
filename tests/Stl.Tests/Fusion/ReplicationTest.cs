@@ -37,9 +37,12 @@ namespace Stl.Tests.Fusion
             r1c.IsConsistent.Should().BeFalse();
             r1.Computed.Should().Be(r1c);
 
-            r1c = await r1.RequestUpdateAsync();
-            // r1c.Value.Should().Be("1");
-            // r1.Computed.Should().Be(r1c);
+            await r1.RequestUpdateAsync();
+            r1c = r1.Computed;
+            r1c.Value.Should().Be("1");
+
+            await r1.RequestUpdateAsync();
+            r1.Computed.Should().Be(r1c);
         }
 
         [Fact]

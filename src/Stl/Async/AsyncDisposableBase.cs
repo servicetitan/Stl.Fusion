@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Internal;
@@ -14,9 +15,18 @@ namespace Stl.Async
 
     public abstract class AsyncDisposableBase : IAsyncDisposable, IDisposable
     {
-        private volatile int _disposalState;
+        private volatile TaskCompletionSource<Unit>? _disposeTcs = null;
 
-        public DisposalState DisposalState => (DisposalState) _disposalState;
+        public DisposalState DisposalState {
+            get {
+                var disposeTcs = _disposeTcs;
+                if (disposeTcs == null)
+                    return DisposalState.Active;
+                return disposeTcs.Task.IsCompleted 
+                    ? DisposalState.Disposed 
+                    : DisposalState.Disposing;
+            }
+        }
 
         public void Dispose()
         {
@@ -27,23 +37,36 @@ namespace Stl.Async
                 ad.DisposeAsync();
         }
 
-        public ValueTask DisposeAsync()
+        public async ValueTask DisposeAsync()
         {
-            return DisposeAsync(true);
+            await DisposeAsync(true).ConfigureAwait(false);
         }
 
-        protected virtual async ValueTask DisposeAsync(bool disposing)
+        protected virtual async Task DisposeAsync(bool disposing)
         {
-            if ((int) DisposalState.Active != Interlocked.CompareExchange(
-                ref _disposalState, 
-                (int) DisposalState.Disposing,
-                (int) DisposalState.Active))
+            // The logic is a bit complicated b/c we want any DisposeAsync
+            // call to complete only when the actual dispose completes,
+            // not earlier.
+
+            var oldDisposeTcs = _disposeTcs;
+            if (oldDisposeTcs != null) {
+                await oldDisposeTcs.Task.ConfigureAwait(false);
                 return;
+            }
+            var disposeTcs = new TaskCompletionSource<Unit>();
+            oldDisposeTcs = Interlocked.CompareExchange(ref _disposeTcs, disposeTcs, null); 
+            if (oldDisposeTcs != null) {
+                await oldDisposeTcs.Task.ConfigureAwait(false);
+                return;
+            }
             try {
                 await DisposeInternalAsync(disposing).ConfigureAwait(false);
             }
+            catch {
+                // DisposeAsync should never throw
+            }
             finally {
-                Interlocked.Exchange(ref _disposalState, (int) DisposalState.Disposed);
+                disposeTcs.TrySetResult(default);
             }
         }
         
