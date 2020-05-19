@@ -2,8 +2,7 @@ using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Stl.Async;
-using Stl.Hosting.HostedServices;
-using Stl.Plugins;
+using Stl.Hosting.Internal;
 
 namespace Stl.Hosting
 {
@@ -27,27 +26,6 @@ namespace Stl.Hosting
         {
             services.AddSingleton(factory);
             services.AddHostedService<HostedServiceWrapper<TService>>();
-            return services;
-        }
-
-        // AddHasAutoStartSingleton
-        
-        public static IServiceCollection AddHasAutoStartSingleton<TService>(
-            this IServiceCollection services)
-            where TService : class, IHasAutoStart
-        {
-            services.AddSingleton<TService>();
-            services.AddHostedService<HasAutoStartWrapper<TService>>();
-            return services;
-        }
-
-        public static IServiceCollection AddHasAutoStartSingleton<TService>(
-            this IServiceCollection services,
-            Func<IServiceProvider, TService> factory)
-            where TService : class, IHasAutoStart
-        {
-            services.AddSingleton(factory);
-            services.AddHostedService<HasAutoStartWrapper<TService>>();
             return services;
         }
 

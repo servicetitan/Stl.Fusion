@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Stl.Serialization;
 
 namespace Stl.Channels
@@ -119,5 +120,39 @@ namespace Stl.Channels
                 cancellationToken);
             return pair.Channel2;
         }
+
+        public static Channel<T> WithLogger<T>(
+            this Channel<T> channel,
+            string channelName, ILogger logger, LogLevel logLevel,  
+            BoundedChannelOptions? channelOptions = null,
+            CancellationToken cancellationToken = default)
+        {
+            channelOptions ??= new BoundedChannelOptions(16) {
+                FullMode = BoundedChannelFullMode.Wait,
+                SingleReader = true,
+                SingleWriter = true,
+                AllowSynchronousContinuations = true,
+            };
+            var pair = ChannelPair.CreateTwisted(
+                Channel.CreateBounded<T>(channelOptions),
+                Channel.CreateBounded<T>(channelOptions));
+
+            channel.ConnectAsync(
+                pair.Channel1, true,
+                m => {
+                    logger.Log(logLevel, $"{channelName} -> {m}");
+                    return m;
+                },
+                m => {
+                    logger.Log(logLevel, $"{channelName} <- {m}");
+                    return m;
+                },
+                cancellationToken);
+            return pair.Channel2;
+        }
+
+        public static CustomChannelWithId<TId, T> WithId<TId, T>(
+            this Channel<T> channel, TId id)
+            => new CustomChannelWithId<TId, T>(id, channel.Reader, channel.Writer);
     }
 }

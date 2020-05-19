@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Stl.Async;
 
-namespace Stl.Hosting.HostedServices 
+namespace Stl.Hosting.Internal 
 {
     public sealed class AsyncProcessWrapper<TImpl> : IHostedService
         where TImpl : IAsyncProcess

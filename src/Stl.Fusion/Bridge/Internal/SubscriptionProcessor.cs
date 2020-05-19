@@ -17,11 +17,11 @@ namespace Stl.Fusion.Bridge.Internal
 
         public IPublisher Publisher => Publication.Publisher;
         public readonly IPublicationImpl Publication;
-        public readonly Channel<PublicationMessage> Channel;
+        public readonly Channel<Message> Channel;
         public readonly SubscribeMessage SubscribeMessage;
 
         protected SubscriptionProcessor(
-            IPublicationImpl publication, Channel<PublicationMessage> channel, SubscribeMessage subscribeMessage)
+            IPublicationImpl publication, Channel<Message> channel, SubscribeMessage subscribeMessage)
         {
             Publication = publication;
             Channel = channel;
@@ -39,7 +39,7 @@ namespace Stl.Fusion.Bridge.Internal
         public new readonly IPublicationImpl<T> Publication;
 
         public SubscriptionProcessor( 
-            IPublicationImpl<T> publication, Channel<PublicationMessage> channel, SubscribeMessage subscribeMessage)
+            IPublicationImpl<T> publication, Channel<Message> channel, SubscribeMessage subscribeMessage)
             : base(publication, channel, subscribeMessage)
         {
             Publication = publication;

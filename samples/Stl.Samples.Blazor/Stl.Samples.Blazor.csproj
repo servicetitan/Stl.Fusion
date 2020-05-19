@@ -12,6 +12,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Build" PrivateAssets="all" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
     <PackageReference Include="System.Net.Http.Json" />
   </ItemGroup>
   
@@ -24,11 +25,12 @@
   </ItemGroup>
   
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Stl.Fusion\Stl.Fusion.csproj" />
     <ProjectReference Include="..\..\src\Stl\Stl.csproj" />
   </ItemGroup>
   
   <ItemGroup>
-    <None Include="$(ProjectDir)\wwwroot\**" CopyToOutputDirectory="PreserveNewest" LinkBase="wwwroot\"/>
+    <None Include="$(ProjectDir)\wwwroot\**" CopyToOutputDirectory="PreserveNewest" LinkBase="wwwroot\" />
   </ItemGroup>
 
   <Target Name="CreateCmdFiles" AfterTargets="CopyFilesToOutputDirectory">
@@ -37,15 +39,15 @@
       <ChromeDebugCmdPath>$(TargetDir)ChromeDebug.cmd</ChromeDebugCmdPath>
       <DebugMeCmdPath>$(TargetDir)DebugMe.cmd</DebugMeCmdPath>
       <DevServerCmdContent>
-        &#64;dotnet &quot;$(_BlazorDevServerDll)&quot; serve --applicationpath &quot;$(TargetPath)&quot;
+        @dotnet "$(_BlazorDevServerDll)" serve --applicationpath "$(TargetPath)"
       </DevServerCmdContent>
       <ChromeDebugCmdContent>
-        &#64;start &quot;Chrome&quot; chrome.exe --remote-debugging-port=9222 --user-data-dir=&quot;$(Temp)\blazor-chrome-debug&quot; http://localhost:5000/
+        @start "Chrome" chrome.exe --remote-debugging-port=9222 --user-data-dir="$(Temp)\blazor-chrome-debug" http://localhost:5000/
       </ChromeDebugCmdContent>
       <DebugMeCmdContent>
-&#64;echo off 
-start &quot;Blazor DevServer&quot; cmd /C &quot;$(DevServerCmdPath)&quot;
-call &quot;$(ChromeDebugCmdPath)&quot;
+@echo off 
+start "Blazor DevServer" cmd /C "$(DevServerCmdPath)"
+call "$(ChromeDebugCmdPath)"
       </DebugMeCmdContent>
     </PropertyGroup>
     <WriteLinesToFile File="$(DevServerCmdPath)" Lines="$(DevServerCmdContent)" Overwrite="true" />

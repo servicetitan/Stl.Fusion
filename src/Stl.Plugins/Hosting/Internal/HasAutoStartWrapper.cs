@@ -1,9 +1,8 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
-using Stl.Plugins;
 
-namespace Stl.Hosting.HostedServices 
+namespace Stl.Plugins.Hosting.Internal 
 {
     public sealed class HasAutoStartWrapper<TImpl> : IHostedService
         where TImpl : IHasAutoStart

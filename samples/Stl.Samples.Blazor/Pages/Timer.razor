@@ -1,0 +1,41 @@
+﻿@page "/timer"
+@inject HttpClient HttpClient
+@inject IReplicator Replicator
+@inject ILogger<Timer> Log
+
+<h1>Timer</h1>
+
+<p>Server Time: @ServerTime</p>
+
+<button class="btn btn-primary" @onclick="UpdateNow">Click me</button>
+
+@code {
+    private IReplica<DateTime>? ServerTimeReplica { get; set; }
+    private string ServerTime => SafeToString(() => ServerTimeReplica?.Computed.Value);
+
+    protected override async Task OnInitializedAsync()
+    {
+        var json = await HttpClient.GetStringAsync("services/time");
+        var message = new JsonNetSerializer<PublicationPublishedMessage>().Deserialize(json);
+        ServerTimeReplica = Replicator.GetOrAdd<DateTime>(message.PublisherId, message.PublicationId);
+        await ServerTimeReplica.RequestUpdateAsync();
+        ServerTimeReplica.Computed.AutoUpdate((c, o, _) => {
+            Log.LogInformation("Timer is updated.");
+        });
+    }
+
+    private string SafeToString(Func<object> func)
+    {
+        try {
+            return func.Invoke().ToString() ?? "n/a";
+        }
+        catch (Exception) {
+            return "n/a";
+        }
+    }
+
+    private void UpdateNow()
+    {
+        ServerTimeReplica?.RequestUpdateAsync();
+    }
+}

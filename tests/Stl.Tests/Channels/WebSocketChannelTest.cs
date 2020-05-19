@@ -67,8 +67,7 @@ namespace Stl.Tests.Channels
             var uri = new Uri($"{HostUrl}ws").ToWss();
             await ws.ConnectAsync(uri, CancellationToken.None);
             var wsChannel = new WebSocketChannel(ws);
-            var mChannel = wsChannel.WithSerializer(
-                new JsonNetSerializer<PublicationMessage>());
+            var mChannel = wsChannel.WithSerializer(new JsonNetSerializer<Message>());
 
             // Actual test
             await mChannel.Writer.WriteAsync(new PublicationStateChangedMessage<int>() { MessageIndex = 100 });
@@ -94,8 +93,7 @@ namespace Stl.Tests.Channels
             var clientUri = new Uri($"{serverUri}ws").ToWss();
             await ws.ConnectAsync(clientUri, CancellationToken.None);
             var wsChannel = new WebSocketChannel(ws);
-            var mChannel = wsChannel.WithSerializer(
-                new JsonNetSerializer<PublicationMessage>());
+            var mChannel = wsChannel.WithSerializer(new JsonNetSerializer<Message>());
 
             // Actual test
             await mChannel.Writer.WriteAsync(new PublicationStateChangedMessage<int>() { MessageIndex = 100 });
@@ -112,8 +110,7 @@ namespace Stl.Tests.Channels
             WebSocket webSocket, CancellationToken cancellationToken = default)
         {
             await using var wsChannel = new WebSocketChannel(webSocket);
-            var mChannel = wsChannel.WithSerializer(
-                new JsonNetSerializer<PublicationMessage>());
+            var mChannel = wsChannel.WithSerializer(new JsonNetSerializer<Message>());
             await Task.Run(async () => {
                 await foreach (var m in mChannel.Reader.ReadAllAsync()) {
                     if (m is PublicationDisposedMessage)

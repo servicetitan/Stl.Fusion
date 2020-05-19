@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Threading;
 using Stl.Collections;
 using Stl.Mathematics;
+using Stl.Text;
 
 namespace Stl.Security
 {
@@ -48,7 +49,7 @@ namespace Stl.Security
             => _transformer.Invoke(_source.Next());
     }
 
-    public sealed class RandomStringGenerator : IGenerator<string>, IDisposable
+    public class RandomStringGenerator : IGenerator<string>, IDisposable
     {
         public static readonly string DefaultAlphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_"; 
         public static readonly string Base64Alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/"; 
@@ -107,5 +108,16 @@ namespace Stl.Security
                 buffer.Release();
             }
         }
+    }
+
+    public class RandomSymbolGenerator : RandomStringGenerator, IGenerator<Symbol>
+    {
+        public string Prefix { get; }
+
+        public RandomSymbolGenerator(string prefix = "", int length = 12, string? alphabet = null, RandomNumberGenerator? rng = null) 
+            : base(length, alphabet, rng) 
+            => Prefix = prefix;
+
+        public new Symbol Next() => new Symbol(Prefix + base.Next());
     }
 }

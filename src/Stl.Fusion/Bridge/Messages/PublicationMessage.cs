@@ -5,17 +5,11 @@ using Stl.Text;
 namespace Stl.Fusion.Bridge.Messages
 {
     [Serializable]
-    public abstract class PublicationMessage
+    public abstract class PublicationMessage : Message
     {
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public long? MessageIndex { get; set; }
         public Symbol PublisherId { get; set; }
         public Symbol PublicationId { get; set; }
-        public long MessageIndex { get; set; }
-
-        public override string ToString()
-        {
-            var json = JsonConvert.SerializeObject(this, Formatting.Indented);
-            return $"{GetType().Name} {json}";
-        }
-
     }
 }

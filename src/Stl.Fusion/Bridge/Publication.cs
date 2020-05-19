@@ -29,7 +29,7 @@ namespace Stl.Fusion.Bridge
 
     public interface IPublicationImpl : IPublication, IAsyncProcess
     {
-        SubscriptionProcessor CreateSubscriptionProcessor(Channel<PublicationMessage> channel, SubscribeMessage subscribeMessage);
+        SubscriptionProcessor CreateSubscriptionProcessor(Channel<Message> channel, SubscribeMessage subscribeMessage);
     }
 
     public interface IPublicationImpl<T> : IPublicationImpl, IPublication<T> { }
@@ -141,9 +141,9 @@ namespace Stl.Fusion.Bridge
             }
         }
 
-        SubscriptionProcessor IPublicationImpl.CreateSubscriptionProcessor(Channel<PublicationMessage> channel, SubscribeMessage subscribeMessage) 
+        SubscriptionProcessor IPublicationImpl.CreateSubscriptionProcessor(Channel<Message> channel, SubscribeMessage subscribeMessage) 
             => CreateSubscriptionProcessor(channel, subscribeMessage);
-        protected virtual SubscriptionProcessor CreateSubscriptionProcessor(Channel<PublicationMessage> channel, SubscribeMessage subscribeMessage)
+        protected virtual SubscriptionProcessor CreateSubscriptionProcessor(Channel<Message> channel, SubscribeMessage subscribeMessage)
             => new SubscriptionProcessor<T>(this, channel, subscribeMessage);
 
         protected override Task DisposeAsync(bool disposing)

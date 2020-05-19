@@ -4,7 +4,9 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Stl.OS;
 using Stl.Time.Internal;
 
 namespace Stl.Time
@@ -45,19 +47,33 @@ namespace Stl.Time
 
             private static void BeginUpdates()
             {
-                // Dedicated thread is preferable here, since
-                // we need to adjust its priority.
-                var t = new Thread(() => {
-                    var interval = new TimeSpan(TicksPerUnit / 2);
-                    while (true) {
-                        Thread.Sleep(interval);
-                        Update();
-                    }
-                }, 64_000) {
-                    Priority = ThreadPriority.Highest, 
-                    IsBackground = true
-                };
-                t.Start();
+                try {
+                    // Dedicated thread is preferable here, since
+                    // we need to adjust its priority.
+                    var t = new Thread(() => {
+                        var interval = new TimeSpan(TicksPerUnit / 2);
+                        while (true) {
+                            Thread.Sleep(interval);
+                            Update();
+                        }
+                        // ReSharper disable once FunctionNeverReturns
+                    }, 64_000) {
+                        Priority = ThreadPriority.Highest, 
+                        IsBackground = true
+                    };
+                    t.Start();
+                }
+                catch (NotSupportedException) {
+                    // Likely, Blazor/WASM
+                    Task.Run(async () => {
+                        var interval = new TimeSpan(TicksPerUnit / 2);
+                        while (true) {
+                            await Task.Delay(interval).ConfigureAwait(false);
+                            Update();
+                        }
+                        // ReSharper disable once FunctionNeverReturns
+                    });
+                }
             }
         }
 

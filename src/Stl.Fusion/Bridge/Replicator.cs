@@ -16,7 +16,7 @@ namespace Stl.Fusion.Bridge
 {
     public interface IReplicator
     {
-        IChannelHub<PublicationMessage> ChannelHub { get; }
+        IChannelHub<Message> ChannelHub { get; }
         bool OwnsChannelHub { get; }
 
         IReplica<T> GetOrAdd<T>(Symbol publisherId, Symbol publicationId, 
@@ -35,31 +35,36 @@ namespace Stl.Fusion.Bridge
 
     public class Replicator : AsyncDisposableBase, IReplicatorImpl
     {
+        protected static readonly Func<Channel<Message>, Symbol> DefaultPublisherIdProvider =
+            c => c is IHasId<Symbol> hasId ? hasId.Id : Symbol.Empty; 
         protected ConcurrentDictionary<Symbol, IReplica> Replicas { get; }
-        protected ConcurrentDictionary<Channel<PublicationMessage>, ReplicatorChannelProcessor> ChannelProcessors { get; }
+        protected ConcurrentDictionary<Channel<Message>, ReplicatorChannelProcessor> ChannelProcessors { get; }
         protected ConcurrentDictionary<Symbol, ReplicatorChannelProcessor> ChannelProcessorsById { get; }
-        protected Action<Channel<PublicationMessage>> OnChannelAttachedHandler { get; } 
-        protected Func<Channel<PublicationMessage>, ValueTask> OnChannelDetachedAsyncHandler { get; } 
+        protected Action<Channel<Message>> OnChannelAttachedHandler { get; } 
+        protected Func<Channel<Message>, ValueTask> OnChannelDetachedAsyncHandler { get; } 
 
-        public IChannelHub<PublicationMessage> ChannelHub { get; }
-        public Func<Channel<PublicationMessage>, Symbol> PublisherIdProvider { get; }
+        public IChannelHub<Message> ChannelHub { get; }
+        public Func<Channel<Message>, Symbol> PublisherIdProvider { get; }
         public IComputeRetryPolicy RetryPolicy { get; }
         public bool OwnsChannelHub { get; }
 
         public Replicator(
-            IChannelHub<PublicationMessage> channelHub,
-            Func<Channel<PublicationMessage>, Symbol> publisherIdProvider,
+            IChannelHub<Message>? channelHub = null,
+            Func<Channel<Message>, Symbol>? publisherIdProvider = null,
             IComputeRetryPolicy? retryPolicy = null,
             bool ownsChannelHub = true)
         {
+            channelHub ??= new ChannelHub<Message>();
+            publisherIdProvider ??= DefaultPublisherIdProvider;
             retryPolicy ??= ComputeRetryPolicy.Default;
+
             ChannelHub = channelHub;
             PublisherIdProvider = publisherIdProvider;
             RetryPolicy = retryPolicy;
             OwnsChannelHub = ownsChannelHub;
             Replicas = new ConcurrentDictionary<Symbol, IReplica>();
             ChannelProcessorsById = new ConcurrentDictionary<Symbol, ReplicatorChannelProcessor>();
-            ChannelProcessors = new ConcurrentDictionary<Channel<PublicationMessage>, ReplicatorChannelProcessor>();
+            ChannelProcessors = new ConcurrentDictionary<Channel<Message>, ReplicatorChannelProcessor>();
             
             OnChannelAttachedHandler = OnChannelAttached;
             OnChannelDetachedAsyncHandler = OnChannelDetachedAsync;
@@ -84,7 +89,7 @@ namespace Stl.Fusion.Bridge
         public virtual IReplica? TryGet(Symbol publicationId) 
             => Replicas.TryGetValue(publicationId, out var replica) ? replica : null;
 
-        protected virtual void OnChannelAttached(Channel<PublicationMessage> channel)
+        protected virtual void OnChannelAttached(Channel<Message> channel)
         {
             var publisherId = PublisherIdProvider.Invoke(channel);
             var channelProcessor = CreateChannelProcessor(channel, publisherId);
@@ -105,7 +110,7 @@ namespace Stl.Fusion.Bridge
             });
         }
 
-        protected virtual ValueTask OnChannelDetachedAsync(Channel<PublicationMessage> channel)
+        protected virtual ValueTask OnChannelDetachedAsync(Channel<Message> channel)
         {
             if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
                 return ValueTaskEx.CompletedTask;
@@ -114,7 +119,7 @@ namespace Stl.Fusion.Bridge
         }
 
         protected virtual ReplicatorChannelProcessor CreateChannelProcessor(
-            Channel<PublicationMessage> channel, Symbol publisherId) 
+            Channel<Message> channel, Symbol publisherId) 
             => new ReplicatorChannelProcessor(this, channel, publisherId);
 
         bool IReplicatorImpl.TrySubscribe(IReplica replica, bool requestUpdate) 

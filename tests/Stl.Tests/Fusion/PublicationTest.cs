@@ -37,8 +37,9 @@ namespace Stl.Tests.Fusion
             m = await cReader.AssertReadAsync();
             m.Should().BeOfType<PublicationStateChangedMessage<string>>()
                 .Which.NewIsConsistent.Should().BeFalse();
-            m.PublisherId.Should().Be(Publisher.Id);
-            m.PublicationId.Should().Be(p1!.Id);
+            var pm = (PublicationMessage) m; 
+            pm.PublisherId.Should().Be(Publisher.Id);
+            pm.PublicationId.Should().Be(p1!.Id);
             await cReader.AssertCannotReadAsync();
             
             sp.SetValue("12");

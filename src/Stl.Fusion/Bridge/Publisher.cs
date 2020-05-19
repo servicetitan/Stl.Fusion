@@ -6,6 +6,7 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using Stl.Async;
 using Stl.Channels;
+using Stl.Concurrency;
 using Stl.Fusion.Bridge.Internal;
 using Stl.Fusion.Bridge.Messages;
 using Stl.OS;
@@ -18,23 +19,23 @@ namespace Stl.Fusion.Bridge
     public interface IPublisher
     {
         Symbol Id { get; }
-        IChannelHub<PublicationMessage> ChannelHub { get; }
+        IChannelHub<Message> ChannelHub { get; }
         bool OwnsChannelHub { get; }
 
         IPublication Publish(IComputed computed);
         IPublication? TryGet(Symbol publicationId);
         ValueTask<bool> SubscribeAsync(
-            Channel<PublicationMessage> channel, IPublication publication, 
+            Channel<Message> channel, IPublication publication, 
             bool sendUpdate, CancellationToken cancellationToken = default);
         ValueTask<bool> UnsubscribeAsync(
-            Channel<PublicationMessage> channel, IPublication publication, 
+            Channel<Message> channel, IPublication publication, 
             CancellationToken cancellationToken = default);
     }
 
     public interface IPublisherImpl : IPublisher
     {
         ValueTask<bool> SubscribeAsync(
-            Channel<PublicationMessage> channel, IPublication publication, 
+            Channel<Message> channel, IPublication publication, 
             SubscribeMessage subscribeMessage, CancellationToken cancellationToken);
         void OnPublicationDisposed(IPublication publication);
         void OnChannelProcessorDisposed(PublisherChannelProcessor channelProcessor);
@@ -44,25 +45,29 @@ namespace Stl.Fusion.Bridge
     {
         protected ConcurrentDictionary<ComputedInput, IPublication> Publications { get; } 
         protected ConcurrentDictionary<Symbol, IPublication> PublicationsById { get; }
-        protected ConcurrentDictionary<Channel<PublicationMessage>, PublisherChannelProcessor> ChannelProcessors { get; }
+        protected ConcurrentDictionary<Channel<Message>, PublisherChannelProcessor> ChannelProcessors { get; }
         protected IGenerator<Symbol> PublicationIdGenerator { get; }
-        protected Action<Channel<PublicationMessage>> OnChannelAttachedHandler { get; } 
-        protected Func<Channel<PublicationMessage>, ValueTask> OnChannelDetachedAsyncHandler { get; }
+        protected Action<Channel<Message>> OnChannelAttachedHandler { get; } 
+        protected Func<Channel<Message>, ValueTask> OnChannelDetachedAsyncHandler { get; }
         protected IPublicationFactory PublicationFactory { get; }
         protected Type PublicationType { get; }
 
         public Symbol Id { get; }
-        public IChannelHub<PublicationMessage> ChannelHub { get; }
+        public IChannelHub<Message> ChannelHub { get; }
         public bool OwnsChannelHub { get; }
 
-        public Publisher(Symbol id, 
-            IChannelHub<PublicationMessage> channelHub,
-            IGenerator<Symbol> publicationIdGenerator,
+        public Publisher(Symbol id = default, 
+            IChannelHub<Message>? channelHub = null,
+            IGenerator<Symbol>? publicationIdGenerator = null,
             Type? publicationType = null,
             bool ownsChannelHub = true)
         {
+            if (id.Value == null) id = Symbol.Empty;
+            channelHub ??= new ChannelHub<Message>();
+            publicationIdGenerator ??= new RandomSymbolGenerator("p-");
             publicationType ??= typeof(Publication<>);
-            Id = id;
+
+            Id = id.Value;
             ChannelHub = channelHub;
             OwnsChannelHub = ownsChannelHub;
             PublicationIdGenerator = publicationIdGenerator;
@@ -73,7 +78,7 @@ namespace Stl.Fusion.Bridge
             var capacity = 7919;
             Publications = new ConcurrentDictionary<ComputedInput, IPublication>(concurrencyLevel, capacity);
             PublicationsById = new ConcurrentDictionary<Symbol, IPublication>(concurrencyLevel, capacity);
-            ChannelProcessors = new ConcurrentDictionary<Channel<PublicationMessage>, PublisherChannelProcessor>(concurrencyLevel, capacity);
+            ChannelProcessors = new ConcurrentDictionary<Channel<Message>, PublisherChannelProcessor>(concurrencyLevel, capacity);
 
             OnChannelAttachedHandler = OnChannelAttached;
             OnChannelDetachedAsyncHandler = OnChannelDetachedAsync;
@@ -123,7 +128,7 @@ namespace Stl.Fusion.Bridge
         { }
 
         public ValueTask<bool> SubscribeAsync(
-            Channel<PublicationMessage> channel, IPublication publication, 
+            Channel<Message> channel, IPublication publication, 
             bool sendUpdate, CancellationToken cancellationToken)
         {
             var message = new SubscribeMessage() {
@@ -137,11 +142,11 @@ namespace Stl.Fusion.Bridge
         }
 
         ValueTask<bool> IPublisherImpl.SubscribeAsync(
-            Channel<PublicationMessage> channel, IPublication publication, 
+            Channel<Message> channel, IPublication publication, 
             SubscribeMessage subscribeMessage, CancellationToken cancellationToken) 
             => SubscribeAsync(channel, publication, subscribeMessage, cancellationToken);
         protected virtual ValueTask<bool> SubscribeAsync(
-            Channel<PublicationMessage> channel, IPublication publication, 
+            Channel<Message> channel, IPublication publication, 
             SubscribeMessage subscribeMessage, CancellationToken cancellationToken)
         {
             ThrowIfDisposedOrDisposing();
@@ -153,7 +158,7 @@ namespace Stl.Fusion.Bridge
         }
 
         public virtual ValueTask<bool> UnsubscribeAsync(
-            Channel<PublicationMessage> channel, IPublication publication, 
+            Channel<Message> channel, IPublication publication, 
             CancellationToken cancellationToken = default)
         {
             if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
@@ -163,10 +168,10 @@ namespace Stl.Fusion.Bridge
 
         // Channel-related
 
-        protected virtual PublisherChannelProcessor CreateChannelProcessor(Channel<PublicationMessage> channel) 
+        protected virtual PublisherChannelProcessor CreateChannelProcessor(Channel<Message> channel) 
             => new PublisherChannelProcessor(this, channel);
 
-        protected virtual void OnChannelAttached(Channel<PublicationMessage> channel)
+        protected virtual void OnChannelAttached(Channel<Message> channel)
         {
             var channelProcessor = CreateChannelProcessor(channel);
             if (!ChannelProcessors.TryAdd(channel, channelProcessor))
@@ -180,7 +185,7 @@ namespace Stl.Fusion.Bridge
             });
         }
 
-        protected virtual ValueTask OnChannelDetachedAsync(Channel<PublicationMessage> channel)
+        protected virtual ValueTask OnChannelDetachedAsync(Channel<Message> channel)
         {
             if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
                 return ValueTaskEx.CompletedTask;

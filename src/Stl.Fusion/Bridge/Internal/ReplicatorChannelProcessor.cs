@@ -22,11 +22,11 @@ namespace Stl.Fusion.Bridge.Internal
 
         public readonly IReplicator Replicator;
         public readonly IReplicatorImpl ReplicatorImpl;
-        public readonly Channel<PublicationMessage> Channel;
+        public readonly Channel<Message> Channel;
         public readonly Symbol PublisherId;
         protected object Lock => new object();  
 
-        public ReplicatorChannelProcessor(IReplicator replicator, Channel<PublicationMessage> channel, Symbol publisherId)
+        public ReplicatorChannelProcessor(IReplicator replicator, Channel<Message> channel, Symbol publisherId)
         {
             Replicator = replicator;
             ReplicatorImpl = (IReplicatorImpl) replicator;
@@ -69,7 +69,7 @@ namespace Stl.Fusion.Bridge.Internal
             }
         }
 
-        protected virtual Task OnMessageAsync(PublicationMessage message, CancellationToken cancellationToken)
+        protected virtual Task OnMessageAsync(Message message, CancellationToken cancellationToken)
         {
             switch (message) {
             case PublicationStateChangedMessage scm:

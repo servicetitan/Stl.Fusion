@@ -1,14 +1,9 @@
 using System;
-using System.Threading.Channels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Stl.Channels;
 using Stl.Extensibility;
 using Stl.Fusion.Bridge;
-using Stl.Fusion.Bridge.Messages;
 using Stl.Fusion.Interception;
-using Stl.Security;
-using Stl.Text;
 
 namespace Stl.Fusion
 {
@@ -18,39 +13,16 @@ namespace Stl.Fusion
         {
             services.TryAddSingleton(c => ComputedProxyGenerator.Default);
             services.TryAddSingleton<ComputedInterceptor>();
+            services.TryAddSingleton(c => new [] { c.GetRequiredService<ComputedInterceptor>() });
             services.TryAddSingleton(c => ComputedRegistry.Default);
             services.TryAddSingleton(c => ArgumentComparerProvider.Default);
             services.TryAddSingleton(c => ComputeRetryPolicy.Default);
             services.TryAddSingleton(c => ComputedReplicaRetryPolicy.Default);
+            services.TryAddSingleton<IPublisher, Publisher>();
+            services.TryAddSingleton<IReplicator, Replicator>();
             services.TryAddComputedProvider<CustomFunction>();
             return services;
         }
-
-        public static IServiceCollection AddFusionPublisher(this IServiceCollection services,
-            Symbol publisherId, IGenerator<Symbol>? publicationIdGenerator = null)
-        {
-            if (services.HasService<IPublisher>())
-                return services;
-
-            IGenerator<Symbol> PublicationIdGeneratorResolver(IServiceProvider c) 
-                => publicationIdGenerator ?? c.GetRequiredService<IGenerator<Symbol>>();
-
-            var channelHub = new ChannelHub<PublicationMessage>();
-            return services.AddSingleton<IPublisher>(
-                c => new Publisher(publisherId, channelHub, PublicationIdGeneratorResolver(c))); 
-        }
-
-        public static IServiceCollection AddFusionReplicator(this IServiceCollection services,
-            Func<Channel<PublicationMessage>, Symbol> publisherIdProvider)
-        {
-            if (services.HasService<IReplicator>())
-                return services;
-
-            var channelHub = new ChannelHub<PublicationMessage>();
-            return services.AddSingleton<IReplicator>(
-                c => new Replicator(channelHub, publisherIdProvider)); 
-        }
-
 
         // TryAddComputedProvider & AddComputedProvider
 

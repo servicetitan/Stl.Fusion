@@ -15,11 +15,11 @@ namespace Stl.Fusion.Bridge.Internal
     {
         public readonly IPublisher Publisher;
         public readonly IPublisherImpl PublisherImpl;
-        public readonly Channel<PublicationMessage> Channel;
+        public readonly Channel<Message> Channel;
         public readonly ConcurrentDictionary<Symbol, SubscriptionProcessor> Subscriptions;
         protected object Lock => Subscriptions;  
 
-        public PublisherChannelProcessor(IPublisher publisher, Channel<PublicationMessage> channel)
+        public PublisherChannelProcessor(IPublisher publisher, Channel<Message> channel)
         {
             Publisher = publisher;
             PublisherImpl = (IPublisherImpl) publisher;
@@ -45,7 +45,7 @@ namespace Stl.Fusion.Bridge.Internal
             }
         }
 
-        protected virtual Task OnMessageAsync(PublicationMessage message, CancellationToken cancellationToken)
+        protected virtual Task OnMessageAsync(Message message, CancellationToken cancellationToken)
         {
             switch (message) {
             case SubscribeMessage sm:

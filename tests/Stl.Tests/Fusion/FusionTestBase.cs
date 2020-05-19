@@ -2,27 +2,22 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Stl.Channels;
 using Stl.IO;
-using Stl.Fusion.Interception;
 using Stl.Fusion;
 using Stl.Fusion.Bridge;
-using Stl.Fusion.Bridge.Messages;
-using Stl.Security;
 using Stl.Testing;
 using Stl.Testing.Internal;
 using Stl.Tests.Fusion.Model;
 using Stl.Tests.Fusion.Services;
-using Stl.Text;
 using Xunit.Abstractions;
 using Xunit.DependencyInjection.Logging;
+using Message = Stl.Fusion.Bridge.Messages.Message;
 
 namespace Stl.Tests.Fusion
 {
@@ -123,13 +118,7 @@ namespace Stl.Tests.Fusion
             services.AddSingleton<ITestDbContextPool, TestDbContextPool>();
 
             // Core fusion services
-            var publicationIdGenerator = new TransformingGenerator<string, Symbol>(
-                new RandomStringGenerator(), 
-                s => new Symbol($"p-{s}"));
-
             services.AddFusion();
-            services.AddFusionPublisher("p", publicationIdGenerator);
-            services.AddFusionReplicator(_ => "p");
 
             // Computed providers
             services.AddComputedProvider<ISimplestProvider, SimplestProvider>();
@@ -143,8 +132,8 @@ namespace Stl.Tests.Fusion
         public virtual void ConfigureServices(ContainerBuilder builder)
         { }
 
-        public virtual TestChannelPair<PublicationMessage> CreateChannelPair(
+        public virtual TestChannelPair<Message> CreateChannelPair(
             string name, bool dump = true) 
-            => new TestChannelPair<PublicationMessage>(name, dump ? Out : null);
+            => new TestChannelPair<Message>(name, dump ? Out : null);
     }
 }

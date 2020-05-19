@@ -2,7 +2,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 
-namespace Stl.Hosting.HostedServices
+namespace Stl.Hosting.Internal
 {
     public sealed class HostedServiceWrapper<TImpl> : IHostedService
         where TImpl : IHostedService
