@@ -26,8 +26,8 @@ namespace Stl.Async
         private int _readPosition;
         private int _writePosition;
         private readonly TaskCreationOptions _taskCreationOptions;
-        private TaskCompletionStruct<Unit> _pullHappened;
-        private TaskCompletionStruct<Unit> _putHappened;
+        private TaskSource<Unit> _pullHappened;
+        private TaskSource<Unit> _putHappened;
 
         public int Size { get; }
         public int FreeCount => Size - Count;
@@ -68,8 +68,8 @@ namespace Stl.Async
             Size = buffer.Length - 1; // To make sure that "buffer is full" != "buffer is empty"
             _buffer = buffer;
             _taskCreationOptions = taskCreationOptions;
-            _pullHappened = new TaskCompletionStruct<Unit>(_taskCreationOptions);
-            _putHappened = new TaskCompletionStruct<Unit>(_taskCreationOptions);
+            _pullHappened = TaskSource.New<Unit>(_taskCreationOptions);
+            _putHappened = TaskSource.New<Unit>(_taskCreationOptions);
         }
 
         public bool CompletePut()
@@ -209,32 +209,32 @@ namespace Stl.Async
 
         private async Task WaitForDequeueAsync(CancellationToken cancellationToken = default)
         {
-            TaskCompletionStruct<Unit> tcs; 
+            TaskSource<Unit> ts; 
             lock (Lock) {
                 cancellationToken.ThrowIfCancellationRequested();
-                tcs = _pullHappened;
-                if (tcs.Task.IsCompleted && FreeCountNoLock > 0)
+                ts = _pullHappened;
+                if (ts.Task.IsCompleted && FreeCountNoLock > 0)
                     return;
-                tcs = new TaskCompletionStruct<Unit>(_taskCreationOptions);
-                _pullHappened = tcs;
+                ts = TaskSource.New<Unit>(_taskCreationOptions);
+                _pullHappened = ts;
             }
 
-            await Task.WhenAny(tcs.Task, cancellationToken.ToTask(true)).ConfigureAwait(false);
+            await Task.WhenAny(ts.Task, cancellationToken.ToTask(true)).ConfigureAwait(false);
         }
 
         private async Task WaitForEnqueueAsync(CancellationToken cancellationToken = default)
         {
-            TaskCompletionStruct<Unit> tcs; 
+            TaskSource<Unit> ts; 
             lock (Lock) {
                 cancellationToken.ThrowIfCancellationRequested();
-                tcs = _putHappened;
-                if (tcs.Task.IsCompleted && (CountNoLock > 0 || IsPutCompleted))
+                ts = _putHappened;
+                if (ts.Task.IsCompleted && (CountNoLock > 0 || IsPutCompleted))
                     return;
-                tcs = new TaskCompletionStruct<Unit>(_taskCreationOptions);
-                _putHappened = tcs;
+                ts = TaskSource.New<Unit>(_taskCreationOptions);
+                _putHappened = ts;
             }
 
-            await Task.WhenAny(tcs.Task, cancellationToken.ToTask(true)).ConfigureAwait(false);
+            await Task.WhenAny(ts.Task, cancellationToken.ToTask(true)).ConfigureAwait(false);
         }
     }
 }

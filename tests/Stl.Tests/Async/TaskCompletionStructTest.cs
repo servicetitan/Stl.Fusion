@@ -16,30 +16,30 @@ namespace Stl.Tests.Async
         [Fact]
         public void BasicTest()
         {
-            var tcs = new TaskCompletionStruct<int>(TaskCreationOptions.None);
-            tcs.Task.IsCompleted.Should().BeFalse();
-            tcs.SetResult(1);
-            tcs.TrySetResult(2).Should().BeFalse();
-            tcs.Task.IsCompletedSuccessfully.Should().BeTrue();
-            tcs.Task.Result.Should().Be(1);
+            var ts = TaskSource.New<int>(TaskCreationOptions.None);
+            ts.Task.IsCompleted.Should().BeFalse();
+            ts.SetResult(1);
+            ts.TrySetResult(2).Should().BeFalse();
+            ts.Task.IsCompletedSuccessfully.Should().BeTrue();
+            ts.Task.Result.Should().Be(1);
 
-            tcs = new TaskCompletionStruct<int>(TaskCreationOptions.None);
-            tcs.Task.IsCompleted.Should().BeFalse();
+            ts = TaskSource.New<int>(TaskCreationOptions.None);
+            ts.Task.IsCompleted.Should().BeFalse();
             var e = new InvalidOperationException();
-            tcs.SetException(e);
-            tcs.TrySetException(new InvalidOperationException()).Should().BeFalse();
-            tcs.Task.IsCompleted.Should().BeTrue();
-            tcs.Task.IsFaulted.Should().BeTrue();
-            tcs.Task.Exception.Should().NotBeNull();
+            ts.SetException(e);
+            ts.TrySetException(new InvalidOperationException()).Should().BeFalse();
+            ts.Task.IsCompleted.Should().BeTrue();
+            ts.Task.IsFaulted.Should().BeTrue();
+            ts.Task.Exception.Should().NotBeNull();
 
-            tcs = new TaskCompletionStruct<int>(TaskCreationOptions.None);
-            tcs.Task.IsCompleted.Should().BeFalse();
+            ts = TaskSource.New<int>(TaskCreationOptions.None);
+            ts.Task.IsCompleted.Should().BeFalse();
             using var cts = new CancellationTokenSource(); 
-            tcs.SetCanceled();
-            tcs.TrySetCanceled(cts.Token).Should().BeFalse();
-            tcs.Task.IsCompleted.Should().BeTrue();
-            tcs.Task.IsFaulted.Should().BeFalse();
-            tcs.Task.IsCanceled.Should().BeTrue();
+            ts.SetCanceled();
+            ts.TrySetCanceled(cts.Token).Should().BeFalse();
+            ts.Task.IsCompleted.Should().BeTrue();
+            ts.Task.IsFaulted.Should().BeFalse();
+            ts.Task.IsCanceled.Should().BeTrue();
         }
     }
 }

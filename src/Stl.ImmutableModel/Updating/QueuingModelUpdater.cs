@@ -14,11 +14,11 @@ namespace Stl.ImmutableModel.Updating
         protected AsyncChannel<(
             Func<IModelIndex<TModel>, (IModelIndex<TModel> NewIndex, ModelChangeSet ChangeSet)> Updater,
             CancellationToken CancellationToken,
-            TaskCompletionSource<ModelUpdateInfo<TModel>> Result)> UpdateQueue { get; set; } = 
+            TaskSource<ModelUpdateInfo<TModel>> Result)> UpdateQueue { get; set; } = 
             new AsyncChannel<(
                 Func<IModelIndex<TModel>, (IModelIndex<TModel> NewIndex, ModelChangeSet ChangeSet)> Updater, 
                 CancellationToken CancellationToken,
-                TaskCompletionSource<ModelUpdateInfo<TModel>> Result)>(64);
+                TaskSource<ModelUpdateInfo<TModel>> Result)>(64);
         protected Task QueueProcessorTask { get; set; }
 
         [JsonConstructor]
@@ -62,7 +62,7 @@ namespace Stl.ImmutableModel.Updating
             Func<IModelIndex<TModel>, (IModelIndex<TModel> NewIndex, ModelChangeSet ChangeSet)> updater,
             CancellationToken cancellationToken = default)
         {
-            var result = new TaskCompletionSource<ModelUpdateInfo<TModel>>(
+            var result = TaskSource.New<ModelUpdateInfo<TModel>>(
                 TaskCreationOptions.RunContinuationsAsynchronously);
             await UpdateQueue
                 .PutAsync((updater, cancellationToken, result), cancellationToken)

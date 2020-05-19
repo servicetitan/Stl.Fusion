@@ -38,7 +38,7 @@ namespace Stl.Fusion.Bridge
     {
         protected readonly ReplicaInput Input;
         protected IComputedReplica<T> ComputedField = null!;
-        protected volatile Task<Unit>? UpdateRequestTcs;
+        protected volatile Task<Unit>? UpdateRequestCompleted;
         protected IReplicatorImpl ReplicatorImpl => (IReplicatorImpl) Replicator;
 
         public IReplicator Replicator { get; }
@@ -46,7 +46,7 @@ namespace Stl.Fusion.Bridge
         public Symbol PublicationId => Input.PublicationId;
         IComputedReplica IReplica.Computed => ComputedField;
         public IComputedReplica<T> Computed => ComputedField;
-        public bool IsUpdateRequested => UpdateRequestTcs != null;
+        public bool IsUpdateRequested => UpdateRequestCompleted != null;
 
         public Replica(
             IReplicator replicator, Symbol publisherId, Symbol publicationId, 
@@ -56,7 +56,7 @@ namespace Stl.Fusion.Bridge
             Input = new ReplicaInput(this, publisherId, publicationId);
             if (isUpdateRequested)
                 // ReSharper disable once VirtualMemberCallInConstructor
-                UpdateRequestTcs = CreateUpdateRequestTcs().Task;
+                UpdateRequestCompleted = CreateUpdateRequestCompletedSource().Task;
             // ReSharper disable once VirtualMemberCallInConstructor
             ChangeState(null, initialOutput, isConsistent);
         }
@@ -69,16 +69,17 @@ namespace Stl.Fusion.Bridge
             => RequestUpdateAsync(cancellationToken);
         public virtual Task RequestUpdateAsync(CancellationToken cancellationToken = default)
         {
-            var updateRequestTcs = UpdateRequestTcs;
-            if (updateRequestTcs == null) {
-                var newUpdateRequestTcs = CreateUpdateRequestTcs().Task;
-                updateRequestTcs = Interlocked.CompareExchange(ref UpdateRequestTcs, newUpdateRequestTcs, null!);
-                if (updateRequestTcs == null) {
-                    updateRequestTcs = newUpdateRequestTcs;
+            var updateRequestCompleted = UpdateRequestCompleted;
+            if (updateRequestCompleted == null) {
+                var newUpdateRequestCompleted = CreateUpdateRequestCompletedSource().Task;
+                updateRequestCompleted = Interlocked.CompareExchange(
+                    ref UpdateRequestCompleted, newUpdateRequestCompleted, null!);
+                if (updateRequestCompleted == null) {
+                    updateRequestCompleted = newUpdateRequestCompleted;
                     Input.ReplicatorImpl.TrySubscribe(this, true);
                 }
             }
-            return updateRequestTcs.WithFakeCancellation(cancellationToken);
+            return updateRequestCompleted.WithFakeCancellation(cancellationToken);
         }
 
         bool IReplicaImpl<T>.ChangeState(IComputedReplica<T>? expected, LTagged<Result<T>> output, bool isConsistent) 
@@ -100,15 +101,13 @@ namespace Stl.Fusion.Bridge
             => CompleteUpdateRequest();
         protected virtual void CompleteUpdateRequest()
         {
-            var updateRequestTcs = Interlocked.Exchange(ref UpdateRequestTcs, null);
-            if (updateRequestTcs != null) {
-                var tcs = new TaskCompletionStruct<Unit>(updateRequestTcs);
-                tcs.TrySetResult(default);
-            }
+            var updateRequestCompleted = Interlocked.Exchange(ref UpdateRequestCompleted, null);
+            if (updateRequestCompleted != null)
+                TaskSource.For(updateRequestCompleted).TrySetResult(default);
         }
 
-        protected virtual TaskCompletionStruct<Unit> CreateUpdateRequestTcs() 
-            => new TaskCompletionStruct<Unit>(TaskCreationOptions.None);
+        protected virtual TaskSource<Unit> CreateUpdateRequestCompletedSource() 
+            => TaskSource.New<Unit>(TaskCreationOptions.None);
 
         protected async Task<IComputed<T>> InvokeAsync(ReplicaInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)

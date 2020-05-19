@@ -2,8 +2,8 @@ using System;
 using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
+using Stl.Async;
 using Stl.ImmutableModel.Indexing;
-using Stl.Text;
 
 namespace Stl.ImmutableModel.Processing.Internal
 {
@@ -14,7 +14,7 @@ namespace Stl.ImmutableModel.Processing.Internal
         public NodeLink NodeLink { get; set; }
         public CancellationTokenSource NodeRemovedTokenSource { get; set; }
         public CancellationTokenSource ProcessStoppedOrNodeRemovedTokenSource { get; set; }
-        public TaskCompletionSource<Unit> CompletionSource { get; set; }
+        public TaskSource<Unit> CompletionSource { get; set; }
         public Exception? Error { get; set; }
         public bool IsStartedForAlreadyExistingNode { get; set; }
         public bool IsDormant { get; set; }
@@ -36,7 +36,7 @@ namespace Stl.ImmutableModel.Processing.Internal
             NodeRemovedTokenSource = new CancellationTokenSource();
             ProcessStoppedOrNodeRemovedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(
                 processor.StopToken, NodeRemovedTokenSource.Token);
-            CompletionSource = new TaskCompletionSource<Unit>(TaskCreationOptions.RunContinuationsAsynchronously);
+            CompletionSource = TaskSource.New<Unit>(TaskCreationOptions.RunContinuationsAsynchronously);
         }
 
         protected virtual void Dispose(bool disposing)

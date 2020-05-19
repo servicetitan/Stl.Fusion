@@ -7,52 +7,52 @@ namespace Stl.Async
 {
     public static class CancellationTokenEx
     {
-        // ToTaskCompletionStruct
+        // ToTaskSource
 
         // Note that this method won't release the token unless it's cancelled!
-        public static TaskCompletionStruct<T> ToTaskCompletionStruct<T>(this CancellationToken token, 
+        public static TaskSource<T> ToTaskSource<T>(this CancellationToken token, 
             bool throwIfCancelled,  
             TaskCreationOptions taskCreationOptions = default)
         {
-            var tcs = new TaskCompletionStruct<T>(taskCreationOptions);
+            var ts = TaskSource.New<T>(taskCreationOptions);
             if (throwIfCancelled)
                 token.Register(arg => {
-                    var tcs1 = (TaskCompletionStruct<T>) arg;
-                    tcs1.SetCanceled();
-                }, tcs);
+                    var ts1 = (TaskSource<T>) arg;
+                    ts1.SetCanceled();
+                }, ts);
             else
                 token.Register(arg => {
-                    var tcs1 = (TaskCompletionStruct<T>) arg;
+                    var tcs1 = (TaskSource<T>) arg;
                     tcs1.SetResult(default!);
-                }, tcs);
-            return tcs;
+                }, ts);
+            return ts;
         }
 
         // Note that this method won't release the token unless it's cancelled!
-        public static TaskCompletionStruct<T> ToTaskCompletionStruct<T>(this CancellationToken token, 
+        public static TaskSource<T> ToTaskSource<T>(this CancellationToken token, 
             T resultWhenCancelled,  
             TaskCreationOptions taskCreationOptions = default)
         {
             // ReSharper disable once HeapView.BoxingAllocation
-            var tcs = new TaskCompletionStruct<T>(resultWhenCancelled, taskCreationOptions);
+            var ts = TaskSource.New<T>(resultWhenCancelled, taskCreationOptions);
             token.Register(arg => {
-                var tcs1 = (TaskCompletionStruct<T>) arg;
-                tcs1.SetResult((T) tcs1.Task.AsyncState);
-            }, tcs);
-            return tcs;
+                var ts1 = (TaskSource<T>) arg;
+                ts1.SetResult((T) ts1.Task.AsyncState);
+            }, ts);
+            return ts;
         }
 
         // Note that this method won't release the token unless it's cancelled!
-        public static TaskCompletionStruct<T> ToTaskCompletionStruct<T>(this CancellationToken token, 
+        public static TaskSource<T> ToTaskSource<T>(this CancellationToken token, 
             Exception exceptionWhenCancelled,  
             TaskCreationOptions taskCreationOptions = default)
         {
-            var tcs = new TaskCompletionStruct<T>(exceptionWhenCancelled, taskCreationOptions);
+            var ts = TaskSource.New<T>(exceptionWhenCancelled, taskCreationOptions);
             token.Register(arg => {
-                var tcs1 = (TaskCompletionStruct<T>) arg;
-                tcs1.SetException((Exception) tcs1.Task.AsyncState);
-            }, tcs);
-            return tcs;
+                var ts1 = (TaskSource<T>) arg;
+                ts1.SetException((Exception) ts1.Task.AsyncState);
+            }, ts);
+            return ts;
         }
 
 

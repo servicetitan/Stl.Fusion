@@ -1,31 +1,48 @@
 using System;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Stl.Async
 {
-    public readonly struct TaskCompletionStruct<T> : IEquatable<TaskCompletionStruct<T>>
+    public static class TaskSource
+    {
+        public static TaskSource<T> For<T>(Task<T> task) 
+            => new TaskSource<T>(task); 
+        public static TaskSource<T> New<T>() 
+            => new TaskSource<T>(TaskSource<T>.CreateTask0()); 
+        public static TaskSource<T> New<T>(object? state, TaskCreationOptions taskCreationOptions) 
+            => new TaskSource<T>(TaskSource<T>.CreateTask2(state, taskCreationOptions)); 
+        public static TaskSource<T> New<T>(TaskCreationOptions taskCreationOptions) 
+            => new TaskSource<T>(TaskSource<T>.CreateTask2(null, taskCreationOptions)); 
+    }
+
+    public readonly struct TaskSource<T> : IEquatable<TaskSource<T>>
     {
         [ThreadStatic]
         private static volatile TaskCompletionSource<T>? _taskCompletionSource;
-        private static readonly Func<Task<T>> CreateTask0;
-        private static readonly Func<object?, TaskCreationOptions, Task<T>> CreateTask2;
-        private static readonly Action<TaskCompletionSource<T>, Task<T>> TcsSetTask;
+        internal static readonly Func<Task<T>> CreateTask0;
+        internal static readonly Func<object?, TaskCreationOptions, Task<T>> CreateTask2;
+        private static readonly Action<TaskCompletionSource<T>, Task<T>> SetTask;
 
-        public static TaskCompletionStruct<T> Empty => default;
+        public static TaskSource<T> Empty => default;
 
         public readonly Task<T> Task;
-        public bool IsValid => Task != null;
-        public bool IsEmpty => Task == null;
+        
+        public bool HasTask {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => Task != null;
+        }
 
-        public TaskCompletionStruct(Task<T> task) 
-            => Task = task;
-        public TaskCompletionStruct(object? state, TaskCreationOptions taskCreationOptions)
-            => Task = CreateTask2(state, taskCreationOptions);
-        public TaskCompletionStruct(TaskCreationOptions taskCreationOptions)
-            => Task = CreateTask2(null, taskCreationOptions);
+        public bool IsEmpty {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => Task == null;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal TaskSource(Task<T> task) => Task = task;
 
         // Private methods
         
@@ -38,28 +55,34 @@ namespace Stl.Async
                 if (oldTcs != null)
                     tcs = oldTcs;
             }
-            TcsSetTask.Invoke(tcs, task);
+            SetTask.Invoke(tcs, task);
             return tcs;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TrySetResult(T result) 
             => Wrap(Task).TrySetResult(result);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetResult(T result) 
             => Wrap(Task).SetResult(result);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TrySetException(Exception exception) 
             => Wrap(Task).TrySetException(exception);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetException(Exception exception) 
             => Wrap(Task).SetException(exception);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TrySetCanceled(CancellationToken cancellationToken = default) 
             => Wrap(Task).TrySetCanceled(cancellationToken);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetCanceled() 
             => Wrap(Task).SetCanceled();
 
         // Type initializer
 
-        static TaskCompletionStruct()
+        static TaskSource()
         {
             var tTcs = typeof(TaskCompletionSource<T>);
             var tTask = typeof(Task<T>);
@@ -90,21 +113,26 @@ namespace Stl.Async
                 exampleAssign.GetType(), 
                 privateCtorBindingFlags, null,
                 new object[] {Expression.Field(pTcs, fTask), pTask}, null);
-            TcsSetTask = Expression.Lambda<Action<TaskCompletionSource<T>, Task<T>>>(
+            SetTask = Expression.Lambda<Action<TaskCompletionSource<T>, Task<T>>>(
                 realAssign, pTcs, pTask).Compile();
         }
 
         // Equality
 
-        public bool Equals(TaskCompletionStruct<T> other) 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Equals(TaskSource<T> other) 
             => Task.Equals(other.Task);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override bool Equals(object? obj) 
-            => obj is TaskCompletionStruct<T> other && Equals(other);
+            => obj is TaskSource<T> other && Equals(other);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode() 
             => Task.GetHashCode();
-        public static bool operator ==(TaskCompletionStruct<T> left, TaskCompletionStruct<T> right) 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator ==(TaskSource<T> left, TaskSource<T> right) 
             => left.Equals(right);
-        public static bool operator !=(TaskCompletionStruct<T> left, TaskCompletionStruct<T> right) 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator !=(TaskSource<T> left, TaskSource<T> right) 
             => !left.Equals(right);
     }
 }

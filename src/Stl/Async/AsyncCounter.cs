@@ -6,7 +6,7 @@ namespace Stl.Async
 {
     public sealed class AsyncCounter : AsyncDisposableBase
     {
-        private TaskCompletionStruct<Unit> _zeroTcs = TaskCompletionStruct<Unit>.Empty; 
+        private TaskSource<Unit> _zeroSource = TaskSource<Unit>.Empty; 
         private readonly object _lock;
         private readonly TaskCreationOptions _taskCreationOptions;
         public int Count { get; private set; }
@@ -22,13 +22,13 @@ namespace Stl.Async
 
         public ValueTask WhenZeroAsync()
         {
-            TaskCompletionStruct<Unit> zeroTcs;
+            TaskSource<Unit> zeroSource;
             lock (_lock) {
-                zeroTcs = _zeroTcs;
+                zeroSource = _zeroSource;
             }
-            if (zeroTcs.IsEmpty)
+            if (zeroSource.IsEmpty)
                 return ValueTaskEx.CompletedTask;
-            return ((Task) zeroTcs.Task).ToValueTask();
+            return ((Task) zeroSource.Task).ToValueTask();
         }
 
         public void Increment()
@@ -38,22 +38,22 @@ namespace Stl.Async
                     throw Errors.AlreadyDisposedOrDisposing(DisposalState);
                 Count += 1;
                 if (Count == 1)
-                    _zeroTcs = new TaskCompletionStruct<Unit>(_taskCreationOptions);
+                    _zeroSource = TaskSource.New<Unit>(_taskCreationOptions);
             }
         }
 
         public void Decrement()
         {
-            TaskCompletionStruct<Unit> zeroTcs = default;
+            TaskSource<Unit> zeroSource = default;
             lock (_lock) {
                 Count -= 1;
                 if (Count == 0) {
-                    zeroTcs = _zeroTcs;
-                    _zeroTcs = default;
+                    zeroSource = _zeroSource;
+                    _zeroSource = default;
                 }
             }
-            if (zeroTcs.IsValid)
-                zeroTcs.SetResult(default);
+            if (zeroSource.HasTask)
+                zeroSource.SetResult(default);
         }
 
         public Disposable<AsyncCounter> Use()

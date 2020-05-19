@@ -51,7 +51,7 @@ namespace Stl.Plugins.Metadata
 
             object? tmpPlugin = null;
             try {
-                tmpPlugin = constructionInfo.PluginFactory!.Create(type);
+                tmpPlugin = constructionInfo.PluginFactory.Create(type);
             }
             catch (Exception) {
                 // There might be plugins we can't construct -- mainly,
@@ -66,7 +66,7 @@ namespace Stl.Plugins.Metadata
             if (tmpPlugin is IHasDependencies hd)
                 Dependencies = hd.Dependencies.Select(t => (TypeRef) t).ToImmutableHashSet();
             
-            var allAssemblyRefs = constructionInfo.AllAssemblyRefs![type.Assembly];
+            var allAssemblyRefs = constructionInfo.AllAssemblyRefs[type.Assembly];
             AllDependencies = constructionInfo.Plugins
                 .Where(p => p != type && (
                     allAssemblyRefs.Contains(p.Assembly) || 

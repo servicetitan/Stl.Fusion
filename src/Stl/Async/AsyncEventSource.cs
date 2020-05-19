@@ -27,8 +27,8 @@ namespace Stl.Async
         private class State
         {
             public readonly bool IsCompleted;
-            public readonly TaskCompletionSource<Option<TEvent>> FireTcs;
-            public readonly TaskCompletionSource<Unit> ReadyTcs;
+            public readonly TaskSource<Option<TEvent>> FireSource;
+            public readonly TaskSource<Unit> ReadySource;
             public volatile State? NextState;
             public volatile int ObserverCount;
 
@@ -37,16 +37,16 @@ namespace Stl.Async
                 TaskCreationOptions fireTaskCreationOptions, 
                 TaskCreationOptions readyTaskCreationOptions)
             {
-                FireTcs = new TaskCompletionSource<Option<TEvent>>(fireTaskCreationOptions);
-                ReadyTcs = new TaskCompletionSource<Unit>(readyTaskCreationOptions);
+                FireSource = TaskSource.New<Option<TEvent>>(fireTaskCreationOptions);
+                ReadySource = TaskSource.New<Unit>(readyTaskCreationOptions);
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public State(State previousState, bool complete)
             {
                 IsCompleted = previousState.IsCompleted | complete;
-                FireTcs = new TaskCompletionSource<Option<TEvent>>(previousState.FireTcs.Task.CreationOptions);
-                ReadyTcs = new TaskCompletionSource<Unit>(previousState.ReadyTcs.Task.CreationOptions);
+                FireSource = TaskSource.New<Option<TEvent>>(previousState.FireSource.Task.CreationOptions);
+                ReadySource = TaskSource.New<Unit>(previousState.ReadySource.Task.CreationOptions);
             } 
         }
 
@@ -104,29 +104,29 @@ namespace Stl.Async
         {
             // Please don't modify this code unless you fully understands how it works!
             var spinWait = new SpinWait();
-            var readyTcs = state.ReadyTcs;
+            var readySource = state.ReadySource;
             while (true) {
-                // Increment is to make sure no one will trigger readyTcs (except us)
+                // Increment is to make sure no one will trigger readySource (except us)
                 if (1 != Interlocked.Increment(ref state.ObserverCount)) {
                     // It wasn't zero, i.e. there were other subscribers
                     if (0 == Interlocked.Decrement(ref state.ObserverCount)) {
                         // We just decremented it to 0, so we have to complete it
-                        readyTcs.TrySetResult(default);
+                        readySource.TrySetResult(default);
                         return Task.CompletedTask;
                     }
                     // It wasn't 0 after the decrement, so someone else will
-                    // complete readyTcs for sure; we should return its task than.
-                    return readyTcs.Task;
+                    // complete readySource for sure; we should return its task than.
+                    return readySource.Task;
                 }
                 try {
                     // We know there were no other subscribers when we incremented it,
                     // which might mean that:
                     // 1) Either someone already signaled it
-                    if (readyTcs.Task.IsCompleted)
+                    if (readySource.Task.IsCompleted)
                         return Task.CompletedTask;
                     // 2) Or there were no subscribers at all
                     if (0 == Interlocked.CompareExchange(ref _observerCount, 0, 0)) {
-                        readyTcs.TrySetResult(default);
+                        readySource.TrySetResult(default);
                         return Task.CompletedTask;
                     }
                     // 3) Or there were subscribers, but either none of them got into
@@ -159,7 +159,7 @@ namespace Stl.Async
                 while (!state.IsCompleted) {
                     Interlocked.Increment(ref state.ObserverCount);
                     try {
-                        // Note that inside this block state.ReadyTcs state is stable:
+                        // Note that inside this block state.ReadySource state is stable:
                         // it is either completed or not, and no one else may complete
                         // it except us.
                         if (isFirst) {
@@ -167,14 +167,14 @@ namespace Stl.Async
                             // before incrementing state.ObserverCount (we can't do it
                             // differently :) ), there is a chance it was completed
                             // somewhere in between.
-                            if (state.ReadyTcs.Task.IsCompleted) {
+                            if (state.ReadySource.Task.IsCompleted) {
                                 // It was completed, so all we need to do is to switch
                                 // to the next state.
                                 continue;
                             }
                             isFirst = false;
                         }
-                        var eOption = await state.FireTcs
+                        var eOption = await state.FireSource
                             .WithCancellation(cancellationToken)
                             .ConfigureAwait(false);
                         if (!eOption.IsSome(out var e))
@@ -183,9 +183,9 @@ namespace Stl.Async
                     }
                     finally {
                         if (0 == Interlocked.Decrement(ref state.ObserverCount))
-                            state.ReadyTcs.TrySetResult(default);
+                            state.ReadySource.TrySetResult(default);
                         else
-                            await state.ReadyTcs
+                            await state.ReadySource
                                 .WithCancellation(cancellationToken)
                                 .ConfigureAwait(false);
                         state = state.NextState!;
@@ -207,7 +207,7 @@ namespace Stl.Async
                 var nextState = new State(state, !eventOpt.HasValue);
                 if (state == Interlocked.CompareExchange(ref _state, nextState, state)) {
                     Interlocked.Exchange(ref state.NextState, nextState);
-                    state.FireTcs.SetResult(eventOpt);
+                    state.FireSource.SetResult(eventOpt);
                     return state;
                 }
             }

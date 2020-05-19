@@ -15,14 +15,14 @@ namespace Stl.Async
 
     public abstract class AsyncDisposableBase : IAsyncDisposable, IDisposable
     {
-        private volatile Task<Unit>? _disposeTcs = null;
+        private volatile Task<Unit>? _disposeCompleted = null;
 
         public DisposalState DisposalState {
             get {
-                var disposeTcs = _disposeTcs;
-                if (disposeTcs == null)
+                var disposeCompleted = _disposeCompleted;
+                if (disposeCompleted == null)
                     return DisposalState.Active;
-                return disposeTcs.IsCompleted 
+                return disposeCompleted.IsCompleted 
                     ? DisposalState.Disposed 
                     : DisposalState.Disposing;
             }
@@ -48,15 +48,16 @@ namespace Stl.Async
             // call to complete only when the actual dispose completes,
             // not earlier.
 
-            var oldDisposeTcs = _disposeTcs;
-            if (oldDisposeTcs != null) {
-                await oldDisposeTcs.ConfigureAwait(false);
+            var oldDisposeCompleted = _disposeCompleted;
+            if (oldDisposeCompleted != null) {
+                await oldDisposeCompleted.ConfigureAwait(false);
                 return;
             }
-            var disposeTcs = new TaskCompletionStruct<Unit>(TaskCreationOptions.None);
-            oldDisposeTcs = Interlocked.CompareExchange(ref _disposeTcs, disposeTcs.Task, null); 
-            if (oldDisposeTcs != null) {
-                await oldDisposeTcs.ConfigureAwait(false);
+            var disposeCompletedSource = TaskSource.New<Unit>(TaskCreationOptions.None);
+            oldDisposeCompleted = Interlocked.CompareExchange(
+                ref _disposeCompleted, disposeCompletedSource.Task, null); 
+            if (oldDisposeCompleted != null) {
+                await oldDisposeCompleted.ConfigureAwait(false);
                 return;
             }
             try {
@@ -66,7 +67,7 @@ namespace Stl.Async
                 // DisposeAsync should never throw
             }
             finally {
-                disposeTcs.TrySetResult(default);
+                disposeCompletedSource.TrySetResult(default);
             }
         }
         

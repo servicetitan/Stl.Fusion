@@ -54,7 +54,7 @@ namespace Stl.Testing
             var timeoutToken = timeoutCts.Token;
             timeoutCts.CancelAfter(timeout.GetValueOrDefault());
 
-            var timeoutTask = timeoutToken.ToTaskCompletionSource(false).Task;
+            var timeoutTask = timeoutToken.ToTaskSource(false).Task;
             await Task.WhenAny(reader.Completion, timeoutTask).ConfigureAwait(false);
             reader.Completion.IsCompleted.Should().BeTrue();
         }

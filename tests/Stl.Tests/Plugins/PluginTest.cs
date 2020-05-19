@@ -90,9 +90,12 @@ namespace Stl.Tests.Plugins
             testPlugin2Caps.GetValueOrDefault("Server").Should().Be(false);
 
             // Dependencies extraction
-            var testPlugin1Deps = plugins.InfoByType[typeof(TestPlugin1)].AllDependencies;
+            var testPlugin1Deps = plugins.InfoByType[typeof(TestPlugin1)].Dependencies;
             testPlugin1Deps.Should().BeEquivalentTo((TypeRef) typeof(TestPlugin2));
-            var testPlugin2Deps = plugins.InfoByType[typeof(TestPlugin2)].AllDependencies;
+            var testPlugin1AllDeps = plugins.InfoByType[typeof(TestPlugin1)].AllDependencies;
+            testPlugin1AllDeps.Should().Contain((TypeRef) typeof(TestPlugin2));
+
+            var testPlugin2Deps = plugins.InfoByType[typeof(TestPlugin2)].Dependencies;
             testPlugin2Deps.Count.Should().Be(0);
 
             var host = new PluginHostBuilder()

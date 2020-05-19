@@ -31,8 +31,8 @@ namespace Stl.Fusion.Bridge
 
     public class PublicationState<T> : IPublicationStateImpl<T>
     {
-        protected readonly TaskCompletionStruct<object?> InvalidatedTcs;
-        protected readonly TaskCompletionStruct<Unit> OutdatedTcs;
+        protected readonly TaskSource<object?> InvalidatedSource;
+        protected readonly TaskSource<Unit> OutdatedSource;
 
         IPublication IPublicationState.Publication => Publication;
         public IPublication<T> Publication { get; }
@@ -42,30 +42,30 @@ namespace Stl.Fusion.Bridge
         public IntMoment CreatedAt { get; }
 
         public PublicationState(IPublication<T> publication, IComputed<T> computed, bool isDisposed,
-            TaskCompletionStruct<object?> invalidatedTcs = default,
-            TaskCompletionStruct<Unit> outdatedTcs = default)
+            TaskSource<object?> invalidatedSource = default,
+            TaskSource<Unit> outdatedSource = default)
         {
-            if (invalidatedTcs.IsEmpty)
-                invalidatedTcs = new TaskCompletionStruct<object?>(TaskCreationOptions.RunContinuationsAsynchronously);
-            if (outdatedTcs.IsEmpty)
-                outdatedTcs = new TaskCompletionStruct<Unit>(TaskCreationOptions.RunContinuationsAsynchronously);
+            if (invalidatedSource.IsEmpty)
+                invalidatedSource = TaskSource.New<object?>(TaskCreationOptions.RunContinuationsAsynchronously);
+            if (outdatedSource.IsEmpty)
+                outdatedSource = TaskSource.New<Unit>(TaskCreationOptions.RunContinuationsAsynchronously);
             Publication = publication;
             CreatedAt = IntMoment.Now;
             IsDisposed = isDisposed;
-            InvalidatedTcs = invalidatedTcs;
-            OutdatedTcs = outdatedTcs;
+            InvalidatedSource = invalidatedSource;
+            OutdatedSource = outdatedSource;
             Computed = computed;
-            computed.Invalidated += (_, invalidatedBy) => InvalidatedTcs.TrySetResult(invalidatedBy);  
+            computed.Invalidated += (_, invalidatedBy) => InvalidatedSource.TrySetResult(invalidatedBy);  
         }
 
-        public Task<object?> InvalidatedAsync() => InvalidatedTcs.Task;
-        public Task OutdatedAsync() => OutdatedTcs.Task;
+        public Task<object?> InvalidatedAsync() => InvalidatedSource.Task;
+        public Task OutdatedAsync() => OutdatedSource.Task;
 
         bool IPublicationStateImpl.TryMarkOutdated()
         {
-            if (!OutdatedTcs.TrySetResult(default))
+            if (!OutdatedSource.TrySetResult(default))
                 return false;
-            InvalidatedTcs.TrySetCanceled();
+            InvalidatedSource.TrySetCanceled();
             return true;
         }
     }
