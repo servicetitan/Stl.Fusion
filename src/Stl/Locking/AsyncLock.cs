@@ -32,7 +32,7 @@ namespace Stl.Locking
 
         async ValueTask<IDisposable> IAsyncLock.LockAsync(CancellationToken cancellationToken) 
             => await LockAsync(cancellationToken).ConfigureAwait(false);
-        public ValueTask<Disposable<(AsyncLock, TaskCompletionSource<Unit>?, ReentryCounter?)>> LockAsync(
+        public ValueTask<Disposable<(AsyncLock, TaskCompletionStruct<Unit>, ReentryCounter?)>> LockAsync(
             CancellationToken cancellationToken = default)
         {
             // This has to be done in non-async method, otherwise the Value
@@ -43,15 +43,15 @@ namespace Stl.Locking
             return InternalLockAsync(reentryCounter, cancellationToken);
         }
 
-        protected async ValueTask<Disposable<(AsyncLock, TaskCompletionSource<Unit>?, ReentryCounter?)>> InternalLockAsync(
+        protected async ValueTask<Disposable<(AsyncLock, TaskCompletionStruct<Unit>, ReentryCounter?)>> InternalLockAsync(
             ReentryCounter? reentryCounter, CancellationToken cancellationToken = default)
         {
-            var newLockTcs = new TaskCompletionSource<Unit>(_taskCreationOptions);
+            var newLockTcs = new TaskCompletionStruct<Unit>(_taskCreationOptions);
             var cancellationTask = (Task?) null;
             while (true) {
                 cancellationToken.ThrowIfCancellationRequested();
                 if (reentryCounter?.TryReenter(ReentryMode) == true)
-                    return CreateUnlocker(null, reentryCounter);
+                    return CreateUnlocker(default, reentryCounter);
                 var oldLock = Interlocked.CompareExchange(ref _lock, newLockTcs.Task, null);
                 if (oldLock == null)
                     return CreateUnlocker(newLockTcs, reentryCounter);
@@ -62,10 +62,10 @@ namespace Stl.Locking
             }
         }
 
-        protected Disposable<(AsyncLock, TaskCompletionSource<Unit>?, ReentryCounter?)> CreateUnlocker(
-            TaskCompletionSource<Unit>? lockTcs, ReentryCounter? reentryCounter)
+        protected Disposable<(AsyncLock, TaskCompletionStruct<Unit>, ReentryCounter?)> CreateUnlocker(
+            TaskCompletionStruct<Unit> lockTcs, ReentryCounter? reentryCounter)
         {
-            if (lockTcs != null)
+            if (lockTcs.IsValid)
                 reentryCounter?.Enter(ReentryMode);
 
             // ReSharper disable once HeapView.BoxingAllocation
@@ -75,7 +75,7 @@ namespace Stl.Locking
                 // locks from the same async flow to re-enter w/o actually acquiring
                 // a lock, i.e. they'll be forced to acquire their own locks.
                 reentryCounter1?.Leave(); 
-                if (lockTcs1 == null)
+                if (lockTcs1.IsEmpty)
                     return;
 
                 var lock1 = lockTcs1.Task;

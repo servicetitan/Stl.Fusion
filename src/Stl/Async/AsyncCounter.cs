@@ -6,7 +6,7 @@ namespace Stl.Async
 {
     public sealed class AsyncCounter : AsyncDisposableBase
     {
-        private TaskCompletionSource<Unit>? _zeroTcs = null; 
+        private TaskCompletionStruct<Unit> _zeroTcs = TaskCompletionStruct<Unit>.Empty; 
         private readonly object _lock;
         private readonly TaskCreationOptions _taskCreationOptions;
         public int Count { get; private set; }
@@ -22,11 +22,13 @@ namespace Stl.Async
 
         public ValueTask WhenZeroAsync()
         {
-            var zeroTcs = (TaskCompletionSource<Unit>?) null;
+            TaskCompletionStruct<Unit> zeroTcs;
             lock (_lock) {
                 zeroTcs = _zeroTcs;
             }
-            return ((Task?) zeroTcs?.Task)?.ToValueTask() ?? ValueTaskEx.CompletedTask;
+            if (zeroTcs.IsEmpty)
+                return ValueTaskEx.CompletedTask;
+            return ((Task) zeroTcs.Task).ToValueTask();
         }
 
         public void Increment()
@@ -36,21 +38,22 @@ namespace Stl.Async
                     throw Errors.AlreadyDisposedOrDisposing(DisposalState);
                 Count += 1;
                 if (Count == 1)
-                    _zeroTcs = new TaskCompletionSource<Unit>(_taskCreationOptions);
+                    _zeroTcs = new TaskCompletionStruct<Unit>(_taskCreationOptions);
             }
         }
 
         public void Decrement()
         {
-            var zeroTcs = (TaskCompletionSource<Unit>?) null;
+            TaskCompletionStruct<Unit> zeroTcs = default;
             lock (_lock) {
                 Count -= 1;
                 if (Count == 0) {
                     zeroTcs = _zeroTcs;
-                    _zeroTcs = null;
+                    _zeroTcs = default;
                 }
             }
-            zeroTcs?.SetResult(default);
+            if (zeroTcs.IsValid)
+                zeroTcs.SetResult(default);
         }
 
         public Disposable<AsyncCounter> Use()

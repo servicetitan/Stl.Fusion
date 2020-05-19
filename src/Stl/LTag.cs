@@ -51,7 +51,7 @@ namespace Stl
             if (!MathEx.TryParse(formattedLTag.AsSpan().Slice(1), Base62Digits, out var value)) 
                 return false;
             lTag = new LTag(value);
-            return false;
+            return true;
         }
 
         // Equality

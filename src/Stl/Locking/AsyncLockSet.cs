@@ -17,7 +17,7 @@ namespace Stl.Locking
         public static int DefaultConcurrencyLevel => HardwareInfo.ProcessorCount;
         public static readonly int DefaultCapacity = 509;
 
-        private readonly ConcurrentDictionary<TKey, TaskCompletionSource<Unit>> _locks;
+        private readonly ConcurrentDictionary<TKey, TaskCompletionStruct<Unit>> _locks;
         private readonly AsyncLocal<Dictionary<TKey, int>>? _localLocks;
         private readonly TaskCreationOptions _taskCreationOptions;
 
@@ -39,7 +39,7 @@ namespace Stl.Locking
         {
             ReentryMode = reentryMode;
             _taskCreationOptions = taskCreationOptions;
-            _locks = new ConcurrentDictionary<TKey, TaskCompletionSource<Unit>>(concurrencyLevel, capacity);
+            _locks = new ConcurrentDictionary<TKey, TaskCompletionStruct<Unit>>(concurrencyLevel, capacity);
             _localLocks = ReentryMode != ReentryMode.UncheckedDeadlock
                 ? new AsyncLocal<Dictionary<TKey, int>>()
                 : null;
@@ -71,7 +71,7 @@ namespace Stl.Locking
         private async ValueTask<IDisposable> InternalLockAsync(
             TKey key, Dictionary<TKey, int>? localLocks, CancellationToken cancellationToken = default)
         {
-            var myLock = new TaskCompletionSource<Unit>(_taskCreationOptions);
+            var myLock = new TaskCompletionStruct<Unit>(_taskCreationOptions);
             var cancellationTask = (Task?) null;
             while (true) {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -94,7 +94,7 @@ namespace Stl.Locking
         }
 
         protected IDisposable CreateDisposable(TKey key, 
-            TaskCompletionSource<Unit> myLock, Dictionary<TKey, int> localLocks)
+            TaskCompletionStruct<Unit> myLock, Dictionary<TKey, int> localLocks)
         {
             if (localLocks != null) {
                 var reentryCount = localLocks.GetValueOrDefault(key) + 1;

@@ -15,14 +15,14 @@ namespace Stl.Async
 
     public abstract class AsyncDisposableBase : IAsyncDisposable, IDisposable
     {
-        private volatile TaskCompletionSource<Unit>? _disposeTcs = null;
+        private volatile Task<Unit>? _disposeTcs = null;
 
         public DisposalState DisposalState {
             get {
                 var disposeTcs = _disposeTcs;
                 if (disposeTcs == null)
                     return DisposalState.Active;
-                return disposeTcs.Task.IsCompleted 
+                return disposeTcs.IsCompleted 
                     ? DisposalState.Disposed 
                     : DisposalState.Disposing;
             }
@@ -50,13 +50,13 @@ namespace Stl.Async
 
             var oldDisposeTcs = _disposeTcs;
             if (oldDisposeTcs != null) {
-                await oldDisposeTcs.Task.ConfigureAwait(false);
+                await oldDisposeTcs.ConfigureAwait(false);
                 return;
             }
-            var disposeTcs = new TaskCompletionSource<Unit>();
-            oldDisposeTcs = Interlocked.CompareExchange(ref _disposeTcs, disposeTcs, null); 
+            var disposeTcs = new TaskCompletionStruct<Unit>(TaskCreationOptions.None);
+            oldDisposeTcs = Interlocked.CompareExchange(ref _disposeTcs, disposeTcs.Task, null); 
             if (oldDisposeTcs != null) {
-                await oldDisposeTcs.Task.ConfigureAwait(false);
+                await oldDisposeTcs.ConfigureAwait(false);
                 return;
             }
             try {

@@ -7,6 +7,57 @@ namespace Stl.Async
 {
     public static class CancellationTokenEx
     {
+        // ToTaskCompletionStruct
+
+        // Note that this method won't release the token unless it's cancelled!
+        public static TaskCompletionStruct<T> ToTaskCompletionStruct<T>(this CancellationToken token, 
+            bool throwIfCancelled,  
+            TaskCreationOptions taskCreationOptions = default)
+        {
+            var tcs = new TaskCompletionStruct<T>(taskCreationOptions);
+            if (throwIfCancelled)
+                token.Register(arg => {
+                    var tcs1 = (TaskCompletionStruct<T>) arg;
+                    tcs1.SetCanceled();
+                }, tcs);
+            else
+                token.Register(arg => {
+                    var tcs1 = (TaskCompletionStruct<T>) arg;
+                    tcs1.SetResult(default!);
+                }, tcs);
+            return tcs;
+        }
+
+        // Note that this method won't release the token unless it's cancelled!
+        public static TaskCompletionStruct<T> ToTaskCompletionStruct<T>(this CancellationToken token, 
+            T resultWhenCancelled,  
+            TaskCreationOptions taskCreationOptions = default)
+        {
+            // ReSharper disable once HeapView.BoxingAllocation
+            var tcs = new TaskCompletionStruct<T>(resultWhenCancelled, taskCreationOptions);
+            token.Register(arg => {
+                var tcs1 = (TaskCompletionStruct<T>) arg;
+                tcs1.SetResult((T) tcs1.Task.AsyncState);
+            }, tcs);
+            return tcs;
+        }
+
+        // Note that this method won't release the token unless it's cancelled!
+        public static TaskCompletionStruct<T> ToTaskCompletionStruct<T>(this CancellationToken token, 
+            Exception exceptionWhenCancelled,  
+            TaskCreationOptions taskCreationOptions = default)
+        {
+            var tcs = new TaskCompletionStruct<T>(exceptionWhenCancelled, taskCreationOptions);
+            token.Register(arg => {
+                var tcs1 = (TaskCompletionStruct<T>) arg;
+                tcs1.SetException((Exception) tcs1.Task.AsyncState);
+            }, tcs);
+            return tcs;
+        }
+
+
+        // ToTaskCompletionSource
+
         // Note that this method won't release the token unless it's cancelled!
         public static TaskCompletionSource<T> ToTaskCompletionSource<T>(this CancellationToken token, 
             bool throwIfCancelled,  
@@ -52,6 +103,9 @@ namespace Stl.Async
             }, tcs);
             return tcs;
         }
+
+
+        // ToTask
 
         // Note that this method won't release the token unless it's cancelled!
         public static Task<T> ToTask<T>(this CancellationToken token, bool throwIfCancelled, 

@@ -1,5 +1,6 @@
 using System.Reactive;
 using System.Threading.Tasks;
+using Stl.Async;
 using Stl.Time;
 
 namespace Stl.Fusion.Bridge
@@ -30,8 +31,8 @@ namespace Stl.Fusion.Bridge
 
     public class PublicationState<T> : IPublicationStateImpl<T>
     {
-        protected readonly TaskCompletionSource<object?> InvalidatedTcs;
-        protected readonly TaskCompletionSource<Unit> OutdatedTcs;
+        protected readonly TaskCompletionStruct<object?> InvalidatedTcs;
+        protected readonly TaskCompletionStruct<Unit> OutdatedTcs;
 
         IPublication IPublicationState.Publication => Publication;
         public IPublication<T> Publication { get; }
@@ -41,11 +42,13 @@ namespace Stl.Fusion.Bridge
         public IntMoment CreatedAt { get; }
 
         public PublicationState(IPublication<T> publication, IComputed<T> computed, bool isDisposed,
-            TaskCompletionSource<object?>? invalidatedTcs = null,
-            TaskCompletionSource<Unit>? outdatedTcs = null)
+            TaskCompletionStruct<object?> invalidatedTcs = default,
+            TaskCompletionStruct<Unit> outdatedTcs = default)
         {
-            invalidatedTcs ??= new TaskCompletionSource<object?>(TaskCreationOptions.RunContinuationsAsynchronously);
-            outdatedTcs ??= new TaskCompletionSource<Unit>(TaskCreationOptions.RunContinuationsAsynchronously);
+            if (invalidatedTcs.IsEmpty)
+                invalidatedTcs = new TaskCompletionStruct<object?>(TaskCreationOptions.RunContinuationsAsynchronously);
+            if (outdatedTcs.IsEmpty)
+                outdatedTcs = new TaskCompletionStruct<Unit>(TaskCreationOptions.RunContinuationsAsynchronously);
             Publication = publication;
             CreatedAt = IntMoment.Now;
             IsDisposed = isDisposed;

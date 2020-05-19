@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using FluentAssertions;
 using Stl.Async;
 using Stl.Testing;
@@ -15,14 +16,14 @@ namespace Stl.Tests.Async
         [Fact]
         public void BasicTest()
         {
-            var tcs = TaskCompletionStruct<int>.New();
+            var tcs = new TaskCompletionStruct<int>(TaskCreationOptions.None);
             tcs.Task.IsCompleted.Should().BeFalse();
             tcs.SetResult(1);
             tcs.TrySetResult(2).Should().BeFalse();
             tcs.Task.IsCompletedSuccessfully.Should().BeTrue();
             tcs.Task.Result.Should().Be(1);
 
-            tcs = TaskCompletionStruct<int>.New();
+            tcs = new TaskCompletionStruct<int>(TaskCreationOptions.None);
             tcs.Task.IsCompleted.Should().BeFalse();
             var e = new InvalidOperationException();
             tcs.SetException(e);
@@ -31,11 +32,11 @@ namespace Stl.Tests.Async
             tcs.Task.IsFaulted.Should().BeTrue();
             tcs.Task.Exception.Should().NotBeNull();
 
-            tcs = TaskCompletionStruct<int>.New();
+            tcs = new TaskCompletionStruct<int>(TaskCreationOptions.None);
             tcs.Task.IsCompleted.Should().BeFalse();
             using var cts = new CancellationTokenSource(); 
-            tcs.SetCancelled();
-            tcs.TrySetCancelled(cts.Token).Should().BeFalse();
+            tcs.SetCanceled();
+            tcs.TrySetCanceled(cts.Token).Should().BeFalse();
             tcs.Task.IsCompleted.Should().BeTrue();
             tcs.Task.IsFaulted.Should().BeFalse();
             tcs.Task.IsCanceled.Should().BeTrue();
