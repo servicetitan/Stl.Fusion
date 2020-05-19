@@ -7,14 +7,17 @@ using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
 using Stl.Internal;
+using Stl.OS;
 
 namespace Stl.Locking
 {
     public class AsyncLockSet<TKey> : IAsyncLockSet<TKey>
         where TKey : notnull
     {
-        private readonly ConcurrentDictionary<TKey, TaskCompletionSource<Unit>> _locks =
-            new ConcurrentDictionary<TKey, TaskCompletionSource<Unit>>();
+        public static int DefaultConcurrencyLevel => HardwareInfo.ProcessorCount;
+        public static readonly int DefaultCapacity = 509;
+
+        private readonly ConcurrentDictionary<TKey, TaskCompletionSource<Unit>> _locks;
         private readonly AsyncLocal<Dictionary<TKey, int>>? _localLocks;
         private readonly TaskCreationOptions _taskCreationOptions;
 
@@ -24,11 +27,19 @@ namespace Stl.Locking
         public AsyncLockSet(
             TaskCreationOptions taskCreationOptions = TaskCreationOptions.RunContinuationsAsynchronously) 
             : this(ReentryMode.CheckedFail, taskCreationOptions) { }
-        public AsyncLockSet(ReentryMode reentryMode, 
-            TaskCreationOptions taskCreationOptions = TaskCreationOptions.RunContinuationsAsynchronously)
+        public AsyncLockSet(
+            ReentryMode reentryMode,
+            TaskCreationOptions taskCreationOptions = TaskCreationOptions.RunContinuationsAsynchronously) 
+            : this(ReentryMode.CheckedFail, taskCreationOptions, DefaultConcurrencyLevel, DefaultCapacity) { }
+
+        public AsyncLockSet(
+            ReentryMode reentryMode,
+            TaskCreationOptions taskCreationOptions,
+            int concurrencyLevel, int capacity)
         {
             ReentryMode = reentryMode;
             _taskCreationOptions = taskCreationOptions;
+            _locks = new ConcurrentDictionary<TKey, TaskCompletionSource<Unit>>(concurrencyLevel, capacity);
             _localLocks = ReentryMode != ReentryMode.UncheckedDeadlock
                 ? new AsyncLocal<Dictionary<TKey, int>>()
                 : null;

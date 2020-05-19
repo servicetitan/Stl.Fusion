@@ -28,7 +28,7 @@ namespace Stl.Fusion.Bridge.Internal
             SubscribeMessage = subscribeMessage;
             ReplicaLTag = subscribeMessage.ReplicaLTag;
             ReplicaIsConsistent = subscribeMessage.ReplicaIsConsistent;
-            AsyncLock = new AsyncLock(ReentryMode.CheckedFail, TaskCreationOptions.None);
+            AsyncLock = new AsyncLock(ReentryMode.CheckedPass, TaskCreationOptions.None);
         }
 
         public abstract ValueTask OnMessageAsync(ReplicaMessage message, CancellationToken cancellationToken);
