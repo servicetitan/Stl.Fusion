@@ -43,9 +43,9 @@ ProjectSection(SolutionItems) = preProject
 	samples\Directory.Build.props = samples\Directory.Build.props
 EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Samples.Blazor", "C:\ServiceTitan\Stl\samples\Stl.Samples.Blazor\Stl.Samples.Blazor.csproj", "{E6AE3956-2754-4E6A-9B09-295C1B9F5826}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Samples.Blazor", "samples\Stl.Samples.Blazor\Stl.Samples.Blazor.csproj", "{E6AE3956-2754-4E6A-9B09-295C1B9F5826}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Testing", "C:\ServiceTitan\Stl\src\Stl.Testing\Stl.Testing.csproj", "{DFAB3D1D-6301-4A01-958B-8C0F58D672B4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Testing", "src\Stl.Testing\Stl.Testing.csproj", "{DFAB3D1D-6301-4A01-958B-8C0F58D672B4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
