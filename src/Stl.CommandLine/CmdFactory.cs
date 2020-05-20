@@ -30,7 +30,7 @@ namespace Stl.CommandLine
             IServiceProvider services, 
             ILogger<CmdFactoryBase>? log = null)
         {
-            _log = log ?? NullLogger<CmdFactoryBase>.Instance;
+            _log = log ??= NullLogger<CmdFactoryBase>.Instance;
             Services = services;
             _lazyCommands = new Lazy<ImmutableList<CmdDescriptor>>(() => {
                 var commands = new List<CmdDescriptor>();

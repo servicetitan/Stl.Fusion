@@ -119,7 +119,7 @@ namespace Stl.Security
 
     public class RandomSymbolGenerator : RandomStringGenerator, IGenerator<Symbol>
     {
-        public static readonly RandomSymbolGenerator Default = new RandomSymbolGenerator();
+        public new static readonly RandomSymbolGenerator Default = new RandomSymbolGenerator();
 
         public string Prefix { get; }
 

@@ -46,7 +46,7 @@ namespace Stl.Fusion.Server
             var webSocket = await context.WebSockets.AcceptWebSocketAsync();
             await using var wsChannel = new WebSocketChannel(webSocket);
             var channel = wsChannel
-                .WithSerializer(new JsonNetSerializer<Message>())
+                .WithSerializer(new SafeJsonNetSerializer<Message>())
                 .WithId(clientId);
             Publisher.ChannelHub.Attach(channel);
             await wsChannel.ReaderTask.ConfigureAwait(false);

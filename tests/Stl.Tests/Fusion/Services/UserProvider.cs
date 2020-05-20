@@ -35,7 +35,7 @@ namespace Stl.Tests.Fusion.Services
             ITestDbContextPool dbContextPool,
             ILogger<UserProvider>? log = null)
         {
-            _log = log ?? NullLogger<UserProvider>.Instance;
+            _log = log ??= NullLogger<UserProvider>.Instance;
             DbContextPool = dbContextPool;
             IsCaching = GetType().Name.EndsWith("Proxy");
         }

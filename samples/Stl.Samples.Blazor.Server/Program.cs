@@ -9,6 +9,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using Stl.Fusion;
+using Stl.Fusion.Bridge;
 using Stl.Fusion.Server;
 using Stl.IO;
 using Stl.Samples.Blazor.Common.Services;
@@ -34,6 +35,7 @@ namespace Stl.Samples.Blazor.Server
                         logging.SetMinimumLevel(LogLevel.Information);
                         logging.AddDebug();
                     });
+                    services.AddSingleton(new Publisher.Options() { Id = Settings.PublisherId });
                     services.AddFusion();
                     services.AddFusionWebSocketServer();
                     services.AddComputedProvider<ITimeProvider, TimeProvider>();

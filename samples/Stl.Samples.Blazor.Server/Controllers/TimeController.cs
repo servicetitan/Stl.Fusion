@@ -26,7 +26,7 @@ namespace Stl.Samples.Blazor.Server.Controllers
         public async Task<ActionResult<PublicationPublishedMessage>> GetTime()
         {
             var publication = await Computed
-                .PublishAsync(Publisher, () => TimeProvider.GetTimeAsync())
+                .PublishAsync(Publisher, () => TimeProvider.GetTimeAsync(2000))
                 .ConfigureAwait(false);
 
             return new PublicationPublishedMessage() {

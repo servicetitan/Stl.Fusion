@@ -25,6 +25,7 @@ namespace Stl.Fusion.Client
             private Uri? _connectionUri;
 
             public Symbol Id { get; set; } = NewId();
+            public Symbol PublisherId { get; set; } = Symbol.Empty;
             public Uri BaseUri { get; set; } = new Uri("http://localhost:5000/");
             public string RequestPath { get; set; } = "/ws";
             public string ClientIdQueryParameterName { get; set; } = "clientId";
@@ -58,6 +59,7 @@ namespace Stl.Fusion.Client
         private readonly ILogger<WebSocketClient> _log;
 
         public Symbol Id { get; }
+        public Symbol PublisherId { get; set; }
         public Uri ConnectionUri { get; } 
         public TimeSpan ReconnectDelay { get; }
         protected IReplicator Replicator { get; }
@@ -68,11 +70,14 @@ namespace Stl.Fusion.Client
             TimeSpan? reconnectDelay = null,
             ILogger<WebSocketClient>? log = null)
         {
+            _log = log ??= NullLogger<WebSocketClient>.Instance;
             reconnectDelay ??= TimeSpan.FromSeconds(5);
-            log ??= NullLogger<WebSocketClient>.Instance;
 
-            _log = log;
+            if (string.IsNullOrEmpty(options.PublisherId))
+                throw new ArgumentException(nameof(options) + "." + nameof(PublisherId));
+
             Id = options.Id;
+            PublisherId = options.PublisherId;
             ConnectionUri = options.ConnectionUri;
             ReconnectDelay = options.ReconnectDelay;
             Replicator = replicator;
@@ -89,9 +94,9 @@ namespace Stl.Fusion.Client
                     
                     await using var wsChannel = new WebSocketChannel(ws);
                     var channel = wsChannel
-                        .WithLogger(Id.ToString(), _log, LogLevel.Information)
-                        .WithSerializer(new JsonNetSerializer<Message>())
-                        .WithId(Symbol.Empty);
+                        .WithLogger(Id.Value, _log, LogLevel.Information)
+                        .WithSerializer(new SafeJsonNetSerializer<Message>())
+                        .WithId(PublisherId);
                     Replicator.ChannelHub.Attach(channel);
                     
                     await channel.Reader.Completion
@@ -103,7 +108,7 @@ namespace Stl.Fusion.Client
                     throw;
                 }
                 catch (Exception e) {
-                    _log.LogError($"{Id}: error.", e);
+                    _log.LogError($"{Id}: error: {e.GetType().Name}(\"{e.Message}\").", e);
                     await Task.Delay(ReconnectDelay, cancellationToken).ConfigureAwait(false);
                 }
             }

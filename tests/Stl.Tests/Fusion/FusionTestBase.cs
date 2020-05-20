@@ -136,6 +136,7 @@ namespace Stl.Tests.Fusion
             // Bridge
             services.AddSingleton(c => new TestWebServer(c.GetRequiredService<IPublisher>()));
             services.AddFusionWebSocketClient((c, o) => {
+                o.PublisherId = c.GetRequiredService<IPublisher>().Id;
                 o.BaseUri = c.GetRequiredService<TestWebServer>().BaseUri;
             });
         }

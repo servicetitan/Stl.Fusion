@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
@@ -7,8 +8,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Stl.Fusion;
+using Stl.Fusion.Bridge.Messages;
 using Stl.Fusion.Client;
 using Stl.OS;
+using Stl.Reflection;
 using Stl.Samples.Blazor.Common.Services;
 
 namespace Stl.Samples.Blazor
@@ -43,7 +46,10 @@ namespace Stl.Samples.Blazor
 
             services.AddLogging(logging => logging.AddDebug());
             services.AddFusion();
-            services.AddFusionWebSocketClient((c, o) => { o.BaseUri = baseUri; });
+            services.AddFusionWebSocketClient((c, o) => {
+                o.BaseUri = baseUri;
+                o.PublisherId = Settings.PublisherId;
+            });
             services.AddTransient(c => new HttpClient { BaseAddress = baseUri });
         }
     }

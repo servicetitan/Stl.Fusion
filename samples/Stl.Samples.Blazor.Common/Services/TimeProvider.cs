@@ -9,6 +9,7 @@ namespace Stl.Samples.Blazor.Common.Services
     public interface ITimeProvider
     {
         Task<DateTime> GetTimeAsync();
+        Task<DateTime> GetTimeAsync(int invalidateIn);
     }
 
     public class TimeProvider : ITimeProvider
@@ -18,7 +19,7 @@ namespace Stl.Samples.Blazor.Common.Services
 
         public TimeProvider(ILogger<TimeProvider>? log = null)
         {
-            _log = log ?? NullLogger<TimeProvider>.Instance;
+            _log = log ??= NullLogger<TimeProvider>.Instance;
             IsCaching = GetType().Name.EndsWith("Proxy");
         }
 
@@ -37,6 +38,19 @@ namespace Stl.Samples.Blazor.Common.Services
             var cResult = Computed.GetCurrent();
             Task.Run(async () => {
                 await Task.Delay(250).ConfigureAwait(false);
+                cResult!.Invalidate();
+            });
+            return Task.FromResult(GetTime());
+        }
+
+        public virtual Task<DateTime> GetTimeAsync(int invalidateIn)
+        {
+            if (!IsCaching)
+                return Task.FromResult(GetTime());
+            
+            var cResult = Computed.GetCurrent();
+            Task.Run(async () => {
+                await Task.Delay(invalidateIn).ConfigureAwait(false);
                 cResult!.Invalidate();
             });
             return Task.FromResult(GetTime());

@@ -23,7 +23,8 @@
         await TimeReplica.RequestUpdateAsync();
         Log.LogInformation($"Replica updated.");
         TimeReplica.Computed.AutoUpdate((c, o, _) => {
-            Log.LogInformation("Replica updated (post-invalidation).");
+            Log.LogInformation($"Replica updated: {c.Output}.");
+            StateHasChanged();
         });
     }
 
