@@ -26,6 +26,7 @@
     <PackageReference Update="Microsoft.AspNetCore.Components.WebAssembly" Version="$(BlazorVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.Components.WebAssembly.Build" Version="$(BlazorVersion)" PrivateAssets="all" />
     <PackageReference Update="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="$(BlazorVersion)" PrivateAssets="all" />
+    <PackageReference Update="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.4" />
     <PackageReference Update="Microsoft.Data.SqlClient" Version="1.1.2" />
     <PackageReference Update="Microsoft.Extensions.Caching.Abstractions" Version="$(AspNetCoreVersion)" />
     <PackageReference Update="Microsoft.Extensions.Configuration.Abstractions" Version="$(AspNetCoreVersion)" />
@@ -56,6 +57,7 @@
     <PackageReference Update="Serilog.Sinks.Observable" Version="2.0.2" />
     <PackageReference Update="Serilog.Sinks.TextWriter" Version="2.1.0" />
     <PackageReference Update="StackExchange.Redis" Version="2.1.30" />
+    <PackageReference Update="Swashbuckle.AspNetCore" Version="5.4.1" />
     <PackageReference Update="System.Collections.Immutable" Version="1.7.0" />
     <PackageReference Update="System.CommandLine" Version="2.0.0-beta1.20214.1" />
     <PackageReference Update="System.IO.Abstractions" Version="11.0.2" />

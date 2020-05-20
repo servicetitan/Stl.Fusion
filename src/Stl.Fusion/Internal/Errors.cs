@@ -20,12 +20,13 @@ namespace Stl.Fusion.Internal
         public static Exception ComputedCapturedIsOfIncompatibleType(Type expectedType)
             => new InvalidCastException(
                 $"Computed.Captured() can't be converted to '{expectedType.Name}'.");
+        public static Exception NoComputedCaptured()
+            => new InvalidOperationException("No IComputed was captured.");
 
         public static Exception PublicationTypeMustBeOpenGenericType(string paramName)
             => new ArgumentOutOfRangeException(paramName, "Publication type must be open generic type.");
 
         public static Exception ReplicaHasBeenNeverUpdated() =>
             new InvalidOperationException("The replica has been never updated.");
-
     }
 }

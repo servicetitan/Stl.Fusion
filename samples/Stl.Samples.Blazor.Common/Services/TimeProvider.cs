@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Fusion;
 
-namespace Stl.Samples.Blazor.Services
+namespace Stl.Samples.Blazor.Common.Services
 {
     public interface ITimeProvider
     {

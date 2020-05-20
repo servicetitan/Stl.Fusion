@@ -1,7 +1,0 @@
-{
-  "rollForward": "Major",
-  "framework": {
-    "name": "Microsoft.AspNetCore.App",
-    "version": "3.0.0"
-  }
-}
