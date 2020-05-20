@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using Stl.IO;
 using Stl.Fusion;
 using Stl.Fusion.Bridge;
+using Stl.Fusion.Client;
 using Stl.Testing;
 using Stl.Testing.Internal;
 using Stl.Tests.Fusion.Model;
@@ -36,6 +37,7 @@ namespace Stl.Tests.Fusion
         public TestDbContext DbContext => Container.Resolve<TestDbContext>();
         public IPublisher Publisher => Container.Resolve<IPublisher>();
         public IReplicator Replicator => Container.Resolve<IReplicator>();
+        public TestWebServer WebSocketServer => Container.Resolve<TestWebServer>();
 
         public FusionTestBase(ITestOutputHelper @out, FusionTestOptions? options = null) : base(@out)
         {
@@ -44,6 +46,9 @@ namespace Stl.Tests.Fusion
             Container = Services.GetRequiredService<ILifetimeScope>();
             Log = (ILogger) Container.Resolve(typeof(ILogger<>).MakeGenericType(GetType()));
         }
+
+        public WebSocketClient NewWebSocketClient() 
+            => Container.Resolve<WebSocketClient>();
 
         public virtual Task InitializeAsync() 
             => DbContext.Database.EnsureCreatedAsync();
@@ -127,6 +132,12 @@ namespace Stl.Tests.Fusion
 
             // Regular services
             services.AddScoped<UserProvider, UserProvider>();
+
+            // Bridge
+            services.AddSingleton(c => new TestWebServer(c.GetRequiredService<IPublisher>()));
+            services.AddFusionWebSocketClient((c, o) => {
+                o.BaseUri = c.GetRequiredService<TestWebServer>().BaseUri;
+            });
         }
 
         public virtual void ConfigureServices(ContainerBuilder builder)

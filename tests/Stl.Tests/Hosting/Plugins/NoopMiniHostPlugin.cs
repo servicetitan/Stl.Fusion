@@ -11,7 +11,7 @@ namespace Stl.Tests.Hosting.Plugins
 {
     public class NoopMiniHostPlugin : IMiniHostPlugin
     {
-        protected ILogger Log = NullLogger.Instance;
+        private readonly ILogger<NoopMiniHostPlugin> _log = NullLogger<NoopMiniHostPlugin>.Instance;
         protected IPluginHost Plugins { get; set; } = null!;
         protected MiniHostBuilder MiniHostBuilder { get; set; } = null!;
 
@@ -21,7 +21,7 @@ namespace Stl.Tests.Hosting.Plugins
             IAppHostBuilder appHostBuilder,
             ILogger<NoopMiniHostPlugin>? log = null)
         {
-            Log = ((ILogger?) log) ?? NullLogger.Instance; 
+            _log = log ?? NullLogger<NoopMiniHostPlugin>.Instance; 
             Plugins = plugins;
             MiniHostBuilder = (MiniHostBuilder) appHostBuilder;
         }

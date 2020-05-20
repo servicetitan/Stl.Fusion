@@ -27,7 +27,7 @@ namespace Stl.Tests.Fusion.Services
 
     public class UserProvider : IUserProvider 
     {
-        protected ILogger Log { get; }
+        private readonly ILogger<UserProvider> _log;
         protected ITestDbContextPool DbContextPool { get; }
         protected bool IsCaching { get; }
 
@@ -35,7 +35,7 @@ namespace Stl.Tests.Fusion.Services
             ITestDbContextPool dbContextPool,
             ILogger<UserProvider>? log = null)
         {
-            Log = log as ILogger ?? NullLogger.Instance;
+            _log = log ?? NullLogger<UserProvider>.Instance;
             DbContextPool = dbContextPool;
             IsCaching = GetType().Name.EndsWith("Proxy");
         }
@@ -111,7 +111,7 @@ namespace Stl.Tests.Fusion.Services
             using var lease = DbContextPool.Rent();
             var dbContext = lease.Item;
             var count = await dbContext.Users.LongCountAsync(cancellationToken).ConfigureAwait(false);
-            Log.LogDebug($"Users.Count query: {count}");
+            _log.LogDebug($"Users.Count query: {count}");
             return count;
         }
 
@@ -122,7 +122,7 @@ namespace Stl.Tests.Fusion.Services
         public virtual void Invalidate()
         {
             Computed.Invalidate(Everything);
-            Log.LogDebug($"Invalidated everything.");
+            _log.LogDebug($"Invalidated everything.");
         }
 
         protected virtual void Invalidate(User user, bool countChanged = true)
@@ -131,11 +131,11 @@ namespace Stl.Tests.Fusion.Services
                 return;
             var cUser = Computed.Invalidate(() => TryGetAsync(user.Id)); 
             if (cUser != null)
-                Log.LogDebug($"Invalidated: User.Id={user.Id}");
+                _log.LogDebug($"Invalidated: User.Id={user.Id}");
             if (countChanged) {
                 var cCount = Computed.Invalidate(() => CountAsync());
                 if (cCount != null)
-                    Log.LogDebug($"Invalidated: Users.Count");
+                    _log.LogDebug($"Invalidated: Users.Count");
             }
         }
     }

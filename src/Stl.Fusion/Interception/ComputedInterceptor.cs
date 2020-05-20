@@ -24,6 +24,7 @@ namespace Stl.Fusion.Interception
             public IComputeRetryPolicy RetryPolicy { get; set; } = ComputeRetryPolicy.Default;
         }
 
+        private readonly ILogger<ComputedInterceptor> _log;
         private readonly MethodInfo _createTypedHandlerMethod;
         private readonly Func<MethodInfo, IInvocation, Action<IInvocation>?> _createHandler;
         private readonly Func<MethodInfo, InterceptedMethod?> _createInterceptedMethod;
@@ -36,14 +37,13 @@ namespace Stl.Fusion.Interception
         protected ConcurrentIdGenerator<LTag> LTagGenerator { get; }
         protected IArgumentComparerProvider ArgumentComparerProvider { get; }
         protected IComputeRetryPolicy RetryPolicy { get; }
-        protected ILogger Log { get; }
 
         public ComputedInterceptor(
             Options options, 
             IComputedRegistry? registry = null, 
             ILogger<ComputedInterceptor>? log = null) 
         {
-            Log = log ?? NullLogger<ComputedInterceptor>.Instance;
+            _log = log ?? NullLogger<ComputedInterceptor>.Instance;
 
             LTagGenerator = options.LTagGenerator;
             Registry = registry ?? ComputedRegistry.Default;

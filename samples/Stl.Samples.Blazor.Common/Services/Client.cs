@@ -18,8 +18,8 @@ namespace Stl.Samples.Blazor.Common.Services
 {
     public class Client : AsyncProcessBase
     {
+        private readonly ILogger<Client> _log;
         public Symbol Id { get; }
-        protected ILogger Log { get; }
         protected IReplicator Replicator { get; }
         protected HttpClient HttpClient { get; }
 
@@ -28,7 +28,7 @@ namespace Stl.Samples.Blazor.Common.Services
             HttpClient httpClient, 
             ILogger<Client>? log = null)
         {
-            Log = ((ILogger?) log) ?? NullLogger.Instance;
+            _log = log ?? NullLogger<Client>.Instance;
             Id = "c-" + new RandomStringGenerator().Next();
             Replicator = replicator;
             HttpClient = httpClient;
@@ -40,25 +40,25 @@ namespace Stl.Samples.Blazor.Common.Services
             var wsUri = new Uri($"{ToWss(serverUri)}ws?clientId={Id.Value}");
             while (true) {
                 try {
-                    Log.LogInformation($"WebSocket: connecting to {wsUri}...");
+                    _log.LogInformation($"WebSocket: connecting to {wsUri}...");
                     var ws = new ClientWebSocket();
                     await ws.ConnectAsync(wsUri, CancellationToken.None).ConfigureAwait(false);
-                    Log.LogInformation("WebSocket: connected.");
+                    _log.LogInformation("WebSocket: connected.");
                     await using var wsChannel = new WebSocketChannel(ws);
                     var channel = wsChannel
-                        .WithLogger("channel", Log, LogLevel.Information)
+                        .WithLogger("channel", _log, LogLevel.Information)
                         .WithSerializer(new JsonNetSerializer<Message>())
                         .WithId(Symbol.Empty);
                     Replicator.ChannelHub.Attach(channel);
                     while (ws.State == WebSocketState.Open)
                         await Task.Delay(5000, default);
-                    Log.LogInformation("WebSocket: closed.");
+                    _log.LogInformation("WebSocket: closed.");
                 }
                 catch (OperationCanceledException) {
                     throw;
                 }
                 catch (Exception e) {
-                    Log.LogError("WebSocket: error.", e);
+                    _log.LogError("WebSocket: error.", e);
                     await Task.Delay(5000, cancellationToken).ConfigureAwait(false);
                 }
             }

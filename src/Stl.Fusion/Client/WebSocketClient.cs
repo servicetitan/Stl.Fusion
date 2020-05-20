@@ -55,11 +55,12 @@ namespace Stl.Fusion.Client
             }
         }
 
+        private readonly ILogger<WebSocketClient> _log;
+
         public Symbol Id { get; }
         public Uri ConnectionUri { get; } 
         public TimeSpan ReconnectDelay { get; }
         protected IReplicator Replicator { get; }
-        protected ILogger Log { get; }
 
         public WebSocketClient(
             Options options,
@@ -70,7 +71,7 @@ namespace Stl.Fusion.Client
             reconnectDelay ??= TimeSpan.FromSeconds(5);
             log ??= NullLogger<WebSocketClient>.Instance;
 
-            Log = log;
+            _log = log;
             Id = options.Id;
             ConnectionUri = options.ConnectionUri;
             ReconnectDelay = options.ReconnectDelay;
@@ -81,25 +82,28 @@ namespace Stl.Fusion.Client
         {
             while (true) {
                 try {
-                    Log.LogInformation($"{Id}: connecting to {ConnectionUri}...");
+                    _log.LogInformation($"{Id}: connecting to {ConnectionUri}...");
                     var ws = new ClientWebSocket();
                     await ws.ConnectAsync(ConnectionUri, CancellationToken.None).ConfigureAwait(false);
-                    Log.LogInformation($"{Id}: connected.");
+                    _log.LogInformation($"{Id}: connected.");
+                    
                     await using var wsChannel = new WebSocketChannel(ws);
                     var channel = wsChannel
-                        .WithLogger("channel", Log, LogLevel.Information)
+                        .WithLogger(Id.ToString(), _log, LogLevel.Information)
                         .WithSerializer(new JsonNetSerializer<Message>())
                         .WithId(Symbol.Empty);
                     Replicator.ChannelHub.Attach(channel);
-                    while (ws.State == WebSocketState.Open)
-                        await Task.Delay(5000, default);
-                    Log.LogInformation($"{Id}: disconnected.");
+                    
+                    await channel.Reader.Completion
+                        .WithFakeCancellation(cancellationToken)
+                        .ConfigureAwait(false);
+                    _log.LogInformation($"{Id}: disconnected.");
                 }
                 catch (OperationCanceledException) {
                     throw;
                 }
                 catch (Exception e) {
-                    Log.LogError($"{Id}: error.", e);
+                    _log.LogError($"{Id}: error.", e);
                     await Task.Delay(ReconnectDelay, cancellationToken).ConfigureAwait(false);
                 }
             }

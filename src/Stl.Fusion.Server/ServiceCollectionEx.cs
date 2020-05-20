@@ -15,11 +15,15 @@ namespace Stl.Fusion.Server
         }
 
         public static IServiceCollection AddFusionWebSocketServer(this IServiceCollection services, 
-            Action<WebSocketServerMiddleware.Options>? optionsBuilder = null)
+            Action<IServiceProvider, WebSocketServerMiddleware.Options>? optionsBuilder = null)
         {
-            var options = new WebSocketServerMiddleware.Options();
-            optionsBuilder?.Invoke(options);
-            return services.AddFusionWebSocketServer(options);
+            services.TryAddSingleton(c => {
+                var options = new WebSocketServerMiddleware.Options();
+                optionsBuilder?.Invoke(c, options);
+                return options;
+            });
+            services.TryAddScoped<WebSocketServerMiddleware>();
+            return services;
         }        
     }
 }

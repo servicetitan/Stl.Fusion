@@ -1,11 +1,14 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace Stl.Testing
 {
     public static class WebTestEx
     {
-        private static volatile int _lastUsedPortOffset = 0;
+        private static readonly Queue<int> RecentlyUsedPortQueue = new Queue<int>(); 
+        private static readonly HashSet<int> RecentlyUsedPorts = new HashSet<int>();
+        private static readonly Random Random = new Random();
 
         public static Uri ToWss(this Uri uri)
         {
@@ -22,8 +25,19 @@ namespace Stl.Testing
         public static Uri GetRandomLocalUri() => GetLocalUri(GetRandomPort());
         public static int GetRandomPort()
         {
-            var portOffset = Interlocked.Increment(ref _lastUsedPortOffset);
-            return 25000 + (portOffset % 25000);
+            lock (RecentlyUsedPorts) {
+                while (true) {
+                    var port = 25000 + Random.Next(25000);
+                    if (RecentlyUsedPorts.Add(port)) {
+                        RecentlyUsedPortQueue.Enqueue(port);
+                        while (RecentlyUsedPortQueue.Count > 1000) {
+                            var oldPort = RecentlyUsedPortQueue.Dequeue();
+                            RecentlyUsedPorts.Remove(oldPort);
+                        }
+                        return port;
+                    }
+                }
+            }
         }
     }
 }

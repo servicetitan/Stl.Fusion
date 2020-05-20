@@ -13,19 +13,19 @@ namespace Stl.Samples.Blazor.Common.Services
 
     public class TimeProvider : ITimeProvider
     {
-        protected ILogger Log { get; }
+        private readonly ILogger<TimeProvider> _log;
         protected bool IsCaching { get; }
 
         public TimeProvider(ILogger<TimeProvider>? log = null)
         {
-            Log = log as ILogger ?? NullLogger.Instance;
+            _log = log ?? NullLogger<TimeProvider>.Instance;
             IsCaching = GetType().Name.EndsWith("Proxy");
         }
 
         private DateTime GetTime()
         {
             var now = DateTime.Now;
-            Log.LogDebug($"GetTime() -> {now}");
+            _log.LogDebug($"GetTime() -> {now}");
             return now;
         }
 

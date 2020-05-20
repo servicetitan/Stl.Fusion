@@ -12,13 +12,14 @@ namespace Stl.Plugins.Services
     public abstract class CachingPluginFinderBase : IPluginFinder
     {
         private readonly Lazy<IAsyncCache<string, string>> _lazyCache;
-        protected ILogger Logger { get; }
+        private readonly ILogger<CachingPluginFinderBase> _log;
 
         public IAsyncCache<string, string> Cache => _lazyCache.Value;
 
-        protected CachingPluginFinderBase(ILogger? logger = null)
+        protected CachingPluginFinderBase(
+            ILogger<CachingPluginFinderBase>? log = null)
         {
-            Logger = logger ?? NullLogger.Instance;
+            _log = log ?? NullLogger<CachingPluginFinderBase>.Instance;
             _lazyCache = new Lazy<IAsyncCache<string, string>>(CreateCache);
         }
 
@@ -31,25 +32,25 @@ namespace Stl.Plugins.Services
             var cacheKey = GetCacheKey();
             if (cacheKey == null) {
                 // Caching is off
-                Logger.LogDebug("Plugin cache is disabled (cache key is null).");
+                _log.LogDebug("Plugin cache is disabled (cache key is null).");
                 return await CreatePluginSetInfoAsync();
             }
             PluginSetInfo pluginSetInfo;
             var result = await Cache.TryGetAsync(cacheKey).ConfigureAwait(false);
             if (result.IsSome(out var v)) {
-                Logger.LogDebug("Cached plugin set info found.");
+                _log.LogDebug("Cached plugin set info found.");
                 try {
                     pluginSetInfo = Deserialize(v);
                     return pluginSetInfo;
                 }
                 catch (Exception e) {
-                    Logger.LogError(e, "Couldn't deserialize cached plugin set info.");
+                    _log.LogError(e, "Couldn't deserialize cached plugin set info.");
                 }
             }
-            Logger.LogDebug("Cached plugin set info is not available; populating...");
+            _log.LogDebug("Cached plugin set info is not available; populating...");
             pluginSetInfo = await CreatePluginSetInfoAsync();
             await Cache.SetAsync(cacheKey, Serialize(pluginSetInfo)).ConfigureAwait(false);
-            Logger.LogDebug("Plugin set info is populated and cached.");
+            _log.LogDebug("Plugin set info is populated and cached.");
             return pluginSetInfo;
         }
 

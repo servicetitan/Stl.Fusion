@@ -113,12 +113,11 @@ namespace Stl.Tests.Async
                 tasks.Add(task);
             }
 
-            Func<Task> whenAll = () => Task.WhenAll(tasks);
             var expectedRuntime = TimeSpan.FromMilliseconds(maxDelayMs + maxDurationMs * taskCount);
-            
             Out.WriteLine($"Expected runtime: {expectedRuntime.Seconds:f1}s");
             var start = RealTimeClock.HighResolutionNow;
-            await whenAll.Should().CompleteWithinAsync(10 * expectedRuntime);
+            await Task.WhenAll(tasks).AsAsyncFunc()
+                .Should().CompleteWithinAsync(10 * expectedRuntime);
             var runtime = RealTimeClock.HighResolutionNow - start;
             Out.WriteLine($"Actual runtime:   {runtime.Seconds:f1}s");
 

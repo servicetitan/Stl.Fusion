@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Runtime.Loader;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Caching;
 using Stl.IO;
 using Stl.OS;
@@ -21,25 +22,28 @@ namespace Stl.Plugins.Services
 
     public class PluginFinder : CachingPluginFinderBase
     {
+        private readonly ILogger<PluginFinder> _log;
+
         public PathString PluginDir { get; set; } = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? ".";
         public string AssemblyNamePattern { get; set; } = "*.dll";
         public bool UseCache { get; set; } = true;
         public PathString CacheDir { get; set; }
 
-        public PluginFinder(ILogger? logger = null)
-            : base(logger)
+        public PluginFinder(ILogger<PluginFinder>? log = null)
+            : base(log)
         {
+            _log = log ?? NullLogger<PluginFinder>.Instance;
             CacheDir = PathEx.GetApplicationTempDirectory();
         }
 
         protected override IAsyncCache<string, string> CreateCache()
         {
             if (!UseCache) {
-                Logger.LogDebug($"Cache isn't used.");
+                _log.LogDebug($"Cache isn't used.");
                 return new ZeroCapacityCache<string, string>();
             }
             var cache = new FileSystemCache<string, string>(GetCacheDir());
-            Logger.LogDebug($"Cache directory: {cache.CacheDirectory}");
+            _log.LogDebug($"Cache directory: {cache.CacheDirectory}");
             return cache;
         }
 

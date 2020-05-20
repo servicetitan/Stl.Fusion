@@ -20,8 +20,8 @@ namespace Stl.CommandLine
     {
         private readonly Lazy<ImmutableList<CmdDescriptor>> _lazyCommands;
         private readonly Lazy<ImmutableDictionary<object, CmdDescriptor>> _lazyCommandByKey;
+        private readonly ILogger<CmdFactoryBase> _log;
 
-        protected ILogger Log = NullLogger.Instance;
         protected IServiceProvider Services { get; }
         protected ImmutableList<CmdDescriptor> Commands => _lazyCommands.Value;
         protected ImmutableDictionary<object, CmdDescriptor> CommandByKey => _lazyCommandByKey.Value;
@@ -30,7 +30,7 @@ namespace Stl.CommandLine
             IServiceProvider services, 
             ILogger<CmdFactoryBase>? log = null)
         {
-            Log = log ?? Log;
+            _log = log ?? NullLogger<CmdFactoryBase>.Instance;
             Services = services;
             _lazyCommands = new Lazy<ImmutableList<CmdDescriptor>>(() => {
                 var commands = new List<CmdDescriptor>();

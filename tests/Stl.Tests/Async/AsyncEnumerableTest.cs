@@ -52,8 +52,8 @@ namespace Stl.Tests.Async
             var failed = false;
 
             async Task<int> Test() {
-                await clock.DelayAsync(10).ConfigureAwait(false);
-                return (int) await clock
+                await clock!.DelayAsync(10).ConfigureAwait(false);
+                return (int) await clock!
                     .IntervalAsync(TimeSpan.FromMilliseconds(10))
                     .Select(i => {
                         if (i > 2) failed = true;
