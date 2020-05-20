@@ -9,6 +9,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using Stl.Fusion;
+using Stl.Fusion.Server;
 using Stl.IO;
 using Stl.Samples.Blazor.Common.Services;
 using Stl.Samples.Blazor.Server.Services;
@@ -34,10 +35,11 @@ namespace Stl.Samples.Blazor.Server
                         logging.AddDebug();
                     });
                     services.AddFusion();
+                    services.AddFusionWebSocketServer();
                     services.AddComputedProvider<ITimeProvider, TimeProvider>();
 
                     // Web
-                    services.AddScoped<PublisherMiddleware>();
+                    services.AddScoped<WebSocketServerMiddleware>();
                     services.AddRouting(options => options.LowercaseUrls = true);
                     services.AddControllers()
                         .AddApplicationPart(Assembly.GetExecutingAssembly());
@@ -72,10 +74,9 @@ namespace Stl.Samples.Blazor.Server
                         app.UseSwaggerUI(c => {
                             c.SwaggerEndpoint("/swagger/v1/swagger.json", "API v1");
                         });
-
-                        // WebSockets
-                        app.UseWebSockets(new WebSocketOptions() { ReceiveBufferSize = 16_384 });
-                        app.UseMiddleware<PublisherMiddleware>();
+                        
+                        // Stl.Fusion server
+                        app.UseFusionWebSocketServer(true);
 
                         // API controllers
                         app.UseRouting();

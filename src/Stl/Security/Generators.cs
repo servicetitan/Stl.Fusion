@@ -14,6 +14,8 @@ namespace Stl.Security
 
     public sealed class Int32Generator : IGenerator<int>
     {
+        public static readonly Int32Generator Default = new Int32Generator();
+
         private int _counter;
 
         public Int32Generator(int start = 1) 
@@ -25,6 +27,8 @@ namespace Stl.Security
 
     public sealed class Int64Generator : IGenerator<long>
     {
+        public static readonly Int64Generator Default = new Int64Generator();
+
         private long _counter;
 
         public Int64Generator(long start = 1) 
@@ -54,11 +58,14 @@ namespace Stl.Security
         public static readonly string DefaultAlphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_"; 
         public static readonly string Base64Alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/"; 
         public static readonly string Base32Alphabet = "0123456789abcdefghijklmnopqrstuv"; 
-        public static readonly string Base16Alphabet = "0123456789abcdef"; 
-        private readonly RandomNumberGenerator _rng;
+        public static readonly string Base16Alphabet = "0123456789abcdef";
+        public static readonly RandomStringGenerator Default = new RandomStringGenerator();
+
+        protected readonly RandomNumberGenerator Rng;
+        protected object Lock => Rng;
+
         public string Alphabet { get; }
         public int Length { get; }
-        private object Lock => _rng;
 
         public RandomStringGenerator(int length = 12, string? alphabet = null, RandomNumberGenerator? rng = null)
         {
@@ -71,10 +78,10 @@ namespace Stl.Security
 
             Length = length;
             Alphabet = alphabet;
-            _rng = rng;
+            Rng = rng;
         }
 
-        public void Dispose() => _rng.Dispose();
+        public void Dispose() => Rng.Dispose();
 
         public string Next() => Next(Length);
         public string Next(int length, string? alphabet = null)
@@ -86,7 +93,7 @@ namespace Stl.Security
             var buffer = ListBuffer<byte>.LeaseAndSetCount(length);
             try {
                 lock (Lock) {
-                    _rng.GetBytes(buffer.Span);
+                    Rng.GetBytes(buffer.Span);
                 }
                 return string.Create(length, (buffer.BufferMemory, alphabet), (charSpan, arg) => {
                     var (bufferMemory, alphabet1) = arg;
@@ -112,6 +119,8 @@ namespace Stl.Security
 
     public class RandomSymbolGenerator : RandomStringGenerator, IGenerator<Symbol>
     {
+        public static readonly RandomSymbolGenerator Default = new RandomSymbolGenerator();
+
         public string Prefix { get; }
 
         public RandomSymbolGenerator(string prefix = "", int length = 12, string? alphabet = null, RandomNumberGenerator? rng = null) 

@@ -22,7 +22,6 @@ namespace Stl.Samples.Blazor.Common.Services
         protected ILogger Log { get; }
         protected IReplicator Replicator { get; }
         protected HttpClient HttpClient { get; }
-        
 
         public Client(
             IReplicator replicator, 

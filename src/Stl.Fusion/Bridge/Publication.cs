@@ -11,10 +11,9 @@ using Stl.Time;
 
 namespace Stl.Fusion.Bridge
 {
-    public interface IPublication : IAsyncDisposable
+    public interface IPublication : IHasId<Symbol>, IAsyncDisposable
     {
         IPublisher Publisher { get; }
-        Symbol Id { get; }
         IPublicationState State { get; }
         
         Disposable<IPublication> Use();

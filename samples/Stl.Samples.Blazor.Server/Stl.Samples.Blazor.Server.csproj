@@ -11,6 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Stl.Fusion.Server\Stl.Fusion.Server.csproj" />
     <ProjectReference Include="..\Stl.Samples.Blazor.Common\Stl.Samples.Blazor.Common.csproj" />
   </ItemGroup>
 

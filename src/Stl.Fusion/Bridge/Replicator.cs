@@ -35,8 +35,17 @@ namespace Stl.Fusion.Bridge
 
     public class Replicator : AsyncDisposableBase, IReplicatorImpl
     {
-        protected static readonly Func<Channel<Message>, Symbol> DefaultPublisherIdProvider =
-            c => c is IHasId<Symbol> hasId ? hasId.Id : Symbol.Empty; 
+        public class Options
+        {
+            protected static readonly Func<Channel<Message>, Symbol> DefaultPublisherIdProvider =
+                c => c is IHasId<Symbol> hasId ? hasId.Id : Symbol.Empty; 
+
+            public IChannelHub<Message> ChannelHub { get; set; } = new ChannelHub<Message>();
+            public bool OwnsChannelHub { get; set; } = true;
+            public Func<Channel<Message>, Symbol> PublisherIdProvider { get; set; } = DefaultPublisherIdProvider;
+            public IComputeRetryPolicy RetryPolicy { get; set; } = ComputeRetryPolicy.Default;
+        }
+
         protected ConcurrentDictionary<Symbol, IReplica> Replicas { get; }
         protected ConcurrentDictionary<Channel<Message>, ReplicatorChannelProcessor> ChannelProcessors { get; }
         protected ConcurrentDictionary<Symbol, ReplicatorChannelProcessor> ChannelProcessorsById { get; }
@@ -44,24 +53,17 @@ namespace Stl.Fusion.Bridge
         protected Func<Channel<Message>, ValueTask> OnChannelDetachedAsyncHandler { get; } 
 
         public IChannelHub<Message> ChannelHub { get; }
+        public bool OwnsChannelHub { get; }
         public Func<Channel<Message>, Symbol> PublisherIdProvider { get; }
         public IComputeRetryPolicy RetryPolicy { get; }
-        public bool OwnsChannelHub { get; }
 
-        public Replicator(
-            IChannelHub<Message>? channelHub = null,
-            Func<Channel<Message>, Symbol>? publisherIdProvider = null,
-            IComputeRetryPolicy? retryPolicy = null,
-            bool ownsChannelHub = true)
+        public Replicator(Options options)
         {
-            channelHub ??= new ChannelHub<Message>();
-            publisherIdProvider ??= DefaultPublisherIdProvider;
-            retryPolicy ??= ComputeRetryPolicy.Default;
+            ChannelHub = options.ChannelHub;
+            OwnsChannelHub = options.OwnsChannelHub;
+            PublisherIdProvider = options.PublisherIdProvider;
+            RetryPolicy = options.RetryPolicy;
 
-            ChannelHub = channelHub;
-            PublisherIdProvider = publisherIdProvider;
-            RetryPolicy = retryPolicy;
-            OwnsChannelHub = ownsChannelHub;
             Replicas = new ConcurrentDictionary<Symbol, IReplica>();
             ChannelProcessorsById = new ConcurrentDictionary<Symbol, ReplicatorChannelProcessor>();
             ChannelProcessors = new ConcurrentDictionary<Channel<Message>, ReplicatorChannelProcessor>();

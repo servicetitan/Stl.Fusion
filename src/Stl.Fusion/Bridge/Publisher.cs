@@ -6,7 +6,6 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using Stl.Async;
 using Stl.Channels;
-using Stl.Concurrency;
 using Stl.Fusion.Bridge.Internal;
 using Stl.Fusion.Bridge.Messages;
 using Stl.OS;
@@ -16,9 +15,8 @@ using Stl.Text;
 
 namespace Stl.Fusion.Bridge
 {
-    public interface IPublisher
+    public interface IPublisher : IHasId<Symbol>
     {
-        Symbol Id { get; }
         IChannelHub<Message> ChannelHub { get; }
         bool OwnsChannelHub { get; }
 
@@ -43,6 +41,18 @@ namespace Stl.Fusion.Bridge
 
     public class Publisher : AsyncDisposableBase, IPublisherImpl
     {
+        public class Options
+        {
+            public static Symbol NewId() => "P-" + RandomStringGenerator.Default.Next();
+
+            public Symbol Id { get; set; } = NewId();
+            public IChannelHub<Message> ChannelHub { get; set; } = new ChannelHub<Message>();
+            public bool OwnsChannelHub { get; set; } = true;
+            public IGenerator<Symbol> PublicationIdGenerator { get; set; } = new RandomSymbolGenerator("p-");
+            public Type PublicationType { get; set; } = typeof(Publication<>);
+            public IPublicationFactory PublicationFactory { get; set; } = Internal.PublicationFactory.Instance;
+        }
+
         protected ConcurrentDictionary<ComputedInput, IPublication> Publications { get; } 
         protected ConcurrentDictionary<Symbol, IPublication> PublicationsById { get; }
         protected ConcurrentDictionary<Channel<Message>, PublisherChannelProcessor> ChannelProcessors { get; }
@@ -56,23 +66,14 @@ namespace Stl.Fusion.Bridge
         public IChannelHub<Message> ChannelHub { get; }
         public bool OwnsChannelHub { get; }
 
-        public Publisher(Symbol id = default, 
-            IChannelHub<Message>? channelHub = null,
-            IGenerator<Symbol>? publicationIdGenerator = null,
-            Type? publicationType = null,
-            bool ownsChannelHub = true)
+        public Publisher(Options options)
         {
-            if (id.Value == null) id = Symbol.Empty;
-            channelHub ??= new ChannelHub<Message>();
-            publicationIdGenerator ??= new RandomSymbolGenerator("p-");
-            publicationType ??= typeof(Publication<>);
-
-            Id = id.Value;
-            ChannelHub = channelHub;
-            OwnsChannelHub = ownsChannelHub;
-            PublicationIdGenerator = publicationIdGenerator;
-            PublicationFactory = Internal.PublicationFactory.Instance;
-            PublicationType = publicationType;
+            Id = options.Id;
+            ChannelHub = options.ChannelHub;
+            OwnsChannelHub = options.OwnsChannelHub;
+            PublicationIdGenerator = options.PublicationIdGenerator;
+            PublicationFactory = options.PublicationFactory;
+            PublicationType = options.PublicationType;
 
             var concurrencyLevel = HardwareInfo.ProcessorCount << 2;
             var capacity = 7919;

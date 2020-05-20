@@ -11,15 +11,22 @@ namespace Stl.Fusion
     {
         public static IServiceCollection AddFusion(this IServiceCollection services)
         {
+            // Registry
+            services.TryAddSingleton(ComputedRegistry.Default);
+
+            // Call interception & related services
             services.TryAddSingleton(c => ComputedProxyGenerator.Default);
+            services.TryAddSingleton(new ComputedInterceptor.Options());
             services.TryAddSingleton<ComputedInterceptor>();
             services.TryAddSingleton(c => new [] { c.GetRequiredService<ComputedInterceptor>() });
-            services.TryAddSingleton(c => ComputedRegistry.Default);
-            services.TryAddSingleton(c => ArgumentComparerProvider.Default);
-            services.TryAddSingleton(c => ComputeRetryPolicy.Default);
-            services.TryAddSingleton(c => ComputedReplicaRetryPolicy.Default);
+
+            // Everything else
+            services.TryAddSingleton(new Publisher.Options());
             services.TryAddSingleton<IPublisher, Publisher>();
+            services.TryAddSingleton(new Replicator.Options());
             services.TryAddSingleton<IReplicator, Replicator>();
+            
+            // Built-in computed providers
             services.TryAddComputedProvider<CustomFunction>();
             return services;
         }

@@ -5,6 +5,8 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Castle.DynamicProxy;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Concurrency;
 using Stl.Fusion.Interception.Internal;
 using Stl.Reflection;
@@ -14,6 +16,14 @@ namespace Stl.Fusion.Interception
 {
     public class ComputedInterceptor : IInterceptor
     {
+        public class Options
+        {
+            public ConcurrentIdGenerator<LTag> LTagGenerator { get; set; } = ConcurrentIdGenerator.DefaultLTag; 
+            public IArgumentComparerProvider ArgumentComparerProvider { get; set; } = 
+                Interception.ArgumentComparerProvider.Default;
+            public IComputeRetryPolicy RetryPolicy { get; set; } = ComputeRetryPolicy.Default;
+        }
+
         private readonly MethodInfo _createTypedHandlerMethod;
         private readonly Func<MethodInfo, IInvocation, Action<IInvocation>?> _createHandler;
         private readonly Func<MethodInfo, InterceptedMethod?> _createInterceptedMethod;
@@ -22,32 +32,29 @@ namespace Stl.Fusion.Interception
         private readonly ConcurrentDictionary<MethodInfo, Action<IInvocation>?> _handlerCache = 
             new ConcurrentDictionary<MethodInfo, Action<IInvocation>?>();
 
+        protected IComputedRegistry Registry { get; }
         protected ConcurrentIdGenerator<LTag> LTagGenerator { get; }
-        protected IComputedRegistry ComputedRegistry { get; }
         protected IArgumentComparerProvider ArgumentComparerProvider { get; }
-        protected IComputeRetryPolicy ComputeRetryPolicy { get; }
+        protected IComputeRetryPolicy RetryPolicy { get; }
+        protected ILogger Log { get; }
 
         public ComputedInterceptor(
-            ConcurrentIdGenerator<LTag>? lTagGenerator = null,
-            IComputedRegistry? computedRegistry = null,
-            IArgumentComparerProvider? argumentComparerProvider = null,
-            IComputeRetryPolicy? computeRetryPolicy = null) 
+            Options options, 
+            IComputedRegistry? registry = null, 
+            ILogger<ComputedInterceptor>? log = null) 
         {
-            computeRetryPolicy ??= Fusion.ComputeRetryPolicy.Default;
-            argumentComparerProvider ??= Interception.ArgumentComparerProvider.Default;
-            computedRegistry ??= Fusion.ComputedRegistry.Default;
-            lTagGenerator ??= ConcurrentIdGenerator.DefaultLTag;
+            Log = log ?? NullLogger<ComputedInterceptor>.Instance;
+
+            LTagGenerator = options.LTagGenerator;
+            Registry = registry ?? ComputedRegistry.Default;
+            ArgumentComparerProvider = options.ArgumentComparerProvider;
+            RetryPolicy = options.RetryPolicy;
 
             _createHandler = CreateHandler;
             _createInterceptedMethod = CreateInterceptedMethod;
             _createTypedHandlerMethod = GetType()
                 .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
                 .Single(m => m.Name == nameof(CreateTypedHandler));
-            
-            LTagGenerator = lTagGenerator;
-            ComputedRegistry = computedRegistry;
-            ArgumentComparerProvider = argumentComparerProvider;
-            ComputeRetryPolicy = computeRetryPolicy;
         }
 
         public void Intercept(IInvocation invocation)
@@ -75,7 +82,7 @@ namespace Stl.Fusion.Interception
             IInvocation initialInvocation, InterceptedMethod method)
         {
             var function = new InterceptedFunction<TOut>(method, 
-                LTagGenerator, ComputedRegistry, ComputeRetryPolicy);
+                LTagGenerator, Registry, RetryPolicy);
             return invocation => {
                 // ReSharper disable once VariableHidesOuterVariable
                 var method = function.Method;

@@ -6,24 +6,35 @@ using Stl.Fusion.Bridge.Messages;
 using Stl.Net;
 using Stl.Serialization;
 
-namespace Stl.Samples.Blazor.Server.Services
+namespace Stl.Fusion.Server
 {
-    public class PublisherMiddleware
+    public class WebSocketServerMiddleware
     {
+        public class Options
+        {
+            public string RequestPath { get; set; } = "/ws";
+            public string ClientIdQueryParameterName { get; set; } = "clientId";
+        }
+
+        protected string RequestPath { get; }
+        protected string ClientIdQueryParameterName { get; } 
         protected RequestDelegate Next { get; }
         protected IPublisher Publisher { get; }
 
-        public PublisherMiddleware(
+        public WebSocketServerMiddleware(
             RequestDelegate next,
+            Options options,
             IPublisher publisher)
         {
             Next = next;
+            RequestPath = options.RequestPath;
+            ClientIdQueryParameterName = options.ClientIdQueryParameterName;
             Publisher = publisher;
         }
 
         public async Task InvokeAsync(HttpContext context)
         {
-            if (context.Request.Path != "/ws") {
+            if (context.Request.Path != RequestPath) {
                 await Next.Invoke(context);
                 return;
             }
@@ -31,7 +42,7 @@ namespace Stl.Samples.Blazor.Server.Services
                 context.Response.StatusCode = 400;
                 return;
             }
-            var clientId = context.Request.Query["clientId"];
+            var clientId = context.Request.Query[ClientIdQueryParameterName];
             var webSocket = await context.WebSockets.AcceptWebSocketAsync();
             await using var wsChannel = new WebSocketChannel(webSocket);
             var channel = wsChannel
