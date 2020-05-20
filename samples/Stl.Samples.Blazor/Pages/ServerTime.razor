@@ -1,4 +1,5 @@
 @page "/serverTime"
+@using System.Globalization
 @inject HttpClient HttpClient
 @inject IReplicator Replicator
 @inject ILogger<ServerTime> Log
@@ -7,14 +8,18 @@
 
 <p>Server Time: @Time</p>
 
-<button class="btn btn-primary" @onclick="UpdateNow">Click me</button>
+<button class="btn btn-primary" @onclick="UpdateNow">Refresh</button>
 
 @code {
     private IReplica<DateTime>? TimeReplica { get; set; }
-    private string Time => SafeToString(() => TimeReplica?.Computed.Value);
+    private string Time => 
+        TimeReplica?.Computed.Value.ToString("HH:mm:ss.ffff") ?? "n/a";
 
     protected override async Task OnInitializedAsync()
     {
+        // Temp. issue workaround: websocket connection should be established first.
+        await Task.Delay(3000);
+
         var json = await HttpClient.GetStringAsync("api/time");
         Log.LogInformation($"Got JSON: {json}");
         var message = new JsonNetSerializer<PublicationPublishedMessage>().Deserialize(json);
@@ -22,24 +27,16 @@
         Log.LogInformation($"Trying to update replica...");
         await TimeReplica.RequestUpdateAsync();
         Log.LogInformation($"Replica updated.");
-        TimeReplica.Computed.AutoUpdate((c, o, _) => {
-            Log.LogInformation($"Replica updated: {c.Output}.");
+        TimeReplica.Computed.AutoUpdate(TimeSpan.FromSeconds(2), (c, o, _) => {
+            Log.LogInformation($"Update (auto): {Time}.");
             StateHasChanged();
         });
     }
 
-    private string SafeToString(Func<object> func)
+    private async void UpdateNow()
     {
-        try {
-            return func.Invoke().ToString() ?? "n/a";
-        }
-        catch (Exception) {
-            return "n/a";
-        }
-    }
-
-    private void UpdateNow()
-    {
-        TimeReplica?.RequestUpdateAsync();
+        await (TimeReplica?.RequestUpdateAsync() ?? Task.CompletedTask);
+        Log.LogInformation($"Update (manual): {Time}.");
+        StateHasChanged();
     }
 }

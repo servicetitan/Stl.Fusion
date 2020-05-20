@@ -10,8 +10,6 @@ namespace Stl.Fusion.Bridge.Internal
 {
     public abstract class SubscriptionProcessor : AsyncProcessBase
     {
-        protected bool ReplicaIsConsistent;
-        protected LTag ReplicaLTag; 
         protected long MessageIndex = 1;
         protected AsyncLock AsyncLock;
 
@@ -26,8 +24,6 @@ namespace Stl.Fusion.Bridge.Internal
             Publication = publication;
             Channel = channel;
             SubscribeMessage = subscribeMessage;
-            ReplicaLTag = subscribeMessage.ReplicaLTag;
-            ReplicaIsConsistent = subscribeMessage.ReplicaIsConsistent;
             AsyncLock = new AsyncLock(ReentryMode.CheckedPass, TaskCreationOptions.None);
         }
 
@@ -88,7 +84,6 @@ namespace Stl.Fusion.Bridge.Internal
             using var _ = await AsyncLock.LockAsync(cancellationToken);
 
             var state = Publication.State;
-            (ReplicaLTag, ReplicaIsConsistent) = (message.ReplicaLTag, message.ReplicaIsConsistent);
             switch (message) {
             case SubscribeMessage sm:
                 await Publication.UpdateAsync(cancellationToken).ConfigureAwait(false);
@@ -110,24 +105,18 @@ namespace Stl.Fusion.Bridge.Internal
             using var _ = await AsyncLock.LockAsync(cancellationToken);
 
             var computed = state.Computed;
-            var computedIsConsistent = computed.IsConsistent; // May change at any moment to false, so...
-            var computedVersion = (computed.LTag, computedIsConsistent);
-
-            var (replicaLTag, replicaIsConsistent) = (ReplicaLTag, ReplicaIsConsistent);
-            var replicaVersion = (replicaLTag, replicaIsConsistent);
-            var isUpdated = replicaVersion != computedVersion;
-            if (!(isUpdated || isUpdateRequested))
-                return;
+            var computedIsConsistent = computed.IsConsistent;
+            var computedOutput = computed.Output;
 
             var message = new PublicationStateChangedMessage<T>() {
-                ReplicaLTag = replicaLTag,
-                ReplicaIsConsistent = replicaIsConsistent,
                 NewLTag = computed.LTag,
                 NewIsConsistent = computedIsConsistent,
             };
-            if (isUpdated && computedIsConsistent) {
+            if (computedIsConsistent) {
                 message.HasOutput = true;
-                message.Output = computed.Output;
+                message.OutputValue = computedOutput.UnsafeValue;
+                message.OutputErrorType = computedOutput.Error?.GetType();
+                message.OutputErrorMessage = computedOutput.Error?.Message; 
             }
             
             await SendAsync(message, cancellationToken).ConfigureAwait(false);
@@ -145,9 +134,6 @@ namespace Stl.Fusion.Bridge.Internal
             message.PublicationId = Publication.Id;
 
             await Channel.Writer.WriteAsync(message, cancellationToken).ConfigureAwait(false);
-
-            if (message is PublicationStateChangedMessage scm)
-                (ReplicaLTag, ReplicaIsConsistent) = (scm.NewLTag, scm.NewIsConsistent);
         }
     }
 }

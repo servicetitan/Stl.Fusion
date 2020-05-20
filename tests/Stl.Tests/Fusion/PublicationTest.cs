@@ -30,7 +30,7 @@ namespace Stl.Tests.Fusion
             (await Publisher.SubscribeAsync(cp.Channel1, p1!, true)).Should().BeTrue();
             var m = await cReader.AssertReadAsync();
             m.Should().BeOfType<PublicationStateChangedMessage<string>>()
-                .Which.Output.Value.Should().Be("");
+                .Which.OutputValue.Should().Be("");
             await cReader.AssertCannotReadAsync();
             
             sp.SetValue("1");
@@ -51,7 +51,7 @@ namespace Stl.Tests.Fusion
             m.Should().BeOfType<PublicationStateChangedMessage<string>>()
                 .Which.NewIsConsistent.Should().BeTrue();
             m.Should().BeOfType<PublicationStateChangedMessage<string>>()
-                .Which.Output.Value.Should().Be("12");
+                .Which.OutputValue.Should().Be("12");
             await cReader.AssertCannotReadAsync();
 
             await p1.DisposeAsync();

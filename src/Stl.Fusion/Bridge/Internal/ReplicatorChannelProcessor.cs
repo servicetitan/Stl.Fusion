@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -44,8 +45,6 @@ namespace Stl.Fusion.Bridge.Internal
             var subscribeMessage = new SubscribeMessage() {
                 PublisherId = PublisherId,
                 PublicationId = replica.PublicationId,
-                ReplicaLTag = computed.LTag,
-                ReplicaIsConsistent = computed.IsConsistent,
                 IsUpdateRequested = requestUpdate,
             };
             return Channel.Writer.WriteAsync(subscribeMessage, cancellationToken);
@@ -84,7 +83,17 @@ namespace Stl.Fusion.Bridge.Internal
 
         protected virtual Task OnStateChangedMessageAsync<T>(PublicationStateChangedMessage<T> message, CancellationToken cancellationToken)
         {
-            var lTaggedOutput = new LTagged<Result<T>>(message.Output, message.NewLTag);
+            var output = default(Result<T>);
+            if (message.HasOutput) {
+                output = message.OutputErrorType == null
+                    ? new Result<T>(message.OutputValue, null)
+                    : new Result<T>(
+                        default!,
+                        new TargetInvocationException(message.OutputErrorMessage,
+                            new ApplicationException(message.OutputErrorMessage)
+                        ));
+            }
+            var lTaggedOutput = new LTagged<Result<T>>(output, message.NewLTag);
             var replica = Replicator.GetOrAdd(message.PublisherId, message.PublicationId, lTaggedOutput);
             if (!(replica is IReplicaImpl<T> replicaImpl))
                 // Weird case: somehow replica is of different type

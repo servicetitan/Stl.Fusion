@@ -135,8 +135,6 @@ namespace Stl.Fusion.Bridge
             var message = new SubscribeMessage() {
                 PublisherId = Id,
                 PublicationId = Id,
-                ReplicaLTag = LTag.Default,
-                ReplicaIsConsistent = false,
                 IsUpdateRequested = sendUpdate,
             };
             return SubscribeAsync(channel, publication, message, cancellationToken);
