@@ -16,7 +16,7 @@ namespace Stl.Fusion.Bridge.Messages
     [Serializable]
     public class PublicationStateChangedMessage<T> : PublicationStateChangedMessage
     {
-        public T OutputValue { get; set; }
+        public T OutputValue { get; set; } = default!;
         public Type? OutputErrorType { get; set; }
         public string? OutputErrorMessage { get; set; } 
 
