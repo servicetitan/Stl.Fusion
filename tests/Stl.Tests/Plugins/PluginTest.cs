@@ -29,7 +29,7 @@ namespace Stl.Tests.Plugins
 
             RunPluginHostTests(host);
         }
-        
+
         [Fact]
         public void PluginFilterTest()
         {
@@ -55,7 +55,7 @@ namespace Stl.Tests.Plugins
             host.GetPlugins<ITestPlugin>().Count().Should().Be(2);
             host.GetPlugins<ITestSingletonPlugin>().Count().Should().Be(1);
         }
-        
+
         [Fact]
         public void CombinedTest()
         {
@@ -70,11 +70,11 @@ namespace Stl.Tests.Plugins
         }
 
         private void RunCombinedTest(ILoggerFactory loggerFactory, bool mustClearCache = false)
-        { 
+        {
             var logger = loggerFactory.CreateLogger<PluginFinder>();
             var pluginFinder = new PluginFinder(logger);
             if (mustClearCache) {
-                var fsc = (FileSystemCache<string, string>) pluginFinder.Cache;
+                var fsc = (FileSystemCache<string, string>)pluginFinder.Cache;
                 fsc.Clear();
             }
 
@@ -91,9 +91,9 @@ namespace Stl.Tests.Plugins
 
             // Dependencies extraction
             var testPlugin1Deps = plugins.InfoByType[typeof(TestPlugin1)].Dependencies;
-            testPlugin1Deps.Should().BeEquivalentTo((TypeRef) typeof(TestPlugin2));
+            testPlugin1Deps.Should().BeEquivalentTo((TypeRef)typeof(TestPlugin2));
             var testPlugin1AllDeps = plugins.InfoByType[typeof(TestPlugin1)].AllDependencies;
-            testPlugin1AllDeps.Should().Contain((TypeRef) typeof(TestPlugin2));
+            testPlugin1AllDeps.Should().Contain((TypeRef)typeof(TestPlugin2));
 
             var testPlugin2Deps = plugins.InfoByType[typeof(TestPlugin2)].Dependencies;
             testPlugin2Deps.Count.Should().Be(0);
