@@ -29,6 +29,10 @@ namespace Stl.Samples.Blazor.Server.Controllers
                 .PublishAsync(Publisher, () => TimeProvider.GetTimeAsync(100))
                 .ConfigureAwait(false);
 
+            // As you see, the value isn't even sent.
+            // In future we will be sending it, but for now let's just send
+            // the bare minimum - the client will get the update via
+            // WebSocket channel anyway.
             return new PublicationPublishedMessage() {
                 PublicationId = publication.Id,
                 PublisherId = Publisher.Id,

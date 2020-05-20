@@ -14,21 +14,15 @@ namespace Stl.Samples.Blazor.Common.Services
     public class TimeProvider : ITimeProvider
     {
         private readonly ILogger<TimeProvider> _log;
-        protected bool IsCaching { get; }
 
-        public TimeProvider(ILogger<TimeProvider>? log = null)
-        {
-            _log = log ??= NullLogger<TimeProvider>.Instance;
-            IsCaching = GetType().Name.EndsWith("Proxy");
-        }
+        public TimeProvider(ILogger<TimeProvider>? log = null) 
+            => _log = log ??= NullLogger<TimeProvider>.Instance;
 
         public virtual Task<DateTime> GetTimeAsync(int invalidateIn)
         {
-            if (!IsCaching)
-                return Task.FromResult(DateTime.Now);
-            
             var cResult = Computed.GetCurrent();
             Task.Run(async () => {
+                // This method is fancy: it self-invalidates its own result
                 await Task.Delay(invalidateIn).ConfigureAwait(false);
                 cResult!.Invalidate();
             });
