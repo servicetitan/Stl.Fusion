@@ -5,7 +5,7 @@
     <RazorLangVersion>3.0</RazorLangVersion>
     <BlazorWebAssemblyEnableLinking>false</BlazorWebAssemblyEnableLinking>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Build" PrivateAssets="all" />
@@ -13,11 +13,11 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
     <PackageReference Include="System.Net.Http.Json" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <None Include="$(ProjectDir)\wwwroot\**" CopyToOutputDirectory="PreserveNewest" LinkBase="wwwroot\" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <ProjectReference Include="..\..\src\Stl.Fusion\Stl.Fusion.csproj" />
     <ProjectReference Include="..\..\src\Stl\Stl.csproj" />
@@ -36,7 +36,7 @@
         @start "Chrome" chrome.exe --remote-debugging-port=9222 --user-data-dir="$(Temp)\blazor-chrome-debug" http://localhost:5000/
       </ChromeDebugCmdContent>
       <DebugMeCmdContent>
-@echo off 
+@echo off
 start "Blazor DevServer" cmd /C "$(DevServerCmdPath)"
 call "$(ChromeDebugCmdPath)"
       </DebugMeCmdContent>
@@ -45,5 +45,5 @@ call "$(ChromeDebugCmdPath)"
     <WriteLinesToFile File="$(ChromeDebugCmdPath)" Lines="$(ChromeDebugCmdContent)" Overwrite="true" />
     <WriteLinesToFile File="$(DebugMeCmdPath)" Lines="$(DebugMeCmdContent)" Overwrite="true" />
   </Target>
-  
+
 </Project>

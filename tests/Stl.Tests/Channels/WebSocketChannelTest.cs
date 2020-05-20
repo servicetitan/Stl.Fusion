@@ -61,7 +61,7 @@ namespace Stl.Tests.Channels
         public async Task KestrelTest()
         {
             Host.Should().NotBeNull();
-            
+
             // Connecting
             using var ws = new ClientWebSocket();
             var uri = new Uri($"{HostUrl}ws").ToWss();
@@ -87,7 +87,7 @@ namespace Stl.Tests.Channels
                 return HandlerType.Final;
             });
             server.Start();
-            
+
             // Connecting
             using var ws = new ClientWebSocket();
             var clientUri = new Uri($"{serverUri}ws").ToWss();

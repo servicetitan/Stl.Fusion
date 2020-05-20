@@ -13,7 +13,7 @@ namespace Stl.Tests.Hosting.Plugins
         protected MiniHostBuilder MiniHostBuilder { get; } = null!;
 
         public MiniHostPrimaryCliPlugin() { }
-        public MiniHostPrimaryCliPlugin(IPluginHost plugins, IAppHostBuilder appHostBuilder) 
+        public MiniHostPrimaryCliPlugin(IPluginHost plugins, IAppHostBuilder appHostBuilder)
             : base(plugins, appHostBuilder)
         {
             MiniHostBuilder = (MiniHostBuilder) appHostBuilder;

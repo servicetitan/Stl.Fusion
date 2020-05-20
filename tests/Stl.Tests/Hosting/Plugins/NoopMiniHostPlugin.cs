@@ -17,11 +17,11 @@ namespace Stl.Tests.Hosting.Plugins
 
         public NoopMiniHostPlugin() { }
         public NoopMiniHostPlugin(
-            IPluginHost plugins, 
+            IPluginHost plugins,
             IAppHostBuilder appHostBuilder,
             ILogger<NoopMiniHostPlugin>? log = null)
         {
-            _log = log ?? NullLogger<NoopMiniHostPlugin>.Instance; 
+            _log = log ?? NullLogger<NoopMiniHostPlugin>.Instance;
             Plugins = plugins;
             MiniHostBuilder = (MiniHostBuilder) appHostBuilder;
         }

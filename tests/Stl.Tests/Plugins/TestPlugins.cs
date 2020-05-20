@@ -36,7 +36,7 @@ namespace Stl.Tests.Plugins
         public TestPlugin1(IPluginInfoQuery query) { }
         public TestPlugin1() { }
     }
-    
+
     public class TestPlugin2 : TestPlugin, ITestPluginEx, IHasCapabilities, ITestSingletonPlugin
     {
         public virtual string GetVersion() => "1.0";

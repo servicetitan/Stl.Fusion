@@ -17,7 +17,7 @@ namespace Stl.Fusion.Server
         }
 
         protected string RequestPath { get; }
-        protected string ClientIdQueryParameterName { get; } 
+        protected string ClientIdQueryParameterName { get; }
         protected RequestDelegate Next { get; }
         protected IPublisher Publisher { get; }
 

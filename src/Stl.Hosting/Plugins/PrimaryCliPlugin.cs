@@ -60,7 +60,7 @@ namespace Stl.Hosting.Plugins
             return exitCode;
         }
 
-        protected virtual void OnCliException(Exception exception, InvocationContext context) 
+        protected virtual void OnCliException(Exception exception, InvocationContext context)
             => AppHostBuilder.BuildState.CliException = exception;
 
         protected virtual void ConfigureCliBuilder()
@@ -83,7 +83,7 @@ namespace Stl.Hosting.Plugins
         protected virtual void AddBindOption()
         {
             var option = new CliOption(
-                new[] {"-b", "--bind"}, 
+                new[] {"-b", "--bind"},
                 "Web server bind address; you can use multiple bind options") {
                 Argument = new Argument<string[]>(),
             };
@@ -103,7 +103,7 @@ namespace Stl.Hosting.Plugins
             var middlewareListField = CliBuilder.GetType().GetField(
                 "_middlewareList", BindingFlags.Instance | BindingFlags.NonPublic);
             var fieldValue = middlewareListField!.GetValue(CliBuilder);
-            var middlewareList = (List<(InvocationMiddleware, int)>) fieldValue!; 
+            var middlewareList = (List<(InvocationMiddleware, int)>) fieldValue!;
             middlewareList.Add((middleware, order));
         }
     }

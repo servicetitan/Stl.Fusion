@@ -6,7 +6,7 @@ namespace Stl.Fusion.Server
 {
     public static class ServiceCollectionEx
     {
-        public static IServiceCollection AddFusionWebSocketServer(this IServiceCollection services, 
+        public static IServiceCollection AddFusionWebSocketServer(this IServiceCollection services,
             WebSocketServerMiddleware.Options options)
         {
             services.TryAddSingleton(options);
@@ -14,7 +14,7 @@ namespace Stl.Fusion.Server
             return services;
         }
 
-        public static IServiceCollection AddFusionWebSocketServer(this IServiceCollection services, 
+        public static IServiceCollection AddFusionWebSocketServer(this IServiceCollection services,
             Action<IServiceProvider, WebSocketServerMiddleware.Options>? optionsBuilder = null)
         {
             services.TryAddSingleton(c => {
@@ -24,6 +24,6 @@ namespace Stl.Fusion.Server
             });
             services.TryAddScoped<WebSocketServerMiddleware>();
             return services;
-        }        
+        }
     }
 }
