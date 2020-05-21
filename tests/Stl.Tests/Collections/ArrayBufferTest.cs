@@ -6,7 +6,7 @@ using Xunit;
 
 namespace Stl.Tests.Collections
 {
-    public class ListBufferTest
+    public class ArrayBufferTest
     {
         private readonly Random _rnd = new Random();
 
