@@ -10,6 +10,7 @@ using Stl.Channels;
 using Stl.Collections;
 using Stl.Fusion.Bridge.Internal;
 using Stl.Fusion.Bridge.Messages;
+using Stl.Fusion.Internal;
 using Stl.OS;
 using Stl.Text;
 
@@ -80,23 +81,22 @@ namespace Stl.Fusion.Bridge
         {
             var spinWait = new SpinWait();
             IReplica? replica;
-            while (true) {
-                while (!Replicas.TryGetValue(publicationId, out replica)) {
-                    replica = new Replica<T>(this, publisherId, publicationId, initialOutput, isConsistent, requestUpdate);
-                    if (Replicas.TryAdd(publicationId, replica)) {
-                        if (TrySubscribe(replica, requestUpdate))
-                            return (IReplica<T>) replica;
+            while (!Replicas.TryGetValue(publicationId, out replica)) {
+                replica = new Replica<T>(this, publisherId, publicationId, initialOutput, isConsistent, requestUpdate);
+                if (Replicas.TryAdd(publicationId, replica)) {
+                    if (!TrySubscribe(replica, requestUpdate)) {
                         // No subscription = we can't keep it
                         Replicas.TryRemove(publicationId, replica);
+                        throw Errors.NoChannelToPublisher();
                     }
-                    spinWait.SpinOnce();
+                    return (IReplica<T>) replica;
                 }
-                if (ChannelProcessorsById.TryGetValue(replica.PublisherId, out var _))
-                    break;
-                // Missing channel processor = subscription didn't happen,
-                // so we can't return this replica (yet?)
                 spinWait.SpinOnce();
             }
+            // We don't pay attention on ChannelProcessor here for now,
+            // because the upcoming reconnection logic should take care
+            // of this case.
+            // TODO: Add reconnection logic
             return (IReplica<T>) replica;
         }
 

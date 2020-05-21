@@ -27,9 +27,11 @@ namespace Stl.Fusion.Internal
             => new ArgumentOutOfRangeException(paramName, "Publication type must be open generic type.");
 
         public static Exception ReplicaHasNeverBeenUpdated()
-            => new InvalidOperationException("The replica has never been updated.");
-
+            => new InvalidOperationException("The Replica has never been updated.");
         public static Exception CouldNotUpdateReplica()
-            => new InvalidOperationException("Couldn't update replica. Likely, the connection to Publisher is down.");
+            => new InvalidOperationException("Couldn't update Replica: the channel to its Publisher is likely down.");
+
+        public static Exception NoChannelToPublisher()
+            => new InvalidOperationException("There is no channel to Replica's Publisher.");
     }
 }

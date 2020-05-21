@@ -33,6 +33,7 @@ namespace Stl.Tests.Fusion
 
             var tp = Container.Resolve<ITimeProvider>();
             var pub = await Computed.PublishAsync(Publisher, () => tp.GetTimeAsync());
+            await Task.Delay(1000);
             var rep = Replicator.GetOrAdd<DateTime>(pub!.Publisher.Id, pub.Id);
             await rep.RequestUpdateAsync();
             // await rep.RequestUpdateAsync().AsAsyncFunc()
@@ -57,8 +58,9 @@ namespace Stl.Tests.Fusion
 
             var tp = Container.Resolve<ITimeProvider>();
             var pub = await Computed.PublishAsync(Publisher, () => tp.GetTimeAsync());
-            var rep = Replicator.GetOrAdd<DateTime>("NoPublisher", pub.Id);
-            await rep.RequestUpdateAsync();
+
+            Action getOrAdd = () => Replicator.GetOrAdd<DateTime>("NoPublisher", pub.Id);
+            getOrAdd.Should().Throw<InvalidOperationException>();
         }
     }
 }
