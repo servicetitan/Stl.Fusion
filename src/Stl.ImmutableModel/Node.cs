@@ -41,7 +41,7 @@ namespace Stl.ImmutableModel
             Key.ThrowIfNull(); 
 
             // First we freeze child freezables
-            var buffer = ListBuffer<KeyValuePair<ItemKey, IFreezable>>.Lease();
+            var buffer = MemoryBuffer<KeyValuePair<ItemKey, IFreezable>>.Lease();
             try {
                 this.GetDefinition().GetFreezableItems(this, ref buffer);
                 foreach (var (key, freezable) in buffer)
@@ -62,7 +62,7 @@ namespace Stl.ImmutableModel
 
             if (deep) {
                 // Defrost every freezable
-                var buffer = ListBuffer<KeyValuePair<ItemKey, IFreezable>>.Lease();
+                var buffer = MemoryBuffer<KeyValuePair<ItemKey, IFreezable>>.Lease();
                 try {
                     nodeTypeDef.GetFreezableItems(clone, ref buffer);
                     foreach (var (key, f) in buffer)
@@ -74,7 +74,7 @@ namespace Stl.ImmutableModel
             }
             else {
                 // Defrost every collection (for convenience)
-                var buffer = ListBuffer<KeyValuePair<ItemKey, ICollectionNode>>.Lease();
+                var buffer = MemoryBuffer<KeyValuePair<ItemKey, ICollectionNode>>.Lease();
                 try {
                     nodeTypeDef.GetCollectionNodeItems(clone, ref buffer);
                     foreach (var (key, c) in buffer)

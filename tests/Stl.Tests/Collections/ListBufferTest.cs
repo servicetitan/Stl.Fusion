@@ -24,7 +24,7 @@ namespace Stl.Tests.Collections
 
         private void Test<T>(List<T> list)
         {
-            var buffer = ListBuffer<T>.Lease();
+            var buffer = MemoryBuffer<T>.Lease();
             try {
                 foreach (var i in list) 
                     buffer.Add(i);

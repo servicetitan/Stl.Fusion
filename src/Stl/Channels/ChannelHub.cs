@@ -6,53 +6,36 @@ using System.Reactive;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Stl.Async;
+using Stl.Collections;
 using Stl.OS;
 
 namespace Stl.Channels
 {
+    public delegate void ChannelAttachedHandler<T>(Channel<T> channel);
+    public delegate void ChannelDetachedHandler<T>(Channel<T> channel, ref Collector<ValueTask> taskCollector);
+
     public interface IChannelHub<T> : IAsyncDisposable
     {
         bool Attach(Channel<T> channel);
         bool IsAttached(Channel<T> channel);
         ValueTask<bool> DetachAsync(Channel<T> channel);
 
-        event Action<Channel<T>> Attached;
-        event Func<Channel<T>, ValueTask> Detached;
+        event ChannelAttachedHandler<T> Attached;
+        event ChannelDetachedHandler<T> Detached;
     }
 
     public class ChannelHub<T> : AsyncDisposableBase, IChannelHub<T>
     {
         protected ConcurrentDictionary<Channel<T>, Unit> Channels { get; }
-        protected ConcurrentDictionary<Action<Channel<T>>, Unit> AttachedHandlers { get; }
-        protected ConcurrentDictionary<Func<Channel<T>, ValueTask>, Unit> DetachedHandlers { get; }
 
-        public event Action<Channel<T>> Attached {
-            add {
-                if (value == null)
-                    throw new ArgumentNullException(nameof(value));
-                ThrowIfDisposedOrDisposing();
-                AttachedHandlers.TryAdd(value, Unit.Default);
-            }
-            remove => AttachedHandlers.TryRemove(value, out _);
-        }
-
-        public event Func<Channel<T>, ValueTask> Detached {
-            add {
-                if (value == null)
-                    throw new ArgumentNullException(nameof(value));
-                ThrowIfDisposedOrDisposing();
-                DetachedHandlers.TryAdd(value, Unit.Default);
-            }
-            remove => DetachedHandlers.TryRemove(value, out _);
-        }
+        public event ChannelAttachedHandler<T>? Attached;
+        public event ChannelDetachedHandler<T>? Detached;
 
         public ChannelHub()
         {
             var concurrencyLevel = HardwareInfo.ProcessorCount << 2;
             var capacity = 7919;
             Channels = new ConcurrentDictionary<Channel<T>, Unit>(concurrencyLevel, capacity);
-            AttachedHandlers = new ConcurrentDictionary<Action<Channel<T>>, Unit>();
-            DetachedHandlers = new ConcurrentDictionary<Func<Channel<T>, ValueTask>, Unit>();
         }
 
         public virtual bool Attach(Channel<T> channel)
@@ -87,41 +70,31 @@ namespace Stl.Channels
             channel.Reader.Completion.ContinueWith(async _ => {
                 await DetachAsync(channel);
             });
-
-            // TODO: Add exception aggregation?
-            foreach (var (handler, _) in AttachedHandlers) {
-                try {
-                    handler.Invoke(channel);
-                }
-                catch {
-                    // Ignore: we want to invoke all handlers
-                }
-            }
+            Attached?.Invoke(channel);
         }
 
         protected virtual async ValueTask OnDetachedAsync(Channel<T> channel)
         {
-            // TODO: Add exception aggregation?
+            var taskCollector = new Collector<ValueTask>();
+            try {
+                Detached?.Invoke(channel, ref taskCollector);
 
-            // Let's try to run all of them in parallel
-            var tasks = new List<ValueTask>();
-            foreach (var (handler, _) in DetachedHandlers) {
-                try {
-                    var valueTask = handler.Invoke(channel);
-                    if (!valueTask.IsCompleted)
-                        tasks.Add(valueTask);
-                }
-                catch {
-                    // Ignore: we want to invoke all handlers
+                // The traversal direction doesn't matter, so let's traverse
+                // it in reverse order to help the compiler to get rid of extra
+                // bound checks.
+                var tasks = taskCollector.Buffer;
+                for (var i = taskCollector.Count - 1; i >= 0; i--) {
+                    var task = tasks[i];
+                    try {
+                        await task.ConfigureAwait(false);
+                    }
+                    catch {
+                        // Ignore: we want to invoke all handlers
+                    }
                 }
             }
-            foreach (var task in tasks) {
-                try {
-                    await task.ConfigureAwait(false);
-                }
-                catch {
-                    // Ignore: we want to invoke all handlers
-                }
+            finally {
+                taskCollector.Dispose();
             }
 
             switch (channel) {

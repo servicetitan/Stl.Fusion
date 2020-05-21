@@ -7,6 +7,7 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using Stl.Async;
 using Stl.Channels;
+using Stl.Collections;
 using Stl.Fusion.Bridge.Internal;
 using Stl.Fusion.Bridge.Messages;
 using Stl.OS;
@@ -37,31 +38,31 @@ namespace Stl.Fusion.Bridge
     {
         public class Options
         {
-            protected static readonly Func<Channel<Message>, Symbol> DefaultPublisherIdProvider =
+            protected static readonly Func<Channel<Message>, Symbol> DefaultPublisherIdResolver =
                 c => c is IHasId<Symbol> hasId ? hasId.Id : Symbol.Empty; 
 
             public IChannelHub<Message> ChannelHub { get; set; } = new ChannelHub<Message>();
             public bool OwnsChannelHub { get; set; } = true;
-            public Func<Channel<Message>, Symbol> PublisherIdProvider { get; set; } = DefaultPublisherIdProvider;
+            public Func<Channel<Message>, Symbol> PublisherIdResolver { get; set; } = DefaultPublisherIdResolver;
             public IComputeRetryPolicy RetryPolicy { get; set; } = ComputeRetryPolicy.Default;
         }
 
         protected ConcurrentDictionary<Symbol, IReplica> Replicas { get; }
         protected ConcurrentDictionary<Channel<Message>, ReplicatorChannelProcessor> ChannelProcessors { get; }
         protected ConcurrentDictionary<Symbol, ReplicatorChannelProcessor> ChannelProcessorsById { get; }
-        protected Action<Channel<Message>> OnChannelAttachedHandler { get; } 
-        protected Func<Channel<Message>, ValueTask> OnChannelDetachedAsyncHandler { get; } 
+        protected ChannelAttachedHandler<Message> OnChannelAttachedHandler { get; } 
+        protected ChannelDetachedHandler<Message> OnChannelDetachedHandler { get; } 
 
         public IChannelHub<Message> ChannelHub { get; }
         public bool OwnsChannelHub { get; }
-        public Func<Channel<Message>, Symbol> PublisherIdProvider { get; }
+        public Func<Channel<Message>, Symbol> PublisherIdResolver { get; }
         public IComputeRetryPolicy RetryPolicy { get; }
 
         public Replicator(Options options)
         {
             ChannelHub = options.ChannelHub;
             OwnsChannelHub = options.OwnsChannelHub;
-            PublisherIdProvider = options.PublisherIdProvider;
+            PublisherIdResolver = options.PublisherIdResolver;
             RetryPolicy = options.RetryPolicy;
 
             Replicas = new ConcurrentDictionary<Symbol, IReplica>();
@@ -69,8 +70,8 @@ namespace Stl.Fusion.Bridge
             ChannelProcessors = new ConcurrentDictionary<Channel<Message>, ReplicatorChannelProcessor>();
             
             OnChannelAttachedHandler = OnChannelAttached;
-            OnChannelDetachedAsyncHandler = OnChannelDetachedAsync;
-            ChannelHub.Detached += OnChannelDetachedAsyncHandler; // Must go first
+            OnChannelDetachedHandler = OnChannelDetachedAsync;
+            ChannelHub.Detached += OnChannelDetachedHandler; // Must go first
             ChannelHub.Attached += OnChannelAttachedHandler;
         }
 
@@ -110,7 +111,7 @@ namespace Stl.Fusion.Bridge
 
         protected virtual void OnChannelAttached(Channel<Message> channel)
         {
-            var publisherId = PublisherIdProvider.Invoke(channel);
+            var publisherId = PublisherIdResolver.Invoke(channel);
             var channelProcessor = CreateChannelProcessor(channel, publisherId);
             if (!ChannelProcessors.TryAdd(channel, channelProcessor))
                 return;
@@ -129,12 +130,13 @@ namespace Stl.Fusion.Bridge
             });
         }
 
-        protected virtual ValueTask OnChannelDetachedAsync(Channel<Message> channel)
+        protected virtual void OnChannelDetachedAsync(
+            Channel<Message> channel, ref Collector<ValueTask> taskCollector)
         {
             if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
-                return ValueTaskEx.CompletedTask;
+                return;
             ChannelProcessorsById.TryRemove(channelProcessor.PublisherId, channelProcessor);
-            return channelProcessor.DisposeAsync();
+            taskCollector.Add(channelProcessor.DisposeAsync());
         }
 
         protected virtual ReplicatorChannelProcessor CreateChannelProcessor(
@@ -171,7 +173,7 @@ namespace Stl.Fusion.Bridge
         protected override async ValueTask DisposeInternalAsync(bool disposing)
         {
             ChannelHub.Attached -= OnChannelAttachedHandler; // Must go first
-            ChannelHub.Detached -= OnChannelDetachedAsyncHandler;
+            ChannelHub.Detached -= OnChannelDetachedHandler;
             var channelProcessors = ChannelProcessors;
             while (!channelProcessors.IsEmpty) {
                 var tasks = channelProcessors

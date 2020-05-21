@@ -179,10 +179,10 @@ namespace Stl.Text
             return result;
         }
 
-        public void ParseAll(ListBuffer<string> listBuffer)
+        public void ParseAll(MemoryBuffer<string> buffer)
         {
             while (TryParseNext())
-                listBuffer.Add(Item);
+                buffer.Add(Item);
         }
     }
 }

@@ -47,5 +47,18 @@ namespace Stl.Tests.Fusion
             await Task.Delay(2000);
             count.Should().BeGreaterThan(4);
         }
+
+        [Fact]
+        public async Task NoConnectionTest()
+        {
+            await using var serving = await WebSocketServer.ServeAsync();
+            await using var client = NewWebSocketClient();
+            var clientTask = client.RunAsync();
+
+            var tp = Container.Resolve<ITimeProvider>();
+            var pub = await Computed.PublishAsync(Publisher, () => tp.GetTimeAsync());
+            var rep = Replicator.GetOrAdd<DateTime>("NoPublisher", pub.Id);
+            await rep.RequestUpdateAsync();
+        }
     }
 }

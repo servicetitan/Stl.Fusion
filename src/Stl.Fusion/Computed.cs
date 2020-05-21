@@ -214,11 +214,11 @@ namespace Stl.Fusion
         {
             if (!TryChangeState(ComputedState.Invalidated))
                 return false;
-            ListBuffer<(ComputedInput Input, LTag LTag)> usedBy = default;
+            MemoryBuffer<(ComputedInput Input, LTag LTag)> usedBy = default;
             try {
                 lock (Lock) {
                     _invalidatedBy = invalidatedBy;
-                    usedBy = ListBuffer<(ComputedInput, LTag)>.LeaseAndSetCount(_usedBy.Count);
+                    usedBy = MemoryBuffer<(ComputedInput, LTag)>.LeaseAndSetCount(_usedBy.Count);
                     _usedBy.CopyTo(usedBy.Span);
                     _usedBy.Clear();
                     _used.Apply(this, (self, c) => c.RemoveUsedBy(self));

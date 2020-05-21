@@ -96,7 +96,7 @@ namespace Stl.ImmutableModel.Reflection
                 yield return KeyValuePair.Create((ItemKey) key, option)!;
         }
 
-        public virtual void GetFreezableItems(INode node, ref ListBuffer<KeyValuePair<ItemKey, IFreezable>> output)
+        public virtual void GetFreezableItems(INode node, ref MemoryBuffer<KeyValuePair<ItemKey, IFreezable>> output)
         {
             foreach (var (name, propertyDef) in FreezableProperties) {
                 var getter = (Func<INode, object>?) propertyDef.UntypedGetter;
@@ -114,7 +114,7 @@ namespace Stl.ImmutableModel.Reflection
             }
         }
 
-        public virtual void GetNodeItems(INode node, ref ListBuffer<KeyValuePair<ItemKey, INode>> output)
+        public virtual void GetNodeItems(INode node, ref MemoryBuffer<KeyValuePair<ItemKey, INode>> output)
         {
             foreach (var (name, propertyDef) in NodeProperties) {
                 var getter = (Func<INode, object>?) propertyDef.UntypedGetter;
@@ -132,7 +132,7 @@ namespace Stl.ImmutableModel.Reflection
             }
         }
 
-        public virtual void GetCollectionNodeItems(INode node, ref ListBuffer<KeyValuePair<ItemKey, ICollectionNode>> output)
+        public virtual void GetCollectionNodeItems(INode node, ref MemoryBuffer<KeyValuePair<ItemKey, ICollectionNode>> output)
         {
             foreach (var (name, propertyDef) in CollectionNodeProperties) {
                 var getter = (Func<INode, object>?) propertyDef.UntypedGetter;
@@ -233,7 +233,7 @@ namespace Stl.ImmutableModel.Reflection
 
         // Useful helpers
 
-        public void GetClosestChildNodesByType<TChild>(INode node, ref ListBuffer<TChild> output, bool includeSelf = false)
+        public void GetClosestChildNodesByType<TChild>(INode node, ref MemoryBuffer<TChild> output, bool includeSelf = false)
             where TChild : class, INode
         {
             if (node is TChild n && includeSelf) {
@@ -241,7 +241,7 @@ namespace Stl.ImmutableModel.Reflection
                 return;
             }
 
-            var buffer = ListBuffer<KeyValuePair<ItemKey, INode>>.Lease();
+            var buffer = MemoryBuffer<KeyValuePair<ItemKey, INode>>.Lease();
             try {
                 node.GetDefinition().GetNodeItems(node, ref buffer);
                 foreach (var (key, value) in buffer)

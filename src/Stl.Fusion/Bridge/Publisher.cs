@@ -6,6 +6,7 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using Stl.Async;
 using Stl.Channels;
+using Stl.Collections;
 using Stl.Fusion.Bridge.Internal;
 using Stl.Fusion.Bridge.Messages;
 using Stl.OS;
@@ -57,8 +58,8 @@ namespace Stl.Fusion.Bridge
         protected ConcurrentDictionary<Symbol, IPublication> PublicationsById { get; }
         protected ConcurrentDictionary<Channel<Message>, PublisherChannelProcessor> ChannelProcessors { get; }
         protected IGenerator<Symbol> PublicationIdGenerator { get; }
-        protected Action<Channel<Message>> OnChannelAttachedHandler { get; } 
-        protected Func<Channel<Message>, ValueTask> OnChannelDetachedAsyncHandler { get; }
+        protected ChannelAttachedHandler<Message> OnChannelAttachedHandler { get; } 
+        protected ChannelDetachedHandler<Message> OnChannelDetachedHandler { get; } 
         protected IPublicationFactory PublicationFactory { get; }
         protected Type PublicationType { get; }
 
@@ -82,8 +83,8 @@ namespace Stl.Fusion.Bridge
             ChannelProcessors = new ConcurrentDictionary<Channel<Message>, PublisherChannelProcessor>(concurrencyLevel, capacity);
 
             OnChannelAttachedHandler = OnChannelAttached;
-            OnChannelDetachedAsyncHandler = OnChannelDetachedAsync;
-            ChannelHub.Detached += OnChannelDetachedAsyncHandler; // Must go first
+            OnChannelDetachedHandler = OnChannelDetachedAsync;
+            ChannelHub.Detached += OnChannelDetachedHandler; // Must go first
             ChannelHub.Attached += OnChannelAttachedHandler;
         }
 
@@ -184,17 +185,18 @@ namespace Stl.Fusion.Bridge
             });
         }
 
-        protected virtual ValueTask OnChannelDetachedAsync(Channel<Message> channel)
+        protected virtual void OnChannelDetachedAsync(
+            Channel<Message> channel, ref Collector<ValueTask> taskCollector)
         {
             if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
-                return ValueTaskEx.CompletedTask;
-            return channelProcessor.DisposeAsync();
+                return;
+            taskCollector.Add(channelProcessor.DisposeAsync());
         }
 
         protected override async ValueTask DisposeInternalAsync(bool disposing)
         {
             ChannelHub.Attached -= OnChannelAttachedHandler; // Must go first
-            ChannelHub.Detached -= OnChannelDetachedAsyncHandler;
+            ChannelHub.Detached -= OnChannelDetachedHandler;
             var channelProcessors = ChannelProcessors;
             while (!channelProcessors.IsEmpty) {
                 var tasks = channelProcessors

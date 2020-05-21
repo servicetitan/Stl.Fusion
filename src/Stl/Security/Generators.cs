@@ -90,7 +90,7 @@ namespace Stl.Security
                 alphabet = Alphabet;
             else if (alphabet.Length < 1)
                 throw new ArgumentOutOfRangeException(nameof(alphabet));
-            var buffer = ListBuffer<byte>.LeaseAndSetCount(length);
+            var buffer = MemoryBuffer<byte>.LeaseAndSetCount(length);
             try {
                 lock (Lock) {
                     Rng.GetBytes(buffer.Span);
