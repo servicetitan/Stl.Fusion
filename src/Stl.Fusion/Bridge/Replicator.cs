@@ -78,18 +78,35 @@ namespace Stl.Fusion.Bridge
             LTagged<Result<T>> initialOutput, bool isConsistent = true, bool requestUpdate = false)
         {
             var spinWait = new SpinWait();
-            IReplica? replica; 
-            while (!Replicas.TryGetValue(publicationId, out replica)) {
-                replica = new Replica<T>(this, publisherId, publicationId, initialOutput, isConsistent, requestUpdate);
-                if (Replicas.TryAdd(publicationId, replica))
-                    TrySubscribe(replica, requestUpdate);
+            IReplica? replica;
+            while (true) {
+                while (!Replicas.TryGetValue(publicationId, out replica)) {
+                    replica = new Replica<T>(this, publisherId, publicationId, initialOutput, isConsistent, requestUpdate);
+                    if (Replicas.TryAdd(publicationId, replica)) {
+                        if (TrySubscribe(replica, requestUpdate))
+                            return (IReplica<T>) replica;
+                        // No subscription = we can't keep it
+                        Replicas.TryRemove(publicationId, replica);
+                    }
+                    spinWait.SpinOnce();
+                }
+                if (ChannelProcessorsById.TryGetValue(replica.PublisherId, out var _))
+                    break;
+                // Missing channel processor = subscription didn't happen,
+                // so we can't return this replica (yet?)
                 spinWait.SpinOnce();
             }
             return (IReplica<T>) replica;
         }
 
-        public virtual IReplica? TryGet(Symbol publicationId) 
-            => Replicas.TryGetValue(publicationId, out var replica) ? replica : null;
+        public virtual IReplica? TryGet(Symbol publicationId)
+        {
+            if (!Replicas.TryGetValue(publicationId, out var replica))
+                return null;
+            if (!ChannelProcessorsById.TryGetValue(replica.PublisherId, out var _))
+                return null;
+            return replica;
+        }
 
         protected virtual void OnChannelAttached(Channel<Message> channel)
         {

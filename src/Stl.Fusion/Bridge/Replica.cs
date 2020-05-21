@@ -23,15 +23,13 @@ namespace Stl.Fusion.Bridge
     public interface IReplica<T> : IReplica
     {
         new IComputedReplica<T> Computed { get; }
-        
-        new Task RequestUpdateAsync(CancellationToken cancellationToken = default);
     }
 
     public interface IReplicaImpl : IReplica, IFunction { }
     public interface IReplicaImpl<T> : IReplica<T>, IFunction<ReplicaInput, T>, IReplicaImpl
     {
         bool ChangeState(IComputedReplica<T> expected, LTagged<Result<T>> output, bool isConsistent);
-        void CompleteUpdateRequest();
+        void CompleteUpdateRequest(Exception? error = null, CancellationToken cancellationToken = default);
     } 
 
     public class Replica<T> : AsyncDisposableBase, IReplicaImpl<T>
@@ -76,7 +74,24 @@ namespace Stl.Fusion.Bridge
                     ref UpdateRequestCompleted, newUpdateRequestCompleted, null!);
                 if (updateRequestCompleted == null) {
                     updateRequestCompleted = newUpdateRequestCompleted;
-                    Input.ReplicatorImpl.TrySubscribe(this, true);
+                    Exception? error = null;
+                    try {
+                        if (!Input.ReplicatorImpl.TrySubscribe(this, true))
+                            error = Fusion.Internal.Errors.CouldNotUpdateReplica();
+                    }
+                    catch (Exception e) {
+                        error = e;
+                    }
+                    if (error != null) {
+                        // We can't use CompleteUpdateRequest here, since it
+                        // completes whatever request is current, but we
+                        // have a specific request to complete.
+                        TaskSource.For(updateRequestCompleted)
+                            .TrySetFromResult(new Result<Unit>(default, error), CancellationToken.None);
+                        Interlocked.CompareExchange(ref UpdateRequestCompleted, null, updateRequestCompleted);
+                        // Cancellation doesn't matter here, since the task is already in error state
+                        return updateRequestCompleted; 
+                    }
                 }
             }
             return updateRequestCompleted.WithFakeCancellation(cancellationToken);
@@ -97,13 +112,14 @@ namespace Stl.Fusion.Bridge
             return true;
         }
 
-        void IReplicaImpl<T>.CompleteUpdateRequest() 
-            => CompleteUpdateRequest();
-        protected virtual void CompleteUpdateRequest()
+        void IReplicaImpl<T>.CompleteUpdateRequest(Exception? error, CancellationToken cancellationToken)
+            => CompleteUpdateRequest(error, cancellationToken);
+        protected virtual void CompleteUpdateRequest(Exception? error = null, CancellationToken cancellationToken = default)
         {
             var updateRequestCompleted = Interlocked.Exchange(ref UpdateRequestCompleted, null);
             if (updateRequestCompleted != null)
-                TaskSource.For(updateRequestCompleted).TrySetResult(default);
+                TaskSource.For(updateRequestCompleted)
+                    .TrySetFromResult(new Result<Unit>(default, error), cancellationToken);
         }
 
         protected virtual TaskSource<Unit> CreateUpdateRequestCompletedSource() 

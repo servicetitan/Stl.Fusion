@@ -8,7 +8,7 @@ namespace Stl.Samples.Blazor.Common.Services
 {
     public interface ITimeProvider
     {
-        Task<DateTime> GetTimeAsync(int invalidateIn = 1000);
+        Task<DateTime> GetTimeAsync();
     }
 
     public class TimeProvider : ITimeProvider
@@ -18,12 +18,12 @@ namespace Stl.Samples.Blazor.Common.Services
         public TimeProvider(ILogger<TimeProvider>? log = null) 
             => _log = log ??= NullLogger<TimeProvider>.Instance;
 
-        public virtual Task<DateTime> GetTimeAsync(int invalidateIn)
+        public virtual Task<DateTime> GetTimeAsync()
         {
             var cResult = Computed.GetCurrent();
             Task.Run(async () => {
                 // This method is fancy: it self-invalidates its own result
-                await Task.Delay(invalidateIn).ConfigureAwait(false);
+                await Task.Delay(100).ConfigureAwait(false);
                 cResult!.Invalidate();
             });
             return Task.FromResult(DateTime.Now);

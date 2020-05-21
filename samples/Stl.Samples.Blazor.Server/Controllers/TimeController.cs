@@ -26,7 +26,7 @@ namespace Stl.Samples.Blazor.Server.Controllers
         public async Task<ActionResult<PublicationPublishedMessage>> GetTime()
         {
             var publication = await Computed
-                .PublishAsync(Publisher, () => TimeProvider.GetTimeAsync(100))
+                .PublishAsync(Publisher, () => TimeProvider.GetTimeAsync())
                 .ConfigureAwait(false);
 
             // As you see, the value isn't even sent.

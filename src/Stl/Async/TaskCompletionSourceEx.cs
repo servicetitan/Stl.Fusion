@@ -5,6 +5,8 @@ namespace Stl.Async
 {
     public static class TaskCompletionSourceEx
     {
+        // (Try)SetFromTask
+
         public static void SetFromTask<T>(this TaskCompletionSource<T> target, Task<T> source)
         {
             if (source.IsCanceled)
@@ -23,6 +25,28 @@ namespace Stl.Async
                 target.TrySetException(source.Exception);
             else
                 target.TrySetResult(source.Result);
+        }
+
+        // (Try)SetFromResult
+
+        public static void SetFromResult<T>(this TaskCompletionSource<T> target, Result<T> source, CancellationToken cancellationToken)
+        {
+            if (cancellationToken.IsCancellationRequested)
+                target.SetCanceled();
+            else if (source.Error != null)
+                target.SetException(source.Error);
+            else
+                target.SetResult(source.Value);
+        }
+
+        public static void TrySetFromResult<T>(this TaskCompletionSource<T> target, Result<T> source, CancellationToken cancellationToken)
+        {
+            if (cancellationToken.IsCancellationRequested)
+                target.TrySetCanceled();
+            else if (source.Error != null)
+                target.TrySetException(source.Error);
+            else
+                target.TrySetResult(source.Value);
         }
 
         // WithCancellation
