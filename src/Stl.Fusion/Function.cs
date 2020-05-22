@@ -44,11 +44,11 @@ namespace Stl.Fusion
         protected IAsyncLockSet<ComputedInput> Locks { get; }
         protected object Lock => Locks;
 
-        public FunctionBase(
+        protected FunctionBase(
             IComputedRegistry computedRegistry,
             IComputeRetryPolicy? retryPolicy = null)
         {
-            retryPolicy ??= Fusion.ComputeRetryPolicy.Default;
+            retryPolicy ??= ComputeRetryPolicy.Default;
             ComputedRegistry = computedRegistry;
             RetryPolicy = retryPolicy; 
             Locks = computedRegistry.GetLocksFor(this);

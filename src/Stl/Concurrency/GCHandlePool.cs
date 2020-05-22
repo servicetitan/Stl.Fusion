@@ -38,6 +38,8 @@ namespace Stl.Concurrency
             GC.SuppressFinalize(this);
         }
 
+        public GCHandle Acquire(object? target)
+            => Acquire(target, Thread.CurrentThread.ManagedThreadId);
         public GCHandle Acquire(object? target, int random)
         {
             if (_handles.TryTake(out var handle)) {
@@ -51,6 +53,8 @@ namespace Stl.Concurrency
             return GCHandle.Alloc(target, HandleType);
         }
 
+        public bool Release(GCHandle handle)
+            => Release(handle, Thread.CurrentThread.ManagedThreadId);
         public bool Release(GCHandle handle, int random)
         {
             if (_counter.ApproximateValue >= Capacity) {

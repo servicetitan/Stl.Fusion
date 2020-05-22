@@ -117,7 +117,7 @@ namespace Stl.Fusion.Bridge
                 return;
             while (!ChannelProcessorsById.TryAdd(publisherId, channelProcessor)) {
                 if (ChannelProcessorsById.TryRemove(publisherId, out var oldChannelProcessor)) {
-                    // We intend to just start the task here
+                    // We intend to just start the disposal here
                     oldChannelProcessor.DisposeAsync();  
                 }
             }

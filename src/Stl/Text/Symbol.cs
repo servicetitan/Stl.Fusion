@@ -13,8 +13,8 @@ namespace Stl.Text
     {
         public static readonly Symbol Empty = new Symbol("");
 
-        internal int HashCode { get; }
-        public string Value { get; }
+        public readonly string Value;
+        public readonly int HashCode;
 
         public Symbol(string value)
         {

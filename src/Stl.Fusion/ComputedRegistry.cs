@@ -15,7 +15,7 @@ namespace Stl.Fusion
     {
         IComputed? TryGet(ComputedInput key);
         void Store(IComputed value);
-        void Remove(IComputed value);
+        bool Remove(IComputed value);
         IAsyncLockSet<ComputedInput> GetLocksFor(IFunction function);
     }
 
@@ -103,20 +103,23 @@ namespace Stl.Fusion
                 (This: this, Value: value, Random: random));
         }
 
-        public void Remove(IComputed value)
+        public bool Remove(IComputed value)
         {
             var key = value.Input;
             var random = key.HashCode + IntMoment.Clock.EpochOffsetUnits;
             OnOperation(random);
             if (!_storage.TryGetValue(key, out var entry))
-                return;
+                return false;
             var target = entry.Handle.Target;
-            if (target == null || ReferenceEquals(target, value)) {
-                // gcHandle.Target == null (is gone, i.e. to be pruned)
-                // or pointing to the right computation object
-                if (_storage.TryRemove(key, entry))
-                    _gcHandlePool.Release(entry.Handle, random);
-            }
+            if (target != null && !ReferenceEquals(target, value))
+                return false;
+            // gcHandle.Target == null (is gone, i.e. to be pruned)
+            // or pointing to the right computation object
+            if (!_storage.TryRemove(key, entry))
+                // If another thread removed the entry, it also released the handle
+                return false;
+            _gcHandlePool.Release(entry.Handle, random);
+            return true;
         }
 
         public IAsyncLockSet<ComputedInput> GetLocksFor(IFunction function) 
@@ -150,7 +153,10 @@ namespace Stl.Fusion
             var now = IntMoment.Clock.EpochOffsetUnits;
             foreach (var (key, entry) in _storage) {
                 if (!entry.Handle.IsAllocated) {
-                    _storage.TryRemove(key, entry);
+                    if (_storage.TryRemove(key, entry)) {
+                        var random = key.HashCode + now;
+                        _gcHandlePool.Release(entry.Handle, random);
+                    }
                     continue;
                 }
                 var computed = entry.Computed;
@@ -184,7 +190,6 @@ namespace Stl.Fusion
         {
             public readonly IComputed? Computed;
             public readonly GCHandle Handle;
-            public IComputed? AnyComputed => Computed ?? (IComputed?) Handle.Target;
 
             public Entry(IComputed? computed, GCHandle handle)
             {
