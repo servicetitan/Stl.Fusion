@@ -18,10 +18,8 @@ namespace Stl.Tests.Fusion
         [Fact]
         public async Task BasicTest()
         {
+            await using var serving = await WebSocketServer.ServeAsync();
             var sp = Container.Resolve<ISimplestProvider>();
-            var cp = CreateChannelPair("channel");
-            Publisher.ChannelHub.Attach(cp.Channel1).Should().BeTrue();
-            Replicator.ChannelHub.Attach(cp.Channel2.WithId(Publisher.Id)).Should().BeTrue();
 
             sp.SetValue("");
             var p1 = await Computed.PublishAsync(Publisher, () => sp.GetValueAsync());
@@ -49,10 +47,8 @@ namespace Stl.Tests.Fusion
         [Fact]
         public async Task TimerTest()
         {
+            await using var serving = await WebSocketServer.ServeAsync();
             var tp = Container.Resolve<ITimeProvider>();
-            var cp = CreateChannelPair("channel");
-            Publisher.ChannelHub.Attach(cp.Channel1).Should().BeTrue();
-            Replicator.ChannelHub.Attach(cp.Channel2.WithId(Publisher.Id)).Should().BeTrue();
 
             var pub = await Computed.PublishAsync(Publisher, () => tp.GetTimeAsync());
             var rep = Replicator.GetOrAdd<DateTime>(pub!.Publisher.Id, pub.Id);

@@ -43,7 +43,7 @@ namespace Stl.Tests.Fusion
             await Task.WhenAll(tasks);
         }
 
-        [Fact, Category("Performance")]
+        [Fact(Skip = "Performance")]
         public async Task ComputedPerformanceTest()
         {
             if (TestRunnerInfo.IsBuildAgent())
@@ -159,6 +159,7 @@ namespace Stl.Tests.Fusion
         }
     }
 
+    [Category(nameof(TimeSensitiveTests))]
     public class PerformanceTest_Sqlite : PerformanceTestBase
     {
         public PerformanceTest_Sqlite(ITestOutputHelper @out) 
@@ -166,6 +167,7 @@ namespace Stl.Tests.Fusion
         { }
     }
 
+    [Category(nameof(TimeSensitiveTests))]
     public class PerformanceTest_InMemoryDb : PerformanceTestBase
     {
         public PerformanceTest_InMemoryDb(ITestOutputHelper @out) 

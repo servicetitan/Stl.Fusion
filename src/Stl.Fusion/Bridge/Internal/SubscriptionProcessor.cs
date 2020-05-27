@@ -2,6 +2,8 @@ using System;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Async;
 using Stl.Fusion.Bridge.Messages;
 using Stl.Locking;
@@ -10,6 +12,7 @@ namespace Stl.Fusion.Bridge.Internal
 {
     public abstract class SubscriptionProcessor : AsyncProcessBase
     {
+        protected readonly ILogger Log;
         protected long MessageIndex = 1;
         protected AsyncLock AsyncLock;
 
@@ -19,8 +22,10 @@ namespace Stl.Fusion.Bridge.Internal
         public readonly SubscribeMessage SubscribeMessage;
 
         protected SubscriptionProcessor(
-            IPublicationImpl publication, Channel<Message> channel, SubscribeMessage subscribeMessage)
+            IPublicationImpl publication, Channel<Message> channel, SubscribeMessage subscribeMessage, 
+            ILogger? log = null)
         {
+            Log = log ?? NullLogger.Instance;
             Publication = publication;
             Channel = channel;
             SubscribeMessage = subscribeMessage;

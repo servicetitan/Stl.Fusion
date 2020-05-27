@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Async;
 using Stl.Fusion.Bridge.Messages;
 using Stl.OS;
@@ -13,14 +15,17 @@ namespace Stl.Fusion.Bridge.Internal
 {
     public class PublisherChannelProcessor : AsyncProcessBase
     {
-        public readonly IPublisher Publisher;
-        public readonly IPublisherImpl PublisherImpl;
-        public readonly Channel<Message> Channel;
-        public readonly ConcurrentDictionary<Symbol, SubscriptionProcessor> Subscriptions;
+        protected readonly ILogger Log;
+        protected readonly IPublisherImpl PublisherImpl;
+        protected readonly ConcurrentDictionary<Symbol, SubscriptionProcessor> Subscriptions;
         protected object Lock => Subscriptions;  
 
-        public PublisherChannelProcessor(IPublisher publisher, Channel<Message> channel)
+        public readonly IPublisher Publisher;
+        public readonly Channel<Message> Channel;
+
+        public PublisherChannelProcessor(IPublisher publisher, Channel<Message> channel, ILogger? log = null)
         {
+            Log = log ?? NullLogger.Instance;
             Publisher = publisher;
             PublisherImpl = (IPublisherImpl) publisher;
             Channel = channel;
@@ -45,8 +50,9 @@ namespace Stl.Fusion.Bridge.Internal
             }
         }
 
-        protected virtual Task OnMessageAsync(Message message, CancellationToken cancellationToken)
+        protected virtual async ValueTask OnMessageAsync(Message message, CancellationToken cancellationToken)
         {
+            var isProcessed = false;
             switch (message) {
             case SubscribeMessage sm:
                 if (sm.PublisherId != Publisher.Id)
@@ -54,7 +60,10 @@ namespace Stl.Fusion.Bridge.Internal
                 var publication = Publisher.TryGet(sm.PublicationId);
                 if (publication == null)
                     break;
-                PublisherImpl.SubscribeAsync(Channel, publication, sm, cancellationToken);
+                await PublisherImpl
+                    .SubscribeAsync(Channel, publication, sm, cancellationToken)
+                    .ConfigureAwait(false);
+                isProcessed = true;
                 break;
             case UnsubscribeMessage um:
                 if (um.PublisherId != Publisher.Id)
@@ -62,10 +71,21 @@ namespace Stl.Fusion.Bridge.Internal
                 publication = Publisher.TryGet(um.PublicationId);
                 if (publication == null)
                     break;
-                var _ = PublisherImpl.UnsubscribeAsync(Channel, publication, cancellationToken);
+                await PublisherImpl
+                    .UnsubscribeAsync(Channel, publication, cancellationToken)
+                    .ConfigureAwait(false);
+                isProcessed = true;
                 break;
             }
-            return Task.CompletedTask;
+            if (!isProcessed && message is PublicationMessage pm) {
+                var response = new PublicationAbsentsMessage() {
+                    PublisherId = pm.PublisherId,
+                    PublicationId = pm.PublicationId,
+                };
+                await Channel.Writer
+                    .WriteAsync(response, cancellationToken)
+                    .ConfigureAwait(false);
+            }
         }
 
         public virtual async ValueTask<bool> SubscribeAsync(

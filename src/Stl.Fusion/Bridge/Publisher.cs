@@ -58,10 +58,10 @@ namespace Stl.Fusion.Bridge
         protected ConcurrentDictionary<Symbol, IPublication> PublicationsById { get; }
         protected ConcurrentDictionary<Channel<Message>, PublisherChannelProcessor> ChannelProcessors { get; }
         protected IGenerator<Symbol> PublicationIdGenerator { get; }
-        protected ChannelAttachedHandler<Message> OnChannelAttachedHandler { get; } 
-        protected ChannelDetachedHandler<Message> OnChannelDetachedHandler { get; } 
         protected IPublicationFactory PublicationFactory { get; }
         protected Type PublicationType { get; }
+        protected ChannelAttachedHandler<Message> OnChannelAttachedHandler { get; } 
+        protected ChannelDetachedHandler<Message> OnChannelDetachedHandler { get; } 
 
         public Symbol Id { get; }
         public IChannelHub<Message> ChannelHub { get; }

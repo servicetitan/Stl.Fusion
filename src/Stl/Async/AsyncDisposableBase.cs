@@ -60,6 +60,7 @@ namespace Stl.Async
                 await oldDisposeCompleted.ConfigureAwait(false);
                 return;
             }
+            GC.SuppressFinalize(this);
             try {
                 await DisposeInternalAsync(disposing).ConfigureAwait(false);
             }

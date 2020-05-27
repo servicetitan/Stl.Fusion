@@ -15,7 +15,7 @@ namespace Stl.Fusion.Bridge
     public interface IReplicaRegistry
     {
         IReplica? TryGet(Symbol publicationId);
-        IReplica GetOrAdd(Symbol publicationId, IReplica replica);
+        IReplica GetOrAdd(IReplica replica);
         bool Remove(IReplica replica);
     }
 
@@ -25,12 +25,12 @@ namespace Stl.Fusion.Bridge
         public static int DefaultConcurrencyLevel => HardwareInfo.ProcessorCount;
         public static readonly IReplicaRegistry Default = new ReplicaRegistry();
 
-        private readonly ConcurrentDictionary<Symbol, GCHandle> _storage;
+        private readonly ConcurrentDictionary<Symbol, GCHandle> _handles;
         private readonly GCHandlePool _gcHandlePool;
         private readonly StochasticCounter _opCounter;
         private volatile int _pruneCounterThreshold;
         private Task? _pruneTask = null;
-        private object Lock => _storage; 
+        private object Lock => _handles; 
 
         public ReplicaRegistry() 
             : this(DefaultConcurrencyLevel, DefaultInitialCapacity) { }
@@ -46,7 +46,7 @@ namespace Stl.Fusion.Bridge
 
             _gcHandlePool = gcHandlePool;
             _opCounter = new StochasticCounter();
-            _storage = new ConcurrentDictionary<Symbol, GCHandle>(concurrencyLevel, initialCapacity);
+            _handles = new ConcurrentDictionary<Symbol, GCHandle>(concurrencyLevel, initialCapacity);
             UpdatePruneCounterThreshold(); 
         }
 
@@ -57,33 +57,37 @@ namespace Stl.Fusion.Bridge
         {
             var random = publicationId.HashCode + IntMoment.Clock.EpochOffsetUnits;
             OnOperation(random);
-            if (!_storage.TryGetValue(publicationId, out var gcHandle))
+            if (!_handles.TryGetValue(publicationId, out var handle))
                 return null;
-            var target = (IReplica?) gcHandle.Target;
+            var target = (IReplica?) handle.Target;
             if (target != null)
                 return target;
             // GCHandle target == null => we have to recycle it 
-            if (!_storage.TryRemove(publicationId, gcHandle))
+            if (!_handles.TryRemove(publicationId, handle))
                 // Some other thread already removed this entry
                 return null;
             // The thread that succeeds in removal releases gcHandle as well
-            _gcHandlePool.Release(gcHandle, random);
+            _gcHandlePool.Release(handle, random);
             return null;
         }
 
-        public IReplica GetOrAdd(Symbol publicationId, IReplica replica)
+        public IReplica GetOrAdd(IReplica replica)
         {
+            var publicationId = replica.PublicationId;
+            var publisherId = replica.PublisherId;
             var random = publicationId.HashCode + IntMoment.Clock.EpochOffsetUnits;
             OnOperation(random);
             var spinWait = new SpinWait();
-            var gcHandle = default(GCHandle);
+            var handle = default(GCHandle);
             while (true) {
                 var oldReplica = TryGet(publicationId);
-                if (oldReplica != null)
+                if (oldReplica != null) {
+                    _gcHandlePool.Release(handle);
                     return oldReplica;
-                if (gcHandle != default)
-                    gcHandle = _gcHandlePool.Acquire(replica, random);
-                if (_storage.TryAdd(publicationId, gcHandle))
+                }
+                if (!handle.IsAllocated)
+                    handle = _gcHandlePool.Acquire(replica, random);
+                if (_handles.TryAdd(publicationId, handle))
                     return replica;
                 spinWait.SpinOnce();
             }
@@ -92,19 +96,20 @@ namespace Stl.Fusion.Bridge
         public bool Remove(IReplica replica)
         {
             var publicationId = replica.PublicationId;
+            var publisherId = replica.PublisherId;
             var random = publicationId.HashCode + IntMoment.Clock.EpochOffsetUnits;
             OnOperation(random);
-            if (!_storage.TryGetValue(publicationId, out var gcHandle))
+            if (!_handles.TryGetValue(publicationId, out var handle))
                 return false;
-            var target = gcHandle.Target;
+            var target = handle.Target;
             if (target != null && !ReferenceEquals(target, replica))
                 // GCHandle target is pointing to another replica
                 return false;
-            if (!_storage.TryRemove(publicationId, gcHandle))
+            if (!_handles.TryRemove(publicationId, handle))
                 // Some other thread already removed this entry
                 return false;
             // The thread that succeeds in removal releases gcHandle as well
-            _gcHandlePool.Release(gcHandle, random);
+            _gcHandlePool.Release(handle, random);
             return true;
         }
 
@@ -115,7 +120,7 @@ namespace Stl.Fusion.Bridge
             lock (Lock) {
                 // Should be called inside Lock
                 var currentThreshold = (long) _pruneCounterThreshold;
-                var capacity = (long) _storage.GetCapacity();
+                var capacity = (long) _handles.GetCapacity();
                 var nextThreshold = (int) Math.Min(int.MaxValue >> 1, Math.Max(capacity << 1, currentThreshold << 1));
                 _pruneCounterThreshold = nextThreshold;
             }
@@ -145,10 +150,10 @@ namespace Stl.Fusion.Bridge
         private void Prune()
         {
             var now = IntMoment.Clock.EpochOffsetUnits;
-            foreach (var (key, gcHandle) in _storage) {
-                if (gcHandle.IsAllocated)
+            foreach (var (key, gcHandle) in _handles) {
+                if (gcHandle.Target != null)
                     continue;
-                if (!_storage.TryRemove(key, gcHandle))
+                if (!_handles.TryRemove(key, gcHandle))
                     continue;
                 var random = key.HashCode + now;
                 _gcHandlePool.Release(gcHandle, random);

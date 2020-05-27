@@ -1,44 +1,32 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Stl.Extensibility;
-using Stl.Hosting;
 
 namespace Stl.Fusion.Client
 {
     public static class ServiceCollectionEx
     {
-        public static IServiceCollection AddFusionWebSocketClient(
+        public static IServiceCollection AddFusionWebSocketChannelProvider(
             this IServiceCollection services, 
-            WebSocketClient.Options options, 
+            WebSocketChannelProvider.Options options, 
             bool addTransient = false)
         {
             services.TryAddSingleton(options);
-            if (!services.HasService<WebSocketClient>()) {
-                if (addTransient)
-                    services.AddTransient<WebSocketClient>();
-                else
-                    services.AddAsyncProcessSingleton<WebSocketClient>();
-            }
+            services.TryAddSingleton<IChannelProvider, WebSocketChannelProvider>();
             return services;
         }
 
-        public static IServiceCollection AddFusionWebSocketClient(
+        public static IServiceCollection AddFusionWebSocketChannelProvider(
             this IServiceCollection services, 
-            Action<IServiceProvider, WebSocketClient.Options>? optionsBuilder = null, 
+            Action<IServiceProvider, WebSocketChannelProvider.Options>? optionsBuilder = null, 
             bool addTransient = false)
         {
             services.TryAddSingleton(c => {
-                var options = new WebSocketClient.Options();
+                var options = new WebSocketChannelProvider.Options();
                 optionsBuilder?.Invoke(c, options);
                 return options;
             });
-            if (!services.HasService<WebSocketClient>()) {
-                if (addTransient)
-                    services.AddTransient<WebSocketClient>();
-                else
-                    services.AddAsyncProcessSingleton<WebSocketClient>();
-            }
+            services.TryAddSingleton<IChannelProvider, WebSocketChannelProvider>();
             return services;
         }        
     }

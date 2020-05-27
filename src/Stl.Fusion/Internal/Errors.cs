@@ -28,10 +28,10 @@ namespace Stl.Fusion.Internal
 
         public static Exception ReplicaHasNeverBeenUpdated()
             => new InvalidOperationException("The Replica has never been updated.");
-        public static Exception CouldNotUpdateReplica()
-            => new InvalidOperationException("Couldn't update Replica: the channel to its Publisher is likely down.");
 
-        public static Exception NoChannelToPublisher()
-            => new InvalidOperationException("There is no channel to Replica's Publisher.");
+        public static Exception PublicationAbsents()
+            => new InvalidOperationException("The Publication absents on the server.");
+        public static Exception PublicationDisposed()
+            => new InvalidOperationException("The Publication was disposed.");
     }
 }

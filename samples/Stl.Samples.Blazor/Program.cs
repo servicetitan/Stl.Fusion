@@ -46,9 +46,8 @@ namespace Stl.Samples.Blazor
 
             services.AddLogging(logging => logging.AddDebug());
             services.AddFusion();
-            services.AddFusionWebSocketClient((c, o) => {
+            services.AddFusionWebSocketChannelProvider((c, o) => {
                 o.BaseUri = baseUri;
-                o.PublisherId = Settings.PublisherId;
             });
             services.AddTransient(c => new HttpClient { BaseAddress = baseUri });
         }

@@ -9,7 +9,7 @@ namespace Stl.Concurrency
     {
         public static readonly int DefaultCapacity = 1024;
 
-        private readonly ConcurrentBag<GCHandle> _handles;
+        private readonly ConcurrentQueue<GCHandle> _queue;
         private readonly StochasticCounter _counter;
         private volatile int _capacity;
 
@@ -24,25 +24,25 @@ namespace Stl.Concurrency
         public GCHandlePool(GCHandleType handleType, int capacity, 
             int counterApproximationFactor = StochasticCounter.DefaultApproximationFactor)
         {
-            _handles = new ConcurrentBag<GCHandle>();
+            _queue = new ConcurrentQueue<GCHandle>();
             _counter = new StochasticCounter(counterApproximationFactor);
             HandleType = handleType;
             Capacity = capacity;
         }
 
-        ~GCHandlePool() => Clear();
+        ~GCHandlePool() => Dispose();
 
         public void Dispose()
         {
-            Clear();
             GC.SuppressFinalize(this);
+            Clear();
         }
 
         public GCHandle Acquire(object? target)
             => Acquire(target, Thread.CurrentThread.ManagedThreadId);
         public GCHandle Acquire(object? target, int random)
         {
-            if (_handles.TryTake(out var handle)) {
+            if (_queue.TryDequeue(out var handle)) {
                 if (random == 0)
                     random = handle.GetHashCode();
                 _counter.Decrement(random, out var _);
@@ -66,16 +66,16 @@ namespace Stl.Concurrency
             if (random == 0)
                 random = handle.GetHashCode();
             handle.Target = null;
-            _handles.Add(handle);
+            _queue.Enqueue(handle);
             _counter.Increment(random, out var _);
             return true;
         }
 
         public void Clear()
         {
-            while (_handles.TryTake(out var handle))
+            while (_queue.TryDequeue(out var handle))
                 handle.Free();
-            _counter.ApproximateValue = _handles.Count;
+            _counter.ApproximateValue = _queue.Count;
         }
     }
 }

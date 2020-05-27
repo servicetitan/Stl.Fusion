@@ -70,14 +70,16 @@ namespace Stl.Fusion
                     value.Touch();
                     return value;
                 }
-                value = (IComputed?) entry.Handle.Target;
+
+                var handle = entry.Handle;
+                value = (IComputed?) handle.Target;
                 if (value != null) {                        
                     value.Touch();
-                    _storage.TryUpdate(key, new Entry(value, entry.Handle), entry);
+                    _storage.TryUpdate(key, new Entry(value, handle), entry);
                     return value;
                 }
                 if (_storage.TryRemove(key, entry))
-                    _gcHandlePool.Release(entry.Handle, random);
+                    _gcHandlePool.Release(handle, random);
             }
             // Debug.WriteLine($"Cache miss: {key}");
             return null;
@@ -110,7 +112,8 @@ namespace Stl.Fusion
             OnOperation(random);
             if (!_storage.TryGetValue(key, out var entry))
                 return false;
-            var target = entry.Handle.Target;
+            var handle = entry.Handle;
+            var target = handle.Target;
             if (target != null && !ReferenceEquals(target, value))
                 return false;
             // gcHandle.Target == null (is gone, i.e. to be pruned)
@@ -118,7 +121,7 @@ namespace Stl.Fusion
             if (!_storage.TryRemove(key, entry))
                 // If another thread removed the entry, it also released the handle
                 return false;
-            _gcHandlePool.Release(entry.Handle, random);
+            _gcHandlePool.Release(handle, random);
             return true;
         }
 
@@ -152,10 +155,11 @@ namespace Stl.Fusion
         {
             var now = IntMoment.Clock.EpochOffsetUnits;
             foreach (var (key, entry) in _storage) {
-                if (!entry.Handle.IsAllocated) {
+                var handle = entry.Handle;
+                if (handle.Target == null) {
                     if (_storage.TryRemove(key, entry)) {
                         var random = key.HashCode + now;
-                        _gcHandlePool.Release(entry.Handle, random);
+                        _gcHandlePool.Release(handle, random);
                     }
                     continue;
                 }
@@ -165,7 +169,7 @@ namespace Stl.Fusion
                 var expirationTime = computed.LastAccessTime.EpochOffsetUnits + computed.KeepAliveTime;
                 if (expirationTime >= now)
                     continue;
-                _storage.TryUpdate(key, new Entry(null, entry.Handle), entry);
+                _storage.TryUpdate(key, new Entry(null, handle), entry);
             }
 
             lock (Lock) {
