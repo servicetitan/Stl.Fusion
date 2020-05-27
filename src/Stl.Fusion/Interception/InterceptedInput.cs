@@ -85,9 +85,11 @@ namespace Stl.Fusion.Interception
             }
             return true;
         }
-        public override bool Equals(ComputedInput obj) => obj is InterceptedInput other && Equals(other);
-        public override bool Equals(object? obj) => obj is InterceptedInput other && Equals(other);
-        // ReSharper disable once NonReadonlyMemberInGetHashCode
-        public override int GetHashCode() => HashCode;
+        public override bool Equals(ComputedInput obj) 
+            => obj is InterceptedInput other && Equals(other);
+#pragma warning disable 659
+        public override bool Equals(object? obj) 
+            => obj is InterceptedInput other && Equals(other);
+#pragma warning restore 659
     }
 }

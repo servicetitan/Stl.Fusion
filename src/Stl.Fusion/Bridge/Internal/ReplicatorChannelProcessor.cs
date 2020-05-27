@@ -92,7 +92,7 @@ namespace Stl.Fusion.Bridge.Internal
                         var ct = cancellationToken.IsCancellationRequested ? cancellationToken : default;
                         foreach (var publicationId in subscriptions) {
                             var replicaImpl = (IReplicaImpl?) Replicator.TryGet(publicationId);
-                            replicaImpl?.ApplyFailedUpdate(null, e, ct);
+                            replicaImpl?.ApplyFailedUpdate(e, ct);
                         }
 
                         await Task.Delay(ReplicatorImpl.ReconnectDelay, cancellationToken).ConfigureAwait(false);
@@ -180,13 +180,9 @@ namespace Stl.Fusion.Bridge.Internal
             case PublicationStateChangedMessage scm:
                 // Fast dispatch to OnUpdatedMessageAsync<T> 
                 return OnStateChangeMessageAsyncHandlers[scm.GetResultType()].Handle(scm, (this, cancellationToken));
-            case PublicationDisposedMessage dm:
-                var replica = (IReplicaImpl?) Replicator.TryGet(dm.PublicationId);
-                replica?.ApplyFailedUpdate(null, Errors.PublicationDisposed(), default);
-                break;
             case PublicationAbsentsMessage pam:
-                replica = (IReplicaImpl?) Replicator.TryGet(pam.PublicationId);
-                replica?.ApplyFailedUpdate(null, Errors.PublicationAbsents(), default);
+                var replica = (IReplicaImpl?) Replicator.TryGet(pam.PublicationId);
+                replica?.ApplyFailedUpdate(Errors.PublicationAbsents(), default);
                 break;
             }
             return Task.CompletedTask;
@@ -210,7 +206,7 @@ namespace Stl.Fusion.Bridge.Internal
                 // Weird case: somehow replica is of different type
                 return Task.CompletedTask; 
 
-            replicaImpl.ApplySuccessfulUpdate(null, lTaggedOutput, message.NewIsConsistent);
+            replicaImpl.ApplySuccessfulUpdate(lTaggedOutput, message.NewIsConsistent);
             return Task.CompletedTask;
         }
         

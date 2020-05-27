@@ -30,13 +30,9 @@ namespace Stl.Fusion.Bridge.Internal
             => !ReferenceEquals(null, other) && PublicationId == other.PublicationId;
         public override bool Equals(ComputedInput other)
             => other is ReplicaInput ri && PublicationId == ri.PublicationId;
+#pragma warning disable 659
         public override bool Equals(object? obj) 
             => Equals(obj as ReplicaInput);
-        public override int GetHashCode() 
-            => PublicationId.GetHashCode();
-        public static bool operator ==(ReplicaInput? left, ReplicaInput? right) 
-            => Equals(left, right);
-        public static bool operator !=(ReplicaInput? left, ReplicaInput? right) 
-            => !Equals(left, right);
+#pragma warning restore 659
     }
 }

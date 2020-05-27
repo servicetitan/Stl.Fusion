@@ -28,12 +28,12 @@ namespace Stl.Fusion.Bridge
 
     public interface IReplicaImpl : IReplica, IFunction
     {
-        bool ApplyFailedUpdate(IComputedReplica? expected, Exception? error, CancellationToken cancellationToken);
+        bool ApplyFailedUpdate(Exception? error, CancellationToken cancellationToken);
     }
 
     public interface IReplicaImpl<T> : IReplica<T>, IFunction<ReplicaInput, T>, IReplicaImpl
     {
-        bool ApplySuccessfulUpdate(IComputedReplica<T>? expected, LTagged<Result<T>> output, bool isConsistent);
+        bool ApplySuccessfulUpdate(LTagged<Result<T>> output, bool isConsistent);
     } 
 
     public class Replica<T> : AsyncDisposableBase, IReplicaImpl<T>
@@ -60,7 +60,7 @@ namespace Stl.Fusion.Bridge
             Replicator = replicator;
             Input = new ReplicaInput(this, publisherId, publicationId);
             // ReSharper disable once VirtualMemberCallInConstructor
-            ApplySuccessfulUpdate(null, initialOutput, isConsistent);
+            ApplySuccessfulUpdate(initialOutput, isConsistent);
             if (isUpdateRequested)
                 // ReSharper disable once VirtualMemberCallInConstructor
                 UpdateRequestTask = CreateUpdateRequestTaskSource().Task;
@@ -98,21 +98,17 @@ namespace Stl.Fusion.Bridge
             }
         }
 
-        bool IReplicaImpl<T>.ApplySuccessfulUpdate(IComputedReplica<T>? expected, LTagged<Result<T>> output, bool isConsistent) 
-            => ApplySuccessfulUpdate(expected, output, isConsistent);
-        protected virtual bool ApplySuccessfulUpdate(IComputedReplica<T>? expected, LTagged<Result<T>> output, bool isConsistent)
+        bool IReplicaImpl<T>.ApplySuccessfulUpdate(LTagged<Result<T>> output, bool isConsistent) 
+            => ApplySuccessfulUpdate(output, isConsistent);
+        protected virtual bool ApplySuccessfulUpdate(LTagged<Result<T>> output, bool isConsistent)
         {
             IComputedReplica<T> computed;
             Task<Unit>? updateRequestTask;
             var mustInvalidate = false;
             lock (Lock) {
-                // 0. Check version
-                computed = ComputedField;
-                if (expected != null && computed != expected)
-                    return false;
-
                 // 1. Update Computed & LastUpdateError 
                 LastUpdateErrorField = null;
+                computed = ComputedField;
                 if (computed == null || computed.LTag != output.LTag)
                     ComputedField = new ComputedReplica<T>(Input, output.Value, output.LTag, isConsistent);
                 else if (computed.IsConsistent != isConsistent) {
@@ -135,19 +131,15 @@ namespace Stl.Fusion.Bridge
             return true;
         }
 
-        bool IReplicaImpl.ApplyFailedUpdate(IComputedReplica? expected, Exception? error, CancellationToken cancellationToken)
-            => ApplyFailedUpdate(expected, error, cancellationToken);
-        protected virtual bool ApplyFailedUpdate(IComputedReplica? expected, Exception? error, CancellationToken cancellationToken)
+        bool IReplicaImpl.ApplyFailedUpdate(Exception? error, CancellationToken cancellationToken)
+            => ApplyFailedUpdate(error, cancellationToken);
+        protected virtual bool ApplyFailedUpdate(Exception? error, CancellationToken cancellationToken)
         {
             IComputedReplica<T>? computed;
             Task<Unit>? updateRequestTask;
             lock (Lock) {
-                // 0. Check version
-                computed = ComputedField;
-                if (expected != null && computed != expected)
-                    return false;
-
                 // 1. Update Computed & LastUpdateError 
+                computed = ComputedField;
                 LastUpdateErrorField = error;
 
                 // 2. Complete UpdateRequestTask

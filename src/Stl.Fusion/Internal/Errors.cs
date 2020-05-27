@@ -31,7 +31,5 @@ namespace Stl.Fusion.Internal
 
         public static Exception PublicationAbsents()
             => new InvalidOperationException("The Publication absents on the server.");
-        public static Exception PublicationDisposed()
-            => new InvalidOperationException("The Publication was disposed.");
     }
 }

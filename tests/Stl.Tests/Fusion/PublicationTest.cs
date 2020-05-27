@@ -58,7 +58,7 @@ namespace Stl.Tests.Fusion
 
             await p1.DisposeAsync();
             m = await cReader.AssertReadAsync();
-            m.Should().BeOfType<PublicationDisposedMessage>();
+            m.Should().BeOfType<PublicationAbsentsMessage>();
         }
     }
 }
