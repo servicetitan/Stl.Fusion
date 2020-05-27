@@ -5,14 +5,18 @@ using System.Threading.Tasks;
 using Stl.Async;
 using Stl.Concurrency;
 using Stl.Fusion.Internal;
+using Stl.Locking;
 
 namespace Stl.Fusion
 {
     public abstract class SimpleComputedInput : ComputedInput, 
         IEquatable<SimpleComputedInput>, IFunction
     {
+        protected AsyncLock AsyncLock { get; set; }
+
         protected SimpleComputedInput()
         {
+            AsyncLock = new AsyncLock(ReentryMode.CheckedFail);
             Function = this;
             HashCode = RuntimeHelpers.GetHashCode(this);
         }
@@ -58,8 +62,16 @@ namespace Stl.Fusion
 
     public class SimpleComputedInput<T> : SimpleComputedInput, IFunction<SimpleComputedInput, T>
     {
-        public SimpleComputed<T> Computed { get; set; } = null!;
+        protected volatile SimpleComputed<T> ComputedField = null!;
+
         public Func<SimpleComputed<T>, Task<T>> Updater { get; }
+        public SimpleComputed<T> Computed {
+            get => ComputedField;
+            set {
+                var oldComputed = Interlocked.Exchange(ref ComputedField, value);
+                oldComputed?.Invalidate();
+            }
+        }
 
         public SimpleComputedInput(Func<SimpleComputed<T>, Task<T>> updater) 
             => Updater = updater;
@@ -87,6 +99,17 @@ namespace Stl.Fusion
             context = contextUseScope.Context;
 
             var result = Computed;
+            if ((context.Options & ComputeOptions.TryGetCached) != 0) {
+                context.TryCaptureValue(result);
+                if ((context.Options & ComputeOptions.Invalidate) == ComputeOptions.Invalidate)
+                    result.Invalidate(context.InvalidatedBy);
+                ((IComputedImpl?) usedBy)?.AddUsed(result);
+                return result!;
+            }
+
+            using var _ = await AsyncLock.LockAsync(cancellationToken);
+
+            result = Computed;
             if ((context.Options & ComputeOptions.TryGetCached) != 0) {
                 context.TryCaptureValue(result);
                 if ((context.Options & ComputeOptions.Invalidate) == ComputeOptions.Invalidate)
@@ -123,6 +146,17 @@ namespace Stl.Fusion
             context = contextUseScope.Context;
 
             var result = Computed;
+            if ((context.Options & ComputeOptions.TryGetCached) != 0) {
+                context.TryCaptureValue(result);
+                if ((context.Options & ComputeOptions.Invalidate) == ComputeOptions.Invalidate)
+                    result.Invalidate(context.InvalidatedBy);
+                ((IComputedImpl?) usedBy)?.AddUsed(result);
+                return result.Strip();
+            }
+
+            using var _ = await AsyncLock.LockAsync(cancellationToken);
+
+            result = Computed;
             if ((context.Options & ComputeOptions.TryGetCached) != 0) {
                 context.TryCaptureValue(result);
                 if ((context.Options & ComputeOptions.Invalidate) == ComputeOptions.Invalidate)

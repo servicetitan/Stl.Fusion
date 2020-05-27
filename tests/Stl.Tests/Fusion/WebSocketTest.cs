@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -69,17 +70,31 @@ namespace Stl.Tests.Fusion
             var rep = Replicator.GetOrAdd<DateTime>(pub!.Publisher.Id, pub.Id);
             await rep.RequestUpdateAsync().AsAsyncFunc()
                 .Should().CompleteWithinAsync(TimeSpan.FromMinutes(1));
-            var state = await Replicator.GetPublisherConnectionState(pub.Publisher.Id).UpdateAsync();
+            var state = Replicator.GetPublisherConnectionState(pub.Publisher.Id);
+            state.IsConsistent.Should().BeFalse();
+            state = await state.UpdateAsync();
+            state.Should().Be(Replicator.GetPublisherConnectionState(pub.Publisher.Id));
             state.Value.Should().BeTrue();
-                
+
             await serving.DisposeAsync();
+
+            // First try -- should fail w/ ChannelClosedException
             await rep.RequestUpdateAsync().AsAsyncFunc()
                 .Should().ThrowAsync<ChannelClosedException>();
+            state.Should().Be(Replicator.GetPublisherConnectionState(pub.Publisher.Id));
             state = await state.UpdateAsync();
+            state.Should().Be(Replicator.GetPublisherConnectionState(pub.Publisher.Id));
             state.Error.Should().BeOfType<ChannelClosedException>();
+            
+            // Second try -- should fail w/ WebSocketException
+            await rep.Computed.UpdateAsync();
+            rep.UpdateError.Should().BeOfType<WebSocketException>();
+            state = await state.UpdateAsync();
+            state.Error.Should().BeOfType<WebSocketException>();
 
             serving = await WebSocketServer.ServeAsync();
             await Task.Delay(1000);
+
             await rep.RequestUpdateAsync().AsAsyncFunc()
                 .Should().CompleteWithinAsync(TimeSpan.FromMinutes(1));
             state = await state.UpdateAsync();

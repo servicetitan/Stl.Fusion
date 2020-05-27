@@ -35,11 +35,10 @@ namespace Stl.Fusion.Bridge
 
     public class Publication<T> : AsyncProcessBase, IPublicationImpl<T>
     {
-        // Fields
         protected volatile IPublicationStateImpl<T> StateField;
         protected volatile int UserCount;
         protected volatile int LastTouchTime;
-        // protected object Lock => new object();
+        protected IPublisherImpl PublisherImpl => (IPublisherImpl) Publisher;
 
         // Properties
         public Type PublicationType { get; }
@@ -106,6 +105,8 @@ namespace Stl.Fusion.Bridge
 
         protected virtual async Task ExpireAsync(CancellationToken cancellationToken)
         {
+            var expirationTime = PublisherImpl.PublicationExpirationTime;
+
             IntMoment GetLastUseTime() 
                 => UserCount > 0 ? IntMoment.Now : new IntMoment(LastTouchTime);
 
@@ -114,9 +115,7 @@ namespace Stl.Fusion.Bridge
                 // return lastUseTime + TimeSpan.FromMinutes(5); // Good for debugging 
                 var now = IntMoment.Now;
                 var lifetime = now.EpochOffsetUnits - start.EpochOffsetUnits;
-                if (lifetime < IntMoment.UnitsPerSecond * 60) // 1 minute
-                    return lastUseTime + TimeSpan.FromSeconds(10); 
-                return lastUseTime + TimeSpan.FromSeconds(30); 
+                return lastUseTime + expirationTime; 
             }
 
             // return;

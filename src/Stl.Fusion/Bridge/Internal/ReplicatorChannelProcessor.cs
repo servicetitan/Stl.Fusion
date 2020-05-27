@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -64,6 +65,7 @@ namespace Stl.Fusion.Bridge.Internal
                 var lastChannelTask = (Task<Channel<Message>>?) null;
                 var channel = (Channel<Message>) null!;
                 while (true) {
+                    var error = (Exception?) null;
                     try {
                         var channelTask = ChannelTask;
                         if (channelTask != lastChannelTask)
@@ -75,14 +77,28 @@ namespace Stl.Fusion.Bridge.Internal
                         if (cancellationToken.IsCancellationRequested)
                             throw;
                     }
+                    catch (AggregateException e) {
+                        error = e.Flatten().InnerExceptions.SingleOrDefault() ?? e;
+                    }
                     catch (Exception e) {
-                        Reconnect(e);
+                        error = e;
+                    }
+
+                    switch (error) {
+                    case null:
+                        break;
+                    case OperationCanceledException oce:
+                        if (cancellationToken.IsCancellationRequested)
+                            throw oce;
+                        break;
+                    default:
+                        Reconnect(error);
                         var ct = cancellationToken.IsCancellationRequested ? cancellationToken : default;
                         foreach (var publicationId in GetSubscriptions()) {
                             var replicaImpl = (IReplicaImpl?) Replicator.TryGet(publicationId);
-                            replicaImpl?.ApplyFailedUpdate(e, ct);
+                            replicaImpl?.ApplyFailedUpdate(error, ct);
                         }
-
+                        break;
                     }
                 }
             }
@@ -169,13 +185,19 @@ namespace Stl.Fusion.Bridge.Internal
                 TaskCreationOptions.RunContinuationsAsynchronously);
             var channelTask = channelTaskSource.Task;
 
+            Channel<Message> oldSendChannel;
             lock (Lock) {
-                var oldSendChannel = Interlocked.Exchange(ref SendChannel, sendChannel);
-                oldSendChannel?.Writer.Complete();
+                oldSendChannel = Interlocked.Exchange(ref SendChannel, sendChannel);
                 Interlocked.Exchange(ref ChannelTask, channelTask);
                 Interlocked.Exchange(ref LastError, error);
             }
-            StateComputedRef.Computed.Invalidate(Replicator);
+            try {
+                oldSendChannel?.Writer.TryComplete();
+            }
+            catch {
+                // It's better to suppress all exceptions here
+            }
+            StateComputedRef.Computed.Invalidate();
 
             // Connect task
             var connectTask = Task.Run(async () => {
@@ -214,7 +236,7 @@ namespace Stl.Fusion.Bridge.Internal
                 lock (Lock) {
                     Interlocked.Exchange(ref LastError, null);
                 }
-                StateComputedRef.Computed.Invalidate(Replicator);
+                StateComputedRef.Computed.Invalidate();
             });
 
             // Copy task

@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Channels;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Messages;
+using Stl.Fusion.Internal;
 using Stl.Net;
 using Stl.Serialization;
 using Stl.Text;
@@ -22,6 +23,7 @@ namespace Stl.Fusion.Client
             public string RequestPath { get; set; } = "/ws";
             public string PublisherIdQueryParameterName { get; set; } = "publisherId";
             public string ClientIdQueryParameterName { get; set; } = "clientId";
+            public TimeSpan ConnectTimeout { get; set; } = TimeSpan.FromSeconds(10);
         }
 
         private readonly ILogger<WebSocketChannelProvider> _log;
@@ -30,6 +32,7 @@ namespace Stl.Fusion.Client
         public string RequestPath { get; }
         public string PublisherIdQueryParameterName { get; }
         public string ClientIdQueryParameterName { get; }
+        public TimeSpan ConnectTimeout { get; }
         protected Lazy<IReplicator>? ReplicatorLazy { get; }
         protected Symbol ClientId => ReplicatorLazy?.Value.Id ?? Symbol.Empty; 
 
@@ -44,6 +47,7 @@ namespace Stl.Fusion.Client
             RequestPath = options.RequestPath;
             PublisherIdQueryParameterName = options.PublisherIdQueryParameterName;
             ClientIdQueryParameterName = options.ClientIdQueryParameterName;
+            ConnectTimeout = options.ConnectTimeout;
             ReplicatorLazy = replicatorLazy;
         }
 
@@ -55,7 +59,9 @@ namespace Stl.Fusion.Client
                 var connectionUri = GetConnectionUrl(publisherId);
                 _log.LogInformation($"{clientId}: connecting to {connectionUri}...");
                 var ws = new ClientWebSocket();
-                await ws.ConnectAsync(connectionUri, cancellationToken).ConfigureAwait(false);
+                using var cts = new CancellationTokenSource(ConnectTimeout);
+                using var lts = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken);
+                await ws.ConnectAsync(connectionUri, lts.Token).ConfigureAwait(false);
                 _log.LogInformation($"{clientId}: connected.");
                 
                 await using var wsChannel = new WebSocketChannel(ws);
@@ -65,7 +71,9 @@ namespace Stl.Fusion.Client
                 return channel;
             }
             catch (OperationCanceledException) {
-                throw;
+                if (cancellationToken.IsCancellationRequested)
+                    throw;
+                throw Errors.WebSocketConnectTimeout();
             }
             catch (Exception e) {
                 _log.LogError($"{clientId}: error: {e.GetType().Name}(\"{e.Message}\").", e);

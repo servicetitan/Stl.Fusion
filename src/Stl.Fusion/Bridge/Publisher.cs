@@ -33,6 +33,11 @@ namespace Stl.Fusion.Bridge
 
     public interface IPublisherImpl : IPublisher
     {
+        IPublicationFactory PublicationFactory { get; }
+        Type PublicationType { get; }
+        TimeSpan PublicationExpirationTime { get; }
+        IGenerator<Symbol> PublicationIdGenerator { get; }
+
         ValueTask<bool> SubscribeAsync(
             Channel<Message> channel, IPublication publication, 
             SubscribeMessage subscribeMessage, CancellationToken cancellationToken);
@@ -49,32 +54,35 @@ namespace Stl.Fusion.Bridge
             public Symbol Id { get; set; } = NewId();
             public IChannelHub<Message> ChannelHub { get; set; } = new ChannelHub<Message>();
             public bool OwnsChannelHub { get; set; } = true;
-            public IGenerator<Symbol> PublicationIdGenerator { get; set; } = new RandomSymbolGenerator("p-");
-            public Type PublicationType { get; set; } = typeof(Publication<>);
             public IPublicationFactory PublicationFactory { get; set; } = Internal.PublicationFactory.Instance;
+            public Type PublicationType { get; set; } = typeof(Publication<>);
+            public TimeSpan PublicationExpirationTime { get; set; } = TimeSpan.FromSeconds(60);
+            public IGenerator<Symbol> PublicationIdGenerator { get; set; } = new RandomSymbolGenerator("p-");
         }
 
         protected ConcurrentDictionary<ComputedInput, IPublication> Publications { get; } 
         protected ConcurrentDictionary<Symbol, IPublication> PublicationsById { get; }
         protected ConcurrentDictionary<Channel<Message>, PublisherChannelProcessor> ChannelProcessors { get; }
-        protected IGenerator<Symbol> PublicationIdGenerator { get; }
-        protected IPublicationFactory PublicationFactory { get; }
-        protected Type PublicationType { get; }
         protected ChannelAttachedHandler<Message> OnChannelAttachedHandler { get; } 
         protected ChannelDetachedHandler<Message> OnChannelDetachedHandler { get; } 
 
         public Symbol Id { get; }
         public IChannelHub<Message> ChannelHub { get; }
         public bool OwnsChannelHub { get; }
+        public IPublicationFactory PublicationFactory { get; }
+        public Type PublicationType { get; }
+        public TimeSpan PublicationExpirationTime { get; }
+        public IGenerator<Symbol> PublicationIdGenerator { get; }
 
         public Publisher(Options options)
         {
             Id = options.Id;
             ChannelHub = options.ChannelHub;
             OwnsChannelHub = options.OwnsChannelHub;
-            PublicationIdGenerator = options.PublicationIdGenerator;
             PublicationFactory = options.PublicationFactory;
             PublicationType = options.PublicationType;
+            PublicationExpirationTime = options.PublicationExpirationTime;
+            PublicationIdGenerator = options.PublicationIdGenerator;
 
             var concurrencyLevel = HardwareInfo.ProcessorCount << 2;
             var capacity = 7919;

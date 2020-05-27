@@ -140,11 +140,11 @@ namespace Stl.Channels
             channel.ConnectAsync(
                 pair.Channel1, true,
                 m => {
-                    logger.Log(logLevel, $"{channelName} -> {m}");
+                    logger.Log(logLevel, $"{channelName} <- {m}");
                     return m;
                 },
                 m => {
-                    logger.Log(logLevel, $"{channelName} <- {m}");
+                    logger.Log(logLevel, $"{channelName} -> {m}");
                     return m;
                 },
                 cancellationToken);

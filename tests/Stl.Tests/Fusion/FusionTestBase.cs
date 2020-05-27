@@ -74,7 +74,8 @@ namespace Stl.Tests.Fusion
 
             // Logging
             services.AddLogging(logging => {
-                var debugCategories = new HashSet<string> {
+                var debugCategories = new List<string> {
+                    "Stl.Fusion",
                     "Stl.Tests.Fusion",
                     // DbLoggerCategory.Database.Transaction.Name,
                     // DbLoggerCategory.Database.Connection.Name,

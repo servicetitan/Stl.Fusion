@@ -75,7 +75,7 @@ namespace Stl.Channels
 
         protected virtual async ValueTask OnDetachedAsync(Channel<T> channel)
         {
-            var taskCollector = new Collector<ValueTask>();
+            var taskCollector = Collector<ValueTask>.New();
             try {
                 Detached?.Invoke(channel, ref taskCollector);
 

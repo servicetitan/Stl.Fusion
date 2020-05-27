@@ -178,6 +178,8 @@ namespace Stl.Fusion.Bridge
                 return result!;
             }
 
+            // No async locking here b/c RequestUpdateAsync is, in fact, doing this
+
             var retryPolicy = ReplicatorImpl.RetryPolicy;
             for (var tryIndex = 0;; tryIndex++) {
                 try {
@@ -222,6 +224,8 @@ namespace Stl.Fusion.Bridge
                 ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) result);
                 return result.Strip();
             }
+
+            // No async locking here b/c RequestUpdateAsync is, in fact, doing this
 
             var retryPolicy = ReplicatorImpl.RetryPolicy;
             for (var tryIndex = 0;; tryIndex++) {

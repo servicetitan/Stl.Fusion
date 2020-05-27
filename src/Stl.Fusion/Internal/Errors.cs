@@ -1,4 +1,5 @@
 using System;
+using System.Net.WebSockets;
 
 namespace Stl.Fusion.Internal
 {
@@ -25,11 +26,13 @@ namespace Stl.Fusion.Internal
 
         public static Exception PublicationTypeMustBeOpenGenericType(string paramName)
             => new ArgumentOutOfRangeException(paramName, "Publication type must be open generic type.");
+        public static Exception PublicationAbsents()
+            => new InvalidOperationException("The Publication absents on the server.");
 
         public static Exception ReplicaHasNeverBeenUpdated()
             => new InvalidOperationException("The Replica has never been updated.");
 
-        public static Exception PublicationAbsents()
-            => new InvalidOperationException("The Publication absents on the server.");
+        public static Exception WebSocketConnectTimeout()
+            => new WebSocketException("Connection timeout.");
     }
 }

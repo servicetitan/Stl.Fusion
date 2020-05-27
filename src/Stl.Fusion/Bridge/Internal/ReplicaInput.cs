@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.CompilerServices;
 using Stl.Text;
 
 namespace Stl.Fusion.Bridge.Internal
