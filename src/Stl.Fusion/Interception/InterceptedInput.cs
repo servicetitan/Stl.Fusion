@@ -87,9 +87,9 @@ namespace Stl.Fusion.Interception
         }
         public override bool Equals(ComputedInput obj) 
             => obj is InterceptedInput other && Equals(other);
-#pragma warning disable 659
         public override bool Equals(object? obj) 
             => obj is InterceptedInput other && Equals(other);
-#pragma warning restore 659
+        public override int GetHashCode() 
+            => base.GetHashCode();
     }
 }

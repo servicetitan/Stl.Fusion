@@ -16,9 +16,11 @@ namespace Stl.Fusion.Bridge
     {
         Symbol Id { get; }
 
+        IReplica? TryGet(Symbol publicationId);
         IReplica<T> GetOrAdd<T>(Symbol publisherId, Symbol publicationId, 
             LTagged<Result<T>> initialOutput, bool isConsistent = true, bool requestUpdate = false);
-        IReplica? TryGet(Symbol publicationId);
+
+        IComputed<bool> GetPublisherChannelState(Symbol publisherId);
     }
 
     public interface IReplicatorImpl : IReplicator
@@ -62,6 +64,9 @@ namespace Stl.Fusion.Bridge
             CreateChannelProcessorHandler = CreateChannelProcessor;
         }
 
+        public virtual IReplica? TryGet(Symbol publicationId) 
+            => Registry.TryGet(publicationId);
+
         public virtual IReplica<T> GetOrAdd<T>(Symbol publisherId, Symbol publicationId, 
             LTagged<Result<T>> initialOutput, bool isConsistent = true, bool requestUpdate = false)
         {
@@ -73,11 +78,14 @@ namespace Stl.Fusion.Bridge
             return (IReplica<T>) replica;
         }
 
-        public virtual IReplica? TryGet(Symbol publicationId) 
-            => Registry.TryGet(publicationId);
+        public IComputed<bool> GetPublisherChannelState(Symbol publisherId) 
+            => ChannelProcessors
+                .GetOrAddChecked(publisherId, CreateChannelProcessorHandler)
+                .StateComputedRef.Computed;
 
         protected virtual ReplicatorChannelProcessor GetChannelProcessor(Symbol publisherId) 
-            => ChannelProcessors.GetOrAddChecked(publisherId, CreateChannelProcessorHandler);
+            => ChannelProcessors
+                .GetOrAddChecked(publisherId, CreateChannelProcessorHandler);
 
         protected virtual ReplicatorChannelProcessor CreateChannelProcessor(Symbol publisherId)
         {

@@ -1,5 +1,6 @@
 using System;
 using System.Net.WebSockets;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using Autofac;
 using FluentAssertions;
@@ -18,7 +19,7 @@ namespace Stl.Tests.Fusion
             : base(@out, options) { }
 
         [Fact]
-        public async Task BasicServiceTest()
+        public async Task ConnectToPublisherTest()
         {
             await using var serving = await WebSocketServer.ServeAsync();
             var channel = await ConnectToPublisherAsync();
@@ -32,7 +33,6 @@ namespace Stl.Tests.Fusion
             var tp = Container.Resolve<ITimeProvider>();
 
             var pub = await Computed.PublishAsync(Publisher, () => tp.GetTimeAsync());
-            await Task.Delay(1000);
             var rep = Replicator.GetOrAdd<DateTime>(pub!.Publisher.Id, pub.Id);
             await rep.RequestUpdateAsync().AsAsyncFunc()
                 .Should().CompleteWithinAsync(TimeSpan.FromMinutes(1));
@@ -51,13 +51,41 @@ namespace Stl.Tests.Fusion
         public async Task NoConnectionTest()
         {
             await using var serving = await WebSocketServer.ServeAsync();
-
             var tp = Container.Resolve<ITimeProvider>();
-            var pub = await Computed.PublishAsync(Publisher, () => tp.GetTimeAsync());
 
-            var replica = Replicator.GetOrAdd<DateTime>("NoPublisher", pub.Id);
-            await replica.RequestUpdateAsync().AsAsyncFunc()
+            var pub = await Computed.PublishAsync(Publisher, () => tp.GetTimeAsync());
+            var rep = Replicator.GetOrAdd<DateTime>("NoPublisher", pub.Id);
+            await rep.RequestUpdateAsync().AsAsyncFunc()
                 .Should().ThrowAsync<WebSocketException>();
+        }
+
+        [Fact]
+        public async Task DropReconnectTest()
+        {
+            var serving = await WebSocketServer.ServeAsync();
+            var tp = Container.Resolve<ITimeProvider>();
+
+            var pub = await Computed.PublishAsync(Publisher, () => tp.GetTimeAsync());
+            var rep = Replicator.GetOrAdd<DateTime>(pub!.Publisher.Id, pub.Id);
+            await rep.RequestUpdateAsync().AsAsyncFunc()
+                .Should().CompleteWithinAsync(TimeSpan.FromMinutes(1));
+            var state = await Replicator.GetPublisherChannelState(pub.Publisher.Id).UpdateAsync();
+            state.Value.Should().BeTrue();
+                
+            await serving.DisposeAsync();
+            await rep.RequestUpdateAsync().AsAsyncFunc()
+                .Should().ThrowAsync<ChannelClosedException>();
+            state = await state.UpdateAsync();
+            state.Error.Should().BeOfType<ChannelClosedException>();
+
+            serving = await WebSocketServer.ServeAsync();
+            await Task.Delay(1000);
+            await rep.RequestUpdateAsync().AsAsyncFunc()
+                .Should().CompleteWithinAsync(TimeSpan.FromMinutes(1));
+            state = await state.UpdateAsync();
+            state.Value.Should().BeTrue();
+
+            await serving.DisposeAsync();
         }
     }
 }

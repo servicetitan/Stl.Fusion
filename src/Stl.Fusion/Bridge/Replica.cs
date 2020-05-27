@@ -16,7 +16,7 @@ namespace Stl.Fusion.Bridge
         Symbol PublicationId { get; }
         IComputedReplica Computed { get; }
         bool IsUpdateRequested { get; }
-        Exception? LastUpdateError { get; }
+        Exception? UpdateError { get; }
 
         Task RequestUpdateAsync(CancellationToken cancellationToken = default);
     }
@@ -40,7 +40,7 @@ namespace Stl.Fusion.Bridge
     {
         protected readonly ReplicaInput Input;
         protected volatile IComputedReplica<T> ComputedField = null!;
-        protected volatile Exception? LastUpdateErrorField;
+        protected volatile Exception? UpdateErrorField;
         protected volatile Task<Unit>? UpdateRequestTask;
         protected IReplicatorImpl ReplicatorImpl => (IReplicatorImpl) Replicator;
         protected object Lock => new object();
@@ -51,7 +51,7 @@ namespace Stl.Fusion.Bridge
         IComputedReplica IReplica.Computed => ComputedField;
         public IComputedReplica<T> Computed => ComputedField;
         public bool IsUpdateRequested => UpdateRequestTask != null;
-        public Exception? LastUpdateError => LastUpdateErrorField;
+        public Exception? UpdateError => UpdateErrorField;
 
         public Replica(
             IReplicator replicator, Symbol publisherId, Symbol publicationId, 
@@ -106,8 +106,8 @@ namespace Stl.Fusion.Bridge
             Task<Unit>? updateRequestTask;
             var mustInvalidate = false;
             lock (Lock) {
-                // 1. Update Computed & LastUpdateError 
-                LastUpdateErrorField = null;
+                // 1. Update Computed & UpdateError 
+                UpdateErrorField = null;
                 computed = ComputedField;
                 if (computed == null || computed.LTag != output.LTag)
                     ComputedField = new ComputedReplica<T>(Input, output.Value, output.LTag, isConsistent);
@@ -138,9 +138,9 @@ namespace Stl.Fusion.Bridge
             IComputedReplica<T>? computed;
             Task<Unit>? updateRequestTask;
             lock (Lock) {
-                // 1. Update Computed & LastUpdateError 
+                // 1. Update Computed & UpdateError 
                 computed = ComputedField;
-                LastUpdateErrorField = error;
+                UpdateErrorField = error;
 
                 // 2. Complete UpdateRequestTask
                 (updateRequestTask, UpdateRequestTask) = (UpdateRequestTask, null);

@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using Stl.Text;
 
 namespace Stl.Fusion.Bridge.Internal
@@ -30,9 +31,9 @@ namespace Stl.Fusion.Bridge.Internal
             => !ReferenceEquals(null, other) && PublicationId == other.PublicationId;
         public override bool Equals(ComputedInput other)
             => other is ReplicaInput ri && PublicationId == ri.PublicationId;
-#pragma warning disable 659
         public override bool Equals(object? obj) 
             => Equals(obj as ReplicaInput);
-#pragma warning restore 659
+        public override int GetHashCode() 
+            => base.GetHashCode();
     }
 }

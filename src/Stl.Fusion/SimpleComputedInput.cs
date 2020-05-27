@@ -50,10 +50,10 @@ namespace Stl.Fusion
             => ReferenceEquals(this, other);
         public override bool Equals(ComputedInput other)
             => ReferenceEquals(this, other);
-#pragma warning disable 659
         public override bool Equals(object? obj) 
             => ReferenceEquals(this, obj);
-#pragma warning restore 659
+        public override int GetHashCode() 
+            => base.GetHashCode();
     }
 
     public class SimpleComputedInput<T> : SimpleComputedInput, IFunction<SimpleComputedInput, T>
@@ -95,7 +95,7 @@ namespace Stl.Fusion
                 return result!;
             }
 
-            await UpdateAsync().ConfigureAwait(false);
+            result = await UpdateAsync().ConfigureAwait(false);
             context.TryCaptureValue(result);
             ((IComputedImpl?) usedBy)?.AddUsed(result);
             return result;
@@ -131,7 +131,7 @@ namespace Stl.Fusion
                 return result.Strip();
             }
 
-            await UpdateAsync().ConfigureAwait(false);
+            result = await UpdateAsync().ConfigureAwait(false);
             context.TryCaptureValue(result);
             ((IComputedImpl?) usedBy)?.AddUsed(result);
             return result.Strip();
@@ -155,15 +155,15 @@ namespace Stl.Fusion
             return computed;
         }
 
-        protected virtual async ValueTask UpdateAsync()
+        protected virtual async ValueTask<SimpleComputed<T>> UpdateAsync()
         {
             var lTagGenerator = ConcurrentIdGenerator.DefaultLTag;
             try {
                 var result = await Updater.Invoke(Computed).ConfigureAwait(false);
-                Computed = new SimpleComputed<T>(this, new Result<T>(result, null), lTagGenerator.Next());
+                return Computed = new SimpleComputed<T>(this, new Result<T>(result, null), lTagGenerator.Next());
             }
             catch (Exception e) {
-                Computed = new SimpleComputed<T>(this, new Result<T>(default!, e), lTagGenerator.Next());
+                return Computed = new SimpleComputed<T>(this, new Result<T>(default!, e), lTagGenerator.Next());
             }
         }
     }

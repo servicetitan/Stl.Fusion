@@ -29,13 +29,15 @@ namespace Stl.Fusion.Bridge.Internal
         protected readonly ILogger Log;
         protected readonly IReplicatorImpl ReplicatorImpl;
         protected readonly HashSet<Symbol> Subscriptions;
-        protected Channel<Message>? SendChannel;
-        protected Channel<Message>? Channel;
+        protected volatile Task<Channel<Message>> ChannelTask = null!;
+        protected volatile Channel<Message> SendChannel = null!;
+        protected volatile Exception? LastError;
         protected Symbol ClientId => Replicator.Id;
         protected object Lock => Subscriptions;
 
         public readonly IReplicator Replicator;
         public readonly Symbol PublisherId;
+        public SimpleComputedInput<bool> StateComputedRef;
 
         public ReplicatorChannelProcessor(IReplicator replicator, Symbol publisherId, ILogger? log = null)
         {
@@ -44,59 +46,43 @@ namespace Stl.Fusion.Bridge.Internal
             ReplicatorImpl = (IReplicatorImpl) replicator;
             PublisherId = publisherId;
             Subscriptions = new HashSet<Symbol>();
+            StateComputedRef = SimpleComputed.New<bool>(_ => {
+                lock (Lock) {
+                    var lastError = LastError;
+                    if (lastError != null)
+                        return Task.FromException<bool>(lastError);
+                    return Task.FromResult(ChannelTask.IsCompleted);
+                }
+            }).Input;
+            // ReSharper disable once VirtualMemberCallInConstructor
+            Reconnect();
         }
 
         protected override async Task RunInternalAsync(CancellationToken cancellationToken)
         {
-            var tasks = new Task<Message>[2];
             try {
-                Task<Message>? channelReadTask = null;
-                Task<Message>? sendChannelReadTask = null;
+                var lastChannelTask = (Task<Channel<Message>>?) null;
+                var channel = (Channel<Message>) null!;
                 while (true) {
                     try {
-                        var channel = await GetChannelAsync(cancellationToken);
-
-                        // Here we await for either channel.Reader or 
-                        sendChannelReadTask ??= GetSendChannel().Reader.ReadAsync(cancellationToken).AsTask();
-                        channelReadTask ??= channel.Reader.ReadAsync(cancellationToken).AsTask();
-                        tasks[0] = sendChannelReadTask;
-                        tasks[1] = channelReadTask; 
-                        var completedTask = await Task.WhenAny(tasks).ConfigureAwait(false);
-
-                        var message = await completedTask.ConfigureAwait(false);
-                        if (completedTask == sendChannelReadTask) {
-                            sendChannelReadTask = null;
-                            await channel.Writer.WriteAsync(message, cancellationToken).ConfigureAwait(false);
-                        }
-                        else if (completedTask == channelReadTask) {
-                            channelReadTask = null;
-                            await OnMessageAsync(message, cancellationToken).ConfigureAwait(false);
-                        }
+                        var channelTask = ChannelTask;
+                        if (channelTask != lastChannelTask)
+                            channel = await ChannelTask.WithFakeCancellation(cancellationToken).ConfigureAwait(false);
+                        var message = await channel.Reader.ReadAsync(cancellationToken).AsTask();
+                        await OnMessageAsync(message, cancellationToken).ConfigureAwait(false);
                     }
                     catch (OperationCanceledException) {
                         if (cancellationToken.IsCancellationRequested)
                             throw;
                     }
                     catch (Exception e) {
-                        Log.LogError($"{ClientId}: Error: {e.GetType().Name}, {e.Message}", e);
-
-                        // Reset state + cancel all pending requests
-                        List<Symbol> subscriptions;
-                        lock (Lock) {
-                            channelReadTask = null;
-                            sendChannelReadTask = null;
-                            Channel = null;
-                            SendChannel = null;
-                            subscriptions = Subscriptions.ToList();
-                        }
+                        Reconnect(e);
                         var ct = cancellationToken.IsCancellationRequested ? cancellationToken : default;
-                        foreach (var publicationId in subscriptions) {
+                        foreach (var publicationId in GetSubscriptions()) {
                             var replicaImpl = (IReplicaImpl?) Replicator.TryGet(publicationId);
                             replicaImpl?.ApplyFailedUpdate(e, ct);
                         }
 
-                        await Task.Delay(ReplicatorImpl.ReconnectDelay, cancellationToken).ConfigureAwait(false);
-                        Log.LogInformation($"{ClientId}: Reconnecting...");
                     }
                 }
             }
@@ -133,45 +119,11 @@ namespace Stl.Fusion.Bridge.Internal
             }
         }
 
-        protected virtual async ValueTask<Channel<Message>> GetChannelAsync(
-            CancellationToken cancellationToken)
+        protected List<Symbol> GetSubscriptions()
         {
             lock (Lock) {
-                var channel = Channel;
-                if (channel != null)
-                    return channel;
+                return Subscriptions.ToList();
             }
-
-            var channelProvider = ReplicatorImpl.ChannelProvider;
-            var newChannel = await channelProvider
-                .CreateChannelAsync(PublisherId, cancellationToken)
-                .ConfigureAwait(false);
-            
-            lock (Lock) {
-                var channel = Channel;
-                if (channel != null)
-                    return channel;
-                Channel = newChannel;
-                SendChannel = null;
-            }
-
-            // 2. And queue new subscribe messages
-            List<Symbol> subscriptions;
-            lock (Lock) {
-                subscriptions = Subscriptions.ToList();
-            }
-            foreach (var publicationId in subscriptions) {
-                var replica = Replicator.TryGet(publicationId);
-                if (replica != null)
-                    Subscribe(replica);
-                else {
-                    lock (Lock) {
-                        Subscriptions.Remove(publicationId);
-                    }
-                }
-            }
-
-            return newChannel;
         }
 
         protected virtual Task OnMessageAsync(Message message, CancellationToken cancellationToken)
@@ -209,23 +161,94 @@ namespace Stl.Fusion.Bridge.Internal
             replicaImpl.ApplySuccessfulUpdate(lTaggedOutput, message.NewIsConsistent);
             return Task.CompletedTask;
         }
-        
+
+        protected virtual void Reconnect(Exception? error = null)
+        {
+            var sendChannel = CreateSendChannel();
+            var channelTaskSource = TaskSource.New<Channel<Message>>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            var channelTask = channelTaskSource.Task;
+
+            lock (Lock) {
+                var oldSendChannel = Interlocked.Exchange(ref SendChannel, sendChannel);
+                oldSendChannel?.Writer.Complete();
+                Interlocked.Exchange(ref ChannelTask, channelTask);
+                Interlocked.Exchange(ref LastError, error);
+            }
+            StateComputedRef.Computed.Invalidate(Replicator);
+
+            // Connect task
+            var connectTask = Task.Run(async () => {
+                var cancellationToken = CancellationToken.None;
+                if (error != null) {
+                    Log.LogError($"{ClientId}: Error: {error.GetType().Name}, {error.Message}", error);
+                    await Task.Delay(ReplicatorImpl.ReconnectDelay, cancellationToken).ConfigureAwait(false);
+                    Log.LogInformation($"{ClientId}: Reconnecting...");
+                }
+                else 
+                    Log.LogInformation($"{ClientId}: Connecting...");
+
+                var channelProvider = ReplicatorImpl.ChannelProvider;
+                var channel = await channelProvider
+                    .CreateChannelAsync(PublisherId, cancellationToken)
+                    .ConfigureAwait(false);
+            
+                foreach (var publicationId in GetSubscriptions()) {
+                    var replica = Replicator.TryGet(publicationId);
+                    if (replica != null)
+                        Subscribe(replica);
+                    else {
+                        lock (Lock) {
+                            Subscriptions.Remove(publicationId);
+                        }
+                    }
+                }
+
+                return channel;
+            });
+            connectTask.ContinueWith(ct => {
+                channelTaskSource.SetFromTask(ct);
+                if (!ct.IsCompletedSuccessfully)
+                    // LastError will be updated anyway in this case
+                    return; 
+                lock (Lock) {
+                    Interlocked.Exchange(ref LastError, null);
+                }
+                StateComputedRef.Computed.Invalidate(Replicator);
+            });
+
+            // Copy task
+            Task.Run(async () => {
+                var cancellationToken = CancellationToken.None;
+                try {
+                    var sendChannelReader = sendChannel.Reader;
+                    var channel = (Channel<Message>?) null;
+                    while (await sendChannelReader.WaitToReadAsync(cancellationToken).ConfigureAwait(false)) {
+                        if (sendChannel != SendChannel)
+                            break;
+                        if (!sendChannelReader.TryRead(out var message))
+                            continue;
+                        channel ??= await channelTask.ConfigureAwait(false);
+                        await channel.Writer.WriteAsync(message, cancellationToken).ConfigureAwait(false);
+                    }
+                }
+                catch (Exception e) {
+                    Log.LogError($"{ClientId}: Error: {e.GetType().Name}, {e.Message}", e);
+                }
+            });
+        }
+
         protected virtual Channel<Message> CreateSendChannel() 
-            => System.Threading.Channels.Channel.CreateUnbounded<Message>(
+            => Channel.CreateUnbounded<Message>(
                 new UnboundedChannelOptions() {
                     AllowSynchronousContinuations = true,
                     SingleReader = true,
-                    SingleWriter = true,
+                    SingleWriter = false,
                 });
 
-        protected virtual Channel<Message> GetSendChannel()
+        protected void Send(Message message)
         {
-            lock (Lock) {
-                return SendChannel ??= CreateSendChannel();
-            }
+            SendChannel.Writer.WriteAsync(message); 
         }
-
-        protected void Send(Message message) 
-            => GetSendChannel().Writer.WriteAsync(message);
     }
 }
