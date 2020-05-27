@@ -20,7 +20,7 @@ namespace Stl.Fusion.Bridge
         IReplica<T> GetOrAdd<T>(Symbol publisherId, Symbol publicationId, 
             LTagged<Result<T>> initialOutput, bool isConsistent = true, bool requestUpdate = false);
 
-        IComputed<bool> GetPublisherChannelState(Symbol publisherId);
+        IComputed<bool> GetPublisherConnectionState(Symbol publisherId);
     }
 
     public interface IReplicatorImpl : IReplicator
@@ -78,7 +78,7 @@ namespace Stl.Fusion.Bridge
             return (IReplica<T>) replica;
         }
 
-        public IComputed<bool> GetPublisherChannelState(Symbol publisherId) 
+        public IComputed<bool> GetPublisherConnectionState(Symbol publisherId) 
             => ChannelProcessors
                 .GetOrAddChecked(publisherId, CreateChannelProcessorHandler)
                 .StateComputedRef.Computed;

@@ -69,7 +69,7 @@ namespace Stl.Tests.Fusion
             var rep = Replicator.GetOrAdd<DateTime>(pub!.Publisher.Id, pub.Id);
             await rep.RequestUpdateAsync().AsAsyncFunc()
                 .Should().CompleteWithinAsync(TimeSpan.FromMinutes(1));
-            var state = await Replicator.GetPublisherChannelState(pub.Publisher.Id).UpdateAsync();
+            var state = await Replicator.GetPublisherConnectionState(pub.Publisher.Id).UpdateAsync();
             state.Value.Should().BeTrue();
                 
             await serving.DisposeAsync();
