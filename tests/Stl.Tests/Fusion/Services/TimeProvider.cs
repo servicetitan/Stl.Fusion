@@ -20,7 +20,7 @@ namespace Stl.Tests.Fusion.Services
 
         public TimeProvider(ILogger<TimeProvider>? log = null)
         {
-            _log = log ?? NullLogger<TimeProvider>.Instance;
+            _log = log ??= NullLogger<TimeProvider>.Instance;
             IsCaching = GetType().Name.EndsWith("Proxy");
         }
 

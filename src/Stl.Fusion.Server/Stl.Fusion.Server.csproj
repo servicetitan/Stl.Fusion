@@ -4,7 +4,6 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <OutputType>Library</OutputType>
     <TypeScriptCompilerBlocked>true</TypeScriptCompilerBlocked>
-    <RootNamespace>Stl.Fusion.Server</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

@@ -44,6 +44,8 @@ namespace Stl.Async
 
         protected virtual async Task DisposeAsync(bool disposing)
         {
+            GC.SuppressFinalize(this);
+
             // The logic is a bit complicated b/c we want any DisposeAsync
             // call to complete only when the actual dispose completes,
             // not earlier.
@@ -73,7 +75,15 @@ namespace Stl.Async
         
         protected virtual ValueTask DisposeInternalAsync(bool disposing) => 
             new ValueTask(Task.CompletedTask);
-        
+
+        protected bool MarkDisposed()
+        {
+            var success = null == Interlocked.CompareExchange(ref _disposeCompleted, TaskEx.UnitTask, null);
+            if (success)
+                GC.SuppressFinalize(this);
+            return success;
+        }
+
         protected void ThrowIfDisposedOrDisposing()
         {
             if (DisposalState != DisposalState.Active)

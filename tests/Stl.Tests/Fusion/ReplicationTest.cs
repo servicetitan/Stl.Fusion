@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Autofac;
 using FluentAssertions;
+using Stl.Channels;
 using Stl.Fusion;
 using Stl.Fusion.Bridge;
 using Stl.Tests.Fusion.Services;
@@ -17,13 +18,11 @@ namespace Stl.Tests.Fusion
         [Fact]
         public async Task BasicTest()
         {
+            await using var serving = await WebSocketServer.ServeAsync();
             var sp = Container.Resolve<ISimplestProvider>();
-            var cp = CreateChannelPair("channel");
-            Publisher.ChannelHub.Attach(cp.Channel1).Should().BeTrue();
-            Replicator.ChannelHub.Attach(cp.Channel2).Should().BeTrue();
 
             sp.SetValue("");
-            var p1 = await Computed.PublishAsync(Publisher, () => sp.GetValueAsync());
+            var (p1, _) = await Publisher.PublishAsync(_ => sp.GetValueAsync());
             p1.Should().NotBeNull();
 
             var r1 = Replicator.GetOrAdd<string>(p1!.Publisher.Id, p1.Id, true);
@@ -48,12 +47,10 @@ namespace Stl.Tests.Fusion
         [Fact]
         public async Task TimerTest()
         {
+            await using var serving = await WebSocketServer.ServeAsync();
             var tp = Container.Resolve<ITimeProvider>();
-            var cp = CreateChannelPair("channel");
-            Publisher.ChannelHub.Attach(cp.Channel1).Should().BeTrue();
-            Replicator.ChannelHub.Attach(cp.Channel2).Should().BeTrue();
 
-            var pub = await Computed.PublishAsync(Publisher, () => tp.GetTimeAsync());
+            var (pub, _) = await Publisher.PublishAsync(_ => tp.GetTimeAsync());
             var rep = Replicator.GetOrAdd<DateTime>(pub!.Publisher.Id, pub.Id);
             await rep.RequestUpdateAsync();
 

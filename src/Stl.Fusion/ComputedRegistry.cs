@@ -15,7 +15,7 @@ namespace Stl.Fusion
     {
         IComputed? TryGet(ComputedInput key);
         void Store(IComputed value);
-        void Remove(IComputed value);
+        bool Remove(IComputed value);
         IAsyncLockSet<ComputedInput> GetLocksFor(IFunction function);
     }
 
@@ -70,14 +70,16 @@ namespace Stl.Fusion
                     value.Touch();
                     return value;
                 }
-                value = (IComputed?) entry.Handle.Target;
+
+                var handle = entry.Handle;
+                value = (IComputed?) handle.Target;
                 if (value != null) {                        
                     value.Touch();
-                    _storage.TryUpdate(key, new Entry(value, entry.Handle), entry);
+                    _storage.TryUpdate(key, new Entry(value, handle), entry);
                     return value;
                 }
                 if (_storage.TryRemove(key, entry))
-                    _gcHandlePool.Release(entry.Handle, random);
+                    _gcHandlePool.Release(handle, random);
             }
             // Debug.WriteLine($"Cache miss: {key}");
             return null;
@@ -103,20 +105,24 @@ namespace Stl.Fusion
                 (This: this, Value: value, Random: random));
         }
 
-        public void Remove(IComputed value)
+        public bool Remove(IComputed value)
         {
             var key = value.Input;
             var random = key.HashCode + IntMoment.Clock.EpochOffsetUnits;
             OnOperation(random);
             if (!_storage.TryGetValue(key, out var entry))
-                return;
-            var target = entry.Handle.Target;
-            if (target == null || ReferenceEquals(target, value)) {
-                // gcHandle.Target == null (is gone, i.e. to be pruned)
-                // or pointing to the right computation object
-                if (_storage.TryRemove(key, entry))
-                    _gcHandlePool.Release(entry.Handle, random);
-            }
+                return false;
+            var handle = entry.Handle;
+            var target = handle.Target;
+            if (target != null && !ReferenceEquals(target, value))
+                return false;
+            // gcHandle.Target == null (is gone, i.e. to be pruned)
+            // or pointing to the right computation object
+            if (!_storage.TryRemove(key, entry))
+                // If another thread removed the entry, it also released the handle
+                return false;
+            _gcHandlePool.Release(handle, random);
+            return true;
         }
 
         public IAsyncLockSet<ComputedInput> GetLocksFor(IFunction function) 
@@ -149,8 +155,12 @@ namespace Stl.Fusion
         {
             var now = IntMoment.Clock.EpochOffsetUnits;
             foreach (var (key, entry) in _storage) {
-                if (!entry.Handle.IsAllocated) {
-                    _storage.TryRemove(key, entry);
+                var handle = entry.Handle;
+                if (handle.Target == null) {
+                    if (_storage.TryRemove(key, entry)) {
+                        var random = key.HashCode + now;
+                        _gcHandlePool.Release(handle, random);
+                    }
                     continue;
                 }
                 var computed = entry.Computed;
@@ -159,7 +169,7 @@ namespace Stl.Fusion
                 var expirationTime = computed.LastAccessTime.EpochOffsetUnits + computed.KeepAliveTime;
                 if (expirationTime >= now)
                     continue;
-                _storage.TryUpdate(key, new Entry(null, entry.Handle), entry);
+                _storage.TryUpdate(key, new Entry(null, handle), entry);
             }
 
             lock (Lock) {
@@ -184,7 +194,6 @@ namespace Stl.Fusion
         {
             public readonly IComputed? Computed;
             public readonly GCHandle Handle;
-            public IComputed? AnyComputed => Computed ?? (IComputed?) Handle.Target;
 
             public Entry(IComputed? computed, GCHandle handle)
             {

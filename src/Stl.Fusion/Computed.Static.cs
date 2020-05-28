@@ -1,9 +1,9 @@
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
 using Stl.Fusion.Internal;
-using Stl.Fusion;
 using Stl.Fusion.Bridge;
 using Stl.Time;
 
@@ -39,11 +39,22 @@ namespace Stl.Fusion
 
         // Capture & invalidate
 
-        public static async Task<IComputed<T>?> CaptureAsync<T>(Func<Task<T>> producer)
+        public static async Task<IComputed<T>?> TryCaptureAsync<T>(Func<CancellationToken, Task<T>> producer, CancellationToken cancellationToken = default)
         {
             using var ccs = ComputeContext.New(ComputeOptions.Capture).Activate();
-            await producer.Invoke().ConfigureAwait(false);
+            await producer.Invoke(cancellationToken).ConfigureAwait(false);
             var result = ccs.Context.GetCapturedComputed<T>();
+            return result;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static async Task<IComputed<T>> CaptureAsync<T>(Func<CancellationToken, Task<T>> producer, CancellationToken cancellationToken = default)
+        {
+            using var ccs = ComputeContext.New(ComputeOptions.Capture).Activate();
+            await producer.Invoke(cancellationToken).ConfigureAwait(false);
+            var result = ccs.Context.GetCapturedComputed<T>();
+            if (result == null)
+                throw Errors.NoComputedCaptured();
             return result;
         }
 
@@ -51,6 +62,15 @@ namespace Stl.Fusion
         {
             using var ccs = ComputeContext.New(ComputeOptions.Invalidate, invalidatedBy).Activate();
             var task = producer.Invoke();
+            // The flow is essentially synchronous in this case, so...
+            task.AssertCompleted();
+            return ccs.Context.GetCapturedComputed<T>();
+        }
+
+        public static IComputed<T>? Invalidate<T>(Func<CancellationToken, Task<T>> producer, object? invalidatedBy = null, CancellationToken cancellationToken = default)
+        {
+            using var ccs = ComputeContext.New(ComputeOptions.Invalidate, invalidatedBy).Activate();
+            var task = producer.Invoke(cancellationToken);
             // The flow is essentially synchronous in this case, so...
             task.AssertCompleted();
             return ccs.Context.GetCapturedComputed<T>();
@@ -65,16 +85,13 @@ namespace Stl.Fusion
             return ccs.Context.GetCapturedComputed<T>();
         }
 
-        // Publish
-
-        public static async Task<IPublication<T>> PublishAsync<T>(IPublisher publisher, Func<Task<T>> producer)
+        public static IComputed<T>? TryGetCached<T>(Func<CancellationToken, Task<T>> producer, CancellationToken cancellationToken = default)
         {
-            using var ccs = ComputeContext.New(ComputeOptions.Capture).Activate();
-            await producer.Invoke().ConfigureAwait(false);
-            var computed = ccs.Context.GetCapturedComputed<T>();
-            if (computed == null)
-                throw Errors.NoComputedCaptured();
-            return (IPublication<T>) publisher.Publish(computed);
+            using var ccs = ComputeContext.New(ComputeOptions.TryGetCached).Activate();
+            var task = producer.Invoke(cancellationToken);
+            // The flow is essentially synchronous in this case, so...
+            task.AssertCompleted();
+            return ccs.Context.GetCapturedComputed<T>();
         }
     }
 }

@@ -1,140 +1,110 @@
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 using Stl.Async;
-using Stl.Channels;
 using Stl.Fusion.Bridge.Internal;
-using Stl.Fusion.Bridge.Messages;
 using Stl.OS;
+using Stl.Reflection;
+using Stl.Security;
 using Stl.Text;
 
 namespace Stl.Fusion.Bridge
 {
     public interface IReplicator
     {
-        IChannelHub<Message> ChannelHub { get; }
-        bool OwnsChannelHub { get; }
+        Symbol Id { get; }
 
+        IReplica? TryGet(Symbol publicationId);
         IReplica<T> GetOrAdd<T>(Symbol publisherId, Symbol publicationId, 
             LTagged<Result<T>> initialOutput, bool isConsistent = true, bool requestUpdate = false);
-        IReplica? TryGet(Symbol publicationId);
+
+        IComputed<bool> GetPublisherConnectionState(Symbol publisherId);
     }
 
     public interface IReplicatorImpl : IReplicator
     {
         IComputeRetryPolicy RetryPolicy { get; }
+        IChannelProvider ChannelProvider { get; }
+        TimeSpan ReconnectDelay { get; }
 
-        bool TrySubscribe(IReplica replica, bool requestUpdate);
+        void Subscribe(IReplica replica);
         void OnReplicaDisposed(IReplica replica);
-        void OnChannelProcessorDisposed(ReplicatorChannelProcessor replicatorChannelProcessor);
     }
 
     public class Replicator : AsyncDisposableBase, IReplicatorImpl
     {
         public class Options
         {
-            protected static readonly Func<Channel<Message>, Symbol> DefaultPublisherIdProvider =
-                c => c is IHasId<Symbol> hasId ? hasId.Id : Symbol.Empty; 
+            public static Symbol NewId() => "R-" + RandomStringGenerator.Default.Next();
 
-            public IChannelHub<Message> ChannelHub { get; set; } = new ChannelHub<Message>();
-            public bool OwnsChannelHub { get; set; } = true;
-            public Func<Channel<Message>, Symbol> PublisherIdProvider { get; set; } = DefaultPublisherIdProvider;
+            public Symbol Id { get; set; } = NewId();
+            public IReplicaRegistry Registry { get; set; } = new ReplicaRegistry();
             public IComputeRetryPolicy RetryPolicy { get; set; } = ComputeRetryPolicy.Default;
+            public TimeSpan ReconnectDelay = TimeSpan.FromSeconds(5);
         }
 
-        protected ConcurrentDictionary<Symbol, IReplica> Replicas { get; }
-        protected ConcurrentDictionary<Channel<Message>, ReplicatorChannelProcessor> ChannelProcessors { get; }
-        protected ConcurrentDictionary<Symbol, ReplicatorChannelProcessor> ChannelProcessorsById { get; }
-        protected Action<Channel<Message>> OnChannelAttachedHandler { get; } 
-        protected Func<Channel<Message>, ValueTask> OnChannelDetachedAsyncHandler { get; } 
-
-        public IChannelHub<Message> ChannelHub { get; }
-        public bool OwnsChannelHub { get; }
-        public Func<Channel<Message>, Symbol> PublisherIdProvider { get; }
+        protected IReplicaRegistry Registry { get; }
+        protected ConcurrentDictionary<Symbol, ReplicatorChannelProcessor> ChannelProcessors { get; }
+        protected Func<Symbol, ReplicatorChannelProcessor> CreateChannelProcessorHandler { get; }
+        public Symbol Id { get; }
+        public IChannelProvider ChannelProvider { get; }
         public IComputeRetryPolicy RetryPolicy { get; }
+        public TimeSpan ReconnectDelay { get; }
 
-        public Replicator(Options options)
+        public Replicator(Options options, IChannelProvider channelProvider)
         {
-            ChannelHub = options.ChannelHub;
-            OwnsChannelHub = options.OwnsChannelHub;
-            PublisherIdProvider = options.PublisherIdProvider;
+            Id = options.Id;
+            Registry = options.Registry;
             RetryPolicy = options.RetryPolicy;
-
-            Replicas = new ConcurrentDictionary<Symbol, IReplica>();
-            ChannelProcessorsById = new ConcurrentDictionary<Symbol, ReplicatorChannelProcessor>();
-            ChannelProcessors = new ConcurrentDictionary<Channel<Message>, ReplicatorChannelProcessor>();
-            
-            OnChannelAttachedHandler = OnChannelAttached;
-            OnChannelDetachedAsyncHandler = OnChannelDetachedAsync;
-            ChannelHub.Detached += OnChannelDetachedAsyncHandler; // Must go first
-            ChannelHub.Attached += OnChannelAttachedHandler;
+            ReconnectDelay = options.ReconnectDelay;
+            ChannelProvider = channelProvider;
+            ChannelProcessors = new ConcurrentDictionary<Symbol, ReplicatorChannelProcessor>();
+            CreateChannelProcessorHandler = CreateChannelProcessor;
         }
+
+        public virtual IReplica? TryGet(Symbol publicationId) 
+            => Registry.TryGet(publicationId);
 
         public virtual IReplica<T> GetOrAdd<T>(Symbol publisherId, Symbol publicationId, 
             LTagged<Result<T>> initialOutput, bool isConsistent = true, bool requestUpdate = false)
         {
-            var spinWait = new SpinWait();
-            IReplica? replica; 
-            while (!Replicas.TryGetValue(publicationId, out replica)) {
-                replica = new Replica<T>(this, publisherId, publicationId, initialOutput, isConsistent, requestUpdate);
-                if (Replicas.TryAdd(publicationId, replica))
-                    TrySubscribe(replica, requestUpdate);
-                spinWait.SpinOnce();
-            }
+            var (replica, isNew) = Registry.GetOrAdd(publicationId, 
+                () => new Replica<T>(this, publisherId, publicationId, initialOutput, isConsistent, requestUpdate));
+            if (isNew)
+                Subscribe(replica);
             return (IReplica<T>) replica;
         }
 
-        public virtual IReplica? TryGet(Symbol publicationId) 
-            => Replicas.TryGetValue(publicationId, out var replica) ? replica : null;
+        public IComputed<bool> GetPublisherConnectionState(Symbol publisherId) 
+            => ChannelProcessors
+                .GetOrAddChecked(publisherId, CreateChannelProcessorHandler)
+                .StateComputedRef.Computed;
 
-        protected virtual void OnChannelAttached(Channel<Message> channel)
+        protected virtual ReplicatorChannelProcessor GetChannelProcessor(Symbol publisherId) 
+            => ChannelProcessors
+                .GetOrAddChecked(publisherId, CreateChannelProcessorHandler);
+
+        protected virtual ReplicatorChannelProcessor CreateChannelProcessor(Symbol publisherId)
         {
-            var publisherId = PublisherIdProvider.Invoke(channel);
-            var channelProcessor = CreateChannelProcessor(channel, publisherId);
-            if (!ChannelProcessors.TryAdd(channel, channelProcessor))
-                return;
-            while (!ChannelProcessorsById.TryAdd(publisherId, channelProcessor)) {
-                if (ChannelProcessorsById.TryRemove(publisherId, out var oldChannelProcessor)) {
-                    // We intend to just start the task here
-                    oldChannelProcessor.DisposeAsync();  
-                }
-            }
+            var channelProcessor = new ReplicatorChannelProcessor(this, publisherId);
             channelProcessor.RunAsync().ContinueWith(_ => {
                 // Since ChannelProcessor is AsyncProcessorBase desc.,
                 // its disposal will shut down RunAsync as well,
                 // so "subscribing" to RunAsync completion is the
                 // same as subscribing to its disposal.
-                ChannelProcessors.TryRemove(channel, channelProcessor);
+                ChannelProcessors.TryRemove(publisherId, channelProcessor);
             });
+            return channelProcessor;
         }
 
-        protected virtual ValueTask OnChannelDetachedAsync(Channel<Message> channel)
-        {
-            if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
-                return ValueTaskEx.CompletedTask;
-            ChannelProcessorsById.TryRemove(channelProcessor.PublisherId, channelProcessor);
-            return channelProcessor.DisposeAsync();
-        }
-
-        protected virtual ReplicatorChannelProcessor CreateChannelProcessor(
-            Channel<Message> channel, Symbol publisherId) 
-            => new ReplicatorChannelProcessor(this, channel, publisherId);
-
-        bool IReplicatorImpl.TrySubscribe(IReplica replica, bool requestUpdate) 
-            => TrySubscribe(replica, requestUpdate);
-        protected virtual bool TrySubscribe(IReplica replica, bool requestUpdate)
+        void IReplicatorImpl.Subscribe(IReplica replica) 
+            => Subscribe(replica);
+        protected virtual void Subscribe(IReplica replica)
         {
             if (replica.Replicator != this)
                 throw new ArgumentOutOfRangeException(nameof(replica));
-            if (!ChannelProcessorsById.TryGetValue(replica.PublisherId, out var channelProcessor))
-                return false;
-            // We intend to just start the task here
-            channelProcessor.SubscribeAsync(replica, requestUpdate, default);
-            return true;
+            GetChannelProcessor(replica.PublisherId).Subscribe(replica);
         }
 
         void IReplicatorImpl.OnReplicaDisposed(IReplica replica) 
@@ -143,18 +113,11 @@ namespace Stl.Fusion.Bridge
         {
             if (replica.Replicator != this)
                 throw new ArgumentOutOfRangeException(nameof(replica));
-            Replicas.TryRemove(replica.PublicationId, replica);
+            GetChannelProcessor(replica.PublisherId).Unsubscribe(replica);
         }
-
-        void IReplicatorImpl.OnChannelProcessorDisposed(ReplicatorChannelProcessor channelProcessor) 
-            => OnChannelProcessorDisposed(channelProcessor);
-        protected virtual void OnChannelProcessorDisposed(ReplicatorChannelProcessor channelProcessor) 
-            => ChannelProcessorsById.TryRemove(channelProcessor.PublisherId, channelProcessor);
 
         protected override async ValueTask DisposeInternalAsync(bool disposing)
         {
-            ChannelHub.Attached -= OnChannelAttachedHandler; // Must go first
-            ChannelHub.Detached -= OnChannelDetachedAsyncHandler;
             var channelProcessors = ChannelProcessors;
             while (!channelProcessors.IsEmpty) {
                 var tasks = channelProcessors

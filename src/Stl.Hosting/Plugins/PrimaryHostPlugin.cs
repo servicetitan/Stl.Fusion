@@ -87,7 +87,7 @@ namespace Stl.Hosting.Plugins
                 services.AddOptions();
                 services.TryAddSingleton(Plugins);
                 services.TryCopySingleton<IAppHostBuilder>(Plugins);
-                services.TryCopySingleton<IRegistry>(Plugins);
+                services.TryCopySingleton<ISectionRegistry>(Plugins);
                 services.TryCopySingleton<IClock>(Plugins);
                 services.TryCopySingleton<ISystemClock>(Plugins);
                 services.TryCopySingleton<Microsoft.Extensions.Internal.ISystemClock>(Plugins);

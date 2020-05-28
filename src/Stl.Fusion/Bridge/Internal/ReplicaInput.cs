@@ -33,10 +33,6 @@ namespace Stl.Fusion.Bridge.Internal
         public override bool Equals(object? obj) 
             => Equals(obj as ReplicaInput);
         public override int GetHashCode() 
-            => PublicationId.GetHashCode();
-        public static bool operator ==(ReplicaInput? left, ReplicaInput? right) 
-            => Equals(left, right);
-        public static bool operator !=(ReplicaInput? left, ReplicaInput? right) 
-            => !Equals(left, right);
+            => base.GetHashCode();
     }
 }

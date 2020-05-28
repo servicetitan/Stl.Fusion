@@ -108,7 +108,7 @@ namespace Stl.Tests.ImmutableModel.Indexing
                 index.GetNode(node.Key).Should().Equals(node);
 
                 var nodeTypeDef = node.GetDefinition();
-                var buffer = ListBuffer<KeyValuePair<ItemKey, INode>>.Lease();
+                var buffer = MemoryBuffer<KeyValuePair<ItemKey, INode>>.Lease();
                 try {
                     nodeTypeDef.GetNodeItems(node, ref buffer);
                     var parentKey = node.Key;

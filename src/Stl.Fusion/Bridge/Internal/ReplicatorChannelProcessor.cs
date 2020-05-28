@@ -1,10 +1,17 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Async;
 using Stl.Extensibility;
 using Stl.Fusion.Bridge.Messages;
+using Stl.Fusion.Internal;
 using Stl.Text;
 
 namespace Stl.Fusion.Bridge.Internal
@@ -20,45 +27,79 @@ namespace Stl.Fusion.Bridge.Internal
                 => arg.Item1.OnStateChangedMessageAsync((PublicationStateChangedMessage<T>) target, arg.Item2);
         }
 
-        public readonly IReplicator Replicator;
-        public readonly IReplicatorImpl ReplicatorImpl;
-        public readonly Channel<Message> Channel;
-        public readonly Symbol PublisherId;
-        protected object Lock => new object();  
+        protected readonly ILogger Log;
+        protected readonly IReplicatorImpl ReplicatorImpl;
+        protected readonly HashSet<Symbol> Subscriptions;
+        protected volatile Task<Channel<Message>> ChannelTask = null!;
+        protected volatile Channel<Message> SendChannel = null!;
+        protected volatile Exception? LastError;
+        protected Symbol ClientId => Replicator.Id;
+        protected object Lock => Subscriptions;
 
-        public ReplicatorChannelProcessor(IReplicator replicator, Channel<Message> channel, Symbol publisherId)
+        public readonly IReplicator Replicator;
+        public readonly Symbol PublisherId;
+        public SimpleComputedInput<bool> StateComputedRef;
+
+        public ReplicatorChannelProcessor(IReplicator replicator, Symbol publisherId, ILogger? log = null)
         {
+            Log = log ?? NullLogger.Instance;
             Replicator = replicator;
             ReplicatorImpl = (IReplicatorImpl) replicator;
-            Channel = channel;
             PublisherId = publisherId;
-        }
-
-        public ValueTask SubscribeAsync(IReplica replica, bool requestUpdate, CancellationToken cancellationToken)
-        {
-            // No checks, since they're done by the only caller of this method
-            // if (replica.Replicator != Replicator || replica.PublisherId != PublisherId)
-            //     throw new ArgumentOutOfRangeException(nameof(replica));
-
-            var computed = replica.Computed;
-            var subscribeMessage = new SubscribeMessage() {
-                PublisherId = PublisherId,
-                PublicationId = replica.PublicationId,
-                ReplicaLTag = computed.LTag,
-                ReplicaIsConsistent = computed.IsConsistent,
-                IsUpdateRequested = requestUpdate,
-            };
-            return Channel.Writer.WriteAsync(subscribeMessage, cancellationToken);
+            Subscriptions = new HashSet<Symbol>();
+            StateComputedRef = SimpleComputed.New<bool>(_ => {
+                lock (Lock) {
+                    var lastError = LastError;
+                    if (lastError != null)
+                        return Task.FromException<bool>(lastError);
+                    return Task.FromResult(ChannelTask.IsCompleted);
+                }
+            }).Input;
+            // ReSharper disable once VirtualMemberCallInConstructor
+            Reconnect();
         }
 
         protected override async Task RunInternalAsync(CancellationToken cancellationToken)
         {
             try {
-                var reader = Channel.Reader;
-                while (await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false)) {
-                    if (!reader.TryRead(out var message))
-                        continue;
-                    await OnMessageAsync(message, cancellationToken).ConfigureAwait(false);
+                var lastChannelTask = (Task<Channel<Message>>?) null;
+                var channel = (Channel<Message>) null!;
+                while (true) {
+                    var error = (Exception?) null;
+                    try {
+                        var channelTask = ChannelTask;
+                        if (channelTask != lastChannelTask)
+                            channel = await ChannelTask.WithFakeCancellation(cancellationToken).ConfigureAwait(false);
+                        var message = await channel.Reader.ReadAsync(cancellationToken).AsTask();
+                        await OnMessageAsync(message, cancellationToken).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException) {
+                        if (cancellationToken.IsCancellationRequested)
+                            throw;
+                    }
+                    catch (AggregateException e) {
+                        error = e.Flatten().InnerExceptions.SingleOrDefault() ?? e;
+                    }
+                    catch (Exception e) {
+                        error = e;
+                    }
+
+                    switch (error) {
+                    case null:
+                        break;
+                    case OperationCanceledException oce:
+                        if (cancellationToken.IsCancellationRequested)
+                            throw oce;
+                        break;
+                    default:
+                        Reconnect(error);
+                        var ct = cancellationToken.IsCancellationRequested ? cancellationToken : default;
+                        foreach (var publicationId in GetSubscriptions()) {
+                            var replicaImpl = (IReplicaImpl?) Replicator.TryGet(publicationId);
+                            replicaImpl?.ApplyFailedUpdate(error, ct);
+                        }
+                        break;
+                    }
                 }
             }
             finally {
@@ -69,51 +110,167 @@ namespace Stl.Fusion.Bridge.Internal
             }
         }
 
+        public virtual void Subscribe(IReplica replica)
+        {
+            // No checks, since they're done by the only caller of this method
+            lock (Lock) {
+                Subscriptions.Add(replica.PublicationId);
+                Send(new SubscribeMessage() {
+                    PublisherId = PublisherId,
+                    PublicationId = replica.PublicationId,
+                    IsUpdateRequested = replica.IsUpdateRequested,
+                });
+            }
+        }
+
+        public virtual void Unsubscribe(IReplica replica)
+        {
+            // No checks, since they're done by the only caller of this method
+            lock (Lock) {
+                Subscriptions.Remove(replica.PublicationId);
+                Send(new UnsubscribeMessage() {
+                    PublisherId = PublisherId,
+                    PublicationId = replica.PublicationId,
+                });
+            }
+        }
+
+        protected List<Symbol> GetSubscriptions()
+        {
+            lock (Lock) {
+                return Subscriptions.ToList();
+            }
+        }
+
         protected virtual Task OnMessageAsync(Message message, CancellationToken cancellationToken)
         {
             switch (message) {
             case PublicationStateChangedMessage scm:
                 // Fast dispatch to OnUpdatedMessageAsync<T> 
                 return OnStateChangeMessageAsyncHandlers[scm.GetResultType()].Handle(scm, (this, cancellationToken));
-            case PublicationDisposedMessage dm:
-                var replica = Replicator.TryGet(dm.PublicationId);
-                return replica?.DisposeAsync().AsTask() ?? Task.CompletedTask;
+            case PublicationAbsentsMessage pam:
+                var replica = (IReplicaImpl?) Replicator.TryGet(pam.PublicationId);
+                replica?.ApplyFailedUpdate(Errors.PublicationAbsents(), default);
+                break;
             }
             return Task.CompletedTask;
         }
 
         protected virtual Task OnStateChangedMessageAsync<T>(PublicationStateChangedMessage<T> message, CancellationToken cancellationToken)
         {
-            var lTaggedOutput = new LTagged<Result<T>>(message.Output, message.NewLTag);
+            var output = default(Result<T>);
+            if (message.HasOutput) {
+                output = message.OutputErrorType == null
+                    ? new Result<T>(message.OutputValue, null)
+                    : new Result<T>(
+                        default!,
+                        new TargetInvocationException(message.OutputErrorMessage,
+                            new ApplicationException(message.OutputErrorMessage)
+                        ));
+            }
+            var lTaggedOutput = new LTagged<Result<T>>(output, message.NewLTag);
             var replica = Replicator.GetOrAdd(message.PublisherId, message.PublicationId, lTaggedOutput);
             if (!(replica is IReplicaImpl<T> replicaImpl))
                 // Weird case: somehow replica is of different type
                 return Task.CompletedTask; 
 
-            try {
-                var computed = replica.Computed;
-                if (message.NewLTag != computed.LTag) {
-                    // LTags don't match => this is update + maybe invalidation
-                    replicaImpl.ChangeState(computed, lTaggedOutput, message.NewIsConsistent);
-                    return Task.CompletedTask; // Wrong type
-                }
-
-                // LTags are equal, so it could be only invalidation
-                if (message.NewIsConsistent == false)
-                    // There is a check that invalidation can happen only once, so...
-                    computed.Invalidate(Replicator);
-
-                return Task.CompletedTask;
-            }
-            finally {
-                replicaImpl.CompleteUpdateRequest();
-            }
+            replicaImpl.ApplySuccessfulUpdate(lTaggedOutput, message.NewIsConsistent);
+            return Task.CompletedTask;
         }
 
-        protected override async ValueTask DisposeInternalAsync(bool disposing)
+        protected virtual void Reconnect(Exception? error = null)
         {
-            await base.DisposeInternalAsync(disposing);
-            ReplicatorImpl.OnChannelProcessorDisposed(this);
+            var sendChannel = CreateSendChannel();
+            var channelTaskSource = TaskSource.New<Channel<Message>>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            var channelTask = channelTaskSource.Task;
+
+            Channel<Message> oldSendChannel;
+            lock (Lock) {
+                oldSendChannel = Interlocked.Exchange(ref SendChannel, sendChannel);
+                Interlocked.Exchange(ref ChannelTask, channelTask);
+                Interlocked.Exchange(ref LastError, error);
+            }
+            try {
+                oldSendChannel?.Writer.TryComplete();
+            }
+            catch {
+                // It's better to suppress all exceptions here
+            }
+            StateComputedRef.Computed.Invalidate();
+
+            // Connect task
+            var connectTask = Task.Run(async () => {
+                var cancellationToken = CancellationToken.None;
+                if (error != null) {
+                    Log.LogError($"{ClientId}: Error: {error.GetType().Name}, {error.Message}", error);
+                    await Task.Delay(ReplicatorImpl.ReconnectDelay, cancellationToken).ConfigureAwait(false);
+                    Log.LogInformation($"{ClientId}: Reconnecting...");
+                }
+                else 
+                    Log.LogInformation($"{ClientId}: Connecting...");
+
+                var channelProvider = ReplicatorImpl.ChannelProvider;
+                var channel = await channelProvider
+                    .CreateChannelAsync(PublisherId, cancellationToken)
+                    .ConfigureAwait(false);
+            
+                foreach (var publicationId in GetSubscriptions()) {
+                    var replica = Replicator.TryGet(publicationId);
+                    if (replica != null)
+                        Subscribe(replica);
+                    else {
+                        lock (Lock) {
+                            Subscriptions.Remove(publicationId);
+                        }
+                    }
+                }
+
+                return channel;
+            });
+            connectTask.ContinueWith(ct => {
+                channelTaskSource.SetFromTask(ct);
+                if (!ct.IsCompletedSuccessfully)
+                    // LastError will be updated anyway in this case
+                    return; 
+                lock (Lock) {
+                    Interlocked.Exchange(ref LastError, null);
+                }
+                StateComputedRef.Computed.Invalidate();
+            });
+
+            // Copy task
+            Task.Run(async () => {
+                var cancellationToken = CancellationToken.None;
+                try {
+                    var sendChannelReader = sendChannel.Reader;
+                    var channel = (Channel<Message>?) null;
+                    while (await sendChannelReader.WaitToReadAsync(cancellationToken).ConfigureAwait(false)) {
+                        if (sendChannel != SendChannel)
+                            break;
+                        if (!sendChannelReader.TryRead(out var message))
+                            continue;
+                        channel ??= await channelTask.ConfigureAwait(false);
+                        await channel.Writer.WriteAsync(message, cancellationToken).ConfigureAwait(false);
+                    }
+                }
+                catch (Exception e) {
+                    Log.LogError($"{ClientId}: Error: {e.GetType().Name}, {e.Message}", e);
+                }
+            });
+        }
+
+        protected virtual Channel<Message> CreateSendChannel() 
+            => Channel.CreateUnbounded<Message>(
+                new UnboundedChannelOptions() {
+                    AllowSynchronousContinuations = true,
+                    SingleReader = true,
+                    SingleWriter = false,
+                });
+
+        protected void Send(Message message)
+        {
+            SendChannel.Writer.WriteAsync(message); 
         }
     }
 }

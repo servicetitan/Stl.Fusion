@@ -1,8 +1,8 @@
+using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Stl.Fusion;
 using Stl.Fusion.Bridge;
-using Stl.Fusion.Bridge.Messages;
+using Stl.Fusion.Server;
 using Stl.Samples.Blazor.Common.Services;
 
 namespace Stl.Samples.Blazor.Server.Controllers
@@ -22,17 +22,11 @@ namespace Stl.Samples.Blazor.Server.Controllers
             Publisher = publisher;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<PublicationPublishedMessage>> GetTime()
+        [HttpGet("get")]
+        public async Task<ActionResult<DateTime>> GetTimeAsync()
         {
-            var publication = await Computed
-                .PublishAsync(Publisher, () => TimeProvider.GetTimeAsync())
-                .ConfigureAwait(false);
-
-            return new PublicationPublishedMessage() {
-                PublicationId = publication.Id,
-                PublisherId = Publisher.Id,
-            };
+            var c = await HttpContext.TryPublishAsync(Publisher, _ => TimeProvider.GetTimeAsync());
+            return c.Value;
         }
     }
 }

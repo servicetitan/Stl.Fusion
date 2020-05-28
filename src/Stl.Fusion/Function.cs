@@ -44,11 +44,11 @@ namespace Stl.Fusion
         protected IAsyncLockSet<ComputedInput> Locks { get; }
         protected object Lock => Locks;
 
-        public FunctionBase(
+        protected FunctionBase(
             IComputedRegistry computedRegistry,
             IComputeRetryPolicy? retryPolicy = null)
         {
-            retryPolicy ??= Fusion.ComputeRetryPolicy.Default;
+            retryPolicy ??= ComputeRetryPolicy.Default;
             ComputedRegistry = computedRegistry;
             RetryPolicy = retryPolicy; 
             Locks = computedRegistry.GetLocksFor(this);
@@ -75,7 +75,7 @@ namespace Stl.Fusion
             context.TryCaptureValue(result);
             if (result != null || (context.Options & ComputeOptions.TryGetCached) != 0) {
                 if ((context.Options & ComputeOptions.Invalidate) == ComputeOptions.Invalidate)
-                    result?.Invalidate();
+                    result?.Invalidate(context.InvalidatedBy);
                 return result!;
             }
 
@@ -85,7 +85,7 @@ namespace Stl.Fusion
             context.TryCaptureValue(result);
             if (result != null || (context.Options & ComputeOptions.TryGetCached) != 0) {
                 if ((context.Options & ComputeOptions.Invalidate) == ComputeOptions.Invalidate)
-                    result?.Invalidate();
+                    result?.Invalidate(context.InvalidatedBy);
                 return result!;
             }
 
@@ -123,7 +123,7 @@ namespace Stl.Fusion
             context.TryCaptureValue(result);
             if (result != null || (context.Options & ComputeOptions.TryGetCached) != 0) {
                 if ((context.Options & ComputeOptions.Invalidate) == ComputeOptions.Invalidate)
-                    result?.Invalidate();
+                    result?.Invalidate(context.InvalidatedBy);
                 return result.Strip();
             }
 
@@ -133,7 +133,7 @@ namespace Stl.Fusion
             context.TryCaptureValue(result);
             if (result != null || (context.Options & ComputeOptions.TryGetCached) != 0) {
                 if ((context.Options & ComputeOptions.Invalidate) == ComputeOptions.Invalidate)
-                    result?.Invalidate();
+                    result?.Invalidate(context.InvalidatedBy);
                 return result.Strip();
             }
 

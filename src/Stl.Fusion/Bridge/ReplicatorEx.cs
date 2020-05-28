@@ -7,7 +7,8 @@ namespace Stl.Fusion.Bridge
 {
     public static class ReplicatorEx
     {
-        private static readonly Exception ReplicaHasBeenNeverUpdatedError = Errors.ReplicaHasBeenNeverUpdated();
+        private static readonly Exception ReplicaHasBeenNeverUpdatedError = 
+            Errors.ReplicaHasNeverBeenUpdated();
         
         public static IReplica<T> GetOrAdd<T>(this IReplicator replicator, 
             Symbol publisherId, Symbol publicationId, bool requestUpdate = false)

@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,6 +17,7 @@ namespace Stl.Fusion.Bridge
         Symbol PublicationId { get; }
         IComputedReplica Computed { get; }
         bool IsUpdateRequested { get; }
+        Exception? UpdateError { get; }
 
         Task RequestUpdateAsync(CancellationToken cancellationToken = default);
     }
@@ -23,30 +25,35 @@ namespace Stl.Fusion.Bridge
     public interface IReplica<T> : IReplica
     {
         new IComputedReplica<T> Computed { get; }
-        
-        new Task RequestUpdateAsync(CancellationToken cancellationToken = default);
     }
 
-    public interface IReplicaImpl : IReplica, IFunction { }
+    public interface IReplicaImpl : IReplica, IFunction
+    {
+        void MarkDisposed();
+        bool ApplyFailedUpdate(Exception? error, CancellationToken cancellationToken);
+    }
+
     public interface IReplicaImpl<T> : IReplica<T>, IFunction<ReplicaInput, T>, IReplicaImpl
     {
-        bool ChangeState(IComputedReplica<T> expected, LTagged<Result<T>> output, bool isConsistent);
-        void CompleteUpdateRequest();
+        bool ApplySuccessfulUpdate(LTagged<Result<T>> output, bool isConsistent);
     } 
 
     public class Replica<T> : AsyncDisposableBase, IReplicaImpl<T>
     {
         protected readonly ReplicaInput Input;
-        protected IComputedReplica<T> ComputedField = null!;
-        protected volatile Task<Unit>? UpdateRequestCompleted;
+        protected volatile IComputedReplica<T> ComputedField = null!;
+        protected volatile Exception? UpdateErrorField;
+        protected volatile Task<Unit>? UpdateRequestTask;
         protected IReplicatorImpl ReplicatorImpl => (IReplicatorImpl) Replicator;
+        protected object Lock = new object();
 
         public IReplicator Replicator { get; }
         public Symbol PublisherId => Input.PublisherId;
         public Symbol PublicationId => Input.PublicationId;
         IComputedReplica IReplica.Computed => ComputedField;
         public IComputedReplica<T> Computed => ComputedField;
-        public bool IsUpdateRequested => UpdateRequestCompleted != null;
+        public bool IsUpdateRequested => UpdateRequestTask != null;
+        public Exception? UpdateError => UpdateErrorField;
 
         public Replica(
             IReplicator replicator, Symbol publisherId, Symbol publicationId, 
@@ -54,59 +61,106 @@ namespace Stl.Fusion.Bridge
         {
             Replicator = replicator;
             Input = new ReplicaInput(this, publisherId, publicationId);
+            // ReSharper disable once VirtualMemberCallInConstructor
+            ApplySuccessfulUpdate(initialOutput, isConsistent);
             if (isUpdateRequested)
                 // ReSharper disable once VirtualMemberCallInConstructor
-                UpdateRequestCompleted = CreateUpdateRequestCompletedSource().Task;
-            // ReSharper disable once VirtualMemberCallInConstructor
-            ChangeState(null, initialOutput, isConsistent);
+                UpdateRequestTask = CreateUpdateRequestTaskSource().Task;
         }
 
-        protected virtual IComputedReplica<T> CreateComputedReplica(
-            LTagged<Result<T>> initialOutput, bool isConsistent) 
-            => new ComputedReplica<T>(Input, initialOutput.Value, initialOutput.LTag, isConsistent);
+        // This method is called for temp. replicas that were never attached to anything.
+        void IReplicaImpl.MarkDisposed() => MarkDisposed();
+
+        // We want to make sure the replicas are connected to
+        // publishers only while they're used.
+        ~Replica() => DisposeAsync(false);
+
+        protected override ValueTask DisposeInternalAsync(bool disposing)
+        {
+            // Debug.WriteLine($"DisposeInternalAsync({disposing}) for {PublicationId} / {GetHashCode()}");
+            Input.ReplicatorImpl.OnReplicaDisposed(this);
+            return base.DisposeInternalAsync(disposing);
+        }
 
         Task IReplica.RequestUpdateAsync(CancellationToken cancellationToken) 
             => RequestUpdateAsync(cancellationToken);
         public virtual Task RequestUpdateAsync(CancellationToken cancellationToken = default)
         {
-            var updateRequestCompleted = UpdateRequestCompleted;
-            if (updateRequestCompleted == null) {
-                var newUpdateRequestCompleted = CreateUpdateRequestCompletedSource().Task;
-                updateRequestCompleted = Interlocked.CompareExchange(
-                    ref UpdateRequestCompleted, newUpdateRequestCompleted, null!);
-                if (updateRequestCompleted == null) {
-                    updateRequestCompleted = newUpdateRequestCompleted;
-                    Input.ReplicatorImpl.TrySubscribe(this, true);
-                }
+            var updateRequestTask = UpdateRequestTask;
+            if (updateRequestTask != null)
+                return updateRequestTask.WithFakeCancellation(cancellationToken);
+            // Double check locking
+            lock (Lock) {
+                updateRequestTask = UpdateRequestTask;
+                if (updateRequestTask != null)
+                    return updateRequestTask.WithFakeCancellation(cancellationToken);
+                UpdateRequestTask = updateRequestTask = CreateUpdateRequestTaskSource().Task;
+                Input.ReplicatorImpl.Subscribe(this);
+                return updateRequestTask.WithFakeCancellation(cancellationToken);
             }
-            return updateRequestCompleted.WithFakeCancellation(cancellationToken);
         }
 
-        bool IReplicaImpl<T>.ChangeState(IComputedReplica<T>? expected, LTagged<Result<T>> output, bool isConsistent) 
-            => ChangeState(expected, output, isConsistent);
-        protected virtual bool ChangeState(IComputedReplica<T>? expected, LTagged<Result<T>> output, bool isConsistent)
+        bool IReplicaImpl<T>.ApplySuccessfulUpdate(LTagged<Result<T>> output, bool isConsistent) 
+            => ApplySuccessfulUpdate(output, isConsistent);
+        protected virtual bool ApplySuccessfulUpdate(LTagged<Result<T>> output, bool isConsistent)
         {
-            var computed = ComputedField;
-            if (computed != expected)
-                return false;
-            var newComputed = new ComputedReplica<T>(Input, output.Value, output.LTag, isConsistent);
-            computed = Interlocked.CompareExchange(ref ComputedField, newComputed, expected);
-            if (computed != expected)
-                return false;
-            expected?.Invalidate();
+            IComputedReplica<T> computed;
+            Task<Unit>? updateRequestTask;
+            lock (Lock) {
+                // 1. Update Computed & UpdateError 
+                UpdateErrorField = null;
+                computed = ComputedField;
+                if (computed == null || computed.LTag != output.LTag)
+                    // LTag doesn't match -> replace
+                    ComputedField = new ComputedReplica<T>(Input, output.Value, output.LTag, isConsistent);
+                else if (computed.IsConsistent != isConsistent) {
+                    // LTag matches:
+                    if (isConsistent)
+                        // Replace inconsistent w/ the
+                        ComputedField = new ComputedReplica<T>(Input, output.Value, output.LTag, isConsistent);
+                    // Otherwise it will be invalidated right after exiting the lock 
+                } 
+
+                // 2. Complete UpdateRequestTask
+                (updateRequestTask, UpdateRequestTask) = (UpdateRequestTask, null);
+            }
+
+            // We always invalidate the old computed here, b/c it was either
+            // replaced or has to be invalidated.
+            computed?.Invalidate(this);
+            if (updateRequestTask != null) {
+                var updateRequestTaskSource = TaskSource.For(updateRequestTask);
+                updateRequestTaskSource.TrySetResult(default);
+            }
             return true;
         }
 
-        void IReplicaImpl<T>.CompleteUpdateRequest() 
-            => CompleteUpdateRequest();
-        protected virtual void CompleteUpdateRequest()
+        bool IReplicaImpl.ApplyFailedUpdate(Exception? error, CancellationToken cancellationToken)
+            => ApplyFailedUpdate(error, cancellationToken);
+        protected virtual bool ApplyFailedUpdate(Exception? error, CancellationToken cancellationToken)
         {
-            var updateRequestCompleted = Interlocked.Exchange(ref UpdateRequestCompleted, null);
-            if (updateRequestCompleted != null)
-                TaskSource.For(updateRequestCompleted).TrySetResult(default);
+            IComputedReplica<T>? computed;
+            Task<Unit>? updateRequestTask;
+            lock (Lock) {
+                // 1. Update Computed & UpdateError 
+                computed = ComputedField;
+                UpdateErrorField = error;
+
+                // 2. Complete UpdateRequestTask
+                (updateRequestTask, UpdateRequestTask) = (UpdateRequestTask, null);
+            }
+
+            if (error != null)
+                computed.Invalidate(this);
+            if (updateRequestTask != null) {
+                var result = new Result<Unit>(default, error);
+                var updateRequestTaskSource = TaskSource.For(updateRequestTask);
+                updateRequestTaskSource.TrySetFromResult(result, cancellationToken);
+            }
+            return true;
         }
 
-        protected virtual TaskSource<Unit> CreateUpdateRequestCompletedSource() 
+        protected virtual TaskSource<Unit> CreateUpdateRequestTaskSource() 
             => TaskSource.New<Unit>(TaskCreationOptions.None);
 
         protected async Task<IComputed<T>> InvokeAsync(ReplicaInput input, IComputed? usedBy, ComputeContext? context,
@@ -123,14 +177,28 @@ namespace Stl.Fusion.Bridge
             if ((context.Options & ComputeOptions.TryGetCached) != 0) {
                 context.TryCaptureValue(result);
                 if ((context.Options & ComputeOptions.Invalidate) == ComputeOptions.Invalidate)
-                    result.Invalidate();
+                    result.Invalidate(context.InvalidatedBy);
                 ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) result);
                 return result!;
             }
 
+            // No async locking here b/c RequestUpdateAsync is, in fact, doing this
+
             var retryPolicy = ReplicatorImpl.RetryPolicy;
             for (var tryIndex = 0;; tryIndex++) {
-                await RequestUpdateAsync(cancellationToken).ConfigureAwait(false);
+                try {
+                    await RequestUpdateAsync(cancellationToken).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) {
+                    if (cancellationToken.IsCancellationRequested)
+                        throw;
+                }
+                catch {
+                    // Intended: if RequestUpdateAsync fails, replica will become
+                    // inconsistent; the exception will be saved anyway, so we 
+                    // shouldn't throw it. We should try to reprocess the "still inconsistent"
+                    // state though.
+                }
                 result = Computed;
                 if (result.IsConsistent)
                     break;
@@ -156,14 +224,28 @@ namespace Stl.Fusion.Bridge
             if ((context.Options & ComputeOptions.TryGetCached) != 0) {
                 context.TryCaptureValue(result);
                 if ((context.Options & ComputeOptions.Invalidate) == ComputeOptions.Invalidate)
-                    result.Invalidate();
+                    result.Invalidate(context.InvalidatedBy);
                 ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) result);
                 return result.Strip();
             }
 
+            // No async locking here b/c RequestUpdateAsync is, in fact, doing this
+
             var retryPolicy = ReplicatorImpl.RetryPolicy;
             for (var tryIndex = 0;; tryIndex++) {
-                await RequestUpdateAsync(cancellationToken).ConfigureAwait(false);
+                try {
+                    await RequestUpdateAsync(cancellationToken).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) {
+                    if (cancellationToken.IsCancellationRequested)
+                        throw;
+                }
+                catch {
+                    // Intended: if RequestUpdateAsync fails, replica will become
+                    // inconsistent; the exception will be saved anyway, so we 
+                    // shouldn't throw it. We should try to reprocess the "still inconsistent"
+                    // state though.
+                }
                 result = Computed;
                 if (result.IsConsistent)
                     break;
@@ -212,11 +294,5 @@ namespace Stl.Fusion.Bridge
             => TryGetCached(input, usedBy);
 
         #endregion
-
-        protected override ValueTask DisposeInternalAsync(bool disposing)
-        {
-            Input.ReplicatorImpl.OnReplicaDisposed(this);
-            return base.DisposeInternalAsync(disposing);
-        }
     }
 }

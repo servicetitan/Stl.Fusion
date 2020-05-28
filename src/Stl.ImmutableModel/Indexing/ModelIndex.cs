@@ -113,7 +113,7 @@ namespace Stl.ImmutableModel.Indexing
             NodeToNodeLink = NodeToNodeLink.Add(node, nodeLink);
 
             var nodeTypeDef = node.GetDefinition();
-            var buffer = ListBuffer<KeyValuePair<ItemKey, INode>>.Lease();
+            var buffer = MemoryBuffer<KeyValuePair<ItemKey, INode>>.Lease();
             try {
                 nodeTypeDef.GetNodeItems(node, ref buffer);
                 var parentKey = node.Key;
@@ -134,7 +134,7 @@ namespace Stl.ImmutableModel.Indexing
             NodeToNodeLink = NodeToNodeLink.Remove(node);
 
             var nodeTypeDef = node.GetDefinition();
-            var buffer = ListBuffer<KeyValuePair<ItemKey, INode>>.Lease();
+            var buffer = MemoryBuffer<KeyValuePair<ItemKey, INode>>.Lease();
             try {
                 nodeTypeDef.GetNodeItems(node, ref buffer);
                 var parentKey = node.Key;

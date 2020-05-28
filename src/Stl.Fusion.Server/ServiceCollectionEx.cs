@@ -9,6 +9,7 @@ namespace Stl.Fusion.Server
         public static IServiceCollection AddFusionWebSocketServer(this IServiceCollection services,
             WebSocketServerMiddleware.Options options)
         {
+            services.AddHttpContextAccessor();
             services.TryAddSingleton(options);
             services.TryAddScoped<WebSocketServerMiddleware>();
             return services;
@@ -17,6 +18,7 @@ namespace Stl.Fusion.Server
         public static IServiceCollection AddFusionWebSocketServer(this IServiceCollection services,
             Action<IServiceProvider, WebSocketServerMiddleware.Options>? optionsBuilder = null)
         {
+            services.AddHttpContextAccessor();
             services.TryAddSingleton(c => {
                 var options = new WebSocketServerMiddleware.Options();
                 optionsBuilder?.Invoke(c, options);

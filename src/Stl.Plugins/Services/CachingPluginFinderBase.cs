@@ -19,7 +19,7 @@ namespace Stl.Plugins.Services
         protected CachingPluginFinderBase(
             ILogger<CachingPluginFinderBase>? log = null)
         {
-            _log = log ?? NullLogger<CachingPluginFinderBase>.Instance;
+            _log = log ??= NullLogger<CachingPluginFinderBase>.Instance;
             _lazyCache = new Lazy<IAsyncCache<string, string>>(CreateCache);
         }
 

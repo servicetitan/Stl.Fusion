@@ -1,44 +1,47 @@
 @page "/serverTime"
-@inject HttpClient HttpClient
+@using Stl.Samples.Blazor.Services
+@using System.Diagnostics
+@implements IDisposable
 @inject IReplicator Replicator
 @inject ILogger<ServerTime> Log
+@inject ITimeProviderClient TimeProviderClient
 
 <h1>Timer</h1>
 
-<p>Server Time: @Time</p>
+<p>Server Time: @TimeString</p>
 
-<button class="btn btn-primary" @onclick="UpdateNow">Click me</button>
+<button class="btn btn-primary" @onclick="UpdateNow">Refresh</button>
 
 @code {
-    private IReplica<DateTime>? TimeReplica { get; set; }
-    private string Time => SafeToString(() => TimeReplica?.Computed.Value);
+    protected IComputed<DateTime> Time { get; set; }
+    protected string TimeString => Time?.Value.ToString("HH:mm:ss.ffff") ?? "n/a";
+    private IDisposable _autoUpdateHandler;
 
     protected override async Task OnInitializedAsync()
     {
-        var json = await HttpClient.GetStringAsync("api/time");
-        Log.LogInformation($"Got JSON: {json}");
-        var message = new JsonNetSerializer<PublicationPublishedMessage>().Deserialize(json);
-        TimeReplica = Replicator.GetOrAdd<DateTime>(message.PublisherId, message.PublicationId);
-        Log.LogInformation($"Trying to update replica...");
-        await TimeReplica.RequestUpdateAsync();
-        Log.LogInformation($"Replica updated.");
-        TimeReplica.Computed.AutoUpdate((c, o, _) => {
-            Log.LogInformation("Replica updated (post-invalidation).");
+        Debug.WriteLine($"{GetType().Name}: OnInitializedAsync");
+        Time = await TimeProviderClient.GetTimeAsync(); 
+        // ReSharper disable once HeapView.BoxingAllocation
+        _autoUpdateHandler = Time.AutoUpdate(TimeSpan.FromSeconds(2), (c, o, _) => {
+            Time = c;
+            Log.LogInformation($"Update (auto): {TimeString}.");
+            StateHasChanged();
         });
     }
 
-    private string SafeToString(Func<object> func)
+    private async void UpdateNow()
     {
-        try {
-            return func.Invoke().ToString() ?? "n/a";
-        }
-        catch (Exception) {
-            return "n/a";
-        }
+        GC.Collect(); // That's just for testing
+        if (Time != null)
+            Time = await Time.UpdateAsync();
+        Log.LogInformation($"Update (manual): {TimeString}.");
     }
 
-    private void UpdateNow()
+    public void Dispose()
     {
-        TimeReplica?.RequestUpdateAsync();
+        Debug.WriteLine($"{GetType().Name}: Dispose");
+        _autoUpdateHandler?.Dispose();
+        (Time as IComputedReplica<DateTime>)?.Replica.DisposeAsync();
     }
+
 }

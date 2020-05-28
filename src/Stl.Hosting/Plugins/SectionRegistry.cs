@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 
-namespace Stl.Extensibility
+namespace Stl.Hosting.Plugins
 {
-    public interface IRegistry
+    public interface ISectionRegistry
     {
         IEnumerable<Type> Sections { get; }
         ImmutableDictionary<string, T> GetSection<T>();
@@ -12,7 +12,7 @@ namespace Stl.Extensibility
             Func<ImmutableDictionary<string, T>, ImmutableDictionary<string, T>> updater);
     }
 
-    public sealed class Registry : IRegistry
+    public sealed class SectionRegistry : ISectionRegistry
     {
         private readonly object _lock = new object();
         private ImmutableDictionary<Type, object> _sections = ImmutableDictionary<Type, object>.Empty;

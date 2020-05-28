@@ -10,7 +10,9 @@ namespace Stl.Collections
     // (it relies on MemoryPool<T>.Shared & disposes its buffer);
     // it is supposed to be used as a temp. buffer in various
     // enumeration scenarios. 
-    public ref struct ListBuffer<T>
+    // ArrayBuffer<T> vs MemoryBuffer<T>: they are almost identical, but
+    // ArrayBuffer isn't a ref struct, so you can store it in fields.
+    public ref struct MemoryBuffer<T>
     {
         public const int MinCapacity = 1;
         public const int DefaultCapacity = 16;
@@ -24,7 +26,9 @@ namespace Stl.Collections
         public Span<T> Span => BufferSpan.Slice(0, Count);
         public int Capacity => BufferSpan.Length;
         public int Count {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _count;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set {
                 if (value < 0 || value > Capacity)
                     throw new ArgumentOutOfRangeException(nameof(value));
@@ -33,14 +37,17 @@ namespace Stl.Collections
         }
 
         public T this[int index] {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => index < Count ? BufferSpan[index] : throw new IndexOutOfRangeException();
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set {
                 if (index >= Count) throw new IndexOutOfRangeException();
                 BufferSpan[index] = value;
             }
         }
 
-        private ListBuffer(int capacity)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private MemoryBuffer(int capacity)
         {
             if (capacity < MinCapacity)
                 capacity = MinCapacity;
@@ -49,20 +56,26 @@ namespace Stl.Collections
             BufferSpan = _lease.Memory.Span;
         }
 
-        public static ListBuffer<T> Lease(int capacity = DefaultCapacity) 
-            => new ListBuffer<T>(capacity);
-        public static ListBuffer<T> LeaseAndSetCount(int count) 
-            => new ListBuffer<T>(count) {Count = count};
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static MemoryBuffer<T> Lease(int capacity = DefaultCapacity) 
+            => new MemoryBuffer<T>(capacity);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static MemoryBuffer<T> LeaseAndSetCount(int count) 
+            => new MemoryBuffer<T>(count) {Count = count};
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Release()
         {
             _lease?.Dispose();
             _lease = null!;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Span<T>.Enumerator GetEnumerator() => Span.GetEnumerator(); 
         
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T[] ToArray() => Span.ToArray();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public List<T> ToList()
         {
             var list = new List<T>(Count);
@@ -71,6 +84,7 @@ namespace Stl.Collections
             return list;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add(T item)
         {
             var capacity = Capacity;
@@ -113,6 +127,7 @@ namespace Stl.Collections
             source.CopyTo(target);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear()
         {
             ChangeLease(Pool.Rent(MinCapacity));
@@ -126,7 +141,7 @@ namespace Stl.Collections
 
             var pool = Pool;
             var span = _lease.Memory.Span;
-            var newLease = MemoryPool<T>.Shared.Rent(capacity);
+            var newLease = Pool.Rent(capacity);
             if (capacity < Count) {
                 Count = capacity;
                 span = span.Slice(0, capacity);
@@ -135,6 +150,7 @@ namespace Stl.Collections
             ChangeLease(newLease);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CopyTo(T[] array, int arrayIndex) 
             => BufferSpan.CopyTo(array.AsSpan().Slice(arrayIndex));
 

@@ -50,7 +50,7 @@ namespace Stl.ImmutableModel.Reflection
             return base.GetAllItems(node).Concat(collectionItems);
         }
 
-        public override void GetFreezableItems(INode node, ref ListBuffer<KeyValuePair<ItemKey, IFreezable>> output)
+        public override void GetFreezableItems(INode node, ref MemoryBuffer<KeyValuePair<ItemKey, IFreezable>> output)
         {
             base.GetFreezableItems(node, ref output);
             if (!IsItemFreezable) return;
@@ -62,7 +62,7 @@ namespace Stl.ImmutableModel.Reflection
             }
         }
 
-        public override void GetNodeItems(INode node, ref ListBuffer<KeyValuePair<ItemKey, INode>> output)
+        public override void GetNodeItems(INode node, ref MemoryBuffer<KeyValuePair<ItemKey, INode>> output)
         {
             base.GetNodeItems(node, ref output);
             if (!IsItemNode) return;
@@ -74,7 +74,7 @@ namespace Stl.ImmutableModel.Reflection
             }
         }
 
-        public override void GetCollectionNodeItems(INode node, ref ListBuffer<KeyValuePair<ItemKey, ICollectionNode>> output)
+        public override void GetCollectionNodeItems(INode node, ref MemoryBuffer<KeyValuePair<ItemKey, ICollectionNode>> output)
         {
             base.GetCollectionNodeItems(node, ref output);
             if (!IsItemCollectionNode) return;

@@ -43,7 +43,7 @@ namespace Stl.Fusion.Interception
             IComputedRegistry? registry = null, 
             ILogger<ComputedInterceptor>? log = null) 
         {
-            _log = log ?? NullLogger<ComputedInterceptor>.Instance;
+            _log = log ??= NullLogger<ComputedInterceptor>.Instance;
 
             LTagGenerator = options.LTagGenerator;
             Registry = registry ?? ComputedRegistry.Default;

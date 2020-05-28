@@ -29,12 +29,12 @@ namespace Stl.Tests.Fusion
             }, true);
 
             var u1 = await users.TryGetAsync(int.MaxValue);
-            var c1 = await Computed.CaptureAsync(() => users.CountAsync());
+            var c1 = await Computed.CaptureAsync(_ => users.CountAsync());
             
             users.Invalidate();
 
             var u2 = await users.TryGetAsync(int.MaxValue);
-            var c2 = await Computed.CaptureAsync(() => users.CountAsync());
+            var c2 = await Computed.CaptureAsync(_ => users.CountAsync());
             
             u2.Should().NotBeSameAs(u1);
             u2!.Id.Should().Be(u1!.Id);
@@ -102,7 +102,7 @@ namespace Stl.Tests.Fusion
             await users.CreateAsync(u, true);
 
             var cText = await Computed.CaptureAsync(
-                () => customFunction.InvokeAsync(async ct => {
+                _ => customFunction.InvokeAsync(async ct => {
                     var norris = await users.TryGetAsync(int.MaxValue, ct).ConfigureAwait(false);
                     var now = await time.GetTimeAsync().ConfigureAwait(false);
                     return $"@ {now:hh:mm:ss.fff}: {norris?.Name ?? "(none)"}";  
@@ -126,8 +126,8 @@ namespace Stl.Tests.Fusion
         {
             var users = Container.Resolve<IUserProvider>();
 
-            var cUser0 = await Computed.CaptureAsync(() => users.TryGetAsync(0));
-            var cCount = await Computed.CaptureAsync(() => users.CountAsync());
+            var cUser0 = await Computed.CaptureAsync(_ => users.TryGetAsync(0));
+            var cCount = await Computed.CaptureAsync(_ => users.CountAsync());
 
             cUser0!.KeepAliveTime.Should().Be(Computed.DefaultKeepAliveTime);
             cCount!.KeepAliveTime.Should().Be(IntMoment.SecondsToUnits(5));

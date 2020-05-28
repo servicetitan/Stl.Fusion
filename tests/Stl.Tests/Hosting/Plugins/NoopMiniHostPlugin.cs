@@ -21,7 +21,7 @@ namespace Stl.Tests.Hosting.Plugins
             IAppHostBuilder appHostBuilder,
             ILogger<NoopMiniHostPlugin>? log = null)
         {
-            _log = log ?? NullLogger<NoopMiniHostPlugin>.Instance;
+            _log = log ??= NullLogger<NoopMiniHostPlugin>.Instance; 
             Plugins = plugins;
             MiniHostBuilder = (MiniHostBuilder) appHostBuilder;
         }

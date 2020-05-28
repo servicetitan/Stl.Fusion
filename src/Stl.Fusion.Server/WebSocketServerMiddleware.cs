@@ -13,11 +13,13 @@ namespace Stl.Fusion.Server
         public class Options
         {
             public string RequestPath { get; set; } = "/ws";
+            public string PublisherIdQueryParameterName { get; set; } = "publisherId";
             public string ClientIdQueryParameterName { get; set; } = "clientId";
         }
 
         protected string RequestPath { get; }
-        protected string ClientIdQueryParameterName { get; }
+        protected string PublisherIdQueryParameterName { get; } 
+        protected string ClientIdQueryParameterName { get; } 
         protected RequestDelegate Next { get; }
         protected IPublisher Publisher { get; }
 
@@ -28,6 +30,7 @@ namespace Stl.Fusion.Server
         {
             Next = next;
             RequestPath = options.RequestPath;
+            PublisherIdQueryParameterName = options.PublisherIdQueryParameterName;
             ClientIdQueryParameterName = options.ClientIdQueryParameterName;
             Publisher = publisher;
         }
@@ -42,11 +45,17 @@ namespace Stl.Fusion.Server
                 context.Response.StatusCode = 400;
                 return;
             }
+            var publisherId = context.Request.Query[PublisherIdQueryParameterName];
+            if (Publisher.Id != publisherId) {
+                context.Response.StatusCode = 400;
+                return;
+            }
+
             var clientId = context.Request.Query[ClientIdQueryParameterName];
             var webSocket = await context.WebSockets.AcceptWebSocketAsync();
             await using var wsChannel = new WebSocketChannel(webSocket);
             var channel = wsChannel
-                .WithSerializer(new JsonNetSerializer<Message>())
+                .WithSerializer(new SafeJsonNetSerializer<Message>())
                 .WithId(clientId);
             Publisher.ChannelHub.Attach(channel);
             await wsChannel.ReaderTask.ConfigureAwait(false);

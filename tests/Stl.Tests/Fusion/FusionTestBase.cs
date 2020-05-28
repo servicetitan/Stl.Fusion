@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
@@ -47,9 +49,6 @@ namespace Stl.Tests.Fusion
             Log = (ILogger) Container.Resolve(typeof(ILogger<>).MakeGenericType(GetType()));
         }
 
-        public WebSocketClient NewWebSocketClient() 
-            => Container.Resolve<WebSocketClient>();
-
         public virtual Task InitializeAsync() 
             => DbContext.Database.EnsureCreatedAsync();
         public virtual Task DisposeAsync() 
@@ -75,7 +74,8 @@ namespace Stl.Tests.Fusion
 
             // Logging
             services.AddLogging(logging => {
-                var debugCategories = new HashSet<string> {
+                var debugCategories = new List<string> {
+                    "Stl.Fusion",
                     "Stl.Tests.Fusion",
                     // DbLoggerCategory.Database.Transaction.Name,
                     // DbLoggerCategory.Database.Connection.Name,
@@ -135,15 +135,21 @@ namespace Stl.Tests.Fusion
 
             // Bridge
             services.AddSingleton(c => new TestWebServer(c.GetRequiredService<IPublisher>()));
-            services.AddFusionWebSocketClient((c, o) => {
+            services.AddFusionWebSocketChannelProvider((c, o) => {
                 o.BaseUri = c.GetRequiredService<TestWebServer>().BaseUri;
             });
         }
 
-        public virtual void ConfigureServices(ContainerBuilder builder)
+        protected Task<Channel<Message>> ConnectToPublisherAsync(CancellationToken cancellationToken = default)
+        {
+            var channelProvider = Container.Resolve<IChannelProvider>();
+            return channelProvider.CreateChannelAsync(Publisher.Id, cancellationToken);
+        }
+
+        protected virtual void ConfigureServices(ContainerBuilder builder)
         { }
 
-        public virtual TestChannelPair<Message> CreateChannelPair(
+        protected virtual TestChannelPair<Message> CreateChannelPair(
             string name, bool dump = true) 
             => new TestChannelPair<Message>(name, dump ? Out : null);
     }

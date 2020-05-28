@@ -1,4 +1,5 @@
 using System;
+using Newtonsoft.Json;
 using Stl.Async;
 using Stl.Reflection;
 
@@ -56,6 +57,9 @@ namespace Stl.Internal
 
         public static Exception PathIsRelative(string? paramName) =>
             new ArgumentException("Path is relative.", paramName);
+
+        public static Exception UnsupportedTypeForJsonSerialization(TypeRef typeRef)
+            => new JsonSerializationException($"Unsupported type: {typeRef.AssemblyQualifiedName}.");
 
         public static Exception AlreadyDisposed() =>
             new ObjectDisposedException("unknown", "The object is already disposed.");

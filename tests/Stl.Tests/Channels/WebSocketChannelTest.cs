@@ -1,19 +1,17 @@
 using System;
+using System.ComponentModel;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Hosting;
 using Red;
 using Stl.Channels;
 using Stl.Fusion.Bridge.Messages;
 using Stl.Hosting.Plugins;
 using Stl.Net;
 using Stl.Plugins;
-using Stl.Plugins.Extensions.Hosting;
 using Stl.Serialization;
 using Stl.Testing;
 using Stl.Tests.Channels;
@@ -26,6 +24,7 @@ using Xunit.Abstractions;
 
 namespace Stl.Tests.Channels
 {
+    [Category(nameof(TimeSensitiveTests))]
     public class WebSocketChannelTest : MiniHostTestBase
     {
         public class Plugin : IConfigureWebAppPlugin, IMiniHostPlugin
@@ -73,7 +72,7 @@ namespace Stl.Tests.Channels
             await mChannel.Writer.WriteAsync(new PublicationStateChangedMessage<int>() { MessageIndex = 100 });
             var m = await mChannel.Reader.AssertReadAsync();
             m.Should().BeOfType<PublicationStateChangedMessage<int>>().Which.MessageIndex.Should().Be(100);
-            await mChannel.Writer.WriteAsync(new PublicationDisposedMessage());
+            await mChannel.Writer.WriteAsync(new PublicationAbsentsMessage());
             await mChannel.Reader.AssertCompletedAsync();
         }
 
@@ -99,7 +98,7 @@ namespace Stl.Tests.Channels
             await mChannel.Writer.WriteAsync(new PublicationStateChangedMessage<int>() { MessageIndex = 100 });
             var m = await mChannel.Reader.AssertReadAsync();
             m.Should().BeOfType<PublicationStateChangedMessage<int>>().Which.MessageIndex.Should().Be(100);
-            await mChannel.Writer.WriteAsync(new PublicationDisposedMessage());
+            await mChannel.Writer.WriteAsync(new PublicationAbsentsMessage());
             await mChannel.Reader.AssertCompletedAsync();
             // await mChannel.Reader.AssertCompletedAsync(TimeSpan.FromMinutes(10));
 
@@ -113,7 +112,7 @@ namespace Stl.Tests.Channels
             var mChannel = wsChannel.WithSerializer(new JsonNetSerializer<Message>());
             await Task.Run(async () => {
                 await foreach (var m in mChannel.Reader.ReadAllAsync()) {
-                    if (m is PublicationDisposedMessage)
+                    if (m is PublicationAbsentsMessage)
                         break;
                     await mChannel.Writer.WriteAsync(m);
                 }

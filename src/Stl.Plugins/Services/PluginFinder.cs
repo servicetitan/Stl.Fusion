@@ -32,7 +32,7 @@ namespace Stl.Plugins.Services
         public PluginFinder(ILogger<PluginFinder>? log = null)
             : base(log)
         {
-            _log = log ?? NullLogger<PluginFinder>.Instance;
+            _log = log ??= NullLogger<PluginFinder>.Instance;
             CacheDir = PathEx.GetApplicationTempDirectory();
         }
 

@@ -335,7 +335,7 @@ namespace Stl.Hosting
                     // Yes, we add this type solely to provide environment name for plugins
                     EnvironmentName = BuildState.EnvironmentName,
                 });
-                services.TryAddSingleton<IRegistry>(c => new Registry());
+                services.TryAddSingleton<ISectionRegistry>(c => new SectionRegistry());
                 services.TryAddSingleton<IConsole, SystemConsole>();
                 var clock = RealTimeClock.Instance;;
                 if (IsTestHost) {

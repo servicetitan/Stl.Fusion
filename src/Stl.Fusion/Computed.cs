@@ -117,18 +117,19 @@ namespace Stl.Fusion
 
         public event Action<IComputed, object?> Invalidated {
             add {
+                if (State == ComputedState.Invalidated) {
+                    value?.Invoke(this, _invalidatedBy);
+                    return;
+                }
                 lock (Lock) {
-                    if (State != ComputedState.Invalidated)
-                        _invalidated += value;
-                    else
+                    if (State == ComputedState.Invalidated) {
                         value?.Invoke(this, _invalidatedBy);
+                        return;
+                    }
+                    _invalidated += value;
                 }
             }
-            remove {
-                lock (Lock) {
-                    _invalidated -= value;
-                }
-            }
+            remove => _invalidated -= value;
         }
 
         public Computed(TIn input, LTag lTag)
@@ -197,11 +198,14 @@ namespace Stl.Fusion
 
         public bool TrySetOutput(Result<TOut> output)
         {
-            if (!TryChangeState(ComputedState.Consistent))
+            if (State != ComputedState.Computing)
                 return false;
-            lock (Lock)
+            lock (Lock) {
+                if (!TrySetStateUnsafe(ComputedState.Consistent))
+                    return false;
                 _output = output;
-            return true;
+                return true;
+            }
         }
 
         public void SetOutput(Result<TOut> output)
@@ -212,13 +216,15 @@ namespace Stl.Fusion
 
         public bool Invalidate(object? invalidatedBy = null)
         {
-            if (!TryChangeState(ComputedState.Invalidated))
+            if (State == ComputedState.Invalidated)
                 return false;
-            ListBuffer<(ComputedInput Input, LTag LTag)> usedBy = default;
+            MemoryBuffer<(ComputedInput Input, LTag LTag)> usedBy = default;
             try {
                 lock (Lock) {
+                    if (!TrySetStateUnsafe(ComputedState.Invalidated))
+                        return false;
                     _invalidatedBy = invalidatedBy;
-                    usedBy = ListBuffer<(ComputedInput, LTag)>.LeaseAndSetCount(_usedBy.Count);
+                    usedBy = MemoryBuffer<(ComputedInput, LTag)>.LeaseAndSetCount(_usedBy.Count);
                     _usedBy.CopyTo(usedBy.Span);
                     _usedBy.Clear();
                     _used.Apply(this, (self, c) => c.RemoveUsedBy(self));
@@ -275,20 +281,12 @@ namespace Stl.Fusion
         // Protected & private methods
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected bool TryChangeState(ComputedState newState)
+        protected bool TrySetStateUnsafe(ComputedState newState)
         {
-            var newStateInt = (int) newState;
-            while (true) {
-                var oldState = _state;
-                if (oldState >= newStateInt)
-                    return false;
-                if (oldState == Interlocked.CompareExchange(ref _state, newStateInt, oldState))
-                    return true;
-                // No SpinWait / something similar is needed here, since
-                // each iteration in this loop means the state was updated
-                // by another thread, and since the new value can only be
-                // higher, the max. # of iterations here is 2.
-            }
+            if (_state >= (int) newState)
+                return false;
+            _state = (int) newState;
+            return true;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
