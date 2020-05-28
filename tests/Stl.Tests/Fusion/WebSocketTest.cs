@@ -33,7 +33,7 @@ namespace Stl.Tests.Fusion
             await using var serving = await WebSocketServer.ServeAsync();
             var tp = Container.Resolve<ITimeProvider>();
 
-            var pub = await Computed.PublishAsync(Publisher, () => tp.GetTimeAsync());
+            var (pub, _) = await Publisher.PublishAsync(() => tp.GetTimeAsync());
             var rep = Replicator.GetOrAdd<DateTime>(pub!.Publisher.Id, pub.Id);
             await rep.RequestUpdateAsync().AsAsyncFunc()
                 .Should().CompleteWithinAsync(TimeSpan.FromMinutes(1));
@@ -54,7 +54,7 @@ namespace Stl.Tests.Fusion
             await using var serving = await WebSocketServer.ServeAsync();
             var tp = Container.Resolve<ITimeProvider>();
 
-            var pub = await Computed.PublishAsync(Publisher, () => tp.GetTimeAsync());
+            var (pub, _) = await Publisher.PublishAsync(() => tp.GetTimeAsync());
             var rep = Replicator.GetOrAdd<DateTime>("NoPublisher", pub.Id);
             await rep.RequestUpdateAsync().AsAsyncFunc()
                 .Should().ThrowAsync<WebSocketException>();
@@ -66,7 +66,7 @@ namespace Stl.Tests.Fusion
             var serving = await WebSocketServer.ServeAsync();
             var tp = Container.Resolve<ITimeProvider>();
 
-            var pub = await Computed.PublishAsync(Publisher, () => tp.GetTimeAsync());
+            var (pub, _) = await Publisher.PublishAsync(() => tp.GetTimeAsync());
             var rep = Replicator.GetOrAdd<DateTime>(pub!.Publisher.Id, pub.Id);
             await rep.RequestUpdateAsync().AsAsyncFunc()
                 .Should().CompleteWithinAsync(TimeSpan.FromMinutes(1));

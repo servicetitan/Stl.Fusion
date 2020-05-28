@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using Autofac;
 using FluentAssertions;
 using Stl.Fusion;
+using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Messages;
 using Stl.Testing;
 using Stl.Tests.Fusion.Services;
@@ -24,7 +25,7 @@ namespace Stl.Tests.Fusion
             var sp = Container.Resolve<ISimplestProvider>();
             sp.SetValue("");
 
-            var p1 = await Computed.PublishAsync(Publisher, () => sp.GetValueAsync());
+            var (p1, _) = await Publisher.PublishAsync(() => sp.GetValueAsync());
             p1.Should().NotBeNull();
 
             (await Publisher.SubscribeAsync(cp.Channel1, p1!, true)).Should().BeTrue();

@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Stl.Async;
 using Stl.Fusion.Bridge.Internal;
-using Stl.Fusion.Client;
 using Stl.OS;
 using Stl.Reflection;
 using Stl.Security;

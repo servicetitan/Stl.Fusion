@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Stl.Fusion.Bridge.Messages;
 using Stl.Text;
 
-namespace Stl.Fusion.Client
+namespace Stl.Fusion.Bridge
 {
     public interface IChannelProvider
     {

@@ -63,17 +63,5 @@ namespace Stl.Fusion
             task.AssertCompleted();
             return ccs.Context.GetCapturedComputed<T>();
         }
-
-        // Publish
-
-        public static async Task<IPublication<T>> PublishAsync<T>(IPublisher publisher, Func<Task<T>> producer)
-        {
-            using var ccs = ComputeContext.New(ComputeOptions.Capture).Activate();
-            await producer.Invoke().ConfigureAwait(false);
-            var computed = ccs.Context.GetCapturedComputed<T>();
-            if (computed == null)
-                throw Errors.NoComputedCaptured();
-            return (IPublication<T>) publisher.Publish(computed);
-        }
     }
 }
