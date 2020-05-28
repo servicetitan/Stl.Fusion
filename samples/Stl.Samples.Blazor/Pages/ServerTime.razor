@@ -31,10 +31,10 @@
 
     private async void UpdateNow()
     {
+        GC.Collect(); // That's just for testing
         if (Time != null)
             Time = await Time.UpdateAsync();
         Log.LogInformation($"Update (manual): {TimeString}.");
-        GC.Collect();
     }
 
     public void Dispose()
