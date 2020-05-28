@@ -22,7 +22,7 @@ namespace Stl.Tests.Fusion
             var sp = Container.Resolve<ISimplestProvider>();
 
             sp.SetValue("");
-            var (p1, _) = await Publisher.PublishAsync(() => sp.GetValueAsync());
+            var (p1, _) = await Publisher.PublishAsync(_ => sp.GetValueAsync());
             p1.Should().NotBeNull();
 
             var r1 = Replicator.GetOrAdd<string>(p1!.Publisher.Id, p1.Id, true);
@@ -50,7 +50,7 @@ namespace Stl.Tests.Fusion
             await using var serving = await WebSocketServer.ServeAsync();
             var tp = Container.Resolve<ITimeProvider>();
 
-            var (pub, _) = await Publisher.PublishAsync(() => tp.GetTimeAsync());
+            var (pub, _) = await Publisher.PublishAsync(_ => tp.GetTimeAsync());
             var rep = Replicator.GetOrAdd<DateTime>(pub!.Publisher.Id, pub.Id);
             await rep.RequestUpdateAsync();
 

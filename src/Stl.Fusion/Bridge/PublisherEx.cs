@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
-using Stl.Fusion.Internal;
 using Stl.Text;
 
 namespace Stl.Fusion.Bridge
@@ -12,14 +12,12 @@ namespace Stl.Fusion.Bridge
             this IPublisher publisher, Symbol publicationId) 
             => publisher.TryGet(publicationId) ?? throw new KeyNotFoundException();
 
-        public static async Task<(IPublication<T> Publication, IComputed<T> Computed)> 
-            PublishAsync<T>(this IPublisher publisher, Func<Task<T>> producer)
+        public static async Task<(IPublication<T> Publication, IComputed<T> Computed)> PublishAsync<T>(
+                this IPublisher publisher, 
+                Func<CancellationToken, Task<T>> producer, 
+                CancellationToken cancellationToken = default)
         {
-            using var ccs = ComputeContext.New(ComputeOptions.Capture).Activate();
-            await producer.Invoke().ConfigureAwait(false);
-            var computed = ccs.Context.GetCapturedComputed<T>();
-            if (computed == null)
-                throw Errors.NoComputedCaptured();
+            var computed = await Computed.CaptureAsync(producer, cancellationToken).ConfigureAwait(false);
             var publication = (IPublication<T>) publisher.Publish(computed);
             return (publication, computed);
         }

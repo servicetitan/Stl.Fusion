@@ -49,12 +49,12 @@ namespace Stl.Fusion.Client.RestEase
             }
 
             var headers = response.Headers;
-            var publisherId = headers.GetValues(HttpHeaderNames.PublisherId).Single();
-            var publicationId = headers.GetValues(HttpHeaderNames.PublicationId).Single();
-            var lTag = LTag.Parse(headers.GetValues(HttpHeaderNames.LTag).Single());
+            var publisherId = headers.GetValues(FusionHeaders.PublisherId).Single();
+            var publicationId = headers.GetValues(FusionHeaders.PublicationId).Single();
+            var lTag = LTag.Parse(headers.GetValues(FusionHeaders.LTag).Single());
             var isConsistent = true;
-            if (headers.Contains(HttpHeaderNames.IsConsistent))
-                isConsistent = Boolean.Parse(headers.GetValues(HttpHeaderNames.IsConsistent).Single());
+            if (headers.Contains(FusionHeaders.IsConsistent))
+                isConsistent = Boolean.Parse(headers.GetValues(FusionHeaders.IsConsistent).Single());
             var lTagged = new LTagged<Result<T>>(result, lTag);
             var replica = Replicator.GetOrAdd(publisherId, publicationId, lTagged, isConsistent);
             return replica.Computed;

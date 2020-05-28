@@ -22,12 +22,10 @@ namespace Stl.Samples.Blazor.Server.Controllers
             Publisher = publisher;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<DateTime>> GetTime()
+        [HttpGet("get")]
+        public async Task<ActionResult<DateTime>> GetTimeAsync()
         {
-            var c = await HttpContext.ShareAsync(
-                Publisher, 
-                () => TimeProvider.GetTimeAsync());
+            var c = await HttpContext.TryPublishAsync(Publisher, _ => TimeProvider.GetTimeAsync());
             return c.Value;
         }
     }

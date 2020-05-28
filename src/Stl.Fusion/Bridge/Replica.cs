@@ -106,26 +106,28 @@ namespace Stl.Fusion.Bridge
         {
             IComputedReplica<T> computed;
             Task<Unit>? updateRequestTask;
-            var mustInvalidate = false;
             lock (Lock) {
                 // 1. Update Computed & UpdateError 
                 UpdateErrorField = null;
                 computed = ComputedField;
                 if (computed == null || computed.LTag != output.LTag)
+                    // LTag doesn't match -> replace
                     ComputedField = new ComputedReplica<T>(Input, output.Value, output.LTag, isConsistent);
                 else if (computed.IsConsistent != isConsistent) {
-                    if (computed.IsConsistent)
-                        mustInvalidate = true;
-                    else
+                    // LTag matches:
+                    if (isConsistent)
+                        // Replace inconsistent w/ the
                         ComputedField = new ComputedReplica<T>(Input, output.Value, output.LTag, isConsistent);
+                    // Otherwise it will be invalidated right after exiting the lock 
                 } 
 
                 // 2. Complete UpdateRequestTask
                 (updateRequestTask, UpdateRequestTask) = (UpdateRequestTask, null);
             }
 
-            if (mustInvalidate)
-                computed?.Invalidate(this);
+            // We always invalidate the old computed here, b/c it was either
+            // replaced or has to be invalidated.
+            computed?.Invalidate(this);
             if (updateRequestTask != null) {
                 var updateRequestTaskSource = TaskSource.For(updateRequestTask);
                 updateRequestTaskSource.TrySetResult(default);

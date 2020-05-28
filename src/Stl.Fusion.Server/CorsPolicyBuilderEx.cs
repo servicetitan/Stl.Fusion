@@ -7,10 +7,11 @@ namespace Stl.Fusion.Server
     {
         public static CorsPolicyBuilder WithFusionHeaders(this CorsPolicyBuilder builder)
             => builder.WithExposedHeaders(
-                HttpHeaderNames.PublisherId,
-                HttpHeaderNames.PublicationId,
-                HttpHeaderNames.LTag,
-                HttpHeaderNames.IsConsistent
+                FusionHeaders.Publish,
+                FusionHeaders.PublisherId,
+                FusionHeaders.PublicationId,
+                FusionHeaders.LTag,
+                FusionHeaders.IsConsistent
             );
     }
 }

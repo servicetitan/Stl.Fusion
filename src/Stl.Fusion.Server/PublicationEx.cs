@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Stl.Fusion.Bridge;
@@ -9,7 +10,7 @@ namespace Stl.Fusion.Server
 {
     public static class HttpContextEx
     {
-        public static void Share(this HttpContext httpContext, IPublication publication)
+        public static void Publish(this HttpContext httpContext, IPublication publication)
         {
             using var _ = publication.Use();
             var state = publication.State;
@@ -17,21 +18,34 @@ namespace Stl.Fusion.Server
             var isConsistent = computed.IsConsistent;
 
             var headers = httpContext.Response.Headers;
-            if (headers.ContainsKey(HttpHeaderNames.PublisherId))
+            if (headers.ContainsKey(FusionHeaders.PublisherId))
                 throw Errors.AlreadyShared();
-            headers[HttpHeaderNames.PublisherId] = publication.Publisher.Id.Value;
-            headers[HttpHeaderNames.PublicationId] = publication.Id.Value;
-            headers[HttpHeaderNames.LTag] = state.Computed.LTag.ToString();
+            headers[FusionHeaders.PublisherId] = publication.Publisher.Id.Value;
+            headers[FusionHeaders.PublicationId] = publication.Id.Value;
+            headers[FusionHeaders.LTag] = state.Computed.LTag.ToString();
             if (!isConsistent)
-                headers[HttpHeaderNames.IsConsistent] = isConsistent.ToString();
+                headers[FusionHeaders.IsConsistent] = isConsistent.ToString();
         }
 
-        public static async Task<IComputed<T>> ShareAsync<T>(
-            this HttpContext httpContext, IPublisher publisher, Func<Task<T>> producer)
+        public static async Task<IComputed<T>> PublishAsync<T>(
+            this HttpContext httpContext, IPublisher publisher, 
+            Func<CancellationToken, Task<T>> producer, 
+            CancellationToken cancellationToken = default)
         {
-            var (publication, computed) = await publisher.PublishAsync(producer);
-            httpContext.Share(publication);
+            var (pub, computed) = await publisher.PublishAsync(producer, cancellationToken).ConfigureAwait(false);
+            httpContext.Publish(pub);
             return computed;
+        }
+
+        public static Task<IComputed<T>> TryPublishAsync<T>(
+            this HttpContext httpContext, IPublisher publisher, 
+            Func<CancellationToken, Task<T>> producer, 
+            CancellationToken cancellationToken = default)
+        {
+            var mustPublish = httpContext.Request.Headers.TryGetValue(FusionHeaders.Publish, out var _);
+            return mustPublish 
+                ? httpContext.PublishAsync(publisher, producer, cancellationToken) 
+                : Computed.CaptureAsync(producer, cancellationToken);
         }
     }
 }
