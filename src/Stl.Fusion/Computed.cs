@@ -117,17 +117,13 @@ namespace Stl.Fusion
 
         public event Action<IComputed, object?> Invalidated {
             add {
-                lock (Lock) {
-                    if (State != ComputedState.Invalidated)
-                        _invalidated += value;
-                    else
-                        value?.Invoke(this, _invalidatedBy);
-                }
+                if (State != ComputedState.Invalidated)
+                    _invalidated += value;
+                else
+                    value?.Invoke(this, _invalidatedBy);
             }
             remove {
-                lock (Lock) {
-                    _invalidated -= value;
-                }
+                _invalidated -= value;
             }
         }
 

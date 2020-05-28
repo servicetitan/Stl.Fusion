@@ -10,4 +10,8 @@
     <ProjectReference Include="..\Stl.Fusion\Stl.Fusion.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="RestEase" />
+  </ItemGroup>
+
 </Project>

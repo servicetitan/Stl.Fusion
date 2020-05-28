@@ -1,42 +1,47 @@
 @page "/serverTime"
-@using System.Globalization
-@inject HttpClient HttpClient
+@using Stl.Samples.Blazor.Services
+@using System.Diagnostics
+@implements IDisposable
 @inject IReplicator Replicator
 @inject ILogger<ServerTime> Log
+@inject ITimeProviderClient TimeProviderClient
 
 <h1>Timer</h1>
 
-<p>Server Time: @Time</p>
+<p>Server Time: @TimeString</p>
 
 <button class="btn btn-primary" @onclick="UpdateNow">Refresh</button>
 
 @code {
-    private IReplica<DateTime>? TimeReplica { get; set; }
-    private string Time => 
-        TimeReplica?.Computed.Value.ToString("HH:mm:ss.ffff") ?? "n/a";
+    protected IComputed<DateTime> Time { get; set; }
+    protected string TimeString => Time?.Value.ToString("HH:mm:ss.ffff") ?? "n/a";
+    private IDisposable _autoUpdateHandler;
 
     protected override async Task OnInitializedAsync()
     {
-        // Temp. issue workaround: websocket connection should be established first.
-        await Task.Delay(3000);
-
-        var json = await HttpClient.GetStringAsync("api/time");
-        Log.LogInformation($"Got JSON: {json}");
-        var message = new JsonNetSerializer<PublicationPublishedMessage>().Deserialize(json);
-        TimeReplica = Replicator.GetOrAdd<DateTime>(message.PublisherId, message.PublicationId);
-        Log.LogInformation($"Trying to update replica...");
-        await TimeReplica.RequestUpdateAsync();
-        Log.LogInformation($"Replica updated.");
-        TimeReplica.Computed.AutoUpdate(TimeSpan.FromSeconds(2), (c, o, _) => {
-            Log.LogInformation($"Update (auto): {Time}.");
+        Debug.WriteLine($"{GetType().Name}: OnInitializedAsync");
+        Time = await TimeProviderClient.GetTimeAsync(); 
+        // ReSharper disable once HeapView.BoxingAllocation
+        _autoUpdateHandler = Time.AutoUpdate(TimeSpan.FromSeconds(2), (c, o, _) => {
+            Time = c;
+            Log.LogInformation($"Update (auto): {TimeString}.");
             StateHasChanged();
         });
     }
 
     private async void UpdateNow()
     {
-        await (TimeReplica?.RequestUpdateAsync() ?? Task.CompletedTask);
-        Log.LogInformation($"Update (manual): {Time}.");
-        StateHasChanged();
+        if (Time != null)
+            Time = await Time.UpdateAsync();
+        Log.LogInformation($"Update (manual): {TimeString}.");
+        GC.Collect();
     }
+
+    public void Dispose()
+    {
+        Debug.WriteLine($"{GetType().Name}: Dispose");
+        _autoUpdateHandler?.Dispose();
+        (Time as IComputedReplica<DateTime>)?.Replica.DisposeAsync();
+    }
+
 }

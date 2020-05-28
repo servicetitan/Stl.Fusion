@@ -69,10 +69,9 @@ namespace Stl.Fusion.Bridge
         public virtual IReplica<T> GetOrAdd<T>(Symbol publisherId, Symbol publicationId, 
             LTagged<Result<T>> initialOutput, bool isConsistent = true, bool requestUpdate = false)
         {
-            var newReplica = new Replica<T>(
-                this, publisherId, publicationId, initialOutput, isConsistent, requestUpdate);
-            var replica = Registry.GetOrAdd(newReplica);
-            if (replica == newReplica)
+            var (replica, isNew) = Registry.GetOrAdd(publicationId, 
+                () => new Replica<T>(this, publisherId, publicationId, initialOutput, isConsistent, requestUpdate));
+            if (isNew)
                 Subscribe(replica);
             return (IReplica<T>) replica;
         }

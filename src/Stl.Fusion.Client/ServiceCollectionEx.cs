@@ -1,7 +1,11 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Newtonsoft.Json;
+using RestEase;
 using Stl.Fusion.Bridge;
+using Stl.Fusion.Client.RestEase;
+using Stl.Serialization;
 
 namespace Stl.Fusion.Client
 {
@@ -29,6 +33,18 @@ namespace Stl.Fusion.Client
             });
             services.TryAddSingleton<IChannelProvider, WebSocketChannelProvider>();
             return services;
-        }        
+        }
+        
+        public static IServiceCollection AddFusionRestEaseServices(this IServiceCollection services)
+        {
+            services.TryAddTransient(typeof(SafeJsonNetSerializer<>));
+            services.TryAddTransient<ResponseDeserializer>(c => new JsonResponseDeserializer() {
+                JsonSerializerSettings = new JsonSerializerSettings() {
+                    TypeNameHandling = TypeNameHandling.None,
+                }
+            });
+            services.TryAddTransient<ReplicaResponseDeserializer>();
+            return services;
+        }
     }
 }

@@ -15,7 +15,7 @@ namespace Stl.Fusion.Bridge
     public interface IReplicaRegistry
     {
         IReplica? TryGet(Symbol publicationId);
-        IReplica GetOrAdd(IReplica replica);
+        (IReplica Replica, bool IsNew) GetOrAdd(Symbol publicationId, Func<IReplica> replicaFactory);
         bool Remove(IReplica replica);
     }
 
@@ -71,24 +71,30 @@ namespace Stl.Fusion.Bridge
             return null;
         }
 
-        public IReplica GetOrAdd(IReplica replica)
+        public (IReplica Replica, bool IsNew) GetOrAdd(Symbol publicationId, Func<IReplica> replicaFactory)
         {
-            var publicationId = replica.PublicationId;
-            var publisherId = replica.PublisherId;
             var random = publicationId.HashCode + IntMoment.Clock.EpochOffsetUnits;
             OnOperation(random);
             var spinWait = new SpinWait();
-            var handle = default(GCHandle);
+            var newReplica = (IReplica?) null; // Just to make sure we store this ref
             while (true) {
-                var oldReplica = TryGet(publicationId);
-                if (oldReplica != null) {
-                    _gcHandlePool.Release(handle);
-                    return oldReplica;
+                // ReSharper disable once HeapView.CanAvoidClosure
+                var handle = _handles.GetOrAdd(publicationId, _ => {
+                    var replica = replicaFactory.Invoke();
+                    return _gcHandlePool.Acquire(replica, random);
+                });
+                var target = (IReplica?) handle.Target;
+                if (target != null) {
+                    if (target == newReplica)
+                        return (target, true);
+                    (newReplica as IReplicaImpl)?.MarkDisposed();
+                    return (target, false);
                 }
-                if (!handle.IsAllocated)
-                    handle = _gcHandlePool.Acquire(replica, random);
-                if (_handles.TryAdd(publicationId, handle))
-                    return replica;
+                // GCHandle target == null => we have to recycle it 
+                if (_handles.TryRemove(publicationId, handle))
+                    // The thread that succeeds in removal releases gcHandle as well
+                    _gcHandlePool.Release(handle, random);
+                // And since we didn't manage to add the replica, let's retry
                 spinWait.SpinOnce();
             }
         }

@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
@@ -28,6 +29,7 @@ namespace Stl.Fusion.Bridge
 
     public interface IReplicaImpl : IReplica, IFunction
     {
+        void MarkDisposed();
         bool ApplyFailedUpdate(Exception? error, CancellationToken cancellationToken);
     }
 
@@ -43,7 +45,7 @@ namespace Stl.Fusion.Bridge
         protected volatile Exception? UpdateErrorField;
         protected volatile Task<Unit>? UpdateRequestTask;
         protected IReplicatorImpl ReplicatorImpl => (IReplicatorImpl) Replicator;
-        protected object Lock => new object();
+        protected object Lock = new object();
 
         public IReplicator Replicator { get; }
         public Symbol PublisherId => Input.PublisherId;
@@ -66,19 +68,19 @@ namespace Stl.Fusion.Bridge
                 UpdateRequestTask = CreateUpdateRequestTaskSource().Task;
         }
 
+        // This method is called for temp. replicas that were never attached to anything.
+        void IReplicaImpl.MarkDisposed() => MarkDisposed();
+
         // We want to make sure the replicas are connected to
         // publishers only while they're used.
         ~Replica() => DisposeAsync(false);
 
         protected override ValueTask DisposeInternalAsync(bool disposing)
         {
+            // Debug.WriteLine($"DisposeInternalAsync({disposing}) for {PublicationId} / {GetHashCode()}");
             Input.ReplicatorImpl.OnReplicaDisposed(this);
             return base.DisposeInternalAsync(disposing);
         }
-
-        protected virtual IComputedReplica<T> CreateComputedReplica(
-            LTagged<Result<T>> initialOutput, bool isConsistent) 
-            => new ComputedReplica<T>(Input, initialOutput.Value, initialOutput.LTag, isConsistent);
 
         Task IReplica.RequestUpdateAsync(CancellationToken cancellationToken) 
             => RequestUpdateAsync(cancellationToken);

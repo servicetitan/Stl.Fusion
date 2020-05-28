@@ -7,12 +7,15 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using RestEase;
 using Stl.Fusion;
 using Stl.Fusion.Bridge.Messages;
 using Stl.Fusion.Client;
+using Stl.Fusion.Client.RestEase;
 using Stl.OS;
 using Stl.Reflection;
 using Stl.Samples.Blazor.Common.Services;
+using Stl.Samples.Blazor.Services;
 
 namespace Stl.Samples.Blazor
 {
@@ -46,10 +49,11 @@ namespace Stl.Samples.Blazor
 
             services.AddLogging(logging => logging.AddDebug());
             services.AddFusion();
-            services.AddFusionWebSocketChannelProvider((c, o) => {
-                o.BaseUri = baseUri;
-            });
-            services.AddTransient(c => new HttpClient { BaseAddress = baseUri });
+            services.AddFusionWebSocketChannelProvider((c, o) => { o.BaseUri = baseUri; });
+            services.AddFusionRestEaseServices();
+            services.AddTransient(c => new RestClient($"{baseUri}api/time") {
+                ResponseDeserializer = c.GetRequiredService<ReplicaResponseDeserializer>()
+            }.For<ITimeProviderClient>());
         }
     }
 }

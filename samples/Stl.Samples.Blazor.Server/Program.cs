@@ -28,7 +28,7 @@ namespace Stl.Samples.Blazor.Server
                 .UseContentRoot(wwwRoot)
                 .ConfigureServices(services => {
                     services.AddCors(o => o.AddPolicy("AllowAll", builder => {
-                        builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+                        builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader().WithFusionHeaders();
                     }));
                     services.AddLogging(logging => {
                         logging.ClearProviders();
