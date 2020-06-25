@@ -15,12 +15,4 @@
     <ProjectReference Include="..\Stl.Fusion\Stl.Fusion.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Properties" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="Properties\launchSettings.json" />
-  </ItemGroup>
-
 </Project>

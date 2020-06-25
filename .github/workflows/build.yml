@@ -1,0 +1,37 @@
+name: Build
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          # avoid shallow clone for Nerdbank.GitVersioning
+          fetch-depth: 0
+      - uses: dotnet/nbgv@master
+        id: nbgv
+        with:
+          setAllVars: true
+          setCommonVars: true
+      - run: "echo 'SemVer2: ${{ steps.nbgv.outputs.SemVer2 }}'"
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 3.1.301
+      - name: Restore & Restore tools
+        run: dotnet run --project build --configuration Release --no-launch-profile -- --configuration Debug restore restore-tools
+      - name: Unit tests
+        run: dotnet run --project build --configuration Release --no-launch-profile -- --configuration Debug coverage
+      #- name: Codecov
+      #  uses: codecov/codecov-action@v1.0.7
+      #  with:
+      #    name: codecov-bot
+      #    file: "artifacts/tests/output/coverage.cobertura.xml"
+      #    flags: unit
+      #    fail_ci_if_error: true

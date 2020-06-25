@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <IsPackable>False</IsPackable>
+    <IsPublishable>False</IsPublishable>
+    <RollForward>Major</RollForward>
+    <RestoreIgnoreFailedSources>true</RestoreIgnoreFailedSources>
+    <DependencyVersion>Highest</DependencyVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Bullseye" />
+    <PackageReference Include="CliWrap" />
+    <PackageReference Include="System.CommandLine.DragonFruit" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Condition="Exists('..\version.json')" Include="..\version.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="Directory.Build.props" />
+  </ItemGroup>
+</Project>

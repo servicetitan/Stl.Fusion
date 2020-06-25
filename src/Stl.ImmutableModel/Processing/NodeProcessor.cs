@@ -11,7 +11,6 @@ using Stl.Async;
 using Stl.ImmutableModel.Indexing;
 using Stl.ImmutableModel.Processing.Internal;
 using Stl.ImmutableModel.Updating;
-using Stl.Text;
 
 namespace Stl.ImmutableModel.Processing
 {
@@ -39,17 +38,17 @@ namespace Stl.ImmutableModel.Processing
         public IModelIndex ModelIndex => ModelProvider.Index;
         public IModelChangeTracker ChangeTracker => ModelProvider.ChangeTracker;
 
-        protected NodeProcessorBase(IModelProvider modelProvider) 
+        protected NodeProcessorBase(IModelProvider modelProvider)
             => ModelProvider = modelProvider;
 
         protected abstract Task ProcessNodeAsync(INodeProcessingInfo info);
         protected virtual Task OnReadyAsync() => Task.CompletedTask;
         protected virtual bool IsSupportedUpdate(IModelUpdateInfo updateInfo) => true;
-        protected virtual bool IsSupportedChange(in NodeChangeInfo nodeChangeInfo) => true; 
+        protected virtual bool IsSupportedChange(in NodeChangeInfo nodeChangeInfo) => true;
 
         protected override async Task RunInternalAsync(CancellationToken cancellationToken)
         {
-            var allChanges = ChangeTracker.AllChanges.Publish(); 
+            var allChanges = ChangeTracker.AllChanges.Publish();
             var processorTask = allChanges.Select(ProcessChange).ToTask(cancellationToken).SuppressCancellation();
             using (allChanges.Connect()) {
                 await OnReadyAsync().ConfigureAwait(false);
@@ -58,14 +57,14 @@ namespace Stl.ImmutableModel.Processing
             }
 
             // If we're here, there are two options:
-            // - StopToken is cancelled 
+            // - StopToken is cancelled
             // - AllChanges sequence is exhausted b/c ChangeTracker was disposed.
             // We should handle both cases properly. So:
-            
+
             // 1. We cancel the main token (~ process stopping event)
             if (!StopTokenSource.IsCancellationRequested)
                 StopTokenSource.Cancel();
-            
+
             // 2. We wait till both Processes and DyingProcesses deplete
             while (true) {
                 var (domainKey, info) = Processes.FirstOrDefault();
@@ -91,7 +90,7 @@ namespace Stl.ImmutableModel.Processing
             var modelUpdateInfoType = typeof(ModelUpdateInfo<>).MakeGenericType(modelType);
             var modelUpdateInfo = (IModelUpdateInfo) Activator.CreateInstance(
                 modelUpdateInfoType, index, index, ModelChangeSet.Empty)!;
-            
+
             var changes = index.Entries
                 .Select(item => new NodeChangeInfo(modelUpdateInfo, item.Node, item.NodeLink, 0))
                 .Where(info => IsSupportedChange(info))
@@ -127,7 +126,7 @@ namespace Stl.ImmutableModel.Processing
             return default;
         }
 
-        protected virtual IEnumerable<NodeChangeInfo> OrderChanges(List<NodeChangeInfo> changes) 
+        protected virtual IEnumerable<NodeChangeInfo> OrderChanges(List<NodeChangeInfo> changes)
             // Removals go fist, then creations, and finally, all other changes
             => changes.OrderBy(c => (int) c.ChangeType);
 
@@ -141,7 +140,7 @@ namespace Stl.ImmutableModel.Processing
                     // Nothing to do: node is removed & the process isn't running
                     return;
                 nodeProcessingInfo = new NodeProcessingInfo(
-                    this, domainKey, nodeChangeInfo.NodeLink, 
+                    this, domainKey, nodeChangeInfo.NodeLink,
                     !nodeChangeType.HasFlag(NodeChangeType.Created));
                 var existingInfo = Processes.GetOrAdd(domainKey, nodeProcessingInfo);
                 if (existingInfo != nodeProcessingInfo) {
@@ -198,7 +197,7 @@ namespace Stl.ImmutableModel.Processing
         public new IModelIndex<TModel> ModelIndex => ModelProvider.Index;
         public new IModelChangeTracker<TModel> ChangeTracker => ModelProvider.ChangeTracker;
 
-        protected NodeProcessorBase(IModelProvider<TModel> modelProvider) : base(modelProvider) 
+        protected NodeProcessorBase(IModelProvider<TModel> modelProvider) : base(modelProvider)
             => ModelProvider = modelProvider;
     }
 }

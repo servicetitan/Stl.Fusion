@@ -21,7 +21,7 @@ end_of_line = lf
 
 [*.cs]
 # Indentation options
-# https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference#indent
+# https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference#
 
 csharp_indent_case_contents = true
 csharp_indent_block_contents = true
@@ -58,7 +58,7 @@ dotnet_style_prefer_is_null_check_over_reference_equality_method = true:suggesti
 dotnet_style_prefer_conditional_expression_over_assignment = false:suggestion
 dotnet_style_prefer_conditional_expression_over_return = false:suggestion
 csharp_prefer_simple_default_expression = true:suggestion
-csharp_prefer_braces = true:suggestion
+csharp_prefer_braces = true:silent
 
 # Expression-bodied members
 csharp_style_expression_bodied_methods = true:none

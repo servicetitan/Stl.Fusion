@@ -1,18 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="latest" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
   <PropertyGroup>
     <BaseIntermediateOutputPath>$(SolutionDir)artifacts\obj\$(MSBuildProjectName)</BaseIntermediateOutputPath>
     <OutputPath>$(SolutionDir)artifacts\bin</OutputPath>
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <PublishConfiguration>Release</PublishConfiguration>
     <IsPackable>True</IsPackable>
     <!-- Include the PDB in the built .nupkg -->
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <IncludeSymbols>false</IncludeSymbols>
-    <!-- ToDo: fix all warnings-->
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <!-- Nerdbank.GitVersioning props -->
+    <DefaultPublicRelease>true</DefaultPublicRelease>
+    <!-- SourceLink props: https://github.com/dotnet/sourcelink/issues/159 -->
+    <EnableSourceLink>false</EnableSourceLink>
+    <EnableSourceLink Condition="'$(GitCommitId)' != ''">true</EnableSourceLink>
+    <UseSourceLink>$(EnableSourceLink)</UseSourceLink>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/servicetitan/Stl</RepositoryUrl>
+    <EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries>
+    <RevisionId>$(GitCommitId)</RevisionId>
   </PropertyGroup>
   <ItemGroup Condition="'$(MSBuildProjectExtension)' != '.dcproj'">
     <PackageReference Include="Nerdbank.GitVersioning" />

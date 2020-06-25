@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <ServerGarbageCollection>true</ServerGarbageCollection>
@@ -25,6 +25,10 @@
     <ProjectReference Include="..\..\src\Stl.Plugins\Stl.Plugins.csproj" />
     <ProjectReference Include="..\..\src\Stl.Plugins.Extensions\Stl.Plugins.Extensions.csproj" />
     <ProjectReference Include="..\..\src\Stl.Hosting\Stl.Hosting.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="*.xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

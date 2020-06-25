@@ -1,3 +1,9 @@
+*.cmd
+artifacts/
+*.binlog
+**/Properties/launchSettings.json
+
+
 # IDE folders & files
 .vs/
 .vscode/
@@ -22,6 +28,8 @@ StyleCopReport.xml
 *.dotCover
 *.coverage
 *.coveragexml
+*.DotSettings
+
 
 # Package folders
 [Pp]ackages/

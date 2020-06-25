@@ -1,4 +1,4 @@
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="latest" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <SolutionDir Condition="$(SolutionDir) == ''">$(MSBuildThisFileDirectory.TrimEnd('\').TrimEnd('/'))\</SolutionDir>
     <NoLogo>true</NoLogo>
@@ -16,14 +16,13 @@
     <Features>strict;pdb-path-determinism</Features>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
-    <OutputPath>$(SolutionDir)artifacts\</OutputPath>
     <PackageProjectUrl>https://github.com/servicetitan/Stl</PackageProjectUrl>
     <RepositoryUrl>https://github.com/servicetitan/Stl</RepositoryUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageTags>ServiceTitan Library</PackageTags>
+    <OutputPath>$(SolutionDir)artifacts\</OutputPath>
     <PackageOutputPath>$(SolutionDir)artifacts\nupkg</PackageOutputPath>
-    <!-- Coverlet bug with SourceLink workaround  https://github.com/tonerdo/coverlet/issues/363 and https://github.com/dotnet/sourcelink/issues/91 -->
-    <!-- Rider doesn't support deterministic build with SourceMap -->
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <!-- embedded not recommended yet for libs and nupkg, track this in https://github.com/dotnet/sdk/issues/2679 -->
     <!-- also embedded doesn't work with dotnet pack without nuspec or IncludeBuildOutput = false -->
     <DebugType>portable</DebugType>
@@ -32,9 +31,7 @@
     <!-- NU5048: The 'PackageIconUrl'/'iconUrl' element is deprecated -->
     <NoWarn>$(NoWarn);NU5105;NU5048;</NoWarn>
     <GenerateFullPaths Condition="'$(TERM_PROGRAM)' == 'vscode'">true</GenerateFullPaths>
-    <IsPublishable>false</IsPublishable>
     <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
-    <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
   </PropertyGroup>
 
   <!-- Rider doesn't support deterministic build with SourceMap -->
@@ -44,13 +41,7 @@
     <ContinuousIntegrationBuild>false</ContinuousIntegrationBuild>
     <PathMap>'$(SolutionDir)'=/_/</PathMap>
   </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
-    <DefineConstants>DEBUG</DefineConstants>
-    <UseSourceLink>false</UseSourceLink>
-  </PropertyGroup>
-  <!-- From https://github.com/dotnet/roslyn/issues/37379 -->
   <ItemGroup Condition="$(DeterministicSourcePaths) == 'true'">
-    <SourceRoot Include="$(MSBuildThisFileDirectory)/"/>
+    <SourceRoot Include="$(MSBuildThisFileDirectory)/" />
   </ItemGroup>
 </Project>

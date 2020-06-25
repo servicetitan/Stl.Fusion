@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <IsTestProject>false</IsTestProject>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,7 +13,6 @@
     <PackageReference Include="AutoFixture" />
     <PackageReference Include="AutoFixture.Xunit2" />
     <PackageReference Include="Moq" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="FluentAssertions" />
 
     <PackageReference Include="System.CommandLine" />
@@ -26,7 +26,6 @@
 
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.analyzers" />
-    <PackageReference Include="xunit.runner.visualstudio" />
     <PackageReference Include="Xunit.DependencyInjection.Logging" />
   </ItemGroup>
 

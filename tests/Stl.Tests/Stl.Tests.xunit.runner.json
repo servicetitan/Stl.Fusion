@@ -1,0 +1,9 @@
+{
+  "diagnosticMessages": true,
+  "parallelizeAssembly": true,
+  "parallelizeTestCollections": true,
+  "methodDisplay": "classAndMethod",
+  "preEnumerateTheories":  true,
+  "longRunningTestSeconds":  300,
+  "shadowCopy": false
+}

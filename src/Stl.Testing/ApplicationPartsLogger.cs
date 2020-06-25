@@ -15,10 +15,10 @@ namespace Stl.Testing
         private readonly ApplicationPartManager _partManager;
 
         public ApplicationPartsLogger(
-            ApplicationPartManager partManager, 
+            ApplicationPartManager partManager,
             ILogger<ApplicationPartsLogger>? log = null)
         {
-            _log = log ??= NullLogger<ApplicationPartsLogger>.Instance;
+            _log = log ?? NullLogger<ApplicationPartsLogger>.Instance;
             _partManager = partManager;
         }
 
@@ -34,7 +34,7 @@ namespace Stl.Testing
             return Task.CompletedTask;
         }
 
-        public Task StopAsync(CancellationToken cancellationToken) 
+        public Task StopAsync(CancellationToken cancellationToken)
             => Task.CompletedTask;
     }
 }
