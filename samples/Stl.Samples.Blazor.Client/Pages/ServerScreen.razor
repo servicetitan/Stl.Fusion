@@ -1,0 +1,30 @@
+@page "/serverScreen"
+@implements IDisposable
+@inject ILogger<ServerScreen> Log
+@inject ILive<ServerScreenUI.Model> LiveModel
+
+@{
+    var lastUpdateError = LiveModel.LastUpdateError; 
+}
+
+<h1>Server Screen</h1>
+
+@if (lastUpdateError != null) {
+    <div class="alert alert-warning" role="alert">
+        Update error: @lastUpdateError.Message
+    </div>
+}
+
+<p><img src="data:image/png;base64, @Model.Screenshot.Base64Content" alt="Server screen" width="100%" /><br/></p>
+
+@code {
+    private ServerScreenUI.Model Model => LiveModel.Value;
+
+    protected override Task OnInitializedAsync()
+    {
+        LiveModel.Updated += _ => StateHasChanged();
+        return base.OnInitializedAsync();
+    }
+
+    public void Dispose() => LiveModel.Dispose();
+}

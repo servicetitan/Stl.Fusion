@@ -1,0 +1,139 @@
+@page "/chat"
+@implements IDisposable
+@inject ILogger<Chat> Log
+@inject NavigationManager Navigator
+@inject IChatClient Client
+@inject ILive<ChatUI.Model> LiveModel
+
+@{
+    var model = Model; 
+    var lastPage = model.LastPage;
+    var error = model.ActionError;
+    var lastUpdateError = LiveModel.LastUpdateError; 
+}
+
+<div>
+    <span class="float-right">
+        <span class="badge btn-primary">
+            @(model.ActiveUserCount) <span class="oi oi-chat"></span>
+        </span>
+        <span class="badge btn-light">
+            @(model.UserCount) <span class="oi oi-people"></span>
+        </span>
+    </span>
+    <h1>Chat</h1>
+</div>
+
+<p>
+    To see the state replication in action,
+    <a href="@Navigator.Uri" target="_blank">open this chat in another window</a>.
+</p>
+
+@if (error != null) {
+    <div class="alert alert-danger" role="alert">
+        @error.Message
+    </div>
+}
+@if (lastUpdateError != null) {
+    <div class="alert alert-warning" role="alert">
+        Update error: @lastUpdateError.Message
+    </div>
+}
+
+<EditForm Model="@model" OnValidSubmit="ChangeMyNameAsync">
+    <div class="input-group pb-3">
+        <div class="input-group-prepend">
+            <span class="input-group-text">Your name</span>
+        </div>
+        <InputText class="form-control" @bind-Value="@model.MyName"/>
+        <div class="input-group-append">
+            <button type="submit" class="btn btn-warning">Change</button>
+        </div>        
+    </div>
+</EditForm>
+
+<table class="table table-sm table-striped">
+    <thead>
+    <tr>
+        <th scope="col">User</th>
+        <th scope="col">Message</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach(var message in lastPage.Messages) {
+        var user = lastPage.Users[message.UserId];
+        {
+            <tr>
+                <td style="max-width: 20%">@user.Name</td>
+                <td class="w-auto">@message.Text</td>
+            </tr>
+        }
+    }
+    </tbody>
+</table>
+
+<EditForm Model="@model" OnValidSubmit="SendMessageAsync">
+    <div class="input-group pb-3">
+        <div class="input-group-prepend">
+            <span class="input-group-text">Message</span>
+        </div>
+        <InputText class="form-control" 
+            placeholder="No ideas? Send an empty one!"
+            @bind-Value="@model.MyMessage" />
+        <div class="input-group-append">
+            <button type="submit" class="btn btn-success">Send</button>
+        </div>        
+    </div>
+</EditForm>
+
+@code {
+    private ChatUI.Model Model => LiveModel.Value;
+    private IUpdateDelayer UpdateDelayer => LiveModel.UpdateDelayer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        LiveModel.Updated += _ => StateHasChanged();
+        if (Model.Me == null) {
+            // Let's pre-create the user
+            await ChangeMyNameAsync();
+        }
+    }
+
+    public void Dispose() => LiveModel.Dispose();
+
+    private Task ChangeMyNameAsync() => ActionAsync(async () => {
+        if (Model.Me != null) 
+            try {
+                Model.Me = await Client.SetUserNameAsync(Model.Me.Id, Model.MyName);
+                return;
+            }
+            catch {
+                // Prob. user doesn't exist (server restarted), so
+                // we should try re-creating it.
+            }
+        Model.Me = await Client.CreateUserAsync(Model.MyName);
+    });
+
+    private Task SendMessageAsync() => ActionAsync(async () => {
+        if (Model.Me == null)
+            throw new ApplicationException("Please set your name first.");
+        await Client.AddMessageAsync(Model.Me.Id, Model.MyMessage);
+        Model.MyMessage = "";
+    });
+
+    private async Task ActionAsync(Func<Task> taskFactory)
+    {
+        Model.ActionError = null;
+        StateHasChanged(); // That's just to display ActionError change
+        try {
+            await taskFactory.Invoke();
+        }
+        catch (Exception e) {
+            Model.ActionError = e;
+        }
+        finally {
+            LiveModel.Invalidate(); // That's to display possible changes
+            UpdateDelayer.CancelDelays(); // Updates caused by our own actions aren't delayed
+        }
+    }
+}

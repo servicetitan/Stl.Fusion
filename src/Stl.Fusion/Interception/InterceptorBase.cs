@@ -1,0 +1,195 @@
+using System;
+using System.Collections.Concurrent;
+using System.Linq;
+using System.Reactive;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
+using Castle.DynamicProxy;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Stl.Fusion.Interception.Internal;
+using Stl.Reflection;
+using Stl.Time;
+
+namespace Stl.Fusion.Interception
+{
+    public abstract class InterceptorBase : IInterceptor
+    {
+        public class Options
+        {
+            public IArgumentComparerProvider ArgumentComparerProvider { get; set; } = 
+                Interception.ArgumentComparerProvider.Default;
+            public IMomentClock Clock { get; set; } = CoarseCpuClock.Instance;
+        }
+
+        private readonly MethodInfo _createTypedHandlerMethod;
+        private readonly Func<MethodInfo, IInvocation, Action<IInvocation>?> _createHandler;
+        private readonly Func<MethodInfo, IInvocation, InterceptedMethod?> _createInterceptedMethod;
+        private readonly ConcurrentDictionary<MethodInfo, InterceptedMethod?> _interceptedMethodCache = 
+            new ConcurrentDictionary<MethodInfo, InterceptedMethod?>();
+        private readonly ConcurrentDictionary<MethodInfo, Action<IInvocation>?> _handlerCache = 
+            new ConcurrentDictionary<MethodInfo, Action<IInvocation>?>();
+        private readonly ConcurrentDictionary<Type, Unit> _validateTypeCache =
+            new ConcurrentDictionary<Type, Unit>();
+
+        protected ILoggerFactory LoggerFactory { get; }
+        protected ILogger Log { get; }
+        protected IComputedRegistry Registry { get; }
+        protected IArgumentComparerProvider ArgumentComparerProvider { get; }
+        protected bool RequiresAttribute { get; set; } = true;
+
+        protected InterceptorBase(
+            Options options, 
+            IComputedRegistry? registry = null, 
+            ILoggerFactory? loggerFactory = null)
+        {
+            LoggerFactory = loggerFactory ??= NullLoggerFactory.Instance;
+            Log = LoggerFactory.CreateLogger(GetType());
+            Registry = registry ?? ComputedRegistry.Default;
+            ArgumentComparerProvider = options.ArgumentComparerProvider;
+
+            _createHandler = CreateHandler;
+            _createInterceptedMethod = CreateInterceptedMethod;
+            _createTypedHandlerMethod = GetType()
+                .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
+                .Single(m => m.Name == nameof(CreateTypedHandler));
+        }
+
+        public void Intercept(IInvocation invocation)
+        {
+            var handler = _handlerCache.GetOrAddChecked(invocation.Method, _createHandler, invocation);
+            if (handler == null)
+                invocation.Proceed();
+            else 
+                handler.Invoke(invocation);
+        }
+
+        private Action<IInvocation>? CreateHandler(MethodInfo methodInfo, IInvocation initialInvocation)
+        {
+            var proxyMethodInfo = initialInvocation.GetConcreteMethodInvocationTarget();
+            var method = _interceptedMethodCache.GetOrAddChecked(proxyMethodInfo, _createInterceptedMethod, initialInvocation);
+            if (method == null)
+                return null;
+
+            return (Action<IInvocation>) _createTypedHandlerMethod
+                .MakeGenericMethod(method.OutputType)
+                .Invoke(this, new [] {(object) initialInvocation, method})!;
+        }
+
+        protected virtual Action<IInvocation> CreateTypedHandler<T>(
+            IInvocation initialInvocation, InterceptedMethod method)
+        {
+            var function = CreateFunction<T>(method);
+            return invocation => {
+                // ReSharper disable once VariableHidesOuterVariable
+                var method = function.Method;
+                var input = new InterceptedInput(function, method, invocation);
+
+                // Invoking the function
+                var cancellationToken = input.CancellationToken;
+                var usedBy = Computed.GetCurrent();
+
+                // Unusual return type
+                if (method.ReturnsComputed) {
+                    var computedTask = function.InvokeAsync(input, usedBy, null, cancellationToken);
+                    // Technically, invocation.ReturnValue could be
+                    // already set here - e.g. when it was a cache miss,
+                    // and real invocation's async flow (which could complete
+                    // synchronously) had already completed.
+                    // But we can't return it, because valueTask's async flow
+                    // might be still ongoing. So no matter what, we have to
+                    // replace the return value with valueTask.Result. 
+                    if (method.ReturnsValueTask)
+                        // ReSharper disable once HeapView.BoxingAllocation
+                        invocation.ReturnValue = new ValueTask<IComputed<T>>(computedTask!);
+                    else                                                        
+                        invocation.ReturnValue = computedTask;
+                    return;
+                }
+
+                // InvokeAndStripAsync allows to get rid of one extra allocation
+                // of a task stripping the result of regular InvokeAsync.
+                var task = function.InvokeAndStripAsync(input, usedBy, null, cancellationToken);
+                if (method.ReturnsValueTask)
+                    // ReSharper disable once HeapView.BoxingAllocation
+                    invocation.ReturnValue = new ValueTask<T>(task);
+                else
+                    invocation.ReturnValue = task;
+            };
+        }
+
+        protected abstract InterceptedFunctionBase<T> CreateFunction<T>(InterceptedMethod method); 
+
+        protected virtual InterceptedMethod? CreateInterceptedMethod(MethodInfo proxyMethodInfo, IInvocation invocation)
+        {
+            _validateTypeCache.GetOrAdd(invocation.TargetType, (type, self) => {
+                self.ValidateType(type);
+                return default;
+            }, this);
+
+            // We need an attribute from interface / original type, so we
+            // can't use proxyMethodInfo here, b/c it points to a proxy method. 
+            var attrs = invocation.Method
+                .GetCustomAttributes(typeof(InterceptedMethodAttribute), true)
+                .Cast<InterceptedMethodAttribute>()
+                .ToArray();
+            if (attrs.Any(a => !a.IsEnabled))
+                // Explicitly disabled -> no interception
+                return null;
+            if (RequiresAttribute && attrs.Length == 0)
+                // No attribute while it is required -> no interception
+                return null;
+            var attr = attrs.FirstOrDefault();
+
+            var returnType = proxyMethodInfo.ReturnType;
+            if (!returnType.IsGenericType)
+                return null;
+
+            var returnTypeGtd = returnType.GetGenericTypeDefinition();
+            var returnsTask = returnTypeGtd == typeof(Task<>);
+            var returnsValueTask = returnTypeGtd == typeof(ValueTask<>);
+            if (!(returnsTask || returnsValueTask))
+                return null;
+
+            var outputType = returnType.GetGenericArguments()[0];
+            var returnsComputed = false;
+            if (outputType.IsGenericType) {
+                var returnTypeArgGtd = outputType.GetGenericTypeDefinition();
+                if (returnTypeArgGtd == typeof(IComputed<>)) {
+                    returnsComputed = true;
+                    outputType = outputType.GetGenericArguments()[0];
+                }
+            }
+
+
+            var keepAliveTime = (TimeSpan?) null;
+            if (attr is ComputedServiceMethodAttribute ca && !double.IsNaN(ca.KeepAliveTime))
+                keepAliveTime = TimeSpan.FromSeconds(ca.KeepAliveTime);
+            var invocationTargetType = proxyMethodInfo.ReflectedType;
+            var parameters = proxyMethodInfo.GetParameters();
+            var r = new InterceptedMethod {
+                MethodInfo = proxyMethodInfo,
+                OutputType = outputType,
+                ReturnsValueTask = returnsValueTask,
+                ReturnsComputed = returnsComputed,
+                InvocationTargetComparer = ArgumentComparerProvider.GetInvocationTargetComparer(
+                    proxyMethodInfo, invocationTargetType!),
+                ArgumentComparers = new ArgumentComparer[parameters.Length],
+                KeepAliveTime = keepAliveTime,  
+            };
+
+            for (var i = 0; i < parameters.Length; i++) {
+                var p = parameters[i];
+                r.ArgumentComparers[i] = ArgumentComparerProvider.GetArgumentComparer(proxyMethodInfo, p);
+                var parameterType = p.ParameterType;
+                if (typeof(CancellationToken).IsAssignableFrom(parameterType))
+                    r.CancellationTokenArgumentIndex = i;
+            }
+
+            return r;
+        }
+
+        protected abstract void ValidateType(Type type);
+    }
+}

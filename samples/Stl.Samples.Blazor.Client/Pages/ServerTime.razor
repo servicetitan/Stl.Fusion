@@ -1,0 +1,36 @@
+@page "/serverTime"
+@implements IDisposable
+@inject ILogger<ServerTime> Log
+@inject ILive<ServerTimeUI.Model> LiveModel
+
+@{
+    var lastUpdateError = LiveModel.LastUpdateError; 
+}
+
+<h1>Server Time</h1>
+
+<p>Server Time: @(Model.FormattedTime)</p>
+
+@if (lastUpdateError != null) {
+    <div class="alert alert-warning" role="alert">
+        Update error: @lastUpdateError.Message
+    </div>
+}
+
+<button class="btn btn-primary" @onclick="Refresh">Refresh</button>
+
+@code {
+    private ServerTimeUI.Model Model => LiveModel.Value;
+    private IUpdateDelayer UpdateDelayer => LiveModel.UpdateDelayer;
+
+    protected override Task OnInitializedAsync()
+    {
+        LiveModel.Updated += _ => StateHasChanged();
+        return base.OnInitializedAsync();
+    }
+
+    private void Refresh() 
+        => UpdateDelayer.CancelDelays();
+
+    public void Dispose() => LiveModel.Dispose();
+}

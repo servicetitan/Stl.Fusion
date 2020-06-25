@@ -1,0 +1,9 @@
+version: '3.4'
+services:
+  app:
+    build: .
+    ports:
+     - "5000:5000"
+    environment:
+      ASPNETCORE_URLS: "http://0.0.0.0:5000"
+      ASPNETCORE_ENVIRONMENT: "Development"

@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Autofac.Extensions.DependencyInjection" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Stl.Plugins\Stl.Plugins.csproj" />
+    <ProjectReference Include="..\Stl.Plugins.Extensions\Stl.Plugins.Extensions.csproj" />
+    <ProjectReference Include="..\Stl\Stl.csproj" />
+  </ItemGroup>
+
+</Project>

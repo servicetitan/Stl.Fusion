@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" />
+    <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+    <PackageReference Include="System.Drawing.Common" />
+    <PackageReference Include="System.Net.WebSockets.Client" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Stl.Fusion.Client\Stl.Fusion.Client.csproj" />
+    <ProjectReference Include="..\..\src\Stl.Fusion.Server\Stl.Fusion.Server.csproj" />
+    <ProjectReference Include="..\..\src\Stl.Fusion\Stl.Fusion.csproj" />
+    <ProjectReference Include="..\..\src\Stl.Testing\Stl.Testing.csproj" />
+    <ProjectReference Include="..\..\src\Stl\Stl.csproj" />
+    <ProjectReference Include="..\..\src\Stl.ImmutableModel\Stl.ImmutableModel.csproj" />
+    <ProjectReference Include="..\..\src\Stl.CommandLine\Stl.CommandLine.csproj" />
+    <ProjectReference Include="..\..\src\Stl.Plugins\Stl.Plugins.csproj" />
+    <ProjectReference Include="..\..\src\Stl.Plugins.Extensions\Stl.Plugins.Extensions.csproj" />
+    <ProjectReference Include="..\..\src\Stl.Hosting\Stl.Hosting.csproj" />
+  </ItemGroup>
+
+</Project>
