@@ -4,6 +4,6 @@
   "parallelizeTestCollections": true,
   "methodDisplay": "classAndMethod",
   "preEnumerateTheories":  true,
-  "longRunningTestSeconds":  300,
+  "longRunningTestSeconds":  30,
   "shadowCopy": false
 }
