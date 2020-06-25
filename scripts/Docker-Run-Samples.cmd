@@ -1,9 +1,9 @@
 @echo off
 
-pushd ..
+pushd ..\docker
 docker-compose build
 start "Stl.Samples.Blazor.Server" docker-compose up
 timeout 2
 popd
 
-call Start-Chrome-Debug.cmd
+start "Samples" http://localhost:5000/
