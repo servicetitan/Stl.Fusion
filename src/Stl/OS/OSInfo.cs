@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace Stl.OS
@@ -9,7 +8,7 @@ namespace Stl.OS
         Unix = 0,
         Windows = 1,
         MacOS = 2,
-        Wasm = 3,
+        WebAssembly = 3,
     }
 
     public static class OSInfo
@@ -19,9 +18,9 @@ namespace Stl.OS
 
         static OSInfo()
         {
-            // WASM
+            // WebAssembly
             if (RuntimeInformation.OSDescription == "web" && RuntimeInformation.FrameworkDescription.StartsWith("Mono")) {
-                Kind = OSKind.Wasm;
+                Kind = OSKind.WebAssembly;
                 UserHomePath = "";
                 return;
             }

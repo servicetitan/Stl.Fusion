@@ -35,7 +35,7 @@ namespace Stl.OS
                     break;
                 case OSKind.Unix:
                 case OSKind.MacOS:
-                case OSKind.Wasm:
+                case OSKind.WebAssembly:
                     break;
                 }
             }

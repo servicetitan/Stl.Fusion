@@ -7,12 +7,13 @@ COPY ["samples/", "samples/"]
 COPY ["tests/", "tests/"]
 COPY ["docs/", "docs/"]
 COPY ["build/", "build/"]
+COPY ["scripts/", "scripts/"]
 
 COPY Stl.sln .
 COPY Directory.Build.props .
 COPY Directory.Build.targets .
 COPY Packages.props .
-COPY NuGet.Config .
+COPY version.json .
 
 # Collect application artifacts
 FROM base as build

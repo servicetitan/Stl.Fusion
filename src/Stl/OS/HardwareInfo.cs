@@ -1,11 +1,12 @@
 using System;
+using System.Threading;
 using Stl.Mathematics;
 
 namespace Stl.OS
 {
     public class HardwareInfo
     {
-        private const int RefreshIntervalTicks = 30000; // Tick = millisecond
+        private const int RefreshIntervalTicks = 30_000; // Tick = millisecond
         private static volatile int _lastRefreshTicks;
         private static volatile int _processorCount; 
         private static volatile int _processorCountPo2; 
@@ -27,11 +28,15 @@ namespace Stl.OS
         private static void MaybeRefresh()
         {
             var now = Environment.TickCount;
-            if (_lastRefreshTicks != 0 && now - _lastRefreshTicks < RefreshIntervalTicks)
+            var lastRefreshTicks = _lastRefreshTicks;
+            if (lastRefreshTicks != 0 && now - lastRefreshTicks < RefreshIntervalTicks)
+                // No need to refresh
                 return;
-            _lastRefreshTicks = now;
-            _processorCount = Environment.ProcessorCount;
-            _processorCountPo2 = (int) Bits.GreaterOrEqualPowerOf2((uint) _processorCount);
+            if (lastRefreshTicks != Interlocked.CompareExchange(ref _lastRefreshTicks, now, lastRefreshTicks))
+                // Some other thread is already updating these values
+                return;
+            _processorCount = Math.Max(1, Environment.ProcessorCount);
+            _processorCountPo2 = Math.Max(1, (int) Bits.GreaterOrEqualPowerOf2((uint) _processorCount));
         }
     }
 }

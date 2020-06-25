@@ -19,7 +19,7 @@ namespace Stl.Samples.Blazor.Client
     {
         public static Task Main(string[] args)
         {
-            if (OSInfo.Kind != OSKind.Wasm)
+            if (OSInfo.Kind != OSKind.WebAssembly)
                 throw new ApplicationException("This app runs only in browser.");
 
             var builder = WebAssemblyHostBuilder.CreateDefault(args);
