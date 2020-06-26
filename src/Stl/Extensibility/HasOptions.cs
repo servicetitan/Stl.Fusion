@@ -1,6 +1,4 @@
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using Stl.Frozen;
 using Stl.Text;
 
 namespace Stl.Extensibility
@@ -14,7 +12,7 @@ namespace Stl.Extensibility
         void SetOption(Symbol key, object? value);
     }
 
-    public abstract class HasOptionsBase : FrozenBase, IHasOptions
+    public abstract class HasOptionsBase : IHasOptions
     {
         protected IDictionary<Symbol, object> Options { get; private set; } = 
             new Dictionary<Symbol, object>();
@@ -32,21 +30,10 @@ namespace Stl.Extensibility
         void IHasOptions.SetOption(Symbol key, object? value) => SetOption(key, value); 
         protected void SetOption(Symbol key, object? value)
         {
-            this.ThrowIfFrozen();
             if (value == null)
                 Options.Remove(key);
             else 
                 Options[key] = value;
-        }
-
-        public override void Freeze()
-        {
-            if (IsFrozen) return;
-            foreach (var optionValue in Options.Values)
-                if (optionValue is IFrozen f)
-                    f.Freeze();
-            Options = new ReadOnlyDictionary<Symbol, object>(Options);
-            base.Freeze();
         }
     }
 }

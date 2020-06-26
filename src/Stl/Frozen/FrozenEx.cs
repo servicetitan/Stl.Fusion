@@ -8,7 +8,7 @@ namespace Stl.Frozen
         // it's going to be a virtual generic method (i.e. w/ super slow invocation).
         public static T ToUnfrozen<T>(this T frozen, bool deep = false) 
             where T : IFrozen 
-            => (T) frozen.BaseToUnfrozen(deep); 
+            => (T) frozen.ToUnfrozenUntyped(deep); 
 
         // ThrowIfXxx
 

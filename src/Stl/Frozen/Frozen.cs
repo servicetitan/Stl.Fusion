@@ -1,5 +1,6 @@
 using System;
 using Newtonsoft.Json;
+using Stl.Internal;
 
 namespace Stl.Frozen
 {
@@ -8,7 +9,7 @@ namespace Stl.Frozen
         bool IsFrozen { get; }
         void Freeze(); // Must freeze every reachable IFrozen too!
 
-        IFrozen BaseToUnfrozen(bool deep = false);
+        IFrozen ToUnfrozenUntyped(bool deep = false);
     }
 
     [Serializable]
@@ -25,11 +26,23 @@ namespace Stl.Frozen
             IsFrozen = true;
         }
 
-        public virtual IFrozen BaseToUnfrozen(bool deep = false)
+        public virtual IFrozen ToUnfrozenUntyped(bool deep = false)
         {
             var clone = (FrozenBase) MemberwiseClone();
             clone.IsFrozen = false;
             return clone;
+        }
+
+        // Protected
+
+        protected void ThrowIfFrozen()
+        {
+            if (IsFrozen) throw Errors.MustBeUnfrozen();
+        }
+
+        protected void ThrowIfUnfrozen()
+        {
+            if (!IsFrozen) throw Errors.MustBeFrozen();
         }
     }
 }
