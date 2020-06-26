@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -5,6 +6,7 @@ namespace Stl.Frozen
 {
     public interface IFrozenSet<T> : ISet<T>, IFrozenCollection<T> { }
 
+    [Serializable]
     public class FrozenSet<T> : FrozenBase, IFrozenSet<T>
     {
         protected static readonly bool AreItemsFrozen = 
