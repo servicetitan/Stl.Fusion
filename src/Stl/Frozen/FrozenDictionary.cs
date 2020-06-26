@@ -12,6 +12,9 @@ namespace Stl.Frozen
     [Serializable]
     public class FrozenDictionary<TKey, TValue> : FrozenBase, IFrozenDictionary<TKey, TValue>
     {
+        protected static readonly bool AreValuesFrozen = 
+            typeof(IFrozen).IsAssignableFrom(typeof(TValue));
+
         protected Dictionary<TKey, TValue> Dictionary { get; set; }
         protected ICollection<KeyValuePair<TKey, TValue>> DictionaryAsCollection => Dictionary;
         public int Count => Dictionary.Count;
@@ -88,5 +91,36 @@ namespace Stl.Frozen
             => DictionaryAsCollection.Contains(item);
         void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) 
             => DictionaryAsCollection.CopyTo(array, arrayIndex);
+
+        // IFrozen-related
+
+        public override void Freeze()
+        {
+            base.Freeze();
+            if (!AreValuesFrozen)
+                return;
+            foreach (var (key, value) in Dictionary)
+                if (value is IFrozen f)
+                    f.Freeze();
+        }
+
+        public override IFrozen BaseToUnfrozen(bool deep = false)
+        {
+            var clone = (FrozenDictionary<TKey, TValue>) base.BaseToUnfrozen(deep);
+            if (!deep || !AreValuesFrozen) {
+                clone.Dictionary = new Dictionary<TKey, TValue>(Comparer);
+                return clone;
+            }
+
+            var d = new Dictionary<TKey, TValue>(Count, Comparer);
+            foreach (var (key, value) in Dictionary) {
+                if (value is IFrozen f)
+                    d.Add(key, (TValue) f.ToUnfrozen(deep));
+                else
+                    d.Add(key, value);
+            }
+            clone.Dictionary = d;
+            return clone;
+        }
     }
 }

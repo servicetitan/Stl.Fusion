@@ -105,11 +105,11 @@ namespace Stl.Frozen
         {
             var clone = (FrozenSet<T>) base.BaseToUnfrozen(deep);
             if (!deep || !AreItemsFrozen) {
-                clone.Set = new HashSet<T>(Set.Comparer);
+                clone.Set = new HashSet<T>(Comparer);
                 return clone;
             }
 
-            var set = new HashSet<T>(Count, Set.Comparer);
+            var set = new HashSet<T>(Count, Comparer);
             foreach (var item in Set) {
                 if (item is IFrozen f)
                     set.Add((T) f.ToUnfrozen(deep));
