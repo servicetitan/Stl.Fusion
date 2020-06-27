@@ -8,7 +8,13 @@ namespace Stl.Frozen
         // it's going to be a virtual generic method (i.e. w/ super slow invocation).
         public static T ToUnfrozen<T>(this T frozen, bool deep = false) 
             where T : IFrozen 
-            => (T) frozen.ToUnfrozenUntyped(deep); 
+            => (deep || frozen.IsFrozen) ? frozen.CloneToUnfrozen(deep) : frozen;
+
+        // This method isn't a part of the interface mainly because otherwise
+        // it's going to be a virtual generic method (i.e. w/ super slow invocation).
+        public static T CloneToUnfrozen<T>(this T frozen, bool deep = false) 
+            where T : IFrozen 
+            => (T) frozen.CloneToUnfrozenUntyped(deep); 
 
         // ThrowIfXxx
 

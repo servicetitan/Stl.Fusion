@@ -104,9 +104,9 @@ namespace Stl.Frozen
                     f.Freeze();
         }
 
-        public override IFrozen ToUnfrozenUntyped(bool deep = false)
+        public override IFrozen CloneToUnfrozenUntyped(bool deep = false)
         {
-            var clone = (FrozenDictionary<TKey, TValue>) base.ToUnfrozenUntyped(deep);
+            var clone = (FrozenDictionary<TKey, TValue>) base.CloneToUnfrozenUntyped(deep);
             if (!deep || !AreValuesFrozen) {
                 clone.Dictionary = new Dictionary<TKey, TValue>(Comparer);
                 return clone;

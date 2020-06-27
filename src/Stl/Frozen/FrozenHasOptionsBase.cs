@@ -44,9 +44,9 @@ namespace Stl.Frozen
             base.Freeze();
         }
 
-        public override IFrozen ToUnfrozenUntyped(bool deep = false)
+        public override IFrozen CloneToUnfrozenUntyped(bool deep = false)
         {
-            var clone = (FrozenHasOptionsBase) base.ToUnfrozenUntyped(deep);
+            var clone = (FrozenHasOptionsBase) base.CloneToUnfrozenUntyped(deep);
             var options = new Dictionary<Symbol, object>(Options.Count);
             foreach (var (key, option) in Options) {
                 if (option is IFrozen f)

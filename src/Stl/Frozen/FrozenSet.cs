@@ -101,9 +101,9 @@ namespace Stl.Frozen
                     f.Freeze();
         }
 
-        public override IFrozen ToUnfrozenUntyped(bool deep = false)
+        public override IFrozen CloneToUnfrozenUntyped(bool deep = false)
         {
-            var clone = (FrozenSet<T>) base.ToUnfrozenUntyped(deep);
+            var clone = (FrozenSet<T>) base.CloneToUnfrozenUntyped(deep);
             if (!deep || !AreItemsFrozen) {
                 clone.Set = new HashSet<T>(Comparer);
                 return clone;

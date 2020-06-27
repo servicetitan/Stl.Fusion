@@ -9,7 +9,7 @@ namespace Stl.Frozen
         bool IsFrozen { get; }
         void Freeze(); // Must freeze every reachable IFrozen too!
 
-        IFrozen ToUnfrozenUntyped(bool deep = false);
+        IFrozen CloneToUnfrozenUntyped(bool deep = false);
     }
 
     [Serializable]
@@ -26,7 +26,7 @@ namespace Stl.Frozen
             IsFrozen = true;
         }
 
-        public virtual IFrozen ToUnfrozenUntyped(bool deep = false)
+        public virtual IFrozen CloneToUnfrozenUntyped(bool deep = false)
         {
             var clone = (FrozenBase) MemberwiseClone();
             clone.IsFrozen = false;

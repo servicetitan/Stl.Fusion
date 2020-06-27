@@ -76,9 +76,9 @@ namespace Stl.Frozen
                     f.Freeze();
         }
 
-        public override IFrozen ToUnfrozenUntyped(bool deep = false)
+        public override IFrozen CloneToUnfrozenUntyped(bool deep = false)
         {
-            var clone = (FrozenList<T>) base.ToUnfrozenUntyped(deep);
+            var clone = (FrozenList<T>) base.CloneToUnfrozenUntyped(deep);
             if (!deep || !AreItemsFrozen) {
                 clone.List = new List<T>(List);
                 return clone;
