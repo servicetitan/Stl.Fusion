@@ -1,15 +1,17 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Stl.ImmutableModel;
+using Stl.Frozen;
 
 namespace Stl.Tests.Fusion.Model
 {
-    public class LongKeyedEntity : Node<LongKey>, IHasKey<LongKey>
+    public class LongKeyedEntity : FrozenBase, IHasId<long>
     {
+        private long _id;
+
         [Key, DatabaseGenerated(DatabaseGeneratedOption.None)]
         public long Id {
-            get => Key.Value;
-            set => Key = new LongKey(value);
+            get => _id;
+            set { ThrowIfFrozen(); _id = value; }
         }
     }
 }

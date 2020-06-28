@@ -144,10 +144,12 @@ namespace Stl.Tests.Fusion
             services.AddScoped<UserService, UserService>();
 
             // Replica services
-            services.AddReplicaService<ITimeClient>(null, (c, httpClient) => {
+            services.AddSingleton(c => {
                 var baseUri = c.GetRequiredService<TestWebServer>().BaseUri;
-                httpClient.BaseAddress = new Uri($"{baseUri}api/time");
+                var apiUri = new Uri($"{baseUri}api/");
+                return new HttpClient() { BaseAddress = apiUri };
             });
+            services.AddReplicaService<ITimeClient>("time");
 
             // UI Models
             services.AddLive<ServerTimeModel1>(

@@ -12,25 +12,25 @@ namespace Stl.Tests.Fusion.Model
 
         public DateTime Date {
             get => _date;
-            set => _date = PreparePropertyValue(nameof(Date), value);
+            set { ThrowIfFrozen(); _date = value; }
         }
 
         [Required, MaxLength(1_000_000)]
         public string Text {
             get => _text;
-            set => _text = PreparePropertyValue(nameof(Text), value);
+            set { ThrowIfFrozen(); _text = value; }
         }
 
         [Required]
         public User Author {
             get => _author;
-            set => _author = PreparePropertyValue(nameof(Author), value);
+            set { ThrowIfFrozen(); _author = value; }
         }
 
         [Required]
         public Chat Chat {
             get => _chat;
-            set => _chat = PreparePropertyValue(nameof(Chat), value);
+            set { ThrowIfFrozen(); _chat = value; }
         }
     }
 }

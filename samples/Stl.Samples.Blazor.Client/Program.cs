@@ -41,16 +41,17 @@ namespace Stl.Samples.Blazor.Client
         private static void ConfigureServices(IServiceCollection services, WebAssemblyHostBuilder builder)
         {
             var baseUri = new Uri(builder.HostEnvironment.BaseAddress);
-            var apiUri = new Uri($"{baseUri}api");
             services.AddFusionWebSocketClient((c, o) => {
                 o.BaseUri = baseUri;
                 o.MessageLogLevel = LogLevel.Information;
             });
             
             // Replica services
-            services.AddReplicaService<ITimeClient>($"{apiUri}/Time");
-            services.AddReplicaService<IScreenshotClient>($"{apiUri}/Screenshot");
-            services.AddReplicaService<IChatClient>($"{apiUri}/Chat");
+            var apiUri = new Uri($"{baseUri}api/");
+            services.AddSingleton(new HttpClient() { BaseAddress = apiUri });
+            services.AddReplicaService<ITimeClient>("time");
+            services.AddReplicaService<IScreenshotClient>("screenshot");
+            services.AddReplicaService<IChatClient>("chat");
 
             // Configuring live updaters
             services.AddSingleton(c => new UpdateDelayer.Options() {

@@ -75,8 +75,14 @@ namespace Stl.Fusion.Client
                     .MakeGenericType(typeof(HttpClient), interfaceType);
                 services.TryAddSingleton(tSpecial, c => {
                     var httpClient = new HttpClient();
-                    if (baseAddress != null)
-                        httpClient.BaseAddress = new Uri(baseAddress);
+                    if (baseAddress != null) {
+                        if (!Uri.TryCreate(baseAddress, UriKind.Absolute, out var baseUri)) {
+                            var defaultHttpClient = c.GetRequiredService<HttpClient>();
+                            if (!Uri.TryCreate(defaultHttpClient.BaseAddress, baseAddress, out baseUri))
+                                throw Internal.Errors.InvalidUri(baseAddress);
+                        }
+                        httpClient.BaseAddress = baseUri;
+                    }
                     httpClientBuilder?.Invoke(c, httpClient);
                     return tSpecial.CreateInstance(httpClient);
                 });
@@ -114,8 +120,14 @@ namespace Stl.Fusion.Client
                     .MakeGenericType(typeof(HttpClient), interfaceType);
                 services.TryAddSingleton(tSpecial, c => {
                     var httpClient = new HttpClient();
-                    if (baseAddress != null)
-                        httpClient.BaseAddress = new Uri(baseAddress);
+                    if (baseAddress != null) {
+                        if (!Uri.TryCreate(baseAddress, UriKind.Absolute, out var baseUri)) {
+                            var defaultHttpClient = c.GetRequiredService<HttpClient>();
+                            if (!Uri.TryCreate(defaultHttpClient.BaseAddress, baseAddress, out baseUri))
+                                throw Internal.Errors.InvalidUri(baseAddress);
+                        }
+                        httpClient.BaseAddress = baseUri;
+                    }
                     httpClientBuilder?.Invoke(c, httpClient);
                     return tSpecial.CreateInstance(httpClient);
                 });
