@@ -13,6 +13,7 @@ using Stl.Fusion.Client;
 using Stl.Fusion.UI;
 using Stl.OS;
 using Stl.Samples.Blazor.Client.Services;
+using Stl.Samples.Blazor.Client.UI;
 
 namespace Stl.Samples.Blazor.Client
 {
@@ -39,12 +40,6 @@ namespace Stl.Samples.Blazor.Client
 
         private static void ConfigureServices(IServiceCollection services, WebAssemblyHostBuilder builder)
         {
-            HttpClientHandler CreateNoCacheHandler() =>
-                new ModifyingClientHttpHandler((requestMessage, cancellationToken) => {
-                    requestMessage.SetBrowserRequestCache(BrowserRequestCache.NoStore);
-                    return Task.CompletedTask;
-                });
-
             var baseUri = new Uri(builder.HostEnvironment.BaseAddress);
             var apiUri = new Uri($"{baseUri}api");
             services.AddFusionWebSocketClient((c, o) => {
@@ -53,34 +48,20 @@ namespace Stl.Samples.Blazor.Client
             });
             
             // Replica services
-            services.AddSingleton(c => Special.Use(new HttpClient(CreateNoCacheHandler()) {
-                BaseAddress = new Uri($"{apiUri}/Time")
-            }).For<ITimeClient>());
-            services.AddReplicaService<ITimeClient>();
-            services.AddSingleton(c => Special.Use(new HttpClient(CreateNoCacheHandler()) {
-                BaseAddress = new Uri($"{apiUri}/Screenshot")
-            }).For<IScreenshotClient>());
-            services.AddReplicaService<IScreenshotClient>();
-            services.AddSingleton(c => Special.Use(new HttpClient(CreateNoCacheHandler()) {
-                BaseAddress = new Uri($"{apiUri}/Chat")
-            }).For<IChatClient>());
-            services.AddReplicaService<IChatClient>();
+            services.AddReplicaService<ITimeClient>($"{apiUri}/Time");
+            services.AddReplicaService<IScreenshotClient>($"{apiUri}/Screenshot");
+            services.AddReplicaService<IChatClient>($"{apiUri}/Chat");
 
-            // Live UI models
-            services.AddLive<ServerTimeUI.Model, ServerTimeUI>((c, o) => {
-                o.UpdateDelayer = new UpdateDelayer(new UpdateDelayer.Options() {
-                    Delay = TimeSpan.FromSeconds(0.5),
-                });
+            // Configuring live updaters
+            services.AddSingleton(c => new UpdateDelayer.Options() {
+                Delay = TimeSpan.FromSeconds(0.05),
             });
-            services.AddLive<ServerScreenUI.Model, ServerScreenUI>((c, o) => {
-                o.UpdateDelayer = new UpdateDelayer(new UpdateDelayer.Options() {
-                    Delay = TimeSpan.FromSeconds(0.01),
-                });
-            });
-            services.AddLive<ChatUI.Model, ChatUI>((c, o) => {
-                o.UpdateDelayer = new UpdateDelayer(new UpdateDelayer.Options() {
-                    Delay = TimeSpan.FromSeconds(0.01),
-                });
+            services.AddAllLive(typeof(Program).Assembly, (c, options) => {
+                if (options is Live<ServerTimeUI>.Options) {
+                    options.UpdateDelayer = new UpdateDelayer(new UpdateDelayer.Options() {
+                        Delay = TimeSpan.FromSeconds(0.5),
+                    });
+                }
             });
         }
     }

@@ -1,7 +1,7 @@
 @page "/serverScreen"
 @implements IDisposable
 @inject ILogger<ServerScreen> Log
-@inject ILive<ServerScreenUI.Model> LiveModel
+@inject ILive<ServerScreenUI> LiveModel
 
 @{
     var lastUpdateError = LiveModel.LastUpdateError; 
@@ -18,7 +18,7 @@
 <p><img src="data:image/png;base64, @Model.Screenshot.Base64Content" alt="Server screen" width="100%" /><br/></p>
 
 @code {
-    private ServerScreenUI.Model Model => LiveModel.Value;
+    private ServerScreenUI Model => LiveModel.Value;
 
     protected override Task OnInitializedAsync()
     {

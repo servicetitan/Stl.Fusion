@@ -19,7 +19,7 @@ namespace Stl.Extensibility
         object ISpecial.Service => Service;
         public TService Service { get; }
 
-        internal Special(TService service) 
+        public Special(TService service) 
             => Service = service;
     }
 
@@ -28,6 +28,5 @@ namespace Stl.Extensibility
         public static SpecialBuilder<TService> Use<TService>(TService service) 
             where TService : class
             => new SpecialBuilder<TService>(service);
-
     }
 }

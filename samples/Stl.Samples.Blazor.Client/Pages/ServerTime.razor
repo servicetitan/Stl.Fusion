@@ -1,7 +1,7 @@
 @page "/serverTime"
 @implements IDisposable
 @inject ILogger<ServerTime> Log
-@inject ILive<ServerTimeUI.Model> LiveModel
+@inject ILive<ServerTimeUI> LiveModel
 
 @{
     var lastUpdateError = LiveModel.LastUpdateError; 
@@ -20,7 +20,7 @@
 <button class="btn btn-primary" @onclick="Refresh">Refresh</button>
 
 @code {
-    private ServerTimeUI.Model Model => LiveModel.Value;
+    private ServerTimeUI Model => LiveModel.Value;
     private IUpdateDelayer UpdateDelayer => LiveModel.UpdateDelayer;
 
     protected override Task OnInitializedAsync()

@@ -1,8 +1,10 @@
 using System;
 using System.Net.Http;
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using RestEase;
+using RestEase.Implementation;
 using Stl.Extensibility;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Interception;
@@ -53,14 +55,32 @@ namespace Stl.Fusion.Client
         // User-defined client-side services
         
         public static IServiceCollection AddRestEaseService<TInterface>(
-            this IServiceCollection services)
-            => services.AddRestEaseService(typeof(TInterface));
+            this IServiceCollection services,
+            string? baseAddress = null,
+            Action<IServiceProvider, HttpClient>? httpClientBuilder = null)
+            => services.AddRestEaseService(typeof(TInterface), baseAddress, httpClientBuilder);
         public static IServiceCollection AddRestEaseService(
             this IServiceCollection services, 
-            Type interfaceType)
+            Type interfaceType,
+            string? baseAddress = null,
+            Action<IServiceProvider, HttpClient>? httpClientBuilder = null)
         {
             if (!interfaceType.IsInterface)
                 throw new ArgumentOutOfRangeException(nameof(interfaceType));
+
+            if (baseAddress != null || httpClientBuilder != null) {
+                // Adding Special<HttpClient, interfaceType> to make sure
+                // RestClient uses this HttpClient instead of the default one
+                var tSpecial = typeof(Special<,>)
+                    .MakeGenericType(typeof(HttpClient), interfaceType);
+                services.TryAddSingleton(tSpecial, c => {
+                    var httpClient = new HttpClient();
+                    if (baseAddress != null)
+                        httpClient.BaseAddress = new Uri(baseAddress);
+                    httpClientBuilder?.Invoke(c, httpClient);
+                    return tSpecial.CreateInstance(httpClient);
+                });
+            }
             services.TryAddSingleton(interfaceType, c => {
                 var httpClient = c.GetRequiredSpecialService<HttpClient>(interfaceType);
                 var restClient = new RestClient(httpClient) {
@@ -72,15 +92,34 @@ namespace Stl.Fusion.Client
         }
 
         public static IServiceCollection AddReplicaService<TInterface>(
-            this IServiceCollection services)
-            => services.AddReplicaService(typeof(TInterface));
+            this IServiceCollection services,
+            string? baseAddress = null,
+            Action<IServiceProvider, HttpClient>? httpClientBuilder = null)
+            => services.AddReplicaService(typeof(TInterface), baseAddress, httpClientBuilder);
         public static IServiceCollection AddReplicaService(
-            this IServiceCollection services, Type interfaceType)
+            this IServiceCollection services, 
+            Type interfaceType,
+            string? baseAddress = null,
+            Action<IServiceProvider, HttpClient>? httpClientBuilder = null)
         {
             if (!interfaceType.IsInterface)
                 throw new ArgumentOutOfRangeException(nameof(interfaceType));
             if (!typeof(IReplicaService).IsAssignableFrom(interfaceType))
                 throw Errors.MustImplement<IReplicaService>(interfaceType);
+
+            if (baseAddress != null || httpClientBuilder != null) {
+                // Adding Special<HttpClient, interfaceType> to make sure
+                // RestClient uses this HttpClient instead of the default one
+                var tSpecial = typeof(Special<,>)
+                    .MakeGenericType(typeof(HttpClient), interfaceType);
+                services.TryAddSingleton(tSpecial, c => {
+                    var httpClient = new HttpClient();
+                    if (baseAddress != null)
+                        httpClient.BaseAddress = new Uri(baseAddress);
+                    httpClientBuilder?.Invoke(c, httpClient);
+                    return tSpecial.CreateInstance(httpClient);
+                });
+            }
             services.TryAddSingleton(interfaceType, c => {
                 // 1. Create REST client for the service
                 var httpClient = c.GetRequiredSpecialService<HttpClient>(interfaceType);

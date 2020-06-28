@@ -3,7 +3,7 @@
 @inject ILogger<Chat> Log
 @inject NavigationManager Navigator
 @inject IChatClient Client
-@inject ILive<ChatUI.Model> LiveModel
+@inject ILive<ChatUI> LiveModel
 
 @{
     var model = Model; 
@@ -87,7 +87,7 @@
 </EditForm>
 
 @code {
-    private ChatUI.Model Model => LiveModel.Value;
+    private ChatUI Model => LiveModel.Value;
     private IUpdateDelayer UpdateDelayer => LiveModel.UpdateDelayer;
 
     protected override async Task OnInitializedAsync()

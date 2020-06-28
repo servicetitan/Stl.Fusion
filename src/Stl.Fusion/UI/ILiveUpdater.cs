@@ -3,7 +3,10 @@ using System.Threading.Tasks;
 
 namespace Stl.Fusion.UI
 {
-    public interface ILiveUpdater<T>
+    public interface ILiveUpdater // Just a tagging interface to simplify assembly scanning
+    { }
+
+    public interface ILiveUpdater<T> : ILiveUpdater
     {
         Task<T> UpdateAsync(IComputed<T> prevComputed, CancellationToken cancellationToken);
     }

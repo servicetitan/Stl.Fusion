@@ -1,5 +1,5 @@
 using System;
-using System.Threading;
+using System.Diagnostics;
 using Stl.Mathematics;
 
 namespace Stl.OS
@@ -7,9 +7,12 @@ namespace Stl.OS
     public class HardwareInfo
     {
         private const int RefreshIntervalTicks = 30_000; // Tick = millisecond
-        private static volatile int _lastRefreshTicks;
+        private static readonly object Lock = new object();
         private static volatile int _processorCount; 
-        private static volatile int _processorCountPo2; 
+        private static volatile int _processorCountPo2;
+        private static volatile int _lastRefreshTicks =
+            // Environment.TickCount is negative in WebAssembly @ startup
+            Environment.TickCount - (RefreshIntervalTicks << 1);
 
         public static int ProcessorCount {
             get {
@@ -28,15 +31,20 @@ namespace Stl.OS
         private static void MaybeRefresh()
         {
             var now = Environment.TickCount;
-            var lastRefreshTicks = _lastRefreshTicks;
-            if (lastRefreshTicks != 0 && now - lastRefreshTicks < RefreshIntervalTicks)
-                // No need to refresh
+            if (now - _lastRefreshTicks < RefreshIntervalTicks) {
+                Debug.WriteLine(now);
+                Debug.WriteLine(_lastRefreshTicks);
                 return;
-            if (lastRefreshTicks != Interlocked.CompareExchange(ref _lastRefreshTicks, now, lastRefreshTicks))
-                // Some other thread is already updating these values
-                return;
-            _processorCount = Math.Max(1, Environment.ProcessorCount);
-            _processorCountPo2 = Math.Max(1, (int) Bits.GreaterOrEqualPowerOf2((uint) _processorCount));
+            }
+            lock (Lock) {
+                if (now - _lastRefreshTicks < RefreshIntervalTicks)
+                    return;
+                _processorCount = Math.Max(1, Environment.ProcessorCount);
+                _processorCountPo2 = Math.Max(1, (int) Bits.GreaterOrEqualPowerOf2((uint) _processorCount));
+                // This should be done at last, otherwise there is a chance
+                // another thread sees _processorCount == 0
+                _lastRefreshTicks = now;
+            }
         }
     }
 }

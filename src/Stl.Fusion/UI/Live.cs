@@ -8,6 +8,14 @@ using Stl.Fusion.Internal;
 
 namespace Stl.Fusion.UI
 {
+    public interface ILiveOptions
+    {
+        bool AutoStart { get; set; }
+        bool IsolateUpdateErrors { get; set; }
+        bool DelayFirstUpdate { get; set; }
+        IUpdateDelayer? UpdateDelayer { get; set; }
+    }
+
     public interface ILive : IResult, IDisposable
     {
         IComputed Computed { get; }
@@ -27,7 +35,7 @@ namespace Stl.Fusion.UI
 
     public sealed class Live<T> : ILive<T>
     {
-        public sealed class Options
+        public sealed class Options : ILiveOptions
         {
             public Result<T> Default { get; set; } = default;
             public Func<IComputed<T>, CancellationToken, Task<T>> Updater { get; set; } = null!;
