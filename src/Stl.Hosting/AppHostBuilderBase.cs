@@ -16,6 +16,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Hosting.Internal;
 using Microsoft.Extensions.Logging;
 using Stl.Extensibility;
+using Stl.Frozen;
 using Stl.Hosting.Internal;
 using Stl.Hosting.Plugins;
 using Stl.Plugins;
@@ -61,7 +62,7 @@ namespace Stl.Hosting
         void BuildHost();
     }
 
-    public abstract class AppHostBuilderBase : HasOptionsBase,
+    public abstract class AppHostBuilderBase : FrozenHasOptionsBase,
         IAppHostBuilder, IAppHostBuilderImpl, IAppHostBuildState,
         ITestAppHostBuilder, ITestAppHostBuilderImpl
     {

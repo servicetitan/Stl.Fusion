@@ -7,22 +7,22 @@ namespace Stl.Fusion.Server
     public static class ServiceCollectionEx
     {
         public static IServiceCollection AddFusionWebSocketServer(this IServiceCollection services,
-            WebSocketServerMiddleware.Options options)
+            WebSocketServer.Options options)
         {
-            services.AddHttpContextAccessor();
             services.TryAddSingleton(options);
+            services.TryAddSingleton<WebSocketServer>();
             return services.AddFusionServerCore();
         }
 
         public static IServiceCollection AddFusionWebSocketServer(this IServiceCollection services,
-            Action<IServiceProvider, WebSocketServerMiddleware.Options>? optionsBuilder = null)
+            Action<IServiceProvider, WebSocketServer.Options>? optionsBuilder = null)
         {
-            services.AddHttpContextAccessor();
             services.TryAddSingleton(c => {
-                var options = new WebSocketServerMiddleware.Options();
+                var options = new WebSocketServer.Options();
                 optionsBuilder?.Invoke(c, options);
                 return options;
             });
+            services.TryAddSingleton<WebSocketServer>();
             return services.AddFusionServerCore();
         }
     }

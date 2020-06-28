@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Fusion.Internal;
 
-namespace Stl.Fusion.Client
+namespace Stl.Fusion.UI
 {
     public interface ILive : IResult, IDisposable
     {
@@ -76,7 +76,7 @@ namespace Stl.Fusion.Client
                 ?? throw new ArgumentNullException(nameof(options) + "." + nameof(options.Updater));
             _delayFirstUpdate = options.DelayFirstUpdate;
             _isolateUpdateErrors = options.IsolateUpdateErrors;
-            UpdateDelayer = options.UpdateDelayer ?? updateDelayer ?? Client.UpdateDelayer.Default;
+            UpdateDelayer = options.UpdateDelayer ?? updateDelayer ?? UI.UpdateDelayer.Default;
 
             _invalidationHandler = OnInvalidated;
             _disposeCts = new CancellationTokenSource();

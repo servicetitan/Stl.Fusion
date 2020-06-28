@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using RestEase.Implementation;
 using Stl.Extensibility;
 using Stl.Fusion.Client;
+using Stl.Fusion.UI;
 using Stl.OS;
 using Stl.Samples.Blazor.Client.Services;
 

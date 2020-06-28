@@ -1,7 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Stl.Fusion.Client
+namespace Stl.Fusion.UI
 {
     public interface ILiveUpdater<T>
     {

@@ -4,19 +4,24 @@ using Microsoft.AspNetCore.Http;
 using Stl.Channels;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Messages;
+using Stl.Fusion.Client;
 using Stl.Net;
 using Stl.Serialization;
 
 namespace Stl.Fusion.Server
 {
-    public class WebSocketServerMiddleware
+    public class WebSocketServer
     {
         public class Options
         {
-            public string RequestPath { get; set; } = "/ws";
-            public string PublisherIdQueryParameterName { get; set; } = "publisherId";
-            public string ClientIdQueryParameterName { get; set; } = "clientId";
-            public Func<ChannelSerializerPair<Message, string>> ChannelSerializerPairFactory { get; set; } = DefaultChannelSerializerPairFactory;
+            private static readonly WebSocketChannelProvider.Options DefaultClientOptions = 
+                new WebSocketChannelProvider.Options();
+
+            public string RequestPath { get; set; } = DefaultClientOptions.RequestPath;
+            public string PublisherIdQueryParameterName { get; set; } = DefaultClientOptions.PublisherIdQueryParameterName;
+            public string ClientIdQueryParameterName { get; set; } = DefaultClientOptions.ClientIdQueryParameterName;
+            public Func<ChannelSerializerPair<Message, string>> ChannelSerializerPairFactory { get; set; } = 
+                DefaultChannelSerializerPairFactory;
 
             public static ChannelSerializerPair<Message, string> DefaultChannelSerializerPairFactory()
                 => new ChannelSerializerPair<Message, string>(
@@ -24,19 +29,14 @@ namespace Stl.Fusion.Server
                     new SafeJsonNetSerializer(t => typeof(ReplicatorMessage).IsAssignableFrom(t)).ToTyped<Message>());
         }
 
-        protected string RequestPath { get; }
-        protected string PublisherIdQueryParameterName { get; } 
-        protected string ClientIdQueryParameterName { get; } 
-        protected RequestDelegate Next { get; }
+        public string RequestPath { get; }
+        public string PublisherIdQueryParameterName { get; } 
+        public string ClientIdQueryParameterName { get; } 
         protected IPublisher Publisher { get; }
         protected Func<ChannelSerializerPair<Message, string>> ChannelSerializerPairFactory { get; }
 
-        public WebSocketServerMiddleware(
-            RequestDelegate next,
-            Options options,
-            IPublisher publisher)
+        public WebSocketServer(Options options, IPublisher publisher)
         {
-            Next = next;
             RequestPath = options.RequestPath;
             PublisherIdQueryParameterName = options.PublisherIdQueryParameterName;
             ClientIdQueryParameterName = options.ClientIdQueryParameterName;
@@ -44,12 +44,8 @@ namespace Stl.Fusion.Server
             ChannelSerializerPairFactory = options.ChannelSerializerPairFactory;
         }
 
-        public async Task InvokeAsync(HttpContext context)
+        public async Task HandleAsync(HttpContext context)
         {
-            if (context.Request.Path != RequestPath) {
-                await Next.Invoke(context);
-                return;
-            }
             if (!context.WebSockets.IsWebSocketRequest) {
                 context.Response.StatusCode = 400;
                 return;
@@ -62,7 +58,7 @@ namespace Stl.Fusion.Server
 
             var serializers = ChannelSerializerPairFactory.Invoke();
             var clientId = context.Request.Query[ClientIdQueryParameterName];
-            var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+            var webSocket = await context.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
             await using var wsChannel = new WebSocketChannel(webSocket);
             var channel = wsChannel
                 .WithSerializers(serializers)

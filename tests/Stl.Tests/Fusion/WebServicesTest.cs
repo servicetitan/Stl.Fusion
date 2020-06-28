@@ -3,8 +3,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using Autofac;
 using FluentAssertions;
-using Stl.Fusion;
-using Stl.Fusion.Client;
+using Stl.Fusion.UI;
 using Stl.Tests.Fusion.Services;
 using Stl.Tests.Fusion.UIModels;
 using Xunit;
@@ -20,7 +19,7 @@ namespace Stl.Tests.Fusion
         public async Task TimeServiceTest()
         {
             await using var serving = await WebSocketServer.ServeAsync();
-            var tpc = Container.Resolve<ITimeProviderClient>();
+            var tpc = Container.Resolve<ITimeClient>();
             var cTime = await tpc.GetComputedTimeAsync();
             cTime.IsConsistent.Should().BeTrue();
             (DateTime.Now - cTime.Value).Should().BeLessThan(TimeSpan.FromSeconds(1));

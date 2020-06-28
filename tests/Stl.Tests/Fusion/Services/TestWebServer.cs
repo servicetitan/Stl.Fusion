@@ -45,7 +45,7 @@ namespace Stl.Tests.Fusion.Services
                     services.AddFusionWebSocketServer();
 
                     // Web
-                    services.AddRouting(options => options.LowercaseUrls = true);
+                    services.AddRouting();
                     services.AddControllers().AddApplicationPart(Assembly.GetExecutingAssembly());
                     services.AddMvc()
                         .AddNewtonsoftJson()
@@ -57,13 +57,13 @@ namespace Stl.Tests.Fusion.Services
                 .ConfigureWebHost(builder => {
                     builder.UseKestrel().UseUrls(BaseUri.ToString());
                     builder.Configure((ctx, app) => {
-                        // Stl.Fusion server
-                        app.UseFusionWebSocketServer(true);
+                        app.UseWebSockets(new WebSocketOptions() { ReceiveBufferSize = 16_384 });
 
                         // API controllers
                         app.UseRouting();
                         app.UseEndpoints(endpoints => {
                             endpoints.MapControllers();
+                            endpoints.MapFusionWebSocketServer();
                         });
                     });
                 })

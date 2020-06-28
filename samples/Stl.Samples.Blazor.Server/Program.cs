@@ -80,6 +80,7 @@ namespace Stl.Samples.Blazor.Server
                             app.UseDeveloperExceptionPage();
                             app.UseWebAssemblyDebugging();
                         }
+                        app.UseWebSockets(new WebSocketOptions() { ReceiveBufferSize = 16_384 });
 
                         // Static + Swagger
                         var staticFileOptions = new StaticFileOptions {
@@ -93,13 +94,11 @@ namespace Stl.Samples.Blazor.Server
                         app.UseSwaggerUI(c => {
                             c.SwaggerEndpoint("/swagger/v1/swagger.json", "API v1");
                         });
-                        
-                        // Stl.Fusion server
-                        app.UseFusionWebSocketServer(true);
 
                         // API controllers
                         app.UseRouting();
                         app.UseEndpoints(endpoints => {
+                            endpoints.MapFusionWebSocketServer();
                             endpoints.MapControllers();
                             endpoints.MapFallbackToFile("index.html", staticFileOptions);
                         });

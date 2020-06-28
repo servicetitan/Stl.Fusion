@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Async;
 
-namespace Stl.Fusion.Client
+namespace Stl.Fusion.UI
 {
     public interface IUpdateDelayer
     {

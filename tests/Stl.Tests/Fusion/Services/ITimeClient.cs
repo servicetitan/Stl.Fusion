@@ -9,7 +9,7 @@ using Stl.Fusion.Client;
 namespace Stl.Tests.Fusion.Services
 {
     [Header(FusionHeaders.RequestPublication, "1")]
-    public interface ITimeProviderClient : IReplicaService
+    public interface ITimeClient : IReplicaService
     {
         [Get("get")]
         Task<IComputed<DateTime>> GetComputedTimeAsync(CancellationToken cancellationToken = default);

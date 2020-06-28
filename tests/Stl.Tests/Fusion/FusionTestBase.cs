@@ -16,6 +16,7 @@ using Stl.IO;
 using Stl.Fusion;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Client;
+using Stl.Fusion.UI;
 using Stl.Testing;
 using Stl.Testing.Internal;
 using Stl.Tests.Fusion.Model;
@@ -145,13 +146,13 @@ namespace Stl.Tests.Fusion
             // Replica services
             services.AddSingleton(c => Special.Use(new HttpClient() {
                 BaseAddress = new Uri($"{c.GetRequiredService<TestWebServer>().BaseUri}api/time")
-            }).For<ITimeProviderClient>());
-            services.AddReplicaService<ITimeProviderClient>();
+            }).For<ITimeClient>());
+            services.AddReplicaService<ITimeClient>();
 
             // UI Models
             services.AddLive<ServerTimeModel1>(
                 async (c, prev, cancellationToken) => {
-                    var client = c.GetRequiredService<ITimeProviderClient>();
+                    var client = c.GetRequiredService<ITimeClient>();
                     var time = await client.GetTimeAsync(cancellationToken).ConfigureAwait(false);
                     return new ServerTimeModel1(time);
                 }, (c, options) => {
@@ -159,7 +160,7 @@ namespace Stl.Tests.Fusion
                 });
             services.AddLive<ServerTimeModel2>(
                 async (c, prev, cancellationToken) => {
-                    var client = c.GetRequiredService<ITimeProviderClient>();
+                    var client = c.GetRequiredService<ITimeClient>();
                     var cTime = await client.GetComputedTimeAsync(cancellationToken).ConfigureAwait(false);
                     return new ServerTimeModel2(cTime.Value);
                 }, (c, options) => {
