@@ -40,7 +40,7 @@ namespace Stl.Frozen
             if (IsFrozen) throw Errors.MustBeUnfrozen();
         }
 
-        protected void ThrowIfUnfrozen()
+        protected void ThrowIfNotFrozen()
         {
             if (!IsFrozen) throw Errors.MustBeFrozen();
         }

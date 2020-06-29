@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using Newtonsoft.Json;
 using Stl.Extensibility;
 using Stl.Text;
 
@@ -7,8 +9,10 @@ namespace Stl.Frozen
 {
     public interface IFrozenHasOptions : IHasOptions, IFrozen { }
 
+    [Serializable]
     public abstract class FrozenHasOptionsBase : FrozenBase, IFrozenHasOptions
     {
+        [JsonProperty]
         protected IDictionary<Symbol, object> Options { get; private set; } = 
             new Dictionary<Symbol, object>();
 
@@ -25,7 +29,7 @@ namespace Stl.Frozen
         void IHasOptions.SetOption(Symbol key, object? value) => SetOption(key, value); 
         protected void SetOption(Symbol key, object? value)
         {
-            this.ThrowIfFrozen();
+            ThrowIfFrozen();
             if (value == null)
                 Options.Remove(key);
             else 

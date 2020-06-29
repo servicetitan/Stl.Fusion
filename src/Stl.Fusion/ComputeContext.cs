@@ -52,8 +52,9 @@ namespace Stl.Fusion
         {
             if (value == null || (Options & ComputeOptions.Capture) == 0)
                 return;
-            // We capture the last value, not the first one.
+            // We capture the the last value
             Interlocked.Exchange(ref _capturedComputed, value);
+            // Interlocked.CompareExchange(ref _capturedComputed, value, null);
         }
 
         public IComputed? GetCapturedComputed() => _capturedComputed;

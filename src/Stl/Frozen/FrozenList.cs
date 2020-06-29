@@ -19,7 +19,7 @@ namespace Stl.Frozen
         public T this[int index] {
             get => List[index];
             set {
-                this.ThrowIfFrozen();
+                ThrowIfFrozen();
                 List[index] = value;
             }
         }
@@ -36,31 +36,31 @@ namespace Stl.Frozen
 
         public void Add(T item)
         {
-            this.ThrowIfFrozen();
+            ThrowIfFrozen();
             List.Add(item);
         }
 
         public void Insert(int index, T item)
         {
-            this.ThrowIfFrozen();
+            ThrowIfFrozen();
             List.Insert(index, item);
         }
 
         public bool Remove(T item)
         {
-            this.ThrowIfFrozen();
+            ThrowIfFrozen();
             return List.Remove(item);
         }
 
         public void RemoveAt(int index)
         {
-            this.ThrowIfFrozen();
+            ThrowIfFrozen();
             List.RemoveAt(index);
         }
 
         public void Clear()
         {
-            this.ThrowIfFrozen();
+            ThrowIfFrozen();
             List.Clear();
         }
 

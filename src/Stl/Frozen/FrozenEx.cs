@@ -18,12 +18,12 @@ namespace Stl.Frozen
 
         // ThrowIfXxx
 
-        public static void ThrowIfUnfrozen(this IFrozen frozen)
+        public static void ThrowIfNotFrozen(this IFrozen frozen)
         {
             if (!frozen.IsFrozen) throw Errors.MustBeFrozen();
         }
 
-        public static void ThrowIfUnfrozen(this IFrozen frozen, string paramName)
+        public static void ThrowIfNotFrozen(this IFrozen frozen, string paramName)
         {
             if (!frozen.IsFrozen) throw Errors.MustBeFrozen(paramName);
         }

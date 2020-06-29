@@ -31,11 +31,8 @@ namespace Stl.OS
         private static void MaybeRefresh()
         {
             var now = Environment.TickCount;
-            if (now - _lastRefreshTicks < RefreshIntervalTicks) {
-                Debug.WriteLine(now);
-                Debug.WriteLine(_lastRefreshTicks);
+            if (now - _lastRefreshTicks < RefreshIntervalTicks)
                 return;
-            }
             lock (Lock) {
                 if (now - _lastRefreshTicks < RefreshIntervalTicks)
                     return;

@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 using Stl.Text;
 
 namespace Stl.Extensibility
@@ -12,8 +14,10 @@ namespace Stl.Extensibility
         void SetOption(Symbol key, object? value);
     }
 
+    [Serializable]
     public abstract class HasOptionsBase : IHasOptions
     {
+        [JsonProperty]
         protected IDictionary<Symbol, object> Options { get; private set; } = 
             new Dictionary<Symbol, object>();
 

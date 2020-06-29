@@ -40,7 +40,8 @@ namespace Stl.Fusion.Interception
             if (!typeof(IComputedService).IsAssignableFrom(type))
                 throw Errors.MustImplement<IComputedService>(type);
             var bindingFlags = BindingFlags.Public | BindingFlags.NonPublic
-                | BindingFlags.Instance | BindingFlags.Static;
+                | BindingFlags.Instance | BindingFlags.Static
+                | BindingFlags.FlattenHierarchy;
             foreach (var method in type.GetMethods(bindingFlags)) {
                 var attrs = method
                     .GetCustomAttributes(typeof(ComputedServiceMethodAttribute), true)
@@ -51,7 +52,11 @@ namespace Stl.Fusion.Interception
                 if (method.IsStatic)
                     throw Errors.ComputedServiceMethodAttributeOnStaticMethod(method);
                 if (!method.IsVirtual)
-                    throw Errors.ComputedServiceMethodAttributeOnStaticMethod(method);
+                    throw Errors.ComputedServiceMethodAttributeOnNonVirtualMethod(method);
+                if (method.IsFinal) 
+                    // All implemented interface members are marked as "virtual final"
+                    // unless they are truly virtual 
+                    throw Errors.ComputedServiceMethodAttributeOnNonVirtualMethod(method);
                 if (attrs.Any(a => !a.IsEnabled)) {
                     Log.LogDebug($"- {method}: has {nameof(ComputedServiceMethodAttribute)}(false)");
                     continue;

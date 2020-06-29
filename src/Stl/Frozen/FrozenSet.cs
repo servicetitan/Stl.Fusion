@@ -49,43 +49,43 @@ namespace Stl.Frozen
         void ICollection<T>.Add(T item) => Add(item);
         public bool Add(T item)
         {
-            this.ThrowIfFrozen();
+            ThrowIfFrozen();
             return Set.Add(item);
         }
 
         public bool Remove(T item)
         {
-            this.ThrowIfFrozen();
+            ThrowIfFrozen();
             return Set.Remove(item);
         }
 
         public void Clear()
         {
-            this.ThrowIfFrozen();
+            ThrowIfFrozen();
             Set.Clear();
         }
 
         public void ExceptWith(IEnumerable<T> other)
         {
-            this.ThrowIfFrozen();
+            ThrowIfFrozen();
             Set.ExceptWith(other);
         }
 
         public void IntersectWith(IEnumerable<T> other)
         {
-            this.ThrowIfFrozen();
+            ThrowIfFrozen();
             Set.IntersectWith(other);
         }
 
         public void SymmetricExceptWith(IEnumerable<T> other)
         {
-            this.ThrowIfFrozen();
+            ThrowIfFrozen();
             Set.SymmetricExceptWith(other);
         }
 
         public void UnionWith(IEnumerable<T> other)
         {
-            this.ThrowIfFrozen();
+            ThrowIfFrozen();
             Set.UnionWith(other);
         }
 

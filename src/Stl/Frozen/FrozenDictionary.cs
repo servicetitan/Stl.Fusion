@@ -26,7 +26,7 @@ namespace Stl.Frozen
         public TValue this[TKey key] {
             get => Dictionary[key];
             set {
-                this.ThrowIfFrozen();
+                ThrowIfFrozen();
                 Dictionary[key] = value;
             }
         }
@@ -49,31 +49,31 @@ namespace Stl.Frozen
 
         public void Add(KeyValuePair<TKey, TValue> item)
         {
-            this.ThrowIfFrozen();
+            ThrowIfFrozen();
             DictionaryAsCollection.Add(item);
         }
 
         public void Add(TKey key, TValue value)
         {
-            this.ThrowIfFrozen();
+            ThrowIfFrozen();
             Dictionary.Add(key, value);
         }
 
         public void Clear()
         {
-            this.ThrowIfFrozen();
+            ThrowIfFrozen();
             Dictionary.Clear();
         }
 
         public bool Remove(TKey key)
         {
-            this.ThrowIfFrozen();
+            ThrowIfFrozen();
             return Dictionary.Remove(key);
         }
 
         public bool Remove(KeyValuePair<TKey, TValue> item)
         {
-            this.ThrowIfFrozen();
+            ThrowIfFrozen();
             return DictionaryAsCollection.Remove(item);
         }
 
