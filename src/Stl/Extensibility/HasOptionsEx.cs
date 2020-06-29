@@ -33,7 +33,7 @@ namespace Stl.Extensibility
             => hasOptions.GetOption(type.ToSymbol());
         [return: MaybeNull]
         public static TValue GetOption<TValue>(this IHasOptions hasOptions)
-            => (TValue) (hasOptions.GetOption(typeof(TValue)) ?? default(TValue)!);
+            => (TValue) (hasOptions.GetOption(typeof(TValue)) ?? default!);
 
         public static void SetOption(this IHasOptions hasOptions, Type type, object? value)
             => hasOptions.SetOption(type.ToSymbol(), value);

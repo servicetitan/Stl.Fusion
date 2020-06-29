@@ -21,8 +21,10 @@ namespace Stl.Reflection
         private static readonly ConcurrentDictionary<Type, Symbol> ToSymbolCache =
             new ConcurrentDictionary<Type, Symbol>();
 
-        public static IEnumerable<Type> GetAllBaseTypes(this Type type)
+        public static IEnumerable<Type> GetAllBaseTypes(this Type type, bool addSelf = false)
         {
+            if (addSelf)
+                yield return type;
             var baseType = type.BaseType;
             while (baseType != null) {
                 yield return baseType;
