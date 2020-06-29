@@ -47,8 +47,8 @@ namespace Stl.Samples.Blazor.Client
             });
             
             // Replica services
-            var apiUri = new Uri($"{baseUri}api/");
-            services.AddSingleton(new HttpClient() { BaseAddress = apiUri });
+            var apiBaseUri = new Uri($"{baseUri}api/");
+            services.AddTransient(c => new HttpClient() { BaseAddress = apiBaseUri });
             services.AddReplicaService<ITimeClient>("time");
             services.AddReplicaService<IScreenshotClient>("screenshot");
             services.AddReplicaService<IChatClient>("chat");

@@ -11,7 +11,6 @@ using Autofac.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Stl.Extensibility;
 using Stl.IO;
 using Stl.Fusion;
 using Stl.Fusion.Bridge;
@@ -144,6 +143,11 @@ namespace Stl.Tests.Fusion
             services.AddScoped<UserService, UserService>();
 
             // Replica services
+            services.AddHttpClient<HttpClient>((c, httpClient) => {
+                var baseUri = c.GetRequiredService<TestWebServer>().BaseUri;
+                var apiUri = new Uri($"{baseUri}api/");
+                httpClient.BaseAddress = apiUri;
+            });
             services.AddSingleton(c => {
                 var baseUri = c.GetRequiredService<TestWebServer>().BaseUri;
                 var apiUri = new Uri($"{baseUri}api/");
