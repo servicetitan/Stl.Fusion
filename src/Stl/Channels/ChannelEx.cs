@@ -167,18 +167,19 @@ namespace Stl.Channels
                 Channel.CreateBounded<T>(channelOptions),
                 Channel.CreateBounded<T>(channelOptions));
 
-            T LogMessage(T message)
+            T LogMessage(T message, bool isIncoming)
             {
                 var text = message?.ToString() ?? "<null>";
                 if (maxLength.HasValue && text.Length > maxLength.GetValueOrDefault())
                     text = text.Substring(0, maxLength.GetValueOrDefault()) + "...";
-                logger.Log(logLevel, $"{channelName} <- {text}");
+                logger.Log(logLevel, $"{channelName} {(isIncoming ? "<-" : "->")} {text}");
                 return message;
             }
 
             channel.ConnectAsync(
                 pair.Channel1, true,
-                LogMessage, LogMessage,
+                m => LogMessage(m, true), 
+                m => LogMessage(m, false),
                 cancellationToken);
             return pair.Channel2;
         }
