@@ -23,6 +23,7 @@ namespace Stl.Fusion.UI
             public TimeSpan MinExtraErrorDelay { get; set; } =  TimeSpan.FromSeconds(5);
             public TimeSpan MaxExtraErrorDelay { get; set; } = TimeSpan.FromMinutes(2);
             public TimeSpan CancelDelaysDelay { get; set; } = TimeSpan.FromSeconds(0.05);
+            public LogLevel LogLevel { get; set; } = LogLevel.Debug;
         }
 
         public static readonly IUpdateDelayer Default = new UpdateDelayer(new Options());
@@ -34,6 +35,7 @@ namespace Stl.Fusion.UI
         public TimeSpan MinExtraErrorDelay { get; }
         public TimeSpan MaxExtraErrorDelay { get; }
         public TimeSpan CancelDelaysDelay { get; } // Really sorry for this name :)
+        public LogLevel LogLevel { get; }
 
         public UpdateDelayer(
             Options options,
@@ -44,22 +46,23 @@ namespace Stl.Fusion.UI
             Delay = options.Delay;
             MinExtraErrorDelay = options.MinExtraErrorDelay;
             MaxExtraErrorDelay = options.MaxExtraErrorDelay;
-            CancelDelaysDelay = options.CancelDelaysDelay; 
+            CancelDelaysDelay = options.CancelDelaysDelay;
+            LogLevel = options.LogLevel;
             EndDelay(ref EndDelayTask);
             EndDelay(ref ErrorEndDelayTask);
         }
 
         public virtual async Task DelayAsync(CancellationToken cancellationToken = default)
         {
-            _log.LogInformation($"Delay started ({Delay.TotalSeconds:f2}s).");
+            _log.Log(LogLevel, $"Delay started ({Delay.TotalSeconds:f2}s).");
             try {
                 var mainDelayTask = Task.Delay(Delay, cancellationToken);
                 var endDelayTask = Volatile.Read(ref EndDelayTask);
                 await Task.WhenAny(endDelayTask, mainDelayTask).ConfigureAwait(false);
-                _log.LogInformation($"Delay ended {(mainDelayTask.IsCompleted ? "normally": "via EndActiveDelays")}.");
+                _log.Log(LogLevel, $"Delay ended {(mainDelayTask.IsCompleted ? "normally": "via EndActiveDelays")}.");
             }
             catch (OperationCanceledException) {
-                _log.LogInformation("Delay cancelled.");
+                _log.Log(LogLevel, "Delay cancelled.");
             }
         }
 
@@ -67,15 +70,15 @@ namespace Stl.Fusion.UI
         {
             var duration = Math.Pow(Math.Sqrt(2), tryIndex) * MinExtraErrorDelay.TotalSeconds;
             duration = Math.Min(MaxExtraErrorDelay.TotalSeconds, duration);
-            _log.LogInformation($"Error delay started ({duration:f2}s).");
+            _log.Log(LogLevel, $"Error delay started ({duration:f2}s).");
             try {
                 var mainDelayTask = Task.Delay(TimeSpan.FromSeconds(duration), cancellationToken);
                 var errorEndDelayTask = Volatile.Read(ref ErrorEndDelayTask);
                 await Task.WhenAny(errorEndDelayTask, mainDelayTask).ConfigureAwait(false);
-                _log.LogInformation($"Error delay ended {(mainDelayTask.IsCompleted ? "normally": "via EndActiveDelays")}.");
+                _log.Log(LogLevel, $"Error delay ended {(mainDelayTask.IsCompleted ? "normally": "via EndActiveDelays")}.");
             }
             catch (OperationCanceledException) {
-                _log.LogInformation("Error delay cancelled.");
+                _log.Log(LogLevel, "Error delay cancelled.");
             }
         }
 

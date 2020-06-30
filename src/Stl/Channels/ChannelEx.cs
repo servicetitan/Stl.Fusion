@@ -157,6 +157,10 @@ namespace Stl.Channels
             BoundedChannelOptions? channelOptions = null,
             CancellationToken cancellationToken = default)
         {
+            var mustLog = logLevel != LogLevel.None && logger.IsEnabled(logLevel);
+            if (!mustLog)
+                return channel;
+
             channelOptions ??= new BoundedChannelOptions(16) {
                 FullMode = BoundedChannelFullMode.Wait,
                 SingleReader = true,
@@ -179,7 +183,7 @@ namespace Stl.Channels
             channel.ConnectAsync(
                 pair.Channel1, true,
                 m => LogMessage(m, true), 
-                m => LogMessage(m, false),
+                m => LogMessage(m, false), 
                 cancellationToken);
             return pair.Channel2;
         }
