@@ -16,7 +16,7 @@ namespace Stl.Tests.Fusion
     {
         public ComputedInterceptorTest(ITestOutputHelper @out) : base(@out) { }
 
-        [Fact(Skip = "Failed test, check this later")]
+        [Fact]
         public async Task AutoRecomputeTest()
         {
             var time = Container.Resolve<ITimeService>();

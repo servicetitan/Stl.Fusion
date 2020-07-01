@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Stl.Fusion.Internal;
 using Stl.Time;
 
@@ -22,8 +23,14 @@ namespace Stl.Fusion
                 var handler = (Action<IComputed<TOut>, Result<TOut>, Exception?>?) untypedHandler;
                 var stop = new CancellationTokenSource();
                 var stopToken = stop.Token;
+                
+                void RunOnInvalidated(IComputed c)
+                {
+                    using var _ = ExecutionContext.SuppressFlow();
+                    Task.Run(() => OnInvalidated(c), default);
+                } 
 
-                async void OnInvalidated(IComputed c) {
+                async Task OnInvalidated(IComputed c) {
                     try {
                         var prevComputed = (IComputed<TIn, TOut>) c;
                         if (delay > TimeSpan.Zero)
@@ -41,11 +48,11 @@ namespace Stl.Fusion
                         }
                         var prevOutput = prevComputed.Output;
                         handler?.Invoke(nextComputed, prevOutput, error);
-                        nextComputed!.Invalidated += OnInvalidated;
+                        nextComputed!.Invalidated += RunOnInvalidated;
                     }
                     catch (OperationCanceledException) { }
                 };
-                computed.Invalidated += OnInvalidated;
+                computed.Invalidated += RunOnInvalidated;
                 return Disposable.New(
                     (Computed: (IComputed) computed, CancellationTokenSource: stop, CompletedHandler: untypedCompletedHandler), 
                     state => {

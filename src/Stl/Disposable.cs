@@ -9,6 +9,18 @@ namespace Stl
 
         public static Disposable<TState> New<TState>(TState state, Action<TState> onDispose)
             => new Disposable<TState>(state, onDispose);
+
+        public static Disposable<(T1, T2)> Join<T1, T2>(T1 disposable1, T2 disposable2)
+            where T1 : IDisposable
+            where T2 : IDisposable
+            => New<(T1, T2)>((disposable1, disposable2), state => {
+                try {
+                    state.Item1?.Dispose();
+                }
+                finally {
+                    state.Item2?.Dispose();
+                }
+            });
     }
 
     public readonly struct Disposable<TState> : IDisposable

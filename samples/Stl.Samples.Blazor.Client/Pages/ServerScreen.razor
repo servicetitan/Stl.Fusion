@@ -1,7 +1,6 @@
 @page "/serverScreen"
-@implements IDisposable
+@inherits LiveComponentBase<ServerScreenUI>
 @inject ILogger<ServerScreen> Log
-@inject ILive<ServerScreenUI> LiveModel
 
 @{
     var lastUpdateError = LiveModel.LastUpdateError; 
@@ -16,15 +15,3 @@
 }
 
 <p><img src="data:image/png;base64, @Model.Screenshot.Base64Content" alt="Server screen" width="100%" /><br/></p>
-
-@code {
-    private ServerScreenUI Model => LiveModel.Value;
-
-    protected override Task OnInitializedAsync()
-    {
-        LiveModel.Updated += _ => StateHasChanged();
-        return base.OnInitializedAsync();
-    }
-
-    public void Dispose() => LiveModel.Dispose();
-}

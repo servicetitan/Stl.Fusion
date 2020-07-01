@@ -144,6 +144,7 @@ namespace Stl.Fusion.UI
 
         private void OnInvalidated(IComputed computed)
         {
+            using var _ = ExecutionContext.SuppressFlow();
             Task.Run(async () => {
                 var updateIndex = Interlocked.Increment(ref _updateIndex) - 1;
                 var cancellationToken = _disposeCtsToken;

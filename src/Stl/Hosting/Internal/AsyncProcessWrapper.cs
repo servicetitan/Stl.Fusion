@@ -17,7 +17,7 @@ namespace Stl.Hosting.Internal
             Task.Run(() => {
                 AsyncProcess.RunAsync();
                 return Task.CompletedTask;
-            });
+            }, CancellationToken.None);
 
         public async Task StopAsync(CancellationToken cancellationToken) 
             => await AsyncProcess.DisposeAsync();

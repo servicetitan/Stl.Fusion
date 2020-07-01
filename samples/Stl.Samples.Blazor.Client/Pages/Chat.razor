@@ -1,9 +1,8 @@
 @page "/chat"
-@implements IDisposable
+@inherits LiveComponentBase<ChatUI>
 @inject ILogger<Chat> Log
 @inject NavigationManager Navigator
 @inject IChatClient Client
-@inject ILive<ChatUI> LiveModel
 
 @{
     var model = Model; 
@@ -87,19 +86,12 @@
 </EditForm>
 
 @code {
-    private ChatUI Model => LiveModel.Value;
-    private IUpdateDelayer UpdateDelayer => LiveModel.UpdateDelayer;
-
     protected override async Task OnInitializedAsync()
     {
-        LiveModel.Updated += _ => StateHasChanged();
-        if (Model.Me == null) {
+        if (Model.Me == null)
             // Let's pre-create the user
             await ChangeMyNameAsync();
-        }
     }
-
-    public void Dispose() => LiveModel.Dispose();
 
     private Task ChangeMyNameAsync() => ActionAsync(async () => {
         if (Model.Me != null) 
