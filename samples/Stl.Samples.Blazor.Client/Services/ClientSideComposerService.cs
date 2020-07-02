@@ -32,7 +32,7 @@ namespace Stl.Samples.Blazor.Client.Services
             var time = await _time.GetTimeAsync(cancellationToken).ConfigureAwait(false);
             var lastChatMessage = chatTail.Messages.SingleOrDefault()?.Text ?? "(no messages)";
             var activeUserCount = await _chat.GetActiveUserCountAsync(cancellationToken).ConfigureAwait(false);
-            return new ComposedValue(parameter, time, lastChatMessage, activeUserCount);
+            return new ComposedValue($"{parameter} - local", time, lastChatMessage, activeUserCount);
         }
     }
 }

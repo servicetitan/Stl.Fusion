@@ -8,7 +8,7 @@
     var model = Model; 
     var lastPage = model.LastPage;
     var error = model.ActionError;
-    var lastUpdateError = LiveModel.LastUpdateError; 
+    var lastUpdateError = Live.LastUpdateError; 
 }
 
 <div>
@@ -118,7 +118,7 @@
     private async Task ActionAsync(Func<Task> taskFactory)
     {
         Model.ActionError = null;
-        StateHasChanged(); // That's just to display ActionError change
+        StateHasChanged(); // That's just to display ActionError change immediately
         try {
             await taskFactory.Invoke();
         }
@@ -126,8 +126,7 @@
             Model.ActionError = e;
         }
         finally {
-            LiveModel.Invalidate(); // That's to display possible changes
-            UpdateDelayer.CancelDelays(); // Updates caused by our own actions aren't delayed
+            UpdateModel();
         }
     }
 }

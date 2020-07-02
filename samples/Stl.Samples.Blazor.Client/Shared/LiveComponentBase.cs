@@ -7,17 +7,24 @@ namespace Stl.Samples.Blazor.Client.Shared
     public abstract class LiveComponentBase<TModel> : ComponentBase, IDisposable
     {
         [Inject]
-        protected ILive<TModel> LiveModel { get; set; } = null!;
-        protected TModel Model => LiveModel.Value;
-        protected IUpdateDelayer UpdateDelayer => LiveModel.UpdateDelayer;
-
-        protected override void OnInitialized() 
-            => LiveModel.Updated += OnLiveModelUpdated;
-
-        protected virtual void OnLiveModelUpdated(ILive liveModel) 
-            => StateHasChanged();
+        protected ILive<TModel> Live { get; set; } = null!;
+        protected TModel Model => Live.Value;
+        protected IUpdateDelayer UpdateDelayer => Live.UpdateDelayer;
 
         public virtual void Dispose() 
-            => LiveModel.Dispose();
+            => Live.Dispose();
+
+        public void UpdateModel(bool immediately = true)
+        {
+            Live.Invalidate();
+            if (immediately)
+                UpdateDelayer.CancelDelays();
+        }
+
+        protected override void OnInitialized() 
+            => Live.Updated += OnModelUpdated;
+
+        protected virtual void OnModelUpdated(ILive live) 
+            => StateHasChanged();
     }
 }

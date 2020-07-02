@@ -18,6 +18,7 @@ namespace Stl.Fusion.UI
 
     public interface ILive : IResult, IDisposable
     {
+        bool IsStarted { get; }
         IComputed Computed { get; }
         Exception? LastUpdateError { get; }
         IUpdateDelayer UpdateDelayer { get; }
@@ -58,6 +59,7 @@ namespace Stl.Fusion.UI
         private volatile int _failedUpdateIndex;
         private volatile int _updateIndex;
 
+        public bool IsStarted => _computedRef != null;
         IComputed ILive.Computed => Computed;
         public IComputed<T> Computed => _computedRef!.Computed;
         public Exception? LastUpdateError => _lastUpdateError;
