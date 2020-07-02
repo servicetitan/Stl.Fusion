@@ -93,7 +93,7 @@
             // Let's pre-create the user
             await SetNameAsync();
         else
-            UpdateLocalState(s => s.MyName = s.Me?.Name ?? "");
+            UpdateLocal(s => s.MyName = s.Me?.Name ?? "");
     }
 
     private async Task SetNameAsync()
@@ -104,7 +104,7 @@
             if (local.Me != null) {
                 try {
                     var user1 = await Client.SetUserNameAsync(local.Me.Id, local.MyName);
-                    UpdateLocalState(s => s.Me = user1);
+                    UpdateLocal(s => s.Me = user1);
                     return;
                 }
                 catch {
@@ -112,7 +112,7 @@
                 }
             }
             var user2 = await Client.CreateUserAsync(local.MyName);
-            UpdateLocalState(s => s.Me = user2);
+            UpdateLocal(s => s.Me = user2);
         }
         catch (Exception e) {
             SetError(e);
@@ -127,7 +127,7 @@
             if (local.Me == null)
                 throw new ApplicationException("Please set your name first.");
             await Client.AddMessageAsync(local.Me.Id, local.MyMessage);
-            UpdateLocalState(s => s.MyMessage = "");
+            UpdateLocal(s => s.MyMessage = "");
         }
         catch (Exception e) {
             SetError(e);
@@ -137,5 +137,5 @@
     private void ResetError() => SetError(null);
 
     private void SetError(Exception? error) 
-        => UpdateLocalState(local => local.Error = error);
+        => UpdateLocal(local => local.Error = error);
 }

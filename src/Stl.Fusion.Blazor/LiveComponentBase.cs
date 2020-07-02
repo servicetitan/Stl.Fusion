@@ -38,16 +38,16 @@ namespace Stl.Fusion.Blazor
             set => base.LiveState = value;
         }
 
-        protected virtual void UpdateLocalState(Action<TLocalState> updater)
+        protected virtual void UpdateLocal(Action<TLocalState> updater)
         {
-            var clone = CloneLocalState(Local);
+            var clone = CloneLocal(Local);
             updater.Invoke(clone);
             if (Local is IFrozen f)
                 f.Freeze();
             Local = clone;
         }
 
-        protected virtual TLocalState CloneLocalState(TLocalState source)
+        protected virtual TLocalState CloneLocal(TLocalState source)
         {
             switch (source) {
             case IFrozen f:
