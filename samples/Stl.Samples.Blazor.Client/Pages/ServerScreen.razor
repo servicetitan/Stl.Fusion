@@ -1,9 +1,8 @@
 @page "/serverScreen"
-@inherits LiveComponentBase<ServerScreenUI>
-@inject ILogger<ServerScreen> Log
+@inherits LiveComponentBase<ServerScreenState.Local, ServerScreenState>
 
 @{
-    var lastUpdateError = Live.LastUpdateError; 
+    var lastUpdateError = LiveState.LastUpdateError; 
 }
 
 <h1>Server Screen</h1>
@@ -14,4 +13,4 @@
     </div>
 }
 
-<p><img src="data:image/png;base64, @Model.Screenshot.Base64Content" alt="Server screen" width="100%" /><br/></p>
+<p><img src="data:image/png;base64, @State.Screenshot.Base64Content" alt="Server screen" width="100%" /><br/></p>

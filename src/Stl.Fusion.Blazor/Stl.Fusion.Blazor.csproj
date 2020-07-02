@@ -1,15 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
   </PropertyGroup>
-
+  
   <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Stl.Fusion\Stl.Fusion.csproj" />
     <ProjectReference Include="..\Stl.Fusion.Client\Stl.Fusion.Client.csproj" />
   </ItemGroup>
 

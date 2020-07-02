@@ -1,14 +1,13 @@
 @page "/serverTime"
-@inherits LiveComponentBase<ServerTimeUI>
-@inject ILogger<ServerTime> Log
+@inherits LiveComponentBase<ServerTimeState>
 
 @{
-    var lastUpdateError = Live.LastUpdateError; 
+    var lastUpdateError = LiveState.LastUpdateError; 
 }
 
 <h1>Server Time</h1>
 
-<p>Server Time: @(Model.Time.Format())</p>
+<p>Server Time: @(State.Time.Format())</p>
 
 @if (lastUpdateError != null) {
     <div class="alert alert-warning" role="alert">
@@ -16,4 +15,4 @@
     </div>
 }
 
-<button class="btn btn-primary" @onclick="() => UpdateDelayer.CancelDelays()">Refresh</button>
+<button class="btn btn-primary" @onclick="() => Invalidate()">Refresh</button>

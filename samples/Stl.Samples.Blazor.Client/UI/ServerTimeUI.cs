@@ -6,21 +6,21 @@ using Stl.Samples.Blazor.Client.Services;
 
 namespace Stl.Samples.Blazor.Client.UI
 {
-    public class ServerTimeUI
+    public class ServerTimeState
     {
         public DateTime? Time { get; set; }
 
-        public class Updater : ILiveUpdater<ServerTimeUI>
+        public class Updater : ILiveStateUpdater<ServerTimeState>
         {
             protected ITimeClient Client { get; }
 
             public Updater(ITimeClient client) => Client = client;
 
-            public virtual async Task<ServerTimeUI> UpdateAsync(
-                ILive<ServerTimeUI> live, CancellationToken cancellationToken)
+            public virtual async Task<ServerTimeState> UpdateAsync(
+                ILiveState<ServerTimeState> liveState, CancellationToken cancellationToken)
             {
                 var time = await Client.GetTimeAsync(cancellationToken);
-                return new ServerTimeUI() { Time = time };
+                return new ServerTimeState() { Time = time };
             }
         }
     }

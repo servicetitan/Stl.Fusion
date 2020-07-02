@@ -1,23 +1,22 @@
 @page "/chat"
-@inherits LiveComponentBase<ChatUI>
-@inject ILogger<Chat> Log
+@inherits LiveComponentBase<ChatState.Local, ChatState>
 @inject NavigationManager Navigator
 @inject IChatClient Client
 
 @{
-    var model = Model; 
-    var lastPage = model.LastPage;
-    var error = model.ActionError;
-    var lastUpdateError = Live.LastUpdateError; 
+    var local = Local;
+    var state = State; 
+    var lastPage = state.LastPage;
+    var lastUpdateError = LiveState.LastUpdateError; 
 }
 
 <div>
     <span class="float-right">
         <span class="badge btn-primary">
-            @(model.ActiveUserCount) <span class="oi oi-chat"></span>
+            @(state.ActiveUserCount) <span class="oi oi-chat"></span>
         </span>
         <span class="badge btn-light">
-            @(model.UserCount) <span class="oi oi-people"></span>
+            @(state.UserCount) <span class="oi oi-people"></span>
         </span>
     </span>
     <h1>Chat</h1>
@@ -30,9 +29,9 @@
     in another window.
 </p>
 
-@if (error != null) {
+@if (local.Error != null) {
     <div class="alert alert-danger" role="alert">
-        @error.Message
+        @local.Error.Message
     </div>
 }
 @if (lastUpdateError != null) {
@@ -41,12 +40,12 @@
     </div>
 }
 
-<EditForm Model="@model" OnValidSubmit="ChangeMyNameAsync">
+<EditForm Model="@state" OnValidSubmit="SetNameAsync">
     <div class="input-group pb-3">
         <div class="input-group-prepend">
             <span class="input-group-text">Your name</span>
         </div>
-        <InputText class="form-control" @bind-Value="@model.MyName"/>
+        <InputText class="form-control" @bind-Value="@local.MyName"/>
         <div class="input-group-append">
             <button type="submit" class="btn btn-warning">Change</button>
         </div>        
@@ -73,14 +72,14 @@
     </tbody>
 </table>
 
-<EditForm Model="@model" OnValidSubmit="SendMessageAsync">
+<EditForm Model="@state" OnValidSubmit="SendMessageAsync">
     <div class="input-group pb-3">
         <div class="input-group-prepend">
             <span class="input-group-text">Message</span>
         </div>
         <InputText class="form-control" 
             placeholder="No ideas? Send an empty one!"
-            @bind-Value="@model.MyMessage" />
+            @bind-Value="@local.MyMessage" />
         <div class="input-group-append">
             <button type="submit" class="btn btn-success">Send</button>
         </div>        
@@ -90,43 +89,53 @@
 @code {
     protected override async Task OnInitializedAsync()
     {
-        if (Model.Me == null)
+        if (Local.Me == null)
             // Let's pre-create the user
-            await ChangeMyNameAsync();
+            await SetNameAsync();
+        else
+            UpdateLocalState(s => s.MyName = s.Me?.Name ?? "");
     }
 
-    private Task ChangeMyNameAsync() => ActionAsync(async () => {
-        if (Model.Me != null) 
-            try {
-                Model.Me = await Client.SetUserNameAsync(Model.Me.Id, Model.MyName);
-                return;
-            }
-            catch {
-                // Prob. user doesn't exist (server restarted), so
-                // we should try re-creating it.
-            }
-        Model.Me = await Client.CreateUserAsync(Model.MyName);
-    });
-
-    private Task SendMessageAsync() => ActionAsync(async () => {
-        if (Model.Me == null)
-            throw new ApplicationException("Please set your name first.");
-        await Client.AddMessageAsync(Model.Me.Id, Model.MyMessage);
-        Model.MyMessage = "";
-    });
-
-    private async Task ActionAsync(Func<Task> taskFactory)
+    private async Task SetNameAsync()
     {
-        Model.ActionError = null;
-        StateHasChanged(); // That's just to display ActionError change immediately
+        ResetError();
+        var local = Local;
         try {
-            await taskFactory.Invoke();
+            if (local.Me != null) {
+                try {
+                    var user1 = await Client.SetUserNameAsync(local.Me.Id, local.MyName);
+                    UpdateLocalState(s => s.Me = user1);
+                    return;
+                }
+                catch {
+                    // Prob. the user doesn't exist (server restarted), so we should try to recreate it.
+                }
+            }
+            var user2 = await Client.CreateUserAsync(local.MyName);
+            UpdateLocalState(s => s.Me = user2);
         }
         catch (Exception e) {
-            Model.ActionError = e;
-        }
-        finally {
-            UpdateModel();
+            SetError(e);
         }
     }
+
+    private async Task SendMessageAsync()
+    {
+        ResetError();
+        try {
+            var local = Local;
+            if (local.Me == null)
+                throw new ApplicationException("Please set your name first.");
+            await Client.AddMessageAsync(local.Me.Id, local.MyMessage);
+            UpdateLocalState(s => s.MyMessage = "");
+        }
+        catch (Exception e) {
+            SetError(e);
+        }
+    }
+
+    private void ResetError() => SetError(null);
+
+    private void SetError(Exception? error) 
+        => UpdateLocalState(local => local.Error = error);
 }

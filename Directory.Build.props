@@ -4,16 +4,12 @@
     <NoLogo>true</NoLogo>
     <Authors>ServiceTitan</Authors>
     <Company>ServiceTitan</Company>
-    <Description>Stl - ServiceTitan Library</Description>
+    <Description>Stl = ServiceTitan Library</Description>
     <ApplicationIcon>$(MSBuildThisFileDirectory)\docs\img\icon.ico</ApplicationIcon>
     <PackageIconUrl>https://github.com/servicetitan/Stl/master/docs/img/icon.ico</PackageIconUrl>
     <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
     <NoPackageAnalysis>true</NoPackageAnalysis>
     <DefaultLanguage>en-US</DefaultLanguage>
-    <LangVersion>latest</LangVersion>
-    <Nullable>enable</Nullable>
-    <WarningsAsErrors>true</WarningsAsErrors>
-    <Features>strict;pdb-path-determinism</Features>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <PackageProjectUrl>https://github.com/servicetitan/Stl</PackageProjectUrl>
@@ -27,11 +23,19 @@
     <!-- also embedded doesn't work with dotnet pack without nuspec or IncludeBuildOutput = false -->
     <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>
+    <GenerateFullPaths Condition="'$(TERM_PROGRAM)' == 'vscode'">true</GenerateFullPaths>
+    <!-- Defaults for .csproj -->
+    <OutputType>Library</OutputType>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <Features>strict;pdb-path-determinism</Features>
+    <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
+    <TypeScriptCompilerBlocked>true</TypeScriptCompilerBlocked>
+    <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
     <!-- NU5105: The package version uses SemVer 2.0.0 or components of SemVer 1.0.0 that are not supported on legacy clients -->
     <!-- NU5048: The 'PackageIconUrl'/'iconUrl' element is deprecated -->
     <NoWarn>$(NoWarn);NU5105;NU5048;</NoWarn>
-    <GenerateFullPaths Condition="'$(TERM_PROGRAM)' == 'vscode'">true</GenerateFullPaths>
-    <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
+    <WarningsAsErrors>true</WarningsAsErrors>
   </PropertyGroup>
 
   <!-- Rider doesn't support deterministic build with SourceMap -->

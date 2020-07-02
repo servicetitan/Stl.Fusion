@@ -6,24 +6,21 @@
     <OutputPath>$(SolutionDir)artifacts\tests</OutputPath>
     <IsPackable>false</IsPackable>
     <IsPublishable>false</IsPublishable>
-    <Nullable>enable</Nullable>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <!-- Copy all references to output folder (important for coverage tools) -->
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Moq" />
     <PackageReference Include="AutoFixture" />
     <PackageReference Include="AutoFixture.Xunit2" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="coverlet.collector" />
     <PackageReference Include="FluentAssertions" />
-
-
+    <PackageReference Include="Moq" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.analyzers" />
     <PackageReference Include="xunit.runner.visualstudio" />
     <PackageReference Include="Xunit.DependencyInjection.Logging" />
-    <PackageReference Include="coverlet.collector" />
   </ItemGroup>
 </Project>

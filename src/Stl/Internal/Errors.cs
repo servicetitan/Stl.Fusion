@@ -47,7 +47,7 @@ namespace Stl.Internal
             new InvalidOperationException($"Circular dependency on {item} found.");
 
         public static Exception CannotActivate(Type type) =>
-            new InvalidOperationException($"Cannot find the right constructor to activate type '{type.Name}'.");
+            new InvalidOperationException($"Cannot find the right constructor to activate type '{type.FullName}'.");
 
         public static Exception OptionIsNone() =>
             new InvalidOperationException("Option is None.");
@@ -89,6 +89,8 @@ namespace Stl.Internal
             new InvalidOperationException("The event source is already completed.");
         public static Exception ThisValueCanBeSetJustOnce() =>
             new InvalidOperationException($"This value can be set just once.");
+        public static Exception NoDefaultConstructor(Type type)
+            => new InvalidOperationException($"Type '{type.FullName}' doesn't have a default constructor.");
 
         public static Exception InternalError(string message) =>
             new SystemException(message);

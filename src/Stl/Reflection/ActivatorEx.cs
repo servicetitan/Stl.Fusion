@@ -1,11 +1,15 @@
 using System;
 using System.Collections.Concurrent;
 using System.Linq.Expressions;
+using System.Reflection;
+using Stl.Internal;
 
 namespace Stl.Reflection
 {
     public static class ActivatorEx
     {
+        private static readonly ConcurrentDictionary<Type, bool> HasDefaultCtorCache =
+            new ConcurrentDictionary<Type, bool>();
         private static readonly ConcurrentDictionary<Type, Delegate?> CtorDelegate0Cache =
             new ConcurrentDictionary<Type, Delegate?>();
         private static readonly ConcurrentDictionary<(Type, Type), Delegate?> CtorDelegate1Cache =
@@ -18,6 +22,21 @@ namespace Stl.Reflection
             new ConcurrentDictionary<(Type, Type, Type, Type, Type), Delegate?>();
         private static readonly ConcurrentDictionary<(Type, Type, Type, Type, Type, Type), Delegate?> CtorDelegate5Cache =
             new ConcurrentDictionary<(Type, Type, Type, Type, Type, Type), Delegate?>();
+
+        // An alternative to "new()" constraint
+        public static T New<T>(bool failIfNoDefaultConstructor = true)
+        {
+            var type = typeof(T);
+            if (type.IsValueType)
+                return default!;
+            var hasDefaultCtor = HasDefaultCtorCache.GetOrAddChecked(type, 
+                type1 => type1.GetConstructor(Array.Empty<Type>()) != null);
+            if (hasDefaultCtor)
+                return (T) type.CreateInstance();
+            if (failIfNoDefaultConstructor)
+                throw Errors.NoDefaultConstructor(type);
+            return default!;
+        }
 
         public static Delegate? GetConstructorDelegate(this Type type) 
             => CtorDelegate0Cache.GetOrAddChecked(type, tObject => {

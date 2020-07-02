@@ -17,9 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Stl.Fusion\Stl.Fusion.csproj" />
-    <ProjectReference Include="..\..\src\Stl.Fusion.Client\Stl.Fusion.Client.csproj" />
-    <ProjectReference Include="..\..\src\Stl\Stl.csproj" />
+    <ProjectReference Include="..\..\src\Stl.Fusion.Blazor\Stl.Fusion.Blazor.csproj" />
     <ProjectReference Include="..\Stl.Samples.Blazor.Common\Stl.Samples.Blazor.Common.csproj" />
   </ItemGroup>
 

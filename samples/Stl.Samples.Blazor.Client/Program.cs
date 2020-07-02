@@ -61,15 +61,15 @@ namespace Stl.Samples.Blazor.Client
 
             // Configuring live updaters
             services.AddSingleton(c => new UpdateDelayer.Options() {
-                Delay = TimeSpan.FromSeconds(0.05),
+                Delay = TimeSpan.FromSeconds(0.1),
             });
-            services.AddAllLive(typeof(Program).Assembly, (c, options) => {
-                if (options is Live<ServerTimeUI>.Options) {
+            services.AutoAddLiveState(typeof(Program).Assembly, (c, options) => {
+                if (options is LiveState<ServerTimeState>.Options) {
                     options.UpdateDelayer = new UpdateDelayer(new UpdateDelayer.Options() {
                         Delay = TimeSpan.FromSeconds(0.5),
                     });
                 }
-                if (options is Live<CompositionUI>.Options) {
+                if (options is LiveState<CompositionState.Local, CompositionState>.Options) {
                     options.UpdateDelayer = new UpdateDelayer(new UpdateDelayer.Options() {
                         Delay = TimeSpan.FromSeconds(0.5),
                     });

@@ -156,21 +156,21 @@ namespace Stl.Tests.Fusion
             services.AddReplicaService<ITimeClient>("time");
 
             // UI Models
-            services.AddLive<ServerTimeModel1>(
+            services.AddLiveState<ServerTimeModel1>(
                 async (c, prev, cancellationToken) => {
                     var client = c.GetRequiredService<ITimeClient>();
                     var time = await client.GetTimeAsync(cancellationToken).ConfigureAwait(false);
                     return new ServerTimeModel1(time);
                 }, (c, options) => {
-                    options.Default = new ServerTimeModel1();
+                    options.InitialState = new ServerTimeModel1();
                 });
-            services.AddLive<ServerTimeModel2>(
+            services.AddLiveState<ServerTimeModel2>(
                 async (c, prev, cancellationToken) => {
                     var client = c.GetRequiredService<ITimeClient>();
                     var cTime = await client.GetComputedTimeAsync(cancellationToken).ConfigureAwait(false);
                     return new ServerTimeModel2(cTime.Value);
                 }, (c, options) => {
-                    options.Default = new ServerTimeModel2();
+                    options.InitialState = new ServerTimeModel2();
                 });
         }
 

@@ -1,86 +1,94 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Stl.Fusion.Internal;
+using Stl.Internal;
+using Stl.Reflection;
+using Errors = Stl.Fusion.Internal.Errors;
 
 namespace Stl.Fusion.UI
 {
-    public interface ILiveOptions
+    public interface ILiveState : IResult, IDisposable
     {
-        bool AutoStart { get; set; }
-        bool IsolateUpdateErrors { get; set; }
-        bool DelayFirstUpdate { get; set; }
-        IUpdateDelayer? UpdateDelayer { get; set; }
-    }
-
-    public interface ILive : IResult, IDisposable
-    {
-        bool IsStarted { get; }
-        IComputed Computed { get; }
+        IComputed State { get; }
         Exception? LastUpdateError { get; }
         IUpdateDelayer UpdateDelayer { get; }
-        event Action<ILive>? Updated;
+        event Action<ILiveState>? Updated;
 
-        void Invalidate();
+        void Invalidate(bool updateImmediately = true);
     }
 
-    public interface ILive<T> : ILive, IResult<T>
+    public interface ILiveState<TState> : ILiveState, IResult<TState>
     {
-        new IComputed<T> Computed { get; }
-
-        void Start(Result<T> @default);
+        new IComputed<TState> State { get; }
     }
 
-    public sealed class Live<T> : ILive<T>
+    public interface ILiveState<TLocal, TState> : ILiveState<TState>
     {
-        public sealed class Options : ILiveOptions
+        TLocal Local { get; set; }
+    }
+
+    public abstract class LiveState
+    {
+        public abstract class Options
         {
-            public Result<T> Default { get; set; } = default;
-            public Func<ILive<T>, CancellationToken, Task<T>> Updater { get; set; } = null!;
-            public bool AutoStart { get; set; } = true;
             public bool IsolateUpdateErrors { get; set; } = true;
             public bool DelayFirstUpdate { get; set; } = false;
             public IUpdateDelayer? UpdateDelayer { get; set; } = null;
         }
+    }
+
+    public class LiveState<TLocal, TState> : LiveState, ILiveState<TLocal, TState>
+    {
+        public new class Options : LiveState.Options
+        {
+            public TLocal InitialLocal { get; set; } = ActivatorEx.New<TLocal>(false);
+            public Result<TState> InitialState { get; set; } = ActivatorEx.New<TState>(false)!;
+            public Func<ILiveState<TLocal, TState>, CancellationToken, Task<TState>> Updater { get; set; } = null!;
+        }
 
         private readonly ILogger _log; 
-        private readonly Func<ILive<T>, CancellationToken, Task<T>> _updater;
+        private readonly Func<ILiveState<TLocal, TState>, CancellationToken, Task<TState>> _updater;
         private readonly bool _isolateUpdateErrors; 
         private readonly bool _delayFirstUpdate; 
         private readonly Action<IComputed> _invalidationHandler;
         private readonly CancellationTokenSource _disposeCts;
         private readonly CancellationToken _disposeCtsToken;
-        private SimpleComputedInput<T>? _computedRef;
-        private volatile IComputed<T>? _trackedComputed;
+        private volatile IComputed<TState>? _trackedComputed;
+        private volatile Box<TLocal> _local;
+        private SimpleComputedInput<TState>? _computedRef;
         private volatile Exception? _lastUpdateError;
         private volatile int _failedUpdateIndex;
         private volatile int _updateIndex;
 
-        public bool IsStarted => _computedRef != null;
-        IComputed ILive.Computed => Computed;
-        public IComputed<T> Computed => _computedRef!.Computed;
+        public TLocal Local {
+            get => _local.Value;
+            set { _local = Box.New(value); Invalidate(); }
+        }
+        IComputed ILiveState.State => State;
+        public IComputed<TState> State => _computedRef!.Computed;
         public Exception? LastUpdateError => _lastUpdateError;
         public IUpdateDelayer UpdateDelayer { get; }
-        public event Action<ILive>? Updated;
+        public event Action<ILiveState>? Updated;
 
         // IResult<T> & IResult
         object? IResult.UnsafeValue => UnsafeValue;
-        public T UnsafeValue => Computed.UnsafeValue;
+        public TState UnsafeValue => State.UnsafeValue;
         object? IResult.Value => Value;
-        public T Value => Computed.Value;
-        public Exception? Error => Computed.Error;
-        public bool HasValue => Computed.HasValue;
-        public bool HasError => Computed.HasError;
+        public TState Value => State.Value;
+        public Exception? Error => State.Error;
+        public bool HasValue => State.HasValue;
+        public bool HasError => State.HasError;
 
-        public Live(
+        public LiveState(
             Options options,
             IUpdateDelayer? updateDelayer = null,
-            ILogger<Live<T>>? log = null)
+            ILogger<LiveState<TState>>? log = null)
         {
-            _log = log ??= NullLogger<Live<T>>.Instance;
+            _log = log ??= NullLogger<LiveState<TState>>.Instance;
 
             _updater = options.Updater 
                 ?? throw new ArgumentNullException(nameof(options) + "." + nameof(options.Updater));
@@ -91,12 +99,11 @@ namespace Stl.Fusion.UI
             _invalidationHandler = OnInvalidated;
             _disposeCts = new CancellationTokenSource();
             _disposeCtsToken = _disposeCts.Token;
-
-            if (options.AutoStart)
-                Start(options.Default);
+            _local = Box.New(options.InitialLocal);
+            Start(options.InitialState);
         }
 
-        ~Live() => Dispose();
+        ~LiveState() => Dispose();
 
         public void Dispose()
         {
@@ -112,18 +119,23 @@ namespace Stl.Fusion.UI
             }
         }
 
-        public void Deconstruct(out T value, out Exception? error)
-            => Computed.Deconstruct(out value, out error);
+        public void Deconstruct(out TState value, out Exception? error)
+            => State.Deconstruct(out value, out error);
 
-        public void ThrowIfError() => Computed.ThrowIfError();
-        public bool IsValue([MaybeNullWhen(false)] out T value) 
-            => Computed.IsValue(out value);
-        public bool IsValue([MaybeNullWhen(false)] out T value, [MaybeNullWhen(true)] out Exception error) 
-            => Computed.IsValue(out value, out error!);
+        public void ThrowIfError() => State.ThrowIfError();
+        public bool IsValue([MaybeNullWhen(false)] out TState value) 
+            => State.IsValue(out value);
+        public bool IsValue([MaybeNullWhen(false)] out TState value, [MaybeNullWhen(true)] out Exception error) 
+            => State.IsValue(out value, out error!);
 
-        public void Invalidate() => Computed.Invalidate();
+        public void Invalidate(bool updateImmediately = true)
+        {
+            State.Invalidate();
+            if (updateImmediately)
+                UpdateDelayer.CancelDelays();
+        }
 
-        public void Start(Result<T> @default)
+        private void Start(Result<TState> @default)
         {
             var computed = SimpleComputed.New(UpdateAsync, @default, false);
             var oldComputedRef = Interlocked.CompareExchange(
@@ -133,7 +145,7 @@ namespace Stl.Fusion.UI
             BeginTracking(computed);
         }
 
-        private void BeginTracking(IComputed<T>? newComputed)
+        private void BeginTracking(IComputed<TState>? newComputed)
         {
             var oldComputed = Interlocked.Exchange(ref _trackedComputed, newComputed);
             if (oldComputed != null)
@@ -164,13 +176,13 @@ namespace Stl.Fusion.UI
         }
 
         private async Task UpdateAsync(
-            IComputed<T> prev, IComputed<T> next, 
+            IComputed<TState> prev, IComputed<TState> next, 
             CancellationToken cancellationToken)
         {
             try {
                 var value = await _updater.Invoke(this, cancellationToken)
                     .ConfigureAwait(false);
-                next.SetOutput(new Result<T>(value, null));
+                next.SetOutput(new Result<TState>(value, null));
                 Interlocked.Exchange(ref _lastUpdateError, null);
                 Interlocked.Exchange(ref _failedUpdateIndex, 0);
             }
@@ -181,7 +193,7 @@ namespace Stl.Fusion.UI
                 _log.LogError(e, $"{nameof(UpdateAsync)}: Error.");
                 next.SetOutput(_isolateUpdateErrors 
                     ? prev.Output 
-                    : new Result<T>(default!, e));
+                    : new Result<TState>(default!, e));
                 Interlocked.Exchange(ref _lastUpdateError, e);
                 var tryIndex = Interlocked.Increment(ref _failedUpdateIndex) - 1;
                 UpdateDelayer.ExtraErrorDelayAsync(e, tryIndex, cancellationToken)
@@ -192,5 +204,28 @@ namespace Stl.Fusion.UI
                 BeginTracking(next);
             }
         }
+    }
+
+    public class LiveState<TState> : LiveState<Unit, TState>
+    {
+        public new class Options : LiveState<Unit, TState>.Options
+        {
+            private Func<ILiveState<TState>, CancellationToken, Task<TState>> _updater = null!;
+
+            public new Func<ILiveState<TState>, CancellationToken, Task<TState>> Updater {
+                get => _updater;
+                set {
+                    _updater = value;
+                    base.Updater = (liveState, cancellationToken) => _updater.Invoke(liveState, cancellationToken);
+                }
+            }
+        }
+
+        public LiveState(
+            Options options, 
+            IUpdateDelayer? updateDelayer = null, 
+            ILogger<LiveState<TState>>? log = null) 
+            : base(options, updateDelayer, log) 
+        { }
     }
 }

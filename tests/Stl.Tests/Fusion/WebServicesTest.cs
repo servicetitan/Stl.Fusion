@@ -34,9 +34,9 @@ namespace Stl.Tests.Fusion
         public async Task ServerTimeModelTest1()
         {
             await using var serving = await WebSocketServer.ServeAsync();
-            using var stm = Container.Resolve<ILive<ServerTimeModel1>>();
+            using var stm = Container.Resolve<ILiveState<ServerTimeModel1>>();
             
-            var c = stm.Computed;
+            var c = stm.State;
             c.IsConsistent.Should().BeFalse();
             c.Value.Time.Should().Be(default);
 
@@ -46,7 +46,7 @@ namespace Stl.Tests.Fusion
             await c.UpdateAsync();
             Debug.WriteLine("2");
 
-            c = stm.Computed;
+            c = stm.State;
             c.IsConsistent.Should().BeTrue();
             (DateTime.Now - c.Value.Time).Should().BeLessThan(TimeSpan.FromSeconds(1));
 
@@ -57,7 +57,7 @@ namespace Stl.Tests.Fusion
             Debug.WriteLine("5");
             await Task.Delay(100); // Let's just wait for the updates to happen
             Debug.WriteLine("6");
-            c = stm.Computed;
+            c = stm.State;
             Debug.WriteLine("7");
 
             // c.IsConsistent.Should().BeTrue(); // Hard to be sure here
@@ -70,9 +70,9 @@ namespace Stl.Tests.Fusion
         public async Task ServerTimeModelTest2()
         {
             await using var serving = await WebSocketServer.ServeAsync();
-            using var stm = Container.Resolve<ILive<ServerTimeModel2>>();
+            using var stm = Container.Resolve<ILiveState<ServerTimeModel2>>();
             
-            var c = stm.Computed;
+            var c = stm.State;
             c.IsConsistent.Should().BeFalse();
             c.Value.Time.Should().Be(default);
 
@@ -82,7 +82,7 @@ namespace Stl.Tests.Fusion
             await c.UpdateAsync();
             Debug.WriteLine("2");
 
-            c = stm.Computed;
+            c = stm.State;
             c.IsConsistent.Should().BeTrue();
             (DateTime.Now - c.Value.Time).Should().BeLessThan(TimeSpan.FromSeconds(1));
 
@@ -93,7 +93,7 @@ namespace Stl.Tests.Fusion
             Debug.WriteLine("5");
             await Task.Delay(100); // Let's just wait for the updates to happen
             Debug.WriteLine("6");
-            c = stm.Computed;
+            c = stm.State;
             Debug.WriteLine("7");
 
             // c.IsConsistent.Should().BeTrue(); // Hard to be sure here
