@@ -78,6 +78,12 @@ namespace Stl.Fusion
             if (!typeof(IComputedService).IsAssignableFrom(implementationType))
                 throw Errors.MustImplement<IComputedService>(implementationType);
             services.TryAddSingleton(type, c => {
+                // We should try to validate it here because if the type doesn't
+                // have any virtual methods (which might be a mistake), no calls
+                // will be intercepted, so no error will be thrown later.
+                var interceptor = c.GetRequiredService<ComputedServiceInterceptor>();
+                interceptor.ValidateType(implementationType);  
+
                 var proxyGenerator = c.GetRequiredService<IComputedServiceProxyGenerator>();
                 var proxyType = proxyGenerator.GetProxyType(implementationType);
                 return c.Activate(proxyType);

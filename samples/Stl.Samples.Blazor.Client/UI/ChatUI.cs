@@ -31,9 +31,9 @@ namespace Stl.Samples.Blazor.Client.UI
             public Updater(IChatClient client) => Client = client;
 
             public virtual async Task<ChatUI> UpdateAsync(
-                IComputed<ChatUI> prevComputed, CancellationToken cancellationToken)
+                ILive<ChatUI> live, CancellationToken cancellationToken)
             {
-                var prevModel = prevComputed.UnsafeValue ?? new ChatUI();
+                var prevModel = live.UnsafeValue ?? new ChatUI();
                 var userCount = await Client.GetUserCountAsync(cancellationToken);
                 var activeUserCount = await Client.GetActiveUserCountAsync(cancellationToken);
                 var lastPage = await Client.GetChatTailAsync(30, cancellationToken);

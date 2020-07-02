@@ -94,13 +94,17 @@ namespace Stl.Fusion.Client
 
             httpClientResolver ??= DefaultHttpClientResolver(baseAddress);
             services.TryAddSingleton(interfaceType, c => {
-                // 1. Create REST client for the service
+                // 1. Validate type
+                var interceptor = c.GetRequiredService<ReplicaServiceInterceptor>();
+                interceptor.ValidateType(interfaceType);  
+
+                // 2. Create REST client for the service
                 var httpClient = httpClientResolver.Invoke(c);
                 var restClient = new RestClient(httpClient) {
                     ResponseDeserializer = c.GetRequiredService<ReplicaResponseDeserializer>()
                 }.For(interfaceType);
 
-                // 2. Create Replica Service 
+                // 3. Create Replica Service 
                 var proxyGenerator = c.GetRequiredService<IReplicaServiceProxyGenerator>();
                 var proxyType = proxyGenerator.GetProxyType(interfaceType);
                 var interceptors = c.GetRequiredService<ReplicaServiceInterceptor[]>();

@@ -35,7 +35,7 @@ namespace Stl.Fusion.Bridge.Interception
             return new ReplicaServiceFunction<T>(method, LTagGenerator, Registry, log);
         }
 
-        protected override void ValidateType(Type type)
+        protected override void ValidateTypeInternal(Type type)
         {
             if (!typeof(IReplicaService).IsAssignableFrom(type))
                 throw Errors.MustImplement<IComputedService>(type);

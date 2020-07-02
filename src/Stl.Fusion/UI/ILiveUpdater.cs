@@ -8,6 +8,6 @@ namespace Stl.Fusion.UI
 
     public interface ILiveUpdater<T> : ILiveUpdater
     {
-        Task<T> UpdateAsync(IComputed<T> prevComputed, CancellationToken cancellationToken);
+        Task<T> UpdateAsync(ILive<T> live, CancellationToken cancellationToken);
     }
 }

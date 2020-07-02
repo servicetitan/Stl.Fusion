@@ -9,24 +9,19 @@ namespace Stl.Samples.Blazor.Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ScreenshotController : Controller, IScreenshotService
+    public class ScreenshotController : FusionController, IScreenshotService
     {
-        protected IScreenshotService ScreenshotService { get; }
-        protected IPublisher Publisher { get; }
+        private readonly IScreenshotService _screenshots;
 
-        public ScreenshotController(
-            IScreenshotService screenshotService,
-            IPublisher publisher)
-        {
-            ScreenshotService = screenshotService;
-            Publisher = publisher;
-        }
+        public ScreenshotController(IScreenshotService screenshots, IPublisher publisher)
+            : base(publisher) 
+            => _screenshots = screenshots;
 
         [HttpGet("get")]
         public async Task<Screenshot> GetScreenshotAsync(int width, CancellationToken cancellationToken)
         {
             var c = await HttpContext.TryPublishAsync(Publisher, 
-                _ => ScreenshotService.GetScreenshotAsync(width, cancellationToken),
+                _ => _screenshots.GetScreenshotAsync(width, cancellationToken),
                 cancellationToken);
             return c.Value;
         }

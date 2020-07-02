@@ -8,7 +8,7 @@
 
 <h1>Server Time</h1>
 
-<p>Server Time: @(Model.FormattedTime)</p>
+<p>Server Time: @(Model.Time.Format())</p>
 
 @if (lastUpdateError != null) {
     <div class="alert alert-warning" role="alert">

@@ -14,22 +14,22 @@ namespace Stl.Samples.Blazor.Server.Services
 {
     public class ScreenshotService : IScreenshotService, IComputedService
     {
-        protected ImageCodecInfo JpegEncoder { get; }
-        protected EncoderParameters JpegEncoderParameters { get; }
-        protected Rectangle DisplayDimensions { get; }
-        protected Task<Screenshot> PrevScreenshotTask;
+        private readonly ImageCodecInfo _jpegEncoder;
+        private readonly EncoderParameters _jpegEncoderParameters;
+        private readonly Rectangle _displayDimensions;
+        private volatile Task<Screenshot> _prevScreenshotTask;
 
         public ScreenshotService()
         {
-            JpegEncoder = ImageCodecInfo
+            _jpegEncoder = ImageCodecInfo
                 .GetImageDecoders()
                 .Single(codec => codec.FormatID == ImageFormat.Jpeg.Guid);  
-            JpegEncoderParameters = new EncoderParameters(1) {
+            _jpegEncoderParameters = new EncoderParameters(1) {
                 Param = {[0] = new EncoderParameter(Encoder.Quality, 50L)}
             };
-            DisplayDimensions = DisplayInfo.PrimaryDisplayDimensions 
+            _displayDimensions = DisplayInfo.PrimaryDisplayDimensions 
                 ?? new Rectangle(0, 0, 1920, 1080);  
-            PrevScreenshotTask = ScreenshotAsync(128);
+            _prevScreenshotTask = ScreenshotAsync(128);
         }
 
         [ComputedServiceMethod]
@@ -39,7 +39,7 @@ namespace Stl.Samples.Blazor.Server.Services
             // here rather than wait for the current one.
             var computed = Computed.GetCurrent();
             var next = ScreenshotAsync(width);
-            var prev = Interlocked.Exchange(ref PrevScreenshotTask, next);
+            var prev = Interlocked.Exchange(ref _prevScreenshotTask, next);
             var result = await prev.ConfigureAwait(false);
             if (result.Width != width)
                 // Width changed, let's wait for the current one
@@ -52,7 +52,7 @@ namespace Stl.Samples.Blazor.Server.Services
 
         private Task<Screenshot> ScreenshotAsync(int width)
             => Task.Run(() => {
-                var (w, h) = (DisplayDimensions.Width, DisplayDimensions.Height);
+                var (w, h) = (_displayDimensions.Width, _displayDimensions.Height);
                 using var bScreen = new Bitmap(w, h);
                 using var gScreen = Graphics.FromImage(bScreen);
                 gScreen.CopyFromScreen(0, 0, 0, 0, bScreen.Size);
@@ -65,7 +65,7 @@ namespace Stl.Samples.Blazor.Server.Services
                 gOut.CompositingMode = CompositingMode.SourceCopy;
                 gOut.DrawImage(bScreen, 0, 0, ow, oh);
                 using var stream = new MemoryStream();
-                bOut.Save(stream, JpegEncoder, JpegEncoderParameters);
+                bOut.Save(stream, _jpegEncoder, _jpegEncoderParameters);
                 var bytes = stream.ToArray();
                 var base64Content = Convert.ToBase64String(bytes);
                 return new Screenshot(ow, oh, base64Content);

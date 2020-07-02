@@ -52,7 +52,7 @@ namespace Stl.Fusion
         {
             if (value == null || (Options & ComputeOptions.Capture) == 0)
                 return;
-            // We capture the the last value
+            // We capture the last value
             Interlocked.Exchange(ref _capturedComputed, value);
             // Interlocked.CompareExchange(ref _capturedComputed, value, null);
         }

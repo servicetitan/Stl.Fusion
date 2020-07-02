@@ -9,11 +9,13 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using RestEase.Implementation;
 using Stl.Extensibility;
+using Stl.Fusion;
 using Stl.Fusion.Client;
 using Stl.Fusion.UI;
 using Stl.OS;
 using Stl.Samples.Blazor.Client.Services;
 using Stl.Samples.Blazor.Client.UI;
+using Stl.Samples.Blazor.Common.Services;
 
 namespace Stl.Samples.Blazor.Client
 {
@@ -45,6 +47,9 @@ namespace Stl.Samples.Blazor.Client
                 o.BaseUri = baseUri;
                 o.MessageLogLevel = LogLevel.Information;
             });
+
+            // Computed services
+            services.AddComputedService<IComposerService, ClientSideComposerService>();
             
             // Replica services
             var apiBaseUri = new Uri($"{baseUri}api/");
@@ -52,6 +57,7 @@ namespace Stl.Samples.Blazor.Client
             services.AddReplicaService<ITimeClient>("time");
             services.AddReplicaService<IScreenshotClient>("screenshot");
             services.AddReplicaService<IChatClient>("chat");
+            services.AddReplicaService<IComposerClient>("composer");
 
             // Configuring live updaters
             services.AddSingleton(c => new UpdateDelayer.Options() {

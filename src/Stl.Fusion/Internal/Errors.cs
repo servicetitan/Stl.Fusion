@@ -46,5 +46,11 @@ namespace Stl.Fusion.Internal
             => new InvalidOperationException($"{nameof(ComputedServiceMethodAttribute)} is applied to static method '{method}'.");
         public static Exception ComputedServiceMethodAttributeOnNonVirtualMethod(MethodInfo method)
             => new InvalidOperationException($"{nameof(ComputedServiceMethodAttribute)} is applied to non-virtual method '{method}'.");
+
+        public static Exception UnsupportedReplicaType(Type replicaType)
+            => new NotSupportedException(
+                $"IReplica<{replicaType.Name}> isn't supported by the current client, " +
+                $"most likely because there is no good way to intercept the deserialization " +
+                $"of results of this type.");
     }
 }

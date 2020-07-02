@@ -45,4 +45,11 @@ namespace Stl.Samples.Blazor.Client.Services
         [Get("get")]
         Task<Screenshot> GetScreenshotAsync(int width, CancellationToken cancellationToken = default);
     }
+
+    [Header(FusionHeaders.RequestPublication, "1")]
+    public interface IComposerClient : IReplicaService
+    {
+        [Get("get")]
+        Task<ComposedValue> GetComposedValueAsync(string? parameter, CancellationToken cancellationToken = default);
+    }
 }

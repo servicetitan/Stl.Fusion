@@ -21,9 +21,9 @@ namespace Stl.Samples.Blazor.Client.UI
             public Updater(IScreenshotClient client) => Client = client;
 
             public virtual async Task<ServerScreenUI> UpdateAsync(
-                IComputed<ServerScreenUI> prevComputed, CancellationToken cancellationToken)
+                ILive<ServerScreenUI> live, CancellationToken cancellationToken)
             {
-                var prevModel = prevComputed.UnsafeValue ?? new ServerScreenUI();
+                var prevModel = live.UnsafeValue ?? new ServerScreenUI();
                 var screenshot = await Client.GetScreenshotAsync(prevModel.Width, cancellationToken);
                 return new ServerScreenUI() {
                     Screenshot = screenshot,

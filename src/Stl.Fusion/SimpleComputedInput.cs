@@ -101,10 +101,10 @@ namespace Stl.Fusion
             var result = Computed;
             var resultIsConsistent = result.IsConsistent;
             if (resultIsConsistent || (context.Options & ComputeOptions.TryGetCached) != 0) {
-                context.TryCaptureValue(result);
                 if ((context.Options & ComputeOptions.Invalidate) == ComputeOptions.Invalidate)
                     result.Invalidate();
                 ((IComputedImpl?) usedBy)?.AddUsed(result);
+                context.TryCaptureValue(result);
                 return result!;
             }
 
@@ -113,10 +113,10 @@ namespace Stl.Fusion
             result = Computed;
             resultIsConsistent = result.IsConsistent;
             if (resultIsConsistent || (context.Options & ComputeOptions.TryGetCached) != 0) {
-                context.TryCaptureValue(result);
                 if ((context.Options & ComputeOptions.Invalidate) == ComputeOptions.Invalidate)
                     result.Invalidate();
                 ((IComputedImpl?) usedBy)?.AddUsed(result);
+                context.TryCaptureValue(result);
                 return result!;
             }
 
@@ -150,10 +150,10 @@ namespace Stl.Fusion
             var result = Computed;
             var resultIsConsistent = result.IsConsistent;
             if (resultIsConsistent || (context.Options & ComputeOptions.TryGetCached) != 0) {
-                context.TryCaptureValue(result);
                 if ((context.Options & ComputeOptions.Invalidate) == ComputeOptions.Invalidate)
                     result.Invalidate();
                 ((IComputedImpl?) usedBy)?.AddUsed(result);
+                context.TryCaptureValue(result);
                 return result.Strip();
             }
 
@@ -162,10 +162,10 @@ namespace Stl.Fusion
             result = Computed;
             resultIsConsistent = result.IsConsistent;
             if (resultIsConsistent || (context.Options & ComputeOptions.TryGetCached) != 0) {
-                context.TryCaptureValue(result);
                 if ((context.Options & ComputeOptions.Invalidate) == ComputeOptions.Invalidate)
                     result.Invalidate();
                 ((IComputedImpl?) usedBy)?.AddUsed(result);
+                context.TryCaptureValue(result);
                 return result.Strip();
             }
 

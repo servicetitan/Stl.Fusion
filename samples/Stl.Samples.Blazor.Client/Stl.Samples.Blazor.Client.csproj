@@ -23,4 +23,13 @@
     <ProjectReference Include="..\Stl.Samples.Blazor.Common\Stl.Samples.Blazor.Common.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="Pages\Composition.razor">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </Content>
+    <Content Update="Shared\ComposedValueCard.razor">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </Content>
+  </ItemGroup>
+
 </Project>

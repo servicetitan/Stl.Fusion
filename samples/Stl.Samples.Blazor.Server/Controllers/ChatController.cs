@@ -9,18 +9,13 @@ namespace Stl.Samples.Blazor.Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ChatController : Controller, IChatService
+    public class ChatController : FusionController, IChatService
     {
-        protected IChatService ChatService { get; }
-        protected IPublisher Publisher { get; }
+        private readonly IChatService _chat;
 
-        public ChatController(
-            IChatService chatService,
-            IPublisher publisher)
-        {
-            ChatService = chatService;
-            Publisher = publisher;
-        }
+        public ChatController(IChatService chat, IPublisher publisher) 
+            : base(publisher) 
+            => _chat = chat;
 
         // Writers
 
@@ -28,21 +23,21 @@ namespace Stl.Samples.Blazor.Server.Controllers
         public Task<ChatUser> CreateUserAsync(string? name, CancellationToken cancellationToken = default)
         {
             name ??= "";
-            return ChatService.CreateUserAsync(name, cancellationToken);
+            return _chat.CreateUserAsync(name, cancellationToken);
         }
 
         [HttpPost("setUserName")]
         public async Task<ChatUser> SetUserNameAsync(long id, string? name, CancellationToken cancellationToken = default)
         {
             name ??= "";
-            return await ChatService.SetUserNameAsync(id, name, cancellationToken);
+            return await _chat.SetUserNameAsync(id, name, cancellationToken);
         }
 
         [HttpPost("addMessage")]
         public async Task<ChatMessage> AddMessageAsync(long userId, string? text, CancellationToken cancellationToken = default)
         {
             text ??= "";
-            return await ChatService.AddMessageAsync(userId, text, cancellationToken);
+            return await _chat.AddMessageAsync(userId, text, cancellationToken);
         }
 
         // Readers
@@ -51,7 +46,7 @@ namespace Stl.Samples.Blazor.Server.Controllers
         public async Task<long> GetUserCountAsync(CancellationToken cancellationToken = default)
         {
             var c = await HttpContext.TryPublishAsync(Publisher, 
-                _ => ChatService.GetUserCountAsync(cancellationToken),
+                _ => _chat.GetUserCountAsync(cancellationToken),
                 cancellationToken);
             return c.Value;
         }
@@ -60,7 +55,7 @@ namespace Stl.Samples.Blazor.Server.Controllers
         public async Task<long> GetActiveUserCountAsync(CancellationToken cancellationToken = default)
         {
             var c = await HttpContext.TryPublishAsync(Publisher, 
-                _ => ChatService.GetActiveUserCountAsync(cancellationToken),
+                _ => _chat.GetActiveUserCountAsync(cancellationToken),
                 cancellationToken);
             return c.Value;
         }
@@ -69,7 +64,7 @@ namespace Stl.Samples.Blazor.Server.Controllers
         public async Task<ChatUser> GetUserAsync(long id, CancellationToken cancellationToken = default)
         {
             var c = await HttpContext.TryPublishAsync(Publisher, 
-                _ => ChatService.GetUserAsync(id, cancellationToken),
+                _ => _chat.GetUserAsync(id, cancellationToken),
                 cancellationToken);
             return c.Value;
         }
@@ -78,7 +73,7 @@ namespace Stl.Samples.Blazor.Server.Controllers
         public async Task<ChatPage> GetChatTailAsync(int length, CancellationToken cancellationToken = default)
         {
             var c = await HttpContext.TryPublishAsync(Publisher, 
-                _ => ChatService.GetChatTailAsync(length, cancellationToken),
+                _ => _chat.GetChatTailAsync(length, cancellationToken),
                 cancellationToken);
             return c.Value;
         }
@@ -87,7 +82,7 @@ namespace Stl.Samples.Blazor.Server.Controllers
         public async Task<ChatPage> GetChatPageAsync(long minMessageId, long maxMessageId, CancellationToken cancellationToken = default)
         {
             var c = await HttpContext.TryPublishAsync(Publisher, 
-                _ => ChatService.GetChatPageAsync(minMessageId, maxMessageId, cancellationToken),
+                _ => _chat.GetChatPageAsync(minMessageId, maxMessageId, cancellationToken),
                 cancellationToken);
             return c.Value;
         }

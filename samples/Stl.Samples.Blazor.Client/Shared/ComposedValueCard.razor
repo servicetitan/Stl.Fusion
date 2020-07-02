@@ -1,0 +1,37 @@
+<div class="@CssClass">
+    <div class="card-header">
+        @(Title)
+    </div>
+    <div class="card-body">
+        <table class="table table-sm">
+            <tbody>
+            <tr>
+                <td>Parameter:</td>
+                <td>@(Source.Parameter)</td>
+            </tr>
+            <tr>
+                <td>Time:</td>
+                <td>@(Source.Time.Format())</td>
+            </tr>
+            <tr>
+                <td>Last Chat Message:</td>
+                <td>@(Source.LastChatMessage)</td>
+            </tr>
+            <tr>
+                <td>Active User Count:</td>
+                <td>@(Source.ActiveUserCount)</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+@code {
+    [Parameter]
+    public string CssClass { get; set; } = "card";
+    [Parameter]
+    public string Title { get; set; } = null!;
+    [Parameter]
+    public ComposedValue Source { get; set; } = null!;
+}

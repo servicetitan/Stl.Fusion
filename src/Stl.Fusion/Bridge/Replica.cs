@@ -182,15 +182,14 @@ namespace Stl.Fusion.Bridge
             var result = Computed;
             var resultIsConsistent = result.IsConsistent;
             if (resultIsConsistent || (context.Options & ComputeOptions.TryGetCached) != 0) {
-                context.TryCaptureValue(result);
                 if ((context.Options & ComputeOptions.Invalidate) == ComputeOptions.Invalidate)
                     result.Invalidate();
                 ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) result);
+                context.TryCaptureValue(result);
                 return result!;
             }
 
             // No async locking here b/c RequestUpdateAsync is, in fact, doing this
-
             await RequestUpdateAsync(cancellationToken).ConfigureAwait(false);
             result = Computed;
             ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) result);
@@ -211,15 +210,14 @@ namespace Stl.Fusion.Bridge
             var result = Computed;
             var resultIsConsistent = result.IsConsistent;
             if (resultIsConsistent || (context.Options & ComputeOptions.TryGetCached) != 0) {
-                context.TryCaptureValue(result);
                 if ((context.Options & ComputeOptions.Invalidate) == ComputeOptions.Invalidate)
                     result.Invalidate();
                 ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) result);
+                context.TryCaptureValue(result);
                 return result.Strip();
             }
 
             // No async locking here b/c RequestUpdateAsync is, in fact, doing this
-
             await RequestUpdateAsync(cancellationToken).ConfigureAwait(false);
             result = Computed;
             ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) result);

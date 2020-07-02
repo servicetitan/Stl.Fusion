@@ -5,6 +5,8 @@ using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Async;
 using Stl.Fusion;
 using Stl.Fusion.Bridge;
@@ -14,21 +16,24 @@ namespace Stl.Samples.Blazor.Server.Services
 {
     public class ChatService : IChatService, IComputedService
     {
-        protected ChatDbContextPool DbContextPool { get; }
-        protected IUzbyClient UzbyClient { get; }
-        protected IForismaticClient ForismaticClient { get; }
-        protected IPublisher Publisher { get; }
+        private readonly ILogger _log;
+        private readonly ChatDbContextPool _dbContextPool;
+        private readonly   IUzbyClient _uzbyClient;
+        private readonly  IForismaticClient _forismaticClient;
+        private readonly  IPublisher _publisher;
 
         public ChatService(
             ChatDbContextPool dbContextPool, 
             IUzbyClient uzbyClient, 
             IForismaticClient forismaticClient,
-            IPublisher publisher)
+            IPublisher publisher,
+            ILogger<ChatService>? log = null)
         {
-            DbContextPool = dbContextPool;
-            UzbyClient = uzbyClient;
-            ForismaticClient = forismaticClient;
-            Publisher = publisher;
+            _log = log ??= NullLogger<ChatService>.Instance;
+            _dbContextPool = dbContextPool;
+            _uzbyClient = uzbyClient;
+            _forismaticClient = forismaticClient;
+            _publisher = publisher;
         }
 
         // Writers
@@ -36,7 +41,7 @@ namespace Stl.Samples.Blazor.Server.Services
         public virtual async Task<ChatUser> CreateUserAsync(string name, CancellationToken cancellationToken = default)
         {
             name = await NormalizeNameAsync(name, cancellationToken).ConfigureAwait(false);
-            using var lease = DbContextPool.Rent();
+            using var lease = _dbContextPool.Rent();
             var dbContext = lease.Subject;
             var userEntry = dbContext.Users.Add(new ChatUser() {
                 Name = name
@@ -52,7 +57,7 @@ namespace Stl.Samples.Blazor.Server.Services
         {
             name = await NormalizeNameAsync(name, cancellationToken).ConfigureAwait(false);
             var user = await GetUserAsync(id, cancellationToken).ConfigureAwait(false);
-            using var lease = DbContextPool.Rent();
+            using var lease = _dbContextPool.Rent();
             var dbContext = lease.Subject;
             user.Name = name;
             dbContext.Users.Update(user);
@@ -66,7 +71,7 @@ namespace Stl.Samples.Blazor.Server.Services
             text = await NormalizeTextAsync(text, cancellationToken).ConfigureAwait(false);
             // Just to ensure the user really exists:
             await GetUserAsync(userId, cancellationToken).ConfigureAwait(false);
-            using var lease = DbContextPool.Rent();
+            using var lease = _dbContextPool.Rent();
             var dbContext = lease.Subject;
             var messageEntry = dbContext.Messages.Add(new ChatMessage() {
                 CreatedAt = DateTime.UtcNow,
@@ -84,7 +89,7 @@ namespace Stl.Samples.Blazor.Server.Services
         [ComputedServiceMethod]
         public virtual async Task<long> GetUserCountAsync(CancellationToken cancellationToken = default)
         {
-            using var lease = DbContextPool.Rent();
+            using var lease = _dbContextPool.Rent();
             var dbContext = lease.Subject;
             return await dbContext.Users.LongCountAsync(cancellationToken).ConfigureAwait(false);
         }
@@ -92,7 +97,7 @@ namespace Stl.Samples.Blazor.Server.Services
         [ComputedServiceMethod]
         public virtual Task<long> GetActiveUserCountAsync(CancellationToken cancellationToken = default)
         {
-            var channelHub = Publisher.ChannelHub;
+            var channelHub = _publisher.ChannelHub;
             var userCount = (long) channelHub.ChannelCount;
             var c = Computed.GetCurrent();
             Task.Run(async () => {
@@ -107,7 +112,7 @@ namespace Stl.Samples.Blazor.Server.Services
         [ComputedServiceMethod]
         public virtual async Task<ChatUser> GetUserAsync(long id, CancellationToken cancellationToken = default)
         {
-            using var lease = DbContextPool.Rent();
+            using var lease = _dbContextPool.Rent();
             var dbContext = lease.Subject;
             return await dbContext.Users
                 .SingleAsync(u => u.Id == id, cancellationToken)
@@ -118,7 +123,7 @@ namespace Stl.Samples.Blazor.Server.Services
         public virtual async Task<ChatPage> GetChatTailAsync(int length, CancellationToken cancellationToken = default)
         {
             await EveryChatTail().ConfigureAwait(false);
-            using var lease = DbContextPool.Rent();
+            using var lease = _dbContextPool.Rent();
             var dbContext = lease.Subject;
             var messages = dbContext.Messages.OrderByDescending(m => m.Id).Take(length).ToList();
             messages.Reverse();
@@ -143,12 +148,12 @@ namespace Stl.Samples.Blazor.Server.Services
         {
             if (!string.IsNullOrEmpty(name))
                 return name;
-            name = await UzbyClient
+            name = await _uzbyClient
                 .GetNameAsync(cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
             if (name.GetHashCode() % 3 == 0)
                 // First-last name pairs are fun too :)
-                name += " " + await UzbyClient
+                name += " " + await _uzbyClient
                     .GetNameAsync(cancellationToken: cancellationToken)
                     .ConfigureAwait(false);
             return name;
@@ -158,7 +163,7 @@ namespace Stl.Samples.Blazor.Server.Services
         {
             if (!string.IsNullOrEmpty(text))
                 return text;
-            var json = await ForismaticClient
+            var json = await _forismaticClient
                 .GetQuoteAsync(cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
             return json.Value<string>("quoteText");

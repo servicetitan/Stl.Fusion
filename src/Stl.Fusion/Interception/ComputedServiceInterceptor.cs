@@ -34,9 +34,9 @@ namespace Stl.Fusion.Interception
             return new ComputedServiceFunction<T>(method, LTagGenerator, Registry, log);
         }
 
-        protected override void ValidateType(Type type)
+        protected override void ValidateTypeInternal(Type type)
         {
-            Log.LogDebug($"Validating: '{type.FullName}':");
+            Log.Log(ValidationLogLevel, $"Validating: '{type.FullName}':");
             if (!typeof(IComputedService).IsAssignableFrom(type))
                 throw Errors.MustImplement<IComputedService>(type);
             var bindingFlags = BindingFlags.Public | BindingFlags.NonPublic
@@ -58,11 +58,13 @@ namespace Stl.Fusion.Interception
                     // unless they are truly virtual 
                     throw Errors.ComputedServiceMethodAttributeOnNonVirtualMethod(method);
                 if (attrs.Any(a => !a.IsEnabled)) {
-                    Log.LogDebug($"- {method}: has {nameof(ComputedServiceMethodAttribute)}(false)");
+                    Log.Log(ValidationLogLevel,
+                        $"- {method}: has {nameof(ComputedServiceMethodAttribute)}(false)");
                     continue;
                 }
                 var attr = attrs.FirstOrDefault();
-                Log.LogDebug($"+ {method}: {nameof(ComputedServiceMethodAttribute)} {{ " +
+                Log.Log(ValidationLogLevel, 
+                    $"+ {method}: {nameof(ComputedServiceMethodAttribute)} {{ " +
                     $"{nameof(ComputedServiceMethodAttribute.IsEnabled)} = {attr.IsEnabled}, " +
                     $"{nameof(ComputedServiceMethodAttribute.KeepAliveTime)} = {attr.KeepAliveTime}" +
                     $" }}");

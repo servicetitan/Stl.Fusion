@@ -1,4 +1,3 @@
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -10,19 +9,20 @@ namespace Stl.Samples.Blazor.Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class TimeController : FusionController, ITimeService
+    public class ComposerController : FusionController, IComposerService
     {
-        private readonly ITimeService _time;
+        private readonly IComposerService _composer;
 
-        public TimeController(ITimeService time, IPublisher publisher)
+        public ComposerController(IComposerService composer, IPublisher publisher)
             : base(publisher) 
-            => _time = time;
+            => _composer = composer;
 
         [HttpGet("get")]
-        public async Task<DateTime> GetTimeAsync(CancellationToken cancellationToken)
+        public async Task<ComposedValue> GetComposedValueAsync(string? parameter, CancellationToken cancellationToken = default) 
         {
+            parameter ??= "";
             var c = await HttpContext.TryPublishAsync(Publisher, 
-                _ => _time.GetTimeAsync(cancellationToken),
+                _ => _composer.GetComposedValueAsync(parameter, cancellationToken),
                 cancellationToken);
             return c.Value;
         }

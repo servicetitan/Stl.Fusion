@@ -274,11 +274,11 @@ namespace Stl.Fusion
             using var contextUseScope = context.Use();
             context = contextUseScope.Context;
 
-            context.TryCaptureValue(this);
             if ((context.Options & ComputeOptions.Invalidate) == ComputeOptions.Invalidate)
                 Invalidate();
             var usedBy = Computed.GetCurrent();
             ((IComputedImpl?) usedBy)?.AddUsed(this);
+            context.TryCaptureValue(this);
             return this;
         }
 

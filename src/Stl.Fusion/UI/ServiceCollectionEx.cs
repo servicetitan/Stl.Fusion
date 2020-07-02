@@ -93,7 +93,7 @@ namespace Stl.Fusion.UI
                 var updater = c.GetRequiredService<ILiveUpdater<TModel>>();
                 var options = new Live<TModel>.Options() {
                     Default = new TModel(),
-                    Updater = (prev, cancellationToken) => updater.UpdateAsync(prev, cancellationToken),
+                    Updater = (live, cancellationToken) => updater.UpdateAsync(live, cancellationToken),
                 };
                 optionsBuilder?.Invoke(c, options);
                 return options;
@@ -105,12 +105,12 @@ namespace Stl.Fusion.UI
 
         public static IServiceCollection AddLive<T>(
             this IServiceCollection services,
-            Func<IServiceProvider, IComputed<T>, CancellationToken, Task<T>> updater,
+            Func<IServiceProvider, ILive<T>, CancellationToken, Task<T>> updater,
             Action<IServiceProvider, Live<T>.Options>? optionsBuilder = null)
         {
             services.TryAddSingleton(c => {
                 var options = new Live<T>.Options() {
-                    Updater = (prev, cancellationToken) => updater.Invoke(c, prev, cancellationToken),
+                    Updater = (live, cancellationToken) => updater.Invoke(c, live, cancellationToken),
                 };
                 optionsBuilder?.Invoke(c, options);
                 return options;

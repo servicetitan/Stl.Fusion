@@ -53,6 +53,7 @@ namespace Stl.Samples.Blazor.Server
                     services.AddFusionWebSocketServer();
                     services.AddComputedService<ITimeService, TimeService>();
                     services.AddComputedService<IChatService, ChatService>();
+                    services.AddComputedService<IComposerService, ServerSideComposerService>();
                     services.AddSingleton(c => new RestClient(new Uri("https://uzby.com/api.php"))
                         .For<IUzbyClient>());
                     services.AddSingleton(c => new RestClient(new Uri("https://api.forismatic.com/api/1.0/"))

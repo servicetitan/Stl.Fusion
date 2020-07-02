@@ -8,9 +8,9 @@ namespace Stl.Fusion.Bridge.Internal
     {
         internal static readonly AsyncLocal<ReplicaCapture?> CurrentLocal = new AsyncLocal<ReplicaCapture?>();
         private readonly ReplicaCapture? _oldCurrent;
-        private volatile IReplica? _capturedReplica;
+        private volatile IReplica? _replica;
         
-        public IReplica? CapturedReplica => _capturedReplica;
+        public IReplica? Replica => _replica;
 
         public ReplicaCapture()
         {
@@ -22,9 +22,13 @@ namespace Stl.Fusion.Bridge.Internal
 
         public IReplica<T> GetCapturedReplica<T>()
         {
-            var replica = CapturedReplica;
-            if (replica == null)
+            var replica = Replica;
+            if (replica == null) {
+                var replicaType = typeof(T);
+                if (replicaType == typeof(string))
+                    throw Fusion.Internal.Errors.UnsupportedReplicaType(replicaType);
                 throw Errors.InternalError("Replica wasn't captured.");
+            }
             return (IReplica<T>) replica;
         }
 
@@ -33,7 +37,7 @@ namespace Stl.Fusion.Bridge.Internal
             var replicaCapture = CurrentLocal.Value;
             if (replicaCapture == null)
                 throw Errors.InternalError($"Missing {nameof(ReplicaCapture)}.");
-            if (null != Interlocked.CompareExchange(ref replicaCapture._capturedReplica, value, null))
+            if (null != Interlocked.CompareExchange(ref replicaCapture._replica, value, null))
                 throw Errors.InternalError($"{nameof(ReplicaCapture)} already captured replica.");
         }
     }

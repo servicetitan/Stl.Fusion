@@ -38,7 +38,7 @@ namespace Stl.Fusion.UI
         public sealed class Options : ILiveOptions
         {
             public Result<T> Default { get; set; } = default;
-            public Func<IComputed<T>, CancellationToken, Task<T>> Updater { get; set; } = null!;
+            public Func<ILive<T>, CancellationToken, Task<T>> Updater { get; set; } = null!;
             public bool AutoStart { get; set; } = true;
             public bool IsolateUpdateErrors { get; set; } = true;
             public bool DelayFirstUpdate { get; set; } = false;
@@ -46,7 +46,7 @@ namespace Stl.Fusion.UI
         }
 
         private readonly ILogger _log; 
-        private readonly Func<IComputed<T>, CancellationToken, Task<T>> _updater;
+        private readonly Func<ILive<T>, CancellationToken, Task<T>> _updater;
         private readonly bool _isolateUpdateErrors; 
         private readonly bool _delayFirstUpdate; 
         private readonly Action<IComputed> _invalidationHandler;
@@ -123,7 +123,7 @@ namespace Stl.Fusion.UI
 
         public void Start(Result<T> @default)
         {
-            var computed = SimpleComputed.New(Updater, @default, false);
+            var computed = SimpleComputed.New(UpdateAsync, @default, false);
             var oldComputedRef = Interlocked.CompareExchange(
                 ref _computedRef, computed.Input, null);
             if (oldComputedRef != null)
@@ -161,12 +161,12 @@ namespace Stl.Fusion.UI
             }, CancellationToken.None);
         }
 
-        private async Task Updater(
+        private async Task UpdateAsync(
             IComputed<T> prev, IComputed<T> next, 
             CancellationToken cancellationToken)
         {
             try {
-                var value = await _updater.Invoke(prev, cancellationToken)
+                var value = await _updater.Invoke(this, cancellationToken)
                     .ConfigureAwait(false);
                 next.SetOutput(new Result<T>(value, null));
                 Interlocked.Exchange(ref _lastUpdateError, null);
@@ -176,7 +176,7 @@ namespace Stl.Fusion.UI
                 throw;
             }
             catch (Exception e) {
-                _log.LogError(e, $"{nameof(Updater)}: Error.");
+                _log.LogError(e, $"{nameof(UpdateAsync)}: Error.");
                 next.SetOutput(_isolateUpdateErrors 
                     ? prev.Output 
                     : new Result<T>(default!, e));

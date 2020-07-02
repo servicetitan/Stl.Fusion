@@ -21,6 +21,8 @@ namespace Stl.Fusion.Interception
             public IArgumentComparerProvider ArgumentComparerProvider { get; set; } = 
                 Interception.ArgumentComparerProvider.Default;
             public IMomentClock Clock { get; set; } = CoarseCpuClock.Instance;
+            public LogLevel LogLevel { get; set; } = LogLevel.Debug;
+            public LogLevel ValidationLogLevel { get; set; } = LogLevel.Information;
         }
 
         private readonly MethodInfo _createTypedHandlerMethod;
@@ -35,6 +37,8 @@ namespace Stl.Fusion.Interception
 
         protected ILoggerFactory LoggerFactory { get; }
         protected ILogger Log { get; }
+        protected LogLevel LogLevel { get; }
+        protected LogLevel ValidationLogLevel { get; }
         protected IComputedRegistry Registry { get; }
         protected IArgumentComparerProvider ArgumentComparerProvider { get; }
         protected bool RequiresAttribute { get; set; } = true;
@@ -46,6 +50,9 @@ namespace Stl.Fusion.Interception
         {
             LoggerFactory = loggerFactory ??= NullLoggerFactory.Instance;
             Log = LoggerFactory.CreateLogger(GetType());
+            LogLevel = options.LogLevel;
+            ValidationLogLevel = options.ValidationLogLevel;
+
             Registry = registry ?? ComputedRegistry.Default;
             ArgumentComparerProvider = options.ArgumentComparerProvider;
 
@@ -63,6 +70,14 @@ namespace Stl.Fusion.Interception
                 invocation.Proceed();
             else 
                 handler.Invoke(invocation);
+        }
+
+        public void ValidateType(Type type)
+        {
+            _validateTypeCache.GetOrAddChecked(type, (type1, self) => {
+                self.ValidateTypeInternal(type1);
+                return default;
+            }, this);
         }
 
         private Action<IInvocation>? CreateHandler(MethodInfo methodInfo, IInvocation initialInvocation)
@@ -119,14 +134,11 @@ namespace Stl.Fusion.Interception
             };
         }
 
-        protected abstract InterceptedFunctionBase<T> CreateFunction<T>(InterceptedMethod method); 
-
+        protected abstract InterceptedFunctionBase<T> CreateFunction<T>(InterceptedMethod method);
+        
         protected virtual InterceptedMethod? CreateInterceptedMethod(MethodInfo proxyMethodInfo, IInvocation invocation)
         {
-            _validateTypeCache.GetOrAdd(invocation.TargetType, (type, self) => {
-                self.ValidateType(type);
-                return default;
-            }, this);
+            ValidateType(invocation.TargetType);
 
             // We need an attribute from interface / original type, so we
             // can't use proxyMethodInfo here, b/c it points to a proxy method. 
@@ -190,6 +202,6 @@ namespace Stl.Fusion.Interception
             return r;
         }
 
-        protected abstract void ValidateType(Type type);
+        protected abstract void ValidateTypeInternal(Type type);
     }
 }
