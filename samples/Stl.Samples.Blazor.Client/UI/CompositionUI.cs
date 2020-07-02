@@ -12,7 +12,7 @@ namespace Stl.Samples.Blazor.Client.UI
         public ComposedValue LocallyComposedValue { get; set; } = new ComposedValue();
         public ComposedValue RemotelyComposedValue { get; set; } = new ComposedValue();
 
-        private string _parameter = "";
+        private string _parameter = "Type something here";
         public string Parameter {
             get => _parameter;
             set {
@@ -24,6 +24,13 @@ namespace Stl.Samples.Blazor.Client.UI
                     Live.UpdateDelayer.CancelDelays();
                 }
             }
+        }
+
+        public CompositionUI() { }
+        public CompositionUI(ILive<CompositionUI>? live, string parameter)
+        {
+            Live = live;
+            _parameter = parameter;
         }
 
         public class Updater : ILiveUpdater<CompositionUI>
@@ -44,11 +51,9 @@ namespace Stl.Samples.Blazor.Client.UI
                 var parameter = prevModel.Parameter;
                 var localValue = await LocalComposer.GetComposedValueAsync(parameter, cancellationToken);
                 var remoteValue = await RemoteComposer.GetComposedValueAsync(parameter, cancellationToken);
-                return new CompositionUI() {
-                    Live = live,
+                return new CompositionUI(live, parameter) {
                     LocallyComposedValue = localValue,
                     RemotelyComposedValue = remoteValue,
-                    Parameter = parameter,
                 };
             }
         }

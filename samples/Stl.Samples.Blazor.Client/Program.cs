@@ -45,7 +45,7 @@ namespace Stl.Samples.Blazor.Client
             var baseUri = new Uri(builder.HostEnvironment.BaseAddress);
             services.AddFusionWebSocketClient((c, o) => {
                 o.BaseUri = baseUri;
-                o.MessageLogLevel = LogLevel.Information;
+                // o.MessageLogLevel = LogLevel.Information;
             });
 
             // Computed services
@@ -65,6 +65,11 @@ namespace Stl.Samples.Blazor.Client
             });
             services.AddAllLive(typeof(Program).Assembly, (c, options) => {
                 if (options is Live<ServerTimeUI>.Options) {
+                    options.UpdateDelayer = new UpdateDelayer(new UpdateDelayer.Options() {
+                        Delay = TimeSpan.FromSeconds(0.5),
+                    });
+                }
+                if (options is Live<CompositionUI>.Options) {
                     options.UpdateDelayer = new UpdateDelayer(new UpdateDelayer.Options() {
                         Delay = TimeSpan.FromSeconds(0.5),
                     });
