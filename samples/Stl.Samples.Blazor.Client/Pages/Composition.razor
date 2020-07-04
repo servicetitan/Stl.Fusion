@@ -20,7 +20,7 @@
         <span class="input-group-text">Parameter</span>
     </div>
     <input class="form-control" 
-           @bind-value="@(local.Parameter)"
+           @bind-value="@local.Parameter"
            @bind-value:event="oninput" />
 </div>
 
@@ -41,6 +41,6 @@
     protected override void OnInitialized()
     {
         base.OnInitialized();
-        UpdateLocal(s => s.Owner = LiveState);
+        UpdateLocal(s => s.LiveState = LiveState);
     }
 }

@@ -174,7 +174,7 @@ namespace Stl.Fusion
                 var computed = entry.Computed;
                 if (computed == null)
                     continue;
-                var expirationTime = computed.LastAccessTime + computed.KeepAliveTime;
+                var expirationTime = computed.LastAccessTime + computed.Options.KeepAliveTime;
                 if (expirationTime >= now)
                     continue;
                 _storage.TryUpdate(key, new Entry(null, handle), entry);

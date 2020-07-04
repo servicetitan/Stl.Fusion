@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using Autofac;
 using FluentAssertions;
+using Stl.Fusion;
 using Stl.Tests.Fusion.Services;
 using Xunit;
 using Xunit.Abstractions;
@@ -15,8 +16,11 @@ namespace Stl.Tests.Fusion
         public async Task BasicTest()
         {
             var screenshots = Container.Resolve<IScreenshotService>();
-            var s1 = await screenshots.GetScreenshotAsync(128);
-            s1.Length.Should().BeGreaterThan(0);
+            var c = await Computed.CaptureAsync(_ => screenshots.GetScreenshotAsync(128));
+            c.IsConsistent.Should().BeTrue();
+            c.Value.Length.Should().BeGreaterThan(0);
+            await Task.Delay(200);
+            c.IsConsistent.Should().BeFalse();
         }
     }
 }

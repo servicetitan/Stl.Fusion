@@ -2,10 +2,26 @@
 @inherits LiveComponentBase<ServerScreenState.Local, ServerScreenState>
 
 @{
+    var local = Local;
     var lastUpdateError = LiveState.LastUpdateError; 
 }
 
 <h1>Server Screen</h1>
+
+<div class="input-group pb-3">
+    <div class="input-group-prepend">
+        <span class="input-group-text">Screenshot width (in pixels):</span>
+    </div>
+    <input class="form-control" 
+           @bind-value="@local.Width"
+           @bind-value:event="oninput" />
+    @if (local.Width != local.ActualWidth) {
+        <div class="input-group-append">
+            <span class="input-group-text">(actual width: @local.ActualWidth)</span>
+        </div>
+    }
+</div>
+
 
 @if (lastUpdateError != null) {
     <div class="alert alert-warning" role="alert">
@@ -14,3 +30,11 @@
 }
 
 <p><img src="data:image/png;base64, @State.Screenshot.Base64Content" alt="Server screen" width="100%" /><br/></p>
+
+@code {
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        UpdateLocal(s => s.LiveState = LiveState);
+    }
+}

@@ -32,21 +32,17 @@ namespace Stl.Samples.Blazor.Server.Services
             _prevScreenshotTask = ScreenshotAsync(128);
         }
 
-        [ComputedServiceMethod]
+        [ComputedServiceMethod(AutoInvalidateTimeout = 0.02)]
         public virtual async Task<Screenshot> GetScreenshotAsync(int width, CancellationToken cancellationToken = default)
         {
             // The logic here is a bit complicated b/c we send the last screenshot
             // here rather than wait for the current one.
-            var computed = Computed.GetCurrent();
             var next = ScreenshotAsync(width);
             var prev = Interlocked.Exchange(ref _prevScreenshotTask, next);
             var result = await prev.ConfigureAwait(false);
             if (result.Width != width)
                 // Width changed, let's wait for the current one
                 result = await next.ConfigureAwait(false);
-            Task.Delay(100, CancellationToken.None)
-                .ContinueWith(_ => computed!.Invalidate(), CancellationToken.None)
-                .Ignore();
             return result;
         }
 

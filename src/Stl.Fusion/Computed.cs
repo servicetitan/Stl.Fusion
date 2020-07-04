@@ -1,8 +1,10 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Reactive;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Stl.Async;
 using Stl.Collections;
 using Stl.Collections.Slim;
 using Stl.Frozen;
@@ -20,6 +22,7 @@ namespace Stl.Fusion
 
     public interface IComputed : IResult
     {
+        ComputedOptions Options { get; set; }
         ComputedInput Input { get; }
         IResult Output { get; }
         Type OutputType { get; }
@@ -28,7 +31,6 @@ namespace Stl.Fusion
         bool IsConsistent { get; }
         event Action<IComputed> Invalidated;
         Moment LastAccessTime { get; }
-        TimeSpan KeepAliveTime { get; set; }
 
         bool Invalidate();
         ValueTask<IComputed> UpdateAsync(CancellationToken cancellationToken = default);
@@ -62,6 +64,7 @@ namespace Stl.Fusion
     public class Computed<TIn, TOut> : IComputed<TIn, TOut>, IComputedImpl
         where TIn : ComputedInput
     {
+        private ComputedOptions _options;
         private volatile int _state;
         private Result<TOut> _output;
         private RefHashSetSlim2<IComputedImpl> _used = default;
@@ -70,27 +73,27 @@ namespace Stl.Fusion
         private event Action<IComputed>? _invalidated;
         private bool _invalidateOnSetOutput = false;
         private long _lastAccessTimeTicks;
-        private TimeSpan _keepAliveTime;
         private object Lock => this;
 
-        public bool IsConsistent => State == ComputedState.Consistent;
-        public ComputedState State => (ComputedState) _state;
+        public ComputedOptions Options {
+            get => _options;
+            set {
+                AssertStateIs(ComputedState.Computing);
+                _options = value;
+            }
+        }
+
         public TIn Input { get; }
+        public ComputedState State => (ComputedState) _state;
+        public bool IsConsistent => State == ComputedState.Consistent;
         public IFunction<TIn, TOut> Function => (IFunction<TIn, TOut>) Input.Function; 
         public LTag LTag { get; }
+
         public Moment LastAccessTime {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => new Moment(Volatile.Read(ref _lastAccessTimeTicks));
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             protected set => Volatile.Write(ref _lastAccessTimeTicks, value.EpochOffset.Ticks);
-        }
-
-        public TimeSpan KeepAliveTime {
-            get => _keepAliveTime;
-            set {
-                AssertStateIs(ComputedState.Computing);
-                _keepAliveTime = value;
-            }
         }
 
         public Type OutputType => typeof(TOut);
@@ -135,23 +138,23 @@ namespace Stl.Fusion
             remove => _invalidated -= value;
         }
 
-        public Computed(TIn input, LTag lTag)
+        public Computed(ComputedOptions options, TIn input, LTag lTag)
         {
+            _options = options;
             Input = input;
             LTag = lTag;
-            _keepAliveTime = Computed.DefaultKeepAliveTime;
             LastAccessTime = CoarseCpuClock.Now;
         }
 
-        public Computed(TIn input, Result<TOut> output, LTag lTag, bool isConsistent = true)
+        public Computed(ComputedOptions options, TIn input, Result<TOut> output, LTag lTag, bool isConsistent = true)
         {
             if (output.IsValue(out var v) && v is IFrozen f)
                 f.Freeze();
+            _options = options;
             Input = input;
             _state = (int) (isConsistent ? ComputedState.Consistent : ComputedState.Invalidated);
             _output = output;
             LTag = lTag;
-            _keepAliveTime = Computed.DefaultKeepAliveTime;
             LastAccessTime = CoarseCpuClock.Now;
         }
 
@@ -209,6 +212,12 @@ namespace Stl.Fusion
             }
             if (mustInvalidate)
                 Invalidate();
+            else {
+                if (output.HasError)
+                    AutoInvalidate(_options.ErrorAutoInvalidateTimeout);
+                else if (_options.AutoInvalidateTimeout.HasValue)
+                    AutoInvalidate(_options.AutoInvalidateTimeout.GetValueOrDefault());
+            }
             return true;
         }
 
@@ -320,6 +329,29 @@ namespace Stl.Fusion
         {
             if (State == unexpectedState)
                 throw Errors.WrongComputedState(State);
+        }
+
+        private void AutoInvalidate(TimeSpan timeout)
+        {
+            // This method is called just once for sure
+            var cts = new CancellationTokenSource(timeout);
+            Invalidated += _ => {
+                try {
+                    if (!cts.IsCancellationRequested)
+                        cts.Cancel(true);
+                } catch {
+                    // Intended: this method should never throw any exceptions
+                }
+            };
+            cts.Token.Register(() => {
+                cts.Dispose();
+                // No need to schedule this via Task.Run, since this code is
+                // either invoked from Invalidate method (via Invalidated handler),
+                // so Invalidate() call will do nothing & return immediately,
+                // or it's invoked via one of timer threads, i.e. where it's
+                // totally fine to invoke Invalidate directly as well.
+                Invalidate();
+            }, false);
         }
     }
 }

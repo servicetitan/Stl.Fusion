@@ -113,12 +113,12 @@ namespace Stl.Async
         // Note that this method won't release the token unless it's cancelled!
         public static Task<T> ToTask<T>(this CancellationToken token, bool throwIfCancelled, 
             TaskCreationOptions taskCreationOptions = default)
-            => token.ToTaskCompletionSource<T>(throwIfCancelled, taskCreationOptions).Task;
+            => token.ToTaskSource<T>(throwIfCancelled, taskCreationOptions).Task;
 
         // Note that this method won't release the token unless it's cancelled!
         public static Task ToTask(this CancellationToken token, bool throwIfCancelled, 
             TaskCreationOptions taskCreationOptions = default)
-            => token.ToTaskCompletionSource<Unit>(throwIfCancelled, taskCreationOptions).Task;
+            => token.ToTaskSource<Unit>(throwIfCancelled, taskCreationOptions).Task;
 
         // A safer version of the previous method relying on a secondary token
         public static async Task ToTask(this CancellationToken token, CancellationToken cancellationToken)

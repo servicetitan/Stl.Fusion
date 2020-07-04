@@ -174,11 +174,12 @@ namespace Stl.Fusion.Interception
                 }
             }
 
-
-            var keepAliveTime = (TimeSpan?) null;
-            if (attr is ComputedServiceMethodAttribute ca && !double.IsNaN(ca.KeepAliveTime))
-                keepAliveTime = TimeSpan.FromSeconds(ca.KeepAliveTime);
             var invocationTargetType = proxyMethodInfo.ReflectedType;
+            var options = new ComputedOptions(
+                GetTimespan<ComputedServiceMethodAttribute>(attr, a => a.KeepAliveTime),
+                GetTimespan<ComputedServiceMethodAttribute>(attr, a => a.ErrorAutoInvalidateTimeout),
+                GetTimespan<ComputedServiceMethodAttribute>(attr, a => a.AutoInvalidateTimeout)
+                ); 
             var parameters = proxyMethodInfo.GetParameters();
             var r = new InterceptedMethod {
                 MethodInfo = proxyMethodInfo,
@@ -188,7 +189,7 @@ namespace Stl.Fusion.Interception
                 InvocationTargetComparer = ArgumentComparerProvider.GetInvocationTargetComparer(
                     proxyMethodInfo, invocationTargetType!),
                 ArgumentComparers = new ArgumentComparer[parameters.Length],
-                KeepAliveTime = keepAliveTime,  
+                Options = options,
             };
 
             for (var i = 0; i < parameters.Length; i++) {
@@ -203,5 +204,17 @@ namespace Stl.Fusion.Interception
         }
 
         protected abstract void ValidateTypeInternal(Type type);
+
+        // Private methods
+
+        private TimeSpan? GetTimespan<TAttribute>(Attribute attr, Func<TAttribute, double> propertyGetter)
+        {
+            if (!(attr is TAttribute typedAttr))
+                return null;
+            var value = propertyGetter.Invoke(typedAttr);
+            return double.IsNaN(value) 
+                ? (TimeSpan?) null 
+                : TimeSpan.FromSeconds(value);
+        } 
     }
 }

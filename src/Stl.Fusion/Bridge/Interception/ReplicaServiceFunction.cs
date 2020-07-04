@@ -15,7 +15,8 @@ namespace Stl.Fusion.Bridge.Interception
 {
     public class ReplicaServiceFunction<T> : InterceptedFunctionBase<T>
     {
-        private readonly ILogger _log; 
+        private readonly ILogger _log;
+        private readonly bool _isLogDebugEnabled;
         protected ConcurrentIdGenerator<LTag> LTagGenerator { get; }
 
         public ReplicaServiceFunction(
@@ -26,6 +27,7 @@ namespace Stl.Fusion.Bridge.Interception
             : base(method, computedRegistry)
         {
             _log = log ??= NullLogger<ReplicaServiceFunction<T>>.Instance;
+            _isLogDebugEnabled = _log.IsEnabled(LogLevel.Debug);
             LTagGenerator = lTagGenerator;
             InvalidatedHandler = null;
         }
@@ -47,21 +49,26 @@ namespace Stl.Fusion.Bridge.Interception
             InterceptedInput input, IComputed<T>? cached, 
             CancellationToken cancellationToken) 
         {
+            var method = input.Method;
+
             // 1. Trying to update the Replica first
             if (cached is IReplicaServiceComputed<T> rsc && rsc.Replica != null) {
                 try {
                     var replica = rsc.Replica;
                     var computed = await replica.Computed.UpdateAsync(cancellationToken).ConfigureAwait(false);
                     var replicaComputed = (IReplicaComputed<T>) computed;
-                    var output = new ReplicaServiceComputed<T>(replicaComputed, input);
+                    var output = new ReplicaServiceComputed<T>(
+                        method.Options, replicaComputed, input);
                     return output;
                 }
                 catch (OperationCanceledException) {
-                    _log.LogDebug($"{nameof(ComputeAsync)}: Cancelled (1).");
+                    if (_isLogDebugEnabled)
+                        _log.LogDebug($"{nameof(ComputeAsync)}: Cancelled (1).");
                     throw;
                 }
                 catch (Exception e) {
-                    _log.LogError(e, $"{nameof(ComputeAsync)}: Error on Replica update.");
+                    if (_isLogDebugEnabled)
+                        _log.LogError(e, $"{nameof(ComputeAsync)}: Error on Replica update.");
                 }
             }
 
@@ -69,7 +76,6 @@ namespace Stl.Fusion.Bridge.Interception
             try {
                 using var replicaCapture = new ReplicaCapture();
                 var result = input.InvokeOriginalFunction(cancellationToken);
-                var method = Method;
                 if (method.ReturnsComputed) {
                     if (method.ReturnsValueTask) {
                         var task = (ValueTask<IComputed<T>>) result;
@@ -93,19 +99,23 @@ namespace Stl.Fusion.Bridge.Interception
                 var replica = replicaCapture.GetCapturedReplica<T>();
                 var computed = await replica.Computed.UpdateAsync(cancellationToken).ConfigureAwait(false);
                 var replicaComputed = (IReplicaComputed<T>) computed;
-                var output = new ReplicaServiceComputed<T>(replicaComputed, input);
+                var output = new ReplicaServiceComputed<T>(
+                    method.Options, replicaComputed, input);
                 return output;
             }
             catch (OperationCanceledException) {
-                _log.LogDebug($"{nameof(ComputeAsync)}: Cancelled (2).");
+                if (_isLogDebugEnabled)
+                    _log.LogDebug($"{nameof(ComputeAsync)}: Cancelled (2).");
                 throw;
             }
             catch (Exception e) {
-                _log.LogError(e, $"{nameof(ComputeAsync)}: Error on update.");
+                if (_isLogDebugEnabled)
+                    _log.LogError(e, $"{nameof(ComputeAsync)}: Error on update.");
                 // We need a unique LTag here, so we use a range that's supposed
                 // to be unused by LTagGenerators.
                 var lTag = new LTag(LTagGenerator.Next().Value ^ (1L << 62));
-                var output = new ReplicaServiceComputed<T>(null, input, new Result<T>(default!, e), lTag);
+                var output = new ReplicaServiceComputed<T>(
+                    method.Options, null, input, new Result<T>(default!, e), lTag);
                 return output;
             }
         }

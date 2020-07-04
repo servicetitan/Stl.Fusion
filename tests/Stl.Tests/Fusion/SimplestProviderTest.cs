@@ -1,7 +1,9 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Autofac;
 using FluentAssertions;
+using Stl.Fusion;
 using Stl.Tests.Fusion.Services;
 using Xunit;
 using Xunit.Abstractions;
@@ -57,7 +59,30 @@ namespace Stl.Tests.Fusion
             await Assert.ThrowsAsync<NullReferenceException>(() => p.GetCharCountAsync());
             p.GetValueCallCount.Should().Be(gv);
             p.GetCharCountCallCount.Should().Be(gcc);
+
+            // But if we wait for 0.1s+, it should recompute again
+            await Task.Delay(150);
+            await Assert.ThrowsAsync<NullReferenceException>(() => p.GetCharCountAsync());
+            p.GetValueCallCount.Should().Be(gv);
+            p.GetCharCountCallCount.Should().Be(++gcc);
         }
 
+        [Fact]
+        public async Task OptionsTest()
+        {
+            var d = ComputedOptions.Default;
+            var p = Container.Resolve<ISimplestProvider>();
+            p.SetValue("");
+
+            var c1 = await Computed.CaptureAsync(_ => p.GetValueAsync());
+            c1.Options.KeepAliveTime.Should().Be(d.KeepAliveTime);
+            c1.Options.ErrorAutoInvalidateTimeout.Should().Be(d.ErrorAutoInvalidateTimeout);
+            c1.Options.AutoInvalidateTimeout.Should().Be(d.AutoInvalidateTimeout);
+
+            var c2 = await Computed.CaptureAsync(_ => p.GetCharCountAsync());
+            c2.Options.KeepAliveTime.Should().Be(d.KeepAliveTime);
+            c2.Options.ErrorAutoInvalidateTimeout.Should().Be(TimeSpan.FromSeconds(0.1));
+            c2.Options.AutoInvalidateTimeout.Should().Be(d.AutoInvalidateTimeout);
+        }
     }
 }

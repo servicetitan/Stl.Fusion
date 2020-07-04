@@ -64,12 +64,20 @@ namespace Stl.Samples.Blazor.Client
                 Delay = TimeSpan.FromSeconds(0.1),
             });
             services.AutoAddLiveState(typeof(Program).Assembly, (c, options) => {
+                if (options is LiveState<ServerScreenState.Local, ServerScreenState>.Options) {
+                    // Server Screen part always updates as quickly as it can
+                    options.UpdateDelayer = new UpdateDelayer(new UpdateDelayer.Options() {
+                        Delay = TimeSpan.FromSeconds(0),
+                    });
+                }
                 if (options is LiveState<ServerTimeState>.Options) {
+                    // Slower auto-updates for Server Time part
                     options.UpdateDelayer = new UpdateDelayer(new UpdateDelayer.Options() {
                         Delay = TimeSpan.FromSeconds(0.5),
                     });
                 }
                 if (options is LiveState<CompositionState.Local, CompositionState>.Options) {
+                    // Slower auto-updates for Composition part
                     options.UpdateDelayer = new UpdateDelayer(new UpdateDelayer.Options() {
                         Delay = TimeSpan.FromSeconds(0.5),
                     });

@@ -30,29 +30,27 @@ namespace Stl.Tests.Fusion.Services
             };
         }
 
-        [ComputedServiceMethod]
+        [ComputedServiceMethod(AutoInvalidateTimeout = 0.05)]
         public virtual async Task<string> GetScreenshotAsync(int width, CancellationToken cancellationToken = default)
         {
-            return await Task.Run(() => {
-                using var screen = Graphics.FromHwnd(IntPtr.Zero);
-                var vcb = screen.VisibleClipBounds;
-                var (w, h) = ((int) vcb.Width, (int) vcb.Height);
-                using var bScreen = new Bitmap(w, h);
-                using var gScreen = Graphics.FromImage(bScreen);
-                gScreen.CopyFromScreen(0, 0, 0, 0, bScreen.Size);
-                var ow = width;
-                var oh = h * ow / w;
-                using var bOut = new Bitmap(ow, oh);
-                using var gOut = Graphics.FromImage(bOut);
-                gOut.CompositingQuality = CompositingQuality.HighSpeed;
-                gOut.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                gOut.CompositingMode = CompositingMode.SourceCopy;
-                gOut.DrawImage(bScreen, 0, 0, ow, oh);
-                using var stream = new MemoryStream();
-                bOut.Save(stream, JpegEncoder, JpegEncoderParameters);
-                var bytes = stream.ToArray();
-                return Convert.ToBase64String(bytes);
-            });
+            using var screen = Graphics.FromHwnd(IntPtr.Zero);
+            var vcb = screen.VisibleClipBounds;
+            var (w, h) = ((int) vcb.Width, (int) vcb.Height);
+            using var bScreen = new Bitmap(w, h);
+            using var gScreen = Graphics.FromImage(bScreen);
+            gScreen.CopyFromScreen(0, 0, 0, 0, bScreen.Size);
+            var ow = width;
+            var oh = h * ow / w;
+            using var bOut = new Bitmap(ow, oh);
+            using var gOut = Graphics.FromImage(bOut);
+            gOut.CompositingQuality = CompositingQuality.HighSpeed;
+            gOut.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            gOut.CompositingMode = CompositingMode.SourceCopy;
+            gOut.DrawImage(bScreen, 0, 0, ow, oh);
+            await using var stream = new MemoryStream();
+            bOut.Save(stream, JpegEncoder, JpegEncoderParameters);
+            var bytes = stream.ToArray();
+            return Convert.ToBase64String(bytes);
         }
     }
 }

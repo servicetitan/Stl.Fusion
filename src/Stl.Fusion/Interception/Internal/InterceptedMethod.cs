@@ -12,6 +12,6 @@ namespace Stl.Fusion.Interception.Internal
         public ArgumentComparer InvocationTargetComparer { get; set; } = null!;
         public ArgumentComparer[] ArgumentComparers { get; set; } = null!;
         public int CancellationTokenArgumentIndex { get; set; } = -1;
-        public TimeSpan? KeepAliveTime { get; set; }
+        public ComputedOptions Options { get; set; } = ComputedOptions.Default;
     }
 }

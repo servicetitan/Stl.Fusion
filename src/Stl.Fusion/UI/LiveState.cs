@@ -35,6 +35,7 @@ namespace Stl.Fusion.UI
     {
         public abstract class Options
         {
+            public ComputedOptions StateOptions { get; set; } = ComputedOptions.Default;
             public bool IsolateUpdateErrors { get; set; } = true;
             public bool DelayFirstUpdate { get; set; } = false;
             public IUpdateDelayer? UpdateDelayer { get; set; } = null;
@@ -50,7 +51,7 @@ namespace Stl.Fusion.UI
             public Func<ILiveState<TLocal, TState>, CancellationToken, Task<TState>> Updater { get; set; } = null!;
         }
 
-        private readonly ILogger _log; 
+        private readonly ILogger _log;
         private readonly Func<ILiveState<TLocal, TState>, CancellationToken, Task<TState>> _updater;
         private readonly bool _isolateUpdateErrors; 
         private readonly bool _delayFirstUpdate; 
@@ -100,7 +101,7 @@ namespace Stl.Fusion.UI
             _disposeCts = new CancellationTokenSource();
             _disposeCtsToken = _disposeCts.Token;
             _local = Box.New(options.InitialLocal);
-            Start(options.InitialState);
+            Start(options);
         }
 
         ~LiveState() => Dispose();
@@ -135,9 +136,10 @@ namespace Stl.Fusion.UI
                 UpdateDelayer.CancelDelays();
         }
 
-        private void Start(Result<TState> @default)
+        private void Start(Options options)
         {
-            var computed = SimpleComputed.New(UpdateAsync, @default, false);
+            var computed = SimpleComputed.New(
+                options.StateOptions, UpdateAsync, options.InitialState, false);
             var oldComputedRef = Interlocked.CompareExchange(
                 ref _computedRef, computed.Input, null);
             if (oldComputedRef != null)

@@ -197,7 +197,7 @@ namespace Stl.Fusion
         {
             var oldComputed = Computed;
             var lTag = ConcurrentIdGenerator.DefaultLTag.Next();
-            var newComputed = new SimpleComputed<T>(this, lTag);
+            var newComputed = new SimpleComputed<T>(Computed.Options, this, lTag);
             try {
                 using var _ = Fusion.Computed.ChangeCurrent(newComputed);
                 await Updater.Invoke(oldComputed, newComputed, cancellationToken).ConfigureAwait(false);

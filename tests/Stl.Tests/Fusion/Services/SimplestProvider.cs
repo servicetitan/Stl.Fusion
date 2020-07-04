@@ -39,7 +39,7 @@ namespace Stl.Tests.Fusion.Services
             return Task.FromResult(_value);
         }
 
-        [ComputedServiceMethod]
+        [ComputedServiceMethod(ErrorAutoInvalidateTimeout = 0.1)]
         public virtual async Task<int> GetCharCountAsync()
         {
             GetCharCountCallCount++;

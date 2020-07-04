@@ -22,11 +22,11 @@ namespace Stl.Samples.Blazor.Client.UI
                     if (_parameter == value)
                         return;
                     _parameter = value;
-                    Owner?.Invalidate();
+                    LiveState?.Invalidate();
                 }
             }
 
-            public ILiveState<CompositionState>? Owner { get; set; }
+            public ILiveState<Local, CompositionState>? LiveState { get; set; }
         }
 
         public class Updater : ILiveStateUpdater<Local, CompositionState>

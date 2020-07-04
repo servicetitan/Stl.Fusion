@@ -4,7 +4,6 @@ using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
-using Stl.Fusion.Bridge.Internal;
 using Stl.Fusion.Internal;
 using Stl.Text;
 
@@ -15,6 +14,7 @@ namespace Stl.Fusion.Bridge
         IReplicator Replicator { get; }
         Symbol PublisherId { get; }
         Symbol PublicationId { get; }
+        ComputedOptions ComputedOptions { get; set; }
         IReplicaComputed Computed { get; }
         bool IsUpdateRequested { get; }
         Exception? UpdateError { get; }
@@ -40,6 +40,8 @@ namespace Stl.Fusion.Bridge
 
     public class Replica<T> : AsyncDisposableBase, IReplicaImpl<T>
     {
+        private volatile ComputedOptions _computedOptions = ComputedOptions.Default;
+
         protected readonly ReplicaInput Input;
         protected volatile IReplicaComputed<T> ComputedField = null!;
         protected volatile Exception? UpdateErrorField;
@@ -50,13 +52,17 @@ namespace Stl.Fusion.Bridge
         public IReplicator Replicator { get; }
         public Symbol PublisherId => Input.PublisherId;
         public Symbol PublicationId => Input.PublicationId;
+        public ComputedOptions ComputedOptions {
+            get => _computedOptions; 
+            set => _computedOptions = value;
+        }
         IReplicaComputed IReplica.Computed => ComputedField;
         public IReplicaComputed<T> Computed => ComputedField;
         public bool IsUpdateRequested => UpdateRequestTask != null;
         public Exception? UpdateError => UpdateErrorField;
 
         public Replica(
-            IReplicator replicator, Symbol publisherId, Symbol publicationId, 
+            IReplicator replicator, Symbol publisherId, Symbol publicationId,
             LTagged<Result<T>> initialOutput, bool isConsistent = true, bool isUpdateRequested = false)
         {
             Replicator = replicator;
@@ -113,12 +119,14 @@ namespace Stl.Fusion.Bridge
                 computed = ComputedField;
                 if (computed == null || computed.LTag != output.LTag)
                     // LTag doesn't match -> replace
-                    ComputedField = new ReplicaComputed<T>(Input, output.Value, output.LTag, isConsistent);
+                    ComputedField = new ReplicaComputed<T>(
+                        ComputedOptions, Input, output.Value, output.LTag, isConsistent);
                 else if (computed.IsConsistent != isConsistent) {
                     // LTag matches:
                     if (isConsistent)
                         // Replace inconsistent w/ the consistent
-                        ComputedField = new ReplicaComputed<T>(Input, output.Value, output.LTag, isConsistent);
+                        ComputedField = new ReplicaComputed<T>(
+                            ComputedOptions, Input, output.Value, output.LTag, isConsistent);
                     // Otherwise it will be invalidated right after exiting the lock 
                 }
                 else {

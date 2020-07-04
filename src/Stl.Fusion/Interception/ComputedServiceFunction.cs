@@ -29,11 +29,8 @@ namespace Stl.Fusion.Interception
             CancellationToken cancellationToken)
         {
             var tag = LTagGenerator.Next(input.HashCode);
-            var output = new Computed<InterceptedInput, T>(input, tag);
             var method = Method;
-            var keepAliveTime = method.KeepAliveTime;
-            if (keepAliveTime.HasValue)
-                output.KeepAliveTime = keepAliveTime.GetValueOrDefault();
+            var output = new Computed<InterceptedInput, T>(method.Options, input, tag);
             try {
                 using var _ = Computed.ChangeCurrent(output);
                 var resultTask = input.InvokeOriginalFunction(cancellationToken);

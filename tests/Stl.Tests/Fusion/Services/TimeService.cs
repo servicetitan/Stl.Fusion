@@ -31,19 +31,9 @@ namespace Stl.Tests.Fusion.Services
             return now;
         }
 
-        [ComputedServiceMethod]
-        public virtual Task<DateTime> GetTimeAsync()
-        {
-            if (IsCaching) {
-                // Self-invalidation
-                var cResult = Computed.GetCurrent();
-                Task.Run(async () => {
-                    await Task.Delay(250).ConfigureAwait(false);
-                    cResult!.Invalidate();
-                });
-            }
-            return Task.FromResult(GetTime());
-        }
+        [ComputedServiceMethod(AutoInvalidateTimeout = 0.25)]
+        public virtual Task<DateTime> GetTimeAsync() 
+            => Task.FromResult(GetTime());
 
         [ComputedServiceMethod]
         public virtual async Task<DateTime> GetTimeWithOffsetAsync(TimeSpan offset)
