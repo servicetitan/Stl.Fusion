@@ -214,9 +214,9 @@ namespace Stl.Fusion
                 Invalidate();
             else {
                 if (output.HasError)
-                    AutoInvalidate(_options.ErrorAutoInvalidateTimeout);
-                else if (_options.AutoInvalidateTimeout.HasValue)
-                    AutoInvalidate(_options.AutoInvalidateTimeout.GetValueOrDefault());
+                    AutoInvalidate(_options.ErrorAutoInvalidateTime);
+                else if (_options.AutoInvalidateTime.HasValue)
+                    AutoInvalidate(_options.AutoInvalidateTime.GetValueOrDefault());
             }
             return true;
         }
@@ -283,7 +283,7 @@ namespace Stl.Fusion
             using var contextUseScope = context.Use();
             context = contextUseScope.Context;
 
-            if ((context.Options & ComputeOptions.Invalidate) == ComputeOptions.Invalidate)
+            if ((context.CallOptions & CallOptions.Invalidate) == CallOptions.Invalidate)
                 Invalidate();
             var usedBy = Computed.GetCurrent();
             ((IComputedImpl?) usedBy)?.AddUsed(this);

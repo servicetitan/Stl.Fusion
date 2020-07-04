@@ -30,7 +30,7 @@ namespace Stl.Tests.Fusion.Services
             };
         }
 
-        [ComputedServiceMethod(AutoInvalidateTimeout = 0.05)]
+        [ComputedServiceMethod(AutoInvalidateTime = 0.05)]
         public virtual async Task<string> GetScreenshotAsync(int width, CancellationToken cancellationToken = default)
         {
             using var screen = Graphics.FromHwnd(IntPtr.Zero);

@@ -76,13 +76,13 @@ namespace Stl.Tests.Fusion
 
             var c1 = await Computed.CaptureAsync(_ => p.GetValueAsync());
             c1.Options.KeepAliveTime.Should().Be(d.KeepAliveTime);
-            c1.Options.ErrorAutoInvalidateTimeout.Should().Be(d.ErrorAutoInvalidateTimeout);
-            c1.Options.AutoInvalidateTimeout.Should().Be(d.AutoInvalidateTimeout);
+            c1.Options.ErrorAutoInvalidateTime.Should().Be(d.ErrorAutoInvalidateTime);
+            c1.Options.AutoInvalidateTime.Should().Be(d.AutoInvalidateTime);
 
             var c2 = await Computed.CaptureAsync(_ => p.GetCharCountAsync());
             c2.Options.KeepAliveTime.Should().Be(d.KeepAliveTime);
-            c2.Options.ErrorAutoInvalidateTimeout.Should().Be(TimeSpan.FromSeconds(0.1));
-            c2.Options.AutoInvalidateTimeout.Should().Be(d.AutoInvalidateTimeout);
+            c2.Options.ErrorAutoInvalidateTime.Should().Be(TimeSpan.FromSeconds(0.1));
+            c2.Options.AutoInvalidateTime.Should().Be(d.AutoInvalidateTime);
         }
     }
 }

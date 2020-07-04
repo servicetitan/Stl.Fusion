@@ -39,7 +39,7 @@ namespace Stl.Fusion
 
         public static async Task<IComputed<T>?> TryCaptureAsync<T>(Func<CancellationToken, Task<T>> producer, CancellationToken cancellationToken = default)
         {
-            using var ccs = ComputeContext.New(ComputeOptions.Capture).Activate();
+            using var ccs = ComputeContext.New(CallOptions.Capture).Activate();
             await producer.Invoke(cancellationToken).ConfigureAwait(false);
             var result = ccs.Context.GetCapturedComputed<T>();
             return result;
@@ -48,7 +48,7 @@ namespace Stl.Fusion
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static async Task<IComputed<T>> CaptureAsync<T>(Func<CancellationToken, Task<T>> producer, CancellationToken cancellationToken = default)
         {
-            using var ccs = ComputeContext.New(ComputeOptions.Capture).Activate();
+            using var ccs = ComputeContext.New(CallOptions.Capture).Activate();
             await producer.Invoke(cancellationToken).ConfigureAwait(false);
             var result = ccs.Context.GetCapturedComputed<T>();
             if (result == null)
@@ -58,7 +58,7 @@ namespace Stl.Fusion
 
         public static IComputed<T>? Invalidate<T>(Func<Task<T>> producer)
         {
-            using var ccs = ComputeContext.New(ComputeOptions.Invalidate).Activate();
+            using var ccs = ComputeContext.New(CallOptions.Invalidate).Activate();
             var task = producer.Invoke();
             // The flow is essentially synchronous in this case, so...
             task.AssertCompleted();
@@ -67,7 +67,7 @@ namespace Stl.Fusion
 
         public static IComputed<T>? TryGetCached<T>(Func<Task<T>> producer)
         {
-            using var ccs = ComputeContext.New(ComputeOptions.TryGetCached).Activate();
+            using var ccs = ComputeContext.New(CallOptions.TryGetCached).Activate();
             var task = producer.Invoke();
             // The flow is essentially synchronous in this case, so...
             task.AssertCompleted();

@@ -68,8 +68,8 @@ namespace Stl.Fusion
 
             var result = TryGetCached(input, usedBy);
             var resultIsConsistent = result?.IsConsistent ?? false;
-            if (resultIsConsistent || (context.Options & ComputeOptions.TryGetCached) != 0) {
-                if ((context.Options & ComputeOptions.Invalidate) == ComputeOptions.Invalidate)
+            if (resultIsConsistent || (context.CallOptions & CallOptions.TryGetCached) != 0) {
+                if ((context.CallOptions & CallOptions.Invalidate) == CallOptions.Invalidate)
                     result?.Invalidate();
                 context.TryCaptureValue(result);
                 return result!;
@@ -79,8 +79,8 @@ namespace Stl.Fusion
             
             result = TryGetCached(input, usedBy);
             resultIsConsistent = result?.IsConsistent ?? false;
-            if (resultIsConsistent || (context.Options & ComputeOptions.TryGetCached) != 0) {
-                if ((context.Options & ComputeOptions.Invalidate) == ComputeOptions.Invalidate)
+            if (resultIsConsistent || (context.CallOptions & CallOptions.TryGetCached) != 0) {
+                if ((context.CallOptions & CallOptions.Invalidate) == CallOptions.Invalidate)
                     result?.Invalidate();
                 context.TryCaptureValue(result);
                 return result!;
@@ -113,8 +113,8 @@ namespace Stl.Fusion
 
             var result = TryGetCached(input, usedBy);
             var resultIsConsistent = result?.IsConsistent ?? false;
-            if (resultIsConsistent || (context.Options & ComputeOptions.TryGetCached) != 0) {
-                if ((context.Options & ComputeOptions.Invalidate) == ComputeOptions.Invalidate)
+            if (resultIsConsistent || (context.CallOptions & CallOptions.TryGetCached) != 0) {
+                if ((context.CallOptions & CallOptions.Invalidate) == CallOptions.Invalidate)
                     result?.Invalidate();
                 context.TryCaptureValue(result);
                 return result.Strip();
@@ -124,8 +124,8 @@ namespace Stl.Fusion
             
             result = TryGetCached(input, usedBy);
             resultIsConsistent = result?.IsConsistent ?? false;
-            if (resultIsConsistent || (context.Options & ComputeOptions.TryGetCached) != 0) {
-                if ((context.Options & ComputeOptions.Invalidate) == ComputeOptions.Invalidate)
+            if (resultIsConsistent || (context.CallOptions & CallOptions.TryGetCached) != 0) {
+                if ((context.CallOptions & CallOptions.Invalidate) == CallOptions.Invalidate)
                     result?.Invalidate();
                 context.TryCaptureValue(result);
                 return result.Strip();

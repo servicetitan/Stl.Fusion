@@ -31,7 +31,7 @@ namespace Stl.Tests.Fusion.Services
             return now;
         }
 
-        [ComputedServiceMethod(AutoInvalidateTimeout = 0.25)]
+        [ComputedServiceMethod(AutoInvalidateTime = 0.25)]
         public virtual Task<DateTime> GetTimeAsync() 
             => Task.FromResult(GetTime());
 

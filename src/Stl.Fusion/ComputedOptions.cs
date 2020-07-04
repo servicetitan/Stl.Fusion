@@ -7,37 +7,37 @@ namespace Stl.Fusion
     public class ComputedOptions
     {
         public static readonly TimeSpan DefaultKeepAliveTime = TimeSpan.FromSeconds(1);
-        public static readonly TimeSpan DefaultErrorAutoInvalidateTimeout = TimeSpan.FromSeconds(1);
+        public static readonly TimeSpan DefaultErrorAutoInvalidateTime = TimeSpan.FromSeconds(1);
         public static readonly ComputedOptions Default = new ComputedOptions();
 
         public TimeSpan KeepAliveTime { get; }
-        public TimeSpan ErrorAutoInvalidateTimeout { get; }
-        public TimeSpan? AutoInvalidateTimeout { get; }
+        public TimeSpan ErrorAutoInvalidateTime { get; }
+        public TimeSpan? AutoInvalidateTime { get; }
 
         public ComputedOptions(
             TimeSpan? keepAliveTime = null, 
-            TimeSpan? errorAutoInvalidateTimeout = null,
-            TimeSpan? autoInvalidateTimeout = null)
+            TimeSpan? errorAutoInvalidateTime = null,
+            TimeSpan? autoInvalidateTime = null)
             : this(
                 keepAliveTime ?? DefaultKeepAliveTime,
-                errorAutoInvalidateTimeout ?? DefaultErrorAutoInvalidateTimeout,
-                autoInvalidateTimeout)
+                errorAutoInvalidateTime ?? DefaultErrorAutoInvalidateTime,
+                autoInvalidateTime)
         { }
 
         [JsonConstructor]
         public ComputedOptions(
             TimeSpan keepAliveTime, 
-            TimeSpan errorAutoInvalidateTimeout,
-            TimeSpan? autoInvalidateTimeout)
+            TimeSpan errorAutoInvalidateTime,
+            TimeSpan? autoInvalidateTime)
         {
             KeepAliveTime = keepAliveTime;
-            ErrorAutoInvalidateTimeout = errorAutoInvalidateTimeout;
-            AutoInvalidateTimeout = autoInvalidateTimeout;
-            if (autoInvalidateTimeout.HasValue) {
-                var ait = AutoInvalidateTimeout.GetValueOrDefault();
-                if (ErrorAutoInvalidateTimeout > ait)
+            ErrorAutoInvalidateTime = errorAutoInvalidateTime;
+            AutoInvalidateTime = autoInvalidateTime;
+            if (autoInvalidateTime.HasValue) {
+                var ait = AutoInvalidateTime.GetValueOrDefault();
+                if (ErrorAutoInvalidateTime > ait)
                     // It just doesn't make sense to keep it higher
-                    ErrorAutoInvalidateTimeout = ait;
+                    ErrorAutoInvalidateTime = ait;
             }
         }
     }

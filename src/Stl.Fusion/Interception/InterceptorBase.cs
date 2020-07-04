@@ -177,8 +177,8 @@ namespace Stl.Fusion.Interception
             var invocationTargetType = proxyMethodInfo.ReflectedType;
             var options = new ComputedOptions(
                 GetTimespan<ComputedServiceMethodAttribute>(attr, a => a.KeepAliveTime),
-                GetTimespan<ComputedServiceMethodAttribute>(attr, a => a.ErrorAutoInvalidateTimeout),
-                GetTimespan<ComputedServiceMethodAttribute>(attr, a => a.AutoInvalidateTimeout)
+                GetTimespan<ComputedServiceMethodAttribute>(attr, a => a.ErrorAutoInvalidateTime),
+                GetTimespan<ComputedServiceMethodAttribute>(attr, a => a.AutoInvalidateTime)
                 ); 
             var parameters = proxyMethodInfo.GetParameters();
             var r = new InterceptedMethod {

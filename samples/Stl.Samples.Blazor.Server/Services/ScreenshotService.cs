@@ -32,7 +32,7 @@ namespace Stl.Samples.Blazor.Server.Services
             _prevScreenshotTask = ScreenshotAsync(128);
         }
 
-        [ComputedServiceMethod(AutoInvalidateTimeout = 0.02)]
+        [ComputedServiceMethod(AutoInvalidateTime = 0.02)]
         public virtual async Task<Screenshot> GetScreenshotAsync(int width, CancellationToken cancellationToken = default)
         {
             // The logic here is a bit complicated b/c we send the last screenshot

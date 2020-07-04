@@ -100,8 +100,8 @@ namespace Stl.Fusion
 
             var result = Computed;
             var resultIsConsistent = result.IsConsistent;
-            if (resultIsConsistent || (context.Options & ComputeOptions.TryGetCached) != 0) {
-                if ((context.Options & ComputeOptions.Invalidate) == ComputeOptions.Invalidate)
+            if (resultIsConsistent || (context.CallOptions & CallOptions.TryGetCached) != 0) {
+                if ((context.CallOptions & CallOptions.Invalidate) == CallOptions.Invalidate)
                     result.Invalidate();
                 ((IComputedImpl?) usedBy)?.AddUsed(result);
                 context.TryCaptureValue(result);
@@ -112,8 +112,8 @@ namespace Stl.Fusion
 
             result = Computed;
             resultIsConsistent = result.IsConsistent;
-            if (resultIsConsistent || (context.Options & ComputeOptions.TryGetCached) != 0) {
-                if ((context.Options & ComputeOptions.Invalidate) == ComputeOptions.Invalidate)
+            if (resultIsConsistent || (context.CallOptions & CallOptions.TryGetCached) != 0) {
+                if ((context.CallOptions & CallOptions.Invalidate) == CallOptions.Invalidate)
                     result.Invalidate();
                 ((IComputedImpl?) usedBy)?.AddUsed(result);
                 context.TryCaptureValue(result);
@@ -149,8 +149,8 @@ namespace Stl.Fusion
 
             var result = Computed;
             var resultIsConsistent = result.IsConsistent;
-            if (resultIsConsistent || (context.Options & ComputeOptions.TryGetCached) != 0) {
-                if ((context.Options & ComputeOptions.Invalidate) == ComputeOptions.Invalidate)
+            if (resultIsConsistent || (context.CallOptions & CallOptions.TryGetCached) != 0) {
+                if ((context.CallOptions & CallOptions.Invalidate) == CallOptions.Invalidate)
                     result.Invalidate();
                 ((IComputedImpl?) usedBy)?.AddUsed(result);
                 context.TryCaptureValue(result);
@@ -161,8 +161,8 @@ namespace Stl.Fusion
 
             result = Computed;
             resultIsConsistent = result.IsConsistent;
-            if (resultIsConsistent || (context.Options & ComputeOptions.TryGetCached) != 0) {
-                if ((context.Options & ComputeOptions.Invalidate) == ComputeOptions.Invalidate)
+            if (resultIsConsistent || (context.CallOptions & CallOptions.TryGetCached) != 0) {
+                if ((context.CallOptions & CallOptions.Invalidate) == CallOptions.Invalidate)
                     result.Invalidate();
                 ((IComputedImpl?) usedBy)?.AddUsed(result);
                 context.TryCaptureValue(result);

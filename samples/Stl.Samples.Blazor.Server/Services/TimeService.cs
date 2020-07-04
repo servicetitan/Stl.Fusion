@@ -15,7 +15,7 @@ namespace Stl.Samples.Blazor.Server.Services
         public TimeService(ILogger<TimeService>? log = null) 
             => _log = log ??= NullLogger<TimeService>.Instance;
 
-        [ComputedServiceMethod(AutoInvalidateTimeout = 0.1)]
+        [ComputedServiceMethod(AutoInvalidateTime = 0.1)]
         public virtual Task<DateTime> GetTimeAsync(CancellationToken cancellationToken = default) 
             => Task.FromResult(DateTime.Now);
     }

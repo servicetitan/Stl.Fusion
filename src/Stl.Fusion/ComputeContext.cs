@@ -7,50 +7,48 @@ namespace Stl.Fusion
     public class ComputeContext
     {
         internal static readonly AsyncLocal<ComputeContext?> CurrentLocal = new AsyncLocal<ComputeContext?>();
-        private static readonly Dictionary<ComputeOptions, ComputeContext> Cache;
+        private static readonly Dictionary<CallOptions, ComputeContext> ContextCache;
         private volatile IComputed? _capturedComputed;
         private volatile int _isUsed;
         
         public static readonly ComputeContext Default;
 
-        public ComputeOptions Options { get; }
+        public CallOptions CallOptions { get; }
         protected bool IsDisposed { get; set; }
         protected bool IsUsed => _isUsed != 0;
 
-        public static ComputeContext New(ComputeOptions options)
+        public static ComputeContext New(CallOptions options)
         {
-            var canUseCache = (options & ComputeOptions.Capture) == 0;
+            var canUseCache = (options & CallOptions.Capture) == 0;
             var context = canUseCache 
-                ? Cache[options] 
+                ? ContextCache[options] 
                 : new ComputeContext(options); 
             return context;
         }
 
         static ComputeContext()
         {
-            var allActions = ComputeOptions.TryGetCached |  ComputeOptions.Invalidate;
-            var cache = new Dictionary<ComputeOptions, ComputeContext>();
-            for (var i = 0; i <= (int) allActions; i++) {
-                var action = (ComputeOptions) i;
+            var allCallOptions = CallOptions.TryGetCached |  CallOptions.Invalidate;
+            var cache = new Dictionary<CallOptions, ComputeContext>();
+            for (var i = 0; i <= (int) allCallOptions; i++) {
+                var action = (CallOptions) i;
                 cache[action] = new CachedComputeContext(action);
             }
-            Cache = cache;
+            ContextCache = cache;
             Default = New(default);
         }
 
-        protected ComputeContext(ComputeOptions options)
-        {
-            Options = options;
-        }
+        protected ComputeContext(CallOptions callOptions) 
+            => CallOptions = callOptions;
 
-        public override string ToString() => $"{GetType().Name}({Options})";
+        public override string ToString() => $"{GetType().Name}({CallOptions})";
 
         public ComputeContextScope Activate() => new ComputeContextScope(this);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void TryCaptureValue(IComputed? value)
         {
-            if (value == null || (Options & ComputeOptions.Capture) == 0)
+            if (value == null || (CallOptions & CallOptions.Capture) == 0)
                 return;
             // We capture the last value
             Interlocked.Exchange(ref _capturedComputed, value);
@@ -68,6 +66,6 @@ namespace Stl.Fusion
 
     internal class CachedComputeContext : ComputeContext
     {
-        internal CachedComputeContext(ComputeOptions options) : base(options) { }
+        internal CachedComputeContext(CallOptions callOptions) : base(callOptions) { }
     }
 }
