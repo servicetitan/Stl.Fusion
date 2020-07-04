@@ -76,7 +76,7 @@ namespace Stl.Fusion.Bridge
         public IComputed<bool> GetPublisherConnectionState(Symbol publisherId) 
             => ChannelProcessors
                 .GetOrAddChecked(publisherId, CreateChannelProcessorHandler)
-                .StateComputedRef.Computed;
+                .StateComputed.Computed;
 
         protected virtual ReplicatorChannelProcessor GetChannelProcessor(Symbol publisherId) 
             => ChannelProcessors

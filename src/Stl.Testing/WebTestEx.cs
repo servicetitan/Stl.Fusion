@@ -20,9 +20,12 @@ namespace Stl.Testing
             return uri;
         }
 
-        public static Uri GetLocalUri(int port) => new Uri($"http://localhost:{port}");
+        public static Uri GetLocalUri(int port) 
+            => new Uri($"http://127.0.0.1:{port}");
 
-        public static Uri GetRandomLocalUri() => GetLocalUri(GetRandomPort());
+        public static Uri GetRandomLocalUri() 
+            => GetLocalUri(GetRandomPort());
+
         public static int GetRandomPort()
         {
             lock (RecentlyUsedPorts) {

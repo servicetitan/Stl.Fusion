@@ -38,7 +38,7 @@ namespace Stl.Fusion.Bridge.Internal
 
         public readonly IReplicator Replicator;
         public readonly Symbol PublisherId;
-        public SimpleComputedInput<bool> StateComputedRef;
+        public SimpleComputedInput<bool> StateComputed;
 
         public ReplicatorChannelProcessor(IReplicator replicator, Symbol publisherId, ILogger? log = null)
         {
@@ -47,8 +47,8 @@ namespace Stl.Fusion.Bridge.Internal
             ReplicatorImpl = (IReplicatorImpl) replicator;
             PublisherId = publisherId;
             Subscriptions = new HashSet<Symbol>();
-            StateComputedRef = SimpleComputed.New<bool>(
-                ComputedOptions.Default, 
+            StateComputed = SimpleComputed.New<bool>(
+                ComputedOptions.NoAutoInvalidateOnError, 
                 (c, ct) => {
                     lock (Lock) {
                         var lastError = LastError;
@@ -189,7 +189,7 @@ namespace Stl.Fusion.Bridge.Internal
             catch {
                 // It's better to suppress all exceptions here
             }
-            StateComputedRef.Computed.Invalidate();
+            StateComputed.Computed.Invalidate();
 
             // Connect task
             var connectTask = Task.Run(async () => {
@@ -228,7 +228,7 @@ namespace Stl.Fusion.Bridge.Internal
                 lock (Lock) {
                     Interlocked.Exchange(ref LastError, null);
                 }
-                StateComputedRef.Computed.Invalidate();
+                StateComputed.Computed.Invalidate();
             });
 
             // Copy task

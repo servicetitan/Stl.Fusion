@@ -121,7 +121,7 @@ namespace Stl.Tests.Async
             var rnd = new Random();
             var tasks = new List<Task>();
 
-            const int taskCount = 1000;
+            const int taskCount = 200;
             const int maxDelayMs = 100;
             const int maxDurationMs = 3;
             const int maxReentryCount = 5;
@@ -135,7 +135,7 @@ namespace Stl.Tests.Async
             }
 
             var expectedRuntime = TimeSpan.FromMilliseconds(
-                2 * maxDelayMs + maxDurationMs * maxReentryCount * taskCount);
+                5 * maxDelayMs + maxDurationMs * maxReentryCount * taskCount);
             Out.WriteLine($"Expected runtime: {expectedRuntime.Seconds:f1}s");
             var start = CpuClock.Now;
             await Task.WhenAll(tasks).AsAsyncFunc()

@@ -8,11 +8,15 @@ namespace Stl.Fusion
     {
         public static readonly TimeSpan DefaultKeepAliveTime = TimeSpan.FromSeconds(1);
         public static readonly TimeSpan DefaultErrorAutoInvalidateTime = TimeSpan.FromSeconds(1);
+        public static readonly TimeSpan DefaultAutoInvalidateTime = TimeSpan.MaxValue; // No auto invalidation
+
         public static readonly ComputedOptions Default = new ComputedOptions();
+        public static readonly ComputedOptions NoAutoInvalidateOnError = 
+            new ComputedOptions(errorAutoInvalidateTime: TimeSpan.MaxValue);
 
         public TimeSpan KeepAliveTime { get; }
         public TimeSpan ErrorAutoInvalidateTime { get; }
-        public TimeSpan? AutoInvalidateTime { get; }
+        public TimeSpan AutoInvalidateTime { get; }
 
         public ComputedOptions(
             TimeSpan? keepAliveTime = null, 
@@ -21,24 +25,21 @@ namespace Stl.Fusion
             : this(
                 keepAliveTime ?? DefaultKeepAliveTime,
                 errorAutoInvalidateTime ?? DefaultErrorAutoInvalidateTime,
-                autoInvalidateTime)
+                autoInvalidateTime ?? DefaultAutoInvalidateTime)
         { }
 
         [JsonConstructor]
         public ComputedOptions(
             TimeSpan keepAliveTime, 
             TimeSpan errorAutoInvalidateTime,
-            TimeSpan? autoInvalidateTime)
+            TimeSpan autoInvalidateTime)
         {
             KeepAliveTime = keepAliveTime;
             ErrorAutoInvalidateTime = errorAutoInvalidateTime;
             AutoInvalidateTime = autoInvalidateTime;
-            if (autoInvalidateTime.HasValue) {
-                var ait = AutoInvalidateTime.GetValueOrDefault();
-                if (ErrorAutoInvalidateTime > ait)
-                    // It just doesn't make sense to keep it higher
-                    ErrorAutoInvalidateTime = ait;
-            }
+            if (ErrorAutoInvalidateTime > autoInvalidateTime)
+                // It just doesn't make sense to keep it higher
+                ErrorAutoInvalidateTime = autoInvalidateTime;
         }
     }
 }

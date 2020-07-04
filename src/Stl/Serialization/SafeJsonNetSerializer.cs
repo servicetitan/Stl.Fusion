@@ -15,7 +15,8 @@ namespace Stl.Serialization
         public Func<Type, bool> Verifier { get; }
         public JsonNetSerializer UnsafeSerializer { get; }
 
-        public SafeJsonNetSerializer(Func<Type, bool> verifier) : this(new JsonNetSerializer(), verifier) { }
+        public SafeJsonNetSerializer(Func<Type, bool> verifier) 
+            : this(new JsonNetSerializer(), verifier) { }
         public SafeJsonNetSerializer(JsonNetSerializer unsafeSerializer, Func<Type, bool> verifier)
         {
             UnsafeSerializer = unsafeSerializer;

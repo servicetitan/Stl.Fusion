@@ -83,9 +83,9 @@ namespace Stl.Tests.Async
         }
 
         [Theory]
-        [InlineData(1000)]
-        [InlineData(1001)]
-        [InlineData(1002)]
+        [InlineData(100)]
+        [InlineData(101)]
+        [InlineData(102)]
         public async Task ConcurrentTest(int iterationCount)
         {
             var start = CpuClock.Now;

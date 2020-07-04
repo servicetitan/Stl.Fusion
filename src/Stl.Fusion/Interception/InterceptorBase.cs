@@ -178,8 +178,7 @@ namespace Stl.Fusion.Interception
             var options = new ComputedOptions(
                 GetTimespan<ComputedServiceMethodAttribute>(attr, a => a.KeepAliveTime),
                 GetTimespan<ComputedServiceMethodAttribute>(attr, a => a.ErrorAutoInvalidateTime),
-                GetTimespan<ComputedServiceMethodAttribute>(attr, a => a.AutoInvalidateTime)
-                ); 
+                GetTimespan<ComputedServiceMethodAttribute>(attr, a => a.AutoInvalidateTime)); 
             var parameters = proxyMethodInfo.GetParameters();
             var r = new InterceptedMethod {
                 MethodInfo = proxyMethodInfo,
@@ -212,9 +211,11 @@ namespace Stl.Fusion.Interception
             if (!(attr is TAttribute typedAttr))
                 return null;
             var value = propertyGetter.Invoke(typedAttr);
-            return double.IsNaN(value) 
-                ? (TimeSpan?) null 
-                : TimeSpan.FromSeconds(value);
+            if (double.IsNaN(value))
+                return null;
+            if (double.IsPositiveInfinity(value))
+                return TimeSpan.MaxValue;
+            return TimeSpan.FromSeconds(value);
         } 
     }
 }

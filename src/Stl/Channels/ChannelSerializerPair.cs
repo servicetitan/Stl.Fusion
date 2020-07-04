@@ -29,5 +29,8 @@ namespace Stl.Channels
             serializer = Serializer;
             deserializer = Deserializer;
         }
+
+        public ChannelSerializerPair<T, TSerialized> Swap()
+            => new ChannelSerializerPair<T, TSerialized>(Deserializer, Serializer);
     }
 }

@@ -213,11 +213,13 @@ namespace Stl.Fusion
             if (mustInvalidate)
                 Invalidate();
             else {
-                if (output.HasError)
-                    AutoInvalidate(_options.ErrorAutoInvalidateTime);
-                else if (_options.AutoInvalidateTime.HasValue)
-                    AutoInvalidate(_options.AutoInvalidateTime.GetValueOrDefault());
+                var timeout = output.HasError
+                    ? _options.ErrorAutoInvalidateTime
+                    : _options.AutoInvalidateTime;
+                if (timeout != TimeSpan.MaxValue)
+                    AutoInvalidate(timeout);
             }
+
             return true;
         }
 

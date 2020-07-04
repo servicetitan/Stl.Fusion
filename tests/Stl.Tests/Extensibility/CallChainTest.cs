@@ -192,7 +192,7 @@ namespace Stl.Tests.Extensibility
             // the calls are async-recursive, so in this case
             // they shouldn't trigger StackOverflowException
             // even for very long chains
-            const int chainLength = 100000; 
+            const int chainLength = 1000; 
             var boxes = Enumerable.Range(0, chainLength).Select(i => Box.New(0)).ToArray();
             await AsyncInvoker.New(boxes, IncrementAsync).RunAsync();
             boxes.Sum(b => b.Value).Should().Be(chainLength);

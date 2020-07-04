@@ -28,7 +28,8 @@ namespace Stl.Fusion.Client
             public TimeSpan ConnectTimeout { get; set; } = TimeSpan.FromSeconds(10);
             public LogLevel? MessageLogLevel { get; set; } = null;
             public int? MessageMaxLength { get; set; } = 2048;
-            public Func<ChannelSerializerPair<Message, string>> ChannelSerializerPairFactory { get; set; } = DefaultChannelSerializerPairFactory;
+            public Func<ChannelSerializerPair<Message, string>> ChannelSerializerPairFactory { get; set; } = 
+                DefaultChannelSerializerPairFactory;
 
             public static ChannelSerializerPair<Message, string> DefaultChannelSerializerPairFactory() 
                 => new ChannelSerializerPair<Message, string>(
@@ -82,12 +83,12 @@ namespace Stl.Fusion.Client
                 
                 await using var wsChannel = new WebSocketChannel(ws);
                 Channel<string> stringChannel = wsChannel; 
-                var serializers = ChannelSerializerPairFactory.Invoke();
                 if (MessageLogLevel.HasValue)
                     stringChannel = stringChannel.WithLogger(
                         clientId, _log, 
                         MessageLogLevel.GetValueOrDefault(),
                         MessageMaxLength);
+                var serializers = ChannelSerializerPairFactory.Invoke();
                 var resultChannel = stringChannel.WithSerializers(serializers);
                 return resultChannel;
             }

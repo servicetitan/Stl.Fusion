@@ -7,6 +7,7 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Stl.Channels;
+using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Messages;
 using Stl.Fusion.Client;
 using Stl.Hosting.Plugins;
@@ -16,6 +17,7 @@ using Stl.Testing;
 using Stl.Tests.Channels;
 using Stl.Tests.Hosting;
 using Stl.Tests.Hosting.Plugins;
+using Stl.Text;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -55,7 +57,7 @@ namespace Stl.Tests.Channels
             HostProvider = new TestMiniHostProvider(@out, typeof(Plugin));
         }
 
-        [Fact(Skip = "Failed test, check this later")]
+        [Fact]
         public async Task KestrelTest()
         {
             Host.Should().NotBeNull();
@@ -65,13 +67,15 @@ namespace Stl.Tests.Channels
             var uri = new Uri($"{HostUrl}ws").ToWss();
             await ws.ConnectAsync(uri, CancellationToken.None);
             var wsChannel = new WebSocketChannel(ws);
-            var mChannel = wsChannel.WithSerializers(WebSocketChannelProvider.Options.DefaultChannelSerializerPairFactory());
+            var defaultOptions = new WebSocketChannelProvider.Options();
+            var serializers = defaultOptions.ChannelSerializerPairFactory.Invoke();
+            var mChannel = wsChannel.WithSerializers(serializers);
 
             // Actual test
-            await mChannel.Writer.WriteAsync(new PublicationStateChangedMessage<int>() { MessageIndex = 100 });
-            var m = await mChannel.Reader.AssertReadAsync();
-            m.Should().BeOfType<PublicationStateChangedMessage<int>>().Which.MessageIndex.Should().Be(100);
-            await mChannel.Writer.WriteAsync(new PublicationAbsentsMessage());
+            await mChannel.Writer.WriteAsync(new SubscribeMessage() { PublisherId = "X" });
+            (await mChannel.Reader.AssertReadAsync())
+                .Should().BeOfType<PublicationAbsentsMessage>();
+            await mChannel.Writer.WriteAsync(new SubscribeMessage());
             await mChannel.Reader.AssertCompletedAsync();
         }
 
@@ -79,12 +83,14 @@ namespace Stl.Tests.Channels
             WebSocket webSocket, CancellationToken cancellationToken = default)
         {
             await using var wsChannel = new WebSocketChannel(webSocket);
-            var mChannel = wsChannel.WithSerializers(WebSocketChannelProvider.Options.DefaultChannelSerializerPairFactory());
+            var defaultOptions = new WebSocketChannelProvider.Options();
+            var serializers = defaultOptions.ChannelSerializerPairFactory.Invoke().Swap();
+            var mChannel = wsChannel.WithSerializers(serializers);
             await Task.Run(async () => {
                 await foreach (var m in mChannel.Reader.ReadAllAsync()) {
-                    if (m is PublicationAbsentsMessage)
+                    if (m is SubscribeMessage sm && sm.PublisherId == Symbol.Null)
                         break;
-                    await mChannel.Writer.WriteAsync(m);
+                    await mChannel.Writer.WriteAsync(new PublicationAbsentsMessage());
                 }
                 mChannel.Writer.TryComplete();
             });

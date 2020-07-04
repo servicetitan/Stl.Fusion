@@ -86,10 +86,10 @@ namespace Stl.Tests.Time
             await speedupTask;
         }
 
-        [Fact(Skip = "Failed test, check this later")]
+        [Fact]
         public async Task IntervalTest()
         {
-            var epsilon = TimeSpan.FromSeconds(0.5);
+            var epsilon = TimeSpan.FromSeconds(1);
             using var clock = new TestClock();
             var realStart = SystemClock.Now;
             var clockStart = clock.Now;
