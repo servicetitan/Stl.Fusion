@@ -27,7 +27,8 @@ jobs:
       - name: Restore & Restore tools
         run: dotnet run --project build --configuration Release --no-launch-profile -- --configuration Debug restore restore-tools
       - name: Unit tests
-        run: dotnet run --project build --configuration Release --no-launch-profile -- --configuration Debug coverage
+        #run: dotnet run --project build --configuration Release --no-launch-profile -- --configuration Debug coverage
+        run: dotnet run --project build --configuration Release --no-launch-profile -- --configuration Debug test
       #- name: Codecov
       #  uses: codecov/codecov-action@v1.0.7
       #  with:
