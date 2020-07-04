@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Threading.Tasks;
 using Autofac;
 using FluentAssertions;
@@ -11,6 +12,7 @@ using Xunit.Abstractions;
 
 namespace Stl.Tests.Fusion
 {
+    [Category(nameof(TimeSensitiveTests))]
     public class ReplicationTest : FusionTestBase, IAsyncLifetime
     {
         public ReplicationTest(ITestOutputHelper @out) : base(@out) { }
@@ -61,7 +63,7 @@ namespace Stl.Tests.Fusion
             });
 
             await Task.Delay(2000);
-            count.Should().BeGreaterThan(4);
+            count.Should().BeGreaterThan(2);
         }
     }
 }

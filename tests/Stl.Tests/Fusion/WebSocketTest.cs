@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Threading.Tasks;
@@ -14,6 +15,7 @@ using Xunit.Abstractions;
 
 namespace Stl.Tests.Fusion
 {
+    [Category(nameof(TimeSensitiveTests))]
     public class WebSocketTest : FusionTestBase
     {
         public WebSocketTest(ITestOutputHelper @out, FusionTestOptions? options = null) 
@@ -45,16 +47,12 @@ namespace Stl.Tests.Fusion
             });
 
             await Task.Delay(2000);
-            count.Should().BeGreaterThan(4);
+            count.Should().BeGreaterThan(2);
         }
 
-        [Fact]
+        [Fact(Timeout = 60_000)]
         public async Task NoConnectionTest()
         {
-            // if (OSInfo.Kind == OSKind.Unix)
-            //     // TODO: Fix this test - it can't complete on GitHub
-            //     return;
-
             await using var serving = await WebSocketServer.ServeAsync();
             var tp = Container.Resolve<ITimeService>();
 
@@ -64,7 +62,7 @@ namespace Stl.Tests.Fusion
                 .Should().ThrowAsync<WebSocketException>();
         }
 
-        [Fact]
+        [Fact(Timeout = 60_000)]
         public async Task DropReconnectTest()
         {
             if (OSInfo.Kind == OSKind.Unix)
