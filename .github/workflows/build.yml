@@ -24,11 +24,13 @@ jobs:
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: 3.1.301
-      - name: Restore & Restore tools
+      - name: Restore NuGet Packages & Tools
         run: dotnet run --project build --configuration Release --no-launch-profile -- --configuration Debug restore restore-tools
-      - name: Unit tests
+      - name: Build
+        run: dotnet run --project build --configuration Release --no-launch-profile -- --configuration Debug build
+      - name: Run tests
         #run: dotnet run --project build --configuration Release --no-launch-profile -- --configuration Debug coverage
-        run: dotnet run --project build --configuration Release --no-launch-profile -- --configuration Debug test
+        run: dotnet test artifacts/tests/Stl.Tests.dll
       #- name: Codecov
       #  uses: codecov/codecov-action@v1.0.7
       #  with:
