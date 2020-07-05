@@ -14,8 +14,8 @@
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <PackageProjectUrl>https://github.com/servicetitan/Stl</PackageProjectUrl>
     <RepositoryUrl>https://github.com/servicetitan/Stl</RepositoryUrl>
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <PackageTags>ServiceTitan Library</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageTags>ServiceTitan;Stl;Stl.Fusion</PackageTags>
     <OutputPath>$(SolutionDir)artifacts\</OutputPath>
     <PackageOutputPath>$(SolutionDir)artifacts\nupkg</PackageOutputPath>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
