@@ -13,7 +13,7 @@ using Xunit.Abstractions;
 
 namespace Stl.Tests.Async
 {
-    [Category(nameof(TimeSensitiveTests))]
+    [Trait("Category", nameof(TimeSensitive))]
     public class AsyncEventSourceTest : TestBase
     {
         public AsyncEventSourceTest(ITestOutputHelper @out) : base(@out) { }

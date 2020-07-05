@@ -25,7 +25,7 @@ using Xunit.Abstractions;
 
 namespace Stl.Tests.Channels
 {
-    [Category(nameof(TimeSensitiveTests))]
+    [Trait("Category", nameof(TimeSensitive))]
     public class WebSocketChannelTest : MiniHostTestBase
     {
         public class Plugin : IConfigureWebAppPlugin, IMiniHostPlugin

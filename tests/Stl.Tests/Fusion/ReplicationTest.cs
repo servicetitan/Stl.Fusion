@@ -12,7 +12,7 @@ using Xunit.Abstractions;
 
 namespace Stl.Tests.Fusion
 {
-    [Category(nameof(TimeSensitiveTests))]
+    [Trait("Category", nameof(TimeSensitive))]
     public class ReplicationTest : FusionTestBase, IAsyncLifetime
     {
         public ReplicationTest(ITestOutputHelper @out) : base(@out) { }

@@ -6,11 +6,12 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Stl.Locking;
 using Stl.Security;
+using Xunit;
 using Xunit.Abstractions;
 
 namespace Stl.Tests.Async
 {
-    [Category(nameof(TimeSensitiveTests))]
+    [Trait("Category", nameof(TimeSensitive))]
     public class AsyncLockSetTest : AsyncLockTestBase
     {
         protected AsyncLockSet<string> CheckedFailSet { get; } = 

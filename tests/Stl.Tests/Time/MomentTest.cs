@@ -2,12 +2,12 @@ using System;
 using FluentAssertions;
 using Stl.Testing;
 using Stl.Time;
-using Stl.Time.Testing;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace Stl.Tests.Time
 {
+    [Trait("Category", nameof(TimeSensitive))]
     public class MomentTest : TestBase
     {
         public MomentTest(ITestOutputHelper @out) : base(@out) { }
@@ -18,7 +18,7 @@ namespace Stl.Tests.Time
             var m = SystemClock.Now;
             var m1 = (Moment) m.ToDateTimeOffset();
             m1.Should().Equals(m);
-            m1 = (Moment) m.ToDateTime();
+            m1 = m.ToDateTime();
             m1.Should().Equals(m);
 
             var e = Event.New("Test", m);

@@ -1,10 +1,10 @@
-using System.ComponentModel;
 using Stl.Locking;
+using Xunit;
 using Xunit.Abstractions;
 
 namespace Stl.Tests.Async
 {
-    [Category(nameof(TimeSensitiveTests))]
+    [Trait("Category", nameof(TimeSensitive))]
     public class AsyncLockTest : AsyncLockTestBase
     {
         public AsyncLockTest(ITestOutputHelper @out) : base(@out) { }

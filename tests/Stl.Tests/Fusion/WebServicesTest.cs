@@ -11,6 +11,7 @@ using Xunit.Abstractions;
 
 namespace Stl.Tests.Fusion
 {
+    [Trait("Category", nameof(TimeSensitive))]
     public class WebServicesTest : FusionTestBase
     {
         public WebServicesTest(ITestOutputHelper @out, FusionTestOptions? options = null) : base(@out, options) { }
