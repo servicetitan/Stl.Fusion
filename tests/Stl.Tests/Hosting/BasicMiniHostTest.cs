@@ -6,7 +6,7 @@ using Xunit.Abstractions;
 
 namespace Stl.Tests.Hosting
 {
-    [Trait("Category", nameof(TimeSensitive))]
+    [Collection(nameof(TimeSensitive)), Trait("Category", nameof(TimeSensitive))]
     public class BasicMiniHostTest : MiniHostTestBase
     {
         public BasicMiniHostTest(ITestOutputHelper @out) : base(@out) { }

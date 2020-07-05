@@ -4,7 +4,7 @@ using Xunit.Abstractions;
 
 namespace Stl.Tests.Async
 {
-    [Trait("Category", nameof(TimeSensitive))]
+    [Collection(nameof(TimeSensitive)), Trait("Category", nameof(TimeSensitive))]
     public class AsyncLockTest : AsyncLockTestBase
     {
         public AsyncLockTest(ITestOutputHelper @out) : base(@out) { }

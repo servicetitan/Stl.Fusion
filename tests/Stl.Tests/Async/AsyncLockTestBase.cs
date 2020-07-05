@@ -13,7 +13,7 @@ using Xunit.Abstractions;
 
 namespace Stl.Tests.Async
 {
-    [Trait("Category", nameof(TimeSensitive))]
+    [Collection(nameof(TimeSensitive)), Trait("Category", nameof(TimeSensitive))]
     public abstract class AsyncLockTestBase : TestBase
     {
         protected class Resource

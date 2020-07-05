@@ -160,7 +160,7 @@ namespace Stl.Tests.Fusion
         }
     }
 
-    [Trait("Category", nameof(TimeSensitive))]
+    [Collection(nameof(TimeSensitive)), Trait("Category", nameof(TimeSensitive))]
     public class PerformanceTest_Sqlite : PerformanceTestBase
     {
         public PerformanceTest_Sqlite(ITestOutputHelper @out) 
@@ -168,7 +168,7 @@ namespace Stl.Tests.Fusion
         { }
     }
 
-    [Trait("Category", nameof(TimeSensitive))]
+    [Collection(nameof(TimeSensitive)), Trait("Category", nameof(TimeSensitive))]
     public class PerformanceTest_InMemoryDb : PerformanceTestBase
     {
         public PerformanceTest_InMemoryDb(ITestOutputHelper @out) 

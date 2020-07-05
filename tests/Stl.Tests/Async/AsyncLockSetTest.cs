@@ -11,7 +11,7 @@ using Xunit.Abstractions;
 
 namespace Stl.Tests.Async
 {
-    [Trait("Category", nameof(TimeSensitive))]
+    [Collection(nameof(TimeSensitive)), Trait("Category", nameof(TimeSensitive))]
     public class AsyncLockSetTest : AsyncLockTestBase
     {
         protected AsyncLockSet<string> CheckedFailSet { get; } = 

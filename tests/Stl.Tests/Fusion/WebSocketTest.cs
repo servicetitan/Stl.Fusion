@@ -15,7 +15,7 @@ using Xunit.Abstractions;
 
 namespace Stl.Tests.Fusion
 {
-    [Trait("Category", nameof(TimeSensitive))]
+    [Collection(nameof(TimeSensitive)), Trait("Category", nameof(TimeSensitive))]
     public class WebSocketTest : FusionTestBase
     {
         public WebSocketTest(ITestOutputHelper @out, FusionTestOptions? options = null) 
