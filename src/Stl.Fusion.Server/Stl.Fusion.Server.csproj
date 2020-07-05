@@ -2,6 +2,13 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <PackageTags>servicetitan stl fusion server</PackageTags>
+    <Description>
+      Server-side components of Stl.Fusion -
+      a Knockout.js-style computed/observable abstraction
+      designed to power distributed apps: immutable, thread-safe, and
+      capable of providing its observable replicas to remote clients.
+    </Description>
   </PropertyGroup>
 
   <ItemGroup>

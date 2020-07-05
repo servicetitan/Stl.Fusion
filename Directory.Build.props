@@ -1,23 +1,27 @@
 <Project ToolsVersion="latest" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <SolutionDir Condition="$(SolutionDir) == ''">$(MSBuildThisFileDirectory.TrimEnd('\').TrimEnd('/'))\</SolutionDir>
+    <Authors>ServiceTitan, Inc.</Authors>
+    <Company>ServiceTitan, Inc.</Company>
+    <Copyright>Copyright ServiceTitan, Inc.</Copyright>
+    <PackageProjectUrl>https://github.com/servicetitan/Stl</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/servicetitan/Stl</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>servicetitan stl</PackageTags>
+    <Description>A part of ServiceTitan Library.</Description>
     <NoLogo>true</NoLogo>
-    <Authors>ServiceTitan</Authors>
-    <Company>ServiceTitan</Company>
-    <Description>Stl = ServiceTitan Library</Description>
+    <!--
     <ApplicationIcon>$(MSBuildThisFileDirectory)\docs\img\icon.ico</ApplicationIcon>
     <PackageIconUrl>https://github.com/servicetitan/Stl/master/docs/img/icon.ico</PackageIconUrl>
-    <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
-    <NoPackageAnalysis>true</NoPackageAnalysis>
-    <DefaultLanguage>en-US</DefaultLanguage>
+    -->
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <NoPackageAnalysis>false</NoPackageAnalysis>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
-    <PackageProjectUrl>https://github.com/servicetitan/Stl</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/servicetitan/Stl</RepositoryUrl>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageTags>ServiceTitan;Stl;Stl.Fusion</PackageTags>
     <OutputPath>$(SolutionDir)artifacts\</OutputPath>
     <PackageOutputPath>$(SolutionDir)artifacts\nupkg</PackageOutputPath>
+    <DefaultLanguage>en-US</DefaultLanguage>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <!-- embedded not recommended yet for libs and nupkg, track this in https://github.com/dotnet/sdk/issues/2679 -->
     <!-- also embedded doesn't work with dotnet pack without nuspec or IncludeBuildOutput = false -->

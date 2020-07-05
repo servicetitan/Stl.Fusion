@@ -3,6 +3,10 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <IsTestProject>false</IsTestProject>
+    <PackageTags>servicetitan stl testing</PackageTags>
+    <Description>
+      A set of helpers for Unit and Integration testing.
+    </Description>
   </PropertyGroup>
 
   <ItemGroup>

@@ -3,6 +3,10 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <RootNamespace>Stl</RootNamespace>
+    <PackageTags>servicetitan stl experimental</PackageTags>
+    <Description>
+      Either obsolete or experimental pieces of "Stl" library.
+    </Description>
   </PropertyGroup>
 
   <ItemGroup>

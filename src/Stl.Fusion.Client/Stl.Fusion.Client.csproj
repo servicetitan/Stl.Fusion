@@ -3,6 +3,13 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <OutputType>Library</OutputType>
+    <PackageTags>servicetitan stl fusion client</PackageTags>
+    <Description>
+      Client-side components of Stl.Fusion -
+      a Knockout.js-style computed/observable abstraction
+      designed to power distributed apps: immutable, thread-safe, and
+      capable of providing its observable replicas to remote clients.
+    </Description>
   </PropertyGroup>
 
   <ItemGroup>

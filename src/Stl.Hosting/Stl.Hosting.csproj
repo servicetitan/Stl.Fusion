@@ -2,6 +2,11 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <PackageTags>servicetitan stl hosting</PackageTags>
+    <Description>
+      An experimental host builder that supports extensibility
+      via Stl.Plugins. Likely it won't survive 2020 :/
+    </Description>
   </PropertyGroup>
   
   <ItemGroup>

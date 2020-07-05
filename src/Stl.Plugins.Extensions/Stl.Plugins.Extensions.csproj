@@ -2,6 +2,11 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <PackageTags>servicetitan stl plugins extensions</PackageTags>
+    <Description>
+      A few useful helpers simplifying development
+      of the most common kinds of plugins.  
+    </Description>
   </PropertyGroup>
 
   <ItemGroup>
