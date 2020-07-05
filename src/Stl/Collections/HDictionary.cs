@@ -24,7 +24,7 @@ namespace Stl.Collections
 
         public TItem GetOrAdd(TKey key, Func<TKey, TItem> factory)
         {
-            var item = this.Get(key, null!);
+            var item = this.TryGetOrDefault(key, null!);
             if (item == null) {
                 item = factory.Invoke(key);
                 Add(key, item);

@@ -1,14 +1,15 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Hosting;
 
 namespace Stl.Async
 {
-    public interface IAsyncProcess : IAsyncDisposable
+    public interface IAsyncProcess : IAsyncDisposable, IHostedService
     {
         CancellationToken StopToken { get; }
         Task? RunningTask { get; }
-        Task RunAsync();
+        Task RunAsync(); 
     }
 
     public abstract class AsyncProcessBase : AsyncDisposableBase, IAsyncProcess
@@ -26,16 +27,29 @@ namespace Stl.Async
 
         public Task RunAsync()
         {
+            if (RunningTask != null)
+                return RunningTask;
             lock (Lock) {
-                if (RunningTask == null)
-                    RunningTask = Task
-                        .Run(() => RunInternalAsync(StopToken), CancellationToken.None)
-                        .SuppressCancellation();
+                if (RunningTask != null)
+                    return RunningTask;
+                ThrowIfDisposedOrDisposing();
+                RunningTask = Task
+                    .Run(() => RunInternalAsync(StopToken), CancellationToken.None)
+                    .SuppressCancellation();
             }
             return RunningTask;
         }
 
         protected abstract Task RunInternalAsync(CancellationToken cancellationToken);
+
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
+            RunAsync();
+            return Task.CompletedTask;
+        }
+
+        public async Task StopAsync(CancellationToken cancellationToken) 
+            => await DisposeAsync();
 
         protected override async ValueTask DisposeInternalAsync(bool disposing)
         {

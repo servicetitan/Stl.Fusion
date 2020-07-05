@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Stl.Reflection;
+using Stl.Concurrency;
 
 namespace Stl.Extensibility
 {

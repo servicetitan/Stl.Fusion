@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using Microsoft.Extensions.DependencyInjection;
-using Stl.Reflection;
+using Stl.Concurrency;
 
 namespace Stl.Plugins.Services
 {

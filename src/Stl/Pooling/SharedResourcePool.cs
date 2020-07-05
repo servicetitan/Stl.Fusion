@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
-using Stl.Collections;
+using Stl.Concurrency;
 using Stl.Internal;
 using Stl.Locking;
 

@@ -4,7 +4,7 @@ using System.Threading;
 using Stl.Mathematics;
 using Stl.OS;
 
-namespace Stl.Concurrency.Experimental
+namespace Stl.Concurrency
 {
     public sealed class ConcurrentCounter
     {

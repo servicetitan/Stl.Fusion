@@ -8,8 +8,8 @@ using System.Threading.Tasks;
 using Castle.DynamicProxy;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Stl.Concurrency;
 using Stl.Fusion.Interception.Internal;
-using Stl.Reflection;
 using Stl.Time;
 
 namespace Stl.Fusion.Interception

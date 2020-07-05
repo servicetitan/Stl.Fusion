@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Concurrent;
 using Castle.DynamicProxy;
+using Stl.Concurrency;
 using Stl.Fusion.Bridge.Interception.Internal;
-using Stl.Reflection;
 
 namespace Stl.Fusion.Bridge.Interception
 {

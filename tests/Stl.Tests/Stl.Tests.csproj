@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Stl.Experimental\Stl.Experimental.csproj" />
     <ProjectReference Include="..\..\src\Stl.CommandLine\Stl.CommandLine.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.Client\Stl.Fusion.Client.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.Server\Stl.Fusion.Server.csproj" />
