@@ -50,7 +50,7 @@ namespace Stl.Tests.Fusion
             count.Should().BeGreaterThan(2);
         }
 
-        [Fact(Timeout = 60_000)]
+        [Fact(Timeout = 120_000)]
         public async Task NoConnectionTest()
         {
             await using var serving = await WebSocketServer.ServeAsync();
@@ -62,7 +62,7 @@ namespace Stl.Tests.Fusion
                 .Should().ThrowAsync<WebSocketException>();
         }
 
-        [Fact(Timeout = 60_000)]
+        [Fact(Timeout = 120_000)]
         public async Task DropReconnectTest()
         {
             if (OSInfo.Kind == OSKind.Unix)

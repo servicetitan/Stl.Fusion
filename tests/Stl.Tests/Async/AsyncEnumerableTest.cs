@@ -11,6 +11,7 @@ using Xunit.Abstractions;
 
 namespace Stl.Tests.Async
 {
+    [Collection(nameof(TimeSensitive)), Trait("Category", nameof(TimeSensitive))]
     public class AsyncEnumerableTest : TestBase
     {
         public AsyncEnumerableTest(ITestOutputHelper @out) : base(@out) { }
