@@ -14,7 +14,7 @@ Before jumping into the details, let's play with `IComputed` first.
 The simplest way to create a new `IComputed<TOut>` instance ("computed" further) is
 to use `SimpestComputed.New` shortcuts.
 
-``` cs --region part01_create --source-file ./Part01.cs
+``` cs --region part01_create --source-file Part01.cs --project Tutorial.csproj
 ```
 
 #### [Next: Part 2 &raquo;](./Part02.md) | [Tutorial Home](./README.md)

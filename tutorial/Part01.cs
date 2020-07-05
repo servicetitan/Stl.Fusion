@@ -6,9 +6,9 @@ using static System.Console;
 
 namespace Tutorial
 {
-    public class Part01
+    public static class Part01
     {
-        public async Task Create()
+        public static async Task Create()
         {
             #region part01_create
             // Later we'll show you much nicer ways to create IComputed instances,
@@ -19,7 +19,7 @@ namespace Tutorial
             #endregion
         }
 
-        public async Task Invalidate()
+        public static async Task Invalidate()
         {
             #region part01_invalidate
             var cCount = SimpleComputed.New(async (prev, ct) => prev.Value + 1, Result.New(1));
@@ -29,7 +29,7 @@ namespace Tutorial
             #endregion
         }
 
-        public async Task TheRest()
+        public static async Task TheRest()
         {
             #region update
             var cCount = SimpleComputed.New(async (prev, ct) => prev.Value + 1, Result.New(1));

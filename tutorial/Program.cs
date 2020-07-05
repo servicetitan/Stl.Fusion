@@ -1,16 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
+using System.Reflection;
 using System.Threading.Tasks;
-using Stl.Collections;
-using Stl.Reflection;
 
 namespace Tutorial
 {
     public class Program
     {
-        public static async Task Main(
+        public static void Main(
             string? region = null,
             string? session = null,
             string? package = null,
@@ -23,17 +20,17 @@ namespace Tutorial
             var methodName = parts[1];
             
             var type = typeof(Program).Assembly.GetTypes()
-                .SingleOrDefault(t => t.Name.ToLowerInvariant() == typeName && !@t.IsAbstract);
+                .SingleOrDefault(t => t.Name.ToLowerInvariant() == typeName);
             if (type == null)
-                throw new ArgumentOutOfRangeException(nameof(region));
-            var method = type.GetMethod(methodName);
+                throw new ArgumentOutOfRangeException(nameof(region), $"No type named as '{typeName}' found.");
+            var method = type.GetMethod(methodName, 
+                BindingFlags.Public | BindingFlags.Static | BindingFlags.IgnoreCase);
             if (method == null)
-                throw new ArgumentOutOfRangeException(nameof(region));
+                throw new ArgumentOutOfRangeException(nameof(region), $"No method named as '{methodName}' found.");
 
-            var instance = type.CreateInstance();
-            var result = method.Invoke(instance, Array.Empty<object>());
+            var result = method.Invoke(null, Array.Empty<object>());
             if (result is Task task)
-                await task;
+                task.Wait();
         }
     }
 }

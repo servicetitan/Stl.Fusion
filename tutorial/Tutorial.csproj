@@ -3,6 +3,10 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <IsPackable>False</IsPackable>
+    <IsPublishable>False</IsPublishable>
     <!-- 1591: Missing XML comment for publicly visible type or member '*' -->
     <!-- 1998: [CS1998] This async method lacks 'await' operators and will run synchronously. -->
     <NoWarn>$(NoWarn);1591;1998</NoWarn>
