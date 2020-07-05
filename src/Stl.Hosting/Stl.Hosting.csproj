@@ -7,6 +7,8 @@
       An experimental host builder that supports extensibility
       via Stl.Plugins. Likely it won't survive 2020 :/
     </Description>
+    <IsPackable>false</IsPackable>
+    <IsPublishable>false</IsPublishable>
   </PropertyGroup>
   
   <ItemGroup>

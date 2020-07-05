@@ -7,6 +7,8 @@
     <Description>
       Either obsolete or experimental pieces of "Stl" library.
     </Description>
+    <IsPackable>false</IsPackable>
+    <IsPublishable>false</IsPublishable>
   </PropertyGroup>
 
   <ItemGroup>
