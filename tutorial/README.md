@@ -12,4 +12,5 @@ code of Fusion samples.
 
 Without further ado:
 * [Part 1: `IComputed<T>` and its key properties](./Part01.md)
-* [Part 2: `IComputedService`](./Part02.md)
+* [Part 2: Dependencies](./Part02.md)
+* [Part 3: `IComputedService`](./Part03.md)
