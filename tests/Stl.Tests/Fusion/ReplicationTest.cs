@@ -28,7 +28,7 @@ namespace Stl.Tests.Fusion
             p1.Should().NotBeNull();
 
             var r1 = Replicator.GetOrAdd<string>(p1!.Publisher.Id, p1.Id, true);
-            var r1c = await r1.Computed.UpdateAsync();
+            var r1c = await r1.Computed.UpdateAsync(false);
             r1c.IsConsistent.Should().BeTrue();
             r1c.Value.Should().Be("");
             r1.Computed.Should().Be(r1c);

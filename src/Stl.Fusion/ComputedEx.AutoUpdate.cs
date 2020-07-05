@@ -40,7 +40,8 @@ namespace Stl.Fusion
                         IComputed<TOut> nextComputed;
                         Exception? error = null;
                         try {
-                            nextComputed = await prevComputed.UpdateAsync(stopToken).ConfigureAwait(false);
+                            nextComputed = await prevComputed
+                                .UpdateAsync(false, stopToken).ConfigureAwait(false);
                         }
                         catch (Exception e) {
                             nextComputed = prevComputed;

@@ -1,10 +1,8 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Reactive;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using Stl.Async;
 using Stl.Collections;
 using Stl.Collections.Slim;
 using Stl.Frozen;
@@ -33,11 +31,13 @@ namespace Stl.Fusion
         Moment LastAccessTime { get; }
 
         bool Invalidate();
-        ValueTask<IComputed> UpdateAsync(CancellationToken cancellationToken = default);
-        ValueTask<IComputed> UpdateAsync(ComputeContext context, CancellationToken cancellationToken = default);
-
         void Touch();
         TResult Apply<TArg, TResult>(IComputedApplyHandler<TArg, TResult> handler, TArg arg);
+
+        ValueTask<IComputed> UpdateAsync(bool addDependency, CancellationToken cancellationToken = default);
+        ValueTask<IComputed> UpdateAsync(bool addDependency, ComputeContext context, CancellationToken cancellationToken = default);
+        ValueTask<object> UseAsync(CancellationToken cancellationToken = default);
+        ValueTask<object> UseAsync(ComputeContext context, CancellationToken cancellationToken = default);
     }
     
     public interface IComputed<TOut> : IComputed, IResult<TOut>
@@ -47,8 +47,10 @@ namespace Stl.Fusion
         bool TrySetOutput(Result<TOut> output);
         void SetOutput(Result<TOut> output);
 
-        new ValueTask<IComputed<TOut>> UpdateAsync(CancellationToken cancellationToken = default);
-        new ValueTask<IComputed<TOut>> UpdateAsync(ComputeContext context, CancellationToken cancellationToken = default);
+        new ValueTask<IComputed<TOut>> UpdateAsync(bool addDependency, CancellationToken cancellationToken = default);
+        new ValueTask<IComputed<TOut>> UpdateAsync(bool addDependency, ComputeContext context, CancellationToken cancellationToken = default);
+        new ValueTask<TOut> UseAsync(CancellationToken cancellationToken = default);
+        new ValueTask<TOut> UseAsync(ComputeContext context, CancellationToken cancellationToken = default);
     }
     
     public interface IComputedWithTypedInput<out TIn> : IComputed 
@@ -269,28 +271,43 @@ namespace Stl.Fusion
             }
         }
 
-        // UpdateAsync methods
+        // UpdateAsync
 
-        async ValueTask<IComputed> IComputed.UpdateAsync(CancellationToken cancellationToken) 
-            => await UpdateAsync(null!, cancellationToken).ConfigureAwait(false);
-        async ValueTask<IComputed> IComputed.UpdateAsync(ComputeContext context, CancellationToken cancellationToken) 
-            => await UpdateAsync(cancellationToken).ConfigureAwait(false);
-        public ValueTask<IComputed<TOut>> UpdateAsync(CancellationToken cancellationToken = default)
-            => UpdateAsync(null!, cancellationToken);
-        public async ValueTask<IComputed<TOut>> UpdateAsync(ComputeContext context, CancellationToken cancellationToken = default)
+        async ValueTask<IComputed> IComputed.UpdateAsync(bool addDependency, CancellationToken cancellationToken) 
+            => await UpdateAsync(addDependency, null!, cancellationToken).ConfigureAwait(false);
+        async ValueTask<IComputed> IComputed.UpdateAsync(bool addDependency, ComputeContext context, CancellationToken cancellationToken) 
+            => await UpdateAsync(addDependency, cancellationToken).ConfigureAwait(false);
+        public ValueTask<IComputed<TOut>> UpdateAsync(bool addDependency, CancellationToken cancellationToken = default)
+            => UpdateAsync(addDependency, null!, cancellationToken);
+        public async ValueTask<IComputed<TOut>> UpdateAsync(bool addDependency, ComputeContext context, CancellationToken cancellationToken = default)
         {
+            var usedBy = addDependency ? Computed.GetCurrent() : null; 
+
             if (!IsConsistent)
-                return await Function.InvokeAsync(Input, null, context, cancellationToken);
+                return await Function.InvokeAsync(Input, usedBy, context, cancellationToken);
 
             using var contextUseScope = context.Use();
             context = contextUseScope.Context;
 
             if ((context.CallOptions & CallOptions.Invalidate) == CallOptions.Invalidate)
                 Invalidate();
-            var usedBy = Computed.GetCurrent();
             ((IComputedImpl?) usedBy)?.AddUsed(this);
             context.TryCaptureValue(this);
             return this;
+        }
+
+        // UseAsync
+
+        async ValueTask<object> IComputed.UseAsync(CancellationToken cancellationToken) 
+            => (await UseAsync(null!, cancellationToken).ConfigureAwait(false))!;
+        async ValueTask<object> IComputed.UseAsync( ComputeContext context, CancellationToken cancellationToken) 
+            => (await UseAsync(context, cancellationToken).ConfigureAwait(false))!; 
+        public ValueTask<TOut> UseAsync(CancellationToken cancellationToken = default) 
+            => UseAsync(null!, cancellationToken);
+        public async ValueTask<TOut> UseAsync(ComputeContext context, CancellationToken cancellationToken = default)
+        {
+            var computed = await UpdateAsync(true, context, cancellationToken).ConfigureAwait(false);
+            return computed.Value;
         }
 
         // Touch

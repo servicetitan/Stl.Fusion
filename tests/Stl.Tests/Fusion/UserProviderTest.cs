@@ -102,13 +102,13 @@ namespace Stl.Tests.Fusion
             };
             await users.CreateAsync(u, true);
 
-            var cText = (IComputed<string>) await SimpleComputed.NewAsync<string>(
+            var cText = await SimpleComputed.New<string>(
                 async (prev, cancellationToken) => {
                     Debug.WriteLine("p1");
                     var norris = await users.TryGetAsync(int.MaxValue, cancellationToken).ConfigureAwait(false);
                     var now = await time.GetTimeAsync().ConfigureAwait(false);
                     return $"@ {now:hh:mm:ss.fff}: {norris?.Name ?? "(none)"}";  
-                }, CancellationToken.None);
+                }).UpdateAsync(false);
             
             using var _ = cText.AutoUpdate((cNext, rPrev, updateError) => {
                 Log.LogInformation(cNext.Value);
@@ -120,8 +120,8 @@ namespace Stl.Tests.Fusion
                 await Task.Delay(100);
             }
 
-            cText = await cText.UpdateAsync();
-            cText!.Value.Should().EndWith("Lvl10");
+            var text = await cText.UseAsync();
+            text.Should().EndWith("Lvl10");
         }
 
         [Fact]

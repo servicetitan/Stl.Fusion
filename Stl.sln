@@ -14,6 +14,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_root", "_root", "{35F39E26
 		version.json = version.json
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{F92C91E5-07F7-435E-B1A8-720C4F2F3766}"
+	ProjectSection(SolutionItems) = preProject
+		build\Directory.Build.props = build\Directory.Build.props
+	EndProjectSection
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{A50B98CF-9AA1-4622-B2AD-5E17610115A7}"
 	ProjectSection(SolutionItems) = preProject
 		src\Directory.Build.props = src\Directory.Build.props
@@ -28,6 +33,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{D633
 	ProjectSection(SolutionItems) = preProject
 		samples\Directory.Build.props = samples\Directory.Build.props
 	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tutorial", "tutorial", "{73821472-B678-4E93-8118-5FC748C2F945}"
+ProjectSection(SolutionItems) = preProject
+	D:\C\ServiceTitan\Stl\tutorial\Directory.Build.props = D:\C\ServiceTitan\Stl\tutorial\Directory.Build.props
+EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl", "src\Stl\Stl.csproj", "{9637C3C9-794B-44B2-9A91-96E4B5837516}"
 EndProject
@@ -55,14 +65,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl.Samples.Blazor.Common",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl.Samples.Blazor.Server", "samples\Stl.Samples.Blazor.Server\Stl.Samples.Blazor.Server.csproj", "{E8418F8B-4CEC-487F-9CA7-378A7067DC6F}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{F92C91E5-07F7-435E-B1A8-720C4F2F3766}"
-	ProjectSection(SolutionItems) = preProject
-		build\Directory.Build.props = build\Directory.Build.props
-	EndProjectSection
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Build", "build\Build.csproj", "{812FB859-81E3-4386-AFEE-4A1CC6D20AED}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Fusion.Blazor", "src\Stl.Fusion.Blazor\Stl.Fusion.Blazor.csproj", "{A1B918A1-93A3-477C-AE25-CC6A7907FEAC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tutorial", "tutorial\code\Tutorial.csproj", "{B72487AC-0C06-4262-94C0-FD54310FBC3C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -252,6 +259,18 @@ Global
 		{A1B918A1-93A3-477C-AE25-CC6A7907FEAC}.Release|x64.Build.0 = Release|Any CPU
 		{A1B918A1-93A3-477C-AE25-CC6A7907FEAC}.Release|x86.ActiveCfg = Release|Any CPU
 		{A1B918A1-93A3-477C-AE25-CC6A7907FEAC}.Release|x86.Build.0 = Release|Any CPU
+		{B72487AC-0C06-4262-94C0-FD54310FBC3C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B72487AC-0C06-4262-94C0-FD54310FBC3C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B72487AC-0C06-4262-94C0-FD54310FBC3C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B72487AC-0C06-4262-94C0-FD54310FBC3C}.Debug|x64.Build.0 = Debug|Any CPU
+		{B72487AC-0C06-4262-94C0-FD54310FBC3C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B72487AC-0C06-4262-94C0-FD54310FBC3C}.Debug|x86.Build.0 = Debug|Any CPU
+		{B72487AC-0C06-4262-94C0-FD54310FBC3C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B72487AC-0C06-4262-94C0-FD54310FBC3C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B72487AC-0C06-4262-94C0-FD54310FBC3C}.Release|x64.ActiveCfg = Release|Any CPU
+		{B72487AC-0C06-4262-94C0-FD54310FBC3C}.Release|x64.Build.0 = Release|Any CPU
+		{B72487AC-0C06-4262-94C0-FD54310FBC3C}.Release|x86.ActiveCfg = Release|Any CPU
+		{B72487AC-0C06-4262-94C0-FD54310FBC3C}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -272,6 +291,7 @@ Global
 		{E8418F8B-4CEC-487F-9CA7-378A7067DC6F} = {D6336AFB-F892-4D7B-BF26-BDE847CEF7E3}
 		{812FB859-81E3-4386-AFEE-4A1CC6D20AED} = {F92C91E5-07F7-435E-B1A8-720C4F2F3766}
 		{A1B918A1-93A3-477C-AE25-CC6A7907FEAC} = {A50B98CF-9AA1-4622-B2AD-5E17610115A7}
+		{B72487AC-0C06-4262-94C0-FD54310FBC3C} = {73821472-B678-4E93-8118-5FC748C2F945}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B50610D6-2B28-4258-98A2-A0B486FD5907}

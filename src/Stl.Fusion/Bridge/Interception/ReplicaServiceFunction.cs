@@ -55,7 +55,8 @@ namespace Stl.Fusion.Bridge.Interception
             if (cached is IReplicaServiceComputed<T> rsc && rsc.Replica != null) {
                 try {
                     var replica = rsc.Replica;
-                    var computed = await replica.Computed.UpdateAsync(cancellationToken).ConfigureAwait(false);
+                    var computed = await replica.Computed
+                        .UpdateAsync(true, cancellationToken).ConfigureAwait(false);
                     var replicaComputed = (IReplicaComputed<T>) computed;
                     var output = new ReplicaServiceComputed<T>(
                         method.Options, replicaComputed, input);
@@ -97,7 +98,8 @@ namespace Stl.Fusion.Bridge.Interception
                     }
                 }
                 var replica = replicaCapture.GetCapturedReplica<T>();
-                var computed = await replica.Computed.UpdateAsync(cancellationToken).ConfigureAwait(false);
+                var computed = await replica.Computed
+                    .UpdateAsync(true, cancellationToken).ConfigureAwait(false);
                 var replicaComputed = (IReplicaComputed<T>) computed;
                 var output = new ReplicaServiceComputed<T>(
                     method.Options, replicaComputed, input);

@@ -95,7 +95,8 @@ namespace Stl.Fusion.Bridge
             var state = StateField;
             if (state.IsDisposed || state.Computed.IsConsistent)
                 return;
-            var newComputed = await state.Computed.UpdateAsync(cancellationToken).ConfigureAwait(false);
+            var newComputed = await state.Computed
+                .UpdateAsync(false, cancellationToken).ConfigureAwait(false);
             var newState = CreatePublicationState(newComputed);
             ChangeState(newState, state);
         }

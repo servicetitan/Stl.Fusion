@@ -26,8 +26,8 @@ namespace Stl.Tests.Fusion
 
             await Task.Delay(TimeSpan.FromSeconds(2));
             cTime.IsConsistent.Should().BeFalse();
-            cTime = await cTime.UpdateAsync();
-            (DateTime.Now - cTime.Value).Should().BeLessThan(TimeSpan.FromSeconds(1));
+            var time = await cTime.UseAsync();
+            (DateTime.Now - time).Should().BeLessThan(TimeSpan.FromSeconds(1));
         }
 
         [Fact]
@@ -43,7 +43,7 @@ namespace Stl.Tests.Fusion
             Debug.WriteLine("0");
             stm.UpdateDelayer.CancelDelays();
             Debug.WriteLine("1");
-            await c.UpdateAsync();
+            await c.UpdateAsync(false);
             Debug.WriteLine("2");
 
             c = stm.State;
@@ -79,7 +79,7 @@ namespace Stl.Tests.Fusion
             Debug.WriteLine("0");
             stm.UpdateDelayer.CancelDelays();
             Debug.WriteLine("1");
-            await c.UpdateAsync();
+            await c.UpdateAsync(false);
             Debug.WriteLine("2");
 
             c = stm.State;

@@ -47,7 +47,7 @@ namespace Stl.Fusion.Bridge.Internal
             ReplicatorImpl = (IReplicatorImpl) replicator;
             PublisherId = publisherId;
             Subscriptions = new HashSet<Symbol>();
-            StateComputed = SimpleComputed.New<bool>(
+            StateComputed = ((SimpleComputed<bool>) SimpleComputed.New<bool>(
                 ComputedOptions.NoAutoInvalidateOnError, 
                 (c, ct) => {
                     lock (Lock) {
@@ -56,7 +56,7 @@ namespace Stl.Fusion.Bridge.Internal
                             return Task.FromException<bool>(lastError);
                         return Task.FromResult(ChannelTask.IsCompleted);
                     }
-                })
+                }))
                 .Input;
             // ReSharper disable once VirtualMemberCallInConstructor
             Reconnect();

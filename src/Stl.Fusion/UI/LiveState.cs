@@ -138,7 +138,7 @@ namespace Stl.Fusion.UI
 
         private void Start(Options options)
         {
-            var computed = SimpleComputed.New(
+            var computed = (SimpleComputed<TState>) SimpleComputed.New(
                 options.StateOptions, UpdateAsync, options.InitialState, false);
             var oldComputedRef = Interlocked.CompareExchange(
                 ref _computedRef, computed.Input, null);
@@ -168,7 +168,7 @@ namespace Stl.Fusion.UI
                     cancellationToken.ThrowIfCancellationRequested();
                     if (updateIndex != 0 || _delayFirstUpdate)
                         await UpdateDelayer.DelayAsync(cancellationToken).ConfigureAwait(false);
-                    await computed.UpdateAsync(cancellationToken).ConfigureAwait(false);
+                    await computed.UpdateAsync(false, cancellationToken).ConfigureAwait(false);
                 }
                 finally {
                     cancellationToken.ThrowIfCancellationRequested();
