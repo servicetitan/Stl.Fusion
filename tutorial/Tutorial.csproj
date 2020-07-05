@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <!-- 1591: Missing XML comment for publicly visible type or member '*' -->
+    <!-- 1998: [CS1998] This async method lacks 'await' operators and will run synchronously. -->
+    <NoWarn>$(NoWarn);1591;1998</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove=".trydotnet" />
+    <None Remove="msbuild.log" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\src\Stl.Fusion.Client\Stl.Fusion.Client.csproj" />
+    <ProjectReference Include="..\src\Stl.Fusion.Server\Stl.Fusion.Server.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.CommandLine.DragonFruit" />
+    <PackageReference Include="System.CommandLine" />
+  </ItemGroup>
+
+</Project>

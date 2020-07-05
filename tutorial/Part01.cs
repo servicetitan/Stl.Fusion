@@ -1,5 +1,4 @@
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 using Stl;
 using Stl.Fusion;
@@ -7,26 +6,34 @@ using static System.Console;
 
 namespace Tutorial
 {
-    public class Part01 : ITutorialPart
+    public class Part01
     {
-        public async Task RunAsync(CancellationToken cancellationToken = default)
+        public async Task Create()
         {
-            #region create
+            #region part01_create
             // Later we'll show you much nicer ways to create IComputed instances,
             // but for now let's stick to the basics:
             var cCount = SimpleComputed.New(async (prev, ct) => prev.Value + 1, Result.New(1));
             WriteLine(cCount.State);
             WriteLine(cCount.Value);
             #endregion
+        }
 
-            #region invalidate
+        public async Task Invalidate()
+        {
+            #region part01_invalidate
+            var cCount = SimpleComputed.New(async (prev, ct) => prev.Value + 1, Result.New(1));
             cCount.Invalidate();
             WriteLine(cCount.State);
             WriteLine(cCount.Value);
             #endregion
+        }
 
+        public async Task TheRest()
+        {
             #region update
-            var cCount1 = await cCount.UpdateAsync(false, cancellationToken);
+            var cCount = SimpleComputed.New(async (prev, ct) => prev.Value + 1, Result.New(1));
+            var cCount1 = await cCount.UpdateAsync(false);
             WriteLine(cCount1.State);
             WriteLine(cCount1.Value);
             #endregion
@@ -41,7 +48,7 @@ namespace Tutorial
 
             #region dependency  
             // Let's get the most "up to date" cCount instance
-            cCount = await cCount.UpdateAsync(false, cancellationToken);
+            cCount = await cCount.UpdateAsync(false);
 
             // And create another computed that uses it:
             var cCountTitle = await SimpleComputed.New<string>(async (prev, ct) => {
@@ -53,7 +60,7 @@ namespace Tutorial
                 // (and have default(string) value), but since we'd like to
                 // see a real computed value for it, we update it right after the
                 // creation.
-            }).UpdateAsync(false, cancellationToken);
+            }).UpdateAsync(false);
             WriteLine($"{nameof(cCountTitle)}: {cCountTitle}, Value = {cCountTitle.Value}");
 
             // And invalidate it
@@ -66,14 +73,14 @@ namespace Tutorial
 
             #region depdencency_recompute
             // Now, let's update cCountTitle:
-            cCountTitle = await cCountTitle.UpdateAsync(false, cancellationToken);
+            cCountTitle = await cCountTitle.UpdateAsync(false);
             // As you see, the update also triggered recompute of cCount (its dependency)!
             WriteLine($"{nameof(cCountTitle)}: {cCountTitle}, Value = {cCountTitle.Value}");
             #endregion
 
             #region dependency_complex_1
             // Let's get the most "up to date" cCount instance
-            cCount = await cCount.UpdateAsync(false, cancellationToken);
+            cCount = await cCount.UpdateAsync(false);
 
             // And declare a new computed
             var cTime = SimpleComputed.New<DateTime>(async (prev, ct) => DateTime.Now);
@@ -88,7 +95,7 @@ namespace Tutorial
                 var countTitle = cCountTitle.UseAsync(ct);
                 var time = await cTime.UseAsync(ct);
                 return $"{time}: {countTitle}";
-            }).UpdateAsync(false, cancellationToken);
+            }).UpdateAsync(false);
             WriteLine($"{nameof(cSummary)}: {cSummary}, Value = {cSummary.Value}");
             #endregion
 
@@ -104,7 +111,7 @@ namespace Tutorial
 
             #region dependency_complex_4
             // And finally, let's update the summary:
-            cSummary = await cSummary.UpdateAsync(false, cancellationToken);
+            cSummary = await cSummary.UpdateAsync(false);
             // Notice that cCount was updated, even though cSummary doesn't depend on it directly?
             WriteLine($"{nameof(cSummary)}: {cSummary}, Value = {cSummary.Value}");
             #endregion
