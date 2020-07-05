@@ -7,7 +7,7 @@ to dig into the code.
 
 Understanding how they work will also eliminate a lot
 of questions you might get further, so we highly recommend you
-to complete this tutorial _before_ digging into the source
+to complete this tutorial *before* digging into the source
 code of Fusion samples.
 
 Without further ado:

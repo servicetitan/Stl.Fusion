@@ -13,19 +13,29 @@ namespace Tutorial
             #region part01_create
             // Later we'll show you much nicer ways to create IComputed instances,
             // but for now let's stick to the basics:
-            var cCount = SimpleComputed.New(async (prev, ct) => prev.Value + 1, Result.New(1));
-            WriteLine(cCount.State);
-            WriteLine(cCount.Value);
+            var c = SimpleComputed.New(async (prev, ct) => prev.Value + 1, Result.New(1));
+            WriteLine($"{c}, Value = {c.Value}");
             #endregion
         }
 
-        public static async Task Invalidate()
+        public static async Task InvalidateAndUpdate()
         {
-            #region part01_invalidate
-            var cCount = SimpleComputed.New(async (prev, ct) => prev.Value + 1, Result.New(1));
-            cCount.Invalidate();
-            WriteLine(cCount.State);
-            WriteLine(cCount.Value);
+            #region part01_invalidateAndUpdate
+            var c = SimpleComputed.New(async (prev, ct) => prev.Value + 1, Result.New(1));
+            c.Invalidate();
+            WriteLine($"{c}, Value = {c.Value}"); // Must be in Invalidated state
+            c = await c.UpdateAsync(false);
+            WriteLine($"{c}, Value = {c.Value}"); // Must be in Consistent state
+            #endregion
+        }
+
+        public static async Task CreateNoDefault()
+        {
+            #region part01_createNoDefault
+            var c = SimpleComputed.New<DateTime>(async (prev, ct) => DateTime.Now);
+            WriteLine($"{c}, Value = {c.Value}"); // Must be in Invalidated state
+            c = await c.UpdateAsync(false);
+            WriteLine($"{c}, Value = {c.Value}"); // Must be in Consistent state
             #endregion
         }
 
