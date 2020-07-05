@@ -30,7 +30,7 @@ jobs:
         run: dotnet run --project build --configuration Release --no-launch-profile -- --configuration Debug build
       - name: Run tests
         #run: dotnet run --project build --configuration Release --no-launch-profile -- --configuration Debug coverage
-        run: dotnet test artifacts/tests/Stl.Tests.dll
+        run: timeout 10m dotnet test artifacts/tests/Stl.Tests.dll
       #- name: Codecov
       #  uses: codecov/codecov-action@v1.0.7
       #  with:
