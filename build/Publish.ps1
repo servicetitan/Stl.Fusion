@@ -11,7 +11,9 @@ function Publish($name) {
 }
 
 function PublishAll() {
-    dotnet nuget push "artifacts/nupkg/*.nupkg" -k $env:NUGET_ORG_API_KEY -s https://api.nuget.org/v3/index.json
+    foreach ($package in Get-ChildItem "artifacts/nupkg/*.nupkg" ) {
+        dotnet nuget push $package -k $env:NUGET_ORG_API_KEY -s https://api.nuget.org/v3/index.json
+    }
 }
 
 Push-Location ".."
