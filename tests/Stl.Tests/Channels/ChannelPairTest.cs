@@ -16,7 +16,9 @@ namespace Stl.Tests.Channels
         [Fact]
         public async Task TwistedPairTest()
         {
-            var options = new BoundedChannelOptions(1);
+            var options = new BoundedChannelOptions(1) {
+                AllowSynchronousContinuations = false,
+            };
             var cp = ChannelPair.CreateTwisted(
                 Channel.CreateBounded<int>(options),
                 Channel.CreateBounded<int>(options));
@@ -36,7 +38,9 @@ namespace Stl.Tests.Channels
         [Fact]
         public async Task ConnectTest1()
         {
-            var options = new BoundedChannelOptions(1);
+            var options = new BoundedChannelOptions(1) {
+                AllowSynchronousContinuations = false,
+            };
             var cp1 = ChannelPair.CreateTwisted(
                 Channel.CreateBounded<int>(options),
                 Channel.CreateBounded<int>(options));
@@ -52,7 +56,9 @@ namespace Stl.Tests.Channels
         [Fact]
         public async Task ConnectTest2()
         {
-            var options = new BoundedChannelOptions(1);
+            var options = new BoundedChannelOptions(1) {
+                AllowSynchronousContinuations = false,
+            };
             var cp1 = ChannelPair.CreateTwisted(
                 Channel.CreateBounded<int>(options),
                 Channel.CreateBounded<int>(options));

@@ -66,7 +66,7 @@ namespace Stl.Extensibility
             CancellationToken cancellationToken = default)
             where TSelf : AsyncInvokerBase
         {
-            await self.InvokeAsync(cancellationToken);
+            await self.InvokeAsync(cancellationToken).ConfigureAwait(false);
             return self;
         }
     }
@@ -136,7 +136,7 @@ namespace Stl.Extensibility
                     while (Tail.Length != 0) {
                         var item = Tail.Span[0];
                         Tail = Tail.Slice(1); 
-                        await InvokeOne(item, cancellationToken);
+                        await InvokeOne(item, cancellationToken).ConfigureAwait(false);
                     }
                 }
                 else {
@@ -144,7 +144,7 @@ namespace Stl.Extensibility
                         var nextTailLength = Tail.Length - 1;
                         var item = Tail.Span[nextTailLength];
                         Tail = Tail.Slice(0, nextTailLength);
-                        await InvokeOne(item, cancellationToken);
+                        await InvokeOne(item, cancellationToken).ConfigureAwait(false);
                     }
                 }
             }
@@ -157,10 +157,10 @@ namespace Stl.Extensibility
         {
             var invoker = (TSelf) this;
             if (ErrorHandler == null)
-                await Handler!.Invoke(item, invoker, cancellationToken);
+                await Handler!.Invoke(item, invoker, cancellationToken).ConfigureAwait(false);
             else { 
                 try {
-                    await Handler!.Invoke(item, invoker, cancellationToken);
+                    await Handler!.Invoke(item, invoker, cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception e) {
                     ErrorHandler!.Invoke(e, item, invoker);

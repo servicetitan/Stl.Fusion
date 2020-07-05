@@ -10,6 +10,7 @@ using Xunit.Abstractions;
 
 namespace Stl.Tests.Fusion
 {
+    [Collection(nameof(TimeSensitive)), Trait("Category", nameof(TimeSensitive))]
     public class SimplestProviderTest : FusionTestBase, IAsyncLifetime
     {
         public SimplestProviderTest(ITestOutputHelper @out) : base(@out) { }

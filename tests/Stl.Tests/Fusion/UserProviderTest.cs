@@ -104,7 +104,6 @@ namespace Stl.Tests.Fusion
 
             var cText = await SimpleComputed.New<string>(
                 async (prev, cancellationToken) => {
-                    Debug.WriteLine("p1");
                     var norris = await users.TryGetAsync(int.MaxValue, cancellationToken).ConfigureAwait(false);
                     var now = await time.GetTimeAsync().ConfigureAwait(false);
                     return $"@ {now:hh:mm:ss.fff}: {norris?.Name ?? "(none)"}";  

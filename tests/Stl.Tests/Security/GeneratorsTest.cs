@@ -45,17 +45,17 @@ namespace Stl.Tests.Security
         {
             var g = new RandomStringGenerator();
             ValidateGeneratedValues(
-                Enumerable.Range(0, 10_000).Select(_ => g.Next()),
+                Enumerable.Range(0, 1_000).Select(_ => g.Next()),
                 12, RandomStringGenerator.DefaultAlphabet);
 
             g = new RandomStringGenerator(8, RandomStringGenerator.Base16Alphabet);
             ValidateGeneratedValues(
-                Enumerable.Range(0, 10_000).Select(_ => g.Next()),
+                Enumerable.Range(0, 1_000).Select(_ => g.Next()),
                 8, RandomStringGenerator.Base16Alphabet);
 
             g = new RandomStringGenerator();
             ValidateGeneratedValues(
-                Enumerable.Range(0, 10_000).Select(_ => g.Next(8, RandomStringGenerator.Base32Alphabet)),
+                Enumerable.Range(0, 1_000).Select(_ => g.Next(8, RandomStringGenerator.Base32Alphabet)),
                 8, RandomStringGenerator.Base32Alphabet);
         }
 
