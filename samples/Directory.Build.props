@@ -5,8 +5,9 @@
   <PropertyGroup>
     <BaseIntermediateOutputPath>$(SolutionDir)\artifacts\obj\$(MSBuildProjectName)</BaseIntermediateOutputPath>
     <OutputPath>$(SolutionDir)\artifacts\samples\$(MSBuildProjectName)</OutputPath>
-    <IsPackable>False</IsPackable>
-    <IsPublishable>False</IsPublishable>
+    <IsPackable>false</IsPackable>
+    <IsPublishable>false</IsPublishable>
+    <WarnOnPackingNonPackableProject>false</WarnOnPackingNonPackableProject>
   </PropertyGroup>
 
 </Project>
