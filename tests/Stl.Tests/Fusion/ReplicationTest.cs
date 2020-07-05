@@ -17,7 +17,7 @@ namespace Stl.Tests.Fusion
     {
         public ReplicationTest(ITestOutputHelper @out) : base(@out) { }
 
-        [Fact]
+        [Fact(Timeout = 60_000)]
         public async Task BasicTest()
         {
             await using var serving = await WebSocketServer.ServeAsync();
