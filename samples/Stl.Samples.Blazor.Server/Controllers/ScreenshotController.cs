@@ -18,12 +18,7 @@ namespace Stl.Samples.Blazor.Server.Controllers
             => _screenshots = screenshots;
 
         [HttpGet("get")]
-        public async Task<Screenshot> GetScreenshotAsync(int width, CancellationToken cancellationToken)
-        {
-            var c = await HttpContext.TryPublishAsync(Publisher, 
-                _ => _screenshots.GetScreenshotAsync(width, cancellationToken),
-                cancellationToken);
-            return c.Value;
-        }
+        public Task<Screenshot> GetScreenshotAsync(int width, CancellationToken cancellationToken) 
+            => PublishAsync(ct => _screenshots.GetScreenshotAsync(width, ct));
     }
 }

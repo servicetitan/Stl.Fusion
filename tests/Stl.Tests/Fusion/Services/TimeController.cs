@@ -8,24 +8,18 @@ namespace Stl.Tests.Fusion.Services
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class TimeController : Controller
+    public class TimeController : FusionController
     {
         protected ITimeService TimeService { get; }
-        protected IPublisher Publisher { get; }
-
-        public TimeController(
-            ITimeService timeService,
-            IPublisher publisher)
-        {
-            TimeService = timeService;
-            Publisher = publisher;
-        }
+        
+        public TimeController(IPublisher publisher, ITimeService timeService) 
+            : base(publisher) 
+            => TimeService = timeService;
 
         [HttpGet("get")]
-        public async Task<ActionResult<DateTime>> GetTimeAsync()
+        public Task<DateTime> GetTimeAsync()
         {
-            var c = await HttpContext.TryPublishAsync(Publisher, _ => TimeService.GetTimeAsync());
-            return c.Value;
+            return PublishAsync(_ => TimeService.GetTimeAsync());
         }
     }
 }

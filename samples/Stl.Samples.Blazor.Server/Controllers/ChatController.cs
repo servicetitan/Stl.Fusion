@@ -43,48 +43,23 @@ namespace Stl.Samples.Blazor.Server.Controllers
         // Readers
 
         [HttpGet("getUserCount")]
-        public async Task<long> GetUserCountAsync(CancellationToken cancellationToken = default)
-        {
-            var c = await HttpContext.TryPublishAsync(Publisher, 
-                _ => _chat.GetUserCountAsync(cancellationToken),
-                cancellationToken);
-            return c.Value;
-        }
+        public Task<long> GetUserCountAsync(CancellationToken cancellationToken = default) 
+            => PublishAsync(ct => _chat.GetUserCountAsync(ct));
 
         [HttpGet("getActiveUserCount")]
-        public async Task<long> GetActiveUserCountAsync(CancellationToken cancellationToken = default)
-        {
-            var c = await HttpContext.TryPublishAsync(Publisher, 
-                _ => _chat.GetActiveUserCountAsync(cancellationToken),
-                cancellationToken);
-            return c.Value;
-        }
+        public Task<long> GetActiveUserCountAsync(CancellationToken cancellationToken = default) 
+            => PublishAsync(ct => _chat.GetActiveUserCountAsync(ct));
 
         [HttpGet("getUser")]
-        public async Task<ChatUser> GetUserAsync(long id, CancellationToken cancellationToken = default)
-        {
-            var c = await HttpContext.TryPublishAsync(Publisher, 
-                _ => _chat.GetUserAsync(id, cancellationToken),
-                cancellationToken);
-            return c.Value;
-        }
+        public Task<ChatUser> GetUserAsync(long id, CancellationToken cancellationToken = default) 
+            => PublishAsync(ct => _chat.GetUserAsync(id, ct));
 
         [HttpGet("getChatTail")]
-        public async Task<ChatPage> GetChatTailAsync(int length, CancellationToken cancellationToken = default)
-        {
-            var c = await HttpContext.TryPublishAsync(Publisher, 
-                _ => _chat.GetChatTailAsync(length, cancellationToken),
-                cancellationToken);
-            return c.Value;
-        }
+        public Task<ChatPage> GetChatTailAsync(int length, CancellationToken cancellationToken = default) 
+            => PublishAsync(ct => _chat.GetChatTailAsync(length, ct));
 
         [HttpGet("getChatPage")]
-        public async Task<ChatPage> GetChatPageAsync(long minMessageId, long maxMessageId, CancellationToken cancellationToken = default)
-        {
-            var c = await HttpContext.TryPublishAsync(Publisher, 
-                _ => _chat.GetChatPageAsync(minMessageId, maxMessageId, cancellationToken),
-                cancellationToken);
-            return c.Value;
-        }
+        public Task<ChatPage> GetChatPageAsync(long minMessageId, long maxMessageId, CancellationToken cancellationToken = default) 
+            => PublishAsync(ct => _chat.GetChatPageAsync(minMessageId, maxMessageId, ct));
     }
 }

@@ -18,13 +18,10 @@ namespace Stl.Samples.Blazor.Server.Controllers
             => _composer = composer;
 
         [HttpGet("get")]
-        public async Task<ComposedValue> GetComposedValueAsync(string? parameter, CancellationToken cancellationToken = default) 
+        public Task<ComposedValue> GetComposedValueAsync(string? parameter, CancellationToken cancellationToken = default) 
         {
             parameter ??= "";
-            var c = await HttpContext.TryPublishAsync(Publisher, 
-                _ => _composer.GetComposedValueAsync(parameter, cancellationToken),
-                cancellationToken);
-            return c.Value;
+            return PublishAsync(ct => _composer.GetComposedValueAsync(parameter, ct));
         }
     }
 }

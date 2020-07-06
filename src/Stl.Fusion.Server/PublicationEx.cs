@@ -38,7 +38,7 @@ namespace Stl.Fusion.Server
             return c;
         }
 
-        public static Task<IComputed<T>> TryPublishAsync<T>(
+        public static Task<IComputed<T>> MaybePublishAsync<T>(
             this HttpContext httpContext, IPublisher publisher, 
             Func<CancellationToken, Task<T>> producer, 
             CancellationToken cancellationToken = default)

@@ -19,12 +19,7 @@ namespace Stl.Samples.Blazor.Server.Controllers
             => _time = time;
 
         [HttpGet("get")]
-        public async Task<DateTime> GetTimeAsync(CancellationToken cancellationToken)
-        {
-            var c = await HttpContext.TryPublishAsync(Publisher, 
-                _ => _time.GetTimeAsync(cancellationToken),
-                cancellationToken);
-            return c.Value;
-        }
+        public Task<DateTime> GetTimeAsync(CancellationToken cancellationToken) 
+            => PublishAsync(ct => _time.GetTimeAsync(ct));
     }
 }
