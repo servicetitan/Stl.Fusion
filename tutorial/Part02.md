@@ -1,4 +1,4 @@
-# Part 2: Dependencies
+# Part 2: Dependencies between computed instances
 
 Computed instances describe computations, and if these computations
 involve other computed instances, the computation that uses another
