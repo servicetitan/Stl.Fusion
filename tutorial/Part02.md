@@ -5,10 +5,10 @@ involve other computed instances, the computation that uses another
 one is called "dependent", and the used one is called a "dependency".
 
 The following rules apply:   
-* Once a dependency ("used") result gets invalidated, all the computed instances
+* Once a dependency ("used" instance) gets invalidated, all the computed instances
   that depend on it (directly and indirectly) are invalidated as well. 
-  This happens synchronously right when you call `dependency.Invalidate()`.
-* Once a dependent computation is computed, it triggers computation of all its
+  This happens *synchronously* right when you call `dependency.Invalidate()`.
+* Once a dependent instance gets (re)computed, it triggers computation of all its
   dependencies (unless they are already computing or computed, i.e. their most 
   recently produced `IComputed` instance is not in `Invalidated` state).
 
@@ -17,9 +17,9 @@ The code below (sorry, it's large) explains how it works:
 ``` cs --region part02_dependencies --source-file Part02.cs
 ```
 
-You might that dependent-dependency links form a 
+You might notice that dependent-dependency links form a 
 [directed acyclic graph](https://en.wikipedia.org/wiki/Directed_acyclic_graph),
-so:
+thus:
 * There must be no cycles. Note, though, that the links are established
   between the instances, not the computations, so technically you're 
   totally fine to have e.g. recursive functions that return computed instances.
