@@ -61,12 +61,5 @@ namespace Tutorial
             WriteLine($"{cTitle}, Value = {cTitle.Value}");
             #endregion
         }
-
-        public static async Task IndirectDependencies()
-        {
-            #region part02_indirectDependencies
-            // TBD.
-            #endregion
-        }
     }
 }

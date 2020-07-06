@@ -29,9 +29,5 @@ so:
   * Invalidation of a graph node also "spreads" to every node in its "upper subtree"
   * Computation of a graph node also "spreads" to every node in its "lower subtree". 
 
-Let's see how indirect dependencies work: 
-
-``` cs --region part02_indirectDependencies --source-file Part02.cs
-```
 
 #### [Next: Part 3 &raquo;](./Part03.md) | [Tutorial Home](./README.md)
