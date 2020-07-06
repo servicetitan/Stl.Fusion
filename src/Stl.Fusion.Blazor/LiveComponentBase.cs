@@ -26,19 +26,19 @@ namespace Stl.Fusion.Blazor
             => StateHasChanged();
     }
 
-    public abstract class LiveComponentBase<TLocalState, TState> : LiveComponentBase<TState>
+    public abstract class LiveComponentBase<TLocal, TState> : LiveComponentBase<TState>
     {
-        protected TLocalState Local {
+        protected TLocal Local {
             get => LiveState.Local;
             set => LiveState.Local = value;
         }
 
-        protected new ILiveState<TLocalState, TState> LiveState {
-            get => (ILiveState<TLocalState, TState>) base.LiveState;
+        protected new ILiveState<TLocal, TState> LiveState {
+            get => (ILiveState<TLocal, TState>) base.LiveState;
             set => base.LiveState = value;
         }
 
-        protected virtual void UpdateLocal(Action<TLocalState> updater)
+        protected virtual void UpdateLocal(Action<TLocal> updater)
         {
             var clone = CloneLocal(Local);
             updater.Invoke(clone);
@@ -47,16 +47,16 @@ namespace Stl.Fusion.Blazor
             Local = clone;
         }
 
-        protected virtual TLocalState CloneLocal(TLocalState source)
+        protected virtual TLocal CloneLocal(TLocal source)
         {
             switch (source) {
             case IFrozen f:
-                return (TLocalState) f.CloneToUnfrozen(true);
+                return (TLocal) f.CloneToUnfrozen(true);
             default:
                 var memberwiseCloneMethod = typeof(object).GetMethod(
                     nameof(MemberwiseClone), 
                     BindingFlags.Instance | BindingFlags.NonPublic);
-                return (TLocalState) memberwiseCloneMethod.Invoke(source, Array.Empty<object>());
+                return (TLocal) memberwiseCloneMethod.Invoke(source, Array.Empty<object>());
             }
         }
     }
