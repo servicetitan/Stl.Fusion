@@ -19,8 +19,6 @@
     <UseSourceLink>$(EnableSourceLink)</UseSourceLink>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://github.com/servicetitan/Stl</RepositoryUrl>
     <EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries>
     <RevisionId>$(GitCommitId)</RevisionId>
   </PropertyGroup>
