@@ -106,4 +106,6 @@ an *eventually consistent* cache, but with extremelly short inconsistency period
 cache entry.
 
 That was a quick intro - thanks for reading it!
-Check out [Stl.Fusion Documentation](docs/README.md) to learn more.  
+Check out [Stl.Fusion Documentation](docs/README.md) and join
+our [Discord Server](https://discord.gg/EKEwv6d) to ask questions and
+track project updates.
