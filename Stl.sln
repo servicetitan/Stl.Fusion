@@ -34,7 +34,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{D633
 		samples\Directory.Build.props = samples\Directory.Build.props
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tutorial", "tutorial", "{73821472-B678-4E93-8118-5FC748C2F945}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{73821472-B678-4E93-8118-5FC748C2F945}"
+ProjectSection(SolutionItems) = preProject
+	D:\C\ServiceTitan\Stl\docs\README.md = D:\C\ServiceTitan\Stl\docs\README.md
+EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl", "src\Stl\Stl.csproj", "{9637C3C9-794B-44B2-9A91-96E4B5837516}"
 EndProject
@@ -66,7 +69,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Build", "build\Build.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Fusion.Blazor", "src\Stl.Fusion.Blazor\Stl.Fusion.Blazor.csproj", "{A1B918A1-93A3-477C-AE25-CC6A7907FEAC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tutorial", "tutorial\Tutorial.csproj", "{C9A804EF-8642-4C7F-A0C3-B1C40DB50645}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tutorial", "docs\tutorial\Tutorial.csproj", "{C9A804EF-8642-4C7F-A0C3-B1C40DB50645}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Experimental", "src\Stl.Experimental\Stl.Experimental.csproj", "{B78358D6-C69E-4760-9D46-2F58896DD973}"
 EndProject

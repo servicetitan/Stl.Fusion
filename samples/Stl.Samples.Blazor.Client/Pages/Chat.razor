@@ -1,5 +1,6 @@
 @page "/chat"
 @inherits LiveComponentBase<ChatState.Local, ChatState>
+@inject IJSRuntime JSRuntime
 @inject NavigationManager Navigator
 @inject IChatClient Client
 
@@ -40,17 +41,17 @@
     </div>
 }
 
-<EditForm Model="@state" OnValidSubmit="SetNameAsync">
+<form @onsubmit="@SetNameAsync">
     <div class="input-group pb-3">
         <div class="input-group-prepend">
             <span class="input-group-text">Your name</span>
         </div>
-        <InputText class="form-control" @bind-Value="@local.MyName"/>
+        <input class="form-control" @bind-value="@local.MyName"/>
         <div class="input-group-append">
             <button type="submit" class="btn btn-warning">Change</button>
         </div>        
     </div>
-</EditForm>
+</form>
 
 <table class="table table-sm table-striped">
     <thead>
@@ -64,27 +65,27 @@
         var user = lastPage.Users[message.UserId];
         {
             <tr>
-                <td style="max-width: 20%">@user.Name</td>
-                <td class="w-auto">@message.Text</td>
+                <td style="width: 20%; max-width: 33%">@user.Name</td>
+                <td style="width: auto; min-width: 67%">@message.Text</td>
             </tr>
         }
     }
     </tbody>
 </table>
 
-<EditForm Model="@state" OnValidSubmit="SendMessageAsync">
+<form @onsubmit="@SendMessageAsync">
     <div class="input-group pb-3">
         <div class="input-group-prepend">
             <span class="input-group-text">Message</span>
         </div>
-        <InputText class="form-control" 
+        <input class="form-control" 
             placeholder="No ideas? Send an empty one!"
-            @bind-Value="@local.MyMessage" />
+            @bind-value="@local.MyMessage" />
         <div class="input-group-append">
             <button type="submit" class="btn btn-success">Send</button>
         </div>        
     </div>
-</EditForm>
+</form>
 
 @code {
     protected override async Task OnInitializedAsync()
@@ -117,7 +118,7 @@
         catch (Exception e) {
             SetError(e);
         }
-    }
+   }
 
     private async Task SendMessageAsync()
     {
