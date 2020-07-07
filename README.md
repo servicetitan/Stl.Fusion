@@ -29,9 +29,10 @@ The last part is crucial:
 This is what makes `Stl.Fusion` a great fit for real-time apps: it becomes the only abstraction
 such apps need, since anything else can be easily described as a state change. For example,
 if you build a chat app, you don't need to worry about delivering every message to every client
-anymore. What you want to have is an endpoint that allows to get your clients a replica
-of server-side computed that "stores" chat tail. Once a message gets posted to some channel, 
-its chat tail gets invalidated, and the clients will automatically "pull" the updated tail.    
+anymore. What you want to have is an API endpoint allowing chat clients to get a replica
+of server-side computed instance that "stores" chat tail. Once a message gets posted to some 
+channel, its chat tail gets invalidated, and every client will automatically "pull" the updated 
+tail.
 
 That's how Fusion-based Chat sample reacts to user interaction:
 
