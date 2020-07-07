@@ -38,7 +38,17 @@ That's how Fusion-based Chat sample reacts to user interaction:
 
 ![](docs/img/Stl-Fusion-Chat-Sample.gif)
 
-One other fancy sample there is "Server Screen", which literally sends screenshots captured
+Notice the "Composition" sample shown in a separate window in the bottom-right corner
+also properly updates its page - in particular, it captures the last chat message. It's
+actually the most interesting example there, since it "composes" the final model by two
+different ways: 
+* One model is [composed on the server side](https://github.com/servicetitan/Stl/blob/master/samples/Stl.Samples.Blazor.Server/Services/ServerSideComposerService.cs);
+  its replica is published to all the clients
+* And another model is [composed completely on the client](https://github.com/servicetitan/Stl/blob/master/samples/Stl.Samples.Blazor.Client/Services/ClientSideComposerService.cs) 
+  by combining other server-side replicas.
+* **The surprising part:** open two above links side-by-side & spot the difference :)
+
+Another fancy sample there is "Server Screen", which literally sends screenshots captured
 on server side in real-time to every client visiting it:
   
 ![](docs/img/Stl-Fusion-Server-Screen-Sample.gif)
