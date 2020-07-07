@@ -16,7 +16,7 @@ namespace Stl.Reflection
         private static readonly Regex MethodNameRe = new Regex("[^\\w\\d]+", RegexOptions.Compiled);
         private static readonly Regex MethodNameTailRe = new Regex("_+$", RegexOptions.Compiled);
         private static readonly Regex GenericMethodNameTailRe = new Regex("_\\d+$", RegexOptions.Compiled);
-        private static readonly ConcurrentDictionary<(Type, bool, bool), Symbol> ToMethodNameCache =
+        private static readonly ConcurrentDictionary<(Type, bool, bool), Symbol> ToIdentifierNameCache =
             new ConcurrentDictionary<(Type, bool, bool), Symbol>();
         private static readonly ConcurrentDictionary<Type, Symbol> ToSymbolCache =
             new ConcurrentDictionary<Type, Symbol>();
@@ -49,17 +49,17 @@ namespace Stl.Reflection
             return castTo.IsAssignableFrom(castFrom) || castFrom.IsAssignableFrom(castTo);
         }
 
-        public static string ToMethodName(this Type type, bool useFullName = false, bool useFullArgumentNames = false)
+        public static string ToIdentifierName(this Type type, bool useFullName = false, bool useFullArgumentNames = false)
         {
             var key = (type, useFullName, useFullArgumentNames);
-            return ToMethodNameCache.GetOrAddChecked(key, key1 => {
+            return ToIdentifierNameCache.GetOrAddChecked(key, key1 => {
                 var (type1, useFullName1, useFullArgumentNames1) = key1;
                 var name = useFullName1 ? type1.FullName : type1.Name;
                 if (type1.IsGenericType && !type1.IsGenericTypeDefinition) {
-                    name = type1.GetGenericTypeDefinition().ToMethodName(useFullName1);
+                    name = type1.GetGenericTypeDefinition().ToIdentifierName(useFullName1);
                     name = GenericMethodNameTailRe.Replace(name, "");
                     var argumentNames = type1.GetGenericArguments()
-                        .Select(t => t.ToMethodName(useFullArgumentNames1, useFullArgumentNames1));
+                        .Select(t => t.ToIdentifierName(useFullArgumentNames1, useFullArgumentNames1));
                     name = string.Join('_', EnumerableEx.One(name).Concat(argumentNames));
                 }
                 name = MethodNameRe.Replace(name, "_");
@@ -71,7 +71,7 @@ namespace Stl.Reflection
         public static Symbol ToSymbol(this Type type, bool withPrefix = true) 
             => withPrefix
                 ? ToSymbolCache.GetOrAddChecked(type, type1 =>
-                    new Symbol(SymbolPrefix + type1.ToMethodName(true, true)))
-                : (Symbol) type.ToMethodName(true, true);
+                    new Symbol(SymbolPrefix + type1.ToIdentifierName(true, true)))
+                : (Symbol) type.ToIdentifierName(true, true);
     }
 }

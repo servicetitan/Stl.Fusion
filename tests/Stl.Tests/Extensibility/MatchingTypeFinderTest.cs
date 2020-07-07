@@ -38,12 +38,12 @@ namespace Stl.Tests.Extensibility
         {
             var scope = GetType();
             var finder = new MatchingTypeFinder(scope.Assembly);
+            finder.TryFind(typeof(object), null!).Should().BeNull();
             finder.TryFind(typeof(int), scope).Should().Be(typeof(MatchForInt));
             finder.TryFind(typeof(bool), scope).Should().Be(typeof(MatchForValueType));
             finder.TryFind(typeof(MatchingTypeFinderTest), scope).Should().BeNull();
             finder.TryFind(typeof(object), scope).Should().BeNull();
             ((Action) (() => finder.TryFind(null!, scope))).Should().Throw<ArgumentNullException>();
-            ((Action) (() => finder.TryFind(typeof(object), null!))).Should().Throw<ArgumentNullException>();
         }
 
         [Fact]

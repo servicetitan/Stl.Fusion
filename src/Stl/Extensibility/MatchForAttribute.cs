@@ -1,4 +1,5 @@
 using System;
+using Stl.Reflection;
 
 namespace Stl.Extensibility
 {
@@ -6,12 +7,18 @@ namespace Stl.Extensibility
     public class MatchForAttribute : Attribute
     {
         public Type Source { get; }
-        public Type Scope { get; }
+        public string Scope { get; }
+
+        public MatchForAttribute(Type source, string scope)
+        {
+            Source = source;
+            Scope = scope;
+        }
 
         public MatchForAttribute(Type source, Type scope)
         {
             Source = source;
-            Scope = scope;
+            Scope = scope.ToSymbol();
         }
     }
 }

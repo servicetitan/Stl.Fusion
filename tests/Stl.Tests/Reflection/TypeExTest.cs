@@ -21,26 +21,26 @@ namespace Stl.Tests.Reflection
         }
 
         [Fact]
-        public void ToMethodNameTest()
+        public void ToIdentifierNameTest()
         {
-            typeof(Box).ToMethodName().Should().Equals("Box");
-            typeof(Box).ToMethodName(true).Should().Equals("Stl_Internal_Box");
+            typeof(Box).ToIdentifierName().Should().Equals("Box");
+            typeof(Box).ToIdentifierName(true).Should().Equals("Stl_Internal_Box");
 
-            typeof(Box<>).ToMethodName().Should().Equals("Box_1");
-            typeof(Box<>).ToMethodName(true).Should().Equals("Stl_Internal_Box_1");
+            typeof(Box<>).ToIdentifierName().Should().Equals("Box_1");
+            typeof(Box<>).ToIdentifierName(true).Should().Equals("Stl_Internal_Box_1");
 
-            typeof(Box<object>).ToMethodName().Should().Equals("Box_Object");
-            typeof(Box<object>).ToMethodName(true).Should().Equals("Stl_Internal_Box_Object");
-            typeof(Box<object>).ToMethodName(true, true).Should().Equals("Stl_Internal_Box_System_Object");
+            typeof(Box<object>).ToIdentifierName().Should().Equals("Box_Object");
+            typeof(Box<object>).ToIdentifierName(true).Should().Equals("Stl_Internal_Box_Object");
+            typeof(Box<object>).ToIdentifierName(true, true).Should().Equals("Stl_Internal_Box_System_Object");
 
-            typeof(Dictionary<,>).ToMethodName().Should().Equals("Dictionary_2");
-            typeof(Dictionary<,>).ToMethodName(true).Should().Equals("System_Collections_Generic_Dictionary_2");
-            typeof(Dictionary<int, byte>).ToMethodName().Should().Equals("Dictionary_Int32_Byte");
+            typeof(Dictionary<,>).ToIdentifierName().Should().Equals("Dictionary_2");
+            typeof(Dictionary<,>).ToIdentifierName(true).Should().Equals("System_Collections_Generic_Dictionary_2");
+            typeof(Dictionary<int, byte>).ToIdentifierName().Should().Equals("Dictionary_Int32_Byte");
 
-            typeof(Box<Box<int>>).ToMethodName().Should().Equals("Box_Int_Int");
-            typeof(Box<Box<int>>).ToMethodName(true).Should().Equals("Stl_Internal_Box_Int_Int");
-            typeof(Box<Box<int>>).ToMethodName(false, true).Should().Equals("Box_System_Int_System_Int");
-            typeof(Box<Box<int>>).ToMethodName(true, true).Should().Equals("Stl_Internal_Box_System_Int_System_Int");
+            typeof(Box<Box<int>>).ToIdentifierName().Should().Equals("Box_Int_Int");
+            typeof(Box<Box<int>>).ToIdentifierName(true).Should().Equals("Stl_Internal_Box_Int_Int");
+            typeof(Box<Box<int>>).ToIdentifierName(false, true).Should().Equals("Box_System_Int_System_Int");
+            typeof(Box<Box<int>>).ToIdentifierName(true, true).Should().Equals("Stl_Internal_Box_System_Int_System_Int");
         }
     }
 }
