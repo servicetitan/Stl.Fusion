@@ -86,15 +86,18 @@ involving it in future.
 
 [One of tests in Stl.Fusion test suite](https://github.com/servicetitan/Stl.Fusion/blob/master/tests/Stl.Tests/Fusion/PerformanceTest.cs) 
 benchmarks "raw" [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/) - 
-based Sqlite Data Access Layer (DAL) against its version relying on Fusion. 
+based Data Access Layer (DAL) against its version relying on Fusion. 
 Both tests run almost identical code - in fact, the only difference there is that Fusion
 version of test uses a Fusion-provided proxy wrapping the 
 [`UserService`](https://github.com/servicetitan/Stl.Fusion/blob/master/tests/Stl.Tests/Fusion/Services/UserService.cs)
 (the DAL used in this test) instead of the actual type.
 
-The speed difference is quite impressive:
-
 ![](docs/img/Performance.gif)
+
+The speed difference is quite impressive:
+* ~31,500x speedup with [Sqlite](https://www.sqlite.org/index.html) EF Core provider
+* ~1,000x speedup with 
+  [In-memory EF Core provider](https://docs.microsoft.com/en-us/ef/core/providers/in-memory/?tabs=dotnet-core-cli)  
 
 Obviously, you're expected to get a huge performance boost in any scenario involving
 local caching, but note that here you get it almost for free in terms of extra code, 
