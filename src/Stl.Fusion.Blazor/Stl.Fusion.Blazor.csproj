@@ -2,10 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <PackageTags>servicetitan stl fusion blazor</PackageTags>
-    <Description>
-      Blazor components for Stl.Fusion.
-    </Description>
+    <PackageTags>servicetitan stl stl_fusion blazor</PackageTags>
+    <Description>Blazor components for Stl.Fusion.</Description>
   </PropertyGroup>
   
   <ItemGroup>

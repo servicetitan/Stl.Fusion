@@ -3,12 +3,12 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <PackageTags>servicetitan stl fusion blazor knockout mobx</PackageTags>
-    <Description>
-      A new, shiny Knockout.js-style computed/observable abstraction 
-      designed to power distributed apps: immutable, thread-safe, and
-      capable of providing its observable replicas to remote clients.  
-    </Description>
+    <PackageTags>servicetitan stl stl_fusion blazor knockout mobx</PackageTags>
+    <Description>Stl.Fusion - a Knockout.js-style Knockout.js-style computed/observable <!-- 
+      -->abstraction designed to power distributed apps: thread-safe, asynchronous, immutable, and ready to <!--
+      -->provide its own replicas (~ proxies that are connected to the original computed/observable instance) <!--
+      -->for remote clients.<!--
+    --></Description>
   </PropertyGroup>
 
   <ItemGroup>

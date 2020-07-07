@@ -3,7 +3,7 @@
 ## 1. Get Fusion
 
 Even though all Fusion packages are 
-[available on NuGet](https://www.nuget.org/packages?q=Owner%3Aservicetitan+Tags%3Afusion),
+[available on NuGet](https://www.nuget.org/packages?q=Owner%3Aservicetitan+Tags%3Astl_fusion),
 we highly recommend you to clone the repository, since it includes
 the tutorial and samples.
 

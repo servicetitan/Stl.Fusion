@@ -36,7 +36,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{D633
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{73821472-B678-4E93-8118-5FC748C2F945}"
 ProjectSection(SolutionItems) = preProject
-	D:\C\ServiceTitan\Stl\docs\README.md = D:\C\ServiceTitan\Stl\docs\README.md
+	docs\README.md = docs\README.md
 EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl", "src\Stl\Stl.csproj", "{9637C3C9-794B-44B2-9A91-96E4B5837516}"

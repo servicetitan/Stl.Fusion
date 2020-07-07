@@ -3,12 +3,8 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <PackageTags>servicetitan stl</PackageTags>
-    <Description>
-      Stl ("ServiceTitan Library" :/ ) is a collection of
-      relatively small abstractions or methods we couldn't find 
-      in BCL. 
-    </Description>
+    <PackageTags>servicetitan stl stl_fusion</PackageTags>
+    <Description>Stl ("ServiceTitan Library" :/ ) is a collection of relatively small abstractions or methods we couldn't find in BCL.</Description>
   </PropertyGroup>
 
   <ItemGroup>

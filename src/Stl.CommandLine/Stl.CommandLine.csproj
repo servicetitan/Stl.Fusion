@@ -3,10 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <PackageTags>servicetitan stl command line</PackageTags>
-    <Description>
-      A set of abstractions allowing to construct typed
-      wrappers over command line tools.
-    </Description>
+    <Description>A set of abstractions allowing to construct typed wrappers over command line tools.</Description>
   </PropertyGroup>
 
   <ItemGroup>
