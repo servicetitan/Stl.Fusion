@@ -100,5 +100,5 @@ This is actually pretty good, taking into account the following timeline:
   
 > Q: What's the best place to ask questions related to Stl.Fusion?
 
-[Stl.Fusion Discord Server](https://discord.gg/jpdnjM) is currently the best 
+[Stl.Fusion Discord Server](https://discord.gg/EKEwv6d) is currently the best 
 place to ask questions & track project updates. 
