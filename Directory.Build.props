@@ -4,9 +4,9 @@
     <Authors>ServiceTitan, Inc.</Authors>
     <Company>ServiceTitan, Inc.</Company>
     <Copyright>Copyright ServiceTitan, Inc.</Copyright>
-    <PackageProjectUrl>https://github.com/servicetitan/Stl</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/servicetitan/Stl.Fusion</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <RepositoryUrl>https://github.com/servicetitan/Stl</RepositoryUrl>
+    <RepositoryUrl>https://github.com/servicetitan/Stl.Fusion</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>servicetitan stl</PackageTags>
     <Description>A part of ServiceTitan Library.</Description>

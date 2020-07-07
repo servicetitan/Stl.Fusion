@@ -8,7 +8,7 @@ we highly recommend you to clone the repository, since it includes
 the tutorial and samples.
 
 ```bash
-git clone git@github.com:servicetitan/Stl.git
+git clone git@github.com:servicetitan/Stl.Fusion.git
 ```
 
 You also need to install:
