@@ -35,12 +35,12 @@ its chat tail gets invalidated, and the clients will automatically "pull" the up
 
 That's how Fusion-based Chat sample reacts to user interaction:
 
-!()[docs/img/Stl-Fusion-Chat-Sample.gif]
+![](docs/img/Stl-Fusion-Chat-Sample.gif)
 
 One other fancy sample there is "Server Screen", which literally sends screenshots captured
 on server side in real-time to every client visiting it:
   
-!()[docs/img/Stl-Fusion-Server-Screen-Sample.gif]
+![](docs/img/Stl-Fusion-Server-Screen-Sample.gif)
  
 Note that this is *client-side Blazor app*, the real-time changes it displays are
 delivered there via WebSocket channel backing computed replicas. 
