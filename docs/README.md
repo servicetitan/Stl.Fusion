@@ -86,7 +86,7 @@ Absolutely - just create your first
 
 > Q: Does ServiceTitan use Stl.Fusion now?
 
-Yes, but not in production. We're currently using it on our "DevPortal" web site, 
+Yes, but not in production. We're currently using it on our internal DevPortal web site, 
 which aggregates the information about all of our Kubernetes-based app instances.
 The intent is to turn DevPortal into a "home page" for all of our developers, 
 so it will aggregate much more useful information over time.

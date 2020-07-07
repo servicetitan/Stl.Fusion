@@ -80,9 +80,27 @@ Obviously, the use cases aren't limited to client-side Blazor UIs. You can also 
   gets a cache, that invalidates right when it should, so % of inconsistent reads 
   there is as tiny as possible. Which is why it is a perfect fit for scenarios where
   having a cache is crucial.
-  
-> Note that the library is quite new, so we expect to see more interesting cases involving it 
-in future.
+
+> Note that the library is quite new, so we expect to see more interesting cases 
+involving it in future.
+
+[One of tests in Stl.Fusion test suite](https://github.com/servicetitan/Stl.Fusion/blob/master/tests/Stl.Tests/Fusion/PerformanceTest.cs) 
+benchmarks "raw" [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/) - 
+based Sqlite Data Access Layer (DAL) against its version relying on Fusion. 
+Both tests run almost identical code - in fact, the only difference there is that Fusion
+version of test uses a Fusion-provided proxy wrapping the 
+[`UserService`](https://github.com/servicetitan/Stl.Fusion/blob/master/tests/Stl.Tests/Fusion/Services/UserService.cs)
+(the DAL used in this test) instead of the actual type.
+
+The speed difference is quite impressive:
+
+![](docs/img/Performance.gif)
+
+Obviously, you're expected to get a huge performance boost in any scenario involving
+local caching, but note that here you get it almost for free in terms of extra code, 
+and moreover, you get an *almost* always consistent cache. In reality, it's still 
+an *eventually consistent* cache, but with extremelly short inconsistency periods per
+cache entry.
 
 That was a quick intro - thanks for reading it!
 Check out [Stl.Fusion Documentation](docs/README.md) to learn more.  

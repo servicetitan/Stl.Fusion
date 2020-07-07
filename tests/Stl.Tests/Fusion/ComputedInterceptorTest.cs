@@ -11,7 +11,7 @@ using Xunit.Abstractions;
 
 namespace Stl.Tests.Fusion
 {
-    [Collection(nameof(TimeSensitive)), Trait("Category", nameof(TimeSensitive))]
+    [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
     public class ComputedInterceptorTest : FusionTestBase, IAsyncLifetime
     {
         public ComputedInterceptorTest(ITestOutputHelper @out) : base(@out) { }

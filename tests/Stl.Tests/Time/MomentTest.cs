@@ -7,7 +7,7 @@ using Xunit.Abstractions;
 
 namespace Stl.Tests.Time
 {
-    [Collection(nameof(TimeSensitive)), Trait("Category", nameof(TimeSensitive))]
+    [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
     public class MomentTest : TestBase
     {
         public MomentTest(ITestOutputHelper @out) : base(@out) { }

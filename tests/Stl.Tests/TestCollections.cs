@@ -2,7 +2,11 @@ using Xunit;
 
 namespace Stl.Tests
 {
-    [CollectionDefinition(nameof(TimeSensitive), DisableParallelization = true)]
-    public class TimeSensitive 
+    [CollectionDefinition(nameof(PerformanceTests), DisableParallelization = true)]
+    public class PerformanceTests 
+    { }
+
+    [CollectionDefinition(nameof(TimeSensitiveTests), DisableParallelization = true)]
+    public class TimeSensitiveTests 
     { }
 }

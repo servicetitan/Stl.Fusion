@@ -22,6 +22,7 @@ using Xunit.Abstractions;
 
 namespace Stl.Tests.Fusion
 {
+    [Collection(nameof(PerformanceTests)), Trait("Category", nameof(PerformanceTests))]
     public abstract class PerformanceTestBase : FusionTestBase, IAsyncLifetime
     {
         public int UserCount = 1000;
@@ -160,7 +161,6 @@ namespace Stl.Tests.Fusion
         }
     }
 
-    [Collection(nameof(TimeSensitive)), Trait("Category", nameof(TimeSensitive))]
     public class PerformanceTest_Sqlite : PerformanceTestBase
     {
         public PerformanceTest_Sqlite(ITestOutputHelper @out) 
@@ -168,7 +168,6 @@ namespace Stl.Tests.Fusion
         { }
     }
 
-    [Collection(nameof(TimeSensitive)), Trait("Category", nameof(TimeSensitive))]
     public class PerformanceTest_InMemoryDb : PerformanceTestBase
     {
         public PerformanceTest_InMemoryDb(ITestOutputHelper @out) 

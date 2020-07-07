@@ -14,7 +14,7 @@ using Xunit.Abstractions;
 
 namespace Stl.Tests.Time
 {
-    [Collection(nameof(TimeSensitive)), Trait("Category", nameof(TimeSensitive))]
+    [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
     public class ClockTest : TestBase
     {
         public ClockTest(ITestOutputHelper @out) : base(@out) { }
