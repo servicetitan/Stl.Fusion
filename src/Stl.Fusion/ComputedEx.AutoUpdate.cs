@@ -21,18 +21,13 @@ namespace Stl.Fusion
             {
                 var (delay, clock, untypedHandler, untypedCompletedHandler) = arg;
                 var handler = (Action<IComputed<TOut>, Result<TOut>, Exception?>?) untypedHandler;
-                var stop = new CancellationTokenSource();
-                var stopToken = stop.Token;
-                
-                void RunOnInvalidated(IComputed c)
-                {
-                    using var _ = ExecutionContext.SuppressFlow();
-                    Task.Run(() => OnInvalidated(c), default);
-                } 
+                var stopCts = new CancellationTokenSource();
+                var stopToken = stopCts.Token;
 
-                async Task OnInvalidated(IComputed c) {
-                    try {
-                        var prevComputed = (IComputed<TIn, TOut>) c;
+                Task.Run(async () => {
+                    var prevComputed = (IComputed<TOut>) computed;
+                    while (true) {
+                        await prevComputed.InvalidatedAsync(stopToken).ConfigureAwait(false);
                         if (delay > TimeSpan.Zero)
                             await clock!.DelayAsync(delay, stopToken).ConfigureAwait(false);
                         else
@@ -40,28 +35,25 @@ namespace Stl.Fusion
                         IComputed<TOut> nextComputed;
                         Exception? error = null;
                         try {
-                            nextComputed = await prevComputed
-                                .UpdateAsync(false, stopToken).ConfigureAwait(false);
+                            nextComputed = await prevComputed.UpdateAsync(false, stopToken).ConfigureAwait(false);
                         }
                         catch (Exception e) {
                             nextComputed = prevComputed;
                             error = e;
                         }
-                        var prevOutput = prevComputed.Output;
-                        handler?.Invoke(nextComputed, prevOutput, error);
-                        nextComputed!.Invalidated += RunOnInvalidated;
+                        handler?.Invoke(nextComputed, prevComputed.Output, error);
+                        prevComputed = nextComputed;
                     }
-                    catch (OperationCanceledException) { }
-                };
-                computed.Invalidated += RunOnInvalidated;
+                }, stopToken);
+
                 return Disposable.New(
-                    (Computed: (IComputed) computed, CancellationTokenSource: stop, CompletedHandler: untypedCompletedHandler), 
+                    (Computed: (IComputed) computed, StopCts: stopCts, CompletedHandler: untypedCompletedHandler), 
                     state => {
                         try {
-                            state.CancellationTokenSource.Cancel();
+                            state.StopCts.Cancel();
                         }
                         finally {
-                            state.CancellationTokenSource.Dispose();
+                            state.StopCts.Dispose();
                             if (untypedCompletedHandler is Action<IComputed<TOut>> completedHandler)
                                 completedHandler.Invoke(computed);
                         }

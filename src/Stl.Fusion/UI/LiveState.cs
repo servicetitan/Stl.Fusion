@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Internal;
 using Stl.Reflection;
-using Errors = Stl.Fusion.Internal.Errors;
 
 namespace Stl.Fusion.UI
 {
@@ -55,15 +54,12 @@ namespace Stl.Fusion.UI
         private readonly Func<ILiveState<TLocal, TState>, CancellationToken, Task<TState>> _updater;
         private readonly bool _isolateUpdateErrors; 
         private readonly bool _delayFirstUpdate; 
-        private readonly Action<IComputed> _invalidationHandler;
-        private readonly CancellationTokenSource _disposeCts;
-        private readonly CancellationToken _disposeCtsToken;
-        private volatile IComputed<TState>? _trackedComputed;
+        private readonly CancellationTokenSource _stopCts;
+        private readonly CancellationToken _stopToken;
+        private readonly SimpleComputedInput<TState> _computedRef;
         private volatile Box<TLocal> _local;
-        private SimpleComputedInput<TState>? _computedRef;
         private volatile Exception? _lastUpdateError;
         private volatile int _failedUpdateIndex;
-        private volatile int _updateIndex;
 
         public TLocal Local {
             get => _local.Value;
@@ -97,26 +93,27 @@ namespace Stl.Fusion.UI
             _isolateUpdateErrors = options.IsolateUpdateErrors;
             UpdateDelayer = options.UpdateDelayer ?? updateDelayer ?? UI.UpdateDelayer.Default;
 
-            _invalidationHandler = OnInvalidated;
-            _disposeCts = new CancellationTokenSource();
-            _disposeCtsToken = _disposeCts.Token;
+            _stopCts = new CancellationTokenSource();
+            _stopToken = _stopCts.Token;
             _local = Box.New(options.InitialLocal);
-            Start(options);
+            var computed = (SimpleComputed<TState>) SimpleComputed.New(
+                options.StateOptions, UpdateAsync, options.InitialState, false);
+            _computedRef = computed.Input;
+            Task.Run(RunAsync);
         }
 
         ~LiveState() => Dispose();
 
         public void Dispose()
         {
-            if (_trackedComputed == null || _disposeCts.IsCancellationRequested)
+            if (_stopCts.IsCancellationRequested)
                 return;
             GC.SuppressFinalize(this);
-            BeginTracking(null);
             try {
-                _disposeCts.Cancel();
+                _stopCts.Cancel();
             }
             finally {
-                _disposeCts.Dispose();
+                _stopCts.Dispose();
             }
         }
 
@@ -136,45 +133,23 @@ namespace Stl.Fusion.UI
                 UpdateDelayer.CancelDelays();
         }
 
-        private void Start(Options options)
+        protected virtual async Task RunAsync()
         {
-            var computed = (SimpleComputed<TState>) SimpleComputed.New(
-                options.StateOptions, UpdateAsync, options.InitialState, false);
-            var oldComputedRef = Interlocked.CompareExchange(
-                ref _computedRef, computed.Input, null);
-            if (oldComputedRef != null)
-                throw Errors.AlreadyStarted();
-            BeginTracking(computed);
-        }
-
-        private void BeginTracking(IComputed<TState>? newComputed)
-        {
-            var oldComputed = Interlocked.Exchange(ref _trackedComputed, newComputed);
-            if (oldComputed != null)
-                oldComputed.Invalidated -= _invalidationHandler;
-            if (newComputed != null)
-                newComputed.Invalidated += _invalidationHandler;
-            if (oldComputed?.IsConsistent == true)
-                _log.LogWarning($"{nameof(BeginTracking)}: oldComputed.IsConsistent == true.");
-        }
-
-        private void OnInvalidated(IComputed computed)
-        {
-            using var _ = ExecutionContext.SuppressFlow();
-            Task.Run(async () => {
-                var updateIndex = Interlocked.Increment(ref _updateIndex) - 1;
-                var cancellationToken = _disposeCtsToken;
+            var cancellationToken = _stopToken;
+            var computed = _computedRef.Computed;
+            for (var updateIndex = 0;; updateIndex++) {
+                await computed.InvalidatedAsync(cancellationToken).ConfigureAwait(false);
                 try {
-                    cancellationToken.ThrowIfCancellationRequested();
                     if (updateIndex != 0 || _delayFirstUpdate)
                         await UpdateDelayer.DelayAsync(cancellationToken).ConfigureAwait(false);
-                    await computed.UpdateAsync(false, cancellationToken).ConfigureAwait(false);
+                    computed = (SimpleComputed<TState>) 
+                        await computed.UpdateAsync(false, cancellationToken).ConfigureAwait(false);
                 }
                 finally {
                     cancellationToken.ThrowIfCancellationRequested();
                     Updated?.Invoke(this);
                 }
-            }, CancellationToken.None);
+            }
         }
 
         private async Task UpdateAsync(
@@ -201,9 +176,6 @@ namespace Stl.Fusion.UI
                 UpdateDelayer.ExtraErrorDelayAsync(e, tryIndex, cancellationToken)
                     .ContinueWith(_ => next.Invalidate(), CancellationToken.None)
                     .Ignore();
-            }
-            finally {
-                BeginTracking(next);
             }
         }
     }
