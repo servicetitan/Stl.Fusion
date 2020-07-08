@@ -37,3 +37,5 @@ Without further ado:
 * [Part 3: `IComputedService` and a nicer way to create `IComputed<TOut>`](./Part03.md)
 * [Part 4: Computed Services: execution, caching, and invalidation](./Part04.md)
 * [Part 5: Computed Services: dependencies](./Part05.md)
+* [Part 6: Computed Instances and Computed Services - Review](./Part05.md)
+

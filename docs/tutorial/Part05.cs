@@ -117,17 +117,16 @@ namespace Tutorial
             var formatter = services.GetRequiredService<FormatService>();
 
             users.SetUserName(0, "John Carmack");
-            var cFormatted = await Computed.CaptureAsync(async _ => 
+            var cFormattedUser0 = await Computed.CaptureAsync(async _ => 
                 await formatter.FormatUserNameAsync(0));
             for (var i = 0; i < 10; i++) {
-                WriteLine(cFormatted.Value);
-                WriteLine(await formatter.FormatUserNameAsync(0));
-                await Task.Delay(100);
+                WriteLine(cFormattedUser0.Value);
+                await cFormattedUser0.InvalidatedAsync();
+                // Note that nothing gets recomputed automatically;
+                // on a positive side, any IComputed knows how to recompute itself,
+                // so you can always do this manually:
+                cFormattedUser0 = await cFormattedUser0.UpdateAsync(false);
             }
-            users.SetUserName(0, "Linus Torvalds");
-            WriteLine(await formatter.FormatUserNameAsync(0));
-            users.SetUserName(0, "Satoshi Nakamoto");
-            WriteLine(await formatter.FormatUserNameAsync(0));
             #endregion
         }
     }
