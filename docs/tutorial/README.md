@@ -35,4 +35,5 @@ Without further ado:
 * [Part 1: `IComputed<TOut>` and `SimpleComputed<TOut>`](./Part01.md)
 * [Part 2: Dependencies between computed instances](./Part02.md)
 * [Part 3: `IComputedService` and a nicer way to create `IComputed<TOut>`](./Part03.md)
-* [Part 4: Playing with `IComputedService`](./Part04.md)
+* [Part 4: Computed Services: execution, caching, and invalidation](./Part04.md)
+* [Part 5: Computed Services: automatic dependencies](./Part05.md)
