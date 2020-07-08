@@ -75,33 +75,32 @@ Let's try to make Fusion to evict some cached entries:
 // Use try-dotnet to see this part 
 ```
 
-`ComputedRegistry.Prune` removes string references to the
-entries with expired `KeepAliveTime` (1s after the last use by default)
-and evicts the entries those `IComputed` instances are collected by GC.
-
+`ComputedRegistry.Prune` removes strong references to the
+entries with expired `KeepAliveTime` (which is 1 second by default)
+and removes the entries those `IComputed` instances are collected by GC.
 We invoked it in above example to ensure strong references to our cached 
 computed instances (method outputs) are removed, so GC can pick it up.
 
 `Prune` is triggered once per `O(registry.Capacity)` operations (reads and
 updates) with `ComputedRegistry`. This ensures the amortized cost of pruning 
-is `O(1)` per operation.  
-
-So in reality, you don't have to invoke it manually - it will be invoked 
-after a certain number of operations anyway:
+is `O(1)` per operation. So in reality, you don't have to invoke it manually - 
+it will be invoked after a certain number of operations anyway:
 
 ``` cs --region part04_useCalculator4 --source-file Part04.cs
 // Use try-dotnet to see this part 
 ```
 
-Ok, but we already know `IComputed` instances can be invalidated.
-Can we somehow pull an instance of `IComputed` that represents the result
-of method call and invalidate it manually? Yes: 
+Ok, now let's check out how the invalidation impacts our cache.
+Can we somehow pull an instance of `IComputed` that represents 
+the result of specific call and invalidate it manually? 
+
+Yes: 
 
 ``` cs --region part04_useCalculator5 --source-file Part04.cs
 // Use try-dotnet to see this part 
 ```
 
-There is a shorter way to invalidate method call results:
+There is a shorter way to invalidate method call result:
 
 ``` cs --region part04_useCalculator6 --source-file Part04.cs
 // Use try-dotnet to see this part 
