@@ -15,6 +15,7 @@ The simplest way to create a new `IComputed<TOut>` instance ("computed" further)
 to use `SimpestComputed.New` shortcuts.
 
 ``` cs --region part01_create --source-file Part01.cs
+// Use try-dotnet to see this part 
 ```
 
 As you might notice, every computed has `Value`, which stores the cached result of 
@@ -42,6 +43,7 @@ Computed instances are *semi-immutable*:
 Let's see how it works:    
 
 ``` cs --region part01_invalidateAndUpdate --source-file Part01.cs
+// Use try-dotnet to see this part 
 ```
 
 As you might notice, the instances we were playing with so far were "born"
@@ -50,6 +52,7 @@ in `Consistent` state. That's because they were constructed using
 to construct computed instances that are "born" invalidated:
   
 ``` cs --region part01_createNoDefault --source-file Part01.cs
+// Use try-dotnet to see this part 
 ```
 
 

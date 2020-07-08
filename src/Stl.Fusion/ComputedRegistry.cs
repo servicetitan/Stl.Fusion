@@ -1,14 +1,15 @@
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
-using Stl.Collections;
 using Stl.Concurrency;
 using Stl.Locking;
 using Stl.OS;
-using Stl.Reflection;
 using Stl.Time;
+using Stl.Time.Internal;
 
 namespace Stl.Fusion
 {
@@ -39,7 +40,7 @@ namespace Stl.Fusion
         private readonly StochasticCounter _opCounter;
         private readonly IMomentClock _clock;
         private volatile int _pruneCounterThreshold;
-        private Task? _pruneTask = null;
+        private Task? _pruneTask;
         private object Lock => _storage; 
 
         public ComputedRegistry(Options? options = null) 
@@ -66,7 +67,7 @@ namespace Stl.Fusion
 
         public IComputed? TryGet(ComputedInput key)
         {
-            var random = key.HashCode + GetRandomInt();
+            var random = Randomize(key.HashCode);
             OnOperation(random);
             if (_storage.TryGetValue(key, out var entry)) {
                 var value = entry.Computed;
@@ -93,7 +94,7 @@ namespace Stl.Fusion
             if (!value.IsConsistent) // It could be invalidated on the way here :)
                 return;
             var key = value.Input;
-            var random = key.HashCode + GetRandomInt();
+            var random = Randomize(key.HashCode);
             OnOperation(random);
             _storage.AddOrUpdate(
                 key, 
@@ -111,7 +112,7 @@ namespace Stl.Fusion
         public bool Remove(IComputed value)
         {
             var key = value.Input;
-            var random = key.HashCode + GetRandomInt();
+            var random = Randomize(key.HashCode);
             OnOperation(random);
             if (!_storage.TryGetValue(key, out var entry))
                 return false;
@@ -134,8 +135,8 @@ namespace Stl.Fusion
         // Private members
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private int GetRandomInt()
-            => unchecked((int) _clock.Now.EpochOffset.Ticks);
+        private int Randomize(int random) 
+            => random + CoarseStopwatch.RandomInt32;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void OnOperation(int random)
@@ -153,15 +154,22 @@ namespace Stl.Fusion
                 if (_opCounter.ApproximateValue <= _pruneCounterThreshold)
                     return;
                 _opCounter.ApproximateValue = 0;
-                if (_pruneTask != null)
-                    _pruneTask = Task.Run(Prune);
+                Prune();
             }
         }
 
         private void Prune()
         {
+            lock (Lock) {
+                if (_pruneTask == null || _pruneTask.IsCompleted)
+                    _pruneTask = Task.Run(PruneInternal);
+            }
+        }
+
+        private void PruneInternal()
+        {
             var now = _clock.Now;
-            var randomOffset = GetRandomInt();
+            var randomOffset = Randomize(Thread.CurrentThread.ManagedThreadId);
             foreach (var (key, entry) in _storage) {
                 var handle = entry.Handle;
                 if (handle.Target == null) {
@@ -183,7 +191,6 @@ namespace Stl.Fusion
             lock (Lock) {
                 UpdatePruneCounterThreshold();
                 _opCounter.ApproximateValue = 0;
-                _pruneTask = null;
             }
         }
 
@@ -191,9 +198,8 @@ namespace Stl.Fusion
         {
             lock (Lock) {
                 // Should be called inside Lock
-                var currentThreshold = (long) _pruneCounterThreshold;
                 var capacity = (long) _storage.GetCapacity();
-                var nextThreshold = (int) Math.Min(int.MaxValue >> 1, Math.Max(capacity << 1, currentThreshold << 1));
+                var nextThreshold = (int) Math.Min(int.MaxValue >> 1, capacity << 1);
                 _pruneCounterThreshold = nextThreshold;
             }
         }

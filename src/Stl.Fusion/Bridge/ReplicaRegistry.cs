@@ -125,9 +125,8 @@ namespace Stl.Fusion.Bridge
         {
             lock (Lock) {
                 // Should be called inside Lock
-                var currentThreshold = (long) _pruneCounterThreshold;
                 var capacity = (long) _handles.GetCapacity();
-                var nextThreshold = (int) Math.Min(int.MaxValue >> 1, Math.Max(capacity << 1, currentThreshold << 1));
+                var nextThreshold = (int) Math.Min(int.MaxValue >> 1, capacity << 1);
                 _pruneCounterThreshold = nextThreshold;
             }
         }
@@ -148,12 +147,19 @@ namespace Stl.Fusion.Bridge
                 if (_opCounter.ApproximateValue <= _pruneCounterThreshold)
                     return;
                 _opCounter.ApproximateValue = 0;
-                if (_pruneTask != null)
-                    _pruneTask = Task.Run(Prune);
+                Prune();
             }
         }
 
         private void Prune()
+        {
+            lock (Lock) {
+                if (_pruneTask == null || _pruneTask.IsCompleted)
+                    _pruneTask = Task.Run(PruneInternal);
+            }
+        }
+
+        private void PruneInternal()
         {
             foreach (var (key, gcHandle) in _handles) {
                 if (gcHandle.Target != null)
@@ -167,7 +173,6 @@ namespace Stl.Fusion.Bridge
             lock (Lock) {
                 UpdatePruneCounterThreshold();
                 _opCounter.ApproximateValue = 0;
-                _pruneTask = null;
             }
         }
     }

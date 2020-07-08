@@ -6,6 +6,7 @@ but there is a much better way to do this, which gives a number of advantages.
 Let's create a helper we'll be using for a few next samples first:
 
 ``` cs --editable false --region part03_createHelper --source-file Part03.cs
+// Use try-dotnet to see this part 
 ```
 
 As you might notice, it:
@@ -27,11 +28,13 @@ As you might notice, it:
 Now, let's declare our first computed service:
 
 ``` cs --editable false --region part03_service1 --source-file Part03.cs
+// Use try-dotnet to see this part 
 ```
 
 And finally, let's play with it:
 
 ``` cs --region part03_useService1_part1 --source-file Part03.cs
+// Use try-dotnet to see this part 
 ```
 
 So what's going on here?

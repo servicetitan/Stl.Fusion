@@ -15,6 +15,7 @@ The following rules apply:
 The code below (sorry, it's large) explains how it works:
 
 ``` cs --region part02_dependencies --source-file Part02.cs
+// Use try-dotnet to see this part 
 ```
 
 You might notice that dependent-dependency links form a 

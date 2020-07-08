@@ -29,12 +29,11 @@ namespace Stl.Concurrency
 
         public ResourceLease<T> Rent()
         {
-            if (_queue.TryDequeue(out var item)) {
-                _count.Decrement(item!.GetHashCode(), out var _);
-                return new ResourceLease<T>(item, this);
+            if (_queue.TryDequeue(out var resource)) {
+                _count.Decrement(resource!.GetHashCode(), out var _);
+                return new ResourceLease<T>(resource, this);
             }
-            if (_count.ApproximateValue != 0)
-                _count.ApproximateValue = 0;
+            _count.Reset();
             return new ResourceLease<T>(_itemFactory.Invoke(), this);
         }
 

@@ -10,7 +10,7 @@ namespace Stl.Concurrency
         public static readonly int DefaultCapacity = 1024;
 
         private readonly ConcurrentQueue<GCHandle> _queue;
-        private readonly StochasticCounter _counter;
+        private readonly StochasticCounter _count;
         private volatile int _capacity;
 
         public GCHandleType HandleType { get; }
@@ -25,7 +25,7 @@ namespace Stl.Concurrency
             int counterApproximationFactor = StochasticCounter.DefaultApproximationFactor)
         {
             _queue = new ConcurrentQueue<GCHandle>();
-            _counter = new StochasticCounter(counterApproximationFactor);
+            _count = new StochasticCounter(counterApproximationFactor);
             HandleType = handleType;
             Capacity = capacity;
         }
@@ -45,11 +45,12 @@ namespace Stl.Concurrency
             if (_queue.TryDequeue(out var handle)) {
                 if (random == 0)
                     random = handle.GetHashCode();
-                _counter.Decrement(random, out var _);
+                _count.Decrement(random, out var _);
                 if (target != null)
                     handle.Target = target;
                 return handle;
             }
+            _count.Reset();
             return GCHandle.Alloc(target, HandleType);
         }
 
@@ -57,7 +58,7 @@ namespace Stl.Concurrency
             => Release(handle, Thread.CurrentThread.ManagedThreadId);
         public bool Release(GCHandle handle, int random)
         {
-            if (_counter.ApproximateValue >= Capacity) {
+            if (_count.ApproximateValue >= Capacity) {
                 handle.Free();
                 return false;
             }
@@ -65,9 +66,9 @@ namespace Stl.Concurrency
                 return false;
             if (random == 0)
                 random = handle.GetHashCode();
-            handle.Target = null;
+            _count.Increment(random, out var _);
             _queue.Enqueue(handle);
-            _counter.Increment(random, out var _);
+            handle.Target = null;
             return true;
         }
 
@@ -75,7 +76,7 @@ namespace Stl.Concurrency
         {
             while (_queue.TryDequeue(out var handle))
                 handle.Free();
-            _counter.ApproximateValue = _queue.Count;
+            _count.ApproximateValue = _queue.Count;
         }
     }
 }

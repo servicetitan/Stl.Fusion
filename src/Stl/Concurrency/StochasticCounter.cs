@@ -8,7 +8,7 @@ namespace Stl.Concurrency
 {
     public sealed class StochasticCounter
     {
-        public const int DefaultApproximationFactor = 16;
+        public const int DefaultApproximationFactor = 4;
 
         private long _value = 0;  
         private readonly uint _approximationMask;
@@ -31,8 +31,11 @@ namespace Stl.Concurrency
             approximationFactor *= HardwareInfo.ProcessorCount;
             ApproximationStep = (int) Bits.GreaterOrEqualPowerOf2((uint) approximationFactor);
             ApproximationStepLog2 = Bits.MsbIndex((ulong) ApproximationStep);
-            _approximationMask = (uint) ApproximationStep - 1;
+            _approximationMask = ((uint) ApproximationStep - 1) << 2;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Reset() => Interlocked.Exchange(ref _value, 0);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Increment(int random, out long approximateValue)

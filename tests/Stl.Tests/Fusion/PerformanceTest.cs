@@ -45,6 +45,7 @@ namespace Stl.Tests.Fusion
             await Task.WhenAll(tasks);
         }
 
+        // [Fact]
         [Fact(Skip = "Performance")]
         public async Task ComputedPerformanceTest()
         {
