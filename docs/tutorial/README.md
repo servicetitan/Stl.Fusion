@@ -1,4 +1,4 @@
-# `Stl.Fusion` Tutorial
+# Stl.Fusion Tutorial
 
 ## Prerequisites
 
