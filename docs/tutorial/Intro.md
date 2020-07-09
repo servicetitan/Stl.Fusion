@@ -61,7 +61,7 @@ by either immediate or delayed update request.
 So since we "reduced" this problem to cache invalidation, let's talk a bit
 more about it.
 
-## Caching, invalidation and eventual consistency
+## Caching, invalidation, and eventual consistency
 
 Quick recap of what consistency and caching is:
 
