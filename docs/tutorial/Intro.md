@@ -253,8 +253,8 @@ keyword - it's necessary to enable proxy type to override this method
 and do nearly what's done in the decorated version.
 
 > For the sake of clarity: the real Fusion proxy code is way more complex,
-> because:
-> * It is fully asynchronous & thread-safe 
+> because it:
+> * Is fully asynchronous & thread-safe 
 > * Hits the cache to pull existing IComputed<T> matching the same set
 >   of arguments, if it's available - there is no point to re-compute
 >   what's already computed and isn't invalidated yet, right?
