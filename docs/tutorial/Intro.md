@@ -83,9 +83,8 @@ Quick recap of what consistency and caching is:
    consistency can be partial too.
    
 4. **Any non-malfunctioning system is at least eventually consistent**.
-   Being worse then eventually consistent is the same as "being prone
-   to a failure you won't recover from". In short, it's a property of
-   malfunctioning / broken system.
+   Being worse then eventually consistent is almost exactly the same as 
+   "being prone to a failure you won't *ever* recover from".
    
 5. "Caching" is just a fancy way of saying "we store the results of 
    computations somewhere and reuse them without running the actual
