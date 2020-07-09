@@ -279,9 +279,14 @@ Let's get back to the second part now - the methods that don't use
 
 If you think about the logic in a real-life app, 90% of it is high-level logic -
 in particular, anything you have on the client-side and most of the server-side
-logic except all the data provider at the lowest level (e.g. repositories). 
+calls something else in the same app to get the data. And maybe just 10%
+of its code pulls the data by invoking some third-party code or API (e.g. SQL data
+providers). In short, yes, manual invalidation is something we'll need
+to take care of, but it's not as big of a deal as it might seem initially. 
 Later you'll learn both how to implement it, and also how to address some 
-of the cases there that look tricky at first.
+of the cases that look tricky at first. 
+
+## Real Fusion
 
 That's how real Fusion-based code of `GetTimeWithOffsetAsync` looks like:
 ```cs
