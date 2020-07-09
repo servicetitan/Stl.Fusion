@@ -290,15 +290,28 @@ of the cases that look tricky at first.
 
 That's how real Fusion-based code of `GetTimeWithOffsetAsync` looks like:
 ```cs
-[ComputedServiceMethod]
-public virtual async Task<DateTime> GetTimeWithOffsetAsync(TimeSpan offset)
+public class TimeService : IComputedService
 {
-    var time = await GetTimeAsync(); // Yes, it supports async calls too
-    return time + offset;
+    ...
+
+    [ComputedServiceMethod]
+    public virtual async Task<DateTime> GetTimeWithOffsetAsync(TimeSpan offset)
+    {
+        var time = await GetTimeAsync(); // Yes, it supports async calls too
+        return time + offset;
+    }
 }
 ```
 
-Is this it? No. Let's talk about the *distributed computed services* now!
+As you see, it's almost exactly the code you saw, but with the following differences:
+* The class implements `IComputedService` - a tagging interface with no members. 
+* The method is decorated with [ComputedServiceMethod] - the attribute is required
+  mainly to enable some safety checks, though it also allows to configure the
+  options of computed instances provided for this method.    
+
+In any other sense it works nearly as it was described earlier.
+
+Let's talk about the *distributed computed services* now.
 
 ## Crossing the process boundary
 
