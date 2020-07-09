@@ -4,7 +4,7 @@ Nearly everything in `Stl.Fusion` is based on `IComputed<TOut>` - an abstraction
 a _computation_ and _its output_.
 
 At glance, these instances are very similar to "Observable" \ "Computed observable" abstractions 
-from such libraries as [Knockout.js](https://knockoutjs.com/) or [mobX](https://mobx.js.org/),
+from such libraries as [Knockout.js](https://knockoutjs.com/) or [MobX](https://mobx.js.org/),
 but there are a few quite significant differences.
 
 Before jumping into the details, let's play with `IComputed` first.  
