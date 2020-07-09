@@ -492,7 +492,11 @@ We'll cover this part later, but for now let's focus on the code inside
   corresponding to the arguments isn't already available in cache.
   If a replica is available, but inconsistent, it will be automatically
   updated via WebSocket channel first, but ultimately, the caller 
-  will get its most up-to-date version (more precisely, its value).
+  will get its most up-to-date version (more precisely, its `.Value`).
+* "Cache" above refers to a local cache where all the consisntent instances
+  of `IComputed<T>` are registered. It's not exactly the cache - i.e. its 
+  actual purpose is a bit different (Tutorial explains this), but for simplicity
+  let's call it cache here.
 
 Do `IReplicaService`s differ from `IComputedService`? Yes and no:
 * Yes, because they are automatically implemented
