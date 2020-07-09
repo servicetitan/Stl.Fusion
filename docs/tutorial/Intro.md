@@ -125,7 +125,7 @@ The first option is easy to code, but has a huge trade-off:
 ![](../img/InconsistencyPeriod.gif)
       
 So here is the conceptual plan:
-* Real-time UI updates <=> cache consistency problem
+* Real-time UI updates ≃ cache consistency problem
 * Assuming we care only about `x == f(...)`-style consistency rules,
   we need something that will tell us when an output of a certain function
   changes -- as quickly as possible.
