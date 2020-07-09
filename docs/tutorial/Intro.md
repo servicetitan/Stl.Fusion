@@ -3,65 +3,83 @@
 Sorry in advance - the document is long (~ 500 lines or ~ 12 pages),
 but I hope you'll find it interesting.
 
-## The story behind Stl.Fusion
+## The Story Behind Stl.Fusion
 
 TODO: Write the story of how the concept was born.
 
-## What is "real-time application"? 
+## What Is Real-time Application?
 
-The question seems quite simple, right? *Real-time apps are the apps
-that update the content user sees in real-time.* Wait, did I just explained "real-time" using another "real-time"?
+Ultimately, it's the app displaying always up-to-date content, which 
+gets updated even if user doesn't take actions. It's also expected that
+"pushes" of such updates are triggered by the changes made by other 
+users or services, but not by a timer -- so an app that refreshes the 
+page every minute *unconditionally* isn't a fit for this category. 
 
-Let's try to come up with a more precise definition:
-* If an app almost always requires an explicit user action to update the content
-  user sees, it's *clearly not real-time*.
-* On contrary, if the content displayed to the user stays always up-to-date, 
-  even if user doesn't take actions, it's *possibly a real-time app*.
-  
-"Possibly" could mean a huge difference:
-* The app that simply refreshes the page every minute doesn't seem to be
-  even close to real-time.
-* On contrary, apps like Facebook, Quora, Slack, and lots of others - in fact,
-  the ones that almost instantly display at least the most critical updates -
-  are considered real-time.
-  
-Let's define this in more scientific terms:
-* Let's assume the content user sees (the UI) is produced by some function 
-* And the output of this function changes over time - mostly, due to changes
-  in state that this function uses to produce the content.
-  
-So how UI update pseudo-code could look like:
-
+In more scientific terms, the UI update loop of a regular app
+looks as follows:
 ```
-ui_state = function(app_state, client_state)
-await any(app_state.change(), client_state.change())  
-ui_state = function(app_state, client_state)
+// React+Redux - style update loop 
+while (true) {
+    var action = await GetUserAction();
+    (localState, cachedServerState) = 
+        await ApplyAction(localState, cachedServerState)
+    var uiState = CreateUIState(localState, serverState);
+    UpdateUI(uiState);   
+}
 ```  
 
-Now, we want to make sure that `ui_state` gets "in sync" with the `app_state`
-and the `client_state` as quickly as possible once any of them changes.
-
-Does this problem sound familiar to you? 
-
-Yeah, **"real-time" is all about eventual consistency and caching**. Compare
-what I just described with a pseudo-code that tries to invalidate some cached
-value in real time:
+And this is how similar loop looks for a real-time app:
 ```
-cache[(function, arguments)] = function(app_state, arguments)
-await app_state.change()
-cache[(function, arguments)] = <none>  
+while (true) {
+    var localStateChangedTask = localState.ChangedAsync(); 
+    var cachedServerStateChangedTask = cachedServerState.ChangedAsync();
+    var completedTask = await Task.WhenAny(
+        localStateChangedTask,
+        cachedServerStateChangedTask);
+    if (completedTask == localStateChangedTask)
+        localState = await localState.UpdateAsync();
+    else
+        cachedServerState = await cachedServerState.UpdateAsync();
+    var uiState = CreateUIState(localState, cachedServerState);
+    UpdateUI(uiState);   
+}
 ```  
 
-Long story short, you may think about the UI presented to the user
-(or its state / model) as a value that's cached remotely on the client,
-and your goal is to "invalidate" it automatically once the data it depends 
-on changes. The code on the client may react to the invalidation
-by either immediate or delayed update request.
+As you see, the key part there is `.ChangedAsync()` function,
+which is supposed to trigger once changes happen. It's easy
+to write it for the `localState`, but what about the
+`cachedServerState`? It's actually pretty hard, assuming that:
+* `cachedServerState` is a small part of "full" server-side state
+  that client caches (stores locally)
+* We don't want to get too many of false positives - e.g. we don't
+  want to send a change notification to every client once any change
+  on server happens, because this means our servers will be sending 
+  `O(userCount^2)` of such notifications per any interval, i.e.
+  it won't scale.
 
-So since we "reduced" this problem to cache invalidation, let's talk a bit
-more about it.
+Now let's look at a seemingly different problem: caching with 
+real-time entry invalidation driven by changes in the underlying data:
 
-## Caching, invalidation, and eventual consistency
+```
+var observableState = FunctionReturningObservableState();
+await cache.SetAsync(key, observableState.Value);
+await state.ChangedAsync(); // <-- LOOK AT THIS LINE 
+await cache.Evict(key);
+```  
+
+As you see, it's actually a very similar problem:
+you may look at any UI (its state or model) as a value 
+cached remotely on the client. 
+And if you want it to update in real time, your actually 
+want to "invalidate" this value once the data it 
+depends on changes &ndash; as quickly as possible. 
+The code on the client may react to the invalidation by 
+either immediate or delayed update request.
+
+So since both these problems are connected, let's try to
+solve them together. But first, let's talk about caching.
+
+## Caching, Invalidation, and Eventual Consistency
 
 Quick recap of what consistency and caching is:
 
@@ -124,13 +142,15 @@ The first option is easy to code, but has a huge trade-off:
 
 ![](../img/InconsistencyPeriod.gif)
       
-So here is the conceptual plan:
-* Real-time UI updates ≃ cache consistency problem
+So here is the solution plan:
 * Assuming we care only about `x == f(...)`-style consistency rules,
-  we need something that will tell us when an output of a certain function
-  changes -- as quickly as possible.
-
-## How can we implement changes tracking?
+  we need something that will tell us when the output of a certain 
+  function changes &ndash; as quickly as possible.
+* If we have this piece, we can solve both problems:
+  * Cache inconsistency
+  * Real-time UI updates.
+    
+## The Implementation
 
 I'll try keep it short from this point:
 * Detecting changes precisely is ~ as expensive as computing the function itself.
@@ -149,8 +169,8 @@ Before we get to the final part, let's think of the API of what we want to build
 Let's say this is the "original" function's code we have:
 ```cs
 DateTime GetCurrentTimeWithOffset(TimeSpan offset) {
-  var time = GetCurrentTime()
-  return time + offset;
+    var time = GetCurrentTime()
+    return time + offset;
 }  
 ```
 
@@ -160,17 +180,17 @@ return something that allows us to get a notification once its output
 (for the specific argument) is invalidated: 
 ```cs
 IComputed<DateTime> GetCurrentTimeWithOffset(TimeSpan offset) {
-  var time = GetCurrentTime()
-  return Computed.New(time + offset);
+    var time = GetCurrentTime()
+    return Computed.New(time + offset);
 }  
 ```
 
 Assuming `IComputed<T>` has at least these properties:
 ```cs
 interface IComputed<T> {
-  T Value { get; }
-  bool IsConsistent { get; }
-  Action Invalidated; // Triggered once it turns inconsistent
+    T Value { get; }
+    bool IsConsistent { get; }
+    Action Invalidated; // Triggered once it turns inconsistent
 }
 ```
 
@@ -189,10 +209,10 @@ If that's the case, the working version of
 `GetCurrentTimeWithOffset()` could be:
 ```cs
 IComputed<DateTime> GetCurrentTimeWithOffset(TimeSpan offset) {
-  var cTime = GetCurrentTime()
-  var result = Computed.New(cTime.Value + offset);
-  cTime.Invalidated += () => result.Invalidate();
-  return result;
+    var cTime = GetCurrentTime()
+    var result = Computed.New(cTime.Value + offset);
+    cTime.Invalidated += () => result.Invalidate();
+    return result;
 }  
 ```
 
@@ -225,26 +245,25 @@ returns IComputed<T>? Actually, yes:
 
 // The original code in TimeService class
 virtual DateTime GetCurrentTimeWithOffset(TimeSpan offset) {
-  var time = GetCurrentTime()
-  return time + offset;
+    var time = GetCurrentTime()
+    return time + offset;
 }  
 
 // The "decorated" version of this function generated in a 
 // descendant of TimeService class:                     
 override DateTime GetCurrentTimeWithOffset(TimeSpan offset) {
-  var result = Computed.New();
-  var dependant = Computed.GetCurrent();
-  if (dependant != null)
-    result.Invalidated += () => dependant.Invalidate();
-  using (Computed.SetCurrent(result)) {
+    var result = Computed.New();
+    var dependant = Computed.GetCurrent();
+    if (dependant != null)
+        result.Invalidated += () => dependant.Invalidate();
+    using var _ = Computed.SetCurrent(result);
     try {
-      result.SetValue(base.GetCurrentTimeWithOffset(offset));
+        result.SetValue(base.GetCurrentTimeWithOffset(offset));
     }
     catch (Exception e) {
-      result.SetError(e);
+        result.SetError(e);
     }
-  }
-  return result.Value; // Re-throws an error if SetError was called 
+    return result.Value; // Re-throws an error if SetError was called 
 }  
 ``` 
 
@@ -286,7 +305,7 @@ to take care of, but it's not as big of a deal as it might seem initially.
 Later you'll learn both how to implement it, and also how to address some 
 of the cases that look tricky at first. 
 
-## Real Fusion
+## Real Fusion Code
 
 That's how real Fusion-based code of `GetTimeWithOffsetAsync` looks like:
 ```cs
@@ -318,15 +337,15 @@ Let's talk about the *distributed computed services* now.
 First, notice that nothing prevents us from crafting this "kind" of `IComputed<T>`:
 ```cs
 public class ReplicaComputed<T> : IComputed<T> {
-  T Value { get; }
-  bool IsConsistent { get; }
-  Action Invalidated;
-
-  public ReplicaComputed<T>(IComputed<T> source) {
-    Value = source.Value;
-    IsConsistent = source.IsConsistent;
-    source.Invalidated += () => Invalidate();
-  } 
+    T Value { get; }
+    bool IsConsistent { get; }
+    Action Invalidated;
+    
+    public ReplicaComputed<T>(IComputed<T> source) {
+        Value = source.Value;
+        IsConsistent = source.IsConsistent;
+        source.Invalidated += () => Invalidate();
+    } 
 }
 ```
 
@@ -340,11 +359,11 @@ I described. Speaking about the updates - let's add one more useful method
 to our `IComputed<T>`:
 ```cs
 interface IComputed<T> {
-  T Value { get; }
-  bool IsConsistent { get; }
-  Action Invalidated; 
-
-  Task<IComputed<T>> UpdateAsync(); // THIS ONE
+    T Value { get; }
+    bool IsConsistent { get; }
+    Action Invalidated; 
+    
+    Task<IComputed<T>> UpdateAsync(); // THIS ONE
 }
 ```
 
