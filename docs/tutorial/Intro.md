@@ -17,7 +17,7 @@ page every minute *unconditionally* isn't a fit for this category.
 
 In more scientific terms, the UI update loop of a regular app
 looks as follows:
-```
+```cs
 // React+Redux - style update loop 
 while (true) {
     var action = await GetUserAction();
@@ -29,7 +29,7 @@ while (true) {
 ```  
 
 And this is how similar loop looks for a real-time app:
-```
+```cs
 while (true) {
     var localStateChangedTask = localState.ChangedAsync(); 
     var cachedServerStateChangedTask = cachedServerState.ChangedAsync();
@@ -60,7 +60,7 @@ to write it for the `localState`, but what about the
 Now let's look at a seemingly different problem: caching with 
 real-time entry invalidation driven by changes in the underlying data:
 
-```
+```cs
 var observableState = FunctionReturningObservableState();
 await cache.SetAsync(key, observableState.Value);
 await observableState.ChangedAsync(); // <-- LOOK AT THIS LINE 
@@ -70,7 +70,7 @@ await cache.Evict(key);
 As you see, it's actually a very similar problem:
 you may look at any UI (its state or model) as a value 
 cached remotely on the client. 
-And if you want it to update in real time, your actually 
+And if you want to update it in real time, your actually 
 want to "invalidate" this value once the data it 
 depends on changes &ndash; as quickly as possible. 
 The code on the client may react to the invalidation by 
@@ -240,9 +240,7 @@ And if you're curious what's going to invalidate the output of
 Let's ignore functions from the second category for now. Can we automatically
 turn every regular function from the first category to a function that
 returns IComputed<T>? Actually, yes:
-
 ```cs
-
 // The original code in TimeService class
 virtual DateTime GetCurrentTimeWithOffset(TimeSpan offset) {
     var time = GetCurrentTime()
@@ -324,15 +322,16 @@ public class TimeService : IComputedService
 
 As you see, it's almost exactly the code you saw, but with the following differences:
 * The class implements `IComputedService` - a tagging interface with no members. 
+  "Computed service" in the content below refers to such types.
 * The method is decorated with [ComputedServiceMethod] - the attribute is required
   mainly to enable some safety checks, though it also allows to configure the
   options of computed instances provided for this method.    
 
 In any other sense it works nearly as it was described earlier.
 
-Let's talk about the *distributed computed services* now.
+Now, let's talk about...
 
-## Crossing the process boundary
+## Distributed Computed Services
 
 First, notice that nothing prevents us from crafting this "kind" of `IComputed<T>`:
 ```cs
@@ -533,7 +532,7 @@ it "composes" its model by two different ways:
 
 Which is why Fusion is mostly a...
 
-## Transparent abstraction     
+## Transparent Abstraction     
 
 Likely, you already spotted that you almost never have to deal 
 with `IComputed<T>` directly:
@@ -545,13 +544,54 @@ with `IComputed<T>` directly:
 In this sense, Fusion is quite similar to Garbage Collection - 
 a much more famous transparent abstraction all of us love.
 
-![](../img/InvisibleSnowboard.JPG) 
-
-## Fusion and Blazor = ❤
+![](../img/InvisibleSnowboard.JPG)
 
 Stay focused, that's the last topic here :)
 
-So why every single piece of a client-side code shown here is supposed to run on 
+## Fusion And Other Technologies
+
+### SignalR, Pusher, etc.
+
+Technically, you don't need [SignalR](https://dotnet.microsoft.com/apps/aspnet/signalr) 
+or anything similar with Fusion:
+* Yes, they are capable to push messages to the clients
+* And although Fusion currently "pushes" just one kind of message - 
+  "replica is invalidated", this is more than enough to have the rest,
+  since the subsequent update (or even another call) can bring all the
+  data needed.
+
+Here is an example of an API endpoints that could be used solely for messaging:
+```cs
+Task<int> GetLastMessageIndexAsync(string userId);
+Task<Message[]> GetLastMessagesAsync(string userId, int count);
+```
+
+Notice that such a solution is even better than something like a server-side
+broadcast in SignalR (`Clients.All.*` calls), because if you persist these
+messages, they'll be still reliably delivered after a temporary disconnection 
+of a client and even a server restart &ndash; Fusion reconnects automatically 
+and transparently for replicas, and once this happens, all the client-side 
+replicas query its most current state.
+
+Besides that, you don't have to think of concepts like "topics" or 
+"subscriptions" - whatever you consume from a client automatically gets
+the updates, and if it's something shared amoung multiple clients,
+you may thing of this as a "topic".
+
+Of course I don't mean SignalR is completely useless with Fusion - there 
+are some scenarios where you could still benefit from it - e.g.
+if you really want to deliver the update as quickly as possible, 
+SignalR could be a better choice: currently there is no way to tell Fusion
+to push the update together with invalidation message, so any update
+requires a explicit round-trip after the invalidation. Later
+you will learn why this is behaviour is actually quite reasonable,
+but nevertheless, there are cases when this could be a deal breaker.
+
+Obvoiusly, we consider addressing this in future.
+
+### Fusion and Blazor = ❤
+
+Why every single piece of a client-side code shown here is supposed to run on 
 [Blazor](https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor)? 
 
 Stl.Fusion is just 3 months old project (that's on Jul 9, 2020). 
