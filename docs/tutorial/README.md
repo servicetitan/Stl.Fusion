@@ -31,7 +31,7 @@ to complete this tutorial *before* digging into the source
 code of Fusion samples.
 
 Without further ado:
-* [Conceptual Intro](./Intro.md)
+* [Stl.Fusion: Introduction](./Intro.md)
 * [Part 0: NuGet packages](./Part00.md)
 * [Part 1: `IComputed<TOut>` and `SimpleComputed<TOut>`](./Part01.md)
 * [Part 2: Dependencies between computed instances](./Part02.md)

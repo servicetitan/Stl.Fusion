@@ -585,5 +585,8 @@ especially for the companies running their server-side code on .NET Core (or .NE
   switching to something else assuming its not going to be the best choice in 
   future?      
 
-P.S. If you're reading this, you are definitely ready
-for the [Part 0 of the Tutorial](./Part00.md) ❤    
+P.S. If you're reading this, you are absolutely ready
+to open [Part 0 of the Tutorial](./Part00.md) or
+ask a tricky question on our
+[Discord Server](https://discord.gg/EKEwv6d)! 
+    

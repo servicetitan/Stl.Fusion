@@ -72,9 +72,15 @@ Check out the [Tutorial](tutorial/README.md) to learn how.
 
 ## 4. Documentation and other materials
 
-* [Tutorial](tutorial/README.md)
-* That's it for now, but we'll definitely add more. 
-  You're absolutely welcome to contribute!
+* [Stl.Fusion: Introduction](./Intro.md) is the best place
+  to start. It describes what's Fusion on conceptual level
+  and explains the most tricky concepts on relatively simple
+  examples (mostly pseudo-code).
+* [Tutorial](tutorial/README.md) - not fully finished yet,
+  but the best part is: it is interactive, so any code you see
+  there is runnable with [try-dotnet](https://github.com/dotnet/try/blob/master/DotNetTryLocal.md)!
+  
+That's it for now, but we'll definitely add more over time. 
 
 ## 5. Q/A
 
