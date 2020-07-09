@@ -365,8 +365,6 @@ code?
 
 As you might guess, YES again!
 
-![](../img/InvisibleSnowboard.JPG) 
-
 Fusion provides a fancy base type for your ASP.NET Core API controllers:
 `FusionController`. This controller currently provides a single extra method,
 and here its complete source code:
@@ -522,6 +520,8 @@ with `IComputed<T>` directly:
 
 In this sense, Fusion is quite similar to Garbage Collection - 
 a much more famous transparent abstraction all of us love.
+
+![](../img/InvisibleSnowboard.JPG) 
 
 ## Fusion and Blazor = ❤
 
