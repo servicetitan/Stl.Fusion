@@ -9,27 +9,24 @@ TODO: Write the story of how the concept was born.
 
 ## What is "real-time application"? 
 
-The question seems quite simple, right? Real-time apps are the apps
-that update the content user sees in real-time. 
+The question seems quite simple, right? *Real-time apps are the apps
+that update the content user sees in real-time.* Wait, did I just explained "real-time" using another "real-time"?
 
-Wait, did I just explained "real-time" using another "real-time"?
-
-Ok, let's try to come up with a more precise definition:
+Let's try to come up with a more precise definition:
 * If an app almost always requires an explicit user action to update the content
   user sees, it's *clearly not real-time*.
 * On contrary, if the content displayed to the user stays always up-to-date, 
   even if user doesn't take actions, it's *possibly a real-time app*.
   
-"Possibly" above could imply a huge difference:
+"Possibly" could mean a huge difference:
 * The app that simply refreshes the page every minute doesn't seem to be
   even close to real-time.
 * On contrary, apps like Facebook, Quora, Slack, and lots of others - in fact,
   the ones that almost instantly display at least the most critical updates -
   are considered real-time.
   
-Let's define this in scientific terms:
+Let's define this in more scientific terms:
 * Let's assume the content user sees (the UI) is produced by some function 
-  (which is usually the case)
 * And the output of this function changes over time - mostly, due to changes
   in state that this function uses to produce the content.
   
