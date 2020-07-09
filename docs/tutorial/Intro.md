@@ -555,12 +555,20 @@ Stay focused, that's the last topic here :)
 Technically, you don't need [SignalR](https://dotnet.microsoft.com/apps/aspnet/signalr) 
 or anything similar with Fusion:
 * Yes, they are capable to push messages to the clients
-* And although Fusion currently "pushes" just one kind of message - 
-  "replica is invalidated", this is more than enough to have the rest,
-  since the subsequent update (or even another call) can bring all the
-  data needed.
+* And although Fusion currently "pushes" just one type of message - 
+  "the original computed instance for your replica is invalidated", 
+  this is more than enough to have the rest, since the subsequent update 
+  (or even another API call) can bring all the data needed.
 
-Here is an example of an API endpoints that could be used solely for messaging:
+You may think of this as follows:
+* Usually the messages we send combine two pieces of information: 
+  "the state has changed" + "that's how exactly it changed".
+* Fusion is an abstraction designed to track state changes; and although it sends 
+  just the first kind of message ("state changed"), getting the actual change once
+  you get this notification is a cheap operation, because Fusion also ensures
+  everything is computed just once after the change.
+
+Here is an example of API endpoints that could be used solely for messaging:
 ```cs
 Task<int> GetLastMessageIndexAsync(string userId);
 Task<Message[]> GetLastMessagesAsync(string userId, int count);
