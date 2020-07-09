@@ -417,6 +417,7 @@ almost for free!
 
 The proof: if you open Fusion samples and go to http://localhost:5000/swagger/ page,
 you'll see this:
+
 ![](../img/SwaggerDoc.jpg)
 
 You can launch any of these methods right there, of course.
