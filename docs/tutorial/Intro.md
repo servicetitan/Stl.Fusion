@@ -63,7 +63,7 @@ real-time entry invalidation driven by changes in the underlying data:
 ```
 var observableState = FunctionReturningObservableState();
 await cache.SetAsync(key, observableState.Value);
-await state.ChangedAsync(); // <-- LOOK AT THIS LINE 
+await observableState.ChangedAsync(); // <-- LOOK AT THIS LINE 
 await cache.Evict(key);
 ```  
 
