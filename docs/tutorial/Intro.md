@@ -547,14 +547,14 @@ expand the timeline by at least 1 month assuming we build it
 relying on MobX, i.e. don't even try to replicate the fancy
 "Transparent abstraction" concept we have on server.
 
-This is the original reason I ditched the idea to even try 
-implementing a JavaScript client and bet on Blazor.
+This is the original reason I ditched the idea of even trying
+to implement a JavaScript client and bet on Blazor.
 
 > Though you're welcome to try doing this - and I'll be happy to help!
    
 And that's how I learned **Blazor is absolutely amazing!** I am talking
 about the client-side Blazor, i.e. its WebAssembly part, though 
-I am absolutely sure server-side Blazor isn't any worse, I just 
+I am absolutely sure server-side Blazor isn't any worse,
 it just wasn't the right fit for what I tried to accomplish, so
 I didn't play with it yet.
    
