@@ -55,7 +55,7 @@ cache[(function, arguments)] = <none>
 Long story short, you may think about the UI presented to the user
 (or its state / model) as a value that's cached remotely on the client,
 and your goal is to "invalidate" it automatically once the data it depends 
-on changes. The code on the client may react to the invalidation with
+on changes. The code on the client may react to the invalidation
 by either immediate or delayed update request.
 
 So since we "reduced" this problem to cache invalidation, let's talk a bit
