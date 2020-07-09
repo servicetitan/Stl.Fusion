@@ -73,7 +73,7 @@ Check out the [Tutorial](tutorial/README.md) to learn how.
 ## 4. Documentation and other materials
 
 * [Stl.Fusion: Introduction](tutorial/Intro.md) is the best place
-  to start. It describes what's Fusion on conceptual level
+  to start. It describes what Stl.Fusion is on conceptual level
   and explains the most tricky concepts on relatively simple
   examples (mostly pseudo-code).
 * [Tutorial](tutorial/README.md) - not fully finished yet,
