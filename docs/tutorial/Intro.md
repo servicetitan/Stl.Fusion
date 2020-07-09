@@ -568,7 +568,7 @@ You may think of this as follows:
   you get this notification is a cheap operation, because Fusion also ensures
   everything is computed just once after the change.
 
-Here is an example of API endpoints that could be used solely for messaging:
+Here is an example of API endpoints that could be used to implement messaging:
 ```cs
 Task<int> GetLastMessageIndexAsync(string userId);
 Task<Message[]> GetLastMessagesAsync(string userId, int count);
