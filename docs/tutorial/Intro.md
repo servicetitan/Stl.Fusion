@@ -386,10 +386,9 @@ protected virtual Task<T> PublishAsync<T>(Func<CancellationToken, Task<T>> produ
             return publication.State.Computed.Value;
         }, cancellationToken);
 }
-
 ```
 
-This is how you typically use it:
+This is how you use it:
 ```cs
 [Route("api/[controller]")]
 [ApiController]
@@ -405,7 +404,7 @@ public class TimeController : FusionController, ITimeService
 }
 ```
 
-And that's all you need to get an `IComputed<T>` created by `Time.GetTimeAsync()`
+That's all you need to get an `IComputed<T>` created by `Time.GetTimeAsync()`
 published!
 
 If you look at `PublishAsync` code above, you'll notice it checks if the
