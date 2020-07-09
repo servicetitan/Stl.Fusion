@@ -2,7 +2,7 @@
 
 ## The story behind Stl.Fusion
 
-TODO: Write the story of how I came up with this :)
+TODO: Write the story of how I came up with the concept :)
 
 ## What is "real-time application"? 
 
