@@ -28,7 +28,7 @@ while (true) {
 }
 ```  
 
-And this is how similar loop looks for a real-time app:
+And this is how a similar loop looks for a real-time app:
 ```cs
 while (true) {
     var localStateChangedTask = localState.ChangedAsync(); 
