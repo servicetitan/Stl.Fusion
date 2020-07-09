@@ -46,8 +46,8 @@ while (true) {
 ```  
 
 As you see, the key part there is `.ChangedAsync()` function,
-which is supposed to trigger once changes happen. It's easy
-to write it for the `localState`, but what about the
+which is supposed to asynchronously complete once changes happen. 
+It's easy to write it for the `localState`, but what about the
 `cachedServerState`? It's actually pretty hard, assuming that:
 * `cachedServerState` is a small part of "full" server-side state
   that client caches (stores locally)
