@@ -83,12 +83,12 @@ solve them together. But first, let's talk about caching.
 
 Quick recap of what consistency and caching is:
 
-1. **Consisntency** is the state when the values observed satisfy the
+1. **"Consistency"** is the state when the values observed satisfy the
    relation rules defined for them. Relations are defined as
    a set of predicates (or assertions) about the values, but 
    the most common relation is `x == fn(a, b)`, 
    i.e. it says `x` is always an output of some function `fn` 
-   applied to `(a, b)`. In other words, it's a functional relation.
+   applied to `(a, b)`. In other words, it's a **functional relation**.
 
 2. Consistency can be **partial** - e.g. you can say that triplet `(x, a, b)`
    is in consistent state for all the relations defined for it, but
@@ -98,14 +98,14 @@ Quick recap of what consistency and caching is:
 
 3. Consistency can be **eventual** - this is a fancy way of saying that
    if you'll leave the system "untouched" (i.e. won't introduce new changes), 
-   at some future point it will be in a consistent state. Obviously, eventual
-   consistency can be partial too.
+   *eventually* (i.e. at some point in future) you will find it in 
+   a consistent state. 
    
 4. **Any non-malfunctioning system is at least eventually consistent**.
    Being worse than eventually consistent is almost exactly the same as 
-   "being prone to a failure you won't *ever* recover from".
+   "being prone to a failure you won't recover from - *ever*".
    
-5. "Caching" is just a fancy way of saying "we store the results of 
+5. **"Caching"** is just a fancy way of saying "we store the results of 
    computations somewhere and reuse them without running the actual
    computation again". 
    * Typically "caching" implies use of high-performance key-value 
