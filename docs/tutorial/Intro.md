@@ -84,14 +84,15 @@ solve them together. But first, let's talk about caching.
 Quick recap of what consistency and caching is:
 
 1. **Consisntency** is the state when the values observed satisfy the
-   relationship rules defined for them. Even though relationships are
-   predicates (or assertions) about the values, the most common relationship
-   probably looks like `x == fn(a, b)`, i.e. it says `x` is always
-   an output of some function `fn` applied to `(a, b)`.
+   relation rules defined for them. Relations are defined as
+   a set of predicates (or assertions) about the values, but 
+   the most common relation is `x == fn(a, b)`, 
+   i.e. it says `x` is always an output of some function `fn` 
+   applied to `(a, b)`. In other words, it's a functional relation.
 
 2. Consistency can be **partial** - e.g. you can say that triplet `(x, a, b)`
-   is in consistent state for all the relationships defined for it, but
-   it's not true for some other values and/or relationships. In short,
+   is in consistent state for all the relations defined for it, but
+   it's not true for some other values and/or relations. In short,
    "consistency" always implies some scope of it, and this scope can be as
    narrow as a single value or a consistency rule.
 
