@@ -118,15 +118,26 @@ Quick recap of what consistency and caching is:
      again".
      
 Now, let's say we have two systems, A and B, and both are eventually
-consistent. Are they equally good? No. The biggest differentiating factor 
-between eventually consistent systems is inconsistency period:
-* If it's tiny (milliseconds?), this state is quite similar to 
-  absence of caching at all, because most of the reads are consistent. 
-  So e.g. you can optimistically ignore the inconsistencies on reads,
-  and check for them only when you apply the updates.
+consistent. Are they equally good for developers? 
+No. The biggest differentiating factor between eventually consistent 
+systems is the probability of finding them in consistent (or inconsistent) 
+state. You can also define this as ~ an expected length of inconsistency 
+period for a random transaction that follow the update - in other words,
+the duration of a period after a random update during which a random
+user of this system might get some data that captures the inconsistency.
+* If this period is tiny, such a system is quite similar to 
+  always-consistent one. Most of the reads there are consistent, 
+  so you as a developer can optimistically ignore the inconsistencies 
+  on reads and check for them only when you apply the updates.
 * On contrary, large inconsistency periods are quite painful -
   you have to take them into account everywhere, including the
   code that reads the data.
+
+> "Tiny" and "large inconsistency periods" above are a relative
+> term &ndash; all you care about is the percent of transactions
+> that capture the inconsistency. So if the users of your app 
+> are humans, "tiny" is ~ a millisecond or so, but if you build 
+> an API for robots (trading, etc.), "tiny" might be a sub-microsecond.
 
 Long story short, we want tiny inconsistency periods. But wait...
 If we look at what most caches offer, there are just two ways of
