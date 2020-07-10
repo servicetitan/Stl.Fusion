@@ -164,19 +164,23 @@ So here is the solution plan:
     
 ## The Implementation
 
-I'll try keep it short from this point:
-* Detecting changes precisely is ~ as expensive as computing the function itself.
-* But if we are ok with a small % of false positives, we can assume that
-  function's output always changes once its input changes. 
-  It's ~ similar to an assumption every function is a 
-  [random oracle](https://en.wikipedia.org/wiki/Random_oracle),
-  or a perfect hash function.
-* Once we agreed on this, the problem of detecting changes gets much simpler:
-  we only need to figure out what are all the inputs of every function.
-  Note that arguments is just one part of the input, another one is anything that's 
-  "consumed" from external state - e.g. static variables or other functions.
+> I'll try to keep the explanation short from this point, and focus more on code examples.
 
-Before we get to the final part, let's think of the API of what we want to build first.
+Detecting changes precisely is ~ as expensive as computing the function itself. 
+But if we are ok with a small % of false positives, we can assume that
+function's output always changes once its input changes. 
+It's ~ similar to an assumption every function is a 
+[random oracle](https://en.wikipedia.org/wiki/Random_oracle),
+or a perfect hash function.
+
+Once we agreed on this, the problem of detecting changes gets much simpler:
+we only need to figure out what are all the inputs of every function.
+Note that arguments is just one part of the input, another one is anything that's 
+"consumed" from external state - e.g. static variables or other functions.
+
+I'll explain how we'll use this convention shortly, but for now let's 
+also think of the API we need to get change notifications for
+anything we compute.
 
 Let's say this is the "original" function's code we have:
 ```cs
@@ -188,28 +192,31 @@ DateTime GetCurrentTimeWithOffset(TimeSpan offset) {
 
 As you see, this function uses both the argument and the external state
 (`GetCurrentTime()`) to produce the output. So first, we want to make it
-return something that allows us to get a notification once its output
-(for the specific argument) is invalidated: 
+return something that allows us to get a notification once its output 
+is invalidated: 
 ```cs
 IComputed<DateTime> GetCurrentTimeWithOffset(TimeSpan offset) {
     var time = GetCurrentTime()
-    return Computed.New(time + offset);
+    return Computed.New(time + offset); // Notice we return a different type now!
 }  
 ```
 
-Assuming `IComputed<T>` has at least these properties:
+`IComputed<T>` we return here is defined as follows:
 ```cs
 interface IComputed<T> {
     T Value { get; }
     bool IsConsistent { get; }
-    Action Invalidated; // Triggered once it turns inconsistent
+    Action Invalidated; // Event, triggered just once on invalidation
+
+    void Invalidate();
 }
 ```
 
-Nice. Now, as you see, this method returns a different (in fact, new) 
-instance of `IComputed<T>` for different arguments, which means arguments
-there simply can't change - they are constant for every output. The only
-thing that may change is the output of `GetCurrentTime()`.
+Nice. Now, as you see, this method returns a different (in fact, a new) 
+instance of `IComputed<T>` for different arguments, so this part 
+of the function's input is always constant relatively to its output.
+The only thing that may change the output (for a given set of arguments)
+is the output of `GetCurrentTime()`.
 
 But what if we assume this function also supports our API, i.e. it has
 the following signature:
@@ -229,23 +236,25 @@ IComputed<DateTime> GetCurrentTimeWithOffset(TimeSpan offset) {
 ```
 
 > If you ever used [Knockout.js](https://knockoutjs.com/) or 
-> [MobX](https://mobx.js.org/), this is almost exactly what
-> you do there except the fact you don't have to manually
-> subscribe on dependency's invalidation - this happens
-> automatically.  
+> [MobX](https://mobx.js.org/), this is almost exactly
+> the code you write there when you want to create a computed
+> observable that uses some other observable &ndash; 
+> except the fact you don't have to manually
+> subscribe on dependency's invalidation (this happens
+> automatically).
 
 As you see, now any output of `GetCurrentTimeWithOffset()`
 is automatically invalidated once the output of `GetCurrentTime()`
 gets invalidated, so *we fully solved the invalidation problem for
 `GetCurrentTimeWithOffset()`!* 
 
-And if you're curious what's going to invalidate the output of 
-`GetCurrentTime()`, the answer is quite simple:
+But what's going to invalidate the output of `GetCurrentTime()`?
+Actually, there are just two options:
 1. Either this function's output is invalidated the same way
    `GetCurrentTimeWithOffset()` output is invalidated - i.e. it similarly 
    subscribes to the invalidation events of all of its dependencies and
    invalidates itself once any of them signals.
-2. Or there is some other code that properly invalidates it. 
+2. Or there is some other code that invalidates it "manually".
    This is always the case when one of values it consumes don't support 
    `IComputed<T>`.
 
