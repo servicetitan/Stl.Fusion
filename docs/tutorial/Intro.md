@@ -164,8 +164,6 @@ So here is the solution plan:
     
 ## The Implementation
 
-> I'll try to keep the explanation short from this point, and focus more on code examples.
-
 Detecting changes precisely is ~ as expensive as computing the function itself. 
 But if we are ok with a small % of false positives, we can assume that
 function's output always changes once its input changes. 
