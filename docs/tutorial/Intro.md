@@ -742,16 +742,18 @@ Besides that, you don't have to think of concepts like "topics" or
 the updates, and if it's something shared amoung multiple clients,
 you may thing of this as a "topic".
 
-Of course I don't mean SignalR is completely useless with Fusion - there 
-are some scenarios where you could still benefit from it - e.g.
+Of course I don't mean SignalR is absolutely useless with Fusion - 
+there are scenarios where you could still benefit from it - e.g.
 if you really want to deliver the update as quickly as possible, 
 SignalR could be a better choice: currently there is no way to tell Fusion
 to push the update together with invalidation message, so any update
 requires a explicit round-trip after the invalidation. Later
 you will learn why this is behaviour is actually quite reasonable,
 but nevertheless, there are cases when this could be a deal breaker.
-
-Obvoiusly, we consider addressing this in future.
+We consider addressing this particular scenario in future, but
+even if this is done, there always be other cases and reasons
+to prefer X over Fusion. It can't be a silver bullet, even though
+it tries really hard to be the one :)
 
 ### Fusion and Blazor = ❤
 
