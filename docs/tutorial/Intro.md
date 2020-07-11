@@ -368,8 +368,7 @@ is untouched.
 public async Task<ChatUser> CreateUserAsync(string name)
 {
     // We have to rent or create a new DBContext here, because
-    // the service that manages users is a computed service, so
-    // it is a singleton in IoC container.
+    // this service (ChatService) is a singleton in IoC container.
     using var lease = _dbContextPool.Rent();
     var dbContext = lease.Subject;
 
