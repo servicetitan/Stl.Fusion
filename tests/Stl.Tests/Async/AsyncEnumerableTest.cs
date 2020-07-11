@@ -49,7 +49,7 @@ namespace Stl.Tests.Async
         [Fact]
         public async Task ProperTerminationTest()
         {
-            using var clock = new TestClock().SpeedupBy(1);
+            using var clock = new TestClock();
             var failed = false;
 
             async Task<int> Test() {
@@ -65,7 +65,7 @@ namespace Stl.Tests.Async
                     .ConfigureAwait(false);
             }
 
-            var tasks = Enumerable.Range(0, 10000).Select(i => Task.Run(Test)).ToArray();
+            var tasks = Enumerable.Range(0, 100).Select(i => Task.Run(Test)).ToArray();
             var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
             
             var whenAllTask = Task.WhenAll(tasks);
