@@ -8,7 +8,7 @@ namespace Stl.Concurrency
 {
     public sealed class StochasticCounter
     {
-        public const int DefaultApproximationFactor = 4;
+        public const int DefaultApproximationFactor = 8;
 
         private long _value = 0;  
         private readonly uint _approximationMask;

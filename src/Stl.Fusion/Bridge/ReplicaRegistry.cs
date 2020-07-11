@@ -126,7 +126,7 @@ namespace Stl.Fusion.Bridge
             lock (Lock) {
                 // Should be called inside Lock
                 var capacity = (long) _handles.GetCapacity();
-                var nextThreshold = (int) Math.Min(int.MaxValue >> 1, capacity << 1);
+                var nextThreshold = (int) Math.Min(int.MaxValue >> 1, capacity);
                 _pruneCounterThreshold = nextThreshold;
             }
         }

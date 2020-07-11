@@ -53,7 +53,7 @@ namespace Stl.Tests.Fusion
 
             await Task.Delay(2000);
             var tasks = new List<Task>();
-            for (var i = 0; i < 1000 * HardwareInfo.ProcessorCountPo2; i++)
+            for (var i = 0; i < 20_000 * HardwareInfo.ProcessorCountPo2; i++)
                 tasks.Add(c.SumAsync(2, i));
             await Task.WhenAll(tasks);
             GC.Collect();
