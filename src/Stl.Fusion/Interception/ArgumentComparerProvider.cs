@@ -16,6 +16,7 @@ namespace Stl.Fusion.Interception
         protected static readonly IReadOnlyDictionary<Type, ArgumentComparer> DefaultComparers = 
             new Dictionary<Type, ArgumentComparer>() {
                 {typeof(CancellationToken), ArgumentComparer.Ignore},
+                {typeof(IScopedComputedService), ArgumentComparer.ByType},
             };
 
         public static readonly IArgumentComparerProvider Default = new ArgumentComparerProvider();

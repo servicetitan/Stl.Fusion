@@ -77,17 +77,24 @@ namespace Stl.Fusion
                 throw new ArgumentOutOfRangeException(nameof(implementationType));
             if (!typeof(IComputedService).IsAssignableFrom(implementationType))
                 throw Errors.MustImplement<IComputedService>(implementationType);
-            services.TryAddSingleton(type, c => {
+            
+            object Factory(IServiceProvider c)
+            {
                 // We should try to validate it here because if the type doesn't
                 // have any virtual methods (which might be a mistake), no calls
                 // will be intercepted, so no error will be thrown later.
                 var interceptor = c.GetRequiredService<ComputedServiceInterceptor>();
-                interceptor.ValidateType(implementationType);  
-
+                interceptor.ValidateType(implementationType);
                 var proxyGenerator = c.GetRequiredService<IComputedServiceProxyGenerator>();
                 var proxyType = proxyGenerator.GetProxyType(implementationType);
                 return c.Activate(proxyType);
-            });
+            }
+
+            var isScoped = typeof(IScopedComputedService).IsAssignableFrom(implementationType);
+            if (isScoped)
+                services.TryAddScoped(type, Factory);
+            else
+                services.TryAddSingleton(type, Factory);
             return services;
         }
     }

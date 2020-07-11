@@ -10,6 +10,7 @@ namespace Stl.Fusion.Interception
         public static readonly ArgumentComparer Default = new ArgumentComparer();
         public static readonly IgnoreArgumentComparer Ignore = new IgnoreArgumentComparer();
         public static readonly ArgumentComparer ByRef = new ByRefArgumentComparer();
+        public static readonly ArgumentComparer ByType = new ByTypeArgumentComparer();
 
         public Func<object, int> GetHashCodeFunc { get; protected set; } = 
             o => o?.GetHashCode() ?? 0;
@@ -91,6 +92,15 @@ namespace Stl.Fusion.Interception
         {
             GetHashCodeFunc = obj => obj == null ? 0 : RuntimeHelpers.GetHashCode(obj);
             EqualsFunc = ReferenceEquals;
+        }
+    }
+
+    public class ByTypeArgumentComparer : ArgumentComparer
+    {
+        internal ByTypeArgumentComparer()
+        {
+            GetHashCodeFunc = obj => obj?.GetType().GetHashCode() ?? 0;
+            EqualsFunc = (a, b) => a?.GetType() == b?.GetType();
         }
     }
 }

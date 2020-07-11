@@ -41,6 +41,35 @@ namespace Stl.Tests.Fusion
         }
 
         [Fact]
+        public async Task ScopedTest()
+        {
+            var p = Container.Resolve<ISimplestProvider>();
+            p.SetValue("");
+            var (gv, gcc) = (p.GetValueCallCount, p.GetCharCountCallCount);
+            (await p.GetValueAsync()).Should().Be("");
+            (await p.GetCharCountAsync()).Should().Be(0);
+            p.GetValueCallCount.Should().Be(++gv);
+            p.GetCharCountCallCount.Should().Be(++gcc);
+
+            await using (var s1 = Container.BeginLifetimeScope()) {
+                p = Container.Resolve<ISimplestProvider>();
+                (gv, gcc) = (p.GetValueCallCount, p.GetCharCountCallCount);
+                (await p.GetValueAsync()).Should().Be("");
+                (await p.GetCharCountAsync()).Should().Be(0);
+                p.GetValueCallCount.Should().Be(gv);
+                p.GetCharCountCallCount.Should().Be(gcc);
+            }
+            await using (var s1 = Container.BeginLifetimeScope()) {
+                p = Container.Resolve<ISimplestProvider>();
+                (gv, gcc) = (p.GetValueCallCount, p.GetCharCountCallCount);
+                (await p.GetValueAsync()).Should().Be("");
+                (await p.GetCharCountAsync()).Should().Be(0);
+                p.GetValueCallCount.Should().Be(gv);
+                p.GetCharCountCallCount.Should().Be(gcc);
+            }
+        }
+
+        [Fact]
         public async Task ExceptionCachingTest()
         {
             var p = Container.Resolve<ISimplestProvider>();

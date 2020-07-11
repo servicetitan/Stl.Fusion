@@ -93,7 +93,9 @@ namespace Stl.Fusion.Client
                 throw Errors.MustImplement<IReplicaService>(interfaceType);
 
             httpClientResolver ??= DefaultHttpClientResolver(baseAddress);
-            services.TryAddSingleton(interfaceType, c => {
+            
+            object Factory(IServiceProvider c)
+            {
                 // 1. Validate type
                 var interceptor = c.GetRequiredService<ReplicaServiceInterceptor>();
                 interceptor.ValidateType(interfaceType);  
@@ -109,7 +111,13 @@ namespace Stl.Fusion.Client
                 var proxyType = proxyGenerator.GetProxyType(interfaceType);
                 var interceptors = c.GetRequiredService<ReplicaServiceInterceptor[]>();
                 return proxyType.CreateInstance(interceptors, restClient);
-            });
+            }
+            
+            var isScoped = typeof(IScopedComputedService).IsAssignableFrom(interfaceType);
+            if (isScoped)
+                services.TryAddScoped(interfaceType, Factory);
+            else
+                services.TryAddSingleton(interfaceType, Factory);
             return services;
         }
 
