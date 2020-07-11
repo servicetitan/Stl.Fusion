@@ -1,7 +1,7 @@
 # Stl.Fusion: Introduction  
 
-Sorry in advance - the document is long (~ 500 lines or ~ 12 pages),
-but I hope you'll find it interesting.
+The intro is fairly long (~ 30 min. to read), but hopefully you'll 
+find it interesting.
 
 ## The Story Behind Stl.Fusion
 
