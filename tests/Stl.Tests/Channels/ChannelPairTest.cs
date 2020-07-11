@@ -9,6 +9,7 @@ using Xunit.Abstractions;
 
 namespace Stl.Tests.Channels
 {
+    [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
     public class ChannelPairTest : TestBase
     {
         public ChannelPairTest(ITestOutputHelper @out) : base(@out) { }

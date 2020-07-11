@@ -69,6 +69,7 @@ namespace Stl.Tests.Fusion.Services
                 })
                 .Build();
             await host.StartAsync().ConfigureAwait(false);
+            await Task.Delay(1000);
 
             // ReSharper disable once HeapView.BoxingAllocation
             return AsyncDisposable.New(async host1 => {

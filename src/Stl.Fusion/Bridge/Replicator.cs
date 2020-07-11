@@ -39,7 +39,7 @@ namespace Stl.Fusion.Bridge
 
             public Symbol Id { get; set; } = NewId();
             public IReplicaRegistry Registry { get; set; } = new ReplicaRegistry();
-            public TimeSpan ReconnectDelay = TimeSpan.FromSeconds(5);
+            public TimeSpan ReconnectDelay = TimeSpan.FromSeconds(10);
         }
 
         protected IReplicaRegistry Registry { get; }
