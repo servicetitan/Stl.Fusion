@@ -15,7 +15,7 @@ namespace Stl.Testing
             Out = @out;
             var options = new BoundedChannelOptions(capacity) {
                 FullMode = BoundedChannelFullMode.Wait,
-                AllowSynchronousContinuations = false,
+                AllowSynchronousContinuations = true,
                 SingleReader = false,
                 SingleWriter = false,
             };
