@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Async;
+using Stl.Collections;
 using Stl.Fusion;
 using Stl.Fusion.Bridge;
 using Stl.Samples.Blazor.Common.Services;
@@ -38,41 +39,47 @@ namespace Stl.Samples.Blazor.Server.Services
 
         // Writers
 
-        public virtual async Task<ChatUser> CreateUserAsync(string name, CancellationToken cancellationToken = default)
+        public async Task<ChatUser> CreateUserAsync(string name, CancellationToken cancellationToken = default)
         {
             name = await NormalizeNameAsync(name, cancellationToken).ConfigureAwait(false);
             using var lease = _dbContextPool.Rent();
             var dbContext = lease.Subject;
+
             var userEntry = dbContext.Users.Add(new ChatUser() {
                 Name = name
             });
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             var user = userEntry.Entity;
+
+            // Invalidation
             Computed.Invalidate(() => GetUserAsync(user.Id, CancellationToken.None));
             Computed.Invalidate(() => GetUserCountAsync(CancellationToken.None));
             return user;
         }
 
-        public virtual async Task<ChatUser> SetUserNameAsync(long id, string name, CancellationToken cancellationToken = default)
+        public async Task<ChatUser> SetUserNameAsync(long id, string name, CancellationToken cancellationToken = default)
         {
             name = await NormalizeNameAsync(name, cancellationToken).ConfigureAwait(false);
-            var user = await GetUserAsync(id, cancellationToken).ConfigureAwait(false);
             using var lease = _dbContextPool.Rent();
             var dbContext = lease.Subject;
+
+            var user = await GetUserAsync(id, cancellationToken).ConfigureAwait(false);
             user.Name = name;
             dbContext.Users.Update(user);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+            // Invalidation
             Computed.Invalidate(() => GetUserAsync(id, CancellationToken.None));
             return user;
         }
 
-        public virtual async Task<ChatMessage> AddMessageAsync(long userId, string text, CancellationToken cancellationToken = default)
+        public async Task<ChatMessage> AddMessageAsync(long userId, string text, CancellationToken cancellationToken = default)
         {
             text = await NormalizeTextAsync(text, cancellationToken).ConfigureAwait(false);
-            // Just to ensure the user really exists:
-            await GetUserAsync(userId, cancellationToken).ConfigureAwait(false);
             using var lease = _dbContextPool.Rent();
             var dbContext = lease.Subject;
+
+            await GetUserAsync(userId, cancellationToken).ConfigureAwait(false); // Check to ensure the user exists
             var messageEntry = dbContext.Messages.Add(new ChatMessage() {
                 CreatedAt = DateTime.UtcNow,
                 UserId = userId,
@@ -80,6 +87,8 @@ namespace Stl.Samples.Blazor.Server.Services
             });
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             var message = messageEntry.Entity;
+
+            // Invalidation
             Computed.Invalidate(EveryChatTail);
             return message;
         }
@@ -127,12 +136,12 @@ namespace Stl.Samples.Blazor.Server.Services
             var dbContext = lease.Subject;
             var messages = dbContext.Messages.OrderByDescending(m => m.Id).Take(length).ToList();
             messages.Reverse();
-            var users = new Dictionary<long, ChatUser>();
-            foreach (var message in messages) {
-                var user = await GetUserAsync(message.UserId, cancellationToken).ConfigureAwait(false);
-                users[user.Id] = user;
-            }
-            return new ChatPage(messages, users);
+            var users = await Task.WhenAll(messages
+                    .DistinctBy(m => m.UserId)
+                    .Select(m => GetUserAsync(m.UserId, cancellationToken)))
+                .ConfigureAwait(false);
+            var userById = users.ToDictionary(u => u.Id);
+            return new ChatPage(messages, userById);
         }
 
         [ComputedServiceMethod]

@@ -21,6 +21,16 @@ namespace Stl.Collections
             return result;
         }
 
+        public static IEnumerable<T> DistinctBy<T, TKey>(this IEnumerable<T> source, Func<T, TKey> keySelector)
+        {
+            var hashSet = new HashSet<TKey>();
+            foreach (var item in source) {
+                var key = keySelector.Invoke(item);
+                if (hashSet.Add(key))
+                    yield return item;
+            }
+        }
+
         // Extensions
 
         public static IEnumerable<T> InsertAfter<T>(this IEnumerable<T> source, Func<T, bool> predicate, IEnumerable<T> insertion)

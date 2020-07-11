@@ -258,24 +258,26 @@ Actually, there are just two options:
    This is always the case when one of values it consumes don't support 
    `IComputed<T>`.
 
-Let's ignore functions from the second category for now. Can we automatically
+Let's ignore functions from the second category for now. Can we
 turn every regular function from the first category to a function that
-returns IComputed<T>? Actually, yes:
+returns IComputed<T> without even changing its code? Yes:
 ```cs
 // The original code in TimeService class
 virtual DateTime GetCurrentTimeWithOffset(TimeSpan offset) {
     var time = GetCurrentTime()
     return time + offset;
-}  
+}
+
+// ...
 
 // The "decorated" version of this function generated in a 
 // descendant of TimeService class:                     
 override DateTime GetCurrentTimeWithOffset(TimeSpan offset) {
     var result = Computed.New();
-    var dependant = Computed.GetCurrent();
+    var dependant = Computed.GetCurrent(); // Relies on AsyncLocal<T>
     if (dependant != null)
         result.Invalidated += () => dependant.Invalidate();
-    using var _ = Computed.SetCurrent(result);
+    using var _ = Computed.SetCurrent(result); // Relies on AsyncLocal<T>
     try {
         result.SetValue(base.GetCurrentTimeWithOffset(offset));
     }
@@ -287,11 +289,11 @@ override DateTime GetCurrentTimeWithOffset(TimeSpan offset) {
 ``` 
 
 As you see, the only change I've made to the original was "virtual"
-keyword - it's necessary to enable proxy type to override this method
-and do nearly what's done in the decorated version.
+keyword - it allows a proxy type to override this method and implement
+the desirable behavior without changing the base!
 
-> For the sake of clarity: the real Fusion proxy code is way more complex,
-> because it:
+> For the sake of clarity: the real Fusion proxy code is way more complex -
+> due to the fact it:
 > * Is fully asynchronous & thread-safe 
 > * Hits the cache to pull existing IComputed<T> matching the same set
 >   of arguments, if it's available - there is no point to re-compute
@@ -301,10 +303,10 @@ and do nearly what's done in the decorated version.
 >   what's the point to run it concurrently, if the result is expected to
 >   be the same?
 > * Uses a different invalidation subscription model. The one shown above 
->   isn't GC-friendly: `dependency.Invalidated` handler knows a function
->   that knows dependent instance, so if some low-level dependency is alive
->   (referenced), its whole subtree of dependants stays in heap too, which
->   is obviously quite bad.
+>   isn't GC-friendly: `dependency.Invalidated` handler references a closure
+>   that references dependent instance, so while some low-level dependency 
+>   is alive (reachable from GC roots), its whole subtree of dependants stays 
+>   in heap too, which is obviously quite bad.
 > * Has a few other pieces needed for a complete solution to work - e.g.
 >   manual invalidation, faster and customizable equality comparison for 
 >   method arguments (they have to be compared with what's in cache), 
@@ -312,17 +314,22 @@ and do nearly what's done in the decorated version.
 >
 > But overall, it's a very similar code on conceptual level.
 
-Let's get back to the second part now - the methods that don't use
-`IComputed<T>`, but still requiring invalidation. 
+Let's get back to the second part now - the methods that don't call other
+methods returning `IComputed<T>` and thus getting no invalidation automatically. 
+How do we invalidate them?
 
-If you think about the logic in a real-life app, 90% of it is high-level logic -
-in particular, anything you have on the client-side and most of the server-side
-calls something else in the same app to get the data. And maybe just 10%
-of its code pulls the data by invoking some third-party code or API (e.g. SQL data
-providers). In short, yes, manual invalidation is something we'll need
-to take care of, but it's not as big of a deal as it might seem initially. 
-Later you'll learn both how to implement it, and also how to address some 
-of the cases that look tricky at first. 
+Well, we'll have to do this manually. On a positive side, 
+think about the logic in a real-life app:
+* 80% of it is high-level logic - in particular, anything you have on the 
+  client-side and most of the server-side calls something else in the same 
+  app to get the data. In particular, most of controller and service layer
+  is such a logic.
+* Maybe just 20% of logic pulls the data by invoking some third-party code 
+  or API (e.g. queries SQL data providers). This is the code that has
+  to support manual invalidation.
+
+Shortly you'll learn it's not that hard to cover these 20% of cases. 
+But first, let's look at some...
 
 ## Real Fusion Code
 
@@ -350,7 +357,138 @@ As you see, it's almost exactly the code you saw, but with the following differe
 
 In any other sense it works nearly as it was described earlier.
 
-Now, let's talk about...
+Now let's get back to manual invalidation. The code below is taken from 
+`ChatService.cs` in Fusion samples; everything related to `CancellationToken` 
+and all `.ConfigureAwait(false)` calls are removed for readability (that's
+~ the same boilerplate code as in any other .NET async logic), but the rest 
+is untouched.
+
+```cs
+// Notice this is a regular method, not a computed service method
+public async Task<ChatUser> CreateUserAsync(string name)
+{
+    // We have to rent or create a new DBContext here, because
+    // the service that manages users is a computed service, so
+    // it is a singleton in IoC container.
+    using var lease = _dbContextPool.Rent();
+    var dbContext = lease.Subject;
+
+    // That's the code you'd see normally here
+    var userEntry = dbContext.Users.Add(new ChatUser() {
+        Name = name
+    });
+    await dbContext.SaveChangesAsync();
+    var user = userEntry.Entity;
+
+    // And that's the extra logic performing invalidations
+    Computed.Invalidate(() => GetUserAsync(user.Id));
+    Computed.Invalidate(() => GetUserCountAsync());
+    return user;
+}
+```
+
+As you see, it's fairly simple - you use `Computed.Invalidate(...)`
+to capture and invalidate the result of another computed service method.
+
+I guess you anticipate there are some cases when it's hard to precisely 
+pinpoint what to invalidate. Yes, there are, and here is a bit trickier
+example:
+```cs
+// The code from ChatService.cs from Stl.Samples.Blazor.Server.
+[ComputedServiceMethod]
+public virtual async Task<ChatPage> GetChatTailAsync(int length)
+{
+    using var lease = _dbContextPool.Rent();
+    var dbContext = lease.Subject;
+
+    // The same code as usual
+    var messages = dbContext.Messages.OrderByDescending(m => m.Id).Take(length).ToList();
+    messages.Reverse();
+    // Notice we fetch users in parallel by calling GetUserAsync(...) 
+    // instead of using a single query with left outer join in SQL? 
+    // Seems sub-optiomal, right?
+    var users = await Task.WhenAll(messages
+        .DistinctBy(m => m.UserId)
+        .Select(m => GetUserAsync(m.UserId, cancellationToken)));
+    var userById = users.ToDictionary(u => u.Id);
+
+    await EveryChatTail(); // <- Notice this line
+    return new ChatPage(messages, userById);
+}
+
+[ComputedServiceMethod]
+protected virtual async Task<Unit> EveryChatTail() => default;
+
+```
+
+> Q: What's the problem here?
+
+A: `GetChatTailAsync(...)` has `length` argument, so let's say we write
+`AddMessageAsync` method - how it supposed to find every chat tail
+to invalidate, assuming different clients were calling this method
+with different `length` values?
+
+> Q: Why fetching users in parallel is ok here?
+
+A: `GetUserAsync()` is also a computed service method, which means its
+results are cached. So in a real-life chat app these calls aren't expected
+to be resolved via DB - most of these users should be already cached,
+which means these calls won't hit the DB and will complete synchronously.
+
+The second reason to call `GetUserAsync()` is to make the resulting 
+chat page dependent on all the users listed there. This is the reason 
+you instantly see the change of any user name in chat sample: when 
+the name changes, it invalidates corresponding `GetUserAsync()` call
+result, which in turn invalidates every chat page where this user 
+was used. 
+
+> Q: Why do you call  `EveryChatTail()`, which clearly does nothing?
+
+A: This call is made solely to make any chat tail page dependent on it. 
+If you look for usages of `EveryChatTail()`, you'll find another one:
+
+```cs
+public async Task<ChatMessage> AddMessageAsync(long userId, string text)
+{
+    using var lease = _dbContextPool.Rent();
+    var dbContext = lease.Subject;
+    
+    // Again, this absolutely usual code
+    await GetUserAsync(userId, cancellationToken); // Let's make sure the user exists
+    var messageEntry = dbContext.Messages.Add(new ChatMessage() {
+        CreatedAt = DateTime.UtcNow,
+        UserId = userId,
+        Text = text,
+    });
+    await dbContext.SaveChangesAsync(cancellationToken);
+    var message = messageEntry.Entity;
+
+    // And that's the extra invalidation logic:
+    Computed.Invalidate(EveryChatTail); // <-- Pay attention to this line
+    return message;
+}
+```
+
+So as you see, we create a dependency on fake data source here &ndash;
+`EveryChatTail()`, and invalidate this fake data source to invalidate
+every chat tail independently on its length.
+
+You can use the same trick to invalidate data in much more complex
+cases &ndash; note that you can introduce parameters to such methods too,
+call many of them, make them call themselves recursively with more "broad"
+scope, etc.
+
+Ok, now you know that manual invalidation typically requires ~ 1...3
+extra lines of code per every method modifying the date, and 0 (typically) 
+extra lines of code per every method reading the data. Not a lot, but still,
+do you want to pay this price to have a real-time UI? 
+
+Of course the answer is "it depends", but the extra cost clearly doesn't 
+look prohibitively high. If you need a real-time UI anyway, or a robust 
+caching tier with real-time invalidation, the approach shown here might 
+be the best option.
+
+Oh, and there are other benefits. Let's look at another gem:
 
 ## Distributed Computed Services
 
@@ -551,7 +689,7 @@ it "composes" its model by two different ways:
   by combining other server-side replicas.
 * **The surprising part:** open two above links side-by-side & spot the difference.
 
-Which is why Fusion is mostly a...
+That's why Fusion is a nearly...
 
 ## Transparent Abstraction     
 
