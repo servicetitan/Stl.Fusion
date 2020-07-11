@@ -702,7 +702,7 @@ with `IComputed<T>` directly:
 In this sense, Fusion is quite similar to Garbage Collection - 
 a much more famous transparent abstraction all of us love.
 
-![](../img/InvisibleSnowboard.JPG)
+![](../img/InvisibleSnowboard.jpg)
 
 Stay focused, that's the last topic here :)
 
@@ -759,6 +759,8 @@ Obvoiusly, we consider addressing this in future.
 
 Why every single piece of a client-side code shown here is supposed to run on 
 [Blazor](https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor)? 
+
+![](../img/Blazor.jpg)
 
 Stl.Fusion is just 3 months old project (that's on Jul 9, 2020). 
 In human terms she shouldn't even start to crawl yet :) 
