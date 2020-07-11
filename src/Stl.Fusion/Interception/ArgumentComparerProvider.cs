@@ -55,18 +55,18 @@ namespace Stl.Fusion.Interception
             var cComparer = (ArgumentComparer?) null;
             foreach (var iType in type.GetInterfaces()) {
                 if (_comparers.TryGetValue(iType, out comparer)) {
-                    if (cType == null || iType.IsAssignableFrom(cType)) {
+                    if (cType == null || cType.IsAssignableFrom(iType)) {
                         // We're looking for the most specific type here
                         cType = iType;
                         cComparer = comparer;
                     }
                 }
             }
-
-            if (comparer != null)
-                return comparer;
+            if (cComparer != null)
+                return cComparer;
             if (isInvocationTarget)
                 return ArgumentComparer.ByRef;
+
             var equatableType = typeof(IEquatable<>).MakeGenericType(type);
             if (equatableType.IsAssignableFrom(type)) {
                 var eacType = typeof(EquatableArgumentComparer<>).MakeGenericType(type);

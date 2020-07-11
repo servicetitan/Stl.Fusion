@@ -52,15 +52,15 @@ namespace Stl.Tests.Fusion
             p.GetCharCountCallCount.Should().Be(++gcc);
 
             await using (var s1 = Container.BeginLifetimeScope()) {
-                p = Container.Resolve<ISimplestProvider>();
+                p = s1.Resolve<ISimplestProvider>();
                 (gv, gcc) = (p.GetValueCallCount, p.GetCharCountCallCount);
                 (await p.GetValueAsync()).Should().Be("");
                 (await p.GetCharCountAsync()).Should().Be(0);
                 p.GetValueCallCount.Should().Be(gv);
                 p.GetCharCountCallCount.Should().Be(gcc);
             }
-            await using (var s1 = Container.BeginLifetimeScope()) {
-                p = Container.Resolve<ISimplestProvider>();
+            await using (var s2 = Container.BeginLifetimeScope()) {
+                p = s2.Resolve<ISimplestProvider>();
                 (gv, gcc) = (p.GetValueCallCount, p.GetCharCountCallCount);
                 (await p.GetValueAsync()).Should().Be("");
                 (await p.GetCharCountAsync()).Should().Be(0);

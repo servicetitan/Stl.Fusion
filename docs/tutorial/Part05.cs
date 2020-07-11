@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using Stl;
 using Stl.Fusion;
 using static System.Console;
 
@@ -47,9 +48,9 @@ namespace Tutorial
                 var computed = Computed.GetCurrent();
                 // We just start this task here, but don't await for its result
                 Task.Delay(TimeSpan.FromSeconds(0.1)).ContinueWith(_ => {
-                    computed.Invalidate();
+                    computed!.Invalidate();
                     WriteLine($"! {nameof(GetTimeAsync)}() -> invalidated");
-                });
+                }).Ignore();
                 return DateTime.Now;
             }
         }
