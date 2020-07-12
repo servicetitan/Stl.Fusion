@@ -4,7 +4,7 @@
 and [Blazor](https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor)
 providing [Knockout.js](https://knockoutjs.com/) 
 / [mobX](https://mobx.js.org/) - style computed/observable abstractions,
-**but designed to power distributed apps** rather than client-side user interfaces.
+**but designed to power distributed apps** as well as client-side UIs.
 
 The version of "computed/observable state" it provides is:
 * **Fully thread-safe**
