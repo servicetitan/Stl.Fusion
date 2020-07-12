@@ -67,7 +67,7 @@ await observableState.ChangedAsync(); // <-- LOOK AT THIS LINE
 await cache.Evict(key);
 ```  
 
-As you see,it's a very similar problem:
+As you see, it's a very similar problem:
 you may look at any UI (its state or model) as a value 
 cached remotely on the client. 
 And if you want to update it in real time, your actually 
