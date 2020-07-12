@@ -45,7 +45,7 @@ while (true) {
 }
 ```  
 
-As you see, the key part there is `.ChangedAsync()` function,
+The key part there is `.ChangedAsync()` function,
 which is supposed to asynchronously complete once changes happen. 
 It's easy to write it for the `localState`, but what about the
 `cachedServerState`? It's actually pretty hard, assuming that:
@@ -67,7 +67,7 @@ await observableState.ChangedAsync(); // <-- LOOK AT THIS LINE
 await cache.Evict(key);
 ```  
 
-As you see, it's actually a very similar problem:
+As you see,it's a very similar problem:
 you may look at any UI (its state or model) as a value 
 cached remotely on the client. 
 And if you want to update it in real time, your actually 
