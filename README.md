@@ -11,10 +11,10 @@ The version of "computed/observable state" it provides is:
 * **Built for asynchronous world** &ndash; any computation of any `IComputed<TOut>` can be 
   asynchronous, as well as all of Stl.Fusion APIs that may invoke async computations.   
 * **Almost immutable** &ndash; once created, the only change that may happen to it is transition 
-  to `Invalidated` state
-* **Always "renewable"** &ndash; once you have some `IComputed<TOut>`, you can always ask for its
-  most up to date (consistent) version. Every other version of it is guaranteed to be
-  in invalidated state.
+  to `IsConsistent == false` state
+* **Always consistent** &ndash; once you have some `IComputed<TOut>`, you can ask for its
+  consistent version at any time. If it is consistent, you'll get the same object, otherwise
+  you'll get a new one, and every other version of it is guaranteed to be marked inconsistent.
 * **Supports remote replicas** &ndash; any computed instance can be *published*, which allows
   any other code that knows the publication endpoint and publication ID to create
   a replica of this computed instance in their own process. 
