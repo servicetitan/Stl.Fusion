@@ -13,8 +13,8 @@ The version of "computed/observable state" it provides is:
 * **Almost immutable** &ndash; once created, the only change that may happen to it is transition 
   to `IsConsistent == false` state
 * **Always consistent** &ndash; once you have some `IComputed<TOut>`, you can ask for its
-  consistent version at any time. If it is consistent, you'll get the same object, otherwise
-  you'll get a consisntent one (it will be recomputed), and every other version of it 
+  consistent version at any time. If the current version is consistent, you'll get the same 
+  object, otherwise you'll get a newly computed consisntent one, and every other version of it 
   is guaranteed to be marked inconsistent.
 * **Supports remote replicas** &ndash; any computed instance can be *published*, which allows
   any other code that knows the publication endpoint and publication ID to create
