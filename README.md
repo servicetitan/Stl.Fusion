@@ -45,13 +45,15 @@ that are used on the server-side too.
 
 Note that "Composition" sample shown in a separate window in the bottom-right corner
 also properly updates its page - in particular, it captures the last chat message. It's
-actually the most interesting example there, since it "composes" the final model by two
-different ways: 
-* One model is [composed on the server side](https://github.com/servicetitan/Stl/blob/master/samples/Stl.Samples.Blazor.Server/Services/ServerSideComposerService.cs);
+actually the most interesting example there, since it "composes" the final state (its UI model)
+by two different ways: 
+* One is 
+  [composed on the server side](https://github.com/servicetitan/Stl/blob/master/samples/Stl.Samples.Blazor.Server/Services/ServerSideComposerService.cs);
   its replica is published to all the clients
-* And another model is [composed completely on the client](https://github.com/servicetitan/Stl/blob/master/samples/Stl.Samples.Blazor.Client/Services/ClientSideComposerService.cs) 
+* And another one is 
+  [composed completely on the client](https://github.com/servicetitan/Stl/blob/master/samples/Stl.Samples.Blazor.Client/Services/ClientSideComposerService.cs) 
   by combining other server-side replicas.
-* **The surprising part:** open two above links side-by-side & spot the difference :)
+* **The surprising part:** notice two above files are almost identical!
 
 And here is **literally** all the client-side code powering Chat sample:
 * [ChatState](https://github.com/servicetitan/Stl/blob/master/samples/Stl.Samples.Blazor.Client/UI/ChatState.cs) 
@@ -61,8 +63,8 @@ And here is **literally** all the client-side code powering Chat sample:
 * [IChatClient in Clients.cs](https://github.com/servicetitan/Stl/blob/master/samples/Stl.Samples.Blazor.Client/Services/Clients.cs#L19) 
   &ndash; the client (the actual client is generated in the runtime).  
  
-Another fancy sample there is "Server Screen", which shows a timeout-based state update.
-If "state" is server screen, the result is:
+Another interesting sample there is "Server Screen", which shows a timeout-based state update.
+If the "state" is the image of your screen, the result is:
   
 ![](docs/img/Stl-Fusion-Server-Screen-Sample.gif)
 
