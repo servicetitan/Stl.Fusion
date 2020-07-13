@@ -41,7 +41,7 @@ A short animation showing Fusion delivers state changes to 3 different clients:
 
 The "Samples" app is a client-side [Blazor](https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor)
 application running in browser and relying on the same abstractions from `Stl.Fusion.dll` 
-that are used by server-side code.
+that are used on the server-side too.
 
 Note that "Composition" sample shown in a separate window in the bottom-right corner
 also properly updates its page - in particular, it captures the last chat message. It's
