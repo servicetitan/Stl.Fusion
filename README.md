@@ -35,7 +35,8 @@ of server-side computed instance that "stores" chat tail. Once a message gets po
 channel, its chat tail gets invalidated, and every client will automatically "pull" the updated 
 tail.
 
-That's how Fusion-based Chat sample reacts to user interaction:
+A short animation showing Fusion delivers state changes to 3 different Blazor clients 
+("Chat" and "Composition" samples):
 
 ![](docs/img/Stl-Fusion-Chat-Sample.gif)
 
