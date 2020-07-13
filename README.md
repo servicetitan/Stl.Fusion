@@ -35,12 +35,15 @@ of server-side `IComputed` instance that "stores" the chat tail. Once a message 
 channel, its chat tail gets invalidated, and every client will automatically "pull" the updated 
 tail.
 
-A short animation showing Fusion delivers state changes to 3 different Blazor clients 
-("Chat" and "Composition" samples):
+A short animation showing Fusion delivers state changes to 3 different clients:
 
 ![](docs/img/Stl-Fusion-Chat-Sample.gif)
 
-Notice the "Composition" sample shown in a separate window in the bottom-right corner
+The "Samples" app is a client-side [Blazor](https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor)
+application running in browser and relying on the same abstractions from `Stl.Fusion.dll` 
+that are used by server-side code.
+
+Note that "Composition" sample shown in a separate window in the bottom-right corner
 also properly updates its page - in particular, it captures the last chat message. It's
 actually the most interesting example there, since it "composes" the final model by two
 different ways: 
@@ -50,16 +53,7 @@ different ways:
   by combining other server-side replicas.
 * **The surprising part:** open two above links side-by-side & spot the difference :)
 
-Another fancy sample there is "Server Screen", which literally sends screenshots captured
-on server side in real-time to every client visiting it:
-  
-![](docs/img/Stl-Fusion-Server-Screen-Sample.gif)
- 
-Note that this is *client-side Blazor app*, the real-time changes it displays are
-delivered there via WebSocket channel backing `IComputed` replicas. 
-
-There is **no single line of JavaScript code**, and below is **literally** all the 
-client-side code powering Chat sample:
+And here is **literally** all the client-side code powering Chat sample:
 * [ChatState](https://github.com/servicetitan/Stl/blob/master/samples/Stl.Samples.Blazor.Client/UI/ChatState.cs) 
   &ndash; the view model
 * [Chat.razor](https://github.com/servicetitan/Stl/blob/master/samples/Stl.Samples.Blazor.Client/Pages/Chat.razor) 
@@ -67,6 +61,11 @@ client-side code powering Chat sample:
 * [IChatClient in Clients.cs](https://github.com/servicetitan/Stl/blob/master/samples/Stl.Samples.Blazor.Client/Services/Clients.cs#L19) 
   &ndash; the client (the actual client is generated in the runtime).  
  
+Another fancy sample there is "Server Screen", which shows a timeout-based state update.
+If "state" is server screen, the result is:
+  
+![](docs/img/Stl-Fusion-Server-Screen-Sample.gif)
+
 Obviously, the use cases aren't limited to client-side Blazor UIs. You can also use Fusion in:
 * **Server-side Blazor apps** &ndash; to implement the same real-time update
   logic. The only difference here is that you don't need API controllers supporting
