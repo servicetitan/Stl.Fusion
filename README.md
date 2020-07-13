@@ -12,7 +12,7 @@ The version of "computed/observable state" it provides is:
   asynchronous, as well as all of Stl.Fusion APIs that may invoke async computations.   
 * **Almost immutable** &ndash; once created, the only change that may happen to it is transition 
   to `IsConsistent == false` state
-* **Always consistent** &ndash; once you have some `IComputed<TOut>`, you can ask for its
+* **Always consistent** &ndash; once you have some `IComputed`, you can ask for its
   consistent version at any time. If the current version is consistent, you'll get the same 
   object, otherwise you'll get a newly computed consisntent one, and every other version of it 
   is guaranteed to be marked inconsistent.
