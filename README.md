@@ -16,9 +16,9 @@ The version of "computed/observable state" it provides is:
   consistent version at any time. If the current version is consistent, you'll get the same 
   object, otherwise you'll get a newly computed consisntent one, and every other version of it 
   is guaranteed to be marked inconsistent.
-* **Supports remote replicas** &ndash; any computed instance can be *published*, which allows
+* **Supports remote replicas** &ndash; any `IComputed` instance can be *published*, which allows
   any other code that knows the publication endpoint and publication ID to create
-  a replica of this computed instance in their own process. 
+  a replica of this `IComputed` instance in their own process. 
   
 The last part is crucial: 
 * The ability to replicate any server-side state to any client allows client-side code 
@@ -31,7 +31,7 @@ This is what makes `Stl.Fusion` a great fit for real-time apps: it becomes the o
 such apps need, since anything else can be easily described as a state change. For example,
 if you build a chat app, you don't need to worry about delivering every message to every client
 anymore. What you want to have is an API endpoint allowing chat clients to get a replica
-of server-side computed instance that "stores" chat tail. Once a message gets posted to some 
+of server-side `IComputed` instance that "stores" the chat tail. Once a message gets posted to some 
 channel, its chat tail gets invalidated, and every client will automatically "pull" the updated 
 tail.
 
@@ -56,7 +56,7 @@ on server side in real-time to every client visiting it:
 ![](docs/img/Stl-Fusion-Server-Screen-Sample.gif)
  
 Note that this is *client-side Blazor app*, the real-time changes it displays are
-delivered there via WebSocket channel backing computed replicas. 
+delivered there via WebSocket channel backing `IComputed` replicas. 
 
 There is **no single line of JavaScript code**, and below is **literally** all the 
 client-side code powering Chat sample:
