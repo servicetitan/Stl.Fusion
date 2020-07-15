@@ -124,6 +124,34 @@ namespace Stl.Tests.Fusion
         }
 
         [Fact]
+        public async Task SuppressTest()
+        {
+            var time = Container.Resolve<ITimeService>();
+            var count1 = 0;
+            var count2 = 0;
+
+            var c1 = await SimpleComputed.New<int>(async (prev, cancellationToken) => count1++)
+                .UpdateAsync(false);
+            var c2 = await SimpleComputed.New<int>(async (prev, cancellationToken) => count2++)
+                .UpdateAsync(false);
+            var c12 = await SimpleComputed.New<(int, int)>(
+                async (prev, cancellationToken) => {
+                    var a = await c1.UseAsync(cancellationToken).ConfigureAwait(false);
+                    using var _ = Computed.Suppress();
+                    var b = await c2.UseAsync(cancellationToken).ConfigureAwait(false);
+                    return (a, b);  
+                }).UpdateAsync(false);
+
+            var v12a = await c12.UseAsync();
+            c1.Invalidate(); // Should increment c1 & impact c12
+            var v12b = await c12.UseAsync();
+            v12b.Should().Be((v12a.Item1 + 1, v12a.Item2));
+            c2.Invalidate(); // Should increment c2, but shouldn't impact c12
+            var v12c = await c12.UseAsync();
+            v12c.Should().Be(v12b);
+        }
+
+        [Fact]
         public async Task KeepAliveTimeTest()
         {
             var users = Container.Resolve<IUserService>();

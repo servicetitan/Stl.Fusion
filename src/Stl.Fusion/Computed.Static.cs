@@ -35,6 +35,8 @@ namespace Stl.Fusion
             return Disposable.New(oldCurrent, oldCurrent1 => CurrentLocal.Value = oldCurrent1);
         }
 
+        public static Disposable<IComputed?> Suppress() => ChangeCurrent(null);
+
         // Capture & invalidate
 
         public static async Task<IComputed<T>?> TryCaptureAsync<T>(Func<CancellationToken, Task<T>> producer, CancellationToken cancellationToken = default)
