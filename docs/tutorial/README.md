@@ -39,4 +39,4 @@ Without further ado:
 * [Part 4: Computed Services: execution, caching, and invalidation](./Part04.md)
 * [Part 5: Computed Services: dependencies](./Part05.md)
 * [Part 6: Computed Instances and Computed Services - Review](./Part06.md)
-
+* Part 7+: To be added on this week.
