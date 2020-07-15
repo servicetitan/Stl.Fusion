@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Stl.Concurrency;
+using Stl.Internal;
+using Stl.Reflection;
 using Stl.Text;
 
 namespace Stl.Extensibility
@@ -40,24 +42,26 @@ namespace Stl.Extensibility
                 throw new ArgumentNullException(nameof(source)); 
             return _cache.GetOrAddChecked((source, scope), (key, self) => {
                 var (source1, scope1) = key;
-                var currentType = source1;
-                var genericTypeArguments = Array.Empty<Type>();
-                while (currentType != null) {
-                    var match = self._matches.GetValueOrDefault((currentType, scope1));
+                var baseTypes = source1.GetAllBaseTypes(true, true);
+                foreach (var cType in baseTypes) {
+                    var match = self._matches.GetValueOrDefault((cType, scope1));
                     if (match != null) {
                         if (match.IsGenericTypeDefinition)
-                            match = match.MakeGenericType(genericTypeArguments);
+                            throw Errors.GenericMatchForConcreteType(cType, match);
                         return match;
                     }
-
-                    if (currentType.IsConstructedGenericType) {
-                        genericTypeArguments = currentType.GetGenericArguments();
-                        currentType = currentType.GetGenericTypeDefinition();
+                    if (cType.IsConstructedGenericType) {
+                        var gType = cType.GetGenericTypeDefinition();
+                        var gTypeArgs = cType.GetGenericArguments();
+                        match = self._matches.GetValueOrDefault((gType, scope1));
+                        if (match != null) {
+                            if (!match.IsGenericTypeDefinition)
+                                throw Errors.ConcreteMatchForGenericType(gType, match);
+                            match = match.MakeGenericType(gTypeArgs);
+                            return match;
+                        }
                     }
-                    else
-                        currentType = currentType.BaseType;
                 }
-
                 return null;
             }, this);
         }

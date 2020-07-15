@@ -1,16 +1,16 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
+using System.Threading;
+using Stl.Extensibility;
 
 namespace Stl.Fusion.Interception
 {
     public class ArgumentComparer
     {
-        public static readonly ArgumentComparer Default = new ArgumentComparer();
-        public static readonly IgnoreArgumentComparer Ignore = new IgnoreArgumentComparer();
-        public static readonly ArgumentComparer ByRef = new ByRefArgumentComparer();
-        public static readonly ArgumentComparer ByType = new ByTypeArgumentComparer();
+        public static ArgumentComparer Default { get; } = new ArgumentComparer();
 
         public Func<object, int> GetHashCodeFunc { get; protected set; } = 
             o => o?.GetHashCode() ?? 0;
@@ -25,8 +25,7 @@ namespace Stl.Fusion.Interception
 
     public class EquatableArgumentComparer<T> : EquatableArgumentComparer
     {
-        public static readonly EquatableArgumentComparer<T> Instance = 
-            new EquatableArgumentComparer<T>();
+        public static EquatableArgumentComparer<T> Instance { get; } = new EquatableArgumentComparer<T>();
 
         private EquatableArgumentComparer()
         {
@@ -77,9 +76,12 @@ namespace Stl.Fusion.Interception
         }
     }
 
+    [MatchFor(typeof(CancellationToken), typeof(ArgumentComparerProvider))]
     public class IgnoreArgumentComparer : ArgumentComparer
     {
-        internal IgnoreArgumentComparer()
+        public static IgnoreArgumentComparer Instance { get; } = new IgnoreArgumentComparer();
+
+        private IgnoreArgumentComparer()
         {
             GetHashCodeFunc = _ => 0;
             EqualsFunc = (a, b) => true;
@@ -88,19 +90,35 @@ namespace Stl.Fusion.Interception
 
     public class ByRefArgumentComparer : ArgumentComparer
     {
-        internal ByRefArgumentComparer()
+        public static ByRefArgumentComparer Instance { get; } = new ByRefArgumentComparer();
+
+        private ByRefArgumentComparer()
         {
             GetHashCodeFunc = obj => obj == null ? 0 : RuntimeHelpers.GetHashCode(obj);
             EqualsFunc = ReferenceEquals;
         }
     }
 
-    public class ByTypeArgumentComparer : ArgumentComparer
+    [MatchFor(typeof(IHasId<>), typeof(ArgumentComparerProvider))]
+    public class HasIdArgumentComparer<T> : ArgumentComparer
     {
-        internal ByTypeArgumentComparer()
+        public static HasIdArgumentComparer<T> Instance { get; } = new HasIdArgumentComparer<T>();
+
+        private HasIdArgumentComparer()
         {
-            GetHashCodeFunc = obj => obj?.GetType().GetHashCode() ?? 0;
-            EqualsFunc = (a, b) => a?.GetType() == b?.GetType();
+            GetHashCodeFunc = obj => {
+                var hasId = (IHasId<T>) obj;
+                return EqualityComparer<T>.Default.GetHashCode(hasId.Id);
+            };
+            EqualsFunc = (a, b) => {
+                if (a == null) 
+                    return b == null;
+                if (b == null)
+                    return false;
+                var aHasId = (IHasId<T>) a;
+                var bHasId = (IHasId<T>) b;
+                return EqualityComparer<T>.Default.Equals(aHasId.Id, bHasId.Id);
+            };
         }
     }
 }

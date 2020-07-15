@@ -1,6 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore.Internal;
+using Microsoft.Extensions.Hosting;
+using Stl.Async;
 using Stl.Internal;
 using Stl.Reflection;
 using Stl.Testing;
@@ -18,6 +22,19 @@ namespace Stl.Tests.Reflection
         {
             var baseTypes = GetType().GetAllBaseTypes().ToArray();
             baseTypes.Should().BeEquivalentTo(typeof(TestBase), typeof(object));
+
+            baseTypes = typeof(AsyncProcessBase).GetAllBaseTypes(true, true).ToArray();
+            var adwdsIndex = baseTypes.IndexOf(typeof(IAsyncDisposableWithDisposalState));
+            var apIndex = baseTypes.IndexOf(typeof(IAsyncProcess));
+            var adIndex = baseTypes.IndexOf(typeof(IAsyncDisposable));
+            var dIndex = baseTypes.IndexOf(typeof(IDisposable));
+            var hsIndex = baseTypes.IndexOf(typeof(IHostedService));
+            var oIndex = baseTypes.IndexOf(typeof(object));
+            oIndex.Should().Be(baseTypes.Length - 1);
+            adwdsIndex.Should().BeLessThan(adIndex);
+            adwdsIndex.Should().BeLessThan(dIndex);
+            apIndex.Should().BeLessThan(adIndex);
+            apIndex.Should().BeLessThan(hsIndex);
         }
 
         [Fact]

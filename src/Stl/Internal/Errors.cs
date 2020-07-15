@@ -47,7 +47,7 @@ namespace Stl.Internal
             new InvalidOperationException($"Circular dependency on {item} found.");
 
         public static Exception CannotActivate(Type type) =>
-            new InvalidOperationException($"Cannot find the right constructor to activate type '{type.FullName}'.");
+            new InvalidOperationException($"Cannot find the right constructor to activate type '{type}'.");
 
         public static Exception OptionIsNone() =>
             new InvalidOperationException("Option is None.");
@@ -59,7 +59,7 @@ namespace Stl.Internal
             new ArgumentException("Path is relative.", paramName);
 
         public static Exception UnsupportedTypeForJsonSerialization(Type type)
-            => new JsonSerializationException($"Unsupported type: '{type.FullName}'.");
+            => new JsonSerializationException($"Unsupported type: '{type}'.");
 
         public static Exception AlreadyDisposed() =>
             new ObjectDisposedException("unknown", "The object is already disposed.");
@@ -89,10 +89,15 @@ namespace Stl.Internal
             new InvalidOperationException("The event source is already completed.");
         public static Exception ThisValueCanBeSetJustOnce() =>
             new InvalidOperationException($"This value can be set just once.");
-        public static Exception NoDefaultConstructor(Type type)
-            => new InvalidOperationException($"Type '{type.FullName}' doesn't have a default constructor.");
+        public static Exception NoDefaultConstructor(Type type) => 
+            new InvalidOperationException($"Type '{type}' doesn't have a default constructor.");
 
         public static Exception InternalError(string message) =>
             new SystemException(message);
+
+        public static Exception GenericMatchForConcreteType(Type type, Type matchType) =>
+            new InvalidOperationException($"Generic type '{matchType}' can't be a match for concrete type '{type}'.");
+        public static Exception ConcreteMatchForGenericType(Type type, Type matchType) =>
+            new InvalidOperationException($"Concrete type '{matchType}' can't be a match for generic type '{type}'.");
     }
 }

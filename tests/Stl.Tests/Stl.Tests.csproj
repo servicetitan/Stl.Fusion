@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <ServerGarbageCollection>true</ServerGarbageCollection>
+    <!--  EF1001: X is an internal API that supports the Entity Framework Core infrastructure ... -->
+    <NoWarn>$(NoWarn);EF1001;</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

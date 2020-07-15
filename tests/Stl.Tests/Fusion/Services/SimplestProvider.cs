@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Fusion;
@@ -15,11 +16,12 @@ namespace Stl.Tests.Fusion.Services
         Task<int> GetCharCountAsync();
     }
 
-    public class SimplestProvider : ISimplestProvider, IScopedComputedService
+    public class SimplestProvider : ISimplestProvider, IScopedComputedService, IHasId<Type>
     {
         private static volatile string _value = "";
         private readonly bool _isCaching;
 
+        public Type Id => GetType();
         public int GetValueCallCount { get; private set; }
         public int GetCharCountCallCount { get; private set; }
 

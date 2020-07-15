@@ -1,7 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.Reflection;
-using System.Threading;
+using Stl.Extensibility;
+using Stl.Reflection;
 
 namespace Stl.Fusion.Interception
 {
@@ -13,26 +13,24 @@ namespace Stl.Fusion.Interception
 
     public class ArgumentComparerProvider : IArgumentComparerProvider
     {
-        protected static readonly IReadOnlyDictionary<Type, ArgumentComparer> DefaultComparers = 
-            new Dictionary<Type, ArgumentComparer>() {
-                {typeof(CancellationToken), ArgumentComparer.Ignore},
-                {typeof(IScopedComputedService), ArgumentComparer.ByType},
-            };
-
-        public static readonly IArgumentComparerProvider Default = new ArgumentComparerProvider();
-
-        private readonly Dictionary<Type, ArgumentComparer> _comparers;
-
-        public ArgumentComparerProvider()
+        public class Options
         {
-            _comparers = new Dictionary<Type, ArgumentComparer>(DefaultComparers);
+            public IMatchingTypeFinder MatchingTypeFinder { get; set; } = null!;
         }
 
-        public ArgumentComparerProvider(Dictionary<Type, ArgumentComparer> comparers)
+        public static readonly IArgumentComparerProvider Default = new ArgumentComparerProvider();
+        protected IMatchingTypeFinder MatchingTypeFinder { get; }
+        protected IServiceProvider? Services { get; }
+
+        public ArgumentComparerProvider(
+            Options? options = null, 
+            IServiceProvider? services = null)
         {
-            foreach (var (key, value) in DefaultComparers)
-                comparers[key] = value;
-            _comparers = comparers;
+            options ??= new Options() {
+                MatchingTypeFinder = new MatchingTypeFinder(GetType().Assembly),
+            };
+            MatchingTypeFinder = options.MatchingTypeFinder;
+            Services = services;
         }
 
         public ArgumentComparer GetInvocationTargetComparer(MethodInfo methodInfo, Type invocationTargetType) 
@@ -43,40 +41,39 @@ namespace Stl.Fusion.Interception
 
         public virtual ArgumentComparer GetArgumentComparer(Type type, bool isInvocationTarget = false)
         {
-            if (_comparers.TryGetValue(type, out var comparer))
-                return comparer;
-            var bType = type.BaseType;
-            while (bType != null) {
-                if (_comparers.TryGetValue(bType, out comparer))
-                    return comparer;
-                bType = bType.BaseType;
-            }
-            var cType = (Type?) null;
-            var cComparer = (ArgumentComparer?) null;
-            foreach (var iType in type.GetInterfaces()) {
-                if (_comparers.TryGetValue(iType, out comparer)) {
-                    if (cType == null || cType.IsAssignableFrom(iType)) {
-                        // We're looking for the most specific type here
-                        cType = iType;
-                        cComparer = comparer;
-                    }
-                }
-            }
-            if (cComparer != null)
-                return cComparer;
+            var comparerType = MatchingTypeFinder.TryFind(type, typeof(ArgumentComparerProvider));
+            if (comparerType != null)
+                return CreateComparer(comparerType);
+            
             if (isInvocationTarget)
-                return ArgumentComparer.ByRef;
-
+                return ByRefArgumentComparer.Instance;
             var equatableType = typeof(IEquatable<>).MakeGenericType(type);
             if (equatableType.IsAssignableFrom(type)) {
                 var eacType = typeof(EquatableArgumentComparer<>).MakeGenericType(type);
-                var eac = (EquatableArgumentComparer) eacType
-                    .GetField(nameof(EquatableArgumentComparer<int>.Instance))
-                    .GetValue(null);
+                var eac = (EquatableArgumentComparer) CreateComparer(eacType);
                 if (eac.IsAvailable)
                     return eac;
             }
             return ArgumentComparer.Default;
+        }
+
+        protected virtual ArgumentComparer CreateComparer(Type comparerType)
+        {
+            var pInstance = comparerType.GetProperty(
+                nameof(ByRefArgumentComparer.Instance), 
+                BindingFlags.Static | BindingFlags.Public);
+            if (pInstance != null)
+                return (ArgumentComparer) pInstance.GetValue(null);
+
+            var fInstance = comparerType.GetField(
+                nameof(ByRefArgumentComparer.Instance), 
+                BindingFlags.Static | BindingFlags.Public);
+            if (fInstance != null)
+                return (ArgumentComparer) fInstance.GetValue(null);
+            
+            if (Services != null)
+                return (ArgumentComparer) Services.Activate(comparerType);
+            return (ArgumentComparer) comparerType.CreateInstance();
         }
     }
 }

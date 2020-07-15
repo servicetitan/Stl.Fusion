@@ -130,10 +130,12 @@ namespace Stl.Tests.Fusion
             var count1 = 0;
             var count2 = 0;
 
+#pragma warning disable 1998
             var c1 = await SimpleComputed.New<int>(async (prev, cancellationToken) => count1++)
                 .UpdateAsync(false);
             var c2 = await SimpleComputed.New<int>(async (prev, cancellationToken) => count2++)
                 .UpdateAsync(false);
+#pragma warning restore 1998
             var c12 = await SimpleComputed.New<(int, int)>(
                 async (prev, cancellationToken) => {
                     var a = await c1.UseAsync(cancellationToken);

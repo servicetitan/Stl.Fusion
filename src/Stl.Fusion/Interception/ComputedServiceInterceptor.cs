@@ -36,7 +36,7 @@ namespace Stl.Fusion.Interception
 
         protected override void ValidateTypeInternal(Type type)
         {
-            Log.Log(ValidationLogLevel, $"Validating: '{type.FullName}':");
+            Log.Log(ValidationLogLevel, $"Validating: '{type}':");
             if (!typeof(IComputedService).IsAssignableFrom(type))
                 throw Errors.MustImplement<IComputedService>(type);
             var bindingFlags = BindingFlags.Public | BindingFlags.NonPublic

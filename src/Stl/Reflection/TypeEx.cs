@@ -21,15 +21,31 @@ namespace Stl.Reflection
         private static readonly ConcurrentDictionary<Type, Symbol> ToSymbolCache =
             new ConcurrentDictionary<Type, Symbol>();
 
-        public static IEnumerable<Type> GetAllBaseTypes(this Type type, bool addSelf = false)
+        public static IEnumerable<Type> GetAllBaseTypes(this Type type, bool addSelf = false, bool addInterfaces = false)
         {
+            if (type == null)
+                throw new ArgumentNullException(nameof(type));
+            
             if (addSelf)
                 yield return type;
             var baseType = type.BaseType;
-            while (baseType != null) {
+            if (baseType == null)
+                yield break; // type == typeof(Object)
+
+            while (baseType != typeof(object)) {
                 yield return baseType;
                 baseType = baseType.BaseType;
             }
+            if (addInterfaces) {
+                var interfaces = type.GetInterfaces();
+                var orderedInterfaces = interfaces
+                    .OrderBy(i => -i.GetInterfaces().Length)
+                    .OrderByDependency(i => interfaces.Where(j => i != j && j.IsAssignableFrom(i)))
+                    .Reverse();
+                foreach (var @interface in orderedInterfaces)
+                    yield return @interface;
+            }
+            yield return typeof(object);
         }
 
         public static bool MayCastSucceed(this Type castFrom, Type castTo)
