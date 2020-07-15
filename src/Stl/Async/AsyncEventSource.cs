@@ -62,7 +62,7 @@ namespace Stl.Async
             TTag tag, 
             Action<AsyncEventSource<TEvent, TTag>, int, bool>? onObserverCountChanged,
             TaskCreationOptions fireTaskCreationOptions = TaskCreationOptions.RunContinuationsAsynchronously,
-            TaskCreationOptions readyTaskCreationOption = TaskCreationOptions.None)
+            TaskCreationOptions readyTaskCreationOption = TaskCreationOptions.RunContinuationsAsynchronously)
         {
             Tag = tag;
             _state = new State(fireTaskCreationOptions, readyTaskCreationOption);

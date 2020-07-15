@@ -136,21 +136,21 @@ namespace Stl.Tests.Time
                 await ((Func<Task>) (async () => {
                     var cts = new CancellationTokenSource(100);
                     await clock1.DelayAsync(Timeout.Infinite, cts.Token).SuppressCancellation();
-                })).Should().CompleteWithinAsync(TimeSpan.FromMilliseconds(200));
+                })).Should().CompleteWithinAsync(TimeSpan.FromMilliseconds(1000));
                 await ((Func<Task>) (async () => {
                     var cts = new CancellationTokenSource(100);
                     await clock1.DelayAsync(Timeout.InfiniteTimeSpan, cts.Token).SuppressCancellation();
-                })).Should().CompleteWithinAsync(TimeSpan.FromMilliseconds(200));
+                })).Should().CompleteWithinAsync(TimeSpan.FromMilliseconds(1000));
 
                 // Zero
                 await ((Func<Task>) (async () => {
                     var cts = new CancellationTokenSource(1000);
                     await clock1.DelayAsync(0, cts.Token).SuppressCancellation();
-                })).Should().CompleteWithinAsync(TimeSpan.FromMilliseconds(100));
+                })).Should().CompleteWithinAsync(TimeSpan.FromMilliseconds(500));
                 await ((Func<Task>) (async () => {
                     var cts = new CancellationTokenSource(1000);
                     await clock1.DelayAsync(TimeSpan.Zero, cts.Token).SuppressCancellation();
-                })).Should().CompleteWithinAsync(TimeSpan.FromMilliseconds(100));
+                })).Should().CompleteWithinAsync(TimeSpan.FromMilliseconds(500));
             }
 
             await Test(SystemClock.Instance);

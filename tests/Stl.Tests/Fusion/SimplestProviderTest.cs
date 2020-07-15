@@ -91,7 +91,7 @@ namespace Stl.Tests.Fusion
             p.GetCharCountCallCount.Should().Be(gcc);
 
             // But if we wait for 0.1s+, it should recompute again
-            await Task.Delay(200);
+            await Task.Delay(500);
             await Assert.ThrowsAsync<NullReferenceException>(() => p.GetCharCountAsync());
             p.GetValueCallCount.Should().Be(gv);
             p.GetCharCountCallCount.Should().Be(++gcc);
