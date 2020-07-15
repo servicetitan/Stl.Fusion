@@ -49,7 +49,7 @@ It took a while to get back to this problem — my first few years at
 [ServiceTitan](https://www.servicetitan.com/) were absolutely terrific,
 but also quite intense in terms of the workload. 2020 was the first 
 year I've got a chance to write a fair amount of code;
-Besides that, a few other things happened over these years:
+besides that, a few other things happened over these years:
 
 * [React](https://reactjs.org/) (I love it from the day one) 
   took #1 spot among web UI frameworks
