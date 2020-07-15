@@ -108,3 +108,19 @@ This is actually pretty good, taking into account the following timeline:
 
 [Stl.Fusion Discord Server](https://discord.gg/EKEwv6d) is currently the best 
 place to ask questions & track project updates. 
+
+## Credits
+
+* [Knockout](https://knockoutjs.com/) by 
+  [Steve Sanderson](http://blog.stevensanderson.com/) &ndash; 
+  for making "computed observable" abstraction popular 
+  (and likely, inventing it)
+* [Quora](https://www.quora.com/) — a huge part of the inspiration for Stl.Fusion was Quora's LiveNode framework
+* [ServiceTitan](https://www.servicetitan.com/) - for giving me the
+  opportunity to work on this
+* All other contributors. For now it is
+  [Vladimir Chirikov](https://github.com/vchirikov) &ndash;
+  everything related to build system is written by him.
+  But everyone is welcome to join &ndash; 
+  [your pull request](https://github.com/servicetitan/Stl/pulls) 
+  is all we need!
