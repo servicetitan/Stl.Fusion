@@ -136,9 +136,9 @@ namespace Stl.Tests.Fusion
                 .UpdateAsync(false);
             var c12 = await SimpleComputed.New<(int, int)>(
                 async (prev, cancellationToken) => {
-                    var a = await c1.UseAsync(cancellationToken).ConfigureAwait(false);
+                    var a = await c1.UseAsync(cancellationToken);
                     using var _ = Computed.Suppress();
-                    var b = await c2.UseAsync(cancellationToken).ConfigureAwait(false);
+                    var b = await c2.UseAsync(cancellationToken);
                     return (a, b);  
                 }).UpdateAsync(false);
 
