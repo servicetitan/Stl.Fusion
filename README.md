@@ -1,7 +1,7 @@
 # Stl.Fusion
 
 ### Two-sentence description:
-* **Craft a real-time UI by** adding ~1 extra line of code per every "update" endpoint
+* **Craft a real-time UI** by adding ~1 extra line of code per every "update" endpoint
 * **Get 1,000%&hellip;∞ speedup** for your API with auto-invalidating cache.
 
 ### A longer version:
