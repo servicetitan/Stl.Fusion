@@ -2,6 +2,9 @@
 
 ## Prerequisites
 
+> We highly recommended you to read the 
+  [Overview](https://github.com/servicetitan/Stl.Fusion/blob/master/docs/Overview.md) first.
+
 Install: 
 - [.NET Core SDK 3.1](https://dotnet.microsoft.com/download) - you need it
   to build `Stl.Fusion`, its samples, and this tutorial
@@ -31,7 +34,6 @@ to complete this tutorial *before* digging into the source
 code of Fusion samples.
 
 Without further ado:
-* [Stl.Fusion: Introduction](./Intro.md)
 * [Part 0: NuGet packages](./Part00.md)
 * [Part 1: `IComputed<TOut>` and `SimpleComputed<TOut>`](./Part01.md)
 * [Part 2: Dependencies between computed instances](./Part02.md)
@@ -39,4 +41,4 @@ Without further ado:
 * [Part 4: Computed Services: execution, caching, and invalidation](./Part04.md)
 * [Part 5: Computed Services: dependencies](./Part05.md)
 * [Part 6: Computed Instances and Computed Services - Review](./Part06.md)
-* Part 7+: To be added on this week.
+* Part 7+: To be added later this week.
