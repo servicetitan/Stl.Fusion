@@ -23,7 +23,7 @@
     <PackageReference Update="DataAnnotationsValidatorNetStandard" Version="1.0.3" />
     <PackageReference Update="Enums.NET" Version="3.0.3" />
     <PackageReference Update="FluentAssertions" Version="5.10.3" />
-    <PackageReference Update="MediatR" Version="8.0.1" />
+    <PackageReference Update="MediatR" Version="8.0.2" />
     <PackageReference Update="MediatR.Extensions.Microsoft.DependencyInjection" Version="8.0.0" />
     <PackageReference Update="Microsoft.AspNetCore.Components.WebAssembly" Version="$(BlazorVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="$(BlazorVersion)" />
