@@ -1,6 +1,6 @@
 # Stl.Fusion
 
-### Two-sentence description:
+### Four sentence description
 
 * Have you ever dreamed of an abstraction that magically delivers
   every change made to you server-side data to every client that displays it?
@@ -12,7 +12,7 @@ Stl.Fusion is an abstraction that solves both these problems &ndash; morever,
 it does it mostly transparently for you, so most of your code won't even change!
 And yes, it is scalable and crafted for performance.
 
-### A longer version:
+### A longer version
 
 `Stl.Fusion` is a new library for [.NET Core](https://en.wikipedia.org/wiki/.NET_Core) 
 and [Blazor](https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor)
