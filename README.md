@@ -1,18 +1,17 @@
-# Stl.Fusion
+![](docs/img/Banner.jpg)
 
-### Four sentence description
-
-* Have you ever dreamed of an abstraction that magically delivers
+> Have you ever dreamed of an abstraction that magically delivers
   every change made to you server-side data to every client that displays it?
-* Have you thought of a caching API that automatically evicts a 
+
+> Have you thought of a caching API that automatically evicts a 
   cached entry right at the moment it becomes inconsistent with the
   ground truth?
 
-Stl.Fusion is an abstraction that solves both these problems &ndash; morever,
+`Stl.Fusion` is an abstraction that solves both these problems &ndash; morever,
 it does it mostly transparently for you, so most of your code won't even change!
 And yes, it is scalable and crafted for performance.
 
-### A longer version
+## A Longer Description
 
 `Stl.Fusion` is a new library for [.NET Core](https://en.wikipedia.org/wiki/.NET_Core) 
 and [Blazor](https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor)
@@ -21,8 +20,8 @@ providing [Knockout.js](https://knockoutjs.com/)
 **but designed to power distributed apps** as well as client-side UIs.
 
 The version of "computed/observable state" it provides is:
-* **Fully thread-safe**
-* **Built for asynchronous world** &ndash; any computation of any `IComputed<TOut>` can be 
+* **Thread-safe**, so you don't have to synchronize access to it
+* **Asynchronous** &ndash; any computation of any `IComputed<TOut>` can be 
   asynchronous, as well as all of Stl.Fusion APIs that may invoke async computations.   
 * **Almost immutable** &ndash; once created, the only change that may happen to it is transition 
   to `IsConsistent == false` state

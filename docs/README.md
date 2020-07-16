@@ -111,6 +111,10 @@ This is actually pretty good, taking into account the following timeline:
 [Stl.Fusion Discord Server](https://discord.gg/EKEwv6d) is currently the best 
 place to ask questions & track project updates. 
 
+> Q: What "Stl" stands for?
+
+It's an acronym for "ServiceTitan Library".
+
 ## Credits
 
 * [Knockout](https://knockoutjs.com/) by 

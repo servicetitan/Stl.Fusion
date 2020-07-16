@@ -286,22 +286,22 @@ As you see, the only change I've made to the original was "virtual"
 keyword - it allows a proxy type to override this method and implement
 the desirable behavior without changing the base!
 
-> For the sake of clarity: the real Fusion proxy code is way more complex -
-> due to the fact it:
-> * Is fully asynchronous & thread-safe 
-> * Hits the cache to pull existing IComputed<T> matching the same set
+> For the sake of clarity: the real Fusion proxy code is way more complex due
+> to the following factors:
+> * Is must be asynchronous & thread-safe 
+> * It hits the cache to pull existing IComputed<T> matching the same set
 >   of arguments, if it's available - there is no point to re-compute
 >   what's already computed and isn't invalidated yet, right?
-> * Implements the logic that makes sure just one computation runs at a time 
+> * It implements the logic that makes sure just one computation runs at a time 
 >   for a given set of arguments if the value isn't cached - because
 >   what's the point to run it concurrently, if the result is expected to
 >   be the same?
-> * Uses a different invalidation subscription model. The one shown above 
+> * It uses a different invalidation subscription model. The one shown above 
 >   isn't GC-friendly: `dependency.Invalidated` handler references a closure
 >   that references dependent instance, so while some low-level dependency 
 >   is alive (reachable from GC roots), its whole subtree of dependants stays 
 >   in heap too, which is obviously quite bad.
-> * Has a few other pieces needed for a complete solution to work - e.g.
+> * There are a few other pieces needed for a complete solution to work - e.g.
 >   manual invalidation, faster and customizable equality comparison for 
 >   method arguments (they have to be compared with what's in cache), 
 >   `CancellationToken` handling, ...
