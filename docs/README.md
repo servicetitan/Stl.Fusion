@@ -79,6 +79,8 @@ Check out the [Tutorial](tutorial/README.md) to learn how.
 * [Tutorial](tutorial/README.md) - not fully finished yet,
   but the best part is: it is interactive, so any code you see
   there is runnable with [try-dotnet](https://github.com/dotnet/try/blob/master/DotNetTryLocal.md)!
+* [The Story Behind Stl.Fusion](Story.md) &ndash; maybe you'll find
+  it interesting too.
   
 That's it for now, but we'll definitely add more over time. 
 
