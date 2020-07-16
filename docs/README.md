@@ -55,7 +55,21 @@ If you prefer a CLI-only way, `cd` to the repository folder and run:
 > A few other useful scripts can be found in 
 > ["scripts" folder](https://github.com/servicetitan/Stl/tree/master/scripts).
 
-## 3. Use Fusion
+## 3. Learn Fusion
+
+* [Introduction](tutorial/Intro.md) is the best place
+  to start. It describes what Stl.Fusion is on conceptual level
+  and explains the most tricky concepts on relatively simple
+  examples (mostly pseudo-code).
+* [Tutorial](tutorial/README.md) - not fully finished yet,
+  but the best part is: it is interactive, so any code you see
+  there is runnable with [try-dotnet](https://github.com/dotnet/try/blob/master/DotNetTryLocal.md)!
+* [The Story Behind Stl.Fusion](Story.md) &ndash; maybe you'll find
+  it interesting too.
+  
+That's it for now, but we'll definitely add more over time. 
+
+## 4. Use Fusion
 
 Overall, it's fairly simple:
 * Server-side code should reference 
@@ -69,20 +83,6 @@ Overall, it's fairly simple:
 
 Once it's done, you can start using it. 
 Check out the [Tutorial](tutorial/README.md) to learn how.
-
-## 4. Documentation and other materials
-
-* [Stl.Fusion: Introduction](tutorial/Intro.md) is the best place
-  to start. It describes what Stl.Fusion is on conceptual level
-  and explains the most tricky concepts on relatively simple
-  examples (mostly pseudo-code).
-* [Tutorial](tutorial/README.md) - not fully finished yet,
-  but the best part is: it is interactive, so any code you see
-  there is runnable with [try-dotnet](https://github.com/dotnet/try/blob/master/DotNetTryLocal.md)!
-* [The Story Behind Stl.Fusion](Story.md) &ndash; maybe you'll find
-  it interesting too.
-  
-That's it for now, but we'll definitely add more over time. 
 
 ## 5. Q/A
 
