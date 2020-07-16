@@ -10,7 +10,7 @@
 
 Stl.Fusion is an abstraction that solves both these problems &ndash; morever,
 it does it mostly transparently for you, so most of your code won't even change!
-And yes, it's not a toy &ndash; it is scalable and crafted for performance.
+And yes, it is scalable and crafted for performance.
 
 ### A longer version:
 
