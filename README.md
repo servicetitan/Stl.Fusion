@@ -1,5 +1,11 @@
 # Stl.Fusion
 
+### Two-sentence description:
+* **Craft a real-time UI by** adding ~1 extra line of code per every "update" endpoint
+* **Get 1,000%&hellip;∞ speedup** for your API with auto-invalidating cache.
+
+### A longer version:
+
 `Stl.Fusion` is a new library for [.NET Core](https://en.wikipedia.org/wiki/.NET_Core) 
 and [Blazor](https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor)
 providing [Knockout.js](https://knockoutjs.com/) 
