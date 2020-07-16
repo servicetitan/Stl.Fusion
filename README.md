@@ -1,8 +1,16 @@
 # Stl.Fusion
 
 ### Two-sentence description:
-* **Craft a real-time UI** by adding ~1 extra line of code per every "update" endpoint
-* **Get 1,000%&hellip;∞ speedup** for your API with auto-invalidating cache.
+
+* Have you ever dreamed of an abstraction that magically delivers
+  every change made to you server-side data to every client that displays it?
+* Have you thought of a caching API that automatically evicts a 
+  cached entry right at the moment it becomes inconsistent with the
+  ground truth?
+
+Stl.Fusion is an abstraction that solves both these problems &ndash; morever,
+it does it mostly transparently for you, so most of your code won't even change!
+And yes, it's not a toy &ndash; it is scalable and crafted for performance.
 
 ### A longer version:
 
