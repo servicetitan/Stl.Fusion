@@ -1,5 +1,9 @@
 ![](docs/img/Banner.jpg)
 
+[![Build](https://github.com/servicetitan/Stl.Fusion/workflows/Build/badge.svg)](https://github.com/servicetitan/Stl.Fusion/actions?query=workflow%3A%22Build%22)
+[![codecov](https://codecov.io/gh/servicetitan/Stl.Fusion/branch/master/graph/badge.svg)](https://codecov.io/gh/servicetitan/Stl.Fusion)
+
+
 > Have you ever dreamed of an abstraction that magically delivers
   every change made to you server-side data to every client that displays it?
 
