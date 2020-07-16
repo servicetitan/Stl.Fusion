@@ -122,8 +122,8 @@ It's an acronym for "ServiceTitan Library".
   for making "computed observable" abstraction popular 
   (and likely, inventing it)
 * [Quora](https://www.quora.com/) — a huge part of the inspiration for Stl.Fusion was Quora's LiveNode framework
-* [ServiceTitan](https://www.servicetitan.com/) - for giving me the
-  opportunity to work on this
+* [ServiceTitan](https://www.servicetitan.com/) - for giving some of us
+  an opportunity to work on this project
 * All other contributors. For now it is
   [Vladimir Chirikov](https://github.com/vchirikov) &ndash;
   everything related to build system is written by him.
