@@ -12,25 +12,31 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          # avoid shallow clone for Nerdbank.GitVersioning
+          # Avoid shallow clone for Nerdbank.GitVersioning
           fetch-depth: 0
+
       - uses: dotnet/nbgv@master
         id: nbgv
         with:
           setAllVars: true
           setCommonVars: true
+
       - run: "echo 'SemVer2: ${{ steps.nbgv.outputs.SemVer2 }}'"
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: 3.1.301
+      
       - name: Restore NuGet Packages & Tools
         run: dotnet run --project build --configuration Release --no-launch-profile -- --configuration Debug restore restore-tools
+      
       - name: Build
         run: dotnet run --project build --configuration Release --no-launch-profile -- --configuration Debug build
+      
       - name: Run tests
         #run: dotnet run --project build --configuration Release --no-launch-profile -- --configuration Debug coverage
         run: timeout 10m dotnet test artifacts/tests/Stl.Tests.dll
+      
       #- name: Codecov
       #  uses: codecov/codecov-action@v1.0.7
       #  with:

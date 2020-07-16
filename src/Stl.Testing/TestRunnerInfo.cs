@@ -20,7 +20,24 @@ namespace Stl.Testing
             }
         }
 
+        public static class GitHub
+        {
+            public static readonly string Workflow;
+            public static readonly string Action;
+            public static readonly string RunId;
+            public static readonly bool IsActionRunning;
+
+            static GitHub()
+            {
+                Workflow = Environment.GetEnvironmentVariable("GITHUB_WORKFLOW") ?? "";
+                Action = Environment.GetEnvironmentVariable("GITHUB_ACTION") ?? "";
+                RunId = Environment.GetEnvironmentVariable("GITHUB_RUN_ID") ?? "";
+                var isActionRunning = Environment.GetEnvironmentVariable("GITHUB_ACTIONS") ?? "";
+                bool.TryParse(isActionRunning, out IsActionRunning);
+            }
+        }
+
         public static bool IsBuildAgent() 
-            => TeamCity.Version != null;
+            => TeamCity.Version != null || GitHub.IsActionRunning;
     }
 }

@@ -65,8 +65,8 @@ namespace Stl.Tests.Fusion
         [Fact(Timeout = 120_000)]
         public async Task DropReconnectTest()
         {
-            if (OSInfo.Kind == OSKind.Unix)
-                // TODO: Fix this test - it can't complete on GitHub
+            if (TestRunnerInfo.GitHub.IsActionRunning)
+                // TODO: Unbreak this test on GitHub
                 return;
 
             var serving = await WebSocketServer.ServeAsync();

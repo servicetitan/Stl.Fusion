@@ -118,7 +118,7 @@ namespace Stl.Tests.Async
         [Fact]
         public async Task ConcurrentTest()
         {
-            if (OSInfo.Kind == OSKind.Unix)
+            if (TestRunnerInfo.GitHub.IsActionRunning)
                 // TODO: Unbreak this test on GitHub
                 return;
 
