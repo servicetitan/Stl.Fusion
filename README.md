@@ -63,7 +63,7 @@ Fusion is built on three "pillars":
   [Pure Computed Observables](https://knockoutjs.com/documentation/computed-pure.html) 
   from Knockout, you understand the problem. `IComputed` solves it even better &ndash;
   dependent-dependency relationships are explicit there, and the reference pointing
-  from dependency-to-dependent is [weak](https://en.wikipedia.org/wiki/Weak_reference), 
+  from dependency to dependent is [weak](https://en.wikipedia.org/wiki/Weak_reference), 
   so any dependent `IComputed` is available for GC unless it's referenced by something 
   else (i.e. used).
 
