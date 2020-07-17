@@ -56,7 +56,7 @@ Fusion is built on three "pillars":
 `IComputed<TOut>` is:
 * **Thread-safe**
 * **Asynchronous** &ndash; any computation of any `IComputed<TOut>` can be 
-  asynchronous, as well as all of Stl.Fusion APIs that may invoke async computations.   
+  asynchronous; Fusion APIs dependent on this feature are also asynchronous.
 * **Almost immutable** &ndash; once created, the only change that may happen to it is transition 
   to `IsConsistent == false` state
 * **GC-friendly** &ndash; if you know about 
