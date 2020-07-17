@@ -78,7 +78,7 @@ But there is more &ndash; any `IComputed`:
   and return the newly cached instance.
 * **Updated on demand** &ndash; once you have an `IComputed`, you can ask for its
   consistent version at any time. If the current version is consistent, you'll get the 
-  same object, otherwise you'll get a newly computed consisntent version, 
+  same object, otherwise you'll get a *newly computed* consistent version, 
   and every other version of it  is guaranteed to be marked inconsistent.
   At glance, it doesn't look like a useful property, but together with immutability and
   "computed just once" model, it de-couples invalidations (change notifications) 
