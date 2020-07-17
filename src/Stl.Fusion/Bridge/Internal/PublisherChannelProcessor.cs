@@ -134,7 +134,7 @@ namespace Stl.Fusion.Bridge.Internal
                             var (publicationId, _) = (p.Key, p.Value);
                             var publication = Publisher.TryGet(publicationId);
                             if (publication != null)
-                                await PublisherImpl.UnsubscribeAsync(Channel, publication).ConfigureAwait(false);
+                                await UnsubscribeAsync(publication, default).ConfigureAwait(false);
                         }));
                     await Task.WhenAll(tasks).ConfigureAwait(false);
                 }
