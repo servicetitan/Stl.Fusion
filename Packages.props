@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="latest" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <ServiceTitanPlatformVersion>1.4.7</ServiceTitanPlatformVersion>
     <EntityFrameworkCoreVersion>3.1.6</EntityFrameworkCoreVersion>
     <AspNetCoreVersion>3.1.6</AspNetCoreVersion>
     <BlazorVersion>3.2.1</BlazorVersion>
@@ -13,7 +12,7 @@
     <PackageReference Update="Autofac" Version="5.2.0" />
     <PackageReference Update="Autofac.Extensions.DependencyInjection" Version="6.0.0" />
     <PackageReference Update="Autofac.Extras.DynamicProxy" Version="5.0.0" />
-    <PackageReference Update="AutoFixture" Version="4.11.0" />
+    <PackageReference Update="AutoFixture" Version="4.13.0" />
     <PackageReference Update="AutoFixture.Xunit2" Version="4.13.0" />
     <PackageReference Update="Bullseye" Version="3.3.0" />
     <PackageReference Update="Castle.Core" Version="4.4.0" />
