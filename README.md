@@ -49,7 +49,7 @@ Fusion is based on 3 key abstractions:
   version of "computed observables"
 * **Replica services** - remote proxies of "computed services". 
   All you need to have one is its interface.
-* And finally, an `IComputed<TOut>` &ndash; a "computed observable" abstraction, 
+* And finally, **`IComputed<TOut>` &ndash; a "computed observable" abstraction**, 
   that's in some ways similar to the one you can find in Knockout, MobX, or Vue.js,
   but very different, if you look at its fundamental properties.
     
