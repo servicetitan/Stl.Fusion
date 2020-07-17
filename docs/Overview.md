@@ -354,10 +354,8 @@ is untouched.
 // Notice this is a regular method, not a computed service method
 public async Task<ChatUser> CreateUserAsync(string name)
 {
-    // We have to rent or create a new DBContext here, because
-    // this service (ChatService) is a singleton in IoC container.
-    using var lease = _dbContextPool.Rent();
-    var dbContext = lease.Subject;
+    // The real-life code should do this a bit differently
+    using var dbContext = CreateDbContext();
 
     // That's the code you'd see normally here
     var userEntry = dbContext.Users.Add(new ChatUser() {
@@ -384,8 +382,7 @@ example:
 [ComputedServiceMethod]
 public virtual async Task<ChatPage> GetChatTailAsync(int length)
 {
-    using var lease = _dbContextPool.Rent();
-    var dbContext = lease.Subject;
+    using var dbContext = CreateDbContext();
 
     // The same code as usual
     var messages = dbContext.Messages.OrderByDescending(m => m.Id).Take(length).ToList();
@@ -436,8 +433,7 @@ If you look for usages of `EveryChatTail()`, you'll find another one:
 ```cs
 public async Task<ChatMessage> AddMessageAsync(long userId, string text)
 {
-    using var lease = _dbContextPool.Rent();
-    var dbContext = lease.Subject;
+    using var dbContext = CreateDbContext();
     
     // Again, this absolutely usual code
     await GetUserAsync(userId, cancellationToken); // Let's make sure the user exists
@@ -490,6 +486,8 @@ public class ReplicaComputed<T> : IComputed<T> {
         IsConsistent = source.IsConsistent;
         source.Invalidated += () => Invalidate();
     } 
+
+    public void Invalidate() { ... }
 }
 ```
 
@@ -508,6 +506,7 @@ interface IComputed<T> {
     bool IsConsistent { get; }
     Action Invalidated; 
     
+    void Invalidate();
     Task<IComputed<T>> UpdateAsync(); // THIS ONE
 }
 ```
