@@ -11,7 +11,7 @@
   ground truth?
 
 `Stl.Fusion` solves both these problems &ndash; 
-moreover, it does it almost transparently for you, so most of your code won't even change!
+moreover, it does this almost transparently for you, so most of your code won't even change!
 And yes, it is scalable and crafted for performance.
 
 If this sounds interesting, skip the marketing part below and go straight
