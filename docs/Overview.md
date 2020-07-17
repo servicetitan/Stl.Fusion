@@ -267,13 +267,13 @@ override DateTime GetCurrentTimeWithOffset(TimeSpan offset) {
         // 1. Trying to pull cached value w/o locking;
         //    the real cacheKey is, of course, more complex.
         var cacheKey = (object) (this, nameof(GetCurrentTimeWithOffset), offset);
-        if (ComputedRegistry.TryGetCached(cacheKey, out var result))
+        if (ComputedRegistry.TryGet(cacheKey, out var result))
             return result;
         
         // 2. Retrying the same with async lock to make sure 
         //    we never recompute the same result twice
-        using var asyncLock = await AsyncLockSet.Lock(cacheKey);
-        if (ComputedRegistry.TryGetCached(cacheKey, out result))
+        using var _ = await LockAsync(cacheKey);
+        if (ComputedRegistry.TryGet(cacheKey, out result))
             return result;
 
         // 3. Nothing is cached, so we have to compute the result
@@ -285,7 +285,7 @@ override DateTime GetCurrentTimeWithOffset(TimeSpan offset) {
         catch (Exception e) {
             result.SetError(e);
         }
-        ComputedRegistry.TrySetValue(cacheKey, result);
+        ComputedRegistry.Set(cacheKey, result);
         return result.Value; // Re-throws an error if SetError was called 
     }
     finally {
