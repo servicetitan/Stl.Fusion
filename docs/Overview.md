@@ -496,7 +496,8 @@ public class ReplicaComputed<T> : IComputed<T> {
 As you see, it does nothing but "replicates" the source's behaviour. Doesn't seem
 quite useful, right? But what about remote replicas? What if we implement something
 allowing to publish a computed instance on server side, which will let clients
-to create its remote replicas listening to invalidation and request its updates?  
+to create its remote replicas, and these remote replicas will support all the same
+operations - e.g. you could subscribe to their invalidation events or request an update?
 
 Long story short, such type really exists in Fusion, and it works nearly as 
 I described. Speaking about the updates - let's add one more useful method 
