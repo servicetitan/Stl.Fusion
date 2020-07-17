@@ -65,7 +65,7 @@
     <PackageReference Update="Stl.Fusion.Blazor" Version="$(StlVersion)" />
     <PackageReference Update="Stl.Plugins" Version="$(StlVersion)" />
     <PackageReference Update="Stl.Plugins.Extensions" Version="$(StlVersion)" />
-    <PackageReference Update="Swashbuckle.AspNetCore" Version="5.4.1" />
+    <PackageReference Update="Swashbuckle.AspNetCore" Version="5.5.1" />
     <PackageReference Update="System.Collections.Immutable" Version="1.7.1" />
     <PackageReference Update="System.ComponentModel.Annotations" Version="4.7.0" />
     <PackageReference Update="System.Configuration.ConfigurationManager" Version="4.7.0" />
