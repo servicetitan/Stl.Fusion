@@ -8,7 +8,7 @@
     <StlVersion>0.1.150</StlVersion>
   </PropertyGroup>
   <ItemGroup Label="Nupkg Versions">
-    <PackageReference Update="AutoMapper" Version="9.0.0" />
+    <PackageReference Update="AutoMapper" Version="10.0.0" />
     <PackageReference Update="Autofac" Version="5.2.0" />
     <PackageReference Update="Autofac.Extensions.DependencyInjection" Version="6.0.0" />
     <PackageReference Update="Autofac.Extras.DynamicProxy" Version="5.0.0" />
