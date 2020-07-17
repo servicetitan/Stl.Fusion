@@ -20,7 +20,7 @@ to the [Overview](docs/Overview.md).
 
 ## Create Real-Time Apps With Almost No Extra Code (*)
 
-> (*) It's a marketing message &ndash; please don't read it literally.
+> (*) It's a marketing message &ndash; please don't take it literally.
 > Lika Tesla's "Autopilot", it's not a fully automatic solution, 
 > but similarly to Autopilot, it takes care of 90% of the problem
 > and reduces the amount of extra code you need to write to a tiny
@@ -157,7 +157,7 @@ And here is **literally** all the client-side code powering Chat sample:
 * [IChatClient in Clients.cs](https://github.com/servicetitan/Stl/blob/master/samples/Stl.Samples.Blazor.Client/Services/Clients.cs#L19) 
   &ndash; the client (the actual client is generated in the runtime).  
 
-## Get 10&times;&hellip;&infin; Better Performance
+## Get 10&times;&hellip;&infin; Better Performance (*)
 
 > (*) Keep in mind a lot depends on your specific case &ndash; 
 > and even though the examples presented below are absolutely real,
