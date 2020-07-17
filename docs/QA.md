@@ -1,5 +1,7 @@
 # Q/A
 
+## General questions
+
 > Q: What's the best place to ask questions related to Stl.Fusion?
 
 [Stl.Fusion Discord Server](https://discord.gg/EKEwv6d) is currently the best 
@@ -10,6 +12,47 @@ place to ask questions & track project updates.
 Absolutely - just create your first 
 [pull request](https://github.com/servicetitan/Stl/pulls) or 
 [report a bug](https://github.com/servicetitan/Stl/issues).
+
+> Q: What "Stl" stands for?
+
+It's an acronym for "ServiceTitan Library". Don't worry, we know about "STL" in C++ :)
+
+## Stability and production use
+
+> Q: How stable is Stl.Fusion?
+
+Yeah, you can use it in production right now &ndash; 
+[no one really needs more than 53% test coverage](https://en.wikiquote.org/wiki/Talk:Bill_Gates)!
+
+Jokes aside, of course we can't claim it is ready for true production use.
+You might notice though the tests there are testing everything in this repository,
+including projects which aren't parts of Stl.Fusion, and "no coverage" there
+contributes to the overall %. We'll fix this soon.
+
+But still, we definitely need more tests &ndash; and simultaneously, more use cases.
+So if you love the concept, it's probably not the reason to wait till the moment
+we declare it's ready for production use (i.e. maybe a couple more months).
+
+It is definitely ready for prototyping & internal use; 
+likely, rapid prodotyping of real-time UIs could be one of the best use cases 
+for `Stl.Fusion` in future too &ndash; of course with an opportunity
+to transform the prototype to production app.
+
+> Q: Does ServiceTitan use Stl.Fusion now?
+
+Yes, but not in production. We're currently using it on our internal DevPortal web site, 
+which aggregates the information about all of our Kubernetes-based app instances.
+The intent is to turn DevPortal into a "home page" for all of our developers, 
+so it will aggregate much more useful information over time.
+
+This is actually pretty good, taking into account the following timeline:
+* End of March 2020: first lines of Stl.Fusion code were written
+* Late May 2020: "Server Time" sample was added, i.e. Fusion got its 
+  distributed state replication working
+* Mid-June 2020: We actually started to use it on DevPortal
+* July 6, 2020: This line was written :)    
+  
+## Possible use cases, pros and cons
 
 > Q: Can I use Fusion with server-side Blazor?
 
@@ -44,20 +87,6 @@ as possible.
 Which is why Fusion is also a very good fit for caching scenarios requiring
 nearly real-time invalidation / minimum % of inconsistencies.
 
-> Q: Does ServiceTitan use Stl.Fusion now?
+## API related questions
 
-Yes, but not in production. We're currently using it on our internal DevPortal web site, 
-which aggregates the information about all of our Kubernetes-based app instances.
-The intent is to turn DevPortal into a "home page" for all of our developers, 
-so it will aggregate much more useful information over time.
-
-This is actually pretty good, taking into account the following timeline:
-* End of March 2020: first lines of Stl.Fusion code were written
-* Late May 2020: "Server Time" sample was added, i.e. Fusion got its 
-  distributed state replication working
-* Mid-June 2020: We actually started to use it on DevPortal
-* July 6, 2020: This line was written :)    
-  
-> Q: What "Stl" stands for?
-
-It's an acronym for "ServiceTitan Library".
+TBD.
