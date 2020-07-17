@@ -44,7 +44,7 @@ state update example):
   
 ![](docs/img/Stl-Fusion-Server-Screen-Sample.gif)
 
-Fusion is based on 3 key abstractions:
+Fusion is built on three "pillars":
 * **Computed services** - services that expose methods "backed" by Fusion's 
   version of "computed observables"
 * **Replica services** - remote proxies of "computed services". 
