@@ -18,7 +18,13 @@ And yes, it is scalable and crafted for performance.
 If this sounds interesting, skip the marketing part below and go straight
 to the [Overview](docs/Overview.md).
 
-## A Longer Description 
+## Create Real-Time Apps With Almost No Extra Code (*)
+
+> (*) It's a marketing message &ndash; please don't read it literally.
+> Lika Tesla's "Autopilot", it's not a fully automatic solution, 
+> but similarly to Autopilot, it takes care of 90% of the problem
+> and reduces the amount of extra code you need to write to a tiny
+> fraction of what's reasonable to expect otherwise.
 
 `Stl.Fusion` is a new library for [.NET Core](https://en.wikipedia.org/wiki/.NET_Core) 
 and [Blazor](https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor)
@@ -26,12 +32,40 @@ providing [Knockout.js](https://knockoutjs.com/)
 / [mobX](https://mobx.js.org/) - style computed/observable abstractions,
 **but designed to power distributed apps** as well as client-side UIs.
 
-The version of "computed/observable state" it provides is:
+Here is a short animation showing Fusion delivers state changes to 3 different clients 
+&ndash; instances of the same Blazor app running in browser and relying on the same 
+abstractions from `Stl.Fusion.dll` that are used on the server-side:
+
+![](docs/img/Stl-Fusion-Chat-Sample.gif)
+
+"Server Screen" sample captures and shares server screen in real time, and
+the code there is almost identical to "Server Time" (the most straightforward 
+state update example):
+  
+![](docs/img/Stl-Fusion-Server-Screen-Sample.gif)
+
+Fusion is based on 3 key abstractions:
+* **Computed services** - services that expose methods "backed" by Fusion's 
+  version of "computed observables"
+* **Replica services** - remote proxies of "computed services". 
+  All you need to have one is its interface.
+* And finally, an `IComputed<TOut>` &ndash; a "computed observable" abstraction, 
+  that's in some ways similar to the one you can find in Knockout, MobX, or Vue.js,
+  but very different, if you look at its fundamental properties.
+    
+`IComputed<TOut>` is:
 * **Thread-safe**, so you don't have to synchronize access to it
 * **Asynchronous** &ndash; any computation of any `IComputed<TOut>` can be 
   asynchronous, as well as all of Stl.Fusion APIs that may invoke async computations.   
 * **Almost immutable** &ndash; once created, the only change that may happen to it is transition 
   to `IsConsistent == false` state
+* **GC-friendly** &ndash; if you know about 
+  [Pure Computed Observables](https://knockoutjs.com/documentation/computed-pure.html) 
+  from Knockout.js, you understand the problem. `IComputed` solves it even better &ndash;
+  dependent-dependency relationships are explicit there, and the reference pointing
+  from dependency-to-dependent is [weak](https://en.wikipedia.org/wiki/Weak_reference), 
+  so any dependent `IComputed` is available for GC unless it's referenced by something 
+  else (i.e. used).
 * **Computed just once** &ndash; when you request the same `IComputed` at the same time 
   from multiple (async) threads and it's not cached yet, just one of these threads will
   actually run the computation.  Every other async thread will await till its completion 
@@ -46,8 +80,9 @@ The version of "computed/observable state" it provides is:
   update once you know certain state is inconsistent.
 * **Supports remote replicas** &ndash; any `IComputed` instance can be *published*, which allows
   any other code that knows the publication endpoint and publication ID to create
-  a replica of this `IComputed` instance in their own process. 
-  
+  a replica of this `IComputed` instance in their own process. Replica services mentioned
+  above rely on this feature.
+
 The last points are crucial:
 * The ability to replicate any server-side state to any client allows client-side code 
   to build a dependent state that changes whenever any of its server-side components
@@ -98,13 +133,9 @@ All of this makes `Stl.Fusion` the only abstraction real-time apps need:
   "stores" the chat tail. Once a message gets posted to some channel, its chat tail 
   gets invalidated, and every client will automatically "pull" the updated tail.
 
-A short animation showing Fusion delivers state changes to 3 different clients:
+Finally, let's look again at the first animation:
 
 ![](docs/img/Stl-Fusion-Chat-Sample.gif)
-
-The "Samples" app is a client-side [Blazor](https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor)
-application running in browser and relying on the same abstractions from `Stl.Fusion.dll` 
-that are used on the server-side too.
 
 Note that "Composition" sample shown in a separate window in the bottom-right corner
 also properly updates its page - in particular, it captures the last chat message. It's
@@ -125,30 +156,15 @@ And here is **literally** all the client-side code powering Chat sample:
   &ndash; the view
 * [IChatClient in Clients.cs](https://github.com/servicetitan/Stl/blob/master/samples/Stl.Samples.Blazor.Client/Services/Clients.cs#L19) 
   &ndash; the client (the actual client is generated in the runtime).  
- 
-Another interesting sample there is "Server Screen", which shows a timeout-based state update.
-If the "state" is the image of your screen, the result is:
-  
-![](docs/img/Stl-Fusion-Server-Screen-Sample.gif)
 
-Obviously, the use cases aren't limited to client-side Blazor UIs. You can also use Fusion in:
-* **Server-side Blazor apps** &ndash; to implement the same real-time update
-  logic. The only difference here is that you don't need API controllers supporting
-  Fusion publication in this case, i.e. your models might depend right on the 
-  *server-side computed services* (that's an abstraction you primarily deal with, that
-  "hides" all the complexities of dealing with `IComputed` & does it transparently
-  for you).
-* **JavaScript-based UIs (e.g. React-based)** &ndash; right now this implies you still 
-  need a counterpart on Blazor that exports the "live state" it builds on the client 
-  to JavaScript part of the app, but it's quite likely we'll have a native JS client 
-  for Stl.Fusion in future. 
-* **Server-side only** &ndash; you'll learn that any service backed by Fusion, in fact,
-  gets a cache, that invalidates right when it should, so % of inconsistent reads 
-  there is as tiny as possible. Which is why it is a perfect fit for scenarios where
-  having a cache is crucial.
+## Get 10&times;&hellip;&infin; Better Performance
 
-> Note that the library is quite new, so we expect to see more interesting cases 
-involving it in future.
+> (*) Keep in mind a lot depends on your specific case &ndash; 
+> and even though the examples presented below are absolutely real,
+> they are still synthetic. That's the reason we carefully 
+> put the low boundary to 10&times; rather than 10,000&times; &ndash;
+> it's reasonable to expect at least 90% cache hit ratio in a vast
+> majority of cases we were aiming at.
 
 [One of tests in Stl.Fusion test suite](https://github.com/servicetitan/Stl.Fusion/blob/master/tests/Stl.Tests/Fusion/PerformanceTest.cs) 
 benchmarks "raw" [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/) - 
@@ -171,7 +187,7 @@ and moreover, you get an *almost* always consistent cache. In reality, it's stil
 an *eventually consistent* cache, but with extremelly short inconsistency periods per
 cache entry.
 
-### Next Steps
+## Next Steps
 
 * Check out the [Overview](docs/Overview.md)
   or go to [Documentation Home](docs/README.md)
