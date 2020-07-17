@@ -10,8 +10,8 @@
   cached entry right at the moment it becomes inconsistent with the
   ground truth?
 
-`Stl.Fusion` is an abstraction that solves both these problems &ndash; morever,
-it does it mostly transparently for you, so most of your code won't even change!
+`Stl.Fusion` solves both these problems &ndash; 
+morever, it does it almost transparently for you, so most of your code won't even change!
 And yes, it is scalable and crafted for performance.
 
 If this sounds interesting, skip the marketing part below and go straight
