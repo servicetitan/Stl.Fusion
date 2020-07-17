@@ -34,7 +34,7 @@ and even connects them together!
 
 Here is a short animation showing Fusion delivers state changes to 3 different clients 
 &ndash; instances of the same Blazor app running in browser and relying on the same 
-abstractions from `Stl.Fusion.dll` that are used on the server-side:
+abstractions from `Stl.Fusion.dll`:
 
 ![](docs/img/Stl-Fusion-Chat-Sample.gif)
 
