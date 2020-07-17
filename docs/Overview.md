@@ -465,7 +465,7 @@ call many of them, make them call themselves recursively with more "broad"
 scope, etc.
 
 Ok, now you know that manual invalidation typically requires ~ 1...3
-extra lines of code per every method modifying the date, and 0 (typically) 
+extra lines of code per every method modifying the data, and zero (typically) 
 extra lines of code per every method reading the data. Not a lot, but still,
 do you want to pay this price to have a real-time UI? 
 
