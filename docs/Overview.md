@@ -273,12 +273,12 @@ override DateTime GetCurrentTimeWithOffset(TimeSpan offset) {
         // 2. Retrying the same with async lock to make sure 
         //    we never recompute the same result twice
         using var asyncLock = await AsyncLockSet.Lock(cacheKey);
-        if (ComputedRegistry.TryGetCached(cacheKey, out var result))
+        if (ComputedRegistry.TryGetCached(cacheKey, out result))
             return result;
 
         // 3. Nothing is cached, so we have to compute the result
-        var result = Computed.New();
-        using var _ = Computed.SetCurrent(result); // Relies on AsyncLocal<T>
+        result = Computed.New();
+        using var _ = Computed.SetCurrent(result);
         try {
             result.SetValue(base.GetCurrentTimeWithOffset(offset));
         }
