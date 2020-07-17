@@ -260,18 +260,40 @@ virtual DateTime GetCurrentTimeWithOffset(TimeSpan offset) {
 // The "decorated" version of this function generated in a 
 // descendant of TimeService class:                     
 override DateTime GetCurrentTimeWithOffset(TimeSpan offset) {
-    var result = Computed.New();
+    // Below is a GROSS SIMPLIFICATION of what really happens, I
+    // provide it here mainly to explain all the high-level actions
     var dependant = Computed.GetCurrent(); // Relies on AsyncLocal<T>
-    if (dependant != null)
-        result.Invalidated += () => dependant.Invalidate();
-    using var _ = Computed.SetCurrent(result); // Relies on AsyncLocal<T>
     try {
-        result.SetValue(base.GetCurrentTimeWithOffset(offset));
+        // 1. Trying to pull cached value w/o locking;
+        //    the real cacheKey is, of course, more complex.
+        var cacheKey = (object) (this, nameof(GetCurrentTimeWithOffset), offset);
+        if (ComputedRegistry.TryGetCached(cacheKey, out var result))
+            return result;
+        
+        // 2. Retrying the same with async lock to make sure 
+        //    we never recompute the same result twice
+        using var asyncLock = await AsyncLockSet.Lock(cacheKey);
+        if (ComputedRegistry.TryGetCached(cacheKey, out var result))
+            return result;
+
+        // 3. Nothing is cached, so we have to compute the result
+        var result = Computed.New();
+        using var _ = Computed.SetCurrent(result); // Relies on AsyncLocal<T>
+        try {
+            result.SetValue(base.GetCurrentTimeWithOffset(offset));
+        }
+        catch (Exception e) {
+            result.SetError(e);
+        }
+        ComputedRegistry.TrySetValue(cacheKey, result);
+        return result.Value; // Re-throws an error if SetError was called 
     }
-    catch (Exception e) {
-        result.SetError(e);
+    finally {
+        // Let's setup a dependent-dependency link; again,
+        // the real logic is very different from this.
+        if (dependant != null)
+            result.Invalidated += () => dependant.Invalidate();
     }
-    return result.Value; // Re-throws an error if SetError was called 
 }  
 ``` 
 
@@ -281,14 +303,8 @@ the desirable behavior without changing the base!
 
 > For the sake of clarity: the real Fusion proxy code is way more complex due
 > to the following factors:
-> * Is must be asynchronous & thread-safe 
-> * It hits the cache to pull existing IComputed<T> matching the same set
->   of arguments, if it's available - there is no point to re-compute
->   what's already computed and isn't invalidated yet, right?
-> * It implements the logic that makes sure just one computation runs at a time 
->   for a given set of arguments if the value isn't cached - because
->   what's the point to run it concurrently, if the result is expected to
->   be the same?
+> * The caching logic (esp. related to key computation & comparison) 
+    is more complex
 > * It uses a different invalidation subscription model. The one shown above 
 >   isn't GC-friendly: `dependency.Invalidated` handler references a closure
 >   that references dependent instance, so while some low-level dependency 
