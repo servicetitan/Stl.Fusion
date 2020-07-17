@@ -126,15 +126,15 @@ you can throttle (or speedup) the update rate as much as you need.
   drops to "just" 1M updates per second. That's still a lot, of course 
   but already 1000x better - and note that 1 second delay for 
   seeing other people's updates is something you won't even notice! 
-  `Stl.Fusion` allows to control such delay quite precisely. 
+  `Stl.Fusion` allows you to control such delay precisely.
   You may use a larger delay (10 seconds?) for e.g. "Likes" counters, 
   but almost instantly update comments. 
   The delays can be dynamic too &ndash; the simplest example of 
   behavior is instant update for any content you see that was invalidated 
   right after your own action.
 
-All of this makes `Stl.Fusion` the only abstraction real-time apps need:
-**any notification can be described as a state change**. 
+All of this makes `Stl.Fusion` the only communication library a real-time app 
+may ever need: **any notification can be described as a state change as well**. 
 
 For example, if you build a chat app, you don't need to worry about delivering 
 every message to every client anymore. What you want to have is an API endpoint 
