@@ -54,7 +54,7 @@ Fusion is based on 3 key abstractions:
   but very different, if you look at its fundamental properties.
     
 `IComputed<TOut>` is:
-* **Thread-safe**, so you don't have to synchronize access to it
+* **Thread-safe**
 * **Asynchronous** &ndash; any computation of any `IComputed<TOut>` can be 
   asynchronous, as well as all of Stl.Fusion APIs that may invoke async computations.   
 * **Almost immutable** &ndash; once created, the only change that may happen to it is transition 
@@ -66,7 +66,14 @@ Fusion is based on 3 key abstractions:
   from dependency-to-dependent is [weak](https://en.wikipedia.org/wiki/Weak_reference), 
   so any dependent `IComputed` is available for GC unless it's referenced by something 
   else (i.e. used).
-* **Computed just once** &ndash; when you request the same `IComputed` at the same time 
+
+All above make it possible to use `IComputed` on the server side &ndash; 
+you don't have to synchronize access to it, you can use it everywhere, including
+async functions, and you don't need to worry about GC.
+
+But there is more &ndash; any `IComputed`:
+
+* **Is computed just once** &ndash; when you request the same `IComputed` at the same time 
   from multiple (async) threads and it's not cached yet, just one of these threads will
   actually run the computation.  Every other async thread will await till its completion 
   and return the newly cached instance.
@@ -83,18 +90,20 @@ Fusion is based on 3 key abstractions:
   a replica of this `IComputed` instance in their own process. Replica services mentioned
   above rely on this feature.
 
-The last points are crucial:
-* The ability to replicate any server-side state to any client allows client-side code 
+And these features are crucial:
+
+> The ability to replicate any server-side state to any client allows client-side code 
   to build a dependent state that changes whenever any of its server-side components
-  change.
-* This client-side state can be, for example, your UI model, that instantly reacts
+  change. 
+  This client-side state can be, for example, your UI model, that instantly reacts
   to the changes made not only locally, but also remotely!
-* De-coupling updates from invalidation events enables such apps to scale. 
+
+> De-coupling updates from invalidation events enables such apps to scale. 
   You absolutely need the ability to control the update delay, otherwise 
   your app is expected to suffer from `O(N^2)` update rate on any 
   piece of popular content (that's both viewed and updated by a large number of users).
 
-The issue is well-described in 
+The last issue is well-described in 
 ["Why not LiveQueries?" part in "Subscriptions in GraphQL"](https://graphql.org/blog/subscriptions-in-graphql-and-relay/), and you may view `Stl.Fusion` 
 as 95% automated solution for the this problem:
 * **It makes recomputations cheap** by caching of all the intermediates
@@ -127,11 +136,11 @@ you can throttle the update rate as much as you need.
 All of this makes `Stl.Fusion` the only abstraction real-time apps need:
 **any notification can be described as a state change**. 
 
-> For example, if you build a chat app, you don't need to worry about delivering 
-  every message to every client anymore. What you want to have is an API endpoint 
-  allowing chat clients to get a replica of server-side `IComputed` instance that 
-  "stores" the chat tail. Once a message gets posted to some channel, its chat tail 
-  gets invalidated, and every client will automatically "pull" the updated tail.
+For example, if you build a chat app, you don't need to worry about delivering 
+every message to every client anymore. What you want to have is an API endpoint 
+allowing chat clients to get a replica of server-side `IComputed` instance that 
+"stores" the chat tail. Once a message gets posted to some channel, its chat tail 
+gets invalidated, and every client will automatically "pull" the updated tail.
 
 Finally, let's look again at the first animation:
 
