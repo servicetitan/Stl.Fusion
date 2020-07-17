@@ -48,7 +48,7 @@ Fusion is built on three "pillars":
 * **Computed services** - services that expose methods "backed" by Fusion's 
   version of "computed observables"
 * **Replica services** - remote proxies of "computed services". 
-  All you need to have one is its interface.
+  Replicas are quite simple to define: they are, in fact, just interfaces.
 * And finally, **`IComputed<TOut>` &ndash; a "computed observable" abstraction**, 
   that's in some ways similar to the one you can find in Knockout, MobX, or Vue.js,
   but very different, if you look at its fundamental properties.

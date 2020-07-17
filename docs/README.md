@@ -90,16 +90,21 @@ Check out the [Tutorial](tutorial/README.md) to learn how.
 
 ## Credits
 
-* [ServiceTitan](https://www.servicetitan.com/) - for giving some of us
+* [ServiceTitan](https://www.servicetitan.com/) &ndash; for giving some of us
   an opportunity to work on this project
 * [Knockout](https://knockoutjs.com/) by 
   [Steve Sanderson](http://blog.stevensanderson.com/) &ndash; 
   for making "computed observable" abstraction popular 
   (and likely, inventing it)
 * [Quora](https://www.quora.com/) — a huge part of the inspiration for Stl.Fusion was Quora's LiveNode framework
+* [Microsoft](microsoft.com) &ndash; for .NET Core and Blazor.
 * All other contributors. For now it is
   [Vladimir Chirikov](https://github.com/vchirikov) &ndash;
   everything related to build system is written by him.
   But everyone is welcome to join &ndash; 
   [your pull request](https://github.com/servicetitan/Stl/pulls) 
   is all we need!
+* The authors and maintainers of every library used by `Stl.Fusion`. Most notably,
+  [DynamicProxy from Castle.Core](http://www.castleproject.org/projects/dynamicproxy/),
+  [RestEase](https://github.com/canton7/RestEase), and 
+  [Json.NET](https://www.newtonsoft.com/json).
