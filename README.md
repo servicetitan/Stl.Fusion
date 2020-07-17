@@ -111,10 +111,10 @@ as 95% automated solution for the this problem:
   **any subscription costs ~ nothing**.
 
 "Nothing" means that the cost of subscription is fixed relatively to the 
-cost of some prior operation, because always a single invalidation following
-either the "intiaal subscribe" or "update" action. 
+cost of some prior operation, because only a single invalidation follows
+either the "intial subscribe" or "update" action.
 And since you can control the delay between the invalidation and the update, 
-you can throttle the update rate as much as you need.
+you can throttle (or speedup) the update rate as much as you need.
   
 > If you have a post viewed by 1M users and updated with 1 KHz frequency 
   (usually the frequency is proportional to the count of viewers too), 
