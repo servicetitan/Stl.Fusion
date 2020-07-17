@@ -173,7 +173,7 @@ And here is **literally** all the client-side code powering Chat sample:
 > they are still synthetic. That's the reason we carefully 
 > put the low boundary to 10&times; rather than 10,000&times; &ndash;
 > it's reasonable to expect at least 90% cache hit ratio in a vast
-> majority of cases we were aiming at.
+> majority of cases we are aiming at.
 
 [One of tests in Stl.Fusion test suite](https://github.com/servicetitan/Stl.Fusion/blob/master/tests/Stl.Tests/Fusion/PerformanceTest.cs) 
 benchmarks "raw" [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/) - 
