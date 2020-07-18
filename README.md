@@ -17,13 +17,11 @@ And yes, it is scalable and crafted for performance.
 If this sounds interesting, skip the marketing part below and go straight
 to the [Overview](docs/Overview.md).
 
-## Create Real-Time Apps With Almost No Extra Code (*)
+## Create Real-Time User Interfaces With Almost No Extra Code (*)
 
-> (*) It's a marketing message &ndash; please don't take it literally.
-> Lika Tesla's "Autopilot", it's not a fully automatic solution, 
-> but similarly to Autopilot, it takes care of 90% of the problem
-> and reduces the amount of extra code you need to write to a tiny
-> fraction of what's reasonable to expect otherwise.
+> (*) Lika Tesla's Autopilot, Fusion can't solve the problem without your help &ndash;
+> but similarly, it takes care of 90% of it and reduces the amount of extra code you need to 
+> write to a tiny fraction of what's reasonable to expect otherwise.
 
 `Stl.Fusion` is a new library for [.NET Core](https://en.wikipedia.org/wiki/.NET_Core) 
 and [Blazor](https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor)
@@ -104,8 +102,8 @@ And these features are crucial:
   piece of popular content (that's both viewed and updated by a large number of users).
 
 The last issue is well-described in 
-["Why not LiveQueries?" part in "Subscriptions in GraphQL"](https://graphql.org/blog/subscriptions-in-graphql-and-relay/), and you may view `Stl.Fusion` 
-as 95% automated solution for the this problem:
+["Why not LiveQueries?" part in "Subscriptions in GraphQL"](https://graphql.org/blog/subscriptions-in-graphql-and-relay/), 
+and you may view `Stl.Fusion` as 95% automated solution for this problem:
 * **It makes recomputations cheap** by caching of all the intermediates
 * It de-couples updates from invalidations to ensure 
   **any subscription costs ~ nothing**.
