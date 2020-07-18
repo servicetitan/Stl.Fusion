@@ -36,9 +36,9 @@ we declare it's ready for production use (i.e. maybe a couple more months).
 It is definitely ready for prototyping & internal use; 
 likely, rapid prodotyping of real-time UIs could be one of the best use cases 
 for `Stl.Fusion` in future too &ndash; and transforming the prototype to a 
-production app won't be hard (it's mostly about tuning the invalidation logic
-to that you don't invalidate too much, which might be totally fine for the 
-prorotyping stage).
+production app won't be hard. It's mostly about tuning the invalidation logic
+so that you don't invalidate a lot of extra, which might be totally fine 
+(and even desirable) for the prorotyping stage, but won't scale well in production.
 
 > Q: Does ServiceTitan use Stl.Fusion now?
 
