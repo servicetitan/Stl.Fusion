@@ -119,7 +119,7 @@ namespace Stl.Tests.Async
         public async Task ConcurrentTest()
         {
             if (TestRunnerInfo.GitHub.IsActionRunning)
-                // TODO: Unbreak this test on GitHub
+                // TODO: Fix intermittent failures on GitHub
                 return;
 
             var r = new Resource(CreateAsyncLock(ReentryMode.CheckedPass));

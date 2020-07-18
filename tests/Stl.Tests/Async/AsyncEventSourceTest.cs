@@ -67,7 +67,7 @@ namespace Stl.Tests.Async
         public async Task BasicTest3()
         {
             if (TestRunnerInfo.GitHub.IsActionRunning)
-                // TODO: Unbreak this test on GitHub
+                // TODO: Fix intermittent failures on GitHub
                 return;
 
             var n = 0;

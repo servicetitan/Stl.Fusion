@@ -46,7 +46,7 @@ namespace Stl.Tests.Fusion
         public async void Test()
         {
             if (TestRunnerInfo.GitHub.IsActionRunning)
-                // TODO: Unbreak this test on GitHub
+                // TODO: Fix intermittent failures on GitHub
                 return;
 
             var services = CreateProviderFor<Calculator>();

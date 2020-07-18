@@ -66,7 +66,7 @@ namespace Stl.Tests.Fusion
         public async Task DropReconnectTest()
         {
             if (TestRunnerInfo.GitHub.IsActionRunning)
-                // TODO: Unbreak this test on GitHub
+                // TODO: Fix intermittent failures on GitHub
                 return;
 
             var serving = await WebSocketServer.ServeAsync();
