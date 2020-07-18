@@ -298,8 +298,8 @@ override DateTime GetCurrentTimeWithOffset(TimeSpan offset) {
 ``` 
 
 As you see, the only change I've made to the original was "virtual"
-keyword - it allows a proxy type to override this method and implement
-the desirable behavior without changing the base!
+keyword to allow proxy type to override this method and implement
+the desirable behavior without changing the base method's body.
 
 > For the sake of clarity: the real Fusion proxy code is way more complex due
 > to the following factors:
