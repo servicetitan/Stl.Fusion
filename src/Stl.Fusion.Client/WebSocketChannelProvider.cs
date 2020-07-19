@@ -73,7 +73,7 @@ namespace Stl.Fusion.Client
             MessageLogLevel = options.MessageLogLevel;
             MessageMaxLength = options.MessageMaxLength;
             ConnectTimeout = options.ConnectTimeout;
-            ReplicatorLazy = services.GetRequiredService<Lazy<IReplicator>>();
+            ReplicatorLazy = new Lazy<IReplicator>(services.GetRequiredService<IReplicator>);
             ChannelSerializerPairFactory = options.ChannelSerializerPairFactory;
             ClientWebSocketFactory = options.ClientWebSocketFactory;
         }
