@@ -68,7 +68,7 @@ namespace Stl.Tests.Channels
             await ws.ConnectAsync(uri, CancellationToken.None);
             var wsChannel = new WebSocketChannel(ws);
             var defaultOptions = new WebSocketChannelProvider.Options();
-            var serializers = defaultOptions.ChannelSerializerPairFactory.Invoke();
+            var serializers = defaultOptions.ChannelSerializerPairFactory.Invoke(null!);
             var mChannel = wsChannel.WithSerializers(serializers);
 
             // Actual test
@@ -84,7 +84,7 @@ namespace Stl.Tests.Channels
         {
             await using var wsChannel = new WebSocketChannel(webSocket);
             var defaultOptions = new WebSocketChannelProvider.Options();
-            var serializers = defaultOptions.ChannelSerializerPairFactory.Invoke().Swap();
+            var serializers = defaultOptions.ChannelSerializerPairFactory.Invoke(null!).Swap();
             var mChannel = wsChannel.WithSerializers(serializers);
             await Task.Run(async () => {
                 await foreach (var m in mChannel.Reader.ReadAllAsync()) {

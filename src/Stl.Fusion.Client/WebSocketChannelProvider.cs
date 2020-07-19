@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Channels;
@@ -28,13 +29,18 @@ namespace Stl.Fusion.Client
             public TimeSpan ConnectTimeout { get; set; } = TimeSpan.FromSeconds(10);
             public LogLevel? MessageLogLevel { get; set; } = null;
             public int? MessageMaxLength { get; set; } = 2048;
-            public Func<ChannelSerializerPair<Message, string>> ChannelSerializerPairFactory { get; set; } = 
+            public Func<IServiceProvider, ChannelSerializerPair<Message, string>> ChannelSerializerPairFactory { get; set; } = 
                 DefaultChannelSerializerPairFactory;
+            public Func<IServiceProvider, ClientWebSocket> ClientWebSocketFactory { get; set; } = 
+                DefaultClientWebSocketFactory;
 
-            public static ChannelSerializerPair<Message, string> DefaultChannelSerializerPairFactory() 
+            public static ChannelSerializerPair<Message, string> DefaultChannelSerializerPairFactory(IServiceProvider services) 
                 => new ChannelSerializerPair<Message, string>(
                     new SafeJsonNetSerializer(t => typeof(ReplicatorMessage).IsAssignableFrom(t)).ToTyped<Message>(), 
                     new JsonNetSerializer().ToTyped<Message>());
+
+            public static ClientWebSocket DefaultClientWebSocketFactory(IServiceProvider services) 
+                => services?.GetService<ClientWebSocket>() ?? new ClientWebSocket();
         }
 
         private readonly ILogger _log;
@@ -44,7 +50,9 @@ namespace Stl.Fusion.Client
         public string PublisherIdQueryParameterName { get; }
         public string ClientIdQueryParameterName { get; }
         public TimeSpan ConnectTimeout { get; }
-        protected Func<ChannelSerializerPair<Message, string>> ChannelSerializerPairFactory { get; }
+        protected IServiceProvider Services { get; }
+        protected Func<IServiceProvider, ChannelSerializerPair<Message, string>> ChannelSerializerPairFactory { get; }
+        protected Func<IServiceProvider, ClientWebSocket> ClientWebSocketFactory { get; } 
         protected LogLevel? MessageLogLevel { get; }
         protected int? MessageMaxLength { get; }
         protected Lazy<IReplicator>? ReplicatorLazy { get; }
@@ -52,11 +60,12 @@ namespace Stl.Fusion.Client
 
         public WebSocketChannelProvider(
             Options options,
-            Lazy<IReplicator>? replicatorLazy = null,
+            IServiceProvider services,
             ILogger<WebSocketChannelProvider>? log = null)
         {
             _log = log ??= NullLogger<WebSocketChannelProvider>.Instance;
 
+            Services = services;
             BaseUri = options.BaseUri;
             RequestPath = options.RequestPath;
             PublisherIdQueryParameterName = options.PublisherIdQueryParameterName;
@@ -64,8 +73,9 @@ namespace Stl.Fusion.Client
             MessageLogLevel = options.MessageLogLevel;
             MessageMaxLength = options.MessageMaxLength;
             ConnectTimeout = options.ConnectTimeout;
-            ReplicatorLazy = replicatorLazy;
+            ReplicatorLazy = services.GetRequiredService<Lazy<IReplicator>>();
             ChannelSerializerPairFactory = options.ChannelSerializerPairFactory;
+            ClientWebSocketFactory = options.ClientWebSocketFactory;
         }
 
         public async Task<Channel<Message>> CreateChannelAsync(
@@ -75,7 +85,7 @@ namespace Stl.Fusion.Client
             try {
                 var connectionUri = GetConnectionUrl(publisherId);
                 _log.LogInformation($"{clientId}: Connecting to {connectionUri}...");
-                var ws = new ClientWebSocket();
+                var ws = ClientWebSocketFactory.Invoke(Services);
                 using var cts = new CancellationTokenSource(ConnectTimeout);
                 using var lts = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken);
                 await ws.ConnectAsync(connectionUri, lts.Token).ConfigureAwait(false);
@@ -88,7 +98,7 @@ namespace Stl.Fusion.Client
                         clientId, _log, 
                         MessageLogLevel.GetValueOrDefault(),
                         MessageMaxLength);
-                var serializers = ChannelSerializerPairFactory.Invoke();
+                var serializers = ChannelSerializerPairFactory.Invoke(Services);
                 var resultChannel = stringChannel.WithSerializers(serializers);
                 return resultChannel;
             }
