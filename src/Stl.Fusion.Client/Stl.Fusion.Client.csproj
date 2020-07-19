@@ -4,10 +4,10 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <OutputType>Library</OutputType>
     <PackageTags>servicetitan stl stl_fusion client</PackageTags>
-    <Description>Client-side components of Stl.Fusion - a Knockout.js-style Knockout.js-style computed/observable <!-- 
-      -->abstraction designed to power distributed apps: thread-safe, asynchronous, immutable, and ready to <!--
-      -->provide its own replicas (~ proxies that are connected to the original computed/observable instance) <!--
-      -->for remote clients.<!--
+    <Description>Client-side components of Stl.Fusion - <!-- 
+    -->a new implementation of "computed observables" <!-- 
+    -->designed to power distributed apps. Thread-safe, asynchronous, immutable,  <!-- 
+    -->and ready to serve replicas of computed instances to remote clients.<!--
     --></Description>
   </PropertyGroup>
 

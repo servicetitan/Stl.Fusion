@@ -3,7 +3,11 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <PackageTags>servicetitan stl stl_fusion blazor</PackageTags>
-    <Description>Blazor components for Stl.Fusion.</Description>
+    <Description>Blazor components of Stl.Fusion - <!-- 
+    -->a new implementation of "computed observables" <!-- 
+    -->designed to power distributed apps. Thread-safe, asynchronous, immutable,  <!-- 
+    -->and ready to serve replicas of computed instances to remote clients.<!--
+    --></Description>
   </PropertyGroup>
   
   <ItemGroup>
