@@ -37,6 +37,8 @@ namespace Stl.OS
                 if (now - _lastRefreshTicks < RefreshIntervalTicks)
                     return;
                 _processorCount = Math.Max(1, Environment.ProcessorCount);
+                if (OSInfo.Kind == OSKind.WebAssembly)
+                    _processorCount = 1; // Weird, but Environment.ProcessorCount reports true CPU count in Blazor!
                 _processorCountPo2 = Math.Max(1, (int) Bits.GreaterOrEqualPowerOf2((uint) _processorCount));
                 // This should be done at last, otherwise there is a chance
                 // another thread sees _processorCount == 0

@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Stl.Concurrency;
 using Stl.Locking;
+using Stl.Mathematics;
 using Stl.OS;
 using Stl.Time;
 using Stl.Time.Internal;
@@ -27,11 +28,24 @@ namespace Stl.Fusion
 
         public sealed class Options
         {
-            public int InitialCapacity { get; set; } = 7919;
+            internal static PrimeSieve CapacityPrimeSieve;
+            public static int DefaultInitialCapacity { get; }
+
+            public int InitialCapacity { get; set; } = DefaultInitialCapacity;      
             public int ConcurrencyLevel { get; set; } = HardwareInfo.ProcessorCount;
             public Func<IFunction, IAsyncLockSet<ComputedInput>>? LocksProvider { get; set; } = null;
             public GCHandlePool? GCHandlePool { get; set; } = null;
             public IMomentClock Clock { get; set; } = CoarseCpuClock.Instance;
+
+            static Options()
+            {
+                var capacity = Math.Min(16_384, HardwareInfo.ProcessorCountPo2 * 128);
+                CapacityPrimeSieve = new PrimeSieve(capacity + 1024);
+                while (!CapacityPrimeSieve.IsPrime(capacity))
+                    capacity--;
+                DefaultInitialCapacity = capacity;
+                Debug.WriteLine($"{nameof(ComputedRegistry)}.{nameof(Options)}.{nameof(DefaultInitialCapacity)} = {DefaultInitialCapacity}");
+            }
         }
 
         private readonly ConcurrentDictionary<ComputedInput, Entry> _storage;

@@ -7,10 +7,15 @@ namespace Stl.Concurrency
 {
     public class GCHandlePool : IDisposable
     {
-        public static readonly int DefaultCapacity = 1024;
+        public class Options
+        {
+            public int Capacity { get; set; } = 1024;
+            public GCHandleType HandleType { get; set; } = GCHandleType.Weak;
+            public StochasticCounter OperationCounter { get; set; } = new StochasticCounter();
+        }
 
         private readonly ConcurrentQueue<GCHandle> _queue;
-        private readonly StochasticCounter _count;
+        private readonly StochasticCounter _opCounter;
         private volatile int _capacity;
 
         public GCHandleType HandleType { get; }
@@ -20,14 +25,14 @@ namespace Stl.Concurrency
             set => Interlocked.Exchange(ref _capacity, value);
         }
 
-        public GCHandlePool(GCHandleType handleType) : this(handleType, DefaultCapacity) { }
-        public GCHandlePool(GCHandleType handleType, int capacity, 
-            int counterApproximationFactor = StochasticCounter.DefaultApproximationFactor)
+        public GCHandlePool(GCHandleType handleType) : this(new Options() { HandleType = handleType }) { }
+        public GCHandlePool(Options? options = null)
         {
+            options ??= new Options();
             _queue = new ConcurrentQueue<GCHandle>();
-            _count = new StochasticCounter(counterApproximationFactor);
-            HandleType = handleType;
-            Capacity = capacity;
+            _opCounter = options.OperationCounter;
+            HandleType = options.HandleType;
+            Capacity = options.Capacity;
         }
 
         ~GCHandlePool() => Dispose();
@@ -45,12 +50,12 @@ namespace Stl.Concurrency
             if (_queue.TryDequeue(out var handle)) {
                 if (random == 0)
                     random = handle.GetHashCode();
-                _count.Decrement(random, out var _);
+                _opCounter.Decrement(random, out var _);
                 if (target != null)
                     handle.Target = target;
                 return handle;
             }
-            _count.Reset();
+            _opCounter.Reset();
             return GCHandle.Alloc(target, HandleType);
         }
 
@@ -58,7 +63,7 @@ namespace Stl.Concurrency
             => Release(handle, Thread.CurrentThread.ManagedThreadId);
         public bool Release(GCHandle handle, int random)
         {
-            if (_count.ApproximateValue >= Capacity) {
+            if (_opCounter.ApproximateValue >= Capacity) {
                 handle.Free();
                 return false;
             }
@@ -66,7 +71,7 @@ namespace Stl.Concurrency
                 return false;
             if (random == 0)
                 random = handle.GetHashCode();
-            _count.Increment(random, out var _);
+            _opCounter.Increment(random, out var _);
             _queue.Enqueue(handle);
             handle.Target = null;
             return true;
@@ -76,7 +81,7 @@ namespace Stl.Concurrency
         {
             while (_queue.TryDequeue(out var handle))
                 handle.Free();
-            _count.ApproximateValue = _queue.Count;
+            _opCounter.ApproximateValue = _queue.Count;
         }
     }
 }

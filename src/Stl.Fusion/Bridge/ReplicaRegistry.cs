@@ -1,15 +1,13 @@
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using Stl.Collections;
 using Stl.Concurrency;
 using Stl.OS;
-using Stl.Reflection;
 using Stl.Text;
-using Stl.Time;
 
 namespace Stl.Fusion.Bridge
 {
@@ -26,9 +24,21 @@ namespace Stl.Fusion.Bridge
 
         public sealed class Options
         {
-            public int InitialCapacity { get; set; } = 509;
+            public static int DefaultInitialCapacity { get; }
+
+            public int InitialCapacity { get; set; } = DefaultInitialCapacity;
             public int ConcurrencyLevel { get; set; } = HardwareInfo.ProcessorCount;
             public GCHandlePool? GCHandlePool { get; set; } = null;
+
+            static Options()
+            {
+                var ps = ComputedRegistry.Options.CapacityPrimeSieve;
+                var capacity = HardwareInfo.ProcessorCountPo2 * 8;
+                while (!ps.IsPrime(capacity))
+                    capacity--;
+                DefaultInitialCapacity = capacity;
+                Debug.WriteLine($"{nameof(ReplicaRegistry)}.{nameof(Options)}.{nameof(DefaultInitialCapacity)} = {DefaultInitialCapacity}");
+            }
         }
 
         private readonly ConcurrentDictionary<Symbol, GCHandle> _handles;
@@ -42,7 +52,7 @@ namespace Stl.Fusion.Bridge
         {
             options ??= new Options();
             _handles = new ConcurrentDictionary<Symbol, GCHandle>(options.ConcurrencyLevel, options.InitialCapacity);
-            _opCounter = new StochasticCounter();
+            _opCounter = new StochasticCounter(1);
             _gcHandlePool = options.GCHandlePool ?? new GCHandlePool(GCHandleType.Weak);
             if (_gcHandlePool.HandleType != GCHandleType.Weak)
                 throw new ArgumentOutOfRangeException(
