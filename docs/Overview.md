@@ -842,3 +842,6 @@ especially for the companies running their server-side code on .NET Core (or .NE
 * Join our [Discord Server](https://discord.gg/EKEwv6d) 
   to ask questions and track project updates.
 * Check out [Q/A](QA.md) to get answers to some frequent questions.
+* If you read this document but still don't understand it,
+  check out [Stl.Fusion In Simple Terms](https://medium.com/@alexyakunin/stl-fusion-in-simple-terms-65b1975967ab?source=friends_link&sk=04e73e75a52768cf7c3330744a9b1e38).
+  

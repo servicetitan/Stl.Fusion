@@ -61,6 +61,8 @@ If you prefer a CLI-only way, `cd` to the repository folder and run:
   It describes what Stl.Fusion is on conceptual level
   and explains the most tricky concepts on relatively simple
   examples.
+* [Stl.Fusion In Simple Terms](https://medium.com/@alexyakunin/stl-fusion-in-simple-terms-65b1975967ab?source=friends_link&sk=04e73e75a52768cf7c3330744a9b1e38) 
+  is so far the best descriptin of what Fusion is for non-developers
 * [Tutorial](tutorial/README.md) &ndash; it's not fully finished yet,
   but the best part is: it is interactive, so any code you see
   there is runnable with [try-dotnet](https://github.com/dotnet/try/blob/master/DotNetTryLocal.md)!

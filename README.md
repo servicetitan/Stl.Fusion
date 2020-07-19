@@ -25,8 +25,7 @@ to the [Overview](docs/Overview.md).
 
 `Stl.Fusion` is a new library for [.NET Core](https://en.wikipedia.org/wiki/.NET_Core) 
 and [Blazor](https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor)
-providing [Knockout](https://knockoutjs.com/) 
-/ [mobX](https://mobx.js.org/) - style "computed observable" abstraction
+providing [mobX](https://mobx.js.org/) - style "computed observable" abstraction
 **designed to power distributed applications**. It works on the server, client,
 and even connects them together!
 
@@ -196,7 +195,9 @@ cache entry.
 
 ## Next Steps
 
-* Check out the [Overview](docs/Overview.md)
-  or go to [Documentation Home](docs/README.md)
+* If you are not a developer, but still want to understand what it's all about, 
+  [Stl.Fusion In Simple Terms](https://medium.com/@alexyakunin/stl-fusion-in-simple-terms-65b1975967ab?source=friends_link&sk=04e73e75a52768cf7c3330744a9b1e38)
+* Otherwise, go to [Overview](docs/Overview.md) 
+  or [Documentation Home](docs/README.md)
 * Join our [Discord Server](https://discord.gg/EKEwv6d) 
   to ask questions and track project updates.
