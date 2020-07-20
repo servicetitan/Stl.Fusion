@@ -63,6 +63,8 @@ besides that, a few other things happened over these years:
   made it possible to run .NET code in browser / 
   [WebAssembly](https://webassembly.org/) - and in particular, 
   enable server-side and client-side code to use shared .NET assemblies. 
+  FYI Blazor is also created by Steve Sanderson - yes, the same
+  person who long time ago created Knockout!
 
 So the demand for such a library was still there, and moreover, 
 all the tools needed to build it became available.

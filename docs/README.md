@@ -94,10 +94,9 @@ Check out the [Tutorial](tutorial/README.md) to learn how.
 
 * [ServiceTitan](https://www.servicetitan.com/) &ndash; for giving some of us
   an opportunity to work on this project
-* [Knockout](https://knockoutjs.com/) by 
-  [Steve Sanderson](http://blog.stevensanderson.com/) &ndash; 
-  for making "computed observable" abstraction popular 
-  (and likely, inventing it)
+* [Steve Sanderson](http://blog.stevensanderson.com/) &ndash; 
+  for both [Knockout](https://knockoutjs.com/), which made "computed observable" abstraction popular
+  and [Blazor](https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor) (yeah, he is the creator it as well!)
 * [Quora](https://www.quora.com/) — a huge part of the inspiration for Stl.Fusion was Quora's LiveNode framework
 * [Microsoft](microsoft.com) &ndash; for .NET Core and Blazor.
 * All other contributors. For now it is
