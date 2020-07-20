@@ -23,8 +23,10 @@ It's an acronym for "ServiceTitan Library". Don't worry, we know about "STL" in 
 
 Yeah, you can use it in production right now &ndash; 
 [no one really needs more than 53% test coverage](https://en.wikiquote.org/wiki/Talk:Bill_Gates)!
+[![Build](https://github.com/servicetitan/Stl.Fusion/workflows/Build/badge.svg)](https://github.com/servicetitan/Stl.Fusion/actions?query=workflow%3A%22Build%22)
+[![codecov](https://codecov.io/gh/servicetitan/Stl.Fusion/branch/master/graph/badge.svg)](https://codecov.io/gh/servicetitan/Stl.Fusion)
 
-Jokes aside, of course we can't claim it is ready for true production use.
+Jokes aside, of course we can't claim it is ready for production use.
 You might notice though the tests there are testing everything in this repository,
 including projects which aren't parts of Stl.Fusion, and "no coverage" there
 contributes to the overall %. We'll fix this soon.
