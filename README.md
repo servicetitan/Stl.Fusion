@@ -98,7 +98,7 @@ you have is a part of the state / model you want to track**, and since there is
 no way to fit it in RAM, Fusion is designed to “spawn” the **observed part** of this 
 huge state on-demand, and destroy the unused parts quickly.
 
-To achieve that, it relies on 3 key components:
+It provides three key abstractions to implement this:
 * **Computed services** are services exposing methods "backed" by Fusion's 
   version of "computed observables". That's what "spawn" the parts of the state 
   on-demand.
