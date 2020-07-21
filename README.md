@@ -43,12 +43,6 @@ abstractions from `Stl.Fusion.dll`:
 
 ![](docs/img/Stl-Fusion-Chat-Sample.gif)
 
-"Server Screen" sample captures and shares server screen in real time, and
-the code there is almost identical to "Server Time" (the most straightforward 
-state update example):
-  
-![](docs/img/Stl-Fusion-Server-Screen-Sample.gif)
-
 Note that "Composition" sample shown in a separate window in the bottom-right corner
 also properly updates its page - in particular, it captures the last chat message. It's
 actually the most interesting example there, since it "composes" the final state (its UI model)
@@ -60,6 +54,12 @@ by two different ways:
   [composed completely on the client](https://github.com/servicetitan/Stl/blob/master/samples/Stl.Samples.Blazor.Client/Services/ClientSideComposerService.cs) 
   by combining other server-side replicas.
 * **The surprising part:** notice two above files are almost identical!
+
+"Server Screen" sample captures and shares server screen in real time, and
+the code there is almost identical to "Server Time" (the most straightforward 
+state update example):
+  
+![](docs/img/Stl-Fusion-Server-Screen-Sample.gif)
 
 ## Get 10&times;&hellip;&infin; Better Performance (*)
 
