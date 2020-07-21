@@ -96,7 +96,7 @@ cache entry.
 It's a state change tracking abstraction built in assumption that **every piece of data 
 you have is a part of the state / model you want to track**, and since there is 
 no way to fit it in RAM, Fusion is designed to “spawn” the **observed part** of this 
-huge state on-demand, and destroy the unused parts quickly.
+state on-demand, and destroy the unused parts quickly.
 
 It provides three key abstractions to implement this:
 * **Computed services** are services exposing methods "backed" by Fusion's 
