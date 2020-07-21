@@ -13,9 +13,6 @@
 moreover, it does this almost transparently for you, so most of your code won't even change!
 And yes, it is scalable and crafted for performance.
 
-If this sounds interesting, skip the marketing part below and go straight
-to the [Overview](docs/Overview.md).
-
 ## Create Real-Time User Interfaces With Almost No Extra Code
 
 `Stl.Fusion` is a new library for [.NET Core](https://en.wikipedia.org/wiki/.NET_Core) 
