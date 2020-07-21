@@ -16,11 +16,7 @@ And yes, it is scalable and crafted for performance.
 If this sounds interesting, skip the marketing part below and go straight
 to the [Overview](docs/Overview.md).
 
-## Create Real-Time User Interfaces With Almost No Extra Code (*)
-
-> (*) Lika Tesla's Autopilot, Fusion can't solve the problem without your help &ndash;
-> but similarly, it takes care of 90% of it and reduces the amount of extra code you need to 
-> write to a tiny fraction of what's reasonable to expect otherwise.
+## Create Real-Time User Interfaces With Almost No Extra Code
 
 `Stl.Fusion` is a new library for [.NET Core](https://en.wikipedia.org/wiki/.NET_Core) 
 and [Blazor](https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor)
