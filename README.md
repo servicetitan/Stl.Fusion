@@ -100,11 +100,10 @@ huge state on-demand, and destroy the unused parts quickly.
 
 It provides three key abstractions to implement this:
 * **Computed services** are services exposing methods "backed" by Fusion's 
-  version of "computed observables". That's what "spawn" the parts of the state 
-  on-demand.
-* **Replica services** - remote proxies of "computed services". 
-  Replicas are quite simple to define: they are, in fact, just interfaces;
-  They allow clients to consume the parts of remote state.
+  version of "computed observables". Computed services are responsible for 
+  "spawning" parts of the state on-demand.
+* **Replica services** - remote proxies of "computed services".
+  They allow clients to consume ("observe") the parts of remote state.
 * And finally, **`IComputed<TOut>` &ndash; a "computed observable" abstraction**, 
   that's in some ways similar to the one you can find in Knockout, MobX, or Vue.js,
   but very different, if you look at its fundamental properties.
