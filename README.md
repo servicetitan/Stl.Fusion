@@ -86,7 +86,7 @@ But there is more &ndash; any `IComputed`:
   a replica of this `IComputed` instance in their own process. Replica services mentioned
   above rely on this feature.
 
-And these features are crucial:
+### Why these features are game changing?
 
 > The ability to replicate any server-side state to any client allows client-side code 
   to build a dependent state that changes whenever any of its server-side components
@@ -103,40 +103,101 @@ The last issue is well-described in
 ["Why not LiveQueries?" part in "Subscriptions in GraphQL"](https://graphql.org/blog/subscriptions-in-graphql-and-relay/), 
 and you may view `Stl.Fusion` as 95% automated solution for this problem:
 * **It makes recomputations cheap** by caching of all the intermediates
-* It de-couples updates from invalidations to ensure 
-  **any subscription costs ~ nothing**.
-
-"Nothing" means that the cost of subscription is fixed relatively to the 
-cost of some prior operation, because only a single invalidation follows
-either the "intial subscribe" or "update" action.
-And since you can control the delay between the invalidation and the update, 
-you can throttle (or speedup) the update rate as much as you need.
+* It de-couples updates from the invalidations to ensure 
+  **any subscription has a fixed / negligible cost**.
   
-> If you have a post viewed by 1M users and updated with 1 KHz frequency 
-  (usually the frequency is proportional to the count of viewers too), 
-  it's 1B of update messages per second to send for your servers
-  assuming you try to deliver every update to every user. 
-  In other words, **this can't scale**.
-  
-> But if you switch to 1-second update delay, your update frequency 
-  drops to "just" 1M updates per second. That's still a lot, of course 
-  but already 1000x better - and note that 1 second delay for 
-  seeing other people's updates is something you won't even notice! 
-  `Stl.Fusion` allows you to control such delay precisely.
-  You may use a larger delay (10 seconds?) for e.g. "Likes" counters, 
-  but almost instantly update comments. 
-  The delays can be dynamic too &ndash; the simplest example of 
-  behavior is instant update for any content you see that was invalidated 
-  right after your own action.
+If you have a post viewed by 1M users and updated with 1 KHz frequency 
+(usually the frequency is proportional to the count of viewers too), 
+it's 1B of update messages per second to send for your servers
+assuming you try to deliver every update to every user. 
+**This can't scale.** 
+But if you switch to 10-second update delay, your update frequency 
+drops by 10,000x to just 100K updates per second. 
+Note that 10 second delay for seeing other people's updates is 
+something you probably won't even notice.
 
-All of this makes `Stl.Fusion` the only communication library a real-time app 
-may ever need: **any notification can be described as a state change as well**. 
+`Stl.Fusion` allows you to control such delays precisely.
+You may use a longer delay (10 seconds?) for components rendering
+"Likes" counters, but almost instantly update comments. 
+The delays can be dynamic too &ndash; the simplest example of 
+behavior is instant update for any content you see that was invalidated 
+right after your own action.
 
-For example, if you build a chat app, you don't need to worry about delivering 
-every message to every client anymore. What you want to have is an API endpoint 
-allowing chat clients to get a replica of server-side `IComputed` instance that 
-"stores" the chat tail. Once a message gets posted to some channel, its chat tail 
-gets invalidated, and every client will automatically "pull" the updated tail.
+## Stl.Fusion is the only communication library your real-time app needs
+
+Imagine you're building a real-time chat app on .NET Core and Blazor,
+and [SignalR](https://dotnet.microsoft.com/apps/aspnet/signalr)
+is the library you want to use to deliver real-time updates to every client.
+
+Here is how a typical "change-to-update" sequence involving SignalR looks like:
+* One of clients makes an API call to post a new message `M` to channel `C`. 
+  This could be done via SignalR as well, but SignalR usage here isn't 
+  quite necessary here - any Web API allows to do the same nearly as efficiently
+  (~ except some extra payload like headers & cookies).
+* Server persists the message to the DB and responds with "Ok" to the 
+  original client. If it wouldn't be a real-time chat, that's 
+  where we would stop.
+* But a real-time app has to do more &ndash; now server has to notify other 
+  clients about this change. Initially this looks like a simple problem
+  *(just broadcast the  message to everyone connected)*, but it turns into
+  a much more complex one if you want your chat to *scale*:
+  * Ideally, you want notify just the clients that are interested
+    in this update &ndash; the ones keeping this channel open 
+    (so they see the chat tail), "pinned" (so they see the number 
+    of unread messages), or maybe looking at the settings page
+    of this channel, which also displays the number of unread messages.
+  * SignalR's 
+    ["Groups" feature](https://docs.microsoft.com/en-us/aspnet/signalr/overview/guide-to-the-api/working-with-groups) is designed to address almost
+    exactly such cases. 
+    All you need is to dynamically add/remove users to a group that corresponds 
+    to channel `C`. Once you have this, you can broadcast a message to this group.
+  * But if you think what's required to implement this "dynamic add/remove" behavior,
+    you may quickly conclude it's totally not as easy as it seems, because
+    *you have to do this based on the client-side UI state* &ndash;
+    in other words, now you have to notify server each time client
+    opens or closes settings page of channel `C` to let it decide
+    whether the client still has to be a part of "channel `C` group" or not,
+    and so on!
+  * Worse, SignalR state (groups, etc.) doesn't survive restarts, so 
+    if your client reconnects to same or another server (and typically
+    you want to retain the UI state on reconnection), the first thing 
+    that has to happen is figuring out how its UI state maps to SingalR 
+    channels it has to be subscribed to.
+  * **The gist:** even this part is complex.
+* And that's not the end: once you received the message on the client, 
+  you have to apply it to the UI state there, which typically means 
+  to dispatch through a set of reducers (if you use Redux) so that some
+  of them will apply it to the corresponding part of the UI state,
+  which in turn will make related UI components to re-render.
+
+**But if you think what you really achieved by doing all of this**, you'll 
+quickly conclude the only end result of above actions is that
+client-side state of every client became consistent with the server-side state!
+
+In other words, SignalR, messaging, etc. &ndash; all of this isn't essential
+to the problem you were solving. **Your problem was to "replicate" the
+state change happened on the server to every client that's interested
+in this part of server's state.**
+
+Stl.Fusion was designed to solve exactly this problem. Instead of making you 
+to dynamically subscribe/unsubscribe every client to a fair number of SignalR 
+channels, it:
+  * Makes your server-side code to track dependencies between the pieces
+    of data produced and used by every service.
+  * Tracks remote replicas of every piece of such data consumed by clients
+  * And once one of such pieces of data changes, it notifies every of its
+    direct and indirect dependencies about this, including the remote ones.
+  * This allows clients to refresh the data that's changed &ndash; 
+    either immediately or later.
+
+> If above description looks too complicated, please check out 
+  [Stl.Fusion In Simple Terms](https://medium.com/@alexyakunin/stl-fusion-in-simple-terms-65b1975967ab?source=friends_link&sk=04e73e75a52768cf7c3330744a9b1e38).
+
+This makes Fusion the only client-to-server notification library 
+most of real-time apps need:
+having an ability to send just a single type of notification
+("the value X you requested earlier is now obsolete") is enough 
+assuming it's not a problem to get the actual update later.
 
 Finally, let's look again at the first animation:
 
