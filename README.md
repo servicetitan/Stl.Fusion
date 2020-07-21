@@ -25,10 +25,26 @@ to the [Overview](docs/Overview.md).
 `Stl.Fusion` is a new library for [.NET Core](https://en.wikipedia.org/wiki/.NET_Core) 
 and [Blazor](https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor)
 providing [Knockout](https://knockoutjs.com/) / [mobX](https://mobx.js.org/) - style 
-"computed observable" abstraction **designed to power distributed applications**. 
-It works on the client, server, and even connects them together!
+"computed observable" abstraction designed to power distributed real-time applications. 
+Contrary to KO / MobX, **Fusion is designed in assumption the state it tracks is 
+huge** &ndash; in fact, it's every bit of server-side data your app uses, 
+including DBs, blob storages, etc., so there is no way to fit it in RAM.
+But we still *can* track changes there, because **we only care about the
+parts of the state that are *observed* by someone**. 
 
-Here is a short animation showing Fusion delivers state changes to 3 different clients 
+That's the reason Fusion uses a different pattern to provide access to this 
+state &ndash; instead of providing you with a huge model that's full of 
+nested "observables", it lets you to spawn and consume the parts of your 
+state piece-by-piece. And you already know how to design such an API &ndash; 
+any "regular" Web API providing access to some parts of server-side data
+implements exactly this pattern! The only missing part is change tracking, 
+and that's what Fusion provides.
+
+If you're curious how Fusion compares to other libraries, check out:
+* [How similar is Stl.Fusion to SignalR?](https://medium.com/@alexyakunin/how-similar-is-stl-fusion-to-signalr-e751c14b70c3?source=friends_link&sk=241d5293494e352f3db338d93c352249)
+* [How similar is Stl.Fusion to Knockout / MobX?](https://medium.com/@alexyakunin/how-similar-is-stl-fusion-to-knockout-mobx-fcebd0bef5d5?source=friends_link&sk=a808f7c46c4d5613605f8ada732e790e)
+
+Below is a short animation showing Fusion delivers state changes to 3 different clients 
 &ndash; instances of the same Blazor app running in browser and relying on the same 
 abstractions from `Stl.Fusion.dll`:
 
@@ -40,11 +56,62 @@ state update example):
   
 ![](docs/img/Stl-Fusion-Server-Screen-Sample.gif)
 
-Fusion is built on three "pillars":
-* **Computed services** - services that expose methods "backed" by Fusion's 
-  version of "computed observables"
+Note that "Composition" sample shown in a separate window in the bottom-right corner
+also properly updates its page - in particular, it captures the last chat message. It's
+actually the most interesting example there, since it "composes" the final state (its UI model)
+by two different ways: 
+* One is 
+  [composed on the server side](https://github.com/servicetitan/Stl/blob/master/samples/Stl.Samples.Blazor.Server/Services/ServerSideComposerService.cs);
+  its replica is published to all the clients
+* And another one is 
+  [composed completely on the client](https://github.com/servicetitan/Stl/blob/master/samples/Stl.Samples.Blazor.Client/Services/ClientSideComposerService.cs) 
+  by combining other server-side replicas.
+* **The surprising part:** notice two above files are almost identical!
+
+## Get 10&times;&hellip;&infin; Better Performance (*)
+
+> (*) Keep in mind a lot depends on your specific case &ndash; 
+> and even though the examples presented below are absolutely real,
+> they are still synthetic. That's the reason we carefully 
+> put the low boundary to 10&times; rather than 10,000&times; &ndash;
+> it's reasonable to expect at least 90% cache hit ratio in a vast
+> majority of cases we are aiming at.
+
+[One of tests in Stl.Fusion test suite](https://github.com/servicetitan/Stl.Fusion/blob/master/tests/Stl.Tests/Fusion/PerformanceTest.cs) 
+benchmarks "raw" [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/) - 
+based Data Access Layer (DAL) against its version relying on Fusion. 
+Both tests run almost identical code - in fact, the only difference there is that Fusion
+version of test uses a Fusion-provided proxy wrapping the 
+[`UserService`](https://github.com/servicetitan/Stl.Fusion/blob/master/tests/Stl.Tests/Fusion/Services/UserService.cs)
+(the DAL used in this test) instead of the actual type.
+
+![](docs/img/Performance.gif)
+
+The speed difference is quite impressive:
+* ~31,500x speedup with [Sqlite](https://www.sqlite.org/index.html) EF Core provider
+* ~1,000x speedup with 
+  [In-memory EF Core provider](https://docs.microsoft.com/en-us/ef/core/providers/in-memory/?tabs=dotnet-core-cli)  
+
+Obviously, you're expected to get a huge performance boost in any scenario involving
+local caching, but note that here you get it almost for free in terms of extra code, 
+and moreover, you get an *almost* always consistent cache. In reality, it's still 
+an *eventually consistent* cache, but with extremelly short inconsistency periods per
+cache entry.
+
+## So What Is Fusion?
+
+It's a state change tracking abstraction built in assumption that **every piece of data 
+you have is a part of the state / model you want to track**, and since there is 
+no way to fit it in RAM, Fusion is designed to “spawn” the **observed part** of this 
+huge state on-demand, and destroy the unused parts quickly.
+
+To achieve that, it relies on 3 key components:
+* **Computed services** are services exposing methods "backed" by Fusion's 
+  version of "computed observables". That's what "spawn" the parts of the state 
+  on-demand.
 * **Replica services** - remote proxies of "computed services". 
-  Replicas are quite simple to define: they are, in fact, just interfaces.
+  Replicas are quite simple to define: they are, in fact, just interfaces;
+  They allow clients to consume the parts of remote state.
 * And finally, **`IComputed<TOut>` &ndash; a "computed observable" abstraction**, 
   that's in some ways similar to the one you can find in Knockout, MobX, or Vue.js,
   but very different, if you look at its fundamental properties.
@@ -123,139 +190,9 @@ The delays can be dynamic too &ndash; the simplest example of
 behavior is instant update for any content you see that was invalidated 
 right after your own action.
 
-## Stl.Fusion is the only communication library your real-time app needs
-
-Imagine you're building a real-time chat app on .NET Core and Blazor,
-and [SignalR](https://dotnet.microsoft.com/apps/aspnet/signalr)
-is the library you want to use to deliver real-time updates to every client.
-
-Here is how a typical "change-to-update" sequence involving SignalR looks like:
-* One of clients makes an API call to post a new message `M` to channel `C`. 
-  This could be done via SignalR as well, but SignalR usage here isn't 
-  quite necessary here - any Web API allows to do the same nearly as efficiently
-  (~ except some extra payload like headers & cookies).
-* Server persists the message to the DB and responds with "Ok" to the 
-  original client. If it wouldn't be a real-time chat, that's 
-  where we would stop.
-* But a real-time app has to do more &ndash; now server has to notify other 
-  clients about this change. Initially this looks like a simple problem
-  *(just broadcast the  message to everyone connected)*, but it turns into
-  a much more complex one if you want your chat to *scale*:
-  * Ideally, you want notify just the clients that are interested
-    in this update &ndash; the ones keeping this channel open 
-    (so they see the chat tail), "pinned" (so they see the number 
-    of unread messages), or maybe looking at the settings page
-    of this channel, which also displays the number of unread messages.
-  * SignalR's 
-    ["Groups" feature](https://docs.microsoft.com/en-us/aspnet/signalr/overview/guide-to-the-api/working-with-groups) is designed to address almost
-    exactly such cases. 
-    All you need is to dynamically add/remove users to a group that corresponds 
-    to channel `C`. Once you have this, you can broadcast a message to this group.
-  * But if you think what's required to implement this "dynamic add/remove" behavior,
-    you may quickly conclude it's totally not as easy as it seems, because
-    *you have to do this based on the client-side UI state* &ndash;
-    in other words, now you have to notify server each time client
-    opens or closes settings page of channel `C` to let it decide
-    whether the client still has to be a part of "channel `C` group" or not,
-    and so on!
-  * Worse, SignalR state (groups, etc.) doesn't survive restarts, so 
-    if your client reconnects to same or another server (and typically
-    you want to retain the UI state on reconnection), the first thing 
-    that has to happen is figuring out how its UI state maps to SingalR 
-    channels it has to be subscribed to.
-  * **The gist:** even this part is complex.
-* And that's not the end: once you received the message on the client, 
-  you have to apply it to the UI state there, which typically means 
-  to dispatch through a set of reducers (if you use Redux) so that some
-  of them will apply it to the corresponding part of the UI state,
-  which in turn will make related UI components to re-render.
-
-**But if you think what you really achieved by doing all of this**, you'll 
-quickly conclude the only end result of above actions is that
-client-side state of every client became consistent with the server-side state!
-
-In other words, SignalR, messaging, etc. &ndash; all of this isn't essential
-to the problem you were solving. **Your problem was to "replicate" the
-state change happened on the server to every client that's interested
-in this part of server's state.**
-
-Stl.Fusion was designed to solve exactly this problem. Instead of making you 
-to dynamically subscribe/unsubscribe every client to a fair number of SignalR 
-channels, it:
-  * Makes your server-side code to track dependencies between the pieces
-    of data produced and used by every service.
-  * Tracks remote replicas of every piece of such data consumed by clients
-  * And once one of such pieces of data changes, it notifies every of its
-    direct and indirect dependencies about this, including the remote ones.
-  * This allows clients to refresh the data that's changed &ndash; 
-    either immediately or later.
-
-> If above description looks too complicated, please check out 
-  [Stl.Fusion In Simple Terms](https://medium.com/@alexyakunin/stl-fusion-in-simple-terms-65b1975967ab?source=friends_link&sk=04e73e75a52768cf7c3330744a9b1e38).
-
-This makes Fusion the only client-to-server notification library 
-most of real-time apps need:
-having an ability to send just a single type of notification
-("the value X you requested earlier is now obsolete") is enough 
-assuming it's not a problem to get the actual update later.
-
-Finally, let's look again at the first animation:
-
-![](docs/img/Stl-Fusion-Chat-Sample.gif)
-
-Note that "Composition" sample shown in a separate window in the bottom-right corner
-also properly updates its page - in particular, it captures the last chat message. It's
-actually the most interesting example there, since it "composes" the final state (its UI model)
-by two different ways: 
-* One is 
-  [composed on the server side](https://github.com/servicetitan/Stl/blob/master/samples/Stl.Samples.Blazor.Server/Services/ServerSideComposerService.cs);
-  its replica is published to all the clients
-* And another one is 
-  [composed completely on the client](https://github.com/servicetitan/Stl/blob/master/samples/Stl.Samples.Blazor.Client/Services/ClientSideComposerService.cs) 
-  by combining other server-side replicas.
-* **The surprising part:** notice two above files are almost identical!
-
-And here is **literally** all the client-side code powering Chat sample:
-* [ChatState](https://github.com/servicetitan/Stl/blob/master/samples/Stl.Samples.Blazor.Client/UI/ChatState.cs) 
-  &ndash; the view model
-* [Chat.razor](https://github.com/servicetitan/Stl/blob/master/samples/Stl.Samples.Blazor.Client/Pages/Chat.razor) 
-  &ndash; the view
-* [IChatClient in Clients.cs](https://github.com/servicetitan/Stl/blob/master/samples/Stl.Samples.Blazor.Client/Services/Clients.cs#L19) 
-  &ndash; the client (the actual client is generated in the runtime).  
-
-## Get 10&times;&hellip;&infin; Better Performance (*)
-
-> (*) Keep in mind a lot depends on your specific case &ndash; 
-> and even though the examples presented below are absolutely real,
-> they are still synthetic. That's the reason we carefully 
-> put the low boundary to 10&times; rather than 10,000&times; &ndash;
-> it's reasonable to expect at least 90% cache hit ratio in a vast
-> majority of cases we are aiming at.
-
-[One of tests in Stl.Fusion test suite](https://github.com/servicetitan/Stl.Fusion/blob/master/tests/Stl.Tests/Fusion/PerformanceTest.cs) 
-benchmarks "raw" [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/) - 
-based Data Access Layer (DAL) against its version relying on Fusion. 
-Both tests run almost identical code - in fact, the only difference there is that Fusion
-version of test uses a Fusion-provided proxy wrapping the 
-[`UserService`](https://github.com/servicetitan/Stl.Fusion/blob/master/tests/Stl.Tests/Fusion/Services/UserService.cs)
-(the DAL used in this test) instead of the actual type.
-
-![](docs/img/Performance.gif)
-
-The speed difference is quite impressive:
-* ~31,500x speedup with [Sqlite](https://www.sqlite.org/index.html) EF Core provider
-* ~1,000x speedup with 
-  [In-memory EF Core provider](https://docs.microsoft.com/en-us/ef/core/providers/in-memory/?tabs=dotnet-core-cli)  
-
-Obviously, you're expected to get a huge performance boost in any scenario involving
-local caching, but note that here you get it almost for free in terms of extra code, 
-and moreover, you get an *almost* always consistent cache. In reality, it's still 
-an *eventually consistent* cache, but with extremelly short inconsistency periods per
-cache entry.
-
 ## Next Steps
 
-* If you are not a developer, but still want to understand what it's all about, 
+* If above description looks too complicated for you, please check out
   [Stl.Fusion In Simple Terms](https://medium.com/@alexyakunin/stl-fusion-in-simple-terms-65b1975967ab?source=friends_link&sk=04e73e75a52768cf7c3330744a9b1e38)
 * Otherwise, go to [Overview](docs/Overview.md) 
   or [Documentation Home](docs/README.md)

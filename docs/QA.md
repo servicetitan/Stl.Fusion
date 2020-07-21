@@ -56,7 +56,12 @@ This is actually pretty good, taking into account the following timeline:
   distributed state replication working
 * Mid-June 2020: We actually started to use it on DevPortal
 * July 6, 2020: This line was written :)    
-  
+
+## Comparison to other libraries
+
+* [How similar is Stl.Fusion to SignalR?](https://medium.com/@alexyakunin/how-similar-is-stl-fusion-to-signalr-e751c14b70c3?source=friends_link&sk=241d5293494e352f3db338d93c352249)
+* [How similar is Stl.Fusion to Knockout / MobX?](https://medium.com/@alexyakunin/how-similar-is-stl-fusion-to-knockout-mobx-fcebd0bef5d5?source=friends_link&sk=a808f7c46c4d5613605f8ada732e790e)
+
 ## Possible use cases, pros and cons
 
 > Q: Can I use Fusion with server-side Blazor?
