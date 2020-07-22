@@ -1,6 +1,7 @@
 ![](docs/img/Banner.jpg)
 
 [![Build](https://github.com/servicetitan/Stl.Fusion/workflows/Build/badge.svg)](https://github.com/servicetitan/Stl.Fusion/actions?query=workflow%3A%22Build%22)
+[![NuGetVersion](https://img.shields.io/nuget/v/Stl.Fusion)](https://www.nuget.org/packages/Stl.Fusion)
 
 > Have you ever dreamed of an abstraction that magically delivers
   every change made to you server-side data to every client that displays it?
