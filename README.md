@@ -24,7 +24,7 @@ Contrary to KO / MobX, **Fusion is designed in assumption the state it tracks is
 huge** &ndash; in fact, it's every bit of server-side data your app uses, 
 including DBs, blob storages, etc., so there is no way to fit it in RAM.
 But we still *can* track changes there, because **we only care about the
-parts of the state that are *observed* by someone**. 
+part of the state that is *observed* by someone**.
 
 That's the reason Fusion uses a different pattern to provide access to this 
 state &ndash; instead of providing you with a huge model that's full of 
