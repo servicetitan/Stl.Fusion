@@ -12,11 +12,11 @@ namespace Tutorial
         public static TService Create<TService>()
             where TService : class, IComputedService
         {
-            var providerFactory = new DefaultServiceProviderFactory();
-            var services = new ServiceCollection();
-            services.AddFusionCore();
-            services.AddComputedService<TService>();
-            var provider = providerFactory.CreateServiceProvider(services);
+            var services = new ServiceCollection()
+                .AddFusionCore()
+                .AddComputedService<TService>();
+
+            var provider = services.BuildServiceProvider();
             return provider.GetRequiredService<TService>();
         }
         #endregion

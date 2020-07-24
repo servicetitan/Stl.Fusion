@@ -85,7 +85,8 @@ namespace Tutorial
                 .AddComputedService<UserRegistry>()
                 .AddComputedService<Clock>()
                 .AddComputedService<FormatService>();
-            return new DefaultServiceProviderFactory().CreateServiceProvider(services);
+
+            return services.BuildServiceProvider();
         }
         #endregion
 
@@ -94,7 +95,6 @@ namespace Tutorial
             #region part05_useServices_part1
             var services = CreateServiceProvider();
             var users = services.GetRequiredService<UserRegistry>();
-            var clock = services.GetRequiredService<Clock>();
             var formatter = services.GetRequiredService<FormatService>();
 
             users.SetUserName(0, "John Carmack");
@@ -114,7 +114,6 @@ namespace Tutorial
             #region part05_useServices_part2
             var services = CreateServiceProvider();
             var users = services.GetRequiredService<UserRegistry>();
-            var clock = services.GetRequiredService<Clock>();
             var formatter = services.GetRequiredService<FormatService>();
 
             users.SetUserName(0, "John Carmack");
