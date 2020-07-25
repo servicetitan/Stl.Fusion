@@ -14,7 +14,8 @@
 moreover, it does this almost transparently for you, so most of your code won't even change!
 And yes, it is scalable and crafted for performance.
 
-> **All project updates are published on its [Discord Server](https://discord.gg/EKEwv6d).**
+> **IMPORTANT:** All project updates are currently published on its [Discord Server](https://discord.gg/EKEwv6d); 
+> it's also the best place for Q/A.
 
 ## Create Real-Time User Interfaces With Almost No Extra Code
 
