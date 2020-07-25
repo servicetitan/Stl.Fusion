@@ -159,7 +159,7 @@ But there is more &ndash; any `IComputed`:
 The last issue is well-described in 
 ["Why not LiveQueries?" part in "Subscriptions in GraphQL"](https://graphql.org/blog/subscriptions-in-graphql-and-relay/), 
 and you may view `Stl.Fusion` as 95% automated solution for this problem:
-* **It makes recomputations cheap** by caching of all the intermediates
+* **It makes recomputations cheap** by caching all the intermediates
 * It de-couples updates from the invalidations to ensure 
   **any subscription has a fixed / negligible cost**.
   

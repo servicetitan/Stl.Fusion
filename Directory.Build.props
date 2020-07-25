@@ -14,7 +14,7 @@
     <!--
     <ApplicationIcon>$(MSBuildThisFileDirectory)\docs\img\Logo128.jpg</ApplicationIcon>
     -->
-    <PackageIconUrl>https://github.com/servicetitan/Stl/master/docs/img/Logo128.jpg</PackageIconUrl>
+    <PackageIconUrl>https://github.com/servicetitan/Stl.Fusion/master/docs/img/Logo128.jpg</PackageIconUrl>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <NoPackageAnalysis>false</NoPackageAnalysis>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
