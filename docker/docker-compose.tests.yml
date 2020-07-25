@@ -5,4 +5,4 @@ services:
       context: ../
       dockerfile: ./docker/Dockerfile
       target: base
-    command: dotnet test tests/Stl.Tests/Stl.Tests.csproj
+    command: dotnet test

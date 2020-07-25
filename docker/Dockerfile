@@ -9,7 +9,7 @@ COPY ["docs/", "docs/"]
 COPY ["build/", "build/"]
 COPY ["scripts/", "scripts/"]
 
-COPY Stl.sln .
+COPY Stl.Fusion.sln .
 COPY Directory.Build.props .
 COPY Directory.Build.targets .
 COPY Packages.props .

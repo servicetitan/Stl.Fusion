@@ -15,9 +15,9 @@ namespace Stl.Generators
         public RandomSymbolGenerator(string prefix = "", int length = 12, string? alphabet = null, RandomNumberGenerator? rng = null)
         {
             Prefix = prefix;
-            Length = length;
-            Alphabet = alphabet;
             Rsg = new RandomStringGenerator(length, alphabet, rng);
+            Alphabet = Rsg.Alphabet;
+            Length = Rsg.Length;
         }
 
         public override Symbol Next() => Next(Length);
