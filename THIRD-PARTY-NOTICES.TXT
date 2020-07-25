@@ -1,0 +1,2520 @@
+﻿License notice for Microsoft.Extensions.Caching.Abstractions (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/Extensions at 7d9baaf617741d775578c8018729ac5b75734c69
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.Extensions.Configuration.Abstractions (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/Extensions at 7d9baaf617741d775578c8018729ac5b75734c69
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.Extensions.DependencyInjection (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/Extensions at 7d9baaf617741d775578c8018729ac5b75734c69
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.Extensions.DependencyInjection.Abstractions (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/Extensions at 7d9baaf617741d775578c8018729ac5b75734c69
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.Extensions.Hosting (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/Extensions at 7d9baaf617741d775578c8018729ac5b75734c69
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.Extensions.Logging.Abstractions (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/Extensions at 7d9baaf617741d775578c8018729ac5b75734c69
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Newtonsoft.Json (v12.0.3)
+------------------------------------
+
+https://github.com/JamesNK/Newtonsoft.Json at 7c3d7f8da7e35dde8fa74188b0decff70f8f10e3
+
+https://www.newtonsoft.com/json
+
+Copyright © James Newton-King 2008
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for System.Collections.Immutable (v1.7.0)
+------------------------------------
+
+https://github.com/dotnet/corefx
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for System.Net.WebSockets (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Reactive (v4.4.1)
+------------------------------------
+
+https://github.com/dotnet/reactive at 7fe23fedde3d0c462ea3dd851debcf9ccb0f52f6
+
+Copyright (c) .NET Foundation and Contributors.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for System.Threading.Channels (v4.7.0)
+------------------------------------
+
+https://github.com/dotnet/corefx
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for Microsoft.Bcl.AsyncInterfaces (v1.1.0)
+------------------------------------
+
+https://github.com/dotnet/corefx
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for Microsoft.Extensions.Configuration (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/Extensions at 7d9baaf617741d775578c8018729ac5b75734c69
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.Extensions.Configuration.Binder (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/Extensions at 7d9baaf617741d775578c8018729ac5b75734c69
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.Extensions.Configuration.CommandLine (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/Extensions at 7d9baaf617741d775578c8018729ac5b75734c69
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.Extensions.Configuration.EnvironmentVariables (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/Extensions at 7d9baaf617741d775578c8018729ac5b75734c69
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.Extensions.Configuration.FileExtensions (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/Extensions at 7d9baaf617741d775578c8018729ac5b75734c69
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.Extensions.Configuration.Json (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/Extensions at 7d9baaf617741d775578c8018729ac5b75734c69
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.Extensions.Configuration.UserSecrets (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/Extensions at 7d9baaf617741d775578c8018729ac5b75734c69
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.Extensions.FileProviders.Abstractions (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/Extensions at 7d9baaf617741d775578c8018729ac5b75734c69
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.Extensions.FileProviders.Physical (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/Extensions at 7d9baaf617741d775578c8018729ac5b75734c69
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.Extensions.FileSystemGlobbing (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/Extensions at 7d9baaf617741d775578c8018729ac5b75734c69
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.Extensions.Hosting.Abstractions (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/Extensions at 7d9baaf617741d775578c8018729ac5b75734c69
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.Extensions.Logging (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/Extensions at 7d9baaf617741d775578c8018729ac5b75734c69
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.Extensions.Logging.Configuration (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/Extensions at 7d9baaf617741d775578c8018729ac5b75734c69
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.Extensions.Logging.Console (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/Extensions at 7d9baaf617741d775578c8018729ac5b75734c69
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.Extensions.Logging.Debug (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/Extensions at 7d9baaf617741d775578c8018729ac5b75734c69
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.Extensions.Logging.EventLog (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/Extensions at 7d9baaf617741d775578c8018729ac5b75734c69
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.Extensions.Logging.EventSource (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/Extensions at 7d9baaf617741d775578c8018729ac5b75734c69
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.Extensions.Options (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/Extensions at 7d9baaf617741d775578c8018729ac5b75734c69
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.Extensions.Options.ConfigurationExtensions (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/Extensions at 7d9baaf617741d775578c8018729ac5b75734c69
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.Extensions.Primitives (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/Extensions at 7d9baaf617741d775578c8018729ac5b75734c69
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.NETCore.Platforms (v1.1.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for Microsoft.NETCore.Targets (v1.1.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for Microsoft.Win32.Primitives (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Buffers (v4.5.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at https://github.com/dotnet/corefx/blob/master/LICENSE.TXT
+
+
+License notice for System.ComponentModel.Annotations (v4.7.0)
+------------------------------------
+
+https://github.com/dotnet/corefx
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for System.Diagnostics.EventLog (v4.7.0)
+------------------------------------
+
+https://github.com/dotnet/corefx
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for System.Globalization (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.IO (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Memory (v4.5.3)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+License available at https://github.com/dotnet/corefx/blob/master/LICENSE.TXT
+
+
+License notice for System.Numerics.Vectors (v4.5.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at https://github.com/dotnet/corefx/blob/master/LICENSE.TXT
+
+
+License notice for System.Reflection (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Reflection.Primitives (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Resources.ResourceManager (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Runtime (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Runtime.CompilerServices.Unsafe (v4.7.1)
+------------------------------------
+
+https://github.com/dotnet/corefx
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for System.Runtime.InteropServices.WindowsRuntime (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Security.Principal.Windows (v4.7.0)
+------------------------------------
+
+https://github.com/dotnet/corefx
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for System.Text.Encoding (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Text.Encodings.Web (v4.7.0)
+------------------------------------
+
+https://github.com/dotnet/corefx
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for System.Text.Json (v4.7.1)
+------------------------------------
+
+https://github.com/dotnet/corefx
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for System.Threading.Tasks (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Threading.Tasks.Extensions (v4.5.4)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+License available at https://github.com/dotnet/corefx/blob/master/LICENSE.TXT
+
+
+License notice for AutoFixture (v4.11.0)
+------------------------------------
+
+https://github.com/AutoFixture/AutoFixture
+
+Copyright © Ploeh 2011
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for AutoFixture.Xunit2 (v4.11.0)
+------------------------------------
+
+https://github.com/AutoFixture/AutoFixture
+
+Copyright © Ploeh 2011
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for FluentAssertions (v5.10.3)
+------------------------------------
+
+https://github.com/fluentassertions/fluentassertions.git
+
+https://www.fluentassertions.com/
+
+Copyright Dennis Doomen 2010-2020
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for MediatR (v8.0.1)
+------------------------------------
+
+git://github.com/jbogard/mediatr at b92ae61355349c32bc8d5c260022cfe710a8f84a
+
+https://github.com/jbogard/MediatR
+
+Copyright Jimmy Bogard
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for MediatR.Extensions.Microsoft.DependencyInjection (v8.0.0)
+------------------------------------
+
+git://github.com/jbogard/MediatR.Extensions.Microsoft.DependencyInjection
+
+https://github.com/jbogard/MediatR.Extensions.Microsoft.DependencyInjection
+
+Copyright Jimmy Bogard
+
+License available at https://github.com/jbogard/MediatR/blob/master/LICENSE
+
+
+License notice for Microsoft.AspNetCore.Mvc.NewtonsoftJson (v3.1.4)
+------------------------------------
+
+https://github.com/aspnet/AspNetCore at 67e04394e98d5bfa6a5684d471a72fcbe30fd587
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.EntityFrameworkCore.InMemory (v3.1.3)
+------------------------------------
+
+https://github.com/dotnet/efcore at 6f4f078e8f92ee8e2ca497fa4b83d4ecebdd643b
+
+https://docs.microsoft.com/ef/core/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.EntityFrameworkCore.Sqlite (v3.1.3)
+------------------------------------
+
+https://github.com/dotnet/efcore at 6f4f078e8f92ee8e2ca497fa4b83d4ecebdd643b
+
+https://docs.microsoft.com/ef/core/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.NET.Test.Sdk (v16.6.1)
+------------------------------------
+
+https://github.com/microsoft/vstest/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+License available at http://www.microsoft.com/web/webpi/eula/net_library_eula_enu.htm
+
+
+License notice for Moq (v4.14.1)
+------------------------------------
+
+https://github.com/moq/moq4 at d5552d5762033764b495cd122d55185f0adddbf8
+
+License available at https://raw.githubusercontent.com/moq/moq4/master/License.txt
+
+
+License notice for System.Drawing.Common (v4.7.0)
+------------------------------------
+
+https://github.com/dotnet/corefx
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for System.Net.WebSockets.Client (v4.3.2)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for xunit (v2.4.1)
+------------------------------------
+
+https://github.com/xunit/xunit
+
+License available at https://raw.githubusercontent.com/xunit/xunit/master/license.txt
+
+
+License notice for xunit.analyzers (v0.10.0)
+------------------------------------
+
+https://github.com/xunit/xunit.analyzers
+
+License available at https://raw.githubusercontent.com/xunit/xunit.analyzers/master/LICENSE
+
+
+License notice for Xunit.DependencyInjection.Logging (v2.1.0)
+------------------------------------
+
+https://github.com/pengweiqhca/Xunit.DependencyInjection at 18901384f97a7638c911c603c96e9389b711e581
+
+Copyright © 2019
+
+
+License notice for Autofac (v5.0.0)
+------------------------------------
+
+https://github.com/autofac/Autofac at c247e60ce8c9cb1545384e763e41798b3998ee59
+
+https://autofac.org/
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for Autofac.Extensions.DependencyInjection (v6.0.0)
+------------------------------------
+
+https://github.com/autofac/Autofac.Extensions.DependencyInjection at ec38706c11d60e19d1d97ef12bc8f391b9f65ebf
+
+https://autofac.org/
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for Castle.Core (v4.4.0)
+------------------------------------
+
+https://github.com/castleproject/Core
+
+http://www.castleproject.org/
+
+Copyright (c) 2004-2019 Castle Project - http://www.castleproject.org/
+
+License available at http://www.apache.org/licenses/LICENSE-2.0.html
+
+
+License notice for CliWrap (v3.0.3)
+------------------------------------
+
+https://github.com/Tyrrrz/CliWrap at 54abad02376b98bf87b6bef5a62c103362e18107
+
+Copyright (C) Alexey Golub
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for Enums.NET (v3.0.3)
+------------------------------------
+
+https://github.com/TylerBrinkley/Enums.NET at a69921078f2f9cde05c769d6ecd8cc01b95ff399
+
+Copyright © Tyler Brinkley 2016
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for Fare (v2.1.1)
+------------------------------------
+
+https://github.com/moodmosaic/Fare
+
+Copyright © Nikos Baxevanis 2016
+
+License available at https://github.com/moodmosaic/Fare/blob/master/LICENCE
+
+
+License notice for Microsoft.AspNetCore.JsonPatch (v3.1.4)
+------------------------------------
+
+https://github.com/aspnet/AspNetCore at 67e04394e98d5bfa6a5684d471a72fcbe30fd587
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.Bcl.HashCode (v1.1.0)
+------------------------------------
+
+https://github.com/dotnet/corefx
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for Microsoft.CodeCoverage (v16.6.1)
+------------------------------------
+
+https://github.com/microsoft/vstest/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+License available at http://www.microsoft.com/web/webpi/eula/net_library_eula_enu.htm
+
+
+License notice for Microsoft.CSharp (v4.7.0)
+------------------------------------
+
+https://github.com/dotnet/corefx
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for Microsoft.Data.Sqlite.Core (v3.1.3)
+------------------------------------
+
+https://github.com/dotnet/efcore at 6f4f078e8f92ee8e2ca497fa4b83d4ecebdd643b
+
+https://docs.microsoft.com/ef/core/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.DotNet.PlatformAbstractions (v3.1.3)
+------------------------------------
+
+git://github.com/dotnet/core-setup at 4a9f85e9f89d7f686fef2ae2109d876b1e2eed2a
+
+https://dot.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Available at https://aka.ms/deprecateLicenseUrl
+
+LICENSE.TXT
+
+
+License notice for Microsoft.EntityFrameworkCore (v3.1.3)
+------------------------------------
+
+https://github.com/dotnet/efcore at 6f4f078e8f92ee8e2ca497fa4b83d4ecebdd643b
+
+https://docs.microsoft.com/ef/core/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.EntityFrameworkCore.Abstractions (v3.1.3)
+------------------------------------
+
+https://github.com/dotnet/efcore at 6f4f078e8f92ee8e2ca497fa4b83d4ecebdd643b
+
+https://docs.microsoft.com/ef/core/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.EntityFrameworkCore.Analyzers (v3.1.3)
+------------------------------------
+
+https://github.com/dotnet/efcore at 6f4f078e8f92ee8e2ca497fa4b83d4ecebdd643b
+
+https://docs.microsoft.com/ef/core/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.EntityFrameworkCore.Relational (v3.1.3)
+------------------------------------
+
+https://github.com/dotnet/efcore at 6f4f078e8f92ee8e2ca497fa4b83d4ecebdd643b
+
+https://docs.microsoft.com/ef/core/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.EntityFrameworkCore.Sqlite.Core (v3.1.3)
+------------------------------------
+
+https://github.com/dotnet/efcore at 6f4f078e8f92ee8e2ca497fa4b83d4ecebdd643b
+
+https://docs.microsoft.com/ef/core/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.Extensions.Caching.Memory (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/Extensions at 7d9baaf617741d775578c8018729ac5b75734c69
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.Extensions.DependencyModel (v3.1.3)
+------------------------------------
+
+git://github.com/dotnet/core-setup at 4a9f85e9f89d7f686fef2ae2109d876b1e2eed2a
+
+https://dot.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Available at https://aka.ms/deprecateLicenseUrl
+
+LICENSE.TXT
+
+
+License notice for Microsoft.NETCore.Platforms (v3.1.0)
+------------------------------------
+
+https://github.com/dotnet/corefx
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for Microsoft.TestPlatform.ObjectModel (v16.6.1)
+------------------------------------
+
+https://github.com/microsoft/vstest/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+License available at http://www.microsoft.com/web/webpi/eula/net_library_eula_enu.htm
+
+
+License notice for Microsoft.TestPlatform.TestHost (v16.6.1)
+------------------------------------
+
+https://github.com/microsoft/vstest/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+License available at http://www.microsoft.com/web/webpi/eula/net_library_eula_enu.htm
+
+
+License notice for Microsoft.Win32.Registry (v4.7.0)
+------------------------------------
+
+https://github.com/dotnet/corefx
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for Microsoft.Win32.SystemEvents (v4.7.0)
+------------------------------------
+
+https://github.com/dotnet/corefx
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for NETStandard.Library (v1.6.1)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for Newtonsoft.Json.Bson (v1.0.2)
+------------------------------------
+
+https://github.com/JamesNK/Newtonsoft.Json.Bson at a1db92678e7e72eb733f37079f3a93bfb6215338
+
+http://www.newtonsoft.com/json
+
+Copyright © James Newton-King 2017
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for NuGet.Frameworks (v5.0.0+42a8779499c1d1ed2488c2e6b9e2ee6ff6107766)
+------------------------------------
+
+https://github.com/NuGet/NuGet.Client
+
+https://aka.ms/nugetprj
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for RestEase (v1.4.12)
+------------------------------------
+
+https://github.com/canton7/RestEase at 6dcaa9f6b0f3b35451d25bb9cd1620c64d56284c
+
+http://github.com/canton7/RestEase
+
+Copyright © Antony Male 2015-2020
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for runtime.debian.8-x64.runtime.native.System.Security.Cryptography.OpenSsl (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for runtime.fedora.23-x64.runtime.native.System.Security.Cryptography.OpenSsl (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for runtime.fedora.24-x64.runtime.native.System.Security.Cryptography.OpenSsl (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for runtime.native.System (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for runtime.native.System.IO.Compression (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for runtime.native.System.Net.Http (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for runtime.native.System.Net.Security (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for runtime.native.System.Security.Cryptography.Apple (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for runtime.native.System.Security.Cryptography.OpenSsl (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for runtime.opensuse.13.2-x64.runtime.native.System.Security.Cryptography.OpenSsl (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for runtime.opensuse.42.1-x64.runtime.native.System.Security.Cryptography.OpenSsl (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.Apple (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.OpenSsl (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for runtime.rhel.7-x64.runtime.native.System.Security.Cryptography.OpenSsl (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for runtime.ubuntu.14.04-x64.runtime.native.System.Security.Cryptography.OpenSsl (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for runtime.ubuntu.16.04-x64.runtime.native.System.Security.Cryptography.OpenSsl (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for runtime.ubuntu.16.10-x64.runtime.native.System.Security.Cryptography.OpenSsl (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for Serilog (v2.9.0)
+------------------------------------
+
+https://github.com/serilog/serilog.git at 655778f74384f682d2c8705ab4883c39ef17e44d
+
+https://serilog.net/
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Serilog.Extensions.Logging (v3.0.1)
+------------------------------------
+
+https://github.com/serilog/serilog-extensions-logging
+
+License available at http://www.apache.org/licenses/LICENSE-2.0
+
+
+License notice for Serilog.Sinks.Console (v3.1.1)
+------------------------------------
+
+https://github.com/serilog/serilog-sinks-console
+
+License available at https://www.apache.org/licenses/LICENSE-2.0
+
+
+License notice for Serilog.Sinks.Observable (v2.0.2)
+------------------------------------
+
+http://serilog.net/
+
+License available at http://www.apache.org/licenses/LICENSE-2.0
+
+
+License notice for Serilog.Sinks.TextWriter (v2.1.0)
+------------------------------------
+
+http://serilog.net/
+
+License available at http://www.apache.org/licenses/LICENSE-2.0
+
+
+License notice for SQLitePCLRaw.bundle_e_sqlite3 (v2.0.2)
+------------------------------------
+
+https://github.com/ericsink/SQLitePCL.raw
+
+Copyright 2014-2019 SourceGear, LLC
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for SQLitePCLRaw.core (v2.0.2)
+------------------------------------
+
+https://github.com/ericsink/SQLitePCL.raw
+
+Copyright 2014-2019 SourceGear, LLC
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for SQLitePCLRaw.lib.e_sqlite3 (v2.0.2)
+------------------------------------
+
+https://github.com/ericsink/SQLitePCL.raw
+
+Copyright 2014-2019 SourceGear, LLC
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for SQLitePCLRaw.provider.dynamic_cdecl (v2.0.2)
+------------------------------------
+
+https://github.com/ericsink/SQLitePCL.raw
+
+Copyright 2014-2019 SourceGear, LLC
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for System.AppContext (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Buffers (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Collections (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Collections.Concurrent (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Collections.NonGeneric (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Collections.Specialized (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.CommandLine (v2.0.0-beta1.20303.1)
+------------------------------------
+
+https://github.com/dotnet/command-line-api at 217225e6c9007d8712c7ff9b30b56bb8e7bf5280
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for System.ComponentModel (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.ComponentModel.Primitives (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.ComponentModel.TypeConverter (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Configuration.ConfigurationManager (v4.4.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at https://github.com/dotnet/corefx/blob/master/LICENSE.TXT
+
+
+License notice for System.Console (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Diagnostics.Debug (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Diagnostics.DiagnosticSource (v4.7.0)
+------------------------------------
+
+https://github.com/dotnet/corefx
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for System.Diagnostics.Tools (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Diagnostics.TraceSource (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Diagnostics.Tracing (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Dynamic.Runtime (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Globalization.Calendars (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Globalization.Extensions (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.IO.Compression (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.IO.Compression.ZipFile (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.IO.FileSystem (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.IO.FileSystem.Primitives (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Linq (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Linq.Expressions (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Memory (v4.5.4)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+License available at https://github.com/dotnet/corefx/blob/master/LICENSE.TXT
+
+
+License notice for System.Net.Http (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Net.NameResolution (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Net.Primitives (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Net.Security (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Net.Sockets (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Net.WebHeaderCollection (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.ObjectModel (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Reflection.Emit (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Reflection.Emit.ILGeneration (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Reflection.Emit.Lightweight (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Reflection.Extensions (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Reflection.TypeExtensions (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Runtime.Extensions (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Runtime.Handles (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Runtime.InteropServices (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Runtime.InteropServices.RuntimeInformation (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Runtime.Loader (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Runtime.Numerics (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Security.AccessControl (v4.7.0)
+------------------------------------
+
+https://github.com/dotnet/corefx
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for System.Security.Claims (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Security.Cryptography.Algorithms (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Security.Cryptography.Cng (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Security.Cryptography.Csp (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Security.Cryptography.Encoding (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Security.Cryptography.OpenSsl (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Security.Cryptography.Primitives (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Security.Cryptography.ProtectedData (v4.4.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at https://github.com/dotnet/corefx/blob/master/LICENSE.TXT
+
+
+License notice for System.Security.Cryptography.X509Certificates (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Security.Principal (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Text.Encoding.Extensions (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Text.RegularExpressions (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Threading (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Threading.Tasks.Extensions (v4.5.1)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at https://github.com/dotnet/corefx/blob/master/LICENSE.TXT
+
+
+License notice for System.Threading.ThreadPool (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Threading.Timer (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Xml.ReaderWriter (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Xml.XDocument (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Xml.XmlDocument (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for xunit.abstractions (v2.0.3)
+------------------------------------
+
+https://github.com/xunit/xunit
+
+License available at https://raw.githubusercontent.com/xunit/xunit/master/license.txt
+
+
+License notice for xunit.assert (v2.4.1)
+------------------------------------
+
+https://github.com/xunit/xunit
+
+License available at https://raw.githubusercontent.com/xunit/xunit/master/license.txt
+
+
+License notice for xunit.core (v2.4.1)
+------------------------------------
+
+https://github.com/xunit/xunit
+
+License available at https://raw.githubusercontent.com/xunit/xunit/master/license.txt
+
+
+License notice for Xunit.DependencyInjection (v5.2.0)
+------------------------------------
+
+https://github.com/pengweiqhca/Xunit.DependencyInjection at 363391b3e28fda1ec2b901d18881328eb64c1eac
+
+Copyright © 2019
+
+
+License notice for xunit.extensibility.core (v2.4.1)
+------------------------------------
+
+https://github.com/xunit/xunit
+
+License available at https://raw.githubusercontent.com/xunit/xunit/master/license.txt
+
+
+License notice for xunit.extensibility.execution (v2.4.1)
+------------------------------------
+
+https://github.com/xunit/xunit
+
+License available at https://raw.githubusercontent.com/xunit/xunit/master/license.txt
+
+
+License notice for Microsoft.CSharp (v4.4.1)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at https://github.com/dotnet/corefx/blob/master/LICENSE.TXT
+
+
+License notice for System.Buffers (v4.5.1)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+License available at https://github.com/dotnet/corefx/blob/master/LICENSE.TXT
+
+
+License notice for System.Diagnostics.DiagnosticSource (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.Threading.Tasks.Extensions (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for System.ComponentModel.Annotations (v4.3.0)
+------------------------------------
+
+https://dot.net/
+
+Copyright © Microsoft Corporation.  All rights reserved.
+
+License available at http://go.microsoft.com/fwlink/?LinkId=329770
+
+
+License notice for Microsoft.AspNetCore.Components.WebAssembly (v3.2.0)
+------------------------------------
+
+https://github.com/aspnet/AspNetCore at 158126c27a182202900dbe26aa0d3329019b4c09
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.AspNetCore.Components.WebAssembly.Build (v3.2.0)
+------------------------------------
+
+https://github.com/aspnet/AspNetCore at 158126c27a182202900dbe26aa0d3329019b4c09
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.AspNetCore.Authorization (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/AspNetCore at e81033e094d4663ffd227bb4aed30b76b0631e6d
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.AspNetCore.Components (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/AspNetCore at e81033e094d4663ffd227bb4aed30b76b0631e6d
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.AspNetCore.Components.Analyzers (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/AspNetCore at e81033e094d4663ffd227bb4aed30b76b0631e6d
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.AspNetCore.Components.Forms (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/AspNetCore at e81033e094d4663ffd227bb4aed30b76b0631e6d
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.AspNetCore.Components.Web (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/AspNetCore at e81033e094d4663ffd227bb4aed30b76b0631e6d
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.AspNetCore.Components.WebAssembly.HttpHandler (v3.2.0)
+------------------------------------
+
+https://github.com/aspnet/AspNetCore at 158126c27a182202900dbe26aa0d3329019b4c09
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.AspNetCore.Components.WebAssembly.Runtime (v3.2.0)
+------------------------------------
+
+https://github.com/dotnet/blazor at cc449601d638ffaab58ae9487f0fd010bb178a12
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.AspNetCore.Metadata (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/AspNetCore at e81033e094d4663ffd227bb4aed30b76b0631e6d
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.JSInterop (v3.1.3)
+------------------------------------
+
+https://github.com/aspnet/Extensions at 7d9baaf617741d775578c8018729ac5b75734c69
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.JSInterop.WebAssembly (v3.2.0)
+------------------------------------
+
+https://github.com/aspnet/AspNetCore at 158126c27a182202900dbe26aa0d3329019b4c09
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Microsoft.AspNetCore.Components.WebAssembly.Server (v3.2.0)
+------------------------------------
+
+https://github.com/aspnet/AspNetCore at 158126c27a182202900dbe26aa0d3329019b4c09
+
+https://asp.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Swashbuckle.AspNetCore (v5.4.1)
+------------------------------------
+
+https://github.com/domaindrivendev/Swashbuckle.AspNetCore.git
+
+https://github.com/domaindrivendev/Swashbuckle.AspNetCore
+
+License available at https://raw.githubusercontent.com/domaindrivendev/Swashbuckle.AspNetCore/master/LICENSE
+
+
+License notice for Microsoft.OpenApi (v1.1.4)
+------------------------------------
+
+https://github.com/Microsoft/OpenAPI.NET
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+License available at https://raw.githubusercontent.com/Microsoft/OpenAPI.NET/master/LICENSE
+
+
+License notice for Swashbuckle.AspNetCore.Swagger (v5.4.1)
+------------------------------------
+
+https://github.com/domaindrivendev/Swashbuckle.AspNetCore.git
+
+https://github.com/domaindrivendev/Swashbuckle.AspNetCore
+
+License available at https://raw.githubusercontent.com/domaindrivendev/Swashbuckle.AspNetCore/master/LICENSE
+
+
+License notice for Swashbuckle.AspNetCore.SwaggerGen (v5.4.1)
+------------------------------------
+
+https://github.com/domaindrivendev/Swashbuckle.AspNetCore.git
+
+https://github.com/domaindrivendev/Swashbuckle.AspNetCore
+
+License available at https://raw.githubusercontent.com/domaindrivendev/Swashbuckle.AspNetCore/master/LICENSE
+
+
+License notice for Swashbuckle.AspNetCore.SwaggerUI (v5.4.1)
+------------------------------------
+
+https://github.com/domaindrivendev/Swashbuckle.AspNetCore.git
+
+https://github.com/domaindrivendev/Swashbuckle.AspNetCore
+
+License available at https://raw.githubusercontent.com/domaindrivendev/Swashbuckle.AspNetCore/master/LICENSE
+
+
+License notice for Bullseye (v3.3.0)
+------------------------------------
+
+https://github.com/adamralph/bullseye at 4f00608e29f1b32e94dc2a8c4156acad1fbd8e3f
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for System.CommandLine.DragonFruit (v0.3.0-alpha.20303.1)
+------------------------------------
+
+https://github.com/dotnet/command-line-api at 217225e6c9007d8712c7ff9b30b56bb8e7bf5280
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for System.CommandLine.Rendering (v0.3.0-alpha.20303.1)
+------------------------------------
+
+https://github.com/dotnet/command-line-api at 217225e6c9007d8712c7ff9b30b56bb8e7bf5280
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for Stl.Fusion.Client (v0.1.87)
+------------------------------------
+
+https://github.com/servicetitan/Stl.Fusion
+
+Copyright ServiceTitan, Inc.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for Stl.Fusion.Server (v0.1.87)
+------------------------------------
+
+https://github.com/servicetitan/Stl.Fusion
+
+Copyright ServiceTitan, Inc.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for Stl (v0.1.87)
+------------------------------------
+
+https://github.com/servicetitan/Stl.Fusion
+
+Copyright ServiceTitan, Inc.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for Stl.Fusion (v0.1.87)
+------------------------------------
+
+https://github.com/servicetitan/Stl.Fusion
+
+Copyright ServiceTitan, Inc.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
