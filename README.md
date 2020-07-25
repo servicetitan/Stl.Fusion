@@ -1,6 +1,6 @@
 ![](docs/img/Banner.jpg)
 
-> All project updates are published on our [Discord Server](https://discord.gg/EKEwv6d); it's also the best place for Q/A.  &#32;
+> All project updates are published on our [Discord Server](https://discord.gg/EKEwv6d); it's also the best place for Q/A.\
 > [![Build](https://github.com/servicetitan/Stl.Fusion/workflows/Build/badge.svg)](https://github.com/servicetitan/Stl.Fusion/actions?query=workflow%3A%22Build%22)
 > [![NuGetVersion](https://img.shields.io/nuget/v/Stl.Fusion)](https://www.nuget.org/packages/Stl.Fusion) 
 
