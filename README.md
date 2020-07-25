@@ -1,21 +1,15 @@
 ![](docs/img/Banner.jpg)
 
-[![Build](https://github.com/servicetitan/Stl.Fusion/workflows/Build/badge.svg)](https://github.com/servicetitan/Stl.Fusion/actions?query=workflow%3A%22Build%22)
-[![NuGetVersion](https://img.shields.io/nuget/v/Stl.Fusion)](https://www.nuget.org/packages/Stl.Fusion)
+> All project updates are published on our [Discord Server](https://discord.gg/EKEwv6d); it's also the best place for Q/A. &#32;
+> [![Build](https://github.com/servicetitan/Stl.Fusion/workflows/Build/badge.svg)](https://github.com/servicetitan/Stl.Fusion/actions?query=workflow%3A%22Build%22)
+> [![NuGetVersion](https://img.shields.io/nuget/v/Stl.Fusion)](https://www.nuget.org/packages/Stl.Fusion) 
 
-> Have you ever dreamed of an abstraction that magically delivers
-  every change made to you server-side data to every client that displays it?
+**Stl.Fusion** is .NET Core & Blazor library that attempts to dramatically
+improve the way we write real-time services and UIs. If you ever dreamed 
+of an abstraction that **automatically delivers every modification made to your 
+server-side data to every client who uses (e.g. displays) the affected data**, 
+you've just found it.
 
-> Have you thought of a caching API that automatically evicts a 
-  cached entry right at the moment it becomes inconsistent with the
-  ground truth?
-
-`Stl.Fusion` solves both these problems &ndash; 
-moreover, it does this almost transparently for you, so most of your code won't even change!
-And yes, it is scalable and crafted for performance.
-
-> **IMPORTANT:** All project updates are currently published on its [Discord Server](https://discord.gg/EKEwv6d); 
-> it's also the best place for Q/A.
 
 ## Create Real-Time User Interfaces With Almost No Extra Code
 
