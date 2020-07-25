@@ -1,9 +1,7 @@
 using System;
-using System.ComponentModel;
 using System.Threading.Tasks;
-using Autofac;
 using FluentAssertions;
-using Stl.Channels;
+using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion;
 using Stl.Fusion.Bridge;
 using Stl.Tests.Fusion.Services;
@@ -20,8 +18,8 @@ namespace Stl.Tests.Fusion
         [Fact(Timeout = 120_000)]
         public async Task BasicTest()
         {
-            await using var serving = await WebSocketServer.ServeAsync();
-            var sp = Container.Resolve<ISimplestProvider>();
+            await using var serving = await WebSocketHost.ServeAsync();
+            var sp = Services.GetRequiredService<ISimplestProvider>();
 
             sp.SetValue("");
             var p1 = await Publisher.PublishAsync(_ => sp.GetValueAsync());
@@ -49,8 +47,8 @@ namespace Stl.Tests.Fusion
         [Fact(Timeout = 120_000)]
         public async Task TimerTest()
         {
-            await using var serving = await WebSocketServer.ServeAsync();
-            var tp = Container.Resolve<ITimeService>();
+            await using var serving = await WebSocketHost.ServeAsync();
+            var tp = Services.GetRequiredService<ITimeService>();
 
             var pub = await Publisher.PublishAsync(_ => tp.GetTimeAsync());
             var rep = Replicator.GetOrAdd<DateTime>(pub!.Publisher.Id, pub.Id);

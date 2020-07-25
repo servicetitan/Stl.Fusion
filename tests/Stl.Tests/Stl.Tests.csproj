@@ -17,14 +17,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Stl.Experimental\Stl.Experimental.csproj" />
-    <ProjectReference Include="..\..\src\Stl.CommandLine\Stl.CommandLine.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.Client\Stl.Fusion.Client.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.Server\Stl.Fusion.Server.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion\Stl.Fusion.csproj" />
-    <ProjectReference Include="..\..\src\Stl.Hosting\Stl.Hosting.csproj" />
-    <ProjectReference Include="..\..\src\Stl.Plugins\Stl.Plugins.csproj" />
-    <ProjectReference Include="..\..\src\Stl.Plugins.Extensions\Stl.Plugins.Extensions.csproj" />
     <ProjectReference Include="..\..\src\Stl.Testing\Stl.Testing.csproj" />
     <ProjectReference Include="..\..\src\Stl\Stl.csproj" />
   </ItemGroup>

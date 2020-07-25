@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
-using Autofac;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion;
 using Stl.OS;
 using Stl.Tests.Fusion.Services;
@@ -20,7 +20,7 @@ namespace Stl.Tests.Fusion
                 // Screenshots don't work on Unix
                 return;
 
-            var screenshots = Container.Resolve<IScreenshotService>();
+            var screenshots = Services.GetRequiredService<IScreenshotService>();
             var c = await Computed.CaptureAsync(_ => screenshots.GetScreenshotAsync(128));
             c.IsConsistent.Should().BeTrue();
             c.Value.Length.Should().BeGreaterThan(0);

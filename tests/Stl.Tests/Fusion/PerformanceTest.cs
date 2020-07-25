@@ -4,7 +4,6 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Autofac;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
@@ -35,7 +34,7 @@ namespace Stl.Tests.Fusion
         {
             await base.InitializeAsync();
 
-            var users = Container.Resolve<IUserService>();
+            var users = Services.GetRequiredService<IUserService>();
             var tasks = new List<Task>();
             for (var i = 0; i < UserCount; i++)
                 tasks.Add(users.CreateAsync(new User() {
@@ -62,8 +61,8 @@ namespace Stl.Tests.Fusion
 
             var cachingProviderPool = new ConcurrentPool<IUserService>(() => users);
             var nonCachingProviderPool = new ConcurrentPool<IUserService>(() => {
-                var scope = Container.BeginLifetimeScope();
-                return scope.Resolve<UserService>();
+                var scope = Services.CreateScope();
+                return scope.ServiceProvider.GetRequiredService<UserService>();
                 // No scope disposal, but it's fine for the test, I guess
             });
 

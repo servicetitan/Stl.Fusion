@@ -4,11 +4,8 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <IsTestProject>false</IsTestProject>
     <PackageTags>servicetitan stl testing</PackageTags>
-    <Description>
-      A set of helpers for Unit and Integration testing.
-    </Description>
-    <IsPackable>false</IsPackable>
-    <IsPublishable>false</IsPublishable>
+    <Description>Stl.Testing is a collection of <!--
+    -->testing helpers used by Stl.Fusion tests.</Description>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +16,7 @@
     <PackageReference Include="AutoFixture" />
     <PackageReference Include="AutoFixture.Xunit2" />
     <PackageReference Include="Moq" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="FluentAssertions" />
 
     <PackageReference Include="System.CommandLine" />
@@ -28,7 +26,6 @@
     <PackageReference Include="Serilog.Sinks.Console" />
     <PackageReference Include="Serilog.Sinks.Observable" />
     <PackageReference Include="Serilog.Sinks.TextWriter" />
-
 
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.analyzers" />

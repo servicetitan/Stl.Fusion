@@ -1,14 +1,11 @@
 using System;
-using System.Diagnostics;
-using System.Threading;
 using System.Threading.Tasks;
-using Autofac;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Stl.Fusion;
 using Stl.Tests.Fusion.Model;
 using Stl.Tests.Fusion.Services;
-using Stl.Time;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -21,7 +18,7 @@ namespace Stl.Tests.Fusion
         [Fact]
         public async Task InvalidateEverythingTest()
         {
-            var users = Container.Resolve<IUserService>();
+            var users = Services.GetRequiredService<IUserService>();
             // We need at least 1 user to see count invalidation messages
             await users.CreateAsync(new User() {
                 Id = int.MaxValue,
@@ -48,7 +45,7 @@ namespace Stl.Tests.Fusion
         [Fact]
         public async Task InvalidationTest()
         {
-            var users = Container.Resolve<IUserService>();
+            var users = Services.GetRequiredService<IUserService>();
             // We need at least 1 user to see count invalidation messages
             await users.CreateAsync(new User() {
                 Id = int.MaxValue,
@@ -93,8 +90,8 @@ namespace Stl.Tests.Fusion
         [Fact]
         public async Task SimpleComputedTest()
         {
-            var users = Container.Resolve<IUserService>();
-            var time = Container.Resolve<ITimeService>();
+            var users = Services.GetRequiredService<IUserService>();
+            var time = Services.GetRequiredService<ITimeService>();
 
             var u = new User() {
                 Id = int.MaxValue,
@@ -126,7 +123,7 @@ namespace Stl.Tests.Fusion
         [Fact]
         public async Task SuppressTest()
         {
-            var time = Container.Resolve<ITimeService>();
+            var time = Services.GetRequiredService<ITimeService>();
             var count1 = 0;
             var count2 = 0;
 
@@ -156,7 +153,7 @@ namespace Stl.Tests.Fusion
         [Fact]
         public async Task KeepAliveTimeTest()
         {
-            var users = Container.Resolve<IUserService>();
+            var users = Services.GetRequiredService<IUserService>();
 
             var cUser0 = await Computed.CaptureAsync(_ => users.TryGetAsync(0));
             var cCount = await Computed.CaptureAsync(_ => users.CountAsync());

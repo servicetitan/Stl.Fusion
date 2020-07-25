@@ -1,8 +1,8 @@
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
-using Autofac;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.UI;
 using Stl.Tests.Fusion.Services;
 using Stl.Tests.Fusion.UIModels;
@@ -19,8 +19,8 @@ namespace Stl.Tests.Fusion
         [Fact]
         public async Task TimeServiceTest()
         {
-            await using var serving = await WebSocketServer.ServeAsync();
-            var tpc = Container.Resolve<ITimeClient>();
+            await using var serving = await WebSocketHost.ServeAsync();
+            var tpc = Services.GetRequiredService<ITimeClient>();
             var cTime = await tpc.GetComputedTimeAsync();
             cTime.IsConsistent.Should().BeTrue();
             (DateTime.Now - cTime.Value).Should().BeLessThan(TimeSpan.FromSeconds(1));
@@ -34,8 +34,8 @@ namespace Stl.Tests.Fusion
         [Fact]
         public async Task ServerTimeModelTest1()
         {
-            await using var serving = await WebSocketServer.ServeAsync();
-            using var stm = Container.Resolve<ILiveState<ServerTimeModel1>>();
+            await using var serving = await WebSocketHost.ServeAsync();
+            using var stm = Services.GetRequiredService<ILiveState<ServerTimeModel1>>();
 
             var c = stm.State;
             c.IsConsistent.Should().BeFalse();
@@ -70,8 +70,8 @@ namespace Stl.Tests.Fusion
         [Fact]
         public async Task ServerTimeModelTest2()
         {
-            await using var serving = await WebSocketServer.ServeAsync();
-            using var stm = Container.Resolve<ILiveState<ServerTimeModel2>>();
+            await using var serving = await WebSocketHost.ServeAsync();
+            using var stm = Services.GetRequiredService<ILiveState<ServerTimeModel2>>();
 
             var c = stm.State;
             c.IsConsistent.Should().BeFalse();

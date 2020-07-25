@@ -1,13 +1,11 @@
 using System;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Threading.Tasks;
-using Autofac;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion;
 using Stl.Fusion.Bridge;
-using Stl.OS;
 using Stl.Testing;
 using Stl.Tests.Fusion.Services;
 using Xunit;
@@ -24,7 +22,7 @@ namespace Stl.Tests.Fusion
         [Fact]
         public async Task ConnectToPublisherTest()
         {
-            await using var serving = await WebSocketServer.ServeAsync();
+            await using var serving = await WebSocketHost.ServeAsync();
             var channel = await ConnectToPublisherAsync();
             channel.Writer.Complete();
         }
@@ -32,8 +30,8 @@ namespace Stl.Tests.Fusion
         [Fact]
         public async Task TimerTest()
         {
-            await using var serving = await WebSocketServer.ServeAsync();
-            var tp = Container.Resolve<ITimeService>();
+            await using var serving = await WebSocketHost.ServeAsync();
+            var tp = Services.GetRequiredService<ITimeService>();
 
             var pub = await Publisher.PublishAsync(_ => tp.GetTimeAsync());
             var rep = Replicator.GetOrAdd<DateTime>(pub!.Publisher.Id, pub.Id);
@@ -53,8 +51,8 @@ namespace Stl.Tests.Fusion
         [Fact(Timeout = 120_000)]
         public async Task NoConnectionTest()
         {
-            await using var serving = await WebSocketServer.ServeAsync();
-            var tp = Container.Resolve<ITimeService>();
+            await using var serving = await WebSocketHost.ServeAsync();
+            var tp = Services.GetRequiredService<ITimeService>();
 
             var pub = await Publisher.PublishAsync(_ => tp.GetTimeAsync());
             var rep = Replicator.GetOrAdd<DateTime>("NoPublisher", pub.Id);
@@ -69,8 +67,8 @@ namespace Stl.Tests.Fusion
                 // TODO: Fix intermittent failures on GitHub
                 return;
 
-            var serving = await WebSocketServer.ServeAsync();
-            var tp = Container.Resolve<ITimeService>();
+            var serving = await WebSocketHost.ServeAsync();
+            var tp = Services.GetRequiredService<ITimeService>();
 
             Debug.WriteLine("0");
             var pub = await Publisher.PublishAsync(_ => tp.GetTimeAsync());
@@ -113,7 +111,7 @@ namespace Stl.Tests.Fusion
             state.Error.Should().BeOfType<WebSocketException>();
 
             Debug.WriteLine("WebServer: starting.");
-            serving = await WebSocketServer.ServeAsync();
+            serving = await WebSocketHost.ServeAsync();
             await Task.Delay(1000);
             Debug.WriteLine("WebServer: started.");
 

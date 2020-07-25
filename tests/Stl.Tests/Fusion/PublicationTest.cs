@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
-using Autofac;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Messages;
 using Stl.Testing;
@@ -22,7 +22,7 @@ namespace Stl.Tests.Fusion
             Publisher.ChannelHub.Attach(cp.Channel1).Should().BeTrue();
             var cReader = cp.Channel2.Reader;
 
-            var sp = Container.Resolve<ISimplestProvider>();
+            var sp = Services.GetRequiredService<ISimplestProvider>();
             sp.SetValue("");
 
             var p1 = await Publisher.PublishAsync(_ => sp.GetValueAsync());

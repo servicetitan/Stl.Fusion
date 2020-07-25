@@ -1,8 +1,7 @@
 using System;
-using System.ComponentModel;
 using System.Threading.Tasks;
-using Autofac;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Stl.Fusion;
 using Stl.Tests.Fusion.Services;
@@ -19,7 +18,7 @@ namespace Stl.Tests.Fusion
         [Fact]
         public async Task AutoRecomputeTest()
         {
-            var time = Container.Resolve<ITimeService>();
+            var time = Services.GetRequiredService<ITimeService>();
             var c = await Computed.CaptureAsync(
                 _ => time.GetTimeWithOffsetAsync(TimeSpan.FromSeconds(1)));
 
@@ -41,7 +40,7 @@ namespace Stl.Tests.Fusion
         [Fact]
         public async Task InvalidationAndCachingTest1()
         {
-            var time = Container.Resolve<ITimeService>();
+            var time = Services.GetRequiredService<ITimeService>();
 
             var c1 = await Computed.CaptureAsync(_ => time.GetTimeAsync());
 
@@ -59,7 +58,7 @@ namespace Stl.Tests.Fusion
         {
             // TODO: Fix the test so that it starts right after the time invalidation,
             // otherwise it has a tiny chance of failure
-            var time = Container.Resolve<ITimeService>();
+            var time = Services.GetRequiredService<ITimeService>();
 
             var c1 = await Computed.CaptureAsync(_ => time.GetTimeWithOffsetAsync(TimeSpan.FromSeconds(1)));
             c1.Should().NotBeNull();

@@ -6,8 +6,6 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
-using Autofac;
-using Autofac.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -37,38 +35,29 @@ namespace Stl.Tests.Fusion
         public FusionTestOptions Options { get; }
         public bool IsLoggingEnabled { get; set; } = true;
         public IServiceProvider Services { get; }
-        public ILifetimeScope Container { get; }
         public ILogger Log { get; }
-        public TestDbContext DbContext => Container.Resolve<TestDbContext>();
-        public IPublisher Publisher => Container.Resolve<IPublisher>();
-        public IReplicator Replicator => Container.Resolve<IReplicator>();
-        public TestWebServer WebSocketServer => Container.Resolve<TestWebServer>();
+        public TestDbContext DbContext => Services.GetRequiredService<TestDbContext>();
+        public IPublisher Publisher => Services.GetRequiredService<IPublisher>();
+        public IReplicator Replicator => Services.GetRequiredService<IReplicator>();
+        public TestWebHost WebSocketHost => Services.GetRequiredService<TestWebHost>();
 
         public FusionTestBase(ITestOutputHelper @out, FusionTestOptions? options = null) : base(@out)
         {
             Options = options ?? new FusionTestOptions();
             Services = CreateServices();
-            Container = Services.GetRequiredService<ILifetimeScope>();
-            Log = (ILogger) Container.Resolve(typeof(ILogger<>).MakeGenericType(GetType()));
+            Log = (ILogger) Services.GetService(typeof(ILogger<>).MakeGenericType(GetType()));
         }
 
         public virtual Task InitializeAsync()
             => DbContext.Database.EnsureCreatedAsync();
         public virtual Task DisposeAsync()
-            => Task.CompletedTask.ContinueWith(_ => Container?.Dispose());
+            => Task.CompletedTask.ContinueWith(_ => (Services as IDisposable)?.Dispose());
 
         protected virtual IServiceProvider CreateServices()
         {
-            // IServiceCollection-based services
             var services = (IServiceCollection) new ServiceCollection();
             ConfigureServices(services);
-
-            // Native Autofac services
-            var builder = new AutofacServiceProviderFactory().CreateBuilder(services);
-            ConfigureServices(builder);
-
-            var container = builder.Build();
-            return new AutofacServiceProvider(container);
+            return services.BuildServiceProvider();
         }
 
         protected virtual void ConfigureServices(IServiceCollection services)
@@ -125,10 +114,10 @@ namespace Stl.Tests.Fusion
             services.AddSingleton<TestDbContextPool>();
 
             // Core fusion services
-            services.AddSingleton(c => new TestWebServer(c));
+            services.AddSingleton(c => new TestWebHost(c));
             services.AddFusionServerCore();
             services.AddFusionWebSocketClient((c, o) => {
-                o.BaseUri = c.GetRequiredService<TestWebServer>().BaseUri;
+                o.BaseUri = c.GetRequiredService<TestWebHost>().ServerUri;
                 o.MessageLogLevel = LogLevel.Information;
             });
 
@@ -144,12 +133,12 @@ namespace Stl.Tests.Fusion
 
             // Replica services
             services.AddHttpClient<HttpClient>((c, httpClient) => {
-                var baseUri = c.GetRequiredService<TestWebServer>().BaseUri;
+                var baseUri = c.GetRequiredService<TestWebHost>().ServerUri;
                 var apiUri = new Uri($"{baseUri}api/");
                 httpClient.BaseAddress = apiUri;
             });
             services.AddSingleton(c => {
-                var baseUri = c.GetRequiredService<TestWebServer>().BaseUri;
+                var baseUri = c.GetRequiredService<TestWebHost>().ServerUri;
                 var apiUri = new Uri($"{baseUri}api/");
                 return new HttpClient() { BaseAddress = apiUri };
             });
@@ -176,12 +165,9 @@ namespace Stl.Tests.Fusion
 
         protected Task<Channel<Message>> ConnectToPublisherAsync(CancellationToken cancellationToken = default)
         {
-            var channelProvider = Container.Resolve<IChannelProvider>();
+            var channelProvider = Services.GetRequiredService<IChannelProvider>();
             return channelProvider.CreateChannelAsync(Publisher.Id, cancellationToken);
         }
-
-        protected virtual void ConfigureServices(ContainerBuilder builder)
-        { }
 
         protected virtual TestChannelPair<Message> CreateChannelPair(
             string name, bool dump = true)

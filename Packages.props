@@ -26,7 +26,8 @@
     <PackageReference Update="MediatR.Extensions.Microsoft.DependencyInjection" Version="8.0.1" />
     <PackageReference Update="Microsoft.AspNetCore.Components.WebAssembly" Version="$(BlazorVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="$(BlazorVersion)" />
-    <PackageReference Update="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.6" />
+    <PackageReference Update="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="$(AspNetCoreVersion)" />
+    <PackageReference Update="Microsoft.AspNetCore.Mvc.Testing" Version="$(AspNetCoreVersion)" />
     <PackageReference Update="Microsoft.Data.SqlClient" Version="2.0.0" />
     <PackageReference Update="Microsoft.Extensions.Caching.Abstractions" Version="$(AspNetCoreVersion)" />
     <PackageReference Update="Microsoft.Extensions.Configuration.Abstractions" Version="$(AspNetCoreVersion)" />

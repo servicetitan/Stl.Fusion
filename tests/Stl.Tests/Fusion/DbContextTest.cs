@@ -1,10 +1,9 @@
 using System.Linq;
 using System.Threading.Tasks;
-using Autofac;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Stl.Tests.Fusion.Model;
-using Stl.Tests.Fusion.Services;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -42,8 +41,8 @@ namespace Stl.Tests.Fusion
             DbContext.AddRange(u1, c1, m1);
             await DbContext.SaveChangesAsync();
 
-            using var scope = Container.BeginLifetimeScope();
-            using var dbContext = scope.Resolve<TestDbContext>();
+            using var scope = Services.CreateScope();
+            using var dbContext = scope.ServiceProvider.GetRequiredService<TestDbContext>();
 
             (await dbContext.Users.CountAsync()).Should().Be(1);
             (await dbContext.Messages.CountAsync()).Should().Be(1);

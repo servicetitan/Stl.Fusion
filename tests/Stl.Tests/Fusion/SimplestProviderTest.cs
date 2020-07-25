@@ -1,8 +1,8 @@
 using System;
-using System.Threading;
+using System.ComponentModel;
 using System.Threading.Tasks;
-using Autofac;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion;
 using Stl.Tests.Fusion.Services;
 using Xunit;
@@ -18,7 +18,7 @@ namespace Stl.Tests.Fusion
         [Fact]
         public async Task BasicTest()
         {
-            var p = Container.Resolve<ISimplestProvider>();
+            var p = Services.GetRequiredService<ISimplestProvider>();
             p.SetValue("");
             var (gv, gcc) = (p.GetValueCallCount, p.GetCharCountCallCount);
 
@@ -43,7 +43,7 @@ namespace Stl.Tests.Fusion
         [Fact]
         public async Task ScopedTest()
         {
-            var p = Container.Resolve<ISimplestProvider>();
+            var p = Services.GetRequiredService<ISimplestProvider>();
             p.SetValue("");
             var (gv, gcc) = (p.GetValueCallCount, p.GetCharCountCallCount);
             (await p.GetValueAsync()).Should().Be("");
@@ -51,16 +51,16 @@ namespace Stl.Tests.Fusion
             p.GetValueCallCount.Should().Be(++gv);
             p.GetCharCountCallCount.Should().Be(++gcc);
 
-            await using (var s1 = Container.BeginLifetimeScope()) {
-                p = s1.Resolve<ISimplestProvider>();
+            using (var s1 = Services.CreateScope()) {
+                p = s1.ServiceProvider.GetRequiredService<ISimplestProvider>();
                 (gv, gcc) = (p.GetValueCallCount, p.GetCharCountCallCount);
                 (await p.GetValueAsync()).Should().Be("");
                 (await p.GetCharCountAsync()).Should().Be(0);
                 p.GetValueCallCount.Should().Be(gv);
                 p.GetCharCountCallCount.Should().Be(gcc);
             }
-            await using (var s2 = Container.BeginLifetimeScope()) {
-                p = s2.Resolve<ISimplestProvider>();
+            using (var s2 = Services.CreateScope()) {
+                p = s2.ServiceProvider.GetRequiredService<ISimplestProvider>();
                 (gv, gcc) = (p.GetValueCallCount, p.GetCharCountCallCount);
                 (await p.GetValueAsync()).Should().Be("");
                 (await p.GetCharCountAsync()).Should().Be(0);
@@ -72,7 +72,7 @@ namespace Stl.Tests.Fusion
         [Fact]
         public async Task ExceptionCachingTest()
         {
-            var p = Container.Resolve<ISimplestProvider>();
+            var p = Services.GetRequiredService<ISimplestProvider>();
             p.SetValue("");
             var (gv, gcc) = (p.GetValueCallCount, p.GetCharCountCallCount);
 
@@ -101,7 +101,7 @@ namespace Stl.Tests.Fusion
         public async Task OptionsTest()
         {
             var d = ComputedOptions.Default;
-            var p = Container.Resolve<ISimplestProvider>();
+            var p = Services.GetRequiredService<ISimplestProvider>();
             p.SetValue("");
 
             var c1 = await Computed.CaptureAsync(_ => p.GetValueAsync());
