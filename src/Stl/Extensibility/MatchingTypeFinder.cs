@@ -18,10 +18,10 @@ namespace Stl.Extensibility
     public class MatchingTypeFinder : IMatchingTypeFinder
     {
         private readonly Dictionary<(Type Source, Symbol Scope), Type> _matches;
-        private readonly ConcurrentDictionary<(Type Source, Symbol Scope), Type?> _cache = 
+        private readonly ConcurrentDictionary<(Type Source, Symbol Scope), Type?> _cache =
             new ConcurrentDictionary<(Type, Symbol), Type?>();
 
-        public MatchingTypeFinder(Dictionary<(Type Source, Symbol Scope), Type> matches) 
+        public MatchingTypeFinder(Dictionary<(Type Source, Symbol Scope), Type> matches)
             => _matches = matches;
         public MatchingTypeFinder(params Assembly[] assemblies)
             : this(assemblies.SelectMany(a => a.GetTypes())) { }
@@ -39,7 +39,7 @@ namespace Stl.Extensibility
         public Type? TryFind(Type source, Symbol scope)
         {
             if (source == null)
-                throw new ArgumentNullException(nameof(source)); 
+                throw new ArgumentNullException(nameof(source));
             return _cache.GetOrAddChecked((source, scope), (key, self) => {
                 var (source1, scope1) = key;
                 var baseTypes = source1.GetAllBaseTypes(true, true);

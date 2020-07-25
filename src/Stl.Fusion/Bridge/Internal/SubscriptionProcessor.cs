@@ -22,7 +22,7 @@ namespace Stl.Fusion.Bridge.Internal
         public readonly SubscribeMessage SubscribeMessage;
 
         protected SubscriptionProcessor(
-            IPublicationImpl publication, Channel<Message> channel, SubscribeMessage subscribeMessage, 
+            IPublicationImpl publication, Channel<Message> channel, SubscribeMessage subscribeMessage,
             ILogger? log = null)
         {
             Log = log ?? NullLogger.Instance;
@@ -39,14 +39,14 @@ namespace Stl.Fusion.Bridge.Internal
     {
         public new readonly IPublicationImpl<T> Publication;
 
-        public SubscriptionProcessor( 
+        public SubscriptionProcessor(
             IPublicationImpl<T> publication, Channel<Message> channel, SubscribeMessage subscribeMessage)
             : base(publication, channel, subscribeMessage)
         {
             Publication = publication;
         }
 
-        protected override async Task RunInternalAsync(CancellationToken cancellationToken) 
+        protected override async Task RunInternalAsync(CancellationToken cancellationToken)
         {
             var publicationUseScope = Publication.Use();
             try {
@@ -109,7 +109,7 @@ namespace Stl.Fusion.Bridge.Internal
                 await SendAsync(absentsMessage, cancellationToken).ConfigureAwait(false);
                 return;
             }
-            
+
             using var _ = await AsyncLock.LockAsync(cancellationToken);
 
             var computed = state.Computed;

@@ -5,13 +5,13 @@ namespace Stl.Testing
 {
     public static class TaskEx
     {
-        public static Func<Task> AsAsyncFunc(this Task task) 
+        public static Func<Task> AsAsyncFunc(this Task task)
             => () => task;
-        public static Func<Task<T>> AsAsyncFunc<T>(this Task<T> task) 
+        public static Func<Task<T>> AsAsyncFunc<T>(this Task<T> task)
             => () => task;
-        public static Func<Task> AsAsyncFunc(this ValueTask task) 
+        public static Func<Task> AsAsyncFunc(this ValueTask task)
             => task.AsTask;
-        public static Func<Task<T>> AsAsyncFunc<T>(this ValueTask<T> task) 
+        public static Func<Task<T>> AsAsyncFunc<T>(this ValueTask<T> task)
             => task.AsTask;
     }
 }

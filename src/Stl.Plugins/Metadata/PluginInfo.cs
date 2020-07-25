@@ -18,9 +18,9 @@ namespace Stl.Plugins.Metadata
         public int OrderByDependencyIndex { get; protected internal set; }
 
         [JsonConstructor]
-        public PluginInfo(TypeRef type, 
-            ImmutableArray<TypeRef> ancestors, 
-            ImmutableArray<TypeRef> interfaces, 
+        public PluginInfo(TypeRef type,
+            ImmutableArray<TypeRef> ancestors,
+            ImmutableArray<TypeRef> interfaces,
             ImmutableHashSet<TypeRef> castableTo,
             ImmutableDictionary<string, object> capabilities,
             ImmutableHashSet<TypeRef> dependencies,
@@ -59,17 +59,17 @@ namespace Stl.Plugins.Metadata
                 // temporary plugin factory.
                 // All we can do here is to ignore this exception & assume
                 // these plugins can't provide capabilities and dependencies.
-            } 
+            }
 
             if (tmpPlugin is IHasCapabilities hc)
                 Capabilities = hc.Capabilities;
             if (tmpPlugin is IHasDependencies hd)
                 Dependencies = hd.Dependencies.Select(t => (TypeRef) t).ToImmutableHashSet();
-            
+
             var allAssemblyRefs = constructionInfo.AllAssemblyRefs[type.Assembly];
             AllDependencies = constructionInfo.Plugins
                 .Where(p => p != type && (
-                    allAssemblyRefs.Contains(p.Assembly) || 
+                    allAssemblyRefs.Contains(p.Assembly) ||
                     CastableTo.Contains(p)))
                 .Select(t => (TypeRef) t)
                 .Concat(Dependencies)

@@ -17,7 +17,7 @@ namespace Stl.Reflection
             }
             return fullName ? aqn : RemoveAssemblyDetails(aqn);
         }
-        
+
         public static void SplitAssemblyQualifiedName(string fullyQualifiedTypeName, out string? assemblyName, out string typeName)
         {
             var assemblyDelimiterIndex = GetAssemblyDelimiterIndex(fullyQualifiedTypeName);
@@ -28,7 +28,7 @@ namespace Stl.Reflection
                     .ToString();
                 assemblyName = fullyQualifiedTypeName.AsSpan()
                     .Slice(
-                        assemblyDelimiterIndex.GetValueOrDefault() + 1, 
+                        assemblyDelimiterIndex.GetValueOrDefault() + 1,
                         fullyQualifiedTypeName.Length - assemblyDelimiterIndex.GetValueOrDefault() - 1)
                     .Trim()
                     .ToString();

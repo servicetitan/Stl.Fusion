@@ -7,7 +7,7 @@ namespace Stl.Mathematics
 {
     public static class MathEx
     {
-        private static readonly ConcurrentDictionary<int, BigInteger> _factorials = 
+        private static readonly ConcurrentDictionary<int, BigInteger> _factorials =
             new ConcurrentDictionary<int, BigInteger>();
 
         public static long Min(long a, long b) => a <= b ? a : b;
@@ -15,7 +15,7 @@ namespace Stl.Mathematics
 
         public static ulong Min(ulong a, ulong b) => a <= b ? a : b;
         public static ulong Max(ulong a, ulong b) => a >= b ? a : b;
-        
+
         public static long Gcd(long a, long b) => b == 0 ? a : Gcd(b, a%b);
         public static BigInteger Gcd(BigInteger a, BigInteger b) => b == 0 ? a : Gcd(b, a%b);
 
@@ -25,16 +25,16 @@ namespace Stl.Mathematics
         public static long ExtendedGcd(long a, long b, ref long x, ref long y)
         {
             if (b==0) {
-                x = 1; 
-                y = 0; 
+                x = 1;
+                y = 0;
                 return a;
             } else {
-                var g = ExtendedGcd(b, a%b, ref y, ref x); 
-                y -= a/b*x; 
+                var g = ExtendedGcd(b, a%b, ref y, ref x);
+                y -= a/b*x;
                 return g;
             }
         }
-        
+
         public static BigInteger Factorial(int n)
         {
             if (n < 0)
@@ -102,8 +102,8 @@ namespace Stl.Mathematics
         public static long Parse(string number, string digits)
             => Parse(number.AsSpan(), digits);
         public static long Parse(ReadOnlySpan<char> number, string digits)
-            => TryParse(number, digits, out var result) 
-                ? result 
+            => TryParse(number, digits, out var result)
+                ? result
                 : throw new ArgumentOutOfRangeException(nameof(number));
 
         public static bool TryParse(string number, string digits, out long result)
@@ -113,7 +113,7 @@ namespace Stl.Mathematics
             var radix = digits.Length;
             if (radix < 2)
                 throw new ArgumentOutOfRangeException(nameof(digits));
-            
+
             result = 0;
             if (number.IsEmpty)
                 return false;

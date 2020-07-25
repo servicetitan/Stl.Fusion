@@ -5,7 +5,7 @@ using Stl.Testing;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Stl.Tests.Collections 
+namespace Stl.Tests.Collections
 {
     public class FenwickTreeTest : TestBase
     {

@@ -21,16 +21,16 @@ namespace Stl.Time
         Moment IMomentClock.Now => Now;
         DateTimeOffset ISystemClock.UtcNow => Now;
         DateTimeOffset Microsoft.Extensions.Internal.ISystemClock.UtcNow => Now;
-        
+
         private CpuClock() { }
-        
+
         public override string ToString() => $"{GetType().Name}()";
-        public Moment ToRealTime(Moment localTime) => localTime; 
+        public Moment ToRealTime(Moment localTime) => localTime;
         public Moment ToLocalTime(Moment realTime) => realTime;
         public TimeSpan ToRealDuration(TimeSpan localDuration) => localDuration;
         public TimeSpan ToLocalDuration(TimeSpan realDuration) => realDuration;
 
-        public Task DelayAsync(TimeSpan dueIn, CancellationToken cancellationToken = default) 
+        public Task DelayAsync(TimeSpan dueIn, CancellationToken cancellationToken = default)
             => Task.Delay(dueIn, cancellationToken);
     }
 }

@@ -12,11 +12,11 @@ namespace Stl.Samples.Blazor.Server.Services
     {
         private readonly ILogger _log;
 
-        public TimeService(ILogger<TimeService>? log = null) 
+        public TimeService(ILogger<TimeService>? log = null)
             => _log = log ??= NullLogger<TimeService>.Instance;
 
         [ComputedServiceMethod(AutoInvalidateTime = 0.1)]
-        public virtual Task<DateTime> GetTimeAsync(CancellationToken cancellationToken = default) 
+        public virtual Task<DateTime> GetTimeAsync(CancellationToken cancellationToken = default)
             => Task.FromResult(DateTime.Now);
     }
 }

@@ -20,7 +20,7 @@ namespace Stl.Fusion.Bridge.Interception
         public IReplica<T>? Replica { get; }
 
         // Two primary constructors
-        public ReplicaServiceComputed(ComputedOptions options, IReplicaComputed<T> source, InterceptedInput input) 
+        public ReplicaServiceComputed(ComputedOptions options, IReplicaComputed<T> source, InterceptedInput input)
             : this(options, source.Replica, input, source.LTag)
         {
             ((IComputedImpl) this).AddUsed((IComputedImpl) source);
@@ -28,19 +28,19 @@ namespace Stl.Fusion.Bridge.Interception
             if (!source.IsConsistent)
                 Invalidate();
         }
-        
-        public ReplicaServiceComputed(ComputedOptions options, InterceptedInput input, Exception error, LTag lTag) 
-            : this(options, null, input, new Result<T>(default!, error), lTag, false) { } 
+
+        public ReplicaServiceComputed(ComputedOptions options, InterceptedInput input, Exception error, LTag lTag)
+            : this(options, null, input, new Result<T>(default!, error), lTag, false) { }
 
         // And the "inherited" ones allowing to configure this computed as you wish
         public ReplicaServiceComputed(
-            ComputedOptions options, IReplica<T>? replica, InterceptedInput input, LTag lTag) 
-            : base(options, input, lTag) 
+            ComputedOptions options, IReplica<T>? replica, InterceptedInput input, LTag lTag)
+            : base(options, input, lTag)
             => Replica = replica;
         public ReplicaServiceComputed(
-            ComputedOptions options, IReplica<T>? replica, InterceptedInput input, 
-            Result<T> output, LTag lTag, bool isConsistent = true) 
-            : base(options, input, output, lTag, isConsistent) 
+            ComputedOptions options, IReplica<T>? replica, InterceptedInput input,
+            Result<T> output, LTag lTag, bool isConsistent = true)
+            : base(options, input, output, lTag, isConsistent)
             => Replica = replica;
     }
 }

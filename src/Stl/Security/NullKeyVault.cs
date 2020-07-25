@@ -8,9 +8,9 @@ namespace Stl.Security
     {
         public static readonly NullKeyVault Instance = new NullKeyVault();
 
-        public string? TryGetSecret(string key) 
+        public string? TryGetSecret(string key)
             => null;
-        public ValueTask<string?> TryGetSecretAsync(string key) 
+        public ValueTask<string?> TryGetSecretAsync(string key)
             => ValueTaskEx.FromResult((string?) null);
     }
 }

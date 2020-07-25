@@ -8,7 +8,7 @@ namespace Stl.Tests.Fusion.Model
 {
     public class TestDbContextPool : ScopedServicePool<TestDbContext>
     {
-        public TestDbContextPool(IServiceProvider services) 
+        public TestDbContextPool(IServiceProvider services)
             : base(services, CanReuse, HardwareInfo.ProcessorCount * 64) { }
 
         private static bool CanReuse(TestDbContext dbContext)
@@ -22,7 +22,7 @@ namespace Stl.Tests.Fusion.Model
         public DbSet<User> Users { get; protected set; } = null!;
         public DbSet<Message> Messages { get; protected set; } = null!;
         public DbSet<Chat> Chats { get; protected set; } = null!;
-        
+
         public TestDbContext(DbContextOptions options) : base(options)
         {
             var ct = ChangeTracker;
@@ -38,7 +38,7 @@ namespace Stl.Tests.Fusion.Model
 
             var message = modelBuilder.Entity<Message>();
             message.HasIndex(c => c.Date);
-            
+
             var chat = modelBuilder.Entity<Chat>();
             chat.HasIndex(c => c.Title);
         }

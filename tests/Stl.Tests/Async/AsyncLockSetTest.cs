@@ -14,7 +14,7 @@ namespace Stl.Tests.Async
     [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
     public class AsyncLockSetTest : AsyncLockTestBase
     {
-        protected AsyncLockSet<string> CheckedFailSet { get; } = 
+        protected AsyncLockSet<string> CheckedFailSet { get; } =
             new AsyncLockSet<string>(ReentryMode.CheckedFail);
         protected AsyncLockSet<string> CheckedPassSet { get; } =
             new AsyncLockSet<string>(ReentryMode.CheckedPass);
@@ -27,10 +27,10 @@ namespace Stl.Tests.Async
             public IAsyncLockSet<TKey> LockSet { get; }
             public TKey Key { get; }
 
-            public ReentryMode ReentryMode => LockSet.ReentryMode; 
+            public ReentryMode ReentryMode => LockSet.ReentryMode;
             public bool IsLocked => LockSet.IsLocked(Key);
             public bool? IsLockedLocally => LockSet.IsLockedLocally(Key);
-            public ValueTask<IDisposable> LockAsync(CancellationToken cancellationToken = default) 
+            public ValueTask<IDisposable> LockAsync(CancellationToken cancellationToken = default)
                 => LockSet.LockAsync(Key, cancellationToken);
 
             public AsyncSetLock(IAsyncLockSet<TKey> lockSet, TKey key)
@@ -61,7 +61,7 @@ namespace Stl.Tests.Async
         {
             void AssertIsEmpty(IAsyncLockSet<string> asyncLockSet)
             {
-                var fEntries = asyncLockSet.GetType().GetField("_entries", 
+                var fEntries = asyncLockSet.GetType().GetField("_entries",
                     BindingFlags.Instance | BindingFlags.NonPublic);
                 var entries = fEntries!.GetValue(asyncLockSet);
                 entries.Should().NotBeNull();

@@ -33,11 +33,11 @@ namespace Stl.Locking
         public int AcquiredLockCount => _entries.Count;
 
         public AsyncLockSet(
-            TaskCreationOptions taskCreationOptions = TaskCreationOptions.RunContinuationsAsynchronously) 
+            TaskCreationOptions taskCreationOptions = TaskCreationOptions.RunContinuationsAsynchronously)
             : this(ReentryMode.CheckedFail, taskCreationOptions) { }
         public AsyncLockSet(
             ReentryMode reentryMode,
-            TaskCreationOptions taskCreationOptions = TaskCreationOptions.RunContinuationsAsynchronously) 
+            TaskCreationOptions taskCreationOptions = TaskCreationOptions.RunContinuationsAsynchronously)
             : this(reentryMode, taskCreationOptions, DefaultConcurrencyLevel, DefaultCapacity) { }
         public AsyncLockSet(
             ReentryMode reentryMode,
@@ -181,7 +181,7 @@ namespace Stl.Locking
 
         public struct Releaser : IDisposable
         {
-            private readonly Entry _entry; 
+            private readonly Entry _entry;
             private AsyncLock.Releaser _asyncLockReleaser;
 
             public Releaser(object entry, AsyncLock.Releaser asyncLockReleaser)

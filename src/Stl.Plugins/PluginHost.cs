@@ -42,8 +42,8 @@ namespace Stl.Plugins
                 throw Errors.AlreadyInvoked(nameof(Start));
             IsStarted = true;
             var plugins = this.GetPlugins<IHasStart>().ToArray();
-            var invoker = Invoker.New(plugins, 
-                (plugin, _) => plugin.Start(), 
+            var invoker = Invoker.New(plugins,
+                (plugin, _) => plugin.Start(),
                 InvocationOrder.Reverse);
             invoker.Run();
         }

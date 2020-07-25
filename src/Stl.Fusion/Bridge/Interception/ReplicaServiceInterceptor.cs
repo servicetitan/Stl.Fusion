@@ -14,15 +14,15 @@ namespace Stl.Fusion.Bridge.Interception
     {
         public new class Options : InterceptorBase.Options
         {
-            public ConcurrentIdGenerator<LTag> LTagGenerator { get; set; } = ConcurrentIdGenerator.DefaultLTag; 
+            public ConcurrentIdGenerator<LTag> LTagGenerator { get; set; } = ConcurrentIdGenerator.DefaultLTag;
         }
 
         protected ConcurrentIdGenerator<LTag> LTagGenerator { get; }
 
         public ReplicaServiceInterceptor(
-            Options options, 
+            Options options,
             IComputedRegistry? registry = null,
-            ILoggerFactory? loggerFactory = null) 
+            ILoggerFactory? loggerFactory = null)
             : base(options, registry, loggerFactory)
         {
             RequiresAttribute = false;

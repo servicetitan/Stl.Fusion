@@ -18,10 +18,10 @@ namespace Stl.Security
 
         private int _counter;
 
-        public Int32Generator(int start = 1) 
+        public Int32Generator(int start = 1)
             => _counter = start - 1;
 
-        public int Next() 
+        public int Next()
             => Interlocked.Increment(ref _counter);
     }
 
@@ -31,10 +31,10 @@ namespace Stl.Security
 
         private long _counter;
 
-        public Int64Generator(long start = 1) 
+        public Int64Generator(long start = 1)
             => _counter = start - 1;
 
-        public long Next() 
+        public long Next()
             => Interlocked.Increment(ref _counter);
     }
 
@@ -49,15 +49,15 @@ namespace Stl.Security
             _transformer = transformer ?? throw new ArgumentNullException(nameof(transformer));
         }
 
-        public TOut Next() 
+        public TOut Next()
             => _transformer.Invoke(_source.Next());
     }
 
     public class RandomStringGenerator : IGenerator<string>, IDisposable
     {
-        public static readonly string DefaultAlphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_"; 
-        public static readonly string Base64Alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/"; 
-        public static readonly string Base32Alphabet = "0123456789abcdefghijklmnopqrstuv"; 
+        public static readonly string DefaultAlphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_";
+        public static readonly string Base64Alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/";
+        public static readonly string Base32Alphabet = "0123456789abcdefghijklmnopqrstuv";
         public static readonly string Base16Alphabet = "0123456789abcdef";
         public static readonly RandomStringGenerator Default = new RandomStringGenerator();
 
@@ -123,8 +123,8 @@ namespace Stl.Security
 
         public string Prefix { get; }
 
-        public RandomSymbolGenerator(string prefix = "", int length = 12, string? alphabet = null, RandomNumberGenerator? rng = null) 
-            : base(length, alphabet, rng) 
+        public RandomSymbolGenerator(string prefix = "", int length = 12, string? alphabet = null, RandomNumberGenerator? rng = null)
+            : base(length, alphabet, rng)
             => Prefix = prefix;
 
         public new Symbol Next() => new Symbol(Prefix + base.Next());

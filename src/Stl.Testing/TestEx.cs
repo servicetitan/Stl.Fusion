@@ -10,10 +10,10 @@ namespace Stl.Testing
 {
     public static class TestEx
     {
-        public static readonly IEnumerable<TimeSpan> DefaultCheckIntervals = Intervals.Fixed(TimeSpan.FromMilliseconds(50)); 
+        public static readonly IEnumerable<TimeSpan> DefaultCheckIntervals = Intervals.Fixed(TimeSpan.FromMilliseconds(50));
 
-        public static Task WhenMet(Action condition, 
-            TimeSpan waitDuration) 
+        public static Task WhenMet(Action condition,
+            TimeSpan waitDuration)
             => WhenMet(condition, null, waitDuration);
 
         public static async Task WhenMet(Action condition,

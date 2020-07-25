@@ -23,7 +23,7 @@ namespace Stl.Fusion.Bridge.Internal
 
         protected class UpdatedMessageHandler<T> : HandlerProvider<(ReplicatorChannelProcessor, CancellationToken), Task>.IHandler<T>
         {
-            public Task Handle(object target, (ReplicatorChannelProcessor, CancellationToken) arg) 
+            public Task Handle(object target, (ReplicatorChannelProcessor, CancellationToken) arg)
                 => arg.Item1.OnStateChangedMessageAsync((PublicationStateChangedMessage<T>) target, arg.Item2);
         }
 
@@ -48,7 +48,7 @@ namespace Stl.Fusion.Bridge.Internal
             PublisherId = publisherId;
             Subscriptions = new HashSet<Symbol>();
             StateComputed = ((SimpleComputed<bool>) SimpleComputed.New<bool>(
-                ComputedOptions.NoAutoInvalidateOnError, 
+                ComputedOptions.NoAutoInvalidateOnError,
                 (c, ct) => {
                     lock (Lock) {
                         var lastError = LastError;
@@ -149,7 +149,7 @@ namespace Stl.Fusion.Bridge.Internal
         {
             switch (message) {
             case PublicationStateChangedMessage scm:
-                // Fast dispatch to OnUpdatedMessageAsync<T> 
+                // Fast dispatch to OnUpdatedMessageAsync<T>
                 return OnStateChangeMessageAsyncHandlers[scm.GetResultType()].Handle(scm, (this, cancellationToken));
             case PublicationAbsentsMessage pam:
                 var replica = (IReplicaImpl?) Replicator.TryGet(pam.PublicationId);
@@ -165,7 +165,7 @@ namespace Stl.Fusion.Bridge.Internal
             var replica = Replicator.GetOrAdd(message.PublisherId, message.PublicationId, lTaggedOutput);
             if (!(replica is IReplicaImpl<T> replicaImpl))
                 // Weird case: somehow replica is of different type
-                return Task.CompletedTask; 
+                return Task.CompletedTask;
 
             replicaImpl.ApplySuccessfulUpdate(lTaggedOutput, message.NewIsConsistent);
             return Task.CompletedTask;
@@ -199,14 +199,14 @@ namespace Stl.Fusion.Bridge.Internal
                     await Task.Delay(ReplicatorImpl.ReconnectDelay, cancellationToken).ConfigureAwait(false);
                     Log.LogInformation($"{ClientId}: Reconnecting...");
                 }
-                else 
+                else
                     Log.LogInformation($"{ClientId}: Connecting...");
 
                 var channelProvider = ReplicatorImpl.ChannelProvider;
                 var channel = await channelProvider
                     .CreateChannelAsync(PublisherId, cancellationToken)
                     .ConfigureAwait(false);
-            
+
                 foreach (var publicationId in GetSubscriptions()) {
                     var replica = Replicator.TryGet(publicationId);
                     if (replica != null)
@@ -224,7 +224,7 @@ namespace Stl.Fusion.Bridge.Internal
                 channelTaskSource.SetFromTask(ct);
                 if (!ct.IsCompletedSuccessfully)
                     // LastError will be updated anyway in this case
-                    return; 
+                    return;
                 lock (Lock) {
                     Interlocked.Exchange(ref LastError, null);
                 }
@@ -252,7 +252,7 @@ namespace Stl.Fusion.Bridge.Internal
             });
         }
 
-        protected virtual Channel<Message> CreateSendChannel() 
+        protected virtual Channel<Message> CreateSendChannel()
             => Channel.CreateUnbounded<Message>(
                 new UnboundedChannelOptions() {
                     AllowSynchronousContinuations = true,
@@ -262,7 +262,7 @@ namespace Stl.Fusion.Bridge.Internal
 
         protected void Send(Message message)
         {
-            SendChannel.Writer.WriteAsync(message); 
+            SendChannel.Writer.WriteAsync(message);
         }
     }
 }

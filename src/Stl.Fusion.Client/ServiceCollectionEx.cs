@@ -26,8 +26,8 @@ namespace Stl.Fusion.Client
         }
 
         public static IServiceCollection AddFusionWebSocketClient(
-            this IServiceCollection services, 
-            WebSocketChannelProvider.Options options, 
+            this IServiceCollection services,
+            WebSocketChannelProvider.Options options,
             bool addTransient = false)
         {
             services.TryAddSingleton(options);
@@ -36,8 +36,8 @@ namespace Stl.Fusion.Client
         }
 
         public static IServiceCollection AddFusionWebSocketClient(
-            this IServiceCollection services, 
-            Action<IServiceProvider, WebSocketChannelProvider.Options>? optionsBuilder = null, 
+            this IServiceCollection services,
+            Action<IServiceProvider, WebSocketChannelProvider.Options>? optionsBuilder = null,
             bool addTransient = false)
         {
             services.TryAddSingleton(c => {
@@ -50,14 +50,14 @@ namespace Stl.Fusion.Client
         }
 
         // User-defined client-side services
-        
+
         public static IServiceCollection AddRestEaseService<TInterface>(
             this IServiceCollection services,
             string? baseAddress = null,
             Func<IServiceProvider, HttpClient>? httpClientResolver = null)
             => services.AddRestEaseService(typeof(TInterface), baseAddress, httpClientResolver);
         public static IServiceCollection AddRestEaseService(
-            this IServiceCollection services, 
+            this IServiceCollection services,
             Type interfaceType,
             string? baseAddress = null,
             Func<IServiceProvider, HttpClient>? httpClientResolver = null)
@@ -82,7 +82,7 @@ namespace Stl.Fusion.Client
             Func<IServiceProvider, HttpClient>? httpClientResolver = null)
             => services.AddReplicaService(typeof(TInterface), baseAddress, httpClientResolver);
         public static IServiceCollection AddReplicaService(
-            this IServiceCollection services, 
+            this IServiceCollection services,
             Type interfaceType,
             string? baseAddress = null,
             Func<IServiceProvider, HttpClient>? httpClientResolver = null)
@@ -93,12 +93,12 @@ namespace Stl.Fusion.Client
                 throw Errors.MustImplement<IReplicaService>(interfaceType);
 
             httpClientResolver ??= DefaultHttpClientResolver(baseAddress);
-            
+
             object Factory(IServiceProvider c)
             {
                 // 1. Validate type
                 var interceptor = c.GetRequiredService<ReplicaServiceInterceptor>();
-                interceptor.ValidateType(interfaceType);  
+                interceptor.ValidateType(interfaceType);
 
                 // 2. Create REST client for the service
                 var httpClient = httpClientResolver.Invoke(c);
@@ -106,13 +106,13 @@ namespace Stl.Fusion.Client
                     ResponseDeserializer = c.GetRequiredService<ReplicaResponseDeserializer>()
                 }.For(interfaceType);
 
-                // 3. Create Replica Service 
+                // 3. Create Replica Service
                 var proxyGenerator = c.GetRequiredService<IReplicaServiceProxyGenerator>();
                 var proxyType = proxyGenerator.GetProxyType(interfaceType);
                 var interceptors = c.GetRequiredService<ReplicaServiceInterceptor[]>();
                 return proxyType.CreateInstance(interceptors, restClient);
             }
-            
+
             var isScoped = typeof(IScopedComputedService).IsAssignableFrom(interfaceType);
             if (isScoped)
                 services.TryAddScoped(interfaceType, Factory);

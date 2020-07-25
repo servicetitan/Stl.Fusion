@@ -5,7 +5,7 @@ namespace Stl
 {
     public static class ResultEx
     {
-        public static Result<T> InvokeForResult<T, TState>(this Func<TState, T> func, TState state) 
+        public static Result<T> InvokeForResult<T, TState>(this Func<TState, T> func, TState state)
         {
             try {
                 return Result.Value(func.Invoke(state));
@@ -15,7 +15,7 @@ namespace Stl
             }
         }
 
-        public static Result<T> InvokeForResult<T>(this Func<T> func) 
+        public static Result<T> InvokeForResult<T>(this Func<T> func)
         {
             try {
                 return Result.Value(func.Invoke());
@@ -43,9 +43,9 @@ namespace Stl
             }
         };
 
-        public static Task<Result<T>> ToResultTask<T>(this Task<T> task) => 
-            task.ContinueWith(t => t.IsCompletedSuccessfully 
-                ? Result.Value(t.Result) 
+        public static Task<Result<T>> ToResultTask<T>(this Task<T> task) =>
+            task.ContinueWith(t => t.IsCompletedSuccessfully
+                ? Result.Value(t.Result)
                 : Result.Error<T>(t.Exception));
     }
 }

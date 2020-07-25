@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Stl.Plugins.Metadata;
 using Stl.Plugins.Services;
 
-namespace Stl.Plugins 
+namespace Stl.Plugins
 {
     public static class PluginHostBuilderEx
     {
@@ -27,30 +27,30 @@ namespace Stl.Plugins
             return builder;
         }
 
-        public static TBuilder ConfigureServices<TBuilder>(this TBuilder builder, 
+        public static TBuilder ConfigureServices<TBuilder>(this TBuilder builder,
             Action<TBuilder, IServiceCollection> configurator)
             where TBuilder : IPluginHostBuilder
         {
             configurator.Invoke(builder, builder.Services);
             return builder;
         }
-        
+
         public static TBuilder UseDefaultServices<TBuilder>(this TBuilder builder)
             where TBuilder : IPluginHostBuilder
         {
             builder.Implementation.UseDefaultServices();
             return builder;
         }
-        
-        public static TBuilder UsePlugins<TBuilder>(this TBuilder builder, 
+
+        public static TBuilder UsePlugins<TBuilder>(this TBuilder builder,
             PluginSetInfo plugins)
             where TBuilder : IPluginHostBuilder
         {
             builder.Plugins = plugins;
             return builder;
         }
-        
-        public static TBuilder UsePluginTypes<TBuilder>(this TBuilder builder, 
+
+        public static TBuilder UsePluginTypes<TBuilder>(this TBuilder builder,
             params Type[] pluginTypes)
             where TBuilder : IPluginHostBuilder
         {
@@ -58,7 +58,7 @@ namespace Stl.Plugins
             return builder;
         }
 
-        public static TBuilder AddPluginFilter<TBuilder>(this TBuilder builder, 
+        public static TBuilder AddPluginFilter<TBuilder>(this TBuilder builder,
             Func<PluginInfo, bool> predicate)
             where TBuilder : IPluginHostBuilder
         {

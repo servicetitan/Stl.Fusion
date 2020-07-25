@@ -30,19 +30,19 @@ namespace Stl.Tests.Fusion
 
             var u1 = await users.TryGetAsync(int.MaxValue);
             var c1 = await Computed.CaptureAsync(_ => users.CountAsync());
-            
+
             users.Invalidate();
 
             var u2 = await users.TryGetAsync(int.MaxValue);
             u2!.IsFrozen.Should().BeTrue();
             var c2 = await Computed.CaptureAsync(_ => users.CountAsync());
-            
+
             u2.Should().NotBeSameAs(u1);
             u2!.Id.Should().Be(u1!.Id);
             u2.Name.Should().Be(u1.Name);
 
             c2.Should().NotBeSameAs(c1);
-            c2!.Value.Should().Be(c1!.Value); 
+            c2!.Value.Should().Be(c1!.Value);
         }
 
         [Fact]
@@ -55,7 +55,7 @@ namespace Stl.Tests.Fusion
                 Name = "Chuck Norris",
             }, true);
 
-            var userCount = await users.CountAsync(); 
+            var userCount = await users.CountAsync();
 
             var u = new User() {
                 Id = 1000,
@@ -75,12 +75,12 @@ namespace Stl.Tests.Fusion
             u1.Id.Should().Be(u.Id);
             u1.Name.Should().Be(u.Name);
             (await users.CountAsync()).Should().Be(++userCount);
-            
+
             var u2 = await users.TryGetAsync(u.Id);
             u2.Should().BeSameAs(u1);
-            
+
             u.Name = "Jackie Chan";
-            await users.UpdateAsync(u); // u.Name change 
+            await users.UpdateAsync(u); // u.Name change
 
             var u3 = await users.TryGetAsync(u.Id);
             u3.Should().NotBeNull();
@@ -106,9 +106,9 @@ namespace Stl.Tests.Fusion
                 async (prev, cancellationToken) => {
                     var norris = await users.TryGetAsync(int.MaxValue, cancellationToken).ConfigureAwait(false);
                     var now = await time.GetTimeAsync().ConfigureAwait(false);
-                    return $"@ {now:hh:mm:ss.fff}: {norris?.Name ?? "(none)"}";  
+                    return $"@ {now:hh:mm:ss.fff}: {norris?.Name ?? "(none)"}";
                 }).UpdateAsync(false);
-            
+
             using var _ = cText.AutoUpdate((cNext, rPrev, updateError) => {
                 Log.LogInformation(cNext.Value);
             });
@@ -141,7 +141,7 @@ namespace Stl.Tests.Fusion
                     var a = await c1.UseAsync(cancellationToken);
                     using var _ = Computed.Suppress();
                     var b = await c2.UseAsync(cancellationToken);
-                    return (a, b);  
+                    return (a, b);
                 }).UpdateAsync(false);
 
             var v12a = await c12.UseAsync();

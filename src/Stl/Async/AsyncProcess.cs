@@ -9,7 +9,7 @@ namespace Stl.Async
     {
         CancellationToken StopToken { get; }
         Task? RunningTask { get; }
-        Task RunAsync(); 
+        Task RunAsync();
     }
 
     public abstract class AsyncProcessBase : AsyncDisposableBase, IAsyncProcess
@@ -48,7 +48,7 @@ namespace Stl.Async
             return Task.CompletedTask;
         }
 
-        public async Task StopAsync(CancellationToken cancellationToken) 
+        public async Task StopAsync(CancellationToken cancellationToken)
             => await DisposeAsync();
 
         protected override async ValueTask DisposeInternalAsync(bool disposing)

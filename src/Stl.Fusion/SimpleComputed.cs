@@ -9,10 +9,10 @@ namespace Stl.Fusion
     {
         public new SimpleComputedInput<T> Input => (SimpleComputedInput<T>) base.Input;
 
-        public SimpleComputed(ComputedOptions options, SimpleComputedInput input, LTag lTag) 
+        public SimpleComputed(ComputedOptions options, SimpleComputedInput input, LTag lTag)
             : base(options, input, lTag) { }
-        public SimpleComputed(ComputedOptions options, SimpleComputedInput input, 
-            Result<T> output, LTag lTag, bool isConsistent = true) 
+        public SimpleComputed(ComputedOptions options, SimpleComputedInput input,
+            Result<T> output, LTag lTag, bool isConsistent = true)
             : base(options, input, output, lTag, isConsistent) { }
     }
 
@@ -66,7 +66,7 @@ namespace Stl.Fusion
         // Private methods
 
         private static Func<IComputed<T>, IComputed<T>, CancellationToken, Task> Wrap<T>(
-            Func<IComputed<T>, CancellationToken, Task<T>> updater) 
+            Func<IComputed<T>, CancellationToken, Task<T>> updater)
             => async (prevComputed, nextComputed, cancellationToken) => {
                 var value = await updater.Invoke(prevComputed, cancellationToken);
                 nextComputed.TrySetOutput(new Result<T>(value, null));

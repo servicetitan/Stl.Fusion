@@ -5,7 +5,7 @@ using Stl.Text;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Stl.Tests.Text 
+namespace Stl.Tests.Text
 {
     public class ListFormatTest : TestBase
     {

@@ -10,10 +10,10 @@ namespace Stl.CommandLine.Ansible
         public static readonly PathString DefaultAnsiblePath = "ansible";
 
         public PathString AnsiblePath { get; set; }
-        
+
         public AnsibleCmd(
             PathString? ansiblePath = null,
-            PathString? executable = null) : base(executable ?? DefaultExecutable) 
+            PathString? executable = null) : base(executable ?? DefaultExecutable)
             => AnsiblePath = ansiblePath ?? DefaultAnsiblePath;
 
         protected override CliString GetPrefix() => DefaultAnsiblePath;

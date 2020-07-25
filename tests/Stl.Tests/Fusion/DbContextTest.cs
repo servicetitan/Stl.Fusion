@@ -49,7 +49,7 @@ namespace Stl.Tests.Fusion
             (await dbContext.Messages.CountAsync()).Should().Be(1);
             u1 = await dbContext.Users.FindAsync(u1.Id);
             u1.Name.Should().Be("realDonaldTrump");
-            
+
             m1 = await dbContext.Messages
                 .Where(p => p.Id == p.Id)
                 .Include(p => p.Author)

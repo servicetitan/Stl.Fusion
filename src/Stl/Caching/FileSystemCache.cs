@@ -34,8 +34,8 @@ namespace Stl.Caching
                 var newText = (string?) null;
                 await using (var fileStream = OpenFile(fileName, true, cancellationToken)) {
                     var originalText = await GetTextAsync(fileStream, cancellationToken).ConfigureAwait(false);
-                    var pairs = 
-                        Deserialize(originalText) 
+                    var pairs =
+                        Deserialize(originalText)
                         ?? new Dictionary<TKey, TValue>();
                     pairs.SetOption(key, value);
                     newText = Serialize(pairs);
@@ -85,14 +85,14 @@ namespace Stl.Caching
             fileStream.SetLength(fileStream.Position);
         }
 
-        protected virtual Dictionary<TKey, TValue>? Deserialize(string? source) 
-            => source == null 
-                ? null 
+        protected virtual Dictionary<TKey, TValue>? Deserialize(string? source)
+            => source == null
+                ? null
                 : JsonConvert.DeserializeObject<Dictionary<TKey, TValue>>(source);
-        
-        protected virtual string? Serialize(Dictionary<TKey, TValue>? source) 
-            => source == null || source.Count == 0 
-                ? null 
+
+        protected virtual string? Serialize(Dictionary<TKey, TValue>? source)
+            => source == null || source.Count == 0
+                ? null
                 : JsonConvert.SerializeObject(source);
     }
 
@@ -100,7 +100,7 @@ namespace Stl.Caching
         where TKey : notnull
     {
         protected static readonly string DefaultExtension = ".tmp";
-        protected static readonly Func<TKey, PathString> DefaultKeyToFileNameConverter = 
+        protected static readonly Func<TKey, PathString> DefaultKeyToFileNameConverter =
             key => PathEx.GetHashedName(key?.ToString() ?? "0_0");
 
         public string CacheDirectory { get; }
@@ -121,11 +121,11 @@ namespace Stl.Caching
             var names = Directory.EnumerateFiles(
                 CacheDirectory, "*" + FileExtension,
                 SearchOption.TopDirectoryOnly);
-            foreach (var name in names) 
+            foreach (var name in names)
                 File.Delete(name);
         }
 
-        protected override PathString GetFileName(TKey key) 
+        protected override PathString GetFileName(TKey key)
             => CacheDirectory & (KeyToFileNameConverter(key) + FileExtension);
     }
 }

@@ -9,7 +9,7 @@ namespace Stl.Plugins.Metadata
     {
         public Type[] Plugins { get; set; } = null!;
         public Assembly[] Assemblies { get; set; } = null!;
-        public Dictionary<Assembly, HashSet<Assembly>> AllAssemblyRefs { get; set; } = null!; 
+        public Dictionary<Assembly, HashSet<Assembly>> AllAssemblyRefs { get; set; } = null!;
         public IPluginFactory PluginFactory { get; set; } = null!;
     }
 }

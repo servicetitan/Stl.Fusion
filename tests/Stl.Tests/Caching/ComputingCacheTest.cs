@@ -20,7 +20,7 @@ namespace Stl.Tests.Caching
         public async Task ComputingCache_OrderByDependencyTest()
         {
             await OrderByDependencyTestAsync(computer => new ComputingCache<char, char>(
-                new MemoizingCache<char, char>(), 
+                new MemoizingCache<char, char>(),
                 computer));
         }
 
@@ -32,15 +32,15 @@ namespace Stl.Tests.Caching
 
         private async Task OrderByDependencyTestAsync(
             Func<
-                Func<char, CancellationToken, ValueTask<char>>, 
+                Func<char, CancellationToken, ValueTask<char>>,
                 IAsyncKeyResolver<char, char>> cacheFactory)
         {
-            IEnumerable<char> DepSelector1(char c) => 
+            IEnumerable<char> DepSelector1(char c) =>
                 Enumerable
                     .Range(0, c - '0')
                     .Select(i => (char) ('0' + i));
             IEnumerable<char> BadDepSelector1(char c) => new [] {c};
-            IEnumerable<char> BadDepSelector2(char c) => 
+            IEnumerable<char> BadDepSelector2(char c) =>
                 Enumerable
                     .Range(1, 5)
                     .Select(i => (char) ('0' + (c - '0' + i) % 10));
@@ -51,7 +51,7 @@ namespace Stl.Tests.Caching
                 var result = new List<char>();
 
                 IAsyncKeyResolver<char, char>? cache = null;
-                
+
                 async ValueTask<char> Compute(char c, CancellationToken ct)
                 {
                     if (cache == null)
@@ -73,10 +73,10 @@ namespace Stl.Tests.Caching
             Assert.Equal("012", await OBD("12", DepSelector1));
             Assert.Equal("012", await OBD("21", DepSelector1));
             Assert.Equal("0123", await OBD("231", DepSelector1));
-            
-            await Assert.ThrowsAsync<InvalidOperationException>(async () => 
+
+            await Assert.ThrowsAsync<InvalidOperationException>(async () =>
                 (await OBD("0", BadDepSelector1)).Ignore());
-            await Assert.ThrowsAsync<InvalidOperationException>(async () => 
+            await Assert.ThrowsAsync<InvalidOperationException>(async () =>
                 (await OBD("0", BadDepSelector2)).Ignore());
         }
     }

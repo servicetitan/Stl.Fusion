@@ -10,9 +10,9 @@ namespace Stl.CommandLine
         public static readonly CliString DefaultPrefix = CliString.New("-c").VaryByOS("/C");
 
         public CliString Prefix { get; set; }
-        
+
         public ShellCmd(PathString? executable = null)
-            : base(executable ?? DefaultExecutable) 
+            : base(executable ?? DefaultExecutable)
             => Prefix = DefaultPrefix;
 
         protected override CliString GetPrefix() => Prefix;

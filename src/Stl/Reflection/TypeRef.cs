@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 using Stl.Internal;
 using Stl.Text;
 
-namespace Stl.Reflection 
+namespace Stl.Reflection
 {
     [Serializable]
     [JsonConverter(typeof(TypeRefJsonConverter))]
@@ -19,12 +19,12 @@ namespace Stl.Reflection
         public TypeRef(string assemblyQualifiedName) => AssemblyQualifiedName = assemblyQualifiedName;
 
         public override string ToString() => $"{Name}";
-        
+
         public Type? TryResolve() => Type.GetType(AssemblyQualifiedName, false, false);
         public Type Resolve() => Type.GetType(AssemblyQualifiedName, true, false)!;
 
         // Conversion
-        
+
         public static implicit operator TypeRef(string typeName) => new TypeRef(typeName);
         public static implicit operator TypeRef(Type type) => new TypeRef(type.AssemblyQualifiedName!);
         public static explicit operator string(TypeRef type) => type.AssemblyQualifiedName;
@@ -39,7 +39,7 @@ namespace Stl.Reflection
 
         public static bool operator ==(TypeRef left, TypeRef right) => left.Equals(right);
         public static bool operator !=(TypeRef left, TypeRef right) => !left.Equals(right);
-        
+
         // Serialization
 
         private TypeRef(SerializationInfo info, StreamingContext context)
@@ -47,7 +47,7 @@ namespace Stl.Reflection
             AssemblyQualifiedName = info.GetString(nameof(AssemblyQualifiedName)) ?? "";
         }
 
-        void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context) 
+        void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
             => info.AddValue(nameof(AssemblyQualifiedName), AssemblyQualifiedName);
     }
 }

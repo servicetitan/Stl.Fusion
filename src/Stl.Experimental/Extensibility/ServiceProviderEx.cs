@@ -1,7 +1,7 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Stl.Extensibility 
+namespace Stl.Extensibility
 {
     public static class ServiceProviderEx
     {
@@ -11,7 +11,7 @@ namespace Stl.Extensibility
             where TService : class
         {
             var special = services.GetService<Special<TService, TFor>>();
-            return special?.Service ?? services.GetService<TService>(); 
+            return special?.Service ?? services.GetService<TService>();
         }
 
         public static TService GetSpecialService<TService>(this IServiceProvider services, Type forType)
@@ -33,7 +33,7 @@ namespace Stl.Extensibility
             where TService : class
         {
             var special = services.GetService<Special<TService, TFor>>();
-            return special?.Service ?? services.GetRequiredService<TService>(); 
+            return special?.Service ?? services.GetRequiredService<TService>();
         }
 
         public static TService GetRequiredSpecialService<TService>(this IServiceProvider services, Type forType)

@@ -30,7 +30,7 @@ namespace Stl.Samples.Blazor.Client
             ConfigureServices(builder.Services, builder);
             builder.RootComponents.Add<App>("app");
             var host = builder.Build();
-            
+
             var runTask = host.RunAsync();
             Task.Run(async () => {
                 var hostedServices = host.Services.GetService<IEnumerable<IHostedService>>();
@@ -50,7 +50,7 @@ namespace Stl.Samples.Blazor.Client
 
             // Computed services
             services.AddComputedService<IComposerService, ClientSideComposerService>();
-            
+
             // Replica services
             var apiBaseUri = new Uri($"{baseUri}api/");
             services.AddTransient(c => new HttpClient() { BaseAddress = apiBaseUri });

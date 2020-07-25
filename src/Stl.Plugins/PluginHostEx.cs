@@ -10,7 +10,7 @@ namespace Stl.Plugins
     public static class PluginHostEx
     {
         internal static object GetPluginInstance(
-            this IPluginHost plugins, Type implementationType) 
+            this IPluginHost plugins, Type implementationType)
             => plugins
                 .GetRequiredService<IPluginCache>()
                 .GetOrCreate(implementationType)
@@ -23,13 +23,13 @@ namespace Stl.Plugins
         public static object GetSingletonPlugin(this IPluginHost plugins, Type pluginType)
             => plugins.GetPlugins(pluginType).Single();
 
-        public static IEnumerable<TPlugin> GetPlugins<TPlugin>(this IPluginHost plugins) 
+        public static IEnumerable<TPlugin> GetPlugins<TPlugin>(this IPluginHost plugins)
             => plugins
                 .GetRequiredService<IPluginHandle<TPlugin>>()
                 .Instances;
 
         public static IEnumerable<TPlugin> GetPlugins<TPlugin>(
-            this IPluginHost plugins, Func<PluginInfo, bool> predicate) 
+            this IPluginHost plugins, Func<PluginInfo, bool> predicate)
             => plugins
                 .GetRequiredService<IPluginHandle<TPlugin>>()
                 .GetInstances(predicate);

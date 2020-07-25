@@ -15,18 +15,18 @@ namespace Stl.Serialization
             TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
             TypeNameHandling = TypeNameHandling.Auto,
             NullValueHandling = NullValueHandling.Ignore,
-        }; 
+        };
 
         public JsonSerializerSettings Settings { get; }
 
         public JsonNetSerializer(JsonSerializerSettings? settings = null)
         {
-            Settings = settings ??= DefaultSettings; 
+            Settings = settings ??= DefaultSettings;
             _jsonSerializer = JsonSerializer.Create(settings);
             _stringBuilder = new StringBuilder(256);
         }
 
-        public override string Serialize(object? native, Type? type) 
+        public override string Serialize(object? native, Type? type)
         {
             _stringBuilder.Clear();
             using var stringWriter = new StringWriter(_stringBuilder);

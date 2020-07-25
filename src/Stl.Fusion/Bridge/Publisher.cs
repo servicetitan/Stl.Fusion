@@ -25,10 +25,10 @@ namespace Stl.Fusion.Bridge
         IPublication Publish(IComputed computed);
         IPublication? TryGet(Symbol publicationId);
         ValueTask<bool> SubscribeAsync(
-            Channel<Message> channel, IPublication publication, 
+            Channel<Message> channel, IPublication publication,
             bool sendUpdate, CancellationToken cancellationToken = default);
         ValueTask<bool> UnsubscribeAsync(
-            Channel<Message> channel, IPublication publication, 
+            Channel<Message> channel, IPublication publication,
             CancellationToken cancellationToken = default);
     }
 
@@ -40,7 +40,7 @@ namespace Stl.Fusion.Bridge
         IGenerator<Symbol> PublicationIdGenerator { get; }
 
         ValueTask<bool> SubscribeAsync(
-            Channel<Message> channel, IPublication publication, 
+            Channel<Message> channel, IPublication publication,
             SubscribeMessage subscribeMessage, CancellationToken cancellationToken);
         void OnPublicationDisposed(IPublication publication);
         void OnChannelProcessorDisposed(PublisherChannelProcessor channelProcessor);
@@ -62,11 +62,11 @@ namespace Stl.Fusion.Bridge
             public IMomentClock Clock { get; set; } = CoarseCpuClock.Instance;
         }
 
-        protected ConcurrentDictionary<ComputedInput, IPublication> Publications { get; } 
+        protected ConcurrentDictionary<ComputedInput, IPublication> Publications { get; }
         protected ConcurrentDictionary<Symbol, IPublication> PublicationsById { get; }
         protected ConcurrentDictionary<Channel<Message>, PublisherChannelProcessor> ChannelProcessors { get; }
-        protected ChannelAttachedHandler<Message> OnChannelAttachedHandler { get; } 
-        protected ChannelDetachedHandler<Message> OnChannelDetachedHandler { get; } 
+        protected ChannelAttachedHandler<Message> OnChannelAttachedHandler { get; }
+        protected ChannelDetachedHandler<Message> OnChannelDetachedHandler { get; }
 
         public Symbol Id { get; }
         public IChannelHub<Message> ChannelHub { get; }
@@ -121,10 +121,10 @@ namespace Stl.Fusion.Bridge
             }
         }
 
-        public virtual IPublication? TryGet(Symbol publicationId) 
+        public virtual IPublication? TryGet(Symbol publicationId)
             => PublicationsById.TryGetValue(publicationId, out var p) ? p : null;
 
-        void IPublisherImpl.OnPublicationDisposed(IPublication publication) 
+        void IPublisherImpl.OnPublicationDisposed(IPublication publication)
             => OnPublicationDisposed(publication);
         protected virtual void OnPublicationDisposed(IPublication publication)
         {
@@ -136,13 +136,13 @@ namespace Stl.Fusion.Bridge
             PublicationsById.TryRemove(p.Id, p);
         }
 
-        void IPublisherImpl.OnChannelProcessorDisposed(PublisherChannelProcessor channelProcessor) 
+        void IPublisherImpl.OnChannelProcessorDisposed(PublisherChannelProcessor channelProcessor)
             => OnChannelProcessorDisposed(channelProcessor);
         protected virtual void OnChannelProcessorDisposed(PublisherChannelProcessor channelProcessor)
         { }
 
         public ValueTask<bool> SubscribeAsync(
-            Channel<Message> channel, IPublication publication, 
+            Channel<Message> channel, IPublication publication,
             bool sendUpdate, CancellationToken cancellationToken)
         {
             var message = new SubscribeMessage() {
@@ -154,11 +154,11 @@ namespace Stl.Fusion.Bridge
         }
 
         ValueTask<bool> IPublisherImpl.SubscribeAsync(
-            Channel<Message> channel, IPublication publication, 
-            SubscribeMessage subscribeMessage, CancellationToken cancellationToken) 
+            Channel<Message> channel, IPublication publication,
+            SubscribeMessage subscribeMessage, CancellationToken cancellationToken)
             => SubscribeAsync(channel, publication, subscribeMessage, cancellationToken);
         protected virtual ValueTask<bool> SubscribeAsync(
-            Channel<Message> channel, IPublication publication, 
+            Channel<Message> channel, IPublication publication,
             SubscribeMessage subscribeMessage, CancellationToken cancellationToken)
         {
             ThrowIfDisposedOrDisposing();
@@ -170,7 +170,7 @@ namespace Stl.Fusion.Bridge
         }
 
         public virtual ValueTask<bool> UnsubscribeAsync(
-            Channel<Message> channel, IPublication publication, 
+            Channel<Message> channel, IPublication publication,
             CancellationToken cancellationToken = default)
         {
             if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
@@ -180,7 +180,7 @@ namespace Stl.Fusion.Bridge
 
         // Channel-related
 
-        protected virtual PublisherChannelProcessor CreateChannelProcessor(Channel<Message> channel) 
+        protected virtual PublisherChannelProcessor CreateChannelProcessor(Channel<Message> channel)
             => new PublisherChannelProcessor(this, channel);
 
         protected virtual void OnChannelAttached(Channel<Message> channel)

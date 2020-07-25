@@ -8,7 +8,7 @@ namespace Stl.Extensibility
     {
         public TItem Subject { get; }
         public TOwner Owner { get; }
-        
+
         public Owned(TItem subject, TOwner owner)
         {
             Subject = subject;
@@ -27,8 +27,8 @@ namespace Stl.Extensibility
 
         // Equality
 
-        public bool Equals(Owned<TItem, TOwner> other) 
-            => EqualityComparer<TItem>.Default.Equals(Subject, other.Subject) 
+        public bool Equals(Owned<TItem, TOwner> other)
+            => EqualityComparer<TItem>.Default.Equals(Subject, other.Subject)
                 && EqualityComparer<TOwner>.Default.Equals(Owner, other.Owner);
         public override bool Equals(object? obj) => obj is Owned<TItem, TOwner> other && Equals(other);
         public override int GetHashCode() => HashCode.Combine(Subject, Owner);

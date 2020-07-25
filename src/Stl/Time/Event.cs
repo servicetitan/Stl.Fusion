@@ -18,7 +18,7 @@ namespace Stl.Time
         }
 
         // Conversion
-        
+
         public override string ToString() => $"({Value} @ {Moment})";
 
         public void Deconstruct(out T value, out Moment moment)
@@ -31,7 +31,7 @@ namespace Stl.Time
         public static implicit operator (T Value, Moment Moment) (Event<T> source) => (source.Value, source.Moment);
 
         // Equality
-        
+
         public bool Equals(Event<T> other) => Moment == other.Moment && EqualityComparer<T>.Default.Equals(Value, other.Value);
         public override bool Equals(object? obj) => obj is Event<T> other && Equals(other);
         public override int GetHashCode() => HashCode.Combine(Moment, Value);

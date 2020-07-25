@@ -17,8 +17,8 @@ namespace Stl.Async
 
     public class AsyncEventSource<TEvent> : AsyncEventSource<TEvent, Unit>
     {
-        public AsyncEventSource(Action<AsyncEventSource<TEvent, Unit>, int, bool>? onObserverCountChanged = null) 
-            : base(default, onObserverCountChanged) 
+        public AsyncEventSource(Action<AsyncEventSource<TEvent, Unit>, int, bool>? onObserverCountChanged = null)
+            : base(default, onObserverCountChanged)
         { }
     }
 
@@ -34,7 +34,7 @@ namespace Stl.Async
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public State(
-                TaskCreationOptions fireTaskCreationOptions, 
+                TaskCreationOptions fireTaskCreationOptions,
                 TaskCreationOptions readyTaskCreationOptions)
             {
                 FireSource = TaskSource.New<Option<TEvent>>(fireTaskCreationOptions);
@@ -47,10 +47,10 @@ namespace Stl.Async
                 IsCompleted = previousState.IsCompleted | complete;
                 FireSource = TaskSource.New<Option<TEvent>>(previousState.FireSource.Task.CreationOptions);
                 ReadySource = TaskSource.New<Unit>(previousState.ReadySource.Task.CreationOptions);
-            } 
+            }
         }
 
-        private readonly Action<AsyncEventSource<TEvent, TTag>, int, bool>? _onObserverCountChanged; 
+        private readonly Action<AsyncEventSource<TEvent, TTag>, int, bool>? _onObserverCountChanged;
         private volatile State _state;
         private volatile int _observerCount;
         public TTag Tag { get; }
@@ -59,7 +59,7 @@ namespace Stl.Async
         public int ObserverCount => _observerCount;
 
         public AsyncEventSource(
-            TTag tag, 
+            TTag tag,
             Action<AsyncEventSource<TEvent, TTag>, int, bool>? onObserverCountChanged,
             TaskCreationOptions fireTaskCreationOptions = TaskCreationOptions.RunContinuationsAsynchronously,
             TaskCreationOptions readyTaskCreationOption = TaskCreationOptions.RunContinuationsAsynchronously)
@@ -69,7 +69,7 @@ namespace Stl.Async
             _onObserverCountChanged = onObserverCountChanged;
         }
 
-        public override string ToString() 
+        public override string ToString()
             => $"{GetType().Name}({ObserverCount} observer(s), {nameof(IsCompleted)} = {IsCompleted})";
 
         public async ValueTask NextAsync(TEvent value, bool failIfCompleted = true)
@@ -142,7 +142,7 @@ namespace Stl.Async
             }
         }
 
-        public async ValueTask DisposeAsync() 
+        public async ValueTask DisposeAsync()
             => await CompleteAsync().ConfigureAwait(false);
 
 #pragma warning disable 8425

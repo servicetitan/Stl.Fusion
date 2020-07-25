@@ -6,7 +6,7 @@ namespace Stl.Testing
 {
     public static class WebTestEx
     {
-        private static readonly Queue<int> RecentlyUsedPortQueue = new Queue<int>(); 
+        private static readonly Queue<int> RecentlyUsedPortQueue = new Queue<int>();
         private static readonly HashSet<int> RecentlyUsedPorts = new HashSet<int>();
         private static readonly Random Random = new Random();
 
@@ -14,16 +14,16 @@ namespace Stl.Testing
         {
             var url = uri.ToString();
             if (url.StartsWith("http://"))
-                return new Uri("ws://" + url.Substring(7)); 
+                return new Uri("ws://" + url.Substring(7));
             if (url.StartsWith("https://"))
-                return new Uri("wss://" + url.Substring(8)); 
+                return new Uri("wss://" + url.Substring(8));
             return uri;
         }
 
-        public static Uri GetLocalUri(int port) 
+        public static Uri GetLocalUri(int port)
             => new Uri($"http://localhost:{port}");
 
-        public static Uri GetRandomLocalUri() 
+        public static Uri GetRandomLocalUri()
             => GetLocalUri(GetRandomPort());
 
         public static int GetRandomPort()

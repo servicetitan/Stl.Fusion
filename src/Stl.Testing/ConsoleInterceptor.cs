@@ -5,7 +5,7 @@ using System.Threading;
 using Stl.Testing.Internal;
 using Xunit.Abstractions;
 
-namespace Stl.Testing 
+namespace Stl.Testing
 {
     public static class ConsoleInterceptor
     {
@@ -14,11 +14,11 @@ namespace Stl.Testing
             public override Encoding Encoding { get; } = Encoding.UTF8;
             public override void Write(char value) => TestOutput.Value?.Write(value);
             public override void Write(string? value) => TestOutput.Value?.Write(value);
-        }        
+        }
 
         public static readonly TextWriter TextWriter = new ProxyWriter();
         public static readonly AsyncLocal<TestOutputWriter?> TestOutput = new AsyncLocal<TestOutputWriter?>();
-        
+
         public static Disposable<(TestOutputWriter?, TextWriter)> Activate(ITestOutputHelper testOutput)
         {
             var oldTestOut = TestOutput.Value;
@@ -31,6 +31,6 @@ namespace Stl.Testing
                 Console.SetOut(oldConsoleOut1);
             });
         }
-        
+
     }
 }

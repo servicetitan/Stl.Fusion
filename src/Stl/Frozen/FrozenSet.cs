@@ -9,39 +9,39 @@ namespace Stl.Frozen
     [Serializable]
     public class FrozenSet<T> : FrozenBase, IFrozenSet<T>
     {
-        protected static readonly bool AreItemsFrozen = 
+        protected static readonly bool AreItemsFrozen =
             typeof(IFrozen).IsAssignableFrom(typeof(T));
-        
+
         protected HashSet<T> Set { get; set; }
         public int Count => Set.Count;
         public bool IsReadOnly => IsFrozen;
         public IEqualityComparer<T> Comparer => Set.Comparer;
 
         public FrozenSet() : this(null!) { }
-        public FrozenSet(IEqualityComparer<T> comparer) 
+        public FrozenSet(IEqualityComparer<T> comparer)
             => Set = new HashSet<T>(comparer);
-        public FrozenSet(int capacity, IEqualityComparer<T>? comparer = null) 
+        public FrozenSet(int capacity, IEqualityComparer<T>? comparer = null)
             => Set = new HashSet<T>(capacity, comparer);
 
         // Read-only methods
-        
+
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         public IEnumerator<T> GetEnumerator() => Set.GetEnumerator();
 
         public bool Contains(T item) => Set.Contains(item);
         public void CopyTo(T[] array, int arrayIndex) => Set.CopyTo(array, arrayIndex);
 
-        public bool IsProperSubsetOf(IEnumerable<T> other) 
+        public bool IsProperSubsetOf(IEnumerable<T> other)
             => Set.IsProperSubsetOf(other);
-        public bool IsProperSupersetOf(IEnumerable<T> other) 
+        public bool IsProperSupersetOf(IEnumerable<T> other)
             => Set.IsProperSupersetOf(other);
-        public bool IsSubsetOf(IEnumerable<T> other) 
+        public bool IsSubsetOf(IEnumerable<T> other)
             => Set.IsSubsetOf(other);
-        public bool IsSupersetOf(IEnumerable<T> other) 
+        public bool IsSupersetOf(IEnumerable<T> other)
             => Set.IsSupersetOf(other);
-        public bool Overlaps(IEnumerable<T> other) 
+        public bool Overlaps(IEnumerable<T> other)
             => Set.Overlaps(other);
-        public bool SetEquals(IEnumerable<T> other) 
+        public bool SetEquals(IEnumerable<T> other)
             => Set.SetEquals(other);
 
         // Write methods

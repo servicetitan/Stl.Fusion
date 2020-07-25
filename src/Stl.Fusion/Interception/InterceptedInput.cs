@@ -38,7 +38,7 @@ namespace Stl.Fusion.Interception
             HashCode = hashCode;
         }
 
-        public override string ToString() 
+        public override string ToString()
             => $"{Function}({string.Join(", ", Arguments)})";
 
         public object InvokeOriginalFunction(CancellationToken cancellationToken)
@@ -85,11 +85,11 @@ namespace Stl.Fusion.Interception
             }
             return true;
         }
-        public override bool Equals(ComputedInput obj) 
+        public override bool Equals(ComputedInput obj)
             => obj is InterceptedInput other && Equals(other);
-        public override bool Equals(object? obj) 
+        public override bool Equals(object? obj)
             => obj is InterceptedInput other && Equals(other);
-        public override int GetHashCode() 
+        public override int GetHashCode()
             => base.GetHashCode();
     }
 }

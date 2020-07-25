@@ -13,16 +13,16 @@ namespace Stl.Fusion.Blazor
         protected TState State => LiveState.Value;
         protected IUpdateDelayer UpdateDelayer => LiveState.UpdateDelayer;
 
-        public virtual void Dispose() 
+        public virtual void Dispose()
             => LiveState.Dispose();
 
-        public void Invalidate(bool updateImmediately = true) 
+        public void Invalidate(bool updateImmediately = true)
             => LiveState.Invalidate(updateImmediately);
 
-        protected override void OnInitialized() 
+        protected override void OnInitialized()
             => LiveState.Updated += OnLiveStateUpdated;
 
-        protected virtual void OnLiveStateUpdated(ILiveState liveState) 
+        protected virtual void OnLiveStateUpdated(ILiveState liveState)
             => StateHasChanged();
     }
 
@@ -54,7 +54,7 @@ namespace Stl.Fusion.Blazor
                 return (TLocal) f.CloneToUnfrozen(true);
             default:
                 var memberwiseCloneMethod = typeof(object).GetMethod(
-                    nameof(MemberwiseClone), 
+                    nameof(MemberwiseClone),
                     BindingFlags.Instance | BindingFlags.NonPublic);
                 return (TLocal) memberwiseCloneMethod.Invoke(source, Array.Empty<object>());
             }

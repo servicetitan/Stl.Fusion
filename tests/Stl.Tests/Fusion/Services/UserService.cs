@@ -24,7 +24,7 @@ namespace Stl.Tests.Fusion.Services
         void Invalidate();
     }
 
-    public class UserService : IUserService, IComputedService 
+    public class UserService : IUserService, IComputedService
     {
         private readonly ILogger _log;
         protected TestDbContextPool DbContextPool { get; }
@@ -46,7 +46,7 @@ namespace Stl.Tests.Fusion.Services
             var existingUser = (User?) null;
 
             var supportTransactions = !dbContext.Database.IsInMemory();
-            await using var tx = supportTransactions 
+            await using var tx = supportTransactions
                 ? await dbContext.Database.BeginTransactionAsync(cancellationToken)
                 : (IDbContextTransaction?) null;
 
@@ -103,7 +103,7 @@ namespace Stl.Tests.Fusion.Services
         }
 
         [ComputedServiceMethod(KeepAliveTime = 5)]
-        public virtual async Task<long> CountAsync(CancellationToken cancellationToken = default) 
+        public virtual async Task<long> CountAsync(CancellationToken cancellationToken = default)
         {
             await Everything().ConfigureAwait(false);
             using var lease = DbContextPool.Rent();
@@ -128,7 +128,7 @@ namespace Stl.Tests.Fusion.Services
         {
             if (!IsCaching)
                 return;
-            var cUser = Computed.Invalidate(() => TryGetAsync(user.Id)); 
+            var cUser = Computed.Invalidate(() => TryGetAsync(user.Id));
             if (cUser != null)
                 _log.LogDebug($"Invalidated: User.Id={user.Id}");
             if (countChanged) {

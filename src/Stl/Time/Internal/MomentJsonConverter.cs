@@ -5,7 +5,7 @@ namespace Stl.Time.Internal
 {
     public class MomentJsonConverter : JsonConverter
     {
-        public override bool CanConvert(Type objectType) 
+        public override bool CanConvert(Type objectType)
             => objectType == typeof(Moment);
 
         public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)

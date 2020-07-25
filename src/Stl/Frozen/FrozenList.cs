@@ -9,9 +9,9 @@ namespace Stl.Frozen
     [Serializable]
     public class FrozenList<T> : FrozenBase, IFrozenList<T>, IFrozenEnumerable<T>
     {
-        protected static readonly bool AreItemsFrozen = 
+        protected static readonly bool AreItemsFrozen =
             typeof(IFrozen).IsAssignableFrom(typeof(T));
-        
+
         protected List<T> List { get; set; }
         public int Count => List.Count;
         public bool IsReadOnly => IsFrozen;

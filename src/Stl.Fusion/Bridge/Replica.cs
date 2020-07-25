@@ -36,7 +36,7 @@ namespace Stl.Fusion.Bridge
     public interface IReplicaImpl<T> : IReplica<T>, IFunction<ReplicaInput, T>, IReplicaImpl
     {
         bool ApplySuccessfulUpdate(LTagged<Result<T>> output, bool isConsistent);
-    } 
+    }
 
     public class Replica<T> : AsyncDisposableBase, IReplicaImpl<T>
     {
@@ -53,7 +53,7 @@ namespace Stl.Fusion.Bridge
         public Symbol PublisherId => Input.PublisherId;
         public Symbol PublicationId => Input.PublicationId;
         public ComputedOptions ComputedOptions {
-            get => _computedOptions; 
+            get => _computedOptions;
             set => _computedOptions = value;
         }
         IReplicaComputed IReplica.Computed => ComputedField;
@@ -88,7 +88,7 @@ namespace Stl.Fusion.Bridge
             return base.DisposeInternalAsync(disposing);
         }
 
-        Task IReplica.RequestUpdateAsync(CancellationToken cancellationToken) 
+        Task IReplica.RequestUpdateAsync(CancellationToken cancellationToken)
             => RequestUpdateAsync(cancellationToken);
         public virtual Task RequestUpdateAsync(CancellationToken cancellationToken = default)
         {
@@ -106,7 +106,7 @@ namespace Stl.Fusion.Bridge
             }
         }
 
-        bool IReplicaImpl<T>.ApplySuccessfulUpdate(LTagged<Result<T>> output, bool isConsistent) 
+        bool IReplicaImpl<T>.ApplySuccessfulUpdate(LTagged<Result<T>> output, bool isConsistent)
             => ApplySuccessfulUpdate(output, isConsistent);
         protected virtual bool ApplySuccessfulUpdate(LTagged<Result<T>> output, bool isConsistent)
         {
@@ -114,7 +114,7 @@ namespace Stl.Fusion.Bridge
             Task<Unit>? updateRequestTask;
             var mustInvalidate = true;
             lock (Lock) {
-                // 1. Update Computed & UpdateError 
+                // 1. Update Computed & UpdateError
                 UpdateErrorField = null;
                 computed = ComputedField;
                 if (computed == null || computed.LTag != output.LTag)
@@ -127,7 +127,7 @@ namespace Stl.Fusion.Bridge
                         // Replace inconsistent w/ the consistent
                         ComputedField = new ReplicaComputed<T>(
                             ComputedOptions, Input, output.Value, output.LTag, isConsistent);
-                    // Otherwise it will be invalidated right after exiting the lock 
+                    // Otherwise it will be invalidated right after exiting the lock
                 }
                 else {
                     // Nothing has changed
@@ -156,7 +156,7 @@ namespace Stl.Fusion.Bridge
             IReplicaComputed<T>? computed;
             Task<Unit>? updateRequestTask;
             lock (Lock) {
-                // 1. Update Computed & UpdateError 
+                // 1. Update Computed & UpdateError
                 computed = ComputedField;
                 UpdateErrorField = error;
 
@@ -174,7 +174,7 @@ namespace Stl.Fusion.Bridge
             return true;
         }
 
-        protected virtual TaskSource<Unit> CreateUpdateRequestTaskSource() 
+        protected virtual TaskSource<Unit> CreateUpdateRequestTaskSource()
             => TaskSource.New<Unit>(true);
 
         protected async Task<IComputed<T>> InvokeAsync(ReplicaInput input, IComputed? usedBy, ComputeContext? context,
@@ -248,25 +248,25 @@ namespace Stl.Fusion.Bridge
         #region Explicit impl. of IFunction & IFunction<...>
 
         async Task<IComputed> IFunction.InvokeAsync(ComputedInput input, IComputed? usedBy, ComputeContext? context,
-            CancellationToken cancellationToken) 
+            CancellationToken cancellationToken)
             => await InvokeAsync((ReplicaInput) input, usedBy, context, cancellationToken);
 
         Task IFunction.InvokeAndStripAsync(ComputedInput input, IComputed? usedBy, ComputeContext? context,
-            CancellationToken cancellationToken) 
+            CancellationToken cancellationToken)
             => InvokeAndStripAsync((ReplicaInput) input, usedBy, context, cancellationToken);
 
-        IComputed? IFunction.TryGetCached(ComputedInput input, IComputed? usedBy) 
+        IComputed? IFunction.TryGetCached(ComputedInput input, IComputed? usedBy)
             => TryGetCached((ReplicaInput) input, usedBy);
 
         Task<IComputed<T>> IFunction<ReplicaInput, T>.InvokeAsync(ReplicaInput input, IComputed? usedBy, ComputeContext? context,
-            CancellationToken cancellationToken) 
+            CancellationToken cancellationToken)
             => InvokeAsync(input, usedBy, context, cancellationToken);
 
         Task<T> IFunction<ReplicaInput, T>.InvokeAndStripAsync(ReplicaInput input, IComputed? usedBy, ComputeContext? context,
-            CancellationToken cancellationToken) 
+            CancellationToken cancellationToken)
             => InvokeAndStripAsync(input, usedBy, context, cancellationToken);
 
-        IComputed<T>? IFunction<ReplicaInput, T>.TryGetCached(ReplicaInput input, IComputed? usedBy) 
+        IComputed<T>? IFunction<ReplicaInput, T>.TryGetCached(ReplicaInput input, IComputed? usedBy)
             => TryGetCached(input, usedBy);
 
         #endregion

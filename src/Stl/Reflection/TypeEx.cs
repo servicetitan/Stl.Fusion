@@ -25,7 +25,7 @@ namespace Stl.Reflection
         {
             if (type == null)
                 throw new ArgumentNullException(nameof(type));
-            
+
             if (addSelf)
                 yield return type;
             var baseType = type.BaseType;
@@ -59,7 +59,7 @@ namespace Stl.Reflection
             if (castTo.IsInterface || castFrom.IsInterface)
                 // Not super obvious, but true
                 return true;
-            
+
             // Both types are classes, so the cast may succeed
             // only if one of them is a base of another
             return castTo.IsAssignableFrom(castFrom) || castFrom.IsAssignableFrom(castTo);
@@ -84,7 +84,7 @@ namespace Stl.Reflection
             });
         }
 
-        public static Symbol ToSymbol(this Type type, bool withPrefix = true) 
+        public static Symbol ToSymbol(this Type type, bool withPrefix = true)
             => withPrefix
                 ? ToSymbolCache.GetOrAddChecked(type, type1 =>
                     new Symbol(SymbolPrefix + type1.ToIdentifierName(true, true)))

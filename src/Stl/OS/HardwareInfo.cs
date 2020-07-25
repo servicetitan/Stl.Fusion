@@ -8,7 +8,7 @@ namespace Stl.OS
     {
         private const int RefreshIntervalTicks = 30_000; // Tick = millisecond
         private static readonly object Lock = new object();
-        private static volatile int _processorCount; 
+        private static volatile int _processorCount;
         private static volatile int _processorCountPo2;
         private static volatile int _lastRefreshTicks =
             // Environment.TickCount is negative in WebAssembly @ startup

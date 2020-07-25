@@ -9,7 +9,7 @@ namespace Stl.Testing
             writer.Flush();
             writer.GetStringBuilder().Clear();
         }
-            
+
         public static string GetContent(this StringWriter writer)
         {
             writer.Flush();

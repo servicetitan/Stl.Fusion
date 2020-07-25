@@ -17,9 +17,9 @@ namespace Stl.Internal
         [JsonIgnore]
         [field: NonSerialized]
         public Action<TOwner, TActual>? OwnerPropertySetter { get; set; } = null;
-        
+
         [OnDeserialized]
-        protected virtual void OnDeserialized() 
+        protected virtual void OnDeserialized()
             => OwnerPropertySetter?.Invoke(Owner, ToActualObject());
 
         protected abstract TActual ToActualObject();

@@ -22,7 +22,7 @@ namespace Stl.Serialization
             _cache = new ConcurrentDictionary<(string?, string), Type>();
         }
 
-        public Type BindToType(string? assemblyName, string typeName) 
+        public Type BindToType(string? assemblyName, string typeName)
             => GetType(assemblyName, typeName);
 
         public void BindToName(Type serializedType, out string? assemblyName, out string? typeName)
@@ -33,7 +33,7 @@ namespace Stl.Serialization
 
         // Protected part
 
-        protected Type GetType(string? assemblyName, string typeName) 
+        protected Type GetType(string? assemblyName, string typeName)
             => _cache.GetOrAddChecked((assemblyName, typeName), _resolveTypeHandler);
 
         protected virtual Type ResolveType((string? AssemblyName, string TypeName) key)
@@ -72,7 +72,7 @@ namespace Stl.Serialization
             string genericTypeDefName = typeName.Substring(0, openBracketIndex);
             if (openBracketIndex < 0)
                 return null;
-            
+
             var genericTypeDef = assembly.GetType(genericTypeDefName);
             if (genericTypeDef == null)
                 return null;
@@ -95,7 +95,7 @@ namespace Stl.Serialization
                         string typeArgAssemblyQualifiedName = typeName.Substring(
                             typeArgStartIndex, i - typeArgStartIndex);
                         TypeNameHelpers.SplitAssemblyQualifiedName(typeArgAssemblyQualifiedName,
-                            out var typeArgAssemblyName, out var typeArgTypeName); 
+                            out var typeArgAssemblyName, out var typeArgTypeName);
                         genericTypeArguments.Add(GetType(typeArgAssemblyName, typeArgTypeName));
                     }
                     break;

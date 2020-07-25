@@ -50,7 +50,7 @@ namespace Stl.Tests.Fusion
                 return;
 
             var services = CreateProviderFor<Calculator>();
-            var r = services.GetRequiredService<IComputedRegistry>(); 
+            var r = services.GetRequiredService<IComputedRegistry>();
             var c = services.GetRequiredService<Calculator>();
 
             await c.SumAsync(1, 1);

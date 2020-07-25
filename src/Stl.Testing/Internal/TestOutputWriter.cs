@@ -14,7 +14,7 @@ namespace Stl.Testing.Internal
         public ITestOutputHelper TestOutput { get; }
         public override Encoding Encoding { get; } = Encoding.UTF8;
 
-        public TestOutputWriter(ITestOutputHelper testOutput) 
+        public TestOutputWriter(ITestOutputHelper testOutput)
             => TestOutput = testOutput;
 
         public override void Write(char value)
@@ -38,6 +38,6 @@ namespace Stl.Testing.Internal
             Prefix.Clear();
             Prefix.Append(lines[^1]);
         }
-    }        
+    }
 
 }

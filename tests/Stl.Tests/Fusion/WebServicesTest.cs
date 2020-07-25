@@ -36,7 +36,7 @@ namespace Stl.Tests.Fusion
         {
             await using var serving = await WebSocketServer.ServeAsync();
             using var stm = Container.Resolve<ILiveState<ServerTimeModel1>>();
-            
+
             var c = stm.State;
             c.IsConsistent.Should().BeFalse();
             c.Value.Time.Should().Be(default);
@@ -72,7 +72,7 @@ namespace Stl.Tests.Fusion
         {
             await using var serving = await WebSocketServer.ServeAsync();
             using var stm = Container.Resolve<ILiveState<ServerTimeModel2>>();
-            
+
             var c = stm.State;
             c.IsConsistent.Should().BeFalse();
             c.Value.Time.Should().Be(default);

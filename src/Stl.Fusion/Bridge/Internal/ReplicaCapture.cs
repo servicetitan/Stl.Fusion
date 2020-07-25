@@ -9,7 +9,7 @@ namespace Stl.Fusion.Bridge.Internal
         internal static readonly AsyncLocal<ReplicaCapture?> CurrentLocal = new AsyncLocal<ReplicaCapture?>();
         private readonly ReplicaCapture? _oldCurrent;
         private volatile IReplica? _replica;
-        
+
         public IReplica? Replica => _replica;
 
         public ReplicaCapture()

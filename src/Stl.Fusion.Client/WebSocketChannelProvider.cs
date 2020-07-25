@@ -29,17 +29,17 @@ namespace Stl.Fusion.Client
             public TimeSpan ConnectTimeout { get; set; } = TimeSpan.FromSeconds(10);
             public LogLevel? MessageLogLevel { get; set; } = null;
             public int? MessageMaxLength { get; set; } = 2048;
-            public Func<IServiceProvider, ChannelSerializerPair<Message, string>> ChannelSerializerPairFactory { get; set; } = 
+            public Func<IServiceProvider, ChannelSerializerPair<Message, string>> ChannelSerializerPairFactory { get; set; } =
                 DefaultChannelSerializerPairFactory;
-            public Func<IServiceProvider, ClientWebSocket> ClientWebSocketFactory { get; set; } = 
+            public Func<IServiceProvider, ClientWebSocket> ClientWebSocketFactory { get; set; } =
                 DefaultClientWebSocketFactory;
 
-            public static ChannelSerializerPair<Message, string> DefaultChannelSerializerPairFactory(IServiceProvider services) 
+            public static ChannelSerializerPair<Message, string> DefaultChannelSerializerPairFactory(IServiceProvider services)
                 => new ChannelSerializerPair<Message, string>(
-                    new SafeJsonNetSerializer(t => typeof(ReplicatorMessage).IsAssignableFrom(t)).ToTyped<Message>(), 
+                    new SafeJsonNetSerializer(t => typeof(ReplicatorMessage).IsAssignableFrom(t)).ToTyped<Message>(),
                     new JsonNetSerializer().ToTyped<Message>());
 
-            public static ClientWebSocket DefaultClientWebSocketFactory(IServiceProvider services) 
+            public static ClientWebSocket DefaultClientWebSocketFactory(IServiceProvider services)
                 => services?.GetService<ClientWebSocket>() ?? new ClientWebSocket();
         }
 
@@ -52,7 +52,7 @@ namespace Stl.Fusion.Client
         public TimeSpan ConnectTimeout { get; }
         protected IServiceProvider Services { get; }
         protected Func<IServiceProvider, ChannelSerializerPair<Message, string>> ChannelSerializerPairFactory { get; }
-        protected Func<IServiceProvider, ClientWebSocket> ClientWebSocketFactory { get; } 
+        protected Func<IServiceProvider, ClientWebSocket> ClientWebSocketFactory { get; }
         protected LogLevel? MessageLogLevel { get; }
         protected int? MessageMaxLength { get; }
         protected Lazy<IReplicator>? ReplicatorLazy { get; }
@@ -90,12 +90,12 @@ namespace Stl.Fusion.Client
                 using var lts = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken);
                 await ws.ConnectAsync(connectionUri, lts.Token).ConfigureAwait(false);
                 _log.LogInformation($"{clientId}: Connected.");
-                
+
                 await using var wsChannel = new WebSocketChannel(ws);
-                Channel<string> stringChannel = wsChannel; 
+                Channel<string> stringChannel = wsChannel;
                 if (MessageLogLevel.HasValue)
                     stringChannel = stringChannel.WithLogger(
-                        clientId, _log, 
+                        clientId, _log,
                         MessageLogLevel.GetValueOrDefault(),
                         MessageMaxLength);
                 var serializers = ChannelSerializerPairFactory.Invoke(Services);
@@ -117,14 +117,14 @@ namespace Stl.Fusion.Client
         {
             var url = BaseUri.ToString();
             if (url.StartsWith("http://"))
-                url = "ws://" + url.Substring(7); 
+                url = "ws://" + url.Substring(7);
             else if (url.StartsWith("https://"))
                 url = "wss://" + url.Substring(8);
             if (url.EndsWith("/"))
                 url = url.Substring(0, url.Length - 1);
             url += RequestPath;
             var uriBuilder = new UriBuilder(url);
-            var queryTail = 
+            var queryTail =
                 $"{PublisherIdQueryParameterName}={publisherId.Value}" +
                 $"&{ClientIdQueryParameterName}={ClientId.Value}";
             if (!string.IsNullOrEmpty(uriBuilder.Query))

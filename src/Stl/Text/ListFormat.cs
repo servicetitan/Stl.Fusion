@@ -5,7 +5,7 @@ using System.Text;
 using Stl.Collections;
 using Stl.Internal;
 
-namespace Stl.Text 
+namespace Stl.Text
 {
     public readonly struct ListFormat
     {
@@ -144,8 +144,8 @@ namespace Stl.Text
                 ItemBuilder.Append(Source[index]);
             }
 
-            if (ItemIndex == 1 
-                && (ItemBuilder.Length - startLength) == NoItems.Length 
+            if (ItemIndex == 1
+                && (ItemBuilder.Length - startLength) == NoItems.Length
                 && Source.Length == (NoItems.Length << 1)) {
                 // Special case: possibly it's an empty list marker
                 var noItems = true;

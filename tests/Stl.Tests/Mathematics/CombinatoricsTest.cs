@@ -11,7 +11,7 @@ namespace Stl.Tests.Mathematics
     public class CombinatoricsTest : TestBase
     {
         public CombinatoricsTest(ITestOutputHelper @out) : base(@out) { }
-        
+
         [Fact]
         public void CnkTest()
         {
@@ -19,15 +19,15 @@ namespace Stl.Tests.Mathematics
 
             Assert.Equal(1, Combinatorics.Cnk(1, 0));
             Assert.Equal(1, Combinatorics.Cnk(1, 1));
-            
+
             Assert.Equal(2, Combinatorics.Cnk(2, 1));
             Assert.Equal(1, Combinatorics.Cnk(2, 2));
-            
+
             Assert.Equal(1, Combinatorics.Cnk(3, 0));
             Assert.Equal(3, Combinatorics.Cnk(3, 1));
             Assert.Equal(3, Combinatorics.Cnk(3, 2));
             Assert.Equal(1, Combinatorics.Cnk(3, 3));
-            
+
             Assert.Equal(1, Combinatorics.Cnk(4, 0));
             Assert.Equal(4, Combinatorics.Cnk(4, 1));
             Assert.Equal(6, Combinatorics.Cnk(4, 2));
@@ -58,7 +58,7 @@ namespace Stl.Tests.Mathematics
                     Assert.Equal(expected, allKofN.Count());
                 }
             }
-            
+
             AllKOfN(5, 5, false);
             AllKOfN(5, 4, true);
             AllKOfN(5, 4, false);

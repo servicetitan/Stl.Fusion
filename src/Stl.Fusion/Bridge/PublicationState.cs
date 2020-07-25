@@ -55,7 +55,7 @@ namespace Stl.Fusion.Bridge
             InvalidatedSource = invalidatedSource;
             OutdatedSource = outdatedSource;
             Computed = computed;
-            computed.Invalidated += _ => InvalidatedSource.TrySetResult(default);  
+            computed.Invalidated += _ => InvalidatedSource.TrySetResult(default);
         }
 
         public Task InvalidatedAsync() => InvalidatedSource.Task;

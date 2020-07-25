@@ -18,14 +18,14 @@ namespace Stl.Time.Testing
 
         public override string ToString() => $"{GetType().Name}()";
 
-        public Moment ToRealTime(Moment localTime) => throw Errors.UnusableClock(); 
+        public Moment ToRealTime(Moment localTime) => throw Errors.UnusableClock();
         public Moment ToLocalTime(Moment realTime) => throw Errors.UnusableClock();
         public TimeSpan ToRealDuration(TimeSpan localDuration) => throw Errors.UnusableClock();
         public TimeSpan ToLocalDuration(TimeSpan realDuration) => throw Errors.UnusableClock();
 
         public CancellationToken SettingsChangedToken => default;
 
-        public Task DelayAsync(TimeSpan dueIn, CancellationToken cancellationToken = default) 
+        public Task DelayAsync(TimeSpan dueIn, CancellationToken cancellationToken = default)
             => throw Errors.UnusableClock();
     }
 }

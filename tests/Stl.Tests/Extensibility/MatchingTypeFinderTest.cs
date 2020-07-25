@@ -25,7 +25,7 @@ namespace Stl.Tests.Extensibility
 
         [MatchFor(typeof(Lazy<>), typeof(MatchingTypeFinderTest))]
         public class MatchForLazy<T> { }
-        
+
         [MatchFor(typeof(G2<,>), typeof(MatchingTypeFinderTest))]
         public class MatchForG2<T1, T2> { }
         [MatchFor(typeof(G1<>), typeof(MatchingTypeFinderTest))]
@@ -51,7 +51,7 @@ namespace Stl.Tests.Extensibility
         {
             var scope = GetType();
             var finder = new MatchingTypeFinder(scope.Assembly);
-            
+
             finder.TryFind(typeof(NoMatch<int>), scope).Should().BeNull();
 
             finder.TryFind(typeof(Lazy<int>), scope).Should().Be(typeof(MatchForLazy<int>));

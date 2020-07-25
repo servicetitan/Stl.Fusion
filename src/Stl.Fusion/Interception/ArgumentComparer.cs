@@ -12,9 +12,9 @@ namespace Stl.Fusion.Interception
     {
         public static ArgumentComparer Default { get; } = new ArgumentComparer();
 
-        public Func<object, int> GetHashCodeFunc { get; protected set; } = 
+        public Func<object, int> GetHashCodeFunc { get; protected set; } =
             o => o?.GetHashCode() ?? 0;
-        public Func<object, object, bool> EqualsFunc { get; protected set; } = 
+        public Func<object, object, bool> EqualsFunc { get; protected set; } =
             (objA, objB) => objA == objB || (objA?.Equals(objB) ?? false);
     }
 
@@ -36,8 +36,8 @@ namespace Stl.Fusion.Interception
 
             var mGetHashCode = tType
                 .GetMethods()
-                .Single(m => m.Name == nameof(GetHashCode) 
-                    && m.IsVirtual 
+                .Single(m => m.Name == nameof(GetHashCode)
+                    && m.IsVirtual
                     && m.ReturnType == typeof(int)
                     && m.GetParameters().Length == 0);
             var tEqMap = tType.GetInterfaceMap(tEq);
@@ -45,7 +45,7 @@ namespace Stl.Fusion.Interception
                 .Select((mi, index) => (mi, index))
                 .Single(p => p.mi.Name == nameof(Equals)).index;
             var mEquals = tEqMap.TargetMethods[mEqualsIndex];
-            
+
             var eNull = Expression.Constant(null);
             var eSrc = Expression.Parameter(typeof(object), "source");
             var ghcBody = Expression.Condition(
@@ -111,7 +111,7 @@ namespace Stl.Fusion.Interception
                 return EqualityComparer<T>.Default.GetHashCode(hasId.Id);
             };
             EqualsFunc = (a, b) => {
-                if (a == null) 
+                if (a == null)
                     return b == null;
                 if (b == null)
                     return false;

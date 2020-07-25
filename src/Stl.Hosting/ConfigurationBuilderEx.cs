@@ -6,7 +6,7 @@ namespace Stl.Hosting
 {
     public static class ConfigurationBuilderEx
     {
-        public static IConfigurationBuilder AddFile(this IConfigurationBuilder builder, 
+        public static IConfigurationBuilder AddFile(this IConfigurationBuilder builder,
             string fileName, bool optional = true, bool reloadOnChange = false)
         {
             if (fileName.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
@@ -15,7 +15,7 @@ namespace Stl.Hosting
                 builder.AddIniFile(fileName, optional, reloadOnChange);
             else if (fileName.EndsWith(".xml", StringComparison.OrdinalIgnoreCase))
                 builder.AddXmlFile(fileName, optional, reloadOnChange);
-            else 
+            else
                 throw Errors.UnknownConfigurationFileType(fileName);
             return builder;
         }

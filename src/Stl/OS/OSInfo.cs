@@ -33,8 +33,8 @@ namespace Stl.OS
             }
 
             // Unix
-            Kind = RuntimeInformation.IsOSPlatform(OSPlatform.OSX) 
-                ? OSKind.MacOS 
+            Kind = RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
+                ? OSKind.MacOS
                 : OSKind.Unix;
             UserHomePath = Environment.GetEnvironmentVariable("HOME") ?? "";
         }

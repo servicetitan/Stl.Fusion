@@ -19,7 +19,7 @@ namespace Stl.Async
         ValueTask PutAsync(ReadOnlyMemory<T> source, CancellationToken cancellationToken = default);
         ValueTask<int> PullAsync(Memory<T> source, CancellationToken cancellationToken = default);
     }
-    
+
     public sealed class AsyncChannel<T> : IAsyncChannel<T>
     {
         private readonly Memory<T> _buffer;
@@ -41,7 +41,7 @@ namespace Stl.Async
         public bool IsEmpty => Count == 0;
         public bool IsFull => Count == Size;
         public bool IsPutCompleted { get; private set; }
-        
+
         private int CountNoLock {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get {
@@ -56,7 +56,7 @@ namespace Stl.Async
         }
 
         private object Lock => this;
-        
+
         public AsyncChannel(int size, TaskCreationOptions taskCreationOptions = default)
             : this(new T[size + 1], taskCreationOptions)
         { }
@@ -209,7 +209,7 @@ namespace Stl.Async
 
         private async Task WaitForDequeueAsync(CancellationToken cancellationToken = default)
         {
-            TaskSource<Unit> ts; 
+            TaskSource<Unit> ts;
             lock (Lock) {
                 cancellationToken.ThrowIfCancellationRequested();
                 ts = _pullHappened;
@@ -224,7 +224,7 @@ namespace Stl.Async
 
         private async Task WaitForEnqueueAsync(CancellationToken cancellationToken = default)
         {
-            TaskSource<Unit> ts; 
+            TaskSource<Unit> ts;
             lock (Lock) {
                 cancellationToken.ThrowIfCancellationRequested();
                 ts = _putHappened;

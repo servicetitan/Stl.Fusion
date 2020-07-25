@@ -12,7 +12,7 @@ namespace Stl.Collections
         public int Count => _heap.Count;
         public T Min => _heap[0];
 
-        public BinaryHeap(IComparer<T>? comparer = null) => 
+        public BinaryHeap(IComparer<T>? comparer = null) =>
             _comparer = comparer ?? Comparer<T>.Default;
 
         public BinaryHeap(BinaryHeap<T> other)
@@ -21,7 +21,7 @@ namespace Stl.Collections
             _heap = other._heap.ToList();
         }
 
-        public BinaryHeap(IEnumerable<T> source, IComparer<T>? comparer = null) : this(comparer) => 
+        public BinaryHeap(IEnumerable<T> source, IComparer<T>? comparer = null) : this(comparer) =>
             _heap = source.OrderBy(i => i, _comparer).ToList();
 
         public override string ToString() => $"{GetType().Name} of [{this.ToDelimitedString()}]";
@@ -51,8 +51,8 @@ namespace Stl.Collections
         }
 
         public void Clear() => _heap.Clear();
-        
-        // Private part        
+
+        // Private part
 
         private bool IsValidIndex(int index) => index < Count && index >= 0;
         private static int GetFirstChildIndex(int index) => ((index + 1) << 1) - 1;

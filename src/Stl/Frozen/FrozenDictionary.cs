@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Stl.Frozen
 {
-    public interface IFrozenDictionary<TKey, TValue> : 
+    public interface IFrozenDictionary<TKey, TValue> :
         IDictionary<TKey, TValue>,
         IFrozenCollection<KeyValuePair<TKey, TValue>>
     { }
@@ -12,7 +12,7 @@ namespace Stl.Frozen
     [Serializable]
     public class FrozenDictionary<TKey, TValue> : FrozenBase, IFrozenDictionary<TKey, TValue>
     {
-        protected static readonly bool AreValuesFrozen = 
+        protected static readonly bool AreValuesFrozen =
             typeof(IFrozen).IsAssignableFrom(typeof(TValue));
 
         protected Dictionary<TKey, TValue> Dictionary { get; set; }
@@ -33,12 +33,12 @@ namespace Stl.Frozen
 
         public FrozenDictionary() : this(0) { }
         public FrozenDictionary(IEqualityComparer<TKey> comparer) : this(0, comparer) { }
-        public FrozenDictionary(int capacity, IEqualityComparer<TKey>? comparer = null) 
+        public FrozenDictionary(int capacity, IEqualityComparer<TKey>? comparer = null)
             => Dictionary = new Dictionary<TKey, TValue>(capacity, comparer);
-        public FrozenDictionary(Dictionary<TKey, TValue> dictionary) 
+        public FrozenDictionary(Dictionary<TKey, TValue> dictionary)
             => Dictionary = dictionary;
         public FrozenDictionary(IEnumerable<KeyValuePair<TKey, TValue>> source) : this(source, null) { }
-        public FrozenDictionary(IEnumerable<KeyValuePair<TKey, TValue>> source, IEqualityComparer<TKey>? comparer) 
+        public FrozenDictionary(IEnumerable<KeyValuePair<TKey, TValue>> source, IEqualityComparer<TKey>? comparer)
             : this((source as ICollection<KeyValuePair<TKey, TValue>>)?.Count ?? 0, comparer)
         {
             foreach (var (key, value) in source)
@@ -80,16 +80,16 @@ namespace Stl.Frozen
         // Read-only methods
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() 
+        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
             => Dictionary.GetEnumerator();
-        public bool TryGetValue(TKey key, out TValue value) 
+        public bool TryGetValue(TKey key, out TValue value)
             => Dictionary.TryGetValue(key, out value);
-        public bool ContainsKey(TKey key) 
+        public bool ContainsKey(TKey key)
             => Dictionary.ContainsKey(key);
 
-        bool ICollection<KeyValuePair<TKey, TValue>>.Contains(KeyValuePair<TKey, TValue> item) 
+        bool ICollection<KeyValuePair<TKey, TValue>>.Contains(KeyValuePair<TKey, TValue> item)
             => DictionaryAsCollection.Contains(item);
-        void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) 
+        void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
             => DictionaryAsCollection.CopyTo(array, arrayIndex);
 
         // IFrozen-related

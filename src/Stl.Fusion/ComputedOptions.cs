@@ -11,7 +11,7 @@ namespace Stl.Fusion
         public static readonly TimeSpan DefaultAutoInvalidateTime = TimeSpan.MaxValue; // No auto invalidation
 
         public static readonly ComputedOptions Default = new ComputedOptions();
-        public static readonly ComputedOptions NoAutoInvalidateOnError = 
+        public static readonly ComputedOptions NoAutoInvalidateOnError =
             new ComputedOptions(errorAutoInvalidateTime: TimeSpan.MaxValue);
 
         public TimeSpan KeepAliveTime { get; }
@@ -19,7 +19,7 @@ namespace Stl.Fusion
         public TimeSpan AutoInvalidateTime { get; }
 
         public ComputedOptions(
-            TimeSpan? keepAliveTime = null, 
+            TimeSpan? keepAliveTime = null,
             TimeSpan? errorAutoInvalidateTime = null,
             TimeSpan? autoInvalidateTime = null)
             : this(
@@ -30,7 +30,7 @@ namespace Stl.Fusion
 
         [JsonConstructor]
         public ComputedOptions(
-            TimeSpan keepAliveTime, 
+            TimeSpan keepAliveTime,
             TimeSpan errorAutoInvalidateTime,
             TimeSpan autoInvalidateTime)
         {

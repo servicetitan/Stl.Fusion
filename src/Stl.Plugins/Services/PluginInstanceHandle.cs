@@ -19,21 +19,21 @@ namespace Stl.Plugins.Services
     {
         new TPluginImpl Instance { get; }
     }
-    
+
     public class PluginInstanceHandle<TPluginImpl> : IPluginInstanceHandle<TPluginImpl>
         where TPluginImpl : notnull
     {
         private Lazy<TPluginImpl>? _lazyInstance;
-        public TPluginImpl Instance => 
+        public TPluginImpl Instance =>
             (_lazyInstance ?? throw new ObjectDisposedException(GetType().Name)).Value;
         // ReSharper disable once HeapView.BoxingAllocation
         object IPluginInstanceHandle.Instance => Instance;
 
-        public PluginInstanceHandle(PluginSetInfo plugins, 
+        public PluginInstanceHandle(PluginSetInfo plugins,
             IPluginFactory pluginFactory, IEnumerable<IPluginFilter> pluginFilters)
         {
             var pluginType = typeof(TPluginImpl);
-            var pluginInfo = plugins.InfoByType.GetValueOrDefault(pluginType); 
+            var pluginInfo = plugins.InfoByType.GetValueOrDefault(pluginType);
             if (pluginInfo == null)
                 throw Errors.UnknownPluginImplementationType(pluginType);
             if (pluginFilters.Any(f => !f.IsEnabled(pluginInfo)))

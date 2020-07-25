@@ -8,7 +8,7 @@ namespace Stl.Fusion.Interception
 
         protected InterceptedFunctionBase(
             InterceptedMethod method,
-            IComputedRegistry computedRegistry) 
+            IComputedRegistry computedRegistry)
             : base(computedRegistry)
         {
             Method = method;

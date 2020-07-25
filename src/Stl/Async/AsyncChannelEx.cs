@@ -12,7 +12,7 @@ namespace Stl.Async
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             while (true) {
-                var (isPulled, (item, error)) = 
+                var (isPulled, (item, error)) =
                     await channel.PullAsync(cancellationToken).ConfigureAwait(false);
                 if (!isPulled)
                     break;

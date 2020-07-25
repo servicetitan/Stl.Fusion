@@ -2,7 +2,7 @@ using Stl.Extensibility;
 
 namespace Stl.Fusion.Client.RestEase.Internal
 {
-    internal class DeserializeComputedHandler<T> : 
+    internal class DeserializeComputedHandler<T> :
         HandlerProvider<DeserializeMethodArgs, object?>.IHandler<T>
     {
         public object? Handle(object target, DeserializeMethodArgs arg)

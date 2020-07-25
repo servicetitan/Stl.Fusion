@@ -12,7 +12,7 @@ namespace Stl.Testing
             SerializationBinder = CrossPlatformSerializationBinder.Instance,
             Formatting = Formatting.Indented,
 //            ContractResolver = new PreferSerializableContractResolver(),
-        }; 
+        };
 
         public static T PassThroughAllSerializers<T>(this T value)
         {
@@ -23,7 +23,7 @@ namespace Stl.Testing
 
         public static (T, string) PassThroughAllSerializersWithOutput<T>(this T value)
         {
-            var (v, json) = value.PassThroughJsonConvertWithOutput(); 
+            var (v, json) = value.PassThroughJsonConvertWithOutput();
             v = v.PassThroughBinaryFormatter();
             return (v, json);
         }
@@ -35,7 +35,7 @@ namespace Stl.Testing
             box = JsonConvert.DeserializeObject<Box<T>>(json, JsonSerializerSettings)!;
             return box.Value;
         }
-        
+
         public static (T, string) PassThroughJsonConvertWithOutput<T>(this T value)
         {
             var box = Box.New(value);
@@ -43,7 +43,7 @@ namespace Stl.Testing
             box = JsonConvert.DeserializeObject<Box<T>>(json, JsonSerializerSettings)!;
             return (box.Value, json);
         }
-        
+
         public static T PassThroughBinaryFormatter<T>(this T value)
         {
             var box = Box.New(value);

@@ -28,7 +28,7 @@ namespace Stl.Plugins
     }
 
     // This interface is used to hide the methods with
-    // similar names exposed via PluginHostBuilderEx 
+    // similar names exposed via PluginHostBuilderEx
     public interface IPluginHostBuilderImpl
     {
         IConfigurationBuilder CreateConfigurationBuilder();
@@ -37,14 +37,14 @@ namespace Stl.Plugins
 
     public class PluginHostBuilder : IPluginHostBuilder, IPluginHostBuilderImpl
     {
-        protected static readonly ConfigurationRoot EmptyConfiguration = 
+        protected static readonly ConfigurationRoot EmptyConfiguration =
             new ConfigurationRoot(new List<IConfigurationProvider>());
 
         public HashSet<Type> PluginTypes { get; set; } = new HashSet<Type>();
         public PluginSetInfo Plugins { get; set; } = PluginSetInfo.Empty;
         public IServiceCollection Services { get; set; } = new ServiceCollection();
         public IConfiguration Configuration { get; set; } = EmptyConfiguration;
-        public Func<IServiceCollection, IServiceProvider> ServiceProviderFactory { get; set; } = 
+        public Func<IServiceCollection, IServiceProvider> ServiceProviderFactory { get; set; } =
             services => new DefaultServiceProviderFactory().CreateServiceProvider(services);
         public bool AutoStart { get; set; } = true;
         public IPluginHostBuilderImpl Implementation => this;

@@ -22,7 +22,7 @@ namespace Stl.Tests.Async
             using var clock = new TestClock().SpeedupBy(10);
 
             Assert.Equal(
-                new [] {"2", "4"}, 
+                new [] {"2", "4"},
                 clock
                     .IntervalAsync(TimeSpan.FromMilliseconds(10))
                     .Skip(2)
@@ -32,7 +32,7 @@ namespace Stl.Tests.Async
                     .ToEnumerable());
 
             Assert.Equal(
-                new [] {"2", "4"}, 
+                new [] {"2", "4"},
                 clock
                     .IntervalAsync(TimeSpan.FromMilliseconds(10))
                     .Index()
@@ -67,13 +67,13 @@ namespace Stl.Tests.Async
 
             var tasks = Enumerable.Range(0, 100).Select(i => Task.Run(Test)).ToArray();
             var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
-            
+
             var whenAllTask = Task.WhenAll(tasks);
             await Task.WhenAny(whenAllTask, timeoutCts.Token.ToTask(false))
                 .ConfigureAwait(false);
-            
+
             Assert.False(timeoutCts.Token.IsCancellationRequested);
-            
+
             var results = whenAllTask.Result;
             Assert.False(failed);
             Assert.True(results.All(r => r == 2));

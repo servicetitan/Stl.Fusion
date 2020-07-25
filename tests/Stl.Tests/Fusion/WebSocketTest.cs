@@ -18,7 +18,7 @@ namespace Stl.Tests.Fusion
     [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
     public class WebSocketTest : FusionTestBase
     {
-        public WebSocketTest(ITestOutputHelper @out, FusionTestOptions? options = null) 
+        public WebSocketTest(ITestOutputHelper @out, FusionTestOptions? options = null)
             : base(@out, options) { }
 
         [Fact]
@@ -101,7 +101,7 @@ namespace Stl.Tests.Fusion
             Debug.WriteLine("7");
             state.Should().Be(Replicator.GetPublisherConnectionState(pub.Publisher.Id));
             state.Error.Should().BeAssignableTo<Exception>();
-            
+
             // Second try -- should fail w/ WebSocketException
             Debug.WriteLine("8");
             await rep.Computed.UpdateAsync(false).AsAsyncFunc()

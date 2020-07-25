@@ -69,7 +69,7 @@ namespace Stl.Concurrency
             concurrencyLevel = (int) Bits.GreaterOrEqualPowerOf2((uint) concurrencyLevel);
             return new ConcurrentIdGenerator<long>(i => {
                 var count = (ulong) 0;
-                return () => {                  
+                return () => {
                     unchecked {
                         count += (ulong) concurrencyLevel;
                         return (long) (count ^ (ulong) i);
@@ -86,7 +86,7 @@ namespace Stl.Concurrency
             var maxCount = long.MaxValue >> 8; // Let's have some reserve @ the top of the band
             return new ConcurrentIdGenerator<LTag>(i => {
                 var count = (long) 0;
-                return () => {                  
+                return () => {
                     unchecked {
                         count = (count + concurrencyLevel) & maxCount;
                         // We want to return only strictly positive LTags (w/o IsSpecial flag)

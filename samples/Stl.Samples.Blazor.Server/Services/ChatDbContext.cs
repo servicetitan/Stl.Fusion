@@ -9,7 +9,7 @@ namespace Stl.Samples.Blazor.Server.Services
 {
     public class ChatDbContextPool : ScopedServicePool<ChatDbContext>
     {
-        public ChatDbContextPool(IServiceProvider services) 
+        public ChatDbContextPool(IServiceProvider services)
             : base(services, CanReuse, HardwareInfo.ProcessorCount * 4) { }
 
         private static bool CanReuse(ChatDbContext dbContext)
@@ -22,7 +22,7 @@ namespace Stl.Samples.Blazor.Server.Services
     {
         public DbSet<ChatUser> Users { get; protected set; } = null!;
         public DbSet<ChatMessage> Messages { get; protected set; } = null!;
-        
+
         public ChatDbContext(DbContextOptions options) : base(options)
         {
             // ReSharper disable once VirtualMemberCallInConstructor

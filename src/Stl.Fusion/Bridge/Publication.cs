@@ -17,7 +17,7 @@ namespace Stl.Fusion.Bridge
         IPublisher Publisher { get; }
         IPublicationState State { get; }
         long UseCount { get; }
-        
+
         Disposable<IPublication> Use();
         bool Touch();
         ValueTask UpdateAsync(CancellationToken cancellationToken);
@@ -59,7 +59,7 @@ namespace Stl.Fusion.Bridge
         public long UseCount => Volatile.Read(ref _useCount);
 
         public Publication(
-            Type publicationType, IPublisher publisher, 
+            Type publicationType, IPublisher publisher,
             IComputed<T> computed, Symbol id, IMomentClock clock)
         {
             Clock = clock ??= CoarseCpuClock.Instance;
@@ -102,14 +102,14 @@ namespace Stl.Fusion.Bridge
         }
 
         protected virtual IPublicationStateImpl<T> CreatePublicationState(
-            IComputed<T> computed, bool isDisposed = false) 
+            IComputed<T> computed, bool isDisposed = false)
             => new PublicationState<T>(this, computed, Clock.Now, isDisposed);
 
-        protected override async Task RunInternalAsync(CancellationToken cancellationToken) 
+        protected override async Task RunInternalAsync(CancellationToken cancellationToken)
         {
             try {
                 await ExpireAsync(cancellationToken).ConfigureAwait(false);
-            } 
+            }
             finally {
                 // Awaiting for disposal here = cyclic task dependency;
                 // we should just ensure it starts right when this method
@@ -122,13 +122,13 @@ namespace Stl.Fusion.Bridge
         {
             var expirationTime = PublisherImpl.PublicationExpirationTime;
 
-            Moment GetLastUseTime() 
+            Moment GetLastUseTime()
                 => UseCount > 0 ? CoarseCpuClock.Now : LastTouchTime;
-            Moment GetNextCheckTime(Moment start, Moment lastUseTime) 
+            Moment GetNextCheckTime(Moment start, Moment lastUseTime)
                 => lastUseTime + expirationTime;
 
             // Uncomment for debugging:
-            // await Task.Delay(TimeSpan.FromMinutes(10), cancellationToken).ConfigureAwait(false); 
+            // await Task.Delay(TimeSpan.FromMinutes(10), cancellationToken).ConfigureAwait(false);
 
             try {
                 var start = CoarseCpuClock.Now;
@@ -150,7 +150,7 @@ namespace Stl.Fusion.Bridge
             }
         }
 
-        SubscriptionProcessor IPublicationImpl.CreateSubscriptionProcessor(Channel<Message> channel, SubscribeMessage subscribeMessage) 
+        SubscriptionProcessor IPublicationImpl.CreateSubscriptionProcessor(Channel<Message> channel, SubscribeMessage subscribeMessage)
             => CreateSubscriptionProcessor(channel, subscribeMessage);
         protected virtual SubscriptionProcessor CreateSubscriptionProcessor(Channel<Message> channel, SubscribeMessage subscribeMessage)
             => new SubscriptionProcessor<T>(this, channel, subscribeMessage);
@@ -158,7 +158,7 @@ namespace Stl.Fusion.Bridge
         protected override Task DisposeAsync(bool disposing)
         {
             // We override this method to make sure State is the first thing
-            // to reflect the disposal. 
+            // to reflect the disposal.
             var state = StateField;
             if (state.IsDisposed)
                 return Task.CompletedTask;

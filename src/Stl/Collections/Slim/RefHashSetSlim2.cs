@@ -9,12 +9,12 @@ namespace Stl.Collections.Slim
     {
         private (T, T) _tuple;
         private HashSet<T>? _set;
-        
+
         private bool HasSet {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _set != null;
         }
-        
+
         public int Count {
             get {
                 if (HasSet) return _set!.Count;
@@ -28,7 +28,7 @@ namespace Stl.Collections.Slim
         {
             if (item == null)
                 throw new ArgumentNullException(nameof(item));
-            
+
             if (HasSet) return _set!.Contains(item);
             if (_tuple.Item1 == item) return true;
             if (_tuple.Item2 == item) return true;
@@ -39,9 +39,9 @@ namespace Stl.Collections.Slim
         {
             if (item == null)
                 throw new ArgumentNullException(nameof(item));
-            
+
             if (HasSet) return _set!.Add(item);
-            
+
             // Item 1
             if (_tuple.Item1 == null) {
                 _tuple.Item1 = item;
@@ -67,9 +67,9 @@ namespace Stl.Collections.Slim
         {
             if (item == null)
                 throw new ArgumentNullException(nameof(item));
-            
+
             if (HasSet) return _set!.Remove(item);
-            
+
             // Item 1
             if (_tuple.Item1 == null) return false;
             if (_tuple.Item1 == item) {
@@ -106,7 +106,7 @@ namespace Stl.Collections.Slim
                 yield return _tuple.Item2;
             }
         }
-        
+
         public void Apply<TState>(TState state, Action<TState, T> action)
         {
             if (HasSet) {
@@ -119,7 +119,7 @@ namespace Stl.Collections.Slim
             if (_tuple.Item2 == null) return;
             action(state, _tuple.Item2);
         }
-        
+
         public void Aggregate<TState>(ref TState state, Aggregator<TState, T> aggregator)
         {
             if (HasSet) {
@@ -132,7 +132,7 @@ namespace Stl.Collections.Slim
             if (_tuple.Item2 == null) return;
             aggregator(ref state, _tuple.Item2);
         }
-        
+
         public void Aggregate<TState>(TState state, Func<TState, T, TState> aggregator)
         {
             if (HasSet) {

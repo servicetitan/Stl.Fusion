@@ -45,7 +45,7 @@ namespace Stl.Channels
             if (channel == null)
                 throw new ArgumentNullException(nameof(channel));
             ThrowIfDisposedOrDisposing();
-            
+
             if (!Channels.TryAdd(channel, default))
                 return false;
             OnAttached(channel);
@@ -57,14 +57,14 @@ namespace Stl.Channels
             if (channel == null)
                 throw new ArgumentNullException(nameof(channel));
             ThrowIfDisposedOrDisposing();
-            
+
             if (!Channels.TryRemove(channel, out _))
                 return false;
             await OnDetachedAsync(channel).ConfigureAwait(false);
             return true;
         }
 
-        public bool IsAttached(Channel<T> channel) 
+        public bool IsAttached(Channel<T> channel)
             => Channels.TryGetValue(channel, out _);
 
         protected virtual void OnAttached(Channel<T> channel)

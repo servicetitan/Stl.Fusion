@@ -23,7 +23,7 @@ namespace Stl.Fusion.Bridge.Interception
             InterceptedMethod method,
             ConcurrentIdGenerator<LTag> lTagGenerator,
             IComputedRegistry computedRegistry,
-            ILogger<ReplicaServiceFunction<T>>? log = null) 
+            ILogger<ReplicaServiceFunction<T>>? log = null)
             : base(method, computedRegistry)
         {
             _log = log ??= NullLogger<ReplicaServiceFunction<T>>.Instance;
@@ -46,8 +46,8 @@ namespace Stl.Fusion.Bridge.Interception
         }
 
         protected override async ValueTask<IComputed<T>> ComputeAsync(
-            InterceptedInput input, IComputed<T>? cached, 
-            CancellationToken cancellationToken) 
+            InterceptedInput input, IComputed<T>? cached,
+            CancellationToken cancellationToken)
         {
             var method = input.Method;
 

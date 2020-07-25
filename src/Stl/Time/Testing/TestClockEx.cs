@@ -1,6 +1,6 @@
 using System;
 
-namespace Stl.Time.Testing 
+namespace Stl.Time.Testing
 {
     public static class TestClockEx
     {
@@ -30,7 +30,7 @@ namespace Stl.Time.Testing
             where TClock : class, ITestClock
         {
             var s = clock.Settings;
-            var realNow = SystemClock.Now; 
+            var realNow = SystemClock.Now;
             var localNow = s.ToLocalTime(realNow);
             clock.Settings = (localNow.EpochOffset, -realNow.EpochOffset, multiplier * s.Multiplier);
             return clock;

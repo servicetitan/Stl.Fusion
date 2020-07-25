@@ -3,14 +3,14 @@ using System.Diagnostics.CodeAnalysis;
 using Stl.Reflection;
 using Stl.Text;
 
-namespace Stl.Extensibility 
+namespace Stl.Extensibility
 {
     public static class HasOptionsEx
     {
         // Generic overloads
-        
+
         [return: MaybeNull]
-        public static TValue GetOption<TValue>(this IHasOptions hasOptions, Symbol key) 
+        public static TValue GetOption<TValue>(this IHasOptions hasOptions, Symbol key)
             // ReSharper disable once HeapView.BoxingAllocation
             => (TValue) (hasOptions.GetOption(key) ?? default(TValue)!);
 

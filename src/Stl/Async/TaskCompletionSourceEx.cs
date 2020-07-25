@@ -51,7 +51,7 @@ namespace Stl.Async
 
         // WithCancellation
 
-        public static Task<T> WithCancellation<T>(this TaskCompletionSource<T> target, 
+        public static Task<T> WithCancellation<T>(this TaskCompletionSource<T> target,
             CancellationToken cancellationToken)
         {
             var task = target.Task;

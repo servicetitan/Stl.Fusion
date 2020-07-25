@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 
 namespace Stl.Caching
 {
-    public static class CacheEx 
+    public static class CacheEx
     {
         public static async IAsyncEnumerable<TValue> GetManyAsync<TKey, TValue>(
-            this IAsyncKeyResolver<TKey, TValue> cache, 
+            this IAsyncKeyResolver<TKey, TValue> cache,
             IAsyncEnumerable<TKey> keys,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
             where TKey : notnull
@@ -18,7 +18,7 @@ namespace Stl.Caching
         }
 
         public static async IAsyncEnumerable<Option<TValue>> TryGetManyAsync<TKey, TValue>(
-            this IAsyncKeyResolver<TKey, TValue> cache, 
+            this IAsyncKeyResolver<TKey, TValue> cache,
             IAsyncEnumerable<TKey> keys,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
             where TKey : notnull

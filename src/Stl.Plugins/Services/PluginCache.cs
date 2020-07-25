@@ -20,7 +20,7 @@ namespace Stl.Plugins.Services
 
         public IPluginInstanceHandle GetOrCreate(Type pluginImplementationType)
             => _cache.GetOrAddChecked(
-                pluginImplementationType, 
+                pluginImplementationType,
                 (pit, self) => {
                     var handleType = typeof(IPluginInstanceHandle<>).MakeGenericType(pit);
                     return (IPluginInstanceHandle) self._services.GetRequiredService(handleType);

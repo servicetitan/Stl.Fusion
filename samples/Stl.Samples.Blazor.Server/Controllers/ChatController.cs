@@ -13,8 +13,8 @@ namespace Stl.Samples.Blazor.Server.Controllers
     {
         private readonly IChatService _chat;
 
-        public ChatController(IChatService chat, IPublisher publisher) 
-            : base(publisher) 
+        public ChatController(IChatService chat, IPublisher publisher)
+            : base(publisher)
             => _chat = chat;
 
         // Writers
@@ -43,23 +43,23 @@ namespace Stl.Samples.Blazor.Server.Controllers
         // Readers
 
         [HttpGet("getUserCount")]
-        public Task<long> GetUserCountAsync(CancellationToken cancellationToken = default) 
+        public Task<long> GetUserCountAsync(CancellationToken cancellationToken = default)
             => PublishAsync(ct => _chat.GetUserCountAsync(ct));
 
         [HttpGet("getActiveUserCount")]
-        public Task<long> GetActiveUserCountAsync(CancellationToken cancellationToken = default) 
+        public Task<long> GetActiveUserCountAsync(CancellationToken cancellationToken = default)
             => PublishAsync(ct => _chat.GetActiveUserCountAsync(ct));
 
         [HttpGet("getUser")]
-        public Task<ChatUser> GetUserAsync(long id, CancellationToken cancellationToken = default) 
+        public Task<ChatUser> GetUserAsync(long id, CancellationToken cancellationToken = default)
             => PublishAsync(ct => _chat.GetUserAsync(id, ct));
 
         [HttpGet("getChatTail")]
-        public Task<ChatPage> GetChatTailAsync(int length, CancellationToken cancellationToken = default) 
+        public Task<ChatPage> GetChatTailAsync(int length, CancellationToken cancellationToken = default)
             => PublishAsync(ct => _chat.GetChatTailAsync(length, ct));
 
         [HttpGet("getChatPage")]
-        public Task<ChatPage> GetChatPageAsync(long minMessageId, long maxMessageId, CancellationToken cancellationToken = default) 
+        public Task<ChatPage> GetChatPageAsync(long minMessageId, long maxMessageId, CancellationToken cancellationToken = default)
             => PublishAsync(ct => _chat.GetChatPageAsync(minMessageId, maxMessageId, ct));
     }
 }

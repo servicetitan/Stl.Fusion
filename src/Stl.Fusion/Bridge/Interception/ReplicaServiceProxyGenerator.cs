@@ -20,7 +20,7 @@ namespace Stl.Fusion.Bridge.Interception
         protected ModuleScope ModuleScope { get; }
 
         public ReplicaServiceProxyGenerator(
-            ProxyGenerationOptions? options = null, 
+            ProxyGenerationOptions? options = null,
             ModuleScope? moduleScope = null)
         {
             options ??= new ProxyGenerationOptions();
@@ -30,7 +30,7 @@ namespace Stl.Fusion.Bridge.Interception
             Cache = new ConcurrentDictionary<Type, Type>();
         }
 
-        public virtual Type GetProxyType(Type type) 
+        public virtual Type GetProxyType(Type type)
             => Cache.GetOrAddChecked(type, (type1, self) => {
                 var generator = new ReplicaServiceProxyGeneratorImpl(self.ModuleScope, type1);
                 var baseType = typeof(object);

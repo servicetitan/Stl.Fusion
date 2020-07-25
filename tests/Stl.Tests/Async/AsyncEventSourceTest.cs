@@ -95,7 +95,7 @@ namespace Stl.Tests.Async
         {
             if (TestRunnerInfo.GitHub.IsActionRunning)
                 // We're skipping this test on GitHub: the class is anyway unused,
-                // and the test doesn't seem to be stable. 
+                // and the test doesn't seem to be stable.
                 return;
 
             var start = CpuClock.Now;
@@ -133,7 +133,7 @@ namespace Stl.Tests.Async
             await foreach (var i in asyncSequence) {
                 if (lastI.HasValue)
                     i.Should().Be(lastI.Value + 1);
-                else if (output) 
+                else if (output)
                     Out.WriteLine($"First i: {i}");
                 lastI = i;
             }

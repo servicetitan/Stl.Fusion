@@ -34,7 +34,7 @@ namespace Stl.IO
                 .Select(p => p.EventArgs);
             return o1.Merge(o2).Publish().RefCount();
         }
-        
+
         public static Task<FileSystemEventArgs> FirstAsync(
             this FileSystemWatcher watcher,
             CancellationToken cancellationToken = default)

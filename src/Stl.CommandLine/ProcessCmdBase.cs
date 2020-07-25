@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using CliWrap;
 using Stl.IO;
 
-namespace Stl.CommandLine 
+namespace Stl.CommandLine
 {
     public interface IProcessCmd : ICmd
     {
@@ -18,7 +18,7 @@ namespace Stl.CommandLine
     {
         public PathString Executable { get; }
         public PathString WorkingDirectory { get; set; } = PathString.Empty;
-        public ImmutableDictionary<string, string> EnvironmentVariables { get; set; } = 
+        public ImmutableDictionary<string, string> EnvironmentVariables { get; set; } =
             ImmutableDictionary<string, string>.Empty;
 
         protected ProcessCmdBase(PathString executable) => Executable = executable;
@@ -26,7 +26,7 @@ namespace Stl.CommandLine
         public override string ToString() => $"{GetType().Name}(\"{Executable}\" @ \"{WorkingDirectory}\")";
 
         protected override async Task<CmdResult> RunRawAsyncImpl(
-            CliString arguments, string? standardInput, 
+            CliString arguments, string? standardInput,
             CancellationToken cancellationToken)
         {
             var outputBuilder = new StringBuilder();
@@ -44,7 +44,7 @@ namespace Stl.CommandLine
             if (!EnvironmentVariables.IsEmpty)
                 command = command.WithEnvironmentVariables(EnvironmentVariables);
             command = Configure(command);
-            
+
             var result = await command.ExecuteAsync();
             return new CmdResult(command, result, outputBuilder, errorBuilder);
         }

@@ -24,7 +24,7 @@ namespace Stl.Tests.Fusion.Services
         {
             JpegEncoder = ImageCodecInfo
                 .GetImageDecoders()
-                .Single(codec => codec.FormatID == ImageFormat.Jpeg.Guid);  
+                .Single(codec => codec.FormatID == ImageFormat.Jpeg.Guid);
             JpegEncoderParameters = new EncoderParameters(1) {
                 Param = {[0] = new EncoderParameter(Encoder.Quality, 50L)}
             };

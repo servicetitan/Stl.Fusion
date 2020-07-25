@@ -1,15 +1,15 @@
 using Stl.CommandLine;
 
-namespace Stl.CommandLine.Terraform 
+namespace Stl.CommandLine.Terraform
 {
     public class ImportArguments : ApplyLikeArgumentsBase
     {
-        /// <summary>  
+        /// <summary>
         /// Provider to use for import.
         /// </summary>
         [CliArgument("-provider={0:Q}")]
         public CliString Provider { get; set; }
-        
+
         // Address to import the resource to.
         [CliArgument("{0:Q}")]
         public CliString ResourceAddress { get; set; }

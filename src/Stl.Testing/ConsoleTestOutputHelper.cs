@@ -1,13 +1,13 @@
 ﻿using System;
 using Xunit.Abstractions;
 
-namespace Stl.Testing 
+namespace Stl.Testing
 {
     public class ConsoleTestOutputHelper : ITestOutputHelper
     {
-        public void WriteLine(string message) 
+        public void WriteLine(string message)
             => Console.WriteLine(message);
-        public void WriteLine(string format, params object[] args) 
+        public void WriteLine(string format, params object[] args)
             => Console.WriteLine(format, args);
     }
 }

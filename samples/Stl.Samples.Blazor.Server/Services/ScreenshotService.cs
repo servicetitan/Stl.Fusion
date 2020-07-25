@@ -23,12 +23,12 @@ namespace Stl.Samples.Blazor.Server.Services
         {
             _jpegEncoder = ImageCodecInfo
                 .GetImageDecoders()
-                .Single(codec => codec.FormatID == ImageFormat.Jpeg.Guid);  
+                .Single(codec => codec.FormatID == ImageFormat.Jpeg.Guid);
             _jpegEncoderParameters = new EncoderParameters(1) {
                 Param = {[0] = new EncoderParameter(Encoder.Quality, 50L)}
             };
-            _displayDimensions = DisplayInfo.PrimaryDisplayDimensions 
-                ?? new Rectangle(0, 0, 1920, 1080);  
+            _displayDimensions = DisplayInfo.PrimaryDisplayDimensions
+                ?? new Rectangle(0, 0, 1920, 1080);
             _prevScreenshotTask = ScreenshotAsync(128);
         }
 

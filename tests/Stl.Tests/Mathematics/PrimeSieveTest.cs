@@ -19,8 +19,8 @@ namespace Stl.Tests.Mathematics
             foreach (var x in range)
                 Out.WriteLine($"{x} => {sieve.IsPrime(x)}");
             Assert.Equal(new [] {
-                    true, 
-                    false, 
+                    true,
+                    false,
                     true,
                     false,
                     true,

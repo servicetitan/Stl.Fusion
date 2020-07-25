@@ -11,7 +11,7 @@ namespace Stl.Collections
 
         public HDictionary(TKey key) => Key = key;
 
-        public string ToString(bool dump) => dump ? Dump(new StringBuilder()).ToString() : ToString(); 
+        public string ToString(bool dump) => dump ? Dump(new StringBuilder()).ToString() : ToString();
         public override string ToString() => $"{Key} -> [{Count}]";
 
         public virtual StringBuilder Dump(StringBuilder sb, string indent = "")

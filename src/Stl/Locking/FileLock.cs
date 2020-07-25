@@ -11,7 +11,7 @@ namespace Stl.Locking
 {
     public class FileLock : IAsyncLock
     {
-        public static readonly IEnumerable<TimeSpan> DefaultRetryIntervals = 
+        public static readonly IEnumerable<TimeSpan> DefaultRetryIntervals =
             Intervals.Exponential(TimeSpan.FromMilliseconds(50), 1.25, TimeSpan.FromSeconds(1));
 
         public ReentryMode ReentryMode => ReentryMode.UncheckedDeadlock;
@@ -21,11 +21,11 @@ namespace Stl.Locking
             get {
                 try {
                     using var _ = File.OpenWrite(Path);
-                    return false; 
+                    return false;
                 }
                 catch (IOException) {}
                 catch (UnauthorizedAccessException) {}
-                return true; 
+                return true;
             }
         }
         public bool? IsLockedLocally => false;

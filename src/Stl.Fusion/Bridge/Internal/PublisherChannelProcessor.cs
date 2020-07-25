@@ -18,7 +18,7 @@ namespace Stl.Fusion.Bridge.Internal
         protected readonly ILogger Log;
         protected readonly IPublisherImpl PublisherImpl;
         protected readonly ConcurrentDictionary<Symbol, SubscriptionProcessor> Subscriptions;
-        protected object Lock => Subscriptions;  
+        protected object Lock => Subscriptions;
 
         public readonly IPublisher Publisher;
         public readonly Channel<Message> Channel;

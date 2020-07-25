@@ -9,7 +9,7 @@ namespace Stl.Collections
     // List-like struct that typically requires zero allocations
     // (it relies on MemoryPool<T>.Shared & disposes its buffer);
     // it is supposed to be used as a temp. buffer in various
-    // enumeration scenarios. 
+    // enumeration scenarios.
     // ArrayBuffer<T> vs MemoryBuffer<T>: they are almost identical, but
     // ArrayBuffer isn't a ref struct, so you can store it in fields.
     public ref struct MemoryBuffer<T>
@@ -57,10 +57,10 @@ namespace Stl.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static MemoryBuffer<T> Lease(int capacity = DefaultCapacity) 
+        public static MemoryBuffer<T> Lease(int capacity = DefaultCapacity)
             => new MemoryBuffer<T>(capacity);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static MemoryBuffer<T> LeaseAndSetCount(int count) 
+        public static MemoryBuffer<T> LeaseAndSetCount(int count)
             => new MemoryBuffer<T>(count) {Count = count};
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -71,8 +71,8 @@ namespace Stl.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Span<T>.Enumerator GetEnumerator() => Span.GetEnumerator(); 
-        
+        public Span<T>.Enumerator GetEnumerator() => Span.GetEnumerator();
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T[] ToArray() => Span.ToArray();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -151,7 +151,7 @@ namespace Stl.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void CopyTo(T[] array, int arrayIndex) 
+        public void CopyTo(T[] array, int arrayIndex)
             => BufferSpan.CopyTo(array.AsSpan().Slice(arrayIndex));
 
         // Private methods

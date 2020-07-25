@@ -32,11 +32,11 @@ namespace Stl.Tests.Time
         public void UtcHandlingTest()
         {
             var epsilon = TimeSpan.FromSeconds(1);
-            
+
             var now1 = (Moment) DateTime.UtcNow;
             var now2 = (Moment) DateTime.Now;
             Math.Abs((now1 - now2).Ticks).Should().BeLessThan(epsilon.Ticks);
-            
+
             now1 = DateTimeOffset.UtcNow;
             now2 = DateTimeOffset.Now;
             Math.Abs((now1 - now2).Ticks).Should().BeLessThan(epsilon.Ticks);

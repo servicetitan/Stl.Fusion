@@ -11,7 +11,7 @@ namespace Stl.Collections.Slim
         private int _count;
         private (T, T, T) _tuple;
         private ImmutableHashSet<T>? _set;
-        
+
         private bool HasSet {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _set != null;
@@ -41,7 +41,7 @@ namespace Stl.Collections.Slim
                 _set = set;
                 return true;
             }
-            
+
             // Item 1
             if (_count < 1) {
                 _tuple.Item1 = item;
@@ -84,7 +84,7 @@ namespace Stl.Collections.Slim
                 _set = set;
                 return true;
             }
-            
+
             // Item 1
             if (_count < 1) return false;
             if (EqualityComparer<T>.Default.Equals(_tuple.Item1, item)) {
@@ -133,7 +133,7 @@ namespace Stl.Collections.Slim
                 yield return _tuple.Item3;
             }
         }
-        
+
         public void Apply<TState>(TState state, Action<TState, T> action)
         {
             if (HasSet) {
@@ -148,7 +148,7 @@ namespace Stl.Collections.Slim
             if (_count < 3) return;
             action(state, _tuple.Item3);
         }
-        
+
         public void Aggregate<TState>(ref TState state, Aggregator<TState, T> aggregator)
         {
             if (HasSet) {
@@ -163,7 +163,7 @@ namespace Stl.Collections.Slim
             if (_count < 3) return;
             aggregator(ref state, _tuple.Item3);
         }
-        
+
         public void Aggregate<TState>(TState state, Func<TState, T, TState> aggregator)
         {
             if (HasSet) {

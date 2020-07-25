@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Stl.Security 
+namespace Stl.Security
 {
     public static class KeyVaultEx
     {

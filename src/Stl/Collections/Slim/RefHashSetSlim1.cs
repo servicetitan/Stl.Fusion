@@ -9,12 +9,12 @@ namespace Stl.Collections.Slim
     {
         private T _item;
         private HashSet<T>? _set;
-        
+
         private bool HasSet {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _set != null;
         }
-        
+
         public int Count {
             get {
                 if (HasSet) return _set!.Count;
@@ -27,7 +27,7 @@ namespace Stl.Collections.Slim
         {
             if (item == null)
                 throw new ArgumentNullException(nameof(item));
-            
+
             if (HasSet) return _set!.Contains(item);
             if (_item == item) return true;
             return false;
@@ -37,9 +37,9 @@ namespace Stl.Collections.Slim
         {
             if (item == null)
                 throw new ArgumentNullException(nameof(item));
-            
+
             if (HasSet) return _set!.Add(item);
-            
+
             // Item 1
             if (_item == null) {
                 _item = item;
@@ -58,9 +58,9 @@ namespace Stl.Collections.Slim
         {
             if (item == null)
                 throw new ArgumentNullException(nameof(item));
-            
+
             if (HasSet) return _set!.Remove(item);
-            
+
             // Item 1
             if (_item == null) return false;
             if (_item == item) {
@@ -88,7 +88,7 @@ namespace Stl.Collections.Slim
                 yield return _item;
             }
         }
-        
+
         public void Apply<TState>(TState state, Action<TState, T> action)
         {
             if (HasSet) {
@@ -99,8 +99,8 @@ namespace Stl.Collections.Slim
             if (_item == null) return;
             action(state, _item);
         }
-        
-        
+
+
         public void Aggregate<TState>(ref TState state, Aggregator<TState, T> aggregator)
         {
             if (HasSet) {
@@ -111,7 +111,7 @@ namespace Stl.Collections.Slim
             if (_item == null) return;
             aggregator(ref state, _item);
         }
-        
+
         public void Aggregate<TState>(TState state, Func<TState, T, TState> aggregator)
         {
             if (HasSet) {

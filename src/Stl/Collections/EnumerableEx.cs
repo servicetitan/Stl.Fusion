@@ -16,7 +16,7 @@ namespace Stl.Collections
             if (sequences.Length == 0)
                 return Enumerable.Empty<T>();
             var result = sequences[0];
-            for (var i = 1; i < sequences.Length; i++) 
+            for (var i = 1; i < sequences.Length; i++)
                 result = result.Concat(sequences[i]);
             return result;
         }
@@ -95,7 +95,7 @@ namespace Stl.Collections
             => string.Join(delimiter ?? ", ", source);
 
         public static IEnumerable<T> OrderByDependency<T>(
-            this IEnumerable<T> source, 
+            this IEnumerable<T> source,
             Func<T, IEnumerable<T>> dependencySelector)
         {
             var processing = new HashSet<T>();

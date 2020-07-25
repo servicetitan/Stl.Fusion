@@ -28,8 +28,8 @@ namespace Stl.Fusion.Server
         }
 
         public static async Task<IComputed<T>> PublishAsync<T>(
-            this HttpContext httpContext, IPublisher publisher, 
-            Func<CancellationToken, Task<T>> producer, 
+            this HttpContext httpContext, IPublisher publisher,
+            Func<CancellationToken, Task<T>> producer,
             CancellationToken cancellationToken = default)
         {
             var p = await publisher.PublishAsync(producer, cancellationToken).ConfigureAwait(false);
@@ -39,14 +39,14 @@ namespace Stl.Fusion.Server
         }
 
         public static Task<IComputed<T>> MaybePublishAsync<T>(
-            this HttpContext httpContext, IPublisher publisher, 
-            Func<CancellationToken, Task<T>> producer, 
+            this HttpContext httpContext, IPublisher publisher,
+            Func<CancellationToken, Task<T>> producer,
             CancellationToken cancellationToken = default)
         {
             var headers = httpContext.Request.Headers;
             var mustPublish = headers.TryGetValue(FusionHeaders.RequestPublication, out var _);
-            return mustPublish 
-                ? httpContext.PublishAsync(publisher, producer, cancellationToken) 
+            return mustPublish
+                ? httpContext.PublishAsync(publisher, producer, cancellationToken)
                 : Computed.CaptureAsync(producer, cancellationToken);
         }
     }

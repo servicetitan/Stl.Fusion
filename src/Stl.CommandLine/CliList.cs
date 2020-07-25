@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 
-namespace Stl.CommandLine 
+namespace Stl.CommandLine
 {
     [Serializable]
     public class CliList<T> : List<T>, IEnumerable<IFormattable>
@@ -14,7 +14,7 @@ namespace Stl.CommandLine
         public CliList() { }
         public CliList(IEnumerable<T> collection) : base(collection) { }
 
-        public new IEnumerator<IFormattable> GetEnumerator() 
+        public new IEnumerator<IFormattable> GetEnumerator()
             => (this as IEnumerable<T>)
                 // ReSharper disable once HeapView.BoxingAllocation
                 .Select(x => CliString.New(

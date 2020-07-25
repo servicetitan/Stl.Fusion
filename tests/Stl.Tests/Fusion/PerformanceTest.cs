@@ -27,7 +27,7 @@ namespace Stl.Tests.Fusion
     {
         public int UserCount = 1000;
 
-        protected PerformanceTestBase(ITestOutputHelper @out, FusionTestOptions? options = null) 
+        protected PerformanceTestBase(ITestOutputHelper @out, FusionTestOptions? options = null)
             : base(@out, options)
             => IsLoggingEnabled = false;
 
@@ -55,7 +55,7 @@ namespace Stl.Tests.Fusion
             var users = Services.GetRequiredService<IUserService>();
             var useImdb = Options.UseInMemoryDatabase;
             var opCountPerCore = 2_000_000;
-            var readersPerCore = 4; 
+            var readersPerCore = 4;
             var readerCount = HardwareInfo.ProcessorCount * readersPerCore;
             var cachingIterationCount = opCountPerCore / readersPerCore;
             var nonCachingIterationCount = cachingIterationCount / (useImdb ? 1000 : 10_000);
@@ -69,23 +69,23 @@ namespace Stl.Tests.Fusion
 
             var withoutSerialization = (Action<User>) (u => { });
             var withSerialization = (Action<User>) (u => JsonConvert.SerializeObject(u));
-            
+
             Out.WriteLine($"Database: {(useImdb ? "In-memory" : "Sqlite")}");
             Out.WriteLine("With Stl.Fusion:");
-            await Test("Standard test", cachingProviderPool, withoutSerialization, 
+            await Test("Standard test", cachingProviderPool, withoutSerialization,
                 readerCount, cachingIterationCount);
-            await Test("Standard test + serialization", cachingProviderPool, withSerialization, 
+            await Test("Standard test + serialization", cachingProviderPool, withSerialization,
                 readerCount, cachingIterationCount / 3);
 
             Out.WriteLine("Without Stl.Fusion:");
-            await Test("Standard test", nonCachingProviderPool, withoutSerialization, 
+            await Test("Standard test", nonCachingProviderPool, withoutSerialization,
                 readerCount, nonCachingIterationCount);
-            await Test("Standard test + serialization", nonCachingProviderPool, withSerialization, 
+            await Test("Standard test + serialization", nonCachingProviderPool, withSerialization,
                 readerCount, nonCachingIterationCount);
         }
 
         private async Task Test(string title,
-            IPool<IUserService> userProviderPool, Action<User> extraAction, 
+            IPool<IUserService> userProviderPool, Action<User> extraAction,
             int threadCount, int iterationCount, bool isWarmup = false)
         {
             if (!isWarmup)
@@ -143,7 +143,7 @@ namespace Stl.Tests.Fusion
             WriteLine($"    Operations: {operationCount} ({threadCount} readers x {iterationCount}");
 
             var startTime = CpuClock.Now;
-            var mutatorTask = Task.Run(() => Mutator("W", stopCts.Token)); 
+            var mutatorTask = Task.Run(() => Mutator("W", stopCts.Token));
             var tasks = Enumerable
                 .Range(0, threadCount)
                 .Select(i => Task.Run(() => Reader($"R{i}", iterationCount)))
@@ -164,14 +164,14 @@ namespace Stl.Tests.Fusion
 
     public class PerformanceTest_Sqlite : PerformanceTestBase
     {
-        public PerformanceTest_Sqlite(ITestOutputHelper @out) 
+        public PerformanceTest_Sqlite(ITestOutputHelper @out)
             : base(@out, new FusionTestOptions() { UseInMemoryDatabase = false })
         { }
     }
 
     public class PerformanceTest_InMemoryDb : PerformanceTestBase
     {
-        public PerformanceTest_InMemoryDb(ITestOutputHelper @out) 
+        public PerformanceTest_InMemoryDb(ITestOutputHelper @out)
             : base(@out, new FusionTestOptions() { UseInMemoryDatabase = true })
         { }
     }

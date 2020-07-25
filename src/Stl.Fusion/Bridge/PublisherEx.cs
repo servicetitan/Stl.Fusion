@@ -9,12 +9,12 @@ namespace Stl.Fusion.Bridge
     public static class PublisherEx
     {
         public static IPublication Get(
-            this IPublisher publisher, Symbol publicationId) 
+            this IPublisher publisher, Symbol publicationId)
             => publisher.TryGet(publicationId) ?? throw new KeyNotFoundException();
 
         public static async Task<IPublication<T>> PublishAsync<T>(
-                this IPublisher publisher, 
-                Func<CancellationToken, Task<T>> producer, 
+                this IPublisher publisher,
+                Func<CancellationToken, Task<T>> producer,
                 CancellationToken cancellationToken = default)
         {
             var computed = await Computed

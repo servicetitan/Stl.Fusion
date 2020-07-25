@@ -9,7 +9,7 @@ namespace Stl.Mathematics
         private readonly BitArray _isPrime;
 
         public int Limit { get; }
-        
+
         public PrimeSieve(int limit = 10010896)
         {
             _limitSqrt = (int) (1 + Math.Sqrt(limit));

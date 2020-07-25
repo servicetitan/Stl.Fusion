@@ -9,7 +9,7 @@ using Stl.Locking;
 
 namespace Stl.Fusion
 {
-    public abstract class SimpleComputedInput : ComputedInput, 
+    public abstract class SimpleComputedInput : ComputedInput,
         IEquatable<SimpleComputedInput>, IFunction
     {
         public AsyncLock AsyncLock { get; set; }
@@ -23,7 +23,7 @@ namespace Stl.Fusion
 
         public virtual ValueTask DisposeAsync() => ValueTaskEx.CompletedTask;
 
-        public override string ToString() 
+        public override string ToString()
             => $"{GetType().Name}(#{HashCode})";
 
         // IFunction
@@ -44,19 +44,19 @@ namespace Stl.Fusion
             ComputedInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken);
 
-        IComputed? IFunction.TryGetCached(ComputedInput input, IComputed? usedBy) 
+        IComputed? IFunction.TryGetCached(ComputedInput input, IComputed? usedBy)
             => TryGetCached(input, usedBy);
-        protected abstract IComputed? TryGetCached(ComputedInput input, IComputed? usedBy); 
+        protected abstract IComputed? TryGetCached(ComputedInput input, IComputed? usedBy);
 
         // Equality
 
-        public bool Equals(SimpleComputedInput? other) 
+        public bool Equals(SimpleComputedInput? other)
             => ReferenceEquals(this, other);
         public override bool Equals(ComputedInput other)
             => ReferenceEquals(this, other);
-        public override bool Equals(object? obj) 
+        public override bool Equals(object? obj)
             => ReferenceEquals(this, obj);
-        public override int GetHashCode() 
+        public override int GetHashCode()
             => base.GetHashCode();
     }
 
@@ -73,7 +73,7 @@ namespace Stl.Fusion
             }
         }
 
-        public SimpleComputedInput(Func<IComputed<T>, IComputed<T>, CancellationToken, Task> updater) 
+        public SimpleComputedInput(Func<IComputed<T>, IComputed<T>, CancellationToken, Task> updater)
             => Updater = updater;
 
         // IFunction
@@ -84,7 +84,7 @@ namespace Stl.Fusion
 
         protected override async Task<IComputed> InvokeAsync(
             ComputedInput input, IComputed? usedBy, ComputeContext? context,
-            CancellationToken cancellationToken) 
+            CancellationToken cancellationToken)
             => await InvokeAsync((SimpleComputedInput) input, usedBy, context, cancellationToken).ConfigureAwait(false);
 
         protected virtual async Task<IComputed<T>> InvokeAsync(
@@ -128,12 +128,12 @@ namespace Stl.Fusion
 
         Task<T> IFunction<SimpleComputedInput, T>.InvokeAndStripAsync(
             SimpleComputedInput input, IComputed? usedBy, ComputeContext? context,
-            CancellationToken cancellationToken) 
+            CancellationToken cancellationToken)
             => InvokeAndStripAsync(input, usedBy, context, cancellationToken);
 
         protected override async Task InvokeAndStripAsync(
             ComputedInput input, IComputed? usedBy, ComputeContext? context,
-            CancellationToken cancellationToken) 
+            CancellationToken cancellationToken)
             => await InvokeAndStripAsync((SimpleComputedInput) input, usedBy, context, cancellationToken).ConfigureAwait(false);
 
         protected virtual async Task<T> InvokeAndStripAsync(
@@ -175,10 +175,10 @@ namespace Stl.Fusion
             return result.Strip();
         }
 
-        IComputed<T>? IFunction<SimpleComputedInput, T>.TryGetCached(SimpleComputedInput input, IComputed? usedBy) 
+        IComputed<T>? IFunction<SimpleComputedInput, T>.TryGetCached(SimpleComputedInput input, IComputed? usedBy)
             => TryGetCached(input, usedBy);
 
-        protected override IComputed? TryGetCached(ComputedInput input, IComputed? usedBy) 
+        protected override IComputed? TryGetCached(ComputedInput input, IComputed? usedBy)
             => TryGetCached((SimpleComputedInput) input, usedBy);
 
         protected virtual IComputed<T>? TryGetCached(SimpleComputedInput input, IComputed? usedBy)

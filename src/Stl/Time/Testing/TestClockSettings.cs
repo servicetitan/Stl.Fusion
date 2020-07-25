@@ -8,7 +8,7 @@ namespace Stl.Time.Testing
     public sealed class TestClockSettings : IDisposable
     {
         private CancellationTokenSource? _changedTokenSource;
-        
+
         public TimeSpan LocalOffset { get; }
         public TimeSpan RealOffset { get; }
         public double Multiplier { get; }
@@ -41,7 +41,7 @@ namespace Stl.Time.Testing
         // Conversion
 
         public override string ToString() => $"{GetType().Name}({LocalOffset} + {Multiplier} * (t - {RealOffset}))";
-        
+
         public void Deconstruct(out TimeSpan localOffset, out TimeSpan realOffset, out double multiplier)
         {
             localOffset = LocalOffset;
@@ -54,13 +54,13 @@ namespace Stl.Time.Testing
 
         // Other operations
 
-        public Moment ToLocalTime(Moment realTime) 
+        public Moment ToLocalTime(Moment realTime)
             => new Moment(LocalOffset + (realTime.EpochOffset + RealOffset) * Multiplier);
-        public Moment ToRealTime(Moment localTime) 
+        public Moment ToRealTime(Moment localTime)
             => new Moment((localTime.EpochOffset - LocalOffset) / Multiplier - RealOffset);
-        public TimeSpan ToLocalDuration(TimeSpan realDuration) 
+        public TimeSpan ToLocalDuration(TimeSpan realDuration)
             => realDuration * Multiplier;
-        public TimeSpan ToRealDuration(TimeSpan localDuration) 
+        public TimeSpan ToRealDuration(TimeSpan localDuration)
             => localDuration / Multiplier;
     }
 }

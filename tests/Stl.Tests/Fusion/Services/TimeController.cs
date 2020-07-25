@@ -11,9 +11,9 @@ namespace Stl.Tests.Fusion.Services
     public class TimeController : FusionController
     {
         protected ITimeService TimeService { get; }
-        
-        public TimeController(IPublisher publisher, ITimeService timeService) 
-            : base(publisher) 
+
+        public TimeController(IPublisher publisher, ITimeService timeService)
+            : base(publisher)
             => TimeService = timeService;
 
         [HttpGet("get")]

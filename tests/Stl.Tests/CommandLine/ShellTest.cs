@@ -14,7 +14,7 @@ namespace Stl.Tests.CommandLine
         public async Task EchoTest()
         {
             var shell = new ShellCmd();
-            
+
             Assert.Equal("hi", (await shell.GetOutputAsync("echo hi")).Trim());
 
             var expected = "^\"'";

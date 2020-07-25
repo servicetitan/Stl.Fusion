@@ -4,7 +4,7 @@ namespace Stl.CommandLine.Terraform
     {
         [CliArgument("-lock={0}", DefaultValue = "true")]
         public bool Lock { get; set; } = true;
-        
+
         [CliArgument("-lock-timeout={0}s")]
         public int? LockTimeout { get; set; }
 
@@ -16,10 +16,10 @@ namespace Stl.CommandLine.Terraform
     {
         [CliArgument("-force", DefaultValue = "false")]
         public bool Force { get; set; } = false;
-        
+
         [CliArgument("-lock={0}", DefaultValue = "true")]
         public bool Lock { get; set; } = true;
-        
+
         [CliArgument("-lock-timeout={0}s")]
         public int? LockTimeout { get; set; }
     }

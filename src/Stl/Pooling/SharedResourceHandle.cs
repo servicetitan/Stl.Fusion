@@ -11,7 +11,7 @@ namespace Stl.Pooling
         public TResource Resource { get; }
         public bool IsValid => _releaser != null;
         private readonly Func<TKey, TResource, ValueTask>? _releaser;
-        
+
         public SharedResourceHandle(TKey key, TResource resource, Func<TKey, TResource, ValueTask>? releaser)
         {
             Key = key;
@@ -19,7 +19,7 @@ namespace Stl.Pooling
             _releaser = releaser;
         }
 
-        public ValueTask DisposeAsync() 
+        public ValueTask DisposeAsync()
             => _releaser?.Invoke(Key, Resource) ?? ValueTaskEx.CompletedTask;
 
         public void Deconstruct(out TKey key, out TResource resource)
@@ -32,9 +32,9 @@ namespace Stl.Pooling
 
         // Equality
 
-        public bool Equals(SharedResourceHandle<TKey, TResource> other) 
-            => Equals(_releaser, other._releaser) 
-                && EqualityComparer<TKey>.Default.Equals(Key, other.Key) 
+        public bool Equals(SharedResourceHandle<TKey, TResource> other)
+            => Equals(_releaser, other._releaser)
+                && EqualityComparer<TKey>.Default.Equals(Key, other.Key)
                 && EqualityComparer<TResource>.Default.Equals(Resource, other.Resource);
 
         public override bool Equals(object? obj) => obj is SharedResourceHandle<TKey, TResource> other && Equals(other);

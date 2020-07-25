@@ -10,9 +10,9 @@ namespace Stl.Security
 
         public ConfigurationKeyVault(IConfiguration vault) => Vault = vault;
 
-        public string? TryGetSecret(string key) 
+        public string? TryGetSecret(string key)
             => Vault[key];
-        public ValueTask<string?> TryGetSecretAsync(string key) 
+        public ValueTask<string?> TryGetSecretAsync(string key)
             => ValueTaskEx.FromResult(TryGetSecret(key));
     }
 }

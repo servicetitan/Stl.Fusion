@@ -65,11 +65,11 @@ namespace Stl.Mathematics
         public static int MsbIndex(ulong n) => Index(Msb(n)); // Log2 as well
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int MsbIndex(uint n) => Index(Msb(n)); // Log2 as well
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int LsbIndex(ulong n) => Index(Lsb(n)); 
+        public static int LsbIndex(ulong n) => Index(Lsb(n));
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int LsbIndex(uint n) => Index(Lsb(n)); 
+        public static int LsbIndex(uint n) => Index(Lsb(n));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Count(ulong n)

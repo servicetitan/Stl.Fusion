@@ -27,8 +27,8 @@ namespace Stl.Async
                 var disposeCompleted = _disposeCompleted;
                 if (disposeCompleted == null)
                     return DisposalState.Active;
-                return disposeCompleted.IsCompleted 
-                    ? DisposalState.Disposed 
+                return disposeCompleted.IsCompleted
+                    ? DisposalState.Disposed
                     : DisposalState.Disposing;
             }
         }
@@ -62,7 +62,7 @@ namespace Stl.Async
             }
             var disposeCompletedSource = TaskSource.New<Unit>(TaskCreationOptions.None);
             oldDisposeCompleted = Interlocked.CompareExchange(
-                ref _disposeCompleted, disposeCompletedSource.Task, null); 
+                ref _disposeCompleted, disposeCompletedSource.Task, null);
             if (oldDisposeCompleted != null) {
                 await oldDisposeCompleted.ConfigureAwait(false);
                 return;
@@ -77,8 +77,8 @@ namespace Stl.Async
                 disposeCompletedSource.TrySetResult(default);
             }
         }
-        
-        protected virtual ValueTask DisposeInternalAsync(bool disposing) => 
+
+        protected virtual ValueTask DisposeInternalAsync(bool disposing) =>
             new ValueTask(Task.CompletedTask);
 
         protected bool MarkDisposed()
