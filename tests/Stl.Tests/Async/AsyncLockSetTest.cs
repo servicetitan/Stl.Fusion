@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Stl.Locking;
-using Stl.Security;
+using Stl.Generators;
 using Xunit;
 using Xunit.Abstractions;
 

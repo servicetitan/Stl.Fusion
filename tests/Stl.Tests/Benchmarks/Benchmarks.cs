@@ -34,6 +34,20 @@ namespace Stl.Tests.Benchmarks
                 }
                 return sum;
             });
+            RunOne("Read CoarseStopwatch.ElapsedTicks", baseOpCount, opCount => {
+                var sum = 0L;
+                for (; opCount > 0; opCount--) {
+                    sum += CoarseStopwatch.ElapsedTicks;
+                }
+                return sum;
+            });
+            RunOne("Read CoarseStopwatch.NowEpochOffsetTicks", baseOpCount, opCount => {
+                var sum = 0L;
+                for (; opCount > 0; opCount--) {
+                    sum += CoarseStopwatch.NowEpochOffsetTicks;
+                }
+                return sum;
+            });
             RunOne("Read CoarseCpuClock.Now.EpochOffsetTicks", baseOpCount, opCount => {
                 var sum = 0L;
                 for (; opCount > 0; opCount--) {
@@ -41,10 +55,10 @@ namespace Stl.Tests.Benchmarks
                 }
                 return sum;
             });
-            RunOne("Read CoarseStopwatch.ElapsedTicks", baseOpCount, opCount => {
+            RunOne("Read Environment.TickCount64", baseOpCount, opCount => {
                 var sum = 0L;
                 for (; opCount > 0; opCount--) {
-                    sum += CoarseStopwatch.ElapsedTicks;
+                    sum += Environment.TickCount64;
                 }
                 return sum;
             });
@@ -58,6 +72,7 @@ namespace Stl.Tests.Benchmarks
             });
         }
 
+        // [Fact]
         [Fact(Skip = "Performance")]
         public void RunBenchmarks()
         {

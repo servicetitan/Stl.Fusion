@@ -3,19 +3,19 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Stl.Concurrency;
 using Stl.Fusion.Interception.Internal;
+using Stl.Generators;
 
 namespace Stl.Fusion.Interception
 {
     public class ComputedServiceFunction<T> : InterceptedFunctionBase<T>
     {
         private readonly ILogger _log;
-        protected ConcurrentIdGenerator<LTag> LTagGenerator { get; }
+        protected Generator<LTag> LTagGenerator { get; }
 
         public ComputedServiceFunction(
             InterceptedMethod method,
-            ConcurrentIdGenerator<LTag> lTagGenerator,
+            Generator<LTag> lTagGenerator,
             IComputedRegistry computedRegistry,
             ILogger<ComputedServiceFunction<T>>? log = null)
             : base(method, computedRegistry)
@@ -28,7 +28,7 @@ namespace Stl.Fusion.Interception
             InterceptedInput input, IComputed<T>? cached,
             CancellationToken cancellationToken)
         {
-            var tag = LTagGenerator.Next(input.HashCode);
+            var tag = LTagGenerator.Next();
             var method = Method;
             var output = new Computed<InterceptedInput, T>(method.Options, input, tag);
             try {

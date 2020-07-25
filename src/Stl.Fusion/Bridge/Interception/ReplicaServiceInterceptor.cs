@@ -7,6 +7,7 @@ using Stl.Concurrency;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Interception.Internal;
 using Stl.Fusion.Internal;
+using Stl.Generators;
 
 namespace Stl.Fusion.Bridge.Interception
 {
@@ -14,10 +15,10 @@ namespace Stl.Fusion.Bridge.Interception
     {
         public new class Options : InterceptorBase.Options
         {
-            public ConcurrentIdGenerator<LTag> LTagGenerator { get; set; } = ConcurrentIdGenerator.DefaultLTag;
+            public Generator<LTag> LTagGenerator { get; set; } = ConcurrentLTagGenerator.Default;
         }
 
-        protected ConcurrentIdGenerator<LTag> LTagGenerator { get; }
+        protected Generator<LTag> LTagGenerator { get; }
 
         public ReplicaServiceInterceptor(
             Options options,

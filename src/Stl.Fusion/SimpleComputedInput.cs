@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Stl.Async;
 using Stl.Concurrency;
 using Stl.Fusion.Internal;
+using Stl.Generators;
 using Stl.Locking;
 
 namespace Stl.Fusion
@@ -196,7 +197,7 @@ namespace Stl.Fusion
         protected virtual async ValueTask<SimpleComputed<T>> ComputeAsync(CancellationToken cancellationToken)
         {
             var oldComputed = Computed;
-            var lTag = ConcurrentIdGenerator.DefaultLTag.Next();
+            var lTag = ConcurrentLTagGenerator.Default.Next();
             var newComputed = new SimpleComputed<T>(Computed.Options, this, lTag);
             try {
                 using var _ = Fusion.Computed.ChangeCurrent(newComputed);

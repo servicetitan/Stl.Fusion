@@ -40,9 +40,9 @@ ProjectSection(SolutionItems) = preProject
 	docs\Story.md = docs\Story.md
 EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl", "src\Stl\Stl.csproj", "{9637C3C9-794B-44B2-9A91-96E4B5837516}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Build", "build\Build.csproj", "{812FB859-81E3-4386-AFEE-4A1CC6D20AED}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl.Tests", "tests\Stl.Tests\Stl.Tests.csproj", "{E6FDC8B7-93ED-4364-B617-961DEBFCDC0C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl", "src\Stl\Stl.csproj", "{9637C3C9-794B-44B2-9A91-96E4B5837516}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl.Fusion", "src\Stl.Fusion\Stl.Fusion.csproj", "{E8373553-8367-4C29-B9AE-0C334FF87791}"
 EndProject
@@ -50,17 +50,19 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl.Fusion.Server", "src\St
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl.Fusion.Client", "src\Stl.Fusion.Client\Stl.Fusion.Client.csproj", "{A8B721B3-5CD5-4A44-82F9-67CAC4E95D8C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Fusion.Blazor", "src\Stl.Fusion.Blazor\Stl.Fusion.Blazor.csproj", "{A1B918A1-93A3-477C-AE25-CC6A7907FEAC}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl.Testing", "src\Stl.Testing\Stl.Testing.csproj", "{DFAB3D1D-6301-4A01-958B-8C0F58D672B4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl.Tests", "tests\Stl.Tests\Stl.Tests.csproj", "{E6FDC8B7-93ED-4364-B617-961DEBFCDC0C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Fusion.Tests", "tests\Stl.Fusion.Tests\Stl.Fusion.Tests.csproj", "{EE2B810A-689E-469B-9A3A-219C1B27C9A2}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl.Samples.Blazor.Client", "samples\Stl.Samples.Blazor.Client\Stl.Samples.Blazor.Client.csproj", "{E6AE3956-2754-4E6A-9B09-295C1B9F5826}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl.Samples.Blazor.Common", "samples\Stl.Samples.Blazor.Common\Stl.Samples.Blazor.Common.csproj", "{3E7D5A95-1202-40FC-95C5-A51C8F0733AF}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl.Samples.Blazor.Server", "samples\Stl.Samples.Blazor.Server\Stl.Samples.Blazor.Server.csproj", "{E8418F8B-4CEC-487F-9CA7-378A7067DC6F}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Build", "build\Build.csproj", "{812FB859-81E3-4386-AFEE-4A1CC6D20AED}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Fusion.Blazor", "src\Stl.Fusion.Blazor\Stl.Fusion.Blazor.csproj", "{A1B918A1-93A3-477C-AE25-CC6A7907FEAC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tutorial", "docs\tutorial\Tutorial.csproj", "{C9A804EF-8642-4C7F-A0C3-B1C40DB50645}"
 EndProject
@@ -216,6 +218,18 @@ Global
 		{C9A804EF-8642-4C7F-A0C3-B1C40DB50645}.Release|x64.Build.0 = Release|Any CPU
 		{C9A804EF-8642-4C7F-A0C3-B1C40DB50645}.Release|x86.ActiveCfg = Release|Any CPU
 		{C9A804EF-8642-4C7F-A0C3-B1C40DB50645}.Release|x86.Build.0 = Release|Any CPU
+		{EE2B810A-689E-469B-9A3A-219C1B27C9A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EE2B810A-689E-469B-9A3A-219C1B27C9A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EE2B810A-689E-469B-9A3A-219C1B27C9A2}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{EE2B810A-689E-469B-9A3A-219C1B27C9A2}.Debug|x64.Build.0 = Debug|Any CPU
+		{EE2B810A-689E-469B-9A3A-219C1B27C9A2}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{EE2B810A-689E-469B-9A3A-219C1B27C9A2}.Debug|x86.Build.0 = Debug|Any CPU
+		{EE2B810A-689E-469B-9A3A-219C1B27C9A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EE2B810A-689E-469B-9A3A-219C1B27C9A2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EE2B810A-689E-469B-9A3A-219C1B27C9A2}.Release|x64.ActiveCfg = Release|Any CPU
+		{EE2B810A-689E-469B-9A3A-219C1B27C9A2}.Release|x64.Build.0 = Release|Any CPU
+		{EE2B810A-689E-469B-9A3A-219C1B27C9A2}.Release|x86.ActiveCfg = Release|Any CPU
+		{EE2B810A-689E-469B-9A3A-219C1B27C9A2}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -233,6 +247,7 @@ Global
 		{812FB859-81E3-4386-AFEE-4A1CC6D20AED} = {F92C91E5-07F7-435E-B1A8-720C4F2F3766}
 		{A1B918A1-93A3-477C-AE25-CC6A7907FEAC} = {A50B98CF-9AA1-4622-B2AD-5E17610115A7}
 		{C9A804EF-8642-4C7F-A0C3-B1C40DB50645} = {73821472-B678-4E93-8118-5FC748C2F945}
+		{EE2B810A-689E-469B-9A3A-219C1B27C9A2} = {42AAD69E-3038-4793-8A6D-ACF1093E5F09}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B50610D6-2B28-4258-98A2-A0B486FD5907}

@@ -1,10 +1,9 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
+using Stl.Generators;
 using Stl.OS;
 
 namespace Stl.Time.Internal
@@ -16,8 +15,7 @@ namespace Stl.Time.Internal
         public static readonly long StartEpochOffsetTicks;
 
         private static readonly Stopwatch Stopwatch;
-        private static readonly RandomNumberGenerator Rnd = RandomNumberGenerator.Create();
-        private static readonly long[] RndBuffer = new long[1];
+        private static readonly RandomInt64Generator Rng = new RandomInt64Generator();
         private static long _elapsedTicks;
         private static long _randomInt64;
         private static volatile int _randomInt32;
@@ -57,6 +55,7 @@ namespace Stl.Time.Internal
 
         private static void BeginUpdates()
         {
+            Update();
             if (OSInfo.Kind == OSKind.WebAssembly) {
                 Task.Run(AsyncThreadStart);
                 return;
@@ -105,12 +104,9 @@ namespace Stl.Time.Internal
             Interlocked.Exchange(ref _elapsedTicks, Stopwatch.ElapsedTicks);
 
             // Updating _random*
-            var bufferSpan = MemoryMarshal.Cast<long, byte>(RndBuffer.AsSpan());
-            Rnd!.GetBytes(bufferSpan);
-            var randomInt64 = RndBuffer![0];
-            var randomInt32 = unchecked((int) randomInt64);
-            Interlocked.Exchange(ref _randomInt64, randomInt64);
-            _randomInt32 = randomInt32;
+            var rnd = Rng.Next();
+            Interlocked.Exchange(ref _randomInt64, rnd);
+            _randomInt32 = unchecked((int) rnd);
         }
     }
 }

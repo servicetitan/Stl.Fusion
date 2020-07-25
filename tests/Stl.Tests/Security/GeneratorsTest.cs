@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
-using Stl.Security;
+using Stl.Generators;
 using Stl.Testing;
 using Xunit;
 using Xunit.Abstractions;
@@ -15,7 +15,7 @@ namespace Stl.Tests.Security
         [Fact]
         public void Int32GeneratorTest()
         {
-            var g = new Int32Generator();
+            var g = new SequentialInt32Generator();
             g.Next().Should().Be(1);
             g.Next().Should().Be(2);
             g.Next().Should().Be(3);
@@ -24,7 +24,7 @@ namespace Stl.Tests.Security
         [Fact]
         public void Int64GeneratorTest()
         {
-            var g = new Int64Generator();
+            var g = new SequentialInt64Generator();
             g.Next().Should().Be(1);
             g.Next().Should().Be(2);
             g.Next().Should().Be(3);
@@ -33,7 +33,7 @@ namespace Stl.Tests.Security
         [Fact]
         public void TransformingGeneratorTest()
         {
-            var g = new TransformingGenerator<int, string>(new Int32Generator(), i => i.ToString());
+            var g = new TransformingGenerator<int, string>(new SequentialInt32Generator(), i => i.ToString());
             g.Next().Should().Be("1");
             g.Next().Should().Be("2");
             g.Next().Should().Be("3");

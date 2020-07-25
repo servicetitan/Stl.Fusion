@@ -10,6 +10,7 @@ using Stl.Fusion.Bridge.Internal;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Interception.Internal;
 using Stl.Fusion.Internal;
+using Stl.Generators;
 
 namespace Stl.Fusion.Bridge.Interception
 {
@@ -17,11 +18,11 @@ namespace Stl.Fusion.Bridge.Interception
     {
         private readonly ILogger _log;
         private readonly bool _isLogDebugEnabled;
-        protected ConcurrentIdGenerator<LTag> LTagGenerator { get; }
+        protected Generator<LTag> LTagGenerator { get; }
 
         public ReplicaServiceFunction(
             InterceptedMethod method,
-            ConcurrentIdGenerator<LTag> lTagGenerator,
+            Generator<LTag> lTagGenerator,
             IComputedRegistry computedRegistry,
             ILogger<ReplicaServiceFunction<T>>? log = null)
             : base(method, computedRegistry)

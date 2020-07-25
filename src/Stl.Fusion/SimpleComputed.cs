@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Concurrency;
+using Stl.Generators;
 
 namespace Stl.Fusion
 {
@@ -38,7 +39,7 @@ namespace Stl.Fusion
             Result<T> output, bool isConsistent = true)
         {
             var input = new SimpleComputedInput<T>(updater);
-            var lTag = ConcurrentIdGenerator.DefaultLTag.Next();
+            var lTag = ConcurrentLTagGenerator.Default.Next();
             input.Computed = new SimpleComputed<T>(options, input, output, lTag, isConsistent);
             return input.Computed;
         }

@@ -11,7 +11,7 @@ using Stl.Concurrency;
 using Stl.Fusion.Bridge.Internal;
 using Stl.Fusion.Bridge.Messages;
 using Stl.OS;
-using Stl.Security;
+using Stl.Generators;
 using Stl.Text;
 using Stl.Time;
 
@@ -37,7 +37,7 @@ namespace Stl.Fusion.Bridge
         IPublicationFactory PublicationFactory { get; }
         Type PublicationType { get; }
         TimeSpan PublicationExpirationTime { get; }
-        IGenerator<Symbol> PublicationIdGenerator { get; }
+        Generator<Symbol> PublicationIdGenerator { get; }
 
         ValueTask<bool> SubscribeAsync(
             Channel<Message> channel, IPublication publication,
@@ -58,7 +58,7 @@ namespace Stl.Fusion.Bridge
             public IPublicationFactory PublicationFactory { get; set; } = Internal.PublicationFactory.Instance;
             public Type PublicationType { get; set; } = typeof(Publication<>);
             public TimeSpan PublicationExpirationTime { get; set; } = TimeSpan.FromSeconds(60);
-            public IGenerator<Symbol> PublicationIdGenerator { get; set; } = new RandomSymbolGenerator("p-");
+            public Generator<Symbol> PublicationIdGenerator { get; set; } = new RandomSymbolGenerator("p-");
             public IMomentClock Clock { get; set; } = CoarseCpuClock.Instance;
         }
 
@@ -74,7 +74,7 @@ namespace Stl.Fusion.Bridge
         public IPublicationFactory PublicationFactory { get; }
         public Type PublicationType { get; }
         public TimeSpan PublicationExpirationTime { get; }
-        public IGenerator<Symbol> PublicationIdGenerator { get; }
+        public Generator<Symbol> PublicationIdGenerator { get; }
         public IMomentClock Clock { get; }
 
         public Publisher(Options options)
