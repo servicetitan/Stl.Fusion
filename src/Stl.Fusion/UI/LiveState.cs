@@ -52,8 +52,8 @@ namespace Stl.Fusion.UI
 
         private readonly ILogger _log;
         private readonly Func<ILiveState<TLocal, TState>, CancellationToken, Task<TState>> _updater;
-        private readonly bool _isolateUpdateErrors; 
-        private readonly bool _delayFirstUpdate; 
+        private readonly bool _isolateUpdateErrors;
+        private readonly bool _delayFirstUpdate;
         private readonly CancellationTokenSource _stopCts;
         private readonly CancellationToken _stopToken;
         private readonly SimpleComputedInput<TState> _computedRef;
@@ -87,7 +87,7 @@ namespace Stl.Fusion.UI
         {
             _log = log ??= NullLogger<LiveState<TState>>.Instance;
 
-            _updater = options.Updater 
+            _updater = options.Updater
                 ?? throw new ArgumentNullException(nameof(options) + "." + nameof(options.Updater));
             _delayFirstUpdate = options.DelayFirstUpdate;
             _isolateUpdateErrors = options.IsolateUpdateErrors;
@@ -121,9 +121,9 @@ namespace Stl.Fusion.UI
             => State.Deconstruct(out value, out error);
 
         public void ThrowIfError() => State.ThrowIfError();
-        public bool IsValue([MaybeNullWhen(false)] out TState value) 
+        public bool IsValue([MaybeNullWhen(false)] out TState value)
             => State.IsValue(out value);
-        public bool IsValue([MaybeNullWhen(false)] out TState value, [MaybeNullWhen(true)] out Exception error) 
+        public bool IsValue([MaybeNullWhen(false)] out TState value, [MaybeNullWhen(true)] out Exception error)
             => State.IsValue(out value, out error!);
 
         public void Invalidate(bool updateImmediately = true)
@@ -142,7 +142,7 @@ namespace Stl.Fusion.UI
                 try {
                     if (updateIndex != 0 || _delayFirstUpdate)
                         await UpdateDelayer.DelayAsync(cancellationToken).ConfigureAwait(false);
-                    computed = (SimpleComputed<TState>) 
+                    computed = (SimpleComputed<TState>)
                         await computed.UpdateAsync(false, cancellationToken).ConfigureAwait(false);
                 }
                 finally {
@@ -153,7 +153,7 @@ namespace Stl.Fusion.UI
         }
 
         private async Task UpdateAsync(
-            IComputed<TState> prev, IComputed<TState> next, 
+            IComputed<TState> prev, IComputed<TState> next,
             CancellationToken cancellationToken)
         {
             try {
@@ -168,8 +168,8 @@ namespace Stl.Fusion.UI
             }
             catch (Exception e) {
                 _log.LogError(e, $"{nameof(UpdateAsync)}: Error.");
-                next.SetOutput(_isolateUpdateErrors 
-                    ? prev.Output 
+                next.SetOutput(_isolateUpdateErrors
+                    ? prev.Output
                     : new Result<TState>(default!, e));
                 Interlocked.Exchange(ref _lastUpdateError, e);
                 var tryIndex = Interlocked.Increment(ref _failedUpdateIndex) - 1;
@@ -196,10 +196,10 @@ namespace Stl.Fusion.UI
         }
 
         public LiveState(
-            Options options, 
-            IUpdateDelayer? updateDelayer = null, 
-            ILogger<LiveState<TState>>? log = null) 
-            : base(options, updateDelayer, log) 
+            Options options,
+            IUpdateDelayer? updateDelayer = null,
+            ILogger<LiveState<TState>>? log = null)
+            : base(options, updateDelayer, log)
         { }
     }
 }

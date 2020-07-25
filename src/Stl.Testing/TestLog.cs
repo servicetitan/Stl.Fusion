@@ -6,14 +6,14 @@ namespace Stl.Testing
 {
     public static class TestLogger
     {
-        public static readonly string DefaultTestLoggerOutputTemplate = 
+        public static readonly string DefaultTestLoggerOutputTemplate =
             "### [{Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}";
-        public static readonly string DefaultConsoleLoggerOutputTemplate = 
+        public static readonly string DefaultConsoleLoggerOutputTemplate =
             "{Timestamp:mm:ss.fff} [{Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}";
-        
+
         public static ILogger New(
             TextWriter writer,
-            string? outputTemplate = null, 
+            string? outputTemplate = null,
             LogEventLevel minimumLevel = LogEventLevel.Debug,
             bool logToConsole = true,
             string? consoleOutputTemplate = null)

@@ -65,7 +65,7 @@ namespace Stl.Time.Internal
                 // Dedicated thread is preferable here, since
                 // we need to adjust its priority.
                 var t = new Thread(ThreadStart, 64_000) {
-                    Priority = ThreadPriority.Highest, 
+                    Priority = ThreadPriority.Highest,
                     IsBackground = true
                 };
                 t.Start();
@@ -99,11 +99,11 @@ namespace Stl.Time.Internal
         }
 
         [DebuggerStepThrough]
-        private static void Update() 
+        private static void Update()
         {
             // Updating _elapsedTicks
             Interlocked.Exchange(ref _elapsedTicks, Stopwatch.ElapsedTicks);
-                
+
             // Updating _random*
             var bufferSpan = MemoryMarshal.Cast<long, byte>(RndBuffer.AsSpan());
             Rnd!.GetBytes(bufferSpan);

@@ -32,12 +32,12 @@ namespace Stl.CommandLine
 
         protected Task<CmdResult> RunRawAsync(
             object? arguments, CliString tail = default,
-            CancellationToken cancellationToken = default) 
+            CancellationToken cancellationToken = default)
             => RunRawAsync("", arguments, tail, cancellationToken);
 
         protected Task<CmdResult> RunRawAsync(
-            CliString command, object? arguments, CliString tail = default, 
-            CancellationToken cancellationToken = default) 
+            CliString command, object? arguments, CliString tail = default,
+            CancellationToken cancellationToken = default)
             => RunRawAsync(command + CliFormatter.Format(arguments) + tail, cancellationToken);
 
         public Task<CmdResult> RunRawAsync(
@@ -46,24 +46,24 @@ namespace Stl.CommandLine
             => RunRawAsync(arguments, null, cancellationToken);
 
         public virtual Task<CmdResult> RunRawAsync(
-            CliString arguments, string? standardInput, 
-            CancellationToken cancellationToken = default) 
+            CliString arguments, string? standardInput,
+            CancellationToken cancellationToken = default)
         {
             arguments = TransformArguments(arguments);
-            var command = $"{this} {arguments}"; 
+            var command = $"{this} {arguments}";
             Log?.LogDebug($"Running: {command}");
 
             if (EchoMode) {
                 var now = DateTimeOffset.Now;
                 var executionResult = new CmdResult(null!, 0, now, now, command);
                 return Task.FromResult(executionResult);
-            } 
-            
+            }
+
             return RunRawAsyncImpl(arguments, standardInput, cancellationToken);
         }
 
         protected abstract Task<CmdResult> RunRawAsyncImpl(
-            CliString arguments, string? standardInput, 
+            CliString arguments, string? standardInput,
             CancellationToken cancellationToken);
 
         protected virtual CliString TransformArguments(CliString arguments)

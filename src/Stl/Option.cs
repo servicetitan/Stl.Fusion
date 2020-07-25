@@ -44,7 +44,7 @@ namespace Stl
             UnsafeValue = unsafeValue;
         }
 
-        public override string ToString() 
+        public override string ToString()
             => IsSome(out var v) ? $"Some({v})" : "None";
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -55,7 +55,7 @@ namespace Stl
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Option<T>((bool HasValue, T Value) source) 
+        public static implicit operator Option<T>((bool HasValue, T Value) source)
             => new Option<T>(source.HasValue, source.Value);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Option<T>(T source) => new Option<T>(true, source);
@@ -92,12 +92,12 @@ namespace Stl
         // Equality
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Equals(Option<T> other) 
-            => HasValue == other.HasValue 
+        public bool Equals(Option<T> other)
+            => HasValue == other.HasValue
                 && EqualityComparer<T>.Default.Equals(UnsafeValue!, other.UnsafeValue!);
-        public override bool Equals(object? obj) 
+        public override bool Equals(object? obj)
             => obj is Option<T> other && Equals(other);
-        public override int GetHashCode() => HashCode.Combine(HasValue, Value); 
+        public override int GetHashCode() => HashCode.Combine(HasValue, Value);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(Option<T> left, Option<T> right) => left.Equals(right);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -123,11 +123,11 @@ namespace Stl
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Option<T> FromClass<T>(T value)
             where T : class?
-            => value != null ? Some(value) : default; 
+            => value != null ? Some(value) : default;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Option<T> FromStruct<T>(T? value)
             where T : struct
-            => value.HasValue ? Some(value.GetValueOrDefault()) : default; 
+            => value.HasValue ? Some(value.GetValueOrDefault()) : default;
     }
 }

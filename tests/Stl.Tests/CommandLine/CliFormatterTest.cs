@@ -35,7 +35,7 @@ namespace Stl.Tests.CommandLine
             [CliArgument(Priority = 1000)]
             public CliString Suffix { get; set; } = "";
         }
-        
+
         protected class ArgumentsEx : Arguments
         {
             [CliArgument(IsRequired = true)]
@@ -53,7 +53,7 @@ namespace Stl.Tests.CommandLine
             [CliArgument(IsRequired = true)]
             public string? Path { get; set; }
         }
-        
+
         protected enum Gender
         {
             [Display(Name = "male")]
@@ -81,7 +81,7 @@ namespace Stl.Tests.CommandLine
             actual = CliFormatter.Format(new Arguments {Bool = false});
             actual.Value.Should().BeEmpty();
         }
-        
+
         [Fact]
         public void StringTest()
         {
@@ -98,7 +98,7 @@ namespace Stl.Tests.CommandLine
             var actual = CliFormatter.Format(new Arguments {Int = 5});
             actual.Value.Should().Be("-intArg=5s");
         }
-        
+
         [Fact]
         public void EnumTest()
         {
@@ -166,8 +166,8 @@ namespace Stl.Tests.CommandLine
         {
             var actual = CliFormatter.Format(new NestedArguments() {
                 Arguments = new ArgumentsEx() {
-                    Path = "p1", 
-                    Suffix = "s", 
+                    Path = "p1",
+                    Suffix = "s",
                     Prefix = "p"
                 },
                 Path = "p2",
@@ -184,8 +184,8 @@ namespace Stl.Tests.CommandLine
                 Bool = true,
                 Vars = new CliDictionary<string, string>() {{"k", "v"}},
                 Path = "path",
-                Prefix = "prefix", 
-                Suffix = "suffix" 
+                Prefix = "prefix",
+                Suffix = "suffix"
             });
             actual.Value.Should().Be(
                 "prefix " +

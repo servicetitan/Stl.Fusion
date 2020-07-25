@@ -57,7 +57,7 @@ namespace Stl.CommandLine.Terraform
             CancellationToken cancellationToken = default)
         {
             // A workaround for this issue:
-            // https://github.com/hashicorp/terraform/issues/21393 
+            // https://github.com/hashicorp/terraform/issues/21393
             var oldEnv = EnvironmentVariables;
             EnvironmentVariables = oldEnv.SetItem("TF_WORKSPACE", "default");
             try {
@@ -106,19 +106,19 @@ namespace Stl.CommandLine.Terraform
 
         public async Task WorkspaceChangeAsync(string workspaceName, bool reset = false)
         {
-            // This makes sure this method doesn't change ResultChecks 
+            // This makes sure this method doesn't change ResultChecks
             using var _ = this.ChangeResultValidation(0);
             CmdResult r;
             if (reset) {
                 r = await WorkspaceDeleteAsync(
-                    workspaceName, default, 
+                    workspaceName, default,
                     new WorkspaceDeleteArguments() {
                         Force = true,
                     }).ConfigureAwait(false);
             }
             r = await WorkspaceSelectAsync(workspaceName).ConfigureAwait(false);
             ResultValidation = CommandResultValidation.ZeroExitCode;
-            if (r.ExitCode != 0) 
+            if (r.ExitCode != 0)
                 r = await WorkspaceNewAsync(workspaceName).ConfigureAwait(false);
             r = await WorkspaceSelectAsync(workspaceName).ConfigureAwait(false);
         }

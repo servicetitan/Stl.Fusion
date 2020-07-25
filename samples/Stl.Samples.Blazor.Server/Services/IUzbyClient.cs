@@ -8,7 +8,7 @@ namespace Stl.Samples.Blazor.Server.Services
     {
         [Get("")]
         Task<string> GetNameAsync(
-            [Query("min")] int minLength = 2, 
+            [Query("min")] int minLength = 2,
             [Query("max")] int maxLength = 8,
             CancellationToken cancellationToken = default);
     }

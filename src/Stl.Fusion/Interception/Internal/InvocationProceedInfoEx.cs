@@ -17,7 +17,7 @@ namespace Stl.Fusion.Interception.Internal
             var piType = aiType.GetNestedTypes(BindingFlags.NonPublic | BindingFlags.Instance)
                 .Single(t => ipiType.IsAssignableFrom(t));
             var eSrc = Expression.Parameter(typeof(IInvocationProceedInfo), "source");
-            var body = Expression.Field(Expression.TypeAs(eSrc, piType), "invocation"); 
+            var body = Expression.Field(Expression.TypeAs(eSrc, piType), "invocation");
             InvocationReader = (Func<IInvocationProceedInfo, IInvocation>)
                 Expression.Lambda(body, eSrc).Compile();
         }

@@ -25,7 +25,7 @@ namespace Stl.Tests.Fusion.Services
         public int GetValueCallCount { get; private set; }
         public int GetCharCountCallCount { get; private set; }
 
-        public SimplestProvider() 
+        public SimplestProvider()
             => _isCaching = GetType().Name.EndsWith("Proxy");
 
         public void SetValue(string value)

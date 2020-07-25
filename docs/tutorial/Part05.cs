@@ -14,7 +14,7 @@ namespace Tutorial
         #region part05_defineServices
         public class UserRegistry : IComputedService
         {
-            private readonly ConcurrentDictionary<long, string> _userNames = 
+            private readonly ConcurrentDictionary<long, string> _userNames =
                 new ConcurrentDictionary<long, string>();
 
             // Notice there is no [ComputedServiceMethod], because it doesn't
@@ -117,7 +117,7 @@ namespace Tutorial
             var formatter = services.GetRequiredService<FormatService>();
 
             users.SetUserName(0, "John Carmack");
-            var cFormattedUser0 = await Computed.CaptureAsync(async _ => 
+            var cFormattedUser0 = await Computed.CaptureAsync(async _ =>
                 await formatter.FormatUserNameAsync(0));
             for (var i = 0; i < 10; i++) {
                 WriteLine(cFormattedUser0.Value);

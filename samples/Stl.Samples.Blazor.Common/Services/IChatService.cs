@@ -39,7 +39,7 @@ namespace Stl.Samples.Blazor.Common.Services
         public List<ChatMessage> Messages { get; }
         public Dictionary<long, ChatUser> Users { get; }
 
-        public ChatPage() 
+        public ChatPage()
             : this(new List<ChatMessage>(), new Dictionary<long, ChatUser>()) { }
         [JsonConstructor]
         public ChatPage(List<ChatMessage> messages, Dictionary<long, ChatUser> users)

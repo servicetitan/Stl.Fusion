@@ -52,10 +52,10 @@ namespace Stl.Tests.Fusion
             Log = (ILogger) Container.Resolve(typeof(ILogger<>).MakeGenericType(GetType()));
         }
 
-        public virtual Task InitializeAsync() 
+        public virtual Task InitializeAsync()
             => DbContext.Database.EnsureCreatedAsync();
-        public virtual Task DisposeAsync() 
-            => Task.CompletedTask.ContinueWith(_ => Container?.Dispose()); 
+        public virtual Task DisposeAsync()
+            => Task.CompletedTask.ContinueWith(_ => Container?.Dispose());
 
         protected virtual IServiceProvider CreateServices()
         {
@@ -88,8 +88,8 @@ namespace Stl.Tests.Fusion
                 };
 
                 bool LogFilter(string category, LogLevel level)
-                    => IsLoggingEnabled && 
-                        debugCategories.Any(category.StartsWith) 
+                    => IsLoggingEnabled &&
+                        debugCategories.Any(category.StartsWith)
                         && level >= LogLevel.Debug;
 
                 logging.ClearProviders();
@@ -97,9 +97,9 @@ namespace Stl.Tests.Fusion
                 logging.AddFilter(LogFilter);
                 logging.AddDebug();
                 // XUnit logging requires weird setup b/c otherwise it filters out
-                // everything below LogLevel.Information 
+                // everything below LogLevel.Information
                 logging.AddProvider(new XunitTestOutputLoggerProvider(
-                    new TestOutputHelperAccessor(Out), 
+                    new TestOutputHelperAccessor(Out),
                     LogFilter));
             });
 
@@ -184,7 +184,7 @@ namespace Stl.Tests.Fusion
         { }
 
         protected virtual TestChannelPair<Message> CreateChannelPair(
-            string name, bool dump = true) 
+            string name, bool dump = true)
             => new TestChannelPair<Message>(name, dump ? Out : null);
     }
 }

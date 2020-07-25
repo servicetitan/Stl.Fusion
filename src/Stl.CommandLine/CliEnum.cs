@@ -7,7 +7,7 @@ using Stl.Internal;
 namespace Stl.CommandLine
 {
     [Serializable]
-    public readonly struct CliEnum<T> : IEquatable<CliEnum<T>>, IFormattable 
+    public readonly struct CliEnum<T> : IEquatable<CliEnum<T>>, IFormattable
         where T: struct, Enum
     {
         public T Value { get; }
@@ -15,7 +15,7 @@ namespace Stl.CommandLine
         [JsonConstructor]
         public CliEnum(T value) => Value = value;
         public override string ToString() => ToString(null, null);
-        public string ToString(string? format, IFormatProvider? provider = null) 
+        public string ToString(string? format, IFormatProvider? provider = null)
         {
             if (string.IsNullOrEmpty(format)) format = "D";
             provider ??= CultureInfo.InvariantCulture;
@@ -34,8 +34,8 @@ namespace Stl.CommandLine
         public static bool operator ==(CliEnum<T> left, CliEnum<T> right) => left.Equals(right);
         public static bool operator !=(CliEnum<T> left, CliEnum<T> right) => !left.Equals(right);
 
-        public static implicit operator CliEnum<T>(T source) => new CliEnum<T>(source); 
-        public static implicit operator T(CliEnum<T> source) => source.Value; 
+        public static implicit operator CliEnum<T>(T source) => new CliEnum<T>(source);
+        public static implicit operator T(CliEnum<T> source) => source.Value;
         public static implicit operator CliString(CliEnum<T> source) => CliString.New(source.ToString());
     }
 }

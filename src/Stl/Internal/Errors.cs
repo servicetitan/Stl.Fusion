@@ -43,7 +43,7 @@ namespace Stl.Internal
         public static Exception EnqueueCompleted() =>
             new InvalidOperationException("EnqueueCompleted == true.");
 
-        public static Exception CircularDependency<T>(T item) => 
+        public static Exception CircularDependency<T>(T item) =>
             new InvalidOperationException($"Circular dependency on {item} found.");
 
         public static Exception CannotActivate(Type type) =>
@@ -89,7 +89,7 @@ namespace Stl.Internal
             new InvalidOperationException("The event source is already completed.");
         public static Exception ThisValueCanBeSetJustOnce() =>
             new InvalidOperationException($"This value can be set just once.");
-        public static Exception NoDefaultConstructor(Type type) => 
+        public static Exception NoDefaultConstructor(Type type) =>
             new InvalidOperationException($"Type '{type}' doesn't have a default constructor.");
 
         public static Exception InternalError(string message) =>

@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 
-namespace Stl.Security 
+namespace Stl.Security
 {
     public interface IKeyVault
     {

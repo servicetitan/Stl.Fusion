@@ -10,7 +10,7 @@ namespace Stl.Fusion
         private static readonly Dictionary<CallOptions, ComputeContext> ContextCache;
         private volatile IComputed? _capturedComputed;
         private volatile int _isUsed;
-        
+
         public static readonly ComputeContext Default;
 
         public CallOptions CallOptions { get; }
@@ -20,9 +20,9 @@ namespace Stl.Fusion
         public static ComputeContext New(CallOptions options)
         {
             var canUseCache = (options & CallOptions.Capture) == 0;
-            var context = canUseCache 
-                ? ContextCache[options] 
-                : new ComputeContext(options); 
+            var context = canUseCache
+                ? ContextCache[options]
+                : new ComputeContext(options);
             return context;
         }
 
@@ -38,7 +38,7 @@ namespace Stl.Fusion
             Default = New(default);
         }
 
-        protected ComputeContext(CallOptions callOptions) 
+        protected ComputeContext(CallOptions callOptions)
             => CallOptions = callOptions;
 
         public override string ToString() => $"{GetType().Name}({CallOptions})";
@@ -58,9 +58,9 @@ namespace Stl.Fusion
         public IComputed? GetCapturedComputed() => _capturedComputed;
         public IComputed<T>? GetCapturedComputed<T>() => (IComputed<T>?) _capturedComputed;
 
-        internal bool TrySetIsUsed() 
+        internal bool TrySetIsUsed()
             => 0 == Interlocked.CompareExchange(ref _isUsed, 1, 0);
-        internal void ResetIsUsed() 
+        internal void ResetIsUsed()
             => Interlocked.Exchange(ref _isUsed, 0);
     }
 

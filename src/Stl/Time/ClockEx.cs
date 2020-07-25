@@ -49,9 +49,9 @@ namespace Stl.Time
 
         public static IObservable<long> Interval(this IMomentClock clock, long intervalInMilliseconds)
             => clock.Interval(TimeSpan.FromMilliseconds(intervalInMilliseconds));
-        public static IObservable<long> Interval(this IMomentClock clock, TimeSpan interval) 
-            => clock is SystemClock 
-                ? Observable.Interval(interval) // Perf. optimization 
+        public static IObservable<long> Interval(this IMomentClock clock, TimeSpan interval)
+            => clock is SystemClock
+                ? Observable.Interval(interval) // Perf. optimization
                 : clock.Interval(Intervals.Fixed(interval));
         public static IObservable<long> Interval(this IMomentClock clock, IEnumerable<TimeSpan> intervals)
         {
@@ -81,7 +81,7 @@ namespace Stl.Time
         }
         public static IAsyncEnumerable<long> IntervalAsync(this IMomentClock clock, long intervalInMilliseconds)
             => clock.Interval(intervalInMilliseconds).ToAsyncEnumerable();
-        public static IAsyncEnumerable<long> IntervalAsync(this IMomentClock clock, TimeSpan interval) 
+        public static IAsyncEnumerable<long> IntervalAsync(this IMomentClock clock, TimeSpan interval)
             => clock.Interval(interval).ToAsyncEnumerable();
         public static IAsyncEnumerable<long> IntervalAsync(this IMomentClock clock, IEnumerable<TimeSpan> intervals)
             => clock.Interval(intervals).ToAsyncEnumerable();

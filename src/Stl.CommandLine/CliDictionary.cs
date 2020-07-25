@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Runtime.Serialization;
 
-namespace Stl.CommandLine 
+namespace Stl.CommandLine
 {
     [Serializable]
     public class CliDictionary<TKey, TValue> : Dictionary<TKey, TValue>, IEnumerable<IFormattable>

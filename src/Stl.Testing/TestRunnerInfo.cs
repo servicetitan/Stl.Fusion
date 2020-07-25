@@ -37,7 +37,7 @@ namespace Stl.Testing
             }
         }
 
-        public static bool IsBuildAgent() 
+        public static bool IsBuildAgent()
             => TeamCity.Version != null || GitHub.IsActionRunning;
     }
 }

@@ -5,7 +5,7 @@ namespace Stl.Extensibility.Internal
     {
         private readonly TService _service;
 
-        public SpecialBuilder(TService service) 
+        public SpecialBuilder(TService service)
             => _service = service;
 
         public Special<TService, TFor> For<TFor>()

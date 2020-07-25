@@ -20,7 +20,7 @@ namespace Stl.Fusion.Interception
         protected ModuleScope ModuleScope { get; }
 
         public ComputedServiceProxyGenerator(
-            ProxyGenerationOptions? options = null, 
+            ProxyGenerationOptions? options = null,
             ModuleScope? moduleScope = null)
         {
             options ??= new ProxyGenerationOptions();
@@ -30,7 +30,7 @@ namespace Stl.Fusion.Interception
             Cache = new ConcurrentDictionary<Type, Type>();
         }
 
-        public virtual Type GetProxyType(Type type) 
+        public virtual Type GetProxyType(Type type)
             => Cache.GetOrAddChecked(type, (type1, self) => {
                 var generator = new ComputedServiceProxyGeneratorImpl(self.ModuleScope, type1);
                 return generator.GenerateCode(Array.Empty<Type>(), self.Options);

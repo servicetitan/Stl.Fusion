@@ -16,7 +16,7 @@ namespace Stl.Fusion.Bridge
         Symbol Id { get; }
 
         IReplica? TryGet(Symbol publicationId);
-        IReplica<T> GetOrAdd<T>(Symbol publisherId, Symbol publicationId, 
+        IReplica<T> GetOrAdd<T>(Symbol publisherId, Symbol publicationId,
             LTagged<Result<T>> initialOutput, bool isConsistent = true, bool requestUpdate = false);
 
         IComputed<bool> GetPublisherConnectionState(Symbol publisherId);
@@ -59,25 +59,25 @@ namespace Stl.Fusion.Bridge
             CreateChannelProcessorHandler = CreateChannelProcessor;
         }
 
-        public virtual IReplica? TryGet(Symbol publicationId) 
+        public virtual IReplica? TryGet(Symbol publicationId)
             => Registry.TryGet(publicationId);
 
-        public virtual IReplica<T> GetOrAdd<T>(Symbol publisherId, Symbol publicationId, 
+        public virtual IReplica<T> GetOrAdd<T>(Symbol publisherId, Symbol publicationId,
             LTagged<Result<T>> initialOutput, bool isConsistent = true, bool requestUpdate = false)
         {
-            var (replica, isNew) = Registry.GetOrAdd(publicationId, 
+            var (replica, isNew) = Registry.GetOrAdd(publicationId,
                 () => new Replica<T>(this, publisherId, publicationId, initialOutput, isConsistent, requestUpdate));
             if (isNew)
                 Subscribe(replica);
             return (IReplica<T>) replica;
         }
 
-        public IComputed<bool> GetPublisherConnectionState(Symbol publisherId) 
+        public IComputed<bool> GetPublisherConnectionState(Symbol publisherId)
             => ChannelProcessors
                 .GetOrAddChecked(publisherId, CreateChannelProcessorHandler)
                 .StateComputed.Computed;
 
-        protected virtual ReplicatorChannelProcessor GetChannelProcessor(Symbol publisherId) 
+        protected virtual ReplicatorChannelProcessor GetChannelProcessor(Symbol publisherId)
             => ChannelProcessors
                 .GetOrAddChecked(publisherId, CreateChannelProcessorHandler);
 
@@ -94,7 +94,7 @@ namespace Stl.Fusion.Bridge
             return channelProcessor;
         }
 
-        void IReplicatorImpl.Subscribe(IReplica replica) 
+        void IReplicatorImpl.Subscribe(IReplica replica)
             => Subscribe(replica);
         protected virtual void Subscribe(IReplica replica)
         {
@@ -103,7 +103,7 @@ namespace Stl.Fusion.Bridge
             GetChannelProcessor(replica.PublisherId).Subscribe(replica);
         }
 
-        void IReplicatorImpl.OnReplicaDisposed(IReplica replica) 
+        void IReplicatorImpl.OnReplicaDisposed(IReplica replica)
             => OnReplicaDisposed(replica);
         protected virtual void OnReplicaDisposed(IReplica replica)
         {

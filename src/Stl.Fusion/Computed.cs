@@ -39,7 +39,7 @@ namespace Stl.Fusion
         ValueTask<object> UseAsync(CancellationToken cancellationToken = default);
         ValueTask<object> UseAsync(ComputeContext context, CancellationToken cancellationToken = default);
     }
-    
+
     public interface IComputed<TOut> : IComputed, IResult<TOut>
     {
         new Result<TOut> Output { get; }
@@ -52,14 +52,14 @@ namespace Stl.Fusion
         new ValueTask<TOut> UseAsync(CancellationToken cancellationToken = default);
         new ValueTask<TOut> UseAsync(ComputeContext context, CancellationToken cancellationToken = default);
     }
-    
-    public interface IComputedWithTypedInput<out TIn> : IComputed 
+
+    public interface IComputedWithTypedInput<out TIn> : IComputed
         where TIn : ComputedInput
     {
         new TIn Input { get; }
     }
 
-    public interface IComputed<out TIn, TOut> : IComputed<TOut>, IComputedWithTypedInput<TIn> 
+    public interface IComputed<out TIn, TOut> : IComputed<TOut>, IComputedWithTypedInput<TIn>
         where TIn : ComputedInput
     { }
 
@@ -88,7 +88,7 @@ namespace Stl.Fusion
         public TIn Input { get; }
         public ComputedState State => (ComputedState) _state;
         public bool IsConsistent => State == ComputedState.Consistent;
-        public IFunction<TIn, TOut> Function => (IFunction<TIn, TOut>) Input.Function; 
+        public IFunction<TIn, TOut> Function => (IFunction<TIn, TOut>) Input.Function;
         public LTag LTag { get; }
 
         public Moment LastAccessTime {
@@ -121,7 +121,7 @@ namespace Stl.Fusion
         // ReSharper disable once HeapView.BoxingAllocation
         object? IResult.UnsafeValue => Output.UnsafeValue;
         // ReSharper disable once HeapView.BoxingAllocation
-        object? IResult.Value => Output.Value;        
+        object? IResult.Value => Output.Value;
 
         public event Action<IComputed> Invalidated {
             add {
@@ -160,7 +160,7 @@ namespace Stl.Fusion
             LastAccessTime = CoarseCpuClock.Now;
         }
 
-        public override string ToString() 
+        public override string ToString()
             => $"{GetType().Name}({Input} {LTag}, State: {State})";
 
         void IComputedImpl.AddUsed(IComputedImpl used)
@@ -185,7 +185,7 @@ namespace Stl.Fusion
                     throw Errors.WrongComputedState(State);
                 case ComputedState.Invalidated:
                     usedBy.Invalidate();
-                    return; 
+                    return;
                 }
                 _usedBy.Add((usedBy.Input, usedBy.LTag));
             }
@@ -262,7 +262,7 @@ namespace Stl.Fusion
                     ref var d = ref usedBy.Span[i];
                     d.Input.TryGetCachedComputed(d.LTag)?.Invalidate();
                     // Just in case buffers aren't cleaned up when you return them back
-                    d = default!; 
+                    d = default!;
                 }
                 return true;
             }
@@ -273,15 +273,15 @@ namespace Stl.Fusion
 
         // UpdateAsync
 
-        async ValueTask<IComputed> IComputed.UpdateAsync(bool addDependency, CancellationToken cancellationToken) 
+        async ValueTask<IComputed> IComputed.UpdateAsync(bool addDependency, CancellationToken cancellationToken)
             => await UpdateAsync(addDependency, null!, cancellationToken).ConfigureAwait(false);
-        async ValueTask<IComputed> IComputed.UpdateAsync(bool addDependency, ComputeContext context, CancellationToken cancellationToken) 
+        async ValueTask<IComputed> IComputed.UpdateAsync(bool addDependency, ComputeContext context, CancellationToken cancellationToken)
             => await UpdateAsync(addDependency, cancellationToken).ConfigureAwait(false);
         public ValueTask<IComputed<TOut>> UpdateAsync(bool addDependency, CancellationToken cancellationToken = default)
             => UpdateAsync(addDependency, null!, cancellationToken);
         public async ValueTask<IComputed<TOut>> UpdateAsync(bool addDependency, ComputeContext context, CancellationToken cancellationToken = default)
         {
-            var usedBy = addDependency ? Computed.GetCurrent() : null; 
+            var usedBy = addDependency ? Computed.GetCurrent() : null;
 
             if (!IsConsistent)
                 return await Function.InvokeAsync(Input, usedBy, context, cancellationToken);
@@ -298,11 +298,11 @@ namespace Stl.Fusion
 
         // UseAsync
 
-        async ValueTask<object> IComputed.UseAsync(CancellationToken cancellationToken) 
+        async ValueTask<object> IComputed.UseAsync(CancellationToken cancellationToken)
             => (await UseAsync(null!, cancellationToken).ConfigureAwait(false))!;
-        async ValueTask<object> IComputed.UseAsync( ComputeContext context, CancellationToken cancellationToken) 
-            => (await UseAsync(context, cancellationToken).ConfigureAwait(false))!; 
-        public ValueTask<TOut> UseAsync(CancellationToken cancellationToken = default) 
+        async ValueTask<object> IComputed.UseAsync( ComputeContext context, CancellationToken cancellationToken)
+            => (await UseAsync(context, cancellationToken).ConfigureAwait(false))!;
+        public ValueTask<TOut> UseAsync(CancellationToken cancellationToken = default)
             => UseAsync(null!, cancellationToken);
         public async ValueTask<TOut> UseAsync(ComputeContext context, CancellationToken cancellationToken = default)
         {
@@ -312,28 +312,28 @@ namespace Stl.Fusion
 
         // Touch
 
-        public void Touch() 
+        public void Touch()
             => LastAccessTime = CoarseCpuClock.Now;
 
         // Apply
 
-        public TResult Apply<TArg, TResult>(IComputedApplyHandler<TArg, TResult> handler, TArg arg) 
+        public TResult Apply<TArg, TResult>(IComputedApplyHandler<TArg, TResult> handler, TArg arg)
             => handler.Apply(this, arg);
 
         // IResult<T> methods
 
-        public void Deconstruct(out TOut value, out Exception? error) 
+        public void Deconstruct(out TOut value, out Exception? error)
             => Output.Deconstruct(out value, out error);
         public bool IsValue([MaybeNullWhen(false)] out TOut value)
             => Output.IsValue(out value);
-        public bool IsValue([MaybeNullWhen(false)] out TOut value, [MaybeNullWhen(true)] out Exception error) 
+        public bool IsValue([MaybeNullWhen(false)] out TOut value, [MaybeNullWhen(true)] out Exception error)
             => Output.IsValue(out value, out error!);
         public void ThrowIfError() => Output.ThrowIfError();
 
         // Protected & private methods
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected void SetStateUnsafe(ComputedState newState) 
+        protected void SetStateUnsafe(ComputedState newState)
             => _state = (int) newState;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

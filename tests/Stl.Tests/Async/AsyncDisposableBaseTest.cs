@@ -19,8 +19,8 @@ namespace Stl.Tests.Async
 
             protected override async ValueTask DisposeInternalAsync(bool disposing)
             {
-                await Task.Delay(DisposeDelay); 
-            } 
+                await Task.Delay(DisposeDelay);
+            }
         }
 
         public AsyncDisposableTest(ITestOutputHelper @out) : base(@out) { }

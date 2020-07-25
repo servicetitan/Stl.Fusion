@@ -31,14 +31,14 @@ namespace Tutorial
             });
 
             WriteLine("All the computed values below should be in invalidated state.");
-            WriteLine($"{cDate}, Value = {cDate.Value}"); 
+            WriteLine($"{cDate}, Value = {cDate.Value}");
             WriteLine($"{cCount}, Value = {cCount.Value}");
             WriteLine($"{cTitle}, Value = {cTitle.Value}");
 
             WriteLine();
             WriteLine("Let's trigger the computations:");
             cTitle = await cTitle.UpdateAsync(false);
-            WriteLine($"{cDate}, Value = {cDate.Value}"); 
+            WriteLine($"{cDate}, Value = {cDate.Value}");
             WriteLine($"{cCount}, Value = {cCount.Value}");
             WriteLine($"{cTitle}, Value = {cTitle.Value}");
 

@@ -12,7 +12,7 @@ namespace Stl.Plugins.Services
     {
         protected IServiceProvider Services { get; }
 
-        public PluginFactory(IServiceProvider services) 
+        public PluginFactory(IServiceProvider services)
             => Services = services;
 
         public virtual object? Create(Type pluginType)

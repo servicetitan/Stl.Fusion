@@ -23,7 +23,7 @@ namespace Stl.Fusion.Interception
         protected IServiceProvider? Services { get; }
 
         public ArgumentComparerProvider(
-            Options? options = null, 
+            Options? options = null,
             IServiceProvider? services = null)
         {
             options ??= new Options() {
@@ -33,7 +33,7 @@ namespace Stl.Fusion.Interception
             Services = services;
         }
 
-        public ArgumentComparer GetInvocationTargetComparer(MethodInfo methodInfo, Type invocationTargetType) 
+        public ArgumentComparer GetInvocationTargetComparer(MethodInfo methodInfo, Type invocationTargetType)
             => GetArgumentComparer(invocationTargetType, true);
 
         public virtual ArgumentComparer GetArgumentComparer(MethodInfo methodInfo, ParameterInfo parameterInfo)
@@ -44,7 +44,7 @@ namespace Stl.Fusion.Interception
             var comparerType = MatchingTypeFinder.TryFind(type, typeof(ArgumentComparerProvider));
             if (comparerType != null)
                 return CreateComparer(comparerType);
-            
+
             if (isInvocationTarget)
                 return ByRefArgumentComparer.Instance;
             var equatableType = typeof(IEquatable<>).MakeGenericType(type);
@@ -60,17 +60,17 @@ namespace Stl.Fusion.Interception
         protected virtual ArgumentComparer CreateComparer(Type comparerType)
         {
             var pInstance = comparerType.GetProperty(
-                nameof(ByRefArgumentComparer.Instance), 
+                nameof(ByRefArgumentComparer.Instance),
                 BindingFlags.Static | BindingFlags.Public);
             if (pInstance != null)
                 return (ArgumentComparer) pInstance.GetValue(null);
 
             var fInstance = comparerType.GetField(
-                nameof(ByRefArgumentComparer.Instance), 
+                nameof(ByRefArgumentComparer.Instance),
                 BindingFlags.Static | BindingFlags.Public);
             if (fInstance != null)
                 return (ArgumentComparer) fInstance.GetValue(null);
-            
+
             if (Services != null)
                 return (ArgumentComparer) Services.Activate(comparerType);
             return (ArgumentComparer) comparerType.CreateInstance();

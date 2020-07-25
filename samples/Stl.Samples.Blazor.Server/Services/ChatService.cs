@@ -24,8 +24,8 @@ namespace Stl.Samples.Blazor.Server.Services
         private readonly  IPublisher _publisher;
 
         public ChatService(
-            ChatDbContextPool dbContextPool, 
-            IUzbyClient uzbyClient, 
+            ChatDbContextPool dbContextPool,
+            IUzbyClient uzbyClient,
             IForismaticClient forismaticClient,
             IPublisher publisher,
             ILogger<ChatService>? log = null)
@@ -145,7 +145,7 @@ namespace Stl.Samples.Blazor.Server.Services
         }
 
         [ComputedServiceMethod]
-        public virtual Task<ChatPage> GetChatPageAsync(long minMessageId, long maxMessageId, CancellationToken cancellationToken = default) 
+        public virtual Task<ChatPage> GetChatPageAsync(long minMessageId, long maxMessageId, CancellationToken cancellationToken = default)
             => throw new NotImplementedException();
 
         // Helpers

@@ -33,16 +33,16 @@ namespace Stl.Tests.Fusion
             m.Should().BeOfType<PublicationStateChangedMessage<string>>()
                 .Which.Output.Value.Should().Be("");
             await cReader.AssertCannotReadAsync();
-            
+
             sp.SetValue("1");
             m = await cReader.AssertReadAsync();
             m.Should().BeOfType<PublicationStateChangedMessage<string>>()
                 .Which.NewIsConsistent.Should().BeFalse();
-            var pm = (PublicationMessage) m; 
+            var pm = (PublicationMessage) m;
             pm.PublisherId.Should().Be(Publisher.Id);
             pm.PublicationId.Should().Be(p1!.Id);
             await cReader.AssertCannotReadAsync();
-            
+
             sp.SetValue("12");
             // No auto-update after invalidation
             await cReader.AssertCannotReadAsync();

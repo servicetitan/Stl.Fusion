@@ -34,7 +34,7 @@ namespace Stl.Tests.Async
 
             ts = TaskSource.New<int>(TaskCreationOptions.None);
             ts.Task.IsCompleted.Should().BeFalse();
-            using var cts = new CancellationTokenSource(); 
+            using var cts = new CancellationTokenSource();
             ts.SetCanceled();
             ts.TrySetCanceled(cts.Token).Should().BeFalse();
             ts.Task.IsCompleted.Should().BeTrue();

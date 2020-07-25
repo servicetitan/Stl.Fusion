@@ -7,7 +7,7 @@ namespace Stl.Fusion
         public bool IsEnabled { get; } = true;
 
         protected InterceptedMethodAttribute() { }
-        protected InterceptedMethodAttribute(bool isEnabled) 
+        protected InterceptedMethodAttribute(bool isEnabled)
             => IsEnabled = isEnabled;
     }
 }

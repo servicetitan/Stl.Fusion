@@ -29,7 +29,7 @@ namespace Stl.Reflection
             var type = typeof(T);
             if (type.IsValueType)
                 return default!;
-            var hasDefaultCtor = HasDefaultCtorCache.GetOrAddChecked(type, 
+            var hasDefaultCtor = HasDefaultCtorCache.GetOrAddChecked(type,
                 type1 => type1.GetConstructor(Array.Empty<Type>()) != null);
             if (hasDefaultCtor)
                 return (T) type.CreateInstance();
@@ -38,7 +38,7 @@ namespace Stl.Reflection
             return default!;
         }
 
-        public static Delegate? GetConstructorDelegate(this Type type) 
+        public static Delegate? GetConstructorDelegate(this Type type)
             => CtorDelegate0Cache.GetOrAddChecked(type, tObject => {
                 var argTypes = new Type[0];
                 var ctor = tObject.GetConstructor(argTypes);
@@ -90,10 +90,10 @@ namespace Stl.Reflection
                 return Expression.Lambda(eCtor, eArgs).Compile();
             });
 
-        public static Delegate? GetConstructorDelegate(this Type type, 
+        public static Delegate? GetConstructorDelegate(this Type type,
             Type argument1, Type argument2, Type argument3, Type argument4)
             => CtorDelegate4Cache.GetOrAddChecked(
-                (type, argument1, argument2, argument3, argument4), 
+                (type, argument1, argument2, argument3, argument4),
                 key => {
                     var (tObject, tArg1, tArg2, tArg3, tArg4) = key;
                     var ctor = tObject.GetConstructor(new[] {tArg1, tArg2, tArg3, tArg4});
@@ -109,10 +109,10 @@ namespace Stl.Reflection
                     return Expression.Lambda(eCtor, eArgs).Compile();
                 });
 
-        public static Delegate? GetConstructorDelegate(this Type type, 
+        public static Delegate? GetConstructorDelegate(this Type type,
             Type argument1, Type argument2, Type argument3, Type argument4, Type argument5)
             => CtorDelegate5Cache.GetOrAddChecked(
-                (type, argument1, argument2, argument3, argument4, argument5), 
+                (type, argument1, argument2, argument3, argument4, argument5),
                 key => {
                     var (tObject, tArg1, tArg2, tArg3, tArg4, tArg5) = key;
                     var ctor = tObject.GetConstructor(new[] {tArg1, tArg2, tArg3, tArg4, tArg5});

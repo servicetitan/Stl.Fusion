@@ -1,7 +1,7 @@
 using System.CommandLine.Builder;
 using Stl.Extensibility;
 
-namespace Stl.Plugins.Extensions.Cli 
+namespace Stl.Plugins.Extensions.Cli
 {
     public interface ICliPlugin
     {

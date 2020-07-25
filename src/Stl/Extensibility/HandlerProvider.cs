@@ -13,7 +13,7 @@ namespace Stl.Extensibility
 
         public interface IHandler<T> : IHandler
         { }
-        
+
         private readonly ConcurrentDictionary<Type, IHandler> _handlers;
         public Func<Type, IHandler> HandlerFactory { get; }
 
@@ -24,10 +24,10 @@ namespace Stl.Extensibility
             _handlers = new ConcurrentDictionary<Type, IHandler>();
         }
 
-        public IHandler this[Type forType] 
+        public IHandler this[Type forType]
             => _handlers.GetOrAdd(
-                forType, 
-                (forType1, self) => self.HandlerFactory.Invoke(forType1), 
+                forType,
+                (forType1, self) => self.HandlerFactory.Invoke(forType1),
                 this);
 
         // Default handler factories

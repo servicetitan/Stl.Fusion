@@ -18,7 +18,7 @@ namespace Stl.Tests.Terraform
         [Fact]
         public async Task ApplyArgumentFormatTest()
         {
-            var executionResult = await TerraformEcho.ApplyAsync("dir", 
+            var executionResult = await TerraformEcho.ApplyAsync("dir",
                 new ApplyArguments {
                     Backup = "Backup",
                     AutoApprove = false,

@@ -13,8 +13,8 @@ namespace Stl.Async
         // ToTaskSource
 
         // Note that this method won't release the token unless it's cancelled!
-        public static TaskSource<T> ToTaskSource<T>(this CancellationToken token, 
-            bool throwIfCancelled,  
+        public static TaskSource<T> ToTaskSource<T>(this CancellationToken token,
+            bool throwIfCancelled,
             TaskCreationOptions taskCreationOptions = default)
         {
             var ts = TaskSource.New<T>(taskCreationOptions);
@@ -32,8 +32,8 @@ namespace Stl.Async
         }
 
         // Note that this method won't release the token unless it's cancelled!
-        public static TaskSource<T> ToTaskSource<T>(this CancellationToken token, 
-            T resultWhenCancelled,  
+        public static TaskSource<T> ToTaskSource<T>(this CancellationToken token,
+            T resultWhenCancelled,
             TaskCreationOptions taskCreationOptions = default)
         {
             // ReSharper disable once HeapView.BoxingAllocation
@@ -46,8 +46,8 @@ namespace Stl.Async
         }
 
         // Note that this method won't release the token unless it's cancelled!
-        public static TaskSource<T> ToTaskSource<T>(this CancellationToken token, 
-            Exception exceptionWhenCancelled,  
+        public static TaskSource<T> ToTaskSource<T>(this CancellationToken token,
+            Exception exceptionWhenCancelled,
             TaskCreationOptions taskCreationOptions = default)
         {
             var ts = TaskSource.New<T>(exceptionWhenCancelled, taskCreationOptions);
@@ -62,8 +62,8 @@ namespace Stl.Async
         // ToTaskCompletionSource
 
         // Note that this method won't release the token unless it's cancelled!
-        public static TaskCompletionSource<T> ToTaskCompletionSource<T>(this CancellationToken token, 
-            bool throwIfCancelled,  
+        public static TaskCompletionSource<T> ToTaskCompletionSource<T>(this CancellationToken token,
+            bool throwIfCancelled,
             TaskCreationOptions taskCreationOptions = default)
         {
             var tcs = new TaskCompletionSource<T>(taskCreationOptions);
@@ -81,8 +81,8 @@ namespace Stl.Async
         }
 
         // Note that this method won't release the token unless it's cancelled!
-        public static TaskCompletionSource<T> ToTaskCompletionSource<T>(this CancellationToken token, 
-            T resultWhenCancelled,  
+        public static TaskCompletionSource<T> ToTaskCompletionSource<T>(this CancellationToken token,
+            T resultWhenCancelled,
             TaskCreationOptions taskCreationOptions = default)
         {
             // ReSharper disable once HeapView.BoxingAllocation
@@ -95,8 +95,8 @@ namespace Stl.Async
         }
 
         // Note that this method won't release the token unless it's cancelled!
-        public static TaskCompletionSource<T> ToTaskCompletionSource<T>(this CancellationToken token, 
-            Exception exceptionWhenCancelled,  
+        public static TaskCompletionSource<T> ToTaskCompletionSource<T>(this CancellationToken token,
+            Exception exceptionWhenCancelled,
             TaskCreationOptions taskCreationOptions = default)
         {
             var tcs = new TaskCompletionSource<T>(exceptionWhenCancelled, taskCreationOptions);
@@ -111,12 +111,12 @@ namespace Stl.Async
         // ToTask
 
         // Note that this method won't release the token unless it's cancelled!
-        public static Task<T> ToTask<T>(this CancellationToken token, bool throwIfCancelled, 
+        public static Task<T> ToTask<T>(this CancellationToken token, bool throwIfCancelled,
             TaskCreationOptions taskCreationOptions = default)
             => token.ToTaskSource<T>(throwIfCancelled, taskCreationOptions).Task;
 
         // Note that this method won't release the token unless it's cancelled!
-        public static Task ToTask(this CancellationToken token, bool throwIfCancelled, 
+        public static Task ToTask(this CancellationToken token, bool throwIfCancelled,
             TaskCreationOptions taskCreationOptions = default)
             => token.ToTaskSource<Unit>(throwIfCancelled, taskCreationOptions).Task;
 

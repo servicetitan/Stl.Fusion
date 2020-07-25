@@ -17,15 +17,15 @@ namespace Stl.Tests.Hosting
         protected ITestClock Clock => HostProvider.Clock;
         protected TestOutputConsole Console => HostProvider.Console;
 
-        protected MiniHostTestBase(ITestOutputHelper @out) : base(@out) 
+        protected MiniHostTestBase(ITestOutputHelper @out) : base(@out)
             => HostProvider = new TestMiniHostProvider(@out);
 
         Task IAsyncLifetime.InitializeAsync() => InitializeAsync();
-        protected virtual Task InitializeAsync() 
+        protected virtual Task InitializeAsync()
             => CreateHostAsync();
 
         Task IAsyncLifetime.DisposeAsync() => DisposeAsync();
-        protected virtual async Task DisposeAsync() 
+        protected virtual async Task DisposeAsync()
             => await HostProvider.DisposeAsync();
 
         protected Task CreateHostAsync(params string[] arguments)

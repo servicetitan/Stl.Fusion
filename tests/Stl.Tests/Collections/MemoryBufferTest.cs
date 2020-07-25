@@ -26,7 +26,7 @@ namespace Stl.Tests.Collections
         {
             var buffer = MemoryBuffer<T>.Lease();
             try {
-                foreach (var i in list) 
+                foreach (var i in list)
                     buffer.Add(i);
                 buffer.ToArray().Should().Equal(list);
 

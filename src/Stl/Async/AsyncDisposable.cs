@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace Stl.Async 
+namespace Stl.Async
 {
     public static class AsyncDisposable
     {
@@ -23,7 +23,7 @@ namespace Stl.Async
             _state = state;
         }
 
-        public ValueTask DisposeAsync() 
+        public ValueTask DisposeAsync()
             => _onDisposeAsync?.Invoke(_state) ?? ValueTaskEx.CompletedTask;
     }
 }

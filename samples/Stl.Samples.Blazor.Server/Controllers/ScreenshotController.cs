@@ -14,11 +14,11 @@ namespace Stl.Samples.Blazor.Server.Controllers
         private readonly IScreenshotService _screenshots;
 
         public ScreenshotController(IScreenshotService screenshots, IPublisher publisher)
-            : base(publisher) 
+            : base(publisher)
             => _screenshots = screenshots;
 
         [HttpGet("get")]
-        public Task<Screenshot> GetScreenshotAsync(int width, CancellationToken cancellationToken) 
+        public Task<Screenshot> GetScreenshotAsync(int width, CancellationToken cancellationToken)
             => PublishAsync(ct => _screenshots.GetScreenshotAsync(width, ct));
     }
 }

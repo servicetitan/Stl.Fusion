@@ -7,7 +7,7 @@ namespace Stl.Fusion.Client.RestEase.Internal
 {
     internal class DeserializeComputedHandlerProvider
     {
-        public static readonly HandlerProvider<DeserializeMethodArgs, object?> Instance = 
+        public static readonly HandlerProvider<DeserializeMethodArgs, object?> Instance =
             new HandlerProvider<DeserializeMethodArgs, object?>(CreateHandler);
         private static readonly Type HandlerType = typeof(DeserializeComputedHandler<>);
 

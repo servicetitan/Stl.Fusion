@@ -1,13 +1,13 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Stl.Plugins.Services 
+namespace Stl.Plugins.Services
 {
     public class QueryingPluginFactory : PluginFactory
     {
-        public IPluginInfoQuery Query { get; } 
+        public IPluginInfoQuery Query { get; }
 
-        public QueryingPluginFactory(IServiceProvider services) : base(services) 
+        public QueryingPluginFactory(IServiceProvider services) : base(services)
             => Query = services.GetRequiredService<IPluginInfoQuery>();
 
         public override object? Create(Type pluginType)

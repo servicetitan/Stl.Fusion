@@ -11,7 +11,7 @@ namespace Stl.Testing.Internal
         protected object Lock = new object();
         public StringBuilder StringBuilder = new StringBuilder();
         public TextWriter? TextWriter { get; set; }
-        
+
         public override string ToString()
         {
             lock (Lock) {

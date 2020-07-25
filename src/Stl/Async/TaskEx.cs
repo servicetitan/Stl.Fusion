@@ -32,7 +32,7 @@ namespace Stl.Async
 
         // WithFakeCancellation
 
-        public static Task<T> WithFakeCancellation<T>(this Task<T> task, 
+        public static Task<T> WithFakeCancellation<T>(this Task<T> task,
             CancellationToken cancellationToken)
         {
             if (cancellationToken == default)
@@ -48,7 +48,7 @@ namespace Stl.Async
 
         }
 
-        public static Task WithFakeCancellation(this Task task, 
+        public static Task WithFakeCancellation(this Task task,
             CancellationToken cancellationToken)
         {
             if (cancellationToken == default)
@@ -62,14 +62,14 @@ namespace Stl.Async
 
             return InnerAsync();
         }
-        
+
         // SuppressXxx
 
-        public static Task SuppressExceptions(this Task task) 
+        public static Task SuppressExceptions(this Task task)
             => task.ContinueWith(t => { });
-        public static Task<T> SuppressExceptions<T>(this Task<T> task) 
+        public static Task<T> SuppressExceptions<T>(this Task<T> task)
             => task.ContinueWith(t => t.IsCompletedSuccessfully ? t.Result : default!);
-        
+
         public static Task SuppressCancellation(this Task task)
             => task.ContinueWith(t => {
                 if (t.IsCompletedSuccessfully || t.IsCanceled)
@@ -149,10 +149,10 @@ namespace Stl.Async
 
         // AssertXxx
 
-        public static Task AssertCompleted(this Task task) 
+        public static Task AssertCompleted(this Task task)
             => !task.IsCompleted ? throw Errors.TaskIsNotCompleted() : task;
-        
-        public static Task<T> AssertCompleted<T>(this Task<T> task) 
+
+        public static Task<T> AssertCompleted<T>(this Task<T> task)
             => !task.IsCompleted ? throw Errors.TaskIsNotCompleted() : task;
     }
 }

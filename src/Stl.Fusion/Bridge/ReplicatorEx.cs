@@ -7,18 +7,18 @@ namespace Stl.Fusion.Bridge
 {
     public static class ReplicatorEx
     {
-        private static readonly Exception ReplicaHasBeenNeverUpdatedError = 
+        private static readonly Exception ReplicaHasBeenNeverUpdatedError =
             Errors.ReplicaHasNeverBeenUpdated();
-        
-        public static IReplica<T> GetOrAdd<T>(this IReplicator replicator, 
+
+        public static IReplica<T> GetOrAdd<T>(this IReplicator replicator,
             Symbol publisherId, Symbol publicationId, bool requestUpdate = false)
         {
             var output = new Result<T>(default!, ReplicaHasBeenNeverUpdatedError);
             var initialOutput = new LTagged<Result<T>>(output, LTag.Default);
-            return replicator.GetOrAdd(publisherId, publicationId, initialOutput, false, requestUpdate); 
+            return replicator.GetOrAdd(publisherId, publicationId, initialOutput, false, requestUpdate);
         }
 
-        public static IReplica Get(this IReplicator replicator, Symbol publicationId) 
+        public static IReplica Get(this IReplicator replicator, Symbol publicationId)
             => replicator.TryGet(publicationId) ?? throw new KeyNotFoundException();
 
         public static IReplica<T>? TryGet<T>(this IReplicator replicator, Symbol publicationId)

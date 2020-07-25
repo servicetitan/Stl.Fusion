@@ -30,12 +30,12 @@ namespace Tutorial
             var c = SimpleComputed.New(async (prev, ct) => prev.Value + 1, Result.New(1));
             c.Invalidate();
             WriteLine($"{c}, Value = {c.Value}"); // Must be in Invalidated state
-            
+
             var c1 = await c.UpdateAsync(false);
             WriteLine($"{c1}, Value = {c1.Value}"); // Must be in Consistent state
-            
-            // Equality isn't overriden for any implementation of IComputed, 
-            // so it relies on default Equals & GetHashCode (by-ref comparison).   
+
+            // Equality isn't overriden for any implementation of IComputed,
+            // so it relies on default Equals & GetHashCode (by-ref comparison).
             WriteLine($"Are {nameof(c)} and {nameof(c1)} pointing to the same instance? {c == c1}");
             #endregion
         }

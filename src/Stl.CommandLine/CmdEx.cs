@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 using CliWrap;
 using Stl.IO;
 
-namespace Stl.CommandLine 
+namespace Stl.CommandLine
 {
     public static class CmdEx
     {

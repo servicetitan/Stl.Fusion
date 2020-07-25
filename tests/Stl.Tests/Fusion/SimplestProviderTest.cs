@@ -21,7 +21,7 @@ namespace Stl.Tests.Fusion
             var p = Container.Resolve<ISimplestProvider>();
             p.SetValue("");
             var (gv, gcc) = (p.GetValueCallCount, p.GetCharCountCallCount);
-            
+
             (await p.GetValueAsync()).Should().Be("");
             (await p.GetCharCountAsync()).Should().Be(0);
             p.GetValueCallCount.Should().Be(++gv);
@@ -74,7 +74,7 @@ namespace Stl.Tests.Fusion
         {
             var p = Container.Resolve<ISimplestProvider>();
             p.SetValue("");
-            var (gv, gcc) = (p.GetValueCallCount, p.GetCharCountCallCount);  
+            var (gv, gcc) = (p.GetValueCallCount, p.GetCharCountCallCount);
 
             p.SetValue(null!); // Will cause an exception in GetCharCountAsync
             (await p.GetValueAsync()).Should().Be(null);

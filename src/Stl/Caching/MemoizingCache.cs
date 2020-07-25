@@ -15,8 +15,8 @@ namespace Stl.Caching
 
         public override ValueTask<Option<TValue>> TryGetAsync(TKey key, CancellationToken cancellationToken = default)
             => ValueTaskEx.FromResult(
-                _dictionary.TryGetValue(key, out var value) 
-                    ? Option.Some(value) 
+                _dictionary.TryGetValue(key, out var value)
+                    ? Option.Some(value)
                     : default);
 
         protected override ValueTask SetAsync(TKey key, Option<TValue> value, CancellationToken cancellationToken = default)

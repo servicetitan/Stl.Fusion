@@ -18,7 +18,7 @@ namespace Stl.Fusion.Interception
     {
         public class Options
         {
-            public IArgumentComparerProvider ArgumentComparerProvider { get; set; } = 
+            public IArgumentComparerProvider ArgumentComparerProvider { get; set; } =
                 Interception.ArgumentComparerProvider.Default;
             public IMomentClock Clock { get; set; } = CoarseCpuClock.Instance;
             public LogLevel LogLevel { get; set; } = LogLevel.Debug;
@@ -28,9 +28,9 @@ namespace Stl.Fusion.Interception
         private readonly MethodInfo _createTypedHandlerMethod;
         private readonly Func<MethodInfo, IInvocation, Action<IInvocation>?> _createHandler;
         private readonly Func<MethodInfo, IInvocation, InterceptedMethod?> _createInterceptedMethod;
-        private readonly ConcurrentDictionary<MethodInfo, InterceptedMethod?> _interceptedMethodCache = 
+        private readonly ConcurrentDictionary<MethodInfo, InterceptedMethod?> _interceptedMethodCache =
             new ConcurrentDictionary<MethodInfo, InterceptedMethod?>();
-        private readonly ConcurrentDictionary<MethodInfo, Action<IInvocation>?> _handlerCache = 
+        private readonly ConcurrentDictionary<MethodInfo, Action<IInvocation>?> _handlerCache =
             new ConcurrentDictionary<MethodInfo, Action<IInvocation>?>();
         private readonly ConcurrentDictionary<Type, Unit> _validateTypeCache =
             new ConcurrentDictionary<Type, Unit>();
@@ -44,8 +44,8 @@ namespace Stl.Fusion.Interception
         protected bool RequiresAttribute { get; set; } = true;
 
         protected InterceptorBase(
-            Options options, 
-            IComputedRegistry? registry = null, 
+            Options options,
+            IComputedRegistry? registry = null,
             ILoggerFactory? loggerFactory = null)
         {
             LoggerFactory = loggerFactory ??= NullLoggerFactory.Instance;
@@ -68,7 +68,7 @@ namespace Stl.Fusion.Interception
             var handler = _handlerCache.GetOrAddChecked(invocation.Method, _createHandler, invocation);
             if (handler == null)
                 invocation.Proceed();
-            else 
+            else
                 handler.Invoke(invocation);
         }
 
@@ -114,11 +114,11 @@ namespace Stl.Fusion.Interception
                     // synchronously) had already completed.
                     // But we can't return it, because valueTask's async flow
                     // might be still ongoing. So no matter what, we have to
-                    // replace the return value with valueTask.Result. 
+                    // replace the return value with valueTask.Result.
                     if (method.ReturnsValueTask)
                         // ReSharper disable once HeapView.BoxingAllocation
                         invocation.ReturnValue = new ValueTask<IComputed<T>>(computedTask!);
-                    else                                                        
+                    else
                         invocation.ReturnValue = computedTask;
                     return;
                 }
@@ -135,13 +135,13 @@ namespace Stl.Fusion.Interception
         }
 
         protected abstract InterceptedFunctionBase<T> CreateFunction<T>(InterceptedMethod method);
-        
+
         protected virtual InterceptedMethod? CreateInterceptedMethod(MethodInfo proxyMethodInfo, IInvocation invocation)
         {
             ValidateType(invocation.TargetType);
 
             // We need an attribute from interface / original type, so we
-            // can't use proxyMethodInfo here, b/c it points to a proxy method. 
+            // can't use proxyMethodInfo here, b/c it points to a proxy method.
             var attrs = invocation.Method
                 .GetCustomAttributes(typeof(InterceptedMethodAttribute), true)
                 .Cast<InterceptedMethodAttribute>()
@@ -178,7 +178,7 @@ namespace Stl.Fusion.Interception
             var options = new ComputedOptions(
                 GetTimespan<ComputedServiceMethodAttribute>(attr, a => a.KeepAliveTime),
                 GetTimespan<ComputedServiceMethodAttribute>(attr, a => a.ErrorAutoInvalidateTime),
-                GetTimespan<ComputedServiceMethodAttribute>(attr, a => a.AutoInvalidateTime)); 
+                GetTimespan<ComputedServiceMethodAttribute>(attr, a => a.AutoInvalidateTime));
             var parameters = proxyMethodInfo.GetParameters();
             var r = new InterceptedMethod {
                 MethodInfo = proxyMethodInfo,
@@ -216,6 +216,6 @@ namespace Stl.Fusion.Interception
             if (double.IsPositiveInfinity(value))
                 return TimeSpan.MaxValue;
             return TimeSpan.FromSeconds(value);
-        } 
+        }
     }
 }

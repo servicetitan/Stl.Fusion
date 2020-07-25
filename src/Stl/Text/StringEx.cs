@@ -6,7 +6,7 @@ namespace Stl.Text
 {
     public static class StringEx
     {
-        private static readonly ListFormat OneToManyListFormat = new ListFormat('|'); 
+        private static readonly ListFormat OneToManyListFormat = new ListFormat('|');
 
         public static string ManyToOne(IEnumerable<string> values)
         {

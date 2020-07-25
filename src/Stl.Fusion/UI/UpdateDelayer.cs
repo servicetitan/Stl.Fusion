@@ -98,7 +98,7 @@ namespace Stl.Fusion.UI
             if (noDelay) {
                 EndDelay(ref EndDelayTask);
                 // We intentionally delay the cancellation here for 1s,
-                // since otherwise it could enable rapid retries on errors. 
+                // since otherwise it could enable rapid retries on errors.
                 EndDelay(ref ErrorEndDelayTask, TimeSpan.FromSeconds(1));
                 return;
             }

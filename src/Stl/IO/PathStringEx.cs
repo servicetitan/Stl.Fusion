@@ -9,20 +9,20 @@ namespace Stl.IO
 {
     public static class PathStringEx
     {
-        public static FileInfo GetFileInfo(this PathString path) 
+        public static FileInfo GetFileInfo(this PathString path)
             => new FileInfo(path.Value);
-        
-        public static DirectoryInfo GetDirectoryInfo(this PathString path) 
+
+        public static DirectoryInfo GetDirectoryInfo(this PathString path)
             => new DirectoryInfo(path.Value);
 
         public static Task<string> ReadTextAsync(
-            this PathString path, 
-            Encoding? encoding = null, 
-            CancellationToken cancellationToken = default) 
+            this PathString path,
+            Encoding? encoding = null,
+            CancellationToken cancellationToken = default)
             => File.ReadAllTextAsync(path, encoding ?? Encoding.UTF8, cancellationToken);
 
         public static async IAsyncEnumerable<string> ReadLinesAsync(
-            this PathString path, 
+            this PathString path,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             using var reader = File.OpenText(path);

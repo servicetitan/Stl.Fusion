@@ -3,7 +3,7 @@ using System.Globalization;
 using Newtonsoft.Json;
 using Stl.Internal;
 
-namespace Stl.CommandLine 
+namespace Stl.CommandLine
 {
     [Serializable]
     public readonly struct CliBool : IEquatable<CliBool>, IFormattable
@@ -14,7 +14,7 @@ namespace Stl.CommandLine
         public CliBool(bool value) => Value = value;
 
         public override string ToString() => ToString(null, null);
-        public string ToString(string? format, IFormatProvider? provider = null) 
+        public string ToString(string? format, IFormatProvider? provider = null)
         {
             if (string.IsNullOrEmpty(format)) format = "V";
             provider ??= CultureInfo.InvariantCulture;
@@ -31,7 +31,7 @@ namespace Stl.CommandLine
         public static bool operator ==(CliBool left, CliBool right) => left.Equals(right);
         public static bool operator !=(CliBool left, CliBool right) => !left.Equals(right);
 
-        public static implicit operator CliBool(bool source) => new CliBool(source); 
+        public static implicit operator CliBool(bool source) => new CliBool(source);
         public static implicit operator bool(CliBool source) => source.Value;
         public static implicit operator CliString(CliBool source) => CliString.New(source.ToString());
     }

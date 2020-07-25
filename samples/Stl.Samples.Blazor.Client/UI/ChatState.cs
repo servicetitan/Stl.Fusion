@@ -31,7 +31,7 @@ namespace Stl.Samples.Blazor.Client.UI
             public string MyMessage { get; set; } = "";
             public Exception? Error { get; set; }
 
-            public Local Clone() 
+            public Local Clone()
                 => (Local) MemberwiseClone();
         }
 
@@ -49,7 +49,7 @@ namespace Stl.Samples.Blazor.Client.UI
                 var lastPage = await Client.GetChatTailAsync(30, cancellationToken);
                 var state = new ChatState() {
                     UserCount = userCount,
-                    ActiveUserCount = activeUserCount, 
+                    ActiveUserCount = activeUserCount,
                     LastPage = lastPage,
                 };
                 return state;

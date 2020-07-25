@@ -2,11 +2,11 @@ using System;
 using Newtonsoft.Json;
 using Stl.IO;
 
-namespace Stl.Internal 
+namespace Stl.Internal
 {
     public class PathStringJsonConverter : JsonConverter
     {
-        public override bool CanConvert(Type objectType) 
+        public override bool CanConvert(Type objectType)
             => objectType == typeof(PathString);
 
         public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)

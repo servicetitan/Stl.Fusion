@@ -17,7 +17,7 @@ namespace Stl.Serialization
             SerializedValue = serializedValue;
         }
 
-        public override string ToString() 
+        public override string ToString()
             => $"({Value}, {SerializedValue?.GetType()?.ToString() ?? "null"})";
 
         public void Deconstruct(out T value, out object? serializedValue)

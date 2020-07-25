@@ -20,7 +20,7 @@ namespace Stl.CommandLine.Git
         public PathString TargetPath { get; set; }
         public Func<GitCmd> GitCmdFactory { get; set; }
 
-        public GitFetcher(string sourceUrl, string sourceRevision, PathString targetPath, 
+        public GitFetcher(string sourceUrl, string sourceRevision, PathString targetPath,
             Func<GitCmd>? gitCmdFactory = null)
         {
             SourceUrl = sourceUrl;
@@ -34,7 +34,7 @@ namespace Stl.CommandLine.Git
             using var _ = await FileLock
                 .LockAsync(TargetPath + ".lock", cancellationToken)
                 .ConfigureAwait(false);
-            
+
             async Task TryAsync()
             {
                 var git = GitCmdFactory.Invoke();
@@ -52,7 +52,7 @@ namespace Stl.CommandLine.Git
                     await git
                         .RunAsync("checkout" + new CliString(SourceRevision), cancellationToken)
                         .ConfigureAwait(false);
-                } 
+                }
                 else {
                     git.WorkingDirectory = TargetPath;
                     var mustFetch = AlwaysFetch;

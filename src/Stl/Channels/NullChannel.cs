@@ -20,26 +20,26 @@ namespace Stl.Channels
                 return false;
             }
 
-            public override ValueTask<bool> WaitToReadAsync(CancellationToken cancellationToken = new CancellationToken()) 
+            public override ValueTask<bool> WaitToReadAsync(CancellationToken cancellationToken = new CancellationToken())
                 => ValueTaskEx.FalseTask;
         }
 
         private class NullChannelWriter : ChannelWriter<T>
         {
-            public override bool TryComplete(Exception? error = null) 
+            public override bool TryComplete(Exception? error = null)
                 => false;
 
-            public override bool TryWrite(T item) 
+            public override bool TryWrite(T item)
                 => true;
-            
-            public override ValueTask<bool> WaitToWriteAsync(CancellationToken cancellationToken = new CancellationToken()) 
+
+            public override ValueTask<bool> WaitToWriteAsync(CancellationToken cancellationToken = new CancellationToken())
                 => ValueTaskEx.TrueTask;
         }
 
         private NullChannel()
         {
-            Reader = new NullChannelReader(); 
-            Writer = new NullChannelWriter(); 
+            Reader = new NullChannelReader();
+            Writer = new NullChannelWriter();
         }
     }
 }

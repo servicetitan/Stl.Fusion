@@ -6,7 +6,7 @@ namespace Stl.Internal
 {
     public class SymbolListJsonConverter : JsonConverter
     {
-        public override bool CanConvert(Type objectType) 
+        public override bool CanConvert(Type objectType)
             => objectType == typeof(SymbolList);
 
         public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)

@@ -14,7 +14,7 @@ using Stl.OS;
 using Stl.Plugins.Metadata;
 using Stl.Reflection;
 
-namespace Stl.Plugins.Services 
+namespace Stl.Plugins.Services
 {
     public interface IPluginFinder
     {
@@ -52,7 +52,7 @@ namespace Stl.Plugins.Services
 
         protected override string GetCacheKey()
         {
-            var files = ( 
+            var files = (
                 from name in GetPluginAssemblyNames()
                 let modifyDate = File.GetLastWriteTime(name)
                 select (name, modifyDate.ToFileTime())
@@ -60,7 +60,7 @@ namespace Stl.Plugins.Services
             return files.ToDelimitedString();
         }
 
-        protected virtual PathString[] GetPluginAssemblyNames() 
+        protected virtual PathString[] GetPluginAssemblyNames()
             => Directory
                 .EnumerateFiles(
                     PluginDir, AssemblyNamePattern, SearchOption.TopDirectoryOnly)
@@ -87,7 +87,7 @@ namespace Stl.Plugins.Services
             return new PluginSetInfo(plugins);
         }
 
-        protected virtual AssemblyLoadContext GetAssemblyLoadContext() 
+        protected virtual AssemblyLoadContext GetAssemblyLoadContext()
             => AssemblyLoadContext.Default;
     }
 }

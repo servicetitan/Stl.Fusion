@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 
-namespace Stl.Mathematics 
+namespace Stl.Mathematics
 {
     public static class Combinatorics
     {
@@ -19,7 +19,7 @@ namespace Stl.Mathematics
             for (var i = setSize - 1; i >= 0; i--)
                 yield return source.Slice(i);
         }
-        
+
         public static IEnumerable<List<int>> KOfN(int n, int k, bool exactlyK = true)
         {
             if (k > n)
@@ -34,7 +34,7 @@ namespace Stl.Mathematics
             while (true) {
                 var lastIndex = prefix.Count - 1;
                 var next = prefix[lastIndex] + 1;
-                if (prefix.Count == k || (next == n && !exactlyK)) 
+                if (prefix.Count == k || (next == n && !exactlyK))
                     yield return prefix;
                 if (next < n) {
                     prefix[lastIndex] = next;
@@ -47,7 +47,7 @@ namespace Stl.Mathematics
                 prefix.RemoveAt(lastIndex);
             }
         }
-        
+
         public static IEnumerable<Memory<T>> Subsets<T>(Memory<T> source, bool withEmptySubset = true)
         {
             int AddSubset(Memory<T> src, Memory<T> dst, int dstIndex, ulong mask)
@@ -64,7 +64,7 @@ namespace Stl.Mathematics
             }
 
             const int maxBufferSize = 8;
-            
+
             if (withEmptySubset)
                 yield return Memory<T>.Empty;
             if (source.IsEmpty)
@@ -72,7 +72,7 @@ namespace Stl.Mathematics
             var setSize = source.Length;
             var subsetCount = 1UL << setSize;
             var bufferSize = setSize * (int) MathEx.Min((ulong) maxBufferSize, subsetCount);
-            
+
             var buffer = Memory<T>.Empty;
             var lastBufferIndex = 0;
             var bufferIndex = 0;

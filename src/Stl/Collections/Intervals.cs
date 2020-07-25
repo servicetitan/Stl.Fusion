@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Stl.Collections 
+namespace Stl.Collections
 {
     public static class Intervals
     {
@@ -10,7 +10,7 @@ namespace Stl.Collections
             while (true)
                 yield return delay;
         }
-            
+
         public static IEnumerable<TimeSpan> Exponential(TimeSpan delay, double factor, TimeSpan? maxDelay = null)
         {
             while (true) {

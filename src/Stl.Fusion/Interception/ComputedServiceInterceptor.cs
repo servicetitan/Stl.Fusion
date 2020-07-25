@@ -14,15 +14,15 @@ namespace Stl.Fusion.Interception
     {
         public new class Options : InterceptorBase.Options
         {
-            public ConcurrentIdGenerator<LTag> LTagGenerator { get; set; } = ConcurrentIdGenerator.DefaultLTag; 
+            public ConcurrentIdGenerator<LTag> LTagGenerator { get; set; } = ConcurrentIdGenerator.DefaultLTag;
         }
 
         protected ConcurrentIdGenerator<LTag> LTagGenerator { get; }
 
         public ComputedServiceInterceptor(
-            Options options, 
-            IComputedRegistry? registry = null, 
-            ILoggerFactory? loggerFactory = null) 
+            Options options,
+            IComputedRegistry? registry = null,
+            ILoggerFactory? loggerFactory = null)
             : base(options, registry, loggerFactory)
         {
             LTagGenerator = options.LTagGenerator;
@@ -53,9 +53,9 @@ namespace Stl.Fusion.Interception
                     throw Errors.ComputedServiceMethodAttributeOnStaticMethod(method);
                 if (!method.IsVirtual)
                     throw Errors.ComputedServiceMethodAttributeOnNonVirtualMethod(method);
-                if (method.IsFinal) 
+                if (method.IsFinal)
                     // All implemented interface members are marked as "virtual final"
-                    // unless they are truly virtual 
+                    // unless they are truly virtual
                     throw Errors.ComputedServiceMethodAttributeOnNonVirtualMethod(method);
                 if (attrs.Any(a => !a.IsEnabled)) {
                     Log.Log(ValidationLogLevel,
@@ -63,7 +63,7 @@ namespace Stl.Fusion.Interception
                     continue;
                 }
                 var attr = attrs.FirstOrDefault();
-                Log.Log(ValidationLogLevel, 
+                Log.Log(ValidationLogLevel,
                     $"+ {method}: {nameof(ComputedServiceMethodAttribute)} {{ " +
                     $"{nameof(ComputedServiceMethodAttribute.IsEnabled)} = {attr.IsEnabled}, " +
                     $"{nameof(ComputedServiceMethodAttribute.KeepAliveTime)} = {attr.KeepAliveTime}" +

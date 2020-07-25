@@ -12,7 +12,7 @@ namespace Stl.Extensibility
         public static AsyncInvoker<T, TState> New<T, TState>(
             ReadOnlyMemory<T> tail,
             TState initialState,
-            Func<T, AsyncInvoker<T, TState>, CancellationToken, Task> handler, 
+            Func<T, AsyncInvoker<T, TState>, CancellationToken, Task> handler,
             InvocationOrder order = InvocationOrder.Straight,
             Action<Exception, T, AsyncInvoker<T, TState>>? errorHandler = null)
             => new AsyncInvoker<T, TState>() {
@@ -25,7 +25,7 @@ namespace Stl.Extensibility
 
         public static AsyncInvoker<T, Unit> New<T>(
             ReadOnlyMemory<T> tail,
-            Func<T, AsyncInvoker<T, Unit>, CancellationToken, Task> handler, 
+            Func<T, AsyncInvoker<T, Unit>, CancellationToken, Task> handler,
             InvocationOrder order = InvocationOrder.Straight,
             Action<Exception, T, AsyncInvoker<T, Unit>>? errorHandler = null)
             => new AsyncInvoker<T, Unit>() {
@@ -51,7 +51,7 @@ namespace Stl.Extensibility
 
         public static AsyncInvoker<T, Unit> New<T>(
             T[] tail,
-            Func<T, AsyncInvoker<T, Unit>, CancellationToken, Task> handler, 
+            Func<T, AsyncInvoker<T, Unit>, CancellationToken, Task> handler,
             InvocationOrder order = InvocationOrder.Straight,
             Action<Exception, T, AsyncInvoker<T, Unit>>? errorHandler = null)
             => new AsyncInvoker<T, Unit>() {
@@ -62,7 +62,7 @@ namespace Stl.Extensibility
             };
 
         public static async Task<TSelf> RunAsync<TSelf>(
-            this TSelf self, 
+            this TSelf self,
             CancellationToken cancellationToken = default)
             where TSelf : AsyncInvokerBase
         {
@@ -124,7 +124,7 @@ namespace Stl.Extensibility
 
         public override bool HasErrorHandler => ErrorHandler != null;
 
-        public override string ToString() 
+        public override string ToString()
             => $"{GetType().Name}(Handler={Handler}), Tail=[{Tail.Length} item(s)]";
 
         public override async Task InvokeAsync(CancellationToken cancellationToken)
@@ -135,7 +135,7 @@ namespace Stl.Extensibility
                 if (Order == InvocationOrder.Straight) {
                     while (Tail.Length != 0) {
                         var item = Tail.Span[0];
-                        Tail = Tail.Slice(1); 
+                        Tail = Tail.Slice(1);
                         await InvokeOne(item, cancellationToken).ConfigureAwait(false);
                     }
                 }
@@ -158,7 +158,7 @@ namespace Stl.Extensibility
             var invoker = (TSelf) this;
             if (ErrorHandler == null)
                 await Handler!.Invoke(item, invoker, cancellationToken).ConfigureAwait(false);
-            else { 
+            else {
                 try {
                     await Handler!.Invoke(item, invoker, cancellationToken).ConfigureAwait(false);
                 }
@@ -169,7 +169,7 @@ namespace Stl.Extensibility
         }
     }
 
-    public class AsyncInvoker<TItem, TState> 
+    public class AsyncInvoker<TItem, TState>
         : AsyncInvokerBase<TItem, AsyncInvoker<TItem, TState>>
     {
         [AllowNull]

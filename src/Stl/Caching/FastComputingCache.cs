@@ -11,7 +11,7 @@ namespace Stl.Caching
     public abstract class FastComputingCacheBase<TKey, TValue> : AsyncKeyResolverBase<TKey, TValue>
         where TKey : notnull
     {
-        protected AsyncLocal<ImmutableHashSet<TKey>> AccessedKeys { get; set; }= 
+        protected AsyncLocal<ImmutableHashSet<TKey>> AccessedKeys { get; set; }=
             new AsyncLocal<ImmutableHashSet<TKey>>();
         protected ConcurrentDictionary<TKey, (Task<TValue> Task, Result<TValue> Result)> Cache { get; set; } =
             new ConcurrentDictionary<TKey, (Task<TValue> Task, Result<TValue> Result)>();
@@ -22,8 +22,8 @@ namespace Stl.Caching
         {
             if (Cache.TryGetValue(key, out var cached))
                 return Unwrap(cached);
-            return Unwrap(Cache.GetOrAdd(key, 
-                (k, s) => (ComputeAndUpdateAsync(s.self, k, s.cancellationToken), default)!, 
+            return Unwrap(Cache.GetOrAdd(key,
+                (k, s) => (ComputeAndUpdateAsync(s.self, k, s.cancellationToken), default)!,
                 (self: this, cancellationToken)));
         }
 
@@ -49,11 +49,11 @@ namespace Stl.Caching
 
         private static ValueTask<TValue> Unwrap((Task<TValue>? Task, Result<TValue> Result) entry) =>
             entry.Task?.ToValueTask() ?? entry.Result;
-            
+
         private static async Task<TValue> ComputeAndUpdateAsync(
             FastComputingCacheBase<TKey, TValue> self,
             TKey key,
-            CancellationToken cancellationToken) 
+            CancellationToken cancellationToken)
         {
             var r = await self.SafeComputeAsync(key, cancellationToken).ConfigureAwait(false);
             self.Cache[key] = (null, r)!;
@@ -66,10 +66,10 @@ namespace Stl.Caching
     {
         private Func<TKey, CancellationToken, ValueTask<TValue>> Computer { get; }
 
-        public FastComputingCache(Func<TKey, CancellationToken, ValueTask<TValue>> computer) 
+        public FastComputingCache(Func<TKey, CancellationToken, ValueTask<TValue>> computer)
             => Computer = computer;
 
-        protected override ValueTask<TValue> ComputeAsync(TKey key, CancellationToken cancellationToken = default) 
+        protected override ValueTask<TValue> ComputeAsync(TKey key, CancellationToken cancellationToken = default)
             => Computer.Invoke(key, cancellationToken);
     }
 }

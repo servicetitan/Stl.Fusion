@@ -13,7 +13,7 @@ namespace Stl.Async
     // Temporary impl. -- there is nothing similar in BCL yet,
     // but we need something.
     //
-    // Thus performance is not a priority for now. 
+    // Thus performance is not a priority for now.
     public static partial class AsyncEnumerableEx
     {
         public const int DefaultBufferSize = 16;
@@ -162,7 +162,7 @@ namespace Stl.Async
             });
         }
 
-        public static IEnumerable<T> ToEnumerable<T>(this IAsyncEnumerable<T> source) => 
+        public static IEnumerable<T> ToEnumerable<T>(this IAsyncEnumerable<T> source) =>
             source.ToObservable().ToEnumerable();
     }
 }

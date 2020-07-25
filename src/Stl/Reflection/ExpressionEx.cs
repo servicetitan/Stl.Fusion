@@ -14,7 +14,7 @@ namespace Stl.Reflection
                 throw new ArgumentNullException(nameof (expression));
             var memberExpression = expression.Body as MemberExpression;
 
-            (Type memberType, string memberName) TypeAndName(MemberExpression me) => 
+            (Type memberType, string memberName) TypeAndName(MemberExpression me) =>
                 (me.Member.ReturnType(), me.Member.Name);
 
             if (memberExpression != null)

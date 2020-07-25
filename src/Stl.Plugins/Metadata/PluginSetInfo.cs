@@ -10,14 +10,14 @@ using Stl.Plugins.Internal;
 using Stl.Plugins.Services;
 using Stl.Reflection;
 
-namespace Stl.Plugins.Metadata 
+namespace Stl.Plugins.Metadata
 {
     public class PluginSetInfo
     {
-        public static PluginSetInfo Empty { get; } = 
+        public static PluginSetInfo Empty { get; } =
             new PluginSetInfo(
                 ImmutableDictionary<TypeRef, PluginInfo>.Empty,
-                ImmutableDictionary<TypeRef, ImmutableHashSet<TypeRef>>.Empty, 
+                ImmutableDictionary<TypeRef, ImmutableHashSet<TypeRef>>.Empty,
                 ImmutableDictionary<TypeRef, ImmutableArray<TypeRef>>.Empty);
 
         public ImmutableDictionary<TypeRef, PluginInfo> InfoByType { get; }
@@ -26,7 +26,7 @@ namespace Stl.Plugins.Metadata
 
         [JsonConstructor]
         public PluginSetInfo(
-            ImmutableDictionary<TypeRef, PluginInfo> infoByType, 
+            ImmutableDictionary<TypeRef, PluginInfo> infoByType,
             ImmutableDictionary<TypeRef, ImmutableHashSet<TypeRef>> typesByBaseType,
             ImmutableDictionary<TypeRef, ImmutableArray<TypeRef>> typesByBaseTypeOrderedByDependency)
         {
@@ -65,13 +65,13 @@ namespace Stl.Plugins.Metadata
             var hAssemblies = ci.Plugins.Select(t => t.Assembly).ToHashSet();
             ci.AllAssemblyRefs = hAssemblies
                 .Select(a => (
-                    Assembly: a, 
+                    Assembly: a,
                     Refs: GetAllDependencies(a)
                         .Where(a => hAssemblies.Contains(a))
                         .ToHashSet()))
                 .ToDictionary(p => p.Assembly, p => p.Refs);
             ci.Assemblies = hAssemblies
-                .OrderByDependency(a => 
+                .OrderByDependency(a =>
                     ci.AllAssemblyRefs.GetValueOrDefault(a) ?? Enumerable.Empty<Assembly>())
                 .ToArray();
             ci.PluginFactory = new PluginHostBuilder()
@@ -90,7 +90,7 @@ namespace Stl.Plugins.Metadata
                 var pluginInfo = new PluginInfo(plugin, ci);
                 dPlugins.Add(plugin, pluginInfo);
                 foreach (var baseType in pluginInfo.CastableTo) {
-                    var existingImpls = dTypesByBaseType.GetValueOrDefault(baseType) 
+                    var existingImpls = dTypesByBaseType.GetValueOrDefault(baseType)
                         ?? ImmutableHashSet<TypeRef>.Empty;
                     dTypesByBaseType[baseType] = existingImpls.Add(pluginInfo.Type);
                 }
@@ -99,7 +99,7 @@ namespace Stl.Plugins.Metadata
             var orderedPlugins = dPlugins.Values
                 .OrderByDependency(p => p.AllDependencies.Select(t => dPlugins[t]))
                 .ToArray();
-            for (var i = 0; i < orderedPlugins.Length; i++) 
+            for (var i = 0; i < orderedPlugins.Length; i++)
                 orderedPlugins[i].OrderByDependencyIndex = i;
 
             InfoByType = dPlugins.ToImmutableDictionary();
@@ -113,7 +113,7 @@ namespace Stl.Plugins.Metadata
                 .ToImmutableDictionary();
         }
 
-        public override string ToString() 
+        public override string ToString()
             => $"{GetType().Name} of [{InfoByType.Values.ToDelimitedString()}]";
     }
 }

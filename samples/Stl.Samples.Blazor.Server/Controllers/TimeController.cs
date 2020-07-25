@@ -15,11 +15,11 @@ namespace Stl.Samples.Blazor.Server.Controllers
         private readonly ITimeService _time;
 
         public TimeController(ITimeService time, IPublisher publisher)
-            : base(publisher) 
+            : base(publisher)
             => _time = time;
 
         [HttpGet("get")]
-        public Task<DateTime> GetTimeAsync(CancellationToken cancellationToken) 
+        public Task<DateTime> GetTimeAsync(CancellationToken cancellationToken)
             => PublishAsync(ct => _time.GetTimeAsync(ct));
     }
 }

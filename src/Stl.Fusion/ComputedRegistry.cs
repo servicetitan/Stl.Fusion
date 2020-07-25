@@ -31,7 +31,7 @@ namespace Stl.Fusion
             internal static PrimeSieve CapacityPrimeSieve;
             public static int DefaultInitialCapacity { get; }
 
-            public int InitialCapacity { get; set; } = DefaultInitialCapacity;      
+            public int InitialCapacity { get; set; } = DefaultInitialCapacity;
             public int ConcurrencyLevel { get; set; } = HardwareInfo.ProcessorCount;
             public Func<IFunction, IAsyncLockSet<ComputedInput>>? LocksProvider { get; set; } = null;
             public GCHandlePool? GCHandlePool { get; set; } = null;
@@ -49,15 +49,15 @@ namespace Stl.Fusion
         }
 
         private readonly ConcurrentDictionary<ComputedInput, Entry> _storage;
-        private readonly Func<IFunction, IAsyncLockSet<ComputedInput>> _locksProvider; 
+        private readonly Func<IFunction, IAsyncLockSet<ComputedInput>> _locksProvider;
         private readonly GCHandlePool _gcHandlePool;
         private readonly StochasticCounter _opCounter;
         private readonly IMomentClock _clock;
         private volatile int _pruneCounterThreshold;
         private Task? _pruneTask;
-        private object Lock => _storage; 
+        private object Lock => _storage;
 
-        public ComputedRegistry(Options? options = null) 
+        public ComputedRegistry(Options? options = null)
         {
             options ??= new Options();
             _storage = new ConcurrentDictionary<ComputedInput, Entry>(options.ConcurrencyLevel, options.InitialCapacity);
@@ -73,10 +73,10 @@ namespace Stl.Fusion
                     $"{nameof(options)}.{nameof(options.GCHandlePool)}.{nameof(_gcHandlePool.HandleType)}");
             _opCounter = new StochasticCounter();
             _clock = options.Clock;
-            UpdatePruneCounterThreshold(); 
+            UpdatePruneCounterThreshold();
         }
 
-        public void Dispose() 
+        public void Dispose()
             => _gcHandlePool.Dispose();
 
         public IComputed? TryGet(ComputedInput key)
@@ -92,7 +92,7 @@ namespace Stl.Fusion
 
                 var handle = entry.Handle;
                 value = (IComputed?) handle.Target;
-                if (value != null) {                        
+                if (value != null) {
                     value.Touch();
                     _storage.TryUpdate(key, new Entry(value, handle), entry);
                     return value;
@@ -111,8 +111,8 @@ namespace Stl.Fusion
             var random = Randomize(key.HashCode);
             OnOperation(random);
             _storage.AddOrUpdate(
-                key, 
-                (key1, s) => new Entry(s.Value, s.This._gcHandlePool.Acquire(s.Value, s.Random)), 
+                key,
+                (key1, s) => new Entry(s.Value, s.This._gcHandlePool.Acquire(s.Value, s.Random)),
                 (key1, entry, s) => {
                     // Not sure how we can reach this point,
                     // but if we are here somehow, let's reuse the handle.
@@ -143,13 +143,13 @@ namespace Stl.Fusion
             return true;
         }
 
-        public IAsyncLockSet<ComputedInput> GetLocksFor(IFunction function) 
+        public IAsyncLockSet<ComputedInput> GetLocksFor(IFunction function)
             => _locksProvider.Invoke(function);
 
         // Private members
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private int Randomize(int random) 
+        private int Randomize(int random)
             => random + CoarseStopwatch.RandomInt32;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -229,9 +229,9 @@ namespace Stl.Fusion
                 Handle = handle;
             }
 
-            public bool Equals(Entry other) 
+            public bool Equals(Entry other)
                 => Computed == other.Computed && Handle == other.Handle;
-            public override bool Equals(object? obj) 
+            public override bool Equals(object? obj)
                 => obj is Entry other && Equals(other);
             public override int GetHashCode() => HashCode.Combine(Computed, Handle);
             public static bool operator ==(Entry left, Entry right) => left.Equals(right);

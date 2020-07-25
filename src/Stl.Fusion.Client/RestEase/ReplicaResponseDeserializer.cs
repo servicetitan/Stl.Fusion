@@ -25,14 +25,14 @@ namespace Stl.Fusion.Client.RestEase
         }
 
         public override T Deserialize<T>(
-            string? content, HttpResponseMessage response, 
+            string? content, HttpResponseMessage response,
             ResponseDeserializerInfo info)
         {
             var headers = response.Headers;
             if (!(headers.TryGetValues(FusionHeaders.PublisherId, out var values) && values.Any()))
                 // No PublisherId -> not a publication / replica
                 return InnerDeserialize<T>(content, response, info);
-            
+
             var handler = DeserializeComputedHandlerProvider.Instance[typeof(T)];
             var result = handler.Handle(this, new DeserializeMethodArgs(content, response, info));
             if (result is null)
@@ -43,7 +43,7 @@ namespace Stl.Fusion.Client.RestEase
         }
 
         public virtual IComputed<T> DeserializeComputed<T>(
-            string? content, HttpResponseMessage response, 
+            string? content, HttpResponseMessage response,
             ResponseDeserializerInfo info)
         {
             Result<T> result;

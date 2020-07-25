@@ -15,7 +15,7 @@ namespace Stl.Fusion
             Context = context;
         }
 
-        public void Dispose() 
+        public void Dispose()
             => ComputeContext.CurrentLocal.Value = _previousContext;
     }
 }

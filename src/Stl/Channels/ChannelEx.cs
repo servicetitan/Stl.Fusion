@@ -29,7 +29,7 @@ namespace Stl.Channels
         }
 
         public static async Task<bool> CopyAsync<T>(
-            this ChannelReader<T> reader, ChannelWriter<T> writer, bool tryComplete,  
+            this ChannelReader<T> reader, ChannelWriter<T> writer, bool tryComplete,
             CancellationToken cancellationToken = default)
         {
             Exception? error = null;
@@ -53,7 +53,7 @@ namespace Stl.Channels
 
         public static async Task<bool> TransformAsync<TRead, TWrite>(
             this ChannelReader<TRead> reader, ChannelWriter<TWrite> writer,
-            bool tryComplete, Func<TRead, TWrite> adapter,  
+            bool tryComplete, Func<TRead, TWrite> adapter,
             CancellationToken cancellationToken = default)
         {
             Exception? error = null;
@@ -79,8 +79,8 @@ namespace Stl.Channels
 
         public static Task ConnectAsync<T>(
             this Channel<T> channel1, Channel<T> channel2,
-            bool tryComplete, 
-            CancellationToken cancellationToken = default) 
+            bool tryComplete,
+            CancellationToken cancellationToken = default)
             => Task.WhenAll(
                 Task.Run(() => channel1.Reader.CopyAsync(channel2, tryComplete, cancellationToken), CancellationToken.None),
                 Task.Run(() => channel2.Reader.CopyAsync(channel1, tryComplete, cancellationToken), CancellationToken.None)
@@ -90,14 +90,14 @@ namespace Stl.Channels
             this Channel<T1> channel1, Channel<T2> channel2,
             bool tryComplete,
             Func<T1, T2> adapter12, Func<T2, T1> adapter21,
-            CancellationToken cancellationToken = default) 
+            CancellationToken cancellationToken = default)
             => Task.WhenAll(
                 Task.Run(() => channel1.Reader.TransformAsync(channel2, tryComplete, adapter12, cancellationToken), CancellationToken.None),
                 Task.Run(() => channel2.Reader.TransformAsync(channel1, tryComplete, adapter21, cancellationToken), CancellationToken.None)
             );
 
         public static async Task ConsumeAsync<T>(
-            this ChannelReader<T> reader, 
+            this ChannelReader<T> reader,
             CancellationToken cancellationToken = default)
         {
             while (await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
@@ -105,7 +105,7 @@ namespace Stl.Channels
         }
 
         public static async Task ConsumeSilentAsync<T>(
-            this ChannelReader<T> reader, 
+            this ChannelReader<T> reader,
             CancellationToken cancellationToken = default)
         {
             try {
@@ -119,17 +119,17 @@ namespace Stl.Channels
 
         public static Channel<T> WithSerializers<T, TSerialized>(
             this Channel<TSerialized> downstreamChannel,
-            ChannelSerializerPair<T, TSerialized> serializers, 
+            ChannelSerializerPair<T, TSerialized> serializers,
             BoundedChannelOptions? channelOptions = null,
             CancellationToken cancellationToken = default)
             => downstreamChannel.WithSerializers(
-                serializers.Serializer, serializers.Deserializer, 
+                serializers.Serializer, serializers.Deserializer,
                 channelOptions, cancellationToken);
 
         public static Channel<T> WithSerializers<T, TSerialized>(
             this Channel<TSerialized> downstreamChannel,
-            ITypedSerializer<T, TSerialized> serializer, 
-            ITypedSerializer<T, TSerialized> deserializer, 
+            ITypedSerializer<T, TSerialized> serializer,
+            ITypedSerializer<T, TSerialized> deserializer,
             BoundedChannelOptions? channelOptions = null,
             CancellationToken cancellationToken = default)
         {
@@ -152,8 +152,8 @@ namespace Stl.Channels
 
         public static Channel<T> WithLogger<T>(
             this Channel<T> channel,
-            string channelName, 
-            ILogger logger, LogLevel logLevel, int? maxLength = null,  
+            string channelName,
+            ILogger logger, LogLevel logLevel, int? maxLength = null,
             BoundedChannelOptions? channelOptions = null,
             CancellationToken cancellationToken = default)
         {
@@ -182,8 +182,8 @@ namespace Stl.Channels
 
             channel.ConnectAsync(
                 pair.Channel1, true,
-                m => LogMessage(m, true), 
-                m => LogMessage(m, false), 
+                m => LogMessage(m, true),
+                m => LogMessage(m, false),
                 cancellationToken);
             return pair.Channel2;
         }

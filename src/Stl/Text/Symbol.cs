@@ -22,11 +22,11 @@ namespace Stl.Text
             Value = value;
             HashCode = value?.GetHashCode() ?? 0;
         }
-        
+
         public override string ToString() => $"`{Value}`";
-        
+
         // Conversion
-        
+
         public static implicit operator Symbol(string source) => new Symbol(source);
         public static implicit operator string(Symbol source) => source.Value;
 
@@ -51,7 +51,7 @@ namespace Stl.Text
             HashCode = Value?.GetHashCode() ?? 0;
         }
 
-        void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context) 
+        void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
             => info.AddValue(nameof(Value), Value);
     }
 }

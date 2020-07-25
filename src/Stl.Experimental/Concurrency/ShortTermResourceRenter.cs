@@ -31,8 +31,8 @@ namespace Stl.Concurrency
             }
         }
 
-        private readonly object[] _locks; 
-        private readonly T[] _resources; 
+        private readonly object[] _locks;
+        private readonly T[] _resources;
 
         public int ConcurrencyLevel => _locks.Length;
         public int ConcurrencyLevelMask { get; }

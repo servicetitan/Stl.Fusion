@@ -20,7 +20,7 @@ namespace Stl.Tests.Collections
             Assert.Throws<ArgumentOutOfRangeException>(() => heap.RemoveMin());
             Assert.Empty(heap);
         }
-        
+
         [Fact]
         public void RandomHeapTest()
         {

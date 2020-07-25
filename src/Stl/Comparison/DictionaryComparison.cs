@@ -6,7 +6,7 @@ namespace Stl.Comparison
     public static class DictionaryComparison
     {
         public static DictionaryComparison<TKey, TValue> New<TKey, TValue>(
-            IReadOnlyDictionary<TKey, TValue> left, 
+            IReadOnlyDictionary<TKey, TValue> left,
             IReadOnlyDictionary<TKey, TValue> right,
             IEqualityComparer<TValue>? valueComparer = null)
             where TKey : notnull
@@ -23,26 +23,26 @@ namespace Stl.Comparison
         public List<KeyValuePair<TKey, TValue>> LeftOnly { get; } = new List<KeyValuePair<TKey, TValue>>();
         public List<KeyValuePair<TKey, TValue>> RightOnly { get; } = new List<KeyValuePair<TKey, TValue>>();
         public List<KeyValuePair<TKey, TValue>> SharedEqual { get; } = new List<KeyValuePair<TKey, TValue>>();
-        public List<(TKey Key, TValue LeftValue, TValue RightValue)> SharedUnequal { get; } = 
+        public List<(TKey Key, TValue LeftValue, TValue RightValue)> SharedUnequal { get; } =
             new List<(TKey Key, TValue LeftValue, TValue RightValue)>();
 
         public bool AreCountsEqual => Left.Count == Right.Count;
         public bool AreEqual => SharedEqual.Count == Left.Count && AreCountsEqual;
 
         public DictionaryComparison(
-            IEnumerable<(TKey, TValue)> left, 
-            IEnumerable<(TKey, TValue)> right, 
-            IEqualityComparer<TValue>? valueComparer = null) 
+            IEnumerable<(TKey, TValue)> left,
+            IEnumerable<(TKey, TValue)> right,
+            IEqualityComparer<TValue>? valueComparer = null)
             : this(left.ToDictionary(), right.ToDictionary(), valueComparer) { }
 
         public DictionaryComparison(
-            IEnumerable<KeyValuePair<TKey, TValue>> left, 
+            IEnumerable<KeyValuePair<TKey, TValue>> left,
             IEnumerable<KeyValuePair<TKey, TValue>> right,
-            IEqualityComparer<TValue>? valueComparer = null) 
+            IEqualityComparer<TValue>? valueComparer = null)
             : this(left.ToDictionary(), right.ToDictionary(), valueComparer) { }
 
         public DictionaryComparison(
-            IReadOnlyDictionary<TKey, TValue> left, 
+            IReadOnlyDictionary<TKey, TValue> left,
             IReadOnlyDictionary<TKey, TValue> right,
             IEqualityComparer<TValue>? valueComparer = null)
         {

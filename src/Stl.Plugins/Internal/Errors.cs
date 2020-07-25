@@ -14,6 +14,6 @@ namespace Stl.Plugins.Internal
             Type requestedType, Type matchingType1, Type matchingType2)
             => throw new InvalidOperationException(
                 $"Multiple implementations of singleton plugin of type '{requestedType.Name}' found: " +
-                $"{matchingType1.Name} and {matchingType2.Name}."); 
+                $"{matchingType1.Name} and {matchingType2.Name}.");
     }
 }

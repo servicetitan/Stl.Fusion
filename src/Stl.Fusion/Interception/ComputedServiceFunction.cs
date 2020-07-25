@@ -17,7 +17,7 @@ namespace Stl.Fusion.Interception
             InterceptedMethod method,
             ConcurrentIdGenerator<LTag> lTagGenerator,
             IComputedRegistry computedRegistry,
-            ILogger<ComputedServiceFunction<T>>? log = null) 
+            ILogger<ComputedServiceFunction<T>>? log = null)
             : base(method, computedRegistry)
         {
             _log = log ??= NullLogger<ComputedServiceFunction<T>>.Instance;
@@ -25,7 +25,7 @@ namespace Stl.Fusion.Interception
         }
 
         protected override async ValueTask<IComputed<T>> ComputeAsync(
-            InterceptedInput input, IComputed<T>? cached, 
+            InterceptedInput input, IComputed<T>? cached,
             CancellationToken cancellationToken)
         {
             var tag = LTagGenerator.Next(input.HashCode);
@@ -62,7 +62,7 @@ namespace Stl.Fusion.Interception
             catch (OperationCanceledException) {
                 throw;
             }
-            catch (Exception e) { 
+            catch (Exception e) {
                 output.TrySetOutput(Result.Error<T>(e));
                 // Weird case: if the output is already set, all we can
                 // is to ignore the exception we've just caught;

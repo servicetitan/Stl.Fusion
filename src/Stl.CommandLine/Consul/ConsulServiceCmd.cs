@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using CliWrap;
 using SysProcess=System.Diagnostics.Process;
 
-namespace Stl.CommandLine.Consul 
+namespace Stl.CommandLine.Consul
 {
     public class ConsulServiceCmd : ProxyCmd<ConsulCmd>
     {

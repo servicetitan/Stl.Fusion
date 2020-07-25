@@ -14,13 +14,13 @@ namespace Stl.Fusion.Server
     {
         public class Options
         {
-            private static readonly WebSocketChannelProvider.Options DefaultClientOptions = 
+            private static readonly WebSocketChannelProvider.Options DefaultClientOptions =
                 new WebSocketChannelProvider.Options();
 
             public string RequestPath { get; set; } = DefaultClientOptions.RequestPath;
             public string PublisherIdQueryParameterName { get; set; } = DefaultClientOptions.PublisherIdQueryParameterName;
             public string ClientIdQueryParameterName { get; set; } = DefaultClientOptions.ClientIdQueryParameterName;
-            public Func<ChannelSerializerPair<Message, string>> ChannelSerializerPairFactory { get; set; } = 
+            public Func<ChannelSerializerPair<Message, string>> ChannelSerializerPairFactory { get; set; } =
                 DefaultChannelSerializerPairFactory;
 
             public static ChannelSerializerPair<Message, string> DefaultChannelSerializerPairFactory()
@@ -30,8 +30,8 @@ namespace Stl.Fusion.Server
         }
 
         public string RequestPath { get; }
-        public string PublisherIdQueryParameterName { get; } 
-        public string ClientIdQueryParameterName { get; } 
+        public string PublisherIdQueryParameterName { get; }
+        public string ClientIdQueryParameterName { get; }
         protected IPublisher Publisher { get; }
         protected Func<ChannelSerializerPair<Message, string>> ChannelSerializerPairFactory { get; }
 

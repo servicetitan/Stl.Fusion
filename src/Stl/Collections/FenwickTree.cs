@@ -6,7 +6,7 @@ namespace Stl.Collections
     public class FenwickTree<T>
     {
         private T[] _nodes;
-        
+
         public int Count => _nodes.Length - 1;
         public Func<T, T, T> Addition { get; }
 
@@ -16,7 +16,7 @@ namespace Stl.Collections
             Array.Copy(source._nodes, _nodes, _nodes.Length);
             Addition = source.Addition;
         }
-        
+
         public FenwickTree(int count, Func<T, T, T> addition)
         {
             _nodes = new T[count + 1];
@@ -39,28 +39,28 @@ namespace Stl.Collections
                 Increment(index, source[index]);
         }
 
-        public void Increment(int index, T value) 
+        public void Increment(int index, T value)
         {
-            index++; 
-            while (index < _nodes.Length) { 
-                _nodes[index] = Addition(_nodes[index], value); 
-                index += index & -index; // Add LSB 
-            } 
+            index++;
+            while (index < _nodes.Length) {
+                _nodes[index] = Addition(_nodes[index], value);
+                index += index & -index; // Add LSB
+            }
         }
 
-        public T GetSum(int index) 
+        public T GetSum(int index)
         {
-            var sum = (T) default!; 
+            var sum = (T) default!;
             if (index < 0)
                 return sum;
-            index++; 
+            index++;
             if (index >= _nodes.Length)
                 index = _nodes.Length - 1;
-            while (index > 0) { 
-                sum = Addition(sum, _nodes[index]); 
-                index -= index & -index; 
-            } 
-            return sum; 
+            while (index > 0) {
+                sum = Addition(sum, _nodes[index]);
+                index -= index & -index;
+            }
+            return sum;
         }
     }
 }

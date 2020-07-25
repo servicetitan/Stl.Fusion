@@ -6,27 +6,27 @@ using System.Reflection;
 using Stl.Internal;
 using Stl.OS;
 
-namespace Stl.CommandLine 
+namespace Stl.CommandLine
 {
     public interface ICliFormatter : IFormatProvider
     {
-        CliString Format(object? value, CliArgumentAttribute? argumentAttribute = null);  
+        CliString Format(object? value, CliArgumentAttribute? argumentAttribute = null);
     }
 
     [Serializable]
-    public class CliFormatter : ICliFormatter  
+    public class CliFormatter : ICliFormatter
     {
         // Workaround against BadImageFormatException in CliFormatter.TrySubstituteValue code
-        private static readonly Type CliEnumGenericType = 
+        private static readonly Type CliEnumGenericType =
             new CliEnum<OSKind>().GetType().GetGenericTypeDefinition();
 
         public IFormatProvider FormatProvider { get; set; }
 
-        public CliFormatter(IFormatProvider? formatProvider = null) 
+        public CliFormatter(IFormatProvider? formatProvider = null)
             => FormatProvider = formatProvider ?? CultureInfo.InvariantCulture;
 
         public object? GetFormat(Type? formatType) => FormatProvider.GetFormat(formatType);
-        
+
         public CliString Format(object? value, CliArgumentAttribute? argumentAttribute = null)
         {
             argumentAttribute ??= new CliArgumentAttribute();
@@ -49,11 +49,11 @@ namespace Stl.CommandLine
                 // IFormattable is preferred over IEnumerable<IFormattable>
                 IFormattable _ => Format(value),
                 IEnumerable<IFormattable> sequence => CliString.Concat(sequence.Select(Format)),
-                _ => Format(FormatStructure(value)), 
+                _ => Format(FormatStructure(value)),
             };
         }
 
-        protected virtual object? TrySubstituteValue(object? value) 
+        protected virtual object? TrySubstituteValue(object? value)
             => value switch {
                 null => null,
                 bool b => new CliBool(b),

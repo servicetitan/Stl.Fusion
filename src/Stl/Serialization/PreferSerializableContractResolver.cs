@@ -10,7 +10,7 @@ namespace Stl.Serialization
         {
             if (typeof(ISerializable).IsAssignableFrom(objectType))
                 return CreateISerializableContract(objectType);
-            
+
             return base.CreateContract(objectType);
         }
     }

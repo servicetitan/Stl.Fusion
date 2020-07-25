@@ -6,7 +6,7 @@ namespace Stl.Fusion.Client.RestEase.Internal
     internal readonly struct DeserializeMethodArgs
     {
         public readonly string? Content;
-        public readonly HttpResponseMessage Response; 
+        public readonly HttpResponseMessage Response;
         public readonly ResponseDeserializerInfo Info;
 
         public DeserializeMethodArgs(string? content, HttpResponseMessage response, ResponseDeserializerInfo info)

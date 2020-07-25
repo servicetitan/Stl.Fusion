@@ -6,18 +6,18 @@ namespace Stl.Async
 {
     public sealed class AsyncCounter : AsyncDisposableBase
     {
-        private TaskSource<Unit> _zeroSource = TaskSource<Unit>.Empty; 
+        private TaskSource<Unit> _zeroSource = TaskSource<Unit>.Empty;
         private readonly object _lock;
         private readonly TaskCreationOptions _taskCreationOptions;
         public int Count { get; private set; }
-        
+
         public AsyncCounter(TaskCreationOptions taskCreationOptions = TaskCreationOptions.RunContinuationsAsynchronously)
         {
             _taskCreationOptions = taskCreationOptions;
             _lock = this;
         }
 
-        protected override ValueTask DisposeInternalAsync(bool disposing) 
+        protected override ValueTask DisposeInternalAsync(bool disposing)
             => WhenZeroAsync();
 
         public ValueTask WhenZeroAsync()

@@ -46,9 +46,9 @@ namespace Stl.Tests.Hosting
         protected override async ValueTask DisposeInternalAsync(bool disposing)
         {
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-            if (Host == null) 
+            if (Host == null)
                 return;
-            IHost host; 
+            IHost host;
             (host, Host) = (Host, null!);
             await host.StopAsync();
             host.Dispose();
@@ -72,7 +72,7 @@ namespace Stl.Tests.Hosting
         {
             var miniHostBuilder = (MiniHostBuilder) testAppHostBuilder;
             var hasOut = Out != null;
-            var console = hasOut 
+            var console = hasOut
                 ? (IConsole) new TestOutputConsole(Out)
                 : new SystemConsole();
             var testOutputLoggerProvider = hasOut

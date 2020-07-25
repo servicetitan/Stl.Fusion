@@ -1,4 +1,4 @@
-namespace Stl.Time.Testing 
+namespace Stl.Time.Testing
 {
     public interface ITestClock : IMomentClock
     {

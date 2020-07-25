@@ -6,7 +6,7 @@ namespace Stl.Fusion.Bridge.Interception.Internal
 {
     public class ReplicaServiceProxyGeneratorImpl : Castle.DynamicProxy.Generators.InterfaceProxyWithTargetInterfaceGenerator
     {
-        public ReplicaServiceProxyGeneratorImpl(ModuleScope scope, Type @interface) 
+        public ReplicaServiceProxyGeneratorImpl(ModuleScope scope, Type @interface)
             : base(scope, @interface) { }
 
         protected override void CreateFields(ClassEmitter emitter)

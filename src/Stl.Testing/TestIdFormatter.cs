@@ -2,7 +2,7 @@ using System;
 using System.Text;
 using Stl.IO;
 
-namespace Stl.Testing 
+namespace Stl.Testing
 {
     public class TestIdFormatter
     {
@@ -10,7 +10,7 @@ namespace Stl.Testing
 
         public string MachineId { get; set; } = Environment.MachineName.ToLowerInvariant() ?? "unknown";
         public string TestId { get; set; }
-        public int MaxLength { get; set; } = 12; 
+        public int MaxLength { get; set; } = 12;
         public bool AlwaysHash { get; set; } = false;
 
         public TestIdFormatter(Type testType) : this($"{testType.Name}_{testType.Namespace}") { }

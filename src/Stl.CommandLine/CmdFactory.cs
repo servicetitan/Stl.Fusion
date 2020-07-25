@@ -15,7 +15,7 @@ namespace Stl.CommandLine
         TCmd New<TCmd>() where TCmd : ICmd;
         ICmd New(string cmdName);
     }
-    
+
     public abstract class CmdFactoryBase : ICmdFactory
     {
         private readonly Lazy<ImmutableList<CmdDescriptor>> _lazyCommands;
@@ -27,7 +27,7 @@ namespace Stl.CommandLine
         protected ImmutableDictionary<object, CmdDescriptor> CommandByKey => _lazyCommandByKey.Value;
 
         protected CmdFactoryBase(
-            IServiceProvider services, 
+            IServiceProvider services,
             ILogger<CmdFactoryBase>? log = null)
         {
             _log = log ??= NullLogger<CmdFactoryBase>.Instance;
@@ -54,10 +54,10 @@ namespace Stl.CommandLine
         public IEnumerator<CmdDescriptor> GetEnumerator() => Commands.GetEnumerator();
 
         public virtual TCmd New<TCmd>()
-            where TCmd : ICmd 
+            where TCmd : ICmd
             => (TCmd) CommandByKey[typeof(TCmd)].Factory.Invoke(Services);
 
-        public virtual ICmd New(string cmdName) 
+        public virtual ICmd New(string cmdName)
             => CommandByKey[cmdName].Factory.Invoke(Services);
 
         // Protected methods

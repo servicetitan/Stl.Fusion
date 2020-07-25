@@ -47,11 +47,11 @@ namespace Tutorial
             var service1 = Create<Service1>();
             WriteLine($"{nameof(service1)}'s actual type: {service1.GetType()}");
 
-            // You should see two methods are executed here: GetTimeAsync and GetTimeWithOffsetAsync 
+            // You should see two methods are executed here: GetTimeAsync and GetTimeWithOffsetAsync
             var time1 = await service1.GetTimeWithOffsetAsync(TimeSpan.FromHours(1));
             WriteLine($"{nameof(time1)}: {time1}");
 
-            // You should see just one method is executed here: GetTimeWithOffsetAsync 
+            // You should see just one method is executed here: GetTimeWithOffsetAsync
             var time2 = await service1.GetTimeWithOffsetAsync(TimeSpan.FromDays(1));
             WriteLine($"{nameof(time2)}: {time2}");
             #endregion

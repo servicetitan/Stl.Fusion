@@ -10,10 +10,10 @@ namespace Stl.CommandLine
         public string DefaultValue { get; set; } = "";
         public bool IsRequired { get; set; }
         public Type? FormatterType { get; set; } = null;
-        public double Priority { get; set; } 
+        public double Priority { get; set; }
 
-        public CliArgumentAttribute() { } 
-        public CliArgumentAttribute(string template) 
+        public CliArgumentAttribute() { }
+        public CliArgumentAttribute(string template)
             => Template = template;
     }
 }

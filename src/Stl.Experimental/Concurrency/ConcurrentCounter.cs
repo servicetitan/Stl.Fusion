@@ -12,8 +12,8 @@ namespace Stl.Concurrency
         public static int DefaultConcurrencyLevel => HardwareInfo.ProcessorCountPo2;
 
         private readonly long _approximationStep;
-        private readonly long[] _counters; 
-        private long _approximateValue = 0;  
+        private readonly long[] _counters;
+        private long _approximateValue = 0;
         private readonly long _concurrencyMask;
 
         public int ConcurrencyLevel => _counters.Length;
@@ -40,9 +40,9 @@ namespace Stl.Concurrency
             }
         }
 
-        public ConcurrentCounter() 
+        public ConcurrentCounter()
             : this(DefaultApproximationStep) { }
-        public ConcurrentCounter(int approximationStep) 
+        public ConcurrentCounter(int approximationStep)
             : this(approximationStep, DefaultConcurrencyLevel) { }
         public ConcurrentCounter(int approximationStep, int concurrencyLevel)
         {

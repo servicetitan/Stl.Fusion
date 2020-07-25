@@ -12,7 +12,7 @@ namespace Stl
     [TypeConverter(typeof(LTagTypeConverter))]
     public readonly struct LTag : IEquatable<LTag>
     {
-        public static readonly string Base62Digits = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"; 
+        public static readonly string Base62Digits = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
         public static readonly LTag Default = default;
 
         public readonly long Value;
@@ -36,9 +36,9 @@ namespace Stl
             }
         }
 
-        public static LTag Parse(string formattedLTag) 
-            => TryParse(formattedLTag, out var result) 
-                ? result 
+        public static LTag Parse(string formattedLTag)
+            => TryParse(formattedLTag, out var result)
+                ? result
                 : throw new ArgumentOutOfRangeException(nameof(formattedLTag));
 
         public static bool TryParse(string formattedLTag, out LTag lTag)
@@ -48,7 +48,7 @@ namespace Stl
                 return false;
             if (formattedLTag[0] != '@')
                 return false;
-            if (!MathEx.TryParse(formattedLTag.AsSpan().Slice(1), Base62Digits, out var value)) 
+            if (!MathEx.TryParse(formattedLTag.AsSpan().Slice(1), Base62Digits, out var value))
                 return false;
             lTag = new LTag(value);
             return true;

@@ -16,7 +16,7 @@ namespace Stl.Concurrency
             {
                 var eSrc = Expression.Parameter(typeof(ConcurrentDictionary<TKey, TValue>), "source");
                 var body = Expression.PropertyOrField(
-                    Expression.Field(Expression.Field(eSrc, "_tables"), "_buckets"), 
+                    Expression.Field(Expression.Field(eSrc, "_tables"), "_buckets"),
                     "Length");
                 CapacityReader = (Func<ConcurrentDictionary<TKey, TValue>, int>)
                     Expression.Lambda(body, eSrc).Compile();
@@ -28,7 +28,7 @@ namespace Stl.Concurrency
             => Cache<TKey, TValue>.CapacityReader.Invoke(source);
 
         public static bool TryRemove<TKey, TValue>(
-            this ConcurrentDictionary<TKey, TValue> dictionary, 
+            this ConcurrentDictionary<TKey, TValue> dictionary,
             TKey key, TValue value)
             where TKey : notnull
             // Based on:
@@ -40,9 +40,9 @@ namespace Stl.Concurrency
             this ConcurrentDictionary<TKey, TValue> dictionary,
             TKey key,
             Func<TKey, TValue> valueFactory)
-            where TKey : notnull 
-            => dictionary.TryGetValue(key, out var v) 
-                ? v 
+            where TKey : notnull
+            => dictionary.TryGetValue(key, out var v)
+                ? v
                 : dictionary.GetOrAdd(key, valueFactory);
 
         public static TValue GetOrAddChecked<TKey, TValue, TArg>(
@@ -50,9 +50,9 @@ namespace Stl.Concurrency
             TKey key,
             Func<TKey, TArg, TValue> valueFactory,
             TArg factoryArgument)
-            where TKey : notnull 
-            => dictionary.TryGetValue(key, out var v) 
-                ? v 
+            where TKey : notnull
+            => dictionary.TryGetValue(key, out var v)
+                ? v
                 : dictionary.GetOrAdd(key, valueFactory, factoryArgument);
 
         public static int Increment<TKey>(this ConcurrentDictionary<TKey, int> dictionary, TKey key)

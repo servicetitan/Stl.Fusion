@@ -1,7 +1,7 @@
 using System;
 using Xunit.Abstractions;
 
-namespace Stl.Testing 
+namespace Stl.Testing
 {
     public abstract class TestBase : IDisposable
     {

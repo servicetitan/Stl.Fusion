@@ -23,7 +23,7 @@ namespace Stl.OS
                     else
                         VersionString = null;
                 }
-            }        
+            }
         }
     }
 }

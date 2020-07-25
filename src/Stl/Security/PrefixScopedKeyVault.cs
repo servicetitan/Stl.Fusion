@@ -13,9 +13,9 @@ namespace Stl.Security
             Prefix = prefix;
         }
 
-        public string? TryGetSecret(string key) 
-            => KeyVault.TryGetSecret(Prefix + key); 
+        public string? TryGetSecret(string key)
+            => KeyVault.TryGetSecret(Prefix + key);
         public ValueTask<string?> TryGetSecretAsync(string key)
-            => KeyVault.TryGetSecretAsync(Prefix + key); 
+            => KeyVault.TryGetSecretAsync(Prefix + key);
     }
 }

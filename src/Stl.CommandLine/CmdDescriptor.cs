@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace Stl.CommandLine 
+namespace Stl.CommandLine
 {
     public class CmdDescriptor
     {
@@ -12,7 +12,7 @@ namespace Stl.CommandLine
         public ReadOnlyMemory<string> Aliases { get; }
 
         public static CmdDescriptor New<TCmd>(
-            Func<IServiceProvider, TCmd> factory, 
+            Func<IServiceProvider, TCmd> factory,
             string name, params string[] aliases)
             where TCmd : class, ICmd
             => new CmdDescriptor(typeof(TCmd), factory, c => Task.CompletedTask, name, aliases);
@@ -24,8 +24,8 @@ namespace Stl.CommandLine
             where TCmd : class, ICmd
             => new CmdDescriptor(typeof(TCmd), factory, initializer, name, aliases);
 
-        public CmdDescriptor(Type type, 
-            Func<IServiceProvider, ICmd> factory, Func<IServiceProvider, Task> initializer, 
+        public CmdDescriptor(Type type,
+            Func<IServiceProvider, ICmd> factory, Func<IServiceProvider, Task> initializer,
             string name, params string[] aliases)
         {
             Type = type;
@@ -42,7 +42,7 @@ namespace Stl.CommandLine
                 var cmd = Factory.Invoke(services);
                 cmd = configurator.Invoke(cmd, services);
                 return cmd;
-            }; 
+            };
             return clone;
         }
 
@@ -55,7 +55,7 @@ namespace Stl.CommandLine
                 var initializerTask = initializer.Invoke(services);
                 await Task.WhenAll(oldInitializerTask, initializerTask)
                     .ConfigureAwait(false);
-            }; 
+            };
             return clone;
         }
     }

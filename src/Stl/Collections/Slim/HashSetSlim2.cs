@@ -10,12 +10,12 @@ namespace Stl.Collections.Slim
         private int _count;
         private (T, T) _tuple;
         private HashSet<T>? _set;
-        
+
         private bool HasSet {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _set != null;
         }
-        
+
         public int Count {
             get {
                 if (HasSet) return _set!.Count;
@@ -34,7 +34,7 @@ namespace Stl.Collections.Slim
         public bool Add(T item)
         {
             if (HasSet) return _set!.Add(item);
-            
+
             // Item 1
             if (_count < 1) {
                 _tuple.Item1 = item;
@@ -62,7 +62,7 @@ namespace Stl.Collections.Slim
         public bool Remove(T item)
         {
             if (HasSet) return _set!.Remove(item);
-            
+
             // Item 1
             if (_count < 1) return false;
             if (EqualityComparer<T>.Default.Equals(_tuple.Item1, item)) {
@@ -102,7 +102,7 @@ namespace Stl.Collections.Slim
                 yield return _tuple.Item2;
             }
         }
-        
+
         public void Apply<TState>(TState state, Action<TState, T> action)
         {
             if (HasSet) {
@@ -115,7 +115,7 @@ namespace Stl.Collections.Slim
             if (_count < 2) return;
             action(state, _tuple.Item2);
         }
-        
+
         public void Aggregate<TState>(ref TState state, Aggregator<TState, T> aggregator)
         {
             if (HasSet) {

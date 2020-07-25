@@ -23,7 +23,7 @@ namespace Stl.Locking.Internal
                 throw Errors.AlreadyLocked();
             return 1;
         }
-        
+
         public bool TryReenter(ReentryMode reentryMode)
         {
             if (reentryMode == ReentryMode.CheckedFail) {
@@ -44,7 +44,7 @@ namespace Stl.Locking.Internal
             return false;
         }
 
-        public int Leave() 
+        public int Leave()
             => Interlocked.Decrement(ref _count);
     }
 }

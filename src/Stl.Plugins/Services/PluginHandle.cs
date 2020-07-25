@@ -11,13 +11,13 @@ namespace Stl.Plugins.Services
     public interface IPluginHandle
     {
         IEnumerable<object> Instances { get; }
-        IEnumerable<object> GetInstances(Func<PluginInfo, bool> predicate); 
+        IEnumerable<object> GetInstances(Func<PluginInfo, bool> predicate);
     }
 
     public interface IPluginHandle<out TPlugin> : IPluginHandle
     {
         new IEnumerable<TPlugin> Instances { get; }
-        new IEnumerable<TPlugin> GetInstances(Func<PluginInfo, bool> predicate); 
+        new IEnumerable<TPlugin> GetInstances(Func<PluginInfo, bool> predicate);
     }
 
     public class PluginHandle<TPlugin> : IPluginHandle<TPlugin>
@@ -30,7 +30,7 @@ namespace Stl.Plugins.Services
         IEnumerable<object> IPluginHandle.Instances => Instances.Cast<object>();
         public IEnumerable<TPlugin> Instances => _lazyInstances.Value;
 
-        public PluginHandle(PluginSetInfo plugins, 
+        public PluginHandle(PluginSetInfo plugins,
             IPluginCache pluginCache, IEnumerable<IPluginFilter> pluginFilters)
         {
             Plugins = plugins;
@@ -40,7 +40,7 @@ namespace Stl.Plugins.Services
                 () => GetInstances(_ => true).Cast<TPlugin>().ToArray());
         }
 
-        IEnumerable<object> IPluginHandle.GetInstances(Func<PluginInfo, bool> predicate) 
+        IEnumerable<object> IPluginHandle.GetInstances(Func<PluginInfo, bool> predicate)
             => GetInstances(predicate);
         IEnumerable<TPlugin> IPluginHandle<TPlugin>.GetInstances(Func<PluginInfo, bool> predicate)
             => GetInstances(predicate).Cast<TPlugin>();
@@ -70,8 +70,8 @@ namespace Stl.Plugins.Services
                         continue;
                     if (!singletonPluginInfo.AllDependencies.Contains(pluginInfo.Type))
                         throw Errors.MultipleSingletonPluginImplementationsFound(
-                            requestedType, 
-                            singletonPluginInfo.Type.Resolve(), 
+                            requestedType,
+                            singletonPluginInfo.Type.Resolve(),
                             pluginInfo.Type.Resolve());
                 }
                 pluginInfos = Enumerable.Repeat(singletonPluginInfo, 1);

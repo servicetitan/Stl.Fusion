@@ -5,7 +5,7 @@ using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Internal;
 
-namespace Stl.Extensibility 
+namespace Stl.Extensibility
 {
     public static class ServiceProviderEx
     {
@@ -40,7 +40,7 @@ namespace Stl.Extensibility
             throw Errors.CannotActivate(type);
         }
 
-        public static object Activate(this IServiceProvider services, 
+        public static object Activate(this IServiceProvider services,
             Type type, ConstructorInfo constructorInfo)
         {
             if (services.TryActivate(type, constructorInfo, out var result))
@@ -48,7 +48,7 @@ namespace Stl.Extensibility
             throw Errors.CannotActivate(type);
         }
 
-        public static bool TryActivate(this IServiceProvider services, 
+        public static bool TryActivate(this IServiceProvider services,
             Type type, ConstructorInfo constructorInfo, [NotNullWhen(true)] out object? result)
         {
             var args = constructorInfo.GetParameters();

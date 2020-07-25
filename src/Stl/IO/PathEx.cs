@@ -8,15 +8,15 @@ namespace Stl.IO
 {
     public static class PathEx
     {
-        private static readonly Regex NonAlphaOrNumberRe = 
+        private static readonly Regex NonAlphaOrNumberRe =
             new Regex("[^a-z0-9_]+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private static readonly Regex LeadingUnderscoresRe = 
+        private static readonly Regex LeadingUnderscoresRe =
             new Regex("^_+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private static readonly Regex TrailingUnderscoresRe = 
+        private static readonly Regex TrailingUnderscoresRe =
             new Regex("_+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         public static PathString GetHashedName(
-            string key, string? prefix = null, 
+            string key, string? prefix = null,
             int maxLength = 40, bool alwaysHash = false)
         {
             if (maxLength < 8 || maxLength > 128)

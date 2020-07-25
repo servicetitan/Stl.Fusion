@@ -29,7 +29,7 @@ namespace Stl.Samples.Blazor.Client.UI
 
             public ILiveState<Local, ServerScreenState>? LiveState { get; set; }
         }
-                                    
+
         public class Updater : ILiveStateUpdater<Local, ServerScreenState>
         {
             protected IScreenshotClient Client { get; }

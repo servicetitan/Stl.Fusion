@@ -46,7 +46,7 @@ namespace Stl.Fusion.Bridge
         private readonly GCHandlePool _gcHandlePool;
         private volatile int _pruneCounterThreshold;
         private Task? _pruneTask = null;
-        private object Lock => _handles; 
+        private object Lock => _handles;
 
         public ReplicaRegistry(Options? options = null)
         {
@@ -57,10 +57,10 @@ namespace Stl.Fusion.Bridge
             if (_gcHandlePool.HandleType != GCHandleType.Weak)
                 throw new ArgumentOutOfRangeException(
                     $"{nameof(options)}.{nameof(options.GCHandlePool)}.{nameof(_gcHandlePool.HandleType)}");
-            UpdatePruneCounterThreshold(); 
+            UpdatePruneCounterThreshold();
         }
 
-        public void Dispose() 
+        public void Dispose()
             => _gcHandlePool.Dispose();
 
         public IReplica? TryGet(Symbol publicationId)
@@ -72,7 +72,7 @@ namespace Stl.Fusion.Bridge
             var target = (IReplica?) handle.Target;
             if (target != null)
                 return target;
-            // GCHandle target == null => we have to recycle it 
+            // GCHandle target == null => we have to recycle it
             if (!_handles.TryRemove(publicationId, handle))
                 // Some other thread already removed this entry
                 return null;
@@ -100,7 +100,7 @@ namespace Stl.Fusion.Bridge
                     (newReplica as IReplicaImpl)?.MarkDisposed();
                     return (target, false);
                 }
-                // GCHandle target == null => we have to recycle it 
+                // GCHandle target == null => we have to recycle it
                 if (_handles.TryRemove(publicationId, handle))
                     // The thread that succeeds in removal releases gcHandle as well
                     _gcHandlePool.Release(handle, random);

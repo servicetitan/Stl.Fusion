@@ -67,7 +67,7 @@ namespace Stl.Tests.Async
             private async ValueTask Delay(int delayMs, CancellationToken cancellationToken)
             {
                 await Task.Delay(delayMs, cancellationToken).ConfigureAwait(false);
-                
+
                 // Let's add a "spread" that's not ms-based
                 var sw = new SpinWait();
                 var spinCount = (delayMs * 347) & 15;
@@ -78,7 +78,7 @@ namespace Stl.Tests.Async
 
         public AsyncLockTestBase(ITestOutputHelper @out) : base(@out) { }
 
-        protected abstract IAsyncLock CreateAsyncLock(ReentryMode reentryMode); 
+        protected abstract IAsyncLock CreateAsyncLock(ReentryMode reentryMode);
         protected abstract void AssertResourcesReleased();
 
         [Fact]
@@ -96,7 +96,7 @@ namespace Stl.Tests.Async
             };
             await Task.WhenAll(tasks);
             tasks.All(t => t.IsCompletedSuccessfully).Should().BeTrue();
-            
+
             AssertResourcesReleased();
         }
 

@@ -9,14 +9,14 @@ namespace Stl.Fusion
     public static partial class ComputedEx
     {
         internal sealed class AutoUpdateApplyHandler : IComputedApplyHandler<
-            (TimeSpan, IMomentClock, Delegate?, Delegate?), 
+            (TimeSpan, IMomentClock, Delegate?, Delegate?),
             Disposable<(IComputed, CancellationTokenSource, Delegate?)>>
         {
             public static readonly AutoUpdateApplyHandler Instance = new AutoUpdateApplyHandler();
-            
+
             public Disposable<(IComputed, CancellationTokenSource, Delegate?)> Apply<TIn, TOut>(
-                IComputed<TIn, TOut> computed, 
-                (TimeSpan, IMomentClock, Delegate?, Delegate?) arg) 
+                IComputed<TIn, TOut> computed,
+                (TimeSpan, IMomentClock, Delegate?, Delegate?) arg)
                 where TIn : ComputedInput
             {
                 var (delay, clock, untypedHandler, untypedCompletedHandler) = arg;
@@ -47,7 +47,7 @@ namespace Stl.Fusion
                 }, stopToken);
 
                 return Disposable.New(
-                    (Computed: (IComputed) computed, StopCts: stopCts, CompletedHandler: untypedCompletedHandler), 
+                    (Computed: (IComputed) computed, StopCts: stopCts, CompletedHandler: untypedCompletedHandler),
                     state => {
                         try {
                             state.StopCts.Cancel();
@@ -57,25 +57,25 @@ namespace Stl.Fusion
                             if (untypedCompletedHandler is Action<IComputed<TOut>> completedHandler)
                                 completedHandler.Invoke(computed);
                         }
-                    }); 
-            }                               
+                    });
+            }
         }
 
         public static Disposable<(IComputed, CancellationTokenSource, Delegate?)> AutoUpdate<T>(
-            this IComputed<T> computed, 
+            this IComputed<T> computed,
             Action<IComputed<T>, Result<T>, Exception?>? recomputed = null,
             Action<IComputed<T>>? completed = null)
             => computed.AutoUpdate(default, null, recomputed, completed);
 
         public static Disposable<(IComputed, CancellationTokenSource, Delegate?)> AutoUpdate<T>(
-            this IComputed<T> computed, 
+            this IComputed<T> computed,
             TimeSpan delay = default,
             Action<IComputed<T>, Result<T>, Exception?>? recomputed = null,
             Action<IComputed<T>>? completed = null)
             => computed.AutoUpdate(delay, null, recomputed, completed);
 
         public static Disposable<(IComputed, CancellationTokenSource, Delegate?)> AutoUpdate<T>(
-            this IComputed<T> computed, 
+            this IComputed<T> computed,
             TimeSpan delay = default,
             IMomentClock? clock = null,
             Action<IComputed<T>, Result<T>, Exception?>? recomputed = null,
@@ -83,7 +83,7 @@ namespace Stl.Fusion
         {
             clock ??= SystemClock.Instance;
             return computed.Apply(
-                AutoUpdateApplyHandler.Instance, 
+                AutoUpdateApplyHandler.Instance,
                 (delay, clock, recomputed, completed));
         }
     }

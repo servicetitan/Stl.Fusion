@@ -19,7 +19,7 @@ namespace Stl.Security
         {
             var json = File.ReadAllText(fileName);
             Vault = JObject.Parse(json);
-        } 
+        }
 
         public string? TryGetSecret(string key)
         {
@@ -40,7 +40,7 @@ namespace Stl.Security
             return (string?) jValue.Value;
         }
 
-        public ValueTask<string?> TryGetSecretAsync(string key) 
+        public ValueTask<string?> TryGetSecretAsync(string key)
             => ValueTaskEx.FromResult(TryGetSecret(key));
     }
 }

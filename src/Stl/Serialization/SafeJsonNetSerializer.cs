@@ -15,7 +15,7 @@ namespace Stl.Serialization
         public Func<Type, bool> Verifier { get; }
         public JsonNetSerializer UnsafeSerializer { get; }
 
-        public SafeJsonNetSerializer(Func<Type, bool> verifier) 
+        public SafeJsonNetSerializer(Func<Type, bool> verifier)
             : this(new JsonNetSerializer(), verifier) { }
         public SafeJsonNetSerializer(JsonNetSerializer unsafeSerializer, Func<Type, bool> verifier)
         {
@@ -48,11 +48,11 @@ namespace Stl.Serialization
             return _stringBuilder.ToString();
         }
 
-        public override object? Deserialize(string serialized, Type type) 
+        public override object? Deserialize(string serialized, Type type)
         {
             _stringBuilder.Clear();
             var p = ListFormat.Default.CreateParser(serialized, _stringBuilder);
-            
+
             p.ParseNext();
             if (string.IsNullOrEmpty(p.Item))
                 // Special case: null deserialization

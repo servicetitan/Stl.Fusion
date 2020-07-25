@@ -22,8 +22,8 @@ namespace Stl.Reflection
             new ConcurrentDictionary<(Type, Delegate, BindingFlags), ReadOnlyMemory<Symbol>>();
 
         // Note that predicate is used as cache key here, so you shouldn't pass
-        // closure predicates into this method!  
-        public static ReadOnlyMemory<Symbol> FindProperties(this Type type, Func<PropertyInfo, bool> predicate, 
+        // closure predicates into this method!
+        public static ReadOnlyMemory<Symbol> FindProperties(this Type type, Func<PropertyInfo, bool> predicate,
             BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
         {
             var key = (type, predicate, bindingFlags);
@@ -33,8 +33,8 @@ namespace Stl.Reflection
                 if (_findPropertiesCache.TryGetValue(key, out r))
                     return r;
                 r = (
-                    from property in type.GetProperties(bindingFlags) 
-                    where predicate.Invoke(property) 
+                    from property in type.GetProperties(bindingFlags)
+                    where predicate.Invoke(property)
                     select new Symbol(property.Name)
                     ).ToArray();
                 _findPropertiesCache[key] = r;
@@ -42,19 +42,19 @@ namespace Stl.Reflection
             }
         }
 
-        public static T Get<T>(object target, Symbol propertyName) 
+        public static T Get<T>(object target, Symbol propertyName)
             => GetGetter<T>(target.GetType(), propertyName)!.Invoke(target);
-        public static object GetUntyped(object target, Symbol propertyName) 
+        public static object GetUntyped(object target, Symbol propertyName)
             => GetGetter<object>(target.GetType(), propertyName, true)!.Invoke(target);
 
-        public static void Set<T>(object target, Symbol propertyName, T value) 
+        public static void Set<T>(object target, Symbol propertyName, T value)
             => GetSetter<T>(target.GetType(), propertyName)!.Invoke(target, value);
-        public static void SetUntyped(object target, Symbol propertyName, object value) 
+        public static void SetUntyped(object target, Symbol propertyName, object value)
             => GetSetter<object>(target.GetType(), propertyName, true)!.Invoke(target, value);
 
         public static Func<object, TProperty>? GetGetter<TProperty>(this Type type, Symbol propertyName, bool isValueUntyped = false)
             => (Func<object, TProperty>?) GetGetter(type, propertyName, isValueUntyped);
-        
+
         public static Delegate? GetGetter(this Type type, Symbol propertyName, bool isValueUntyped = false)
         {
             var key = (type, propertyName, isValueUntyped);
@@ -80,7 +80,7 @@ namespace Stl.Reflection
                     return r;
                 var pObject = Expression.Parameter(typeof(object), "object");
                 var eAccess = Expression.Property(
-                    Expression.ConvertChecked(pObject, type), 
+                    Expression.ConvertChecked(pObject, type),
                     propertyInfo);
                 var body = isValueUntyped
                     ? (Expression) Expression.Convert(eAccess, typeof(object))
@@ -90,7 +90,7 @@ namespace Stl.Reflection
                 return r;
             }
         }
-        
+
         public static Action<object, TProperty>? GetSetter<TProperty>(this Type type, Symbol propertyName, bool isValueUntyped = false)
             => (Action<object, TProperty>?) GetSetter(type, propertyName, isValueUntyped);
 
@@ -119,7 +119,7 @@ namespace Stl.Reflection
                     return r;
                 var pObject = Expression.Parameter(typeof(object), "object");
                 var lValue = Expression.Property(
-                    Expression.ConvertChecked(pObject, type), 
+                    Expression.ConvertChecked(pObject, type),
                     propertyInfo);
                 var pValue = Expression.Parameter(lValue.Type, "value");
                 var rValue = (Expression) pValue;
@@ -130,7 +130,7 @@ namespace Stl.Reflection
                 var eAssign = Expression.Assign(lValue, rValue);
                 var eReturnTarget = Expression.Label();
                 var eBlock = Expression.Block(
-                    eAssign, 
+                    eAssign,
                     Expression.Return(eReturnTarget),
                     Expression.Label(eReturnTarget));
                 r = Expression.Lambda(eBlock, pObject, pValue).Compile();
@@ -140,10 +140,10 @@ namespace Stl.Reflection
         }
 
         // Prefers public properties over private ones
-        public static PropertyInfo? GetProperty(Type type, Symbol propertyName) 
-            => type.GetProperty(propertyName, 
+        public static PropertyInfo? GetProperty(Type type, Symbol propertyName)
+            => type.GetProperty(propertyName,
                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.IgnoreCase | BindingFlags.FlattenHierarchy)
-               ?? type.GetProperty(propertyName, 
+               ?? type.GetProperty(propertyName,
                    BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.IgnoreCase | BindingFlags.FlattenHierarchy);
     }
 }

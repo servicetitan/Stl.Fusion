@@ -23,7 +23,7 @@ namespace Stl.Extensibility
 
         public static Invoker<T, Unit> New<T>(
             ReadOnlyMemory<T> tail,
-            Action<T, Invoker<T, Unit>> handler, 
+            Action<T, Invoker<T, Unit>> handler,
             InvocationOrder order = InvocationOrder.Straight,
             Action<Exception, T, Invoker<T, Unit>>? errorHandler = null)
             => new Invoker<T, Unit>() {
@@ -36,7 +36,7 @@ namespace Stl.Extensibility
         public static Invoker<T, TState> New<T, TState>(
             T[] tail,
             TState initialState,
-            Action<T, Invoker<T, TState>> handler, 
+            Action<T, Invoker<T, TState>> handler,
             InvocationOrder order = InvocationOrder.Straight,
             Action<Exception, T, Invoker<T, TState>>? errorHandler = null)
             => new Invoker<T, TState>() {
@@ -49,7 +49,7 @@ namespace Stl.Extensibility
 
         public static Invoker<T, Unit> New<T>(
             T[] tail,
-            Action<T, Invoker<T, Unit>> handler, 
+            Action<T, Invoker<T, Unit>> handler,
             InvocationOrder order = InvocationOrder.Straight,
             Action<Exception, T, Invoker<T, Unit>>? errorHandler = null)
             => new Invoker<T, Unit>() {
@@ -91,7 +91,7 @@ namespace Stl.Extensibility
         }
     }
 
-    public abstract class InvokerBase<TItem> : InvokerBase 
+    public abstract class InvokerBase<TItem> : InvokerBase
     {
         public ReadOnlyMemory<TItem> Tail { get; set; }
     }
@@ -120,7 +120,7 @@ namespace Stl.Extensibility
 
         public override bool HasErrorHandler => ErrorHandler != null;
 
-        public override string ToString() 
+        public override string ToString()
             => $"{GetType().Name}(Handler={Handler}), Tail=[{Tail.Length} item(s)]";
 
         public override void Invoke()
@@ -154,7 +154,7 @@ namespace Stl.Extensibility
             var invoker = (TSelf) this;
             if (ErrorHandler == null)
                 Handler!.Invoke(item, invoker);
-            else { 
+            else {
                 try {
                     Handler!.Invoke(item, invoker);
                 }
@@ -165,7 +165,7 @@ namespace Stl.Extensibility
         }
     }
 
-    public class Invoker<TItem, TState> 
+    public class Invoker<TItem, TState>
         : InvokerBase<TItem, Invoker<TItem, TState>>
     {
         [AllowNull]

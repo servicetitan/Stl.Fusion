@@ -36,7 +36,7 @@ namespace Stl.Net
             Channel<string>? readChannel = null,
             Channel<string>? writeChannel = null,
             bool ownsWebSocket = true,
-            BoundedChannelOptions? channelOptions = null 
+            BoundedChannelOptions? channelOptions = null
         )
         {
             ReadBufferSize = readBufferSize;
@@ -91,13 +91,13 @@ namespace Stl.Net
         {
             var status = WebSocketCloseStatus.NormalClosure;
             var message = "Ok.";
-            
+
             var error = ReaderError ?? WriterError;
             if (error != null) {
                 status = WebSocketCloseStatus.InternalServerError;
                 message = "Internal Server Error.";
             }
-            
+
             await WebSocket.CloseAsync(status, message, cancellationToken).ConfigureAwait(false);
         }
 

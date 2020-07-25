@@ -54,10 +54,10 @@ namespace Stl.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ArrayBuffer<T> Lease(int capacity = DefaultCapacity) 
+        public static ArrayBuffer<T> Lease(int capacity = DefaultCapacity)
             => new ArrayBuffer<T>(capacity);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ArrayBuffer<T> LeaseAndSetCount(int count) 
+        public static ArrayBuffer<T> LeaseAndSetCount(int count)
             => new ArrayBuffer<T>(count) {Count = count};
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -69,8 +69,8 @@ namespace Stl.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Span<T>.Enumerator GetEnumerator() => Span.GetEnumerator(); 
-        
+        public Span<T>.Enumerator GetEnumerator() => Span.GetEnumerator();
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T[] ToArray() => Span.ToArray();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -148,7 +148,7 @@ namespace Stl.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void CopyTo(T[] array, int arrayIndex) 
+        public void CopyTo(T[] array, int arrayIndex)
             => Buffer.CopyTo(array.AsSpan().Slice(arrayIndex));
 
         // Private methods

@@ -24,8 +24,8 @@ namespace Stl.Tests.Fusion.Services
 
         public TestWebServer(IServiceProvider services, int? port = null)
         {
-            port ??= WebTestEx.GetRandomPort(); 
-            Port = port.Value; 
+            port ??= WebTestEx.GetRandomPort();
+            Port = port.Value;
             BaseUri = WebTestEx.GetLocalUri(Port);
             Services = services;
         }

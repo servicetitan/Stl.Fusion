@@ -48,7 +48,7 @@ namespace Stl.Fusion
             return services.AddFusionCore();
         }
 
-        public static IServiceCollection AddFusion(this IServiceCollection services, 
+        public static IServiceCollection AddFusion(this IServiceCollection services,
             bool addServerCore, bool addClientCore)
         {
             if (addServerCore)
@@ -67,17 +67,17 @@ namespace Stl.Fusion
             where TService : class
             where TImpl : class, TService
             => services.AddComputedService(typeof(TService), typeof(TImpl));
-        
+
         public static IServiceCollection AddComputedService(this IServiceCollection services, Type type)
             => services.AddComputedService(type, type);
-        public static IServiceCollection AddComputedService(this IServiceCollection services, 
+        public static IServiceCollection AddComputedService(this IServiceCollection services,
             Type type, Type implementationType)
         {
             if (!type.IsAssignableFrom(implementationType))
                 throw new ArgumentOutOfRangeException(nameof(implementationType));
             if (!typeof(IComputedService).IsAssignableFrom(implementationType))
                 throw Errors.MustImplement<IComputedService>(implementationType);
-            
+
             object Factory(IServiceProvider c)
             {
                 // We should try to validate it here because if the type doesn't

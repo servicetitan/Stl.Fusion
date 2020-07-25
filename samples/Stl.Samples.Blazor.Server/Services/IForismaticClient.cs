@@ -9,7 +9,7 @@ namespace Stl.Samples.Blazor.Server.Services
     {
         [Get("?method=getQuote&format=json")]
         Task<JObject> GetQuoteAsync(
-            [Query("lang")] string language = "en", 
+            [Query("lang")] string language = "en",
             CancellationToken cancellationToken = default);
     }
 }

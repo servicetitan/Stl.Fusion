@@ -13,7 +13,7 @@ namespace Stl
 
         public int MaxTryCount { get; }
 
-        public RetryPolicy(int maxTryCount) 
+        public RetryPolicy(int maxTryCount)
             => MaxTryCount = maxTryCount;
 
         public virtual bool MustRetry(TTarget target, Exception error, int tryIndex)
@@ -21,6 +21,6 @@ namespace Stl
             if (error is OperationCanceledException)
                 return false;
             return tryIndex < MaxTryCount;
-        } 
+        }
     }
 }

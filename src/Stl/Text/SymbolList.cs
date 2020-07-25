@@ -33,10 +33,10 @@ namespace Stl.Text
 
         public SymbolList(params Symbol[] segments)
         {
-            if (segments.Length == 0) 
+            if (segments.Length == 0)
                 throw new ArgumentOutOfRangeException(nameof(segments));
             var prefix = Null;
-            for (var index = 0; index < segments.Length - 1; index++) 
+            for (var index = 0; index < segments.Length - 1; index++)
                 prefix = new SymbolList(prefix, segments[index]);
             Prefix = prefix;
             Tail = segments[^1];
@@ -45,12 +45,12 @@ namespace Stl.Text
             HashCode = ComputeHashCode();
         }
 
-        public SymbolList Concat(Symbol tail) 
+        public SymbolList Concat(Symbol tail)
             => new SymbolList(this, tail);
-        public SymbolList Concat(SymbolList other) 
+        public SymbolList Concat(SymbolList other)
             => other.GetSegments().Aggregate(this, (current, tail) => current.Concat(tail));
 
-        public static SymbolList Parse(string formattedValue) 
+        public static SymbolList Parse(string formattedValue)
             => SymbolListFormatter.Default.Parse(formattedValue);
 
         public override string ToString() => $"{GetType().Name}({FormattedValue})";
@@ -67,14 +67,14 @@ namespace Stl.Text
         public static SymbolList operator +(SymbolList first, SymbolList second) => first.Concat(second);
 
         // Equality & comparison
-        
-        public bool Equals(SymbolList? other) 
-            => other != null && HashCode == other.HashCode 
+
+        public bool Equals(SymbolList? other)
+            => other != null && HashCode == other.HashCode
                 && Tail == other.Tail && (Prefix?.Equals(other.Prefix) ?? other.Prefix == null);
-        public override bool Equals(object? obj) 
+        public override bool Equals(object? obj)
             => ReferenceEquals(this, obj) || obj is SymbolList other && Equals(other);
         public override int GetHashCode() => HashCode;
-        
+
         public int CompareTo(SymbolList? other)
         {
             if (other == null)
@@ -104,10 +104,10 @@ namespace Stl.Text
             }
             return true;
         }
-        
+
         // Enumeration
-        
-        public Symbol[] GetSegments(bool reversed = false) 
+
+        public Symbol[] GetSegments(bool reversed = false)
         {
             var result = new Symbol[SegmentCount];
             SymbolList? current = this;
@@ -139,11 +139,11 @@ namespace Stl.Text
             HashCode = parsed.HashCode;
         }
 
-        void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context) 
+        void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
             => info.AddValue(nameof(FormattedValue), FormattedValue);
-        
+
         // Private methods
-        
+
         private int ComputeHashCode() => unchecked ((Prefix?.HashCode ?? 0) * 397 ^ Tail.HashCode);
     }
 }

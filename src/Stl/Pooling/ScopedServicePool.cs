@@ -15,7 +15,7 @@ namespace Stl.Pooling
         private readonly ConcurrentPool<IServiceScope> _scopePool;
         private readonly Func<TService, bool> _canReuseHandler;
 
-        public ScopedServicePool(IServiceProvider services, 
+        public ScopedServicePool(IServiceProvider services,
             Func<TService, bool> canReuseHandler,
             int capacity)
         {

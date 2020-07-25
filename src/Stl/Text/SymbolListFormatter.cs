@@ -8,7 +8,7 @@ namespace Stl.Text
         string ToString(SymbolList source);
         SymbolList Parse(string source);
     }
-    
+
     public class SymbolListFormatter : ISymbolListFormatter
     {
         public static ISymbolListFormatter Default { get; } = new SymbolListFormatter('|');

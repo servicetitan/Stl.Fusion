@@ -28,7 +28,7 @@ namespace Stl.Tests.Extensibility
             Invoker.New(new [] {10}, 1, Add).Run().State.Should().Be(11);
             Invoker.New(new [] {1, 2, 3}, 0, Add).Run().State.Should().Be(6);
         }
-        
+
         [Fact]
         public void OrderAndErrorHandlingTest()
         {
@@ -46,7 +46,7 @@ namespace Stl.Tests.Extensibility
                     throw new ArgumentException();
                 invoker.State += s;
             }
-            
+
             Invoker.New(new [] {"a", "b"}, "", Concat1)
                 .Run().State.Should().Be("ab");
             Invoker.New(new [] {"a", "b"}, "", Concat1, InvocationOrder.Reverse)
@@ -68,7 +68,7 @@ namespace Stl.Tests.Extensibility
             action.Should().Throw<ArgumentException>();
 
             var errorHandlerCalled = false;
-            void ErrorHandler(Exception e, string s, Invoker<string, string> invoker) 
+            void ErrorHandler(Exception e, string s, Invoker<string, string> invoker)
                 => errorHandlerCalled = true;
 
             action = () => {
@@ -84,7 +84,7 @@ namespace Stl.Tests.Extensibility
             };
             action.Should().NotThrow();
         }
-        
+
         [Fact]
         public void StatelessChainTest()
         {
@@ -93,12 +93,12 @@ namespace Stl.Tests.Extensibility
                 box.Value += 1;
                 chain.Invoke();
             }
-            const int chainLength = 10; 
+            const int chainLength = 10;
             var boxes = Enumerable.Range(0, chainLength).Select(i => Box.New(0)).ToArray();
             Invoker.New(boxes, Increment).Run();
             boxes.Sum(b => b.Value).Should().Be(chainLength);
         }
-        
+
         [Fact]
         public async Task SimpleChainTestAsync()
         {
@@ -114,8 +114,8 @@ namespace Stl.Tests.Extensibility
             (await AsyncInvoker.New(new [] {1, 2, 3}, 0, AddAsync).RunAsync()).State
                 .Should().Be(6);
         }
-        
-        
+
+
         [Fact]
         public async Task OrderAndErrorHandlingTestAsync()
         {
@@ -134,7 +134,7 @@ namespace Stl.Tests.Extensibility
                     throw new ArgumentException();
                 invoker.State += s;
             }
-            
+
             (await AsyncInvoker.New(new [] {"a", "b"}, "", Concat1Async).RunAsync())
                 .State.Should().Be("ab");
             (await AsyncInvoker.New(new [] {"a", "b"}, "", Concat1Async, InvocationOrder.Reverse).RunAsync())
@@ -160,7 +160,7 @@ namespace Stl.Tests.Extensibility
             action.Should().Throw<ArgumentException>();
 
             var errorHandlerCalled = false;
-            void ErrorHandler(Exception e, string s, AsyncInvoker<string, string> invoker) 
+            void ErrorHandler(Exception e, string s, AsyncInvoker<string, string> invoker)
                 => errorHandlerCalled = true;
 
             action = () => {
@@ -192,7 +192,7 @@ namespace Stl.Tests.Extensibility
             // the calls are async-recursive, so in this case
             // they shouldn't trigger StackOverflowException
             // even for very long chains
-            const int chainLength = 1000; 
+            const int chainLength = 1000;
             var boxes = Enumerable.Range(0, chainLength).Select(i => Box.New(0)).ToArray();
             await AsyncInvoker.New(boxes, IncrementAsync).RunAsync();
             boxes.Sum(b => b.Value).Should().Be(chainLength);

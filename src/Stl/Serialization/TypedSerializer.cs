@@ -10,13 +10,13 @@ namespace Stl.Serialization
     {
         private readonly ISerializer<TSerialized> _serializer;
 
-        public TypedSerializer(ISerializer<TSerialized> serializer) 
+        public TypedSerializer(ISerializer<TSerialized> serializer)
             => _serializer = serializer;
 
-        public TSerialized Serialize(T native) 
+        public TSerialized Serialize(T native)
             => _serializer.Serialize(native);
 
-        public T Deserialize(TSerialized serialized) 
+        public T Deserialize(TSerialized serialized)
             => _serializer.Deserialize<T>(serialized);
     }
 }

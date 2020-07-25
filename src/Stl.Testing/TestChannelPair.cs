@@ -21,7 +21,7 @@ namespace Stl.Testing
             };
             if (Out == null) {
                 var cp = ChannelPair.CreateTwisted(
-                    Channel.CreateBounded<T>(options), 
+                    Channel.CreateBounded<T>(options),
                     Channel.CreateBounded<T>(options));
                 Channel1 = cp.Channel1;
                 Channel2 = cp.Channel2;

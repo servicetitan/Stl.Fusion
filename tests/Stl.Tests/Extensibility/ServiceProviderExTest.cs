@@ -70,7 +70,7 @@ namespace Stl.Tests.Extensibility
             b.Y.Should().BeEmpty();
 
             ((Action) (() => {
-                var c = services.Activate<C>(); 
+                var c = services.Activate<C>();
             })).Should().Throw<InvalidOperationException>();
         }
     }

@@ -9,7 +9,7 @@ namespace Stl.Fusion
 {
     public interface IFunction : IAsyncDisposable
     {
-        Task<IComputed> InvokeAsync(ComputedInput input, 
+        Task<IComputed> InvokeAsync(ComputedInput input,
             IComputed? usedBy,
             ComputeContext? context,
             CancellationToken cancellationToken = default);
@@ -50,13 +50,13 @@ namespace Stl.Fusion
             InvalidatedHandler = c => Unregister((IComputed<TIn, TOut>) c!);
         }
 
-        async Task<IComputed> IFunction.InvokeAsync(ComputedInput input, 
+        async Task<IComputed> IFunction.InvokeAsync(ComputedInput input,
             IComputed? usedBy,
             ComputeContext? context,
-            CancellationToken cancellationToken) 
+            CancellationToken cancellationToken)
             => await InvokeAsync((TIn) input, usedBy, context, cancellationToken).ConfigureAwait(false);
 
-        public virtual async Task<IComputed<TOut>> InvokeAsync(TIn input, 
+        public virtual async Task<IComputed<TOut>> InvokeAsync(TIn input,
             IComputed? usedBy,
             ComputeContext? context,
             CancellationToken cancellationToken = default)
@@ -76,7 +76,7 @@ namespace Stl.Fusion
             }
 
             using var @lock = await Locks.LockAsync(input, cancellationToken).ConfigureAwait(false);
-            
+
             result = TryGetCached(input, usedBy);
             resultIsConsistent = result?.IsConsistent ?? false;
             if (resultIsConsistent || (context.CallOptions & CallOptions.TryGetCached) != 0) {
@@ -95,13 +95,13 @@ namespace Stl.Fusion
             return result;
         }
 
-        Task IFunction.InvokeAndStripAsync(ComputedInput input,  
-            IComputed? usedBy, 
-            ComputeContext? context, 
-            CancellationToken cancellationToken) 
+        Task IFunction.InvokeAndStripAsync(ComputedInput input,
+            IComputed? usedBy,
+            ComputeContext? context,
+            CancellationToken cancellationToken)
             => InvokeAndStripAsync((TIn) input, usedBy, context, cancellationToken);
 
-        public virtual async Task<TOut> InvokeAndStripAsync(TIn input, 
+        public virtual async Task<TOut> InvokeAndStripAsync(TIn input,
             IComputed? usedBy,
             ComputeContext? context,
             CancellationToken cancellationToken = default)
@@ -121,7 +121,7 @@ namespace Stl.Fusion
             }
 
             using var @lock = await Locks.LockAsync(input, cancellationToken).ConfigureAwait(false);
-            
+
             result = TryGetCached(input, usedBy);
             resultIsConsistent = result?.IsConsistent ?? false;
             if (resultIsConsistent || (context.CallOptions & CallOptions.TryGetCached) != 0) {
@@ -140,7 +140,7 @@ namespace Stl.Fusion
             return result.Strip();
         }
 
-        IComputed? IFunction.TryGetCached(ComputedInput input, IComputed? usedBy) 
+        IComputed? IFunction.TryGetCached(ComputedInput input, IComputed? usedBy)
             => TryGetCached((TIn) input, null);
         public virtual IComputed<TOut>? TryGetCached(TIn input, IComputed? usedBy)
         {
@@ -155,10 +155,10 @@ namespace Stl.Fusion
         protected abstract ValueTask<IComputed<TOut>> ComputeAsync(
             TIn input, IComputed<TOut>? cached, CancellationToken cancellationToken);
 
-        protected void Register(IComputed<TIn, TOut> computed) 
+        protected void Register(IComputed<TIn, TOut> computed)
             => ComputedRegistry.Store(computed);
 
-        protected void Unregister(IComputed<TIn, TOut> computed) 
+        protected void Unregister(IComputed<TIn, TOut> computed)
             => ComputedRegistry.Remove(computed);
     }
 }

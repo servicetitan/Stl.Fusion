@@ -15,9 +15,9 @@ namespace Stl.Concurrency
 
         public int Capacity { get; }
 
-        public ConcurrentPool(Func<T> itemFactory) 
+        public ConcurrentPool(Func<T> itemFactory)
             : this(itemFactory, DefaultCapacity) { }
-        public ConcurrentPool(Func<T> itemFactory, int capacity) 
+        public ConcurrentPool(Func<T> itemFactory, int capacity)
             : this(itemFactory, capacity, StochasticCounter.DefaultApproximationFactor) { }
         public ConcurrentPool(Func<T> itemFactory, int capacity, int counterApproximationFactor)
         {

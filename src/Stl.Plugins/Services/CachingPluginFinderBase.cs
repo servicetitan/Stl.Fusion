@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 using Stl.Caching;
 using Stl.Plugins.Metadata;
 
-namespace Stl.Plugins.Services 
+namespace Stl.Plugins.Services
 {
     public abstract class CachingPluginFinderBase : IPluginFinder
     {
@@ -23,7 +23,7 @@ namespace Stl.Plugins.Services
             _lazyCache = new Lazy<IAsyncCache<string, string>>(CreateCache);
         }
 
-        public PluginSetInfo FindPlugins() 
+        public PluginSetInfo FindPlugins()
             => Task.Run(GetPluginSetInfoAsync).Result;
 
         // This method is async solely because ICache API is async
@@ -54,15 +54,15 @@ namespace Stl.Plugins.Services
             return pluginSetInfo;
         }
 
-        protected virtual JsonSerializerSettings GetJsonSerializerSettings() 
+        protected virtual JsonSerializerSettings GetJsonSerializerSettings()
             => new JsonSerializerSettings() {
                 TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
             };
 
-        protected virtual string Serialize(PluginSetInfo source) 
+        protected virtual string Serialize(PluginSetInfo source)
             => JsonConvert.SerializeObject(source, GetJsonSerializerSettings());
 
-        protected virtual PluginSetInfo Deserialize(string source) 
+        protected virtual PluginSetInfo Deserialize(string source)
             => JsonConvert.DeserializeObject<PluginSetInfo>(source, GetJsonSerializerSettings())
                 ?? PluginSetInfo.Empty;
 

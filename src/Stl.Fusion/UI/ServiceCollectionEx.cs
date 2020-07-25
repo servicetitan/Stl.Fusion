@@ -57,25 +57,25 @@ namespace Stl.Fusion.UI
         // AddLiveUpdater
 
         public static IServiceCollection AddLiveStateUpdater(
-            this IServiceCollection services, 
+            this IServiceCollection services,
             Type stateType, Type updaterType)
         {
             var iUpdaterType = typeof(ILiveStateUpdater<>).MakeGenericType(stateType);
             if (typeof(IComputedService).IsAssignableFrom(updaterType))
                 services.AddComputedService(iUpdaterType, updaterType);
-            else 
+            else
                 services.TryAddSingleton(iUpdaterType, updaterType);
             return services;
         }
 
         public static IServiceCollection AddLiveStateUpdater(
-            this IServiceCollection services, 
+            this IServiceCollection services,
             Type localType, Type stateType, Type updaterType)
         {
             var iUpdaterType = typeof(ILiveStateUpdater<,>).MakeGenericType(localType, stateType);
             if (typeof(IComputedService).IsAssignableFrom(updaterType))
                 services.AddComputedService(iUpdaterType, updaterType);
-            else 
+            else
                 services.TryAddSingleton(iUpdaterType, updaterType);
             return services;
         }
@@ -87,7 +87,7 @@ namespace Stl.Fusion.UI
         {
             if (typeof(IComputedService).IsAssignableFrom(typeof(TLiveUpdater)))
                 services.AddComputedService<ILiveStateUpdater<TState>, TLiveUpdater>();
-            else 
+            else
                 services.TryAddSingleton<ILiveStateUpdater<TState>, TLiveUpdater>();
             return services;
         }
@@ -99,7 +99,7 @@ namespace Stl.Fusion.UI
         {
             if (typeof(IComputedService).IsAssignableFrom(typeof(TLiveUpdater)))
                 services.AddComputedService<ILiveStateUpdater<TLocal, TState>, TLiveUpdater>();
-            else 
+            else
                 services.TryAddSingleton<ILiveStateUpdater<TLocal, TState>, TLiveUpdater>();
             return services;
         }

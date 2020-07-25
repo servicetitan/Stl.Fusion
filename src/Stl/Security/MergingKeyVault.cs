@@ -14,10 +14,10 @@ namespace Stl.Security
             SecondaryVault = secondaryVault;
         }
 
-        public string? TryGetSecret(string key) 
-            => PrimaryVault.TryGetSecret(key) ?? SecondaryVault.TryGetSecret(key); 
-        public async ValueTask<string?> TryGetSecretAsync(string key) 
-            => (await PrimaryVault.TryGetSecretAsync(key).ConfigureAwait(false)) 
-                ?? (await SecondaryVault.TryGetSecretAsync(key).ConfigureAwait(false)); 
+        public string? TryGetSecret(string key)
+            => PrimaryVault.TryGetSecret(key) ?? SecondaryVault.TryGetSecret(key);
+        public async ValueTask<string?> TryGetSecretAsync(string key)
+            => (await PrimaryVault.TryGetSecretAsync(key).ConfigureAwait(false))
+                ?? (await SecondaryVault.TryGetSecretAsync(key).ConfigureAwait(false));
     }
 }

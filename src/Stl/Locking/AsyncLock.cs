@@ -6,7 +6,7 @@ using Stl.Async;
 using Stl.Internal;
 using Stl.Locking.Internal;
 
-namespace Stl.Locking 
+namespace Stl.Locking
 {
     public enum ReentryMode
     {
@@ -14,7 +14,7 @@ namespace Stl.Locking
         CheckedPass,
         UncheckedDeadlock,
     }
-    
+
     public interface IAsyncLock
     {
         ReentryMode ReentryMode { get; }
@@ -30,18 +30,18 @@ namespace Stl.Locking
         private readonly TaskCreationOptions _taskCreationOptions;
 
         public ReentryMode ReentryMode { get; }
-        public bool IsLocked => _lock != null; 
-        public bool? IsLockedLocally => _reentryCounter == null 
-            ? (bool?) null // No reentry counter -> we don't track reentry 
+        public bool IsLocked => _lock != null;
+        public bool? IsLockedLocally => _reentryCounter == null
+            ? (bool?) null // No reentry counter -> we don't track reentry
             : _reentryCounter.Value?.Count > 0;
 
-        public AsyncLock(ReentryMode reentryMode, 
+        public AsyncLock(ReentryMode reentryMode,
             TaskCreationOptions taskCreationOptions = TaskCreationOptions.RunContinuationsAsynchronously)
         {
             ReentryMode = reentryMode;
             _taskCreationOptions = taskCreationOptions;
-            _reentryCounter = ReentryMode != ReentryMode.UncheckedDeadlock 
-                ? new AsyncLocal<ReentryCounter>() 
+            _reentryCounter = ReentryMode != ReentryMode.UncheckedDeadlock
+                ? new AsyncLocal<ReentryCounter>()
                 : null;
         }
 
@@ -67,7 +67,7 @@ namespace Stl.Locking
         }
 
         protected async ValueTask<IDisposable> SlowInternalLockAsync(
-            ReentryCounter? reentryCounter, CancellationToken cancellationToken = default) 
+            ReentryCounter? reentryCounter, CancellationToken cancellationToken = default)
             => await FastInternalLockAsync(reentryCounter, cancellationToken).ConfigureAwait(false);
 
         protected async ValueTask<Releaser> FastInternalLockAsync(
@@ -83,7 +83,7 @@ namespace Stl.Locking
                 if (oldLock == null)
                     return new Releaser(this, newLockSrc, reentryCounter);
                 if (oldLock.IsCompleted)
-                    continue; // Task.WhenAny will return immediately, so let's save a bit 
+                    continue; // Task.WhenAny will return immediately, so let's save a bit
                 cancellationTask ??= cancellationToken.ToTask(true);
                 await Task.WhenAny(oldLock, cancellationTask).ConfigureAwait(false);
             }
@@ -92,7 +92,7 @@ namespace Stl.Locking
         public struct Releaser : IDisposable
         {
             private readonly AsyncLock _owner;
-            private readonly TaskSource<Unit> _taskSource; 
+            private readonly TaskSource<Unit> _taskSource;
             private readonly ReentryCounter? _reentryCounter;
 
             public Releaser(AsyncLock owner, TaskSource<Unit> taskSource, ReentryCounter? reentryCounter)
@@ -110,7 +110,7 @@ namespace Stl.Locking
                 // We should leave reentry first. ReentryCounter.Count == 0 will prevent
                 // locks from the same async flow to re-enter w/o actually acquiring
                 // a lock, i.e. they'll be forced to acquire their own locks.
-                _reentryCounter?.Leave(); 
+                _reentryCounter?.Leave();
                 if (_taskSource.IsEmpty)
                     return;
 
@@ -120,7 +120,7 @@ namespace Stl.Locking
                     throw Errors.InternalError("Something is off with AsyncLock!");
 
                 // And this should be done at the very end
-                _taskSource.SetResult(default); 
+                _taskSource.SetResult(default);
             }
         }
     }

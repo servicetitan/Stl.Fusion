@@ -11,7 +11,7 @@ namespace Stl.Collections.Slim
         private int _count;
         private (T, T, T, T) _tuple;
         private ImmutableHashSet<T>? _set;
-        
+
         private bool HasSet {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _set != null;
@@ -42,7 +42,7 @@ namespace Stl.Collections.Slim
                 _set = set;
                 return true;
             }
-            
+
             // Item 1
             if (_count < 1) {
                 _tuple.Item1 = item;
@@ -66,7 +66,7 @@ namespace Stl.Collections.Slim
                 return true;
             }
             if (EqualityComparer<T>.Default.Equals(_tuple.Item3, item)) return true;
-            
+
             // Item 4
             if (_count < 4) {
                 _tuple.Item4 = item;
@@ -94,7 +94,7 @@ namespace Stl.Collections.Slim
                 _set = set;
                 return true;
             }
-            
+
             // Item 1
             if (_count < 1) return false;
             if (EqualityComparer<T>.Default.Equals(_tuple.Item1, item)) {
@@ -125,7 +125,7 @@ namespace Stl.Collections.Slim
                 _count--;
                 return true;
             }
-            
+
             return false;
         }
 
@@ -153,7 +153,7 @@ namespace Stl.Collections.Slim
                 yield return _tuple.Item4;
             }
         }
-        
+
         public void Apply<TState>(TState state, Action<TState, T> action)
         {
             if (HasSet) {
@@ -170,7 +170,7 @@ namespace Stl.Collections.Slim
             if (_count < 4) return;
             action(state, _tuple.Item4);
         }
-        
+
         public void Aggregate<TState>(ref TState state, Aggregator<TState, T> aggregator)
         {
             if (HasSet) {
@@ -187,7 +187,7 @@ namespace Stl.Collections.Slim
             if (_count < 4) return;
             aggregator(ref state, _tuple.Item4);
         }
-        
+
         public void Aggregate<TState>(TState state, Func<TState, T, TState> aggregator)
         {
             if (HasSet) {

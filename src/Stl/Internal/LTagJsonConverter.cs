@@ -5,7 +5,7 @@ namespace Stl.Internal
 {
     public class LTagJsonConverter : JsonConverter
     {
-        public override bool CanConvert(Type objectType) 
+        public override bool CanConvert(Type objectType)
             => objectType == typeof(LTag);
 
         public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
