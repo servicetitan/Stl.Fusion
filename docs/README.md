@@ -61,5 +61,3 @@ Indirect contributors & everyone else who made Stl.Fusion possible:
   [DynamicProxy from Castle.Core](http://www.castleproject.org/projects/dynamicproxy/),
   [RestEase](https://github.com/canton7/RestEase), and 
   [Json.NET](https://www.newtonsoft.com/json).
-
-P.S. [Your pull request](https://github.com/servicetitan/Stl/pulls) is all we need to list you here.
