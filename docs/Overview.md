@@ -594,7 +594,7 @@ All of this means that if you write your controllers like this, you get both a
 "normal" server-side API, and an API that supports Fusion publication mechanism
 almost for free!
 
-The proof: if you open Fusion samples and go to http://localhost:5000/swagger/ page,
+The proof: if you open Fusion samples and go to http://localhost:5005/swagger/ page,
 you'll see this:
 
 ![](img/SwaggerDoc.jpg)
