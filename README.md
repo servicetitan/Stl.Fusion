@@ -45,15 +45,15 @@ abstractions from `Stl.Fusion.dll`:
 ![](docs/img/Stl-Fusion-Chat-Sample.gif)
 
 Note that "Composition" sample shown in a separate window in the bottom-right corner
-also properly updates its page - in particular, it captures the last chat message. It's
-actually the most interesting example there, since it "composes" the final state (its UI model)
-by two different ways: 
-* One is 
+also properly updates everything. It shows Fusion's ability to use both local `IComputed<T>` 
+instances and client-side replicas of similar server-side instances to compute a new value
+that properly tracks all these dependencies and updates accordingly: 
+* First panel's UI model is 
   [composed on the server-side](https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/src/Blazor/Server/Services/ServerSideComposerService.cs);
-  its replica is published to all the clients
-* And another one is 
+  its client-side replica is bound to the component displaying the panel
+* And the second panel uses an UI model
   [composed completely on the client](https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/src/Blazor/Client/Services/ClientSideComposerService.cs) 
-  by combining other server-side replicas.
+  by combining server-side replicas of all the values used there.
 * **The surprising part:** two above files are almost identical!
 
 "Server Screen" sample captures and shares server screen in real time, and
