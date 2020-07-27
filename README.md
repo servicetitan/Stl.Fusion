@@ -2,7 +2,7 @@
 
 > All project updates are published on our [Discord Server](https://discord.gg/EKEwv6d); it's also the best place for Q/A.\
 > [![Build](https://github.com/servicetitan/Stl.Fusion/workflows/Build/badge.svg)](https://github.com/servicetitan/Stl.Fusion/actions?query=workflow%3A%22Build%22)
-> [![NuGetVersion](https://img.shields.io/nuget/v/Stl.Fusion)](https://www.nuget.org/packages/Stl.Fusion) 
+> [![NuGetVersion](https://img.shields.io/nuget/v/Stl.Fusion)](https://www.nuget.org/packages?q=Owner%3Aservicetitan+Tags%3Astl_fusion) 
 
 **Stl.Fusion** is .NET Core & Blazor library that attempts to dramatically
 improve the way we write real-time services and UIs. If you ever dreamed 
@@ -10,6 +10,9 @@ of an abstraction that **automatically delivers every modification made to your
 server-side data to every client who uses (e.g. displays) the affected data**, 
 you've just found it.
 
+If you'd rather jump straight to the code, check out 
+[Stl.Fusion.Samples repository](https://github.com/servicetitan/Stl.Fusion.Samples) +
+an [Overview](docs/Overview.md).
 
 ## Create Real-Time User Interfaces With Almost No Extra Code
 
@@ -46,12 +49,12 @@ also properly updates its page - in particular, it captures the last chat messag
 actually the most interesting example there, since it "composes" the final state (its UI model)
 by two different ways: 
 * One is 
-  [composed on the server side](https://github.com/servicetitan/Stl/blob/master/samples/Stl.Samples.Blazor.Server/Services/ServerSideComposerService.cs);
+  [composed on the server-side](https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/src/Blazor/Server/Services/ServerSideComposerService.cs);
   its replica is published to all the clients
 * And another one is 
-  [composed completely on the client](https://github.com/servicetitan/Stl/blob/master/samples/Stl.Samples.Blazor.Client/Services/ClientSideComposerService.cs) 
+  [composed completely on the client](https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/src/Blazor/Client/Services/ClientSideComposerService.cs) 
   by combining other server-side replicas.
-* **The surprising part:** notice two above files are almost identical!
+* **The surprising part:** two above files are almost identical!
 
 "Server Screen" sample captures and shares server screen in real time, and
 the code there is almost identical to "Server Time" (the most straightforward 
@@ -86,7 +89,7 @@ The speed difference is quite impressive:
 Obviously, you're expected to get a huge performance boost in any scenario involving
 local caching, but note that here you get it almost for free in terms of extra code, 
 and moreover, you get an *almost* always consistent cache. In reality, it's still 
-an *eventually consistent* cache, but with extremelly short inconsistency periods per
+an *eventually consistent* cache, but with extremely short inconsistency periods per
 cache entry.
 
 ## So What Is Fusion?
@@ -182,9 +185,8 @@ right after your own action.
 
 ## Next Steps
 
-* If above description looks too complicated for you, please check out
+* If above description looks complicated for you, please check out
   [Stl.Fusion In Simple Terms](https://medium.com/@alexyakunin/stl-fusion-in-simple-terms-65b1975967ab?source=friends_link&sk=04e73e75a52768cf7c3330744a9b1e38)
-* Otherwise, go to [Overview](docs/Overview.md) 
-  or [Documentation Home](docs/README.md)
+* Otherwise, go [Documentation Home](docs/README.md)
 * Join our [Discord Server](https://discord.gg/EKEwv6d) 
   to ask questions and track project updates.

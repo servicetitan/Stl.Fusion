@@ -1,112 +1,65 @@
 # Stl.Fusion Documentation
 
-## 1. Get Fusion
+## Samples and Tutorial
 
-Even though all Fusion packages are 
-[available on NuGet](https://www.nuget.org/packages?q=Owner%3Aservicetitan+Tags%3Astl_fusion),
-we highly recommend you to clone the repository, since it includes
-the tutorial and samples.
-
-```bash
-git clone git@github.com:servicetitan/Stl.Fusion.git
+1\. Clone [Stl.Fusion.Samples repository](https://github.com/servicetitan/Stl.Fusion.Samples):
+```
+git clone git@github.com:servicetitan/Stl.Fusion.Samples.git
 ```
 
-You also need to install:
-- [.NET Core SDK 3.1](https://dotnet.microsoft.com/download) 
-  &ndash; to use or build Fusion. 
-- [try-dotnet](https://github.com/dotnet/try/blob/master/DotNetTryLocal.md) 
-  &ndash; to run the [Tutorial](tutorial/README.md).
-- If you only intend to run samples, you need just 
-  [docker-compose](https://docs.docker.com/compose/install/). 
+2\. Follow the instructions in its
+[README.md](https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/README.md)
+to build and run everything.
 
-## 2. Run Samples
-
-Using IDE:
-* Open the `Stl.sln` in your favorite IDE
-(note that Blazor *debugging* is currently supported only in Visual Studio and VSCode though)
-* Run "Stl.Samples.Blazor.Server" project
-* Open http://localhost:5000 unless it didn't happen automatically.
-
-If you prefer a CLI-only way, `cd` to the repository folder and run:
-
-*   Windows:
-    ```cmd
-    dotnet build
-    # The next line is optional - you need it if you want to debug Blazor client
-    set ASPNETCORE_ENVIRONMENT=Development
-    start "Stl.Samples.Blazor.Server" dotnet artifacts/samples/Stl.Samples.Blazor.Server/Stl.Samples.Blazor.Server.dll
-    start "Samples" http://localhost:5000/
-    ``` 
-*   Unix:
-    ```
-    dotnet build
-    # The next line is optional - you need it if you want to debug Blazor client
-    export ASPNETCORE_ENVIRONMENT=Development
-    dotnet artifacts/samples/Stl.Samples.Blazor.Server/Stl.Samples.Blazor.Server.dll
-    ```
-*   Finally, if you don't want to install .NET Core SDK, you can run the samples 
-    in Docker:
-    ```cmd
-    cd docker
-    docker-compose up 
-    start "Samples" http://localhost:5000/
-    ```
-
-> A few other useful scripts can be found in 
-> ["scripts" folder](https://github.com/servicetitan/Stl/tree/master/scripts).
-
-## 3. Learn Fusion
+## Documentation
 
 * [Overview](Overview.md) is the best place to start. 
   It describes what Stl.Fusion is on conceptual level
   and explains the most tricky concepts on relatively simple
   examples.
-* [Stl.Fusion In Simple Terms](https://medium.com/@alexyakunin/stl-fusion-in-simple-terms-65b1975967ab?source=friends_link&sk=04e73e75a52768cf7c3330744a9b1e38) 
-  is so far the best descriptin of what Fusion is for non-developers
-* [Tutorial](tutorial/README.md) &ndash; it's not fully finished yet,
-  but the best part is: it is interactive, so any code you see
-  there is runnable with [try-dotnet](https://github.com/dotnet/try/blob/master/DotNetTryLocal.md)!
+* [Tutorial](https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/README.md) &ndash; 
+  now a part of [Stl.Fusion.Samples repository](https://github.com/servicetitan/Stl.Fusion.Samples),
+  not fully finished yet, but the best part is: it is interactive, so any code you see
+  there is runnable!
 * [The Story Behind Stl.Fusion](Story.md) &ndash; maybe you'll find
   it interesting too.
 * Join our [Discord Server](https://discord.gg/EKEwv6d) 
   to ask questions and track project updates
 * Check out [Q/A](QA.md) to get answers on some frequent questions.
-  
+
+Posts:
+* [Stl.Fusion In Simple Terms](https://medium.com/@alexyakunin/stl-fusion-in-simple-terms-65b1975967ab?source=friends_link&sk=04e73e75a52768cf7c3330744a9b1e38) &ndash;
+  so far the best description of what Fusion is for non-developers
+* [How similar is Stl.Fusion to SignalR?](https://medium.com/@alexyakunin/how-similar-is-stl-fusion-to-signalr-e751c14b70c3?source=friends_link&sk=241d5293494e352f3db338d93c352249)
+* [How similar is Stl.Fusion to Knockout / MobX?](https://medium.com/@alexyakunin/how-similar-is-stl-fusion-to-knockout-mobx-fcebd0bef5d5?source=friends_link&sk=a808f7c46c4d5613605f8ada732e790e)
+
+
 That's it for now, but we'll definitely add more over time. 
-
-## 4. Use Fusion
-
-Overall, it's fairly simple:
-* Server-side code should reference 
-  [Stl.Fusion.Server](https://www.nuget.org/packages/Stl.Fusion.Server/) NuGet package
-* Client-side code should reference
-  [Stl.Fusion.Client](https://www.nuget.org/packages/Stl.Fusion.Client/)
-  * Though if it's a Blazor client, it's a good idea to reference 
-    [Stl.Fusion.Blazor](https://www.nuget.org/packages/Stl.Fusion.Blazor/) instead
-* A library that could be used both by client and server should reference only 
-  [Stl.Fusion](https://www.nuget.org/packages/Stl.Fusion/). 
-
-Once it's done, you can start using it. 
-Check out the [Tutorial](tutorial/README.md) to learn how.
-
 
 ## Credits
 
-* [ServiceTitan](https://www.servicetitan.com/) &ndash; for giving some of us
-  an opportunity to work on this project
+[ServiceTitan](https://www.servicetitan.com/) &ndash; for giving some of us
+an opportunity to work on this project.
+
+Contributors:
+* [Vladimir Chirikov](https://github.com/vchirikov) &ndash; build system & misc. improvements
+* [Alexey Ananyev](https://github.com/hypercodeplace) &ndash; minor fixes
+* [Alexey Golub](https://github.com/Tyrrrz) &ndash; minor fixes; FYI we use his 
+  [CliWrap](https://github.com/Tyrrrz/CliWrap) in our build pipeline, and his
+  [CliFx](https://github.com/Tyrrrz/CliFx) is pretty amazing too!
+* [Alex Yakunin](https://github.com/alexyakunin) ([Medium](https://medium.com/@alexyakunin)) &ndash; 
+  the creator of Stl.Fusion.
+
+Indirect contributors & everyone else who made Stl.Fusion possible:
 * [Steve Sanderson](http://blog.stevensanderson.com/) &ndash; 
   for both [Knockout](https://knockoutjs.com/), which made "computed observable" abstraction popular, 
   and [Blazor](https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor) &ndash;
   yeah, Steve is the creator of it as well!
 * [Quora](https://www.quora.com/) — a huge part of the inspiration for Stl.Fusion was Quora's LiveNode framework
 * [Microsoft](microsoft.com) &ndash; for .NET Core and Blazor.
-* All other contributors. For now it is
-  [Vladimir Chirikov](https://github.com/vchirikov) &ndash;
-  everything related to build system is written by him.
-  But everyone is welcome to join &ndash; 
-  [your pull request](https://github.com/servicetitan/Stl/pulls) 
-  is all we need!
 * The authors and maintainers of every library used by `Stl.Fusion`. Most notably,
   [DynamicProxy from Castle.Core](http://www.castleproject.org/projects/dynamicproxy/),
   [RestEase](https://github.com/canton7/RestEase), and 
   [Json.NET](https://www.newtonsoft.com/json).
+
+P.S. [Your pull request](https://github.com/servicetitan/Stl/pulls) is all we need to list you here.
