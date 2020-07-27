@@ -42,8 +42,8 @@ That's it for now, but we'll definitely add more over time.
 an opportunity to work on this project.
 
 Contributors:
-* [Vladimir Chirikov](https://github.com/vchirikov) &ndash; build system & misc. improvements
-* [Alexey Ananyev](https://github.com/hypercodeplace) &ndash; minor fixes
+* [Vladimir Chirikov](https://github.com/vchirikov) &ndash; build system & misc. fixes
+* [Alexey Ananyev](https://github.com/hypercodeplace) &ndash; misc. fixes
 * [Alexey Golub](https://github.com/Tyrrrz) &ndash; minor fixes; FYI we use his 
   [CliWrap](https://github.com/Tyrrrz/CliWrap) in our build pipeline, and his
   [CliFx](https://github.com/Tyrrrz/CliFx) is pretty amazing too!
