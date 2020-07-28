@@ -49,10 +49,10 @@ also properly updates everything. It shows Fusion's ability to use both local `I
 instances and client-side replicas of similar server-side instances to compute a new value
 that properly tracks all these dependencies and updates accordingly: 
 * First panel's UI model is 
-  [composed on the server-side](https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/src/Blazor/Server/Services/ServerSideComposerService.cs);
+  [composed on the server-side](https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/src/Blazor/Server/Services/ComposerService.cs);
   its client-side replica is bound to the component displaying the panel
 * And the second panel uses an UI model
-  [composed completely on the client](https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/src/Blazor/Client/Services/ClientSideComposerService.cs) 
+  [composed completely on the client](https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/src/Blazor/Client/Services/LocalComposerService.cs) 
   by combining server-side replicas of all the values used there.
 * **The surprising part:** two above files are almost identical!
 
