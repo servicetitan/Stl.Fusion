@@ -23,7 +23,7 @@ namespace Stl.Fusion.Blazor
             => LiveState.Updated += OnLiveStateUpdated;
 
         protected virtual void OnLiveStateUpdated(ILiveState liveState)
-            => StateHasChanged();
+            => InvokeAsync(StateHasChanged);
     }
 
     public abstract class LiveComponentBase<TLocal, TState> : LiveComponentBase<TState>
