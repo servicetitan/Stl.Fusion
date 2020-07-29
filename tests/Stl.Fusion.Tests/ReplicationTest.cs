@@ -32,16 +32,15 @@ namespace Stl.Fusion.Tests
             r1.Computed.Should().Be(r1c);
 
             sp.SetValue("1");
-            await Task.Delay(200);
+            await Task.Delay(100);
             r1c.IsConsistent.Should().BeFalse();
             r1.Computed.Should().Be(r1c);
 
-            await r1.RequestUpdateAsync();
-            r1c = r1.Computed;
+            r1c = await r1c.UpdateAsync(false);
             r1c.Value.Should().Be("1");
 
-            await r1.RequestUpdateAsync();
-            r1.Computed.Should().Be(r1c);
+            var r1c1 = await r1c.UpdateAsync(false);
+            r1c1.Should().Be(r1c);
         }
 
         [Fact(Timeout = 120_000)]
@@ -52,7 +51,6 @@ namespace Stl.Fusion.Tests
 
             var pub = await Publisher.PublishAsync(_ => tp.GetTimeAsync());
             var rep = Replicator.GetOrAdd<DateTime>(pub!.Publisher.Id, pub.Id);
-            await rep.RequestUpdateAsync();
 
             var count = 0;
             using var _ = rep.Computed.AutoUpdate((c, o, _) => {
@@ -60,7 +58,7 @@ namespace Stl.Fusion.Tests
                 count++;
             });
 
-            await Task.Delay(2000);
+            await Task.Delay(1100);
             count.Should().BeGreaterThan(2);
         }
     }
