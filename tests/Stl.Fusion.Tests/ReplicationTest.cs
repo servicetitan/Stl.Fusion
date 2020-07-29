@@ -32,7 +32,7 @@ namespace Stl.Fusion.Tests
             r1.Computed.Should().Be(r1c);
 
             sp.SetValue("1");
-            await Task.Delay(10);
+            await Task.Delay(200);
             r1c.IsConsistent.Should().BeFalse();
             r1.Computed.Should().Be(r1c);
 
