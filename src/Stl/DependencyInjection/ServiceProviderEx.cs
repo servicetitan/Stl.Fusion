@@ -5,7 +5,7 @@ using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Internal;
 
-namespace Stl.Extensibility
+namespace Stl.DependencyInjection
 {
     public static class ServiceProviderEx
     {

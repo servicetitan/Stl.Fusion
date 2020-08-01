@@ -15,6 +15,7 @@ namespace Stl.Fusion.Tests.Services
         Task<int> GetCharCountAsync();
     }
 
+    [ComputedService(typeof(ISimplestProvider))]
     public class SimplestProvider : ISimplestProvider, IScopedComputedService, IHasId<Type>
     {
         private static volatile string _value = "";

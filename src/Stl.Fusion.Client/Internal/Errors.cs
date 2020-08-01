@@ -7,8 +7,12 @@ namespace Stl.Fusion.Client.Internal
         public static Exception InvalidUri(string uri)
             => new InvalidOperationException($"Invalid URI: '{uri}'.");
 
-        public static Exception ComputedOfTExpected(string argumentName)
-            => new ArgumentOutOfRangeException(argumentName,
-                "Only typeof(IComputed<T>) values are supported for this argument.");
+        public static Exception InterfaceTypeExpected(Type type, bool mustBePublic, string? argumentName = null)
+        {
+            var message = $"'{type}' must be {(mustBePublic ? "a public": "an")} interface type.";
+            return string.IsNullOrEmpty(argumentName)
+                ? (Exception) new InvalidOperationException(message)
+                : new ArgumentOutOfRangeException(argumentName, message);
+        }
     }
 }

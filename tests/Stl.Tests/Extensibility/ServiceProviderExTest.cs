@@ -1,7 +1,7 @@
 using System;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using Stl.Extensibility;
+using Stl.DependencyInjection;
 using Stl.Testing;
 using Xunit;
 using Xunit.Abstractions;

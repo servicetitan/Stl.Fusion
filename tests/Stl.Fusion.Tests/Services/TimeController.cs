@@ -19,7 +19,7 @@ namespace Stl.Fusion.Tests.Services
         [HttpGet("get")]
         public Task<DateTime> GetTimeAsync()
         {
-            return PublishAsync(_ => TimeService.GetTimeAsync());
+            return PublishAsync(ct => TimeService.GetTimeAsync(ct));
         }
     }
 }

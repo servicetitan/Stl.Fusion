@@ -145,7 +145,10 @@ namespace Stl.Fusion.UI
                 var options = new LiveState<TState>.Options() {
                     Updater = (live, cancellationToken) => updater.UpdateAsync(live, cancellationToken),
                 };
-                optionsBuilder?.Invoke(c, options);
+                var untypedOptionsBuilder = optionsBuilder
+                    ?? c.GetService<Action<IServiceProvider, LiveState<TState>.Options>>()
+                    ?? c.GetService<Action<IServiceProvider, LiveState.Options>>();
+                untypedOptionsBuilder?.Invoke(c, options);
                 return options;
             });
             services.TryAddTransient<ILiveState<TState>, LiveState<TState>>();
@@ -164,7 +167,10 @@ namespace Stl.Fusion.UI
                 var options = new LiveState<TLocal, TState>.Options() {
                     Updater = (live, cancellationToken) => updater.UpdateAsync(live, cancellationToken),
                 };
-                optionsBuilder?.Invoke(c, options);
+                var untypedOptionsBuilder = optionsBuilder
+                    ?? c.GetService<Action<IServiceProvider, LiveState<TLocal, TState>.Options>>()
+                    ?? c.GetService<Action<IServiceProvider, LiveState.Options>>();
+                untypedOptionsBuilder?.Invoke(c, options);
                 return options;
             });
             services.TryAddTransient<ILiveState<TLocal, TState>, LiveState<TLocal, TState>>();
@@ -182,7 +188,10 @@ namespace Stl.Fusion.UI
                 var options = new LiveState<TState>.Options() {
                     Updater = (live, cancellationToken) => updater.Invoke(c, live, cancellationToken),
                 };
-                optionsBuilder?.Invoke(c, options);
+                var untypedOptionsBuilder = optionsBuilder
+                    ?? c.GetService<Action<IServiceProvider, LiveState<TState>.Options>>()
+                    ?? c.GetService<Action<IServiceProvider, LiveState.Options>>();
+                untypedOptionsBuilder?.Invoke(c, options);
                 return options;
             });
             services.TryAddTransient<ILiveState<TState>, LiveState<TState>>();
@@ -198,7 +207,10 @@ namespace Stl.Fusion.UI
                 var options = new LiveState<TLocal, TState>.Options() {
                     Updater = (live, cancellationToken) => updater.Invoke(c, live, cancellationToken),
                 };
-                optionsBuilder?.Invoke(c, options);
+                var untypedOptionsBuilder = optionsBuilder
+                    ?? c.GetService<Action<IServiceProvider, LiveState<TLocal, TState>.Options>>()
+                    ?? c.GetService<Action<IServiceProvider, LiveState.Options>>();
+                untypedOptionsBuilder?.Invoke(c, options);
                 return options;
             });
             services.TryAddTransient<ILiveState<TLocal, TState>, LiveState<TLocal, TState>>();

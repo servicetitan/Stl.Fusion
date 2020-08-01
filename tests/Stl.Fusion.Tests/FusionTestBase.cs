@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Stl.DependencyInjection;
 using Stl.IO;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Client;
@@ -119,18 +120,6 @@ namespace Stl.Fusion.Tests
                 o.BaseUri = c.GetRequiredService<TestWebHost>().ServerUri;
                 o.MessageLogLevel = LogLevel.Information;
             });
-
-
-            // Computed providers
-            services.AddComputedService<ISimplestProvider, SimplestProvider>();
-            services.AddComputedService<ITimeService, TimeService>();
-            services.AddComputedService<IUserService, UserService>();
-            services.AddComputedService<IScreenshotService, ScreenshotService>();
-
-            // Regular services
-            services.AddScoped<UserService, UserService>();
-
-            // Replica services
             services.AddHttpClient<HttpClient>((c, httpClient) => {
                 var baseUri = c.GetRequiredService<TestWebHost>().ServerUri;
                 var apiUri = new Uri($"{baseUri}api/");
@@ -141,20 +130,12 @@ namespace Stl.Fusion.Tests
                 var apiUri = new Uri($"{baseUri}api/");
                 return new HttpClient() { BaseAddress = apiUri };
             });
-            services.AddReplicaService<ITimeClient>("time");
+            services.AddServices(t => t.Namespace!.StartsWith(testType.Namespace!), testType.Assembly);
 
-            // UI Models
-            services.AddLiveState<ServerTimeModel1>(
-                async (c, prev, cancellationToken) => {
-                    var client = c.GetRequiredService<ITimeClient>();
-                    var time = await client.GetTimeAsync(cancellationToken).ConfigureAwait(false);
-                    return new ServerTimeModel1(time);
-                }, (c, options) => {
-                    options.InitialState = new ServerTimeModel1();
-                });
+            // Custom live state updater
             services.AddLiveState<ServerTimeModel2>(
                 async (c, prev, cancellationToken) => {
-                    var client = c.GetRequiredService<ITimeClient>();
+                    var client = c.GetRequiredService<ITimeServiceClient>();
                     var cTime = await client.GetComputedTimeAsync(cancellationToken).ConfigureAwait(false);
                     return new ServerTimeModel2(cTime.Value);
                 }, (c, options) => {

@@ -1,7 +1,7 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Stl.Extensibility;
+using Stl.DependencyInjection;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Interception;
 using Stl.Fusion.Interception;
@@ -16,6 +16,10 @@ namespace Stl.Fusion
         {
             // Registry
             services.TryAddSingleton(ComputedRegistry.Default);
+            // InterfaceCastProxyGenerator (typically used by ReplicaServices)
+            services.TryAddSingleton<InterfaceCastInterceptor>();
+            services.TryAddSingleton(c => InterfaceCastProxyGenerator.Default);
+            services.TryAddSingleton(c => new [] { c.GetRequiredService<InterfaceCastInterceptor>() });
             // ComputedServiceProxyGenerator
             services.TryAddSingleton(new ComputedServiceInterceptor.Options());
             services.TryAddSingleton<ComputedServiceInterceptor>();
@@ -35,10 +39,10 @@ namespace Stl.Fusion
         public static IServiceCollection AddFusionClientCore(this IServiceCollection services)
         {
             // ReplicaServiceProxyGenerator
-            services.TryAddSingleton(new ReplicaServiceInterceptor.Options());
-            services.TryAddSingleton<ReplicaServiceInterceptor>();
-            services.TryAddSingleton(c => ReplicaServiceProxyGenerator.Default);
-            services.TryAddSingleton(c => new [] { c.GetRequiredService<ReplicaServiceInterceptor>() });
+            services.TryAddSingleton(new ReplicaClientInterceptor.Options());
+            services.TryAddSingleton<ReplicaClientInterceptor>();
+            services.TryAddSingleton(c => ReplicaClientProxyGenerator.Default);
+            services.TryAddSingleton(c => new [] { c.GetRequiredService<ReplicaClientInterceptor>() });
             // Replicator
             services.TryAddSingleton(new Replicator.Options());
             services.TryAddSingleton<IReplicator, Replicator>();

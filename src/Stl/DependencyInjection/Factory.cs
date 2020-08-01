@@ -1,6 +1,6 @@
 using System;
 
-namespace Stl.Extensibility
+namespace Stl.DependencyInjection
 {
     public interface IFactory<out T>
     {

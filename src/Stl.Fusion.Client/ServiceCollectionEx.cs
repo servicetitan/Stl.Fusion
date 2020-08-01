@@ -1,5 +1,6 @@
 using System;
 using System.Net.Http;
+using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using RestEase;
@@ -51,73 +52,98 @@ namespace Stl.Fusion.Client
 
         // User-defined client-side services
 
-        public static IServiceCollection AddRestEaseService<TInterface>(
+        public static IServiceCollection AddRestEaseClient<TClient>(
             this IServiceCollection services,
             string? baseAddress = null,
             Func<IServiceProvider, HttpClient>? httpClientResolver = null)
-            => services.AddRestEaseService(typeof(TInterface), baseAddress, httpClientResolver);
-        public static IServiceCollection AddRestEaseService(
+            => services.AddRestEaseClient(typeof(TClient), baseAddress, httpClientResolver);
+        public static IServiceCollection AddRestEaseClient(
             this IServiceCollection services,
-            Type interfaceType,
+            Type clientType,
             string? baseAddress = null,
             Func<IServiceProvider, HttpClient>? httpClientResolver = null)
         {
-            if (!interfaceType.IsInterface)
-                throw new ArgumentOutOfRangeException(nameof(interfaceType));
+            if (!(clientType.IsInterface && clientType.IsPublic))
+                throw Internal.Errors.InterfaceTypeExpected(clientType, true, nameof(clientType));
 
             httpClientResolver ??= DefaultHttpClientResolver(baseAddress);
-            services.TryAddSingleton(interfaceType, c => {
+            services.TryAddSingleton(clientType, c => {
                 var httpClient = httpClientResolver.Invoke(c);
                 var restClient = new RestClient(httpClient) {
                     ResponseDeserializer = c.GetRequiredService<ReplicaResponseDeserializer>()
-                }.For(interfaceType);
+                }.For(clientType);
                 return restClient;
             });
             return services;
         }
 
-        public static IServiceCollection AddReplicaService<TInterface>(
+        public static IServiceCollection AddRestEaseReplicaService<TClient>(
             this IServiceCollection services,
             string? baseAddress = null,
             Func<IServiceProvider, HttpClient>? httpClientResolver = null)
-            => services.AddReplicaService(typeof(TInterface), baseAddress, httpClientResolver);
-        public static IServiceCollection AddReplicaService(
+            where TClient : IRestEaseReplicaClient
+            => services.AddRestEaseReplicaService(typeof(TClient), baseAddress, httpClientResolver);
+        public static IServiceCollection AddRestEaseReplicaService<TService, TClient>(
             this IServiceCollection services,
-            Type interfaceType,
+            string? baseAddress = null,
+            Func<IServiceProvider, HttpClient>? httpClientResolver = null)
+            where TClient : IRestEaseReplicaClient
+            => services.AddRestEaseReplicaService(typeof(TService), typeof(TClient), baseAddress, httpClientResolver);
+        public static IServiceCollection AddRestEaseReplicaService(
+            this IServiceCollection services,
+            Type clientType,
+            string? baseAddress = null,
+            Func<IServiceProvider, HttpClient>? httpClientResolver = null)
+            => services.AddRestEaseReplicaService(clientType, clientType, baseAddress, httpClientResolver);
+        public static IServiceCollection AddRestEaseReplicaService(
+            this IServiceCollection services,
+            Type serviceType,
+            Type clientType,
             string? baseAddress = null,
             Func<IServiceProvider, HttpClient>? httpClientResolver = null)
         {
-            if (!interfaceType.IsInterface)
-                throw new ArgumentOutOfRangeException(nameof(interfaceType));
-            if (!typeof(IReplicaService).IsAssignableFrom(interfaceType))
-                throw Errors.MustImplement<IReplicaService>(interfaceType);
+            if (!(serviceType.IsInterface && serviceType.IsPublic))
+                throw Internal.Errors.InterfaceTypeExpected(serviceType, true, nameof(serviceType));
+            if (!(clientType.IsInterface && clientType.IsPublic))
+                throw Internal.Errors.InterfaceTypeExpected(clientType, true, nameof(clientType));
+            if (!typeof(IRestEaseReplicaClient).IsAssignableFrom(clientType))
+                throw Errors.MustImplement<IRestEaseReplicaClient>(clientType, nameof(clientType));
 
             httpClientResolver ??= DefaultHttpClientResolver(baseAddress);
 
             object Factory(IServiceProvider c)
             {
                 // 1. Validate type
-                var interceptor = c.GetRequiredService<ReplicaServiceInterceptor>();
-                interceptor.ValidateType(interfaceType);
+                var interceptor = c.GetRequiredService<ReplicaClientInterceptor>();
+                interceptor.ValidateType(clientType);
 
                 // 2. Create REST client for the service
                 var httpClient = httpClientResolver.Invoke(c);
                 var restClient = new RestClient(httpClient) {
                     ResponseDeserializer = c.GetRequiredService<ReplicaResponseDeserializer>()
-                }.For(interfaceType);
+                }.For(clientType);
 
-                // 3. Create Replica Service
-                var proxyGenerator = c.GetRequiredService<IReplicaServiceProxyGenerator>();
-                var proxyType = proxyGenerator.GetProxyType(interfaceType);
-                var interceptors = c.GetRequiredService<ReplicaServiceInterceptor[]>();
-                return proxyType.CreateInstance(interceptors, restClient);
+                // 3. Create Replica Client
+                var clientProxyGenerator = c.GetRequiredService<IReplicaClientProxyGenerator>();
+                var clientProxyType = clientProxyGenerator.GetProxyType(clientType);
+                var clientInterceptors = c.GetRequiredService<ReplicaClientInterceptor[]>();
+                var client = clientProxyType.CreateInstance(clientInterceptors, restClient);
+                if (clientType == serviceType)
+                    return client;
+
+                // 4. Create Replica Service
+                var serviceProxyGenerator = c.GetRequiredService<IInterfaceCastProxyGenerator>();
+                var serviceProxyType = serviceProxyGenerator.GetProxyType(serviceType);
+                var serviceInterceptors = c.GetRequiredService<InterfaceCastInterceptor[]>();
+                var service = serviceProxyType.CreateInstance(serviceInterceptors, client);
+                return service;
             }
 
-            var isScoped = typeof(IScopedComputedService).IsAssignableFrom(interfaceType);
+            var isScoped = typeof(IScopedComputedService).IsAssignableFrom(clientType);
             if (isScoped)
-                services.TryAddScoped(interfaceType, Factory);
+                services.TryAddScoped(serviceType, Factory);
             else
-                services.TryAddSingleton(interfaceType, Factory);
+                services.TryAddSingleton(serviceType, Factory);
             return services;
         }
 

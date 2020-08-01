@@ -29,10 +29,11 @@ namespace Stl.Extensibility
         {
             _matches = new Dictionary<(Type, Symbol), Type>();
             foreach (var type in candidates) {
-                var attr = type.GetCustomAttribute<MatchForAttribute>(false);
-                if (attr == null)
+                var attrs = type.GetCustomAttributes<MatchForAttribute>(false);
+                if (attrs == null)
                     continue;
-                _matches.Add((attr.Source, attr.Scope), type);
+                foreach (var attr in attrs)
+                    _matches.Add((attr.Source, new Symbol(attr.Scope)), type);
             }
         }
 

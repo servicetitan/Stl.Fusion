@@ -4,23 +4,23 @@ using Stl.Fusion.Internal;
 
 namespace Stl.Fusion.Bridge.Interception
 {
-    public interface IReplicaServiceComputed : IComputed
+    public interface IReplicaClientComputed : IComputed
     {
         IReplica? Replica { get; }
     }
 
-    public interface IReplicaServiceComputed<T> : IComputed<InterceptedInput, T>, IReplicaServiceComputed
+    public interface IReplicaClientComputed<T> : IComputed<InterceptedInput, T>, IReplicaClientComputed
     {
         new IReplica<T>? Replica { get; }
     }
 
-    public class ReplicaServiceComputed<T> : Computed<InterceptedInput, T>, IReplicaServiceComputed<T>
+    public class ReplicaClientComputed<T> : Computed<InterceptedInput, T>, IReplicaClientComputed<T>
     {
-        IReplica? IReplicaServiceComputed.Replica => Replica;
+        IReplica? IReplicaClientComputed.Replica => Replica;
         public IReplica<T>? Replica { get; }
 
         // Two primary constructors
-        public ReplicaServiceComputed(ComputedOptions options, IReplicaComputed<T> source, InterceptedInput input)
+        public ReplicaClientComputed(ComputedOptions options, IReplicaComputed<T> source, InterceptedInput input)
             : this(options, source.Replica, input, source.LTag)
         {
             ((IComputedImpl) this).AddUsed((IComputedImpl) source);
@@ -29,15 +29,15 @@ namespace Stl.Fusion.Bridge.Interception
                 Invalidate();
         }
 
-        public ReplicaServiceComputed(ComputedOptions options, InterceptedInput input, Exception error, LTag lTag)
+        public ReplicaClientComputed(ComputedOptions options, InterceptedInput input, Exception error, LTag lTag)
             : this(options, null, input, new Result<T>(default!, error), lTag, false) { }
 
         // And the "inherited" ones allowing to configure this computed as you wish
-        public ReplicaServiceComputed(
+        public ReplicaClientComputed(
             ComputedOptions options, IReplica<T>? replica, InterceptedInput input, LTag lTag)
             : base(options, input, lTag)
             => Replica = replica;
-        public ReplicaServiceComputed(
+        public ReplicaClientComputed(
             ComputedOptions options, IReplica<T>? replica, InterceptedInput input,
             Result<T> output, LTag lTag, bool isConsistent = true)
             : base(options, input, output, lTag, isConsistent)

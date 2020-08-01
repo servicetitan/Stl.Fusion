@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using Stl.DependencyInjection;
 using Stl.Extensibility;
 using Stl.Reflection;
 

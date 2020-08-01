@@ -1,11 +1,9 @@
 using System;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Async;
-using Stl.Concurrency;
 using Stl.Fusion.Bridge.Internal;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Interception.Internal;
@@ -14,20 +12,20 @@ using Stl.Generators;
 
 namespace Stl.Fusion.Bridge.Interception
 {
-    public class ReplicaServiceFunction<T> : InterceptedFunctionBase<T>
+    public class ReplicaClientFunction<T> : InterceptedFunctionBase<T>
     {
         private readonly ILogger _log;
         private readonly bool _isLogDebugEnabled;
         protected Generator<LTag> LTagGenerator { get; }
 
-        public ReplicaServiceFunction(
+        public ReplicaClientFunction(
             InterceptedMethod method,
             Generator<LTag> lTagGenerator,
             IComputedRegistry computedRegistry,
-            ILogger<ReplicaServiceFunction<T>>? log = null)
+            ILogger<ReplicaClientFunction<T>>? log = null)
             : base(method, computedRegistry)
         {
-            _log = log ??= NullLogger<ReplicaServiceFunction<T>>.Instance;
+            _log = log ??= NullLogger<ReplicaClientFunction<T>>.Instance;
             _isLogDebugEnabled = _log.IsEnabled(LogLevel.Debug);
             LTagGenerator = lTagGenerator;
             InvalidatedHandler = null;
@@ -35,7 +33,7 @@ namespace Stl.Fusion.Bridge.Interception
 
         public override IComputed<T>? TryGetCached(InterceptedInput input, IComputed? usedBy)
         {
-            if (!(ComputedRegistry.TryGet(input) is IReplicaServiceComputed<T> computed))
+            if (!(ComputedRegistry.TryGet(input) is IReplicaClientComputed<T> computed))
                 return null;
             var replica = computed.Replica;
             if (replica == null || replica.UpdateError != null || replica.DisposalState != DisposalState.Active) {
@@ -53,13 +51,13 @@ namespace Stl.Fusion.Bridge.Interception
             var method = input.Method;
 
             // 1. Trying to update the Replica first
-            if (cached is IReplicaServiceComputed<T> rsc && rsc.Replica != null) {
+            if (cached is IReplicaClientComputed<T> rsc && rsc.Replica != null) {
                 try {
                     var replica = rsc.Replica;
                     var computed = await replica.Computed
                         .UpdateAsync(true, cancellationToken).ConfigureAwait(false);
                     var replicaComputed = (IReplicaComputed<T>) computed;
-                    var output = new ReplicaServiceComputed<T>(
+                    var output = new ReplicaClientComputed<T>(
                         method.Options, replicaComputed, input);
                     return output;
                 }
@@ -102,7 +100,7 @@ namespace Stl.Fusion.Bridge.Interception
                 var computed = await replica.Computed
                     .UpdateAsync(true, cancellationToken).ConfigureAwait(false);
                 var replicaComputed = (IReplicaComputed<T>) computed;
-                var output = new ReplicaServiceComputed<T>(
+                var output = new ReplicaClientComputed<T>(
                     method.Options, replicaComputed, input);
                 return output;
             }
@@ -117,7 +115,7 @@ namespace Stl.Fusion.Bridge.Interception
                 // We need a unique LTag here, so we use a range that's supposed
                 // to be unused by LTagGenerators.
                 var lTag = new LTag(LTagGenerator.Next().Value ^ (1L << 62));
-                var output = new ReplicaServiceComputed<T>(
+                var output = new ReplicaClientComputed<T>(
                     method.Options, null, input, new Result<T>(default!, e), lTag);
                 return output;
             }

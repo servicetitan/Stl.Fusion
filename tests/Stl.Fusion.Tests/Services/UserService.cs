@@ -21,6 +21,7 @@ namespace Stl.Fusion.Tests.Services
         void Invalidate();
     }
 
+    [ComputedService(typeof(IUserService))]
     public class UserService : IUserService, IComputedService
     {
         private readonly ILogger _log;

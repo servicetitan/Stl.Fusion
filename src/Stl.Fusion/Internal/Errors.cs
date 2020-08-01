@@ -6,8 +6,13 @@ namespace Stl.Fusion.Internal
 {
     public static class Errors
     {
-        public static Exception MustImplement<TExpected>(Type serviceType)
-            => new InvalidOperationException($"{serviceType.Name} must implement {typeof(TExpected).Name}.");
+        public static Exception MustImplement<TExpected>(Type type, string? argumentName = null)
+        {
+            var message = $"{type.Name} must implement {typeof(TExpected).Name}.";
+            return string.IsNullOrEmpty(argumentName)
+                ? (Exception) new InvalidOperationException(message)
+                : new ArgumentOutOfRangeException(argumentName, message);
+        }
 
         public static Exception WrongComputedState(
             ComputedState expectedState, ComputedState state)

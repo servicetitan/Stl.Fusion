@@ -14,6 +14,7 @@ namespace Stl.Fusion.Tests.Services
         Task<string> GetScreenshotAsync(int width, CancellationToken cancellationToken = default);
     }
 
+    [ComputedService(typeof(IScreenshotService))]
     public class ScreenshotService : IScreenshotService, IComputedService
     {
         protected ImageCodecInfo JpegEncoder { get; }

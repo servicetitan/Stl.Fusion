@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -8,10 +9,11 @@ namespace Stl.Fusion.Tests.Services
     public interface ITimeService
     {
         DateTime GetTime();
-        Task<DateTime> GetTimeAsync();
+        Task<DateTime> GetTimeAsync(CancellationToken cancellationToken = default);
         Task<DateTime> GetTimeWithOffsetAsync(TimeSpan offset);
     }
 
+    [ComputedService(typeof(ITimeService))]
     public class TimeService : ITimeService, IComputedService
     {
         private readonly ILogger _log;
@@ -31,7 +33,7 @@ namespace Stl.Fusion.Tests.Services
         }
 
         [ComputedServiceMethod(AutoInvalidateTime = 0.25)]
-        public virtual Task<DateTime> GetTimeAsync()
+        public virtual Task<DateTime> GetTimeAsync(CancellationToken cancellationToken = default)
             => Task.FromResult(GetTime());
 
         [ComputedServiceMethod]
