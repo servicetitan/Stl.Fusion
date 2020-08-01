@@ -11,8 +11,8 @@ namespace Stl.Fusion.UI
         Task<TState> UpdateAsync(ILiveState<TState> liveState, CancellationToken cancellationToken);
     }
 
-    public interface ILiveStateUpdater<TInput, TState> : ILiveStateUpdater
+    public interface ILiveStateUpdater<TLocal, TState> : ILiveStateUpdater
     {
-        Task<TState> UpdateAsync(ILiveState<TInput, TState> liveState, CancellationToken cancellationToken);
+        Task<TState> UpdateAsync(ILiveState<TLocal, TState> liveState, CancellationToken cancellationToken);
     }
 }
