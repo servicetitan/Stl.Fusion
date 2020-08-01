@@ -7,7 +7,7 @@ namespace Stl.DependencyInjection
     [Serializable]
     public class ServiceAttribute : ServiceImplementationAttributeBase
     {
-        public ServiceLifetime Lifetime { get; } = ServiceLifetime.Singleton;
+        public ServiceLifetime Lifetime { get; set; } = ServiceLifetime.Singleton;
 
         public ServiceAttribute(Type? serviceType = null) : base(serviceType) { }
 

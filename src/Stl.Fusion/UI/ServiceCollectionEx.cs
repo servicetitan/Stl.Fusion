@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,50 +9,6 @@ namespace Stl.Fusion.UI
 {
     public static class ServiceCollectionEx
     {
-        // AddAllLive
-
-        public static IServiceCollection AutoAddLiveState(
-            this IServiceCollection services,
-            Assembly fromAssembly,
-            Action<IServiceProvider, LiveState.Options>? optionsBuilder = null)
-        {
-            var tLiveUpdater = typeof(ILiveStateUpdater);
-            var tLiveUpdaterGeneric1 = typeof(ILiveStateUpdater<>);
-            var tLiveUpdaterGeneric2 = typeof(ILiveStateUpdater<,>);
-            Debug.WriteLine("Registering ILiveUpdater implementations:");
-            foreach (var tUpdater in fromAssembly.DefinedTypes) {
-                if (tUpdater.IsNotPublic || tUpdater.IsAbstract || tUpdater.IsValueType)
-                    continue;
-                if (!tLiveUpdater.IsAssignableFrom(tUpdater))
-                    continue;
-                foreach (var tImplemented in tUpdater.ImplementedInterfaces) {
-                    if (!tImplemented.IsConstructedGenericType)
-                        continue;
-                    if (!tLiveUpdater.IsAssignableFrom(tImplemented))
-                        continue;
-                    var tBase = tImplemented.GetGenericTypeDefinition();
-                    var ga = tImplemented.GetGenericArguments();
-                    switch (ga.Length) {
-                    case 1:
-                        if (tBase != tLiveUpdaterGeneric1)
-                            continue;
-                        Debug.WriteLine($"+ {tUpdater.FullName}");
-                        AddLiveState(services, ga[0], tUpdater, optionsBuilder);
-                        break;
-                    case 2:
-                        if (tBase != tLiveUpdaterGeneric2)
-                            continue;
-                        Debug.WriteLine($"+ {tUpdater.FullName}");
-                        AddLiveState(services, ga[0], ga[1], tUpdater, optionsBuilder);
-                        break;
-                    default:
-                        continue;
-                    }
-                }
-            }
-            return services;
-        }
-
         // AddLiveUpdater
 
         public static IServiceCollection AddLiveStateUpdater(

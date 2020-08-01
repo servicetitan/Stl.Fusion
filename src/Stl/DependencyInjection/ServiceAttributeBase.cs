@@ -7,7 +7,7 @@ namespace Stl.DependencyInjection
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public abstract class ServiceAttributeBase : Attribute
     {
-        public string Scope { get; } = "";
+        public string Scope { get; set; } = "";
 
         public abstract void TryRegister(IServiceCollection services, Type implementationType);
     }

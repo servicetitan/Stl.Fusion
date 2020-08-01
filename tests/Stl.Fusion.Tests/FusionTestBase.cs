@@ -120,11 +120,6 @@ namespace Stl.Fusion.Tests
                 o.BaseUri = c.GetRequiredService<TestWebHost>().ServerUri;
                 o.MessageLogLevel = LogLevel.Information;
             });
-            services.AddHttpClient<HttpClient>((c, httpClient) => {
-                var baseUri = c.GetRequiredService<TestWebHost>().ServerUri;
-                var apiUri = new Uri($"{baseUri}api/");
-                httpClient.BaseAddress = apiUri;
-            });
             services.AddSingleton(c => {
                 var baseUri = c.GetRequiredService<TestWebHost>().ServerUri;
                 var apiUri = new Uri($"{baseUri}api/");
