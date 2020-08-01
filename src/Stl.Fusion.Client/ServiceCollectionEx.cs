@@ -69,10 +69,10 @@ namespace Stl.Fusion.Client
             httpClientResolver ??= DefaultHttpClientResolver(baseAddress);
             services.TryAddSingleton(clientType, c => {
                 var httpClient = httpClientResolver.Invoke(c);
-                var restClient = new RestClient(httpClient) {
-                    ResponseDeserializer = c.GetRequiredService<ReplicaResponseDeserializer>()
-                }.For(clientType);
-                return restClient;
+                var restClient = new RestClient(httpClient);
+                if (typeof(IRestEaseReplicaClient).IsAssignableFrom(clientType))
+                    restClient.ResponseDeserializer = c.GetRequiredService<ReplicaResponseDeserializer>();
+                return restClient.For(clientType);
             });
             return services;
         }
