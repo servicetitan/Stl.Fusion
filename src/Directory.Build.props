@@ -8,15 +8,14 @@
     <IsPackable>True</IsPackable>
     <!-- Include the PDB in the built .nupkg -->
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
-    <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <IncludeSymbols>false</IncludeSymbols>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <!-- Nerdbank.GitVersioning props -->
     <DefaultPublicRelease>true</DefaultPublicRelease>
     <!-- SourceLink props: https://github.com/dotnet/sourcelink/issues/159 -->
     <EnableSourceLink>false</EnableSourceLink>
     <EnableSourceLink Condition="'$(GitCommitId)' != ''">true</EnableSourceLink>
     <UseSourceLink>$(EnableSourceLink)</UseSourceLink>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries>
