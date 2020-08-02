@@ -1,9 +1,7 @@
 using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
-using System.Threading.Tasks;
 using RestEase;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Internal;
