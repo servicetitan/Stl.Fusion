@@ -11,18 +11,39 @@
     <!-- Nerdbank.GitVersioning props -->
     <DefaultPublicRelease>true</DefaultPublicRelease>
     <!-- SourceLink props: https://github.com/dotnet/sourcelink/issues/159 -->
-    <EnableSourceLink>false</EnableSourceLink>
-    <EnableSourceLink Condition="'$(GitCommitId)' != ''">true</EnableSourceLink>
-    <UseSourceLink>$(EnableSourceLink)</UseSourceLink>
+    <EnableSourceLink>false</EnableSourceLink> <!-- Set later -->
+    <UseSourceLink>false</UseSourceLink> <!-- Set later -->
     <IncludeSymbols>true</IncludeSymbols>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <!--
     <EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries>
-    <RevisionId>$(GitCommitId)</RevisionId>
+    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+    -->
   </PropertyGroup>
+
   <ItemGroup Condition="'$(MSBuildProjectExtension)' != '.dcproj'">
     <PackageReference Include="Nerdbank.GitVersioning" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" />
   </ItemGroup>
+
+  <Target Name="TryEnableSourceLink" AfterTargets="GetBuildVersion">
+    <CreateProperty Condition="'$(GitCommitId)' != ''" Value="true">
+      <Output PropertyName="EnableSourceLink" TaskParameter="Value" />
+    </CreateProperty>
+    <CreateProperty Value="$(EnableSourceLink)">
+      <Output PropertyName="UseSourceLink" TaskParameter="Value" />
+    </CreateProperty>
+    <CreateItem Condition="$(EnableSourceLink)"
+          Include="$(SolutionDir)"
+          AdditionalMetadata="SourceControl=git;RevisionId=$(GitCommitId);RepositoryUrl=$(RepositoryUrl)">
+      <Output ItemName="SourceRoot" TaskParameter="Include" />
+    </CreateItem>
+    <Message Text="EnableSourceLink: $(EnableSourceLink), GitCommitId: $(GitCommitId)" Importance="low"/>
+  </Target>
+
+  <Target Name="LogMessages" AfterTargets="Build" >
+  </Target>
+
 </Project>

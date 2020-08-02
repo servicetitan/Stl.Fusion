@@ -23,8 +23,8 @@
     <PackageOutputPath>$(SolutionDir)artifacts\nupkg</PackageOutputPath>
     <DefaultLanguage>en-US</DefaultLanguage>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
-    <!-- embedded not recommended yet for libs and nupkg, track this in https://github.com/dotnet/sdk/issues/2679 -->
-    <!-- also embedded doesn't work with dotnet pack without nuspec or IncludeBuildOutput = false -->
+    <!-- Embedded not recommended yet for libs and nupkg, track this in https://github.com/dotnet/sdk/issues/2679 -->
+    <!-- Also embedded doesn't work with dotnet pack without nuspec or IncludeBuildOutput = false -->
     <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>
     <GenerateFullPaths Condition="'$(TERM_PROGRAM)' == 'vscode'">true</GenerateFullPaths>
@@ -50,7 +50,8 @@
     <ContinuousIntegrationBuild>false</ContinuousIntegrationBuild>
     <PathMap>'$(SolutionDir)'=/_/</PathMap>
   </PropertyGroup>
+
   <ItemGroup Condition="$(DeterministicSourcePaths) == 'true'">
-    <SourceRoot Include="$(MSBuildThisFileDirectory)/" />
+    <SourceRoot Include="$(SolutionDir)" />
   </ItemGroup>
 </Project>
