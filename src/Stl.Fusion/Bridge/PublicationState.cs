@@ -12,8 +12,8 @@ namespace Stl.Fusion.Bridge
         IComputed Computed { get; }
         bool IsDisposed { get; }
 
-        Task InvalidatedAsync();
-        Task OutdatedAsync();
+        Task WhenInvalidatedAsync();
+        Task WhenOutdatedAsync();
     }
 
     public interface IPublicationState<T> : IPublicationState
@@ -31,8 +31,8 @@ namespace Stl.Fusion.Bridge
 
     public class PublicationState<T> : IPublicationStateImpl<T>
     {
-        protected readonly TaskSource<Unit> InvalidatedSource;
-        protected readonly TaskSource<Unit> OutdatedSource;
+        protected readonly TaskSource<Unit> WhenInvalidatedSource;
+        protected readonly TaskSource<Unit> WhenOutdatedSource;
 
         IPublication IPublicationState.Publication => Publication;
         public IPublication<T> Publication { get; }
@@ -42,30 +42,30 @@ namespace Stl.Fusion.Bridge
         public Moment CreatedAt { get; }
 
         public PublicationState(IPublication<T> publication, IComputed<T> computed, Moment createdAt, bool isDisposed,
-            TaskSource<Unit> invalidatedSource = default,
-            TaskSource<Unit> outdatedSource = default)
+            TaskSource<Unit> whenInvalidatedSource = default,
+            TaskSource<Unit> whenOutdatedSource = default)
         {
-            if (invalidatedSource.IsEmpty)
-                invalidatedSource = TaskSource.New<Unit>(true);
-            if (outdatedSource.IsEmpty)
-                outdatedSource = TaskSource.New<Unit>(true);
+            if (whenInvalidatedSource.IsEmpty)
+                whenInvalidatedSource = TaskSource.New<Unit>(true);
+            if (whenOutdatedSource.IsEmpty)
+                whenOutdatedSource = TaskSource.New<Unit>(true);
             Publication = publication;
             CreatedAt = createdAt;
             IsDisposed = isDisposed;
-            InvalidatedSource = invalidatedSource;
-            OutdatedSource = outdatedSource;
+            WhenInvalidatedSource = whenInvalidatedSource;
+            WhenOutdatedSource = whenOutdatedSource;
             Computed = computed;
-            computed.Invalidated += _ => InvalidatedSource.TrySetResult(default);
+            computed.Invalidated += _ => WhenInvalidatedSource.TrySetResult(default);
         }
 
-        public Task InvalidatedAsync() => InvalidatedSource.Task;
-        public Task OutdatedAsync() => OutdatedSource.Task;
+        public Task WhenInvalidatedAsync() => WhenInvalidatedSource.Task;
+        public Task WhenOutdatedAsync() => WhenOutdatedSource.Task;
 
         bool IPublicationStateImpl.TryMarkOutdated()
         {
-            if (!OutdatedSource.TrySetResult(default))
+            if (!WhenOutdatedSource.TrySetResult(default))
                 return false;
-            InvalidatedSource.TrySetCanceled();
+            WhenInvalidatedSource.TrySetCanceled();
             return true;
         }
     }

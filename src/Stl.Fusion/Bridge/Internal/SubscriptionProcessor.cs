@@ -55,20 +55,20 @@ namespace Stl.Fusion.Bridge.Internal
                     .ConfigureAwait(false);
                 while (!state.IsDisposed) {
                     try {
-                        await state.InvalidatedAsync()
+                        await state.WhenInvalidatedAsync()
                             .WithFakeCancellation(cancellationToken)
                             .ConfigureAwait(false);
                         await TrySendUpdateAsync(state, false, cancellationToken)
                             .ConfigureAwait(false);
-                        await state.OutdatedAsync()
+                        await state.WhenOutdatedAsync()
                             .WithFakeCancellation(cancellationToken)
                             .ConfigureAwait(false);
                     }
                     catch (OperationCanceledException) {
                         if (cancellationToken.IsCancellationRequested)
                             throw;
-                        // => InvalidatedAsync was cancelled due to Publication.State change;
-                        // => OutdatedAsync is already completed too.
+                        // => WhenInvalidatedAsync was cancelled due to Publication.State change;
+                        // => WhenOutdatedAsync is already completed too.
                     }
                     state = Publication.State;
                     await TrySendUpdateAsync(state, false, cancellationToken)

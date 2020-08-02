@@ -138,7 +138,7 @@ namespace Stl.Fusion.UI
             var cancellationToken = _stopToken;
             var computed = _computedRef.Computed;
             for (var updateIndex = 0;; updateIndex++) {
-                await computed.InvalidatedAsync(cancellationToken).ConfigureAwait(false);
+                await computed.WhenInvalidatedAsync(cancellationToken).ConfigureAwait(false);
                 try {
                     if (updateIndex != 0 || _delayFirstUpdate)
                         await UpdateDelayer.DelayAsync(cancellationToken).ConfigureAwait(false);

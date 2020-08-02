@@ -27,7 +27,7 @@ namespace Stl.Fusion
                 Task.Run(async () => {
                     var prevComputed = (IComputed<TOut>) computed;
                     while (true) {
-                        await prevComputed.InvalidatedAsync(stopToken).ConfigureAwait(false);
+                        await prevComputed.WhenInvalidatedAsync(stopToken).ConfigureAwait(false);
                         if (delay > TimeSpan.Zero)
                             await clock!.DelayAsync(delay, stopToken).ConfigureAwait(false);
                         else
