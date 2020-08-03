@@ -8,17 +8,17 @@ using Stl.Fusion.Internal;
 
 namespace Stl.Fusion.Interception
 {
-    public interface IComputedServiceProxyGenerator
+    public interface IComputeServiceProxyGenerator
     {
         Type GetProxyType(Type type);
     }
 
-    public class ComputedServiceProxyGenerator : ProxyGeneratorBase<ComputedServiceProxyGenerator.Options>,
-        IComputedServiceProxyGenerator
+    public class ComputeServiceProxyGenerator : ProxyGeneratorBase<ComputeServiceProxyGenerator.Options>,
+        IComputeServiceProxyGenerator
     {
         public class Options : ProxyGenerationOptions
         {
-            public Type InterceptorType { get; set; } = typeof(ComputedServiceInterceptor);
+            public Type InterceptorType { get; set; } = typeof(ComputeServiceInterceptor);
         }
 
         protected class Implementation : ClassProxyGenerator
@@ -40,11 +40,11 @@ namespace Stl.Fusion.Interception
                 => emitter.CreateField("__interceptors", Options.InterceptorType.MakeArrayType());
         }
 
-        public static readonly IComputedServiceProxyGenerator Default = new ComputedServiceProxyGenerator();
+        public static readonly IComputeServiceProxyGenerator Default = new ComputeServiceProxyGenerator();
 
         protected ConcurrentDictionary<Type, Type> Cache { get; } = new ConcurrentDictionary<Type, Type>();
 
-        public ComputedServiceProxyGenerator(
+        public ComputeServiceProxyGenerator(
             Options? options = null,
             ModuleScope? moduleScope = null)
             : base(options, moduleScope) { }

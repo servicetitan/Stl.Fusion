@@ -13,8 +13,8 @@ namespace Stl.Fusion.Tests.Services
         Task<DateTime> GetTimeWithOffsetAsync(TimeSpan offset);
     }
 
-    [ComputedService(typeof(ITimeService))]
-    public class TimeService : ITimeService, IComputedService
+    [ComputeService(typeof(ITimeService))]
+    public class TimeService : ITimeService
     {
         private readonly ILogger _log;
         protected bool IsCaching { get; }
@@ -32,11 +32,11 @@ namespace Stl.Fusion.Tests.Services
             return now;
         }
 
-        [ComputedServiceMethod(AutoInvalidateTime = 0.25)]
+        [ComputeMethod(AutoInvalidateTime = 0.25)]
         public virtual Task<DateTime> GetTimeAsync(CancellationToken cancellationToken = default)
             => Task.FromResult(GetTime());
 
-        [ComputedServiceMethod]
+        [ComputeMethod]
         public virtual async Task<DateTime> GetTimeWithOffsetAsync(TimeSpan offset)
         {
             var now = await GetTimeAsync().ConfigureAwait(false);

@@ -139,11 +139,7 @@ namespace Stl.Fusion.Client
                 return service;
             }
 
-            var isScoped = typeof(IScopedComputedService).IsAssignableFrom(clientType);
-            if (isScoped)
-                services.TryAddScoped(serviceType, Factory);
-            else
-                services.TryAddSingleton(serviceType, Factory);
+            services.TryAddSingleton(serviceType, Factory);
             return services;
         }
 

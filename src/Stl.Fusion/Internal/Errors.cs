@@ -47,10 +47,10 @@ namespace Stl.Fusion.Internal
         public static Exception AlreadyStarted()
             => new InvalidOperationException("Already started.");
 
-        public static Exception ComputedServiceMethodAttributeOnStaticMethod(MethodInfo method)
-            => new InvalidOperationException($"{nameof(ComputedServiceMethodAttribute)} is applied to static method '{method}'.");
-        public static Exception ComputedServiceMethodAttributeOnNonVirtualMethod(MethodInfo method)
-            => new InvalidOperationException($"{nameof(ComputedServiceMethodAttribute)} is applied to non-virtual method '{method}'.");
+        public static Exception ComputeServiceMethodAttributeOnStaticMethod(MethodInfo method)
+            => new InvalidOperationException($"{nameof(ComputeMethodAttribute)} is applied to static method '{method}'.");
+        public static Exception ComputeServiceMethodAttributeOnNonVirtualMethod(MethodInfo method)
+            => new InvalidOperationException($"{nameof(ComputeMethodAttribute)} is applied to non-virtual method '{method}'.");
 
         public static Exception UnsupportedReplicaType(Type replicaType)
             => new NotSupportedException(

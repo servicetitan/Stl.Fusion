@@ -24,34 +24,31 @@ namespace Stl.Tests.Collections
 
         private void Test<T>(List<T> list)
         {
-            var buffer = MemoryBuffer<T>.Lease();
-            try {
-                foreach (var i in list)
-                    buffer.Add(i);
+            using var buffer = ArrayBuffer<T>.Lease();
+            foreach (var i in list)
+                buffer.Add(i);
+            buffer.ToArray().Should().Equal(list);
+
+            for (var _ = 0; _ < 5; _++) {
+                if (buffer.Count == 0)
+                    break;
+
+                var idx = _rnd.Next(list.Count);
+                var item = buffer[idx];
+                buffer.RemoveAt(idx);
+                list.RemoveAt(idx);
                 buffer.ToArray().Should().Equal(list);
 
-                for (var _ = 0; _ < 5; _++) {
-                    if (buffer.Count == 0)
-                        break;
+                idx = _rnd.Next(list.Count);
+                buffer.Insert(idx, item);
+                list.Insert(idx, item);
+                buffer.ToArray().Should().Equal(list);
 
-                    var idx = _rnd.Next(list.Count);
-                    var item = buffer[idx];
-                    buffer.RemoveAt(idx);
-                    list.RemoveAt(idx);
-                    buffer.ToArray().Should().Equal(list);
-
-                    idx = _rnd.Next(list.Count);
-                    buffer.Insert(idx, item);
-                    list.Insert(idx, item);
-                    buffer.ToArray().Should().Equal(list);
-
-                    idx = _rnd.Next(list.Count);
-                    buffer[idx] = buffer[idx];
-                    buffer.ToArray().Should().Equal(list);
-                }
-            }
-            finally {
-                buffer.Release();
+                idx = _rnd.Next(list.Count);
+                var tmp = buffer[idx];
+                buffer.SetItem(idx, list[idx]);
+                list[idx] = tmp;
+                buffer.ToArray().Should().Equal(list);
             }
         }
     }

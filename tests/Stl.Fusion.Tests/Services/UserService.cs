@@ -21,8 +21,8 @@ namespace Stl.Fusion.Tests.Services
         void Invalidate();
     }
 
-    [ComputedService(typeof(IUserService))]
-    public class UserService : IUserService, IComputedService
+    [ComputeService(typeof(IUserService))]
+    public class UserService : IUserService
     {
         private readonly ILogger _log;
         protected TestDbContextPool DbContextPool { get; }
@@ -87,7 +87,7 @@ namespace Stl.Fusion.Tests.Services
             }
         }
 
-        [ComputedServiceMethod]
+        [ComputeMethod]
         public virtual async Task<User?> TryGetAsync(long userId, CancellationToken cancellationToken = default)
         {
             // Debug.WriteLine($"TryGetAsync {userId}");
@@ -100,7 +100,7 @@ namespace Stl.Fusion.Tests.Services
             return user;
         }
 
-        [ComputedServiceMethod(KeepAliveTime = 5)]
+        [ComputeMethod(KeepAliveTime = 5)]
         public virtual async Task<long> CountAsync(CancellationToken cancellationToken = default)
         {
             await Everything().ConfigureAwait(false);
@@ -113,7 +113,7 @@ namespace Stl.Fusion.Tests.Services
 
         // Change handling
 
-        [ComputedServiceMethod]
+        [ComputeMethod]
         protected virtual Task<Unit> Everything() => TaskEx.UnitTask;
 
         public virtual void Invalidate()

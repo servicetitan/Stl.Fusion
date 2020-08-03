@@ -6,11 +6,14 @@ namespace Stl.Fusion.Client
 {
     [Serializable]
     [AttributeUsage(AttributeTargets.Interface, AllowMultiple = true)]
-    public class RestEaseReplicaServiceAttribute : ServiceImplementationAttributeBase
+    public class RestEaseReplicaServiceAttribute : ServiceAttributeBase
     {
-        public RestEaseReplicaServiceAttribute(Type? serviceType = null) : base(serviceType) { }
+        public Type? ServiceType { get; set; }
 
-        public override void TryRegister(IServiceCollection services, Type implementationType)
+        public RestEaseReplicaServiceAttribute(Type? serviceType = null)
+            => ServiceType = serviceType;
+
+        public override void Register(IServiceCollection services, Type implementationType)
             => services.AddRestEaseReplicaService(ServiceType ?? implementationType, implementationType);
     }
 }

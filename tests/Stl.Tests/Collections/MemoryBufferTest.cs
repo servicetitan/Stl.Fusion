@@ -46,7 +46,9 @@ namespace Stl.Tests.Collections
                     buffer.ToArray().Should().Equal(list);
 
                     idx = _rnd.Next(list.Count);
-                    buffer[idx] = buffer[idx];
+                    var tmp = buffer[idx];
+                    buffer[idx] = list[idx];
+                    list[idx] = tmp;
                     buffer.ToArray().Should().Equal(list);
                 }
             }

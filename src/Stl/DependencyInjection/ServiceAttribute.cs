@@ -5,13 +5,15 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 namespace Stl.DependencyInjection
 {
     [Serializable]
-    public class ServiceAttribute : ServiceImplementationAttributeBase
+    public class ServiceAttribute : ServiceAttributeBase
     {
+        public Type? ServiceType { get; set; }
         public ServiceLifetime Lifetime { get; set; } = ServiceLifetime.Singleton;
 
-        public ServiceAttribute(Type? serviceType = null) : base(serviceType) { }
+        public ServiceAttribute(Type? serviceType = null)
+            => ServiceType = serviceType;
 
-        public override void TryRegister(IServiceCollection services, Type implementationType)
+        public override void Register(IServiceCollection services, Type implementationType)
         {
             var descriptor = new ServiceDescriptor(
                 ServiceType ?? implementationType, implementationType, Lifetime);

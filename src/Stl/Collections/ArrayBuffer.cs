@@ -37,11 +37,6 @@ namespace Stl.Collections
         public T this[int index] {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => index < Count ? Buffer[index] : throw new IndexOutOfRangeException();
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            set {
-                if (index >= Count) throw new IndexOutOfRangeException();
-                Buffer[index] = value;
-            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -80,6 +75,20 @@ namespace Stl.Collections
             foreach (var item in Span)
                 list.Add(item);
             return list;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetItem(int index, T item)
+        {
+            if (index >= Count) throw new IndexOutOfRangeException();
+            Buffer[index] = item;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AddRange(IEnumerable<T> items)
+        {
+            foreach (var item in items)
+                Add(item);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

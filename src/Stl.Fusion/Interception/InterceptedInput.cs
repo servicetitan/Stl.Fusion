@@ -8,6 +8,9 @@ namespace Stl.Fusion.Interception
 {
     public class InterceptedInput : ComputedInput, IEquatable<InterceptedInput>
     {
+        // ReSharper disable once HeapView.BoxingAllocation
+        private static readonly object BoxedDefaultCancellationToken = (CancellationToken) default;
+
         public readonly InterceptedMethod Method;
         public readonly IInvocation Invocation;
         public readonly IInvocationProceedInfo ProceedInfo;
@@ -50,15 +53,22 @@ namespace Stl.Fusion.Interception
 
             var method = Method;
             var arguments = Arguments;
-            if (method.CancellationTokenArgumentIndex >= 0) {
-                var currentCancellationToken = (CancellationToken) arguments[method.CancellationTokenArgumentIndex];
+            var ctIndex = method.CancellationTokenArgumentIndex;
+            if (ctIndex >= 0) {
+                var currentCancellationToken = (CancellationToken) arguments[ctIndex];
                 // Comparison w/ the existing one to avoid boxing when possible
-                if (currentCancellationToken != cancellationToken)
+                if (currentCancellationToken != cancellationToken) {
                     // ReSharper disable once HeapView.BoxingAllocation
-                    arguments[method.CancellationTokenArgumentIndex] = cancellationToken;
+                    arguments[ctIndex] = cancellationToken;
+                    ProceedInfo.Invoke();
+                    arguments[ctIndex] = BoxedDefaultCancellationToken;
+                }
+                else
+                    ProceedInfo.Invoke();
             }
+            else
+                ProceedInfo.Invoke();
 
-            ProceedInfo.Invoke();
             return Invocation.ReturnValue;
         }
 

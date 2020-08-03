@@ -14,11 +14,11 @@ namespace Stl.Fusion.Tests
     [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
     public class PruneTest : TestBase
     {
-        public class Calculator : IComputedService
+        public class Calculator
         {
             public Action<double, double>? OnSumAsync;
 
-            [ComputedServiceMethod]
+            [ComputeMethod]
             public virtual async Task<double> SumAsync(double a, double b)
             {
                 OnSumAsync?.Invoke(a, b);
@@ -30,7 +30,7 @@ namespace Stl.Fusion.Tests
         public PruneTest(ITestOutputHelper @out) : base(@out) { }
 
         public static IServiceProvider CreateProviderFor<TService>()
-            where TService : class, IComputedService
+            where TService : class
         {
             var providerFactory = new DefaultServiceProviderFactory();
             var services = new ServiceCollection();
@@ -38,7 +38,7 @@ namespace Stl.Fusion.Tests
                 InitialCapacity = 16,
             }));
             services.AddFusionCore();
-            services.AddComputedService<TService>();
+            services.AddComputeService<TService>();
             return providerFactory.CreateServiceProvider(services);
         }
 

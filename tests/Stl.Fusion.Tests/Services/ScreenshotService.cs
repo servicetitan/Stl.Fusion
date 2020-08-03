@@ -14,8 +14,8 @@ namespace Stl.Fusion.Tests.Services
         Task<string> GetScreenshotAsync(int width, CancellationToken cancellationToken = default);
     }
 
-    [ComputedService(typeof(IScreenshotService))]
-    public class ScreenshotService : IScreenshotService, IComputedService
+    [ComputeService(typeof(IScreenshotService))]
+    public class ScreenshotService : IScreenshotService
     {
         protected ImageCodecInfo JpegEncoder { get; }
         protected EncoderParameters JpegEncoderParameters { get; }
@@ -30,7 +30,7 @@ namespace Stl.Fusion.Tests.Services
             };
         }
 
-        [ComputedServiceMethod(AutoInvalidateTime = 0.05)]
+        [ComputeMethod(AutoInvalidateTime = 0.05)]
         public virtual async Task<string> GetScreenshotAsync(int width, CancellationToken cancellationToken = default)
         {
             using var screen = Graphics.FromHwnd(IntPtr.Zero);

@@ -338,11 +338,11 @@ But first, let's look at some...
 
 That's how real Fusion-based code of `GetTimeWithOffsetAsync` looks like:
 ```cs
-public class TimeService : IComputedService
+public class TimeService
 {
     ...
 
-    [ComputedServiceMethod]
+    [ComputeMethod]
     public virtual async Task<DateTime> GetTimeWithOffsetAsync(TimeSpan offset)
     {
         var time = await GetTimeAsync(); // Yes, it supports async calls too
@@ -351,12 +351,10 @@ public class TimeService : IComputedService
 }
 ```
 
-As you see, it's almost exactly the code you saw, but with the following differences:
-* The class implements `IComputedService` - a tagging interface with no members. 
-  "Computed service" in the content below refers to such types.
-* The method is decorated with [ComputedServiceMethod] - the attribute is required
+As you see, it's almost exactly the code you saw, but with a single difference:
+* The method is decorated with `[ComputeMethod]` - the attribute is required
   mainly to enable some safety checks, though it also allows to configure the
-  options of computed instances provided for this method.    
+  options for `IComputed` instances backing this method.    
 
 In any other sense it works nearly as it was described earlier.
 
@@ -395,7 +393,7 @@ pinpoint what to invalidate. Yes, there are, and here is a bit trickier
 example:
 ```cs
 // The code from ChatService.cs from Stl.Samples.Blazor.Server.
-[ComputedServiceMethod]
+[ComputeMethod]
 public virtual async Task<ChatPage> GetChatTailAsync(int length)
 {
     using var dbContext = CreateDbContext();
@@ -415,7 +413,7 @@ public virtual async Task<ChatPage> GetChatTailAsync(int length)
     return new ChatPage(messages, userById);
 }
 
-[ComputedServiceMethod]
+[ComputeMethod]
 protected virtual async Task<Unit> EveryChatTail() => default;
 
 ```
@@ -677,9 +675,9 @@ We'll cover this part later, but for now let's focus on the code inside
   actual purpose is a bit different (Tutorial explains this), but for simplicity
   let's call it cache here.
 
-Do `IReplicaService`s differ from `IComputedService`? Yes and no:
+Do `IReplicaService`s differ from compute services? Yes and no:
 * Yes, because they are automatically implemented
-* No, because they behave as any other `IComputedService` - in sense that
+* No, because they behave as any other compute service - in sense that
   you can "consume" the values they produce in other computed services,
   and all the invalidation chains will just work.
   
@@ -844,4 +842,3 @@ especially for the companies running their server-side code on .NET Core (or .NE
 * Check out [Q/A](QA.md) to get answers to some frequent questions.
 * If you read this document but still don't understand it,
   check out [Stl.Fusion In Simple Terms](https://medium.com/@alexyakunin/stl-fusion-in-simple-terms-65b1975967ab?source=friends_link&sk=04e73e75a52768cf7c3330744a9b1e38).
-  

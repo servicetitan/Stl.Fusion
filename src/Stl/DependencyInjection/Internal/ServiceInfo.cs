@@ -2,64 +2,75 @@ using System;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Reflection;
+using Stl.Collections;
 using Stl.Concurrency;
+using Stl.Text;
 
 namespace Stl.DependencyInjection.Internal
 {
-    internal class ServiceInfo
+    internal readonly struct ServiceInfo
     {
-        private static ConcurrentDictionary<Assembly, ServiceInfo[]> ServiceDefCache { get; } =
+        private static ConcurrentDictionary<Assembly, ServiceInfo[]> ServiceInfoCache { get; } =
             new ConcurrentDictionary<Assembly, ServiceInfo[]>();
-        private static ConcurrentDictionary<(Assembly, string), ServiceInfo[]> ScopedServiceDefCache { get; } =
-            new ConcurrentDictionary<(Assembly, string), ServiceInfo[]>();
+        private static ConcurrentDictionary<(Assembly, Symbol), ServiceInfo[]> ScopedServiceInfoCache { get; } =
+            new ConcurrentDictionary<(Assembly, Symbol), ServiceInfo[]>();
 
         public Type ImplementationType { get; }
         public ServiceAttributeBase[] Attributes { get; }
 
-        public ServiceInfo(Type implementationType, ServiceAttributeBase[] attributes)
+        public ServiceInfo(Type implementationType, ServiceAttributeBase[]? attributes = null)
         {
             ImplementationType = implementationType;
-            Attributes = attributes;
+            Attributes = attributes ?? Array.Empty<ServiceAttributeBase>();
         }
 
-        public static ServiceInfo? For(Type implementationType)
+        public static ServiceInfo For(Type implementationType, Func<ServiceAttributeBase, bool>? filter = null)
         {
             var attrs = implementationType.GetCustomAttributes<ServiceAttributeBase>(false);
             if (attrs == null)
-                return null;
-            var aAttrs = attrs.ToArray();
-            if (aAttrs.Length == 0)
-                return null;
-            return new ServiceInfo(implementationType, aAttrs);
+                return new ServiceInfo(implementationType);
+            using var buffer = ArrayBuffer<ServiceAttributeBase>.Lease();
+            foreach (var attr in implementationType.GetCustomAttributes<ServiceAttributeBase>(false)) {
+                if (filter == null || filter.Invoke(attr))
+                    buffer.Add(attr);
+            }
+            if (buffer.Count == 0)
+                return new ServiceInfo(implementationType);
+            return new ServiceInfo(implementationType, buffer.ToArray());
         }
 
-        public static ServiceInfo? For(Type implementationType, string scope)
+        public static ServiceInfo For(Type implementationType, Symbol scope)
         {
+
             var attrs = implementationType.GetCustomAttributes<ServiceAttributeBase>(false);
             if (attrs == null)
-                return null;
-            var aAttrs = attrs.Where(a => a.Scope == scope).ToArray();
-            if (aAttrs.Length == 0)
-                return null;
-            return new ServiceInfo(implementationType, aAttrs);
+                return new ServiceInfo(implementationType);
+            using var buffer = ArrayBuffer<ServiceAttributeBase>.Lease();
+            foreach (var attr in implementationType.GetCustomAttributes<ServiceAttributeBase>(false)) {
+                if (attr.Scope == scope.Value)
+                    buffer.Add(attr);
+            }
+            if (buffer.Count == 0)
+                return new ServiceInfo(implementationType);
+            return new ServiceInfo(implementationType, buffer.ToArray());
         }
 
         public static ServiceInfo[] ForAll(Assembly assembly)
-            => ServiceDefCache!.GetOrAddChecked(
+            => ServiceInfoCache!.GetOrAddChecked(
                 assembly, a => a.ExportedTypes
-                    .Select(For)
-                    .Where(d => d != null)
+                    .Select(t => For(t))
+                    .Where(s => s.Attributes.Length != 0)
                     .ToArray())!;
 
-        public static ServiceInfo[] ForAll(Assembly assembly, string scope)
-            => ScopedServiceDefCache.GetOrAddChecked(
+        public static ServiceInfo[] ForAll(Assembly assembly, Symbol scope)
+            => ScopedServiceInfoCache.GetOrAddChecked(
                 (assembly, scope), key => {
                     var (assembly1, scope1) = key;
                     return ForAll(assembly1)
-                        .Where(d => d.Attributes.Any(a => a.Scope == scope1))
-                        .Select(d => new ServiceInfo(
-                            d.ImplementationType,
-                            d.Attributes.Where(a => a.Scope == scope1).ToArray()))
+                        .Where(s => s.Attributes.Any(a => a.Scope == scope1.Value))
+                        .Select(s => new ServiceInfo(
+                            s.ImplementationType,
+                            s.Attributes.Where(a => a.Scope == scope1.Value).ToArray()))
                         .ToArray();
                 });
     }

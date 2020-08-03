@@ -5,6 +5,8 @@ using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.DependencyInjection.Internal;
+using Stl.Internal;
+using Stl.Text;
 
 namespace Stl.DependencyInjection
 {
@@ -53,6 +55,82 @@ namespace Stl.DependencyInjection
 
         // [Service]-based automatic service discovery
 
+        public static IServiceCollection AddService<TImplementation>(
+            this IServiceCollection services,
+            ServiceAttributeBase? defaultServiceAttribute = null)
+            => services.AddService(typeof(TImplementation), defaultServiceAttribute);
+        public static IServiceCollection AddService<TImplementation>(
+            this IServiceCollection services,
+            Symbol scope,
+            ServiceAttributeBase? defaultServiceAttribute = null)
+            => services.AddService(typeof(TImplementation), scope, defaultServiceAttribute);
+        public static IServiceCollection AddService<TImplementation>(
+            this IServiceCollection services,
+            ServiceAttributeBase[] candidateServiceAttributes,
+            ServiceAttributeBase? defaultServiceAttribute = null)
+            => services.AddService(typeof(TImplementation), candidateServiceAttributes, defaultServiceAttribute);
+        public static IServiceCollection AddService<TImplementation>(
+            this IServiceCollection services,
+            Symbol scope,
+            ServiceAttributeBase[] candidateServiceAttributes,
+            ServiceAttributeBase? defaultServiceAttribute = null)
+            => services.AddService(typeof(TImplementation), scope, candidateServiceAttributes, defaultServiceAttribute);
+
+        public static IServiceCollection AddService(
+            this IServiceCollection services,
+            Type implementationType,
+            ServiceAttributeBase? defaultServiceAttribute = null)
+        {
+            var attr = ServiceAttributeBase.Get(implementationType) ?? defaultServiceAttribute;
+            if (attr == null)
+                throw Errors.NoServiceAttribute(implementationType);
+            attr.Register(services, implementationType);
+            return services;
+        }
+        public static IServiceCollection AddService(
+            this IServiceCollection services,
+            Type implementationType,
+            Symbol scope,
+            ServiceAttributeBase? defaultServiceAttribute = null)
+        {
+            var attr = ServiceAttributeBase.Get(implementationType, scope) ?? defaultServiceAttribute;
+            if (attr == null)
+                throw Errors.NoServiceAttribute(implementationType);
+            attr.Register(services, implementationType);
+            return services;
+        }
+
+        public static IServiceCollection AddService(
+            this IServiceCollection services,
+            Type implementationType,
+            ServiceAttributeBase[] candidateServiceAttributes,
+            ServiceAttributeBase? defaultServiceAttribute = null)
+        {
+            // ReSharper disable once PossibleMultipleEnumeration
+            var attr = candidateServiceAttributes.SingleOrDefault(a => a.Scope == ServiceScope.ManualRegistration)
+                // ReSharper disable once PossibleMultipleEnumeration
+                ?? candidateServiceAttributes.SingleOrDefault(a => a.Scope == ServiceScope.Default)
+                ?? defaultServiceAttribute;
+            if (attr == null)
+                throw Errors.NoServiceAttribute(implementationType);
+            attr.Register(services, implementationType);
+            return services;
+        }
+        public static IServiceCollection AddService(
+            this IServiceCollection services,
+            Type implementationType,
+            Symbol scope,
+            ServiceAttributeBase[] candidateServiceAttributes,
+            ServiceAttributeBase? defaultServiceAttribute = null)
+        {
+            var attr = candidateServiceAttributes.SingleOrDefault(a => a.Scope == scope.Value)
+                ?? defaultServiceAttribute;
+            if (attr == null)
+                throw Errors.NoServiceAttribute(implementationType);
+            attr.Register(services, implementationType);
+            return services;
+        }
+
         public static IServiceCollection AddServices(
             this IServiceCollection services,
             params Assembly[] assemblies)
@@ -64,12 +142,12 @@ namespace Stl.DependencyInjection
             => services.AddServices("", filter, assemblies);
         public static IServiceCollection AddServices(
             this IServiceCollection services,
-            string scope,
+            Symbol scope,
             params Assembly[] assemblies)
             => services.AddServices(scope, null!, assemblies);
         public static IServiceCollection AddServices(
             this IServiceCollection services,
-            string scope,
+            Symbol scope,
             Func<Type, bool> filter,
             params Assembly[] assemblies)
             => services.AddServices(scope, filter, assemblies.SelectMany(a => ServiceInfo.ForAll(a, scope)));
@@ -80,24 +158,22 @@ namespace Stl.DependencyInjection
             => services.AddServices("", candidates);
         public static IServiceCollection AddServices(
             this IServiceCollection services,
-            string scope,
+            Symbol scope,
             IEnumerable<Type> candidates)
             => services.AddServices(scope, null, candidates.Select(t => ServiceInfo.For(t, scope)));
 
         internal static IServiceCollection AddServices(
             this IServiceCollection services,
-            string scope,
+            Symbol scope,
             Func<Type, bool>? filter,
-            IEnumerable<ServiceInfo?> candidates)
+            IEnumerable<ServiceInfo> candidates)
         {
             filter ??= _ => true;
             foreach (var service in candidates) {
-                if (service == null)
-                    continue;
                 foreach (var attr in service.Attributes) {
                     var implementationType = service.ImplementationType;
                     if (attr.Scope == scope && filter.Invoke(implementationType))
-                        attr.TryRegister(services, implementationType);
+                        attr.Register(services, implementationType);
                 }
             }
             return services;

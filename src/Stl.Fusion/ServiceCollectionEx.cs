@@ -20,11 +20,11 @@ namespace Stl.Fusion
             services.TryAddSingleton<InterfaceCastInterceptor>();
             services.TryAddSingleton(c => InterfaceCastProxyGenerator.Default);
             services.TryAddSingleton(c => new [] { c.GetRequiredService<InterfaceCastInterceptor>() });
-            // ComputedServiceProxyGenerator
-            services.TryAddSingleton(new ComputedServiceInterceptor.Options());
-            services.TryAddSingleton<ComputedServiceInterceptor>();
-            services.TryAddSingleton(c => ComputedServiceProxyGenerator.Default);
-            services.TryAddSingleton(c => new [] { c.GetRequiredService<ComputedServiceInterceptor>() });
+            // ComputeServiceProxyGenerator
+            services.TryAddSingleton(new ComputeServiceInterceptor.Options());
+            services.TryAddSingleton<ComputeServiceInterceptor>();
+            services.TryAddSingleton(c => ComputeServiceProxyGenerator.Default);
+            services.TryAddSingleton(c => new [] { c.GetRequiredService<ComputeServiceInterceptor>() });
             return services;
         }
 
@@ -62,43 +62,48 @@ namespace Stl.Fusion
             return services.AddFusionCore();
         }
 
-        // AddComputedService
+        // AddComputeService
 
-        public static IServiceCollection AddComputedService<TService>(this IServiceCollection services)
+        public static IServiceCollection AddComputeService<TService>(
+            this IServiceCollection services,
+            ServiceLifetime lifetime = ServiceLifetime.Singleton)
             where TService : class
-            => services.AddComputedService(typeof(TService));
-        public static IServiceCollection AddComputedService<TService, TImpl>(this IServiceCollection services)
+            => services.AddComputeService(typeof(TService), lifetime);
+        public static IServiceCollection AddComputeService<TService, TImpl>(
+            this IServiceCollection services,
+            ServiceLifetime lifetime = ServiceLifetime.Singleton)
             where TService : class
             where TImpl : class, TService
-            => services.AddComputedService(typeof(TService), typeof(TImpl));
+            => services.AddComputeService(typeof(TService), typeof(TImpl), lifetime);
 
-        public static IServiceCollection AddComputedService(this IServiceCollection services, Type type)
-            => services.AddComputedService(type, type);
-        public static IServiceCollection AddComputedService(this IServiceCollection services,
-            Type type, Type implementationType)
+        public static IServiceCollection AddComputeService(
+            this IServiceCollection services,
+            Type serviceType,
+            ServiceLifetime lifetime = ServiceLifetime.Singleton)
+            => services.AddComputeService(serviceType, serviceType, lifetime);
+        public static IServiceCollection AddComputeService(
+            this IServiceCollection services,
+            Type serviceType, Type implementationType,
+            ServiceLifetime lifetime = ServiceLifetime.Singleton)
         {
-            if (!type.IsAssignableFrom(implementationType))
+            if (!serviceType.IsAssignableFrom(implementationType))
                 throw new ArgumentOutOfRangeException(nameof(implementationType));
-            if (!typeof(IComputedService).IsAssignableFrom(implementationType))
-                throw Errors.MustImplement<IComputedService>(implementationType);
 
             object Factory(IServiceProvider c)
             {
                 // We should try to validate it here because if the type doesn't
                 // have any virtual methods (which might be a mistake), no calls
                 // will be intercepted, so no error will be thrown later.
-                var interceptor = c.GetRequiredService<ComputedServiceInterceptor>();
+                var interceptor = c.GetRequiredService<ComputeServiceInterceptor>();
                 interceptor.ValidateType(implementationType);
-                var proxyGenerator = c.GetRequiredService<IComputedServiceProxyGenerator>();
+                var proxyGenerator = c.GetRequiredService<IComputeServiceProxyGenerator>();
                 var proxyType = proxyGenerator.GetProxyType(implementationType);
                 return c.Activate(proxyType);
             }
 
-            var isScoped = typeof(IScopedComputedService).IsAssignableFrom(implementationType);
-            if (isScoped)
-                services.TryAddScoped(type, Factory);
-            else
-                services.TryAddSingleton(type, Factory);
+            var descriptor = new ServiceDescriptor(
+                serviceType ?? implementationType, Factory, lifetime);
+            services.TryAdd(descriptor);
             return services;
         }
     }

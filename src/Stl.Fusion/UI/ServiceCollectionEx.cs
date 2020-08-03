@@ -1,9 +1,11 @@
 using System;
+using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Stl.DependencyInjection;
 
 namespace Stl.Fusion.UI
 {
@@ -16,11 +18,8 @@ namespace Stl.Fusion.UI
             Type stateType, Type updaterType)
         {
             var iUpdaterType = typeof(ILiveStateUpdater<>).MakeGenericType(stateType);
-            if (typeof(IComputedService).IsAssignableFrom(updaterType))
-                services.AddComputedService(iUpdaterType, updaterType);
-            else
-                services.TryAddSingleton(iUpdaterType, updaterType);
-            return services;
+            var serviceAttributes = ServiceAttributeBase.GetAll(updaterType, a => !(a is LiveStateUpdaterAttribute));
+            return services.AddService(updaterType, serviceAttributes, new ServiceAttribute(iUpdaterType));
         }
 
         public static IServiceCollection AddLiveStateUpdater(
@@ -28,11 +27,8 @@ namespace Stl.Fusion.UI
             Type localType, Type stateType, Type updaterType)
         {
             var iUpdaterType = typeof(ILiveStateUpdater<,>).MakeGenericType(localType, stateType);
-            if (typeof(IComputedService).IsAssignableFrom(updaterType))
-                services.AddComputedService(iUpdaterType, updaterType);
-            else
-                services.TryAddSingleton(iUpdaterType, updaterType);
-            return services;
+            var serviceAttributes = ServiceAttributeBase.GetAll(updaterType, a => !(a is LiveStateUpdaterAttribute));
+            return services.AddService(updaterType, serviceAttributes, new ServiceAttribute(iUpdaterType));
         }
 
         public static IServiceCollection AddLiveStateUpdater<TState, TLiveUpdater>(
@@ -40,11 +36,8 @@ namespace Stl.Fusion.UI
             where TLiveUpdater : class, ILiveStateUpdater<TState>
             where TState : class
         {
-            if (typeof(IComputedService).IsAssignableFrom(typeof(TLiveUpdater)))
-                services.AddComputedService<ILiveStateUpdater<TState>, TLiveUpdater>();
-            else
-                services.TryAddSingleton<ILiveStateUpdater<TState>, TLiveUpdater>();
-            return services;
+            var serviceAttributes = ServiceAttributeBase.GetAll(typeof(TLiveUpdater), a => !(a is LiveStateUpdaterAttribute));
+            return services.AddService<TLiveUpdater>(serviceAttributes, new ServiceAttribute(typeof(ILiveStateUpdater<TState>)));
         }
 
         public static IServiceCollection AddLiveStateUpdater<TLocal, TState, TLiveUpdater>(
@@ -52,11 +45,8 @@ namespace Stl.Fusion.UI
             where TLiveUpdater : class, ILiveStateUpdater<TLocal, TState>
             where TState : class
         {
-            if (typeof(IComputedService).IsAssignableFrom(typeof(TLiveUpdater)))
-                services.AddComputedService<ILiveStateUpdater<TLocal, TState>, TLiveUpdater>();
-            else
-                services.TryAddSingleton<ILiveStateUpdater<TLocal, TState>, TLiveUpdater>();
-            return services;
+            var serviceAttributes = ServiceAttributeBase.GetAll(typeof(TLiveUpdater), a => !(a is LiveStateUpdaterAttribute));
+            return services.AddService<TLiveUpdater>(serviceAttributes, new ServiceAttribute(typeof(ILiveStateUpdater<TState, TLocal>)));
         }
 
         // AddLive

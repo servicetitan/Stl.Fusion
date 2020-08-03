@@ -8,7 +8,7 @@ namespace Stl.Fusion.UI
     [Serializable]
     public class LiveStateUpdaterAttribute : ServiceAttributeBase
     {
-        public override void TryRegister(IServiceCollection services, Type implementationType)
+        public override void Register(IServiceCollection services, Type implementationType)
         {
             var tLiveUpdater = typeof(ILiveStateUpdater);
             var tLiveUpdaterGeneric1 = typeof(ILiveStateUpdater<>);

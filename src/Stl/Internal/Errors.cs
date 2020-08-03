@@ -1,6 +1,7 @@
 using System;
 using Newtonsoft.Json;
 using Stl.Async;
+using Stl.DependencyInjection;
 using Stl.Reflection;
 
 namespace Stl.Internal
@@ -99,5 +100,10 @@ namespace Stl.Internal
             new InvalidOperationException($"Generic type '{matchType}' can't be a match for concrete type '{type}'.");
         public static Exception ConcreteMatchForGenericType(Type type, Type matchType) =>
             new InvalidOperationException($"Concrete type '{matchType}' can't be a match for generic type '{type}'.");
+
+        public static Exception NoServiceAttribute(Type implementationType) =>
+            new InvalidOperationException(
+                $"'{implementationType}' doesn't have a [{nameof(ServiceAttribute)}] or some other " +
+                $"{nameof(ServiceAttributeBase)} descendant applied.");
     }
 }

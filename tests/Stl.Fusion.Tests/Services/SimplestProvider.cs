@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Stl.Fusion.Tests.Services
 {
@@ -15,8 +16,8 @@ namespace Stl.Fusion.Tests.Services
         Task<int> GetCharCountAsync();
     }
 
-    [ComputedService(typeof(ISimplestProvider))]
-    public class SimplestProvider : ISimplestProvider, IScopedComputedService, IHasId<Type>
+    [ComputeService(typeof(ISimplestProvider), Lifetime = ServiceLifetime.Scoped)]
+    public class SimplestProvider : ISimplestProvider, IHasId<Type>
     {
         private static volatile string _value = "";
         private readonly bool _isCaching;
@@ -34,14 +35,14 @@ namespace Stl.Fusion.Tests.Services
             Invalidate();
         }
 
-        [ComputedServiceMethod]
+        [ComputeMethod]
         public virtual Task<string> GetValueAsync()
         {
             GetValueCallCount++;
             return Task.FromResult(_value);
         }
 
-        [ComputedServiceMethod(ErrorAutoInvalidateTime = 0.1)]
+        [ComputeMethod(ErrorAutoInvalidateTime = 0.1)]
         public virtual async Task<int> GetCharCountAsync()
         {
             GetCharCountCallCount++;

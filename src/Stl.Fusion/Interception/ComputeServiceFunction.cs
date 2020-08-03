@@ -8,19 +8,19 @@ using Stl.Generators;
 
 namespace Stl.Fusion.Interception
 {
-    public class ComputedServiceFunction<T> : InterceptedFunctionBase<T>
+    public class ComputeServiceFunction<T> : InterceptedFunctionBase<T>
     {
         private readonly ILogger _log;
         protected Generator<LTag> LTagGenerator { get; }
 
-        public ComputedServiceFunction(
+        public ComputeServiceFunction(
             InterceptedMethod method,
             Generator<LTag> lTagGenerator,
             IComputedRegistry computedRegistry,
-            ILogger<ComputedServiceFunction<T>>? log = null)
+            ILogger<ComputeServiceFunction<T>>? log = null)
             : base(method, computedRegistry)
         {
-            _log = log ??= NullLogger<ComputedServiceFunction<T>>.Instance;
+            _log = log ??= NullLogger<ComputeServiceFunction<T>>.Instance;
             LTagGenerator = lTagGenerator;
         }
 

@@ -85,6 +85,13 @@ namespace Stl.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AddRange(IEnumerable<T> items)
+        {
+            foreach (var item in items)
+                Add(item);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add(T item)
         {
             var capacity = Capacity;

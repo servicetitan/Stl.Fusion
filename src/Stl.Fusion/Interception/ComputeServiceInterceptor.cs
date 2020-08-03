@@ -8,7 +8,7 @@ using Stl.Generators;
 
 namespace Stl.Fusion.Interception
 {
-    public class ComputedServiceInterceptor : InterceptorBase
+    public class ComputeServiceInterceptor : InterceptorBase
     {
         public new class Options : InterceptorBase.Options
         {
@@ -17,7 +17,7 @@ namespace Stl.Fusion.Interception
 
         protected Generator<LTag> LTagGenerator { get; }
 
-        public ComputedServiceInterceptor(
+        public ComputeServiceInterceptor(
             Options options,
             IComputedRegistry? registry = null,
             ILoggerFactory? loggerFactory = null)
@@ -28,43 +28,41 @@ namespace Stl.Fusion.Interception
 
         protected override InterceptedFunctionBase<T> CreateFunction<T>(InterceptedMethod method)
         {
-            var log = LoggerFactory.CreateLogger<ComputedServiceFunction<T>>();
-            return new ComputedServiceFunction<T>(method, LTagGenerator, Registry, log);
+            var log = LoggerFactory.CreateLogger<ComputeServiceFunction<T>>();
+            return new ComputeServiceFunction<T>(method, LTagGenerator, Registry, log);
         }
 
         protected override void ValidateTypeInternal(Type type)
         {
             Log.Log(ValidationLogLevel, $"Validating: '{type}':");
-            if (!typeof(IComputedService).IsAssignableFrom(type))
-                throw Errors.MustImplement<IComputedService>(type);
             var bindingFlags = BindingFlags.Public | BindingFlags.NonPublic
                 | BindingFlags.Instance | BindingFlags.Static
                 | BindingFlags.FlattenHierarchy;
             foreach (var method in type.GetMethods(bindingFlags)) {
                 var attrs = method
-                    .GetCustomAttributes(typeof(ComputedServiceMethodAttribute), true)
-                    .Cast<ComputedServiceMethodAttribute>()
+                    .GetCustomAttributes(typeof(ComputeMethodAttribute), true)
+                    .Cast<ComputeMethodAttribute>()
                     .ToArray();
                 if (!attrs.Any())
                     continue; // No attributes
                 if (method.IsStatic)
-                    throw Errors.ComputedServiceMethodAttributeOnStaticMethod(method);
+                    throw Errors.ComputeServiceMethodAttributeOnStaticMethod(method);
                 if (!method.IsVirtual)
-                    throw Errors.ComputedServiceMethodAttributeOnNonVirtualMethod(method);
+                    throw Errors.ComputeServiceMethodAttributeOnNonVirtualMethod(method);
                 if (method.IsFinal)
                     // All implemented interface members are marked as "virtual final"
                     // unless they are truly virtual
-                    throw Errors.ComputedServiceMethodAttributeOnNonVirtualMethod(method);
+                    throw Errors.ComputeServiceMethodAttributeOnNonVirtualMethod(method);
                 if (attrs.Any(a => !a.IsEnabled)) {
                     Log.Log(ValidationLogLevel,
-                        $"- {method}: has {nameof(ComputedServiceMethodAttribute)}(false)");
+                        $"- {method}: has {nameof(ComputeMethodAttribute)}(false)");
                     continue;
                 }
                 var attr = attrs.FirstOrDefault();
                 Log.Log(ValidationLogLevel,
-                    $"+ {method}: {nameof(ComputedServiceMethodAttribute)} {{ " +
-                    $"{nameof(ComputedServiceMethodAttribute.IsEnabled)} = {attr.IsEnabled}, " +
-                    $"{nameof(ComputedServiceMethodAttribute.KeepAliveTime)} = {attr.KeepAliveTime}" +
+                    $"+ {method}: {nameof(ComputeMethodAttribute)} {{ " +
+                    $"{nameof(ComputeMethodAttribute.IsEnabled)} = {attr.IsEnabled}, " +
+                    $"{nameof(ComputeMethodAttribute.KeepAliveTime)} = {attr.KeepAliveTime}" +
                     $" }}");
             }
         }
