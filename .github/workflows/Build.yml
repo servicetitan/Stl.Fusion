@@ -35,7 +35,7 @@ jobs:
 
       - name: Run tests
         run: dotnet run --project build --configuration Release --no-launch-profile -- --configuration Debug coverage
-        #run: timeout 10m dotnet test artifacts/tests/Stl.Tests.dll
+        # run: timeout 10m dotnet test artifacts/tests/Stl.Tests.dll
 
       - name: Codecov
         uses: codecov/codecov-action@v1.0.7
@@ -43,4 +43,4 @@ jobs:
           name: codecov-bot
           file: "artifacts/tests/output/coverage.cobertura.xml"
           flags: unit
-          fail_ci_if_error: true
+          # fail_ci_if_error: true
