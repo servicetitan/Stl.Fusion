@@ -100,10 +100,10 @@ no way to fit it in RAM, Fusion is designed to “spawn” the **observed part**
 state on-demand, and destroy the unused parts quickly.
 
 It provides three key abstractions to implement this:
-* **Computed services** are services exposing methods "backed" by Fusion's 
-  version of "computed observables". Computed services are responsible for 
+* **Compute services** are services exposing methods "backed" by Fusion's 
+  version of "computed observables". Compute services are responsible for 
   "spawning" parts of the state on-demand.
-* **Replica services** - remote proxies of "computed services".
+* **Replica services** - remote proxies of "compute services".
   They allow clients to consume ("observe") the parts of remote state.
 * And finally, **`IComputed<TOut>` &ndash; a "computed observable" abstraction**, 
   that's in some ways similar to the one you can find in Knockout, MobX, or Vue.js,

@@ -365,7 +365,7 @@ and all `.ConfigureAwait(false)` calls are removed for readability (that's
 is untouched.
 
 ```cs
-// Notice this is a regular method, not a computed service method
+// Notice this is a regular method, not a compute service method
 public async Task<ChatUser> CreateUserAsync(string name)
 {
     // The real-life code should do this a bit differently
@@ -386,7 +386,7 @@ public async Task<ChatUser> CreateUserAsync(string name)
 ```
 
 As you see, it's fairly simple - you use `Computed.Invalidate(...)`
-to capture and invalidate the result of another computed service method.
+to capture and invalidate the result of another compute service method.
 
 I guess you anticipate there are some cases when it's hard to precisely 
 pinpoint what to invalidate. Yes, there are, and here is a bit trickier
@@ -427,7 +427,7 @@ with different `length` values?
 
 > Q: Why fetching users in parallel is ok here?
 
-A: `GetUserAsync()` is also a computed service method, which means its
+A: `GetUserAsync()` is also a compute service method, which means its
 results are cached. So in a real-life chat app these calls aren't expected
 to be resolved via DB - most of these users should be already cached,
 which means these calls won't hit the DB and will complete synchronously.
@@ -486,7 +486,7 @@ be the best option.
 
 Oh, and there are other benefits. Let's look at another gem:
 
-## Distributed Computed Services
+## Distributed Compute Services
 
 First, notice that nothing prevents us from crafting this "kind" of `IComputed<T>`:
 ```cs
@@ -678,7 +678,7 @@ We'll cover this part later, but for now let's focus on the code inside
 Do `IReplicaService`s differ from compute services? Yes and no:
 * Yes, because they are automatically implemented
 * No, because they behave as any other compute service - in sense that
-  you can "consume" the values they produce in other computed services,
+  you can "consume" the values they produce in other compute services,
   and all the invalidation chains will just work.
   
 The "Composition" sample is actually designed to prove this: 

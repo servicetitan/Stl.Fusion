@@ -69,7 +69,7 @@ This is actually pretty good, taking into account the following timeline:
 Yes, you can use it to implement the same real-time update logic there. 
 The only difference here is that you don't need API controllers supporting
 Fusion publication in this case, i.e. your models might depend right on the 
-*server-side computed services* (that's an abstraction you primarily deal with, that
+*server-side compute services* (that's an abstraction you primarily deal with, that
 "hides" all the complexities of dealing with `IComputed` & does it transparently
 for you).
 
