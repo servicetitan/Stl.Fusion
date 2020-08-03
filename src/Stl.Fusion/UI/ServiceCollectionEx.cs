@@ -46,7 +46,7 @@ namespace Stl.Fusion.UI
             where TState : class
         {
             var serviceAttributes = ServiceAttributeBase.GetAll(typeof(TLiveUpdater), a => !(a is LiveStateUpdaterAttribute));
-            return services.AddService<TLiveUpdater>(serviceAttributes, new ServiceAttribute(typeof(ILiveStateUpdater<TState, TLocal>)));
+            return services.AddService<TLiveUpdater>(serviceAttributes, new ServiceAttribute(typeof(ILiveStateUpdater<TLocal, TState>)));
         }
 
         // AddLive
