@@ -4,11 +4,14 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using Bullseye;
 using CliWrap;
 using CliWrap.Buffered;
 using static Bullseye.Targets;
+
+#pragma warning disable CS1587 // XML comment is not placed on a valid language element
 
 namespace Build
 {
@@ -29,7 +32,10 @@ namespace Build
         /// <param name="parallel">Run targets in parallel.</param>
         /// <param name="skipDependencies">Do not run targets' dependencies.</param>
         /// <param name="verbose">Enable verbose output.</param>
+        /// <param name="cancellationToken"></param>
         /// <param name="configuration">The configuration for building</param>
+        /// <param name="nugetApiKey">Nuget api key for publishing, also you can use NUGET_ORG_API_KEY env variable</param>
+        /// <param name="isPublicRelease">You can redefine PublicRelease property for Nerdbank.GitVersioning</param>
         private static async Task Main(
             string[] arguments,
             bool clear,
@@ -43,8 +49,11 @@ namespace Build
             bool parallel,
             bool skipDependencies,
             bool verbose,
+            CancellationToken cancellationToken,
             // our options here
-            string configuration = "Debug"
+            string configuration = "Debug",
+            string nugetApiKey = "",
+            bool isPublicRelease = true
             )
         {
             SetEnvVariables();
@@ -66,28 +75,64 @@ namespace Build
             var dotnet = TryFindDotNetExePath()
                 ?? throw new FileNotFoundException("'dotnet' command isn't found. Try to set DOTNET_ROOT variable.");
 
+            /// for Nerdbank.GitVersioning <seealso href="https://github.com/dotnet/Nerdbank.GitVersioning/blob/master/doc/public_vs_stable.md"/>
+            var publicReleaseEnvVar = Environment.GetEnvironmentVariable("NBGV_PublicRelease");
+            var publicReleaseProperty = $"-p:PublicRelease={(string.IsNullOrWhiteSpace(publicReleaseEnvVar) ? isPublicRelease : bool.Parse(publicReleaseEnvVar))} ";
+
             Target("restore-tools", async () => {
-                var cmd = await Cli.Wrap(dotnet).WithArguments($"tool restore --ignore-failed-sources").ToConsole()
-                    .ExecuteBufferedAsync().Task.ConfigureAwait(false);
+                await Cli.Wrap(dotnet).WithArguments($"tool restore --ignore-failed-sources")
+                    .ToConsole()
+                    .ExecuteAsync(cancellationToken).Task.ConfigureAwait(false);
             });
 
             Target("restore", async () => {
-                var isPublicRelease = bool.Parse(Environment.GetEnvironmentVariable("NBGV_PublicRelease") ?? "false");
-                var cmd = await Cli.Wrap(dotnet).WithArguments($"msbuild -noLogo " +
-                    "-t:Restore " +
-                    "-p:RestoreForce=true " +
-                    "-p:RestoreIgnoreFailedSources=True " +
-                    $"-p:Configuration={configuration} " +
-                    // for Nerdbank.GitVersioning
-                    $"-p:PublicRelease={isPublicRelease} "
-                    ).ToConsole()
-                    .ExecuteBufferedAsync().Task.ConfigureAwait(false);
+                await Cli.Wrap(dotnet).WithArguments($"msbuild -noLogo " +
+                   "-t:Restore " +
+                   "-p:RestoreForce=true " +
+                   "-p:RestoreIgnoreFailedSources=True " +
+                   $"-p:Configuration={configuration} " +
+                   publicReleaseProperty
+                   ).ToConsole()
+                   .ExecuteAsync(cancellationToken).Task.ConfigureAwait(false);
             });
 
             Target("build", async () => {
-                var cmd = await Cli.Wrap(dotnet).WithArguments($"build -noLogo -c {configuration}")
+                await Cli.Wrap(dotnet).WithArguments($"build -noLogo -c {configuration} --no-restore {publicReleaseProperty}")
                     .ToConsole()
-                    .ExecuteBufferedAsync().Task.ConfigureAwait(false);
+                    .ExecuteAsync(cancellationToken).Task.ConfigureAwait(false);
+            });
+
+            Target("pack", DependsOn("restore", "build"), async () => {
+                await Cli.Wrap(dotnet).WithArguments($"pack -noLogo -c {configuration} --no-build {publicReleaseProperty}")
+                    .ToConsole()
+                    .ExecuteAsync(cancellationToken).Task.ConfigureAwait(false);
+            });
+
+            Target("nupkg-clean", () => {
+
+                var path = Path.GetFullPath(Path.Combine("artifacts", "nupkg"));
+                if (Directory.Exists(path)) {
+                    try {
+                        Directory.Delete(path, recursive: true);
+                    }
+                    catch { }
+                }
+                Directory.CreateDirectory(path);
+
+            });
+            Target("publish", DependsOn("nupkg-clean", "pack"), async () => {
+                const string feed = "https://api.nuget.org/v3/index.json";
+                if (string.IsNullOrWhiteSpace(nugetApiKey)) {
+                    nugetApiKey = Environment.GetEnvironmentVariable("NUGET_ORG_API_KEY") ?? "";
+                }
+                if (string.IsNullOrWhiteSpace(nugetApiKey)) {
+                    throw new Exception("You should specify --nuget-api-key value for publishing");
+                }
+                foreach (var nupkg in Directory.EnumerateFiles(Path.GetFullPath(Path.Combine("artifacts", "nupkg")), "*.nupkg", SearchOption.TopDirectoryOnly)) {
+                    await Cli.Wrap(dotnet).WithArguments($"nuget push \"{nupkg}\" --force-english-output --timeout 60 --api-key \"{nugetApiKey}\" --source \"{feed}\" --skip-duplicate")
+                        .ToConsole()
+                        .ExecuteAsync(cancellationToken).Task.ConfigureAwait(false);
+                }
             });
 
             Target("coverage", async () => {
@@ -103,14 +148,13 @@ namespace Build
                     "--nologo " +
                     "--no-restore " +
                     $"--collect:\"XPlat Code Coverage\" --results-directory {resultsDirectory} " +
-                    $"--logger trx;LogFileName=\"{Path.Combine(resultsDirectory, "tests.trx").Replace("\"", "\\\"")}\" " +
                     $"-c {configuration} " +
                     "-- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=json,cobertura"
                     )
                     .ToConsole()
-                    .ExecuteBufferedAsync().Task.ConfigureAwait(false);
+                    .ExecuteBufferedAsync(cancellationToken).Task.ConfigureAwait(false);
 
-                MoveAttachmentsToResultsDirectory(resultsDirectory, cmd.StandardOutput);
+                MoveAllAttachmentsToResultsDirectory(resultsDirectory, cmd.StandardOutput);
                 TryRemoveTestsOutputDirectories(resultsDirectory);
 
                 // Removes all files in inner folders, workaround of https://github.com/microsoft/vstest/issues/2334
@@ -125,18 +169,19 @@ namespace Build
                 }
 
                 // Removes guid from tests output path, workaround of https://github.com/microsoft/vstest/issues/2378
-                static void MoveAttachmentsToResultsDirectory(string resultsDirectory, string output)
+                static void MoveAllAttachmentsToResultsDirectory(string resultsDirectory, string output)
                 {
-                    var attachmentsRegex = new Regex($@"Attachments:(?<filepaths>(?<filepath>[\s]+[^\n]+{Regex.Escape(resultsDirectory)}[^\n]+[\n])+)", RegexOptions.Singleline | RegexOptions.CultureInvariant);
-                    var match = attachmentsRegex.Match(output);
-                    if (match.Success) {
+                    var pattern = $@"Test run for (?<testLib>[^(]*).*?Attachments:(?<filepaths>(?<filepath>[\s]+[^\n]+{Regex.Escape(resultsDirectory)}[^\n]+[\n])+)";
+                    var attachmentsRegex = new Regex(pattern, RegexOptions.Singleline | RegexOptions.CultureInvariant);
+                    foreach (var match in attachmentsRegex.Matches(output).OfType<Match>()) {
                         var regexPaths = match.Groups["filepaths"].Value.Trim('\n', ' ', '\t', '\r');
                         var paths = regexPaths.Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToArray();
                         if (paths.Length > 0) {
                             foreach (var path in paths) {
-                                File.Move(path, Path.Combine(resultsDirectory, Path.GetFileName(path)), overwrite: true);
+                                var newFileName = $"{Path.GetFileNameWithoutExtension(match.Groups["testLib"].Value)}.{Path.GetFileName(path)}";
+                                File.Move(path, Path.Combine(resultsDirectory, newFileName), overwrite: true);
                             }
-                            Directory.Delete(Path.GetDirectoryName(paths[0]), true);
+                            Directory.Delete(Path.GetDirectoryName(paths[0]), recursive: true);
                         }
                     }
                 }
@@ -144,7 +189,25 @@ namespace Build
 
             Target("default", DependsOn("build"));
 
-            await RunTargetsAndExitAsync(arguments, options).ConfigureAwait(false);
+
+
+            try {
+                /// <see cref="RunTargetsAndExitAsync"/> will hang Target on ctrl+c
+                await RunTargetsWithoutExitingAsync(arguments, options, ex => ex is OperationCanceledException).ConfigureAwait(false);
+            }
+            catch (TargetFailedException targetException) {
+                if (targetException.InnerException is OperationCanceledException operationCanceledException) {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine(operationCanceledException.Message);
+                    Console.ResetColor();
+                }
+            }
+            catch (Exception ex) {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"Unhandled exception: {ex}");
+                Console.ResetColor();
+            }
+
 
             static void SetEnvVariables()
             {
@@ -185,4 +248,3 @@ namespace Build
         }
     }
 }
-
