@@ -9,6 +9,19 @@ function Build() {
     }
 }
 
+function DockerMmdc($src, $dst, $options)
+{
+    $dstName = [System.IO.Path]::GetFileName($dst)
+    $dstPath = Join-Path $srcDir $dstName
+    $srcDir = [System.IO.Path]::GetDirectoryName($src)
+    $srcTmpName = "${dstName}.tmp.mmd"
+    $srcTmpPath = Join-Path $srcDir $srcTmpName
+    (Get-Content $src -Raw).Replace("`r`n","`n") | Set-Content $srcTmpPath -Force
+    Invoke-Expression "docker run --rm -v ${srcDir}:/data minlag/mermaid-cli:latest -i $srcTmpName -o $dstName $options"
+    Remove-Item $srcTmpPath
+    Move-Item $dstPath $dst -Force
+}
+
 function Build1($src) {
     Write-Host "Processing: $src"
     $magicOptions = "-density 600 -trim +repage -resize 3840 -size 3840x2160 -quality 50"
@@ -21,11 +34,15 @@ function Build1($src) {
     $dstDarkPdf  = [System.IO.Path]::ChangeExtension($dstDarkSvg, ".pdf")
     $dstDarkJpg  = [System.IO.Path]::ChangeExtension($dstDarkSvg, ".jpg")
     
-    Invoke-Expression "mmdc -i $src -o $dstLightSvg -t neutral"
-    Invoke-Expression "mmdc -i $src -o $dstLightPdf -t neutral -b white"
+    # Invoke-Expression "mmdc -i $src -o $dstLightSvg -t neutral"
+    # Invoke-Expression "mmdc -i $src -o $dstLightPdf -t neutral -b white"
+    DockerMmdc $src $dstDarkSvg "-t neutral"
+    DockerMmdc $src $dstDarkPdf "-t neutral -b white"
     Invoke-Expression "magick convert $magicOptions $dstLightPdf $dstLightJpg"
-    Invoke-Expression "mmdc -i $src -o $dstDarkSvg -t dark"
-    Invoke-Expression "mmdc -i $src -o $dstDarkPdf -t dark -b black"
+    # Invoke-Expression "mmdc -i $src -o $dstDarkSvg -t dark"
+    # Invoke-Expression "mmdc -i $src -o $dstDarkPdf -t dark -b black"
+    DockerMmdc $src $dstDarkSvg "-t dark"
+    DockerMmdc $src $dstDarkPdf "-t dark -b black"
     Invoke-Expression "magick convert $magicOptions $dstDarkPdf $dstDarkJpg"
 }
 
