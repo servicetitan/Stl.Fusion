@@ -71,7 +71,7 @@
     <PackageReference Update="System.CommandLine.DragonFruit" Version="0.3.0-alpha.20303.1" />
     <PackageReference Update="System.Drawing.Common" Version="4.7.0" />
     <PackageReference Update="System.IO.Abstractions" Version="12.0.10" />
-    <PackageReference Update="System.IO.Abstractions.TestingHelpers" Version="12.0.10" />
+    <PackageReference Update="System.IO.Abstractions.TestingHelpers" Version="12.1.1" />
     <PackageReference Update="System.Net.Http.Json" Version="$(SystemNetHttpJsonVersion)" />
     <PackageReference Update="System.Net.WebSockets" Version="4.3.0" />
     <PackageReference Update="System.Net.WebSockets.Client" Version="4.3.2" />
