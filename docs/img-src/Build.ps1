@@ -11,7 +11,9 @@ function Build1($src) {
     $dst = [System.IO.Path]::ChangeExtension(
         [System.IO.Path]::GetFullPath("$srcDir/../img/$srcName"),
         ".svg")
-    mmdc.cmd -i $src -o $dst -b white -t neutral
+    $dstDark = [System.IO.Path]::ChangeExtension($dst, ".dark.svg")
+    mmdc.cmd -i $src -o $dst -t neutral
+    mmdc.cmd -i $src -o $dstDark -t dark
 }
 
 Build
