@@ -5,14 +5,12 @@ function Build() {
 }
 
 function Build1($src) {
-    $src | Out-Host
+    Write-Host "Processing: $src"
     $srcDir = $src | Split-Path
     $srcName = $src | Split-Path -Leaf
-    $dst = [System.IO.Path]::ChangeExtension(
-        [System.IO.Path]::GetFullPath("$srcDir/../img/$srcName"),
-        ".svg")
-    $dstDark = [System.IO.Path]::ChangeExtension($dst, ".dark.svg")
-    mmdc.cmd -i $src -o $dst -t neutral
+    $dstLight = [System.IO.Path]::ChangeExtension([System.IO.Path]::GetFullPath("$srcDir/../img/light/$srcName"), ".svg")
+    $dstDark = [System.IO.Path]::ChangeExtension([System.IO.Path]::GetFullPath("$srcDir/../img/dark/$srcName"), ".svg")
+    mmdc.cmd -i $src -o $dstLight -t neutral
     mmdc.cmd -i $src -o $dstDark -t dark
 }
 
