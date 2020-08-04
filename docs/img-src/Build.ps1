@@ -36,8 +36,8 @@ function Build1($src) {
     
     # Invoke-Expression "mmdc -i $src -o $dstLightSvg -t neutral"
     # Invoke-Expression "mmdc -i $src -o $dstLightPdf -t neutral -b white"
-    DockerMmdc $src $dstDarkSvg "-t neutral"
-    DockerMmdc $src $dstDarkPdf "-t neutral -b white"
+    DockerMmdc $src $dstLightSvg "-t neutral"
+    DockerMmdc $src $dstLightPdf "-t neutral -b white"
     Invoke-Expression "magick convert $magicOptions $dstLightPdf $dstLightJpg"
     # Invoke-Expression "mmdc -i $src -o $dstDarkSvg -t dark"
     # Invoke-Expression "mmdc -i $src -o $dstDarkPdf -t dark -b black"

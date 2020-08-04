@@ -3,6 +3,7 @@ classDiagram
   Computed <|-- SimpleComputed
   Computed <|-- ReplicaComputed
   Computed <|-- ReplicaClientComputed
+  <<interface>> IComputed
   class IComputed {
     +ComputedState State
     +LTag LTag
