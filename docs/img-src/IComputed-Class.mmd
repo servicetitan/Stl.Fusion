@@ -9,7 +9,7 @@ classDiagram
     +Exception? Error
     +event~Action~ Invalidated
 
-    +Invalidate()
+    +Invalidate() void
     +UpdateAsync() ValueTask~IComputed~
     +UseAsync() ValueTask~TOut~
     +WhenInvalidatedAsync() Task

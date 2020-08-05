@@ -3,8 +3,8 @@ classDiagram
     <<static>>
     +GetCurrent()$ IComputed
     +ChangeCurrent(IComputed newCurrent)$ IDisposable
-    +Suppress()$
-    +Invalidate(Func producer)$
+    +Suppress() void$
+    +Invalidate(Func producer) void$
     +CaptureAsync(Func producer, CancellationToken ct)$ Task~IComputed~
     +TryGetCached(Func producer)$ IComputed
   }
