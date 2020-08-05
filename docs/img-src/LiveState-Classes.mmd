@@ -1,0 +1,32 @@
+classDiagram
+  ILiveState~TState,TLocal~ <|.. LiveState~TState,TLocal~
+  IUpdateDelayer <-- ILiveState~TState,TLocal~ : Uses
+  IUpdateDelayer <|.. UpdateDelayer
+  ILiveStateUpdater~TState,TLocal~ <-- ILiveState~TState,TLocal~ : Uses
+  class ILiveStateUpdater~TState,TLocal~ {
+    <<Computes new TState based on the last one>>
+    UpdateAsync(ILiveState<TLocal, TState> liveState) Task~TState~
+  }
+  class IUpdateDelayer {
+    <<Controls update delays>>
+    +DelayAsync() Task
+    +ExtraErrorDelayAsync(Exception error, int tryIndex) Task
+    +CancelDelays(bool noDelay) void
+  }
+  class ILiveState~TState,TLocal~ {
+    <<Runs Updater + UpdateDelayer>>
+    +IComputed State
+    +TLocal Local
+    +Exception? LastUpdateError
+    +ILiveStateUpdater~TState,TLocal~ Updater
+    +IUpdateDelayer UpdateDelayer
+    +event~Action<ILiveState>~ Updated;
+
+    +Invalidate(bool updateImmediately) void
+  }
+  class UpdateDelayer {
+    <<The default impl.>>
+  }
+  class LiveState~TState,TLocal~ {
+    <<The default impl.>>
+  }

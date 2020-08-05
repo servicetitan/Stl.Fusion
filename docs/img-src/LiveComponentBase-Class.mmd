@@ -1,0 +1,11 @@
+classDiagram
+  ComponentBase <|-- LiveComponentBase~TState~
+  IDisposable <|.. LiveComponentBase~TState~
+  ILiveState~TState~ <-- LiveComponentBase~TState~ : Uses
+  class LiveComponentBase~TState~ {
+    +ILiveState~TState~ LiveState
+    +TState State
+    +IUpdateDelayer UpdateDelayer
+    +Invalidate(bool updateImmediately) void
+    #OnLiveStateUpdated(ILiveState liveState) void
+  }

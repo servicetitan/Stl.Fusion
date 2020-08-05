@@ -1,30 +1,22 @@
 classDiagram
+  IComputed <|-- IReplicaClientComputed
   IComputed <|.. Computed
+  IReplicaClientComputed <|.. ReplicaClientComputed
   Computed <|-- SimpleComputed
-  Computed <|-- ReplicaComputed
   Computed <|-- ReplicaClientComputed
-  <<interface>> IComputed
   class IComputed {
-    +ComputedState State
-    +LTag LTag
-    +bool IsConsistent
-    +TIn Input
-    +Result~TOut~ Output
-    +TOut Value
-    +Exception Error
-    +Action Invalidated
-
-    +Invalidate()
-    +UpdateAsync() ValueTask~IComputed~
-    +UseAsync() ValueTask~TOut~
-    +WhenInvalidatedAsync() Task
+    <<interface>>
+  }
+  class IReplicaClientComputed {
+    <<interface>>
+    +IReplica Replica 
   }
   class Computed {
-    +GetCurrent()$ IComputed
-    +ChangeCurrent(IComputed newCurrent)$
-    +Suppress()$
-    +TryCaptureAsync(Func producer, CancellationToken ct)$ Task~IComputed~
-    +CaptureAsync(Func producer, CancellationToken ct)$ Task~IComputed~
-    +Invalidate(Func producer)$
-    +TryGetCached(Func producer)$ IComputed
+    <<Backs computed methods>>
+  }
+  class ReplicaClientComputed {
+    <<Backs client-side IComputed replicas>>
+  }
+  class SimpleComputed {
+    <<Can be created manually>>
   }

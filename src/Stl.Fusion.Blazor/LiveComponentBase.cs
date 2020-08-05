@@ -40,6 +40,9 @@ namespace Stl.Fusion.Blazor
 
         protected virtual void UpdateLocal(Action<TLocal> updater)
         {
+            // Atomically updates Local; non-atomic updates require
+            // some synchronization on Local here & in ILiveStateUpdater,
+            // so ideally, you want it to be immutable to avoid this.
             var clone = CloneLocal(Local);
             updater.Invoke(clone);
             if (Local is IFrozen f)
