@@ -27,12 +27,9 @@ to build and run everything.
   join our [Discord Server](https://discord.gg/EKEwv6d) to ask yours.
 
 Videos:
-* [Modern Real-Time Apps With Stl.Fusion + Blazor, Part 1: Intro + Samples Overview](https://youtu.be/jYVe5yd0xuQ) &ndash; 
-  this video covers key concepts behind Stl.Fusion and all of its 
-  [samples](https://github.com/servicetitan/Stl.Fusion.Samples).
-  Sorry in advance: 
-  the video is long, it implies you already played with Blazor and samples, 
-  and finally,   the commenter there clearly need more practice :/ 
+* [Modern Real-Time Apps With Stl.Fusion + Blazor, Part 1: Intro + Samples Overview](https://youtu.be/jYVe5yd0xuQ)
+  Sorry in advance: the video is long, it implies you already played with Blazor, 
+  and finally, the commenter there clearly need more practice :/ 
   On a bright side, likely it will still save you more time than 
   you'll spend on it.
   **Check out its description - there is TOC + links to interesting parts.**
