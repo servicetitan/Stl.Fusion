@@ -91,7 +91,9 @@ namespace Stl.Fusion.UI
                 ?? throw new ArgumentNullException(nameof(options) + "." + nameof(options.Updater));
             _delayFirstUpdate = options.DelayFirstUpdate;
             _isolateUpdateErrors = options.IsolateUpdateErrors;
-            UpdateDelayer = options.UpdateDelayer ?? updateDelayer ?? UI.UpdateDelayer.Default;
+            UpdateDelayer = options.UpdateDelayer
+                ?? updateDelayer
+                ?? throw new ArgumentNullException(nameof(updateDelayer));
 
             _stopCts = new CancellationTokenSource();
             _stopToken = _stopCts.Token;

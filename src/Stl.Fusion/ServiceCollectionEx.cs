@@ -25,6 +25,9 @@ namespace Stl.Fusion
             services.TryAddSingleton<ComputeServiceInterceptor>();
             services.TryAddSingleton(c => ComputeServiceProxyGenerator.Default);
             services.TryAddSingleton(c => new [] { c.GetRequiredService<ComputeServiceInterceptor>() });
+            // UpdateDelayer
+            services.TryAddScoped(c => new UpdateDelayer.Options());
+            services.TryAddScoped<IUpdateDelayer, UpdateDelayer>();
             return services;
         }
 

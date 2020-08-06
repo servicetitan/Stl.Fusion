@@ -26,7 +26,6 @@ namespace Stl.Fusion.UI
             public LogLevel LogLevel { get; set; } = LogLevel.Debug;
         }
 
-        public static readonly IUpdateDelayer Default = new UpdateDelayer(new Options());
         protected readonly ILogger Log;
         protected readonly bool IsLoggingEnabled;
         protected Task<Unit> EndDelayTask = null!;
