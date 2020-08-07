@@ -153,7 +153,7 @@ namespace Build
                     .ExecuteBufferedAsync(cancellationToken)
                     .Task.ConfigureAwait(false);
 
-                MoveAttachments(testOutputPath, cmd.StandardOutput);
+                MoveAttachments(cmd.StandardOutput, testOutputPath);
 
                 // Removes all files in inner folders, workaround for https://github.com/microsoft/vstest/issues/2334
                 foreach (var path in Directory.EnumerateDirectories(testOutputPath).Select(PathString.New))
