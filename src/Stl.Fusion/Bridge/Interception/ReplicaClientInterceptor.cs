@@ -11,10 +11,10 @@ namespace Stl.Fusion.Bridge.Interception
     {
         public new class Options : InterceptorBase.Options
         {
-            public Generator<LTag> LTagGenerator { get; set; } = ConcurrentLTagGenerator.Default;
+            public Generator<LTag> VersionGenerator { get; set; } = ConcurrentLTagGenerator.Default;
         }
 
-        protected Generator<LTag> LTagGenerator { get; }
+        protected readonly Generator<LTag> VersionGenerator;
 
         public ReplicaClientInterceptor(
             Options options,
@@ -23,13 +23,13 @@ namespace Stl.Fusion.Bridge.Interception
             : base(options, registry, loggerFactory)
         {
             RequiresAttribute = false;
-            LTagGenerator = options.LTagGenerator;
+            VersionGenerator = options.VersionGenerator;
         }
 
         protected override InterceptedFunctionBase<T> CreateFunction<T>(InterceptedMethod method)
         {
             var log = LoggerFactory.CreateLogger<ReplicaClientFunction<T>>();
-            return new ReplicaClientFunction<T>(method, LTagGenerator, Registry, log);
+            return new ReplicaClientFunction<T>(method, VersionGenerator, Registry, log);
         }
 
         protected override void ValidateTypeInternal(Type type)

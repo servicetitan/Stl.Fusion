@@ -6,5 +6,6 @@ namespace Stl.DependencyInjection
     {
         public static readonly Symbol Default = Symbol.Empty;
         public static readonly Symbol ManualRegistration = nameof(ManualRegistration);
+        public static readonly Symbol WebServer = nameof(WebServer);
     }
 }

@@ -24,10 +24,10 @@ namespace Stl.Fusion
         public IComputed? TryGetCachedComputed(IComputed? usedBy = null)
             => Function.TryGetCached(this, usedBy);
 
-        public IComputed? TryGetCachedComputed(LTag lTag, IComputed? usedBy = null)
+        public IComputed? TryGetCachedComputed(LTag version, IComputed? usedBy = null)
         {
             var computed = TryGetCachedComputed(usedBy);
-            return computed == null ? computed : computed.LTag == lTag ? computed : null;
+            return computed == null ? computed : computed.Version == version ? computed : null;
         }
 
         public Task<IComputed> GetComputedAsync(IComputed? usedBy = null,

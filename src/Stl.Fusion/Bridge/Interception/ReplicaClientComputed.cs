@@ -21,7 +21,7 @@ namespace Stl.Fusion.Bridge.Interception
 
         // Two primary constructors
         public ReplicaClientComputed(ComputedOptions options, IReplicaComputed<T> source, InterceptedInput input)
-            : this(options, source.Replica, input, source.LTag)
+            : this(options, source.Replica, input, source.Version)
         {
             ((IComputedImpl) this).AddUsed((IComputedImpl) source);
             TrySetOutput(source.Output);
@@ -29,18 +29,18 @@ namespace Stl.Fusion.Bridge.Interception
                 Invalidate();
         }
 
-        public ReplicaClientComputed(ComputedOptions options, InterceptedInput input, Exception error, LTag lTag)
-            : this(options, null, input, new Result<T>(default!, error), lTag, false) { }
+        public ReplicaClientComputed(ComputedOptions options, InterceptedInput input, Exception error, LTag version)
+            : this(options, null, input, new Result<T>(default!, error), version, false) { }
 
         // And the "inherited" ones allowing to configure this computed as you wish
         public ReplicaClientComputed(
-            ComputedOptions options, IReplica<T>? replica, InterceptedInput input, LTag lTag)
-            : base(options, input, lTag)
+            ComputedOptions options, IReplica<T>? replica, InterceptedInput input, LTag version)
+            : base(options, input, version)
             => Replica = replica;
         public ReplicaClientComputed(
             ComputedOptions options, IReplica<T>? replica, InterceptedInput input,
-            Result<T> output, LTag lTag, bool isConsistent = true)
-            : base(options, input, output, lTag, isConsistent)
+            Result<T> output, LTag version, bool isConsistent = true)
+            : base(options, input, output, version, isConsistent)
             => Replica = replica;
     }
 }

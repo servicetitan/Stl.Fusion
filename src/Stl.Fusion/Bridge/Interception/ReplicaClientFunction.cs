@@ -14,20 +14,20 @@ namespace Stl.Fusion.Bridge.Interception
 {
     public class ReplicaClientFunction<T> : InterceptedFunctionBase<T>
     {
-        private readonly ILogger _log;
-        private readonly bool _isLogDebugEnabled;
-        protected Generator<LTag> LTagGenerator { get; }
+        protected readonly ILogger Log;
+        protected readonly bool IsLogDebugEnabled;
+        protected readonly Generator<LTag> VersionGenerator;
 
         public ReplicaClientFunction(
             InterceptedMethod method,
-            Generator<LTag> lTagGenerator,
+            Generator<LTag> versionGenerator,
             IComputedRegistry computedRegistry,
             ILogger<ReplicaClientFunction<T>>? log = null)
             : base(method, computedRegistry)
         {
-            _log = log ??= NullLogger<ReplicaClientFunction<T>>.Instance;
-            _isLogDebugEnabled = _log.IsEnabled(LogLevel.Debug);
-            LTagGenerator = lTagGenerator;
+            Log = log ??= NullLogger<ReplicaClientFunction<T>>.Instance;
+            IsLogDebugEnabled = Log.IsEnabled(LogLevel.Debug);
+            VersionGenerator = versionGenerator;
             InvalidatedHandler = null;
         }
 
@@ -62,13 +62,13 @@ namespace Stl.Fusion.Bridge.Interception
                     return output;
                 }
                 catch (OperationCanceledException) {
-                    if (_isLogDebugEnabled)
-                        _log.LogDebug($"{nameof(ComputeAsync)}: Cancelled (1).");
+                    if (IsLogDebugEnabled)
+                        Log.LogDebug($"{nameof(ComputeAsync)}: Cancelled (1).");
                     throw;
                 }
                 catch (Exception e) {
-                    if (_isLogDebugEnabled)
-                        _log.LogError(e, $"{nameof(ComputeAsync)}: Error on Replica update.");
+                    if (IsLogDebugEnabled)
+                        Log.LogError(e, $"{nameof(ComputeAsync)}: Error on Replica update.");
                 }
             }
 
@@ -105,18 +105,18 @@ namespace Stl.Fusion.Bridge.Interception
                 return output;
             }
             catch (OperationCanceledException) {
-                if (_isLogDebugEnabled)
-                    _log.LogDebug($"{nameof(ComputeAsync)}: Cancelled (2).");
+                if (IsLogDebugEnabled)
+                    Log.LogDebug($"{nameof(ComputeAsync)}: Cancelled (2).");
                 throw;
             }
             catch (Exception e) {
-                if (_isLogDebugEnabled)
-                    _log.LogError(e, $"{nameof(ComputeAsync)}: Error on update.");
+                if (IsLogDebugEnabled)
+                    Log.LogError(e, $"{nameof(ComputeAsync)}: Error on update.");
                 // We need a unique LTag here, so we use a range that's supposed
                 // to be unused by LTagGenerators.
-                var lTag = new LTag(LTagGenerator.Next().Value ^ (1L << 62));
+                var version = new LTag(VersionGenerator.Next().Value ^ (1L << 62));
                 var output = new ReplicaClientComputed<T>(
-                    method.Options, null, input, new Result<T>(default!, e), lTag);
+                    method.Options, null, input, new Result<T>(default!, e), version);
                 return output;
             }
         }

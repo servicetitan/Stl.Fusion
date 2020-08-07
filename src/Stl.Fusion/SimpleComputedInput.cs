@@ -197,8 +197,8 @@ namespace Stl.Fusion
         protected virtual async ValueTask<SimpleComputed<T>> ComputeAsync(CancellationToken cancellationToken)
         {
             var oldComputed = Computed;
-            var lTag = ConcurrentLTagGenerator.Default.Next();
-            var newComputed = new SimpleComputed<T>(Computed.Options, this, lTag);
+            var version = ConcurrentLTagGenerator.Default.Next();
+            var newComputed = new SimpleComputed<T>(Computed.Options, this, version);
             try {
                 using var _ = Fusion.Computed.ChangeCurrent(newComputed);
                 await Updater.Invoke(oldComputed, newComputed, cancellationToken).ConfigureAwait(false);

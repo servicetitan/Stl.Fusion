@@ -24,7 +24,7 @@ namespace Stl.Fusion
         ComputedInput Input { get; }
         IResult Output { get; }
         Type OutputType { get; }
-        LTag LTag { get; } // ~ Unique for the specific (Func, Key) pair
+        LTag Version { get; } // ~ Unique for the specific (Func, Key) pair
         ComputedState State { get; }
         bool IsConsistent { get; }
         event Action<IComputed> Invalidated;
@@ -43,7 +43,6 @@ namespace Stl.Fusion
     public interface IComputed<TOut> : IComputed, IResult<TOut>
     {
         new Result<TOut> Output { get; }
-        LTagged<Result<TOut>> LTaggedOutput { get; }
         bool TrySetOutput(Result<TOut> output);
         void SetOutput(Result<TOut> output);
 
@@ -70,7 +69,7 @@ namespace Stl.Fusion
         private volatile int _state;
         private Result<TOut> _output;
         private RefHashSetSlim2<IComputedImpl> _used = default;
-        private HashSetSlim2<(ComputedInput Input, LTag LTag)> _usedBy = default;
+        private HashSetSlim2<(ComputedInput Input, LTag Version)> _usedBy = default;
         // ReSharper disable once InconsistentNaming
         private event Action<IComputed>? _invalidated;
         private bool _invalidateOnSetOutput = false;
@@ -89,7 +88,7 @@ namespace Stl.Fusion
         public ComputedState State => (ComputedState) _state;
         public bool IsConsistent => State == ComputedState.Consistent;
         public IFunction<TIn, TOut> Function => (IFunction<TIn, TOut>) Input.Function;
-        public LTag LTag { get; }
+        public LTag Version { get; }
 
         public Moment LastAccessTime {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -105,7 +104,6 @@ namespace Stl.Fusion
                 return _output;
             }
         }
-        public LTagged<Result<TOut>> LTaggedOutput => (Output, LTag);
 
         // IResult<T> properties
         public Exception? Error => Output.Error;
@@ -140,15 +138,15 @@ namespace Stl.Fusion
             remove => _invalidated -= value;
         }
 
-        public Computed(ComputedOptions options, TIn input, LTag lTag)
+        public Computed(ComputedOptions options, TIn input, LTag version)
         {
             _options = options;
             Input = input;
-            LTag = lTag;
+            Version = version;
             LastAccessTime = CoarseCpuClock.Now;
         }
 
-        public Computed(ComputedOptions options, TIn input, Result<TOut> output, LTag lTag, bool isConsistent = true)
+        public Computed(ComputedOptions options, TIn input, Result<TOut> output, LTag version, bool isConsistent = true)
         {
             if (output.IsValue(out var v) && v is IFrozen f)
                 f.Freeze();
@@ -156,12 +154,12 @@ namespace Stl.Fusion
             Input = input;
             _state = (int) (isConsistent ? ComputedState.Consistent : ComputedState.Invalidated);
             _output = output;
-            LTag = lTag;
+            Version = version;
             LastAccessTime = CoarseCpuClock.Now;
         }
 
         public override string ToString()
-            => $"{GetType().Name}({Input} {LTag}, State: {State})";
+            => $"{GetType().Name}({Input} {Version}, State: {State})";
 
         void IComputedImpl.AddUsed(IComputedImpl used)
         {
@@ -187,14 +185,14 @@ namespace Stl.Fusion
                     usedBy.Invalidate();
                     return;
                 }
-                _usedBy.Add((usedBy.Input, usedBy.LTag));
+                _usedBy.Add((usedBy.Input, usedBy.Version));
             }
         }
 
         void IComputedImpl.RemoveUsedBy(IComputedImpl usedBy)
         {
             lock (Lock) {
-                _usedBy.Remove((usedBy.Input, usedBy.LTag));
+                _usedBy.Remove((usedBy.Input, usedBy.Version));
             }
         }
 
@@ -235,7 +233,7 @@ namespace Stl.Fusion
         {
             if (State == ComputedState.Invalidated)
                 return false;
-            MemoryBuffer<(ComputedInput Input, LTag LTag)> usedBy = default;
+            MemoryBuffer<(ComputedInput Input, LTag Version)> usedBy = default;
             try {
                 lock (Lock) {
                     switch (State) {
@@ -260,7 +258,7 @@ namespace Stl.Fusion
                 }
                 for (var i = 0; i < usedBy.Span.Length; i++) {
                     ref var d = ref usedBy.Span[i];
-                    d.Input.TryGetCachedComputed(d.LTag)?.Invalidate();
+                    d.Input.TryGetCachedComputed(d.Version)?.Invalidate();
                     // Just in case buffers aren't cleaned up when you return them back
                     d = default!;
                 }

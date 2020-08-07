@@ -10,11 +10,11 @@ namespace Stl.Fusion
     {
         public new SimpleComputedInput<T> Input => (SimpleComputedInput<T>) base.Input;
 
-        public SimpleComputed(ComputedOptions options, SimpleComputedInput input, LTag lTag)
-            : base(options, input, lTag) { }
+        public SimpleComputed(ComputedOptions options, SimpleComputedInput input, LTag version)
+            : base(options, input, version) { }
         public SimpleComputed(ComputedOptions options, SimpleComputedInput input,
-            Result<T> output, LTag lTag, bool isConsistent = true)
-            : base(options, input, output, lTag, isConsistent) { }
+            Result<T> output, LTag version, bool isConsistent = true)
+            : base(options, input, output, version, isConsistent) { }
     }
 
     public static class SimpleComputed
@@ -39,8 +39,8 @@ namespace Stl.Fusion
             Result<T> output, bool isConsistent = true)
         {
             var input = new SimpleComputedInput<T>(updater);
-            var lTag = ConcurrentLTagGenerator.Default.Next();
-            input.Computed = new SimpleComputed<T>(options, input, output, lTag, isConsistent);
+            var version = ConcurrentLTagGenerator.Default.Next();
+            input.Computed = new SimpleComputed<T>(options, input, output, version, isConsistent);
             return input.Computed;
         }
 

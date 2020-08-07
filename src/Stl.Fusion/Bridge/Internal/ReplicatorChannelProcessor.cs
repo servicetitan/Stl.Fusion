@@ -161,13 +161,14 @@ namespace Stl.Fusion.Bridge.Internal
 
         protected virtual Task OnStateChangedMessageAsync<T>(PublicationStateChangedMessage<T> message, CancellationToken cancellationToken)
         {
-            var lTaggedOutput = new LTagged<Result<T>>(message.Output, message.NewLTag);
-            var replica = Replicator.GetOrAdd(message.PublisherId, message.PublicationId, lTaggedOutput);
+            var replica = Replicator.GetOrAdd(
+                message.PublisherId, message.PublicationId,
+                message.Output, message.Version, message.IsConsistent);
             if (!(replica is IReplicaImpl<T> replicaImpl))
                 // Weird case: somehow replica is of different type
                 return Task.CompletedTask;
 
-            replicaImpl.ApplySuccessfulUpdate(lTaggedOutput, message.NewIsConsistent);
+            replicaImpl.ApplySuccessfulUpdate(message.Output, message.Version, message.IsConsistent);
             return Task.CompletedTask;
         }
 

@@ -10,7 +10,7 @@ namespace Stl.Fusion.Server
                 FusionHeaders.RequestPublication,
                 FusionHeaders.PublisherId,
                 FusionHeaders.PublicationId,
-                FusionHeaders.LTag,
+                FusionHeaders.Version,
                 FusionHeaders.IsConsistent
             );
     }

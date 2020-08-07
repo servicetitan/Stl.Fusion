@@ -6,6 +6,7 @@ using Stl.Fusion.Server;
 
 namespace Stl.Fusion.Tests.Services
 {
+    // [FusionController(Scope = nameof(ServiceScope.WebServer))]
     [Route("api/[controller]")]
     [ApiController]
     public class TimeController : FusionController
@@ -18,8 +19,6 @@ namespace Stl.Fusion.Tests.Services
 
         [HttpGet("get")]
         public Task<DateTime> GetTimeAsync()
-        {
-            return PublishAsync(ct => TimeService.GetTimeAsync(ct));
-        }
+            => PublishAsync(ct => TimeService.GetTimeAsync(ct));
     }
 }

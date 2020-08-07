@@ -44,26 +44,25 @@ namespace Stl.Fusion.Client.RestEase
             string? content, HttpResponseMessage response,
             ResponseDeserializerInfo info)
         {
-            Result<T> result;
+            Result<T> output;
             if (!response.IsSuccessStatusCode) {
                 var message = $"{response.StatusCode}: {response.ReasonPhrase}";
                 var error = new TargetInvocationException(message, null);
-                result = new Result<T>(default!, error);
+                output = new Result<T>(default!, error);
             }
             else {
                 var value = InnerDeserialize<T>(content, response, info);
-                result = new Result<T>(value, null);
+                output = new Result<T>(value, null);
             }
 
             var headers = response.Headers;
             var publisherId = headers.GetValues(FusionHeaders.PublisherId).Single();
             var publicationId = headers.GetValues(FusionHeaders.PublicationId).Single();
-            var lTag = LTag.Parse(headers.GetValues(FusionHeaders.LTag).Single());
+            var version = LTag.Parse(headers.GetValues(FusionHeaders.Version).Single());
             var isConsistent = true;
             if (headers.Contains(FusionHeaders.IsConsistent))
                 isConsistent = Boolean.Parse(headers.GetValues(FusionHeaders.IsConsistent).Single());
-            var lTagged = new LTagged<Result<T>>(result, lTag);
-            var replica = Replicator.GetOrAdd(publisherId, publicationId, lTagged, isConsistent);
+            var replica = Replicator.GetOrAdd(publisherId, publicationId, output, version);
             ReplicaCapture.Capture(replica);
             return replica.Computed;
         }

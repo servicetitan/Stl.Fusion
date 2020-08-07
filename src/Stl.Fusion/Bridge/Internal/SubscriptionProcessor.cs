@@ -117,8 +117,8 @@ namespace Stl.Fusion.Bridge.Internal
             var computedOutput = computed.Output;
 
             var message = new PublicationStateChangedMessage<T>() {
-                NewLTag = computed.LTag,
-                NewIsConsistent = computedIsConsistent,
+                Version = computed.Version,
+                IsConsistent = computedIsConsistent,
             };
             if (computedIsConsistent)
                 message.Output = computedOutput;

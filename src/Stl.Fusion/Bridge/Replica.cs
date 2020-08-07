@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
@@ -35,7 +34,7 @@ namespace Stl.Fusion.Bridge
 
     public interface IReplicaImpl<T> : IReplica<T>, IFunction<ReplicaInput, T>, IReplicaImpl
     {
-        bool ApplySuccessfulUpdate(LTagged<Result<T>> output, bool isConsistent);
+        bool ApplySuccessfulUpdate(Result<T> output, LTag version, bool isConsistent);
     }
 
     public class Replica<T> : AsyncDisposableBase, IReplicaImpl<T>
@@ -63,12 +62,12 @@ namespace Stl.Fusion.Bridge
 
         public Replica(
             IReplicator replicator, Symbol publisherId, Symbol publicationId,
-            LTagged<Result<T>> initialOutput, bool isConsistent = true, bool isUpdateRequested = false)
+            Result<T> output, LTag version, bool isConsistent = true, bool isUpdateRequested = false)
         {
             Replicator = replicator;
             Input = new ReplicaInput(this, publisherId, publicationId);
             // ReSharper disable once VirtualMemberCallInConstructor
-            ApplySuccessfulUpdate(initialOutput, isConsistent);
+            ApplySuccessfulUpdate(output, version, isConsistent);
             if (isUpdateRequested)
                 // ReSharper disable once VirtualMemberCallInConstructor
                 UpdateRequestTask = CreateUpdateRequestTaskSource().Task;
@@ -106,9 +105,9 @@ namespace Stl.Fusion.Bridge
             }
         }
 
-        bool IReplicaImpl<T>.ApplySuccessfulUpdate(LTagged<Result<T>> output, bool isConsistent)
-            => ApplySuccessfulUpdate(output, isConsistent);
-        protected virtual bool ApplySuccessfulUpdate(LTagged<Result<T>> output, bool isConsistent)
+        bool IReplicaImpl<T>.ApplySuccessfulUpdate(Result<T> output, LTag version, bool isConsistent)
+            => ApplySuccessfulUpdate(output, version, isConsistent);
+        protected virtual bool ApplySuccessfulUpdate(Result<T> output, LTag version, bool isConsistent)
         {
             IReplicaComputed<T> computed;
             Task<Unit>? updateRequestTask;
@@ -117,16 +116,14 @@ namespace Stl.Fusion.Bridge
                 // 1. Update Computed & UpdateError
                 UpdateErrorField = null;
                 computed = ComputedField;
-                if (computed == null || computed.LTag != output.LTag)
-                    // LTag doesn't match -> replace
-                    ComputedField = new ReplicaComputed<T>(
-                        ComputedOptions, Input, output.Value, output.LTag, isConsistent);
+                if (computed == null || computed.Version != version)
+                    // Version doesn't match -> replace
+                    ComputedField = new ReplicaComputed<T>(ComputedOptions, Input, output, version, isConsistent);
                 else if (computed.IsConsistent != isConsistent) {
-                    // LTag matches:
+                    // Version matches:
                     if (isConsistent)
                         // Replace inconsistent w/ the consistent
-                        ComputedField = new ReplicaComputed<T>(
-                            ComputedOptions, Input, output.Value, output.LTag, isConsistent);
+                        ComputedField = new ReplicaComputed<T>(ComputedOptions, Input, output, version, isConsistent);
                     // Otherwise it will be invalidated right after exiting the lock
                 }
                 else {

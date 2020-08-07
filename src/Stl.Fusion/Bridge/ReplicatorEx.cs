@@ -14,8 +14,7 @@ namespace Stl.Fusion.Bridge
             Symbol publisherId, Symbol publicationId, bool requestUpdate = false)
         {
             var output = new Result<T>(default!, ReplicaHasBeenNeverUpdatedError);
-            var initialOutput = new LTagged<Result<T>>(output, LTag.Default);
-            return replicator.GetOrAdd(publisherId, publicationId, initialOutput, false, requestUpdate);
+            return replicator.GetOrAdd(publisherId, publicationId, output, LTag.Default, false, requestUpdate);
         }
 
         public static IReplica Get(this IReplicator replicator, Symbol publicationId)

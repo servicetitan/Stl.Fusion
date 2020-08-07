@@ -5,8 +5,8 @@ namespace Stl.Fusion.Bridge.Messages
     [Serializable]
     public abstract class PublicationStateChangedMessage : PublicationMessage
     {
-        public LTag NewLTag { get; set; }
-        public bool NewIsConsistent { get; set; }
+        public LTag Version { get; set; }
+        public bool IsConsistent { get; set; }
         public abstract Type GetResultType();
     }
 

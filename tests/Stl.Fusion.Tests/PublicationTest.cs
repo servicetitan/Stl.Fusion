@@ -38,7 +38,7 @@ namespace Stl.Fusion.Tests
             sp.SetValue("1");
             m = await cReader.AssertReadAsync();
             m.Should().BeOfType<PublicationStateChangedMessage<string>>()
-                .Which.NewIsConsistent.Should().BeFalse();
+                .Which.IsConsistent.Should().BeFalse();
             var pm = (PublicationMessage) m;
             pm.PublisherId.Should().Be(Publisher.Id);
             pm.PublicationId.Should().Be(p1!.Id);
@@ -51,7 +51,7 @@ namespace Stl.Fusion.Tests
             (await Publisher.SubscribeAsync(cp.Channel1, p1!, true)).Should().BeTrue();
             m = await cReader.AssertReadAsync();
             m.Should().BeOfType<PublicationStateChangedMessage<string>>()
-                .Which.NewIsConsistent.Should().BeTrue();
+                .Which.IsConsistent.Should().BeTrue();
             m.Should().BeOfType<PublicationStateChangedMessage<string>>()
                 .Which.Output.Value.Should().Be("12");
             // TODO: Get rid of one extra msg here

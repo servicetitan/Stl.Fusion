@@ -22,7 +22,7 @@ namespace Stl.Fusion.Server
                 throw Errors.AlreadyShared();
             headers[FusionHeaders.PublisherId] = publication.Publisher.Id.Value;
             headers[FusionHeaders.PublicationId] = publication.Id.Value;
-            headers[FusionHeaders.LTag] = state.Computed.LTag.ToString();
+            headers[FusionHeaders.Version] = state.Computed.Version.ToString();
             if (!isConsistent)
                 headers[FusionHeaders.IsConsistent] = isConsistent.ToString();
         }

@@ -12,10 +12,10 @@ namespace Stl.Fusion.Interception
     {
         public new class Options : InterceptorBase.Options
         {
-            public Generator<LTag> LTagGenerator { get; set; } = ConcurrentLTagGenerator.Default;
+            public Generator<LTag> VersionGenerator { get; set; } = ConcurrentLTagGenerator.Default;
         }
 
-        protected Generator<LTag> LTagGenerator { get; }
+        protected readonly Generator<LTag> VersionGenerator;
 
         public ComputeServiceInterceptor(
             Options options,
@@ -23,13 +23,13 @@ namespace Stl.Fusion.Interception
             ILoggerFactory? loggerFactory = null)
             : base(options, registry, loggerFactory)
         {
-            LTagGenerator = options.LTagGenerator;
+            VersionGenerator = options.VersionGenerator;
         }
 
         protected override InterceptedFunctionBase<T> CreateFunction<T>(InterceptedMethod method)
         {
             var log = LoggerFactory.CreateLogger<ComputeServiceFunction<T>>();
-            return new ComputeServiceFunction<T>(method, LTagGenerator, Registry, log);
+            return new ComputeServiceFunction<T>(method, VersionGenerator, Registry, log);
         }
 
         protected override void ValidateTypeInternal(Type type)

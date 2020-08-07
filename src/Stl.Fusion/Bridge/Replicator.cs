@@ -16,8 +16,10 @@ namespace Stl.Fusion.Bridge
         Symbol Id { get; }
 
         IReplica? TryGet(Symbol publicationId);
-        IReplica<T> GetOrAdd<T>(Symbol publisherId, Symbol publicationId,
-            LTagged<Result<T>> initialOutput, bool isConsistent = true, bool requestUpdate = false);
+        IReplica<T> GetOrAdd<T>(
+            Symbol publisherId, Symbol publicationId,
+            Result<T> output, LTag version, bool isConsistent = true,
+            bool requestUpdate = false);
 
         IComputed<bool> GetPublisherConnectionState(Symbol publisherId);
     }
@@ -62,11 +64,13 @@ namespace Stl.Fusion.Bridge
         public virtual IReplica? TryGet(Symbol publicationId)
             => Registry.TryGet(publicationId);
 
-        public virtual IReplica<T> GetOrAdd<T>(Symbol publisherId, Symbol publicationId,
-            LTagged<Result<T>> initialOutput, bool isConsistent = true, bool requestUpdate = false)
+        public virtual IReplica<T> GetOrAdd<T>(
+            Symbol publisherId, Symbol publicationId,
+            Result<T> output, LTag version, bool isConsistent = true,
+            bool requestUpdate = false)
         {
             var (replica, isNew) = Registry.GetOrAdd(publicationId,
-                () => new Replica<T>(this, publisherId, publicationId, initialOutput, isConsistent, requestUpdate));
+                () => new Replica<T>(this, publisherId, publicationId, output, version, isConsistent, requestUpdate));
             if (isNew)
                 Subscribe(replica);
             return (IReplica<T>) replica;

@@ -10,25 +10,25 @@ namespace Stl.Fusion.Interception
 {
     public class ComputeServiceFunction<T> : InterceptedFunctionBase<T>
     {
-        private readonly ILogger _log;
-        protected Generator<LTag> LTagGenerator { get; }
+        protected readonly ILogger Log;
+        protected readonly Generator<LTag> VersionGenerator;
 
         public ComputeServiceFunction(
             InterceptedMethod method,
-            Generator<LTag> lTagGenerator,
+            Generator<LTag> versionGenerator,
             IComputedRegistry computedRegistry,
             ILogger<ComputeServiceFunction<T>>? log = null)
             : base(method, computedRegistry)
         {
-            _log = log ??= NullLogger<ComputeServiceFunction<T>>.Instance;
-            LTagGenerator = lTagGenerator;
+            Log = log ??= NullLogger<ComputeServiceFunction<T>>.Instance;
+            VersionGenerator = versionGenerator;
         }
 
         protected override async ValueTask<IComputed<T>> ComputeAsync(
             InterceptedInput input, IComputed<T>? cached,
             CancellationToken cancellationToken)
         {
-            var tag = LTagGenerator.Next();
+            var tag = VersionGenerator.Next();
             var method = Method;
             var output = new Computed<InterceptedInput, T>(method.Options, input, tag);
             try {
