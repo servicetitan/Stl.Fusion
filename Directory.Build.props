@@ -11,6 +11,7 @@
     <PackageTags>servicetitan stl</PackageTags>
     <Description>A part of ServiceTitan Library.</Description>
     <NoLogo>true</NoLogo>
+    <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
     <!--
     <ApplicationIcon>$(MSBuildThisFileDirectory)\docs\img\Logo128.jpg</ApplicationIcon>
     -->
