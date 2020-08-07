@@ -1,0 +1,22 @@
+classDiagram
+  IComputed <|-- IReplicaClientComputed
+  IComputed <|.. Computed
+  IReplicaClientComputed <|.. ReplicaClientComputed
+  Computed <|-- SimpleComputed
+  Computed <|-- ReplicaClientComputed
+  class IComputed {
+    <<interface>>
+  }
+  class IReplicaClientComputed {
+    <<interface>>
+    +IReplica Replica 
+  }
+  class Computed {
+    <<Backs computed methods>>
+  }
+  class ReplicaClientComputed {
+    <<Backs client-side IComputed replicas>>
+  }
+  class SimpleComputed {
+    <<Can be created manually>>
+  }

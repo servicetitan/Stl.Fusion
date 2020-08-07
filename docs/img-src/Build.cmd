@@ -1,1 +1,1 @@
-@powershell -file Build.ps1 %*
+@pwsh -f Build.ps1 %*

@@ -23,9 +23,17 @@ to build and run everything.
   there is runnable!
 * [The Story Behind Stl.Fusion](Story.md) &ndash; maybe you'll find
   it interesting too.
-* Join our [Discord Server](https://discord.gg/EKEwv6d) 
-  to ask questions and track project updates
-* Check out [Q/A](QA.md) to get answers on some frequent questions.
+* [Q/A](QA.md) answers the most frequent questions; 
+  join our [Discord Server](https://discord.gg/EKEwv6d) to ask yours.
+
+Videos:
+* [Modern Real-Time Apps With Stl.Fusion + Blazor, Part 1: Intro + Samples Overview](https://youtu.be/jYVe5yd0xuQ)
+  Sorry in advance: the video is long, it implies you already played with Blazor, 
+  and finally, the commenter there clearly needs more practice :/ 
+  On a bright side, likely it will still save you more time than 
+  you'll spend on it.
+  **Check out its description - there is TOC + links to interesting parts.**
+* More videos are upcoming.
 
 Posts:
 * [Stl.Fusion In Simple Terms](https://medium.com/@alexyakunin/stl-fusion-in-simple-terms-65b1975967ab?source=friends_link&sk=04e73e75a52768cf7c3330744a9b1e38) &ndash;
@@ -33,8 +41,9 @@ Posts:
 * [How similar is Stl.Fusion to SignalR?](https://medium.com/@alexyakunin/how-similar-is-stl-fusion-to-signalr-e751c14b70c3?source=friends_link&sk=241d5293494e352f3db338d93c352249)
 * [How similar is Stl.Fusion to Knockout / MobX?](https://medium.com/@alexyakunin/how-similar-is-stl-fusion-to-knockout-mobx-fcebd0bef5d5?source=friends_link&sk=a808f7c46c4d5613605f8ada732e790e)
 
+Join our [Discord Server](https://discord.gg/EKEwv6d) 
+to ask questions and track project updates.
 
-That's it for now, but we'll definitely add more over time. 
 
 ## Credits
 
