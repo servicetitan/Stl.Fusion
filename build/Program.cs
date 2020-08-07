@@ -95,14 +95,15 @@ namespace Build
             });
 
             Target("restore", async () => {
-                await Cli.Wrap(dotnetExePath).WithArguments($"msbuild -noLogo " +
-                   "-t:Restore " +
-                   "-p:RestoreForce=true " +
-                   "-p:RestoreIgnoreFailedSources=True " +
-                   $"-p:Configuration={configuration} " +
-                   publicReleaseProperty
-                   ).ToConsole()
-                   .ExecuteAsync(cancellationToken).Task.ConfigureAwait(false);
+                await Cli.Wrap(dotnetExePath).WithArguments($"msbuild" +
+                        " -noLogo " +
+                        "-t:Restore " +
+                        "-p:RestoreForce=true " +
+                        "-p:RestoreIgnoreFailedSources=True " +
+                        $"-p:Configuration={configuration} " +
+                        publicReleaseProperty
+                    ).ToConsole()
+                    .ExecuteAsync(cancellationToken).Task.ConfigureAwait(false);
             });
 
             Target("build", async () => {
@@ -111,7 +112,7 @@ namespace Build
                     .ExecuteAsync(cancellationToken).Task.ConfigureAwait(false);
             });
 
-            Target("pack", DependsOn("restore", "build"), async () => {
+            Target("pack", DependsOn("clean", "restore", "build"), async () => {
                 await Cli.Wrap(dotnetExePath).WithArguments($"pack -noLogo -c {configuration} --no-build {publicReleaseProperty}")
                     .ToConsole()
                     .ExecuteAsync(cancellationToken).Task.ConfigureAwait(false);
@@ -148,8 +149,7 @@ namespace Build
                         $"--collect:\"XPlat Code Coverage\" --results-directory {testOutputPath} " +
                         $"-c {configuration} " +
                         "-- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=json,cobertura"
-                    )
-                    .ToConsole()
+                    ).ToConsole()
                     .ExecuteBufferedAsync(cancellationToken)
                     .Task.ConfigureAwait(false);
 
