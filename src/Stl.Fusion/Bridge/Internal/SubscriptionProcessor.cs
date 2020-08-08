@@ -13,8 +13,9 @@ namespace Stl.Fusion.Bridge.Internal
     public abstract class SubscriptionProcessor : AsyncProcessBase
     {
         protected readonly ILogger Log;
+        protected readonly AsyncLock AsyncLock;
         protected long MessageIndex = 1;
-        protected AsyncLock AsyncLock;
+        protected (LTag, bool) LastSentVersion = default;
 
         public IPublisher Publisher => Publication.Publisher;
         public readonly IPublicationImpl Publication;
@@ -67,9 +68,10 @@ namespace Stl.Fusion.Bridge.Internal
                     catch (OperationCanceledException) {
                         if (cancellationToken.IsCancellationRequested)
                             throw;
-                        // => WhenInvalidatedAsync was cancelled due to Publication.State change;
-                        // => WhenOutdatedAsync is already completed too.
                     }
+                    // If we're here:
+                    // 1) WhenInvalidatedAsync was cancelled due to Publication.State change
+                    // 2) Or it has completed + WhenOutdatedAsync completed as well.
                     state = Publication.State;
                     await TrySendUpdateAsync(state, false, cancellationToken)
                         .ConfigureAwait(false);
@@ -102,37 +104,36 @@ namespace Stl.Fusion.Bridge.Internal
         public virtual async ValueTask TrySendUpdateAsync(
             IPublicationState<T> state, bool isUpdateRequested, CancellationToken cancellationToken)
         {
+            using var _ = await AsyncLock.LockAsync(cancellationToken);
+
             if (state.IsDisposed) {
                 var absentsMessage = new PublicationAbsentsMessage() {
                     IsDisposed = true,
                 };
-                await SendAsync(absentsMessage, cancellationToken).ConfigureAwait(false);
+                await SendUnsafeAsync(absentsMessage, cancellationToken).ConfigureAwait(false);
+                LastSentVersion = default;
                 return;
             }
 
-            using var _ = await AsyncLock.LockAsync(cancellationToken);
-
             var computed = state.Computed;
-            var computedIsConsistent = computed.IsConsistent;
-            var computedOutput = computed.Output;
+            var isConsistent = computed.IsConsistent; // It may change, so we want to make a snapshot here
+            var version = (computed.Version, isConsistent);
+            if ((!isUpdateRequested) && LastSentVersion == version)
+                return;
 
             var message = new PublicationStateChangedMessage<T>() {
                 Version = computed.Version,
-                IsConsistent = computedIsConsistent,
+                IsConsistent = isConsistent,
             };
-            if (computedIsConsistent)
-                message.Output = computedOutput;
+            if (isConsistent)
+                message.Output = computed.Output;
 
-            await SendAsync(message, cancellationToken).ConfigureAwait(false);
+            await SendUnsafeAsync(message, cancellationToken).ConfigureAwait(false);
+            LastSentVersion = version;
         }
 
-        protected virtual async ValueTask SendAsync(PublicationMessage? message, CancellationToken cancellationToken)
+        protected virtual async ValueTask SendUnsafeAsync(PublicationMessage message, CancellationToken cancellationToken)
         {
-            if (message == null)
-                return;
-
-            using var _ = await AsyncLock.LockAsync(cancellationToken);
-
             message.MessageIndex = Interlocked.Increment(ref MessageIndex);
             message.PublisherId = Publisher.Id;
             message.PublicationId = Publication.Id;

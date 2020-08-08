@@ -54,9 +54,7 @@ namespace Stl.Fusion.Tests
                 .Which.IsConsistent.Should().BeTrue();
             m.Should().BeOfType<PublicationStateChangedMessage<string>>()
                 .Which.Output.Value.Should().Be("12");
-            // TODO: Get rid of one extra msg here
-            m = await cReader.AssertReadAsync();
-            // await cReader.AssertCannotReadAsync();
+            await cReader.AssertCannotReadAsync();
 
             await p1.DisposeAsync();
             m = await cReader.AssertReadAsync();
