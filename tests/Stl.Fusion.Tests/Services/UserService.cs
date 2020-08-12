@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Async;
+using Stl.DependencyInjection;
 using Stl.Fusion.Tests.Model;
 
 namespace Stl.Fusion.Tests.Services
@@ -21,7 +22,8 @@ namespace Stl.Fusion.Tests.Services
         void Invalidate();
     }
 
-    [ComputeService(typeof(IUserService))]
+    [ComputeService(typeof(IUserService))] // Fusion version
+    [Service] // "No Fusion" version
     public class UserService : IUserService
     {
         private readonly ILogger _log;

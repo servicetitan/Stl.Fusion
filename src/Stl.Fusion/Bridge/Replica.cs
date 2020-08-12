@@ -181,24 +181,16 @@ namespace Stl.Fusion.Bridge
                 // This "Function" supports just a single input == Input
                 throw new ArgumentOutOfRangeException(nameof(input));
 
-            using var contextUseScope = context.Use();
-            context = contextUseScope.Context;
+            context ??= ComputeContext.Current;
 
             var result = Computed;
-            var resultIsConsistent = result.IsConsistent;
-            if (resultIsConsistent || (context.CallOptions & CallOptions.TryGetCached) != 0) {
-                if ((context.CallOptions & CallOptions.Invalidate) == CallOptions.Invalidate)
-                    result.Invalidate();
-                ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) result);
-                context.TryCaptureValue(result);
-                return result!;
-            }
+            if (result.TryUseCached(context, usedBy))
+                return result;
 
             // No async locking here b/c RequestUpdateAsync is, in fact, doing this
             await RequestUpdateAsync(cancellationToken).ConfigureAwait(false);
             result = Computed;
-            ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) result);
-            context.TryCaptureValue(result);
+            result.UseNew(context, usedBy);
             return result;
         }
 
@@ -209,24 +201,16 @@ namespace Stl.Fusion.Bridge
                 // This "Function" supports just a single input == Input
                 throw new ArgumentOutOfRangeException(nameof(input));
 
-            using var contextUseScope = context.Use();
-            context = contextUseScope.Context;
+            context ??= ComputeContext.Current;
 
             var result = Computed;
-            var resultIsConsistent = result.IsConsistent;
-            if (resultIsConsistent || (context.CallOptions & CallOptions.TryGetCached) != 0) {
-                if ((context.CallOptions & CallOptions.Invalidate) == CallOptions.Invalidate)
-                    result.Invalidate();
-                ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) result);
-                context.TryCaptureValue(result);
+            if (result.TryUseCached(context, usedBy))
                 return result.Strip();
-            }
 
             // No async locking here b/c RequestUpdateAsync is, in fact, doing this
             await RequestUpdateAsync(cancellationToken).ConfigureAwait(false);
             result = Computed;
-            ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) result);
-            context.TryCaptureValue(result);
+            result.UseNew(context, usedBy);
             return result.Strip();
         }
 

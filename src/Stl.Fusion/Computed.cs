@@ -35,9 +35,7 @@ namespace Stl.Fusion
         TResult Apply<TArg, TResult>(IComputedApplyHandler<TArg, TResult> handler, TArg arg);
 
         ValueTask<IComputed> UpdateAsync(bool addDependency, CancellationToken cancellationToken = default);
-        ValueTask<IComputed> UpdateAsync(bool addDependency, ComputeContext context, CancellationToken cancellationToken = default);
         ValueTask<object> UseAsync(CancellationToken cancellationToken = default);
-        ValueTask<object> UseAsync(ComputeContext context, CancellationToken cancellationToken = default);
     }
 
     public interface IComputed<TOut> : IComputed, IResult<TOut>
@@ -47,9 +45,7 @@ namespace Stl.Fusion
         void SetOutput(Result<TOut> output);
 
         new ValueTask<IComputed<TOut>> UpdateAsync(bool addDependency, CancellationToken cancellationToken = default);
-        new ValueTask<IComputed<TOut>> UpdateAsync(bool addDependency, ComputeContext context, CancellationToken cancellationToken = default);
         new ValueTask<TOut> UseAsync(CancellationToken cancellationToken = default);
-        new ValueTask<TOut> UseAsync(ComputeContext context, CancellationToken cancellationToken = default);
     }
 
     public interface IComputedWithTypedInput<out TIn> : IComputed
@@ -275,39 +271,24 @@ namespace Stl.Fusion
         // UpdateAsync
 
         async ValueTask<IComputed> IComputed.UpdateAsync(bool addDependency, CancellationToken cancellationToken)
-            => await UpdateAsync(addDependency, null!, cancellationToken).ConfigureAwait(false);
-        async ValueTask<IComputed> IComputed.UpdateAsync(bool addDependency, ComputeContext context, CancellationToken cancellationToken)
             => await UpdateAsync(addDependency, cancellationToken).ConfigureAwait(false);
-        public ValueTask<IComputed<TOut>> UpdateAsync(bool addDependency, CancellationToken cancellationToken = default)
-            => UpdateAsync(addDependency, null!, cancellationToken);
-        public async ValueTask<IComputed<TOut>> UpdateAsync(bool addDependency, ComputeContext context, CancellationToken cancellationToken = default)
+        public async ValueTask<IComputed<TOut>> UpdateAsync(bool addDependency, CancellationToken cancellationToken = default)
         {
             var usedBy = addDependency ? Computed.GetCurrent() : null;
+            var context = ComputeContext.Current;
 
-            if (!IsConsistent)
-                return await Function.InvokeAsync(Input, usedBy, context, cancellationToken);
-
-            using var contextUseScope = context.Use();
-            context = contextUseScope.Context;
-
-            if ((context.CallOptions & CallOptions.Invalidate) == CallOptions.Invalidate)
-                Invalidate();
-            ((IComputedImpl?) usedBy)?.AddUsed(this);
-            context.TryCaptureValue(this);
-            return this;
+            if (this.TryUseCached(context, usedBy))
+                return this;
+            return await Function.InvokeAsync(Input, usedBy, context, cancellationToken);
         }
 
         // UseAsync
 
         async ValueTask<object> IComputed.UseAsync(CancellationToken cancellationToken)
-            => (await UseAsync(null!, cancellationToken).ConfigureAwait(false))!;
-        async ValueTask<object> IComputed.UseAsync( ComputeContext context, CancellationToken cancellationToken)
-            => (await UseAsync(context, cancellationToken).ConfigureAwait(false))!;
-        public ValueTask<TOut> UseAsync(CancellationToken cancellationToken = default)
-            => UseAsync(null!, cancellationToken);
-        public async ValueTask<TOut> UseAsync(ComputeContext context, CancellationToken cancellationToken = default)
+            => (await UseAsync(cancellationToken).ConfigureAwait(false))!;
+        public async ValueTask<TOut> UseAsync(CancellationToken cancellationToken = default)
         {
-            var computed = await UpdateAsync(true, context, cancellationToken).ConfigureAwait(false);
+            var computed = await UpdateAsync(true, cancellationToken).ConfigureAwait(false);
             return computed.Value;
         }
 

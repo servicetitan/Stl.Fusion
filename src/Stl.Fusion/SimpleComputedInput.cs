@@ -95,34 +95,20 @@ namespace Stl.Fusion
                 // This "Function" supports just a single input == this
                 throw new ArgumentOutOfRangeException(nameof(input));
 
-            using var contextUseScope = context.Use();
-            context = contextUseScope.Context;
+            context ??= ComputeContext.Current;
 
             var result = Computed;
-            var resultIsConsistent = result.IsConsistent;
-            if (resultIsConsistent || (context.CallOptions & CallOptions.TryGetCached) != 0) {
-                if ((context.CallOptions & CallOptions.Invalidate) == CallOptions.Invalidate)
-                    result.Invalidate();
-                ((IComputedImpl?) usedBy)?.AddUsed(result);
-                context.TryCaptureValue(result);
-                return result!;
-            }
+            if (result.TryUseCached(context, usedBy))
+                return result;
 
             using var _ = await AsyncLock.LockAsync(cancellationToken);
 
             result = Computed;
-            resultIsConsistent = result.IsConsistent;
-            if (resultIsConsistent || (context.CallOptions & CallOptions.TryGetCached) != 0) {
-                if ((context.CallOptions & CallOptions.Invalidate) == CallOptions.Invalidate)
-                    result.Invalidate();
-                ((IComputedImpl?) usedBy)?.AddUsed(result);
-                context.TryCaptureValue(result);
-                return result!;
-            }
+            if (result.TryUseCached(context, usedBy))
+                return result;
 
             result = await ComputeAsync(cancellationToken).ConfigureAwait(false);
-            ((IComputedImpl?) usedBy)?.AddUsed(result);
-            context.TryCaptureValue(result);
+            result.UseNew(context, usedBy);
             return result;
         }
 
@@ -144,34 +130,20 @@ namespace Stl.Fusion
                 // This "Function" supports just a single input == this
                 throw new ArgumentOutOfRangeException(nameof(input));
 
-            using var contextUseScope = context.Use();
-            context = contextUseScope.Context;
+            context ??= ComputeContext.Current;
 
             var result = Computed;
-            var resultIsConsistent = result.IsConsistent;
-            if (resultIsConsistent || (context.CallOptions & CallOptions.TryGetCached) != 0) {
-                if ((context.CallOptions & CallOptions.Invalidate) == CallOptions.Invalidate)
-                    result.Invalidate();
-                ((IComputedImpl?) usedBy)?.AddUsed(result);
-                context.TryCaptureValue(result);
+            if (result.TryUseCached(context, usedBy))
                 return result.Strip();
-            }
 
             using var _ = await AsyncLock.LockAsync(cancellationToken);
 
             result = Computed;
-            resultIsConsistent = result.IsConsistent;
-            if (resultIsConsistent || (context.CallOptions & CallOptions.TryGetCached) != 0) {
-                if ((context.CallOptions & CallOptions.Invalidate) == CallOptions.Invalidate)
-                    result.Invalidate();
-                ((IComputedImpl?) usedBy)?.AddUsed(result);
-                context.TryCaptureValue(result);
+            if (result.TryUseCached(context, usedBy))
                 return result.Strip();
-            }
 
             result = await ComputeAsync(cancellationToken).ConfigureAwait(false);
-            ((IComputedImpl?) usedBy)?.AddUsed(result);
-            context.TryCaptureValue(result);
+            result.UseNew(context, usedBy);
             return result.Strip();
         }
 

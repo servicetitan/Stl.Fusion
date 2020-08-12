@@ -6,12 +6,20 @@ namespace Stl.Fusion
 {
     public class ComputeContext
     {
-        internal static readonly AsyncLocal<ComputeContext?> CurrentLocal = new AsyncLocal<ComputeContext?>();
         private static readonly Dictionary<CallOptions, ComputeContext> ContextCache;
-        private volatile IComputed? _capturedComputed;
+        private static readonly AsyncLocal<ComputeContext?> CurrentLocal = new AsyncLocal<ComputeContext?>();
+        internal volatile IComputed? CapturedComputed;
         private volatile int _isUsed;
 
         public static readonly ComputeContext Default;
+        public static ComputeContext Current {
+            get => CurrentLocal.Value ?? Default;
+            internal set {
+                if (value == Default)
+                    value = null!;
+                CurrentLocal.Value = value;
+            }
+        }
 
         public CallOptions CallOptions { get; }
         protected bool IsDisposed { get; set; }
@@ -51,16 +59,16 @@ namespace Stl.Fusion
             if (value == null || (CallOptions & CallOptions.Capture) == 0)
                 return;
             // We capture the last value
-            Interlocked.Exchange(ref _capturedComputed, value);
+            Interlocked.Exchange(ref CapturedComputed, value);
             // Interlocked.CompareExchange(ref _capturedComputed, value, null);
         }
 
-        public IComputed? GetCapturedComputed() => _capturedComputed;
-        public IComputed<T>? GetCapturedComputed<T>() => (IComputed<T>?) _capturedComputed;
+        public IComputed? GetCapturedComputed() => CapturedComputed;
+        public IComputed<T>? GetCapturedComputed<T>() => (IComputed<T>?) CapturedComputed;
 
-        internal bool TrySetIsUsed()
+        internal bool Acquire()
             => 0 == Interlocked.CompareExchange(ref _isUsed, 1, 0);
-        internal void ResetIsUsed()
+        internal void Release()
             => Interlocked.Exchange(ref _isUsed, 0);
     }
 

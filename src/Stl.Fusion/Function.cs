@@ -61,39 +61,25 @@ namespace Stl.Fusion
             ComputeContext? context,
             CancellationToken cancellationToken = default)
         {
-            using var contextUseScope = context.Use();
-            context = contextUseScope.Context;
+            context ??= ComputeContext.Current;
 
             // Read-Lock-RetryRead-Compute-Store pattern
 
             var result = TryGetCached(input);
-            var resultIsConsistent = result?.IsConsistent ?? false;
-            if (resultIsConsistent || (context.CallOptions & CallOptions.TryGetCached) != 0) {
-                if ((context.CallOptions & CallOptions.Invalidate) == CallOptions.Invalidate)
-                    result?.Invalidate();
-                usedBy.TryAddUsed(result);
-                context.TryCaptureValue(result);
+            if (result.TryUseCached(context, usedBy))
                 return result!;
-            }
 
             using var @lock = await Locks.LockAsync(input, cancellationToken).ConfigureAwait(false);
 
             result = TryGetCached(input);
-            resultIsConsistent = result?.IsConsistent ?? false;
-            if (resultIsConsistent || (context.CallOptions & CallOptions.TryGetCached) != 0) {
-                if ((context.CallOptions & CallOptions.Invalidate) == CallOptions.Invalidate)
-                    result?.Invalidate();
-                usedBy.TryAddUsed(result);
-                context.TryCaptureValue(result);
+            if (result.TryUseCached(context, usedBy))
                 return result!;
-            }
 
             result = await ComputeAsync(input, result, cancellationToken).ConfigureAwait(false);
             if (InvalidatedHandler != null)
                 result.Invalidated += InvalidatedHandler;
-            ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) result);
             Register((IComputed<TIn, TOut>) result);
-            context.TryCaptureValue(result);
+            result.UseNew(context, usedBy);
             return result;
         }
 
@@ -108,39 +94,25 @@ namespace Stl.Fusion
             ComputeContext? context,
             CancellationToken cancellationToken = default)
         {
-            using var contextUseScope = context.Use();
-            context = contextUseScope.Context;
+            context ??= ComputeContext.Current;
 
             // Read-Lock-RetryRead-Compute-Store pattern
 
             var result = TryGetCached(input);
-            var resultIsConsistent = result?.IsConsistent ?? false;
-            if (resultIsConsistent || (context.CallOptions & CallOptions.TryGetCached) != 0) {
-                if ((context.CallOptions & CallOptions.Invalidate) == CallOptions.Invalidate)
-                    result?.Invalidate();
-                usedBy.TryAddUsed(result);
-                context.TryCaptureValue(result);
+            if (result.TryUseCached(context, usedBy))
                 return result.Strip();
-            }
 
             using var @lock = await Locks.LockAsync(input, cancellationToken).ConfigureAwait(false);
 
             result = TryGetCached(input);
-            resultIsConsistent = result?.IsConsistent ?? false;
-            if (resultIsConsistent || (context.CallOptions & CallOptions.TryGetCached) != 0) {
-                if ((context.CallOptions & CallOptions.Invalidate) == CallOptions.Invalidate)
-                    result?.Invalidate();
-                usedBy.TryAddUsed(result);
-                context.TryCaptureValue(result);
+            if (result.TryUseCached(context, usedBy))
                 return result.Strip();
-            }
 
             result = await ComputeAsync(input, result, cancellationToken).ConfigureAwait(false);
             if (InvalidatedHandler != null)
                 result.Invalidated += InvalidatedHandler;
-            ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) result);
             Register((IComputed<TIn, TOut>) result);
-            context.TryCaptureValue(result);
+            result.UseNew(context, usedBy);
             return result.Strip();
         }
 
