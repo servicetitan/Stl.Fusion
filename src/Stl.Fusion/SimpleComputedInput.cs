@@ -45,9 +45,8 @@ namespace Stl.Fusion
             ComputedInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken);
 
-        IComputed? IFunction.TryGetCached(ComputedInput input, IComputed? usedBy)
-            => TryGetCached(input, usedBy);
-        protected abstract IComputed? TryGetCached(ComputedInput input, IComputed? usedBy);
+        IComputed? IFunction.TryGetCached(ComputedInput input) => TryGetCached(input);
+        protected abstract IComputed? TryGetCached(ComputedInput input);
 
         // Equality
 
@@ -176,22 +175,16 @@ namespace Stl.Fusion
             return result.Strip();
         }
 
-        IComputed<T>? IFunction<SimpleComputedInput, T>.TryGetCached(SimpleComputedInput input, IComputed? usedBy)
-            => TryGetCached(input, usedBy);
-
-        protected override IComputed? TryGetCached(ComputedInput input, IComputed? usedBy)
-            => TryGetCached((SimpleComputedInput) input, usedBy);
-
-        protected virtual IComputed<T>? TryGetCached(SimpleComputedInput input, IComputed? usedBy)
+        IComputed<T>? IFunction<SimpleComputedInput, T>.TryGetCached(SimpleComputedInput input)
+            => TryGetCached(input);
+        protected override IComputed? TryGetCached(ComputedInput input)
+            => TryGetCached((SimpleComputedInput) input);
+        protected virtual IComputed<T>? TryGetCached(SimpleComputedInput input)
         {
             if (input != this)
                 // This "Function" supports just a single input == this
                 throw new ArgumentOutOfRangeException(nameof(input));
-
-            var computed = Computed;
-            if (computed != null)
-                ((IComputedImpl?) usedBy)?.AddUsed(computed);
-            return computed;
+            return Computed;
         }
 
         protected virtual async ValueTask<SimpleComputed<T>> ComputeAsync(CancellationToken cancellationToken)

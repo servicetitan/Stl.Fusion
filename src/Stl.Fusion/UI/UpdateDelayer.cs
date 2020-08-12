@@ -75,10 +75,11 @@ namespace Stl.Fusion.UI
 
         public virtual async Task ExtraErrorDelayAsync(Exception error, int tryIndex, CancellationToken cancellationToken = default)
         {
-            var duration = Math.Pow(Math.Sqrt(2), tryIndex) * MinExtraErrorDelay.TotalSeconds;
+            var zeroBasedTryIndex = Math.Max(0, tryIndex - 1);
+            var duration = Math.Pow(Math.Sqrt(2), zeroBasedTryIndex) * MinExtraErrorDelay.TotalSeconds;
             duration = Math.Min(MaxExtraErrorDelay.TotalSeconds, duration);
             if (IsLoggingEnabled)
-                Log.Log(LogLevel, $"Error delay started ({duration:f2}s).");
+                Log.Log(LogLevel, $"Error delay started ({duration:f2}s - attempt #{tryIndex}).");
             try {
                 var mainDelayTask = Task.Delay(TimeSpan.FromSeconds(duration), cancellationToken);
                 var errorEndDelayTask = Volatile.Read(ref ErrorEndDelayTask);

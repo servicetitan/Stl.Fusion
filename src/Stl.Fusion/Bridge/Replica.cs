@@ -230,16 +230,12 @@ namespace Stl.Fusion.Bridge
             return result.Strip();
         }
 
-        protected IComputed<T>? TryGetCached(ReplicaInput input, IComputed? usedBy)
+        protected IComputed<T>? TryGetCached(ReplicaInput input)
         {
             if (input != Input)
                 // This "Function" supports just a single input == Input
                 throw new ArgumentOutOfRangeException(nameof(input));
-
-            var computed = Computed;
-            if (computed != null)
-                ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) computed);
-            return computed;
+            return Computed;
         }
 
         #region Explicit impl. of IFunction & IFunction<...>
@@ -252,8 +248,8 @@ namespace Stl.Fusion.Bridge
             CancellationToken cancellationToken)
             => InvokeAndStripAsync((ReplicaInput) input, usedBy, context, cancellationToken);
 
-        IComputed? IFunction.TryGetCached(ComputedInput input, IComputed? usedBy)
-            => TryGetCached((ReplicaInput) input, usedBy);
+        IComputed? IFunction.TryGetCached(ComputedInput input)
+            => TryGetCached((ReplicaInput) input);
 
         Task<IComputed<T>> IFunction<ReplicaInput, T>.InvokeAsync(ReplicaInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)
@@ -263,8 +259,8 @@ namespace Stl.Fusion.Bridge
             CancellationToken cancellationToken)
             => InvokeAndStripAsync(input, usedBy, context, cancellationToken);
 
-        IComputed<T>? IFunction<ReplicaInput, T>.TryGetCached(ReplicaInput input, IComputed? usedBy)
-            => TryGetCached(input, usedBy);
+        IComputed<T>? IFunction<ReplicaInput, T>.TryGetCached(ReplicaInput input)
+            => TryGetCached(input);
 
         #endregion
     }

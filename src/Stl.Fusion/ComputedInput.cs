@@ -1,7 +1,5 @@
 using System;
 using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Stl.Fusion
 {
@@ -18,22 +16,6 @@ namespace Stl.Fusion
         }
 
         public override string ToString() => $"{Function}(...)";
-
-        // Conversion to IComputed
-
-        public IComputed? TryGetCachedComputed(IComputed? usedBy = null)
-            => Function.TryGetCached(this, usedBy);
-
-        public IComputed? TryGetCachedComputed(LTag version, IComputed? usedBy = null)
-        {
-            var computed = TryGetCachedComputed(usedBy);
-            return computed == null ? computed : computed.Version == version ? computed : null;
-        }
-
-        public Task<IComputed> GetComputedAsync(IComputed? usedBy = null,
-            ComputeContext? context = null,
-            CancellationToken cancellationToken = default)
-            => Function.InvokeAsync(this, usedBy, context, cancellationToken);
 
         // Equality
 

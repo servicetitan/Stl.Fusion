@@ -6,8 +6,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Server;
+using Stl.Reflection;
+using Stl.Serialization;
 using Stl.Testing;
 
 namespace Stl.Fusion.Tests.Services
@@ -30,14 +33,19 @@ namespace Stl.Fusion.Tests.Services
 
                 services.AddSingleton(BaseServices.GetRequiredService<IPublisher>());
                 services.AddSingleton(BaseServices.GetRequiredService<ITimeService>());
+                services.AddSingleton(BaseServices.GetRequiredService<IKeyValueService<string>>());
                 services.AddFusionWebSocketServer();
 
                 // Web
                 services.AddRouting();
-                services.AddControllers().AddApplicationPart(Assembly.GetExecutingAssembly());
+                services.AddControllers()
+                    .AddApplicationPart(Assembly.GetExecutingAssembly());
                 services.AddMvc()
-                    .AddNewtonsoftJson()
-                    .SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
+                    .AddNewtonsoftJson(options => {
+                        MemberwiseCopier
+                            .New(JsonNetSerializer.DefaultSettings)
+                            .Apply(options.SerializerSettings);
+                    });
 
                 // Testing
                 services.AddHostedService<ApplicationPartsLogger>();

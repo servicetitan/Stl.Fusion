@@ -17,7 +17,7 @@ namespace Stl.Fusion
             IComputed? usedBy,
             ComputeContext? context,
             CancellationToken cancellationToken = default);
-        IComputed? TryGetCached(ComputedInput input, IComputed? usedBy);
+        IComputed? TryGetCached(ComputedInput input);
     }
 
     public interface IFunction<in TIn, TOut> : IFunction
@@ -31,7 +31,7 @@ namespace Stl.Fusion
             IComputed? usedBy,
             ComputeContext? context,
             CancellationToken cancellationToken = default);
-        IComputed<TOut>? TryGetCached(TIn input, IComputed? usedBy);
+        IComputed<TOut>? TryGetCached(TIn input);
     }
 
     public abstract class FunctionBase<TIn, TOut> : AsyncDisposableBase,
@@ -66,22 +66,24 @@ namespace Stl.Fusion
 
             // Read-Lock-RetryRead-Compute-Store pattern
 
-            var result = TryGetCached(input, usedBy);
+            var result = TryGetCached(input);
             var resultIsConsistent = result?.IsConsistent ?? false;
             if (resultIsConsistent || (context.CallOptions & CallOptions.TryGetCached) != 0) {
                 if ((context.CallOptions & CallOptions.Invalidate) == CallOptions.Invalidate)
                     result?.Invalidate();
+                usedBy.TryAddUsed(result);
                 context.TryCaptureValue(result);
                 return result!;
             }
 
             using var @lock = await Locks.LockAsync(input, cancellationToken).ConfigureAwait(false);
 
-            result = TryGetCached(input, usedBy);
+            result = TryGetCached(input);
             resultIsConsistent = result?.IsConsistent ?? false;
             if (resultIsConsistent || (context.CallOptions & CallOptions.TryGetCached) != 0) {
                 if ((context.CallOptions & CallOptions.Invalidate) == CallOptions.Invalidate)
                     result?.Invalidate();
+                usedBy.TryAddUsed(result);
                 context.TryCaptureValue(result);
                 return result!;
             }
@@ -111,22 +113,24 @@ namespace Stl.Fusion
 
             // Read-Lock-RetryRead-Compute-Store pattern
 
-            var result = TryGetCached(input, usedBy);
+            var result = TryGetCached(input);
             var resultIsConsistent = result?.IsConsistent ?? false;
             if (resultIsConsistent || (context.CallOptions & CallOptions.TryGetCached) != 0) {
                 if ((context.CallOptions & CallOptions.Invalidate) == CallOptions.Invalidate)
                     result?.Invalidate();
+                usedBy.TryAddUsed(result);
                 context.TryCaptureValue(result);
                 return result.Strip();
             }
 
             using var @lock = await Locks.LockAsync(input, cancellationToken).ConfigureAwait(false);
 
-            result = TryGetCached(input, usedBy);
+            result = TryGetCached(input);
             resultIsConsistent = result?.IsConsistent ?? false;
             if (resultIsConsistent || (context.CallOptions & CallOptions.TryGetCached) != 0) {
                 if ((context.CallOptions & CallOptions.Invalidate) == CallOptions.Invalidate)
                     result?.Invalidate();
+                usedBy.TryAddUsed(result);
                 context.TryCaptureValue(result);
                 return result.Strip();
             }
@@ -140,15 +144,10 @@ namespace Stl.Fusion
             return result.Strip();
         }
 
-        IComputed? IFunction.TryGetCached(ComputedInput input, IComputed? usedBy)
-            => TryGetCached((TIn) input, null);
-        public virtual IComputed<TOut>? TryGetCached(TIn input, IComputed? usedBy)
-        {
-            var result = ComputedRegistry.TryGet(input) as IComputed<TIn, TOut>;
-            if (result != null)
-                ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) result);
-            return result;
-        }
+        IComputed? IFunction.TryGetCached(ComputedInput input)
+            => TryGetCached((TIn) input);
+        public virtual IComputed<TOut>? TryGetCached(TIn input)
+            => ComputedRegistry.TryGet(input) as IComputed<TIn, TOut>;
 
         // Protected & private
 

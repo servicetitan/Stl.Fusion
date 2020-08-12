@@ -258,7 +258,10 @@ namespace Stl.Fusion
                 }
                 for (var i = 0; i < usedBy.Span.Length; i++) {
                     ref var d = ref usedBy.Span[i];
-                    d.Input.TryGetCachedComputed(d.Version)?.Invalidate();
+                    var fn = d.Input.Function;
+                    var c = fn.TryGetCached(d.Input);
+                    if (c != null && c.Version == d.Version)
+                        c.Invalidate();
                     // Just in case buffers aren't cleaned up when you return them back
                     d = default!;
                 }

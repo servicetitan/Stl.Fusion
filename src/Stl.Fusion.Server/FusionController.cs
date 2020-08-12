@@ -15,13 +15,15 @@ namespace Stl.Fusion.Server
             => Publisher = publisher;
 
         protected virtual Task<T> PublishAsync<T>(Func<CancellationToken, Task<T>> producer)
+            => PublishAsync(producer, HttpContext.RequestAborted);
+
+        protected virtual Task<T> PublishAsync<T>(Func<CancellationToken, Task<T>> producer, CancellationToken cancellationToken)
         {
             // This method is supposed to be the one you use in most of cases - that's
             // why it doesn't accept CancellationToken & uses the most likely default
             // for it instead. If you'd like to use some other CancellationToken,
             // you should use MaybePublishAsync extension method instead.
             // Note that this method is virtual, so you can override it as well.
-            var cancellationToken = HttpContext.RequestAborted;
             var headers = HttpContext.Request.Headers;
             var mustPublish = headers.TryGetValue(FusionHeaders.RequestPublication, out var _);
             if (!mustPublish)

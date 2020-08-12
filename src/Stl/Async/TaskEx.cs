@@ -45,7 +45,6 @@ namespace Stl.Async
             }
 
             return InnerAsync();
-
         }
 
         public static Task WithFakeCancellation(this Task task,

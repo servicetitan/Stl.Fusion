@@ -31,7 +31,7 @@ namespace Stl.Fusion.Bridge.Interception
             InvalidatedHandler = null;
         }
 
-        public override IComputed<T>? TryGetCached(InterceptedInput input, IComputed? usedBy)
+        public override IComputed<T>? TryGetCached(InterceptedInput input)
         {
             if (!(ComputedRegistry.TryGet(input) is IReplicaClientComputed<T> computed))
                 return null;
@@ -40,7 +40,6 @@ namespace Stl.Fusion.Bridge.Interception
                 ComputedRegistry.Remove(computed);
                 return null;
             }
-            ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) computed);
             return computed;
         }
 

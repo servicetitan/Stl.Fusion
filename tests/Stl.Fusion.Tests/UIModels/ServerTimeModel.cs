@@ -16,13 +16,13 @@ namespace Stl.Fusion.Tests.UIModels
         [LiveStateUpdater]
         public class Updater : ILiveStateUpdater<ServerTimeModel1>
         {
-            private IClientTimeService Time { get; }
+            private IClientTimeService Client { get; }
 
-            public Updater(IClientTimeService time) => Time = time;
+            public Updater(IClientTimeService time) => Client = time;
 
             public async Task<ServerTimeModel1> UpdateAsync(ILiveState<ServerTimeModel1> liveState, CancellationToken cancellationToken)
             {
-                var time = await Time.GetTimeAsync(cancellationToken).ConfigureAwait(false);
+                var time = await Client.GetTimeAsync(cancellationToken).ConfigureAwait(false);
                 return new ServerTimeModel1(time);
             }
         }

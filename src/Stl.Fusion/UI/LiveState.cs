@@ -13,7 +13,7 @@ namespace Stl.Fusion.UI
     public interface ILiveState : IResult, IDisposable
     {
         IComputed State { get; }
-        Exception? LastUpdateError { get; }
+        Exception? UpdateError { get; }
         IUpdateDelayer UpdateDelayer { get; }
         event Action<ILiveState>? Updated;
 
@@ -58,7 +58,7 @@ namespace Stl.Fusion.UI
         private readonly CancellationToken _stopToken;
         private readonly SimpleComputedInput<TState> _computedRef;
         private volatile Box<TLocal> _local;
-        private volatile Exception? _lastUpdateError;
+        private volatile Exception? _updateError;
         private volatile int _failedUpdateIndex;
 
         public TLocal Local {
@@ -67,7 +67,7 @@ namespace Stl.Fusion.UI
         }
         IComputed ILiveState.State => State;
         public IComputed<TState> State => _computedRef!.Computed;
-        public Exception? LastUpdateError => _lastUpdateError;
+        public Exception? UpdateError => _updateError;
         public IUpdateDelayer UpdateDelayer { get; }
         public event Action<ILiveState>? Updated;
 
@@ -162,7 +162,7 @@ namespace Stl.Fusion.UI
                 var value = await _updater.Invoke(this, cancellationToken)
                     .ConfigureAwait(false);
                 next.SetOutput(new Result<TState>(value, null));
-                Interlocked.Exchange(ref _lastUpdateError, null);
+                Interlocked.Exchange(ref _updateError, null);
                 Interlocked.Exchange(ref _failedUpdateIndex, 0);
             }
             catch (OperationCanceledException) {
@@ -173,8 +173,8 @@ namespace Stl.Fusion.UI
                 next.SetOutput(_isolateUpdateErrors
                     ? prev.Output
                     : new Result<TState>(default!, e));
-                Interlocked.Exchange(ref _lastUpdateError, e);
-                var tryIndex = Interlocked.Increment(ref _failedUpdateIndex) - 1;
+                Interlocked.Exchange(ref _updateError, e);
+                var tryIndex = Interlocked.Increment(ref _failedUpdateIndex);
                 UpdateDelayer.ExtraErrorDelayAsync(e, tryIndex, cancellationToken)
                     .ContinueWith(_ => next.Invalidate(), CancellationToken.None)
                     .Ignore();
