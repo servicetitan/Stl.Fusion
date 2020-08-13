@@ -11,8 +11,7 @@ namespace Stl.Fusion.Bridge
     public interface IReplica : IAsyncDisposableWithDisposalState
     {
         IReplicator Replicator { get; }
-        Symbol PublisherId { get; }
-        Symbol PublicationId { get; }
+        PublicationRef PublicationRef { get; }
         ComputedOptions ComputedOptions { get; set; }
         IReplicaComputed Computed { get; }
         bool IsUpdateRequested { get; }
@@ -49,8 +48,7 @@ namespace Stl.Fusion.Bridge
         protected object Lock = new object();
 
         public IReplicator Replicator { get; }
-        public Symbol PublisherId => Input.PublisherId;
-        public Symbol PublicationId => Input.PublicationId;
+        public PublicationRef PublicationRef => Input.PublicationRef;
         public ComputedOptions ComputedOptions {
             get => _computedOptions;
             set => _computedOptions = value;
@@ -60,14 +58,12 @@ namespace Stl.Fusion.Bridge
         public bool IsUpdateRequested => UpdateRequestTask != null;
         public Exception? UpdateError => UpdateErrorField;
 
-        public Replica(
-            IReplicator replicator, Symbol publisherId, Symbol publicationId,
-            Result<T> output, LTag version, bool isConsistent = true, bool isUpdateRequested = false)
+        public Replica(IReplicator replicator, PublicationStateInfo<T> info, bool isUpdateRequested = false)
         {
             Replicator = replicator;
-            Input = new ReplicaInput(this, publisherId, publicationId);
+            Input = new ReplicaInput(this, info.PublicationRef);
             // ReSharper disable once VirtualMemberCallInConstructor
-            ApplySuccessfulUpdate(output, version, isConsistent);
+            ApplySuccessfulUpdate(info.Output, info.Version, info.IsConsistent);
             if (isUpdateRequested)
                 // ReSharper disable once VirtualMemberCallInConstructor
                 UpdateRequestTask = CreateUpdateRequestTaskSource().Task;

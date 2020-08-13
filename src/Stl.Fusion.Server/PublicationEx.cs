@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Client;
 using Stl.Fusion.Server.Internal;
@@ -18,13 +19,10 @@ namespace Stl.Fusion.Server
             var isConsistent = computed.IsConsistent;
 
             var headers = httpContext.Response.Headers;
-            if (headers.ContainsKey(FusionHeaders.PublisherId))
+            if (headers.ContainsKey(FusionHeaders.Publication))
                 throw Errors.AlreadyShared();
-            headers[FusionHeaders.PublisherId] = publication.Publisher.Id.Value;
-            headers[FusionHeaders.PublicationId] = publication.Id.Value;
-            headers[FusionHeaders.Version] = state.Computed.Version.ToString();
-            if (!isConsistent)
-                headers[FusionHeaders.IsConsistent] = isConsistent.ToString();
+            var psi = new PublicationStateInfo(publication.Ref, computed.Version, isConsistent);
+            headers[FusionHeaders.Publication] = JsonConvert.SerializeObject(psi);
         }
 
         public static async Task<IComputed<T>> PublishAsync<T>(

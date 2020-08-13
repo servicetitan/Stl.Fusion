@@ -1,12 +1,12 @@
 using System;
 using System.Net.Http;
-using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using RestEase;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Interception;
 using Stl.Fusion.Client.RestEase;
+using Stl.Fusion.Client.RestEase.Internal;
 using Stl.Fusion.Internal;
 using Stl.Reflection;
 using Stl.Serialization;
@@ -19,10 +19,19 @@ namespace Stl.Fusion.Client
 
         public static IServiceCollection AddFusionRestEaseServices(this IServiceCollection services)
         {
+            // InterfaceCastProxyGenerator (used by ReplicaServices)
+            services.TryAddSingleton<InterfaceCastInterceptor>();
+            services.TryAddSingleton(c => InterfaceCastProxyGenerator.Default);
+            services.TryAddSingleton(c => new [] { c.GetRequiredService<InterfaceCastInterceptor>() });
+
+            // ResponseDeserializer & ReplicaResponseDeserializer
             services.TryAddTransient<ResponseDeserializer>(c => new JsonResponseDeserializer() {
                 JsonSerializerSettings = JsonNetSerializer.DefaultSettings
             });
-            services.TryAddTransient<ReplicaResponseDeserializer>();
+            services.TryAddTransient<RequestBodySerializer>(c => new JsonRequestBodySerializer() {
+                JsonSerializerSettings = JsonNetSerializer.DefaultSettings
+            });
+            services.TryAddTransient<FusionResponseDeserializer>();
             return services;
         }
 
@@ -69,9 +78,10 @@ namespace Stl.Fusion.Client
             httpClientResolver ??= DefaultHttpClientResolver(baseAddress);
             services.TryAddSingleton(clientType, c => {
                 var httpClient = httpClientResolver.Invoke(c);
-                var restClient = new RestClient(httpClient);
-                if (typeof(IRestEaseReplicaClient).IsAssignableFrom(clientType))
-                    restClient.ResponseDeserializer = c.GetRequiredService<ReplicaResponseDeserializer>();
+                var restClient = new RestClient(httpClient) {
+                    RequestBodySerializer = c.GetRequiredService<RequestBodySerializer>(),
+                    ResponseDeserializer = c.GetRequiredService<ResponseDeserializer>(),
+                };
                 return restClient.For(clientType);
             });
             return services;
@@ -117,26 +127,27 @@ namespace Stl.Fusion.Client
                 var interceptor = c.GetRequiredService<ReplicaClientInterceptor>();
                 interceptor.ValidateType(clientType);
 
-                // 2. Create REST client for the service
+                // 2. Create REST client (of clientType)
                 var httpClient = httpClientResolver.Invoke(c);
-                var restClient = new RestClient(httpClient) {
-                    ResponseDeserializer = c.GetRequiredService<ReplicaResponseDeserializer>()
+                var client = new RestClient(httpClient) {
+                    RequestBodySerializer = c.GetRequiredService<RequestBodySerializer>(),
+                    ResponseDeserializer = c.GetRequiredService<FusionResponseDeserializer>()
                 }.For(clientType);
 
-                // 3. Create Replica Client
-                var clientProxyGenerator = c.GetRequiredService<IReplicaClientProxyGenerator>();
-                var clientProxyType = clientProxyGenerator.GetProxyType(clientType);
-                var clientInterceptors = c.GetRequiredService<ReplicaClientInterceptor[]>();
-                var client = clientProxyType.CreateInstance(clientInterceptors, restClient);
-                if (clientType == serviceType)
-                    return client;
+                // 3. Create proxy mapping client to serviceType
+                if (clientType != serviceType) {
+                    var serviceProxyGenerator = c.GetRequiredService<IInterfaceCastProxyGenerator>();
+                    var serviceProxyType = serviceProxyGenerator.GetProxyType(serviceType);
+                    var serviceInterceptors = c.GetRequiredService<InterfaceCastInterceptor[]>();
+                    client = serviceProxyType.CreateInstance(serviceInterceptors, client);
+                }
 
-                // 4. Create Replica Service
-                var serviceProxyGenerator = c.GetRequiredService<IInterfaceCastProxyGenerator>();
-                var serviceProxyType = serviceProxyGenerator.GetProxyType(serviceType);
-                var serviceInterceptors = c.GetRequiredService<InterfaceCastInterceptor[]>();
-                var service = serviceProxyType.CreateInstance(serviceInterceptors, client);
-                return service;
+                // 4. Create Replica Client
+                var replicaProxyGenerator = c.GetRequiredService<IReplicaClientProxyGenerator>();
+                var replicaProxyType = replicaProxyGenerator.GetProxyType(serviceType);
+                var replicaInterceptors = c.GetRequiredService<ReplicaClientInterceptor[]>();
+                client = replicaProxyType.CreateInstance(replicaInterceptors, client);
+                return client;
             }
 
             services.TryAddSingleton(serviceType, Factory);

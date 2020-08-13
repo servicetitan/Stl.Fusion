@@ -15,19 +15,19 @@ namespace Stl.Fusion.Tests.UIModels
     [LiveStateUpdater]
     public class StringKeyValueModelUpdater : ILiveStateUpdater<string, KeyValueModel<string>>
     {
-        private IStringKeyValueClient Client { get; }
+        private IKeyValueServiceClient<string> KeyValueServiceClient { get; }
 
-        public StringKeyValueModelUpdater(IStringKeyValueClient service)
-            => Client = service;
+        public StringKeyValueModelUpdater(IKeyValueServiceClient<string> service)
+            => KeyValueServiceClient = service;
 
         public async Task<KeyValueModel<string>> UpdateAsync(ILiveState<string, KeyValueModel<string>> liveState, CancellationToken cancellationToken)
         {
             var updateCount = liveState.UnsafeValue?.UpdateCount ?? 0;
             var key = liveState.Local ?? "";
-            var value = await Client.GetValueAsync(key, cancellationToken).ConfigureAwait(false);
+            var value = await KeyValueServiceClient.GetAsync(key, cancellationToken).ConfigureAwait(false);
             return new KeyValueModel<string>() {
                 Key = key,
-                Value = value.ValueOr(""),
+                Value = value,
                 UpdateCount = updateCount + 1,
             };
         }

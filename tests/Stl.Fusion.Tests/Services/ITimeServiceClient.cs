@@ -13,8 +13,6 @@ namespace Stl.Fusion.Tests.Services
     public interface ITimeServiceClient : IRestEaseReplicaClient
     {
         [Get("getTime")]
-        Task<IComputed<DateTime>> GetComputedTimeAsync(CancellationToken cancellationToken = default);
-        [Get("getTime")]
         Task<DateTime> GetTimeAsync(CancellationToken cancellationToken = default);
     }
 

@@ -80,7 +80,7 @@ namespace Stl.Fusion.Interception
             }, this);
         }
 
-        private Action<IInvocation>? CreateHandler(MethodInfo methodInfo, IInvocation initialInvocation)
+        protected virtual Action<IInvocation>? CreateHandler(MethodInfo methodInfo, IInvocation initialInvocation)
         {
             var proxyMethodInfo = initialInvocation.GetConcreteMethodInvocationTarget();
             var method = _interceptedMethodCache.GetOrAddChecked(proxyMethodInfo, _createInterceptedMethod, initialInvocation);
@@ -89,7 +89,7 @@ namespace Stl.Fusion.Interception
 
             return (Action<IInvocation>) _createTypedHandlerMethod
                 .MakeGenericMethod(method.OutputType)
-                .Invoke(this, new [] {(object) initialInvocation, method})!;
+                .Invoke(this, new object[] {initialInvocation, method})!;
         }
 
         protected virtual Action<IInvocation> CreateTypedHandler<T>(
@@ -104,24 +104,6 @@ namespace Stl.Fusion.Interception
                 // Invoking the function
                 var cancellationToken = input.CancellationToken;
                 var usedBy = Computed.GetCurrent();
-
-                // Unusual return type
-                if (method.ReturnsComputed) {
-                    var computedTask = function.InvokeAsync(input, usedBy, null, cancellationToken);
-                    // Technically, invocation.ReturnValue could be
-                    // already set here - e.g. when it was a cache miss,
-                    // and real invocation's async flow (which could complete
-                    // synchronously) had already completed.
-                    // But we can't return it, because valueTask's async flow
-                    // might be still ongoing. So no matter what, we have to
-                    // replace the return value with valueTask.Result.
-                    if (method.ReturnsValueTask)
-                        // ReSharper disable once HeapView.BoxingAllocation
-                        invocation.ReturnValue = new ValueTask<IComputed<T>>(computedTask!);
-                    else
-                        invocation.ReturnValue = computedTask;
-                    return;
-                }
 
                 // InvokeAndStripAsync allows to get rid of one extra allocation
                 // of a task stripping the result of regular InvokeAsync.
@@ -165,15 +147,6 @@ namespace Stl.Fusion.Interception
                 return null;
 
             var outputType = returnType.GetGenericArguments()[0];
-            var returnsComputed = false;
-            if (outputType.IsGenericType) {
-                var returnTypeArgGtd = outputType.GetGenericTypeDefinition();
-                if (returnTypeArgGtd == typeof(IComputed<>)) {
-                    returnsComputed = true;
-                    outputType = outputType.GetGenericArguments()[0];
-                }
-            }
-
             var invocationTargetType = proxyMethodInfo.ReflectedType;
             var options = new ComputedOptions(
                 GetTimespan<ComputeMethodAttribute>(attr, a => a.KeepAliveTime),
@@ -184,7 +157,6 @@ namespace Stl.Fusion.Interception
                 MethodInfo = proxyMethodInfo,
                 OutputType = outputType,
                 ReturnsValueTask = returnsValueTask,
-                ReturnsComputed = returnsComputed,
                 InvocationTargetComparer = ArgumentComparerProvider.GetInvocationTargetComparer(
                     proxyMethodInfo, invocationTargetType!),
                 ArgumentComparers = new ArgumentComparer[parameters.Length],

@@ -15,11 +15,8 @@ namespace Stl.Fusion.Bridge
     {
         Symbol Id { get; }
 
-        IReplica? TryGet(Symbol publicationId);
-        IReplica<T> GetOrAdd<T>(
-            Symbol publisherId, Symbol publicationId,
-            Result<T> output, LTag version, bool isConsistent = true,
-            bool requestUpdate = false);
+        IReplica? TryGet(PublicationRef publicationRef);
+        IReplica<T> GetOrAdd<T>(PublicationStateInfo<T> publicationStateInfo, bool requestUpdate = false);
 
         IComputed<bool> GetPublisherConnectionState(Symbol publisherId);
     }
@@ -61,16 +58,13 @@ namespace Stl.Fusion.Bridge
             CreateChannelProcessorHandler = CreateChannelProcessor;
         }
 
-        public virtual IReplica? TryGet(Symbol publicationId)
-            => Registry.TryGet(publicationId);
+        public IReplica? TryGet(PublicationRef publicationRef)
+            => Registry.TryGet(publicationRef);
 
-        public virtual IReplica<T> GetOrAdd<T>(
-            Symbol publisherId, Symbol publicationId,
-            Result<T> output, LTag version, bool isConsistent = true,
-            bool requestUpdate = false)
+        public IReplica<T> GetOrAdd<T>(PublicationStateInfo<T> publicationStateInfo, bool requestUpdate = false)
         {
-            var (replica, isNew) = Registry.GetOrAdd(publicationId,
-                () => new Replica<T>(this, publisherId, publicationId, output, version, isConsistent, requestUpdate));
+            var (replica, isNew) = Registry.GetOrAdd(publicationStateInfo.PublicationRef,
+                () => new Replica<T>(this, publicationStateInfo, requestUpdate));
             if (isNew)
                 Subscribe(replica);
             return (IReplica<T>) replica;
@@ -104,7 +98,7 @@ namespace Stl.Fusion.Bridge
         {
             if (replica.Replicator != this)
                 throw new ArgumentOutOfRangeException(nameof(replica));
-            GetChannelProcessor(replica.PublisherId).Subscribe(replica);
+            GetChannelProcessor(replica.PublicationRef.PublisherId).Subscribe(replica);
         }
 
         void IReplicatorImpl.OnReplicaDisposed(IReplica replica)
@@ -113,7 +107,7 @@ namespace Stl.Fusion.Bridge
         {
             if (replica.Replicator != this)
                 throw new ArgumentOutOfRangeException(nameof(replica));
-            GetChannelProcessor(replica.PublisherId).Unsubscribe(replica);
+            GetChannelProcessor(replica.PublicationRef.PublisherId).Unsubscribe(replica);
         }
 
         protected override async ValueTask DisposeInternalAsync(bool disposing)

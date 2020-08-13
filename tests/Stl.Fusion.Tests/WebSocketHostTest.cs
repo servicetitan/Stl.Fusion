@@ -19,7 +19,7 @@ namespace Stl.Fusion.Tests
         {
             await using var serving = await WebSocketHost.ServeAsync();
             var client = Services.GetRequiredService<ITimeServiceClient>();
-            var cTime = await client.GetComputedTimeAsync();
+            var cTime = await Computed.CaptureAsync(_ => client.GetTimeAsync());
             cTime.IsConsistent.Should().BeTrue();
             (DateTime.Now - cTime.Value).Should().BeLessThan(TimeSpan.FromSeconds(1));
 

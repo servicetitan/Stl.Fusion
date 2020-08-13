@@ -12,9 +12,11 @@ using Stl.Time;
 
 namespace Stl.Fusion.Bridge
 {
-    public interface IPublication : IHasId<Symbol>, IAsyncDisposable
+    public interface IPublication : IAsyncDisposable
     {
         IPublisher Publisher { get; }
+        Symbol Id { get; }
+        PublicationRef Ref { get; }
         IPublicationState State { get; }
         long UseCount { get; }
 
@@ -54,6 +56,7 @@ namespace Stl.Fusion.Bridge
         public Type PublicationType { get; }
         public IPublisher Publisher { get; }
         public Symbol Id { get; }
+        public PublicationRef Ref => new PublicationRef(Publisher.Id, Id);
         IPublicationState IPublication.State => State;
         public IPublicationState<T> State => StateField;
         public long UseCount => Volatile.Read(ref _useCount);

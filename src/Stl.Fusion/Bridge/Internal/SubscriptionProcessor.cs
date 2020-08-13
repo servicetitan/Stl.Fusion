@@ -123,7 +123,6 @@ namespace Stl.Fusion.Bridge.Internal
 
             var message = new PublicationStateChangedMessage<T>() {
                 Version = computed.Version,
-                IsConsistent = isConsistent,
             };
             if (isConsistent)
                 message.Output = computed.Output;

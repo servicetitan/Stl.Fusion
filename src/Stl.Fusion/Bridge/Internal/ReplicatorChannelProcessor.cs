@@ -38,7 +38,7 @@ namespace Stl.Fusion.Bridge.Internal
 
         public readonly IReplicator Replicator;
         public readonly Symbol PublisherId;
-        public SimpleComputedInput<bool> StateComputed;
+        public readonly SimpleComputedInput<bool> StateComputed;
 
         public ReplicatorChannelProcessor(IReplicator replicator, Symbol publisherId, ILogger? log = null)
         {
@@ -98,7 +98,8 @@ namespace Stl.Fusion.Bridge.Internal
                         Reconnect(error);
                         var ct = cancellationToken.IsCancellationRequested ? cancellationToken : default;
                         foreach (var publicationId in GetSubscriptions()) {
-                            var replicaImpl = (IReplicaImpl?) Replicator.TryGet(publicationId);
+                            var publicationRef = new PublicationRef(PublisherId, publicationId);
+                            var replicaImpl = (IReplicaImpl?) Replicator.TryGet(publicationRef);
                             replicaImpl?.ApplyFailedUpdate(error, ct);
                         }
                         break;
@@ -116,11 +117,12 @@ namespace Stl.Fusion.Bridge.Internal
         public virtual void Subscribe(IReplica replica)
         {
             // No checks, since they're done by the only caller of this method
+            var publicationId = replica.PublicationRef.PublicationId;
             lock (Lock) {
-                Subscriptions.Add(replica.PublicationId);
+                Subscriptions.Add(publicationId);
                 Send(new SubscribeMessage() {
                     PublisherId = PublisherId,
-                    PublicationId = replica.PublicationId,
+                    PublicationId = publicationId,
                     IsUpdateRequested = replica.IsUpdateRequested,
                 });
             }
@@ -129,11 +131,12 @@ namespace Stl.Fusion.Bridge.Internal
         public virtual void Unsubscribe(IReplica replica)
         {
             // No checks, since they're done by the only caller of this method
+            var publicationId = replica.PublicationRef.PublicationId;
             lock (Lock) {
-                Subscriptions.Remove(replica.PublicationId);
+                Subscriptions.Remove(publicationId);
                 Send(new UnsubscribeMessage() {
                     PublisherId = PublisherId,
-                    PublicationId = replica.PublicationId,
+                    PublicationId = publicationId,
                 });
             }
         }
@@ -152,7 +155,7 @@ namespace Stl.Fusion.Bridge.Internal
                 // Fast dispatch to OnUpdatedMessageAsync<T>
                 return OnStateChangeMessageAsyncHandlers[scm.GetResultType()].Handle(scm, (this, cancellationToken));
             case PublicationAbsentsMessage pam:
-                var replica = (IReplicaImpl?) Replicator.TryGet(pam.PublicationId);
+                var replica = (IReplicaImpl?) Replicator.TryGet((PublisherId, pam.PublicationId));
                 replica?.ApplyFailedUpdate(Errors.PublicationAbsents(), default);
                 break;
             }
@@ -161,14 +164,17 @@ namespace Stl.Fusion.Bridge.Internal
 
         protected virtual Task OnStateChangedMessageAsync<T>(PublicationStateChangedMessage<T> message, CancellationToken cancellationToken)
         {
-            var replica = Replicator.GetOrAdd(
-                message.PublisherId, message.PublicationId,
-                message.Output, message.Version, message.IsConsistent);
+            var psi = new PublicationStateInfo<T>(
+                new PublicationRef(message.PublisherId, message.PublicationId),
+                message.Version, message.IsConsistent,
+                message.Output.GetValueOrDefault());
+
+            var replica = Replicator.GetOrAdd(psi);
             if (!(replica is IReplicaImpl<T> replicaImpl))
                 // Weird case: somehow replica is of different type
                 return Task.CompletedTask;
 
-            replicaImpl.ApplySuccessfulUpdate(message.Output, message.Version, message.IsConsistent);
+            replicaImpl.ApplySuccessfulUpdate(psi.Output, psi.Version, psi.IsConsistent);
             return Task.CompletedTask;
         }
 
@@ -209,7 +215,8 @@ namespace Stl.Fusion.Bridge.Internal
                     .ConfigureAwait(false);
 
                 foreach (var publicationId in GetSubscriptions()) {
-                    var replica = Replicator.TryGet(publicationId);
+                    var publicationRef = new PublicationRef(PublisherId, publicationId);
+                    var replica = Replicator.TryGet(publicationRef);
                     if (replica != null)
                         Subscribe(replica);
                     else {

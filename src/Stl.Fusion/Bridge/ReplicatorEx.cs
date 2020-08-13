@@ -11,18 +11,19 @@ namespace Stl.Fusion.Bridge
             Errors.ReplicaHasNeverBeenUpdated();
 
         public static IReplica<T> GetOrAdd<T>(this IReplicator replicator,
-            Symbol publisherId, Symbol publicationId, bool requestUpdate = false)
+            PublicationRef publicationRef, bool requestUpdate = false)
         {
             var output = new Result<T>(default!, ReplicaHasBeenNeverUpdatedError);
-            return replicator.GetOrAdd(publisherId, publicationId, output, LTag.Default, false, requestUpdate);
+            var info = new PublicationStateInfo<T>(publicationRef, LTag.Default, false, output);
+            return replicator.GetOrAdd(info, requestUpdate);
         }
 
-        public static IReplica Get(this IReplicator replicator, Symbol publicationId)
-            => replicator.TryGet(publicationId) ?? throw new KeyNotFoundException();
+        public static IReplica Get(this IReplicator replicator, PublicationRef publicationRef)
+            => replicator.TryGet(publicationRef) ?? throw new KeyNotFoundException();
 
-        public static IReplica<T>? TryGet<T>(this IReplicator replicator, Symbol publicationId)
-            => replicator.TryGet(publicationId) as IReplica<T>;
-        public static IReplica<T> Get<T>(this IReplicator replicator, Symbol publicationId)
-            => (IReplica<T>) replicator.Get(publicationId);
+        public static IReplica<T>? TryGet<T>(this IReplicator replicator, PublicationRef publicationRef)
+            => replicator.TryGet(publicationRef) as IReplica<T>;
+        public static IReplica<T> Get<T>(this IReplicator replicator, PublicationRef publicationRef)
+            => (IReplica<T>) replicator.Get(publicationRef);
     }
 }

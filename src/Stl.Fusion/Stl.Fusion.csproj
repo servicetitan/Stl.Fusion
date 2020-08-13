@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <PackageReference Include="Castle.Core" />
+    <PackageReference Include="System.Text.Json" />
   </ItemGroup>
 
   <ItemGroup>

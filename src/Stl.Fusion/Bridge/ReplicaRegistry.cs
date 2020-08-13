@@ -13,8 +13,8 @@ namespace Stl.Fusion.Bridge
 {
     public interface IReplicaRegistry
     {
-        IReplica? TryGet(Symbol publicationId);
-        (IReplica Replica, bool IsNew) GetOrAdd(Symbol publicationId, Func<IReplica> replicaFactory);
+        IReplica? TryGet(PublicationRef publicationRef);
+        (IReplica Replica, bool IsNew) GetOrAdd(PublicationRef publicationRef, Func<IReplica> replicaFactory);
         bool Remove(IReplica replica);
     }
 
@@ -41,7 +41,7 @@ namespace Stl.Fusion.Bridge
             }
         }
 
-        private readonly ConcurrentDictionary<Symbol, GCHandle> _handles;
+        private readonly ConcurrentDictionary<PublicationRef, GCHandle> _handles;
         private readonly StochasticCounter _opCounter;
         private readonly GCHandlePool _gcHandlePool;
         private volatile int _pruneCounterThreshold;
@@ -51,7 +51,7 @@ namespace Stl.Fusion.Bridge
         public ReplicaRegistry(Options? options = null)
         {
             options ??= new Options();
-            _handles = new ConcurrentDictionary<Symbol, GCHandle>(options.ConcurrencyLevel, options.InitialCapacity);
+            _handles = new ConcurrentDictionary<PublicationRef, GCHandle>(options.ConcurrencyLevel, options.InitialCapacity);
             _opCounter = new StochasticCounter(1);
             _gcHandlePool = options.GCHandlePool ?? new GCHandlePool(GCHandleType.Weak);
             if (_gcHandlePool.HandleType != GCHandleType.Weak)
@@ -63,17 +63,17 @@ namespace Stl.Fusion.Bridge
         public void Dispose()
             => _gcHandlePool.Dispose();
 
-        public IReplica? TryGet(Symbol publicationId)
+        public IReplica? TryGet(PublicationRef publicationRef)
         {
-            var random = publicationId.HashCode;
+            var random = publicationRef.PublicationId.HashCode;
             OnOperation(random);
-            if (!_handles.TryGetValue(publicationId, out var handle))
+            if (!_handles.TryGetValue(publicationRef, out var handle))
                 return null;
             var target = (IReplica?) handle.Target;
             if (target != null)
                 return target;
             // GCHandle target == null => we have to recycle it
-            if (!_handles.TryRemove(publicationId, handle))
+            if (!_handles.TryRemove(publicationRef, handle))
                 // Some other thread already removed this entry
                 return null;
             // The thread that succeeds in removal releases gcHandle as well
@@ -81,15 +81,15 @@ namespace Stl.Fusion.Bridge
             return null;
         }
 
-        public (IReplica Replica, bool IsNew) GetOrAdd(Symbol publicationId, Func<IReplica> replicaFactory)
+        public (IReplica Replica, bool IsNew) GetOrAdd(PublicationRef publicationRef, Func<IReplica> replicaFactory)
         {
-            var random = publicationId.HashCode;
+            var random = publicationRef.PublicationId.HashCode;
             OnOperation(random);
             var spinWait = new SpinWait();
             var newReplica = (IReplica?) null; // Just to make sure we store this ref
             while (true) {
                 // ReSharper disable once HeapView.CanAvoidClosure
-                var handle = _handles.GetOrAdd(publicationId, _ => {
+                var handle = _handles.GetOrAdd(publicationRef, _ => {
                     newReplica = replicaFactory.Invoke();
                     return _gcHandlePool.Acquire(newReplica, random);
                 });
@@ -101,7 +101,7 @@ namespace Stl.Fusion.Bridge
                     return (target, false);
                 }
                 // GCHandle target == null => we have to recycle it
-                if (_handles.TryRemove(publicationId, handle))
+                if (_handles.TryRemove(publicationRef, handle))
                     // The thread that succeeds in removal releases gcHandle as well
                     _gcHandlePool.Release(handle, random);
                 // And since we didn't manage to add the replica, let's retry
@@ -111,17 +111,16 @@ namespace Stl.Fusion.Bridge
 
         public bool Remove(IReplica replica)
         {
-            var publicationId = replica.PublicationId;
-            var publisherId = replica.PublisherId;
-            var random = publicationId.HashCode;
+            var publicationRef = replica.PublicationRef;
+            var random = publicationRef.PublicationId.HashCode;
             OnOperation(random);
-            if (!_handles.TryGetValue(publicationId, out var handle))
+            if (!_handles.TryGetValue(publicationRef, out var handle))
                 return false;
             var target = handle.Target;
             if (target != null && !ReferenceEquals(target, replica))
                 // GCHandle target is pointing to another replica
                 return false;
-            if (!_handles.TryRemove(publicationId, handle))
+            if (!_handles.TryRemove(publicationRef, handle))
                 // Some other thread already removed this entry
                 return false;
             // The thread that succeeds in removal releases gcHandle as well
@@ -176,7 +175,7 @@ namespace Stl.Fusion.Bridge
                     continue;
                 if (!_handles.TryRemove(key, gcHandle))
                     continue;
-                var random = key.HashCode;
+                var random = key.PublicationId.HashCode;
                 _gcHandlePool.Release(gcHandle, random);
             }
 

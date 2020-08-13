@@ -34,29 +34,15 @@ namespace Stl.Fusion.Interception
             try {
                 using var _ = Computed.ChangeCurrent(output);
                 var resultTask = input.InvokeOriginalFunction(cancellationToken);
-                if (method.ReturnsComputed) {
-                    if (method.ReturnsValueTask) {
-                        var task = (ValueTask<IComputed<T>>) resultTask;
-                        await task.ConfigureAwait(false);
-                        // output == task.Result here, so no need to call output.TrySetOutput(...)
-                    }
-                    else {
-                        var task = (Task<IComputed<T>>) resultTask;
-                        await task.ConfigureAwait(false);
-                        // output == task.Result here, so no need to call output.TrySetOutput(...)
-                    }
+                if (method.ReturnsValueTask) {
+                    var task = (ValueTask<T>) resultTask;
+                    var value = await task.ConfigureAwait(false);
+                    output.TrySetOutput(value!);
                 }
                 else {
-                    if (method.ReturnsValueTask) {
-                        var task = (ValueTask<T>) resultTask;
-                        var value = await task.ConfigureAwait(false);
-                        output.TrySetOutput(value!);
-                    }
-                    else {
-                        var task = (Task<T>) resultTask;
-                        var value = await task.ConfigureAwait(false);
-                        output.TrySetOutput(value!);
-                    }
+                    var task = (Task<T>) resultTask;
+                    var value = await task.ConfigureAwait(false);
+                    output.TrySetOutput(value!);
                 }
             }
             catch (OperationCanceledException) {

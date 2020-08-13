@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="latest" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <EntityFrameworkCoreVersion>3.1.6</EntityFrameworkCoreVersion>
-    <AspNetCoreVersion>3.1.6</AspNetCoreVersion>
+    <EntityFrameworkCoreVersion>3.1.7</EntityFrameworkCoreVersion>
+    <AspNetCoreVersion>3.1.7</AspNetCoreVersion>
     <BlazorVersion>3.2.1</BlazorVersion>
     <SystemNetHttpJsonVersion>3.2.1</SystemNetHttpJsonVersion>
-    <StlFusionVersion>0.2.32</StlFusionVersion>
+    <StlFusionVersion>0.2.36</StlFusionVersion>
   </PropertyGroup>
   <ItemGroup Label="Nupkg Versions">
     <PackageReference Update="AutoMapper" Version="10.0.0" />

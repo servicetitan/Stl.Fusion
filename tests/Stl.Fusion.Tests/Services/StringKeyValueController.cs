@@ -1,14 +1,15 @@
-using System.Threading;
+using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Stl.Fusion.Bridge;
+using Stl.Fusion.Client;
 using Stl.Fusion.Server;
 
 namespace Stl.Fusion.Tests.Services
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
-    public class StringKeyValueController : FusionController, IKeyValueService<string>
+    public class StringKeyValueController : FusionController
     {
         protected IKeyValueService<string> Service { get; }
 
@@ -16,11 +17,24 @@ namespace Stl.Fusion.Tests.Services
             => Service = service;
 
         [HttpGet("{key?}")]
-        public Task<Option<string>> GetValueAsync(string? key, CancellationToken cancellationToken = default)
-            => PublishAsync(ct => Service.GetValueAsync(key ?? "", ct), cancellationToken);
+        public Task<Option<string>> TryGetAsync(string? key)
+            => PublishAsync(ct => Service.TryGetAsync(key ?? "", ct));
+
+        [HttpGet("{key?}")]
+        public async Task<JsonString> GetAsync(string? key)
+            => await PublishAsync(ct => Service.GetAsync(key ?? "", ct));
 
         [HttpPost("{key?}")]
-        public Task SetValueAsync(string? key, [FromBody] Option<string> value, CancellationToken cancellationToken = default)
-            => Service.SetValueAsync(key ?? "", value, cancellationToken);
+        public async Task SetAsync(string? key)
+        {
+            var cancellationToken = HttpContext.RequestAborted;
+            using var reader = new StreamReader(Request.Body);
+            var value = await reader.ReadToEndAsync();
+            await Service.SetAsync(key ?? "", value ?? "", cancellationToken);
+        }
+
+        [HttpGet("{key?}")]
+        public Task RemoveAsync(string? key)
+            => Service.RemoveAsync(key ?? "", HttpContext.RequestAborted);
     }
 }

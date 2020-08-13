@@ -1,6 +1,7 @@
 using System;
 using System.Net.WebSockets;
 using System.Reflection;
+using Stl.Fusion.Bridge;
 
 namespace Stl.Fusion.Internal
 {
@@ -31,12 +32,14 @@ namespace Stl.Fusion.Internal
             => new InvalidCastException(
                 $"Computed.Captured() can't be converted to '{expectedType.Name}'.");
         public static Exception NoComputedCaptured()
-            => new InvalidOperationException("No IComputed was captured.");
+            => new InvalidOperationException($"No {nameof(IComputed)} was captured.");
 
         public static Exception PublicationTypeMustBeOpenGenericType(string paramName)
             => new ArgumentOutOfRangeException(paramName, "Publication type must be open generic type.");
         public static Exception PublicationAbsents()
             => new InvalidOperationException("The Publication absents on the server.");
+        public static Exception NoPublicationStateInfoCaptured()
+            => new InvalidOperationException($"No {nameof(PublicationStateInfo)} was captured.");
 
         public static Exception ReplicaHasNeverBeenUpdated()
             => new InvalidOperationException("The Replica has never been updated.");

@@ -78,14 +78,10 @@ namespace Stl.Fusion.Interception
         {
             if (HashCode != other.HashCode)
                 return false;
-            if (!Method.InvocationTargetComparer.EqualsFunc(Target, other.Target))
+            if (!ReferenceEquals(Method, other.Method))
                 return false;
             var arguments = Arguments;
             var otherArguments = other.Arguments;
-            // if (arguments == otherArguments)
-            //     return true;
-            if (arguments.Length != other.Arguments.Length)
-                return false;
             var argumentComparers = Method.ArgumentComparers;
             // Backward direction is intended: tail arguments
             // are more likely to differ.
@@ -93,6 +89,8 @@ namespace Stl.Fusion.Interception
                 if (!argumentComparers[i].EqualsFunc(arguments[i], otherArguments[i]))
                     return false;
             }
+            if (!Method.InvocationTargetComparer.EqualsFunc(Target, other.Target))
+                return false;
             return true;
         }
         public override bool Equals(ComputedInput obj)

@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
+using Stl.Extensibility;
 using Stl.Internal;
 
 namespace Stl.Text
@@ -9,7 +10,8 @@ namespace Stl.Text
     [Serializable]
     [JsonConverter(typeof(SymbolJsonConverter))]
     [TypeConverter(typeof(SymbolTypeConverter))]
-    public readonly struct Symbol : IEquatable<Symbol>, IComparable<Symbol>, ISerializable
+    public readonly struct Symbol : IEquatable<Symbol>, IComparable<Symbol>,
+        IConvertibleTo<string>, ISerializable
     {
         public static readonly Symbol Null = default;
         public static readonly Symbol Empty = new Symbol("");
@@ -27,6 +29,7 @@ namespace Stl.Text
 
         // Conversion
 
+        string IConvertibleTo<string>.Convert() => Value;
         public static implicit operator Symbol(string source) => new Symbol(source);
         public static implicit operator string(Symbol source) => source.Value;
 

@@ -131,8 +131,8 @@ namespace Stl.Fusion.Tests
             services.AddLiveState<ServerTimeModel2>(
                 async (c, prev, cancellationToken) => {
                     var client = c.GetRequiredService<ITimeServiceClient>();
-                    var cTime = await client.GetComputedTimeAsync(cancellationToken).ConfigureAwait(false);
-                    return new ServerTimeModel2(cTime.Value);
+                    var time = await client.GetTimeAsync(cancellationToken).ConfigureAwait(false);
+                    return new ServerTimeModel2(time);
                 }, (c, options) => {
                     options.InitialState = new ServerTimeModel2();
                 });

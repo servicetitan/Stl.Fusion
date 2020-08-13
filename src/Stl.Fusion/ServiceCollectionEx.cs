@@ -16,10 +16,6 @@ namespace Stl.Fusion
         {
             // Registry
             services.TryAddSingleton(ComputedRegistry.Default);
-            // InterfaceCastProxyGenerator (typically used by ReplicaServices)
-            services.TryAddSingleton<InterfaceCastInterceptor>();
-            services.TryAddSingleton(c => InterfaceCastProxyGenerator.Default);
-            services.TryAddSingleton(c => new [] { c.GetRequiredService<InterfaceCastInterceptor>() });
             // ComputeServiceProxyGenerator
             services.TryAddSingleton(new ComputeServiceInterceptor.Options());
             services.TryAddSingleton<ComputeServiceInterceptor>();

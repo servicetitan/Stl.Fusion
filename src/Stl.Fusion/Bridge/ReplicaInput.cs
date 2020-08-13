@@ -8,28 +8,26 @@ namespace Stl.Fusion.Bridge
         protected internal readonly IReplicaImpl ReplicaImpl;
         protected internal IReplicatorImpl ReplicatorImpl => (IReplicatorImpl) Replicator;
 
-        public Symbol PublisherId { get; }
-        public Symbol PublicationId { get; }
+        public PublicationRef PublicationRef { get; }
         public IReplicator Replicator => ReplicaImpl.Replicator;
         public IReplica Replica => ReplicaImpl;
 
-        public ReplicaInput(IReplicaImpl replicaImpl, Symbol publisherId, Symbol publicationId)
+        public ReplicaInput(IReplicaImpl replicaImpl, PublicationRef publicationRef)
             : base(replicaImpl)
         {
             ReplicaImpl = replicaImpl;
-            PublisherId = publisherId;
-            PublicationId = publicationId;
+            PublicationRef = publicationRef;
         }
 
         public override string ToString()
-            => $"{GetType().Name}({Replica.PublicationId})";
+            => $"{GetType().Name}({Replica.PublicationRef})";
 
         // Equality
 
         public bool Equals(ReplicaInput? other)
-            => !ReferenceEquals(null, other) && PublicationId == other.PublicationId;
+            => !ReferenceEquals(null, other) && PublicationRef == other.PublicationRef;
         public override bool Equals(ComputedInput other)
-            => other is ReplicaInput ri && PublicationId == ri.PublicationId;
+            => other is ReplicaInput ri && PublicationRef == ri.PublicationRef;
         public override bool Equals(object? obj)
             => Equals(obj as ReplicaInput);
         public override int GetHashCode()

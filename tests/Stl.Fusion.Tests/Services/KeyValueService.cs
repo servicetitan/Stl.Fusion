@@ -2,17 +2,15 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using RestEase;
-using Stl.Concurrency;
 
 namespace Stl.Fusion.Tests.Services
 {
     public interface IKeyValueService<TValue>
     {
-        [Get("getValue/{key}")] // Intended
-        Task<Option<TValue>> GetValueAsync([Path] string key, CancellationToken cancellationToken = default);
-        [Post("setValue/{key}")] // Intended
-        Task SetValueAsync([Path] string key, [Body] Option<TValue> value, CancellationToken cancellationToken = default);
+        Task<Option<TValue>> TryGetAsync(string key, CancellationToken cancellationToken = default);
+        Task<TValue> GetAsync(string key, CancellationToken cancellationToken = default);
+        Task SetAsync(string key, TValue value, CancellationToken cancellationToken = default);
+        Task RemoveAsync(string key, CancellationToken cancellationToken = default);
     }
 
     public class KeyValueService<TValue> : IKeyValueService<TValue>
@@ -20,20 +18,29 @@ namespace Stl.Fusion.Tests.Services
         private readonly ConcurrentDictionary<string, TValue> _values =
             new ConcurrentDictionary<string, TValue>();
 
-        public Task SetValueAsync(string key, Option<TValue> value, CancellationToken cancellationToken = default)
+        [ComputeMethod]
+        public virtual Task<Option<TValue>> TryGetAsync(string key, CancellationToken cancellationToken = default)
+            => Task.FromResult(_values.TryGetValue(key, out var v) ? Option.Some(v) : default);
+
+        [ComputeMethod]
+        public virtual Task<TValue> GetAsync(string key, CancellationToken cancellationToken = default)
+            => Task.FromResult(_values.GetValueOrDefault(key)!);
+
+        public virtual Task SetAsync(string key, TValue value, CancellationToken cancellationToken = default)
         {
-            if (value.HasValue)
-                _values[key] = value.UnsafeValue!;
-            else
-                _values.TryRemove(key, out _);
-            Computed.Invalidate(() => GetValueAsync(key, default));
+            _values[key] = value;
+            Computed.Invalidate(() => TryGetAsync(key, default));
+            Computed.Invalidate(() => GetAsync(key, default));
             return Task.CompletedTask;
         }
 
-        [ComputeMethod]
-        public virtual Task<Option<TValue>> GetValueAsync(string key, CancellationToken cancellationToken = default)
-            => Task.FromResult(
-                _values.TryGetValue(key, out var v) ? Option.Some(v) : default);
+        public virtual Task RemoveAsync(string key, CancellationToken cancellationToken = default)
+        {
+            _values.TryRemove(key, out _);
+            Computed.Invalidate(() => TryGetAsync(key, default));
+            Computed.Invalidate(() => GetAsync(key, default));
+            return Task.CompletedTask;
+        }
     }
 
     [ComputeService(typeof(IKeyValueService<string>))]

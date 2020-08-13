@@ -17,9 +17,11 @@ namespace Stl.Fusion.Bridge.Interception
         protected readonly ILogger Log;
         protected readonly bool IsLogDebugEnabled;
         protected readonly Generator<LTag> VersionGenerator;
+        protected readonly IReplicator Replicator;
 
         public ReplicaClientFunction(
             InterceptedMethod method,
+            IReplicator replicator,
             Generator<LTag> versionGenerator,
             IComputedRegistry computedRegistry,
             ILogger<ReplicaClientFunction<T>>? log = null)
@@ -28,6 +30,7 @@ namespace Stl.Fusion.Bridge.Interception
             Log = log ??= NullLogger<ReplicaClientFunction<T>>.Instance;
             IsLogDebugEnabled = Log.IsEnabled(LogLevel.Debug);
             VersionGenerator = versionGenerator;
+            Replicator = replicator;
             InvalidatedHandler = null;
         }
 
@@ -48,17 +51,16 @@ namespace Stl.Fusion.Bridge.Interception
             CancellationToken cancellationToken)
         {
             var method = input.Method;
+            IReplica<T> replica;
+            IReplicaComputed<T> replicaComputed;
 
             // 1. Trying to update the Replica first
             if (cached is IReplicaClientComputed<T> rsc && rsc.Replica != null) {
                 try {
-                    var replica = rsc.Replica;
-                    var computed = await replica.Computed
+                    replica = rsc.Replica;
+                    replicaComputed = (IReplicaComputed<T>) await replica.Computed
                         .UpdateAsync(true, cancellationToken).ConfigureAwait(false);
-                    var replicaComputed = (IReplicaComputed<T>) computed;
-                    var output = new ReplicaClientComputed<T>(
-                        method.Options, replicaComputed, input);
-                    return output;
+                    return new ReplicaClientComputed<T>(method.Options, input, replicaComputed);
                 }
                 catch (OperationCanceledException) {
                     if (IsLogDebugEnabled)
@@ -72,36 +74,18 @@ namespace Stl.Fusion.Bridge.Interception
             }
 
             // 2. Replica update failed, let's refresh it
+            using var psiCapture = new PublicationStateInfoCapture();
+            Result<T> output;
             try {
-                using var replicaCapture = new ReplicaCapture();
                 var result = input.InvokeOriginalFunction(cancellationToken);
-                if (method.ReturnsComputed) {
-                    if (method.ReturnsValueTask) {
-                        var task = (ValueTask<IComputed<T>>) result;
-                        await task.ConfigureAwait(false);
-                    }
-                    else {
-                        var task = (Task<IComputed<T>>) result;
-                        await task.ConfigureAwait(false);
-                    }
+                if (method.ReturnsValueTask) {
+                    var task = (ValueTask<T>) result;
+                    output = new Result<T>(await task.ConfigureAwait(false), null);
                 }
                 else {
-                    if (method.ReturnsValueTask) {
-                        var task = (ValueTask<T>) result;
-                        await task.ConfigureAwait(false);
-                    }
-                    else {
-                        var task = (Task<T>) result;
-                        await task.ConfigureAwait(false);
-                    }
+                    var task = (Task<T>) result;
+                    output = new Result<T>(await task.ConfigureAwait(false), null);
                 }
-                var replica = replicaCapture.GetCapturedReplica<T>();
-                var computed = await replica.Computed
-                    .UpdateAsync(true, cancellationToken).ConfigureAwait(false);
-                var replicaComputed = (IReplicaComputed<T>) computed;
-                var output = new ReplicaClientComputed<T>(
-                    method.Options, replicaComputed, input);
-                return output;
             }
             catch (OperationCanceledException) {
                 if (IsLogDebugEnabled)
@@ -111,13 +95,23 @@ namespace Stl.Fusion.Bridge.Interception
             catch (Exception e) {
                 if (IsLogDebugEnabled)
                     Log.LogError(e, $"{nameof(ComputeAsync)}: Error on update.");
-                // We need a unique LTag here, so we use a range that's supposed
-                // to be unused by LTagGenerators.
-                var version = new LTag(VersionGenerator.Next().Value ^ (1L << 62));
-                var output = new ReplicaClientComputed<T>(
-                    method.Options, null, input, new Result<T>(default!, e), version);
-                return output;
+                output = new Result<T>(default!, e);
             }
+
+            var psi = psiCapture.Captured;
+            if (psi == null) {
+                output = new Result<T>(default!, Errors.NoPublicationStateInfoCaptured());
+                // We need a unique LTag here, so we use a range that's supposed to be unused by LTagGenerators.
+                var version = new LTag(VersionGenerator.Next().Value ^ (1L << 62));
+                return new ReplicaClientComputed<T>(method.Options, input, output.Error!, version);
+            }
+            if (output.HasError)
+                // We need a unique LTag here, so we use a range that's supposed to be unused by LTagGenerators.
+                psi.Version = new LTag(VersionGenerator.Next().Value ^ (1L << 62));
+            replica = Replicator.GetOrAdd(new PublicationStateInfo<T>(psi, output));
+            replicaComputed = (IReplicaComputed<T>) await replica.Computed
+                .UpdateAsync(true, cancellationToken).ConfigureAwait(false);
+            return new ReplicaClientComputed<T>(method.Options, input, replicaComputed);
         }
     }
 }
