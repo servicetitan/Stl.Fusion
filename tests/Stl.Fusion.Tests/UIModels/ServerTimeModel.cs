@@ -6,32 +6,25 @@ using Stl.Fusion.UI;
 
 namespace Stl.Fusion.Tests.UIModels
 {
-    public class ServerTimeModel1
+    public class ServerTimeModel
     {
-        public DateTime? Time { get; }
+        public DateTime Time { get; }
 
-        public ServerTimeModel1() { }
-        public ServerTimeModel1(DateTime time) => Time = time;
+        public ServerTimeModel() { }
+        public ServerTimeModel(DateTime time) => Time = time;
 
         [LiveStateUpdater]
-        public class Updater : ILiveStateUpdater<ServerTimeModel1>
+        public class Updater : ILiveStateUpdater<ServerTimeModel>
         {
             private IClientTimeService Client { get; }
 
             public Updater(IClientTimeService time) => Client = time;
 
-            public async Task<ServerTimeModel1> UpdateAsync(ILiveState<ServerTimeModel1> liveState, CancellationToken cancellationToken)
+            public async Task<ServerTimeModel> UpdateAsync(ILiveState<ServerTimeModel> liveState, CancellationToken cancellationToken)
             {
                 var time = await Client.GetTimeAsync(cancellationToken).ConfigureAwait(false);
-                return new ServerTimeModel1(time);
+                return new ServerTimeModel(time);
             }
         }
-    }
-
-    // We need its second version to run the test w/ IComputed too
-    public class ServerTimeModel2 : ServerTimeModel1
-    {
-        public ServerTimeModel2() { }
-        public ServerTimeModel2(DateTime time) : base(time) { }
     }
 }

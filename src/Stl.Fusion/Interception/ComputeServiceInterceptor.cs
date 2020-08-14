@@ -19,9 +19,8 @@ namespace Stl.Fusion.Interception
 
         public ComputeServiceInterceptor(
             Options options,
-            IComputedRegistry? registry = null,
             ILoggerFactory? loggerFactory = null)
-            : base(options, registry, loggerFactory)
+            : base(options, loggerFactory)
         {
             VersionGenerator = options.VersionGenerator;
         }
@@ -29,7 +28,7 @@ namespace Stl.Fusion.Interception
         protected override InterceptedFunctionBase<T> CreateFunction<T>(InterceptedMethod method)
         {
             var log = LoggerFactory.CreateLogger<ComputeServiceFunction<T>>();
-            return new ComputeServiceFunction<T>(method, VersionGenerator, Registry, log);
+            return new ComputeServiceFunction<T>(method, VersionGenerator, log);
         }
 
         protected override void ValidateTypeInternal(Type type)

@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -68,7 +69,7 @@ namespace Stl.Fusion
         private HashSetSlim2<(ComputedInput Input, LTag Version)> _usedBy = default;
         // ReSharper disable once InconsistentNaming
         private event Action<IComputed>? _invalidated;
-        private bool _invalidateOnSetOutput = false;
+        private bool _invalidateOnSetOutput;
         private long _lastAccessTimeTicks;
         private object Lock => this;
 
@@ -140,6 +141,7 @@ namespace Stl.Fusion
             Input = input;
             Version = version;
             LastAccessTime = CoarseCpuClock.Now;
+            ComputedRegistry.Instance.Register(this);
         }
 
         public Computed(ComputedOptions options, TIn input, Result<TOut> output, LTag version, bool isConsistent = true)
@@ -152,6 +154,8 @@ namespace Stl.Fusion
             _output = output;
             Version = version;
             LastAccessTime = CoarseCpuClock.Now;
+            if (isConsistent)
+                ComputedRegistry.Instance.Register(this);
         }
 
         public override string ToString()
@@ -159,6 +163,7 @@ namespace Stl.Fusion
 
         void IComputedImpl.AddUsed(IComputedImpl used)
         {
+            // Debug.WriteLine($"{nameof(IComputedImpl.AddUsed)}: {this} <- {used}");
             lock (Lock) {
                 switch (State) {
                 case ComputedState.Consistent:
@@ -181,7 +186,18 @@ namespace Stl.Fusion
                     usedBy.Invalidate();
                     return;
                 }
-                _usedBy.Add((usedBy.Input, usedBy.Version));
+
+                // The invalidation could happen here -
+                // that's why there is a second check later
+                // in this method
+                var usedByRef = (usedBy.Input, usedBy.Version);
+                _usedBy.Add(usedByRef);
+
+                // Second check
+                if (State == ComputedState.Invalidated) {
+                    _usedBy.Remove(usedByRef);
+                    usedBy.Invalidate();
+                }
             }
         }
 
@@ -204,9 +220,8 @@ namespace Stl.Fusion
                     return false;
                 SetStateUnsafe(ComputedState.Consistent);
                 _output = output;
-                (mustInvalidate, _invalidateOnSetOutput) = (_invalidateOnSetOutput, false);
             }
-            if (mustInvalidate)
+            if (_invalidateOnSetOutput)
                 Invalidate();
             else {
                 var timeout = output.HasError
@@ -229,14 +244,16 @@ namespace Stl.Fusion
         {
             if (State == ComputedState.Invalidated)
                 return false;
+            // Debug.WriteLine($"{nameof(Invalidate)}: {this}");
             MemoryBuffer<(ComputedInput Input, LTag Version)> usedBy = default;
+            var invalidateOnSetOutput = false;
             try {
                 lock (Lock) {
                     switch (State) {
                     case ComputedState.Invalidated:
                         return false;
                     case ComputedState.Computing:
-                        _invalidateOnSetOutput = true;
+                        invalidateOnSetOutput = true;
                         return true;
                     }
                     SetStateUnsafe(ComputedState.Invalidated);
@@ -252,12 +269,14 @@ namespace Stl.Fusion
                 catch {
                     // We should never throw errors during the invalidation
                 }
+                var computedRegistry = ComputedRegistry.Instance;
                 for (var i = 0; i < usedBy.Span.Length; i++) {
                     ref var d = ref usedBy.Span[i];
-                    var fn = d.Input.Function;
-                    var c = fn.TryGetCached(d.Input);
+                    var c = computedRegistry.TryGet(d.Input);
                     if (c != null && c.Version == d.Version)
                         c.Invalidate();
+                    else
+                        Debugger.Break();
                     // Just in case buffers aren't cleaned up when you return them back
                     d = default!;
                 }
@@ -265,8 +284,15 @@ namespace Stl.Fusion
             }
             finally {
                 usedBy.Release();
+                if (invalidateOnSetOutput)
+                    _invalidateOnSetOutput = true;
+                else
+                    OnInvalidated();
             }
         }
+
+        protected virtual void OnInvalidated()
+            => ComputedRegistry.Instance.Unregister(this);
 
         // UpdateAsync
 

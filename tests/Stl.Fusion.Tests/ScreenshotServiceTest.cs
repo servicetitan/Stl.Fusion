@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,12 +20,24 @@ namespace Stl.Fusion.Tests
                 // Screenshots don't work on Unix
                 return;
 
-            var screenshots = Services.GetRequiredService<IScreenshotService>();
-            var c = await Computed.CaptureAsync(_ => screenshots.GetScreenshotAsync(128));
-            c.IsConsistent.Should().BeTrue();
-            c.Value.Length.Should().BeGreaterThan(0);
-            await Task.Delay(200);
+            var c = await GetScreenshotComputedAsync();
+            for (var i = 0; i < 10; i++) {
+                c.Value.Base64Content.Length.Should().BeGreaterThan(0);
+                await Task.Delay(100);
+                if (c.IsConsistent) {
+                    Debugger.Break();
+                    break;
+                }
+                c = await GetScreenshotComputedAsync();
+            }
             c.IsConsistent.Should().BeFalse();
+        }
+
+        private async Task<IComputed<Screenshot>> GetScreenshotComputedAsync()
+        {
+            var screenshots = Services.GetRequiredService<IScreenshotService>();
+            var computed = await Computed.CaptureAsync(_ => screenshots.GetScreenshotAsync(1280));
+            return computed;
         }
     }
 }

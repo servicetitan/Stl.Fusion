@@ -32,14 +32,13 @@ namespace Stl.Fusion.Tests
         public static IServiceProvider CreateProviderFor<TService>()
             where TService : class
         {
-            var providerFactory = new DefaultServiceProviderFactory();
-            var services = new ServiceCollection();
-            services.AddSingleton<IComputedRegistry>(new ComputedRegistry(new ComputedRegistry.Options() {
+            ComputedRegistry.Instance = new ComputedRegistry(new ComputedRegistry.Options() {
                 InitialCapacity = 16,
-            }));
+            });
+            var services = new ServiceCollection();
             services.AddFusionCore();
             services.AddComputeService<TService>();
-            return providerFactory.CreateServiceProvider(services);
+            return services.BuildServiceProvider();
         }
 
         [Fact]
@@ -50,7 +49,7 @@ namespace Stl.Fusion.Tests
                 return;
 
             var services = CreateProviderFor<Calculator>();
-            var r = services.GetRequiredService<IComputedRegistry>();
+            var r = ComputedRegistry.Instance;
             var c = services.GetRequiredService<Calculator>();
 
             await c.SumAsync(1, 1);

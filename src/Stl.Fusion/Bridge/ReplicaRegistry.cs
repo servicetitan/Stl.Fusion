@@ -7,20 +7,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using Stl.Concurrency;
 using Stl.OS;
-using Stl.Text;
 
 namespace Stl.Fusion.Bridge
 {
-    public interface IReplicaRegistry
+    public class ReplicaRegistry : IDisposable
     {
-        IReplica? TryGet(PublicationRef publicationRef);
-        (IReplica Replica, bool IsNew) GetOrAdd(PublicationRef publicationRef, Func<IReplica> replicaFactory);
-        bool Remove(IReplica replica);
-    }
-
-    public sealed class ReplicaRegistry : IReplicaRegistry, IDisposable
-    {
-        public static readonly IReplicaRegistry Default = new ReplicaRegistry();
+        public static ReplicaRegistry Instance { get; set; } = new ReplicaRegistry();
 
         public sealed class Options
         {
@@ -37,7 +29,7 @@ namespace Stl.Fusion.Bridge
                 while (!ps.IsPrime(capacity))
                     capacity--;
                 DefaultInitialCapacity = capacity;
-                Debug.WriteLine($"{nameof(ReplicaRegistry)}.{nameof(Options)}.{nameof(DefaultInitialCapacity)} = {DefaultInitialCapacity}");
+                // Debug.WriteLine($"{nameof(ReplicaRegistry)}.{nameof(Options)}.{nameof(DefaultInitialCapacity)} = {DefaultInitialCapacity}");
             }
         }
 
@@ -61,9 +53,15 @@ namespace Stl.Fusion.Bridge
         }
 
         public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
             => _gcHandlePool.Dispose();
 
-        public IReplica? TryGet(PublicationRef publicationRef)
+        public virtual IReplica? TryGet(PublicationRef publicationRef)
         {
             var random = publicationRef.PublicationId.HashCode;
             OnOperation(random);
@@ -81,7 +79,7 @@ namespace Stl.Fusion.Bridge
             return null;
         }
 
-        public (IReplica Replica, bool IsNew) GetOrAdd(PublicationRef publicationRef, Func<IReplica> replicaFactory)
+        public virtual (IReplica Replica, bool IsNew) GetOrRegister(PublicationRef publicationRef, Func<IReplica> replicaFactory)
         {
             var random = publicationRef.PublicationId.HashCode;
             OnOperation(random);
@@ -97,7 +95,7 @@ namespace Stl.Fusion.Bridge
                 if (target != null) {
                     if (target == newReplica)
                         return (target, true);
-                    (newReplica as IReplicaImpl)?.MarkDisposed();
+                    (newReplica as IReplicaImpl)?.DisposeTemporaryReplica();
                     return (target, false);
                 }
                 // GCHandle target == null => we have to recycle it
@@ -109,7 +107,7 @@ namespace Stl.Fusion.Bridge
             }
         }
 
-        public bool Remove(IReplica replica)
+        public virtual bool Remove(IReplica replica)
         {
             var publicationRef = replica.PublicationRef;
             var random = publicationRef.PublicationId.HashCode;

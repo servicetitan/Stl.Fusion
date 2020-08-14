@@ -45,9 +45,6 @@ namespace Stl.Fusion
             ComputedInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken);
 
-        IComputed? IFunction.TryGetCached(ComputedInput input) => TryGetCached(input);
-        protected abstract IComputed? TryGetCached(ComputedInput input);
-
         // Equality
 
         public bool Equals(SimpleComputedInput? other)
@@ -145,18 +142,6 @@ namespace Stl.Fusion
             result = await ComputeAsync(cancellationToken).ConfigureAwait(false);
             result.UseNew(context, usedBy);
             return result.Strip();
-        }
-
-        IComputed<T>? IFunction<SimpleComputedInput, T>.TryGetCached(SimpleComputedInput input)
-            => TryGetCached(input);
-        protected override IComputed? TryGetCached(ComputedInput input)
-            => TryGetCached((SimpleComputedInput) input);
-        protected virtual IComputed<T>? TryGetCached(SimpleComputedInput input)
-        {
-            if (input != this)
-                // This "Function" supports just a single input == this
-                throw new ArgumentOutOfRangeException(nameof(input));
-            return Computed;
         }
 
         protected virtual async ValueTask<SimpleComputed<T>> ComputeAsync(CancellationToken cancellationToken)

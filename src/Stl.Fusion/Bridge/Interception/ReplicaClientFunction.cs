@@ -23,27 +23,13 @@ namespace Stl.Fusion.Bridge.Interception
             InterceptedMethod method,
             IReplicator replicator,
             Generator<LTag> versionGenerator,
-            IComputedRegistry computedRegistry,
             ILogger<ReplicaClientFunction<T>>? log = null)
-            : base(method, computedRegistry)
+            : base(method)
         {
             Log = log ??= NullLogger<ReplicaClientFunction<T>>.Instance;
             IsLogDebugEnabled = Log.IsEnabled(LogLevel.Debug);
             VersionGenerator = versionGenerator;
             Replicator = replicator;
-            InvalidatedHandler = null;
-        }
-
-        public override IComputed<T>? TryGetCached(InterceptedInput input)
-        {
-            if (!(ComputedRegistry.TryGet(input) is IReplicaClientComputed<T> computed))
-                return null;
-            var replica = computed.Replica;
-            if (replica == null || replica.UpdateError != null || replica.DisposalState != DisposalState.Active) {
-                ComputedRegistry.Remove(computed);
-                return null;
-            }
-            return computed;
         }
 
         protected override async ValueTask<IComputed<T>> ComputeAsync(

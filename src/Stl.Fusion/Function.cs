@@ -17,7 +17,6 @@ namespace Stl.Fusion
             IComputed? usedBy,
             ComputeContext? context,
             CancellationToken cancellationToken = default);
-        IComputed? TryGetCached(ComputedInput input);
     }
 
     public interface IFunction<in TIn, TOut> : IFunction
@@ -31,23 +30,18 @@ namespace Stl.Fusion
             IComputed? usedBy,
             ComputeContext? context,
             CancellationToken cancellationToken = default);
-        IComputed<TOut>? TryGetCached(TIn input);
     }
 
     public abstract class FunctionBase<TIn, TOut> : AsyncDisposableBase,
         IFunction<TIn, TOut>
         where TIn : ComputedInput
     {
-        protected Action<IComputed?>? InvalidatedHandler { get; set; }
-        protected IComputedRegistry ComputedRegistry { get; }
         protected IAsyncLockSet<ComputedInput> Locks { get; }
         protected object Lock => Locks;
 
-        protected FunctionBase(IComputedRegistry computedRegistry)
+        protected FunctionBase()
         {
-            ComputedRegistry = computedRegistry;
-            Locks = computedRegistry.GetLocksFor(this);
-            InvalidatedHandler = c => Unregister((IComputed<TIn, TOut>) c!);
+            Locks = ComputedRegistry.Instance.GetLocksFor(this);
         }
 
         async Task<IComputed> IFunction.InvokeAsync(ComputedInput input,
@@ -76,9 +70,6 @@ namespace Stl.Fusion
                 return result!;
 
             result = await ComputeAsync(input, result, cancellationToken).ConfigureAwait(false);
-            if (InvalidatedHandler != null)
-                result.Invalidated += InvalidatedHandler;
-            Register((IComputed<TIn, TOut>) result);
             result.UseNew(context, usedBy);
             return result;
         }
@@ -109,27 +100,19 @@ namespace Stl.Fusion
                 return result.Strip();
 
             result = await ComputeAsync(input, result, cancellationToken).ConfigureAwait(false);
-            if (InvalidatedHandler != null)
-                result.Invalidated += InvalidatedHandler;
-            Register((IComputed<TIn, TOut>) result);
             result.UseNew(context, usedBy);
             return result.Strip();
         }
 
-        IComputed? IFunction.TryGetCached(ComputedInput input)
-            => TryGetCached((TIn) input);
-        public virtual IComputed<TOut>? TryGetCached(TIn input)
-            => ComputedRegistry.TryGet(input) as IComputed<TIn, TOut>;
+        protected IComputed<TOut>? TryGetCached(TIn input)
+        {
+            var computed = ComputedRegistry.Instance.TryGet(input);
+            return computed as IComputed<TIn, TOut>;
+        }
 
         // Protected & private
 
         protected abstract ValueTask<IComputed<TOut>> ComputeAsync(
             TIn input, IComputed<TOut>? cached, CancellationToken cancellationToken);
-
-        protected void Register(IComputed<TIn, TOut> computed)
-            => ComputedRegistry.Store(computed);
-
-        protected void Unregister(IComputed<TIn, TOut> computed)
-            => ComputedRegistry.Remove(computed);
     }
 }

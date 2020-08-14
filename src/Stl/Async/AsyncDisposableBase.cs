@@ -60,6 +60,7 @@ namespace Stl.Async
                 await oldDisposeCompleted.ConfigureAwait(false);
                 return;
             }
+            // Double-check CAS to save on Task creation
             var disposeCompletedSource = TaskSource.New<Unit>(TaskCreationOptions.None);
             oldDisposeCompleted = Interlocked.CompareExchange(
                 ref _disposeCompleted, disposeCompletedSource.Task, null);

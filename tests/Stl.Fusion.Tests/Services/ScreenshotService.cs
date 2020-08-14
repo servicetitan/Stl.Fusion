@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -6,51 +7,88 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using Stl.OS;
 
 namespace Stl.Fusion.Tests.Services
 {
+    public class Screenshot
+    {
+        public int Width { get; }
+        public int Height { get; }
+        public string Base64Content { get; }
+
+        [JsonConstructor]
+        public Screenshot(int width, int height, string base64Content)
+        {
+            Width = width;
+            Height = height;
+            Base64Content = base64Content;
+        }
+    }
+
     public interface IScreenshotService
     {
-        Task<string> GetScreenshotAsync(int width, CancellationToken cancellationToken = default);
+        Task<Screenshot> GetScreenshotAsync(int width, CancellationToken cancellationToken = default);
     }
 
     [ComputeService(typeof(IScreenshotService))]
     public class ScreenshotService : IScreenshotService
     {
-        protected ImageCodecInfo JpegEncoder { get; }
-        protected EncoderParameters JpegEncoderParameters { get; }
+        private readonly ImageCodecInfo _jpegEncoder;
+        private readonly EncoderParameters _jpegEncoderParameters;
+        private readonly Rectangle _displayDimensions;
 
         public ScreenshotService()
         {
-            JpegEncoder = ImageCodecInfo
+            _jpegEncoder = ImageCodecInfo
                 .GetImageDecoders()
                 .Single(codec => codec.FormatID == ImageFormat.Jpeg.Guid);
-            JpegEncoderParameters = new EncoderParameters(1) {
+            _jpegEncoderParameters = new EncoderParameters(1) {
                 Param = {[0] = new EncoderParameter(Encoder.Quality, 50L)}
             };
+            _displayDimensions = DisplayInfo.PrimaryDisplayDimensions
+                ?? new Rectangle(0, 0, 1920, 1080);
         }
 
-        [ComputeMethod(AutoInvalidateTime = 0.05)]
-        public virtual async Task<string> GetScreenshotAsync(int width, CancellationToken cancellationToken = default)
+        [ComputeMethod]
+        public virtual async Task<Screenshot> GetScreenshotAsync(int width, CancellationToken cancellationToken = default)
         {
-            using var screen = Graphics.FromHwnd(IntPtr.Zero);
-            var vcb = screen.VisibleClipBounds;
-            var (w, h) = ((int) vcb.Width, (int) vcb.Height);
-            using var bScreen = new Bitmap(w, h);
-            using var gScreen = Graphics.FromImage(bScreen);
-            gScreen.CopyFromScreen(0, 0, 0, 0, bScreen.Size);
+            var bScreen = await GetScreenshotAsync(cancellationToken).ConfigureAwait(false);
+            // The code below scales a full-resolution screenshot to a desirable resolution
+            var (w, h) = (_displayDimensions.Width, _displayDimensions.Height);
             var ow = width;
             var oh = h * ow / w;
             using var bOut = new Bitmap(ow, oh);
             using var gOut = Graphics.FromImage(bOut);
             gOut.CompositingQuality = CompositingQuality.HighSpeed;
-            gOut.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            gOut.InterpolationMode = InterpolationMode.Default;
             gOut.CompositingMode = CompositingMode.SourceCopy;
             gOut.DrawImage(bScreen, 0, 0, ow, oh);
             await using var stream = new MemoryStream();
-            bOut.Save(stream, JpegEncoder, JpegEncoderParameters);
+            bOut.Save(stream, _jpegEncoder, _jpegEncoderParameters);
             var bytes = stream.ToArray();
-            return Convert.ToBase64String(bytes);
+            var base64Content = Convert.ToBase64String(bytes);
+            return new Screenshot(ow, oh, base64Content);
+        }
+
+        [ComputeMethod(AutoInvalidateTime = 0.01)]
+        protected virtual Task<Bitmap> GetScreenshotAsync(CancellationToken cancellationToken = default)
+        {
+            // This method takes a full-resolution screenshot
+            var (w, h) = (_displayDimensions.Width, _displayDimensions.Height);
+            var bScreen = new Bitmap(w, h);
+            using var gScreen = Graphics.FromImage(bScreen);
+            gScreen.CopyFromScreen(0, 0, 0, 0, bScreen.Size);
+            Computed.GetCurrent()!.Invalidated += c => {
+                Task.Delay(2000).ContinueWith(_ => {
+                    // Let's dispose these values in 2 seconds
+                    var computed = (IComputed<Bitmap>) c;
+                    if (computed.HasValue)
+                        computed.Value.Dispose();
+                });
+            };
+            return Task.FromResult(bScreen);
         }
     }
 }

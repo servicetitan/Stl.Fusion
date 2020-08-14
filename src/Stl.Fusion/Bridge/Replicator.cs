@@ -37,11 +37,9 @@ namespace Stl.Fusion.Bridge
             public static Symbol NewId() => "R-" + RandomStringGenerator.Default.Next();
 
             public Symbol Id { get; set; } = NewId();
-            public IReplicaRegistry Registry { get; set; } = new ReplicaRegistry();
             public TimeSpan ReconnectDelay = TimeSpan.FromSeconds(10);
         }
 
-        protected IReplicaRegistry Registry { get; }
         protected ConcurrentDictionary<Symbol, ReplicatorChannelProcessor> ChannelProcessors { get; }
         protected Func<Symbol, ReplicatorChannelProcessor> CreateChannelProcessorHandler { get; }
         public Symbol Id { get; }
@@ -51,7 +49,6 @@ namespace Stl.Fusion.Bridge
         public Replicator(Options options, IChannelProvider channelProvider)
         {
             Id = options.Id;
-            Registry = options.Registry;
             ReconnectDelay = options.ReconnectDelay;
             ChannelProvider = channelProvider;
             ChannelProcessors = new ConcurrentDictionary<Symbol, ReplicatorChannelProcessor>();
@@ -59,11 +56,11 @@ namespace Stl.Fusion.Bridge
         }
 
         public IReplica? TryGet(PublicationRef publicationRef)
-            => Registry.TryGet(publicationRef);
+            => ReplicaRegistry.Instance.TryGet(publicationRef);
 
         public IReplica<T> GetOrAdd<T>(PublicationStateInfo<T> publicationStateInfo, bool requestUpdate = false)
         {
-            var (replica, isNew) = Registry.GetOrAdd(publicationStateInfo.PublicationRef,
+            var (replica, isNew) = ReplicaRegistry.Instance.GetOrRegister(publicationStateInfo.PublicationRef,
                 () => new Replica<T>(this, publicationStateInfo, requestUpdate));
             if (isNew)
                 Subscribe(replica);

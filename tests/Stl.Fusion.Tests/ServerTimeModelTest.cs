@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Reactive;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,7 +21,7 @@ namespace Stl.Fusion.Tests
         public async Task ServerTimeModelTest1()
         {
             await using var serving = await WebSocketHost.ServeAsync();
-            using var stm = Services.GetRequiredService<ILiveState<ServerTimeModel1>>();
+            using var stm = Services.GetRequiredService<ILiveState<ServerTimeModel>>();
 
             var c = stm.State;
             c.IsConsistent.Should().BeFalse();
@@ -47,7 +48,7 @@ namespace Stl.Fusion.Tests
             Debug.WriteLine("7");
 
             // c.IsConsistent.Should().BeTrue(); // Hard to be sure here
-            var delta = DateTime.Now - c.Value.Time!.Value;
+            var delta = DateTime.Now - c.Value.Time;
             Debug.WriteLine(delta.TotalSeconds);
             delta.Should().BeLessThan(TimeSpan.FromSeconds(1));
         }
@@ -56,7 +57,7 @@ namespace Stl.Fusion.Tests
         public async Task ServerTimeModelTest2()
         {
             await using var serving = await WebSocketHost.ServeAsync();
-            using var stm = Services.GetRequiredService<ILiveState<ServerTimeModel2>>();
+            using var stm = Services.GetRequiredService<ILiveState<Unit, ServerTimeModel>>();
 
             var c = stm.State;
             c.IsConsistent.Should().BeFalse();
@@ -83,7 +84,7 @@ namespace Stl.Fusion.Tests
             Debug.WriteLine("7");
 
             // c.IsConsistent.Should().BeTrue(); // Hard to be sure here
-            var delta = DateTime.Now - c.Value.Time!.Value;
+            var delta = DateTime.Now - c.Value.Time;
             Debug.WriteLine(delta.TotalSeconds);
             delta.Should().BeLessThan(TimeSpan.FromSeconds(1));
         }

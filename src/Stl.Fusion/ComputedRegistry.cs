@@ -11,20 +11,13 @@ using Stl.Mathematics;
 using Stl.OS;
 using Stl.Time;
 using Stl.Time.Internal;
+using Errors = Stl.Fusion.Internal.Errors;
 
 namespace Stl.Fusion
 {
-    public interface IComputedRegistry
+    public class ComputedRegistry : IDisposable
     {
-        IComputed? TryGet(ComputedInput key);
-        void Store(IComputed value);
-        bool Remove(IComputed value);
-        IAsyncLockSet<ComputedInput> GetLocksFor(IFunction function);
-    }
-
-    public sealed class ComputedRegistry : IComputedRegistry, IDisposable
-    {
-        public static readonly IComputedRegistry Default = new ComputedRegistry();
+        public static ComputedRegistry Instance { get; set; } = new ComputedRegistry();
 
         public sealed class Options
         {
@@ -44,7 +37,7 @@ namespace Stl.Fusion
                 while (!CapacityPrimeSieve.IsPrime(capacity))
                     capacity--;
                 DefaultInitialCapacity = capacity;
-                Debug.WriteLine($"{nameof(ComputedRegistry)}.{nameof(Options)}.{nameof(DefaultInitialCapacity)} = {DefaultInitialCapacity}");
+                // Debug.WriteLine($"{nameof(ComputedRegistry)}.{nameof(Options)}.{nameof(DefaultInitialCapacity)} = {DefaultInitialCapacity}");
             }
         }
 
@@ -77,9 +70,15 @@ namespace Stl.Fusion
         }
 
         public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
             => _gcHandlePool.Dispose();
 
-        public IComputed? TryGet(ComputedInput key)
+        public virtual IComputed? TryGet(ComputedInput key)
         {
             var random = Randomize(key.HashCode);
             OnOperation(random);
@@ -103,36 +102,53 @@ namespace Stl.Fusion
             return null;
         }
 
-        public void Store(IComputed value)
+        public virtual void Register(IComputed computed)
         {
-            if (!value.IsConsistent) // It could be invalidated on the way here :)
-                return;
-            var key = value.Input;
+            // Debug.WriteLine($"{nameof(Register)}: {computed}");
+            var key = computed.Input;
             var random = Randomize(key.HashCode);
             OnOperation(random);
-            _storage.AddOrUpdate(
-                key,
-                (key1, s) => new Entry(s.Value, s.This._gcHandlePool.Acquire(s.Value, s.Random)),
-                (key1, entry, s) => {
-                    // Not sure how we can reach this point,
-                    // but if we are here somehow, let's reuse the handle.
+
+            var spinWait = new SpinWait();
+            Entry? newEntry = null;
+            while (computed.State != ComputedState.Invalidated) {
+                if (_storage.TryGetValue(key, out var entry)) {
                     var handle = entry.Handle;
-                    handle.Target = s.Value;
-                    return new Entry(s.Value, handle);
-                },
-                (This: this, Value: value, Random: random));
+                    var target = (IComputed?) handle.Target;
+                    if (target == computed)
+                        break;
+                    target?.Invalidate(); // Triggers removal!
+                }
+                else {
+                    newEntry ??= new Entry(computed, _gcHandlePool.Acquire(computed, random));
+                    if (_storage.TryAdd(key, newEntry.GetValueOrDefault())) {
+                        if (computed.State == ComputedState.Invalidated) {
+                            if (_storage.TryRemove(key, entry))
+                                _gcHandlePool.Release(entry.Handle, random);
+                        }
+                        break;
+                    }
+                }
+                spinWait.SpinOnce();
+            }
         }
 
-        public bool Remove(IComputed value)
+        public virtual bool Unregister(IComputed computed)
         {
-            var key = value.Input;
+            // Debug.WriteLine($"{nameof(Unregister)}: {computed}");
+            // We can't remove what still could be invalidated,
+            // since "usedBy" links are resolved via this registry
+            if (computed.State != ComputedState.Invalidated)
+                throw Errors.WrongComputedState(computed.State);
+
+            var key = computed.Input;
             var random = Randomize(key.HashCode);
             OnOperation(random);
             if (!_storage.TryGetValue(key, out var entry))
                 return false;
             var handle = entry.Handle;
             var target = handle.Target;
-            if (target != null && !ReferenceEquals(target, value))
+            if (target != null && !ReferenceEquals(target, computed))
                 return false;
             // gcHandle.Target == null (is gone, i.e. to be pruned)
             // or pointing to the right computation object
@@ -143,7 +159,7 @@ namespace Stl.Fusion
             return true;
         }
 
-        public IAsyncLockSet<ComputedInput> GetLocksFor(IFunction function)
+        public virtual IAsyncLockSet<ComputedInput> GetLocksFor(IFunction function)
             => _locksProvider.Invoke(function);
 
         // Private members
@@ -182,6 +198,7 @@ namespace Stl.Fusion
 
         private void PruneInternal()
         {
+            // Debug.WriteLine(nameof(PruneInternal));
             var now = _clock.Now;
             var randomOffset = Randomize(Thread.CurrentThread.ManagedThreadId);
             foreach (var (key, entry) in _storage) {

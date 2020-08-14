@@ -39,13 +39,11 @@ namespace Stl.Fusion.Interception
         protected ILogger Log { get; }
         protected LogLevel LogLevel { get; }
         protected LogLevel ValidationLogLevel { get; }
-        protected IComputedRegistry Registry { get; }
         protected IArgumentComparerProvider ArgumentComparerProvider { get; }
         protected bool RequiresAttribute { get; set; } = true;
 
         protected InterceptorBase(
             Options options,
-            IComputedRegistry? registry = null,
             ILoggerFactory? loggerFactory = null)
         {
             LoggerFactory = loggerFactory ??= NullLoggerFactory.Instance;
@@ -53,7 +51,6 @@ namespace Stl.Fusion.Interception
             LogLevel = options.LogLevel;
             ValidationLogLevel = options.ValidationLogLevel;
 
-            Registry = registry ?? ComputedRegistry.Default;
             ArgumentComparerProvider = options.ArgumentComparerProvider;
 
             _createHandler = CreateHandler;

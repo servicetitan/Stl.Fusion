@@ -15,7 +15,7 @@ namespace Stl.Fusion
         public static IServiceCollection AddFusionCore(this IServiceCollection services)
         {
             // Registry
-            services.TryAddSingleton(ComputedRegistry.Default);
+            services.TryAddSingleton(ComputedRegistry.Instance);
             // ComputeServiceProxyGenerator
             services.TryAddSingleton(new ComputeServiceInterceptor.Options());
             services.TryAddSingleton<ComputeServiceInterceptor>();

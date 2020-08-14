@@ -19,9 +19,8 @@ namespace Stl.Fusion.Bridge.Interception
         public ReplicaClientInterceptor(
             Options options,
             IReplicator replicator,
-            IComputedRegistry? registry = null,
             ILoggerFactory? loggerFactory = null)
-            : base(options, registry, loggerFactory)
+            : base(options, loggerFactory)
         {
             RequiresAttribute = false;
             Replicator = replicator;
@@ -31,7 +30,7 @@ namespace Stl.Fusion.Bridge.Interception
         protected override InterceptedFunctionBase<T> CreateFunction<T>(InterceptedMethod method)
         {
             var log = LoggerFactory.CreateLogger<ReplicaClientFunction<T>>();
-            return new ReplicaClientFunction<T>(method, Replicator, VersionGenerator, Registry, log);
+            return new ReplicaClientFunction<T>(method, Replicator, VersionGenerator, log);
         }
 
         protected override void ValidateTypeInternal(Type type) { }

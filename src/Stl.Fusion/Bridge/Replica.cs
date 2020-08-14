@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
 using Stl.Fusion.Internal;
-using Stl.Text;
+using Errors = Stl.Internal.Errors;
 
 namespace Stl.Fusion.Bridge
 {
@@ -27,7 +27,7 @@ namespace Stl.Fusion.Bridge
 
     public interface IReplicaImpl : IReplica, IFunction
     {
-        void MarkDisposed();
+        void DisposeTemporaryReplica();
         bool ApplyFailedUpdate(Exception? error, CancellationToken cancellationToken);
     }
 
@@ -70,7 +70,11 @@ namespace Stl.Fusion.Bridge
         }
 
         // This method is called for temp. replicas that were never attached to anything.
-        void IReplicaImpl.MarkDisposed() => MarkDisposed();
+        void IReplicaImpl.DisposeTemporaryReplica()
+        {
+            if (!MarkDisposed())
+                throw Errors.InternalError("Couldn't dispose temporary Replica!");
+        }
 
         // We want to make sure the replicas are connected to
         // publishers only while they're used.
@@ -78,9 +82,9 @@ namespace Stl.Fusion.Bridge
 
         protected override ValueTask DisposeInternalAsync(bool disposing)
         {
-            // Debug.WriteLine($"{nameof(DisposeInternalAsync)}({disposing}) for {PublicationId} / {GetHashCode()}");
             Input.ReplicatorImpl.OnReplicaDisposed(this);
-            return base.DisposeInternalAsync(disposing);
+            ReplicaRegistry.Instance.Remove(this);
+            return ValueTaskEx.CompletedTask;
         }
 
         Task IReplica.RequestUpdateAsync(CancellationToken cancellationToken)
@@ -105,36 +109,25 @@ namespace Stl.Fusion.Bridge
             => ApplySuccessfulUpdate(output, version, isConsistent);
         protected virtual bool ApplySuccessfulUpdate(Result<T> output, LTag version, bool isConsistent)
         {
-            IReplicaComputed<T> computed;
             Task<Unit>? updateRequestTask;
-            var mustInvalidate = true;
             lock (Lock) {
                 // 1. Update Computed & UpdateError
                 UpdateErrorField = null;
-                computed = ComputedField;
-                if (computed == null || computed.Version != version)
-                    // Version doesn't match -> replace
-                    ComputedField = new ReplicaComputed<T>(ComputedOptions, Input, output, version, isConsistent);
-                else if (computed.IsConsistent != isConsistent) {
-                    // Version matches:
+                var oldComputed = ComputedField;
+
+                if (oldComputed == null || oldComputed.Version != version)
+                    ReplaceComputedUnsafe(oldComputed, output, version, isConsistent);
+                else if (oldComputed.IsConsistent != isConsistent) {
                     if (isConsistent)
-                        // Replace inconsistent w/ the consistent
-                        ComputedField = new ReplicaComputed<T>(ComputedOptions, Input, output, version, isConsistent);
-                    // Otherwise it will be invalidated right after exiting the lock
-                }
-                else {
-                    // Nothing has changed
-                    mustInvalidate = false;
+                        ReplaceComputedUnsafe(oldComputed, output, version, isConsistent);
+                    else
+                        oldComputed?.Invalidate();
                 }
 
                 // 2. Complete UpdateRequestTask
                 (updateRequestTask, UpdateRequestTask) = (UpdateRequestTask, null);
             }
 
-            // We always invalidate the old computed here, b/c it was either
-            // replaced or has to be invalidated.
-            if (mustInvalidate)
-                computed?.Invalidate();
             if (updateRequestTask != null) {
                 var updateRequestTaskSource = TaskSource.For(updateRequestTask);
                 updateRequestTaskSource.TrySetResult(default);
@@ -169,6 +162,15 @@ namespace Stl.Fusion.Bridge
 
         protected virtual TaskSource<Unit> CreateUpdateRequestTaskSource()
             => TaskSource.New<Unit>(true);
+
+        protected virtual void ReplaceComputedUnsafe(IReplicaComputed<T>? oldComputed,
+            Result<T> output, LTag version, bool isConsistent)
+        {
+            oldComputed?.Invalidate();
+            var newComputed = new ReplicaComputed<T>(ComputedOptions, Input, output, version, isConsistent);
+            ComputedRegistry.Instance.Register(newComputed);
+            ComputedField = newComputed;
+        }
 
         protected async Task<IComputed<T>> InvokeAsync(ReplicaInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)
@@ -228,9 +230,6 @@ namespace Stl.Fusion.Bridge
             CancellationToken cancellationToken)
             => InvokeAndStripAsync((ReplicaInput) input, usedBy, context, cancellationToken);
 
-        IComputed? IFunction.TryGetCached(ComputedInput input)
-            => TryGetCached((ReplicaInput) input);
-
         Task<IComputed<T>> IFunction<ReplicaInput, T>.InvokeAsync(ReplicaInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)
             => InvokeAsync(input, usedBy, context, cancellationToken);
@@ -238,9 +237,6 @@ namespace Stl.Fusion.Bridge
         Task<T> IFunction<ReplicaInput, T>.InvokeAndStripAsync(ReplicaInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)
             => InvokeAndStripAsync(input, usedBy, context, cancellationToken);
-
-        IComputed<T>? IFunction<ReplicaInput, T>.TryGetCached(ReplicaInput input)
-            => TryGetCached(input);
 
         #endregion
     }

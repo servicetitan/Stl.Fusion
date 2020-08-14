@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Reactive;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -128,13 +129,13 @@ namespace Stl.Fusion.Tests
             services.AddServices(t => t.Namespace!.StartsWith(testType.Namespace!), testType.Assembly);
 
             // Custom live state updater
-            services.AddLiveState<ServerTimeModel2>(
-                async (c, prev, cancellationToken) => {
+            services.AddLiveState<Unit, ServerTimeModel>(
+                async (c, liveState, cancellationToken) => {
                     var client = c.GetRequiredService<ITimeServiceClient>();
                     var time = await client.GetTimeAsync(cancellationToken).ConfigureAwait(false);
-                    return new ServerTimeModel2(time);
+                    return new ServerTimeModel(time);
                 }, (c, options) => {
-                    options.InitialState = new ServerTimeModel2();
+                    options.InitialState = new ServerTimeModel();
                 });
         }
 

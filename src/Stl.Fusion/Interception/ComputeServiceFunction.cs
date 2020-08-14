@@ -16,9 +16,8 @@ namespace Stl.Fusion.Interception
         public ComputeServiceFunction(
             InterceptedMethod method,
             Generator<LTag> versionGenerator,
-            IComputedRegistry computedRegistry,
             ILogger<ComputeServiceFunction<T>>? log = null)
-            : base(method, computedRegistry)
+            : base(method)
         {
             Log = log ??= NullLogger<ComputeServiceFunction<T>>.Instance;
             VersionGenerator = versionGenerator;
