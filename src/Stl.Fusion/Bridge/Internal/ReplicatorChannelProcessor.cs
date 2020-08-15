@@ -272,6 +272,8 @@ namespace Stl.Fusion.Bridge.Internal
 
         protected void Send(Message message)
         {
+            if (message is ReplicatorMessage rm)
+                rm.ReplicatorId = Replicator.Id;
             SendChannel.Writer.WriteAsync(message);
         }
     }

@@ -71,11 +71,13 @@ namespace Stl.Fusion.Bridge.Internal
                     // Maybe sending an update
                     var isHardUpdateRequested = false;
                     var isSoftUpdateRequested = false;
-                    if (incomingMessage is SubscribeMessage subscribeMessage) {
-                        isHardUpdateRequested |= subscribeMessage.IsUpdateRequested;
+                    if (incomingMessage is SubscribeMessage sm) {
+                        if (MessageIndex == 0)
+                            LastSentVersion = (sm.Version, sm.IsConsistent);
+                        isHardUpdateRequested |= sm.IsUpdateRequested;
                         // Generally the version should match; if it's not the case, it could be due to
                         // reconnect / lost message / something similar.
-                        isSoftUpdateRequested |= subscribeMessage.Version != state.Computed.Version;
+                        isSoftUpdateRequested |= sm.Version != state.Computed.Version;
                     }
                     if (isHardUpdateRequested) {
                         // We do only explicit state updates
@@ -145,7 +147,7 @@ namespace Stl.Fusion.Bridge.Internal
 
         protected virtual async ValueTask SendAsync(PublicationMessage message, CancellationToken cancellationToken)
         {
-            message.MessageIndex = Interlocked.Increment(ref MessageIndex);
+            message.MessageIndex = ++MessageIndex;
             message.PublisherId = Publisher.Id;
             message.PublicationId = Publication.Id;
 
