@@ -71,7 +71,6 @@ namespace Stl.Tests.Reflection
             var methodAName = nameof(A<object>.MethodA);
             var methodVName = nameof(A<object>.MethodV);
             var methodGName = nameof(A<object>.MethodG);
-            var methodXName = nameof(A<object>.MethodX);
             var tA = typeof(A<>);
             var tAString = tA.MakeGenericType(typeof(string));
             var tB = typeof(B);
@@ -138,11 +137,11 @@ namespace Stl.Tests.Reflection
 
             void Check(MethodInfo? method, params string[] expected)
             {
-                var attrs = method.GetAttributes<DisplayNameAttribute>(true, true);
+                var attrs = method!.GetAttributes<DisplayNameAttribute>(true, true);
                 attrs.Count.Should().Be(expected.Length);
                 foreach (var (a, s) in attrs.Zip(expected))
                     a.DisplayName.Should().Be(s);
-                var attr = method.GetAttribute<DisplayNameAttribute>(true, true);
+                var attr = method!.GetAttribute<DisplayNameAttribute>(true, true);
                 if (attr == null)
                     expected.Length.Should().Be(0);
                 else
