@@ -1,8 +1,11 @@
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reactive;
 using System.Reflection;
+using System.Runtime.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Castle.DynamicProxy;
@@ -10,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Concurrency;
 using Stl.Fusion.Interception.Internal;
+using Stl.Reflection;
 using Stl.Time;
 
 namespace Stl.Fusion.Interception
@@ -41,7 +45,6 @@ namespace Stl.Fusion.Interception
         protected LogLevel ValidationLogLevel { get; }
         protected IMomentClock Clock { get; }
         protected IArgumentComparerProvider ArgumentComparerProvider { get; }
-        protected bool RequiresAttribute { get; set; } = true;
 
         protected InterceptorBase(
             Options options,
@@ -82,7 +85,7 @@ namespace Stl.Fusion.Interception
 
         protected virtual Action<IInvocation>? CreateHandler(MethodInfo methodInfo, IInvocation initialInvocation)
         {
-            var proxyMethodInfo = initialInvocation.GetConcreteMethodInvocationTarget();
+            var proxyMethodInfo = initialInvocation.MethodInvocationTarget;
             var method = _interceptedMethodCache.GetOrAddChecked(proxyMethodInfo, _createInterceptedMethod, initialInvocation);
             if (method == null)
                 return null;
@@ -124,17 +127,11 @@ namespace Stl.Fusion.Interception
 
             // We need an attribute from interface / original type, so we
             // can't use proxyMethodInfo here, b/c it points to a proxy method.
-            var attrs = invocation.Method
-                .GetCustomAttributes(typeof(InterceptedMethodAttribute), true)
-                .Cast<InterceptedMethodAttribute>()
-                .ToArray();
-            if (attrs.Any(a => !a.IsEnabled))
-                // Explicitly disabled -> no interception
+            var attr = GetInterceptedMethodAttribute(proxyMethodInfo);
+            if (attr == null)
+                // No attribute -> no interception.
+                // GetInterceptedMethodAttribute can provide a default though.
                 return null;
-            if (RequiresAttribute && attrs.Length == 0)
-                // No attribute while it is required -> no interception
-                return null;
-            var attr = attrs.FirstOrDefault();
 
             var returnType = proxyMethodInfo.ReturnType;
             if (!returnType.IsGenericType)
@@ -155,6 +152,7 @@ namespace Stl.Fusion.Interception
             var parameters = proxyMethodInfo.GetParameters();
             var r = new InterceptedMethod {
                 MethodInfo = proxyMethodInfo,
+                Attribute = attr,
                 OutputType = outputType,
                 ReturnsValueTask = returnsValueTask,
                 InvocationTargetComparer = ArgumentComparerProvider.GetInvocationTargetComparer(
@@ -174,11 +172,14 @@ namespace Stl.Fusion.Interception
             return r;
         }
 
+        protected virtual InterceptedMethodAttribute? GetInterceptedMethodAttribute(MethodInfo method)
+            => method.GetAttribute<InterceptedMethodAttribute>(true, true);
+
         protected abstract void ValidateTypeInternal(Type type);
 
         // Private methods
 
-        private TimeSpan? GetTimespan<TAttribute>(Attribute attr, Func<TAttribute, double> propertyGetter)
+        private TimeSpan? GetTimespan<TAttribute>(Attribute? attr, Func<TAttribute, double> propertyGetter)
         {
             if (!(attr is TAttribute typedAttr))
                 return null;

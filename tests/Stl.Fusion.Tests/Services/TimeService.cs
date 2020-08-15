@@ -9,7 +9,9 @@ namespace Stl.Fusion.Tests.Services
     public interface ITimeService
     {
         DateTime GetTime();
+        [ComputeMethod]
         Task<DateTime> GetTimeAsync(CancellationToken cancellationToken = default);
+        [ComputeMethod]
         Task<DateTime> GetTimeWithOffsetAsync(TimeSpan offset);
     }
 
@@ -36,7 +38,6 @@ namespace Stl.Fusion.Tests.Services
         public virtual Task<DateTime> GetTimeAsync(CancellationToken cancellationToken = default)
             => Task.FromResult(GetTime());
 
-        [ComputeMethod]
         public virtual async Task<DateTime> GetTimeWithOffsetAsync(TimeSpan offset)
         {
             var now = await GetTimeAsync().ConfigureAwait(false);

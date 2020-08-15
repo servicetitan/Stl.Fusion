@@ -2,7 +2,7 @@ using System;
 
 namespace Stl.Fusion
 {
-    [AttributeUsage(AttributeTargets.Method)]
+    [AttributeUsage(AttributeTargets.Method, Inherited = false)]
     public class ComputeMethodAttribute : InterceptedMethodAttribute
     {
         // In seconds, NaN means "use default"

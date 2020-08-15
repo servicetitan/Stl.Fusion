@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -31,6 +30,7 @@ namespace Stl.Fusion.Tests.Services
 
     public interface IScreenshotService
     {
+        [ComputeMethod]
         Task<Screenshot> GetScreenshotAsync(int width, CancellationToken cancellationToken = default);
     }
 
@@ -53,7 +53,6 @@ namespace Stl.Fusion.Tests.Services
                 ?? new Rectangle(0, 0, 1920, 1080);
         }
 
-        [ComputeMethod]
         public virtual async Task<Screenshot> GetScreenshotAsync(int width, CancellationToken cancellationToken = default)
         {
             var bScreen = await GetScreenshotAsync(cancellationToken).ConfigureAwait(false);

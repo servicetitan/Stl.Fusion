@@ -7,10 +7,12 @@ namespace Stl.Fusion.Tests.Services
 {
     public interface IKeyValueService<TValue>
     {
-        Task<Option<TValue>> TryGetAsync(string key, CancellationToken cancellationToken = default);
-        Task<TValue> GetAsync(string key, CancellationToken cancellationToken = default);
         Task SetAsync(string key, TValue value, CancellationToken cancellationToken = default);
         Task RemoveAsync(string key, CancellationToken cancellationToken = default);
+        [ComputeMethod]
+        Task<Option<TValue>> TryGetAsync(string key, CancellationToken cancellationToken = default);
+        [ComputeMethod]
+        Task<TValue> GetAsync(string key, CancellationToken cancellationToken = default);
     }
 
     public class KeyValueService<TValue> : IKeyValueService<TValue>
@@ -18,11 +20,9 @@ namespace Stl.Fusion.Tests.Services
         private readonly ConcurrentDictionary<string, TValue> _values =
             new ConcurrentDictionary<string, TValue>();
 
-        [ComputeMethod]
         public virtual Task<Option<TValue>> TryGetAsync(string key, CancellationToken cancellationToken = default)
             => Task.FromResult(_values.TryGetValue(key, out var v) ? Option.Some(v) : default);
 
-        [ComputeMethod]
         public virtual Task<TValue> GetAsync(string key, CancellationToken cancellationToken = default)
             => Task.FromResult(_values.GetValueOrDefault(key)!);
 

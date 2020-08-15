@@ -40,12 +40,8 @@ namespace Stl.Fusion.Interception
                 | BindingFlags.Instance | BindingFlags.Static
                 | BindingFlags.FlattenHierarchy;
             foreach (var method in type.GetMethods(bindingFlags)) {
-                var attrs = method
-                    .GetCustomAttributes(typeof(ComputeMethodAttribute), true)
-                    .Cast<ComputeMethodAttribute>()
-                    .ToArray();
-                if (!attrs.Any())
-                    continue; // No attributes
+                if (!(GetInterceptedMethodAttribute(method) is ComputeMethodAttribute attr))
+                    continue;
                 if (method.IsStatic)
                     throw Errors.ComputeServiceMethodAttributeOnStaticMethod(method);
                 if (!method.IsVirtual)
@@ -54,12 +50,11 @@ namespace Stl.Fusion.Interception
                     // All implemented interface members are marked as "virtual final"
                     // unless they are truly virtual
                     throw Errors.ComputeServiceMethodAttributeOnNonVirtualMethod(method);
-                if (attrs.Any(a => !a.IsEnabled)) {
+                if (!attr.IsEnabled) {
                     Log.Log(ValidationLogLevel,
                         $"- {method}: has {nameof(ComputeMethodAttribute)}(false)");
                     continue;
                 }
-                var attr = attrs.FirstOrDefault();
                 Log.Log(ValidationLogLevel,
                     $"+ {method}: {nameof(ComputeMethodAttribute)} {{ " +
                     $"{nameof(ComputeMethodAttribute.IsEnabled)} = {attr.IsEnabled}, " +

@@ -1,4 +1,6 @@
 using System;
+using System.Reflection;
+using Castle.DynamicProxy;
 using Microsoft.Extensions.Logging;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Interception.Internal;
@@ -24,7 +26,6 @@ namespace Stl.Fusion.Bridge.Interception
             ILoggerFactory? loggerFactory = null)
             : base(options, clock, loggerFactory)
         {
-            RequiresAttribute = false;
             Replicator = replicator;
             VersionGenerator = options.VersionGenerator;
         }
