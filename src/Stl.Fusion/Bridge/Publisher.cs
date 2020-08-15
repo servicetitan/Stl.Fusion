@@ -10,6 +10,7 @@ using Stl.Collections;
 using Stl.Concurrency;
 using Stl.Fusion.Bridge.Internal;
 using Stl.Fusion.Bridge.Messages;
+using Stl.Fusion.Internal;
 using Stl.OS;
 using Stl.Generators;
 using Stl.Text;
@@ -24,10 +25,10 @@ namespace Stl.Fusion.Bridge
 
         IPublication Publish(IComputed computed);
         IPublication? TryGet(Symbol publicationId);
-        ValueTask<bool> SubscribeAsync(
+        ValueTask SubscribeAsync(
             Channel<Message> channel, IPublication publication,
-            bool sendUpdate, CancellationToken cancellationToken = default);
-        ValueTask<bool> UnsubscribeAsync(
+            bool isUpdateRequested, CancellationToken cancellationToken = default);
+        ValueTask UnsubscribeAsync(
             Channel<Message> channel, IPublication publication,
             CancellationToken cancellationToken = default);
     }
@@ -35,13 +36,14 @@ namespace Stl.Fusion.Bridge
     public interface IPublisherImpl : IPublisher
     {
         IPublicationFactory PublicationFactory { get; }
-        Type PublicationType { get; }
+        ISubscriptionProcessorFactory SubscriptionProcessorFactory { get; }
+        Type PublicationGeneric { get; }
+        Type SubscriptionProcessorGeneric { get; }
         TimeSpan PublicationExpirationTime { get; }
+        TimeSpan SubscriptionExpirationTime { get; }
         Generator<Symbol> PublicationIdGenerator { get; }
+        IMomentClock Clock { get; }
 
-        ValueTask<bool> SubscribeAsync(
-            Channel<Message> channel, IPublication publication,
-            SubscribeMessage subscribeMessage, CancellationToken cancellationToken);
         void OnPublicationDisposed(IPublication publication);
         void OnChannelProcessorDisposed(PublisherChannelProcessor channelProcessor);
     }
@@ -56,9 +58,12 @@ namespace Stl.Fusion.Bridge
             public IChannelHub<Message> ChannelHub { get; set; } = new ChannelHub<Message>();
             public bool OwnsChannelHub { get; set; } = true;
             public IPublicationFactory PublicationFactory { get; set; } = Internal.PublicationFactory.Instance;
-            public Type PublicationType { get; set; } = typeof(Publication<>);
+            public Type PublicationGeneric { get; set; } = typeof(Publication<>);
             public TimeSpan PublicationExpirationTime { get; set; } = TimeSpan.FromSeconds(60);
             public Generator<Symbol> PublicationIdGenerator { get; set; } = new RandomSymbolGenerator("p-");
+            public ISubscriptionProcessorFactory SubscriptionProcessorFactory { get; set; } = Internal.SubscriptionProcessorFactory.Instance;
+            public Type SubscriptionProcessorGeneric { get; set; } = typeof(SubscriptionProcessor<>);
+            public TimeSpan SubscriptionExpirationTime { get; set; } = TimeSpan.FromSeconds(60);
             public IMomentClock Clock { get; set; } = CoarseCpuClock.Instance;
         }
 
@@ -72,9 +77,12 @@ namespace Stl.Fusion.Bridge
         public IChannelHub<Message> ChannelHub { get; }
         public bool OwnsChannelHub { get; }
         public IPublicationFactory PublicationFactory { get; }
-        public Type PublicationType { get; }
+        public Type PublicationGeneric { get; }
         public TimeSpan PublicationExpirationTime { get; }
         public Generator<Symbol> PublicationIdGenerator { get; }
+        public ISubscriptionProcessorFactory SubscriptionProcessorFactory { get; }
+        public Type SubscriptionProcessorGeneric { get; }
+        public TimeSpan SubscriptionExpirationTime { get; }
         public IMomentClock Clock { get; }
 
         public Publisher(Options options)
@@ -82,10 +90,14 @@ namespace Stl.Fusion.Bridge
             Id = options.Id;
             ChannelHub = options.ChannelHub;
             OwnsChannelHub = options.OwnsChannelHub;
+
             PublicationFactory = options.PublicationFactory;
-            PublicationType = options.PublicationType;
+            PublicationGeneric = options.PublicationGeneric;
             PublicationExpirationTime = options.PublicationExpirationTime;
             PublicationIdGenerator = options.PublicationIdGenerator;
+            SubscriptionProcessorFactory = options.SubscriptionProcessorFactory;
+            SubscriptionProcessorGeneric = options.SubscriptionProcessorGeneric;
+            SubscriptionExpirationTime = options.SubscriptionExpirationTime;
             Clock = options.Clock;
 
             var concurrencyLevel = HardwareInfo.ProcessorCount << 2;
@@ -110,9 +122,9 @@ namespace Stl.Fusion.Bridge
                      (key, arg) => {
                          var (this1, computed1) = arg;
                          var id = this1.PublicationIdGenerator.Next();
-                         var p1 = this1.PublicationFactory.Create(this1.PublicationType, this1, computed1, id, Clock);
+                         var p1 = this1.PublicationFactory.Create(this1.PublicationGeneric, this1, computed1, id, Clock);
                          this1.PublicationsById[id] = p1;
-                         ((IPublicationImpl) p1).RunAsync();
+                         p1.RunAsync();
                          return p1;
                      }, (this, computed));
                 if (p.Touch())
@@ -123,6 +135,32 @@ namespace Stl.Fusion.Bridge
 
         public virtual IPublication? TryGet(Symbol publicationId)
             => PublicationsById.TryGetValue(publicationId, out var p) ? p : null;
+
+        public virtual ValueTask SubscribeAsync(
+            Channel<Message> channel, IPublication publication,
+            bool isUpdateRequested, CancellationToken cancellationToken = default)
+        {
+            ThrowIfDisposedOrDisposing();
+            if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
+                throw Errors.UnknownChannel(channel);
+            if (publication.Publisher != this)
+                throw Errors.WrongPublisher(this, publication.Publisher.Id);
+            var message = new SubscribeMessage() {
+                PublisherId = Id,
+                PublicationId = publication.Id,
+                IsUpdateRequested = isUpdateRequested,
+            };
+            return channelProcessor.OnReplicaMessageAsync(message, cancellationToken);
+        }
+
+        public virtual ValueTask UnsubscribeAsync(
+            Channel<Message> channel, IPublication publication,
+            CancellationToken cancellationToken = default)
+        {
+            if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
+                return ValueTaskEx.CompletedTask;
+            return channelProcessor.UnsubscribeAsync(publication, cancellationToken);
+        }
 
         void IPublisherImpl.OnPublicationDisposed(IPublication publication)
             => OnPublicationDisposed(publication);
@@ -140,43 +178,6 @@ namespace Stl.Fusion.Bridge
             => OnChannelProcessorDisposed(channelProcessor);
         protected virtual void OnChannelProcessorDisposed(PublisherChannelProcessor channelProcessor)
         { }
-
-        public ValueTask<bool> SubscribeAsync(
-            Channel<Message> channel, IPublication publication,
-            bool sendUpdate, CancellationToken cancellationToken)
-        {
-            var message = new SubscribeMessage() {
-                PublisherId = Id,
-                PublicationId = Id,
-                IsUpdateRequested = sendUpdate,
-            };
-            return SubscribeAsync(channel, publication, message, cancellationToken);
-        }
-
-        ValueTask<bool> IPublisherImpl.SubscribeAsync(
-            Channel<Message> channel, IPublication publication,
-            SubscribeMessage subscribeMessage, CancellationToken cancellationToken)
-            => SubscribeAsync(channel, publication, subscribeMessage, cancellationToken);
-        protected virtual ValueTask<bool> SubscribeAsync(
-            Channel<Message> channel, IPublication publication,
-            SubscribeMessage subscribeMessage, CancellationToken cancellationToken)
-        {
-            ThrowIfDisposedOrDisposing();
-            if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
-                return ValueTaskEx.FalseTask;
-            if (publication.Publisher != this || publication.State.IsDisposed)
-                return ValueTaskEx.FalseTask;
-            return channelProcessor.SubscribeAsync(publication, subscribeMessage, cancellationToken);
-        }
-
-        public virtual ValueTask<bool> UnsubscribeAsync(
-            Channel<Message> channel, IPublication publication,
-            CancellationToken cancellationToken = default)
-        {
-            if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
-                return ValueTaskEx.FalseTask;
-            return channelProcessor.UnsubscribeAsync(publication, cancellationToken);
-        }
 
         // Channel-related
 

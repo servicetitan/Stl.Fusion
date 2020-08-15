@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Stl.DependencyInjection;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Server;
 using Stl.Reflection;
@@ -31,9 +32,10 @@ namespace Stl.Fusion.Tests.Services
                     logging.AddDebug();
                 });
 
-                services.AddSingleton(BaseServices.GetRequiredService<IPublisher>());
-                services.AddSingleton(BaseServices.GetRequiredService<ITimeService>());
-                services.AddSingleton(BaseServices.GetRequiredService<IKeyValueService<string>>());
+                services.CopySingleton<IPublisher>(BaseServices);
+                services.CopySingleton<ITimeService>(BaseServices);
+                services.CopySingleton<IScreenshotService>(BaseServices);
+                services.CopySingleton<IKeyValueService<string>>(BaseServices);
                 services.AddFusionWebSocketServer();
 
                 // Web

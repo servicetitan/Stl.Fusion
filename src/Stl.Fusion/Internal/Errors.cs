@@ -1,7 +1,10 @@
 using System;
 using System.Net.WebSockets;
 using System.Reflection;
+using System.Threading.Channels;
 using Stl.Fusion.Bridge;
+using Stl.Fusion.Bridge.Messages;
+using Stl.Text;
 
 namespace Stl.Fusion.Internal
 {
@@ -14,6 +17,8 @@ namespace Stl.Fusion.Internal
                 ? (Exception) new InvalidOperationException(message)
                 : new ArgumentOutOfRangeException(argumentName, message);
         }
+        public static Exception TypeMustBeOpenGenericType(Type type)
+            => new InvalidOperationException($"'{type}' must be open generic type.");
 
         public static Exception WrongComputedState(
             ComputedState expectedState, ComputedState state)
@@ -34,8 +39,11 @@ namespace Stl.Fusion.Internal
         public static Exception NoComputedCaptured()
             => new InvalidOperationException($"No {nameof(IComputed)} was captured.");
 
-        public static Exception PublicationTypeMustBeOpenGenericType(string paramName)
-            => new ArgumentOutOfRangeException(paramName, "Publication type must be open generic type.");
+        public static Exception WrongPublisher(IPublisher expected, Symbol providedPublisherId)
+            => new InvalidOperationException($"Wrong publisher: {expected.Id} (expected) != {providedPublisherId} (provided).");
+        public static Exception UnknownChannel(Channel<Message> channel)
+            => new InvalidOperationException("Unknown channel.");
+
         public static Exception PublicationAbsents()
             => new InvalidOperationException("The Publication absents on the server.");
         public static Exception NoPublicationStateInfoCaptured()
@@ -46,9 +54,6 @@ namespace Stl.Fusion.Internal
 
         public static Exception WebSocketConnectTimeout()
             => new WebSocketException("Connection timeout.");
-
-        public static Exception AlreadyStarted()
-            => new InvalidOperationException("Already started.");
 
         public static Exception ComputeServiceMethodAttributeOnStaticMethod(MethodInfo method)
             => new InvalidOperationException($"{nameof(ComputeMethodAttribute)} is applied to static method '{method}'.");

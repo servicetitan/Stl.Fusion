@@ -15,6 +15,7 @@ namespace Stl.Fusion.Bridge.Internal
 {
     public class PublisherChannelProcessor : AsyncProcessBase
     {
+        protected readonly ILoggerFactory LoggerFactory;
         protected readonly ILogger Log;
         protected readonly IPublisherImpl PublisherImpl;
         protected readonly ConcurrentDictionary<Symbol, SubscriptionProcessor> Subscriptions;
@@ -23,9 +24,11 @@ namespace Stl.Fusion.Bridge.Internal
         public readonly IPublisher Publisher;
         public readonly Channel<Message> Channel;
 
-        public PublisherChannelProcessor(IPublisher publisher, Channel<Message> channel, ILogger? log = null)
+        public PublisherChannelProcessor(IPublisher publisher, Channel<Message> channel,
+            ILoggerFactory? loggerFactory = null)
         {
-            Log = log ?? NullLogger.Instance;
+            LoggerFactory = loggerFactory ??= NullLoggerFactory.Instance;
+            Log = LoggerFactory.CreateLogger(GetType());
             Publisher = publisher;
             PublisherImpl = (IPublisherImpl) publisher;
             Channel = channel;
@@ -39,7 +42,14 @@ namespace Stl.Fusion.Bridge.Internal
                 while (await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false)) {
                     if (!reader.TryRead(out var message))
                         continue;
-                    await OnMessageAsync(message, cancellationToken).ConfigureAwait(false);
+                    switch (message) {
+                    case ReplicaMessage rm:
+                        await OnReplicaMessageAsync(rm, cancellationToken).ConfigureAwait(false);
+                        break;
+                    default:
+                        await OnUnsupportedMessageAsync(message, cancellationToken).ConfigureAwait(false);
+                        break;
+                    }
                 }
             }
             finally {
@@ -50,37 +60,12 @@ namespace Stl.Fusion.Bridge.Internal
             }
         }
 
-        protected virtual async ValueTask OnMessageAsync(Message message, CancellationToken cancellationToken)
+        protected virtual async ValueTask OnUnsupportedMessageAsync(Message message, CancellationToken cancellationToken)
         {
-            var isProcessed = false;
-            switch (message) {
-            case SubscribeMessage sm:
-                if (sm.PublisherId != Publisher.Id)
-                    break;
-                var publication = Publisher.TryGet(sm.PublicationId);
-                if (publication == null)
-                    break;
-                await PublisherImpl
-                    .SubscribeAsync(Channel, publication, sm, cancellationToken)
-                    .ConfigureAwait(false);
-                isProcessed = true;
-                break;
-            case UnsubscribeMessage um:
-                if (um.PublisherId != Publisher.Id)
-                    break;
-                publication = Publisher.TryGet(um.PublicationId);
-                if (publication == null)
-                    break;
-                await PublisherImpl
-                    .UnsubscribeAsync(Channel, publication, cancellationToken)
-                    .ConfigureAwait(false);
-                isProcessed = true;
-                break;
-            }
-            if (!isProcessed && message is PublicationMessage pm) {
+            if (message is ReplicaMessage rm) {
                 var response = new PublicationAbsentsMessage() {
-                    PublisherId = pm.PublisherId,
-                    PublicationId = pm.PublicationId,
+                    PublisherId = rm.PublisherId,
+                    PublicationId = rm.PublicationId,
                 };
                 await Channel.Writer
                     .WriteAsync(response, cancellationToken)
@@ -88,37 +73,46 @@ namespace Stl.Fusion.Bridge.Internal
             }
         }
 
-        public virtual async ValueTask<bool> SubscribeAsync(
-            IPublication publication, SubscribeMessage subscribeMessage, CancellationToken cancellationToken)
+        public virtual async ValueTask OnReplicaMessageAsync(ReplicaMessage message, CancellationToken cancellationToken)
         {
-            var publicationId = publication.Id;
+            if (message.PublisherId != Publisher.Id) {
+                await OnUnsupportedMessageAsync(message, cancellationToken).ConfigureAwait(false);
+                return;
+            }
+            var publicationId = message.PublicationId;
+            var publication = Publisher.TryGet(publicationId);
+            if (publication == null) {
+                await OnUnsupportedMessageAsync(message, cancellationToken).ConfigureAwait(false);
+                return;
+            }
             if (Subscriptions.TryGetValue(publicationId, out var subscriptionProcessor))
                 goto subscriptionExists;
             lock (Lock) {
                 // Double check locking
                 if (Subscriptions.TryGetValue(publicationId, out subscriptionProcessor))
                     goto subscriptionExists;
-                var publicationImpl = (IPublicationImpl) publication;
-                subscriptionProcessor = publicationImpl.CreateSubscriptionProcessor(Channel, subscribeMessage);
+
+                subscriptionProcessor = PublisherImpl.SubscriptionProcessorFactory.Create(
+                    PublisherImpl.SubscriptionProcessorGeneric,
+                    publication, Channel, PublisherImpl.SubscriptionExpirationTime,
+                    PublisherImpl.Clock, LoggerFactory);
                 Subscriptions[publicationId] = subscriptionProcessor;
             }
-            var _ = subscriptionProcessor.RunAsync()
-                .ContinueWith(_ => UnsubscribeAsync(publication, default), CancellationToken.None);
-            return true;
+            subscriptionProcessor.RunAsync()
+                .ContinueWith(_ => UnsubscribeAsync(publication, default), CancellationToken.None)
+                .Ignore();
         subscriptionExists:
-            await subscriptionProcessor.OnMessageAsync(subscribeMessage, cancellationToken)
-                .ConfigureAwait(false);
-            return true;
+            await subscriptionProcessor.IncomingChannel.Writer
+                .WriteAsync(message, cancellationToken).ConfigureAwait(false);
         }
 
-        public virtual async ValueTask<bool> UnsubscribeAsync(
+        public virtual async ValueTask UnsubscribeAsync(
             IPublication publication, CancellationToken cancellationToken)
         {
             var publicationId = publication.Id;
             if (!Subscriptions.TryRemove(publicationId, out var subscriptionProcessor))
-                return false;
+                return;
             await subscriptionProcessor.DisposeAsync().ConfigureAwait(false);
-            return true;
         }
 
         protected virtual async Task RemoveSubscriptionsAsync()

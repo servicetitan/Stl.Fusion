@@ -33,7 +33,7 @@ namespace Stl.Fusion.Bridge
 
     public interface IReplicaImpl<T> : IReplica<T>, IFunction<ReplicaInput, T>, IReplicaImpl
     {
-        bool ApplySuccessfulUpdate(Result<T> output, LTag version, bool isConsistent);
+        bool ApplySuccessfulUpdate(Result<T>? output, LTag version, bool isConsistent);
     }
 
     public class Replica<T> : AsyncDisposableBase, IReplicaImpl<T>
@@ -105,9 +105,9 @@ namespace Stl.Fusion.Bridge
             }
         }
 
-        bool IReplicaImpl<T>.ApplySuccessfulUpdate(Result<T> output, LTag version, bool isConsistent)
+        bool IReplicaImpl<T>.ApplySuccessfulUpdate(Result<T>? output, LTag version, bool isConsistent)
             => ApplySuccessfulUpdate(output, version, isConsistent);
-        protected virtual bool ApplySuccessfulUpdate(Result<T> output, LTag version, bool isConsistent)
+        protected virtual bool ApplySuccessfulUpdate(Result<T>? output, LTag version, bool isConsistent)
         {
             Task<Unit>? updateRequestTask;
             lock (Lock) {
@@ -163,13 +163,18 @@ namespace Stl.Fusion.Bridge
         protected virtual TaskSource<Unit> CreateUpdateRequestTaskSource()
             => TaskSource.New<Unit>(true);
 
-        protected virtual void ReplaceComputedUnsafe(IReplicaComputed<T>? oldComputed,
-            Result<T> output, LTag version, bool isConsistent)
+        protected virtual void ReplaceComputedUnsafe(
+            IReplicaComputed<T>? oldComputed,
+            Result<T>? output, LTag version, bool isConsistent)
         {
             oldComputed?.Invalidate();
-            var newComputed = new ReplicaComputed<T>(ComputedOptions, Input, output, version, isConsistent);
-            ComputedRegistry.Instance.Register(newComputed);
-            ComputedField = newComputed;
+            if (output.HasValue) {
+                var newComputed = new ReplicaComputed<T>(
+                    ComputedOptions, Input, output.GetValueOrDefault(), version, isConsistent);
+                if (isConsistent)
+                    ComputedRegistry.Instance.Register(newComputed);
+                ComputedField = newComputed;
+            }
         }
 
         protected async Task<IComputed<T>> InvokeAsync(ReplicaInput input, IComputed? usedBy, ComputeContext? context,

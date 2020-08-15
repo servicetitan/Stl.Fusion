@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,35 +30,57 @@ namespace Stl.Fusion.Tests
             var p1 = await Publisher.PublishAsync(_ => sp.GetValueAsync());
             p1.Should().NotBeNull();
 
-            (await Publisher.SubscribeAsync(cp.Channel1, p1!, true)).Should().BeTrue();
+            Debug.WriteLine("a1");
+            await Publisher.SubscribeAsync(cp.Channel1, p1, true);
+            Debug.WriteLine("a2");
             var m = await cReader.AssertReadAsync();
-            m.Should().BeOfType<PublicationStateChangedMessage<string>>()
+            m.Should().BeOfType<PublicationStateMessage<string>>()
                 .Which.Output!.Value.Value.Should().Be("");
+            Debug.WriteLine("a3");
             await cReader.AssertCannotReadAsync();
 
+            Debug.WriteLine("b1");
             sp.SetValue("1");
+            Debug.WriteLine("b2");
             m = await cReader.AssertReadAsync();
-            m.Should().BeOfType<PublicationStateChangedMessage<string>>()
+            Debug.WriteLine("b3");
+            m.Should().BeOfType<PublicationStateMessage<string>>()
                 .Which.IsConsistent.Should().BeFalse();
+            Debug.WriteLine("b4");
             var pm = (PublicationMessage) m;
             pm.PublisherId.Should().Be(Publisher.Id);
-            pm.PublicationId.Should().Be(p1!.Id);
+            pm.PublicationId.Should().Be(p1.Id);
+            Debug.WriteLine("b5");
             await cReader.AssertCannotReadAsync();
 
+            Debug.WriteLine("c1");
             sp.SetValue("12");
             // No auto-update after invalidation
+            Debug.WriteLine("c2");
             await cReader.AssertCannotReadAsync();
 
-            (await Publisher.SubscribeAsync(cp.Channel1, p1!, true)).Should().BeTrue();
+            Debug.WriteLine("d1");
+            await Publisher.SubscribeAsync(cp.Channel1, p1, true);
+            Debug.WriteLine("d2");
             m = await cReader.AssertReadAsync();
-            m.Should().BeOfType<PublicationStateChangedMessage<string>>()
+            Debug.WriteLine("d3");
+            m.Should().BeOfType<PublicationStateMessage<string>>()
                 .Which.IsConsistent.Should().BeTrue();
-            m.Should().BeOfType<PublicationStateChangedMessage<string>>()
+            m.Should().BeOfType<PublicationStateMessage<string>>()
                 .Which.Output!.Value.Value.Should().Be("12");
+            Debug.WriteLine("d4");
             await cReader.AssertCannotReadAsync();
 
+            Debug.WriteLine("e1");
             await p1.DisposeAsync();
+            Debug.WriteLine("e2");
+            await cReader.AssertCannotReadAsync();
+
+            Debug.WriteLine("f1");
+            await Publisher.SubscribeAsync(cp.Channel1, p1, true);
+            Debug.WriteLine("f2");
             m = await cReader.AssertReadAsync();
+            Debug.WriteLine("f3");
             m.Should().BeOfType<PublicationAbsentsMessage>();
         }
     }

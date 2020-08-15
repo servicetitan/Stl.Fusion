@@ -3,78 +3,106 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Async;
 using Stl.Fusion.Bridge.Messages;
-using Stl.Locking;
+using Stl.Time;
 
 namespace Stl.Fusion.Bridge.Internal
 {
     public abstract class SubscriptionProcessor : AsyncProcessBase
     {
         protected readonly ILogger Log;
-        protected readonly AsyncLock AsyncLock;
-        protected long MessageIndex = 1;
-        protected (LTag, bool) LastSentVersion = default;
+        protected readonly IMomentClock Clock;
+        protected readonly TimeSpan ExpirationTime;
+        protected long MessageIndex;
+        protected (LTag Version, bool IsConsistent) LastSentVersion = default;
 
         public IPublisher Publisher => Publication.Publisher;
-        public readonly IPublicationImpl Publication;
-        public readonly Channel<Message> Channel;
-        public readonly SubscribeMessage SubscribeMessage;
+        public readonly IPublication Publication;
+        public readonly Channel<Message> OutgoingChannel;
+        public readonly Channel<ReplicaMessage> IncomingChannel;
 
         protected SubscriptionProcessor(
-            IPublicationImpl publication, Channel<Message> channel, SubscribeMessage subscribeMessage,
-            ILogger? log = null)
+            IPublication publication,
+            Channel<Message> outgoingChannel,
+            TimeSpan expirationTime,
+            IMomentClock clock,
+            ILoggerFactory loggerFactory)
         {
-            Log = log ?? NullLogger.Instance;
+            Log = loggerFactory.CreateLogger(GetType());
+            Clock = clock;
             Publication = publication;
-            Channel = channel;
-            SubscribeMessage = subscribeMessage;
-            AsyncLock = new AsyncLock(ReentryMode.CheckedPass, TaskCreationOptions.None);
+            OutgoingChannel = outgoingChannel;
+            IncomingChannel = Channel.CreateBounded<ReplicaMessage>(new BoundedChannelOptions(16));
+            ExpirationTime = expirationTime;
         }
-
-        public abstract ValueTask OnMessageAsync(ReplicaMessage message, CancellationToken cancellationToken);
     }
 
     public class SubscriptionProcessor<T> : SubscriptionProcessor
     {
-        public new readonly IPublicationImpl<T> Publication;
+        public new readonly IPublication<T> Publication;
 
         public SubscriptionProcessor(
-            IPublicationImpl<T> publication, Channel<Message> channel, SubscribeMessage subscribeMessage)
-            : base(publication, channel, subscribeMessage)
-        {
-            Publication = publication;
-        }
+            IPublication<T> publication,
+            Channel<Message> outgoingChannel,
+            TimeSpan expirationTime,
+            IMomentClock clock,
+            ILoggerFactory loggerFactory)
+            : base(publication, outgoingChannel, expirationTime, clock, loggerFactory)
+            => Publication = publication;
 
         protected override async Task RunInternalAsync(CancellationToken cancellationToken)
         {
             var publicationUseScope = Publication.Use();
+            var cancellationTask = cancellationToken.ToTask(true);
+            var incomingChannelReader = IncomingChannel.Reader;
+            var state = Publication.State;
             try {
-                var state = Publication.State;
-                await TrySendUpdateAsync(state, SubscribeMessage.IsUpdateRequested, cancellationToken)
-                    .ConfigureAwait(false);
-                while (!state.IsDisposed) {
-                    try {
-                        await state.WhenInvalidatedAsync()
-                            .WithFakeCancellation(cancellationToken)
-                            .ConfigureAwait(false);
-                        await TrySendUpdateAsync(state, false, cancellationToken)
-                            .ConfigureAwait(false);
-                        await state.WhenOutdatedAsync()
-                            .WithFakeCancellation(cancellationToken)
-                            .ConfigureAwait(false);
+                var incomingMessageTask = incomingChannelReader.ReadAsync(cancellationToken).AsTask();
+                while (true) {
+                    // Awaiting for new SubscribeMessage
+                    var expirationTask = Clock.DelayAsync(ExpirationTime, cancellationToken);
+                    var completedTask = await Task.WhenAny(incomingMessageTask, expirationTask).ConfigureAwait(false);
+                    cancellationToken.ThrowIfCancellationRequested();
+                    if (completedTask == expirationTask)
+                        break;
+                    var incomingMessage = await incomingMessageTask.ConfigureAwait(false);
+
+                    // Maybe sending an update
+                    var isHardUpdateRequested = false;
+                    var isSoftUpdateRequested = false;
+                    if (incomingMessage is SubscribeMessage subscribeMessage) {
+                        isHardUpdateRequested |= subscribeMessage.IsUpdateRequested;
+                        // Generally the version should match; if it's not the case, it could be due to
+                        // reconnect / lost message / something similar.
+                        isSoftUpdateRequested |= subscribeMessage.Version != state.Computed.Version;
                     }
-                    catch (OperationCanceledException) {
-                        if (cancellationToken.IsCancellationRequested)
-                            throw;
+                    if (isHardUpdateRequested) {
+                        // We do only explicit state updates
+                        await Publication.UpdateAsync(cancellationToken).ConfigureAwait(false);
+                        state = Publication.State;
                     }
-                    // If we're here:
-                    // 1) WhenInvalidatedAsync was cancelled due to Publication.State change
-                    // 2) Or it has completed + WhenOutdatedAsync completed as well.
-                    state = Publication.State;
-                    await TrySendUpdateAsync(state, false, cancellationToken)
+                    await TrySendUpdateAsync(state, isSoftUpdateRequested | isHardUpdateRequested, cancellationToken)
                         .ConfigureAwait(false);
+
+                    incomingMessageTask = incomingChannelReader.ReadAsync(cancellationToken).AsTask();
+                    // If we know for sure the last sent version is inconsistent,
+                    // we don't need to wait till the moment it gets invalidated -
+                    // it's client's time to act & request the update.
+                    if (!LastSentVersion.IsConsistent)
+                        continue;
+
+                    // Awaiting for state change
+                    var whenInvalidatedTask = state.WhenInvalidatedAsync();
+                    completedTask = await Task
+                        .WhenAny(whenInvalidatedTask, incomingMessageTask)
+                        .ConfigureAwait(false);
+                    cancellationToken.ThrowIfCancellationRequested();
+                    if (completedTask == incomingMessageTask)
+                        continue;
+
+                    // And finally, sending the invalidation message
+                    await TrySendUpdateAsync(state, false, cancellationToken).ConfigureAwait(false);
                 }
             }
             finally {
@@ -86,31 +114,14 @@ namespace Stl.Fusion.Bridge.Internal
             }
         }
 
-        public override async ValueTask OnMessageAsync(ReplicaMessage message, CancellationToken cancellationToken)
+        protected virtual async ValueTask TrySendUpdateAsync(
+            IPublicationState<T>? state, bool isUpdateRequested, CancellationToken cancellationToken)
         {
-            using var _ = await AsyncLock.LockAsync(cancellationToken);
-
-            var state = Publication.State;
-            switch (message) {
-            case SubscribeMessage sm:
-                await Publication.UpdateAsync(cancellationToken).ConfigureAwait(false);
-                state = Publication.State;
-                await TrySendUpdateAsync(state, SubscribeMessage.IsUpdateRequested, cancellationToken)
-                    .ConfigureAwait(false);
-                break;
-            }
-        }
-
-        public virtual async ValueTask TrySendUpdateAsync(
-            IPublicationState<T> state, bool isUpdateRequested, CancellationToken cancellationToken)
-        {
-            using var _ = await AsyncLock.LockAsync(cancellationToken);
-
-            if (state.IsDisposed) {
+            if (state == null || state.IsDisposed) {
                 var absentsMessage = new PublicationAbsentsMessage() {
                     IsDisposed = true,
                 };
-                await SendUnsafeAsync(absentsMessage, cancellationToken).ConfigureAwait(false);
+                await SendAsync(absentsMessage, cancellationToken).ConfigureAwait(false);
                 LastSentVersion = default;
                 return;
             }
@@ -121,23 +132,24 @@ namespace Stl.Fusion.Bridge.Internal
             if ((!isUpdateRequested) && LastSentVersion == version)
                 return;
 
-            var message = new PublicationStateChangedMessage<T>() {
+            var message = new PublicationStateMessage<T>() {
                 Version = computed.Version,
+                IsConsistent = isConsistent,
             };
-            if (isConsistent)
+            if (isConsistent || LastSentVersion.Version != computed.Version)
                 message.Output = computed.Output;
 
-            await SendUnsafeAsync(message, cancellationToken).ConfigureAwait(false);
+            await SendAsync(message, cancellationToken).ConfigureAwait(false);
             LastSentVersion = version;
         }
 
-        protected virtual async ValueTask SendUnsafeAsync(PublicationMessage message, CancellationToken cancellationToken)
+        protected virtual async ValueTask SendAsync(PublicationMessage message, CancellationToken cancellationToken)
         {
             message.MessageIndex = Interlocked.Increment(ref MessageIndex);
             message.PublisherId = Publisher.Id;
             message.PublicationId = Publication.Id;
 
-            await Channel.Writer.WriteAsync(message, cancellationToken).ConfigureAwait(false);
+            await OutgoingChannel.Writer.WriteAsync(message, cancellationToken).ConfigureAwait(false);
         }
     }
 }

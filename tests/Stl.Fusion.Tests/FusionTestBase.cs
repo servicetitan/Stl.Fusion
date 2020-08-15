@@ -131,7 +131,7 @@ namespace Stl.Fusion.Tests
             // Custom live state updater
             services.AddLiveState<Unit, ServerTimeModel>(
                 async (c, liveState, cancellationToken) => {
-                    var client = c.GetRequiredService<ITimeServiceClient>();
+                    var client = c.GetRequiredService<IClientTimeService>();
                     var time = await client.GetTimeAsync(cancellationToken).ConfigureAwait(false);
                     return new ServerTimeModel(time);
                 }, (c, options) => {

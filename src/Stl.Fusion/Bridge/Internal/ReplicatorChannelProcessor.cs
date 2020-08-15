@@ -18,13 +18,13 @@ namespace Stl.Fusion.Bridge.Internal
 {
     public class ReplicatorChannelProcessor : AsyncProcessBase
     {
-        protected static readonly HandlerProvider<(ReplicatorChannelProcessor, CancellationToken), Task> OnStateChangeMessageAsyncHandlers =
-            new HandlerProvider<(ReplicatorChannelProcessor, CancellationToken), Task>(typeof(UpdatedMessageHandler<>));
+        protected static readonly HandlerProvider<(ReplicatorChannelProcessor, CancellationToken), Task> OnStateMessageAsyncHandlers =
+            new HandlerProvider<(ReplicatorChannelProcessor, CancellationToken), Task>(typeof(StateMessageHandler<>));
 
-        protected class UpdatedMessageHandler<T> : HandlerProvider<(ReplicatorChannelProcessor, CancellationToken), Task>.IHandler<T>
+        protected class StateMessageHandler<T> : HandlerProvider<(ReplicatorChannelProcessor, CancellationToken), Task>.IHandler<T>
         {
             public Task Handle(object target, (ReplicatorChannelProcessor, CancellationToken) arg)
-                => arg.Item1.OnStateChangedMessageAsync((PublicationStateChangedMessage<T>) target, arg.Item2);
+                => arg.Item1.OnStateMessageAsync((PublicationStateMessage<T>) target, arg.Item2);
         }
 
         protected readonly ILogger Log;
@@ -118,11 +118,15 @@ namespace Stl.Fusion.Bridge.Internal
         {
             // No checks, since they're done by the only caller of this method
             var publicationId = replica.PublicationRef.PublicationId;
+            var computed = replica.Computed;
+            var isConsistent = computed.IsConsistent;
             lock (Lock) {
                 Subscriptions.Add(publicationId);
                 Send(new SubscribeMessage() {
                     PublisherId = PublisherId,
                     PublicationId = publicationId,
+                    Version = computed.Version,
+                    IsConsistent = isConsistent,
                     IsUpdateRequested = replica.IsUpdateRequested,
                 });
             }
@@ -151,9 +155,9 @@ namespace Stl.Fusion.Bridge.Internal
         protected virtual Task OnMessageAsync(Message message, CancellationToken cancellationToken)
         {
             switch (message) {
-            case PublicationStateChangedMessage scm:
+            case PublicationStateMessage psm:
                 // Fast dispatch to OnUpdatedMessageAsync<T>
-                return OnStateChangeMessageAsyncHandlers[scm.GetResultType()].Handle(scm, (this, cancellationToken));
+                return OnStateMessageAsyncHandlers[psm.GetResultType()].Handle(psm, (this, cancellationToken));
             case PublicationAbsentsMessage pam:
                 var replica = (IReplicaImpl?) Replicator.TryGet((PublisherId, pam.PublicationId));
                 replica?.ApplyFailedUpdate(Errors.PublicationAbsents(), default);
@@ -162,19 +166,17 @@ namespace Stl.Fusion.Bridge.Internal
             return Task.CompletedTask;
         }
 
-        protected virtual Task OnStateChangedMessageAsync<T>(PublicationStateChangedMessage<T> message, CancellationToken cancellationToken)
+        protected virtual Task OnStateMessageAsync<T>(PublicationStateMessage<T> message, CancellationToken cancellationToken)
         {
+            // Debug.WriteLine($"#{message.MessageIndex} -> {message.Version}, {message.IsConsistent}, {message.Output.HasValue}");
             var psi = new PublicationStateInfo<T>(
                 new PublicationRef(message.PublisherId, message.PublicationId),
                 message.Version, message.IsConsistent,
                 message.Output.GetValueOrDefault());
 
             var replica = Replicator.GetOrAdd(psi);
-            if (!(replica is IReplicaImpl<T> replicaImpl))
-                // Weird case: somehow replica is of different type
-                return Task.CompletedTask;
-
-            replicaImpl.ApplySuccessfulUpdate(psi.Output, psi.Version, psi.IsConsistent);
+            var replicaImpl = (IReplicaImpl<T>) replica;
+            replicaImpl.ApplySuccessfulUpdate(message.Output, psi.Version, psi.IsConsistent);
             return Task.CompletedTask;
         }
 
