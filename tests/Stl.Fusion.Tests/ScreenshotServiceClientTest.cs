@@ -22,11 +22,13 @@ namespace Stl.Fusion.Tests
             await using var serving = await WebSocketHost.ServeAsync();
             var service = Services.GetRequiredService<IScreenshotServiceClient>();
 
+            ScreenshotController.CallCount = 0;
             for (int i = 0; i < 20; i++) {
                 var screenshot = await service.GetScreenshotAsync(100);
                 (DateTime.Now - screenshot.CapturedAt).Should().BeLessThan(epsilon);
                 await Task.Delay(TimeSpan.FromSeconds(0.1));
             }
+            ScreenshotController.CallCount.Should().Be(1);
         }
     }
 }

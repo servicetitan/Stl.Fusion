@@ -117,7 +117,15 @@ namespace Stl.Fusion
                     var target = (IComputed?) handle.Target;
                     if (target == computed)
                         break;
-                    target?.Invalidate(); // Triggers removal!
+                    if (target == null || target.State == ComputedState.Invalidated) {
+                        if (_storage.TryRemove(key, entry))
+                            _gcHandlePool.Release(handle, random);
+                    }
+                    else {
+                        // This typically triggers Unregister -
+                        // except for ReplicaClientComputed.
+                        target.Invalidate();
+                    }
                 }
                 else {
                     newEntry ??= new Entry(computed, _gcHandlePool.Acquire(computed, random));

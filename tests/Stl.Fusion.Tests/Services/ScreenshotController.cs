@@ -9,6 +9,7 @@ namespace Stl.Fusion.Tests.Services
     [ApiController]
     public class ScreenshotController : FusionController
     {
+        public static int CallCount { get; set; }
         protected IScreenshotService Service { get; }
 
         public ScreenshotController(IPublisher publisher, IScreenshotService service) : base(publisher)
@@ -16,6 +17,9 @@ namespace Stl.Fusion.Tests.Services
 
         [HttpGet]
         public Task<Screenshot> GetScreenshotAsync(int width)
-            => PublishAsync(ct => Service.GetScreenshotAsync(width, ct));
+        {
+            CallCount++;
+            return PublishAsync(ct => Service.GetScreenshotAsync(width, ct));
+        }
     }
 }

@@ -43,5 +43,12 @@ namespace Stl.Fusion.Bridge.Interception
             Result<T> output, LTag version, bool isConsistent = true)
             : base(options, input, output, version, isConsistent)
             => Replica = replica;
+
+        protected override void OnInvalidated()
+        {
+            // We intentionally suppress ComputedRegistry.Unregister here,
+            // otherwise it won't be possible to find IReplica using
+            // old IComputed.
+        }
     }
 }
