@@ -20,7 +20,7 @@ namespace Stl.Fusion.Interception
         {
             public IArgumentComparerProvider ArgumentComparerProvider { get; set; } =
                 Interception.ArgumentComparerProvider.Default;
-            public IMomentClock Clock { get; set; } = CoarseCpuClock.Instance;
+            public IMomentClock? Clock { get; set; }
             public LogLevel LogLevel { get; set; } = LogLevel.Debug;
             public LogLevel ValidationLogLevel { get; set; } = LogLevel.Information;
         }
@@ -39,17 +39,20 @@ namespace Stl.Fusion.Interception
         protected ILogger Log { get; }
         protected LogLevel LogLevel { get; }
         protected LogLevel ValidationLogLevel { get; }
+        protected IMomentClock Clock { get; }
         protected IArgumentComparerProvider ArgumentComparerProvider { get; }
         protected bool RequiresAttribute { get; set; } = true;
 
         protected InterceptorBase(
             Options options,
+            IMomentClock? clock = null,
             ILoggerFactory? loggerFactory = null)
         {
             LoggerFactory = loggerFactory ??= NullLoggerFactory.Instance;
             Log = LoggerFactory.CreateLogger(GetType());
             LogLevel = options.LogLevel;
             ValidationLogLevel = options.ValidationLogLevel;
+            Clock = options.Clock ?? clock ?? CoarseCpuClock.Instance;
 
             ArgumentComparerProvider = options.ArgumentComparerProvider;
 

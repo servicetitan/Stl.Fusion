@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Interception.Internal;
 using Stl.Generators;
+using Stl.Time;
 
 namespace Stl.Fusion.Bridge.Interception
 {
@@ -19,8 +20,9 @@ namespace Stl.Fusion.Bridge.Interception
         public ReplicaClientInterceptor(
             Options options,
             IReplicator replicator,
+            IMomentClock? clock = null,
             ILoggerFactory? loggerFactory = null)
-            : base(options, loggerFactory)
+            : base(options, clock, loggerFactory)
         {
             RequiresAttribute = false;
             Replicator = replicator;

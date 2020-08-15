@@ -119,22 +119,22 @@ namespace Stl.Mathematics
                 return false;
 
             var sDigits = digits.AsSpan();
-            var multiplier = 1L;
+            var sign = 1L;
             if (number[0] == '-') {
-                multiplier = -1;
+                sign = -1;
                 number = number.Slice(1);
             }
-            for (var i = number.Length - 1; i >= 0; i--)
-            {
+            var multiplier = 1L;
+            for (var i = number.Length - 1; i >= 0; i--) {
                 var c = number[i];
                 var digit = sDigits.IndexOf(c);
                 if (digit == -1)
                     return false;
 
-                result += digit;
+                result += digit * multiplier;
                 multiplier *= radix;
             }
-            result *= multiplier;
+            result *= sign;
             return true;
         }
     }

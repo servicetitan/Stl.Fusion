@@ -6,8 +6,6 @@ namespace Stl.Generators
 {
     public sealed class RandomInt64Generator : Generator<long>
     {
-        public static readonly RandomInt64Generator Default = new RandomInt64Generator();
-
         private readonly long[] _buffer = new long[1];
         private readonly RandomNumberGenerator _rng;
 

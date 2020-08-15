@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Stl.Fusion.Interception.Internal;
 using Stl.Fusion.Internal;
 using Stl.Generators;
+using Stl.Time;
 
 namespace Stl.Fusion.Interception
 {
@@ -19,8 +20,9 @@ namespace Stl.Fusion.Interception
 
         public ComputeServiceInterceptor(
             Options options,
+            IMomentClock? clock = null,
             ILoggerFactory? loggerFactory = null)
-            : base(options, loggerFactory)
+            : base(options, clock, loggerFactory)
         {
             VersionGenerator = options.VersionGenerator;
         }

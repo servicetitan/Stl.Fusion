@@ -29,7 +29,7 @@ namespace Stl
         public override string ToString()
         {
             unsafe {
-                Span<char> buffer = stackalloc char[12];
+                Span<char> buffer = stackalloc char[16];
                 buffer[0] = '@';
                 var n = MathEx.FormatTo(Value, Base62Digits, buffer.Slice(1));
                 return new string(buffer.Slice(0, n.Length + 1));

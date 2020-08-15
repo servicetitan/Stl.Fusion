@@ -8,7 +8,6 @@ using Stl.Fusion.Client.RestEase;
 namespace Stl.Fusion.Tests.Services
 {
     [RestEaseReplicaService(typeof(IClientTimeService))]
-    [RestEaseReplicaService(typeof(ITimeServiceClient))]
     [BasePath("time")]
     public interface ITimeServiceClient : IRestEaseReplicaClient
     {

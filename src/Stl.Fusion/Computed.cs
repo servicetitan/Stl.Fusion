@@ -214,7 +214,6 @@ namespace Stl.Fusion
                 f.Freeze();
             if (State != ComputedState.Computing)
                 return false;
-            bool mustInvalidate;
             lock (Lock) {
                 if (State != ComputedState.Computing)
                     return false;
@@ -230,7 +229,6 @@ namespace Stl.Fusion
                 if (timeout != TimeSpan.MaxValue)
                     AutoInvalidate(timeout);
             }
-
             return true;
         }
 

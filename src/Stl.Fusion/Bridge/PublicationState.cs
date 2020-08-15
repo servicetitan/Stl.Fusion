@@ -65,7 +65,11 @@ namespace Stl.Fusion.Bridge
         {
             if (!WhenOutdatedSource.TrySetResult(default))
                 return false;
-            WhenInvalidatedSource.TrySetCanceled();
+            // WhenInvalidatedSource result must be set
+            // after setting WhenOutdatedSource result to
+            // make sure the code awaiting for both events
+            // can optimize for this case.
+            WhenInvalidatedSource.TrySetResult(default);
             return true;
         }
     }

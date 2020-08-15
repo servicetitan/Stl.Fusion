@@ -1,18 +1,16 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 using Stl.Async;
 using Stl.Fusion.Bridge.Internal;
-using Stl.Fusion.Bridge.Messages;
-using Stl.Internal;
 using Stl.Text;
 using Stl.Time;
+using Errors = Stl.Internal.Errors;
 
 namespace Stl.Fusion.Bridge
 {
-    public interface IPublication : IAsyncDisposable
+    public interface IPublication : IAsyncProcess
     {
         IPublisher Publisher { get; }
         Symbol Id { get; }
@@ -20,9 +18,13 @@ namespace Stl.Fusion.Bridge
         IPublicationState State { get; }
         long UseCount { get; }
 
+        Type GetResultType();
         Disposable<IPublication> Use();
         bool Touch();
         ValueTask UpdateAsync(CancellationToken cancellationToken);
+
+        // Convenience helpers
+        TResult Apply<TArg, TResult>(IPublicationApplyHandler<TArg, TResult> handler, TArg arg);
     }
 
     public interface IPublication<T> : IPublication
@@ -30,14 +32,7 @@ namespace Stl.Fusion.Bridge
         new IPublicationState<T> State { get; }
     }
 
-    public interface IPublicationImpl : IPublication, IAsyncProcess
-    {
-        SubscriptionProcessor CreateSubscriptionProcessor(Channel<Message> channel, SubscribeMessage subscribeMessage);
-    }
-
-    public interface IPublicationImpl<T> : IPublicationImpl, IPublication<T> { }
-
-    public class Publication<T> : AsyncProcessBase, IPublicationImpl<T>
+    public class Publication<T> : AsyncProcessBase, IPublication<T>
     {
         private long _lastTouchTime;
         private long _useCount;
@@ -63,7 +58,8 @@ namespace Stl.Fusion.Bridge
 
         public Publication(
             Type publicationType, IPublisher publisher,
-            IComputed<T> computed, Symbol id, IMomentClock clock)
+            IComputed<T> computed, Symbol id,
+            IMomentClock clock)
         {
             Clock = clock ??= CoarseCpuClock.Instance;
             PublicationType = publicationType;
@@ -72,6 +68,9 @@ namespace Stl.Fusion.Bridge
             LastTouchTime = clock.Now;
             StateField = CreatePublicationState(computed);
         }
+
+        public Type GetResultType()
+            => typeof(T);
 
         public bool Touch()
         {
@@ -103,6 +102,11 @@ namespace Stl.Fusion.Bridge
             var newState = CreatePublicationState(newComputed);
             ChangeState(newState, state);
         }
+
+        public TResult Apply<TArg, TResult>(IPublicationApplyHandler<TArg, TResult> handler, TArg arg)
+            => handler.Apply(this, arg);
+
+        // Protected methods
 
         protected virtual IPublicationStateImpl<T> CreatePublicationState(
             IComputed<T> computed, bool isDisposed = false)
@@ -152,11 +156,6 @@ namespace Stl.Fusion.Bridge
                 // it throws this exception synchronously (if cts got cancelled already).
             }
         }
-
-        SubscriptionProcessor IPublicationImpl.CreateSubscriptionProcessor(Channel<Message> channel, SubscribeMessage subscribeMessage)
-            => CreateSubscriptionProcessor(channel, subscribeMessage);
-        protected virtual SubscriptionProcessor CreateSubscriptionProcessor(Channel<Message> channel, SubscribeMessage subscribeMessage)
-            => new SubscriptionProcessor<T>(this, channel, subscribeMessage);
 
         protected override Task DisposeAsync(bool disposing)
         {

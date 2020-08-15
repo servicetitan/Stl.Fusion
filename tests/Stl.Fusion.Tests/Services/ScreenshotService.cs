@@ -16,13 +16,15 @@ namespace Stl.Fusion.Tests.Services
     {
         public int Width { get; }
         public int Height { get; }
+        public DateTime CapturedAt { get; }
         public string Base64Content { get; }
 
         [JsonConstructor]
-        public Screenshot(int width, int height, string base64Content)
+        public Screenshot(int width, int height, DateTime capturedAt, string base64Content)
         {
             Width = width;
             Height = height;
+            CapturedAt = capturedAt;
             Base64Content = base64Content;
         }
     }
@@ -69,7 +71,7 @@ namespace Stl.Fusion.Tests.Services
             bOut.Save(stream, _jpegEncoder, _jpegEncoderParameters);
             var bytes = stream.ToArray();
             var base64Content = Convert.ToBase64String(bytes);
-            return new Screenshot(ow, oh, base64Content);
+            return new Screenshot(ow, oh, DateTime.Now, base64Content);
         }
 
         [ComputeMethod(AutoInvalidateTime = 0.01)]

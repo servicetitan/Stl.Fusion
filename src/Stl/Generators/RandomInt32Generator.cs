@@ -6,8 +6,6 @@ namespace Stl.Generators
 {
     public sealed class RandomInt32Generator : Generator<long>
     {
-        public static readonly RandomInt32Generator Default = new RandomInt32Generator();
-
         private readonly int[] _buffer = new int[1];
         private readonly RandomNumberGenerator _rng;
 

@@ -10,15 +10,16 @@ namespace Stl.Fusion.Bridge.Internal
 {
     public interface IPublicationFactory
     {
-        public IPublication Create(
-            Type publicationType, IPublisher publisher,
-            IComputed computed, Symbol publicationId, IMomentClock clock);
+        public IPublication Create(Type genericType,
+            IPublisher publisher, IComputed computed,
+            Symbol publicationId, IMomentClock clock);
     }
 
     public sealed class PublicationFactory : IPublicationFactory
     {
-        private delegate IPublication Constructor(IPublisher publisher,
-            IComputed computed, Symbol publicationId, IMomentClock clock);
+        private delegate IPublication Constructor(
+            IPublisher publisher, IComputed computed,
+            Symbol publicationId, IMomentClock clock);
 
         private static readonly ConcurrentDictionary<Type, Constructor> ConstructorCache =
             new ConcurrentDictionary<Type, Constructor>();
@@ -28,20 +29,23 @@ namespace Stl.Fusion.Bridge.Internal
 
         private PublicationFactory() { }
 
-        public IPublication Create(Type publicationType, IPublisher publisher,
-            IComputed computed, Symbol publicationId, IMomentClock clock)
+        public IPublication Create(Type genericType,
+            IPublisher publisher, IComputed computed,
+            Symbol publicationId, IMomentClock clock)
             => ConstructorCache
-                .GetOrAddChecked(publicationType, CreateCache)
+                .GetOrAddChecked(genericType, CreateCache)
                 .Invoke(publisher, computed, publicationId, clock);
 
-        private static Constructor Create(Type publicationType)
+        private static Constructor Create(Type genericType)
         {
-            if (!publicationType.IsGenericTypeDefinition)
-                throw Errors.PublicationTypeMustBeOpenGenericType(nameof(publicationType));
+            if (!genericType.IsGenericTypeDefinition)
+                throw Errors.TypeMustBeOpenGenericType(genericType);
 
-            var handler = new FactoryApplyHandler(publicationType);
+            var handler = new FactoryApplyHandler(genericType);
 
-            IPublication Factory(IPublisher publisher, IComputed computed, Symbol publicationId, IMomentClock clock)
+            IPublication Factory(
+                IPublisher publisher, IComputed computed,
+                Symbol publicationId, IMomentClock clock)
                 => computed.Apply(handler, (publisher, publicationId, clock));
 
             return Factory;
@@ -51,12 +55,12 @@ namespace Stl.Fusion.Bridge.Internal
             (IPublisher Publisher, Symbol PublicationId, IMomentClock Clock),
             IPublication>
         {
-            private readonly Type _publicationType;
+            private readonly Type _genericType;
             private readonly ConcurrentDictionary<Type, Type> _closedTypeCache =
                 new ConcurrentDictionary<Type, Type>();
 
-            public FactoryApplyHandler(Type publicationType)
-                => _publicationType = publicationType;
+            public FactoryApplyHandler(Type genericType)
+                => _genericType = genericType;
 
             public IPublication Apply<TIn, TOut>(
                 IComputed<TIn, TOut> computed,
@@ -66,9 +70,9 @@ namespace Stl.Fusion.Bridge.Internal
                 var closedType = _closedTypeCache.GetOrAddChecked(
                     typeof(TOut),
                     (tArg, tGeneric) => tGeneric.MakeGenericType(tArg),
-                    _publicationType);
+                    _genericType);
                 return (IPublication) closedType.CreateInstance(
-                    _publicationType, arg.Publisher,
+                    _genericType, arg.Publisher,
                     (IComputed<TOut>) computed, arg.PublicationId, arg.Clock);
             }
         }
