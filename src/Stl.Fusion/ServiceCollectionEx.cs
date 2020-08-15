@@ -5,7 +5,6 @@ using Stl.DependencyInjection;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Interception;
 using Stl.Fusion.Interception;
-using Stl.Fusion.Internal;
 using Stl.Fusion.UI;
 
 namespace Stl.Fusion

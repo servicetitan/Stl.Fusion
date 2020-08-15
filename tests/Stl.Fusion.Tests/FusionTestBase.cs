@@ -117,7 +117,7 @@ namespace Stl.Fusion.Tests
             // Core fusion services
             services.AddSingleton(c => new TestWebHost(c));
             services.AddFusionServerCore();
-            services.AddFusionWebSocketClient((c, o) => {
+            services.AddFusionRestEaseClient((c, o) => {
                 o.BaseUri = c.GetRequiredService<TestWebHost>().ServerUri;
                 o.MessageLogLevel = LogLevel.Information;
             });

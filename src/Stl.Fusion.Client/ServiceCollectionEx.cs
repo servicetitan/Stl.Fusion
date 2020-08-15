@@ -17,7 +17,25 @@ namespace Stl.Fusion.Client
     {
         // Common client-side services
 
-        public static IServiceCollection AddFusionRestEaseServices(this IServiceCollection services)
+        public static IServiceCollection AddFusionRestEaseClient(
+            this IServiceCollection services,
+            WebSocketChannelProvider.Options options)
+        {
+            services.TryAddTransient<FusionResponseDeserializer>();
+            services.AddRestEaseClientCore();
+            return services.AddFusionWebSocketClient(options);
+        }
+
+        public static IServiceCollection AddFusionRestEaseClient(
+            this IServiceCollection services,
+            Action<IServiceProvider, WebSocketChannelProvider.Options>? optionsBuilder = null)
+        {
+            services.TryAddTransient<FusionResponseDeserializer>();
+            services.AddRestEaseClientCore();
+            return services.AddFusionWebSocketClient(optionsBuilder);
+        }
+
+        public static IServiceCollection AddRestEaseClientCore(this IServiceCollection services)
         {
             // InterfaceCastProxyGenerator (used by ReplicaServices)
             services.TryAddSingleton<InterfaceCastInterceptor>();
@@ -31,24 +49,21 @@ namespace Stl.Fusion.Client
             services.TryAddTransient<RequestBodySerializer>(c => new JsonRequestBodySerializer() {
                 JsonSerializerSettings = JsonNetSerializer.DefaultSettings
             });
-            services.TryAddTransient<FusionResponseDeserializer>();
             return services;
         }
 
         public static IServiceCollection AddFusionWebSocketClient(
             this IServiceCollection services,
-            WebSocketChannelProvider.Options options,
-            bool addTransient = false)
+            WebSocketChannelProvider.Options options)
         {
             services.TryAddSingleton(options);
             services.TryAddSingleton<IChannelProvider, WebSocketChannelProvider>();
-            return services.AddFusionClientCore().AddFusionRestEaseServices();
+            return services.AddFusionClientCore();
         }
 
         public static IServiceCollection AddFusionWebSocketClient(
             this IServiceCollection services,
-            Action<IServiceProvider, WebSocketChannelProvider.Options>? optionsBuilder = null,
-            bool addTransient = false)
+            Action<IServiceProvider, WebSocketChannelProvider.Options>? optionsBuilder = null)
         {
             services.TryAddSingleton(c => {
                 var options = new WebSocketChannelProvider.Options();
@@ -56,17 +71,17 @@ namespace Stl.Fusion.Client
                 return options;
             });
             services.TryAddSingleton<IChannelProvider, WebSocketChannelProvider>();
-            return services.AddFusionClientCore().AddFusionRestEaseServices();
+            return services.AddFusionClientCore().AddRestEaseClientCore();
         }
 
         // User-defined client-side services
 
-        public static IServiceCollection AddRestEaseClient<TClient>(
+        public static IServiceCollection AddPlainRestEaseClient<TClient>(
             this IServiceCollection services,
             string? baseAddress = null,
             Func<IServiceProvider, HttpClient>? httpClientResolver = null)
-            => services.AddRestEaseClient(typeof(TClient), baseAddress, httpClientResolver);
-        public static IServiceCollection AddRestEaseClient(
+            => services.AddPlainRestEaseClient(typeof(TClient), baseAddress, httpClientResolver);
+        public static IServiceCollection AddPlainRestEaseClient(
             this IServiceCollection services,
             Type clientType,
             string? baseAddress = null,
