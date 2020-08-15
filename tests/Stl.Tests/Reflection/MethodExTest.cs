@@ -55,8 +55,15 @@ namespace Stl.Tests.Reflection
             public override void MethodA() {}
         }
 
-        public class D : C { }
-        public class E : D { }
+        public class D : C
+        {
+            [DisplayName("D")]
+            public new void MethodA() {}
+            [DisplayName("D")]
+            public new virtual void MethodV() {}
+        }
+
+        public class E : D, IMethodA, IMethodV { }
 
         [Fact]
         public void GetBaseOrDeclaringMethodTest()
@@ -64,12 +71,17 @@ namespace Stl.Tests.Reflection
             var methodAName = nameof(A<object>.MethodA);
             var methodVName = nameof(A<object>.MethodV);
             var methodGName = nameof(A<object>.MethodG);
+            var methodXName = nameof(A<object>.MethodX);
             var tA = typeof(A<>);
             var tAString = tA.MakeGenericType(typeof(string));
             var tB = typeof(B);
             var tC = typeof(C);
             var tD = typeof(D);
             var tE = typeof(E);
+            var tIMethodA = typeof(IMethodA);
+            var tIMethodV = typeof(IMethodV);
+            var tIMethodG = typeof(IMethodG);
+            var tIMethodX = typeof(IMethodX);
 
             void Check(MethodInfo? method, Type? baseType)
             {
@@ -82,15 +94,15 @@ namespace Stl.Tests.Reflection
             Check(tA.GetMethod(name), null);
             Check(tB.GetMethod(name), tAString);
             Check(tC.GetMethod(name), tB);
-            Check(tD.GetMethod(name), tC);
-            Check(tE.GetMethod(name), tC);
+            Check(tD.GetMethod(name), null);
+            Check(tE.GetMethod(name), null);
 
             name = methodVName;
             Check(tA.GetMethod(name), null);
             Check(tB.GetMethod(name), tAString);
             Check(tC.GetMethod(name), tB);
-            Check(tD.GetMethod(name), tB);
-            Check(tE.GetMethod(name), tB);
+            Check(tD.GetMethod(name), null);
+            Check(tE.GetMethod(name), tD);
 
             name = methodGName;
             Check(tA.GetMethod(name), null);
@@ -142,16 +154,16 @@ namespace Stl.Tests.Reflection
             Check(tA.GetMethod(name), tIMethodA.Name);
             Check(tB.GetMethod(name), tB.Name, tIMethodA.Name);
             Check(tC.GetMethod(name), tB.Name, tIMethodA.Name);
-            Check(tD.GetMethod(name), tB.Name, tIMethodA.Name);
-            Check(tE.GetMethod(name), tB.Name, tIMethodA.Name);
+            Check(tD.GetMethod(name), tD.Name);
+            Check(tE.GetMethod(name), tD.Name); // Exception: no interface method here
 
             name = methodVName;
             Check(tIMethodV.GetMethod(name), tIMethodV.Name);
             Check(tA.GetMethod(name));
             Check(tB.GetMethod(name), tIMethodV.Name);
             Check(tC.GetMethod(name), tIMethodV.Name);
-            Check(tD.GetMethod(name), tIMethodV.Name);
-            Check(tE.GetMethod(name), tIMethodV.Name);
+            Check(tD.GetMethod(name), tD.Name);
+            Check(tE.GetMethod(name), tD.Name); // Exception: no interface method here
 
             name = methodGName;
             Check(tIMethodG.GetMethod(name), tIMethodG.Name);

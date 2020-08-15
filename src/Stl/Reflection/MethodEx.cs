@@ -49,7 +49,8 @@ namespace Stl.Reflection
         {
             if (method.IsConstructedGenericMethod)
                 method = method.GetGenericMethodDefinition();
-            return GetAttributeInternal<TAttr>(method, inheritFromInterfaces, inheritFromBaseTypes);
+            var methodDef = method.GetBaseDefinition();
+            return GetAttributeInternal<TAttr>(method, methodDef, inheritFromInterfaces, inheritFromBaseTypes);
         }
 
         public static List<TAttr> GetAttributes<TAttr>(this MethodInfo method, bool inheritFromInterfaces, bool inheritFromBaseTypes)
@@ -57,15 +58,17 @@ namespace Stl.Reflection
         {
             if (method.IsConstructedGenericMethod)
                 method = method.GetGenericMethodDefinition();
+            var methodDef = method.GetBaseDefinition();
             var result = new List<TAttr>();
-            AddAttributes(result, method, inheritFromInterfaces, inheritFromBaseTypes);
+            AddAttributes(result, new HashSet<Type>(), method, methodDef, inheritFromInterfaces, inheritFromBaseTypes);
             return result;
         }
 
-        private static TAttr? GetAttributeInternal<TAttr>(MethodInfo method, bool inheritFromInterfaces, bool inheritFromBaseTypes)
+        private static TAttr? GetAttributeInternal<TAttr>(MethodInfo method, MethodInfo methodDef, bool inheritFromInterfaces, bool inheritFromBaseTypes)
             where TAttr : Attribute
         {
-            if (method.DeclaringType == method.ReflectedType) {
+            var isEndOfChain = method == methodDef;
+            if (isEndOfChain || method.DeclaringType == method.ReflectedType) {
                 var attr = method.GetCustomAttributes(false).OfType<TAttr>().FirstOrDefault();
                 if (attr != null)
                     return attr;
@@ -75,13 +78,15 @@ namespace Stl.Reflection
             if (baseType == type)
                 baseType = type.BaseType;
             if (inheritFromInterfaces && !type.IsInterface) {
-                var interfaces = type.GetInterfaces().AsEnumerable();
+                var interfaces = type.GetInterfaces().ToHashSet();
                 if (baseType != null)
-                    interfaces = interfaces.Except(baseType.GetInterfaces());
+                    interfaces.ExceptWith(baseType.GetInterfaces());
                 foreach (var @interface in interfaces) {
                     var map = type.GetInterfaceMap(@interface);
-                    for (var index = 0; index < map.TargetMethods.Length; index++) {
-                        if (map.TargetMethods[index] != method)
+                    var targetMethods = map.TargetMethods;
+                    for (var index = 0; index < targetMethods.Length; index++) {
+                        var targetMethod = targetMethods[index];
+                        if (targetMethod != method)
                             continue;
                         var iMethod = map.InterfaceMethods[index];
                         var attr = iMethod.GetCustomAttributes(false).OfType<TAttr>().FirstOrDefault();
@@ -90,19 +95,20 @@ namespace Stl.Reflection
                     }
                 }
             }
-            if (inheritFromBaseTypes && baseType != null) {
+            if (inheritFromBaseTypes && baseType != null && !isEndOfChain) {
                 var baseMethod = method.GetBaseOrDeclaringMethod();
                 if (baseMethod == null)
                     return null;
-                return GetAttributeInternal<TAttr>(baseMethod, inheritFromInterfaces, inheritFromBaseTypes);
+                return GetAttributeInternal<TAttr>(baseMethod, methodDef, inheritFromInterfaces, inheritFromBaseTypes);
             }
             return null;
         }
 
-        private static void AddAttributes<TAttr>(List<TAttr> result, MethodInfo method, bool inheritFromInterfaces, bool inheritFromBaseTypes)
+        private static void AddAttributes<TAttr>(List<TAttr> result, HashSet<Type> excluded, MethodInfo method, MethodInfo methodDef, bool inheritFromInterfaces, bool inheritFromBaseTypes)
             where TAttr : Attribute
         {
-            if (method.DeclaringType == method.ReflectedType)
+            var isEndOfChain = method == methodDef;
+            if (isEndOfChain || method.DeclaringType == method.ReflectedType)
                 result.AddRange(method.GetCustomAttributes(false).OfType<TAttr>());
             var type = method.ReflectedType;
             var baseType = method.DeclaringType;
@@ -110,23 +116,27 @@ namespace Stl.Reflection
                 baseType = type.BaseType;
 
             if (inheritFromInterfaces && !type.IsInterface) {
-                var interfaces = type.GetInterfaces().AsEnumerable();
+                var interfaces = type.GetInterfaces().ToHashSet();
                 if (baseType != null)
-                    interfaces = interfaces.Except(baseType.GetInterfaces());
+                    interfaces.ExceptWith(baseType.GetInterfaces());
                 foreach (var @interface in interfaces) {
+                    if (!excluded.Add(@interface))
+                        continue;
                     var map = type.GetInterfaceMap(@interface);
-                    for (var index = 0; index < map.TargetMethods.Length; index++) {
-                        if (map.TargetMethods[index] != method)
+                    var targetMethods = map.TargetMethods;
+                    for (var index = 0; index < targetMethods.Length; index++) {
+                        var targetMethod = targetMethods[index];
+                        if (targetMethod != method)
                             continue;
                         var iMethod = map.InterfaceMethods[index];
                         result.AddRange(iMethod.GetCustomAttributes(false).OfType<TAttr>());
                     }
                 }
             }
-            if (inheritFromBaseTypes && baseType != null) {
+            if (inheritFromBaseTypes && baseType != null && !isEndOfChain) {
                 var baseMethod = method.GetBaseOrDeclaringMethod();
                 if (baseMethod != null)
-                    result.AddRange(baseMethod.GetAttributes<TAttr>(inheritFromInterfaces, inheritFromBaseTypes));
+                    AddAttributes<TAttr>(result, excluded, baseMethod, methodDef, inheritFromInterfaces, inheritFromBaseTypes);
             }
         }
     }
