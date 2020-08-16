@@ -10,7 +10,7 @@ using Xunit.Abstractions;
 
 namespace Stl.Fusion.Tests
 {
-    public class UserProviderTest : FusionTestBase, IAsyncLifetime
+    public class UserProviderTest : FusionTestBase
     {
         public UserProviderTest(ITestOutputHelper @out) : base(@out) { }
 

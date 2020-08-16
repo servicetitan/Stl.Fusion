@@ -22,18 +22,17 @@ using Xunit.Abstractions;
 namespace Stl.Fusion.Tests
 {
     [Collection(nameof(PerformanceTests)), Trait("Category", nameof(PerformanceTests))]
-    public abstract class PerformanceTestBase : FusionTestBase, IAsyncLifetime
+    public abstract class PerformanceTestBase : FusionTestBase
     {
         public int UserCount = 1000;
 
         protected PerformanceTestBase(ITestOutputHelper @out, FusionTestOptions? options = null)
             : base(@out, options)
-            => IsLoggingEnabled = false;
+        { }
 
         public override async Task InitializeAsync()
         {
-            await base.InitializeAsync();
-
+            await base.InitializeAsync().ConfigureAwait(false);
             var users = Services.GetRequiredService<IUserService>();
             var tasks = new List<Task>();
             for (var i = 0; i < UserCount; i++)
@@ -44,8 +43,8 @@ namespace Stl.Fusion.Tests
             await Task.WhenAll(tasks);
         }
 
-        // [Fact]
-        [Fact(Skip = "Performance")]
+        [Fact]
+        // [Fact(Skip = "Performance")]
         public async Task ComputedPerformanceTest()
         {
             if (TestRunnerInfo.IsBuildAgent())

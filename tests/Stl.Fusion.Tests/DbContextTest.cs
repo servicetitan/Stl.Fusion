@@ -2,21 +2,21 @@ using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Tests.Model;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace Stl.Fusion.Tests
 {
-    public class DbContextTest : FusionTestBase, IAsyncLifetime
+    public class DbContextTest : FusionTestBase
     {
         public DbContextTest(ITestOutputHelper @out) : base(@out) { }
 
         [Fact]
         public async Task BasicTest()
         {
-            var count = await DbContext.Users.CountAsync();
+            await using var dbContext1 = RentDbContext();
+            var count = await dbContext1.Users.CountAsync();
             count.Should().Be(0);
 
             var u1 = new User() {
@@ -38,18 +38,16 @@ namespace Stl.Fusion.Tests
 
             };
 
-            DbContext.AddRange(u1, c1, m1);
-            await DbContext.SaveChangesAsync();
+            dbContext1.AddRange(u1, c1, m1);
+            await dbContext1.SaveChangesAsync();
 
-            using var scope = Services.CreateScope();
-            using var dbContext = scope.ServiceProvider.GetRequiredService<TestDbContext>();
-
-            (await dbContext.Users.CountAsync()).Should().Be(1);
-            (await dbContext.Messages.CountAsync()).Should().Be(1);
-            u1 = await dbContext.Users.FindAsync(u1.Id);
+            await using var dbContext2 = RentDbContext();
+            (await dbContext2.Users.CountAsync()).Should().Be(1);
+            (await dbContext2.Messages.CountAsync()).Should().Be(1);
+            u1 = await dbContext2.Users.FindAsync(u1.Id);
             u1.Name.Should().Be("realDonaldTrump");
 
-            m1 = await dbContext.Messages
+            m1 = await dbContext2.Messages
                 .Where(p => p.Id == p.Id)
                 .Include(p => p.Author)
                 .SingleAsync();

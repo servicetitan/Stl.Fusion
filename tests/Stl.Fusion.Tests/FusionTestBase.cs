@@ -8,6 +8,8 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Stl.DependencyInjection;
@@ -20,6 +22,7 @@ using Stl.Fusion.Tests.UIModels;
 using Stl.Fusion.UI;
 using Stl.Testing;
 using Stl.Testing.Internal;
+using Xunit;
 using Xunit.Abstractions;
 using Xunit.DependencyInjection.Logging;
 using Message = Stl.Fusion.Bridge.Messages.Message;
@@ -31,13 +34,13 @@ namespace Stl.Fusion.Tests
         public bool UseInMemoryDatabase { get; set; }
     }
 
-    public class FusionTestBase : TestBase
+    public class FusionTestBase : TestBase, IAsyncLifetime
     {
         public FusionTestOptions Options { get; }
         public bool IsLoggingEnabled { get; set; } = true;
         public IServiceProvider Services { get; }
         public ILogger Log { get; }
-        public TestDbContext DbContext => Services.GetRequiredService<TestDbContext>();
+        public PathString DbPath { get; protected set; }
         public IPublisher Publisher => Services.GetRequiredService<IPublisher>();
         public IReplicator Replicator => Services.GetRequiredService<IReplicator>();
         public TestWebHost WebSocketHost => Services.GetRequiredService<TestWebHost>();
@@ -49,10 +52,22 @@ namespace Stl.Fusion.Tests
             Log = (ILogger) Services.GetService(typeof(ILogger<>).MakeGenericType(GetType()));
         }
 
-        public virtual Task InitializeAsync()
-            => DbContext.Database.EnsureCreatedAsync();
-        public virtual Task DisposeAsync()
-            => Task.CompletedTask.ContinueWith(_ => (Services as IDisposable)?.Dispose());
+        public virtual async Task InitializeAsync()
+        {
+            if (File.Exists(DbPath))
+                File.Delete(DbPath);
+            await using var dbContext = RentDbContext();
+            await dbContext.Database.EnsureCreatedAsync();
+        }
+
+        public virtual async Task DisposeAsync()
+        {
+            if (Services is IDisposable d)
+                d.Dispose();
+        }
+
+        protected override void Dispose(bool disposing)
+            => DisposeAsync().Wait();
 
         protected virtual IServiceProvider CreateServices()
         {
@@ -96,23 +111,20 @@ namespace Stl.Fusion.Tests
             // DbContext & related services
             var testType = GetType();
             var appTempDir = PathEx.GetApplicationTempDirectory("", true);
-            var dbPath = appTempDir & PathEx.GetHashedName($"{testType.Name}_{testType.Namespace}.db");
-            if (File.Exists(dbPath))
-                File.Delete(dbPath);
+            DbPath = appTempDir & PathEx.GetHashedName($"{testType.Name}_{testType.Namespace}.db");
 
             if (Options.UseInMemoryDatabase)
                 services
                     .AddEntityFrameworkInMemoryDatabase()
                     .AddDbContextPool<TestDbContext>(builder => {
-                        builder.UseInMemoryDatabase(dbPath);
-                    });
+                        builder.UseInMemoryDatabase(DbPath);
+                    }, 256);
             else
                 services
                     .AddEntityFrameworkSqlite()
                     .AddDbContextPool<TestDbContext>(builder => {
-                        builder.UseSqlite($"Data Source={dbPath}", sqlite => { });
-                    });
-            services.AddSingleton<TestDbContextPool>();
+                        builder.UseSqlite($"Data Source={DbPath}", sqlite => { });
+                    }, 256);
 
             // Core fusion services
             services.AddSingleton(c => new TestWebHost(c));
@@ -138,6 +150,9 @@ namespace Stl.Fusion.Tests
                     options.InitialState = new ServerTimeModel();
                 });
         }
+
+        protected TestDbContext RentDbContext()
+            => Services.GetRequiredService<DbContextPool<TestDbContext>>().Rent();
 
         protected Task<Channel<Message>> ConnectToPublisherAsync(CancellationToken cancellationToken = default)
         {

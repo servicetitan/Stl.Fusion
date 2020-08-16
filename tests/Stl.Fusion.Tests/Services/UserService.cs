@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -27,11 +28,11 @@ namespace Stl.Fusion.Tests.Services
     public class UserService : IUserService
     {
         private readonly ILogger _log;
-        protected TestDbContextPool DbContextPool { get; }
+        protected DbContextPool<TestDbContext> DbContextPool { get; }
         protected bool IsCaching { get; }
 
         public UserService(
-            TestDbContextPool dbContextPool,
+            DbContextPool<TestDbContext> dbContextPool,
             ILogger<UserService>? log = null)
         {
             _log = log ??= NullLogger<UserService>.Instance;
@@ -41,8 +42,7 @@ namespace Stl.Fusion.Tests.Services
 
         public virtual async Task CreateAsync(User user, bool orUpdate = false, CancellationToken cancellationToken = default)
         {
-            using var lease = DbContextPool.Rent();
-            var dbContext = lease.Subject;
+            await using var dbContext = DbContextPool.Rent();
             var existingUser = (User?) null;
 
             var supportTransactions = !dbContext.Database.IsInMemory();
@@ -66,8 +66,7 @@ namespace Stl.Fusion.Tests.Services
 
         public virtual async Task UpdateAsync(User user, CancellationToken cancellationToken = default)
         {
-            using var lease = DbContextPool.Rent();
-            var dbContext = lease.Subject;
+            await using var dbContext = DbContextPool.Rent();
             dbContext.Users.Update(user);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             Invalidate(user, false);
@@ -76,8 +75,7 @@ namespace Stl.Fusion.Tests.Services
         public virtual async Task<bool> DeleteAsync(User user, CancellationToken cancellationToken = default)
         {
             Computed.GetCurrent().Should().BeNull();
-            using var lease = DbContextPool.Rent();
-            var dbContext = lease.Subject;
+            await using var dbContext = DbContextPool.Rent();
             dbContext.Users.Remove(user);
             try {
                 await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -94,8 +92,7 @@ namespace Stl.Fusion.Tests.Services
         {
             // Debug.WriteLine($"TryGetAsync {userId}");
             await Everything().ConfigureAwait(false);
-            using var lease = DbContextPool.Rent();
-            var dbContext = lease.Subject;
+            await using var dbContext = DbContextPool.Rent();
             var user = await dbContext.Users
                 .FindAsync(new[] {(object) userId}, cancellationToken)
                 .ConfigureAwait(false);
@@ -106,8 +103,7 @@ namespace Stl.Fusion.Tests.Services
         public virtual async Task<long> CountAsync(CancellationToken cancellationToken = default)
         {
             await Everything().ConfigureAwait(false);
-            using var lease = DbContextPool.Rent();
-            var dbContext = lease.Subject;
+            await using var dbContext = DbContextPool.Rent();
             var count = await dbContext.Users.LongCountAsync(cancellationToken).ConfigureAwait(false);
             _log.LogDebug($"Users.Count query: {count}");
             return count;

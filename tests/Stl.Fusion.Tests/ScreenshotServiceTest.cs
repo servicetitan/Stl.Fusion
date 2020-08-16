@@ -9,7 +9,7 @@ using Xunit.Abstractions;
 
 namespace Stl.Fusion.Tests
 {
-    public class ScreenshotServiceTest : FusionTestBase, IAsyncLifetime
+    public class ScreenshotServiceTest : FusionTestBase
     {
         public ScreenshotServiceTest(ITestOutputHelper @out) : base(@out) { }
 
