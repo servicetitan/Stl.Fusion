@@ -5,7 +5,7 @@
     <AspNetCoreVersion>3.1.7</AspNetCoreVersion>
     <BlazorVersion>3.2.1</BlazorVersion>
     <SystemNetHttpJsonVersion>3.2.1</SystemNetHttpJsonVersion>
-    <StlFusionVersion>0.3.6</StlFusionVersion>
+    <StlFusionVersion>0.3.8</StlFusionVersion>
   </PropertyGroup>
   <ItemGroup Label="Nupkg Versions">
     <PackageReference Update="AutoMapper" Version="10.0.0" />
