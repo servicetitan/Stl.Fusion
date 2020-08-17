@@ -8,7 +8,6 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -60,10 +59,11 @@ namespace Stl.Fusion.Tests
             await dbContext.Database.EnsureCreatedAsync();
         }
 
-        public virtual async Task DisposeAsync()
+        public virtual Task DisposeAsync()
         {
             if (Services is IDisposable d)
                 d.Dispose();
+            return Task.CompletedTask;
         }
 
         protected override void Dispose(bool disposing)
