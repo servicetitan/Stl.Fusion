@@ -1,11 +1,14 @@
 using System;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Stl.Async;
 using Stl.Mathematics;
 
 namespace Stl.Time
 {
-    public sealed class ConcurrentTimerSet<TTimer> : AsyncDisposableBase, ITimerSet<TTimer>
+    public sealed class ConcurrentTimerSet<TTimer> : AsyncDisposableBase
+        where TTimer : notnull
     {
         public class Options : TimerSet<TTimer>.Options
         {
@@ -19,14 +22,15 @@ namespace Stl.Time
         public TimeSpan Quanta { get; }
         public IMomentClock Clock { get; }
         public int ConcurrencyLevel { get; }
+        public int Count => _timerSets.Sum(ts => ts.Count);
 
         public ConcurrentTimerSet(Options? options = null,
             Action<TTimer>? fireHandler = null,
             IMomentClock? clock = null)
         {
             options ??= new Options();
-            if (options.Quanta < TimeSpan.FromMilliseconds(10))
-                options.Quanta = TimeSpan.FromMilliseconds(10);
+            if (options.Quanta < Options.MinQuanta)
+                options.Quanta = Options.MinQuanta;
             if (options.ConcurrencyLevel < 1)
                 options.ConcurrencyLevel = 1;
             Quanta = options.Quanta;
@@ -45,12 +49,28 @@ namespace Stl.Time
                 await timerSet.DisposeAsync();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddOrUpdate(TTimer timer, Moment time)
         {
             var timerSet = _timerSets[(timer?.GetHashCode() ?? 0) & _concurrencyLevelMask];
             timerSet.AddOrUpdate(timer, time);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool AddOrUpdateToEarlier(TTimer timer, Moment time)
+        {
+            var timerSet = _timerSets[(timer?.GetHashCode() ?? 0) & _concurrencyLevelMask];
+            return timerSet.AddOrUpdateToEarlier(timer, time);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool AddOrUpdateToLater(TTimer timer, Moment time)
+        {
+            var timerSet = _timerSets[(timer?.GetHashCode() ?? 0) & _concurrencyLevelMask];
+            return timerSet.AddOrUpdateToLater(timer, time);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Remove(TTimer timer)
         {
             var timerSet = _timerSets[(timer?.GetHashCode() ?? 0) & _concurrencyLevelMask];

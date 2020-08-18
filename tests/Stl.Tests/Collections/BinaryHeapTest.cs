@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using FluentAssertions;
 using Stl.Collections;
 using Stl.Testing;
 using Xunit;
@@ -14,10 +15,10 @@ namespace Stl.Tests.Collections
         [Fact]
         public void EmptyHeapTest()
         {
-            var heap = new BinaryHeap<int>();
-            Assert.Equal(0, heap.Count);
-            Assert.Throws<ArgumentOutOfRangeException>(() => heap.Min);
-            Assert.Throws<ArgumentOutOfRangeException>(() => heap.RemoveMin());
+            var heap = new BinaryHeap<int, int>();
+            heap.Count.Should().Be(0);
+            heap.PeekMin().IsNone().Should().BeTrue();
+            heap.ExtractMin().IsNone().Should().BeTrue();
             Assert.Empty(heap);
         }
 
@@ -25,19 +26,26 @@ namespace Stl.Tests.Collections
         public void RandomHeapTest()
         {
             var rnd = new Random(10);
-            for (var count = 1; count < 10; count++) {
-                for (var iteration = 0; iteration < 10000; iteration++) {
+            for (var count = 1; count < 100; count++) {
+                for (var iteration = 0; iteration < 1000; iteration++) {
                     var items = Enumerable.Range(0, count).Select(i => rnd.Next(5)).ToList();
-                    var heap = new BinaryHeap<int>();
+                    var heap = new BinaryHeap<int, int>();
                     foreach (var item in items)
-                        heap.Add(item);
+                        heap.Add(item, item);
                     var sortedItems = items.OrderBy(i => i).ToList();
-                    var heapItems = heap.ToList();
-                    Assert.Equal(sortedItems.Count, heap.Count);
-                    Assert.Equal(sortedItems.Count, heapItems.Count);
-                    for (var i = 0; i < sortedItems.Count; i++)
-                        Assert.Equal(sortedItems[i], heapItems[i]);
-                    Assert.Equal(sortedItems[0], heap.Min);
+                    var heapPriorities = heap.Select(i => i.Priority).ToList();
+                    var heapValues = heap.Select(i => i.Value).ToList();
+
+                    heap.Count.Should().Be(sortedItems.Count);
+                    heapPriorities.Count.Should().Be(sortedItems.Count);
+                    heapValues.Count.Should().Be(sortedItems.Count);
+                    for (var i = 0; i < sortedItems.Count; i++) {
+                        heapPriorities[i].Should().Be(sortedItems[i]);
+                        heapValues[i].Should().Be(sortedItems[i]);
+                    }
+                    var min = heap.ExtractMin();
+                    min.Value.Priority.Should().Be(sortedItems[0]);
+                    min.Value.Value.Should().Be(sortedItems[0]);
                 }
             }
         }

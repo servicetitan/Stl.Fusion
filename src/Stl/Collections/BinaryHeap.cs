@@ -1,53 +1,68 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace Stl.Collections
 {
-    public class BinaryHeap<T> : IEnumerable<T>
+    public class BinaryHeap<TPriority, TValue> : IEnumerable<(TPriority Priority, TValue Value)>
     {
-        private readonly IComparer<T> _comparer;
-        private readonly List<T> _heap = new List<T>();
+        private readonly Option<(TPriority Priority, TValue Value)> None =
+            Option<(TPriority Priority, TValue Value)>.None;
+        private readonly IComparer<TPriority> _comparer;
+        private readonly List<(TPriority Key, TValue Value)> _heap = new List<(TPriority Key, TValue Data)>();
 
-        public int Count => _heap.Count;
-        public T Min => _heap[0];
+        public int Count {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _heap.Count;
+        }
 
-        public BinaryHeap(IComparer<T>? comparer = null) =>
-            _comparer = comparer ?? Comparer<T>.Default;
+        public BinaryHeap(IComparer<TPriority>? comparer = null) =>
+            _comparer = comparer ?? Comparer<TPriority>.Default;
 
-        public BinaryHeap(BinaryHeap<T> other)
+        public BinaryHeap(BinaryHeap<TPriority, TValue> other)
         {
             _comparer = other._comparer;
             _heap = other._heap.ToList();
         }
 
-        public BinaryHeap(IEnumerable<T> source, IComparer<T>? comparer = null) : this(comparer) =>
-            _heap = source.OrderBy(i => i, _comparer).ToList();
-
-        public override string ToString() => $"{GetType().Name} of [{this.ToDelimitedString()}]";
+        public BinaryHeap(IEnumerable<(TPriority, TValue)> source, IComparer<TPriority>? comparer = null)
+            : this(comparer) =>
+            _heap = source.OrderBy(i => i.Item1, _comparer).ToList();
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        public IEnumerator<T> GetEnumerator()
+        public IEnumerator<(TPriority Priority, TValue Value)> GetEnumerator()
         {
-            var copy = new BinaryHeap<T>(this);
-            while (copy.Count > 0)
-                yield return copy.RemoveMin();
+            var copy = new BinaryHeap<TPriority, TValue>(this);
+            for (;;) {
+                var min = copy.ExtractMin();
+                if (min.IsSome(out var result))
+                    yield return result;
+                else
+                    break;
+            }
         }
 
-        public T RemoveMin()
+        public void Add(TPriority priority, TValue value)
         {
-            var min = Min;
+            _heap.Add((priority, value));
+            FixBottomUp(Count - 1);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Option<(TPriority Priority, TValue Value)> PeekMin()
+            => Count == 0 ? None : _heap[0];
+
+        public Option<(TPriority Priority, TValue Value)> ExtractMin()
+        {
+            if (Count == 0)
+                return None;
+            var result = Option.Some(_heap[0]);
             var lastIndex = Count - 1;
             _heap[0] = _heap[lastIndex];
             _heap.RemoveAt(lastIndex);
             FixTopDown(0);
-            return min;
-        }
-
-        public void Add(T item)
-        {
-            _heap.Add(item);
-            FixBottomUp(Count - 1);
+            return result;
         }
 
         public void Clear() => _heap.Clear();
@@ -64,9 +79,9 @@ namespace Stl.Collections
                 var l = GetFirstChildIndex(i);
                 var r = l + 1;
                 var minIndex = i;
-                if (IsValidIndex(l) && _comparer.Compare(_heap[l], _heap[minIndex]) < 0)
+                if (IsValidIndex(l) && _comparer.Compare(_heap[l].Key, _heap[minIndex].Key) < 0)
                     minIndex = l;
-                if (IsValidIndex(r) && _comparer.Compare(_heap[r], _heap[minIndex]) < 0)
+                if (IsValidIndex(r) && _comparer.Compare(_heap[r].Key, _heap[minIndex].Key) < 0)
                     minIndex = r;
                 if (minIndex == i)
                     break;
@@ -79,7 +94,7 @@ namespace Stl.Collections
         {
             while (i > 0) {
                 var p = GetParentIndex(i);
-                if (_comparer.Compare(_heap[i], _heap[p]) > 0)
+                if (_comparer.Compare(_heap[i].Key, _heap[p].Key) > 0)
                     break;
                 (_heap[p], _heap[i]) = (_heap[i], _heap[p]);
                 i = p;
