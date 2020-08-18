@@ -157,8 +157,8 @@ namespace Stl.Fusion.Tests
             var cUser0 = await Computed.CaptureAsync(_ => users.TryGetAsync(0));
             var cCount = await Computed.CaptureAsync(_ => users.CountAsync());
 
-            cUser0!.Options.KeepAliveTime.Should().Be(Computed.DefaultKeepAliveTime);
-            cCount!.Options.KeepAliveTime.Should().Be(TimeSpan.FromSeconds(5));
+            cUser0!.Options.KeepAliveTime.Should().Be(TimeSpan.FromSeconds(1));
+            cCount!.Options.KeepAliveTime.Should().Be(TimeSpan.FromSeconds(1));
         }
     }
 }

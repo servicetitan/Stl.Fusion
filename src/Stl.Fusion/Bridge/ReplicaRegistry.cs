@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -126,20 +125,19 @@ namespace Stl.Fusion.Bridge
             return true;
         }
 
-        // Private members
-
-        private void UpdatePruneCounterThreshold()
+        public Task PruneAsync()
         {
             lock (Lock) {
-                // Should be called inside Lock
-                var capacity = (long) _handles.GetCapacity();
-                var nextThreshold = (int) Math.Min(int.MaxValue >> 1, capacity);
-                _pruneCounterThreshold = nextThreshold;
+                if (_pruneTask == null || _pruneTask.IsCompleted)
+                    _pruneTask = Task.Run(PruneInternal);
+                return _pruneTask;
             }
         }
 
+        // Protected members
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void OnOperation(int random)
+        protected void OnOperation(int random)
         {
             if (!_opCounter.Increment(random, out var opCounterValue))
                 return;
@@ -147,39 +145,36 @@ namespace Stl.Fusion.Bridge
                 TryPrune();
         }
 
-        private void TryPrune()
+        protected void TryPrune()
         {
             lock (Lock) {
                 // Double check locking
                 if (_opCounter.ApproximateValue <= _pruneCounterThreshold)
                     return;
                 _opCounter.ApproximateValue = 0;
-                Prune();
+                PruneAsync();
             }
         }
 
-        private void Prune()
-        {
-            lock (Lock) {
-                if (_pruneTask == null || _pruneTask.IsCompleted)
-                    _pruneTask = Task.Run(PruneInternal);
-            }
-        }
-
-        private void PruneInternal()
+        protected virtual void PruneInternal()
         {
             foreach (var (key, gcHandle) in _handles) {
-                if (gcHandle.Target != null)
-                    continue;
-                if (!_handles.TryRemove(key, gcHandle))
-                    continue;
-                var random = key.PublicationId.HashCode;
-                _gcHandlePool.Release(gcHandle, random);
+                if (gcHandle.Target == null && _handles.TryRemove(key, gcHandle))
+                    _gcHandlePool.Release(gcHandle, key.PublicationId.HashCode);
             }
-
             lock (Lock) {
                 UpdatePruneCounterThreshold();
                 _opCounter.ApproximateValue = 0;
+            }
+        }
+
+        protected void UpdatePruneCounterThreshold()
+        {
+            lock (Lock) {
+                // Should be called inside Lock
+                var capacity = (long) _handles.GetCapacity();
+                var nextThreshold = (int) Math.Min(int.MaxValue >> 1, capacity);
+                _pruneCounterThreshold = nextThreshold;
             }
         }
     }

@@ -9,7 +9,6 @@ namespace Stl.Fusion
 {
     public static class Computed
     {
-        public static readonly TimeSpan DefaultKeepAliveTime = TimeSpan.FromSeconds(1);
         private static readonly AsyncLocal<IComputed?> CurrentLocal = new AsyncLocal<IComputed?>();
 
         // GetCurrent & ChangeCurrent

@@ -8,7 +8,6 @@ using Stl.Collections;
 using Stl.Collections.Slim;
 using Stl.Frozen;
 using Stl.Fusion.Internal;
-using Stl.Time;
 
 namespace Stl.Fusion
 {
@@ -29,10 +28,8 @@ namespace Stl.Fusion
         ComputedState State { get; }
         bool IsConsistent { get; }
         event Action<IComputed> Invalidated;
-        Moment LastAccessTime { get; }
 
         bool Invalidate();
-        void Touch();
         TResult Apply<TArg, TResult>(IComputedApplyHandler<TArg, TResult> handler, TArg arg);
 
         ValueTask<IComputed> UpdateAsync(bool addDependency, CancellationToken cancellationToken = default);
@@ -70,7 +67,6 @@ namespace Stl.Fusion
         // ReSharper disable once InconsistentNaming
         private event Action<IComputed>? _invalidated;
         private bool _invalidateOnSetOutput;
-        private long _lastAccessTimeTicks;
         private object Lock => this;
 
         public ComputedOptions Options {
@@ -86,13 +82,6 @@ namespace Stl.Fusion
         public bool IsConsistent => State == ComputedState.Consistent;
         public IFunction<TIn, TOut> Function => (IFunction<TIn, TOut>) Input.Function;
         public LTag Version { get; }
-
-        public Moment LastAccessTime {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => new Moment(Volatile.Read(ref _lastAccessTimeTicks));
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            protected set => Volatile.Write(ref _lastAccessTimeTicks, value.EpochOffset.Ticks);
-        }
 
         public Type OutputType => typeof(TOut);
         public Result<TOut> Output {
@@ -140,7 +129,6 @@ namespace Stl.Fusion
             _options = options;
             Input = input;
             Version = version;
-            LastAccessTime = CoarseCpuClock.Now;
             ComputedRegistry.Instance.Register(this);
         }
 
@@ -153,7 +141,6 @@ namespace Stl.Fusion
             _state = (int) (isConsistent ? ComputedState.Consistent : ComputedState.Invalidated);
             _output = output;
             Version = version;
-            LastAccessTime = CoarseCpuClock.Now;
             if (isConsistent)
                 ComputedRegistry.Instance.Register(this);
         }
@@ -290,7 +277,10 @@ namespace Stl.Fusion
         }
 
         protected virtual void OnInvalidated()
-            => ComputedRegistry.Instance.Unregister(this);
+        {
+            ComputedRegistry.Instance.Unregister(this);
+            this.CancelKeepAlive();
+        }
 
         // UpdateAsync
 
@@ -315,11 +305,6 @@ namespace Stl.Fusion
             var computed = await UpdateAsync(true, cancellationToken).ConfigureAwait(false);
             return computed.Value;
         }
-
-        // Touch
-
-        public void Touch()
-            => LastAccessTime = CoarseCpuClock.Now;
 
         // Apply
 

@@ -6,7 +6,7 @@ namespace Stl.Fusion
     [Serializable]
     public class ComputedOptions
     {
-        public static readonly TimeSpan DefaultKeepAliveTime = TimeSpan.FromSeconds(1);
+        public static readonly TimeSpan DefaultKeepAliveTime = TimeSpan.Zero;
         public static readonly TimeSpan DefaultErrorAutoInvalidateTime = TimeSpan.FromSeconds(1);
         public static readonly TimeSpan DefaultAutoInvalidateTime = TimeSpan.MaxValue; // No auto invalidation
 

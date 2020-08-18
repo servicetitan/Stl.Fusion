@@ -18,7 +18,10 @@ namespace Stl.Fusion.Tests.Services
         Task CreateAsync(User user, bool orUpdate = false, CancellationToken cancellationToken = default);
         Task UpdateAsync(User user, CancellationToken cancellationToken = default);
         Task<bool> DeleteAsync(User user, CancellationToken cancellationToken = default);
+
+        [ComputeMethod(KeepAliveTime = 1)]
         Task<User?> TryGetAsync(long userId, CancellationToken cancellationToken = default);
+        [ComputeMethod(KeepAliveTime = 1)]
         Task<long> CountAsync(CancellationToken cancellationToken = default);
         void Invalidate();
     }
@@ -87,7 +90,6 @@ namespace Stl.Fusion.Tests.Services
             }
         }
 
-        [ComputeMethod]
         public virtual async Task<User?> TryGetAsync(long userId, CancellationToken cancellationToken = default)
         {
             // Debug.WriteLine($"TryGetAsync {userId}");
@@ -99,13 +101,12 @@ namespace Stl.Fusion.Tests.Services
             return user;
         }
 
-        [ComputeMethod(KeepAliveTime = 5)]
         public virtual async Task<long> CountAsync(CancellationToken cancellationToken = default)
         {
             await Everything().ConfigureAwait(false);
             await using var dbContext = DbContextPool.Rent();
             var count = await dbContext.Users.LongCountAsync(cancellationToken).ConfigureAwait(false);
-            _log.LogDebug($"Users.Count query: {count}");
+            // _log.LogDebug($"Users.Count query: {count}");
             return count;
         }
 

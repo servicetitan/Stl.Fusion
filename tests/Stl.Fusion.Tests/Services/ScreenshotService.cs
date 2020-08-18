@@ -30,7 +30,7 @@ namespace Stl.Fusion.Tests.Services
 
     public interface IScreenshotService
     {
-        [ComputeMethod]
+        [ComputeMethod(KeepAliveTime = 0.3)]
         Task<Screenshot> GetScreenshotAsync(int width, CancellationToken cancellationToken = default);
     }
 

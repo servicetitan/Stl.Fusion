@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -26,6 +27,7 @@ namespace Stl.Fusion.Internal
             ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) cached!);
             if ((callOptions & CallOptions.Capture) != 0)
                 Interlocked.Exchange(ref context.CapturedComputed, cached);
+            cached.KeepAlive();
             return true;
         }
 
@@ -35,6 +37,7 @@ namespace Stl.Fusion.Internal
             ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) computed);
             if ((context.CallOptions & CallOptions.Capture) != 0)
                 Interlocked.Exchange(ref context.CapturedComputed, computed);
+            computed.KeepAlive();
         }
     }
 }
