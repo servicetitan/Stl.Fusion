@@ -11,7 +11,7 @@ using Stl.Generators;
 
 namespace Stl.Fusion.Interception
 {
-    public class ComputeServiceFunction<T> : InterceptedFunctionBase<T>, ICachingFunction<InterceptedInput, T>
+    public class ComputeServiceFunction<T> : CachingFunctionBase<T>
     {
         protected readonly ILogger Log;
         protected readonly Generator<LTag> VersionGenerator;
@@ -35,13 +35,11 @@ namespace Stl.Fusion.Interception
         {
             var tag = VersionGenerator.Next();
             var method = Method;
-            var options = method.Options;
-            var cacheOptions = options.CacheOptions;
-            var computed = new Computed<T>(options, input, tag);
+            var computed = new Computed<T>(method.Options, input, tag);
             try {
                 using var _ = Computed.ChangeCurrent(computed);
-                if (cacheOptions.IsCachingEnabled) {
-                    var maybeCachedOutput = await GetCachedOutputAsync(input, cacheOptions, cancellationToken)
+                if (IsCachingEnabled) {
+                    var maybeCachedOutput = await GetCachedOutputAsync(input, cancellationToken)
                         .ConfigureAwait(false);
                     if (maybeCachedOutput.IsSome(out var cachedOutput)) {
                         computed.TrySetOutput(cachedOutput);
@@ -74,29 +72,12 @@ namespace Stl.Fusion.Interception
             return computed;
         }
 
-        public async ValueTask<Option<Result<T>>> GetCachedOutputAsync(
-            InterceptedInput input, CacheOptions cacheOptions,
-            CancellationToken cancellationToken = default)
+        public override async ValueTask<Option<Result<T>>> GetCachedOutputAsync(
+            InterceptedInput input, CancellationToken cancellationToken = default)
         {
-            var cache = (ICache) Services.GetRequiredService(cacheOptions.CacheType);
+            var cache = (ICache) Services.GetRequiredService(CachingOptions.CacheType);
             var maybeResult = await cache.GetAsync(input, cancellationToken).ConfigureAwait(false);
             return maybeResult.IsSome(out var r) ? r.Cast<T>() : Option<Result<T>>.None;
-        }
-
-        // Private methods
-
-        private static void SetReturnValue(InterceptedInput input, Result<T> output)
-        {
-            if (input.Method.ReturnsValueTask)
-                input.Invocation.ReturnValue =
-                    output.IsValue(out var v)
-                        ? ValueTaskEx.FromResult(v)
-                        : ValueTaskEx.FromException<T>(output.Error!);
-            else
-                input.Invocation.ReturnValue =
-                    output.IsValue(out var v)
-                        ? Task.FromResult(v)
-                        : Task.FromException<T>(output.Error!);
         }
     }
 }

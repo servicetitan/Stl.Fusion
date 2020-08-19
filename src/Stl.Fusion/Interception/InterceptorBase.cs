@@ -23,8 +23,8 @@ namespace Stl.Fusion.Interception
     {
         public class Options
         {
-            public IArgumentComparerProvider ArgumentComparerProvider { get; set; } =
-                Interception.ArgumentComparerProvider.Default;
+            public IArgumentHandlerProvider ArgumentHandlerProvider { get; set; } =
+                Interception.ArgumentHandlerProvider.Default;
             public IMomentClock? Clock { get; set; }
             public LogLevel LogLevel { get; set; } = LogLevel.Debug;
             public LogLevel ValidationLogLevel { get; set; } = LogLevel.Information;
@@ -45,7 +45,7 @@ namespace Stl.Fusion.Interception
         protected LogLevel LogLevel { get; }
         protected LogLevel ValidationLogLevel { get; }
         protected IMomentClock Clock { get; }
-        protected IArgumentComparerProvider ArgumentComparerProvider { get; }
+        protected IArgumentHandlerProvider ArgumentHandlerProvider { get; }
 
         protected InterceptorBase(
             Options options,
@@ -58,7 +58,7 @@ namespace Stl.Fusion.Interception
             ValidationLogLevel = options.ValidationLogLevel;
             Clock = options.Clock ?? clock ?? CoarseCpuClock.Instance;
 
-            ArgumentComparerProvider = options.ArgumentComparerProvider;
+            ArgumentHandlerProvider = options.ArgumentHandlerProvider;
 
             _createHandler = CreateHandler;
             _createInterceptedMethod = CreateInterceptedMethod;
@@ -153,15 +153,15 @@ namespace Stl.Fusion.Interception
                 Attribute = attr,
                 OutputType = outputType,
                 ReturnsValueTask = returnsValueTask,
-                InvocationTargetComparer = ArgumentComparerProvider.GetInvocationTargetComparer(
+                InvocationTargetHandler = ArgumentHandlerProvider.GetInvocationTargetHandler(
                     proxyMethodInfo, invocationTargetType!),
-                ArgumentComparers = new ArgumentComparer[parameters.Length],
+                ArgumentHandlers = new ArgumentHandler[parameters.Length],
                 Options = options,
             };
 
             for (var i = 0; i < parameters.Length; i++) {
                 var p = parameters[i];
-                r.ArgumentComparers[i] = ArgumentComparerProvider.GetArgumentComparer(proxyMethodInfo, p);
+                r.ArgumentHandlers[i] = ArgumentHandlerProvider.GetArgumentHandler(proxyMethodInfo, p);
                 var parameterType = p.ParameterType;
                 if (typeof(CancellationToken).IsAssignableFrom(parameterType))
                     r.CancellationTokenArgumentIndex = i;
@@ -173,8 +173,8 @@ namespace Stl.Fusion.Interception
         protected virtual InterceptedMethodAttribute? GetInterceptedMethodAttribute(MethodInfo method)
             => method.GetAttribute<InterceptedMethodAttribute>(true, true);
 
-        protected virtual CacheAttribute? GetCacheAttribute(MethodInfo method)
-            => method.GetAttribute<CacheAttribute>(true, true);
+        protected virtual CachingAttribute? GetCacheAttribute(MethodInfo method)
+            => method.GetAttribute<CachingAttribute>(true, true);
 
         protected abstract void ValidateTypeInternal(Type type);
     }

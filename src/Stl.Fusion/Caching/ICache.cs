@@ -9,7 +9,7 @@ namespace Stl.Fusion.Caching
     {
         ValueTask<bool> SetAsync(
             InterceptedInput key, Option<Result<object>> value,
-            TimeSpan? expirationTime, CancellationToken cancellationToken);
+            TimeSpan expirationTime, CancellationToken cancellationToken);
 
         [ComputeMethod(KeepAliveTime = 0)]
         ValueTask<Option<Result<object>>> GetAsync(

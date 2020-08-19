@@ -23,23 +23,42 @@ namespace Stl.Fusion
 
         public static void KeepAlive(this IComputed computed)
         {
-            var keepAliveTime = computed.Options.KeepAliveTime;
-            if (keepAliveTime > TimeSpan.Zero && computed.State != ComputedState.Invalidated)
-                RefHolder.Hold(computed, keepAliveTime);
-        }
-
-        public static void CancelKeepAlive(this IComputed computed, TimeSpan threshold)
-        {
-            var keepAliveTime = computed.Options.KeepAliveTime;
-            if (keepAliveTime >= threshold)
-                RefHolder.Release(computed);
+            var options = computed.Options;
+            switch (options.IsCachingEnabled) {
+            case true:
+                var cachingOptions = options.CachingOptions;
+                var outputReleaseTime = cachingOptions.OutputReleaseTime;
+                if (outputReleaseTime == TimeSpan.MaxValue)
+                    goto default;
+                if (outputReleaseTime != TimeSpan.MaxValue && computed.State != ComputedState.Invalidated)
+                    Timers.ReleaseOutput.AddOrUpdateToLater(computed, Timers.Clock.Now + outputReleaseTime);
+                break;
+            default:
+                var keepAliveTime = options.KeepAliveTime;
+                if (keepAliveTime != TimeSpan.MaxValue && computed.State != ComputedState.Invalidated)
+                    Timers.KeepAlive.AddOrUpdateToLater(computed, Timers.Clock.Now + keepAliveTime);
+                break;
+            }
         }
 
         public static void CancelKeepAlive(this IComputed computed)
         {
-            var keepAliveTime = computed.Options.KeepAliveTime;
-            if (keepAliveTime >= CancelKeepAliveThreshold)
-                RefHolder.Release(computed);
+            var options = computed.Options;
+            switch (options.IsCachingEnabled) {
+            case true:
+                var cachingOptions = options.CachingOptions;
+                var outputReleaseTime = cachingOptions.OutputReleaseTime;
+                if (outputReleaseTime == TimeSpan.MaxValue)
+                    goto default;
+                if (outputReleaseTime != TimeSpan.MaxValue)
+                    Timers.ReleaseOutput.Remove(computed);
+                break;
+            default:
+                var keepAliveTime = options.KeepAliveTime;
+                if (keepAliveTime != TimeSpan.MaxValue)
+                    Timers.KeepAlive.Remove(computed);
+                break;
+            }
         }
     }
 }

@@ -20,11 +20,11 @@ namespace Stl.Fusion
 
         public sealed class Options
         {
-            internal static PrimeSieve CapacityPrimeSieve;
+            internal static readonly PrimeSieve CapacityPrimeSieve;
             public static int DefaultInitialCapacity { get; }
 
             public int InitialCapacity { get; set; } = DefaultInitialCapacity;
-            public int ConcurrencyLevel { get; set; } = HardwareInfo.ProcessorCount << 5;
+            public int ConcurrencyLevel { get; set; } = HardwareInfo.ProcessorCount << 4;
             public Func<IFunction, IAsyncLockSet<ComputedInput>>? LocksProvider { get; set; } = null;
             public GCHandlePool? GCHandlePool { get; set; } = null;
             public IMomentClock Clock { get; set; } = CoarseCpuClock.Instance;

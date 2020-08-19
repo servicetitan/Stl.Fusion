@@ -43,8 +43,8 @@ namespace Stl.Fusion.Tests
             await Task.WhenAll(tasks);
         }
 
-        // [Fact]
-        [Fact(Skip = "Performance")]
+        [Fact]
+        // [Fact(Skip = "Performance")]
         public async Task ComputedPerformanceTest()
         {
             if (TestRunnerInfo.IsBuildAgent())

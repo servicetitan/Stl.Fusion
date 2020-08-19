@@ -310,6 +310,7 @@ namespace Stl.Fusion
         {
             if (!Options.IsCachingEnabled)
                 throw Errors.UnsupportedRequiresCaching();
+            AssertStateIsNot(ComputedState.Computing);
             // Concurrency: _outputState should be set before resetting the _output!
             Interlocked.Exchange(ref _outputState, new OutputState(Option<Result<TOut>>.None));
             _output = default;
@@ -326,9 +327,13 @@ namespace Stl.Fusion
             var outputOpt = MaybeOutput;
             if (outputOpt.HasValue)
                 return outputOpt;
-            var fn = (ICachingFunction<TIn, TOut>) Input.Function;
-            var maybeOutput = await fn.GetCachedOutputAsync(Input, Options.CacheOptions, cancellationToken)
-                .ConfigureAwait(false);
+
+            Option<Result<TOut>> maybeOutput;
+            using (Computed.Suppress()) {
+                var fn = (ICachingFunction<TIn, TOut>) Input.Function;
+                maybeOutput = await fn.GetCachedOutputAsync(Input, cancellationToken)
+                    .ConfigureAwait(false);
+            }
             if (!maybeOutput.IsSome(out var output)) {
                 Invalidate();
                 return Option<Result<TOut>>.None;
