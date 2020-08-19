@@ -7,10 +7,7 @@ namespace Stl.Fusion.Interception
         public InterceptedMethod Method { get; }
 
         protected InterceptedFunctionBase(InterceptedMethod method)
-            : base()
-        {
-            Method = method;
-        }
+            => Method = method;
 
         public override string ToString()
         {

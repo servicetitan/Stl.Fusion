@@ -17,20 +17,23 @@ namespace Stl.Fusion.Interception
         }
 
         protected readonly Generator<LTag> VersionGenerator;
+        protected readonly IServiceProvider Services;
 
         public ComputeServiceInterceptor(
             Options options,
+            IServiceProvider services,
             IMomentClock? clock = null,
             ILoggerFactory? loggerFactory = null)
             : base(options, clock, loggerFactory)
         {
             VersionGenerator = options.VersionGenerator;
+            Services = services;
         }
 
         protected override InterceptedFunctionBase<T> CreateFunction<T>(InterceptedMethod method)
         {
             var log = LoggerFactory.CreateLogger<ComputeServiceFunction<T>>();
-            return new ComputeServiceFunction<T>(method, VersionGenerator, log);
+            return new ComputeServiceFunction<T>(method, VersionGenerator, Services, log);
         }
 
         protected override void ValidateTypeInternal(Type type)

@@ -89,7 +89,7 @@ namespace Stl.Fusion.Tests
             p.GetValueCallCount.Should().Be(gv);
             p.GetCharCountCallCount.Should().Be(gcc);
 
-            // But if we wait for 0.1s+, it should recompute again
+            // But if we wait for 0.3s+, it should recompute again
             await Task.Delay(500);
             await Assert.ThrowsAsync<NullReferenceException>(() => p.GetCharCountAsync());
             p.GetValueCallCount.Should().Be(gv);
@@ -109,8 +109,8 @@ namespace Stl.Fusion.Tests
             c1.Options.AutoInvalidateTime.Should().Be(d.AutoInvalidateTime);
 
             var c2 = await Computed.CaptureAsync(_ => p.GetCharCountAsync());
-            c2.Options.KeepAliveTime.Should().Be(d.KeepAliveTime);
-            c2.Options.ErrorAutoInvalidateTime.Should().Be(TimeSpan.FromSeconds(0.1));
+            c2.Options.KeepAliveTime.Should().Be(TimeSpan.FromSeconds(0.3));
+            c2.Options.ErrorAutoInvalidateTime.Should().Be(TimeSpan.FromSeconds(0.3));
             c2.Options.AutoInvalidateTime.Should().Be(d.AutoInvalidateTime);
         }
     }

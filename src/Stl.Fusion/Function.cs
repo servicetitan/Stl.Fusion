@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
+using Stl.Fusion.Caching;
 using Stl.Fusion.Internal;
 using Stl.Locking;
 
@@ -32,8 +33,7 @@ namespace Stl.Fusion
             CancellationToken cancellationToken = default);
     }
 
-    public abstract class FunctionBase<TIn, TOut> : AsyncDisposableBase,
-        IFunction<TIn, TOut>
+    public abstract class FunctionBase<TIn, TOut> : AsyncDisposableBase, IFunction<TIn, TOut>
         where TIn : ComputedInput
     {
         protected IAsyncLockSet<ComputedInput> Locks { get; }
@@ -59,14 +59,14 @@ namespace Stl.Fusion
 
             // Read-Lock-RetryRead-Compute-Store pattern
 
-            var result = TryGetCached(input);
-            if (result.TryUseCached(context, usedBy))
+            var result = TryGetExisting(input);
+            if (result.TryUseExisting(context, usedBy))
                 return result!;
 
             using var @lock = await Locks.LockAsync(input, cancellationToken).ConfigureAwait(false);
 
-            result = TryGetCached(input);
-            if (result.TryUseCached(context, usedBy))
+            result = TryGetExisting(input);
+            if (result.TryUseExisting(context, usedBy))
                 return result!;
 
             result = await ComputeAsync(input, result, cancellationToken).ConfigureAwait(false);
@@ -86,25 +86,39 @@ namespace Stl.Fusion
             CancellationToken cancellationToken = default)
         {
             context ??= ComputeContext.Current;
+            Result<TOut> output;
 
             // Read-Lock-RetryRead-Compute-Store pattern
 
-            var result = TryGetCached(input);
-            if (result.TryUseCached(context, usedBy))
-                return result.Strip();
+            var result = TryGetExisting(input);
+            if (result != null && result.Options.IsCachingEnabled) {
+                var maybeOutput = await result.TryUseExistingAsync(context, usedBy, cancellationToken)
+                    .ConfigureAwait(false);
+                if (maybeOutput.IsSome(out output))
+                    return output.Value;
+            }
+            else if (result.TryUseExisting(context, usedBy))
+                return result!.Value;
 
             using var @lock = await Locks.LockAsync(input, cancellationToken).ConfigureAwait(false);
 
-            result = TryGetCached(input);
-            if (result.TryUseCached(context, usedBy))
-                return result.Strip();
+            result = TryGetExisting(input);
+            if (result != null && result.Options.IsCachingEnabled) {
+                var maybeOutput = await result.TryUseExistingAsync(context, usedBy, cancellationToken)
+                    .ConfigureAwait(false);
+                if (maybeOutput.IsSome(out output))
+                    return output.Value;
+            }
+            else if (result.TryUseExisting(context, usedBy))
+                return result!.Value;
 
             result = await ComputeAsync(input, result, cancellationToken).ConfigureAwait(false);
+            output = result.Output; // It can't be gone here b/c KeepAlive isn't called yet
             result.UseNew(context, usedBy);
-            return result.Strip();
+            return output.Value;
         }
 
-        protected IComputed<TOut>? TryGetCached(TIn input)
+        protected IComputed<TOut>? TryGetExisting(TIn input)
         {
             var computed = ComputedRegistry.Instance.TryGet(input);
             return computed as IComputed<TIn, TOut>;
@@ -113,6 +127,6 @@ namespace Stl.Fusion
         // Protected & private
 
         protected abstract ValueTask<IComputed<TOut>> ComputeAsync(
-            TIn input, IComputed<TOut>? cached, CancellationToken cancellationToken);
+            TIn input, IComputed<TOut>? existing, CancellationToken cancellationToken);
     }
 }

@@ -14,7 +14,7 @@ namespace Stl.Fusion.Tests.Services
         void SetValue(string value);
         [ComputeMethod]
         Task<string> GetValueAsync();
-        [ComputeMethod(ErrorAutoInvalidateTime = 0.1)]
+        [ComputeMethod(KeepAliveTime = 0.3, ErrorAutoInvalidateTime = 0.3)]
         Task<int> GetCharCountAsync();
     }
 

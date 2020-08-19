@@ -95,13 +95,13 @@ namespace Stl.Fusion
             context ??= ComputeContext.Current;
 
             var result = Computed;
-            if (result.TryUseCached(context, usedBy))
+            if (result.TryUseExisting(context, usedBy))
                 return result;
 
             using var _ = await AsyncLock.LockAsync(cancellationToken);
 
             result = Computed;
-            if (result.TryUseCached(context, usedBy))
+            if (result.TryUseExisting(context, usedBy))
                 return result;
 
             result = await ComputeAsync(cancellationToken).ConfigureAwait(false);
@@ -130,18 +130,18 @@ namespace Stl.Fusion
             context ??= ComputeContext.Current;
 
             var result = Computed;
-            if (result.TryUseCached(context, usedBy))
-                return result.Strip();
+            if (result.TryUseExisting(context, usedBy))
+                return result.Value;
 
             using var _ = await AsyncLock.LockAsync(cancellationToken);
 
             result = Computed;
-            if (result.TryUseCached(context, usedBy))
-                return result.Strip();
+            if (result.TryUseExisting(context, usedBy))
+                return result.Value;
 
             result = await ComputeAsync(cancellationToken).ConfigureAwait(false);
             result.UseNew(context, usedBy);
-            return result.Strip();
+            return result.Value;
         }
 
         protected virtual async ValueTask<SimpleComputed<T>> ComputeAsync(CancellationToken cancellationToken)

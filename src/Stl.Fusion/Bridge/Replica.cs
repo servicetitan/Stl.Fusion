@@ -177,7 +177,8 @@ namespace Stl.Fusion.Bridge
             }
         }
 
-        protected async Task<IComputed<T>> InvokeAsync(ReplicaInput input, IComputed? usedBy, ComputeContext? context,
+        protected async Task<IComputed<T>> InvokeAsync(
+            ReplicaInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)
         {
             if (input != Input)
@@ -187,7 +188,7 @@ namespace Stl.Fusion.Bridge
             context ??= ComputeContext.Current;
 
             var result = Computed;
-            if (result.TryUseCached(context, usedBy))
+            if (result.TryUseExisting(context, usedBy))
                 return result;
 
             // No async locking here b/c RequestUpdateAsync is, in fact, doing this
@@ -197,7 +198,8 @@ namespace Stl.Fusion.Bridge
             return result;
         }
 
-        protected async Task<T> InvokeAndStripAsync(ReplicaInput input, IComputed? usedBy, ComputeContext? context,
+        protected async Task<T> InvokeAndStripAsync(
+            ReplicaInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)
         {
             if (input != Input)
@@ -207,22 +209,14 @@ namespace Stl.Fusion.Bridge
             context ??= ComputeContext.Current;
 
             var result = Computed;
-            if (result.TryUseCached(context, usedBy))
-                return result.Strip();
+            if (result.TryUseExisting(context, usedBy))
+                return result.Value;
 
             // No async locking here b/c RequestUpdateAsync is, in fact, doing this
             await RequestUpdateAsync(cancellationToken).ConfigureAwait(false);
             result = Computed;
             result.UseNew(context, usedBy);
-            return result.Strip();
-        }
-
-        protected IComputed<T>? TryGetCached(ReplicaInput input)
-        {
-            if (input != Input)
-                // This "Function" supports just a single input == Input
-                throw new ArgumentOutOfRangeException(nameof(input));
-            return Computed;
+            return result.Value;
         }
 
         #region Explicit impl. of IFunction & IFunction<...>

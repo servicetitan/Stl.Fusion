@@ -12,6 +12,7 @@ using Castle.DynamicProxy;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Concurrency;
+using Stl.Fusion.Caching;
 using Stl.Fusion.Interception.Internal;
 using Stl.Reflection;
 using Stl.Time;
@@ -145,10 +146,7 @@ namespace Stl.Fusion.Interception
 
             var outputType = returnType.GetGenericArguments()[0];
             var invocationTargetType = proxyMethodInfo.ReflectedType;
-            var options = new ComputedOptions(
-                GetTimespan<ComputeMethodAttribute>(attr, a => a.KeepAliveTime),
-                GetTimespan<ComputeMethodAttribute>(attr, a => a.ErrorAutoInvalidateTime),
-                GetTimespan<ComputeMethodAttribute>(attr, a => a.AutoInvalidateTime));
+            var options = ComputedOptions.FromAttribute(attr, GetCacheAttribute(proxyMethodInfo));
             var parameters = proxyMethodInfo.GetParameters();
             var r = new InterceptedMethod {
                 MethodInfo = proxyMethodInfo,
@@ -175,20 +173,9 @@ namespace Stl.Fusion.Interception
         protected virtual InterceptedMethodAttribute? GetInterceptedMethodAttribute(MethodInfo method)
             => method.GetAttribute<InterceptedMethodAttribute>(true, true);
 
+        protected virtual CacheAttribute? GetCacheAttribute(MethodInfo method)
+            => method.GetAttribute<CacheAttribute>(true, true);
+
         protected abstract void ValidateTypeInternal(Type type);
-
-        // Private methods
-
-        private TimeSpan? GetTimespan<TAttribute>(Attribute? attr, Func<TAttribute, double> propertyGetter)
-        {
-            if (!(attr is TAttribute typedAttr))
-                return null;
-            var value = propertyGetter.Invoke(typedAttr);
-            if (double.IsNaN(value))
-                return null;
-            if (double.IsPositiveInfinity(value))
-                return TimeSpan.MaxValue;
-            return TimeSpan.FromSeconds(value);
-        }
     }
 }

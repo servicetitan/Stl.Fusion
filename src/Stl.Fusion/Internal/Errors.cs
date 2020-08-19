@@ -65,5 +65,7 @@ namespace Stl.Fusion.Internal
                 $"IReplica<{replicaType.Name}> isn't supported by the current client, " +
                 $"most likely because there is no good way to intercept the deserialization " +
                 $"of results of this type.");
+        public static Exception UnsupportedRequiresCaching()
+            => new NotSupportedException($"This operation requires {nameof(IComputed)} with enabled caching.");
     }
 }

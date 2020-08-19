@@ -66,9 +66,9 @@ namespace Stl.Fusion
             return ccs.Context.GetCapturedComputed<T>();
         }
 
-        public static IComputed<T>? TryGetCached<T>(Func<Task<T>> producer)
+        public static IComputed<T>? TryGetExisting<T>(Func<Task<T>> producer)
         {
-            using var ccs = ComputeContext.New(CallOptions.TryGetCached).Activate();
+            using var ccs = ComputeContext.New(CallOptions.TryGetExisting).Activate();
             var task = producer.Invoke();
             // The flow is essentially synchronous in this case, so...
             task.AssertCompleted();

@@ -49,7 +49,7 @@ namespace Stl.Fusion.Interception
             // This method fixes up the arguments before the invocation so that
             // CancellationToken is set to the correct one and CallOptions are reset.
             // In addition, it processes CallOptions.Capture, though note that
-            // it's also processed in InterceptedFunction.TryGetCached.
+            // it's also processed in InterceptedFunction.TryGetExisting.
 
             var method = Method;
             var arguments = Arguments;

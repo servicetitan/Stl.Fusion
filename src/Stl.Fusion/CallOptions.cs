@@ -5,8 +5,8 @@ namespace Stl.Fusion
     [Flags]
     public enum CallOptions
     {
-        TryGetCached = 1,
-        Invalidate = 2 + TryGetCached,
+        TryGetExisting = 1,
+        Invalidate = 2 + TryGetExisting,
         Capture = 4,
     }
 }

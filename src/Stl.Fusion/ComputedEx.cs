@@ -12,10 +12,6 @@ namespace Stl.Fusion
     {
         private static readonly TimeSpan CancelKeepAliveThreshold = TimeSpan.FromSeconds(1.1);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static T Strip<T>(this IComputed<T>? computed)
-            => computed != null ? computed.Value : default!;
-
         public static Task WhenInvalidatedAsync<T>(this IComputed<T> computed, CancellationToken cancellationToken = default)
         {
             if (computed.State == ComputedState.Invalidated)
