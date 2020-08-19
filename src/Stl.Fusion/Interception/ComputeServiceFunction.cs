@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Stl.Async;
 using Stl.Fusion.Caching;
 using Stl.Fusion.Interception.Internal;
 using Stl.Generators;
@@ -69,6 +68,9 @@ namespace Stl.Fusion.Interception
                 // throwing it further will probably make it just worse,
                 // since the the caller have to take this scenario into acc.
             }
+            if (IsCachingEnabled)
+                await SetCachedOutputAsync(input, Option.Some(computed.Output.Cast<object>()), cancellationToken)
+                    .ConfigureAwait(false);
             return computed;
         }
 
@@ -78,6 +80,14 @@ namespace Stl.Fusion.Interception
             var cache = (ICache) Services.GetRequiredService(CachingOptions.CacheType);
             var maybeResult = await cache.GetAsync(input, cancellationToken).ConfigureAwait(false);
             return maybeResult.IsSome(out var r) ? r.Cast<T>() : Option<Result<T>>.None;
+        }
+
+        public override ValueTask SetCachedOutputAsync(
+            InterceptedInput input, Option<Result<object>> output,
+            CancellationToken cancellationToken = default)
+        {
+            var cache = (ICache) Services.GetRequiredService(CachingOptions.CacheType);
+            return cache.SetAsync(input, output, CachingOptions.ExpirationTime, cancellationToken);
         }
     }
 }

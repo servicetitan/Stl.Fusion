@@ -7,20 +7,20 @@ namespace Stl.Fusion.Caching
     public class CachingOptions
     {
         public static readonly CachingOptions Default =
-            new CachingOptions(true, typeof(ICache), null, TimeSpan.FromSeconds(10));
+            new CachingOptions(true, typeof(ICache), TimeSpan.MaxValue, TimeSpan.FromSeconds(10));
         public static readonly CachingOptions NoCaching =
             new CachingOptions(false, Default.CacheType, Default.ExpirationTime, Default.OutputReleaseTime);
 
         public bool IsCachingEnabled { get; }
         public Type CacheType { get; }
-        public TimeSpan? ExpirationTime { get; }
+        public TimeSpan ExpirationTime { get; }
         public TimeSpan OutputReleaseTime { get; }
 
         [JsonConstructor]
         public CachingOptions(
             bool isCachingEnabled,
             Type cacheType,
-            TimeSpan? expirationTime,
+            TimeSpan expirationTime,
             TimeSpan outputReleaseTime)
         {
             IsCachingEnabled = isCachingEnabled;
