@@ -1,5 +1,6 @@
 using System;
 using Newtonsoft.Json;
+using Stl.Fusion.Interception;
 
 namespace Stl.Fusion.Caching
 {
@@ -7,7 +8,7 @@ namespace Stl.Fusion.Caching
     public class CachingOptions
     {
         public static readonly CachingOptions Default =
-            new CachingOptions(true, typeof(ICache), TimeSpan.MaxValue, TimeSpan.FromSeconds(10));
+            new CachingOptions(true, typeof(ICache<InterceptedInput, Result<object>>), TimeSpan.MaxValue, TimeSpan.FromSeconds(10));
         public static readonly CachingOptions NoCaching =
             new CachingOptions(false, Default.CacheType, Default.ExpirationTime, Default.OutputReleaseTime);
 

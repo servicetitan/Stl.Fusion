@@ -10,15 +10,15 @@ namespace Stl.Fusion.Caching
     public interface ICachingComputed : IComputed
     {
         bool IsFromCache { get; }
-        IResult? CacheOutput { get; }
+        IResult? MaybeOutput { get; }
 
-        void DropCachedOutput();
+        void ReleaseOutput();
         ValueTask<IResult?> GetOutputAsync(CancellationToken cancellationToken = default);
     }
 
     public interface ICachingComputed<T> : ICachingComputed, IComputed<T>
     {
-        new ResultBox<T>? CacheOutput { get; }
+        new ResultBox<T>? MaybeOutput { get; }
 
         bool TrySetOutput(Result<T> output, bool isFromCache);
         new ValueTask<ResultBox<T>?> GetOutputAsync(CancellationToken cancellationToken = default);
@@ -26,33 +26,33 @@ namespace Stl.Fusion.Caching
 
     public class CachingComputed<T> : Computed<T>, ICachingComputed<T>
     {
-        private volatile ResultBox<T>? _cacheOutput = null;
+        private volatile ResultBox<T>? _maybeOutput = null;
 
         public bool IsFromCache { get; private set; }
         public override Result<T> Output {
             get {
                 AssertStateIsNot(ComputedState.Computing);
-                var output = _cacheOutput;
+                var output = _maybeOutput;
                 if (output == null)
-                    throw Errors.CachedOutputIsAlreadyDropped();
+                    throw Errors.OutputIsAlreadyReleased();
                 return output.ToResult();
             }
         }
-        IResult? ICachingComputed.CacheOutput => CacheOutput;
-        public ResultBox<T>? CacheOutput => _cacheOutput;
+        IResult? ICachingComputed.MaybeOutput => MaybeOutput;
+        public ResultBox<T>? MaybeOutput => _maybeOutput;
         public new ICachingFunction<InterceptedInput, T> Function
             => (ICachingFunction<InterceptedInput, T>) Input.Function;
 
         public CachingComputed(ComputedOptions options, InterceptedInput input, LTag version)
             : base(options, input, version) { }
-        protected CachingComputed(ComputedOptions options, InterceptedInput input, ResultBox<T> cachedOutput, LTag version, bool isConsistent = true)
+        protected CachingComputed(ComputedOptions options, InterceptedInput input, ResultBox<T> maybeOutput, LTag version, bool isConsistent = true)
             : base(options, input, default, version, isConsistent)
-            => _cacheOutput = cachedOutput;
+            => _maybeOutput = maybeOutput;
 
-        public void DropCachedOutput()
+        public void ReleaseOutput()
         {
             AssertStateIsNot(ComputedState.Computing);
-            Interlocked.Exchange(ref _cacheOutput, null);
+            Interlocked.Exchange(ref _maybeOutput, null);
         }
 
         public override bool TrySetOutput(Result<T> output)
@@ -67,7 +67,7 @@ namespace Stl.Fusion.Caching
                 if (State != ComputedState.Computing)
                     return false;
                 SetStateUnsafe(ComputedState.Consistent);
-                Interlocked.Exchange(ref _cacheOutput, new ResultBox<T>(output));
+                Interlocked.Exchange(ref _maybeOutput, new ResultBox<T>(output));
                 IsFromCache = isFromCache;
             }
             OnOutputSet(output);
@@ -78,9 +78,9 @@ namespace Stl.Fusion.Caching
             => await GetOutputAsync(cancellationToken).ConfigureAwait(false);
         public async ValueTask<ResultBox<T>?> GetOutputAsync(CancellationToken cancellationToken)
         {
-            var cachedOutput = CacheOutput;
-            if (cachedOutput != null)
-                return cachedOutput;
+            var maybeOutput = MaybeOutput;
+            if (maybeOutput != null)
+                return maybeOutput;
 
             Option<Result<T>> outputOpt;
             using (Computed.Suppress()) {
@@ -93,9 +93,9 @@ namespace Stl.Fusion.Caching
                 return null;
             }
 
-            cachedOutput = new ResultBox<T>(output);
-            Interlocked.Exchange(ref _cacheOutput, cachedOutput);
-            return cachedOutput;
+            maybeOutput = new ResultBox<T>(output);
+            Interlocked.Exchange(ref _maybeOutput, maybeOutput);
+            return maybeOutput;
         }
 
         protected override void OnInvalidated()

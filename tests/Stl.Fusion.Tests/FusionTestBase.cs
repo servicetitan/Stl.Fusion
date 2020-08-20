@@ -16,6 +16,7 @@ using Stl.IO;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Caching;
 using Stl.Fusion.Client;
+using Stl.Fusion.Interception;
 using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
 using Stl.Fusion.Tests.UIModels;
@@ -128,9 +129,11 @@ namespace Stl.Fusion.Tests
                     }, 256);
 
             // Cache
-            services.AddSingleton<SimpleCache>();
-            services.AddSingleton<ICache, LoggingCacheWrapper<SimpleCache>>();
-            services.AddSingleton(c => new LoggingCacheWrapper<SimpleCache>.Options() {
+            services.AddSingleton<SimpleCache<InterceptedInput, Result<object>>>();
+            services.AddSingleton<
+                ICache<InterceptedInput, Result<object>>,
+                LoggingCacheWrapper<InterceptedInput, Result<object>, SimpleCache<InterceptedInput, Result<object>>>>();
+            services.AddSingleton(c => new LoggingCacheWrapper<InterceptedInput, Result<object>, SimpleCache<InterceptedInput, Result<object>>>.Options() {
                 LogLevel = LogLevel.Information,
             });
 

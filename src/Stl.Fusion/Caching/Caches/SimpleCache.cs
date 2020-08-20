@@ -10,7 +10,8 @@ using Stl.Time;
 
 namespace Stl.Fusion.Caching
 {
-    public class SimpleCache : ICache
+    public class SimpleCache<TKey, TValue> : ICache<TKey, TValue>
+        where TKey : notnull
     {
         public class Options
         {
@@ -20,9 +21,9 @@ namespace Stl.Fusion.Caching
             public IMomentClock? Clock { get; set; }
         }
 
-        protected static readonly Option<Result<object>> None = Option<Result<object>>.None;
-        protected readonly ConcurrentDictionary<InterceptedInput, (Result<object> Value, TimeSpan ExpirationTime)> Storage;
-        protected readonly ConcurrentTimerSet<InterceptedInput> ExpirationTimers;
+        protected static readonly Option<TValue> None = Option<TValue>.None;
+        protected readonly ConcurrentDictionary<TKey, (TValue Value, TimeSpan ExpirationTime)> Storage;
+        protected readonly ConcurrentTimerSet<TKey> ExpirationTimers;
         public TimeSpan MaxExpirationTime { get; }
         public IMomentClock Clock { get; }
 
@@ -33,10 +34,10 @@ namespace Stl.Fusion.Caching
             options ??= new Options();
             MaxExpirationTime = options.MaxExpirationTime;
             Clock = clock ?? options.Clock ?? CoarseCpuClock.Instance;
-            Storage = new ConcurrentDictionary<InterceptedInput,(Result<object>, TimeSpan)>(
+            Storage = new ConcurrentDictionary<TKey, (TValue Value, TimeSpan ExpirationTime)>(
                 options.ConcurrencyLevel,
                 ComputedRegistry.Options.DefaultInitialCapacity);
-            ExpirationTimers = new ConcurrentTimerSet<InterceptedInput>(new ConcurrentTimerSet<InterceptedInput>.Options() {
+            ExpirationTimers = new ConcurrentTimerSet<TKey>(new ConcurrentTimerSet<TKey>.Options() {
                 Clock = Clock,
                 Quanta = options.Quanta,
                 ConcurrencyLevel = options.ConcurrencyLevel,
@@ -44,9 +45,9 @@ namespace Stl.Fusion.Caching
             });
         }
 
-        public ValueTask SetAsync(InterceptedInput key, Result<object> value, TimeSpan expirationTime, CancellationToken cancellationToken)
+        public ValueTask SetAsync(TKey key, TValue value, TimeSpan expirationTime, CancellationToken cancellationToken)
         {
-            if (expirationTime > MaxExpirationTime)
+            if (expirationTime == TimeSpan.Zero || expirationTime > MaxExpirationTime)
                 expirationTime = MaxExpirationTime;
             Storage[key] = (value, expirationTime);
             ExpirationTimers.AddOrUpdateToLater(key, Clock.Now + expirationTime);
@@ -54,7 +55,7 @@ namespace Stl.Fusion.Caching
             return ValueTaskEx.CompletedTask;
         }
 
-        public ValueTask RemoveAsync(InterceptedInput key, CancellationToken cancellationToken)
+        public ValueTask RemoveAsync(TKey key, CancellationToken cancellationToken)
         {
             Storage.Remove(key, out _);
             ExpirationTimers.Remove(key);
@@ -62,7 +63,7 @@ namespace Stl.Fusion.Caching
             return ValueTaskEx.CompletedTask;
         }
 
-        public virtual ValueTask<Option<Result<object>>> GetAsync(InterceptedInput key, CancellationToken cancellationToken)
+        public virtual ValueTask<Option<TValue>> GetAsync(TKey key, CancellationToken cancellationToken)
         {
             if (!Storage.TryGetValue(key, out var pair))
                 return ValueTaskEx.FromResult(None);

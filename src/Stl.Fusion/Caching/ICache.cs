@@ -1,19 +1,19 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Stl.Fusion.Interception;
 
 namespace Stl.Fusion.Caching
 {
-    public interface ICache
+    public interface ICache<in TKey, TValue>
+        where TKey : notnull
     {
         ValueTask SetAsync(
-            InterceptedInput key, Result<object> value, TimeSpan expirationTime, CancellationToken cancellationToken);
+            TKey key, TValue value, TimeSpan expirationTime, CancellationToken cancellationToken);
         ValueTask RemoveAsync(
-            InterceptedInput key, CancellationToken cancellationToken);
+            TKey key, CancellationToken cancellationToken);
 
         [ComputeMethod(KeepAliveTime = 0)]
-        ValueTask<Option<Result<object>>> GetAsync(
-            InterceptedInput key, CancellationToken cancellationToken);
+        ValueTask<Option<TValue>> GetAsync(
+            TKey key, CancellationToken cancellationToken);
     }
 }

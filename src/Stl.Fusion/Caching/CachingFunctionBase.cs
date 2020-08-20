@@ -31,6 +31,7 @@ namespace Stl.Fusion.Caching
             IsCachingEnabled = CachingOptions.IsCachingEnabled;
         }
 
+        // Get-Set-RemoveCachedOutputAsync
         public abstract ValueTask<Option<Result<T>>> GetCachedOutputAsync(
             InterceptedInput input, CancellationToken cancellationToken = default);
         public abstract ValueTask SetCachedOutputAsync(
@@ -74,7 +75,7 @@ namespace Stl.Fusion.Caching
 
             computed = (ICachingComputed<T>) await ComputeAsync(input, computed, cancellationToken)
                 .ConfigureAwait(false);
-            output = computed.CacheOutput; // It can't be gone here b/c KeepAlive isn't called yet
+            output = computed.MaybeOutput; // It can't be gone here b/c KeepAlive isn't called yet
             computed.UseNew(context, usedBy);
             return output!.Value;
         }

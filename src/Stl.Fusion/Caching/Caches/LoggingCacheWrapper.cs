@@ -2,12 +2,12 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Stl.Fusion.Interception;
 
 namespace Stl.Fusion.Caching
 {
-    public class LoggingCacheWrapper<TCache> : ICache
-        where TCache : ICache
+    public class LoggingCacheWrapper<TKey, TValue, TCache> : ICache<TKey, TValue>
+        where TKey : notnull
+        where TCache : ICache<TKey, TValue>
     {
         public class Options
         {
@@ -31,21 +31,21 @@ namespace Stl.Fusion.Caching
             IsEnabled = Log.IsEnabled(LogLevel);
         }
 
-        public ValueTask SetAsync(InterceptedInput key, Result<object> value, TimeSpan expirationTime, CancellationToken cancellationToken)
+        public ValueTask SetAsync(TKey key, TValue value, TimeSpan expirationTime, CancellationToken cancellationToken)
         {
             if (IsEnabled)
                 Log.Log(LogLevel, $"[=] {key} <- {value}");
             return Cache.SetAsync(key, value, expirationTime, cancellationToken);
         }
 
-        public ValueTask RemoveAsync(InterceptedInput key, CancellationToken cancellationToken)
+        public ValueTask RemoveAsync(TKey key, CancellationToken cancellationToken)
         {
             if (IsEnabled)
                 Log.Log(LogLevel, $"[-] {key}");
             return Cache.RemoveAsync(key, cancellationToken);
         }
 
-        public async ValueTask<Option<Result<object>>> GetAsync(InterceptedInput key, CancellationToken cancellationToken)
+        public async ValueTask<Option<TValue>> GetAsync(TKey key, CancellationToken cancellationToken)
         {
             var value = await Cache.GetAsync(key, cancellationToken).ConfigureAwait(false);
             if (IsEnabled)

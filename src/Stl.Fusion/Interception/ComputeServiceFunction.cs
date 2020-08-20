@@ -12,11 +12,11 @@ namespace Stl.Fusion.Interception
 {
     public class ComputeServiceFunction<T> : CachingFunctionBase<T>
     {
-        private readonly Lazy<ICache> _cacheLazy;
+        private readonly Lazy<ICache<InterceptedInput, Result<object>>> _cacheLazy;
         protected readonly ILogger Log;
         protected readonly Generator<LTag> VersionGenerator;
         protected readonly IServiceProvider Services;
-        protected ICache Cache => _cacheLazy.Value;
+        protected ICache<InterceptedInput, Result<object>> Cache => _cacheLazy.Value;
 
         public ComputeServiceFunction(
             InterceptedMethod method,
@@ -28,7 +28,8 @@ namespace Stl.Fusion.Interception
             Log = log ??= NullLogger<ComputeServiceFunction<T>>.Instance;
             VersionGenerator = versionGenerator;
             Services = services;
-            _cacheLazy = new Lazy<ICache>(() => (ICache) Services.GetRequiredService(CachingOptions.CacheType));
+            _cacheLazy = new Lazy<ICache<InterceptedInput, Result<object>>>(
+                () => (ICache<InterceptedInput, Result<object>>) Services.GetRequiredService(CachingOptions.CacheType));
         }
 
         protected override async ValueTask<IComputed<T>> ComputeAsync(

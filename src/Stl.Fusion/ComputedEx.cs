@@ -38,7 +38,7 @@ namespace Stl.Fusion
                 if (outputReleaseTime == TimeSpan.MaxValue)
                     goto default;
                 if (outputReleaseTime != TimeSpan.MaxValue && computed.State != ComputedState.Invalidated)
-                    Timers.DropCachedOutput.AddOrUpdateToLater((ICachingComputed) computed, Timers.Clock.Now + outputReleaseTime);
+                    Timers.ReleaseOutput.AddOrUpdateToLater((ICachingComputed) computed, Timers.Clock.Now + outputReleaseTime);
                 break;
             default:
                 var keepAliveTime = options.KeepAliveTime;
@@ -58,7 +58,7 @@ namespace Stl.Fusion
                 if (outputReleaseTime == TimeSpan.MaxValue)
                     goto default;
                 if (outputReleaseTime != TimeSpan.MaxValue)
-                    Timers.DropCachedOutput.Remove((ICachingComputed) computed);
+                    Timers.ReleaseOutput.Remove((ICachingComputed) computed);
                 break;
             default:
                 var keepAliveTime = options.KeepAliveTime;

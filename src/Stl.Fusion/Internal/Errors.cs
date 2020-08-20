@@ -69,9 +69,7 @@ namespace Stl.Fusion.Internal
 
         public static Exception UnsupportedRequiresCachingComputed()
             => new NotSupportedException($"{nameof(ICachingComputed)} is required to perform this operation.");
-        public static Exception UnsupportedUseAnotherOverload(Type type)
-            => new NotSupportedException($"This method isn't supported in '{type}'. Use its another overload.");
-        public static Exception CachedOutputIsAlreadyDropped()
-            => new InvalidOperationException($"{nameof(ICachingComputed.CacheOutput)} is already dropped.");
+        public static Exception OutputIsAlreadyReleased()
+            => new InvalidOperationException($"{nameof(ICachingComputed.MaybeOutput)} is already released.");
     }
 }

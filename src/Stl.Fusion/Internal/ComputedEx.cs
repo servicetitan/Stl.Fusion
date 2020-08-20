@@ -48,10 +48,10 @@ namespace Stl.Fusion.Internal
                 existing.Invalidate();
                 if ((callOptions & CallOptions.Capture) != 0)
                     Interlocked.Exchange(ref context.CapturedComputed, existing);
-                return existing.CacheOutput ?? ResultBox<T>.Default;
+                return existing.MaybeOutput ?? ResultBox<T>.Default;
             }
 
-            var result = existing.CacheOutput;
+            var result = existing.MaybeOutput;
             if (result == null) {
                 result = await existing.GetOutputAsync(cancellationToken).ConfigureAwait(false);
                 if (result == null)
