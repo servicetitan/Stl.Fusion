@@ -14,6 +14,7 @@ using Microsoft.Extensions.Logging;
 using Stl.DependencyInjection;
 using Stl.IO;
 using Stl.Fusion.Bridge;
+using Stl.Fusion.Caching;
 using Stl.Fusion.Client;
 using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
@@ -126,6 +127,13 @@ namespace Stl.Fusion.Tests
                         builder.UseSqlite($"Data Source={DbPath}", sqlite => { });
                     }, 256);
 
+            // Cache
+            services.AddSingleton<SimpleCache>();
+            services.AddSingleton<ICache, LoggingCacheWrapper<SimpleCache>>();
+            services.AddSingleton(c => new LoggingCacheWrapper<SimpleCache>.Options() {
+                LogLevel = LogLevel.Information,
+            });
+
             // Core fusion services
             services.AddSingleton(c => new TestWebHost(c));
             services.AddFusionServerCore();
@@ -138,7 +146,9 @@ namespace Stl.Fusion.Tests
                 var apiUri = new Uri($"{baseUri}api/");
                 return new HttpClient() { BaseAddress = apiUri };
             });
-            services.AddServices(t => t.Namespace!.StartsWith(testType.Namespace!), testType.Assembly);
+
+            // Auto-discovered services
+            services.AddDiscoveredServices(t => t.Namespace!.StartsWith(testType.Namespace!), testType.Assembly);
 
             // Custom live state updater
             services.AddLiveState<Unit, ServerTimeModel>(

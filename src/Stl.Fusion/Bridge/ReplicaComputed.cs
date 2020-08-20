@@ -1,3 +1,5 @@
+using Stl.Fusion.Internal;
+
 namespace Stl.Fusion.Bridge
 {
     public interface IReplicaComputed : IComputed
@@ -15,9 +17,18 @@ namespace Stl.Fusion.Bridge
         IReplica IReplicaComputed.Replica => Input.Replica;
         public IReplica<T> Replica => (IReplica<T>) Input.Replica;
 
-        public ReplicaComputed(ComputedOptions options, ReplicaInput input, LTag version)
-            : base(options, input, version) { }
+        protected ReplicaComputed(ComputedOptions options, ReplicaInput input, LTag version)
+            : base(options, input, version)
+        {
+            if (options.IsCachingEnabled)
+                throw Errors.UnsupportedRequiresCachingComputed();
+        }
+
         public ReplicaComputed(ComputedOptions options, ReplicaInput input, Result<T> output, LTag version, bool isConsistent = true)
-            : base(options, input, output, version, isConsistent) { }
+            : base(options, input, output, version, isConsistent)
+        {
+            if (options.IsCachingEnabled)
+                throw Errors.UnsupportedRequiresCachingComputed();
+        }
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Stl.Fusion.Internal;
 using Stl.Generators;
 
 namespace Stl.Fusion
@@ -10,10 +11,19 @@ namespace Stl.Fusion
         public new SimpleComputedInput<T> Input => (SimpleComputedInput<T>) base.Input;
 
         protected internal SimpleComputed(ComputedOptions options, SimpleComputedInput input, LTag version)
-            : base(options, input, version) { }
+            : base(options, input, version)
+        {
+            if (options.IsCachingEnabled)
+                throw Errors.UnsupportedRequiresCachingComputed();
+        }
+
         protected internal SimpleComputed(ComputedOptions options, SimpleComputedInput input,
             Result<T> output, LTag version, bool isConsistent = true)
-            : base(options, input, output, version, isConsistent) { }
+            : base(options, input, output, version, isConsistent)
+        {
+            if (options.IsCachingEnabled)
+                throw Errors.UnsupportedRequiresCachingComputed();
+        }
     }
 
     public static class SimpleComputed

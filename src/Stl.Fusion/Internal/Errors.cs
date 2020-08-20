@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Threading.Channels;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Messages;
+using Stl.Fusion.Caching;
 using Stl.Text;
 
 namespace Stl.Fusion.Internal
@@ -65,7 +66,12 @@ namespace Stl.Fusion.Internal
                 $"IReplica<{replicaType.Name}> isn't supported by the current client, " +
                 $"most likely because there is no good way to intercept the deserialization " +
                 $"of results of this type.");
-        public static Exception UnsupportedRequiresCaching()
-            => new NotSupportedException($"This operation requires {nameof(IComputed)} with enabled caching.");
+
+        public static Exception UnsupportedRequiresCachingComputed()
+            => new NotSupportedException($"{nameof(ICachingComputed)} is required to perform this operation.");
+        public static Exception UnsupportedUseAnotherOverload(Type type)
+            => new NotSupportedException($"This method isn't supported in '{type}'. Use its another overload.");
+        public static Exception CachedOutputIsAlreadyDropped()
+            => new InvalidOperationException($"{nameof(ICachingComputed.CacheOutput)} is already dropped.");
     }
 }

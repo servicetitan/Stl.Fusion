@@ -1,6 +1,6 @@
 using System;
 
-namespace Stl.Fusion.Caching
+namespace Stl.Fusion
 {
     [AttributeUsage(AttributeTargets.Method, Inherited = false)]
     public class CachingAttribute : Attribute

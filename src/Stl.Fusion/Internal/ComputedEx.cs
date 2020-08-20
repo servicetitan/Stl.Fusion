@@ -2,6 +2,7 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Stl.Fusion.Caching;
 
 namespace Stl.Fusion.Internal
 {
@@ -10,12 +11,12 @@ namespace Stl.Fusion.Internal
         internal static bool TryUseExisting<T>(this IComputed<T>? existing, ComputeContext context, IComputed? usedBy)
         {
             var callOptions = context.CallOptions;
-            var useCached = (callOptions & CallOptions.TryGetExisting) != 0;
+            var useExisting = (callOptions & CallOptions.TryGetExisting) != 0;
 
             if (existing == null)
-                return useCached;
-            useCached |= existing.IsConsistent;
-            if (!useCached)
+                return useExisting;
+            useExisting |= existing.IsConsistent;
+            if (!useExisting)
                 return false;
 
             if ((callOptions & CallOptions.Capture) != 0)
@@ -29,34 +30,32 @@ namespace Stl.Fusion.Internal
             return true;
         }
 
-        internal static async ValueTask<Option<Result<T>>> TryUseExistingAsync<T>(
-            this IComputed<T>? existing, ComputeContext context, IComputed? usedBy,
+        internal static async ValueTask<ResultBox<T>?> TryUseExistingAsync<T>(
+            this ICachingComputed<T>? existing, ComputeContext context, IComputed? usedBy,
             CancellationToken cancellationToken)
         {
             var callOptions = context.CallOptions;
-            var useCached = (callOptions & CallOptions.TryGetExisting) != 0;
+            var useExisting = (callOptions & CallOptions.TryGetExisting) != 0;
 
             if (existing == null)
-                return useCached
-                    ? Option<Result<T>>.Some(default)
-                    : Option<Result<T>>.None;
+                return useExisting ? ResultBox<T>.Default : null;
 
-            useCached |= existing.IsConsistent;
-            if (!useCached)
-                return Option<Result<T>>.None;
+            useExisting |= existing.IsConsistent;
+            if (!useExisting)
+                return null;
 
             if ((callOptions & CallOptions.Invalidate) == CallOptions.Invalidate) {
                 existing.Invalidate();
                 if ((callOptions & CallOptions.Capture) != 0)
                     Interlocked.Exchange(ref context.CapturedComputed, existing);
-                return Option<Result<T>>.Some(default);
+                return existing.CacheOutput ?? ResultBox<T>.Default;
             }
 
-            var result = existing.MaybeOutput;
-            if (!result.HasValue) {
+            var result = existing.CacheOutput;
+            if (result == null) {
                 result = await existing.GetOutputAsync(cancellationToken).ConfigureAwait(false);
-                if (!result.HasValue)
-                    return Option<Result<T>>.None;
+                if (result == null)
+                    return null;
             }
 
             ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) existing!);
@@ -74,5 +73,8 @@ namespace Stl.Fusion.Internal
                 Interlocked.Exchange(ref context.CapturedComputed, computed);
             computed.KeepAlive();
         }
-    }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static T Strip<T>(this IComputed<T>? computed)
+            => computed != null ? computed.Value : default!;    }
 }

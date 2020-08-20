@@ -90,26 +90,14 @@ namespace Stl.Fusion
             // Read-Lock-RetryRead-Compute-Store pattern
 
             var result = TryGetExisting(input);
-            if (result != null && result.Options.IsCachingEnabled) {
-                var maybeOutput = await result.TryUseExistingAsync(context, usedBy, cancellationToken)
-                    .ConfigureAwait(false);
-                if (maybeOutput.IsSome(out output))
-                    return output.Value;
-            }
-            else if (result.TryUseExisting(context, usedBy))
-                return result!.Value;
+            if (result.TryUseExisting(context, usedBy))
+                return result.Strip();
 
             using var @lock = await Locks.LockAsync(input, cancellationToken).ConfigureAwait(false);
 
             result = TryGetExisting(input);
-            if (result != null && result.Options.IsCachingEnabled) {
-                var maybeOutput = await result.TryUseExistingAsync(context, usedBy, cancellationToken)
-                    .ConfigureAwait(false);
-                if (maybeOutput.IsSome(out output))
-                    return output.Value;
-            }
-            else if (result.TryUseExisting(context, usedBy))
-                return result!.Value;
+            if (result.TryUseExisting(context, usedBy))
+                return result.Strip();
 
             result = await ComputeAsync(input, result, cancellationToken).ConfigureAwait(false);
             output = result.Output; // It can't be gone here b/c KeepAlive isn't called yet

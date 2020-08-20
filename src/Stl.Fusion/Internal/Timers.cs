@@ -1,4 +1,5 @@
 using System;
+using Stl.Fusion.Caching;
 using Stl.OS;
 using Stl.Time;
 
@@ -7,7 +8,7 @@ namespace Stl.Fusion.Internal
     public static class Timers
     {
         public readonly static ConcurrentTimerSet<object> KeepAlive;
-        public readonly static ConcurrentTimerSet<IComputed> ReleaseOutput;
+        public readonly static ConcurrentTimerSet<ICachingComputed> DropCachedOutput;
         public readonly static IMomentClock Clock;
 
         static Timers()
@@ -20,12 +21,12 @@ namespace Stl.Fusion.Internal
                     ConcurrencyLevel = concurrencyLevel,
                     Clock = Clock,
                 });
-            ReleaseOutput = new ConcurrentTimerSet<IComputed>(
-                new ConcurrentTimerSet<IComputed>.Options() {
+            DropCachedOutput = new ConcurrentTimerSet<ICachingComputed>(
+                new ConcurrentTimerSet<ICachingComputed>.Options() {
                     Quanta = TimeSpan.FromSeconds(1),
                     ConcurrencyLevel = concurrencyLevel,
                     Clock = Clock,
-                    FireHandler = t => t.ReleaseOutput(),
+                    FireHandler = t => t.DropCachedOutput(),
                 });
         }
     }

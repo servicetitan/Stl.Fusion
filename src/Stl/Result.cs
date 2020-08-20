@@ -86,6 +86,14 @@ namespace Stl
         }
 
         public override string? ToString() => Value?.ToString();
+        public ValueTask<T> ToValueTask()
+            => IsValue(out var value, out var error)
+                ? ValueTaskEx.FromResult(value)
+                : ValueTaskEx.FromException<T>(error);
+        public Task<T> ToTask()
+            => IsValue(out var value, out var error)
+                ? Task.FromResult(value)
+                : Task.FromException<T>(error);
 
         public void Deconstruct(out T value, out Exception? error)
         {
@@ -102,6 +110,7 @@ namespace Stl
         public bool IsValue([MaybeNullWhen(false)] out T value, [MaybeNullWhen(true)] out Exception error)
         {
             error = Error!;
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             var hasValue = error == null;
             value = hasValue ? UnsafeValue : default!;
 #pragma warning disable CS8762
@@ -132,11 +141,6 @@ namespace Stl
         // Operators
 
         public static implicit operator T(Result<T> source) => source.Value;
-        public static implicit operator ValueTask<T>(Result<T> source)
-            => source.IsValue(out var value, out var error)
-                ? ValueTaskEx.FromResult(value)
-                : ValueTaskEx.FromException<T>(error);
-
         public static implicit operator Result<T>(T source) => new Result<T>(source, null);
         public static implicit operator Result<T>((T Value, Exception? Error) source) =>
             new Result<T>(source.Value, source.Error);

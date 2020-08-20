@@ -22,21 +22,18 @@ namespace Stl.Fusion
 
     public interface IComputed : IResult
     {
-        ComputedOptions Options { get; set; }
+        ComputedOptions Options { get; }
         ComputedInput Input { get; }
-        IResult Output { get; }
-        IResult? MaybeOutput { get; }
         Type OutputType { get; }
+        IResult Output { get; }
         LTag Version { get; } // ~ Unique for the specific (Func, Key) pair
         ComputedState State { get; }
         bool IsConsistent { get; }
         event Action<IComputed> Invalidated;
 
         bool Invalidate();
-        void ReleaseOutput();
         TResult Apply<TArg, TResult>(IComputedApplyHandler<TArg, TResult> handler, TArg arg);
 
-        ValueTask<IResult?> GetOutputAsync(CancellationToken cancellationToken = default);
         ValueTask<IComputed> UpdateAsync(bool addDependency, CancellationToken cancellationToken = default);
         ValueTask<object> UseAsync(CancellationToken cancellationToken = default);
     }
@@ -44,11 +41,8 @@ namespace Stl.Fusion
     public interface IComputed<TOut> : IComputed, IResult<TOut>
     {
         new Result<TOut> Output { get; }
-        new Option<Result<TOut>> MaybeOutput { get; }
         bool TrySetOutput(Result<TOut> output);
-        void SetOutput(Result<TOut> output);
 
-        new ValueTask<Option<Result<TOut>>> GetOutputAsync(CancellationToken cancellationToken = default);
         new ValueTask<IComputed<TOut>> UpdateAsync(bool addDependency, CancellationToken cancellationToken = default);
         new ValueTask<TOut> UseAsync(CancellationToken cancellationToken = default);
     }
@@ -66,49 +60,30 @@ namespace Stl.Fusion
     public class Computed<TIn, TOut> : IComputed<TIn, TOut>, IComputedImpl
         where TIn : ComputedInput
     {
-        private class OutputState
-        {
-            public readonly Option<Result<TOut>> MaybeOutput;
-            public OutputState(Option<Result<TOut>> maybeOutput) => MaybeOutput = maybeOutput;
-        }
-
-        private ComputedOptions _options;
+        private readonly ComputedOptions _options;
         private volatile int _state;
-        private volatile OutputState? _outputState = null;
         private Result<TOut> _output;
-        private RefHashSetSlim2<IComputedImpl> _used = default;
-        private HashSetSlim2<(ComputedInput Input, LTag Version)> _usedBy = default;
+        private RefHashSetSlim2<IComputedImpl> _used;
+        private HashSetSlim2<(ComputedInput Input, LTag Version)> _usedBy;
         // ReSharper disable once InconsistentNaming
         private event Action<IComputed>? _invalidated;
         private bool _invalidateOnSetOutput;
-        private object Lock => this;
 
-        public ComputedOptions Options {
-            get => _options;
-            set {
-                AssertStateIs(ComputedState.Computing);
-                _options = value;
-            }
-        }
+        protected bool InvalidateOnSetOutput => _invalidateOnSetOutput;
+        protected object Lock => this;
 
+        public ComputedOptions Options => _options;
         public TIn Input { get; }
         public ComputedState State => (ComputedState) _state;
         public bool IsConsistent => State == ComputedState.Consistent;
         public IFunction<TIn, TOut> Function => (IFunction<TIn, TOut>) Input.Function;
         public LTag Version { get; }
-
         public Type OutputType => typeof(TOut);
-        public Result<TOut> Output {
+
+        public virtual Result<TOut> Output {
             get {
                 AssertStateIsNot(ComputedState.Computing);
-                return MaybeOutput.Value;
-            }
-        }
-        public Option<Result<TOut>> MaybeOutput {
-            get {
-                // Concurrency: _outputState should be set before resetting the _output!
-                var output = _output;
-                return _outputState?.MaybeOutput ?? output;
+                return _output;
             }
         }
 
@@ -127,7 +102,6 @@ namespace Stl.Fusion
         object? IResult.UnsafeValue => Output.UnsafeValue;
         // ReSharper disable once HeapView.BoxingAllocation
         object? IResult.Value => Output.Value;
-        IResult? IComputed.MaybeOutput => MaybeOutput.IsSome(out var r) ? (IResult) r : null;
 
         public event Action<IComputed> Invalidated {
             add {
@@ -146,7 +120,7 @@ namespace Stl.Fusion
             remove => _invalidated -= value;
         }
 
-        public Computed(ComputedOptions options, TIn input, LTag version)
+        protected Computed(ComputedOptions options, TIn input, LTag version)
         {
             _options = options;
             Input = input;
@@ -154,7 +128,7 @@ namespace Stl.Fusion
             ComputedRegistry.Instance.Register(this);
         }
 
-        public Computed(ComputedOptions options, TIn input, Result<TOut> output, LTag version, bool isConsistent = true)
+        protected Computed(ComputedOptions options, TIn input, Result<TOut> output, LTag version, bool isConsistent = true)
         {
             if (output.IsValue(out var v) && v is IFrozen f)
                 f.Freeze();
@@ -217,7 +191,7 @@ namespace Stl.Fusion
             }
         }
 
-        public bool TrySetOutput(Result<TOut> output)
+        public virtual bool TrySetOutput(Result<TOut> output)
         {
             if (output.IsValue(out var v) && v is IFrozen f)
                 f.Freeze();
@@ -229,22 +203,21 @@ namespace Stl.Fusion
                 SetStateUnsafe(ComputedState.Consistent);
                 _output = output;
             }
-            if (_invalidateOnSetOutput)
-                Invalidate();
-            else {
-                var timeout = output.HasError
-                    ? _options.ErrorAutoInvalidateTime
-                    : _options.AutoInvalidateTime;
-                if (timeout != TimeSpan.MaxValue)
-                    AutoInvalidate(timeout);
-            }
+            OnOutputSet(output);
             return true;
         }
 
-        public void SetOutput(Result<TOut> output)
+        protected void OnOutputSet(Result<TOut> output)
         {
-            if (!TrySetOutput(output))
-                throw Errors.WrongComputedState(ComputedState.Computing, State);
+            if (InvalidateOnSetOutput) {
+                Invalidate();
+                return;
+            }
+            var timeout = output.HasError
+                ? _options.ErrorAutoInvalidateTime
+                : _options.AutoInvalidateTime;
+            if (timeout != TimeSpan.MaxValue)
+                AutoInvalidate(timeout);
         }
 
         public bool Invalidate()
@@ -304,44 +277,6 @@ namespace Stl.Fusion
             this.CancelKeepAlive();
         }
 
-        // Caching-related
-
-        public void ReleaseOutput()
-        {
-            if (!Options.IsCachingEnabled)
-                throw Errors.UnsupportedRequiresCaching();
-            AssertStateIsNot(ComputedState.Computing);
-            // Concurrency: _outputState should be set before resetting the _output!
-            Interlocked.Exchange(ref _outputState, new OutputState(Option<Result<TOut>>.None));
-            _output = default;
-        }
-
-        async ValueTask<IResult?> IComputed.GetOutputAsync(CancellationToken cancellationToken)
-        {
-            var outputOpt = await GetOutputAsync(cancellationToken).ConfigureAwait(false);
-            return outputOpt.IsSome(out var r) ? (IResult) r : null;
-        }
-
-        public async ValueTask<Option<Result<TOut>>> GetOutputAsync(CancellationToken cancellationToken)
-        {
-            var outputOpt = MaybeOutput;
-            if (outputOpt.HasValue)
-                return outputOpt;
-
-            Option<Result<TOut>> maybeOutput;
-            using (Computed.Suppress()) {
-                var fn = (ICachingFunction<TIn, TOut>) Input.Function;
-                maybeOutput = await fn.GetCachedOutputAsync(Input, cancellationToken)
-                    .ConfigureAwait(false);
-            }
-            if (!maybeOutput.IsSome(out var output)) {
-                Invalidate();
-                return Option<Result<TOut>>.None;
-            }
-            Interlocked.Exchange(ref _outputState, new OutputState(output));
-            return output;
-        }
-
         // UpdateAsync
 
         async ValueTask<IComputed> IComputed.UpdateAsync(bool addDependency, CancellationToken cancellationToken)
@@ -384,10 +319,6 @@ namespace Stl.Fusion
         // Protected & private methods
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected void SetStateUnsafe(ComputedState newState)
-            => _state = (int) newState;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected void AssertStateIs(ComputedState expectedState)
         {
             if (State != expectedState)
@@ -401,7 +332,11 @@ namespace Stl.Fusion
                 throw Errors.WrongComputedState(State);
         }
 
-        private void AutoInvalidate(TimeSpan timeout)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected void SetStateUnsafe(ComputedState newState)
+            => _state = (int) newState;
+
+        protected void AutoInvalidate(TimeSpan timeout)
         {
             // This method is called just once for sure
             var cts = new CancellationTokenSource(timeout);
@@ -429,7 +364,8 @@ namespace Stl.Fusion
     {
         public Computed(ComputedOptions options, InterceptedInput input, LTag version)
             : base(options, input, version) { }
-        public Computed(ComputedOptions options, InterceptedInput input, Result<T> output, LTag version, bool isConsistent = true)
+
+        protected Computed(ComputedOptions options, InterceptedInput input, Result<T> output, LTag version, bool isConsistent = true)
             : base(options, input, output, version, isConsistent) { }
     }
 }

@@ -14,6 +14,7 @@ namespace Stl.Fusion.Tests
     {
         public ClientTimeServiceTest(ITestOutputHelper @out, FusionTestOptions? options = null) : base(@out, options) { }
 
+        [Fact]
         public async Task Test1()
         {
             var epsilon = TimeSpan.FromSeconds(0.5);

@@ -14,8 +14,10 @@ namespace Stl.Fusion.Caching
         ValueTask<Option<Result<TOut>>> GetCachedOutputAsync(
             TIn input, CancellationToken cancellationToken = default);
         ValueTask SetCachedOutputAsync(
-            TIn input, Option<Result<object>> output,
+            TIn input, Result<object> output,
             CancellationToken cancellationToken = default);
+        ValueTask RemoveCachedOutputAsync(
+            TIn input, CancellationToken cancellationToken = default);
     }
 
     public abstract class CachingFunctionBase<T> : InterceptedFunctionBase<T>, ICachingFunction<InterceptedInput, T>
@@ -31,46 +33,56 @@ namespace Stl.Fusion.Caching
 
         public abstract ValueTask<Option<Result<T>>> GetCachedOutputAsync(
             InterceptedInput input, CancellationToken cancellationToken = default);
-
         public abstract ValueTask SetCachedOutputAsync(
-            InterceptedInput input, Option<Result<object>> output,
-            CancellationToken cancellationToken = default);
+            InterceptedInput input, Result<object> output, CancellationToken cancellationToken = default);
+        public abstract ValueTask RemoveCachedOutputAsync(
+            InterceptedInput input, CancellationToken cancellationToken = default);
 
-        public override async Task<T> InvokeAndStripAsync(
+        public override Task<T> InvokeAndStripAsync(
+            InterceptedInput input, IComputed? usedBy, ComputeContext? context,
+            CancellationToken cancellationToken = default)
+            => IsCachingEnabled
+                ? InvokeAndStripCachingAsync(input, usedBy, context, cancellationToken)
+                : base.InvokeAndStripAsync(input, usedBy, context, cancellationToken);
+
+        protected async Task<T> InvokeAndStripCachingAsync(
             InterceptedInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken = default)
         {
             context ??= ComputeContext.Current;
-            Result<T> output;
+            ResultBox<T>? output;
 
             // Read-Lock-RetryRead-Compute-Store pattern
 
-            var result = TryGetExisting(input);
-            if (result != null && IsCachingEnabled) {
-                var maybeOutput = await result.TryUseExistingAsync(context, usedBy, cancellationToken)
+            var computed = TryGetExisting(input);
+            if (computed != null) {
+                output = await computed.TryUseExistingAsync(context, usedBy, cancellationToken)
                     .ConfigureAwait(false);
-                if (maybeOutput.IsSome(out output))
+                if (output != null)
                     return output.Value;
             }
-            else if (result.TryUseExisting(context, usedBy))
-                return result!.Value;
 
             using var @lock = await Locks.LockAsync(input, cancellationToken).ConfigureAwait(false);
 
-            result = TryGetExisting(input);
-            if (result != null && IsCachingEnabled) {
-                var maybeOutput = await result.TryUseExistingAsync(context, usedBy, cancellationToken)
+            computed = TryGetExisting(input);
+            if (computed != null) {
+                output = await computed.TryUseExistingAsync(context, usedBy, cancellationToken)
                     .ConfigureAwait(false);
-                if (maybeOutput.IsSome(out output))
+                if (output != null)
                     return output.Value;
             }
-            else if (result.TryUseExisting(context, usedBy))
-                return result!.Value;
 
-            result = await ComputeAsync(input, result, cancellationToken).ConfigureAwait(false);
-            output = result.Output; // It can't be gone here b/c KeepAlive isn't called yet
-            result.UseNew(context, usedBy);
-            return output.Value;
+            computed = (ICachingComputed<T>) await ComputeAsync(input, computed, cancellationToken)
+                .ConfigureAwait(false);
+            output = computed.CacheOutput; // It can't be gone here b/c KeepAlive isn't called yet
+            computed.UseNew(context, usedBy);
+            return output!.Value;
+        }
+
+        new protected ICachingComputed<T>? TryGetExisting(InterceptedInput input)
+        {
+            var computed = ComputedRegistry.Instance.TryGet(input);
+            return computed as ICachingComputed<T>;
         }
     }
 }

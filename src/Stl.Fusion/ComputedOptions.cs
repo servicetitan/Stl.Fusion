@@ -9,7 +9,7 @@ namespace Stl.Fusion
     {
         public static readonly ComputedOptions Default =
             new ComputedOptions(
-                keepAliveTime: TimeSpan.FromSeconds(1),
+                keepAliveTime: TimeSpan.Zero,
                 errorAutoInvalidateTime: TimeSpan.FromSeconds(1),
                 autoInvalidateTime: TimeSpan.MaxValue,
                 cachingOptions: CachingOptions.NoCaching);

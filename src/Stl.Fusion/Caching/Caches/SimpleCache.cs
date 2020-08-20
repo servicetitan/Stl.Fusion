@@ -10,29 +10,6 @@ using Stl.Time;
 
 namespace Stl.Fusion.Caching
 {
-    public interface ICache
-    {
-        ValueTask SetAsync(
-            InterceptedInput key, Option<Result<object>> value,
-            TimeSpan expirationTime, CancellationToken cancellationToken);
-
-        [ComputeMethod(KeepAliveTime = 0)]
-        ValueTask<Option<Result<object>>> GetAsync(
-            InterceptedInput key, CancellationToken cancellationToken);
-    }
-
-    public class NoCache : ICache
-    {
-        public ValueTask SetAsync(InterceptedInput key, Option<Result<object>> value, TimeSpan expirationTime, CancellationToken cancellationToken)
-        {
-            Computed.Invalidate(() => GetAsync(key, default));
-            return ValueTaskEx.CompletedTask;
-        }
-
-        public ValueTask<Option<Result<object>>> GetAsync(InterceptedInput key, CancellationToken cancellationToken)
-            => ValueTaskEx.FromResult(Option.None<Result<object>>());
-    }
-
     public class SimpleCache : ICache
     {
         public class Options
@@ -67,23 +44,25 @@ namespace Stl.Fusion.Caching
             });
         }
 
-        public ValueTask SetAsync(InterceptedInput key, Option<Result<object>> value, TimeSpan expirationTime, CancellationToken cancellationToken)
+        public ValueTask SetAsync(InterceptedInput key, Result<object> value, TimeSpan expirationTime, CancellationToken cancellationToken)
         {
-            if (value.IsSome(out var v)) {
-                if (expirationTime > MaxExpirationTime)
-                    expirationTime = MaxExpirationTime;
-                Storage[key] = (v, expirationTime);
-                ExpirationTimers.AddOrUpdateToLater(key, Clock.Now + expirationTime);
-            }
-            else {
-                Storage.Remove(key, out _);
-                ExpirationTimers.Remove(key);
-            }
+            if (expirationTime > MaxExpirationTime)
+                expirationTime = MaxExpirationTime;
+            Storage[key] = (value, expirationTime);
+            ExpirationTimers.AddOrUpdateToLater(key, Clock.Now + expirationTime);
             Computed.Invalidate(() => GetAsync(key, default));
             return ValueTaskEx.CompletedTask;
         }
 
-        public ValueTask<Option<Result<object>>> GetAsync(InterceptedInput key, CancellationToken cancellationToken)
+        public ValueTask RemoveAsync(InterceptedInput key, CancellationToken cancellationToken)
+        {
+            Storage.Remove(key, out _);
+            ExpirationTimers.Remove(key);
+            Computed.Invalidate(() => GetAsync(key, default));
+            return ValueTaskEx.CompletedTask;
+        }
+
+        public virtual ValueTask<Option<Result<object>>> GetAsync(InterceptedInput key, CancellationToken cancellationToken)
         {
             if (!Storage.TryGetValue(key, out var pair))
                 return ValueTaskEx.FromResult(None);
