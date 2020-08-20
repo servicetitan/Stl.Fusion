@@ -14,14 +14,16 @@ namespace Stl.Fusion.Caching
     {
         public class Options
         {
+            public TimeSpan DefaultExpirationTime { get; set; } = TimeSpan.FromMinutes(1);
             public TimeSpan MaxExpirationTime { get; set; } = TimeSpan.FromMinutes(1);
-            public TimeSpan Quanta { get; set; } = TimeSpan.FromSeconds(1);
+            public TimeSpan TimerQuanta { get; set; } = TimeSpan.FromSeconds(1);
             public int ConcurrencyLevel { get; set; } = HardwareInfo.ProcessorCount;
             public IMomentClock? Clock { get; set; }
         }
 
         protected readonly ConcurrentDictionary<TKey, (object Value, TimeSpan ExpirationTime)> Storage;
         protected readonly ConcurrentTimerSet<TKey> ExpirationTimers;
+        public TimeSpan DefaultExpirationTime { get; }
         public TimeSpan MaxExpirationTime { get; }
         public IMomentClock Clock { get; }
 
@@ -30,6 +32,7 @@ namespace Stl.Fusion.Caching
             IMomentClock? clock = null)
         {
             options ??= new Options();
+            DefaultExpirationTime = options.DefaultExpirationTime;
             MaxExpirationTime = options.MaxExpirationTime;
             Clock = clock ?? options.Clock ?? CoarseCpuClock.Instance;
             Storage = new ConcurrentDictionary<TKey, (object Value, TimeSpan ExpirationTime)>(
@@ -37,7 +40,7 @@ namespace Stl.Fusion.Caching
                 ComputedRegistry.Options.DefaultInitialCapacity);
             ExpirationTimers = new ConcurrentTimerSet<TKey>(new ConcurrentTimerSet<TKey>.Options() {
                 Clock = Clock,
-                Quanta = options.Quanta,
+                Quanta = options.TimerQuanta,
                 ConcurrencyLevel = options.ConcurrencyLevel,
                 FireHandler = key => Storage.TryRemove(key, out _)
             });
@@ -45,8 +48,10 @@ namespace Stl.Fusion.Caching
 
         public ValueTask SetAsync(TKey key, object value, TimeSpan expirationTime, CancellationToken cancellationToken)
         {
-            if (expirationTime == TimeSpan.Zero || expirationTime > MaxExpirationTime)
+            if (expirationTime > MaxExpirationTime)
                 expirationTime = MaxExpirationTime;
+            else if (expirationTime == TimeSpan.Zero)
+                expirationTime = DefaultExpirationTime;
             Storage[key] = (value, expirationTime);
             ExpirationTimers.AddOrUpdateToLater(key, Clock.Now + expirationTime);
             Computed.Invalidate(() => GetAsync(key, default));

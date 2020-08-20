@@ -8,7 +8,11 @@ namespace Stl.Fusion.Caching
     public class CachingOptions
     {
         public static readonly CachingOptions Default =
-            new CachingOptions(true, typeof(ICache<InterceptedInput>), TimeSpan.MaxValue, TimeSpan.FromSeconds(10));
+            new CachingOptions(
+                isCachingEnabled: true,
+                cacheType: typeof(ICache<InterceptedInput>),
+                expirationTime: TimeSpan.Zero,
+                outputReleaseTime: TimeSpan.FromSeconds(10));
         public static readonly CachingOptions NoCaching =
             new CachingOptions(false, Default.CacheType, Default.ExpirationTime, Default.OutputReleaseTime);
 
