@@ -13,7 +13,7 @@ namespace Stl.Fusion.Caching
             TKey key, CancellationToken cancellationToken);
 
         [ComputeMethod(KeepAliveTime = 0)]
-        ValueTask<Option<object>> GetAsync(
+        Task<Option<object>> GetAsync(
             TKey key, CancellationToken cancellationToken);
     }
 }

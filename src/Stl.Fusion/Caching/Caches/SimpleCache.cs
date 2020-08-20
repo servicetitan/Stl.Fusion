@@ -66,13 +66,13 @@ namespace Stl.Fusion.Caching
             return ValueTaskEx.CompletedTask;
         }
 
-        public virtual ValueTask<Option<object>> GetAsync(TKey key, CancellationToken cancellationToken)
+        public virtual Task<Option<object>> GetAsync(TKey key, CancellationToken cancellationToken)
         {
             if (!Storage.TryGetValue(key, out var pair))
-                return ValueTaskEx.FromResult(Option<object>.None);
+                return Task.FromResult(Option<object>.None);
             var (value, expirationTime) = pair;
             ExpirationTimers.AddOrUpdateToLater(key, Clock.Now + expirationTime);
-            return ValueTaskEx.FromResult(Option.Some(value));
+            return Task.FromResult(Option.Some(value));
         }
     }
 }

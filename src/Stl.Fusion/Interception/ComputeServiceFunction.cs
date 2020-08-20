@@ -86,7 +86,7 @@ namespace Stl.Fusion.Interception
             return computed;
         }
 
-        public override async ValueTask<ResultBox<T>?> GetCachedOutputAsync(
+        public override async Task<ResultBox<T>?> GetCachedOutputAsync(
             InterceptedInput input, CancellationToken cancellationToken = default)
         {
             var resultOpt = await Cache.GetAsync(input, cancellationToken).ConfigureAwait(false);

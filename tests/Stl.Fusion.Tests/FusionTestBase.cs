@@ -129,11 +129,11 @@ namespace Stl.Fusion.Tests
                     }, 256);
 
             // Cache
-            services.AddSingleton<SimpleCache<InterceptedInput>>();
+            services.AddSingleton<FakeCache<InterceptedInput>>();
             services.AddSingleton<ICache<InterceptedInput>,
-                LoggingCacheWrapper<InterceptedInput, SimpleCache<InterceptedInput>>>();
+                LoggingCacheWrapper<InterceptedInput, FakeCache<InterceptedInput>>>();
             services.AddSingleton(c =>
-                new LoggingCacheWrapper<InterceptedInput, SimpleCache<InterceptedInput>>.Options() {
+                new LoggingCacheWrapper<InterceptedInput, FakeCache<InterceptedInput>>.Options() {
                     LogLevel = LogLevel.Information,
                 });
 

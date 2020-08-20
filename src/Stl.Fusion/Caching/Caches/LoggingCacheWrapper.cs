@@ -45,7 +45,7 @@ namespace Stl.Fusion.Caching
             return Cache.RemoveAsync(key, cancellationToken);
         }
 
-        public async ValueTask<Option<object>> GetAsync(TKey key, CancellationToken cancellationToken)
+        public async Task<Option<object>> GetAsync(TKey key, CancellationToken cancellationToken)
         {
             var value = await Cache.GetAsync(key, cancellationToken).ConfigureAwait(false);
             if (IsEnabled)

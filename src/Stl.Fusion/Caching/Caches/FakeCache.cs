@@ -20,7 +20,7 @@ namespace Stl.Fusion.Caching
             return ValueTaskEx.CompletedTask;
         }
 
-        public virtual ValueTask<Option<object>> GetAsync(TKey key, CancellationToken cancellationToken)
-            => ValueTaskEx.FromResult(Option.None<object>());
+        public virtual Task<Option<object>> GetAsync(TKey key, CancellationToken cancellationToken)
+            => Task.FromResult(Option.None<object>());
     }
 }
