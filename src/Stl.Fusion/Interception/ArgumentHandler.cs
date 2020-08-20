@@ -87,6 +87,7 @@ namespace Stl.Fusion.Interception
         {
             GetHashCodeFunc = _ => 0;
             EqualsFunc = (a, b) => true;
+            ToStringFunc = _ => "";
         }
     }
 
