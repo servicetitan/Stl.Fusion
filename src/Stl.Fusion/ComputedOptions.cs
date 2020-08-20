@@ -44,7 +44,7 @@ namespace Stl.Fusion
             IsCachingEnabled = CachingOptions.IsCachingEnabled;
         }
 
-        public static ComputedOptions FromAttribute(InterceptedMethodAttribute? attribute, CachingAttribute? cacheAttribute)
+        public static ComputedOptions FromAttribute(InterceptedMethodAttribute? attribute, CacheAttribute? cacheAttribute)
         {
             var cacheOptions = CachingOptions.FromAttribute(cacheAttribute);
             var cma = attribute as ComputeMethodAttribute;

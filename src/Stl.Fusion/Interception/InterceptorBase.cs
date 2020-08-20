@@ -173,8 +173,8 @@ namespace Stl.Fusion.Interception
         protected virtual InterceptedMethodAttribute? GetInterceptedMethodAttribute(MethodInfo method)
             => method.GetAttribute<InterceptedMethodAttribute>(true, true);
 
-        protected virtual CachingAttribute? GetCacheAttribute(MethodInfo method)
-            => method.GetAttribute<CachingAttribute>(true, true);
+        protected virtual CacheAttribute? GetCacheAttribute(MethodInfo method)
+            => method.GetAttribute<CacheAttribute>(true, true);
 
         protected abstract void ValidateTypeInternal(Type type);
     }

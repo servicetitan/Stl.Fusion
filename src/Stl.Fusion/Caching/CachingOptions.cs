@@ -29,7 +29,7 @@ namespace Stl.Fusion.Caching
             OutputReleaseTime = outputReleaseTime;
         }
 
-        public static CachingOptions FromAttribute(CachingAttribute? attribute)
+        public static CachingOptions FromAttribute(CacheAttribute? attribute)
         {
             if (attribute == null || !attribute.IsEnabled)
                 return NoCaching;
