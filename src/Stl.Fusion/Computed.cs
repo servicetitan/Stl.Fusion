@@ -274,7 +274,7 @@ namespace Stl.Fusion
         protected virtual void OnInvalidated()
         {
             ComputedRegistry.Instance.Unregister(this);
-            this.CancelKeepAlive();
+            this.CancelTimeouts();
         }
 
         // UpdateAsync

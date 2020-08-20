@@ -129,13 +129,13 @@ namespace Stl.Fusion.Tests
                     }, 256);
 
             // Cache
-            services.AddSingleton<SimpleCache<InterceptedInput, Result<object>>>();
-            services.AddSingleton<
-                ICache<InterceptedInput, Result<object>>,
-                LoggingCacheWrapper<InterceptedInput, Result<object>, SimpleCache<InterceptedInput, Result<object>>>>();
-            services.AddSingleton(c => new LoggingCacheWrapper<InterceptedInput, Result<object>, SimpleCache<InterceptedInput, Result<object>>>.Options() {
-                LogLevel = LogLevel.Information,
-            });
+            services.AddSingleton<SimpleCache<InterceptedInput>>();
+            services.AddSingleton<ICache<InterceptedInput>,
+                LoggingCacheWrapper<InterceptedInput, SimpleCache<InterceptedInput>>>();
+            services.AddSingleton(c =>
+                new LoggingCacheWrapper<InterceptedInput, SimpleCache<InterceptedInput>>.Options() {
+                    LogLevel = LogLevel.Information,
+                });
 
             // Core fusion services
             services.AddSingleton(c => new TestWebHost(c));

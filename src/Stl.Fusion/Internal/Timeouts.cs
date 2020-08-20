@@ -5,13 +5,13 @@ using Stl.Time;
 
 namespace Stl.Fusion.Internal
 {
-    public static class Timers
+    public static class Timeouts
     {
-        public readonly static ConcurrentTimerSet<object> KeepAlive;
-        public readonly static ConcurrentTimerSet<ICachingComputed> ReleaseOutput;
-        public readonly static IMomentClock Clock;
+        public static readonly ConcurrentTimerSet<object> KeepAlive;
+        public static readonly ConcurrentTimerSet<ICachingComputed> ReleaseOutput;
+        public static readonly IMomentClock Clock;
 
-        static Timers()
+        static Timeouts()
         {
             Clock = CoarseCpuClock.Instance;
             var concurrencyLevel = HardwareInfo.ProcessorCountPo2 << 4;

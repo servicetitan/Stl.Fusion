@@ -12,11 +12,11 @@ namespace Stl.Fusion.Interception
 {
     public class ComputeServiceFunction<T> : CachingFunctionBase<T>
     {
-        private readonly Lazy<ICache<InterceptedInput, Result<object>>> _cacheLazy;
+        private readonly Lazy<ICache<InterceptedInput>> _cacheLazy;
         protected readonly ILogger Log;
         protected readonly Generator<LTag> VersionGenerator;
         protected readonly IServiceProvider Services;
-        protected ICache<InterceptedInput, Result<object>> Cache => _cacheLazy.Value;
+        protected ICache<InterceptedInput> Cache => _cacheLazy.Value;
 
         public ComputeServiceFunction(
             InterceptedMethod method,
@@ -28,8 +28,8 @@ namespace Stl.Fusion.Interception
             Log = log ??= NullLogger<ComputeServiceFunction<T>>.Instance;
             VersionGenerator = versionGenerator;
             Services = services;
-            _cacheLazy = new Lazy<ICache<InterceptedInput, Result<object>>>(
-                () => (ICache<InterceptedInput, Result<object>>) Services.GetRequiredService(CachingOptions.CacheType));
+            _cacheLazy = new Lazy<ICache<InterceptedInput>>(
+                () => (ICache<InterceptedInput>) Services.GetRequiredService(CachingOptions.CacheType));
         }
 
         protected override async ValueTask<IComputed<T>> ComputeAsync(
@@ -41,6 +41,7 @@ namespace Stl.Fusion.Interception
 
             CachingComputed<T>? cachingComputed;
             Computed<T> computed;
+            Result<T> output;
             if (IsCachingEnabled)
                 computed = cachingComputed = new CachingComputed<T>(method.Options, input, tag);
             else {
@@ -52,48 +53,47 @@ namespace Stl.Fusion.Interception
                 if (cachingComputed != null) {
                     var cachedOutput = await GetCachedOutputAsync(input, cancellationToken)
                         .ConfigureAwait(false);
-                    if (cachedOutput.IsSome(out var output)) {
-                        cachingComputed.TrySetOutput(output, true);
-                        SetReturnValue(input, output);
+                    if (cachedOutput != null) {
+                        cachingComputed.TrySetOutput(cachedOutput, true);
+                        SetReturnValue(input, cachedOutput.ToResult());
                         return computed;
                     }
                 }
-                var resultTask = input.InvokeOriginalFunction(cancellationToken);
+                var result = input.InvokeOriginalFunction(cancellationToken);
                 if (method.ReturnsValueTask) {
-                    var task = (ValueTask<T>) resultTask;
-                    var value = await task.ConfigureAwait(false);
-                    computed.TrySetOutput(value!);
+                    output = await ((ValueTask<T>) result).ConfigureAwait(false);
+                    computed.TrySetOutput(output);
                 }
                 else {
-                    var task = (Task<T>) resultTask;
-                    var value = await task.ConfigureAwait(false);
-                    computed.TrySetOutput(value!);
+                    output = await ((Task<T>) result).ConfigureAwait(false);
+                    computed.TrySetOutput(output);
                 }
             }
             catch (OperationCanceledException) {
                 throw;
             }
             catch (Exception e) {
-                computed.TrySetOutput(Result.Error<T>(e));
+                output = Result.Error<T>(e);
+                computed.TrySetOutput(output);
                 // Weird case: if the output is already set, all we can
                 // is to ignore the exception we've just caught;
                 // throwing it further will probably make it just worse,
                 // since the the caller have to take this scenario into acc.
             }
             if (cachingComputed != null)
-                await SetCachedOutputAsync(input, Option.Some(computed.Output.Cast<object>()), cancellationToken)
+                await SetCachedOutputAsync(input, new ResultBox<T>(output), cancellationToken)
                     .ConfigureAwait(false);
             return computed;
         }
 
-        public override async ValueTask<Option<Result<T>>> GetCachedOutputAsync(
+        public override async ValueTask<ResultBox<T>?> GetCachedOutputAsync(
             InterceptedInput input, CancellationToken cancellationToken = default)
         {
             var resultOpt = await Cache.GetAsync(input, cancellationToken).ConfigureAwait(false);
-            return resultOpt.IsSome(out var r) ? r.Cast<T>() : Option<Result<T>>.None;
+            return resultOpt.IsSome(out var result) ? result as ResultBox<T> : null;
         }
 
-        public override ValueTask SetCachedOutputAsync(InterceptedInput input, Result<object> output, CancellationToken cancellationToken = default)
+        public override ValueTask SetCachedOutputAsync(InterceptedInput input, ResultBox<T> output, CancellationToken cancellationToken = default)
             => Cache.SetAsync(input, output, CachingOptions.ExpirationTime, cancellationToken);
 
         public override ValueTask RemoveCachedOutputAsync(InterceptedInput input, CancellationToken cancellationToken = default)

@@ -49,7 +49,7 @@ namespace Stl.Fusion.Bridge.Interception
             // We intentionally suppress ComputedRegistry.Unregister here,
             // otherwise it won't be possible to find IReplica using
             // old IComputed.
-            this.CancelKeepAlive();
+            this.CancelTimeouts();
         }
     }
 }

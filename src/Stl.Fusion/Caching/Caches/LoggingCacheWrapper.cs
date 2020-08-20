@@ -5,9 +5,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Stl.Fusion.Caching
 {
-    public class LoggingCacheWrapper<TKey, TValue, TCache> : ICache<TKey, TValue>
+    public class LoggingCacheWrapper<TKey, TCache> : ICache<TKey>
         where TKey : notnull
-        where TCache : ICache<TKey, TValue>
+        where TCache : ICache<TKey>
     {
         public class Options
         {
@@ -31,7 +31,7 @@ namespace Stl.Fusion.Caching
             IsEnabled = Log.IsEnabled(LogLevel);
         }
 
-        public ValueTask SetAsync(TKey key, TValue value, TimeSpan expirationTime, CancellationToken cancellationToken)
+        public ValueTask SetAsync(TKey key, object value, TimeSpan expirationTime, CancellationToken cancellationToken)
         {
             if (IsEnabled)
                 Log.Log(LogLevel, $"[=] {key} <- {value}");
@@ -45,7 +45,7 @@ namespace Stl.Fusion.Caching
             return Cache.RemoveAsync(key, cancellationToken);
         }
 
-        public async ValueTask<Option<TValue>> GetAsync(TKey key, CancellationToken cancellationToken)
+        public async ValueTask<Option<object>> GetAsync(TKey key, CancellationToken cancellationToken)
         {
             var value = await Cache.GetAsync(key, cancellationToken).ConfigureAwait(false);
             if (IsEnabled)

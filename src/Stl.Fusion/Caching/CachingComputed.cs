@@ -20,7 +20,7 @@ namespace Stl.Fusion.Caching
     {
         new ResultBox<T>? MaybeOutput { get; }
 
-        bool TrySetOutput(Result<T> output, bool isFromCache);
+        bool TrySetOutput(ResultBox<T> output, bool isFromCache);
         new ValueTask<ResultBox<T>?> GetOutputAsync(CancellationToken cancellationToken = default);
     }
 
@@ -56,8 +56,8 @@ namespace Stl.Fusion.Caching
         }
 
         public override bool TrySetOutput(Result<T> output)
-            => TrySetOutput(output, false);
-        public bool TrySetOutput(Result<T> output, bool isFromCache)
+            => TrySetOutput(new ResultBox<T>(output), false);
+        public bool TrySetOutput(ResultBox<T> output, bool isFromCache)
         {
             if (output.IsValue(out var v) && v is IFrozen f)
                 f.Freeze();
@@ -67,10 +67,10 @@ namespace Stl.Fusion.Caching
                 if (State != ComputedState.Computing)
                     return false;
                 SetStateUnsafe(ComputedState.Consistent);
-                Interlocked.Exchange(ref _maybeOutput, new ResultBox<T>(output));
+                Interlocked.Exchange(ref _maybeOutput, output);
                 IsFromCache = isFromCache;
             }
-            OnOutputSet(output);
+            OnOutputSet(output.ToResult());
             return true;
         }
 
@@ -82,18 +82,16 @@ namespace Stl.Fusion.Caching
             if (maybeOutput != null)
                 return maybeOutput;
 
-            Option<Result<T>> outputOpt;
             using (Computed.Suppress()) {
                 var fn = (ICachingFunction<InterceptedInput, T>) Input.Function;
-                outputOpt = await fn.GetCachedOutputAsync(Input, cancellationToken)
+                maybeOutput = await fn.GetCachedOutputAsync(Input, cancellationToken)
                     .ConfigureAwait(false);
             }
-            if (!outputOpt.IsSome(out var output)) {
+            if (maybeOutput == null) {
                 Invalidate();
                 return null;
             }
 
-            maybeOutput = new ResultBox<T>(output);
             Interlocked.Exchange(ref _maybeOutput, maybeOutput);
             return maybeOutput;
         }
@@ -102,8 +100,9 @@ namespace Stl.Fusion.Caching
         {
             base.OnInvalidated();
             if (!IsFromCache) {
-                // We created this cache entry, so we have to remove it
-                Task.Run(() => Function.RemoveCachedOutputAsync(Input));
+                // We created this cache entry, so we have to remove it.
+                // RemoveCachedOutputAsync shouldn't block.
+                Function.RemoveCachedOutputAsync(Input).Ignore();
             }
         }
     }

@@ -11,10 +11,10 @@ namespace Stl.Fusion.Caching
     {
         CachingOptions CachingOptions { get; }
 
-        ValueTask<Option<Result<TOut>>> GetCachedOutputAsync(
+        ValueTask<ResultBox<TOut>?> GetCachedOutputAsync(
             TIn input, CancellationToken cancellationToken = default);
         ValueTask SetCachedOutputAsync(
-            TIn input, Result<object> output,
+            TIn input, ResultBox<TOut> output,
             CancellationToken cancellationToken = default);
         ValueTask RemoveCachedOutputAsync(
             TIn input, CancellationToken cancellationToken = default);
@@ -32,10 +32,10 @@ namespace Stl.Fusion.Caching
         }
 
         // Get-Set-RemoveCachedOutputAsync
-        public abstract ValueTask<Option<Result<T>>> GetCachedOutputAsync(
+        public abstract ValueTask<ResultBox<T>?> GetCachedOutputAsync(
             InterceptedInput input, CancellationToken cancellationToken = default);
         public abstract ValueTask SetCachedOutputAsync(
-            InterceptedInput input, Result<object> output, CancellationToken cancellationToken = default);
+            InterceptedInput input, ResultBox<T> output, CancellationToken cancellationToken = default);
         public abstract ValueTask RemoveCachedOutputAsync(
             InterceptedInput input, CancellationToken cancellationToken = default);
 
