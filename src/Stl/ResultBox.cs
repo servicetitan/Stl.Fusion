@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using Newtonsoft.Json;
 
-namespace Stl.Fusion.Caching
+namespace Stl
 {
     [DebuggerDisplay("({" + nameof(UnsafeValue) + "}, Error = {" + nameof(Error) + "})")]
     public sealed class ResultBox<T> : IResult<T>
@@ -54,7 +54,6 @@ namespace Stl.Fusion.Caching
         }
 
         public override string? ToString() => Value?.ToString();
-        public Result<T> ToResult() => new Result<T>(UnsafeValue, Error);
 
         public void Deconstruct(out T value, out Exception? error)
         {
@@ -84,5 +83,27 @@ namespace Stl.Fusion.Caching
             if (Error != null)
                 throw Error;
         }
+
+        public Result<T> AsResult()
+            => new Result<T>(UnsafeValue, Error);
+        public Result<TOther> AsResult<TOther>()
+            => new Result<TOther>((TOther) (object) UnsafeValue!, Error);
+
+        // Operators
+
+        public static implicit operator T(ResultBox<T> source) => source.Value;
+        public static implicit operator Result<T>(ResultBox<T> source) => source.AsResult();
+        public static implicit operator ResultBox<T>(Result<T> source) => new ResultBox<T>(source);
+        public static implicit operator ResultBox<T>(T source) => new ResultBox<T>(source, null);
+        public static implicit operator ResultBox<T>((T Value, Exception? Error) source) =>
+            new ResultBox<T>(source.Value, source.Error);
+    }
+
+    public static class ResultBox
+    {
+        public static ResultBox<T> New<T>(Result<T> result) => new ResultBox<T>(result);
+        public static ResultBox<T> New<T>(T value, Exception? error = null) => new ResultBox<T>(value, error);
+        public static ResultBox<T> Value<T>(T value) => new ResultBox<T>(value, null);
+        public static ResultBox<T> Error<T>(Exception? error) => new ResultBox<T>(default!, error);
     }
 }

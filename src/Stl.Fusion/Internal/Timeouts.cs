@@ -1,5 +1,5 @@
 using System;
-using Stl.Fusion.Caching;
+using Stl.Fusion.Swapping;
 using Stl.OS;
 using Stl.Time;
 
@@ -8,7 +8,7 @@ namespace Stl.Fusion.Internal
     public static class Timeouts
     {
         public static readonly ConcurrentTimerSet<object> KeepAlive;
-        public static readonly ConcurrentTimerSet<ICachingComputed> ReleaseOutput;
+        public static readonly ConcurrentTimerSet<ISwappable> Swap;
         public static readonly IMomentClock Clock;
 
         static Timeouts()
@@ -21,12 +21,12 @@ namespace Stl.Fusion.Internal
                     ConcurrencyLevel = concurrencyLevel,
                     Clock = Clock,
                 });
-            ReleaseOutput = new ConcurrentTimerSet<ICachingComputed>(
-                new ConcurrentTimerSet<ICachingComputed>.Options() {
+            Swap = new ConcurrentTimerSet<ISwappable>(
+                new ConcurrentTimerSet<ISwappable>.Options() {
                     Quanta = TimeSpan.FromSeconds(1),
                     ConcurrencyLevel = concurrencyLevel,
                     Clock = Clock,
-                    FireHandler = t => t.ReleaseOutput(),
+                    FireHandler = t => t.SwapAsync(),
                 });
         }
     }

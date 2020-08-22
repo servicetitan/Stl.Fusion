@@ -3,8 +3,8 @@ using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
+using Stl.DependencyInjection;
 using Stl.Fusion.Internal;
-using Errors = Stl.Internal.Errors;
 
 namespace Stl.Fusion.Bridge
 {
@@ -51,12 +51,20 @@ namespace Stl.Fusion.Bridge
         public PublicationRef PublicationRef => Input.PublicationRef;
         public ComputedOptions ComputedOptions {
             get => _computedOptions;
-            set => _computedOptions = value;
+            set {
+                if (value.SwappingOptions.IsEnabled)
+                    throw Errors.UnsupportedComputedOptions(GetType());
+                _computedOptions = value;
+            }
         }
-        IReplicaComputed IReplica.Computed => ComputedField;
+
         public IReplicaComputed<T> Computed => ComputedField;
         public bool IsUpdateRequested => UpdateRequestTask != null;
         public Exception? UpdateError => UpdateErrorField;
+
+        // Explicit property implementations
+        IServiceProvider IHasServiceProvider.ServiceProvider => ReplicatorImpl.ServiceProvider;
+        IReplicaComputed IReplica.Computed => ComputedField;
 
         public Replica(IReplicator replicator, PublicationStateInfo<T> info, bool isUpdateRequested = false)
         {
@@ -73,7 +81,8 @@ namespace Stl.Fusion.Bridge
         void IReplicaImpl.DisposeTemporaryReplica()
         {
             if (!MarkDisposed())
-                throw Errors.InternalError("Couldn't dispose temporary Replica!");
+                throw Stl.Internal.Errors.InternalError(
+                    "Couldn't dispose temporary Replica!");
         }
 
         // We want to make sure the replicas are connected to

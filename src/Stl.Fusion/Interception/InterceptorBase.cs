@@ -9,10 +9,12 @@ using System.Runtime.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Castle.DynamicProxy;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Concurrency;
-using Stl.Fusion.Caching;
+using Stl.DependencyInjection;
+using Stl.Fusion.Swapping;
 using Stl.Fusion.Interception.Internal;
 using Stl.Reflection;
 using Stl.Time;
@@ -25,7 +27,6 @@ namespace Stl.Fusion.Interception
         {
             public IArgumentHandlerProvider ArgumentHandlerProvider { get; set; } =
                 Interception.ArgumentHandlerProvider.Default;
-            public IMomentClock? Clock { get; set; }
             public LogLevel LogLevel { get; set; } = LogLevel.Debug;
             public LogLevel ValidationLogLevel { get; set; } = LogLevel.Information;
         }
@@ -44,19 +45,19 @@ namespace Stl.Fusion.Interception
         protected ILogger Log { get; }
         protected LogLevel LogLevel { get; }
         protected LogLevel ValidationLogLevel { get; }
-        protected IMomentClock Clock { get; }
+        protected IServiceProvider Services { get; }
         protected IArgumentHandlerProvider ArgumentHandlerProvider { get; }
 
         protected InterceptorBase(
             Options options,
-            IMomentClock? clock = null,
+            IServiceProvider services,
             ILoggerFactory? loggerFactory = null)
         {
             LoggerFactory = loggerFactory ??= NullLoggerFactory.Instance;
             Log = LoggerFactory.CreateLogger(GetType());
             LogLevel = options.LogLevel;
             ValidationLogLevel = options.ValidationLogLevel;
-            Clock = options.Clock ?? clock ?? CoarseCpuClock.Instance;
+            Services = services;
 
             ArgumentHandlerProvider = options.ArgumentHandlerProvider;
 
@@ -173,8 +174,8 @@ namespace Stl.Fusion.Interception
         protected virtual InterceptedMethodAttribute? GetInterceptedMethodAttribute(MethodInfo method)
             => method.GetAttribute<InterceptedMethodAttribute>(true, true);
 
-        protected virtual CacheAttribute? GetCacheAttribute(MethodInfo method)
-            => method.GetAttribute<CacheAttribute>(true, true);
+        protected virtual SwapAttribute? GetCacheAttribute(MethodInfo method)
+            => method.GetAttribute<SwapAttribute>(true, true);
 
         protected abstract void ValidateTypeInternal(Type type);
     }

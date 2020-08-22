@@ -3,20 +3,21 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
-using Stl.Concurrency;
 using Stl.Fusion.Internal;
 using Stl.Generators;
 using Stl.Locking;
 
 namespace Stl.Fusion
 {
-    public abstract class SimpleComputedInput : ComputedInput,
-        IEquatable<SimpleComputedInput>, IFunction
+    public abstract class StandaloneComputedInput : ComputedInput,
+        IEquatable<StandaloneComputedInput>, IFunction
     {
-        public AsyncLock AsyncLock { get; set; }
+        public IServiceProvider ServiceProvider { get; }
+        public AsyncLock AsyncLock { get; }
 
-        protected SimpleComputedInput()
+        protected StandaloneComputedInput(IServiceProvider serviceProvider)
         {
+            ServiceProvider = serviceProvider;
             AsyncLock = new AsyncLock(ReentryMode.CheckedFail);
             Function = this;
             HashCode = RuntimeHelpers.GetHashCode(this);
@@ -47,7 +48,7 @@ namespace Stl.Fusion
 
         // Equality
 
-        public bool Equals(SimpleComputedInput? other)
+        public bool Equals(StandaloneComputedInput? other)
             => ReferenceEquals(this, other);
         public override bool Equals(ComputedInput other)
             => ReferenceEquals(this, other);
@@ -57,12 +58,12 @@ namespace Stl.Fusion
             => base.GetHashCode();
     }
 
-    public class SimpleComputedInput<T> : SimpleComputedInput, IFunction<SimpleComputedInput, T>
+    public class StandaloneComputedInput<T> : StandaloneComputedInput, IFunction<StandaloneComputedInput, T>
     {
-        protected volatile SimpleComputed<T> ComputedField = null!;
+        protected volatile StandaloneComputed<T> ComputedField = null!;
 
-        public Func<IComputed<T>, IComputed<T>, CancellationToken, Task> Updater { get; }
-        public SimpleComputed<T> Computed {
+        public ComputedUpdater<T> Updater { get; }
+        public StandaloneComputed<T> Computed {
             get => ComputedField;
             set {
                 var oldComputed = Interlocked.Exchange(ref ComputedField, value);
@@ -70,22 +71,23 @@ namespace Stl.Fusion
             }
         }
 
-        public SimpleComputedInput(Func<IComputed<T>, IComputed<T>, CancellationToken, Task> updater)
+        public StandaloneComputedInput(IServiceProvider serviceProvider, ComputedUpdater<T> updater)
+            : base(serviceProvider)
             => Updater = updater;
 
         // IFunction
 
-        Task<IComputed<T>> IFunction<SimpleComputedInput, T>.InvokeAsync(SimpleComputedInput input, IComputed? usedBy, ComputeContext? context,
+        Task<IComputed<T>> IFunction<StandaloneComputedInput, T>.InvokeAsync(StandaloneComputedInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken) =>
             InvokeAsync(input, usedBy, context, cancellationToken);
 
         protected override async Task<IComputed> InvokeAsync(
             ComputedInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)
-            => await InvokeAsync((SimpleComputedInput) input, usedBy, context, cancellationToken).ConfigureAwait(false);
+            => await InvokeAsync((StandaloneComputedInput) input, usedBy, context, cancellationToken).ConfigureAwait(false);
 
         protected virtual async Task<IComputed<T>> InvokeAsync(
-            SimpleComputedInput input, IComputed? usedBy, ComputeContext? context,
+            StandaloneComputedInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)
         {
             if (input != this)
@@ -109,18 +111,18 @@ namespace Stl.Fusion
             return result;
         }
 
-        Task<T> IFunction<SimpleComputedInput, T>.InvokeAndStripAsync(
-            SimpleComputedInput input, IComputed? usedBy, ComputeContext? context,
+        Task<T> IFunction<StandaloneComputedInput, T>.InvokeAndStripAsync(
+            StandaloneComputedInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)
             => InvokeAndStripAsync(input, usedBy, context, cancellationToken);
 
         protected override async Task InvokeAndStripAsync(
             ComputedInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)
-            => await InvokeAndStripAsync((SimpleComputedInput) input, usedBy, context, cancellationToken).ConfigureAwait(false);
+            => await InvokeAndStripAsync((StandaloneComputedInput) input, usedBy, context, cancellationToken).ConfigureAwait(false);
 
         protected virtual async Task<T> InvokeAndStripAsync(
-            SimpleComputedInput input, IComputed? usedBy, ComputeContext? context,
+            StandaloneComputedInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)
         {
             if (input != this)
@@ -144,21 +146,13 @@ namespace Stl.Fusion
             return result.Value;
         }
 
-        protected virtual async ValueTask<SimpleComputed<T>> ComputeAsync(CancellationToken cancellationToken)
+        protected virtual async ValueTask<StandaloneComputed<T>> ComputeAsync(CancellationToken cancellationToken)
         {
             var oldComputed = Computed;
             var version = ConcurrentLTagGenerator.Default.Next();
-            var newComputed = new SimpleComputed<T>(Computed.Options, this, version);
-            try {
-                using var _ = Fusion.Computed.ChangeCurrent(newComputed);
-                await Updater.Invoke(oldComputed, newComputed, cancellationToken).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException) {
-                throw;
-            }
-            catch (Exception e) {
-                newComputed.TrySetOutput(new Result<T>(default!, e));
-            }
+            var newComputed = new StandaloneComputed<T>(Computed.Options, this, version);
+            using var _ = Fusion.Computed.ChangeCurrent(newComputed);
+            await Updater.Update(oldComputed, newComputed, cancellationToken).ConfigureAwait(false);
             Computed = newComputed;
             return newComputed;
         }

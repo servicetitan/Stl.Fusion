@@ -2,53 +2,11 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using Stl.Fusion.Caching;
 
 namespace Stl.Fusion.Internal
 {
     public static class ComputedEx
     {
-        public static void RenewTimeouts(this IComputed computed)
-        {
-            var options = computed.Options;
-            switch (options.IsCachingEnabled) {
-            case true:
-                var cachingOptions = options.CachingOptions;
-                var outputReleaseTime = cachingOptions.OutputReleaseTime;
-                if (outputReleaseTime == TimeSpan.MaxValue)
-                    goto default;
-                if (computed.State != ComputedState.Invalidated)
-                    Timeouts.ReleaseOutput.AddOrUpdateToLater(
-                        (ICachingComputed) computed, Timeouts.Clock.Now + outputReleaseTime);
-                break;
-            default:
-                var keepAliveTime = options.KeepAliveTime;
-                if (keepAliveTime != TimeSpan.Zero && computed.State != ComputedState.Invalidated)
-                    Timeouts.KeepAlive.AddOrUpdateToLater(
-                        computed, Timeouts.Clock.Now + keepAliveTime);
-                break;
-            }
-        }
-
-        public static void CancelTimeouts(this IComputed computed)
-        {
-            var options = computed.Options;
-            switch (options.IsCachingEnabled) {
-            case true:
-                var cachingOptions = options.CachingOptions;
-                var outputReleaseTime = cachingOptions.OutputReleaseTime;
-                if (outputReleaseTime == TimeSpan.MaxValue)
-                    goto default;
-                Timeouts.ReleaseOutput.Remove((ICachingComputed) computed);
-                break;
-            default:
-                var keepAliveTime = options.KeepAliveTime;
-                if (keepAliveTime != TimeSpan.Zero)
-                    Timeouts.KeepAlive.Remove(computed);
-                break;
-            }
-        }
-
         internal static bool TryUseExisting<T>(this IComputed<T>? existing, ComputeContext context, IComputed? usedBy)
         {
             var callOptions = context.CallOptions;
@@ -67,12 +25,12 @@ namespace Stl.Fusion.Internal
                 return true;
             }
             ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) existing!);
-            existing.RenewTimeouts();
+            ((IComputedImpl?) existing)?.RenewTimeouts();
             return true;
         }
 
         internal static async ValueTask<ResultBox<T>?> TryUseExistingAsync<T>(
-            this ICachingComputed<T>? existing, ComputeContext context, IComputed? usedBy,
+            this IAsyncComputed<T>? existing, ComputeContext context, IComputed? usedBy,
             CancellationToken cancellationToken)
         {
             var callOptions = context.CallOptions;
@@ -102,7 +60,7 @@ namespace Stl.Fusion.Internal
             ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) existing!);
             if ((callOptions & CallOptions.Capture) != 0)
                 Interlocked.Exchange(ref context.CapturedComputed, existing);
-            existing.RenewTimeouts();
+            ((IComputedImpl?) existing)?.RenewTimeouts();
             return result;
         }
 
@@ -112,7 +70,7 @@ namespace Stl.Fusion.Internal
             ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) computed);
             if ((context.CallOptions & CallOptions.Capture) != 0)
                 Interlocked.Exchange(ref context.CapturedComputed, computed);
-            computed.RenewTimeouts();
+            ((IComputedImpl?) computed)?.RenewTimeouts();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Stl.Async;
 using Stl.Fusion.Interception.Internal;
@@ -7,9 +8,14 @@ namespace Stl.Fusion.Interception
     public abstract class InterceptedFunctionBase<TOut> : FunctionBase<InterceptedInput, TOut>
     {
         public InterceptedMethod Method { get; }
+        protected ComputedOptions Options { get; }
 
-        protected InterceptedFunctionBase(InterceptedMethod method)
-            => Method = method;
+        protected InterceptedFunctionBase(IServiceProvider serviceProvider, InterceptedMethod method)
+            : base(serviceProvider)
+        {
+            Method = method;
+            Options = method.Options;
+        }
 
         public override string ToString()
         {

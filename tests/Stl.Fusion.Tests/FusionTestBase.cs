@@ -14,7 +14,7 @@ using Microsoft.Extensions.Logging;
 using Stl.DependencyInjection;
 using Stl.IO;
 using Stl.Fusion.Bridge;
-using Stl.Fusion.Caching;
+using Stl.Fusion.Swapping;
 using Stl.Fusion.Client;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Tests.Model;
@@ -129,13 +129,11 @@ namespace Stl.Fusion.Tests
                     }, 256);
 
             // Cache
-            services.AddSingleton<FakeCache<InterceptedInput>>();
-            services.AddSingleton<ICache<InterceptedInput>,
-                LoggingCacheWrapper<InterceptedInput, FakeCache<InterceptedInput>>>();
-            services.AddSingleton(c =>
-                new LoggingCacheWrapper<InterceptedInput, FakeCache<InterceptedInput>>.Options() {
-                    LogLevel = LogLevel.Information,
-                });
+            services.AddSingleton<FakeSwapService>();
+            services.AddSingleton<ISwapService, LoggingSwapServiceWrapper<FakeSwapService>>();
+            services.AddSingleton(c => new LoggingSwapServiceWrapper<FakeSwapService>.Options() {
+                LogLevel = LogLevel.Information,
+            });
 
             // Core fusion services
             services.AddSingleton(c => new TestWebHost(c));

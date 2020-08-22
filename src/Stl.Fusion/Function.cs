@@ -2,12 +2,13 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
+using Stl.DependencyInjection;
 using Stl.Fusion.Internal;
 using Stl.Locking;
 
 namespace Stl.Fusion
 {
-    public interface IFunction : IAsyncDisposable
+    public interface IFunction : IHasServiceProvider, IAsyncDisposable
     {
         Task<IComputed> InvokeAsync(ComputedInput input,
             IComputed? usedBy,
@@ -37,9 +38,11 @@ namespace Stl.Fusion
     {
         protected IAsyncLockSet<ComputedInput> Locks { get; }
         protected object Lock => Locks;
+        public IServiceProvider ServiceProvider { get; }
 
-        protected FunctionBase()
+        protected FunctionBase(IServiceProvider serviceProvider)
         {
+            ServiceProvider = serviceProvider;
             Locks = ComputedRegistry.Instance.GetLocksFor(this);
         }
 

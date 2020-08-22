@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Stl.Async;
 using Stl.Concurrency;
+using Stl.DependencyInjection;
 using Stl.Fusion.Bridge.Internal;
 using Stl.OS;
 using Stl.Generators;
@@ -21,7 +22,7 @@ namespace Stl.Fusion.Bridge
         IComputed<bool> GetPublisherConnectionState(Symbol publisherId);
     }
 
-    public interface IReplicatorImpl : IReplicator
+    public interface IReplicatorImpl : IReplicator, IHasServiceProvider
     {
         IChannelProvider ChannelProvider { get; }
         TimeSpan ReconnectDelay { get; }
@@ -43,13 +44,16 @@ namespace Stl.Fusion.Bridge
         protected ConcurrentDictionary<Symbol, ReplicatorChannelProcessor> ChannelProcessors { get; }
         protected Func<Symbol, ReplicatorChannelProcessor> CreateChannelProcessorHandler { get; }
         public Symbol Id { get; }
+        public IServiceProvider ServiceProvider { get; }
         public IChannelProvider ChannelProvider { get; }
         public TimeSpan ReconnectDelay { get; }
 
-        public Replicator(Options options, IChannelProvider channelProvider)
+        public Replicator(Options? options, IServiceProvider serviceProvider, IChannelProvider channelProvider)
         {
+            options ??= new Options();
             Id = options.Id;
             ReconnectDelay = options.ReconnectDelay;
+            ServiceProvider = serviceProvider;
             ChannelProvider = channelProvider;
             ChannelProcessors = new ConcurrentDictionary<Symbol, ReplicatorChannelProcessor>();
             CreateChannelProcessorHandler = CreateChannelProcessor;

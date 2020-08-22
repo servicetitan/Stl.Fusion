@@ -4,7 +4,7 @@ using System.Reflection;
 using System.Threading.Channels;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Messages;
-using Stl.Fusion.Caching;
+using Stl.Fusion.Swapping;
 using Stl.Text;
 
 namespace Stl.Fusion.Internal
@@ -20,6 +20,8 @@ namespace Stl.Fusion.Internal
         }
         public static Exception TypeMustBeOpenGenericType(Type type)
             => new InvalidOperationException($"'{type}' must be open generic type.");
+        public static Exception MustHaveASingleGenericArgument(Type type)
+            => new InvalidOperationException($"'{type}' must have a single generic argument.");
 
         public static Exception WrongComputedState(
             ComputedState expectedState, ComputedState state)
@@ -67,9 +69,9 @@ namespace Stl.Fusion.Internal
                 $"most likely because there is no good way to intercept the deserialization " +
                 $"of results of this type.");
 
-        public static Exception UnsupportedRequiresCachingComputed()
-            => new NotSupportedException($"{nameof(ICachingComputed)} is required to perform this operation.");
-        public static Exception OutputIsAlreadyReleased()
-            => new InvalidOperationException($"{nameof(ICachingComputed.MaybeOutput)} is already released.");
+        public static Exception UnsupportedComputedOptions(Type unsupportedBy)
+            => new NotSupportedException($"Specified {nameof(ComputedOptions)} aren't supported by '{unsupportedBy}'.");
+        public static Exception OutputIsUnloaded()
+            => new InvalidOperationException($"{nameof(IAsyncComputed.MaybeOutput)} is unloaded.");
     }
 }

@@ -87,7 +87,7 @@ namespace Stl.Fusion.Tests
         }
 
         [Fact]
-        public async Task SimpleComputedTest()
+        public async Task StandaloneComputedTest()
         {
             var users = Services.GetRequiredService<IUserService>();
             var time = Services.GetRequiredService<ITimeService>();
@@ -98,7 +98,7 @@ namespace Stl.Fusion.Tests
             };
             await users.CreateAsync(u, true);
 
-            var cText = await SimpleComputed.New<string>(
+            var cText = await Computed.New<string>(
                 async (prev, cancellationToken) => {
                     var norris = await users.TryGetAsync(int.MaxValue, cancellationToken).ConfigureAwait(false);
                     var now = await time.GetTimeAsync().ConfigureAwait(false);
@@ -127,12 +127,12 @@ namespace Stl.Fusion.Tests
             var count2 = 0;
 
 #pragma warning disable 1998
-            var c1 = await SimpleComputed.New<int>(async (prev, cancellationToken) => count1++)
+            var c1 = await Computed.New<int>(async (prev, cancellationToken) => count1++)
                 .UpdateAsync(false);
-            var c2 = await SimpleComputed.New<int>(async (prev, cancellationToken) => count2++)
+            var c2 = await Computed.New<int>(async (prev, cancellationToken) => count2++)
                 .UpdateAsync(false);
 #pragma warning restore 1998
-            var c12 = await SimpleComputed.New<(int, int)>(
+            var c12 = await Computed.New<(int, int)>(
                 async (prev, cancellationToken) => {
                     var a = await c1.UseAsync(cancellationToken);
                     using var _ = Computed.Suppress();

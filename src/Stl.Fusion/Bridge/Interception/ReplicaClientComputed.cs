@@ -40,7 +40,7 @@ namespace Stl.Fusion.Bridge.Interception
 
         protected ReplicaClientComputed(IReplica<T>? replica,
             ComputedOptions options, InterceptedInput input,
-            Result<T> output, LTag version, bool isConsistent = true)
+            Result<T> output, LTag version, bool isConsistent)
             : base(options, input, output, version, isConsistent)
             => Replica = replica;
 

@@ -21,10 +21,10 @@ namespace Stl.Fusion.Bridge.Interception
 
         public ReplicaClientInterceptor(
             Options options,
+            IServiceProvider services,
             IReplicator replicator,
-            IMomentClock? clock = null,
             ILoggerFactory? loggerFactory = null)
-            : base(options, clock, loggerFactory)
+            : base(options, services, loggerFactory)
         {
             Replicator = replicator;
             VersionGenerator = options.VersionGenerator;

@@ -35,7 +35,7 @@ namespace Stl.Fusion.Tests.Services
         }
 
         [ComputeMethod(AutoInvalidateTime = 0.25)]
-        [Cache]
+        [Swap(0.01)]
         public virtual Task<DateTime> GetTimeAsync(CancellationToken cancellationToken = default)
             => Task.FromResult(GetTime());
 

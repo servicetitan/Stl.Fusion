@@ -38,7 +38,7 @@ namespace Stl.Fusion.Bridge.Internal
 
         public readonly IReplicator Replicator;
         public readonly Symbol PublisherId;
-        public readonly SimpleComputedInput<bool> StateComputed;
+        public readonly StandaloneComputedInput<bool> StateComputed;
 
         public ReplicatorChannelProcessor(IReplicator replicator, Symbol publisherId, ILogger? log = null)
         {
@@ -47,9 +47,10 @@ namespace Stl.Fusion.Bridge.Internal
             ReplicatorImpl = (IReplicatorImpl) replicator;
             PublisherId = publisherId;
             Subscriptions = new HashSet<Symbol>();
-            StateComputed = ((SimpleComputed<bool>) SimpleComputed.New<bool>(
+            StateComputed = ((StandaloneComputed<bool>) Computed.New<bool>(
+                ReplicatorImpl.ServiceProvider,
                 ComputedOptions.NoAutoInvalidateOnError,
-                (c, ct) => {
+                _ => {
                     lock (Lock) {
                         var lastError = LastError;
                         if (lastError != null)

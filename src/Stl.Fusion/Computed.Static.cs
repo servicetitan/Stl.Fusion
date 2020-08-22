@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
@@ -7,7 +6,7 @@ using Stl.Fusion.Internal;
 
 namespace Stl.Fusion
 {
-    public static class Computed
+    public static partial class Computed
     {
         private static readonly AsyncLocal<IComputed?> CurrentLocal = new AsyncLocal<IComputed?>();
 

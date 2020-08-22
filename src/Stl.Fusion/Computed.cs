@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 using Stl.Collections;
 using Stl.Collections.Slim;
 using Stl.Frozen;
-using Stl.Fusion.Caching;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Internal;
+using Stl.Fusion.Swapping;
 
 namespace Stl.Fusion
 {
@@ -45,6 +45,18 @@ namespace Stl.Fusion
 
         new ValueTask<IComputed<TOut>> UpdateAsync(bool addDependency, CancellationToken cancellationToken = default);
         new ValueTask<TOut> UseAsync(CancellationToken cancellationToken = default);
+    }
+
+    public interface IAsyncComputed : IComputed
+    {
+        IResult? MaybeOutput { get; }
+        ValueTask<IResult?> GetOutputAsync(CancellationToken cancellationToken = default);
+    }
+
+    public interface IAsyncComputed<T> : IAsyncComputed, IComputed<T>
+    {
+        new ResultBox<T>? MaybeOutput { get; }
+        new ValueTask<ResultBox<T>?> GetOutputAsync(CancellationToken cancellationToken = default);
     }
 
     public interface IComputedWithTypedInput<out TIn> : IComputed
@@ -128,7 +140,7 @@ namespace Stl.Fusion
             ComputedRegistry.Instance.Register(this);
         }
 
-        protected Computed(ComputedOptions options, TIn input, Result<TOut> output, LTag version, bool isConsistent = true)
+        protected Computed(ComputedOptions options, TIn input, Result<TOut> output, LTag version, bool isConsistent)
         {
             if (output.IsValue(out var v) && v is IFrozen f)
                 f.Freeze();
@@ -143,53 +155,6 @@ namespace Stl.Fusion
 
         public override string ToString()
             => $"{GetType().Name}({Input} {Version}, State: {State})";
-
-        void IComputedImpl.AddUsed(IComputedImpl used)
-        {
-            // Debug.WriteLine($"{nameof(IComputedImpl.AddUsed)}: {this} <- {used}");
-            lock (Lock) {
-                switch (State) {
-                case ComputedState.Consistent:
-                    throw Errors.WrongComputedState(State);
-                case ComputedState.Invalidated:
-                    return; // Already invalidated, so nothing to do here
-                }
-                used.AddUsedBy(this);
-                _used.Add(used);
-            }
-        }
-
-        void IComputedImpl.AddUsedBy(IComputedImpl usedBy)
-        {
-            lock (Lock) {
-                switch (State) {
-                case ComputedState.Computing:
-                    throw Errors.WrongComputedState(State);
-                case ComputedState.Invalidated:
-                    usedBy.Invalidate();
-                    return;
-                }
-
-                // The invalidation could happen here -
-                // that's why there is a second check later
-                // in this method
-                var usedByRef = (usedBy.Input, usedBy.Version);
-                _usedBy.Add(usedByRef);
-
-                // Second check
-                if (State == ComputedState.Invalidated) {
-                    _usedBy.Remove(usedByRef);
-                    usedBy.Invalidate();
-                }
-            }
-        }
-
-        void IComputedImpl.RemoveUsedBy(IComputedImpl usedBy)
-        {
-            lock (Lock) {
-                _usedBy.Remove((usedBy.Input, usedBy.Version));
-            }
-        }
 
         public virtual bool TrySetOutput(Result<TOut> output)
         {
@@ -314,7 +279,76 @@ namespace Stl.Fusion
             => Output.IsValue(out value);
         public bool IsValue([MaybeNullWhen(false)] out TOut value, [MaybeNullWhen(true)] out Exception error)
             => Output.IsValue(out value, out error!);
+        public Result<TOut> AsResult()
+            => Output.AsResult();
+        public Result<TOther> AsResult<TOther>()
+            => Output.AsResult<TOther>();
         public void ThrowIfError() => Output.ThrowIfError();
+
+        // IComputedImpl methods
+
+        void IComputedImpl.AddUsed(IComputedImpl used)
+        {
+            // Debug.WriteLine($"{nameof(IComputedImpl.AddUsed)}: {this} <- {used}");
+            lock (Lock) {
+                switch (State) {
+                case ComputedState.Consistent:
+                    throw Errors.WrongComputedState(State);
+                case ComputedState.Invalidated:
+                    return; // Already invalidated, so nothing to do here
+                }
+                used.AddUsedBy(this);
+                _used.Add(used);
+            }
+        }
+
+        void IComputedImpl.AddUsedBy(IComputedImpl usedBy)
+        {
+            lock (Lock) {
+                switch (State) {
+                case ComputedState.Computing:
+                    throw Errors.WrongComputedState(State);
+                case ComputedState.Invalidated:
+                    usedBy.Invalidate();
+                    return;
+                }
+
+                // The invalidation could happen here -
+                // that's why there is a second check later
+                // in this method
+                var usedByRef = (usedBy.Input, usedBy.Version);
+                _usedBy.Add(usedByRef);
+
+                // Second check
+                if (State == ComputedState.Invalidated) {
+                    _usedBy.Remove(usedByRef);
+                    usedBy.Invalidate();
+                }
+            }
+        }
+
+        void IComputedImpl.RemoveUsedBy(IComputedImpl usedBy)
+        {
+            lock (Lock) {
+                _usedBy.Remove((usedBy.Input, usedBy.Version));
+            }
+        }
+
+        public virtual void RenewTimeouts()
+        {
+            if (State == ComputedState.Invalidated)
+                return;
+            var options = Options;
+            if (options.KeepAliveTime > TimeSpan.Zero)
+                Timeouts.KeepAlive.AddOrUpdateToLater(this, Timeouts.Clock.Now + options.KeepAliveTime);
+        }
+
+        public virtual void CancelTimeouts()
+        {
+            var options = Options;
+            if (options.KeepAliveTime > TimeSpan.Zero)
+                Timeouts.KeepAlive.Remove(this);
+        }
 
         // Protected & private methods
 

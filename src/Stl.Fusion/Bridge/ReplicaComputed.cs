@@ -19,16 +19,10 @@ namespace Stl.Fusion.Bridge
 
         protected ReplicaComputed(ComputedOptions options, ReplicaInput input, LTag version)
             : base(options, input, version)
-        {
-            if (options.IsCachingEnabled)
-                throw Errors.UnsupportedRequiresCachingComputed();
-        }
+        { }
 
-        public ReplicaComputed(ComputedOptions options, ReplicaInput input, Result<T> output, LTag version, bool isConsistent = true)
+        public ReplicaComputed(ComputedOptions options, ReplicaInput input, Result<T> output, LTag version, bool isConsistent)
             : base(options, input, output, version, isConsistent)
-        {
-            if (options.IsCachingEnabled)
-                throw Errors.UnsupportedRequiresCachingComputed();
-        }
+        { }
     }
 }

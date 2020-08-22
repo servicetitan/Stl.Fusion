@@ -19,12 +19,14 @@ namespace Stl
         bool HasError { get; }
 
         void ThrowIfError();
+        Result<TOther> AsResult<TOther>();
     }
 
     public interface IMutableResult : IResult
     {
-        new object? Value { get; set; }
-        new Exception? Error { get; set; }
+        void Update(IResult result);
+        void SetValue(object? value);
+        void SetError(Exception error);
     }
 
     public interface IResult<T> : IResult
@@ -35,12 +37,13 @@ namespace Stl
         void Deconstruct(out T value, out Exception? error);
         bool IsValue([MaybeNullWhen(false)] out T value);
         bool IsValue([MaybeNullWhen(false)] out T value, [MaybeNullWhen(true)] out Exception error);
+        Result<T> AsResult();
     }
 
-    public interface IMutableResult<T> : IResult<T>
+    public interface IMutableResult<T> : IResult<T>, IMutableResult
     {
-        new T UnsafeValue { get; set; }
-        new T Value { get; set; }
+        void Update(Result<T> result);
+        void SetValue(T value);
     }
 
     [DebuggerDisplay("({" + nameof(UnsafeValue) + "}, Error = {" + nameof(Error) + "})")]
@@ -118,15 +121,15 @@ namespace Stl
 #pragma warning restore CS8762
         }
 
+        public Result<T> AsResult() => this;
+        public Result<TOther> AsResult<TOther>() =>
+            new Result<TOther>((TOther) (object) UnsafeValue!, Error);
+
         public void ThrowIfError()
         {
             if (Error != null)
                 throw Error;
         }
-
-        public Result<TOther> Cast<TOther>() =>
-            // ReSharper disable once HeapView.BoxingAllocation
-            new Result<TOther>((TOther) (object) UnsafeValue!, Error);
 
         // Equality
 

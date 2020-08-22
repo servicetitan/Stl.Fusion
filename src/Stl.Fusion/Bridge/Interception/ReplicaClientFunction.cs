@@ -23,7 +23,7 @@ namespace Stl.Fusion.Bridge.Interception
             IReplicator replicator,
             Generator<LTag> versionGenerator,
             ILogger<ReplicaClientFunction<T>>? log = null)
-            : base(method)
+            : base(((IReplicatorImpl) replicator).ServiceProvider, method)
         {
             Log = log ??= NullLogger<ReplicaClientFunction<T>>.Instance;
             IsLogDebugEnabled = Log.IsEnabled(LogLevel.Debug);

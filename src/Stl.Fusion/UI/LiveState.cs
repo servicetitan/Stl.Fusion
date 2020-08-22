@@ -5,12 +5,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Stl.DependencyInjection;
 using Stl.Internal;
 using Stl.Reflection;
 
 namespace Stl.Fusion.UI
 {
-    public interface ILiveState : IResult, IDisposable
+    public interface ILiveState : IResult, IHasServiceProvider, IDisposable
     {
         IComputed State { get; }
         Exception? UpdateError { get; }
@@ -56,11 +57,12 @@ namespace Stl.Fusion.UI
         private readonly bool _delayFirstUpdate;
         private readonly CancellationTokenSource _stopCts;
         private readonly CancellationToken _stopToken;
-        private readonly SimpleComputedInput<TState> _computedRef;
+        private readonly StandaloneComputedInput<TState> _computedRef;
         private volatile Box<TLocal> _local;
         private volatile Exception? _updateError;
         private volatile int _failedUpdateIndex;
 
+        public IServiceProvider ServiceProvider { get; }
         public TLocal Local {
             get => _local.Value;
             set { _local = Box.New(value); Invalidate(); }
@@ -82,10 +84,12 @@ namespace Stl.Fusion.UI
 
         public LiveState(
             Options options,
+            IServiceProvider? serviceProvider = null,
             IUpdateDelayer? updateDelayer = null,
             ILogger<LiveState<TState>>? log = null)
         {
             _log = log ??= NullLogger<LiveState<TState>>.Instance;
+            ServiceProvider = serviceProvider ??= ServiceProviderEx.Empty;
 
             _updater = options.Updater
                 ?? throw new ArgumentNullException(nameof(options) + "." + nameof(options.Updater));
@@ -98,8 +102,9 @@ namespace Stl.Fusion.UI
             _stopCts = new CancellationTokenSource();
             _stopToken = _stopCts.Token;
             _local = Box.New(options.InitialLocal);
-            var computed = (SimpleComputed<TState>) SimpleComputed.New(
-                options.StateOptions, UpdateAsync, options.InitialState, false);
+            var computed = (StandaloneComputed<TState>) Computed.New(
+                ServiceProvider, options.StateOptions,
+                (ComputedUpdater<TState>) UpdateAsync, options.InitialState);
             _computedRef = computed.Input;
             Task.Run(RunAsync);
         }
@@ -122,11 +127,17 @@ namespace Stl.Fusion.UI
         public void Deconstruct(out TState value, out Exception? error)
             => State.Deconstruct(out value, out error);
 
-        public void ThrowIfError() => State.ThrowIfError();
         public bool IsValue([MaybeNullWhen(false)] out TState value)
             => State.IsValue(out value);
         public bool IsValue([MaybeNullWhen(false)] out TState value, [MaybeNullWhen(true)] out Exception error)
             => State.IsValue(out value, out error!);
+
+        public Result<TState> AsResult()
+            => State.AsResult();
+        public Result<TOther> AsResult<TOther>()
+            => State.AsResult<TOther>();
+
+        public void ThrowIfError() => State.ThrowIfError();
 
         public void Invalidate(bool updateImmediately = true)
         {
@@ -144,7 +155,7 @@ namespace Stl.Fusion.UI
                 try {
                     if (updateIndex != 0 || _delayFirstUpdate)
                         await UpdateDelayer.DelayAsync(cancellationToken).ConfigureAwait(false);
-                    computed = (SimpleComputed<TState>)
+                    computed = (StandaloneComputed<TState>)
                         await computed.UpdateAsync(false, cancellationToken).ConfigureAwait(false);
                 }
                 finally {
@@ -199,9 +210,10 @@ namespace Stl.Fusion.UI
 
         public LiveState(
             Options options,
+            IServiceProvider? serviceProvider = null,
             IUpdateDelayer? updateDelayer = null,
             ILogger<LiveState<TState>>? log = null)
-            : base(options, updateDelayer, log)
+            : base(options, serviceProvider, updateDelayer, log)
         { }
     }
 }

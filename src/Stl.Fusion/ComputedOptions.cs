@@ -1,6 +1,6 @@
 using System;
 using Newtonsoft.Json;
-using Stl.Fusion.Caching;
+using Stl.Fusion.Swapping;
 
 namespace Stl.Fusion
 {
@@ -12,27 +12,27 @@ namespace Stl.Fusion
                 keepAliveTime: TimeSpan.Zero,
                 errorAutoInvalidateTime: TimeSpan.FromSeconds(1),
                 autoInvalidateTime: TimeSpan.MaxValue,
-                cachingOptions: CachingOptions.NoCaching);
+                swappingOptions: SwappingOptions.NoSwapping);
         public static readonly ComputedOptions NoAutoInvalidateOnError =
             new ComputedOptions(
                 keepAliveTime: Default.KeepAliveTime,
                 errorAutoInvalidateTime: TimeSpan.MaxValue,
                 autoInvalidateTime: Default.AutoInvalidateTime,
-                cachingOptions: Default.CachingOptions);
+                swappingOptions: Default.SwappingOptions);
 
         public TimeSpan KeepAliveTime { get; }
         public TimeSpan ErrorAutoInvalidateTime { get; }
         public TimeSpan AutoInvalidateTime { get; }
-        public CachingOptions CachingOptions { get; }
+        public SwappingOptions SwappingOptions { get; }
         [JsonIgnore]
-        public bool IsCachingEnabled { get; }
+        public bool IsAsyncComputed { get; }
 
         [JsonConstructor]
         public ComputedOptions(
             TimeSpan keepAliveTime,
             TimeSpan errorAutoInvalidateTime,
             TimeSpan autoInvalidateTime,
-            CachingOptions cachingOptions)
+            SwappingOptions swappingOptions)
         {
             KeepAliveTime = keepAliveTime;
             ErrorAutoInvalidateTime = errorAutoInvalidateTime;
@@ -40,21 +40,21 @@ namespace Stl.Fusion
             if (ErrorAutoInvalidateTime > autoInvalidateTime)
                 // It just doesn't make sense to keep it higher
                 ErrorAutoInvalidateTime = autoInvalidateTime;
-            CachingOptions = cachingOptions.IsCachingEnabled ? cachingOptions : CachingOptions.NoCaching;
-            IsCachingEnabled = CachingOptions.IsCachingEnabled;
+            SwappingOptions = swappingOptions.IsEnabled ? swappingOptions : SwappingOptions.NoSwapping;
+            IsAsyncComputed = swappingOptions.IsEnabled;
         }
 
-        public static ComputedOptions FromAttribute(InterceptedMethodAttribute? attribute, CacheAttribute? cacheAttribute)
+        public static ComputedOptions FromAttribute(InterceptedMethodAttribute? attribute, SwapAttribute? cacheAttribute)
         {
-            var cacheOptions = CachingOptions.FromAttribute(cacheAttribute);
+            var swappingOptions = SwappingOptions.FromAttribute(cacheAttribute);
             var cma = attribute as ComputeMethodAttribute;
-            if (cma == null && !cacheOptions.IsCachingEnabled)
+            if (cma == null && !swappingOptions.IsEnabled)
                 return Default;
             var options = new ComputedOptions(
                 ToTimeSpan(cma?.KeepAliveTime) ?? Default.KeepAliveTime,
                 ToTimeSpan(cma?.ErrorAutoInvalidateTime) ?? Default.ErrorAutoInvalidateTime,
                 ToTimeSpan(cma?.AutoInvalidateTime) ?? Default.AutoInvalidateTime,
-                cacheOptions);
+                swappingOptions);
             return options.IsDefault() ? Default : options;
         }
 
@@ -73,10 +73,10 @@ namespace Stl.Fusion
         }
 
         private bool IsDefault()
-            =>  Default.IsCachingEnabled
-                && KeepAliveTime == Default.KeepAliveTime
+            =>  KeepAliveTime == Default.KeepAliveTime
                 && ErrorAutoInvalidateTime == Default.ErrorAutoInvalidateTime
                 && AutoInvalidateTime == Default.AutoInvalidateTime
-                && CachingOptions == Default.CachingOptions;
+                && SwappingOptions == Default.SwappingOptions
+                && IsAsyncComputed == Default.IsAsyncComputed;
     }
 }
