@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Stl.Fusion.UI;
@@ -15,11 +16,11 @@ namespace Stl.Fusion.Tests
         public async Task BasicTest()
         {
             var ms1 = new MutableState<string>("A");
-            ms1.Updated += s => Out.WriteLine($"ms1 = {s.Value}");
+            ms1.Updated += s => Out.WriteLine($"ms1 = {s.UnsafeValue}");
             ms1.Value.Should().Be("A");
 
             var ms2 = new MutableState<string>("B");
-            ms2.Updated += s => Out.WriteLine($"ms2 = {s.Value}");
+            ms2.Updated += s => Out.WriteLine($"ms2 = {s.UnsafeValue}");
             ms2.Value.Should().Be("B");
 
             var c = Computed.New<string>(async ct => {
@@ -30,15 +31,24 @@ namespace Stl.Fusion.Tests
             c = await c.UpdateAsync(false);
             c.Value.Should().Be("AB");
 
-            ms1.SetValue("X");
+            ms1.Value = "X";
             ms1.Value.Should().Be("X");
             c = await c.UpdateAsync(false);
             c.Value.Should().Be("XB");
 
-            ms2.SetValue("Y");
+            ms2.Value = "Y";
             ms2.Value.Should().Be("Y");
             c = await c.UpdateAsync(false);
             c.Value.Should().Be("XY");
+
+            ms1.Error = new NullReferenceException();
+            ms1.HasError.Should().BeTrue();
+            ms1.HasValue.Should().BeFalse();
+            ms1.Error.Should().BeOfType<NullReferenceException>();
+            c = await c.UpdateAsync(false);
+            c.HasError.Should().BeTrue();
+            c.HasValue.Should().BeFalse();
+            c.Error.Should().BeOfType<NullReferenceException>();
         }
     }
 }

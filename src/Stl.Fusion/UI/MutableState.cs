@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Internal;
@@ -16,6 +15,18 @@ namespace Stl.Fusion.UI
         protected readonly object Lock = new object();
 
         public override IComputed<T> Computed => _computed;
+        public new T Value {
+            get => base.Value;
+            set => Update(Result.Value(value));
+        }
+        public new Exception? Error {
+            get => base.Error;
+            set => Update(Result.Error<T>(value));
+        }
+        object? IMutableResult.UntypedValue {
+            get => base.Value;
+            set => Update(Result.Value((T) value!));
+        }
 
         public MutableState(ResultBox<T> output) : this(null, output) { }
         public MutableState(
@@ -33,10 +44,8 @@ namespace Stl.Fusion.UI
             return Task.CompletedTask;
         }
 
-        void IMutableResult.SetValue(object? value) => Update(Result.New((T) value!));
-        void IMutableResult.Update(IResult result) => Update(result.AsResult<T>());
-        public void SetValue(T value) => Update(Result.New(value));
-        public void SetError(Exception error) => Update(Result.Error<T>(error));
+        void IMutableResult.Update(IResult result)
+            => Update(result.AsResult<T>());
         public void Update(Result<T> result)
         {
             lock (Lock) {

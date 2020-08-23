@@ -24,9 +24,9 @@ namespace Stl
 
     public interface IMutableResult : IResult
     {
+        object? UntypedValue { get; set; }
+        new Exception? Error { get; set; }
         void Update(IResult result);
-        void SetValue(object? value);
-        void SetError(Exception error);
     }
 
     public interface IResult<T> : IResult
@@ -42,8 +42,8 @@ namespace Stl
 
     public interface IMutableResult<T> : IResult<T>, IMutableResult
     {
+        new T Value { get; set; }
         void Update(Result<T> result);
-        void SetValue(T value);
     }
 
     [DebuggerDisplay("({" + nameof(UnsafeValue) + "}, Error = {" + nameof(Error) + "})")]
