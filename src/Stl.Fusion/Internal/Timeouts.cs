@@ -23,7 +23,7 @@ namespace Stl.Fusion.Internal
                 });
             Swap = new ConcurrentTimerSet<ISwappable>(
                 new ConcurrentTimerSet<ISwappable>.Options() {
-                    Quanta = TimeSpan.FromSeconds(1),
+                    Quanta = TimeSpan.FromMilliseconds(250),
                     ConcurrencyLevel = concurrencyLevel,
                     Clock = Clock,
                     FireHandler = t => t.SwapAsync(),

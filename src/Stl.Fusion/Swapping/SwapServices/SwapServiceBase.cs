@@ -27,7 +27,7 @@ namespace Stl.Fusion.Swapping
             return SerializerFactory.Invoke().Deserialize<object>(serializedValue) as IResult;
         }
 
-        public async ValueTask StoreOrRenewAsync(
+        public async ValueTask StoreAsync(
             (InterceptedInput Input, LTag Version) key, IResult value,
             CancellationToken cancellationToken = default)
         {

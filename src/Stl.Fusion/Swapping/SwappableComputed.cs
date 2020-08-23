@@ -84,18 +84,21 @@ namespace Stl.Fusion.Swapping
             if (MaybeOutput == null)
                 return;
             var swapService = Function.ServiceProvider.GetRequiredService<ISwapService>();
-            await swapService.StoreOrRenewAsync((Input, Version), MaybeOutput, cancellationToken);
+            await swapService.StoreAsync((Input, Version), MaybeOutput, cancellationToken);
             Interlocked.Exchange(ref _maybeOutput, null);
+            RenewTimeouts();
         }
 
         public override void RenewTimeouts()
         {
             if (State == ComputedState.Invalidated)
                 return;
-            var swappingOptions = Options.SwappingOptions;
-            if (swappingOptions.IsEnabled && swappingOptions.SwapTime > TimeSpan.Zero) {
-                Timeouts.Swap.AddOrUpdateToLater(this, Timeouts.Clock.Now + swappingOptions.SwapTime);
-                return;
+            if (MaybeOutput != null) {
+                var swappingOptions = Options.SwappingOptions;
+                if (swappingOptions.IsEnabled && swappingOptions.SwapTime > TimeSpan.Zero) {
+                    Timeouts.Swap.AddOrUpdateToLater(this, Timeouts.Clock.Now + swappingOptions.SwapTime);
+                    return;
+                }
             }
             base.RenewTimeouts();
         }

@@ -12,7 +12,7 @@ namespace Stl.Fusion.Tests
     [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
     public class KeepAliveTest : TestBase
     {
-        public class Calculator
+        public class Service
         {
             public int CallCount { get; set; }
 
@@ -54,19 +54,18 @@ namespace Stl.Fusion.Tests
                 // TODO: Fix intermittent failures on GitHub
                 return;
 
-            var services = CreateProviderFor<Calculator>();
-            var r = ComputedRegistry.Instance;
-            var c = services.GetRequiredService<Calculator>();
+            var services = CreateProviderFor<Service>();
+            var service = services.GetRequiredService<Service>();
 
-            c.CallCount = 0;
-            await c.MulAsync(1, 1);
-            c.CallCount.Should().Be(1);
-            await c.MulAsync(1, 1);
-            c.CallCount.Should().Be(1);
+            service.CallCount = 0;
+            await service.MulAsync(1, 1);
+            service.CallCount.Should().Be(1);
+            await service.MulAsync(1, 1);
+            service.CallCount.Should().Be(1);
 
             await GCCollectAsync();
-            await c.MulAsync(1, 1);
-            c.CallCount.Should().Be(2);
+            await service.MulAsync(1, 1);
+            service.CallCount.Should().Be(2);
         }
 
         [Fact]
@@ -76,25 +75,24 @@ namespace Stl.Fusion.Tests
                 // TODO: Fix intermittent failures on GitHub
                 return;
 
-            var services = CreateProviderFor<Calculator>();
-            var r = ComputedRegistry.Instance;
-            var c = services.GetRequiredService<Calculator>();
+            var services = CreateProviderFor<Service>();
+            var service = services.GetRequiredService<Service>();
 
-            c.CallCount = 0;
-            await c.SumAsync(1, 1);
-            c.CallCount.Should().Be(1);
-            await c.SumAsync(1, 1);
-            c.CallCount.Should().Be(1);
+            service.CallCount = 0;
+            await service.SumAsync(1, 1);
+            service.CallCount.Should().Be(1);
+            await service.SumAsync(1, 1);
+            service.CallCount.Should().Be(1);
 
             await Task.Delay(250);
             await GCCollectAsync();
-            await c.SumAsync(1, 1);
-            c.CallCount.Should().Be(1);
+            await service.SumAsync(1, 1);
+            service.CallCount.Should().Be(1);
 
             await Task.Delay(1000);
             await GCCollectAsync();
-            await c.SumAsync(1, 1);
-            c.CallCount.Should().Be(2);
+            await service.SumAsync(1, 1);
+            service.CallCount.Should().Be(2);
         }
 
         private async Task GCCollectAsync()

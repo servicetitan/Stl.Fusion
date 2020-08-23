@@ -10,7 +10,7 @@ namespace Stl.Fusion.Swapping
         public ValueTask<IResult?> LoadAsync((InterceptedInput Input, LTag Version) key, CancellationToken cancellationToken = default)
             => ValueTaskEx.FromResult((IResult?) null);
 
-        public ValueTask StoreOrRenewAsync((InterceptedInput Input, LTag Version) key, IResult value,
+        public ValueTask StoreAsync((InterceptedInput Input, LTag Version) key, IResult value,
             CancellationToken cancellationToken = default)
             => ValueTaskEx.CompletedTask;
     }

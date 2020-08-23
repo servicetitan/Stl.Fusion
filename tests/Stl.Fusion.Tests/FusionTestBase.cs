@@ -128,13 +128,6 @@ namespace Stl.Fusion.Tests
                         builder.UseSqlite($"Data Source={DbPath}", sqlite => { });
                     }, 256);
 
-            // Cache
-            services.AddSingleton<FakeSwapService>();
-            services.AddSingleton<ISwapService, LoggingSwapServiceWrapper<FakeSwapService>>();
-            services.AddSingleton(c => new LoggingSwapServiceWrapper<FakeSwapService>.Options() {
-                LogLevel = LogLevel.Information,
-            });
-
             // Core fusion services
             services.AddSingleton(c => new TestWebHost(c));
             services.AddFusionServerCore();

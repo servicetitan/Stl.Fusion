@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Fusion.Interception;
 
 namespace Stl.Fusion.Swapping
@@ -25,6 +26,7 @@ namespace Stl.Fusion.Swapping
             ILoggerFactory? loggerFactory = null)
         {
             options ??= new Options();
+            loggerFactory ??= NullLoggerFactory.Instance;
             SwapService = swapService;
             Log = loggerFactory.CreateLogger(swapService.GetType());
             LogLevel = options.LogLevel;
@@ -39,12 +41,12 @@ namespace Stl.Fusion.Swapping
             return value;
         }
 
-        public ValueTask StoreOrRenewAsync((InterceptedInput Input, LTag Version) key, IResult value,
+        public ValueTask StoreAsync((InterceptedInput Input, LTag Version) key, IResult value,
             CancellationToken cancellationToken = default)
         {
             if (IsEnabled)
                 Log.Log(LogLevel, $"[=] {key} <- {value}");
-            return SwapService.StoreOrRenewAsync(key, value, cancellationToken);
+            return SwapService.StoreAsync(key, value, cancellationToken);
         }
     }
 }
