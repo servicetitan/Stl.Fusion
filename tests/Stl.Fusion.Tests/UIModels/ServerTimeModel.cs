@@ -1,30 +1,38 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Tests.Services;
-using Stl.Fusion.UI;
 
 namespace Stl.Fusion.Tests.UIModels
 {
-    public class ServerTimeModel
+    public class ServerTimeModel1
     {
         public DateTime Time { get; }
 
-        public ServerTimeModel() { }
-        public ServerTimeModel(DateTime time) => Time = time;
+        public ServerTimeModel1() { }
+        public ServerTimeModel1(DateTime time) => Time = time;
+    }
 
-        [LiveStateUpdater]
-        public class Updater : ILiveStateUpdater<ServerTimeModel>
+    public class ServerTimeModel2 : ServerTimeModel1
+    {
+        public ServerTimeModel2() { }
+        public ServerTimeModel2(DateTime time) : base(time) { }
+    }
+
+    [State]
+    public class ServerTimeModel1State : LiveState<ServerTimeModel1>
+    {
+        private IClientTimeService Client
+            => ServiceProvider.GetRequiredService<IClientTimeService>();
+
+        public ServerTimeModel1State(Options options, IServiceProvider serviceProvider, object? argument = null)
+            : base(options, serviceProvider, argument) { }
+
+        protected override async Task<ServerTimeModel1> ComputeValueAsync(CancellationToken cancellationToken)
         {
-            private IClientTimeService Client { get; }
-
-            public Updater(IClientTimeService time) => Client = time;
-
-            public async Task<ServerTimeModel> UpdateAsync(ILiveState<ServerTimeModel> liveState, CancellationToken cancellationToken)
-            {
-                var time = await Client.GetTimeAsync(cancellationToken).ConfigureAwait(false);
-                return new ServerTimeModel(time);
-            }
+            var time = await Client.GetTimeAsync(cancellationToken).ConfigureAwait(false);
+            return new ServerTimeModel1(time);
         }
     }
 }

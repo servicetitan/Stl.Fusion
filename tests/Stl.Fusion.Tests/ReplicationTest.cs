@@ -27,13 +27,13 @@ namespace Stl.Fusion.Tests
 
             var r1 = Replicator.GetOrAdd<string>(p1.Ref, true);
             var r1c = await r1.Computed.UpdateAsync(false);
-            r1c.IsConsistent.Should().BeTrue();
+            r1c.IsConsistent().Should().BeTrue();
             r1c.Value.Should().Be("");
             r1.Computed.Should().Be(r1c);
 
             sp.SetValue("1");
             await Task.Delay(100);
-            r1c.IsConsistent.Should().BeFalse();
+            r1c.IsConsistent().Should().BeFalse();
             r1.Computed.Should().Be(r1c);
 
             r1c = await r1c.UpdateAsync(false);
@@ -53,10 +53,13 @@ namespace Stl.Fusion.Tests
             var rep = Replicator.GetOrAdd<DateTime>(pub.Ref);
 
             var count = 0;
-            using var _ = rep.Computed.AutoUpdate((c, o, _) => {
-                Out.WriteLine($"{c.Value}");
+            using var state = StateFactory.NewLive<DateTime>(
+                o => o.NoUpdateDelay(),
+                async (_, ct) => await rep.Computed.UseAsync(ct));
+            state.Updated += s => {
+                Out.WriteLine($"{s.Value}");
                 count++;
-            });
+            };
 
             await Task.Delay(1100);
             count.Should().BeGreaterThan(2);

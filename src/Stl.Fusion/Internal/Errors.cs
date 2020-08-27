@@ -4,7 +4,6 @@ using System.Reflection;
 using System.Threading.Channels;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Messages;
-using Stl.Fusion.Swapping;
 using Stl.Text;
 
 namespace Stl.Fusion.Internal
@@ -12,22 +11,25 @@ namespace Stl.Fusion.Internal
     public static class Errors
     {
         public static Exception MustImplement<TExpected>(Type type, string? argumentName = null)
+            => MustImplement(type, typeof(TExpected), argumentName);
+        public static Exception MustImplement(Type type, Type expectedType, string? argumentName = null)
         {
-            var message = $"{type.Name} must implement {typeof(TExpected).Name}.";
+            var message = $"'{type}' must implement '{expectedType}'.";
             return string.IsNullOrEmpty(argumentName)
                 ? (Exception) new InvalidOperationException(message)
                 : new ArgumentOutOfRangeException(argumentName, message);
         }
+
         public static Exception TypeMustBeOpenGenericType(Type type)
             => new InvalidOperationException($"'{type}' must be open generic type.");
         public static Exception MustHaveASingleGenericArgument(Type type)
             => new InvalidOperationException($"'{type}' must have a single generic argument.");
 
         public static Exception WrongComputedState(
-            ComputedState expectedState, ComputedState state)
+            ConsistencyState expectedState, ConsistencyState state)
             => new InvalidOperationException(
                 $"Wrong Computed.State: expected {expectedState}, was {state}.");
-        public static Exception WrongComputedState(ComputedState state)
+        public static Exception WrongComputedState(ConsistencyState state)
             => new InvalidOperationException(
                 $"Wrong Computed.State: {state}.");
 

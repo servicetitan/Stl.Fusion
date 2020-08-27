@@ -16,7 +16,7 @@ namespace Stl.Fusion.Server
             using var _ = publication.Use();
             var state = publication.State;
             var computed = state.Computed;
-            var isConsistent = computed.IsConsistent;
+            var isConsistent = computed.IsConsistent();
 
             var headers = httpContext.Response.Headers;
             if (headers.ContainsKey(FusionHeaders.Publication))

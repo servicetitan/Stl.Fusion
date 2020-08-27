@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
+using Stl.DependencyInjection;
 using Stl.OS;
 using Stl.Serialization;
 using Stl.Time;
@@ -11,7 +12,7 @@ namespace Stl.Fusion.Swapping
 {
     public class SimpleSwapService : SwapServiceBase<string>
     {
-        public class Options
+        public class Options : IOptions
         {
             public TimeSpan ExpirationTime { get; set; } = TimeSpan.FromMinutes(1);
             public TimeSpan TimerQuanta { get; set; } = TimeSpan.FromSeconds(1);
@@ -27,7 +28,7 @@ namespace Stl.Fusion.Swapping
 
         public SimpleSwapService(Options? options = null)
         {
-            options ??= new Options();
+            options = options.OrDefault();
             SerializerFactory = options.SerializerFactory;
             ExpirationTime = options.ExpirationTime;
             Clock = options.Clock ?? CoarseCpuClock.Instance;

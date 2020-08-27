@@ -23,18 +23,19 @@ namespace Stl.Fusion.Tests
                 _ => time.GetTimeWithOffsetAsync(TimeSpan.FromSeconds(1)));
 
             var count = 0L;
-            void OnInvalidated(IComputed<DateTime> @new, Result<DateTime> old, Exception? updateError)
-                => Log.LogInformation($"{++count} -> {@new.Value:hh:mm:ss:fff}");
+            using var state = StateFactory.NewLive<DateTime>(
+                o => o.NoUpdateDelay(),
+                async (_, ct) => await c.UseAsync(ct));
+            state.Updated += s
+                => Log.LogInformation($"{++count} -> {s.Value:hh:mm:ss:fff}");
 
-            using (var _ = c!.AutoUpdate(OnInvalidated)) {
-                await Task.Delay(3000);
-            }
+            await Task.Delay(3000);
+            state.Dispose();
             var lastCount = count;
-            Out.WriteLine("Completed AutoRecompute.");
+            lastCount.Should().BeGreaterThan(3);
 
             await Task.Delay(1000);
             count.Should().Be(lastCount);
-            count.Should().BeGreaterThan(3);
         }
 
         [Fact]

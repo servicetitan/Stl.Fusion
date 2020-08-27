@@ -22,11 +22,11 @@ namespace Stl.Fusion.Tests
             await using var serving = await WebSocketHost.ServeAsync();
             var client = Services.GetRequiredService<IClientTimeService>();
             var cTime = await Computed.CaptureAsync(_ => client.GetTimeAsync());
-            cTime.IsConsistent.Should().BeTrue();
+            cTime.IsConsistent().Should().BeTrue();
             (DateTime.Now - cTime.Value).Should().BeLessThan(epsilon);
 
             await Task.Delay(TimeSpan.FromSeconds(2));
-            cTime.IsConsistent.Should().BeFalse();
+            cTime.IsConsistent().Should().BeFalse();
             var time = await cTime.UseAsync();
             (DateTime.Now - time).Should().BeLessThan(epsilon);
         }

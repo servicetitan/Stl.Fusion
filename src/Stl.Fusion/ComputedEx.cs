@@ -14,12 +14,12 @@ namespace Stl.Fusion
         public static void SetOutput<T>(this IComputed<T> computed, Result<T> output)
         {
             if (!computed.TrySetOutput(output))
-                throw Errors.WrongComputedState(ComputedState.Computing, computed.State);
+                throw Errors.WrongComputedState(ConsistencyState.Computing, computed.ConsistencyState);
         }
 
         public static Task WhenInvalidatedAsync<T>(this IComputed<T> computed, CancellationToken cancellationToken = default)
         {
-            if (computed.State == ComputedState.Invalidated)
+            if (computed.ConsistencyState == ConsistencyState.Invalidated)
                 return Task.CompletedTask;
             var ts = TaskSource.New<Unit>(true);
             computed.Invalidated += c => ts.SetResult(default);

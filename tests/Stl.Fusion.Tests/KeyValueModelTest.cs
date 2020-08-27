@@ -4,7 +4,7 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Tests.Services;
 using Stl.Fusion.Tests.UIModels;
-using Stl.Fusion.UI;
+using Stl.Fusion;
 using Stl.Testing;
 using Stl.Tests;
 using Xunit;
@@ -32,32 +32,33 @@ namespace Stl.Fusion.Tests
             var kvc = Services.GetRequiredService<IKeyValueServiceClient<string>>();
 
             // First read
-            var c = kvm.State;
-            c.IsConsistent.Should().BeFalse();
+            var c = kvm.Computed;
+            c.IsConsistent().Should().BeFalse();
             c.Value.Key.Should().Be("");
             c.Value.Value.Should().BeNull();
             c.Value.UpdateCount.Should().Be(0);
 
             await TestEx.WhenMet(() => {
-                kvm.UpdateError.Should().BeNull();
-                var c = kvm.State;
-                c.IsConsistent.Should().BeTrue();
+                var snapshot = kvm.Snapshot;
+                snapshot.Computed.HasValue.Should().BeTrue();
+                var c = snapshot.Computed;
+                c.IsConsistent().Should().BeTrue();
                 c.Value.Key.Should().Be("");
                 c.Value.Value.Should().Be("1");
                 c.Value.UpdateCount.Should().Be(1);
             }, TimeSpan.FromSeconds(1));
 
             // Update
-            await kvc.SetAsync(kvm.State.Value.Key, "2");
+            await kvc.SetAsync(kvm.Computed.Value.Key, "2");
             await Task.Delay(300);
-            c = kvm.State;
-            c.IsConsistent.Should().BeFalse();
+            c = kvm.Computed;
+            c.IsConsistent().Should().BeFalse();
             c.Value.Value.Should().Be("1");
             c.Value.UpdateCount.Should().Be(1);
 
             await Task.Delay(1000);
-            c = kvm.State;
-            c.IsConsistent.Should().BeTrue();
+            c = kvm.Computed;
+            c.IsConsistent().Should().BeTrue();
             c.Value.Value.Should().Be("2");
             c.Value.UpdateCount.Should().Be(2);
         }

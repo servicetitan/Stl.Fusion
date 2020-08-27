@@ -78,12 +78,6 @@ namespace Stl
 #pragma warning restore CS8762
         }
 
-        public void ThrowIfError()
-        {
-            if (Error != null)
-                throw Error;
-        }
-
         public Result<T> AsResult()
             => new Result<T>(UnsafeValue, Error);
         public Result<TOther> AsResult<TOther>()

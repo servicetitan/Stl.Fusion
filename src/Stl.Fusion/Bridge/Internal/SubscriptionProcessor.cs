@@ -129,7 +129,7 @@ namespace Stl.Fusion.Bridge.Internal
             }
 
             var computed = state.Computed;
-            var isConsistent = computed.IsConsistent; // It may change, so we want to make a snapshot here
+            var isConsistent = computed.IsConsistent(); // It may change, so we want to make a snapshot here
             var version = (computed.Version, isConsistent);
             if ((!isUpdateRequested) && LastSentVersion == version)
                 return;

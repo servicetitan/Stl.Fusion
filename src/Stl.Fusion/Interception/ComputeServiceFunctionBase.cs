@@ -14,11 +14,11 @@ namespace Stl.Fusion.Interception
         protected readonly Generator<LTag> VersionGenerator;
 
         public ComputeServiceFunctionBase(
-            IServiceProvider serviceProvider,
             InterceptedMethod method,
             Generator<LTag> versionGenerator,
+            IServiceProvider serviceProvider,
             ILogger<ComputeServiceFunction<T>>? log = null)
-            : base(serviceProvider, method)
+            : base(method, serviceProvider)
         {
             Log = log ??= NullLogger<ComputeServiceFunction<T>>.Instance;
             VersionGenerator = versionGenerator;

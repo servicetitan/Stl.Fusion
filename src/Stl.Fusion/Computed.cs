@@ -9,26 +9,16 @@ using Stl.Collections.Slim;
 using Stl.Frozen;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Internal;
-using Stl.Fusion.Swapping;
 
 namespace Stl.Fusion
 {
-    public enum ComputedState
-    {
-        Computing = 0,
-        Consistent,
-        Invalidated,
-    }
-
-    public interface IComputed : IResult
+    public interface IComputed : IHasConsistencyState, IResult
     {
         ComputedOptions Options { get; }
         ComputedInput Input { get; }
         Type OutputType { get; }
         IResult Output { get; }
         LTag Version { get; } // ~ Unique for the specific (Func, Key) pair
-        ComputedState State { get; }
-        bool IsConsistent { get; }
         event Action<IComputed> Invalidated;
 
         bool Invalidate();
@@ -86,15 +76,15 @@ namespace Stl.Fusion
 
         public ComputedOptions Options => _options;
         public TIn Input { get; }
-        public ComputedState State => (ComputedState) _state;
-        public bool IsConsistent => State == ComputedState.Consistent;
+        public ConsistencyState ConsistencyState => (ConsistencyState) _state;
+        public bool IsConsistent() => ConsistencyState == ConsistencyState.Consistent;
         public IFunction<TIn, TOut> Function => (IFunction<TIn, TOut>) Input.Function;
         public LTag Version { get; }
         public Type OutputType => typeof(TOut);
 
         public virtual Result<TOut> Output {
             get {
-                AssertStateIsNot(ComputedState.Computing);
+                this.AssertConsistencyStateIsNot(ConsistencyState.Computing);
                 return _output;
             }
         }
@@ -117,12 +107,12 @@ namespace Stl.Fusion
 
         public event Action<IComputed> Invalidated {
             add {
-                if (State == ComputedState.Invalidated) {
+                if (ConsistencyState == ConsistencyState.Invalidated) {
                     value?.Invoke(this);
                     return;
                 }
                 lock (Lock) {
-                    if (State == ComputedState.Invalidated) {
+                    if (ConsistencyState == ConsistencyState.Invalidated) {
                         value?.Invoke(this);
                         return;
                     }
@@ -146,7 +136,7 @@ namespace Stl.Fusion
                 f.Freeze();
             _options = options;
             Input = input;
-            _state = (int) (isConsistent ? ComputedState.Consistent : ComputedState.Invalidated);
+            _state = (int) (isConsistent ? ConsistencyState.Consistent : ConsistencyState.Invalidated);
             _output = output;
             Version = version;
             if (isConsistent)
@@ -154,18 +144,18 @@ namespace Stl.Fusion
         }
 
         public override string ToString()
-            => $"{GetType().Name}({Input} {Version}, State: {State})";
+            => $"{GetType().Name}({Input} {Version}, State: {ConsistencyState})";
 
         public virtual bool TrySetOutput(Result<TOut> output)
         {
             if (output.IsValue(out var v) && v is IFrozen f)
                 f.Freeze();
-            if (State != ComputedState.Computing)
+            if (ConsistencyState != ConsistencyState.Computing)
                 return false;
             lock (Lock) {
-                if (State != ComputedState.Computing)
+                if (ConsistencyState != ConsistencyState.Computing)
                     return false;
-                SetStateUnsafe(ComputedState.Consistent);
+                SetStateUnsafe(ConsistencyState.Consistent);
                 _output = output;
             }
             OnOutputSet(output);
@@ -187,21 +177,21 @@ namespace Stl.Fusion
 
         public bool Invalidate()
         {
-            if (State == ComputedState.Invalidated)
+            if (ConsistencyState == ConsistencyState.Invalidated)
                 return false;
             // Debug.WriteLine($"{nameof(Invalidate)}: {this}");
             MemoryBuffer<(ComputedInput Input, LTag Version)> usedBy = default;
             var invalidateOnSetOutput = false;
             try {
                 lock (Lock) {
-                    switch (State) {
-                    case ComputedState.Invalidated:
+                    switch (ConsistencyState) {
+                    case ConsistencyState.Invalidated:
                         return false;
-                    case ComputedState.Computing:
+                    case ConsistencyState.Computing:
                         invalidateOnSetOutput = true;
                         return true;
                     }
-                    SetStateUnsafe(ComputedState.Invalidated);
+                    SetStateUnsafe(ConsistencyState.Invalidated);
                     usedBy = MemoryBuffer<(ComputedInput, LTag)>.LeaseAndSetCount(_usedBy.Count);
                     _usedBy.CopyTo(usedBy.Span);
                     _usedBy.Clear();
@@ -239,7 +229,7 @@ namespace Stl.Fusion
         protected virtual void OnInvalidated()
         {
             ComputedRegistry.Instance.Unregister(this);
-            this.CancelTimeouts();
+            CancelTimeouts();
         }
 
         // UpdateAsync
@@ -283,7 +273,6 @@ namespace Stl.Fusion
             => Output.AsResult();
         public Result<TOther> AsResult<TOther>()
             => Output.AsResult<TOther>();
-        public void ThrowIfError() => Output.ThrowIfError();
 
         // IComputedImpl methods
 
@@ -291,10 +280,10 @@ namespace Stl.Fusion
         {
             // Debug.WriteLine($"{nameof(IComputedImpl.AddUsed)}: {this} <- {used}");
             lock (Lock) {
-                switch (State) {
-                case ComputedState.Consistent:
-                    throw Errors.WrongComputedState(State);
-                case ComputedState.Invalidated:
+                switch (ConsistencyState) {
+                case ConsistencyState.Consistent:
+                    throw Errors.WrongComputedState(ConsistencyState);
+                case ConsistencyState.Invalidated:
                     return; // Already invalidated, so nothing to do here
                 }
                 used.AddUsedBy(this);
@@ -305,10 +294,10 @@ namespace Stl.Fusion
         void IComputedImpl.AddUsedBy(IComputedImpl usedBy)
         {
             lock (Lock) {
-                switch (State) {
-                case ComputedState.Computing:
-                    throw Errors.WrongComputedState(State);
-                case ComputedState.Invalidated:
+                switch (ConsistencyState) {
+                case ConsistencyState.Computing:
+                    throw Errors.WrongComputedState(ConsistencyState);
+                case ConsistencyState.Invalidated:
                     usedBy.Invalidate();
                     return;
                 }
@@ -320,7 +309,7 @@ namespace Stl.Fusion
                 _usedBy.Add(usedByRef);
 
                 // Second check
-                if (State == ComputedState.Invalidated) {
+                if (ConsistencyState == ConsistencyState.Invalidated) {
                     _usedBy.Remove(usedByRef);
                     usedBy.Invalidate();
                 }
@@ -336,7 +325,7 @@ namespace Stl.Fusion
 
         public virtual void RenewTimeouts()
         {
-            if (State == ComputedState.Invalidated)
+            if (ConsistencyState == ConsistencyState.Invalidated)
                 return;
             var options = Options;
             if (options.KeepAliveTime > TimeSpan.Zero)
@@ -353,21 +342,7 @@ namespace Stl.Fusion
         // Protected & private methods
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected void AssertStateIs(ComputedState expectedState)
-        {
-            if (State != expectedState)
-                throw Errors.WrongComputedState(expectedState, State);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected void AssertStateIsNot(ComputedState unexpectedState)
-        {
-            if (State == unexpectedState)
-                throw Errors.WrongComputedState(State);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected void SetStateUnsafe(ComputedState newState)
+        protected void SetStateUnsafe(ConsistencyState newState)
             => _state = (int) newState;
 
         protected void AutoInvalidate(TimeSpan timeout)

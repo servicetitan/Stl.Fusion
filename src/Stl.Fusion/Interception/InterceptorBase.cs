@@ -17,16 +17,14 @@ using Stl.DependencyInjection;
 using Stl.Fusion.Swapping;
 using Stl.Fusion.Interception.Internal;
 using Stl.Reflection;
-using Stl.Time;
 
 namespace Stl.Fusion.Interception
 {
-    public abstract class InterceptorBase : IInterceptor
+    public abstract class InterceptorBase : IInterceptor, IHasServiceProvider
     {
-        public class Options
+        public class Options : IOptions
         {
-            public IArgumentHandlerProvider ArgumentHandlerProvider { get; set; } =
-                Interception.ArgumentHandlerProvider.Default;
+            public IArgumentHandlerProvider? ArgumentHandlerProvider { get; set; } = null!;
             public LogLevel LogLevel { get; set; } = LogLevel.Debug;
             public LogLevel ValidationLogLevel { get; set; } = LogLevel.Information;
         }
@@ -45,21 +43,23 @@ namespace Stl.Fusion.Interception
         protected ILogger Log { get; }
         protected LogLevel LogLevel { get; }
         protected LogLevel ValidationLogLevel { get; }
-        protected IServiceProvider Services { get; }
         protected IArgumentHandlerProvider ArgumentHandlerProvider { get; }
+
+        public IServiceProvider ServiceProvider { get; }
 
         protected InterceptorBase(
             Options options,
-            IServiceProvider services,
+            IServiceProvider serviceProvider,
             ILoggerFactory? loggerFactory = null)
         {
             LoggerFactory = loggerFactory ??= NullLoggerFactory.Instance;
             Log = LoggerFactory.CreateLogger(GetType());
             LogLevel = options.LogLevel;
             ValidationLogLevel = options.ValidationLogLevel;
-            Services = services;
+            ServiceProvider = serviceProvider;
 
-            ArgumentHandlerProvider = options.ArgumentHandlerProvider;
+            ArgumentHandlerProvider = options.ArgumentHandlerProvider
+                ?? serviceProvider.GetRequiredService<IArgumentHandlerProvider>();
 
             _createHandler = CreateHandler;
             _createInterceptedMethod = CreateInterceptedMethod;

@@ -14,7 +14,7 @@ namespace Stl.Fusion.Internal
 
             if (existing == null)
                 return useExisting;
-            useExisting |= existing.IsConsistent;
+            useExisting |= existing.IsConsistent();
             if (!useExisting)
                 return false;
 
@@ -39,7 +39,7 @@ namespace Stl.Fusion.Internal
             if (existing == null)
                 return useExisting ? ResultBox<T>.Default : null;
 
-            useExisting |= existing.IsConsistent;
+            useExisting |= existing.IsConsistent();
             if (!useExisting)
                 return null;
 

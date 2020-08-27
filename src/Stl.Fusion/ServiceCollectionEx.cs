@@ -1,28 +1,38 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.DependencyInjection;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Interception;
 using Stl.Fusion.Interception;
-using Stl.Fusion.UI;
+using Stl.Fusion.Internal;
+using Stl.Reflection;
 
 namespace Stl.Fusion
 {
     public static class ServiceCollectionEx
     {
+        private static readonly HashSet<Type> GenericStateInterfaces = new HashSet<Type>() {
+            typeof(IState<>),
+            typeof(IMutableState<>),
+            typeof(IComputedState<>),
+            typeof(ILiveState<>),
+            typeof(ILiveState<,>),
+        };
+
         public static IServiceCollection AddFusionCore(this IServiceCollection services)
         {
-            // Registry
-            services.TryAddSingleton(ComputedRegistry.Instance);
             // ComputeServiceProxyGenerator
+            services.TryAddSingleton(new ArgumentHandlerProvider.Options());
+            services.TryAddSingleton<IArgumentHandlerProvider, ArgumentHandlerProvider>();
             services.TryAddSingleton(new ComputeServiceInterceptor.Options());
             services.TryAddSingleton<ComputeServiceInterceptor>();
             services.TryAddSingleton(c => ComputeServiceProxyGenerator.Default);
             services.TryAddSingleton(c => new [] { c.GetRequiredService<ComputeServiceInterceptor>() });
-            // UpdateDelayer
-            services.TryAddScoped(c => new UpdateDelayer.Options());
-            services.TryAddScoped<IUpdateDelayer, UpdateDelayer>();
+            // StateFactory
+            services.AddScoped<IStateFactory, StateFactory>();
             return services;
         }
 
@@ -104,5 +114,60 @@ namespace Stl.Fusion
             services.TryAdd(descriptor);
             return services;
         }
+
+        // AddState
+
+        public static IServiceCollection AddState(
+            this IServiceCollection services, Type implementationType,
+            Func<IServiceProvider, IState>? factory = null)
+        {
+            if (implementationType.IsValueType)
+                throw new ArgumentOutOfRangeException(nameof(implementationType));
+            var isRegistered = false;
+
+            var tInterfaces = new List<Type>();
+            if (implementationType.IsInterface)
+                tInterfaces.Add(implementationType);
+            tInterfaces.AddRange(implementationType.GetInterfaces());
+
+            foreach (var tInterface in tInterfaces) {
+                if (!tInterface.IsConstructedGenericType)
+                    continue;
+                var gInterface = tInterface.GetGenericTypeDefinition();
+                if (GenericStateInterfaces.Contains(gInterface)) {
+                    if (factory != null)
+                        services.TryAddTransient(tInterface, factory);
+                    else
+                        services.TryAddTransient(tInterface, implementationType);
+                    isRegistered = true;
+                }
+            }
+            if (!isRegistered)
+                throw Errors.MustImplement(implementationType, typeof(IState<>), nameof(implementationType));
+
+            // Registering IOption types based on .ctor parameters
+            foreach (var ctor in implementationType.GetConstructors()) {
+                if (!ctor.IsPublic)
+                    continue;
+                var parameters = ctor.GetParameters();
+                if (parameters.Length < 1)
+                    continue;
+                var optionsType = parameters[0].ParameterType;
+                if (!typeof(IOptions).IsAssignableFrom(optionsType))
+                    continue;
+                services.TryAddTransient(optionsType);
+            }
+            return services;
+        }
+
+        public static IServiceCollection AddState<TImplementation>(
+            this IServiceCollection services)
+            where TImplementation : class, IState
+            => services.AddState(typeof(TImplementation));
+
+        public static IServiceCollection AddState<TImplementation>(
+            this IServiceCollection services, Func<IServiceProvider, TImplementation> factory)
+            where TImplementation : class, IState
+            => services.AddState(typeof(TImplementation), factory);
     }
 }

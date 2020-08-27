@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using Microsoft.Extensions.Logging;
+using Stl.DependencyInjection;
 using Stl.Fusion.Interception.Internal;
 using Stl.Fusion.Internal;
 using Stl.Generators;
@@ -18,18 +19,18 @@ namespace Stl.Fusion.Interception
         protected readonly Generator<LTag> VersionGenerator;
 
         public ComputeServiceInterceptor(
-            Options options,
-            IServiceProvider services,
+            Options? options,
+            IServiceProvider serviceProvider,
             ILoggerFactory? loggerFactory = null)
-            : base(options, services, loggerFactory)
+            : base(options = options.OrDefault(serviceProvider), serviceProvider, loggerFactory)
             => VersionGenerator = options.VersionGenerator;
 
         protected override InterceptedFunctionBase<T> CreateFunction<T>(InterceptedMethod method)
         {
             var log = LoggerFactory.CreateLogger<ComputeServiceFunction<T>>();
             if (method.Options.IsAsyncComputed)
-                return new AsyncComputeServiceFunction<T>(Services, method, VersionGenerator, log);
-            return new ComputeServiceFunction<T>(Services, method, VersionGenerator, log);
+                return new AsyncComputeServiceFunction<T>(method, VersionGenerator, ServiceProvider, log);
+            return new ComputeServiceFunction<T>(method, VersionGenerator, ServiceProvider, log);
         }
 
         protected override void ValidateTypeInternal(Type type)

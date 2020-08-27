@@ -1,33 +1,37 @@
 using System;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Stl.Fusion.UI;
-using Stl.Testing;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace Stl.Fusion.Tests
 {
-    public class MutableStateTest : TestBase
+    public class MutableStateTest : SimpleFusionTestBase
     {
         public MutableStateTest(ITestOutputHelper @out) : base(@out) { }
+
+        protected override void ConfigureCommonServices(ServiceCollection services) { }
 
         [Fact]
         public async Task BasicTest()
         {
-            var ms1 = new MutableState<string>("A");
+            var factory = CreateServiceProvider().GetStateFactory();
+
+            var ms1 = factory.NewMutable<string>("A");
             ms1.Updated += s => Out.WriteLine($"ms1 = {s.UnsafeValue}");
             ms1.Value.Should().Be("A");
 
-            var ms2 = new MutableState<string>("B");
+            var ms2 = factory.NewMutable<string>("B");
             ms2.Updated += s => Out.WriteLine($"ms2 = {s.UnsafeValue}");
             ms2.Value.Should().Be("B");
 
-            var c = Computed.New<string>(async ct => {
+            var cs = factory.NewComputed<string>(async (s, ct) => {
                 var value1 = await ms1.Computed.UseAsync(ct);
                 var value2 = await ms2.Computed.UseAsync(ct);
                 return $"{value1}{value2}";
             });
+            var c = cs.Computed;
             c = await c.UpdateAsync(false);
             c.Value.Should().Be("AB");
 

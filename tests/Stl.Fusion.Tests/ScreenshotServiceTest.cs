@@ -24,13 +24,13 @@ namespace Stl.Fusion.Tests
             for (var i = 0; i < 10; i++) {
                 c.Value.Base64Content.Length.Should().BeGreaterThan(0);
                 await Task.Delay(100);
-                if (c.IsConsistent) {
+                if (c.IsConsistent()) {
                     Debugger.Break();
                     break;
                 }
                 c = await GetScreenshotComputedAsync();
             }
-            c.IsConsistent.Should().BeFalse();
+            c.IsConsistent().Should().BeFalse();
         }
 
         private async Task<IComputed<Screenshot>> GetScreenshotComputedAsync()

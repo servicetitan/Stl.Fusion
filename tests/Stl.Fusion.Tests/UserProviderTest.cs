@@ -98,16 +98,14 @@ namespace Stl.Fusion.Tests
             };
             await users.CreateAsync(u, true);
 
-            var cText = await Computed.New<string>(
-                async (prev, cancellationToken) => {
+            using var sText = await StateFactory.NewLive<string>(
+                o => o.NoUpdateDelay(),
+                async (s, cancellationToken) => {
                     var norris = await users.TryGetAsync(int.MaxValue, cancellationToken).ConfigureAwait(false);
                     var now = await time.GetTimeAsync().ConfigureAwait(false);
                     return $"@ {now:hh:mm:ss.fff}: {norris?.Name ?? "(none)"}";
                 }).UpdateAsync(false);
-
-            using var _ = cText.AutoUpdate((cNext, rPrev, updateError) => {
-                Log.LogInformation(cNext.Value);
-            });
+            sText.Updated += s => Log.LogInformation($"{s.Value}");
 
             for (var i = 1; i <= 10; i += 1) {
                 u.Name = $"Chuck Norris Lvl{i}";
@@ -115,7 +113,7 @@ namespace Stl.Fusion.Tests
                 await Task.Delay(100);
             }
 
-            var text = await cText.UseAsync();
+            var text = await sText.UseAsync();
             text.Should().EndWith("Lvl10");
         }
 
@@ -127,25 +125,23 @@ namespace Stl.Fusion.Tests
             var count2 = 0;
 
 #pragma warning disable 1998
-            var c1 = await Computed.New<int>(async (prev, cancellationToken) => count1++)
-                .UpdateAsync(false);
-            var c2 = await Computed.New<int>(async (prev, cancellationToken) => count2++)
-                .UpdateAsync(false);
+            var s1 = await StateFactory.NewComputed<int>(async (s, ct) => count1++).UpdateAsync(false);
+            var s2 = await StateFactory.NewComputed<int>(async (s, ct) => count2++).UpdateAsync(false);
 #pragma warning restore 1998
-            var c12 = await Computed.New<(int, int)>(
-                async (prev, cancellationToken) => {
-                    var a = await c1.UseAsync(cancellationToken);
+            var s12 = await StateFactory.NewComputed<(int, int)>(
+                async (s, cancellationToken) => {
+                    var a = await s1.UseAsync(cancellationToken);
                     using var _ = Computed.Suppress();
-                    var b = await c2.UseAsync(cancellationToken);
+                    var b = await s2.UseAsync(cancellationToken);
                     return (a, b);
                 }).UpdateAsync(false);
 
-            var v12a = await c12.UseAsync();
-            c1.Invalidate(); // Should increment c1 & impact c12
-            var v12b = await c12.UseAsync();
+            var v12a = await s12.UseAsync();
+            s1.Invalidate(); // Should increment c1 & impact c12
+            var v12b = await s12.UseAsync();
             v12b.Should().Be((v12a.Item1 + 1, v12a.Item2));
-            c2.Invalidate(); // Should increment c2, but shouldn't impact c12
-            var v12c = await c12.UseAsync();
+            s2.Invalidate(); // Should increment c2, but shouldn't impact c12
+            var v12c = await s12.UseAsync();
             v12c.Should().Be(v12b);
         }
 

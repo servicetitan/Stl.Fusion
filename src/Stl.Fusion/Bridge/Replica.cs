@@ -126,7 +126,7 @@ namespace Stl.Fusion.Bridge
 
                 if (oldComputed == null || oldComputed.Version != version)
                     ReplaceComputedUnsafe(oldComputed, output, version, isConsistent);
-                else if (oldComputed.IsConsistent != isConsistent) {
+                else if (oldComputed.IsConsistent() != isConsistent) {
                     if (isConsistent)
                         ReplaceComputedUnsafe(oldComputed, output, version, isConsistent);
                     else

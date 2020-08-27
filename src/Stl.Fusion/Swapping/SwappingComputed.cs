@@ -18,7 +18,7 @@ namespace Stl.Fusion.Swapping
         protected AsyncLock SwapOutputLock => _swapOutputLockLazy.Value;
         public override Result<T> Output {
             get {
-                AssertStateIsNot(ComputedState.Computing);
+                this.AssertConsistencyStateIsNot(ConsistencyState.Computing);
                 var output = _maybeOutput;
                 if (output == null)
                     throw Errors.OutputIsUnloaded();
@@ -40,12 +40,12 @@ namespace Stl.Fusion.Swapping
         {
             if (output.IsValue(out var v) && v is IFrozen f)
                 f.Freeze();
-            if (State != ComputedState.Computing)
+            if (ConsistencyState != ConsistencyState.Computing)
                 return false;
             lock (Lock) {
-                if (State != ComputedState.Computing)
+                if (ConsistencyState != ConsistencyState.Computing)
                     return false;
-                SetStateUnsafe(ComputedState.Consistent);
+                SetStateUnsafe(ConsistencyState.Consistent);
                 Interlocked.Exchange(ref _maybeOutput, output);
             }
             OnOutputSet(output.AsResult());
@@ -79,7 +79,7 @@ namespace Stl.Fusion.Swapping
 
         public async ValueTask SwapAsync(CancellationToken cancellationToken = default)
         {
-            AssertStateIsNot(ComputedState.Computing);
+            this.AssertConsistencyStateIsNot(ConsistencyState.Computing);
             using var _ = await SwapOutputLock.LockAsync(cancellationToken).ConfigureAwait(false);
             if (MaybeOutput == null)
                 return;
@@ -91,7 +91,7 @@ namespace Stl.Fusion.Swapping
 
         public override void RenewTimeouts()
         {
-            if (State == ComputedState.Invalidated)
+            if (ConsistencyState == ConsistencyState.Invalidated)
                 return;
             if (MaybeOutput != null) {
                 var swappingOptions = Options.SwappingOptions;

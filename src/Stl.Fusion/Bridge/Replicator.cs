@@ -19,7 +19,7 @@ namespace Stl.Fusion.Bridge
         IReplica? TryGet(PublicationRef publicationRef);
         IReplica<T> GetOrAdd<T>(PublicationStateInfo<T> publicationStateInfo, bool requestUpdate = false);
 
-        IComputed<bool> GetPublisherConnectionState(Symbol publisherId);
+        IState<bool> GetPublisherConnectionState(Symbol publisherId);
     }
 
     public interface IReplicatorImpl : IReplicator, IHasServiceProvider
@@ -33,7 +33,7 @@ namespace Stl.Fusion.Bridge
 
     public class Replicator : AsyncDisposableBase, IReplicatorImpl
     {
-        public class Options
+        public class Options : IOptions
         {
             public static Symbol NewId() => "R-" + RandomStringGenerator.Default.Next();
 
@@ -50,7 +50,7 @@ namespace Stl.Fusion.Bridge
 
         public Replicator(Options? options, IServiceProvider serviceProvider, IChannelProvider channelProvider)
         {
-            options ??= new Options();
+            options = options.OrDefault(serviceProvider);
             Id = options.Id;
             ReconnectDelay = options.ReconnectDelay;
             ServiceProvider = serviceProvider;
@@ -71,10 +71,10 @@ namespace Stl.Fusion.Bridge
             return (IReplica<T>) replica;
         }
 
-        public IComputed<bool> GetPublisherConnectionState(Symbol publisherId)
+        public IState<bool> GetPublisherConnectionState(Symbol publisherId)
             => ChannelProcessors
                 .GetOrAddChecked(publisherId, CreateChannelProcessorHandler)
-                .StateComputed.Computed;
+                .IsConnected;
 
         protected virtual ReplicatorChannelProcessor GetChannelProcessor(Symbol publisherId)
             => ChannelProcessors

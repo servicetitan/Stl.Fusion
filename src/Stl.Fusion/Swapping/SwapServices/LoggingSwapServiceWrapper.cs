@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Stl.DependencyInjection;
 using Stl.Fusion.Interception;
 
 namespace Stl.Fusion.Swapping
@@ -10,7 +11,7 @@ namespace Stl.Fusion.Swapping
     public class LoggingSwapServiceWrapper<TSwapService> : ISwapService
         where TSwapService : ISwapService
     {
-        public class Options
+        public class Options : IOptions
         {
             public LogLevel LogLevel { get; set; } = LogLevel.Debug;
         }
@@ -25,7 +26,7 @@ namespace Stl.Fusion.Swapping
             TSwapService swapService,
             ILoggerFactory? loggerFactory = null)
         {
-            options ??= new Options();
+            options = options.OrDefault();
             loggerFactory ??= NullLoggerFactory.Instance;
             SwapService = swapService;
             Log = loggerFactory.CreateLogger(swapService.GetType());

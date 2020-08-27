@@ -20,7 +20,8 @@ using Stl.Fusion.Interception;
 using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
 using Stl.Fusion.Tests.UIModels;
-using Stl.Fusion.UI;
+using Stl.Fusion;
+using Stl.Fusion.Internal;
 using Stl.Testing;
 using Stl.Testing.Internal;
 using Xunit;
@@ -39,9 +40,11 @@ namespace Stl.Fusion.Tests
     {
         public FusionTestOptions Options { get; }
         public bool IsLoggingEnabled { get; set; } = true;
+        public PathString DbPath { get; protected set; }
         public IServiceProvider Services { get; }
         public ILogger Log { get; }
-        public PathString DbPath { get; protected set; }
+
+        public IStateFactory StateFactory => Services.GetStateFactory();
         public IPublisher Publisher => Services.GetRequiredService<IPublisher>();
         public IReplicator Replicator => Services.GetRequiredService<IReplicator>();
         public TestWebHost WebSocketHost => Services.GetRequiredService<TestWebHost>();
@@ -144,15 +147,13 @@ namespace Stl.Fusion.Tests
             // Auto-discovered services
             services.AddDiscoveredServices(t => t.Namespace!.StartsWith(testType.Namespace!), testType.Assembly);
 
-            // Custom live state updater
-            services.AddLiveState<Unit, ServerTimeModel>(
-                async (c, liveState, cancellationToken) => {
+            // Custom live state
+            services.AddState(c => c.GetStateFactory().NewLive<ServerTimeModel2>(
+                async (state, cancellationToken) => {
                     var client = c.GetRequiredService<IClientTimeService>();
                     var time = await client.GetTimeAsync(cancellationToken).ConfigureAwait(false);
-                    return new ServerTimeModel(time);
-                }, (c, options) => {
-                    options.InitialState = new ServerTimeModel();
-                });
+                    return new ServerTimeModel2(time);
+                }));
         }
 
         protected TestDbContext RentDbContext()
@@ -167,5 +168,16 @@ namespace Stl.Fusion.Tests
         protected virtual TestChannelPair<Message> CreateChannelPair(
             string name, bool dump = true)
             => new TestChannelPair<Message>(name, dump ? Out : null);
+
+        protected virtual Task DelayAsync(double seconds)
+            => Timeouts.Clock.DelayAsync(TimeSpan.FromSeconds(seconds));
+
+        protected void GCCollect()
+        {
+            for (var i = 0; i < 3; i++) {
+                GC.Collect();
+                Thread.Sleep(10);
+            }
+        }
     }
 }

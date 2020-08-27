@@ -10,7 +10,7 @@ namespace Stl.Fusion.Interception
         public InterceptedMethod Method { get; }
         protected ComputedOptions Options { get; }
 
-        protected InterceptedFunctionBase(IServiceProvider serviceProvider, InterceptedMethod method)
+        protected InterceptedFunctionBase(InterceptedMethod method, IServiceProvider serviceProvider)
             : base(serviceProvider)
         {
             Method = method;

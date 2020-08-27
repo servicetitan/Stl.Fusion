@@ -39,10 +39,13 @@ namespace Stl.Fusion.Tests
                 .Should().CompleteWithinAsync(TimeSpan.FromMinutes(1));
 
             var count = 0;
-            using var _ = rep.Computed.AutoUpdate((c, o, _) => {
-                Out.WriteLine($"Client: {c.Value}");
+            using var state = StateFactory.NewLive<DateTime>(
+                o => o.NoUpdateDelay(),
+                async (_, ct) => await rep.Computed.UseAsync(ct));
+            state.Updated += s => {
+                Out.WriteLine($"Client: {s.Value}");
                 count++;
-            });
+            };
 
             await Task.Delay(2000);
             count.Should().BeGreaterThan(2);
@@ -78,9 +81,9 @@ namespace Stl.Fusion.Tests
                 .Should().CompleteWithinAsync(TimeSpan.FromMinutes(1));
             Debug.WriteLine("2");
             var state = Replicator.GetPublisherConnectionState(pub.Publisher.Id);
-            state.IsConsistent.Should().BeFalse();
+            state.Computed.IsConsistent().Should().BeTrue();
             Debug.WriteLine("3");
-            state = await state.UpdateAsync(false);
+            await state.Computed.UpdateAsync(false);
             Debug.WriteLine("4");
             state.Should().Be(Replicator.GetPublisherConnectionState(pub.Publisher.Id));
             state.Value.Should().BeTrue();
@@ -95,7 +98,7 @@ namespace Stl.Fusion.Tests
                 .Should().ThrowAsync<Exception>();
             Debug.WriteLine("6");
             state.Should().Be(Replicator.GetPublisherConnectionState(pub.Publisher.Id));
-            state = await state.UpdateAsync(false);
+            await state.Computed.UpdateAsync(false);
             Debug.WriteLine("7");
             state.Should().Be(Replicator.GetPublisherConnectionState(pub.Publisher.Id));
             state.Error.Should().BeAssignableTo<Exception>();
@@ -106,7 +109,7 @@ namespace Stl.Fusion.Tests
                 .Should().ThrowAsync<WebSocketException>();
             Debug.WriteLine("9");
             rep.UpdateError.Should().BeOfType<WebSocketException>();
-            state = await state.UpdateAsync(false);
+            await state.Computed.UpdateAsync(false);
             Debug.WriteLine("10");
             state.Error.Should().BeOfType<WebSocketException>();
 
@@ -119,7 +122,7 @@ namespace Stl.Fusion.Tests
             await rep.RequestUpdateAsync().AsAsyncFunc()
                 .Should().CompleteWithinAsync(TimeSpan.FromMinutes(1));
             Debug.WriteLine("12");
-            state = await state.UpdateAsync(false);
+            await state.Computed.UpdateAsync(false);
             Debug.WriteLine("13");
             state.Value.Should().BeTrue();
 

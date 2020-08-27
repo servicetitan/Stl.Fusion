@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Stl.Async;
+using Stl.Internal;
 
 namespace Stl
 {
@@ -18,7 +18,6 @@ namespace Stl
         bool HasValue { get; }
         bool HasError { get; }
 
-        void ThrowIfError();
         Result<TOther> AsResult<TOther>();
     }
 
@@ -65,13 +64,9 @@ namespace Stl
         [JsonIgnore]
         public T Value {
             get {
-                if (Error == null)
-                    return UnsafeValue;
-                else {
-                    // That's the right way to re-throw an exception and preserve its stack trace
+                if (Error != null)
                     ExceptionDispatchInfo.Capture(Error).Throw();
-                    return default!; // Never executed, but no way to get rid of this
-                }
+                return UnsafeValue;
             }
         }
 
@@ -88,15 +83,8 @@ namespace Stl
             Error = error;
         }
 
-        public override string? ToString() => Value?.ToString();
-        public ValueTask<T> ToValueTask()
-            => IsValue(out var value, out var error)
-                ? ValueTaskEx.FromResult(value)
-                : ValueTaskEx.FromException<T>(error);
-        public Task<T> ToTask()
-            => IsValue(out var value, out var error)
-                ? Task.FromResult(value)
-                : Task.FromException<T>(error);
+        public override string? ToString()
+            => $"{GetType().Name}({(HasError ? $"Error: {Error}" : Value?.ToString())})";
 
         public void Deconstruct(out T value, out Exception? error)
         {
@@ -125,12 +113,6 @@ namespace Stl
         public Result<TOther> AsResult<TOther>() =>
             new Result<TOther>((TOther) (object) UnsafeValue!, Error);
 
-        public void ThrowIfError()
-        {
-            if (Error != null)
-                throw Error;
-        }
-
         // Equality
 
         public bool Equals(Result<T> other) =>
@@ -154,5 +136,35 @@ namespace Stl
         public static Result<T> New<T>(T value, Exception? error = null) => new Result<T>(value, error);
         public static Result<T> Value<T>(T value) => new Result<T>(value, null);
         public static Result<T> Error<T>(Exception? error) => new Result<T>(default!, error);
+
+        public static Result<T> FromTask<T>(Task<T> task)
+        {
+            if (!task.IsCompleted)
+                throw Errors.TaskIsNotCompleted();
+            if (task.IsCompletedSuccessfully)
+                return Value(task.Result);
+            return Error<T>(task.Exception
+                ?? Errors.InternalError("Task hasn't completed successfully but has no Exception."));
+        }
+
+        public static Result<T> FromFunc<T, TState>(TState state, Func<TState, T> func)
+        {
+            try {
+                return Value(func.Invoke(state));
+            }
+            catch (Exception e) {
+                return Error<T>(e);
+            }
+        }
+
+        public static Result<T> FromFunc<T>(Func<T> func)
+        {
+            try {
+                return Value(func.Invoke());
+            }
+            catch (Exception e) {
+                return Error<T>(e);
+            }
+        }
     }
 }

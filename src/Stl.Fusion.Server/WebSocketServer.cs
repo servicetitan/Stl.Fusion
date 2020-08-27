@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Stl.Channels;
+using Stl.DependencyInjection;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Messages;
 using Stl.Fusion.Client;
@@ -12,7 +13,7 @@ namespace Stl.Fusion.Server
 {
     public class WebSocketServer
     {
-        public class Options
+        public class Options : IOptions
         {
             private static readonly WebSocketChannelProvider.Options DefaultClientOptions =
                 new WebSocketChannelProvider.Options();

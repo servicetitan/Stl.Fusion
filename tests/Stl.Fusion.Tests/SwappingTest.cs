@@ -7,16 +7,14 @@ using Microsoft.Extensions.Logging;
 using Stl.Fusion.Internal;
 using Stl.Fusion.Swapping;
 using Stl.Testing;
-using Stl.Testing.Internal;
 using Stl.Tests;
 using Xunit;
 using Xunit.Abstractions;
-using Xunit.DependencyInjection.Logging;
 
 namespace Stl.Fusion.Tests
 {
     [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-    public class SwappingTest : TestBase
+    public class SwappingTest : SimpleFusionTestBase
     {
         public class Service
         {
@@ -61,34 +59,17 @@ namespace Stl.Fusion.Tests
 
         public SwappingTest(ITestOutputHelper @out) : base(@out) { }
 
-        public IServiceProvider CreateProviderFor<TService>()
-            where TService : class
+        protected override void ConfigureCommonServices(ServiceCollection services)
         {
-            ComputedRegistry.Instance = new ComputedRegistry(new ComputedRegistry.Options() {
-                InitialCapacity = 16,
-            });
-            var services = new ServiceCollection();
-            services.AddLogging(logging => {
-                logging.ClearProviders();
-                logging.SetMinimumLevel(LogLevel.Debug);
-                logging.AddDebug();
-                logging.AddProvider(
-                    new XunitTestOutputLoggerProvider(
-                        new TestOutputHelperAccessor(Out)));
-            });
-            services.AddFusionCore();
-            services.AddSingleton<SwapService>();
+            services.AddSingleton<SwappingTest.SwapService>();
             services.AddSingleton(c => new SimpleSwapService.Options {
                 TimerQuanta = TimeSpan.FromSeconds(0.1),
                 ExpirationTime = TimeSpan.FromSeconds(3),
             });
-            services.AddSingleton<ISwapService, LoggingSwapServiceWrapper<SwapService>>();
-            services.AddSingleton(c => new LoggingSwapServiceWrapper<SwapService>.Options() {
+            services.AddSingleton<ISwapService, LoggingSwapServiceWrapper<SwappingTest.SwapService>>();
+            services.AddSingleton(c => new LoggingSwapServiceWrapper<SwappingTest.SwapService>.Options() {
                 LogLevel = LogLevel.Information,
             });
-
-            services.AddComputeService<TService>();
-            return services.BuildServiceProvider();
         }
 
         [Fact]
@@ -98,7 +79,7 @@ namespace Stl.Fusion.Tests
                 // TODO: Fix intermittent failures on GitHub
                 return;
 
-            var services = CreateProviderFor<Service>();
+            var services = CreateServiceProviderFor<Service>();
             var swapService = services.GetRequiredService<SwapService>();
             var service = services.GetRequiredService<Service>();
             var clock = Timeouts.Clock;
@@ -130,7 +111,8 @@ namespace Stl.Fusion.Tests
             swapService.LoadCallCount.Should().Be(1);
             swapService.RenewCallCount.Should().Be(2);
             swapService.StoreCallCount.Should().Be(1);
-            await GCCollectAsync();
+
+            GCCollect();
             v = await service.SameValueAsync(a);
             service.CallCount.Should().Be(2);
             swapService.LoadCallCount.Should().Be(1);
@@ -138,18 +120,6 @@ namespace Stl.Fusion.Tests
             swapService.StoreCallCount.Should().Be(1);
             v.Should().Be(a);
             v.Should().BeSameAs(a);
-        }
-
-        private Task DelayAsync(double seconds)
-            => Timeouts.Clock.DelayAsync(TimeSpan.FromSeconds(seconds));
-
-        private async Task GCCollectAsync()
-        {
-            GC.Collect();
-            await Task.Delay(10);
-            GC.Collect();
-            await Task.Delay(10);
-            GC.Collect(); // To collect what has finalizers
         }
     }
 }

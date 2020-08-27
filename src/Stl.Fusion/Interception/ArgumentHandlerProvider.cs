@@ -2,7 +2,6 @@ using System;
 using System.Reflection;
 using Stl.DependencyInjection;
 using Stl.Extensibility;
-using Stl.Reflection;
 
 namespace Stl.Fusion.Interception
 {
@@ -12,26 +11,22 @@ namespace Stl.Fusion.Interception
         ArgumentHandler GetArgumentHandler(MethodInfo methodInfo, ParameterInfo parameterInfo);
     }
 
-    public class ArgumentHandlerProvider : IArgumentHandlerProvider
+    public class ArgumentHandlerProvider : IArgumentHandlerProvider, IHasServiceProvider
     {
-        public class Options
+        public class Options : IOptions
         {
-            public IMatchingTypeFinder MatchingTypeFinder { get; set; } = null!;
+            public IMatchingTypeFinder MatchingTypeFinder { get; set; } =
+                new MatchingTypeFinder(Assembly.GetExecutingAssembly());
         }
 
-        public static readonly IArgumentHandlerProvider Default = new ArgumentHandlerProvider();
         protected IMatchingTypeFinder MatchingTypeFinder { get; }
-        protected IServiceProvider? Services { get; }
+        public IServiceProvider ServiceProvider { get; }
 
-        public ArgumentHandlerProvider(
-            Options? options = null,
-            IServiceProvider? services = null)
+        public ArgumentHandlerProvider(Options? options, IServiceProvider serviceProvider)
         {
-            options ??= new Options() {
-                MatchingTypeFinder = new MatchingTypeFinder(GetType().Assembly),
-            };
+            options = options.OrDefault(serviceProvider);
             MatchingTypeFinder = options.MatchingTypeFinder;
-            Services = services;
+            ServiceProvider = serviceProvider;
         }
 
         public ArgumentHandler GetInvocationTargetHandler(MethodInfo methodInfo, Type invocationTargetType)
@@ -72,9 +67,7 @@ namespace Stl.Fusion.Interception
             if (fInstance != null)
                 return (ArgumentHandler) fInstance.GetValue(null);
 
-            if (Services != null)
-                return (ArgumentHandler) Services.Activate(comparerType);
-            return (ArgumentHandler) comparerType.CreateInstance();
+            return (ArgumentHandler) ServiceProvider.Activate(comparerType);
         }
     }
 }

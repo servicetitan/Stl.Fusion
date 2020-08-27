@@ -25,7 +25,7 @@ namespace Stl.Fusion.Bridge.Interception
         {
             ((IComputedImpl) this).AddUsed((IComputedImpl) source);
             TrySetOutput(source.Output);
-            if (!source.IsConsistent)
+            if (!source.IsConsistent())
                 Invalidate();
         }
 

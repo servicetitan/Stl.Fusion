@@ -9,11 +9,11 @@ namespace Stl.Fusion.Interception
     public class ComputeServiceFunction<T> : ComputeServiceFunctionBase<T>
     {
         public ComputeServiceFunction(
-            IServiceProvider serviceProvider,
             InterceptedMethod method,
             Generator<LTag> versionGenerator,
+            IServiceProvider serviceProvider,
             ILogger<ComputeServiceFunction<T>>? log = null)
-            : base(serviceProvider, method, versionGenerator, log)
+            : base(method, versionGenerator, serviceProvider, log)
         {
             if (method.Options.IsAsyncComputed)
                 throw Errors.InternalError(

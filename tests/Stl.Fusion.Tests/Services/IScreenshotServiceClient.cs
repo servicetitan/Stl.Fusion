@@ -10,7 +10,7 @@ namespace Stl.Fusion.Tests.Services
     [BasePath("screenshot")]
     public interface IScreenshotServiceClient : IRestEaseReplicaClient
     {
-        [Get("getScreenshot"), ComputeMethod(KeepAliveTime = 0.5)]
+        [Get("getScreenshot"), ComputeMethod(KeepAliveTime = 1)]
         Task<Screenshot> GetScreenshotAsync(int width, CancellationToken cancellationToken = default);
     }
 }

@@ -4,6 +4,7 @@ using Castle.DynamicProxy;
 using Castle.DynamicProxy.Generators;
 using Castle.DynamicProxy.Generators.Emitters;
 using Stl.Concurrency;
+using Stl.DependencyInjection;
 using Stl.Fusion.Internal;
 
 namespace Stl.Fusion.Interception
@@ -16,7 +17,7 @@ namespace Stl.Fusion.Interception
     public class ComputeServiceProxyGenerator : ProxyGeneratorBase<ComputeServiceProxyGenerator.Options>,
         IComputeServiceProxyGenerator
     {
-        public class Options : ProxyGenerationOptions
+        public class Options : ProxyGenerationOptions, IOptions
         {
             public Type InterceptorType { get; set; } = typeof(ComputeServiceInterceptor);
         }
