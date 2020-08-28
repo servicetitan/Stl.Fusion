@@ -11,7 +11,7 @@ namespace Stl.Fusion.Blazor
         private TState? _state = null!;
 
         [Inject]
-        protected IServiceProvider ServiceProvider { get; } = null!;
+        protected IServiceProvider ServiceProvider { get; set; } = null!;
         protected IStateFactory StateFactory => ServiceProvider.GetStateFactory();
 
         protected virtual TState State {
