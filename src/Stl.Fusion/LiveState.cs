@@ -10,7 +10,6 @@ namespace Stl.Fusion
     public interface ILiveState : IComputedState
     {
         IUpdateDelayer UpdateDelayer { get; }
-        Task? ActiveUpdateTask { get; }
     }
 
     public interface ILiveState<T> : IComputedState<T>, ILiveState, IDisposable { }
@@ -40,29 +39,31 @@ namespace Stl.Fusion
                 };
 
             public Func<ILiveState<T>, IUpdateDelayer> UpdateDelayerFactory { get; set; } = DefaultUpdateDelayerFactory;
+            public bool DelayFirstUpdate { get; set; } = false;
 
             public void NoUpdateDelay()
                 => UpdateDelayerFactory = _ => Fusion.UpdateDelayer.None;
         }
 
-        private readonly CancellationTokenSource _disposeCts;
-        private volatile Task? _activeUpdateTask;
+        private readonly CancellationTokenSource _stopCts;
 
-        protected Func<ILiveState<T>, IUpdateDelayer> UpdateDelayerFactory { get; set; }
-        protected CancellationToken DisposeToken { get; }
+        protected CancellationToken StopToken { get; }
+        protected Func<ILiveState<T>, IUpdateDelayer> UpdateDelayerFactory { get; }
         protected ILogger Log { get; }
-        public IUpdateDelayer UpdateDelayer { get; protected set; } = null!;
-        public Task? ActiveUpdateTask => _activeUpdateTask;
+
+        public IUpdateDelayer UpdateDelayer { get; private set; } = null!;
+        public bool DelayFirstUpdate { get; }
 
         protected LiveState(
             Options options, IServiceProvider serviceProvider,
             object? argument = null, bool initialize = true)
             : base(options, serviceProvider, argument, false)
         {
-            _disposeCts = new CancellationTokenSource();
-            DisposeToken = _disposeCts.Token;
+            _stopCts = new CancellationTokenSource();
+            StopToken = _stopCts.Token;
             Log = ServiceProvider.GetService<ILoggerFactory>()?.CreateLogger(GetType()) ?? NullLogger.Instance;
             UpdateDelayerFactory = options.UpdateDelayerFactory;
+            DelayFirstUpdate = options.DelayFirstUpdate;
             if (initialize) Initialize(options);
         }
 
@@ -70,49 +71,41 @@ namespace Stl.Fusion
         {
             UpdateDelayer = UpdateDelayerFactory.Invoke(this);
             base.Initialize(options);
+            Task.Run(RunAsync, StopToken);
         }
 
         public virtual void Dispose()
         {
-            if (DisposeToken.IsCancellationRequested)
+            if (StopToken.IsCancellationRequested)
                 return;
             try {
-                _disposeCts.Cancel();
+                _stopCts.Cancel();
             }
             catch {
-                _disposeCts.Dispose();
+                _stopCts.Dispose();
             }
             GC.SuppressFinalize(this);
         }
 
-        protected internal override void OnInvalidated()
+        protected virtual async Task RunAsync()
         {
-            if (!DisposeToken.IsCancellationRequested) {
-                var newUpdateTask = Task.Run(DelayedUpdateAsync, DisposeToken);
-                var oldUpdateTask = Interlocked.Exchange(ref _activeUpdateTask, newUpdateTask);
-                if (oldUpdateTask != null)
-                    Log.LogError($"{nameof(ActiveUpdateTask)} should be null here.");
+            var cancellationToken = StopToken;
+            while (!cancellationToken.IsCancellationRequested) {
+                try {
+                    var snapshot = Snapshot;
+                    var computed = snapshot.Computed;
+                    await computed.WhenInvalidatedAsync(cancellationToken).ConfigureAwait(false);
+                    if (snapshot.UpdateCount != 0 || DelayFirstUpdate)
+                        await UpdateDelayer.DelayAsync(this, cancellationToken).ConfigureAwait(false);
+                    await computed.UpdateAsync(false, cancellationToken).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) {
+                    // Will break from while if it's due to cancellationToken cancellation
+                }
+                catch (Exception e) {
+                    Log.LogError(e, $"Error in LiveState.RunAsync().");
+                }
             }
-            base.OnInvalidated();
-        }
-
-        protected override void OnUpdated(IStateSnapshot<T>? oldSnapshot)
-        {
-            if (oldSnapshot != null) {
-                var oldUpdateTask = Interlocked.Exchange(ref _activeUpdateTask, null);
-                if (oldUpdateTask == null)
-                    Log.LogError($"{nameof(ActiveUpdateTask)} shouldn't be null here.");
-                else if (!oldUpdateTask.IsCompleted)
-                    Log.LogError($"{nameof(ActiveUpdateTask)} should be completed here.");
-            }
-            base.OnUpdated(oldSnapshot);
-        }
-
-        protected virtual async Task DelayedUpdateAsync()
-        {
-            await UpdateDelayer.DelayAsync(this, DisposeToken).ConfigureAwait(false);
-            DisposeToken.ThrowIfCancellationRequested();
-            await Computed.UpdateAsync(false, DisposeToken).ConfigureAwait(false);
         }
     }
 
