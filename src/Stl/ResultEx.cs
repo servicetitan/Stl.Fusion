@@ -32,11 +32,11 @@ namespace Stl
 
         // Update (for IMutableResult<T>)
 
-        public static void Update<T>(IMutableResult<T> result, Func<Result<T>, Result<T>> updater)
+        public static void Update<T>(this IMutableResult<T> result, Func<Result<T>, Result<T>> updater)
             => result.Update(updater.Invoke(result.AsResult()));
-        public static void Update<T>(IMutableResult<T> result, Func<T, T> updater)
+        public static void Update<T>(this IMutableResult<T> result, Func<T, T> updater)
             => result.Update(updater.Invoke(result.Value));
-        public static void Update<T>(IMutableResult<T> result, Action<T> updater)
+        public static void Update<T>(this IMutableResult<T> result, Action<T> updater)
         {
             var clone = MemberwiseCloner.Clone(result.Value);
             updater.Invoke(clone);
