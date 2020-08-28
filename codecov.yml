@@ -1,0 +1,3 @@
+ignore:
+  - "tests"
+  - "src/Stl.Testing"

@@ -199,7 +199,8 @@ namespace Build
         // Removes guid from tests output path, workaround of https://github.com/microsoft/vstest/issues/2378
         static void MoveAttachments(string coverageOutput, PathString targetPath)
         {
-            var pattern = $@"Test run for (?<testLib>[^(]*).*?Attachments:(?<filepaths>(?<filepath>[\s]+[^\n]+{Regex.Escape(targetPath)}[^\n]+[\n])+)";
+            var targetPathString = targetPath.Value.Replace('\\', Path.PathSeparator).Replace('/', Path.PathSeparator);
+            var pattern = $@"Test run for (?<testLib>[^(]*).*?Attachments:(?<filepaths>(?<filepath>[\s]+[^\n]+{Regex.Escape(targetPathString)}[^\n]+[\n])+)";
             var attachmentsRegex = new Regex(pattern, RegexOptions.Singleline | RegexOptions.CultureInvariant);
             foreach (var match in attachmentsRegex.Matches(coverageOutput).OfType<Match>()) {
                 var regexPaths = match.Groups["filepaths"].Value.Trim('\n', ' ', '\t', '\r');
