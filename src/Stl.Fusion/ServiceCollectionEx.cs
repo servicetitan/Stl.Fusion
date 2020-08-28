@@ -126,8 +126,11 @@ namespace Stl.Fusion
             var isRegistered = false;
 
             var tInterfaces = new List<Type>();
-            if (implementationType.IsInterface)
+            if (implementationType.IsInterface) {
                 tInterfaces.Add(implementationType);
+                if (factory == null)
+                    throw new ArgumentNullException(nameof(factory));
+            }
             tInterfaces.AddRange(implementationType.GetInterfaces());
 
             foreach (var tInterface in tInterfaces) {
@@ -144,6 +147,13 @@ namespace Stl.Fusion
             }
             if (!isRegistered)
                 throw Errors.MustImplement(implementationType, typeof(IState<>), nameof(implementationType));
+
+            if (!implementationType.IsInterface) {
+                if (factory != null)
+                    services.TryAddTransient(implementationType, factory);
+                else
+                    services.TryAddTransient(implementationType);
+            }
 
             // Registering IOption types based on .ctor parameters
             foreach (var ctor in implementationType.GetConstructors()) {
