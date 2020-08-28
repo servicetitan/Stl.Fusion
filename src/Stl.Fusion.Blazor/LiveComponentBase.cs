@@ -1,26 +1,10 @@
 ﻿namespace Stl.Fusion.Blazor
 {
-    public abstract class LiveComponentBase<T> : StatefulComponentBase<T>
+    public abstract class LiveComponentBase<T> : StatefulComponentBase<ILiveState<T>>
+    { }
+
+    public abstract class LiveComponentBase<T, TOwn> : StatefulComponentBase<ILiveState<T, TOwn>>
     {
-        protected new ILiveState<T> State { get; private set; } = null!;
-
-        protected override void OnStateAssigned(IState<T> state)
-        {
-            State = (ILiveState<T>) state;
-            base.OnStateAssigned(state);
-        }
-    }
-
-    public abstract class LiveComponentBase<T, TOwn> : LiveComponentBase<T>
-    {
-        protected new ILiveState<T, TOwn> State { get; private set; } = null!;
-        protected IMutableState<TOwn> OwnState { get; private set; } = null!;
-
-        protected override void OnStateAssigned(IState<T> state)
-        {
-            State = (ILiveState<T, TOwn>) state;
-            OwnState = State.OwnState;
-            base.OnStateAssigned(state);
-        }
+        protected IMutableState<TOwn> OwnState => State.OwnState;
     }
 }

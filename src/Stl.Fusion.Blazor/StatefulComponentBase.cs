@@ -1,22 +1,35 @@
 using System;
-using System.Reflection;
 using Microsoft.AspNetCore.Components;
-using Stl.Frozen;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Stl.Fusion.Blazor
 {
-    public abstract class StatefulComponentBase<T> : ComponentBase, IDisposable
+    public abstract class StatefulComponentBase<TState> : ComponentBase, IDisposable
+        where TState : class, IState
     {
-        private IState<T> _state = null!;
+        private readonly Action<IState> _onStateUpdatedCached;
+        private TState? _state = null!;
 
         [Inject]
-        protected IState<T> State {
-            get => _state;
+        protected IServiceProvider ServiceProvider { get; } = null!;
+        protected IStateFactory StateFactory => ServiceProvider.GetStateFactory();
+
+        protected virtual TState State {
+            get => _state!;
             set {
+                var oldState = _state;
+                if (!ReferenceEquals(oldState, null)) {
+                    oldState.Updated -= _onStateUpdatedCached;
+                    if (oldState is IDisposable d)
+                        d.Dispose();
+                }
                 _state = value;
-                OnStateAssigned(value);
+                _state.Updated += _onStateUpdatedCached;
             }
         }
+
+        protected StatefulComponentBase()
+            => _onStateUpdatedCached = _ => OnStateUpdated();
 
         public virtual void Dispose()
         {
@@ -27,26 +40,12 @@ namespace Stl.Fusion.Blazor
         // Protected methods
 
         protected override void OnInitialized()
-            => State.Updated += state => OnStateUpdated();
-
-        protected virtual void OnStateAssigned(IState<T> state) { }
+        {
+            // ReSharper disable once ConstantNullCoalescingCondition
+            State ??= ServiceProvider.GetRequiredService<TState>();
+        }
 
         protected virtual void OnStateUpdated()
             => InvokeAsync(StateHasChanged);
-
-        // Helpers
-
-        protected static TAny Clone<TAny>(TAny source)
-        {
-            switch (source) {
-            case IFrozen f:
-                return (TAny) f.CloneToUnfrozen(true);
-            default:
-                var memberwiseCloneMethod = typeof(object).GetMethod(
-                    nameof(MemberwiseClone),
-                    BindingFlags.Instance | BindingFlags.NonPublic);
-                return (TAny) memberwiseCloneMethod!.Invoke(source, Array.Empty<object>());
-            }
-        }
     }
 }
