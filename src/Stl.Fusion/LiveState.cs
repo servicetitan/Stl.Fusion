@@ -41,8 +41,18 @@ namespace Stl.Fusion
             public Func<ILiveState<T>, IUpdateDelayer> UpdateDelayerFactory { get; set; } = DefaultUpdateDelayerFactory;
             public bool DelayFirstUpdate { get; set; } = false;
 
-            public void NoUpdateDelay()
+            public void NoUpdateDelayer()
                 => UpdateDelayerFactory = _ => Fusion.UpdateDelayer.None;
+
+            public void UpdateDelayer(UpdateDelayer.Options options)
+                => UpdateDelayerFactory = _ => new UpdateDelayer(options);
+
+            public void UpdateDelayer(Action<UpdateDelayer.Options>? optionsBuilder)
+            {
+                var options = new UpdateDelayer.Options();
+                optionsBuilder?.Invoke(options);
+                UpdateDelayer(options);
+            }
         }
 
         private readonly CancellationTokenSource _stopCts;
