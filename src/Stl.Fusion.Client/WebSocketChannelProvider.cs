@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Channels;
+using Stl.DependencyInjection;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Messages;
 using Stl.Fusion.Internal;
@@ -16,9 +17,9 @@ using Stl.Text;
 
 namespace Stl.Fusion.Client
 {
-    public class WebSocketChannelProvider : IChannelProvider
+    public class WebSocketChannelProvider : IChannelProvider, IHasServiceProvider
     {
-        public class Options
+        public class Options : IOptions
         {
             public Uri BaseUri { get; set; } = new Uri("http://localhost:5000/");
             public string RequestPath { get; set; } = "/fusion";
@@ -48,7 +49,8 @@ namespace Stl.Fusion.Client
         public string PublisherIdQueryParameterName { get; }
         public string ClientIdQueryParameterName { get; }
         public TimeSpan ConnectTimeout { get; }
-        protected IServiceProvider Services { get; }
+        public IServiceProvider ServiceProvider { get; }
+
         protected Func<IServiceProvider, ChannelSerializerPair<Message, string>> ChannelSerializerPairFactory { get; }
         protected Func<IServiceProvider, ClientWebSocket> ClientWebSocketFactory { get; }
         protected LogLevel? MessageLogLevel { get; }
@@ -57,13 +59,14 @@ namespace Stl.Fusion.Client
         protected Symbol ClientId => ReplicatorLazy?.Value.Id ?? Symbol.Empty;
 
         public WebSocketChannelProvider(
-            Options options,
-            IServiceProvider services,
+            Options? options,
+            IServiceProvider serviceProvider,
             ILogger<WebSocketChannelProvider>? log = null)
         {
+            options = options.OrDefault(serviceProvider);
             _log = log ??= NullLogger<WebSocketChannelProvider>.Instance;
 
-            Services = services;
+            ServiceProvider = serviceProvider;
             BaseUri = options.BaseUri;
             RequestPath = options.RequestPath;
             PublisherIdQueryParameterName = options.PublisherIdQueryParameterName;
@@ -71,7 +74,7 @@ namespace Stl.Fusion.Client
             MessageLogLevel = options.MessageLogLevel;
             MessageMaxLength = options.MessageMaxLength;
             ConnectTimeout = options.ConnectTimeout;
-            ReplicatorLazy = new Lazy<IReplicator>(services.GetRequiredService<IReplicator>);
+            ReplicatorLazy = new Lazy<IReplicator>(serviceProvider.GetRequiredService<IReplicator>);
             ChannelSerializerPairFactory = options.ChannelSerializerPairFactory;
             ClientWebSocketFactory = options.ClientWebSocketFactory;
         }
@@ -83,7 +86,7 @@ namespace Stl.Fusion.Client
             try {
                 var connectionUri = GetConnectionUrl(publisherId);
                 _log.LogInformation($"{clientId}: Connecting to {connectionUri}...");
-                var ws = ClientWebSocketFactory.Invoke(Services);
+                var ws = ClientWebSocketFactory.Invoke(ServiceProvider);
                 using var cts = new CancellationTokenSource(ConnectTimeout);
                 using var lts = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken);
                 await ws.ConnectAsync(connectionUri, lts.Token).ConfigureAwait(false);
@@ -96,7 +99,7 @@ namespace Stl.Fusion.Client
                         clientId, _log,
                         MessageLogLevel.GetValueOrDefault(),
                         MessageMaxLength);
-                var serializers = ChannelSerializerPairFactory.Invoke(Services);
+                var serializers = ChannelSerializerPairFactory.Invoke(ServiceProvider);
                 var resultChannel = stringChannel.WithSerializers(serializers);
                 return resultChannel;
             }

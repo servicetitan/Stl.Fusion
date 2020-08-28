@@ -8,26 +8,28 @@ using Stl.Extensibility;
 
 namespace Stl.Fusion.Interception
 {
-    public class ArgumentComparer
+    public class ArgumentHandler
     {
-        public static ArgumentComparer Default { get; } = new ArgumentComparer();
+        public static ArgumentHandler Default { get; } = new ArgumentHandler();
 
-        public Func<object, int> GetHashCodeFunc { get; protected set; } =
+        public Func<object?, int> GetHashCodeFunc { get; protected set; } =
             o => o?.GetHashCode() ?? 0;
-        public Func<object, object, bool> EqualsFunc { get; protected set; } =
+        public Func<object?, object?, bool> EqualsFunc { get; protected set; } =
             (objA, objB) => objA == objB || (objA?.Equals(objB) ?? false);
+        public Func<object?, string> ToStringFunc { get; protected set; } =
+            o => o?.ToString() ?? "␀";
     }
 
-    public abstract class EquatableArgumentComparer : ArgumentComparer
+    public abstract class EquatableArgumentHandler : ArgumentHandler
     {
         public bool IsAvailable { get; protected set; } = false;
     }
 
-    public class EquatableArgumentComparer<T> : EquatableArgumentComparer
+    public class EquatableArgumentHandler<T> : EquatableArgumentHandler
     {
-        public static EquatableArgumentComparer<T> Instance { get; } = new EquatableArgumentComparer<T>();
+        public static EquatableArgumentHandler<T> Instance { get; } = new EquatableArgumentHandler<T>();
 
-        private EquatableArgumentComparer()
+        private EquatableArgumentHandler()
         {
             var tType = typeof(T);
             var tEq = tType.GetInterfaces().SingleOrDefault(t => t == typeof(IEquatable<T>));
@@ -55,7 +57,7 @@ namespace Stl.Fusion.Interception
                         Expression.ConvertChecked(eSrc, tType),
                         mGetHashCode)
                 );
-            GetHashCodeFunc = (Func<object, int>)
+            GetHashCodeFunc = (Func<object?, int>)
                 Expression.Lambda(ghcBody, eSrc).Compile();
 
             var eOther = Expression.Parameter(typeof(object), "other");
@@ -69,46 +71,47 @@ namespace Stl.Fusion.Interception
                     mEquals,
                     Expression.ConvertChecked(eOther, tType))
             );
-            EqualsFunc = (Func<object, object, bool>)
+            EqualsFunc = (Func<object?, object?, bool>)
                 Expression.Lambda(equalsBody, eSrc, eOther).Compile();
 
             IsAvailable = true;
         }
     }
 
-    [MatchFor(typeof(CancellationToken), typeof(ArgumentComparerProvider))]
-    public class IgnoreArgumentComparer : ArgumentComparer
+    [MatchFor(typeof(CancellationToken), typeof(ArgumentHandlerProvider))]
+    public class IgnoreArgumentHandler : ArgumentHandler
     {
-        public static IgnoreArgumentComparer Instance { get; } = new IgnoreArgumentComparer();
+        public static IgnoreArgumentHandler Instance { get; } = new IgnoreArgumentHandler();
 
-        private IgnoreArgumentComparer()
+        private IgnoreArgumentHandler()
         {
             GetHashCodeFunc = _ => 0;
             EqualsFunc = (a, b) => true;
+            ToStringFunc = _ => "";
         }
     }
 
-    public class ByRefArgumentComparer : ArgumentComparer
+    public class ByRefArgumentHandler : ArgumentHandler
     {
-        public static ByRefArgumentComparer Instance { get; } = new ByRefArgumentComparer();
+        public static ByRefArgumentHandler Instance { get; } = new ByRefArgumentHandler();
 
-        private ByRefArgumentComparer()
+        private ByRefArgumentHandler()
         {
             GetHashCodeFunc = obj => obj == null ? 0 : RuntimeHelpers.GetHashCode(obj);
             EqualsFunc = ReferenceEquals;
         }
     }
 
-    [MatchFor(typeof(IHasId<>), typeof(ArgumentComparerProvider))]
-    public class HasIdArgumentComparer<T> : ArgumentComparer
+    [MatchFor(typeof(IHasId<>), typeof(ArgumentHandlerProvider))]
+    public class HasIdArgumentHandler<T> : ArgumentHandler
     {
-        public static HasIdArgumentComparer<T> Instance { get; } = new HasIdArgumentComparer<T>();
+        public static HasIdArgumentHandler<T> Instance { get; } = new HasIdArgumentHandler<T>();
 
-        private HasIdArgumentComparer()
+        private HasIdArgumentHandler()
         {
             GetHashCodeFunc = obj => {
-                var hasId = (IHasId<T>) obj;
-                return EqualityComparer<T>.Default.GetHashCode(hasId.Id);
+                var hasId = (IHasId<T>?) obj;
+                return hasId == null ? 0 : EqualityComparer<T>.Default.GetHashCode(hasId.Id);
             };
             EqualsFunc = (a, b) => {
                 if (a == null)

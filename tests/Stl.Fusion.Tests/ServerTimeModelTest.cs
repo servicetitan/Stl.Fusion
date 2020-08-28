@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Tests.UIModels;
-using Stl.Fusion.UI;
+using Stl.Fusion;
 using Stl.Tests;
 using Xunit;
 using Xunit.Abstractions;
@@ -21,10 +21,10 @@ namespace Stl.Fusion.Tests
         public async Task ServerTimeModelTest1()
         {
             await using var serving = await WebSocketHost.ServeAsync();
-            using var stm = Services.GetRequiredService<ILiveState<ServerTimeModel>>();
+            using var stm = Services.GetRequiredService<ILiveState<ServerTimeModel1>>();
 
-            var c = stm.State;
-            c.IsConsistent.Should().BeFalse();
+            var c = stm.Computed;
+            c.IsConsistent().Should().BeFalse();
             c.Value.Time.Should().Be(default);
 
             Debug.WriteLine("0");
@@ -33,8 +33,8 @@ namespace Stl.Fusion.Tests
             await c.UpdateAsync(false);
             Debug.WriteLine("2");
 
-            c = stm.State;
-            c.IsConsistent.Should().BeTrue();
+            c = stm.Computed;
+            c.IsConsistent().Should().BeTrue();
             (DateTime.Now - c.Value.Time).Should().BeLessThan(TimeSpan.FromSeconds(1));
 
             Debug.WriteLine("3");
@@ -44,7 +44,7 @@ namespace Stl.Fusion.Tests
             Debug.WriteLine("5");
             await Task.Delay(100); // Let's just wait for the updates to happen
             Debug.WriteLine("6");
-            c = stm.State;
+            c = stm.Computed;
             Debug.WriteLine("7");
 
             // c.IsConsistent.Should().BeTrue(); // Hard to be sure here
@@ -57,10 +57,10 @@ namespace Stl.Fusion.Tests
         public async Task ServerTimeModelTest2()
         {
             await using var serving = await WebSocketHost.ServeAsync();
-            using var stm = Services.GetRequiredService<ILiveState<Unit, ServerTimeModel>>();
+            using var stm = Services.GetRequiredService<ILiveState<ServerTimeModel2>>();
 
-            var c = stm.State;
-            c.IsConsistent.Should().BeFalse();
+            var c = stm.Computed;
+            c.IsConsistent().Should().BeFalse();
             c.Value.Time.Should().Be(default);
 
             Debug.WriteLine("0");
@@ -69,8 +69,8 @@ namespace Stl.Fusion.Tests
             await c.UpdateAsync(false);
             Debug.WriteLine("2");
 
-            c = stm.State;
-            c.IsConsistent.Should().BeTrue();
+            c = stm.Computed;
+            c.IsConsistent().Should().BeTrue();
             (DateTime.Now - c.Value.Time).Should().BeLessThan(TimeSpan.FromSeconds(1));
 
             Debug.WriteLine("3");
@@ -80,7 +80,7 @@ namespace Stl.Fusion.Tests
             Debug.WriteLine("5");
             await Task.Delay(100); // Let's just wait for the updates to happen
             Debug.WriteLine("6");
-            c = stm.State;
+            c = stm.Computed;
             Debug.WriteLine("7");
 
             // c.IsConsistent.Should().BeTrue(); // Hard to be sure here

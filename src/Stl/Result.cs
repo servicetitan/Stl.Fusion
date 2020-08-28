@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Stl.Async;
+using Stl.Internal;
 
 namespace Stl
 {
@@ -18,13 +18,14 @@ namespace Stl
         bool HasValue { get; }
         bool HasError { get; }
 
-        void ThrowIfError();
+        Result<TOther> AsResult<TOther>();
     }
 
     public interface IMutableResult : IResult
     {
-        new object? Value { get; set; }
+        object? UntypedValue { get; set; }
         new Exception? Error { get; set; }
+        void Update(IResult result);
     }
 
     public interface IResult<T> : IResult
@@ -35,12 +36,13 @@ namespace Stl
         void Deconstruct(out T value, out Exception? error);
         bool IsValue([MaybeNullWhen(false)] out T value);
         bool IsValue([MaybeNullWhen(false)] out T value, [MaybeNullWhen(true)] out Exception error);
+        Result<T> AsResult();
     }
 
-    public interface IMutableResult<T> : IResult<T>
+    public interface IMutableResult<T> : IResult<T>, IMutableResult
     {
-        new T UnsafeValue { get; set; }
         new T Value { get; set; }
+        void Update(Result<T> result);
     }
 
     [DebuggerDisplay("({" + nameof(UnsafeValue) + "}, Error = {" + nameof(Error) + "})")]
@@ -62,13 +64,9 @@ namespace Stl
         [JsonIgnore]
         public T Value {
             get {
-                if (Error == null)
-                    return UnsafeValue;
-                else {
-                    // That's the right way to re-throw an exception and preserve its stack trace
+                if (Error != null)
                     ExceptionDispatchInfo.Capture(Error).Throw();
-                    return default!; // Never executed, but no way to get rid of this
-                }
+                return UnsafeValue;
             }
         }
 
@@ -85,7 +83,8 @@ namespace Stl
             Error = error;
         }
 
-        public override string? ToString() => Value?.ToString();
+        public override string? ToString()
+            => $"{GetType().Name}({(HasError ? $"Error: {Error}" : Value?.ToString())})";
 
         public void Deconstruct(out T value, out Exception? error)
         {
@@ -102,6 +101,7 @@ namespace Stl
         public bool IsValue([MaybeNullWhen(false)] out T value, [MaybeNullWhen(true)] out Exception error)
         {
             error = Error!;
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             var hasValue = error == null;
             value = hasValue ? UnsafeValue : default!;
 #pragma warning disable CS8762
@@ -109,14 +109,8 @@ namespace Stl
 #pragma warning restore CS8762
         }
 
-        public void ThrowIfError()
-        {
-            if (Error != null)
-                throw Error;
-        }
-
-        public Result<TOther> Cast<TOther>() =>
-            // ReSharper disable once HeapView.BoxingAllocation
+        public Result<T> AsResult() => this;
+        public Result<TOther> AsResult<TOther>() =>
             new Result<TOther>((TOther) (object) UnsafeValue!, Error);
 
         // Equality
@@ -132,11 +126,6 @@ namespace Stl
         // Operators
 
         public static implicit operator T(Result<T> source) => source.Value;
-        public static implicit operator ValueTask<T>(Result<T> source)
-            => source.IsValue(out var value, out var error)
-                ? ValueTaskEx.FromResult(value)
-                : ValueTaskEx.FromException<T>(error);
-
         public static implicit operator Result<T>(T source) => new Result<T>(source, null);
         public static implicit operator Result<T>((T Value, Exception? Error) source) =>
             new Result<T>(source.Value, source.Error);
@@ -147,5 +136,35 @@ namespace Stl
         public static Result<T> New<T>(T value, Exception? error = null) => new Result<T>(value, error);
         public static Result<T> Value<T>(T value) => new Result<T>(value, null);
         public static Result<T> Error<T>(Exception? error) => new Result<T>(default!, error);
+
+        public static Result<T> FromTask<T>(Task<T> task)
+        {
+            if (!task.IsCompleted)
+                throw Errors.TaskIsNotCompleted();
+            if (task.IsCompletedSuccessfully)
+                return Value(task.Result);
+            return Error<T>(task.Exception
+                ?? Errors.InternalError("Task hasn't completed successfully but has no Exception."));
+        }
+
+        public static Result<T> FromFunc<T, TState>(TState state, Func<TState, T> func)
+        {
+            try {
+                return Value(func.Invoke(state));
+            }
+            catch (Exception e) {
+                return Error<T>(e);
+            }
+        }
+
+        public static Result<T> FromFunc<T>(Func<T> func)
+        {
+            try {
+                return Value(func.Invoke());
+            }
+            catch (Exception e) {
+                return Error<T>(e);
+            }
+        }
     }
 }

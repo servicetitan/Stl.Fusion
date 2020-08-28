@@ -3,8 +3,8 @@ using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
+using Stl.DependencyInjection;
 using Stl.Fusion.Internal;
-using Errors = Stl.Internal.Errors;
 
 namespace Stl.Fusion.Bridge
 {
@@ -51,12 +51,20 @@ namespace Stl.Fusion.Bridge
         public PublicationRef PublicationRef => Input.PublicationRef;
         public ComputedOptions ComputedOptions {
             get => _computedOptions;
-            set => _computedOptions = value;
+            set {
+                if (value.SwappingOptions.IsEnabled)
+                    throw Errors.UnsupportedComputedOptions(GetType());
+                _computedOptions = value;
+            }
         }
-        IReplicaComputed IReplica.Computed => ComputedField;
+
         public IReplicaComputed<T> Computed => ComputedField;
         public bool IsUpdateRequested => UpdateRequestTask != null;
         public Exception? UpdateError => UpdateErrorField;
+
+        // Explicit property implementations
+        IServiceProvider IHasServiceProvider.ServiceProvider => ReplicatorImpl.ServiceProvider;
+        IReplicaComputed IReplica.Computed => ComputedField;
 
         public Replica(IReplicator replicator, PublicationStateInfo<T> info, bool isUpdateRequested = false)
         {
@@ -73,7 +81,8 @@ namespace Stl.Fusion.Bridge
         void IReplicaImpl.DisposeTemporaryReplica()
         {
             if (!MarkDisposed())
-                throw Errors.InternalError("Couldn't dispose temporary Replica!");
+                throw Stl.Internal.Errors.InternalError(
+                    "Couldn't dispose temporary Replica!");
         }
 
         // We want to make sure the replicas are connected to
@@ -117,7 +126,7 @@ namespace Stl.Fusion.Bridge
 
                 if (oldComputed == null || oldComputed.Version != version)
                     ReplaceComputedUnsafe(oldComputed, output, version, isConsistent);
-                else if (oldComputed.IsConsistent != isConsistent) {
+                else if (oldComputed.IsConsistent() != isConsistent) {
                     if (isConsistent)
                         ReplaceComputedUnsafe(oldComputed, output, version, isConsistent);
                     else
@@ -177,7 +186,8 @@ namespace Stl.Fusion.Bridge
             }
         }
 
-        protected async Task<IComputed<T>> InvokeAsync(ReplicaInput input, IComputed? usedBy, ComputeContext? context,
+        protected async Task<IComputed<T>> InvokeAsync(
+            ReplicaInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)
         {
             if (input != Input)
@@ -187,7 +197,7 @@ namespace Stl.Fusion.Bridge
             context ??= ComputeContext.Current;
 
             var result = Computed;
-            if (result.TryUseCached(context, usedBy))
+            if (result.TryUseExisting(context, usedBy))
                 return result;
 
             // No async locking here b/c RequestUpdateAsync is, in fact, doing this
@@ -197,7 +207,8 @@ namespace Stl.Fusion.Bridge
             return result;
         }
 
-        protected async Task<T> InvokeAndStripAsync(ReplicaInput input, IComputed? usedBy, ComputeContext? context,
+        protected async Task<T> InvokeAndStripAsync(
+            ReplicaInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)
         {
             if (input != Input)
@@ -207,22 +218,14 @@ namespace Stl.Fusion.Bridge
             context ??= ComputeContext.Current;
 
             var result = Computed;
-            if (result.TryUseCached(context, usedBy))
+            if (result.TryUseExisting(context, usedBy))
                 return result.Strip();
 
             // No async locking here b/c RequestUpdateAsync is, in fact, doing this
             await RequestUpdateAsync(cancellationToken).ConfigureAwait(false);
             result = Computed;
             result.UseNew(context, usedBy);
-            return result.Strip();
-        }
-
-        protected IComputed<T>? TryGetCached(ReplicaInput input)
-        {
-            if (input != Input)
-                // This "Function" supports just a single input == Input
-                throw new ArgumentOutOfRangeException(nameof(input));
-            return Computed;
+            return result.Value;
         }
 
         #region Explicit impl. of IFunction & IFunction<...>

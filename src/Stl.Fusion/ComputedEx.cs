@@ -1,6 +1,5 @@
 using System;
 using System.Reactive;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
@@ -12,38 +11,19 @@ namespace Stl.Fusion
     {
         private static readonly TimeSpan CancelKeepAliveThreshold = TimeSpan.FromSeconds(1.1);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static T Strip<T>(this IComputed<T>? computed)
-            => computed != null ? computed.Value : default!;
+        public static void SetOutput<T>(this IComputed<T> computed, Result<T> output)
+        {
+            if (!computed.TrySetOutput(output))
+                throw Errors.WrongComputedState(ConsistencyState.Computing, computed.ConsistencyState);
+        }
 
         public static Task WhenInvalidatedAsync<T>(this IComputed<T> computed, CancellationToken cancellationToken = default)
         {
-            if (computed.State == ComputedState.Invalidated)
+            if (computed.ConsistencyState == ConsistencyState.Invalidated)
                 return Task.CompletedTask;
             var ts = TaskSource.New<Unit>(true);
             computed.Invalidated += c => ts.SetResult(default);
             return ts.Task.WithFakeCancellation(cancellationToken);
-        }
-
-        public static void KeepAlive(this IComputed computed)
-        {
-            var keepAliveTime = computed.Options.KeepAliveTime;
-            if (keepAliveTime > TimeSpan.Zero && computed.State != ComputedState.Invalidated)
-                RefHolder.Hold(computed, keepAliveTime);
-        }
-
-        public static void CancelKeepAlive(this IComputed computed, TimeSpan threshold)
-        {
-            var keepAliveTime = computed.Options.KeepAliveTime;
-            if (keepAliveTime >= threshold)
-                RefHolder.Release(computed);
-        }
-
-        public static void CancelKeepAlive(this IComputed computed)
-        {
-            var keepAliveTime = computed.Options.KeepAliveTime;
-            if (keepAliveTime >= CancelKeepAliveThreshold)
-                RefHolder.Release(computed);
         }
     }
 }

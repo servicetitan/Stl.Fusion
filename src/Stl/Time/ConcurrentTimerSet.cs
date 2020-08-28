@@ -3,6 +3,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Stl.Async;
+using Stl.DependencyInjection;
 using Stl.Mathematics;
 
 namespace Stl.Time
@@ -28,7 +29,7 @@ namespace Stl.Time
             Action<TTimer>? fireHandler = null,
             IMomentClock? clock = null)
         {
-            options ??= new Options();
+            options = options.OrDefault();
             if (options.Quanta < Options.MinQuanta)
                 options.Quanta = Options.MinQuanta;
             if (options.ConcurrencyLevel < 1)

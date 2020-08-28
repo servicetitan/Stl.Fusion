@@ -14,6 +14,6 @@ namespace Stl.Caching
         where TKey : notnull
     {
         ValueTask SetAsync(TKey key, TValue value, CancellationToken cancellationToken = default);
-        ValueTask InvalidateAsync(TKey key, CancellationToken cancellationToken = default);
+        ValueTask RemoveAsync(TKey key, CancellationToken cancellationToken = default);
     }
 }

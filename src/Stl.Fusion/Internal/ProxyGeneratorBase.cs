@@ -1,9 +1,10 @@
 using Castle.DynamicProxy;
+using Stl.DependencyInjection;
 
 namespace Stl.Fusion.Internal
 {
     public abstract class ProxyGeneratorBase<TOptions>
-        where TOptions : ProxyGenerationOptions, new()
+        where TOptions : ProxyGenerationOptions, IOptions, new()
     {
         protected TOptions ProxyGeneratorOptions { get; }
         protected ModuleScope ModuleScope { get; }
@@ -12,8 +13,10 @@ namespace Stl.Fusion.Internal
             TOptions? options = null,
             ModuleScope? moduleScope = null)
         {
-            ProxyGeneratorOptions = options ??= new TOptions();
-            ModuleScope = moduleScope ??= new ModuleScope();
+            options = options.OrDefault();
+            moduleScope ??= new ModuleScope();
+            ProxyGeneratorOptions = options;
+            ModuleScope = moduleScope;
         }
     }
 }

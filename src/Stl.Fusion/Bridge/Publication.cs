@@ -95,7 +95,7 @@ namespace Stl.Fusion.Bridge
         public async ValueTask UpdateAsync(CancellationToken cancellationToken)
         {
             var state = StateField;
-            if (state.IsDisposed || state.Computed.IsConsistent)
+            if (state.IsDisposed || state.Computed.IsConsistent())
                 return;
             var newComputed = await state.Computed
                 .UpdateAsync(false, cancellationToken).ConfigureAwait(false);

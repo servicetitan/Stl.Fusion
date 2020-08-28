@@ -1,66 +1,26 @@
-﻿using System;
-using System.Reflection;
-using Microsoft.AspNetCore.Components;
-using Stl.Frozen;
-using Stl.Fusion.UI;
-
-namespace Stl.Fusion.Blazor
+﻿namespace Stl.Fusion.Blazor
 {
-    public abstract class LiveComponentBase<TState> : ComponentBase, IDisposable
+    public abstract class LiveComponentBase<T> : StatefulComponentBase<T>
     {
-        [Inject]
-        protected ILiveState<TState> LiveState { get; set; } = null!;
-        protected TState State => LiveState.Value;
-        protected IUpdateDelayer UpdateDelayer => LiveState.UpdateDelayer;
+        protected new ILiveState<T> State { get; private set; } = null!;
 
-        public virtual void Dispose()
-            => LiveState.Dispose();
-
-        public void Invalidate(bool updateImmediately = true)
-            => LiveState.Invalidate(updateImmediately);
-
-        protected override void OnInitialized()
-            => LiveState.Updated += OnLiveStateUpdated;
-
-        protected virtual void OnLiveStateUpdated(ILiveState liveState)
-            => InvokeAsync(StateHasChanged);
+        protected override void OnStateAssigned(IState<T> state)
+        {
+            State = (ILiveState<T>) state;
+            base.OnStateAssigned(state);
+        }
     }
 
-    public abstract class LiveComponentBase<TLocal, TState> : LiveComponentBase<TState>
+    public abstract class LiveComponentBase<T, TOwn> : LiveComponentBase<T>
     {
-        protected TLocal Local {
-            get => LiveState.Local;
-            set => LiveState.Local = value;
-        }
+        protected new ILiveState<T, TOwn> State { get; private set; } = null!;
+        protected IMutableState<TOwn> OwnState { get; private set; } = null!;
 
-        protected new ILiveState<TLocal, TState> LiveState {
-            get => (ILiveState<TLocal, TState>) base.LiveState;
-            set => base.LiveState = value;
-        }
-
-        protected virtual void UpdateLocal(Action<TLocal> updater)
+        protected override void OnStateAssigned(IState<T> state)
         {
-            // Atomically updates Local; non-atomic updates require
-            // some synchronization on Local here & in ILiveStateUpdater,
-            // so ideally, you want it to be immutable to avoid this.
-            var clone = CloneLocal(Local);
-            updater.Invoke(clone);
-            if (Local is IFrozen f)
-                f.Freeze();
-            Local = clone;
-        }
-
-        protected virtual TLocal CloneLocal(TLocal source)
-        {
-            switch (source) {
-            case IFrozen f:
-                return (TLocal) f.CloneToUnfrozen(true);
-            default:
-                var memberwiseCloneMethod = typeof(object).GetMethod(
-                    nameof(MemberwiseClone),
-                    BindingFlags.Instance | BindingFlags.NonPublic);
-                return (TLocal) memberwiseCloneMethod.Invoke(source, Array.Empty<object>());
-            }
+            State = (ILiveState<T, TOwn>) state;
+            OwnState = State.OwnState;
+            base.OnStateAssigned(state);
         }
     }
 }

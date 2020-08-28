@@ -23,7 +23,7 @@ namespace Stl.Fusion.Bridge.Interception
             IReplicator replicator,
             Generator<LTag> versionGenerator,
             ILogger<ReplicaClientFunction<T>>? log = null)
-            : base(method)
+            : base(method, ((IReplicatorImpl) replicator).ServiceProvider)
         {
             Log = log ??= NullLogger<ReplicaClientFunction<T>>.Instance;
             IsLogDebugEnabled = Log.IsEnabled(LogLevel.Debug);
@@ -32,7 +32,7 @@ namespace Stl.Fusion.Bridge.Interception
         }
 
         protected override async ValueTask<IComputed<T>> ComputeAsync(
-            InterceptedInput input, IComputed<T>? cached,
+            InterceptedInput input, IComputed<T>? existing,
             CancellationToken cancellationToken)
         {
             var method = input.Method;
@@ -40,7 +40,7 @@ namespace Stl.Fusion.Bridge.Interception
             IReplicaComputed<T> replicaComputed;
 
             // 1. Trying to update the Replica first
-            if (cached is IReplicaClientComputed<T> rsc && rsc.Replica != null) {
+            if (existing is IReplicaClientComputed<T> rsc && rsc.Replica != null) {
                 try {
                     replica = rsc.Replica;
                     replicaComputed = (IReplicaComputed<T>) await replica.Computed

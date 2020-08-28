@@ -36,7 +36,7 @@ namespace Stl.Fusion
 
         static ComputeContext()
         {
-            var allCallOptions = CallOptions.TryGetCached |  CallOptions.Invalidate;
+            var allCallOptions = CallOptions.TryGetExisting |  CallOptions.Invalidate;
             var cache = new Dictionary<CallOptions, ComputeContext>();
             for (var i = 0; i <= (int) allCallOptions; i++) {
                 var action = (CallOptions) i;

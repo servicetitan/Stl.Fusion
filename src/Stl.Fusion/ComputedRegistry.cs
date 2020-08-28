@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Concurrency;
+using Stl.DependencyInjection;
 using Stl.Locking;
 using Stl.Mathematics;
 using Stl.OS;
@@ -18,13 +19,13 @@ namespace Stl.Fusion
     {
         public static ComputedRegistry Instance { get; set; } = new ComputedRegistry();
 
-        public sealed class Options
+        public sealed class Options : IOptions
         {
-            internal static PrimeSieve CapacityPrimeSieve;
+            internal static readonly PrimeSieve CapacityPrimeSieve;
             public static int DefaultInitialCapacity { get; }
 
             public int InitialCapacity { get; set; } = DefaultInitialCapacity;
-            public int ConcurrencyLevel { get; set; } = HardwareInfo.ProcessorCount << 5;
+            public int ConcurrencyLevel { get; set; } = HardwareInfo.ProcessorCount << 4;
             public Func<IFunction, IAsyncLockSet<ComputedInput>>? LocksProvider { get; set; } = null;
             public GCHandlePool? GCHandlePool { get; set; } = null;
             public IMomentClock Clock { get; set; } = CoarseCpuClock.Instance;
@@ -51,7 +52,7 @@ namespace Stl.Fusion
 
         public ComputedRegistry(Options? options = null)
         {
-            options ??= new Options();
+            options = options.OrDefault();
             _storage = new ConcurrentDictionary<ComputedInput, GCHandle>(options.ConcurrencyLevel, options.InitialCapacity);
             var locksProvider = options.LocksProvider;
             if (locksProvider == null) {
@@ -100,12 +101,12 @@ namespace Stl.Fusion
 
             var spinWait = new SpinWait();
             GCHandle? newHandle = null;
-            while (computed.State != ComputedState.Invalidated) {
+            while (computed.ConsistencyState != ConsistencyState.Invalidated) {
                 if (_storage.TryGetValue(key, out var handle)) {
                     var target = (IComputed?) handle.Target;
                     if (target == computed)
                         break;
-                    if (target == null || target.State == ComputedState.Invalidated) {
+                    if (target == null || target.ConsistencyState == ConsistencyState.Invalidated) {
                         if (_storage.TryRemove(key, handle))
                             _gcHandlePool.Release(handle, random);
                     }
@@ -118,7 +119,7 @@ namespace Stl.Fusion
                 else {
                     newHandle ??= _gcHandlePool.Acquire(computed, random);
                     if (_storage.TryAdd(key, newHandle.GetValueOrDefault())) {
-                        if (computed.State == ComputedState.Invalidated) {
+                        if (computed.ConsistencyState == ConsistencyState.Invalidated) {
                             if (_storage.TryRemove(key, handle))
                                 _gcHandlePool.Release(handle, random);
                         }
@@ -134,8 +135,8 @@ namespace Stl.Fusion
             // Debug.WriteLine($"{nameof(Unregister)}: {computed}");
             // We can't remove what still could be invalidated,
             // since "usedBy" links are resolved via this registry
-            if (computed.State != ComputedState.Invalidated)
-                throw Errors.WrongComputedState(computed.State);
+            if (computed.ConsistencyState != ConsistencyState.Invalidated)
+                throw Errors.WrongComputedState(computed.ConsistencyState);
 
             var key = computed.Input;
             var random = Randomize(key.HashCode);

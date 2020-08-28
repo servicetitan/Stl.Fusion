@@ -9,22 +9,22 @@ using System.Runtime.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Castle.DynamicProxy;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Concurrency;
+using Stl.DependencyInjection;
+using Stl.Fusion.Swapping;
 using Stl.Fusion.Interception.Internal;
 using Stl.Reflection;
-using Stl.Time;
 
 namespace Stl.Fusion.Interception
 {
-    public abstract class InterceptorBase : IInterceptor
+    public abstract class InterceptorBase : IInterceptor, IHasServiceProvider
     {
-        public class Options
+        public class Options : IOptions
         {
-            public IArgumentComparerProvider ArgumentComparerProvider { get; set; } =
-                Interception.ArgumentComparerProvider.Default;
-            public IMomentClock? Clock { get; set; }
+            public IArgumentHandlerProvider? ArgumentHandlerProvider { get; set; } = null!;
             public LogLevel LogLevel { get; set; } = LogLevel.Debug;
             public LogLevel ValidationLogLevel { get; set; } = LogLevel.Information;
         }
@@ -43,21 +43,23 @@ namespace Stl.Fusion.Interception
         protected ILogger Log { get; }
         protected LogLevel LogLevel { get; }
         protected LogLevel ValidationLogLevel { get; }
-        protected IMomentClock Clock { get; }
-        protected IArgumentComparerProvider ArgumentComparerProvider { get; }
+        protected IArgumentHandlerProvider ArgumentHandlerProvider { get; }
+
+        public IServiceProvider ServiceProvider { get; }
 
         protected InterceptorBase(
             Options options,
-            IMomentClock? clock = null,
+            IServiceProvider serviceProvider,
             ILoggerFactory? loggerFactory = null)
         {
             LoggerFactory = loggerFactory ??= NullLoggerFactory.Instance;
             Log = LoggerFactory.CreateLogger(GetType());
             LogLevel = options.LogLevel;
             ValidationLogLevel = options.ValidationLogLevel;
-            Clock = options.Clock ?? clock ?? CoarseCpuClock.Instance;
+            ServiceProvider = serviceProvider;
 
-            ArgumentComparerProvider = options.ArgumentComparerProvider;
+            ArgumentHandlerProvider = options.ArgumentHandlerProvider
+                ?? serviceProvider.GetRequiredService<IArgumentHandlerProvider>();
 
             _createHandler = CreateHandler;
             _createInterceptedMethod = CreateInterceptedMethod;
@@ -145,25 +147,22 @@ namespace Stl.Fusion.Interception
 
             var outputType = returnType.GetGenericArguments()[0];
             var invocationTargetType = proxyMethodInfo.ReflectedType;
-            var options = new ComputedOptions(
-                GetTimespan<ComputeMethodAttribute>(attr, a => a.KeepAliveTime),
-                GetTimespan<ComputeMethodAttribute>(attr, a => a.ErrorAutoInvalidateTime),
-                GetTimespan<ComputeMethodAttribute>(attr, a => a.AutoInvalidateTime));
+            var options = ComputedOptions.FromAttribute(attr, GetCacheAttribute(proxyMethodInfo));
             var parameters = proxyMethodInfo.GetParameters();
             var r = new InterceptedMethod {
                 MethodInfo = proxyMethodInfo,
                 Attribute = attr,
                 OutputType = outputType,
                 ReturnsValueTask = returnsValueTask,
-                InvocationTargetComparer = ArgumentComparerProvider.GetInvocationTargetComparer(
+                InvocationTargetHandler = ArgumentHandlerProvider.GetInvocationTargetHandler(
                     proxyMethodInfo, invocationTargetType!),
-                ArgumentComparers = new ArgumentComparer[parameters.Length],
+                ArgumentHandlers = new ArgumentHandler[parameters.Length],
                 Options = options,
             };
 
             for (var i = 0; i < parameters.Length; i++) {
                 var p = parameters[i];
-                r.ArgumentComparers[i] = ArgumentComparerProvider.GetArgumentComparer(proxyMethodInfo, p);
+                r.ArgumentHandlers[i] = ArgumentHandlerProvider.GetArgumentHandler(proxyMethodInfo, p);
                 var parameterType = p.ParameterType;
                 if (typeof(CancellationToken).IsAssignableFrom(parameterType))
                     r.CancellationTokenArgumentIndex = i;
@@ -175,20 +174,9 @@ namespace Stl.Fusion.Interception
         protected virtual InterceptedMethodAttribute? GetInterceptedMethodAttribute(MethodInfo method)
             => method.GetAttribute<InterceptedMethodAttribute>(true, true);
 
+        protected virtual SwapAttribute? GetCacheAttribute(MethodInfo method)
+            => method.GetAttribute<SwapAttribute>(true, true);
+
         protected abstract void ValidateTypeInternal(Type type);
-
-        // Private methods
-
-        private TimeSpan? GetTimespan<TAttribute>(Attribute? attr, Func<TAttribute, double> propertyGetter)
-        {
-            if (!(attr is TAttribute typedAttr))
-                return null;
-            var value = propertyGetter.Invoke(typedAttr);
-            if (double.IsNaN(value))
-                return null;
-            if (double.IsPositiveInfinity(value))
-                return TimeSpan.MaxValue;
-            return TimeSpan.FromSeconds(value);
-        }
     }
 }

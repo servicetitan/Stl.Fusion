@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reactive;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Channels;
@@ -32,13 +33,12 @@ namespace Stl.Fusion.Bridge.Internal
         protected readonly HashSet<Symbol> Subscriptions;
         protected volatile Task<Channel<Message>> ChannelTask = null!;
         protected volatile Channel<Message> SendChannel = null!;
-        protected volatile Exception? LastError;
         protected Symbol ClientId => Replicator.Id;
         protected object Lock => Subscriptions;
 
         public readonly IReplicator Replicator;
         public readonly Symbol PublisherId;
-        public readonly SimpleComputedInput<bool> StateComputed;
+        public readonly IMutableState<bool> IsConnected;
 
         public ReplicatorChannelProcessor(IReplicator replicator, Symbol publisherId, ILogger? log = null)
         {
@@ -47,17 +47,8 @@ namespace Stl.Fusion.Bridge.Internal
             ReplicatorImpl = (IReplicatorImpl) replicator;
             PublisherId = publisherId;
             Subscriptions = new HashSet<Symbol>();
-            StateComputed = ((SimpleComputed<bool>) SimpleComputed.New<bool>(
-                ComputedOptions.NoAutoInvalidateOnError,
-                (c, ct) => {
-                    lock (Lock) {
-                        var lastError = LastError;
-                        if (lastError != null)
-                            return Task.FromException<bool>(lastError);
-                        return Task.FromResult(ChannelTask.IsCompleted);
-                    }
-                }))
-                .Input;
+            var stateFactory = ReplicatorImpl.ServiceProvider.GetStateFactory();
+            IsConnected = stateFactory.NewMutable(Result.Value(true));
             // ReSharper disable once VirtualMemberCallInConstructor
             Reconnect();
         }
@@ -119,7 +110,7 @@ namespace Stl.Fusion.Bridge.Internal
             // No checks, since they're done by the only caller of this method
             var publicationId = replica.PublicationRef.PublicationId;
             var computed = replica.Computed;
-            var isConsistent = computed.IsConsistent;
+            var isConsistent = computed.IsConsistent();
             lock (Lock) {
                 Subscriptions.Add(publicationId);
                 Send(new SubscribeMessage() {
@@ -182,6 +173,11 @@ namespace Stl.Fusion.Bridge.Internal
 
         protected virtual void Reconnect(Exception? error = null)
         {
+            if (error != null)
+                IsConnected.Error = error;
+            else
+                IsConnected.Value = false;
+
             var sendChannel = CreateSendChannel();
             var channelTaskSource = TaskSource.New<Channel<Message>>(true);
             var channelTask = channelTaskSource.Task;
@@ -190,7 +186,6 @@ namespace Stl.Fusion.Bridge.Internal
             lock (Lock) {
                 oldSendChannel = Interlocked.Exchange(ref SendChannel, sendChannel);
                 Interlocked.Exchange(ref ChannelTask, channelTask);
-                Interlocked.Exchange(ref LastError, error);
             }
             try {
                 oldSendChannel?.Writer.TryComplete();
@@ -198,7 +193,6 @@ namespace Stl.Fusion.Bridge.Internal
             catch {
                 // It's better to suppress all exceptions here
             }
-            StateComputed.Computed.Invalidate();
 
             // Connect task
             var connectTask = Task.Run(async () => {
@@ -232,13 +226,8 @@ namespace Stl.Fusion.Bridge.Internal
             });
             connectTask.ContinueWith(ct => {
                 channelTaskSource.SetFromTask(ct);
-                if (!ct.IsCompletedSuccessfully)
-                    // LastError will be updated anyway in this case
-                    return;
-                lock (Lock) {
-                    Interlocked.Exchange(ref LastError, null);
-                }
-                StateComputed.Computed.Invalidate();
+                if (ct.IsCompletedSuccessfully)
+                    IsConnected.Value = true;
             });
 
             // Copy task

@@ -25,7 +25,7 @@ namespace Stl.Fusion.Bridge.Interception
         {
             ((IComputedImpl) this).AddUsed((IComputedImpl) source);
             TrySetOutput(source.Output);
-            if (!source.IsConsistent)
+            if (!source.IsConsistent())
                 Invalidate();
         }
 
@@ -40,7 +40,7 @@ namespace Stl.Fusion.Bridge.Interception
 
         protected ReplicaClientComputed(IReplica<T>? replica,
             ComputedOptions options, InterceptedInput input,
-            Result<T> output, LTag version, bool isConsistent = true)
+            Result<T> output, LTag version, bool isConsistent)
             : base(options, input, output, version, isConsistent)
             => Replica = replica;
 
@@ -49,7 +49,7 @@ namespace Stl.Fusion.Bridge.Interception
             // We intentionally suppress ComputedRegistry.Unregister here,
             // otherwise it won't be possible to find IReplica using
             // old IComputed.
-            this.CancelKeepAlive();
+            this.CancelTimeouts();
         }
     }
 }

@@ -31,13 +31,13 @@ namespace Stl.Fusion.Interception
             Invocation = invocation;
             ProceedInfo = invocation.CaptureProceedInfo();
 
-            var argumentComparers = method.ArgumentComparers;
+            var argumentHandlers = method.ArgumentHandlers;
             var hashCode = System.HashCode.Combine(
                 HashCode,
-                method.InvocationTargetComparer.GetHashCodeFunc(invocation.InvocationTarget));
+                method.InvocationTargetHandler.GetHashCodeFunc(invocation.InvocationTarget));
             var arguments = Invocation.Arguments;
             for (var i = 0; i < arguments.Length; i++)
-                hashCode ^= argumentComparers[i].GetHashCodeFunc(arguments[i]);
+                hashCode ^= argumentHandlers[i].GetHashCodeFunc(arguments[i]);
             HashCode = hashCode;
         }
 
@@ -49,7 +49,7 @@ namespace Stl.Fusion.Interception
             // This method fixes up the arguments before the invocation so that
             // CancellationToken is set to the correct one and CallOptions are reset.
             // In addition, it processes CallOptions.Capture, though note that
-            // it's also processed in InterceptedFunction.TryGetCached.
+            // it's also processed in InterceptedFunction.TryGetExisting.
 
             var method = Method;
             var arguments = Arguments;
@@ -82,14 +82,14 @@ namespace Stl.Fusion.Interception
                 return false;
             var arguments = Arguments;
             var otherArguments = other.Arguments;
-            var argumentComparers = Method.ArgumentComparers;
+            var argumentHandlers = Method.ArgumentHandlers;
             // Backward direction is intended: tail arguments
             // are more likely to differ.
             for (var i = arguments.Length - 1; i >= 0; i--) {
-                if (!argumentComparers[i].EqualsFunc(arguments[i], otherArguments[i]))
+                if (!argumentHandlers[i].EqualsFunc(arguments[i], otherArguments[i]))
                     return false;
             }
-            if (!Method.InvocationTargetComparer.EqualsFunc(Target, other.Target))
+            if (!Method.InvocationTargetHandler.EqualsFunc(Target, other.Target))
                 return false;
             return true;
         }

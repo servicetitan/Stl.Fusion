@@ -5,13 +5,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
 using Stl.Collections;
+using Stl.DependencyInjection;
 
 namespace Stl.Time
 {
     public sealed class TimerSet<TTimer> : AsyncProcessBase
         where TTimer : notnull
     {
-        public class Options
+        public class Options : IOptions
         {
             // ReSharper disable once StaticMemberInGenericType
             public static TimeSpan MinQuanta { get; } = TimeSpan.FromMilliseconds(10);
@@ -38,7 +39,7 @@ namespace Stl.Time
             Action<TTimer>? fireHandler = null,
             IMomentClock? clock = null)
         {
-            options ??= new Options();
+            options = options.OrDefault();
             if (options.Quanta < Options.MinQuanta)
                 options.Quanta = Options.MinQuanta;
             Quanta = options.Quanta;

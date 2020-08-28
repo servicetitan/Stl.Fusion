@@ -131,38 +131,38 @@ namespace Stl.DependencyInjection
             return services;
         }
 
-        public static IServiceCollection AddServices(
+        public static IServiceCollection AddDiscoveredServices(
             this IServiceCollection services,
             params Assembly[] assemblies)
-            => services.AddServices("", null!, assemblies);
-        public static IServiceCollection AddServices(
+            => services.AddDiscoveredServices("", null!, assemblies);
+        public static IServiceCollection AddDiscoveredServices(
             this IServiceCollection services,
             Func<Type, bool> filter,
             params Assembly[] assemblies)
-            => services.AddServices("", filter, assemblies);
-        public static IServiceCollection AddServices(
+            => services.AddDiscoveredServices("", filter, assemblies);
+        public static IServiceCollection AddDiscoveredServices(
             this IServiceCollection services,
             Symbol scope,
             params Assembly[] assemblies)
-            => services.AddServices(scope, null!, assemblies);
-        public static IServiceCollection AddServices(
+            => services.AddDiscoveredServices(scope, null!, assemblies);
+        public static IServiceCollection AddDiscoveredServices(
             this IServiceCollection services,
             Symbol scope,
             Func<Type, bool> filter,
             params Assembly[] assemblies)
-            => services.AddServices(scope, filter, assemblies.SelectMany(a => ServiceInfo.ForAll(a, scope)));
+            => services.AddDiscoveredServices(scope, filter, assemblies.SelectMany(a => ServiceInfo.ForAll(a, scope)));
 
-        public static IServiceCollection AddServices(
+        public static IServiceCollection AddDiscoveredServices(
             this IServiceCollection services,
             IEnumerable<Type> candidates)
-            => services.AddServices("", candidates);
-        public static IServiceCollection AddServices(
+            => services.AddDiscoveredServices("", candidates);
+        public static IServiceCollection AddDiscoveredServices(
             this IServiceCollection services,
             Symbol scope,
             IEnumerable<Type> candidates)
-            => services.AddServices(scope, null, candidates.Select(t => ServiceInfo.For(t, scope)));
+            => services.AddDiscoveredServices(scope, null, candidates.Select(t => ServiceInfo.For(t, scope)));
 
-        internal static IServiceCollection AddServices(
+        internal static IServiceCollection AddDiscoveredServices(
             this IServiceCollection services,
             Symbol scope,
             Func<Type, bool>? filter,

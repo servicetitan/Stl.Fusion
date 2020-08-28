@@ -2,10 +2,10 @@ using System;
 using System.Reflection;
 using Castle.DynamicProxy;
 using Microsoft.Extensions.Logging;
+using Stl.DependencyInjection;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Interception.Internal;
 using Stl.Generators;
-using Stl.Time;
 
 namespace Stl.Fusion.Bridge.Interception
 {
@@ -20,11 +20,11 @@ namespace Stl.Fusion.Bridge.Interception
         protected readonly Generator<LTag> VersionGenerator;
 
         public ReplicaClientInterceptor(
-            Options options,
+            Options? options,
+            IServiceProvider serviceProvider,
             IReplicator replicator,
-            IMomentClock? clock = null,
             ILoggerFactory? loggerFactory = null)
-            : base(options, clock, loggerFactory)
+            : base(options = options.OrDefault(serviceProvider), serviceProvider, loggerFactory)
         {
             Replicator = replicator;
             VersionGenerator = options.VersionGenerator;

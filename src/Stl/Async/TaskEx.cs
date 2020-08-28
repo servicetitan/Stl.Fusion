@@ -153,5 +153,11 @@ namespace Stl.Async
 
         public static Task<T> AssertCompleted<T>(this Task<T> task)
             => !task.IsCompleted ? throw Errors.TaskIsNotCompleted() : task;
+
+        public static ValueTask AssertCompleted(this ValueTask task)
+            => !task.IsCompleted ? throw Errors.TaskIsNotCompleted() : task;
+
+        public static ValueTask<T> AssertCompleted<T>(this ValueTask<T> task)
+            => !task.IsCompleted ? throw Errors.TaskIsNotCompleted() : task;
     }
 }
