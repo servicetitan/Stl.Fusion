@@ -140,7 +140,7 @@ namespace Build
                 }
             });
 
-            Target("coverage", async () => {
+            Target("coverage", DependsOn("build"), async () => {
                 CreateDir(testOutputPath);
                 var cmd = await Cli.Wrap(dotnetExePath)
                     .WithArguments($"test " +
