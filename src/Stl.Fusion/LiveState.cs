@@ -18,10 +18,13 @@ namespace Stl.Fusion
         IUpdateDelayer UpdateDelayer { get; }
     }
 
-    public interface ILiveState<T> : IComputedState<T>, ILiveState, IDisposable { }
+    public interface ILiveState<T> : IComputedState<T>, ILiveState, IDisposable
+    { }
 
     public interface ILiveState<T, TOwn> : ILiveState<T>
     {
+        bool InvalidateOnOwnStateUpdate { get; set; }
+        bool UpdateOnOwnStateUpdate { get; set; }
         IMutableState<TOwn> OwnState { get; }
     }
 
@@ -118,9 +121,12 @@ namespace Stl.Fusion
         public new class Options : LiveState<T>.Options
         {
             public MutableState<TOwn>.Options OwnStateOptions { get; set; } = new MutableState<TOwn>.Options();
-            public bool AutoUpdateOnOwnStateChange { get; set; } = true;
+            public bool InvalidateOnOwnStateUpdate { get; set; } = true;
+            public bool UpdateOnOwnStateUpdate { get; set; } = true;
         }
 
+        public bool InvalidateOnOwnStateUpdate { get; set; }
+        public bool UpdateOnOwnStateUpdate { get; set; }
         public IMutableState<TOwn> OwnState { get; }
 
         protected LiveState(
@@ -128,13 +134,17 @@ namespace Stl.Fusion
             object? argument = null, bool initialize = true)
             : base(options, serviceProvider, argument, false)
         {
+            InvalidateOnOwnStateUpdate = options.InvalidateOnOwnStateUpdate;
+            UpdateOnOwnStateUpdate = options.UpdateOnOwnStateUpdate;
             OwnState = new MutableState<TOwn>(options.OwnStateOptions, serviceProvider, default, this);
-            if (options.AutoUpdateOnOwnStateChange)
-                OwnState.Updated += ownState => {
-                    var self = ownState.Argument as LiveState<T, TOwn>;
-                    self?.Invalidate(true);
-                };
+            OwnState.Updated += OwnStateUpdated;
             if (initialize) Initialize(options);
+        }
+
+        protected virtual void OwnStateUpdated(IState<TOwn> ownState)
+        {
+            if (UpdateOnOwnStateUpdate || InvalidateOnOwnStateUpdate)
+                this.Invalidate(UpdateOnOwnStateUpdate);
         }
     }
 }
