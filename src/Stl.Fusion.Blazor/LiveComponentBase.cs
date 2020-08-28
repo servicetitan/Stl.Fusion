@@ -9,14 +9,14 @@ namespace Stl.Fusion.Blazor
         protected override void OnInitialized()
         {
             State ??= ServiceProvider.GetService<ILiveState<T>>()
-                ?? StateFactory.NewLive<T>(ConfigureState, ComputeStateAsync, this);
+                ?? StateFactory.NewLive<T>(ConfigureState, (_, ct) => ComputeStateAsync(ct), this);
         }
 
         protected virtual void ConfigureState(LiveState<T>.Options options) { }
 
-        protected virtual Task<T> ComputeStateAsync(ILiveState<T> state, CancellationToken cancellationToken)
+        protected virtual Task<T> ComputeStateAsync(CancellationToken cancellationToken)
             // No updates by default
-            => state.AsTask();
+            => State.AsTask();
     }
 
     public abstract class LiveComponentBase<T, TLocals> : StatefulComponentBase<ILiveState<T, TLocals>>
@@ -26,13 +26,13 @@ namespace Stl.Fusion.Blazor
         protected override void OnInitialized()
         {
             State ??= ServiceProvider.GetService<ILiveState<T, TLocals>>()
-                ?? StateFactory.NewLive<T, TLocals>(ConfigureState, ComputeStateAsync, this);
+                ?? StateFactory.NewLive<T, TLocals>(ConfigureState, (_, ct) => ComputeStateAsync(ct), this);
         }
 
         protected virtual void ConfigureState(LiveState<T, TLocals>.Options options) { }
 
-        protected virtual Task<T> ComputeStateAsync(ILiveState<T, TLocals> state, CancellationToken cancellationToken)
+        protected virtual Task<T> ComputeStateAsync(CancellationToken cancellationToken)
             // No updates by default
-            => state.AsTask();
+            => State.AsTask();
     }
 }
