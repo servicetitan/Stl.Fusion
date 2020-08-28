@@ -24,15 +24,18 @@ namespace Stl.Fusion
 
         public static IServiceCollection AddFusionCore(this IServiceCollection services)
         {
-            // ComputeServiceProxyGenerator
+            // Compute services & their dependencies
             services.TryAddSingleton(new ArgumentHandlerProvider.Options());
             services.TryAddSingleton<IArgumentHandlerProvider, ArgumentHandlerProvider>();
             services.TryAddSingleton(new ComputeServiceInterceptor.Options());
             services.TryAddSingleton<ComputeServiceInterceptor>();
             services.TryAddSingleton(c => ComputeServiceProxyGenerator.Default);
             services.TryAddSingleton(c => new [] { c.GetRequiredService<ComputeServiceInterceptor>() });
-            // StateFactory
-            services.AddScoped<IStateFactory, StateFactory>();
+
+            // States & their dependencies
+            services.TryAddTransient<IStateFactory, StateFactory>();
+            services.TryAddSingleton(new UpdateDelayer.Options());
+            services.TryAddTransient<IUpdateDelayer, UpdateDelayer>();
             return services;
         }
 
@@ -54,9 +57,6 @@ namespace Stl.Fusion
             // Replicator
             services.TryAddSingleton(new Replicator.Options());
             services.TryAddSingleton<IReplicator, Replicator>();
-            // Client-side services
-            services.TryAddSingleton(new UpdateDelayer.Options());
-            services.TryAddSingleton<IUpdateDelayer, UpdateDelayer>();
             return services.AddFusionCore();
         }
 

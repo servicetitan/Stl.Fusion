@@ -49,10 +49,9 @@ namespace Stl.Fusion
         private volatile Task? _activeUpdateTask;
 
         protected Func<ILiveState<T>, IUpdateDelayer> UpdateDelayerFactory { get; set; }
-        protected Lazy<IUpdateDelayer> UpdateDelayerLazy { get; set; }
         protected CancellationToken DisposeToken { get; }
         protected ILogger Log { get; }
-        public IUpdateDelayer UpdateDelayer => UpdateDelayerLazy.Value;
+        public IUpdateDelayer UpdateDelayer { get; protected set; } = null!;
         public Task? ActiveUpdateTask => _activeUpdateTask;
 
         protected LiveState(
@@ -63,10 +62,14 @@ namespace Stl.Fusion
             _disposeCts = new CancellationTokenSource();
             DisposeToken = _disposeCts.Token;
             Log = ServiceProvider.GetService<ILoggerFactory>()?.CreateLogger(GetType()) ?? NullLogger.Instance;
-
             UpdateDelayerFactory = options.UpdateDelayerFactory;
-            UpdateDelayerLazy = new Lazy<IUpdateDelayer>(() => UpdateDelayerFactory.Invoke(this));
             if (initialize) Initialize(options);
+        }
+
+        protected override void Initialize(State<T>.Options options)
+        {
+            UpdateDelayer = UpdateDelayerFactory.Invoke(this);
+            base.Initialize(options);
         }
 
         public virtual void Dispose()
