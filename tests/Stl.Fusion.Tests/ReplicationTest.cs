@@ -4,6 +4,7 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Tests.Services;
+using Stl.Testing;
 using Stl.Tests;
 using Xunit;
 using Xunit.Abstractions;
@@ -61,8 +62,9 @@ namespace Stl.Fusion.Tests
                 count++;
             };
 
-            await Task.Delay(1100);
-            count.Should().BeGreaterThan(2);
+            await TestEx.WhenMet(
+                () => count.Should().BeGreaterThan(2),
+                TimeSpan.FromSeconds(5));
         }
     }
 }

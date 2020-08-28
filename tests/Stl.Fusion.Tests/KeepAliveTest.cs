@@ -50,7 +50,7 @@ namespace Stl.Fusion.Tests
         [Fact]
         public async void TestNoKeepAlive()
         {
-            if (TestRunnerInfo.GitHub.IsActionRunning)
+            if (TestRunnerInfo.IsBuildAgent())
                 // TODO: Fix intermittent failures on GitHub
                 return;
 
@@ -71,7 +71,7 @@ namespace Stl.Fusion.Tests
         [Fact]
         public async void TestKeepAlive()
         {
-            if (TestRunnerInfo.GitHub.IsActionRunning)
+            if (TestRunnerInfo.IsBuildAgent())
                 // TODO: Fix intermittent failures on GitHub
                 return;
 

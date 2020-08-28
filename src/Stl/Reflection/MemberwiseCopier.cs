@@ -1,4 +1,5 @@
 using System;
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace Stl.Reflection
@@ -13,9 +14,9 @@ namespace Stl.Reflection
         public Func<MemberInfo, bool>? Filter { get; set; }
         public T Source { get; set; } = default!;
 
-        public MemberwiseCopier<T> Configure(Action<MemberwiseCopier<T>> configurer)
+        public MemberwiseCopier<T> Configure(Action<MemberwiseCopier<T>>? configurer)
         {
-            configurer.Invoke(this);
+            configurer?.Invoke(this);
             return this;
         }
 
@@ -62,5 +63,9 @@ namespace Stl.Reflection
     {
         public static MemberwiseCopier<T> New<T>(T source)
             => new MemberwiseCopier<T>() { Source = source };
+
+        public static T Copy<T>(T source, T target,
+            Action<MemberwiseCopier<T>>? configurer = null)
+            => New(source).Configure(configurer).Apply(target);
     }
 }

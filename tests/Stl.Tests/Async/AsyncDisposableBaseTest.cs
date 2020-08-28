@@ -28,7 +28,7 @@ namespace Stl.Tests.Async
         [Fact]
         public async Task DisposeAsyncTest()
         {
-            if (TestRunnerInfo.GitHub.IsActionRunning)
+            if (TestRunnerInfo.IsBuildAgent())
                 // TODO: Fix intermittent failures on GitHub
                 return;
             AsyncDisposableWithDelay? copy = null;

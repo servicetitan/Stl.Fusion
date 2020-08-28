@@ -19,19 +19,19 @@ namespace Stl.Fusion.Blazor
             => state.AsTask();
     }
 
-    public abstract class LiveComponentBase<T, TOwn> : StatefulComponentBase<ILiveState<T, TOwn>>
+    public abstract class LiveComponentBase<T, TLocals> : StatefulComponentBase<ILiveState<T, TLocals>>
     {
-        protected IMutableState<TOwn> OwnState => State.OwnState;
+        protected IMutableState<TLocals> Locals => State.Locals;
 
         protected override void OnInitialized()
         {
-            State ??= ServiceProvider.GetService<ILiveState<T, TOwn>>()
-                ?? StateFactory.NewLive<T, TOwn>(ConfigureState, ComputeStateAsync, this);
+            State ??= ServiceProvider.GetService<ILiveState<T, TLocals>>()
+                ?? StateFactory.NewLive<T, TLocals>(ConfigureState, ComputeStateAsync, this);
         }
 
-        protected virtual void ConfigureState(LiveState<T, TOwn>.Options options) { }
+        protected virtual void ConfigureState(LiveState<T, TLocals>.Options options) { }
 
-        protected virtual Task<T> ComputeStateAsync(ILiveState<T, TOwn> state, CancellationToken cancellationToken)
+        protected virtual Task<T> ComputeStateAsync(ILiveState<T, TLocals> state, CancellationToken cancellationToken)
             // No updates by default
             => state.AsTask();
     }

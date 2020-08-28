@@ -68,12 +68,9 @@ namespace Stl.Tests.Collections
         [Fact]
         public async Task RandomTimerTest()
         {
-            if (TestRunnerInfo.GitHub.IsActionRunning)
-                // Requires tuning to work on ~ single-CPU GitHub test runner
-                return;
-
+            var taskCount = TestRunnerInfo.IsBuildAgent() ? 10 : 1000;
             var rnd = new Random();
-            var tasks = Enumerable.Range(0, 1000)
+            var tasks = Enumerable.Range(0, taskCount)
                 .Select(i => Task.Run(() => OneRandomTest(rnd.Next(100), 3000, 200)))
                 .ToArray();
             await Task.WhenAll(tasks);

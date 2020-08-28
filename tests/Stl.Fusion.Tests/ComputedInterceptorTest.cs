@@ -4,6 +4,7 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Stl.Fusion.Tests.Services;
+using Stl.Testing;
 using Stl.Tests;
 using Xunit;
 using Xunit.Abstractions;
@@ -29,10 +30,11 @@ namespace Stl.Fusion.Tests
             state.Updated += s
                 => Log.LogInformation($"{++count} -> {s.Value:hh:mm:ss:fff}");
 
-            await Task.Delay(3000);
-            state.Dispose();
+            await TestEx.WhenMet(
+                () => count.Should().BeGreaterThan(2),
+                TimeSpan.FromSeconds(5));
             var lastCount = count;
-            lastCount.Should().BeGreaterThan(3);
+            state.Dispose();
 
             await Task.Delay(1000);
             count.Should().Be(lastCount);

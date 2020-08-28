@@ -47,8 +47,9 @@ namespace Stl.Fusion.Tests
                 count++;
             };
 
-            await Task.Delay(2000);
-            count.Should().BeGreaterThan(2);
+            await TestEx.WhenMet(
+                () => count.Should().BeGreaterThan(2),
+                TimeSpan.FromSeconds(5));
         }
 
         [Fact(Timeout = 120_000)]
@@ -66,7 +67,7 @@ namespace Stl.Fusion.Tests
         [Fact(Timeout = 120_000)]
         public async Task DropReconnectTest()
         {
-            if (TestRunnerInfo.GitHub.IsActionRunning)
+            if (TestRunnerInfo.IsBuildAgent())
                 // TODO: Fix intermittent failures on GitHub
                 return;
 

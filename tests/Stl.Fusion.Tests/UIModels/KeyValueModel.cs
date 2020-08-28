@@ -38,7 +38,7 @@ namespace Stl.Fusion.Tests.UIModels
         protected override async Task<KeyValueModel<string>> ComputeValueAsync(CancellationToken cancellationToken)
         {
             var updateCount = UnsafeValue?.UpdateCount ?? 0;
-            var key = OwnState.UnsafeValue ?? "";
+            var key = Locals.UnsafeValue ?? "";
             var value = await KeyValueServiceClient.GetAsync(key, cancellationToken).ConfigureAwait(false);
             return new KeyValueModel<string>() {
                 Key = key,

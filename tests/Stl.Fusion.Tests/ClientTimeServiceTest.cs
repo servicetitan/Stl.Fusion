@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Tests.Services;
+using Stl.Testing;
 using Stl.Tests;
 using Xunit;
 using Xunit.Abstractions;
@@ -22,11 +23,14 @@ namespace Stl.Fusion.Tests
             await using var serving = await WebSocketHost.ServeAsync();
             var client = Services.GetRequiredService<IClientTimeService>();
             var cTime = await Computed.CaptureAsync(_ => client.GetTimeAsync());
+
+            cTime.Options.AutoInvalidateTime.Should().Be(ComputedOptions.Default.AutoInvalidateTime);
             cTime.IsConsistent().Should().BeTrue();
             (DateTime.Now - cTime.Value).Should().BeLessThan(epsilon);
 
-            await Task.Delay(TimeSpan.FromSeconds(2));
-            cTime.IsConsistent().Should().BeFalse();
+            await TestEx.WhenMet(
+                () => cTime.IsConsistent().Should().BeFalse(),
+                TimeSpan.FromSeconds(5));
             var time = await cTime.UseAsync();
             (DateTime.Now - time).Should().BeLessThan(epsilon);
         }
@@ -35,6 +39,8 @@ namespace Stl.Fusion.Tests
         public async Task Test2()
         {
             var epsilon = TimeSpan.FromSeconds(0.5);
+            if (TestRunnerInfo.IsBuildAgent())
+                epsilon *= 2;
 
             await using var serving = await WebSocketHost.ServeAsync();
             var service = Services.GetRequiredService<IClientTimeService>();

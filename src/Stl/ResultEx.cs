@@ -2,6 +2,7 @@ using System;
 using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 using Stl.Async;
+using Stl.Reflection;
 
 namespace Stl
 {
@@ -28,6 +29,19 @@ namespace Stl
             => result.IsValue(out var value, out var error)
                 ? ValueTaskEx.FromResult(value)
                 : ValueTaskEx.FromException<T>(error);
+
+        // Update (for IMutableResult<T>)
+
+        public static void Update<T>(IMutableResult<T> result, Func<Result<T>, Result<T>> updater)
+            => result.Update(updater.Invoke(result.AsResult()));
+        public static void Update<T>(IMutableResult<T> result, Func<T, T> updater)
+            => result.Update(updater.Invoke(result.Value));
+        public static void Update<T>(IMutableResult<T> result, Action<T> updater)
+        {
+            var clone = MemberwiseCloner.Clone(result.Value);
+            updater.Invoke(clone);
+            result.Update(clone);
+        }
 
         // ThrowIfError
 

@@ -118,18 +118,15 @@ namespace Stl.Tests.Async
         [Fact]
         public async Task ConcurrentTest()
         {
-            if (TestRunnerInfo.GitHub.IsActionRunning)
-                // TODO: Fix intermittent failures on GitHub
-                return;
-
             var r = new Resource(CreateAsyncLock(ReentryMode.CheckedPass));
             var rnd = new Random();
             var tasks = new List<Task>();
 
-            const int taskCount = 200;
-            const int maxDelayMs = 100;
-            const int maxDurationMs = 3;
-            const int maxReentryCount = 5;
+            var taskCount = TestRunnerInfo.IsBuildAgent() ? 2 : 200;
+            var maxDelayMs = 100;
+            var maxDurationMs = 3;
+            var maxReentryCount = 5;
+
             for (var i = 0; i < taskCount; i++) {
                 var delayMs = rnd.Next(maxDelayMs);
                 var durationMs = rnd.Next(maxDurationMs);

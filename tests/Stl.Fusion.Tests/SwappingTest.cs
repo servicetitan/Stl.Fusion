@@ -75,7 +75,7 @@ namespace Stl.Fusion.Tests
         [Fact]
         public async void BasicTest()
         {
-            if (TestRunnerInfo.GitHub.IsActionRunning)
+            if (TestRunnerInfo.IsBuildAgent())
                 // TODO: Fix intermittent failures on GitHub
                 return;
 
