@@ -9,6 +9,12 @@ namespace Stl.Fusion
 {
     public interface ILiveState : IComputedState
     {
+        public new interface IOptions : IComputedState.IOptions
+        {
+            Func<ILiveState, IUpdateDelayer> UpdateDelayerFactory { get; set; }
+            bool DelayFirstUpdate { get; set; }
+        }
+
         IUpdateDelayer UpdateDelayer { get; }
     }
 
@@ -21,9 +27,9 @@ namespace Stl.Fusion
 
     public abstract class LiveState<T> : ComputedState<T>, ILiveState<T>
     {
-        public new class Options : ComputedState<T>.Options
+        public new class Options : ComputedState<T>.Options, ILiveState.IOptions
         {
-            public static readonly Func<ILiveState<T>, IUpdateDelayer> DefaultUpdateDelayerFactory =
+            public static readonly Func<ILiveState, IUpdateDelayer> DefaultUpdateDelayerFactory =
                 liveState => {
                     var services = liveState.ServiceProvider;
 
@@ -38,21 +44,9 @@ namespace Stl.Fusion
                     return services.GetRequiredService<IUpdateDelayer>();
                 };
 
-            public Func<ILiveState<T>, IUpdateDelayer> UpdateDelayerFactory { get; set; } = DefaultUpdateDelayerFactory;
+
+            public Func<ILiveState, IUpdateDelayer> UpdateDelayerFactory { get; set; } = DefaultUpdateDelayerFactory;
             public bool DelayFirstUpdate { get; set; } = false;
-
-            public void NoUpdateDelayer()
-                => UpdateDelayerFactory = _ => Fusion.UpdateDelayer.None;
-
-            public void UpdateDelayer(UpdateDelayer.Options options)
-                => UpdateDelayerFactory = _ => new UpdateDelayer(options);
-
-            public void UpdateDelayer(Action<UpdateDelayer.Options>? optionsBuilder)
-            {
-                var options = new UpdateDelayer.Options();
-                optionsBuilder?.Invoke(options);
-                UpdateDelayer(options);
-            }
         }
 
         private readonly CancellationTokenSource _stopCts;

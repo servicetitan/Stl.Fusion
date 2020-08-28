@@ -99,7 +99,7 @@ namespace Stl.Fusion.Tests
             await users.CreateAsync(u, true);
 
             using var sText = await StateFactory.NewLive<string>(
-                o => o.NoUpdateDelayer(),
+                o => o.WithNoUpdateDelayer(),
                 async (s, cancellationToken) => {
                     var norris = await users.TryGetAsync(int.MaxValue, cancellationToken).ConfigureAwait(false);
                     var now = await time.GetTimeAsync().ConfigureAwait(false);

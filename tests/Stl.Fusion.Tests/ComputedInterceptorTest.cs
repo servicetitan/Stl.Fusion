@@ -24,7 +24,7 @@ namespace Stl.Fusion.Tests
 
             var count = 0L;
             using var state = StateFactory.NewLive<DateTime>(
-                o => o.NoUpdateDelayer(),
+                o => o.WithNoUpdateDelayer(),
                 async (_, ct) => await c.UseAsync(ct));
             state.Updated += s
                 => Log.LogInformation($"{++count} -> {s.Value:hh:mm:ss:fff}");

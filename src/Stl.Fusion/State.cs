@@ -14,6 +14,13 @@ namespace Stl.Fusion
 {
     public interface IState : IResult, IHasServiceProvider
     {
+        public interface IOptions : Stl.DependencyInjection.IOptions
+        {
+            ComputedOptions ComputedOptions { get; set; }
+            Generator<LTag> VersionGenerator { get; set; }
+            public bool InitialIsConsistent { get; set; }
+        }
+
         IStateSnapshot Snapshot { get; }
         IComputed Computed { get; }
         IComputed LastValueComputed { get; }
@@ -40,7 +47,7 @@ namespace Stl.Fusion
         IEquatable<State<T>>,
         IFunction<State<T>, T>
     {
-        public class Options : IOptions
+        public class Options : IState.IOptions
         {
             public static readonly Func<IState<T>, Result<T>> DefaultInitialOutputFactory =
                 state => Result.Value(ActivatorEx.New<T>(false));

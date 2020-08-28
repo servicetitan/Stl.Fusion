@@ -6,12 +6,15 @@ using Stl.Internal;
 
 namespace Stl.Fusion
 {
-    public interface IMutableState : IState, IMutableResult { }
+    public interface IMutableState : IState, IMutableResult
+    {
+        public new interface IOptions : IState.IOptions { }
+    }
     public interface IMutableState<T> : IState<T>, IMutableResult<T>, IMutableState { }
 
     public class MutableState<T> : State<T>, IMutableState<T>
     {
-        public new class Options : State<T>.Options
+        public new class Options : State<T>.Options, IMutableState.IOptions
         {
             public Options()
             {
