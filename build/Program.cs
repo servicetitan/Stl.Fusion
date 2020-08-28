@@ -211,7 +211,9 @@ namespace Build
                 if (paths.Length > 0) {
                     foreach (var path in paths) {
                         var newFileName = $"{Path.GetFileNameWithoutExtension(match.Groups["testLib"].Value)}.{path.FileName}";
-                        File.Move(path, targetPath & newFileName, true);
+                        var newPath = targetPath & newFileName;
+                        Console.WriteLine($"Moving: {path} -> {newPath}");
+                        File.Move(path, newPath, true);
                     }
                     DeleteDir(paths[0].DirectoryPath, true);
                 }
@@ -267,6 +269,7 @@ namespace Build
         {
             if (Directory.Exists(path))
                 return true;
+            Console.WriteLine($"Creating Directory: {path}");
             try {
                 Directory.CreateDirectory(path);
                 return true;
@@ -282,6 +285,7 @@ namespace Build
         {
             if (!Directory.Exists(path))
                 return true;
+            Console.WriteLine($"Deleting Directory: {path}");
             try {
                 Directory.Delete(path, true);
                 return true;
