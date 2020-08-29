@@ -4,7 +4,6 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Tests.Services;
 using Stl.Fusion.Tests.UIModels;
-using Stl.Fusion;
 using Stl.Testing;
 using Stl.Tests;
 using Xunit;

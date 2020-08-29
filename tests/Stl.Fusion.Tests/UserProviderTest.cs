@@ -5,11 +5,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
+using Stl.Tests;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace Stl.Fusion.Tests
 {
+    [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
     public class UserProviderTest : FusionTestBase
     {
         public UserProviderTest(ITestOutputHelper @out) : base(@out) { }
