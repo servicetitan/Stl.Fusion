@@ -205,15 +205,12 @@ namespace Stl.Fusion
                     // We should never throw errors during the invalidation
                 }
                 var computedRegistry = ComputedRegistry.Instance;
-                for (var i = 0; i < usedBy.Span.Length; i++) {
-                    ref var d = ref usedBy.Span[i];
+                var usedBySpan = usedBy.Span;
+                for (var i = 0; i < usedBySpan.Length; i++) {
+                    ref var d = ref usedBySpan[i];
                     var c = computedRegistry.TryGet(d.Input);
                     if (c != null && c.Version == d.Version)
                         c.Invalidate();
-                    else
-                        Debugger.Break();
-                    // Just in case buffers aren't cleaned up when you return them back
-                    d = default!;
                 }
                 return true;
             }

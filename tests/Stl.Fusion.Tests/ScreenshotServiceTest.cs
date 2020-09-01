@@ -1,9 +1,11 @@
+using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Tests.Services;
 using Stl.OS;
+using Stl.Testing;
 using Stl.Tests;
 using Xunit;
 using Xunit.Abstractions;
@@ -25,11 +27,9 @@ namespace Stl.Fusion.Tests
             var c = await GetScreenshotComputedAsync();
             for (var i = 0; i < 10; i++) {
                 c.Value.Base64Content.Length.Should().BeGreaterThan(0);
-                await Task.Delay(100);
-                if (c.IsConsistent()) {
-                    Debugger.Break();
-                    break;
-                }
+                await TestEx.WhenMet(
+                    () => c.IsConsistent().Should().BeFalse(),
+                    TimeSpan.FromSeconds(0.5));
                 c = await GetScreenshotComputedAsync();
             }
             c.IsConsistent().Should().BeFalse();
