@@ -1,8 +1,8 @@
 classDiagram
+  IResult <|-- IComputed
   class IComputed {
-    +ComputedState State
+    +ConsistencyState ConsistencyState
     +LTag LTag
-    +bool IsConsistent
     +TIn Input
     +Result~TOut~ Output
     +TOut Value
