@@ -25,7 +25,10 @@ namespace Stl.Fusion.Tests
             var cTime = await Computed.CaptureAsync(_ => client.GetTimeAsync());
 
             cTime.Options.AutoInvalidateTime.Should().Be(ComputedOptions.Default.AutoInvalidateTime);
-            cTime.IsConsistent().Should().BeTrue();
+            if (!cTime.IsConsistent()) {
+                cTime = await cTime.UpdateAsync(false);
+                cTime.IsConsistent().Should().BeTrue();
+            }
             (DateTime.Now - cTime.Value).Should().BeLessThan(epsilon);
 
             await TestEx.WhenMet(

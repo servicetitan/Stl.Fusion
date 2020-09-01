@@ -19,7 +19,7 @@ namespace Stl.Generators
         public string Alphabet { get; }
         public int Length { get; }
 
-        public RandomStringGenerator(int length = 12, string? alphabet = null, RandomNumberGenerator? rng = null)
+        public RandomStringGenerator(int length = 16, string? alphabet = null, RandomNumberGenerator? rng = null)
         {
             if (length < 1)
                 throw new ArgumentOutOfRangeException(nameof(length));

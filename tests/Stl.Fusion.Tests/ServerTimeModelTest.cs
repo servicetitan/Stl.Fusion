@@ -1,11 +1,9 @@
 using System;
 using System.Diagnostics;
-using System.Reactive;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Tests.UIModels;
-using Stl.Fusion;
 using Stl.Tests;
 using Xunit;
 using Xunit.Abstractions;
@@ -42,7 +40,7 @@ namespace Stl.Fusion.Tests
             Debug.WriteLine("4");
             stm.UpdateDelayer.CancelDelays();
             Debug.WriteLine("5");
-            await Task.Delay(100); // Let's just wait for the updates to happen
+            await Task.Delay(300); // Let's just wait for the updates to happen
             Debug.WriteLine("6");
             c = stm.Computed;
             Debug.WriteLine("7");
@@ -78,7 +76,7 @@ namespace Stl.Fusion.Tests
             Debug.WriteLine("4");
             stm.UpdateDelayer.CancelDelays();
             Debug.WriteLine("5");
-            await Task.Delay(100); // Let's just wait for the updates to happen
+            await Task.Delay(300); // Let's just wait for the updates to happen
             Debug.WriteLine("6");
             c = stm.Computed;
             Debug.WriteLine("7");

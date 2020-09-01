@@ -46,7 +46,7 @@ namespace Stl.Tests.Security
             var g = new RandomStringGenerator();
             ValidateGeneratedValues(
                 Enumerable.Range(0, 1_000).Select(_ => g.Next()),
-                12, RandomStringGenerator.DefaultAlphabet);
+                16, RandomStringGenerator.DefaultAlphabet);
 
             g = new RandomStringGenerator(8, RandomStringGenerator.Base16Alphabet);
             ValidateGeneratedValues(

@@ -104,7 +104,7 @@ namespace Stl.Fusion.Tests
             p.SetValue("");
 
             var c1 = await Computed.CaptureAsync(_ => p.GetValueAsync());
-            c1.Options.KeepAliveTime.Should().Be(d.KeepAliveTime);
+            c1.Options.KeepAliveTime.Should().Be(TimeSpan.FromSeconds(10));
             c1.Options.ErrorAutoInvalidateTime.Should().Be(d.ErrorAutoInvalidateTime);
             c1.Options.AutoInvalidateTime.Should().Be(d.AutoInvalidateTime);
 

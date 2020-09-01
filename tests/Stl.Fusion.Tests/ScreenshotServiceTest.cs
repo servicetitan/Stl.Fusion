@@ -32,7 +32,6 @@ namespace Stl.Fusion.Tests
                     TimeSpan.FromSeconds(0.5));
                 c = await GetScreenshotComputedAsync();
             }
-            c.IsConsistent().Should().BeFalse();
         }
 
         private async Task<IComputed<Screenshot>> GetScreenshotComputedAsync()

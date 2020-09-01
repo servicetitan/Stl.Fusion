@@ -12,7 +12,7 @@ namespace Stl.Fusion.Tests.Services
         int GetCharCountCallCount { get; }
 
         void SetValue(string value);
-        [ComputeMethod]
+        [ComputeMethod(KeepAliveTime = 10)]
         Task<string> GetValueAsync();
         [ComputeMethod(KeepAliveTime = 0.5, ErrorAutoInvalidateTime = 0.5)]
         Task<int> GetCharCountAsync();

@@ -70,9 +70,9 @@ namespace Stl.Tests.Async
 
                 // Let's add a "spread" that's not ms-based
                 var sw = new SpinWait();
-                var spinCount = (delayMs * 347) & 15;
+                var spinCount = (delayMs * 347) & 7;
                 for (var i = 0; i < spinCount; i++)
-                    sw.SpinOnce(int.MaxValue);
+                    sw.SpinOnce(-1);
             }
         }
 
@@ -122,7 +122,7 @@ namespace Stl.Tests.Async
             var rnd = new Random();
             var tasks = new List<Task>();
 
-            var taskCount = TestRunnerInfo.IsBuildAgent() ? 2 : 200;
+            var taskCount = TestRunnerInfo.IsBuildAgent() ? 2 : HardwareInfo.ProcessorCount * 4;
             var maxDelayMs = 100;
             var maxDurationMs = 3;
             var maxReentryCount = 5;
@@ -137,7 +137,7 @@ namespace Stl.Tests.Async
             }
 
             var expectedRuntime = TimeSpan.FromMilliseconds(
-                5 * maxDelayMs + maxDurationMs * maxReentryCount * taskCount);
+                1000 + maxDelayMs + taskCount * maxDurationMs * maxReentryCount);
             Out.WriteLine($"Expected runtime: {expectedRuntime.Seconds:f1}s");
             var start = CpuClock.Now;
             await Task.WhenAll(tasks).AsAsyncFunc()
