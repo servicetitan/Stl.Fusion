@@ -187,6 +187,6 @@ right after your own action.
 
 * If above description looks complicated for you, please check out
   [Stl.Fusion In Simple Terms](https://medium.com/@alexyakunin/stl-fusion-in-simple-terms-65b1975967ab?source=friends_link&sk=04e73e75a52768cf7c3330744a9b1e38)
-* Otherwise, go [Documentation Home](docs/README.md)
+* Otherwise, go to [Documentation Home](docs/README.md)
 * Join our [Discord Server](https://discord.gg/EKEwv6d) 
   to ask questions and track project updates.
