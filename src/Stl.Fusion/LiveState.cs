@@ -20,13 +20,13 @@ namespace Stl.Fusion
 
     public interface ILiveState<T> : IComputedState<T>, ILiveState, IDisposable
     { }
-
-    public interface ILiveState<T, TOwn> : ILiveState<T>
+    public interface ILiveState<T, TLocals> : ILiveState<T>
     {
         bool InvalidateOnLocalsUpdate { get; set; }
         bool UpdateOnLocalsUpdate { get; set; }
-        IMutableState<TOwn> Locals { get; }
+        IMutableState<TLocals> Locals { get; }
     }
+
 
     public abstract class LiveState<T> : ComputedState<T>, ILiveState<T>
     {
