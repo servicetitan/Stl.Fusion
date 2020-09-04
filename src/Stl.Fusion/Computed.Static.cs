@@ -47,7 +47,7 @@ namespace Stl.Fusion
             catch (OperationCanceledException) {
                 throw;
             }
-            catch (Exception e) {
+            catch (Exception) {
                 result = ccs.Context.GetCapturedComputed<T>();
                 if (result?.Error != null)
                     return result;
@@ -67,7 +67,7 @@ namespace Stl.Fusion
             catch (OperationCanceledException) {
                 throw;
             }
-            catch (Exception e) {
+            catch (Exception) {
                 result = ccs.Context.GetCapturedComputed<T>();
                 if (result?.Error != null)
                     return result;
@@ -87,10 +87,8 @@ namespace Stl.Fusion
             catch (OperationCanceledException) {
                 throw;
             }
-            catch (Exception e) {
+            catch (Exception) {
                 result = ccs.Context.GetCapturedComputed<T>();
-                if (result == null)
-                    throw Errors.NoComputedCaptured();
                 if (result?.Error != null)
                     return result;
                 throw;
@@ -111,10 +109,8 @@ namespace Stl.Fusion
             catch (OperationCanceledException) {
                 throw;
             }
-            catch (Exception e) {
+            catch (Exception) {
                 result = ccs.Context.GetCapturedComputed<T>();
-                if (result == null)
-                    throw Errors.NoComputedCaptured();
                 if (result?.Error != null)
                     return result;
                 throw;
