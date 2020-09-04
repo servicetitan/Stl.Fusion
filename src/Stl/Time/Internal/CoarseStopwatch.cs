@@ -14,6 +14,7 @@ namespace Stl.Time.Internal
         public static readonly Moment Start;
         public static readonly long StartEpochOffsetTicks;
 
+        private static readonly Timer Timer;
         private static readonly Stopwatch Stopwatch;
         private static readonly RandomInt64Generator Rng = new RandomInt64Generator();
         private static long _elapsedTicks;
@@ -50,51 +51,8 @@ namespace Stl.Time.Internal
             Start = SystemClock.Now;
             Stopwatch = Stopwatch.StartNew();
             StartEpochOffsetTicks = Start.EpochOffset.Ticks;
-            BeginUpdates();
-        }
-
-        private static void BeginUpdates()
-        {
-            Update();
-            if (OSInfo.Kind == OSKind.WebAssembly) {
-                Task.Run(AsyncThreadStart);
-                return;
-            }
-            try {
-                // Dedicated thread is preferable here, since
-                // we need to adjust its priority.
-                var t = new Thread(ThreadStart, 64_000) {
-                    Priority = ThreadPriority.Highest,
-                    IsBackground = true
-                };
-                t.Start();
-            }
-            catch (NotSupportedException) {
-                // Something similar to WebAssembly runtime?
-                Task.Run(AsyncThreadStart);
-            }
-        }
-
-        [DebuggerStepThrough]
-        private static void ThreadStart()
-        {
             var interval = TimeSpan.FromSeconds(1.0 / Frequency);
-            while (true) {
-                Update();
-                Thread.Sleep(interval);
-            }
-            // ReSharper disable once FunctionNeverReturns
-        }
-
-        [DebuggerStepThrough]
-        private static async Task AsyncThreadStart()
-        {
-            var interval = TimeSpan.FromSeconds(1.0 / Frequency);
-            while (true) {
-                Update();
-                await Task.Delay(interval).ConfigureAwait(false);
-            }
-            // ReSharper disable once FunctionNeverReturns
+            Timer = NonCapturingTimer.Create(_ => Update(), null!, interval, interval);
         }
 
         [DebuggerStepThrough]

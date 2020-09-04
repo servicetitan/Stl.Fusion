@@ -7,6 +7,7 @@ using Stl.Fusion.Client;
 
 namespace Stl.Fusion.Server
 {
+    [FusionExceptionFilter]
     public abstract class FusionController : Controller
     {
         protected IPublisher Publisher { get; set; }

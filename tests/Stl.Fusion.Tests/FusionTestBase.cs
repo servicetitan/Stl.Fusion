@@ -10,7 +10,9 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Stl.DependencyInjection;
 using Stl.IO;
 using Stl.Fusion.Bridge;
@@ -138,11 +140,15 @@ namespace Stl.Fusion.Tests
                 o.BaseUri = c.GetRequiredService<TestWebHost>().ServerUri;
                 o.MessageLogLevel = LogLevel.Information;
             });
-            services.AddSingleton(c => {
-                var baseUri = c.GetRequiredService<TestWebHost>().ServerUri;
-                var apiUri = new Uri($"{baseUri}api/");
-                return new HttpClient() { BaseAddress = apiUri };
-            });
+            // Could use services.ConfigureAll<HttpClientFactoryOptions>(...),
+            // but it doesn't have an overload with IServiceProvider.
+            services.AddSingleton<IConfigureOptions<HttpClientFactoryOptions>>(c =>
+                new ConfigureNamedOptions<HttpClientFactoryOptions>(null, options => {
+                    var baseUri = c.GetRequiredService<TestWebHost>().ServerUri;
+                    var apiUri = new Uri($"{baseUri}api/");
+                    options.HttpClientActions.Add(c => c.BaseAddress = apiUri);
+                })
+            );
 
             // Auto-discovered services
             services.AddDiscoveredServices(t => t.Namespace!.StartsWith(testType.Namespace!), testType.Assembly);

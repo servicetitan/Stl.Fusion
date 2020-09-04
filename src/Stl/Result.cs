@@ -86,18 +86,21 @@ namespace Stl
         public override string? ToString()
             => $"{GetType().Name}({(HasError ? $"Error: {Error}" : Value?.ToString())})";
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Deconstruct(out T value, out Exception? error)
         {
             value = UnsafeValue;
             error = Error;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsValue([MaybeNullWhen(false)] out T value)
         {
             value = HasError ? default! : UnsafeValue;
             return !HasError;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsValue([MaybeNullWhen(false)] out T value, [MaybeNullWhen(true)] out Exception error)
         {
             error = Error!;
@@ -109,7 +112,9 @@ namespace Stl
 #pragma warning restore CS8762
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Result<T> AsResult() => this;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Result<TOther> AsResult<TOther>() =>
             new Result<TOther>((TOther) (object) UnsafeValue!, Error);
 
@@ -125,16 +130,22 @@ namespace Stl
 
         // Operators
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator T(Result<T> source) => source.Value;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Result<T>(T source) => new Result<T>(source, null);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Result<T>((T Value, Exception? Error) source) =>
             new Result<T>(source.Value, source.Error);
     }
 
     public static class Result
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Result<T> New<T>(T value, Exception? error = null) => new Result<T>(value, error);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Result<T> Value<T>(T value) => new Result<T>(value, null);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Result<T> Error<T>(Exception? error) => new Result<T>(default!, error);
 
         public static Result<T> FromTask<T>(Task<T> task)

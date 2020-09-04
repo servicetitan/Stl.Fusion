@@ -40,24 +40,62 @@ namespace Stl.Fusion
         public static async Task<IComputed<T>?> TryCaptureAsync<T>(Func<CancellationToken, Task<T>> producer, CancellationToken cancellationToken = default)
         {
             using var ccs = ComputeContext.New(CallOptions.Capture).Activate();
-            await producer.Invoke(cancellationToken).ConfigureAwait(false);
-            var result = ccs.Context.GetCapturedComputed<T>();
+            IComputed<T>? result;
+            try {
+                await producer.Invoke(cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) {
+                throw;
+            }
+            catch (Exception e) {
+                result = ccs.Context.GetCapturedComputed<T>();
+                if (result?.Error != null)
+                    return result;
+                throw;
+            }
+            result = ccs.Context.GetCapturedComputed<T>();
             return result;
         }
 
         public static async Task<IComputed<T>?> TryCaptureAsync<T>(Func<CancellationToken, ValueTask<T>> producer, CancellationToken cancellationToken = default)
         {
             using var ccs = ComputeContext.New(CallOptions.Capture).Activate();
-            await producer.Invoke(cancellationToken).ConfigureAwait(false);
-            var result = ccs.Context.GetCapturedComputed<T>();
+            IComputed<T>? result;
+            try {
+                await producer.Invoke(cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) {
+                throw;
+            }
+            catch (Exception e) {
+                result = ccs.Context.GetCapturedComputed<T>();
+                if (result?.Error != null)
+                    return result;
+                throw;
+            }
+            result = ccs.Context.GetCapturedComputed<T>();
             return result;
         }
 
         public static async Task<IComputed<T>> CaptureAsync<T>(Func<CancellationToken, Task<T>> producer, CancellationToken cancellationToken = default)
         {
             using var ccs = ComputeContext.New(CallOptions.Capture).Activate();
-            await producer.Invoke(cancellationToken).ConfigureAwait(false);
-            var result = ccs.Context.GetCapturedComputed<T>();
+            IComputed<T>? result;
+            try {
+                await producer.Invoke(cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) {
+                throw;
+            }
+            catch (Exception e) {
+                result = ccs.Context.GetCapturedComputed<T>();
+                if (result == null)
+                    throw Errors.NoComputedCaptured();
+                if (result?.Error != null)
+                    return result;
+                throw;
+            }
+            result = ccs.Context.GetCapturedComputed<T>();
             if (result == null)
                 throw Errors.NoComputedCaptured();
             return result;
@@ -66,8 +104,22 @@ namespace Stl.Fusion
         public static async Task<IComputed<T>> CaptureAsync<T>(Func<CancellationToken, ValueTask<T>> producer, CancellationToken cancellationToken = default)
         {
             using var ccs = ComputeContext.New(CallOptions.Capture).Activate();
-            await producer.Invoke(cancellationToken).ConfigureAwait(false);
-            var result = ccs.Context.GetCapturedComputed<T>();
+            IComputed<T>? result;
+            try {
+                await producer.Invoke(cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) {
+                throw;
+            }
+            catch (Exception e) {
+                result = ccs.Context.GetCapturedComputed<T>();
+                if (result == null)
+                    throw Errors.NoComputedCaptured();
+                if (result?.Error != null)
+                    return result;
+                throw;
+            }
+            result = ccs.Context.GetCapturedComputed<T>();
             if (result == null)
                 throw Errors.NoComputedCaptured();
             return result;

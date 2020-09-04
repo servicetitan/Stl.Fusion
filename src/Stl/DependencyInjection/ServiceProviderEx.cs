@@ -34,54 +34,18 @@ namespace Stl.DependencyInjection
 
         // GetOrActivate
 
-        public static T GetOrActivate<T>(this IServiceProvider services)
+        public static T GetOrActivate<T>(this IServiceProvider services, params object[] arguments)
             => (T) services.GetOrActivate(typeof(T));
 
-        public static object GetOrActivate(this IServiceProvider services, Type type)
+        public static object GetOrActivate(this IServiceProvider services, Type type, params object[] arguments)
             => services.GetService(type) ?? services.Activate(type);
 
         // Activate
 
-        public static T Activate<T>(this IServiceProvider services)
-            => (T) services.Activate(typeof(T));
+        public static T Activate<T>(this IServiceProvider services, params object[] arguments)
+            => (T) services.Activate(typeof(T), arguments);
 
-        public static object Activate(this IServiceProvider services, Type type)
-        {
-            // The current impl. is super slow; use with caution.
-            var ctors = type.GetConstructors()
-                .OrderByDescending(ci => ci.GetParameters().Length)
-                .ToList();
-
-            var primaryCtor = ctors
-                .SingleOrDefault(ci => ci.GetCustomAttribute<ServiceConstructorAttribute>() != null);
-            if (primaryCtor != null)
-                return services.Activate(primaryCtor);
-
-            foreach (var ctor in ctors) {
-                var result = services.TryActivate(ctor);
-                if (result != null)
-                    return result;
-            }
-            throw Errors.CannotActivate(type);
-        }
-
-        public static object Activate(this IServiceProvider services, ConstructorInfo constructorInfo)
-            => services.TryActivate(constructorInfo) ?? throw Errors.CannotActivate(constructorInfo.ReflectedType!);
-
-        // TryActivate
-
-        public static object? TryActivate(this IServiceProvider services, ConstructorInfo constructorInfo)
-        {
-            var args = constructorInfo.GetParameters();
-            var argValues = new object[args.Length];
-            for (var i = 0; i < args.Length; i++) {
-                var arg = args[i];
-                var value = services.GetService(arg.ParameterType);
-                if (value == null)
-                    return null;
-                argValues[i] = value;
-            }
-            return constructorInfo.Invoke(argValues);
-        }
+        public static object Activate(this IServiceProvider services, Type instanceType, params object[] arguments)
+            => ActivatorUtilities.CreateInstance(services, instanceType, arguments);
     }
 }

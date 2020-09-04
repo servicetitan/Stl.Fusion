@@ -1,7 +1,9 @@
 using System;
+using System.Reflection;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using RestEase;
 using Stl.Fusion.Tests.Services;
 using Stl.Fusion.Tests.UIModels;
 using Stl.Testing;
@@ -60,6 +62,21 @@ namespace Stl.Fusion.Tests
             c.IsConsistent().Should().BeTrue();
             c.Value.Value.Should().Be("2");
             c.Value.UpdateCount.Should().Be(2);
+        }
+
+        [Fact]
+        public async Task ExceptionTest()
+        {
+            var kv = Services.GetRequiredService<IKeyValueService<string>>();
+            await using var serving = await WebSocketHost.ServeAsync();
+            var kvc = Services.GetRequiredService<IKeyValueServiceClient<string>>();
+
+            try {
+                await kvc.GetAsync("error");
+            }
+            catch (ApiException ae) {
+                ae.Content.Should().Be("Error!");
+            }
         }
     }
 }

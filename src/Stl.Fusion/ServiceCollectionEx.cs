@@ -8,7 +8,6 @@ using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Interception;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Internal;
-using Stl.Reflection;
 
 namespace Stl.Fusion
 {
@@ -24,6 +23,8 @@ namespace Stl.Fusion
 
         public static IServiceCollection AddFusionCore(this IServiceCollection services)
         {
+            services.AddOptions();
+
             // Compute services & their dependencies
             services.TryAddSingleton(new ArgumentHandlerProvider.Options());
             services.TryAddSingleton<IArgumentHandlerProvider, ArgumentHandlerProvider>();

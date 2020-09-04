@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
@@ -23,8 +24,14 @@ namespace Stl.Fusion.Tests.Services
         public virtual Task<Option<TValue>> TryGetAsync(string key, CancellationToken cancellationToken = default)
             => Task.FromResult(_values.TryGetValue(key, out var v) ? Option.Some(v) : default);
 
-        public virtual Task<TValue> GetAsync(string key, CancellationToken cancellationToken = default)
-            => Task.FromResult(_values.GetValueOrDefault(key)!);
+#pragma warning disable 1998
+        public virtual async Task<TValue> GetAsync(string key, CancellationToken cancellationToken = default)
+#pragma warning restore 1998
+        {
+            if (key.EndsWith("error"))
+                throw new ApplicationException("Error!");
+            return _values.GetValueOrDefault(key)!;
+        }
 
         public virtual Task SetAsync(string key, TValue value, CancellationToken cancellationToken = default)
         {

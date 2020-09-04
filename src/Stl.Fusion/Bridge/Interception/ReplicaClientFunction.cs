@@ -65,11 +65,11 @@ namespace Stl.Fusion.Bridge.Interception
                 var result = input.InvokeOriginalFunction(cancellationToken);
                 if (method.ReturnsValueTask) {
                     var task = (ValueTask<T>) result;
-                    output = new Result<T>(await task.ConfigureAwait(false), null);
+                    output = Result.Value(await task.ConfigureAwait(false));
                 }
                 else {
                     var task = (Task<T>) result;
-                    output = new Result<T>(await task.ConfigureAwait(false), null);
+                    output =  Result.Value(await task.ConfigureAwait(false));
                 }
             }
             catch (OperationCanceledException) {
@@ -80,7 +80,7 @@ namespace Stl.Fusion.Bridge.Interception
             catch (Exception e) {
                 if (IsLogDebugEnabled)
                     Log.LogError(e, $"{nameof(ComputeAsync)}: Error on update.");
-                output = new Result<T>(default!, e);
+                output = Result.Error<T>(e);
             }
 
             var psi = psiCapture.Captured;
@@ -90,9 +90,16 @@ namespace Stl.Fusion.Bridge.Interception
                 var version = new LTag(VersionGenerator.Next().Value ^ (1L << 62));
                 return new ReplicaClientComputed<T>(method.Options, input, output.Error!, version);
             }
-            if (output.HasError)
-                // We need a unique LTag here, so we use a range that's supposed to be unused by LTagGenerators.
-                psi.Version = new LTag(VersionGenerator.Next().Value ^ (1L << 62));
+            if (output.HasError) {
+                // Try to pull the actual error first
+                var errorPsi = (PublicationStateInfo<object>) psi;
+                if (errorPsi.Output.HasError)
+                    output = Result.Error<T>(errorPsi.Output.Error);
+                // We need a unique LTag here, so we use a range that's supposed
+                // to be unused by LTagGenerators.
+                if (psi.Version == default)
+                    psi.Version = new LTag(VersionGenerator.Next().Value ^ (1L << 62));
+            }
             replica = Replicator.GetOrAdd(new PublicationStateInfo<T>(psi, output));
             replicaComputed = (IReplicaComputed<T>) await replica.Computed
                 .UpdateAsync(true, cancellationToken).ConfigureAwait(false);

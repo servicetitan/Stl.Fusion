@@ -2,6 +2,7 @@ using System;
 using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Http;
 using RestEase;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Interception;
@@ -20,23 +21,26 @@ namespace Stl.Fusion.Client
         public static IServiceCollection AddFusionWebSocketClient(
             this IServiceCollection services,
             WebSocketChannelProvider.Options options)
-        {
-            services.TryAddTransient<FusionResponseDeserializer>();
-            services.AddRestEaseCore();
-            return services.AddFusionWebSocketClientCore(options);
-        }
+            => services
+                .AddRestEaseCore()
+                .AddFusionWebSocketClientCore(options);
 
         public static IServiceCollection AddFusionWebSocketClient(
             this IServiceCollection services,
             Action<IServiceProvider, WebSocketChannelProvider.Options>? optionsBuilder = null)
-        {
-            services.TryAddTransient<FusionResponseDeserializer>();
-            services.AddRestEaseCore();
-            return services.AddFusionWebSocketClientCore(optionsBuilder);
-        }
+            => services
+                .AddRestEaseCore()
+                .AddFusionWebSocketClientCore(optionsBuilder);
 
         public static IServiceCollection AddRestEaseCore(this IServiceCollection services)
         {
+            // FusionHttpMessageHandler (handles Fusion headers)
+            services.AddHttpClient();
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<
+                IHttpMessageHandlerBuilderFilter,
+                FusionHttpMessageHandlerBuilderFilter>());
+            services.TryAddTransient<FusionHttpMessageHandler>();
+
             // InterfaceCastProxyGenerator (used by ReplicaServices)
             services.TryAddSingleton<InterfaceCastInterceptor>();
             services.TryAddSingleton(c => InterfaceCastProxyGenerator.Default);
@@ -78,21 +82,20 @@ namespace Stl.Fusion.Client
 
         public static IServiceCollection AddRestEaseService<TService>(
             this IServiceCollection services,
-            string? baseAddress = null,
-            Func<IServiceProvider, HttpClient>? httpClientResolver = null)
-            => services.AddRestEaseService(typeof(TService), baseAddress, httpClientResolver);
+            string? clientName = null)
+            => services.AddRestEaseService(typeof(TService), clientName);
         public static IServiceCollection AddRestEaseService(
             this IServiceCollection services,
             Type clientType,
-            string? baseAddress = null,
-            Func<IServiceProvider, HttpClient>? httpClientResolver = null)
+            string? clientName = null)
         {
             if (!(clientType.IsInterface && clientType.IsPublic))
                 throw Internal.Errors.InterfaceTypeExpected(clientType, true, nameof(clientType));
+            clientName ??= clientType.FullName;
 
-            httpClientResolver ??= DefaultHttpClientResolver(baseAddress);
             services.TryAddSingleton(clientType, c => {
-                var httpClient = httpClientResolver.Invoke(c);
+                var httpClientFactory = c.GetRequiredService<IHttpClientFactory>();
+                var httpClient = httpClientFactory.CreateClient(clientName);
                 var restClient = new RestClient(httpClient) {
                     RequestBodySerializer = c.GetRequiredService<RequestBodySerializer>(),
                     ResponseDeserializer = c.GetRequiredService<ResponseDeserializer>(),
@@ -104,28 +107,24 @@ namespace Stl.Fusion.Client
 
         public static IServiceCollection AddRestEaseReplicaService<TClient>(
             this IServiceCollection services,
-            string? baseAddress = null,
-            Func<IServiceProvider, HttpClient>? httpClientResolver = null)
+            string? clientName = null)
             where TClient : IRestEaseReplicaClient
-            => services.AddRestEaseReplicaService(typeof(TClient), baseAddress, httpClientResolver);
+            => services.AddRestEaseReplicaService(typeof(TClient), clientName);
         public static IServiceCollection AddRestEaseReplicaService<TService, TClient>(
             this IServiceCollection services,
-            string? baseAddress = null,
-            Func<IServiceProvider, HttpClient>? httpClientResolver = null)
+            string? clientName = null)
             where TClient : IRestEaseReplicaClient
-            => services.AddRestEaseReplicaService(typeof(TService), typeof(TClient), baseAddress, httpClientResolver);
+            => services.AddRestEaseReplicaService(typeof(TService), typeof(TClient), clientName);
         public static IServiceCollection AddRestEaseReplicaService(
             this IServiceCollection services,
             Type clientType,
-            string? baseAddress = null,
-            Func<IServiceProvider, HttpClient>? httpClientResolver = null)
-            => services.AddRestEaseReplicaService(clientType, clientType, baseAddress, httpClientResolver);
+            string? clientName = null)
+            => services.AddRestEaseReplicaService(clientType, clientType, clientName);
         public static IServiceCollection AddRestEaseReplicaService(
             this IServiceCollection services,
             Type serviceType,
             Type clientType,
-            string? baseAddress = null,
-            Func<IServiceProvider, HttpClient>? httpClientResolver = null)
+            string? clientName = null)
         {
             if (!(serviceType.IsInterface && serviceType.IsPublic))
                 throw Internal.Errors.InterfaceTypeExpected(serviceType, true, nameof(serviceType));
@@ -133,8 +132,7 @@ namespace Stl.Fusion.Client
                 throw Internal.Errors.InterfaceTypeExpected(clientType, true, nameof(clientType));
             if (!typeof(IRestEaseReplicaClient).IsAssignableFrom(clientType))
                 throw Errors.MustImplement<IRestEaseReplicaClient>(clientType, nameof(clientType));
-
-            httpClientResolver ??= DefaultHttpClientResolver(baseAddress);
+            clientName ??= clientType.FullName;
 
             object Factory(IServiceProvider c)
             {
@@ -143,10 +141,11 @@ namespace Stl.Fusion.Client
                 interceptor.ValidateType(clientType);
 
                 // 2. Create REST client (of clientType)
-                var httpClient = httpClientResolver.Invoke(c);
+                var httpClientFactory = c.GetRequiredService<IHttpClientFactory>();
+                var httpClient = httpClientFactory.CreateClient(clientName);
                 var client = new RestClient(httpClient) {
                     RequestBodySerializer = c.GetRequiredService<RequestBodySerializer>(),
-                    ResponseDeserializer = c.GetRequiredService<FusionResponseDeserializer>()
+                    ResponseDeserializer = c.GetRequiredService<ResponseDeserializer>()
                 }.For(clientType);
 
                 // 3. Create proxy mapping client to serviceType
@@ -167,23 +166,6 @@ namespace Stl.Fusion.Client
 
             services.TryAddSingleton(serviceType, Factory);
             return services;
-        }
-
-        private static Func<IServiceProvider, HttpClient> DefaultHttpClientResolver(string? baseAddress = null)
-            => services => {
-                var httpClient = services.GetRequiredService<HttpClient>();
-                TrySetBaseAddress(httpClient, baseAddress);
-                return httpClient;
-            };
-
-        private static void TrySetBaseAddress(HttpClient httpClient, string? baseAddress)
-        {
-            if (baseAddress == null)
-                return;
-            if (!Uri.TryCreate(baseAddress, UriKind.Absolute, out var baseUri))
-                if (!Uri.TryCreate(httpClient.BaseAddress, baseAddress, out baseUri))
-                    throw Internal.Errors.InvalidUri(baseAddress);
-            httpClient.BaseAddress = baseUri;
         }
     }
 }

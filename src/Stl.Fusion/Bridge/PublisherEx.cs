@@ -24,7 +24,15 @@ namespace Stl.Fusion.Bridge
             // Publication doesn't have to be "in sync" with the computed
             // we requested it for (i.e. it might still point to its older,
             // inconsistent version), so we have to update it here.
-            await publication.UpdateAsync(cancellationToken);
+            try {
+                await publication.UpdateAsync(cancellationToken);
+            }
+            catch (OperationCanceledException) {
+                throw;
+            }
+            catch {
+                // Intended
+            }
             return publication;
         }
     }

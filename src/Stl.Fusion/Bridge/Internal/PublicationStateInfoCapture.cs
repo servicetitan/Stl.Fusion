@@ -19,7 +19,7 @@ namespace Stl.Fusion.Bridge.Internal
 
         public void Dispose() => CurrentLocal.Value = _oldCurrent;
 
-        public static void Capture(PublicationStateInfo publicationStateInfo)
+        public static void TryCapture(PublicationStateInfo publicationStateInfo)
         {
             var current = CurrentLocal.Value;
             if (current != null)

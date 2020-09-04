@@ -97,6 +97,17 @@ namespace Stl.Fusion.Tests
         }
 
         [Fact]
+        public async Task ExceptionCaptureTest()
+        {
+            var p = Services.GetRequiredService<ISimplestProvider>();
+            p.SetValue(null!); // Will cause an exception in GetCharCountAsync
+            var c1 = await Computed.TryCaptureAsync(_ => p.GetCharCountAsync());
+            var c2 = await Computed.CaptureAsync(_ => p.GetCharCountAsync());
+            c1!.Error!.GetType().Should().Be(typeof(NullReferenceException));
+            c2.Should().BeSameAs(c1);
+        }
+
+        [Fact]
         public async Task OptionsTest()
         {
             var d = ComputedOptions.Default;
