@@ -240,7 +240,9 @@ namespace Stl.Fusion
 
             if (this.TryUseExisting(context, usedBy))
                 return this;
-            return await Function.InvokeAsync(Input, usedBy, context, cancellationToken);
+            return await Function
+                .InvokeAsync(Input, usedBy, context, cancellationToken)
+                .ConfigureAwait(false);
         }
 
         // UseAsync

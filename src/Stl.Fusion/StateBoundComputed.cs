@@ -18,7 +18,7 @@ namespace Stl.Fusion
         protected override void OnInvalidated()
         {
             try {
-                Input.OnInvalidated();
+                Input.OnInvalidated(this);
             }
             catch {
                 // Intended: shouldn't throw errors

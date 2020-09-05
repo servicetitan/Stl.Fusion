@@ -1,7 +1,9 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using Stl.Fusion.Tests.Services;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -53,6 +55,43 @@ namespace Stl.Fusion.Tests
             c.HasError.Should().BeTrue();
             c.HasValue.Should().BeFalse();
             c.Error.Should().BeOfType<NullReferenceException>();
+        }
+
+        [Fact]
+        public async Task TestCounterServiceAsync()
+        {
+            using var stopCts = new CancellationTokenSource();
+            var cancellationToken = stopCts.Token;
+
+            async Task WatchAsync<T>(string name, IComputed<T> computed)
+            {
+                for (;;) {
+                    Out.WriteLine($"{name}: {computed.Value}, {computed}");
+                    await computed.WhenInvalidatedAsync(cancellationToken);
+                    Out.WriteLine($"{name}: {computed.Value}, {computed}");
+                    computed = await computed.UpdateAsync(false, cancellationToken);
+                }
+            }
+
+            var services = CreateServiceProviderFor<CounterService>();
+            var counters = services.GetService<CounterService>();
+            var aComputed = await Computed.CaptureAsync(_ => counters.GetAsync("a"));
+            Task.Run(() => WatchAsync(nameof(aComputed), aComputed));
+            var bComputed = await Computed.CaptureAsync(_ => counters.GetAsync("b"));
+            Task.Run(() => WatchAsync(nameof(bComputed), bComputed));
+
+            await counters.IncrementAsync("a");
+            await counters.SetOffsetAsync(10);
+
+            aComputed = await aComputed.UpdateAsync(false);
+            aComputed.Value.Should().Be(11);
+            aComputed.IsConsistent().Should().BeTrue();
+
+            bComputed = await bComputed.UpdateAsync(false);
+            bComputed.Value.Should().Be(10);
+            bComputed.IsConsistent().Should().BeTrue();
+
+            stopCts.Cancel();
         }
     }
 }

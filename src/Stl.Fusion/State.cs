@@ -174,7 +174,7 @@ namespace Stl.Fusion
                 computed.Invalidate();
         }
 
-        protected internal virtual void OnInvalidated()
+        protected internal virtual void OnInvalidated(IComputed<T> computed)
             => Invalidated?.Invoke(this);
 
         protected virtual void OnUpdated(IStateSnapshot<T>? oldSnapshot)

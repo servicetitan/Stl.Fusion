@@ -2,15 +2,18 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Frozen;
-using Stl.Internal;
 
 namespace Stl.Fusion
 {
     public interface IMutableState : IState, IMutableResult
     {
         public new interface IOptions : IState.IOptions { }
+        public ValueTask SetAsync(IResult result, CancellationToken cancellationToken);
     }
-    public interface IMutableState<T> : IState<T>, IMutableResult<T>, IMutableState { }
+    public interface IMutableState<T> : IState<T>, IMutableResult<T>, IMutableState
+    {
+        public ValueTask SetAsync(Result<T> result, CancellationToken cancellationToken);
+    }
 
     public class MutableState<T> : State<T>, IMutableState<T>
     {
@@ -27,15 +30,15 @@ namespace Stl.Fusion
 
         public new T Value {
             get => base.Value;
-            set => Update(Result.Value(value));
+            set => Set(Result.Value(value));
         }
         public new Exception? Error {
             get => base.Error;
-            set => Update(Result.Error<T>(value));
+            set => Set(Result.Error<T>(value));
         }
         object? IMutableResult.UntypedValue {
             get => Value;
-            set => Update(Result.Value((T) value!));
+            set => Set(Result.Value((T) value!));
         }
 
         public MutableState(
@@ -58,20 +61,33 @@ namespace Stl.Fusion
             Computed = computed;
         }
 
-        void IMutableResult.Update(IResult result)
-            => Update(result.AsResult<T>());
-        public void Update(Result<T> result)
+        void IMutableResult.Set(IResult result)
+            => Set(result.AsResult<T>());
+        public void Set(Result<T> result)
         {
             if (result.IsValue(out var v) && v is IFrozen f)
                 f.Freeze();
+            IStateSnapshot<T> snapshot;
             lock (Lock) {
+                snapshot = Snapshot;
                 _output = result;
-                Computed.Invalidate();
-                var task = Computed.UpdateAsync(false, CancellationToken.None);
-                if (!task.IsCompleted)
-                    throw Errors.InternalError(
-                        $"{nameof(IComputed.UpdateAsync)} must complete synchronously here.");
             }
+            snapshot.Computed.Invalidate();
+        }
+
+        public async ValueTask SetAsync(IResult result, CancellationToken cancellationToken)
+            => await SetAsync(result.AsResult<T>(), cancellationToken).ConfigureAwait(false);
+        public async ValueTask SetAsync(Result<T> result, CancellationToken cancellationToken)
+        {
+            Set(result);
+            await Computed.UpdateAsync(false, cancellationToken).ConfigureAwait(false);
+        }
+
+        protected internal override void OnInvalidated(IComputed<T> computed)
+        {
+            base.OnInvalidated(computed);
+            if (Snapshot.Computed == computed)
+                computed.UpdateAsync(false);
         }
 
         protected override Task<T> ComputeValueAsync(CancellationToken cancellationToken)
