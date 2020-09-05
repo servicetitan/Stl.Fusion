@@ -89,7 +89,7 @@ namespace Stl.Fusion.Client
             Type clientType,
             string? clientName = null)
         {
-            if (!(clientType.IsInterface && clientType.IsPublic))
+            if (!(clientType.IsInterface && clientType.IsVisible))
                 throw Internal.Errors.InterfaceTypeExpected(clientType, true, nameof(clientType));
             clientName ??= clientType.FullName;
 
@@ -126,9 +126,9 @@ namespace Stl.Fusion.Client
             Type clientType,
             string? clientName = null)
         {
-            if (!(serviceType.IsInterface && serviceType.IsPublic))
+            if (!(serviceType.IsInterface && serviceType.IsVisible))
                 throw Internal.Errors.InterfaceTypeExpected(serviceType, true, nameof(serviceType));
-            if (!(clientType.IsInterface && clientType.IsPublic))
+            if (!(clientType.IsInterface && clientType.IsVisible))
                 throw Internal.Errors.InterfaceTypeExpected(clientType, true, nameof(clientType));
             if (!typeof(IRestEaseReplicaClient).IsAssignableFrom(clientType))
                 throw Errors.MustImplement<IRestEaseReplicaClient>(clientType, nameof(clientType));
