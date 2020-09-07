@@ -51,7 +51,7 @@
     <PackageReference Update="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Update="Npgsql.EntityFrameworkCore.PostgreSQL" Version="3.1.4" />
     <PackageReference Update="Polly" Version="7.2.1" />
-    <PackageReference Update="Refit" Version="5.1.67" />
+    <PackageReference Update="Refit" Version="5.2.1" />
     <PackageReference Update="RestEase" Version="1.5.0" />
     <PackageReference Update="Serilog" Version="2.9.0" />
     <PackageReference Update="Serilog.Extensions.Logging" Version="3.0.1" />
