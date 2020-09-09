@@ -186,7 +186,7 @@ right after your own action.
 
 ![](docs/img/LetsFight.gif)
 
-Most of Fusion-based code is located inside Compute Services.
+[Compute Services] is where a majority of Fusion-based code is supposed to live.
 [CounterService](https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/src/HelloBlazorServer/Services/CounterService.cs)
 from [HelloBlazorServer sample](https://github.com/servicetitan/Stl.Fusion.Samples)
 is a good example of such a service:
