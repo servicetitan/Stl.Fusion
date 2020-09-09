@@ -10,7 +10,8 @@ of an abstraction that **automatically delivers every modification made to your
 server-side data to every client who uses (e.g. displays) the affected data**, 
 you've just found it.
 
-If you'd rather jump straight to the code, scroll to the bottom of this page.
+If you'd rather jump straight to the code, 
+[scroll to the bottom of this page](#enough-talk---lets-fight-show-me-the-code).
 
 ## Create Real-Time User Interfaces With Almost No Extra Code
 
