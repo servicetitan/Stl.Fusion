@@ -242,7 +242,7 @@ which looks as follows:
 
 In other words, `ComputeStateAsync` becomes dependent on "moments ago"
 value, and this value self-invalidates ~ at the right moment triggering 
-`ComputeStateAsync` invalidation.
+cascading `ComputeStateAsync` invalidation.
 
 "Simple Chat" is a bit more complex example showing another interesting
 aspect of this approach:
