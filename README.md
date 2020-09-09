@@ -194,7 +194,7 @@ is a good example of such a service:
 ![](docs/img/CounterService.gif)
 
 Lime-colored parts show additions to a similar singleton service
-you'd probably have, if real-time updates won't be needed:
+you'd probably have in case when real-time updates aren't needed:
 * `[ComputeMethod]` indicates that any `GetCounterAsync` result should be 
   "backed" by [Computed Value]. 
   This attribute works only when you register a service as [Compute Service] 
