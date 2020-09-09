@@ -1,4 +1,6 @@
 using System;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using Stl.Async;
 using Stl.DependencyInjection;
@@ -105,5 +107,11 @@ namespace Stl.Internal
             new InvalidOperationException(
                 $"'{implementationType}' doesn't have a [{nameof(ServiceAttribute)}] or some other " +
                 $"{nameof(ServiceAttributeBase)} descendant applied.");
+
+        public static Exception HostedServiceHasToBeSingleton(Type implementationType) =>
+            new InvalidOperationException(
+                $"'{implementationType}' has to use {nameof(ServiceAttribute.Lifetime)} == " +
+                $"{nameof(ServiceLifetime)}.{nameof(ServiceLifetime.Singleton)} " +
+                $"to be registered as {nameof(IHostedService)}.");
     }
 }
