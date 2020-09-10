@@ -698,9 +698,9 @@ The feature allowing to replicate [Compute Service] on the client is called
   so in particular, you can "consume" the values they produce in other 
   [Compute Services], and all the invalidation chains will just work.
   
-![](docs/img/Stl-Fusion-Chat-Sample.gif)
+![](img/Stl-Fusion-Chat-Sample.gif)
 
-The "Composition" sample (shown in a bottom-right window) proves exactly this. 
+"Composition" sample (shown in a bottom-right window) proves exactly this. 
 It "composes" its own model by two different ways: 
 * First panel's UI model is 
   [composed on the server-side](https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/src/Blazor/Server/Services/ComposerService.cs);
