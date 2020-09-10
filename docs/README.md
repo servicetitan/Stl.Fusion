@@ -13,21 +13,22 @@ to build and run everything.
 
 ## Documentation
 
-* [Overview](Overview.md) is the best place to start. 
-  It describes what Stl.Fusion is on conceptual level
-  and explains the most tricky concepts on relatively simple
-  examples.
-* [Tutorial](https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/README.md) &ndash; 
-  now a part of [Stl.Fusion.Samples repository](https://github.com/servicetitan/Stl.Fusion.Samples),
-  not fully finished yet, but the best part is: it is interactive, so any code you see
-  there is runnable!
+* [Overview] describes the fundamentals and key concepts of Stl.Fusion.
+* [Tutorial] covers all key abstractions Stl.Fusion has and provides
+  a fair number of code examples helping to understand them.
+  Although you can simply browse it, you can also run and modify any
+  C# code featured here. All you need is
+  [Try .NET](https://github.com/dotnet/try/blob/master/DotNetTryLocal.md)
+  or [Docker](https://www.docker.com/).  
 * [The Story Behind Stl.Fusion](Story.md) &ndash; maybe you'll find
   it interesting too.
 * [Q/A](QA.md) answers the most frequent questions; 
   join our [Discord Server](https://discord.gg/EKEwv6d) to ask yours.
 
 Videos:
-* [Modern Real-Time Apps With Stl.Fusion + Blazor, Part 1: Intro + Samples Overview](https://youtu.be/jYVe5yd0xuQ)
+* [Stl.Fusion Tutorial Videos] - a playlist with videos covering different
+  parts of the [Tutorial].
+* [Modern Real-Time Apps With Stl.Fusion + Blazor: Intro + Samples Overview](https://youtu.be/jYVe5yd0xuQ)
   Sorry in advance: the video is long, it implies you already played with Blazor, 
   and finally, the commenter there clearly needs more practice :/ 
   On a bright side, likely it will still save you more time than 
@@ -70,3 +71,6 @@ Indirect contributors & everyone else who made Stl.Fusion possible:
   [DynamicProxy from Castle.Core](http://www.castleproject.org/projects/dynamicproxy/),
   [RestEase](https://github.com/canton7/RestEase), and 
   [Json.NET](https://www.newtonsoft.com/json).
+
+[Overview]: Overview.md
+[Tutorial]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/README.md
