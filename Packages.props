@@ -53,7 +53,7 @@
     <PackageReference Update="Polly" Version="7.2.1" />
     <PackageReference Update="Refit" Version="5.1.67" />
     <PackageReference Update="RestEase" Version="1.5.0" />
-    <PackageReference Update="Serilog" Version="2.9.0" />
+    <PackageReference Update="Serilog" Version="2.10.0" />
     <PackageReference Update="Serilog.Extensions.Logging" Version="3.0.1" />
     <PackageReference Update="Serilog.Sinks.Console" Version="3.1.1" />
     <PackageReference Update="Serilog.Sinks.Observable" Version="2.0.2" />
