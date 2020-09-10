@@ -182,9 +182,7 @@ The delays can be dynamic too &ndash; the simplest example of
 behavior is instant update for any content you see that was invalidated 
 right after your own action.
 
-## Enough talk - let's fight! Show me the code!
-
-![](docs/img/LetsFight.gif)
+## Enough talk. Show me the code!
 
 [Compute Services] is where a majority of Fusion-based code is supposed to live.
 [CounterService](https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/src/HelloBlazorServer/Services/CounterService.cs)
