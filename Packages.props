@@ -2,7 +2,7 @@
 <Project ToolsVersion="latest" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <EntityFrameworkCoreVersion>3.1.8</EntityFrameworkCoreVersion>
-    <AspNetCoreVersion>3.1.7</AspNetCoreVersion>
+    <AspNetCoreVersion>3.1.8</AspNetCoreVersion>
     <BlazorVersion>3.2.1</BlazorVersion>
     <SystemNetHttpJsonVersion>3.2.1</SystemNetHttpJsonVersion>
     <StlFusionVersion>0.4.29</StlFusionVersion>
@@ -17,7 +17,7 @@
     <PackageReference Update="Bullseye" Version="3.4.0" />
     <PackageReference Update="Castle.Core" Version="4.4.1" />
     <PackageReference Update="Castle.Core.AsyncInterceptor" Version="1.7.0" />
-    <PackageReference Update="CliWrap" Version="3.1.0" />
+    <PackageReference Update="CliWrap" Version="3.1.1" />
     <PackageReference Update="Concurrent.FastReflection.NetStandard" Version="1.2.1.1" />
     <PackageReference Update="DataAnnotationsValidatorNetStandard" Version="1.0.3" />
     <PackageReference Update="Enums.NET" Version="3.0.3" />
@@ -51,9 +51,9 @@
     <PackageReference Update="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Update="Npgsql.EntityFrameworkCore.PostgreSQL" Version="3.1.4" />
     <PackageReference Update="Polly" Version="7.2.1" />
-    <PackageReference Update="Refit" Version="5.1.67" />
+    <PackageReference Update="Refit" Version="5.2.1" />
     <PackageReference Update="RestEase" Version="1.5.0" />
-    <PackageReference Update="Serilog" Version="2.9.0" />
+    <PackageReference Update="Serilog" Version="2.10.0" />
     <PackageReference Update="Serilog.Extensions.Logging" Version="3.0.1" />
     <PackageReference Update="Serilog.Sinks.Console" Version="3.1.1" />
     <PackageReference Update="Serilog.Sinks.Observable" Version="2.0.2" />
