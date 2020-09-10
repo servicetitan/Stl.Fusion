@@ -26,8 +26,8 @@ to build and run everything.
   join our [Discord Server](https://discord.gg/EKEwv6d) to ask yours.
 
 Videos:
-* [Stl.Fusion Tutorial Videos] - a playlist with videos covering different
-  parts of the [Tutorial].
+* [Stl.Fusion Tutorial Videos](https://www.youtube.com/playlist?list=PLKM0mLUUiLWHsvS6eOLb3IlhMiL9y3X_Z) &ndash;
+  a playlist with videos from the [Tutorial].
 * [Modern Real-Time Apps With Stl.Fusion + Blazor: Intro + Samples Overview](https://youtu.be/jYVe5yd0xuQ)
   Sorry in advance: the video is long, it implies you already played with Blazor, 
   and finally, the commenter there clearly needs more practice :/ 
