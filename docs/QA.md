@@ -21,27 +21,22 @@ It's an acronym for "ServiceTitan Library". Don't worry, we know about "STL" in 
 
 > Q: How stable is Stl.Fusion?
 
-Yeah, you can use it in production right now &ndash; 
-[no one really needs more than 52% test coverage](https://en.wikiquote.org/wiki/Talk:Bill_Gates)!
-
+It looks fairly stable on samples and one of our internal apps 
+(~ runs for days without any issues for about a hundreed users), 
+but its test coverage is fairly low now:
 [![Build](https://github.com/servicetitan/Stl.Fusion/workflows/Build/badge.svg)](https://github.com/servicetitan/Stl.Fusion/actions?query=workflow%3A%22Build%22)
 [![codecov](https://codecov.io/gh/servicetitan/Stl.Fusion/branch/master/graph/badge.svg)](https://codecov.io/gh/servicetitan/Stl.Fusion)
+(sorry, **the actual coverage is about 55%** &ndash; the reports in CodeCov are broken now, we'll fix this soon).
 
-Jokes aside, of course we can't claim it is ready for production use.
-You might notice though the tests there are testing everything in this repository,
-including projects which aren't parts of Stl.Fusion, and "no coverage" there
-contributes to the overall %. We'll fix this soon.
+We need more tests &ndash; and more use cases to claim it's ready for production use.
+But if you love the concept, it's probably not the reason to wait till the moment
+we cross all the checkboxes.
 
-But still, we definitely need more tests &ndash; and simultaneously, more use cases.
-So if you love the concept, it's probably not the reason to wait till the moment
-we declare it's ready for production use (i.e. maybe a couple more months).
-
-It is definitely ready for prototyping & internal use; 
-likely, rapid prodotyping of real-time UIs could be one of the best use cases 
-for `Stl.Fusion` in future too &ndash; and transforming the prototype to a 
-production app won't be hard. It's mostly about tuning the invalidation logic
-so that you don't invalidate a lot of extra, which might be totally fine 
-(and even desirable) for the prorotyping stage, but won't scale well in production.
+What's fair to claim is that Fusion is ready for prototyping & internal use; 
+rapid prodotyping of real-time UIs is another good use case for it right now.
+Note that you can save a fair amount of time by having much simpler invalidation
+logic in such prototypes (i.e. invalidating the data much more broadly), 
+assuming you tweak it to a more robust one later.
 
 > Q: Does ServiceTitan use Stl.Fusion now?
 
