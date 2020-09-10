@@ -23,10 +23,10 @@ It's an acronym for "ServiceTitan Library". Don't worry, we know about "STL" in 
 
 It looks fairly stable on samples and one of our internal apps 
 (~ runs for days without any issues for about a hundreed users), 
-but its test coverage is fairly low now:
+but its test coverage is fairly low (sorry, **the actual coverage is about 55%** &ndash; the reports in CodeCov are broken now, we'll fix this soon):
+
 [![Build](https://github.com/servicetitan/Stl.Fusion/workflows/Build/badge.svg)](https://github.com/servicetitan/Stl.Fusion/actions?query=workflow%3A%22Build%22)
 [![codecov](https://codecov.io/gh/servicetitan/Stl.Fusion/branch/master/graph/badge.svg)](https://codecov.io/gh/servicetitan/Stl.Fusion)
-(sorry, **the actual coverage is about 55%** &ndash; the reports in CodeCov are broken now, we'll fix this soon).
 
 We need more tests &ndash; and more use cases to claim it's ready for production use.
 But if you love the concept, it's probably not the reason to wait till the moment
