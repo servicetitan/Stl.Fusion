@@ -28,9 +28,9 @@ but its test coverage is fairly low (sorry, **the actual coverage is about 55%**
 [![Build](https://github.com/servicetitan/Stl.Fusion/workflows/Build/badge.svg)](https://github.com/servicetitan/Stl.Fusion/actions?query=workflow%3A%22Build%22)
 [![codecov](https://codecov.io/gh/servicetitan/Stl.Fusion/branch/master/graph/badge.svg)](https://codecov.io/gh/servicetitan/Stl.Fusion)
 
-We need more tests &ndash; and more use cases to claim it's ready for production use.
+So we definitely need more tests and more use cases to claim it's ready for production use.
 But if you love the concept, it's probably not the reason to wait till the moment
-we cross all the checkboxes.
+we check all the boxes.
 
 What's fair to claim is that Fusion is ready for prototyping & internal use; 
 rapid prodotyping of real-time UIs is another good use case for it right now.
