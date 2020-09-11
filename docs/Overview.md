@@ -689,7 +689,7 @@ sample:
 This component inherits from `LiveComponentBase<T>`, which ensures
 it has `State` property (a [Live State]) and all the logic needed to recompute it
 once it changes; 
-[here you can read more about this](https://github.com/servicetitan/Stl.Fusion#enough-talk---lets-fight-show-me-the-code).
+[here you can read more about this](https://github.com/servicetitan/Stl.Fusion/blob/master/README.md#enough-talk-show-me-the-code).
 
 The feature allowing to replicate [Compute Service] on the client is called
 [Replica Services]. Do such services differ from compute services? Yes and no:
