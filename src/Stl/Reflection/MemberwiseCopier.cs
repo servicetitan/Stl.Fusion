@@ -1,5 +1,4 @@
 using System;
-using System.Linq.Expressions;
 using System.Reflection;
 
 namespace Stl.Reflection
@@ -9,10 +8,10 @@ namespace Stl.Reflection
         protected const BindingFlags PropertyOrFieldBindingFlagsMask =
             BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
+        public Type Type => typeof(T);
         public BindingFlags PropertyBindingFlags { get; set; } = BindingFlags.Instance | BindingFlags.Public;
         public BindingFlags FieldBindingFlags { get; set; } = 0;
         public Func<MemberInfo, bool>? Filter { get; set; }
-        public T Source { get; set; } = default!;
 
         public MemberwiseCopier<T> Configure(Action<MemberwiseCopier<T>>? configurer)
         {
@@ -38,18 +37,17 @@ namespace Stl.Reflection
             return this;
         }
 
-        public T Apply(T target)
+        public T CopyMembers(T source, T target)
         {
-            var oSource = (object) Source!;
+            var oSource = (object) source!;
             var oTarget = (object) target!;
-            var type = typeof(T);
-            var fields = type.GetFields(FieldBindingFlags & PropertyOrFieldBindingFlagsMask);
+            var fields = Type.GetFields(FieldBindingFlags & PropertyOrFieldBindingFlagsMask);
             foreach (var field in fields) {
                 if (!(Filter?.Invoke(field) ?? true))
                     continue;
                 field.SetValue(oTarget, field.GetValue(oSource));
             }
-            var properties = type.GetProperties(FieldBindingFlags & PropertyOrFieldBindingFlagsMask);
+            var properties = Type.GetProperties(FieldBindingFlags & PropertyOrFieldBindingFlagsMask);
             foreach (var property in properties) {
                 if (!(Filter?.Invoke(property) ?? true))
                     continue;
@@ -61,11 +59,8 @@ namespace Stl.Reflection
 
     public static class MemberwiseCopier
     {
-        public static MemberwiseCopier<T> New<T>(T source)
-            => new MemberwiseCopier<T>() { Source = source };
-
-        public static T Copy<T>(T source, T target,
+        public static T CopyMembers<T>(T source, T target,
             Action<MemberwiseCopier<T>>? configurer = null)
-            => New(source).Configure(configurer).Apply(target);
+            => new MemberwiseCopier<T>().Configure(configurer).CopyMembers(source, target);
     }
 }

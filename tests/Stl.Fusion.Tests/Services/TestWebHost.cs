@@ -41,11 +41,10 @@ namespace Stl.Fusion.Tests.Services
                 services.AddControllers()
                     .AddApplicationPart(Assembly.GetExecutingAssembly());
                 services.AddMvc()
-                    .AddNewtonsoftJson(options => {
-                        MemberwiseCopier
-                            .New(JsonNetSerializer.DefaultSettings)
-                            .Apply(options.SerializerSettings);
-                    });
+                    .AddNewtonsoftJson(options =>
+                        MemberwiseCopier.CopyMembers(
+                            JsonNetSerializer.DefaultSettings,
+                            options.SerializerSettings));
 
                 // Testing
                 services.AddHostedService<ApplicationPartsLogger>();

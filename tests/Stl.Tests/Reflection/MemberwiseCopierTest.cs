@@ -19,7 +19,7 @@ namespace Stl.Tests.Reflection
         {
             var e = new Example() { Property = 3, Field = "3" };
             var c = new Example();
-            MemberwiseCopier.Copy(e, c, o => o.AddFields());
+            MemberwiseCopier.CopyMembers(e, c, o => o.AddFields());
             c.Property.Should().Be(e.Property);
             c.Field.Should().Be(e.Field);
         }

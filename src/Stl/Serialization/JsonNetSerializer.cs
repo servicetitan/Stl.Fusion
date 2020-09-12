@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Text;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace Stl.Serialization
 {
@@ -15,6 +16,7 @@ namespace Stl.Serialization
             TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
             TypeNameHandling = TypeNameHandling.Auto,
             NullValueHandling = NullValueHandling.Ignore,
+            ContractResolver = new DefaultContractResolver(),
         };
 
         public JsonSerializerSettings Settings { get; }
