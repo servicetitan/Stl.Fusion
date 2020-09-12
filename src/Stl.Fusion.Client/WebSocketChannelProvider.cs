@@ -32,6 +32,8 @@ namespace Stl.Fusion.Client
                 DefaultChannelSerializerPairFactory;
             public Func<IServiceProvider, ClientWebSocket> ClientWebSocketFactory { get; set; } =
                 DefaultClientWebSocketFactory;
+            public Func<WebSocketChannelProvider, Symbol, Uri> ConnectionUrlResolver { get; set; } =
+                DefaultConnectionUrlResolver;
 
             public static ChannelSerializerPair<Message, string> DefaultChannelSerializerPairFactory(IServiceProvider services)
                 => new ChannelSerializerPair<Message, string>(
@@ -40,6 +42,27 @@ namespace Stl.Fusion.Client
 
             public static ClientWebSocket DefaultClientWebSocketFactory(IServiceProvider services)
                 => services?.GetService<ClientWebSocket>() ?? new ClientWebSocket();
+
+            public static Uri DefaultConnectionUrlResolver(WebSocketChannelProvider channelProvider, Symbol publisherId)
+            {
+                var url = channelProvider.BaseUri.ToString();
+                if (url.StartsWith("http://"))
+                    url = "ws://" + url.Substring(7);
+                else if (url.StartsWith("https://"))
+                    url = "wss://" + url.Substring(8);
+                if (url.EndsWith("/"))
+                    url = url.Substring(0, url.Length - 1);
+                url += channelProvider.RequestPath;
+                var uriBuilder = new UriBuilder(url);
+                var queryTail =
+                    $"{channelProvider.PublisherIdQueryParameterName}={publisherId.Value}" +
+                    $"&{channelProvider.ClientIdQueryParameterName}={channelProvider.ClientId.Value}";
+                if (!string.IsNullOrEmpty(uriBuilder.Query))
+                    uriBuilder.Query += "&" + queryTail;
+                else
+                    uriBuilder.Query = queryTail;
+                return uriBuilder.Uri;
+            }
         }
 
         private readonly ILogger _log;
@@ -53,6 +76,7 @@ namespace Stl.Fusion.Client
 
         protected Func<IServiceProvider, ChannelSerializerPair<Message, string>> ChannelSerializerPairFactory { get; }
         protected Func<IServiceProvider, ClientWebSocket> ClientWebSocketFactory { get; }
+        public Func<WebSocketChannelProvider, Symbol, Uri> ConnectionUrlResolver { get; }
         protected LogLevel? MessageLogLevel { get; }
         protected int? MessageMaxLength { get; }
         protected Lazy<IReplicator>? ReplicatorLazy { get; }
@@ -77,6 +101,7 @@ namespace Stl.Fusion.Client
             ReplicatorLazy = new Lazy<IReplicator>(serviceProvider.GetRequiredService<IReplicator>);
             ChannelSerializerPairFactory = options.ChannelSerializerPairFactory;
             ClientWebSocketFactory = options.ClientWebSocketFactory;
+            ConnectionUrlResolver = options.ConnectionUrlResolver;
         }
 
         public async Task<Channel<Message>> CreateChannelAsync(
@@ -84,7 +109,7 @@ namespace Stl.Fusion.Client
         {
             var clientId = ClientId.Value;
             try {
-                var connectionUri = GetConnectionUrl(publisherId);
+                var connectionUri = ConnectionUrlResolver.Invoke(this, publisherId);
                 _log.LogInformation($"{clientId}: Connecting to {connectionUri}...");
                 var ws = ClientWebSocketFactory.Invoke(ServiceProvider);
                 using var cts = new CancellationTokenSource(ConnectTimeout);
@@ -112,27 +137,6 @@ namespace Stl.Fusion.Client
                 _log.LogError(e, $"{clientId}: Error.");
                 throw;
             }
-        }
-
-        protected virtual Uri GetConnectionUrl(Symbol publisherId)
-        {
-            var url = BaseUri.ToString();
-            if (url.StartsWith("http://"))
-                url = "ws://" + url.Substring(7);
-            else if (url.StartsWith("https://"))
-                url = "wss://" + url.Substring(8);
-            if (url.EndsWith("/"))
-                url = url.Substring(0, url.Length - 1);
-            url += RequestPath;
-            var uriBuilder = new UriBuilder(url);
-            var queryTail =
-                $"{PublisherIdQueryParameterName}={publisherId.Value}" +
-                $"&{ClientIdQueryParameterName}={ClientId.Value}";
-            if (!string.IsNullOrEmpty(uriBuilder.Query))
-                uriBuilder.Query += "&" + queryTail;
-            else
-                uriBuilder.Query = queryTail;
-            return uriBuilder.Uri;
         }
     }
 }
