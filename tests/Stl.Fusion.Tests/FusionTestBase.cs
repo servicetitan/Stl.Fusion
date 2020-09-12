@@ -119,19 +119,12 @@ namespace Stl.Fusion.Tests
             var testType = GetType();
             var appTempDir = PathEx.GetApplicationTempDirectory("", true);
             DbPath = appTempDir & PathEx.GetHashedName($"{testType.Name}_{testType.Namespace}.db");
-
-            if (Options.UseInMemoryDatabase)
-                services
-                    .AddEntityFrameworkInMemoryDatabase()
-                    .AddDbContextPool<TestDbContext>(builder => {
-                        builder.UseInMemoryDatabase(DbPath);
-                    }, 256);
-            else
-                services
-                    .AddEntityFrameworkSqlite()
-                    .AddDbContextPool<TestDbContext>(builder => {
-                        builder.UseSqlite($"Data Source={DbPath}", sqlite => { });
-                    }, 256);
+            services.AddDbContextPool<TestDbContext>(builder => {
+                if (Options.UseInMemoryDatabase)
+                    builder.UseInMemoryDatabase(DbPath);
+                else
+                    builder.UseSqlite($"Data Source={DbPath}", sqlite => { });
+            }, 256);
 
             // Core fusion services
             services.AddSingleton(c => new TestWebHost(c));
