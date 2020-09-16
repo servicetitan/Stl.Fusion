@@ -28,7 +28,7 @@ state changes for every player.
 
 ### Build a Real-Time UI
 
-This is [Fusion Blazor Sample](https://github.com/servicetitan/Stl.Fusion.Samples),
+This is [Stl.Fusion Blazor Sample](https://github.com/servicetitan/Stl.Fusion.Samples),
 delivering real-time updates to 3 browser windows:
 
 ![](docs/img/Stl-Fusion-Chat-Sample.gif)
