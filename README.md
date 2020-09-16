@@ -4,79 +4,52 @@
 > [![Build](https://github.com/servicetitan/Stl.Fusion/workflows/Build/badge.svg)](https://github.com/servicetitan/Stl.Fusion/actions?query=workflow%3A%22Build%22)
 > [![NuGetVersion](https://img.shields.io/nuget/v/Stl.Fusion)](https://www.nuget.org/packages?q=Owner%3Aservicetitan+Tags%3Astl_fusion) 
 
-**Stl.Fusion** is .NET Core & Blazor library that attempts to dramatically
-improve the way we write real-time services and UIs. If you ever dreamed 
-of an abstraction that **automatically delivers every modification made to your 
-server-side data to every client who uses (e.g. displays) the affected data**, 
-you've just found it.
+## What is Stl.Fusion?
 
-If you'd rather jump straight to the code, 
-[click here](#enough-talk-show-me-the-code).
+`Stl.Fusion` is a [.NET Core](https://en.wikipedia.org/wiki/.NET_Core) library
+providing a new change tracking abstraction built in assumption that **every piece of data 
+you have is a part of the observable state / model**, and since there is 
+no way to fit such a huge state in RAM, Fusion:
+* Spawns the **observed part** of this state on-demand
+* **Holds the dependency graph of any observed state in memory** to make sure 
+  every dependency of this state triggers cascading invalidation once it gets 
+  changed.
+* And finally, **it does all of this automatically and transparently for you**, 
+  so Fusion-based code is [almost identical](#enough-talk-show-me-the-code)
+  to the code you'd write without it.
 
-## Create Real-Time User Interfaces With Almost No Extra Code
+This is quite similar to what any 
+[MMORPG](https://en.wikipedia.org/wiki/Massively_multiplayer_online_role-playing_game) 
+game engine does: even though the complete game state is huge, it's still possible to 
+run the game in real time for 1M+ players, because every player observes 
+a tiny fraction of a complete game state, and thus all you need is to ensure
+this part of the state fits in RAM + you have enough computing power to process
+state changes for every player.
 
-`Stl.Fusion` is a new library for [.NET Core](https://en.wikipedia.org/wiki/.NET_Core) 
-and [Blazor](https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor)
-providing [Knockout](https://knockoutjs.com/) / [mobX](https://mobx.js.org/) - style 
-"computed observable" abstraction designed to power distributed real-time applications. 
-Contrary to KO / MobX, **Fusion is designed in assumption the state it tracks is 
-huge** &ndash; in fact, it's every bit of server-side data your app uses, 
-including DBs, blob storages, etc., so there is no way to fit it in RAM.
-But we still *can* track changes there, because **we only care about the
-part of the state that is *observed* by someone**.
+### Build a Real-Time UI
 
-That's the reason Fusion uses a different pattern to provide access to this 
-state &ndash; instead of providing you with a huge model that's full of 
-nested "observables", it lets you to spawn and consume the parts of your 
-state piece-by-piece. And you already know how to design such an API &ndash; 
-any "regular" Web API providing access to some parts of server-side data
-implements exactly this pattern! The only missing part is change tracking, 
-and that's what Fusion provides.
-
-If you're curious how Fusion compares to other libraries, check out:
-* [How similar is Stl.Fusion to SignalR?](https://medium.com/@alexyakunin/how-similar-is-stl-fusion-to-signalr-e751c14b70c3?source=friends_link&sk=241d5293494e352f3db338d93c352249)
-* [How similar is Stl.Fusion to Knockout / MobX?](https://medium.com/@alexyakunin/how-similar-is-stl-fusion-to-knockout-mobx-fcebd0bef5d5?source=friends_link&sk=a808f7c46c4d5613605f8ada732e790e)
-
-Below is a short animation showing Fusion delivers state changes to 3 different clients 
-&ndash; instances of the same Blazor app running in browser and relying on the same 
-abstractions from `Stl.Fusion.dll`:
+This is [Fusion Blazor Sample](https://github.com/servicetitan/Stl.Fusion.Samples),
+delivering real-time updates to 3 browser windows:
 
 ![](docs/img/Stl-Fusion-Chat-Sample.gif)
 
-Note that "Composition" sample shown in a separate window in the bottom-right corner
-also properly updates everything. It shows Fusion's ability to use both local `IComputed<T>` 
-instances and client-side replicas of similar server-side instances to compute a new value
-that properly tracks all these dependencies and updates accordingly: 
-* First panel's UI model is 
-  [composed on the server-side](https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/src/Blazor/Server/Services/ComposerService.cs);
-  its client-side replica is bound to the component displaying the panel
-* And the second panel uses an UI model
-  [composed completely on the client](https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/src/Blazor/Client/Services/LocalComposerService.cs) 
-  by combining server-side replicas of all the values used there.
-* **The surprising part:** two above files are almost identical!
+The sample supports **both (!)** Server-Side Blazor and Blazor WebAssembly 
+[hosting modes](https://docs.microsoft.com/en-us/aspnet/core/blazor/hosting-models?view=aspnetcore-3.1)
+&ndash; you can switch the mode on its "Home" page.
 
-"Server Screen" sample captures and shares server screen in real time, and
-the code there is almost identical to "Server Time" (the most straightforward 
-state update example):
-  
-![](docs/img/Stl-Fusion-Server-Screen-Sample.gif)
+![](docs/img/Samples-Blazor-DualMode.gif)
 
-## Get 10&times;&hellip;&infin; Better Performance (*)
+### Get 10&times;&hellip;&infin; Performance Boost By Caching Everything
 
-> (*) Keep in mind a lot depends on your specific case &ndash; 
-> and even though the examples presented below are absolutely real,
-> they are still synthetic. That's the reason we carefully 
-> put the low boundary to 10&times; rather than 10,000&times; &ndash;
-> it's reasonable to expect at least 90% cache hit ratio in a vast
-> majority of cases we are aiming at.
-
-[One of tests in Stl.Fusion test suite](https://github.com/servicetitan/Stl.Fusion/blob/master/tests/Stl.Fusion.Tests/PerformanceTest.cs) 
-benchmarks "raw" [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/) - 
+[A small benchmark in Stl.Fusion test suite](https://github.com/servicetitan/Stl.Fusion/blob/master/tests/Stl.Fusion.Tests/PerformanceTest.cs) 
+compares "raw" [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/) - 
 based Data Access Layer (DAL) against its version relying on Fusion. 
-Both tests run almost identical code - in fact, the only difference there is that Fusion
-version of test uses a Fusion-provided proxy wrapping the 
+Both tests run *almost* identical code - in fact, the only difference is that Fusion
+version of this test uses Fusion-provided proxy wrapping the 
 [`UserService`](https://github.com/servicetitan/Stl.Fusion/blob/master/tests/Stl.Fusion.Tests/Services/UserService.cs)
 (the DAL used in this test) instead of the actual type.
+
+The performance difference looks shocking at first:
 
 ![](docs/img/Performance.gif)
 
@@ -85,25 +58,33 @@ The speed difference is quite impressive:
 * ~1,000x speedup with 
   [In-memory EF Core provider](https://docs.microsoft.com/en-us/ef/core/providers/in-memory/?tabs=dotnet-core-cli)  
 
-Obviously, you're expected to get a huge performance boost in any scenario involving
-local caching, but note that here you get it almost for free in terms of extra code, 
-and moreover, you get an *almost* always consistent cache. In reality, it's still 
-an *eventually consistent* cache, but with extremely short inconsistency periods per
-cache entry.
+Since Fusion precisely knows when every result - even the intermediate one - 
+gets inconsistent with the ground truth, it also ensures that 
+**every result is computed just once and reused until it gets invalidated**.
+In other words, **Fusion also provides a transparent cache**, and that's
+why you see such a speedup.
 
-## So What Is Fusion?
+You can control how such caching works, and even though it's an in-process cache
+(which is why it speeds up even in-memory EF Core provider by 1000x),
+Fusion supports "swapping" to any external cache (e.g. Redis) as well.
 
-It's a state change tracking abstraction built in assumption that **every piece of data 
-you have is a part of the state / model you want to track**, and since there is 
-no way to fit it in RAM, Fusion is designed to “spawn” the **observed part** of this 
-state on-demand, and destroy the unused parts quickly.
+Note that:
+* Similarly to real-time updates, *you get this speedup for free* in terms of extra code.
+* You also get *almost always consistent* cache. 
+  It's still an *eventually consistent* cache, of course, but the inconsistency periods 
+  for cache entries are so short that normally don't need to worry about the inconsistencies.
+* The speedup you're expected to see in production may differ from these numbers a lot. 
+  Even though the results presented here are absolutely real, they are produced on a synthetic test.
 
-It provides three key abstractions to implement this:
+## How Stl.Fusion works?
+
+Fusion provides three key abstractions:
 * [Compute Services] are services exposing methods "backed" by Fusion's 
   version of "computed observables". Compute Services are responsible for 
   "spawning" parts of the state on-demand.
 * [Replica Services] - remote proxies of Compute Services.
-  They allow clients to consume ("observe") the parts of remote state.
+  They allow remote clients to consume ("observe") the parts of server-side state.
+  They typically "substitute" similar [Compute Services] on the client side.
 * And finally, [`IComputed<T>`] &ndash; an observable [Computed Value]
   that's in some ways similar to the one you can find in Knockout, MobX, or Vue.js,
   but very different, if you look at its fundamental properties.
@@ -266,14 +247,19 @@ and
 
 ## Next Steps
 
-* If above description looks complicated for you, please check out [Stl.Fusion In Simple Terms]
-* Otherwise, go to [Documentation Home]
+* Check out [Tutorial], [Samples], or go to [Documentation Home]
 * Join our [Discord Server] to ask questions and track project updates.
+
+## Posts And Other Content
+* [Why real-time UI is inevitable future for any web app?](https://medium.com/@alexyakunin/features-of-the-future-web-apps-part-1-e32cf4e4e4f4?source=friends_link&sk=65dacdbf670ef9b5d961c4c666e223e2)
+* [How similar is Stl.Fusion to SignalR?](https://medium.com/@alexyakunin/how-similar-is-stl-fusion-to-signalr-e751c14b70c3?source=friends_link&sk=241d5293494e352f3db338d93c352249)
+* [How similar is Stl.Fusion to Knockout / MobX?](https://medium.com/@alexyakunin/how-similar-is-stl-fusion-to-knockout-mobx-fcebd0bef5d5?source=friends_link&sk=a808f7c46c4d5613605f8ada732e790e)
+* [Stl.Fusion In Simple Terms](https://medium.com/@alexyakunin/stl-fusion-in-simple-terms-65b1975967ab?source=friends_link&sk=04e73e75a52768cf7c3330744a9b1e38)
+
 
 **P.S.** If you've already spent some time learning about Stl.Fusion, 
 please help us to make it better by completing [Stl.Fusion Feedback Form] 
 (1&hellip;3 min).
-
 
 [Compute Services]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/Part01.md
 [Compute Service]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/Part01.md
@@ -285,6 +271,6 @@ please help us to make it better by completing [Stl.Fusion Feedback Form]
 [Documentation Home]: docs/README.md
 [Samples]: https://github.com/servicetitan/Stl.Fusion.Samples
 [Tutorial]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/README.md
-[Stl.Fusion In Simple Terms]: https://medium.com/@alexyakunin/stl-fusion-in-simple-terms-65b1975967ab?source=friends_link&sk=04e73e75a52768cf7c3330744a9b1e38
+
 [Discord Server]: https://discord.gg/EKEwv6d
 [Stl.Fusion Feedback Form]: https://forms.gle/TpGkmTZttukhDMRB6
