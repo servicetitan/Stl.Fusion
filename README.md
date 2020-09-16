@@ -39,7 +39,7 @@ The sample supports **both (!)** Server-Side Blazor and Blazor WebAssembly
 
 ![](docs/img/Samples-Blazor-DualMode.gif)
 
-### Get 10&times;&hellip;&infin; Performance Boost By Caching Everything
+### Get A Performance Boost By Caching Everything
 
 [A small benchmark in Stl.Fusion test suite](https://github.com/servicetitan/Stl.Fusion/blob/master/tests/Stl.Fusion.Tests/PerformanceTest.cs) 
 compares "raw" [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/) - 
@@ -53,10 +53,9 @@ The performance difference looks shocking at first:
 
 ![](docs/img/Performance.gif)
 
-The speed difference is quite impressive:
-* ~31,500x speedup with [Sqlite](https://www.sqlite.org/index.html) EF Core provider
-* ~1,000x speedup with 
-  [In-memory EF Core provider](https://docs.microsoft.com/en-us/ef/core/providers/in-memory/?tabs=dotnet-core-cli)  
+The speedup is:
+* ~31,500x for [Sqlite EF Core Provider](https://www.sqlite.org/index.html) 
+* ~1,000x for [In-memory EF Core Provider](https://docs.microsoft.com/en-us/ef/core/providers/in-memory/?tabs=dotnet-core-cli)  
 
 Since Fusion precisely knows when every result - even the intermediate one - 
 gets inconsistent with the ground truth, it also ensures that 
