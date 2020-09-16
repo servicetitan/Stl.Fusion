@@ -39,7 +39,7 @@ The sample supports **both (!)** Server-Side Blazor and Blazor WebAssembly
 
 ![](docs/img/Samples-Blazor-DualMode.gif)
 
-### Get A Performance Boost By Caching Everything
+### Speedup Your Service By Caching Everything
 
 [A small benchmark in Stl.Fusion test suite](https://github.com/servicetitan/Stl.Fusion/blob/master/tests/Stl.Fusion.Tests/PerformanceTest.cs) 
 compares "raw" [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/) - 
