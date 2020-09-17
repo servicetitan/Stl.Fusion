@@ -18,13 +18,19 @@ no way to fit such a huge state in RAM, Fusion:
   so Fusion-based code is [almost identical](#enough-talk-show-me-the-code)
   to the code you'd write without it.
 
-This is quite similar to what any 
-[MMORPG](https://en.wikipedia.org/wiki/Massively_multiplayer_online_role-playing_game) 
-game engine does: even though the complete game state is huge, it's still possible to 
+This is quite similar to what any [MMORPG] game engine does: 
+even though the complete game state is huge, it's still possible to 
 run the game in real time for 1M+ players, because every player observes 
 a tiny fraction of a complete game state, and thus all you need is to ensure
 this part of the state fits in RAM + you have enough computing power to process
 state changes for every player.
+
+Under the hood, Fusion turns any response of your internal and public API 
+into ~ `(Response Result<T>, Task Invalidated)` pair, where the second part tells 
+when this pair has to be recomputed. But you rarely need to deal with this &ndash;
+Fusion-based services return regular result types, and these pairs
+(actually, [`IComputed<T>`] instances) are created, consumed, and composed into
+complex dependency graphs transparently for you.
 
 ### Build a Real-Time UI
 
@@ -127,40 +133,31 @@ But there is more &ndash; any [Computed Value]:
 
 ### Why these features are game changing?
 
-> The ability to replicate any server-side state to any client allows client-side code 
-  to build a dependent state that changes whenever any of its server-side components
-  change. 
-  This client-side state can be, for example, your UI model, that instantly reacts
-  to the changes made not only locally, but also remotely!
+Real-time typically implies you need one or another flavor of
+[*event-driven architecture*](https://martinfowler.com/articles/201701-event-driven.html)
+(CQRS, event sourcing, actors, etc.). And all these options are more complex than
+a simple and familiar *request-response model*, which Fusion allows you to use.
 
-> De-coupling updates from invalidation events enables such apps to scale. 
-  You absolutely need the ability to control the update delay, otherwise 
-  your app is expected to suffer from `O(N^2)` update rate on any 
-  piece of popular content (that's both viewed and updated by a large number of users).
+Besides that, Fusion solves a complex problem of identifying and tracking dependencies 
+automatically for any method that uses Fusion-based services (+ its own logic) 
+to produce the output, and implementing this without Fusion is not only hard,
+but quite error prone problem.
 
-The last issue is well-described in 
-["Why not LiveQueries?" part in "Subscriptions in GraphQL"](https://graphql.org/blog/subscriptions-in-graphql-and-relay/), 
-and you may view `Stl.Fusion` as 95% automated solution for this problem:
-* **It makes recomputations cheap** by caching all the intermediates
-* It de-couples updates from the invalidations to ensure 
-  **any subscription has a fixed / negligible cost**.
-  
-If you have a post viewed by 1M users and updated with 1 KHz frequency 
-(usually the frequency is proportional to the count of viewers too), 
-it's 1B of update messages per second to send for your servers
-assuming you try to deliver every update to every user. 
-**This can't scale.** 
-But if you switch to 10-second update delay, your update frequency 
-drops by 10,000x to just 100K updates per second. 
-Note that 10 second delay for seeing other people's updates is 
-something you probably won't even notice.
+Of course you still can use events, event sourcing, CQRS, etc. - 
+you'll just need maybe 100&times; fewer event types.
 
-`Stl.Fusion` allows you to control such delays precisely.
-You may use a longer delay (10 seconds?) for components rendering
-"Likes" counters, but almost instantly update comments. 
-The delays can be dynamic too &ndash; the simplest example of 
-behavior is instant update for any content you see that was invalidated 
-right after your own action.
+Check out [how Stl.Fusion differs from SignalR](https://medium.com/@alexyakunin/ow-similar-is-stl-fusion-to-signalr-e751c14b70c3?source=friends_link&sk=241d5293494e352f3db338d93c352249)
+&ndash; this post takes a real app example (Slack-like chat) and describes
+what has to be done in both these cases to implement it.
+
+### Does Fusion scale?
+
+Yes. [MMORPG] example provided earlier hints on how Fusion-based apps scale. 
+But contrary to games, web apps rarely have a strong upper limit on update delay
+&ndash; at least for a majority of content they present. 
+This means you can always increase these delays to throttle down the rate of 
+outgoing invalidation and update messages, and vice versa.
+In other words, Fusion-based web apps should scale much better than [MMORPG].
 
 ## Enough talk. Show me the code!
 
@@ -270,6 +267,7 @@ please help us to make it better by completing [Stl.Fusion Feedback Form]
 [Documentation Home]: docs/README.md
 [Samples]: https://github.com/servicetitan/Stl.Fusion.Samples
 [Tutorial]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/README.md
+[MMORPG]: https://en.wikipedia.org/wiki/Massively_multiplayer_online_role-playing_game
 
 [Discord Server]: https://discord.gg/EKEwv6d
 [Stl.Fusion Feedback Form]: https://forms.gle/TpGkmTZttukhDMRB6
