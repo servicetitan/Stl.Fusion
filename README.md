@@ -26,7 +26,7 @@ this part of the state fits in RAM + you have enough computing power to process
 state changes for every player.
 
 Under the hood, Fusion turns any response of your internal and public API 
-into ~ `(Response Result<T>, Task Invalidated)` pair, where the second part tells 
+into ~ `(Result<T> Response, Task Invalidated)` pair, where the second part tells 
 when this pair has to be recomputed. But you rarely need to deal with this &ndash;
 Fusion-based services return regular result types, and these pairs
 (actually, [`IComputed<T>`] instances) are created, consumed, and composed into
