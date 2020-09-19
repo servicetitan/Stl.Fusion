@@ -5,7 +5,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Fusion.Bridge.Internal;
 using Stl.Fusion.Interception;
-using Stl.Fusion.Interception.Internal;
 using Stl.Fusion.Internal;
 using Stl.Generators;
 
@@ -19,7 +18,7 @@ namespace Stl.Fusion.Bridge.Interception
         protected readonly IReplicator Replicator;
 
         public ReplicaClientFunction(
-            InterceptedMethod method,
+            InterceptedMethodDescriptor method,
             IReplicator replicator,
             Generator<LTag> versionGenerator,
             ILogger<ReplicaClientFunction<T>>? log = null)

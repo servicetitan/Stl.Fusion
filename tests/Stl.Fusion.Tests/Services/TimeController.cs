@@ -18,5 +18,12 @@ namespace Stl.Fusion.Tests.Services
         [HttpGet]
         public Task<DateTime> GetTimeAsync()
             => PublishAsync(ct => Service.GetTimeAsync(ct));
+
+        [HttpGet]
+        public Task<string> GetFormattedTimeAsync(string? format)
+        {
+            format ??= "";
+            return PublishAsync(ct => Service.GetFormattedTimeAsync(format, ct));
+        }
     }
 }

@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
@@ -29,4 +28,5 @@ namespace Stl.Fusion.Tests.Services
 
         public Task SetOffsetAsync(int offset, CancellationToken cancellationToken = default)
             => _offset.SetAsync(offset, cancellationToken).AsTask();
-    }}
+    }
+}

@@ -32,7 +32,8 @@ namespace Stl.Fusion
             TimeSpan keepAliveTime,
             TimeSpan errorAutoInvalidateTime,
             TimeSpan autoInvalidateTime,
-            SwappingOptions swappingOptions)
+            SwappingOptions swappingOptions,
+            Type? argumentDefaultProvider = null)
         {
             KeepAliveTime = keepAliveTime;
             ErrorAutoInvalidateTime = errorAutoInvalidateTime;
@@ -44,9 +45,9 @@ namespace Stl.Fusion
             IsAsyncComputed = swappingOptions.IsEnabled;
         }
 
-        public static ComputedOptions FromAttribute(InterceptedMethodAttribute? attribute, SwapAttribute? cacheAttribute)
+        public static ComputedOptions FromAttribute(InterceptedMethodAttribute? attribute, SwapAttribute? swapAttribute)
         {
-            var swappingOptions = SwappingOptions.FromAttribute(cacheAttribute);
+            var swappingOptions = SwappingOptions.FromAttribute(swapAttribute);
             var cma = attribute as ComputeMethodAttribute;
             if (cma == null && !swappingOptions.IsEnabled)
                 return Default;

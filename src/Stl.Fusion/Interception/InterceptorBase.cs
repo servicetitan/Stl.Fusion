@@ -1,11 +1,8 @@
 using System;
-using System.Collections;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reactive;
 using System.Reflection;
-using System.Runtime.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Castle.DynamicProxy;
@@ -14,14 +11,15 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Concurrency;
 using Stl.DependencyInjection;
-using Stl.Fusion.Swapping;
-using Stl.Fusion.Interception.Internal;
 using Stl.Reflection;
 
 namespace Stl.Fusion.Interception
 {
     public abstract class InterceptorBase : IInterceptor, IHasServiceProvider
     {
+        // ReSharper disable once HeapView.BoxingAllocation
+        private static readonly object NoCancellationTokenBoxed = CancellationToken.None;
+
         public class Options : IOptions
         {
             public IArgumentHandlerProvider? ArgumentHandlerProvider { get; set; } = null!;
@@ -31,9 +29,9 @@ namespace Stl.Fusion.Interception
 
         private readonly MethodInfo _createTypedHandlerMethod;
         private readonly Func<MethodInfo, IInvocation, Action<IInvocation>?> _createHandler;
-        private readonly Func<MethodInfo, IInvocation, InterceptedMethod?> _createInterceptedMethod;
-        private readonly ConcurrentDictionary<MethodInfo, InterceptedMethod?> _interceptedMethodCache =
-            new ConcurrentDictionary<MethodInfo, InterceptedMethod?>();
+        private readonly Func<MethodInfo, IInvocation, InterceptedMethodDescriptor?> _createInterceptedMethod;
+        private readonly ConcurrentDictionary<MethodInfo, InterceptedMethodDescriptor?> _interceptedMethodCache =
+            new ConcurrentDictionary<MethodInfo, InterceptedMethodDescriptor?>();
         private readonly ConcurrentDictionary<MethodInfo, Action<IInvocation>?> _handlerCache =
             new ConcurrentDictionary<MethodInfo, Action<IInvocation>?>();
         private readonly ConcurrentDictionary<Type, Unit> _validateTypeCache =
@@ -43,9 +41,9 @@ namespace Stl.Fusion.Interception
         protected ILogger Log { get; }
         protected LogLevel LogLevel { get; }
         protected LogLevel ValidationLogLevel { get; }
-        protected IArgumentHandlerProvider ArgumentHandlerProvider { get; }
 
         public IServiceProvider ServiceProvider { get; }
+        public IArgumentHandlerProvider ArgumentHandlerProvider { get; }
 
         protected InterceptorBase(
             Options options,
@@ -57,7 +55,6 @@ namespace Stl.Fusion.Interception
             LogLevel = options.LogLevel;
             ValidationLogLevel = options.ValidationLogLevel;
             ServiceProvider = serviceProvider;
-
             ArgumentHandlerProvider = options.ArgumentHandlerProvider
                 ?? serviceProvider.GetRequiredService<IArgumentHandlerProvider>();
 
@@ -98,21 +95,27 @@ namespace Stl.Fusion.Interception
         }
 
         protected virtual Action<IInvocation> CreateTypedHandler<T>(
-            IInvocation initialInvocation, InterceptedMethod method)
+            IInvocation initialInvocation, InterceptedMethodDescriptor method)
         {
             var function = CreateFunction<T>(method);
             return invocation => {
-                // ReSharper disable once VariableHidesOuterVariable
-                var method = function.Method;
-                var input = new InterceptedInput(function, method, invocation);
+                var input = method.CreateInput(function, invocation);
+                var arguments = input.Arguments;
+                var cancellationTokenIndex = method.CancellationTokenArgumentIndex;
+                var cancellationToken = cancellationTokenIndex >= 0
+                    ? (CancellationToken) arguments[cancellationTokenIndex]
+                    : default;
 
                 // Invoking the function
-                var cancellationToken = input.CancellationToken;
                 var usedBy = Computed.GetCurrent();
 
                 // InvokeAndStripAsync allows to get rid of one extra allocation
                 // of a task stripping the result of regular InvokeAsync.
                 var task = function.InvokeAndStripAsync(input, usedBy, null, cancellationToken);
+                if (cancellationTokenIndex >= 0)
+                    // We don't want memory leaks + unexpected cancellation later
+                    arguments[cancellationTokenIndex] = NoCancellationTokenBoxed;
+
                 if (method.ReturnsValueTask)
                     // ReSharper disable once HeapView.BoxingAllocation
                     invocation.ReturnValue = new ValueTask<T>(task);
@@ -121,62 +124,30 @@ namespace Stl.Fusion.Interception
             };
         }
 
-        protected abstract InterceptedFunctionBase<T> CreateFunction<T>(InterceptedMethod method);
+        protected abstract InterceptedFunctionBase<T> CreateFunction<T>(InterceptedMethodDescriptor method);
 
-        protected virtual InterceptedMethod? CreateInterceptedMethod(MethodInfo proxyMethodInfo, IInvocation invocation)
+        protected virtual InterceptedMethodDescriptor? CreateInterceptedMethod(MethodInfo methodInfo, IInvocation initialInvocation)
         {
-            ValidateType(invocation.TargetType);
+            ValidateType(initialInvocation.TargetType);
 
-            // We need an attribute from interface / original type, so we
-            // can't use proxyMethodInfo here, b/c it points to a proxy method.
-            var attr = GetInterceptedMethodAttribute(proxyMethodInfo);
-            if (attr == null)
-                // No attribute -> no interception.
-                // GetInterceptedMethodAttribute can provide a default though.
+            var attribute = GetInterceptedMethodAttribute(methodInfo);
+            if (attribute == null)
                 return null;
+            var swapAttribute = GetSwapAttribute(methodInfo);
+            var options = ComputedOptions.FromAttribute(attribute, swapAttribute);
 
-            var returnType = proxyMethodInfo.ReturnType;
-            if (!returnType.IsGenericType)
-                return null;
-
-            var returnTypeGtd = returnType.GetGenericTypeDefinition();
-            var returnsTask = returnTypeGtd == typeof(Task<>);
-            var returnsValueTask = returnTypeGtd == typeof(ValueTask<>);
-            if (!(returnsTask || returnsValueTask))
-                return null;
-
-            var outputType = returnType.GetGenericArguments()[0];
-            var invocationTargetType = proxyMethodInfo.ReflectedType;
-            var options = ComputedOptions.FromAttribute(attr, GetCacheAttribute(proxyMethodInfo));
-            var parameters = proxyMethodInfo.GetParameters();
-            var r = new InterceptedMethod {
-                MethodInfo = proxyMethodInfo,
-                Attribute = attr,
-                OutputType = outputType,
-                ReturnsValueTask = returnsValueTask,
-                InvocationTargetHandler = ArgumentHandlerProvider.GetInvocationTargetHandler(
-                    proxyMethodInfo, invocationTargetType!),
-                ArgumentHandlers = new ArgumentHandler[parameters.Length],
-                Options = options,
-            };
-
-            for (var i = 0; i < parameters.Length; i++) {
-                var p = parameters[i];
-                r.ArgumentHandlers[i] = ArgumentHandlerProvider.GetArgumentHandler(proxyMethodInfo, p);
-                var parameterType = p.ParameterType;
-                if (typeof(CancellationToken).IsAssignableFrom(parameterType))
-                    r.CancellationTokenArgumentIndex = i;
-            }
-
-            return r;
+            var interceptedMethodType = attribute.InterceptedMethodDescriptorType ?? typeof(InterceptedMethodDescriptor);
+            var interceptedMethod = (InterceptedMethodDescriptor) ServiceProvider.Activate(
+                interceptedMethodType, this, methodInfo, attribute);
+            return interceptedMethod.IsValid ? interceptedMethod : null;
         }
+
+        protected abstract void ValidateTypeInternal(Type type);
 
         protected virtual InterceptedMethodAttribute? GetInterceptedMethodAttribute(MethodInfo method)
             => method.GetAttribute<InterceptedMethodAttribute>(true, true);
 
-        protected virtual SwapAttribute? GetCacheAttribute(MethodInfo method)
+        protected virtual SwapAttribute? GetSwapAttribute(MethodInfo method)
             => method.GetAttribute<SwapAttribute>(true, true);
-
-        protected abstract void ValidateTypeInternal(Type type);
     }
 }

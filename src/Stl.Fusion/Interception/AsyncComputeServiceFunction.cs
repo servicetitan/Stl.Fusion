@@ -2,7 +2,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Stl.Fusion.Interception.Internal;
 using Stl.Fusion.Internal;
 using Stl.Fusion.Swapping;
 using Stl.Generators;
@@ -12,7 +11,7 @@ namespace Stl.Fusion.Interception
     public class AsyncComputeServiceFunction<T> : ComputeServiceFunctionBase<T>
     {
         public AsyncComputeServiceFunction(
-            InterceptedMethod method,
+            InterceptedMethodDescriptor method,
             Generator<LTag> versionGenerator,
             IServiceProvider serviceProvider,
             ILogger<ComputeServiceFunction<T>>? log = null)

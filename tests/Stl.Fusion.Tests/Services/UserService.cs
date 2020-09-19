@@ -30,15 +30,11 @@ namespace Stl.Fusion.Tests.Services
     [Service] // "No Fusion" version
     public class UserService : IUserService
     {
-        private readonly ILogger _log;
         protected DbContextPool<TestDbContext> DbContextPool { get; }
         protected bool IsCaching { get; }
 
-        public UserService(
-            DbContextPool<TestDbContext> dbContextPool,
-            ILogger<UserService>? log = null)
+        public UserService(DbContextPool<TestDbContext> dbContextPool)
         {
-            _log = log ??= NullLogger<UserService>.Instance;
             DbContextPool = dbContextPool;
             IsCaching = GetType().Name.EndsWith("Proxy");
         }
@@ -51,7 +47,7 @@ namespace Stl.Fusion.Tests.Services
             var supportTransactions = !dbContext.Database.IsInMemory();
             await using var tx = supportTransactions
                 ? await dbContext.Database.BeginTransactionAsync(cancellationToken)
-                : (IDbContextTransaction?) null;
+                : null;
 
             var userId = user.Id;
             if (orUpdate) {
@@ -117,22 +113,18 @@ namespace Stl.Fusion.Tests.Services
 
         public virtual void Invalidate()
         {
+            if (!IsCaching)
+                return;
             Computed.Invalidate(Everything);
-            _log.LogDebug($"Invalidated everything.");
         }
 
         protected virtual void Invalidate(User user, bool countChanged = true)
         {
             if (!IsCaching)
                 return;
-            var cUser = Computed.Invalidate(() => TryGetAsync(user.Id));
-            if (cUser != null)
-                _log.LogDebug($"Invalidated: User.Id={user.Id}");
-            if (countChanged) {
-                var cCount = Computed.Invalidate(() => CountAsync());
-                if (cCount != null)
-                    _log.LogDebug($"Invalidated: Users.Count");
-            }
+            Computed.Invalidate(() => TryGetAsync(user.Id));
+            if (countChanged)
+                Computed.Invalidate(() => CountAsync());
         }
     }
 }

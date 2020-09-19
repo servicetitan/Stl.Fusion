@@ -1,16 +1,15 @@
 using System;
 using System.Threading.Tasks;
 using Stl.Async;
-using Stl.Fusion.Interception.Internal;
 
 namespace Stl.Fusion.Interception
 {
     public abstract class InterceptedFunctionBase<TOut> : FunctionBase<InterceptedInput, TOut>
     {
-        public InterceptedMethod Method { get; }
+        public InterceptedMethodDescriptor Method { get; }
         protected ComputedOptions Options { get; }
 
-        protected InterceptedFunctionBase(InterceptedMethod method, IServiceProvider serviceProvider)
+        protected InterceptedFunctionBase(InterceptedMethodDescriptor method, IServiceProvider serviceProvider)
             : base(serviceProvider)
         {
             Method = method;
@@ -29,6 +28,7 @@ namespace Stl.Fusion.Interception
         {
             if (input.Method.ReturnsValueTask)
                 input.Invocation.ReturnValue =
+                    // ReSharper disable once HeapView.BoxingAllocation
                     output.IsValue(out var v)
                         ? ValueTaskEx.FromResult(v)
                         : ValueTaskEx.FromException<TOut>(output.Error!);

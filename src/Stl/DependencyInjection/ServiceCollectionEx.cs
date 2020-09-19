@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using Stl.DependencyInjection.Internal;
 using Stl.Internal;
 using Stl.Text;
@@ -81,10 +83,15 @@ namespace Stl.DependencyInjection
             Type implementationType,
             ServiceAttributeBase? defaultServiceAttribute = null)
         {
-            var attr = ServiceAttributeBase.Get(implementationType) ?? defaultServiceAttribute;
-            if (attr == null)
+            var attrs = ServiceAttributeBase.GetAll(implementationType);
+            if (attrs.Length != 0) {
+                foreach (var attr in attrs)
+                    attr.Register(services, implementationType);
+            }
+            else if (defaultServiceAttribute != null)
+                defaultServiceAttribute.Register(services, implementationType);
+            else
                 throw Errors.NoServiceAttribute(implementationType);
-            attr.Register(services, implementationType);
             return services;
         }
         public static IServiceCollection AddService(
@@ -93,10 +100,15 @@ namespace Stl.DependencyInjection
             Symbol scope,
             ServiceAttributeBase? defaultServiceAttribute = null)
         {
-            var attr = ServiceAttributeBase.Get(implementationType, scope) ?? defaultServiceAttribute;
-            if (attr == null)
+            var attrs = ServiceAttributeBase.GetAll(implementationType, a => a.Scope == scope);
+            if (attrs.Length != 0) {
+                foreach (var attr in attrs)
+                    attr.Register(services, implementationType);
+            }
+            else if (defaultServiceAttribute != null)
+                defaultServiceAttribute.Register(services, implementationType);
+            else
                 throw Errors.NoServiceAttribute(implementationType);
-            attr.Register(services, implementationType);
             return services;
         }
 
@@ -176,6 +188,21 @@ namespace Stl.DependencyInjection
                         attr.Register(services, implementationType);
                 }
             }
+            return services;
+        }
+
+        public static IServiceCollection Configure<TOptions>(
+            this IServiceCollection services,
+            Action<IServiceProvider, string?, TOptions> configureOptions)
+            where TOptions : class
+        {
+            if (services == null)
+                throw new ArgumentNullException(nameof(services));
+            if (configureOptions == null)
+                throw new ArgumentNullException(nameof(configureOptions));
+            services.AddOptions();
+            services.AddSingleton<IConfigureOptions<TOptions>>(
+                c => new ConfigureAllNamedOptions<TOptions>(c, configureOptions));
             return services;
         }
     }

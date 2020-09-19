@@ -1,8 +1,6 @@
 using System;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using Castle.DynamicProxy;
-using Stl.Fusion.Interception.Internal;
 
 namespace Stl.Fusion.Interception
 {
@@ -11,31 +9,31 @@ namespace Stl.Fusion.Interception
         // ReSharper disable once HeapView.BoxingAllocation
         private static readonly object BoxedDefaultCancellationToken = (CancellationToken) default;
 
-        public readonly InterceptedMethod Method;
+        public readonly InterceptedMethodDescriptor Method;
         public readonly IInvocation Invocation;
         public readonly IInvocationProceedInfo ProceedInfo;
         // Shortcuts
         public object Target => Invocation.InvocationTarget;
         public object[] Arguments => Invocation.Arguments;
-        public CancellationToken CancellationToken {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => Method.CancellationTokenArgumentIndex >= 0
-                ? (CancellationToken) Arguments[Method.CancellationTokenArgumentIndex]
-                : default;
-        }
 
-        public InterceptedInput(IFunction function, InterceptedMethod method, IInvocation invocation)
+        public InterceptedInput(IFunction function, InterceptedMethodDescriptor method, IInvocation invocation)
             : base(function)
         {
             Method = method;
             Invocation = invocation;
             ProceedInfo = invocation.CaptureProceedInfo();
 
+            var arguments = invocation.Arguments;
             var argumentHandlers = method.ArgumentHandlers;
+            var preprocessingArgumentHandlers = method.PreprocessingArgumentHandlers;
+            if (preprocessingArgumentHandlers != null) {
+                foreach (var (handler, index) in preprocessingArgumentHandlers)
+                    handler.PreprocessFunc!.Invoke(method, invocation, index);
+            }
+
             var hashCode = System.HashCode.Combine(
                 HashCode,
                 method.InvocationTargetHandler.GetHashCodeFunc(invocation.InvocationTarget));
-            var arguments = Invocation.Arguments;
             for (var i = 0; i < arguments.Length; i++)
                 hashCode ^= argumentHandlers[i].GetHashCodeFunc(arguments[i]);
             HashCode = hashCode;
@@ -80,6 +78,9 @@ namespace Stl.Fusion.Interception
                 return false;
             if (!ReferenceEquals(Method, other.Method))
                 return false;
+            // GetType() & other.GetType() are the same here, because
+            // Method & other.Method are the same
+
             var arguments = Arguments;
             var otherArguments = other.Arguments;
             var argumentHandlers = Method.ArgumentHandlers;

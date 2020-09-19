@@ -1,6 +1,5 @@
 using System;
 using Microsoft.Extensions.Logging;
-using Stl.Fusion.Interception.Internal;
 using Stl.Generators;
 using Stl.Internal;
 
@@ -9,7 +8,7 @@ namespace Stl.Fusion.Interception
     public class ComputeServiceFunction<T> : ComputeServiceFunctionBase<T>
     {
         public ComputeServiceFunction(
-            InterceptedMethod method,
+            InterceptedMethodDescriptor method,
             Generator<LTag> versionGenerator,
             IServiceProvider serviceProvider,
             ILogger<ComputeServiceFunction<T>>? log = null)

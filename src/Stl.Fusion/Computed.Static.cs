@@ -123,22 +123,20 @@ namespace Stl.Fusion
 
         // Invalidate
 
-        public static IComputed<T>? Invalidate<T>(Func<Task<T>> producer)
+        public static void Invalidate<T>(Func<Task<T>> producer)
         {
             using var ccs = ComputeContext.New(CallOptions.Invalidate).Activate();
             var task = producer.Invoke();
             // The flow is essentially synchronous in this case, so...
             task.AssertCompleted();
-            return ccs.Context.GetCapturedComputed<T>();
         }
 
-        public static IComputed<T>? Invalidate<T>(Func<ValueTask<T>> producer)
+        public static void Invalidate<T>(Func<ValueTask<T>> producer)
         {
             using var ccs = ComputeContext.New(CallOptions.Invalidate).Activate();
             var task = producer.Invoke();
             // The flow is essentially synchronous in this case, so...
             task.AssertCompleted();
-            return ccs.Context.GetCapturedComputed<T>();
         }
 
         // TryGetExisting

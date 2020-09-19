@@ -58,7 +58,7 @@ namespace Stl.Fusion.Tests
         }
 
         [Fact]
-        public async Task TestCounterServiceAsync()
+        public async Task CounterServiceTest()
         {
             using var stopCts = new CancellationTokenSource();
             var cancellationToken = stopCts.Token;

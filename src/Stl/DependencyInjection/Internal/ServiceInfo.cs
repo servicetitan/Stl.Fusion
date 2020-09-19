@@ -26,9 +26,6 @@ namespace Stl.DependencyInjection.Internal
 
         public static ServiceInfo For(Type implementationType, Func<ServiceAttributeBase, bool>? filter = null)
         {
-            var attrs = implementationType.GetCustomAttributes<ServiceAttributeBase>(false);
-            if (attrs == null)
-                return new ServiceInfo(implementationType);
             using var buffer = ArrayBuffer<ServiceAttributeBase>.Lease();
             foreach (var attr in implementationType.GetCustomAttributes<ServiceAttributeBase>(false)) {
                 if (filter == null || filter.Invoke(attr))
@@ -41,10 +38,6 @@ namespace Stl.DependencyInjection.Internal
 
         public static ServiceInfo For(Type implementationType, Symbol scope)
         {
-
-            var attrs = implementationType.GetCustomAttributes<ServiceAttributeBase>(false);
-            if (attrs == null)
-                return new ServiceInfo(implementationType);
             using var buffer = ArrayBuffer<ServiceAttributeBase>.Lease();
             foreach (var attr in implementationType.GetCustomAttributes<ServiceAttributeBase>(false)) {
                 if (attr.Scope == scope.Value)

@@ -54,5 +54,27 @@ namespace Stl.Fusion.Tests
                 await Task.Delay(TimeSpan.FromSeconds(0.1));
             }
         }
+
+        [Fact]
+        public async Task TestFormattedTime()
+        {
+            await using var serving = await WebSocketHost.ServeAsync();
+            var service = Services.GetRequiredService<IClientTimeService>();
+
+            (await service.GetFormattedTimeAsync("")).Should().Be("");
+            (await service.GetFormattedTimeAsync("null")).Should().Be("");
+
+            var format = "{0}";
+            var matchCount = 0;
+            for (int i = 0; i < 20; i++) {
+                var time = await service.GetTimeAsync();
+                var formatted = await service.GetFormattedTimeAsync(format);
+                var expected = string.Format(format, time);
+                if (formatted == expected)
+                    matchCount++;
+                await Task.Delay(TimeSpan.FromSeconds(0.1));
+            }
+            matchCount.Should().BeGreaterThan(2);
+        }
     }
 }

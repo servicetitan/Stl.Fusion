@@ -6,6 +6,7 @@ namespace Stl.Fusion
     public abstract class InterceptedMethodAttribute : Attribute
     {
         public bool IsEnabled { get; } = true;
+        public Type? InterceptedMethodDescriptorType { get; set; } = null;
 
         protected InterceptedMethodAttribute() { }
         protected InterceptedMethodAttribute(bool isEnabled)

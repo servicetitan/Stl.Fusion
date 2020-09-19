@@ -3,7 +3,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Stl.Fusion.Interception.Internal;
 using Stl.Generators;
 
 namespace Stl.Fusion.Interception
@@ -14,7 +13,7 @@ namespace Stl.Fusion.Interception
         protected readonly Generator<LTag> VersionGenerator;
 
         public ComputeServiceFunctionBase(
-            InterceptedMethod method,
+            InterceptedMethodDescriptor method,
             Generator<LTag> versionGenerator,
             IServiceProvider serviceProvider,
             ILogger<ComputeServiceFunction<T>>? log = null)

@@ -13,6 +13,8 @@ namespace Stl.Fusion.Tests.Services
     {
         [Get("getTime")]
         Task<DateTime> GetTimeAsync(CancellationToken cancellationToken = default);
+        [Get("getFormattedTime")]
+        Task<string?> GetFormattedTimeAsync(string format, CancellationToken cancellationToken = default);
     }
 
     public interface IClientTimeService : ITimeService { }

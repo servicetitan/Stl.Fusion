@@ -1,9 +1,7 @@
 using System;
-using System.Linq;
 using System.Reflection;
 using Microsoft.Extensions.Logging;
 using Stl.DependencyInjection;
-using Stl.Fusion.Interception.Internal;
 using Stl.Fusion.Internal;
 using Stl.Generators;
 
@@ -25,7 +23,7 @@ namespace Stl.Fusion.Interception
             : base(options = options.OrDefault(serviceProvider), serviceProvider, loggerFactory)
             => VersionGenerator = options.VersionGenerator;
 
-        protected override InterceptedFunctionBase<T> CreateFunction<T>(InterceptedMethod method)
+        protected override InterceptedFunctionBase<T> CreateFunction<T>(InterceptedMethodDescriptor method)
         {
             var log = LoggerFactory.CreateLogger<ComputeServiceFunction<T>>();
             if (method.Options.IsAsyncComputed)

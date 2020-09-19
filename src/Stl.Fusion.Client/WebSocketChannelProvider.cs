@@ -22,7 +22,7 @@ namespace Stl.Fusion.Client
         public class Options : IOptions
         {
             public Uri BaseUri { get; set; } = new Uri("http://localhost:5000/");
-            public string RequestPath { get; set; } = "/fusion";
+            public string RequestPath { get; set; } = "/fusion/ws";
             public string PublisherIdQueryParameterName { get; set; } = "publisherId";
             public string ClientIdQueryParameterName { get; set; } = "clientId";
             public TimeSpan ConnectTimeout { get; set; } = TimeSpan.FromSeconds(10);

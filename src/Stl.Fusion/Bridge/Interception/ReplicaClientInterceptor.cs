@@ -4,7 +4,6 @@ using Castle.DynamicProxy;
 using Microsoft.Extensions.Logging;
 using Stl.DependencyInjection;
 using Stl.Fusion.Interception;
-using Stl.Fusion.Interception.Internal;
 using Stl.Generators;
 
 namespace Stl.Fusion.Bridge.Interception
@@ -30,7 +29,7 @@ namespace Stl.Fusion.Bridge.Interception
             VersionGenerator = options.VersionGenerator;
         }
 
-        protected override InterceptedFunctionBase<T> CreateFunction<T>(InterceptedMethod method)
+        protected override InterceptedFunctionBase<T> CreateFunction<T>(InterceptedMethodDescriptor method)
         {
             var log = LoggerFactory.CreateLogger<ReplicaClientFunction<T>>();
             return new ReplicaClientFunction<T>(method, Replicator, VersionGenerator, log);

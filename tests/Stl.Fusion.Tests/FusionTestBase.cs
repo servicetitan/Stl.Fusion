@@ -23,6 +23,8 @@ using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
 using Stl.Fusion.Tests.UIModels;
 using Stl.Fusion;
+using Stl.Fusion.Authentication;
+using Stl.Fusion.Client.Authentication;
 using Stl.Fusion.Internal;
 using Stl.Testing;
 using Stl.Testing.Internal;
@@ -135,16 +137,20 @@ namespace Stl.Fusion.Tests
             });
             // Could use services.ConfigureAll<HttpClientFactoryOptions>(...),
             // but it doesn't have an overload with IServiceProvider.
-            services.AddSingleton<IConfigureOptions<HttpClientFactoryOptions>>(c =>
-                new ConfigureNamedOptions<HttpClientFactoryOptions>(null, options => {
-                    var baseUri = c.GetRequiredService<TestWebHost>().ServerUri;
-                    var apiUri = new Uri($"{baseUri}api/");
+            services.Configure<HttpClientFactoryOptions>((c, name, options) => {
+                var baseUri = c.GetRequiredService<TestWebHost>().ServerUri;
+                var apiUri = new Uri($"{baseUri}api/");
+                if (name != "auth")
                     options.HttpClientActions.Add(c => c.BaseAddress = apiUri);
-                })
-            );
+                else
+                    options.HttpClientActions.Add(c => c.BaseAddress = baseUri);
+            });
 
             // Auto-discovered services
             services.AddDiscoveredServices(t => t.Namespace!.StartsWith(testType.Namespace!), testType.Assembly);
+            services.AddService<SessionAccessor>();
+            services.AddService<InProcessServerAuthenticator>();
+            services.AddRestEaseReplicaService<IAuthenticatorClient>("auth");
 
             // Custom live state
             services.AddState(c => c.GetStateFactory().NewLive<ServerTimeModel2>(

@@ -6,8 +6,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Stl.DependencyInjection;
+using Stl.Fusion.Authentication;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Server;
+using Stl.Fusion.Server.Authentication;
 using Stl.Reflection;
 using Stl.Serialization;
 using Stl.Testing;
@@ -34,12 +36,18 @@ namespace Stl.Fusion.Tests.Services
                 services.CopySingleton<ITimeService>(BaseServices);
                 services.CopySingleton<IScreenshotService>(BaseServices);
                 services.CopySingleton<IKeyValueService<string>>(BaseServices);
+                services.CopySingleton<IAuthenticator>(BaseServices);
+                services.AddService<SessionAccessor>();
+                services.AddService<SessionMiddleware>();
                 services.AddFusionWebSocketServer();
 
                 // Web
+                services.AddDistributedMemoryCache();
+                services.AddSession();
                 services.AddRouting();
                 services.AddControllers()
-                    .AddApplicationPart(Assembly.GetExecutingAssembly());
+                    .AddApplicationPart(Assembly.GetExecutingAssembly())
+                    .AddApplicationPart(typeof(AuthenticatorController).Assembly);
                 services.AddMvc()
                     .AddNewtonsoftJson(options =>
                         MemberwiseCopier.CopyMembers(
@@ -55,6 +63,8 @@ namespace Stl.Fusion.Tests.Services
         {
             builder.Configure((ctx, app) => {
                 app.UseWebSockets(new WebSocketOptions() { ReceiveBufferSize = 16_384 });
+                app.UseSession();
+                app.UseMiddleware<SessionMiddleware>();
 
                 // API controllers
                 app.UseRouting();

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Castle.DynamicProxy;
 using Stl.Extensibility;
 
 namespace Stl.Fusion.Interception
@@ -18,6 +19,7 @@ namespace Stl.Fusion.Interception
             (objA, objB) => objA == objB || (objA?.Equals(objB) ?? false);
         public Func<object?, string> ToStringFunc { get; protected set; } =
             o => o?.ToString() ?? "␀";
+        public Action<InterceptedMethodDescriptor, IInvocation, int>? PreprocessFunc { get; protected set; } = null;
     }
 
     public abstract class EquatableArgumentHandler : ArgumentHandler
@@ -29,7 +31,7 @@ namespace Stl.Fusion.Interception
     {
         public static EquatableArgumentHandler<T> Instance { get; } = new EquatableArgumentHandler<T>();
 
-        private EquatableArgumentHandler()
+        protected EquatableArgumentHandler()
         {
             var tType = typeof(T);
             var tEq = tType.GetInterfaces().SingleOrDefault(t => t == typeof(IEquatable<T>));

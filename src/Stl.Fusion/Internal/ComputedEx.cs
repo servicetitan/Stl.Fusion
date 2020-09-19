@@ -1,4 +1,3 @@
-using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -38,7 +37,6 @@ namespace Stl.Fusion.Internal
 
             if (existing == null)
                 return useExisting ? ResultBox<T>.Default : null;
-
             useExisting |= existing.IsConsistent();
             if (!useExisting)
                 return null;
