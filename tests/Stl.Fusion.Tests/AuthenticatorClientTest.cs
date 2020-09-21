@@ -18,7 +18,7 @@ namespace Stl.Fusion.Tests
         public async Task BasicTest()
         {
             await using var serving = await WebSocketHost.ServeAsync();
-            var auth = Services.GetRequiredService<IServerAuthenticator>();
+            var auth = Services.GetRequiredService<IServerAuthService>();
             var authClient = Services.GetRequiredService<IAuthenticatorClient>();
             var sessionAccessor = Services.GetRequiredService<ISessionAccessor>();
             var sessionA = new Session("a");

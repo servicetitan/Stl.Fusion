@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
 using RestEase;
+using Stl.DependencyInjection;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Interception;
 using Stl.Fusion.Client.RestEase;
@@ -14,86 +15,95 @@ using Stl.Serialization;
 
 namespace Stl.Fusion.Client
 {
-    public static class ServiceCollectionEx
+    public readonly struct FusionRestEaseClientBuilder
     {
-        // Common client-side services
+        private class AddedTag { }
+        private static readonly ServiceDescriptor AddedTagDescriptor =
+            new ServiceDescriptor(typeof(AddedTag), new AddedTag());
 
-        public static IServiceCollection AddFusionWebSocketClient(
-            this IServiceCollection services,
-            WebSocketChannelProvider.Options options)
-            => services
-                .AddRestEaseCore()
-                .AddFusionWebSocketClientCore(options);
+        public FusionBuilder Fusion { get; }
+        public IServiceCollection Services => Fusion.Services;
 
-        public static IServiceCollection AddFusionWebSocketClient(
-            this IServiceCollection services,
-            Action<IServiceProvider, WebSocketChannelProvider.Options>? optionsBuilder = null)
-            => services
-                .AddRestEaseCore()
-                .AddFusionWebSocketClientCore(optionsBuilder);
-
-        public static IServiceCollection AddRestEaseCore(this IServiceCollection services)
+        internal FusionRestEaseClientBuilder(FusionBuilder fusion)
         {
+            Fusion = fusion;
+            if (Services.Contains(AddedTagDescriptor))
+                return;
+            // We want above Contains call to run in O(1), so...
+            Services.Insert(0, AddedTagDescriptor);
+
+            Fusion.AddReplicator();
+            Services.TryAddSingleton<WebSocketChannelProvider.Options>();
+            Services.TryAddSingleton<IChannelProvider, WebSocketChannelProvider>();
+
             // FusionHttpMessageHandler (handles Fusion headers)
-            services.AddHttpClient();
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<
+            Services.AddHttpClient();
+            Services.TryAddEnumerable(ServiceDescriptor.Singleton<
                 IHttpMessageHandlerBuilderFilter,
                 FusionHttpMessageHandlerBuilderFilter>());
-            services.TryAddTransient<FusionHttpMessageHandler>();
+            Services.TryAddTransient<FusionHttpMessageHandler>();
 
             // InterfaceCastProxyGenerator (used by ReplicaServices)
-            services.TryAddSingleton<InterfaceCastInterceptor>();
-            services.TryAddSingleton(c => InterfaceCastProxyGenerator.Default);
-            services.TryAddSingleton(c => new [] { c.GetRequiredService<InterfaceCastInterceptor>() });
+            Services.TryAddSingleton<InterfaceCastInterceptor>();
+            Services.TryAddSingleton(c => InterfaceCastProxyGenerator.Default);
+            Services.TryAddSingleton(c => new [] { c.GetRequiredService<InterfaceCastInterceptor>() });
 
             // ResponseDeserializer & ReplicaResponseDeserializer
-            services.TryAddTransient<ResponseDeserializer>(c => new JsonResponseDeserializer() {
+            Services.TryAddTransient<ResponseDeserializer>(c => new JsonResponseDeserializer() {
                 JsonSerializerSettings = JsonNetSerializer.DefaultSettings
             });
-            services.TryAddTransient<RequestBodySerializer>(c => new JsonRequestBodySerializer() {
+            Services.TryAddTransient<RequestBodySerializer>(c => new JsonRequestBodySerializer() {
                 JsonSerializerSettings = JsonNetSerializer.DefaultSettings
             });
-            return services;
         }
 
-        public static IServiceCollection AddFusionWebSocketClientCore(
-            this IServiceCollection services,
+        public FusionBuilder BackToFusion() => Fusion;
+
+        // ConfigureXxx
+
+        public FusionRestEaseClientBuilder ConfigureHttpClientFactory(
+            Action<IServiceProvider, string?, HttpClientFactoryOptions> httpClientFactoryOptionsBuilder)
+        {
+            Services.Configure(httpClientFactoryOptionsBuilder);
+            return this;
+        }
+
+        public FusionRestEaseClientBuilder ConfigureWebSocketChannel(
             WebSocketChannelProvider.Options options)
         {
-            services.TryAddSingleton(options);
-            services.TryAddSingleton<IChannelProvider, WebSocketChannelProvider>();
-            return services.AddFusionClientCore();
+            var serviceDescriptor = new ServiceDescriptor(
+                typeof(WebSocketChannelProvider.Options),
+                options);
+            Services.Replace(serviceDescriptor);
+            return this;
         }
 
-        public static IServiceCollection AddFusionWebSocketClientCore(
-            this IServiceCollection services,
-            Action<IServiceProvider, WebSocketChannelProvider.Options>? optionsBuilder = null)
+        public FusionRestEaseClientBuilder ConfigureWebSocketChannel(
+            Action<IServiceProvider, WebSocketChannelProvider.Options> optionsBuilder)
         {
-            services.TryAddSingleton(c => {
-                var options = new WebSocketChannelProvider.Options();
-                optionsBuilder?.Invoke(c, options);
-                return options;
-            });
-            services.TryAddSingleton<IChannelProvider, WebSocketChannelProvider>();
-            return services.AddFusionClientCore().AddRestEaseCore();
+            var serviceDescriptor = new ServiceDescriptor(
+                typeof(WebSocketChannelProvider.Options),
+                c => {
+                    var options = new WebSocketChannelProvider.Options();
+                    optionsBuilder.Invoke(c, options);
+                    return options;
+                },
+                ServiceLifetime.Singleton);
+            Services.Replace(serviceDescriptor);
+            return this;
         }
 
         // User-defined client-side services
 
-        public static IServiceCollection AddRestEaseService<TService>(
-            this IServiceCollection services,
-            string? clientName = null)
-            => services.AddRestEaseService(typeof(TService), clientName);
-        public static IServiceCollection AddRestEaseService(
-            this IServiceCollection services,
-            Type clientType,
-            string? clientName = null)
+        public FusionRestEaseClientBuilder AddClientService<TClient>(string? clientName = null)
+            => AddClientService(typeof(TClient), clientName);
+        public FusionRestEaseClientBuilder AddClientService(Type clientType, string? clientName = null)
         {
             if (!(clientType.IsInterface && clientType.IsVisible))
                 throw Internal.Errors.InterfaceTypeExpected(clientType, true, nameof(clientType));
             clientName ??= clientType.FullName;
 
-            services.TryAddSingleton(clientType, c => {
+            Services.TryAddSingleton(clientType, c => {
                 var httpClientFactory = c.GetRequiredService<IHttpClientFactory>();
                 var httpClient = httpClientFactory.CreateClient(clientName);
                 var restClient = new RestClient(httpClient) {
@@ -102,26 +112,22 @@ namespace Stl.Fusion.Client
                 };
                 return restClient.For(clientType);
             });
-            return services;
+            return this;
         }
 
-        public static IServiceCollection AddRestEaseReplicaService<TClient>(
-            this IServiceCollection services,
+        public FusionRestEaseClientBuilder AddReplicaService<TClient>(
             string? clientName = null)
             where TClient : IRestEaseReplicaClient
-            => services.AddRestEaseReplicaService(typeof(TClient), clientName);
-        public static IServiceCollection AddRestEaseReplicaService<TService, TClient>(
-            this IServiceCollection services,
+            => AddReplicaService(typeof(TClient), clientName);
+        public FusionRestEaseClientBuilder AddReplicaService<TService, TClient>(
             string? clientName = null)
             where TClient : IRestEaseReplicaClient
-            => services.AddRestEaseReplicaService(typeof(TService), typeof(TClient), clientName);
-        public static IServiceCollection AddRestEaseReplicaService(
-            this IServiceCollection services,
+            => AddReplicaService(typeof(TService), typeof(TClient), clientName);
+        public FusionRestEaseClientBuilder AddReplicaService(
             Type clientType,
             string? clientName = null)
-            => services.AddRestEaseReplicaService(clientType, clientType, clientName);
-        public static IServiceCollection AddRestEaseReplicaService(
-            this IServiceCollection services,
+            => AddReplicaService(clientType, clientType, clientName);
+        public FusionRestEaseClientBuilder AddReplicaService(
             Type serviceType,
             Type clientType,
             string? clientName = null)
@@ -164,8 +170,8 @@ namespace Stl.Fusion.Client
                 return client;
             }
 
-            services.TryAddSingleton(serviceType, Factory);
-            return services;
+            Services.TryAddSingleton(serviceType, Factory);
+            return this;
         }
     }
 }

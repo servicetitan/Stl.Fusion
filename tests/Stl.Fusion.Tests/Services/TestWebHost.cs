@@ -32,14 +32,15 @@ namespace Stl.Fusion.Tests.Services
                     logging.AddDebug();
                 });
 
+                services.AddFusion().AddWebSocketServer();
                 services.CopySingleton<IPublisher>(BaseServices);
                 services.CopySingleton<ITimeService>(BaseServices);
                 services.CopySingleton<IScreenshotService>(BaseServices);
                 services.CopySingleton<IKeyValueService<string>>(BaseServices);
-                services.CopySingleton<IAuthenticator>(BaseServices);
-                services.AddService<SessionAccessor>();
-                services.AddService<SessionMiddleware>();
-                services.AddFusionWebSocketServer();
+                services.CopySingleton<IAuthService>(BaseServices);
+                services.AttributeBased()
+                    .AddService<SessionAccessor>()
+                    .AddService<SessionMiddleware>();
 
                 // Web
                 services.AddDistributedMemoryCache();

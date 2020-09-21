@@ -14,6 +14,6 @@ namespace Stl.Fusion.Client
             => ServiceType = serviceType;
 
         public override void Register(IServiceCollection services, Type implementationType)
-            => services.AddRestEaseReplicaService(ServiceType ?? implementationType, implementationType);
+            => services.AddFusion().AddRestEaseClient().AddReplicaService(ServiceType ?? implementationType, implementationType);
     }
 }

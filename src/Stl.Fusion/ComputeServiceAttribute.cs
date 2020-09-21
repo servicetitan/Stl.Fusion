@@ -10,6 +10,7 @@ namespace Stl.Fusion
         public ComputeServiceAttribute(Type? serviceType = null) : base(serviceType) { }
 
         public override void Register(IServiceCollection services, Type implementationType)
-            => services.AddComputeService(ServiceType ?? implementationType, implementationType, Lifetime);
+            => services.AddFusion().AddComputeService(
+                ServiceType ?? implementationType, implementationType, Lifetime);
     }
 }

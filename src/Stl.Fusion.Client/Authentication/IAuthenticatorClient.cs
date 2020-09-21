@@ -6,7 +6,7 @@ using Stl.Fusion.Client.RestEase;
 
 namespace Stl.Fusion.Client.Authentication
 {
-    [RestEaseReplicaService(typeof(IAuthenticator))]
+    [RestEaseReplicaService(typeof(IAuthService))]
     [BasePath("fusion/auth")]
     public interface IAuthenticatorClient : IRestEaseReplicaClient
     {

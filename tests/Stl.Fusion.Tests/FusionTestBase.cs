@@ -26,6 +26,7 @@ using Stl.Fusion;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Client.Authentication;
 using Stl.Fusion.Internal;
+using Stl.Fusion.Server;
 using Stl.Testing;
 using Stl.Testing.Internal;
 using Xunit;
@@ -128,32 +129,35 @@ namespace Stl.Fusion.Tests
                     builder.UseSqlite($"Data Source={DbPath}", sqlite => { });
             }, 256);
 
-            // Core fusion services
             services.AddSingleton(c => new TestWebHost(c));
-            services.AddFusionServerCore();
-            services.AddFusionWebSocketClient((c, o) => {
-                o.BaseUri = c.GetRequiredService<TestWebHost>().ServerUri;
-                o.MessageLogLevel = LogLevel.Information;
-            });
-            // Could use services.ConfigureAll<HttpClientFactoryOptions>(...),
-            // but it doesn't have an overload with IServiceProvider.
-            services.Configure<HttpClientFactoryOptions>((c, name, options) => {
-                var baseUri = c.GetRequiredService<TestWebHost>().ServerUri;
-                var apiUri = new Uri($"{baseUri}api/");
-                if (name != "auth")
-                    options.HttpClientActions.Add(c => c.BaseAddress = apiUri);
-                else
-                    options.HttpClientActions.Add(c => c.BaseAddress = baseUri);
-            });
+
+            // Core fusion services
+            var fusion = services.AddFusion();
+            var fusionServer = fusion.AddWebSocketServer();
+            var fusionClient = fusion.AddRestEaseClient((c, o) => {
+                    o.BaseUri = c.GetRequiredService<TestWebHost>().ServerUri;
+                    o.MessageLogLevel = LogLevel.Information;
+                });
+            fusionClient
+                .ConfigureHttpClientFactory((c, name, options) => {
+                    var baseUri = c.GetRequiredService<TestWebHost>().ServerUri;
+                    var apiUri = new Uri($"{baseUri}api/");
+                    if (name != "auth")
+                        options.HttpClientActions.Add(c => c.BaseAddress = apiUri);
+                    else
+                        options.HttpClientActions.Add(c => c.BaseAddress = baseUri);
+                })
+                .AddReplicaService<IAuthenticatorClient>("auth");
 
             // Auto-discovered services
-            services.AddDiscoveredServices(t => t.Namespace!.StartsWith(testType.Namespace!), testType.Assembly);
-            services.AddService<SessionAccessor>();
-            services.AddService<InProcessServerAuthenticator>();
-            services.AddRestEaseReplicaService<IAuthenticatorClient>("auth");
+            services.AttributeBased()
+                .AddService<SessionAccessor>()
+                .AddService<InProcessServerAuthService>()
+                .SetTypeFilter(testType.Namespace!)
+                .AddServicesFrom(testType.Assembly);
 
             // Custom live state
-            services.AddState(c => c.GetStateFactory().NewLive<ServerTimeModel2>(
+            fusion.AddState(c => c.GetStateFactory().NewLive<ServerTimeModel2>(
                 async (state, cancellationToken) => {
                     var client = c.GetRequiredService<IClientTimeService>();
                     var time = await client.GetTimeAsync(cancellationToken).ConfigureAwait(false);

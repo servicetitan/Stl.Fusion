@@ -1,7 +1,7 @@
 using System;
-using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.DependencyInjection.Internal;
+using Stl.Text;
 
 namespace Stl.DependencyInjection
 {
@@ -13,7 +13,10 @@ namespace Stl.DependencyInjection
 
         public abstract void Register(IServiceCollection services, Type implementationType);
 
-        public static ServiceAttributeBase[] GetAll(Type implementationType, Func<ServiceAttributeBase, bool>? filter = null)
-            => ServiceInfo.For(implementationType, filter).Attributes;
+        public static ServiceAttributeBase[] GetAll(Type implementationType)
+            => ServiceInfo.For(implementationType).Attributes;
+
+        public static ServiceAttributeBase[] GetAll(Type implementationType, Symbol scope)
+            => ServiceInfo.For(implementationType, scope).Attributes;
     }
 }

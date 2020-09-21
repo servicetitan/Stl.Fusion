@@ -30,7 +30,7 @@ namespace Stl.Fusion.Tests
                     new XunitTestOutputLoggerProvider(
                         new TestOutputHelperAccessor(Out)));
             });
-            services.AddFusionCore();
+            services.AddFusion();
             ConfigureCommonServices(services);
             configureServices?.Invoke(services);
             return services.BuildServiceProvider();
@@ -38,7 +38,7 @@ namespace Stl.Fusion.Tests
 
         protected IServiceProvider CreateServiceProviderFor<TService>()
             where TService : class
-            => CreateServiceProvider(services => services.AddComputeService<TService>());
+            => CreateServiceProvider(services => services.AddFusion().AddComputeService<TService>());
 
         protected abstract void ConfigureCommonServices(ServiceCollection services);
 

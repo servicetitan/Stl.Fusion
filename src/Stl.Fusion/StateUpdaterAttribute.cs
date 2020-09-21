@@ -8,6 +8,6 @@ namespace Stl.Fusion
     public class StateAttribute : ServiceAttributeBase
     {
         public override void Register(IServiceCollection services, Type implementationType)
-            => services.AddState(implementationType);
+            => services.AddFusion().AddState(implementationType);
     }
 }

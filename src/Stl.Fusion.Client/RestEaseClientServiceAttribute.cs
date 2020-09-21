@@ -6,9 +6,9 @@ namespace Stl.Fusion.Client
 {
     [Serializable]
     [AttributeUsage(AttributeTargets.Interface, AllowMultiple = true)]
-    public class RestEaseServiceAttribute : ServiceAttributeBase
+    public class RestEaseClientServiceAttribute : ServiceAttributeBase
     {
         public override void Register(IServiceCollection services, Type implementationType)
-            => services.AddRestEaseService(implementationType);
+            => services.AddFusion().AddRestEaseClient().AddClientService(implementationType);
     }
 }

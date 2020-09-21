@@ -42,8 +42,7 @@ namespace Stl.Fusion.Tests
                 InitialCapacity = 16,
             });
             var services = new ServiceCollection();
-            services.AddFusionCore();
-            services.AddComputeService<TService>();
+            services.AddFusion().AddComputeService<TService>();
             return services.BuildServiceProvider();
         }
 

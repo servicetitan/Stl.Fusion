@@ -105,8 +105,8 @@ namespace Stl.Internal
 
         public static Exception NoServiceAttribute(Type implementationType) =>
             new InvalidOperationException(
-                $"'{implementationType}' doesn't have a [{nameof(ServiceAttribute)}] or some other " +
-                $"{nameof(ServiceAttributeBase)} descendant applied.");
+                $"No matching [{nameof(ServiceAttributeBase)}] descendant is found " +
+                $"on '{implementationType}'.");
 
         public static Exception HostedServiceHasToBeSingleton(Type implementationType) =>
             new InvalidOperationException(

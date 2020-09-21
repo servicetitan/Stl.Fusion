@@ -7,15 +7,15 @@ using Stl.DependencyInjection;
 
 namespace Stl.Fusion.Authentication
 {
-    [ComputeService(typeof(IServerAuthenticator))]
-    [ServiceAlias(typeof(IAuthenticator), typeof(IServerAuthenticator))]
-    public class InProcessServerAuthenticator : IServerAuthenticator
+    [ComputeService(typeof(IServerAuthService))]
+    [ServiceAlias(typeof(IAuthService), typeof(IServerAuthService))]
+    public class InProcessServerAuthService : IServerAuthService
     {
         protected ConcurrentDictionary<string, Principal> Sessions { get; } =
             new ConcurrentDictionary<string, Principal>();
         protected ISessionAccessor SessionAccessor { get; }
 
-        public InProcessServerAuthenticator(ISessionAccessor sessionAccessor)
+        public InProcessServerAuthService(ISessionAccessor sessionAccessor)
             => SessionAccessor = sessionAccessor;
 
         public Task LoginAsync(Principal user, Session? session = null, CancellationToken cancellationToken = default)
