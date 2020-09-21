@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 
 namespace Stl.Fusion.Authentication
 {
-    public class Principal : IPrincipal, IIdentity, IHasId<string>
+    public class AuthUser : IPrincipal, IIdentity, IHasId<string>
     {
         public static string GuestName { get; set; } = "Guest";
 
@@ -21,9 +21,9 @@ namespace Stl.Fusion.Authentication
         [JsonIgnore]
         public ClaimsPrincipal ClaimsPrincipal => _claimsPrincipalLazy.Value;
 
-        public Principal(string id) : this(id, GuestName, "") { }
+        public AuthUser(string id) : this(id, GuestName, "") { }
         [JsonConstructor]
-        public Principal(string id, string name, string authenticationType)
+        public AuthUser(string id, string name, string authenticationType)
         {
             _claimsPrincipalLazy = new Lazy<ClaimsPrincipal>(ToClaimsPrincipal);
             Id = id;

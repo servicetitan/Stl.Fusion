@@ -9,13 +9,13 @@ namespace Stl.Fusion.Tests.Services
     public class PerUserCounterService
     {
         private readonly ConcurrentDictionary<(string, string), int> _counters = new ConcurrentDictionary<(string, string), int>();
-        private readonly ISessionAccessor _sessionAccessor;
+        private readonly IAuthSessionAccessor _authSessionAccessor;
 
-        public PerUserCounterService(ISessionAccessor sessionAccessor)
-            => _sessionAccessor = sessionAccessor;
+        public PerUserCounterService(IAuthSessionAccessor authSessionAccessor)
+            => _authSessionAccessor = authSessionAccessor;
 
         [ComputeMethod]
-        public virtual Task<int> GetAsync(string key, Session? session = null,
+        public virtual Task<int> GetAsync(string key, AuthSession? session = null,
             CancellationToken cancellationToken = default)
         {
             if (session == null)
@@ -24,10 +24,10 @@ namespace Stl.Fusion.Tests.Services
             return Task.FromResult(result);
         }
 
-        public Task IncrementAsync(string key, Session? session = null,
+        public Task IncrementAsync(string key, AuthSession? session = null,
             CancellationToken cancellationToken = default)
         {
-            session ??= _sessionAccessor.Session ?? throw new ArgumentNullException(nameof(session));
+            session ??= _authSessionAccessor.Session ?? throw new ArgumentNullException(nameof(session));
             _counters.AddOrUpdate((session.Id, key), k => 1, (k, v) => v + 1);
             Computed.Invalidate(() => GetAsync(key, session, default));
             return Task.CompletedTask;

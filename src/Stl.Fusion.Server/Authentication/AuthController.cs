@@ -7,32 +7,32 @@ namespace Stl.Fusion.Server.Authentication
 {
     [Route("fusion/auth")]
     [ApiController]
-    public class AuthenticatorController : FusionController
+    public class AuthController : FusionController
     {
         protected IAuthService AuthService { get; }
-        protected ISessionAccessor SessionAccessor { get; }
+        protected IAuthSessionAccessor AuthSessionAccessor { get; }
 
-        public AuthenticatorController(
+        public AuthController(
             IPublisher publisher,
             IAuthService authService,
-            ISessionAccessor sessionAccessor)
+            IAuthSessionAccessor authSessionAccessor)
             : base(publisher)
         {
             AuthService = authService;
-            SessionAccessor = sessionAccessor;
+            AuthSessionAccessor = authSessionAccessor;
         }
 
         [HttpGet("logout")]
-        public Task LogoutAsync(Session? session = null)
+        public Task LogoutAsync(AuthSession? session = null)
         {
-            session ??= SessionAccessor.Session;
+            session ??= AuthSessionAccessor.Session;
             return AuthService.LogoutAsync(session, HttpContext.RequestAborted);
         }
 
         [HttpGet("getUser")]
-        public Task<Principal> GetUserAsync(Session? session = null)
+        public Task<AuthUser> GetUserAsync(AuthSession? session = null)
         {
-            session ??= SessionAccessor.Session;
+            session ??= AuthSessionAccessor.Session;
             return PublishAsync(ct => AuthService.GetUserAsync(session, ct));
         }
     }

@@ -8,11 +8,11 @@ namespace Stl.Fusion.Client.Authentication
 {
     [RestEaseReplicaService(typeof(IAuthService))]
     [BasePath("fusion/auth")]
-    public interface IAuthenticatorClient : IRestEaseReplicaClient
+    public interface IAuthClient : IRestEaseReplicaClient
     {
         [Get("logout")]
-        Task LogoutAsync(Session? session = null, CancellationToken cancellationToken = default);
+        Task LogoutAsync(AuthSession? session = null, CancellationToken cancellationToken = default);
         [Get("getUser"), ComputeMethod]
-        Task<Principal> GetUserAsync(Session? session = null, CancellationToken cancellationToken = default);
+        Task<AuthUser> GetUserAsync(AuthSession? session = null, CancellationToken cancellationToken = default);
     }
 }

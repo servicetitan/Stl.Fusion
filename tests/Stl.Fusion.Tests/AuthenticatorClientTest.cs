@@ -19,12 +19,12 @@ namespace Stl.Fusion.Tests
         {
             await using var serving = await WebSocketHost.ServeAsync();
             var auth = Services.GetRequiredService<IServerAuthService>();
-            var authClient = Services.GetRequiredService<IAuthenticatorClient>();
-            var sessionAccessor = Services.GetRequiredService<ISessionAccessor>();
-            var sessionA = new Session("a");
-            var sessionB = new Session("b");
-            var alice = new Principal("alice", "Alice", "Local");
-            var bob   = new Principal("bob", "Bob", "Local");
+            var authClient = Services.GetRequiredService<IAuthClient>();
+            var sessionAccessor = Services.GetRequiredService<IAuthSessionAccessor>();
+            var sessionA = new AuthSession("a");
+            var sessionB = new AuthSession("b");
+            var alice = new AuthUser("alice", "Alice", "Local");
+            var bob   = new AuthUser("bob", "Bob", "Local");
 
             sessionAccessor.Session = sessionA;
             await auth.LoginAsync(bob);
@@ -39,13 +39,13 @@ namespace Stl.Fusion.Tests
             sessionAccessor.Session = sessionB;
             user = await authClient.GetUserAsync();
             user.Id.Should().Be(sessionB.Id);
-            user.Name.Should().Be(Principal.GuestName);
+            user.Name.Should().Be(AuthUser.GuestName);
 
             sessionAccessor.Session = null;
             user = await authClient.GetUserAsync();
+            // User.Id should be equal to new AuthSession.Id
             user.Id.Length.Should().BeGreaterThan(8);
-            user.Name.Should().Be(Principal.GuestName);
-
+            user.Name.Should().Be(AuthUser.GuestName);
         }
     }
 }

@@ -147,12 +147,12 @@ namespace Stl.Fusion.Tests
                     else
                         options.HttpClientActions.Add(c => c.BaseAddress = baseUri);
                 })
-                .AddReplicaService<IAuthenticatorClient>("auth");
+                .AddReplicaService<IAuthClient>("auth");
 
             // Auto-discovered services
             services.AttributeBased()
-                .AddService<SessionAccessor>()
-                .AddService<InProcessServerAuthService>()
+                .AddService<AuthSessionAccessor>()
+                .AddService<InProcessAuthService>()
                 .SetTypeFilter(testType.Namespace!)
                 .AddServicesFrom(testType.Assembly);
 

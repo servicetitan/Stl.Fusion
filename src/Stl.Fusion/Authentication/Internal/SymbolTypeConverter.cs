@@ -12,7 +12,7 @@ namespace Stl.Fusion.Authentication.Internal
 
         public override object? ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) {
             if (destinationType == typeof(string))
-                return ((Session?) value)?.Id;
+                return ((AuthSession?) value)?.Id;
             return base.ConvertTo(context, culture, value, destinationType);
         }
 
@@ -21,7 +21,7 @@ namespace Stl.Fusion.Authentication.Internal
             if (value == null)
                 return null;
             if (value is string s)
-                return new Session(s);
+                return new AuthSession(s);
             return base.ConvertFrom(context, culture, value);
         }
     }

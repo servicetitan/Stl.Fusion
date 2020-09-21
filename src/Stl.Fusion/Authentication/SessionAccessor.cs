@@ -3,14 +3,14 @@ using Stl.DependencyInjection;
 
 namespace Stl.Fusion.Authentication
 {
-    public interface ISessionAccessor
+    public interface IAuthSessionAccessor
     {
-        Session? Session { get; set; }
+        AuthSession? Session { get; set; }
     }
 
-    [Service(typeof(ISessionAccessor), Lifetime = ServiceLifetime.Scoped)]
-    public class SessionAccessor : ISessionAccessor
+    [Service(typeof(IAuthSessionAccessor), Lifetime = ServiceLifetime.Scoped)]
+    public class AuthSessionAccessor : IAuthSessionAccessor
     {
-        public Session? Session { get; set; }
+        public AuthSession? Session { get; set; }
     }
 }

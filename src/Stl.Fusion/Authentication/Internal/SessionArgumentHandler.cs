@@ -5,8 +5,8 @@ using Stl.Fusion.Interception;
 
 namespace Stl.Fusion.Authentication.Internal
 {
-    [MatchFor(typeof(Session), typeof(ArgumentHandlerProvider))]
-    public class SessionArgumentHandler : EquatableArgumentHandler<Session>
+    [MatchFor(typeof(AuthSession), typeof(ArgumentHandlerProvider))]
+    public class SessionArgumentHandler : EquatableArgumentHandler<AuthSession>
     {
         public new static SessionArgumentHandler Instance { get; } = new SessionArgumentHandler();
 
@@ -19,7 +19,7 @@ namespace Stl.Fusion.Authentication.Internal
                 var services = invocation.InvocationTarget is IHasServiceProvider hsp
                     ? hsp.ServiceProvider
                     : method.Interceptor.ServiceProvider;
-                var sessionAccessor = services.GetRequiredService<ISessionAccessor>();
+                var sessionAccessor = services.GetRequiredService<IAuthSessionAccessor>();
                 arguments[index] = sessionAccessor.Session;
             };
         }

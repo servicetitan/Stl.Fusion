@@ -16,7 +16,7 @@ namespace Stl.Fusion.Tests
 
         protected override void ConfigureCommonServices(ServiceCollection services)
         {
-            services.AddScoped<ISessionAccessor, SessionAccessor>();
+            services.AddScoped<IAuthSessionAccessor, AuthSessionAccessor>();
         }
 
         [Fact]
@@ -37,10 +37,9 @@ namespace Stl.Fusion.Tests
 
             var services = CreateServiceProviderFor<PerUserCounterService>();
             var counters = services.GetRequiredService<PerUserCounterService>();
-            var sessionAccessor = services.GetRequiredService<ISessionAccessor>();
-            var sessionA = new Session("a");
-            var sessionB = new Session("b");
-
+            var sessionAccessor = services.GetRequiredService<IAuthSessionAccessor>();
+            var sessionA = new AuthSession("a");
+            var sessionB = new AuthSession("b");
 
             sessionAccessor.Session = sessionA;
             var aaComputed = await Computed.CaptureAsync(_ => counters.GetAsync("a"));

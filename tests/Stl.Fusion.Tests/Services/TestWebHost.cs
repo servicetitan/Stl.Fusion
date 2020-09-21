@@ -39,8 +39,8 @@ namespace Stl.Fusion.Tests.Services
                 services.CopySingleton<IKeyValueService<string>>(BaseServices);
                 services.CopySingleton<IAuthService>(BaseServices);
                 services.AttributeBased()
-                    .AddService<SessionAccessor>()
-                    .AddService<SessionMiddleware>();
+                    .AddService<AuthSessionAccessor>()
+                    .AddService<AuthSessionMiddleware>();
 
                 // Web
                 services.AddDistributedMemoryCache();
@@ -48,7 +48,7 @@ namespace Stl.Fusion.Tests.Services
                 services.AddRouting();
                 services.AddControllers()
                     .AddApplicationPart(Assembly.GetExecutingAssembly())
-                    .AddApplicationPart(typeof(AuthenticatorController).Assembly);
+                    .AddApplicationPart(typeof(AuthController).Assembly);
                 services.AddMvc()
                     .AddNewtonsoftJson(options =>
                         MemberwiseCopier.CopyMembers(
@@ -65,7 +65,7 @@ namespace Stl.Fusion.Tests.Services
             builder.Configure((ctx, app) => {
                 app.UseWebSockets(new WebSocketOptions() { ReceiveBufferSize = 16_384 });
                 app.UseSession();
-                app.UseMiddleware<SessionMiddleware>();
+                app.UseMiddleware<AuthSessionMiddleware>();
 
                 // API controllers
                 app.UseRouting();
