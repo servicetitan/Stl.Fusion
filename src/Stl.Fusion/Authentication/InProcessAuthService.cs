@@ -18,7 +18,9 @@ namespace Stl.Fusion.Authentication
         public InProcessAuthService(IAuthSessionAccessor authSessionAccessor)
             => AuthSessionAccessor = authSessionAccessor;
 
-        public Task LoginAsync(AuthUser user, AuthSession? session = null, CancellationToken cancellationToken = default)
+        public Task LoginAsync(
+            AuthUser user, AuthSession? session = null,
+            CancellationToken cancellationToken = default)
         {
             session ??= AuthSessionAccessor.Session ?? throw new ArgumentNullException(nameof(session));
             Sessions[session.Id] = user;
@@ -26,7 +28,9 @@ namespace Stl.Fusion.Authentication
             return Task.CompletedTask;
         }
 
-        public Task LogoutAsync(AuthSession? session = null, CancellationToken cancellationToken = default)
+        public Task LogoutAsync(
+            AuthSession? session = null,
+            CancellationToken cancellationToken = default)
         {
             session ??= AuthSessionAccessor.Session ?? throw new ArgumentNullException(nameof(session));
             if (Sessions.TryRemove(session.Id, out var _))
@@ -34,7 +38,9 @@ namespace Stl.Fusion.Authentication
             return Task.CompletedTask;
         }
 
-        public virtual Task<AuthUser> GetUserAsync(AuthSession? session = null, CancellationToken cancellationToken = default)
+        public virtual Task<AuthUser> GetUserAsync(
+            AuthSession? session = null,
+            CancellationToken cancellationToken = default)
         {
             if (session == null)
                 throw new ArgumentNullException(nameof(session));

@@ -8,6 +8,13 @@ namespace Stl.DependencyInjection
 
     public static class OptionsEx
     {
+        public static TOptions Configure<TOptions>(this TOptions options, Action<TOptions> configurator)
+            where TOptions : class, IOptions
+        {
+            configurator.Invoke(options);
+            return options;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static TOptions OrDefault<TOptions>(this TOptions? options)
             where TOptions : class, IOptions, new()

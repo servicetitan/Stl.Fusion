@@ -23,8 +23,8 @@ namespace Stl.Fusion.Tests
             var sessionAccessor = Services.GetRequiredService<IAuthSessionAccessor>();
             var sessionA = new AuthSession("a");
             var sessionB = new AuthSession("b");
-            var alice = new AuthUser("alice", "Alice", "Local");
-            var bob   = new AuthUser("bob", "Bob", "Local");
+            var alice = new AuthUser("Local", "alice", "Alice");
+            var bob   = new AuthUser("Local", "bob", "Bob");
 
             sessionAccessor.Session = sessionA;
             await auth.LoginAsync(bob);

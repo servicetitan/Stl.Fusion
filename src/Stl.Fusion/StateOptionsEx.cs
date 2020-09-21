@@ -30,12 +30,26 @@ namespace Stl.Fusion
             return options.WithUpdateDelayer(updateDelayerOptions);
         }
 
-        public static TOptions WithUpdateDelayer<TOptions>(this TOptions options, TimeSpan delay)
+        public static TOptions WithUpdateDelayer<TOptions>(
+            this TOptions options,
+            TimeSpan delay, TimeSpan? maxExtraErrorDelay = null)
             where TOptions : class, ILiveState.IOptions
-            => options.WithUpdateDelayer(new UpdateDelayer.Options() { Delay = delay });
+        {
+            var o = new UpdateDelayer.Options() { Delay = delay };
+            if (maxExtraErrorDelay.HasValue)
+                o.MaxExtraErrorDelay = maxExtraErrorDelay.GetValueOrDefault();
+            return options.WithUpdateDelayer(o);
+        }
 
-        public static TOptions WithUpdateDelayer<TOptions>(this TOptions options, double delayInSeconds)
+        public static TOptions WithUpdateDelayer<TOptions>(
+            this TOptions options,
+            double delayInSeconds, double? maxExtraErrorDelayInSeconds = null)
             where TOptions : class, ILiveState.IOptions
-            => options.WithUpdateDelayer(TimeSpan.FromSeconds(delayInSeconds));
+        {
+            var o = new UpdateDelayer.Options() { Delay = TimeSpan.FromSeconds(delayInSeconds) };
+            if (maxExtraErrorDelayInSeconds.HasValue)
+                o.MaxExtraErrorDelay = TimeSpan.FromSeconds(maxExtraErrorDelayInSeconds.GetValueOrDefault());
+            return options.WithUpdateDelayer(o);
+        }
     }
 }
