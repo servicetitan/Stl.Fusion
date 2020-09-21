@@ -27,6 +27,7 @@ namespace Stl.Fusion.Server
         }
 
         public FusionBuilder BackToFusion() => Fusion;
+        public IServiceCollection BackToServices() => Services;
 
         // ConfigureXxx
 

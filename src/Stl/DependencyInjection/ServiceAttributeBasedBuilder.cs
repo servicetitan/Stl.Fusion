@@ -19,6 +19,8 @@ namespace Stl.DependencyInjection
         public ServiceAttributeBasedBuilder(IServiceCollection services)
             => Services = services;
 
+        public IServiceCollection BackToServices() => Services;
+
         // SetXxx, ResetXxx
 
         public ServiceAttributeBasedBuilder SetScope(Symbol scope)

@@ -48,6 +48,10 @@ namespace Stl.Fusion
             Services.TryAddTransient<IUpdateDelayer, UpdateDelayer>();
         }
 
+        public IServiceCollection BackToServices() => Services;
+
+        // AddPublisher, AddReplicator
+
         public FusionBuilder AddPublisher()
         {
             // Publisher
