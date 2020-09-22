@@ -18,7 +18,7 @@
     [Parameter]
     public RenderFragment ChildContent { get; set; } = _ => { };
     [Parameter]
-    public string AuthContextIdJavaScriptExpression { get; set; } = "window.FusionAuth.contextId";
+    public string AuthContextIdJavaScriptExpression { get; set; } = "window.FusionAuth.authContextId";
     [Parameter]
     public string AuthContextId {
         get => _authContext?.Id ?? "";
