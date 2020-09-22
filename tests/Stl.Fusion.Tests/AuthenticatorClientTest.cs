@@ -2,7 +2,6 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Authentication;
-using Stl.Fusion.Client.Authentication;
 using Stl.Tests;
 using Xunit;
 using Xunit.Abstractions;

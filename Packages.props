@@ -24,7 +24,9 @@
     <PackageReference Update="FluentAssertions" Version="5.10.3" />
     <PackageReference Update="MediatR" Version="8.1.0" />
     <PackageReference Update="MediatR.Extensions.Microsoft.DependencyInjection" Version="8.1.0" />
+    <PackageReference Update="Microsoft.AspNetCore.Components" Version="$(AspNetCoreVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.Components.Authorization" Version="$(AspNetCoreVersion)" />
+    <PackageReference Update="Microsoft.AspNetCore.Components.Web" Version="$(AspNetCoreVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.Components.WebAssembly" Version="$(BlazorVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="$(BlazorVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="$(AspNetCoreVersion)" />
