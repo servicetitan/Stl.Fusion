@@ -1,6 +1,8 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Stl.Reflection;
+using Stl.Serialization;
 
 namespace Stl.Fusion.Server
 {
@@ -24,6 +26,11 @@ namespace Stl.Fusion.Server
             Fusion.AddPublisher();
             Services.TryAddSingleton<WebSocketServer.Options>();
             Services.TryAddSingleton<WebSocketServer>();
+            Services.AddMvcCore()
+                .AddNewtonsoftJson(
+                    options => MemberwiseCopier.CopyMembers(
+                        JsonNetSerializer.DefaultSettings,
+                        options.SerializerSettings));
         }
 
         public FusionBuilder BackToFusion() => Fusion;

@@ -2,29 +2,20 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
-using System.Reactive;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Stl.DependencyInjection;
 using Stl.IO;
 using Stl.Fusion.Bridge;
-using Stl.Fusion.Swapping;
 using Stl.Fusion.Client;
-using Stl.Fusion.Interception;
 using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
 using Stl.Fusion.Tests.UIModels;
-using Stl.Fusion;
-using Stl.Fusion.Authentication;
-using Stl.Fusion.Client.Authentication;
 using Stl.Fusion.Internal;
 using Stl.Fusion.Server;
 using Stl.Testing;
@@ -134,25 +125,22 @@ namespace Stl.Fusion.Tests
             // Core fusion services
             var fusion = services.AddFusion();
             var fusionServer = fusion.AddWebSocketServer();
-            var fusionClient = fusion.AddRestEaseClient((c, o) => {
-                    o.BaseUri = c.GetRequiredService<TestWebHost>().ServerUri;
-                    o.MessageLogLevel = LogLevel.Information;
-                });
-            fusionClient
-                .ConfigureHttpClientFactory((c, name, options) => {
+            var fusionClient = fusion.AddRestEaseClient(
+                (c, options) => {
+                    options.BaseUri = c.GetRequiredService<TestWebHost>().ServerUri;
+                    options.MessageLogLevel = LogLevel.Information;
+                }).ConfigureHttpClientFactory(
+                (c, name, options) => {
                     var baseUri = c.GetRequiredService<TestWebHost>().ServerUri;
                     var apiUri = new Uri($"{baseUri}api/");
-                    if (name != "auth")
-                        options.HttpClientActions.Add(c => c.BaseAddress = apiUri);
-                    else
-                        options.HttpClientActions.Add(c => c.BaseAddress = baseUri);
-                })
-                .AddReplicaService<IAuthClient>("auth");
+                    var isFusionService = !(name ?? "").Contains("Tests");
+                    var clientBaseUri = isFusionService ? baseUri : apiUri;
+                    options.HttpClientActions.Add(c => c.BaseAddress = clientBaseUri);
+                });
+            var fusionAuth = fusion.AddAuthentication().AddClient();
 
             // Auto-discovered services
             services.AttributeBased()
-                .AddService<AuthSessionAccessor>()
-                .AddService<InProcessAuthService>()
                 .SetTypeFilter(testType.Namespace!)
                 .AddServicesFrom(testType.Assembly);
 

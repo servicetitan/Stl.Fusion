@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.DependencyInjection;
+using Stl.Fusion.Authentication;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Interception;
 using Stl.Fusion.Interception;
@@ -176,5 +177,10 @@ namespace Stl.Fusion
             Func<IServiceProvider, TImplementation> factory)
             where TImplementation : class, IState
             => AddState(typeof(TImplementation), factory);
+
+        // Extensions
+
+        public FusionAuthenticationBuilder AddAuthentication()
+            => new FusionAuthenticationBuilder(this);
     }
 }

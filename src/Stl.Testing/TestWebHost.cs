@@ -80,6 +80,10 @@ namespace Stl.Testing
             Directory.CreateDirectory(emptyDir);
 
             var builder = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder();
+            builder.UseDefaultServiceProvider((ctx, options) => {
+                options.ValidateScopes = true;
+                options.ValidateOnBuild = true;
+            });
             builder.ConfigureWebHost(b => {
                 var serverUri = ServerUriLazy.IsValueCreated
                     ? ServerUri.ToString()

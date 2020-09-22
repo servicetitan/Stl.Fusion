@@ -9,27 +9,22 @@ namespace Stl.Fusion.Tests.Services
     public class PerUserCounterService
     {
         private readonly ConcurrentDictionary<(string, string), int> _counters = new ConcurrentDictionary<(string, string), int>();
-        private readonly IAuthSessionAccessor _authSessionAccessor;
-
-        public PerUserCounterService(IAuthSessionAccessor authSessionAccessor)
-            => _authSessionAccessor = authSessionAccessor;
 
         [ComputeMethod]
-        public virtual Task<int> GetAsync(string key, AuthSession? session = null,
-            CancellationToken cancellationToken = default)
+        public virtual Task<int> GetAsync(string key,
+            AuthContext? context = null, CancellationToken cancellationToken = default)
         {
-            if (session == null)
-                throw new ArgumentNullException(nameof(session));
-            var result = _counters.TryGetValue((session.Id, key), out var value) ? value : 0;
+            context ??= AuthContext.Current.AssertNotNull();
+            var result = _counters.TryGetValue((context.Id, key), out var value) ? value : 0;
             return Task.FromResult(result);
         }
 
-        public Task IncrementAsync(string key, AuthSession? session = null,
-            CancellationToken cancellationToken = default)
+        public Task IncrementAsync(string key,
+            AuthContext? context = null, CancellationToken cancellationToken = default)
         {
-            session ??= _authSessionAccessor.Session ?? throw new ArgumentNullException(nameof(session));
-            _counters.AddOrUpdate((session.Id, key), k => 1, (k, v) => v + 1);
-            Computed.Invalidate(() => GetAsync(key, session, default));
+            context ??= AuthContext.Current.AssertNotNull();
+            _counters.AddOrUpdate((context.Id, key), k => 1, (k, v) => v + 1);
+            Computed.Invalidate(() => GetAsync(key, context, default));
             return Task.CompletedTask;
         }
     }

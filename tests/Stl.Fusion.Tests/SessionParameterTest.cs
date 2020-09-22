@@ -10,14 +10,11 @@ using Xunit.Abstractions;
 
 namespace Stl.Fusion.Tests
 {
-    public class SessionParameterTest : SimpleFusionTestBase
+    public class AuthContextParameterTest : SimpleFusionTestBase
     {
-        public SessionParameterTest(ITestOutputHelper @out) : base(@out) { }
+        public AuthContextParameterTest(ITestOutputHelper @out) : base(@out) { }
 
-        protected override void ConfigureCommonServices(ServiceCollection services)
-        {
-            services.AddScoped<IAuthSessionAccessor, AuthSessionAccessor>();
-        }
+        protected override void ConfigureCommonServices(ServiceCollection services) { }
 
         [Fact]
         public async Task BasicTest()
@@ -37,21 +34,20 @@ namespace Stl.Fusion.Tests
 
             var services = CreateServiceProviderFor<PerUserCounterService>();
             var counters = services.GetRequiredService<PerUserCounterService>();
-            var sessionAccessor = services.GetRequiredService<IAuthSessionAccessor>();
-            var sessionA = new AuthSession("a");
-            var sessionB = new AuthSession("b");
+            var contextA = new AuthContext("a");
+            var contextB = new AuthContext("b");
 
-            sessionAccessor.Session = sessionA;
+            using var _1 = contextA.Activate();
             var aaComputed = await Computed.CaptureAsync(_ => counters.GetAsync("a"));
             Task.Run(() => WatchAsync(nameof(aaComputed), aaComputed)).Ignore();
             var abComputed = await Computed.CaptureAsync(_ => counters.GetAsync("b"));
             Task.Run(() => WatchAsync(nameof(abComputed), abComputed)).Ignore();
 
-            sessionAccessor.Session = sessionB;
+            using var _2 = contextB.Activate();
             var baComputed = await Computed.CaptureAsync(_ => counters.GetAsync("a"));
             Task.Run(() => WatchAsync(nameof(baComputed), baComputed)).Ignore();
 
-            sessionAccessor.Session = sessionA;
+            using var _3 = contextA.Activate();
             await counters.IncrementAsync("a");
             (await aaComputed.UpdateAsync(false)).Value.Should().Be(1);
             (await abComputed.UpdateAsync(false)).Value.Should().Be(0);
@@ -61,7 +57,7 @@ namespace Stl.Fusion.Tests
             (await abComputed.UpdateAsync(false)).Value.Should().Be(1);
             (await baComputed.UpdateAsync(false)).Value.Should().Be(0);
 
-            sessionAccessor.Session = sessionB;
+            using var _4 = contextB.Activate();
             await counters.IncrementAsync("a");
             (await aaComputed.UpdateAsync(false)).Value.Should().Be(1);
             (await abComputed.UpdateAsync(false)).Value.Should().Be(1);

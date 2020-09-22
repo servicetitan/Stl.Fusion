@@ -5,13 +5,13 @@ namespace Stl.Fusion.Authentication
 {
     public interface IAuthService
     {
-        Task LogoutAsync(AuthSession? session = null, CancellationToken cancellationToken = default);
+        Task LogoutAsync(AuthContext? context = null, CancellationToken cancellationToken = default);
         [ComputeMethod]
-        Task<AuthUser> GetUserAsync(AuthSession? session = null, CancellationToken cancellationToken = default);
+        Task<AuthUser> GetUserAsync(AuthContext? context = null, CancellationToken cancellationToken = default);
     }
 
-    public interface IServerAuthService : IAuthService
+    public interface IServerSideAuthService : IAuthService
     {
-        Task LoginAsync(AuthUser user, AuthSession? session = null, CancellationToken cancellationToken = default);
+        Task LoginAsync(AuthUser user, AuthContext? context = null, CancellationToken cancellationToken = default);
     }
 }

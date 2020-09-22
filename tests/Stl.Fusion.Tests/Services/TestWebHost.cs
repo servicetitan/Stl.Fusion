@@ -10,8 +10,6 @@ using Stl.Fusion.Authentication;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Server;
 using Stl.Fusion.Server.Authentication;
-using Stl.Reflection;
-using Stl.Serialization;
 using Stl.Testing;
 
 namespace Stl.Fusion.Tests.Services
@@ -32,28 +30,19 @@ namespace Stl.Fusion.Tests.Services
                     logging.AddDebug();
                 });
 
-                services.AddFusion().AddWebSocketServer();
                 services.CopySingleton<IPublisher>(BaseServices);
                 services.CopySingleton<ITimeService>(BaseServices);
                 services.CopySingleton<IScreenshotService>(BaseServices);
                 services.CopySingleton<IKeyValueService<string>>(BaseServices);
-                services.CopySingleton<IAuthService>(BaseServices);
-                services.AttributeBased()
-                    .AddService<AuthSessionAccessor>()
-                    .AddService<AuthSessionMiddleware>();
+                // services.CopySingleton<IAuthService>(BaseServices);
+
+                // Fusion
+                var fusion = services.AddFusion();
+                fusion.AddAuthentication().AddServer();
+                fusion.AddWebSocketServer();
 
                 // Web
-                services.AddDistributedMemoryCache();
-                services.AddSession();
-                services.AddRouting();
-                services.AddControllers()
-                    .AddApplicationPart(Assembly.GetExecutingAssembly())
-                    .AddApplicationPart(typeof(AuthController).Assembly);
-                services.AddMvc()
-                    .AddNewtonsoftJson(options =>
-                        MemberwiseCopier.CopyMembers(
-                            JsonNetSerializer.DefaultSettings,
-                            options.SerializerSettings));
+                services.AddControllers().AddApplicationPart(Assembly.GetExecutingAssembly());
 
                 // Testing
                 services.AddHostedService<ApplicationPartsLogger>();
@@ -64,8 +53,7 @@ namespace Stl.Fusion.Tests.Services
         {
             builder.Configure((ctx, app) => {
                 app.UseWebSockets(new WebSocketOptions() { ReceiveBufferSize = 16_384 });
-                app.UseSession();
-                app.UseMiddleware<AuthSessionMiddleware>();
+                app.UseAuthContext();
 
                 // API controllers
                 app.UseRouting();

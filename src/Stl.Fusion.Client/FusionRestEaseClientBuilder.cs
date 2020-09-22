@@ -7,6 +7,7 @@ using RestEase;
 using Stl.DependencyInjection;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Interception;
+using Stl.Fusion.Client.Authentication;
 using Stl.Fusion.Client.RestEase;
 using Stl.Fusion.Client.RestEase.Internal;
 using Stl.Fusion.Internal;
