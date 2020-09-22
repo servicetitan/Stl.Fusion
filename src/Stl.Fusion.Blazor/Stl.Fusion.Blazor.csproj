@@ -19,6 +19,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="wwwroot\**\*.js" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Stl.Fusion.Client\Stl.Fusion.Client.csproj" />
   </ItemGroup>
 
