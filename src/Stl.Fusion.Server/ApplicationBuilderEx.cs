@@ -5,7 +5,7 @@ namespace Stl.Fusion.Server
 {
     public static class ApplicationBuilderEx
     {
-        public static IApplicationBuilder UseAuthContext(this IApplicationBuilder app)
-            => app.UseMiddleware<AuthContextMiddleware>();
+        public static IApplicationBuilder UseFusionSession(this IApplicationBuilder app)
+            => app.UseMiddleware<SessionMiddleware>();
     }
 }

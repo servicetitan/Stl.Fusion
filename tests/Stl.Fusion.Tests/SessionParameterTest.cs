@@ -10,9 +10,9 @@ using Xunit.Abstractions;
 
 namespace Stl.Fusion.Tests
 {
-    public class AuthContextParameterTest : SimpleFusionTestBase
+    public class SessionParameterTest : SimpleFusionTestBase
     {
-        public AuthContextParameterTest(ITestOutputHelper @out) : base(@out) { }
+        public SessionParameterTest(ITestOutputHelper @out) : base(@out) { }
 
         protected override void ConfigureCommonServices(ServiceCollection services) { }
 

@@ -53,7 +53,7 @@ namespace Stl.Fusion.Tests.Services
         {
             builder.Configure((ctx, app) => {
                 app.UseWebSockets(new WebSocketOptions() { ReceiveBufferSize = 16_384 });
-                app.UseAuthContext();
+                app.UseFusionSession();
 
                 // API controllers
                 app.UseRouting();

@@ -7,7 +7,7 @@ using Stl.Generators;
 
 namespace Stl.Fusion.Server.Authentication
 {
-    public class AuthContextMiddleware : IMiddleware
+    public class SessionMiddleware : IMiddleware
     {
         public class Options : IOptions
         {
@@ -25,8 +25,8 @@ namespace Stl.Fusion.Server.Authentication
         protected Generator<string> IdGenerator { get; }
         protected CookieBuilder Cookie { get; }
 
-        public AuthContextMiddleware(ISessionProvider sessionProvider) : this(null, sessionProvider) { }
-        public AuthContextMiddleware(Options? options, ISessionProvider sessionProvider)
+        public SessionMiddleware(ISessionProvider sessionProvider) : this(null, sessionProvider) { }
+        public SessionMiddleware(Options? options, ISessionProvider sessionProvider)
         {
             options ??= new Options();
             IdGenerator = options.IdGenerator;

@@ -14,8 +14,8 @@ namespace Stl.Fusion.Server
             fusionAuth.AddAuthService(authServiceImplementationType);
 
             var services = fusionAuth.Services;
-            services.TryAddSingleton<AuthContextMiddleware.Options>();
-            services.TryAddScoped<AuthContextMiddleware>();
+            services.TryAddSingleton<SessionMiddleware.Options>();
+            services.TryAddScoped<SessionMiddleware>();
             services.AddRouting();
             services.AddControllers().AddApplicationPart(typeof(AuthController).Assembly);
 
