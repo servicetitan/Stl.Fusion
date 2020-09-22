@@ -20,7 +20,6 @@ namespace Stl.Fusion.Blazor
             services.AddAuthorizationCore(configure);
             services.TryAddScoped<AuthenticationStateProvider, AuthStateProvider>();
             services.TryAddTransient(c => (AuthStateProvider) c.GetRequiredService<AuthenticationStateProvider>());
-            services.TryAddTransient(c => c.GetRequiredService<Task<AuthenticationState>>().ContinueWith(t => (AuthState) t.Result));
             return fusionAuth;
         }
 
