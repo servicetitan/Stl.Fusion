@@ -21,17 +21,17 @@ namespace Stl.Fusion.Server.Authentication
             };
         }
 
-        protected AuthContextAccessor AuthContextAccessor { get; }
+        protected AuthContextProvider AuthContextProvider { get; }
         protected Generator<string> IdGenerator { get; }
         protected CookieBuilder Cookie { get; }
 
-        public AuthContextMiddleware(AuthContextAccessor authContextAccessor) : this(null, authContextAccessor) { }
-        public AuthContextMiddleware(Options? options, AuthContextAccessor authContextAccessor)
+        public AuthContextMiddleware(AuthContextProvider authContextProvider) : this(null, authContextProvider) { }
+        public AuthContextMiddleware(Options? options, AuthContextProvider authContextProvider)
         {
             options ??= new Options();
             IdGenerator = options.IdGenerator;
             Cookie = options.Cookie;
-            AuthContextAccessor = authContextAccessor;
+            AuthContextProvider = authContextProvider;
         }
 
         public async Task InvokeAsync(HttpContext httpContext, RequestDelegate next)
@@ -47,7 +47,7 @@ namespace Stl.Fusion.Server.Authentication
                 responseCookies.Append(cookieName, contextId, Cookie.Build(httpContext));
             }
             var authContext = new AuthContext(contextId);
-            AuthContextAccessor.Context = authContext;
+            AuthContextProvider.SetContext(authContext);
             using (authContext.Activate())
                 await next(httpContext);
         }

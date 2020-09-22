@@ -1,7 +1,7 @@
 using System;
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Stl.DependencyInjection;
 using Stl.Fusion.Internal;
 
 namespace Stl.Fusion.Authentication
@@ -14,8 +14,8 @@ namespace Stl.Fusion.Authentication
         internal FusionAuthenticationBuilder(FusionBuilder fusion)
         {
             Fusion = fusion;
-            Services.TryAddScoped<AuthContextAccessor>();
-            Services.TryAddScoped(c => c.GetRequiredService<AuthContextAccessor>().Context.AssertNotNull());
+            Services.TryAddScoped<AuthContextProvider>();
+            Services.TryAddTransient(c => c.GetRequiredService<AuthContextProvider>().ContextTask);
         }
 
         public FusionBuilder BackToFusion() => Fusion;
@@ -33,7 +33,7 @@ namespace Stl.Fusion.Authentication
                 throw Errors.MustImplement(implementationType, serverSideServiceType, nameof(implementationType));
 
             Fusion.AddComputeService(serverSideServiceType, implementationType);
-            Services.TryAddSingleton<IAuthService>(c => c.GetRequiredService<IServerSideAuthService>());
+            Services.TryAddTransient<IAuthService>(c => c.GetRequiredService<IServerSideAuthService>());
             return this;
         }
     }
