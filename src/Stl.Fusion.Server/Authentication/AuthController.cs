@@ -16,17 +16,17 @@ namespace Stl.Fusion.Server.Authentication
             => AuthService = authService;
 
         [HttpGet("logout")]
-        public Task LogoutAsync(AuthContext? context = null)
+        public Task LogoutAsync(Session? session = null)
         {
-            context ??= AuthContext.Current.AssertNotNull();
-            return AuthService.LogoutAsync(context, HttpContext.RequestAborted);
+            session ??= Session.Current.AssertNotNull();
+            return AuthService.LogoutAsync(session, HttpContext.RequestAborted);
         }
 
         [HttpGet("getUser")]
-        public Task<AuthUser> GetUserAsync(AuthContext? context = null)
+        public Task<User> GetUserAsync(Session? session = null)
         {
-            context ??= AuthContext.Current.AssertNotNull();
-            return PublishAsync(ct => AuthService.GetUserAsync(context, ct));
+            session ??= Session.Current.AssertNotNull();
+            return PublishAsync(ct => AuthService.GetUserAsync(session, ct));
         }
     }
 }

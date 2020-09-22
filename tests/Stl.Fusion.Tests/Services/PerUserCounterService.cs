@@ -12,19 +12,19 @@ namespace Stl.Fusion.Tests.Services
 
         [ComputeMethod]
         public virtual Task<int> GetAsync(string key,
-            AuthContext? context = null, CancellationToken cancellationToken = default)
+            Session? session = null, CancellationToken cancellationToken = default)
         {
-            context ??= AuthContext.Current.AssertNotNull();
-            var result = _counters.TryGetValue((context.Id, key), out var value) ? value : 0;
+            session ??= Session.Current.AssertNotNull();
+            var result = _counters.TryGetValue((session.Id, key), out var value) ? value : 0;
             return Task.FromResult(result);
         }
 
         public Task IncrementAsync(string key,
-            AuthContext? context = null, CancellationToken cancellationToken = default)
+            Session? session = null, CancellationToken cancellationToken = default)
         {
-            context ??= AuthContext.Current.AssertNotNull();
-            _counters.AddOrUpdate((context.Id, key), k => 1, (k, v) => v + 1);
-            Computed.Invalidate(() => GetAsync(key, context, default));
+            session ??= Session.Current.AssertNotNull();
+            _counters.AddOrUpdate((session.Id, key), k => 1, (k, v) => v + 1);
+            Computed.Invalidate(() => GetAsync(key, session, default));
             return Task.CompletedTask;
         }
     }

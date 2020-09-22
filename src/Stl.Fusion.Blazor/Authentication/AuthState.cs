@@ -5,10 +5,10 @@ namespace Stl.Fusion.Blazor.Authentication
 {
     public class AuthState : AuthenticationState
     {
-        public new AuthUser User { get; }
+        public new User User { get; }
 
-        public AuthState(AuthUser authUser)
-            : base(authUser.ClaimsPrincipal)
-            => User = authUser;
+        public AuthState(User user)
+            : base(user.ClaimsPrincipal)
+            => User = user;
     }
 }

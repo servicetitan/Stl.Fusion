@@ -7,35 +7,35 @@ namespace Stl.Fusion.Authentication
 {
     public class InProcessAuthService : IServerSideAuthService
     {
-        protected ConcurrentDictionary<string, AuthUser> Sessions { get; } =
-            new ConcurrentDictionary<string, AuthUser>();
+        protected ConcurrentDictionary<string, User> Sessions { get; } =
+            new ConcurrentDictionary<string, User>();
 
         public Task LoginAsync(
-            AuthUser user, AuthContext? context = null,
+            User user, Session? session = null,
             CancellationToken cancellationToken = default)
         {
-            context ??= AuthContext.Current.AssertNotNull();
-            Sessions[context.Id] = user;
-            Computed.Invalidate(() => GetUserAsync(context, default));
+            session ??= Session.Current.AssertNotNull();
+            Sessions[session.Id] = user;
+            Computed.Invalidate(() => GetUserAsync(session, default));
             return Task.CompletedTask;
         }
 
         public Task LogoutAsync(
-            AuthContext? context = null,
+            Session? session = null,
             CancellationToken cancellationToken = default)
         {
-            context ??= AuthContext.Current.AssertNotNull();
-            if (Sessions.TryRemove(context.Id, out var _))
-                Computed.Invalidate(() => GetUserAsync(context, default));
+            session ??= Session.Current.AssertNotNull();
+            if (Sessions.TryRemove(session.Id, out var _))
+                Computed.Invalidate(() => GetUserAsync(session, default));
             return Task.CompletedTask;
         }
 
-        public virtual Task<AuthUser> GetUserAsync(
-            AuthContext? context = null,
+        public virtual Task<User> GetUserAsync(
+            Session? session = null,
             CancellationToken cancellationToken = default)
         {
-            context ??= AuthContext.Current.AssertNotNull();
-            var user = Sessions.GetValueOrDefault(context.Id) ?? new AuthUser(context.Id);
+            session ??= Session.Current.AssertNotNull();
+            var user = Sessions.GetValueOrDefault(session.Id) ?? new User(session.Id);
             return Task.FromResult(user)!;
         }
     }

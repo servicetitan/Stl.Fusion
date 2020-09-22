@@ -19,34 +19,34 @@ namespace Stl.Fusion.Tests
             await using var serving = await WebSocketHost.ServeAsync();
             var authServer = WebSocketHost.Services.GetRequiredService<IServerSideAuthService>();
             var authClient = Services.GetRequiredService<IAuthService>();
-            var contextA = new AuthContext("a");
-            var contextB = new AuthContext("b");
-            var alice = new AuthUser("Local", "alice", "Alice");
-            var bob   = new AuthUser("Local", "bob", "Bob");
-            var guest = new AuthUser("<guest>");
+            var sessionA = new Session("a");
+            var sessionB = new Session("b");
+            var alice = new User("Local", "alice", "Alice");
+            var bob   = new User("Local", "bob", "Bob");
+            var guest = new User("<guest>");
 
-            using (contextA.Activate()) {
+            using (sessionA.Activate()) {
                 await authServer.LoginAsync(bob);
                 var user = await authServer.GetUserAsync();
                 user.Name.Should().Be(bob.Name);
 
-                user = await authClient.GetUserAsync(contextA);
+                user = await authClient.GetUserAsync(sessionA);
                 user.Name.Should().Be(bob.Name);
                 user = await authClient.GetUserAsync();
                 user.Name.Should().Be(bob.Name);
             }
 
-            using (contextB.Activate()) {
+            using (sessionB.Activate()) {
                 var user = await authClient.GetUserAsync();
-                user.Id.Should().Be(contextB.Id);
-                user.Name.Should().Be(AuthUser.GuestName);
+                user.Id.Should().Be(sessionB.Id);
+                user.Name.Should().Be(User.GuestName);
             }
 
-            using (((AuthContext?) null).Activate()) {
+            using (((Session?) null).Activate()) {
                 var user = await authClient.GetUserAsync();
                 // User.Id should be equal to new AuthSession.Id
                 user.Id.Length.Should().BeGreaterThan(8);
-                user.Name.Should().Be(AuthUser.GuestName);
+                user.Name.Should().Be(User.GuestName);
             }
         }
     }

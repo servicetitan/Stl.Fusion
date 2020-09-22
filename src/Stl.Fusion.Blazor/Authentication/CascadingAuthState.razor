@@ -2,40 +2,35 @@
 @using Microsoft.JSInterop
 @using Stl.Fusion.Authentication
 @using Stl.OS
-@inject AuthContextProvider AuthContextProvider
+@inject ISessionProvider SessionProvider
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IJSRuntime JSRuntime
 
-<CascadingValue TValue="AuthContext" Value="@_authContext">
-    <CascadingAuthenticationState>
-        <CascadingValue TValue="Task<AuthState>" Value="@GetAuthStateAsync()" ChildContent="@ChildContent"/>
-    </CascadingAuthenticationState>
-</CascadingValue>
+<CascadingAuthenticationState>
+    <CascadingValue TValue="Task<AuthState>" Value="@GetAuthStateAsync()" ChildContent="@ChildContent"/>
+</CascadingAuthenticationState>
 
 @code {
-    private AuthContext? _authContext;
-
     [Parameter]
     public RenderFragment ChildContent { get; set; } = _ => { };
     [Parameter]
-    public string AuthContextIdJavaScriptExpression { get; set; } = "window.FusionAuth.authContextId";
+    public string SessionIdJavaScriptExpression { get; set; } = "window.FusionAuth.sessionId";
     [Parameter]
-    public string AuthContextId {
-        get => _authContext?.Id ?? "";
+    public string SessionId {
+        get => SessionProvider.HasSession ? SessionProvider.Session.Id : "";
         set {
-            if (_authContext != null || string.IsNullOrEmpty(value))
+            if (SessionProvider.HasSession || string.IsNullOrEmpty(value))
                 return;
-            _authContext = new AuthContext(value);
-            AuthContextProvider.TrySetContext(_authContext);
-            StateHasChanged();
+            SessionProvider.Session = new Session(value);
         }
     }
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnParametersSet()
     {
-        if (AuthContextId != "" || OSInfo.Kind != OSKind.WebAssembly)
+        if (SessionId != "" || OSInfo.Kind != OSKind.WebAssembly)
             return;
-        AuthContextId = await JSRuntime.InvokeAsync<string>("eval", AuthContextIdJavaScriptExpression);
+        var inProcessJSRuntime = (IJSInProcessRuntime) JSRuntime;
+        SessionId = inProcessJSRuntime.Invoke<string>("eval", SessionIdJavaScriptExpression);
     }
 
     private Task<AuthState> GetAuthStateAsync()

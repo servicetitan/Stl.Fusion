@@ -34,20 +34,20 @@ namespace Stl.Fusion.Tests
 
             var services = CreateServiceProviderFor<PerUserCounterService>();
             var counters = services.GetRequiredService<PerUserCounterService>();
-            var contextA = new AuthContext("a");
-            var contextB = new AuthContext("b");
+            var sessionA = new Session("a");
+            var sessionB = new Session("b");
 
-            using var _1 = contextA.Activate();
+            using var _1 = sessionA.Activate();
             var aaComputed = await Computed.CaptureAsync(_ => counters.GetAsync("a"));
             Task.Run(() => WatchAsync(nameof(aaComputed), aaComputed)).Ignore();
             var abComputed = await Computed.CaptureAsync(_ => counters.GetAsync("b"));
             Task.Run(() => WatchAsync(nameof(abComputed), abComputed)).Ignore();
 
-            using var _2 = contextB.Activate();
+            using var _2 = sessionB.Activate();
             var baComputed = await Computed.CaptureAsync(_ => counters.GetAsync("a"));
             Task.Run(() => WatchAsync(nameof(baComputed), baComputed)).Ignore();
 
-            using var _3 = contextA.Activate();
+            using var _3 = sessionA.Activate();
             await counters.IncrementAsync("a");
             (await aaComputed.UpdateAsync(false)).Value.Should().Be(1);
             (await abComputed.UpdateAsync(false)).Value.Should().Be(0);
@@ -57,7 +57,7 @@ namespace Stl.Fusion.Tests
             (await abComputed.UpdateAsync(false)).Value.Should().Be(1);
             (await baComputed.UpdateAsync(false)).Value.Should().Be(0);
 
-            using var _4 = contextB.Activate();
+            using var _4 = sessionB.Activate();
             await counters.IncrementAsync("a");
             (await aaComputed.UpdateAsync(false)).Value.Should().Be(1);
             (await abComputed.UpdateAsync(false)).Value.Should().Be(1);

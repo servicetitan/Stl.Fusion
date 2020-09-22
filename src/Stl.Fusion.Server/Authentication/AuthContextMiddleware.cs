@@ -13,7 +13,7 @@ namespace Stl.Fusion.Server.Authentication
         {
             public Generator<string> IdGenerator { get; set; } = RandomStringGenerator.Default;
             public CookieBuilder Cookie { get; set; } = new CookieBuilder() {
-                Name = "AuthContext",
+                Name = "FusionAuth.SessionId",
                 IsEssential = true,
                 HttpOnly = true,
                 SameSite = SameSiteMode.Lax,
@@ -21,34 +21,34 @@ namespace Stl.Fusion.Server.Authentication
             };
         }
 
-        protected AuthContextProvider AuthContextProvider { get; }
+        protected ISessionProvider SessionProvider { get; }
         protected Generator<string> IdGenerator { get; }
         protected CookieBuilder Cookie { get; }
 
-        public AuthContextMiddleware(AuthContextProvider authContextProvider) : this(null, authContextProvider) { }
-        public AuthContextMiddleware(Options? options, AuthContextProvider authContextProvider)
+        public AuthContextMiddleware(ISessionProvider sessionProvider) : this(null, sessionProvider) { }
+        public AuthContextMiddleware(Options? options, ISessionProvider sessionProvider)
         {
             options ??= new Options();
             IdGenerator = options.IdGenerator;
             Cookie = options.Cookie;
-            AuthContextProvider = authContextProvider;
+            SessionProvider = sessionProvider;
         }
 
         public async Task InvokeAsync(HttpContext httpContext, RequestDelegate next)
         {
             var cookies = httpContext.Request.Cookies;
             var cookieName = Cookie.Name;
-            var hasCookie = cookies.TryGetValue(cookieName, out var contextId);
-            if (!hasCookie || string.IsNullOrEmpty(contextId)) {
-                contextId = IdGenerator.Next();
+            var hasCookie = cookies.TryGetValue(cookieName, out var sessionId);
+            if (!hasCookie || string.IsNullOrEmpty(sessionId)) {
+                sessionId = IdGenerator.Next();
                 var responseCookies = httpContext.Response.Cookies;
                 if (hasCookie)
                     responseCookies.Delete(cookieName);
-                responseCookies.Append(cookieName, contextId, Cookie.Build(httpContext));
+                responseCookies.Append(cookieName, sessionId, Cookie.Build(httpContext));
             }
-            var authContext = new AuthContext(contextId);
-            AuthContextProvider.SetContext(authContext);
-            using (authContext.Activate())
+            var session = new Session(sessionId);
+            SessionProvider.Session = session;
+            using (session.Activate())
                 await next(httpContext);
         }
     }

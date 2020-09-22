@@ -5,7 +5,7 @@ let openAuthWindow = function (action, flowName) {
 }
 
 window.FusionAuth = {
-    authContextId: "",
+    sessionId: "",
     windowTarget: "_blank",
     windowFeatures: "width=600,height=600",
     signIn: function () {

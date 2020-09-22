@@ -1,5 +1,4 @@
 using System;
-using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Fusion.Internal;
@@ -14,8 +13,8 @@ namespace Stl.Fusion.Authentication
         internal FusionAuthenticationBuilder(FusionBuilder fusion)
         {
             Fusion = fusion;
-            Services.TryAddScoped<AuthContextProvider>();
-            Services.TryAddTransient(c => c.GetRequiredService<AuthContextProvider>().ContextTask);
+            Services.TryAddScoped<ISessionProvider, SessionProvider>();
+            Services.TryAddTransient(c => (ISessionResolver) c.GetRequiredService<ISessionProvider>());
         }
 
         public FusionBuilder BackToFusion() => Fusion;

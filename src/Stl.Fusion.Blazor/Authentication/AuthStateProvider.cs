@@ -19,26 +19,26 @@ namespace Stl.Fusion.Blazor.Authentication
         }
 
         protected IAuthService AuthService { get; }
-        protected Task<AuthContext> AuthContextTask { get; }
+        protected ISessionResolver SessionResolver { get; }
         protected ILiveState<AuthState> State { get; }
 
         public AuthStateProvider(
             IAuthService authService,
-            Task<AuthContext> authContextTask,
+            ISessionResolver sessionResolver,
             IStateFactory stateFactory)
-            : this(null, authService, authContextTask, stateFactory) { }
+            : this(null, authService, sessionResolver, stateFactory) { }
         public AuthStateProvider(
             Options? options,
             IAuthService authService,
-            Task<AuthContext> authContextTask,
+            ISessionResolver sessionResolver,
             IStateFactory stateFactory)
         {
             options ??= new Options();
             AuthService = authService;
-            AuthContextTask = authContextTask;
+            SessionResolver = sessionResolver;
             State = stateFactory.NewLive<AuthState>(o => {
                 options.LiveStateOptionsBuilder.Invoke(o);
-                o.InitialOutputFactory = _ => new AuthState(new AuthUser(""));
+                o.InitialOutputFactory = _ => new AuthState(new User(""));
                 o.Invalidated += OnStateInvalidated;
                 o.Updated += OnStateUpdated;
             }, ComputeState);
@@ -53,8 +53,8 @@ namespace Stl.Fusion.Blazor.Authentication
 
         protected virtual async Task<AuthState> ComputeState(ILiveState<AuthState> state, CancellationToken cancellationToken)
         {
-            var context = await AuthContextTask.WithFakeCancellation(cancellationToken).ConfigureAwait(false);
-            var user = await AuthService.GetUserAsync(context, cancellationToken).ConfigureAwait(false);
+            var session = await SessionResolver.GetSessionAsync(cancellationToken).ConfigureAwait(false);
+            var user = await AuthService.GetUserAsync(session, cancellationToken).ConfigureAwait(false);
             return new AuthState(user);
         }
 
