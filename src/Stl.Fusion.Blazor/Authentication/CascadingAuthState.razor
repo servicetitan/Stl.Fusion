@@ -1,0 +1,43 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.JSInterop
+@using Stl.Fusion.Authentication
+@using Stl.OS
+@inject AuthContextProvider AuthContextProvider
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IJSRuntime JSRuntime
+
+<CascadingValue TValue="AuthContext" Value="@_authContext">
+    <CascadingAuthenticationState>
+        <CascadingValue TValue="Task<AuthState>" Value="@GetAuthStateAsync()" ChildContent="@ChildContent"/>
+    </CascadingAuthenticationState>
+</CascadingValue>
+
+@code {
+    private AuthContext? _authContext;
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; } = _ => { };
+    [Parameter]
+    public string AuthContextIdJavaScriptExpression { get; set; } = "window.FusionAuth.contextId";
+    [Parameter]
+    public string AuthContextId {
+        get => _authContext?.Id ?? "";
+        set {
+            if (_authContext != null || string.IsNullOrEmpty(value))
+                return;
+            _authContext = new AuthContext(value);
+            AuthContextProvider.TrySetContext(_authContext);
+            StateHasChanged();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthContextId != "" || OSInfo.Kind != OSKind.WebAssembly)
+            return;
+        AuthContextId = await JSRuntime.InvokeAsync<string>("eval", AuthContextIdJavaScriptExpression);
+    }
+
+    private Task<AuthState> GetAuthStateAsync()
+        => AuthenticationStateProvider.GetAuthenticationStateAsync().ContinueWith(t => (AuthState) t.Result);
+}

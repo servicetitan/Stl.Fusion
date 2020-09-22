@@ -1,15 +1,16 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
+    <RazorLangVersion>3.0</RazorLangVersion>
     <PackageTags>servicetitan stl stl_fusion blazor</PackageTags>
-    <Description>Blazor components of Stl.Fusion - <!-- 
-    -->a new implementation of "computed observables" <!-- 
-    -->designed to power distributed apps. Thread-safe, asynchronous, immutable,  <!-- 
+    <Description>Blazor components of Stl.Fusion - <!--
+    -->a new implementation of "computed observables" <!--
+    -->designed to power distributed apps. Thread-safe, asynchronous, immutable,  <!--
     -->and ready to serve replicas of computed instances to remote clients.<!--
     --></Description>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
