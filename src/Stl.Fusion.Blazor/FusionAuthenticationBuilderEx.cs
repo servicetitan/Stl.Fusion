@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,6 +19,8 @@ namespace Stl.Fusion.Blazor
             var services = fusionAuth.Services;
             services.AddAuthorizationCore(configure);
             services.TryAddScoped<AuthenticationStateProvider, AuthStateProvider>();
+            services.TryAddTransient(c => (AuthStateProvider) c.GetRequiredService<AuthenticationStateProvider>());
+            services.TryAddTransient(c => c.GetRequiredService<Task<AuthenticationState>>().ContinueWith(t => (AuthState) t.Result));
             return fusionAuth;
         }
 
