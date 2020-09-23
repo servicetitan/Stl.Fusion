@@ -56,7 +56,7 @@ namespace Stl.Fusion.Blazor
             var user = await AuthService.GetUserAsync(session, cancellationToken).ConfigureAwait(false);
             // AuthService.GetUserAsync checks for forced logout as well, so
             // we should explicitly query its state for unauthenticated users only
-            var isLogoutForced = user.IsAuthenticated
+            var isLogoutForced = !user.IsAuthenticated
                 && await AuthService.IsLogoutForcedAsync(session, cancellationToken).ConfigureAwait(false);
             return new AuthState(user, isLogoutForced);
         }
