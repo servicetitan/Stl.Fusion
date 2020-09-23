@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Stl.Fusion.Authentication
 {
@@ -8,8 +9,8 @@ namespace Stl.Fusion.Authentication
         public DateTime? CreatedAt { get; set; }
         public DateTime? LastSeenAt { get; set; }
         public string IPAddress { get; set; } = "";
-        public string Device { get; set; } = "";
-        public string Location { get; set; } = "";
+        public string UserAgent { get; set; } = "";
+        public Dictionary<string, object>? ExtraProperties { get; } = null;
 
         public SessionInfo() { }
         public SessionInfo(string id) => Id = id;
