@@ -92,7 +92,7 @@ namespace Stl.Fusion.Authentication
 
         public virtual Task<bool> IsSignOutForcedAsync(Session? session = null, CancellationToken cancellationToken = default)
         {
-            session ??= Session.Current.AssertNotNull();
+            session ??= session.AssertNotNull();
             return Task.FromResult(ForcedSignOuts.ContainsKey(session.Id));
         }
 
@@ -100,7 +100,7 @@ namespace Stl.Fusion.Authentication
             Session? session = null,
             CancellationToken cancellationToken = default)
         {
-            session ??= Session.Current.AssertNotNull();
+            session ??= session.AssertNotNull();
             if (await IsSignOutForcedAsync(session, cancellationToken).ConfigureAwait(false))
                 return new User(session.Id);
             return Users.GetValueOrDefault(session.Id) ?? new User(session.Id);
@@ -108,14 +108,14 @@ namespace Stl.Fusion.Authentication
 
         public virtual Task<SessionInfo> GetSessionInfoAsync(Session? session = null, CancellationToken cancellationToken = default)
         {
-            session ??= Session.Current.AssertNotNull();
+            session ??= session.AssertNotNull();
             var sessionInfo = SessionInfos.GetValueOrDefault(session.Id) ?? new SessionInfo(session.Id);
             return Task.FromResult(sessionInfo)!;
         }
 
         public virtual async Task<SessionInfo[]> GetUserSessions(Session? session = null, CancellationToken cancellationToken = default)
         {
-            session ??= Session.Current.AssertNotNull();
+            session ??= session.AssertNotNull();
             var user = await GetUserAsync(session, cancellationToken).ConfigureAwait(false);
             if (!user.IsAuthenticated)
                 return Array.Empty<SessionInfo>();
