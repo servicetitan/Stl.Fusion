@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Stl.DependencyInjection;
 using Stl.Fusion.Authentication;
@@ -19,12 +20,17 @@ namespace Stl.Fusion.Server.Authentication
                 SameSite = SameSiteMode.Lax,
                 Expiration = TimeSpan.FromDays(28),
             };
+            public Func<SessionMiddleware, HttpContext, Task> ForceLogoutHandler { get; set; } = DefaultForceLogoutHandler;
+
+            public static Task DefaultForceLogoutHandler(SessionMiddleware self, HttpContext httpContext)
+                => httpContext.SignOutAsync();
         }
 
-        protected ISessionProvider SessionProvider { get; }
-        protected IAuthService? AuthService { get; }
-        protected Generator<string> IdGenerator { get; }
-        protected CookieBuilder Cookie { get; }
+        public ISessionProvider SessionProvider { get; }
+        public IAuthService? AuthService { get; }
+        public Generator<string> IdGenerator { get; }
+        public CookieBuilder Cookie { get; }
+        public Func<SessionMiddleware, HttpContext, Task> ForceLogoutHandler { get; }
 
         public SessionMiddleware(ISessionProvider sessionProvider, IAuthService? authService = null)
             : this(null, sessionProvider, authService) { }
@@ -33,6 +39,7 @@ namespace Stl.Fusion.Server.Authentication
             options ??= new Options();
             IdGenerator = options.IdGenerator;
             Cookie = options.Cookie;
+            ForceLogoutHandler = options.ForceLogoutHandler;
             SessionProvider = sessionProvider;
             AuthService = authService;
         }
@@ -47,8 +54,10 @@ namespace Stl.Fusion.Server.Authentication
             if (session != null) {
                 if (AuthService != null) {
                     var isLogoutForced = await AuthService.IsLogoutForcedAsync(session, cancellationToken);
-                    if (isLogoutForced)
+                    if (isLogoutForced) {
+                        await ForceLogoutHandler(this, httpContext);
                         session = null;
+                    }
                 }
             }
             if (session == null) {
