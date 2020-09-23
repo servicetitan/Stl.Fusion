@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Reactive;
-using System.Security.Authentication;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
@@ -21,16 +20,16 @@ namespace Stl.Fusion.Authentication
             new ConcurrentDictionary<string, SessionInfo>();
         protected ConcurrentDictionary<string, User> Users { get; } =
             new ConcurrentDictionary<string, User>();
-        protected ConcurrentDictionary<string, Unit> IsLogoutForced { get; } =
+        protected ConcurrentDictionary<string, Unit> ForcedSignOuts { get; } =
             new ConcurrentDictionary<string, Unit>();
 
-        public async Task LoginAsync(
+        public async Task SignInAsync(
             User user, Session? session = null,
             CancellationToken cancellationToken = default)
         {
             session ??= Session.Current.AssertNotNull();
-            if (await IsLogoutForcedAsync(session, cancellationToken).ConfigureAwait(false))
-                throw Errors.ForcedLogout();
+            if (await IsSignOutForcedAsync(session, cancellationToken).ConfigureAwait(false))
+                throw Errors.ForcedSignOut();
             Users[session.Id] = user;
             UserSessions.AddOrUpdate(user.Id,
                 (userId, sessionId) => ImmutableHashSet<string>.Empty.Add(sessionId),
@@ -40,7 +39,7 @@ namespace Stl.Fusion.Authentication
             Computed.Invalidate(() => GetFakeUserInfo(user.Id));
         }
 
-        public Task LogoutAsync(
+        public Task SignOutAsync(
             bool force,
             Session? session = null,
             CancellationToken cancellationToken = default)
@@ -56,8 +55,8 @@ namespace Stl.Fusion.Authentication
                 Computed.Invalidate(() => GetFakeUserInfo(user.Id));
             }
             if (force) {
-                IsLogoutForced[session.Id] = default;
-                Computed.Invalidate(() => IsLogoutForcedAsync(session, default));
+                ForcedSignOuts[session.Id] = default;
+                Computed.Invalidate(() => IsSignOutForcedAsync(session, default));
             }
             return Task.CompletedTask;
         }
@@ -91,10 +90,10 @@ namespace Stl.Fusion.Authentication
 
         // Compute methods
 
-        public virtual Task<bool> IsLogoutForcedAsync(Session? session = null, CancellationToken cancellationToken = default)
+        public virtual Task<bool> IsSignOutForcedAsync(Session? session = null, CancellationToken cancellationToken = default)
         {
             session ??= Session.Current.AssertNotNull();
-            return Task.FromResult(IsLogoutForced.ContainsKey(session.Id));
+            return Task.FromResult(ForcedSignOuts.ContainsKey(session.Id));
         }
 
         public virtual async Task<User> GetUserAsync(
@@ -102,7 +101,7 @@ namespace Stl.Fusion.Authentication
             CancellationToken cancellationToken = default)
         {
             session ??= Session.Current.AssertNotNull();
-            if (await IsLogoutForcedAsync(session, cancellationToken).ConfigureAwait(false))
+            if (await IsSignOutForcedAsync(session, cancellationToken).ConfigureAwait(false))
                 return new User(session.Id);
             return Users.GetValueOrDefault(session.Id) ?? new User(session.Id);
         }

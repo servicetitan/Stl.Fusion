@@ -6,13 +6,13 @@ namespace Stl.Fusion.Blazor
     public class AuthState : AuthenticationState
     {
         public new User User { get; }
-        public bool IsLogoutForced { get; }
+        public bool IsSignOutForced { get; }
 
-        public AuthState(User user, bool isLogoutForced = false)
+        public AuthState(User user, bool isSignOutForced = false)
             : base(user.ClaimsPrincipal)
         {
             User = user;
-            IsLogoutForced = isLogoutForced;
+            IsSignOutForced = isSignOutForced;
         }
     }
 }

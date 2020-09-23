@@ -51,9 +51,9 @@
             if (!t.IsCompletedSuccessfully)
                 return; // Will react to the next change
             var authState = (AuthState) t.Result;
-            if (!authState.IsLogoutForced)
+            if (!authState.IsSignOutForced)
                 return;
-            // Current Session is unusable due to forced logout.
+            // Current Session is unusable due to forced sign-out.
             // The only way to get an usable one is to reload the page.
             InvokeAsync(() => Navigator.NavigateTo(Navigator.Uri, true)).Ignore();
         }).Ignore();

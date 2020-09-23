@@ -8,11 +8,11 @@ window.FusionAuth = {
     sessionId: "",
     windowTarget: "_blank",
     windowFeatures: "width=600,height=600",
-    login: function () {
-        openAuthWindow("login", "Sign-in");
+    signIn: function () {
+        openAuthWindow("signin", "Sign-in");
     },
-    logout: function () {
-        openAuthWindow("logout", "Sign-out");
+    signOut: function () {
+        openAuthWindow("signout", "Sign-out");
     },
     openAuthWindow: function (action, flowName) {
         let encode = encodeURIComponent;

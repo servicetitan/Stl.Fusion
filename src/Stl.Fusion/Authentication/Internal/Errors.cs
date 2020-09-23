@@ -8,7 +8,7 @@ namespace Stl.Fusion.Authentication.Internal
         public static Exception NoSessionProvided(string? parameterName = null)
             => new InvalidOperationException("No Session provided.");
 
-        public static Exception ForcedLogout()
-            => new AuthenticationException("Logout was forced for this session.");
+        public static Exception ForcedSignOut()
+            => new AuthenticationException("Sign-out was forced for this session.");
     }
 }

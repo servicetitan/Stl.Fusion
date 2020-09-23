@@ -5,12 +5,12 @@ namespace Stl.Fusion.Authentication
 {
     public interface IAuthService
     {
-        Task LogoutAsync(bool force, Session? session = null, CancellationToken cancellationToken = default);
+        Task SignOutAsync(bool force, Session? session = null, CancellationToken cancellationToken = default);
         Task SaveSessionInfoAsync(SessionInfo sessionInfo, Session? session = null, CancellationToken cancellationToken = default);
         Task UpdatePresenceAsync(Session? session = null, CancellationToken cancellationToken = default);
 
         [ComputeMethod(KeepAliveTime = 10)]
-        Task<bool> IsLogoutForcedAsync(Session? session = null, CancellationToken cancellationToken = default);
+        Task<bool> IsSignOutForcedAsync(Session? session = null, CancellationToken cancellationToken = default);
         [ComputeMethod(KeepAliveTime = 10)]
         Task<User> GetUserAsync(Session? session = null, CancellationToken cancellationToken = default);
         [ComputeMethod(KeepAliveTime = 10)]
@@ -21,6 +21,6 @@ namespace Stl.Fusion.Authentication
 
     public interface IServerSideAuthService : IAuthService
     {
-        Task LoginAsync(User user, Session? session = null, CancellationToken cancellationToken = default);
+        Task SignInAsync(User user, Session? session = null, CancellationToken cancellationToken = default);
     }
 }

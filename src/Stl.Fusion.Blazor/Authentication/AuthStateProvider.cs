@@ -54,11 +54,11 @@ namespace Stl.Fusion.Blazor
         {
             var session = await SessionResolver.GetSessionAsync(cancellationToken).ConfigureAwait(false);
             var user = await AuthService.GetUserAsync(session, cancellationToken).ConfigureAwait(false);
-            // AuthService.GetUserAsync checks for forced logout as well, so
+            // AuthService.GetUserAsync checks for forced sign-out as well, so
             // we should explicitly query its state for unauthenticated users only
-            var isLogoutForced = !user.IsAuthenticated
-                && await AuthService.IsLogoutForcedAsync(session, cancellationToken).ConfigureAwait(false);
-            return new AuthState(user, isLogoutForced);
+            var isSignOutForced = !user.IsAuthenticated
+                && await AuthService.IsSignOutForcedAsync(session, cancellationToken).ConfigureAwait(false);
+            return new AuthState(user, isSignOutForced);
         }
 
         protected virtual void OnStateInvalidated(IState<AuthState> obj) { }

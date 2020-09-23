@@ -20,9 +20,10 @@ namespace Stl.Fusion.Server.Authentication
                 SameSite = SameSiteMode.Lax,
                 Expiration = TimeSpan.FromDays(28),
             };
-            public Func<SessionMiddleware, HttpContext, Task> ForceLogoutHandler { get; set; } = DefaultForceLogoutHandler;
+            public Func<SessionMiddleware, HttpContext, Task> ForcedSignOutHandler { get; set; } =
+                DefaultForcedSignOutHandler;
 
-            public static Task DefaultForceLogoutHandler(SessionMiddleware self, HttpContext httpContext)
+            public static Task DefaultForcedSignOutHandler(SessionMiddleware self, HttpContext httpContext)
                 => httpContext.SignOutAsync();
         }
 
@@ -30,7 +31,7 @@ namespace Stl.Fusion.Server.Authentication
         public IAuthService? AuthService { get; }
         public Generator<string> IdGenerator { get; }
         public CookieBuilder Cookie { get; }
-        public Func<SessionMiddleware, HttpContext, Task> ForceLogoutHandler { get; }
+        public Func<SessionMiddleware, HttpContext, Task> ForcedSignOutHandler { get; }
 
         public SessionMiddleware(ISessionProvider sessionProvider, IAuthService? authService = null)
             : this(null, sessionProvider, authService) { }
@@ -39,7 +40,7 @@ namespace Stl.Fusion.Server.Authentication
             options ??= new Options();
             IdGenerator = options.IdGenerator;
             Cookie = options.Cookie;
-            ForceLogoutHandler = options.ForceLogoutHandler;
+            ForcedSignOutHandler = options.ForcedSignOutHandler;
             SessionProvider = sessionProvider;
             AuthService = authService;
         }
@@ -53,9 +54,9 @@ namespace Stl.Fusion.Server.Authentication
             var session = string.IsNullOrEmpty(sessionId) ? null : new Session(sessionId);
             if (session != null) {
                 if (AuthService != null) {
-                    var isLogoutForced = await AuthService.IsLogoutForcedAsync(session, cancellationToken);
-                    if (isLogoutForced) {
-                        await ForceLogoutHandler(this, httpContext);
+                    var isSignOutForced = await AuthService.IsSignOutForcedAsync(session, cancellationToken);
+                    if (isSignOutForced) {
+                        await ForcedSignOutHandler(this, httpContext);
                         session = null;
                     }
                 }

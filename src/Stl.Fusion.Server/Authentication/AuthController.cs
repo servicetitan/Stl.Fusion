@@ -16,11 +16,11 @@ namespace Stl.Fusion.Server.Authentication
             : base(publisher)
             => AuthService = authService;
 
-        [HttpGet("logout")]
-        public Task LogoutAsync(bool force, Session? session = null, CancellationToken cancellationToken = default)
+        [HttpGet("signOut")]
+        public Task SignOutAsync(bool force, Session? session = null, CancellationToken cancellationToken = default)
         {
             session ??= Session.Current.AssertNotNull();
-            return AuthService.LogoutAsync(force, session, cancellationToken);
+            return AuthService.SignOutAsync(force, session, cancellationToken);
         }
 
         [HttpGet("saveSessionInfo")]
@@ -40,11 +40,11 @@ namespace Stl.Fusion.Server.Authentication
 
         // Compute methods
 
-        [HttpGet("isLogoutForced")]
-        public Task<bool> IsLogoutForcedAsync(Session? session = null, CancellationToken cancellationToken = default)
+        [HttpGet("isSignOutForced")]
+        public Task<bool> IsSignOutForcedAsync(Session? session = null, CancellationToken cancellationToken = default)
         {
             session ??= Session.Current.AssertNotNull();
-            return PublishAsync(ct => AuthService.IsLogoutForcedAsync(session, ct), cancellationToken);
+            return PublishAsync(ct => AuthService.IsSignOutForcedAsync(session, ct), cancellationToken);
         }
 
         [HttpGet("getUser")]

@@ -26,7 +26,7 @@ namespace Stl.Fusion.Tests
             var guest = new User("<guest>");
 
             using (sessionA.Activate()) {
-                await authServer.LoginAsync(bob);
+                await authServer.SignInAsync(bob);
                 var user = await authServer.GetUserAsync();
                 user.Name.Should().Be(bob.Name);
 
