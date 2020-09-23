@@ -43,7 +43,7 @@ The sample supports **both (!)** Server-Side Blazor and Blazor WebAssembly
 [hosting modes](https://docs.microsoft.com/en-us/aspnet/core/blazor/hosting-models?view=aspnetcore-3.1)
 &ndash; you can switch the mode on its "Home" page.
 
-![](docs/img/Samples-Blazor-DualMode.gif)
+![](https://github.com/servicetitan/Stl.Fusion.Samples/raw/master/docs/img/Samples-Blazor-Auth.gif)
 
 ### Speedup Your Service By Caching Everything
 
@@ -66,7 +66,7 @@ The speedup is:
 Since Fusion precisely knows when every result - even the intermediate one - 
 gets inconsistent with the ground truth, it also ensures that 
 **every result is computed just once and reused until it gets invalidated**.
-In other words, **Fusion also provides a transparent cache**, and that's
+In other words, Fusion also provides a transparent cache, and that's
 why you see such a speedup.
 
 You can control how such caching works, and even though it's an in-process cache
