@@ -91,7 +91,7 @@ namespace Stl.Fusion.Authentication
 
         // Compute methods
 
-        public Task<bool> IsLogoutForcedAsync(Session? session = null, CancellationToken cancellationToken = default)
+        public virtual Task<bool> IsLogoutForcedAsync(Session? session = null, CancellationToken cancellationToken = default)
         {
             session ??= Session.Current.AssertNotNull();
             return Task.FromResult(IsLogoutForced.ContainsKey(session.Id));

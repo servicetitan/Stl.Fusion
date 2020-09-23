@@ -2,9 +2,11 @@
 @using Microsoft.JSInterop
 @using Stl.Fusion.Authentication
 @using Stl.OS
+@implements IDisposable
 @inject ISessionProvider SessionProvider
-@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject AuthStateProvider AuthStateProvider
 @inject PresenceService PresenceService
+@inject NavigationManager Navigator
 @inject IJSRuntime JSRuntime
 
 <CascadingAuthenticationState>
@@ -36,8 +38,26 @@
         }
         if (StartPresenceService)
             Task.Run(() => PresenceService.StartAsync(default)).Ignore();
+        AuthStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
+    }
+
+    void IDisposable.Dispose()
+        => AuthStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
+
+    private void OnAuthenticationStateChanged(Task<AuthenticationState> newAuthStateTask)
+    {
+        newAuthStateTask.ContinueWith(t => {
+            if (!t.IsCompletedSuccessfully)
+                return;
+            var authState = (AuthState) t.Result;
+            if (!authState.IsLogoutForced)
+                return;
+            // Current Session is unusable due to forced logout.
+            // The only way to get an usable one is to reload the page.
+            InvokeAsync(() => Navigator.NavigateTo(Navigator.Uri, true)).Ignore();
+        }).Ignore();
     }
 
     private Task<AuthState> GetAuthStateAsync()
-        => AuthenticationStateProvider.GetAuthenticationStateAsync().ContinueWith(t => (AuthState) t.Result);
+        => AuthStateProvider.GetAuthenticationStateAsync().ContinueWith(t => (AuthState) t.Result);
 }
