@@ -10,12 +10,14 @@ namespace Stl.Fusion.Client.Authentication
     public interface IAuthClient : IRestEaseReplicaClient
     {
         [Get("logout")]
-        Task LogoutAsync(Session? session = null, CancellationToken cancellationToken = default);
+        Task LogoutAsync(bool force, Session? session = null, CancellationToken cancellationToken = default);
         [Get("saveSessionInfo")]
         Task SaveSessionInfoAsync(SessionInfo sessionInfo, Session? session = null, CancellationToken cancellationToken = default);
         [Get("updatePresence")]
         Task UpdatePresenceAsync(Session? session = null, CancellationToken cancellationToken = default);
 
+        [Get("isLogoutForced"), ComputeMethod]
+        Task<bool> IsLogoutForcedAsync(Session? session = null, CancellationToken cancellationToken = default);
         [Get("getUser"), ComputeMethod]
         Task<User> GetUserAsync(Session? session = null, CancellationToken cancellationToken = default);
         [Get("getSessionInfo"), ComputeMethod]

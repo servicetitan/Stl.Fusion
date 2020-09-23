@@ -2,7 +2,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components.Authorization;
-using Stl.Async;
 using Stl.Fusion.Authentication;
 
 namespace Stl.Fusion.Blazor
@@ -55,7 +54,11 @@ namespace Stl.Fusion.Blazor
         {
             var session = await SessionResolver.GetSessionAsync(cancellationToken).ConfigureAwait(false);
             var user = await AuthService.GetUserAsync(session, cancellationToken).ConfigureAwait(false);
-            return new AuthState(user);
+            // AuthService.GetUserAsync checks for forced logout as well, so
+            // we should explicitly query its state for unauthenticated users only
+            var isLogoutForced = user.IsAuthenticated
+                && await AuthService.IsLogoutForcedAsync(session, cancellationToken).ConfigureAwait(false);
+            return new AuthState(user, isLogoutForced);
         }
 
         protected virtual void OnStateInvalidated(IState<AuthState> obj) { }

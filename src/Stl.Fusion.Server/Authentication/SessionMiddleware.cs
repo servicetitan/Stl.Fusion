@@ -22,31 +22,41 @@ namespace Stl.Fusion.Server.Authentication
         }
 
         protected ISessionProvider SessionProvider { get; }
+        protected IAuthService? AuthService { get; }
         protected Generator<string> IdGenerator { get; }
         protected CookieBuilder Cookie { get; }
 
-        public SessionMiddleware(ISessionProvider sessionProvider) : this(null, sessionProvider) { }
-        public SessionMiddleware(Options? options, ISessionProvider sessionProvider)
+        public SessionMiddleware(ISessionProvider sessionProvider, IAuthService? authService = null)
+            : this(null, sessionProvider, authService) { }
+        public SessionMiddleware(Options? options, ISessionProvider sessionProvider, IAuthService? authService = null)
         {
             options ??= new Options();
             IdGenerator = options.IdGenerator;
             Cookie = options.Cookie;
             SessionProvider = sessionProvider;
+            AuthService = authService;
         }
 
         public async Task InvokeAsync(HttpContext httpContext, RequestDelegate next)
         {
+            var cancellationToken = httpContext.RequestAborted;
             var cookies = httpContext.Request.Cookies;
             var cookieName = Cookie.Name;
-            var hasCookie = cookies.TryGetValue(cookieName, out var sessionId);
-            if (!hasCookie || string.IsNullOrEmpty(sessionId)) {
+            cookies.TryGetValue(cookieName, out var sessionId);
+            var session = string.IsNullOrEmpty(sessionId) ? null : new Session(sessionId);
+            if (session != null) {
+                if (AuthService != null) {
+                    var isLogoutForced = await AuthService.IsLogoutForcedAsync(session, cancellationToken);
+                    if (isLogoutForced)
+                        session = null;
+                }
+            }
+            if (session == null) {
                 sessionId = IdGenerator.Next();
+                session = new Session(sessionId);
                 var responseCookies = httpContext.Response.Cookies;
-                if (hasCookie)
-                    responseCookies.Delete(cookieName);
                 responseCookies.Append(cookieName, sessionId, Cookie.Build(httpContext));
             }
-            var session = new Session(sessionId);
             SessionProvider.Session = session;
             using (session.Activate())
                 await next(httpContext);
