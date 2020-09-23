@@ -16,6 +16,7 @@ namespace Stl.Fusion.Authentication
             Services.TryAddScoped<ISessionProvider, SessionProvider>();
             Services.TryAddTransient(c => (ISessionResolver) c.GetRequiredService<ISessionProvider>());
             Services.TryAddTransient(c => c.GetRequiredService<ISessionProvider>().Session);
+            Services.TryAddScoped<PresenceService>();
         }
 
         public FusionBuilder BackToFusion() => Fusion;

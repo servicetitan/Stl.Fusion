@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Fusion.Authentication;
-using Stl.Fusion.Blazor.Authentication;
+using Stl.Fusion.Blazor;
 
 namespace Stl.Fusion.Blazor
 {

@@ -11,6 +11,7 @@ namespace Stl.Fusion
     public interface IUpdateDelayer
     {
         Task DelayAsync(IState state, CancellationToken cancellationToken = default);
+        Task DelayAsync(int retryCount, CancellationToken cancellationToken = default);
         void CancelDelays(bool immediately = false);
     }
 
@@ -48,13 +49,13 @@ namespace Stl.Fusion
             CancelDelays(true);
         }
 
-        public virtual async Task DelayAsync(IState state, CancellationToken cancellationToken = default)
+        public virtual Task DelayAsync(IState state, CancellationToken cancellationToken = default)
+            => DelayAsync(state.Snapshot.RetryCount, cancellationToken);
+        public virtual async Task DelayAsync(int retryCount, CancellationToken cancellationToken = default)
         {
             var delay = Math.Max(0, Delay.TotalSeconds);
             var start = Clock.Now;
-            var snapshot = state.Snapshot;
 
-            var retryCount = snapshot.RetryCount;
             if (retryCount > 0) {
                 var extraDelay = Math.Pow(Math.Sqrt(2), retryCount - 1) * MinExtraErrorDelay.TotalSeconds;
                 extraDelay = Math.Min(MaxExtraErrorDelay.TotalSeconds, extraDelay);
@@ -102,6 +103,8 @@ namespace Stl.Fusion
     internal class NoDelayUpdateDelayer : IUpdateDelayer
     {
         public Task DelayAsync(IState state, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+        public Task DelayAsync(int retryCount, CancellationToken cancellationToken = default)
             => Task.CompletedTask;
 
         public void CancelDelays(bool immediately = false) { }

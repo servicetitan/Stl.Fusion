@@ -4,6 +4,7 @@
 @using Stl.OS
 @inject ISessionProvider SessionProvider
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject PresenceService PresenceService
 @inject IJSRuntime JSRuntime
 
 <CascadingAuthenticationState>
@@ -24,6 +25,8 @@
             SessionProvider.Session = new Session(value);
         }
     }
+    [Parameter]
+    public bool StartPresenceService { get; set; } = true;
 
     protected override void OnParametersSet()
     {
@@ -31,6 +34,8 @@
             return;
         var inProcessJSRuntime = (IJSInProcessRuntime) JSRuntime;
         SessionId = inProcessJSRuntime.Invoke<string>("eval", SessionIdJavaScriptExpression);
+        if (StartPresenceService)
+            Task.Run(() => PresenceService.StartAsync(default)).Ignore();
     }
 
     private Task<AuthState> GetAuthStateAsync()
