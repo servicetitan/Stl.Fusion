@@ -39,6 +39,7 @@
         if (StartPresenceService)
             Task.Run(() => PresenceService.StartAsync(default)).Ignore();
         AuthStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
+        OnAuthenticationStateChanged(AuthStateProvider.GetAuthenticationStateAsync());
     }
 
     void IDisposable.Dispose()
@@ -48,7 +49,7 @@
     {
         newAuthStateTask.ContinueWith(t => {
             if (!t.IsCompletedSuccessfully)
-                return;
+                return; // Will react to the next change
             var authState = (AuthState) t.Result;
             if (!authState.IsLogoutForced)
                 return;
