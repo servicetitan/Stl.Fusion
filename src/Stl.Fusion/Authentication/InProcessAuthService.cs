@@ -105,7 +105,7 @@ namespace Stl.Fusion.Authentication
                 return Array.Empty<SessionInfo>();
 
             await GetFakeUserInfo(user.Id).ConfigureAwait(false);
-            var sessionIds = UserSessions.GetValueOrDefault(session.Id) ?? ImmutableHashSet<string>.Empty;
+            var sessionIds = UserSessions.GetValueOrDefault(user.Id) ?? ImmutableHashSet<string>.Empty;
             var result = new List<SessionInfo>();
             foreach (var sessionId in sessionIds) {
                 var tmpSession = new Session(sessionId);
