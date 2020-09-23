@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Stl.Fusion.Authentication;
@@ -7,7 +8,7 @@ namespace Stl.Fusion.Server.Authentication
 {
     [Route("fusion/auth")]
     [ApiController]
-    public class AuthController : FusionController
+    public class AuthController : FusionController, IAuthService
     {
         protected IAuthService AuthService { get; }
 
@@ -16,17 +17,48 @@ namespace Stl.Fusion.Server.Authentication
             => AuthService = authService;
 
         [HttpGet("logout")]
-        public Task LogoutAsync(Session? session = null)
+        public Task LogoutAsync(Session? session = null, CancellationToken cancellationToken = default)
         {
             session ??= Session.Current.AssertNotNull();
-            return AuthService.LogoutAsync(session, HttpContext.RequestAborted);
+            return AuthService.LogoutAsync(session, cancellationToken);
         }
 
-        [HttpGet("getUser")]
-        public Task<User> GetUserAsync(Session? session = null)
+        [HttpGet("saveSessionInfo")]
+        public Task SaveSessionInfoAsync(SessionInfo sessionInfo, Session? session = null,
+            CancellationToken cancellationToken = default)
         {
             session ??= Session.Current.AssertNotNull();
-            return PublishAsync(ct => AuthService.GetUserAsync(session, ct));
+            return AuthService.SaveSessionInfoAsync(sessionInfo, session, cancellationToken);
+        }
+
+        [HttpGet("updatePresence")]
+        public Task UpdatePresenceAsync(Session? session = null, CancellationToken cancellationToken = default)
+        {
+            session ??= Session.Current.AssertNotNull();
+            return AuthService.UpdatePresenceAsync(session, cancellationToken);
+        }
+
+        // Compute methods
+
+        [HttpGet("getUser")]
+        public Task<User> GetUserAsync(Session? session = null, CancellationToken cancellationToken = default)
+        {
+            session ??= Session.Current.AssertNotNull();
+            return PublishAsync(ct => AuthService.GetUserAsync(session, ct), cancellationToken);
+        }
+
+        [HttpGet("getSessionInfo")]
+        public Task<SessionInfo> GetSessionInfoAsync(Session? session = null, CancellationToken cancellationToken = default)
+        {
+            session ??= Session.Current.AssertNotNull();
+            return PublishAsync(ct => AuthService.GetSessionInfoAsync(session, ct), cancellationToken);
+        }
+
+        [HttpGet("getUserSessions")]
+        public Task<SessionInfo[]> GetUserSessions(Session? session = null, CancellationToken cancellationToken = default)
+        {
+            session ??= Session.Current.AssertNotNull();
+            return PublishAsync(ct => AuthService.GetUserSessions(session, ct), cancellationToken);
         }
     }
 }
