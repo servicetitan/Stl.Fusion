@@ -28,12 +28,12 @@
     [Parameter]
     public bool StartPresenceService { get; set; } = true;
 
-    protected override void OnParametersSet()
+    protected override void OnInitialized()
     {
-        if (SessionId != "" || OSInfo.Kind != OSKind.WebAssembly)
-            return;
-        var inProcessJSRuntime = (IJSInProcessRuntime) JSRuntime;
-        SessionId = inProcessJSRuntime.Invoke<string>("eval", SessionIdJavaScriptExpression);
+        if (SessionId == "" && OSInfo.Kind == OSKind.WebAssembly) {
+            var inProcessJSRuntime = (IJSInProcessRuntime) JSRuntime;
+            SessionId = inProcessJSRuntime.Invoke<string>("eval", SessionIdJavaScriptExpression);
+        }
         if (StartPresenceService)
             Task.Run(() => PresenceService.StartAsync(default)).Ignore();
     }
