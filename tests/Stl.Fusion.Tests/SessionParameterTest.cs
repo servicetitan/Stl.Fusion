@@ -14,7 +14,8 @@ namespace Stl.Fusion.Tests
     {
         public SessionParameterTest(ITestOutputHelper @out) : base(@out) { }
 
-        protected override void ConfigureCommonServices(ServiceCollection services) { }
+        protected override void ConfigureCommonServices(ServiceCollection services)
+            => services.AddFusion().AddAuthentication();
 
         [Fact]
         public async Task BasicTest()
@@ -34,8 +35,9 @@ namespace Stl.Fusion.Tests
 
             var services = CreateServiceProviderFor<PerUserCounterService>();
             var counters = services.GetRequiredService<PerUserCounterService>();
-            var sessionA = new Session("a");
-            var sessionB = new Session("b");
+            var sessionFactory = services.GetRequiredService<ISessionFactory>();
+            var sessionA = sessionFactory.CreateSession();
+            var sessionB = sessionFactory.CreateSession();
 
             var session = sessionA;
             var aaComputed = await Computed.CaptureAsync(_ => counters.GetAsync("a", session));

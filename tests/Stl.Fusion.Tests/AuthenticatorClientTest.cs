@@ -19,8 +19,9 @@ namespace Stl.Fusion.Tests
             await using var serving = await WebSocketHost.ServeAsync();
             var authServer = WebSocketHost.Services.GetRequiredService<IServerSideAuthService>();
             var authClient = Services.GetRequiredService<IAuthService>();
-            var sessionA = new Session("a");
-            var sessionB = new Session("b");
+            var sessionFactory = Services.GetRequiredService<ISessionFactory>();
+            var sessionA = sessionFactory.CreateSession();
+            var sessionB = sessionFactory.CreateSession();
             var alice = new User("Local", "alice", "Alice");
             var bob   = new User("Local", "bob", "Bob");
             var guest = new User("<guest>");
@@ -40,7 +41,6 @@ namespace Stl.Fusion.Tests
             user.Id.Should().Be(sessionB.Id);
             user.Name.Should().Be(User.GuestName);
 
-            var sessionFactory = Services.GetRequiredService<ISessionFactory>();
             session = sessionFactory.CreateSession();
             user = await authClient.GetUserAsync(session);
             // User.Id should be equal to new AuthSession.Id

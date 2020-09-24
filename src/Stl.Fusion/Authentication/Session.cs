@@ -14,7 +14,14 @@ namespace Stl.Fusion.Authentication
         public string Id { get; }
 
         [JsonConstructor]
-        public Session(string id) => Id = id;
+        public Session(string id)
+        {
+            // The check is here to prevent use of sessions with empty or other special Ids,
+            // which could be a source of security problems later.
+            if (id.Length < 8)
+                throw Errors.InvalidSessionId(id);
+            Id = id;
+        }
 
         public override string ToString() => Id;
         string IConvertibleTo<string>.Convert() => Id;
