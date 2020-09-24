@@ -1,6 +1,8 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Channels;
 using Stl.DependencyInjection;
 using Stl.Fusion.Bridge;
@@ -33,11 +35,13 @@ namespace Stl.Fusion.Server
         public string RequestPath { get; }
         public string PublisherIdQueryParameterName { get; }
         public string ClientIdQueryParameterName { get; }
+        protected ILogger Log { get; }
         protected IPublisher Publisher { get; }
         protected Func<ChannelSerializerPair<Message, string>> ChannelSerializerPairFactory { get; }
 
-        public WebSocketServer(Options options, IPublisher publisher)
+        public WebSocketServer(Options options, IPublisher publisher, ILogger<WebSocketServer>? log = null)
         {
+            Log = log ??= NullLogger<WebSocketServer>.Instance;
             RequestPath = options.RequestPath;
             PublisherIdQueryParameterName = options.PublisherIdQueryParameterName;
             ClientIdQueryParameterName = options.ClientIdQueryParameterName;
@@ -65,7 +69,15 @@ namespace Stl.Fusion.Server
                 .WithSerializers(serializers)
                 .WithId(clientId);
             Publisher.ChannelHub.Attach(channel);
-            await wsChannel.ReaderTask.ConfigureAwait(false);
+            try {
+                await wsChannel.ReaderTask.ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) {
+                throw;
+            }
+            catch (Exception e) {
+                Log.LogWarning(e, "WebSocket connection was closed with an error.");
+            }
         }
     }
 }
