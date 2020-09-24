@@ -105,15 +105,23 @@ namespace Stl.Fusion
         object? IResult.Value => Computed.Value;
 
         event Action<IState>? IState.Invalidated {
-            add => Invalidated += value;
-            remove => Invalidated -= value;
+            add => UntypedInvalidated += value;
+            remove => UntypedInvalidated -= value;
         }
         event Action<IState>? IState.Updated {
-            add => Updated += value;
-            remove => Updated -= value;
+            add => UntypedUpdated += value;
+            remove => UntypedUpdated -= value;
         }
-        public event Action<IState<T>>? Invalidated;
-        public event Action<IState<T>>? Updated;
+        public event Action<IState<T>>? Invalidated {
+            add => UntypedInvalidated += value;
+            remove => UntypedInvalidated -= value;
+        }
+        public event Action<IState<T>>? Updated {
+            add => UntypedUpdated += value;
+            remove => UntypedUpdated -= value;
+        }
+        protected event Action<IState<T>>? UntypedInvalidated;
+        protected event Action<IState<T>>? UntypedUpdated;
 
         protected State(
             Options options, IServiceProvider serviceProvider,
@@ -175,7 +183,7 @@ namespace Stl.Fusion
         }
 
         protected internal virtual void OnInvalidated(IComputed<T> computed)
-            => Invalidated?.Invoke(this);
+            => UntypedInvalidated?.Invoke(this);
 
         protected virtual void OnUpdated(IStateSnapshot<T>? oldSnapshot)
         {
@@ -185,7 +193,7 @@ namespace Stl.Fusion
                 if (computed.Options.IsAsyncComputed)
                     throw Errors.UnsupportedComputedOptions(computed.GetType());
             }
-            Updated?.Invoke(this);
+            UntypedUpdated?.Invoke(this);
         }
 
 
