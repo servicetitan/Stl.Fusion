@@ -18,7 +18,10 @@ namespace Stl.Fusion
         {
             ComputedOptions ComputedOptions { get; set; }
             Generator<LTag> VersionGenerator { get; set; }
-            public bool InitialIsConsistent { get; set; }
+            bool InitialIsConsistent { get; set; }
+
+            Action<IState>? Invalidated { get; set; }
+            Action<IState>? Updated { get; set; }
         }
 
         IStateSnapshot Snapshot { get; }
@@ -54,10 +57,22 @@ namespace Stl.Fusion
 
             public ComputedOptions ComputedOptions { get; set; } = ComputedOptions.Default;
             public Generator<LTag> VersionGenerator { get; set; } = ConcurrentLTagGenerator.Default;
-            public Action<IState<T>>? Invalidated { get; set; }
-            public Action<IState<T>>? Updated { get; set; }
             public Func<IState<T>, Result<T>> InitialOutputFactory { get; set; } = DefaultInitialOutputFactory;
             public bool InitialIsConsistent { get; set; } = false;
+
+            public Action<IState<T>>? Invalidated { get; set; }
+            public Action<IState<T>>? Updated { get; set; }
+
+            Action<IState>? IState.IOptions.Invalidated {
+                get => UntypedInvalidated;
+                set => UntypedInvalidated = value;
+            }
+            Action<IState>? IState.IOptions.Updated {
+                get => UntypedUpdated;
+                set => UntypedUpdated = value;
+            }
+            public Action<IState>? UntypedInvalidated { get; set; }
+            public Action<IState>? UntypedUpdated { get; set; }
         }
 
         private volatile StateSnapshot<T>? _snapshot;
@@ -104,24 +119,16 @@ namespace Stl.Fusion
         object? IResult.UnsafeValue => Computed.UnsafeValue;
         object? IResult.Value => Computed.Value;
 
+        public event Action<IState<T>>? Invalidated;
+        public event Action<IState<T>>? Updated;
         event Action<IState>? IState.Invalidated {
-            add => UntypedInvalidated += value;
-            remove => UntypedInvalidated -= value;
+            add => Invalidated += value;
+            remove => Invalidated -= value;
         }
         event Action<IState>? IState.Updated {
-            add => UntypedUpdated += value;
-            remove => UntypedUpdated -= value;
+            add => Updated += value;
+            remove => Updated -= value;
         }
-        public event Action<IState<T>>? Invalidated {
-            add => UntypedInvalidated += value;
-            remove => UntypedInvalidated -= value;
-        }
-        public event Action<IState<T>>? Updated {
-            add => UntypedUpdated += value;
-            remove => UntypedUpdated -= value;
-        }
-        protected event Action<IState<T>>? UntypedInvalidated;
-        protected event Action<IState<T>>? UntypedUpdated;
 
         protected State(
             Options options, IServiceProvider serviceProvider,
@@ -133,8 +140,12 @@ namespace Stl.Fusion
             VersionGenerator = options.VersionGenerator;
             if (options.Invalidated != null)
                 Invalidated += options.Invalidated;
+            if (options.UntypedInvalidated != null)
+                Invalidated += options.UntypedInvalidated;
             if (options.Updated != null)
                 Updated += options.Updated;
+            if (options.UntypedUpdated != null)
+                Updated += options.UntypedUpdated;
 
             Function = this;
             HashCode = RuntimeHelpers.GetHashCode(this);
@@ -183,7 +194,7 @@ namespace Stl.Fusion
         }
 
         protected internal virtual void OnInvalidated(IComputed<T> computed)
-            => UntypedInvalidated?.Invoke(this);
+            => Invalidated?.Invoke(this);
 
         protected virtual void OnUpdated(IStateSnapshot<T>? oldSnapshot)
         {
@@ -193,9 +204,8 @@ namespace Stl.Fusion
                 if (computed.Options.IsAsyncComputed)
                     throw Errors.UnsupportedComputedOptions(computed.GetType());
             }
-            UntypedUpdated?.Invoke(this);
+            Updated?.Invoke(this);
         }
-
 
         // IFunction<T> & IFunction
 
