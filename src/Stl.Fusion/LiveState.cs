@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Stl.Fusion
 {
-    public interface ILiveState : IComputedState
+    public interface ILiveState : IComputedState, IDisposable
     {
         public new interface IOptions : IComputedState.IOptions
         {
@@ -18,7 +18,7 @@ namespace Stl.Fusion
         IUpdateDelayer UpdateDelayer { get; }
     }
 
-    public interface ILiveState<T> : IComputedState<T>, ILiveState, IDisposable
+    public interface ILiveState<T> : IComputedState<T>, ILiveState
     { }
     public interface ILiveState<T, TLocals> : ILiveState<T>
     {
