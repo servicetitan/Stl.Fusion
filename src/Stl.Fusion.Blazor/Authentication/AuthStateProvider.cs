@@ -17,9 +17,11 @@ namespace Stl.Fusion.Blazor
                 => options.WithUpdateDelayer(0.1, 10);
         }
 
-        protected IAuthService AuthService { get; }
-        protected ISessionResolver SessionResolver { get; }
-        protected ILiveState<AuthState> State { get; }
+        // These properties are intentionally public -
+        // e.g. State is quite handy to consume in other compute methods or states
+        public ISessionResolver SessionResolver { get; }
+        public IAuthService AuthService { get; }
+        public ILiveState<AuthState> State { get; }
 
         public AuthStateProvider(
             IAuthService authService,
