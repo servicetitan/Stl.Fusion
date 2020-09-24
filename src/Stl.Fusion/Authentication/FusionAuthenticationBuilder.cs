@@ -13,6 +13,7 @@ namespace Stl.Fusion.Authentication
         internal FusionAuthenticationBuilder(FusionBuilder fusion)
         {
             Fusion = fusion;
+            Services.TryAddSingleton<ISessionFactory, SessionFactory>();
             Services.TryAddScoped<ISessionProvider, SessionProvider>();
             Services.TryAddTransient(c => (ISessionResolver) c.GetRequiredService<ISessionProvider>());
             Services.TryAddTransient(c => c.GetRequiredService<ISessionProvider>().Session);

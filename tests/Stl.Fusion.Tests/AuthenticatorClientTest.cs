@@ -25,29 +25,27 @@ namespace Stl.Fusion.Tests
             var bob   = new User("Local", "bob", "Bob");
             var guest = new User("<guest>");
 
-            using (sessionA.Activate()) {
-                await authServer.SignInAsync(bob);
-                var user = await authServer.GetUserAsync();
-                user.Name.Should().Be(bob.Name);
+            var session = sessionA;
+            await authServer.SignInAsync(bob, session);
+            var user = await authServer.GetUserAsync(session);
+            user.Name.Should().Be(bob.Name);
 
-                user = await authClient.GetUserAsync(sessionA);
-                user.Name.Should().Be(bob.Name);
-                user = await authClient.GetUserAsync();
-                user.Name.Should().Be(bob.Name);
-            }
+            user = await authClient.GetUserAsync(sessionA);
+            user.Name.Should().Be(bob.Name);
+            user = await authClient.GetUserAsync(session);
+            user.Name.Should().Be(bob.Name);
 
-            using (sessionB.Activate()) {
-                var user = await authClient.GetUserAsync();
-                user.Id.Should().Be(sessionB.Id);
-                user.Name.Should().Be(User.GuestName);
-            }
+            session = sessionB;
+            user = await authClient.GetUserAsync(session);
+            user.Id.Should().Be(sessionB.Id);
+            user.Name.Should().Be(User.GuestName);
 
-            using (((Session?) null).Activate()) {
-                var user = await authClient.GetUserAsync();
-                // User.Id should be equal to new AuthSession.Id
-                user.Id.Length.Should().BeGreaterThan(8);
-                user.Name.Should().Be(User.GuestName);
-            }
+            var sessionFactory = Services.GetRequiredService<ISessionFactory>();
+            session = sessionFactory.CreateSession();
+            user = await authClient.GetUserAsync(session);
+            // User.Id should be equal to new AuthSession.Id
+            user.Id.Length.Should().BeGreaterThan(8);
+            user.Name.Should().Be(User.GuestName);
         }
     }
 }

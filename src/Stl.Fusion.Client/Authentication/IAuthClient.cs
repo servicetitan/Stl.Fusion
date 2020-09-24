@@ -10,19 +10,19 @@ namespace Stl.Fusion.Client.Authentication
     public interface IAuthClient : IRestEaseReplicaClient
     {
         [Get("signOut")]
-        Task SignOutAsync(bool force, Session? session = null, CancellationToken cancellationToken = default);
+        Task SignOutAsync(bool force, Session session, CancellationToken cancellationToken = default);
         [Get("saveSessionInfo")]
-        Task SaveSessionInfoAsync(SessionInfo sessionInfo, Session? session = null, CancellationToken cancellationToken = default);
+        Task SaveSessionInfoAsync(SessionInfo sessionInfo, Session session, CancellationToken cancellationToken = default);
         [Get("updatePresence")]
-        Task UpdatePresenceAsync(Session? session = null, CancellationToken cancellationToken = default);
+        Task UpdatePresenceAsync(Session session, CancellationToken cancellationToken = default);
 
         [Get("isSignOutForced"), ComputeMethod]
-        Task<bool> IsSignOutForcedAsync(Session? session = null, CancellationToken cancellationToken = default);
+        Task<bool> IsSignOutForcedAsync(Session session, CancellationToken cancellationToken = default);
         [Get("getUser"), ComputeMethod]
-        Task<User> GetUserAsync(Session? session = null, CancellationToken cancellationToken = default);
+        Task<User> GetUserAsync(Session session, CancellationToken cancellationToken = default);
         [Get("getSessionInfo"), ComputeMethod]
-        Task<SessionInfo> GetSessionInfoAsync(Session? session = null, CancellationToken cancellationToken = default);
+        Task<SessionInfo> GetSessionInfoAsync(Session session, CancellationToken cancellationToken = default);
         [Get("getUserSessions"), ComputeMethod]
-        Task<SessionInfo[]> GetUserSessions(Session? session = null, CancellationToken cancellationToken = default);
+        Task<SessionInfo[]> GetUserSessions(Session session, CancellationToken cancellationToken = default);
     }
 }

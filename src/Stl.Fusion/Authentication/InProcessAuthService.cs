@@ -23,11 +23,8 @@ namespace Stl.Fusion.Authentication
         protected ConcurrentDictionary<string, Unit> ForcedSignOuts { get; } =
             new ConcurrentDictionary<string, Unit>();
 
-        public async Task SignInAsync(
-            User user, Session? session = null,
-            CancellationToken cancellationToken = default)
+        public async Task SignInAsync(User user, Session session, CancellationToken cancellationToken = default)
         {
-            session ??= Session.Current.AssertNotNull();
             if (await IsSignOutForcedAsync(session, cancellationToken).ConfigureAwait(false))
                 throw Errors.ForcedSignOut();
             Users[session.Id] = user;
@@ -39,12 +36,8 @@ namespace Stl.Fusion.Authentication
             Computed.Invalidate(() => GetFakeUserInfo(user.Id));
         }
 
-        public Task SignOutAsync(
-            bool force,
-            Session? session = null,
-            CancellationToken cancellationToken = default)
+        public Task SignOutAsync(bool force, Session session, CancellationToken cancellationToken = default)
         {
-            session ??= Session.Current.AssertNotNull();
             if (Users.TryRemove(session.Id, out var user)) {
                 UserSessions.AddOrUpdate(user.Id,
                     (userId, sessionId) => ImmutableHashSet<string>.Empty,
@@ -61,9 +54,8 @@ namespace Stl.Fusion.Authentication
             return Task.CompletedTask;
         }
 
-        public Task SaveSessionInfoAsync(SessionInfo sessionInfo, Session? session = null, CancellationToken cancellationToken = default)
+        public Task SaveSessionInfoAsync(SessionInfo sessionInfo, Session session, CancellationToken cancellationToken = default)
         {
-            session ??= Session.Current.AssertNotNull();
             if (sessionInfo.Id != session.Id)
                 throw new ArgumentOutOfRangeException(nameof(sessionInfo));
             var now = DateTime.UtcNow;
@@ -76,9 +68,8 @@ namespace Stl.Fusion.Authentication
             return Task.CompletedTask;
         }
 
-        public async Task UpdatePresenceAsync(Session? session = null, CancellationToken cancellationToken = default)
+        public async Task UpdatePresenceAsync(Session session, CancellationToken cancellationToken = default)
         {
-            session ??= Session.Current.AssertNotNull();
             var sessionInfo = await GetSessionInfoAsync(session, cancellationToken).ConfigureAwait(false);
             var now = DateTime.UtcNow;
             var delta = now - sessionInfo.LastSeenAt;
@@ -90,32 +81,26 @@ namespace Stl.Fusion.Authentication
 
         // Compute methods
 
-        public virtual Task<bool> IsSignOutForcedAsync(Session? session = null, CancellationToken cancellationToken = default)
-        {
-            session ??= session.AssertNotNull();
-            return Task.FromResult(ForcedSignOuts.ContainsKey(session.Id));
-        }
+        public virtual Task<bool> IsSignOutForcedAsync(Session session, CancellationToken cancellationToken = default)
+            => Task.FromResult(ForcedSignOuts.ContainsKey(session.Id));
 
-        public virtual async Task<User> GetUserAsync(
-            Session? session = null,
-            CancellationToken cancellationToken = default)
+        public virtual async Task<User> GetUserAsync(Session session, CancellationToken cancellationToken = default)
         {
-            session ??= session.AssertNotNull();
             if (await IsSignOutForcedAsync(session, cancellationToken).ConfigureAwait(false))
                 return new User(session.Id);
             return Users.GetValueOrDefault(session.Id) ?? new User(session.Id);
         }
 
-        public virtual Task<SessionInfo> GetSessionInfoAsync(Session? session = null, CancellationToken cancellationToken = default)
+        public virtual Task<SessionInfo> GetSessionInfoAsync(
+            Session session, CancellationToken cancellationToken = default)
         {
-            session ??= session.AssertNotNull();
             var sessionInfo = SessionInfos.GetValueOrDefault(session.Id) ?? new SessionInfo(session.Id);
             return Task.FromResult(sessionInfo)!;
         }
 
-        public virtual async Task<SessionInfo[]> GetUserSessions(Session? session = null, CancellationToken cancellationToken = default)
+        public virtual async Task<SessionInfo[]> GetUserSessions(
+            Session session, CancellationToken cancellationToken = default)
         {
-            session ??= session.AssertNotNull();
             var user = await GetUserAsync(session, cancellationToken).ConfigureAwait(false);
             if (!user.IsAuthenticated)
                 return Array.Empty<SessionInfo>();

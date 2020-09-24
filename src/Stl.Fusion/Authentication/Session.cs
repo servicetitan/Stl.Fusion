@@ -1,6 +1,5 @@
 using System;
 using System.ComponentModel;
-using System.Threading;
 using Newtonsoft.Json;
 using Stl.Extensibility;
 using Stl.Fusion.Authentication.Internal;
@@ -12,9 +11,6 @@ namespace Stl.Fusion.Authentication
     [TypeConverter(typeof(SessionTypeConverter))]
     public class Session : IHasId<string>, IEquatable<Session>, IConvertibleTo<string>
     {
-        internal static readonly AsyncLocal<Session?> CurrentLocal = new AsyncLocal<Session?>();
-
-        public static Session? Current => CurrentLocal.Value;
         public string Id { get; }
 
         [JsonConstructor]

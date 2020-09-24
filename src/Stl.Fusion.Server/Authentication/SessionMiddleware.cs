@@ -12,7 +12,6 @@ namespace Stl.Fusion.Server.Authentication
     {
         public class Options : IOptions
         {
-            public Generator<string> IdGenerator { get; set; } = RandomStringGenerator.Default;
             public CookieBuilder Cookie { get; set; } = new CookieBuilder() {
                 Name = "FusionAuth.SessionId",
                 IsEssential = true,
@@ -28,20 +27,27 @@ namespace Stl.Fusion.Server.Authentication
         }
 
         public ISessionProvider SessionProvider { get; }
+        public ISessionFactory SessionFactory { get; }
         public IAuthService? AuthService { get; }
-        public Generator<string> IdGenerator { get; }
         public CookieBuilder Cookie { get; }
         public Func<SessionMiddleware, HttpContext, Task> ForcedSignOutHandler { get; }
 
-        public SessionMiddleware(ISessionProvider sessionProvider, IAuthService? authService = null)
-            : this(null, sessionProvider, authService) { }
-        public SessionMiddleware(Options? options, ISessionProvider sessionProvider, IAuthService? authService = null)
+        public SessionMiddleware(
+            ISessionProvider sessionProvider,
+            ISessionFactory sessionFactory,
+            IAuthService? authService = null)
+            : this(null, sessionProvider, sessionFactory, authService) { }
+        public SessionMiddleware(
+            Options? options,
+            ISessionProvider sessionProvider,
+            ISessionFactory sessionFactory,
+            IAuthService? authService = null)
         {
             options ??= new Options();
-            IdGenerator = options.IdGenerator;
             Cookie = options.Cookie;
             ForcedSignOutHandler = options.ForcedSignOutHandler;
             SessionProvider = sessionProvider;
+            SessionFactory = sessionFactory;
             AuthService = authService;
         }
 
@@ -62,14 +68,12 @@ namespace Stl.Fusion.Server.Authentication
                 }
             }
             if (session == null) {
-                sessionId = IdGenerator.Next();
-                session = new Session(sessionId);
+                session = SessionFactory.CreateSession();
                 var responseCookies = httpContext.Response.Cookies;
-                responseCookies.Append(cookieName, sessionId, Cookie.Build(httpContext));
+                responseCookies.Append(cookieName, session.Id, Cookie.Build(httpContext));
             }
             SessionProvider.Session = session;
-            using (session.Activate())
-                await next(httpContext);
+            await next(httpContext);
         }
     }
 }

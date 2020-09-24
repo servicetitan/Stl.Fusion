@@ -11,18 +11,14 @@ namespace Stl.Fusion.Tests.Services
         private readonly ConcurrentDictionary<(string, string), int> _counters = new ConcurrentDictionary<(string, string), int>();
 
         [ComputeMethod]
-        public virtual Task<int> GetAsync(string key,
-            Session? session = null, CancellationToken cancellationToken = default)
+        public virtual Task<int> GetAsync(string key, Session session, CancellationToken cancellationToken = default)
         {
-            session ??= Session.Current.AssertNotNull();
             var result = _counters.TryGetValue((session.Id, key), out var value) ? value : 0;
             return Task.FromResult(result);
         }
 
-        public Task IncrementAsync(string key,
-            Session? session = null, CancellationToken cancellationToken = default)
+        public Task IncrementAsync(string key, Session session, CancellationToken cancellationToken = default)
         {
-            session ??= Session.Current.AssertNotNull();
             _counters.AddOrUpdate((session.Id, key), k => 1, (k, v) => v + 1);
             Computed.Invalidate(() => GetAsync(key, session, default));
             return Task.CompletedTask;
