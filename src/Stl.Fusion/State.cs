@@ -122,13 +122,15 @@ namespace Stl.Fusion
         public event Action<IState<T>>? Invalidated;
         public event Action<IState<T>>? Updated;
         event Action<IState>? IState.Invalidated {
-            add => Invalidated += value;
-            remove => Invalidated -= value;
+            add => UntypedInvalidated += value;
+            remove => UntypedInvalidated -= value;
         }
         event Action<IState>? IState.Updated {
-            add => Updated += value;
-            remove => Updated -= value;
+            add => UntypedUpdated += value;
+            remove => UntypedUpdated -= value;
         }
+        protected event Action<IState<T>>? UntypedInvalidated;
+        protected event Action<IState<T>>? UntypedUpdated;
 
         protected State(
             Options options, IServiceProvider serviceProvider,
@@ -141,11 +143,11 @@ namespace Stl.Fusion
             if (options.Invalidated != null)
                 Invalidated += options.Invalidated;
             if (options.UntypedInvalidated != null)
-                Invalidated += options.UntypedInvalidated;
+                UntypedInvalidated += options.UntypedInvalidated;
             if (options.Updated != null)
                 Updated += options.Updated;
             if (options.UntypedUpdated != null)
-                Updated += options.UntypedUpdated;
+                UntypedUpdated += options.UntypedUpdated;
 
             Function = this;
             HashCode = RuntimeHelpers.GetHashCode(this);
@@ -194,7 +196,10 @@ namespace Stl.Fusion
         }
 
         protected internal virtual void OnInvalidated(IComputed<T> computed)
-            => Invalidated?.Invoke(this);
+        {
+            Invalidated?.Invoke(this);
+            UntypedInvalidated?.Invoke(this);
+        }
 
         protected virtual void OnUpdated(IStateSnapshot<T>? oldSnapshot)
         {
@@ -205,6 +210,7 @@ namespace Stl.Fusion
                     throw Errors.UnsupportedComputedOptions(computed.GetType());
             }
             Updated?.Invoke(this);
+            UntypedUpdated?.Invoke(this);
         }
 
         // IFunction<T> & IFunction
