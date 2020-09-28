@@ -7,7 +7,7 @@ namespace Stl.Fusion.Blazor
     public abstract class StatefulComponentBase : ComponentBase, IDisposable
     {
         [Flags]
-        protected enum StateEventHandlers
+        public enum StateEventHandlers
         {
             Invalidated = 1,
             Updating = 2,
@@ -24,9 +24,10 @@ namespace Stl.Fusion.Blazor
         protected IServiceProvider ServiceProvider { get; set; } = null!;
         protected IStateFactory StateFactory => ServiceProvider.GetStateFactory();
         protected StateEventHandlers UsedStateEventHandlers { get; set; } = StateEventHandlers.Updated;
-        protected bool IsLoading => _state == null || _state.Snapshot.UpdateCount == 0;
-        protected bool IsUpdating => _state == null || _state.Snapshot.IsUpdating;
-        protected bool IsUpdatePending => _state == null || _state.Snapshot.Computed.IsInvalidated();
+
+        public bool IsLoading => _state == null || _state.Snapshot.UpdateCount == 0;
+        public bool IsUpdating => _state == null || _state.Snapshot.IsUpdating;
+        public bool IsUpdatePending => _state == null || _state.Snapshot.Computed.IsInvalidated();
 
         protected StatefulComponentBase()
         {
@@ -49,6 +50,7 @@ namespace Stl.Fusion.Blazor
 
         protected virtual void OnSetState(IState newState, IState? oldState)
         {
+            _state = newState;
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (oldState != null) {
                 DetachStateEventHandlers(oldState);
