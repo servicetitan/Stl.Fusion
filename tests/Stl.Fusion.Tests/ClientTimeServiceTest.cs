@@ -31,7 +31,7 @@ namespace Stl.Fusion.Tests
             }
             (DateTime.Now - cTime.Value).Should().BeLessThan(epsilon);
 
-            await TestEx.WhenMet(
+            await TestEx.WhenMetAsync(
                 () => cTime.IsConsistent().Should().BeFalse(),
                 TimeSpan.FromSeconds(5));
             var time = await cTime.UseAsync();

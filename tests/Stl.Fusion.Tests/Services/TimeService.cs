@@ -12,6 +12,8 @@ namespace Stl.Fusion.Tests.Services
         [ComputeMethod]
         Task<DateTime> GetTimeAsync(CancellationToken cancellationToken = default);
         [ComputeMethod]
+        Task<DateTime> GetTimeWithDelayAsync(CancellationToken cancellationToken = default);
+        [ComputeMethod]
         Task<string?> GetFormattedTimeAsync(string format, CancellationToken cancellationToken = default);
         [ComputeMethod]
         Task<DateTime> GetTimeWithOffsetAsync(TimeSpan offset);
@@ -39,6 +41,13 @@ namespace Stl.Fusion.Tests.Services
         [ComputeMethod(AutoInvalidateTime = 0.25)]
         public virtual Task<DateTime> GetTimeAsync(CancellationToken cancellationToken = default)
             => Task.FromResult(GetTime());
+
+        [ComputeMethod(AutoInvalidateTime = 0.25)]
+        public virtual async Task<DateTime> GetTimeWithDelayAsync(CancellationToken cancellationToken = default)
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken).ConfigureAwait(false);
+            return GetTime();
+        }
 
         [ComputeMethod]
         public virtual async Task<string?> GetFormattedTimeAsync(string format, CancellationToken cancellationToken = default)
