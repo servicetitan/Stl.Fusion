@@ -23,14 +23,14 @@ namespace Stl.Fusion.Internal
             => Computer.Invoke(this, cancellationToken);
     }
 
-    public sealed class FuncLiveState<T, TOwn> : LiveState<T, TOwn>
+    public sealed class FuncLiveState<T, TLocals> : LiveState<T, TLocals>
     {
-        public Func<ILiveState<T, TOwn>, CancellationToken, Task<T>> Computer { get; }
+        public Func<ILiveState<T, TLocals>, CancellationToken, Task<T>> Computer { get; }
 
         public FuncLiveState(
             Options options,
             IServiceProvider serviceProvider,
-            Func<ILiveState<T, TOwn>, CancellationToken, Task<T>> computer,
+            Func<ILiveState<T, TLocals>, CancellationToken, Task<T>> computer,
             object? argument = null)
             : base(options, serviceProvider, argument, false)
         {

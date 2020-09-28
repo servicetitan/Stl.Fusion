@@ -21,6 +21,7 @@ namespace Stl.Fusion
             bool InitialIsConsistent { get; set; }
 
             Action<IState>? Invalidated { get; set; }
+            Action<IState>? Updating { get; set; }
             Action<IState>? Updated { get; set; }
         }
 
@@ -31,6 +32,7 @@ namespace Stl.Fusion
         object? Argument { get; }
 
         event Action<IState>? Invalidated;
+        event Action<IState>? Updating;
         event Action<IState>? Updated;
     }
 
@@ -61,17 +63,24 @@ namespace Stl.Fusion
             public bool InitialIsConsistent { get; set; } = false;
 
             public Action<IState<T>>? Invalidated { get; set; }
+            public Action<IState<T>>? Updating { get; set; }
             public Action<IState<T>>? Updated { get; set; }
 
             Action<IState>? IState.IOptions.Invalidated {
                 get => UntypedInvalidated;
                 set => UntypedInvalidated = value;
             }
+            Action<IState>? IState.IOptions.Updating {
+                get => UntypedUpdating;
+                set => UntypedUpdating = value;
+            }
             Action<IState>? IState.IOptions.Updated {
                 get => UntypedUpdated;
                 set => UntypedUpdated = value;
             }
+
             public Action<IState>? UntypedInvalidated { get; set; }
+            public Action<IState>? UntypedUpdating { get; set; }
             public Action<IState>? UntypedUpdated { get; set; }
         }
 
@@ -120,16 +129,24 @@ namespace Stl.Fusion
         object? IResult.Value => Computed.Value;
 
         public event Action<IState<T>>? Invalidated;
+        public event Action<IState<T>>? Updating;
         public event Action<IState<T>>? Updated;
+
         event Action<IState>? IState.Invalidated {
             add => UntypedInvalidated += value;
             remove => UntypedInvalidated -= value;
+        }
+        event Action<IState>? IState.Updating {
+            add => UntypedUpdating += value;
+            remove => UntypedUpdating -= value;
         }
         event Action<IState>? IState.Updated {
             add => UntypedUpdated += value;
             remove => UntypedUpdated -= value;
         }
+
         protected event Action<IState<T>>? UntypedInvalidated;
+        protected event Action<IState<T>>? UntypedUpdating;
         protected event Action<IState<T>>? UntypedUpdated;
 
         protected State(
@@ -140,10 +157,17 @@ namespace Stl.Fusion
             Argument = argument;
             ComputedOptions = options.ComputedOptions;
             VersionGenerator = options.VersionGenerator;
+
             if (options.Invalidated != null)
                 Invalidated += options.Invalidated;
             if (options.UntypedInvalidated != null)
                 UntypedInvalidated += options.UntypedInvalidated;
+
+            if (options.Updating != null)
+                Updating += options.Updating;
+            if (options.UntypedUpdating != null)
+                UntypedUpdating += options.UntypedUpdating;
+
             if (options.Updated != null)
                 Updated += options.Updated;
             if (options.UntypedUpdated != null)
@@ -201,6 +225,13 @@ namespace Stl.Fusion
             UntypedInvalidated?.Invoke(this);
         }
 
+        protected virtual void OnUpdating()
+        {
+            Snapshot.IsUpdating = true;
+            Updating?.Invoke(this);
+            UntypedUpdating?.Invoke(this);
+        }
+
         protected virtual void OnUpdated(IStateSnapshot<T>? oldSnapshot)
         {
             if (oldSnapshot == null) {
@@ -242,6 +273,7 @@ namespace Stl.Fusion
             if (result.TryUseExisting(context, usedBy))
                 return result;
 
+            OnUpdating();
             result = await ComputeAsync(cancellationToken).ConfigureAwait(false);
             result.UseNew(context, usedBy);
             return result;
@@ -275,6 +307,7 @@ namespace Stl.Fusion
             if (result.TryUseExisting(context, usedBy))
                 return result.Strip();
 
+            OnUpdating();
             result = await ComputeAsync(cancellationToken).ConfigureAwait(false);
             result.UseNew(context, usedBy);
             return result.Value;
