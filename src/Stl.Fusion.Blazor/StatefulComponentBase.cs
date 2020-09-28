@@ -18,15 +18,15 @@ namespace Stl.Fusion.Blazor
         private readonly Action<IState> _onStateInvalidatedCached;
         private readonly Action<IState> _onStateUpdatingCached;
         private readonly Action<IState> _onStateUpdatedCached;
-        private IState _state = null!;
+        private IState? _state;
 
         [Inject]
         protected IServiceProvider ServiceProvider { get; set; } = null!;
         protected IStateFactory StateFactory => ServiceProvider.GetStateFactory();
         protected StateEventHandlers UsedStateEventHandlers { get; set; } = StateEventHandlers.Updated;
-        protected bool IsLoading => _state.Snapshot.UpdateCount != 0;
-        protected bool IsUpdating => _state.Snapshot.IsUpdating;
-        protected bool IsUpdatePending => _state.Snapshot.Computed.IsInvalidated();
+        protected bool IsLoading => _state == null || _state.Snapshot.UpdateCount == 0;
+        protected bool IsUpdating => _state == null || _state.Snapshot.IsUpdating;
+        protected bool IsUpdatePending => _state == null || _state.Snapshot.Computed.IsInvalidated();
 
         protected StatefulComponentBase()
         {
@@ -38,19 +38,19 @@ namespace Stl.Fusion.Blazor
         public virtual void Dispose()
         {
             var state = _state;
-            _state = null!;
-            DetachStateEventHandlers(state);
+            _state = null;
+            if (state != null)
+                DetachStateEventHandlers(state);
             if (state is IDisposable d)
                 d.Dispose();
         }
 
         // Protected methods
 
-        protected virtual void OnSetState(IState newState)
+        protected virtual void OnSetState(IState newState, IState? oldState)
         {
-            var oldState = _state;
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-            if (!ReferenceEquals(oldState, null)) {
+            if (oldState != null) {
                 DetachStateEventHandlers(oldState);
                 if (oldState is IDisposable d)
                     d.Dispose();
@@ -85,15 +85,16 @@ namespace Stl.Fusion.Blazor
     public abstract class StatefulComponentBase<TState> : StatefulComponentBase, IDisposable
         where TState : class, IState
     {
-        private TState? _state = null!;
+        private TState? _state;
 
         protected TState State {
             get => _state!;
             set {
-                if (ReferenceEquals(_state, value))
+                var oldState = _state;
+                if (ReferenceEquals(oldState, value))
                     return;
                 _state = value;
-                OnSetState(value);
+                OnSetState(value, oldState);
             }
         }
 
