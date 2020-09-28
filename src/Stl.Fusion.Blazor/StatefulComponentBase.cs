@@ -9,10 +9,10 @@ namespace Stl.Fusion.Blazor
         [Flags]
         protected enum StateEventHandlers
         {
-            OnInvalidated = 1,
-            OnUpdating = 2,
-            OnUpdated = 4,
-            OnAny = OnInvalidated | OnUpdating | OnUpdated,
+            Invalidated = 1,
+            Updating = 2,
+            Updated = 4,
+            All = Invalidated | Updating | Updated,
         }
 
         private readonly Action<IState> _onStateInvalidatedCached;
@@ -23,7 +23,7 @@ namespace Stl.Fusion.Blazor
         [Inject]
         protected IServiceProvider ServiceProvider { get; set; } = null!;
         protected IStateFactory StateFactory => ServiceProvider.GetStateFactory();
-        protected StateEventHandlers UsedStateEventHandlers { get; set; } = StateEventHandlers.OnUpdated;
+        protected StateEventHandlers UsedStateEventHandlers { get; set; } = StateEventHandlers.Updated;
         protected bool IsLoading => _state.Snapshot.UpdateCount != 0;
         protected bool IsUpdating => _state.Snapshot.IsUpdating;
         protected bool IsUpdatePending => _state.Snapshot.Computed.IsInvalidated();
@@ -66,11 +66,11 @@ namespace Stl.Fusion.Blazor
 
         private void AttachStateEventHandlers(IState state)
         {
-            if ((UsedStateEventHandlers & StateEventHandlers.OnInvalidated) != 0)
+            if ((UsedStateEventHandlers & StateEventHandlers.Invalidated) != 0)
                 state.Invalidated += _onStateInvalidatedCached;
-            if ((UsedStateEventHandlers & StateEventHandlers.OnUpdating) != 0)
+            if ((UsedStateEventHandlers & StateEventHandlers.Updating) != 0)
                 state.Updating += _onStateUpdatingCached;
-            if ((UsedStateEventHandlers & StateEventHandlers.OnUpdated) != 0)
+            if ((UsedStateEventHandlers & StateEventHandlers.Updated) != 0)
                 state.Updated += _onStateUpdatedCached;
         }
 
