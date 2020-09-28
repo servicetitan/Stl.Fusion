@@ -15,7 +15,7 @@ namespace Stl.Fusion.Blazor
         protected virtual void ConfigureState(LiveState<T>.Options options) { }
 
         protected virtual Task<T> ComputeStateAsync(CancellationToken cancellationToken)
-            // No updates by default
+            // Return the prev. value by default
             => State.AsTask();
     }
 
@@ -32,7 +32,7 @@ namespace Stl.Fusion.Blazor
         protected virtual void ConfigureState(LiveState<T, TLocals>.Options options) { }
 
         protected virtual Task<T> ComputeStateAsync(CancellationToken cancellationToken)
-            // No updates by default
+            // Return the prev. value by default
             => State.AsTask();
     }
 }

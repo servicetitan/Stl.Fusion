@@ -26,8 +26,8 @@ namespace Stl.Fusion.Internal
                     Quanta = TimeSpan.FromMilliseconds(250),
                     ConcurrencyLevel = concurrencyLevel,
                     Clock = Clock,
-                    FireHandler = t => t.SwapAsync(),
-                });
+                },
+                t => t.SwapAsync());
         }
     }
 }

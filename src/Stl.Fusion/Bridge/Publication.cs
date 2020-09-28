@@ -37,7 +37,7 @@ namespace Stl.Fusion.Bridge
         private long _lastTouchTime;
         private long _useCount;
 
-        protected readonly IMomentClock Clock;
+        protected IMomentClock Clock { get; }
         protected volatile IPublicationStateImpl<T> StateField;
         protected IPublisherImpl PublisherImpl => (IPublisherImpl) Publisher;
         protected Moment LastTouchTime {

@@ -23,9 +23,9 @@ namespace Stl.Fusion
             Func<ILiveState<T>, CancellationToken, Task<T>> computer,
             object? argument = null);
 
-        ILiveState<T, TOwn> NewLive<T, TOwn>(
-            LiveState<T, TOwn>.Options options,
-            Func<ILiveState<T, TOwn>, CancellationToken, Task<T>> computer,
+        ILiveState<T, TLocals> NewLive<T, TLocals>(
+            LiveState<T, TLocals>.Options options,
+            Func<ILiveState<T, TLocals>, CancellationToken, Task<T>> computer,
             object? argument = null);
     }
 
@@ -54,10 +54,10 @@ namespace Stl.Fusion
             object? argument = null)
             => new FuncLiveState<T>(options, ServiceProvider, computer, argument);
 
-        public ILiveState<T, TOwn> NewLive<T, TOwn>(
-            LiveState<T, TOwn>.Options options,
-            Func<ILiveState<T, TOwn>, CancellationToken, Task<T>> computer,
+        public ILiveState<T, TLocals> NewLive<T, TLocals>(
+            LiveState<T, TLocals>.Options options,
+            Func<ILiveState<T, TLocals>, CancellationToken, Task<T>> computer,
             object? argument = null)
-            => new FuncLiveState<T, TOwn>(options, ServiceProvider, computer, argument);
+            => new FuncLiveState<T, TLocals>(options, ServiceProvider, computer, argument);
     }
 }

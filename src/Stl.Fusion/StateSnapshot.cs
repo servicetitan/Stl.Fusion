@@ -1,3 +1,6 @@
+using System;
+using System.Threading;
+
 namespace Stl.Fusion
 {
     public interface IStateSnapshot
@@ -8,6 +11,7 @@ namespace Stl.Fusion
         int UpdateCount { get; }
         int FailureCount { get; }
         int RetryCount { get; }
+        bool IsUpdating { get; set; }
     }
 
     public interface IStateSnapshot<T> : IStateSnapshot
@@ -19,6 +23,17 @@ namespace Stl.Fusion
 
     public class StateSnapshot<T> : IStateSnapshot<T>
     {
+        private volatile int _isUpdating = 0;
+
+        public bool IsUpdating {
+            get => _isUpdating != 0;
+            set {
+                if (value == false)
+                    throw new ArgumentOutOfRangeException(nameof(value));
+                Interlocked.CompareExchange(ref _isUpdating, 1, 0);
+            }
+        }
+
         public IComputed<T> Computed { get; }
         public IComputed<T> LastValueComputed { get; }
         public T LastValue => LastValueComputed.Value;

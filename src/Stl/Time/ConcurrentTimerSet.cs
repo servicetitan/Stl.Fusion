@@ -25,9 +25,7 @@ namespace Stl.Time
         public int ConcurrencyLevel { get; }
         public int Count => _timerSets.Sum(ts => ts.Count);
 
-        public ConcurrentTimerSet(Options? options = null,
-            Action<TTimer>? fireHandler = null,
-            IMomentClock? clock = null)
+        public ConcurrentTimerSet(Options? options = null, Action<TTimer>? fireHandler = null)
         {
             options = options.OrDefault();
             if (options.Quanta < Options.MinQuanta)
@@ -35,13 +33,13 @@ namespace Stl.Time
             if (options.ConcurrencyLevel < 1)
                 options.ConcurrencyLevel = 1;
             Quanta = options.Quanta;
-            Clock = clock ?? options.Clock ?? CoarseCpuClock.Instance;
+            Clock = options.Clock;
             ConcurrencyLevel = (int) Bits.GreaterOrEqualPowerOf2((ulong) Math.Max(1, options.ConcurrencyLevel));
-            _fireHandler = fireHandler ?? options.FireHandler;
+            _fireHandler = fireHandler;
             _concurrencyLevelMask = ConcurrencyLevel - 1;
             _timerSets = new TimerSet<TTimer>[ConcurrencyLevel];
             for (var i = 0; i < _timerSets.Length; i++)
-                _timerSets[i] = new TimerSet<TTimer>(options, _fireHandler, Clock);
+                _timerSets[i] = new TimerSet<TTimer>(options, _fireHandler);
         }
 
         protected override async ValueTask DisposeInternalAsync(bool disposing)

@@ -17,8 +17,8 @@ namespace Stl.Fusion.Swapping
             public TimeSpan ExpirationTime { get; set; } = TimeSpan.FromMinutes(1);
             public TimeSpan TimerQuanta { get; set; } = TimeSpan.FromSeconds(1);
             public int ConcurrencyLevel { get; set; } = HardwareInfo.ProcessorCount;
-            public IMomentClock? Clock { get; set; } = CoarseCpuClock.Instance;
             public Func<ISerializer<string>> SerializerFactory { get; set; } = () => new JsonNetSerializer();
+            public IMomentClock Clock { get; set; } = CoarseCpuClock.Instance;
         }
 
         protected readonly ConcurrentDictionary<string, string> Storage;
@@ -31,16 +31,17 @@ namespace Stl.Fusion.Swapping
             options = options.OrDefault();
             SerializerFactory = options.SerializerFactory;
             ExpirationTime = options.ExpirationTime;
-            Clock = options.Clock ?? CoarseCpuClock.Instance;
+            Clock = options.Clock;
             Storage = new ConcurrentDictionary<string, string>(
                 options.ConcurrencyLevel,
                 ComputedRegistry.Options.DefaultInitialCapacity);
-            ExpirationTimers = new ConcurrentTimerSet<string>(new ConcurrentTimerSet<string>.Options() {
-                Clock = Clock,
-                Quanta = options.TimerQuanta,
-                ConcurrencyLevel = options.ConcurrencyLevel,
-                FireHandler = key => Storage.TryRemove(key, out _)
-            });
+            ExpirationTimers = new ConcurrentTimerSet<string>(
+                new ConcurrentTimerSet<string>.Options() {
+                    Clock = Clock,
+                    Quanta = options.TimerQuanta,
+                    ConcurrencyLevel = options.ConcurrencyLevel,
+                },
+                key => Storage.TryRemove(key, out _));
         }
 
         protected override ValueTask<Option<string>> LoadAsync(string key, CancellationToken cancellationToken)

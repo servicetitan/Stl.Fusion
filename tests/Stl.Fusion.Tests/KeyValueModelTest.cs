@@ -39,7 +39,7 @@ namespace Stl.Fusion.Tests
             c.Value.Value.Should().BeNull();
             c.Value.UpdateCount.Should().Be(0);
 
-            await TestEx.WhenMet(() => {
+            await TestEx.WhenMetAsync(() => {
                 var snapshot = kvm.Snapshot;
                 snapshot.Computed.HasValue.Should().BeTrue();
                 var c = snapshot.Computed;

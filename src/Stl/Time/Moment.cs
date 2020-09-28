@@ -65,19 +65,35 @@ namespace Stl.Time
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public DateTime ToDateTime() => DateTime.UnixEpoch + EpochOffset;
+        public DateTime ToDateTime(DateTime min, DateTime max)
+            => Clamp(new Moment(min), new Moment(max)).ToDateTime();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public DateTime ToDateTimeClamped()
+            => ToDateTime(DateTime.MinValue.ToUniversalTime(), DateTime.MaxValue.ToUniversalTime());
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public DateTimeOffset ToDateTimeOffset() => DateTimeOffset.UnixEpoch + EpochOffset;
+        public DateTimeOffset ToDateTimeOffset(DateTimeOffset min, DateTimeOffset max)
+            => Clamp(new Moment(min), new Moment(max)).ToDateTimeOffset();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public DateTimeOffset ToDateTimeOffsetClamped()
+            => ToDateTimeOffset(DateTimeOffset.MinValue.ToUniversalTime(), DateTimeOffset.MaxValue.ToUniversalTime());
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double ToUnixEpoch() => EpochOffset.TotalSeconds;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long ToIntegerUnixEpoch() => (long) Math.Floor(ToUnixEpoch());
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Moment Clamp(Moment min, Moment max)
+            => new Moment(Math.Max(min.EpochOffsetTicks, Math.Min(max.EpochOffsetTicks, EpochOffsetTicks)));
+
         public override string ToString()
-            => ToDateTime().ToString(CultureInfo.InvariantCulture);
+            => ToDateTimeClamped().ToString(CultureInfo.InvariantCulture);
         public string ToString(string format)
-            => ToDateTime().ToString(format, CultureInfo.InvariantCulture);
+            => ToDateTimeClamped().ToString(format, CultureInfo.InvariantCulture);
         public string ToString(string format, CultureInfo cultureInfo)
-            => ToDateTime().ToString(format, cultureInfo);
+            => ToDateTimeClamped().ToString(format, cultureInfo);
 
         // Equality
 

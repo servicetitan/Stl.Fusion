@@ -8,6 +8,7 @@ using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Interception;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Internal;
+using Stl.Time;
 
 namespace Stl.Fusion
 {
@@ -36,6 +37,7 @@ namespace Stl.Fusion
 
             // Common services
             Services.AddOptions();
+            Services.TryAddSingleton(SystemClock.Instance);
             // Compute services & their dependencies
             Services.TryAddSingleton(new ArgumentHandlerProvider.Options());
             Services.TryAddSingleton<IArgumentHandlerProvider, ArgumentHandlerProvider>();

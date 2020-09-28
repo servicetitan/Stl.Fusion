@@ -28,7 +28,6 @@ namespace Stl.Fusion
             public int ConcurrencyLevel { get; set; } = HardwareInfo.ProcessorCount << 4;
             public Func<IFunction, IAsyncLockSet<ComputedInput>>? LocksProvider { get; set; } = null;
             public GCHandlePool? GCHandlePool { get; set; } = null;
-            public IMomentClock Clock { get; set; } = CoarseCpuClock.Instance;
 
             static Options()
             {
@@ -45,7 +44,6 @@ namespace Stl.Fusion
         private readonly Func<IFunction, IAsyncLockSet<ComputedInput>> _locksProvider;
         private readonly GCHandlePool _gcHandlePool;
         private readonly StochasticCounter _opCounter;
-        private readonly IMomentClock _clock;
         private volatile int _pruneCounterThreshold;
         private Task? _pruneTask;
         private object Lock => _storage;
@@ -65,7 +63,6 @@ namespace Stl.Fusion
                 throw new ArgumentOutOfRangeException(
                     $"{nameof(options)}.{nameof(options.GCHandlePool)}.{nameof(_gcHandlePool.HandleType)}");
             _opCounter = new StochasticCounter();
-            _clock = options.Clock;
             UpdatePruneCounterThreshold();
         }
 

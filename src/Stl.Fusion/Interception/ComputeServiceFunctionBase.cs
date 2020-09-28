@@ -41,7 +41,9 @@ namespace Stl.Fusion.Interception
                     computed.TrySetOutput(output);
                 }
             }
-            catch (OperationCanceledException) {
+            catch (OperationCanceledException e) {
+                computed.TrySetOutput(Result.Error<T>(e));
+                computed.Invalidate();
                 throw;
             }
             catch (Exception e) {

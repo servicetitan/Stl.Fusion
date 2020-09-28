@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,7 +31,7 @@ namespace Stl.Fusion.Tests
             state.Updated += s
                 => Log.LogInformation($"{++count} -> {s.Value:hh:mm:ss:fff}");
 
-            await TestEx.WhenMet(
+            await TestEx.WhenMetAsync(
                 () => count.Should().BeGreaterThan(2),
                 TimeSpan.FromSeconds(5));
             var lastCount = count;
@@ -38,6 +39,31 @@ namespace Stl.Fusion.Tests
 
             await Task.Delay(1000);
             count.Should().Be(lastCount);
+        }
+
+        [Fact]
+        public async Task CancellationTest()
+        {
+            var time = Services.GetRequiredService<ITimeService>();
+
+            for (var i = 0; i < 5; i++) {
+                await Task.Delay(300);
+                var cts = new CancellationTokenSource();
+                var task = time.GetTimeWithDelayAsync(cts.Token);
+                cts.Cancel();
+                try {
+                    await task.ConfigureAwait(false);
+                }
+                catch {
+                    // Intended
+                }
+                task.IsCanceled.Should().BeTrue();
+
+                task = time.GetTimeWithDelayAsync(default);
+                await TestEx.WhenMetAsync(
+                    () => task.IsCompletedSuccessfully.Should().BeTrue(),
+                    TimeSpan.FromSeconds(1));
+            }
         }
 
         [Fact]

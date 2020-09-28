@@ -27,7 +27,6 @@ namespace Stl.Fusion
         IMutableState<TLocals> Locals { get; }
     }
 
-
     public abstract class LiveState<T> : ComputedState<T>, ILiveState<T>
     {
         public new class Options : ComputedState<T>.Options, ILiveState.IOptions

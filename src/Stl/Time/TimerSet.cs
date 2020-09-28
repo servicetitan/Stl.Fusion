@@ -17,8 +17,7 @@ namespace Stl.Time
             // ReSharper disable once StaticMemberInGenericType
             public static TimeSpan MinQuanta { get; } = TimeSpan.FromMilliseconds(10);
             public TimeSpan Quanta { get; set; } = TimeSpan.FromSeconds(1);
-            public Action<TTimer>? FireHandler { get; set; }
-            public IMomentClock? Clock { get; set; }
+            public IMomentClock Clock { get; set; } = CoarseCpuClock.Instance;
         }
 
         private readonly Action<TTimer>? _fireHandler;
@@ -35,16 +34,14 @@ namespace Stl.Time
             }
         }
 
-        public TimerSet(Options? options = null,
-            Action<TTimer>? fireHandler = null,
-            IMomentClock? clock = null)
+        public TimerSet(Options? options = null, Action<TTimer>? fireHandler = null)
         {
             options = options.OrDefault();
             if (options.Quanta < Options.MinQuanta)
                 options.Quanta = Options.MinQuanta;
             Quanta = options.Quanta;
-            Clock = clock ?? options.Clock ?? CoarseCpuClock.Instance;
-            _fireHandler = fireHandler ?? options.FireHandler;
+            Clock = options.Clock;
+            _fireHandler = fireHandler;
             _start = Clock.Now;
             Task.Run(RunAsync);
         }

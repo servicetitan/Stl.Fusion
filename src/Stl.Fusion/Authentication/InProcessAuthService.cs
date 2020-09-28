@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Stl.Async;
 using Stl.Concurrency;
 using Stl.Fusion.Authentication.Internal;
+using Stl.Time;
 
 namespace Stl.Fusion.Authentication
 {
@@ -22,6 +23,10 @@ namespace Stl.Fusion.Authentication
             new ConcurrentDictionary<string, User>();
         protected ConcurrentDictionary<string, Unit> ForcedSignOuts { get; } =
             new ConcurrentDictionary<string, Unit>();
+        protected IMomentClock Clock { get; }
+
+        public InProcessAuthService(IMomentClock clock)
+            => Clock = clock;
 
         public async Task SignInAsync(User user, Session session, CancellationToken cancellationToken = default)
         {
@@ -38,6 +43,8 @@ namespace Stl.Fusion.Authentication
 
         public Task SignOutAsync(bool force, Session session, CancellationToken cancellationToken = default)
         {
+            if (force && ForcedSignOuts.TryAdd(session.Id, default))
+                Computed.Invalidate(() => IsSignOutForcedAsync(session, default));
             if (Users.TryRemove(session.Id, out var user)) {
                 UserSessions.AddOrUpdate(user.Id,
                     (userId, sessionId) => ImmutableHashSet<string>.Empty,
@@ -47,10 +54,6 @@ namespace Stl.Fusion.Authentication
                 Computed.Invalidate(() => GetUserAsync(session, default));
                 Computed.Invalidate(() => GetFakeUserInfo(user.Id));
             }
-            if (force) {
-                ForcedSignOuts[session.Id] = default;
-                Computed.Invalidate(() => IsSignOutForcedAsync(session, default));
-            }
             return Task.CompletedTask;
         }
 
@@ -58,7 +61,7 @@ namespace Stl.Fusion.Authentication
         {
             if (sessionInfo.Id != session.Id)
                 throw new ArgumentOutOfRangeException(nameof(sessionInfo));
-            var now = DateTime.UtcNow;
+            var now = Clock.Now.ToDateTime();
             sessionInfo.LastSeenAt = now;
             SessionInfos.AddOrUpdate(session.Id, sessionInfo, (sessionId, oldSessionInfo) => {
                 sessionInfo.CreatedAt = oldSessionInfo.CreatedAt;
@@ -71,7 +74,7 @@ namespace Stl.Fusion.Authentication
         public async Task UpdatePresenceAsync(Session session, CancellationToken cancellationToken = default)
         {
             var sessionInfo = await GetSessionInfoAsync(session, cancellationToken).ConfigureAwait(false);
-            var now = DateTime.UtcNow;
+            var now = Clock.Now.ToDateTime();
             var delta = now - sessionInfo.LastSeenAt;
             if (delta < TimeSpan.FromSeconds(10))
                 return; // We don't want to update this too frequently
@@ -94,7 +97,12 @@ namespace Stl.Fusion.Authentication
         public virtual Task<SessionInfo> GetSessionInfoAsync(
             Session session, CancellationToken cancellationToken = default)
         {
-            var sessionInfo = SessionInfos.GetValueOrDefault(session.Id) ?? new SessionInfo(session.Id);
+            var now = Clock.Now.ToDateTime();
+            var sessionInfo = SessionInfos.GetValueOrDefault(session.Id)
+                ?? new SessionInfo(session.Id) {
+                    CreatedAt = now,
+                    LastSeenAt = now,
+                };
             return Task.FromResult(sessionInfo)!;
         }
 
