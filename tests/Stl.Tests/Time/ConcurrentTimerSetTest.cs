@@ -25,11 +25,12 @@ namespace Stl.Tests.Collections
         public async Task BasicTest()
         {
             var clock = SystemClock.Instance;
-            await using var timerSet = new ConcurrentTimerSet<Timer>(new ConcurrentTimerSet<Timer>.Options() {
-                Quanta = TimeSpan.FromMilliseconds(10),
-                Clock = clock,
-                FireHandler = t => t.FiredAt = CoarseCpuClock.Now,
-            });
+            await using var timerSet = new ConcurrentTimerSet<Timer>(
+                new ConcurrentTimerSet<Timer>.Options() {
+                    Quanta = TimeSpan.FromMilliseconds(10),
+                    Clock = clock,
+                },
+                timer => timer.FiredAt = CoarseCpuClock.Now);
 
             // AddOrUpdateToLater
             var t = new Timer();
@@ -80,11 +81,12 @@ namespace Stl.Tests.Collections
         [Fact(Skip = "Performance")]
         public async Task TimerPerformanceTest()
         {
-            await using var timerSet = new ConcurrentTimerSet<Timer>(new ConcurrentTimerSet<Timer>.Options() {
-                ConcurrencyLevel = HardwareInfo.ProcessorCountPo2 << 5,
-                Quanta = TimeSpan.FromMilliseconds(100),
-                FireHandler = t => t.FiredAt = CoarseCpuClock.Now,
-            });
+            await using var timerSet = new ConcurrentTimerSet<Timer>(
+                new ConcurrentTimerSet<Timer>.Options() {
+                    ConcurrencyLevel = HardwareInfo.ProcessorCountPo2 << 5,
+                    Quanta = TimeSpan.FromMilliseconds(100),
+                },
+                timer => timer.FiredAt = CoarseCpuClock.Now);
             var tasks = Enumerable.Range(0, HardwareInfo.ProcessorCount)
                 .Select(i => Task.Run(() => OneRandomTest(timerSet, 500_000, 1000, 5000)))
                 .ToArray();
@@ -93,10 +95,11 @@ namespace Stl.Tests.Collections
 
         private static async Task OneRandomTest(int timerCount, int maxDuration, int maxDelta)
         {
-            await using var timerSet = new ConcurrentTimerSet<Timer>(new ConcurrentTimerSet<Timer>.Options() {
-                Quanta = TimeSpan.FromMilliseconds(100),
-                FireHandler = t => t.FiredAt = CoarseCpuClock.Now,
-            });
+            await using var timerSet = new ConcurrentTimerSet<Timer>(
+                new ConcurrentTimerSet<Timer>.Options() {
+                    Quanta = TimeSpan.FromMilliseconds(100),
+                },
+                timer => timer.FiredAt = CoarseCpuClock.Now);
             await OneRandomTest(timerSet, timerCount, maxDuration, maxDelta);
         }
 
