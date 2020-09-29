@@ -46,9 +46,7 @@ namespace Stl.Fusion.Interception
             var equatableType = typeof(IEquatable<>).MakeGenericType(type);
             if (equatableType.IsAssignableFrom(type)) {
                 var eacType = typeof(EquatableArgumentHandler<>).MakeGenericType(type);
-                var eac = (EquatableArgumentHandler) CreateHandler(eacType);
-                if (eac.IsAvailable)
-                    return eac;
+                return CreateHandler(eacType);
             }
             return ArgumentHandler.Default;
         }
