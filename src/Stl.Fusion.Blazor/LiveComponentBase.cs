@@ -21,7 +21,7 @@ namespace Stl.Fusion.Blazor
 
     public abstract class LiveComponentBase<T, TLocals> : StatefulComponentBase<ILiveState<T, TLocals>>
     {
-        protected IMutableState<TLocals> Locals => State.Locals;
+        protected IMutableState<TLocals> Locals => State?.Locals!;
 
         protected override void OnInitialized()
         {
