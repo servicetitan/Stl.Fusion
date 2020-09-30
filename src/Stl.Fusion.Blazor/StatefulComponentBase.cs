@@ -19,11 +19,20 @@ namespace Stl.Fusion.Blazor
         private readonly Action<IState> _onStateUpdatingCached;
         private readonly Action<IState> _onStateUpdatedCached;
         private IState? _state;
+        private StateEventHandlers _usedStateEventHandlers = StateEventHandlers.Updated;
 
         [Inject]
         protected IServiceProvider ServiceProvider { get; set; } = null!;
         protected IStateFactory StateFactory => ServiceProvider.GetStateFactory();
-        protected StateEventHandlers UsedStateEventHandlers { get; set; } = StateEventHandlers.Updated;
+
+        protected StateEventHandlers UsedStateEventHandlers {
+            get => _usedStateEventHandlers;
+            set {
+                DetachStateEventHandlers(_state);
+                _usedStateEventHandlers = value;
+                AttachStateEventHandlers(_state);
+            }
+        }
 
         public bool IsLoading => _state == null || _state.Snapshot.UpdateCount == 0;
         public bool IsUpdating => _state == null || _state.Snapshot.IsUpdating;
@@ -66,21 +75,30 @@ namespace Stl.Fusion.Blazor
 
         // Private methods
 
-        private void AttachStateEventHandlers(IState state)
+        private void AttachStateEventHandlers(IState? state)
         {
-            if ((UsedStateEventHandlers & StateEventHandlers.Invalidated) != 0)
+            if (state == null)
+                return;
+            var handlers = UsedStateEventHandlers;
+            if ((handlers & StateEventHandlers.Invalidated) != 0)
                 state.Invalidated += _onStateInvalidatedCached;
-            if ((UsedStateEventHandlers & StateEventHandlers.Updating) != 0)
+            if ((handlers & StateEventHandlers.Updating) != 0)
                 state.Updating += _onStateUpdatingCached;
-            if ((UsedStateEventHandlers & StateEventHandlers.Updated) != 0)
+            if ((handlers & StateEventHandlers.Updated) != 0)
                 state.Updated += _onStateUpdatedCached;
         }
 
-        private void DetachStateEventHandlers(IState state)
+        private void DetachStateEventHandlers(IState? state)
         {
-            state.Invalidated -= _onStateInvalidatedCached;
-            state.Updating -= _onStateUpdatingCached;
-            state.Updated -= _onStateUpdatedCached;
+            if (state == null)
+                return;
+            var handlers = UsedStateEventHandlers;
+            if ((handlers & StateEventHandlers.Invalidated) != 0)
+                state.Invalidated -= _onStateInvalidatedCached;
+            if ((handlers & StateEventHandlers.Updating) != 0)
+                state.Updating -= _onStateUpdatingCached;
+            if ((handlers & StateEventHandlers.Updated) != 0)
+                state.Updated -= _onStateUpdatedCached;
         }
     }
 
