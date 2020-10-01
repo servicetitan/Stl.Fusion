@@ -21,8 +21,11 @@ to build and run everything.
   or [Docker](https://www.docker.com/).  
 * [The Story Behind Fusion](Story.md) &ndash; maybe you'll find
   it interesting too.
-* [Q/A](QA.md) answers the most frequent questions; 
-  join our [Discord Server] to ask yours.
+* Fusion's [Gitter Chat Room] is the best place to ask questions 
+  and track project updates, though if you prefer Discord, there is
+  a [Discord Server] as well. 
+* [Q/A](QA.md) answers some of the most frequent questions.
+
 
 Videos:
 * [Tutorial Videos](https://www.youtube.com/playlist?list=PLKM0mLUUiLWHsvS6eOLb3IlhMiL9y3X_Z) &ndash;
@@ -41,8 +44,8 @@ Posts:
 * [How similar is Fusion to SignalR?](https://medium.com/@alexyakunin/how-similar-is-stl-fusion-to-signalr-e751c14b70c3?source=friends_link&sk=241d5293494e352f3db338d93c352249)
 * [How similar is Fusion to Knockout / MobX?](https://medium.com/@alexyakunin/how-similar-is-stl-fusion-to-knockout-mobx-fcebd0bef5d5?source=friends_link&sk=a808f7c46c4d5613605f8ada732e790e)
 
-Join our [Discord Server] to ask questions and track project updates.
-
+Please remember that you can always ask for help &ndash; just join 
+our [Gitter Chat Room] or [Discord Server].
 
 ## Credits
 
@@ -72,5 +75,9 @@ Indirect contributors & everyone else who made Fusion possible:
 
 [Overview]: Overview.md
 [Tutorial]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/README.md
-[Discord Server]: https://discord.gg/EKEwv6d
 [Fusion Samples]: https://github.com/servicetitan/Stl.Fusion.Samples
+
+[Gitter]: https://gitter.im/Stl-Fusion/community
+[Gitter Chat Room]: https://gitter.im/Stl-Fusion/community
+[Discord Server]: https://discord.gg/EKEwv6d
+[Fusion Feedback Form]: https://forms.gle/TpGkmTZttukhDMRB6

@@ -1,8 +1,9 @@
 ![](docs/img/Banner.gif)
 
-> All project updates are published on our [Discord Server]; it's also the best place for Q/A.\
+> All project updates are published on [Gitter]; it's also the best place for Q/A.\
 > [![Build](https://github.com/servicetitan/Stl.Fusion/workflows/Build/badge.svg)](https://github.com/servicetitan/Stl.Fusion/actions?query=workflow%3A%22Build%22)
 > [![NuGetVersion](https://img.shields.io/nuget/v/Stl.Fusion)](https://www.nuget.org/packages?q=Owner%3Aservicetitan+Tags%3Astl_fusion) 
+> [![Gitter](https://badges.gitter.im/Stl-Fusion/community.svg)](https://gitter.im/Stl-Fusion/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 ## What is Fusion?
 
@@ -244,7 +245,7 @@ and
 ## Next Steps
 
 * Check out [Tutorial], [Samples], or go to [Documentation Home]
-* Join our [Discord Server] to ask questions and track project updates.
+* Join our [Gitter Chat Room] or [Discord Server] to ask questions and track project updates.
 
 ## Posts And Other Content
 * [Why real-time UI is inevitable future for web apps?](https://medium.com/@alexyakunin/features-of-the-future-web-apps-part-1-e32cf4e4e4f4?source=friends_link&sk=65dacdbf670ef9b5d961c4c666e223e2)
@@ -269,5 +270,7 @@ please help us to make it better by completing [Fusion Feedback Form]
 [Tutorial]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/README.md
 [MMORPG]: https://en.wikipedia.org/wiki/Massively_multiplayer_online_role-playing_game
 
+[Gitter]: https://gitter.im/Stl-Fusion/community
+[Gitter Chat Room]: https://gitter.im/Stl-Fusion/community
 [Discord Server]: https://discord.gg/EKEwv6d
 [Fusion Feedback Form]: https://forms.gle/TpGkmTZttukhDMRB6

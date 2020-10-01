@@ -4,8 +4,10 @@
 
 > Q: What's the best place to ask questions related to Fusion?
 
-[Fusion Discord Server] is currently the best 
+[Gitter Chat Room] is currently the best 
 place to ask questions & track project updates. 
+
+[![Gitter](https://badges.gitter.im/Stl-Fusion/community.svg)](https://gitter.im/Stl-Fusion/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 > Q: Can I contribute to the project?
 
@@ -29,6 +31,7 @@ It looks fairly stable on samples and one of our internal apps
 but its test coverage is fairly low (sorry, **the actual coverage is about 55%** &ndash; the reports in CodeCov are broken now, we'll fix this soon):
 
 [![Build](https://github.com/servicetitan/Stl.Fusion/workflows/Build/badge.svg)](https://github.com/servicetitan/Stl.Fusion/actions?query=workflow%3A%22Build%22)
+[![NuGetVersion](https://img.shields.io/nuget/v/Stl.Fusion)](https://www.nuget.org/packages?q=Owner%3Aservicetitan+Tags%3Astl_fusion) 
 [![codecov](https://codecov.io/gh/servicetitan/Stl.Fusion/branch/master/graph/badge.svg)](https://codecov.io/gh/servicetitan/Stl.Fusion)
 
 So we definitely need more tests and more use cases to claim it's ready for production use.
@@ -101,3 +104,8 @@ TBD.
 
 [Fusion Discord Server]: https://discord.gg/EKEwv6d
 [Fusion Samples]: https://github.com/servicetitan/Stl.Fusion.Samples
+
+[Gitter]: https://gitter.im/Stl-Fusion/community
+[Gitter Chat Room]: https://gitter.im/Stl-Fusion/community
+[Discord Server]: https://discord.gg/EKEwv6d
+[Fusion Feedback Form]: https://forms.gle/TpGkmTZttukhDMRB6
