@@ -26,15 +26,11 @@ namespace Stl.Fusion.Server.Authentication
             public static async Task<bool> DefaultForcedSignOutHandler(SessionMiddleware self, HttpContext httpContext)
             {
                 await httpContext.SignOutAsync();
-                // Let's make a random pause here to make sure that all open windows
-                // in the current session don't race to set a new session cookie.
-                var delay = RandomStringGenerator.Default.Next().GetHashCode() & 1023;
-                await Task.Delay(delay);
                 var url = httpContext.Request.GetEncodedPathAndQuery();
                 httpContext.Response.Redirect(url);
-                // true:  invoke the next middleware
-                // false: don't invoke the next middleware
-                return false;
+                // true:  reload: redirect w/o invoking the next middleware
+                // false: proceed normally, i.e. invoke the next middleware
+                return true;
             }
         }
 
@@ -74,8 +70,11 @@ namespace Stl.Fusion.Server.Authentication
                 if (AuthService != null) {
                     var isSignOutForced = await AuthService.IsSignOutForcedAsync(session, cancellationToken);
                     if (isSignOutForced) {
-                        if (!await ForcedSignOutHandler(this, httpContext))
+                        if (await ForcedSignOutHandler(this, httpContext)) {
+                            var responseCookies = httpContext.Response.Cookies;
+                            responseCookies.Delete(cookieName);
                             return;
+                        }
                         session = null;
                     }
                 }
