@@ -1,4 +1,4 @@
-# The Story Behind Stl.Fusion
+# The Story Behind Fusion
 
 Somewhere in 2011 I started to use [Knockout](https://knockoutjs.com/) 
 by [Steve Sanderson](http://blog.stevensanderson.com/) &ndash; 
@@ -71,6 +71,6 @@ all the tools needed to build it became available.
 
 ![](./img/MissingPiece.jpg)
 
-The only missing piece was Stl.Fusion itself.
+The only missing piece was Fusion itself.
 
 #### [Back to Documentation &raquo;](./README.md)

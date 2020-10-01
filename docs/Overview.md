@@ -1,4 +1,4 @@
-# Stl.Fusion: Overview  
+# Fusion Overview  
 
 ## What is "Real-time User Interface"?
 
@@ -51,7 +51,7 @@ So if we compare this with `async` functions, the difference is:
   `IComputed<T>`, which `(Value, Error)` pair would differ from the
   ones you have.
 
-Ultimately, this is exactly what `Stl.Fusion` brings - 
+Ultimately, this is exactly what Fusion brings - 
 an abstraction for `IComputed<T>` and a way to write functions
 returning these [Computed Values]. 
 
@@ -779,17 +779,17 @@ even if this is done, there always be other cases and reasons
 to prefer X over Fusion. It can't be a silver bullet, even though
 it tries really hard to be the one :)
 
-P.S. Check out ["How similar is Stl.Fusion to SignalR?"](https://medium.com/@alexyakunin/how-similar-is-stl-fusion-to-signalr-e751c14b70c3?source=friends_link&sk=241d5293494e352f3db338d93c352249) if you want to learn more about 
+P.S. Check out ["How similar is Fusion to SignalR?"](https://medium.com/@alexyakunin/how-similar-is-stl-fusion-to-signalr-e751c14b70c3?source=friends_link&sk=241d5293494e352f3db338d93c352249) if you want to learn more about 
 the similarities and differences.
 
-### Fusion and Blazor = ❤
+### Fusion + Blazor = ❤
 
 Why every single piece of a client-side code shown here is supposed to run on 
 [Blazor](https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor)? 
 
 ![](img/Blazor.jpg)
 
-Stl.Fusion is just 3 months old project (that's on Jul 9, 2020). 
+Fusion is just 5 months old project (that's on Oct 1, 2020). 
 In human terms she shouldn't even start to crawl yet :) 
 And so far it's a one-man creation - more an MVP vs a finished product.
 As you might guess, 3 months for all of this + samples, documentation,
@@ -866,7 +866,7 @@ especially for the companies running their server-side code on .NET Core (or .NE
 * Join our [Discord Server] to ask questions and track project updates.
 * Check out [Q/A] to get answers to some frequent questions.
 * If you read this document but still don't understand it,
-  check out [Stl.Fusion In Simple Terms].
+  check out [Fusion In Simple Terms].
 
 
 [Compute Services]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/Part01.md
@@ -880,6 +880,6 @@ especially for the companies running their server-side code on .NET Core (or .NE
 [Q/A]: QA.md
 [Samples]: https://github.com/servicetitan/Stl.Fusion.Samples
 [Tutorial]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/README.md
-[Stl.Fusion In Simple Terms]: https://medium.com/@alexyakunin/stl-fusion-in-simple-terms-65b1975967ab?source=friends_link&sk=04e73e75a52768cf7c3330744a9b1e38
+[Fusion In Simple Terms]: https://medium.com/@alexyakunin/stl-fusion-in-simple-terms-65b1975967ab?source=friends_link&sk=04e73e75a52768cf7c3330744a9b1e38
 [Discord Server]: https://discord.gg/EKEwv6d
-[Stl.Fusion Feedback Form]: https://forms.gle/TpGkmTZttukhDMRB6
+[Fusion Feedback Form]: https://forms.gle/TpGkmTZttukhDMRB6

@@ -4,9 +4,9 @@
 > [![Build](https://github.com/servicetitan/Stl.Fusion/workflows/Build/badge.svg)](https://github.com/servicetitan/Stl.Fusion/actions?query=workflow%3A%22Build%22)
 > [![NuGetVersion](https://img.shields.io/nuget/v/Stl.Fusion)](https://www.nuget.org/packages?q=Owner%3Aservicetitan+Tags%3Astl_fusion) 
 
-## What is Stl.Fusion?
+## What is Fusion?
 
-`Stl.Fusion` is a [.NET Core](https://en.wikipedia.org/wiki/.NET_Core) library
+Fusion is a [.NET Core](https://en.wikipedia.org/wiki/.NET_Core) library
 providing a new change tracking abstraction built in assumption that **every piece of data 
 you have is a part of the observable state / model**, and since there is 
 no way to fit such a huge state in RAM, Fusion:
@@ -34,7 +34,7 @@ complex dependency graphs transparently for you.
 
 ### Build a Real-Time UI
 
-This is [Stl.Fusion Blazor Sample](https://github.com/servicetitan/Stl.Fusion.Samples),
+This is [Fusion+Blazor Sample](https://github.com/servicetitan/Stl.Fusion.Samples#3-blazor-samples),
 delivering real-time updates to 3 browser windows:
 
 ![](docs/img/Stl-Fusion-Chat-Sample.gif)
@@ -47,7 +47,7 @@ The sample supports **both (!)** Server-Side Blazor and Blazor WebAssembly
 
 ### Speedup Your Service By Caching Everything
 
-[A small benchmark in Stl.Fusion test suite](https://github.com/servicetitan/Stl.Fusion/blob/master/tests/Stl.Fusion.Tests/PerformanceTest.cs) 
+[A small benchmark in Fusion test suite](https://github.com/servicetitan/Stl.Fusion/blob/master/tests/Stl.Fusion.Tests/PerformanceTest.cs) 
 compares "raw" [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/) - 
 based Data Access Layer (DAL) against its version relying on Fusion. 
 Both tests run *almost* identical code - in fact, the only difference is that Fusion
@@ -81,7 +81,7 @@ Note that:
 * The speedup you're expected to see in production may differ from these numbers a lot. 
   Even though the results presented here are absolutely real, they are produced on a synthetic test.
 
-## How Stl.Fusion works?
+## How Fusion works?
 
 Fusion provides three key abstractions:
 * [Compute Services] are services exposing methods "backed" by Fusion's 
@@ -146,7 +146,7 @@ but quite error prone problem.
 Of course you still can use events, event sourcing, CQRS, etc. - 
 you'll just need maybe 100&times; fewer event types.
 
-Check out [how Stl.Fusion differs from SignalR](https://medium.com/@alexyakunin/ow-similar-is-stl-fusion-to-signalr-e751c14b70c3?source=friends_link&sk=241d5293494e352f3db338d93c352249)
+Check out [how Fusion differs from SignalR](https://medium.com/@alexyakunin/ow-similar-is-stl-fusion-to-signalr-e751c14b70c3?source=friends_link&sk=241d5293494e352f3db338d93c352249)
 &ndash; this post takes a real app example (Slack-like chat) and describes
 what has to be done in both these cases to implement it.
 
@@ -248,13 +248,13 @@ and
 
 ## Posts And Other Content
 * [Why real-time UI is inevitable future for web apps?](https://medium.com/@alexyakunin/features-of-the-future-web-apps-part-1-e32cf4e4e4f4?source=friends_link&sk=65dacdbf670ef9b5d961c4c666e223e2)
-* [How similar is Stl.Fusion to SignalR?](https://medium.com/@alexyakunin/how-similar-is-stl-fusion-to-signalr-e751c14b70c3?source=friends_link&sk=241d5293494e352f3db338d93c352249)
-* [How similar is Stl.Fusion to Knockout / MobX?](https://medium.com/@alexyakunin/how-similar-is-stl-fusion-to-knockout-mobx-fcebd0bef5d5?source=friends_link&sk=a808f7c46c4d5613605f8ada732e790e)
-* [Stl.Fusion In Simple Terms](https://medium.com/@alexyakunin/stl-fusion-in-simple-terms-65b1975967ab?source=friends_link&sk=04e73e75a52768cf7c3330744a9b1e38)
+* [How similar is Fusion to SignalR?](https://medium.com/@alexyakunin/how-similar-is-stl-fusion-to-signalr-e751c14b70c3?source=friends_link&sk=241d5293494e352f3db338d93c352249)
+* [How similar is Fusion to Knockout / MobX?](https://medium.com/@alexyakunin/how-similar-is-stl-fusion-to-knockout-mobx-fcebd0bef5d5?source=friends_link&sk=a808f7c46c4d5613605f8ada732e790e)
+* [Fusion In Simple Terms](https://medium.com/@alexyakunin/stl-fusion-in-simple-terms-65b1975967ab?source=friends_link&sk=04e73e75a52768cf7c3330744a9b1e38)
 
 
-**P.S.** If you've already spent some time learning about Stl.Fusion, 
-please help us to make it better by completing [Stl.Fusion Feedback Form] 
+**P.S.** If you've already spent some time learning about Fusion, 
+please help us to make it better by completing [Fusion Feedback Form] 
 (1&hellip;3 min).
 
 [Compute Services]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/Part01.md
@@ -270,4 +270,4 @@ please help us to make it better by completing [Stl.Fusion Feedback Form]
 [MMORPG]: https://en.wikipedia.org/wiki/Massively_multiplayer_online_role-playing_game
 
 [Discord Server]: https://discord.gg/EKEwv6d
-[Stl.Fusion Feedback Form]: https://forms.gle/TpGkmTZttukhDMRB6
+[Fusion Feedback Form]: https://forms.gle/TpGkmTZttukhDMRB6
