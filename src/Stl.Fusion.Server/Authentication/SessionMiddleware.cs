@@ -34,7 +34,7 @@ namespace Stl.Fusion.Server.Authentication
                 httpContext.Response.Redirect(url);
                 // true:  invoke the next middleware
                 // false: don't invoke the next middleware
-                return true;
+                return false;
             }
         }
 
