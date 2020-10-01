@@ -9,12 +9,17 @@ namespace Stl.Fusion.Server
     public static class FusionAuthenticationBuilderEx
     {
         public static FusionAuthenticationBuilder AddServer(this FusionAuthenticationBuilder fusionAuth,
+            Action<IServiceProvider, SessionMiddleware.Options>? sessionMiddlewareOptionsBuilder = null,
             Type? authServiceImplementationType = null)
         {
             fusionAuth.AddAuthService(authServiceImplementationType);
 
             var services = fusionAuth.Services;
-            services.TryAddSingleton<SessionMiddleware.Options>();
+            services.TryAddSingleton(c => {
+                var options = new SessionMiddleware.Options();
+                sessionMiddlewareOptionsBuilder?.Invoke(c, options);
+                return options;
+            });
             services.TryAddScoped<SessionMiddleware>();
             services.AddRouting();
             services.AddControllers().AddApplicationPart(typeof(AuthController).Assembly);
