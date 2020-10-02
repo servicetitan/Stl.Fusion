@@ -14,9 +14,9 @@ namespace Stl.Fusion.Tests.UIModels
     }
 
     [State]
-    public class StringKeyValueModelState : LiveState<KeyValueModel<string>, string>
+    public class StringKeyValueModelState : LiveState<KeyValueModel<string>>
     {
-        public new class Options : LiveState<KeyValueModel<string>, string>.Options
+        public new class Options : LiveState<KeyValueModel<string>>.Options
         {
             public Options()
             {
@@ -29,11 +29,17 @@ namespace Stl.Fusion.Tests.UIModels
             }
         }
 
+        protected IMutableState<string> Locals { get; }
+
         private IKeyValueServiceClient<string> KeyValueServiceClient
             => ServiceProvider.GetRequiredService<IKeyValueServiceClient<string>>();
 
         public StringKeyValueModelState(Options options, IServiceProvider serviceProvider, object? argument = null)
-            : base(options, serviceProvider, argument) { }
+            : base(options, serviceProvider, argument)
+        {
+            Locals = new MutableState<string>(serviceProvider);
+            Locals.AddEventHandler(StateEventKind.Updated, (s, e) => this.Invalidate(true));
+        }
 
         protected override async Task<KeyValueModel<string>> ComputeValueAsync(CancellationToken cancellationToken)
         {

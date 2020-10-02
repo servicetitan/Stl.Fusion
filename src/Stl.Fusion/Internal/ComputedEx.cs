@@ -73,5 +73,10 @@ namespace Stl.Fusion.Internal
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static T Strip<T>(this IComputed<T>? computed)
-            => computed != null ? computed.Value : default!;    }
+            => computed != null ? computed.Value : default!;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static Task<T> StripToTask<T>(this IComputed<T>? computed)
+            => computed?.Output.AsTask() ?? Task.FromResult(default(T)!);
+    }
 }

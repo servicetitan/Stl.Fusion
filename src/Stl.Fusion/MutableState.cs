@@ -2,18 +2,17 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Frozen;
+using Stl.Fusion.Internal;
+using Errors = Stl.Internal.Errors;
 
 namespace Stl.Fusion
 {
     public interface IMutableState : IState, IMutableResult
     {
         public new interface IOptions : IState.IOptions { }
-        public ValueTask SetAsync(IResult result, CancellationToken cancellationToken);
     }
     public interface IMutableState<T> : IState<T>, IMutableResult<T>, IMutableState
-    {
-        public ValueTask SetAsync(Result<T> result, CancellationToken cancellationToken);
-    }
+    { }
 
     public class MutableState<T> : State<T>, IMutableState<T>
     {
@@ -41,6 +40,10 @@ namespace Stl.Fusion
             set => Set(Result.Value((T) value!));
         }
 
+        // This constructor is used by generic service descriptor for IMutableState<T>
+        public MutableState(IServiceProvider serviceProvider)
+            : this(new Options(), serviceProvider) { }
+        // This constructor is used by StateFactory
         public MutableState(
             Options options,
             IServiceProvider serviceProvider,
@@ -55,11 +58,7 @@ namespace Stl.Fusion
         }
 
         protected override void Initialize(State<T>.Options options)
-        {
-            var computed = CreateComputed();
-            computed.TrySetOutput(_output);
-            Computed = computed;
-        }
+            => CreateComputed();
 
         void IMutableResult.Set(IResult result)
             => Set(result.AsResult<T>());
@@ -71,16 +70,10 @@ namespace Stl.Fusion
             lock (Lock) {
                 snapshot = Snapshot;
                 _output = result;
+                // Better to do this inside the lock, since it will be
+                // re-acquired later - see InvokeAsync and InvokeAndStripAsync overloads
+                snapshot.Computed.Invalidate();
             }
-            snapshot.Computed.Invalidate();
-        }
-
-        public async ValueTask SetAsync(IResult result, CancellationToken cancellationToken)
-            => await SetAsync(result.AsResult<T>(), cancellationToken).ConfigureAwait(false);
-        public async ValueTask SetAsync(Result<T> result, CancellationToken cancellationToken)
-        {
-            Set(result);
-            await Computed.UpdateAsync(false, cancellationToken).ConfigureAwait(false);
         }
 
         protected internal override void OnInvalidated(IComputed<T> computed)
@@ -90,7 +83,71 @@ namespace Stl.Fusion
                 computed.UpdateAsync(false);
         }
 
+        protected override Task<IComputed<T>> InvokeAsync(
+            State<T> input, IComputed? usedBy, ComputeContext? context,
+            CancellationToken cancellationToken)
+        {
+            // This method should always complete synchronously in IMutableState<T>
+            if (input != this)
+                // This "Function" supports just a single input == this
+                throw new ArgumentOutOfRangeException(nameof(input));
+
+            context ??= ComputeContext.Current;
+
+            var result = Computed;
+            if (result.TryUseExisting(context, usedBy))
+                return Task.FromResult(result);
+
+            // Double-check locking
+            lock (Lock) {
+                result = Computed;
+                if (result.TryUseExisting(context, usedBy))
+                    return Task.FromResult(result);
+
+                OnUpdating();
+                result = CreateComputed();
+                result.UseNew(context, usedBy);
+                return Task.FromResult(result);
+            }
+        }
+
+        protected override Task<T> InvokeAndStripAsync(
+            State<T> input, IComputed? usedBy, ComputeContext? context,
+            CancellationToken cancellationToken)
+        {
+            // This method should always complete synchronously in IMutableState<T>
+            if (input != this)
+                // This "Function" supports just a single input == this
+                throw new ArgumentOutOfRangeException(nameof(input));
+
+            context ??= ComputeContext.Current;
+
+            var result = Computed;
+            if (result.TryUseExisting(context, usedBy))
+                return result.StripToTask();
+
+            // Double-check locking
+            lock (Lock) {
+                result = Computed;
+                if (result.TryUseExisting(context, usedBy))
+                    return result.StripToTask();
+
+                OnUpdating();
+                result = CreateComputed();
+                result.UseNew(context, usedBy);
+                return result.StripToTask();
+            }
+        }
+
+        protected override StateBoundComputed<T> CreateComputed()
+        {
+            var computed = base.CreateComputed();
+            computed.SetOutput(_output);
+            Computed = computed;
+            return computed;
+        }
+
         protected override Task<T> ComputeValueAsync(CancellationToken cancellationToken)
-            => _output.AsTask();
+            => throw Errors.InternalError("This method should never be called.");
     }
 }

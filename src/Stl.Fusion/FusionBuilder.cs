@@ -47,6 +47,7 @@ namespace Stl.Fusion
             Services.TryAddSingleton(c => new [] { c.GetRequiredService<ComputeServiceInterceptor>() });
             // States & their dependencies
             Services.TryAddTransient<IStateFactory, StateFactory>();
+            Services.TryAddTransient(typeof(IMutableState<>), typeof(MutableState<>));
             Services.TryAddSingleton(new UpdateDelayer.Options());
             Services.TryAddTransient<IUpdateDelayer, UpdateDelayer>();
         }

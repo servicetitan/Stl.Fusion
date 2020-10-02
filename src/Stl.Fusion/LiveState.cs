@@ -22,7 +22,7 @@ namespace Stl.Fusion
     { }
     public interface ILiveState<T, TLocals> : ILiveState<T>
     {
-        bool InvalidateOnLocalsUpdate { get; set; }
+        bool InstantUpdateOnLocalsUpdate { get; set; }
         bool UpdateOnLocalsUpdate { get; set; }
         IMutableState<TLocals> Locals { get; }
     }
@@ -112,38 +112,6 @@ namespace Stl.Fusion
                     Log.LogError(e, $"Error in LiveState.RunAsync().");
                 }
             }
-        }
-    }
-
-    public abstract class LiveState<T, TLocals> : LiveState<T>, ILiveState<T, TLocals>
-    {
-        public new class Options : LiveState<T>.Options
-        {
-            public MutableState<TLocals>.Options LocalsOptions { get; set; } = new MutableState<TLocals>.Options();
-            public bool InvalidateOnLocalsUpdate { get; set; } = true;
-            public bool UpdateOnLocalsUpdate { get; set; } = true;
-        }
-
-        public bool InvalidateOnLocalsUpdate { get; set; }
-        public bool UpdateOnLocalsUpdate { get; set; }
-        public IMutableState<TLocals> Locals { get; }
-
-        protected LiveState(
-            Options options, IServiceProvider serviceProvider,
-            object? argument = null, bool initialize = true)
-            : base(options, serviceProvider, argument, false)
-        {
-            InvalidateOnLocalsUpdate = options.InvalidateOnLocalsUpdate;
-            UpdateOnLocalsUpdate = options.UpdateOnLocalsUpdate;
-            Locals = new MutableState<TLocals>(options.LocalsOptions, serviceProvider, default, this);
-            Locals.Updated += OnLocalsUpdated;
-            if (initialize) Initialize(options);
-        }
-
-        protected virtual void OnLocalsUpdated(IState<TLocals> ownState)
-        {
-            if (UpdateOnLocalsUpdate || InvalidateOnLocalsUpdate)
-                this.Invalidate(UpdateOnLocalsUpdate);
         }
     }
 }

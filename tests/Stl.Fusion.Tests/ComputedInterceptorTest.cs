@@ -28,7 +28,7 @@ namespace Stl.Fusion.Tests
             using var state = StateFactory.NewLive<DateTime>(
                 o => o.WithZeroUpdateDelay(),
                 async (_, ct) => await c.UseAsync(ct));
-            state.Updated += s
+            state.Updated += (s, _)
                 => Log.LogInformation($"{++count} -> {s.Value:hh:mm:ss:fff}");
 
             await TestEx.WhenMetAsync(

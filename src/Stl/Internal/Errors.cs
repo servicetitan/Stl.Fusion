@@ -82,8 +82,13 @@ namespace Stl.Internal
             new ArgumentException("Specified key already exists.");
         public static Exception AlreadyInvoked(string methodName) =>
             new InvalidOperationException($"'{methodName}' can be invoked just once.");
-        public static Exception AlreadyInitialized() =>
-            new InvalidOperationException("Already initialized.");
+        public static Exception AlreadyInitialized(string? propertyName = null)
+        {
+            var message = "Already initialized.";
+            return propertyName == null
+                ? (Exception) new InvalidOperationException(message)
+                : new ArgumentException(message, propertyName);
+        }
         public static Exception AlreadyLocked() =>
             new InvalidOperationException($"The lock is already acquired by one of callers of the current method.");
         public static Exception AlreadyUsed() =>

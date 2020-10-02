@@ -1,104 +1,36 @@
 using System;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
+using Stl.Internal;
 
 namespace Stl.Fusion.Blazor
 {
     public abstract class StatefulComponentBase : ComponentBase, IDisposable
     {
-        [Flags]
-        public enum StateEventHandlers
-        {
-            Invalidated = 1,
-            Updating = 2,
-            Updated = 4,
-            All = Invalidated | Updating | Updated,
-        }
-
-        private readonly Action<IState> _onStateInvalidatedCached;
-        private readonly Action<IState> _onStateUpdatingCached;
-        private readonly Action<IState> _onStateUpdatedCached;
-        private IState? _state;
-        private StateEventHandlers _usedStateEventHandlers = StateEventHandlers.Updated;
 
         [Inject]
         protected IServiceProvider ServiceProvider { get; set; } = null!;
         protected IStateFactory StateFactory => ServiceProvider.GetStateFactory();
+        protected abstract IState UntypedState { get; }
+        protected Action<IState, StateEventKind> StateChanged { get; set; }
 
-        protected StateEventHandlers UsedStateEventHandlers {
-            get => _usedStateEventHandlers;
-            set {
-                DetachStateEventHandlers(_state);
-                _usedStateEventHandlers = value;
-                AttachStateEventHandlers(_state);
-            }
-        }
-
-        public bool IsLoading => _state == null || _state.Snapshot.UpdateCount == 0;
-        public bool IsUpdating => _state == null || _state.Snapshot.IsUpdating;
-        public bool IsUpdatePending => _state == null || _state.Snapshot.Computed.IsInvalidated();
+        public bool IsLoading => UntypedState == null! || UntypedState.Snapshot.UpdateCount == 0;
+        public bool IsUpdating => UntypedState == null! || UntypedState.Snapshot.IsUpdating;
+        public bool IsUpdatePending => UntypedState == null! || UntypedState.Snapshot.Computed.IsInvalidated();
 
         protected StatefulComponentBase()
         {
-            _onStateInvalidatedCached = _ => InvokeAsync(OnStateInvalidated);
-            _onStateUpdatingCached = _ => InvokeAsync(OnStateUpdating);
-            _onStateUpdatedCached = _ => InvokeAsync(OnStateUpdated);
+            StateChanged = (state, eventKind) => {
+                if (eventKind == StateEventKind.Updated)
+                    StateHasChanged();
+            };
         }
 
         public virtual void Dispose()
         {
-            var state = _state;
-            _state = null;
-            if (state != null)
-                DetachStateEventHandlers(state);
-            if (state is IDisposable d)
+            UntypedState.RemoveEventHandler(StateEventKind.All, StateChanged);
+            if (UntypedState is IDisposable d)
                 d.Dispose();
-        }
-
-        // Protected methods
-
-        protected virtual void OnSetState(IState newState, IState? oldState)
-        {
-            _state = newState;
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-            if (oldState != null) {
-                DetachStateEventHandlers(oldState);
-                if (oldState is IDisposable d)
-                    d.Dispose();
-            }
-            AttachStateEventHandlers(newState);
-        }
-
-        protected virtual void OnStateInvalidated() => StateHasChanged();
-        protected virtual void OnStateUpdating() => StateHasChanged();
-        protected virtual void OnStateUpdated() => StateHasChanged();
-
-        // Private methods
-
-        private void AttachStateEventHandlers(IState? state)
-        {
-            if (state == null)
-                return;
-            var handlers = UsedStateEventHandlers;
-            if ((handlers & StateEventHandlers.Invalidated) != 0)
-                state.Invalidated += _onStateInvalidatedCached;
-            if ((handlers & StateEventHandlers.Updating) != 0)
-                state.Updating += _onStateUpdatingCached;
-            if ((handlers & StateEventHandlers.Updated) != 0)
-                state.Updated += _onStateUpdatedCached;
-        }
-
-        private void DetachStateEventHandlers(IState? state)
-        {
-            if (state == null)
-                return;
-            var handlers = UsedStateEventHandlers;
-            if ((handlers & StateEventHandlers.Invalidated) != 0)
-                state.Invalidated -= _onStateInvalidatedCached;
-            if ((handlers & StateEventHandlers.Updating) != 0)
-                state.Updating -= _onStateUpdatingCached;
-            if ((handlers & StateEventHandlers.Updated) != 0)
-                state.Updated -= _onStateUpdatedCached;
         }
     }
 
@@ -107,29 +39,26 @@ namespace Stl.Fusion.Blazor
     {
         private TState? _state;
 
+        protected override IState UntypedState => State;
+
         protected TState State {
             get => _state!;
             set {
-                var oldState = _state;
-                if (ReferenceEquals(oldState, value))
+                if (value == null)
+                    throw new ArgumentNullException(nameof(value));
+                if (_state == value)
                     return;
+                if (_state != null)
+                    throw Errors.AlreadyInitialized(nameof(State));
                 _state = value;
-                OnSetState(value, oldState);
             }
         }
-
-        public override void Dispose()
-        {
-            base.Dispose();
-            _state = null!;
-        }
-
-        // Protected methods
 
         protected override void OnInitialized()
         {
             // ReSharper disable once ConstantNullCoalescingCondition
             State ??= ServiceProvider.GetRequiredService<TState>();
+            UntypedState.AddEventHandler(StateEventKind.All, StateChanged);
         }
     }
 }

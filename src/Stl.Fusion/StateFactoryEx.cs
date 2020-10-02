@@ -44,15 +44,6 @@ namespace Stl.Fusion
             return factory.NewLive(options, computer, argument);
         }
 
-        public static ILiveState<T, TLocals> NewLive<T, TLocals>(
-            this IStateFactory factory,
-            Func<ILiveState<T, TLocals>, CancellationToken, Task<T>> computer,
-            object? argument = null)
-        {
-            var options = new LiveState<T, TLocals>.Options();
-            return factory.NewLive(options, computer, argument);
-        }
-
         // With builder
 
         public static IMutableState<T> NewMutable<T>(
@@ -95,17 +86,6 @@ namespace Stl.Fusion
             object? argument = null)
         {
             var options = new LiveState<T>.Options();
-            optionsBuilder.Invoke(options);
-            return factory.NewLive(options, computer, argument);
-        }
-
-        public static ILiveState<T, TLocals> NewLive<T, TLocals>(
-            this IStateFactory factory,
-            Action<LiveState<T, TLocals>.Options> optionsBuilder,
-            Func<ILiveState<T, TLocals>, CancellationToken, Task<T>> computer,
-            object? argument = null)
-        {
-            var options = new LiveState<T, TLocals>.Options();
             optionsBuilder.Invoke(options);
             return factory.NewLive(options, computer, argument);
         }

@@ -22,23 +22,4 @@ namespace Stl.Fusion.Internal
         protected override Task<T> ComputeValueAsync(CancellationToken cancellationToken)
             => Computer.Invoke(this, cancellationToken);
     }
-
-    public sealed class FuncLiveState<T, TLocals> : LiveState<T, TLocals>
-    {
-        public Func<ILiveState<T, TLocals>, CancellationToken, Task<T>> Computer { get; }
-
-        public FuncLiveState(
-            Options options,
-            IServiceProvider serviceProvider,
-            Func<ILiveState<T, TLocals>, CancellationToken, Task<T>> computer,
-            object? argument = null)
-            : base(options, serviceProvider, argument, false)
-        {
-            Computer = computer;
-            Initialize(options);
-        }
-
-        protected override Task<T> ComputeValueAsync(CancellationToken cancellationToken)
-            => Computer.Invoke(this, cancellationToken);
-    }
 }

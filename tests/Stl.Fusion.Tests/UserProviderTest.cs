@@ -107,7 +107,7 @@ namespace Stl.Fusion.Tests
                     var now = await time.GetTimeAsync().ConfigureAwait(false);
                     return $"@ {now:hh:mm:ss.fff}: {norris?.Name ?? "(none)"}";
                 }).UpdateAsync(false);
-            sText.Updated += s => Log.LogInformation($"{s.Value}");
+            sText.Updated += (s, _) => Log.LogInformation($"{s.Value}");
 
             for (var i = 1; i <= 10; i += 1) {
                 u.Name = $"Chuck Norris Lvl{i}";

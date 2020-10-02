@@ -40,8 +40,7 @@ namespace Stl.Fusion.Blazor
             State = stateFactory.NewLive<AuthState>(o => {
                 options.LiveStateOptionsBuilder.Invoke(o);
                 o.InitialOutputFactory = _ => new AuthState(new User(""));
-                o.Invalidated += OnStateInvalidated;
-                o.Updated += OnStateUpdated;
+                o.AddEventHandlers += state => state.AddEventHandler(StateEventKind.All, OnStateChanged);
             }, ComputeState);
         }
 
@@ -63,9 +62,10 @@ namespace Stl.Fusion.Blazor
             return new AuthState(user, isSignOutForced);
         }
 
-        protected virtual void OnStateInvalidated(IState<AuthState> obj) { }
-
-        protected virtual void OnStateUpdated(IState<AuthState> state)
-            => NotifyAuthenticationStateChanged(Task.FromResult((AuthenticationState) state.LastValue));
+        protected virtual void OnStateChanged(IState<AuthState> state, StateEventKind eventKind)
+        {
+            if (eventKind == StateEventKind.Updated)
+                NotifyAuthenticationStateChanged(Task.FromResult((AuthenticationState) state.LastValue));
+        }
     }
 }

@@ -21,11 +21,11 @@ namespace Stl.Fusion.Tests
             var factory = CreateServiceProvider().GetStateFactory();
 
             var ms1 = factory.NewMutable<string>("A");
-            ms1.Updated += s => Out.WriteLine($"ms1 = {s.UnsafeValue}");
+            ms1.Updated += (s, _) => Out.WriteLine($"ms1 = {s.UnsafeValue}");
             ms1.Value.Should().Be("A");
 
             var ms2 = factory.NewMutable<string>("B");
-            ms2.Updated += s => Out.WriteLine($"ms2 = {s.UnsafeValue}");
+            ms2.Updated += (s, _)  => Out.WriteLine($"ms2 = {s.UnsafeValue}");
             ms2.Value.Should().Be("B");
 
             var cs = factory.NewComputed<string>(async (s, ct) => {

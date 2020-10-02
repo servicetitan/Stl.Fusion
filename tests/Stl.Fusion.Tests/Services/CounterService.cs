@@ -9,8 +9,8 @@ namespace Stl.Fusion.Tests.Services
         private readonly ConcurrentDictionary<string, int> _counters = new ConcurrentDictionary<string, int>();
         private readonly IMutableState<int> _offset;
 
-        public CounterService(IStateFactory stateFactory)
-            => _offset = stateFactory.NewMutable<int>();
+        public CounterService(IMutableState<int> offset)
+            => _offset = offset;
 
         [ComputeMethod]
         public virtual async Task<int> GetAsync(string key, CancellationToken cancellationToken = default)
@@ -27,6 +27,9 @@ namespace Stl.Fusion.Tests.Services
         }
 
         public Task SetOffsetAsync(int offset, CancellationToken cancellationToken = default)
-            => _offset.SetAsync(offset, cancellationToken).AsTask();
+        {
+            _offset.Set(offset);
+            return Task.CompletedTask;
+        }
     }
 }

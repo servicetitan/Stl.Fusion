@@ -19,10 +19,7 @@ namespace Stl.Fusion
             ComputedOptions ComputedOptions { get; set; }
             Generator<LTag> VersionGenerator { get; set; }
             bool InitialIsConsistent { get; set; }
-
-            Action<IState>? Invalidated { get; set; }
-            Action<IState>? Updating { get; set; }
-            Action<IState>? Updated { get; set; }
+            Action<IState>? AddEventHandlers { get; set; }
         }
 
         IStateSnapshot Snapshot { get; }
@@ -31,9 +28,9 @@ namespace Stl.Fusion
         object? LastValue { get; }
         object? Argument { get; }
 
-        event Action<IState>? Invalidated;
-        event Action<IState>? Updating;
-        event Action<IState>? Updated;
+        event Action<IState, StateEventKind>? Invalidated;
+        event Action<IState, StateEventKind>? Updating;
+        event Action<IState, StateEventKind>? Updated;
     }
 
     public interface IState<T> : IState, IResult<T>
@@ -43,8 +40,9 @@ namespace Stl.Fusion
         new IComputed<T> LastValueComputed { get; }
         new T LastValue { get; }
 
-        new event Action<IState<T>>? Invalidated;
-        new event Action<IState<T>>? Updated;
+        new event Action<IState<T>, StateEventKind>? Invalidated;
+        new event Action<IState<T>, StateEventKind>? Updating;
+        new event Action<IState<T>, StateEventKind>? Updated;
     }
 
     public abstract class State<T> : ComputedInput,
@@ -62,26 +60,12 @@ namespace Stl.Fusion
             public Func<IState<T>, Result<T>> InitialOutputFactory { get; set; } = DefaultInitialOutputFactory;
             public bool InitialIsConsistent { get; set; } = false;
 
-            public Action<IState<T>>? Invalidated { get; set; }
-            public Action<IState<T>>? Updating { get; set; }
-            public Action<IState<T>>? Updated { get; set; }
-
-            Action<IState>? IState.IOptions.Invalidated {
-                get => UntypedInvalidated;
-                set => UntypedInvalidated = value;
+            public Action<IState<T>>? AddEventHandlers { get; set; }
+            Action<IState>? IState.IOptions.AddEventHandlers {
+                get => AddEventHandlersUntyped;
+                set => AddEventHandlersUntyped = value;
             }
-            Action<IState>? IState.IOptions.Updating {
-                get => UntypedUpdating;
-                set => UntypedUpdating = value;
-            }
-            Action<IState>? IState.IOptions.Updated {
-                get => UntypedUpdated;
-                set => UntypedUpdated = value;
-            }
-
-            public Action<IState>? UntypedInvalidated { get; set; }
-            public Action<IState>? UntypedUpdating { get; set; }
-            public Action<IState>? UntypedUpdated { get; set; }
+            public Action<IState>? AddEventHandlersUntyped { get; set; }
         }
 
         private volatile StateSnapshot<T>? _snapshot;
@@ -128,26 +112,26 @@ namespace Stl.Fusion
         object? IResult.UnsafeValue => Computed.UnsafeValue;
         object? IResult.Value => Computed.Value;
 
-        public event Action<IState<T>>? Invalidated;
-        public event Action<IState<T>>? Updating;
-        public event Action<IState<T>>? Updated;
+        public event Action<IState<T>, StateEventKind>? Invalidated;
+        public event Action<IState<T>, StateEventKind>? Updating;
+        public event Action<IState<T>, StateEventKind>? Updated;
 
-        event Action<IState>? IState.Invalidated {
+        event Action<IState, StateEventKind>? IState.Invalidated {
             add => UntypedInvalidated += value;
             remove => UntypedInvalidated -= value;
         }
-        event Action<IState>? IState.Updating {
+        event Action<IState, StateEventKind>? IState.Updating {
             add => UntypedUpdating += value;
             remove => UntypedUpdating -= value;
         }
-        event Action<IState>? IState.Updated {
+        event Action<IState, StateEventKind>? IState.Updated {
             add => UntypedUpdated += value;
             remove => UntypedUpdated -= value;
         }
 
-        protected event Action<IState<T>>? UntypedInvalidated;
-        protected event Action<IState<T>>? UntypedUpdating;
-        protected event Action<IState<T>>? UntypedUpdated;
+        protected event Action<IState<T>, StateEventKind>? UntypedInvalidated;
+        protected event Action<IState<T>, StateEventKind>? UntypedUpdating;
+        protected event Action<IState<T>, StateEventKind>? UntypedUpdated;
 
         protected State(
             Options options, IServiceProvider serviceProvider,
@@ -157,21 +141,8 @@ namespace Stl.Fusion
             Argument = argument;
             ComputedOptions = options.ComputedOptions;
             VersionGenerator = options.VersionGenerator;
-
-            if (options.Invalidated != null)
-                Invalidated += options.Invalidated;
-            if (options.UntypedInvalidated != null)
-                UntypedInvalidated += options.UntypedInvalidated;
-
-            if (options.Updating != null)
-                Updating += options.Updating;
-            if (options.UntypedUpdating != null)
-                UntypedUpdating += options.UntypedUpdating;
-
-            if (options.Updated != null)
-                Updated += options.Updated;
-            if (options.UntypedUpdated != null)
-                UntypedUpdated += options.UntypedUpdated;
+            options.AddEventHandlers?.Invoke(this);
+            options.AddEventHandlersUntyped?.Invoke(this);
 
             Function = this;
             HashCode = RuntimeHelpers.GetHashCode(this);
@@ -221,15 +192,15 @@ namespace Stl.Fusion
 
         protected internal virtual void OnInvalidated(IComputed<T> computed)
         {
-            Invalidated?.Invoke(this);
-            UntypedInvalidated?.Invoke(this);
+            Invalidated?.Invoke(this, StateEventKind.Invalidated);
+            UntypedInvalidated?.Invoke(this, StateEventKind.Invalidated);
         }
 
         protected virtual void OnUpdating()
         {
             Snapshot.IsUpdating = true;
-            Updating?.Invoke(this);
-            UntypedUpdating?.Invoke(this);
+            Updating?.Invoke(this, StateEventKind.Updating);
+            UntypedUpdating?.Invoke(this, StateEventKind.Updating);
         }
 
         protected virtual void OnUpdated(IStateSnapshot<T>? oldSnapshot)
@@ -240,8 +211,8 @@ namespace Stl.Fusion
                 if (computed.Options.IsAsyncComputed)
                     throw Errors.UnsupportedComputedOptions(computed.GetType());
             }
-            Updated?.Invoke(this);
-            UntypedUpdated?.Invoke(this);
+            Updated?.Invoke(this, StateEventKind.Updated);
+            UntypedUpdated?.Invoke(this, StateEventKind.Updated);
         }
 
         // IFunction<T> & IFunction
@@ -313,7 +284,7 @@ namespace Stl.Fusion
             return result.Value;
         }
 
-        protected virtual async ValueTask<StateBoundComputed<T>> ComputeAsync(CancellationToken cancellationToken)
+        protected async ValueTask<StateBoundComputed<T>> ComputeAsync(CancellationToken cancellationToken)
         {
             var computed = CreateComputed();
             using var _ = Fusion.Computed.ChangeCurrent(computed);
