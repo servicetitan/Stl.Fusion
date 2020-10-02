@@ -13,6 +13,7 @@ namespace Stl.Fusion.Blazor
         protected IStateFactory StateFactory => ServiceProvider.GetStateFactory();
         protected abstract IState UntypedState { get; }
         protected Action<IState, StateEventKind> StateChanged { get; set; }
+        protected StateEventKind StateHasChangedTriggers { get; set; } = StateEventKind.Updated;
 
         public bool IsLoading => UntypedState == null! || UntypedState.Snapshot.UpdateCount == 0;
         public bool IsUpdating => UntypedState == null! || UntypedState.Snapshot.IsUpdating;
@@ -20,10 +21,10 @@ namespace Stl.Fusion.Blazor
 
         protected StatefulComponentBase()
         {
-            StateChanged = (state, eventKind) => {
-                if (eventKind == StateEventKind.Updated)
+            StateChanged = (state, eventKind) => InvokeAsync(() => {
+                if ((eventKind & StateHasChangedTriggers) != 0)
                     StateHasChanged();
-            };
+            });
         }
 
         public virtual void Dispose()
