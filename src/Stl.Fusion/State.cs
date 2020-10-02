@@ -19,7 +19,7 @@ namespace Stl.Fusion
             ComputedOptions ComputedOptions { get; set; }
             Generator<LTag> VersionGenerator { get; set; }
             bool InitialIsConsistent { get; set; }
-            Action<IState>? AddEventHandlers { get; set; }
+            Action<IState>? EventConfigurator { get; set; }
         }
 
         IStateSnapshot Snapshot { get; }
@@ -60,12 +60,8 @@ namespace Stl.Fusion
             public Func<IState<T>, Result<T>> InitialOutputFactory { get; set; } = DefaultInitialOutputFactory;
             public bool InitialIsConsistent { get; set; } = false;
 
-            public Action<IState<T>>? AddEventHandlers { get; set; }
-            Action<IState>? IState.IOptions.AddEventHandlers {
-                get => AddEventHandlersUntyped;
-                set => AddEventHandlersUntyped = value;
-            }
-            public Action<IState>? AddEventHandlersUntyped { get; set; }
+            public Action<IState<T>>? EventConfigurator { get; set; }
+            Action<IState>? IState.IOptions.EventConfigurator { get; set; }
         }
 
         private volatile StateSnapshot<T>? _snapshot;
@@ -141,8 +137,9 @@ namespace Stl.Fusion
             Argument = argument;
             ComputedOptions = options.ComputedOptions;
             VersionGenerator = options.VersionGenerator;
-            options.AddEventHandlers?.Invoke(this);
-            options.AddEventHandlersUntyped?.Invoke(this);
+            options.EventConfigurator?.Invoke(this);
+            var untypedOptions = (IState.IOptions) options;
+            untypedOptions.EventConfigurator?.Invoke(this);
 
             Function = this;
             HashCode = RuntimeHelpers.GetHashCode(this);

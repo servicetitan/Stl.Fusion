@@ -40,7 +40,7 @@ namespace Stl.Fusion.Blazor
             State = stateFactory.NewLive<AuthState>(o => {
                 options.LiveStateOptionsBuilder.Invoke(o);
                 o.InitialOutputFactory = _ => new AuthState(new User(""));
-                o.AddEventHandlers += state => state.AddEventHandler(StateEventKind.All, OnStateChanged);
+                o.EventConfigurator += state => state.AddEventHandler(StateEventKind.All, OnStateChanged);
             }, ComputeState);
         }
 
