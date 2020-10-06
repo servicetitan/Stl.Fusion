@@ -12,9 +12,9 @@ namespace Stl.Fusion.Internal
 {
     public class InterfaceCastInterceptor : IInterceptor
     {
-        private readonly Func<MethodInfo, IInvocation, Action<IInvocation>?> _createHandler;
-        private readonly ConcurrentDictionary<MethodInfo, Action<IInvocation>?> _handlerCache =
-            new ConcurrentDictionary<MethodInfo, Action<IInvocation>?>();
+        private readonly Func<(MethodInfo, Type), IInvocation, Action<IInvocation>?> _createHandler;
+        private readonly ConcurrentDictionary<(MethodInfo, Type), Action<IInvocation>?> _handlerCache =
+            new ConcurrentDictionary<(MethodInfo, Type), Action<IInvocation>?>();
         private readonly MethodInfo _createConvertingHandlerMethod;
 
         public InterfaceCastInterceptor()
@@ -27,16 +27,17 @@ namespace Stl.Fusion.Internal
 
         public void Intercept(IInvocation invocation)
         {
-            var handler = _handlerCache.GetOrAddChecked(invocation.Method, _createHandler, invocation);
+            var key = (invocation.Method, invocation.Proxy.GetType());
+            var handler = _handlerCache.GetOrAddChecked(key, _createHandler, invocation);
             if (handler == null)
                 invocation.Proceed();
             else
                 handler.Invoke(invocation);
         }
 
-        protected virtual Action<IInvocation>? CreateHandler(MethodInfo methodInfo, IInvocation initialInvocation)
+        protected virtual Action<IInvocation>? CreateHandler((MethodInfo, Type) key, IInvocation initialInvocation)
         {
-            var tProxy = initialInvocation.Proxy.GetType();
+            var (methodInfo, tProxy) = key;
             var tTarget = initialInvocation.TargetType;
             var mSource = initialInvocation.Method;
             var mArgTypes = mSource.GetParameters().Select(p => p.ParameterType).ToArray();
