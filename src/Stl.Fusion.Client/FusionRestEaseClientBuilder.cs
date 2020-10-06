@@ -99,40 +99,52 @@ namespace Stl.Fusion.Client
 
         public FusionRestEaseClientBuilder AddClientService<TClient>(string? clientName = null)
             => AddClientService(typeof(TClient), clientName);
+        public FusionRestEaseClientBuilder AddClientService<TService, TClient>(string? clientName = null)
+            => AddClientService(typeof(TService), typeof(TClient), clientName);
         public FusionRestEaseClientBuilder AddClientService(Type clientType, string? clientName = null)
+            => AddClientService(clientType, clientType, clientName);
+        public FusionRestEaseClientBuilder AddClientService(Type serviceType, Type clientType, string? clientName = null)
         {
+            if (!(serviceType.IsInterface && serviceType.IsVisible))
+                throw Internal.Errors.InterfaceTypeExpected(serviceType, true, nameof(serviceType));
             if (!(clientType.IsInterface && clientType.IsVisible))
                 throw Internal.Errors.InterfaceTypeExpected(clientType, true, nameof(clientType));
             clientName ??= clientType.FullName;
 
-            Services.TryAddSingleton(clientType, c => {
+            object Factory(IServiceProvider c)
+            {
+                // 1. Create REST client (of clientType)
                 var httpClientFactory = c.GetRequiredService<IHttpClientFactory>();
                 var httpClient = httpClientFactory.CreateClient(clientName);
-                var restClient = new RestClient(httpClient) {
+                var client = new RestClient(httpClient) {
                     RequestBodySerializer = c.GetRequiredService<RequestBodySerializer>(),
                     ResponseDeserializer = c.GetRequiredService<ResponseDeserializer>(),
-                };
-                return restClient.For(clientType);
-            });
+                }.For(clientType);
+
+                // 2. Create proxy mapping client to serviceType
+                if (clientType != serviceType) {
+                    var serviceProxyGenerator = c.GetRequiredService<IInterfaceCastProxyGenerator>();
+                    var serviceProxyType = serviceProxyGenerator.GetProxyType(serviceType);
+                    var serviceInterceptors = c.GetRequiredService<InterfaceCastInterceptor[]>();
+                    client = serviceProxyType.CreateInstance(serviceInterceptors, client);
+                }
+
+                return client;
+            }
+
+            Services.TryAddSingleton(serviceType, Factory);
             return this;
         }
 
-        public FusionRestEaseClientBuilder AddReplicaService<TClient>(
-            string? clientName = null)
+        public FusionRestEaseClientBuilder AddReplicaService<TClient>(string? clientName = null)
             where TClient : IRestEaseReplicaClient
             => AddReplicaService(typeof(TClient), clientName);
-        public FusionRestEaseClientBuilder AddReplicaService<TService, TClient>(
-            string? clientName = null)
+        public FusionRestEaseClientBuilder AddReplicaService<TService, TClient>(string? clientName = null)
             where TClient : IRestEaseReplicaClient
             => AddReplicaService(typeof(TService), typeof(TClient), clientName);
-        public FusionRestEaseClientBuilder AddReplicaService(
-            Type clientType,
-            string? clientName = null)
+        public FusionRestEaseClientBuilder AddReplicaService(Type clientType, string? clientName = null)
             => AddReplicaService(clientType, clientType, clientName);
-        public FusionRestEaseClientBuilder AddReplicaService(
-            Type serviceType,
-            Type clientType,
-            string? clientName = null)
+        public FusionRestEaseClientBuilder AddReplicaService(Type serviceType, Type clientType, string? clientName = null)
         {
             if (!(serviceType.IsInterface && serviceType.IsVisible))
                 throw Internal.Errors.InterfaceTypeExpected(serviceType, true, nameof(serviceType));
