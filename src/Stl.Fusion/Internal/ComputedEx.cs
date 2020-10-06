@@ -13,17 +13,18 @@ namespace Stl.Fusion.Internal
 
             if (existing == null)
                 return useExisting;
-            useExisting |= existing.IsConsistent();
-            if (!useExisting)
+            if (!(useExisting || existing.IsConsistent()))
                 return false;
 
             if ((callOptions & CallOptions.Capture) != 0)
                 Interlocked.Exchange(ref context.CapturedComputed, existing);
-            if ((callOptions & CallOptions.Invalidate) == CallOptions.Invalidate) {
+            var invalidate = (callOptions & CallOptions.Invalidate) == CallOptions.Invalidate;
+            if (invalidate) {
                 existing.Invalidate();
                 return true;
             }
-            ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) existing!);
+            if (!useExisting)
+                ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) existing!);
             ((IComputedImpl?) existing)?.RenewTimeouts();
             return true;
         }
@@ -37,11 +38,11 @@ namespace Stl.Fusion.Internal
 
             if (existing == null)
                 return useExisting ? ResultBox<T>.Default : null;
-            useExisting |= existing.IsConsistent();
-            if (!useExisting)
+            if (!(useExisting || existing.IsConsistent()))
                 return null;
 
-            if ((callOptions & CallOptions.Invalidate) == CallOptions.Invalidate) {
+            var invalidate = (callOptions & CallOptions.Invalidate) == CallOptions.Invalidate;
+            if (invalidate) {
                 existing.Invalidate();
                 if ((callOptions & CallOptions.Capture) != 0)
                     Interlocked.Exchange(ref context.CapturedComputed, existing);
@@ -55,7 +56,8 @@ namespace Stl.Fusion.Internal
                     return null;
             }
 
-            ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) existing!);
+            if (!useExisting)
+                ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) existing!);
             if ((callOptions & CallOptions.Capture) != 0)
                 Interlocked.Exchange(ref context.CapturedComputed, existing);
             ((IComputedImpl?) existing)?.RenewTimeouts();

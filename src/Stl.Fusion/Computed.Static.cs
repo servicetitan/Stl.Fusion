@@ -143,7 +143,7 @@ namespace Stl.Fusion
 
         public static IComputed<T>? TryGetExisting<T>(Func<Task<T>> producer)
         {
-            using var ccs = ComputeContext.New(CallOptions.TryGetExisting).Activate();
+            using var ccs = ComputeContext.New(CallOptions.TryGetExisting | CallOptions.Capture).Activate();
             var task = producer.Invoke();
             // The flow is essentially synchronous in this case, so...
             task.AssertCompleted();
@@ -152,7 +152,7 @@ namespace Stl.Fusion
 
         public static IComputed<T>? TryGetExisting<T>(Func<ValueTask<T>> producer)
         {
-            using var ccs = ComputeContext.New(CallOptions.TryGetExisting).Activate();
+            using var ccs = ComputeContext.New(CallOptions.TryGetExisting | CallOptions.Capture).Activate();
             var task = producer.Invoke();
             // The flow is essentially synchronous in this case, so...
             task.AssertCompleted();

@@ -12,7 +12,7 @@ namespace Stl.Fusion.Tests.Services
         public CounterService(IMutableState<int> offset)
             => _offset = offset;
 
-        [ComputeMethod]
+        [ComputeMethod(KeepAliveTime = 0.3)]
         public virtual async Task<int> GetAsync(string key, CancellationToken cancellationToken = default)
         {
             var offset = await _offset.UseAsync(cancellationToken).ConfigureAwait(false);

@@ -20,21 +20,21 @@ namespace Stl.Fusion.Tests
         public async Task BasicTest()
         {
             var services = CreateServiceProviderFor<MathService>();
-            var counters = services.GetRequiredService<MathService>();
+            var math = services.GetRequiredService<MathService>();
             var allComputed = new HashSet<IComputed>();
 
-            var c1 = await Computed.CaptureAsync(_ => counters.SumAsync(null));
+            var c1 = await Computed.CaptureAsync(_ => math.SumAsync(null));
             c1.Value.Should().Be(0);
             allComputed.Add(c1);
-            var c2 = await Computed.CaptureAsync(_ => counters.SumAsync(null));
+            var c2 = await Computed.CaptureAsync(_ => math.SumAsync(null));
             c2.Should().BeSameAs(c1);
 
             for (var i = 0; i < 20; i++) {
                 var values = Enumerable.Range(0, i).ToArray();
-                c1 = await Computed.CaptureAsync(_ => counters.SumAsync(values));
+                c1 = await Computed.CaptureAsync(_ => math.SumAsync(values));
                 c1.Value.Should().Be(values.Sum());
                 allComputed.Add(c1);
-                c2 = await Computed.CaptureAsync(_ => counters.SumAsync(values));
+                c2 = await Computed.CaptureAsync(_ => math.SumAsync(values));
                 c2.Should().BeSameAs(c1);
             }
 
