@@ -48,6 +48,8 @@ The sample supports **both (!)** Server-Side Blazor and Blazor WebAssembly
 
 ### Speedup Your Service By Caching Everything
 
+> NEW: [Read about new Caching Sample](https://github.com/servicetitan/Stl.Fusion.Samples#4-caching-sample) - the numbers it produces are even more interesting!
+
 [A small benchmark in Fusion test suite](https://github.com/servicetitan/Stl.Fusion/blob/master/tests/Stl.Fusion.Tests/PerformanceTest.cs) 
 compares "raw" [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/) - 
 based Data Access Layer (DAL) against its version relying on Fusion. 
