@@ -197,10 +197,11 @@ namespace Build
             Environment.SetEnvironmentVariable("DOTNET_CLI_UI_LANGUAGE", "en");
         }
 
-        // Removes guid from tests output path, workaround of https://github.com/microsoft/vstest/issues/2378
         static void MoveCoverageOutputFiles(PathString testOutputPath)
         {
-            // Removes all files in inner folders, workaround for https://github.com/microsoft/vstest/issues/2334
+            // Moves coverage reports from GUID folders to the output path. A workaround for:
+            // - https://github.com/microsoft/vstest/issues/2378
+            // - https://github.com/microsoft/vstest/issues/2334
             var dirPaths = (
                 from dirPath in Directory.EnumerateDirectories(testOutputPath).Select(PathString.New)
                 let createTime = Directory.GetCreationTime(dirPath)
