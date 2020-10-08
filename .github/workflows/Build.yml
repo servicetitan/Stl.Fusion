@@ -40,6 +40,6 @@ jobs:
         uses: codecov/codecov-action@v1.0.13
         with:
           name: codecov-bot
-          files: artifacts/tests/output/1-coverage.xml,artifacts/tests/output/2-coverage.xml
+          file: artifacts/tests/output/*.xml
           flags: unit
           # fail_ci_if_error: true
