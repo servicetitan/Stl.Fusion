@@ -44,7 +44,7 @@ namespace Stl.Fusion.Blazor
             State ??= StateFactory.NewLive<T>(ConfigureState, (_, ct) => ComputeStateAsync(ct), this);
             Locals.Updated += (s, e) => {
                 State.Invalidate();
-                State.UpdateAsync(false);
+                State.CancelUpdateDelay();
             };
             base.OnInitialized();
         }
