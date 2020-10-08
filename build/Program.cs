@@ -146,6 +146,7 @@ namespace Build
                     .WithArguments($"test " +
                         "--nologo " +
                         "--no-restore " +
+                        "--blame " +
                         $"--collect:\"XPlat Code Coverage\" --results-directory {testOutputPath} " +
                         $"-c {configuration} " +
                         "-- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=json,cobertura"
