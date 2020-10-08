@@ -154,7 +154,7 @@ namespace Build
                     .ExecuteBufferedAsync(cancellationToken)
                     .Task.ConfigureAwait(false);
 
-                MoveAttachments(cmd.StandardOutput, testOutputPath);
+                MoveCoverageOutputFiles(testOutputPath);
 
                 // Removes all files in inner folders, workaround for https://github.com/microsoft/vstest/issues/2334
                 foreach (var path in Directory.EnumerateDirectories(testOutputPath).Select(PathString.New))
@@ -198,26 +198,25 @@ namespace Build
         }
 
         // Removes guid from tests output path, workaround of https://github.com/microsoft/vstest/issues/2378
-        static void MoveAttachments(string coverageOutput, PathString targetPath)
+        static void MoveCoverageOutputFiles(PathString testOutputPath)
         {
-            var targetPathString = targetPath.Value.Replace('\\', Path.PathSeparator).Replace('/', Path.PathSeparator);
-            var pattern = $@"Test run for (?<testLib>[^(]*).*?Attachments:(?<filepaths>(?<filepath>[\s]+[^\n]+{Regex.Escape(targetPathString)}[^\n]+[\n])+)";
-            var attachmentsRegex = new Regex(pattern, RegexOptions.Singleline | RegexOptions.CultureInvariant);
-            foreach (var match in attachmentsRegex.Matches(coverageOutput).OfType<Match>()) {
-                var regexPaths = match.Groups["filepaths"].Value.Trim('\n', ' ', '\t', '\r');
-                var paths = regexPaths
-                    .Split('\n', StringSplitOptions.RemoveEmptyEntries)
-                    .Select(x => PathString.New(x.Trim()))
-                    .ToArray();
-                if (paths.Length > 0) {
-                    foreach (var path in paths) {
-                        var newFileName = $"{Path.GetFileNameWithoutExtension(match.Groups["testLib"].Value)}.{path.FileName}";
-                        var newPath = targetPath & newFileName;
-                        Console.WriteLine($"Moving: {path} -> {newPath}");
-                        File.Move(path, newPath, true);
-                    }
-                    DeleteDir(paths[0].DirectoryPath, true);
+            // Removes all files in inner folders, workaround for https://github.com/microsoft/vstest/issues/2334
+            var dirPaths = (
+                from dirPath in Directory.EnumerateDirectories(testOutputPath).Select(PathString.New)
+                let createTime = Directory.GetCreationTime(dirPath)
+                orderby createTime
+                select dirPath
+                ).ToArray();
+            var dirIndex = 1;
+            foreach (var dirPath in dirPaths) {
+                var dirName = dirPath.FileName;
+                foreach (var filePath in Directory.EnumerateFiles(dirPath, "coverage.*").Select(PathString.New).ToArray()) {
+                    var newFilePath = testOutputPath & $"{dirIndex}-{filePath.FileName}";
+                    Console.WriteLine($"Moving: {filePath} -> {newFilePath}");
+                    File.Move(filePath, newFilePath, true);
                 }
+                DeleteDir(dirPath);
+                dirIndex++;
             }
         }
 
