@@ -9,7 +9,7 @@
   </PropertyGroup>
   <ItemGroup Label="Nupkg Versions">
     <PackageReference Update="AutoMapper" Version="10.0.0" />
-    <PackageReference Update="Autofac" Version="5.2.0" />
+    <PackageReference Update="Autofac" Version="6.0.0" />
     <PackageReference Update="Autofac.Extensions.DependencyInjection" Version="6.0.0" />
     <PackageReference Update="Autofac.Extras.DynamicProxy" Version="6.0.0" />
     <PackageReference Update="AutoFixture" Version="4.14.0" />
