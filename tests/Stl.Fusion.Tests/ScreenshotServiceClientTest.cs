@@ -3,6 +3,8 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Tests.Services;
+using Stl.OS;
+using Stl.Testing;
 using Stl.Tests;
 using Xunit;
 using Xunit.Abstractions;
@@ -17,6 +19,10 @@ namespace Stl.Fusion.Tests
         [Fact]
         public async Task BasicTest()
         {
+            if (OSInfo.Kind == OSKind.Unix)
+                // Screenshots don't work on Unix
+                return;
+
             var epsilon = TimeSpan.FromSeconds(0.5);
 
             await using var serving = await WebSocketHost.ServeAsync();
