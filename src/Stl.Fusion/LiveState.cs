@@ -15,6 +15,7 @@ namespace Stl.Fusion
             bool DelayFirstUpdate { get; set; }
         }
 
+        Task? CurrentDelayTask { get; }
         IUpdateDelayer UpdateDelayer { get; }
     }
 
@@ -52,6 +53,7 @@ namespace Stl.Fusion
         }
 
         private readonly CancellationTokenSource _stopCts;
+        private volatile Task? _currentDelayTask;
 
         protected CancellationToken StopToken { get; }
         protected Func<ILiveState<T>, IUpdateDelayer> UpdateDelayerFactory { get; }
@@ -59,6 +61,7 @@ namespace Stl.Fusion
 
         public IUpdateDelayer UpdateDelayer { get; private set; } = null!;
         public bool DelayFirstUpdate { get; }
+        public Task? CurrentDelayTask => _currentDelayTask;
 
         protected LiveState(
             Options options, IServiceProvider serviceProvider,
@@ -101,14 +104,18 @@ namespace Stl.Fusion
                     var snapshot = Snapshot;
                     var computed = snapshot.Computed;
                     await computed.WhenInvalidatedAsync(cancellationToken).ConfigureAwait(false);
-                    if (snapshot.UpdateCount != 0 || DelayFirstUpdate)
-                        await UpdateDelayer.DelayAsync(this, cancellationToken).ConfigureAwait(false);
+                    if (snapshot.UpdateCount != 0 || DelayFirstUpdate) {
+                        var delayTask = UpdateDelayer.DelayAsync(this, cancellationToken);
+                        _currentDelayTask = delayTask;
+                        await delayTask.ConfigureAwait(false);
+                    }
                     await computed.UpdateAsync(false, cancellationToken).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException) {
-                    // Will break from while if it's due to cancellationToken cancellation
+                    // Will break from "while" loop later if it's due to cancellationToken cancellation
                 }
                 catch (Exception e) {
+                    _currentDelayTask = null;
                     Log.LogError(e, $"Error in LiveState.RunAsync().");
                 }
             }

@@ -55,7 +55,7 @@ namespace Stl.Fusion.Tests
 
             var count = 0;
             using var state = StateFactory.NewLive<DateTime>(
-                o => o.WithZeroUpdateDelay(),
+                o => o.WithInstantUpdates(),
                 async (_, ct) => await rep.Computed.UseAsync(ct));
             state.Updated += (s, _) => {
                 Out.WriteLine($"{s.Value}");

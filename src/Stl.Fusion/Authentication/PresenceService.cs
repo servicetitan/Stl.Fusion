@@ -33,6 +33,7 @@ namespace Stl.Fusion.Authentication
             SessionResolver = sessionResolver;
             UpdateDelayer = new UpdateDelayer(new UpdateDelayer.Options() {
                 Delay = options.UpdatePeriod,
+                DefaultPostCancellationDelay = TimeSpan.Zero,
             });
         }
 

@@ -101,7 +101,7 @@ namespace Stl.Fusion.Tests
             await users.CreateAsync(u, true);
 
             using var sText = await StateFactory.NewLive<string>(
-                o => o.WithZeroUpdateDelay(),
+                o => o.WithInstantUpdates(),
                 async (s, cancellationToken) => {
                     var norris = await users.TryGetAsync(int.MaxValue, cancellationToken).ConfigureAwait(false);
                     var now = await time.GetTimeAsync().ConfigureAwait(false);
@@ -139,10 +139,10 @@ namespace Stl.Fusion.Tests
                 }).UpdateAsync(false);
 
             var v12a = await s12.UseAsync();
-            s1.Invalidate(); // Should increment c1 & impact c12
+            s1.Computed.Invalidate(); // Should increment c1 & impact c12
             var v12b = await s12.UseAsync();
             v12b.Should().Be((v12a.Item1 + 1, v12a.Item2));
-            s2.Invalidate(); // Should increment c2, but shouldn't impact c12
+            s2.Computed.Invalidate(); // Should increment c2, but shouldn't impact c12
             var v12c = await s12.UseAsync();
             v12c.Should().Be(v12b);
         }

@@ -42,7 +42,7 @@ namespace Stl.Fusion.Blazor
             // ReSharper disable once ConstantNullCoalescingCondition
             Locals ??= StateFactory.NewMutable(ConfigureLocals, Option<Result<TLocals>>.None);
             State ??= StateFactory.NewLive<T>(ConfigureState, (_, ct) => ComputeStateAsync(ct), this);
-            Locals.Updated += (s, e) => State.Invalidate(true);
+            Locals.Updated += (s, e) => State.CancelUpdateDelay();
             base.OnInitialized();
         }
 

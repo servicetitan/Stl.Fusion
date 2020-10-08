@@ -4,9 +4,9 @@ namespace Stl.Fusion
 {
     public static class StateOptionsEx
     {
-        public static TOptions WithZeroUpdateDelay<TOptions>(this TOptions options)
+        public static TOptions WithInstantUpdates<TOptions>(this TOptions options)
             where TOptions : class, ILiveState.IOptions
-            => options.WithUpdateDelayer(UpdateDelayer.None);
+            => options.WithUpdateDelayer(UpdateDelayer.Options.InstantUpdates);
 
         public static TOptions WithUpdateDelayer<TOptions>(this TOptions options, IUpdateDelayer updateDelayer)
             where TOptions : class, ILiveState.IOptions

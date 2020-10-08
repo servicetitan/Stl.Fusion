@@ -38,7 +38,7 @@ namespace Stl.Fusion.Tests.UIModels
             : base(options, serviceProvider, argument)
         {
             Locals = new MutableState<string>(serviceProvider);
-            Locals.AddEventHandler(StateEventKind.Updated, (s, e) => this.Invalidate(true));
+            Locals.AddEventHandler(StateEventKind.Updated, (s, e) => this.CancelUpdateDelay());
         }
 
         protected override async Task<KeyValueModel<string>> ComputeValueAsync(CancellationToken cancellationToken)
