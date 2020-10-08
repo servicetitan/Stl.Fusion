@@ -31,6 +31,8 @@ namespace Stl.Fusion
         event Action<IState, StateEventKind>? Invalidated;
         event Action<IState, StateEventKind>? Updating;
         event Action<IState, StateEventKind>? Updated;
+
+        bool Invalidate();
     }
 
     public interface IState<T> : IState, IResult<T>
@@ -43,6 +45,9 @@ namespace Stl.Fusion
         new event Action<IState<T>, StateEventKind>? Invalidated;
         new event Action<IState<T>, StateEventKind>? Updating;
         new event Action<IState<T>, StateEventKind>? Updated;
+
+        Task WhenInvalidatedAsync<TState>(CancellationToken cancellationToken = default);
+        ValueTask<T> UseAsync(CancellationToken cancellationToken = default);
     }
 
     public abstract class State<T> : ComputedInput,
@@ -164,6 +169,13 @@ namespace Stl.Fusion
             => Computed.AsResult();
         public Result<TOther> AsResult<TOther>()
             => Computed.AsResult<TOther>();
+
+        public bool Invalidate()
+            => Computed.Invalidate();
+        public Task WhenInvalidatedAsync<TState>(CancellationToken cancellationToken = default)
+            => Computed.WhenInvalidatedAsync(cancellationToken);
+        public ValueTask<T> UseAsync(CancellationToken cancellationToken = default)
+            => Computed.UseAsync(cancellationToken);
 
         // Equality
 
