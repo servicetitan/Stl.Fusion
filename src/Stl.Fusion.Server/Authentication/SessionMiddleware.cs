@@ -51,7 +51,7 @@ namespace Stl.Fusion.Server.Authentication
             ISessionFactory sessionFactory,
             IAuthService? authService = null)
         {
-            options ??= new Options();
+            options = options.OrDefault();
             Cookie = options.Cookie;
             ForcedSignOutHandler = options.ForcedSignOutHandler;
             SessionProvider = sessionProvider;

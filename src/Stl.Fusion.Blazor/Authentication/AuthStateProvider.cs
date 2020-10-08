@@ -2,13 +2,14 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components.Authorization;
+using Stl.DependencyInjection;
 using Stl.Fusion.Authentication;
 
 namespace Stl.Fusion.Blazor
 {
     public class AuthStateProvider : AuthenticationStateProvider, IDisposable
     {
-        public class Options
+        public class Options : IOptions
         {
             public Action<LiveState<AuthState>.Options> LiveStateOptionsBuilder { get; } =
                 DefaultLiveStateOptionsBuilder;
@@ -34,7 +35,7 @@ namespace Stl.Fusion.Blazor
             ISessionResolver sessionResolver,
             IStateFactory stateFactory)
         {
-            options ??= new Options();
+            options = options.OrDefault();
             AuthService = authService;
             SessionResolver = sessionResolver;
             State = stateFactory.NewLive<AuthState>(o => {

@@ -27,13 +27,13 @@ namespace Stl.Fusion.Authentication
         public PresenceService(Options? options,
             IAuthService authService, ISessionResolver sessionResolver, ILogger<PresenceService>? log = null)
         {
+            options = options.OrDefault();
             Log = log ??= NullLogger<PresenceService>.Instance;
-            options ??= new Options();
             AuthService = authService;
             SessionResolver = sessionResolver;
             UpdateDelayer = new UpdateDelayer(new UpdateDelayer.Options() {
                 Delay = options.UpdatePeriod,
-                DefaultPostCancellationDelay = TimeSpan.Zero,
+                CancellationDelay = TimeSpan.Zero,
             });
         }
 
