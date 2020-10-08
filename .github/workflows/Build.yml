@@ -37,9 +37,9 @@ jobs:
         run: dotnet run --project build --configuration Release --no-launch-profile -- --configuration Debug coverage
 
       - name: Codecov
-        uses: codecov/codecov-action@v1.0.12
+        uses: codecov/codecov-action@v1.0.13
         with:
           name: codecov-bot
-          file: artifacts/tests/output/*.xml
+          files: artifacts/tests/output/1-coverage.xml,artifacts/tests/output/2-coverage.xml
           flags: unit
           # fail_ci_if_error: true
