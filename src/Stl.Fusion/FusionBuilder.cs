@@ -22,7 +22,6 @@ namespace Stl.Fusion
             typeof(IMutableState<>),
             typeof(IComputedState<>),
             typeof(ILiveState<>),
-            typeof(ILiveState<,>),
         };
 
         public IServiceCollection Services { get; }

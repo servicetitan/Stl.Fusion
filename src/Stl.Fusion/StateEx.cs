@@ -6,6 +6,10 @@ namespace Stl.Fusion
 {
     public static class StateEx
     {
+        public static bool Invalidate<TState>(this TState state)
+            where TState : class, IState
+            => state.Computed.Invalidate();
+
         public static ValueTask<T> UseAsync<T>(this IState<T> state, CancellationToken cancellationToken = default)
             => state.Computed.UseAsync(cancellationToken);
 
