@@ -28,7 +28,7 @@ in C++, but nothing similar is widely used on .NET, so we ended up taking it :)
 
 It looks fairly stable on samples and one of our internal apps 
 (~ runs for days without any issues for about a hundred users), 
-but its test coverage is fairly low (sorry, **the actual coverage is about 55%** &ndash; the reports in CodeCov are broken now, we'll fix this soon):
+but its test coverage is still below desirable 75-80%:
 
 [![Build](https://github.com/servicetitan/Stl.Fusion/workflows/Build/badge.svg)](https://github.com/servicetitan/Stl.Fusion/actions?query=workflow%3A%22Build%22)
 [![NuGetVersion](https://img.shields.io/nuget/v/Stl.Fusion)](https://www.nuget.org/packages?q=Owner%3Aservicetitan+Tags%3Astl_fusion) 
