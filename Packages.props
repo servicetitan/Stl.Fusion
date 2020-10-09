@@ -23,7 +23,7 @@
     <PackageReference Update="Enums.NET" Version="3.0.3" />
     <PackageReference Update="FluentAssertions" Version="5.10.3" />
     <PackageReference Update="MediatR" Version="8.2.0" />
-    <PackageReference Update="MediatR.Extensions.Microsoft.DependencyInjection" Version="8.1.0" />
+    <PackageReference Update="MediatR.Extensions.Microsoft.DependencyInjection" Version="9.0.0" />
     <PackageReference Update="Microsoft.AspNetCore.Components" Version="$(AspNetCoreVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.Components.Authorization" Version="$(AspNetCoreVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.Components.Web" Version="$(AspNetCoreVersion)" />
