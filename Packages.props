@@ -17,7 +17,7 @@
     <PackageReference Update="Bullseye" Version="3.5.0" />
     <PackageReference Update="Castle.Core" Version="4.4.1" />
     <PackageReference Update="Castle.Core.AsyncInterceptor" Version="1.7.0" />
-    <PackageReference Update="CliWrap" Version="3.2.0" />
+    <PackageReference Update="CliWrap" Version="3.2.1" />
     <PackageReference Update="Concurrent.FastReflection.NetStandard" Version="1.2.1.1" />
     <PackageReference Update="DataAnnotationsValidatorNetStandard" Version="1.0.3" />
     <PackageReference Update="Enums.NET" Version="3.0.3" />
