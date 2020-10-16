@@ -63,11 +63,8 @@ jobs:
     #    and modify them (or add more) to build your code if your project
     #    uses a compiled language
 
-    - name: Restore NuGet Packages & Tools
-      run: dotnet run --project build --configuration Release --no-launch-profile -- --configuration Debug restore restore-tools
-
     - name: Build
-      run: dotnet run --project build --configuration Release --no-launch-profile -- --configuration Debug build
+      run: dotnet build
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
