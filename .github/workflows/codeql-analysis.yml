@@ -36,10 +36,22 @@ jobs:
         # a pull request then we can checkout the head.
         fetch-depth: 2
 
+    - uses: dotnet/nbgv@master
+      id: nbgv
+      with:
+        setAllVars: true
+        setCommonVars: true
+
     # If this run was triggered by a pull request event, then checkout
     # the head of the pull request instead of the merge commit.
     - run: git checkout HEAD^2
       if: ${{ github.event_name == 'pull_request' }}
+
+    - run: "echo 'SemVer2: ${{ steps.nbgv.outputs.SemVer2 }}'"
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.401
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
@@ -50,18 +62,6 @@ jobs:
         # By default, queries listed here will override any specified in a config file. 
         # Prefix the list here with "+" to use these queries and those in the config file.
         # queries: ./path/to/local/query, your-org/your-repo/queries@main
-
-    # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
-    # If this step fails, then you should remove it and run the build manually (see below)
-    # - name: Autobuild
-    #   uses: github/codeql-action/autobuild@v1
-
-    # ℹ️ Command-line programs to run using the OS shell.
-    # 📚 https://git.io/JvXDl
-
-    # ✏️ If the Autobuild fails above, remove it and uncomment the following three lines
-    #    and modify them (or add more) to build your code if your project
-    #    uses a compiled language
 
     - name: Build
       run: dotnet build
