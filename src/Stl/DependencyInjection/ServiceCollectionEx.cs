@@ -1,13 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Stl.DependencyInjection.Internal;
-using Stl.Internal;
 using Stl.Text;
 
 namespace Stl.DependencyInjection

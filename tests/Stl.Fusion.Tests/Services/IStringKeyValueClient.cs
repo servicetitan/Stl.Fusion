@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using RestEase;
 using Stl.Fusion.Client;
 using Stl.Fusion.Client.RestEase;
+using Stl.Serialization;
 
 namespace Stl.Fusion.Tests.Services
 {

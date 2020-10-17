@@ -1,9 +1,8 @@
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Stl.Fusion.Bridge;
-using Stl.Fusion.Client;
 using Stl.Fusion.Server;
+using Stl.Serialization;
 
 namespace Stl.Fusion.Tests.Services
 {

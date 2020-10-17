@@ -5,7 +5,6 @@ using System.Linq;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.DependencyInjection.Internal;
-using Stl.Internal;
 
 namespace Stl.DependencyInjection
 {
@@ -47,5 +46,42 @@ namespace Stl.DependencyInjection
 
         public static object Activate(this IServiceProvider services, Type instanceType, params object[] arguments)
             => ActivatorUtilities.CreateInstance(services, instanceType, arguments);
+
+        // View-related
+
+        public static ITypeViewFactory GetTypeViewFactory(this IServiceProvider services)
+            => services.GetService<ITypeViewFactory>() ?? TypeViewFactory.Default;
+
+        public static object? GetServiceView(this IServiceProvider services, Type serviceType, Type viewType)
+        {
+            var service = services.GetService(serviceType);
+            if (service == null)
+                return null;
+            return services.GetTypeViewFactory().Create(service, serviceType, viewType);
+        }
+
+        public static TView? GetServiceView<TService, TView>(this IServiceProvider services)
+            where TService : class
+            where TView : class
+        {
+            var service = services.GetService<TService>();
+            if (service == null)
+                return null;
+            return services.GetTypeViewFactory().Create<TView>().For(service);
+        }
+
+        public static object GetRequiredServiceView(this IServiceProvider services, Type serviceType, Type viewType)
+        {
+            var service = services.GetRequiredService(serviceType);
+            return services.GetTypeViewFactory().Create(service, serviceType, viewType);
+        }
+
+        public static TView GetRequiredServiceView<TService, TView>(this IServiceProvider services)
+            where TService : class
+            where TView : class
+        {
+            var service = services.GetRequiredService<TService>();
+            return services.GetTypeViewFactory().Create<TView>().For(service);
+        }
     }
 }

@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using Newtonsoft.Json;
+using Stl.Extensibility;
 
 namespace Stl
 {
@@ -82,6 +83,8 @@ namespace Stl
             => new Result<T>(UnsafeValue, Error);
         public Result<TOther> AsResult<TOther>()
             => new Result<TOther>((TOther) (object) UnsafeValue!, Error);
+        T IConvertibleTo<T>.Convert() => Value;
+        Result<T> IConvertibleTo<Result<T>>.Convert() => AsResult();
 
         // Operators
 

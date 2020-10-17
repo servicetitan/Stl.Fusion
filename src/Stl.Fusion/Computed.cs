@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Collections;
 using Stl.Collections.Slim;
+using Stl.Extensibility;
 using Stl.Frozen;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Internal;
@@ -279,6 +280,8 @@ namespace Stl.Fusion
             => Output.AsResult();
         public Result<TOther> AsResult<TOther>()
             => Output.AsResult<TOther>();
+        TOut IConvertibleTo<TOut>.Convert() => Value;
+        Result<TOut> IConvertibleTo<Result<TOut>>.Convert() => AsResult();
 
         // IComputedImpl methods
 

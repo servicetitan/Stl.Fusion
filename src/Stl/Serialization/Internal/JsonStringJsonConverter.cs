@@ -1,7 +1,7 @@
 using System;
 using Newtonsoft.Json;
 
-namespace Stl.Fusion.Client.Internal
+namespace Stl.Serialization.Internal
 {
     public class JsonStringJsonConverter : JsonConverter
     {

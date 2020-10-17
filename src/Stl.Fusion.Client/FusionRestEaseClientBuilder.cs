@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
 using RestEase;
 using Stl.DependencyInjection;
+using Stl.DependencyInjection.Internal;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Interception;
 using Stl.Fusion.Client.Authentication;
@@ -43,11 +44,6 @@ namespace Stl.Fusion.Client
                 IHttpMessageHandlerBuilderFilter,
                 FusionHttpMessageHandlerBuilderFilter>());
             Services.TryAddTransient<FusionHttpMessageHandler>();
-
-            // InterfaceCastProxyGenerator (used by ReplicaServices)
-            Services.TryAddSingleton<InterfaceCastInterceptor>();
-            Services.TryAddSingleton(c => InterfaceCastProxyGenerator.Default);
-            Services.TryAddSingleton(c => new [] { c.GetRequiredService<InterfaceCastInterceptor>() });
 
             // ResponseDeserializer & ReplicaResponseDeserializer
             Services.TryAddTransient<ResponseDeserializer>(c => new JsonResponseDeserializer() {
@@ -121,13 +117,9 @@ namespace Stl.Fusion.Client
                     ResponseDeserializer = c.GetRequiredService<ResponseDeserializer>(),
                 }.For(clientType);
 
-                // 2. Create proxy mapping client to serviceType
-                if (clientType != serviceType) {
-                    var serviceProxyGenerator = c.GetRequiredService<IInterfaceCastProxyGenerator>();
-                    var serviceProxyType = serviceProxyGenerator.GetProxyType(serviceType);
-                    var serviceInterceptors = c.GetRequiredService<InterfaceCastInterceptor[]>();
-                    client = serviceProxyType.CreateInstance(serviceInterceptors, client);
-                }
+                // 2. Create view mapping clientType to serviceType
+                if (clientType != serviceType)
+                    client = c.GetTypeViewFactory().Create(client, clientType, serviceType);
 
                 return client;
             }
@@ -168,13 +160,9 @@ namespace Stl.Fusion.Client
                     ResponseDeserializer = c.GetRequiredService<ResponseDeserializer>()
                 }.For(clientType);
 
-                // 3. Create proxy mapping client to serviceType
-                if (clientType != serviceType) {
-                    var serviceProxyGenerator = c.GetRequiredService<IInterfaceCastProxyGenerator>();
-                    var serviceProxyType = serviceProxyGenerator.GetProxyType(serviceType);
-                    var serviceInterceptors = c.GetRequiredService<InterfaceCastInterceptor[]>();
-                    client = serviceProxyType.CreateInstance(serviceInterceptors, client);
-                }
+                // 3. Create view mapping clientType to serviceType
+                if (clientType != serviceType)
+                    client = c.GetTypeViewFactory().Create(client, clientType, serviceType);
 
                 // 4. Create Replica Client
                 var replicaProxyGenerator = c.GetRequiredService<IReplicaClientProxyGenerator>();

@@ -4,22 +4,21 @@ using Castle.DynamicProxy;
 using Castle.DynamicProxy.Generators;
 using Castle.DynamicProxy.Generators.Emitters;
 using Stl.Concurrency;
-using Stl.DependencyInjection;
 
-namespace Stl.Fusion.Internal
+namespace Stl.DependencyInjection.Internal
 {
-    public interface IInterfaceCastProxyGenerator
+    public interface ITypeViewProxyGenerator
     {
         Type GetProxyType(Type type);
     }
 
-    public class InterfaceCastProxyGenerator : ProxyGeneratorBase<InterfaceCastProxyGenerator.Options>,
-        IInterfaceCastProxyGenerator
+    public class TypeViewProxyGenerator : ProxyGeneratorBase<TypeViewProxyGenerator.Options>,
+        ITypeViewProxyGenerator
     {
         public class Options : ProxyGenerationOptions, IOptions
         {
             public Type BaseType { get; set; } = typeof(object);
-            public Type InterceptorType { get; set; } = typeof(InterfaceCastInterceptor);
+            public Type InterceptorType { get; set; } = typeof(TypeViewInterceptor);
         }
 
         protected class Implementation : InterfaceProxyWithTargetInterfaceGenerator
@@ -41,11 +40,11 @@ namespace Stl.Fusion.Internal
                 => emitter.CreateField("__interceptors", Options.InterceptorType.MakeArrayType());
         }
 
-        public static readonly IInterfaceCastProxyGenerator Default = new InterfaceCastProxyGenerator();
+        public static ITypeViewProxyGenerator Default { get; } = new TypeViewProxyGenerator();
 
         protected ConcurrentDictionary<Type, Type> Cache { get; } = new ConcurrentDictionary<Type, Type>();
 
-        public InterfaceCastProxyGenerator(
+        public TypeViewProxyGenerator(
             Options? options = null,
             ModuleScope? moduleScope = null)
             : base(options, moduleScope) { }

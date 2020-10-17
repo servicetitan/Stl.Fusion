@@ -3,9 +3,9 @@ using System.ComponentModel;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Stl.Extensibility;
-using Stl.Fusion.Client.Internal;
+using Stl.Serialization.Internal;
 
-namespace Stl.Fusion.Client
+namespace Stl.Serialization
 {
     [Serializable]
     [JsonConverter(typeof(JsonStringJsonConverter))]

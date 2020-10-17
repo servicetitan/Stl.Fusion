@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Castle.Core" />
     <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
