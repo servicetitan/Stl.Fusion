@@ -68,7 +68,7 @@ namespace Stl.Fusion.Bridge.Interception
                 }
                 else {
                     var task = (Task<T>) result;
-                    output =  Result.Value(await task.ConfigureAwait(false));
+                    output = Result.Value(await task.ConfigureAwait(false));
                 }
             }
             catch (OperationCanceledException) {
@@ -79,6 +79,8 @@ namespace Stl.Fusion.Bridge.Interception
             catch (Exception e) {
                 if (IsLogDebugEnabled)
                     Log.LogError(e, $"{nameof(ComputeAsync)}: Error on update.");
+                if (e is AggregateException ae)
+                    e = ae.GetFirstInnerException();
                 output = Result.Error<T>(e);
             }
 

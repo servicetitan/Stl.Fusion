@@ -38,7 +38,7 @@ namespace Stl.Fusion.Internal
         public static Exception ComputedCurrentIsOfIncompatibleType(Type expectedType)
             => new InvalidCastException(
                 $"Computed.Current() can't be converted to '{expectedType.Name}'.");
-        public static Exception ComputedCapturedIsOfIncompatibleType(Type expectedType)
+        public static Exception CapturedComputedIsOfIncompatibleType(Type expectedType)
             => new InvalidCastException(
                 $"Computed.Captured() can't be converted to '{expectedType.Name}'.");
         public static Exception NoComputedCaptured()

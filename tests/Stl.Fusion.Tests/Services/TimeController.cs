@@ -12,8 +12,7 @@ namespace Stl.Fusion.Tests.Services
     {
         protected ITimeService Service { get; }
 
-        public TimeController(IPublisher publisher, ITimeService service) : base(publisher)
-            => Service = service;
+        public TimeController(ITimeService service) => Service = service;
 
         [HttpGet]
         public Task<DateTime> GetTimeAsync()

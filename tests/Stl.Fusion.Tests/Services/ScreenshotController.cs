@@ -12,8 +12,7 @@ namespace Stl.Fusion.Tests.Services
         public static int CallCount { get; set; }
         protected IScreenshotService Service { get; }
 
-        public ScreenshotController(IPublisher publisher, IScreenshotService service) : base(publisher)
-            => Service = service;
+        public ScreenshotController(IScreenshotService service) => Service = service;
 
         [HttpGet]
         public Task<Screenshot> GetScreenshotAsync(int width)

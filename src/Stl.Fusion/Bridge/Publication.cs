@@ -19,6 +19,7 @@ namespace Stl.Fusion.Bridge
         long UseCount { get; }
 
         Type GetResultType();
+        void ThrowIfIncompatibleResult(object result);
         Disposable<IPublication> Use();
         bool Touch();
         ValueTask UpdateAsync(CancellationToken cancellationToken);
@@ -71,6 +72,11 @@ namespace Stl.Fusion.Bridge
 
         public Type GetResultType()
             => typeof(T);
+
+        public void ThrowIfIncompatibleResult(object result)
+        {
+            var _ = (T) result;
+        }
 
         public bool Touch()
         {

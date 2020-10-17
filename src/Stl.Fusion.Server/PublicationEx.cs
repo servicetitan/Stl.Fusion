@@ -11,18 +11,34 @@ namespace Stl.Fusion.Server
 {
     public static class HttpContextEx
     {
+        public static IPublicationState? GetPublicationState(this HttpContext httpContext)
+        {
+            if (!httpContext.Items.TryGetValue(typeof(IPublicationState), out var v))
+                return null;
+            return (IPublicationState) v;
+        }
+
+        public static PublicationStateInfo? GetPublicationStateInfo(this HttpContext httpContext)
+        {
+            if (!httpContext.Items.TryGetValue(typeof(PublicationStateInfo), out var v))
+                return null;
+            return (PublicationStateInfo) v;
+        }
+
         public static void Publish(this HttpContext httpContext, IPublication publication)
         {
             using var _ = publication.Use();
-            var state = publication.State;
-            var computed = state.Computed;
+            var publicationState = publication.State;
+            var computed = publicationState.Computed;
             var isConsistent = computed.IsConsistent();
 
-            var headers = httpContext.Response.Headers;
-            if (headers.ContainsKey(FusionHeaders.Publication))
-                throw Errors.AlreadyShared();
+            var responseHeaders = httpContext.Response.Headers;
+            if (responseHeaders.ContainsKey(FusionHeaders.Publication))
+                throw Errors.AlreadyPublished();
             var psi = new PublicationStateInfo(publication.Ref, computed.Version, isConsistent);
-            headers[FusionHeaders.Publication] = JsonConvert.SerializeObject(psi);
+            httpContext.Items[typeof(IPublicationState)] = publicationState;
+            httpContext.Items[typeof(PublicationStateInfo)] = psi;
+            responseHeaders[FusionHeaders.Publication] = JsonConvert.SerializeObject(psi);
         }
 
         public static async Task<IComputed<T>> PublishAsync<T>(

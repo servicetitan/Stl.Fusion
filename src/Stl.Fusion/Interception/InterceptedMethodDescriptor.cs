@@ -24,8 +24,7 @@ namespace Stl.Fusion.Interception
 
         public InterceptedMethodDescriptor(
             InterceptorBase interceptor,
-            MethodInfo methodInfo,
-            InterceptedMethodAttribute attribute)
+            MethodInfo methodInfo)
         {
             var returnType = methodInfo.ReturnType;
             if (!returnType.IsGenericType)
@@ -36,12 +35,13 @@ namespace Stl.Fusion.Interception
             var returnsValueTask = returnTypeGtd == typeof(ValueTask<>);
             if (!(returnsTask || returnsValueTask))
                 return;
-
             var outputType = returnType.GetGenericArguments()[0];
             var invocationTargetType = methodInfo.ReflectedType;
-            var swapAttribute = methodInfo.GetAttribute<SwapAttribute>(true, true);
-            var options = ComputedOptions.FromAttribute(attribute, swapAttribute);
             var parameters = methodInfo.GetParameters();
+
+            var options = interceptor.ComputedOptionsProvider.GetComputedOptions(interceptor, methodInfo);
+            if (options == null)
+                return;
 
             Interceptor = interceptor;
             MethodInfo = methodInfo;

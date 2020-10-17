@@ -13,8 +13,7 @@ namespace Stl.Fusion.Server.Authentication
         protected IAuthService AuthService { get; }
         protected ISessionResolver SessionResolver { get; }
 
-        public AuthController(IPublisher publisher, IAuthService authService, ISessionResolver sessionResolver)
-            : base(publisher)
+        public AuthController(IAuthService authService, ISessionResolver sessionResolver)
         {
             AuthService = authService;
             SessionResolver = sessionResolver;
@@ -45,31 +44,35 @@ namespace Stl.Fusion.Server.Authentication
         // Compute methods
 
         [HttpGet("isSignOutForced")]
+        [Publish]
         public Task<bool> IsSignOutForcedAsync(Session? session = null, CancellationToken cancellationToken = default)
         {
             session ??= SessionResolver.Session;
-            return PublishAsync(ct => AuthService.IsSignOutForcedAsync(session, ct), cancellationToken);
+            return AuthService.IsSignOutForcedAsync(session, cancellationToken);
         }
 
         [HttpGet("getUser")]
+        [Publish]
         public Task<User> GetUserAsync(Session? session = null, CancellationToken cancellationToken = default)
         {
             session ??= SessionResolver.Session;
-            return PublishAsync(ct => AuthService.GetUserAsync(session, ct), cancellationToken);
+            return AuthService.GetUserAsync(session, cancellationToken);
         }
 
         [HttpGet("getSessionInfo")]
+        [Publish]
         public Task<SessionInfo> GetSessionInfoAsync(Session? session = null, CancellationToken cancellationToken = default)
         {
             session ??= SessionResolver.Session;
-            return PublishAsync(ct => AuthService.GetSessionInfoAsync(session, ct), cancellationToken);
+            return AuthService.GetSessionInfoAsync(session, cancellationToken);
         }
 
         [HttpGet("getUserSessions")]
+        [Publish]
         public Task<SessionInfo[]> GetUserSessions(Session? session = null, CancellationToken cancellationToken = default)
         {
             session ??= SessionResolver.Session;
-            return PublishAsync(ct => AuthService.GetUserSessions(session, ct), cancellationToken);
+            return AuthService.GetUserSessions(session, cancellationToken);
         }
     }
 }

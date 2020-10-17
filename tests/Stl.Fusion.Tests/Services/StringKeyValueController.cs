@@ -13,8 +13,7 @@ namespace Stl.Fusion.Tests.Services
     {
         protected IKeyValueService<string> Service { get; }
 
-        public StringKeyValueController(IPublisher publisher, IKeyValueService<string> service) : base(publisher)
-            => Service = service;
+        public StringKeyValueController(IKeyValueService<string> service) => Service = service;
 
         [HttpGet("{key?}")]
         public Task<Option<string>> TryGetAsync(string? key)

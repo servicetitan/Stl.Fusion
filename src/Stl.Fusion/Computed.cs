@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Stl.Collections;
 using Stl.Collections.Slim;
 using Stl.Frozen;
@@ -148,8 +149,14 @@ namespace Stl.Fusion
 
         public virtual bool TrySetOutput(Result<TOut> output)
         {
-            if (output.IsValue(out var v) && v is IFrozen f)
-                f.Freeze();
+            if (output.IsValue(out var v, out var error)) {
+                if (v is IFrozen f)
+                    f.Freeze();
+            }
+            else if (Options.RewriteErrors) {
+                var errorRewriter = Function.ServiceProvider.GetRequiredService<IErrorRewriter>();
+                output = Result.Error<TOut>(errorRewriter.Rewrite(this, error));
+            }
             if (ConsistencyState != ConsistencyState.Computing)
                 return false;
             lock (Lock) {
