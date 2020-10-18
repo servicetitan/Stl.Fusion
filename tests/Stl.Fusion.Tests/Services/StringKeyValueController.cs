@@ -7,28 +7,27 @@ using Stl.Serialization;
 namespace Stl.Fusion.Tests.Services
 {
     [Route("api/[controller]/[action]")]
-    [ApiController]
-    public class StringKeyValueController : FusionController
+    [ApiController, JsonifyErrors]
+    public class StringKeyValueController : ControllerBase
     {
         protected IKeyValueService<string> Service { get; }
 
         public StringKeyValueController(IKeyValueService<string> service) => Service = service;
 
-        [HttpGet("{key?}")]
+        [HttpGet("{key?}"), Publish]
         public Task<Option<string>> TryGetAsync(string? key)
-            => PublishAsync(ct => Service.TryGetAsync(key ?? "", ct));
+            => Service.TryGetAsync(key ?? "", HttpContext.RequestAborted);
 
-        [HttpGet("{key?}")]
+        [HttpGet("{key?}"), Publish]
         public async Task<JsonString> GetAsync(string? key)
-            => await PublishAsync(ct => Service.GetAsync(key ?? "", ct));
+            => await Service.GetAsync(key ?? "", HttpContext.RequestAborted);
 
         [HttpPost("{key?}")]
         public async Task SetAsync(string? key)
         {
-            var cancellationToken = HttpContext.RequestAborted;
             using var reader = new StreamReader(Request.Body);
             var value = await reader.ReadToEndAsync();
-            await Service.SetAsync(key ?? "", value ?? "", cancellationToken);
+            await Service.SetAsync(key ?? "", value ?? "", HttpContext.RequestAborted);
         }
 
         [HttpGet("{key?}")]

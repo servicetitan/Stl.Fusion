@@ -2,13 +2,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Stl.Fusion.Authentication;
-using Stl.Fusion.Bridge;
 
 namespace Stl.Fusion.Server.Authentication
 {
     [Route("fusion/auth")]
-    [ApiController]
-    public class AuthController : FusionController, IAuthService
+    [ApiController, JsonifyErrors(RewriteErrors = true)]
+    public class AuthController : ControllerBase, IAuthService
     {
         protected IAuthService AuthService { get; }
         protected ISessionResolver SessionResolver { get; }

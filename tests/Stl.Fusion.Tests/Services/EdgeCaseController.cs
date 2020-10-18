@@ -6,8 +6,8 @@ using Stl.Fusion.Server;
 namespace Stl.Fusion.Tests.Services
 {
     [Route("api/[controller]/[action]")]
-    [ApiController]
-    public class EdgeCaseController : FusionController, IEdgeCaseService
+    [ApiController, JsonifyErrors]
+    public class EdgeCaseController : ControllerBase, IEdgeCaseService
     {
         protected IEdgeCaseService Service { get; }
 

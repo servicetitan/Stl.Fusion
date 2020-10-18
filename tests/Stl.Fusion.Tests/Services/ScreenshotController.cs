@@ -5,19 +5,19 @@ using Stl.Fusion.Server;
 namespace Stl.Fusion.Tests.Services
 {
     [Route("api/[controller]/[action]")]
-    [ApiController]
-    public class ScreenshotController : FusionController
+    [ApiController, JsonifyErrors]
+    public class ScreenshotController : ControllerBase
     {
         public static int CallCount { get; set; }
         protected IScreenshotService Service { get; }
 
         public ScreenshotController(IScreenshotService service) => Service = service;
 
-        [HttpGet]
+        [HttpGet, Publish]
         public Task<Screenshot> GetScreenshotAsync(int width)
         {
             CallCount++;
-            return PublishAsync(ct => Service.GetScreenshotAsync(width, ct));
+            return Service.GetScreenshotAsync(width, HttpContext.RequestAborted);
         }
     }
 }
