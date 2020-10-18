@@ -105,8 +105,11 @@ namespace Stl.Tests.DependencyInjection
                 (await view.ThreeXAsync()).Should().Be("1");
             }
 
-            await TestViewAsync(services.GetRequiredServiceView<IService, IView>());
-            await TestViewAsync(services.GetRequiredServiceView<Service, IView>());
+            var viewFactory = services.GetTypeViewFactory<IView>();
+            var classView = viewFactory.CreateView(services.GetRequiredService<Service>());
+            var interfaceView = viewFactory.CreateView(services.GetRequiredService<IService>());
+            await TestViewAsync(classView);
+            await TestViewAsync(interfaceView);
         }
     }
 }

@@ -18,23 +18,23 @@ namespace Stl.Fusion.Tests.Services
             => Service.GetSuffixAsync(cancellationToken);
 
         [HttpPost]
-        public Task SetSuffixAsync(string suffix, CancellationToken cancellationToken)
-            => Service.SetSuffixAsync(suffix, cancellationToken);
+        public Task SetSuffixAsync([FromQuery] string? suffix, CancellationToken cancellationToken)
+            => Service.SetSuffixAsync(suffix ?? "", cancellationToken);
 
-        [HttpGet]
-        public Task<string> ThrowIfContainsErrorAsync(string source, CancellationToken cancellationToken)
-            => Service.ThrowIfContainsErrorAsync(source, cancellationToken);
+        [HttpGet, Publish]
+        public Task<string> ThrowIfContainsErrorAsync(string? source, CancellationToken cancellationToken)
+            => Service.ThrowIfContainsErrorAsync(source ?? "", cancellationToken);
 
-        [HttpGet]
-        public Task<string> ThrowIfContainsErrorRewriteErrorsAsync(string source, CancellationToken cancellationToken)
-            => Service.ThrowIfContainsErrorRewriteErrorsAsync(source, cancellationToken);
+        [HttpGet, Publish]
+        public Task<string> ThrowIfContainsErrorRewriteErrorsAsync(string? source, CancellationToken cancellationToken)
+            => Service.ThrowIfContainsErrorRewriteErrorsAsync(source ?? "", cancellationToken);
 
-        [HttpGet]
-        public Task<string> ThrowIfContainsErrorNonComputeAsync(string source, CancellationToken cancellationToken)
-            => Service.ThrowIfContainsErrorNonComputeAsync(source, cancellationToken);
+        [HttpGet, Publish]
+        public Task<string> ThrowIfContainsErrorNonComputeAsync(string? source, CancellationToken cancellationToken)
+            => Service.ThrowIfContainsErrorNonComputeAsync(source ?? "", cancellationToken);
     }
 
-    [JsonifyErrors(RewriteErrors = true)]
+    [JsonifyErrors(RewriteErrors = true, Order = 1)]
     public class EdgeCaseRewriteController : EdgeCaseController
     {
         public EdgeCaseRewriteController(IEdgeCaseService service) : base(service) { }

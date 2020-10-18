@@ -1,17 +1,15 @@
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Client;
-using Stl.Fusion.Internal;
 
 namespace Stl.Fusion.Server
 {
-    public class PublishAttribute : ActionFilterAttribute, IAsyncExceptionFilter
+    public class PublishAttribute : ActionFilterAttribute
     {
-        public bool RewriteErrors { get; set; } = true;
+        public bool RewriteErrors { get; set; } = false;
 
         public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
@@ -46,14 +44,6 @@ namespace Stl.Fusion.Server
                 }
             }
             return base.OnResultExecutionAsync(context, next);
-        }
-
-        public Task OnExceptionAsync(ExceptionContext context)
-        {
-            var jsonExceptionInfoFilter = new JsonifyErrorsAttribute() {
-                RewriteErrors = RewriteErrors
-            };
-            return jsonExceptionInfoFilter.OnExceptionAsync(context);
         }
     }
 }

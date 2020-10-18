@@ -1,5 +1,7 @@
 using System;
 using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
@@ -119,7 +121,7 @@ namespace Stl.Fusion.Client
 
                 // 2. Create view mapping clientType to serviceType
                 if (clientType != serviceType)
-                    client = c.GetTypeViewFactory().Create(client, clientType, serviceType);
+                    client = c.GetTypeViewFactory().CreateView(client, clientType, serviceType);
 
                 return client;
             }
@@ -129,10 +131,10 @@ namespace Stl.Fusion.Client
         }
 
         public FusionRestEaseClientBuilder AddReplicaService<TClient>(string? clientName = null)
-            where TClient : IRestEaseReplicaClient
+            where TClient : class
             => AddReplicaService(typeof(TClient), clientName);
         public FusionRestEaseClientBuilder AddReplicaService<TService, TClient>(string? clientName = null)
-            where TClient : IRestEaseReplicaClient
+            where TClient : class
             => AddReplicaService(typeof(TService), typeof(TClient), clientName);
         public FusionRestEaseClientBuilder AddReplicaService(Type clientType, string? clientName = null)
             => AddReplicaService(clientType, clientType, clientName);
@@ -142,8 +144,6 @@ namespace Stl.Fusion.Client
                 throw Internal.Errors.InterfaceTypeExpected(serviceType, true, nameof(serviceType));
             if (!(clientType.IsInterface && clientType.IsVisible))
                 throw Internal.Errors.InterfaceTypeExpected(clientType, true, nameof(clientType));
-            if (!typeof(IRestEaseReplicaClient).IsAssignableFrom(clientType))
-                throw Errors.MustImplement<IRestEaseReplicaClient>(clientType, nameof(clientType));
             clientName ??= clientType.FullName;
 
             object Factory(IServiceProvider c)
@@ -162,7 +162,7 @@ namespace Stl.Fusion.Client
 
                 // 3. Create view mapping clientType to serviceType
                 if (clientType != serviceType)
-                    client = c.GetTypeViewFactory().Create(client, clientType, serviceType);
+                    client = c.GetTypeViewFactory().CreateView(client, clientType, serviceType);
 
                 // 4. Create Replica Client
                 var replicaProxyGenerator = c.GetRequiredService<IReplicaClientProxyGenerator>();
@@ -175,5 +175,6 @@ namespace Stl.Fusion.Client
             Services.TryAddSingleton(serviceType, Factory);
             return this;
         }
+
     }
 }

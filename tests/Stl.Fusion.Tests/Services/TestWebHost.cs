@@ -34,6 +34,7 @@ namespace Stl.Fusion.Tests.Services
                 services.CopySingleton<ITimeService>(BaseServices);
                 services.CopySingleton<IScreenshotService>(BaseServices);
                 services.CopySingleton<IKeyValueService<string>>(BaseServices);
+                services.CopySingleton<IEdgeCaseService>(BaseServices);
                 // services.CopySingleton<IAuthService>(BaseServices);
 
                 // Fusion

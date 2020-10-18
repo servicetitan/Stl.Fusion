@@ -4,12 +4,13 @@ using Castle.DynamicProxy;
 using Castle.DynamicProxy.Generators;
 using Castle.DynamicProxy.Generators.Emitters;
 using Stl.Concurrency;
+using Stl.Reflection;
 
 namespace Stl.DependencyInjection.Internal
 {
     public interface ITypeViewProxyGenerator
     {
-        Type GetProxyType(Type type);
+        Type GetProxyType(Type implementationType, Type viewType);
     }
 
     public class TypeViewProxyGenerator : ProxyGeneratorBase<TypeViewProxyGenerator.Options>,
@@ -17,7 +18,7 @@ namespace Stl.DependencyInjection.Internal
     {
         public class Options : ProxyGenerationOptions, IOptions
         {
-            public Type BaseType { get; set; } = typeof(object);
+            public Type GenericBaseType { get; set; } = typeof(TypeView<,>);
             public Type InterceptorType { get; set; } = typeof(TypeViewInterceptor);
         }
 
@@ -42,20 +43,22 @@ namespace Stl.DependencyInjection.Internal
 
         public static ITypeViewProxyGenerator Default { get; } = new TypeViewProxyGenerator();
 
-        protected ConcurrentDictionary<Type, Type> Cache { get; } = new ConcurrentDictionary<Type, Type>();
+        protected ConcurrentDictionary<(Type, Type), Type> Cache { get; } = new ConcurrentDictionary<(Type, Type), Type>();
 
         public TypeViewProxyGenerator(
             Options? options = null,
             ModuleScope? moduleScope = null)
             : base(options, moduleScope) { }
 
-        public virtual Type GetProxyType(Type type)
-            => Cache.GetOrAddChecked(type, (type1, self) => {
-                var generator = new Implementation(self.ModuleScope, type1, self.ProxyGeneratorOptions);
-                return generator.GenerateCode(
-                    self.ProxyGeneratorOptions.BaseType,
-                    Array.Empty<Type>(),
-                    self.ProxyGeneratorOptions);
+        public virtual Type GetProxyType(Type implementationType, Type viewType)
+            => Cache.GetOrAddChecked((implementationType, viewType), (key, self) => {
+                var (tImpl, tView) = key;
+                var options = MemberwiseCloner.Clone(self.ProxyGeneratorOptions);
+                options.BaseTypeForInterfaceProxy = options.GenericBaseType
+                    .MakeGenericType(tImpl, tView);
+                var generator = new Implementation(self.ModuleScope, tView, options);
+                var proxyType = generator.GenerateCode(typeof(object), Array.Empty<Type>(), options);
+                return proxyType;
             }, this);
     }
 }

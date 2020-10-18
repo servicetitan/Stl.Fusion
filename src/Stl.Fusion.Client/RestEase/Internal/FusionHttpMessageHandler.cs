@@ -4,11 +4,8 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Castle.Core.Internal;
-using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using RestEase;
 using Stl.DependencyInjection;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Internal;
@@ -26,24 +23,35 @@ namespace Stl.Fusion.Client.RestEase.Internal
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
+            var psiCapture = PublicationStateInfoCapture.Current;
+            if (psiCapture != null)
+                // Publication request -> we need to add header
+                request.Headers.Add(FusionHeaders.RequestPublication, "1");
+
             var response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
-            var headers = response.Headers;
-            headers.TryGetValues(FusionHeaders.Publication, out var values);
-            var publicationStateInfoJson = values?.FirstOrDefault();
-            if (!string.IsNullOrEmpty(publicationStateInfoJson)) {
-                var psi = JsonConvert.DeserializeObject<PublicationStateInfo>(publicationStateInfoJson);
-                if (response.StatusCode == HttpStatusCode.InternalServerError) {
-                    var error = await DeserializeError(response).ConfigureAwait(false);
-                    psi = new PublicationStateInfo<object>(psi, Result.Error<object>(error));
-                    PublicationStateInfoCapture.TryCapture(psi);
-                    throw error;
-                }
-                PublicationStateInfoCapture.TryCapture(psi);
-            }
-            else {
+
+            if (psiCapture == null) {
+                // Regular request
                 if (response.StatusCode == HttpStatusCode.InternalServerError)
                     throw await DeserializeError(response).ConfigureAwait(false);
+                return response;
             }
+
+            // Publication request
+            var headers = response.Headers;
+            headers.TryGetValues(FusionHeaders.Publication, out var values);
+            var psiJson = values?.FirstOrDefault();
+            if (string.IsNullOrEmpty(psiJson))
+                throw Fusion.Internal.Errors.NoPublicationStateInfoCaptured();
+
+            var psi = JsonConvert.DeserializeObject<PublicationStateInfo>(psiJson);
+            if (response.StatusCode == HttpStatusCode.InternalServerError) {
+                var error = await DeserializeError(response).ConfigureAwait(false);
+                psi = new PublicationStateInfo<object>(psi, Result.Error<object>(error));
+                psiCapture.Capture(psi);
+                throw error;
+            }
+            psiCapture.Capture(psi);
             return response;
         }
 

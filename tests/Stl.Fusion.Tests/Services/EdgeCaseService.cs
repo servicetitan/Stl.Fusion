@@ -25,7 +25,7 @@ namespace Stl.Fusion.Tests.Services
         {
             await Task.Delay(100, cancellationToken);
             return source.ToLowerInvariant().Contains("error")
-                ? throw new ArgumentException("Source contains 'Error'.")
+                ? throw new ArgumentException("!")
                 : source + await SuffixState.UseAsync(cancellationToken).ConfigureAwait(false);
         }
 
@@ -33,7 +33,7 @@ namespace Stl.Fusion.Tests.Services
         {
             await Task.Delay(100, cancellationToken);
             return source.ToLowerInvariant().Contains("error")
-                ? throw new ArgumentException("Source contains 'Error'.")
+                ? throw new ArgumentException("!")
                 : source + await SuffixState.UseAsync(cancellationToken).ConfigureAwait(false);
         }
 
@@ -41,7 +41,7 @@ namespace Stl.Fusion.Tests.Services
         {
             await Task.Delay(100, cancellationToken);
             return source.ToLowerInvariant().Contains("error")
-                ? throw new ArgumentException("Source contains 'Error'.")
+                ? throw new ArgumentException("!")
                 : source + SuffixState.Value;
         }
     }

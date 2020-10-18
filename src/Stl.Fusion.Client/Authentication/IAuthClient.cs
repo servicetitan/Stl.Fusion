@@ -2,12 +2,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using RestEase;
 using Stl.Fusion.Authentication;
-using Stl.Fusion.Client.RestEase;
 
 namespace Stl.Fusion.Client.Authentication
 {
     [BasePath("fusion/auth")]
-    public interface IAuthClient : IRestEaseReplicaClient
+    public interface IAuthClient
     {
         [Get("signOut")]
         Task SignOutAsync(bool force, Session session, CancellationToken cancellationToken = default);

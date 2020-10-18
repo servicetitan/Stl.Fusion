@@ -2,22 +2,21 @@ using System.Threading;
 using System.Threading.Tasks;
 using RestEase;
 using Stl.Fusion.Client;
-using Stl.Fusion.Client.RestEase;
 
 namespace Stl.Fusion.Tests.Services
 {
     [RestEaseReplicaService]
     [BasePath("EdgeCase")]
-    public interface IEdgeCaseClient : IRestEaseReplicaClient
+    public interface IEdgeCaseClient
     {
         [Get("GetSuffix")]
         Task<string> GetSuffixAsync(CancellationToken cancellationToken = default);
         [Post("SetSuffix")]
         Task SetSuffixAsync(string suffix, CancellationToken cancellationToken = default);
 
-        [Get("ThrowIfContainsError"), ComputeMethod]
+        [Get("ThrowIfContainsError"), ComputeMethod(KeepAliveTime = 10)]
         Task<string> ThrowIfContainsErrorAsync(string source, CancellationToken cancellationToken = default);
-        [Get("ThrowIfContainsErrorRewriteErrors"), ComputeMethod]
+        [Get("ThrowIfContainsErrorRewriteErrors"), ComputeMethod(KeepAliveTime = 10)]
         Task<string> ThrowIfContainsErrorRewriteErrorsAsync(string source, CancellationToken cancellationToken = default);
         [Get("ThrowIfContainsErrorNonCompute")]
         Task<string> ThrowIfContainsErrorNonComputeAsync(string source, CancellationToken cancellationToken = default);
