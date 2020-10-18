@@ -14,5 +14,11 @@ namespace Stl.Fusion.Client.Internal
                 ? (Exception) new InvalidOperationException(message)
                 : new ArgumentOutOfRangeException(argumentName, message);
         }
+
+        public static Exception CouldNotDeserializeServerSideError()
+            => new ServiceException("Couldn't deserialize server-side error.");
+
+        public static Exception UnknownServerSideError()
+            => new ServiceException("Unknown server-side error.");
     }
 }

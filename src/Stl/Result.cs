@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Stl.Extensibility;
 using Stl.Internal;
 
 namespace Stl
@@ -28,7 +29,7 @@ namespace Stl
         void Set(IResult result);
     }
 
-    public interface IResult<T> : IResult
+    public interface IResult<T> : IResult, IConvertibleTo<T>, IConvertibleTo<Result<T>>
     {
         new T UnsafeValue { get; }
         new T Value { get; }
@@ -117,6 +118,8 @@ namespace Stl
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Result<TOther> AsResult<TOther>() =>
             new Result<TOther>((TOther) (object) UnsafeValue!, Error);
+        T IConvertibleTo<T>.Convert() => Value;
+        Result<T> IConvertibleTo<Result<T>>.Convert() => AsResult();
 
         // Equality
 

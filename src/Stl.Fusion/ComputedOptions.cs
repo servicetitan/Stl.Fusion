@@ -1,5 +1,6 @@
 using System;
 using Newtonsoft.Json;
+using Stl.Fusion.Interception;
 using Stl.Fusion.Swapping;
 
 namespace Stl.Fusion
@@ -24,6 +25,8 @@ namespace Stl.Fusion
         public TimeSpan ErrorAutoInvalidateTime { get; }
         public TimeSpan AutoInvalidateTime { get; }
         public SwappingOptions SwappingOptions { get; }
+        public bool RewriteErrors { get; }
+        public Type InterceptedMethodDescriptorType { get; }
         [JsonIgnore]
         public bool IsAsyncComputed { get; }
 
@@ -33,7 +36,8 @@ namespace Stl.Fusion
             TimeSpan errorAutoInvalidateTime,
             TimeSpan autoInvalidateTime,
             SwappingOptions swappingOptions,
-            Type? argumentDefaultProvider = null)
+            bool rewriteErrors = false,
+            Type? interceptedMethodDescriptorType = null)
         {
             KeepAliveTime = keepAliveTime;
             ErrorAutoInvalidateTime = errorAutoInvalidateTime;
@@ -42,20 +46,23 @@ namespace Stl.Fusion
                 // It just doesn't make sense to keep it higher
                 ErrorAutoInvalidateTime = autoInvalidateTime;
             SwappingOptions = swappingOptions.IsEnabled ? swappingOptions : SwappingOptions.NoSwapping;
+            RewriteErrors = rewriteErrors;
+            InterceptedMethodDescriptorType = interceptedMethodDescriptorType ?? typeof(InterceptedMethodDescriptor);
             IsAsyncComputed = swappingOptions.IsEnabled;
         }
 
-        public static ComputedOptions FromAttribute(InterceptedMethodAttribute? attribute, SwapAttribute? swapAttribute)
+        public static ComputedOptions? FromAttribute(InterceptedMethodAttribute? attribute, SwapAttribute? swapAttribute)
         {
+            if (!(attribute is ComputeMethodAttribute cma) || !cma.IsEnabled)
+                return null;
             var swappingOptions = SwappingOptions.FromAttribute(swapAttribute);
-            var cma = attribute as ComputeMethodAttribute;
-            if (cma == null && !swappingOptions.IsEnabled)
-                return Default;
             var options = new ComputedOptions(
-                ToTimeSpan(cma?.KeepAliveTime) ?? Default.KeepAliveTime,
-                ToTimeSpan(cma?.ErrorAutoInvalidateTime) ?? Default.ErrorAutoInvalidateTime,
-                ToTimeSpan(cma?.AutoInvalidateTime) ?? Default.AutoInvalidateTime,
-                swappingOptions);
+                ToTimeSpan(cma.KeepAliveTime) ?? Default.KeepAliveTime,
+                ToTimeSpan(cma.ErrorAutoInvalidateTime) ?? Default.ErrorAutoInvalidateTime,
+                ToTimeSpan(cma.AutoInvalidateTime) ?? Default.AutoInvalidateTime,
+                swappingOptions,
+                cma.RewriteErrors,
+                cma.InterceptedMethodDescriptorType);
             return options.IsDefault() ? Default : options;
         }
 
@@ -77,7 +84,10 @@ namespace Stl.Fusion
             =>  KeepAliveTime == Default.KeepAliveTime
                 && ErrorAutoInvalidateTime == Default.ErrorAutoInvalidateTime
                 && AutoInvalidateTime == Default.AutoInvalidateTime
+                && RewriteErrors == Default.RewriteErrors
+                && InterceptedMethodDescriptorType == Default.InterceptedMethodDescriptorType
                 && SwappingOptions == Default.SwappingOptions
-                && IsAsyncComputed == Default.IsAsyncComputed;
+                && IsAsyncComputed == Default.IsAsyncComputed
+                ;
     }
 }

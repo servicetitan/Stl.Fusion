@@ -22,6 +22,7 @@ namespace Stl.Fusion.Interception
 
         public class Options : IOptions
         {
+            public IComputedOptionsProvider? ComputedOptionsProvider { get; set; } = null!;
             public IArgumentHandlerProvider? ArgumentHandlerProvider { get; set; } = null!;
             public LogLevel LogLevel { get; set; } = LogLevel.Debug;
             public LogLevel ValidationLogLevel { get; set; } = LogLevel.Information;
@@ -43,6 +44,7 @@ namespace Stl.Fusion.Interception
         protected LogLevel ValidationLogLevel { get; }
 
         public IServiceProvider ServiceProvider { get; }
+        public IComputedOptionsProvider ComputedOptionsProvider { get; }
         public IArgumentHandlerProvider ArgumentHandlerProvider { get; }
 
         protected InterceptorBase(
@@ -55,6 +57,8 @@ namespace Stl.Fusion.Interception
             LogLevel = options.LogLevel;
             ValidationLogLevel = options.ValidationLogLevel;
             ServiceProvider = serviceProvider;
+            ComputedOptionsProvider = options.ComputedOptionsProvider
+                ?? serviceProvider.GetRequiredService<IComputedOptionsProvider>();
             ArgumentHandlerProvider = options.ArgumentHandlerProvider
                 ?? serviceProvider.GetRequiredService<IArgumentHandlerProvider>();
 
@@ -130,15 +134,12 @@ namespace Stl.Fusion.Interception
         {
             ValidateType(initialInvocation.TargetType);
 
-            var attribute = GetInterceptedMethodAttribute(methodInfo);
-            if (attribute == null)
+            var options = ComputedOptionsProvider.GetComputedOptions(this, methodInfo);
+            if (options == null)
                 return null;
-            var swapAttribute = GetSwapAttribute(methodInfo);
-            var options = ComputedOptions.FromAttribute(attribute, swapAttribute);
 
-            var interceptedMethodType = attribute.InterceptedMethodDescriptorType ?? typeof(InterceptedMethodDescriptor);
             var interceptedMethod = (InterceptedMethodDescriptor) ServiceProvider.Activate(
-                interceptedMethodType, this, methodInfo, attribute);
+                options.InterceptedMethodDescriptorType, this, methodInfo);
             return interceptedMethod.IsValid ? interceptedMethod : null;
         }
 

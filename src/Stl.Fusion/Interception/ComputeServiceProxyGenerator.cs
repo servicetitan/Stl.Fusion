@@ -5,7 +5,7 @@ using Castle.DynamicProxy.Generators;
 using Castle.DynamicProxy.Generators.Emitters;
 using Stl.Concurrency;
 using Stl.DependencyInjection;
-using Stl.Fusion.Internal;
+using Stl.DependencyInjection.Internal;
 
 namespace Stl.Fusion.Interception
 {

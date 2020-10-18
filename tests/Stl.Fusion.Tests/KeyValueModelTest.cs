@@ -74,8 +74,8 @@ namespace Stl.Fusion.Tests
             try {
                 await kvc.GetAsync("error");
             }
-            catch (ApiException ae) {
-                ae.Content.Should().Be("Error!");
+            catch (ApplicationException ae) {
+                ae.Message.Should().Be("Error!");
             }
         }
     }

@@ -4,9 +4,9 @@ namespace Stl.Fusion.Server.Internal
 {
     public static class Errors
     {
-        public static Exception AlreadyShared()
+        public static Exception AlreadyPublished()
             => new InvalidOperationException(
-                "Share method can be used just once per HTTP request.");
+                "Only one publication can be published for a given HTTP request.");
 
     }
 }

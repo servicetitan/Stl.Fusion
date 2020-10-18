@@ -38,12 +38,14 @@ namespace Stl.Fusion
             Services.AddOptions();
             Services.TryAddSingleton(SystemClock.Instance);
             // Compute services & their dependencies
+            Services.TryAddSingleton<IComputedOptionsProvider, ComputedOptionsProvider>();
             Services.TryAddSingleton(new ArgumentHandlerProvider.Options());
             Services.TryAddSingleton<IArgumentHandlerProvider, ArgumentHandlerProvider>();
             Services.TryAddSingleton(new ComputeServiceInterceptor.Options());
             Services.TryAddSingleton<ComputeServiceInterceptor>();
             Services.TryAddSingleton(c => ComputeServiceProxyGenerator.Default);
             Services.TryAddSingleton(c => new [] { c.GetRequiredService<ComputeServiceInterceptor>() });
+            Services.TryAddSingleton<IErrorRewriter, ErrorRewriter>();
             // States & their dependencies
             Services.TryAddTransient<IStateFactory, StateFactory>();
             Services.TryAddTransient(typeof(IMutableState<>), typeof(MutableState<>));

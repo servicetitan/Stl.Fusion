@@ -2,7 +2,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using RestEase;
 using Stl.Fusion.Client;
-using Stl.Fusion.Client.RestEase;
+using Stl.Serialization;
 
 namespace Stl.Fusion.Tests.Services
 {
@@ -10,7 +10,7 @@ namespace Stl.Fusion.Tests.Services
 
     [RestEaseReplicaService(typeof(IKeyValueServiceClient<string>))]
     [BasePath("stringKeyValue")]
-    public interface IStringKeyValueClient : IRestEaseReplicaClient
+    public interface IStringKeyValueClient
     {
         [Get("tryGet/{key}")]
         Task<Option<string>> TryGetAsync([Path] string key, CancellationToken cancellationToken = default);

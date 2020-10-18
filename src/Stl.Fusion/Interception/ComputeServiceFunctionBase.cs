@@ -47,6 +47,8 @@ namespace Stl.Fusion.Interception
                 throw;
             }
             catch (Exception e) {
+                if (e is AggregateException ae)
+                    e = ae.GetFirstInnerException();
                 computed.TrySetOutput(Result.Error<T>(e));
                 // Weird case: if the output is already set, all we can
                 // is to ignore the exception we've just caught;

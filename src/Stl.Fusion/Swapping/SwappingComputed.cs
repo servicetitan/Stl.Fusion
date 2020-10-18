@@ -35,11 +35,15 @@ namespace Stl.Fusion.Swapping
             => _maybeOutput = maybeOutput;
 
         public override bool TrySetOutput(Result<T> output)
-            => TrySetOutput(new ResultBox<T>(output), false);
-        public bool TrySetOutput(ResultBox<T> output, bool isFromCache)
         {
-            if (output.IsValue(out var v) && v is IFrozen f)
-                f.Freeze();
+            if (output.IsValue(out var v, out var error)) {
+                if (v is IFrozen f)
+                    f.Freeze();
+            }
+            else if (Options.RewriteErrors) {
+                var errorRewriter = Function.ServiceProvider.GetRequiredService<IErrorRewriter>();
+                output = Result.Error<T>(errorRewriter.Rewrite(this, error));
+            }
             if (ConsistencyState != ConsistencyState.Computing)
                 return false;
             lock (Lock) {

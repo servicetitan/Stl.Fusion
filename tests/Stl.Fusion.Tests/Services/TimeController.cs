@@ -1,29 +1,24 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Stl.Fusion.Bridge;
 using Stl.Fusion.Server;
 
 namespace Stl.Fusion.Tests.Services
 {
     [Route("api/[controller]/[action]")]
-    [ApiController]
-    public class TimeController : FusionController
+    [ApiController, JsonifyErrors]
+    public class TimeController : ControllerBase
     {
         protected ITimeService Service { get; }
 
-        public TimeController(IPublisher publisher, ITimeService service) : base(publisher)
-            => Service = service;
+        public TimeController(ITimeService service) => Service = service;
 
-        [HttpGet]
+        [HttpGet, Publish]
         public Task<DateTime> GetTimeAsync()
-            => PublishAsync(ct => Service.GetTimeAsync(ct));
+            => Service.GetTimeAsync(HttpContext.RequestAborted);
 
-        [HttpGet]
+        [HttpGet, Publish]
         public Task<string?> GetFormattedTimeAsync(string? format)
-        {
-            format ??= "";
-            return PublishAsync(ct => Service.GetFormattedTimeAsync(format, ct));
-        }
+            => Service.GetFormattedTimeAsync(format ?? "", HttpContext.RequestAborted);
     }
 }

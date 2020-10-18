@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
 using Stl.DependencyInjection;
+using Stl.Extensibility;
 using Stl.Fusion.Internal;
 using Stl.Generators;
 using Stl.Locking;
@@ -169,6 +170,8 @@ namespace Stl.Fusion
             => Computed.AsResult();
         public Result<TOther> AsResult<TOther>()
             => Computed.AsResult<TOther>();
+        T IConvertibleTo<T>.Convert() => Value;
+        Result<T> IConvertibleTo<Result<T>>.Convert() => AsResult();
 
         public bool Invalidate()
             => Computed.Invalidate();
