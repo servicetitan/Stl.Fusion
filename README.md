@@ -46,7 +46,7 @@ The sample supports **both (!)** Server-Side Blazor and Blazor WebAssembly
 
 ![](https://github.com/servicetitan/Stl.Fusion.Samples/raw/master/docs/img/Samples-Blazor-Auth.gif)
 
-Check out ["Why real-time UI is inevitable future for web apps?"](https://medium.com/@alexyakunin/features-of-the-future-web-apps-part-1-e32cf4e4e4f4?source=friends_link&sk=65dacdbf670ef9b5d961c4c666e223e2) to learn why real-time UI is a new baseline.
+Check out ["Why real-time UI is inevitable future for web apps?"](https://medium.com/@alexyakunin/features-of-the-future-web-apps-part-1-e32cf4e4e4f4?source=friends_link&sk=65dacdbf670ef9b5d961c4c666e223e2) to learn why "Refresh" action is getting obsolete.
 
 ### Speedup Your Service By Caching Everything
 
