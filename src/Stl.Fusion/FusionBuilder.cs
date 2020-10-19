@@ -7,7 +7,7 @@ using Stl.Fusion.Authentication;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Interception;
 using Stl.Fusion.Interception;
-using Stl.Fusion.Internal;
+using Stl.Internal;
 using Stl.Time;
 
 namespace Stl.Fusion

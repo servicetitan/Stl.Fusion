@@ -10,16 +10,6 @@ namespace Stl.Fusion.Internal
 {
     public static class Errors
     {
-        public static Exception MustImplement<TExpected>(Type type, string? argumentName = null)
-            => MustImplement(type, typeof(TExpected), argumentName);
-        public static Exception MustImplement(Type type, Type expectedType, string? argumentName = null)
-        {
-            var message = $"'{type}' must implement '{expectedType}'.";
-            return string.IsNullOrEmpty(argumentName)
-                ? (Exception) new InvalidOperationException(message)
-                : new ArgumentOutOfRangeException(argumentName, message);
-        }
-
         public static Exception TypeMustBeOpenGenericType(Type type)
             => new InvalidOperationException($"'{type}' must be open generic type.");
         public static Exception MustHaveASingleGenericArgument(Type type)

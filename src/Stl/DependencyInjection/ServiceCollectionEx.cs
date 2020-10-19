@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
@@ -35,6 +36,8 @@ namespace Stl.DependencyInjection
             return target;
         }
 
+        // Options & Settings
+
         public static IServiceCollection Configure<TOptions>(
             this IServiceCollection services,
             Action<IServiceProvider, string?, TOptions> configureOptions)
@@ -49,6 +52,27 @@ namespace Stl.DependencyInjection
                 c => new ConfigureAllNamedOptions<TOptions>(c, configureOptions));
             return services;
         }
+
+        public static IServiceCollection AddSettings<TSettings>(
+            this IServiceCollection services,
+            string sectionName)
+            => services.AddSettings(typeof(TSettings), sectionName);
+        public static IServiceCollection AddSettings(
+            this IServiceCollection services,
+            Type settingsType,
+            string sectionName)
+        {
+            if (sectionName == null)
+                throw new ArgumentNullException(sectionName);
+            return services.AddSingleton(settingsType, c => {
+                var settings = c.Activate(settingsType);
+                var cfg = c.GetRequiredService<IConfiguration>();
+                cfg.GetSection(sectionName)?.Bind(settings);
+                return settings;
+            });
+        }
+
+        // Attribute-based configuration
 
         public static ServiceAttributeBasedBuilder AttributeBased(
             this IServiceCollection services)

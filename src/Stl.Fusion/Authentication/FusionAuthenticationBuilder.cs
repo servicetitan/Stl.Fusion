@@ -1,7 +1,7 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Stl.Fusion.Internal;
+using Stl.Internal;
 
 namespace Stl.Fusion.Authentication
 {
