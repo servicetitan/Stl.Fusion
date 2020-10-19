@@ -23,8 +23,8 @@ This is quite similar to what any [MMORPG] game engine does:
 even though the complete game state is huge, it's still possible to 
 run the game in real time for 1M+ players, because every player observes 
 a tiny fraction of a complete game state, and thus all you need is to ensure
-this part of the state fits in RAM + you have enough computing power to process
-state changes for every player.
+this part of the state fits in RAM + you have enough computing power 
+to process state changes for every player.
 
 Under the hood, Fusion turns any response of your internal and public API 
 into ~ `(Result<T> Response, Task Invalidated)` pair, where the second part tells 
@@ -46,9 +46,9 @@ The sample supports **both (!)** Server-Side Blazor and Blazor WebAssembly
 
 ![](https://github.com/servicetitan/Stl.Fusion.Samples/raw/master/docs/img/Samples-Blazor-Auth.gif)
 
-### Speedup Your Service By Caching Everything
+Check out ["Why real-time UI is inevitable future for web apps?"](https://medium.com/@alexyakunin/features-of-the-future-web-apps-part-1-e32cf4e4e4f4?source=friends_link&sk=65dacdbf670ef9b5d961c4c666e223e2) to learn why real-time UI is a new baseline.
 
-> NEW: [Read about new Caching Sample](https://github.com/servicetitan/Stl.Fusion.Samples#4-caching-sample) - the numbers it produces are even more interesting!
+### Speedup Your Service By Caching Everything
 
 [A small benchmark in Fusion test suite](https://github.com/servicetitan/Stl.Fusion/blob/master/tests/Stl.Fusion.Tests/PerformanceTest.cs) 
 compares "raw" [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/) - 
@@ -66,15 +66,14 @@ The speedup is:
 * ~31,500x for [Sqlite EF Core Provider](https://www.sqlite.org/index.html) 
 * ~1,000x for [In-memory EF Core Provider](https://docs.microsoft.com/en-us/ef/core/providers/in-memory/?tabs=dotnet-core-cli)  
 
-Since Fusion precisely knows when every result - even the intermediate one - 
-gets inconsistent with the ground truth, it also ensures that 
-**every result is computed just once and reused until it gets invalidated**.
-In other words, Fusion also provides a transparent cache, and that's
-why you see such a speedup.
+Such a speedup is possible because Fusion ensures that every output 
+Fusion service produces or consumes &ndash; even the intermediate one &ndash;
+**is computed just once** and **reused without recomputation** while it stays
+consistent with the ground truth.
 
-You can control how such caching works, and even though it's an in-process cache
-(which is why it speeds up even in-memory EF Core provider by 1000x),
-Fusion supports "swapping" to any external cache (e.g. Redis) as well.
+In other words, Fusion acts as a **transparent cache + incremental build system** 
+for any computation your code runs, and as you can see, it's fast enough to be
+able to speed up even a code relying on in-memory EF Core provider by 1000x!
 
 Note that:
 * Similarly to real-time updates, *you get this speedup for free* in terms of extra code.
@@ -83,6 +82,8 @@ Note that:
   for cache entries are so short that normally don't need to worry about the inconsistencies.
 * The speedup you're expected to see in production may differ from these numbers a lot. 
   Even though the results presented here are absolutely real, they are produced on a synthetic test.
+
+Check out ["The Ungreen Web: Why our web apps are terribly inefficient?"](https://alexyakunin.medium.com/the-ungreen-web-why-our-web-apps-are-terribly-inefficient-28791ed48035?source=friends_link&sk=74fb46086ca13ff4fea387d6245cb52b) to learn more about the benefits of this.
 
 ## How Fusion works?
 
@@ -160,7 +161,7 @@ But contrary to games, web apps rarely have a strong upper limit on update delay
 &ndash; at least for a majority of content they present. 
 This means you can always increase these delays to throttle down the rate of 
 outgoing invalidation and update messages, and vice versa.
-In other words, Fusion-based web apps should scale much better than [MMORPG].
+In other words, Fusion-based web apps should scale much better than MMORPG.
 
 ## Enough talk. Show me the code!
 
@@ -250,6 +251,7 @@ and
 * Join our [Gitter Chat Room] or [Discord Server] to ask questions and track project updates.
 
 ## Posts And Other Content
+* [The Ungreen Web: Why our web apps are terribly inefficient?](https://alexyakunin.medium.com/the-ungreen-web-why-our-web-apps-are-terribly-inefficient-28791ed48035?source=friends_link&sk=74fb46086ca13ff4fea387d6245cb52b)
 * [Why real-time UI is inevitable future for web apps?](https://medium.com/@alexyakunin/features-of-the-future-web-apps-part-1-e32cf4e4e4f4?source=friends_link&sk=65dacdbf670ef9b5d961c4c666e223e2)
 * [How similar is Fusion to SignalR?](https://medium.com/@alexyakunin/how-similar-is-stl-fusion-to-signalr-e751c14b70c3?source=friends_link&sk=241d5293494e352f3db338d93c352249)
 * [How similar is Fusion to Knockout / MobX?](https://medium.com/@alexyakunin/how-similar-is-stl-fusion-to-knockout-mobx-fcebd0bef5d5?source=friends_link&sk=a808f7c46c4d5613605f8ada732e790e)
