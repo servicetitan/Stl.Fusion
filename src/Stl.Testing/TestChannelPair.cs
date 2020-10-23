@@ -33,7 +33,7 @@ namespace Stl.Testing
                 var cp2 = ChannelPair.CreateTwisted(
                     Channel.CreateBounded<T>(options),
                     Channel.CreateBounded<T>(options));
-                var _ = cp1.Channel2.ConnectAsync(cp2.Channel1, true,
+                var _ = cp1.Channel2.ConnectAsync(cp2.Channel1,
                     m => {
                         Out.WriteLine($"{Name}.Channel1 -> {m}");
                         return m;
