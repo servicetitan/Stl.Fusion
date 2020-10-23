@@ -52,7 +52,7 @@ namespace Stl.Tests.Channels
                 var expectedRounds = itemCount / concurrencyLevel +
                     (itemCount % concurrencyLevel != 0 ? 1 : 0);
                 if (roundDuration.HasValue)
-                    (elapsed - roundDuration * expectedRounds).Should().BeInRange(0, roundDuration.Value - 1);
+                    (elapsed - roundDuration * expectedRounds).Should().BeInRange(-50, roundDuration.Value - 1);
 
             }
 
