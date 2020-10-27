@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,12 +22,13 @@ namespace Stl.Tests.Async
                     var bi = Interlocked.Increment(ref batchIndex);
                     await Task.Delay(100).ConfigureAwait(false);
                     foreach (var item in batch) {
+                        if (item.Input == -1000)
+                            throw new ArgumentOutOfRangeException();
                         if (!item.TryCancel(cancellationToken))
                             item.SetResult((bi, item.Input), cancellationToken);
                     }
                 }
             };
-            processor.RunAsync().Ignore();
 
             async Task BeginAsync()
             {
@@ -78,6 +80,17 @@ namespace Stl.Tests.Async
             tasks.Count(t => t.Result == (0, 0)).Should().Be(2);
             tasks.Count(t => t.Result.Item1 == 1).Should().Be(1);
             tasks.Count(t => t.Result.Item1 == 2).Should().Be(1);
+
+            // Error test
+            await BeginAsync();
+            tasks = new [] {0, 1, 2, -1000}
+                .Select(i => processor.ProcessAsync(i, default))
+                .ToArray();
+            try {
+                await Task.WhenAll(tasks);
+                true.Should().BeFalse("No exception was thrown.");
+            }
+            catch (ArgumentOutOfRangeException) { }
         }
     }
 }

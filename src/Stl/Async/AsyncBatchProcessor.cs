@@ -23,6 +23,7 @@ namespace Stl.Async
 
         public async Task<TOut> ProcessAsync(TIn input, CancellationToken cancellationToken = default)
         {
+            RunAsync().Ignore();;
             var outputTask = TaskSource.New<TOut>(false).Task;
             var batchItem = new BatchItem<TIn, TOut>(input, cancellationToken, outputTask);
             await Queue.Writer.WriteAsync(batchItem, cancellationToken).ConfigureAwait(false);
@@ -75,7 +76,24 @@ namespace Stl.Async
         public AsyncBatchProcessor(BoundedChannelOptions options) : base(options) { }
         public AsyncBatchProcessor(Channel<BatchItem<TIn, TOut>> queue) : base(queue) { }
 
-        protected override Task ProcessBatchAsync(List<BatchItem<TIn, TOut>> batch, CancellationToken cancellationToken)
-            => BatchProcessor.Invoke(batch, cancellationToken);
+        protected override async Task ProcessBatchAsync(List<BatchItem<TIn, TOut>> batch, CancellationToken cancellationToken)
+        {
+            try {
+                await BatchProcessor.Invoke(batch, cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) {
+                if (!cancellationToken.IsCancellationRequested)
+                    cancellationToken = new CancellationToken(true);
+                foreach (var item in batch)
+                    item.TryCancel(cancellationToken);
+                throw;
+            }
+            catch (Exception e) {
+                var result = Result.Error<TOut>(e);
+                foreach (var item in batch)
+                    item.SetResult(result, default);
+                throw;
+            }
+        }
     }
 }
