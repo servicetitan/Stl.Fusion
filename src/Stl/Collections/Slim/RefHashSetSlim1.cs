@@ -4,10 +4,10 @@ using System.Runtime.CompilerServices;
 
 namespace Stl.Collections.Slim
 {
-    public struct RefHashSetSlim1<T>
+    public struct RefHashSetSlim1<T> : IRefHashSetSlim<T>
         where T : class
     {
-        private T _item;
+        private T? _item;
         private HashSet<T>? _set;
 
         private bool HasSet {
@@ -41,13 +41,14 @@ namespace Stl.Collections.Slim
             if (HasSet) return _set!.Add(item);
 
             // Item 1
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (_item == null) {
                 _item = item;
                 return true;
             }
             if (_item == item) return false;
 
-            _set = new HashSet<T>(ReferenceEqualityComparer<T>.Default) {
+            _set = new HashSet<T>(ReferenceEqualityComparer<T>.Instance) {
                 _item, item
             };
             _item = default!;
@@ -112,15 +113,16 @@ namespace Stl.Collections.Slim
             aggregator(ref state, _item);
         }
 
-        public void Aggregate<TState>(TState state, Func<TState, T, TState> aggregator)
+        public TState Aggregate<TState>(TState state, Func<TState, T, TState> aggregator)
         {
             if (HasSet) {
                 foreach (var item in _set!)
                     state = aggregator(state, item);
-                return;
+                return state;
             }
-            if (_item == null) return;
+            if (_item == null) return state;
             state = aggregator(state, _item);
+            return state;
         }
 
         public void CopyTo(Span<T> target)

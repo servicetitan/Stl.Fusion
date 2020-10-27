@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace Stl.Collections.Slim
 {
-    public struct HashSetSlim2<T>
+    public struct HashSetSlim2<T> : IHashSetSlim<T>
         where T : notnull
     {
         private int _count;
@@ -127,6 +127,20 @@ namespace Stl.Collections.Slim
             aggregator(ref state, _tuple.Item1);
             if (_count < 2) return;
             aggregator(ref state, _tuple.Item2);
+        }
+
+        public TState Aggregate<TState>(TState state, Func<TState, T, TState> aggregator)
+        {
+            if (HasSet) {
+                foreach (var item in _set!)
+                    state = aggregator(state, item);
+                return state;
+            }
+            if (_count < 1) return state;
+            state = aggregator(state, _tuple.Item1);
+            if (_count < 2) return state;
+            state = aggregator(state, _tuple.Item2);
+            return state;
         }
 
         public void CopyTo(Span<T> target)

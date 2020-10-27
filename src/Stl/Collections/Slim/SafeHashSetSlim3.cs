@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace Stl.Collections.Slim
 {
-    public struct SafeHashSetSlim3<T>
+    public struct SafeHashSetSlim3<T> : IHashSetSlim<T>
         where T : notnull
     {
         private int _count;
@@ -97,6 +97,7 @@ namespace Stl.Collections.Slim
             if (_count < 2) return false;
             if (EqualityComparer<T>.Default.Equals(_tuple.Item2, item)) {
                 _tuple = (_tuple.Item1, _tuple.Item3, default)!;
+                _count--;
                 return true;
             }
 
@@ -164,19 +165,20 @@ namespace Stl.Collections.Slim
             aggregator(ref state, _tuple.Item3);
         }
 
-        public void Aggregate<TState>(TState state, Func<TState, T, TState> aggregator)
+        public TState Aggregate<TState>(TState state, Func<TState, T, TState> aggregator)
         {
             if (HasSet) {
                 foreach (var item in _set!)
                     state = aggregator(state, item);
-                return;
+                return state;
             }
-            if (_count < 1) return;
+            if (_count < 1) return state;
             state = aggregator(state, _tuple.Item1);
-            if (_count < 2) return;
+            if (_count < 2) return state;
             state = aggregator(state, _tuple.Item2);
-            if (_count < 3) return;
+            if (_count < 3) return state;
             state = aggregator(state, _tuple.Item3);
+            return state;
         }
 
         public void CopyTo(Span<T> target)

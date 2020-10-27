@@ -4,10 +4,10 @@ using System.Runtime.CompilerServices;
 
 namespace Stl.Collections.Slim
 {
-    public struct RefHashSetSlim4<T>
+    public struct RefHashSetSlim4<T> : IRefHashSetSlim<T>
         where T : class
     {
-        private (T, T, T, T) _tuple;
+        private (T?, T?, T?, T?) _tuple;
         private HashSet<T>? _set;
 
         private bool HasSet {
@@ -74,7 +74,7 @@ namespace Stl.Collections.Slim
             }
             if (_tuple.Item4 == item) return false;
 
-            _set = new HashSet<T>(ReferenceEqualityComparer<T>.Default) {
+            _set = new HashSet<T>(ReferenceEqualityComparer<T>.Instance) {
                 _tuple.Item1, _tuple.Item2, _tuple.Item3, _tuple.Item4, item
             };
             _tuple = default;
@@ -177,21 +177,22 @@ namespace Stl.Collections.Slim
             aggregator(ref state, _tuple.Item4);
         }
 
-        public void Aggregate<TState>(TState state, Func<TState, T, TState> aggregator)
+        public TState Aggregate<TState>(TState state, Func<TState, T, TState> aggregator)
         {
             if (HasSet) {
                 foreach (var item in _set!)
                     state = aggregator(state, item);
-                return;
+                return state;
             }
-            if (_tuple.Item1 == null) return;
+            if (_tuple.Item1 == null) return state;
             state = aggregator(state, _tuple.Item1);
-            if (_tuple.Item2 == null) return;
+            if (_tuple.Item2 == null) return state;
             state = aggregator(state, _tuple.Item2);
-            if (_tuple.Item3 == null) return;
+            if (_tuple.Item3 == null) return state;
             state = aggregator(state, _tuple.Item3);
-            if (_tuple.Item4 == null) return;
+            if (_tuple.Item4 == null) return state;
             state = aggregator(state, _tuple.Item4);
+            return state;
         }
 
         public void CopyTo(Span<T> target)
