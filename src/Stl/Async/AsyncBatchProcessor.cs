@@ -4,7 +4,6 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Stl.OS;
-using Stl.Time;
 
 namespace Stl.Async
 {
@@ -13,7 +12,7 @@ namespace Stl.Async
         public const int DefaultCapacity = 4096;
         public int ConcurrencyLevel { get; set; } = HardwareInfo.ProcessorCount;
         public int MaxBatchSize { get; set; } = 256;
-        public TimeSpan BatchingDelay { get; set; } = TimeSpan.Zero;
+        public Func<CancellationToken, Task>? BatchingDelayTaskFactory { get; set; }
         protected Channel<BatchItem<TIn, TOut>> Queue { get; }
 
         protected AsyncBatchProcessorBase(int capacity = DefaultCapacity)
@@ -49,8 +48,8 @@ namespace Stl.Async
                     }
                     if (batch.Count == 0) {
                         await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false);
-                        if (BatchingDelay > TimeSpan.Zero)
-                            await Task.Delay(BatchingDelay, cancellationToken).ConfigureAwait(false);
+                        if (BatchingDelayTaskFactory != null)
+                            await BatchingDelayTaskFactory(cancellationToken).ConfigureAwait(false);
                         continue;
                     }
                     try {
