@@ -863,7 +863,7 @@ especially for the companies running their server-side code on .NET Core (or .NE
 ### Next Steps
 
 * Check out the [Tutorial] or go to [Documentation Home]
-* Join our [Gitter Chat Room] or [Discord Server] to ask questions and track project updates.
+* Join our [Discord Server] or [Gitter] to ask questions and track project updates.
 
 
 [Compute Services]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/Part01.md
@@ -880,6 +880,5 @@ especially for the companies running their server-side code on .NET Core (or .NE
 [Fusion In Simple Terms]: https://medium.com/@alexyakunin/stl-fusion-in-simple-terms-65b1975967ab?source=friends_link&sk=04e73e75a52768cf7c3330744a9b1e38
 
 [Gitter]: https://gitter.im/Stl-Fusion/community
-[Gitter Chat Room]: https://gitter.im/Stl-Fusion/community
 [Discord Server]: https://discord.gg/EKEwv6d
 [Fusion Feedback Form]: https://forms.gle/TpGkmTZttukhDMRB6

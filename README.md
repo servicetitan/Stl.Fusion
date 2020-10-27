@@ -1,11 +1,16 @@
 ![](docs/img/Banner.gif)
 
-> All project updates are published on [Gitter]; it's also the best place for Q/A.\
+> All project updates are published on its [Discord Server]; it's also the best place for Q/A.\
 > [![Build](https://github.com/servicetitan/Stl.Fusion/workflows/Build/badge.svg)](https://github.com/servicetitan/Stl.Fusion/actions?query=workflow%3A%22Build%22)
-> [![NuGetVersion](https://img.shields.io/nuget/v/Stl.Fusion)](https://www.nuget.org/packages?q=Owner%3Aservicetitan+Tags%3Astl_fusion) 
-> [![Gitter](https://badges.gitter.im/Stl-Fusion/community.svg)](https://gitter.im/Stl-Fusion/community)
+> [![Coverage](https://codecov.io/gh/servicetitan/Stl.Fusion/branch/master/graph/badge.svg)](https://codecov.io/gh/servicetitan/Stl.Fusion)
+> [![NuGet Version](https://img.shields.io/nuget/v/Stl.Fusion)](https://www.nuget.org/packages?q=Owner%3Aservicetitan+Tags%3Astl_fusion)
 
 ## What is Fusion?
+
+[![MIT License](https://img.shields.io/github/license/servicetitan/Stl.Fusion?)](https://github.com/servicetitan/Stl.Fusion/blob/master/LICENSE)
+![Commit Activity](https://img.shields.io/github/commit-activity/m/servicetitan/Stl.Fusion)
+[![Downloads](https://img.shields.io/nuget/dt/Stl.Fusion)](https://www.nuget.org/packages?q=Owner%3Aservicetitan+Tags%3Astl_fusion)
+[![Discord Server](https://img.shields.io/discord/729970863419424788.svg)](https://discord.gg/EKEwv6d)  
 
 Fusion is a [.NET Core](https://en.wikipedia.org/wiki/.NET_Core) library
 providing a new change tracking abstraction built in assumption that **every piece of data 
@@ -248,7 +253,7 @@ and
 ## Next Steps
 
 * Check out [Tutorial], [Samples], or go to [Documentation Home]
-* Join our [Gitter Chat Room] or [Discord Server] to ask questions and track project updates.
+* Join our [Discord Server] or [Gitter] to ask questions and track project updates.
 
 ## Posts And Other Content
 * [The Ungreen Web: Why our web apps are terribly inefficient?](https://alexyakunin.medium.com/the-ungreen-web-why-our-web-apps-are-terribly-inefficient-28791ed48035?source=friends_link&sk=74fb46086ca13ff4fea387d6245cb52b)
@@ -275,6 +280,5 @@ please help us to make it better by completing [Fusion Feedback Form]
 [MMORPG]: https://en.wikipedia.org/wiki/Massively_multiplayer_online_role-playing_game
 
 [Gitter]: https://gitter.im/Stl-Fusion/community
-[Gitter Chat Room]: https://gitter.im/Stl-Fusion/community
 [Discord Server]: https://discord.gg/EKEwv6d
 [Fusion Feedback Form]: https://forms.gle/TpGkmTZttukhDMRB6
