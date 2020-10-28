@@ -19,6 +19,7 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Newtonsoft.Json" />
     <PackageReference Include="System.Collections.Immutable" />
+    <PackageReference Include="System.Linq.Async" />
     <PackageReference Include="System.Net.WebSockets" />
     <PackageReference Include="System.Reactive" />
     <PackageReference Include="System.Threading.Channels" />

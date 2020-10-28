@@ -64,7 +64,7 @@ namespace Stl.Tests.Caching
                 }
 
                 cache = cacheFactory(Compute);
-                await cache.GetManyAsync(s.ToAsyncEnumerable()).Count();
+                await cache.GetManyAsync(s.ToAsyncEnumerable()).CountAsync();
                 return result.ToDelimitedString("");
             }
 

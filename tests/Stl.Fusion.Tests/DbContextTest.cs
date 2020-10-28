@@ -16,7 +16,7 @@ namespace Stl.Fusion.Tests
         public async Task BasicTest()
         {
             await using var dbContext1 = RentDbContext();
-            var count = await dbContext1.Users.CountAsync();
+            var count = await dbContext1.Users.AsQueryable().CountAsync();
             count.Should().Be(0);
 
             var u1 = new User() {
@@ -35,19 +35,18 @@ namespace Stl.Fusion.Tests
                 Text = "Covfefe",
                 Author = u1,
                 Chat = c1,
-
             };
 
             dbContext1.AddRange(u1, c1, m1);
             await dbContext1.SaveChangesAsync();
 
             await using var dbContext2 = RentDbContext();
-            (await dbContext2.Users.CountAsync()).Should().Be(1);
-            (await dbContext2.Messages.CountAsync()).Should().Be(1);
+            (await dbContext2.Users.AsQueryable().CountAsync()).Should().Be(1);
+            (await dbContext2.Messages.AsQueryable().CountAsync()).Should().Be(1);
             u1 = await dbContext2.Users.FindAsync(u1.Id);
             u1.Name.Should().Be("realDonaldTrump");
 
-            m1 = await dbContext2.Messages
+            m1 = await dbContext2.Messages.AsQueryable()
                 .Where(p => p.Id == p.Id)
                 .Include(p => p.Author)
                 .SingleAsync();
