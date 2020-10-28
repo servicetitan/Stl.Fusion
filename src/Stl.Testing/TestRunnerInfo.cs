@@ -4,6 +4,12 @@ namespace Stl.Testing
 {
     public static class TestRunnerInfo
     {
+        public static class Docker
+        {
+            public static readonly bool IsDotnetRunningInContainer =
+                "" != (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") ?? "");
+        }
+
         public static class TeamCity
         {
             public static readonly Version? Version;
