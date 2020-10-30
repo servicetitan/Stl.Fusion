@@ -8,8 +8,12 @@ window.FusionAuth = {
     sessionId: "",
     windowTarget: "_blank",
     windowFeatures: "width=600,height=600",
-    signIn: function () {
-        openAuthWindow("signin", "Sign-in");
+    signIn: function (provider) {
+        if (provider === undefined) {
+            openAuthWindow("signin", "Sign-in");
+        } else {
+            openAuthWindow("signin/" + provider, "Sign-in");
+        }
     },
     signOut: function () {
         openAuthWindow("signout", "Sign-out");
