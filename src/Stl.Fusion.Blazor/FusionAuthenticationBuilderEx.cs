@@ -17,6 +17,7 @@ namespace Stl.Fusion.Blazor
             var services = fusionAuth.Services;
             services.AddAuthorizationCore(configure);
             services.RemoveAll(typeof(AuthenticationStateProvider));
+            services.TryAddSingleton<AuthStateProvider.Options>();
             services.TryAddScoped<AuthenticationStateProvider, AuthStateProvider>();
             services.TryAddTransient(c => (AuthStateProvider) c.GetRequiredService<AuthenticationStateProvider>());
             return fusionAuth;

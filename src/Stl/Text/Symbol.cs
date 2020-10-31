@@ -48,11 +48,13 @@ namespace Stl.Text
 
         // Serialization
 
+#pragma warning disable CS8618
         private Symbol(SerializationInfo info, StreamingContext context)
         {
             Value = info.GetString(nameof(Value));
             HashCode = Value?.GetHashCode() ?? 0;
         }
+#pragma warning restore CS8618
 
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
             => info.AddValue(nameof(Value), Value);

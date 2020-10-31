@@ -51,28 +51,28 @@ namespace Stl.Time
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddOrUpdate(TTimer timer, Moment time)
         {
-            var timerSet = _timerSets[(timer?.GetHashCode() ?? 0) & _concurrencyLevelMask];
+            var timerSet = _timerSets[timer.GetHashCode() & _concurrencyLevelMask];
             timerSet.AddOrUpdate(timer, time);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool AddOrUpdateToEarlier(TTimer timer, Moment time)
         {
-            var timerSet = _timerSets[(timer?.GetHashCode() ?? 0) & _concurrencyLevelMask];
+            var timerSet = _timerSets[timer.GetHashCode() & _concurrencyLevelMask];
             return timerSet.AddOrUpdateToEarlier(timer, time);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool AddOrUpdateToLater(TTimer timer, Moment time)
         {
-            var timerSet = _timerSets[(timer?.GetHashCode() ?? 0) & _concurrencyLevelMask];
+            var timerSet = _timerSets[timer.GetHashCode() & _concurrencyLevelMask];
             return timerSet.AddOrUpdateToLater(timer, time);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Remove(TTimer timer)
         {
-            var timerSet = _timerSets[(timer?.GetHashCode() ?? 0) & _concurrencyLevelMask];
+            var timerSet = _timerSets[timer.GetHashCode() & _concurrencyLevelMask];
             return timerSet.Remove(timer);
         }
     }
