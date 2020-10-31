@@ -41,11 +41,6 @@ namespace Stl.Fusion.Server.Authentication
         public Func<SessionMiddleware, HttpContext, Task<bool>> ForcedSignOutHandler { get; }
 
         public SessionMiddleware(
-            ISessionProvider sessionProvider,
-            ISessionFactory sessionFactory,
-            IAuthService? authService = null)
-            : this(null, sessionProvider, sessionFactory, authService) { }
-        public SessionMiddleware(
             Options? options,
             ISessionProvider sessionProvider,
             ISessionFactory sessionFactory,

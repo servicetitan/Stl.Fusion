@@ -25,11 +25,6 @@ namespace Stl.Fusion.Blazor
         public ILiveState<AuthState> State { get; }
 
         public AuthStateProvider(
-            IAuthService authService,
-            ISessionResolver sessionResolver,
-            IStateFactory stateFactory)
-            : this(null, authService, sessionResolver, stateFactory) { }
-        public AuthStateProvider(
             Options? options,
             IAuthService authService,
             ISessionResolver sessionResolver,

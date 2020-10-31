@@ -22,10 +22,10 @@ namespace Stl.Fusion.Authentication
         protected TimeSpan UpdatePeriod { get; }
 
         public PresenceService(
-            IAuthService authService, ISessionResolver sessionResolver, ILogger<PresenceService>? log = null)
-            : this(null, authService, sessionResolver, log) { }
-        public PresenceService(Options? options,
-            IAuthService authService, ISessionResolver sessionResolver, ILogger<PresenceService>? log = null)
+            Options? options,
+            IAuthService authService,
+            ISessionResolver sessionResolver,
+            ILogger<PresenceService>? log = null)
         {
             options = options.OrDefault();
             Log = log ??= NullLogger<PresenceService>.Instance;
