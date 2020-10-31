@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Stl.Collections;
 
 namespace Stl.Frozen
 {
@@ -106,6 +107,7 @@ namespace Stl.Frozen
             var clone = (FrozenSet<T>) base.CloneToUnfrozenUntyped(deep);
             if (!deep || !AreItemsFrozen) {
                 clone.Set = new HashSet<T>(Comparer);
+                clone.Set.AddRange(Set);
                 return clone;
             }
 

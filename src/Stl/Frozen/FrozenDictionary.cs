@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Stl.Collections;
 
 namespace Stl.Frozen
 {
@@ -109,6 +110,7 @@ namespace Stl.Frozen
             var clone = (FrozenDictionary<TKey, TValue>) base.CloneToUnfrozenUntyped(deep);
             if (!deep || !AreValuesFrozen) {
                 clone.Dictionary = new Dictionary<TKey, TValue>(Comparer);
+                clone.AddRange(Dictionary);
                 return clone;
             }
 
