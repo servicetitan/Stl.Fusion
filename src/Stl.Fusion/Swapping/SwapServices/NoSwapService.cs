@@ -5,8 +5,10 @@ using Stl.Fusion.Interception;
 
 namespace Stl.Fusion.Swapping
 {
-    public class EmptySwapService : ISwapService
+    public class NoSwapService : ISwapService
     {
+        public static ISwapService Instance { get; } = new NoSwapService();
+
         public ValueTask<IResult?> LoadAsync((InterceptedInput Input, LTag Version) key, CancellationToken cancellationToken = default)
             => ValueTaskEx.FromResult((IResult?) null);
 

@@ -71,7 +71,7 @@ namespace Stl.Fusion.Swapping
             if (maybeOutput != null)
                 return maybeOutput;
 
-            var swapService = Function.ServiceProvider.GetRequiredService<ISwapService>();
+            var swapService = Function.ServiceProvider.GetService<ISwapService>() ?? NoSwapService.Instance;
             maybeOutput = await swapService.LoadAsync((Input, Version), cancellationToken) as ResultBox<T>;
             if (maybeOutput == null) {
                 Invalidate();
@@ -87,7 +87,7 @@ namespace Stl.Fusion.Swapping
             using var _ = await SwapOutputLock.LockAsync(cancellationToken).ConfigureAwait(false);
             if (MaybeOutput == null)
                 return;
-            var swapService = Function.ServiceProvider.GetRequiredService<ISwapService>();
+            var swapService = Function.ServiceProvider.GetService<ISwapService>() ?? NoSwapService.Instance;
             await swapService.StoreAsync((Input, Version), MaybeOutput, cancellationToken);
             Interlocked.Exchange(ref _maybeOutput, null);
             RenewTimeouts();
