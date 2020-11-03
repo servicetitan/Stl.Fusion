@@ -14,10 +14,7 @@ namespace Stl.Fusion.Blazor
         }
 
         protected virtual void ConfigureState(LiveState<T>.Options options) { }
-
-        protected virtual Task<T> ComputeStateAsync(CancellationToken cancellationToken)
-            // Return the previous value by default, i.e. doesn't change anything
-            => State.AsTask();
+        protected abstract Task<T> ComputeStateAsync(CancellationToken cancellationToken);
     }
 
     public abstract class LiveComponentBase<T, TLocals> : LiveComponentBase<T>
