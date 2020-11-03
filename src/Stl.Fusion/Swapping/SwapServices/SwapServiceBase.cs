@@ -50,6 +50,7 @@ namespace Stl.Fusion.Swapping
             var f = ListFormat.Default.CreateFormatter(sb);
             var method = input.Method;
             f.Append(method.InvocationTargetHandler.ToStringFunc.Invoke(input.Target));
+            f.Append(version.ToString());
             var arguments = input.Arguments;
             for (var i = 0; i < method.ArgumentHandlers.Length; i++) {
                 var handler = method.ArgumentHandlers[i];
