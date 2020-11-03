@@ -11,6 +11,7 @@ namespace Stl.Fusion.Blazor
         [Inject]
         protected IServiceProvider ServiceProvider { get; set; } = null!;
         protected IStateFactory StateFactory => ServiceProvider.GetStateFactory();
+        protected bool OwnsState { get; set; } = true;
         protected abstract IState UntypedState { get; }
         protected Action<IState, StateEventKind> StateChanged { get; set; }
         protected StateEventKind StateHasChangedTriggers { get; set; } = StateEventKind.Updated;
@@ -30,7 +31,7 @@ namespace Stl.Fusion.Blazor
         public virtual void Dispose()
         {
             UntypedState.RemoveEventHandler(StateEventKind.All, StateChanged);
-            if (UntypedState is IDisposable d)
+            if (OwnsState && UntypedState is IDisposable d)
                 d.Dispose();
         }
     }
