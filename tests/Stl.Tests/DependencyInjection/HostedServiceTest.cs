@@ -1,28 +1,38 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Memory;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Stl.DependencyInjection;
 using Stl.Text;
 using Xunit;
 
 namespace Stl.Tests.DependencyInjection
 {
-    public class SettingsTest
+    public class HostedServiceTest
     {
-        public interface ITestSettings
+        [HostedService(Scope = nameof(HostedServiceTest))]
+        public class TestHostedService : IHostedService
         {
-            string Value { get; set; }
-        }
+            public bool IsStarted { get; set; }
 
-        [Settings("TestSettings", Scope = nameof(SettingsTest))]
-        [ServiceAlias(typeof(ITestSettings), typeof(TestSettings), Scope = nameof(SettingsTest))]
-        public class TestSettings : ITestSettings
-        {
-            public string Value { get; set; } = "";
+            public Task StartAsync(CancellationToken cancellationToken)
+            {
+                IsStarted = true;
+                return Task.CompletedTask;
+            }
+
+            public Task StopAsync(CancellationToken cancellationToken)
+            {
+                IsStarted = false;
+                return Task.CompletedTask;
+            }
         }
 
         [Fact]
@@ -41,19 +51,13 @@ namespace Stl.Tests.DependencyInjection
             var services = new ServiceCollection()
                 .AddSingleton(cfg)
                 .AddSingleton<IConfiguration>(cfg)
-                .AttributeBased(nameof(SettingsTest))
-                .ResetScope()
-                .ResetTypeFilter()
-                .SetScope(Symbol.Empty, nameof(SettingsTest))
-                .SetTypeFilter(new Regex(".*"))
-                .AddServicesFrom(typeof(bool).Assembly)
-                .AddService<TestSettings>()
-                .AddServices(typeof(TestSettings))
+                .AttributeBased(nameof(HostedServiceTest))
+                .AddServicesFrom(Assembly.GetExecutingAssembly())
                 .BackToServices()
                 .BuildServiceProvider();
-            var testSettings = services.GetRequiredService<TestSettings>();
-            testSettings.Value.Should().Be("1");
-            services.GetRequiredService<ITestSettings>().Should().BeSameAs(testSettings);
+            var hostedServices = services.GetServices<IHostedService>().ToArray();
+            hostedServices.Length.Should().Be(1);
+            hostedServices[0].GetType().Should().Be(typeof(TestHostedService));
         }
     }
 }

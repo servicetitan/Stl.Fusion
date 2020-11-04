@@ -35,6 +35,8 @@ namespace Stl.Tests.Collections
                 for (var i = 0; i < opCount; i++) {
                     var item = Items[rnd.Next(Items.Length)];
                     c.Contains(item).Should().Be(hs.Contains(item));
+                    c.Count.Should().Be(hs.Count);
+                    c.Count.Should().Be(hs.Count);
                     var rndValue = rnd.NextDouble();
                     if (rndValue < 0.55) {
                         c.Add(item);
