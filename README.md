@@ -168,6 +168,10 @@ This means you can always increase these delays to throttle down the rate of
 outgoing invalidation and update messages, and vice versa.
 In other words, Fusion-based web apps should scale much better than MMORPG.
 
+Check out 
+["Scaling Fusion Services" part of the Tutorial](https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/Part08.md)
+to see a much more robust description on how Fusion scales.
+
 ## Enough talk. Show me the code!
 
 [Compute Services] is where a majority of Fusion-based code is supposed to live.
@@ -256,6 +260,7 @@ and
 * Join our [Discord Server] or [Gitter] to ask questions and track project updates.
 
 ## Posts And Other Content
+* [Fusion: Current State and Upcoming Features](https://alexyakunin.medium.com/fusion-current-state-and-upcoming-features-88bc4201594b?source=friends_link&sk=375290c4538167fe99419a744f3d42d5)
 * [The Ungreen Web: Why our web apps are terribly inefficient?](https://alexyakunin.medium.com/the-ungreen-web-why-our-web-apps-are-terribly-inefficient-28791ed48035?source=friends_link&sk=74fb46086ca13ff4fea387d6245cb52b)
 * [Why real-time UI is inevitable future for web apps?](https://medium.com/@alexyakunin/features-of-the-future-web-apps-part-1-e32cf4e4e4f4?source=friends_link&sk=65dacdbf670ef9b5d961c4c666e223e2)
 * [How similar is Fusion to SignalR?](https://medium.com/@alexyakunin/how-similar-is-stl-fusion-to-signalr-e751c14b70c3?source=friends_link&sk=241d5293494e352f3db338d93c352249)
