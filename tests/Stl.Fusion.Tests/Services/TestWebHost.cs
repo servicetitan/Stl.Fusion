@@ -53,7 +53,7 @@ namespace Stl.Fusion.Tests.Services
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.Configure((ctx, app) => {
-                app.UseWebSockets(new WebSocketOptions() { ReceiveBufferSize = 16_384 });
+                app.UseWebSockets();
                 app.UseFusionSession();
 
                 // API controllers

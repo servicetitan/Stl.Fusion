@@ -30,18 +30,18 @@ namespace Stl.Fusion.Tests.Services
     [Service] // "No Fusion" version
     public class UserService : IUserService
     {
-        protected DbContextPool<TestDbContext> DbContextPool { get; }
+        protected IDbContextFactory<TestDbContext> DbContextFactory { get; }
         protected bool IsCaching { get; }
 
-        public UserService(DbContextPool<TestDbContext> dbContextPool)
+        public UserService(IDbContextFactory<TestDbContext> dbContextFactory)
         {
-            DbContextPool = dbContextPool;
+            DbContextFactory = dbContextFactory;
             IsCaching = GetType().Name.EndsWith("Proxy");
         }
 
         public virtual async Task CreateAsync(User user, bool orUpdate = false, CancellationToken cancellationToken = default)
         {
-            await using var dbContext = DbContextPool.Rent();
+            await using var dbContext = DbContextFactory.CreateDbContext();
             var existingUser = (User?) null;
 
             var supportTransactions = !dbContext.Database.IsInMemory();
@@ -65,7 +65,7 @@ namespace Stl.Fusion.Tests.Services
 
         public virtual async Task UpdateAsync(User user, CancellationToken cancellationToken = default)
         {
-            await using var dbContext = DbContextPool.Rent();
+            await using var dbContext = DbContextFactory.CreateDbContext();
             dbContext.Users.Update(user);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             Invalidate(user, false);
@@ -74,7 +74,7 @@ namespace Stl.Fusion.Tests.Services
         public virtual async Task<bool> DeleteAsync(User user, CancellationToken cancellationToken = default)
         {
             Computed.GetCurrent().Should().BeNull();
-            await using var dbContext = DbContextPool.Rent();
+            await using var dbContext = DbContextFactory.CreateDbContext();
             dbContext.Users.Remove(user);
             try {
                 await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -90,7 +90,7 @@ namespace Stl.Fusion.Tests.Services
         {
             // Debug.WriteLine($"TryGetAsync {userId}");
             await Everything().ConfigureAwait(false);
-            await using var dbContext = DbContextPool.Rent();
+            await using var dbContext = DbContextFactory.CreateDbContext();
             var user = await dbContext.Users
                 .FindAsync(new[] {(object) userId}, cancellationToken)
                 .ConfigureAwait(false);
@@ -100,7 +100,7 @@ namespace Stl.Fusion.Tests.Services
         public virtual async Task<long> CountAsync(CancellationToken cancellationToken = default)
         {
             await Everything().ConfigureAwait(false);
-            await using var dbContext = DbContextPool.Rent();
+            await using var dbContext = DbContextFactory.CreateDbContext();
             var count = await dbContext.Users.LongCountAsync(cancellationToken).ConfigureAwait(false);
             // _log.LogDebug($"Users.Count query: {count}");
             return count;

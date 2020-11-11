@@ -48,15 +48,16 @@ namespace Stl.Fusion.Tests
         public FusionTestBase(ITestOutputHelper @out, FusionTestOptions? options = null) : base(@out)
         {
             Options = options ?? new FusionTestOptions();
+            // ReSharper disable once VirtualMemberCallInConstructor
             Services = CreateServices();
-            Log = (ILogger) Services.GetService(typeof(ILogger<>).MakeGenericType(GetType()));
+            Log = (ILogger) Services.GetRequiredService(typeof(ILogger<>).MakeGenericType(GetType()));
         }
 
         public virtual async Task InitializeAsync()
         {
             if (File.Exists(DbPath))
                 File.Delete(DbPath);
-            await using var dbContext = RentDbContext();
+            await using var dbContext = GetDbContext();
             await dbContext.Database.EnsureCreatedAsync();
         }
 
@@ -113,7 +114,7 @@ namespace Stl.Fusion.Tests
             var testType = GetType();
             var appTempDir = PathEx.GetApplicationTempDirectory("", true);
             DbPath = appTempDir & PathEx.GetHashedName($"{testType.Name}_{testType.Namespace}.db");
-            services.AddDbContextPool<TestDbContext>(builder => {
+            services.AddPooledDbContextFactory<TestDbContext>(builder => {
                 if (Options.UseInMemoryDatabase)
                     builder.UseInMemoryDatabase(DbPath);
                 else
@@ -153,8 +154,8 @@ namespace Stl.Fusion.Tests
                 }));
         }
 
-        protected TestDbContext RentDbContext()
-            => Services.GetRequiredService<DbContextPool<TestDbContext>>().Rent();
+        protected TestDbContext GetDbContext()
+            => Services.GetRequiredService<IDbContextFactory<TestDbContext>>().CreateDbContext();
 
         protected Task<Channel<Message>> ConnectToPublisherAsync(CancellationToken cancellationToken = default)
         {

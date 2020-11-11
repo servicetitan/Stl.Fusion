@@ -74,7 +74,7 @@ namespace Stl.Fusion.Tests
             }
 
             var services = CreateServiceProviderFor<CounterService>();
-            var counters = services.GetService<CounterService>();
+            var counters = services.GetRequiredService<CounterService>();
             var aComputed = await Computed.CaptureAsync(_ => counters.GetAsync("a"));
             Task.Run(() => WatchAsync(nameof(aComputed), aComputed)).Ignore();
             var bComputed = await Computed.CaptureAsync(_ => counters.GetAsync("b"));
