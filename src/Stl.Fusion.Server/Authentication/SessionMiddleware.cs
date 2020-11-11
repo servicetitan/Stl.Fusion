@@ -58,7 +58,7 @@ namespace Stl.Fusion.Server.Authentication
         {
             var cancellationToken = httpContext.RequestAborted;
             var cookies = httpContext.Request.Cookies;
-            var cookieName = Cookie.Name;
+            var cookieName = Cookie.Name ?? "";
             cookies.TryGetValue(cookieName, out var sessionId);
             var session = string.IsNullOrEmpty(sessionId) ? null : new Session(sessionId);
             if (session != null) {

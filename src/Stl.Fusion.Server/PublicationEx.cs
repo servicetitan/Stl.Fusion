@@ -15,14 +15,14 @@ namespace Stl.Fusion.Server
         {
             if (!httpContext.Items.TryGetValue(typeof(IPublicationState), out var v))
                 return null;
-            return (IPublicationState) v;
+            return (IPublicationState?) v;
         }
 
         public static PublicationStateInfo? GetPublicationStateInfo(this HttpContext httpContext)
         {
             if (!httpContext.Items.TryGetValue(typeof(PublicationStateInfo), out var v))
                 return null;
-            return (PublicationStateInfo) v;
+            return (PublicationStateInfo?) v;
         }
 
         public static void Publish(this HttpContext httpContext, IPublication publication)

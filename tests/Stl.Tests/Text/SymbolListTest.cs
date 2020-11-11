@@ -32,7 +32,6 @@ namespace Stl.Tests.Text
             p.FormattedValue.Should().Be(expectedValue ?? value);
 
             p.PassThroughJsonConvert().Should().Be(p);
-            p.PassThroughBinaryFormatter().Should().Be(p);
         }
     }
 }
