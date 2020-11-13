@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.DependencyInjection;
@@ -14,6 +15,8 @@ namespace Stl.Fusion
 {
     public readonly struct FusionBuilder
     {
+        private static Box<bool> IsInitialized = Box.New<bool>(false);
+
         private class AddedTag { }
         private static readonly ServiceDescriptor AddedTagDescriptor =
             new ServiceDescriptor(typeof(AddedTag), new AddedTag());
@@ -28,6 +31,7 @@ namespace Stl.Fusion
 
         internal FusionBuilder(IServiceCollection services)
         {
+            Initialize();
             Services = services;
             if (Services.Contains(AddedTagDescriptor))
                 return;
@@ -51,6 +55,23 @@ namespace Stl.Fusion
             Services.TryAddTransient(typeof(IMutableState<>), typeof(MutableState<>));
             Services.TryAddSingleton(new UpdateDelayer.Options());
             Services.TryAddTransient<IUpdateDelayer, UpdateDelayer>();
+        }
+
+        public static void Initialize(HashSet<Type>? attributesToAvoidReplicating = null)
+        {
+            if (IsInitialized.Value) return;
+            lock (IsInitialized) {
+                if (IsInitialized.Value) return;
+                IsInitialized.Value = true;
+                // Castle.DynamicProxy fails while trying to replicate
+                // these attributes in WASM in .NET 5.0
+                attributesToAvoidReplicating ??= new HashSet<Type>() {
+                    typeof(AsyncStateMachineAttribute),
+                    typeof(ComputeMethodAttribute),
+                };
+                foreach (var type in attributesToAvoidReplicating)
+                    Castle.DynamicProxy.Generators.AttributesToAvoidReplicating.Add(type);
+            }
         }
 
         public IServiceCollection BackToServices() => Services;
