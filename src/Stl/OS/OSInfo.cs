@@ -18,7 +18,14 @@ namespace Stl.OS
 
         static OSInfo()
         {
-            // WebAssembly
+            // WebAssembly w/ .NET 5.0
+            if (RuntimeInformation.OSDescription.ToLowerInvariant() == "browser") {
+                Kind = OSKind.WebAssembly;
+                UserHomePath = "";
+                return;
+            }
+
+            // WebAssembly w/ .NET Core 3.1
             if (RuntimeInformation.OSDescription == "web" && RuntimeInformation.FrameworkDescription.StartsWith("Mono")) {
                 Kind = OSKind.WebAssembly;
                 UserHomePath = "";
