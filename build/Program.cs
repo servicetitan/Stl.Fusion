@@ -150,6 +150,7 @@ namespace Build
                         "--blame " +
                         $"--collect:\"XPlat Code Coverage\" --results-directory {testOutputPath} " +
                         $"{Option("-c", configuration)} " +
+                        $"{Option("-f", framework)} " +
                         "-- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=json,cobertura"
                     ).ToConsole()
                     .ExecuteBufferedAsync(cancellationToken)
