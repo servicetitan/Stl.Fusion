@@ -18,7 +18,7 @@ namespace Stl.Fusion
 
         protected ServiceException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
-            OriginalExceptionType = (Type) info.GetValue(nameof(OriginalExceptionType), typeof(Type));
+            OriginalExceptionType = (Type) info.GetValue(nameof(OriginalExceptionType), typeof(Type))!;
             var fStackTraceString = typeof(Exception).GetField("_stackTraceString",
                 BindingFlags.Instance | BindingFlags.NonPublic);
             fStackTraceString!.SetValue(this, "");

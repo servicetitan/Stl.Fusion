@@ -28,13 +28,13 @@ jobs:
           dotnet-version: 5.0.100
 
       - name: Restore NuGet Packages & Tools
-        run: dotnet run --project build --configuration Release --no-launch-profile -- --configuration Debug restore restore-tools
+        run: dotnet run -p build -c Release --no-launch-profile -- --configuration Debug --framework net5.0 restore restore-tools
 
       - name: Build
-        run: dotnet run --project build --configuration Release --no-launch-profile -- --configuration Debug build
+        run: dotnet run -p build -c Release --no-launch-profile -- --configuration Debug --framework net5.0 build
 
       - name: Run tests
-        run: dotnet run --project build --configuration Release --no-launch-profile -- --configuration Debug coverage
+        run: dotnet run -p build -c Release --no-launch-profile -- --configuration Debug --framework net5.0 Debug coverage
 
       - name: Codecov
         uses: codecov/codecov-action@v1.0.13

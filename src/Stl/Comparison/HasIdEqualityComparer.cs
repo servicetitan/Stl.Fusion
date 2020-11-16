@@ -15,6 +15,6 @@ namespace Stl.Comparison
         }
 
         public int GetHashCode(IHasId<T>? obj)
-            => obj == null ? 0 : EqualityComparer<T>.Default.GetHashCode(obj.Id);
+            => obj == null ? 0 : EqualityComparer<T>.Default.GetHashCode(obj.Id!);
     }
 }

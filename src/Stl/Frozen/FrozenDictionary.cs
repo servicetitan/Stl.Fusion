@@ -8,10 +8,12 @@ namespace Stl.Frozen
     public interface IFrozenDictionary<TKey, TValue> :
         IDictionary<TKey, TValue>,
         IFrozenCollection<KeyValuePair<TKey, TValue>>
+        where TKey : notnull
     { }
 
     [Serializable]
     public class FrozenDictionary<TKey, TValue> : FrozenBase, IFrozenDictionary<TKey, TValue>
+        where TKey : notnull
     {
         protected static readonly bool AreValuesFrozen =
             typeof(IFrozen).IsAssignableFrom(typeof(TValue));
@@ -84,7 +86,7 @@ namespace Stl.Frozen
         public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
             => Dictionary.GetEnumerator();
         public bool TryGetValue(TKey key, out TValue value)
-            => Dictionary.TryGetValue(key, out value);
+            => Dictionary.TryGetValue(key, out value!);
         public bool ContainsKey(TKey key)
             => Dictionary.ContainsKey(key);
 

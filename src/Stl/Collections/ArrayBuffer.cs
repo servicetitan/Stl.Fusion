@@ -23,6 +23,7 @@ namespace Stl.Collections
         public T[] Buffer { get; private set; }
         public Span<T> Span => Buffer.AsSpan(0, Count);
         public int Capacity => Buffer.Length;
+        public bool MustClean { get; }
         public int Count {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _count;
@@ -40,8 +41,9 @@ namespace Stl.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ArrayBuffer(int capacity)
+        private ArrayBuffer(bool mustClean, int capacity)
         {
+            MustClean = mustClean;
             if (capacity < MinCapacity)
                 capacity = MinCapacity;
             Buffer = Pool.Rent(capacity);
@@ -49,17 +51,18 @@ namespace Stl.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ArrayBuffer<T> Lease(int capacity = DefaultCapacity)
-            => new ArrayBuffer<T>(capacity);
+        public static ArrayBuffer<T> Lease(bool mustClean, int capacity = DefaultCapacity)
+            => new ArrayBuffer<T>(mustClean, capacity);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ArrayBuffer<T> LeaseAndSetCount(int count)
-            => new ArrayBuffer<T>(count) {Count = count};
+        public static ArrayBuffer<T> LeaseAndSetCount(bool mustClean, int count)
+            => new ArrayBuffer<T>(mustClean, count) {Count = count};
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (Buffer != null)
-                Pool.Return(Buffer);
+                Pool.Return(Buffer, MustClean);
             Buffer = null!;
         }
 
@@ -165,7 +168,7 @@ namespace Stl.Collections
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ChangeLease(T[] newLease)
         {
-            Pool.Return(Buffer);
+            Pool.Return(Buffer, MustClean);
             Buffer = newLease;
         }
     }

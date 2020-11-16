@@ -59,7 +59,7 @@ namespace Stl.Fusion.Client.RestEase.Internal
         {
             var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             var contentType = response.Content.Headers.ContentType;
-            if (contentType.MediaType != "application/json")
+            if (contentType?.MediaType != "application/json")
                 return new ServiceException(content);
 
             var serializer = new JsonNetSerializer(JsonNetSerializer.DefaultSettings);

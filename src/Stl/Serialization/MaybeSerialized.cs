@@ -28,7 +28,7 @@ namespace Stl.Serialization
 
         public bool Equals(MaybeSerialized<T> other) => EqualityComparer<T>.Default.Equals(Value, other.Value);
         public override bool Equals(object? obj) => obj is MaybeSerialized<T> other && Equals(other);
-        public override int GetHashCode() => EqualityComparer<T>.Default.GetHashCode(Value);
+        public override int GetHashCode() => EqualityComparer<T>.Default.GetHashCode(Value!);
         public static bool operator ==(MaybeSerialized<T> left, MaybeSerialized<T> right) => left.Equals(right);
         public static bool operator !=(MaybeSerialized<T> left, MaybeSerialized<T> right) => !left.Equals(right);
     }

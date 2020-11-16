@@ -25,7 +25,7 @@ namespace Stl.Fusion.Bridge
 
         public bool Equals(ReplicaInput? other)
             => !ReferenceEquals(null, other) && PublicationRef == other.PublicationRef;
-        public override bool Equals(ComputedInput other)
+        public override bool Equals(ComputedInput? other)
             => other is ReplicaInput ri && PublicationRef == ri.PublicationRef;
         public override bool Equals(object? obj)
             => Equals(obj as ReplicaInput);

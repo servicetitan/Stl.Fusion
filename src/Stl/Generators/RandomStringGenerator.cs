@@ -42,7 +42,7 @@ namespace Stl.Generators
                 alphabet = Alphabet;
             else if (alphabet.Length < 1)
                 throw new ArgumentOutOfRangeException(nameof(alphabet));
-            var buffer = MemoryBuffer<byte>.LeaseAndSetCount(length);
+            var buffer = MemoryBuffer<byte>.LeaseAndSetCount(false, length);
             try {
                 lock (Lock) {
                     Rng.GetBytes(buffer.Span);

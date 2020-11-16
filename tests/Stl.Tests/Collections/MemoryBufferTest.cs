@@ -24,11 +24,12 @@ namespace Stl.Tests.Collections
 
         private void Test<T>(List<T> list)
         {
-            var buffer = MemoryBuffer<T>.Lease();
+            var buffer = MemoryBuffer<T>.Lease(true);
             try {
                 foreach (var i in list)
                     buffer.Add(i);
                 buffer.ToArray().Should().Equal(list);
+                buffer.ToList().Should().Equal(list);
 
                 for (var _ = 0; _ < 5; _++) {
                     if (buffer.Count == 0)

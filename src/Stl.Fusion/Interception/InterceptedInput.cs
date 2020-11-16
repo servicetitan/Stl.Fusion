@@ -72,8 +72,10 @@ namespace Stl.Fusion.Interception
 
         // Equality
 
-        public bool Equals(InterceptedInput other)
+        public bool Equals(InterceptedInput? other)
         {
+            if (other == null)
+                return false;
             if (HashCode != other.HashCode)
                 return false;
             if (!ReferenceEquals(Method, other.Method))
@@ -94,7 +96,7 @@ namespace Stl.Fusion.Interception
                 return false;
             return true;
         }
-        public override bool Equals(ComputedInput obj)
+        public override bool Equals(ComputedInput? obj)
             => obj is InterceptedInput other && Equals(other);
         public override bool Equals(object? obj)
             => obj is InterceptedInput other && Equals(other);

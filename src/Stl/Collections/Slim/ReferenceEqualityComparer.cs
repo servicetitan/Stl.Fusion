@@ -8,7 +8,7 @@ namespace Stl.Collections.Slim
     {
         public static ReferenceEqualityComparer<T> Instance { get; }
             = new ReferenceEqualityComparer<T>();
-        public bool Equals(T x, T y) => ReferenceEquals(x, y);
+        public bool Equals(T? x, T? y) => ReferenceEquals(x, y);
         public int GetHashCode(T obj) => RuntimeHelpers.GetHashCode(obj);
     }
 }

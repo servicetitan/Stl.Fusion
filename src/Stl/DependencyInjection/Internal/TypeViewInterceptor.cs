@@ -73,7 +73,7 @@ namespace Stl.DependencyInjection.Internal
                 return t.GetGenericArguments()[0];
             }
 
-            if (mTarget.ReturnType != mSource.ReturnType) {
+            if (mTarget!.ReturnType != mSource.ReturnType) {
                 Action<IInvocation>? result;
 
                 // Trying Task<T>
@@ -82,7 +82,7 @@ namespace Stl.DependencyInjection.Internal
                 if (rtSource != null && rtTarget != null) {
                     result = (Action<IInvocation>?) _createTaskConvertingHandlerMethod
                         .MakeGenericMethod(rtSource, rtTarget)
-                        .Invoke(this, new object[] {initialInvocation, fTarget, mTarget});
+                        .Invoke(this, new object[] {initialInvocation, fTarget!, mTarget});
                     if (result != null)
                         return result;
                 }
@@ -93,7 +93,7 @@ namespace Stl.DependencyInjection.Internal
                 if (rtSource != null && rtTarget != null) {
                     result = (Action<IInvocation>?) _createValueTaskConvertingHandlerMethod
                         .MakeGenericMethod(rtSource, rtTarget)
-                        .Invoke(this, new object[] {initialInvocation, fTarget, mTarget});
+                        .Invoke(this, new object[] {initialInvocation, fTarget!, mTarget});
                     if (result != null)
                         return result;
                 }
@@ -103,14 +103,14 @@ namespace Stl.DependencyInjection.Internal
                 rtTarget = mTarget.ReturnType;
                 result = (Action<IInvocation>?) _createConvertingHandlerMethod
                     .MakeGenericMethod(rtSource, rtTarget)
-                    .Invoke(this, new object[] {initialInvocation, fTarget, mTarget});
+                    .Invoke(this, new object[] {initialInvocation, fTarget!, mTarget});
                 if (result != null)
                     return result;
             }
 
             return invocation => {
                 // TODO: Get rid of reflection here (not critical)
-                var target = fTarget.GetValue(invocation.Proxy);
+                var target = fTarget!.GetValue(invocation.Proxy);
                 invocation.ReturnValue = mTarget.Invoke(target, invocation.Arguments);
             };
         }
@@ -125,7 +125,7 @@ namespace Stl.DependencyInjection.Internal
             if (typeof(IConvertibleTo<>).MakeGenericType(tSource).IsAssignableFrom(tTarget)) {
                 return invocation => {
                     var target = fTarget.GetValue(invocation.Proxy);
-                    var result = (TTarget) mTarget.Invoke(target, invocation.Arguments);
+                    var result = (TTarget) mTarget.Invoke(target, invocation.Arguments)!;
                     invocation.ReturnValue = result is IConvertibleTo<TSource> c ? c.Convert() : default!;
                 };
             }
@@ -154,7 +154,7 @@ namespace Stl.DependencyInjection.Internal
                 return invocation => {
                     var target = fTarget.GetValue(invocation.Proxy);
                     var untypedResult = mTarget.Invoke(target, invocation.Arguments);
-                    var result = (Task<TTarget>) untypedResult;
+                    var result = (Task<TTarget>) untypedResult!;
                     invocation.ReturnValue = result.ContinueWith(t =>
                         t.Result is IConvertibleTo<TSource> c ? c.Convert() : default!);
                 };
@@ -169,7 +169,7 @@ namespace Stl.DependencyInjection.Internal
                 // TODO: Get rid of reflection here (not critical)
                 var target = fTarget.GetValue(invocation.Proxy);
                 var untypedResult = mTarget.Invoke(target, invocation.Arguments);
-                var result = (Task<TTarget>) untypedResult;
+                var result = (Task<TTarget>) untypedResult!;
                 invocation.ReturnValue = result.ContinueWith(t =>
                     (TSource) d.ConvertTo(t.Result!, tSource)!);
             };
@@ -186,7 +186,7 @@ namespace Stl.DependencyInjection.Internal
                 return invocation => {
                     var target = fTarget.GetValue(invocation.Proxy);
                     var untypedResult = mTarget.Invoke(target, invocation.Arguments);
-                    var result = (ValueTask<TTarget>) untypedResult;
+                    var result = (ValueTask<TTarget>) untypedResult!;
                     // ReSharper disable once HeapView.BoxingAllocation
                     invocation.ReturnValue = result.AsTask().ContinueWith(t =>
                         t.Result is IConvertibleTo<TSource> c ? c.Convert() : default!).ToValueTask();
@@ -202,7 +202,7 @@ namespace Stl.DependencyInjection.Internal
                 // TODO: Get rid of reflection here (not critical)
                 var target = fTarget.GetValue(invocation.Proxy);
                 var untypedResult = mTarget.Invoke(target, invocation.Arguments);
-                var result = (ValueTask<TTarget>) untypedResult;
+                var result = (ValueTask<TTarget>) untypedResult!;
                 // ReSharper disable once HeapView.BoxingAllocation
                 invocation.ReturnValue = result.AsTask().ContinueWith(t =>
                     (TSource) d.ConvertTo(t.Result!, tSource)!).ToValueTask();

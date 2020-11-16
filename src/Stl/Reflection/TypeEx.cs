@@ -33,8 +33,8 @@ namespace Stl.Reflection
                 yield break; // type == typeof(Object)
 
             while (baseType != typeof(object)) {
-                yield return baseType;
-                baseType = baseType.BaseType;
+                yield return baseType!;
+                baseType = baseType!.BaseType;
             }
             if (addInterfaces) {
                 var interfaces = type.GetInterfaces();
@@ -78,7 +78,7 @@ namespace Stl.Reflection
                         .Select(t => t.ToIdentifierName(useFullArgumentNames1, useFullArgumentNames1));
                     name = string.Join('_', EnumerableEx.One(name).Concat(argumentNames));
                 }
-                name = MethodNameRe.Replace(name, "_");
+                name = MethodNameRe.Replace(name!, "_");
                 name = MethodNameTailRe.Replace(name, "");
                 return name;
             });

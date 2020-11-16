@@ -184,7 +184,7 @@ namespace Stl.Fusion
 
         public bool Equals(State<T>? other)
             => ReferenceEquals(this, other);
-        public override bool Equals(ComputedInput other)
+        public override bool Equals(ComputedInput? other)
             => ReferenceEquals(this, other);
         public override bool Equals(object? obj)
             => ReferenceEquals(this, obj);

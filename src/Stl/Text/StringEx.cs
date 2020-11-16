@@ -22,7 +22,7 @@ namespace Stl.Text
             if (value == "")
                 return Array.Empty<string>();
             var parser = OneToManyListFormat.CreateParser(value);
-            var buffer = MemoryBuffer<string>.Lease();
+            var buffer = MemoryBuffer<string>.Lease(true);
             try {
                 while (parser.TryParseNext()) {
                     buffer.Add(parser.Item);

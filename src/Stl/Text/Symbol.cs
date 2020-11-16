@@ -51,7 +51,7 @@ namespace Stl.Text
 #pragma warning disable CS8618
         private Symbol(SerializationInfo info, StreamingContext context)
         {
-            Value = info.GetString(nameof(Value));
+            Value = info.GetString(nameof(Value))!;
             HashCode = Value?.GetHashCode() ?? 0;
         }
 #pragma warning restore CS8618

@@ -10,7 +10,7 @@ namespace Stl.Reflection
         {
             string aqn;
             if (binder == null)
-                aqn = type.AssemblyQualifiedName;
+                aqn = type.AssemblyQualifiedName!;
             else {
                 binder.BindToName(type, out string? assemblyName, out string? typeName);
                 aqn = typeName + (assemblyName == null ? "" : ", " + assemblyName);

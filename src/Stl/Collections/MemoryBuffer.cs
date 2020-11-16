@@ -24,6 +24,7 @@ namespace Stl.Collections
         public Memory<T> BufferMemory => _lease.Memory;
         public Span<T> BufferSpan { get; private set; }
         public Span<T> Span => BufferSpan.Slice(0, Count);
+        public bool MustClean { get; }
         public int Capacity => BufferSpan.Length;
         public int Count {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -47,8 +48,9 @@ namespace Stl.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private MemoryBuffer(int capacity)
+        private MemoryBuffer(bool mustClean, int capacity)
         {
+            MustClean = mustClean;
             if (capacity < MinCapacity)
                 capacity = MinCapacity;
             _lease = Pool.Rent(capacity);
@@ -57,15 +59,17 @@ namespace Stl.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static MemoryBuffer<T> Lease(int capacity = DefaultCapacity)
-            => new MemoryBuffer<T>(capacity);
+        public static MemoryBuffer<T> Lease(bool mustClean, int capacity = DefaultCapacity)
+            => new MemoryBuffer<T>(mustClean, capacity);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static MemoryBuffer<T> LeaseAndSetCount(int count)
-            => new MemoryBuffer<T>(count) {Count = count};
+        public static MemoryBuffer<T> LeaseAndSetCount(bool mustClean, int count)
+            => new MemoryBuffer<T>(mustClean, count) {Count = count};
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Release()
         {
+            if (MustClean)
+                _lease.Memory.Span.Fill(default!);
             _lease?.Dispose();
             _lease = null!;
         }
@@ -166,6 +170,8 @@ namespace Stl.Collections
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ChangeLease(IMemoryOwner<T> newLease)
         {
+            if (MustClean)
+                _lease.Memory.Span.Fill(default!);
             _lease.Dispose();
             _lease = newLease;
             BufferSpan = _lease.Memory.Span;

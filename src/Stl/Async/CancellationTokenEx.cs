@@ -20,12 +20,12 @@ namespace Stl.Async
             var ts = TaskSource.New<T>(taskCreationOptions);
             if (throwIfCancelled)
                 token.Register(arg => {
-                    var ts1 = (TaskSource<T>) arg;
+                    var ts1 = (TaskSource<T>) arg!;
                     ts1.SetCanceled();
                 }, ts);
             else
                 token.Register(arg => {
-                    var tcs1 = (TaskSource<T>) arg;
+                    var tcs1 = (TaskSource<T>) arg!;
                     tcs1.SetResult(default!);
                 }, ts);
             return ts;
@@ -39,8 +39,8 @@ namespace Stl.Async
             // ReSharper disable once HeapView.BoxingAllocation
             var ts = TaskSource.New<T>(resultWhenCancelled, taskCreationOptions);
             token.Register(arg => {
-                var ts1 = (TaskSource<T>) arg;
-                ts1.SetResult((T) ts1.Task.AsyncState);
+                var ts1 = (TaskSource<T>) arg!;
+                ts1.SetResult((T) ts1.Task.AsyncState!);
             }, ts);
             return ts;
         }
@@ -52,8 +52,8 @@ namespace Stl.Async
         {
             var ts = TaskSource.New<T>(exceptionWhenCancelled, taskCreationOptions);
             token.Register(arg => {
-                var ts1 = (TaskSource<T>) arg;
-                ts1.SetException((Exception) ts1.Task.AsyncState);
+                var ts1 = (TaskSource<T>) arg!;
+                ts1.SetException((Exception) ts1.Task.AsyncState!);
             }, ts);
             return ts;
         }
@@ -69,12 +69,13 @@ namespace Stl.Async
             var tcs = new TaskCompletionSource<T>(taskCreationOptions);
             if (throwIfCancelled)
                 token.Register(arg => {
-                    var tcs1 = (TaskCompletionSource<T>) arg;
+                    var tcs1 = (TaskCompletionSource<T>) arg!;
+                    // ReSharper disable once MethodSupportsCancellation
                     tcs1.SetCanceled();
                 }, tcs);
             else
                 token.Register(arg => {
-                    var tcs1 = (TaskCompletionSource<T>) arg;
+                    var tcs1 = (TaskCompletionSource<T>) arg!;
                     tcs1.SetResult(default!);
                 }, tcs);
             return tcs;
@@ -88,8 +89,8 @@ namespace Stl.Async
             // ReSharper disable once HeapView.BoxingAllocation
             var tcs = new TaskCompletionSource<T>(resultWhenCancelled, taskCreationOptions);
             token.Register(arg => {
-                var tcs1 = (TaskCompletionSource<T>) arg;
-                tcs1.SetResult((T) tcs1.Task.AsyncState);
+                var tcs1 = (TaskCompletionSource<T>) arg!;
+                tcs1.SetResult((T) tcs1.Task.AsyncState!);
             }, tcs);
             return tcs;
         }
@@ -101,8 +102,8 @@ namespace Stl.Async
         {
             var tcs = new TaskCompletionSource<T>(exceptionWhenCancelled, taskCreationOptions);
             token.Register(arg => {
-                var tcs1 = (TaskCompletionSource<T>) arg;
-                tcs1.SetException((Exception) tcs1.Task.AsyncState);
+                var tcs1 = (TaskCompletionSource<T>) arg!;
+                tcs1.SetException((Exception) tcs1.Task.AsyncState!);
             }, tcs);
             return tcs;
         }

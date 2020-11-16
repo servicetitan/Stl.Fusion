@@ -12,7 +12,7 @@ namespace Stl.Fusion.Interception
         {
             GetHashCodeFunc = obj => {
                 var hasId = (IHasId<T>?) obj;
-                return hasId == null ? 0 : EqualityComparer<T>.Default.GetHashCode(hasId.Id);
+                return hasId == null ? 0 : EqualityComparer<T>.Default.GetHashCode(hasId.Id!);
             };
             EqualsFunc = (a, b) => {
                 if (a == null)

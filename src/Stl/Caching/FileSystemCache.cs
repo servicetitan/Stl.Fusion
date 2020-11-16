@@ -56,7 +56,7 @@ namespace Stl.Caching
                 return File.Exists(fileName) ? File.OpenRead(fileName) : null;
 
             var dir = Path.GetDirectoryName(fileName);
-            Directory.CreateDirectory(dir);
+            Directory.CreateDirectory(dir!);
             return File.Open(fileName, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
         }
 

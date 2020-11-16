@@ -17,10 +17,10 @@ namespace Stl.Serialization
         static CrossPlatformSerializationBinder()
         {
             var coreLibName = typeof(string).Assembly.FullName;
-            IsMonoPlatform = MsCorLibRe.IsMatch(coreLibName);
+            IsMonoPlatform = MsCorLibRe.IsMatch(coreLibName!);
         }
 
-        protected override Type ResolveType((string? AssemblyName, string TypeName) key)
+        protected override Type? ResolveType((string? AssemblyName, string TypeName) key)
         {
             var (assemblyName, typeName) = key;
             if (assemblyName != null)

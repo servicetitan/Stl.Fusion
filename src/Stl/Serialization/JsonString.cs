@@ -33,10 +33,10 @@ namespace Stl.Serialization
 
         // Equality & comparison
 
-        public bool Equals(JsonString other) => Value == other.Value;
+        public bool Equals(JsonString? other) => !ReferenceEquals(other, null) && Value == other.Value;
         public override bool Equals(object? obj) => obj is JsonString other && Equals(other);
         public override int GetHashCode() => Value?.GetHashCode() ?? 0;
-        public int CompareTo(JsonString other) => string.CompareOrdinal(Value, other.Value);
+        public int CompareTo(JsonString? other) => string.CompareOrdinal(Value, other?.Value);
         public static bool operator ==(JsonString left, JsonString right) => left.Equals(right);
         public static bool operator !=(JsonString left, JsonString right) => !left.Equals(right);
 

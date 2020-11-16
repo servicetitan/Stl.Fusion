@@ -1,10 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Bullseye;
@@ -34,6 +34,7 @@ namespace Build
         /// <param name="verbose">Enable verbose output.</param>
         /// <param name="cancellationToken"></param>
         /// <param name="configuration">The configuration for building</param>
+        /// <param name="framework">The framework to build for</param>
         /// <param name="isPublicRelease">You can redefine PublicRelease property for Nerdbank.GitVersioning</param>
         private static async Task Main(
             string[] arguments,
@@ -51,6 +52,7 @@ namespace Build
             CancellationToken cancellationToken,
             // Our own options
             string configuration = "Debug",
+            string framework = "",
             bool isPublicRelease = true)
         {
             SetDefaults("Stl.Fusion.sln");
@@ -80,7 +82,7 @@ namespace Build
 
             Target("clean", () => {
                 DeleteDir(artifactsPath);
-                CreateDir(artifactsPath, true);
+                CreateDir(nupkgPath, true);
             });
 
             Target("clean-nupkg", () => {
@@ -100,20 +102,19 @@ namespace Build
                         "-t:Restore " +
                         "-p:RestoreForce=true " +
                         "-p:RestoreIgnoreFailedSources=True " +
-                        $"-p:Configuration={configuration} " +
                         publicReleaseProperty
                     ).ToConsole()
                     .ExecuteAsync(cancellationToken).Task.ConfigureAwait(false);
             });
 
             Target("build", async () => {
-                await Cli.Wrap(dotnetExePath).WithArguments($"build -noLogo -c {configuration} --no-restore {publicReleaseProperty}")
+                await Cli.Wrap(dotnetExePath).WithArguments($"build -noLogo -c {configuration} -f {framework} --no-restore {publicReleaseProperty}")
                     .ToConsole()
                     .ExecuteAsync(cancellationToken).Task.ConfigureAwait(false);
             });
 
             Target("pack", DependsOn("clean", "restore", "build"), async () => {
-                await Cli.Wrap(dotnetExePath).WithArguments($"pack -noLogo -c {configuration} --no-build {publicReleaseProperty}")
+                await Cli.Wrap(dotnetExePath).WithArguments($"pack -noLogo -c {configuration} -f {framework} --no-build {publicReleaseProperty}")
                     .ToConsole()
                     .ExecuteAsync(cancellationToken).Task.ConfigureAwait(false);
             });

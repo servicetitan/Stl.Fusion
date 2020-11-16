@@ -27,13 +27,13 @@ namespace Stl.Reflection
                 throw new ArgumentNullException(nameof(method));
             if (method.IsConstructedGenericMethod)
                 return method.GetGenericMethodDefinition();
-            if (!method.IsVirtual || method.IsStatic || method.DeclaringType.IsInterface)
+            if (!method.IsVirtual || method.IsStatic || method.DeclaringType!.IsInterface)
                 return null!;
 
             return BaseOrDeclaringMethodCache.GetOrAddChecked(method, method1 => {
-                var declaringType = method.DeclaringType;
-                var baseType = method.ReflectedType == declaringType
-                    ? declaringType.BaseType
+                var declaringType = method1.DeclaringType;
+                var baseType = method1.ReflectedType == declaringType
+                    ? declaringType!.BaseType
                     : declaringType;
                 if (baseType == null)
                     return null;
@@ -76,8 +76,9 @@ namespace Stl.Reflection
             var type = method.ReflectedType;
             var baseType = method.DeclaringType;
             if (baseType == type)
-                baseType = type.BaseType;
-            if (inheritFromInterfaces && !type.IsInterface) {
+                baseType = type!.BaseType;
+
+            if (inheritFromInterfaces && !type!.IsInterface) {
                 var interfaces = type.GetInterfaces().ToHashSet();
                 if (baseType != null)
                     interfaces.ExceptWith(baseType.GetInterfaces());
@@ -113,9 +114,9 @@ namespace Stl.Reflection
             var type = method.ReflectedType;
             var baseType = method.DeclaringType;
             if (baseType == type)
-                baseType = type.BaseType;
+                baseType = type!.BaseType;
 
-            if (inheritFromInterfaces && !type.IsInterface) {
+            if (inheritFromInterfaces && !type!.IsInterface) {
                 var interfaces = type.GetInterfaces().ToHashSet();
                 if (baseType != null)
                     interfaces.ExceptWith(baseType.GetInterfaces());

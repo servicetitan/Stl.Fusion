@@ -59,7 +59,7 @@ namespace Stl.Async
                 return task;
             if (cancellationToken != default) {
                 cancellationToken.Register(arg => {
-                    var target1 = (TaskCompletionSource<T>) arg;
+                    var target1 = (TaskCompletionSource<T>) arg!;
                     target1.TrySetCanceled();
                 }, target);
             }

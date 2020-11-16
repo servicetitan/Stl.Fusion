@@ -55,7 +55,7 @@ namespace Stl.Locking
         {
             if (_entries.TryGetValue(key, out var entry))
                 return false;
-            return entry.AsyncLock?.IsLocked ?? false;
+            return entry?.AsyncLock?.IsLocked ?? false;
         }
 
         public bool? IsLockedLocally(TKey key)
@@ -64,7 +64,7 @@ namespace Stl.Locking
                 return null;
             if (_entries.TryGetValue(key, out var entry))
                 return false;
-            return entry.AsyncLock?.IsLockedLocally;
+            return entry!.AsyncLock?.IsLockedLocally;
         }
 
         ValueTask<IDisposable> IAsyncLockSet<TKey>.LockAsync(

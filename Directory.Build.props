@@ -18,7 +18,7 @@
     <PackageIconUrl>https://github.com/servicetitan/Stl.Fusion/master/docs/img/Logo128.jpg</PackageIconUrl>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <NoPackageAnalysis>false</NoPackageAnalysis>
-    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <OutputPath>$(SolutionDir)artifacts\</OutputPath>
     <PackageOutputPath>$(SolutionDir)artifacts\nupkg</PackageOutputPath>
@@ -55,4 +55,5 @@
   <ItemGroup Condition="$(DeterministicSourcePaths) == 'true'">
     <SourceRoot Include="$(SolutionDir)" />
   </ItemGroup>
+
 </Project>

@@ -1,12 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="latest" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <EntityFrameworkCoreVersion>5.0.0</EntityFrameworkCoreVersion>
-    <AspNetCoreVersion>5.0.0</AspNetCoreVersion>
-    <BlazorVersion>5.0.0</BlazorVersion>
-    <SystemNetHttpJsonVersion>5.0.0</SystemNetHttpJsonVersion>
-    <StlFusionVersion>0.7.2</StlFusionVersion>
+    <EnablePackageVersionOverrideWithoutCentralVersion>true</EnablePackageVersionOverrideWithoutCentralVersion>
   </PropertyGroup>
+
+  <PropertyGroup>
+    <EntityFrameworkCoreVersion>5.*</EntityFrameworkCoreVersion>
+    <AspNetCoreVersion>5.*</AspNetCoreVersion>
+    <AspNetCoreVersion3>3.*</AspNetCoreVersion3>
+    <BlazorVersion>5.*</BlazorVersion>
+    <BlazorVersion3>3.*</BlazorVersion3>
+    <SystemNetHttpJsonVersion>5.*</SystemNetHttpJsonVersion>
+    <StlFusionVersion>0.*</StlFusionVersion>
+  </PropertyGroup>
+
   <ItemGroup Label="Nupkg Versions">
     <PackageReference Update="AutoMapper" Version="10.1.1" />
     <PackageReference Update="Autofac" Version="6.0.0" />

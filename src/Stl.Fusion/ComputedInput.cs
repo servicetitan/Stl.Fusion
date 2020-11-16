@@ -19,7 +19,7 @@ namespace Stl.Fusion
 
         // Equality
 
-        public abstract bool Equals(ComputedInput other);
+        public abstract bool Equals(ComputedInput? other);
         public override bool Equals(object? obj)
             => obj is ComputedInput other && Equals(other);
 

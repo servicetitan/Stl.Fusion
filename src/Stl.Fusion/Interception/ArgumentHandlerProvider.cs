@@ -57,13 +57,13 @@ namespace Stl.Fusion.Interception
                 nameof(ByRefArgumentHandler.Instance),
                 BindingFlags.Static | BindingFlags.Public);
             if (pInstance != null)
-                return (ArgumentHandler) pInstance.GetValue(null);
+                return (ArgumentHandler) pInstance!.GetValue(null)!;
 
             var fInstance = comparerType.GetField(
                 nameof(ByRefArgumentHandler.Instance),
                 BindingFlags.Static | BindingFlags.Public);
             if (fInstance != null)
-                return (ArgumentHandler) fInstance.GetValue(null);
+                return (ArgumentHandler) fInstance!.GetValue(null)!;
 
             return (ArgumentHandler) ServiceProvider.Activate(comparerType);
         }

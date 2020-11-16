@@ -200,7 +200,7 @@ namespace Stl.Fusion
                         return true;
                     }
                     SetStateUnsafe(ConsistencyState.Invalidated);
-                    usedBy = MemoryBuffer<(ComputedInput, LTag)>.LeaseAndSetCount(_usedBy.Count);
+                    usedBy = MemoryBuffer<(ComputedInput, LTag)>.LeaseAndSetCount(true, _usedBy.Count);
                     _usedBy.CopyTo(usedBy.Span);
                     _usedBy.Clear();
                     _used.Apply(this, (self, c) => c.RemoveUsedBy(self));

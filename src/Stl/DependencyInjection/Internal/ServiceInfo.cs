@@ -27,7 +27,7 @@ namespace Stl.DependencyInjection.Internal
 
         public static ServiceInfo For(Type implementationType)
         {
-            using var buffer = ArrayBuffer<ServiceAttributeBase>.Lease();
+            using var buffer = ArrayBuffer<ServiceAttributeBase>.Lease(true);
             foreach (var attr in implementationType.GetCustomAttributes<ServiceAttributeBase>(false))
                 buffer.Add(attr);
             if (buffer.Count == 0)
@@ -37,7 +37,7 @@ namespace Stl.DependencyInjection.Internal
 
         public static ServiceInfo For(Type implementationType, Symbol scope, Option<Symbol> fallbackScopeOption = default)
         {
-            using var buffer = ArrayBuffer<ServiceAttributeBase>.Lease();
+            using var buffer = ArrayBuffer<ServiceAttributeBase>.Lease(true);
             foreach (var attr in implementationType.GetCustomAttributes<ServiceAttributeBase>(false)) {
                 if (attr.Scope == scope.Value)
                     buffer.Add(attr);

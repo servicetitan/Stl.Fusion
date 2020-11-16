@@ -103,9 +103,9 @@ namespace Stl.Async
             var _taskCtor2 = tTask.GetConstructor(privateCtorBindingFlags, null,
                 new [] {typeof(object), typeof(TaskCreationOptions)}, null);
             CreateTask0 = Expression.Lambda<Func<Task<T>>>(
-                Expression.New(_taskCtor0)).Compile();
+                Expression.New(_taskCtor0!)).Compile();
             CreateTask2 = Expression.Lambda<Func<object?, TaskCreationOptions, Task<T>>>(
-                Expression.New(_taskCtor2, pState, pTco), pState, pTco).Compile();
+                Expression.New(_taskCtor2!, pState, pTco), pState, pTco).Compile();
 
             // Creating assign expression via reflection b/c otherwise
             // it fails "lvalue must be writeable" check -- well,
@@ -114,7 +114,7 @@ namespace Stl.Async
             var realAssign = (Expression) Activator.CreateInstance(
                 exampleAssign.GetType(),
                 privateCtorBindingFlags, null,
-                new object[] {Expression.Field(pTcs, fTask), pTask}, null);
+                new object[] {Expression.Field(pTcs, fTask!), pTask}, null)!;
             SetTask = Expression.Lambda<Action<TaskCompletionSource<T>, Task<T>>>(
                 realAssign, pTcs, pTask).Compile();
         }
