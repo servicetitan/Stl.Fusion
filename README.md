@@ -12,7 +12,7 @@
 [![Downloads](https://img.shields.io/nuget/dt/Stl.Fusion)](https://www.nuget.org/packages?q=Owner%3Aservicetitan+Tags%3Astl_fusion)
 [![Discord Server](https://img.shields.io/discord/729970863419424788.svg)](https://discord.gg/EKEwv6d)  
 
-Fusion is a [.NET 5. / .NET Core 3.1](https://en.wikipedia.org/wiki/.NET_Core) library
+Fusion is a [.NET 5 / .NET Core 3.1](https://en.wikipedia.org/wiki/.NET_Core) library
 providing a new change tracking abstraction built in assumption that **every piece of data 
 you have is a part of the observable state / model**, and since there is 
 no way to fit such a huge state in RAM, Fusion:
