@@ -51,7 +51,7 @@ namespace Build
             bool verbose,
             CancellationToken cancellationToken,
             // Our own options
-            string configuration = "Debug",
+            string configuration = "",
             string framework = "",
             bool isPublicRelease = true)
         {
@@ -108,13 +108,13 @@ namespace Build
             });
 
             Target("build", async () => {
-                await Cli.Wrap(dotnetExePath).WithArguments($"build -noLogo -c {configuration} -f {framework} --no-restore {publicReleaseProperty}")
+                await Cli.Wrap(dotnetExePath).WithArguments($"build -noLogo {Option("-c", configuration)} {Option("-f", framework)} --no-restore {publicReleaseProperty}")
                     .ToConsole()
                     .ExecuteAsync(cancellationToken).Task.ConfigureAwait(false);
             });
 
             Target("pack", DependsOn("clean", "restore", "build"), async () => {
-                await Cli.Wrap(dotnetExePath).WithArguments($"pack -noLogo -c {configuration} -f {framework} --no-build {publicReleaseProperty}")
+                await Cli.Wrap(dotnetExePath).WithArguments($"pack -noLogo {Option("-c", configuration)} {Option("-f", framework)} --no-build {publicReleaseProperty}")
                     .ToConsole()
                     .ExecuteAsync(cancellationToken).Task.ConfigureAwait(false);
             });
@@ -149,7 +149,7 @@ namespace Build
                         "--no-restore " +
                         "--blame " +
                         $"--collect:\"XPlat Code Coverage\" --results-directory {testOutputPath} " +
-                        $"-c {configuration} " +
+                        $"{Option("-c", configuration)} " +
                         "-- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=json,cobertura"
                     ).ToConsole()
                     .ExecuteBufferedAsync(cancellationToken)
@@ -297,6 +297,13 @@ namespace Build
                     throw;
                 return false;
             }
+        }
+
+        private static string Option(string name, string value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return "";
+            return $"{name} {value}";
         }
     }
 }
