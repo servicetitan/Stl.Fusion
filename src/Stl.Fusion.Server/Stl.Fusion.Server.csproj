@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
     <TargetFrameworks>net5.0;netcoreapp3.1</TargetFrameworks>
@@ -9,10 +9,6 @@
     -->and ready to serve replicas of computed instances to remote clients.<!--
     --></Description>
   </PropertyGroup>
-
-  <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
-  </ItemGroup>
 
   <ItemGroup Condition="$(TargetFramework.StartsWith('net5'))">
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" />
