@@ -61,12 +61,11 @@ namespace Stl.Fusion.Bridge.Internal
                 var incomingMessageTask = incomingChannelReader.ReadAsync(cancellationToken).AsTask();
                 while (true) {
                     // Awaiting for new SubscribeMessage
-                    var expirationTask = Clock.DelayAsync(ExpirationTime, cancellationToken);
-                    var completedTask = await Task.WhenAny(incomingMessageTask, expirationTask).ConfigureAwait(false);
-                    cancellationToken.ThrowIfCancellationRequested();
-                    if (completedTask == expirationTask)
-                        break;
-                    var incomingMessage = await incomingMessageTask.ConfigureAwait(false);
+                    var messageOpt = await incomingMessageTask
+                        .WithTimeout(ExpirationTime, Clock)
+                        .ConfigureAwait(false);
+                    if (!messageOpt.IsSome(out var incomingMessage))
+                        break; // Timeout
 
                     // Maybe sending an update
                     var isHardUpdateRequested = false;
@@ -96,7 +95,7 @@ namespace Stl.Fusion.Bridge.Internal
 
                     // Awaiting for state change
                     var whenInvalidatedTask = state.WhenInvalidatedAsync();
-                    completedTask = await Task
+                    var completedTask = await Task
                         .WhenAny(whenInvalidatedTask, incomingMessageTask)
                         .ConfigureAwait(false);
                     cancellationToken.ThrowIfCancellationRequested();

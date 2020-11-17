@@ -4,6 +4,7 @@ using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Internal;
+using Stl.Time;
 
 namespace Stl.Async
 {
@@ -60,6 +61,40 @@ namespace Stl.Async
             }
 
             return InnerAsync();
+        }
+
+        // WithTimeout
+
+        public static async Task<bool> WithTimeout(this Task task, TimeSpan timeout, IMomentClock? clock = null)
+        {
+            clock ??= SystemClock.Instance;
+            Task completedTask;
+            var cts = new CancellationTokenSource(timeout);
+            try {
+                var delayTask = clock.DelayAsync(timeout, cts.Token);
+                completedTask = await Task.WhenAny(task, delayTask).ConfigureAwait(false);
+            }
+            finally {
+                cts.Cancel();
+                cts.Dispose();
+            }
+            return completedTask == task;
+        }
+
+        public static async Task<Option<T>> WithTimeout<T>(this Task<T> task, TimeSpan timeout, IMomentClock? clock = null)
+        {
+            clock ??= SystemClock.Instance;
+            Task completedTask;
+            var cts = new CancellationTokenSource(timeout);
+            try {
+                var delayTask = clock.DelayAsync(timeout, cts.Token);
+                completedTask = await Task.WhenAny(task, delayTask).ConfigureAwait(false);
+            }
+            finally {
+                cts.Cancel();
+                cts.Dispose();
+            }
+            return completedTask == task ? await task.ConfigureAwait(false) : Option<T>.None;
         }
 
         // SuppressXxx

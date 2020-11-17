@@ -69,8 +69,10 @@ namespace Stl.Fusion
             if (delay <= 0)
                 return;
 
-            var delayTask = Task.Delay(TimeSpan.FromSeconds(delay), cancellationToken);
-            await Task.WhenAny(delayTask, CancelDelaysTask).ConfigureAwait(false);
+            await CancelDelaysTask
+                .WithFakeCancellation(cancellationToken)
+                .WithTimeout(TimeSpan.FromSeconds(delay), Clock)
+                .ConfigureAwait(false);
             if (retryCount > 0) {
                 // If it's an error, we still want to enforce at least
                 // the default delay -- even if the delay was cancelled.
