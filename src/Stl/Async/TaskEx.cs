@@ -69,14 +69,14 @@ namespace Stl.Async
         {
             clock ??= SystemClock.Instance;
             Task completedTask;
-            var cts = new CancellationTokenSource(timeout);
+            using var cts = new CancellationTokenSource(timeout);
             try {
                 var delayTask = clock.DelayAsync(timeout, cts.Token);
                 completedTask = await Task.WhenAny(task, delayTask).ConfigureAwait(false);
             }
             finally {
-                cts.Cancel();
-                cts.Dispose();
+                if (!cts.IsCancellationRequested)
+                    cts.Cancel();
             }
             return completedTask == task;
         }
@@ -85,14 +85,14 @@ namespace Stl.Async
         {
             clock ??= SystemClock.Instance;
             Task completedTask;
-            var cts = new CancellationTokenSource(timeout);
+            using var cts = new CancellationTokenSource(timeout);
             try {
                 var delayTask = clock.DelayAsync(timeout, cts.Token);
                 completedTask = await Task.WhenAny(task, delayTask).ConfigureAwait(false);
             }
             finally {
-                cts.Cancel();
-                cts.Dispose();
+                if (!cts.IsCancellationRequested)
+                    cts.Cancel();
             }
             return completedTask == task ? await task.ConfigureAwait(false) : Option<T>.None;
         }
