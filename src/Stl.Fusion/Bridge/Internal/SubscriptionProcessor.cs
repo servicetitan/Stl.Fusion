@@ -54,9 +54,18 @@ namespace Stl.Fusion.Bridge.Internal
         protected override async Task RunInternalAsync(CancellationToken cancellationToken)
         {
             var publicationUseScope = Publication.Use();
-            var cancellationTask = cancellationToken.ToTask(true);
-            var incomingChannelReader = IncomingChannel.Reader;
             var state = Publication.State;
+            var incomingChannelReader = IncomingChannel.Reader;
+
+            var currentCts = (CancellationTokenSource?) null;
+            cancellationToken.Register(() => {
+                try {
+                    currentCts?.Cancel();
+                }
+                catch {
+                    // Intended
+                }
+            });
             try {
                 var incomingMessageTask = incomingChannelReader.ReadAsync(cancellationToken).AsTask();
                 while (true) {
@@ -80,8 +89,17 @@ namespace Stl.Fusion.Bridge.Internal
                     }
                     if (isHardUpdateRequested) {
                         // We do only explicit state updates
-                        await Publication.UpdateAsync(cancellationToken).ConfigureAwait(false);
-                        state = Publication.State;
+                        var cts = new CancellationTokenSource();
+                        var ctsToken = cts.Token;
+                        currentCts = cts;
+                        try {
+                            await Publication.UpdateAsync(ctsToken).ConfigureAwait(false);
+                            state = Publication.State;
+                        }
+                        finally {
+                            currentCts = null;
+                            cts.Dispose();
+                        }
                     }
                     await TrySendUpdateAsync(state, isSoftUpdateRequested | isHardUpdateRequested, cancellationToken)
                         .ConfigureAwait(false);
