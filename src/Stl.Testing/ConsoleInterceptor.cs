@@ -19,13 +19,13 @@ namespace Stl.Testing
         public static readonly TextWriter TextWriter = new ProxyWriter();
         public static readonly AsyncLocal<TestOutputWriter?> TestOutput = new AsyncLocal<TestOutputWriter?>();
 
-        public static Disposable<(TestOutputWriter?, TextWriter)> Activate(ITestOutputHelper testOutput)
+        public static ClosedDisposable<(TestOutputWriter?, TextWriter)> Activate(ITestOutputHelper testOutput)
         {
             var oldTestOut = TestOutput.Value;
             var oldConsoleOut = Console.Out;
             Console.SetOut(TextWriter);
             TestOutput.Value = new TestOutputWriter(testOutput);
-            return Disposable.New((oldTestOut, oldConsoleOut), state => {
+            return Disposable.NewClosed((oldTestOut, oldConsoleOut), state => {
                 var (oldTestOut1, oldConsoleOut1) = state;
                 TestOutput.Value = oldTestOut1;
                 Console.SetOut(oldConsoleOut1);

@@ -24,16 +24,16 @@ namespace Stl.Fusion
             throw Errors.ComputedCurrentIsOfIncompatibleType(typeof(IComputed<T>));
         }
 
-        public static Disposable<IComputed?> ChangeCurrent(IComputed? newCurrent)
+        public static ClosedDisposable<IComputed?> ChangeCurrent(IComputed? newCurrent)
         {
             var oldCurrent = GetCurrent();
             if (oldCurrent == newCurrent)
-                return Disposable.New(oldCurrent, _ => { });
+                return Disposable.NewClosed(oldCurrent, _ => { });
             CurrentLocal.Value = newCurrent;
-            return Disposable.New(oldCurrent, oldCurrent1 => CurrentLocal.Value = oldCurrent1);
+            return Disposable.NewClosed(oldCurrent, oldCurrent1 => CurrentLocal.Value = oldCurrent1);
         }
 
-        public static Disposable<IComputed?> Suppress() => ChangeCurrent(null);
+        public static ClosedDisposable<IComputed?> Suppress() => ChangeCurrent(null);
 
         // TryCaptureAsync
 

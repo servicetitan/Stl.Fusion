@@ -58,6 +58,8 @@ namespace Stl.Fusion.Bridge.Internal
             var incomingChannelReader = IncomingChannel.Reader;
 
             var currentCts = (CancellationTokenSource?) null;
+            // NOTE: cancellationToken == StopToken, so this registration happens
+            // just once, and thus it's fine to omit the disposal of CTR.
             cancellationToken.Register(() => {
                 try {
                     currentCts?.Cancel();

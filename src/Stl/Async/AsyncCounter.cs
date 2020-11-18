@@ -52,7 +52,7 @@ namespace Stl.Async
                     _zeroSource = default;
                 }
             }
-            if (zeroSource.HasTask)
+            if (!zeroSource.IsEmpty)
                 zeroSource.SetResult(default);
         }
 

@@ -33,30 +33,32 @@ namespace Stl.Async
 
         // WithFakeCancellation
 
-        public static Task<T> WithFakeCancellation<T>(this Task<T> task,
+        public static Task<T> WithFakeCancellation<T>(
+            this Task<T> task,
             CancellationToken cancellationToken)
         {
             if (cancellationToken == default)
                 return task;
 
             async Task<T> InnerAsync() {
-                var tokenTask = cancellationToken.ToTask<T>(true, task.CreationOptions);
-                var winner = await Task.WhenAny(task, tokenTask);
+                using var dTask = cancellationToken.ToTask<T>(task.CreationOptions);
+                var winner = await Task.WhenAny(task, dTask.Resource);
                 return await winner;
             }
 
             return InnerAsync();
         }
 
-        public static Task WithFakeCancellation(this Task task,
+        public static Task WithFakeCancellation(
+            this Task task,
             CancellationToken cancellationToken)
         {
             if (cancellationToken == default)
                 return task;
 
             async Task InnerAsync() {
-                var tokenTask = cancellationToken.ToTask(true, task.CreationOptions);
-                var winner = await Task.WhenAny(task, tokenTask);
+                using var dTask = cancellationToken.ToTask(task.CreationOptions);
+                var winner = await Task.WhenAny(task, dTask.Resource);
                 await winner;
             }
 
@@ -65,7 +67,10 @@ namespace Stl.Async
 
         // WithTimeout
 
-        public static async Task<bool> WithTimeout(this Task task, TimeSpan timeout, IMomentClock? clock = null)
+        public static async Task<bool> WithTimeout(
+            this Task task,
+            TimeSpan timeout,
+            IMomentClock? clock = null)
         {
             clock ??= SystemClock.Instance;
             Task completedTask;
@@ -81,7 +86,10 @@ namespace Stl.Async
             return completedTask == task;
         }
 
-        public static async Task<Option<T>> WithTimeout<T>(this Task<T> task, TimeSpan timeout, IMomentClock? clock = null)
+        public static async Task<Option<T>> WithTimeout<T>(
+            this Task<T> task,
+            TimeSpan timeout,
+            IMomentClock? clock = null)
         {
             clock ??= SystemClock.Instance;
             Task completedTask;

@@ -4,12 +4,12 @@ namespace Stl.Async
 {
     public static class ExecutionContextEx
     {
-        public static Disposable<AsyncFlowControl> SuppressFlow()
+        public static ClosedDisposable<AsyncFlowControl> SuppressFlow()
         {
             if (ExecutionContext.IsFlowSuppressed())
-                return Disposable.New<AsyncFlowControl>(default, _ => {});
+                return Disposable.NewClosed<AsyncFlowControl>(default, _ => {});
             var releaser = ExecutionContext.SuppressFlow();
-            return Disposable.New(releaser, r => r.Dispose());
+            return Disposable.NewClosed(releaser, r => r.Dispose());
         }
     }
 }

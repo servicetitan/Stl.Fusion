@@ -74,22 +74,28 @@ namespace Stl.Locking
             ReentryCounter? reentryCounter, CancellationToken cancellationToken = default)
         {
             var newLockSrc = TaskSource.New<Unit>(_taskCreationOptions);
-            var cancellationTask = (Task?) null;
-            while (true) {
-                cancellationToken.ThrowIfCancellationRequested();
-                if (reentryCounter?.TryReenter(ReentryMode) == true)
-                    return new Releaser(this, default, reentryCounter);
-                var oldLock = Interlocked.CompareExchange(ref _lock, newLockSrc.Task, null);
-                if (oldLock == null)
-                    return new Releaser(this, newLockSrc, reentryCounter);
-                if (oldLock.IsCompleted)
-                    continue; // Task.WhenAny will return immediately, so let's save a bit
-                cancellationTask ??= cancellationToken.ToTask(true);
-                await Task.WhenAny(oldLock, cancellationTask).ConfigureAwait(false);
+            var dCancellationTokenTask = new Disposable<Task, CancellationTokenRegistration>();
+            try {
+                while (true) {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    if (reentryCounter?.TryReenter(ReentryMode) == true)
+                        return new Releaser(this, default, reentryCounter);
+                    var oldLock = Interlocked.CompareExchange(ref _lock, newLockSrc.Task, null);
+                    if (oldLock == null)
+                        return new Releaser(this, newLockSrc, reentryCounter);
+                    if (oldLock.IsCompleted)
+                        continue; // Task.WhenAny will return immediately, so let's save a bit
+                    if (dCancellationTokenTask.Resource == null)
+                        dCancellationTokenTask = cancellationToken.ToTask();
+                    await Task.WhenAny(oldLock, dCancellationTokenTask.Resource).ConfigureAwait(false);
+                }
+            }
+            finally {
+                dCancellationTokenTask.Dispose();
             }
         }
 
-        public struct Releaser : IDisposable
+        public readonly struct Releaser : IDisposable
         {
             private readonly AsyncLock _owner;
             private readonly TaskSource<Unit> _taskSource;
@@ -101,7 +107,7 @@ namespace Stl.Locking
                 _taskSource = taskSource;
                 _reentryCounter = reentryCounter;
 
-                if (taskSource.HasTask)
+                if (!taskSource.IsEmpty)
                     reentryCounter?.Enter(owner.ReentryMode);
             }
 

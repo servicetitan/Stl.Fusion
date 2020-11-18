@@ -33,11 +33,6 @@ namespace Stl.Async
 
         public readonly Task<T> Task;
 
-        public bool HasTask {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => Task != null;
-        }
-
         public bool IsEmpty {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => Task == null;
