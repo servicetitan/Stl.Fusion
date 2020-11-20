@@ -88,7 +88,7 @@ Note that:
 * The speedup you're expected to see in production may differ from these numbers a lot. 
   Even though the results presented here are absolutely real, they are produced on a synthetic test.
 
-["The Ungreen Web: Why our web apps are terribly inefficient?"](https://alexyakunin.medium.com/the-ungreen-web-why-our-web-apps-are-terribly-inefficient-28791ed48035?source=friends_link&sk=74fb46086ca13ff4fea387d6245cb52b) lits more light on why this really matters.
+["The Ungreen Web: Why our web apps are terribly inefficient?"](https://alexyakunin.medium.com/the-ungreen-web-why-our-web-apps-are-terribly-inefficient-28791ed48035?source=friends_link&sk=74fb46086ca13ff4fea387d6245cb52b) lits more light on why this matters.
 
 ## How Fusion works?
 
