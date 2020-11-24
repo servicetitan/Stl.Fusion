@@ -44,10 +44,10 @@ Videos:
 
 Please remember that you can always ask for help:
 * [Discord Server] &ndash; <a href="https://discord.gg/EKEwv6d">
-  <img valign="middle"  src="https://img.shields.io/discord/729970863419424788.svg" alt="Discord Server">
+  <img valign="middle" src="https://img.shields.io/discord/729970863419424788.svg" alt="Discord Server">
   </a>
 * [Gitter] &ndash; <a href="https://gitter.im/Stl-Fusion/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge">
-  <img valign="middle"  src="https://badges.gitter.im/Stl-Fusion/community.svg" alt="Gitter">
+  <img valign="middle" src="https://badges.gitter.im/Stl-Fusion/community.svg" alt="Gitter">
   </a>
 
 ## Credits
