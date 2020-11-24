@@ -11,13 +11,15 @@ namespace Stl.Serialization
         private readonly JsonSerializer _jsonSerializer;
         private readonly StringBuilder _stringBuilder;
 
-        public static JsonSerializerSettings DefaultSettings => new JsonSerializerSettings() {
-            SerializationBinder = CrossPlatformSerializationBinder.Instance,
-            TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
-            TypeNameHandling = TypeNameHandling.Auto,
-            NullValueHandling = NullValueHandling.Ignore,
-            ContractResolver = new DefaultContractResolver(),
-        };
+        public static JsonSerializerSettings DefaultSettings { get; set; } =
+            new JsonSerializerSettings() {
+                SerializationBinder = CrossPlatformSerializationBinder.Instance,
+                TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
+                TypeNameHandling = TypeNameHandling.Auto,
+                NullValueHandling = NullValueHandling.Ignore,
+                ReferenceLoopHandling = ReferenceLoopHandling.Serialize,
+                ContractResolver = new DefaultContractResolver(),
+            };
 
         public JsonSerializerSettings Settings { get; }
 
