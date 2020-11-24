@@ -1,6 +1,7 @@
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using Stl.Internal;
 
@@ -42,7 +43,8 @@ namespace Stl.Collections
             get => index < Count ? BufferSpan[index] : throw new IndexOutOfRangeException();
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set {
-                if (index >= Count) throw new IndexOutOfRangeException();
+                if (index >= Count)
+                    throw new IndexOutOfRangeException();
                 BufferSpan[index] = value;
             }
         }
@@ -63,7 +65,7 @@ namespace Stl.Collections
             => new MemoryBuffer<T>(mustClean, capacity);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static MemoryBuffer<T> LeaseAndSetCount(bool mustClean, int count)
-            => new MemoryBuffer<T>(mustClean, count) {Count = count};
+            => new MemoryBuffer<T>(mustClean, count) { Count = count };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Release()
@@ -91,8 +93,24 @@ namespace Stl.Collections
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddRange(IEnumerable<T> items)
         {
+            EnsureCapacity(Count + items.Count());
             foreach (var item in items)
                 Add(item);
+        }
+
+        internal void EnsureCapacity(int desiredCapacity)
+        {
+            //1<<30 is the last bit on a signed int32, and equals to 1073741824
+            if (desiredCapacity > 1 << 30 || desiredCapacity < 0) {
+                throw new InvalidOperationException("Cannot ensure required capacity. It must be larger than zero e lesser than 1073741824.");
+            }
+            if (Capacity >= desiredCapacity)
+                return;
+            var cap = Capacity;
+            while (cap < desiredCapacity) {
+                cap = cap << 1;
+            }
+            Resize(cap);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -150,7 +168,6 @@ namespace Stl.Collections
             if (capacity < MinCapacity)
                 capacity = MinCapacity;
 
-            var pool = Pool;
             var span = _lease.Memory.Span;
             var newLease = Pool.Rent(capacity);
             if (capacity < Count) {

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using FluentAssertions;
 using Stl.Collections;
 using Xunit;
@@ -56,6 +57,50 @@ namespace Stl.Tests.Collections
             finally {
                 buffer.Release();
             }
+        }
+
+        [Fact]
+        public void TestEnsureCapacity()
+        {
+            var buffer = MemoryBuffer<byte>.Lease(true);
+            buffer.Add(0x01);
+            buffer.Add(0x01);
+            buffer.Add(0x01);
+            buffer.Add(0x01);
+            buffer.Add(0x01);
+
+            var baselineCap = buffer.Capacity;
+            buffer.EnsureCapacity(baselineCap << 5);//growth exp of 5
+
+            var verifiedCapacity = Math.Log2(buffer.Capacity);
+            var baseline = Math.Log2(baselineCap);
+
+            Assert.Equal(5, verifiedCapacity - baseline);
+        }
+
+        [Fact]
+        public void AddRangeTest()
+        {
+            var buffer = MemoryBuffer<byte>.Lease(true);
+            buffer.Add(0x01);
+            buffer.Add(0x01);
+            buffer.Add(0x01);
+            buffer.Add(0x01);
+            buffer.Add(0x01);
+
+            var baselineCap = buffer.Capacity;
+            var toBeAdded = new List<byte>(1024);// 1024 == 1<<10 and baseline capacity is 1<<3
+
+            for (int i = 0; i < 1024; i++) {
+                toBeAdded.Add((byte)(_rnd.Next() % 256));
+            }
+
+            buffer.AddRange(toBeAdded);
+
+            var verifiedCapacity = Math.Log2(buffer.Capacity);
+            var baseline = Math.Log2(baselineCap);
+
+            Assert.Equal(7, verifiedCapacity - baseline);
         }
     }
 }
