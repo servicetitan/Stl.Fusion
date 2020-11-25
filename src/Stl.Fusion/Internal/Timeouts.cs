@@ -14,7 +14,7 @@ namespace Stl.Fusion.Internal
         static Timeouts()
         {
             Clock = CoarseCpuClock.Instance;
-            var concurrencyLevel = HardwareInfo.ProcessorCountPo2 << 4;
+            var concurrencyLevel = HardwareInfo.ProcessorCountPo2 << 5;
             KeepAlive = new ConcurrentTimerSet<object>(
                 new ConcurrentTimerSet<object>.Options() {
                     Quanta = TimeSpan.FromMilliseconds(250),

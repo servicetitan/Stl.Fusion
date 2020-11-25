@@ -51,6 +51,7 @@ namespace Stl.Fusion.Tests
                 return; // Shouldn't run this test on build agents
 
             var users = Services.GetRequiredService<IUserService>();
+            var plainUsers = Services.GetRequiredService<UserService>();
             var useImdb = Options.UseInMemoryDatabase;
             var opCountPerCore = 2_000_000;
             var readersPerCore = 4;
@@ -58,41 +59,32 @@ namespace Stl.Fusion.Tests
             var cachingIterationCount = opCountPerCore / readersPerCore;
             var nonCachingIterationCount = cachingIterationCount / (useImdb ? 1000 : 10_000);
 
-            var cachingProviderPool = new ConcurrentPool<IUserService>(() => users);
-            var nonCachingProviderPool = new ConcurrentPool<IUserService>(() => {
-                var scope = Services.CreateScope();
-                return scope.ServiceProvider.GetRequiredService<UserService>();
-                // No scope disposal, but it's fine for the test, I guess
-            });
-
             var withoutSerialization = (Action<User>) (u => { });
             var withSerialization = (Action<User>) (u => JsonConvert.SerializeObject(u));
 
             Out.WriteLine($"Database: {(useImdb ? "In-memory" : "Sqlite")}");
             Out.WriteLine("With Stl.Fusion:");
-            await Test("Standard test", cachingProviderPool, withoutSerialization,
+            await Test("Standard test", users, withoutSerialization,
                 readerCount, cachingIterationCount);
-            await Test("Standard test + serialization", cachingProviderPool, withSerialization,
+            await Test("Standard test + serialization", users, withSerialization,
                 readerCount, cachingIterationCount / 3);
 
             Out.WriteLine("Without Stl.Fusion:");
-            await Test("Standard test", nonCachingProviderPool, withoutSerialization,
+            await Test("Standard test", plainUsers, withoutSerialization,
                 readerCount, nonCachingIterationCount);
-            await Test("Standard test + serialization", nonCachingProviderPool, withSerialization,
+            await Test("Standard test + serialization", plainUsers, withSerialization,
                 readerCount, nonCachingIterationCount);
         }
 
         private async Task Test(string title,
-            IPool<IUserService> userProviderPool, Action<User> extraAction,
+            IUserService users, Action<User> extraAction,
             int threadCount, int iterationCount, bool isWarmup = false)
         {
             if (!isWarmup)
-                await Test(title, userProviderPool, extraAction, threadCount, iterationCount / 10, true);
+                await Test(title, users, extraAction, threadCount, iterationCount / 10, true);
 
             async Task Mutator(string name, CancellationToken cancellationToken)
             {
-                using var lease = userProviderPool.Rent();
-                var users = lease.Resource;
                 var rnd = new Random();
                 var count = 0L;
                 while (true) {
@@ -112,8 +104,6 @@ namespace Stl.Fusion.Tests
 
             async Task<long> Reader(string name, int iterationCount)
             {
-                using var lease = userProviderPool.Rent();
-                var users = lease.Resource;
                 var rnd = new Random();
                 var count = 0L;
                 for (; iterationCount > 0; iterationCount--) {
