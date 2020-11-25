@@ -17,7 +17,7 @@ namespace Stl.Tests.Collections
             for (var i1 = 0; i1 < 100; i1++) {
                 var list = new List<byte>();
                 for (var l = 0; l < 100; l++) {
-                    list.Add((byte) (_rnd.Next() % 256));
+                    list.Add((byte)(_rnd.Next() % 256));
                     Test(list);
                 }
             }
@@ -76,6 +76,44 @@ namespace Stl.Tests.Collections
             var baseline = Math.Log2(baselineCap);
 
             Assert.Equal(5, verifiedCapacity - baseline);
+        }
+
+        [Fact]
+        public void TestEnsureCapacitySmallerThanCurrent()
+        {
+            var buffer = MemoryBuffer<byte>.Lease(true);
+            buffer.Add(0x01);
+            buffer.Add(0x01);
+            buffer.Add(0x01);
+            buffer.Add(0x01);
+            buffer.Add(0x01);
+
+            var baselineCap = buffer.Capacity;
+            buffer.EnsureCapacity(2);
+
+            Assert.Equal(baselineCap, buffer.Capacity);
+        }
+
+        [Fact]
+        public void TestEnsureCapacityError()
+        {
+            var buffer = MemoryBuffer<byte>.Lease(true);
+
+            try {
+                buffer.EnsureCapacity(-1);
+                Assert.True(false, "Should've thrown exception");
+            }
+            catch (InvalidOperationException) {
+                Assert.True(true);
+            }
+
+            try {
+                buffer.EnsureCapacity(int.MaxValue);
+                Assert.True(false, "Should've thrown exception");
+            }
+            catch (InvalidOperationException) {
+                Assert.True(true);
+            }
         }
 
         [Fact]
