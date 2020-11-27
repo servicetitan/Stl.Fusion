@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using FluentAssertions;
 using Stl.Collections;
 using Xunit;
@@ -60,85 +61,48 @@ namespace Stl.Tests.Collections
         }
 
         [Fact]
-        public void TestEnsureCapacity()
+        public void TestEnsureCapacity1()
         {
-            var buffer = MemoryBuffer<byte>.Lease(true);
-            buffer.Add(0x01);
-            buffer.Add(0x01);
-            buffer.Add(0x01);
-            buffer.Add(0x01);
-            buffer.Add(0x01);
-
-            var baselineCap = buffer.Capacity;
-            buffer.EnsureCapacity(baselineCap << 5);//growth exp of 5
-
-            var verifiedCapacity = Math.Log2(buffer.Capacity);
-            var baseline = Math.Log2(baselineCap);
-
-            Assert.Equal(5, verifiedCapacity - baseline);
-        }
-
-        [Fact]
-        public void TestEnsureCapacitySmallerThanCurrent()
-        {
-            var buffer = MemoryBuffer<byte>.Lease(true);
-            buffer.Add(0x01);
-            buffer.Add(0x01);
-            buffer.Add(0x01);
-            buffer.Add(0x01);
-            buffer.Add(0x01);
-
-            var baselineCap = buffer.Capacity;
-            buffer.EnsureCapacity(2);
-
-            Assert.Equal(baselineCap, buffer.Capacity);
-        }
-
-        [Fact]
-        public void TestEnsureCapacityError()
-        {
-            var buffer = MemoryBuffer<byte>.Lease(true);
-
+            var minCapacity = MemoryBuffer<int>.MinCapacity;
+            var b = MemoryBuffer<int>.Lease(true);
             try {
-                buffer.EnsureCapacity(-1);
-                Assert.True(false, "Should've thrown exception");
-            }
-            catch (InvalidOperationException) {
-                Assert.True(true);
-            }
+                for (var i = 0; i < 3; i++) {
+                    var capacity = b.Capacity;
+                    capacity.Should().BeGreaterOrEqualTo(minCapacity);
+                    var numbers = Enumerable.Range(0, capacity + 1).ToArray();
+                    b.AddRange(numbers);
+                    b.Capacity.Should().BeGreaterOrEqualTo(capacity << 1);
+                }
 
-            try {
-                buffer.EnsureCapacity(int.MaxValue);
-                Assert.True(false, "Should've thrown exception");
+                b.Clear();
+                b.Capacity.Should().BeGreaterOrEqualTo(minCapacity);
+
+                // Same test, but with .AddRange(IEnumerable<T>)
+                for (var i = 0; i < 3; i++) {
+                    var capacity = b.Capacity;
+                    capacity.Should().BeGreaterOrEqualTo(minCapacity);
+                    var numbers = Enumerable.Range(0, capacity + 1);
+                    b.AddRange(numbers);
+                    b.Capacity.Should().BeGreaterOrEqualTo(capacity << 1);
+                }
             }
-            catch (InvalidOperationException) {
-                Assert.True(true);
+            finally {
+                b.Release();
             }
         }
 
         [Fact]
-        public void AddRangeTest()
+        public void TestEnsureCapacity2()
         {
-            var buffer = MemoryBuffer<byte>.Lease(true);
-            buffer.Add(0x01);
-            buffer.Add(0x01);
-            buffer.Add(0x01);
-            buffer.Add(0x01);
-            buffer.Add(0x01);
-
-            var baselineCap = buffer.Capacity;
-            var toBeAdded = new List<byte>(1024);// 1024 == 1<<10 and baseline capacity is 1<<3
-
-            for (int i = 0; i < 1024; i++) {
-                toBeAdded.Add((byte)(_rnd.Next() % 256));
-            }
-
-            buffer.AddRange(toBeAdded);
-
-            var verifiedCapacity = Math.Log2(buffer.Capacity);
-            var baseline = Math.Log2(baselineCap);
-
-            Assert.Equal(7, verifiedCapacity - baseline);
+            Assert.Throws<ArgumentOutOfRangeException>(() => {
+                var b = MemoryBuffer<int>.Lease(true);
+                try {
+                    b.EnsureCapacity(int.MaxValue);
+                }
+                finally {
+                    b.Release();
+                }
+            });
         }
     }
 }

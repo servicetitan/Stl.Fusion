@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using FluentAssertions;
 using Stl.Collections;
 using Xunit;
@@ -51,6 +52,42 @@ namespace Stl.Tests.Collections
                 list[idx] = tmp;
                 buffer.ToArray().Should().Equal(list);
             }
+        }
+
+        [Fact]
+        public void TestEnsureCapacity1()
+        {
+            var minCapacity = ArrayBuffer<int>.MinCapacity;
+            using var b = ArrayBuffer<int>.Lease(true);
+
+            for (var i = 0; i < 3; i++) {
+                var capacity = b.Capacity;
+                capacity.Should().BeGreaterOrEqualTo(minCapacity);
+                var numbers = Enumerable.Range(0, capacity + 1).ToArray();
+                b.AddRange(numbers);
+                b.Capacity.Should().BeGreaterOrEqualTo(capacity << 1);
+            }
+
+            b.Clear();
+            b.Capacity.Should().BeGreaterOrEqualTo(minCapacity);
+
+            // Same test, but with .AddRange(IEnumerable<T>)
+            for (var i = 0; i < 3; i++) {
+                var capacity = b.Capacity;
+                capacity.Should().BeGreaterOrEqualTo(minCapacity);
+                var numbers = Enumerable.Range(0, capacity + 1);
+                b.AddRange(numbers);
+                b.Capacity.Should().BeGreaterOrEqualTo(capacity << 1);
+            }
+        }
+
+        [Fact]
+        public void TestEnsureCapacity2()
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => {
+                using var b = ArrayBuffer<int>.Lease(true);
+                b.EnsureCapacity(int.MaxValue);
+            });
         }
     }
 }
