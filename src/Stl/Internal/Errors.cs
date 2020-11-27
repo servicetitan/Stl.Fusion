@@ -36,8 +36,6 @@ namespace Stl.Internal
         public static Exception UnexpectedMemberType(string memberType) =>
             new InvalidOperationException($"Unexpected member type: {memberType}");
 
-        public static Exception ZListIsTooLong() =>
-            new InvalidOperationException("ZList<T> is too long.");
         public static Exception InvalidListFormat() =>
             new FormatException("Invalid list format.");
 

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using Stl.Internal;
+using Stl.Mathematics;
 
 namespace Stl.Collections
 {
@@ -15,8 +16,8 @@ namespace Stl.Collections
     // ArrayBuffer isn't a ref struct, so you can store it in fields.
     public ref struct MemoryBuffer<T>
     {
-        public const int MinCapacity = 1;
-        public const int DefaultCapacity = 16;
+        public const int MinCapacity = 8;
+        public const int MaxCapacity = 1 << 30;
         private static readonly MemoryPool<T> Pool = MemoryPool<T>.Shared;
 
         private IMemoryOwner<T> _lease;
@@ -53,15 +54,14 @@ namespace Stl.Collections
         private MemoryBuffer(bool mustClean, int capacity)
         {
             MustClean = mustClean;
-            if (capacity < MinCapacity)
-                capacity = MinCapacity;
+            capacity = ComputeCapacity(capacity, MinCapacity);
             _lease = Pool.Rent(capacity);
             _count = 0;
             BufferSpan = _lease.Memory.Span;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static MemoryBuffer<T> Lease(bool mustClean, int capacity = DefaultCapacity)
+        public static MemoryBuffer<T> Lease(bool mustClean, int capacity = MinCapacity)
             => new MemoryBuffer<T>(mustClean, capacity);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static MemoryBuffer<T> LeaseAndSetCount(bool mustClean, int count)
@@ -93,48 +93,30 @@ namespace Stl.Collections
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddRange(IEnumerable<T> items)
         {
-            EnsureCapacity(Count + items.Count());
             foreach (var item in items)
                 Add(item);
         }
 
-        internal void EnsureCapacity(int desiredCapacity)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AddRange(IReadOnlyCollection<T> items)
         {
-            //1<<30 is the last bit on a signed int32, and equals to 1073741824
-            if (desiredCapacity > 1 << 30 || desiredCapacity < 0) {
-                throw new InvalidOperationException("Cannot ensure required capacity. It must be larger than zero e lesser than 1073741824.");
-            }
-            if (Capacity >= desiredCapacity)
-                return;
-            var cap = Capacity;
-            while (cap < desiredCapacity) {
-                cap = cap << 1;
-            }
-            Resize(cap);
+            EnsureCapacity(Count + items.Count);
+            foreach (var item in items)
+                Add(item);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add(T item)
         {
-            var capacity = Capacity;
-            if (Count >= capacity) {
-                var newCapacity = capacity << 1;
-                if (newCapacity < capacity)
-                    throw Errors.ZListIsTooLong();
-                Resize(newCapacity);
-            }
+            if (Count >= Capacity)
+                EnsureCapacity(Count + 1);
             BufferSpan[Count++] = item;
         }
 
         public void Insert(int index, T item)
         {
-            var capacity = Capacity;
-            if (Count >= capacity) {
-                var newCapacity = capacity << 1;
-                if (newCapacity < capacity)
-                    throw Errors.ZListIsTooLong();
-                Resize(newCapacity);
-            }
+            if (Count >= Capacity)
+                EnsureCapacity(Count + 1);
             var copyLength = Count - index;
             if (copyLength < 0)
                 throw new ArgumentOutOfRangeException(nameof(index));
@@ -163,26 +145,29 @@ namespace Stl.Collections
             Count = 0;
         }
 
-        public void Resize(int capacity)
-        {
-            if (capacity < MinCapacity)
-                capacity = MinCapacity;
-
-            var span = _lease.Memory.Span;
-            var newLease = Pool.Rent(capacity);
-            if (capacity < Count) {
-                Count = capacity;
-                span = span.Slice(0, capacity);
-            }
-            span.CopyTo(newLease.Memory.Span);
-            ChangeLease(newLease);
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CopyTo(T[] array, int arrayIndex)
             => BufferSpan.CopyTo(array.AsSpan().Slice(arrayIndex));
 
+        public void EnsureCapacity(int capacity)
+        {
+            capacity = ComputeCapacity(capacity, Capacity);
+            var newLease = Pool.Rent(capacity);
+            Span.CopyTo(newLease.Memory.Span);
+            ChangeLease(newLease);
+        }
+
         // Private methods
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static int ComputeCapacity(int capacity, int minCapacity)
+        {
+            if (capacity < minCapacity)
+                capacity = minCapacity;
+            else if (capacity > MaxCapacity)
+                throw new ArgumentOutOfRangeException(nameof(capacity));
+            return (int) Bits.GreaterOrEqualPowerOf2((uint) capacity);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ChangeLease(IMemoryOwner<T> newLease)
