@@ -74,18 +74,18 @@ namespace Stl.Net
             catch {
                 // Dispose shouldn't throw exceptions
             }
-            await ReaderTask.SuppressExceptions().ConfigureAwait(false);
-            await WriterTask.SuppressExceptions().ConfigureAwait(false);
             try {
+                await WhenCompletedAsync(default).ConfigureAwait(false);
             }
             catch {
                 // Dispose shouldn't throw exceptions
             }
-            finally {
-                if (OwnsWebSocket)
-                    WebSocket.Dispose();
-            }
+            if (OwnsWebSocket)
+                WebSocket.Dispose();
         }
+
+        public Task WhenCompletedAsync(CancellationToken cancellationToken = default)
+            => Task.WhenAll(ReaderTask, WriterTask).WithFakeCancellation(cancellationToken);
 
         protected virtual async Task TryCloseWebSocketAsync(CancellationToken cancellationToken)
         {

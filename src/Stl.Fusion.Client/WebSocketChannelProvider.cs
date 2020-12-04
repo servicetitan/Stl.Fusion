@@ -117,7 +117,7 @@ namespace Stl.Fusion.Client
                 await ws.ConnectAsync(connectionUri, lts.Token).ConfigureAwait(false);
                 _log.LogInformation($"{clientId}: Connected.");
 
-                await using var wsChannel = new WebSocketChannel(ws);
+                var wsChannel = new WebSocketChannel(ws);
                 Channel<string> stringChannel = wsChannel;
                 if (MessageLogLevel.HasValue)
                     stringChannel = stringChannel.WithLogger(
@@ -126,6 +126,10 @@ namespace Stl.Fusion.Client
                         MessageMaxLength);
                 var serializers = ChannelSerializerPairFactory.Invoke(ServiceProvider);
                 var resultChannel = stringChannel.WithSerializers(serializers);
+                wsChannel.WhenCompletedAsync(default).ContinueWith(async _ => {
+                    await Task.Delay(1000, default).ConfigureAwait(false);
+                    await wsChannel.DisposeAsync().ConfigureAwait(false);
+                }, CancellationToken.None).Ignore();
                 return resultChannel;
             }
             catch (OperationCanceledException) {

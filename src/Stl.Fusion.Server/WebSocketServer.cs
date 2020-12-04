@@ -70,7 +70,7 @@ namespace Stl.Fusion.Server
                 .WithId(clientId);
             Publisher.ChannelHub.Attach(channel);
             try {
-                await wsChannel.ReaderTask.ConfigureAwait(false);
+                await wsChannel.WhenCompletedAsync().ConfigureAwait(false);
             }
             catch (OperationCanceledException) {
                 throw;
