@@ -209,18 +209,24 @@ namespace Stl.Fusion
 
         // Invalidate
 
-        public static void Invalidate<T>(Func<Task<T>> producer)
+        public static void Invalidate(Action invalidator)
         {
             using var ccs = ComputeContext.New(CallOptions.Invalidate).Activate();
-            var task = producer.Invoke();
+            invalidator.Invoke();
+        }
+
+        public static void Invalidate(Func<Task> invalidator)
+        {
+            using var ccs = ComputeContext.New(CallOptions.Invalidate).Activate();
+            var task = invalidator.Invoke();
             // The flow is essentially synchronous in this case, so...
             task.AssertCompleted();
         }
 
-        public static void Invalidate<T>(Func<ValueTask<T>> producer)
+        public static void Invalidate(Func<ValueTask> invalidator)
         {
             using var ccs = ComputeContext.New(CallOptions.Invalidate).Activate();
-            var task = producer.Invoke();
+            var task = invalidator.Invoke();
             // The flow is essentially synchronous in this case, so...
             task.AssertCompleted();
         }
