@@ -144,39 +144,32 @@ namespace Stl.Tests.Extensibility
             (await AsyncInvoker.New(new [] {"a", "b"}, "", Concat2Async, InvocationOrder.Reverse).RunAsync())
                 .State.Should().Be("ba");
 
-            Action action;
-
-            action = () => AsyncInvoker.New(new [] {"a", "e"}, "", Concat1Async)
-                .RunAsync().Result.Ignore();
-            action.Should().Throw<ArgumentException>();
-            action = () => AsyncInvoker.New(new [] {"a", "e"}, "", Concat1Async, InvocationOrder.Reverse)
-                .RunAsync().Result.Ignore();
-            action.Should().Throw<ArgumentException>();
-            action = () => AsyncInvoker.New(new [] {"a", "e"}, "", Concat2Async)
-                .RunAsync().Result.Ignore();
-            action.Should().Throw<ArgumentException>();
-            action = () => AsyncInvoker.New(new [] {"a", "e"}, "", Concat2Async, InvocationOrder.Reverse)
-                .RunAsync().Result.Ignore();
-            action.Should().Throw<ArgumentException>();
+            await Assert.ThrowsAsync<ArgumentException>(async () => {
+                var _ = await AsyncInvoker.New(new [] {"a", "e"}, "", Concat1Async).RunAsync();
+            });
+            await Assert.ThrowsAsync<ArgumentException>(async () => {
+                var _ = await AsyncInvoker.New(new [] {"a", "e"}, "", Concat1Async, InvocationOrder.Reverse).RunAsync();
+            });
+            await Assert.ThrowsAsync<ArgumentException>(async () => {
+                var _ = await AsyncInvoker.New(new [] {"a", "e"}, "", Concat2Async).RunAsync();
+            });
+            await Assert.ThrowsAsync<ArgumentException>(async () => {
+                var _ = await AsyncInvoker.New(new [] {"a", "e"}, "", Concat2Async, InvocationOrder.Reverse).RunAsync();
+            });
 
             var errorHandlerCalled = false;
             void ErrorHandler(Exception e, string s, AsyncInvoker<string, string> invoker)
                 => errorHandlerCalled = true;
 
-            action = () => {
-                errorHandlerCalled = false;
-                AsyncInvoker.New(new[] {"a", "e"}, "", Concat1Async, InvocationOrder.Straight, ErrorHandler)
-                    .RunAsync().Result.Ignore();
-                errorHandlerCalled.Should().BeTrue();
-            };
-            action.Should().NotThrow();
-            action = () => {
-                errorHandlerCalled = false;
-                AsyncInvoker.New(new[] {"a", "e"}, "", Concat1Async, InvocationOrder.Reverse, ErrorHandler)
-                    .RunAsync().Result.Ignore();
-                errorHandlerCalled.Should().BeTrue();
-            };
-            action.Should().NotThrow();
+            errorHandlerCalled = false;
+            var _ = AsyncInvoker.New(new[] {"a", "e"}, "", Concat1Async, InvocationOrder.Straight, ErrorHandler)
+                .RunAsync().Result;
+            errorHandlerCalled.Should().BeTrue();
+
+            errorHandlerCalled = false;
+            _ = AsyncInvoker.New(new[] {"a", "e"}, "", Concat1Async, InvocationOrder.Reverse, ErrorHandler)
+                .RunAsync().Result;
+            errorHandlerCalled.Should().BeTrue();
         }
 
         [Fact]

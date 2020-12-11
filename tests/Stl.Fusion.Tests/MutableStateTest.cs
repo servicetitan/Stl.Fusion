@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using Stl.Async;
 using Stl.Fusion.Tests.Services;
 using Xunit;
 using Xunit.Abstractions;

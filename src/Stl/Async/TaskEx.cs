@@ -1,5 +1,6 @@
 using System;
 using System.Reactive;
+using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,6 +26,15 @@ namespace Stl.Async
             unitTcs.SetResult(default);
             UnitTaskCompletionSource = unitTcs;
         }
+
+        // Ignore
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Ignore(this Task task) { }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Ignore(this ValueTask valueTask) { }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Ignore<T>(this ValueTask<T> valueTask) { }
 
         // ToXxx
 

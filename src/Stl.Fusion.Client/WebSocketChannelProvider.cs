@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Stl.Async;
 using Stl.Channels;
 using Stl.DependencyInjection;
 using Stl.Fusion.Bridge;

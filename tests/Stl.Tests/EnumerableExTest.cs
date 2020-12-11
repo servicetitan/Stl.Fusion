@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Stl.Collections;
 using Stl.Testing;
 using Xunit;
@@ -35,10 +36,12 @@ namespace Stl.Tests
             Assert.Equal("012", OBD("21", DepSelector1));
             Assert.Equal("0123", OBD("231", DepSelector1));
 
-            Assert.Throws<InvalidOperationException>(() =>
-                OBD("0", BadDepSelector1).Ignore());
-            Assert.Throws<InvalidOperationException>(() =>
-                OBD("0", BadDepSelector2).Ignore());
+            Assert.Throws<InvalidOperationException>(() => {
+                var _ = OBD("0", BadDepSelector1);
+            });
+            Assert.Throws<InvalidOperationException>(() => {
+                var _ = OBD("0", BadDepSelector2);
+            });
         }
     }
 }
