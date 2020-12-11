@@ -7,11 +7,14 @@ namespace Stl.Fusion.Blazor
 {
     public abstract class LiveComponentBase<T> : StatefulComponentBase<ILiveState<T>>
     {
-        protected override void OnInitialized()
-        {
-            State ??= StateFactory.NewLive<T>(ConfigureState, (_, ct) => ComputeStateAsync(ct), this);
-            base.OnInitialized();
-        }
+        protected override ILiveState<T> CreateState()
+            => StateFactory.NewLive<T>(ConfigureState, async (_, ct) => {
+                // Default CreateState synchronizes ComputeStateAsync call
+                // as per https://github.com/servicetitan/Stl.Fusion/issues/202
+                // You can override it to implement a version w/o sync.
+                var task = (Task<T>) InvokeAsync(() => ComputeStateAsync(ct));
+                return await task.ConfigureAwait(false);
+            }, this);
 
         protected virtual void ConfigureState(LiveState<T>.Options options) { }
         protected abstract Task<T> ComputeStateAsync(CancellationToken cancellationToken);
@@ -37,14 +40,16 @@ namespace Stl.Fusion.Blazor
         protected override void OnInitialized()
         {
             // ReSharper disable once ConstantNullCoalescingCondition
-            Locals ??= StateFactory.NewMutable(ConfigureLocals, Option<Result<TLocals>>.None);
-            State ??= StateFactory.NewLive<T>(ConfigureState, (_, ct) => ComputeStateAsync(ct), this);
+            Locals ??= CreateLocals();
             Locals.Updated += (s, e) => {
                 State.Invalidate();
                 State.CancelUpdateDelay();
             };
             base.OnInitialized();
         }
+
+        protected virtual IMutableState<TLocals> CreateLocals()
+            => StateFactory.NewMutable(ConfigureLocals, Option<Result<TLocals>>.None);
 
         protected virtual void ConfigureLocals(MutableState<TLocals>.Options options) { }
     }

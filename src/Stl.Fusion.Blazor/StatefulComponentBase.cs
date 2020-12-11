@@ -59,8 +59,11 @@ namespace Stl.Fusion.Blazor
         protected override void OnInitialized()
         {
             // ReSharper disable once ConstantNullCoalescingCondition
-            State ??= ServiceProvider.GetRequiredService<TState>();
+            State ??= CreateState();
             UntypedState.AddEventHandler(StateEventKind.All, StateChanged);
         }
+
+        protected virtual TState CreateState()
+            => ServiceProvider.GetRequiredService<TState>();
     }
 }
