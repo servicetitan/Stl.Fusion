@@ -74,7 +74,7 @@ namespace Stl.Fusion.Bridge
             ApplySuccessfulUpdate(info.Output, info.Version, info.IsConsistent);
             if (isUpdateRequested)
                 // ReSharper disable once VirtualMemberCallInConstructor
-                UpdateRequestTask = CreateUpdateRequestTaskSource().Task;
+                UpdateRequestTask = CreateUpdateRequestTask();
         }
 
         // This method is called for temp. replicas that were never attached to anything.
@@ -108,7 +108,7 @@ namespace Stl.Fusion.Bridge
                 updateRequestTask = UpdateRequestTask;
                 if (updateRequestTask != null)
                     return updateRequestTask.WithFakeCancellation(cancellationToken);
-                UpdateRequestTask = updateRequestTask = CreateUpdateRequestTaskSource().Task;
+                UpdateRequestTask = updateRequestTask = CreateUpdateRequestTask();
                 Input.ReplicatorImpl.Subscribe(this);
                 return updateRequestTask.WithFakeCancellation(cancellationToken);
             }
@@ -169,8 +169,8 @@ namespace Stl.Fusion.Bridge
             return true;
         }
 
-        protected virtual TaskSource<Unit> CreateUpdateRequestTaskSource()
-            => TaskSource.New<Unit>(true);
+        protected virtual Task<Unit> CreateUpdateRequestTask()
+            => TaskSource.New<Unit>(true).Task;
 
         protected virtual void ReplaceComputedUnsafe(
             IReplicaComputed<T>? oldComputed,

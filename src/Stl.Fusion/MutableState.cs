@@ -107,6 +107,7 @@ namespace Stl.Fusion
                 OnUpdating();
                 result = CreateComputed();
                 result.UseNew(context, usedBy);
+                context.TryCapture(result);
                 return Task.FromResult(result);
             }
         }
@@ -135,6 +136,7 @@ namespace Stl.Fusion
                 OnUpdating();
                 result = CreateComputed();
                 result.UseNew(context, usedBy);
+                context.TryCapture(result);
                 return result.StripToTask();
             }
         }

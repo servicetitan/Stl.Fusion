@@ -4,17 +4,21 @@ namespace Stl.Fusion
 {
     public readonly struct ComputeContextScope : IDisposable
     {
-        private readonly ComputeContext _previousContext;
+        private readonly ComputeContext _oldContext;
         public ComputeContext Context { get; }
 
         internal ComputeContextScope(ComputeContext context)
         {
+            _oldContext = ComputeContext.Current;
             Context = context;
-            _previousContext = ComputeContext.Current;
-            ComputeContext.Current = context;
+            if (_oldContext != context)
+                ComputeContext.Current = context;
         }
 
         public void Dispose()
-            => ComputeContext.Current = _previousContext;
+        {
+            if (_oldContext != Context)
+                ComputeContext.Current = _oldContext;
+        }
     }
 }

@@ -6,7 +6,7 @@ namespace Stl.Fusion
 {
     public class ComputeContext
     {
-        private static readonly Dictionary<CallOptions, ComputeContext> ContextCache;
+        private static readonly ComputeContext[] ContextCache;
         private static readonly AsyncLocal<ComputeContext?> CurrentLocal = new AsyncLocal<ComputeContext?>();
         internal volatile IComputed? CapturedComputed;
         private volatile int _isUsed;
@@ -29,7 +29,7 @@ namespace Stl.Fusion
         {
             var canUseCache = (options & CallOptions.Capture) == 0;
             var context = canUseCache
-                ? ContextCache[options]
+                ? ContextCache[(int) options]
                 : new ComputeContext(options);
             return context;
         }
@@ -37,10 +37,10 @@ namespace Stl.Fusion
         static ComputeContext()
         {
             var allCallOptions = CallOptions.TryGetExisting |  CallOptions.Invalidate;
-            var cache = new Dictionary<CallOptions, ComputeContext>();
+            var cache = new ComputeContext[1 + (int) allCallOptions];
             for (var i = 0; i <= (int) allCallOptions; i++) {
                 var action = (CallOptions) i;
-                cache[action] = new CachedComputeContext(action);
+                cache[i] = new CachedComputeContext(action);
             }
             ContextCache = cache;
             Default = New(default);
@@ -51,16 +51,15 @@ namespace Stl.Fusion
 
         public override string ToString() => $"{GetType().Name}({CallOptions})";
 
-        public ComputeContextScope Activate() => new ComputeContextScope(this);
+        public ComputeContextScope Activate() => new (this);
+        public static ComputeContextScope Suppress() => new(Default);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void TryCaptureValue(IComputed? value)
+        public void TryCapture(IComputed? computed)
         {
-            if (value == null || (CallOptions & CallOptions.Capture) == 0)
+            if (computed == null || (CallOptions & CallOptions.Capture) == 0)
                 return;
-            // We capture the last value
-            Interlocked.Exchange(ref CapturedComputed, value);
-            // Interlocked.CompareExchange(ref _capturedComputed, value, null);
+            Interlocked.CompareExchange(ref CapturedComputed, computed, null);
         }
 
         public IComputed? GetCapturedComputed() => CapturedComputed;

@@ -27,6 +27,7 @@ namespace Stl.Fusion
         public static ClosedDisposable<IComputed?> ChangeCurrent(IComputed? newCurrent)
         {
             var oldCurrent = GetCurrent();
+            ComputeContext.Current.TryCapture(newCurrent);
             if (oldCurrent == newCurrent)
                 return Disposable.NewClosed(oldCurrent, _ => { });
             CurrentLocal.Value = newCurrent;

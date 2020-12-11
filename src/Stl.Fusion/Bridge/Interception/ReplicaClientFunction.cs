@@ -37,14 +37,19 @@ namespace Stl.Fusion.Bridge.Interception
             var method = input.Method;
             IReplica<T> replica;
             IReplicaComputed<T> replicaComputed;
+            ReplicaClientComputed<T> result;
 
             // 1. Trying to update the Replica first
             if (existing is IReplicaClientComputed<T> rsc && rsc.Replica != null) {
                 try {
                     replica = rsc.Replica;
-                    replicaComputed = (IReplicaComputed<T>) await replica.Computed
-                        .UpdateAsync(true, cancellationToken).ConfigureAwait(false);
-                    return new ReplicaClientComputed<T>(method.Options, input, replicaComputed);
+                    using (ComputeContext.Suppress()) {
+                        replicaComputed = (IReplicaComputed<T>) await replica.Computed
+                            .UpdateAsync(true, cancellationToken).ConfigureAwait(false);
+                    }
+                    result = new (method.Options, input, replicaComputed);
+                    ComputeContext.Current.TryCapture(result);
+                    return result;
                 }
                 catch (OperationCanceledException) {
                     if (IsLogDebugEnabled)
@@ -61,13 +66,13 @@ namespace Stl.Fusion.Bridge.Interception
             using var psiCapture = new PublicationStateInfoCapture();
             Result<T> output;
             try {
-                var result = input.InvokeOriginalFunction(cancellationToken);
+                var rpcResult = input.InvokeOriginalFunction(cancellationToken);
                 if (method.ReturnsValueTask) {
-                    var task = (ValueTask<T>) result;
+                    var task = (ValueTask<T>) rpcResult;
                     output = Result.Value(await task.ConfigureAwait(false));
                 }
                 else {
-                    var task = (Task<T>) result;
+                    var task = (Task<T>) rpcResult;
                     output = Result.Value(await task.ConfigureAwait(false));
                 }
             }
@@ -89,7 +94,9 @@ namespace Stl.Fusion.Bridge.Interception
                 output = new Result<T>(default!, Errors.NoPublicationStateInfoCaptured());
                 // We need a unique LTag here, so we use a range that's supposed to be unused by LTagGenerators.
                 var version = new LTag(VersionGenerator.Next().Value ^ (1L << 62));
-                return new ReplicaClientComputed<T>(method.Options, input, output.Error!, version);
+                result = new (method.Options, input, output.Error!, version);
+                ComputeContext.Current.TryCapture(result);
+                return result;
             }
             if (output.HasError) {
                 // Try to pull the actual error first
@@ -101,10 +108,14 @@ namespace Stl.Fusion.Bridge.Interception
                 if (psi.Version == default)
                     psi.Version = new LTag(VersionGenerator.Next().Value ^ (1L << 62));
             }
-            replica = Replicator.GetOrAdd(new PublicationStateInfo<T>(psi, output));
-            replicaComputed = (IReplicaComputed<T>) await replica.Computed
-                .UpdateAsync(true, cancellationToken).ConfigureAwait(false);
-            return new ReplicaClientComputed<T>(method.Options, input, replicaComputed);
+            using (ComputeContext.Suppress()) {
+                replica = Replicator.GetOrAdd(new PublicationStateInfo<T>(psi, output));
+                replicaComputed = (IReplicaComputed<T>) await replica.Computed
+                    .UpdateAsync(true, cancellationToken).ConfigureAwait(false);
+            }
+            result = new ReplicaClientComputed<T>(method.Options, input, replicaComputed);
+            ComputeContext.Current.TryCapture(result);
+            return result;
         }
     }
 }

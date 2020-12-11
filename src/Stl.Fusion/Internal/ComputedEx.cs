@@ -16,8 +16,7 @@ namespace Stl.Fusion.Internal
             if (!(useExisting || existing.IsConsistent()))
                 return false;
 
-            if ((callOptions & CallOptions.Capture) != 0)
-                Interlocked.Exchange(ref context.CapturedComputed, existing);
+            context.TryCapture(existing);
             var invalidate = (callOptions & CallOptions.Invalidate) == CallOptions.Invalidate;
             if (invalidate) {
                 existing.Invalidate();
@@ -44,8 +43,7 @@ namespace Stl.Fusion.Internal
             var invalidate = (callOptions & CallOptions.Invalidate) == CallOptions.Invalidate;
             if (invalidate) {
                 existing.Invalidate();
-                if ((callOptions & CallOptions.Capture) != 0)
-                    Interlocked.Exchange(ref context.CapturedComputed, existing);
+                context.TryCapture(existing);
                 return existing.MaybeOutput ?? ResultBox<T>.Default;
             }
 
@@ -58,8 +56,7 @@ namespace Stl.Fusion.Internal
 
             if (!useExisting)
                 ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) existing!);
-            if ((callOptions & CallOptions.Capture) != 0)
-                Interlocked.Exchange(ref context.CapturedComputed, existing);
+            context.TryCapture(existing);
             ((IComputedImpl?) existing)?.RenewTimeouts();
             return result;
         }
@@ -68,8 +65,6 @@ namespace Stl.Fusion.Internal
         internal static void UseNew<T>(this IComputed<T> computed, ComputeContext context, IComputed? usedBy)
         {
             ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) computed);
-            if ((context.CallOptions & CallOptions.Capture) != 0)
-                Interlocked.Exchange(ref context.CapturedComputed, computed);
             ((IComputedImpl?) computed)?.RenewTimeouts();
         }
 
