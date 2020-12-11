@@ -122,9 +122,11 @@ namespace Stl.Fusion.Tests.Services
         {
             if (!IsCaching)
                 return;
-            Computed.Invalidate(() => TryGetAsync(user.Id));
-            if (countChanged)
-                Computed.Invalidate(() => CountAsync());
+            Computed.Invalidate(() => {
+                TryGetAsync(user.Id).Ignore();
+                if (countChanged)
+                    CountAsync().Ignore();
+            });
         }
     }
 }

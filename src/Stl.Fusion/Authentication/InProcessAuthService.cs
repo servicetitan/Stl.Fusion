@@ -37,8 +37,10 @@ namespace Stl.Fusion.Authentication
                 (userId, sessionId) => ImmutableHashSet<string>.Empty.Add(sessionId),
                 (userId, sessionIds, sessionId) => sessionIds.Add(sessionId),
                 session.Id);
-            Computed.Invalidate(() => GetUserAsync(session, default));
-            Computed.Invalidate(() => GetFakeUserInfo(user.Id));
+            Computed.Invalidate(() => {
+                GetUserAsync(session, default).Ignore();
+                GetFakeUserInfo(user.Id).Ignore();
+            });
         }
 
         public Task SignOutAsync(bool force, Session session, CancellationToken cancellationToken = default)
@@ -51,8 +53,10 @@ namespace Stl.Fusion.Authentication
                     (userId, sessionIds, sessionId) => sessionIds.Remove(sessionId),
                     session.Id);
                 UserSessions.TryRemove(user.Id, ImmutableHashSet<string>.Empty); // No need to store an empty one
-                Computed.Invalidate(() => GetUserAsync(session, default));
-                Computed.Invalidate(() => GetFakeUserInfo(user.Id));
+                Computed.Invalidate(() => {
+                    GetUserAsync(session, default).Ignore();
+                    GetFakeUserInfo(user.Id).Ignore();
+                });
             }
             return Task.CompletedTask;
         }

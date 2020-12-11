@@ -219,16 +219,14 @@ namespace Stl.Fusion
         {
             using var ccs = ComputeContext.New(CallOptions.Invalidate).Activate();
             var task = invalidator.Invoke();
-            // The flow is essentially synchronous in this case, so...
-            task.AssertCompleted();
+            task.AssertCompleted(); // The must be always synchronous in this case
         }
 
         public static void Invalidate(Func<ValueTask> invalidator)
         {
             using var ccs = ComputeContext.New(CallOptions.Invalidate).Activate();
             var task = invalidator.Invoke();
-            // The flow is essentially synchronous in this case, so...
-            task.AssertCompleted();
+            task.AssertCompleted(); // The must be always synchronous in this case
         }
 
         // TryGetExisting
@@ -237,8 +235,7 @@ namespace Stl.Fusion
         {
             using var ccs = ComputeContext.New(CallOptions.TryGetExisting | CallOptions.Capture).Activate();
             var task = producer.Invoke();
-            // The flow is essentially synchronous in this case, so...
-            task.AssertCompleted();
+            task.AssertCompleted(); // The must be always synchronous in this case
             return ccs.Context.GetCapturedComputed<T>();
         }
 
@@ -246,8 +243,7 @@ namespace Stl.Fusion
         {
             using var ccs = ComputeContext.New(CallOptions.TryGetExisting | CallOptions.Capture).Activate();
             var task = producer.Invoke();
-            // The flow is essentially synchronous in this case, so...
-            task.AssertCompleted();
+            task.AssertCompleted(); // The must be always synchronous in this case
             return ccs.Context.GetCapturedComputed<T>();
         }
     }

@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Stl.Async;
 
 namespace Stl.Fusion.Tests.Services
 {
@@ -36,16 +37,20 @@ namespace Stl.Fusion.Tests.Services
         public virtual Task SetAsync(string key, TValue value, CancellationToken cancellationToken = default)
         {
             _values[key] = value;
-            Computed.Invalidate(() => TryGetAsync(key, default));
-            Computed.Invalidate(() => GetAsync(key, default));
+            Computed.Invalidate(() => {
+                TryGetAsync(key, default).Ignore();
+                GetAsync(key, default).Ignore();
+            });
             return Task.CompletedTask;
         }
 
         public virtual Task RemoveAsync(string key, CancellationToken cancellationToken = default)
         {
             _values.TryRemove(key, out _);
-            Computed.Invalidate(() => TryGetAsync(key, default));
-            Computed.Invalidate(() => GetAsync(key, default));
+            Computed.Invalidate(() => {
+                TryGetAsync(key, default).Ignore();
+                GetAsync(key, default).Ignore();
+            });
             return Task.CompletedTask;
         }
     }
