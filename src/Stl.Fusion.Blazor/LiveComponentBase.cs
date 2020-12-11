@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Stl.Async;
 using Stl.Internal;
 
 namespace Stl.Fusion.Blazor
@@ -12,8 +13,19 @@ namespace Stl.Fusion.Blazor
                 // Default CreateState synchronizes ComputeStateAsync call
                 // as per https://github.com/servicetitan/Stl.Fusion/issues/202
                 // You can override it to implement a version w/o sync.
-                var task = (Task<T>) InvokeAsync(() => ComputeStateAsync(ct));
-                return await task.ConfigureAwait(false);
+                var ts = TaskSource.New<T>(false);
+                await InvokeAsync(async () => {
+                    try {
+                        ts.TrySetResult(await ComputeStateAsync(ct));
+                    }
+                    catch (OperationCanceledException) {
+                        ts.TrySetCanceled();
+                    }
+                    catch (Exception e) {
+                        ts.TrySetException(e);
+                    }
+                });
+                return await ts.Task.ConfigureAwait(false);
             }, this);
 
         protected virtual void ConfigureState(LiveState<T>.Options options) { }

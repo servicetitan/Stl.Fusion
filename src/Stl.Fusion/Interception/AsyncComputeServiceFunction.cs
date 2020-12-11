@@ -51,9 +51,9 @@ namespace Stl.Fusion.Interception
 
             computed = (IAsyncComputed<T>) await ComputeAsync(input, computed, cancellationToken)
                 .ConfigureAwait(false);
-            output = computed.Output; // RenewTimeouts isn't called yet, so it's ok
+            var rOutput = computed.Output; // RenewTimeouts isn't called yet, so it's ok
             computed.UseNew(context, usedBy);
-            return output!.Value;
+            return rOutput!.Value;
         }
 
         protected override IComputed<T> CreateComputed(InterceptedInput input, LTag tag)

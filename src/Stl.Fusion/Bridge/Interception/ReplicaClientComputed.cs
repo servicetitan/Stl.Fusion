@@ -24,6 +24,7 @@ namespace Stl.Fusion.Bridge.Interception
             : this(source.Replica, options, input, source.Version)
         {
             ((IComputedImpl) this).AddUsed((IComputedImpl) source);
+            // ReSharper disable once VirtualMemberCallInConstructor
             TrySetOutput(source.Output);
             if (!source.IsConsistent())
                 Invalidate();
