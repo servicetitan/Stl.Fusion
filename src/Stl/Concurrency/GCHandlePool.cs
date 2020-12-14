@@ -8,11 +8,11 @@ namespace Stl.Concurrency
 {
     public class GCHandlePool : IDisposable
     {
-        public class Options : IOptions
+        public record Options : IOptions
         {
-            public int Capacity { get; set; } = 1024;
-            public GCHandleType HandleType { get; set; } = GCHandleType.Weak;
-            public StochasticCounter OperationCounter { get; set; } = new StochasticCounter();
+            public int Capacity { get; init; } = 1024;
+            public GCHandleType HandleType { get; init; } = GCHandleType.Weak;
+            public StochasticCounter OperationCounter { get; init; } = new();
         }
 
         private readonly ConcurrentQueue<GCHandle> _queue;

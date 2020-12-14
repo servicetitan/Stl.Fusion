@@ -15,7 +15,7 @@ namespace Stl.Fusion
 {
     public readonly struct FusionBuilder
     {
-        private static Box<bool> IsInitialized = Box.New<bool>(false);
+        private static readonly Box<bool> IsInitialized = Box.New(false);
 
         private class AddedTag { }
         private static readonly ServiceDescriptor AddedTagDescriptor =
@@ -57,7 +57,7 @@ namespace Stl.Fusion
             Services.TryAddTransient<IUpdateDelayer, UpdateDelayer>();
         }
 
-        public static void Initialize(HashSet<Type>? attributesToAvoidReplicating = null)
+        public static void Initialize(HashSet<Type>? nonReplicableAttributes = null)
         {
             if (IsInitialized.Value) return;
             lock (IsInitialized) {
@@ -65,11 +65,11 @@ namespace Stl.Fusion
                 IsInitialized.Value = true;
                 // Castle.DynamicProxy fails while trying to replicate
                 // these attributes in WASM in .NET 5.0
-                attributesToAvoidReplicating ??= new HashSet<Type>() {
+                nonReplicableAttributes ??= new HashSet<Type>() {
                     typeof(AsyncStateMachineAttribute),
                     typeof(ComputeMethodAttribute),
                 };
-                foreach (var type in attributesToAvoidReplicating)
+                foreach (var type in nonReplicableAttributes)
                     Castle.DynamicProxy.Generators.AttributesToAvoidReplicating.Add(type);
             }
         }

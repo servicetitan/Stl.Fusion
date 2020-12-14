@@ -18,8 +18,7 @@ namespace Stl.Extensibility
     public class MatchingTypeFinder : IMatchingTypeFinder
     {
         private readonly Dictionary<(Type Source, Symbol Scope), Type> _matches;
-        private readonly ConcurrentDictionary<(Type Source, Symbol Scope), Type?> _cache =
-            new ConcurrentDictionary<(Type, Symbol), Type?>();
+        private readonly ConcurrentDictionary<(Type Source, Symbol Scope), Type?> _cache = new();
 
         public MatchingTypeFinder(Dictionary<(Type Source, Symbol Scope), Type> matches)
             => _matches = matches;
@@ -30,8 +29,6 @@ namespace Stl.Extensibility
             _matches = new Dictionary<(Type, Symbol), Type>();
             foreach (var type in candidates) {
                 var attrs = type.GetCustomAttributes<MatchForAttribute>(false);
-                if (attrs == null)
-                    continue;
                 foreach (var attr in attrs)
                     _matches.Add((attr.Source, new Symbol(attr.Scope)), type);
             }

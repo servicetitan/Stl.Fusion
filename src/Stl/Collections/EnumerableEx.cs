@@ -31,55 +31,7 @@ namespace Stl.Collections
             }
         }
 
-        // Extensions
-
-        public static IEnumerable<T> InsertAfter<T>(this IEnumerable<T> source, Func<T, bool> predicate, IEnumerable<T> insertion)
-        {
-            foreach (var item in source) {
-                yield return item;
-                if (predicate.Invoke(item)) {
-                    foreach (var extraItem in insertion)
-                        yield return extraItem;
-                }
-            }
-        }
-
-        public static IEnumerable<T> InsertBefore<T>(this IEnumerable<T> source, Func<T, bool> predicate, IEnumerable<T> insertion)
-        {
-            foreach (var item in source) {
-                if (predicate.Invoke(item)) {
-                    foreach (var extraItem in insertion)
-                        yield return extraItem;
-                }
-                yield return item;
-            }
-        }
-
-        public static IEnumerable<T> InsertOnceAfter<T>(this IEnumerable<T> source, Func<T, bool> predicate, IEnumerable<T> insertion)
-        {
-            var mustInsert = true;
-            foreach (var item in source) {
-                yield return item;
-                if (mustInsert && predicate.Invoke(item)) {
-                    mustInsert = false;
-                    foreach (var extraItem in insertion)
-                        yield return extraItem;
-                }
-            }
-        }
-
-        public static IEnumerable<T> InsertOnceBefore<T>(this IEnumerable<T> source, Func<T, bool> predicate, IEnumerable<T> insertion)
-        {
-            var mustInsert = true;
-            foreach (var item in source) {
-                if (mustInsert && predicate.Invoke(item)) {
-                    mustInsert = false;
-                    foreach (var extraItem in insertion)
-                        yield return extraItem;
-                }
-                yield return item;
-            }
-        }
+        // ToXxx
 
         public static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(
             this IEnumerable<KeyValuePair<TKey, TValue>> source)

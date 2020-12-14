@@ -12,9 +12,9 @@ namespace Stl.Time
     [TypeConverter(typeof(MomentTypeConverter))]
     public readonly struct Moment : IEquatable<Moment>, IComparable<Moment>
     {
-        public static readonly Moment MinValue = new Moment(long.MinValue);
-        public static readonly Moment MaxValue = new Moment(long.MaxValue);
-        public static readonly Moment EpochStart = new Moment(0); // AKA Unix Epoch
+        public static readonly Moment MinValue = new(long.MinValue);
+        public static readonly Moment MaxValue = new(long.MaxValue);
+        public static readonly Moment EpochStart = new(0); // AKA Unix Epoch
 
         // AKA Unix Time
         public long EpochOffsetTicks { get; }
@@ -55,9 +55,9 @@ namespace Stl.Time
         // Conversion
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Moment(DateTime source) => new Moment(source);
+        public static implicit operator Moment(DateTime source) => new(source);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Moment(DateTimeOffset source) => new Moment(source);
+        public static implicit operator Moment(DateTimeOffset source) => new(source);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator DateTime(Moment source) => source.ToDateTime();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -86,7 +86,7 @@ namespace Stl.Time
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Moment Clamp(Moment min, Moment max)
-            => new Moment(Math.Max(min.EpochOffsetTicks, Math.Min(max.EpochOffsetTicks, EpochOffsetTicks)));
+            => new(Math.Max(min.EpochOffsetTicks, Math.Min(max.EpochOffsetTicks, EpochOffsetTicks)));
 
         public override string ToString()
             => ToDateTimeClamped().ToString(CultureInfo.InvariantCulture);
@@ -124,5 +124,12 @@ namespace Stl.Time
         public static Moment operator -(Moment t1, TimeSpan t2) => new Moment(t1.EpochOffsetTicks - t2.Ticks);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static TimeSpan operator -(Moment t1, Moment t2) => new TimeSpan(t1.EpochOffsetTicks - t2.EpochOffsetTicks);
+
+        // Static methods
+
+        public static Moment Min(Moment first, Moment second)
+            => new(Math.Min(first.EpochOffsetTicks, second.EpochOffsetTicks));
+        public static Moment Max(Moment first, Moment second)
+            => new(Math.Max(first.EpochOffsetTicks, second.EpochOffsetTicks));
     }
 }

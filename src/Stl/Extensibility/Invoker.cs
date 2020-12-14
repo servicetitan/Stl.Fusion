@@ -13,7 +13,7 @@ namespace Stl.Extensibility
             Action<T, Invoker<T, TState>> handler,
             InvocationOrder order = InvocationOrder.Straight,
             Action<Exception, T, Invoker<T, TState>>? errorHandler = null)
-            => new Invoker<T, TState>() {
+            => new() {
                 Tail = tail,
                 State = initialState,
                 Handler = handler,
@@ -26,7 +26,7 @@ namespace Stl.Extensibility
             Action<T, Invoker<T, Unit>> handler,
             InvocationOrder order = InvocationOrder.Straight,
             Action<Exception, T, Invoker<T, Unit>>? errorHandler = null)
-            => new Invoker<T, Unit>() {
+            => new() {
                 Tail = tail,
                 Handler = handler,
                 Order = order,
@@ -39,7 +39,7 @@ namespace Stl.Extensibility
             Action<T, Invoker<T, TState>> handler,
             InvocationOrder order = InvocationOrder.Straight,
             Action<Exception, T, Invoker<T, TState>>? errorHandler = null)
-            => new Invoker<T, TState>() {
+            => new() {
                 Tail = tail,
                 State = initialState,
                 Handler = handler,
@@ -52,7 +52,7 @@ namespace Stl.Extensibility
             Action<T, Invoker<T, Unit>> handler,
             InvocationOrder order = InvocationOrder.Straight,
             Action<Exception, T, Invoker<T, Unit>>? errorHandler = null)
-            => new Invoker<T, Unit>() {
+            => new() {
                 Tail = tail,
                 Handler = handler,
                 Order = order,

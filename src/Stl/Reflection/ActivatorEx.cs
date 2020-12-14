@@ -8,20 +8,13 @@ namespace Stl.Reflection
 {
     public static class ActivatorEx
     {
-        private static readonly ConcurrentDictionary<Type, bool> HasDefaultCtorCache =
-            new ConcurrentDictionary<Type, bool>();
-        private static readonly ConcurrentDictionary<Type, Delegate?> CtorDelegate0Cache =
-            new ConcurrentDictionary<Type, Delegate?>();
-        private static readonly ConcurrentDictionary<(Type, Type), Delegate?> CtorDelegate1Cache =
-            new ConcurrentDictionary<(Type, Type), Delegate?>();
-        private static readonly ConcurrentDictionary<(Type, Type, Type), Delegate?> CtorDelegate2Cache =
-            new ConcurrentDictionary<(Type, Type, Type), Delegate?>();
-        private static readonly ConcurrentDictionary<(Type, Type, Type, Type), Delegate?> CtorDelegate3Cache =
-            new ConcurrentDictionary<(Type, Type, Type, Type), Delegate?>();
-        private static readonly ConcurrentDictionary<(Type, Type, Type, Type, Type), Delegate?> CtorDelegate4Cache =
-            new ConcurrentDictionary<(Type, Type, Type, Type, Type), Delegate?>();
-        private static readonly ConcurrentDictionary<(Type, Type, Type, Type, Type, Type), Delegate?> CtorDelegate5Cache =
-            new ConcurrentDictionary<(Type, Type, Type, Type, Type, Type), Delegate?>();
+        private static readonly ConcurrentDictionary<Type, bool> HasDefaultCtorCache = new();
+        private static readonly ConcurrentDictionary<Type, Delegate?> CtorDelegate0Cache = new();
+        private static readonly ConcurrentDictionary<(Type, Type), Delegate?> CtorDelegate1Cache = new();
+        private static readonly ConcurrentDictionary<(Type, Type, Type), Delegate?> CtorDelegate2Cache = new();
+        private static readonly ConcurrentDictionary<(Type, Type, Type, Type), Delegate?> CtorDelegate3Cache = new();
+        private static readonly ConcurrentDictionary<(Type, Type, Type, Type, Type), Delegate?> CtorDelegate4Cache = new();
+        private static readonly ConcurrentDictionary<(Type, Type, Type, Type, Type, Type), Delegate?> CtorDelegate5Cache = new();
 
         // An alternative to "new()" constraint
         public static T New<T>(bool failIfNoDefaultConstructor = true)

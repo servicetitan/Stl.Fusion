@@ -1,6 +1,3 @@
-using System;
-using System.Text;
-
 namespace Stl.Text
 {
     public interface ISymbolListFormatter

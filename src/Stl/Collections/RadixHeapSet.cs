@@ -12,7 +12,7 @@ namespace Stl.Collections
         where T : notnull
     {
         private static readonly Option<(long Priority, T Value)> None = Option<(long Priority, T Value)>.None;
-        private static readonly Dictionary<T, long> Empty = new Dictionary<T, long>();
+        private static readonly Dictionary<T, long> Empty = new();
         private readonly Dictionary<T, int> _bucketIndexes;
         private readonly Dictionary<T, long>[] _buckets;
 

@@ -18,6 +18,7 @@ namespace Stl.Pooling
         {
             if (_releaser?.Release(Resource) ?? false)
                 return;
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             if (Resource is IDisposable d)
                 d.Dispose();
         }

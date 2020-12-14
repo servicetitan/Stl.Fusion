@@ -141,8 +141,8 @@ namespace Stl.Fusion.Tests
             var fusionAuth = fusion.AddAuthentication().AddClient();
 
             // Auto-discovered services
-            services.AttributeBased()
-                .SetTypeFilter(testType.Namespace!)
+            services.AttributeScanner()
+                .WithTypeFilter(testType.Namespace!)
                 .AddServicesFrom(testType.Assembly);
 
             // Custom live state

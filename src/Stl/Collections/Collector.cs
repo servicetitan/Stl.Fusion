@@ -17,10 +17,10 @@ namespace Stl.Collections
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Collector<T> New(bool mustClean)
-            => new Collector<T>(mustClean, ArrayBuffer<T>.MinCapacity);
+            => new(mustClean, ArrayBuffer<T>.MinCapacity);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Collector<T> New(bool mustClean, int capacity)
-            => new Collector<T>(mustClean, capacity);
+            => new(mustClean, capacity);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Stl.Collections
+namespace Stl.Time
 {
     public static class Intervals
     {

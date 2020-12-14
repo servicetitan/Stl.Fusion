@@ -12,12 +12,19 @@ namespace Stl.Time
     public sealed class TimerSet<TTimer> : AsyncProcessBase
         where TTimer : notnull
     {
-        public class Options : IOptions
+        public record Options : IOptions
         {
+            private readonly TimeSpan _quanta = TimeSpan.FromSeconds(1);
+
             // ReSharper disable once StaticMemberInGenericType
             public static TimeSpan MinQuanta { get; } = TimeSpan.FromMilliseconds(10);
-            public TimeSpan Quanta { get; set; } = TimeSpan.FromSeconds(1);
-            public IMomentClock Clock { get; set; } = CoarseCpuClock.Instance;
+
+            public TimeSpan Quanta {
+                get => _quanta;
+                init => _quanta = TimeSpanEx.Max(MinQuanta, value);
+            }
+
+            public IMomentClock Clock { get; init; } = CoarseCpuClock.Instance;
         }
 
         private readonly Action<TTimer>? _fireHandler;
@@ -37,8 +44,6 @@ namespace Stl.Time
         public TimerSet(Options? options = null, Action<TTimer>? fireHandler = null)
         {
             options = options.OrDefault();
-            if (options.Quanta < Options.MinQuanta)
-                options.Quanta = Options.MinQuanta;
             Quanta = options.Quanta;
             Clock = options.Clock;
             _fireHandler = fireHandler;

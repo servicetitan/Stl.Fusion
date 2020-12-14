@@ -6,10 +6,10 @@ namespace Stl.Async
     public static class AsyncDisposable
     {
         public static AsyncDisposable<Func<ValueTask>> New(Func<ValueTask> onDisposeAsync)
-            => new AsyncDisposable<Func<ValueTask>>(func => func.Invoke(), onDisposeAsync);
+            => new(func => func.Invoke(), onDisposeAsync);
 
         public static AsyncDisposable<TState> New<TState>(Func<TState, ValueTask> onDisposeAsync, TState state)
-            => new AsyncDisposable<TState>(onDisposeAsync, state);
+            => new(onDisposeAsync, state);
     }
 
     public readonly struct AsyncDisposable<TState> : IAsyncDisposable

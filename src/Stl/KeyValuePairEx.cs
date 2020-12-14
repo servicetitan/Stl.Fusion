@@ -8,6 +8,6 @@ namespace Stl
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static KeyValuePair<TKey, TValue> ToKeyValuePair<TKey, TValue>(
             this (TKey Key, TValue Value) pair)
-            => new KeyValuePair<TKey, TValue>(pair.Key, pair.Value);
+            => new(pair.Key, pair.Value);
     }
 }

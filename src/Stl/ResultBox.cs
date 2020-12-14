@@ -11,7 +11,7 @@ namespace Stl
     [DebuggerDisplay("({" + nameof(UnsafeValue) + "}, Error = {" + nameof(Error) + "})")]
     public sealed class ResultBox<T> : IResult<T>
     {
-        public static readonly ResultBox<T> Default = new ResultBox<T>(default!, null);
+        public static readonly ResultBox<T> Default = new(default!, null);
 
         public T UnsafeValue { get; }
         public Exception? Error { get; }
@@ -31,11 +31,9 @@ namespace Stl
             get {
                 if (Error == null)
                     return UnsafeValue;
-                else {
-                    // That's the right way to re-throw an exception and preserve its stack trace
-                    ExceptionDispatchInfo.Capture(Error).Throw();
-                    return default!; // Never executed, but no way to get rid of this
-                }
+                // That's the right way to re-throw an exception and preserve its stack trace
+                ExceptionDispatchInfo.Capture(Error).Throw();
+                return default!; // Never executed, but no way to get rid of this
             }
         }
 
@@ -80,9 +78,9 @@ namespace Stl
         }
 
         public Result<T> AsResult()
-            => new Result<T>(UnsafeValue, Error);
+            => new(UnsafeValue, Error);
         public Result<TOther> AsResult<TOther>()
-            => new Result<TOther>((TOther) (object) UnsafeValue!, Error);
+            => new((TOther) (object) UnsafeValue!, Error);
         T IConvertibleTo<T>.Convert() => Value;
         Result<T> IConvertibleTo<Result<T>>.Convert() => AsResult();
 
@@ -90,17 +88,17 @@ namespace Stl
 
         public static implicit operator T(ResultBox<T> source) => source.Value;
         public static implicit operator Result<T>(ResultBox<T> source) => source.AsResult();
-        public static implicit operator ResultBox<T>(Result<T> source) => new ResultBox<T>(source);
-        public static implicit operator ResultBox<T>(T source) => new ResultBox<T>(source, null);
+        public static implicit operator ResultBox<T>(Result<T> source) => new(source);
+        public static implicit operator ResultBox<T>(T source) => new(source, null);
         public static implicit operator ResultBox<T>((T Value, Exception? Error) source) =>
             new ResultBox<T>(source.Value, source.Error);
     }
 
     public static class ResultBox
     {
-        public static ResultBox<T> New<T>(Result<T> result) => new ResultBox<T>(result);
-        public static ResultBox<T> New<T>(T value, Exception? error = null) => new ResultBox<T>(value, error);
-        public static ResultBox<T> Value<T>(T value) => new ResultBox<T>(value, null);
-        public static ResultBox<T> Error<T>(Exception? error) => new ResultBox<T>(default!, error);
+        public static ResultBox<T> New<T>(Result<T> result) => new(result);
+        public static ResultBox<T> New<T>(T value, Exception? error = null) => new(value, error);
+        public static ResultBox<T> Value<T>(T value) => new(value, null);
+        public static ResultBox<T> Error<T>(Exception? error) => new(default!, error);
     }
 }

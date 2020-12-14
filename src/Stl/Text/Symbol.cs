@@ -14,7 +14,7 @@ namespace Stl.Text
         IConvertibleTo<string>, ISerializable
     {
         public static readonly Symbol Null = default;
-        public static readonly Symbol Empty = new Symbol("");
+        public static readonly Symbol Empty = new("");
 
         public readonly string Value;
         public readonly int HashCode;
@@ -30,12 +30,12 @@ namespace Stl.Text
         // Conversion
 
         string IConvertibleTo<string>.Convert() => Value;
-        public static implicit operator Symbol(string source) => new Symbol(source);
+        public static implicit operator Symbol(string source) => new(source);
         public static implicit operator string(Symbol source) => source.Value;
 
         // Operators
 
-        public static Symbol operator +(Symbol left, Symbol right) => new Symbol(left.Value + right.Value);
+        public static Symbol operator +(Symbol left, Symbol right) => new(left.Value + right.Value);
 
         // Equality & comparison
 

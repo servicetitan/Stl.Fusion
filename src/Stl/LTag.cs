@@ -36,12 +36,12 @@ namespace Stl
             }
         }
 
-        public static LTag Parse(string formattedLTag)
+        public static LTag Parse(string? formattedLTag)
             => TryParse(formattedLTag, out var result)
                 ? result
                 : throw new ArgumentOutOfRangeException(nameof(formattedLTag));
 
-        public static bool TryParse(string formattedLTag, out LTag lTag)
+        public static bool TryParse(string? formattedLTag, out LTag lTag)
         {
             lTag = default;
             if (formattedLTag == null || formattedLTag.Length < 2)

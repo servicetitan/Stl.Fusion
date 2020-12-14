@@ -1,6 +1,5 @@
 using System;
 using System.Buffers;
-using System.Buffers.Text;
 using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Text;
@@ -20,7 +19,7 @@ namespace Stl.Net
         protected int WriteBufferSize { get; }
         protected Channel<string> ReadChannel { get; }
         protected Channel<string> WriteChannel { get; }
-        protected volatile CancellationTokenSource StopCts;
+        protected volatile CancellationTokenSource? StopCts;
         protected readonly CancellationToken StopToken;
 
         public WebSocket WebSocket { get; }
@@ -57,7 +56,7 @@ namespace Stl.Net
             OwnsWebSocket = ownsWebSocket;
 
             StopCts = new CancellationTokenSource();
-            var cancellationToken = StopCts.Token;
+            var cancellationToken = StopToken = StopCts.Token;
             ReaderTask = Task.Run(() => RunReaderAsync(cancellationToken));
             WriterTask = Task.Run(() => RunWriterAsync(cancellationToken));
         }
@@ -65,11 +64,11 @@ namespace Stl.Net
         public async ValueTask DisposeAsync()
         {
             var stopCts = Interlocked.Exchange(ref StopCts, null!);
-            if (stopCts != null)
+            if (stopCts == null)
                 return;
 
             try {
-                StopCts.Cancel();
+                stopCts.Cancel();
             }
             catch {
                 // Dispose shouldn't throw exceptions

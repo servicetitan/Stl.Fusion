@@ -53,7 +53,7 @@ namespace Stl.DependencyInjection.Internal
         public virtual Type GetProxyType(Type implementationType, Type viewType)
             => Cache.GetOrAddChecked((implementationType, viewType), (key, self) => {
                 var (tImpl, tView) = key;
-                var options = MemberwiseCloner.Clone(self.ProxyGeneratorOptions);
+                var options = MemberwiseCloner.Invoke(self.ProxyGeneratorOptions);
                 options.BaseTypeForInterfaceProxy = options.GenericBaseType
                     .MakeGenericType(tImpl, tView);
                 var generator = new Implementation(self.ModuleScope, tView, options);

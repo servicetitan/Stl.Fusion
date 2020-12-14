@@ -7,10 +7,9 @@ namespace Stl.Collections
 {
     public class BinaryHeap<TPriority, TValue> : IEnumerable<(TPriority Priority, TValue Value)>
     {
-        private readonly Option<(TPriority Priority, TValue Value)> None =
-            Option<(TPriority Priority, TValue Value)>.None;
+        private readonly Option<(TPriority Priority, TValue Value)> _none = default;
         private readonly IComparer<TPriority> _comparer;
-        private readonly List<(TPriority Key, TValue Value)> _heap = new List<(TPriority Key, TValue Data)>();
+        private readonly List<(TPriority Key, TValue Value)> _heap = new();
 
         public int Count {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -51,12 +50,12 @@ namespace Stl.Collections
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Option<(TPriority Priority, TValue Value)> PeekMin()
-            => Count == 0 ? None : _heap[0];
+            => Count == 0 ? _none : _heap[0];
 
         public Option<(TPriority Priority, TValue Value)> ExtractMin()
         {
             if (Count == 0)
-                return None;
+                return _none;
             var result = Option.Some(_heap[0]);
             var lastIndex = Count - 1;
             _heap[0] = _heap[lastIndex];

@@ -5,16 +5,16 @@ namespace Stl
     public static class Disposable
     {
         public static Disposable<Action> New(Action disposer)
-            => new Disposable<Action>(disposer, action => action.Invoke());
+            => new(disposer, action => action.Invoke());
 
         public static Disposable<T> New<T>(T resource, Action<T> disposer)
-            => new Disposable<T>(resource, disposer);
+            => new(resource, disposer);
 
         public static Disposable<T, TState> New<T, TState>(T resource, TState state, Action<T, TState> disposer)
-            => new Disposable<T, TState>(resource, state, disposer);
+            => new(resource, state, disposer);
 
         public static ClosedDisposable<TState> NewClosed<TState>(TState state, Action<TState> disposer)
-            => new ClosedDisposable<TState>(state, disposer);
+            => new(state, disposer);
 
         public static ClosedDisposable<(T1, T2)> Join<T1, T2>(T1 disposable1, T2 disposable2)
             where T1 : IDisposable

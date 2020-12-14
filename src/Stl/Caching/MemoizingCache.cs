@@ -8,7 +8,7 @@ namespace Stl.Caching
     public class MemoizingCache<TKey, TValue> : AsyncCacheBase<TKey, TValue>
         where TKey : notnull
     {
-        private readonly ConcurrentDictionary<TKey, TValue> _dictionary = new ConcurrentDictionary<TKey, TValue>();
+        private readonly ConcurrentDictionary<TKey, TValue> _dictionary = new();
 
         public override ValueTask<TValue> GetAsync(TKey key, CancellationToken cancellationToken = default)
             => ValueTaskEx.FromResult(_dictionary[key]);

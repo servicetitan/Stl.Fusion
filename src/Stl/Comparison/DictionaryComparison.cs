@@ -10,7 +10,7 @@ namespace Stl.Comparison
             IReadOnlyDictionary<TKey, TValue> right,
             IEqualityComparer<TValue>? valueComparer = null)
             where TKey : notnull
-            => new DictionaryComparison<TKey, TValue>(left, right, valueComparer);
+            => new(left, right, valueComparer);
     }
 
     public class DictionaryComparison<TKey, TValue>
@@ -20,9 +20,9 @@ namespace Stl.Comparison
         public IReadOnlyDictionary<TKey, TValue> Right { get; }
         public IEqualityComparer<TValue> ValueComparer { get; }
 
-        public List<KeyValuePair<TKey, TValue>> LeftOnly { get; } = new List<KeyValuePair<TKey, TValue>>();
-        public List<KeyValuePair<TKey, TValue>> RightOnly { get; } = new List<KeyValuePair<TKey, TValue>>();
-        public List<KeyValuePair<TKey, TValue>> SharedEqual { get; } = new List<KeyValuePair<TKey, TValue>>();
+        public List<KeyValuePair<TKey, TValue>> LeftOnly { get; } = new();
+        public List<KeyValuePair<TKey, TValue>> RightOnly { get; } = new();
+        public List<KeyValuePair<TKey, TValue>> SharedEqual { get; } = new();
         public List<(TKey Key, TValue LeftValue, TValue RightValue)> SharedUnequal { get; } =
             new List<(TKey Key, TValue LeftValue, TValue RightValue)>();
 

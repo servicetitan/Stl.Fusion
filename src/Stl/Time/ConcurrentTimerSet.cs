@@ -11,12 +11,16 @@ namespace Stl.Time
     public sealed class ConcurrentTimerSet<TTimer> : AsyncDisposableBase
         where TTimer : notnull
     {
-        public class Options : TimerSet<TTimer>.Options
+        public record Options : TimerSet<TTimer>.Options
         {
-            public int ConcurrencyLevel { get; set; }
+            private readonly int _concurrencyLevel;
+
+            public int ConcurrencyLevel {
+                get => _concurrencyLevel;
+                init => _concurrencyLevel = Math.Max(1, value);
+            }
         }
 
-        private readonly Action<TTimer>? _fireHandler;
         private readonly TimerSet<TTimer>[] _timerSets;
         private readonly int _concurrencyLevelMask;
 
@@ -28,18 +32,13 @@ namespace Stl.Time
         public ConcurrentTimerSet(Options? options = null, Action<TTimer>? fireHandler = null)
         {
             options = options.OrDefault();
-            if (options.Quanta < Options.MinQuanta)
-                options.Quanta = Options.MinQuanta;
-            if (options.ConcurrencyLevel < 1)
-                options.ConcurrencyLevel = 1;
             Quanta = options.Quanta;
             Clock = options.Clock;
             ConcurrencyLevel = (int) Bits.GreaterOrEqualPowerOf2((ulong) Math.Max(1, options.ConcurrencyLevel));
-            _fireHandler = fireHandler;
             _concurrencyLevelMask = ConcurrencyLevel - 1;
             _timerSets = new TimerSet<TTimer>[ConcurrencyLevel];
             for (var i = 0; i < _timerSets.Length; i++)
-                _timerSets[i] = new TimerSet<TTimer>(options, _fireHandler);
+                _timerSets[i] = new TimerSet<TTimer>(options, fireHandler);
         }
 
         protected override async ValueTask DisposeInternalAsync(bool disposing)

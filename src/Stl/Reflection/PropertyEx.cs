@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -10,16 +9,11 @@ namespace Stl.Reflection
 {
     public static class PropertyEx
     {
-        private static readonly ConcurrentDictionary<(Type, Symbol, bool), Delegate?> _getterBySymCache =
-            new ConcurrentDictionary<(Type, Symbol, bool), Delegate?>();
-        private static readonly ConcurrentDictionary<(Type, Symbol, bool), Delegate?> _setterBySymCache =
-            new ConcurrentDictionary<(Type, Symbol, bool), Delegate?>();
-        private static readonly ConcurrentDictionary<(Type, PropertyInfo, bool), Delegate> _getterCache =
-            new ConcurrentDictionary<(Type, PropertyInfo, bool), Delegate>();
-        private static readonly ConcurrentDictionary<(Type, PropertyInfo, bool), Delegate> _setterCache =
-            new ConcurrentDictionary<(Type, PropertyInfo, bool), Delegate>();
-        private static readonly ConcurrentDictionary<(Type, Delegate, BindingFlags), ReadOnlyMemory<Symbol>> _findPropertiesCache =
-            new ConcurrentDictionary<(Type, Delegate, BindingFlags), ReadOnlyMemory<Symbol>>();
+        private static readonly ConcurrentDictionary<(Type, Symbol, bool), Delegate?> GetterBySymCache = new();
+        private static readonly ConcurrentDictionary<(Type, Symbol, bool), Delegate?> SetterBySymCache = new();
+        private static readonly ConcurrentDictionary<(Type, PropertyInfo, bool), Delegate> GetterCache = new();
+        private static readonly ConcurrentDictionary<(Type, PropertyInfo, bool), Delegate> SetterCache = new();
+        private static readonly ConcurrentDictionary<(Type, Delegate, BindingFlags), ReadOnlyMemory<Symbol>> FindPropertiesCache = new();
 
         // Note that predicate is used as cache key here, so you shouldn't pass
         // closure predicates into this method!
@@ -27,17 +21,18 @@ namespace Stl.Reflection
             BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
         {
             var key = (type, predicate, bindingFlags);
-            if (_findPropertiesCache.TryGetValue(key, out var r))
+            // ReSharper disable once InconsistentlySynchronizedField
+            if (FindPropertiesCache.TryGetValue(key, out var r))
                 return r;
-            lock (_findPropertiesCache) {
-                if (_findPropertiesCache.TryGetValue(key, out r))
+            lock (FindPropertiesCache) {
+                if (FindPropertiesCache.TryGetValue(key, out r))
                     return r;
                 r = (
                     from property in type.GetProperties(bindingFlags)
                     where predicate.Invoke(property)
                     select new Symbol(property.Name)
                     ).ToArray();
-                _findPropertiesCache[key] = r;
+                FindPropertiesCache[key] = r;
                 return r;
             }
         }
@@ -58,14 +53,15 @@ namespace Stl.Reflection
         public static Delegate? GetGetter(this Type type, Symbol propertyName, bool isValueUntyped = false)
         {
             var key = (type, propertyName, isValueUntyped);
-            if (_getterBySymCache.TryGetValue(key, out var r))
+            // ReSharper disable once InconsistentlySynchronizedField
+            if (GetterBySymCache.TryGetValue(key, out var r))
                 return r;
-            lock (_getterBySymCache) {
-                if (_getterBySymCache.TryGetValue(key, out r))
+            lock (GetterBySymCache) {
+                if (GetterBySymCache.TryGetValue(key, out r))
                     return r;
                 var pi = GetProperty(type, propertyName);
                 r = pi == null ? null : type.GetGetter(pi, isValueUntyped);
-                _getterBySymCache[key] = r;
+                GetterBySymCache[key] = r;
                 return r;
             }
         }
@@ -73,10 +69,11 @@ namespace Stl.Reflection
         public static Delegate GetGetter(this Type type, PropertyInfo propertyInfo, bool isValueUntyped = false)
         {
             var key = (type, propertyInfo, isValueUntyped);
-            if (_getterCache.TryGetValue(key, out var r))
+            // ReSharper disable once InconsistentlySynchronizedField
+            if (GetterCache.TryGetValue(key, out var r))
                 return r;
-            lock (_getterCache) {
-                if (_getterCache.TryGetValue(key, out r))
+            lock (GetterCache) {
+                if (GetterCache.TryGetValue(key, out r))
                     return r;
                 var pObject = Expression.Parameter(typeof(object), "object");
                 var eAccess = Expression.Property(
@@ -86,7 +83,7 @@ namespace Stl.Reflection
                     ? (Expression) Expression.Convert(eAccess, typeof(object))
                     : eAccess;
                 r = Expression.Lambda(body, pObject).Compile();
-                _getterCache[key] = r;
+                GetterCache[key] = r;
                 return r;
             }
         }
@@ -97,14 +94,15 @@ namespace Stl.Reflection
         public static Delegate? GetSetter(this Type type, Symbol propertyName, bool isValueUntyped = false)
         {
             var key = (type, propertyName, isValueUntyped);
-            if (_setterBySymCache.TryGetValue(key, out var r))
+            // ReSharper disable once InconsistentlySynchronizedField
+            if (SetterBySymCache.TryGetValue(key, out var r))
                 return r;
-            lock (_setterBySymCache) {
-                if (_setterBySymCache.TryGetValue(key, out r))
+            lock (SetterBySymCache) {
+                if (SetterBySymCache.TryGetValue(key, out r))
                     return r;
                 var pi = GetProperty(type, propertyName);
                 r = pi == null ? null : type.GetSetter(pi, isValueUntyped);
-                _setterBySymCache[key] = r;
+                SetterBySymCache[key] = r;
                 return r;
             }
         }
@@ -112,10 +110,11 @@ namespace Stl.Reflection
         public static Delegate GetSetter(this Type type, PropertyInfo propertyInfo, bool isValueUntyped = false)
         {
             var key = (type, propertyInfo, isValueUntyped);
-            if (_setterCache.TryGetValue(key, out var r))
+            // ReSharper disable once InconsistentlySynchronizedField
+            if (SetterCache.TryGetValue(key, out var r))
                 return r;
-            lock (_setterCache) {
-                if (_setterCache.TryGetValue(key, out r))
+            lock (SetterCache) {
+                if (SetterCache.TryGetValue(key, out r))
                     return r;
                 var pObject = Expression.Parameter(typeof(object), "object");
                 var lValue = Expression.Property(
@@ -134,7 +133,7 @@ namespace Stl.Reflection
                     Expression.Return(eReturnTarget),
                     Expression.Label(eReturnTarget));
                 r = Expression.Lambda(eBlock, pObject, pValue).Compile();
-                _setterCache[key] = r;
+                SetterCache[key] = r;
                 return r;
             }
         }

@@ -1,10 +1,9 @@
 using System;
-using System.Diagnostics;
 using Stl.Mathematics;
 
 namespace Stl.OS
 {
-    public class HardwareInfo
+    public static class HardwareInfo
     {
         private const int RefreshIntervalTicks = 30_000; // Tick = millisecond
         private static readonly object Lock = new object();
