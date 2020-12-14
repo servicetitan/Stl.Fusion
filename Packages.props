@@ -59,7 +59,7 @@
     <PackageReference Update="Moq" Version="4.15.2" />
     <PackageReference Update="MsgPack.Cli" Version="1.0.1" />
     <PackageReference Update="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Update="Npgsql.EntityFrameworkCore.PostgreSQL" Version="5.0.0" />
+    <PackageReference Update="Npgsql.EntityFrameworkCore.PostgreSQL" Version="5.0.1" />
     <PackageReference Update="Polly" Version="7.2.1" />
     <PackageReference Update="Refit" Version="5.2.4" />
     <PackageReference Update="RestEase" Version="1.5.1" />
