@@ -62,7 +62,7 @@
     <PackageReference Update="Npgsql.EntityFrameworkCore.PostgreSQL" Version="5.0.0" />
     <PackageReference Update="Polly" Version="7.2.1" />
     <PackageReference Update="Refit" Version="5.2.4" />
-    <PackageReference Update="RestEase" Version="1.5.1" />
+    <PackageReference Update="RestEase" Version="1.5.2" />
     <PackageReference Update="Serilog" Version="2.10.0" />
     <PackageReference Update="Serilog.Extensions.Logging" Version="3.0.1" />
     <PackageReference Update="Serilog.Sinks.Console" Version="3.1.1" />
