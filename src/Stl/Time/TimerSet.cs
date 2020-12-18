@@ -28,7 +28,7 @@ namespace Stl.Time
         }
 
         private readonly Action<TTimer>? _fireHandler;
-        private readonly RadixHeapSet<TTimer> _timers = new RadixHeapSet<TTimer>(45);
+        private readonly RadixHeapSet<TTimer> _timers = new(45);
         private readonly Moment _start;
         private readonly object _lock = new object();
         private int minPriority = 0;
@@ -48,7 +48,7 @@ namespace Stl.Time
             Clock = options.Clock;
             _fireHandler = fireHandler;
             _start = Clock.Now;
-            Task.Run(RunAsync);
+            RunAsync().Ignore();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -92,11 +92,12 @@ namespace Stl.Time
         {
             var dueAt = _start + Quanta;
             for (;; dueAt += Quanta) {
-                // ReSharper disable once InconsistentlySynchronizedField
+                cancellationToken.ThrowIfCancellationRequested();
                 if (dueAt > Clock.Now)
-                    await Clock.DelayAsync(dueAt, cancellationToken).ConfigureAwait(false);
-                else
-                    cancellationToken.ThrowIfCancellationRequested();
+                    // We intentionally don't pass CancellationToken here:
+                    // the delay is supposed to be short & we want to save on
+                    // CancellationToken registration/unregistration.
+                    await Clock.DelayAsync(dueAt, default).ConfigureAwait(false);
                 IReadOnlyDictionary<TTimer, long> minSet;
                 lock (_lock) {
                     minSet = _timers.ExtractMinSet(minPriority);

@@ -77,7 +77,7 @@ namespace Stl.Channels
             CancellationToken cancellationToken = default)
         {
             if (concurrencyLevel < 0)
-                concurrencyLevel = HardwareInfo.ProcessorCount;
+                concurrencyLevel = HardwareInfo.GetProcessorCountFactor();
             var semaphore = new SemaphoreSlim(concurrencyLevel, concurrencyLevel);
             Exception? error = null;
 
@@ -127,7 +127,7 @@ namespace Stl.Channels
             CancellationToken cancellationToken = default)
         {
             if (concurrencyLevel < 0)
-                concurrencyLevel = HardwareInfo.ProcessorCount;
+                concurrencyLevel = HardwareInfo.GetProcessorCountFactor();
             var semaphore = new SemaphoreSlim(concurrencyLevel, concurrencyLevel);
             Exception? error = null;
 

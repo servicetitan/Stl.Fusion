@@ -5,16 +5,22 @@ namespace Stl.OS
 {
     public enum OSKind
     {
-        Unix = 0,
+        OtherUnix = 0,
         Windows = 1,
         MacOS = 2,
-        WebAssembly = 3,
+        WebAssembly = 4,
     }
 
     public static class OSInfo
     {
         public static readonly OSKind Kind;
         public static readonly string UserHomePath;
+
+        public static bool IsWebAssembly => Kind == OSKind.WebAssembly;
+        public static bool IsWindows => Kind == OSKind.Windows;
+        public static bool IsMacOS => Kind == OSKind.MacOS;
+        public static bool IsOtherUnix => Kind == OSKind.OtherUnix;
+        public static bool IsAnyUnix => Kind == OSKind.OtherUnix || IsMacOS;
 
         static OSInfo()
         {
@@ -42,7 +48,7 @@ namespace Stl.OS
             // Unix
             Kind = RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
                 ? OSKind.MacOS
-                : OSKind.Unix;
+                : OSKind.OtherUnix;
             UserHomePath = Environment.GetEnvironmentVariable("HOME") ?? "";
         }
     }

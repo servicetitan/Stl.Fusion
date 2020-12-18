@@ -122,7 +122,7 @@ namespace Stl.Fusion.Bridge.Internal
             for (var i = 0; i < 2; i++) {
                 while (!subscriptions.IsEmpty) {
                     var tasks = subscriptions
-                        .Take(HardwareInfo.ProcessorCount * 4)
+                        .Take(HardwareInfo.GetProcessorCountFactor(4, 4))
                         .ToList()
                         .Select(p => Task.Run(async () => {
                             var (publicationId, _) = (p.Key, p.Value);

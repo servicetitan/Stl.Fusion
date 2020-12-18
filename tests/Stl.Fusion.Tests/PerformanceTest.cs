@@ -55,7 +55,7 @@ namespace Stl.Fusion.Tests
             var useImdb = Options.UseInMemoryDatabase;
             var opCountPerCore = 2_000_000;
             var readersPerCore = 4;
-            var readerCount = HardwareInfo.ProcessorCount * readersPerCore;
+            var readerCount = HardwareInfo.GetProcessorCountFactor(readersPerCore);
             var cachingIterationCount = opCountPerCore / readersPerCore;
             var nonCachingIterationCount = cachingIterationCount / (useImdb ? 1000 : 10_000);
 

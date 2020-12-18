@@ -23,20 +23,21 @@ namespace Stl.Fusion
         {
             internal static readonly PrimeSieve CapacityPrimeSieve;
             public static int DefaultInitialCapacity { get; }
+            public static int DefaultInitialConcurrency { get; }
 
             public int InitialCapacity { get; set; } = DefaultInitialCapacity;
-            public int ConcurrencyLevel { get; set; } = HardwareInfo.ProcessorCount << 4;
+            public int ConcurrencyLevel { get; set; } = DefaultInitialConcurrency;
             public Func<IFunction, IAsyncLockSet<ComputedInput>>? LocksProvider { get; set; } = null;
             public GCHandlePool? GCHandlePool { get; set; } = null;
 
             static Options()
             {
-                var capacity = Math.Min(16_384, HardwareInfo.ProcessorCountPo2 * 128);
+                DefaultInitialConcurrency = HardwareInfo.GetProcessorCountPo2Factor(16);
+                var capacity = HardwareInfo.GetProcessorCountPo2Factor(128, 128);
                 CapacityPrimeSieve = new PrimeSieve(capacity + 1024);
                 while (!CapacityPrimeSieve.IsPrime(capacity))
                     capacity--;
                 DefaultInitialCapacity = capacity;
-                // Debug.WriteLine($"{nameof(ComputedRegistry)}.{nameof(Options)}.{nameof(DefaultInitialCapacity)} = {DefaultInitialCapacity}");
             }
         }
 

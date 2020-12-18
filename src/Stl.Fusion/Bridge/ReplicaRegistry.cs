@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Stl.Concurrency;
 using Stl.DependencyInjection;
+using Stl.Mathematics;
 using Stl.OS;
 
 namespace Stl.Fusion.Bridge
@@ -17,19 +18,20 @@ namespace Stl.Fusion.Bridge
         public sealed class Options : IOptions
         {
             public static int DefaultInitialCapacity { get; }
+            public static int DefaultInitialConcurrency { get; }
 
             public int InitialCapacity { get; set; } = DefaultInitialCapacity;
-            public int ConcurrencyLevel { get; set; } = HardwareInfo.ProcessorCount;
+            public int ConcurrencyLevel { get; set; } = DefaultInitialConcurrency;
             public GCHandlePool? GCHandlePool { get; set; } = null;
 
             static Options()
             {
+                DefaultInitialConcurrency = HardwareInfo.GetProcessorCountPo2Factor();
+                var capacity = HardwareInfo.GetProcessorCountPo2Factor(16, 16);
                 var ps = ComputedRegistry.Options.CapacityPrimeSieve;
-                var capacity = HardwareInfo.ProcessorCountPo2 * 8;
                 while (!ps.IsPrime(capacity))
                     capacity--;
                 DefaultInitialCapacity = capacity;
-                // Debug.WriteLine($"{nameof(ReplicaRegistry)}.{nameof(Options)}.{nameof(DefaultInitialCapacity)} = {DefaultInitialCapacity}");
             }
         }
 

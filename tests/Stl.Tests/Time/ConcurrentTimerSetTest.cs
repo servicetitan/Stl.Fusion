@@ -69,7 +69,7 @@ namespace Stl.Tests.Collections
         [Fact]
         public async Task RandomTimerTest()
         {
-            var taskCount = (TestRunnerInfo.IsBuildAgent() ? 1 : 10 * HardwareInfo.ProcessorCount);
+            var taskCount = (TestRunnerInfo.IsBuildAgent() ? 1 : HardwareInfo.GetProcessorCountFactor(10));
             var maxDelta = TestRunnerInfo.IsBuildAgent() ? 20000 : 400;
             var rnd = new Random();
             var tasks = Enumerable.Range(0, taskCount)
@@ -87,7 +87,7 @@ namespace Stl.Tests.Collections
                     Quanta = TimeSpan.FromMilliseconds(100),
                 },
                 timer => timer.FiredAt = CoarseCpuClock.Now);
-            var tasks = Enumerable.Range(0, HardwareInfo.ProcessorCount)
+            var tasks = Enumerable.Range(0, HardwareInfo.GetProcessorCountFactor())
                 .Select(i => Task.Run(() => OneRandomTest(timerSet, 500_000, 1000, 5000)))
                 .ToArray();
             await Task.WhenAll(tasks);

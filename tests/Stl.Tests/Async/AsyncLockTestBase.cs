@@ -122,7 +122,7 @@ namespace Stl.Tests.Async
             var rnd = new Random();
             var tasks = new List<Task>();
 
-            var taskCount = TestRunnerInfo.IsBuildAgent() ? 2 : HardwareInfo.ProcessorCount * 4;
+            var taskCount = TestRunnerInfo.IsBuildAgent() ? 2 : HardwareInfo.GetProcessorCountFactor(4);
             var maxDelayMs = 100;
             var maxDurationMs = 3;
             var maxReentryCount = 5;

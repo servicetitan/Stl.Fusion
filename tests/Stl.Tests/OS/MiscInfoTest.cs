@@ -23,7 +23,7 @@ namespace Stl.Tests.OS
         [Fact]
         public void HardwareInfoTest()
         {
-            var processorCount = HardwareInfo.ProcessorCount;
+            var processorCount = HardwareInfo.GetProcessorCountFactor();
             processorCount.Should().BeGreaterThan(0);
             WriteLine($"CPU core count: {processorCount}");
         }
