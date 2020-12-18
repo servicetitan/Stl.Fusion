@@ -116,7 +116,7 @@ namespace Stl.Fusion.Bridge
             var channelProcessors = ChannelProcessors;
             while (!channelProcessors.IsEmpty) {
                 var tasks = channelProcessors
-                    .Take(HardwareInfo.ProcessorCount * 4)
+                    .Take(HardwareInfo.GetProcessorCountFactor(4, 4))
                     .ToList()
                     .Select(p => {
                         var (_, channelProcessor) = (p.Key, p.Value);

@@ -52,7 +52,7 @@ namespace Stl.Async
 
             async Task<T> InnerAsync() {
                 using var dTask = cancellationToken.ToTask<T>(task.CreationOptions);
-                var winner = await Task.WhenAny(task, dTask.Resource);
+                var winner = await Task.WhenAny(task, dTask.Resource).ConfigureAwait(false);
                 return await winner;
             }
 
@@ -68,7 +68,7 @@ namespace Stl.Async
 
             async Task InnerAsync() {
                 using var dTask = cancellationToken.ToTask(task.CreationOptions);
-                var winner = await Task.WhenAny(task, dTask.Resource);
+                var winner = await Task.WhenAny(task, dTask.Resource).ConfigureAwait(false);
                 await winner;
             }
 
@@ -77,42 +77,58 @@ namespace Stl.Async
 
         // WithTimeout
 
-        public static async Task<bool> WithTimeout(
+        public static Task<bool> WithTimeout(
             this Task task,
             TimeSpan timeout,
-            IMomentClock? clock = null)
+            CancellationToken cancellationToken = default)
+            => task.WithTimeout(SystemClock.Instance, timeout, cancellationToken);
+
+        public static async Task<bool> WithTimeout(
+            this Task task,
+            IMomentClock clock,
+            TimeSpan timeout,
+            CancellationToken cancellationToken = default)
         {
-            clock ??= SystemClock.Instance;
-            Task completedTask;
-            using var cts = new CancellationTokenSource(timeout);
-            try {
-                var delayTask = clock.DelayAsync(timeout, cts.Token);
-                completedTask = await Task.WhenAny(task, delayTask).ConfigureAwait(false);
-            }
-            finally {
-                if (!cts.IsCancellationRequested)
-                    cts.Cancel();
-            }
-            return completedTask == task;
+            Task? completedTask = null;
+            using var cts = new CancellationTokenSource();
+            var ctsToken = cts.Token;
+            await using var _ = cancellationToken.Register(state => ((CancellationTokenSource) state!).Cancel(), cts);
+
+            var delayTask = clock.DelayAsync(timeout, ctsToken);
+            completedTask = await Task.WhenAny(task, delayTask).ConfigureAwait(false);
+
+            if (completedTask != task)
+                return false;
+
+            cts.Cancel(); // Ensures delayTask is cancelled to avoid memory leak
+            return true;
         }
+
+        public static Task<Option<T>> WithTimeout<T>(
+            this Task<T> task,
+            TimeSpan timeout,
+            CancellationToken cancellationToken = default)
+            => task.WithTimeout(SystemClock.Instance, timeout, cancellationToken);
 
         public static async Task<Option<T>> WithTimeout<T>(
             this Task<T> task,
+            IMomentClock clock,
             TimeSpan timeout,
-            IMomentClock? clock = null)
+            CancellationToken cancellationToken = default)
         {
-            clock ??= SystemClock.Instance;
-            Task completedTask;
-            using var cts = new CancellationTokenSource(timeout);
-            try {
-                var delayTask = clock.DelayAsync(timeout, cts.Token);
-                completedTask = await Task.WhenAny(task, delayTask).ConfigureAwait(false);
-            }
-            finally {
-                if (!cts.IsCancellationRequested)
-                    cts.Cancel();
-            }
-            return completedTask == task ? await task.ConfigureAwait(false) : Option<T>.None;
+            Task? completedTask = null;
+            using var cts = new CancellationTokenSource();
+            var ctsToken = cts.Token;
+            await using var _ = cancellationToken.Register(state => ((CancellationTokenSource) state!).Cancel(), cts);
+
+            var delayTask = clock.DelayAsync(timeout, ctsToken);
+            completedTask = await Task.WhenAny(task, delayTask).ConfigureAwait(false);
+
+            if (completedTask != task)
+                return Option<T>.None;
+
+            cts.Cancel(); // Ensures delayTask is cancelled to avoid memory leak
+            return await task.ConfigureAwait(false);
         }
 
         // SuppressXxx

@@ -33,10 +33,6 @@ namespace Stl.OS
                     var h = int.Parse(wh[1]);
                     PrimaryDisplayDimensions = new Rectangle(0, 0, w, h);
                     break;
-                case OSKind.Unix:
-                case OSKind.MacOS:
-                case OSKind.WebAssembly:
-                    break;
                 }
             }
             catch {

@@ -35,8 +35,8 @@ namespace Stl.Channels
 
         public ChannelHub()
         {
-            var concurrencyLevel = HardwareInfo.ProcessorCount << 2;
-            var capacity = 7919;
+            var concurrencyLevel = HardwareInfo.GetProcessorCountFactor(4, 4);
+            var capacity = OSInfo.IsWebAssembly ? 17 : 509;
             Channels = new ConcurrentDictionary<Channel<T>, Unit>(concurrencyLevel, capacity);
         }
 
@@ -120,7 +120,7 @@ namespace Stl.Channels
         {
             while (!Channels.IsEmpty) {
                 var tasks = Channels
-                    .Take(HardwareInfo.ProcessorCount * 4)
+                    .Take(HardwareInfo.GetProcessorCountFactor(4, 4))
                     .ToList()
                     .Select(p => Task.Run(async () => {
                         var channel = p.Key;

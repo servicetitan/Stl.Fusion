@@ -8,7 +8,7 @@ namespace Stl.Concurrency
 {
     public sealed class StochasticCounter
     {
-        public static readonly int DefaultApproximationFactor = Math.Min(8, HardwareInfo.ProcessorCount);
+        public static readonly int DefaultApproximationFactor = Math.Min(8, HardwareInfo.GetProcessorCountPo2Factor());
 
         private long _value = 0;
         private readonly uint _approximationMask;

@@ -16,6 +16,7 @@ namespace Stl.Async
     {
         private object Lock => StopTokenSource;
         protected CancellationTokenSource StopTokenSource { get; }
+        protected bool FlowExecutionContext { get; set; }
         public CancellationToken StopToken { get; }
         public Task? RunningTask { get; private set; }
 
@@ -33,9 +34,15 @@ namespace Stl.Async
                 if (RunningTask != null)
                     return RunningTask;
                 ThrowIfDisposedOrDisposing();
-                RunningTask = Task
-                    .Run(() => RunInternalAsync(StopToken), CancellationToken.None)
-                    .SuppressCancellation();
+
+                var flowSuppressor =
+                    (FlowExecutionContext && !ExecutionContext.IsFlowSuppressed())
+                    ? Disposable.NewClosed(ExecutionContext.SuppressFlow(), d => d.Dispose())
+                    : Disposable.NewClosed<AsyncFlowControl>(default, _ => {});
+                using (flowSuppressor)
+                    RunningTask = Task
+                        .Run(() => RunInternalAsync(StopToken), CancellationToken.None)
+                        .SuppressCancellation();
             }
             return RunningTask;
         }

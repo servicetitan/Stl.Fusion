@@ -1,21 +1,27 @@
 using System;
+using System.Runtime.CompilerServices;
 
 namespace Stl
 {
     public static class Disposable
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Disposable<Action> New(Action disposer)
-            => new Disposable<Action>(disposer, action => action.Invoke());
+            => new(disposer, action => action.Invoke());
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Disposable<T> New<T>(T resource, Action<T> disposer)
-            => new Disposable<T>(resource, disposer);
+            => new(resource, disposer);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Disposable<T, TState> New<T, TState>(T resource, TState state, Action<T, TState> disposer)
-            => new Disposable<T, TState>(resource, state, disposer);
+            => new(resource, state, disposer);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ClosedDisposable<TState> NewClosed<TState>(TState state, Action<TState> disposer)
-            => new ClosedDisposable<TState>(state, disposer);
+            => new(state, disposer);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ClosedDisposable<(T1, T2)> Join<T1, T2>(T1 disposable1, T2 disposable2)
             where T1 : IDisposable
             where T2 : IDisposable
@@ -35,12 +41,14 @@ namespace Stl
 
         public T Resource { get; }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Disposable(T resource, Action<T> disposer)
         {
             Resource = resource;
             _disposer = disposer;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose() => _disposer?.Invoke(Resource);
     }
 
@@ -51,6 +59,7 @@ namespace Stl
 
         public T Resource { get; }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Disposable(T resource, TState state, Action<T, TState> disposer)
         {
             Resource = resource;
@@ -58,6 +67,7 @@ namespace Stl
             _disposer = disposer;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose() => _disposer?.Invoke(Resource, _state);
     }
 
@@ -66,12 +76,14 @@ namespace Stl
         private readonly TState _state;
         private readonly Action<TState>? _disposer;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ClosedDisposable(TState state, Action<TState> disposer)
         {
             _state = state;
             _disposer = disposer;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose() => _disposer?.Invoke(_state);
     }
 }

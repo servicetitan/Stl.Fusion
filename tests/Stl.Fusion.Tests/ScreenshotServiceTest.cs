@@ -20,7 +20,7 @@ namespace Stl.Fusion.Tests
         [Fact]
         public async Task BasicTest()
         {
-            if (OSInfo.Kind == OSKind.Unix)
+            if (OSInfo.IsAnyUnix)
                 // Screenshots don't work on Unix
                 return;
 

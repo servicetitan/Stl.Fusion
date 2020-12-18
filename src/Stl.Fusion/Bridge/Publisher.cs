@@ -102,8 +102,9 @@ namespace Stl.Fusion.Bridge
             SubscriptionExpirationTime = options.SubscriptionExpirationTime;
             Clock = options.Clock;
 
-            var concurrencyLevel = HardwareInfo.ProcessorCount << 2;
-            var capacity = 7919;
+            var concurrencyLevel = HardwareInfo.GetProcessorCountPo2Factor(4);
+            var capacity = OSInfo.IsWebAssembly ? 509 : 7919;
+
             Publications = new ConcurrentDictionary<ComputedInput, IPublication>(concurrencyLevel, capacity);
             PublicationsById = new ConcurrentDictionary<Symbol, IPublication>(concurrencyLevel, capacity);
             ChannelProcessors = new ConcurrentDictionary<Channel<Message>, PublisherChannelProcessor>(concurrencyLevel, capacity);
@@ -215,7 +216,7 @@ namespace Stl.Fusion.Bridge
             var channelProcessors = ChannelProcessors;
             while (!channelProcessors.IsEmpty) {
                 var tasks = channelProcessors
-                    .Take(HardwareInfo.ProcessorCount * 4)
+                    .Take(HardwareInfo.GetProcessorCountFactor(4, 4))
                     .ToList()
                     .Select(p => {
                         var (_, channelProcessor) = (p.Key, p.Value);
@@ -226,7 +227,7 @@ namespace Stl.Fusion.Bridge
             var publications = PublicationsById;
             while (!publications.IsEmpty) {
                 var tasks = publications
-                    .Take(HardwareInfo.ProcessorCount * 4)
+                    .Take(HardwareInfo.GetProcessorCountFactor(4, 4))
                     .ToList()
                     .Select(p => {
                         var (_, publication) = (p.Key, p.Value);

@@ -70,8 +70,7 @@ namespace Stl.Fusion
                 return;
 
             await CancelDelaysTask
-                .WithFakeCancellation(cancellationToken)
-                .WithTimeout(TimeSpan.FromSeconds(delay), Clock)
+                .WithTimeout(Clock, TimeSpan.FromSeconds(delay), cancellationToken)
                 .ConfigureAwait(false);
             if (retryCount > 0) {
                 // If it's an error, we still want to enforce at least
