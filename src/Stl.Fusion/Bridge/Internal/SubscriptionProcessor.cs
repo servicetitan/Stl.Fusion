@@ -58,22 +58,13 @@ namespace Stl.Fusion.Bridge.Internal
             var incomingChannelReader = IncomingChannel.Reader;
 
             var currentCts = (CancellationTokenSource?) null;
-            // NOTE: cancellationToken == StopToken, so this registration happens
-            // just once, and thus it's fine to omit the disposal of CTR.
-            cancellationToken.Register(() => {
-                try {
-                    currentCts?.Cancel();
-                }
-                catch {
-                    // Intended
-                }
-            });
+            await using var _ = cancellationToken.Register(() => currentCts?.Cancel());
             try {
                 var incomingMessageTask = incomingChannelReader.ReadAsync(cancellationToken).AsTask();
                 while (true) {
                     // Awaiting for new SubscribeMessage
                     var messageOpt = await incomingMessageTask
-                        .WithTimeout(ExpirationTime, Clock)
+                        .WithTimeout(Clock, ExpirationTime, cancellationToken)
                         .ConfigureAwait(false);
                     if (!messageOpt.IsSome(out var incomingMessage))
                         break; // Timeout
@@ -92,10 +83,9 @@ namespace Stl.Fusion.Bridge.Internal
                     if (isHardUpdateRequested) {
                         // We do only explicit state updates
                         var cts = new CancellationTokenSource();
-                        var ctsToken = cts.Token;
                         currentCts = cts;
                         try {
-                            await Publication.UpdateAsync(ctsToken).ConfigureAwait(false);
+                            await Publication.UpdateAsync(cts.Token).ConfigureAwait(false);
                             state = Publication.State;
                         }
                         finally {
@@ -131,7 +121,7 @@ namespace Stl.Fusion.Bridge.Internal
                 // Awaiting for disposal here = cyclic task dependency;
                 // we should just ensure it starts right when this method
                 // completes.
-                var _ = DisposeAsync();
+                DisposeAsync().Ignore();
             }
         }
 
