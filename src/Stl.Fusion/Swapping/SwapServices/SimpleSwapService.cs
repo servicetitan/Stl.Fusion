@@ -16,7 +16,7 @@ namespace Stl.Fusion.Swapping
         {
             public TimeSpan ExpirationTime { get; set; } = TimeSpan.FromMinutes(1);
             public TimeSpan TimerQuanta { get; set; } = TimeSpan.FromSeconds(1);
-            public int ConcurrencyLevel { get; set; } = HardwareInfo.ProcessorCount;
+            public int ConcurrencyLevel { get; set; } = HardwareInfo.GetProcessorCountPo2Factor();
             public Func<ISerializer<string>> SerializerFactory { get; set; } = () => new JsonNetSerializer();
             public IMomentClock Clock { get; set; } = CoarseCpuClock.Instance;
         }

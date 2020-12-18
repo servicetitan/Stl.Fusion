@@ -52,7 +52,7 @@ namespace Stl.Async
 
             async Task<T> InnerAsync() {
                 using var dTask = cancellationToken.ToTask<T>(task.CreationOptions);
-                var winner = await Task.WhenAny(task, dTask.Resource);
+                var winner = await Task.WhenAny(task, dTask.Resource).ConfigureAwait(false);
                 return await winner;
             }
 
@@ -68,7 +68,7 @@ namespace Stl.Async
 
             async Task InnerAsync() {
                 using var dTask = cancellationToken.ToTask(task.CreationOptions);
-                var winner = await Task.WhenAny(task, dTask.Resource);
+                var winner = await Task.WhenAny(task, dTask.Resource).ConfigureAwait(false);
                 await winner;
             }
 

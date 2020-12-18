@@ -10,7 +10,7 @@ namespace Stl.Async
     public abstract class AsyncBatchProcessorBase<TIn, TOut> : AsyncProcessBase
     {
         public const int DefaultCapacity = 4096;
-        public int ConcurrencyLevel { get; set; } = HardwareInfo.ProcessorCount;
+        public int ConcurrencyLevel { get; set; } = HardwareInfo.GetProcessorCountPo2Factor();
         public int MaxBatchSize { get; set; } = 256;
         public Func<CancellationToken, Task>? BatchingDelayTaskFactory { get; set; }
         protected Channel<BatchItem<TIn, TOut>> Queue { get; }
@@ -40,7 +40,7 @@ namespace Stl.Async
             async Task WorkerAsync()
             {
                 var reader = Queue.Reader;
-                var batch = new List<BatchItem<TIn, TOut>>();
+                var batch = new List<BatchItem<TIn, TOut>>(maxBatchSize);
                 while (!cancellationToken.IsCancellationRequested) {
                     lock (readLock) {
                         while (batch.Count < maxBatchSize && reader.TryRead(out var item))

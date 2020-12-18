@@ -33,7 +33,7 @@
 
     protected override void OnInitialized()
     {
-        if (SessionId == "" && OSInfo.Kind == OSKind.WebAssembly) {
+        if (SessionId == "" && OSInfo.IsWebAssembly) {
             var inProcessJSRuntime = (IJSInProcessRuntime) JSRuntime;
             SessionId = inProcessJSRuntime.Invoke<string>("eval", SessionIdJavaScriptExpression);
         }
