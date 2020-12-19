@@ -74,19 +74,21 @@ namespace Stl.Fusion
             }
         }
 
-        public IServiceCollection BackToServices() => Services;
-
         // AddPublisher, AddReplicator
 
-        public FusionBuilder AddPublisher()
+        public FusionBuilder AddPublisher(Action<IServiceProvider, Publisher.Options>? configurePublisherOptions = null)
         {
             // Publisher
-            Services.TryAddSingleton(new Publisher.Options());
+            Services.TryAddSingleton(c => {
+                var options = new Publisher.Options();
+                configurePublisherOptions?.Invoke(c, options);
+                return options;
+            });
             Services.TryAddSingleton<IPublisher, Publisher>();
             return this;
         }
 
-        public FusionBuilder AddReplicator()
+        public FusionBuilder AddReplicator(Action<IServiceProvider, Replicator.Options>? configureReplicatorOptions = null)
         {
             // ReplicaServiceProxyGenerator
             Services.TryAddSingleton(new ReplicaClientInterceptor.Options());
@@ -94,7 +96,11 @@ namespace Stl.Fusion
             Services.TryAddSingleton(c => ReplicaClientProxyGenerator.Default);
             Services.TryAddSingleton(c => new [] { c.GetRequiredService<ReplicaClientInterceptor>() });
             // Replicator
-            Services.TryAddSingleton(new Replicator.Options());
+            Services.TryAddSingleton(c => {
+                var options = new Replicator.Options();
+                configureReplicatorOptions?.Invoke(c, options);
+                return options;
+            });
             Services.TryAddSingleton<IReplicator, Replicator>();
             return this;
         }
@@ -202,10 +208,5 @@ namespace Stl.Fusion
             Func<IServiceProvider, TImplementation> factory)
             where TImplementation : class, IState
             => AddState(typeof(TImplementation), factory);
-
-        // Extensions
-
-        public FusionAuthenticationBuilder AddAuthentication()
-            => new FusionAuthenticationBuilder(this);
     }
 }

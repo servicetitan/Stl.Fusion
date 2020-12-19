@@ -15,7 +15,8 @@ namespace Stl.Fusion.Server
         public FusionBuilder Fusion { get; }
         public IServiceCollection Services => Fusion.Services;
 
-        internal FusionWebSocketServerBuilder(FusionBuilder fusion)
+        internal FusionWebSocketServerBuilder(FusionBuilder fusion,
+            Action<IServiceProvider, WebSocketServer.Options>? optionsBuilder)
         {
             Fusion = fusion;
             if (Services.Contains(AddedTagDescriptor))
@@ -24,43 +25,17 @@ namespace Stl.Fusion.Server
             Services.Insert(0, AddedTagDescriptor);
 
             Fusion.AddPublisher();
-            Services.TryAddSingleton<WebSocketServer.Options>();
+            Services.TryAddSingleton(c => {
+                var options = new WebSocketServer.Options();
+                optionsBuilder?.Invoke(c, options);
+                return options;
+            });
             Services.TryAddSingleton<WebSocketServer>();
             Services.AddMvcCore()
                 .AddNewtonsoftJson(
                     options => MemberwiseCopier.Invoke(
                         JsonNetSerializer.DefaultSettings,
                         options.SerializerSettings));
-        }
-
-        public FusionBuilder BackToFusion() => Fusion;
-        public IServiceCollection BackToServices() => Services;
-
-        // ConfigureXxx
-
-        public FusionWebSocketServerBuilder ConfigureWebSocketServer(
-            WebSocketServer.Options options)
-        {
-            var serviceDescriptor = new ServiceDescriptor(
-                typeof(WebSocketServer.Options),
-                options);
-            Services.Replace(serviceDescriptor);
-            return this;
-        }
-
-        public FusionWebSocketServerBuilder ConfigureWebSocketServer(
-            Action<IServiceProvider, WebSocketServer.Options> optionsBuilder)
-        {
-            var serviceDescriptor = new ServiceDescriptor(
-                typeof(WebSocketServer.Options),
-                c => {
-                    var options = new WebSocketServer.Options();
-                    optionsBuilder.Invoke(c, options);
-                    return options;
-                },
-                ServiceLifetime.Singleton);
-            Services.Replace(serviceDescriptor);
-            return this;
         }
     }
 }

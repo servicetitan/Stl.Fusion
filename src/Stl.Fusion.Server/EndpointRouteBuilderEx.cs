@@ -16,5 +16,4 @@ namespace Stl.Fusion.Server
                 .WithDisplayName("Stl.Fusion WebSocket Server");
         }
     }
-
 }

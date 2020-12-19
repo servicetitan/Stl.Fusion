@@ -12,5 +12,15 @@ namespace Stl.Fusion.Client
                 builder.ConfigureWebSocketChannel(optionsBuilder);
             return builder;
         }
+
+        public static FusionBuilder AddRestEaseClient(this FusionBuilder fusion,
+            Action<FusionRestEaseClientBuilder> configureClient,
+            Action<IServiceProvider, WebSocketChannelProvider.Options>? optionsBuilder = null)
+        {
+            var restEaseClient = fusion.AddRestEaseClient(optionsBuilder);
+            configureClient.Invoke(restEaseClient);
+            return fusion;
+        }
+
     }
 }

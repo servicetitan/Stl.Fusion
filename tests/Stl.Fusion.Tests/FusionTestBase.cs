@@ -138,7 +138,7 @@ namespace Stl.Fusion.Tests
                     var clientBaseUri = isFusionService ? baseUri : apiUri;
                     options.HttpClientActions.Add(c => c.BaseAddress = clientBaseUri);
                 });
-            var fusionAuth = fusion.AddAuthentication().AddClient();
+            var fusionAuth = fusion.AddAuthentication().AddRestEaseClient();
 
             // Auto-discovered services
             services.AttributeScanner()

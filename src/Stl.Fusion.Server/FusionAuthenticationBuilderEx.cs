@@ -12,7 +12,7 @@ namespace Stl.Fusion.Server
             Action<IServiceProvider, SessionMiddleware.Options>? sessionMiddlewareOptionsBuilder = null,
             Type? authServiceImplementationType = null)
         {
-            fusionAuth.AddAuthService(authServiceImplementationType);
+            fusionAuth.AddServerSideAuthService(authServiceImplementationType);
 
             var services = fusionAuth.Services;
             services.TryAddSingleton(c => {

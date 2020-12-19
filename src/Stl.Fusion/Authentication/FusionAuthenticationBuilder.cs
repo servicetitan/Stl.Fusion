@@ -23,14 +23,11 @@ namespace Stl.Fusion.Authentication
             Services.TryAddScoped<PresenceService>();
         }
 
-        public FusionBuilder BackToFusion() => Fusion;
-        public IServiceCollection BackToServices() => Services;
-
-        public FusionAuthenticationBuilder AddAuthService<TAuthService>()
+        public FusionAuthenticationBuilder AddServerSideAuthService<TAuthService>()
             where TAuthService : class, IServerSideAuthService
-            => AddAuthService(typeof(TAuthService));
+            => AddServerSideAuthService(typeof(TAuthService));
 
-        public FusionAuthenticationBuilder AddAuthService(Type? implementationType = null)
+        public FusionAuthenticationBuilder AddServerSideAuthService(Type? implementationType = null)
         {
             implementationType ??= typeof(InProcessAuthService);
             var serverSideServiceType = typeof(IServerSideAuthService);
