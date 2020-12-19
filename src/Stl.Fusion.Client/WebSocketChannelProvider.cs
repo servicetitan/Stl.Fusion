@@ -22,24 +22,24 @@ namespace Stl.Fusion.Client
     {
         public class Options : IOptions
         {
-            public Uri BaseUri { get; set; } = new Uri("http://localhost:5000/");
+            public Uri BaseUri { get; set; } = new("http://localhost:5000/");
             public string RequestPath { get; set; } = "/fusion/ws";
             public string PublisherIdQueryParameterName { get; set; } = "publisherId";
             public string ClientIdQueryParameterName { get; set; } = "clientId";
             public TimeSpan ConnectTimeout { get; set; } = TimeSpan.FromSeconds(10);
             public LogLevel? MessageLogLevel { get; set; } = null;
             public int? MessageMaxLength { get; set; } = 2048;
-            public Func<IServiceProvider, ChannelSerializerPair<Message, string>> ChannelSerializerPairFactory { get; set; } =
+            public Func<IServiceProvider, ChannelSerializerPair<BridgeMessage, string>> ChannelSerializerPairFactory { get; set; } =
                 DefaultChannelSerializerPairFactory;
             public Func<IServiceProvider, ClientWebSocket> ClientWebSocketFactory { get; set; } =
                 DefaultClientWebSocketFactory;
             public Func<WebSocketChannelProvider, Symbol, Uri> ConnectionUrlResolver { get; set; } =
                 DefaultConnectionUrlResolver;
 
-            public static ChannelSerializerPair<Message, string> DefaultChannelSerializerPairFactory(IServiceProvider services)
-                => new ChannelSerializerPair<Message, string>(
-                    new SafeJsonNetSerializer(t => typeof(ReplicatorMessage).IsAssignableFrom(t)).ToTyped<Message>(),
-                    new JsonNetSerializer().ToTyped<Message>());
+            public static ChannelSerializerPair<BridgeMessage, string> DefaultChannelSerializerPairFactory(IServiceProvider services)
+                => new(
+                    new SafeJsonNetSerializer(t => typeof(ReplicatorMessage).IsAssignableFrom(t)).ToTyped<BridgeMessage>(),
+                    new JsonNetSerializer().ToTyped<BridgeMessage>());
 
             public static ClientWebSocket DefaultClientWebSocketFactory(IServiceProvider services)
                 => services?.GetService<ClientWebSocket>() ?? new ClientWebSocket();
@@ -75,7 +75,7 @@ namespace Stl.Fusion.Client
         public TimeSpan ConnectTimeout { get; }
         public IServiceProvider ServiceProvider { get; }
 
-        protected Func<IServiceProvider, ChannelSerializerPair<Message, string>> ChannelSerializerPairFactory { get; }
+        protected Func<IServiceProvider, ChannelSerializerPair<BridgeMessage, string>> ChannelSerializerPairFactory { get; }
         protected Func<IServiceProvider, ClientWebSocket> ClientWebSocketFactory { get; }
         public Func<WebSocketChannelProvider, Symbol, Uri> ConnectionUrlResolver { get; }
         protected LogLevel? MessageLogLevel { get; }
@@ -105,7 +105,7 @@ namespace Stl.Fusion.Client
             ConnectionUrlResolver = options.ConnectionUrlResolver;
         }
 
-        public async Task<Channel<Message>> CreateChannelAsync(
+        public async Task<Channel<BridgeMessage>> CreateChannelAsync(
             Symbol publisherId, CancellationToken cancellationToken)
         {
             var clientId = ClientId.Value;

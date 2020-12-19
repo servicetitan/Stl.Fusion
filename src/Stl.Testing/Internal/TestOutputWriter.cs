@@ -10,7 +10,7 @@ namespace Stl.Testing.Internal
         protected static readonly string EnvNewLine = Environment.NewLine;
         protected static readonly char LastEnvNewLineChar = EnvNewLine[^1];
 
-        protected StringBuilder Prefix = new StringBuilder();
+        protected StringBuilder Prefix = new();
         public ITestOutputHelper TestOutput { get; }
         public override Encoding Encoding { get; } = Encoding.UTF8;
 

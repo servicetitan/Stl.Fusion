@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using Stl.DependencyInjection;
 using Stl.IO;
 using Stl.Fusion.Bridge;
+using Stl.Fusion.Bridge.Messages;
 using Stl.Fusion.Client;
 using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
@@ -23,7 +24,6 @@ using Stl.Testing.Internal;
 using Xunit;
 using Xunit.Abstractions;
 using Xunit.DependencyInjection.Logging;
-using Message = Stl.Fusion.Bridge.Messages.Message;
 
 namespace Stl.Fusion.Tests
 {
@@ -157,15 +157,15 @@ namespace Stl.Fusion.Tests
         protected TestDbContext GetDbContext()
             => Services.GetRequiredService<IDbContextFactory<TestDbContext>>().CreateDbContext();
 
-        protected Task<Channel<Message>> ConnectToPublisherAsync(CancellationToken cancellationToken = default)
+        protected Task<Channel<BridgeMessage>> ConnectToPublisherAsync(CancellationToken cancellationToken = default)
         {
             var channelProvider = Services.GetRequiredService<IChannelProvider>();
             return channelProvider.CreateChannelAsync(Publisher.Id, cancellationToken);
         }
 
-        protected virtual TestChannelPair<Message> CreateChannelPair(
+        protected virtual TestChannelPair<BridgeMessage> CreateChannelPair(
             string name, bool dump = true)
-            => new TestChannelPair<Message>(name, dump ? Out : null);
+            => new TestChannelPair<BridgeMessage>(name, dump ? Out : null);
 
         protected virtual Task DelayAsync(double seconds)
             => Timeouts.Clock.DelayAsync(TimeSpan.FromSeconds(seconds));

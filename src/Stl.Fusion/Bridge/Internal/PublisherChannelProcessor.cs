@@ -22,9 +22,9 @@ namespace Stl.Fusion.Bridge.Internal
         protected object Lock => Subscriptions;
 
         public readonly IPublisher Publisher;
-        public readonly Channel<Message> Channel;
+        public readonly Channel<BridgeMessage> Channel;
 
-        public PublisherChannelProcessor(IPublisher publisher, Channel<Message> channel,
+        public PublisherChannelProcessor(IPublisher publisher, Channel<BridgeMessage> channel,
             ILoggerFactory? loggerFactory = null)
         {
             LoggerFactory = loggerFactory ??= NullLoggerFactory.Instance;
@@ -60,7 +60,7 @@ namespace Stl.Fusion.Bridge.Internal
             }
         }
 
-        protected virtual async ValueTask OnUnsupportedMessageAsync(Message message, CancellationToken cancellationToken)
+        protected virtual async ValueTask OnUnsupportedMessageAsync(BridgeMessage message, CancellationToken cancellationToken)
         {
             if (message is ReplicaMessage rm) {
                 var response = new PublicationAbsentsMessage() {

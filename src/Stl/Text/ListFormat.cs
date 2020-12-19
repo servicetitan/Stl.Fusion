@@ -23,11 +23,11 @@ namespace Stl.Text
             NoItems = noItems;
         }
 
-        public ListFormatter CreateFormatter(StringBuilder? output = null, int itemIndex = 0)
-            => new ListFormatter(this, output ?? new StringBuilder(), itemIndex);
+        public ListFormatter CreateFormatter(StringBuilder output, int itemIndex = 0)
+            => new(this, output, itemIndex);
 
-        public ListParser CreateParser(in ReadOnlySpan<char> source, StringBuilder? item = null, int itemIndex = 0)
-            => new ListParser(this, source, item ?? new StringBuilder(), itemIndex);
+        public ListParser CreateParser(in ReadOnlySpan<char> source, StringBuilder item, int itemIndex = 0)
+            => new(this, source, item, itemIndex);
     }
 
     public ref struct ListFormatter

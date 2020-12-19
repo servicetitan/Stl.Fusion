@@ -19,12 +19,12 @@ namespace Stl.Fusion.Bridge.Internal
 
         public IPublisher Publisher => Publication.Publisher;
         public readonly IPublication Publication;
-        public readonly Channel<Message> OutgoingChannel;
+        public readonly Channel<BridgeMessage> OutgoingChannel;
         public readonly Channel<ReplicaMessage> IncomingChannel;
 
         protected SubscriptionProcessor(
             IPublication publication,
-            Channel<Message> outgoingChannel,
+            Channel<BridgeMessage> outgoingChannel,
             TimeSpan expirationTime,
             IMomentClock clock,
             ILoggerFactory loggerFactory)
@@ -44,7 +44,7 @@ namespace Stl.Fusion.Bridge.Internal
 
         public SubscriptionProcessor(
             IPublication<T> publication,
-            Channel<Message> outgoingChannel,
+            Channel<BridgeMessage> outgoingChannel,
             TimeSpan expirationTime,
             IMomentClock clock,
             ILoggerFactory loggerFactory)

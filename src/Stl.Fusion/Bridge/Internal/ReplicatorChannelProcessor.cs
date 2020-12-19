@@ -31,8 +31,8 @@ namespace Stl.Fusion.Bridge.Internal
         protected readonly ILogger Log;
         protected readonly IReplicatorImpl ReplicatorImpl;
         protected readonly HashSet<Symbol> Subscriptions;
-        protected volatile Task<Channel<Message>> ChannelTask = null!;
-        protected volatile Channel<Message> SendChannel = null!;
+        protected volatile Task<Channel<BridgeMessage>> ChannelTask = null!;
+        protected volatile Channel<BridgeMessage> SendChannel = null!;
         protected Symbol ClientId => Replicator.Id;
         protected object Lock => Subscriptions;
 
@@ -56,8 +56,8 @@ namespace Stl.Fusion.Bridge.Internal
         protected override async Task RunInternalAsync(CancellationToken cancellationToken)
         {
             try {
-                var lastChannelTask = (Task<Channel<Message>>?) null;
-                var channel = (Channel<Message>) null!;
+                var lastChannelTask = (Task<Channel<BridgeMessage>>?) null;
+                var channel = (Channel<BridgeMessage>) null!;
                 while (true) {
                     var error = (Exception?) null;
                     try {
@@ -143,7 +143,7 @@ namespace Stl.Fusion.Bridge.Internal
             }
         }
 
-        protected virtual Task OnMessageAsync(Message message, CancellationToken cancellationToken)
+        protected virtual Task OnMessageAsync(BridgeMessage message, CancellationToken cancellationToken)
         {
             switch (message) {
             case PublicationStateMessage psm:
@@ -179,10 +179,10 @@ namespace Stl.Fusion.Bridge.Internal
                 IsConnected.Value = false;
 
             var sendChannel = CreateSendChannel();
-            var channelTaskSource = TaskSource.New<Channel<Message>>(true);
+            var channelTaskSource = TaskSource.New<Channel<BridgeMessage>>(true);
             var channelTask = channelTaskSource.Task;
 
-            Channel<Message> oldSendChannel;
+            Channel<BridgeMessage> oldSendChannel;
             lock (Lock) {
                 oldSendChannel = Interlocked.Exchange(ref SendChannel, sendChannel);
                 Interlocked.Exchange(ref ChannelTask, channelTask);
@@ -235,7 +235,7 @@ namespace Stl.Fusion.Bridge.Internal
                 var cancellationToken = CancellationToken.None;
                 try {
                     var sendChannelReader = sendChannel.Reader;
-                    var channel = (Channel<Message>?) null;
+                    var channel = (Channel<BridgeMessage>?) null;
                     while (await sendChannelReader.WaitToReadAsync(cancellationToken).ConfigureAwait(false)) {
                         if (sendChannel != SendChannel)
                             break;
@@ -251,15 +251,15 @@ namespace Stl.Fusion.Bridge.Internal
             });
         }
 
-        protected virtual Channel<Message> CreateSendChannel()
-            => Channel.CreateUnbounded<Message>(
+        protected virtual Channel<BridgeMessage> CreateSendChannel()
+            => Channel.CreateUnbounded<BridgeMessage>(
                 new UnboundedChannelOptions() {
                     AllowSynchronousContinuations = true,
                     SingleReader = true,
                     SingleWriter = false,
                 });
 
-        protected void Send(Message message)
+        protected void Send(BridgeMessage message)
         {
             if (message is ReplicatorMessage rm)
                 rm.ReplicatorId = Replicator.Id;
