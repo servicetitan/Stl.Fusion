@@ -19,7 +19,7 @@
     <PackageReference Update="Autofac" Version="6.1.0" />
     <PackageReference Update="Autofac.Extensions.DependencyInjection" Version="7.1.0" />
     <PackageReference Update="Autofac.Extras.DynamicProxy" Version="6.0.0" />
-    <PackageReference Update="AutoFixture" Version="4.14.0" />
+    <PackageReference Update="AutoFixture" Version="4.15.0" />
     <PackageReference Update="AutoFixture.Xunit2" Version="4.14.0" />
     <PackageReference Update="Bullseye" Version="3.5.0" />
     <PackageReference Update="Castle.Core" Version="4.4.1" />
