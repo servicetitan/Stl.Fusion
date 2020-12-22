@@ -67,10 +67,10 @@ namespace Stl.Fusion.Server.Authentication
 
         [HttpGet("getUserSessions")]
         [Publish]
-        public Task<SessionInfo[]> GetUserSessions(Session? session = null, CancellationToken cancellationToken = default)
+        public Task<SessionInfo[]> GetUserSessionsAsync(Session? session = null, CancellationToken cancellationToken = default)
         {
             session ??= SessionResolver.Session;
-            return AuthService.GetUserSessions(session, cancellationToken);
+            return AuthService.GetUserSessionsAsync(session, cancellationToken);
         }
     }
 }

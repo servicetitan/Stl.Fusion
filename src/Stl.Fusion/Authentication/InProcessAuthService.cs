@@ -15,14 +15,10 @@ namespace Stl.Fusion.Authentication
 {
     public class InProcessAuthService : IServerSideAuthService
     {
-        protected ConcurrentDictionary<string, ImmutableHashSet<string>> UserSessions { get; } =
-            new ConcurrentDictionary<string, ImmutableHashSet<string>>();
-        protected ConcurrentDictionary<string, SessionInfo> SessionInfos { get; } =
-            new ConcurrentDictionary<string, SessionInfo>();
-        protected ConcurrentDictionary<string, User> Users { get; } =
-            new ConcurrentDictionary<string, User>();
-        protected ConcurrentDictionary<string, Unit> ForcedSignOuts { get; } =
-            new ConcurrentDictionary<string, Unit>();
+        protected ConcurrentDictionary<string, ImmutableHashSet<string>> UserSessions { get; } = new();
+        protected ConcurrentDictionary<string, SessionInfo> SessionInfos { get; } = new();
+        protected ConcurrentDictionary<string, User> Users { get; } = new();
+        protected ConcurrentDictionary<string, Unit> ForcedSignOuts { get; } = new();
         protected IMomentClock Clock { get; }
 
         public InProcessAuthService(IMomentClock clock)
@@ -39,7 +35,7 @@ namespace Stl.Fusion.Authentication
                 session.Id);
             Computed.Invalidate(() => {
                 GetUserAsync(session, default).Ignore();
-                GetFakeUserInfo(user.Id).Ignore();
+                GetUserSessionsAsync(user.Id, default).Ignore();
             });
         }
 
@@ -55,7 +51,7 @@ namespace Stl.Fusion.Authentication
                 UserSessions.TryRemove(user.Id, ImmutableHashSet<string>.Empty); // No need to store an empty one
                 Computed.Invalidate(() => {
                     GetUserAsync(session, default).Ignore();
-                    GetFakeUserInfo(user.Id).Ignore();
+                    GetUserSessionsAsync(user.Id, default).Ignore();
                 });
             }
             return Task.CompletedTask;
@@ -66,11 +62,11 @@ namespace Stl.Fusion.Authentication
             if (sessionInfo.Id != session.Id)
                 throw new ArgumentOutOfRangeException(nameof(sessionInfo));
             var now = Clock.Now.ToDateTime();
-            sessionInfo.LastSeenAt = now;
-            SessionInfos.AddOrUpdate(session.Id, sessionInfo, (sessionId, oldSessionInfo) => {
-                sessionInfo.CreatedAt = oldSessionInfo.CreatedAt;
-                return sessionInfo;
-            });
+            sessionInfo = sessionInfo with { LastSeenAt = now };
+            SessionInfos.AddOrUpdate(session.Id, sessionInfo, (sessionId, oldSessionInfo) =>
+                sessionInfo.CreatedAt == oldSessionInfo.CreatedAt
+                ? sessionInfo
+                : sessionInfo with { CreatedAt = oldSessionInfo.CreatedAt });
             Computed.Invalidate(() => GetSessionInfoAsync(session, default));
             return Task.CompletedTask;
         }
@@ -82,7 +78,7 @@ namespace Stl.Fusion.Authentication
             var delta = now - sessionInfo.LastSeenAt;
             if (delta < TimeSpan.FromSeconds(10))
                 return; // We don't want to update this too frequently
-            sessionInfo.LastSeenAt = now;
+            sessionInfo = sessionInfo with { LastSeenAt = now };
             await SaveSessionInfoAsync(sessionInfo, session, cancellationToken).ConfigureAwait(false);
         }
 
@@ -110,15 +106,21 @@ namespace Stl.Fusion.Authentication
             return Task.FromResult(sessionInfo)!;
         }
 
-        public virtual async Task<SessionInfo[]> GetUserSessions(
+        public virtual async Task<SessionInfo[]> GetUserSessionsAsync(
             Session session, CancellationToken cancellationToken = default)
         {
             var user = await GetUserAsync(session, cancellationToken).ConfigureAwait(false);
             if (!user.IsAuthenticated)
                 return Array.Empty<SessionInfo>();
 
-            await GetFakeUserInfo(user.Id).ConfigureAwait(false);
-            var sessionIds = UserSessions.GetValueOrDefault(user.Id) ?? ImmutableHashSet<string>.Empty;
+            return await GetUserSessionsAsync(user.Id, cancellationToken).ConfigureAwait(false);
+        }
+
+        [ComputeMethod]
+        protected virtual async Task<SessionInfo[]> GetUserSessionsAsync(
+            string userId, CancellationToken cancellationToken = default)
+        {
+            var sessionIds = UserSessions.GetValueOrDefault(userId) ?? ImmutableHashSet<string>.Empty;
             var result = new List<SessionInfo>();
             foreach (var sessionId in sessionIds) {
                 var tmpSession = new Session(sessionId);
@@ -127,8 +129,5 @@ namespace Stl.Fusion.Authentication
             }
             return result.OrderByDescending(si => si.LastSeenAt).ToArray();
         }
-
-        [ComputeMethod]
-        protected virtual Task<Unit> GetFakeUserInfo(string userId) => TaskEx.UnitTask;
     }
 }

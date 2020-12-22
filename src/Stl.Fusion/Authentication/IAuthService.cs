@@ -16,7 +16,7 @@ namespace Stl.Fusion.Authentication
         [ComputeMethod(KeepAliveTime = 10)]
         Task<SessionInfo> GetSessionInfoAsync(Session session, CancellationToken cancellationToken = default);
         [ComputeMethod]
-        Task<SessionInfo[]> GetUserSessions(Session session, CancellationToken cancellationToken = default);
+        Task<SessionInfo[]> GetUserSessionsAsync(Session session, CancellationToken cancellationToken = default);
     }
 
     public interface IServerSideAuthService : IAuthService

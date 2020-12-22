@@ -1,22 +1,22 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Security.Claims;
 using System.Security.Principal;
 using Newtonsoft.Json;
 
 namespace Stl.Fusion.Authentication
 {
-    public class User : IPrincipal, IIdentity, IHasId<string>
+    public record User : IPrincipal, IIdentity, IHasId<string>
     {
         public static string GuestName { get; set; } = "Guest";
-        private static readonly Dictionary<string, string> EmptyClaims = new Dictionary<string, string>();
 
         private readonly Lazy<ClaimsPrincipal> _claimsPrincipalLazy;
 
-        public string AuthenticationType { get; }
-        public string Id { get; }
-        public string Name { get; }
-        public IReadOnlyDictionary<string, string> Claims { get; }
+        public string AuthenticationType { get; init; }
+        public string Id { get; init; }
+        public string Name { get; init; }
+        public IReadOnlyDictionary<string, string> Claims { get; init; }
         [JsonIgnore]
         public bool IsAuthenticated => !string.IsNullOrEmpty(AuthenticationType);
         [JsonIgnore]
@@ -34,7 +34,7 @@ namespace Stl.Fusion.Authentication
             AuthenticationType = authenticationType;
             Id = id;
             Name = name;
-            Claims = claims ?? EmptyClaims;
+            Claims = claims ?? ImmutableDictionary<string, string>.Empty;
         }
 
         public virtual bool IsInRole(string role)

@@ -1,6 +1,6 @@
 using System;
+using System.Reactive;
 using FluentAssertions;
-using MediatR;
 using Stl.Reflection;
 using Stl.Testing;
 using Xunit;
@@ -19,8 +19,8 @@ namespace Stl.Tests.Reflection
         {
             ActivatorEx.New<int>().Should().Be(0);
             ActivatorEx.New<int>(false).Should().Be(0);
-            ActivatorEx.New<Unit>().Should().Be(default);
-            ActivatorEx.New<Unit>(false).Should().Be(default);
+            ActivatorEx.New<Unit>().Should().Be(default(Unit));
+            ActivatorEx.New<Unit>(false).Should().Be(default(Unit));
             ActivatorEx.New<SimpleClass>().Should().BeOfType(typeof(SimpleClass));
             ActivatorEx.New<SimpleClass>(false).Should().BeOfType(typeof(SimpleClass));
 
