@@ -8,7 +8,7 @@ namespace Stl.Concurrency
 {
     public class GCHandlePool : IDisposable
     {
-        public record Options : IOptions
+        public record Options : IHasDefault
         {
             public int Capacity { get; init; } = 1024;
             public GCHandleType HandleType { get; init; } = GCHandleType.Weak;

@@ -17,7 +17,7 @@ namespace Stl.Fusion.Bridge.Interception
     public class ReplicaClientProxyGenerator : ProxyGeneratorBase<ReplicaClientProxyGenerator.Options>,
         IReplicaClientProxyGenerator
     {
-        public class Options : ProxyGenerationOptions, IOptions
+        public class Options : ProxyGenerationOptions, IHasDefault
         {
             public Type BaseType { get; set; } = typeof(object);
             public Type InterceptorType { get; set; } = typeof(ReplicaClientInterceptor);

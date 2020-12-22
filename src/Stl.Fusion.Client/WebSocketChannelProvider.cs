@@ -20,14 +20,14 @@ namespace Stl.Fusion.Client
 {
     public class WebSocketChannelProvider : IChannelProvider, IHasServiceProvider
     {
-        public class Options : IOptions
+        public class Options : IHasDefault
         {
             public Uri BaseUri { get; set; } = new("http://localhost:5000/");
             public string RequestPath { get; set; } = "/fusion/ws";
             public string PublisherIdQueryParameterName { get; set; } = "publisherId";
             public string ClientIdQueryParameterName { get; set; } = "clientId";
             public TimeSpan ConnectTimeout { get; set; } = TimeSpan.FromSeconds(10);
-            public LogLevel? MessageLogLevel { get; set; } = null;
+            public LogLevel? MessageLogLevel { get; set; }
             public int? MessageMaxLength { get; set; } = 2048;
             public Func<IServiceProvider, ChannelSerializerPair<BridgeMessage, string>> ChannelSerializerPairFactory { get; set; } =
                 DefaultChannelSerializerPairFactory;

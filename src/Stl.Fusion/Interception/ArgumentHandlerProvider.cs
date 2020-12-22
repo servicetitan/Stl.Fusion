@@ -13,7 +13,7 @@ namespace Stl.Fusion.Interception
 
     public class ArgumentHandlerProvider : IArgumentHandlerProvider, IHasServiceProvider
     {
-        public class Options : IOptions
+        public class Options : IHasDefault
         {
             public IMatchingTypeFinder MatchingTypeFinder { get; set; } =
                 new MatchingTypeFinder(Assembly.GetExecutingAssembly());

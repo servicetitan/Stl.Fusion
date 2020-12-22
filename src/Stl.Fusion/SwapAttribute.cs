@@ -6,7 +6,7 @@ namespace Stl.Fusion
     public class SwapAttribute : Attribute
     {
         public bool IsEnabled { get; } = true;
-        public Type? SwapServiceType { get; set; } = null;
+        public Type? SwapServiceType { get; set; }
         // In seconds, NaN means "use default"
         public double SwapTime { get; set; } = Double.NaN;
 

@@ -6,7 +6,7 @@ namespace Stl.Fusion
     public static class ServiceCollectionEx
     {
         public static FusionBuilder AddFusion(this IServiceCollection services)
-            => new FusionBuilder(services);
+            => new(services);
 
         public static IServiceCollection AddFusion(this IServiceCollection services, Action<FusionBuilder> configureFusion)
         {

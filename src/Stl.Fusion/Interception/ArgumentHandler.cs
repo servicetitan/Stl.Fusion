@@ -5,7 +5,7 @@ namespace Stl.Fusion.Interception
 {
     public class ArgumentHandler
     {
-        public static ArgumentHandler Default { get; } = new ArgumentHandler();
+        public static ArgumentHandler Default { get; } = new();
 
         public Func<object?, int> GetHashCodeFunc { get; protected set; } =
             o => o?.GetHashCode() ?? 0;

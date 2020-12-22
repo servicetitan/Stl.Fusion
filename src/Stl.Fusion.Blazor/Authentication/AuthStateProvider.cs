@@ -9,7 +9,7 @@ namespace Stl.Fusion.Blazor
 {
     public class AuthStateProvider : AuthenticationStateProvider, IDisposable
     {
-        public class Options : IOptions
+        public class Options : IHasDefault
         {
             public Action<LiveState<AuthState>.Options> LiveStateOptionsBuilder { get; } =
                 DefaultLiveStateOptionsBuilder;

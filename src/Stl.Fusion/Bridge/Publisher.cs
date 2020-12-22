@@ -51,7 +51,7 @@ namespace Stl.Fusion.Bridge
 
     public class Publisher : AsyncDisposableBase, IPublisherImpl
     {
-        public class Options : IOptions
+        public class Options : IHasDefault
         {
             public static Symbol NewId() => "P-" + RandomStringGenerator.Default.Next();
 
@@ -185,7 +185,7 @@ namespace Stl.Fusion.Bridge
         // Channel-related
 
         protected virtual PublisherChannelProcessor CreateChannelProcessor(Channel<BridgeMessage> channel)
-            => new PublisherChannelProcessor(this, channel);
+            => new(this, channel);
 
         protected virtual void OnChannelAttached(Channel<BridgeMessage> channel)
         {

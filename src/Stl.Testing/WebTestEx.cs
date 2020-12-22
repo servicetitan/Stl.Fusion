@@ -6,9 +6,9 @@ namespace Stl.Testing
 {
     public static class WebTestEx
     {
-        private static readonly Queue<int> RecentlyUsedPortQueue = new Queue<int>();
-        private static readonly HashSet<int> RecentlyUsedPorts = new HashSet<int>();
-        private static readonly Random Random = new Random();
+        private static readonly Queue<int> RecentlyUsedPortQueue = new();
+        private static readonly HashSet<int> RecentlyUsedPorts = new();
+        private static readonly Random Random = new();
 
         public static Uri ToWss(this Uri uri)
         {

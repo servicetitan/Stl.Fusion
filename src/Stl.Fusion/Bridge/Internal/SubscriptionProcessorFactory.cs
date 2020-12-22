@@ -25,11 +25,10 @@ namespace Stl.Fusion.Bridge.Internal
             TimeSpan subscriptionExpirationTime, IMomentClock clock,
             ILoggerFactory loggerFactory);
 
-        private static readonly ConcurrentDictionary<Type, Constructor> ConstructorCache =
-            new ConcurrentDictionary<Type, Constructor>();
+        private static readonly ConcurrentDictionary<Type, Constructor> ConstructorCache = new();
         private static readonly Func<Type, Constructor> CreateCache = Create;
 
-        public static SubscriptionProcessorFactory Instance { get; } = new SubscriptionProcessorFactory();
+        public static SubscriptionProcessorFactory Instance { get; } = new();
 
         private SubscriptionProcessorFactory() { }
 
@@ -60,8 +59,7 @@ namespace Stl.Fusion.Bridge.Internal
             SubscriptionProcessor>
         {
             private readonly Type _genericType;
-            private readonly ConcurrentDictionary<Type, Type> _closedTypeCache =
-                new ConcurrentDictionary<Type, Type>();
+            private readonly ConcurrentDictionary<Type, Type> _closedTypeCache = new();
 
             public FactoryApplyHandler(Type genericType)
                 => _genericType = genericType;

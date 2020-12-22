@@ -2,21 +2,11 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Stl.Fusion.Tests.Model
 {
-    public class User : LongKeyedEntity
+    public record User : LongKeyedEntity
     {
-        private string _name = "";
-        private string _email = "";
-
         [Required, MaxLength(120)]
-        public string Name {
-            get => _name;
-            set { ThrowIfFrozen(); _name = value; }
-        }
-
+        public string Name { get; init; } = "";
         [Required, MaxLength(250)]
-        public string Email {
-            get => _email;
-            set { ThrowIfFrozen(); _email = value; }
-        }
+        public string Email { get; init; } = "";
     }
 }

@@ -15,7 +15,7 @@ namespace Stl.Fusion.Server
 {
     public class WebSocketServer
     {
-        public class Options : IOptions
+        public class Options : IHasDefault
         {
             private static readonly WebSocketChannelProvider.Options DefaultClientOptions = new();
 
@@ -26,7 +26,7 @@ namespace Stl.Fusion.Server
                 DefaultChannelSerializerPairFactory;
 
             public static ChannelSerializerPair<BridgeMessage, string> DefaultChannelSerializerPairFactory()
-                => new ChannelSerializerPair<BridgeMessage, string>(
+                => new(
                     new JsonNetSerializer().ToTyped<BridgeMessage>(),
                     new SafeJsonNetSerializer(t => typeof(ReplicatorMessage).IsAssignableFrom(t)).ToTyped<BridgeMessage>());
         }

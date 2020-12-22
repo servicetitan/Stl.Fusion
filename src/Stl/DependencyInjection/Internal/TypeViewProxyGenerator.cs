@@ -16,7 +16,7 @@ namespace Stl.DependencyInjection.Internal
     public class TypeViewProxyGenerator : ProxyGeneratorBase<TypeViewProxyGenerator.Options>,
         ITypeViewProxyGenerator
     {
-        public class Options : ProxyGenerationOptions, IOptions
+        public class Options : ProxyGenerationOptions, IHasDefault
         {
             public Type GenericBaseType { get; set; } = typeof(TypeView<,>);
             public Type InterceptorType { get; set; } = typeof(TypeViewInterceptor);

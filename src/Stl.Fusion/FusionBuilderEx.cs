@@ -6,7 +6,7 @@ namespace Stl.Fusion
     public static class FusionBuilderEx
     {
         public static FusionAuthenticationBuilder AddAuthentication(this FusionBuilder fusion)
-            => new FusionAuthenticationBuilder(fusion);
+            => new(fusion);
 
         public static FusionBuilder AddAuthentication(this FusionBuilder fusion,
             Action<FusionAuthenticationBuilder> configureFusionAuthentication)

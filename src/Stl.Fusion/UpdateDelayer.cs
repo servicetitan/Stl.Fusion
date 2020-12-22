@@ -19,10 +19,10 @@ namespace Stl.Fusion
 
     public class UpdateDelayer : IUpdateDelayer
     {
-        public class Options : IOptions
+        public class Options : IHasDefault
         {
-            public static Options Default => new Options();
-            public static Options InstantUpdates => new Options() {
+            public static Options Default => new();
+            public static Options InstantUpdates => new() {
                 Delay = TimeSpan.FromSeconds(0.01),
                 MinExtraErrorDelay = TimeSpan.FromSeconds(1),
             };

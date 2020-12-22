@@ -10,8 +10,8 @@ namespace Stl.Testing
     {
         IStandardStreamWriter IStandardOut.Out => Out;
         IStandardStreamWriter IStandardError.Error => Error;
-        public TestStreamWriter Out { get; protected set; } = new TestStreamWriter();
-        public TestStreamWriter Error { get; protected set; } = new TestStreamWriter();
+        public TestStreamWriter Out { get; protected set; } = new();
+        public TestStreamWriter Error { get; protected set; } = new();
 
         public bool IsOutputRedirected { get; set; }
         public bool IsErrorRedirected { get; set; }

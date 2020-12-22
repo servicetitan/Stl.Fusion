@@ -15,7 +15,7 @@ namespace Stl.Fusion.Bridge.Internal
         protected readonly IMomentClock Clock;
         protected readonly TimeSpan ExpirationTime;
         protected long MessageIndex;
-        protected (LTag Version, bool IsConsistent) LastSentVersion = default;
+        protected (LTag Version, bool IsConsistent) LastSentVersion;
 
         public IPublisher Publisher => Publication.Publisher;
         public readonly IPublication Publication;

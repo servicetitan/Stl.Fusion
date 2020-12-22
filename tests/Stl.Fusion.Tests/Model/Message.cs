@@ -3,34 +3,14 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Stl.Fusion.Tests.Model
 {
-    public class Message : LongKeyedEntity
+    public record Message : LongKeyedEntity
     {
-        private string _text = "";
-        private DateTime _date;
-        private User _author = default!;
-        private Chat _chat = default!;
-
-        public DateTime Date {
-            get => _date;
-            set { ThrowIfFrozen(); _date = value; }
-        }
-
+        public DateTime Date { get; init; }
         [Required, MaxLength(1_000_000)]
-        public string Text {
-            get => _text;
-            set { ThrowIfFrozen(); _text = value; }
-        }
-
+        public string Text { get; init; } = "";
         [Required]
-        public User Author {
-            get => _author;
-            set { ThrowIfFrozen(); _author = value; }
-        }
-
+        public User Author { get; init; } = default!;
         [Required]
-        public Chat Chat {
-            get => _chat;
-            set { ThrowIfFrozen(); _chat = value; }
-        }
+        public Chat Chat { get; init; } = default!;
     }
 }

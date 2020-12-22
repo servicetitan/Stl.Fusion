@@ -6,7 +6,7 @@ namespace Stl.Fusion.Interception
     [MatchFor(typeof(IHasId<>), typeof(ArgumentHandlerProvider))]
     public class HasIdArgumentHandler<T> : ArgumentHandler
     {
-        public static HasIdArgumentHandler<T> Instance { get; } = new HasIdArgumentHandler<T>();
+        public static HasIdArgumentHandler<T> Instance { get; } = new();
 
         private HasIdArgumentHandler()
         {

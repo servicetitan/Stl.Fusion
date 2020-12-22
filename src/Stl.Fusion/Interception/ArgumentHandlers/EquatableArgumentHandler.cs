@@ -6,7 +6,7 @@ namespace Stl.Fusion.Interception
 {
     public class EquatableArgumentHandler<T> : ArgumentHandler
     {
-        public static EquatableArgumentHandler<T> Instance { get; } = new EquatableArgumentHandler<T>();
+        public static EquatableArgumentHandler<T> Instance { get; } = new();
 
         protected EquatableArgumentHandler()
         {

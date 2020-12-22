@@ -11,7 +11,7 @@ namespace Stl.Fusion.Swapping
     public class LoggingSwapServiceWrapper<TSwapService> : ISwapService
         where TSwapService : ISwapService
     {
-        public class Options : IOptions
+        public class Options : IHasDefault
         {
             public LogLevel LogLevel { get; set; } = LogLevel.Debug;
         }

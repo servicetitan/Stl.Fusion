@@ -12,7 +12,7 @@ namespace Stl.Time
     public sealed class TimerSet<TTimer> : AsyncProcessBase
         where TTimer : notnull
     {
-        public record Options : IOptions
+        public record Options : IHasDefault
         {
             private readonly TimeSpan _quanta = TimeSpan.FromSeconds(1);
 

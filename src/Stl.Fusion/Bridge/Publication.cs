@@ -51,7 +51,7 @@ namespace Stl.Fusion.Bridge
         public Type PublicationType { get; }
         public IPublisher Publisher { get; }
         public Symbol Id { get; }
-        public PublicationRef Ref => new PublicationRef(Publisher.Id, Id);
+        public PublicationRef Ref => new(Publisher.Id, Id);
         IPublicationState IPublication.State => State;
         public IPublicationState<T> State => StateField;
         public long UseCount => Volatile.Read(ref _useCount);
@@ -59,7 +59,7 @@ namespace Stl.Fusion.Bridge
         public Publication(
             Type publicationType, IPublisher publisher,
             IComputed<T> computed, Symbol id,
-            IMomentClock clock)
+            IMomentClock? clock)
         {
             Clock = clock ??= CoarseCpuClock.Instance;
             PublicationType = publicationType;

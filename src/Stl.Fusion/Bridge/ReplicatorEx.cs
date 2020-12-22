@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Stl.Fusion.Internal;
-using Stl.Text;
 
 namespace Stl.Fusion.Bridge
 {

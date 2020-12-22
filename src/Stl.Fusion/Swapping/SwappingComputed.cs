@@ -2,7 +2,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
-using Stl.Frozen;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Internal;
 using Stl.Locking;
@@ -12,7 +11,7 @@ namespace Stl.Fusion.Swapping
     public class SwappingComputed<T> : Computed<T>, IAsyncComputed<T>, ISwappable
     {
         private readonly Lazy<AsyncLock> _swapOutputLockLazy =
-            new Lazy<AsyncLock>(() => new AsyncLock(ReentryMode.UncheckedDeadlock));
+            new(() => new AsyncLock(ReentryMode.UncheckedDeadlock));
         private volatile ResultBox<T>? _maybeOutput;
 
         protected AsyncLock SwapOutputLock => _swapOutputLockLazy.Value;
@@ -36,11 +35,7 @@ namespace Stl.Fusion.Swapping
 
         public override bool TrySetOutput(Result<T> output)
         {
-            if (output.IsValue(out var v, out var error)) {
-                if (v is IFrozen f)
-                    f.Freeze();
-            }
-            else if (Options.RewriteErrors) {
+            if (Options.RewriteErrors && !output.IsValue(out _, out var error)) {
                 var errorRewriter = Function.ServiceProvider.GetRequiredService<IErrorRewriter>();
                 output = Result.Error<T>(errorRewriter.Rewrite(this, error));
             }

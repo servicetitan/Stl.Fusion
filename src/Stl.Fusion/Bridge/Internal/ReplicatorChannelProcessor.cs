@@ -20,7 +20,7 @@ namespace Stl.Fusion.Bridge.Internal
     public class ReplicatorChannelProcessor : AsyncProcessBase
     {
         protected static readonly HandlerProvider<(ReplicatorChannelProcessor, CancellationToken), Task> OnStateMessageAsyncHandlers =
-            new HandlerProvider<(ReplicatorChannelProcessor, CancellationToken), Task>(typeof(StateMessageHandler<>));
+            new(typeof(StateMessageHandler<>));
 
         protected class StateMessageHandler<T> : HandlerProvider<(ReplicatorChannelProcessor, CancellationToken), Task>.IHandler<T>
         {
@@ -34,6 +34,7 @@ namespace Stl.Fusion.Bridge.Internal
         protected volatile Task<Channel<BridgeMessage>> ChannelTask = null!;
         protected volatile Channel<BridgeMessage> SendChannel = null!;
         protected Symbol ClientId => Replicator.Id;
+        // ReSharper disable once InconsistentlySynchronizedField
         protected object Lock => Subscriptions;
 
         public readonly IReplicator Replicator;

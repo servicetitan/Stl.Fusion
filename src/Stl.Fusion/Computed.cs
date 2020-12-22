@@ -8,7 +8,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Stl.Collections;
 using Stl.Collections.Slim;
 using Stl.Extensibility;
-using Stl.Frozen;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Internal;
 
@@ -134,8 +133,6 @@ namespace Stl.Fusion
 
         protected Computed(ComputedOptions options, TIn input, Result<TOut> output, LTag version, bool isConsistent)
         {
-            if (output.IsValue(out var v) && v is IFrozen f)
-                f.Freeze();
             _options = options;
             Input = input;
             _state = (int) (isConsistent ? ConsistencyState.Consistent : ConsistencyState.Invalidated);
@@ -150,11 +147,7 @@ namespace Stl.Fusion
 
         public virtual bool TrySetOutput(Result<TOut> output)
         {
-            if (output.IsValue(out var v, out var error)) {
-                if (v is IFrozen f)
-                    f.Freeze();
-            }
-            else if (Options.RewriteErrors) {
+            if (Options.RewriteErrors && !output.IsValue(out _, out var error)) {
                 var errorRewriter = Function.ServiceProvider.GetRequiredService<IErrorRewriter>();
                 output = Result.Error<TOut>(errorRewriter.Rewrite(this, error));
             }

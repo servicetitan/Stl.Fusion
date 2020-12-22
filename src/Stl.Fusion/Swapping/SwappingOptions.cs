@@ -7,12 +7,15 @@ namespace Stl.Fusion.Swapping
     public class SwappingOptions
     {
         public static readonly SwappingOptions Default =
-            new SwappingOptions(
+            new(
                 isEnabled: true,
                 swapServiceType: typeof(ISwapService),
                 swapTime: TimeSpan.FromSeconds(10));
         public static readonly SwappingOptions NoSwapping =
-            new SwappingOptions(false, Default.SwapServiceType, Default.SwapTime);
+            new(
+                isEnabled: false,
+                swapServiceType: Default.SwapServiceType,
+                swapTime: Default.SwapTime);
 
         public bool IsEnabled { get; }
         public Type SwapServiceType { get; }

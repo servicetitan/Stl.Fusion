@@ -13,9 +13,9 @@ namespace Stl.Fusion.Bridge
 {
     public class ReplicaRegistry : IDisposable
     {
-        public static ReplicaRegistry Instance { get; set; } = new ReplicaRegistry();
+        public static ReplicaRegistry Instance { get; set; } = new();
 
-        public sealed class Options : IOptions
+        public sealed class Options : IHasDefault
         {
             public static int DefaultInitialCapacity { get; }
             public static int DefaultInitialConcurrency { get; }
@@ -39,7 +39,7 @@ namespace Stl.Fusion.Bridge
         private readonly StochasticCounter _opCounter;
         private readonly GCHandlePool _gcHandlePool;
         private volatile int _pruneCounterThreshold;
-        private Task? _pruneTask = null;
+        private Task? _pruneTask;
         private object Lock => _handles;
 
         public ReplicaRegistry(Options? options = null)

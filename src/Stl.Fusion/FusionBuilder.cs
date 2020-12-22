@@ -18,9 +18,8 @@ namespace Stl.Fusion
         private static readonly Box<bool> IsInitialized = Box.New(false);
 
         private class AddedTag { }
-        private static readonly ServiceDescriptor AddedTagDescriptor =
-            new ServiceDescriptor(typeof(AddedTag), new AddedTag());
-        private static readonly HashSet<Type> GenericStateInterfaces = new HashSet<Type>() {
+        private static readonly ServiceDescriptor AddedTagDescriptor = new(typeof(AddedTag), new AddedTag());
+        private static readonly HashSet<Type> GenericStateInterfaces = new() {
             typeof(IState<>),
             typeof(IMutableState<>),
             typeof(IComputedState<>),
@@ -193,7 +192,7 @@ namespace Stl.Fusion
                 if (parameters.Length < 1)
                     continue;
                 var optionsType = parameters[0].ParameterType;
-                if (!typeof(IOptions).IsAssignableFrom(optionsType))
+                if (!typeof(IHasDefault).IsAssignableFrom(optionsType))
                     continue;
                 Services.TryAddTransient(optionsType);
             }

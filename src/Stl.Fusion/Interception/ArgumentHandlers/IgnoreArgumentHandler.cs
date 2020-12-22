@@ -6,7 +6,7 @@ namespace Stl.Fusion.Interception
     [MatchFor(typeof(CancellationToken), typeof(ArgumentHandlerProvider))]
     public class IgnoreArgumentHandler : ArgumentHandler
     {
-        public static IgnoreArgumentHandler Instance { get; } = new IgnoreArgumentHandler();
+        public static IgnoreArgumentHandler Instance { get; } = new();
 
         private IgnoreArgumentHandler()
         {

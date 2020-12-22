@@ -2,21 +2,11 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Stl.Fusion.Tests.Model
 {
-    public class Chat : LongKeyedEntity
+    public record Chat : LongKeyedEntity
     {
-        private string _title = "";
-        private User _author = default!;
-
         [Required, MaxLength(120)]
-        public string Title {
-            get => _title;
-            set { ThrowIfFrozen(); _title = value; }
-        }
-
+        public string Title { get; init; } = "";
         [Required]
-        public User Author {
-            get => _author;
-            set { ThrowIfFrozen(); _author = value; }
-        }
+        public User Author { get; init; } = default!;
     }
 }

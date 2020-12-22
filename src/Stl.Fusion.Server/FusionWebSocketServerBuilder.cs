@@ -10,7 +10,7 @@ namespace Stl.Fusion.Server
     {
         private class AddedTag { }
         private static readonly ServiceDescriptor AddedTagDescriptor =
-            new ServiceDescriptor(typeof(AddedTag), new AddedTag());
+            new(typeof(AddedTag), new AddedTag());
 
         public FusionBuilder Fusion { get; }
         public IServiceCollection Services => Fusion.Services;

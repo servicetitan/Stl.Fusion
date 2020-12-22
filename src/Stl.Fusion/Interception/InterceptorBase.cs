@@ -20,7 +20,7 @@ namespace Stl.Fusion.Interception
         // ReSharper disable once HeapView.BoxingAllocation
         private static readonly object NoCancellationTokenBoxed = CancellationToken.None;
 
-        public class Options : IOptions
+        public class Options : IHasDefault
         {
             public IComputedOptionsProvider? ComputedOptionsProvider { get; set; } = null!;
             public IArgumentHandlerProvider? ArgumentHandlerProvider { get; set; } = null!;
@@ -31,12 +31,9 @@ namespace Stl.Fusion.Interception
         private readonly MethodInfo _createTypedHandlerMethod;
         private readonly Func<MethodInfo, IInvocation, Action<IInvocation>?> _createHandler;
         private readonly Func<MethodInfo, IInvocation, InterceptedMethodDescriptor?> _createInterceptedMethod;
-        private readonly ConcurrentDictionary<MethodInfo, InterceptedMethodDescriptor?> _interceptedMethodCache =
-            new ConcurrentDictionary<MethodInfo, InterceptedMethodDescriptor?>();
-        private readonly ConcurrentDictionary<MethodInfo, Action<IInvocation>?> _handlerCache =
-            new ConcurrentDictionary<MethodInfo, Action<IInvocation>?>();
-        private readonly ConcurrentDictionary<Type, Unit> _validateTypeCache =
-            new ConcurrentDictionary<Type, Unit>();
+        private readonly ConcurrentDictionary<MethodInfo, InterceptedMethodDescriptor?> _interceptedMethodCache = new();
+        private readonly ConcurrentDictionary<MethodInfo, Action<IInvocation>?> _handlerCache = new();
+        private readonly ConcurrentDictionary<Type, Unit> _validateTypeCache = new();
 
         protected ILoggerFactory LoggerFactory { get; }
         protected ILogger Log { get; }

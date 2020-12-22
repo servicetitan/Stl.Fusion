@@ -1,19 +1,13 @@
 using System;
 using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
 using RestEase;
 using Stl.DependencyInjection;
-using Stl.DependencyInjection.Internal;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Interception;
-using Stl.Fusion.Client.Authentication;
-using Stl.Fusion.Client.RestEase;
 using Stl.Fusion.Client.RestEase.Internal;
-using Stl.Fusion.Internal;
 using Stl.Reflection;
 using Stl.Serialization;
 
@@ -23,7 +17,7 @@ namespace Stl.Fusion.Client
     {
         private class AddedTag { }
         private static readonly ServiceDescriptor AddedTagDescriptor =
-            new ServiceDescriptor(typeof(AddedTag), new AddedTag());
+            new(typeof(AddedTag), new AddedTag());
 
         public FusionBuilder Fusion { get; }
         public IServiceCollection Services => Fusion.Services;

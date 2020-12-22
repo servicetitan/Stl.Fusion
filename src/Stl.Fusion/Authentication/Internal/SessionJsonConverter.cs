@@ -17,7 +17,7 @@ namespace Stl.Fusion.Authentication.Internal
         public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
         {
             var value = (string?) reader.Value!;
-            return value == null ? null : new Session(value);
+            return value == null! ? null : new Session(value);
         }
     }
 }

@@ -32,7 +32,6 @@ namespace Stl.Fusion.Tests
             users.Invalidate();
 
             var u2 = await users.TryGetAsync(int.MaxValue);
-            u2!.IsFrozen.Should().BeTrue();
             var c2 = await Computed.CaptureAsync(_ => users.CountAsync());
 
             u2.Should().NotBeSameAs(u1);
@@ -69,15 +68,14 @@ namespace Stl.Fusion.Tests
             var u1 = await users.TryGetAsync(u.Id);
             u1.Should().NotBeNull();
             u1.Should().NotBeSameAs(u); // Because it's fetched
-            u1!.IsFrozen.Should().BeTrue();
-            u1.Id.Should().Be(u.Id);
+            u1!.Id.Should().Be(u.Id);
             u1.Name.Should().Be(u.Name);
             (await users.CountAsync()).Should().Be(++userCount);
 
             var u2 = await users.TryGetAsync(u.Id);
             u2.Should().BeSameAs(u1);
 
-            u.Name = "Jackie Chan";
+            u = u with { Name = "Jackie Chan" };
             await users.UpdateAsync(u); // u.Name change
 
             var u3 = await users.TryGetAsync(u.Id);
@@ -110,7 +108,7 @@ namespace Stl.Fusion.Tests
             sText.Updated += (s, _) => Log.LogInformation($"{s.Value}");
 
             for (var i = 1; i <= 10; i += 1) {
-                u.Name = $"Chuck Norris Lvl{i}";
+                u = u with { Name = $"Chuck Norris Lvl{i}" };
                 await users.UpdateAsync(u);
                 await Task.Delay(100);
             }

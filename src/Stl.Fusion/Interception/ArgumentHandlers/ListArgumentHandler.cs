@@ -7,7 +7,7 @@ namespace Stl.Fusion.Interception
     [MatchFor(typeof(IReadOnlyList<>), typeof(ArgumentHandlerProvider))]
     public class ListArgumentHandler<T> : ArgumentHandler
     {
-        public static ListArgumentHandler<T> Instance { get; } = new ListArgumentHandler<T>();
+        public static ListArgumentHandler<T> Instance { get; } = new();
 
         protected ListArgumentHandler()
         {
