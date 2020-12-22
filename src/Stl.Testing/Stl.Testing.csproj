@@ -13,9 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AutoFixture" />
-    <PackageReference Include="AutoFixture.Xunit2" />
-    <PackageReference Include="Moq" />
     <PackageReference Include="FluentAssertions" />
 
     <PackageReference Include="System.CommandLine" />
