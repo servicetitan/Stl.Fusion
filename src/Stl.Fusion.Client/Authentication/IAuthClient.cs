@@ -22,6 +22,6 @@ namespace Stl.Fusion.Client.Authentication
         [Get("getSessionInfo"), ComputeMethod]
         Task<SessionInfo> GetSessionInfoAsync(Session session, CancellationToken cancellationToken = default);
         [Get("getUserSessions"), ComputeMethod]
-        Task<SessionInfo[]> GetUserSessions(Session session, CancellationToken cancellationToken = default);
+        Task<SessionInfo[]> GetUserSessionsAsync(Session session, CancellationToken cancellationToken = default);
     }
 }
