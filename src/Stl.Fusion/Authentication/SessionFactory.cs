@@ -16,6 +16,6 @@ namespace Stl.Fusion.Authentication
             => SessionIdGenerator = sessionIdGenerator;
 
         public virtual Session CreateSession()
-            => new Session(SessionIdGenerator.Next());
+            => new(SessionIdGenerator.Next());
     }
 }

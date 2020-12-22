@@ -17,7 +17,7 @@ namespace Stl.Reflection
             MemberwiseCloneFunc = Expression.Lambda<Func<object, object>>(eBody, eSource).Compile();
         }
 
-        public static T Clone<T>(T source)
+        public static T Invoke<T>(T source)
         {
             var oSource = (object?) source;
             if (oSource == null)

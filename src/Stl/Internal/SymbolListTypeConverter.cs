@@ -14,7 +14,7 @@ namespace Stl.Internal
         public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) {
             if (destinationType == typeof(string))
                 return ((SymbolList) value).FormattedValue;
-            return base.ConvertTo(context, culture, value, destinationType);
+            return base.ConvertTo(context, culture, value, destinationType)!;
         }
 
         public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
@@ -22,7 +22,7 @@ namespace Stl.Internal
             if (value is string s)
                 // ReSharper disable once HeapView.BoxingAllocation
                 return SymbolList.Parse(s);
-            return base.ConvertFrom(context, culture, value);
+            return base.ConvertFrom(context, culture, value)!;
         }
     }
 }

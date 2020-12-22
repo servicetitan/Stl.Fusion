@@ -15,12 +15,11 @@ namespace Stl.Fusion
 {
     public readonly struct FusionBuilder
     {
-        private static Box<bool> IsInitialized = Box.New<bool>(false);
+        private static readonly Box<bool> IsInitialized = Box.New(false);
 
         private class AddedTag { }
-        private static readonly ServiceDescriptor AddedTagDescriptor =
-            new ServiceDescriptor(typeof(AddedTag), new AddedTag());
-        private static readonly HashSet<Type> GenericStateInterfaces = new HashSet<Type>() {
+        private static readonly ServiceDescriptor AddedTagDescriptor = new(typeof(AddedTag), new AddedTag());
+        private static readonly HashSet<Type> GenericStateInterfaces = new() {
             typeof(IState<>),
             typeof(IMutableState<>),
             typeof(IComputedState<>),
@@ -57,7 +56,7 @@ namespace Stl.Fusion
             Services.TryAddTransient<IUpdateDelayer, UpdateDelayer>();
         }
 
-        public static void Initialize(HashSet<Type>? attributesToAvoidReplicating = null)
+        public static void Initialize(HashSet<Type>? nonReplicableAttributes = null)
         {
             if (IsInitialized.Value) return;
             lock (IsInitialized) {
@@ -65,28 +64,30 @@ namespace Stl.Fusion
                 IsInitialized.Value = true;
                 // Castle.DynamicProxy fails while trying to replicate
                 // these attributes in WASM in .NET 5.0
-                attributesToAvoidReplicating ??= new HashSet<Type>() {
+                nonReplicableAttributes ??= new HashSet<Type>() {
                     typeof(AsyncStateMachineAttribute),
                     typeof(ComputeMethodAttribute),
                 };
-                foreach (var type in attributesToAvoidReplicating)
+                foreach (var type in nonReplicableAttributes)
                     Castle.DynamicProxy.Generators.AttributesToAvoidReplicating.Add(type);
             }
         }
 
-        public IServiceCollection BackToServices() => Services;
-
         // AddPublisher, AddReplicator
 
-        public FusionBuilder AddPublisher()
+        public FusionBuilder AddPublisher(Action<IServiceProvider, Publisher.Options>? configurePublisherOptions = null)
         {
             // Publisher
-            Services.TryAddSingleton(new Publisher.Options());
+            Services.TryAddSingleton(c => {
+                var options = new Publisher.Options();
+                configurePublisherOptions?.Invoke(c, options);
+                return options;
+            });
             Services.TryAddSingleton<IPublisher, Publisher>();
             return this;
         }
 
-        public FusionBuilder AddReplicator()
+        public FusionBuilder AddReplicator(Action<IServiceProvider, Replicator.Options>? configureReplicatorOptions = null)
         {
             // ReplicaServiceProxyGenerator
             Services.TryAddSingleton(new ReplicaClientInterceptor.Options());
@@ -94,7 +95,11 @@ namespace Stl.Fusion
             Services.TryAddSingleton(c => ReplicaClientProxyGenerator.Default);
             Services.TryAddSingleton(c => new [] { c.GetRequiredService<ReplicaClientInterceptor>() });
             // Replicator
-            Services.TryAddSingleton(new Replicator.Options());
+            Services.TryAddSingleton(c => {
+                var options = new Replicator.Options();
+                configureReplicatorOptions?.Invoke(c, options);
+                return options;
+            });
             Services.TryAddSingleton<IReplicator, Replicator>();
             return this;
         }
@@ -187,7 +192,7 @@ namespace Stl.Fusion
                 if (parameters.Length < 1)
                     continue;
                 var optionsType = parameters[0].ParameterType;
-                if (!typeof(IOptions).IsAssignableFrom(optionsType))
+                if (!typeof(IHasDefault).IsAssignableFrom(optionsType))
                     continue;
                 Services.TryAddTransient(optionsType);
             }
@@ -202,10 +207,5 @@ namespace Stl.Fusion
             Func<IServiceProvider, TImplementation> factory)
             where TImplementation : class, IState
             => AddState(typeof(TImplementation), factory);
-
-        // Extensions
-
-        public FusionAuthenticationBuilder AddAuthentication()
-            => new FusionAuthenticationBuilder(this);
     }
 }

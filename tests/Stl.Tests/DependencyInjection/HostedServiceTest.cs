@@ -51,7 +51,7 @@ namespace Stl.Tests.DependencyInjection
             var services = new ServiceCollection()
                 .AddSingleton(cfg)
                 .AddSingleton<IConfiguration>(cfg)
-                .AttributeBased(nameof(HostedServiceTest))
+                .AttributeScanner(nameof(HostedServiceTest))
                 .AddServicesFrom(Assembly.GetExecutingAssembly())
                 .BackToServices()
                 .BuildServiceProvider();

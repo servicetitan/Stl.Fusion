@@ -17,7 +17,7 @@ namespace Stl.Fusion.Interception
     public class ComputeServiceProxyGenerator : ProxyGeneratorBase<ComputeServiceProxyGenerator.Options>,
         IComputeServiceProxyGenerator
     {
-        public class Options : ProxyGenerationOptions, IOptions
+        public class Options : ProxyGenerationOptions, IHasDefault
         {
             public Type InterceptorType { get; set; } = typeof(ComputeServiceInterceptor);
         }

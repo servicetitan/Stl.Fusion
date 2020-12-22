@@ -1,5 +1,3 @@
-using Stl.Fusion.Internal;
-
 namespace Stl.Fusion.Bridge
 {
     public interface IReplicaComputed : IComputed

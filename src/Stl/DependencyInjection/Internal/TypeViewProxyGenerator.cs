@@ -16,7 +16,7 @@ namespace Stl.DependencyInjection.Internal
     public class TypeViewProxyGenerator : ProxyGeneratorBase<TypeViewProxyGenerator.Options>,
         ITypeViewProxyGenerator
     {
-        public class Options : ProxyGenerationOptions, IOptions
+        public class Options : ProxyGenerationOptions, IHasDefault
         {
             public Type GenericBaseType { get; set; } = typeof(TypeView<,>);
             public Type InterceptorType { get; set; } = typeof(TypeViewInterceptor);
@@ -53,7 +53,7 @@ namespace Stl.DependencyInjection.Internal
         public virtual Type GetProxyType(Type implementationType, Type viewType)
             => Cache.GetOrAddChecked((implementationType, viewType), (key, self) => {
                 var (tImpl, tView) = key;
-                var options = MemberwiseCloner.Clone(self.ProxyGeneratorOptions);
+                var options = MemberwiseCloner.Invoke(self.ProxyGeneratorOptions);
                 options.BaseTypeForInterfaceProxy = options.GenericBaseType
                     .MakeGenericType(tImpl, tView);
                 var generator = new Implementation(self.ModuleScope, tView, options);

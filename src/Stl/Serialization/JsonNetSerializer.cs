@@ -12,7 +12,7 @@ namespace Stl.Serialization
         private readonly StringBuilder _stringBuilder;
 
         public static JsonSerializerSettings DefaultSettings { get; set; } =
-            new JsonSerializerSettings() {
+            new() {
                 SerializationBinder = CrossPlatformSerializationBinder.Instance,
                 TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
                 TypeNameHandling = TypeNameHandling.Auto,

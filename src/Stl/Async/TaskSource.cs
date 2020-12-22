@@ -10,15 +10,15 @@ namespace Stl.Async
     public static class TaskSource
     {
         public static TaskSource<T> For<T>(Task<T> task)
-            => new TaskSource<T>(task);
+            => new(task);
         public static TaskSource<T> New<T>(bool runContinuationsAsynchronously)
             => runContinuationsAsynchronously
                 ? new TaskSource<T>(TaskSource<T>.CreateTask2(null, TaskCreationOptions.RunContinuationsAsynchronously))
                 : new TaskSource<T>(TaskSource<T>.CreateTask0());
         public static TaskSource<T> New<T>(object? state, TaskCreationOptions taskCreationOptions)
-            => new TaskSource<T>(TaskSource<T>.CreateTask2(state, taskCreationOptions));
+            => new(TaskSource<T>.CreateTask2(state, taskCreationOptions));
         public static TaskSource<T> New<T>(TaskCreationOptions taskCreationOptions)
-            => new TaskSource<T>(TaskSource<T>.CreateTask2(null, taskCreationOptions));
+            => new(TaskSource<T>.CreateTask2(null, taskCreationOptions));
     }
 
     public readonly struct TaskSource<T> : IEquatable<TaskSource<T>>
@@ -35,7 +35,7 @@ namespace Stl.Async
 
         public bool IsEmpty {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => Task == null;
+            get => Task == null!;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -88,9 +88,6 @@ namespace Stl.Async
             var pTco = Expression.Parameter(typeof(TaskCreationOptions), "taskCreationOptions");
             var pTcs = Expression.Parameter(tTcs, "tcs");
             var pTask = Expression.Parameter(tTask, "task");
-            var pResult = Expression.Parameter(typeof(T), "result");
-            var pException = Expression.Parameter(typeof(Exception), "exception");
-            var pCancellationToken = Expression.Parameter(typeof(CancellationToken), "cancellationToken");
             var privateCtorBindingFlags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.CreateInstance;
 
             var _taskCtor0 = tTask.GetConstructor(privateCtorBindingFlags, null,

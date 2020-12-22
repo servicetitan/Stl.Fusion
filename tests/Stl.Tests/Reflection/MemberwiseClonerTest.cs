@@ -10,10 +10,10 @@ namespace Stl.Tests.Reflection
         public void Test()
         {
             var i = 3;
-            MemberwiseCloner.Clone(i).Should().Be(i);
+            MemberwiseCloner.Invoke(i).Should().Be(i);
 
             var a = new [] {1, 2, 3};
-            var b = MemberwiseCloner.Clone(a);
+            var b = MemberwiseCloner.Invoke(a);
             b.Should().NotBeSameAs(a);
             b.Should().Equal(a);
         }

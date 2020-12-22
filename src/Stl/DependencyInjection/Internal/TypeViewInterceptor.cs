@@ -126,6 +126,7 @@ namespace Stl.DependencyInjection.Internal
                 return invocation => {
                     var target = fTarget.GetValue(invocation.Proxy);
                     var result = (TTarget) mTarget.Invoke(target, invocation.Arguments)!;
+                    // ReSharper disable once HeapView.PossibleBoxingAllocation
                     invocation.ReturnValue = result is IConvertibleTo<TSource> c ? c.Convert() : default!;
                 };
             }
@@ -138,7 +139,8 @@ namespace Stl.DependencyInjection.Internal
             return invocation => {
                 // TODO: Get rid of reflection here (not critical)
                 var target = fTarget.GetValue(invocation.Proxy);
-                var result = (TTarget) mTarget.Invoke(target, invocation.Arguments);
+                var result = (TTarget) mTarget.Invoke(target, invocation.Arguments)!;
+                // ReSharper disable once HeapView.PossibleBoxingAllocation
                 invocation.ReturnValue = (TSource) d.ConvertTo(result, tSource)!;
             };
         }
@@ -156,6 +158,7 @@ namespace Stl.DependencyInjection.Internal
                     var untypedResult = mTarget.Invoke(target, invocation.Arguments);
                     var result = (Task<TTarget>) untypedResult!;
                     invocation.ReturnValue = result.ContinueWith(t =>
+                        // ReSharper disable once HeapView.PossibleBoxingAllocation
                         t.Result is IConvertibleTo<TSource> c ? c.Convert() : default!);
                 };
             }
@@ -171,6 +174,7 @@ namespace Stl.DependencyInjection.Internal
                 var untypedResult = mTarget.Invoke(target, invocation.Arguments);
                 var result = (Task<TTarget>) untypedResult!;
                 invocation.ReturnValue = result.ContinueWith(t =>
+                    // ReSharper disable once HeapView.PossibleBoxingAllocation
                     (TSource) d.ConvertTo(t.Result!, tSource)!);
             };
         }
@@ -189,6 +193,7 @@ namespace Stl.DependencyInjection.Internal
                     var result = (ValueTask<TTarget>) untypedResult!;
                     // ReSharper disable once HeapView.BoxingAllocation
                     invocation.ReturnValue = result.AsTask().ContinueWith(t =>
+                        // ReSharper disable once HeapView.PossibleBoxingAllocation
                         t.Result is IConvertibleTo<TSource> c ? c.Convert() : default!).ToValueTask();
                 };
             }
@@ -205,6 +210,7 @@ namespace Stl.DependencyInjection.Internal
                 var result = (ValueTask<TTarget>) untypedResult!;
                 // ReSharper disable once HeapView.BoxingAllocation
                 invocation.ReturnValue = result.AsTask().ContinueWith(t =>
+                    // ReSharper disable once HeapView.PossibleBoxingAllocation
                     (TSource) d.ConvertTo(t.Result!, tSource)!).ToValueTask();
             };
         }

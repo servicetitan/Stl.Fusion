@@ -8,7 +8,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using Stl.Async;
 using Stl.Concurrency;
-using Stl.Frozen;
 using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
 using Stl.OS;
@@ -93,8 +92,7 @@ namespace Stl.Fusion.Tests
                     // Log.LogDebug($"{name}: R {userId}");
                     var user = await users.TryGetAsync(userId, cancellationToken)
                         .ConfigureAwait(false);
-                    user = user!.ToUnfrozen();
-                    user!.Email = $"{++count}@counter.org";
+                    user = user! with { Email = $"{++count}@counter.org" };
                     // Log.LogDebug($"{name}: R done, U {user}");
                     await users.UpdateAsync(user, cancellationToken).ConfigureAwait(false);
                     // Log.LogDebug($"{name}: U {user} done");

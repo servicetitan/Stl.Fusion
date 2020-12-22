@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions.Execution;
 using Stl.Async;
-using Stl.Collections;
+using Stl.Time;
 
 namespace Stl.Testing
 {

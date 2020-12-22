@@ -13,7 +13,7 @@ namespace Stl.Text
     public sealed class SymbolList : IEquatable<SymbolList>, IComparable<SymbolList>, ISerializable
     {
         public static readonly SymbolList? Null = null;
-        public static readonly SymbolList Empty = new SymbolList(Null, Symbol.Empty);
+        public static readonly SymbolList Empty = new(Null, Symbol.Empty);
 
         internal int HashCode { get; }
         public int SegmentCount { get; }
@@ -57,7 +57,7 @@ namespace Stl.Text
 
         // Conversion & operators
 
-        public static implicit operator SymbolList((SymbolList Prefix, Symbol Tail) source) => new SymbolList(source.Prefix, source.Tail);
+        public static implicit operator SymbolList((SymbolList Prefix, Symbol Tail) source) => new(source.Prefix, source.Tail);
         public static explicit operator string(SymbolList source) => source.FormattedValue;
 
         // Operators

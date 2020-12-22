@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -7,7 +6,7 @@ namespace Stl.Fusion
     public class ComputeContext
     {
         private static readonly ComputeContext[] ContextCache;
-        private static readonly AsyncLocal<ComputeContext?> CurrentLocal = new AsyncLocal<ComputeContext?>();
+        private static readonly AsyncLocal<ComputeContext?> CurrentLocal = new();
         internal volatile IComputed? CapturedComputed;
         private volatile int _isUsed;
 

@@ -15,21 +15,20 @@ namespace Stl.Fusion.Server
 {
     public class WebSocketServer
     {
-        public class Options : IOptions
+        public class Options : IHasDefault
         {
-            private static readonly WebSocketChannelProvider.Options DefaultClientOptions =
-                new WebSocketChannelProvider.Options();
+            private static readonly WebSocketChannelProvider.Options DefaultClientOptions = new();
 
             public string RequestPath { get; set; } = DefaultClientOptions.RequestPath;
             public string PublisherIdQueryParameterName { get; set; } = DefaultClientOptions.PublisherIdQueryParameterName;
             public string ClientIdQueryParameterName { get; set; } = DefaultClientOptions.ClientIdQueryParameterName;
-            public Func<ChannelSerializerPair<Message, string>> ChannelSerializerPairFactory { get; set; } =
+            public Func<ChannelSerializerPair<BridgeMessage, string>> ChannelSerializerPairFactory { get; set; } =
                 DefaultChannelSerializerPairFactory;
 
-            public static ChannelSerializerPair<Message, string> DefaultChannelSerializerPairFactory()
-                => new ChannelSerializerPair<Message, string>(
-                    new JsonNetSerializer().ToTyped<Message>(),
-                    new SafeJsonNetSerializer(t => typeof(ReplicatorMessage).IsAssignableFrom(t)).ToTyped<Message>());
+            public static ChannelSerializerPair<BridgeMessage, string> DefaultChannelSerializerPairFactory()
+                => new(
+                    new JsonNetSerializer().ToTyped<BridgeMessage>(),
+                    new SafeJsonNetSerializer(t => typeof(ReplicatorMessage).IsAssignableFrom(t)).ToTyped<BridgeMessage>());
         }
 
         public string RequestPath { get; }
@@ -37,7 +36,7 @@ namespace Stl.Fusion.Server
         public string ClientIdQueryParameterName { get; }
         protected ILogger Log { get; }
         protected IPublisher Publisher { get; }
-        protected Func<ChannelSerializerPair<Message, string>> ChannelSerializerPairFactory { get; }
+        protected Func<ChannelSerializerPair<BridgeMessage, string>> ChannelSerializerPairFactory { get; }
 
         public WebSocketServer(Options options, IPublisher publisher, ILogger<WebSocketServer>? log = null)
         {

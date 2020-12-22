@@ -1,16 +1,18 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 
 namespace Stl.Fusion.Authentication
 {
-    public class SessionInfo : IHasId<string>
+    public record SessionInfo : IHasId<string>
     {
-        public string Id { get; set; } = "";
-        public DateTime CreatedAt { get; set; }
-        public DateTime LastSeenAt { get; set; }
-        public string IPAddress { get; set; } = "";
-        public string UserAgent { get; set; } = "";
-        public Dictionary<string, object>? ExtraProperties { get; } = null;
+        public string Id { get; init; } = "";
+        public DateTime CreatedAt { get; init; }
+        public DateTime LastSeenAt { get; init; }
+        public string IPAddress { get; init; } = "";
+        public string UserAgent { get; init; } = "";
+        public IReadOnlyDictionary<string, object>? ExtraProperties { get; init; } =
+            ImmutableDictionary<string, object>.Empty;
 
         public SessionInfo() { }
         public SessionInfo(string id) => Id = id;

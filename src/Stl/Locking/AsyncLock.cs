@@ -68,6 +68,7 @@ namespace Stl.Locking
 
         protected async ValueTask<IDisposable> SlowInternalLockAsync(
             ReentryCounter? reentryCounter, CancellationToken cancellationToken = default)
+            // ReSharper disable once HeapView.BoxingAllocation
             => await FastInternalLockAsync(reentryCounter, cancellationToken).ConfigureAwait(false);
 
         protected async ValueTask<Releaser> FastInternalLockAsync(
@@ -85,7 +86,7 @@ namespace Stl.Locking
                         return new Releaser(this, newLockSrc, reentryCounter);
                     if (oldLock.IsCompleted)
                         continue; // Task.WhenAny will return immediately, so let's save a bit
-                    if (dCancellationTokenTask.Resource == null)
+                    if (dCancellationTokenTask.Resource == null!)
                         dCancellationTokenTask = cancellationToken.ToTask();
                     await Task.WhenAny(oldLock, dCancellationTokenTask.Resource).ConfigureAwait(false);
                 }

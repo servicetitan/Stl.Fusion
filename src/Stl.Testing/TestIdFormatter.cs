@@ -1,6 +1,7 @@
 using System;
 using System.Text;
 using Stl.IO;
+using Stl.Text;
 
 namespace Stl.Testing
 {
@@ -26,14 +27,14 @@ namespace Stl.Testing
             int? maxLength = null,
             bool? alwaysHash = null)
         {
-            var sb = new StringBuilder();
+            var sb = StringBuilderEx.Acquire();
             if (withMachineId)
                 sb.Append(MachineId).Append("_");
             if (withTestId)
                 sb.Append(TestId).Append("_");
             if (withRunId)
                 sb.Append(RunId).Append("_");
-            var r = sb.ToString(0, Math.Max(0, sb.Length - 1));
+            var r = sb.ToStringAndRelease(0, Math.Max(0, sb.Length - 1));
             r = PathEx.GetHashedName(r, null, maxLength ?? MaxLength, alwaysHash ?? AlwaysHash);
             r = PostProcess(r);
             return r;

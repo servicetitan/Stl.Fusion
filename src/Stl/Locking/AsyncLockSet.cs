@@ -127,6 +127,7 @@ namespace Stl.Locking
         {
             try {
                 var releaser = await task.ConfigureAwait(false);
+                // ReSharper disable once HeapView.BoxingAllocation
                 return new Releaser(entry, releaser);
             }
             catch {

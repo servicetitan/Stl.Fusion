@@ -21,11 +21,10 @@ namespace Stl.Fusion.Bridge.Internal
             IPublisher publisher, IComputed computed,
             Symbol publicationId, IMomentClock clock);
 
-        private static readonly ConcurrentDictionary<Type, Constructor> ConstructorCache =
-            new ConcurrentDictionary<Type, Constructor>();
+        private static readonly ConcurrentDictionary<Type, Constructor> ConstructorCache = new();
         private static readonly Func<Type, Constructor> CreateCache = Create;
 
-        public static PublicationFactory Instance { get; } = new PublicationFactory();
+        public static PublicationFactory Instance { get; } = new();
 
         private PublicationFactory() { }
 
@@ -56,8 +55,7 @@ namespace Stl.Fusion.Bridge.Internal
             IPublication>
         {
             private readonly Type _genericType;
-            private readonly ConcurrentDictionary<Type, Type> _closedTypeCache =
-                new ConcurrentDictionary<Type, Type>();
+            private readonly ConcurrentDictionary<Type, Type> _closedTypeCache = new();
 
             public FactoryApplyHandler(Type genericType)
                 => _genericType = genericType;

@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 namespace Stl.Fusion.Bridge.Messages
 {
     [Serializable]
-    public abstract class Message
+    public abstract class BridgeMessage
     {
         public override string ToString()
         {

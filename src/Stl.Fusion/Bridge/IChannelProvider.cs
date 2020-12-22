@@ -8,6 +8,6 @@ namespace Stl.Fusion.Bridge
 {
     public interface IChannelProvider
     {
-        Task<Channel<Message>> CreateChannelAsync(Symbol publisherId, CancellationToken cancellationToken);
+        Task<Channel<BridgeMessage>> CreateChannelAsync(Symbol publisherId, CancellationToken cancellationToken);
     }
 }

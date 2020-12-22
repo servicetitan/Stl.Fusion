@@ -36,7 +36,7 @@ namespace Stl.Fusion.Internal
 
         public static Exception WrongPublisher(IPublisher expected, Symbol providedPublisherId)
             => new InvalidOperationException($"Wrong publisher: {expected.Id} (expected) != {providedPublisherId} (provided).");
-        public static Exception UnknownChannel(Channel<Message> channel)
+        public static Exception UnknownChannel(Channel<BridgeMessage> channel)
             => new InvalidOperationException("Unknown channel.");
 
         public static Exception PublicationAbsents()

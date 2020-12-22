@@ -4,8 +4,7 @@ namespace Stl.Comparison
 {
     public class HasKeyEqualityComparer<T> : IEqualityComparer<IHasKey<T>>
     {
-        public static readonly IEqualityComparer<IHasKey<T>> Instance =
-            new HasKeyEqualityComparer<T>();
+        public static readonly IEqualityComparer<IHasKey<T>> Instance = new HasKeyEqualityComparer<T>();
 
         public bool Equals(IHasKey<T>? x, IHasKey<T>? y)
         {

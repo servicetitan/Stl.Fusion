@@ -5,7 +5,7 @@ namespace Stl.Collections
 {
     public class FenwickTree<T>
     {
-        private T[] _nodes;
+        private readonly T[] _nodes;
 
         public int Count => _nodes.Length - 1;
         public Func<T, T, T> Addition { get; }

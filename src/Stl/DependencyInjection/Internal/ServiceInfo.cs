@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Stl.Collections;
@@ -11,10 +10,8 @@ namespace Stl.DependencyInjection.Internal
 {
     internal readonly struct ServiceInfo
     {
-        private static ConcurrentDictionary<Assembly, ServiceInfo[]> ServiceInfoCache { get; } =
-            new ConcurrentDictionary<Assembly, ServiceInfo[]>();
-        private static ConcurrentDictionary<(Assembly, Symbol, Option<Symbol>), ServiceInfo[]> ScopedServiceInfoCache { get; } =
-            new ConcurrentDictionary<(Assembly, Symbol, Option<Symbol>), ServiceInfo[]>();
+        private static ConcurrentDictionary<Assembly, ServiceInfo[]> ServiceInfoCache { get; } = new();
+        private static ConcurrentDictionary<(Assembly, Symbol, Option<Symbol>), ServiceInfo[]> ScopedServiceInfoCache { get; } = new();
 
         public Type ImplementationType { get; }
         public ServiceAttributeBase[] Attributes { get; }

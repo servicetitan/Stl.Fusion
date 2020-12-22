@@ -4,7 +4,7 @@ namespace Stl.Fusion.Interception
 {
     public class ByRefArgumentHandler : ArgumentHandler
     {
-        public static ByRefArgumentHandler Instance { get; } = new ByRefArgumentHandler();
+        public static ByRefArgumentHandler Instance { get; } = new();
 
         private ByRefArgumentHandler()
         {

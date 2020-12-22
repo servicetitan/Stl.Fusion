@@ -9,8 +9,7 @@ namespace Stl.Reflection
 {
     public static class MethodEx
     {
-        private static readonly ConcurrentDictionary<MethodInfo, MethodInfo?> BaseOrDeclaringMethodCache =
-            new ConcurrentDictionary<MethodInfo, MethodInfo?>();
+        private static readonly ConcurrentDictionary<MethodInfo, MethodInfo?> BaseOrDeclaringMethodCache = new();
 
         private static MethodInfo GetDeclaringMethod(MethodInfo method)
         {

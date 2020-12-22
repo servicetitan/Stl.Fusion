@@ -1,4 +1,3 @@
-using System.CommandLine;
 using System.CommandLine.IO;
 using System.IO;
 using System.Text;
@@ -8,8 +7,8 @@ namespace Stl.Testing.Internal
 {
     public class TestStreamWriter : IStandardStreamWriter
     {
-        protected object Lock = new object();
-        public StringBuilder StringBuilder = new StringBuilder();
+        protected object Lock = new();
+        public StringBuilder StringBuilder = new();
         public TextWriter? TextWriter { get; set; }
 
         public override string ToString()

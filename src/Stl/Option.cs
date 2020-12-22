@@ -34,7 +34,7 @@ namespace Stl
 
         public static Option<T> None => default;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Option<T> Some(T value) => new Option<T>(true, value);
+        public static Option<T> Some(T value) => new(true, value);
 
         [JsonConstructor]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

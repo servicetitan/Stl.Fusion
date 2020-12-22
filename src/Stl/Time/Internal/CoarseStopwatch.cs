@@ -2,9 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using System.Threading.Tasks;
 using Stl.Generators;
-using Stl.OS;
 
 namespace Stl.Time.Internal
 {
@@ -16,7 +14,7 @@ namespace Stl.Time.Internal
 
         private static readonly Timer Timer;
         private static readonly Stopwatch Stopwatch;
-        private static readonly RandomInt64Generator Rng = new RandomInt64Generator();
+        private static readonly RandomInt64Generator Rng = new();
         private static long _elapsedTicks;
         private static long _randomInt64;
         private static volatile int _randomInt32;

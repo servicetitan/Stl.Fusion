@@ -25,8 +25,8 @@ namespace Stl.Reflection
 
         // Conversion
 
-        public static implicit operator TypeRef(string typeName) => new TypeRef(typeName);
-        public static implicit operator TypeRef(Type type) => new TypeRef(type.AssemblyQualifiedName!);
+        public static implicit operator TypeRef(string typeName) => new(typeName);
+        public static implicit operator TypeRef(Type type) => new(type.AssemblyQualifiedName!);
         public static explicit operator string(TypeRef type) => type.AssemblyQualifiedName;
         public static explicit operator Type(TypeRef type) => type.Resolve();
 

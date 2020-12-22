@@ -10,7 +10,7 @@ namespace Stl.Fusion.Authentication
 {
     public class PresenceService : AsyncProcessBase
     {
-        public class Options : IOptions
+        public class Options : IHasDefault
         {
             public TimeSpan UpdatePeriod { get; set; } = TimeSpan.FromMinutes(10);
         }

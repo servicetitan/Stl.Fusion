@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Stl.Frozen;
 using Stl.Fusion.Internal;
 using Errors = Stl.Internal.Errors;
 
@@ -64,8 +63,6 @@ namespace Stl.Fusion
             => Set(result.AsResult<T>());
         public void Set(Result<T> result)
         {
-            if (result.IsValue(out var v) && v is IFrozen f)
-                f.Freeze();
             IStateSnapshot<T> snapshot;
             lock (Lock) {
                 snapshot = Snapshot;

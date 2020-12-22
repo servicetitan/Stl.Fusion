@@ -15,7 +15,7 @@ namespace Stl.Extensibility
             Func<T, AsyncInvoker<T, TState>, CancellationToken, Task> handler,
             InvocationOrder order = InvocationOrder.Straight,
             Action<Exception, T, AsyncInvoker<T, TState>>? errorHandler = null)
-            => new AsyncInvoker<T, TState>() {
+            => new() {
                 Tail = tail,
                 State = initialState,
                 Handler = handler,
@@ -28,7 +28,7 @@ namespace Stl.Extensibility
             Func<T, AsyncInvoker<T, Unit>, CancellationToken, Task> handler,
             InvocationOrder order = InvocationOrder.Straight,
             Action<Exception, T, AsyncInvoker<T, Unit>>? errorHandler = null)
-            => new AsyncInvoker<T, Unit>() {
+            => new() {
                 Tail = tail,
                 Handler = handler,
                 Order = order,
@@ -41,7 +41,7 @@ namespace Stl.Extensibility
             Func<T, AsyncInvoker<T, TState>, CancellationToken, Task> handler,
             InvocationOrder order = InvocationOrder.Straight,
             Action<Exception, T, AsyncInvoker<T, TState>>? errorHandler = null)
-            => new AsyncInvoker<T, TState>() {
+            => new() {
                 Tail = tail,
                 State = initialState,
                 Handler = handler,
@@ -54,7 +54,7 @@ namespace Stl.Extensibility
             Func<T, AsyncInvoker<T, Unit>, CancellationToken, Task> handler,
             InvocationOrder order = InvocationOrder.Straight,
             Action<Exception, T, AsyncInvoker<T, Unit>>? errorHandler = null)
-            => new AsyncInvoker<T, Unit>() {
+            => new() {
                 Tail = tail,
                 Handler = handler,
                 Order = order,

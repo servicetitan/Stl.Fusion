@@ -5,15 +5,14 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Stl.DependencyInjection;
 using Stl.Fusion.Authentication;
-using Stl.Generators;
 
 namespace Stl.Fusion.Server.Authentication
 {
     public class SessionMiddleware : IMiddleware
     {
-        public class Options : IOptions
+        public class Options : IHasDefault
         {
-            public CookieBuilder Cookie { get; set; } = new CookieBuilder() {
+            public CookieBuilder Cookie { get; set; } = new() {
                 Name = "FusionAuth.SessionId",
                 IsEssential = true,
                 HttpOnly = true,

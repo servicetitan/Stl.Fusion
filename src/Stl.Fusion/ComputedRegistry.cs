@@ -9,7 +9,6 @@ using Stl.DependencyInjection;
 using Stl.Locking;
 using Stl.Mathematics;
 using Stl.OS;
-using Stl.Time;
 using Stl.Time.Internal;
 using Errors = Stl.Fusion.Internal.Errors;
 
@@ -17,9 +16,9 @@ namespace Stl.Fusion
 {
     public class ComputedRegistry : IDisposable
     {
-        public static ComputedRegistry Instance { get; set; } = new ComputedRegistry();
+        public static ComputedRegistry Instance { get; set; } = new();
 
-        public sealed class Options : IOptions
+        public sealed class Options : IHasDefault
         {
             internal static readonly PrimeSieve CapacityPrimeSieve;
             public static int DefaultInitialCapacity { get; }

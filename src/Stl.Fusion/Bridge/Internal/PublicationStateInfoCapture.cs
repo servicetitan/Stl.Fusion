@@ -5,7 +5,7 @@ namespace Stl.Fusion.Bridge.Internal
 {
     public class PublicationStateInfoCapture : IDisposable
     {
-        private static readonly AsyncLocal<PublicationStateInfoCapture?> CurrentLocal = new AsyncLocal<PublicationStateInfoCapture?>();
+        private static readonly AsyncLocal<PublicationStateInfoCapture?> CurrentLocal = new();
         private readonly PublicationStateInfoCapture? _oldCurrent;
 
         public static PublicationStateInfoCapture? Current => CurrentLocal.Value;

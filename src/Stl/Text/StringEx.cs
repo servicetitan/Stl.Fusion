@@ -6,22 +6,22 @@ namespace Stl.Text
 {
     public static class StringEx
     {
-        private static readonly ListFormat OneToManyListFormat = new ListFormat('|');
-
-        public static string ManyToOne(IEnumerable<string> values)
+        public static string ManyToOne(IEnumerable<string> values) => ManyToOne(values, ListFormat.Default);
+        public static string ManyToOne(IEnumerable<string> values, ListFormat listFormat)
         {
-            var formatter = OneToManyListFormat.CreateFormatter();
+            var formatter = listFormat.CreateFormatter(StringBuilderEx.Acquire());
             foreach (var value in values)
                 formatter.Append(value);
             formatter.AppendEnd();
-            return formatter.Output;
+            return formatter.OutputBuilder.ToStringAndRelease();
         }
 
-        public static string[] OneToMany(string value)
+        public static string[] OneToMany(string value) => OneToMany(value, ListFormat.Default);
+        public static string[] OneToMany(string value, ListFormat listFormat)
         {
             if (value == "")
                 return Array.Empty<string>();
-            var parser = OneToManyListFormat.CreateParser(value);
+            var parser = listFormat.CreateParser(value, StringBuilderEx.Acquire());
             var buffer = MemoryBuffer<string>.Lease(true);
             try {
                 while (parser.TryParseNext()) {
@@ -31,6 +31,7 @@ namespace Stl.Text
             }
             finally {
                 buffer.Release();
+                parser.ItemBuilder.Release();
             }
         }
 

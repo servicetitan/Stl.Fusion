@@ -3,41 +3,25 @@ using System.Reflection;
 
 namespace Stl.Reflection
 {
-    public class MemberwiseCopier<T>
+    public record MemberwiseCopier<T>
     {
-        protected const BindingFlags PropertyOrFieldBindingFlagsMask =
+        public static readonly MemberwiseCopier<T> Default = new();
+        private const BindingFlags PropertyOrFieldBindingFlagsMask =
             BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
         public Type Type => typeof(T);
-        public BindingFlags PropertyBindingFlags { get; set; } = BindingFlags.Instance | BindingFlags.Public;
-        public BindingFlags FieldBindingFlags { get; set; } = 0;
-        public Func<MemberInfo, bool>? Filter { get; set; }
+        public BindingFlags PropertyBindingFlags { get; init; } = BindingFlags.Instance | BindingFlags.Public;
+        public BindingFlags FieldBindingFlags { get; init; } = 0;
+        public Func<MemberInfo, bool>? Filter { get; init; }
 
-        public MemberwiseCopier<T> Configure(Action<MemberwiseCopier<T>>? configurer)
-        {
-            configurer?.Invoke(this);
-            return this;
-        }
+        public MemberwiseCopier<T> WithProperties(BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.Instance)
+            => this with { PropertyBindingFlags = PropertyBindingFlags | (bindingFlags & PropertyOrFieldBindingFlagsMask) };
+        public MemberwiseCopier<T> WithFields(BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.Instance)
+            => this with { FieldBindingFlags = FieldBindingFlags | (bindingFlags & PropertyOrFieldBindingFlagsMask) };
+        public MemberwiseCopier<T> WithFilter(Func<MemberInfo, bool>? filter)
+            => this with { Filter = filter };
 
-        public MemberwiseCopier<T> AddProperties(BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.Instance)
-        {
-            PropertyBindingFlags |= bindingFlags & PropertyOrFieldBindingFlagsMask;
-            return this;
-        }
-
-        public MemberwiseCopier<T> AddFields(BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.Instance)
-        {
-            FieldBindingFlags |= bindingFlags & PropertyOrFieldBindingFlagsMask;
-            return this;
-        }
-
-        public MemberwiseCopier<T> SetFilter(Func<MemberInfo, bool>? filter)
-        {
-            Filter = filter;
-            return this;
-        }
-
-        public T CopyMembers(T source, T target)
+        public T Invoke(T source, T target)
         {
             var oSource = (object) source!;
             var oTarget = (object) target!;
@@ -59,8 +43,13 @@ namespace Stl.Reflection
 
     public static class MemberwiseCopier
     {
-        public static T CopyMembers<T>(T source, T target,
-            Action<MemberwiseCopier<T>>? configurer = null)
-            => new MemberwiseCopier<T>().Configure(configurer).CopyMembers(source, target);
+        public static T Invoke<T>(T source, T target,
+            Func<MemberwiseCopier<T>, MemberwiseCopier<T>>? configurator = null)
+        {
+            var copier = MemberwiseCopier<T>.Default;
+            if (configurator != null)
+                copier = configurator.Invoke(MemberwiseCopier<T>.Default);
+            return copier.Invoke(source, target);
+        }
     }
 }

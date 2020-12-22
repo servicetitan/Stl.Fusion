@@ -11,10 +11,8 @@ namespace Stl.Caching
     public abstract class FastComputingCacheBase<TKey, TValue> : AsyncKeyResolverBase<TKey, TValue>
         where TKey : notnull
     {
-        protected AsyncLocal<ImmutableHashSet<TKey>> AccessedKeys { get; set; }=
-            new AsyncLocal<ImmutableHashSet<TKey>>();
-        protected ConcurrentDictionary<TKey, (Task<TValue> Task, Result<TValue> Result)> Cache { get; set; } =
-            new ConcurrentDictionary<TKey, (Task<TValue> Task, Result<TValue> Result)>();
+        protected AsyncLocal<ImmutableHashSet<TKey>> AccessedKeys { get; set; } = new();
+        protected ConcurrentDictionary<TKey, (Task<TValue> Task, Result<TValue> Result)> Cache { get; set; } = new();
 
         protected abstract ValueTask<TValue> ComputeAsync(TKey key, CancellationToken cancellationToken = default);
 

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -74,16 +75,16 @@ namespace Stl.DependencyInjection
 
         // Attribute-based configuration
 
-        public static ServiceAttributeBasedBuilder AttributeBased(
+        public static ServiceAttributeScanner AttributeScanner(
             this IServiceCollection services)
-            => new ServiceAttributeBasedBuilder(services);
-        public static ServiceAttributeBasedBuilder AttributeBased(
+            => new ServiceAttributeScanner(services);
+        public static ServiceAttributeScanner AttributeScanner(
             this IServiceCollection services,
             Symbol scope)
-            => new ServiceAttributeBasedBuilder(services).SetScope(scope);
-        public static ServiceAttributeBasedBuilder AttributeBased(
+            => new ServiceAttributeScanner(services).WithScope(scope);
+        public static ServiceAttributeScanner AttributeScanner(
             this IServiceCollection services,
             Symbol scope, Symbol fallbackScope)
-            => new ServiceAttributeBasedBuilder(services).SetScope(scope, fallbackScope);
+            => new ServiceAttributeScanner(services).WithScope(scope, fallbackScope);
     }
 }

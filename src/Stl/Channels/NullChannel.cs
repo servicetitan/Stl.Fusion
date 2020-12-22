@@ -8,7 +8,7 @@ namespace Stl.Channels
 {
     public class NullChannel<T> : Channel<T, T>
     {
-        public static readonly NullChannel<T> Instance = new NullChannel<T>();
+        public static readonly NullChannel<T> Instance = new();
 
         private class NullChannelReader : ChannelReader<T>
         {

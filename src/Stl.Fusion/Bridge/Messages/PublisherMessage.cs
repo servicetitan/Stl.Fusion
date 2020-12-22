@@ -5,7 +5,7 @@ using Stl.Text;
 namespace Stl.Fusion.Bridge.Messages
 {
     [Serializable]
-    public abstract class PublisherMessage : Message
+    public abstract class PublisherMessage : BridgeMessage
     {
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
         public long? MessageIndex { get; set; }

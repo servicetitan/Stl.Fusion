@@ -7,9 +7,9 @@ namespace Stl.Serialization
     public class CrossPlatformSerializationBinder : SerializationBinder
     {
         private static readonly string CoreLibName = "System.Private.CoreLib";
-        private static readonly Regex CoreLibRe = new Regex("^" + Regex.Escape(CoreLibName));
+        private static readonly Regex CoreLibRe = new("^" + Regex.Escape(CoreLibName));
         private static readonly string MsCorLibName = "mscorlib";
-        private static readonly Regex MsCorLibRe = new Regex("^" + Regex.Escape(MsCorLibName));
+        private static readonly Regex MsCorLibRe = new("^" + Regex.Escape(MsCorLibName));
         private static bool IsMonoPlatform { get; }
 
         public new static readonly ISerializationBinder Instance = new CrossPlatformSerializationBinder();

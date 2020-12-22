@@ -33,7 +33,7 @@ namespace Stl.Fusion.Bridge
 
     public class Replicator : AsyncDisposableBase, IReplicatorImpl
     {
-        public class Options : IOptions
+        public class Options : IHasDefault
         {
             public static Symbol NewId() => "R-" + RandomStringGenerator.Default.Next();
 

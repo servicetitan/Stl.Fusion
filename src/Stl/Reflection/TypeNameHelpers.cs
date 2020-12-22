@@ -1,6 +1,7 @@
 using System;
 using System.Text;
 using Newtonsoft.Json.Serialization;
+using Stl.Text;
 
 namespace Stl.Reflection
 {
@@ -41,7 +42,7 @@ namespace Stl.Reflection
 
         private static string RemoveAssemblyDetails(string fullyQualifiedTypeName)
         {
-            var sb = new StringBuilder();
+            var sb = StringBuilderEx.Acquire(0x20);
             var writingAssemblyName = false;
             var skipping = false;
             foreach (var c in fullyQualifiedTypeName) {
@@ -66,7 +67,7 @@ namespace Stl.Reflection
                     break;
                 }
             }
-            return sb.ToString();
+            return sb.ToStringAndRelease();
         }
 
         private static int? GetAssemblyDelimiterIndex(string fullyQualifiedTypeName)

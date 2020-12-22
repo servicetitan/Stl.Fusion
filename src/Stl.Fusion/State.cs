@@ -15,7 +15,7 @@ namespace Stl.Fusion
 {
     public interface IState : IResult, IHasServiceProvider
     {
-        public interface IOptions : Stl.DependencyInjection.IOptions
+        public interface IOptions : Stl.DependencyInjection.IHasDefault
         {
             ComputedOptions ComputedOptions { get; set; }
             Generator<LTag> VersionGenerator { get; set; }
@@ -64,7 +64,7 @@ namespace Stl.Fusion
             public ComputedOptions ComputedOptions { get; set; } = ComputedOptions.Default;
             public Generator<LTag> VersionGenerator { get; set; } = ConcurrentLTagGenerator.Default;
             public Func<IState<T>, Result<T>> InitialOutputFactory { get; set; } = DefaultInitialOutputFactory;
-            public bool InitialIsConsistent { get; set; } = false;
+            public bool InitialIsConsistent { get; set; }
 
             public Action<IState<T>>? EventConfigurator { get; set; }
             Action<IState>? IState.IOptions.EventConfigurator { get; set; }
@@ -319,6 +319,6 @@ namespace Stl.Fusion
         protected abstract Task<T> ComputeValueAsync(CancellationToken cancellationToken);
 
         protected virtual StateBoundComputed<T> CreateComputed()
-            => new StateBoundComputed<T>(ComputedOptions, this, VersionGenerator.Next());
+            => new(ComputedOptions, this, VersionGenerator.Next());
     }
 }

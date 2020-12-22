@@ -13,7 +13,7 @@ namespace Stl.Fusion.Bridge.Internal
     public interface ISubscriptionProcessorFactory
     {
         public SubscriptionProcessor Create(Type genericType,
-            IPublication publication, Channel<Message> outgoingMessages,
+            IPublication publication, Channel<BridgeMessage> outgoingMessages,
             TimeSpan subscriptionExpirationTime, IMomentClock clock,
             ILoggerFactory loggerFactory);
     }
@@ -21,20 +21,19 @@ namespace Stl.Fusion.Bridge.Internal
     public sealed class SubscriptionProcessorFactory : ISubscriptionProcessorFactory
     {
         private delegate SubscriptionProcessor Constructor(
-            IPublication publication, Channel<Message> outgoingMessages,
+            IPublication publication, Channel<BridgeMessage> outgoingMessages,
             TimeSpan subscriptionExpirationTime, IMomentClock clock,
             ILoggerFactory loggerFactory);
 
-        private static readonly ConcurrentDictionary<Type, Constructor> ConstructorCache =
-            new ConcurrentDictionary<Type, Constructor>();
+        private static readonly ConcurrentDictionary<Type, Constructor> ConstructorCache = new();
         private static readonly Func<Type, Constructor> CreateCache = Create;
 
-        public static SubscriptionProcessorFactory Instance { get; } = new SubscriptionProcessorFactory();
+        public static SubscriptionProcessorFactory Instance { get; } = new();
 
         private SubscriptionProcessorFactory() { }
 
         public SubscriptionProcessor Create(Type genericType,
-            IPublication publication, Channel<Message> outgoingMessages,
+            IPublication publication, Channel<BridgeMessage> outgoingMessages,
             TimeSpan subscriptionExpirationTime, IMomentClock clock, ILoggerFactory loggerFactory)
             => ConstructorCache
                 .GetOrAddChecked(genericType, CreateCache)
@@ -48,7 +47,7 @@ namespace Stl.Fusion.Bridge.Internal
             var handler = new FactoryApplyHandler(genericType);
 
             SubscriptionProcessor Factory(
-                IPublication publication, Channel<Message> outgoingMessages,
+                IPublication publication, Channel<BridgeMessage> outgoingMessages,
                 TimeSpan subscribeTimeout, IMomentClock clock, ILoggerFactory loggerFactory)
                 => publication.Apply(handler, (outgoingMessages, subscribeTimeout, clock, loggerFactory));
 
@@ -56,19 +55,18 @@ namespace Stl.Fusion.Bridge.Internal
         }
 
         private class FactoryApplyHandler : IPublicationApplyHandler<
-            (Channel<Message> OutgoingMessages, TimeSpan SubscriptionExpirationTime, IMomentClock Clock, ILoggerFactory loggerFactory),
+            (Channel<BridgeMessage> OutgoingMessages, TimeSpan SubscriptionExpirationTime, IMomentClock Clock, ILoggerFactory loggerFactory),
             SubscriptionProcessor>
         {
             private readonly Type _genericType;
-            private readonly ConcurrentDictionary<Type, Type> _closedTypeCache =
-                new ConcurrentDictionary<Type, Type>();
+            private readonly ConcurrentDictionary<Type, Type> _closedTypeCache = new();
 
             public FactoryApplyHandler(Type genericType)
                 => _genericType = genericType;
 
             public SubscriptionProcessor Apply<T>(
                 IPublication<T> publication,
-                (Channel<Message> OutgoingMessages, TimeSpan SubscriptionExpirationTime, IMomentClock Clock, ILoggerFactory loggerFactory) arg)
+                (Channel<BridgeMessage> OutgoingMessages, TimeSpan SubscriptionExpirationTime, IMomentClock Clock, ILoggerFactory loggerFactory) arg)
             {
                 var closedType = _closedTypeCache.GetOrAddChecked(
                     typeof(T),

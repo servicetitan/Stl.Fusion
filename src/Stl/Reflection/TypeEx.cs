@@ -13,13 +13,11 @@ namespace Stl.Reflection
     {
         public static readonly string SymbolPrefix = "@";
 
-        private static readonly Regex MethodNameRe = new Regex("[^\\w\\d]+", RegexOptions.Compiled);
-        private static readonly Regex MethodNameTailRe = new Regex("_+$", RegexOptions.Compiled);
-        private static readonly Regex GenericMethodNameTailRe = new Regex("_\\d+$", RegexOptions.Compiled);
-        private static readonly ConcurrentDictionary<(Type, bool, bool), Symbol> ToIdentifierNameCache =
-            new ConcurrentDictionary<(Type, bool, bool), Symbol>();
-        private static readonly ConcurrentDictionary<Type, Symbol> ToSymbolCache =
-            new ConcurrentDictionary<Type, Symbol>();
+        private static readonly Regex MethodNameRe = new("[^\\w\\d]+", RegexOptions.Compiled);
+        private static readonly Regex MethodNameTailRe = new("_+$", RegexOptions.Compiled);
+        private static readonly Regex GenericMethodNameTailRe = new("_\\d+$", RegexOptions.Compiled);
+        private static readonly ConcurrentDictionary<(Type, bool, bool), Symbol> ToIdentifierNameCache = new();
+        private static readonly ConcurrentDictionary<Type, Symbol> ToSymbolCache = new();
 
         public static IEnumerable<Type> GetAllBaseTypes(this Type type, bool addSelf = false, bool addInterfaces = false)
         {

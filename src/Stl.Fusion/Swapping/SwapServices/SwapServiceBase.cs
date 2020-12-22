@@ -46,7 +46,7 @@ namespace Stl.Fusion.Swapping
 
         protected virtual string SerializeKey(InterceptedInput input, LTag version)
         {
-            var sb = new StringBuilder(256);
+            var sb = StringBuilderEx.Acquire(256);
             var f = ListFormat.Default.CreateFormatter(sb);
             var method = input.Method;
             f.Append(method.InvocationTargetHandler.ToStringFunc.Invoke(input.Target));
@@ -57,7 +57,7 @@ namespace Stl.Fusion.Swapping
                 f.Append(handler.ToStringFunc.Invoke(arguments[i]));
             }
             f.AppendEnd();
-            return sb.ToString();
+            return sb.ToStringAndRelease();
         }
     }
 }

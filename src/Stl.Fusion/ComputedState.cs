@@ -62,7 +62,7 @@ namespace Stl.Fusion
         {
             var newTask = TaskSource.New<TValue>(true).Task;
             var oldTask = Interlocked.Exchange(ref task, newTask);
-            if (oldTask != null)
+            if (oldTask != null!)
                 TaskSource.For(oldTask).TrySetResult(result!);
         }
     }

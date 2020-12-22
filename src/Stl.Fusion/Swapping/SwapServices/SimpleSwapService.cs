@@ -12,7 +12,7 @@ namespace Stl.Fusion.Swapping
 {
     public class SimpleSwapService : SwapServiceBase<string>
     {
-        public class Options : IOptions
+        public class Options : IHasDefault
         {
             public TimeSpan ExpirationTime { get; set; } = TimeSpan.FromMinutes(1);
             public TimeSpan TimerQuanta { get; set; } = TimeSpan.FromSeconds(1);
