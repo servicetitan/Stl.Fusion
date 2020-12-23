@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 
 namespace Stl.Fusion.Authentication
 {
-    public record User : IPrincipal, IIdentity, IHasId<string>
+    public class User : IPrincipal, IIdentity, IHasId<string>
     {
         public static string GuestName { get; set; } = "Guest";
 
@@ -37,14 +37,16 @@ namespace Stl.Fusion.Authentication
             Claims = claims ?? ImmutableDictionary<string, string>.Empty;
         }
 
+        public override string ToString() => $"{GetType()}({Id})";
+
         public virtual bool IsInRole(string role)
             => throw new NotSupportedException();
 
         protected virtual ClaimsPrincipal ToClaimsPrincipal()
         {
             var claims = new List<Claim>() {
-                new Claim(ClaimTypes.NameIdentifier, Id, ClaimValueTypes.String),
-                new Claim(ClaimTypes.Name, Name, ClaimValueTypes.String),
+                new(ClaimTypes.NameIdentifier, Id, ClaimValueTypes.String),
+                new(ClaimTypes.Name, Name, ClaimValueTypes.String),
             };
             foreach (var (type, value) in Claims)
                 claims.Add(new Claim(type, value));
