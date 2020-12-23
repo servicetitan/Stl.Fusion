@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 
 namespace Stl.Fusion.Authentication
 {
-    public class User : IPrincipal, IIdentity, IHasId<string>
+    public record User : IPrincipal, IIdentity, IHasId<string>
     {
         public static string GuestName { get; set; } = "Guest";
 
@@ -20,9 +20,8 @@ namespace Stl.Fusion.Authentication
         [JsonIgnore]
         public bool IsAuthenticated => !string.IsNullOrEmpty(AuthenticationType);
         [JsonIgnore]
-        public IIdentity Identity => this;
-        [JsonIgnore]
         public ClaimsPrincipal ClaimsPrincipal => _claimsPrincipalLazy.Value;
+        IIdentity IPrincipal.Identity => this;
 
         public User(string id) : this("", id, GuestName) { }
         [JsonConstructor]
@@ -36,8 +35,6 @@ namespace Stl.Fusion.Authentication
             Name = name;
             Claims = claims ?? ImmutableDictionary<string, string>.Empty;
         }
-
-        public override string ToString() => $"{GetType()}({Id})";
 
         public virtual bool IsInRole(string role)
             => throw new NotSupportedException();

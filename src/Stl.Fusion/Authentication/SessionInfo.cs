@@ -4,7 +4,7 @@ using System.Collections.Immutable;
 
 namespace Stl.Fusion.Authentication
 {
-    public class SessionInfo : IHasId<string>
+    public record SessionInfo : IHasId<string>
     {
         public string Id { get; init; } = "";
         public DateTime CreatedAt { get; init; }
@@ -16,7 +16,5 @@ namespace Stl.Fusion.Authentication
 
         public SessionInfo() { }
         public SessionInfo(string id) => Id = id;
-
-        public override string ToString() => $"{GetType()}({Id})";
     }
 }
