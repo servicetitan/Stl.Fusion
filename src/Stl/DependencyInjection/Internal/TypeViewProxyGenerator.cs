@@ -16,7 +16,7 @@ namespace Stl.DependencyInjection.Internal
     public class TypeViewProxyGenerator : ProxyGeneratorBase<TypeViewProxyGenerator.Options>,
         ITypeViewProxyGenerator
     {
-        public class Options : ProxyGenerationOptions, IHasDefault
+        public class Options : ProxyGenerationOptions
         {
             public Type GenericBaseType { get; set; } = typeof(TypeView<,>);
             public Type InterceptorType { get; set; } = typeof(TypeViewInterceptor);
@@ -43,12 +43,12 @@ namespace Stl.DependencyInjection.Internal
 
         public static ITypeViewProxyGenerator Default { get; } = new TypeViewProxyGenerator();
 
-        protected ConcurrentDictionary<(Type, Type), Type> Cache { get; } = new ConcurrentDictionary<(Type, Type), Type>();
+        protected ConcurrentDictionary<(Type, Type), Type> Cache { get; } = new();
 
         public TypeViewProxyGenerator(
             Options? options = null,
             ModuleScope? moduleScope = null)
-            : base(options, moduleScope) { }
+            : base(options ??= new(), moduleScope) { }
 
         public virtual Type GetProxyType(Type implementationType, Type viewType)
             => Cache.GetOrAddChecked((implementationType, viewType), (key, self) => {

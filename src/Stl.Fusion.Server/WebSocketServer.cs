@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Channels;
-using Stl.DependencyInjection;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Messages;
 using Stl.Fusion.Client;
@@ -15,7 +14,7 @@ namespace Stl.Fusion.Server
 {
     public class WebSocketServer
     {
-        public class Options : IHasDefault
+        public class Options
         {
             private static readonly WebSocketChannelProvider.Options DefaultClientOptions = new();
 
@@ -38,8 +37,9 @@ namespace Stl.Fusion.Server
         protected IPublisher Publisher { get; }
         protected Func<ChannelSerializerPair<BridgeMessage, string>> ChannelSerializerPairFactory { get; }
 
-        public WebSocketServer(Options options, IPublisher publisher, ILogger<WebSocketServer>? log = null)
+        public WebSocketServer(Options? options, IPublisher publisher, ILogger<WebSocketServer>? log = null)
         {
+            options ??= new();
             Log = log ??= NullLogger<WebSocketServer>.Instance;
             RequestPath = options.RequestPath;
             PublisherIdQueryParameterName = options.PublisherIdQueryParameterName;

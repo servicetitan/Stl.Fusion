@@ -15,7 +15,7 @@ namespace Stl.Fusion
 {
     public interface IState : IResult, IHasServiceProvider
     {
-        public interface IOptions : Stl.DependencyInjection.IHasDefault
+        public interface IOptions
         {
             ComputedOptions ComputedOptions { get; set; }
             Generator<LTag> VersionGenerator { get; set; }

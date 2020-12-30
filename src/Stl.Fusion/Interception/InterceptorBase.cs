@@ -20,7 +20,7 @@ namespace Stl.Fusion.Interception
         // ReSharper disable once HeapView.BoxingAllocation
         private static readonly object NoCancellationTokenBoxed = CancellationToken.None;
 
-        public class Options : IHasDefault
+        public class Options
         {
             public IComputedOptionsProvider? ComputedOptionsProvider { get; set; } = null!;
             public IArgumentHandlerProvider? ArgumentHandlerProvider { get; set; } = null!;

@@ -10,7 +10,7 @@ namespace Stl.Serialization
     [Serializable]
     [JsonConverter(typeof(Base64DataJsonConverter))]
     [TypeConverter(typeof(Base64DataTypeConverter))]
-    public readonly struct Base64Data : IEquatable<Base64Data>, IReadOnlyCollection<byte>
+    public readonly struct Base64Encoded : IEquatable<Base64Encoded>, IReadOnlyCollection<byte>
     {
         public readonly byte[] Data;
 
@@ -21,7 +21,7 @@ namespace Stl.Serialization
             set => Data[index] = value;
         }
 
-        public Base64Data(byte[] data) => Data = data;
+        public Base64Encoded(byte[] data) => Data = data;
         public override string ToString() => $"{GetType()}({Count} byte(s))";
 
         // IEnumerable
@@ -30,17 +30,17 @@ namespace Stl.Serialization
 
         // Conversion
         public string Encode() => Convert.ToBase64String(Data);
-        public static Base64Data Decode(string encodedData) => Convert.FromBase64String(encodedData);
+        public static Base64Encoded Decode(string encodedData) => Convert.FromBase64String(encodedData);
 
         // Operators
-        public static implicit operator Base64Data(byte[] data) => new Base64Data(data);
-        public static implicit operator Base64Data(string encodedData) => Decode(encodedData);
+        public static implicit operator Base64Encoded(byte[] data) => new Base64Encoded(data);
+        public static implicit operator Base64Encoded(string encodedData) => Decode(encodedData);
 
         // Equality
-        public bool Equals(Base64Data other) => Data == other.Data;
-        public override bool Equals(object? obj) => obj is Base64Data other && Equals(other);
+        public bool Equals(Base64Encoded other) => Data == other.Data;
+        public override bool Equals(object? obj) => obj is Base64Encoded other && Equals(other);
         public override int GetHashCode() => Data.GetHashCode();
-        public static bool operator ==(Base64Data left, Base64Data right) => left.Equals(right);
-        public static bool operator !=(Base64Data left, Base64Data right) => !left.Equals(right);
+        public static bool operator ==(Base64Encoded left, Base64Encoded right) => left.Equals(right);
+        public static bool operator !=(Base64Encoded left, Base64Encoded right) => !left.Equals(right);
     }
 }

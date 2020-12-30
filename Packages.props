@@ -82,8 +82,10 @@
     <PackageReference Update="System.Runtime.Loader" Version="4.3.0" />
     <PackageReference Update="System.Text.Json" Version="5.0.0" />
     <PackageReference Update="System.Threading.Channels" Version="5.0.0" />
+    <PackageReference Update="Ulid" Version="1.1.0" />
     <PackageReference Update="xunit" Version="2.4.1" />
     <PackageReference Update="Xunit.DependencyInjection.Logging" Version="2.1.0" />
+    <PackageReference Update="ZString" Version="2.2.0" />
     <!-- Build time only -->
     <PackageReference Update="Microsoft.NET.Test.Sdk" Version="16.8.3" />
     <PackageReference Update="Microsoft.AspNetCore.Components.WebAssembly.Build" Version="$(BlazorVersion)" PrivateAssets="all" />

@@ -3,7 +3,6 @@ using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
-using Stl.DependencyInjection;
 using Stl.Time;
 
 namespace Stl.Fusion
@@ -19,9 +18,8 @@ namespace Stl.Fusion
 
     public class UpdateDelayer : IUpdateDelayer
     {
-        public class Options : IHasDefault
+        public class Options
         {
-            public static Options Default => new();
             public static Options InstantUpdates => new() {
                 Delay = TimeSpan.FromSeconds(0.01),
                 MinExtraErrorDelay = TimeSpan.FromSeconds(1),
@@ -34,8 +32,8 @@ namespace Stl.Fusion
             public IMomentClock Clock { get; set; } = CoarseCpuClock.Instance;
         }
 
-        private volatile Task<Unit> _cancelDelaysTask = null!;
-        protected Task<Unit> CancelDelaysTask => _cancelDelaysTask;
+        private volatile Task<Unit>? _cancelDelaysTask;
+        protected Task<Unit> CancelDelaysTask => _cancelDelaysTask!;
         protected IMomentClock Clock { get; }
 
         public TimeSpan Delay { get; set; }
@@ -45,7 +43,7 @@ namespace Stl.Fusion
 
         public UpdateDelayer(Options? options = null)
         {
-            options = options.OrDefault();
+            options ??= new();
             Delay = options.Delay;
             MinExtraErrorDelay = options.MinExtraErrorDelay;
             MaxExtraErrorDelay = options.MaxExtraErrorDelay;

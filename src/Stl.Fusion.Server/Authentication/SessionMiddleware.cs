@@ -3,14 +3,13 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
-using Stl.DependencyInjection;
 using Stl.Fusion.Authentication;
 
 namespace Stl.Fusion.Server.Authentication
 {
     public class SessionMiddleware : IMiddleware
     {
-        public class Options : IHasDefault
+        public class Options
         {
             public CookieBuilder Cookie { get; set; } = new() {
                 Name = "FusionAuth.SessionId",
@@ -45,7 +44,7 @@ namespace Stl.Fusion.Server.Authentication
             ISessionFactory sessionFactory,
             IAuthService? authService = null)
         {
-            options = options.OrDefault();
+            options ??= new();
             Cookie = options.Cookie;
             ForcedSignOutHandler = options.ForcedSignOutHandler;
             SessionProvider = sessionProvider;

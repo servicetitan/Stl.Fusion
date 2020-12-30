@@ -3,16 +3,15 @@ using Castle.DynamicProxy;
 namespace Stl.DependencyInjection.Internal
 {
     public abstract class ProxyGeneratorBase<TOptions>
-        where TOptions : ProxyGenerationOptions, IHasDefault, new()
+        where TOptions : ProxyGenerationOptions, new()
     {
         protected TOptions ProxyGeneratorOptions { get; }
         protected ModuleScope ModuleScope { get; }
 
         public ProxyGeneratorBase(
-            TOptions? options = null,
+            TOptions options,
             ModuleScope? moduleScope = null)
         {
-            options = options.OrDefault();
             moduleScope ??= new ModuleScope();
             ProxyGeneratorOptions = options;
             ModuleScope = moduleScope;

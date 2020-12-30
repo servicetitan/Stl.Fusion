@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="Castle.Core" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
@@ -23,6 +24,8 @@
     <PackageReference Include="System.Net.WebSockets" />
     <PackageReference Include="System.Reactive" />
     <PackageReference Include="System.Threading.Channels" />
+    <PackageReference Include="Ulid" />
+    <PackageReference Include="ZString" />
   </ItemGroup>
 
 </Project>

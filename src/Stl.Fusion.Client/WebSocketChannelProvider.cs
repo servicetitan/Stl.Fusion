@@ -20,7 +20,7 @@ namespace Stl.Fusion.Client
 {
     public class WebSocketChannelProvider : IChannelProvider, IHasServiceProvider
     {
-        public class Options : IHasDefault
+        public class Options
         {
             public Uri BaseUri { get; set; } = new("http://localhost:5000/");
             public string RequestPath { get; set; } = "/fusion/ws";
@@ -88,7 +88,7 @@ namespace Stl.Fusion.Client
             IServiceProvider serviceProvider,
             ILogger<WebSocketChannelProvider>? log = null)
         {
-            options = options.OrDefault(serviceProvider);
+            options ??= new();
             _log = log ??= NullLogger<WebSocketChannelProvider>.Instance;
 
             ServiceProvider = serviceProvider;

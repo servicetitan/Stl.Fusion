@@ -23,7 +23,7 @@ namespace Stl.Fusion.Bridge.Interception
             IServiceProvider serviceProvider,
             IReplicator replicator,
             ILoggerFactory? loggerFactory = null)
-            : base(options = options.OrDefault(serviceProvider), serviceProvider, loggerFactory)
+            : base(options ??= new(), serviceProvider, loggerFactory)
         {
             Replicator = replicator;
             VersionGenerator = options.VersionGenerator;

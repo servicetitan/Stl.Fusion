@@ -5,8 +5,6 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Concurrency;
-using Stl.DependencyInjection;
-using Stl.Mathematics;
 using Stl.OS;
 
 namespace Stl.Fusion.Bridge
@@ -15,7 +13,7 @@ namespace Stl.Fusion.Bridge
     {
         public static ReplicaRegistry Instance { get; set; } = new();
 
-        public sealed class Options : IHasDefault
+        public sealed class Options
         {
             public static int DefaultInitialCapacity { get; }
             public static int DefaultInitialConcurrency { get; }
@@ -44,7 +42,7 @@ namespace Stl.Fusion.Bridge
 
         public ReplicaRegistry(Options? options = null)
         {
-            options = options.OrDefault();
+            options ??= new();
             _handles = new ConcurrentDictionary<PublicationRef, GCHandle>(options.ConcurrencyLevel, options.InitialCapacity);
             _opCounter = new StochasticCounter(1);
             _gcHandlePool = options.GCHandlePool ?? new GCHandlePool(GCHandleType.Weak);

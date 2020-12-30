@@ -20,7 +20,7 @@ namespace Stl.Fusion.Interception
             Options? options,
             IServiceProvider serviceProvider,
             ILoggerFactory? loggerFactory = null)
-            : base(options = options.OrDefault(serviceProvider), serviceProvider, loggerFactory)
+            : base(options ??= new(), serviceProvider, loggerFactory)
             => VersionGenerator = options.VersionGenerator;
 
         protected override InterceptedFunctionBase<T> CreateFunction<T>(InterceptedMethodDescriptor method)

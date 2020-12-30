@@ -33,7 +33,7 @@ namespace Stl.Fusion.Bridge
 
     public class Replicator : AsyncDisposableBase, IReplicatorImpl
     {
-        public class Options : IHasDefault
+        public class Options
         {
             public static Symbol NewId() => "R-" + RandomStringGenerator.Default.Next();
 
@@ -50,7 +50,7 @@ namespace Stl.Fusion.Bridge
 
         public Replicator(Options? options, IServiceProvider serviceProvider, IChannelProvider channelProvider)
         {
-            options = options.OrDefault(serviceProvider);
+            options ??= new();
             Id = options.Id;
             ReconnectDelay = options.ReconnectDelay;
             ServiceProvider = serviceProvider;

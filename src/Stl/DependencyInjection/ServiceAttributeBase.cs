@@ -12,8 +12,7 @@ namespace Stl.DependencyInjection
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public abstract class ServiceAttributeBase : Attribute
     {
-        private static readonly ConcurrentDictionary<Type, Unit> IsInitialized =
-            new ConcurrentDictionary<Type, Unit>();
+        private static readonly ConcurrentDictionary<Type, Unit> IsInitialized = new();
 
         public string Scope { get; set; } = "";
 

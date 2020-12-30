@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -184,17 +185,19 @@ namespace Stl.Fusion
                     Services.TryAddTransient(implementationType);
             }
 
-            // Registering IOption types based on .ctor parameters
+            // Try register Options type based for .ctor(Options options, ...)
             foreach (var ctor in implementationType.GetConstructors()) {
                 if (!ctor.IsPublic)
                     continue;
-                var parameters = ctor.GetParameters();
-                if (parameters.Length < 1)
-                    continue;
-                var optionsType = parameters[0].ParameterType;
-                if (!typeof(IHasDefault).IsAssignableFrom(optionsType))
-                    continue;
-                Services.TryAddTransient(optionsType);
+                var pOptions = ctor.GetParameters().FirstOrDefault();
+                if (pOptions == null)
+                    continue; // Must be the first .ctor parameter
+                if (pOptions.Name != "options")
+                    continue; // Must be named "options"
+                var tOptions = pOptions.ParameterType;
+                if (tOptions.GetConstructor(Array.Empty<Type>()) == null)
+                    continue; // Must have new() constructor
+                Services.TryAddTransient(tOptions);
             }
             return this;
         }
