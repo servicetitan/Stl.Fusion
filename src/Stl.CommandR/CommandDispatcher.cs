@@ -4,10 +4,11 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.CommandR.Internal;
+using Stl.DependencyInjection;
 
 namespace Stl.CommandR
 {
-    public interface ICommandDispatcher
+    public interface ICommandDispatcher : IHasServiceProvider
     {
         Task<CommandContext> DispatchAsync(ICommand command, CancellationToken cancellationToken = default);
         Task<TResult> DispatchAsync<TResult>(ICommand<TResult> command, CancellationToken cancellationToken = default);
@@ -15,62 +16,51 @@ namespace Stl.CommandR
 
     public class CommandDispatcher : ICommandDispatcher
     {
-        protected IServiceProvider Services { get; }
         protected ICommandHandlerResolver HandlerResolver { get; }
         protected ILogger Log { get; }
+        public IServiceProvider ServiceProvider { get; }
 
         public CommandDispatcher(
-            IServiceProvider services,
+            IServiceProvider serviceProvider,
             ICommandHandlerResolver handlerResolver,
             ILogger<CommandDispatcher>? log = null)
         {
             Log = log ??= NullLogger<CommandDispatcher>.Instance;
-            Services = services;
             HandlerResolver = handlerResolver;
+            ServiceProvider = serviceProvider;
         }
 
         public async Task<CommandContext> DispatchAsync(ICommand command, CancellationToken cancellationToken = default)
         {
-            var commandContext = CommandContext.New(command);
-            var commandContextImpl = (ICommandContextImpl) commandContext;
-            using var _ = commandContext.Activate();
+            var context = CommandContext.New(command, ServiceProvider);
+            using var _ = context.Activate();
             try {
-                var handlers = HandlerResolver.GetCommandHandlers(command.GetType());
-                if (handlers.Count == 0) {
+                context.Handlers = HandlerResolver.GetCommandHandlers(command.GetType());
+                if (context.Handlers.Count == 0) {
                     var error = new InvalidOperationException($"No handler(s) found for {command}.");
                     Log.LogError(error, error.Message);
                     throw error;
                 }
-
-                var handlerIndex = 0;
-                Func<Task> next = null!;
-                next = () => {
-                    if (handlerIndex >= handlers!.Count)
-                        return Task.CompletedTask;
-                    var handler = handlers[handlerIndex++];
-                    // ReSharper disable once AccessToModifiedClosure
-                    return handler.InvokeAsync(Services, command, next, cancellationToken);
-                };
-                await next.Invoke().ConfigureAwait(false);
-                commandContextImpl.TrySetDefaultResult();
-                return commandContext;
+                await context.InvokeNextHandlerAsync(cancellationToken).ConfigureAwait(false);
+                context.TrySetDefaultResult();
+                return context;
             }
             catch (OperationCanceledException) {
-                commandContextImpl.TrySetCancelled(
+                context.TrySetCancelled(
                     cancellationToken.IsCancellationRequested ? cancellationToken : default);
-                return commandContext;
+                return context;
             }
             catch (Exception e) {
-                commandContextImpl.TrySetException(e);
-                return commandContext;
+                context.TrySetException(e);
+                return context;
             }
         }
 
         public async Task<TResult> DispatchAsync<TResult>(ICommand<TResult> command, CancellationToken cancellationToken = default)
         {
-            var commandContext = await DispatchAsync((ICommand) command, cancellationToken).ConfigureAwait(false);
-            var typedCommandContext = (CommandContext<TResult>) commandContext;
-            return await typedCommandContext.ResultTask.ConfigureAwait(false);
+            var context = await DispatchAsync((ICommand) command, cancellationToken).ConfigureAwait(false);
+            var typedContext = (CommandContext<TResult>) context;
+            return await typedContext.ResultTask.ConfigureAwait(false);
         }
     }
 }

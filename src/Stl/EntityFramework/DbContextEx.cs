@@ -1,12 +1,13 @@
 using System;
 using Microsoft.EntityFrameworkCore;
+using Stl.EntityFramework.Internal;
 
 namespace Stl.EntityFramework
 {
     public static class DbContextEx
     {
         private static readonly EventHandler<SavingChangesEventArgs> FailOnSaveChanges =
-            (sender, args) => throw new InvalidOperationException("This DbContext is read-only.");
+            (sender, args) => throw Errors.DbContextIsReadOnly();
 
         // ConfigureMode
 

@@ -25,7 +25,7 @@ namespace Stl.CommandR.Internal
         public void AddHandler(CommandHandler handler)
         {
             if (!TryAddHandler(handler))
-                throw new InvalidOperationException($"{handler} is already added.");
+                throw Errors.HandlerIsAlreadyAdded(handler);
         }
     }
 }

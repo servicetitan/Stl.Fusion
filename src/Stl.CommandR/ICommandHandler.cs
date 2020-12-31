@@ -7,6 +7,8 @@ namespace Stl.CommandR
     public interface ICommandHandler<in TCommand>
         where TCommand : class, ICommand
     {
-        Task OnCommandAsync(TCommand command, Func<Task> next, CancellationToken cancellationToken);
+        Task OnCommandAsync(
+            TCommand command, CommandContext context,
+            CancellationToken cancellationToken);
     }
 }

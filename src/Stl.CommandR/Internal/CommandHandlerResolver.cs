@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using Stl.Reflection;
 
@@ -28,7 +27,7 @@ namespace Stl.CommandR.Internal
                 var handlers = (
                     from typeEntry in baseTypes
                     from handler in self.Registry.Handlers.Where(h => h.CommandType == typeEntry.Type)
-                    orderby handler.Priority descending, typeEntry.Index
+                    orderby handler.Priority, typeEntry.Index
                     select handler
                 ).Distinct().ToArray();
                 return handlers;
