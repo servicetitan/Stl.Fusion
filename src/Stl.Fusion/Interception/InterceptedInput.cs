@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using Castle.DynamicProxy;
+using Stl.Fusion.Interception.Internal;
 
 namespace Stl.Fusion.Interception
 {
@@ -10,18 +11,18 @@ namespace Stl.Fusion.Interception
         private static readonly object BoxedDefaultCancellationToken = (CancellationToken) default;
 
         public readonly InterceptedMethodDescriptor Method;
-        public readonly IInvocation Invocation;
-        public readonly IInvocationProceedInfo ProceedInfo;
+        public readonly AbstractInvocation Invocation;
+        public readonly int NextInterceptorIndex;
         // Shortcuts
         public object Target => Invocation.InvocationTarget;
         public object[] Arguments => Invocation.Arguments;
 
-        public InterceptedInput(IFunction function, InterceptedMethodDescriptor method, IInvocation invocation)
+        public InterceptedInput(IFunction function, InterceptedMethodDescriptor method, AbstractInvocation invocation)
             : base(function)
         {
             Method = method;
             Invocation = invocation;
-            ProceedInfo = invocation.CaptureProceedInfo();
+            NextInterceptorIndex = invocation.GetCurrentInterceptorIndex();
 
             var arguments = invocation.Arguments;
             var argumentHandlers = method.ArgumentHandlers;
@@ -52,20 +53,21 @@ namespace Stl.Fusion.Interception
             var method = Method;
             var arguments = Arguments;
             var ctIndex = method.CancellationTokenArgumentIndex;
+            Invocation.SetCurrentInterceptorIndex(NextInterceptorIndex);
             if (ctIndex >= 0) {
                 var currentCancellationToken = (CancellationToken) arguments[ctIndex];
                 // Comparison w/ the existing one to avoid boxing when possible
                 if (currentCancellationToken != cancellationToken) {
                     // ReSharper disable once HeapView.BoxingAllocation
                     arguments[ctIndex] = cancellationToken;
-                    ProceedInfo.Invoke();
+                    Invocation.Proceed();
                     arguments[ctIndex] = BoxedDefaultCancellationToken;
                 }
                 else
-                    ProceedInfo.Invoke();
+                    Invocation.Proceed();
             }
             else
-                ProceedInfo.Invoke();
+                Invocation.Proceed();
 
             return Invocation.ReturnValue;
         }

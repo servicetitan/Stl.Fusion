@@ -66,7 +66,7 @@ namespace Stl.Fusion.Interception
                 PreprocessingArgumentHandlers = preprocessingArgumentHandlers.ToArray();
         }
 
-        public virtual InterceptedInput CreateInput(IFunction function, IInvocation invocation)
-            => new InterceptedInput(function, this, invocation);
+        public virtual InterceptedInput CreateInput(IFunction function, AbstractInvocation invocation)
+            => new(function, this, invocation);
     }
 }

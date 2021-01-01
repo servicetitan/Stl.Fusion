@@ -100,7 +100,7 @@ namespace Stl.Fusion.Interception
         {
             var function = CreateFunction<T>(method);
             return invocation => {
-                var input = method.CreateInput(function, invocation);
+                var input = method.CreateInput(function, (AbstractInvocation) invocation);
                 var arguments = input.Arguments;
                 var cancellationTokenIndex = method.CancellationTokenArgumentIndex;
                 var cancellationToken = cancellationTokenIndex >= 0
