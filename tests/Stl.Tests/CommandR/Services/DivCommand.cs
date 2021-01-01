@@ -12,11 +12,11 @@ namespace Stl.Tests.CommandR.Services
         public double Divisor { get; set; }
     }
 
-    public class DivCommandHandler : CommandHandlerBase<DivCommand, double>
+    public class DivCommandHandler : ServiceBase, ICommandHandler<DivCommand, double>
     {
         public DivCommandHandler(IServiceProvider services) : base(services) { }
 
-        protected override Task<double> OnTypedCommandAsync(
+        public Task<double> OnCommandAsync(
             DivCommand command, CommandContext context,
             CancellationToken cancellationToken)
         {

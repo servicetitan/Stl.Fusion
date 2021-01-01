@@ -29,15 +29,16 @@ namespace Stl.CommandR
             Handlers = handlers ?? throw Errors.CommandHandlerRegistryInstanceIsNotRegistered();
         }
 
+        public CommandRBuilder AddHandler<TCommand, THandlerService>(double priority = 0)
+            where TCommand : class, ICommand
+            where THandlerService : ICommandHandler<TCommand>
+            => AddHandler(CommandHandler.New<TCommand, THandlerService>(priority));
+
+        // Low-level methods
+
         public CommandRBuilder AddHandler(CommandHandler handler)
         {
             Handlers.Add(handler);
-            return this;
-        }
-
-        public CommandRBuilder TryAddHandler(CommandHandler handler)
-        {
-            Handlers.TryAdd(handler);
             return this;
         }
 
@@ -46,15 +47,5 @@ namespace Stl.CommandR
             Handlers.Clear();
             return this;
         }
-
-        public CommandRBuilder AddHandler<TCommand, THandlerService>(double priority = 0)
-            where TCommand : class, ICommand
-            where THandlerService : ICommandHandler<TCommand>
-            => AddHandler(CommandHandler.New<TCommand, THandlerService>(priority));
-
-        public CommandRBuilder TryAddHandler<TCommand, THandlerService>(double priority = 0)
-            where TCommand : class, ICommand
-            where THandlerService : ICommandHandler<TCommand>
-            => TryAddHandler(CommandHandler.New<TCommand, THandlerService>(priority));
     }
 }

@@ -12,11 +12,11 @@ namespace Stl.Tests.CommandR.Services
         public string Message { get; set; } = "";
     }
 
-    public class LogCommandHandler : CommandHandlerBase<LogCommand>
+    public class LogCommandHandler : ServiceBase, ICommandHandler<LogCommand>
     {
         public LogCommandHandler(IServiceProvider services) : base(services) { }
 
-        public override Task OnCommandAsync(
+        public Task OnCommandAsync(
             LogCommand command, CommandContext context,
             CancellationToken cancellationToken)
         {

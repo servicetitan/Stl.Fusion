@@ -13,11 +13,11 @@ namespace Stl.Tests.CommandR.Services
         public double[] Arguments { get; set; } = Array.Empty<double>();
     }
 
-    public class RecSumCommandHandler : CommandHandlerBase<RecSumCommand, double>
+    public class RecSumCommandHandler : ServiceBase, ICommandHandler<RecSumCommand, double>
     {
         public RecSumCommandHandler(IServiceProvider services) : base(services) { }
 
-        protected override async Task<double> OnTypedCommandAsync(
+        public async Task<double> OnCommandAsync(
             RecSumCommand command, CommandContext context,
             CancellationToken cancellationToken)
         {

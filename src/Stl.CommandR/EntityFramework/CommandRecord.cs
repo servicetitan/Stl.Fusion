@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Stl.Serialization;
 
-namespace Stl.CommandR
+namespace Stl.CommandR.EntityFramework
 {
     [Table("Commands")]
     [Index(nameof(StartTime), Name = "IX_StartTime")]

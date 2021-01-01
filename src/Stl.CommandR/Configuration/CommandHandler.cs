@@ -7,17 +7,16 @@ namespace Stl.CommandR.Configuration
 {
     public abstract record CommandHandler
     {
-        public Type CommandType { get; init; } = null!;
+        public Type CommandType { get; private set; }
         public double Priority { get; init; }
 
         public static CommandHandler<TCommand> New<TCommand, THandlerService>(double priority = 0)
             where TCommand : class, ICommand
             where THandlerService : ICommandHandler<TCommand>
-            => new() {
-                CommandType = typeof(TCommand),
-                HandlerServiceType = typeof(THandlerService),
-                Priority = priority,
-            };
+            => new(typeof(THandlerService)) { Priority = priority };
+
+        protected CommandHandler(Type commandType)
+            => CommandType = commandType;
 
         public abstract Task InvokeAsync(
             ICommand command, CommandContext context,
@@ -27,9 +26,11 @@ namespace Stl.CommandR.Configuration
     public record CommandHandler<TCommand> : CommandHandler
         where TCommand : class, ICommand
     {
-        public Type HandlerServiceType { get; init; } = null!;
+        public Type HandlerServiceType { get; } = null!;
 
-        public CommandHandler() => CommandType = typeof(TCommand);
+        public CommandHandler(Type handlerServiceType)
+            : base(typeof(TCommand))
+            => HandlerServiceType = handlerServiceType;
 
         public override Task InvokeAsync(
             ICommand command, CommandContext context,

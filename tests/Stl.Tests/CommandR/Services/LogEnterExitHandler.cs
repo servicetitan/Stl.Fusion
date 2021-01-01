@@ -6,11 +6,11 @@ using Stl.CommandR;
 
 namespace Stl.Tests.CommandR.Services
 {
-    public class LogEnterExitHandler : CommandHandlerBase<ICommand>
+    public class LogEnterExitHandler : ServiceBase, ICommandHandler<ICommand>
     {
         public LogEnterExitHandler(IServiceProvider services) : base(services) { }
 
-        public override async Task OnCommandAsync(
+        public async Task OnCommandAsync(
             ICommand command, CommandContext context,
             CancellationToken cancellationToken)
         {
