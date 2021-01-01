@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Stl.CommandR;
 
@@ -13,11 +12,11 @@ namespace Stl.Tests.CommandR.Services
         public double Divisor { get; set; }
     }
 
-    public class DivCommandHandler : CommandHandlerBase<DivCommand>
+    public class DivCommandHandler : CommandHandlerBase<DivCommand, double>
     {
         public DivCommandHandler(IServiceProvider services) : base(services) { }
 
-        public override Task OnCommandAsync(
+        protected override Task<double> OnTypedCommandAsync(
             DivCommand command, CommandContext context,
             CancellationToken cancellationToken)
         {
@@ -26,9 +25,7 @@ namespace Stl.Tests.CommandR.Services
             Log.LogInformation($"  {result}");
             if (double.IsInfinity(result))
                 throw new DivideByZeroException();
-
-            context.Cast<double>().SetResult(result);
-            return Task.CompletedTask;
+            return Task.FromResult(result);
         }
     }
 }

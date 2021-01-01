@@ -1,10 +1,9 @@
-using System;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Stl.CommandR.Internal
+namespace Stl.CommandR.Configuration
 {
     public record ServiceMethodCommandHandler<TCommand> : CommandHandler<TCommand>
         where TCommand : class, ICommand

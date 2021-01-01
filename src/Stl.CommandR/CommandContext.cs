@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
 using Stl.Collections;
+using Stl.CommandR.Configuration;
 using Stl.Reflection;
 using Stl.CommandR.Internal;
 using Stl.DependencyInjection;
@@ -18,6 +19,7 @@ namespace Stl.CommandR
 
         public abstract ICommand UntypedCommand { get; }
         public abstract Task UntypedResultTask { get; }
+        public abstract Result<object> UntypedResult { get; set; }
         public PropertyBag Globals { get; protected set; }
         public PropertyBag Locals { get; protected set; }
         public CommandContext? Parent { get; protected set; }
@@ -66,13 +68,7 @@ namespace Stl.CommandR
         public CommandContext<TResult> Cast<TResult>()
             => (CommandContext<TResult>) this;
 
-        public Task InvokeNextHandlerAsync(CancellationToken cancellationToken)
-        {
-            if (NextHandlerIndex >= Handlers.Count)
-                return Task.CompletedTask;
-            var handler = Handlers[NextHandlerIndex++];
-            return handler.InvokeAsync(UntypedCommand, this, cancellationToken);
-        }
+        public abstract Task InvokeNextHandlerAsync(CancellationToken cancellationToken);
 
         // SetXxx & TrySetXxx
 
@@ -87,11 +83,26 @@ namespace Stl.CommandR
 
     public class CommandContext<TResult> : CommandContext
     {
+        protected TaskSource<TResult> ResultTaskSource { get; }
+
         public ICommand<TResult> Command { get; }
-        public TaskSource<TResult> ResultTaskSource { get; }
         public Task<TResult> ResultTask => ResultTaskSource.Task;
+        public Result<TResult> Result {
+            get => Stl.Result.FromTask(ResultTask);
+            set {
+                if (value.IsValue(out var v, out var e))
+                    SetResult(v);
+                else
+                    SetException(e);
+            }
+        }
+
         public override Task UntypedResultTask => ResultTask;
         public override ICommand UntypedCommand => Command;
+        public override Result<object> UntypedResult {
+            get => Result.Cast<object>();
+            set => Result = value.Cast<TResult>();
+        }
 
         public CommandContext(ICommand command, IServiceProvider serviceProvider)
             : base(serviceProvider)
@@ -101,6 +112,35 @@ namespace Stl.CommandR
                 throw Errors.CommandResultTypeMismatch(tResult, command.ResultType);
             Command = (ICommand<TResult>) command;
             ResultTaskSource = TaskSource.New<TResult>(true);
+        }
+
+        // Instance methods
+
+        public override async Task InvokeNextHandlerAsync(CancellationToken cancellationToken)
+        {
+            try {
+                if (NextHandlerIndex >= Handlers.Count)
+                    throw Errors.NoFinalHandlerFound(UntypedCommand);
+                var handler = Handlers[NextHandlerIndex++];
+                var resultTask = handler.InvokeAsync(UntypedCommand, this, cancellationToken);
+                if (resultTask is Task<TResult> typedResultTask) {
+                    var result = await typedResultTask.ConfigureAwait(false);
+                    TrySetResult(result);
+                }
+                else {
+                    await resultTask.ConfigureAwait(false);
+                    TrySetDefaultResult();
+                }
+            }
+            catch (OperationCanceledException) {
+                TrySetCancelled(
+                    cancellationToken.IsCancellationRequested ? cancellationToken : default);
+                throw;
+            }
+            catch (Exception e) {
+                TrySetException(e);
+                throw;
+            }
         }
 
         // SetXxx & TrySetXxx

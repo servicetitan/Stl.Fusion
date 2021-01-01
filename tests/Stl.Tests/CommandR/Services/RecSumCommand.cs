@@ -13,11 +13,11 @@ namespace Stl.Tests.CommandR.Services
         public double[] Arguments { get; set; } = Array.Empty<double>();
     }
 
-    public class RecSumCommandHandler : CommandHandlerBase<RecSumCommand>
+    public class RecSumCommandHandler : CommandHandlerBase<RecSumCommand, double>
     {
         public RecSumCommandHandler(IServiceProvider services) : base(services) { }
 
-        public override async Task OnCommandAsync(
+        protected override async Task<double> OnTypedCommandAsync(
             RecSumCommand command, CommandContext context,
             CancellationToken cancellationToken)
         {
@@ -25,16 +25,14 @@ namespace Stl.Tests.CommandR.Services
             Log.LogInformation($"Arguments: {command.Arguments.ToDelimitedString()}");
             typedContext.Should().BeSameAs(CommandContext.GetCurrent());
 
-            if (command.Arguments.Length == 0) {
-                typedContext.SetResult(0);
-                return;
-            }
+            if (command.Arguments.Length == 0)
+                return 0;
 
-            var tailSum = await Services.CommandDispatcher().DispatchAsync(
+            var tailSum = await Services.CommandDispatcher().RunAsync(
                 new RecSumCommand() { Arguments = command.Arguments[1..] },
                 cancellationToken)
                 .ConfigureAwait(false);
-            typedContext.TrySetResult(command.Arguments[0] + tailSum);
+            return command.Arguments[0] + tailSum;
         }
     }
 }

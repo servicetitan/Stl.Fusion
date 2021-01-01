@@ -1,4 +1,5 @@
 using System;
+using Stl.CommandR.Configuration;
 
 namespace Stl.CommandR.Internal
 {
@@ -18,5 +19,11 @@ namespace Stl.CommandR.Internal
 
         public static Exception NoCurrentCommandContext()
             => new InvalidOperationException("CommandContext.Current is null - no command is running.");
+
+        public static Exception NoHandlerFound(ICommand command)
+            => new InvalidOperationException($"No handler is found for command {command}.");
+
+        public static Exception NoFinalHandlerFound(ICommand command)
+            => new InvalidOperationException($"No final handler is found for command {command}.");
     }
 }

@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Stl.CommandR.Internal
+namespace Stl.CommandR.Configuration
 {
     public abstract record CommandHandler
     {

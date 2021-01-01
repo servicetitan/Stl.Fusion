@@ -24,4 +24,19 @@ namespace Stl.Tests.CommandR.Services
             TCommand command, CommandContext context,
             CancellationToken cancellationToken);
     }
+
+    public abstract class CommandHandlerBase<TCommand, TResult> : CommandHandlerBase<TCommand>
+        where TCommand : class, ICommand<TResult>
+    {
+        protected CommandHandlerBase(IServiceProvider services) : base(services) { }
+
+        public sealed override Task OnCommandAsync(
+            TCommand command, CommandContext context,
+            CancellationToken cancellationToken)
+            => OnTypedCommandAsync(command, context, cancellationToken);
+
+        protected abstract Task<TResult> OnTypedCommandAsync(
+            TCommand command, CommandContext context,
+            CancellationToken cancellationToken);
+    }
 }

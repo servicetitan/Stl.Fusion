@@ -271,8 +271,8 @@ namespace Stl.Fusion
             => Output.IsValue(out value, out error!);
         public Result<TOut> AsResult()
             => Output.AsResult();
-        public Result<TOther> AsResult<TOther>()
-            => Output.AsResult<TOther>();
+        public Result<TOther> Cast<TOther>()
+            => Output.Cast<TOther>();
         TOut IConvertibleTo<TOut>.Convert() => Value;
         Result<TOut> IConvertibleTo<Result<TOut>>.Convert() => AsResult();
 

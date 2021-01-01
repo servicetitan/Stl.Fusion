@@ -79,7 +79,7 @@ namespace Stl
 
         public Result<T> AsResult()
             => new(UnsafeValue, Error);
-        public Result<TOther> AsResult<TOther>()
+        public Result<TOther> Cast<TOther>()
             => new((TOther) (object) UnsafeValue!, Error);
         T IConvertibleTo<T>.Convert() => Value;
         Result<T> IConvertibleTo<Result<T>>.Convert() => AsResult();

@@ -60,7 +60,7 @@ namespace Stl.Fusion
             => CreateComputed();
 
         void IMutableResult.Set(IResult result)
-            => Set(result.AsResult<T>());
+            => Set(result.Cast<T>());
         public void Set(Result<T> result)
         {
             IStateSnapshot<T> snapshot;

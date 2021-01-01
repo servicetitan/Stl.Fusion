@@ -168,8 +168,8 @@ namespace Stl.Fusion
 
         public Result<T> AsResult()
             => Computed.AsResult();
-        public Result<TOther> AsResult<TOther>()
-            => Computed.AsResult<TOther>();
+        public Result<TOther> Cast<TOther>()
+            => Computed.Cast<TOther>();
         T IConvertibleTo<T>.Convert() => Value;
         Result<T> IConvertibleTo<Result<T>>.Convert() => AsResult();
 

@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Stl.CommandR.Configuration;
 using Stl.CommandR.Internal;
 
 namespace Stl.CommandR
@@ -30,13 +31,19 @@ namespace Stl.CommandR
 
         public CommandRBuilder AddHandler(CommandHandler handler)
         {
-            Handlers.AddHandler(handler);
+            Handlers.Add(handler);
             return this;
         }
 
         public CommandRBuilder TryAddHandler(CommandHandler handler)
         {
-            Handlers.TryAddHandler(handler);
+            Handlers.TryAdd(handler);
+            return this;
+        }
+
+        public CommandRBuilder ClearHandlers()
+        {
+            Handlers.Clear();
             return this;
         }
 
@@ -44,6 +51,7 @@ namespace Stl.CommandR
             where TCommand : class, ICommand
             where THandlerService : ICommandHandler<TCommand>
             => AddHandler(CommandHandler.New<TCommand, THandlerService>(priority));
+
         public CommandRBuilder TryAddHandler<TCommand, THandlerService>(double priority = 0)
             where TCommand : class, ICommand
             where THandlerService : ICommandHandler<TCommand>

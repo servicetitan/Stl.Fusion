@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Stl.Reflection;
 
-namespace Stl.CommandR.Internal
+namespace Stl.CommandR.Configuration
 {
     public interface ICommandHandlerResolver
     {
