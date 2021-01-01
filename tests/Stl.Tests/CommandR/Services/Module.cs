@@ -2,8 +2,8 @@ using Stl.DependencyInjection;
 
 namespace Stl.Tests.CommandR.Services
 {
-    [Module(Scope = nameof(CommandRTestModule))]
-    public class CommandRTestModule : ModuleBase
+    [Module]
+    public class Module : ModuleBase
     {
         public override void ConfigureServices()
         {

@@ -82,7 +82,10 @@ namespace Stl.Tests.CommandR
                     LogFilter));
             });
 
-            services.AttributeScanner(nameof(CommandRTestModule)).AddServicesFrom(Assembly.GetExecutingAssembly());
+            // Just to test [Module] attribute
+            services.AttributeScanner(ModuleAttribute.DefaultScope)
+                .WithTypeFilter(GetType().Namespace!)
+                .AddServicesFrom(Assembly.GetExecutingAssembly());
             return services.BuildServiceProvider();
         }
     }

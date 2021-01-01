@@ -7,13 +7,13 @@ namespace Stl.DependencyInjection
 {
     public class ModuleAttribute : ServiceAttributeBase
     {
-        public static Symbol DefaultScope = "Module";
+        public static Symbol DefaultScope { get; } = "Module";
 
         public ModuleAttribute()
         {
             // Let's make sure Modules aren't auto-registered together
             // with regular services: most likely this isn't intentional.
-            Scope = DefaultScope;
+            Scope = DefaultScope.Value;
         }
 
         public override void Register(IServiceCollection services, Type implementationType)
