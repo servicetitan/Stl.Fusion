@@ -14,8 +14,8 @@ namespace Stl.CommandR.Configuration
         public MethodInfo HandlerMethod { get; }
         public bool HasContextParameter { get; }
 
-        public MethodCommandHandler(MethodInfo handlerMethod)
-            : base(handlerMethod.ReflectedType!)
+        public MethodCommandHandler(MethodInfo handlerMethod, double priority = 0)
+            : base(handlerMethod.ReflectedType!, priority)
         {
             HandlerMethod = handlerMethod;
             HasContextParameter = handlerMethod.GetParameters().Length == 3;
@@ -54,27 +54,27 @@ namespace Stl.CommandR.Configuration
 
         public static CommandHandler? TryNew(MethodInfo handlerMethod, double? priorityOverride = null)
         {
-            if (!typeof(Task).IsAssignableFrom(handlerMethod.ReturnType))
+            var attr = handlerMethod.GetAttribute<CommandHandlerAttribute>(true, true);
+            var isEnabled = attr?.IsEnabled ?? false;
+            if (!isEnabled)
                 return null;
+            var priority = priorityOverride ?? attr?.Priority ?? 0;
+
+            if (!typeof(Task).IsAssignableFrom(handlerMethod.ReturnType))
+                throw Errors.CommandHandlerMethodMustReturnTask(handlerMethod);
 
             var parameters = handlerMethod.GetParameters();
             if (parameters.Length is < 2 or > 3)
-                return null;
+                throw Errors.WrongCommandHandlerMethodArgumentCount(handlerMethod);
             var pCommand = parameters[0];
             var pContext = parameters.Length > 2 ? parameters[1] : null;
             var pCancellationToken = parameters[^1];
             if (!typeof(ICommand).IsAssignableFrom(pCommand.ParameterType))
-                return null;
+                throw Errors.WrongCommandHandlerMethodArguments(handlerMethod);
             if (typeof(CancellationToken) != pCancellationToken.ParameterType)
-                return null;
+                throw Errors.WrongCommandHandlerMethodArguments(handlerMethod);
             if (pContext != null && !typeof(CommandContext).IsAssignableFrom(pContext.ParameterType))
-                return null;
-
-            var attr = handlerMethod.GetAttribute<CommandHandlerAttribute>(true, true);
-            var isEnabled = attr?.IsEnabled ?? true;
-            var priority = priorityOverride ?? attr?.Priority ?? 0;
-            if (!isEnabled)
-                return null;
+                throw Errors.WrongCommandHandlerMethodArguments(handlerMethod);
 
             return (CommandHandler) CreateMethod
                 .MakeGenericMethod(pCommand.ParameterType)
@@ -84,6 +84,6 @@ namespace Stl.CommandR.Configuration
         private static MethodCommandHandler<TCommand> Create<TCommand>(
             MethodInfo handlerMethod, double priority = 0)
             where TCommand : class, ICommand
-            => new(handlerMethod) { Priority = priority };
+            => new(handlerMethod, priority);
     }
 }

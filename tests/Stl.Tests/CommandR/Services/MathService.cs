@@ -6,9 +6,11 @@ using Microsoft.Extensions.Logging;
 using Stl.Collections;
 using Stl.CommandR;
 using Stl.CommandR.Configuration;
+using Stl.DependencyInjection;
 
 namespace Stl.Tests.CommandR.Services
 {
+    [Service, AddCommandHandlers]
     public class MathService : ServiceBase
     {
         public MathService(IServiceProvider services) : base(services) { }
@@ -27,6 +29,7 @@ namespace Stl.Tests.CommandR.Services
             return Task.FromResult(result);
         }
 
+        [CommandHandler]
         public async Task<double> RecSumAsync(
             RecSumCommand command, CommandContext context,
             CancellationToken cancellationToken)

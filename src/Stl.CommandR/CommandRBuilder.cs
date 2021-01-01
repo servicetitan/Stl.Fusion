@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -49,6 +50,17 @@ namespace Stl.CommandR
             => AddHandlers(typeof(TService), priorityOverride);
         public CommandRBuilder AddHandlers(Type serviceType, double? priorityOverride = null)
         {
+            foreach (var tInterface in serviceType.GetInterfaces()) {
+                if (!tInterface.IsGenericType)
+                    continue;
+                var gInterface = tInterface.GetGenericTypeDefinition();
+                if (gInterface != typeof(ICommandHandler<>))
+                    continue;
+                var tCommand = tInterface.GetGenericArguments().SingleOrDefault();
+                if (tCommand == null)
+                    continue;
+                AddHandler(CommandHandler.New(tCommand, serviceType, priorityOverride ?? 0));
+            }
             var methods = serviceType.GetMethods(BindingFlags.Public | BindingFlags.Instance);
             foreach (var method in methods) {
                 var handler = MethodCommandHandler.TryNew(method, priorityOverride);

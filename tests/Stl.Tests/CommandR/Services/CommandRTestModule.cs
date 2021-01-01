@@ -1,5 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-using Stl.CommandR;
 using Stl.DependencyInjection;
 
 namespace Stl.Tests.CommandR.Services
@@ -9,15 +7,9 @@ namespace Stl.Tests.CommandR.Services
     {
         public override void ConfigureServices()
         {
-            Services.AddSingleton<LogEnterExitService>();
-            Services.AddSingleton<LogCommandHandler>();
-            Services.AddSingleton<MathService>();
-
-            Services.AddCommandR(b => {
-                b.AddHandler<LogCommand, LogCommandHandler>();
-                b.AddHandlers<LogEnterExitService>();
-                b.AddHandlers<MathService>();
-            });
+            Services.AttributeScanner()
+                .WithTypeFilter(GetType().Namespace!)
+                .AddServicesFrom(GetType().Assembly);
         }
     }
 }

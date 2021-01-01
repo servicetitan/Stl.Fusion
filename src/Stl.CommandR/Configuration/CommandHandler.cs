@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,19 +8,33 @@ namespace Stl.CommandR.Configuration
 {
     public abstract record CommandHandler
     {
-        public Type CommandType { get; private set; }
-        public double Priority { get; init; }
+        public Type CommandType { get; }
+        public double Priority { get; }
 
         public static CommandHandler<TCommand> New<TCommand>(
-            Type handlerServiceType, double priority)
+            Type handlerServiceType, double priority = 0)
             where TCommand : class, ICommand
-            => new(handlerServiceType) { Priority = priority };
-        public static CommandHandler<TCommand> New<TCommand, THandlerService>(double priority)
+            => new(handlerServiceType, priority);
+        public static CommandHandler<TCommand> New<TCommand, THandlerService>(double priority = 0)
             where TCommand : class, ICommand
-            => new(typeof(THandlerService)) { Priority = priority };
+            => new(typeof(THandlerService), priority);
 
-        protected CommandHandler(Type commandType)
-            => CommandType = commandType;
+        public static CommandHandler New(
+            Type commandType, Type handlerServiceType, double priority = 0)
+        {
+            var ctor = typeof(CommandHandler<>)
+                .MakeGenericType(commandType)
+                .GetConstructors()
+                .Single();
+            // ReSharper disable once HeapView.BoxingAllocation
+            return (CommandHandler) ctor.Invoke(new object[] { handlerServiceType, priority });
+        }
+
+        protected CommandHandler(Type commandType, double priority = 0)
+        {
+            CommandType = commandType;
+            Priority = priority;
+        }
 
         public abstract Task InvokeAsync(
             ICommand command, CommandContext context,
@@ -31,8 +46,8 @@ namespace Stl.CommandR.Configuration
     {
         public Type HandlerServiceType { get; } = null!;
 
-        public CommandHandler(Type handlerServiceType)
-            : base(typeof(TCommand))
+        public CommandHandler(Type handlerServiceType, double priority = 0)
+            : base(typeof(TCommand), priority)
             => HandlerServiceType = handlerServiceType;
 
         public override Task InvokeAsync(

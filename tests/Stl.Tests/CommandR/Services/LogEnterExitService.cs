@@ -4,9 +4,11 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Stl.CommandR;
 using Stl.CommandR.Configuration;
+using Stl.DependencyInjection;
 
 namespace Stl.Tests.CommandR.Services
 {
+    [Service, AddCommandHandlers]
     public class LogEnterExitService : ServiceBase
     {
         public LogEnterExitService(IServiceProvider services) : base(services) { }
