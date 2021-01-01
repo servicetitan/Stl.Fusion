@@ -10,9 +10,12 @@ namespace Stl.CommandR.Configuration
         public Type CommandType { get; private set; }
         public double Priority { get; init; }
 
-        public static CommandHandler<TCommand> New<TCommand, THandlerService>(double priority = 0)
+        public static CommandHandler<TCommand> New<TCommand>(
+            Type handlerServiceType, double priority)
             where TCommand : class, ICommand
-            where THandlerService : ICommandHandler<TCommand>
+            => new(handlerServiceType) { Priority = priority };
+        public static CommandHandler<TCommand> New<TCommand, THandlerService>(double priority)
+            where TCommand : class, ICommand
             => new(typeof(THandlerService)) { Priority = priority };
 
         protected CommandHandler(Type commandType)

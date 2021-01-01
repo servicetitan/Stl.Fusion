@@ -3,8 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Stl.DependencyInjection
 {
-    [Serializable]
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public class SettingsAttribute : ServiceAttributeBase
     {
         public string SectionName { get; set; } = "";

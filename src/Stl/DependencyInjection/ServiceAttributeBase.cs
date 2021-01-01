@@ -8,7 +8,6 @@ using Stl.Text;
 
 namespace Stl.DependencyInjection
 {
-    [Serializable]
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public abstract class ServiceAttributeBase : Attribute
     {

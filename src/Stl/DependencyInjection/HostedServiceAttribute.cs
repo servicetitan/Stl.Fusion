@@ -6,7 +6,6 @@ using Stl.Internal;
 
 namespace Stl.DependencyInjection
 {
-    [Serializable]
     public class HostedServiceAttribute : ServiceAttribute
     {
         public bool RegisterService { get; set; } = false;

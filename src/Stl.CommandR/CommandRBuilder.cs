@@ -1,3 +1,7 @@
+using System;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.CommandR.Configuration;
@@ -29,10 +33,30 @@ namespace Stl.CommandR
             Handlers = handlers ?? throw Errors.CommandHandlerRegistryInstanceIsNotRegistered();
         }
 
+        // Manually add handlers
+
         public CommandRBuilder AddHandler<TCommand, THandlerService>(double priority = 0)
             where TCommand : class, ICommand
             where THandlerService : ICommandHandler<TCommand>
             => AddHandler(CommandHandler.New<TCommand, THandlerService>(priority));
+
+        public CommandRBuilder AddHandler(MethodInfo handlerMethod, double? priorityOverride = null)
+            => AddHandler(MethodCommandHandler.New(handlerMethod, priorityOverride));
+
+        // Handler discovery
+
+        public CommandRBuilder AddHandlers<TService>(double? priorityOverride = null)
+            => AddHandlers(typeof(TService), priorityOverride);
+        public CommandRBuilder AddHandlers(Type serviceType, double? priorityOverride = null)
+        {
+            var methods = serviceType.GetMethods(BindingFlags.Public | BindingFlags.Instance);
+            foreach (var method in methods) {
+                var handler = MethodCommandHandler.TryNew(method, priorityOverride);
+                if (handler != null)
+                    AddHandler(handler);
+            }
+            return this;
+        }
 
         // Low-level methods
 

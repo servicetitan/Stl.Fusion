@@ -3,14 +3,16 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Stl.CommandR;
+using Stl.CommandR.Configuration;
 
 namespace Stl.Tests.CommandR.Services
 {
-    public class LogEnterExitHandler : ServiceBase, ICommandHandler<ICommand>
+    public class LogEnterExitService : ServiceBase
     {
-        public LogEnterExitHandler(IServiceProvider services) : base(services) { }
+        public LogEnterExitService(IServiceProvider services) : base(services) { }
 
-        public async Task OnCommandAsync(
+        [CommandHandler(-1000)]
+        public async Task OnAnyCommandAsync(
             ICommand command, CommandContext context,
             CancellationToken cancellationToken)
         {

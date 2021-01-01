@@ -5,8 +5,6 @@ using Stl.Text;
 
 namespace Stl.DependencyInjection
 {
-    [Serializable]
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public class ModuleAttribute : ServiceAttributeBase
     {
         public static Symbol DefaultScope = "Module";

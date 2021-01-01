@@ -4,7 +4,6 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Stl.DependencyInjection
 {
-    [Serializable]
     public class ServiceAttribute : ServiceAttributeBase
     {
         public Type? ServiceType { get; set; }

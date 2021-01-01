@@ -4,7 +4,6 @@ using Stl.DependencyInjection;
 
 namespace Stl.Fusion.Client
 {
-    [Serializable]
     [AttributeUsage(AttributeTargets.Interface, AllowMultiple = true)]
     public class RestEaseClientServiceAttribute : ServiceAttributeBase
     {

@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using Stl.CommandR.Configuration;
 
 namespace Stl.CommandR.Internal
@@ -6,7 +7,7 @@ namespace Stl.CommandR.Internal
     public static class Errors
     {
         public static Exception CommandResultTypeMismatch(Type expectedType, Type actualType)
-            => new ArgumentException($"Command result type mismatch: expected {expectedType}, got {actualType}");
+            => new ArgumentException($"Command result type mismatch: expected '{expectedType}', got '{actualType}'");
 
         public static Exception CommandHandlerRegistryMustBeRegisteredAsInstance()
             => new InvalidOperationException("ICommandHandlerRegistry should be registered as instance.");
@@ -25,5 +26,8 @@ namespace Stl.CommandR.Internal
 
         public static Exception NoFinalHandlerFound(ICommand command)
             => new InvalidOperationException($"No final handler is found for command {command}.");
+
+        public static Exception InvalidCommandHandlerMethod(MethodInfo handlerMethod)
+            => new InvalidOperationException($"Invalid command handler method: {handlerMethod}.");
     }
 }

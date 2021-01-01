@@ -9,16 +9,14 @@ namespace Stl.Tests.CommandR.Services
     {
         public override void ConfigureServices()
         {
+            Services.AddSingleton<LogEnterExitService>();
             Services.AddSingleton<LogCommandHandler>();
-            Services.AddSingleton<DivCommandHandler>();
-            Services.AddSingleton<RecSumCommandHandler>();
-            Services.AddSingleton<LogEnterExitHandler>();
+            Services.AddSingleton<MathService>();
 
             Services.AddCommandR(b => {
                 b.AddHandler<LogCommand, LogCommandHandler>();
-                b.AddHandler<DivCommand, DivCommandHandler>();
-                b.AddHandler<RecSumCommand, RecSumCommandHandler>();
-                b.AddHandler<ICommand, LogEnterExitHandler>(-1000);
+                b.AddHandlers<LogEnterExitService>();
+                b.AddHandlers<MathService>();
             });
         }
     }
