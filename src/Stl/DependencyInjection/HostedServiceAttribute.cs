@@ -2,7 +2,7 @@ using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
-using Stl.Internal;
+using Stl.DependencyInjection.Internal;
 
 namespace Stl.DependencyInjection
 {

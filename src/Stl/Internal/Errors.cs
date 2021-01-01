@@ -97,16 +97,5 @@ namespace Stl.Internal
             new InvalidOperationException($"Generic type '{matchType}' can't be a match for concrete type '{type}'.");
         public static Exception ConcreteMatchForGenericType(Type type, Type matchType) =>
             new InvalidOperationException($"Concrete type '{matchType}' can't be a match for generic type '{type}'.");
-
-        public static Exception NoServiceAttribute(Type implementationType) =>
-            new InvalidOperationException(
-                $"No matching [{nameof(ServiceAttributeBase)}] descendant is found " +
-                $"on '{implementationType}'.");
-
-        public static Exception HostedServiceHasToBeSingleton(Type implementationType) =>
-            new InvalidOperationException(
-                $"'{implementationType}' has to use {nameof(ServiceAttribute.Lifetime)} == " +
-                $"{nameof(ServiceLifetime)}.{nameof(ServiceLifetime.Singleton)} " +
-                $"to be registered as {nameof(IHostedService)}.");
     }
 }

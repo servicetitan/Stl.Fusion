@@ -4,7 +4,6 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.DependencyInjection.Internal;
-using Stl.Internal;
 using Stl.Text;
 
 namespace Stl.DependencyInjection
