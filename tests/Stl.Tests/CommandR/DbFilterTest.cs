@@ -45,7 +45,7 @@ namespace Stl.Tests.CommandR
                 new User() { Id = "", Name = "Fail" },
                 new User() { Id = "b", Name = "Bob" },
             }};
-            await services.CommandDispatcher().RunAsync((ICommand) command);
+            await services.CommandDispatcher().RunAsync(command);
 
             var tx = services.GetRequiredService<IDbTransactionRunner<TestDbContext>>();
             await tx.ReadAsync(async dbContext => {
