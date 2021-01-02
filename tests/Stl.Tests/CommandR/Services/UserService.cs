@@ -27,7 +27,7 @@ namespace Stl.Tests.CommandR.Services
             if (command.Users.Length == 0)
                 return;
 
-            await Services.CommandDispatcher().RunAsync(
+            await Services.CommandDispatcher().CallAsync(
                     new RecAddUsersCommand() { Users = command.Users[1..] },
                     cancellationToken)
                 .ConfigureAwait(false);

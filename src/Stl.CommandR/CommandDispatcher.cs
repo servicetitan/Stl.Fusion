@@ -12,8 +12,10 @@ namespace Stl.CommandR
 {
     public interface ICommandDispatcher : IHasServiceProvider
     {
+        // This method doesn't throw exceptions
         Task<CommandContext> RunAsync(ICommand command, CancellationToken cancellationToken = default);
-        Task<TResult> RunAsync<TResult>(ICommand<TResult> command, CancellationToken cancellationToken = default);
+        // And this one does
+        Task<TResult> CallAsync<TResult>(ICommand<TResult> command, CancellationToken cancellationToken = default);
     }
 
     public class CommandDispatcher : ICommandDispatcher
@@ -52,7 +54,7 @@ namespace Stl.CommandR
             return context;
         }
 
-        public async Task<TResult> RunAsync<TResult>(ICommand<TResult> command, CancellationToken cancellationToken = default)
+        public async Task<TResult> CallAsync<TResult>(ICommand<TResult> command, CancellationToken cancellationToken = default)
         {
             var context = await RunAsync((ICommand) command, cancellationToken).ConfigureAwait(false);
             var typedContext = (CommandContext<TResult>) context;

@@ -46,7 +46,7 @@ namespace Stl.Tests.CommandR.Services
             if (command.Arguments.Length == 0)
                 return 0;
 
-            var tailSum = await Services.CommandDispatcher().RunAsync(
+            var tailSum = await Services.CommandDispatcher().CallAsync(
                     new RecSumCommand() { Arguments = command.Arguments[1..] },
                     cancellationToken)
                 .ConfigureAwait(false);
