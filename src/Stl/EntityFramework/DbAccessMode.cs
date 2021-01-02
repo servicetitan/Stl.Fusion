@@ -1,6 +1,6 @@
 namespace Stl.EntityFramework
 {
-    public enum DbContextMode
+    public enum DbAccessMode
     {
         ReadOnly = 0,
         ReadWrite = 1,

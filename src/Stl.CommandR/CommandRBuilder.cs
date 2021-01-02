@@ -1,8 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.CommandR.Configuration;
@@ -50,6 +49,19 @@ namespace Stl.CommandR
             => AddHandlers(typeof(TService), priorityOverride);
         public CommandRBuilder AddHandlers(Type serviceType, double? priorityOverride = null)
         {
+            var commandTypes = new HashSet<Type>();
+
+            // Methods
+            var methods = serviceType.GetMethods(
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            foreach (var method in methods) {
+                var handler = MethodCommandHandler.TryNew(method, priorityOverride);
+                if (handler == null || !commandTypes.Add(handler.CommandType))
+                    continue;
+                TryAddHandler(handler);
+            }
+
+            // Interfaces
             foreach (var tInterface in serviceType.GetInterfaces()) {
                 if (!tInterface.IsGenericType)
                     continue;
@@ -57,16 +69,11 @@ namespace Stl.CommandR
                 if (gInterface != typeof(ICommandHandler<>))
                     continue;
                 var tCommand = tInterface.GetGenericArguments().SingleOrDefault();
-                if (tCommand == null)
+                if (tCommand == null || !commandTypes.Add(tCommand))
                     continue;
-                AddHandler(CommandHandler.New(tCommand, serviceType, priorityOverride ?? 0));
+                TryAddHandler(CommandHandler.New(tCommand, serviceType, priorityOverride ?? 0));
             }
-            var methods = serviceType.GetMethods(BindingFlags.Public | BindingFlags.Instance);
-            foreach (var method in methods) {
-                var handler = MethodCommandHandler.TryNew(method, priorityOverride);
-                if (handler != null)
-                    AddHandler(handler);
-            }
+
             return this;
         }
 
@@ -75,6 +82,12 @@ namespace Stl.CommandR
         public CommandRBuilder AddHandler(CommandHandler handler)
         {
             Handlers.Add(handler);
+            return this;
+        }
+
+        public CommandRBuilder TryAddHandler(CommandHandler handler)
+        {
+            Handlers.TryAdd(handler);
             return this;
         }
 

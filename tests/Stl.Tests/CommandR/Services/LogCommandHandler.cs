@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Stl.CommandR;
 using Stl.CommandR.Configuration;
@@ -17,6 +18,10 @@ namespace Stl.Tests.CommandR.Services
             LogCommand command, CommandContext context,
             CancellationToken cancellationToken)
         {
+            var handler = context.Handlers[^1];
+            handler.GetType().Should().Be(typeof(CommandHandler<LogCommand>));
+            handler.Priority.Should().Be(0);
+
             Log.LogInformation(command.Message);
             return Task.CompletedTask;
         }

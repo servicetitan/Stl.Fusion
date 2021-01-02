@@ -21,10 +21,10 @@ namespace Stl.EntityFramework
             Clock = services.GetService<IMomentClock>() ?? SystemClock.Instance;
         }
 
-        protected virtual TDbContext CreateDbContext(DbContextMode mode = DbContextMode.ReadOnly)
+        protected virtual TDbContext CreateDbContext(DbAccessMode accessMode = DbAccessMode.ReadOnly)
         {
             var dbContext = DbContextFactory.CreateDbContext();
-            dbContext.ConfigureMode(mode);
+            dbContext.SetAccessMode(accessMode);
             return dbContext;
         }
     }

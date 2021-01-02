@@ -11,10 +11,10 @@ namespace Stl.EntityFramework
 
         // ConfigureMode
 
-        public static void ConfigureMode(this DbContext dbContext, DbContextMode mode)
+        public static void SetAccessMode(this DbContext dbContext, DbAccessMode mode)
         {
-            dbContext.EnableChangeTracking(mode == DbContextMode.ReadWrite);
-            dbContext.EnableSaveChanges(mode == DbContextMode.ReadWrite);
+            dbContext.EnableChangeTracking(mode == DbAccessMode.ReadWrite);
+            dbContext.EnableSaveChanges(mode == DbAccessMode.ReadWrite);
         }
 
         // (Enable|Disable)ChangeTracking

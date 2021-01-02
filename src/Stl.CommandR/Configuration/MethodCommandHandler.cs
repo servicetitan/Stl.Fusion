@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -60,7 +61,8 @@ namespace Stl.CommandR.Configuration
                 return null;
             var priority = priorityOverride ?? attr?.Priority ?? 0;
 
-            if (!typeof(Task).IsAssignableFrom(handlerMethod.ReturnType))
+            var tHandlerResult = handlerMethod.ReturnType;
+            if (!typeof(Task).IsAssignableFrom(tHandlerResult))
                 throw Errors.CommandHandlerMethodMustReturnTask(handlerMethod);
 
             var parameters = handlerMethod.GetParameters();
@@ -69,8 +71,16 @@ namespace Stl.CommandR.Configuration
             var pCommand = parameters[0];
             var pContext = parameters.Length > 2 ? parameters[1] : null;
             var pCancellationToken = parameters[^1];
+
             if (!typeof(ICommand).IsAssignableFrom(pCommand.ParameterType))
                 throw Errors.WrongCommandHandlerMethodArguments(handlerMethod);
+            if (tHandlerResult.IsGenericType && tHandlerResult.GetGenericTypeDefinition() == typeof(Task<>)) {
+                var tHandlerResultTaskArgument = tHandlerResult.GetGenericArguments().Single();
+                var tGenericCommandType = typeof(ICommand<>).MakeGenericType(tHandlerResultTaskArgument);
+                if (!tGenericCommandType.IsAssignableFrom(pCommand.ParameterType))
+                    throw Errors.WrongCommandHandlerMethodArguments(handlerMethod);
+            }
+
             if (typeof(CancellationToken) != pCancellationToken.ParameterType)
                 throw Errors.WrongCommandHandlerMethodArguments(handlerMethod);
             if (pContext != null && !typeof(CommandContext).IsAssignableFrom(pContext.ParameterType))

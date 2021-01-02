@@ -10,10 +10,10 @@ namespace Stl.EntityFramework
     public interface IDbTransactionRunner<out TDbContext>
         where TDbContext : DbContext
     {
-        Task ReadOnlyAsync(
+        Task ReadAsync(
             Func<TDbContext, Task> transaction,
             CancellationToken cancellationToken = default);
-        Task<string> ReadWriteAsync(
+        Task<string> WriteAsync(
             object operation,
             Func<TDbContext, Task> transaction,
             CancellationToken cancellationToken = default);
@@ -34,13 +34,13 @@ namespace Stl.EntityFramework
             Clock = services.GetService<IMomentClock>() ?? SystemClock.Instance;
         }
 
-        public virtual async Task ReadOnlyAsync(
+        public virtual async Task ReadAsync(
             Func<TDbContext, Task> transaction,
             CancellationToken cancellationToken = default)
         {
             var dbContext = DbContextFactory.CreateDbContext();
             await using var _1 = dbContext.ConfigureAwait(false);
-            dbContext.ConfigureMode(DbContextMode.ReadOnly);
+            dbContext.SetAccessMode(DbAccessMode.ReadOnly);
             var strategy = dbContext.Database.CreateExecutionStrategy();
 
             await strategy.ExecuteInTransactionAsync(dbContext,
@@ -49,14 +49,14 @@ namespace Stl.EntityFramework
                 cancellationToken);
         }
 
-        public virtual async Task<string> ReadWriteAsync(
+        public virtual async Task<string> WriteAsync(
             object operation,
             Func<TDbContext, Task> transaction,
             CancellationToken cancellationToken = default)
         {
             var dbContext = DbContextFactory.CreateDbContext();
             await using var _ = dbContext.ConfigureAwait(false);
-            dbContext.ConfigureMode(DbContextMode.ReadWrite);
+            dbContext.SetAccessMode(DbAccessMode.ReadWrite);
             var strategy = dbContext.Database.CreateExecutionStrategy();
 
             string dbOperationId = "";

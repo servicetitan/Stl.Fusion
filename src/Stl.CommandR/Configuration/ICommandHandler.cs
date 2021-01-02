@@ -20,10 +20,10 @@ namespace Stl.CommandR.Configuration
         Task ICommandHandler<TCommand>.OnCommandAsync(
             TCommand command, CommandContext context,
             CancellationToken cancellationToken)
-            => OnCommandAsync(command, context, cancellationToken);
+            => OnCommandAsync(command, (CommandContext<TResult>) context, cancellationToken);
 
         new Task<TResult> OnCommandAsync(
-            TCommand command, CommandContext context,
+            TCommand command, CommandContext<TResult> context,
             CancellationToken cancellationToken);
     }
 }

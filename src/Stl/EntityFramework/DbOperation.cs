@@ -14,7 +14,7 @@ namespace Stl.EntityFramework
         object Operation { get; set; }
     }
 
-    [Table("Operations")]
+    [Table("_Operations")]
     [Index(nameof(StartTime), Name = "IX_StartTime")]
     public class DbOperation : IDbOperation
     {
