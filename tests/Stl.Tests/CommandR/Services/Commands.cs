@@ -1,6 +1,7 @@
 using System;
 using System.Reactive;
 using Stl.CommandR;
+using Stl.CommandR.Filters;
 
 namespace Stl.Tests.CommandR.Services
 {
@@ -18,5 +19,10 @@ namespace Stl.Tests.CommandR.Services
     public class RecSumCommand : ICommand<double>
     {
         public double[] Arguments { get; set; } = Array.Empty<double>();
+    }
+
+    public class RecAddUsersCommand : ICommand<Unit>, IDbWriter<TestDbContext>
+    {
+        public User[] Users { get; set; } = Array.Empty<User>();
     }
 }

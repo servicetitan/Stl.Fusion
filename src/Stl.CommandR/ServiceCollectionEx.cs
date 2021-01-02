@@ -10,8 +10,8 @@ namespace Stl.CommandR
 
         public static IServiceCollection AddCommandR(this IServiceCollection services, Action<CommandRBuilder> configureCommandR)
         {
-            var fusion = services.AddCommandR();
-            configureCommandR.Invoke(fusion);
+            var commandR = services.AddCommandR();
+            configureCommandR.Invoke(commandR);
             return services;
         }
     }

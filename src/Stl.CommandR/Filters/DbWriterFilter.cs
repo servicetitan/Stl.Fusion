@@ -16,8 +16,10 @@ namespace Stl.CommandR.Filters
         public virtual async Task OnCommandAsync(IDbWriter<TDbContext> command, CommandContext context, CancellationToken cancellationToken)
         {
             var dbContextOpt = context.Globals.TryGet<TDbContext>();
-            if (dbContextOpt.HasValue)
+            if (dbContextOpt.HasValue) {
                 await context.InvokeNextHandlerAsync(cancellationToken).ConfigureAwait(false);
+                return;
+            }
 
             await Tx.WriteAsync(command, async dbContext => {
                 context.Globals.Set(dbContext);

@@ -27,7 +27,7 @@ namespace Stl.EntityFramework
         protected IDbContextFactory<TDbContext> DbContextFactory { get; }
         protected IMomentClock Clock { get; }
 
-        protected DbTransactionRunner(IServiceProvider services)
+        public DbTransactionRunner(IServiceProvider services)
         {
             Services = services;
             DbContextFactory = services.GetRequiredService<IDbContextFactory<TDbContext>>();
@@ -66,6 +66,7 @@ namespace Stl.EntityFramework
                         .ConfigureAwait(false);
                     dbOperationId = dbOperation.Id;
                     await transaction.Invoke(dbContext1).ConfigureAwait(false);
+                    await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                 },
                 async (dbContext1, _) => {
                     var dbOperation = await FindDbOperationAsync(dbContext1, dbOperationId, cancellationToken)

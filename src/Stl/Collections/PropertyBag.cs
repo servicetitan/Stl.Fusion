@@ -15,7 +15,7 @@ namespace Stl.Collections
         public ImmutableDictionary<Symbol, object> Items => _items;
 
         public object? this[Symbol key] {
-            get => _items[key];
+            get => _items.TryGetValue(key, out var v) ? v : null;
             set {
                 var spinWait = new SpinWait();
                 var properties = _items;

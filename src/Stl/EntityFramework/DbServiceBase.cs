@@ -1,6 +1,8 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Time;
 
 namespace Stl.EntityFramework
@@ -12,6 +14,7 @@ namespace Stl.EntityFramework
         protected IDbContextFactory<TDbContext> DbContextFactory { get; }
         protected IDbTransactionRunner<TDbContext> Tx { get; }
         protected IMomentClock Clock { get; }
+        protected ILogger Log { get; }
 
         protected DbServiceBase(IServiceProvider services)
         {
@@ -19,6 +22,8 @@ namespace Stl.EntityFramework
             DbContextFactory = services.GetRequiredService<IDbContextFactory<TDbContext>>();
             Tx = services.GetRequiredService<IDbTransactionRunner<TDbContext>>();
             Clock = services.GetService<IMomentClock>() ?? SystemClock.Instance;
+            var loggerFactory = services.GetService<ILoggerFactory>();
+            Log = loggerFactory?.CreateLogger(GetType()) ?? NullLogger.Instance;
         }
 
         protected virtual TDbContext CreateDbContext(DbAccessMode accessMode = DbAccessMode.ReadOnly)
