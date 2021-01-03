@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Stl.Time
 {
-    public interface IMomentClock : ISystemClock, Microsoft.Extensions.Internal.ISystemClock
+    public interface IMomentClock : ISystemClock
     {
         Moment Now { get; }
 

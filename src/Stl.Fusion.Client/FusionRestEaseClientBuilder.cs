@@ -8,6 +8,7 @@ using Stl.DependencyInjection;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Interception;
 using Stl.Fusion.Client.RestEase.Internal;
+using Stl.Interception;
 using Stl.Reflection;
 using Stl.Serialization;
 

@@ -1,9 +1,9 @@
 using System;
 using Castle.DynamicProxy;
-using Stl.DependencyInjection.Internal;
+using Stl.Interception.Internal;
 using Stl.Reflection;
 
-namespace Stl.DependencyInjection
+namespace Stl.Interception
 {
     public interface ITypeViewFactory
     {
@@ -14,7 +14,7 @@ namespace Stl.DependencyInjection
 
     public class TypeViewFactory : ITypeViewFactory
     {
-        public static TypeViewFactory Default { get; } = new TypeViewFactory();
+        public static TypeViewFactory Default { get; } = new();
 
         protected ITypeViewProxyGenerator ProxyGenerator { get; }
         protected IInterceptor[] Interceptors { get; }
@@ -47,7 +47,7 @@ namespace Stl.DependencyInjection
 
         public TypeViewFactory<TView> For<TView>()
             where TView : class
-            => new TypeViewFactory<TView>(this);
+            => new(this);
     }
 
     public readonly struct TypeViewFactory<TView>

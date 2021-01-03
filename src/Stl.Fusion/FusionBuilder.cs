@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using Castle.DynamicProxy.Generators;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.DependencyInjection;
@@ -16,8 +17,6 @@ namespace Stl.Fusion
 {
     public readonly struct FusionBuilder
     {
-        private static readonly Box<bool> IsInitialized = Box.New(false);
-
         private class AddedTag { }
         private static readonly ServiceDescriptor AddedTagDescriptor = new(typeof(AddedTag), new AddedTag());
         private static readonly HashSet<Type> GenericStateInterfaces = new() {
@@ -31,7 +30,6 @@ namespace Stl.Fusion
 
         internal FusionBuilder(IServiceCollection services)
         {
-            Initialize();
             Services = services;
             if (Services.Contains(AddedTagDescriptor))
                 return;
@@ -57,21 +55,16 @@ namespace Stl.Fusion
             Services.TryAddTransient<IUpdateDelayer, UpdateDelayer>();
         }
 
-        public static void Initialize(HashSet<Type>? nonReplicableAttributes = null)
+        static FusionBuilder()
         {
-            if (IsInitialized.Value) return;
-            lock (IsInitialized) {
-                if (IsInitialized.Value) return;
-                IsInitialized.Value = true;
-                // Castle.DynamicProxy fails while trying to replicate
-                // these attributes in WASM in .NET 5.0
-                nonReplicableAttributes ??= new HashSet<Type>() {
-                    typeof(AsyncStateMachineAttribute),
-                    typeof(ComputeMethodAttribute),
-                };
-                foreach (var type in nonReplicableAttributes)
-                    Castle.DynamicProxy.Generators.AttributesToAvoidReplicating.Add(type);
-            }
+            var nonReplicableAttributeTypes = new HashSet<Type>() {
+                typeof(ServiceAttributeBase),
+                typeof(AsyncStateMachineAttribute),
+                typeof(ComputeMethodAttribute),
+            };
+            foreach (var type in nonReplicableAttributeTypes)
+                if (!AttributesToAvoidReplicating.Contains(type))
+                    AttributesToAvoidReplicating.Add(type);
         }
 
         // AddPublisher, AddReplicator

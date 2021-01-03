@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Reactive;
-using Castle.DynamicProxy.Generators;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.DependencyInjection.Internal;
 using Stl.Text;
@@ -14,14 +13,6 @@ namespace Stl.DependencyInjection
         private static readonly ConcurrentDictionary<Type, Unit> IsInitialized = new();
 
         public string Scope { get; set; } = "";
-
-        protected ServiceAttributeBase()
-        {
-            IsInitialized.GetOrAdd(GetType(), t => {
-                AttributesToAvoidReplicating.Add(t);
-                return default;
-            });
-        }
 
         public abstract void Register(IServiceCollection services, Type implementationType);
 

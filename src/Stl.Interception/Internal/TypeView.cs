@@ -1,4 +1,4 @@
-namespace Stl.DependencyInjection.Internal
+namespace Stl.Interception.Internal
 {
     public class TypeView<TView>
         where TView : class

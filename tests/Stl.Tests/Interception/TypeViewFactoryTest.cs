@@ -1,13 +1,12 @@
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Async;
-using Stl.DependencyInjection;
+using Stl.Interception;
 using Stl.Serialization;
 using Xunit;
 
-namespace Stl.Tests.DependencyInjection
+namespace Stl.Tests.Interception
 {
     public class TypeViewFactoryTest
     {

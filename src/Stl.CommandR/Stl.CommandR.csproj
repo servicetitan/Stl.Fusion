@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Stl\Stl.csproj" />
+    <ProjectReference Include="..\Stl.EntityFramework\Stl.EntityFramework.csproj" />
   </ItemGroup>
 
   <ItemGroup>

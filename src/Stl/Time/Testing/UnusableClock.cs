@@ -12,7 +12,6 @@ namespace Stl.Time.Testing
         public static readonly IMomentClock Instance = new UnusableClock();
 
         DateTimeOffset ISystemClock.UtcNow => Now;
-        DateTimeOffset Microsoft.Extensions.Internal.ISystemClock.UtcNow => Now;
         public Moment Now => throw Errors.UnusableClock();
         public Moment HighResolutionNow => throw Errors.UnusableClock();
 

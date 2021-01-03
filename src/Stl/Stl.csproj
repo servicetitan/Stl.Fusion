@@ -10,9 +10,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Castle.Core" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
@@ -21,11 +18,10 @@
     <PackageReference Include="Newtonsoft.Json" />
     <PackageReference Include="System.Collections.Immutable" />
     <PackageReference Include="System.Linq.Async" />
-    <PackageReference Include="System.Net.WebSockets" />
     <PackageReference Include="System.Reactive" />
     <PackageReference Include="System.Threading.Channels" />
     <PackageReference Include="Ulid" />
-    <PackageReference Include="ZString" />
+<!--    <PackageReference Include="ZString" />-->
   </ItemGroup>
 
 </Project>

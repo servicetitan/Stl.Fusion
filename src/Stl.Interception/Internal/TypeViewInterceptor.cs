@@ -8,15 +8,14 @@ using Castle.DynamicProxy;
 using Stl.Async;
 using Stl.Concurrency;
 
-namespace Stl.DependencyInjection.Internal
+namespace Stl.Interception.Internal
 {
     public class TypeViewInterceptor : IInterceptor
     {
         public static TypeViewInterceptor Default { get; } = new TypeViewInterceptor();
 
         private readonly Func<(MethodInfo, Type), IInvocation, Action<IInvocation>?> _createHandler;
-        private readonly ConcurrentDictionary<(MethodInfo, Type), Action<IInvocation>?> _handlerCache =
-            new ConcurrentDictionary<(MethodInfo, Type), Action<IInvocation>?>();
+        private readonly ConcurrentDictionary<(MethodInfo, Type), Action<IInvocation>?> _handlerCache = new();
         private readonly MethodInfo _createConvertingHandlerMethod;
         private readonly MethodInfo _createTaskConvertingHandlerMethod;
         private readonly MethodInfo _createValueTaskConvertingHandlerMethod;

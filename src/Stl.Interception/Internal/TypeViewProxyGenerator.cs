@@ -6,7 +6,7 @@ using Castle.DynamicProxy.Generators.Emitters;
 using Stl.Concurrency;
 using Stl.Reflection;
 
-namespace Stl.DependencyInjection.Internal
+namespace Stl.Interception.Internal
 {
     public interface ITypeViewProxyGenerator
     {
