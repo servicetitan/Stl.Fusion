@@ -20,7 +20,6 @@
     <PackageReference Include="System.Linq.Async" />
     <PackageReference Include="System.Reactive" />
     <PackageReference Include="System.Threading.Channels" />
-    <PackageReference Include="Ulid" />
 <!--    <PackageReference Include="ZString" />-->
   </ItemGroup>
 
