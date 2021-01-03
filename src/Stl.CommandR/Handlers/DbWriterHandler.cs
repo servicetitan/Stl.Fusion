@@ -5,12 +5,12 @@ using Microsoft.EntityFrameworkCore;
 using Stl.CommandR.Configuration;
 using Stl.EntityFramework;
 
-namespace Stl.CommandR.Filters
+namespace Stl.CommandR.Handlers
 {
-    public class DbWriterFilter<TDbContext> : DbServiceBase<TDbContext>, ICommandHandler<IDbWriter<TDbContext>>
+    public class DbWriterHandler<TDbContext> : DbServiceBase<TDbContext>, ICommandHandler<IDbWriter<TDbContext>>
         where TDbContext : DbContext
     {
-        public DbWriterFilter(IServiceProvider services) : base(services) { }
+        public DbWriterHandler(IServiceProvider services) : base(services) { }
 
         [CommandHandler(Priority = -900)]
         public virtual async Task OnCommandAsync(IDbWriter<TDbContext> command, CommandContext context, CancellationToken cancellationToken)

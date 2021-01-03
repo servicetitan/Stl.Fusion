@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using Castle.DynamicProxy;
 using Stl.Async;
 using Stl.Concurrency;
-using Stl.Extensibility;
 
 namespace Stl.DependencyInjection.Internal
 {

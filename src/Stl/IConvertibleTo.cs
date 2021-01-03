@@ -1,4 +1,4 @@
-namespace Stl.Extensibility
+namespace Stl
 {
     public interface IConvertibleTo<out T>
     {

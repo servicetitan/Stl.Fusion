@@ -1,9 +1,10 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
+using Stl.DependencyInjection;
 using Stl.Reflection;
 using Stl.Text;
 
-namespace Stl.DependencyInjection
+namespace Stl.Extensibility
 {
     public class ModuleAttribute : ServiceAttributeBase
     {

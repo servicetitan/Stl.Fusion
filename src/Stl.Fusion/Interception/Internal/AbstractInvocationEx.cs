@@ -28,12 +28,12 @@ namespace Stl.Fusion.Interception.Internal
             var pValue = Expression.Parameter(typeof(int), "value");
             GetCurrentInterceptorIndexFunc = Expression
                 .Lambda<Func<AbstractInvocation, int>>(
-                    Expression.Field(pTarget, fInterceptorIndex),
+                    Expression.Field(pTarget, fInterceptorIndex!),
                     pTarget)
                 .Compile();
             SetCurrentInterceptorIndexFunc = Expression
                 .Lambda<Action<AbstractInvocation, int>>(
-                    Expression.Assign(Expression.Field(pTarget, fInterceptorIndex), pValue),
+                    Expression.Assign(Expression.Field(pTarget, fInterceptorIndex!), pValue),
                     pTarget, pValue)
                 .Compile();
         }

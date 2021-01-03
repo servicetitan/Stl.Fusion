@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Stl.DependencyInjection
+namespace Stl.Extensibility
 {
     public interface IModule
     {

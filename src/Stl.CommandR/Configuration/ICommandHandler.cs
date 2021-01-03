@@ -22,7 +22,7 @@ namespace Stl.CommandR.Configuration
             CancellationToken cancellationToken)
             => OnCommandAsync(command, (CommandContext<TResult>) context, cancellationToken);
 
-        new Task<TResult> OnCommandAsync(
+        Task<TResult> OnCommandAsync(
             TCommand command, CommandContext<TResult> context,
             CancellationToken cancellationToken);
     }

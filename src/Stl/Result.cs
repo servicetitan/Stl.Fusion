@@ -6,7 +6,6 @@ using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Stl.Extensibility;
 using Stl.Internal;
 
 namespace Stl

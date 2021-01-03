@@ -31,8 +31,8 @@ namespace Stl.Tests.CommandR
 
             var tx = services.GetRequiredService<IDbTransactionRunner<TestDbContext>>();
             await tx.ReadAsync(async dbContext => {
-                dbContext.Users.Count().Should().Be(2);
-                dbContext.Operations.Count().Should().Be(1);
+                (await dbContext.Users.CountAsync()).Should().Be(2);
+                (await dbContext.Operations.CountAsync()).Should().Be(1);
             });
         }
 
@@ -49,8 +49,8 @@ namespace Stl.Tests.CommandR
 
             var tx = services.GetRequiredService<IDbTransactionRunner<TestDbContext>>();
             await tx.ReadAsync(async dbContext => {
-                dbContext.Users.Count().Should().Be(0);
-                dbContext.Operations.Count().Should().Be(0);
+                (await dbContext.Users.CountAsync()).Should().Be(0);
+                (await dbContext.Operations.CountAsync()).Should().Be(0);
             });
         }
     }

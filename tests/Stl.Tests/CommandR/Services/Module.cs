@@ -1,4 +1,5 @@
 using Stl.DependencyInjection;
+using Stl.Extensibility;
 
 namespace Stl.Tests.CommandR.Services
 {

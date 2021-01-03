@@ -12,4 +12,8 @@
     <ProjectReference Include="..\Stl\Stl.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Interception" />
+  </ItemGroup>
+
 </Project>

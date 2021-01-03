@@ -1,7 +1,7 @@
 using System;
 using System.Reactive;
 using Stl.CommandR;
-using Stl.CommandR.Filters;
+using Stl.CommandR.Handlers;
 
 namespace Stl.Tests.CommandR.Services
 {

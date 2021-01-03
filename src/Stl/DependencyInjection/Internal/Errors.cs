@@ -8,6 +8,8 @@ namespace Stl.DependencyInjection.Internal
     {
         public static Exception NoService(ServiceRef serviceRef)
             => new InvalidOperationException($"No service for {serviceRef}.");
+        public static Exception NoServiceRef(Type serviceType)
+            => new InvalidOperationException($"Can't find a way to create ServiceRef for '{serviceType}'.");
 
         public static Exception NoServiceAttribute(Type implementationType) =>
             new InvalidOperationException(
