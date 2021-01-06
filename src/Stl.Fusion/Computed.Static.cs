@@ -27,14 +27,26 @@ namespace Stl.Fusion
         public static ClosedDisposable<IComputed?> ChangeCurrent(IComputed? newCurrent)
         {
             var oldCurrent = GetCurrent();
-            ComputeContext.Current.TryCapture(newCurrent);
+            if (newCurrent != null)
+                ComputeContext.Current.TryCapture(newCurrent);
             if (oldCurrent == newCurrent)
                 return Disposable.NewClosed(oldCurrent, _ => { });
             CurrentLocal.Value = newCurrent;
             return Disposable.NewClosed(oldCurrent, oldCurrent1 => CurrentLocal.Value = oldCurrent1);
         }
 
-        public static ClosedDisposable<IComputed?> Suppress() => ChangeCurrent(null);
+        public static ClosedDisposable<IComputed?> IgnoreDependencies()
+            => ChangeCurrent(null);
+
+        // Invalidation
+
+        public static bool IsInvalidating()
+            => (ComputeContext.Current.CallOptions & CallOptions.Invalidate) == CallOptions.Invalidate;
+
+        public static ComputeContextScope Invalidate()
+            => ComputeContext.Invalidate.Activate();
+        public static ComputeContextScope SuspendInvalidate()
+            => ComputeContext.Default.Activate();
 
         // TryCaptureAsync
 
@@ -225,15 +237,5 @@ namespace Stl.Fusion
             task.AssertCompleted(); // The must be always synchronous in this case
             return ccs.Context.GetCapturedComputed<T>();
         }
-
-        // Invalidation
-
-        public static bool IsInvalidating()
-            => (ComputeContext.Current.CallOptions & CallOptions.Invalidate) == CallOptions.Invalidate;
-
-        public static ComputeContextScope Invalidate()
-            => ComputeContext.Invalidate.Activate();
-        public static ComputeContextScope SuppressInvalidate()
-            => ComputeContext.Invalidate.Activate();
     }
 }
