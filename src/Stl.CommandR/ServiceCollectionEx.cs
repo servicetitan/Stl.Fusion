@@ -5,13 +5,13 @@ namespace Stl.CommandR
 {
     public static class ServiceCollectionEx
     {
-        public static CommandRBuilder AddCommandR(this IServiceCollection services)
+        public static CommanderBuilder AddCommander(this IServiceCollection services)
             => new(services);
 
-        public static IServiceCollection AddCommandR(this IServiceCollection services, Action<CommandRBuilder> configureCommandR)
+        public static IServiceCollection AddCommander(this IServiceCollection services, Action<CommanderBuilder> configureCommander)
         {
-            var commandR = services.AddCommandR();
-            configureCommandR.Invoke(commandR);
+            var commandR = services.AddCommander();
+            configureCommander.Invoke(commandR);
             return services;
         }
     }

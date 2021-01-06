@@ -12,12 +12,14 @@ namespace Stl.CommandR.Configuration
     public record MethodCommandHandler<TCommand> : CommandHandler<TCommand>
         where TCommand : class, ICommand
     {
+        public Type HandlerServiceType { get; }
         public MethodInfo HandlerMethod { get; }
         public bool HasContextParameter { get; }
 
-        public MethodCommandHandler(MethodInfo handlerMethod, double priority = 0)
-            : base(handlerMethod.ReflectedType!, priority)
+        public MethodCommandHandler(MethodInfo handlerMethod, double order = 0)
+            : base(order)
         {
+            HandlerServiceType = handlerMethod.ReflectedType!;
             HandlerMethod = handlerMethod;
             HasContextParameter = handlerMethod.GetParameters().Length == 3;
         }
@@ -59,7 +61,7 @@ namespace Stl.CommandR.Configuration
             var isEnabled = attr?.IsEnabled ?? false;
             if (!isEnabled)
                 return null;
-            var priority = priorityOverride ?? attr?.Priority ?? 0;
+            var order = priorityOverride ?? attr?.Order ?? 0;
 
             var tHandlerResult = handlerMethod.ReturnType;
             if (!typeof(Task).IsAssignableFrom(tHandlerResult))
@@ -88,12 +90,12 @@ namespace Stl.CommandR.Configuration
 
             return (CommandHandler) CreateMethod
                 .MakeGenericMethod(pCommand.ParameterType)
-                .Invoke(null, new object[] {handlerMethod, priority})!;
+                .Invoke(null, new object[] {handlerMethod, order})!;
         }
 
         private static MethodCommandHandler<TCommand> Create<TCommand>(
-            MethodInfo handlerMethod, double priority = 0)
+            MethodInfo handlerMethod, double order = 0)
             where TCommand : class, ICommand
-            => new(handlerMethod, priority);
+            => new(handlerMethod, order);
     }
 }

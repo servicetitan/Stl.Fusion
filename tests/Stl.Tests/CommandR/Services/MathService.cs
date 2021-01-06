@@ -15,12 +15,12 @@ namespace Stl.Tests.CommandR.Services
     {
         public MathService(IServiceProvider services) : base(services) { }
 
-        [CommandHandler(Priority = 2)]
+        [CommandHandler(Order = 2)]
         public Task<double> OnCommandAsync(DivCommand command, CommandContext<double> context, CancellationToken cancellationToken)
         {
             var handler = context.Handlers[^1];
             handler.GetType().Should().Be(typeof(MethodCommandHandler<DivCommand>));
-            handler.Priority.Should().Be(2);
+            handler.Order.Should().Be(2);
 
             Log.LogInformation($"{command.Divisible} / {command.Divisor} =");
             var result = command.Divisible / command.Divisor;
@@ -30,7 +30,7 @@ namespace Stl.Tests.CommandR.Services
             return Task.FromResult(result);
         }
 
-        [CommandHandler(Priority = 1)]
+        [CommandHandler(Order = 1)]
         public async Task<double> RecSumAsync(
             RecSumCommand command, CommandContext context,
             CancellationToken cancellationToken)
@@ -38,7 +38,7 @@ namespace Stl.Tests.CommandR.Services
             var typedContext = context.Cast<double>();
             var handler = context.Handlers[^1];
             handler.GetType().Should().Be(typeof(MethodCommandHandler<RecSumCommand>));
-            handler.Priority.Should().Be(1);
+            handler.Order.Should().Be(1);
 
             Log.LogInformation($"Arguments: {command.Arguments.ToDelimitedString()}");
             typedContext.Should().BeSameAs(CommandContext.GetCurrent());
@@ -46,7 +46,7 @@ namespace Stl.Tests.CommandR.Services
             if (command.Arguments.Length == 0)
                 return 0;
 
-            var tailSum = await Services.CommandDispatcher().CallAsync(
+            var tailSum = await Services.Commander().CallAsync(
                     new RecSumCommand() { Arguments = command.Arguments[1..] },
                     cancellationToken)
                 .ConfigureAwait(false);

@@ -12,7 +12,7 @@ namespace Stl.CommandR.Handlers
     {
         public DbWriterHandler(IServiceProvider services) : base(services) { }
 
-        [CommandHandler(Priority = -900)]
+        [CommandHandler(Order = -900)]
         public virtual async Task OnCommandAsync(IDbWriter<TDbContext> command, CommandContext context, CancellationToken cancellationToken)
         {
             var dbContextOpt = context.Globals.TryGet<TDbContext>();

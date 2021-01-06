@@ -6,10 +6,10 @@ namespace Stl.CommandR.Configuration
     public class CommandHandlerAttribute : Attribute
     {
         public bool IsEnabled { get; set; } = true;
-        public double Priority { get; set; }
+        public double Order { get; set; }
 
         public CommandHandlerAttribute() { }
         public CommandHandlerAttribute(bool isEnabled) { IsEnabled = isEnabled; }
-        public CommandHandlerAttribute(int priority) { Priority = priority; }
+        public CommandHandlerAttribute(int order) { Order = order; }
     }
 }

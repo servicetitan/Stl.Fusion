@@ -9,16 +9,16 @@ using Stl.CommandR.Internal;
 
 namespace Stl.CommandR
 {
-    public readonly struct CommandRBuilder
+    public readonly struct CommanderBuilder
     {
         public IServiceCollection Services { get; }
         public ICommandHandlerRegistry Handlers { get; }
 
-        internal CommandRBuilder(IServiceCollection services)
+        internal CommanderBuilder(IServiceCollection services)
         {
             Services = services;
 
-            Services.TryAddSingleton<ICommandDispatcher, CommandDispatcher>();
+            Services.TryAddSingleton<ICommander, Commander>();
             Services.TryAddSingleton<ICommandHandlerRegistry>(new CommandHandlerRegistry());
             Services.TryAddSingleton<ICommandHandlerResolver, CommandHandlerResolver>();
 
@@ -35,30 +35,28 @@ namespace Stl.CommandR
 
         // Manually add handlers
 
-        public CommandRBuilder AddHandler<TCommand, THandlerService>(double priority = 0)
+        public CommanderBuilder AddHandler<TCommand, THandlerService>(double order = 0)
             where TCommand : class, ICommand
             where THandlerService : ICommandHandler<TCommand>
-            => AddHandler(CommandHandler.New<TCommand, THandlerService>(priority));
+            => AddHandler(InterfaceCommandHandler.New<TCommand, THandlerService>(order));
 
-        public CommandRBuilder AddHandler(MethodInfo handlerMethod, double? priorityOverride = null)
+        public CommanderBuilder AddHandler(MethodInfo handlerMethod, double? priorityOverride = null)
             => AddHandler(MethodCommandHandler.New(handlerMethod, priorityOverride));
 
         // Handler discovery
 
-        public CommandRBuilder AddHandlers<TService>(double? priorityOverride = null)
+        public CommanderBuilder AddHandlers<TService>(double? priorityOverride = null)
             => AddHandlers(typeof(TService), priorityOverride);
-        public CommandRBuilder AddHandlers(Type serviceType, double? priorityOverride = null)
+        public CommanderBuilder AddHandlers(Type serviceType, double? priorityOverride = null)
         {
-            var commandTypes = new HashSet<Type>();
-
             // Methods
             var methods = serviceType.GetMethods(
                 BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             foreach (var method in methods) {
                 var handler = MethodCommandHandler.TryNew(method, priorityOverride);
-                if (handler == null || !commandTypes.Add(handler.CommandType))
+                if (handler == null)
                     continue;
-                TryAddHandler(handler);
+                AddHandler(handler);
             }
 
             // Interfaces
@@ -69,9 +67,9 @@ namespace Stl.CommandR
                 if (gInterface != typeof(ICommandHandler<>))
                     continue;
                 var tCommand = tInterface.GetGenericArguments().SingleOrDefault();
-                if (tCommand == null || !commandTypes.Add(tCommand))
+                if (tCommand == null)
                     continue;
-                TryAddHandler(CommandHandler.New(tCommand, serviceType, priorityOverride ?? 0));
+                AddHandler(InterfaceCommandHandler.New(tCommand, serviceType, priorityOverride ?? 0));
             }
 
             return this;
@@ -79,19 +77,13 @@ namespace Stl.CommandR
 
         // Low-level methods
 
-        public CommandRBuilder AddHandler(CommandHandler handler)
+        public CommanderBuilder AddHandler(CommandHandler handler)
         {
             Handlers.Add(handler);
             return this;
         }
 
-        public CommandRBuilder TryAddHandler(CommandHandler handler)
-        {
-            Handlers.TryAdd(handler);
-            return this;
-        }
-
-        public CommandRBuilder ClearHandlers()
+        public CommanderBuilder ClearHandlers()
         {
             Handlers.Clear();
             return this;

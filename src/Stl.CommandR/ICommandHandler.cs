@@ -1,7 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Stl.CommandR.Configuration
+namespace Stl.CommandR
 {
     public interface ICommandHandler
     { }

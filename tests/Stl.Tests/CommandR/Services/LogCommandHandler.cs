@@ -19,8 +19,8 @@ namespace Stl.Tests.CommandR.Services
             CancellationToken cancellationToken)
         {
             var handler = context.Handlers[^1];
-            handler.GetType().Should().Be(typeof(CommandHandler<LogCommand>));
-            handler.Priority.Should().Be(0);
+            handler.GetType().Should().Be(typeof(InterfaceCommandHandler<LogCommand>));
+            handler.Order.Should().Be(0);
 
             Log.LogInformation(command.Message);
             return Task.CompletedTask;

@@ -61,7 +61,7 @@ namespace Stl.Tests.CommandR
                     LogFilter));
             });
 
-            var commandR = services.AddCommandR();
+            var commandR = services.AddCommander();
 
             if (UseDbContext) {
                 var testType = GetType();
@@ -75,7 +75,7 @@ namespace Stl.Tests.CommandR
                     dbServices.AddEntityResolver<string, DbOperation>();
                     dbServices.AddEntityResolver<string, User>();
                 });
-                commandR.AddDbWriterFilter<TestDbContext>();
+                commandR.AddDbWriterHandler<TestDbContext>();
             }
 
             // Just to test [Module] attribute

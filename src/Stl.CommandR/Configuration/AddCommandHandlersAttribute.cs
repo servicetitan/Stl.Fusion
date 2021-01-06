@@ -14,7 +14,7 @@ namespace Stl.CommandR.Configuration
         public AddCommandHandlersAttribute(Type serviceType) => ServiceType = serviceType;
 
         public override void Register(IServiceCollection services, Type implementationType)
-            => services.AddCommandR()
+            => services.AddCommander()
                 .AddHandlers(ServiceType ?? implementationType, PriorityOverride);
     }
 }

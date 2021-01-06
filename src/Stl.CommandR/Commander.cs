@@ -10,7 +10,7 @@ using Stl.DependencyInjection;
 
 namespace Stl.CommandR
 {
-    public interface ICommandDispatcher : IHasServices
+    public interface ICommander : IHasServices
     {
         // This method doesn't throw exceptions
         Task<CommandContext> RunAsync(ICommand command, CancellationToken cancellationToken = default);
@@ -18,17 +18,17 @@ namespace Stl.CommandR
         Task<TResult> CallAsync<TResult>(ICommand<TResult> command, CancellationToken cancellationToken = default);
     }
 
-    public class CommandDispatcher : ICommandDispatcher
+    public class Commander : ICommander
     {
         protected ICommandHandlerResolver HandlerResolver { get; }
         protected ILogger Log { get; }
         public IServiceProvider Services { get; }
 
-        public CommandDispatcher(
+        public Commander(
             IServiceProvider services,
-            ILogger<CommandDispatcher>? log = null)
+            ILogger<Commander>? log = null)
         {
-            Log = log ??= NullLogger<CommandDispatcher>.Instance;
+            Log = log ??= NullLogger<Commander>.Instance;
             Services = services;
             HandlerResolver = services.GetRequiredService<ICommandHandlerResolver>();
         }
