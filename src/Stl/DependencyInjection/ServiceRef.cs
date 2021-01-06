@@ -6,15 +6,15 @@ namespace Stl.DependencyInjection
     [Serializable]
     public abstract record ServiceRef
     {
-        public abstract object? TryResolve(IServiceProvider serviceProvider);
+        public abstract object? TryResolve(IServiceProvider services);
 
-        public object Resolve(IServiceProvider serviceProvider)
-            => TryResolve(serviceProvider) ?? throw Errors.NoService(this);
+        public object Resolve(IServiceProvider services)
+            => TryResolve(services) ?? throw Errors.NoService(this);
     }
 
     public record ServiceTypeRef(Type Type) : ServiceRef
     {
-        public override object? TryResolve(IServiceProvider serviceProvider)
-            => serviceProvider.GetService(Type);
+        public override object? TryResolve(IServiceProvider services)
+            => services.GetService(Type);
     }
 }

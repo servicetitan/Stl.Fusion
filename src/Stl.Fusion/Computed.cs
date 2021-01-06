@@ -148,7 +148,7 @@ namespace Stl.Fusion
         public virtual bool TrySetOutput(Result<TOut> output)
         {
             if (Options.RewriteErrors && !output.IsValue(out _, out var error)) {
-                var errorRewriter = Function.ServiceProvider.GetRequiredService<IErrorRewriter>();
+                var errorRewriter = Function.Services.GetRequiredService<IErrorRewriter>();
                 output = Result.Error<TOut>(errorRewriter.Rewrite(this, error));
             }
             if (ConsistencyState != ConsistencyState.Computing)

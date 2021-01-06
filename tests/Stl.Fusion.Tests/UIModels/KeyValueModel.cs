@@ -32,12 +32,12 @@ namespace Stl.Fusion.Tests.UIModels
         protected IMutableState<string> Locals { get; }
 
         private IKeyValueServiceClient<string> KeyValueServiceClient
-            => ServiceProvider.GetRequiredService<IKeyValueServiceClient<string>>();
+            => Services.GetRequiredService<IKeyValueServiceClient<string>>();
 
-        public StringKeyValueModelState(Options options, IServiceProvider serviceProvider, object? argument = null)
-            : base(options, serviceProvider, argument)
+        public StringKeyValueModelState(Options options, IServiceProvider services, object? argument = null)
+            : base(options, services, argument)
         {
-            Locals = new MutableState<string>(serviceProvider);
+            Locals = new MutableState<string>(services);
             Locals.AddEventHandler(StateEventKind.Updated, (s, e) => this.CancelUpdateDelay());
         }
 

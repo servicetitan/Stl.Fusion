@@ -12,7 +12,7 @@ using Stl.DependencyInjection;
 
 namespace Stl.CommandR
 {
-    public abstract class CommandContext : IHasServiceProvider
+    public abstract class CommandContext : IHasServices
     {
         private static readonly AsyncLocal<CommandContext?> CurrentLocal = new();
         public static CommandContext? Current => CurrentLocal.Value;
@@ -25,16 +25,16 @@ namespace Stl.CommandR
         public CommandContext? Parent { get; protected set; }
         public IReadOnlyList<CommandHandler> Handlers { get; set; } = ArraySegment<CommandHandler>.Empty;
         public int NextHandlerIndex { get; set; }
-        public IServiceProvider ServiceProvider { get; }
+        public IServiceProvider Services { get; }
 
         // Static methods
 
-        public static CommandContext<TResult> New<TResult>(ICommand command, IServiceProvider serviceProvider)
-            => new(command, serviceProvider);
-        public static CommandContext New(ICommand command, IServiceProvider serviceProvider)
+        public static CommandContext<TResult> New<TResult>(ICommand command, IServiceProvider services)
+            => new(command, services);
+        public static CommandContext New(ICommand command, IServiceProvider services)
         {
             var tContext = typeof(CommandContext<>).MakeGenericType(command.ResultType);
-            return (CommandContext) tContext.CreateInstance(command, serviceProvider);
+            return (CommandContext) tContext.CreateInstance(command, services);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -47,11 +47,11 @@ namespace Stl.CommandR
 
         // Constructors
 
-        protected CommandContext(IServiceProvider serviceProvider)
+        protected CommandContext(IServiceProvider services)
         {
             Globals = null!;
             Locals = new();
-            ServiceProvider = serviceProvider;
+            Services = services;
         }
 
         // Instance methods
@@ -104,8 +104,8 @@ namespace Stl.CommandR
             set => Result = value.Cast<TResult>();
         }
 
-        public CommandContext(ICommand command, IServiceProvider serviceProvider)
-            : base(serviceProvider)
+        public CommandContext(ICommand command, IServiceProvider services)
+            : base(services)
         {
             var tResult = typeof(TResult);
             if (command.ResultType != tResult)

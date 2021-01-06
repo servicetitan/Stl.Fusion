@@ -26,7 +26,7 @@ namespace Stl.CommandR.Configuration
             ICommand command, CommandContext context,
             CancellationToken cancellationToken)
         {
-            var services = context.ServiceProvider;
+            var services = context.Services;
             var handlerService = services.GetRequiredService(HandlerServiceType);
             var parameters = HasContextParameter
                 // ReSharper disable once HeapView.BoxingAllocation

@@ -28,8 +28,8 @@ namespace Stl.DependencyInjection
         public static IServiceProvider WithPrimary(this IServiceProvider secondary, Func<Type, object?> primary)
             => new ChainingServiceProvider((FuncServiceProvider) primary, secondary);
 
-        public static IServiceProvider WithUnknownServiceActivator(this IServiceProvider serviceProvider)
-            => new UnknownServiceActivator(serviceProvider);
+        public static IServiceProvider WithUnknownServiceActivator(this IServiceProvider services)
+            => new UnknownServiceActivator(services);
 
         // GetOrActivate
 

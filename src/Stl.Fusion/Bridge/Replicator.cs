@@ -22,7 +22,7 @@ namespace Stl.Fusion.Bridge
         IState<bool> GetPublisherConnectionState(Symbol publisherId);
     }
 
-    public interface IReplicatorImpl : IReplicator, IHasServiceProvider
+    public interface IReplicatorImpl : IReplicator, IHasServices
     {
         IChannelProvider ChannelProvider { get; }
         TimeSpan ReconnectDelay { get; }
@@ -44,16 +44,16 @@ namespace Stl.Fusion.Bridge
         protected ConcurrentDictionary<Symbol, ReplicatorChannelProcessor> ChannelProcessors { get; }
         protected Func<Symbol, ReplicatorChannelProcessor> CreateChannelProcessorHandler { get; }
         public Symbol Id { get; }
-        public IServiceProvider ServiceProvider { get; }
+        public IServiceProvider Services { get; }
         public IChannelProvider ChannelProvider { get; }
         public TimeSpan ReconnectDelay { get; }
 
-        public Replicator(Options? options, IServiceProvider serviceProvider, IChannelProvider channelProvider)
+        public Replicator(Options? options, IServiceProvider services, IChannelProvider channelProvider)
         {
             options ??= new();
             Id = options.Id;
             ReconnectDelay = options.ReconnectDelay;
-            ServiceProvider = serviceProvider;
+            Services = services;
             ChannelProvider = channelProvider;
             ChannelProcessors = new ConcurrentDictionary<Symbol, ReplicatorChannelProcessor>();
             CreateChannelProcessorHandler = CreateChannelProcessor;

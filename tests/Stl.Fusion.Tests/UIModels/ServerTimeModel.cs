@@ -24,10 +24,10 @@ namespace Stl.Fusion.Tests.UIModels
     public class ServerTimeModel1State : LiveState<ServerTimeModel1>
     {
         private IClientTimeService Client
-            => ServiceProvider.GetRequiredService<IClientTimeService>();
+            => Services.GetRequiredService<IClientTimeService>();
 
-        public ServerTimeModel1State(Options options, IServiceProvider serviceProvider, object? argument = null)
-            : base(options, serviceProvider, argument) { }
+        public ServerTimeModel1State(Options options, IServiceProvider services, object? argument = null)
+            : base(options, services, argument) { }
 
         protected override async Task<ServerTimeModel1> ComputeValueAsync(CancellationToken cancellationToken)
         {

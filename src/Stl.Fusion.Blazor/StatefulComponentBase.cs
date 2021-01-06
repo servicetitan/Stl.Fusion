@@ -7,10 +7,9 @@ namespace Stl.Fusion.Blazor
 {
     public abstract class StatefulComponentBase : ComponentBase, IDisposable
     {
-
         [Inject]
-        protected IServiceProvider ServiceProvider { get; set; } = null!;
-        protected IStateFactory StateFactory => ServiceProvider.GetStateFactory();
+        protected IServiceProvider Services { get; set; } = null!;
+        protected IStateFactory StateFactory => Services.GetStateFactory();
         protected bool OwnsState { get; set; } = true;
         protected abstract IState UntypedState { get; }
         protected Action<IState, StateEventKind> StateChanged { get; set; }
@@ -64,6 +63,6 @@ namespace Stl.Fusion.Blazor
         }
 
         protected virtual TState CreateState()
-            => ServiceProvider.GetRequiredService<TState>();
+            => Services.GetRequiredService<TState>();
     }
 }

@@ -63,7 +63,7 @@ namespace Stl.Fusion.Bridge
         public Exception? UpdateError => UpdateErrorField;
 
         // Explicit property implementations
-        IServiceProvider IHasServiceProvider.ServiceProvider => ReplicatorImpl.ServiceProvider;
+        IServiceProvider IHasServices.Services => ReplicatorImpl.Services;
         IReplicaComputed IReplica.Computed => ComputedField;
 
         public Replica(IReplicator replicator, PublicationStateInfo<T> info, bool isUpdateRequested = false)

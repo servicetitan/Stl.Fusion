@@ -9,8 +9,8 @@ namespace Stl.Fusion.Interception
         public InterceptedMethodDescriptor Method { get; }
         protected ComputedOptions Options { get; }
 
-        protected InterceptedFunctionBase(InterceptedMethodDescriptor method, IServiceProvider serviceProvider)
-            : base(serviceProvider)
+        protected InterceptedFunctionBase(InterceptedMethodDescriptor method, IServiceProvider services)
+            : base(services)
         {
             Method = method;
             Options = method.Options;

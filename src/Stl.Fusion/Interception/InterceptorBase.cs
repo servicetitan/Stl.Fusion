@@ -15,7 +15,7 @@ using Stl.Reflection;
 
 namespace Stl.Fusion.Interception
 {
-    public abstract class InterceptorBase : IInterceptor, IHasServiceProvider
+    public abstract class InterceptorBase : IInterceptor, IHasServices
     {
         // ReSharper disable once HeapView.BoxingAllocation
         private static readonly object NoCancellationTokenBoxed = CancellationToken.None;
@@ -40,24 +40,24 @@ namespace Stl.Fusion.Interception
         protected LogLevel LogLevel { get; }
         protected LogLevel ValidationLogLevel { get; }
 
-        public IServiceProvider ServiceProvider { get; }
+        public IServiceProvider Services { get; }
         public IComputedOptionsProvider ComputedOptionsProvider { get; }
         public IArgumentHandlerProvider ArgumentHandlerProvider { get; }
 
         protected InterceptorBase(
             Options options,
-            IServiceProvider serviceProvider,
+            IServiceProvider services,
             ILoggerFactory? loggerFactory = null)
         {
             LoggerFactory = loggerFactory ??= NullLoggerFactory.Instance;
             Log = LoggerFactory.CreateLogger(GetType());
             LogLevel = options.LogLevel;
             ValidationLogLevel = options.ValidationLogLevel;
-            ServiceProvider = serviceProvider;
+            Services = services;
             ComputedOptionsProvider = options.ComputedOptionsProvider
-                ?? serviceProvider.GetRequiredService<IComputedOptionsProvider>();
+                ?? services.GetRequiredService<IComputedOptionsProvider>();
             ArgumentHandlerProvider = options.ArgumentHandlerProvider
-                ?? serviceProvider.GetRequiredService<IArgumentHandlerProvider>();
+                ?? services.GetRequiredService<IArgumentHandlerProvider>();
 
             _createHandler = CreateHandler;
             _createInterceptedMethod = CreateInterceptedMethod;
@@ -135,7 +135,7 @@ namespace Stl.Fusion.Interception
             if (options == null)
                 return null;
 
-            var interceptedMethod = (InterceptedMethodDescriptor) ServiceProvider.Activate(
+            var interceptedMethod = (InterceptedMethodDescriptor) Services.Activate(
                 options.InterceptedMethodDescriptorType, this, methodInfo);
             return interceptedMethod.IsValid ? interceptedMethod : null;
         }

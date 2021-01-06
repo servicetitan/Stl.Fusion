@@ -13,9 +13,9 @@ namespace Stl.Fusion.Interception
         public AsyncComputeServiceFunction(
             InterceptedMethodDescriptor method,
             Generator<LTag> versionGenerator,
-            IServiceProvider serviceProvider,
+            IServiceProvider services,
             ILogger<ComputeServiceFunction<T>>? log = null)
-            : base(method, versionGenerator, serviceProvider, log)
+            : base(method, versionGenerator, services, log)
         {
             if (!method.Options.IsAsyncComputed)
                 throw Stl.Internal.Errors.InternalError(

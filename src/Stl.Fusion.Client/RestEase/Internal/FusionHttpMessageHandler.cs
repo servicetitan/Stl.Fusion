@@ -14,12 +14,12 @@ using Stl.Serialization;
 
 namespace Stl.Fusion.Client.RestEase.Internal
 {
-    public class FusionHttpMessageHandler : DelegatingHandler, IHasServiceProvider
+    public class FusionHttpMessageHandler : DelegatingHandler, IHasServices
     {
-        public IServiceProvider ServiceProvider { get; }
+        public IServiceProvider Services { get; }
 
-        public FusionHttpMessageHandler(IServiceProvider serviceProvider)
-            => ServiceProvider = serviceProvider;
+        public FusionHttpMessageHandler(IServiceProvider services)
+            => Services = services;
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {

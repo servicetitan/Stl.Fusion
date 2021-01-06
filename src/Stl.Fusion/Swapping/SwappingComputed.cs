@@ -36,7 +36,7 @@ namespace Stl.Fusion.Swapping
         public override bool TrySetOutput(Result<T> output)
         {
             if (Options.RewriteErrors && !output.IsValue(out _, out var error)) {
-                var errorRewriter = Function.ServiceProvider.GetRequiredService<IErrorRewriter>();
+                var errorRewriter = Function.Services.GetRequiredService<IErrorRewriter>();
                 output = Result.Error<T>(errorRewriter.Rewrite(this, error));
             }
             if (ConsistencyState != ConsistencyState.Computing)
@@ -66,7 +66,7 @@ namespace Stl.Fusion.Swapping
             if (maybeOutput != null)
                 return maybeOutput;
 
-            var swapService = Function.ServiceProvider.GetService<ISwapService>() ?? NoSwapService.Instance;
+            var swapService = Function.Services.GetService<ISwapService>() ?? NoSwapService.Instance;
             maybeOutput = await swapService.LoadAsync((Input, Version), cancellationToken) as ResultBox<T>;
             if (maybeOutput == null) {
                 Invalidate();
@@ -82,7 +82,7 @@ namespace Stl.Fusion.Swapping
             using var _ = await SwapOutputLock.LockAsync(cancellationToken).ConfigureAwait(false);
             if (MaybeOutput == null)
                 return;
-            var swapService = Function.ServiceProvider.GetService<ISwapService>() ?? NoSwapService.Instance;
+            var swapService = Function.Services.GetService<ISwapService>() ?? NoSwapService.Instance;
             await swapService.StoreAsync((Input, Version), MaybeOutput, cancellationToken);
             Interlocked.Exchange(ref _maybeOutput, null);
             RenewTimeouts();

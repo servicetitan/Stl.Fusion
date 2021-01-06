@@ -48,7 +48,7 @@ namespace Stl.Fusion.Bridge.Internal
             ReplicatorImpl = (IReplicatorImpl) replicator;
             PublisherId = publisherId;
             Subscriptions = new HashSet<Symbol>();
-            var stateFactory = ReplicatorImpl.ServiceProvider.GetStateFactory();
+            var stateFactory = ReplicatorImpl.Services.GetStateFactory();
             IsConnected = stateFactory.NewMutable(Result.Value(true));
             // ReSharper disable once VirtualMemberCallInConstructor
             Reconnect();

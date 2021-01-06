@@ -18,17 +18,17 @@ namespace Stl.Fusion.Interception
 
         public ComputeServiceInterceptor(
             Options? options,
-            IServiceProvider serviceProvider,
+            IServiceProvider services,
             ILoggerFactory? loggerFactory = null)
-            : base(options ??= new(), serviceProvider, loggerFactory)
+            : base(options ??= new(), services, loggerFactory)
             => VersionGenerator = options.VersionGenerator;
 
         protected override InterceptedFunctionBase<T> CreateFunction<T>(InterceptedMethodDescriptor method)
         {
             var log = LoggerFactory.CreateLogger<ComputeServiceFunction<T>>();
             if (method.Options.IsAsyncComputed)
-                return new AsyncComputeServiceFunction<T>(method, VersionGenerator, ServiceProvider, log);
-            return new ComputeServiceFunction<T>(method, VersionGenerator, ServiceProvider, log);
+                return new AsyncComputeServiceFunction<T>(method, VersionGenerator, Services, log);
+            return new ComputeServiceFunction<T>(method, VersionGenerator, Services, log);
         }
 
         protected override void ValidateTypeInternal(Type type)

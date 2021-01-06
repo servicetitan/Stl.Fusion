@@ -13,7 +13,7 @@ using Stl.Reflection;
 
 namespace Stl.Fusion
 {
-    public interface IState : IResult, IHasServiceProvider
+    public interface IState : IResult, IHasServices
     {
         public interface IOptions
         {
@@ -77,7 +77,7 @@ namespace Stl.Fusion
         protected object Lock => AsyncLock;
 
         public IStateSnapshot<T> Snapshot => _snapshot!;
-        public IServiceProvider ServiceProvider { get; }
+        public IServiceProvider Services { get; }
         public object? Argument { get; }
 
         public IComputed<T> Computed {
@@ -136,10 +136,10 @@ namespace Stl.Fusion
         protected event Action<IState<T>, StateEventKind>? UntypedUpdated;
 
         protected State(
-            Options options, IServiceProvider serviceProvider,
+            Options options, IServiceProvider services,
             object? argument = null, bool initialize = true)
         {
-            ServiceProvider = serviceProvider;
+            Services = services;
             Argument = argument;
             ComputedOptions = options.ComputedOptions;
             VersionGenerator = options.VersionGenerator;

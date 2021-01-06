@@ -27,7 +27,7 @@ namespace Stl.Fusion
         {
             public static readonly Func<ILiveState, IUpdateDelayer> DefaultUpdateDelayerFactory =
                 liveState => {
-                    var services = liveState.ServiceProvider;
+                    var services = liveState.Services;
 
                     var updateDelayer = services.GetService<IUpdateDelayer<T>>();
                     if (updateDelayer != null)
@@ -55,13 +55,13 @@ namespace Stl.Fusion
         public bool DelayFirstUpdate { get; }
 
         protected LiveState(
-            Options options, IServiceProvider serviceProvider,
+            Options options, IServiceProvider services,
             object? argument = null, bool initialize = true)
-            : base(options, serviceProvider, argument, false)
+            : base(options, services, argument, false)
         {
             _stopCts = new CancellationTokenSource();
             StopToken = _stopCts.Token;
-            Log = ServiceProvider.GetService<ILoggerFactory>()?.CreateLogger(GetType()) ?? NullLogger.Instance;
+            Log = Services.GetService<ILoggerFactory>()?.CreateLogger(GetType()) ?? NullLogger.Instance;
             UpdateDelayerFactory = options.UpdateDelayerFactory;
             DelayFirstUpdate = options.DelayFirstUpdate;
             if (initialize) Initialize(options);
