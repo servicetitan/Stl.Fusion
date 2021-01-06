@@ -208,28 +208,6 @@ namespace Stl.Fusion
             return result;
         }
 
-        // Invalidate
-
-        public static void Invalidate(Action invalidator)
-        {
-            using var ccs = ComputeContext.New(CallOptions.Invalidate).Activate();
-            invalidator.Invoke();
-        }
-
-        public static void Invalidate(Func<Task> invalidator)
-        {
-            using var ccs = ComputeContext.New(CallOptions.Invalidate).Activate();
-            var task = invalidator.Invoke();
-            task.AssertCompleted(); // The must be always synchronous in this case
-        }
-
-        public static void Invalidate(Func<ValueTask> invalidator)
-        {
-            using var ccs = ComputeContext.New(CallOptions.Invalidate).Activate();
-            var task = invalidator.Invoke();
-            task.AssertCompleted(); // The must be always synchronous in this case
-        }
-
         // TryGetExisting
 
         public static IComputed<T>? TryGetExisting<T>(Func<Task<T>> producer)
@@ -247,5 +225,13 @@ namespace Stl.Fusion
             task.AssertCompleted(); // The must be always synchronous in this case
             return ccs.Context.GetCapturedComputed<T>();
         }
+
+        // Invalidate
+
+        public static ComputeContextScope Invalidate()
+            => ComputeContext.Invalidate.Activate();
+
+        public static ComputeContextScope Invalidate(bool invalidate)
+            => (invalidate ? ComputeContext.Invalidate : ComputeContext.Default).Activate();
     }
 }

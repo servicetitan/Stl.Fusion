@@ -10,6 +10,7 @@ namespace Stl.Fusion
         internal volatile IComputed? CapturedComputed;
         private volatile int _isUsed;
 
+        internal static readonly ComputeContext Invalidate;
         public static readonly ComputeContext Default;
         public static ComputeContext Current {
             get => CurrentLocal.Value ?? Default;
@@ -24,7 +25,7 @@ namespace Stl.Fusion
         protected bool IsDisposed { get; set; }
         protected bool IsUsed => _isUsed != 0;
 
-        public static ComputeContext New(CallOptions options)
+        internal static ComputeContext New(CallOptions options)
         {
             var canUseCache = (options & CallOptions.Capture) == 0;
             var context = canUseCache
@@ -43,6 +44,7 @@ namespace Stl.Fusion
             }
             ContextCache = cache;
             Default = New(default);
+            Invalidate = New(CallOptions.Invalidate);
         }
 
         protected ComputeContext(CallOptions callOptions)

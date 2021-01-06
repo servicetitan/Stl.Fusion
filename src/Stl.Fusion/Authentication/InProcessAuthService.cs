@@ -33,26 +33,31 @@ namespace Stl.Fusion.Authentication
                 (userId, sessionId) => ImmutableHashSet<string>.Empty.Add(sessionId),
                 (userId, sessionIds, sessionId) => sessionIds.Add(sessionId),
                 session.Id);
-            Computed.Invalidate(() => {
+
+            using (Computed.Invalidate()) {
                 GetUserAsync(session, default).Ignore();
                 GetUserSessionsAsync(user.Id, default).Ignore();
-            });
+            }
         }
 
         public Task SignOutAsync(bool force, Session session, CancellationToken cancellationToken = default)
         {
-            if (force && ForcedSignOuts.TryAdd(session.Id, default))
-                Computed.Invalidate(() => IsSignOutForcedAsync(session, default));
+            if (force && ForcedSignOuts.TryAdd(session.Id, default)) {
+                using (Computed.Invalidate()) {
+                    IsSignOutForcedAsync(session, default).Ignore();
+                }
+            }
             if (Users.TryRemove(session.Id, out var user)) {
                 UserSessions.AddOrUpdate(user.Id,
                     (userId, sessionId) => ImmutableHashSet<string>.Empty,
                     (userId, sessionIds, sessionId) => sessionIds.Remove(sessionId),
                     session.Id);
                 UserSessions.TryRemove(user.Id, ImmutableHashSet<string>.Empty); // No need to store an empty one
-                Computed.Invalidate(() => {
+
+                using (Computed.Invalidate()) {
                     GetUserAsync(session, default).Ignore();
                     GetUserSessionsAsync(user.Id, default).Ignore();
-                });
+                };
             }
             return Task.CompletedTask;
         }
@@ -67,7 +72,10 @@ namespace Stl.Fusion.Authentication
                 sessionInfo.CreatedAt == oldSessionInfo.CreatedAt
                 ? sessionInfo
                 : sessionInfo with { CreatedAt = oldSessionInfo.CreatedAt });
-            Computed.Invalidate(() => GetSessionInfoAsync(session, default));
+
+            using (Computed.Invalidate()) {
+                GetSessionInfoAsync(session, default);
+            }
             return Task.CompletedTask;
         }
 

@@ -37,20 +37,22 @@ namespace Stl.Fusion.Tests.Services
         public virtual Task SetAsync(string key, TValue value, CancellationToken cancellationToken = default)
         {
             _values[key] = value;
-            Computed.Invalidate(() => {
-                TryGetAsync(key, default).Ignore();
-                GetAsync(key, default).Ignore();
-            });
+
+            using (Computed.Invalidate()) {
+                TryGetAsync(key, default).AssertCompleted();
+                GetAsync(key, default).AssertCompleted();
+            };
             return Task.CompletedTask;
         }
 
         public virtual Task RemoveAsync(string key, CancellationToken cancellationToken = default)
         {
             _values.TryRemove(key, out _);
-            Computed.Invalidate(() => {
-                TryGetAsync(key, default).Ignore();
-                GetAsync(key, default).Ignore();
-            });
+
+            using (Computed.Invalidate()) {
+                TryGetAsync(key, default).AssertCompleted();
+                GetAsync(key, default).AssertCompleted();
+            };
             return Task.CompletedTask;
         }
     }

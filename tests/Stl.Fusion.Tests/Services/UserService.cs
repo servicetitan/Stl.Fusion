@@ -115,18 +115,22 @@ namespace Stl.Fusion.Tests.Services
         {
             if (!IsCaching)
                 return;
-            Computed.Invalidate(Everything);
+
+            using (Computed.Invalidate()) {
+                Everything().AssertCompleted();
+            }
         }
 
         protected virtual void Invalidate(User user, bool countChanged = true)
         {
             if (!IsCaching)
                 return;
-            Computed.Invalidate(() => {
-                TryGetAsync(user.Id).Ignore();
+
+            using (Computed.Invalidate()) {
+                TryGetAsync(user.Id).AssertCompleted();
                 if (countChanged)
-                    CountAsync().Ignore();
-            });
+                    CountAsync().AssertCompleted();
+            };
         }
     }
 }

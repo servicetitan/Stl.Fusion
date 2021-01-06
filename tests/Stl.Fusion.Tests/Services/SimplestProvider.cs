@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using Stl.Async;
 
 namespace Stl.Fusion.Tests.Services
 {
@@ -54,7 +55,10 @@ namespace Stl.Fusion.Tests.Services
         {
             if (!_isCaching)
                 return;
-            Computed.Invalidate(GetValueAsync);
+
+            using (Computed.Invalidate()) {
+                GetValueAsync().AssertCompleted();
+            }
             // No need to invalidate GetCharCountAsync,
             // since it will be invalidated automatically.
         }

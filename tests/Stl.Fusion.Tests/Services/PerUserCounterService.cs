@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
+using Stl.Async;
 using Stl.Fusion.Authentication;
 
 namespace Stl.Fusion.Tests.Services
@@ -20,7 +21,10 @@ namespace Stl.Fusion.Tests.Services
         public Task IncrementAsync(string key, Session session, CancellationToken cancellationToken = default)
         {
             _counters.AddOrUpdate((session.Id, key), k => 1, (k, v) => v + 1);
-            Computed.Invalidate(() => GetAsync(key, session, default));
+
+            using (Computed.Invalidate()) {
+                GetAsync(key, session, default).AssertCompleted();
+            }
             return Task.CompletedTask;
         }
     }

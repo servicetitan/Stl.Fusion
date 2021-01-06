@@ -110,7 +110,7 @@ namespace Stl.CommandR
             set => Result = value.Cast<TResult>();
         }
 
-        internal CommandContext(ICommand command, IServiceProvider services)
+        public CommandContext(ICommand command, IServiceProvider services)
             : base(services)
         {
             var tResult = typeof(TResult);
