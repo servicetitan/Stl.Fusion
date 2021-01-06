@@ -24,8 +24,7 @@ namespace Stl.CommandR.Configuration
             ICommand command, CommandContext context,
             CancellationToken cancellationToken)
         {
-            var services = context.Services;
-            var handler = (ICommandHandler<TCommand>) services.GetRequiredService(HandlerServiceType);
+            var handler = (ICommandHandler<TCommand>) context.GetRequiredService(HandlerServiceType);
             return handler.OnCommandAsync((TCommand) command, context, cancellationToken);
         }
     }

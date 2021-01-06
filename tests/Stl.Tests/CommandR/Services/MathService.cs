@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Stl.Collections;
 using Stl.CommandR;
 using Stl.CommandR.Configuration;
+using Stl.CommandR.Internal;
 using Stl.DependencyInjection;
 
 namespace Stl.Tests.CommandR.Services
@@ -18,7 +19,8 @@ namespace Stl.Tests.CommandR.Services
         [CommandHandler(Order = 2)]
         public Task<double> OnCommandAsync(DivCommand command, CommandContext<double> context, CancellationToken cancellationToken)
         {
-            var handler = context.Handlers[^1];
+            var contextImpl = (ICommandContextImpl) context;
+            var handler = contextImpl.Handlers[^1];
             handler.GetType().Should().Be(typeof(MethodCommandHandler<DivCommand>));
             handler.Order.Should().Be(2);
 
@@ -36,7 +38,8 @@ namespace Stl.Tests.CommandR.Services
             CancellationToken cancellationToken)
         {
             var typedContext = context.Cast<double>();
-            var handler = context.Handlers[^1];
+            var contextImpl = (ICommandContextImpl) context;
+            var handler = contextImpl.Handlers[^1];
             handler.GetType().Should().Be(typeof(MethodCommandHandler<RecSumCommand>));
             handler.Order.Should().Be(1);
 

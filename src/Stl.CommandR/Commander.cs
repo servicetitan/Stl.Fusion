@@ -13,9 +13,9 @@ namespace Stl.CommandR
     public interface ICommander : IHasServices
     {
         // This method doesn't throw exceptions
-        Task<CommandContext> RunAsync(ICommand command, CancellationToken cancellationToken = default);
+        Task<CommandContext> RunAsync(ICommand command, bool isolate, CancellationToken cancellationToken = default);
         // And this one does
-        Task<TResult> CallAsync<TResult>(ICommand<TResult> command, CancellationToken cancellationToken = default);
+        Task<TResult> CallAsync<TResult>(ICommand<TResult> command, bool isolate, CancellationToken cancellationToken = default);
     }
 
     public class Commander : ICommander
@@ -33,13 +33,14 @@ namespace Stl.CommandR
             HandlerResolver = services.GetRequiredService<ICommandHandlerResolver>();
         }
 
-        public async Task<CommandContext> RunAsync(ICommand command, CancellationToken cancellationToken = default)
+        public async Task<CommandContext> RunAsync(
+            ICommand command, bool isolate, CancellationToken cancellationToken = default)
         {
-            var context = CommandContext.New(command, Services);
-            using var _ = context.Activate();
+            using var context = CommandContext.New(this, command, isolate);
+            var contextImpl = (ICommandContextImpl) context;
             try {
-                context.Handlers = HandlerResolver.GetCommandHandlers(command.GetType());
-                if (context.Handlers.Count == 0)
+                contextImpl.Handlers = HandlerResolver.GetCommandHandlers(command.GetType());
+                if (contextImpl.Handlers.Count == 0)
                     await OnUnhandledCommandAsync(command, context, cancellationToken).ConfigureAwait(false);
                 else
                     await context.InvokeNextHandlerAsync(cancellationToken).ConfigureAwait(false);
@@ -54,9 +55,10 @@ namespace Stl.CommandR
             return context;
         }
 
-        public async Task<TResult> CallAsync<TResult>(ICommand<TResult> command, CancellationToken cancellationToken = default)
+        public async Task<TResult> CallAsync<TResult>(
+            ICommand<TResult> command, bool isolate, CancellationToken cancellationToken = default)
         {
-            var context = await RunAsync((ICommand) command, cancellationToken).ConfigureAwait(false);
+            var context = await RunAsync(command, isolate, cancellationToken).ConfigureAwait(false);
             var typedContext = (CommandContext<TResult>) context;
             return await typedContext.ResultTask.ConfigureAwait(false);
         }

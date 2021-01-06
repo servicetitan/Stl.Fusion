@@ -28,7 +28,7 @@ namespace Stl.CommandR.Internal
         public static Exception CommandHandlerMethodMustReturnTask(MethodInfo handlerMethod)
             => new InvalidOperationException($"Command handler method must return Task or Task<T>: {handlerMethod}.");
         public static Exception WrongCommandHandlerMethodArgumentCount(MethodInfo handlerMethod)
-            => new InvalidOperationException($"Command handler method argument count must be 2 or 3: {handlerMethod}.");
+            => new InvalidOperationException($"Command handler method must have at least 2 arguments: command and CancellationToken.");
         public static Exception WrongCommandHandlerMethodArguments(MethodInfo handlerMethod)
             => new InvalidOperationException($"Wrong command handler method arguments: {handlerMethod}.");
 

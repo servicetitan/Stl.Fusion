@@ -8,7 +8,7 @@ using Stl.Text;
 
 namespace Stl.Collections
 {
-    public class NamedValueSet
+    public class NamedValueSet : IServiceProvider
     {
         private volatile ImmutableDictionary<Symbol, object> _items;
 
@@ -42,6 +42,9 @@ namespace Stl.Collections
         [JsonConstructor]
         public NamedValueSet(ImmutableDictionary<Symbol, object>? items)
             => _items = items ?? ImmutableDictionary<Symbol, object>.Empty;
+
+        public object? GetService(Type serviceType)
+            => this[serviceType];
 
         public T Get<T>()
         {

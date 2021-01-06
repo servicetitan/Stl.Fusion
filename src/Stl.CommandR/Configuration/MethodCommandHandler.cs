@@ -14,29 +14,33 @@ namespace Stl.CommandR.Configuration
     {
         public Type HandlerServiceType { get; }
         public MethodInfo HandlerMethod { get; }
-        public bool HasContextParameter { get; }
 
         public MethodCommandHandler(MethodInfo handlerMethod, double order = 0)
             : base(order)
         {
             HandlerServiceType = handlerMethod.ReflectedType!;
             HandlerMethod = handlerMethod;
-            HasContextParameter = handlerMethod.GetParameters().Length == 3;
         }
 
         public override Task InvokeAsync(
             ICommand command, CommandContext context,
             CancellationToken cancellationToken)
         {
-            var services = context.Services;
-            var handlerService = services.GetRequiredService(HandlerServiceType);
-            var parameters = HasContextParameter
-                // ReSharper disable once HeapView.BoxingAllocation
-                ? new object[] {command, context, cancellationToken}
-                // ReSharper disable once HeapView.BoxingAllocation
-                : new object[] {command, cancellationToken};
+            var handlerService = context.GetRequiredService(HandlerServiceType);
+            var parameters = HandlerMethod.GetParameters();
+            var arguments = new object[parameters.Length];
+            arguments[0] = command;
+            // ReSharper disable once HeapView.BoxingAllocation
+            arguments[^1] = cancellationToken;
+            for (var i = 1; i < parameters.Length - 1; i++) {
+                var p = parameters[i];
+                var value = p.HasDefaultValue
+                    ? (context.GetService(p.ParameterType) ?? p.DefaultValue!)
+                    : context.GetRequiredService(p.ParameterType);
+                arguments[i] = value;
+            }
             try {
-                return (Task) HandlerMethod.Invoke(handlerService, parameters)!;
+                return (Task) HandlerMethod.Invoke(handlerService, arguments)!;
             }
             catch (TargetInvocationException tie) {
                 if (tie.InnerException != null)
@@ -68,10 +72,9 @@ namespace Stl.CommandR.Configuration
                 throw Errors.CommandHandlerMethodMustReturnTask(handlerMethod);
 
             var parameters = handlerMethod.GetParameters();
-            if (parameters.Length is < 2 or > 3)
+            if (parameters.Length < 2)
                 throw Errors.WrongCommandHandlerMethodArgumentCount(handlerMethod);
             var pCommand = parameters[0];
-            var pContext = parameters.Length > 2 ? parameters[1] : null;
             var pCancellationToken = parameters[^1];
 
             if (!typeof(ICommand).IsAssignableFrom(pCommand.ParameterType))
@@ -82,10 +85,7 @@ namespace Stl.CommandR.Configuration
                 if (!tGenericCommandType.IsAssignableFrom(pCommand.ParameterType))
                     throw Errors.WrongCommandHandlerMethodArguments(handlerMethod);
             }
-
             if (typeof(CancellationToken) != pCancellationToken.ParameterType)
-                throw Errors.WrongCommandHandlerMethodArguments(handlerMethod);
-            if (pContext != null && !typeof(CommandContext).IsAssignableFrom(pContext.ParameterType))
                 throw Errors.WrongCommandHandlerMethodArguments(handlerMethod);
 
             return (CommandHandler) CreateMethod

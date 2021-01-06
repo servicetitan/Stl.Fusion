@@ -3,38 +3,57 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Stl.Async;
 using Stl.Collections;
 using Stl.CommandR.Configuration;
 using Stl.Reflection;
 using Stl.CommandR.Internal;
-using Stl.DependencyInjection;
 
 namespace Stl.CommandR
 {
-    public abstract class CommandContext : IHasServices
+    public abstract class CommandContext : ICommandContextImpl
     {
-        private static readonly AsyncLocal<CommandContext?> CurrentLocal = new();
+        protected static readonly AsyncLocal<CommandContext?> CurrentLocal = new();
         public static CommandContext? Current => CurrentLocal.Value;
 
+        private volatile int _isDisposed;
+        protected CommandContext? PreviousContext { get; private init; }
+        protected IServiceScope ServiceScope { get; init; } = null!;
+        IServiceScope ICommandContextImpl.ServiceScope => ServiceScope;
+
+        protected IReadOnlyList<CommandHandler> Handlers { get; set; } = ArraySegment<CommandHandler>.Empty;
+        IReadOnlyList<CommandHandler> ICommandContextImpl.Handlers {
+            get => Handlers;
+            set => Handlers = value;
+        }
+
+        protected int NextHandlerIndex { get; set; }
+        int ICommandContextImpl.NextHandlerIndex {
+            get => NextHandlerIndex;
+            set => NextHandlerIndex = value;
+        }
+
+        public ICommander Commander { get; }
         public abstract ICommand UntypedCommand { get; }
         public abstract Task UntypedResultTask { get; }
         public abstract Result<object> UntypedResult { get; set; }
-        public NamedValueSet Items { get; protected set; } = null!;
-        public CommandContext? OuterContext { get; protected set; }
-        public CommandContext OutermostContext { get; protected set; } = null!;
-        public IReadOnlyList<CommandHandler> Handlers { get; set; } = ArraySegment<CommandHandler>.Empty;
-        public int NextHandlerIndex { get; set; }
-        public IServiceProvider Services { get; }
+        public NamedValueSet Items { get; protected init; } = null!;
+        public CommandContext? OuterContext { get; protected init; }
+        public CommandContext OutermostContext { get; protected init; } = null!;
+        public IServiceProvider ScopedServices => ServiceScope.ServiceProvider;
 
         // Static methods
 
-        internal static CommandContext<TResult> New<TResult>(ICommand command, IServiceProvider services)
-            => new(command, services);
-        internal static CommandContext New(ICommand command, IServiceProvider services)
+        internal static CommandContext<TResult> New<TResult>(
+            ICommander commander, ICommand command, bool isolate)
+            => new(commander, command, isolate);
+
+        internal static CommandContext New(
+            ICommander commander, ICommand command, bool isolate)
         {
             var tContext = typeof(CommandContext<>).MakeGenericType(command.ResultType);
-            return (CommandContext) tContext.CreateInstance(command, services);
+            return (CommandContext) tContext.CreateInstance(commander, command, isolate);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -54,27 +73,41 @@ namespace Stl.CommandR
 
         // Constructors
 
-        protected CommandContext(IServiceProvider services)
-            => Services = services;
+        protected CommandContext(ICommander commander)
+        {
+            Commander = commander;
+            PreviousContext = Current;
+        }
+
+        // Disposable
+
+        public void Dispose()
+        {
+            if (0 != Interlocked.CompareExchange(ref _isDisposed, 1, 0))
+                return;
+            DisposeInternal();
+        }
+
+        protected virtual void DisposeInternal()
+        {
+            CurrentLocal.Value = PreviousContext;
+            ServiceScope.Dispose();
+        }
 
         // Instance methods
-
-        public ClosedDisposable<CommandContext> Activate()
-        {
-            if (Items != null)
-                throw Errors.CommandContextWasActivatedEarlier();
-            OuterContext = Current;
-            OutermostContext = OuterContext?.OutermostContext ?? this;
-            Items = OuterContext?.Items ?? new NamedValueSet();
-            CurrentLocal.Value = this;
-            return Disposable.NewClosed(this, self => CurrentLocal.Value = self.OuterContext);
-        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public CommandContext<TResult> Cast<TResult>()
             => (CommandContext<TResult>) this;
 
         public abstract Task InvokeNextHandlerAsync(CancellationToken cancellationToken);
+
+        public virtual object? GetService(Type serviceType)
+        {
+            if (serviceType == typeof(CommandContext) || serviceType == GetType())
+                return this;
+            return Items.GetService(serviceType) ?? ScopedServices.GetService(serviceType);
+        }
 
         // SetXxx & TrySetXxx
 
@@ -110,14 +143,28 @@ namespace Stl.CommandR
             set => Result = value.Cast<TResult>();
         }
 
-        public CommandContext(ICommand command, IServiceProvider services)
-            : base(services)
+        public CommandContext(ICommander commander, ICommand command, bool isolate)
+            : base(commander)
         {
             var tResult = typeof(TResult);
             if (command.ResultType != tResult)
                 throw Errors.CommandResultTypeMismatch(tResult, command.ResultType);
             Command = (ICommand<TResult>) command;
             ResultTaskSource = TaskSource.New<TResult>(true);
+            isolate |= PreviousContext?.Commander != commander;
+            if (isolate) {
+                OuterContext = null;
+                OutermostContext = this;
+                ServiceScope = Commander.Services.CreateScope();
+            }
+            else {
+                OuterContext = PreviousContext;
+                OutermostContext = PreviousContext!.OutermostContext;
+                var outermostContextImpl = (ICommandContextImpl) OutermostContext;
+                ServiceScope = outermostContextImpl.ServiceScope;
+            }
+            CurrentLocal.Value = this;
+            Items = OuterContext?.Items ?? new NamedValueSet();
         }
 
         // Instance methods

@@ -5,6 +5,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Stl.CommandR;
 using Stl.CommandR.Configuration;
+using Stl.CommandR.Internal;
 using Stl.DependencyInjection;
 
 namespace Stl.Tests.CommandR.Services
@@ -18,7 +19,8 @@ namespace Stl.Tests.CommandR.Services
             LogCommand command, CommandContext context,
             CancellationToken cancellationToken)
         {
-            var handler = context.Handlers[^1];
+            var contextImpl = (ICommandContextImpl) context;
+            var handler = contextImpl.Handlers[^1];
             handler.GetType().Should().Be(typeof(InterfaceCommandHandler<LogCommand>));
             handler.Order.Should().Be(0);
 

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Stl.EntityFramework
 {
@@ -10,12 +11,21 @@ namespace Stl.EntityFramework
 
         internal DbContextServiceBuilder(IServiceCollection services) => Services = services;
 
-        public DbContextServiceBuilder<TDbContext> AddTransactionRunner()
-            => this.AddTransactionRunner<DbOperation>();
-        public DbContextServiceBuilder<TDbContext> AddTransactionRunner<TDbOperation>()
+        public DbContextServiceBuilder<TDbContext> AddDbContext()
+        {
+            Services.TryAddScoped(c => {
+                var factory = c.GetRequiredService<IDbContextFactory<TDbContext>>();
+                return factory.CreateDbContext();
+            });
+            return this;
+        }
+
+        public DbContextServiceBuilder<TDbContext> AddTransactionManager()
+            => AddTransactionManager<DbOperation>();
+        public DbContextServiceBuilder<TDbContext> AddTransactionManager<TDbOperation>()
             where TDbOperation : class, IDbOperation, new()
         {
-            Services.AddSingleton<
+            Services.TryAddSingleton<
                 IDbTransactionManager<TDbContext>,
                 DbTransactionManager<TDbContext, TDbOperation>>();
             return this;
@@ -25,7 +35,7 @@ namespace Stl.EntityFramework
             where TKey : notnull
             where TEntity : class
         {
-            Services.AddSingleton<DbEntityResolver<TDbContext, TKey, TEntity>>();
+            Services.TryAddSingleton<DbEntityResolver<TDbContext, TKey, TEntity>>();
             return this;
         }
     }
