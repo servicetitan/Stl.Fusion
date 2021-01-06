@@ -226,12 +226,14 @@ namespace Stl.Fusion
             return ccs.Context.GetCapturedComputed<T>();
         }
 
-        // Invalidate
+        // Invalidation
+
+        public static bool IsInvalidating()
+            => (ComputeContext.Current.CallOptions & CallOptions.Invalidate) == CallOptions.Invalidate;
 
         public static ComputeContextScope Invalidate()
             => ComputeContext.Invalidate.Activate();
-
-        public static ComputeContextScope Invalidate(bool invalidate)
-            => (invalidate ? ComputeContext.Invalidate : ComputeContext.Default).Activate();
+        public static ComputeContextScope SuppressInvalidate()
+            => ComputeContext.Invalidate.Activate();
     }
 }
