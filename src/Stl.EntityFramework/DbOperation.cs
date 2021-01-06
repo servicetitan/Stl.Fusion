@@ -11,6 +11,7 @@ namespace Stl.EntityFramework
     {
         string Id { get; set; }
         DateTime StartTime { get; set; }
+        string AgentId { get; set; }
         object Operation { get; set; }
     }
 
@@ -23,6 +24,7 @@ namespace Stl.EntityFramework
         [Key]
         public string Id { get; set; } = "";
         public DateTime StartTime { get; set; }
+        public string AgentId { get; set; } = "";
 
         public string OperationJson {
             get => _operation.SerializedValue;

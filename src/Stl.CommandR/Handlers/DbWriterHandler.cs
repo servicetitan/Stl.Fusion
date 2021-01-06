@@ -12,17 +12,17 @@ namespace Stl.CommandR.Handlers
     {
         public DbWriterHandler(IServiceProvider services) : base(services) { }
 
-        [CommandHandler(Order = -900)]
+        [CommandHandler(Order = -1000)]
         public virtual async Task OnCommandAsync(IDbWriter<TDbContext> command, CommandContext context, CancellationToken cancellationToken)
         {
-            var dbContextOpt = context.Globals.TryGet<TDbContext>();
+            var dbContextOpt = context.Items.TryGet<TDbContext>();
             if (dbContextOpt.HasValue) {
                 await context.InvokeNextHandlerAsync(cancellationToken).ConfigureAwait(false);
                 return;
             }
 
-            await Tx.WriteAsync(command, async dbContext => {
-                context.Globals.Set(dbContext);
+            await Tx.ReadWriteAsync(command, async dbContext => {
+                context.Items.Set(dbContext);
                 await context.InvokeNextHandlerAsync(cancellationToken).ConfigureAwait(false);
             }, cancellationToken).ConfigureAwait(false);
         }

@@ -12,7 +12,7 @@ namespace Stl.EntityFramework
     {
         protected IServiceProvider Services { get; }
         protected IDbContextFactory<TDbContext> DbContextFactory { get; }
-        protected IDbTransactionRunner<TDbContext> Tx { get; }
+        protected IDbTransactionManager<TDbContext> Tx { get; }
         protected IMomentClock Clock { get; }
         protected ILogger Log { get; }
 
@@ -20,7 +20,7 @@ namespace Stl.EntityFramework
         {
             Services = services;
             DbContextFactory = services.GetRequiredService<IDbContextFactory<TDbContext>>();
-            Tx = services.GetRequiredService<IDbTransactionRunner<TDbContext>>();
+            Tx = services.GetRequiredService<IDbTransactionManager<TDbContext>>();
             Clock = services.GetService<IMomentClock>() ?? SystemClock.Instance;
             var loggerFactory = services.GetService<ILoggerFactory>();
             Log = loggerFactory?.CreateLogger(GetType()) ?? NullLogger.Instance;

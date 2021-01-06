@@ -5,7 +5,7 @@ namespace Stl.Generators
 {
     public class RandomSymbolGenerator : Generator<Symbol>
     {
-        public static readonly RandomSymbolGenerator Default = new RandomSymbolGenerator();
+        public static readonly RandomSymbolGenerator Default = new();
 
         protected RandomStringGenerator Rsg { get; }
         public string Prefix { get; }

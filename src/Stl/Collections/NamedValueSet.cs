@@ -8,7 +8,7 @@ using Stl.Text;
 
 namespace Stl.Collections
 {
-    public class PropertyBag
+    public class NamedValueSet
     {
         private volatile ImmutableDictionary<Symbol, object> _items;
 
@@ -37,10 +37,10 @@ namespace Stl.Collections
             set => this[type.ToSymbol()] = value;
         }
 
-        public PropertyBag()
+        public NamedValueSet()
             => _items = ImmutableDictionary<Symbol, object>.Empty;
         [JsonConstructor]
-        public PropertyBag(ImmutableDictionary<Symbol, object>? items)
+        public NamedValueSet(ImmutableDictionary<Symbol, object>? items)
             => _items = items ?? ImmutableDictionary<Symbol, object>.Empty;
 
         public T Get<T>()

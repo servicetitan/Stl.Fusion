@@ -22,7 +22,7 @@ namespace Stl.Tests.CommandR.Services
             Log.LogInformation($"User count: {command.Users.Length}");
 
             var context = CommandContext.GetCurrent();
-            var dbContext = context.Globals.Get<TestDbContext>();
+            var dbContext = context.OutermostItems.Get<TestDbContext>();
             if (command.Users.Length == 0)
                 return;
 

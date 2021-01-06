@@ -20,18 +20,18 @@ namespace Stl.CommandR
         public abstract ICommand UntypedCommand { get; }
         public abstract Task UntypedResultTask { get; }
         public abstract Result<object> UntypedResult { get; set; }
-        public PropertyBag Globals { get; protected set; }
-        public PropertyBag Locals { get; protected set; }
-        public CommandContext? Parent { get; protected set; }
+        public NamedValueSet Items { get; protected set; } = null!;
+        public CommandContext? OuterContext { get; protected set; }
+        public CommandContext OutermostContext { get; protected set; } = null!;
         public IReadOnlyList<CommandHandler> Handlers { get; set; } = ArraySegment<CommandHandler>.Empty;
         public int NextHandlerIndex { get; set; }
         public IServiceProvider Services { get; }
 
         // Static methods
 
-        public static CommandContext<TResult> New<TResult>(ICommand command, IServiceProvider services)
+        internal static CommandContext<TResult> New<TResult>(ICommand command, IServiceProvider services)
             => new(command, services);
-        public static CommandContext New(ICommand command, IServiceProvider services)
+        internal static CommandContext New(ICommand command, IServiceProvider services)
         {
             var tContext = typeof(CommandContext<>).MakeGenericType(command.ResultType);
             return (CommandContext) tContext.CreateInstance(command, services);
@@ -45,23 +45,29 @@ namespace Stl.CommandR
         public static CommandContext<TResult> GetCurrent<TResult>()
             => GetCurrent().Cast<TResult>();
 
+        public static ClosedDisposable<CommandContext> Suppress()
+        {
+            var oldCurrent = Current;
+            CurrentLocal.Value = null;
+            return Disposable.NewClosed(oldCurrent!, oldCurrent1 => CurrentLocal.Value = oldCurrent1);
+        }
+
         // Constructors
 
         protected CommandContext(IServiceProvider services)
-        {
-            Globals = null!;
-            Locals = new();
-            Services = services;
-        }
+            => Services = services;
 
         // Instance methods
 
         public ClosedDisposable<CommandContext> Activate()
         {
-            Parent = Current;
-            Globals = Parent?.Globals ?? new PropertyBag();
+            if (Items != null)
+                throw Errors.CommandContextWasActivatedEarlier();
+            OuterContext = Current;
+            OutermostContext = OuterContext?.OutermostContext ?? this;
+            Items = OuterContext?.Items ?? new NamedValueSet();
             CurrentLocal.Value = this;
-            return Disposable.NewClosed(this, self => CurrentLocal.Value = self.Parent);
+            return Disposable.NewClosed(this, self => CurrentLocal.Value = self.OuterContext);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -104,7 +110,7 @@ namespace Stl.CommandR
             set => Result = value.Cast<TResult>();
         }
 
-        public CommandContext(ICommand command, IServiceProvider services)
+        internal CommandContext(ICommand command, IServiceProvider services)
             : base(services)
         {
             var tResult = typeof(TResult);

@@ -12,9 +12,9 @@ namespace Stl.CommandR.Internal
             => new InvalidOperationException("ICommandHandlerRegistry instance is not registered.");
         public static Exception CommandResultTypeMismatch(Type expectedType, Type actualType)
             => new ArgumentException($"Command result type mismatch: expected '{expectedType}', got '{actualType}'");
-        public static Exception HandlerIsAlreadyAdded(CommandHandler handler)
-            => new InvalidOperationException($"Command handler {handler} is already added.");
 
+        public static Exception CommandContextWasActivatedEarlier()
+            => new InvalidOperationException("This CommandContext was already activated earlier.");
         public static Exception NoCurrentCommandContext()
             => new InvalidOperationException("CommandContext.Current is null - no command is running.");
 
@@ -31,5 +31,6 @@ namespace Stl.CommandR.Internal
             => new InvalidOperationException($"Command handler method argument count must be 2 or 3: {handlerMethod}.");
         public static Exception WrongCommandHandlerMethodArguments(MethodInfo handlerMethod)
             => new InvalidOperationException($"Wrong command handler method arguments: {handlerMethod}.");
+
     }
 }

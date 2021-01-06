@@ -29,8 +29,8 @@ namespace Stl.Tests.CommandR
             }};
             await services.Commander().CallAsync(command);
 
-            var tx = services.GetRequiredService<IDbTransactionRunner<TestDbContext>>();
-            await tx.ReadAsync(async dbContext => {
+            var tx = services.GetRequiredService<IDbTransactionManager<TestDbContext>>();
+            await tx.ReadOnlyAsync(async dbContext => {
                 (await dbContext.Users.CountAsync()).Should().Be(2);
                 (await dbContext.Operations.CountAsync()).Should().Be(1);
             });
@@ -47,8 +47,8 @@ namespace Stl.Tests.CommandR
             }};
             await services.Commander().RunAsync(command);
 
-            var tx = services.GetRequiredService<IDbTransactionRunner<TestDbContext>>();
-            await tx.ReadAsync(async dbContext => {
+            var tx = services.GetRequiredService<IDbTransactionManager<TestDbContext>>();
+            await tx.ReadOnlyAsync(async dbContext => {
                 (await dbContext.Users.CountAsync()).Should().Be(0);
                 (await dbContext.Operations.CountAsync()).Should().Be(0);
             });

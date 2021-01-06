@@ -11,7 +11,7 @@ namespace Stl.Generators
         public static readonly string Base64Alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/";
         public static readonly string Base32Alphabet = "0123456789abcdefghijklmnopqrstuv";
         public static readonly string Base16Alphabet = "0123456789abcdef";
-        public static readonly RandomStringGenerator Default = new RandomStringGenerator();
+        public static readonly RandomStringGenerator Default = new();
 
         protected readonly RandomNumberGenerator Rng;
         protected object Lock => Rng;

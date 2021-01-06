@@ -3,23 +3,24 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Stl.OS;
 using Stl.Time;
 
 namespace Stl.EntityFramework
 {
-    public interface IDbTransactionRunner<out TDbContext>
+    public interface IDbTransactionManager<out TDbContext>
         where TDbContext : DbContext
     {
-        Task ReadAsync(
+        Task ReadOnlyAsync(
             Func<TDbContext, Task> transaction,
             CancellationToken cancellationToken = default);
-        Task<string> WriteAsync(
+        Task<string> ReadWriteAsync(
             object operation,
             Func<TDbContext, Task> transaction,
             CancellationToken cancellationToken = default);
     }
 
-    public class DbTransactionRunner<TDbContext, TDbOperation> : IDbTransactionRunner<TDbContext>
+    public class DbTransactionManager<TDbContext, TDbOperation> : IDbTransactionManager<TDbContext>
         where TDbContext : DbContext
         where TDbOperation : class, IDbOperation, new()
     {
@@ -27,14 +28,14 @@ namespace Stl.EntityFramework
         protected IDbContextFactory<TDbContext> DbContextFactory { get; }
         protected IMomentClock Clock { get; }
 
-        public DbTransactionRunner(IServiceProvider services)
+        public DbTransactionManager(IServiceProvider services)
         {
             Services = services;
             DbContextFactory = services.GetRequiredService<IDbContextFactory<TDbContext>>();
             Clock = services.GetService<IMomentClock>() ?? SystemClock.Instance;
         }
 
-        public virtual async Task ReadAsync(
+        public virtual async Task ReadOnlyAsync(
             Func<TDbContext, Task> transaction,
             CancellationToken cancellationToken = default)
         {
@@ -49,7 +50,7 @@ namespace Stl.EntityFramework
                 cancellationToken);
         }
 
-        public virtual async Task<string> WriteAsync(
+        public virtual async Task<string> ReadWriteAsync(
             object operation,
             Func<TDbContext, Task> transaction,
             CancellationToken cancellationToken = default)
@@ -85,6 +86,7 @@ namespace Stl.EntityFramework
             var dbOperation = new TDbOperation() {
                 Id = Ulid.NewUlid().ToString(),
                 StartTime = Clock.Now.ToDateTime(),
+                AgentId = RuntimeInfo.Process.MachinePrefixedId,
                 Operation = operation,
             };
             await dbContext.AddAsync((object) dbOperation, cancellationToken).ConfigureAwait(false);

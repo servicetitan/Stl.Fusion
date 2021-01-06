@@ -16,8 +16,8 @@ namespace Stl.EntityFramework
             where TDbOperation : class, IDbOperation, new()
         {
             Services.AddSingleton<
-                IDbTransactionRunner<TDbContext>,
-                DbTransactionRunner<TDbContext, TDbOperation>>();
+                IDbTransactionManager<TDbContext>,
+                DbTransactionManager<TDbContext, TDbOperation>>();
             return this;
         }
 
