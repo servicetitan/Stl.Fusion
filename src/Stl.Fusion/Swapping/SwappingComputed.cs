@@ -27,9 +27,9 @@ namespace Stl.Fusion.Swapping
         IResult? IAsyncComputed.MaybeOutput => MaybeOutput;
         public ResultBox<T>? MaybeOutput => _maybeOutput;
 
-        public SwappingComputed(ComputedOptions options, InterceptedInput input, LTag version)
+        public SwappingComputed(ComputedOptions options, ComputeMethodInput input, LTag version)
             : base(options, input, version) { }
-        protected SwappingComputed(ComputedOptions options, InterceptedInput input, ResultBox<T> maybeOutput, LTag version, bool isConsistent)
+        protected SwappingComputed(ComputedOptions options, ComputeMethodInput input, ResultBox<T> maybeOutput, LTag version, bool isConsistent)
             : base(options, input, default, version, isConsistent)
             => _maybeOutput = maybeOutput;
 

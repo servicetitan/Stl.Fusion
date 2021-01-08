@@ -9,10 +9,10 @@ namespace Stl.Fusion.Swapping
     {
         public static ISwapService Instance { get; } = new NoSwapService();
 
-        public ValueTask<IResult?> LoadAsync((InterceptedInput Input, LTag Version) key, CancellationToken cancellationToken = default)
+        public ValueTask<IResult?> LoadAsync((ComputeMethodInput Input, LTag Version) key, CancellationToken cancellationToken = default)
             => ValueTaskEx.FromResult((IResult?) null);
 
-        public ValueTask StoreAsync((InterceptedInput Input, LTag Version) key, IResult value,
+        public ValueTask StoreAsync((ComputeMethodInput Input, LTag Version) key, IResult value,
             CancellationToken cancellationToken = default)
             => ValueTaskEx.CompletedTask;
     }

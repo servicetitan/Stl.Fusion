@@ -47,22 +47,22 @@ namespace Stl.Fusion
                 ErrorAutoInvalidateTime = autoInvalidateTime;
             SwappingOptions = swappingOptions.IsEnabled ? swappingOptions : SwappingOptions.NoSwapping;
             RewriteErrors = rewriteErrors;
-            InterceptedMethodDescriptorType = interceptedMethodDescriptorType ?? typeof(InterceptedMethodDescriptor);
+            InterceptedMethodDescriptorType = interceptedMethodDescriptorType ?? typeof(ComputeMethodDef);
             IsAsyncComputed = swappingOptions.IsEnabled;
         }
 
-        public static ComputedOptions? FromAttribute(InterceptedMethodAttribute? attribute, SwapAttribute? swapAttribute)
+        public static ComputedOptions? FromAttribute(ComputeMethodAttribute? attribute, SwapAttribute? swapAttribute)
         {
-            if (!(attribute is ComputeMethodAttribute cma) || !cma.IsEnabled)
+            if (attribute == null || !attribute.IsEnabled)
                 return null;
             var swappingOptions = SwappingOptions.FromAttribute(swapAttribute);
             var options = new ComputedOptions(
-                ToTimeSpan(cma.KeepAliveTime) ?? Default.KeepAliveTime,
-                ToTimeSpan(cma.ErrorAutoInvalidateTime) ?? Default.ErrorAutoInvalidateTime,
-                ToTimeSpan(cma.AutoInvalidateTime) ?? Default.AutoInvalidateTime,
+                ToTimeSpan(attribute.KeepAliveTime) ?? Default.KeepAliveTime,
+                ToTimeSpan(attribute.ErrorAutoInvalidateTime) ?? Default.ErrorAutoInvalidateTime,
+                ToTimeSpan(attribute.AutoInvalidateTime) ?? Default.AutoInvalidateTime,
                 swappingOptions,
-                cma.RewriteErrors,
-                cma.InterceptedMethodDescriptorType);
+                attribute.RewriteErrors,
+                attribute.InterceptedMethodDescriptorType);
             return options.IsDefault() ? Default : options;
         }
 

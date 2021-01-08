@@ -10,7 +10,7 @@ using Stl.Generators;
 
 namespace Stl.Fusion.Bridge.Interception
 {
-    public class ReplicaClientFunction<T> : InterceptedFunctionBase<T>
+    public class ReplicaClientFunction<T> : ComputeFunctionBase<T>
     {
         protected readonly ILogger Log;
         protected readonly bool IsLogDebugEnabled;
@@ -18,7 +18,7 @@ namespace Stl.Fusion.Bridge.Interception
         protected readonly IReplicator Replicator;
 
         public ReplicaClientFunction(
-            InterceptedMethodDescriptor method,
+            ComputeMethodDef method,
             IReplicator replicator,
             Generator<LTag> versionGenerator,
             ILogger<ReplicaClientFunction<T>>? log = null)
@@ -31,7 +31,7 @@ namespace Stl.Fusion.Bridge.Interception
         }
 
         protected override async ValueTask<IComputed<T>> ComputeAsync(
-            InterceptedInput input, IComputed<T>? existing,
+            ComputeMethodInput input, IComputed<T>? existing,
             CancellationToken cancellationToken)
         {
             var method = input.Method;

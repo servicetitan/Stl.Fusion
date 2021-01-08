@@ -5,19 +5,19 @@ using Stl.Fusion.Interception.Internal;
 
 namespace Stl.Fusion.Interception
 {
-    public class InterceptedInput : ComputedInput, IEquatable<InterceptedInput>
+    public class ComputeMethodInput : ComputedInput, IEquatable<ComputeMethodInput>
     {
         // ReSharper disable once HeapView.BoxingAllocation
         private static readonly object BoxedDefaultCancellationToken = (CancellationToken) default;
 
-        public readonly InterceptedMethodDescriptor Method;
+        public readonly ComputeMethodDef Method;
         public readonly AbstractInvocation Invocation;
         public readonly int NextInterceptorIndex;
         // Shortcuts
         public object Target => Invocation.InvocationTarget;
         public object[] Arguments => Invocation.Arguments;
 
-        public InterceptedInput(IFunction function, InterceptedMethodDescriptor method, AbstractInvocation invocation)
+        public ComputeMethodInput(IFunction function, ComputeMethodDef method, AbstractInvocation invocation)
             : base(function)
         {
             Method = method;
@@ -74,7 +74,7 @@ namespace Stl.Fusion.Interception
 
         // Equality
 
-        public bool Equals(InterceptedInput? other)
+        public bool Equals(ComputeMethodInput? other)
         {
             if (other == null)
                 return false;
@@ -99,9 +99,9 @@ namespace Stl.Fusion.Interception
             return true;
         }
         public override bool Equals(ComputedInput? obj)
-            => obj is InterceptedInput other && Equals(other);
+            => obj is ComputeMethodInput other && Equals(other);
         public override bool Equals(object? obj)
-            => obj is InterceptedInput other && Equals(other);
+            => obj is ComputeMethodInput other && Equals(other);
         public override int GetHashCode()
             => base.GetHashCode();
     }

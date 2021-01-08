@@ -17,7 +17,7 @@ namespace Stl.Fusion.Swapping
             => SerializerFactory = serializerFactory;
 
         public async ValueTask<IResult?> LoadAsync(
-            (InterceptedInput Input, LTag Version) key,
+            (ComputeMethodInput Input, LTag Version) key,
             CancellationToken cancellationToken = default)
         {
             var serializedKey = SerializeKey(key.Input, key.Version);
@@ -28,7 +28,7 @@ namespace Stl.Fusion.Swapping
         }
 
         public async ValueTask StoreAsync(
-            (InterceptedInput Input, LTag Version) key, IResult value,
+            (ComputeMethodInput Input, LTag Version) key, IResult value,
             CancellationToken cancellationToken = default)
         {
             var serializedKey = SerializeKey(key.Input, key.Version);
@@ -44,7 +44,7 @@ namespace Stl.Fusion.Swapping
         protected abstract ValueTask<bool> RenewAsync(string key, CancellationToken cancellationToken);
         protected abstract ValueTask StoreAsync(string key, TSerialized value, CancellationToken cancellationToken);
 
-        protected virtual string SerializeKey(InterceptedInput input, LTag version)
+        protected virtual string SerializeKey(ComputeMethodInput input, LTag version)
         {
             var sb = StringBuilderEx.Acquire(256);
             var f = ListFormat.Default.CreateFormatter(sb);

@@ -11,7 +11,7 @@ namespace Stl.Fusion.Interception
     public class AsyncComputeServiceFunction<T> : ComputeServiceFunctionBase<T>
     {
         public AsyncComputeServiceFunction(
-            InterceptedMethodDescriptor method,
+            ComputeMethodDef method,
             Generator<LTag> versionGenerator,
             IServiceProvider services,
             ILogger<ComputeServiceFunction<T>>? log = null)
@@ -23,7 +23,7 @@ namespace Stl.Fusion.Interception
         }
 
         public override async Task<T> InvokeAndStripAsync(
-            InterceptedInput input, IComputed? usedBy, ComputeContext? context,
+            ComputeMethodInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken = default)
         {
             context ??= ComputeContext.Current;
@@ -56,10 +56,10 @@ namespace Stl.Fusion.Interception
             return rOutput!.Value;
         }
 
-        protected override IComputed<T> CreateComputed(InterceptedInput input, LTag tag)
+        protected override IComputed<T> CreateComputed(ComputeMethodInput input, LTag tag)
             => new SwappingComputed<T>(Options, input, tag);
 
-        new protected IAsyncComputed<T>? TryGetExisting(InterceptedInput input)
+        new protected IAsyncComputed<T>? TryGetExisting(ComputeMethodInput input)
         {
             var computed = ComputedRegistry.Instance.TryGet(input);
             return computed as IAsyncComputed<T>;

@@ -371,12 +371,12 @@ namespace Stl.Fusion
         }
     }
 
-    public class Computed<T> : Computed<InterceptedInput, T>
+    public class Computed<T> : Computed<ComputeMethodInput, T>
     {
-        public Computed(ComputedOptions options, InterceptedInput input, LTag version)
+        public Computed(ComputedOptions options, ComputeMethodInput input, LTag version)
             : base(options, input, version) { }
 
-        protected Computed(ComputedOptions options, InterceptedInput input, Result<T> output, LTag version, bool isConsistent = true)
+        protected Computed(ComputedOptions options, ComputeMethodInput input, Result<T> output, LTag version, bool isConsistent = true)
             : base(options, input, output, version, isConsistent) { }
     }
 }

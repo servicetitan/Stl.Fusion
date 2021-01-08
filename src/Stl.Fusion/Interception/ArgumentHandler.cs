@@ -13,6 +13,6 @@ namespace Stl.Fusion.Interception
             (objA, objB) => objA == objB || (objA?.Equals(objB) ?? false);
         public Func<object?, string> ToStringFunc { get; init; } =
             o => o?.ToString() ?? "␀";
-        public Action<InterceptedMethodDescriptor, IInvocation, int>? PreprocessFunc { get; init; } = null;
+        public Action<ComputeMethodDef, IInvocation, int>? PreprocessFunc { get; init; } = null;
     }
 }

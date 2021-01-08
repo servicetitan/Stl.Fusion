@@ -7,13 +7,13 @@ using Stl.Generators;
 
 namespace Stl.Fusion.Interception
 {
-    public abstract class ComputeServiceFunctionBase<T> : InterceptedFunctionBase<T>
+    public abstract class ComputeServiceFunctionBase<T> : ComputeFunctionBase<T>
     {
         protected readonly ILogger Log;
         protected readonly Generator<LTag> VersionGenerator;
 
         public ComputeServiceFunctionBase(
-            InterceptedMethodDescriptor method,
+            ComputeMethodDef method,
             Generator<LTag> versionGenerator,
             IServiceProvider services,
             ILogger<ComputeServiceFunction<T>>? log = null)
@@ -24,7 +24,7 @@ namespace Stl.Fusion.Interception
         }
 
         protected override async ValueTask<IComputed<T>> ComputeAsync(
-            InterceptedInput input, IComputed<T>? existing,
+            ComputeMethodInput input, IComputed<T>? existing,
             CancellationToken cancellationToken)
         {
             var tag = VersionGenerator.Next();
@@ -58,6 +58,6 @@ namespace Stl.Fusion.Interception
             return computed;
         }
 
-        protected abstract IComputed<T> CreateComputed(InterceptedInput input, LTag tag);
+        protected abstract IComputed<T> CreateComputed(ComputeMethodInput input, LTag tag);
     }
 }

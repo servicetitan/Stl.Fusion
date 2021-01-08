@@ -1,15 +1,14 @@
 using System;
 using System.Reflection;
 using Microsoft.Extensions.Logging;
-using Stl.DependencyInjection;
 using Stl.Fusion.Internal;
 using Stl.Generators;
 
 namespace Stl.Fusion.Interception
 {
-    public class ComputeServiceInterceptor : InterceptorBase
+    public class ComputeServiceInterceptor : ComputeMethodInterceptorBase
     {
-        public new class Options : InterceptorBase.Options
+        public new class Options : ComputeMethodInterceptorBase.Options
         {
             public Generator<LTag> VersionGenerator { get; set; } = ConcurrentLTagGenerator.Default;
         }
@@ -23,7 +22,7 @@ namespace Stl.Fusion.Interception
             : base(options ??= new(), services, loggerFactory)
             => VersionGenerator = options.VersionGenerator;
 
-        protected override InterceptedFunctionBase<T> CreateFunction<T>(InterceptedMethodDescriptor method)
+        protected override ComputeFunctionBase<T> CreateFunction<T>(ComputeMethodDef method)
         {
             var log = LoggerFactory.CreateLogger<ComputeServiceFunction<T>>();
             if (method.Options.IsAsyncComputed)
@@ -38,7 +37,9 @@ namespace Stl.Fusion.Interception
                 | BindingFlags.Instance | BindingFlags.Static
                 | BindingFlags.FlattenHierarchy;
             foreach (var method in type.GetMethods(bindingFlags)) {
-                if (!(GetInterceptedMethodAttribute(method) is ComputeMethodAttribute attr))
+                var attr = ComputedOptionsProvider.GetComputeMethodAttribute(method);
+                var options = ComputedOptionsProvider.GetComputedOptions(method);
+                if (attr == null || options == null)
                     continue;
                 if (method.IsStatic)
                     throw Errors.ComputeServiceMethodAttributeOnStaticMethod(method);

@@ -5,24 +5,26 @@ namespace Stl.Fusion.Interception
 {
     public interface IComputedOptionsProvider
     {
-        ComputedOptions? GetComputedOptions(InterceptorBase interceptor, MethodInfo methodInfo);
+        ComputedOptions? GetComputedOptions(MethodInfo methodInfo);
+        ComputeMethodAttribute? GetComputeMethodAttribute(MethodInfo methodInfo);
+        SwapAttribute? GetSwapAttribute(MethodInfo methodInfo);
     }
 
     public class ComputedOptionsProvider : IComputedOptionsProvider
     {
-        public virtual ComputedOptions? GetComputedOptions(InterceptorBase interceptor, MethodInfo methodInfo)
+        public virtual ComputedOptions? GetComputedOptions(MethodInfo methodInfo)
         {
-            var attribute = GetInterceptedMethodAttribute(methodInfo);
+            var attribute = GetComputeMethodAttribute(methodInfo);
             if (attribute == null)
                 return null;
             var swapAttribute = GetSwapAttribute(methodInfo);
             return ComputedOptions.FromAttribute(attribute, swapAttribute);
         }
 
-        protected InterceptedMethodAttribute? GetInterceptedMethodAttribute(MethodInfo methodInfo)
-            => methodInfo.GetAttribute<InterceptedMethodAttribute>(true, true);
+        public virtual ComputeMethodAttribute? GetComputeMethodAttribute(MethodInfo methodInfo)
+            => methodInfo.GetAttribute<ComputeMethodAttribute>(true, true);
 
-        protected SwapAttribute? GetSwapAttribute(MethodInfo methodInfo)
+        public virtual SwapAttribute? GetSwapAttribute(MethodInfo methodInfo)
             => methodInfo.GetAttribute<SwapAttribute>(true, true);
     }
 }

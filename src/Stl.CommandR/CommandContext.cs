@@ -18,6 +18,7 @@ namespace Stl.CommandR
         public static CommandContext? Current => CurrentLocal.Value;
 
         private volatile int _isDisposed;
+        private NamedValueSet? _items;
         protected CommandContext? PreviousContext { get; private init; }
         protected IServiceScope ServiceScope { get; init; } = null!;
         IServiceScope ICommandContextImpl.ServiceScope => ServiceScope;
@@ -38,7 +39,7 @@ namespace Stl.CommandR
         public abstract ICommand UntypedCommand { get; }
         public abstract Task UntypedResultTask { get; }
         public abstract Result<object> UntypedResult { get; set; }
-        public NamedValueSet Items { get; protected init; } = null!;
+        public NamedValueSet Items => _items ??= ScopedServices.GetRequiredService<NamedValueSet>();
         public CommandContext? OuterContext { get; protected init; }
         public CommandContext OutermostContext { get; protected init; } = null!;
         public IServiceProvider ScopedServices => ServiceScope.ServiceProvider;
@@ -164,7 +165,6 @@ namespace Stl.CommandR
                 ServiceScope = outermostContextImpl.ServiceScope;
             }
             CurrentLocal.Value = this;
-            Items = OuterContext?.Items ?? new NamedValueSet();
         }
 
         // Instance methods

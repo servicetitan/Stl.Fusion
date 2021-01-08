@@ -4,12 +4,12 @@ using Stl.Async;
 
 namespace Stl.Fusion.Interception
 {
-    public abstract class InterceptedFunctionBase<TOut> : FunctionBase<InterceptedInput, TOut>
+    public abstract class ComputeFunctionBase<TOut> : FunctionBase<ComputeMethodInput, TOut>
     {
-        public InterceptedMethodDescriptor Method { get; }
+        public ComputeMethodDef Method { get; }
         protected ComputedOptions Options { get; }
 
-        protected InterceptedFunctionBase(InterceptedMethodDescriptor method, IServiceProvider services)
+        protected ComputeFunctionBase(ComputeMethodDef method, IServiceProvider services)
             : base(services)
         {
             Method = method;
@@ -24,7 +24,7 @@ namespace Stl.Fusion.Interception
 
         // Protected methods
 
-        protected static void SetReturnValue(InterceptedInput input, Result<TOut> output)
+        protected static void SetReturnValue(ComputeMethodInput input, Result<TOut> output)
         {
             if (input.Method.ReturnsValueTask)
                 input.Invocation.ReturnValue =

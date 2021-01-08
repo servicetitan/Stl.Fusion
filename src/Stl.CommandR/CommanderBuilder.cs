@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Stl.Collections;
 using Stl.CommandR.Configuration;
 using Stl.CommandR.Internal;
 
@@ -21,6 +22,7 @@ namespace Stl.CommandR
             Services.TryAddSingleton<ICommander, Commander>();
             Services.TryAddSingleton<ICommandHandlerRegistry>(new CommandHandlerRegistry());
             Services.TryAddSingleton<ICommandHandlerResolver, CommandHandlerResolver>();
+            services.TryAddScoped<NamedValueSet>();
 
             var handlers = (ICommandHandlerRegistry?) null;
             foreach (var descriptor in Services) {

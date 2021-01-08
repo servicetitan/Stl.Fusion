@@ -8,9 +8,9 @@ using Stl.Generators;
 
 namespace Stl.Fusion.Bridge.Interception
 {
-    public class ReplicaClientInterceptor : InterceptorBase
+    public class ReplicaClientInterceptor : ComputeMethodInterceptorBase
     {
-        public new class Options : InterceptorBase.Options
+        public new class Options : ComputeMethodInterceptorBase.Options
         {
             public Generator<LTag> VersionGenerator { get; set; } = ConcurrentLTagGenerator.Default;
         }
@@ -29,7 +29,7 @@ namespace Stl.Fusion.Bridge.Interception
             VersionGenerator = options.VersionGenerator;
         }
 
-        protected override InterceptedFunctionBase<T> CreateFunction<T>(InterceptedMethodDescriptor method)
+        protected override ComputeFunctionBase<T> CreateFunction<T>(ComputeMethodDef method)
         {
             var log = LoggerFactory.CreateLogger<ReplicaClientFunction<T>>();
             return new ReplicaClientFunction<T>(method, Replicator, VersionGenerator, log);

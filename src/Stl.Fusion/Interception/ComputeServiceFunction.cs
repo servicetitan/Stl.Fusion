@@ -8,7 +8,7 @@ namespace Stl.Fusion.Interception
     public class ComputeServiceFunction<T> : ComputeServiceFunctionBase<T>
     {
         public ComputeServiceFunction(
-            InterceptedMethodDescriptor method,
+            ComputeMethodDef method,
             Generator<LTag> versionGenerator,
             IServiceProvider services,
             ILogger<ComputeServiceFunction<T>>? log = null)
@@ -19,7 +19,7 @@ namespace Stl.Fusion.Interception
                     $"This type can't be used with {nameof(ComputedOptions)}.{nameof(ComputedOptions.IsAsyncComputed)} == true option.");
         }
 
-        protected override IComputed<T> CreateComputed(InterceptedInput input, LTag tag)
+        protected override IComputed<T> CreateComputed(ComputeMethodInput input, LTag tag)
             => new Computed<T>(Options, input, tag);
     }
 }
