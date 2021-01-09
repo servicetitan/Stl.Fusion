@@ -104,11 +104,11 @@ namespace Stl.Fusion
             ServiceLifetime lifetime = ServiceLifetime.Singleton)
             where TService : class
             => AddComputeService(typeof(TService), lifetime);
-        public FusionBuilder AddComputeService<TService, TImpl>(
+        public FusionBuilder AddComputeService<TService, TImplementation>(
             ServiceLifetime lifetime = ServiceLifetime.Singleton)
             where TService : class
-            where TImpl : class, TService
-            => AddComputeService(typeof(TService), typeof(TImpl), lifetime);
+            where TImplementation : class, TService
+            => AddComputeService(typeof(TService), typeof(TImplementation), lifetime);
 
         public FusionBuilder AddComputeService(
             Type serviceType,

@@ -13,8 +13,6 @@ namespace Stl.CommandR.Internal
         public static Exception CommandResultTypeMismatch(Type expectedType, Type actualType)
             => new ArgumentException($"Command result type mismatch: expected '{expectedType}', got '{actualType}'");
 
-        public static Exception CommandContextWasActivatedEarlier()
-            => new InvalidOperationException("This CommandContext was already activated earlier.");
         public static Exception NoCurrentCommandContext()
             => new InvalidOperationException("CommandContext.Current is null - no command is running.");
 
@@ -23,14 +21,20 @@ namespace Stl.CommandR.Internal
         public static Exception NoFinalHandlerFound(ICommand command)
             => new InvalidOperationException($"No final handler is found for command {command}.");
 
-        public static Exception InvalidCommandHandlerMethod(MethodInfo handlerMethod)
-            => new InvalidOperationException($"Invalid command handler method: {handlerMethod}.");
-        public static Exception CommandHandlerMethodMustReturnTask(MethodInfo handlerMethod)
-            => new InvalidOperationException($"Command handler method must return Task or Task<T>: {handlerMethod}.");
-        public static Exception WrongCommandHandlerMethodArgumentCount(MethodInfo handlerMethod)
+        public static Exception InvalidCommandHandlerMethod(MethodInfo methodInfo)
+            => new InvalidOperationException($"Invalid command handler method: {methodInfo}.");
+        public static Exception CommandHandlerMethodMustBeInstanceMethod(MethodInfo method)
+            => new InvalidOperationException($"Command handler method must be instance method (non-static): '{method}'.");
+        public static Exception CommandHandlerMethodMustReturnTask(MethodInfo methodInfo)
+            => new InvalidOperationException($"Command handler method must return Task or Task<T>: {methodInfo}.");
+        public static Exception WrongCommandHandlerMethodArgumentCount(MethodInfo methodInfo)
             => new InvalidOperationException($"Command handler method must have at least 2 arguments: command and CancellationToken.");
-        public static Exception WrongCommandHandlerMethodArguments(MethodInfo handlerMethod)
-            => new InvalidOperationException($"Wrong command handler method arguments: {handlerMethod}.");
-
+        public static Exception WrongCommandHandlerMethodArguments(MethodInfo methodInfo)
+            => new InvalidOperationException($"Wrong command handler method arguments: {methodInfo}.");
+        public static Exception WrongInterceptedCommandHandlerMethodSignature(MethodInfo methodInfo)
+            => new InvalidOperationException(
+                "Intercepted command handler method must be " +
+                "public, virtual, and have exactly 2 arguments: " +
+                "command and CancellationToken.");
     }
 }

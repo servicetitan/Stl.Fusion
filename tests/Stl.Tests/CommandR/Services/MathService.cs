@@ -11,16 +11,15 @@ using Stl.DependencyInjection;
 
 namespace Stl.Tests.CommandR.Services
 {
-    [Service, AddCommandHandlers]
-    public class MathService : ServiceBase, ICommandHandler<DivCommand, double>
+    [CommandService]
+    public class MathService : ServiceBase
     {
         public MathService(IServiceProvider services) : base(services) { }
 
         [CommandHandler(Order = 2)]
-        public Task<double> OnCommandAsync(DivCommand command, CommandContext<double> context, CancellationToken cancellationToken)
+        private Task<double> OnCommandAsync(DivCommand command, CommandContext<double> context, CancellationToken cancellationToken)
         {
-            var contextImpl = (ICommandContextImpl) context;
-            var handler = contextImpl.Handlers[^1];
+            var handler = context.Handlers[^1];
             handler.GetType().Should().Be(typeof(MethodCommandHandler<DivCommand>));
             handler.Order.Should().Be(2);
 
@@ -33,25 +32,21 @@ namespace Stl.Tests.CommandR.Services
         }
 
         [CommandHandler(Order = 1)]
-        public async Task<double> RecSumAsync(
-            RecSumCommand command, CommandContext context,
-            CancellationToken cancellationToken)
+        public virtual async Task<double> RecSumAsync(RecSumCommand command, CancellationToken cancellationToken = default)
         {
-            var typedContext = context.Cast<double>();
-            var contextImpl = (ICommandContextImpl) context;
-            var handler = contextImpl.Handlers[^1];
+            var context = CommandContext.GetCurrent<double>();
+            var handler = context.Handlers[^1];
             handler.GetType().Should().Be(typeof(MethodCommandHandler<RecSumCommand>));
             handler.Order.Should().Be(1);
 
             Log.LogInformation($"Arguments: {command.Arguments.ToDelimitedString()}");
-            typedContext.Should().BeSameAs(CommandContext.GetCurrent());
 
             if (command.Arguments.Length == 0)
                 return 0;
 
-            var tailSum = await Services.Commander().CallAsync(
-                    new RecSumCommand() { Arguments = command.Arguments[1..] },
-                    cancellationToken)
+            var tailSum = await RecSumAsync(
+                new RecSumCommand() { Arguments = command.Arguments[1..] },
+                cancellationToken)
                 .ConfigureAwait(false);
             return command.Arguments[0] + tailSum;
         }

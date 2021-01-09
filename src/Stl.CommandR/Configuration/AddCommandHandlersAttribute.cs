@@ -4,7 +4,6 @@ using Stl.DependencyInjection;
 
 namespace Stl.CommandR.Configuration
 {
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface, Inherited = false)]
     public class AddCommandHandlersAttribute : ServiceAttributeBase
     {
         public Type? ServiceType { get; set; }

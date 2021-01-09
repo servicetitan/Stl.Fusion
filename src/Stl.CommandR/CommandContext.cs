@@ -12,7 +12,7 @@ using Stl.CommandR.Internal;
 
 namespace Stl.CommandR
 {
-    public abstract class CommandContext : ICommandContextImpl
+    public abstract class CommandContext : ICommandContext, IServiceProvider, IDisposable
     {
         protected static readonly AsyncLocal<CommandContext?> CurrentLocal = new();
         public static CommandContext? Current => CurrentLocal.Value;
@@ -20,29 +20,17 @@ namespace Stl.CommandR
         private volatile int _isDisposed;
         private NamedValueSet? _items;
         protected CommandContext? PreviousContext { get; private init; }
-        protected IServiceScope ServiceScope { get; init; } = null!;
-        IServiceScope ICommandContextImpl.ServiceScope => ServiceScope;
-
-        protected IReadOnlyList<CommandHandler> Handlers { get; set; } = ArraySegment<CommandHandler>.Empty;
-        IReadOnlyList<CommandHandler> ICommandContextImpl.Handlers {
-            get => Handlers;
-            set => Handlers = value;
-        }
-
-        protected int NextHandlerIndex { get; set; }
-        int ICommandContextImpl.NextHandlerIndex {
-            get => NextHandlerIndex;
-            set => NextHandlerIndex = value;
-        }
 
         public ICommander Commander { get; }
         public abstract ICommand UntypedCommand { get; }
         public abstract Task UntypedResultTask { get; }
         public abstract Result<object> UntypedResult { get; set; }
-        public NamedValueSet Items => _items ??= ScopedServices.GetRequiredService<NamedValueSet>();
         public CommandContext? OuterContext { get; protected init; }
         public CommandContext OutermostContext { get; protected init; } = null!;
-        public IServiceProvider ScopedServices => ServiceScope.ServiceProvider;
+        public IReadOnlyList<CommandHandler> Handlers { get; set; } = ArraySegment<CommandHandler>.Empty;
+        public int NextHandlerIndex { get; set; }
+        public IServiceScope ServiceScope { get; init; } = null!;
+        public NamedValueSet Items => _items ??= ServiceScope.ServiceProvider.GetRequiredService<NamedValueSet>();
 
         // Static methods
 
@@ -107,7 +95,7 @@ namespace Stl.CommandR
         {
             if (serviceType == typeof(CommandContext) || serviceType == GetType())
                 return this;
-            return Items.GetService(serviceType) ?? ScopedServices.GetService(serviceType);
+            return Items.GetService(serviceType) ?? ServiceScope.ServiceProvider.GetService(serviceType);
         }
 
         // SetXxx & TrySetXxx
@@ -161,8 +149,7 @@ namespace Stl.CommandR
             else {
                 OuterContext = PreviousContext;
                 OutermostContext = PreviousContext!.OutermostContext;
-                var outermostContextImpl = (ICommandContextImpl) OutermostContext;
-                ServiceScope = outermostContextImpl.ServiceScope;
+                ServiceScope = OutermostContext.ServiceScope;
             }
             CurrentLocal.Value = this;
         }

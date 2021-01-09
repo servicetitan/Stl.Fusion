@@ -7,7 +7,7 @@ namespace Stl.Fusion
     {
         public bool IsEnabled { get; } = true;
         public bool RewriteErrors { get; set; }
-        public Type? InterceptedMethodDescriptorType { get; set; } = null;
+        public Type? ComputeMethodDefType { get; set; } = null;
         // In seconds, NaN means "use default"
         public double KeepAliveTime { get; set; } = Double.NaN;
         public double ErrorAutoInvalidateTime { get; set; } = Double.NaN;

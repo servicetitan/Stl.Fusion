@@ -28,7 +28,7 @@ namespace Stl.Tests.CommandR.Services
             CommandContext.GetCurrent().Should().Be(commandContext);
             typedContext.Should().Be(commandContext);
             dbContext.Should().Be(commandContext.GetRequiredService<TestDbContext>());
-            var scopedDbContext = commandContext.ScopedServices.GetRequiredService<TestDbContext>();
+            var scopedDbContext = commandContext.ServiceScope.ServiceProvider.GetRequiredService<TestDbContext>();
             scopedDbContext.Should().NotBeNull();
             scopedDbContext.Should().NotBe(dbContext);
 

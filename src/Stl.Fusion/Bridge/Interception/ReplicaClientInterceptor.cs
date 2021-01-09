@@ -1,8 +1,5 @@
 using System;
-using System.Reflection;
-using Castle.DynamicProxy;
 using Microsoft.Extensions.Logging;
-using Stl.DependencyInjection;
 using Stl.Fusion.Interception;
 using Stl.Generators;
 

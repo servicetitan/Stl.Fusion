@@ -49,16 +49,15 @@ namespace Stl.Fusion.Interception
                     // All implemented interface members are marked as "virtual final"
                     // unless they are truly virtual
                     throw Errors.ComputeServiceMethodAttributeOnNonVirtualMethod(method);
-                if (!attr.IsEnabled) {
+
+                if (!attr.IsEnabled)
                     Log.Log(ValidationLogLevel,
                         $"- {method}: has {nameof(ComputeMethodAttribute)}(false)");
-                    continue;
-                }
-                Log.Log(ValidationLogLevel,
-                    $"+ {method}: {nameof(ComputeMethodAttribute)} {{ " +
-                    $"{nameof(ComputeMethodAttribute.IsEnabled)} = {attr.IsEnabled}, " +
-                    $"{nameof(ComputeMethodAttribute.KeepAliveTime)} = {attr.KeepAliveTime}" +
-                    $" }}");
+                else
+                    Log.Log(ValidationLogLevel,
+                        $"+ {method}: {nameof(ComputeMethodAttribute)} {{ " +
+                        $"{nameof(ComputeMethodAttribute.KeepAliveTime)} = {attr.KeepAliveTime}" +
+                        $" }}");
             }
         }
     }

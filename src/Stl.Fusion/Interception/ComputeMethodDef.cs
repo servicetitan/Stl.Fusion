@@ -19,6 +19,9 @@ namespace Stl.Fusion.Interception
             MethodInfo methodInfo)
             : base(interceptor, methodInfo)
         {
+            if (!IsAsyncMethod)
+                return;
+
             var options = interceptor.ComputedOptionsProvider.GetComputedOptions(methodInfo);
             if (options == null)
                 return;

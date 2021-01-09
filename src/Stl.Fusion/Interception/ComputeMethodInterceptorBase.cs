@@ -77,9 +77,9 @@ namespace Stl.Fusion.Interception
             if (options == null)
                 return null;
 
-            var interceptedMethod = (ComputeMethodDef) Services.Activate(
-                options.InterceptedMethodDescriptorType, this, methodInfo);
-            return interceptedMethod.IsValid ? interceptedMethod : null;
+            var methodDef = (ComputeMethodDef) Services.Activate(
+                options.ComputeMethodDefType, this, methodInfo);
+            return methodDef.IsValid ? methodDef : null;
         }
     }
 }

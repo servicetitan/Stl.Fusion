@@ -4,20 +4,11 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Stl.Async;
 using Stl.CommandR.Configuration;
-using Stl.CommandR.Internal;
-using Stl.DependencyInjection;
 
-namespace Stl.CommandR
+namespace Stl.CommandR.Internal
 {
-    public interface ICommander : IHasServices
-    {
-        // This method doesn't throw exceptions
-        Task<CommandContext> RunAsync(ICommand command, bool isolate, CancellationToken cancellationToken = default);
-        // And this one does
-        Task<TResult> CallAsync<TResult>(ICommand<TResult> command, bool isolate, CancellationToken cancellationToken = default);
-    }
-
     public class Commander : ICommander
     {
         protected ICommandHandlerResolver HandlerResolver { get; }
@@ -33,14 +24,26 @@ namespace Stl.CommandR
             HandlerResolver = services.GetRequiredService<ICommandHandlerResolver>();
         }
 
-        public async Task<CommandContext> RunAsync(
-            ICommand command, bool isolate, CancellationToken cancellationToken = default)
+        public CommandContext Start(ICommand command, bool isolate, CancellationToken cancellationToken = default)
         {
-            using var context = CommandContext.New(this, command, isolate);
-            var contextImpl = (ICommandContextImpl) context;
+            var context = CommandContext.New(this, command, isolate);
+            RunAsync(context, command, isolate, cancellationToken).Ignore();
+            return context;
+        }
+
+        public Task<CommandContext> RunAsync(ICommand command, bool isolate, CancellationToken cancellationToken = default)
+        {
+            var context = CommandContext.New(this, command, isolate);
+            return RunAsync(context, command, isolate, cancellationToken);
+        }
+
+        protected virtual async Task<CommandContext> RunAsync(
+            CommandContext context, ICommand command, bool isolate,
+            CancellationToken cancellationToken = default)
+        {
             try {
-                contextImpl.Handlers = HandlerResolver.GetCommandHandlers(command.GetType());
-                if (contextImpl.Handlers.Count == 0)
+                context.Handlers = HandlerResolver.GetCommandHandlers(command.GetType());
+                if (context.Handlers.Count == 0)
                     await OnUnhandledCommandAsync(command, context, cancellationToken).ConfigureAwait(false);
                 else
                     await context.InvokeNextHandlerAsync(cancellationToken).ConfigureAwait(false);
@@ -52,15 +55,10 @@ namespace Stl.CommandR
             catch (Exception e) {
                 context.TrySetException(e);
             }
+            finally {
+                context.Dispose();
+            }
             return context;
-        }
-
-        public async Task<TResult> CallAsync<TResult>(
-            ICommand<TResult> command, bool isolate, CancellationToken cancellationToken = default)
-        {
-            var context = await RunAsync(command, isolate, cancellationToken).ConfigureAwait(false);
-            var typedContext = (CommandContext<TResult>) context;
-            return await typedContext.ResultTask.ConfigureAwait(false);
         }
 
         protected virtual Task OnUnhandledCommandAsync(

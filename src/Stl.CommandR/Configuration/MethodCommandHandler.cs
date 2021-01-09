@@ -12,22 +12,23 @@ namespace Stl.CommandR.Configuration
     public record MethodCommandHandler<TCommand> : CommandHandler<TCommand>
         where TCommand : class, ICommand
     {
-        public Type HandlerServiceType { get; }
-        public MethodInfo HandlerMethod { get; }
+        private ParameterInfo[]? _cachedParameters;
+        public Type ServiceType { get; }
+        public MethodInfo MethodInfo { get; }
 
-        public MethodCommandHandler(MethodInfo handlerMethod, double order = 0)
+        public MethodCommandHandler(Type serviceType, MethodInfo methodInfo, double order = 0)
             : base(order)
         {
-            HandlerServiceType = handlerMethod.ReflectedType!;
-            HandlerMethod = handlerMethod;
+            ServiceType = serviceType;
+            MethodInfo = methodInfo;
         }
 
         public override Task InvokeAsync(
             ICommand command, CommandContext context,
             CancellationToken cancellationToken)
         {
-            var handlerService = context.GetRequiredService(HandlerServiceType);
-            var parameters = HandlerMethod.GetParameters();
+            var service = context.GetRequiredService(ServiceType);
+            var parameters = _cachedParameters ??= MethodInfo.GetParameters();
             var arguments = new object[parameters.Length];
             arguments[0] = command;
             // ReSharper disable once HeapView.BoxingAllocation
@@ -40,7 +41,7 @@ namespace Stl.CommandR.Configuration
                 arguments[i] = value;
             }
             try {
-                return (Task) HandlerMethod.Invoke(handlerService, arguments)!;
+                return (Task) MethodInfo.Invoke(service, arguments)!;
             }
             catch (TargetInvocationException tie) {
                 if (tie.InnerException != null)
@@ -56,46 +57,55 @@ namespace Stl.CommandR.Configuration
             typeof(MethodCommandHandler)
                 .GetMethod(nameof(Create), BindingFlags.Static | BindingFlags.NonPublic)!;
 
-        public static CommandHandler New(MethodInfo handlerMethod, double? priorityOverride = null)
-            => TryNew(handlerMethod, priorityOverride) ?? throw Errors.InvalidCommandHandlerMethod(handlerMethod);
+        public static CommandHandler New(Type serviceType, MethodInfo methodInfo, double? priorityOverride = null)
+            => TryNew(serviceType, methodInfo, priorityOverride) ?? throw Errors.InvalidCommandHandlerMethod(methodInfo);
 
-        public static CommandHandler? TryNew(MethodInfo handlerMethod, double? priorityOverride = null)
+        public static CommandHandler? TryNew(Type serviceType, MethodInfo methodInfo, double? priorityOverride = null)
         {
-            var attr = handlerMethod.GetAttribute<CommandHandlerAttribute>(true, true);
+            var attr = GetAttribute(methodInfo);
             var isEnabled = attr?.IsEnabled ?? false;
             if (!isEnabled)
                 return null;
             var order = priorityOverride ?? attr?.Order ?? 0;
 
-            var tHandlerResult = handlerMethod.ReturnType;
+            if (methodInfo.IsStatic)
+                throw Errors.CommandHandlerMethodMustBeInstanceMethod(methodInfo);
+
+            var tHandlerResult = methodInfo.ReturnType;
             if (!typeof(Task).IsAssignableFrom(tHandlerResult))
-                throw Errors.CommandHandlerMethodMustReturnTask(handlerMethod);
+                throw Errors.CommandHandlerMethodMustReturnTask(methodInfo);
 
-            var parameters = handlerMethod.GetParameters();
+            var parameters = methodInfo.GetParameters();
             if (parameters.Length < 2)
-                throw Errors.WrongCommandHandlerMethodArgumentCount(handlerMethod);
-            var pCommand = parameters[0];
-            var pCancellationToken = parameters[^1];
+                throw Errors.WrongCommandHandlerMethodArgumentCount(methodInfo);
 
+            // Checking command parameter
+            var pCommand = parameters[0];
             if (!typeof(ICommand).IsAssignableFrom(pCommand.ParameterType))
-                throw Errors.WrongCommandHandlerMethodArguments(handlerMethod);
+                throw Errors.WrongCommandHandlerMethodArguments(methodInfo);
             if (tHandlerResult.IsGenericType && tHandlerResult.GetGenericTypeDefinition() == typeof(Task<>)) {
                 var tHandlerResultTaskArgument = tHandlerResult.GetGenericArguments().Single();
                 var tGenericCommandType = typeof(ICommand<>).MakeGenericType(tHandlerResultTaskArgument);
                 if (!tGenericCommandType.IsAssignableFrom(pCommand.ParameterType))
-                    throw Errors.WrongCommandHandlerMethodArguments(handlerMethod);
+                    throw Errors.WrongCommandHandlerMethodArguments(methodInfo);
             }
+
+            // Checking CancellationToken parameter
+            var pCancellationToken = parameters[^1];
             if (typeof(CancellationToken) != pCancellationToken.ParameterType)
-                throw Errors.WrongCommandHandlerMethodArguments(handlerMethod);
+                throw Errors.WrongCommandHandlerMethodArguments(methodInfo);
 
             return (CommandHandler) CreateMethod
                 .MakeGenericMethod(pCommand.ParameterType)
-                .Invoke(null, new object[] {handlerMethod, order})!;
+                .Invoke(null, new object[] {serviceType, methodInfo, order})!;
         }
 
+        public static CommandHandlerAttribute? GetAttribute(MethodInfo methodInfo)
+            => methodInfo.GetAttribute<CommandHandlerAttribute>(true, true);
+
         private static MethodCommandHandler<TCommand> Create<TCommand>(
-            MethodInfo handlerMethod, double order = 0)
+            Type serviceType, MethodInfo methodInfo, double order = 0)
             where TCommand : class, ICommand
-            => new(handlerMethod, order);
+            => new(serviceType, methodInfo, order);
     }
 }

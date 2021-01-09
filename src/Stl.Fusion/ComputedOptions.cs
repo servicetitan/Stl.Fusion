@@ -26,7 +26,7 @@ namespace Stl.Fusion
         public TimeSpan AutoInvalidateTime { get; }
         public SwappingOptions SwappingOptions { get; }
         public bool RewriteErrors { get; }
-        public Type InterceptedMethodDescriptorType { get; }
+        public Type ComputeMethodDefType { get; }
         [JsonIgnore]
         public bool IsAsyncComputed { get; }
 
@@ -37,7 +37,7 @@ namespace Stl.Fusion
             TimeSpan autoInvalidateTime,
             SwappingOptions swappingOptions,
             bool rewriteErrors = false,
-            Type? interceptedMethodDescriptorType = null)
+            Type? computeMethodDefType = null)
         {
             KeepAliveTime = keepAliveTime;
             ErrorAutoInvalidateTime = errorAutoInvalidateTime;
@@ -47,7 +47,7 @@ namespace Stl.Fusion
                 ErrorAutoInvalidateTime = autoInvalidateTime;
             SwappingOptions = swappingOptions.IsEnabled ? swappingOptions : SwappingOptions.NoSwapping;
             RewriteErrors = rewriteErrors;
-            InterceptedMethodDescriptorType = interceptedMethodDescriptorType ?? typeof(ComputeMethodDef);
+            ComputeMethodDefType = computeMethodDefType ?? typeof(ComputeMethodDef);
             IsAsyncComputed = swappingOptions.IsEnabled;
         }
 
@@ -62,7 +62,7 @@ namespace Stl.Fusion
                 ToTimeSpan(attribute.AutoInvalidateTime) ?? Default.AutoInvalidateTime,
                 swappingOptions,
                 attribute.RewriteErrors,
-                attribute.InterceptedMethodDescriptorType);
+                attribute.ComputeMethodDefType);
             return options.IsDefault() ? Default : options;
         }
 
@@ -85,7 +85,7 @@ namespace Stl.Fusion
                 && ErrorAutoInvalidateTime == Default.ErrorAutoInvalidateTime
                 && AutoInvalidateTime == Default.AutoInvalidateTime
                 && RewriteErrors == Default.RewriteErrors
-                && InterceptedMethodDescriptorType == Default.InterceptedMethodDescriptorType
+                && ComputeMethodDefType == Default.ComputeMethodDefType
                 && SwappingOptions == Default.SwappingOptions
                 && IsAsyncComputed == Default.IsAsyncComputed
                 ;

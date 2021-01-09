@@ -9,12 +9,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Stl.Interception\Stl.Interception.csproj" />
     <ProjectReference Include="..\Stl\Stl.csproj" />
     <ProjectReference Include="..\Stl.EntityFramework\Stl.EntityFramework.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Interception" />
   </ItemGroup>
 
 </Project>

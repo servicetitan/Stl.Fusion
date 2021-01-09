@@ -1,9 +1,6 @@
 using System;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using Stl.Async;
-using Stl.DependencyInjection;
 
 namespace Stl.Internal
 {
@@ -18,18 +15,6 @@ namespace Stl.Internal
                 ? (Exception) new InvalidOperationException(message)
                 : new ArgumentOutOfRangeException(argumentName, message);
         }
-
-        public static Exception MustBeUnfrozen() =>
-            new InvalidOperationException("The object must be unfrozen.");
-        public static Exception MustBeUnfrozen(string paramName) =>
-            new ArgumentException("The object must be unfrozen.", paramName);
-        public static Exception MustBeFrozen() =>
-            new InvalidOperationException("The object must be frozen.");
-        public static Exception MustBeFrozen(string paramName) =>
-            new ArgumentException("The object must be frozen.", paramName);
-
-        public static Exception InvokerIsAlreadyRunning() =>
-            new InvalidOperationException("Can't perform this action while invocation is already in progress.");
 
         public static Exception ExpressionDoesNotSpecifyAMember(string expression) =>
             new ArgumentException("Expression '{expression}' does not specify a member.");
