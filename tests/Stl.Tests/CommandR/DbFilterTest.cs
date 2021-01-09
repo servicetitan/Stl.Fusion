@@ -45,7 +45,9 @@ namespace Stl.Tests.CommandR
                 new User() { Id = "", Name = "Fail" },
                 new User() { Id = "b", Name = "Bob" },
             }};
-            await services.Commander().RunAsync(command);
+            await Assert.ThrowsAsync<InvalidOperationException>(async () => {
+                await services.Commander().CallAsync(command);
+            });
 
             var tx = services.GetRequiredService<IDbTransactionManager<TestDbContext>>();
             await tx.ReadOnlyAsync(async dbContext => {

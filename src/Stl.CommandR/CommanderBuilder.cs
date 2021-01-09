@@ -79,18 +79,10 @@ namespace Stl.CommandR
             if (!serviceType.IsAssignableFrom(implementationType))
                 throw new ArgumentOutOfRangeException(nameof(implementationType));
 
-            // Methods
-            var methods = implementationType.GetMethods(
-                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            foreach (var method in methods) {
-                var handler = MethodCommandHandler.TryNew(serviceType, method, priorityOverride);
-                if (handler == null)
-                    continue;
-                AddHandler(handler);
-            }
+            var interfaceMethods = new HashSet<MethodInfo>();
 
             // Interfaces
-            foreach (var tInterface in serviceType.GetInterfaces()) {
+            foreach (var tInterface in implementationType.GetInterfaces()) {
                 if (!tInterface.IsGenericType)
                     continue;
                 var gInterface = tInterface.GetGenericTypeDefinition();
@@ -99,7 +91,27 @@ namespace Stl.CommandR
                 var tCommand = tInterface.GetGenericArguments().SingleOrDefault();
                 if (tCommand == null)
                     continue;
-                AddHandler(InterfaceCommandHandler.New(serviceType, tCommand, priorityOverride ?? 0));
+
+                var method = implementationType.GetInterfaceMap(tInterface).TargetMethods.Single();
+                var attr = MethodCommandHandler.GetAttribute(method);
+                var isEnabled = attr?.IsEnabled ?? true;
+                if (!isEnabled)
+                    continue;
+                var order = priorityOverride ?? attr?.Order ?? 0;
+                AddHandler(InterfaceCommandHandler.New(serviceType, tCommand, order));
+                interfaceMethods.Add(method);
+            }
+
+            // Methods
+            var methods = implementationType.GetMethods(
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            foreach (var method in methods) {
+                if (interfaceMethods.Contains(method))
+                    continue;
+                var handler = MethodCommandHandler.TryNew(serviceType, method, priorityOverride);
+                if (handler == null)
+                    continue;
+                AddHandler(handler);
             }
 
             return this;
