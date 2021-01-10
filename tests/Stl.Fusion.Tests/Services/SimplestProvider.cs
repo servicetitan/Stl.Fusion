@@ -1,11 +1,20 @@
 using System;
+using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Async;
+using Stl.CommandR;
+using Stl.CommandR.Configuration;
 
 namespace Stl.Fusion.Tests.Services
 {
+    public record SetValueCommand : ICommand<Unit>
+    {
+        public string Value { get; init; } = "";
+    }
+
+
     public interface ISimplestProvider
     {
         // These two properties are here solely for testing purposes
@@ -17,6 +26,9 @@ namespace Stl.Fusion.Tests.Services
         Task<string> GetValueAsync();
         [ComputeMethod(KeepAliveTime = 0.5, ErrorAutoInvalidateTime = 0.5)]
         Task<int> GetCharCountAsync();
+
+        [CommandHandler]
+        Task OnSetValueAsync(SetValueCommand command, CancellationToken cancellationToken = default);
     }
 
     [ComputeService(typeof(ISimplestProvider), Lifetime = ServiceLifetime.Scoped)]
@@ -49,6 +61,12 @@ namespace Stl.Fusion.Tests.Services
             GetCharCountCallCount++;
             var value = await GetValueAsync().ConfigureAwait(false);
             return value.Length;
+        }
+
+        public Task OnSetValueAsync(SetValueCommand command, CancellationToken cancellationToken = default)
+        {
+            SetValue(command.Value);
+            return Task.CompletedTask;
         }
 
         protected virtual void Invalidate()

@@ -26,21 +26,30 @@ namespace Stl.CommandR.Internal
 
         public CommandContext Start(ICommand command, bool isolate, CancellationToken cancellationToken = default)
         {
-            var context = CommandContext.New(this, command, isolate);
-            RunAsync(context, command, isolate, cancellationToken).Ignore();
+            CommandContext context = null!;
+            CommandContext ContextFactory() {
+                context = CommandContext.New(this, command, isolate);
+                return context;
+            }
+            RunAsync(ContextFactory, command, cancellationToken).Ignore();
             return context;
         }
 
         public Task<CommandContext> RunAsync(ICommand command, bool isolate, CancellationToken cancellationToken = default)
         {
-            var context = CommandContext.New(this, command, isolate);
-            return RunAsync(context, command, isolate, cancellationToken);
+            CommandContext? context;
+            CommandContext ContextFactory() {
+                context = CommandContext.New(this, command, isolate);
+                return context;
+            }
+            return RunAsync(ContextFactory, command, cancellationToken);
         }
 
         protected virtual async Task<CommandContext> RunAsync(
-            CommandContext context, ICommand command, bool isolate,
+            Func<CommandContext> contextFactory, ICommand command,
             CancellationToken cancellationToken = default)
         {
+            using var context = contextFactory.Invoke();
             try {
                 context.Handlers = HandlerResolver.GetCommandHandlers(command.GetType());
                 if (context.Handlers.Count == 0)
@@ -54,9 +63,6 @@ namespace Stl.CommandR.Internal
             }
             catch (Exception e) {
                 context.TrySetException(e);
-            }
-            finally {
-                context.Dispose();
             }
             return context;
         }

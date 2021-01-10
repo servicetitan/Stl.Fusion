@@ -19,7 +19,7 @@ namespace Stl.CommandR
 
         private volatile int _isDisposed;
         private NamedValueSet? _items;
-        protected CommandContext? PreviousContext { get; private init; }
+        protected CommandContext? PreviousContext { get; }
 
         public ICommander Commander { get; }
         public abstract ICommand UntypedCommand { get; }
@@ -79,8 +79,13 @@ namespace Stl.CommandR
 
         protected virtual void DisposeInternal()
         {
-            CurrentLocal.Value = PreviousContext;
-            ServiceScope.Dispose();
+            try {
+                if (PreviousContext == null)
+                    ServiceScope.Dispose();
+            }
+            finally {
+                CurrentLocal.Value = PreviousContext;
+            }
         }
 
         // Instance methods
