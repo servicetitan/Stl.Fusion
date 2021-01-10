@@ -3,7 +3,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Castle.DynamicProxy;
 
-namespace Stl.Interception.Internal
+namespace Stl.Interception.Interceptors
 {
     public abstract class MethodDef
     {

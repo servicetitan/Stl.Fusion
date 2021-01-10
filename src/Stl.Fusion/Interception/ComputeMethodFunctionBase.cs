@@ -7,19 +7,19 @@ using Stl.Generators;
 
 namespace Stl.Fusion.Interception
 {
-    public abstract class ComputeServiceFunctionBase<T> : ComputeFunctionBase<T>
+    public abstract class ComputeMethodFunctionBase<T> : ComputeFunctionBase<T>
     {
         protected readonly ILogger Log;
         protected readonly Generator<LTag> VersionGenerator;
 
-        public ComputeServiceFunctionBase(
+        public ComputeMethodFunctionBase(
             ComputeMethodDef method,
             Generator<LTag> versionGenerator,
             IServiceProvider services,
-            ILogger<ComputeServiceFunction<T>>? log = null)
+            ILogger<ComputeMethodFunction<T>>? log = null)
             : base(method, services)
         {
-            Log = log ??= NullLogger<ComputeServiceFunction<T>>.Instance;
+            Log = log ??= NullLogger<ComputeMethodFunction<T>>.Instance;
             VersionGenerator = versionGenerator;
         }
 

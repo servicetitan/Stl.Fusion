@@ -3,17 +3,17 @@ using Microsoft.Extensions.Logging;
 using Stl.CommandR.Interception;
 using Stl.Interception.Interceptors;
 
-namespace Stl.Fusion.Interception
+namespace Stl.Fusion.Bridge.Interception
 {
-    public class ComputeServiceInterceptor : SelectingInterceptorBase
+    public class ReplicaServiceInterceptor : SelectingInterceptorBase
     {
         public new class Options : SelectingInterceptorBase.Options
         {
             public Options() => InterceptorTypes =
-                new[] { typeof(ComputeMethodInterceptor), typeof(CommandServiceInterceptor) };
+                new[] { typeof(ReplicaMethodInterceptor), typeof(CommandServiceInterceptor) };
         }
 
-        public ComputeServiceInterceptor(Options options, IServiceProvider services, ILoggerFactory? loggerFactory = null)
+        public ReplicaServiceInterceptor(Options options, IServiceProvider services, ILoggerFactory? loggerFactory = null)
             : base(options, services, loggerFactory) { }
     }
 }

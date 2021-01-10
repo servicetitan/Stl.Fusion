@@ -5,7 +5,7 @@ using Stl.Generators;
 
 namespace Stl.Fusion.Bridge.Interception
 {
-    public class ReplicaClientInterceptor : ComputeMethodInterceptorBase
+    public class ReplicaMethodInterceptor : ComputeMethodInterceptorBase
     {
         public new class Options : ComputeMethodInterceptorBase.Options
         {
@@ -15,7 +15,7 @@ namespace Stl.Fusion.Bridge.Interception
         protected readonly IReplicator Replicator;
         protected readonly Generator<LTag> VersionGenerator;
 
-        public ReplicaClientInterceptor(
+        public ReplicaMethodInterceptor(
             Options? options,
             IServiceProvider services,
             IReplicator replicator,
@@ -28,8 +28,8 @@ namespace Stl.Fusion.Bridge.Interception
 
         protected override ComputeFunctionBase<T> CreateFunction<T>(ComputeMethodDef method)
         {
-            var log = LoggerFactory.CreateLogger<ReplicaClientFunction<T>>();
-            return new ReplicaClientFunction<T>(method, Replicator, VersionGenerator, log);
+            var log = LoggerFactory.CreateLogger<ReplicaMethodFunction<T>>();
+            return new ReplicaMethodFunction<T>(method, Replicator, VersionGenerator, log);
         }
 
         protected override void ValidateTypeInternal(Type type) { }

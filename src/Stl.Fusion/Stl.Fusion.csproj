@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Stl\Stl.csproj" />
+    <ProjectReference Include="..\Stl.CommandR\Stl.CommandR.csproj" />
     <ProjectReference Include="..\Stl.Interception\Stl.Interception.csproj" />
   </ItemGroup>
 

@@ -1,6 +1,6 @@
 using Castle.DynamicProxy;
 
-namespace Stl.Interception.Internal
+namespace Stl.Interception.Interceptors
 {
     public abstract class ProxyGeneratorBase<TOptions>
         where TOptions : ProxyGenerationOptions, new()

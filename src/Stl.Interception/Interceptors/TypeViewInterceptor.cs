@@ -8,7 +8,7 @@ using Castle.DynamicProxy;
 using Stl.Async;
 using Stl.Concurrency;
 
-namespace Stl.Interception.Internal
+namespace Stl.Interception.Interceptors
 {
     public class TypeViewInterceptor : IInterceptor
     {

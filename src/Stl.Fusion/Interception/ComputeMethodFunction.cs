@@ -5,13 +5,13 @@ using Stl.Internal;
 
 namespace Stl.Fusion.Interception
 {
-    public class ComputeServiceFunction<T> : ComputeServiceFunctionBase<T>
+    public class ComputeMethodFunction<T> : ComputeMethodFunctionBase<T>
     {
-        public ComputeServiceFunction(
+        public ComputeMethodFunction(
             ComputeMethodDef method,
             Generator<LTag> versionGenerator,
             IServiceProvider services,
-            ILogger<ComputeServiceFunction<T>>? log = null)
+            ILogger<ComputeMethodFunction<T>>? log = null)
             : base(method, versionGenerator, services, log)
         {
             if (method.Options.IsAsyncComputed)

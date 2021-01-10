@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Bridge.Interception;
 using Stl.Fusion.Tests.Services;
 using Stl.Interception;
-using Stl.Interception.Internal;
+using Stl.Interception.Interceptors;
 using Stl.Tests;
 using Xunit;
 using Xunit.Abstractions;
@@ -133,7 +133,7 @@ namespace Stl.Fusion.Tests
 
         private async Task<IComputed<T>> UpdateAsync<T>(IComputed<T> computed, CancellationToken cancellationToken = default)
         {
-            if (computed is IReplicaClientComputed rc)
+            if (computed is IReplicaMethodComputed rc)
                 await rc.Replica!.RequestUpdateAsync(cancellationToken);
             return await computed.UpdateAsync(false, cancellationToken);
         }

@@ -9,9 +9,9 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Concurrency;
 using Stl.DependencyInjection;
 
-namespace Stl.Interception.Internal
+namespace Stl.Interception.Interceptors
 {
-    public abstract class InterceptorBase : IInterceptor, IHasServices
+    public abstract class InterceptorBase : IOptionalInterceptor, IHasServices
     {
         public class Options
         {
@@ -53,12 +53,15 @@ namespace Stl.Interception.Internal
 
         public void Intercept(IInvocation invocation)
         {
-            var handler = _handlerCache.GetOrAddChecked(invocation.Method, _createHandlerUntyped, invocation);
+            var handler = GetHandler(invocation);
             if (handler == null)
                 invocation.Proceed();
             else
                 handler.Invoke(invocation);
         }
+
+        public Action<IInvocation>? GetHandler(IInvocation invocation)
+            => _handlerCache.GetOrAddChecked(invocation.Method, _createHandlerUntyped, invocation);
 
         public void ValidateType(Type type)
         {
@@ -68,15 +71,7 @@ namespace Stl.Interception.Internal
             }, this);
         }
 
-        protected abstract Action<IInvocation> CreateHandler<T>(
-            IInvocation initialInvocation, MethodDef methodDef);
-        protected abstract MethodDef? CreateMethodDef(
-            MethodInfo methodInfo, IInvocation initialInvocation);
-        protected abstract void ValidateTypeInternal(Type type);
-
-        // Private methods
-
-        private Action<IInvocation>? CreateHandlerUntyped(MethodInfo methodInfo, IInvocation initialInvocation)
+        protected virtual Action<IInvocation>? CreateHandlerUntyped(MethodInfo methodInfo, IInvocation initialInvocation)
         {
             var proxyMethodInfo = initialInvocation.MethodInvocationTarget;
             var method = _interceptedMethodCache.GetOrAddChecked(proxyMethodInfo, _createInterceptedMethod, initialInvocation);
@@ -87,5 +82,13 @@ namespace Stl.Interception.Internal
                 .MakeGenericMethod(method.UnwrappedReturnType)
                 .Invoke(this, new object[] {initialInvocation, method})!;
         }
+
+        // Abstract methods
+
+        protected abstract Action<IInvocation> CreateHandler<T>(
+            IInvocation initialInvocation, MethodDef methodDef);
+        protected abstract MethodDef? CreateMethodDef(
+            MethodInfo methodInfo, IInvocation initialInvocation);
+        protected abstract void ValidateTypeInternal(Type type);
     }
 }

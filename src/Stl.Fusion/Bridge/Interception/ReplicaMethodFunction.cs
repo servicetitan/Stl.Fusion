@@ -10,21 +10,21 @@ using Stl.Generators;
 
 namespace Stl.Fusion.Bridge.Interception
 {
-    public class ReplicaClientFunction<T> : ComputeFunctionBase<T>
+    public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>
     {
         protected readonly ILogger Log;
         protected readonly bool IsLogDebugEnabled;
         protected readonly Generator<LTag> VersionGenerator;
         protected readonly IReplicator Replicator;
 
-        public ReplicaClientFunction(
+        public ReplicaMethodFunction(
             ComputeMethodDef method,
             IReplicator replicator,
             Generator<LTag> versionGenerator,
-            ILogger<ReplicaClientFunction<T>>? log = null)
+            ILogger<ReplicaMethodFunction<T>>? log = null)
             : base(method, ((IReplicatorImpl) replicator).Services)
         {
-            Log = log ??= NullLogger<ReplicaClientFunction<T>>.Instance;
+            Log = log ??= NullLogger<ReplicaMethodFunction<T>>.Instance;
             IsLogDebugEnabled = Log.IsEnabled(LogLevel.Debug);
             VersionGenerator = versionGenerator;
             Replicator = replicator;
@@ -37,10 +37,10 @@ namespace Stl.Fusion.Bridge.Interception
             var method = input.Method;
             IReplica<T> replica;
             IReplicaComputed<T> replicaComputed;
-            ReplicaClientComputed<T> result;
+            ReplicaMethodComputed<T> result;
 
             // 1. Trying to update the Replica first
-            if (existing is IReplicaClientComputed<T> rsc && rsc.Replica != null) {
+            if (existing is IReplicaMethodComputed<T> rsc && rsc.Replica != null) {
                 try {
                     replica = rsc.Replica;
                     using (ComputeContext.Suppress()) {
@@ -113,7 +113,7 @@ namespace Stl.Fusion.Bridge.Interception
                 replicaComputed = (IReplicaComputed<T>) await replica.Computed
                     .UpdateAsync(true, cancellationToken).ConfigureAwait(false);
             }
-            result = new ReplicaClientComputed<T>(method.Options, input, replicaComputed);
+            result = new ReplicaMethodComputed<T>(method.Options, input, replicaComputed);
             ComputeContext.Current.TryCapture(result);
             return result;
         }

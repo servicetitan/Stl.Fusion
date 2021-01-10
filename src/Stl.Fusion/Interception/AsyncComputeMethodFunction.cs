@@ -8,13 +8,13 @@ using Stl.Generators;
 
 namespace Stl.Fusion.Interception
 {
-    public class AsyncComputeServiceFunction<T> : ComputeServiceFunctionBase<T>
+    public class AsyncComputeMethodFunction<T> : ComputeMethodFunctionBase<T>
     {
-        public AsyncComputeServiceFunction(
+        public AsyncComputeMethodFunction(
             ComputeMethodDef method,
             Generator<LTag> versionGenerator,
             IServiceProvider services,
-            ILogger<ComputeServiceFunction<T>>? log = null)
+            ILogger<ComputeMethodFunction<T>>? log = null)
             : base(method, versionGenerator, services, log)
         {
             if (!method.Options.IsAsyncComputed)

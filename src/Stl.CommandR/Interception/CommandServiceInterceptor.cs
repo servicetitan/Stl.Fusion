@@ -5,13 +5,15 @@ using Castle.DynamicProxy;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Stl.CommandR.Configuration;
-using Stl.CommandR.Internal;
-using Stl.Interception.Internal;
+using Stl.Interception.Interceptors;
 
 namespace Stl.CommandR.Interception
 {
     public class CommandServiceInterceptor : InterceptorBase
     {
+        public new class Options : InterceptorBase.Options
+        { }
+
         protected ICommander Commander { get; }
 
         public CommandServiceInterceptor(

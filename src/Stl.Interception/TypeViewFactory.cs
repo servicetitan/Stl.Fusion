@@ -1,6 +1,6 @@
 using System;
 using Castle.DynamicProxy;
-using Stl.Interception.Internal;
+using Stl.Interception.Interceptors;
 using Stl.Reflection;
 
 namespace Stl.Interception

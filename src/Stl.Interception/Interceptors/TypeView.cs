@@ -1,4 +1,4 @@
-namespace Stl.Interception.Internal
+namespace Stl.Interception.Interceptors
 {
     public class TypeView<TView>
         where TView : class

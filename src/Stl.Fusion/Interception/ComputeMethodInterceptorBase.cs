@@ -6,7 +6,7 @@ using Castle.DynamicProxy;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Stl.DependencyInjection;
-using Stl.Interception.Internal;
+using Stl.Interception.Interceptors;
 
 namespace Stl.Fusion.Interception
 {

@@ -4,22 +4,22 @@ using Castle.DynamicProxy;
 using Castle.DynamicProxy.Generators;
 using Castle.DynamicProxy.Generators.Emitters;
 using Stl.Concurrency;
-using Stl.Interception.Internal;
+using Stl.Interception.Interceptors;
 
 namespace Stl.Fusion.Bridge.Interception
 {
-    public interface IReplicaClientProxyGenerator
+    public interface IReplicaServiceProxyGenerator
     {
         Type GetProxyType(Type type);
     }
 
-    public class ReplicaClientProxyGenerator : ProxyGeneratorBase<ReplicaClientProxyGenerator.Options>,
-        IReplicaClientProxyGenerator
+    public class ReplicaServiceProxyGenerator : ProxyGeneratorBase<ReplicaServiceProxyGenerator.Options>,
+        IReplicaServiceProxyGenerator
     {
         public class Options : ProxyGenerationOptions
         {
             public Type BaseType { get; set; } = typeof(object);
-            public Type InterceptorType { get; set; } = typeof(ReplicaClientInterceptor);
+            public Type InterceptorType { get; set; } = typeof(ReplicaServiceInterceptor);
         }
 
         protected class Implementation : InterfaceProxyWithTargetInterfaceGenerator
@@ -41,11 +41,11 @@ namespace Stl.Fusion.Bridge.Interception
                 => emitter.CreateField("__interceptors", Options.InterceptorType.MakeArrayType());
         }
 
-        public static readonly IReplicaClientProxyGenerator Default = new ReplicaClientProxyGenerator();
+        public static readonly IReplicaServiceProxyGenerator Default = new ReplicaServiceProxyGenerator();
 
         protected ConcurrentDictionary<Type, Type> Cache { get; } = new();
 
-        public ReplicaClientProxyGenerator(
+        public ReplicaServiceProxyGenerator(
             Options? options = null,
             ModuleScope? moduleScope = null)
             : base(options ??= new(), moduleScope) { }

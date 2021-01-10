@@ -39,9 +39,9 @@ namespace Stl.CommandR
             services.TryAddScoped<NamedValueSet>();
 
             // Command services & their dependencies
+            Services.TryAddSingleton(_ => CommandServiceProxyGenerator.Default);
             Services.TryAddSingleton(new CommandServiceInterceptor.Options());
             Services.TryAddSingleton<CommandServiceInterceptor>();
-            Services.TryAddSingleton(c => CommandServiceProxyGenerator.Default);
             Services.TryAddSingleton(c => new [] { c.GetRequiredService<CommandServiceInterceptor>() });
 
             Handlers = TryGetCommandHandlerRegistry(services)

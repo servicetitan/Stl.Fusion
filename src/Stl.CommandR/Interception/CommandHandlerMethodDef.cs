@@ -2,7 +2,7 @@ using System.Reflection;
 using Castle.DynamicProxy;
 using Stl.CommandR.Configuration;
 using Stl.CommandR.Internal;
-using Stl.Interception.Internal;
+using Stl.Interception.Interceptors;
 
 namespace Stl.CommandR.Interception
 {

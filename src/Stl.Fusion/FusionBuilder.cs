@@ -5,8 +5,8 @@ using System.Runtime.CompilerServices;
 using Castle.DynamicProxy.Generators;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Stl.CommandR;
 using Stl.DependencyInjection;
-using Stl.Fusion.Authentication;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Interception;
 using Stl.Fusion.Interception;
@@ -35,17 +35,20 @@ namespace Stl.Fusion
                 return;
             // We want above Contains call to run in O(1), so...
             Services.Insert(0, AddedTagDescriptor);
+            Services.AddCommander();
 
             // Common services
             Services.AddOptions();
             Services.TryAddSingleton(SystemClock.Instance);
             // Compute services & their dependencies
+            Services.TryAddSingleton(_ => ComputeServiceProxyGenerator.Default);
             Services.TryAddSingleton<IComputedOptionsProvider, ComputedOptionsProvider>();
             Services.TryAddSingleton(new ArgumentHandlerProvider.Options());
             Services.TryAddSingleton<IArgumentHandlerProvider, ArgumentHandlerProvider>();
+            Services.TryAddSingleton(new ComputeMethodInterceptor.Options());
+            Services.TryAddSingleton<ComputeMethodInterceptor>();
             Services.TryAddSingleton(new ComputeServiceInterceptor.Options());
             Services.TryAddSingleton<ComputeServiceInterceptor>();
-            Services.TryAddSingleton(c => ComputeServiceProxyGenerator.Default);
             Services.TryAddSingleton(c => new [] { c.GetRequiredService<ComputeServiceInterceptor>() });
             Services.TryAddSingleton<IErrorRewriter, ErrorRewriter>();
             // States & their dependencies
@@ -84,10 +87,12 @@ namespace Stl.Fusion
         public FusionBuilder AddReplicator(Action<IServiceProvider, Replicator.Options>? configureReplicatorOptions = null)
         {
             // ReplicaServiceProxyGenerator
-            Services.TryAddSingleton(new ReplicaClientInterceptor.Options());
-            Services.TryAddSingleton<ReplicaClientInterceptor>();
-            Services.TryAddSingleton(c => ReplicaClientProxyGenerator.Default);
-            Services.TryAddSingleton(c => new [] { c.GetRequiredService<ReplicaClientInterceptor>() });
+            Services.TryAddSingleton(_ => ReplicaServiceProxyGenerator.Default);
+            Services.TryAddSingleton(new ReplicaMethodInterceptor.Options());
+            Services.TryAddSingleton<ReplicaMethodInterceptor>();
+            Services.TryAddSingleton(new ReplicaServiceInterceptor.Options());
+            Services.TryAddSingleton<ReplicaServiceInterceptor>();
+            Services.TryAddSingleton(c => new [] { c.GetRequiredService<ReplicaServiceInterceptor>() });
             // Replicator
             Services.TryAddSingleton(c => {
                 var options = new Replicator.Options();
@@ -135,6 +140,7 @@ namespace Stl.Fusion
 
             var descriptor = new ServiceDescriptor(serviceType, Factory, lifetime);
             Services.TryAdd(descriptor);
+            Services.AddCommander().AddCommandService(serviceType, implementationType);
             return this;
         }
 

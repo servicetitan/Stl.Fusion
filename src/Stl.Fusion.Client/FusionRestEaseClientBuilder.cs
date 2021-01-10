@@ -4,10 +4,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
 using RestEase;
+using Stl.CommandR;
 using Stl.DependencyInjection;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Interception;
 using Stl.Fusion.Client.RestEase.Internal;
+using Stl.Fusion.Interception;
 using Stl.Interception;
 using Stl.Reflection;
 using Stl.Serialization;
@@ -140,9 +142,11 @@ namespace Stl.Fusion.Client
 
             object Factory(IServiceProvider c)
             {
-                // 1. Validate type
-                var interceptor = c.GetRequiredService<ReplicaClientInterceptor>();
-                interceptor.ValidateType(clientType);
+                // 1. Validate types
+                var replicaMethodInterceptor = c.GetRequiredService<ReplicaMethodInterceptor>();
+                replicaMethodInterceptor.ValidateType(clientType);
+                var commandMethodInterceptor = c.GetRequiredService<ComputeMethodInterceptor>();
+                commandMethodInterceptor.ValidateType(serviceType);
 
                 // 2. Create REST client (of clientType)
                 var httpClientFactory = c.GetRequiredService<IHttpClientFactory>();
@@ -157,14 +161,15 @@ namespace Stl.Fusion.Client
                     client = c.GetTypeViewFactory().CreateView(client, clientType, serviceType);
 
                 // 4. Create Replica Client
-                var replicaProxyGenerator = c.GetRequiredService<IReplicaClientProxyGenerator>();
+                var replicaProxyGenerator = c.GetRequiredService<IReplicaServiceProxyGenerator>();
                 var replicaProxyType = replicaProxyGenerator.GetProxyType(serviceType);
-                var replicaInterceptors = c.GetRequiredService<ReplicaClientInterceptor[]>();
+                var replicaInterceptors = c.GetRequiredService<ReplicaServiceInterceptor[]>();
                 client = replicaProxyType.CreateInstance(replicaInterceptors, client);
                 return client;
             }
 
             Services.TryAddSingleton(serviceType, Factory);
+            Services.AddCommander().AddCommandService(serviceType);
             return this;
         }
 

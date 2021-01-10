@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Threading;
 using Castle.DynamicProxy;
-using Stl.Interception.Internal;
+using Stl.Interception.Interceptors;
 
 namespace Stl.Fusion.Interception
 {

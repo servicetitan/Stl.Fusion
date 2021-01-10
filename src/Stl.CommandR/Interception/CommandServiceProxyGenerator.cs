@@ -4,7 +4,7 @@ using Castle.DynamicProxy;
 using Castle.DynamicProxy.Generators;
 using Castle.DynamicProxy.Generators.Emitters;
 using Stl.Concurrency;
-using Stl.Interception.Internal;
+using Stl.Interception.Interceptors;
 
 namespace Stl.CommandR.Interception
 {
