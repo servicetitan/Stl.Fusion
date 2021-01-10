@@ -125,20 +125,20 @@ namespace Stl.Fusion.Client
         }
 
         public FusionRestEaseClientBuilder AddReplicaService<TClient>(
-            string? clientName = null, bool addCommandService = true)
+            string? clientName = null, bool isCommandService = true)
             where TClient : class
-            => AddReplicaService(typeof(TClient), clientName, addCommandService);
+            => AddReplicaService(typeof(TClient), clientName, isCommandService);
         public FusionRestEaseClientBuilder AddReplicaService<TService, TClient>(
-            string? clientName = null, bool addCommandService = true)
+            string? clientName = null, bool isCommandService = true)
             where TClient : class
-            => AddReplicaService(typeof(TService), typeof(TClient), clientName, addCommandService);
+            => AddReplicaService(typeof(TService), typeof(TClient), clientName, isCommandService);
         public FusionRestEaseClientBuilder AddReplicaService(
             Type clientType,
-            string? clientName = null, bool addCommandService = true)
-            => AddReplicaService(clientType, clientType, clientName, addCommandService);
+            string? clientName = null, bool isCommandService = true)
+            => AddReplicaService(clientType, clientType, clientName, isCommandService);
         public FusionRestEaseClientBuilder AddReplicaService(
             Type serviceType, Type clientType,
-            string? clientName = null, bool addCommandService = true)
+            string? clientName = null, bool isCommandService = true)
         {
             if (!(serviceType.IsInterface && serviceType.IsVisible))
                 throw Internal.Errors.InterfaceTypeExpected(serviceType, true, nameof(serviceType));
@@ -168,14 +168,14 @@ namespace Stl.Fusion.Client
 
                 // 4. Create Replica Client
                 var replicaProxyGenerator = c.GetRequiredService<IReplicaServiceProxyGenerator>();
-                var replicaProxyType = replicaProxyGenerator.GetProxyType(serviceType, addCommandService);
+                var replicaProxyType = replicaProxyGenerator.GetProxyType(serviceType, isCommandService);
                 var replicaInterceptors = c.GetRequiredService<ReplicaServiceInterceptor[]>();
                 client = replicaProxyType.CreateInstance(replicaInterceptors, client);
                 return client;
             }
 
             Services.TryAddSingleton(serviceType, Factory);
-            if (addCommandService)
+            if (isCommandService)
                 Services.AddCommander().AddCommandService(serviceType);
             return this;
         }

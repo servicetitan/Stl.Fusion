@@ -8,7 +8,7 @@ namespace Stl.Fusion.Client
     public class RestEaseReplicaServiceAttribute : ServiceAttributeBase
     {
         public Type? ServiceType { get; set; }
-        public bool AddCommandService { get; set; } = true;
+        public bool IsCommandService { get; set; } = true;
 
         public RestEaseReplicaServiceAttribute(Type? serviceType = null)
             => ServiceType = serviceType;
@@ -19,6 +19,6 @@ namespace Stl.Fusion.Client
                 .AddRestEaseClient()
                 .AddReplicaService(
                     ServiceType ?? implementationType, implementationType,
-                    addCommandService: AddCommandService);
+                    isCommandService: IsCommandService);
     }
 }
