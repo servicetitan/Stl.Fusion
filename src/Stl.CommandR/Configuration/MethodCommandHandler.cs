@@ -16,8 +16,8 @@ namespace Stl.CommandR.Configuration
         public Type ServiceType { get; }
         public MethodInfo MethodInfo { get; }
 
-        public MethodCommandHandler(Type serviceType, MethodInfo methodInfo, double order = 0)
-            : base(order)
+        public MethodCommandHandler(Type serviceType, MethodInfo methodInfo, bool isFilter = false, double order = 0)
+            : base(isFilter, order)
         {
             ServiceType = serviceType;
             MethodInfo = methodInfo;
@@ -58,7 +58,8 @@ namespace Stl.CommandR.Configuration
                 .GetMethod(nameof(Create), BindingFlags.Static | BindingFlags.NonPublic)!;
 
         public static CommandHandler New(Type serviceType, MethodInfo methodInfo, double? priorityOverride = null)
-            => TryNew(serviceType, methodInfo, priorityOverride) ?? throw Errors.InvalidCommandHandlerMethod(methodInfo);
+            => TryNew(serviceType, methodInfo, priorityOverride)
+                ?? throw Errors.InvalidCommandHandlerMethod(methodInfo);
 
         public static CommandHandler? TryNew(Type serviceType, MethodInfo methodInfo, double? priorityOverride = null)
         {
@@ -66,6 +67,7 @@ namespace Stl.CommandR.Configuration
             var isEnabled = attr?.IsEnabled ?? false;
             if (!isEnabled)
                 return null;
+            var isFilter = attr?.IsFilter ?? false;
             var order = priorityOverride ?? attr?.Order ?? 0;
 
             if (methodInfo.IsStatic)
@@ -97,15 +99,15 @@ namespace Stl.CommandR.Configuration
 
             return (CommandHandler) CreateMethod
                 .MakeGenericMethod(pCommand.ParameterType)
-                .Invoke(null, new object[] {serviceType, methodInfo, order})!;
+                .Invoke(null, new object[] {serviceType, methodInfo, isFilter, order})!;
         }
 
         public static CommandHandlerAttribute? GetAttribute(MethodInfo methodInfo)
             => methodInfo.GetAttribute<CommandHandlerAttribute>(true, true);
 
         private static MethodCommandHandler<TCommand> Create<TCommand>(
-            Type serviceType, MethodInfo methodInfo, double order = 0)
+            Type serviceType, MethodInfo methodInfo, bool isFilter, double order)
             where TCommand : class, ICommand
-            => new(serviceType, methodInfo, order);
+            => new(serviceType, methodInfo, isFilter, order);
     }
 }

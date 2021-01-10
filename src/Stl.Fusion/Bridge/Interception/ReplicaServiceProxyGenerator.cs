@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using Castle.DynamicProxy;
 using Castle.DynamicProxy.Generators;
 using Castle.DynamicProxy.Generators.Emitters;
+using Stl.CommandR.Interception;
 using Stl.Concurrency;
 using Stl.Interception.Interceptors;
 
@@ -10,7 +11,7 @@ namespace Stl.Fusion.Bridge.Interception
 {
     public interface IReplicaServiceProxyGenerator
     {
-        Type GetProxyType(Type type);
+        Type GetProxyType(Type type, bool isCommandService);
     }
 
     public class ReplicaServiceProxyGenerator : ProxyGeneratorBase<ReplicaServiceProxyGenerator.Options>,
@@ -43,19 +44,23 @@ namespace Stl.Fusion.Bridge.Interception
 
         public static readonly IReplicaServiceProxyGenerator Default = new ReplicaServiceProxyGenerator();
 
-        protected ConcurrentDictionary<Type, Type> Cache { get; } = new();
+        protected ConcurrentDictionary<(Type, bool), Type> Cache { get; } = new();
 
         public ReplicaServiceProxyGenerator(
             Options? options = null,
             ModuleScope? moduleScope = null)
             : base(options ??= new(), moduleScope) { }
 
-        public virtual Type GetProxyType(Type type)
-            => Cache.GetOrAddChecked(type, (type1, self) => {
+        public virtual Type GetProxyType(Type type, bool isCommandService)
+            => Cache.GetOrAddChecked((type, isCommandService), (key, self) => {
+                var (type1, isCommandService1) = key;
+                var tInterfaces = isCommandService1
+                    ? new[] { typeof(IReplicaService), typeof(ICommandService) }
+                    : new[] { typeof(IReplicaService) };
                 var generator = new Implementation(self.ModuleScope, type1, self.ProxyGeneratorOptions);
                 return generator.GenerateCode(
                     self.ProxyGeneratorOptions.BaseType,
-                    Array.Empty<Type>(),
+                    tInterfaces,
                     self.ProxyGeneratorOptions);
             }, this);
     }

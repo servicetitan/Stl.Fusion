@@ -12,8 +12,8 @@ namespace Stl.CommandR.Handlers
     {
         public DbWriterHandler(IServiceProvider services) : base(services) { }
 
-        [CommandHandler(Order = -1000)]
-        public virtual async Task OnCommandAsync(IDbWriter<TDbContext> command, CommandContext context, CancellationToken cancellationToken)
+        [CommandHandler(Order = -1000, IsFilter = true)]
+        public async Task OnCommandAsync(IDbWriter<TDbContext> command, CommandContext context, CancellationToken cancellationToken)
         {
             var dbContextOpt = context.Items.TryGet<TDbContext>();
             if (dbContextOpt.HasValue) {

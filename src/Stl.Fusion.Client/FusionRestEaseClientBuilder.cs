@@ -16,7 +16,7 @@ using Stl.Serialization;
 
 namespace Stl.Fusion.Client
 {
-    public readonly struct FusionRestEaseClientBuilder
+    public struct FusionRestEaseClientBuilder
     {
         private class AddedTag { }
         private static readonly ServiceDescriptor AddedTagDescriptor =
@@ -124,15 +124,21 @@ namespace Stl.Fusion.Client
             return this;
         }
 
-        public FusionRestEaseClientBuilder AddReplicaService<TClient>(string? clientName = null)
+        public FusionRestEaseClientBuilder AddReplicaService<TClient>(
+            string? clientName = null, bool addCommandService = true)
             where TClient : class
-            => AddReplicaService(typeof(TClient), clientName);
-        public FusionRestEaseClientBuilder AddReplicaService<TService, TClient>(string? clientName = null)
+            => AddReplicaService(typeof(TClient), clientName, addCommandService);
+        public FusionRestEaseClientBuilder AddReplicaService<TService, TClient>(
+            string? clientName = null, bool addCommandService = true)
             where TClient : class
-            => AddReplicaService(typeof(TService), typeof(TClient), clientName);
-        public FusionRestEaseClientBuilder AddReplicaService(Type clientType, string? clientName = null)
-            => AddReplicaService(clientType, clientType, clientName);
-        public FusionRestEaseClientBuilder AddReplicaService(Type serviceType, Type clientType, string? clientName = null)
+            => AddReplicaService(typeof(TService), typeof(TClient), clientName, addCommandService);
+        public FusionRestEaseClientBuilder AddReplicaService(
+            Type clientType,
+            string? clientName = null, bool addCommandService = true)
+            => AddReplicaService(clientType, clientType, clientName, addCommandService);
+        public FusionRestEaseClientBuilder AddReplicaService(
+            Type serviceType, Type clientType,
+            string? clientName = null, bool addCommandService = true)
         {
             if (!(serviceType.IsInterface && serviceType.IsVisible))
                 throw Internal.Errors.InterfaceTypeExpected(serviceType, true, nameof(serviceType));
@@ -162,14 +168,15 @@ namespace Stl.Fusion.Client
 
                 // 4. Create Replica Client
                 var replicaProxyGenerator = c.GetRequiredService<IReplicaServiceProxyGenerator>();
-                var replicaProxyType = replicaProxyGenerator.GetProxyType(serviceType);
+                var replicaProxyType = replicaProxyGenerator.GetProxyType(serviceType, addCommandService);
                 var replicaInterceptors = c.GetRequiredService<ReplicaServiceInterceptor[]>();
                 client = replicaProxyType.CreateInstance(replicaInterceptors, client);
                 return client;
             }
 
             Services.TryAddSingleton(serviceType, Factory);
-            Services.AddCommander().AddCommandService(serviceType);
+            if (addCommandService)
+                Services.AddCommander().AddCommandService(serviceType);
             return this;
         }
 

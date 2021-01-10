@@ -82,7 +82,8 @@ namespace Stl.CommandR
             var interfaceMethods = new HashSet<MethodInfo>();
 
             // Interfaces
-            foreach (var tInterface in implementationType.GetInterfaces()) {
+            var tInterfaces = implementationType.GetInterfaces();
+            foreach (var tInterface in tInterfaces) {
                 if (!tInterface.IsGenericType)
                     continue;
                 var gInterface = tInterface.GetGenericTypeDefinition();
@@ -97,14 +98,26 @@ namespace Stl.CommandR
                 var isEnabled = attr?.IsEnabled ?? true;
                 if (!isEnabled)
                     continue;
+                var isFilter = attr?.IsFilter ?? false;
                 var order = priorityOverride ?? attr?.Order ?? 0;
-                AddHandler(InterfaceCommandHandler.New(serviceType, tCommand, order));
+                AddHandler(InterfaceCommandHandler.New(serviceType, tCommand, isFilter, order));
                 interfaceMethods.Add(method);
             }
 
             // Methods
-            var methods = implementationType.GetMethods(
-                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            var bindingFlags = BindingFlags.Public | BindingFlags.NonPublic
+                | BindingFlags.Instance | BindingFlags.Static
+                | BindingFlags.FlattenHierarchy;
+            var methods = implementationType.GetMethods(bindingFlags);
+            if (implementationType.IsInterface) {
+                var tOtherInterfaces = tInterfaces
+                    .Where(t => !typeof(ICommandHandler).IsAssignableFrom(t))
+                    .ToList();
+                var lMethods = new List<MethodInfo>(methods);
+                foreach (var tOtherInterface in tOtherInterfaces)
+                    lMethods.AddRange(tOtherInterface.GetMethods(bindingFlags));
+                methods = lMethods.ToArray();
+            }
             foreach (var method in methods) {
                 if (interfaceMethods.Contains(method))
                     continue;
@@ -167,7 +180,12 @@ namespace Stl.CommandR
         public CommanderBuilder AddHandler<TService, TCommand>(double order = 0)
             where TService : class
             where TCommand : class, ICommand
-            => AddHandler(InterfaceCommandHandler.New<TService, TCommand>(order));
+            => AddHandler<TService, TCommand>(false, order);
+
+        public CommanderBuilder AddHandler<TService, TCommand>(bool isFilter, double order = 0)
+            where TService : class
+            where TCommand : class, ICommand
+            => AddHandler(InterfaceCommandHandler.New<TService, TCommand>(isFilter, order));
 
         public CommanderBuilder AddHandler(Type serviceType, MethodInfo methodInfo, double? priorityOverride = null)
             => AddHandler(MethodCommandHandler.New(serviceType, methodInfo, priorityOverride));

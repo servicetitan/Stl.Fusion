@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using Castle.DynamicProxy;
 using Castle.DynamicProxy.Generators;
 using Castle.DynamicProxy.Generators.Emitters;
+using Stl.CommandR.Interception;
 using Stl.Concurrency;
 using Stl.Interception.Interceptors;
 
@@ -52,7 +53,9 @@ namespace Stl.Fusion.Interception
         public virtual Type GetProxyType(Type type)
             => Cache.GetOrAddChecked(type, (type1, self) => {
                 var generator = new Implementation(self.ModuleScope, type1, self.ProxyGeneratorOptions);
-                return generator.GenerateCode(Array.Empty<Type>(), self.ProxyGeneratorOptions);
+                return generator.GenerateCode(
+                    new[] { typeof(IComputeService), typeof(ICommandService) },
+                    self.ProxyGeneratorOptions);
             }, this);
     }
 }

@@ -52,7 +52,9 @@ namespace Stl.CommandR.Interception
         public virtual Type GetProxyType(Type type)
             => Cache.GetOrAddChecked(type, (type1, self) => {
                 var generator = new Implementation(self.ModuleScope, type1, self.ProxyGeneratorOptions);
-                return generator.GenerateCode(Array.Empty<Type>(), self.ProxyGeneratorOptions);
+                return generator.GenerateCode(
+                    new[] { typeof(ICommandService) },
+                    self.ProxyGeneratorOptions);
             }, this);
     }
 }

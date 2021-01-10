@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using RestEase;
+using Stl.CommandR;
+using Stl.DependencyInjection;
 using Stl.Fusion.Tests.Services;
 using Stl.Fusion.Tests.UIModels;
 using Stl.Testing;
@@ -62,6 +64,21 @@ namespace Stl.Fusion.Tests
             c.IsConsistent().Should().BeTrue();
             c.Value.Value.Should().Be("2");
             c.Value.UpdateCount.Should().Be(2);
+        }
+
+        [Fact]
+        public async Task CommandTest()
+        {
+            var kv = Services.GetRequiredService<IKeyValueService<string>>();
+            (await kv.GetAsync("")).Should().BeNull();
+
+            kv.SetCommandAsync(new IKeyValueService<string>.SetCommand("", "1"));
+            (await kv.GetAsync("")).Should().Be("1");
+
+            Services.Commander().CallAsync(new IKeyValueService<string>.SetCommand("", "2"));
+            (await kv.GetAsync("")).Should().Be("2");
+
+            await using var serving = await WebSocketHost.ServeAsync();
         }
 
         [Fact]

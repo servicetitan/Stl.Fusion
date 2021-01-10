@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using Stl.CommandR.Internal;
 using Stl.Reflection;
 
 namespace Stl.CommandR.Configuration
@@ -30,6 +31,8 @@ namespace Stl.CommandR.Configuration
                     orderby handler.Order, -typeEntry.Index
                     select handler
                 ).Distinct().ToArray();
+                if (handlers.Count(h => !h.IsFilter) > 1)
+                    throw Errors.MultipleNonFilterHandlers(commandType1);
                 return handlers;
             }, this);
     }

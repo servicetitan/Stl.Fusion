@@ -13,7 +13,7 @@ namespace Stl.Tests.CommandR.Services
     {
         public LogEnterExitService(IServiceProvider services) : base(services) { }
 
-        [CommandHandler(-1000)]
+        [CommandHandler(-1000, IsFilter = true)]
         public async Task OnAnyCommandAsync(
             ICommand command, CommandContext context,
             CancellationToken cancellationToken)

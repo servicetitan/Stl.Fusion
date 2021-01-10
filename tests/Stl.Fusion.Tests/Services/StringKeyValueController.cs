@@ -1,6 +1,8 @@
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Stl.Async;
 using Stl.Fusion.Server;
 using Stl.Serialization;
 
@@ -33,5 +35,13 @@ namespace Stl.Fusion.Tests.Services
         [HttpGet("{key?}")]
         public Task RemoveAsync(string? key)
             => Service.RemoveAsync(key ?? "", HttpContext.RequestAborted);
+
+        [HttpPost]
+        public Task SetCommandAsync([FromBody] IKeyValueService<string>.SetCommand cmd)
+            => Service.SetCommandAsync(cmd, HttpContext.RequestAborted);
+
+        [HttpPost]
+        public virtual Task RemoveCommandAsync([FromBody] IKeyValueService<string>.RemoveCommand cmd)
+            => Service.RemoveCommandAsync(cmd, HttpContext.RequestAborted);
     }
 }

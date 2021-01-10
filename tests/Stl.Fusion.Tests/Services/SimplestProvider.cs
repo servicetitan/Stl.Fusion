@@ -14,7 +14,6 @@ namespace Stl.Fusion.Tests.Services
         public string Value { get; init; } = "";
     }
 
-
     public interface ISimplestProvider
     {
         // These two properties are here solely for testing purposes
@@ -28,7 +27,7 @@ namespace Stl.Fusion.Tests.Services
         Task<int> GetCharCountAsync();
 
         [CommandHandler]
-        Task OnSetValueAsync(SetValueCommand command, CancellationToken cancellationToken = default);
+        Task SetValueAsync(SetValueCommand command, CancellationToken cancellationToken = default);
     }
 
     [ComputeService(typeof(ISimplestProvider), Lifetime = ServiceLifetime.Scoped)]
@@ -63,7 +62,7 @@ namespace Stl.Fusion.Tests.Services
             return value.Length;
         }
 
-        public Task OnSetValueAsync(SetValueCommand command, CancellationToken cancellationToken = default)
+        public virtual Task SetValueAsync(SetValueCommand command, CancellationToken cancellationToken = default)
         {
             SetValue(command.Value);
             return Task.CompletedTask;

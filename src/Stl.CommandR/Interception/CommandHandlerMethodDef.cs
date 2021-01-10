@@ -11,14 +11,11 @@ namespace Stl.CommandR.Interception
         public CommandHandlerMethodDef(IInterceptor interceptor, MethodInfo methodInfo)
             : base(interceptor, methodInfo)
         {
-            if (!methodInfo.IsPublic)
-                return;
-
             var commandHandler = MethodCommandHandler.TryNew(methodInfo.ReflectedType!, methodInfo);
             if (commandHandler == null)
-                return;
+                return; // Can be only when attr.IsEnabled == false
 
-            if (!methodInfo.IsVirtual)
+            if (!methodInfo.IsVirtual || methodInfo.IsFinal)
                 throw Errors.WrongInterceptedCommandHandlerMethodSignature(methodInfo);
 
             var parameters = methodInfo.GetParameters();

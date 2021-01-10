@@ -16,10 +16,12 @@ namespace Stl.CommandR.Internal
         public static Exception NoCurrentCommandContext()
             => new InvalidOperationException("CommandContext.Current is null - no command is running.");
 
-        public static Exception NoHandlerFound(ICommand command)
-            => new InvalidOperationException($"No handler is found for command {command}.");
-        public static Exception NoFinalHandlerFound(ICommand command)
-            => new InvalidOperationException($"No final handler is found for command {command}.");
+        public static Exception NoHandlerFound(Type commandType)
+            => new InvalidOperationException($"No handler is found for command '{commandType}'.");
+        public static Exception NoFinalHandlerFound(Type commandType)
+            => new InvalidOperationException($"No final handler is found for command '{commandType}'.");
+        public static Exception MultipleNonFilterHandlers(Type commandType)
+            => new InvalidOperationException($"Multiple non-filter handlers are found for '{commandType}'.");
 
         public static Exception InvalidCommandHandlerMethod(MethodInfo methodInfo)
             => new InvalidOperationException($"Invalid command handler method: {methodInfo}.");
@@ -34,7 +36,11 @@ namespace Stl.CommandR.Internal
         public static Exception WrongInterceptedCommandHandlerMethodSignature(MethodInfo methodInfo)
             => new InvalidOperationException(
                 "Intercepted command handler method must be " +
-                "public, virtual, and have exactly 2 arguments: " +
-                "command and CancellationToken.");
+                "public or protected, virtual, and have exactly 2 arguments: " +
+                $"command and CancellationToken: {methodInfo}.");
+        public static Exception OnlyInterceptedCommandHandlersAllowed(Type type)
+            => new InvalidOperationException(
+                $"Type '{type}' is registered as a service with intercepted command handlers, " +
+                "so it can't declare regular (e.g. interface) command handlers.");
     }
 }

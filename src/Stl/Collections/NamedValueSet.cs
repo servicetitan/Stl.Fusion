@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Threading;
 using Newtonsoft.Json;
 using Stl.Reflection;
@@ -65,5 +66,19 @@ namespace Stl.Collections
         // ReSharper disable once HeapView.PossibleBoxingAllocation
         public void Set<T>(T value) => this[typeof(T)] = value;
         public void Remove<T>() => this[typeof(T)] = null;
+
+        public void Clear()
+        {
+            var spinWait = new SpinWait();
+            var properties = _items;
+            for (;;) {
+                var oldProperties = Interlocked.CompareExchange(
+                    ref _items, ImmutableDictionary<Symbol, object>.Empty, properties);
+                if (oldProperties == properties || oldProperties.Count == 0)
+                    return;
+                properties = oldProperties;
+                spinWait.SpinOnce();
+            }
+        }
     }
 }

@@ -6,8 +6,6 @@ using Microsoft.Extensions.Logging;
 using Stl.Collections;
 using Stl.CommandR;
 using Stl.CommandR.Configuration;
-using Stl.CommandR.Internal;
-using Stl.DependencyInjection;
 
 namespace Stl.Tests.CommandR.Services
 {
@@ -17,8 +15,9 @@ namespace Stl.Tests.CommandR.Services
         public MathService(IServiceProvider services) : base(services) { }
 
         [CommandHandler(Order = 2)]
-        private Task<double> OnCommandAsync(DivCommand command, CommandContext<double> context, CancellationToken cancellationToken)
+        protected virtual Task<double> DivAsync(DivCommand command, CancellationToken cancellationToken = default)
         {
+            var context = CommandContext.GetCurrent<double>();
             var handler = context.Handlers[^1];
             handler.GetType().Should().Be(typeof(MethodCommandHandler<DivCommand>));
             handler.Order.Should().Be(2);

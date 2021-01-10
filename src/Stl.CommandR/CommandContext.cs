@@ -165,7 +165,7 @@ namespace Stl.CommandR
         {
             try {
                 if (NextHandlerIndex >= Handlers.Count)
-                    throw Errors.NoFinalHandlerFound(UntypedCommand);
+                    throw Errors.NoFinalHandlerFound(UntypedCommand.GetType());
                 var handler = Handlers[NextHandlerIndex++];
                 var resultTask = handler.InvokeAsync(UntypedCommand, this, cancellationToken);
                 if (resultTask is Task<TResult> typedResultTask) {

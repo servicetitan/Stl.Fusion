@@ -70,6 +70,6 @@ namespace Stl.CommandR.Internal
         protected virtual Task OnUnhandledCommandAsync(
             ICommand command, CommandContext context,
             CancellationToken cancellationToken)
-            => throw Errors.NoHandlerFound(command);
+            => throw Errors.NoHandlerFound(command.GetType());
     }
 }

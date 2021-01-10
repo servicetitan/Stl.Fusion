@@ -5,6 +5,7 @@ using Castle.DynamicProxy;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Stl.CommandR.Configuration;
+using Stl.CommandR.Internal;
 using Stl.Interception.Interceptors;
 
 namespace Stl.CommandR.Interception
@@ -26,6 +27,10 @@ namespace Stl.CommandR.Interception
         protected override Action<IInvocation> CreateHandler<T>(
             IInvocation initialInvocation, MethodDef methodDef)
             => invocation => {
+                if (!(invocation.Proxy is ICommandService)) {
+                    invocation.Proceed();
+                    return;
+                }
                 var command = (ICommand) invocation.Arguments[0];
                 var cancellationToken1 = (CancellationToken) invocation.Arguments[^1];
                 var context = CommandContext.Current;
@@ -46,6 +51,8 @@ namespace Stl.CommandR.Interception
         protected override void ValidateTypeInternal(Type type)
         {
             Log.Log(ValidationLogLevel, $"Validating: '{type}':");
+            if (typeof(ICommandHandler).IsAssignableFrom(type))
+                throw Errors.OnlyInterceptedCommandHandlersAllowed(type);
             var bindingFlags = BindingFlags.Public | BindingFlags.NonPublic
                 | BindingFlags.Instance | BindingFlags.Static
                 | BindingFlags.FlattenHierarchy;
@@ -55,15 +62,12 @@ namespace Stl.CommandR.Interception
                     continue;
 
                 var methodDef = new CommandHandlerMethodDef(this, method);
-                var isIntercepted = methodDef.IsValid;
-
-                if (!attr.IsEnabled)
+                if (!methodDef.IsValid) // attr.IsEnabled == false
                     Log.Log(ValidationLogLevel,
                         $"- {method}: has {nameof(CommandHandlerAttribute)}(false)");
                 else
                     Log.Log(ValidationLogLevel,
-                        $"+ {method}: {(isIntercepted ? "intercepted " : "")} command handler, " +
-                        $"{nameof(CommandHandlerAttribute)} {{ " +
+                        $"+ {method}: {nameof(CommandHandlerAttribute)} {{ " +
                         $"{nameof(CommandHandlerAttribute.Order)} = {attr.Order}" +
                         $" }}");
             }
