@@ -93,7 +93,7 @@ namespace Stl.Fusion.Tests
             swapService.RenewCallCount.Should().Be(0);
             v.Should().BeSameAs(a);
 
-            await DelayAsync(1.3);
+            await DelayAsync(1.4);
             swapService.LoadCallCount.Should().Be(0);
             swapService.RenewCallCount.Should().Be(1);
             swapService.StoreCallCount.Should().Be(1);
@@ -107,7 +107,7 @@ namespace Stl.Fusion.Tests
 
             // We accessed the value, so we need to wait for
             // SwapTime + KeepAliveTime to make sure it's GC-ed
-            await DelayAsync(1.8);
+            await DelayAsync(1.9);
             swapService.LoadCallCount.Should().Be(1);
             swapService.RenewCallCount.Should().Be(2);
             swapService.StoreCallCount.Should().Be(1);
