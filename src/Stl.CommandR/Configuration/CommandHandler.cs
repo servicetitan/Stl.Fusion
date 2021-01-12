@@ -17,6 +17,9 @@ namespace Stl.CommandR.Configuration
             Order = order;
         }
 
+        public abstract object GetHandlerService(
+            ICommand command, CommandContext context);
+
         public abstract Task InvokeAsync(
             ICommand command, CommandContext context,
             CancellationToken cancellationToken);

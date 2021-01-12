@@ -41,7 +41,7 @@ namespace Stl.Fusion
             // Common services
             Services.AddOptions();
             Services.TryAddSingleton(SystemClock.Instance);
-            Services.AddCommander().AddInvalidatingCommandHandler();
+            Services.AddCommander().AddInvalidatingHandler();
             // Compute services & their dependencies
             Services.TryAddSingleton(_ => ComputeServiceProxyGenerator.Default);
             Services.TryAddSingleton<IComputedOptionsProvider, ComputedOptionsProvider>();

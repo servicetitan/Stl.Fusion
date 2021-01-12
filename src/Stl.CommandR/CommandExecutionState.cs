@@ -26,6 +26,18 @@ namespace Stl.CommandR
 
         public override string ToString() => $"{GetType().Name}({NextHandlerIndex}/{Handlers.Count})";
 
+        public CommandHandler? FindFinalHandler()
+            => FindFinalHandler(NextHandlerIndex);
+        public CommandHandler? FindFinalHandler(int startIndex)
+        {
+            for (var i = startIndex; i < Handlers.Count; i++) {
+                var handler = Handlers[i];
+                if (!handler.IsFilter)
+                    return handler;
+            }
+            return null;
+        }
+
         // Equality
 
         public bool Equals(CommandExecutionState other)
