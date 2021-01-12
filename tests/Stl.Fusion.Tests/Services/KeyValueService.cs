@@ -5,16 +5,16 @@ using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
-using Stl.CommandR;
 using Stl.CommandR.Configuration;
+using Stl.Fusion.CommandR;
 
 namespace Stl.Fusion.Tests.Services
 {
 
     public interface IKeyValueService<TValue>
     {
-        public record SetCommand(string Key, TValue Value) : ICommand<Unit> { }
-        public record RemoveCommand(string Key) : ICommand<Unit> { }
+        public record SetCommand(string Key, TValue Value) : IInvalidatingCommand<Unit> { }
+        public record RemoveCommand(string Key) : IInvalidatingCommand<Unit> { }
 
         [ComputeMethod]
         Task<Option<TValue>> TryGetAsync(string key, CancellationToken cancellationToken = default);
@@ -52,23 +52,25 @@ namespace Stl.Fusion.Tests.Services
 
         public virtual Task SetCommandAsync(IKeyValueService<TValue>.SetCommand cmd, CancellationToken cancellationToken = default)
         {
-            _values[cmd.Key] = cmd.Value;
-
-            using (Computed.Invalidate()) {
+            if (Computed.IsInvalidating()) {
                 TryGetAsync(cmd.Key, default).AssertCompleted();
                 GetAsync(cmd.Key, default).AssertCompleted();
-            };
+                return Task.CompletedTask;
+            }
+
+            _values[cmd.Key] = cmd.Value;
             return Task.CompletedTask;
         }
 
         public virtual Task RemoveCommandAsync(IKeyValueService<TValue>.RemoveCommand cmd, CancellationToken cancellationToken = default)
         {
-            _values.TryRemove(cmd.Key, out _);
-
-            using (Computed.Invalidate()) {
+            if (Computed.IsInvalidating()) {
                 TryGetAsync(cmd.Key, default).AssertCompleted();
                 GetAsync(cmd.Key, default).AssertCompleted();
-            };
+                return Task.CompletedTask;
+            }
+
+            _values.TryRemove(cmd.Key, out _);
             return Task.CompletedTask;
         }
     }

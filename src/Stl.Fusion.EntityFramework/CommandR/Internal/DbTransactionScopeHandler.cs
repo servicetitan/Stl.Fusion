@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Stl.CommandR;
 using Stl.CommandR.Configuration;
 
-namespace Stl.Fusion.EntityFramework
+namespace Stl.Fusion.EntityFramework.CommandR.Internal
 {
     public class DbTransactionScopeHandler<TDbContext> : DbServiceBase<TDbContext>, ICommandHandler<ICommand>
         where TDbContext : DbContext

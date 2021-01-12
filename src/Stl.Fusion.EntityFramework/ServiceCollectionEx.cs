@@ -17,6 +17,5 @@ namespace Stl.Fusion.EntityFramework
             configureDbContext.Invoke(dbContextServices);
             return services;
         }
-
     }
 }

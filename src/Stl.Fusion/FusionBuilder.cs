@@ -9,6 +9,7 @@ using Stl.CommandR;
 using Stl.DependencyInjection;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Interception;
+using Stl.Fusion.CommandR;
 using Stl.Fusion.Interception;
 using Stl.Internal;
 using Stl.Time;
@@ -40,6 +41,7 @@ namespace Stl.Fusion
             // Common services
             Services.AddOptions();
             Services.TryAddSingleton(SystemClock.Instance);
+            Services.AddCommander().AddInvalidatingCommandHandler();
             // Compute services & their dependencies
             Services.TryAddSingleton(_ => ComputeServiceProxyGenerator.Default);
             Services.TryAddSingleton<IComputedOptionsProvider, ComputedOptionsProvider>();

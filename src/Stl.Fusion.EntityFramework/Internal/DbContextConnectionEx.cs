@@ -35,7 +35,9 @@ namespace Stl.Fusion.EntityFramework.Internal
             var oldIsOwned = (bool) ConnectionOwnedField.GetValue(relationalConnection)!;
             ConnectionField.SetValue(relationalConnection, dbConnection);
             ConnectionOwnedField.SetValue(relationalConnection, isOwned);
+#pragma warning disable EF1001
             LeaseField.SetValue(dbContext, DbContextLease.InactiveLease);
+#pragma warning restore
         }
     }
 }

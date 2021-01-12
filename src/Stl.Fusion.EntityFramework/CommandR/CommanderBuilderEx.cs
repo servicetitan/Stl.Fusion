@@ -1,8 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.CommandR;
+using Stl.Fusion.EntityFramework.CommandR.Internal;
 
-namespace Stl.Fusion.EntityFramework
+namespace Stl.Fusion.EntityFramework.CommandR
 {
     public static class CommanderBuilderEx
     {
