@@ -34,7 +34,7 @@ namespace Stl.Fusion.Tests
             var tp = Services.GetRequiredService<ITimeService>();
 
             var pub = await Publisher.PublishAsync(_ => tp.GetTimeAsync());
-            var rep = Replicator.GetOrAdd<DateTime>(pub.Ref);
+            var rep = ClientReplicator.GetOrAdd<DateTime>(pub.Ref);
             await rep.RequestUpdateAsync().AsAsyncFunc()
                 .Should().CompleteWithinAsync(TimeSpan.FromMinutes(1));
 
@@ -59,7 +59,7 @@ namespace Stl.Fusion.Tests
             var tp = Services.GetRequiredService<ITimeService>();
 
             var pub = await Publisher.PublishAsync(_ => tp.GetTimeAsync());
-            var rep = Replicator.GetOrAdd<DateTime>(("NoPublisher", pub.Id));
+            var rep = ClientReplicator.GetOrAdd<DateTime>(("NoPublisher", pub.Id));
             await rep.RequestUpdateAsync().AsAsyncFunc()
                 .Should().ThrowAsync<WebSocketException>();
         }
@@ -76,17 +76,17 @@ namespace Stl.Fusion.Tests
 
             Debug.WriteLine("0");
             var pub = await Publisher.PublishAsync(_ => tp.GetTimeAsync());
-            var rep = Replicator.GetOrAdd<DateTime>(pub.Ref);
+            var rep = ClientReplicator.GetOrAdd<DateTime>(pub.Ref);
             Debug.WriteLine("1");
             await rep.RequestUpdateAsync().AsAsyncFunc()
                 .Should().CompleteWithinAsync(TimeSpan.FromMinutes(1));
             Debug.WriteLine("2");
-            var state = Replicator.GetPublisherConnectionState(pub.Publisher.Id);
+            var state = ClientReplicator.GetPublisherConnectionState(pub.Publisher.Id);
             state.Computed.IsConsistent().Should().BeTrue();
             Debug.WriteLine("3");
             await state.Computed.UpdateAsync(false);
             Debug.WriteLine("4");
-            state.Should().Be(Replicator.GetPublisherConnectionState(pub.Publisher.Id));
+            state.Should().Be(ClientReplicator.GetPublisherConnectionState(pub.Publisher.Id));
             state.Value.Should().BeTrue();
 
             Debug.WriteLine("WebServer: stopping.");
@@ -98,10 +98,10 @@ namespace Stl.Fusion.Tests
             await rep.RequestUpdateAsync().AsAsyncFunc()
                 .Should().ThrowAsync<Exception>();
             Debug.WriteLine("6");
-            state.Should().Be(Replicator.GetPublisherConnectionState(pub.Publisher.Id));
+            state.Should().Be(ClientReplicator.GetPublisherConnectionState(pub.Publisher.Id));
             await state.Computed.UpdateAsync(false);
             Debug.WriteLine("7");
-            state.Should().Be(Replicator.GetPublisherConnectionState(pub.Publisher.Id));
+            state.Should().Be(ClientReplicator.GetPublisherConnectionState(pub.Publisher.Id));
             state.Error.Should().BeAssignableTo<Exception>();
 
             // Second try -- should fail w/ WebSocketException

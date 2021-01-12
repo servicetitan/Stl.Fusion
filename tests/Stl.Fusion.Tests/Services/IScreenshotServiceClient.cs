@@ -5,7 +5,7 @@ using Stl.Fusion.Client;
 
 namespace Stl.Fusion.Tests.Services
 {
-    [RestEaseReplicaService]
+    [RestEaseReplicaService(Scope = ServiceScope.ClientServices)]
     [BasePath("screenshot")]
     public interface IScreenshotServiceClient
     {

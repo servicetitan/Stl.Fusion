@@ -34,7 +34,7 @@ namespace Stl.Fusion.Tests.Services
         Task<Screenshot> GetScreenshotAsync(int width, CancellationToken cancellationToken = default);
     }
 
-    [ComputeService(typeof(IScreenshotService))]
+    [ComputeService(typeof(IScreenshotService), Scope = ServiceScope.Services)]
     public class ScreenshotService : IScreenshotService
     {
         private readonly ImageCodecInfo _jpegEncoder;

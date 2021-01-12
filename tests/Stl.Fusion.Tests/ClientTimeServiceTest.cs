@@ -21,8 +21,8 @@ namespace Stl.Fusion.Tests
             var epsilon = TimeSpan.FromSeconds(0.5);
 
             await using var serving = await WebSocketHost.ServeAsync();
-            var client = Services.GetRequiredService<IClientTimeService>();
-            var cTime = await Computed.CaptureAsync(_ => client.GetTimeAsync());
+            var client = ClientServices.GetRequiredService<IClientTimeService>();
+            var cTime = await Computed.CaptureAsync(_ => client.GetTimeAsync(default));
 
             cTime.Options.AutoInvalidateTime.Should().Be(ComputedOptions.Default.AutoInvalidateTime);
             if (!cTime.IsConsistent()) {
@@ -46,7 +46,7 @@ namespace Stl.Fusion.Tests
                 epsilon *= 2;
 
             await using var serving = await WebSocketHost.ServeAsync();
-            var service = Services.GetRequiredService<IClientTimeService>();
+            var service = ClientServices.GetRequiredService<IClientTimeService>();
 
             for (int i = 0; i < 20; i++) {
                 var time = await service.GetTimeAsync();
@@ -59,7 +59,7 @@ namespace Stl.Fusion.Tests
         public async Task TestFormattedTime()
         {
             await using var serving = await WebSocketHost.ServeAsync();
-            var service = Services.GetRequiredService<IClientTimeService>();
+            var service = ClientServices.GetRequiredService<IClientTimeService>();
 
             (await service.GetFormattedTimeAsync("")).Should().Be("");
             (await service.GetFormattedTimeAsync("null")).Should().Be("");

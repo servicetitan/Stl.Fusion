@@ -73,6 +73,6 @@ namespace Stl.Fusion.Tests.Services
         }
     }
 
-    [ComputeService(typeof(IKeyValueService<string>))]
+    [ComputeService(typeof(IKeyValueService<string>), Scope = ServiceScope.Services)]
     public class StringKeyValueService : KeyValueService<string> { }
 }

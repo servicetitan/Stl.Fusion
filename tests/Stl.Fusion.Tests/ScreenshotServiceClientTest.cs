@@ -25,7 +25,7 @@ namespace Stl.Fusion.Tests
             var epsilon = TimeSpan.FromSeconds(0.5);
 
             await using var serving = await WebSocketHost.ServeAsync();
-            var service = Services.GetRequiredService<IScreenshotServiceClient>();
+            var service = ClientServices.GetRequiredService<IScreenshotServiceClient>();
 
             ScreenshotController.CallCount = 0;
             for (int i = 0; i < 20; i++) {

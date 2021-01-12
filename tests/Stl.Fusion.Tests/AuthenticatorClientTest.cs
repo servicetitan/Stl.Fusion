@@ -18,8 +18,8 @@ namespace Stl.Fusion.Tests
         {
             await using var serving = await WebSocketHost.ServeAsync();
             var authServer = WebSocketHost.Services.GetRequiredService<IServerSideAuthService>();
-            var authClient = Services.GetRequiredService<IAuthService>();
-            var sessionFactory = Services.GetRequiredService<ISessionFactory>();
+            var authClient = ClientServices.GetRequiredService<IAuthService>();
+            var sessionFactory = ClientServices.GetRequiredService<ISessionFactory>();
             var sessionA = sessionFactory.CreateSession();
             var sessionB = sessionFactory.CreateSession();
             var alice = new User("Local", "alice", "Alice");

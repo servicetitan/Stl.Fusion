@@ -8,7 +8,9 @@ namespace Stl.Fusion.Tests.Services
 {
     public interface IKeyValueServiceClient<T> : IKeyValueService<T> { }
 
-    [RestEaseReplicaService(typeof(IKeyValueServiceClient<string>), IsCommandService = false)]
+    [RestEaseReplicaService(typeof(IKeyValueServiceClient<string>), Scope = ServiceScope.ClientServices)]
+    [RestEaseReplicaService(typeof(IKeyValueServiceClient<string>),
+        IsCommandService = false, Scope = ServiceScope.Services)] // Just to ensure IsCommandService works
     [BasePath("stringKeyValue")]
     public interface IStringKeyValueClient
     {

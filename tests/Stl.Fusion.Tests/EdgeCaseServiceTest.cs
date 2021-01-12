@@ -37,8 +37,8 @@ namespace Stl.Fusion.Tests
         public async Task TestClient()
         {
             await using var serving = await WebSocketHost.ServeAsync();
-            var client = Services.GetRequiredService<IEdgeCaseClient>();
-            var tfv = Services.GetTypeViewFactory<IEdgeCaseService>();
+            var client = ClientServices.GetRequiredService<IEdgeCaseClient>();
+            var tfv = ClientServices.GetTypeViewFactory<IEdgeCaseService>();
             var service = tfv.CreateView(client);
             await ActualTest(service);
         }
@@ -47,8 +47,8 @@ namespace Stl.Fusion.Tests
         public async Task TestRewriteClient()
         {
             await using var serving = await WebSocketHost.ServeAsync();
-            var tfv = Services.GetTypeViewFactory<IEdgeCaseService>();
-            var client = Services.GetRequiredService<IEdgeCaseRewriteClient>();
+            var client = ClientServices.GetRequiredService<IEdgeCaseRewriteClient>();
+            var tfv = ClientServices.GetTypeViewFactory<IEdgeCaseService>();
             var service = tfv.CreateView(client);
 
             // ReSharper disable once SuspiciousTypeConversion.Global
@@ -58,7 +58,7 @@ namespace Stl.Fusion.Tests
 
             // This part tests that proxy builder generates
             // a different type for each combination of <TView, TImplementation>
-            var otherClient = Services.GetRequiredService<IEdgeCaseClient>();
+            var otherClient = ClientServices.GetRequiredService<IEdgeCaseClient>();
             var otherService = tfv.CreateView(otherClient);
             service.GetType().Should().NotBeSameAs(otherService.GetType());
 
