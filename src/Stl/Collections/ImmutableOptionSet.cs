@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Threading;
 using Newtonsoft.Json;
 using Stl.Reflection;
 using Stl.Text;
@@ -26,6 +25,9 @@ namespace Stl.Collections
         public object? GetService(Type serviceType)
             => this[serviceType];
 
+        public T? TryGet<T>()
+            => (T?) this[typeof(T)]!;
+
         public T Get<T>()
         {
             var value = this[typeof(T)];
@@ -33,9 +35,6 @@ namespace Stl.Collections
                 throw new KeyNotFoundException();
             return (T) value;
         }
-
-        public T? TryGet<T>()
-            => (T?) this[typeof(T)]!;
 
         public ImmutableOptionSet Set(Symbol key, object? value)
             => new(value != null ? Items.SetItem(key, value) : Items.Remove(key));

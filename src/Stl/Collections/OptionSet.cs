@@ -46,6 +46,9 @@ namespace Stl.Collections
         public object? GetService(Type serviceType)
             => this[serviceType];
 
+        public T? TryGet<T>()
+            => (T?) this[typeof(T)]!;
+
         public T Get<T>()
         {
             var value = this[typeof(T)];
@@ -53,9 +56,6 @@ namespace Stl.Collections
                 throw new KeyNotFoundException();
             return (T) value;
         }
-
-        public T? TryGet<T>()
-            => (T?) this[typeof(T)]!;
 
         // ReSharper disable once HeapView.PossibleBoxingAllocation
         public void Set<T>(T value) => this[typeof(T)] = value;
