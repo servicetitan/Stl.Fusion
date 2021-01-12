@@ -55,13 +55,8 @@ namespace Stl.Collections
             return (T) value;
         }
 
-        public Option<T> TryGet<T>()
-        {
-            var value = this[typeof(T)];
-            if (value == null)
-                return Option<T>.None;
-            return Option<T>.Some((T) value);
-        }
+        public T? TryGet<T>()
+            => (T?) this[typeof(T)]!;
 
         // ReSharper disable once HeapView.PossibleBoxingAllocation
         public void Set<T>(T value) => this[typeof(T)] = value;

@@ -8,6 +8,6 @@ namespace Stl.Tests.CommandR.Services
         public DbSet<DbOperation> Operations { get; protected set; } = null!;
         public DbSet<User> Users { get; protected set; } = null!;
 
-        public TestDbContext(DbContextOptions options) : base(options) { }
+        public TestDbContext(DbContextOptions<TestDbContext> options) : base(options) { }
     }
 }

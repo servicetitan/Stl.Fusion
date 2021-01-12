@@ -30,7 +30,7 @@ namespace Stl.Tests.Collections
 
             nvs.Remove<string>();
             nvs = nvs.PassThroughAllSerializers();
-            nvs.TryGet<string>().Should().Be(Option<string>.None);
+            nvs.TryGet<string>().Should().Be(null);
             Assert.Throws<KeyNotFoundException>(() => {
                 nvs.Get<string>();
             });

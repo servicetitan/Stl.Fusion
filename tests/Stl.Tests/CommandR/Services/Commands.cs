@@ -21,7 +21,7 @@ namespace Stl.Tests.CommandR.Services
         public double[] Arguments { get; set; } = Array.Empty<double>();
     }
 
-    public class RecAddUsersCommand : ICommand<Unit>, IDbWriter<TestDbContext>
+    public class RecAddUsersCommand : ICommand<Unit>
     {
         public User[] Users { get; set; } = Array.Empty<User>();
     }

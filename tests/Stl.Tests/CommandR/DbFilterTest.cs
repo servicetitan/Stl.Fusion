@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.CommandR;
 using Stl.Fusion.EntityFramework;
@@ -28,11 +29,10 @@ namespace Stl.Tests.CommandR
             }};
             await services.Commander().CallAsync(command);
 
-            var tx = services.GetRequiredService<IDbTransactionManager<TestDbContext>>();
-            await tx.ReadOnlyAsync(async dbContext => {
-                (await dbContext.Users.CountAsync()).Should().Be(2);
-                (await dbContext.Operations.CountAsync()).Should().Be(1);
-            });
+            var f = services.GetRequiredService<IDbContextFactory<TestDbContext>>();
+            await using var dbContext = f.CreateDbContext().ReadWrite(false);
+            (await dbContext.Users.AsQueryable().CountAsync()).Should().Be(2);
+            (await dbContext.Operations.AsQueryable().CountAsync()).Should().Be(1);
         }
 
         [Fact]
@@ -48,11 +48,11 @@ namespace Stl.Tests.CommandR
                 await services.Commander().CallAsync(command);
             });
 
-            var tx = services.GetRequiredService<IDbTransactionManager<TestDbContext>>();
-            await tx.ReadOnlyAsync(async dbContext => {
-                (await dbContext.Users.CountAsync()).Should().Be(0);
-                (await dbContext.Operations.CountAsync()).Should().Be(0);
-            });
+            var tx = services.GetRequiredService<IDbOperationLogger<TestDbContext>>();
+            var f = services.GetRequiredService<IDbContextFactory<TestDbContext>>();
+            await using var dbContext = f.CreateDbContext().ReadWrite(false);
+            (await dbContext.Users.AsQueryable().CountAsync()).Should().Be(0);
+            (await dbContext.Operations.AsQueryable().CountAsync()).Should().Be(0);
         }
     }
 }

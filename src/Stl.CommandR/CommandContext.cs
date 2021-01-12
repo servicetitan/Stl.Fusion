@@ -17,7 +17,6 @@ namespace Stl.CommandR
         public static CommandContext? Current => CurrentLocal.Value;
 
         private bool _isDisposed;
-        private NamedValueSet? _items;
         protected CommandContext? PreviousContext { get; }
         protected internal IServiceScope ServiceScope { get; init; } = null!;
 
@@ -29,7 +28,7 @@ namespace Stl.CommandR
         public CommandContext OutermostContext { get; protected init; } = null!;
         public CommandExecutionState ExecutionState { get; set; }
         public IServiceProvider Services => ServiceScope.ServiceProvider;
-        public NamedValueSet Items => _items ??= new NamedValueSet();
+        public NamedValueSet Items { get; protected init; } = null!;
 
         // Static methods
 
@@ -143,11 +142,13 @@ namespace Stl.CommandR
                 OuterContext = null;
                 OutermostContext = this;
                 ServiceScope = Commander.Services.CreateScope();
+                Items = new NamedValueSet();
             }
             else {
                 OuterContext = PreviousContext;
                 OutermostContext = PreviousContext!.OutermostContext;
                 ServiceScope = OutermostContext.ServiceScope;
+                Items = OutermostContext.Items;
             }
             CurrentLocal.Value = this;
         }

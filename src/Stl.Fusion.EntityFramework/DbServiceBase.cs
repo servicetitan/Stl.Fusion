@@ -1,9 +1,11 @@
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Stl.Fusion.EntityFramework;
+using Stl.CommandR;
 using Stl.Time;
 
 namespace Stl.Fusion.EntityFramework
@@ -13,7 +15,6 @@ namespace Stl.Fusion.EntityFramework
     {
         protected IServiceProvider Services { get; }
         protected IDbContextFactory<TDbContext> DbContextFactory { get; }
-        protected IDbTransactionManager<TDbContext> Tx { get; }
         protected IMomentClock Clock { get; }
         protected ILogger Log { get; }
 
@@ -21,17 +22,22 @@ namespace Stl.Fusion.EntityFramework
         {
             Services = services;
             DbContextFactory = services.GetRequiredService<IDbContextFactory<TDbContext>>();
-            Tx = services.GetRequiredService<IDbTransactionManager<TDbContext>>();
             Clock = services.GetService<IMomentClock>() ?? SystemClock.Instance;
             var loggerFactory = services.GetService<ILoggerFactory>();
             Log = loggerFactory?.CreateLogger(GetType()) ?? NullLogger.Instance;
         }
 
-        protected virtual TDbContext CreateDbContext(DbAccessMode accessMode = DbAccessMode.ReadOnly)
+        protected TDbContext CreateDbContext()
+            => DbContextFactory.CreateDbContext().ReadWrite(false);
+
+        protected Task<TDbContext> GetCommandDbContextAsync(CancellationToken cancellationToken = default)
         {
-            var dbContext = DbContextFactory.CreateDbContext();
-            dbContext.SetAccessMode(accessMode);
-            return dbContext;
+            var commandContext = CommandContext.GetCurrent();
+            var tx = commandContext.Items.Get<IDbTransactionScope<TDbContext>>();
+            return tx.GetDbContextAsync(cancellationToken);
         }
+
+        protected IDbTransactionScope<TDbContext> CreateTransaction()
+            => Services.GetRequiredService<IDbTransactionScope<TDbContext>>();
     }
 }

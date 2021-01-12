@@ -68,7 +68,7 @@ namespace Stl.Fusion.EntityFramework
             var entities = await Task.WhenAll(tasks).ConfigureAwait(false);
             var result = new Dictionary<TKey, TEntity>();
             foreach (var entity in entities)
-                if (entity != null)
+                if (entity != null!)
                     result.Add(KeyExtractor.Invoke(entity), entity);
             return result;
         }

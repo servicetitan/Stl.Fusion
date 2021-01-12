@@ -6,11 +6,11 @@ namespace Stl.Fusion.EntityFramework
 {
     public static class ServiceCollectionEx
     {
-        public static DbContextServiceBuilder<TDbContext> AddDbContextServices<TDbContext>(this IServiceCollection services)
+        public static DbContextBuilder<TDbContext> AddDbContextServices<TDbContext>(this IServiceCollection services)
             where TDbContext : DbContext
             => new(services);
 
-        public static IServiceCollection AddDbContextServices<TDbContext>(this IServiceCollection services, Action<DbContextServiceBuilder<TDbContext>> configureDbContext)
+        public static IServiceCollection AddDbContextServices<TDbContext>(this IServiceCollection services, Action<DbContextBuilder<TDbContext>> configureDbContext)
             where TDbContext : DbContext
         {
             var dbContextServices = services.AddDbContextServices<TDbContext>();

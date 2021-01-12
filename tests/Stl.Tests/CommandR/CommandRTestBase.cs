@@ -70,12 +70,10 @@ namespace Stl.Tests.CommandR
                     builder.UseSqlite($"Data Source={dbPath}", sqlite => { });
                 }, 256);
                 services.AddDbContextServices<TestDbContext>(dbServices => {
-                    dbServices.AddDbContext();
-                    dbServices.AddTransactionManager();
                     dbServices.AddEntityResolver<string, DbOperation>();
                     dbServices.AddEntityResolver<string, User>();
                 });
-                commandR.AddDbWriterHandler<TestDbContext>();
+                commandR.AddTransactionScopeHandler<TestDbContext>();
             }
 
             // Just to test [Module] attribute

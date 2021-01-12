@@ -1,5 +1,6 @@
 using System;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Stl.Fusion.EntityFramework.Internal;
 
 namespace Stl.Fusion.EntityFramework
@@ -11,11 +12,17 @@ namespace Stl.Fusion.EntityFramework
 
         // ConfigureMode
 
-        public static void SetAccessMode(this DbContext dbContext, DbAccessMode mode)
+        public static TDbContext ReadWrite<TDbContext>(this TDbContext dbContext, bool isReadWrite = true)
+            where TDbContext : DbContext
         {
-            dbContext.EnableChangeTracking(mode == DbAccessMode.ReadWrite);
-            dbContext.EnableSaveChanges(mode == DbAccessMode.ReadWrite);
+            dbContext.EnableChangeTracking(isReadWrite);
+            dbContext.EnableSaveChanges(isReadWrite);
+            return dbContext;
         }
+
+        public static TDbContext ReadWrite<TDbContext>(this TDbContext dbContext, bool? isReadWrite)
+            where TDbContext : DbContext
+            => isReadWrite.HasValue ? dbContext.ReadWrite(isReadWrite.GetValueOrDefault()) : dbContext;
 
         // (Enable|Disable)ChangeTracking
 

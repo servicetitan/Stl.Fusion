@@ -20,15 +20,16 @@ namespace Stl.Tests.CommandR.Services
         private async Task RecAddUsersAsync(
             RecAddUsersCommand command,
             CommandContext context,
-            TestDbContext dbContext,
             CancellationToken cancellationToken)
         {
             CommandContext.GetCurrent().Should().Be(context);
             context.ExecutionState.Handlers.Count.Should().Be(3);
 
-            var scopedDbContext = context.Services.GetRequiredService<TestDbContext>();
-            scopedDbContext.Should().NotBeNull();
-            scopedDbContext.Should().Be(dbContext);
+            var dbContext = await GetCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
+            var anotherDbContext = await GetCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
+            dbContext.Should().NotBeNull();
+            anotherDbContext.Should().NotBeNull();
+            anotherDbContext.Should().NotBe(dbContext);
 
             Log.LogInformation($"User count: {command.Users.Length}");
             if (command.Users.Length == 0)
