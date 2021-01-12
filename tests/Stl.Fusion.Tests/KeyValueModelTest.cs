@@ -90,7 +90,6 @@ namespace Stl.Fusion.Tests
             await ClientServices.Commander().CallAsync(new IKeyValueService<string>.SetCommand("", "2"));
             await Task.Delay(100); // Remote invalidation takes some time
             (await kvc.GetAsync("")).Should().Be("2");
-
         }
 
         [Fact]
