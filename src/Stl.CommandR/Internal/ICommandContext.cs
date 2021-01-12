@@ -17,7 +17,7 @@ namespace Stl.CommandR.Internal
         CommandContext? OuterContext { get; }
         CommandContext OutermostContext { get; }
         CommandExecutionState ExecutionState { get; set; }
-        NamedValueSet Items { get; }
+        OptionSet Items { get; }
 
         CommandContext<TResult> Cast<TResult>() => (CommandContext<TResult>) this;
         Task InvokeRemainingHandlersAsync(CancellationToken cancellationToken = default);

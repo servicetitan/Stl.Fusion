@@ -28,7 +28,7 @@ namespace Stl.CommandR
         public CommandContext OutermostContext { get; protected init; } = null!;
         public CommandExecutionState ExecutionState { get; set; }
         public IServiceProvider Services => ServiceScope.ServiceProvider;
-        public NamedValueSet Items { get; protected init; } = null!;
+        public OptionSet Items { get; protected init; } = null!;
 
         // Static methods
 
@@ -142,7 +142,7 @@ namespace Stl.CommandR
                 OuterContext = null;
                 OutermostContext = this;
                 ServiceScope = Commander.Services.CreateScope();
-                Items = new NamedValueSet();
+                Items = new OptionSet();
             }
             else {
                 OuterContext = PreviousContext;

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using System.Threading;
 using Newtonsoft.Json;
 using Stl.Reflection;
@@ -9,7 +8,7 @@ using Stl.Text;
 
 namespace Stl.Collections
 {
-    public class NamedValueSet : IServiceProvider
+    public class OptionSet : IServiceProvider
     {
         private volatile ImmutableDictionary<Symbol, object> _items;
 
@@ -19,15 +18,15 @@ namespace Stl.Collections
             get => _items.TryGetValue(key, out var v) ? v : null;
             set {
                 var spinWait = new SpinWait();
-                var properties = _items;
+                var items = _items;
                 for (;;) {
-                    var newProperties = value != null
-                        ? properties.SetItem(key, value)
-                        : properties.Remove(key);
-                    var oldProperties = Interlocked.CompareExchange(ref _items, newProperties, properties);
-                    if (oldProperties == properties)
+                    var newItems = value != null
+                        ? items.SetItem(key, value)
+                        : items.Remove(key);
+                    var oldItems = Interlocked.CompareExchange(ref _items, newItems, items);
+                    if (oldItems == items)
                         return;
-                    properties = oldProperties;
+                    items = oldItems;
                     spinWait.SpinOnce();
                 }
             }
@@ -38,10 +37,10 @@ namespace Stl.Collections
             set => this[type.ToSymbol()] = value;
         }
 
-        public NamedValueSet()
+        public OptionSet()
             => _items = ImmutableDictionary<Symbol, object>.Empty;
         [JsonConstructor]
-        public NamedValueSet(ImmutableDictionary<Symbol, object>? items)
+        public OptionSet(ImmutableDictionary<Symbol, object>? items)
             => _items = items ?? ImmutableDictionary<Symbol, object>.Empty;
 
         public object? GetService(Type serviceType)
@@ -65,13 +64,13 @@ namespace Stl.Collections
         public void Clear()
         {
             var spinWait = new SpinWait();
-            var properties = _items;
+            var items = _items;
             for (;;) {
-                var oldProperties = Interlocked.CompareExchange(
-                    ref _items, ImmutableDictionary<Symbol, object>.Empty, properties);
-                if (oldProperties == properties || oldProperties.Count == 0)
+                var oldItems = Interlocked.CompareExchange(
+                    ref _items, ImmutableDictionary<Symbol, object>.Empty, items);
+                if (oldItems == items || oldItems.Count == 0)
                     return;
-                properties = oldProperties;
+                items = oldItems;
                 spinWait.SpinOnce();
             }
         }
