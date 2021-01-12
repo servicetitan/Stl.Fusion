@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Stl.EntityFramework;
+using Stl.Fusion.EntityFramework;
 
 namespace Stl.Tests.CommandR.Services
 {

@@ -2,10 +2,10 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Stl.CommandR;
 using Stl.CommandR.Configuration;
-using Stl.EntityFramework;
 
-namespace Stl.CommandR.Handlers
+namespace Stl.Fusion.EntityFramework
 {
     public class DbWriterHandler<TDbContext> : DbServiceBase<TDbContext>, ICommandHandler<IDbWriter<TDbContext>>
         where TDbContext : DbContext
@@ -17,13 +17,13 @@ namespace Stl.CommandR.Handlers
         {
             var dbContextOpt = context.Items.TryGet<TDbContext>();
             if (dbContextOpt.HasValue) {
-                await context.InvokeNextHandlerAsync(cancellationToken).ConfigureAwait(false);
+                await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
                 return;
             }
 
             await Tx.ReadWriteAsync(command, async dbContext => {
                 context.Items.Set(dbContext);
-                await context.InvokeNextHandlerAsync(cancellationToken).ConfigureAwait(false);
+                await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
             }, cancellationToken).ConfigureAwait(false);
         }
     }

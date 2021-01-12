@@ -1,25 +1,25 @@
 using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Async;
 using Stl.Collections;
-using Stl.CommandR.Configuration;
 using Stl.Reflection;
 using Stl.CommandR.Internal;
+using Stl.DependencyInjection;
 
 namespace Stl.CommandR
 {
-    public abstract class CommandContext : ICommandContext, IServiceProvider, IDisposable
+    public abstract class CommandContext : ICommandContext, IHasServices, IDisposable
     {
         protected static readonly AsyncLocal<CommandContext?> CurrentLocal = new();
         public static CommandContext? Current => CurrentLocal.Value;
 
-        private volatile int _isDisposed;
+        private bool _isDisposed;
         private NamedValueSet? _items;
         protected CommandContext? PreviousContext { get; }
+        protected internal IServiceScope ServiceScope { get; init; } = null!;
 
         public ICommander Commander { get; }
         public abstract ICommand UntypedCommand { get; }
@@ -27,10 +27,9 @@ namespace Stl.CommandR
         public abstract Result<object> UntypedResult { get; set; }
         public CommandContext? OuterContext { get; protected init; }
         public CommandContext OutermostContext { get; protected init; } = null!;
-        public IReadOnlyList<CommandHandler> Handlers { get; set; } = ArraySegment<CommandHandler>.Empty;
-        public int NextHandlerIndex { get; set; }
-        public IServiceScope ServiceScope { get; init; } = null!;
-        public NamedValueSet Items => _items ??= ServiceScope.ServiceProvider.GetRequiredService<NamedValueSet>();
+        public CommandExecutionState ExecutionState { get; set; }
+        public IServiceProvider Services => ServiceScope.ServiceProvider;
+        public NamedValueSet Items => _items ??= new NamedValueSet();
 
         // Static methods
 
@@ -72,8 +71,9 @@ namespace Stl.CommandR
 
         public void Dispose()
         {
-            if (0 != Interlocked.CompareExchange(ref _isDisposed, 1, 0))
+            if (_isDisposed)
                 return;
+            _isDisposed = true;
             DisposeInternal();
         }
 
@@ -94,14 +94,7 @@ namespace Stl.CommandR
         public CommandContext<TResult> Cast<TResult>()
             => (CommandContext<TResult>) this;
 
-        public abstract Task InvokeNextHandlerAsync(CancellationToken cancellationToken);
-
-        public virtual object? GetService(Type serviceType)
-        {
-            if (serviceType == typeof(CommandContext) || serviceType == GetType())
-                return this;
-            return Items.GetService(serviceType) ?? ServiceScope.ServiceProvider.GetService(serviceType);
-        }
+        public abstract Task InvokeRemainingHandlersAsync(CancellationToken cancellationToken = default);
 
         // SetXxx & TrySetXxx
 
@@ -159,14 +152,13 @@ namespace Stl.CommandR
             CurrentLocal.Value = this;
         }
 
-        // Instance methods
-
-        public override async Task InvokeNextHandlerAsync(CancellationToken cancellationToken)
+        public override async Task InvokeRemainingHandlersAsync(CancellationToken cancellationToken)
         {
             try {
-                if (NextHandlerIndex >= Handlers.Count)
+                if (ExecutionState.IsFinal)
                     throw Errors.NoFinalHandlerFound(UntypedCommand.GetType());
-                var handler = Handlers[NextHandlerIndex++];
+                var handler = ExecutionState.NextHandler;
+                ExecutionState = ExecutionState.NextExecutionState;
                 var resultTask = handler.InvokeAsync(UntypedCommand, this, cancellationToken);
                 if (resultTask is Task<TResult> typedResultTask) {
                     var result = await typedResultTask.ConfigureAwait(false);

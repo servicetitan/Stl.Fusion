@@ -1,6 +1,6 @@
 using System;
 
-namespace Stl.EntityFramework.Internal
+namespace Stl.Fusion.EntityFramework.Internal
 {
     public static class Errors
     {

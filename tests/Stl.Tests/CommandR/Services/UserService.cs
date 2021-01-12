@@ -1,6 +1,4 @@
 using System;
-using System.Linq;
-using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -9,7 +7,7 @@ using Microsoft.Extensions.Logging;
 using Stl.CommandR;
 using Stl.CommandR.Configuration;
 using Stl.DependencyInjection;
-using Stl.EntityFramework;
+using Stl.Fusion.EntityFramework;
 
 namespace Stl.Tests.CommandR.Services
 {
@@ -22,18 +20,15 @@ namespace Stl.Tests.CommandR.Services
         private async Task RecAddUsersAsync(
             RecAddUsersCommand command,
             CommandContext context,
-            CommandContext<Unit> typedContext,
             TestDbContext dbContext,
             CancellationToken cancellationToken)
         {
             CommandContext.GetCurrent().Should().Be(context);
-            typedContext.Should().Be(context);
-            context.Handlers.Count.Should().Be(3);
+            context.ExecutionState.Handlers.Count.Should().Be(3);
 
-            dbContext.Should().Be(context.GetRequiredService<TestDbContext>());
-            var scopedDbContext = context.ServiceScope.ServiceProvider.GetRequiredService<TestDbContext>();
+            var scopedDbContext = context.Services.GetRequiredService<TestDbContext>();
             scopedDbContext.Should().NotBeNull();
-            scopedDbContext.Should().NotBe(dbContext);
+            scopedDbContext.Should().Be(dbContext);
 
             Log.LogInformation($"User count: {command.Users.Length}");
             if (command.Users.Length == 0)

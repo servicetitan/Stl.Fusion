@@ -3,9 +3,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Stl.Fusion.EntityFramework;
 using Stl.Time;
 
-namespace Stl.EntityFramework
+namespace Stl.Fusion.EntityFramework
 {
     public abstract class DbServiceBase<TDbContext>
         where TDbContext : DbContext

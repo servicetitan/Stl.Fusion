@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
-namespace Stl.EntityFramework
+namespace Stl.Fusion.EntityFramework
 {
     public readonly struct DbContextServiceBuilder<TDbContext>
         where TDbContext : DbContext

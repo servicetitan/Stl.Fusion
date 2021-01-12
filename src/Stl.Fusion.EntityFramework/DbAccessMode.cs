@@ -1,4 +1,4 @@
-namespace Stl.EntityFramework
+namespace Stl.Fusion.EntityFramework
 {
     public enum DbAccessMode
     {

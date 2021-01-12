@@ -19,7 +19,7 @@ namespace Stl.Tests.CommandR.Services
             LogCommand command, CommandContext context,
             CancellationToken cancellationToken)
         {
-            var handler = context.Handlers[^1];
+            var handler = context.ExecutionState.Handlers[^1];
             handler.GetType().Should().Be(typeof(InterfaceCommandHandler<LogCommand>));
             handler.Order.Should().Be(0);
 

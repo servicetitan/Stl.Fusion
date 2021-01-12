@@ -2,7 +2,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Stl.EntityFramework
+namespace Stl.Fusion.EntityFramework
 {
     public static class ServiceCollectionEx
     {

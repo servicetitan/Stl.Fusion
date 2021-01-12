@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Stl.Serialization;
 
-namespace Stl.EntityFramework
+namespace Stl.Fusion.EntityFramework
 {
     public interface IDbOperation
     {

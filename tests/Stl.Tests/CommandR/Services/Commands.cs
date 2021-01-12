@@ -1,7 +1,7 @@
 using System;
 using System.Reactive;
 using Stl.CommandR;
-using Stl.CommandR.Handlers;
+using Stl.Fusion.EntityFramework;
 
 namespace Stl.Tests.CommandR.Services
 {

@@ -51,11 +51,12 @@ namespace Stl.CommandR.Internal
         {
             using var context = contextFactory.Invoke();
             try {
-                context.Handlers = HandlerResolver.GetCommandHandlers(command.GetType());
-                if (context.Handlers.Count == 0)
+                var handlers = HandlerResolver.GetCommandHandlers(command.GetType());
+                context.ExecutionState = new CommandExecutionState(handlers);
+                if (handlers.Count == 0)
                     await OnUnhandledCommandAsync(command, context, cancellationToken).ConfigureAwait(false);
                 else
-                    await context.InvokeNextHandlerAsync(cancellationToken).ConfigureAwait(false);
+                    await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException) {
                 context.TrySetCancelled(

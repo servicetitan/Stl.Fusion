@@ -72,10 +72,10 @@ namespace Stl.Fusion.Tests
             var kv = Services.GetRequiredService<IKeyValueService<string>>();
             (await kv.GetAsync("")).Should().BeNull();
 
-            kv.SetCommandAsync(new IKeyValueService<string>.SetCommand("", "1"));
+            await kv.SetCommandAsync(new IKeyValueService<string>.SetCommand("", "1"));
             (await kv.GetAsync("")).Should().Be("1");
 
-            Services.Commander().CallAsync(new IKeyValueService<string>.SetCommand("", "2"));
+            await Services.Commander().CallAsync(new IKeyValueService<string>.SetCommand("", "2"));
             (await kv.GetAsync("")).Should().Be("2");
 
             await using var serving = await WebSocketHost.ServeAsync();

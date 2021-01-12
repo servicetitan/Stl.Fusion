@@ -20,7 +20,7 @@ namespace Stl.Tests.CommandR.Services
         {
             Log.LogInformation($"+ {command}");
             try {
-                await context.InvokeNextHandlerAsync(cancellationToken).ConfigureAwait(false);
+                await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
                 await LogResultAsync((dynamic) command);
             }
             catch (Exception e) {

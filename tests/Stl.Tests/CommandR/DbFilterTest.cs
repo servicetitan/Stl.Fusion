@@ -1,11 +1,10 @@
 using System;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.CommandR;
-using Stl.EntityFramework;
+using Stl.Fusion.EntityFramework;
 using Stl.Tests.CommandR.Services;
 using Xunit;
 using Xunit.Abstractions;

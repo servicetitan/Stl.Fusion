@@ -3,10 +3,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Stl.Fusion.EntityFramework;
 using Stl.OS;
 using Stl.Time;
 
-namespace Stl.EntityFramework
+namespace Stl.Fusion.EntityFramework
 {
     public interface IDbTransactionManager<out TDbContext>
         where TDbContext : DbContext

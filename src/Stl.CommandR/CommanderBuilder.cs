@@ -36,7 +36,7 @@ namespace Stl.CommandR
             Services.TryAddSingleton<ICommander, Commander>();
             Services.TryAddSingleton<ICommandHandlerRegistry>(new CommandHandlerRegistry());
             Services.TryAddSingleton<ICommandHandlerResolver, CommandHandlerResolver>();
-            services.TryAddScoped<NamedValueSet>();
+            Services.TryAddTransient(_ => CommandContext.Current!);
 
             // Command services & their dependencies
             Services.TryAddSingleton(_ => CommandServiceProxyGenerator.Default);

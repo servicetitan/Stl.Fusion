@@ -27,7 +27,8 @@ namespace Stl.CommandR.Configuration
             ICommand command, CommandContext context,
             CancellationToken cancellationToken)
         {
-            var service = context.GetRequiredService(ServiceType);
+            var services = context.Services;
+            var service = services.GetRequiredService(ServiceType);
             var parameters = _cachedParameters ??= MethodInfo.GetParameters();
             var arguments = new object[parameters.Length];
             arguments[0] = command;
@@ -36,8 +37,8 @@ namespace Stl.CommandR.Configuration
             for (var i = 1; i < parameters.Length - 1; i++) {
                 var p = parameters[i];
                 var value = p.HasDefaultValue
-                    ? (context.GetService(p.ParameterType) ?? p.DefaultValue!)
-                    : context.GetRequiredService(p.ParameterType);
+                    ? (services.GetService(p.ParameterType) ?? p.DefaultValue!)
+                    : services.GetRequiredService(p.ParameterType);
                 arguments[i] = value;
             }
             try {

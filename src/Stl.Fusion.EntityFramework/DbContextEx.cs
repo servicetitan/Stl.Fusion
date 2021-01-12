@@ -1,8 +1,8 @@
 using System;
 using Microsoft.EntityFrameworkCore;
-using Stl.EntityFramework.Internal;
+using Stl.Fusion.EntityFramework.Internal;
 
-namespace Stl.EntityFramework
+namespace Stl.Fusion.EntityFramework
 {
     public static class DbContextEx
     {

@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Stl.Async;
 using Stl.OS;
 
-namespace Stl.EntityFramework
+namespace Stl.Fusion.EntityFramework
 {
     // This type queues (when needed) & batches calls to TryGetAsync with AsyncBatchProcessor
     // to reduce the rate of underlying DB queries.

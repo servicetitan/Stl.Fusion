@@ -18,7 +18,7 @@ namespace Stl.Tests.CommandR.Services
         protected virtual Task<double> DivAsync(DivCommand command, CancellationToken cancellationToken = default)
         {
             var context = CommandContext.GetCurrent<double>();
-            var handler = context.Handlers[^1];
+            var handler = context.ExecutionState.Handlers[^1];
             handler.GetType().Should().Be(typeof(MethodCommandHandler<DivCommand>));
             handler.Order.Should().Be(2);
 
@@ -34,7 +34,7 @@ namespace Stl.Tests.CommandR.Services
         public virtual async Task<double> RecSumAsync(RecSumCommand command, CancellationToken cancellationToken = default)
         {
             var context = CommandContext.GetCurrent<double>();
-            var handler = context.Handlers[^1];
+            var handler = context.ExecutionState.Handlers[^1];
             handler.GetType().Should().Be(typeof(MethodCommandHandler<RecSumCommand>));
             handler.Order.Should().Be(1);
 
