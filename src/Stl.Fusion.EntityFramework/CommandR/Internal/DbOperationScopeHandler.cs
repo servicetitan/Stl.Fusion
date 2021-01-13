@@ -6,7 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Stl.CommandR;
 using Stl.CommandR.Configuration;
-using Stl.Fusion.CommandR;
 
 namespace Stl.Fusion.EntityFramework.CommandR.Internal
 {
@@ -53,13 +52,8 @@ namespace Stl.Fusion.EntityFramework.CommandR.Internal
                 }
                 throw;
             }
-
-            if (dbOperation != null && DbOperationNotifier != null) {
-                // Instruct InvalidationHandler to skip the invalidation
-                context.Items.Remove<IInvalidate>();
-                // Send the notification
-                DbOperationNotifier.NotifyConfirmedOperation(dbOperation);
-            }
+            if (dbOperation != null)
+                DbOperationNotifier?.NotifyConfirmedOperation(dbOperation);
         }
     }
 }

@@ -1,6 +1,5 @@
 using System;
 using System.Reactive;
-using System.Text.Json.Serialization;
 using Stl.CommandR;
 using Stl.Reflection;
 
@@ -18,14 +17,10 @@ namespace Stl.Fusion.CommandR
         ICommand IInvalidate.UntypedCommand => Command;
     }
 
-    [Serializable]
-    public class Invalidate<TCommand> : IInvalidate<TCommand>
+    public record Invalidate<TCommand>(TCommand Command) : IInvalidate<TCommand>
         where TCommand : ICommand
     {
-        public TCommand Command { get; init; }
-
-        [JsonConstructor]
-        public Invalidate(TCommand command) => Command = command;
+        public Invalidate(ICommand command) : this((TCommand) command) { }
     }
 
     public static class Invalidate
@@ -33,7 +28,7 @@ namespace Stl.Fusion.CommandR
         public static IInvalidate New(ICommand command)
         {
             var tInvalidate = typeof(Invalidate<>).MakeGenericType(command.GetType());
-            return (IInvalidate) tInvalidate.CreateInstance(command);
+            return (IInvalidate) tInvalidate.CreateInstance(command)!;
         }
     }
 }

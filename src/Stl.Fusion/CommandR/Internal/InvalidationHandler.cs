@@ -48,14 +48,13 @@ namespace Stl.Fusion.CommandR.Internal
 
             var invalidate = context.Items.TryGet<IInvalidate>();
             if (invalidate != null)
-                context.Commander.Start(invalidate, true);
+                await context.Commander.RunAsync(invalidate, true, default).ConfigureAwait(false);
         }
 
         [CommandHandler(Order = -1000_001, IsFilter = true)]
         public async Task OnCommandAsync(IInvalidate command, CommandContext context, CancellationToken cancellationToken)
         {
             var skip = !IsEnabled
-                || context.OuterContext != null // Should be top-level command
                 || !InvalidationInfoProvider.RequiresInvalidation(command.UntypedCommand)
                 || Computed.IsInvalidating();
             if (skip) {
