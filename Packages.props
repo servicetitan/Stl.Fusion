@@ -80,7 +80,7 @@
     <PackageReference Update="System.Net.WebSockets.Client" Version="4.3.2" />
     <PackageReference Update="System.Reactive" Version="5.0.0" />
     <PackageReference Update="System.Runtime.Loader" Version="4.3.0" />
-    <PackageReference Update="System.Text.Json" Version="5.0.0" />
+    <PackageReference Update="System.Text.Json" Version="5.0.1" />
     <PackageReference Update="System.Threading.Channels" Version="5.0.0" />
     <PackageReference Update="xunit" Version="2.4.1" />
     <PackageReference Update="Xunit.DependencyInjection.Logging" Version="2.1.0" />
