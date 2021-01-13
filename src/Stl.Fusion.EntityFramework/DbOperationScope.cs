@@ -10,7 +10,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Async;
 using Stl.Fusion.EntityFramework.Internal;
+using Stl.Fusion.Operations;
 using Stl.Locking;
+using Stl.Time;
 
 namespace Stl.Fusion.EntityFramework
 {
@@ -20,7 +22,7 @@ namespace Stl.Fusion.EntityFramework
         public bool IsCompleted { get; }
 
         Task<DbContext> GetDbContextAsync(bool isReadWrite = true, CancellationToken cancellationToken = default);
-        Task<IDbOperation?> CommitAsync(object? operation, CancellationToken cancellationToken = default);
+        Task<IOperation?> CommitAsync(object? command, CancellationToken cancellationToken = default);
         Task RollbackAsync();
     }
 
@@ -33,11 +35,14 @@ namespace Stl.Fusion.EntityFramework
     public class DbOperationScope<TDbContext> : AsyncDisposableBase, IDbOperationScope<TDbContext>
         where TDbContext : DbContext
     {
+        protected Moment StartTime { get; }
         protected List<TDbContext> AllDbContexts { get; }
         protected TDbContext? PrimaryDbContext { get; set; }
         protected DbConnection? Connection { get; set; }
         protected IDbContextTransaction? Transaction { get; set; }
         protected IDbContextFactory<TDbContext> DbContextFactory { get; }
+        protected IDbOperationLog<TDbContext> DbOperationLog { get; }
+        protected IMomentClock Clock { get; }
         protected IServiceProvider Services { get; }
         protected ILogger Log { get; }
         protected AsyncLock AsyncLock { get; }
@@ -51,9 +56,12 @@ namespace Stl.Fusion.EntityFramework
             var loggerFactory = services.GetService<ILoggerFactory>();
             Log = loggerFactory?.CreateLogger(GetType()) ?? NullLogger.Instance;
             Services = services;
+            Clock = services.GetService<IMomentClock>() ?? SystemClock.Instance;
             DbContextFactory = services.GetRequiredService<IDbContextFactory<TDbContext>>();
+            DbOperationLog = services.GetRequiredService<IDbOperationLog<TDbContext>>();
             AllDbContexts = new List<TDbContext>();
             AsyncLock = new AsyncLock(ReentryMode.CheckedPass);
+            StartTime = Clock.Now;
         }
 
         protected override async ValueTask DisposeInternalAsync(bool disposing)
@@ -109,7 +117,7 @@ namespace Stl.Fusion.EntityFramework
             return dbContext;
         }
 
-        public virtual async Task<IDbOperation?> CommitAsync(object? operation, CancellationToken cancellationToken = default)
+        public virtual async Task<IOperation?> CommitAsync(object? command, CancellationToken cancellationToken = default)
         {
             using var _ = await AsyncLock.LockAsync(cancellationToken).ConfigureAwait(false);
             if (IsCompleted)
@@ -125,20 +133,21 @@ namespace Stl.Fusion.EntityFramework
                     await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                 }
 
-                if (operation == null) {
+                if (command == null) {
                     await Transaction!.CommitAsync(cancellationToken).ConfigureAwait(false);
                     return null;
                 }
                 else {
-                    var opManager = Services.GetRequiredService<IDbOperationLogger<TDbContext>>();
                     var dbContext = PrimaryDbContext!.ReadWrite();
                     dbContext.ChangeTracker.Clear();
-                    var dbOperation = await opManager.AddAsync(dbContext, operation, cancellationToken).ConfigureAwait(false);
+                    var operation = await DbOperationLog.AddAsync(dbContext,
+                        command, StartTime, Clock.Now,
+                        cancellationToken).ConfigureAwait(false);
                     await Transaction!.CommitAsync(cancellationToken).ConfigureAwait(false);
-                    dbOperation = await opManager.TryGetAsync(dbContext, dbOperation.Id, cancellationToken);
-                    if (dbOperation == null)
+                    operation = await DbOperationLog.TryGetAsync(dbContext, operation.Id, cancellationToken);
+                    if (operation == null)
                         throw Errors.OperationCommitFailed();
-                    return dbOperation;
+                    return operation;
                 }
             }
             finally {

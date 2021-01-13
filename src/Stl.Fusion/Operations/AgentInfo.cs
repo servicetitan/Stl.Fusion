@@ -1,7 +1,7 @@
 using Stl.OS;
 using Stl.Text;
 
-namespace Stl.Fusion.EntityFramework
+namespace Stl.Fusion.Operations
 {
     public record AgentInfo(Symbol Id)
     {

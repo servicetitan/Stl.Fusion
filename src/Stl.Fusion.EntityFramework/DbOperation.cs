@@ -3,39 +3,44 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using Stl.Fusion.Operations;
 using Stl.Serialization;
+using Stl.Time;
 
 namespace Stl.Fusion.EntityFramework
 {
-    public interface IDbOperation
-    {
-        string Id { get; set; }
-        DateTime StartTime { get; set; }
-        string AgentId { get; set; }
-        object Operation { get; set; }
-    }
-
     [Table("_Operations")]
     [Index(nameof(StartTime), Name = "IX_StartTime")]
-    public class DbOperation : IDbOperation
+    [Index(nameof(CommitTime), Name = "IX_CommitTime")]
+    public class DbOperation : IOperation
     {
-        private readonly JsonSerialized<object> _operation = new();
+        private readonly JsonSerialized<object?> _command = new();
+        private DateTime _startTime;
+        private DateTime _commitTime;
 
         [Key]
         public string Id { get; set; } = "";
-        public DateTime StartTime { get; set; }
         public string AgentId { get; set; } = "";
 
-        public string OperationJson {
-            get => _operation.SerializedValue;
-            set => _operation.SerializedValue = value;
+        public DateTime StartTime {
+            get => _startTime;
+            set => _startTime = value.DefaultKind(DateTimeKind.Utc);
         }
 
-        [JsonIgnore]
-        [NotMapped]
-        public object Operation {
-            get => _operation.Value;
-            set => _operation.Value = value;
+        public DateTime CommitTime {
+            get => _commitTime;
+            set => _commitTime = value.DefaultKind(DateTimeKind.Utc);
+        }
+
+        public string CommandJson {
+            get => _command.SerializedValue;
+            set => _command.SerializedValue = value;
+        }
+
+        [NotMapped, JsonIgnore]
+        public object? Command {
+            get => _command.Value;
+            set => _command.Value = value;
         }
     }
 }

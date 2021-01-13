@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Stl.CommandR;
 using Stl.CommandR.Configuration;
 
-namespace Stl.Fusion.CommandR.Internal
+namespace Stl.Fusion.Operations.Internal
 {
     public class InvalidationHandler : ICommandHandler<ICommand>, ICommandHandler<IInvalidate>
     {
@@ -29,7 +29,7 @@ namespace Stl.Fusion.CommandR.Internal
             InvalidationInfoProvider = invalidationInfoProvider;
         }
 
-        [CommandHandler(Order = -1000_000, IsFilter = true)]
+        [CommandHandler(Order = -10_000, IsFilter = true)]
         public async Task OnCommandAsync(ICommand command, CommandContext context, CancellationToken cancellationToken)
         {
             var skip = !IsEnabled
@@ -51,7 +51,7 @@ namespace Stl.Fusion.CommandR.Internal
                 await context.Commander.RunAsync(invalidate, true, default).ConfigureAwait(false);
         }
 
-        [CommandHandler(Order = -1000_001, IsFilter = true)]
+        [CommandHandler(Order = -10_001, IsFilter = true)]
         public async Task OnCommandAsync(IInvalidate command, CommandContext context, CancellationToken cancellationToken)
         {
             var skip = !IsEnabled

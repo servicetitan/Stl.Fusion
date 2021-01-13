@@ -9,7 +9,6 @@ using Stl.CommandR;
 using Stl.DependencyInjection;
 using Stl.Extensibility;
 using Stl.Fusion.EntityFramework;
-using Stl.Fusion.EntityFramework.CommandR;
 using Stl.IO;
 using Stl.Testing;
 using Stl.Testing.Internal;
@@ -72,10 +71,8 @@ namespace Stl.Tests.CommandR
                 }, 256);
                 services.AddDbContextServices<TestDbContext>(dbServices => {
                     dbServices.AddOperations();
-                    dbServices.AddEntityResolver<string, DbOperation>();
                     dbServices.AddEntityResolver<string, User>();
                 });
-                commandR.AddTransactionScopeHandler<TestDbContext>();
             }
 
             // Just to test [Module] attribute

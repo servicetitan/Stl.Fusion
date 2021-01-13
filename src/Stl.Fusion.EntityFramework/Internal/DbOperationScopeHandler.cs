@@ -6,28 +6,35 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Stl.CommandR;
 using Stl.CommandR.Configuration;
+using Stl.Fusion.Operations;
 
-namespace Stl.Fusion.EntityFramework.CommandR.Internal
+namespace Stl.Fusion.EntityFramework.Internal
 {
     public class DbOperationScopeHandler<TDbContext> : DbServiceBase<TDbContext>, ICommandHandler<ICommand>
         where TDbContext : DbContext
     {
-        protected IDbOperationNotifier<TDbContext>? DbOperationNotifier { get; }
+        protected IOperationCompletionNotifier? OperationCompletionNotifier { get; }
 
         public DbOperationScopeHandler(
-            IDbOperationNotifier<TDbContext>? dbOperationNotifier,
+            IOperationCompletionNotifier? operationCompletionNotifier,
             IServiceProvider services)
             : base(services)
-            => DbOperationNotifier = dbOperationNotifier;
+            => OperationCompletionNotifier = operationCompletionNotifier;
 
         [CommandHandler(Order = -1000, IsFilter = true)]
         public async Task OnCommandAsync(ICommand command, CommandContext context, CancellationToken cancellationToken)
         {
-            var existingScope = context.Items.TryGet<IDbOperationScope<TDbContext>>();
-            if (existingScope != null) {
+            var skip = context.OuterContext != null // Should be top-level command
+                || command is IInvalidate // Second handler here will take care of it
+                || Computed.IsInvalidating();
+            if (skip) {
                 await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
                 return;
             }
+
+            var tScope = typeof(IDbOperationScope<TDbContext>);
+            if (context.Items[tScope] != null) // Safety check
+                throw Stl.Internal.Errors.InternalError($"'{tScope}' scope is already provided. Duplicate handler?");
 
             var logEnabled = Log.IsEnabled(LogLevel.Debug);
             await using var scope = Services.GetRequiredService<IDbOperationScope<TDbContext>>();
@@ -35,10 +42,10 @@ namespace Stl.Fusion.EntityFramework.CommandR.Internal
             if (logEnabled)
                 Log.LogDebug("+ Operation started: {0}", command);
 
-            IDbOperation? dbOperation = null;
+            IOperation? operation = null;
             try {
                 await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
-                dbOperation = await scope.CommitAsync(command, cancellationToken);
+                operation = await scope.CommitAsync(command, cancellationToken);
                 if (logEnabled)
                     Log.LogDebug("- Operation succeeded: {0}", command);
             }
@@ -52,8 +59,8 @@ namespace Stl.Fusion.EntityFramework.CommandR.Internal
                 }
                 throw;
             }
-            if (dbOperation != null)
-                DbOperationNotifier?.NotifyConfirmedOperation(dbOperation);
+            if (operation != null)
+                OperationCompletionNotifier?.NotifyCompleted(operation);
         }
     }
 }

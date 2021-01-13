@@ -3,7 +3,7 @@ using System.Reactive;
 using Stl.CommandR;
 using Stl.Reflection;
 
-namespace Stl.Fusion.CommandR
+namespace Stl.Fusion.Operations
 {
     public interface IInvalidate : ICommand
     {

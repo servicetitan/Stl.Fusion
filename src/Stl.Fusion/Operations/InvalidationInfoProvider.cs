@@ -8,7 +8,7 @@ using Stl.Fusion.Bridge.Interception;
 using Stl.Fusion.Interception;
 using Stl.Reflection;
 
-namespace Stl.Fusion.CommandR
+namespace Stl.Fusion.Operations
 {
     public interface IInvalidationInfoProvider
     {

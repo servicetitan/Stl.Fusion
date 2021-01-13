@@ -7,10 +7,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.CommandR;
 using Stl.DependencyInjection;
+using Stl.Fusion.Authentication;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Interception;
-using Stl.Fusion.CommandR;
+using Stl.Fusion.Operations;
 using Stl.Fusion.Interception;
+using Stl.Fusion.Operations.Internal;
 using Stl.Internal;
 using Stl.Time;
 
@@ -41,7 +43,7 @@ namespace Stl.Fusion
             // Common services
             Services.AddOptions();
             Services.TryAddSingleton(SystemClock.Instance);
-            Services.AddCommander().AddInvalidationHandler();
+
             // Compute services & their dependencies
             Services.TryAddSingleton(_ => ComputeServiceProxyGenerator.Default);
             Services.TryAddSingleton<IComputedOptionsProvider, ComputedOptionsProvider>();
@@ -53,11 +55,26 @@ namespace Stl.Fusion
             Services.TryAddSingleton<ComputeServiceInterceptor>();
             Services.TryAddSingleton(c => new [] { c.GetRequiredService<ComputeServiceInterceptor>() });
             Services.TryAddSingleton<IErrorRewriter, ErrorRewriter>();
+
             // States & their dependencies
             Services.TryAddTransient<IStateFactory, StateFactory>();
             Services.TryAddTransient(typeof(IMutableState<>), typeof(MutableState<>));
             Services.TryAddSingleton(new UpdateDelayer.Options());
             Services.TryAddTransient<IUpdateDelayer, UpdateDelayer>();
+
+            // Invalidation handler for CommandR
+            var commander = Services.AddCommander();
+            Services.TryAddSingleton<IInvalidationInfoProvider, InvalidationInfoProvider>();
+            Services.TryAddSingleton<InvalidationHandler.Options>();
+            Services.TryAddSingleton<InvalidationHandler>();
+            commander.AddHandlers<InvalidationHandler>();
+
+            // Operations
+            Services.TryAddSingleton<AgentInfo>();
+            Services.TryAddSingleton<OperationCompletionNotifier.Options>();
+            Services.TryAddSingleton<IOperationCompletionNotifier, OperationCompletionNotifier>();
+            Services.TryAddEnumerable(ServiceDescriptor.Singleton(
+                typeof(IOperationCompletionHandler), typeof(OperationInvalidationHandler)));
         }
 
         static FusionBuilder()
@@ -211,5 +228,16 @@ namespace Stl.Fusion
             Func<IServiceProvider, TImplementation> factory)
             where TImplementation : class, IState
             => AddState(typeof(TImplementation), factory);
+
+        // AddAuthentication
+
+        public FusionAuthenticationBuilder AddAuthentication()
+            => new(this);
+        public FusionBuilder AddAuthentication(Action<FusionAuthenticationBuilder> configureFusionAuthentication)
+        {
+            var fusionAuth = AddAuthentication();
+            configureFusionAuthentication.Invoke(fusionAuth);
+            return this;
+        }
     }
 }

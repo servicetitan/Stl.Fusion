@@ -1,6 +1,5 @@
 using System;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Stl.Fusion.EntityFramework.Internal;
 
 namespace Stl.Fusion.EntityFramework
