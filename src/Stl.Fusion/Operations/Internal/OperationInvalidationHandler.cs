@@ -15,7 +15,6 @@ namespace Stl.Fusion.Operations.Internal
             ICommander commander,
             AgentInfo agentInfo,
             IInvalidationInfoProvider invalidationInfoProvider,
-            IOperationCompletionNotifier operationCompletionNotifier,
             ILogger<OperationInvalidationHandler>? log = null)
         {
             Log = log ?? NullLogger<OperationInvalidationHandler>.Instance;
