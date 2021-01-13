@@ -19,7 +19,7 @@ namespace Stl.CommandR.Internal
             IServiceProvider services,
             ILogger<Commander>? log = null)
         {
-            Log = log ??= NullLogger<Commander>.Instance;
+            Log = log ?? NullLogger<Commander>.Instance;
             Services = services;
             HandlerResolver = services.GetRequiredService<ICommandHandlerResolver>();
         }
@@ -28,9 +28,10 @@ namespace Stl.CommandR.Internal
         {
             CommandContext context = null!;
             CommandContext ContextFactory() {
-                context = CommandContext.New(this, command, isolate);
+                context = CommandContext.New(this, command);
                 return context;
             }
+            using var _ = isolate ? ExecutionContextEx.SuppressFlow() : default;
             RunAsync(ContextFactory, command, cancellationToken).Ignore();
             return context;
         }
@@ -39,9 +40,10 @@ namespace Stl.CommandR.Internal
         {
             CommandContext? context;
             CommandContext ContextFactory() {
-                context = CommandContext.New(this, command, isolate);
+                context = CommandContext.New(this, command);
                 return context;
             }
+            using var _ = isolate ? ExecutionContextEx.SuppressFlow() : default;
             return RunAsync(ContextFactory, command, cancellationToken);
         }
 

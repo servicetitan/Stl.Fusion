@@ -14,23 +14,23 @@ using Stl.Locking;
 
 namespace Stl.Fusion.EntityFramework
 {
-    public interface IDbTransactionScope : IAsyncDisposable
+    public interface IDbOperationScope : IAsyncDisposable
     {
         public bool IsUsed { get; }
-        public bool IsClosed { get; }
+        public bool IsCompleted { get; }
 
         Task<DbContext> GetDbContextAsync(bool isReadWrite = true, CancellationToken cancellationToken = default);
-        Task CommitAsync(object? operation, CancellationToken cancellationToken = default);
+        Task<IDbOperation?> CommitAsync(object? operation, CancellationToken cancellationToken = default);
         Task RollbackAsync();
     }
 
-    public interface IDbTransactionScope<TDbContext> : IDbTransactionScope
+    public interface IDbOperationScope<TDbContext> : IDbOperationScope
         where TDbContext : DbContext
     {
         new Task<TDbContext> GetDbContextAsync(bool isReadWrite = true, CancellationToken cancellationToken = default);
     }
 
-    public class DbTransactionScope<TDbContext> : AsyncDisposableBase, IDbTransactionScope<TDbContext>
+    public class DbOperationScope<TDbContext> : AsyncDisposableBase, IDbOperationScope<TDbContext>
         where TDbContext : DbContext
     {
         protected List<TDbContext> AllDbContexts { get; }
@@ -43,9 +43,10 @@ namespace Stl.Fusion.EntityFramework
         protected AsyncLock AsyncLock { get; }
 
         public bool IsUsed => PrimaryDbContext != null;
-        public bool IsClosed { get; private set; }
+        public bool IsCompleted { get; private set; }
+        public bool? IsConfirmed { get; private set; }
 
-        public DbTransactionScope(IServiceProvider services)
+        public DbOperationScope(IServiceProvider services)
         {
             var loggerFactory = services.GetService<ILoggerFactory>();
             Log = loggerFactory?.CreateLogger(GetType()) ?? NullLogger.Instance;
@@ -68,11 +69,11 @@ namespace Stl.Fusion.EntityFramework
 
             using var _ = await AsyncLock.LockAsync().ConfigureAwait(false);
             try {
-                if (IsUsed && !IsClosed)
+                if (IsUsed && !IsCompleted)
                     await RollbackAsync().ConfigureAwait(false);
             }
             finally {
-                IsClosed = true;
+                IsCompleted = true;
                 foreach (var dbContext in AllDbContexts) {
                     if (ReferenceEquals(dbContext, PrimaryDbContext))
                         continue;
@@ -83,14 +84,14 @@ namespace Stl.Fusion.EntityFramework
             }
         }
 
-        async Task<DbContext> IDbTransactionScope.GetDbContextAsync(bool isReadWrite, CancellationToken cancellationToken)
+        async Task<DbContext> IDbOperationScope.GetDbContextAsync(bool isReadWrite, CancellationToken cancellationToken)
             => await GetDbContextAsync(isReadWrite, cancellationToken).ConfigureAwait(false);
 
         public virtual async Task<TDbContext> GetDbContextAsync(
             bool isReadWrite = true, CancellationToken cancellationToken = default)
         {
             using var _ = await AsyncLock.LockAsync(cancellationToken).ConfigureAwait(false);
-            if (IsClosed)
+            if (IsCompleted)
                 throw Errors.TransactionScopeIsAlreadyClosed();
             var dbContext = DbContextFactory.CreateDbContext().ReadWrite(isReadWrite);
             dbContext.Database.AutoTransactionsEnabled = false;
@@ -108,14 +109,14 @@ namespace Stl.Fusion.EntityFramework
             return dbContext;
         }
 
-        public virtual async Task CommitAsync(object? operation, CancellationToken cancellationToken = default)
+        public virtual async Task<IDbOperation?> CommitAsync(object? operation, CancellationToken cancellationToken = default)
         {
             using var _ = await AsyncLock.LockAsync(cancellationToken).ConfigureAwait(false);
-            if (IsClosed)
+            if (IsCompleted)
                 throw Errors.TransactionScopeIsAlreadyClosed();
             try {
                 if (!IsUsed)
-                    return;
+                    return null;
 
                 foreach (var dbContext in AllDbContexts) {
                     if (!(dbContext.ChangeTracker.AutoDetectChangesEnabled ||
@@ -124,24 +125,31 @@ namespace Stl.Fusion.EntityFramework
                     await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                 }
 
-                if (operation != null) {
+                if (operation == null) {
+                    await Transaction!.CommitAsync(cancellationToken).ConfigureAwait(false);
+                    return null;
+                }
+                else {
                     var opManager = Services.GetRequiredService<IDbOperationLogger<TDbContext>>();
                     var dbContext = PrimaryDbContext!.ReadWrite();
                     dbContext.ChangeTracker.Clear();
-                    await opManager.AddAsync(dbContext, operation, cancellationToken).ConfigureAwait(false);
+                    var dbOperation = await opManager.AddAsync(dbContext, operation, cancellationToken).ConfigureAwait(false);
+                    await Transaction!.CommitAsync(cancellationToken).ConfigureAwait(false);
+                    dbOperation = await opManager.TryGetAsync(dbContext, dbOperation.Id, cancellationToken);
+                    if (dbOperation == null)
+                        throw Errors.OperationCommitFailed();
+                    return dbOperation;
                 }
-
-                await Transaction!.CommitAsync(cancellationToken).ConfigureAwait(false);
             }
             finally {
-                IsClosed = true;
+                IsCompleted = true;
             }
         }
 
         public virtual async Task RollbackAsync()
         {
             using var _ = await AsyncLock.LockAsync().ConfigureAwait(false);
-            if (IsClosed)
+            if (IsCompleted)
                 throw Errors.TransactionScopeIsAlreadyClosed();
             try {
                 if (!IsUsed)
@@ -149,7 +157,7 @@ namespace Stl.Fusion.EntityFramework
                 await Transaction!.RollbackAsync().ConfigureAwait(false);
             }
             finally {
-                IsClosed = true;
+                IsCompleted = true;
             }
         }
     }

@@ -12,9 +12,9 @@ using Xunit.Abstractions;
 
 namespace Stl.Tests.CommandR
 {
-    public class DbFilterTest : CommandRTestBase
+    public class DbOperationTest : CommandRTestBase
     {
-        public DbFilterTest(ITestOutputHelper @out) : base(@out)
+        public DbOperationTest(ITestOutputHelper @out) : base(@out)
         {
             UseDbContext = true;
         }

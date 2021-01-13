@@ -30,17 +30,18 @@ namespace Stl.Fusion.Server
                     new SafeJsonNetSerializer(t => typeof(ReplicatorMessage).IsAssignableFrom(t)).ToTyped<BridgeMessage>());
         }
 
+        protected IPublisher Publisher { get; }
+        protected Func<ChannelSerializerPair<BridgeMessage, string>> ChannelSerializerPairFactory { get; }
+        protected ILogger Log { get; }
+
         public string RequestPath { get; }
         public string PublisherIdQueryParameterName { get; }
         public string ClientIdQueryParameterName { get; }
-        protected ILogger Log { get; }
-        protected IPublisher Publisher { get; }
-        protected Func<ChannelSerializerPair<BridgeMessage, string>> ChannelSerializerPairFactory { get; }
 
         public WebSocketServer(Options? options, IPublisher publisher, ILogger<WebSocketServer>? log = null)
         {
             options ??= new();
-            Log = log ??= NullLogger<WebSocketServer>.Instance;
+            Log = log ?? NullLogger<WebSocketServer>.Instance;
             RequestPath = options.RequestPath;
             PublisherIdQueryParameterName = options.PublisherIdQueryParameterName;
             ClientIdQueryParameterName = options.ClientIdQueryParameterName;

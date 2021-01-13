@@ -24,7 +24,7 @@ namespace Stl.Fusion.Bridge.Interception
             ILogger<ReplicaMethodFunction<T>>? log = null)
             : base(method, ((IReplicatorImpl) replicator).Services)
         {
-            Log = log ??= NullLogger<ReplicaMethodFunction<T>>.Instance;
+            Log = log ?? NullLogger<ReplicaMethodFunction<T>>.Instance;
             IsLogDebugEnabled = Log.IsEnabled(LogLevel.Debug);
             VersionGenerator = versionGenerator;
             Replicator = replicator;

@@ -19,7 +19,7 @@ namespace Stl.Fusion.Interception
             ILogger<ComputeMethodFunction<T>>? log = null)
             : base(method, services)
         {
-            Log = log ??= NullLogger<ComputeMethodFunction<T>>.Instance;
+            Log = log ?? NullLogger<ComputeMethodFunction<T>>.Instance;
             VersionGenerator = versionGenerator;
         }
 

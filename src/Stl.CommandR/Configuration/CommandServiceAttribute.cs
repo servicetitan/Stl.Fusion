@@ -6,12 +6,12 @@ namespace Stl.CommandR.Configuration
 {
     public class CommandServiceAttribute : ServiceAttribute
     {
-        public double? PriorityOverride { get; set; }
+        public double? OrderOverride { get; set; }
 
         public CommandServiceAttribute(Type? serviceType = null) : base(serviceType) { }
 
         public override void Register(IServiceCollection services, Type implementationType)
             => services.AddCommander().AddCommandService(
-                ServiceType ?? implementationType, implementationType, Lifetime, PriorityOverride);
+                ServiceType ?? implementationType, implementationType, Lifetime, OrderOverride);
     }
 }

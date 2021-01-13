@@ -5,12 +5,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Stl.Async;
 using Stl.CommandR;
 using Stl.Time;
 
 namespace Stl.Fusion.EntityFramework
 {
-    public abstract class DbServiceBase<TDbContext>
+    public abstract class DbAsyncProcessBase<TDbContext> : AsyncProcessBase
         where TDbContext : DbContext
     {
         protected IServiceProvider Services { get; }
@@ -18,7 +19,7 @@ namespace Stl.Fusion.EntityFramework
         protected IMomentClock Clock { get; }
         protected ILogger Log { get; }
 
-        protected DbServiceBase(IServiceProvider services)
+        protected DbAsyncProcessBase(IServiceProvider services)
         {
             Services = services;
             DbContextFactory = services.GetRequiredService<IDbContextFactory<TDbContext>>();

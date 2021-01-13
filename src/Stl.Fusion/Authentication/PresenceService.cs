@@ -27,7 +27,7 @@ namespace Stl.Fusion.Authentication
             ILogger<PresenceService>? log = null)
         {
             options ??= new();
-            Log = log ??= NullLogger<PresenceService>.Instance;
+            Log = log ?? NullLogger<PresenceService>.Instance;
             AuthService = authService;
             SessionResolver = sessionResolver;
             UpdateDelayer = new UpdateDelayer(new UpdateDelayer.Options() {

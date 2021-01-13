@@ -12,13 +12,18 @@ namespace Stl.Fusion.EntityFramework
 
         internal DbContextBuilder(IServiceCollection services) => Services = services;
 
-        public DbContextBuilder<TDbContext> AddTransactionScope()
-            => AddTransactionScope<DbOperation>();
-        public DbContextBuilder<TDbContext> AddTransactionScope<TDbOperation>()
+        public DbContextBuilder<TDbContext> AddOperations()
+            => AddOperations<DbOperation>();
+        public DbContextBuilder<TDbContext> AddOperations<TDbOperation>()
             where TDbOperation : class, IDbOperation, new()
         {
-            Services.TryAddTransient<IDbTransactionScope<TDbContext>, DbTransactionScope<TDbContext>>();
+            Services.TryAddSingleton<AgentInfo>();
+            Services.TryAddTransient<IDbOperationScope<TDbContext>, DbOperationScope<TDbContext>>();
             Services.TryAddSingleton<IDbOperationLogger<TDbContext>, DbOperationLogger<TDbContext, TDbOperation>>();
+            Services.TryAddSingleton<DbOperationNotifier<TDbContext, TDbOperation>.Options>();
+            Services.TryAddSingleton<IDbOperationNotifier<TDbContext>, DbOperationNotifier<TDbContext, TDbOperation>>();
+            Services.TryAddSingleton<DbOperationInvalidationHandler<TDbContext>>();
+            Services.AddHostedService(c => c.GetRequiredService<IDbOperationNotifier<TDbContext>>());
             return this;
         }
 

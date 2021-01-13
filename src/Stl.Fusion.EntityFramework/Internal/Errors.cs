@@ -8,5 +8,7 @@ namespace Stl.Fusion.EntityFramework.Internal
             => new InvalidOperationException("This DbContext is read-only.");
         public static Exception TransactionScopeIsAlreadyClosed()
             => new InvalidOperationException("The transaction scope is already closed (committed or rolled back).");
+        public static Exception OperationCommitFailed()
+            => new DbOperationFailedException("Couldn't commit the operation.");
     }
 }

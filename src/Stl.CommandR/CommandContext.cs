@@ -1,5 +1,7 @@
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,14 +35,14 @@ namespace Stl.CommandR
         // Static methods
 
         internal static CommandContext<TResult> New<TResult>(
-            ICommander commander, ICommand command, bool isolate)
-            => new(commander, command, isolate);
+            ICommander commander, ICommand command)
+            => new(commander, command);
 
         internal static CommandContext New(
-            ICommander commander, ICommand command, bool isolate)
+            ICommander commander, ICommand command)
         {
             var tContext = typeof(CommandContext<>).MakeGenericType(command.ResultType);
-            return (CommandContext) tContext.CreateInstance(commander, command, isolate);
+            return (CommandContext) tContext.CreateInstance(commander, command);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -129,7 +131,7 @@ namespace Stl.CommandR
             set => Result = value.Cast<TResult>();
         }
 
-        public CommandContext(ICommander commander, ICommand command, bool isolate)
+        public CommandContext(ICommander commander, ICommand command)
             : base(commander)
         {
             var tResult = typeof(TResult);
@@ -137,8 +139,7 @@ namespace Stl.CommandR
                 throw Errors.CommandResultTypeMismatch(tResult, command.ResultType);
             Command = (ICommand<TResult>) command;
             ResultTaskSource = TaskSource.New<TResult>(true);
-            isolate |= PreviousContext?.Commander != commander;
-            if (isolate) {
+            if (PreviousContext?.Commander != commander) {
                 OuterContext = null;
                 OutermostContext = this;
                 ServiceScope = Commander.Services.CreateScope();
@@ -160,15 +161,19 @@ namespace Stl.CommandR
                     throw Errors.NoFinalHandlerFound(UntypedCommand.GetType());
                 var handler = ExecutionState.NextHandler;
                 ExecutionState = ExecutionState.NextExecutionState;
-                var resultTask = handler.InvokeAsync(UntypedCommand, this, cancellationToken);
-                if (resultTask is Task<TResult> typedResultTask) {
-                    var result = await typedResultTask.ConfigureAwait(false);
+                var handlerTask = handler.InvokeAsync(UntypedCommand, this, cancellationToken);
+                if (handlerTask is Task<TResult> typedHandlerTask) {
+                    var result = await typedHandlerTask.ConfigureAwait(false);
                     TrySetResult(result);
                 }
                 else {
-                    await resultTask.ConfigureAwait(false);
+                    await handlerTask.ConfigureAwait(false);
                     TrySetDefaultResult();
                 }
+                // We want to ensure we re-throw any exception even if
+                // it wasn't explicitly thrown (i.e. set via TrySetException)
+                if (UntypedResultTask.IsCompleted && !UntypedResultTask.IsCompletedSuccessfully)
+                    await UntypedResultTask.ConfigureAwait(false);
             }
             catch (OperationCanceledException) {
                 TrySetCancelled(

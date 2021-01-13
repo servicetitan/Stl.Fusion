@@ -7,12 +7,12 @@ namespace Stl.Fusion.EntityFramework.CommandR
 {
     public static class CommanderBuilderEx
     {
-        public static CommanderBuilder AddTransactionScopeHandler<TDbContext>(this CommanderBuilder commander, double? priorityOverride = null)
+        public static CommanderBuilder AddTransactionScopeHandler<TDbContext>(this CommanderBuilder commander, double? orderOverride = null)
             where TDbContext : DbContext
         {
-            commander.Services.AddDbContextServices<TDbContext>().AddTransactionScope();
-            commander.Services.AddSingleton<DbTransactionScopeHandler<TDbContext>>();
-            return commander.AddHandlers<DbTransactionScopeHandler<TDbContext>>(priorityOverride);
+            commander.Services.AddDbContextServices<TDbContext>().AddOperations();
+            commander.Services.AddSingleton<DbOperationScopeHandler<TDbContext>>();
+            return commander.AddHandlers<DbOperationScopeHandler<TDbContext>>(orderOverride);
         }
     }
 }

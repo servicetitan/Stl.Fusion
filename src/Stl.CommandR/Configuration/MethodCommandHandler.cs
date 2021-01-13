@@ -61,18 +61,18 @@ namespace Stl.CommandR.Configuration
             typeof(MethodCommandHandler)
                 .GetMethod(nameof(Create), BindingFlags.Static | BindingFlags.NonPublic)!;
 
-        public static CommandHandler New(Type serviceType, MethodInfo methodInfo, double? priorityOverride = null)
-            => TryNew(serviceType, methodInfo, priorityOverride)
+        public static CommandHandler New(Type serviceType, MethodInfo methodInfo, double? orderOverride = null)
+            => TryNew(serviceType, methodInfo, orderOverride)
                 ?? throw Errors.InvalidCommandHandlerMethod(methodInfo);
 
-        public static CommandHandler? TryNew(Type serviceType, MethodInfo methodInfo, double? priorityOverride = null)
+        public static CommandHandler? TryNew(Type serviceType, MethodInfo methodInfo, double? orderOverride = null)
         {
             var attr = GetAttribute(methodInfo);
             var isEnabled = attr?.IsEnabled ?? false;
             if (!isEnabled)
                 return null;
             var isFilter = attr?.IsFilter ?? false;
-            var order = priorityOverride ?? attr?.Order ?? 0;
+            var order = orderOverride ?? attr?.Order ?? 0;
 
             if (methodInfo.IsStatic)
                 throw Errors.CommandHandlerMethodMustBeInstanceMethod(methodInfo);
