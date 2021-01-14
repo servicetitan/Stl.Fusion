@@ -30,7 +30,7 @@ namespace Stl.Fusion.Swapping
             SwapService = swapService;
             Log = loggerFactory.CreateLogger(swapService.GetType());
             LogLevel = options.LogLevel;
-            IsEnabled = Log.IsEnabled(LogLevel);
+            IsEnabled = LogLevel != LogLevel.None && Log.IsEnabled(LogLevel);
         }
 
         public async ValueTask<IResult?> LoadAsync((ComputeMethodInput Input, LTag Version) key, CancellationToken cancellationToken = default)

@@ -17,7 +17,7 @@ namespace Stl.Fusion.EntityFramework
     public class DbOperation : IOperation
     {
         private readonly JsonSerialized<object?> _command = new();
-        private readonly JsonSerialized<ImmutableOptionSet> _invalidationData = new();
+        private readonly JsonSerialized<ImmutableOptionSet> _items = new();
         private DateTime _startTime;
         private DateTime _commitTime;
 
@@ -40,9 +40,9 @@ namespace Stl.Fusion.EntityFramework
             set => _command.SerializedValue = value;
         }
 
-        public string InvalidationDataJson {
-            get => _invalidationData.SerializedValue;
-            set => _invalidationData.SerializedValue = value;
+        public string ItemsJson {
+            get => _items.SerializedValue;
+            set => _items.SerializedValue = value;
         }
 
         [NotMapped, JsonIgnore]
@@ -52,9 +52,9 @@ namespace Stl.Fusion.EntityFramework
         }
 
         [NotMapped, JsonIgnore]
-        public ImmutableOptionSet InvalidationData {
-            get => _invalidationData.Value;
-            set => _invalidationData.Value = value;
+        public ImmutableOptionSet Items {
+            get => _items.Value;
+            set => _items.Value = value;
         }
     }
 }

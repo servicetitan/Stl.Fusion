@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Stl.DependencyInjection;
@@ -13,6 +14,7 @@ using Stl.IO;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Messages;
 using Stl.Fusion.Client;
+using Stl.Fusion.EntityFramework;
 using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
 using Stl.Fusion.Tests.UIModels;
@@ -88,6 +90,7 @@ namespace Stl.Fusion.Tests
             services.AddLogging(logging => {
                 var debugCategories = new List<string> {
                     "Stl.Fusion",
+                    "Stl.CommandR",
                     "Stl.Tests.Fusion",
                     // DbLoggerCategory.Database.Transaction.Name,
                     // DbLoggerCategory.Database.Connection.Name,
@@ -132,10 +135,17 @@ namespace Stl.Fusion.Tests
                 DbPath = appTempDir & PathEx.GetHashedName($"{testType.Name}_{testType.Namespace}.db");
                 services.AddPooledDbContextFactory<TestDbContext>(builder => {
                     if (Options.UseInMemoryDatabase)
-                        builder.UseInMemoryDatabase(DbPath);
+                        builder.UseInMemoryDatabase(DbPath)
+                            .ConfigureWarnings(w => {
+                                w.Ignore(InMemoryEventId.TransactionIgnoredWarning);
+                            });
                     else
                         builder.UseSqlite($"Data Source={DbPath}", sqlite => { });
                 }, 256);
+                services.AddDbContextServices<TestDbContext>(b => {
+                    b.AddEntityResolver<long, User>();
+                    b.AddOperations();
+                });
 
                 // WebHost
                 var webHost = (FusionTestWebHost?) WebHost;

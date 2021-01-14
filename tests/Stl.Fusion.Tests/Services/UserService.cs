@@ -1,19 +1,31 @@
+using System;
 using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Stl.Async;
+using Stl.CommandR;
+using Stl.CommandR.Configuration;
 using Stl.DependencyInjection;
+using Stl.Fusion.EntityFramework;
+using Stl.Fusion.Operations;
 using Stl.Fusion.Tests.Model;
 
 namespace Stl.Fusion.Tests.Services
 {
     public interface IUserService
     {
-        Task CreateAsync(User user, bool orUpdate = false, CancellationToken cancellationToken = default);
-        Task UpdateAsync(User user, CancellationToken cancellationToken = default);
-        Task<bool> DeleteAsync(User user, CancellationToken cancellationToken = default);
+        public record AddCommand(User User, bool OrUpdate = false) : ICommand<Unit> { }
+        public record UpdateCommand(User User) : ICommand<Unit> { }
+        public record DeleteCommand(User User) : ICommand<bool> { }
+
+        [CommandHandler]
+        Task CreateAsync(AddCommand command, CancellationToken cancellationToken = default);
+        [CommandHandler]
+        Task UpdateAsync(UpdateCommand command, CancellationToken cancellationToken = default);
+        [CommandHandler]
+        Task<bool> DeleteAsync(DeleteCommand command, CancellationToken cancellationToken = default);
 
         [ComputeMethod(KeepAliveTime = 1)]
         Task<User?> TryGetAsync(long userId, CancellationToken cancellationToken = default);
@@ -24,57 +36,73 @@ namespace Stl.Fusion.Tests.Services
 
     [ComputeService(typeof(IUserService), Scope = ServiceScope.Services)] // Fusion version
     [Service] // "No Fusion" version
-    public class UserService : IUserService
+    public class UserService : DbServiceBase<TestDbContext>, IUserService
     {
-        protected IDbContextFactory<TestDbContext> DbContextFactory { get; }
-        protected bool IsCaching { get; }
+        protected bool IsProxy { get; }
 
-        public UserService(IDbContextFactory<TestDbContext> dbContextFactory)
+        public UserService(IServiceProvider services) : base(services)
         {
-            DbContextFactory = dbContextFactory;
-            IsCaching = GetType().Name.EndsWith("Proxy");
+            IsProxy = GetType().Name.EndsWith("Proxy");
         }
 
-        public virtual async Task CreateAsync(User user, bool orUpdate = false, CancellationToken cancellationToken = default)
+        public virtual async Task CreateAsync(IUserService.AddCommand command, CancellationToken cancellationToken = default)
         {
-            await using var dbContext = DbContextFactory.CreateDbContext();
+            var (user, orUpdate) = command;
             var existingUser = (User?) null;
+            var context = CommandContext.GetCurrent();
+            if (Computed.IsInvalidating()) {
+                existingUser = context.Items.TryGet<OperationItem<User>>()?.Value;
+                TryGetAsync(user.Id, default).AssertCompleted().Ignore();
+                if (existingUser == null)
+                    CountAsync(default).AssertCompleted().Ignore();
+                return;
+            }
 
-            var supportTransactions = !dbContext.Database.IsInMemory();
-            await using var tx = supportTransactions
-                ? await dbContext.Database.BeginTransactionAsync(cancellationToken)
-                : null;
-
+            await using var dbContext = await GetCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
+            dbContext.DisableChangeTracking();
             var userId = user.Id;
             if (orUpdate) {
                 existingUser = await dbContext.Users.FindAsync(new [] {(object) userId}, cancellationToken);
+                context.Items.Set(OperationItem.New(existingUser));
                 if (existingUser != null)
                     dbContext.Users.Update(user);
             }
             if (existingUser == null)
                 dbContext.Users.Add(user);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-
-            await (tx?.CommitAsync(cancellationToken) ?? Task.CompletedTask);
-            Invalidate(user, existingUser == null);
         }
 
-        public virtual async Task UpdateAsync(User user, CancellationToken cancellationToken = default)
+        public virtual async Task UpdateAsync(IUserService.UpdateCommand command, CancellationToken cancellationToken = default)
         {
-            await using var dbContext = DbContextFactory.CreateDbContext();
+            var user = command.User;
+            if (Computed.IsInvalidating()) {
+                TryGetAsync(user.Id, default).AssertCompleted().Ignore();
+                return;
+            }
+
+            await using var dbContext = await GetCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
             dbContext.Users.Update(user);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            Invalidate(user, false);
         }
 
-        public virtual async Task<bool> DeleteAsync(User user, CancellationToken cancellationToken = default)
+        public virtual async Task<bool> DeleteAsync(IUserService.DeleteCommand command, CancellationToken cancellationToken = default)
         {
-            Computed.GetCurrent().Should().BeNull();
-            await using var dbContext = DbContextFactory.CreateDbContext();
+            var user = command.User;
+            var context = CommandContext.GetCurrent();
+            if (Computed.IsInvalidating()) {
+                var success = context.Items.TryGet<OperationItem<bool>>()?.Value ?? false;
+                if (success) {
+                    TryGetAsync(user.Id, default).AssertCompleted().Ignore();
+                    CountAsync(default).AssertCompleted().Ignore();
+                }
+                return false;
+            }
+
+            await using var dbContext = await GetCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
             dbContext.Users.Remove(user);
             try {
                 await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-                Invalidate(user);
+                context.Items.Set(OperationItem.New(true));
                 return true;
             }
             catch (DbUpdateConcurrencyException) {
@@ -102,14 +130,9 @@ namespace Stl.Fusion.Tests.Services
             return count;
         }
 
-        // Change handling
-
-        [ComputeMethod]
-        protected virtual Task<Unit> Everything() => TaskEx.UnitTask;
-
         public virtual void Invalidate()
         {
-            if (!IsCaching)
+            if (!IsProxy)
                 return;
 
             using (Computed.Invalidate()) {
@@ -117,16 +140,16 @@ namespace Stl.Fusion.Tests.Services
             }
         }
 
-        protected virtual void Invalidate(User user, bool countChanged = true)
-        {
-            if (!IsCaching)
-                return;
+        // Protected & private methods
 
-            using (Computed.Invalidate()) {
-                TryGetAsync(user.Id).AssertCompleted();
-                if (countChanged)
-                    CountAsync().AssertCompleted();
-            };
+        [ComputeMethod]
+        protected virtual Task<Unit> Everything() => TaskEx.UnitTask;
+
+        private new Task<TestDbContext> GetCommandDbContextAsync(CancellationToken cancellationToken = default)
+        {
+            if (IsProxy)
+                return base.GetCommandDbContextAsync(cancellationToken);
+            return Task.FromResult(GetDbContext().ReadWrite());
         }
     }
 }

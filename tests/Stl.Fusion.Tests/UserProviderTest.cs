@@ -21,10 +21,10 @@ namespace Stl.Fusion.Tests
         {
             var users = Services.GetRequiredService<IUserService>();
             // We need at least 1 user to see count invalidation messages
-            await users.CreateAsync(new User() {
+            await users.CreateAsync(new(new User() {
                 Id = int.MaxValue,
                 Name = "Chuck Norris",
-            }, true);
+            }));
 
             var u1 = await users.TryGetAsync(int.MaxValue);
             var c1 = await Computed.CaptureAsync(_ => users.CountAsync());
@@ -47,11 +47,10 @@ namespace Stl.Fusion.Tests
         {
             var users = Services.GetRequiredService<IUserService>();
             // We need at least 1 user to see count invalidation messages
-            await users.CreateAsync(new User() {
+            await users.CreateAsync(new(new User() {
                 Id = int.MaxValue,
                 Name = "Chuck Norris",
-            }, true);
-
+            }));
             var userCount = await users.CountAsync();
 
             var u = new User() {
@@ -59,11 +58,11 @@ namespace Stl.Fusion.Tests
                 Name = "Bruce Lee"
             };
             // This delete won't do anything, since the user doesn't exist
-            (await users.DeleteAsync(u)).Should().BeFalse();
+            (await users.DeleteAsync(new(u))).Should().BeFalse();
             // Thus count shouldn't change
             (await users.CountAsync()).Should().Be(userCount);
             // But after this line the could should change
-            await users.CreateAsync(u);
+            await users.CreateAsync(new(u));
 
             var u1 = await users.TryGetAsync(u.Id);
             u1.Should().NotBeNull();
@@ -76,7 +75,7 @@ namespace Stl.Fusion.Tests
             u2.Should().BeSameAs(u1);
 
             u = u with { Name = "Jackie Chan" };
-            await users.UpdateAsync(u); // u.Name change
+            await users.UpdateAsync(new(u)); // u.Name change
 
             var u3 = await users.TryGetAsync(u.Id);
             u3.Should().NotBeNull();
@@ -97,7 +96,7 @@ namespace Stl.Fusion.Tests
                 Id = int.MaxValue,
                 Name = "Chuck Norris",
             };
-            await users.CreateAsync(u, true);
+            await users.CreateAsync(new(u));
 
             using var sText = await stateFactory.NewLive<string>(
                 o => o.WithInstantUpdates(),
@@ -110,7 +109,7 @@ namespace Stl.Fusion.Tests
 
             for (var i = 1; i <= 10; i += 1) {
                 u = u with { Name = $"Chuck Norris Lvl{i}" };
-                await users.UpdateAsync(u);
+                await users.CreateAsync(new(u, true));
                 await Task.Delay(100);
             }
 

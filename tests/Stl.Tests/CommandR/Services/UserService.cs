@@ -25,8 +25,8 @@ namespace Stl.Tests.CommandR.Services
             CommandContext.GetCurrent().Should().Be(context);
             context.ExecutionState.Handlers.Count.Should().Be(3);
 
-            var dbContext = await GetCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
-            var anotherDbContext = await GetCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
+            await using var dbContext = await GetCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
+            await using var anotherDbContext = await GetCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
             dbContext.Should().NotBeNull();
             anotherDbContext.Should().NotBeNull();
             anotherDbContext.Should().NotBe(dbContext);
@@ -44,6 +44,7 @@ namespace Stl.Tests.CommandR.Services
             if (string.IsNullOrEmpty(user.Id))
                 throw new InvalidOperationException("User.Id must be set.");
             await dbContext.Users.AddAsync(user, cancellationToken).ConfigureAwait(false);
+            await dbContext.SaveChangesAsync(cancellationToken);
         }
     }
 }

@@ -48,7 +48,6 @@ namespace Stl.Tests.CommandR
                 await services.Commander().CallAsync(command);
             });
 
-            var tx = services.GetRequiredService<IDbOperationLog<TestDbContext>>();
             var f = services.GetRequiredService<IDbContextFactory<TestDbContext>>();
             await using var dbContext = f.CreateDbContext().ReadWrite(false);
             (await dbContext.Users.AsQueryable().CountAsync()).Should().Be(0);

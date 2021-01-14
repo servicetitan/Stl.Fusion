@@ -57,7 +57,7 @@ namespace Stl.Fusion.Authentication
                 if (force)
                     IsSignOutForcedAsync(session, default).Ignore();
                 GetUserAsync(session, default).Ignore();
-                user = context.Items.TryGet<InvalidationData<User>>()?.Value;
+                user = context.Items.TryGet<OperationItem<User>>()?.Value;
                 if (user != null)
                     GetUserSessionsAsync(user.Id, default).Ignore();
                 return Task.CompletedTask;
@@ -66,7 +66,7 @@ namespace Stl.Fusion.Authentication
             if (force)
                 ForcedSignOuts.TryAdd(session.Id, default);
             if (Users.TryRemove(session.Id, out user)) {
-                context.Items.Set(InvalidationData.New(user));
+                context.Items.Set(OperationItem.New(user));
                 UserSessions.AddOrUpdate(user.Id,
                     (userId, sessionId) => ImmutableHashSet<string>.Empty,
                     (userId, sessionIds, sessionId) => sessionIds.Remove(sessionId),

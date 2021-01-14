@@ -10,6 +10,6 @@ namespace Stl.Fusion.Operations
         DateTime CommitTime { get; set; } // Always UTC
         string AgentId { get; set; }
         object? Command { get; set; }
-        ImmutableOptionSet InvalidationData { get; set; }
+        ImmutableOptionSet Items { get; set; }
     }
 }

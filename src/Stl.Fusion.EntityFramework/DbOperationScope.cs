@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Transactions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,7 +22,7 @@ namespace Stl.Fusion.EntityFramework
     {
         Moment StartTime { get; set; }
         object? Command { get; set; }
-        ImmutableOptionSet InvalidationData { get; set; }
+        ImmutableOptionSet Items { get; set; }
         bool IsUsed { get; }
         bool IsCompleted { get; }
         bool? IsConfirmed { get; }
@@ -40,7 +41,8 @@ namespace Stl.Fusion.EntityFramework
     public class DbOperationScope<TDbContext> : AsyncDisposableBase, IDbOperationScope<TDbContext>
         where TDbContext : DbContext
     {
-        protected List<TDbContext> AllDbContexts { get; }
+        private bool _isInMemoryProvider;
+
         protected TDbContext? PrimaryDbContext { get; set; }
         protected DbConnection? Connection { get; set; }
         protected IDbContextTransaction? Transaction { get; set; }
@@ -53,7 +55,7 @@ namespace Stl.Fusion.EntityFramework
 
         public Moment StartTime { get; set; }
         public object? Command { get; set; }
-        public ImmutableOptionSet InvalidationData { get; set; }
+        public ImmutableOptionSet Items { get; set; }
         public bool IsUsed => PrimaryDbContext != null;
         public bool IsCompleted { get; private set; }
         public bool? IsConfirmed { get; private set; }
@@ -66,7 +68,6 @@ namespace Stl.Fusion.EntityFramework
             Clock = services.GetService<IMomentClock>() ?? SystemClock.Instance;
             DbContextFactory = services.GetRequiredService<IDbContextFactory<TDbContext>>();
             DbOperationLog = services.GetRequiredService<IDbOperationLog<TDbContext>>();
-            AllDbContexts = new List<TDbContext>();
             AsyncLock = new AsyncLock(ReentryMode.CheckedPass);
             StartTime = Clock.Now;
         }
@@ -89,11 +90,6 @@ namespace Stl.Fusion.EntityFramework
             }
             finally {
                 IsCompleted = true;
-                foreach (var dbContext in AllDbContexts) {
-                    if (ReferenceEquals(dbContext, PrimaryDbContext))
-                        continue;
-                    SafeDispose(dbContext);
-                }
                 SafeDispose(Transaction);
                 SafeDispose(PrimaryDbContext);
             }
@@ -108,19 +104,23 @@ namespace Stl.Fusion.EntityFramework
             using var _ = await AsyncLock.LockAsync(cancellationToken).ConfigureAwait(false);
             if (IsCompleted)
                 throw Errors.TransactionScopeIsAlreadyClosed();
-            var dbContext = DbContextFactory.CreateDbContext().ReadWrite(isReadWrite);
-            dbContext.Database.AutoTransactionsEnabled = false;
+            TDbContext dbContext;
             if (PrimaryDbContext == null) {
+                dbContext = DbContextFactory.CreateDbContext().ReadWrite();
+                dbContext.Database.AutoTransactionsEnabled = false;
                 Transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
-                Connection = dbContext.GetDbConnection();
-                if (Connection == null)
-                    throw Stl.Internal.Errors.InternalError("No DbConnection.");
+                _isInMemoryProvider = dbContext.Database.ProviderName.EndsWith(".InMemory");
+                if (!_isInMemoryProvider) {
+                    Connection = dbContext.GetDbConnection();
+                    if (Connection == null)
+                        throw Stl.Internal.Errors.InternalError("No DbConnection.");
+                }
                 PrimaryDbContext = dbContext;
             }
-            else
+            dbContext = DbContextFactory.CreateDbContext().ReadWrite(isReadWrite);
+            dbContext.Database.AutoTransactionsEnabled = false;
+            if (!_isInMemoryProvider)
                 dbContext.SetDbConnection(Connection);
-
-            AllDbContexts.Add(dbContext);
             return dbContext;
         }
 
@@ -133,25 +133,17 @@ namespace Stl.Fusion.EntityFramework
                 if (!IsUsed)
                     return null;
 
-                foreach (var dbContext in AllDbContexts) {
-                    if (!(dbContext.ChangeTracker.AutoDetectChangesEnabled ||
-                        dbContext.ChangeTracker.HasChanges()))
-                        continue;
-                    await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-                }
-
                 if (Command == null) {
                     await Transaction!.CommitAsync(cancellationToken).ConfigureAwait(false);
                     return null;
                 }
                 else {
-                    var dbContext = PrimaryDbContext!.ReadWrite();
-                    dbContext.ChangeTracker.Clear();
+                    var dbContext = PrimaryDbContext!;
                     var operation = await DbOperationLog.AddAsync(dbContext, o => {
                             o.StartTime = StartTime;
                             o.CommitTime = Clock.Now;
                             o.Command = Command;
-                            o.InvalidationData = InvalidationData;
+                            o.Items = Items;
                         }, cancellationToken).ConfigureAwait(false);
                     await Transaction!.CommitAsync(cancellationToken).ConfigureAwait(false);
                     operation = await DbOperationLog.TryGetAsync(dbContext, operation.Id, cancellationToken);

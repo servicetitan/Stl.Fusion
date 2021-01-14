@@ -120,8 +120,6 @@ namespace Stl.Fusion.Tests
             Debug.WriteLine("10");
             state.Error.Should().BeOfType<WebSocketException>();
 
-            return;
-
             // The remaining part of this test shouldn't work:
             // since the underlying web host is actually re-created on
             // every ServeAsync call, its endpoints change,
@@ -130,6 +128,7 @@ namespace Stl.Fusion.Tests
             //
             // TODO: Add similar test relying on Replica Services.
 
+            /*
             Debug.WriteLine("WebServer: starting.");
             serving = await WebHost.ServeAsync();
             await Task.Delay(1000);
@@ -146,6 +145,7 @@ namespace Stl.Fusion.Tests
             Debug.WriteLine("100");
             await serving.DisposeAsync();
             Debug.WriteLine("101");
+            */
         }
     }
 }

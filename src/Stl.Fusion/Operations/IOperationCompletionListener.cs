@@ -1,6 +1,6 @@
 namespace Stl.Fusion.Operations
 {
-    public interface IOperationCompletionHandler
+    public interface IOperationCompletionListener
     {
         void OnOperationCompleted(IOperation operation);
     }

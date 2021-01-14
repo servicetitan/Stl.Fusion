@@ -13,13 +13,25 @@ namespace Stl.Fusion.EntityFramework.Internal
     public class DbOperationScopeHandler<TDbContext> : DbServiceBase<TDbContext>, ICommandHandler<ICommand>
         where TDbContext : DbContext
     {
+        public class Options
+        {
+            public LogLevel LogLevel { get; set; } = LogLevel.None;
+        }
+
         protected IOperationCompletionNotifier? OperationCompletionNotifier { get; }
+        protected IInvalidationInfoProvider? InvalidationInfoProvider { get; }
+        protected LogLevel LogLevel { get; }
 
         public DbOperationScopeHandler(
-            IOperationCompletionNotifier? operationCompletionNotifier,
+            Options? options,
             IServiceProvider services)
             : base(services)
-            => OperationCompletionNotifier = operationCompletionNotifier;
+        {
+            options ??= new();
+            LogLevel = options.LogLevel;
+            OperationCompletionNotifier = services.GetService<IOperationCompletionNotifier>();
+            InvalidationInfoProvider = services.GetService<IInvalidationInfoProvider>();
+        }
 
         [CommandHandler(Order = -1000, IsFilter = true)]
         public async Task OnCommandAsync(ICommand command, CommandContext context, CancellationToken cancellationToken)
@@ -36,25 +48,28 @@ namespace Stl.Fusion.EntityFramework.Internal
             if (context.Items[tScope] != null) // Safety check
                 throw Stl.Internal.Errors.InternalError($"'{tScope}' scope is already provided. Duplicate handler?");
 
-            var logEnabled = Log.IsEnabled(LogLevel.Debug);
+            var logEnabled = LogLevel != LogLevel.None && Log.IsEnabled(LogLevel);
             await using var scope = Services.GetRequiredService<IDbOperationScope<TDbContext>>();
             scope.Command = command;
             context.Items.Set(scope);
             if (logEnabled)
-                Log.LogDebug("+ Operation started: {0}", command);
+                Log.Log(LogLevel, "+ Operation started: {0}", command);
 
             IOperation? operation = null;
             try {
                 await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
 
-                // Copying invalidation data from the CommandContext
+                // Building IOperation.Items from CommandContext.Items
                 foreach (var (key, value) in context.Items.Items) {
-                    if (value is IInvalidationData)
-                        scope.InvalidationData = scope.InvalidationData.Set(key, value);
+                    if (value is IOperationItem)
+                        scope.Items = scope.Items.Set(key, value);
                 }
                 operation = await scope.CommitAsync(cancellationToken);
                 if (logEnabled)
-                    Log.LogDebug("- Operation succeeded: {0}", command);
+                    Log.Log(LogLevel, "- Operation succeeded: {0}", command);
+            }
+            catch (OperationCanceledException) {
+                throw;
             }
             catch (Exception e) {
                 Log.LogError(e, "! Operation failed: {0}", command);
@@ -66,8 +81,11 @@ namespace Stl.Fusion.EntityFramework.Internal
                 }
                 throw;
             }
-            if (operation != null)
+            if (operation != null) {
+                if (InvalidationInfoProvider?.RequiresInvalidation(command) ?? false)
+                    context.Items.Set(InvalidateCommand.New(command, operation));
                 OperationCompletionNotifier?.NotifyCompleted(operation);
+            }
         }
     }
 }

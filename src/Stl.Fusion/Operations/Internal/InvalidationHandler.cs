@@ -12,9 +12,11 @@ namespace Stl.Fusion.Operations.Internal
         public class Options
         {
             public bool IsEnabled { get; set; } = true;
+            public LogLevel LogLevel { get; set; } = LogLevel.None;
         }
 
         protected IInvalidationInfoProvider InvalidationInfoProvider { get; }
+        protected LogLevel LogLevel { get; }
         protected ILogger Log { get; }
 
         public bool IsEnabled { get; }
@@ -25,6 +27,7 @@ namespace Stl.Fusion.Operations.Internal
         {
             options ??= new();
             Log = log ?? NullLogger<InvalidationHandler>.Instance;
+            LogLevel = options.LogLevel;
             IsEnabled = options.IsEnabled;
             InvalidationInfoProvider = invalidationInfoProvider;
         }
@@ -41,14 +44,12 @@ namespace Stl.Fusion.Operations.Internal
                 return;
             }
 
-            if (InvalidationInfoProvider.RequiresInvalidation(command))
-                context.Items.Set(InvalidateCommand.New(command));
-
             await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
 
-            var invalidate = context.Items.TryGet<IInvalidateCommand>();
-            if (invalidate != null)
-                await context.Commander.RunAsync(invalidate, true, default).ConfigureAwait(false);
+            if (InvalidationInfoProvider.RequiresInvalidation(command)) {
+                var invalidateCommand = context.Items.TryGet<IInvalidateCommand>() ?? InvalidateCommand.New(command);
+                await context.Commander.RunAsync(invalidateCommand, true, default).ConfigureAwait(false);
+            }
         }
 
         [CommandHandler(Order = -10_001, IsFilter = true)]
@@ -62,16 +63,28 @@ namespace Stl.Fusion.Operations.Internal
                 return;
             }
 
+            // Copying IOperation.Items to CommandContext.Items
+            var operation = command.Operation;
+            var operationItems = operation?.Items.Items;
+            if (operationItems != null) {
+                foreach (var (key, value) in operationItems) {
+                    if (value is IOperationItem)
+                        context.Items[key] = value;
+                }
+            }
+
+            var logEnabled = LogLevel != LogLevel.None && Log.IsEnabled(LogLevel);
             using var _ = Computed.Invalidate();
+
             var finalHandler = context.ExecutionState.FindFinalHandler();
             if (finalHandler != null) {
-                if (Log.IsEnabled(LogLevel.Debug))
-                    Log.LogDebug("Invalidating via dedicated command handler: {0}", command);
+                if (logEnabled)
+                    Log.Log(LogLevel, "Invalidating via dedicated command handler: {0}", command);
                 await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
             }
             else {
-                if (Log.IsEnabled(LogLevel.Debug))
-                    Log.LogDebug("Invalidating via shared command handler: {0}", command);
+                if (logEnabled)
+                    Log.Log(LogLevel, "Invalidating via shared command handler: {0}", command);
                 await context.Commander.RunAsync(command.UntypedCommand, cancellationToken).ConfigureAwait(false);
             }
         }

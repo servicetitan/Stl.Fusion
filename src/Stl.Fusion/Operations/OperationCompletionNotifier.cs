@@ -26,7 +26,7 @@ namespace Stl.Fusion.Operations
         protected int MaxKnownOperationCount { get; }
         protected TimeSpan MaxKnownOperationAge { get; }
         protected AgentInfo AgentInfo { get; }
-        protected IOperationCompletionHandler[] OperationCompletionHandlers { get; }
+        protected IOperationCompletionListener[] OperationCompletionHandlers { get; }
         protected IMomentClock Clock { get; }
         protected BinaryHeap<Moment, string> KnownOperationHeap { get; } = new();
         protected HashSet<string> KnownOperationSet { get; } = new();
@@ -35,7 +35,7 @@ namespace Stl.Fusion.Operations
 
         public OperationCompletionNotifier(Options? options,
             AgentInfo agentInfo,
-            IEnumerable<IOperationCompletionHandler> operationCompletionHandlers,
+            IEnumerable<IOperationCompletionListener> operationCompletionHandlers,
             IMomentClock? clock = null,
             ILogger<OperationCompletionNotifier>? log = null)
         {

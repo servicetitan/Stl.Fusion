@@ -74,7 +74,7 @@ namespace Stl.Fusion
             Services.TryAddSingleton<OperationCompletionNotifier.Options>();
             Services.TryAddSingleton<IOperationCompletionNotifier, OperationCompletionNotifier>();
             Services.TryAddEnumerable(ServiceDescriptor.Singleton(
-                typeof(IOperationCompletionHandler), typeof(OperationInvalidationHandler)));
+                typeof(IOperationCompletionListener), typeof(OperationInvalidator)));
         }
 
         static FusionBuilder()

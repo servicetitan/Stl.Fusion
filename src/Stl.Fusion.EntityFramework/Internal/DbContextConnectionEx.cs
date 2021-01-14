@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
+using Stl.Async;
 
 namespace Stl.Fusion.EntityFramework.Internal
 {
@@ -33,6 +34,8 @@ namespace Stl.Fusion.EntityFramework.Internal
                 .GetRequiredService<IRelationalConnection>();
             var oldDbConnection = (DbConnection?) ConnectionField.GetValue(relationalConnection);
             var oldIsOwned = (bool) ConnectionOwnedField.GetValue(relationalConnection)!;
+            if (oldIsOwned)
+                oldDbConnection?.DisposeAsync().Ignore();
             ConnectionField.SetValue(relationalConnection, dbConnection);
             ConnectionOwnedField.SetValue(relationalConnection, isOwned);
 #pragma warning disable EF1001

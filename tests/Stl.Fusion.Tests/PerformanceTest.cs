@@ -35,10 +35,10 @@ namespace Stl.Fusion.Tests
             var users = Services.GetRequiredService<IUserService>();
             var tasks = new List<Task>();
             for (var i = 0; i < UserCount; i++)
-                tasks.Add(users.CreateAsync(new User() {
+                tasks.Add(users.CreateAsync(new IUserService.AddCommand(new User() {
                     Id = i,
                     Name = $"User_{i}",
-                }, true));
+                }, true)));
             await Task.WhenAll(tasks);
         }
 
@@ -94,7 +94,7 @@ namespace Stl.Fusion.Tests
                         .ConfigureAwait(false);
                     user = user! with { Email = $"{++count}@counter.org" };
                     // Log.LogDebug($"{name}: R done, U {user}");
-                    await users.UpdateAsync(user, cancellationToken).ConfigureAwait(false);
+                    await users.UpdateAsync(new(user), cancellationToken).ConfigureAwait(false);
                     // Log.LogDebug($"{name}: U {user} done");
                     await Task.Delay(10, cancellationToken).ConfigureAwait(false);
                 }

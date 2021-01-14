@@ -30,7 +30,8 @@ namespace Stl.Fusion.EntityFramework
             Services.AddHostedService(c => c.GetRequiredService<DbOperationLogWatcher<TDbContext>>());
             // DbOperationScope & its CommandR handler
             Services.TryAddTransient<IDbOperationScope<TDbContext>, DbOperationScope<TDbContext>>();
-            Services.AddSingleton<DbOperationScopeHandler<TDbContext>>();
+            Services.TryAddSingleton<DbOperationScopeHandler<TDbContext>.Options>();
+            Services.TryAddSingleton<DbOperationScopeHandler<TDbContext>>();
             Services.AddCommander().AddHandlers<DbOperationScopeHandler<TDbContext>>();
             return this;
         }
