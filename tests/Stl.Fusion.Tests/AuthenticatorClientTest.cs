@@ -1,8 +1,11 @@
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using Stl.CommandR;
 using Stl.CommandR.Commands;
+using Stl.CommandR.Internal;
 using Stl.Fusion.Authentication;
+using Stl.Fusion.Authentication.Commands;
 using Stl.Tests;
 using Xunit;
 using Xunit.Abstractions;
@@ -18,7 +21,7 @@ namespace Stl.Fusion.Tests
         public async Task BasicTest()
         {
             await using var serving = await WebSocketHost.ServeAsync();
-            var authServer = WebSocketHost.Services.GetRequiredService<IServerSideAuthService>();
+            var authServer = ServerServices.GetRequiredService<IServerSideAuthService>();
             var authClient = ClientServices.GetRequiredService<IAuthService>();
             var sessionFactory = ClientServices.GetRequiredService<ISessionFactory>();
             var sessionA = sessionFactory.CreateSession();
@@ -28,7 +31,7 @@ namespace Stl.Fusion.Tests
             var guest = new User("<guest>");
 
             var session = sessionA;
-            await authServer.SignInAsync(new AuthCommand.SignIn(bob, session).MarkServerSide());
+            await ServerServices.Commander().CallAsync(new SignInCommand(bob, session).MarkServerSide());
             var user = await authServer.GetUserAsync(session);
             user.Name.Should().Be(bob.Name);
 

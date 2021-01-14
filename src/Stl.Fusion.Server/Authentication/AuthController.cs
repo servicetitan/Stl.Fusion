@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Stl.Fusion.Authentication;
+using Stl.Fusion.Authentication.Commands;
 using Stl.Fusion.Server.Internal;
 
 namespace Stl.Fusion.Server.Authentication
@@ -21,7 +22,7 @@ namespace Stl.Fusion.Server.Authentication
         }
 
         [HttpPost("signOut")]
-        public Task SignOutAsync([FromBody] AuthCommand.SignOut command, CancellationToken cancellationToken = default)
+        public Task SignOutAsync([FromBody] SignOutCommand command, CancellationToken cancellationToken = default)
         {
             command.UseDefaultSession(SessionResolver);
             return AuthService.SignOutAsync(command, cancellationToken);

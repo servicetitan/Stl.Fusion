@@ -2,6 +2,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using RestEase;
 using Stl.Fusion.Authentication;
+using Stl.Fusion.Authentication.Commands;
 
 namespace Stl.Fusion.Client.Authentication
 {
@@ -9,7 +10,7 @@ namespace Stl.Fusion.Client.Authentication
     public interface IAuthClient
     {
         [Post("signOut")]
-        Task SignOutAsync([Body] AuthCommand.SignOut command, CancellationToken cancellationToken = default);
+        Task SignOutAsync([Body] SignOutCommand command, CancellationToken cancellationToken = default);
         [Post("updatePresence")]
         Task UpdatePresenceAsync([Body] Session session, CancellationToken cancellationToken = default);
 

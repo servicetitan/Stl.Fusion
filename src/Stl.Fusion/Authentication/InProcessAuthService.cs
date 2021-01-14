@@ -10,6 +10,7 @@ using Stl.Async;
 using Stl.CommandR;
 using Stl.CommandR.Commands;
 using Stl.Concurrency;
+using Stl.Fusion.Authentication.Commands;
 using Stl.Fusion.Authentication.Internal;
 using Stl.Fusion.Operations;
 using Stl.Time;
@@ -29,7 +30,7 @@ namespace Stl.Fusion.Authentication
 
         // Command handlers
 
-        public virtual async Task SignInAsync(AuthCommand.SignIn command, CancellationToken cancellationToken = default)
+        public virtual async Task SignInAsync(SignInCommand command, CancellationToken cancellationToken = default)
         {
             var (user, session) = command;
             if (Computed.IsInvalidating()) {
@@ -47,7 +48,7 @@ namespace Stl.Fusion.Authentication
                 session.Id);
         }
 
-        public virtual Task SignOutAsync(AuthCommand.SignOut command, CancellationToken cancellationToken = default)
+        public virtual Task SignOutAsync(SignOutCommand command, CancellationToken cancellationToken = default)
         {
             var (force, session) = command;
             var context = CommandContext.GetCurrent();
@@ -75,7 +76,7 @@ namespace Stl.Fusion.Authentication
             return Task.CompletedTask;
         }
 
-        public virtual Task SaveSessionInfoAsync(AuthCommand.SaveSessionInfo command, CancellationToken cancellationToken = default)
+        public virtual Task SaveSessionInfoAsync(SaveSessionInfoCommand command, CancellationToken cancellationToken = default)
         {
             var (sessionInfo, session) = command;
             if (Computed.IsInvalidating()) {
@@ -102,7 +103,7 @@ namespace Stl.Fusion.Authentication
             if (delta < TimeSpan.FromSeconds(10))
                 return; // We don't want to update this too frequently
             sessionInfo = sessionInfo with { LastSeenAt = now };
-            var command = new AuthCommand.SaveSessionInfo(sessionInfo, session).MarkServerSide();
+            var command = new SaveSessionInfoCommand(sessionInfo, session).MarkServerSide();
             await SaveSessionInfoAsync(command, cancellationToken).ConfigureAwait(false);
         }
 

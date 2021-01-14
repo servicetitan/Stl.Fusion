@@ -38,6 +38,7 @@ namespace Stl.Fusion.Tests
         public PathString DbPath { get; protected set; }
         public IServiceProvider Services { get; }
         public IServiceProvider ClientServices { get; }
+        public IServiceProvider ServerServices => WebSocketHost.Services;
         public ILogger Log { get; }
 
         public IStateFactory StateFactory => Services.GetStateFactory();
