@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using Stl.CommandR.Commands;
 using Stl.Fusion.Authentication;
 using Stl.Tests;
 using Xunit;
@@ -27,7 +28,7 @@ namespace Stl.Fusion.Tests
             var guest = new User("<guest>");
 
             var session = sessionA;
-            await authServer.SignInAsync(bob, session);
+            await authServer.SignInAsync(new AuthCommand.SignIn(bob, session).MarkServerSide());
             var user = await authServer.GetUserAsync(session);
             user.Name.Should().Be(bob.Name);
 

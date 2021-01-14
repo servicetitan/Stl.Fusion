@@ -20,20 +20,15 @@ namespace Stl.Fusion.Server.Authentication
             SessionResolver = sessionResolver;
         }
 
-        [HttpGet("signOut")]
-        public Task SignOutAsync(bool force, Session? session = null, CancellationToken cancellationToken = default)
+        [HttpPost("signOut")]
+        public Task SignOutAsync([FromBody] AuthCommand.SignOut command, CancellationToken cancellationToken = default)
         {
-            session ??= SessionResolver.Session;
-            return AuthService.SignOutAsync(force, session, cancellationToken);
+            command.UseDefaultSession(SessionResolver);
+            return AuthService.SignOutAsync(command, cancellationToken);
         }
 
-        [HttpGet("saveSessionInfo")]
-        public Task SaveSessionInfoAsync(SessionInfo sessionInfo, Session? session = null,
-            CancellationToken cancellationToken = default)
-            => throw Errors.UnsupportedWebApiEndpoint();
-
-        [HttpGet("updatePresence")]
-        public Task UpdatePresenceAsync(Session? session = null, CancellationToken cancellationToken = default)
+        [HttpPost("updatePresence")]
+        public Task UpdatePresenceAsync([FromBody] Session? session = null, CancellationToken cancellationToken = default)
         {
             session ??= SessionResolver.Session;
             return AuthService.UpdatePresenceAsync(session, cancellationToken);

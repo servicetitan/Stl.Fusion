@@ -12,8 +12,7 @@ namespace Stl.Fusion.EntityFramework
         where TDbContext : DbContext
     {
         Task<IOperation> AddAsync(TDbContext dbContext,
-            object? command, DateTime startTime, DateTime commitTime,
-            CancellationToken cancellationToken);
+            Action<IOperation> initializer, CancellationToken cancellationToken);
         Task<IOperation?> TryGetAsync(TDbContext dbContext,
             string id, CancellationToken cancellationToken);
         Task<List<IOperation>> ListNewlyCommittedAsync(TDbContext dbContext,
@@ -30,25 +29,20 @@ namespace Stl.Fusion.EntityFramework
             : base(services)
             => AgentInfo = agentInfo;
 
-        public virtual async Task<IOperation> AddAsync(
-            TDbContext dbContext,
-            object? command, DateTime startTime, DateTime commitTime,
-            CancellationToken cancellationToken)
+        public virtual async Task<IOperation> AddAsync(TDbContext dbContext,
+            Action<IOperation> initializer, CancellationToken cancellationToken)
         {
             var operation = new TDbOperation() {
                 Id = Ulid.NewUlid().ToString(),
                 AgentId = AgentInfo.Id.Value,
-                StartTime = startTime,
-                CommitTime = commitTime,
-                Command = command,
             };
+            initializer.Invoke(operation);
             await dbContext.AddAsync((object) operation, cancellationToken).ConfigureAwait(false);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             return operation;
         }
 
-        public virtual async Task<IOperation?> TryGetAsync(
-            TDbContext dbContext,
+        public virtual async Task<IOperation?> TryGetAsync(TDbContext dbContext,
             string id, CancellationToken cancellationToken)
             => await dbContext.Set<TDbOperation>().AsQueryable()
                 .FirstOrDefaultAsync(e => e.Id == id, cancellationToken).ConfigureAwait(false);

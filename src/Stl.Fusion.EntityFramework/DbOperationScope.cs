@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Async;
+using Stl.Collections;
 using Stl.Fusion.EntityFramework.Internal;
 using Stl.Fusion.Operations;
 using Stl.Locking;
@@ -18,11 +19,15 @@ namespace Stl.Fusion.EntityFramework
 {
     public interface IDbOperationScope : IAsyncDisposable
     {
-        public bool IsUsed { get; }
-        public bool IsCompleted { get; }
+        Moment StartTime { get; set; }
+        object? Command { get; set; }
+        ImmutableOptionSet InvalidationData { get; set; }
+        bool IsUsed { get; }
+        bool IsCompleted { get; }
+        bool? IsConfirmed { get; }
 
         Task<DbContext> GetDbContextAsync(bool isReadWrite = true, CancellationToken cancellationToken = default);
-        Task<IOperation?> CommitAsync(object? command, CancellationToken cancellationToken = default);
+        Task<IOperation?> CommitAsync(CancellationToken cancellationToken = default);
         Task RollbackAsync();
     }
 
@@ -35,7 +40,6 @@ namespace Stl.Fusion.EntityFramework
     public class DbOperationScope<TDbContext> : AsyncDisposableBase, IDbOperationScope<TDbContext>
         where TDbContext : DbContext
     {
-        protected Moment StartTime { get; }
         protected List<TDbContext> AllDbContexts { get; }
         protected TDbContext? PrimaryDbContext { get; set; }
         protected DbConnection? Connection { get; set; }
@@ -47,6 +51,9 @@ namespace Stl.Fusion.EntityFramework
         protected ILogger Log { get; }
         protected AsyncLock AsyncLock { get; }
 
+        public Moment StartTime { get; set; }
+        public object? Command { get; set; }
+        public ImmutableOptionSet InvalidationData { get; set; }
         public bool IsUsed => PrimaryDbContext != null;
         public bool IsCompleted { get; private set; }
         public bool? IsConfirmed { get; private set; }
@@ -117,7 +124,7 @@ namespace Stl.Fusion.EntityFramework
             return dbContext;
         }
 
-        public virtual async Task<IOperation?> CommitAsync(object? command, CancellationToken cancellationToken = default)
+        public virtual async Task<IOperation?> CommitAsync(CancellationToken cancellationToken = default)
         {
             using var _ = await AsyncLock.LockAsync(cancellationToken).ConfigureAwait(false);
             if (IsCompleted)
@@ -133,16 +140,19 @@ namespace Stl.Fusion.EntityFramework
                     await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                 }
 
-                if (command == null) {
+                if (Command == null) {
                     await Transaction!.CommitAsync(cancellationToken).ConfigureAwait(false);
                     return null;
                 }
                 else {
                     var dbContext = PrimaryDbContext!.ReadWrite();
                     dbContext.ChangeTracker.Clear();
-                    var operation = await DbOperationLog.AddAsync(dbContext,
-                        command, StartTime, Clock.Now,
-                        cancellationToken).ConfigureAwait(false);
+                    var operation = await DbOperationLog.AddAsync(dbContext, o => {
+                            o.StartTime = StartTime;
+                            o.CommitTime = Clock.Now;
+                            o.Command = Command;
+                            o.InvalidationData = InvalidationData;
+                        }, cancellationToken).ConfigureAwait(false);
                     await Transaction!.CommitAsync(cancellationToken).ConfigureAwait(false);
                     operation = await DbOperationLog.TryGetAsync(dbContext, operation.Id, cancellationToken);
                     if (operation == null)

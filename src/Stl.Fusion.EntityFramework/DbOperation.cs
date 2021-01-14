@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using Stl.Collections;
 using Stl.Fusion.Operations;
 using Stl.Serialization;
 using Stl.Time;
@@ -15,6 +17,7 @@ namespace Stl.Fusion.EntityFramework
     public class DbOperation : IOperation
     {
         private readonly JsonSerialized<object?> _command = new();
+        private readonly JsonSerialized<ImmutableOptionSet> _invalidationData = new();
         private DateTime _startTime;
         private DateTime _commitTime;
 
@@ -37,10 +40,21 @@ namespace Stl.Fusion.EntityFramework
             set => _command.SerializedValue = value;
         }
 
+        public string InvalidationDataJson {
+            get => _invalidationData.SerializedValue;
+            set => _invalidationData.SerializedValue = value;
+        }
+
         [NotMapped, JsonIgnore]
         public object? Command {
             get => _command.Value;
             set => _command.Value = value;
+        }
+
+        [NotMapped, JsonIgnore]
+        public ImmutableOptionSet InvalidationData {
+            get => _invalidationData.Value;
+            set => _invalidationData.Value = value;
         }
     }
 }

@@ -7,7 +7,7 @@ using Stl.CommandR.Configuration;
 
 namespace Stl.Fusion.Operations.Internal
 {
-    public class InvalidationHandler : ICommandHandler<ICommand>, ICommandHandler<IInvalidate>
+    public class InvalidationHandler : ICommandHandler<ICommand>, ICommandHandler<IInvalidateCommand>
     {
         public class Options
         {
@@ -34,7 +34,7 @@ namespace Stl.Fusion.Operations.Internal
         {
             var skip = !IsEnabled
                 || context.OuterContext != null // Should be top-level command
-                || command is IInvalidate // Second handler here will take care of it
+                || command is IInvalidateCommand // Second handler here will take care of it
                 || Computed.IsInvalidating();
             if (skip) {
                 await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
@@ -42,17 +42,17 @@ namespace Stl.Fusion.Operations.Internal
             }
 
             if (InvalidationInfoProvider.RequiresInvalidation(command))
-                context.Items.Set(Invalidate.New(command));
+                context.Items.Set(InvalidateCommand.New(command));
 
             await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
 
-            var invalidate = context.Items.TryGet<IInvalidate>();
+            var invalidate = context.Items.TryGet<IInvalidateCommand>();
             if (invalidate != null)
                 await context.Commander.RunAsync(invalidate, true, default).ConfigureAwait(false);
         }
 
         [CommandHandler(Order = -10_001, IsFilter = true)]
-        public async Task OnCommandAsync(IInvalidate command, CommandContext context, CancellationToken cancellationToken)
+        public async Task OnCommandAsync(IInvalidateCommand command, CommandContext context, CancellationToken cancellationToken)
         {
             var skip = !IsEnabled
                 || !InvalidationInfoProvider.RequiresInvalidation(command.UntypedCommand)

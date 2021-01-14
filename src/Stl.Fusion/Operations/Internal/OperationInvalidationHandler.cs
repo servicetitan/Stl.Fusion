@@ -34,7 +34,7 @@ namespace Stl.Fusion.Operations.Internal
                 return;
             if (Log.IsEnabled(LogLevel.Debug))
                 Log.LogDebug("Invalidating operation: agent {0}, command {1}", operation.AgentId, command);
-            Commander.Start(Invalidate.New(command), true);
+            Commander.Start(InvalidateCommand.New(command), true);
         }
     }
 }

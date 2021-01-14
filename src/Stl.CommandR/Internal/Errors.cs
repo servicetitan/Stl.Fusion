@@ -42,5 +42,8 @@ namespace Stl.CommandR.Internal
             => new InvalidOperationException(
                 $"Type '{type}' is registered as a service with intercepted command handlers, " +
                 "so it can't declare regular (e.g. interface) command handlers.");
+
+        public static Exception CommandIsServerSideOnly()
+            => new InvalidOperationException("The command is server-side only.");
     }
 }

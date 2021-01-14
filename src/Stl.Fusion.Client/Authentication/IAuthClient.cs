@@ -8,12 +8,10 @@ namespace Stl.Fusion.Client.Authentication
     [BasePath("fusion/auth")]
     public interface IAuthClient
     {
-        [Get("signOut")]
-        Task SignOutAsync(bool force, Session session, CancellationToken cancellationToken = default);
-        [Get("saveSessionInfo")]
-        Task SaveSessionInfoAsync(SessionInfo sessionInfo, Session session, CancellationToken cancellationToken = default);
-        [Get("updatePresence")]
-        Task UpdatePresenceAsync(Session session, CancellationToken cancellationToken = default);
+        [Post("signOut")]
+        Task SignOutAsync([Body] AuthCommand.SignOut command, CancellationToken cancellationToken = default);
+        [Post("updatePresence")]
+        Task UpdatePresenceAsync([Body] Session session, CancellationToken cancellationToken = default);
 
         [Get("isSignOutForced"), ComputeMethod]
         Task<bool> IsSignOutForcedAsync(Session session, CancellationToken cancellationToken = default);

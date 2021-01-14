@@ -46,6 +46,10 @@ namespace Stl.CommandR
 
             Handlers = TryGetCommandHandlerRegistry(services)
                 ?? throw Errors.CommandHandlerRegistryInstanceIsNotRegistered();
+
+            // Default handlers
+            Services.AddSingleton<PreprocessedCommandHandler>();
+            AddHandlers<PreprocessedCommandHandler>();
         }
 
         private static ICommandHandlerRegistry? TryGetCommandHandlerRegistry(IServiceCollection services)

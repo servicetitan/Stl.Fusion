@@ -1,12 +1,13 @@
 using System.Threading;
 using System.Threading.Tasks;
+using Stl.CommandR.Configuration;
 
 namespace Stl.Fusion.Authentication
 {
     public interface IAuthService
     {
-        Task SignOutAsync(bool force, Session session, CancellationToken cancellationToken = default);
-        Task SaveSessionInfoAsync(SessionInfo sessionInfo, Session session, CancellationToken cancellationToken = default);
+        [CommandHandler]
+        Task SignOutAsync(AuthCommand.SignOut command, CancellationToken cancellationToken = default);
         Task UpdatePresenceAsync(Session session, CancellationToken cancellationToken = default);
 
         [ComputeMethod(KeepAliveTime = 10)]
@@ -21,6 +22,9 @@ namespace Stl.Fusion.Authentication
 
     public interface IServerSideAuthService : IAuthService
     {
-        Task SignInAsync(User user, Session session, CancellationToken cancellationToken = default);
+        [CommandHandler]
+        Task SignInAsync(AuthCommand.SignIn command, CancellationToken cancellationToken = default);
+        [CommandHandler]
+        Task SaveSessionInfoAsync(AuthCommand.SaveSessionInfo command, CancellationToken cancellationToken = default);
     }
 }

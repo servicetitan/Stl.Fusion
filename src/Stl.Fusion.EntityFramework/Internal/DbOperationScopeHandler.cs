@@ -25,7 +25,7 @@ namespace Stl.Fusion.EntityFramework.Internal
         public async Task OnCommandAsync(ICommand command, CommandContext context, CancellationToken cancellationToken)
         {
             var skip = context.OuterContext != null // Should be top-level command
-                || command is IInvalidate // Second handler here will take care of it
+                || command is IInvalidateCommand // Second handler here will take care of it
                 || Computed.IsInvalidating();
             if (skip) {
                 await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
@@ -38,6 +38,7 @@ namespace Stl.Fusion.EntityFramework.Internal
 
             var logEnabled = Log.IsEnabled(LogLevel.Debug);
             await using var scope = Services.GetRequiredService<IDbOperationScope<TDbContext>>();
+            scope.Command = command;
             context.Items.Set(scope);
             if (logEnabled)
                 Log.LogDebug("+ Operation started: {0}", command);
@@ -45,7 +46,13 @@ namespace Stl.Fusion.EntityFramework.Internal
             IOperation? operation = null;
             try {
                 await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
-                operation = await scope.CommitAsync(command, cancellationToken);
+
+                // Copying invalidation data from the CommandContext
+                foreach (var (key, value) in context.Items.Items) {
+                    if (value is IInvalidationData)
+                        scope.InvalidationData = scope.InvalidationData.Set(key, value);
+                }
+                operation = await scope.CommitAsync(cancellationToken);
                 if (logEnabled)
                     Log.LogDebug("- Operation succeeded: {0}", command);
             }
