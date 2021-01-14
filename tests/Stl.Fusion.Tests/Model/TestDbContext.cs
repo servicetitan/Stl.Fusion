@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Stl.Fusion.EntityFramework;
 
 namespace Stl.Fusion.Tests.Model
 {
@@ -7,14 +8,10 @@ namespace Stl.Fusion.Tests.Model
         public DbSet<User> Users { get; protected set; } = null!;
         public DbSet<Message> Messages { get; protected set; } = null!;
         public DbSet<Chat> Chats { get; protected set; } = null!;
+        public DbSet<DbOperation> Operations { get; protected set; } = null!;
 
         public TestDbContext(DbContextOptions options) : base(options)
-        {
-            var ct = ChangeTracker;
-            ct.AutoDetectChangesEnabled = false;
-            ct.LazyLoadingEnabled = false;
-            ct.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
-        }
+            => this.DisableChangeTracking();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

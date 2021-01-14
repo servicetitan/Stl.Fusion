@@ -63,13 +63,13 @@ namespace Stl.Testing
             return AsyncDisposable.New(async self => {
                 var host1 = self.Host;
                 await host1.StopAsync().SuppressExceptions().ConfigureAwait(false);
-                host1.Dispose();
+                Task.Run(() => host1.Dispose()).Ignore();
                 self.HostLazy = new Lazy<IHost>(CreateHost);
             }, this);
         }
 
         public virtual HttpClient CreateClient()
-            => new HttpClient() { BaseAddress = ServerUri };
+            => new() { BaseAddress = ServerUri };
 
         protected virtual IHost CreateHost()
             => CreateHostBuilder().Build();

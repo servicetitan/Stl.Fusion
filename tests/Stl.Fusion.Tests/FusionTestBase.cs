@@ -36,21 +36,19 @@ namespace Stl.Fusion.Tests
         public FusionTestOptions Options { get; }
         public bool IsLoggingEnabled { get; set; } = true;
         public PathString DbPath { get; protected set; }
+        public FusionTestWebHost WebHost { get; }
         public IServiceProvider Services { get; }
+        public IServiceProvider WebServices { get; }
         public IServiceProvider ClientServices { get; }
-        public IServiceProvider ServerServices => WebSocketHost.Services;
         public ILogger Log { get; }
-
-        public IStateFactory StateFactory => Services.GetStateFactory();
-        public IPublisher Publisher => Services.GetRequiredService<IPublisher>();
-        public TestWebHost WebSocketHost => Services.GetRequiredService<TestWebHost>();
-        public IReplicator ClientReplicator => ClientServices.GetRequiredService<IReplicator>();
 
         public FusionTestBase(ITestOutputHelper @out, FusionTestOptions? options = null) : base(@out)
         {
             Options = options ?? new FusionTestOptions();
             // ReSharper disable once VirtualMemberCallInConstructor
             Services = CreateServices();
+            WebHost = Services.GetRequiredService<FusionTestWebHost>();
+            WebServices = WebHost.Services;
             ClientServices = CreateServices(true);
             Log = (ILogger) Services.GetRequiredService(typeof(ILogger<>).MakeGenericType(GetType()));
         }
@@ -124,6 +122,7 @@ namespace Stl.Fusion.Tests
             var fusion = services.AddFusion();
 
             if (!isClient) {
+                // Configuring Services and ServerServices
                 services.AttributeScanner(ServiceScope.Services)
                     .WithTypeFilter(testType.Namespace!)
                     .AddServicesFrom(testType.Assembly);
@@ -138,37 +137,33 @@ namespace Stl.Fusion.Tests
                         builder.UseSqlite($"Data Source={DbPath}", sqlite => { });
                 }, 256);
 
-                // TestWebHost
-                services.AddSingleton(c => new TestWebHost(c));
-
-                // Fusion server
-                fusion.AddWebSocketServer();
+                // WebHost
+                var webHost = (FusionTestWebHost?) WebHost;
+                services.AddSingleton(c => webHost ?? new FusionTestWebHost(services));
             }
             else {
+                // Configuring ClientServices
                 services.AttributeScanner(ServiceScope.ClientServices)
                     .WithTypeFilter(testType.Namespace!)
                     .AddServicesFrom(testType.Assembly);
 
-                // Copy of TestWebHost from the main container
-                services.CopySingleton<TestWebHost>(Services);
-
                 // Fusion client
                 var fusionClient = fusion.AddRestEaseClient(
                     (c, options) => {
-                        options.BaseUri = c.GetRequiredService<TestWebHost>().ServerUri;
+                        options.BaseUri = WebHost.ServerUri;
                         options.MessageLogLevel = LogLevel.Information;
                     }).ConfigureHttpClientFactory(
                     (c, name, options) => {
-                        var baseUri = c.GetRequiredService<TestWebHost>().ServerUri;
+                        var baseUri = WebHost.ServerUri;
                         var apiUri = new Uri($"{baseUri}api/");
                         var isFusionService = !(name ?? "").Contains("Tests");
                         var clientBaseUri = isFusionService ? baseUri : apiUri;
                         options.HttpClientActions.Add(c => c.BaseAddress = clientBaseUri);
                     });
-                var fusionAuth = fusion.AddAuthentication().AddRestEaseClient();
+                fusion.AddAuthentication(auth => auth.AddRestEaseClient());
 
                 // Custom live state
-                fusion.AddState(c => c.GetStateFactory().NewLive<ServerTimeModel2>(
+                fusion.AddState(c => c.StateFactory().NewLive<ServerTimeModel2>(
                     async (state, cancellationToken) => {
                         var client = c.GetRequiredService<IClientTimeService>();
                         var time = await client.GetTimeAsync(cancellationToken).ConfigureAwait(false);
@@ -182,8 +177,9 @@ namespace Stl.Fusion.Tests
 
         protected Task<Channel<BridgeMessage>> ConnectToPublisherAsync(CancellationToken cancellationToken = default)
         {
+            var publisher = WebServices.GetRequiredService<IPublisher>();
             var channelProvider = ClientServices.GetRequiredService<IChannelProvider>();
-            return channelProvider.CreateChannelAsync(Publisher.Id, cancellationToken);
+            return channelProvider.CreateChannelAsync(publisher.Id, cancellationToken);
         }
 
         protected virtual TestChannelPair<BridgeMessage> CreateChannelPair(

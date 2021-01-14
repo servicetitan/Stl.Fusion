@@ -3,46 +3,38 @@ using System.Reflection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Stl.DependencyInjection;
-using Stl.Fusion.Authentication;
-using Stl.Fusion.Bridge;
+using Stl.Collections;
 using Stl.Fusion.Server;
 using Stl.Fusion.Server.Authentication;
 using Stl.Testing;
 
 namespace Stl.Fusion.Tests.Services
 {
-    public class TestWebHost : TestWebHostBase
+    public class FusionTestWebHost : TestWebHostBase
     {
-        public IServiceProvider BaseServices { get; }
+        public IServiceCollection BaseServices { get; }
 
-        public TestWebHost(IServiceProvider baseServices)
+        public FusionTestWebHost(IServiceCollection baseServices)
             => BaseServices = baseServices;
 
         protected override void ConfigureHost(IHostBuilder builder)
         {
             builder.ConfigureServices(services => {
-                services.AddLogging(logging => {
-                    logging.ClearProviders();
-                    logging.SetMinimumLevel(LogLevel.Information);
-                    logging.AddDebug();
+                // Copy all services from the base service provider here
+                services.AddRange(BaseServices);
+
+                // Since we copy all services here,
+                // only web-related ones must be added to services
+                services.AddFusion(fusion => {
+                    fusion.AddWebSocketServer();
+                    fusion.AddAuthentication(auth => auth.AddServer());
                 });
 
-                services.CopySingleton<IPublisher>(BaseServices);
-                services.CopySingleton<ITimeService>(BaseServices);
-                services.CopySingleton<IScreenshotService>(BaseServices);
-                services.CopySingleton<IKeyValueService<string>>(BaseServices);
-                services.CopySingleton<IEdgeCaseService>(BaseServices);
-                // services.CopySingleton<IAuthService>(BaseServices);
-
-                // Fusion
-                var fusion = services.AddFusion();
-                fusion.AddAuthentication().AddServer();
-                fusion.AddWebSocketServer();
-
                 // Web
+                services.AddRouting();
+                services.AddControllers().AddApplicationPart(typeof(AuthController).Assembly);
                 services.AddControllers().AddApplicationPart(Assembly.GetExecutingAssembly());
 
                 // Testing

@@ -20,14 +20,15 @@ namespace Stl.Fusion.Tests
         [Fact]
         public async Task BasicTest()
         {
-            var kv = Services.GetRequiredService<IKeyValueService<string>>();
+            await using var _ = await WebHost.ServeAsync();
+
+            var kv = WebServices.GetRequiredService<IKeyValueService<string>>();
             (await kv.TryGetAsync("")).Should().Be(Option.None<string>());
             (await kv.GetAsync("")).Should().BeNull();
             await kv.SetAsync("", "1");
             (await kv.TryGetAsync("")).Should().Be(Option.Some("1"));
             (await kv.GetAsync("")).Should().Be("1");
 
-            await using var serving = await WebSocketHost.ServeAsync();
             using var kvm = ClientServices.GetRequiredService<ILiveState<KeyValueModel<string>>>();
             var kvc = ClientServices.GetRequiredService<IKeyValueServiceClient<string>>();
 
@@ -66,19 +67,21 @@ namespace Stl.Fusion.Tests
         [Fact]
         public async Task CommandTest()
         {
+            await using var _ = await WebHost.ServeAsync();
+
             // Server commands
-            var kv = Services.GetRequiredService<IKeyValueService<string>>();
+            var kv = WebServices.GetRequiredService<IKeyValueService<string>>();
             (await kv.GetAsync("")).Should().BeNull();
 
             await kv.SetCommandAsync(new IKeyValueService<string>.SetCommand("", "1"));
             (await kv.GetAsync("")).Should().Be("1");
 
-            await Services.Commander().CallAsync(new IKeyValueService<string>.SetCommand("", "2"));
+            await WebServices.Commander().CallAsync(new IKeyValueService<string>.SetCommand("", "2"));
             (await kv.GetAsync("")).Should().Be("2");
 
             // Client commands
-            await using var serving = await WebSocketHost.ServeAsync();
             var kvc = ClientServices.GetRequiredService<IKeyValueServiceClient<string>>();
+            (await kv.GetAsync("")).Should().Be("2");
 
             await kvc.SetCommandAsync(new IKeyValueService<string>.SetCommand("", "1"));
             await Task.Delay(100); // Remote invalidation takes some time
@@ -92,10 +95,17 @@ namespace Stl.Fusion.Tests
         [Fact]
         public async Task ExceptionTest()
         {
-            var kv = Services.GetRequiredService<IKeyValueService<string>>();
-            await using var serving = await WebSocketHost.ServeAsync();
-            var kvc = ClientServices.GetRequiredService<IKeyValueServiceClient<string>>();
+            await using var _ = await WebHost.ServeAsync();
+            var kv = WebServices.GetRequiredService<IKeyValueService<string>>();
 
+            try {
+                await kv.GetAsync("error");
+            }
+            catch (ApplicationException ae) {
+                ae.Message.Should().Be("Error!");
+            }
+
+            var kvc = ClientServices.GetRequiredService<IKeyValueServiceClient<string>>();
             try {
                 await kvc.GetAsync("error");
             }

@@ -16,6 +16,10 @@ namespace Stl.DependencyInjection.Internal
         }
 
         public object? GetService(Type serviceType)
-            => PrimaryServiceProvider.GetService(serviceType) ?? SecondaryServiceProvider.GetService(serviceType);
+        {
+            if (serviceType == typeof(IServiceProvider))
+                return this;
+            return PrimaryServiceProvider.GetService(serviceType) ?? SecondaryServiceProvider.GetService(serviceType);
+        }
     }
 }

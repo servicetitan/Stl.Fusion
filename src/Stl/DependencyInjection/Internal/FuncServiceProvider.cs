@@ -10,9 +10,13 @@ namespace Stl.DependencyInjection.Internal
             => ServiceProvider = serviceProvider;
 
         public static implicit operator FuncServiceProvider(Func<Type, object?> serviceProvider)
-            => new FuncServiceProvider(serviceProvider);
+            => new(serviceProvider);
 
         public object? GetService(Type serviceType)
-            => ServiceProvider.Invoke(serviceType);
+        {
+            if (serviceType == typeof(IServiceProvider))
+                return this;
+            return ServiceProvider.Invoke(serviceType);
+        }
     }
 }

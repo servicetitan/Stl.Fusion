@@ -89,6 +89,7 @@ namespace Stl.Fusion.Tests
         [Fact]
         public async Task StandaloneComputedTest()
         {
+            var stateFactory = Services.StateFactory();
             var users = Services.GetRequiredService<IUserService>();
             var time = Services.GetRequiredService<ITimeService>();
 
@@ -98,7 +99,7 @@ namespace Stl.Fusion.Tests
             };
             await users.CreateAsync(u, true);
 
-            using var sText = await StateFactory.NewLive<string>(
+            using var sText = await stateFactory.NewLive<string>(
                 o => o.WithInstantUpdates(),
                 async (s, cancellationToken) => {
                     var norris = await users.TryGetAsync(int.MaxValue, cancellationToken).ConfigureAwait(false);
@@ -120,15 +121,16 @@ namespace Stl.Fusion.Tests
         [Fact]
         public async Task SuppressTest()
         {
+            var stateFactory = Services.StateFactory();
             var time = Services.GetRequiredService<ITimeService>();
             var count1 = 0;
             var count2 = 0;
 
 #pragma warning disable 1998
-            var s1 = await StateFactory.NewComputed<int>(async (s, ct) => count1++).UpdateAsync(false);
-            var s2 = await StateFactory.NewComputed<int>(async (s, ct) => count2++).UpdateAsync(false);
+            var s1 = await stateFactory.NewComputed<int>(async (s, ct) => count1++).UpdateAsync(false);
+            var s2 = await stateFactory.NewComputed<int>(async (s, ct) => count2++).UpdateAsync(false);
 #pragma warning restore 1998
-            var s12 = await StateFactory.NewComputed<(int, int)>(
+            var s12 = await stateFactory.NewComputed<(int, int)>(
                 async (s, cancellationToken) => {
                     var a = await s1.UseAsync(cancellationToken);
                     using var _ = Computed.IgnoreDependencies();

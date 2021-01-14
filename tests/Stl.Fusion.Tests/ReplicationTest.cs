@@ -19,14 +19,17 @@ namespace Stl.Fusion.Tests
         [Fact(Timeout = 120_000)]
         public async Task BasicTest()
         {
-            await using var serving = await WebSocketHost.ServeAsync();
-            var sp = Services.GetRequiredService<ISimplestProvider>();
+            await using var serving = await WebHost.ServeAsync();
+            var publisher = WebServices.GetRequiredService<IPublisher>();
+            var replicator = ClientServices.GetRequiredService<IReplicator>();
+            using var scope = WebServices.CreateScope();
+            var sp = scope.ServiceProvider.GetRequiredService<ISimplestProvider>();
 
             sp.SetValue("");
-            var p1 = await Publisher.PublishAsync(_ => sp.GetValueAsync());
+            var p1 = await publisher.PublishAsync(_ => sp.GetValueAsync());
             p1.Should().NotBeNull();
 
-            var r1 = ClientReplicator.GetOrAdd<string>(p1.Ref, true);
+            var r1 = replicator.GetOrAdd<string>(p1.Ref, true);
             var r1c = await r1.Computed.UpdateAsync(false);
             r1c.IsConsistent().Should().BeTrue();
             r1c.Value.Should().Be("");
@@ -47,14 +50,16 @@ namespace Stl.Fusion.Tests
         [Fact(Timeout = 120_000)]
         public async Task TimerTest()
         {
-            await using var serving = await WebSocketHost.ServeAsync();
-            var tp = Services.GetRequiredService<ITimeService>();
+            await using var serving = await WebHost.ServeAsync();
+            var publisher = WebServices.GetRequiredService<IPublisher>();
+            var replicator = ClientServices.GetRequiredService<IReplicator>();
+            var tp = WebServices.GetRequiredService<ITimeService>();
 
-            var pub = await Publisher.PublishAsync(_ => tp.GetTimeAsync());
-            var rep = ClientReplicator.GetOrAdd<DateTime>(pub.Ref);
+            var pub = await publisher.PublishAsync(_ => tp.GetTimeAsync());
+            var rep = replicator.GetOrAdd<DateTime>(pub.Ref);
 
             var count = 0;
-            using var state = StateFactory.NewLive<DateTime>(
+            using var state = Services.StateFactory().NewLive<DateTime>(
                 o => o.WithInstantUpdates(),
                 async (_, ct) => await rep.Computed.UseAsync(ct));
             state.Updated += (s, _) => {

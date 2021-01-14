@@ -17,26 +17,6 @@ namespace Stl.DependencyInjection
         public static bool HasService(this IServiceCollection services, Type serviceType)
             => services.Any(d => d.ServiceType == serviceType);
 
-        public static IServiceCollection CopySingleton(
-            this IServiceCollection target,
-            IServiceProvider source, Type type)
-            => target.AddSingleton(type, source.GetRequiredService(type));
-
-        public static IServiceCollection CopySingleton<T>(
-            this IServiceCollection target, IServiceProvider source)
-            where T : class
-            => target.AddSingleton(source.GetRequiredService<T>());
-
-        public static IServiceCollection TryCopySingleton<T>(
-            this IServiceCollection target, IServiceProvider source)
-            where T : class
-        {
-            var service = source.GetService<T>();
-            if (service != null)
-                target.TryAddSingleton(service);
-            return target;
-        }
-
         // Options & Settings
 
         public static IServiceCollection Configure<TOptions>(

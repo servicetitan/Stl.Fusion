@@ -22,7 +22,7 @@ namespace Stl.Fusion.Tests
         [Fact]
         public async Task ConnectToPublisherTest()
         {
-            await using var serving = await WebSocketHost.ServeAsync();
+            await using var serving = await WebHost.ServeAsync();
             var channel = await ConnectToPublisherAsync();
             channel.Writer.Complete();
         }
@@ -30,16 +30,18 @@ namespace Stl.Fusion.Tests
         [Fact]
         public async Task TimerTest()
         {
-            await using var serving = await WebSocketHost.ServeAsync();
-            var tp = Services.GetRequiredService<ITimeService>();
+            await using var serving = await WebHost.ServeAsync();
+            var publisher = WebServices.GetRequiredService<IPublisher>();
+            var replicator = ClientServices.GetRequiredService<IReplicator>();
+            var tp = WebServices.GetRequiredService<ITimeService>();
 
-            var pub = await Publisher.PublishAsync(_ => tp.GetTimeAsync());
-            var rep = ClientReplicator.GetOrAdd<DateTime>(pub.Ref);
+            var pub = await publisher.PublishAsync(_ => tp.GetTimeAsync());
+            var rep = replicator.GetOrAdd<DateTime>(pub.Ref);
             await rep.RequestUpdateAsync().AsAsyncFunc()
                 .Should().CompleteWithinAsync(TimeSpan.FromMinutes(1));
 
             var count = 0;
-            using var state = StateFactory.NewLive<DateTime>(
+            using var state = WebServices.StateFactory().NewLive<DateTime>(
                 o => o.WithInstantUpdates(),
                 async (_, ct) => await rep.Computed.UseAsync(ct));
             state.Updated += (s, _) => {
@@ -55,11 +57,13 @@ namespace Stl.Fusion.Tests
         [Fact(Timeout = 120_000)]
         public async Task NoConnectionTest()
         {
-            await using var serving = await WebSocketHost.ServeAsync();
-            var tp = Services.GetRequiredService<ITimeService>();
+            await using var serving = await WebHost.ServeAsync();
+            var publisher = WebServices.GetRequiredService<IPublisher>();
+            var replicator = ClientServices.GetRequiredService<IReplicator>();
+            var tp = WebServices.GetRequiredService<ITimeService>();
 
-            var pub = await Publisher.PublishAsync(_ => tp.GetTimeAsync());
-            var rep = ClientReplicator.GetOrAdd<DateTime>(("NoPublisher", pub.Id));
+            var pub = await publisher.PublishAsync(_ => tp.GetTimeAsync());
+            var rep = replicator.GetOrAdd<DateTime>(("NoPublisher", pub.Id));
             await rep.RequestUpdateAsync().AsAsyncFunc()
                 .Should().ThrowAsync<WebSocketException>();
         }
@@ -71,22 +75,24 @@ namespace Stl.Fusion.Tests
                 // TODO: Fix intermittent failures on GitHub
                 return;
 
-            var serving = await WebSocketHost.ServeAsync();
+            var serving = await WebHost.ServeAsync();
+            var publisher = WebServices.GetRequiredService<IPublisher>();
+            var replicator = ClientServices.GetRequiredService<IReplicator>();
             var tp = Services.GetRequiredService<ITimeService>();
 
             Debug.WriteLine("0");
-            var pub = await Publisher.PublishAsync(_ => tp.GetTimeAsync());
-            var rep = ClientReplicator.GetOrAdd<DateTime>(pub.Ref);
+            var pub = await publisher.PublishAsync(_ => tp.GetTimeAsync());
+            var rep = replicator.GetOrAdd<DateTime>(pub.Ref);
             Debug.WriteLine("1");
             await rep.RequestUpdateAsync().AsAsyncFunc()
                 .Should().CompleteWithinAsync(TimeSpan.FromMinutes(1));
             Debug.WriteLine("2");
-            var state = ClientReplicator.GetPublisherConnectionState(pub.Publisher.Id);
+            var state = replicator.GetPublisherConnectionState(pub.Publisher.Id);
             state.Computed.IsConsistent().Should().BeTrue();
             Debug.WriteLine("3");
             await state.Computed.UpdateAsync(false);
             Debug.WriteLine("4");
-            state.Should().Be(ClientReplicator.GetPublisherConnectionState(pub.Publisher.Id));
+            state.Should().Be(replicator.GetPublisherConnectionState(pub.Publisher.Id));
             state.Value.Should().BeTrue();
 
             Debug.WriteLine("WebServer: stopping.");
@@ -98,10 +104,10 @@ namespace Stl.Fusion.Tests
             await rep.RequestUpdateAsync().AsAsyncFunc()
                 .Should().ThrowAsync<Exception>();
             Debug.WriteLine("6");
-            state.Should().Be(ClientReplicator.GetPublisherConnectionState(pub.Publisher.Id));
+            state.Should().Be(replicator.GetPublisherConnectionState(pub.Publisher.Id));
             await state.Computed.UpdateAsync(false);
             Debug.WriteLine("7");
-            state.Should().Be(ClientReplicator.GetPublisherConnectionState(pub.Publisher.Id));
+            state.Should().Be(replicator.GetPublisherConnectionState(pub.Publisher.Id));
             state.Error.Should().BeAssignableTo<Exception>();
 
             // Second try -- should fail w/ WebSocketException
@@ -114,8 +120,18 @@ namespace Stl.Fusion.Tests
             Debug.WriteLine("10");
             state.Error.Should().BeOfType<WebSocketException>();
 
+            return;
+
+            // The remaining part of this test shouldn't work:
+            // since the underlying web host is actually re-created on
+            // every ServeAsync call, its endpoints change,
+            // and moreover, IPublisher, etc. dies there,
+            // so reconnect won't happen in this case.
+            //
+            // TODO: Add similar test relying on Replica Services.
+
             Debug.WriteLine("WebServer: starting.");
-            serving = await WebSocketHost.ServeAsync();
+            serving = await WebHost.ServeAsync();
             await Task.Delay(1000);
             Debug.WriteLine("WebServer: started.");
 

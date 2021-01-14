@@ -20,8 +20,8 @@ namespace Stl.Fusion.Tests
         [Fact]
         public async Task BasicTest()
         {
-            await using var serving = await WebSocketHost.ServeAsync();
-            var authServer = ServerServices.GetRequiredService<IServerSideAuthService>();
+            await using var serving = await WebHost.ServeAsync();
+            var authServer = WebServices.GetRequiredService<IServerSideAuthService>();
             var authClient = ClientServices.GetRequiredService<IAuthService>();
             var sessionFactory = ClientServices.GetRequiredService<ISessionFactory>();
             var sessionA = sessionFactory.CreateSession();
@@ -31,7 +31,7 @@ namespace Stl.Fusion.Tests
             var guest = new User("<guest>");
 
             var session = sessionA;
-            await ServerServices.Commander().CallAsync(new SignInCommand(bob, session).MarkServerSide());
+            await WebServices.Commander().CallAsync(new SignInCommand(bob, session).MarkServerSide());
             var user = await authServer.GetUserAsync(session);
             user.Name.Should().Be(bob.Name);
 

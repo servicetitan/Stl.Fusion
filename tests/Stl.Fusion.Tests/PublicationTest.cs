@@ -20,18 +20,22 @@ namespace Stl.Fusion.Tests
         [Fact]
         public async Task CommunicationTest()
         {
+            await using var serving = await WebHost.ServeAsync();
+            var publisher = WebServices.GetRequiredService<IPublisher>();
+            using var wss = WebServices.CreateScope();
+            var sp = wss.ServiceProvider.GetRequiredService<ISimplestProvider>();
+
             var cp = CreateChannelPair("c1");
-            Publisher.ChannelHub.Attach(cp.Channel1).Should().BeTrue();
+            publisher.ChannelHub.Attach(cp.Channel1).Should().BeTrue();
             var cReader = cp.Channel2.Reader;
 
-            var sp = Services.GetRequiredService<ISimplestProvider>();
             sp.SetValue("");
 
-            var p1 = await Publisher.PublishAsync(_ => sp.GetValueAsync());
+            var p1 = await publisher.PublishAsync(_ => sp.GetValueAsync());
             p1.Should().NotBeNull();
 
             Debug.WriteLine("a1");
-            await Publisher.SubscribeAsync(cp.Channel1, p1, true);
+            await publisher.SubscribeAsync(cp.Channel1, p1, true);
             Debug.WriteLine("a2");
             var m = await cReader.AssertReadAsync();
             m.Should().BeOfType<PublicationStateMessage<string>>()
@@ -48,7 +52,7 @@ namespace Stl.Fusion.Tests
                 .Which.IsConsistent.Should().BeFalse();
             Debug.WriteLine("b4");
             var pm = (PublicationMessage) m;
-            pm.PublisherId.Should().Be(Publisher.Id);
+            pm.PublisherId.Should().Be(publisher.Id);
             pm.PublicationId.Should().Be(p1.Id);
             Debug.WriteLine("b5");
             await cReader.AssertCannotReadAsync();
@@ -60,7 +64,7 @@ namespace Stl.Fusion.Tests
             await cReader.AssertCannotReadAsync();
 
             Debug.WriteLine("d1");
-            await Publisher.SubscribeAsync(cp.Channel1, p1, true);
+            await publisher.SubscribeAsync(cp.Channel1, p1, true);
             Debug.WriteLine("d2");
             m = await cReader.AssertReadAsync();
             Debug.WriteLine("d3");
@@ -77,7 +81,7 @@ namespace Stl.Fusion.Tests
             await cReader.AssertCannotReadAsync();
 
             Debug.WriteLine("f1");
-            await Publisher.SubscribeAsync(cp.Channel1, p1, true);
+            await publisher.SubscribeAsync(cp.Channel1, p1, true);
             Debug.WriteLine("f2");
             m = await cReader.AssertReadAsync();
             Debug.WriteLine("f3");

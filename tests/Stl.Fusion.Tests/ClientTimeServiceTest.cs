@@ -20,7 +20,7 @@ namespace Stl.Fusion.Tests
         {
             var epsilon = TimeSpan.FromSeconds(0.5);
 
-            await using var serving = await WebSocketHost.ServeAsync();
+            await using var serving = await WebHost.ServeAsync();
             var client = ClientServices.GetRequiredService<IClientTimeService>();
             var cTime = await Computed.CaptureAsync(_ => client.GetTimeAsync(default));
 
@@ -45,7 +45,7 @@ namespace Stl.Fusion.Tests
             if (TestRunnerInfo.IsBuildAgent())
                 epsilon *= 2;
 
-            await using var serving = await WebSocketHost.ServeAsync();
+            await using var serving = await WebHost.ServeAsync();
             var service = ClientServices.GetRequiredService<IClientTimeService>();
 
             for (int i = 0; i < 20; i++) {
@@ -58,7 +58,7 @@ namespace Stl.Fusion.Tests
         [Fact]
         public async Task TestFormattedTime()
         {
-            await using var serving = await WebSocketHost.ServeAsync();
+            await using var serving = await WebHost.ServeAsync();
             var service = ClientServices.GetRequiredService<IClientTimeService>();
 
             (await service.GetFormattedTimeAsync("")).Should().Be("");

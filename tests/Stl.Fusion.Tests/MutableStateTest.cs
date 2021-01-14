@@ -19,7 +19,7 @@ namespace Stl.Fusion.Tests
         [Fact]
         public async Task BasicTest()
         {
-            var factory = CreateServiceProvider().GetStateFactory();
+            var factory = CreateServiceProvider().StateFactory();
 
             var ms1 = factory.NewMutable<string>("A");
             ms1.Updated += (s, _) => Out.WriteLine($"ms1 = {s.UnsafeValue}");

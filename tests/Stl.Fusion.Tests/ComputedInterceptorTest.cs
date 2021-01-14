@@ -20,12 +20,13 @@ namespace Stl.Fusion.Tests
         [Fact]
         public async Task AutoRecomputeTest()
         {
+            var stateFactory = Services.StateFactory();
             var time = Services.GetRequiredService<ITimeService>();
             var c = await Computed.CaptureAsync(
                 _ => time.GetTimeWithOffsetAsync(TimeSpan.FromSeconds(1)));
 
             var count = 0L;
-            using var state = StateFactory.NewLive<DateTime>(
+            using var state = stateFactory.NewLive<DateTime>(
                 o => o.WithInstantUpdates(),
                 async (_, ct) => await c.UseAsync(ct));
             state.Updated += (s, _)

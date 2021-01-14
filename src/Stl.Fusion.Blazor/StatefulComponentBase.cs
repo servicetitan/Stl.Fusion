@@ -9,7 +9,7 @@ namespace Stl.Fusion.Blazor
     {
         [Inject]
         protected IServiceProvider Services { get; set; } = null!;
-        protected IStateFactory StateFactory => Services.GetStateFactory();
+        protected IStateFactory StateFactory => Services.StateFactory();
         protected bool OwnsState { get; set; } = true;
         protected abstract IState UntypedState { get; }
         protected Action<IState, StateEventKind> StateChanged { get; set; }

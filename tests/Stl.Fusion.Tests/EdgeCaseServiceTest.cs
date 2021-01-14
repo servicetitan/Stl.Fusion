@@ -36,7 +36,7 @@ namespace Stl.Fusion.Tests
         [Fact]
         public async Task TestClient()
         {
-            await using var serving = await WebSocketHost.ServeAsync();
+            await using var serving = await WebHost.ServeAsync();
             var client = ClientServices.GetRequiredService<IEdgeCaseClient>();
             var tfv = ClientServices.GetTypeViewFactory<IEdgeCaseService>();
             var service = tfv.CreateView(client);
@@ -46,7 +46,7 @@ namespace Stl.Fusion.Tests
         [Fact]
         public async Task TestRewriteClient()
         {
-            await using var serving = await WebSocketHost.ServeAsync();
+            await using var serving = await WebHost.ServeAsync();
             var client = ClientServices.GetRequiredService<IEdgeCaseRewriteClient>();
             var tfv = ClientServices.GetTypeViewFactory<IEdgeCaseService>();
             var service = tfv.CreateView(client);
