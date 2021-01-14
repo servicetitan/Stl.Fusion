@@ -3,10 +3,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
-using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Async;
 using Stl.DependencyInjection;
 using Stl.Fusion.Tests.Model;
@@ -26,7 +22,7 @@ namespace Stl.Fusion.Tests.Services
         void Invalidate();
     }
 
-    [ComputeService(typeof(IUserService))] // Fusion version
+    [ComputeService(typeof(IUserService), Scope = ServiceScope.Services)] // Fusion version
     [Service] // "No Fusion" version
     public class UserService : IUserService
     {
@@ -115,18 +111,22 @@ namespace Stl.Fusion.Tests.Services
         {
             if (!IsCaching)
                 return;
-            Computed.Invalidate(Everything);
+
+            using (Computed.Invalidate()) {
+                Everything().AssertCompleted();
+            }
         }
 
         protected virtual void Invalidate(User user, bool countChanged = true)
         {
             if (!IsCaching)
                 return;
-            Computed.Invalidate(() => {
-                TryGetAsync(user.Id).Ignore();
+
+            using (Computed.Invalidate()) {
+                TryGetAsync(user.Id).AssertCompleted();
                 if (countChanged)
-                    CountAsync().Ignore();
-            });
+                    CountAsync().AssertCompleted();
+            };
         }
     }
 }

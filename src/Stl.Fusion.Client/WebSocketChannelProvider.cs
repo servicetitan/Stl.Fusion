@@ -18,9 +18,9 @@ using Stl.Text;
 
 namespace Stl.Fusion.Client
 {
-    public class WebSocketChannelProvider : IChannelProvider, IHasServiceProvider
+    public class WebSocketChannelProvider : IChannelProvider, IHasServices
     {
-        public class Options : IHasDefault
+        public class Options
         {
             public Uri BaseUri { get; set; } = new("http://localhost:5000/");
             public string RequestPath { get; set; } = "/fusion/ws";
@@ -66,32 +66,31 @@ namespace Stl.Fusion.Client
             }
         }
 
-        private readonly ILogger _log;
-
-        public Uri BaseUri { get; }
-        public string RequestPath { get; }
-        public string PublisherIdQueryParameterName { get; }
-        public string ClientIdQueryParameterName { get; }
-        public TimeSpan ConnectTimeout { get; }
-        public IServiceProvider ServiceProvider { get; }
-
         protected Func<IServiceProvider, ChannelSerializerPair<BridgeMessage, string>> ChannelSerializerPairFactory { get; }
         protected Func<IServiceProvider, ClientWebSocket> ClientWebSocketFactory { get; }
-        public Func<WebSocketChannelProvider, Symbol, Uri> ConnectionUrlResolver { get; }
         protected LogLevel? MessageLogLevel { get; }
         protected int? MessageMaxLength { get; }
         protected Lazy<IReplicator>? ReplicatorLazy { get; }
         protected Symbol ClientId => ReplicatorLazy?.Value.Id ?? Symbol.Empty;
+        protected ILogger Log { get; }
+
+        public Uri BaseUri { get; }
+        public Func<WebSocketChannelProvider, Symbol, Uri> ConnectionUrlResolver { get; }
+        public string RequestPath { get; }
+        public string PublisherIdQueryParameterName { get; }
+        public string ClientIdQueryParameterName { get; }
+        public TimeSpan ConnectTimeout { get; }
+        public IServiceProvider Services { get; }
 
         public WebSocketChannelProvider(
             Options? options,
-            IServiceProvider serviceProvider,
+            IServiceProvider services,
             ILogger<WebSocketChannelProvider>? log = null)
         {
-            options = options.OrDefault(serviceProvider);
-            _log = log ??= NullLogger<WebSocketChannelProvider>.Instance;
+            options ??= new();
+            Log = log ?? NullLogger<WebSocketChannelProvider>.Instance;
 
-            ServiceProvider = serviceProvider;
+            Services = services;
             BaseUri = options.BaseUri;
             RequestPath = options.RequestPath;
             PublisherIdQueryParameterName = options.PublisherIdQueryParameterName;
@@ -99,7 +98,7 @@ namespace Stl.Fusion.Client
             MessageLogLevel = options.MessageLogLevel;
             MessageMaxLength = options.MessageMaxLength;
             ConnectTimeout = options.ConnectTimeout;
-            ReplicatorLazy = new Lazy<IReplicator>(serviceProvider.GetRequiredService<IReplicator>);
+            ReplicatorLazy = new Lazy<IReplicator>(services.GetRequiredService<IReplicator>);
             ChannelSerializerPairFactory = options.ChannelSerializerPairFactory;
             ClientWebSocketFactory = options.ClientWebSocketFactory;
             ConnectionUrlResolver = options.ConnectionUrlResolver;
@@ -111,21 +110,21 @@ namespace Stl.Fusion.Client
             var clientId = ClientId.Value;
             try {
                 var connectionUri = ConnectionUrlResolver.Invoke(this, publisherId);
-                _log.LogInformation($"{clientId}: Connecting to {connectionUri}...");
-                var ws = ClientWebSocketFactory.Invoke(ServiceProvider);
+                Log.LogInformation($"{clientId}: Connecting to {connectionUri}...");
+                var ws = ClientWebSocketFactory.Invoke(Services);
                 using var cts = new CancellationTokenSource(ConnectTimeout);
                 using var lts = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken);
                 await ws.ConnectAsync(connectionUri, lts.Token).ConfigureAwait(false);
-                _log.LogInformation($"{clientId}: Connected.");
+                Log.LogInformation($"{clientId}: Connected.");
 
                 var wsChannel = new WebSocketChannel(ws);
                 Channel<string> stringChannel = wsChannel;
                 if (MessageLogLevel.HasValue)
                     stringChannel = stringChannel.WithLogger(
-                        clientId, _log,
+                        clientId, Log,
                         MessageLogLevel.GetValueOrDefault(),
                         MessageMaxLength);
-                var serializers = ChannelSerializerPairFactory.Invoke(ServiceProvider);
+                var serializers = ChannelSerializerPairFactory.Invoke(Services);
                 var resultChannel = stringChannel.WithSerializers(serializers);
                 wsChannel.WhenCompletedAsync(default).ContinueWith(async _ => {
                     await Task.Delay(1000, default).ConfigureAwait(false);
@@ -139,7 +138,7 @@ namespace Stl.Fusion.Client
                 throw Errors.WebSocketConnectTimeout();
             }
             catch (Exception e) {
-                _log.LogError(e, $"{clientId}: Error.");
+                Log.LogError(e, $"{clientId}: Error.");
                 throw;
             }
         }

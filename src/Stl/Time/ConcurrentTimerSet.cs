@@ -31,7 +31,7 @@ namespace Stl.Time
 
         public ConcurrentTimerSet(Options? options = null, Action<TTimer>? fireHandler = null)
         {
-            options = options.OrDefault();
+            options ??= new();
             Quanta = options.Quanta;
             Clock = options.Clock;
             ConcurrencyLevel = (int) Bits.GreaterOrEqualPowerOf2((ulong) Math.Max(1, options.ConcurrencyLevel));

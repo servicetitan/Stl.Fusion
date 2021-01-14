@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
+using Stl.Async;
 
 namespace Stl.Fusion.Tests.Services
 {
@@ -22,7 +23,10 @@ namespace Stl.Fusion.Tests.Services
         public Task IncrementAsync(string key, CancellationToken cancellationToken = default)
         {
             _counters.AddOrUpdate(key, k => 1, (k, v) => v + 1);
-            Computed.Invalidate(() => GetAsync(key, default));
+
+            using (Computed.Invalidate()) {
+                GetAsync(key, default).AssertCompleted();
+            }
             return Task.CompletedTask;
         }
 

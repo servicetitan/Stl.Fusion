@@ -2,11 +2,10 @@ using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
-using Stl.Internal;
+using Stl.DependencyInjection.Internal;
 
 namespace Stl.DependencyInjection
 {
-    [Serializable]
     public class HostedServiceAttribute : ServiceAttribute
     {
         public bool RegisterService { get; set; } = false;
@@ -21,9 +20,12 @@ namespace Stl.DependencyInjection
                 services.TryAddEnumerable(ServiceDescriptor.Singleton(
                     typeof(IHostedService), c => c.GetRequiredService(serviceType)));
             }
-            else {
+            else if (ServiceType == null) {
                 services.TryAddEnumerable(ServiceDescriptor.Singleton(
                     typeof(IHostedService), implementationType));
+            } else {
+                services.TryAddEnumerable(ServiceDescriptor.Singleton(
+                    typeof(IHostedService), c => c.GetRequiredService(serviceType)));
             }
         }
     }

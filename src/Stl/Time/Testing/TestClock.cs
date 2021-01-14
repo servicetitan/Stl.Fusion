@@ -35,7 +35,6 @@ namespace Stl.Time.Testing
         // Operations
 
         DateTimeOffset ISystemClock.UtcNow => Now;
-        DateTimeOffset Microsoft.Extensions.Internal.ISystemClock.UtcNow => Now;
         public Moment Now => ToLocalTime(SystemClock.Now);
 
         public Moment ToRealTime(Moment localTime) => Settings.ToRealTime(localTime);

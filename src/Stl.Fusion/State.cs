@@ -13,9 +13,9 @@ using Stl.Reflection;
 
 namespace Stl.Fusion
 {
-    public interface IState : IResult, IHasServiceProvider
+    public interface IState : IResult, IHasServices
     {
-        public interface IOptions : Stl.DependencyInjection.IHasDefault
+        public interface IOptions
         {
             ComputedOptions ComputedOptions { get; set; }
             Generator<LTag> VersionGenerator { get; set; }
@@ -77,7 +77,7 @@ namespace Stl.Fusion
         protected object Lock => AsyncLock;
 
         public IStateSnapshot<T> Snapshot => _snapshot!;
-        public IServiceProvider ServiceProvider { get; }
+        public IServiceProvider Services { get; }
         public object? Argument { get; }
 
         public IComputed<T> Computed {
@@ -136,10 +136,10 @@ namespace Stl.Fusion
         protected event Action<IState<T>, StateEventKind>? UntypedUpdated;
 
         protected State(
-            Options options, IServiceProvider serviceProvider,
+            Options options, IServiceProvider services,
             object? argument = null, bool initialize = true)
         {
-            ServiceProvider = serviceProvider;
+            Services = services;
             Argument = argument;
             ComputedOptions = options.ComputedOptions;
             VersionGenerator = options.VersionGenerator;
@@ -168,8 +168,8 @@ namespace Stl.Fusion
 
         public Result<T> AsResult()
             => Computed.AsResult();
-        public Result<TOther> AsResult<TOther>()
-            => Computed.AsResult<TOther>();
+        public Result<TOther> Cast<TOther>()
+            => Computed.Cast<TOther>();
         T IConvertibleTo<T>.Convert() => Value;
         Result<T> IConvertibleTo<Result<T>>.Convert() => AsResult();
 

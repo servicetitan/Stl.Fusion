@@ -12,7 +12,7 @@ namespace Stl.Serialization.Internal
 
         public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) {
             if (destinationType == typeof(string))
-                return ((Base64Data) value).Encode();
+                return ((Base64Encoded) value).Encode();
             return base.ConvertTo(context, culture, value, destinationType)!;
         }
 
@@ -20,7 +20,7 @@ namespace Stl.Serialization.Internal
         {
             if (value is string s)
                 // ReSharper disable once HeapView.BoxingAllocation
-                return Base64Data.Decode(s);
+                return Base64Encoded.Decode(s);
             return base.ConvertFrom(context, culture, value)!;
         }
     }

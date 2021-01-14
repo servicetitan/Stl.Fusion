@@ -11,22 +11,22 @@ namespace Stl.Fusion.Interception
         ArgumentHandler GetArgumentHandler(MethodInfo methodInfo, ParameterInfo parameterInfo);
     }
 
-    public class ArgumentHandlerProvider : IArgumentHandlerProvider, IHasServiceProvider
+    public class ArgumentHandlerProvider : IArgumentHandlerProvider, IHasServices
     {
-        public class Options : IHasDefault
+        public class Options
         {
             public IMatchingTypeFinder MatchingTypeFinder { get; set; } =
                 new MatchingTypeFinder(Assembly.GetExecutingAssembly());
         }
 
         protected IMatchingTypeFinder MatchingTypeFinder { get; }
-        public IServiceProvider ServiceProvider { get; }
+        public IServiceProvider Services { get; }
 
-        public ArgumentHandlerProvider(Options? options, IServiceProvider serviceProvider)
+        public ArgumentHandlerProvider(Options? options, IServiceProvider services)
         {
-            options = options.OrDefault(serviceProvider);
+            options ??= new();
             MatchingTypeFinder = options.MatchingTypeFinder;
-            ServiceProvider = serviceProvider;
+            Services = services;
         }
 
         public ArgumentHandler GetInvocationTargetHandler(MethodInfo methodInfo, Type invocationTargetType)
@@ -65,7 +65,7 @@ namespace Stl.Fusion.Interception
             if (fInstance != null)
                 return (ArgumentHandler) fInstance!.GetValue(null)!;
 
-            return (ArgumentHandler) ServiceProvider.Activate(comparerType);
+            return (ArgumentHandler) Services.Activate(comparerType);
         }
     }
 }

@@ -4,7 +4,6 @@ using Stl.DependencyInjection;
 
 namespace Stl.Fusion
 {
-    [Serializable]
     public class StateAttribute : ServiceAttributeBase
     {
         public override void Register(IServiceCollection services, Type implementationType)

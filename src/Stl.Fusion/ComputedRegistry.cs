@@ -5,7 +5,6 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Concurrency;
-using Stl.DependencyInjection;
 using Stl.Locking;
 using Stl.Mathematics;
 using Stl.OS;
@@ -18,7 +17,7 @@ namespace Stl.Fusion
     {
         public static ComputedRegistry Instance { get; set; } = new();
 
-        public sealed class Options : IHasDefault
+        public sealed class Options
         {
             internal static readonly PrimeSieve CapacityPrimeSieve;
             public static int DefaultInitialCapacity { get; }
@@ -50,7 +49,7 @@ namespace Stl.Fusion
 
         public ComputedRegistry(Options? options = null)
         {
-            options = options.OrDefault();
+            options ??= new();
             _storage = new ConcurrentDictionary<ComputedInput, GCHandle>(options.ConcurrencyLevel, options.InitialCapacity);
             var locksProvider = options.LocksProvider;
             if (locksProvider == null) {

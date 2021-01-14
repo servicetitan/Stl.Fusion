@@ -4,16 +4,21 @@ using Stl.DependencyInjection;
 
 namespace Stl.Fusion.Client
 {
-    [Serializable]
     [AttributeUsage(AttributeTargets.Interface, AllowMultiple = true)]
     public class RestEaseReplicaServiceAttribute : ServiceAttributeBase
     {
         public Type? ServiceType { get; set; }
+        public bool IsCommandService { get; set; } = true;
 
         public RestEaseReplicaServiceAttribute(Type? serviceType = null)
             => ServiceType = serviceType;
 
         public override void Register(IServiceCollection services, Type implementationType)
-            => services.AddFusion().AddRestEaseClient().AddReplicaService(ServiceType ?? implementationType, implementationType);
+            => services
+                .AddFusion()
+                .AddRestEaseClient()
+                .AddReplicaService(
+                    ServiceType ?? implementationType, implementationType,
+                    isCommandService: IsCommandService);
     }
 }

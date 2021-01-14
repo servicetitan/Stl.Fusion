@@ -3,7 +3,6 @@ using Stl.Reflection;
 
 namespace Stl.Extensibility
 {
-    [Serializable]
     [AttributeUsage(
         AttributeTargets.Class | AttributeTargets.Interface,
         AllowMultiple = true,

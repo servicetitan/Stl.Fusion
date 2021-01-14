@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using Stl.CommandR;
 using Stl.Fusion.Tests.Services;
 using Stl.Tests;
 using Xunit;
@@ -123,6 +124,16 @@ namespace Stl.Fusion.Tests
             c2.Options.KeepAliveTime.Should().Be(TimeSpan.FromSeconds(0.5));
             c2.Options.ErrorAutoInvalidateTime.Should().Be(TimeSpan.FromSeconds(0.5));
             c2.Options.AutoInvalidateTime.Should().Be(d.AutoInvalidateTime);
+        }
+
+        [Fact]
+        public async Task CommandTest()
+        {
+            var p = Services.GetRequiredService<ISimplestProvider>();
+            await Services.Commander().RunAsync(new SetValueCommand() { Value = "1" });
+            (await p.GetValueAsync()).Should().Be("1");
+            await Services.Commander().RunAsync(new SetValueCommand() { Value = "2" });
+            (await p.GetValueAsync()).Should().Be("2");
         }
     }
 }

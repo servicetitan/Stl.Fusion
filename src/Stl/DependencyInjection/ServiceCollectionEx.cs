@@ -77,14 +77,9 @@ namespace Stl.DependencyInjection
 
         public static ServiceAttributeScanner AttributeScanner(
             this IServiceCollection services)
-            => new ServiceAttributeScanner(services);
+            => new(services);
         public static ServiceAttributeScanner AttributeScanner(
-            this IServiceCollection services,
-            Symbol scope)
+            this IServiceCollection services, Symbol scope)
             => new ServiceAttributeScanner(services).WithScope(scope);
-        public static ServiceAttributeScanner AttributeScanner(
-            this IServiceCollection services,
-            Symbol scope, Symbol fallbackScope)
-            => new ServiceAttributeScanner(services).WithScope(scope, fallbackScope);
     }
 }

@@ -7,13 +7,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
     <PackageReference Include="System.Drawing.Common" />
     <PackageReference Include="System.Net.WebSockets.Client" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Stl.Testing\Stl.Testing.csproj" />
     <ProjectReference Include="..\..\src\Stl\Stl.csproj" />
+    <ProjectReference Include="..\..\src\Stl.Fusion.EntityFramework\Stl.Fusion.EntityFramework.csproj" />
+    <ProjectReference Include="..\..\src\Stl.CommandR\Stl.CommandR.csproj" />
+    <ProjectReference Include="..\..\src\Stl.Interception\Stl.Interception.csproj" />
+    <ProjectReference Include="..\..\src\Stl.Testing\Stl.Testing.csproj" />
   </ItemGroup>
 
   <ItemGroup>

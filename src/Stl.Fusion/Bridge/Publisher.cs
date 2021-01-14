@@ -8,7 +8,6 @@ using Stl.Async;
 using Stl.Channels;
 using Stl.Collections;
 using Stl.Concurrency;
-using Stl.DependencyInjection;
 using Stl.Fusion.Bridge.Internal;
 using Stl.Fusion.Bridge.Messages;
 using Stl.Fusion.Internal;
@@ -51,7 +50,7 @@ namespace Stl.Fusion.Bridge
 
     public class Publisher : AsyncDisposableBase, IPublisherImpl
     {
-        public class Options : IHasDefault
+        public class Options
         {
             public static Symbol NewId() => "P-" + RandomStringGenerator.Default.Next();
 
@@ -88,7 +87,7 @@ namespace Stl.Fusion.Bridge
 
         public Publisher(Options? options = null)
         {
-            options = options.OrDefault();
+            options ??= new();
             Id = options.Id;
             ChannelHub = options.ChannelHub;
             OwnsChannelHub = options.OwnsChannelHub;

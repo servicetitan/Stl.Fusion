@@ -11,7 +11,7 @@ namespace Stl.DependencyInjection.Internal
     internal readonly struct ServiceInfo
     {
         private static ConcurrentDictionary<Assembly, ServiceInfo[]> ServiceInfoCache { get; } = new();
-        private static ConcurrentDictionary<(Assembly, Symbol, Option<Symbol>), ServiceInfo[]> ScopedServiceInfoCache { get; } = new();
+        private static ConcurrentDictionary<(Assembly, Symbol), ServiceInfo[]> ScopedServiceInfoCache { get; } = new();
 
         public Type ImplementationType { get; }
         public ServiceAttributeBase[] Attributes { get; }
@@ -32,19 +32,14 @@ namespace Stl.DependencyInjection.Internal
             return new ServiceInfo(implementationType, buffer.ToArray());
         }
 
-        public static ServiceInfo For(Type implementationType, Symbol scope, Option<Symbol> fallbackScopeOption = default)
+        public static ServiceInfo For(Type implementationType, Symbol scope)
         {
             using var buffer = ArrayBuffer<ServiceAttributeBase>.Lease(true);
             foreach (var attr in implementationType.GetCustomAttributes<ServiceAttributeBase>(false)) {
                 if (attr.Scope == scope.Value)
                     buffer.Add(attr);
             }
-
-            if (buffer.Count != 0)
-                return new ServiceInfo(implementationType, buffer.ToArray());
-            return fallbackScopeOption.IsSome(out var fallbackScope)
-                ? For(implementationType, fallbackScope)
-                : new ServiceInfo(implementationType);
+            return new ServiceInfo(implementationType, buffer.ToArray());
         }
 
         public static ServiceInfo[] ForAll(Assembly assembly)
@@ -54,12 +49,12 @@ namespace Stl.DependencyInjection.Internal
                     .Where(s => s.Attributes.Length != 0)
                     .ToArray())!;
 
-        public static ServiceInfo[] ForAll(Assembly assembly, Symbol scope, Option<Symbol> fallbackScopeOption = default)
+        public static ServiceInfo[] ForAll(Assembly assembly, Symbol scope)
             => ScopedServiceInfoCache.GetOrAddChecked(
-                (assembly, scope, fallbackScopeOption), key => {
-                    var (assembly1, scope1, fallbackScopeOption1) = key;
+                (assembly, scope), key => {
+                    var (assembly1, scope1) = key;
                     return ForAll(assembly1)
-                        .Select(si => For(si.ImplementationType, scope1, fallbackScopeOption1))
+                        .Select(si => For(si.ImplementationType, scope1))
                         .Where(s => s.Attributes.Length != 0)
                         .ToArray();
                 });

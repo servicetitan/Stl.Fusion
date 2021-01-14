@@ -19,7 +19,7 @@ namespace Stl.Fusion.Tests.Services
         Task<DateTime> GetTimeWithOffsetAsync(TimeSpan offset);
     }
 
-    [ComputeService(typeof(ITimeService))]
+    [ComputeService(typeof(ITimeService), Scope = ServiceScope.Services)]
     public class TimeService : ITimeService
     {
         private readonly ILogger _log;
@@ -27,7 +27,7 @@ namespace Stl.Fusion.Tests.Services
 
         public TimeService(ILogger<TimeService>? log = null)
         {
-            _log = log ??= NullLogger<TimeService>.Instance;
+            _log = log ?? NullLogger<TimeService>.Instance;
             IsCaching = GetType().Name.EndsWith("Proxy");
         }
 

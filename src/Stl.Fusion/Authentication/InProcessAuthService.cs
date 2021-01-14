@@ -7,8 +7,12 @@ using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
+using Stl.CommandR;
+using Stl.CommandR.Commands;
 using Stl.Concurrency;
+using Stl.Fusion.Authentication.Commands;
 using Stl.Fusion.Authentication.Internal;
+using Stl.Fusion.Operations;
 using Stl.Time;
 
 namespace Stl.Fusion.Authentication
@@ -24,8 +28,17 @@ namespace Stl.Fusion.Authentication
         public InProcessAuthService(IMomentClock clock)
             => Clock = clock;
 
-        public async Task SignInAsync(User user, Session session, CancellationToken cancellationToken = default)
+        // Command handlers
+
+        public virtual async Task SignInAsync(SignInCommand command, CancellationToken cancellationToken = default)
         {
+            var (user, session) = command;
+            if (Computed.IsInvalidating()) {
+                GetUserAsync(session, default).Ignore();
+                GetUserSessionsAsync(user.Id, default).Ignore();
+                return;
+            }
+
             if (await IsSignOutForcedAsync(session, cancellationToken).ConfigureAwait(false))
                 throw Errors.ForcedSignOut();
             Users[session.Id] = user;
@@ -33,32 +46,44 @@ namespace Stl.Fusion.Authentication
                 (userId, sessionId) => ImmutableHashSet<string>.Empty.Add(sessionId),
                 (userId, sessionIds, sessionId) => sessionIds.Add(sessionId),
                 session.Id);
-            Computed.Invalidate(() => {
-                GetUserAsync(session, default).Ignore();
-                GetUserSessionsAsync(user.Id, default).Ignore();
-            });
         }
 
-        public Task SignOutAsync(bool force, Session session, CancellationToken cancellationToken = default)
+        public virtual Task SignOutAsync(SignOutCommand command, CancellationToken cancellationToken = default)
         {
-            if (force && ForcedSignOuts.TryAdd(session.Id, default))
-                Computed.Invalidate(() => IsSignOutForcedAsync(session, default));
-            if (Users.TryRemove(session.Id, out var user)) {
+            var (force, session) = command;
+            var context = CommandContext.GetCurrent();
+            User? user;
+            if (Computed.IsInvalidating()) {
+                if (force)
+                    IsSignOutForcedAsync(session, default).Ignore();
+                GetUserAsync(session, default).Ignore();
+                user = context.Items.TryGet<InvalidationData<User>>()?.Value;
+                if (user != null)
+                    GetUserSessionsAsync(user.Id, default).Ignore();
+                return Task.CompletedTask;
+            }
+
+            if (force)
+                ForcedSignOuts.TryAdd(session.Id, default);
+            if (Users.TryRemove(session.Id, out user)) {
+                context.Items.Set(InvalidationData.New(user));
                 UserSessions.AddOrUpdate(user.Id,
                     (userId, sessionId) => ImmutableHashSet<string>.Empty,
                     (userId, sessionIds, sessionId) => sessionIds.Remove(sessionId),
                     session.Id);
                 UserSessions.TryRemove(user.Id, ImmutableHashSet<string>.Empty); // No need to store an empty one
-                Computed.Invalidate(() => {
-                    GetUserAsync(session, default).Ignore();
-                    GetUserSessionsAsync(user.Id, default).Ignore();
-                });
             }
             return Task.CompletedTask;
         }
 
-        public Task SaveSessionInfoAsync(SessionInfo sessionInfo, Session session, CancellationToken cancellationToken = default)
+        public virtual Task SaveSessionInfoAsync(SaveSessionInfoCommand command, CancellationToken cancellationToken = default)
         {
+            var (sessionInfo, session) = command;
+            if (Computed.IsInvalidating()) {
+                GetSessionInfoAsync(session, default);
+                return Task.CompletedTask;
+            }
+
             if (sessionInfo.Id != session.Id)
                 throw new ArgumentOutOfRangeException(nameof(sessionInfo));
             var now = Clock.Now.ToDateTime();
@@ -67,11 +92,10 @@ namespace Stl.Fusion.Authentication
                 sessionInfo.CreatedAt == oldSessionInfo.CreatedAt
                 ? sessionInfo
                 : sessionInfo with { CreatedAt = oldSessionInfo.CreatedAt });
-            Computed.Invalidate(() => GetSessionInfoAsync(session, default));
             return Task.CompletedTask;
         }
 
-        public async Task UpdatePresenceAsync(Session session, CancellationToken cancellationToken = default)
+        public virtual async Task UpdatePresenceAsync(Session session, CancellationToken cancellationToken = default)
         {
             var sessionInfo = await GetSessionInfoAsync(session, cancellationToken).ConfigureAwait(false);
             var now = Clock.Now.ToDateTime();
@@ -79,7 +103,8 @@ namespace Stl.Fusion.Authentication
             if (delta < TimeSpan.FromSeconds(10))
                 return; // We don't want to update this too frequently
             sessionInfo = sessionInfo with { LastSeenAt = now };
-            await SaveSessionInfoAsync(sessionInfo, session, cancellationToken).ConfigureAwait(false);
+            var command = new SaveSessionInfoCommand(sessionInfo, session).MarkServerSide();
+            await SaveSessionInfoAsync(command, cancellationToken).ConfigureAwait(false);
         }
 
         // Compute methods

@@ -1,10 +1,18 @@
 using System;
 using System.Reflection;
+using Stl.Text;
 
 namespace Stl.OS
 {
     public static class RuntimeInfo
     {
+        public static class Process
+        {
+            public static readonly Guid Guid = Guid.NewGuid();
+            public static readonly Symbol Id = Convert.ToBase64String(Guid.ToByteArray());
+            public static readonly Symbol MachinePrefixedId = $"{Environment.MachineName}:{Id.Value}";
+        }
+
         public static class DotNetCore
         {
             public static readonly string? VersionString;

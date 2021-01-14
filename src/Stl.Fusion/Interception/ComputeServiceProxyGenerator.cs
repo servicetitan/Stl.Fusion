@@ -3,9 +3,9 @@ using System.Collections.Concurrent;
 using Castle.DynamicProxy;
 using Castle.DynamicProxy.Generators;
 using Castle.DynamicProxy.Generators.Emitters;
+using Stl.CommandR.Interception;
 using Stl.Concurrency;
-using Stl.DependencyInjection;
-using Stl.DependencyInjection.Internal;
+using Stl.Interception.Interceptors;
 
 namespace Stl.Fusion.Interception
 {
@@ -17,7 +17,7 @@ namespace Stl.Fusion.Interception
     public class ComputeServiceProxyGenerator : ProxyGeneratorBase<ComputeServiceProxyGenerator.Options>,
         IComputeServiceProxyGenerator
     {
-        public class Options : ProxyGenerationOptions, IHasDefault
+        public class Options : ProxyGenerationOptions
         {
             public Type InterceptorType { get; set; } = typeof(ComputeServiceInterceptor);
         }
@@ -43,17 +43,19 @@ namespace Stl.Fusion.Interception
 
         public static readonly IComputeServiceProxyGenerator Default = new ComputeServiceProxyGenerator();
 
-        protected ConcurrentDictionary<Type, Type> Cache { get; } = new ConcurrentDictionary<Type, Type>();
+        protected ConcurrentDictionary<Type, Type> Cache { get; } = new();
 
         public ComputeServiceProxyGenerator(
             Options? options = null,
             ModuleScope? moduleScope = null)
-            : base(options, moduleScope) { }
+            : base(options ??= new(), moduleScope) { }
 
         public virtual Type GetProxyType(Type type)
             => Cache.GetOrAddChecked(type, (type1, self) => {
                 var generator = new Implementation(self.ModuleScope, type1, self.ProxyGeneratorOptions);
-                return generator.GenerateCode(Array.Empty<Type>(), self.ProxyGeneratorOptions);
+                return generator.GenerateCode(
+                    new[] { typeof(IComputeService), typeof(ICommandService) },
+                    self.ProxyGeneratorOptions);
             }, this);
     }
 }

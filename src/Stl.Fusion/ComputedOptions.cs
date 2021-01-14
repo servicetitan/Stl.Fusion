@@ -26,7 +26,7 @@ namespace Stl.Fusion
         public TimeSpan AutoInvalidateTime { get; }
         public SwappingOptions SwappingOptions { get; }
         public bool RewriteErrors { get; }
-        public Type InterceptedMethodDescriptorType { get; }
+        public Type ComputeMethodDefType { get; }
         [JsonIgnore]
         public bool IsAsyncComputed { get; }
 
@@ -37,7 +37,7 @@ namespace Stl.Fusion
             TimeSpan autoInvalidateTime,
             SwappingOptions swappingOptions,
             bool rewriteErrors = false,
-            Type? interceptedMethodDescriptorType = null)
+            Type? computeMethodDefType = null)
         {
             KeepAliveTime = keepAliveTime;
             ErrorAutoInvalidateTime = errorAutoInvalidateTime;
@@ -47,22 +47,22 @@ namespace Stl.Fusion
                 ErrorAutoInvalidateTime = autoInvalidateTime;
             SwappingOptions = swappingOptions.IsEnabled ? swappingOptions : SwappingOptions.NoSwapping;
             RewriteErrors = rewriteErrors;
-            InterceptedMethodDescriptorType = interceptedMethodDescriptorType ?? typeof(InterceptedMethodDescriptor);
+            ComputeMethodDefType = computeMethodDefType ?? typeof(ComputeMethodDef);
             IsAsyncComputed = swappingOptions.IsEnabled;
         }
 
-        public static ComputedOptions? FromAttribute(InterceptedMethodAttribute? attribute, SwapAttribute? swapAttribute)
+        public static ComputedOptions? FromAttribute(ComputeMethodAttribute? attribute, SwapAttribute? swapAttribute)
         {
-            if (!(attribute is ComputeMethodAttribute cma) || !cma.IsEnabled)
+            if (attribute == null || !attribute.IsEnabled)
                 return null;
             var swappingOptions = SwappingOptions.FromAttribute(swapAttribute);
             var options = new ComputedOptions(
-                ToTimeSpan(cma.KeepAliveTime) ?? Default.KeepAliveTime,
-                ToTimeSpan(cma.ErrorAutoInvalidateTime) ?? Default.ErrorAutoInvalidateTime,
-                ToTimeSpan(cma.AutoInvalidateTime) ?? Default.AutoInvalidateTime,
+                ToTimeSpan(attribute.KeepAliveTime) ?? Default.KeepAliveTime,
+                ToTimeSpan(attribute.ErrorAutoInvalidateTime) ?? Default.ErrorAutoInvalidateTime,
+                ToTimeSpan(attribute.AutoInvalidateTime) ?? Default.AutoInvalidateTime,
                 swappingOptions,
-                cma.RewriteErrors,
-                cma.InterceptedMethodDescriptorType);
+                attribute.RewriteErrors,
+                attribute.ComputeMethodDefType);
             return options.IsDefault() ? Default : options;
         }
 
@@ -85,7 +85,7 @@ namespace Stl.Fusion
                 && ErrorAutoInvalidateTime == Default.ErrorAutoInvalidateTime
                 && AutoInvalidateTime == Default.AutoInvalidateTime
                 && RewriteErrors == Default.RewriteErrors
-                && InterceptedMethodDescriptorType == Default.InterceptedMethodDescriptorType
+                && ComputeMethodDefType == Default.ComputeMethodDefType
                 && SwappingOptions == Default.SwappingOptions
                 && IsAsyncComputed == Default.IsAsyncComputed
                 ;

@@ -42,7 +42,7 @@ namespace Stl.Tests.DependencyInjection
                 .AddSingleton(cfg)
                 .AddSingleton<IConfiguration>(cfg)
                 .AttributeScanner()
-                .WithScope(Symbol.Empty, nameof(SettingsTest))
+                .WithScope(nameof(SettingsTest))
                 .WithTypeFilter(new Regex(".*"))
                 .AddServicesFrom(typeof(bool).Assembly)
                 .AddService<TestSettings>()

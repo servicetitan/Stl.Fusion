@@ -2,7 +2,6 @@ using System;
 using System.ComponentModel;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
-using Stl.Extensibility;
 using Stl.Serialization.Internal;
 
 namespace Stl.Serialization

@@ -1,10 +1,19 @@
 using System;
+using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using Stl.Async;
+using Stl.CommandR;
+using Stl.CommandR.Configuration;
 
 namespace Stl.Fusion.Tests.Services
 {
+    public record SetValueCommand : ICommand<Unit>
+    {
+        public string Value { get; init; } = "";
+    }
+
     public interface ISimplestProvider
     {
         // These two properties are here solely for testing purposes
@@ -16,9 +25,12 @@ namespace Stl.Fusion.Tests.Services
         Task<string> GetValueAsync();
         [ComputeMethod(KeepAliveTime = 0.5, ErrorAutoInvalidateTime = 0.5)]
         Task<int> GetCharCountAsync();
+
+        [CommandHandler]
+        Task SetValueAsync(SetValueCommand command, CancellationToken cancellationToken = default);
     }
 
-    [ComputeService(typeof(ISimplestProvider), Lifetime = ServiceLifetime.Scoped)]
+    [ComputeService(typeof(ISimplestProvider), Lifetime = ServiceLifetime.Scoped, Scope = ServiceScope.Services)]
     public class SimplestProvider : ISimplestProvider, IHasId<Type>
     {
         private static volatile string _value = "";
@@ -50,11 +62,20 @@ namespace Stl.Fusion.Tests.Services
             return value.Length;
         }
 
+        public virtual Task SetValueAsync(SetValueCommand command, CancellationToken cancellationToken = default)
+        {
+            SetValue(command.Value);
+            return Task.CompletedTask;
+        }
+
         protected virtual void Invalidate()
         {
             if (!_isCaching)
                 return;
-            Computed.Invalidate(GetValueAsync);
+
+            using (Computed.Invalidate()) {
+                GetValueAsync().AssertCompleted();
+            }
             // No need to invalidate GetCharCountAsync,
             // since it will be invalidated automatically.
         }

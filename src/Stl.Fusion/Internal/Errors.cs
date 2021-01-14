@@ -27,10 +27,10 @@ namespace Stl.Fusion.Internal
             => new NullReferenceException($"Computed.Current() == null.");
         public static Exception ComputedCurrentIsOfIncompatibleType(Type expectedType)
             => new InvalidCastException(
-                $"Computed.Current() can't be converted to '{expectedType.Name}'.");
+                $"Computed.Current() can't be converted to '{expectedType}'.");
         public static Exception CapturedComputedIsOfIncompatibleType(Type expectedType)
             => new InvalidCastException(
-                $"Computed.Captured() can't be converted to '{expectedType.Name}'.");
+                $"Computed.Captured() can't be converted to '{expectedType}'.");
         public static Exception NoComputedCaptured()
             => new InvalidOperationException($"No {nameof(IComputed)} was captured.");
 

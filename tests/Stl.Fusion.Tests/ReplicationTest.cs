@@ -26,7 +26,7 @@ namespace Stl.Fusion.Tests
             var p1 = await Publisher.PublishAsync(_ => sp.GetValueAsync());
             p1.Should().NotBeNull();
 
-            var r1 = Replicator.GetOrAdd<string>(p1.Ref, true);
+            var r1 = ClientReplicator.GetOrAdd<string>(p1.Ref, true);
             var r1c = await r1.Computed.UpdateAsync(false);
             r1c.IsConsistent().Should().BeTrue();
             r1c.Value.Should().Be("");
@@ -51,7 +51,7 @@ namespace Stl.Fusion.Tests
             var tp = Services.GetRequiredService<ITimeService>();
 
             var pub = await Publisher.PublishAsync(_ => tp.GetTimeAsync());
-            var rep = Replicator.GetOrAdd<DateTime>(pub.Ref);
+            var rep = ClientReplicator.GetOrAdd<DateTime>(pub.Ref);
 
             var count = 0;
             using var state = StateFactory.NewLive<DateTime>(

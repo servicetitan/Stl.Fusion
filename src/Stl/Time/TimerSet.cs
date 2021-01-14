@@ -5,14 +5,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
 using Stl.Collections;
-using Stl.DependencyInjection;
 
 namespace Stl.Time
 {
     public sealed class TimerSet<TTimer> : AsyncProcessBase
         where TTimer : notnull
     {
-        public record Options : IHasDefault
+        public record Options
         {
             private readonly TimeSpan _quanta = TimeSpan.FromSeconds(1);
 
@@ -43,7 +42,7 @@ namespace Stl.Time
 
         public TimerSet(Options? options = null, Action<TTimer>? fireHandler = null)
         {
-            options = options.OrDefault();
+            options ??= new();
             Quanta = options.Quanta;
             Clock = options.Clock;
             _fireHandler = fireHandler;

@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net5.0;netcoreapp3.1;netstandard2.1</TargetFrameworks>
+    <PackageTags>servicetitan stl stl_fusion commandr</PackageTags>
+    <Description>Stl.CommandR - a MediatR-like library <!--
+    -->created to simplify CQRS implementations even further.<!--
+    --></Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Stl\Stl.csproj" />
+    <ProjectReference Include="..\Stl.Interception\Stl.Interception.csproj" />
+  </ItemGroup>
+
+</Project>

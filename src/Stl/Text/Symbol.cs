@@ -2,7 +2,6 @@ using System;
 using System.ComponentModel;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
-using Stl.Extensibility;
 using Stl.Internal;
 
 namespace Stl.Text
@@ -25,7 +24,7 @@ namespace Stl.Text
             HashCode = value?.GetHashCode() ?? 0;
         }
 
-        public override string ToString() => $"`{Value}`";
+        public override string ToString() => Value;
 
         // Conversion
 

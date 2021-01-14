@@ -5,7 +5,7 @@ using Stl.Fusion.Client;
 
 namespace Stl.Fusion.Tests.Services
 {
-    [RestEaseReplicaService]
+    [RestEaseReplicaService(Scope = ServiceScope.ClientServices)]
     [BasePath("EdgeCase")]
     public interface IEdgeCaseClient
     {

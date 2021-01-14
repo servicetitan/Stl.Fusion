@@ -4,7 +4,6 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.DependencyInjection.Internal;
-using Stl.Internal;
 using Stl.Text;
 
 namespace Stl.DependencyInjection
@@ -13,7 +12,6 @@ namespace Stl.DependencyInjection
     {
         public IServiceCollection Services { get; }
         public Symbol Scope { get; set; } = Symbol.Empty;
-        public Option<Symbol> FallbackScopeOption { get; set; }
         public Func<Type, bool> TypeFilter { get; set; } = _ => true;
 
         public ServiceAttributeScanner(IServiceCollection services)
@@ -25,8 +23,6 @@ namespace Stl.DependencyInjection
 
         public ServiceAttributeScanner WithScope(Symbol scope)
             => this with { Scope =  scope };
-        public ServiceAttributeScanner WithScope(Symbol scope, Symbol fallbackScope)
-            => this with { Scope = scope, FallbackScopeOption = fallbackScope };
         public ServiceAttributeScanner WithTypeFilter(Func<Type, bool> typeFilter)
             => this with { TypeFilter = typeFilter };
         public ServiceAttributeScanner WithTypeFilter(string fullNamePrefix)
@@ -36,22 +32,17 @@ namespace Stl.DependencyInjection
 
         // AddService
 
-        public ServiceAttributeScanner AddService<TImplementation>(bool ignoreTypeFilter = false)
-            => AddService(typeof(TImplementation), ignoreTypeFilter);
+        public ServiceAttributeScanner AddService<TImplementation>()
+            => AddService(typeof(TImplementation));
 
-        public ServiceAttributeScanner AddService(Type implementationType, bool ignoreTypeFilter = false)
+        public ServiceAttributeScanner AddService(Type implementationType)
         {
-            if (!ignoreTypeFilter && !TypeFilter.Invoke(implementationType))
+            if (!TypeFilter.Invoke(implementationType))
                 return this;
 
             var attrs = ServiceAttributeBase.GetAll(implementationType, Scope);
-            if (attrs.Length == 0) {
-                if (!FallbackScopeOption.IsSome(out var fallbackScope))
-                    throw Errors.NoServiceAttribute(implementationType);
-                attrs = ServiceAttributeBase.GetAll(implementationType, fallbackScope);
-                if (attrs.Length == 0)
-                    throw Errors.NoServiceAttribute(implementationType);
-            }
+            if (attrs.Length == 0)
+                throw Errors.NoServiceAttribute(implementationType);
             foreach (var attr in attrs)
                 attr.Register(Services, implementationType);
             return this;
@@ -76,7 +67,7 @@ namespace Stl.DependencyInjection
         // AddServicesFrom
 
         public ServiceAttributeScanner AddServicesFrom(Assembly assembly)
-            => AddServices(ServiceInfo.ForAll(assembly, Scope, FallbackScopeOption));
+            => AddServices(ServiceInfo.ForAll(assembly, Scope), false, true);
 
         public ServiceAttributeScanner AddServicesFrom(params Assembly[] assemblies)
         {
@@ -88,13 +79,16 @@ namespace Stl.DependencyInjection
         // Private methods
 
         private ServiceAttributeScanner AddServices(
-            IEnumerable<ServiceInfo> scopeBasedCandidates)
+            IEnumerable<ServiceInfo> services, bool filterByScope, bool filterByType)
         {
-            foreach (var service in scopeBasedCandidates) {
+            foreach (var service in services) {
                 foreach (var attr in service.Attributes) {
                     var implementationType = service.ImplementationType;
-                    if (TypeFilter.Invoke(implementationType))
-                        attr.Register(Services, implementationType);
+                    if (filterByScope && Scope != attr.Scope)
+                        continue;
+                    if (filterByType && !TypeFilter.Invoke(implementationType))
+                        continue;
+                    attr.Register(Services, implementationType);
                 }
             }
             return this;

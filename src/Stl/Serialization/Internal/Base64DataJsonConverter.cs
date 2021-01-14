@@ -6,11 +6,11 @@ namespace Stl.Serialization.Internal
     public class Base64DataJsonConverter : JsonConverter
     {
         public override bool CanConvert(Type objectType)
-            => objectType == typeof(Base64Data);
+            => objectType == typeof(Base64Encoded);
 
         public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
         {
-            var data = (Base64Data) value!;
+            var data = (Base64Encoded) value!;
             writer.WriteValue(data.Encode());
         }
 
@@ -18,7 +18,7 @@ namespace Stl.Serialization.Internal
         {
             var value = (string) reader.Value!;
             // ReSharper disable once HeapView.BoxingAllocation
-            return Base64Data.Decode(value);
+            return Base64Encoded.Decode(value);
         }
     }
 }

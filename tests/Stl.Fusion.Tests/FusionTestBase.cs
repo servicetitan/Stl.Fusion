@@ -6,7 +6,6 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Stl.DependencyInjection;
@@ -38,18 +37,21 @@ namespace Stl.Fusion.Tests
         public bool IsLoggingEnabled { get; set; } = true;
         public PathString DbPath { get; protected set; }
         public IServiceProvider Services { get; }
+        public IServiceProvider ClientServices { get; }
+        public IServiceProvider ServerServices => WebSocketHost.Services;
         public ILogger Log { get; }
 
         public IStateFactory StateFactory => Services.GetStateFactory();
         public IPublisher Publisher => Services.GetRequiredService<IPublisher>();
-        public IReplicator Replicator => Services.GetRequiredService<IReplicator>();
         public TestWebHost WebSocketHost => Services.GetRequiredService<TestWebHost>();
+        public IReplicator ClientReplicator => ClientServices.GetRequiredService<IReplicator>();
 
         public FusionTestBase(ITestOutputHelper @out, FusionTestOptions? options = null) : base(@out)
         {
             Options = options ?? new FusionTestOptions();
             // ReSharper disable once VirtualMemberCallInConstructor
             Services = CreateServices();
+            ClientServices = CreateServices(true);
             Log = (ILogger) Services.GetRequiredService(typeof(ILogger<>).MakeGenericType(GetType()));
         }
 
@@ -63,22 +65,24 @@ namespace Stl.Fusion.Tests
 
         public virtual Task DisposeAsync()
         {
-            if (Services is IDisposable d)
-                d.Dispose();
+            if (Services is IDisposable d1)
+                d1.Dispose();
+            if (ClientServices is IDisposable d2)
+                d2.Dispose();
             return Task.CompletedTask;
         }
 
         protected override void Dispose(bool disposing)
             => DisposeAsync().Wait();
 
-        protected virtual IServiceProvider CreateServices()
+        protected IServiceProvider CreateServices(bool isClient = false)
         {
             var services = (IServiceCollection) new ServiceCollection();
-            ConfigureServices(services);
+            ConfigureServices(services, isClient);
             return services.BuildServiceProvider();
         }
 
-        protected virtual void ConfigureServices(IServiceCollection services)
+        protected virtual void ConfigureServices(IServiceCollection services, bool isClient = false)
         {
             services.AddSingleton(Out);
 
@@ -110,48 +114,67 @@ namespace Stl.Fusion.Tests
                     LogFilter));
             });
 
-            // DbContext & related services
-            var testType = GetType();
-            var appTempDir = PathEx.GetApplicationTempDirectory("", true);
-            DbPath = appTempDir & PathEx.GetHashedName($"{testType.Name}_{testType.Namespace}.db");
-            services.AddPooledDbContextFactory<TestDbContext>(builder => {
-                if (Options.UseInMemoryDatabase)
-                    builder.UseInMemoryDatabase(DbPath);
-                else
-                    builder.UseSqlite($"Data Source={DbPath}", sqlite => { });
-            }, 256);
-
-            services.AddSingleton(c => new TestWebHost(c));
-
-            // Core fusion services
-            var fusion = services.AddFusion();
-            var fusionServer = fusion.AddWebSocketServer();
-            var fusionClient = fusion.AddRestEaseClient(
-                (c, options) => {
-                    options.BaseUri = c.GetRequiredService<TestWebHost>().ServerUri;
-                    options.MessageLogLevel = LogLevel.Information;
-                }).ConfigureHttpClientFactory(
-                (c, name, options) => {
-                    var baseUri = c.GetRequiredService<TestWebHost>().ServerUri;
-                    var apiUri = new Uri($"{baseUri}api/");
-                    var isFusionService = !(name ?? "").Contains("Tests");
-                    var clientBaseUri = isFusionService ? baseUri : apiUri;
-                    options.HttpClientActions.Add(c => c.BaseAddress = clientBaseUri);
-                });
-            var fusionAuth = fusion.AddAuthentication().AddRestEaseClient();
-
             // Auto-discovered services
+            var testType = GetType();
             services.AttributeScanner()
                 .WithTypeFilter(testType.Namespace!)
                 .AddServicesFrom(testType.Assembly);
 
-            // Custom live state
-            fusion.AddState(c => c.GetStateFactory().NewLive<ServerTimeModel2>(
-                async (state, cancellationToken) => {
-                    var client = c.GetRequiredService<IClientTimeService>();
-                    var time = await client.GetTimeAsync(cancellationToken).ConfigureAwait(false);
-                    return new ServerTimeModel2(time);
-                }));
+            // Core Fusion services
+            var fusion = services.AddFusion();
+
+            if (!isClient) {
+                services.AttributeScanner(ServiceScope.Services)
+                    .WithTypeFilter(testType.Namespace!)
+                    .AddServicesFrom(testType.Assembly);
+
+                // DbContext & related services
+                var appTempDir = PathEx.GetApplicationTempDirectory("", true);
+                DbPath = appTempDir & PathEx.GetHashedName($"{testType.Name}_{testType.Namespace}.db");
+                services.AddPooledDbContextFactory<TestDbContext>(builder => {
+                    if (Options.UseInMemoryDatabase)
+                        builder.UseInMemoryDatabase(DbPath);
+                    else
+                        builder.UseSqlite($"Data Source={DbPath}", sqlite => { });
+                }, 256);
+
+                // TestWebHost
+                services.AddSingleton(c => new TestWebHost(c));
+
+                // Fusion server
+                fusion.AddWebSocketServer();
+            }
+            else {
+                services.AttributeScanner(ServiceScope.ClientServices)
+                    .WithTypeFilter(testType.Namespace!)
+                    .AddServicesFrom(testType.Assembly);
+
+                // Copy of TestWebHost from the main container
+                services.CopySingleton<TestWebHost>(Services);
+
+                // Fusion client
+                var fusionClient = fusion.AddRestEaseClient(
+                    (c, options) => {
+                        options.BaseUri = c.GetRequiredService<TestWebHost>().ServerUri;
+                        options.MessageLogLevel = LogLevel.Information;
+                    }).ConfigureHttpClientFactory(
+                    (c, name, options) => {
+                        var baseUri = c.GetRequiredService<TestWebHost>().ServerUri;
+                        var apiUri = new Uri($"{baseUri}api/");
+                        var isFusionService = !(name ?? "").Contains("Tests");
+                        var clientBaseUri = isFusionService ? baseUri : apiUri;
+                        options.HttpClientActions.Add(c => c.BaseAddress = clientBaseUri);
+                    });
+                var fusionAuth = fusion.AddAuthentication().AddRestEaseClient();
+
+                // Custom live state
+                fusion.AddState(c => c.GetStateFactory().NewLive<ServerTimeModel2>(
+                    async (state, cancellationToken) => {
+                        var client = c.GetRequiredService<IClientTimeService>();
+                        var time = await client.GetTimeAsync(cancellationToken).ConfigureAwait(false);
+                        return new ServerTimeModel2(time);
+                    }));
+            }
         }
 
         protected TestDbContext GetDbContext()
@@ -159,13 +182,13 @@ namespace Stl.Fusion.Tests
 
         protected Task<Channel<BridgeMessage>> ConnectToPublisherAsync(CancellationToken cancellationToken = default)
         {
-            var channelProvider = Services.GetRequiredService<IChannelProvider>();
+            var channelProvider = ClientServices.GetRequiredService<IChannelProvider>();
             return channelProvider.CreateChannelAsync(Publisher.Id, cancellationToken);
         }
 
         protected virtual TestChannelPair<BridgeMessage> CreateChannelPair(
             string name, bool dump = true)
-            => new TestChannelPair<BridgeMessage>(name, dump ? Out : null);
+            => new(name, dump ? Out : null);
 
         protected virtual Task DelayAsync(double seconds)
             => Timeouts.Clock.DelayAsync(TimeSpan.FromSeconds(seconds));

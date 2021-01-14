@@ -2,18 +2,17 @@ using System.Threading;
 using System.Threading.Tasks;
 using RestEase;
 using Stl.Fusion.Authentication;
+using Stl.Fusion.Authentication.Commands;
 
 namespace Stl.Fusion.Client.Authentication
 {
     [BasePath("fusion/auth")]
     public interface IAuthClient
     {
-        [Get("signOut")]
-        Task SignOutAsync(bool force, Session session, CancellationToken cancellationToken = default);
-        [Get("saveSessionInfo")]
-        Task SaveSessionInfoAsync(SessionInfo sessionInfo, Session session, CancellationToken cancellationToken = default);
-        [Get("updatePresence")]
-        Task UpdatePresenceAsync(Session session, CancellationToken cancellationToken = default);
+        [Post("signOut")]
+        Task SignOutAsync([Body] SignOutCommand command, CancellationToken cancellationToken = default);
+        [Post("updatePresence")]
+        Task UpdatePresenceAsync([Body] Session session, CancellationToken cancellationToken = default);
 
         [Get("isSignOutForced"), ComputeMethod]
         Task<bool> IsSignOutForcedAsync(Session session, CancellationToken cancellationToken = default);

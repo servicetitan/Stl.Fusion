@@ -8,7 +8,7 @@ using Stl.Locking;
 
 namespace Stl.Fusion
 {
-    public interface IFunction : IHasServiceProvider, IAsyncDisposable
+    public interface IFunction : IHasServices, IAsyncDisposable
     {
         Task<IComputed> InvokeAsync(ComputedInput input,
             IComputed? usedBy,
@@ -38,11 +38,11 @@ namespace Stl.Fusion
     {
         protected IAsyncLockSet<ComputedInput> Locks { get; }
         protected object Lock => Locks;
-        public IServiceProvider ServiceProvider { get; }
+        public IServiceProvider Services { get; }
 
-        protected FunctionBase(IServiceProvider serviceProvider)
+        protected FunctionBase(IServiceProvider services)
         {
-            ServiceProvider = serviceProvider;
+            Services = services;
             Locks = ComputedRegistry.Instance.GetLocksFor(this);
         }
 

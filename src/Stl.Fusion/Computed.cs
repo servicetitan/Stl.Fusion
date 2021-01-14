@@ -148,7 +148,7 @@ namespace Stl.Fusion
         public virtual bool TrySetOutput(Result<TOut> output)
         {
             if (Options.RewriteErrors && !output.IsValue(out _, out var error)) {
-                var errorRewriter = Function.ServiceProvider.GetRequiredService<IErrorRewriter>();
+                var errorRewriter = Function.Services.GetRequiredService<IErrorRewriter>();
                 output = Result.Error<TOut>(errorRewriter.Rewrite(this, error));
             }
             if (ConsistencyState != ConsistencyState.Computing)
@@ -271,8 +271,8 @@ namespace Stl.Fusion
             => Output.IsValue(out value, out error!);
         public Result<TOut> AsResult()
             => Output.AsResult();
-        public Result<TOther> AsResult<TOther>()
-            => Output.AsResult<TOther>();
+        public Result<TOther> Cast<TOther>()
+            => Output.Cast<TOther>();
         TOut IConvertibleTo<TOut>.Convert() => Value;
         Result<TOut> IConvertibleTo<Result<TOut>>.Convert() => AsResult();
 
@@ -371,12 +371,12 @@ namespace Stl.Fusion
         }
     }
 
-    public class Computed<T> : Computed<InterceptedInput, T>
+    public class Computed<T> : Computed<ComputeMethodInput, T>
     {
-        public Computed(ComputedOptions options, InterceptedInput input, LTag version)
+        public Computed(ComputedOptions options, ComputeMethodInput input, LTag version)
             : base(options, input, version) { }
 
-        protected Computed(ComputedOptions options, InterceptedInput input, Result<T> output, LTag version, bool isConsistent = true)
+        protected Computed(ComputedOptions options, ComputeMethodInput input, Result<T> output, LTag version, bool isConsistent = true)
             : base(options, input, output, version, isConsistent) { }
     }
 }

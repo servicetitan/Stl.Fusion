@@ -4,7 +4,6 @@ using Stl.DependencyInjection;
 
 namespace Stl.Fusion
 {
-    [Serializable]
     public class ComputeServiceAttribute : ServiceAttribute
     {
         public ComputeServiceAttribute(Type? serviceType = null) : base(serviceType) { }

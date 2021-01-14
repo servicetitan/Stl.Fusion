@@ -1,13 +1,18 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
+using Castle.DynamicProxy.Generators;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Stl.CommandR;
 using Stl.DependencyInjection;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Interception;
+using Stl.Fusion.Operations;
 using Stl.Fusion.Interception;
+using Stl.Fusion.Operations.Internal;
 using Stl.Internal;
 using Stl.Time;
 
@@ -15,8 +20,6 @@ namespace Stl.Fusion
 {
     public readonly struct FusionBuilder
     {
-        private static readonly Box<bool> IsInitialized = Box.New(false);
-
         private class AddedTag { }
         private static readonly ServiceDescriptor AddedTagDescriptor = new(typeof(AddedTag), new AddedTag());
         private static readonly HashSet<Type> GenericStateInterfaces = new() {
@@ -30,47 +33,60 @@ namespace Stl.Fusion
 
         internal FusionBuilder(IServiceCollection services)
         {
-            Initialize();
             Services = services;
             if (Services.Contains(AddedTagDescriptor))
                 return;
             // We want above Contains call to run in O(1), so...
             Services.Insert(0, AddedTagDescriptor);
+            Services.AddCommander();
 
             // Common services
             Services.AddOptions();
             Services.TryAddSingleton(SystemClock.Instance);
+
             // Compute services & their dependencies
+            Services.TryAddSingleton(_ => ComputeServiceProxyGenerator.Default);
             Services.TryAddSingleton<IComputedOptionsProvider, ComputedOptionsProvider>();
             Services.TryAddSingleton(new ArgumentHandlerProvider.Options());
             Services.TryAddSingleton<IArgumentHandlerProvider, ArgumentHandlerProvider>();
+            Services.TryAddSingleton(new ComputeMethodInterceptor.Options());
+            Services.TryAddSingleton<ComputeMethodInterceptor>();
             Services.TryAddSingleton(new ComputeServiceInterceptor.Options());
             Services.TryAddSingleton<ComputeServiceInterceptor>();
-            Services.TryAddSingleton(c => ComputeServiceProxyGenerator.Default);
             Services.TryAddSingleton(c => new [] { c.GetRequiredService<ComputeServiceInterceptor>() });
             Services.TryAddSingleton<IErrorRewriter, ErrorRewriter>();
+
             // States & their dependencies
             Services.TryAddTransient<IStateFactory, StateFactory>();
             Services.TryAddTransient(typeof(IMutableState<>), typeof(MutableState<>));
             Services.TryAddSingleton(new UpdateDelayer.Options());
             Services.TryAddTransient<IUpdateDelayer, UpdateDelayer>();
+
+            // Invalidation handler for CommandR
+            var commander = Services.AddCommander();
+            Services.TryAddSingleton<IInvalidationInfoProvider, InvalidationInfoProvider>();
+            Services.TryAddSingleton<InvalidationHandler.Options>();
+            Services.TryAddSingleton<InvalidationHandler>();
+            commander.AddHandlers<InvalidationHandler>();
+
+            // Operations
+            Services.TryAddSingleton<AgentInfo>();
+            Services.TryAddSingleton<OperationCompletionNotifier.Options>();
+            Services.TryAddSingleton<IOperationCompletionNotifier, OperationCompletionNotifier>();
+            Services.TryAddEnumerable(ServiceDescriptor.Singleton(
+                typeof(IOperationCompletionHandler), typeof(OperationInvalidationHandler)));
         }
 
-        public static void Initialize(HashSet<Type>? nonReplicableAttributes = null)
+        static FusionBuilder()
         {
-            if (IsInitialized.Value) return;
-            lock (IsInitialized) {
-                if (IsInitialized.Value) return;
-                IsInitialized.Value = true;
-                // Castle.DynamicProxy fails while trying to replicate
-                // these attributes in WASM in .NET 5.0
-                nonReplicableAttributes ??= new HashSet<Type>() {
-                    typeof(AsyncStateMachineAttribute),
-                    typeof(ComputeMethodAttribute),
-                };
-                foreach (var type in nonReplicableAttributes)
-                    Castle.DynamicProxy.Generators.AttributesToAvoidReplicating.Add(type);
-            }
+            var nonReplicableAttributeTypes = new HashSet<Type>() {
+                typeof(ServiceAttributeBase),
+                typeof(AsyncStateMachineAttribute),
+                typeof(ComputeMethodAttribute),
+            };
+            foreach (var type in nonReplicableAttributeTypes)
+                if (!AttributesToAvoidReplicating.Contains(type))
+                    AttributesToAvoidReplicating.Add(type);
         }
 
         // AddPublisher, AddReplicator
@@ -90,10 +106,12 @@ namespace Stl.Fusion
         public FusionBuilder AddReplicator(Action<IServiceProvider, Replicator.Options>? configureReplicatorOptions = null)
         {
             // ReplicaServiceProxyGenerator
-            Services.TryAddSingleton(new ReplicaClientInterceptor.Options());
-            Services.TryAddSingleton<ReplicaClientInterceptor>();
-            Services.TryAddSingleton(c => ReplicaClientProxyGenerator.Default);
-            Services.TryAddSingleton(c => new [] { c.GetRequiredService<ReplicaClientInterceptor>() });
+            Services.TryAddSingleton(_ => ReplicaServiceProxyGenerator.Default);
+            Services.TryAddSingleton(new ReplicaMethodInterceptor.Options());
+            Services.TryAddSingleton<ReplicaMethodInterceptor>();
+            Services.TryAddSingleton(new ReplicaServiceInterceptor.Options());
+            Services.TryAddSingleton<ReplicaServiceInterceptor>();
+            Services.TryAddSingleton(c => new [] { c.GetRequiredService<ReplicaServiceInterceptor>() });
             // Replicator
             Services.TryAddSingleton(c => {
                 var options = new Replicator.Options();
@@ -110,11 +128,11 @@ namespace Stl.Fusion
             ServiceLifetime lifetime = ServiceLifetime.Singleton)
             where TService : class
             => AddComputeService(typeof(TService), lifetime);
-        public FusionBuilder AddComputeService<TService, TImpl>(
+        public FusionBuilder AddComputeService<TService, TImplementation>(
             ServiceLifetime lifetime = ServiceLifetime.Singleton)
             where TService : class
-            where TImpl : class, TService
-            => AddComputeService(typeof(TService), typeof(TImpl), lifetime);
+            where TImplementation : class, TService
+            => AddComputeService(typeof(TService), typeof(TImplementation), lifetime);
 
         public FusionBuilder AddComputeService(
             Type serviceType,
@@ -141,6 +159,7 @@ namespace Stl.Fusion
 
             var descriptor = new ServiceDescriptor(serviceType, Factory, lifetime);
             Services.TryAdd(descriptor);
+            Services.AddCommander().AddCommandService(serviceType, implementationType);
             return this;
         }
 
@@ -184,17 +203,19 @@ namespace Stl.Fusion
                     Services.TryAddTransient(implementationType);
             }
 
-            // Registering IOption types based on .ctor parameters
+            // Try register Options type based for .ctor(Options options, ...)
             foreach (var ctor in implementationType.GetConstructors()) {
                 if (!ctor.IsPublic)
                     continue;
-                var parameters = ctor.GetParameters();
-                if (parameters.Length < 1)
-                    continue;
-                var optionsType = parameters[0].ParameterType;
-                if (!typeof(IHasDefault).IsAssignableFrom(optionsType))
-                    continue;
-                Services.TryAddTransient(optionsType);
+                var pOptions = ctor.GetParameters().FirstOrDefault();
+                if (pOptions == null)
+                    continue; // Must be the first .ctor parameter
+                if (pOptions.Name != "options")
+                    continue; // Must be named "options"
+                var tOptions = pOptions.ParameterType;
+                if (tOptions.GetConstructor(Array.Empty<Type>()) == null)
+                    continue; // Must have new() constructor
+                Services.TryAddTransient(tOptions);
             }
             return this;
         }
@@ -207,5 +228,16 @@ namespace Stl.Fusion
             Func<IServiceProvider, TImplementation> factory)
             where TImplementation : class, IState
             => AddState(typeof(TImplementation), factory);
+
+        // AddAuthentication
+
+        public FusionAuthenticationBuilder AddAuthentication()
+            => new(this);
+        public FusionBuilder AddAuthentication(Action<FusionAuthenticationBuilder> configureFusionAuthentication)
+        {
+            var fusionAuth = AddAuthentication();
+            configureFusionAuthentication.Invoke(fusionAuth);
+            return this;
+        }
     }
 }

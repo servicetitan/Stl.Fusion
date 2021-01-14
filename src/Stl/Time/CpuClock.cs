@@ -20,7 +20,6 @@ namespace Stl.Time
 
         Moment IMomentClock.Now => Now;
         DateTimeOffset ISystemClock.UtcNow => Now;
-        DateTimeOffset Microsoft.Extensions.Internal.ISystemClock.UtcNow => Now;
 
         private CpuClock() { }
 

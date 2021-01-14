@@ -4,13 +4,12 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Async;
-using Stl.DependencyInjection;
 
 namespace Stl.Fusion.Authentication
 {
     public class PresenceService : AsyncProcessBase
     {
-        public class Options : IHasDefault
+        public class Options
         {
             public TimeSpan UpdatePeriod { get; set; } = TimeSpan.FromMinutes(10);
         }
@@ -27,8 +26,8 @@ namespace Stl.Fusion.Authentication
             ISessionResolver sessionResolver,
             ILogger<PresenceService>? log = null)
         {
-            options = options.OrDefault();
-            Log = log ??= NullLogger<PresenceService>.Instance;
+            options ??= new();
+            Log = log ?? NullLogger<PresenceService>.Instance;
             AuthService = authService;
             SessionResolver = sessionResolver;
             UpdateDelayer = new UpdateDelayer(new UpdateDelayer.Options() {

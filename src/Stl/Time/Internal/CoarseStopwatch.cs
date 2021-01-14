@@ -31,7 +31,7 @@ namespace Stl.Time.Internal
 
         public static Moment Now {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => new Moment(NowEpochOffsetTicks);
+            get => new(NowEpochOffsetTicks);
         }
 
         public static long RandomInt64 {

@@ -24,9 +24,9 @@ namespace Stl.Fusion
         public new class Options : State<T>.Options, IComputedState.IOptions { }
 
         public ComputedState(
-            Options options, IServiceProvider serviceProvider,
+            Options options, IServiceProvider services,
             object? argument = null, bool initialize = true)
-            : base(options, serviceProvider, argument, false)
+            : base(options, services, argument, false)
         {
 #pragma warning disable 420
             ReplaceRefTask(ref _updatingTask);

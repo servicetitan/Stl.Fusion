@@ -28,8 +28,8 @@ namespace Stl.DependencyInjection
         public static IServiceProvider WithPrimary(this IServiceProvider secondary, Func<Type, object?> primary)
             => new ChainingServiceProvider((FuncServiceProvider) primary, secondary);
 
-        public static IServiceProvider WithUnknownServiceActivator(this IServiceProvider serviceProvider)
-            => new UnknownServiceActivator(serviceProvider);
+        public static IServiceProvider WithUnknownServiceActivator(this IServiceProvider services)
+            => new UnknownServiceActivator(services);
 
         // GetOrActivate
 
@@ -46,14 +46,5 @@ namespace Stl.DependencyInjection
 
         public static object Activate(this IServiceProvider services, Type instanceType, params object[] arguments)
             => ActivatorUtilities.CreateInstance(services, instanceType, arguments);
-
-        // GetTypeViewFactory
-
-        public static ITypeViewFactory GetTypeViewFactory(this IServiceProvider services)
-            => services.GetService<ITypeViewFactory>() ?? TypeViewFactory.Default;
-
-        public static TypeViewFactory<TView> GetTypeViewFactory<TView>(this IServiceProvider services)
-            where TView : class
-            => services.GetTypeViewFactory().For<TView>();
     }
 }

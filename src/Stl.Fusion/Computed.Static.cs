@@ -27,14 +27,26 @@ namespace Stl.Fusion
         public static ClosedDisposable<IComputed?> ChangeCurrent(IComputed? newCurrent)
         {
             var oldCurrent = GetCurrent();
-            ComputeContext.Current.TryCapture(newCurrent);
+            if (newCurrent != null)
+                ComputeContext.Current.TryCapture(newCurrent);
             if (oldCurrent == newCurrent)
                 return Disposable.NewClosed(oldCurrent, _ => { });
             CurrentLocal.Value = newCurrent;
             return Disposable.NewClosed(oldCurrent, oldCurrent1 => CurrentLocal.Value = oldCurrent1);
         }
 
-        public static ClosedDisposable<IComputed?> Suppress() => ChangeCurrent(null);
+        public static ClosedDisposable<IComputed?> IgnoreDependencies()
+            => ChangeCurrent(null);
+
+        // Invalidation
+
+        public static bool IsInvalidating()
+            => (ComputeContext.Current.CallOptions & CallOptions.Invalidate) == CallOptions.Invalidate;
+
+        public static ComputeContextScope Invalidate()
+            => ComputeContext.Invalidate.Activate();
+        public static ComputeContextScope SuspendInvalidate()
+            => ComputeContext.Default.Activate();
 
         // TryCaptureAsync
 
@@ -206,28 +218,6 @@ namespace Stl.Fusion
             if (result == null)
                 throw Errors.NoComputedCaptured();
             return result;
-        }
-
-        // Invalidate
-
-        public static void Invalidate(Action invalidator)
-        {
-            using var ccs = ComputeContext.New(CallOptions.Invalidate).Activate();
-            invalidator.Invoke();
-        }
-
-        public static void Invalidate(Func<Task> invalidator)
-        {
-            using var ccs = ComputeContext.New(CallOptions.Invalidate).Activate();
-            var task = invalidator.Invoke();
-            task.AssertCompleted(); // The must be always synchronous in this case
-        }
-
-        public static void Invalidate(Func<ValueTask> invalidator)
-        {
-            using var ccs = ComputeContext.New(CallOptions.Invalidate).Activate();
-            var task = invalidator.Invoke();
-            task.AssertCompleted(); // The must be always synchronous in this case
         }
 
         // TryGetExisting

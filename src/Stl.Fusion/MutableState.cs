@@ -40,16 +40,16 @@ namespace Stl.Fusion
         }
 
         // This constructor is used by generic service descriptor for IMutableState<T>
-        public MutableState(IServiceProvider serviceProvider)
-            : this(new Options(), serviceProvider) { }
+        public MutableState(IServiceProvider services)
+            : this(new Options(), services) { }
         // This constructor is used by StateFactory
         public MutableState(
             Options options,
-            IServiceProvider serviceProvider,
+            IServiceProvider services,
             Option<Result<T>> initialOutput = default,
             object? argument = null,
             bool initialize = true)
-            : base(options, serviceProvider, argument, false)
+            : base(options, services, argument, false)
         {
             _output = initialOutput.IsSome(out var o) ? o : options.InitialOutputFactory.Invoke(this);
             // ReSharper disable once VirtualMemberCallInConstructor
@@ -60,7 +60,7 @@ namespace Stl.Fusion
             => CreateComputed();
 
         void IMutableResult.Set(IResult result)
-            => Set(result.AsResult<T>());
+            => Set(result.Cast<T>());
         public void Set(Result<T> result)
         {
             IStateSnapshot<T> snapshot;
