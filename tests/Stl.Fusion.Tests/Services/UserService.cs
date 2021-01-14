@@ -58,7 +58,7 @@ namespace Stl.Fusion.Tests.Services
                 return;
             }
 
-            await using var dbContext = await GetCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
+            await using var dbContext = await CreateCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
             dbContext.DisableChangeTracking();
             var userId = user.Id;
             if (orUpdate) {
@@ -80,7 +80,7 @@ namespace Stl.Fusion.Tests.Services
                 return;
             }
 
-            await using var dbContext = await GetCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
+            await using var dbContext = await CreateCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
             dbContext.Users.Update(user);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
@@ -98,7 +98,7 @@ namespace Stl.Fusion.Tests.Services
                 return false;
             }
 
-            await using var dbContext = await GetCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
+            await using var dbContext = await CreateCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
             dbContext.Users.Remove(user);
             try {
                 await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -145,11 +145,11 @@ namespace Stl.Fusion.Tests.Services
         [ComputeMethod]
         protected virtual Task<Unit> Everything() => TaskEx.UnitTask;
 
-        private new Task<TestDbContext> GetCommandDbContextAsync(CancellationToken cancellationToken = default)
+        private new Task<TestDbContext> CreateCommandDbContextAsync(CancellationToken cancellationToken = default)
         {
             if (IsProxy)
-                return base.GetCommandDbContextAsync(cancellationToken);
-            return Task.FromResult(GetDbContext().ReadWrite());
+                return base.CreateCommandDbContextAsync(cancellationToken);
+            return Task.FromResult(CreateDbContext().ReadWrite());
         }
     }
 }

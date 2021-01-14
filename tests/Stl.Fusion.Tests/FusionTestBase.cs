@@ -59,7 +59,7 @@ namespace Stl.Fusion.Tests
         {
             if (File.Exists(DbPath))
                 File.Delete(DbPath);
-            await using var dbContext = GetDbContext();
+            await using var dbContext = CreateDbContext();
             await dbContext.Database.EnsureCreatedAsync();
         }
 
@@ -182,7 +182,7 @@ namespace Stl.Fusion.Tests
             }
         }
 
-        protected TestDbContext GetDbContext()
+        protected TestDbContext CreateDbContext()
             => Services.GetRequiredService<IDbContextFactory<TestDbContext>>().CreateDbContext();
 
         protected Task<Channel<BridgeMessage>> ConnectToPublisherAsync(CancellationToken cancellationToken = default)

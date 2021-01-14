@@ -28,10 +28,10 @@ namespace Stl.Fusion.EntityFramework
             Log = loggerFactory?.CreateLogger(GetType()) ?? NullLogger.Instance;
         }
 
-        protected TDbContext GetDbContext()
+        protected TDbContext CreateDbContext()
             => DbContextFactory.CreateDbContext().ReadWrite(false);
 
-        protected Task<TDbContext> GetCommandDbContextAsync(CancellationToken cancellationToken = default)
+        protected Task<TDbContext> CreateCommandDbContextAsync(CancellationToken cancellationToken = default)
         {
             var commandContext = CommandContext.GetCurrent();
             var operationScope = commandContext.Items.Get<IDbOperationScope<TDbContext>>();

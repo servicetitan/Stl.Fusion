@@ -37,7 +37,7 @@ namespace Stl.Fusion.EntityFramework
             _batchProcessorLazy = new Lazy<AsyncBatchProcessor<TKey, TEntity>>(
                 () => BatchProcessorFactory.Invoke(this));
 
-            using var dbContext = GetDbContext();
+            using var dbContext = CreateDbContext();
             var entityType = dbContext.Model.FindEntityType(typeof(TEntity));
             var key = entityType.FindPrimaryKey();
             KeyExtractorExpressionBuilder = eEntity => Expression.PropertyOrField(eEntity, key.Properties.Single().Name);
@@ -77,7 +77,7 @@ namespace Stl.Fusion.EntityFramework
 
         protected virtual async Task ProcessBatchAsync(List<BatchItem<TKey, TEntity>> batch, CancellationToken cancellationToken)
         {
-            await using var dbContext = GetDbContext();
+            await using var dbContext = CreateDbContext();
             var keys = new HashSet<TKey>();
             foreach (var item in batch) {
                 if (!item.TryCancel(cancellationToken))
