@@ -15,10 +15,10 @@
   </PropertyGroup>
 
   <ItemGroup Label="Nupkg Versions">
-    <PackageReference Update="Bullseye" Version="3.5.0" />
+    <PackageReference Update="Bullseye" Version="3.6.0" />
     <PackageReference Update="Castle.Core" Version="4.4.1" />
     <PackageReference Update="Castle.Core.AsyncInterceptor" Version="1.7.0" />
-    <PackageReference Update="CliWrap" Version="3.2.4" />
+    <PackageReference Update="CliWrap" Version="3.3.0" />
     <PackageReference Update="DataAnnotationsValidatorNetStandard" Version="1.0.3" />
     <PackageReference Update="Enums.NET" Version="3.0.3" />
     <PackageReference Update="FluentAssertions" Version="5.10.3" />
@@ -80,7 +80,7 @@
     <PackageReference Update="System.Net.WebSockets.Client" Version="4.3.2" />
     <PackageReference Update="System.Reactive" Version="5.0.0" />
     <PackageReference Update="System.Runtime.Loader" Version="4.3.0" />
-    <PackageReference Update="System.Text.Json" Version="5.0.0" />
+    <PackageReference Update="System.Text.Json" Version="5.0.1" />
     <PackageReference Update="System.Threading.Channels" Version="5.0.0" />
     <PackageReference Update="Ulid" Version="1.1.0" />
     <PackageReference Update="xunit" Version="2.4.1" />
@@ -94,7 +94,7 @@
     <PackageReference Update="Microsoft.EntityFrameworkCore.Design" Version="$(EntityFrameworkCoreVersion)" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers;" />
     <PackageReference Update="Microsoft.EntityFrameworkCore.Tools" Version="$(EntityFrameworkCoreVersion)" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers;" />
     <PackageReference Update="Nerdbank.GitVersioning" Version="3.3.37" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
-    <PackageReference Update="coverlet.collector" Version="1.3.0" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
+    <PackageReference Update="coverlet.collector" Version="3.0.0" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
     <PackageReference Update="xunit.runner.visualstudio" Version="2.4.3" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
   </ItemGroup>
 </Project>
