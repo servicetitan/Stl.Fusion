@@ -32,7 +32,6 @@ namespace Stl.Fusion.Interception
 
         protected override void ValidateTypeInternal(Type type)
         {
-            Log.Log(ValidationLogLevel, $"Validating: '{type}':");
             var bindingFlags = BindingFlags.Public | BindingFlags.NonPublic
                 | BindingFlags.Instance | BindingFlags.Static
                 | BindingFlags.FlattenHierarchy;

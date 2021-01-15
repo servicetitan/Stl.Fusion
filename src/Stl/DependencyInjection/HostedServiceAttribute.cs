@@ -22,9 +22,6 @@ namespace Stl.DependencyInjection
             }
             else if (ServiceType == null) {
                 services.TryAddEnumerable(ServiceDescriptor.Singleton(
-                    typeof(IHostedService), implementationType));
-            } else {
-                services.TryAddEnumerable(ServiceDescriptor.Singleton(
                     typeof(IHostedService), c => c.GetRequiredService(serviceType)));
             }
         }

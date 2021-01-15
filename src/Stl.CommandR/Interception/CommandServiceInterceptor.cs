@@ -50,7 +50,6 @@ namespace Stl.CommandR.Interception
 
         protected override void ValidateTypeInternal(Type type)
         {
-            Log.Log(ValidationLogLevel, $"Validating: '{type}':");
             if (typeof(ICommandHandler).IsAssignableFrom(type))
                 throw Errors.OnlyInterceptedCommandHandlersAllowed(type);
             var bindingFlags = BindingFlags.Public | BindingFlags.NonPublic
