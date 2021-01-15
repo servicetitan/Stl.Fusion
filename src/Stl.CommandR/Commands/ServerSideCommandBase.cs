@@ -3,7 +3,7 @@ using Stl.CommandR.Internal;
 
 namespace Stl.CommandR.Commands
 {
-    public interface IServerSideCommand : IPreprocessedCommand
+    public interface IServerSideCommand : IPreparedCommand
     {
         void MarkServerSide(bool isServerSide);
     }
@@ -18,7 +18,7 @@ namespace Stl.CommandR.Commands
 
         public void MarkServerSide(bool isServerSide) => _isServerSide = isServerSide;
 
-        public virtual void Preprocess(CommandContext context)
+        public virtual void Prepare(CommandContext context)
         {
             if (!_isServerSide)
                 throw Errors.CommandIsServerSideOnly();

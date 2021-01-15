@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Stl.CommandR;
+using Stl.CommandR.Commands;
 using Stl.CommandR.Configuration;
 using Stl.Fusion.Operations;
 
@@ -36,10 +37,11 @@ namespace Stl.Fusion.EntityFramework.Internal
         [CommandHandler(Priority = 1000, IsFilter = true)]
         public async Task OnCommandAsync(ICommand command, CommandContext context, CancellationToken cancellationToken)
         {
-            var skip = context.OuterContext != null // Should be top-level command
-                || command is ICompletion // Second handler here will take care of it
-                || Computed.IsInvalidating();
-            if (skip) {
+            var operationRequired =
+                context.OuterContext == null // Should be top-level command
+                && !(command is IMetaCommand) // No operations for "second-order" commands
+                && !Computed.IsInvalidating();
+            if (!operationRequired) {
                 await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
                 return;
             }

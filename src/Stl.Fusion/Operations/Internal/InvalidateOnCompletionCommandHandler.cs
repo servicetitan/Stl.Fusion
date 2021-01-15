@@ -28,7 +28,7 @@ namespace Stl.Fusion.Operations.Internal
             InvalidationInfoProvider = invalidationInfoProvider;
         }
 
-        [CommandHandler(Priority = 10_001, IsFilter = true)]
+        [CommandHandler(Priority = 100, IsFilter = true)]
         public async Task OnCommandAsync(ICompletion command, CommandContext context, CancellationToken cancellationToken)
         {
             var requiredInvalidation =
