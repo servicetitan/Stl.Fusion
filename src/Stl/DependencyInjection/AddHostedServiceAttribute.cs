@@ -21,7 +21,7 @@ namespace Stl.DependencyInjection
             // type in its last type argument.
             var factory = (Func<IServiceProvider, object>) CreateServiceFactoryMethod
                 .MakeGenericMethod(implementationType)
-                .Invoke(null, Array.Empty<object>());
+                .Invoke(null, Array.Empty<object>())!;
             services.TryAddEnumerable(
                 ServiceDescriptor.Singleton(
                 typeof(IHostedService), factory));
