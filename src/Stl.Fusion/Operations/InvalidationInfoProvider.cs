@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Linq;
 using Stl.Async;
 using Stl.CommandR;
+using Stl.CommandR.Commands;
 using Stl.CommandR.Configuration;
 using Stl.Fusion.Bridge.Interception;
 using Stl.Fusion.Interception;
@@ -33,6 +34,9 @@ namespace Stl.Fusion.Operations
                 return false;
             return RequiresInvalidationCache.GetOrAdd(command.GetType(), (type, arg) => {
                 var (self, command1) = arg;
+                if (typeof(IMetaCommand).IsAssignableFrom(type))
+                    return false; // No invalidation for "second-order" commands
+
                 using var _ = ExecutionContextEx.SuppressFlow();
                 var tContext = typeof(CommandContext<>).MakeGenericType(command1!.ResultType);
                 using var context = (CommandContext) tContext.CreateInstance(self.Commander, command1);

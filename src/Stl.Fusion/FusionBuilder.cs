@@ -62,19 +62,24 @@ namespace Stl.Fusion
             Services.TryAddSingleton(new UpdateDelayer.Options());
             Services.TryAddTransient<IUpdateDelayer, UpdateDelayer>();
 
-            // Invalidation handler for CommandR
+            // Command completion and invalidation - CommandR services
             var commander = Services.AddCommander();
             Services.TryAddSingleton<IInvalidationInfoProvider, InvalidationInfoProvider>();
-            Services.TryAddSingleton<InvalidationHandler.Options>();
-            Services.TryAddSingleton<InvalidationHandler>();
-            commander.AddHandlers<InvalidationHandler>();
+            Services.TryAddSingleton<LocalCompletionCommandProducer.Options>();
+            Services.TryAddSingleton<LocalCompletionCommandProducer>();
+            Services.TryAddSingleton<InvalidateCompletedCommandHandler.Options>();
+            Services.TryAddSingleton<InvalidateCompletedCommandHandler>();
+            commander.AddHandlers<LocalCompletionCommandProducer>();
+            commander.AddHandlers<InvalidateCompletedCommandHandler>();
 
             // Operations
             Services.TryAddSingleton<AgentInfo>();
             Services.TryAddSingleton<OperationCompletionNotifier.Options>();
             Services.TryAddSingleton<IOperationCompletionNotifier, OperationCompletionNotifier>();
+            Services.TryAddSingleton<CompletionCommandProducer.Options>();
             Services.TryAddEnumerable(ServiceDescriptor.Singleton(
-                typeof(IOperationCompletionListener), typeof(OperationInvalidator)));
+                typeof(IOperationCompletionListener),
+                typeof(CompletionCommandProducer)));
         }
 
         static FusionBuilder()

@@ -37,7 +37,7 @@ namespace Stl.Fusion.EntityFramework.Internal
         public async Task OnCommandAsync(ICommand command, CommandContext context, CancellationToken cancellationToken)
         {
             var skip = context.OuterContext != null // Should be top-level command
-                || command is IInvalidateCommand // Second handler here will take care of it
+                || command is ICompletionCommand // Second handler here will take care of it
                 || Computed.IsInvalidating();
             if (skip) {
                 await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
@@ -83,7 +83,7 @@ namespace Stl.Fusion.EntityFramework.Internal
             }
             if (operation != null) {
                 if (InvalidationInfoProvider?.RequiresInvalidation(command) ?? false)
-                    context.Items.Set(InvalidateCommand.New(command, operation));
+                    context.Items.Set(CompletionCommand.New(command, operation));
                 OperationCompletionNotifier?.NotifyCompleted(operation);
             }
         }
