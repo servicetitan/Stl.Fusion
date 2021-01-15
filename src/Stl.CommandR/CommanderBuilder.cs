@@ -72,13 +72,13 @@ namespace Stl.CommandR
 
         // Handler discovery
 
-        public CommanderBuilder AddHandlers<TService>(double? orderOverride = null)
-            => AddHandlers(typeof(TService), orderOverride);
-        public CommanderBuilder AddHandlers<TService, TImplementation>(double? orderOverride = null)
-            => AddHandlers(typeof(TService), typeof(TImplementation), orderOverride);
-        public CommanderBuilder AddHandlers(Type serviceType, double? orderOverride = null)
-            => AddHandlers(serviceType, serviceType, orderOverride);
-        public CommanderBuilder AddHandlers(Type serviceType, Type implementationType, double? orderOverride = null)
+        public CommanderBuilder AddHandlers<TService>(double? priorityOverride = null)
+            => AddHandlers(typeof(TService), priorityOverride);
+        public CommanderBuilder AddHandlers<TService, TImplementation>(double? priorityOverride = null)
+            => AddHandlers(typeof(TService), typeof(TImplementation), priorityOverride);
+        public CommanderBuilder AddHandlers(Type serviceType, double? priorityOverride = null)
+            => AddHandlers(serviceType, serviceType, priorityOverride);
+        public CommanderBuilder AddHandlers(Type serviceType, Type implementationType, double? priorityOverride = null)
         {
             if (!serviceType.IsAssignableFrom(implementationType))
                 throw new ArgumentOutOfRangeException(nameof(implementationType));
@@ -103,7 +103,7 @@ namespace Stl.CommandR
                 if (!isEnabled)
                     continue;
                 var isFilter = attr?.IsFilter ?? false;
-                var order = orderOverride ?? attr?.Order ?? 0;
+                var order = priorityOverride ?? attr?.Priority ?? 0;
                 AddHandler(InterfaceCommandHandler.New(serviceType, tCommand, isFilter, order));
                 interfaceMethods.Add(method);
             }
@@ -125,7 +125,7 @@ namespace Stl.CommandR
             foreach (var method in methods) {
                 if (interfaceMethods.Contains(method))
                     continue;
-                var handler = MethodCommandHandler.TryNew(serviceType, method, orderOverride);
+                var handler = MethodCommandHandler.TryNew(serviceType, method, priorityOverride);
                 if (handler == null)
                     continue;
                 AddHandler(handler);
@@ -138,25 +138,25 @@ namespace Stl.CommandR
 
         public CommanderBuilder AddCommandService<TService>(
             ServiceLifetime lifetime = ServiceLifetime.Singleton,
-            double? orderOverride = null)
+            double? priorityOverride = null)
             where TService : class
-            => AddCommandService(typeof(TService), lifetime, orderOverride);
+            => AddCommandService(typeof(TService), lifetime, priorityOverride);
         public CommanderBuilder AddCommandService<TService, TImplementation>(
             ServiceLifetime lifetime = ServiceLifetime.Singleton,
-            double? orderOverride = null)
+            double? priorityOverride = null)
             where TService : class
             where TImplementation : class, TService
-            => AddCommandService(typeof(TService), typeof(TImplementation), lifetime, orderOverride);
+            => AddCommandService(typeof(TService), typeof(TImplementation), lifetime, priorityOverride);
 
         public CommanderBuilder AddCommandService(
             Type serviceType,
             ServiceLifetime lifetime = ServiceLifetime.Singleton,
-            double? orderOverride = null)
-            => AddCommandService(serviceType, serviceType, lifetime, orderOverride);
+            double? priorityOverride = null)
+            => AddCommandService(serviceType, serviceType, lifetime, priorityOverride);
         public CommanderBuilder AddCommandService(
             Type serviceType, Type implementationType,
             ServiceLifetime lifetime = ServiceLifetime.Singleton,
-            double? orderOverride = null)
+            double? priorityOverride = null)
         {
             if (!serviceType.IsAssignableFrom(implementationType))
                 throw new ArgumentOutOfRangeException(nameof(implementationType));
@@ -175,24 +175,24 @@ namespace Stl.CommandR
 
             var descriptor = new ServiceDescriptor(serviceType, Factory, lifetime);
             Services.TryAdd(descriptor);
-            AddHandlers(serviceType, implementationType, orderOverride);
+            AddHandlers(serviceType, implementationType, priorityOverride);
             return this;
         }
 
         // Low-level methods
 
-        public CommanderBuilder AddHandler<TService, TCommand>(double order = 0)
+        public CommanderBuilder AddHandler<TService, TCommand>(double priority = 0)
             where TService : class
             where TCommand : class, ICommand
-            => AddHandler<TService, TCommand>(false, order);
+            => AddHandler<TService, TCommand>(false, priority);
 
-        public CommanderBuilder AddHandler<TService, TCommand>(bool isFilter, double order = 0)
+        public CommanderBuilder AddHandler<TService, TCommand>(bool isFilter, double priority = 0)
             where TService : class
             where TCommand : class, ICommand
-            => AddHandler(InterfaceCommandHandler.New<TService, TCommand>(isFilter, order));
+            => AddHandler(InterfaceCommandHandler.New<TService, TCommand>(isFilter, priority));
 
-        public CommanderBuilder AddHandler(Type serviceType, MethodInfo methodInfo, double? orderOverride = null)
-            => AddHandler(MethodCommandHandler.New(serviceType, methodInfo, orderOverride));
+        public CommanderBuilder AddHandler(Type serviceType, MethodInfo methodInfo, double? priorityOverride = null)
+            => AddHandler(MethodCommandHandler.New(serviceType, methodInfo, priorityOverride));
 
         public CommanderBuilder AddHandler(CommandHandler handler)
         {

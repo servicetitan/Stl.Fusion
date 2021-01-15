@@ -8,13 +8,13 @@ namespace Stl.CommandR.Configuration
     {
         public Type CommandType { get; }
         public bool IsFilter { get; }
-        public double Order { get; }
+        public double Priority { get; }
 
-        protected CommandHandler(Type commandType, bool isFilter = false, double order = 0)
+        protected CommandHandler(Type commandType, bool isFilter = false, double priority = 0)
         {
             CommandType = commandType;
             IsFilter = isFilter;
-            Order = order;
+            Priority = priority;
         }
 
         public abstract object GetHandlerService(
@@ -28,7 +28,7 @@ namespace Stl.CommandR.Configuration
     public abstract record CommandHandler<TCommand> : CommandHandler
         where TCommand : class, ICommand
     {
-        protected CommandHandler(bool isFilter = false, double order = 0)
-            : base(typeof(TCommand), isFilter, order) { }
+        protected CommandHandler(bool isFilter = false, double priority = 0)
+            : base(typeof(TCommand), isFilter, priority) { }
     }
 }

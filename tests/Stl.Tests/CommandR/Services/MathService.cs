@@ -14,13 +14,13 @@ namespace Stl.Tests.CommandR.Services
     {
         public MathService(IServiceProvider services) : base(services) { }
 
-        [CommandHandler(Order = 2)]
+        [CommandHandler(Priority = 2)]
         protected virtual Task<double> DivAsync(DivCommand command, CancellationToken cancellationToken = default)
         {
             var context = CommandContext.GetCurrent<double>();
             var handler = context.ExecutionState.Handlers[^1];
             handler.GetType().Should().Be(typeof(MethodCommandHandler<DivCommand>));
-            handler.Order.Should().Be(2);
+            handler.Priority.Should().Be(2);
 
             Log.LogInformation($"{command.Divisible} / {command.Divisor} =");
             var result = command.Divisible / command.Divisor;
@@ -30,13 +30,13 @@ namespace Stl.Tests.CommandR.Services
             return Task.FromResult(result);
         }
 
-        [CommandHandler(Order = 1)]
+        [CommandHandler(Priority = 1)]
         public virtual async Task<double> RecSumAsync(RecSumCommand command, CancellationToken cancellationToken = default)
         {
             var context = CommandContext.GetCurrent<double>();
             var handler = context.ExecutionState.Handlers[^1];
             handler.GetType().Should().Be(typeof(MethodCommandHandler<RecSumCommand>));
-            handler.Order.Should().Be(1);
+            handler.Priority.Should().Be(1);
 
             Log.LogInformation($"Arguments: {command.Arguments.ToDelimitedString()}");
 

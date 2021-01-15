@@ -28,7 +28,7 @@ namespace Stl.CommandR.Configuration
                 var handlers = (
                     from typeEntry in baseTypes
                     from handler in self.Registry.Handlers.Where(h => h.CommandType == typeEntry.Type)
-                    orderby handler.Order, -typeEntry.Index
+                    orderby handler.Priority descending, typeEntry.Index descending
                     select handler
                 ).Distinct().ToArray();
                 if (handlers.Count(h => !h.IsFilter) > 1)

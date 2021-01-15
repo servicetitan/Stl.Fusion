@@ -7,7 +7,7 @@ using Stl.CommandR.Configuration;
 
 namespace Stl.Fusion.Operations.Internal
 {
-    public class InvalidateCompletedCommandHandler : ICommandHandler<ICompletionCommand>
+    public class InvalidateOnCompletionCommandHandler : ICommandHandler<ICompletion>
     {
         public class Options
         {
@@ -18,18 +18,18 @@ namespace Stl.Fusion.Operations.Internal
         protected LogLevel LogLevel { get; }
         protected ILogger Log { get; }
 
-        public InvalidateCompletedCommandHandler(Options? options,
+        public InvalidateOnCompletionCommandHandler(Options? options,
             IInvalidationInfoProvider invalidationInfoProvider,
-            ILogger<InvalidateCompletedCommandHandler>? log = null)
+            ILogger<InvalidateOnCompletionCommandHandler>? log = null)
         {
             options ??= new();
-            Log = log ?? NullLogger<InvalidateCompletedCommandHandler>.Instance;
+            Log = log ?? NullLogger<InvalidateOnCompletionCommandHandler>.Instance;
             LogLevel = options.LogLevel;
             InvalidationInfoProvider = invalidationInfoProvider;
         }
 
-        [CommandHandler(Order = -10_001, IsFilter = true)]
-        public async Task OnCommandAsync(ICompletionCommand command, CommandContext context, CancellationToken cancellationToken)
+        [CommandHandler(Priority = 10_001, IsFilter = true)]
+        public async Task OnCommandAsync(ICompletion command, CommandContext context, CancellationToken cancellationToken)
         {
             var requiredInvalidation =
                 InvalidationInfoProvider.RequiresInvalidation(command.UntypedCommand)

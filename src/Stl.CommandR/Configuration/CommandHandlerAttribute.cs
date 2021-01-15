@@ -7,10 +7,10 @@ namespace Stl.CommandR.Configuration
     {
         public bool IsEnabled { get; set; } = true;
         public bool IsFilter { get; set; } = false;
-        public double Order { get; set; }
+        public double Priority { get; set; }
 
         public CommandHandlerAttribute() { }
         public CommandHandlerAttribute(bool isEnabled) { IsEnabled = isEnabled; }
-        public CommandHandlerAttribute(int order) { Order = order; }
+        public CommandHandlerAttribute(int priority) { Priority = priority; }
     }
 }

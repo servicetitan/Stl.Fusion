@@ -4,7 +4,7 @@ using Stl.CommandR;
 
 namespace Stl.Fusion.Operations.Internal
 {
-    public class CompletionCommandProducer : IOperationCompletionListener
+    public class CompletionProducer : IOperationCompletionListener
     {
         public class Options
         {
@@ -16,13 +16,13 @@ namespace Stl.Fusion.Operations.Internal
         protected LogLevel LogLevel { get; }
         protected ILogger Log { get; }
 
-        public CompletionCommandProducer(Options? options,
+        public CompletionProducer(Options? options,
             ICommander commander,
             AgentInfo agentInfo,
-            ILogger<CompletionCommandProducer>? log = null)
+            ILogger<CompletionProducer>? log = null)
         {
             options ??= new();
-            Log = log ?? NullLogger<CompletionCommandProducer>.Instance;
+            Log = log ?? NullLogger<CompletionProducer>.Instance;
             LogLevel = options.LogLevel;
             AgentInfo = agentInfo;
             Commander = commander;
@@ -31,7 +31,7 @@ namespace Stl.Fusion.Operations.Internal
         public virtual void OnOperationCompleted(IOperation operation)
         {
             if (operation.AgentId == AgentInfo.Id.Value)
-                return; // Local completions are handled by LocalCompletionCommandProducer
+                return; // Local completions are handled by LocalCompletionProducer
             if (!(operation.Command is ICommand command))
                 return; // We can't complete non-commands
 
@@ -39,7 +39,7 @@ namespace Stl.Fusion.Operations.Internal
             if (logEnabled)
                 Log.Log(LogLevel, "External operation completed: agent {0}, command {1}", operation.AgentId, command);
 
-            Commander.Start(CompletionCommand.New(command, operation), true);
+            Commander.Start(Completion.New(command, operation), true);
         }
     }
 }

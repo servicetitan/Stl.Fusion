@@ -21,7 +21,7 @@ namespace Stl.Tests.CommandR.Services
         {
             var handler = context.ExecutionState.Handlers[^1];
             handler.GetType().Should().Be(typeof(InterfaceCommandHandler<LogCommand>));
-            handler.Order.Should().Be(0);
+            handler.Priority.Should().Be(0);
 
             Log.LogInformation(command.Message);
             return Task.CompletedTask;

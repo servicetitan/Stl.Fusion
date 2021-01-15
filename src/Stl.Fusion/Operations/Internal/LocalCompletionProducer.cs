@@ -8,7 +8,7 @@ using Stl.CommandR.Configuration;
 
 namespace Stl.Fusion.Operations.Internal
 {
-    public class LocalCompletionCommandProducer : ICommandHandler<ICommand>
+    public class LocalCompletionProducer : ICommandHandler<ICommand>
     {
         public class Options
         {
@@ -18,16 +18,16 @@ namespace Stl.Fusion.Operations.Internal
         protected LogLevel LogLevel { get; }
         protected ILogger Log { get; }
 
-        public LocalCompletionCommandProducer(Options? options,
+        public LocalCompletionProducer(Options? options,
             IInvalidationInfoProvider invalidationInfoProvider,
-            ILogger<InvalidateCompletedCommandHandler>? log = null)
+            ILogger<InvalidateOnCompletionCommandHandler>? log = null)
         {
             options ??= new();
-            Log = log ?? NullLogger<InvalidateCompletedCommandHandler>.Instance;
+            Log = log ?? NullLogger<InvalidateOnCompletionCommandHandler>.Instance;
             LogLevel = options.LogLevel;
         }
 
-        [CommandHandler(Order = -10_000, IsFilter = true)]
+        [CommandHandler(Priority = 10_000, IsFilter = true)]
         public async Task OnCommandAsync(ICommand command, CommandContext context, CancellationToken cancellationToken)
         {
             await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
@@ -39,8 +39,8 @@ namespace Stl.Fusion.Operations.Internal
             if (!requiresCompletion)
                 return;
 
-            var completionCommand = context.Items.TryGet<ICompletionCommand>() ?? CompletionCommand.New(command);
-            await context.Commander.RunAsync(completionCommand, true, default).ConfigureAwait(false);
+            var completion = context.Items.TryGet<ICompletion>() ?? Completion.New(command);
+            await context.Commander.RunAsync(completion, true, default).ConfigureAwait(false);
         }
     }
 }

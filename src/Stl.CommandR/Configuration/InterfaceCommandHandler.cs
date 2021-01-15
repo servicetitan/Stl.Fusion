@@ -11,8 +11,8 @@ namespace Stl.CommandR.Configuration
     {
         public Type ServiceType { get; }
 
-        public InterfaceCommandHandler(Type serviceType, bool isFilter = false, double order = 0)
-            : base(isFilter, order)
+        public InterfaceCommandHandler(Type serviceType, bool isFilter = false, double priority = 0)
+            : base(isFilter, priority)
             => ServiceType = serviceType;
 
         public override object GetHandlerService(ICommand command, CommandContext context)
@@ -30,25 +30,25 @@ namespace Stl.CommandR.Configuration
     public static class InterfaceCommandHandler
     {
         public static InterfaceCommandHandler<TCommand> New<TCommand>(
-            Type serviceType, bool isFilter, double order = 0)
+            Type serviceType, bool isFilter, double priority = 0)
             where TCommand : class, ICommand
-            => new(serviceType, isFilter, order);
+            => new(serviceType, isFilter, priority);
 
         public static InterfaceCommandHandler<TCommand> New<TService, TCommand>(
-            bool isFilter = false, double order = 0)
+            bool isFilter = false, double priority = 0)
             where TService : class
             where TCommand : class, ICommand
-            => new(typeof(TService), isFilter, order);
+            => new(typeof(TService), isFilter, priority);
 
         public static CommandHandler New(
-            Type serviceType, Type commandType, bool isFilter = false, double order = 0)
+            Type serviceType, Type commandType, bool isFilter = false, double priority = 0)
         {
             var ctor = typeof(InterfaceCommandHandler<>)
                 .MakeGenericType(commandType)
                 .GetConstructors()
                 .Single();
             // ReSharper disable once HeapView.BoxingAllocation
-            return (CommandHandler) ctor.Invoke(new object[] { serviceType, isFilter, order });
+            return (CommandHandler) ctor.Invoke(new object[] { serviceType, isFilter, priority });
         }
     }
 }

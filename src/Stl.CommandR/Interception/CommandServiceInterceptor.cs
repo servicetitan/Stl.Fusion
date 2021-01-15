@@ -68,7 +68,7 @@ namespace Stl.CommandR.Interception
                 else
                     Log.Log(ValidationLogLevel,
                         $"+ {method}: {nameof(CommandHandlerAttribute)} {{ " +
-                        $"{nameof(CommandHandlerAttribute.Order)} = {attr.Order}" +
+                        $"{nameof(CommandHandlerAttribute.Priority)} = {attr.Priority}" +
                         $" }}");
             }
         }

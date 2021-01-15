@@ -1,6 +1,6 @@
 namespace Stl.Fusion.Operations
 {
-    // A helper Box<T> - like type allowing command handlers to store
+    // A helper "tagging" type allowing command handlers to store
     // data related to operation inside CommandContext.Items.
     // Such items are persisted to the operation log & restored
     // on invalidation replay pass.
