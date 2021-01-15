@@ -74,11 +74,6 @@ namespace Stl
         public bool IsNone() => !HasValue;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public T ValueOr(T other) => HasValue ? UnsafeValue! : other;
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public T ValueOr(Func<T> other) => HasValue ? UnsafeValue! : other.Invoke();
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [return: MaybeNull]
         public Option<TCast?> CastAs<TCast>()
             where TCast : class

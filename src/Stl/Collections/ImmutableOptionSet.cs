@@ -7,7 +7,7 @@ using Stl.Text;
 
 namespace Stl.Collections
 {
-    public readonly struct ImmutableOptionSet : IServiceProvider
+    public readonly struct ImmutableOptionSet : IServiceProvider, IEquatable<ImmutableOptionSet>
     {
         public static readonly ImmutableOptionSet Empty = new(ImmutableDictionary<Symbol, object>.Empty);
 
@@ -43,5 +43,13 @@ namespace Stl.Collections
         // ReSharper disable once HeapView.PossibleBoxingAllocation
         public ImmutableOptionSet Set<T>(T value) => Set(typeof(T), value);
         public ImmutableOptionSet Remove<T>() => Set(typeof(T), null);
+
+        // Equality
+
+        public bool Equals(ImmutableOptionSet other) => Equals(Items, other.Items);
+        public override bool Equals(object? obj) => obj is ImmutableOptionSet other && Equals(other);
+        public override int GetHashCode() => Items.GetHashCode();
+        public static bool operator ==(ImmutableOptionSet left, ImmutableOptionSet right) => left.Equals(right);
+        public static bool operator !=(ImmutableOptionSet left, ImmutableOptionSet right) => !left.Equals(right);
     }
 }

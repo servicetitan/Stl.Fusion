@@ -76,7 +76,7 @@ namespace Stl.Fusion.Server
                 throw;
             }
             catch (Exception e) {
-                Log.LogWarning(e, "WebSocket connection was closed with an error.");
+                Log.LogWarning(e, "WebSocket connection was closed with an error");
             }
         }
     }

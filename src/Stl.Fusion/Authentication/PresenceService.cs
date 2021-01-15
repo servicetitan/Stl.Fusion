@@ -59,7 +59,7 @@ namespace Stl.Fusion.Authentication
                 throw;
             }
             catch (Exception e) {
-                Log.LogError(e, "Error on UpdatePresenceAsync call.");
+                Log.LogError(e, "UpdatePresenceAsync error");
                 return false;
             }
         }

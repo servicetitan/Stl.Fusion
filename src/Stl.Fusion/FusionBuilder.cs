@@ -13,8 +13,8 @@ using Stl.Fusion.Bridge.Interception;
 using Stl.Fusion.Operations;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Operations.Internal;
-using Stl.Internal;
 using Stl.Time;
+using Errors = Stl.Internal.Errors;
 
 namespace Stl.Fusion
 {

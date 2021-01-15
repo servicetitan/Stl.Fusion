@@ -23,7 +23,7 @@ namespace Stl.Tests.CommandR.Services
             handler.GetType().Should().Be(typeof(InterfaceCommandHandler<LogCommand>));
             handler.Priority.Should().Be(0);
 
-            Log.LogInformation(command.Message);
+            Log.LogInformation("{Message}", command.Message);
             return Task.CompletedTask;
         }
     }

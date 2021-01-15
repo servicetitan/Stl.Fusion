@@ -31,37 +31,29 @@ namespace Stl.Fusion.Operations.Internal
         [CommandHandler(Priority = 100, IsFilter = true)]
         public async Task OnCommandAsync(ICompletion command, CommandContext context, CancellationToken cancellationToken)
         {
+            var originalCommand = command.UntypedCommand;
             var requiredInvalidation =
-                InvalidationInfoProvider.RequiresInvalidation(command.UntypedCommand)
+                InvalidationInfoProvider.RequiresInvalidation(originalCommand)
                 && !Computed.IsInvalidating();
             if (!requiredInvalidation) {
                 await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
                 return;
             }
 
-            // Copying IOperation.Items to CommandContext.Items
-            var operation = command.Operation;
-            var operationItems = operation?.Items.Items;
-            if (operationItems != null) {
-                foreach (var (key, value) in operationItems) {
-                    if (value is IOperationItem)
-                        context.Items[key] = value;
-                }
-            }
-
             var logEnabled = LogLevel != LogLevel.None && Log.IsEnabled(LogLevel);
             using var _ = Computed.Invalidate();
+            command.Operation.RestoreItems(context.Items);
 
             var finalHandler = context.ExecutionState.FindFinalHandler();
             if (finalHandler != null) {
                 if (logEnabled)
-                    Log.Log(LogLevel, "Invalidating via dedicated command handler: {0}", command);
+                    Log.Log(LogLevel, "Invalidating via dedicated command handler for '{CommandType}'", command.GetType());
                 await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
             }
             else {
                 if (logEnabled)
-                    Log.Log(LogLevel, "Invalidating via shared command handler: {0}", command);
-                await context.Commander.RunAsync(command.UntypedCommand, cancellationToken).ConfigureAwait(false);
+                    Log.Log(LogLevel, "Invalidating via shared command handler for '{CommandType}'", originalCommand.GetType());
+                await context.Commander.RunAsync(originalCommand, cancellationToken).ConfigureAwait(false);
             }
         }
     }

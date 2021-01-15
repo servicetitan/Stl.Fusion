@@ -22,9 +22,9 @@ namespace Stl.Tests.CommandR.Services
             handler.GetType().Should().Be(typeof(MethodCommandHandler<DivCommand>));
             handler.Priority.Should().Be(2);
 
-            Log.LogInformation($"{command.Divisible} / {command.Divisor} =");
+            Log.LogInformation("{Divisible} / {Divisor} =", command.Divisible, command.Divisor);
             var result = command.Divisible / command.Divisor;
-            Log.LogInformation($"  {result}");
+            Log.LogInformation("  {Result}", result);
             if (double.IsInfinity(result))
                 throw new DivideByZeroException();
             return Task.FromResult(result);
@@ -38,7 +38,7 @@ namespace Stl.Tests.CommandR.Services
             handler.GetType().Should().Be(typeof(MethodCommandHandler<RecSumCommand>));
             handler.Priority.Should().Be(1);
 
-            Log.LogInformation($"Arguments: {command.Arguments.ToDelimitedString()}");
+            Log.LogInformation("Arguments: {Arguments}", command.Arguments.ToDelimitedString());
 
             if (command.Arguments.Length == 0)
                 return 0;

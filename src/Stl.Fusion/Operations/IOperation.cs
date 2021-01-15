@@ -1,5 +1,6 @@
 using System;
 using Stl.Collections;
+using Stl.CommandR;
 
 namespace Stl.Fusion.Operations
 {

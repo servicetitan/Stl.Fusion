@@ -66,12 +66,12 @@ namespace Stl.Interception.Interceptors
         public void ValidateType(Type type)
         {
             _validateTypeCache.GetOrAddChecked(type, (type1, self) => {
-                Log.Log(ValidationLogLevel, $"Validating: '{type}':");
+                Log.Log(ValidationLogLevel, "Validating: '{Type}'", type1);
                 try {
                     self.ValidateTypeInternal(type1);
                 }
                 catch (Exception e) {
-                    Log.LogCritical(e, $"Validation failed for '{type}'.");
+                    Log.LogCritical(e, "Validation of '{Type}' failed", type1);
                     throw;
                 }
                 return default;

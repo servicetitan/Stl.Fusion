@@ -199,12 +199,12 @@ namespace Stl.Fusion.Bridge.Internal
             var connectTask = Task.Run(async () => {
                 var cancellationToken = CancellationToken.None;
                 if (error != null) {
-                    Log.LogError(error, $"{ClientId}: Error.");
+                    Log.LogError(error, "{ClientId}: error", ClientId);
                     await Task.Delay(ReplicatorImpl.ReconnectDelay, cancellationToken).ConfigureAwait(false);
-                    Log.LogInformation($"{ClientId}: Reconnecting...");
+                    Log.LogInformation("{ClientId}: reconnecting...", ClientId);
                 }
                 else
-                    Log.LogInformation($"{ClientId}: Connecting...");
+                    Log.LogInformation("{ClientId}: connecting...", ClientId);
 
                 var channelProvider = ReplicatorImpl.ChannelProvider;
                 var channel = await channelProvider
@@ -247,7 +247,7 @@ namespace Stl.Fusion.Bridge.Internal
                     }
                 }
                 catch (Exception e) {
-                    Log.LogError(e, $"{ClientId}: Error.");
+                    Log.LogError(e, "{ClientId}: error", ClientId);
                 }
             });
         }

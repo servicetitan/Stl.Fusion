@@ -29,8 +29,8 @@ namespace Stl.Testing
             _partManager.PopulateFeature(controllerFeature);
             var controllers = controllerFeature.Controllers.Select(x => x.Name);
 
-            _log.LogInformation($"Application parts: {string.Join(", ", applicationParts)}");
-            _log.LogInformation($"Controllers: {string.Join(", ", controllers)}");
+            _log.LogInformation("Application parts: {ApplicationParts}", string.Join(", ", applicationParts));
+            _log.LogInformation("Controllers: {Controllers}", string.Join(", ", controllers));
             return Task.CompletedTask;
         }
 

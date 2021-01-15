@@ -10,7 +10,7 @@ namespace Stl.Serialization
 
         [JsonIgnore]
         public TValue Value {
-            get => _valueOption.ValueOr(Deserialize());
+            get => _valueOption.IsSome(out var v) ? v : Deserialize();
             set {
                 _valueOption = value;
                 _serializedValueOption = Option<string>.None;
@@ -18,7 +18,7 @@ namespace Stl.Serialization
         }
 
         public string SerializedValue {
-            get => _serializedValueOption.ValueOr(Serialize());
+            get => _serializedValueOption.IsSome(out var v) ? v : Serialize();
             set {
                 _valueOption = Option<TValue>.None;
                 _serializedValueOption = value;

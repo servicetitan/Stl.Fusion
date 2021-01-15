@@ -18,13 +18,13 @@ namespace Stl.Tests.CommandR.Services
             ICommand command, CommandContext context,
             CancellationToken cancellationToken)
         {
-            Log.LogInformation($"+ {command}");
+            Log.LogInformation("+ {Command}", command);
             try {
                 await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
                 await LogResultAsync((dynamic) command);
             }
             catch (Exception e) {
-                Log.LogError($"- {command} !-> error: {e}");
+                Log.LogError(e, "- {Command} !-> error", command);
                 throw;
             }
         }
@@ -34,11 +34,11 @@ namespace Stl.Tests.CommandR.Services
             var context = (CommandContext<T>) CommandContext.Current!;
             var resultTask = context.ResultTask;
             if (!resultTask.IsCompleted) {
-                Log.LogInformation($"- {command} -> {default(T)}");
+                Log.LogInformation("- {Command} -> {Result}", command, default(T));
                 return;
             }
             var result = await resultTask.ConfigureAwait(false);
-            Log.LogInformation($"- {command} -> {result}");
+            Log.LogInformation("- {Command} -> {Result}", command, result);
         }
     }
 }

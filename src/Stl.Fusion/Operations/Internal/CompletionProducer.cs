@@ -37,9 +37,10 @@ namespace Stl.Fusion.Operations.Internal
 
             var logEnabled = LogLevel != LogLevel.None && Log.IsEnabled(LogLevel);
             if (logEnabled)
-                Log.Log(LogLevel, "External operation completed: agent {0}, command {1}", operation.AgentId, command);
+                Log.Log(LogLevel, "External operation completed. Agent: '{AgentId}', Command: {Command}",
+                    operation.AgentId, command);
 
-            Commander.Start(Completion.New(command, operation), true);
+            Commander.Start(Completion.New(operation), true);
         }
     }
 }

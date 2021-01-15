@@ -110,12 +110,12 @@ namespace Stl.Fusion.Client
             var clientId = ClientId.Value;
             try {
                 var connectionUri = ConnectionUrlResolver.Invoke(this, publisherId);
-                Log.LogInformation($"{clientId}: Connecting to {connectionUri}...");
+                Log.LogInformation("{ClientId}: connecting to {ConnectionUri}...", clientId, connectionUri);
                 var ws = ClientWebSocketFactory.Invoke(Services);
                 using var cts = new CancellationTokenSource(ConnectTimeout);
                 using var lts = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken);
                 await ws.ConnectAsync(connectionUri, lts.Token).ConfigureAwait(false);
-                Log.LogInformation($"{clientId}: Connected.");
+                Log.LogInformation("{ClientId}: connected", clientId);
 
                 var wsChannel = new WebSocketChannel(ws);
                 Channel<string> stringChannel = wsChannel;
@@ -138,7 +138,7 @@ namespace Stl.Fusion.Client
                 throw Errors.WebSocketConnectTimeout();
             }
             catch (Exception e) {
-                Log.LogError(e, $"{clientId}: Error.");
+                Log.LogError(e, "{ClientId}: error", clientId);
                 throw;
             }
         }

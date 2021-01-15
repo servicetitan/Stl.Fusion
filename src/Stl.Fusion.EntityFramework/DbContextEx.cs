@@ -11,17 +11,17 @@ namespace Stl.Fusion.EntityFramework
 
         // ConfigureMode
 
-        public static TDbContext ReadWrite<TDbContext>(this TDbContext dbContext, bool isReadWrite = true)
+        public static TDbContext ReadWrite<TDbContext>(this TDbContext dbContext, bool readWrite = true)
             where TDbContext : DbContext
         {
-            dbContext.EnableChangeTracking(isReadWrite);
-            dbContext.EnableSaveChanges(isReadWrite);
+            dbContext.EnableChangeTracking(readWrite);
+            dbContext.EnableSaveChanges(readWrite);
             return dbContext;
         }
 
-        public static TDbContext ReadWrite<TDbContext>(this TDbContext dbContext, bool? isReadWrite)
+        public static TDbContext ReadWrite<TDbContext>(this TDbContext dbContext, bool? readWrite)
             where TDbContext : DbContext
-            => isReadWrite.HasValue ? dbContext.ReadWrite(isReadWrite.GetValueOrDefault()) : dbContext;
+            => readWrite.HasValue ? dbContext.ReadWrite(readWrite.GetValueOrDefault()) : dbContext;
 
         // (Enable|Disable)ChangeTracking
 

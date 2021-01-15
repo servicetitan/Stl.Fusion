@@ -39,9 +39,8 @@ namespace Stl.Fusion.EntityFramework.Internal
             var minCommitTime = (MaxKnownCommitTime - MaxCommitDuration).ToDateTime();
 
             // Fetching potentially new operations
-            await using var dbContext = CreateDbContext();
             var operations = await DbOperationLog
-                .ListNewlyCommittedAsync(dbContext, minCommitTime, cancellationToken)
+                .ListNewlyCommittedAsync(minCommitTime, cancellationToken)
                 .ConfigureAwait(false);
 
             // Processing them

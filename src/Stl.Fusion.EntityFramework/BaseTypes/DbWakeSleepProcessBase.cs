@@ -23,7 +23,7 @@ namespace Stl.Fusion.EntityFramework
                 }
                 catch (Exception e) {
                     error = e;
-                    Log.LogError(e, "Error.");
+                    Log.LogError(e, "WakeAsync error");
                 }
                 await SleepAsync(error, cancellationToken).ConfigureAwait(false);
             }

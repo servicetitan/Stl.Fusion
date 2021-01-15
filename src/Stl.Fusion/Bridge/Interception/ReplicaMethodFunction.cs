@@ -52,13 +52,11 @@ namespace Stl.Fusion.Bridge.Interception
                     return result;
                 }
                 catch (OperationCanceledException) {
-                    if (IsLogDebugEnabled)
-                        Log.LogDebug($"{nameof(ComputeAsync)}: Cancelled (1).");
                     throw;
                 }
                 catch (Exception e) {
                     if (IsLogDebugEnabled)
-                        Log.LogError(e, $"{nameof(ComputeAsync)}: Error on Replica update.");
+                        Log.LogError(e, "ComputeAsync: error on Replica update");
                 }
             }
 
@@ -77,13 +75,11 @@ namespace Stl.Fusion.Bridge.Interception
                 }
             }
             catch (OperationCanceledException) {
-                if (IsLogDebugEnabled)
-                    Log.LogDebug($"{nameof(ComputeAsync)}: Cancelled (2).");
                 throw;
             }
             catch (Exception e) {
                 if (IsLogDebugEnabled)
-                    Log.LogError(e, $"{nameof(ComputeAsync)}: Error on update.");
+                    Log.LogError(e, "ComputeAsync: error on update");
                 if (e is AggregateException ae)
                     e = ae.GetFirstInnerException();
                 output = Result.Error<T>(e);

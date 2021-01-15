@@ -26,8 +26,8 @@ namespace Stl.Fusion.Operations
         protected int MaxKnownOperationCount { get; }
         protected TimeSpan MaxKnownOperationAge { get; }
         protected AgentInfo AgentInfo { get; }
-        protected IOperationCompletionListener[] OperationCompletionHandlers { get; }
         protected IMomentClock Clock { get; }
+        protected IOperationCompletionListener[] OperationCompletionHandlers { get; }
         protected BinaryHeap<Moment, string> KnownOperationHeap { get; } = new();
         protected HashSet<string> KnownOperationSet { get; } = new();
         protected object Lock { get; } = new();
@@ -79,7 +79,7 @@ namespace Stl.Fusion.Operations
                         handler.OnOperationCompleted(operation);
                     }
                     catch (Exception e) {
-                        Log.LogError(e, $"Error in operation completion handler of type '{handler.GetType()}'.");
+                        Log.LogError(e, "Error in operation completion handler of type '{HandlerType}'", handler.GetType());
                     }
                 }
             });

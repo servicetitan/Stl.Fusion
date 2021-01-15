@@ -50,31 +50,23 @@ namespace Stl.Fusion.EntityFramework.Internal
             if (context.Items[tScope] != null) // Safety check
                 throw Stl.Internal.Errors.InternalError($"'{tScope}' scope is already provided. Duplicate handler?");
 
-            var logEnabled = LogLevel != LogLevel.None && Log.IsEnabled(LogLevel);
             await using var scope = Services.GetRequiredService<IDbOperationScope<TDbContext>>();
-            scope.Command = command;
+            var operation = scope.Operation;
+            operation.Command = command;
             context.Items.Set(scope);
-            if (logEnabled)
-                Log.Log(LogLevel, "+ Operation started: {0}", command);
 
-            IOperation? operation = null;
+            var logEnabled = LogLevel != LogLevel.None && Log.IsEnabled(LogLevel);
             try {
                 await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
 
-                // Building IOperation.Items from CommandContext.Items
-                foreach (var (key, value) in context.Items.Items) {
-                    if (value is IOperationItem)
-                        scope.Items = scope.Items.Set(key, value);
-                }
-                operation = await scope.CommitAsync(cancellationToken);
-                if (logEnabled)
-                    Log.Log(LogLevel, "- Operation succeeded: {0}", command);
+                operation.CaptureItems(context.Items);
+                await scope.CommitAsync(cancellationToken);
             }
             catch (OperationCanceledException) {
                 throw;
             }
             catch (Exception e) {
-                Log.LogError(e, "! Operation failed: {0}", command);
+                Log.LogError(e, "Operation failed: {Command}", command);
                 try {
                     await scope.RollbackAsync();
                 }
@@ -83,9 +75,10 @@ namespace Stl.Fusion.EntityFramework.Internal
                 }
                 throw;
             }
-            if (operation != null) {
-                if (InvalidationInfoProvider?.RequiresInvalidation(command) ?? false)
-                    context.Items.Set(Completion.New(command, operation));
+            if (scope.IsUsed) {
+                if (logEnabled)
+                    Log.Log(LogLevel, "Operation succeeded: {Command}", command);
+                context.Items.Set(Completion.New(operation));
                 OperationCompletionNotifier?.NotifyCompleted(operation);
             }
         }

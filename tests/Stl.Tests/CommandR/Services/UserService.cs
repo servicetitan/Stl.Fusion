@@ -31,7 +31,7 @@ namespace Stl.Tests.CommandR.Services
             anotherDbContext.Should().NotBeNull();
             anotherDbContext.Should().NotBe(dbContext);
 
-            Log.LogInformation($"User count: {command.Users.Length}");
+            Log.LogInformation("User count: {UserCount}", command.Users.Length);
             if (command.Users.Length == 0)
                 return;
 
