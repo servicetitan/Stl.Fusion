@@ -17,7 +17,8 @@ namespace Stl.Tests.DependencyInjection
 {
     public class HostedServiceTest
     {
-        [HostedService(Scope = nameof(HostedServiceTest))]
+        [Service(Scope = nameof(HostedServiceTest))]
+        [AddHostedService(Scope = nameof(HostedServiceTest))]
         public class TestHostedService : IHostedService
         {
             public bool IsStarted { get; set; }
