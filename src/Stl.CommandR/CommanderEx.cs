@@ -20,7 +20,7 @@ namespace Stl.CommandR
         public static async Task<TResult> CallAsync<TResult>(this ICommander commander,
             ICommand<TResult> command, bool isolate, CancellationToken cancellationToken = default)
         {
-            var context = commander.Start(command, isolate, cancellationToken);
+            var context = await commander.RunAsync(command, isolate, cancellationToken).ConfigureAwait(false);
             var typedContext = (CommandContext<TResult>) context;
             return await typedContext.ResultTask.ConfigureAwait(false);
         }
@@ -28,7 +28,7 @@ namespace Stl.CommandR
         public static async Task CallAsync(this ICommander commander,
             ICommand command, bool isolate, CancellationToken cancellationToken = default)
         {
-            var context = commander.Start(command, isolate, cancellationToken);
+            var context = await commander.RunAsync(command, isolate, cancellationToken).ConfigureAwait(false);
             await context.UntypedResultTask.ConfigureAwait(false);
         }
 
