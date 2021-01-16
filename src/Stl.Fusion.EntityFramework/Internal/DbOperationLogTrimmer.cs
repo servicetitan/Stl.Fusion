@@ -3,8 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Stl.Fusion.Operations;
-using Stl.Time;
+using Stl.Generators;
 
 namespace Stl.Fusion.EntityFramework.Internal
 {
@@ -14,20 +13,22 @@ namespace Stl.Fusion.EntityFramework.Internal
         public class Options
         {
             public TimeSpan CheckInterval { get; set; } = TimeSpan.FromMinutes(10);
-            public TimeSpan MaxCommitAge { get; set; } = TimeSpan.FromHours(1);
+            public TimeSpan MaxOperationAge { get; set; } = TimeSpan.FromHours(1);
         }
 
         protected IDbOperationLog<TDbContext> DbOperationLog { get; }
         protected TimeSpan CheckInterval { get; }
         protected TimeSpan MaxCommitAge { get; }
+        protected Random Random { get; }
 
         public DbOperationLogTrimmer(Options? options, IServiceProvider services)
             : base(services)
         {
             options ??= new();
             CheckInterval = options.CheckInterval;
-            MaxCommitAge = options.MaxCommitAge;
+            MaxCommitAge = options.MaxOperationAge;
             DbOperationLog = services.GetRequiredService<IDbOperationLog<TDbContext>>();
+            Random = new Random();
         }
 
         protected override async Task WakeAsync(CancellationToken cancellationToken)
@@ -37,6 +38,9 @@ namespace Stl.Fusion.EntityFramework.Internal
         }
 
         protected override Task SleepAsync(Exception? error, CancellationToken cancellationToken)
-            => Clock.DelayAsync(CheckInterval, cancellationToken);
+        {
+            var delay = CheckInterval + TimeSpan.FromMilliseconds(100 * Random.NextDouble());
+            return Clock.DelayAsync(delay, cancellationToken);
+        }
     }
 }

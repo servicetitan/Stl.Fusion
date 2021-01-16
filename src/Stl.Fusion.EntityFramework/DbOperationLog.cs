@@ -70,7 +70,7 @@ namespace Stl.Fusion.EntityFramework
 
         public async Task TrimAsync(DateTime minCommitTime, CancellationToken cancellationToken)
         {
-            await using var dbContext = CreateDbContext();
+            await using var dbContext = CreateDbContext(true);
             dbContext.DisableChangeTracking();
             for (;;) {
                 var operations = await dbContext.Set<TDbOperation>().AsQueryable()
