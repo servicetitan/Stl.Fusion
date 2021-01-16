@@ -15,6 +15,7 @@ using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Messages;
 using Stl.Fusion.Client;
 using Stl.Fusion.EntityFramework;
+using Stl.Fusion.EntityFramework.Internal;
 using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
 using Stl.Fusion.Tests.UIModels;
@@ -115,14 +116,14 @@ namespace Stl.Fusion.Tests
                     LogFilter));
             });
 
+            // Core Fusion services
+            var fusion = services.AddFusion();
+
             // Auto-discovered services
             var testType = GetType();
             services.AttributeScanner()
                 .WithTypeFilter(testType.Namespace!)
                 .AddServicesFrom(testType.Assembly);
-
-            // Core Fusion services
-            var fusion = services.AddFusion();
 
             if (!isClient) {
                 // Configuring Services and ServerServices
@@ -142,6 +143,13 @@ namespace Stl.Fusion.Tests
                     else
                         builder.UseSqlite($"Data Source={DbPath}", sqlite => { });
                 }, 256);
+                services.AddSingleton(c => {
+                    var options = new DbOperationLogWatcher<TestDbContext>.Options {
+                        // Enable this if you debug multi-host invalidation
+                        // MaxCommitDuration = TimeSpan.FromMinutes(3)
+                    };
+                    return options;
+                });
                 services.AddDbContextServices<TestDbContext>(b => {
                     b.AddEntityResolver<long, User>();
                     b.AddOperations();

@@ -157,5 +157,39 @@ namespace Stl.Fusion.Tests
             cUser0!.Options.KeepAliveTime.Should().Be(TimeSpan.FromSeconds(1));
             cCount!.Options.KeepAliveTime.Should().Be(TimeSpan.FromSeconds(1));
         }
+
+        [Fact]
+        public async Task MultiHostInvalidationTest()
+        {
+            var users = Services.GetRequiredService<IUserService>();
+            await using var _ = await WebHost.ServeAsync();
+            var webUsers = WebServices.GetRequiredService<IUserService>();
+
+            async Task PingPong(IUserService users1, IUserService users2, User user)
+            {
+                var count0 = await users1.CountAsync();
+                (await users2.CountAsync()).Should().Be(count0);
+
+                await users1.CreateAsync(new(user));
+                (await users1.CountAsync()).Should().Be(++count0);
+
+                await DelayAsync(0.5);
+
+                var user2 = await users2.TryGetAsync(user.Id);
+                user2.Should().NotBeNull();
+                user2!.Id.Should().Be(user.Id);
+                (await users2.CountAsync()).Should().Be(count0);
+            }
+
+            for (var i = 0; i < 5; i++) {
+                var id1 = i * 2;
+                var id2 = id1 + 1;
+                Out.WriteLine($"{i}: ping...");
+                await PingPong(users, webUsers, new User() { Id = id1, Name = id1.ToString()});
+                Out.WriteLine($"{i}: pong...");
+                await PingPong(users, webUsers, new User() { Id = id2, Name = id2.ToString()});
+                // await PingPong(webUsers, users, new User() { Id = id2, Name = id2.ToString()});
+            }
+        }
     }
 }

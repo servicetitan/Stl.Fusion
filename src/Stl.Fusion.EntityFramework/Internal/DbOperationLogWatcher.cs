@@ -3,6 +3,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Fusion.Operations;
 using Stl.Time;
 
@@ -13,7 +15,7 @@ namespace Stl.Fusion.EntityFramework.Internal
     {
         public class Options
         {
-            public TimeSpan CheckInterval { get; set; } = TimeSpan.FromSeconds(0.2);
+            public TimeSpan CheckInterval { get; set; } = TimeSpan.FromSeconds(0.25);
             public TimeSpan MaxCommitDuration { get; set; } = TimeSpan.FromSeconds(1);
         }
 
@@ -22,11 +24,15 @@ namespace Stl.Fusion.EntityFramework.Internal
         protected TimeSpan CheckInterval { get; }
         protected TimeSpan MaxCommitDuration { get; }
         protected Moment MaxKnownCommitTime { get; set; }
+        protected ILogger Log { get; }
 
-        public DbOperationLogWatcher(Options? options, IServiceProvider services)
+        public DbOperationLogWatcher(Options? options,
+            IServiceProvider services,
+            ILogger<DbOperationLogWatcher<TDbContext>>? log = null)
             : base(services)
         {
             options ??= new();
+            Log = log ?? NullLogger<DbOperationLogWatcher<TDbContext>>.Instance;
             CheckInterval = options.CheckInterval;
             MaxCommitDuration = options.MaxCommitDuration;
             MaxKnownCommitTime = Clock.Now;
@@ -42,6 +48,10 @@ namespace Stl.Fusion.EntityFramework.Internal
             var operations = await DbOperationLog
                 .ListNewlyCommittedAsync(minCommitTime, cancellationToken)
                 .ConfigureAwait(false);
+
+            // var secondsAgo = (Clock.Now.ToDateTime() - minCommitTime).TotalSeconds;
+            // Log.LogInformation("({Ago:F2}s ago ... now): {OpCount} operations",
+            //     secondsAgo, operations.Count);
 
             // Processing them
             foreach (var operation in operations) {

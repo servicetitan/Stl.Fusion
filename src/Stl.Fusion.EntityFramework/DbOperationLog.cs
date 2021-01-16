@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,7 +19,7 @@ namespace Stl.Fusion.EntityFramework
         Task<IOperation?> TryGetAsync(TDbContext dbContext, string id, CancellationToken cancellationToken);
 
         Task<List<IOperation>> ListNewlyCommittedAsync(DateTime minCommitTime, CancellationToken cancellationToken);
-        Task TrimAsync(DateTime minCommitTime, CancellationToken cancellationToken);
+        Task<int> TrimAsync(DateTime minCommitTime, int maxCount, CancellationToken cancellationToken);
     }
 
     public class DbOperationLog<TDbContext, TDbOperation> : DbServiceBase<TDbContext>, IDbOperationLog<TDbContext>
@@ -53,11 +54,15 @@ namespace Stl.Fusion.EntityFramework
 
         public virtual async Task<IOperation?> TryGetAsync(TDbContext dbContext,
             string id, CancellationToken cancellationToken)
+        {
             // dbContext shouldn't use tracking!
-            => await dbContext.Set<TDbOperation>().AsQueryable()
-                .FirstOrDefaultAsync(e => e.Id == id, cancellationToken).ConfigureAwait(false);
+            var operation = await dbContext.Set<TDbOperation>().AsQueryable()
+                .FirstOrDefaultAsync(e => e.Id == id, cancellationToken)
+                .ConfigureAwait(false);
+            return AsOperation(operation);
+        }
 
-        public async Task<List<IOperation>> ListNewlyCommittedAsync(
+        public virtual async Task<List<IOperation>> ListNewlyCommittedAsync(
             DateTime minCommitTime, CancellationToken cancellationToken)
         {
             await using var dbContext = CreateDbContext();
@@ -65,25 +70,34 @@ namespace Stl.Fusion.EntityFramework
                 .Where(o => o.CommitTime >= minCommitTime)
                 .OrderBy(o => o.CommitTime)
                 .ToListAsync(cancellationToken).ConfigureAwait(false);
-            return operations.Cast<IOperation>().ToList();
+            return operations.Select(AsOperation).ToList()!;
         }
 
-        public async Task TrimAsync(DateTime minCommitTime, CancellationToken cancellationToken)
+        public virtual async Task<int> TrimAsync(DateTime minCommitTime, int maxCount, CancellationToken cancellationToken)
         {
             await using var dbContext = CreateDbContext(true);
             dbContext.DisableChangeTracking();
-            for (;;) {
-                var operations = await dbContext.Set<TDbOperation>().AsQueryable()
-                    .Where(o => o.CommitTime < minCommitTime)
-                    .OrderBy(o => o.CommitTime)
-                    .Take(1000)
-                    .ToListAsync(cancellationToken).ConfigureAwait(false);
-                if (operations.Count == 0)
-                    break;
-                foreach (var operation in operations)
-                    dbContext.Remove(operation);
-                await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            }
+            var operations = await dbContext.Set<TDbOperation>().AsQueryable()
+                .Where(o => o.CommitTime < minCommitTime)
+                .OrderBy(o => o.CommitTime)
+                .Take(maxCount)
+                .ToListAsync(cancellationToken).ConfigureAwait(false);
+            if (operations.Count == 0)
+                return 0;
+            foreach (var operation in operations)
+                dbContext.Remove(operation);
+            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            return operations.Count;
+        }
+
+        [return: NotNullIfNotNull("operation")]
+        protected IOperation? AsOperation(TDbOperation? operation)
+        {
+            if (operation == null)
+                return null;
+            operation.StartTime = operation.StartTime.DefaultKind(DateTimeKind.Utc);
+            operation.CommitTime = operation.CommitTime.DefaultKind(DateTimeKind.Utc);
+            return operation;
         }
     }
 }
