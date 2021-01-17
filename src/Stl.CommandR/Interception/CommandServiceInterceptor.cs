@@ -1,6 +1,7 @@
 using System;
 using System.Reflection;
 using System.Threading;
+using System.Threading.Tasks;
 using Castle.DynamicProxy;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -37,8 +38,9 @@ namespace Stl.CommandR.Interception
                 if (ReferenceEquals(command, context?.UntypedCommand))
                     invocation.Proceed();
                 else {
-                    var newContext = Commander.Start(command, false, cancellationToken1);
-                    invocation.ReturnValue = newContext.UntypedResultTask;
+                    invocation.ReturnValue = methodDef.IsAsyncVoidMethod
+                        ? Commander.CallAsync(command, false, cancellationToken1)
+                        : Commander.CallAsync((ICommand<T>) command, false, cancellationToken1);
                 }
             };
 
@@ -61,14 +63,15 @@ namespace Stl.CommandR.Interception
                     continue;
 
                 var methodDef = new CommandHandlerMethodDef(this, method);
+                var attributeName = nameof(CommandHandlerAttribute).Replace(nameof(Attribute), "");
                 if (!methodDef.IsValid) // attr.IsEnabled == false
                     Log.Log(ValidationLogLevel,
-                        $"- {method}: has {nameof(CommandHandlerAttribute)}(false)");
+                        "- {Method}: has [{Attribute}(false)]", method.ToString(), attributeName);
                 else
                     Log.Log(ValidationLogLevel,
-                        $"+ {method}: {nameof(CommandHandlerAttribute)} {{ " +
-                        $"{nameof(CommandHandlerAttribute.Priority)} = {attr.Priority}" +
-                        $" }}");
+                        "+ {Method}: [{Attribute}(" +
+                        "Priority = {Priority}" +
+                        ")]", method.ToString(), attributeName, attr.Priority);
             }
         }
     }

@@ -26,7 +26,6 @@ namespace Stl.Fusion.EntityFramework.Internal
         protected int LastTrimCount { get; set; }
         protected Random Random { get; }
         protected LogLevel LogLevel { get; }
-        protected ILogger Log { get; }
 
         public DbOperationLogTrimmer(Options? options,
             IServiceProvider services,
@@ -34,7 +33,6 @@ namespace Stl.Fusion.EntityFramework.Internal
             : base(services)
         {
             options ??= new();
-            Log = log ?? NullLogger<DbOperationLogTrimmer<TDbContext>>.Instance;
             LogLevel = options.LogLevel;
 
             CheckInterval = options.CheckInterval;

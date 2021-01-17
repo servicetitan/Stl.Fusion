@@ -9,11 +9,12 @@ namespace Stl.Interception.Interceptors
     {
         public IInterceptor Interceptor { get; }
         public MethodInfo MethodInfo { get; }
-        public bool IsAsyncMethod { get; protected init; } = false;
-        public bool ReturnsTask { get; protected init; } = false;
-        public bool ReturnsValueTask { get; protected init; } = false;
+        public bool IsAsyncMethod { get; protected init; }
+        public bool IsAsyncVoidMethod { get; protected init; }
+        public bool ReturnsTask { get; protected init; }
+        public bool ReturnsValueTask { get; protected init; }
         public Type UnwrappedReturnType { get; protected init; } = null!;
-        public bool IsValid { get; protected init; } = false;
+        public bool IsValid { get; protected init; }
 
         protected MethodDef(
             IInterceptor interceptor,
@@ -24,16 +25,19 @@ namespace Stl.Interception.Interceptors
 
             var returnType = methodInfo.ReturnType;
             if (!returnType.IsGenericType) {
-                UnwrappedReturnType = returnType;
-                return;
+                ReturnsTask = returnType == typeof(Task);
+                ReturnsValueTask = returnType == typeof(ValueTask);
+                IsAsyncMethod = IsAsyncVoidMethod = ReturnsTask || ReturnsValueTask;
             }
-
-            var returnTypeGtd = returnType.GetGenericTypeDefinition();
-            ReturnsTask = returnTypeGtd == typeof(Task<>);
-            ReturnsValueTask = returnTypeGtd == typeof(ValueTask<>);
-            IsAsyncMethod = ReturnsTask || ReturnsValueTask;
-            if (IsAsyncMethod)
-                UnwrappedReturnType = returnType.GetGenericArguments()[0];
+            else {
+                var returnTypeGtd = returnType.GetGenericTypeDefinition();
+                ReturnsTask = returnTypeGtd == typeof(Task<>);
+                ReturnsValueTask = returnTypeGtd == typeof(ValueTask<>);
+                IsAsyncMethod = ReturnsTask || ReturnsValueTask;
+            }
+            UnwrappedReturnType = IsAsyncMethod && !IsAsyncVoidMethod
+                ? returnType.GetGenericArguments()[0]
+                : returnType;
         }
     }
 }

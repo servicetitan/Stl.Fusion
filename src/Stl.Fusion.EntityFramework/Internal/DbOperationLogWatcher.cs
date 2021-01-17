@@ -24,7 +24,6 @@ namespace Stl.Fusion.EntityFramework.Internal
         protected TimeSpan CheckInterval { get; }
         protected TimeSpan MaxCommitDuration { get; }
         protected Moment MaxKnownCommitTime { get; set; }
-        protected ILogger Log { get; }
 
         public DbOperationLogWatcher(Options? options,
             IServiceProvider services,
@@ -32,7 +31,6 @@ namespace Stl.Fusion.EntityFramework.Internal
             : base(services)
         {
             options ??= new();
-            Log = log ?? NullLogger<DbOperationLogWatcher<TDbContext>>.Instance;
             CheckInterval = options.CheckInterval;
             MaxCommitDuration = options.MaxCommitDuration;
             MaxKnownCommitTime = Clock.Now;

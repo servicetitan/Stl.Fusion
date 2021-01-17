@@ -49,14 +49,16 @@ namespace Stl.Fusion.Interception
                     // unless they are truly virtual
                     throw Errors.ComputeServiceMethodAttributeOnNonVirtualMethod(method);
 
+                var attributeName = nameof(ComputeMethodAttribute).Replace(nameof(Attribute), "");
                 if (!attr.IsEnabled)
                     Log.Log(ValidationLogLevel,
-                        $"- {method}: has {nameof(ComputeMethodAttribute)}(false)");
+                        "- {Method}: has [{Attribute}(false)]", method.ToString(), attributeName);
                 else
                     Log.Log(ValidationLogLevel,
-                        $"+ {method}: {nameof(ComputeMethodAttribute)} {{ " +
-                        $"{nameof(ComputeMethodAttribute.KeepAliveTime)} = {attr.KeepAliveTime}" +
-                        $" }}");
+                        "+ {Method}: [{Attribute}(" +
+                        "KeepAliveTime = {KeepAliveTime}, " +
+                        "AutoInvalidateTime = {AutoInvalidateTime}" +
+                        ")]", method.ToString(), attributeName, attr.KeepAliveTime, attr.AutoInvalidateTime);
             }
         }
     }
