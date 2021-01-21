@@ -16,7 +16,7 @@ namespace Stl.Fusion.EntityFramework
             for (;;) {
                 var error = default(Exception?);
                 try {
-                    await WakeAsync(cancellationToken).ConfigureAwait(false);
+                    await WakeUpAsync(cancellationToken).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException) {
                     throw;
@@ -29,7 +29,7 @@ namespace Stl.Fusion.EntityFramework
             }
         }
 
-        protected abstract Task WakeAsync(CancellationToken cancellationToken);
+        protected abstract Task WakeUpAsync(CancellationToken cancellationToken);
         protected abstract Task SleepAsync(Exception? error, CancellationToken cancellationToken);
     }
 }

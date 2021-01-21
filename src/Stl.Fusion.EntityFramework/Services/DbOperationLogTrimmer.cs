@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Stl.Fusion.EntityFramework.Internal
+namespace Stl.Fusion.EntityFramework.Services
 {
     public class DbOperationLogTrimmer<TDbContext> : DbWakeSleepProcessBase<TDbContext>
         where TDbContext : DbContext
@@ -27,9 +27,7 @@ namespace Stl.Fusion.EntityFramework.Internal
         protected Random Random { get; }
         protected LogLevel LogLevel { get; }
 
-        public DbOperationLogTrimmer(Options? options,
-            IServiceProvider services,
-            ILogger<DbOperationLogTrimmer<TDbContext>>? log = null)
+        public DbOperationLogTrimmer(Options? options, IServiceProvider services)
             : base(services)
         {
             options ??= new();
@@ -42,7 +40,7 @@ namespace Stl.Fusion.EntityFramework.Internal
             Random = new Random();
         }
 
-        protected override async Task WakeAsync(CancellationToken cancellationToken)
+        protected override async Task WakeUpAsync(CancellationToken cancellationToken)
         {
             var minCommitTime = (Clock.Now - MaxCommitAge).ToDateTime();
             LastTrimCount = await DbOperationLog

@@ -9,7 +9,7 @@ using Stl.CommandR.Commands;
 using Stl.CommandR.Configuration;
 using Stl.Fusion.Operations;
 
-namespace Stl.Fusion.EntityFramework.Internal
+namespace Stl.Fusion.EntityFramework.Services
 {
     public class DbOperationScopeHandler<TDbContext> : DbServiceBase<TDbContext>, ICommandHandler<ICommand>
         where TDbContext : DbContext

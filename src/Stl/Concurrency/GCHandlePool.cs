@@ -2,7 +2,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using System.Threading;
-using Stl.DependencyInjection;
 
 namespace Stl.Concurrency
 {

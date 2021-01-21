@@ -6,6 +6,11 @@ namespace Stl.Fusion.Internal
 {
     public static class ComputedEx
     {
+        private static class TaskCache<T>
+        {
+            public static readonly Task<T> DefaultResultTask = Task.FromResult(default(T)!);
+        }
+
         internal static bool TryUseExisting<T>(this IComputed<T>? existing, ComputeContext context, IComputed? usedBy)
         {
             var callOptions = context.CallOptions;
@@ -69,11 +74,23 @@ namespace Stl.Fusion.Internal
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static T Strip<T>(this IComputed<T>? computed)
-            => computed != null ? computed.Value : default!;
+        internal static T Strip<T>(this IComputed<T>? computed, ComputeContext context)
+        {
+            if (computed == null)
+                return default!;
+            if (CallOptions.Invalidate == (context.CallOptions & CallOptions.Invalidate))
+                return default!;
+            return computed.Value;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static Task<T> StripToTask<T>(this IComputed<T>? computed)
-            => computed?.Output.AsTask() ?? Task.FromResult(default(T)!);
+        internal static Task<T> StripToTask<T>(this IComputed<T>? computed, ComputeContext context)
+        {
+            if (computed == null)
+                return TaskCache<T>.DefaultResultTask;
+            if (CallOptions.Invalidate == (context.CallOptions & CallOptions.Invalidate))
+                return TaskCache<T>.DefaultResultTask;
+            return computed.Output.AsTask();
+        }
     }
 }

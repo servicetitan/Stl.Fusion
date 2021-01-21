@@ -113,9 +113,12 @@ namespace Stl.Fusion.Tests
             swapService.RenewCallCount.Should().Be(2);
             swapService.StoreCallCount.Should().Be(1);
 
-            while (service.CallCount == 1) {
+            for (var i = 0; i < 10; i++) {
                 GCCollect();
                 v = await service.SameValueAsync(a);
+                if (service.CallCount != 1)
+                    break;
+                await DelayAsync(0.1);
             }
             service.CallCount.Should().Be(2);
             swapService.LoadCallCount.Should().Be(1);

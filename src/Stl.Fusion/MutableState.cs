@@ -122,19 +122,19 @@ namespace Stl.Fusion
 
             var result = Computed;
             if (result.TryUseExisting(context, usedBy))
-                return result.StripToTask();
+                return result.StripToTask(context);
 
             // Double-check locking
             lock (Lock) {
                 result = Computed;
                 if (result.TryUseExisting(context, usedBy))
-                    return result.StripToTask();
+                    return result.StripToTask(context);
 
                 OnUpdating();
                 result = CreateComputed();
                 result.UseNew(context, usedBy);
                 context.TryCapture(result);
-                return result.StripToTask();
+                return result.StripToTask(context);
             }
         }
 

@@ -282,13 +282,13 @@ namespace Stl.Fusion
 
             var result = Computed;
             if (result.TryUseExisting(context, usedBy))
-                return result.Strip();
+                return result.Strip(context);
 
             using var _ = await AsyncLock.LockAsync(cancellationToken);
 
             result = Computed;
             if (result.TryUseExisting(context, usedBy))
-                return result.Strip();
+                return result.Strip(context);
 
             OnUpdating();
             result = await ComputeAsync(cancellationToken).ConfigureAwait(false);

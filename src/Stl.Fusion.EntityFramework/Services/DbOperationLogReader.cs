@@ -3,42 +3,43 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
+using Stl.Async;
 using Stl.Fusion.Operations;
 using Stl.Time;
 
-namespace Stl.Fusion.EntityFramework.Internal
+namespace Stl.Fusion.EntityFramework.Services
 {
-    public class DbOperationLogWatcher<TDbContext> : DbWakeSleepProcessBase<TDbContext>
+    public class DbOperationLogReader<TDbContext> : DbWakeSleepProcessBase<TDbContext>
         where TDbContext : DbContext
     {
         public class Options
         {
-            public TimeSpan CheckInterval { get; set; } = TimeSpan.FromSeconds(0.25);
             public TimeSpan MaxCommitDuration { get; set; } = TimeSpan.FromSeconds(1);
+            public TimeSpan UnconditionalWakeUpPeriod { get; set; } = TimeSpan.FromSeconds(0.25);
         }
 
         protected IOperationCompletionNotifier OperationCompletionNotifier { get; }
         protected IDbOperationLog<TDbContext> DbOperationLog { get; }
-        protected TimeSpan CheckInterval { get; }
         protected TimeSpan MaxCommitDuration { get; }
+        protected TimeSpan UnconditionalWakeUpPeriod { get; }
+        protected IDbOperationLogChangeMonitor<TDbContext>? OperationLogChangeMonitor { get; }
         protected Moment MaxKnownCommitTime { get; set; }
 
-        public DbOperationLogWatcher(Options? options,
+        public DbOperationLogReader(Options? options,
             IServiceProvider services,
-            ILogger<DbOperationLogWatcher<TDbContext>>? log = null)
+            IDbOperationLogChangeMonitor<TDbContext>? operationLogChangeMonitor = null)
             : base(services)
         {
             options ??= new();
-            CheckInterval = options.CheckInterval;
             MaxCommitDuration = options.MaxCommitDuration;
+            UnconditionalWakeUpPeriod = options.UnconditionalWakeUpPeriod;
             MaxKnownCommitTime = Clock.Now;
+            OperationLogChangeMonitor = operationLogChangeMonitor;
             OperationCompletionNotifier = services.GetRequiredService<IOperationCompletionNotifier>();
             DbOperationLog = services.GetRequiredService<IDbOperationLog<TDbContext>>();
         }
 
-        protected override async Task WakeAsync(CancellationToken cancellationToken)
+        protected override async Task WakeUpAsync(CancellationToken cancellationToken)
         {
             var minCommitTime = (MaxKnownCommitTime - MaxCommitDuration).ToDateTime();
 
@@ -62,6 +63,8 @@ namespace Stl.Fusion.EntityFramework.Internal
         }
 
         protected override Task SleepAsync(Exception? error, CancellationToken cancellationToken)
-            => Clock.DelayAsync(CheckInterval, cancellationToken);
+            => OperationLogChangeMonitor?.WaitForChangesAsync(cancellationToken)
+                .WithTimeout(Clock, UnconditionalWakeUpPeriod, cancellationToken)
+            ?? Clock.DelayAsync(UnconditionalWakeUpPeriod, cancellationToken);
     }
 }

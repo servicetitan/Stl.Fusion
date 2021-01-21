@@ -94,13 +94,13 @@ namespace Stl.Fusion
 
             var result = TryGetExisting(input);
             if (result.TryUseExisting(context, usedBy))
-                return result.Strip();
+                return result.Strip(context);
 
             using var @lock = await Locks.LockAsync(input, cancellationToken).ConfigureAwait(false);
 
             result = TryGetExisting(input);
             if (result.TryUseExisting(context, usedBy))
-                return result.Strip();
+                return result.Strip(context);
 
             result = await ComputeAsync(input, result, cancellationToken).ConfigureAwait(false);
             output = result.Output; // It can't be gone here b/c KeepAlive isn't called yet

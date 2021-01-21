@@ -72,7 +72,11 @@ namespace Stl.Fusion
         }
 
         protected virtual void Dispose(bool disposing)
-            => _gcHandlePool.Dispose();
+        {
+            if (!disposing)
+                return;
+            _gcHandlePool.Dispose();
+        }
 
         public virtual IComputed? TryGet(ComputedInput key)
         {

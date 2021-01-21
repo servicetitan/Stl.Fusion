@@ -16,6 +16,7 @@ using Stl.Fusion.Bridge.Messages;
 using Stl.Fusion.Client;
 using Stl.Fusion.EntityFramework;
 using Stl.Fusion.EntityFramework.Internal;
+using Stl.Fusion.EntityFramework.Services;
 using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
 using Stl.Fusion.Tests.UIModels;
@@ -74,7 +75,11 @@ namespace Stl.Fusion.Tests
         }
 
         protected override void Dispose(bool disposing)
-            => DisposeAsync().Wait();
+        {
+            if (!disposing)
+                return;
+            DisposeAsync().Wait();
+        }
 
         protected IServiceProvider CreateServices(bool isClient = false)
         {
@@ -143,16 +148,16 @@ namespace Stl.Fusion.Tests
                     else
                         builder.UseSqlite($"Data Source={DbPath}", sqlite => { });
                 }, 256);
-                services.AddSingleton(c => {
-                    var options = new DbOperationLogWatcher<TestDbContext>.Options {
-                        // Enable this if you debug multi-host invalidation
-                        // MaxCommitDuration = TimeSpan.FromMinutes(3)
-                    };
-                    return options;
-                });
                 services.AddDbContextServices<TestDbContext>(b => {
-                    b.AddEntityResolver<long, User>();
-                    b.AddOperations();
+                    b.AddDbEntityResolver<long, User>();
+                    b.AddDbOperations((_, o) => {
+                        o.UnconditionalWakeUpPeriod = TimeSpan.FromSeconds(5);
+                        // Enable this if you debug multi-host invalidation
+                        // o.MaxCommitDuration = TimeSpan.FromMinutes(3);
+                    });
+                    var dbOpLogChangedFilePath = DbPath + "_changed";
+                    b.AddFileBasedDbOperationLogChangeNotifier(dbOpLogChangedFilePath);
+                    b.AddFileBasedDbOperationLogChangeMonitor(dbOpLogChangedFilePath);
                 });
 
                 // WebHost

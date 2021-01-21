@@ -15,6 +15,8 @@ namespace Stl.Testing
 
         protected override void Dispose(bool disposing)
         {
+            if (!disposing)
+                return;
             _consoleInterceptorDisposable?.Dispose();
             _consoleInterceptorDisposable = null;
         }

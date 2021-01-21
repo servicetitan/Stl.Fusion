@@ -59,7 +59,11 @@ namespace Stl.Fusion.Bridge
         }
 
         protected virtual void Dispose(bool disposing)
-            => _gcHandlePool.Dispose();
+        {
+            if (!disposing)
+                return;
+            _gcHandlePool.Dispose();
+        }
 
         public virtual IReplica? TryGet(PublicationRef publicationRef)
         {
