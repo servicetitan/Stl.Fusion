@@ -17,12 +17,6 @@
 
     <PackageReference Include="System.CommandLine" />
 
-    <PackageReference Include="Serilog" />
-    <PackageReference Include="Serilog.Extensions.Logging" />
-    <PackageReference Include="Serilog.Sinks.Console" />
-    <PackageReference Include="Serilog.Sinks.Observable" />
-    <PackageReference Include="Serilog.Sinks.TextWriter" />
-
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.analyzers" />
     <PackageReference Include="Xunit.DependencyInjection.Logging" />
