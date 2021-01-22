@@ -46,10 +46,19 @@ namespace Stl.Tests.CommandR
         public async Task RecSumCommandTest()
         {
             var services = CreateServices();
+            RecSumCommand.Tag.Value = new();
 
-            var command = new RecSumCommand() { Arguments = new double[] {1, 2, 3} };
-            var result = await services.Commander().CallAsync(command);
+            var result = await services.Commander().CallAsync(new RecSumCommand() {
+                Arguments = new double[] {1, 2, 3}
+            });
             result.Should().Be(6);
+
+            result = await services.Commander().CallAsync(new RecSumCommand() {
+                Arguments = new double[] {1, 2, 3, 4},
+                Isolate = true,
+            }, true);
+            result.Should().Be(10);
+
         }
     }
 }

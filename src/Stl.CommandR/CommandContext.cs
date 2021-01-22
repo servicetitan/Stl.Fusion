@@ -1,7 +1,5 @@
 using System;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,31 +16,26 @@ namespace Stl.CommandR
         protected static readonly AsyncLocal<CommandContext?> CurrentLocal = new();
         public static CommandContext? Current => CurrentLocal.Value;
 
-        private bool _isDisposed;
-        protected CommandContext? PreviousContext { get; }
         protected internal IServiceScope ServiceScope { get; set; } = null!;
-
         public ICommander Commander { get; }
         public abstract ICommand UntypedCommand { get; }
         public abstract Task UntypedResultTask { get; }
         public abstract Result<object> UntypedResult { get; set; }
         public CommandContext? OuterContext { get; protected set; }
         public CommandContext OutermostContext { get; protected set; } = null!;
+        public bool IsOutermost => OutermostContext == this;
         public CommandExecutionState ExecutionState { get; set; }
         public IServiceProvider Services => ServiceScope.ServiceProvider;
         public OptionSet Items { get; protected set; } = null!;
 
         // Static methods
 
-        internal static CommandContext<TResult> New<TResult>(
-            ICommander commander, ICommand command)
-            => new(commander, command);
-
-        internal static CommandContext New(
-            ICommander commander, ICommand command)
+        public static CommandContext New(
+            ICommander commander, ICommand command, bool isolate = false)
         {
+            var previousContext = isolate ? null : Current;
             var tContext = typeof(CommandContext<>).MakeGenericType(command.ResultType);
-            return (CommandContext) tContext.CreateInstance(commander, command);
+            return (CommandContext) tContext.CreateInstance(commander, command, previousContext);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -60,33 +53,32 @@ namespace Stl.CommandR
             return Disposable.NewClosed(oldCurrent!, oldCurrent1 => CurrentLocal.Value = oldCurrent1);
         }
 
+        public ClosedDisposable<CommandContext> Activate()
+        {
+            var oldCurrent = Current;
+            CurrentLocal.Value = this;
+            return Disposable.NewClosed(oldCurrent!, oldCurrent1 => CurrentLocal.Value = oldCurrent1);
+        }
+
         // Constructors
 
         protected CommandContext(ICommander commander)
-        {
-            Commander = commander;
-            PreviousContext = Current;
-        }
+            => Commander = commander;
 
         // Disposable
 
         public void Dispose()
         {
-            if (_isDisposed)
-                return;
-            _isDisposed = true;
-            DisposeInternal();
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
-        protected virtual void DisposeInternal()
+        protected virtual void Dispose(bool disposing)
         {
-            try {
-                if (PreviousContext == null)
-                    ServiceScope.Dispose();
-            }
-            finally {
-                CurrentLocal.Value = PreviousContext;
-            }
+            if (!disposing)
+                return;
+            if (IsOutermost)
+                ServiceScope.Dispose();
         }
 
         // Instance methods
@@ -131,7 +123,7 @@ namespace Stl.CommandR
             set => Result = value.Cast<TResult>();
         }
 
-        public CommandContext(ICommander commander, ICommand command)
+        public CommandContext(ICommander commander, ICommand command, CommandContext? previousContext)
             : base(commander)
         {
             var tResult = typeof(TResult);
@@ -139,19 +131,18 @@ namespace Stl.CommandR
                 throw Errors.CommandResultTypeMismatch(tResult, command.ResultType);
             Command = (ICommand<TResult>) command;
             ResultTaskSource = TaskSource.New<TResult>(true);
-            if (PreviousContext?.Commander != commander) {
+            if (previousContext?.Commander != commander) {
                 OuterContext = null;
                 OutermostContext = this;
                 ServiceScope = Commander.Services.CreateScope();
                 Items = new OptionSet();
             }
             else {
-                OuterContext = PreviousContext;
-                OutermostContext = PreviousContext!.OutermostContext;
+                OuterContext = previousContext;
+                OutermostContext = previousContext!.OutermostContext;
                 ServiceScope = OutermostContext.ServiceScope;
                 Items = OutermostContext.Items;
             }
-            CurrentLocal.Value = this;
         }
 
         public override async Task InvokeRemainingHandlersAsync(CancellationToken cancellationToken)

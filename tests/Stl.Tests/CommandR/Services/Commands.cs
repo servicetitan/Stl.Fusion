@@ -1,7 +1,7 @@
 using System;
 using System.Reactive;
+using System.Threading;
 using Stl.CommandR;
-using Stl.Fusion.EntityFramework;
 
 namespace Stl.Tests.CommandR.Services
 {
@@ -18,7 +18,10 @@ namespace Stl.Tests.CommandR.Services
 
     public class RecSumCommand : ICommand<double>
     {
+        public static AsyncLocal<object> Tag { get; } = new();
+
         public double[] Arguments { get; set; } = Array.Empty<double>();
+        public bool Isolate { get; set; }
     }
 
     public class RecAddUsersCommand : ICommand<Unit>

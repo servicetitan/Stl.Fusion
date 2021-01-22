@@ -24,41 +24,29 @@ namespace Stl.CommandR.Internal
             HandlerResolver = services.GetRequiredService<ICommandHandlerResolver>();
         }
 
-        public CommandContext Start(ICommand command, bool isolate, CancellationToken cancellationToken = default)
-        {
-            CommandContext context = null!;
-            CommandContext ContextFactory() {
-                context = CommandContext.New(this, command);
-                return context;
-            }
-            using var _ = isolate ? ExecutionContextEx.SuppressFlow() : default;
-            RunAsync(ContextFactory, command, cancellationToken).Ignore();
-            return context;
-        }
-
-        public Task<CommandContext> RunAsync(ICommand command, bool isolate, CancellationToken cancellationToken = default)
-        {
-            CommandContext? context;
-            CommandContext ContextFactory() {
-                context = CommandContext.New(this, command);
-                return context;
-            }
-            using var _ = isolate ? ExecutionContextEx.SuppressFlow() : default;
-            return RunAsync(ContextFactory, command, cancellationToken);
-        }
-
-        protected virtual async Task<CommandContext> RunAsync(
-            Func<CommandContext> contextFactory, ICommand command,
+        public Task RunAsync(
+            CommandContext context, bool isolate,
             CancellationToken cancellationToken = default)
         {
-            using var context = contextFactory.Invoke();
+            if (!isolate)
+                return RunInternalAsync(context, cancellationToken);
+
+            using var _ = ExecutionContextEx.SuppressFlow();
+            return Task.Run(() => RunInternalAsync(context, cancellationToken), default);
+        }
+
+        protected virtual async Task RunInternalAsync(
+            CommandContext context, CancellationToken cancellationToken = default)
+        {
+            using var _1 = context;
+            using var _2 = context.Activate();
             try {
+                var command = context.UntypedCommand;
                 var handlers = HandlerResolver.GetCommandHandlers(command.GetType());
                 context.ExecutionState = new CommandExecutionState(handlers);
-                if (handlers.Count == 0)
+                if (handlers!.Count == 0)
                     await OnUnhandledCommandAsync(command, context, cancellationToken).ConfigureAwait(false);
-                else
-                    await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
+                await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException) {
                 context.TrySetCancelled(
@@ -67,7 +55,6 @@ namespace Stl.CommandR.Internal
             catch (Exception e) {
                 context.TrySetException(e);
             }
-            return context;
         }
 
         protected virtual Task OnUnhandledCommandAsync(

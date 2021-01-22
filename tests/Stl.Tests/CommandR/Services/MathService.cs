@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Stl.Collections;
 using Stl.CommandR;
 using Stl.CommandR.Configuration;
+using Stl.CommandR.Internal;
 
 namespace Stl.Tests.CommandR.Services
 {
@@ -37,16 +38,29 @@ namespace Stl.Tests.CommandR.Services
             var handler = context.ExecutionState.Handlers[^1];
             handler.GetType().Should().Be(typeof(MethodCommandHandler<RecSumCommand>));
             handler.Priority.Should().Be(1);
+            if (command.Isolate) {
+                context.IsOutermost.Should().BeTrue();
+                RecSumCommand.Tag.Value.Should().BeNull();
+            }
+            else {
+                if (command.Arguments.Length == 1)
+                    context.IsOutermost.Should().BeFalse();
+                RecSumCommand.Tag.Value.Should().NotBeNull();
+            }
 
             Log.LogInformation("Arguments: {Arguments}", command.Arguments.ToDelimitedString());
 
             if (command.Arguments.Length == 0)
                 return 0;
 
-            var tailSum = await RecSumAsync(
-                new RecSumCommand() { Arguments = command.Arguments[1..] },
-                cancellationToken)
-                .ConfigureAwait(false);
+            var tailCommand = new RecSumCommand() {
+                Arguments = command.Arguments[1..],
+                Isolate = command.Isolate,
+            };
+            var tailSumTask = command.Isolate
+                ? context.Commander.CallAsync(tailCommand, command.Isolate, cancellationToken)
+                : RecSumAsync(tailCommand, cancellationToken);
+            var tailSum = await tailSumTask.ConfigureAwait(false);
             return command.Arguments[0] + tailSum;
         }
     }

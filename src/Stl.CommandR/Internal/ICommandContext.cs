@@ -16,6 +16,7 @@ namespace Stl.CommandR.Internal
         Result<object> UntypedResult { get; set; }
         CommandContext? OuterContext { get; }
         CommandContext OutermostContext { get; }
+        bool IsOutermost { get; }
         CommandExecutionState ExecutionState { get; set; }
         OptionSet Items { get; }
 
