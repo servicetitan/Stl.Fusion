@@ -20,17 +20,17 @@ namespace Stl.CommandR
 
         private bool _isDisposed;
         protected CommandContext? PreviousContext { get; }
-        protected internal IServiceScope ServiceScope { get; init; } = null!;
+        protected internal IServiceScope ServiceScope { get; set; } = null!;
 
         public ICommander Commander { get; }
         public abstract ICommand UntypedCommand { get; }
         public abstract Task UntypedResultTask { get; }
         public abstract Result<object> UntypedResult { get; set; }
-        public CommandContext? OuterContext { get; protected init; }
-        public CommandContext OutermostContext { get; protected init; } = null!;
+        public CommandContext? OuterContext { get; protected set; }
+        public CommandContext OutermostContext { get; protected set; } = null!;
         public CommandExecutionState ExecutionState { get; set; }
         public IServiceProvider Services => ServiceScope.ServiceProvider;
-        public OptionSet Items { get; protected init; } = null!;
+        public OptionSet Items { get; protected set; } = null!;
 
         // Static methods
 
