@@ -37,10 +37,7 @@ namespace Stl.Fusion.Operations
                 if (typeof(IMetaCommand).IsAssignableFrom(type))
                     return false; // No invalidation for "second-order" commands
 
-                using var _ = ExecutionContextEx.SuppressFlow();
-                var tContext = typeof(CommandContext<>).MakeGenericType(command1!.ResultType);
-                using var context = (CommandContext) tContext.CreateInstance(self.Commander, command1);
-
+                using var context = CommandContext.New(self.Commander, command1!);
                 var handlers = self.CommandHandlerResolver.GetCommandHandlers(command1.GetType());
                 var finalHandler = handlers.FirstOrDefault(h => !h.IsFilter);
                 var finalHandlerService = finalHandler?.GetHandlerService(command1, context);
