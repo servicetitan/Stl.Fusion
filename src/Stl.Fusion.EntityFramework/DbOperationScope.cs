@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Async;
 using Stl.CommandR;
 using Stl.Fusion.EntityFramework.Internal;
+using Stl.Fusion.EntityFramework.Operations;
 using Stl.Fusion.Operations;
 using Stl.Locking;
 using Stl.Time;
@@ -131,7 +132,7 @@ namespace Stl.Fusion.EntityFramework
 
                 Operation.CommitTime = Clock.Now;
                 if (Operation.Command == null)
-                    throw Operations.Internal.Errors.OperationHasNoCommand();
+                    throw Stl.Fusion.Operations.Internal.Errors.OperationHasNoCommand();
                 var dbContext = DbContext!;
                 var operation = await DbOperationLog.AddAsync(dbContext, Operation, cancellationToken).ConfigureAwait(false);
                 await Transaction!.CommitAsync(cancellationToken).ConfigureAwait(false);

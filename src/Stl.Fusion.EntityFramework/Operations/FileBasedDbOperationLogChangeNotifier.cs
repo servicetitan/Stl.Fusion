@@ -5,7 +5,7 @@ using Stl.CommandR;
 using Stl.Fusion.Operations;
 using Stl.IO;
 
-namespace Stl.Fusion.EntityFramework.Services
+namespace Stl.Fusion.EntityFramework.Operations
 {
     public class FileBasedDbOperationLogChangeNotifier<TDbContext> : IOperationCompletionListener
         where TDbContext : DbContext

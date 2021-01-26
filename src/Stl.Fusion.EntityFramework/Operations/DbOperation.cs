@@ -9,7 +9,7 @@ using Stl.Fusion.Operations;
 using Stl.Serialization;
 using Stl.Time;
 
-namespace Stl.Fusion.EntityFramework
+namespace Stl.Fusion.EntityFramework.Operations
 {
     [Table("_Operations")]
     [Index(nameof(StartTime), Name = "IX_StartTime")]

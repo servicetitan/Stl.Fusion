@@ -7,7 +7,7 @@ using Stl.Async;
 using Stl.Fusion.Operations;
 using Stl.Time;
 
-namespace Stl.Fusion.EntityFramework.Services
+namespace Stl.Fusion.EntityFramework.Operations
 {
     public class DbOperationLogReader<TDbContext> : DbWakeSleepProcessBase<TDbContext>
         where TDbContext : DbContext

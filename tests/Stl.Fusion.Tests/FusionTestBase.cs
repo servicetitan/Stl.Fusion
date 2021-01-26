@@ -16,7 +16,6 @@ using Stl.Fusion.Bridge.Messages;
 using Stl.Fusion.Client;
 using Stl.Fusion.EntityFramework;
 using Stl.Fusion.EntityFramework.Internal;
-using Stl.Fusion.EntityFramework.Services;
 using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
 using Stl.Fusion.Tests.UIModels;

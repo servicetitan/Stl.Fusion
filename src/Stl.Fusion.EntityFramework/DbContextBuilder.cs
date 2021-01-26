@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.CommandR;
 using Stl.Fusion.EntityFramework.Internal;
-using Stl.Fusion.EntityFramework.Services;
+using Stl.Fusion.EntityFramework.Operations;
 using Stl.Fusion.Operations;
 using Stl.IO;
 

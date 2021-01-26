@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Stl.Async;
 using Stl.IO;
 
-namespace Stl.Fusion.EntityFramework.Services
+namespace Stl.Fusion.EntityFramework.Operations
 {
     public class FileBasedDbOperationLogChangeMonitor<TDbContext> : IDbOperationLogChangeMonitor<TDbContext>, IDisposable
         where TDbContext : DbContext

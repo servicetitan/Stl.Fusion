@@ -9,7 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Operations;
 using Stl.Time;
 
-namespace Stl.Fusion.EntityFramework
+namespace Stl.Fusion.EntityFramework.Operations
 {
     public interface IDbOperationLog<in TDbContext>
         where TDbContext : DbContext

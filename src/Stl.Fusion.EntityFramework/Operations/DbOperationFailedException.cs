@@ -2,7 +2,7 @@ using System;
 using System.Runtime.Serialization;
 using Microsoft.EntityFrameworkCore;
 
-namespace Stl.Fusion.EntityFramework
+namespace Stl.Fusion.EntityFramework.Operations
 {
     [Serializable]
     public class DbOperationFailedException : DbUpdateException

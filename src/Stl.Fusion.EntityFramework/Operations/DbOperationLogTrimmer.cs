@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Stl.Fusion.EntityFramework.Services
+namespace Stl.Fusion.EntityFramework.Operations
 {
     public class DbOperationLogTrimmer<TDbContext> : DbWakeSleepProcessBase<TDbContext>
         where TDbContext : DbContext
