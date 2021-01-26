@@ -4,7 +4,11 @@ namespace Stl.Extensibility
 {
     public abstract class ModuleBase : IModule
     {
-        public IServiceCollection Services { get; set; } = null!;
-        public abstract void ConfigureServices();
+        public IServiceCollection Services { get; }
+
+        protected ModuleBase(IServiceCollection services)
+            => Services = services;
+
+        public abstract void Use();
     }
 }

@@ -1,7 +1,7 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.DependencyInjection;
-using Stl.Reflection;
 using Stl.Text;
 
 namespace Stl.Extensibility
@@ -12,16 +12,14 @@ namespace Stl.Extensibility
 
         public ModuleAttribute()
         {
-            // Let's make sure Modules aren't auto-registered together
+            // Let's make sure Plugins aren't auto-registered together
             // with regular services: most likely this isn't intentional.
             Scope = DefaultScope.Value;
         }
 
+        // This method registers plugin in ModuleBuilder.ModuleBuilderServices
         public override void Register(IServiceCollection services, Type implementationType)
-        {
-            var module = (IModule) implementationType.CreateInstance();
-            module.Services = services;
-            module.ConfigureServices();
-        }
+            => services.TryAddEnumerable(
+                ServiceDescriptor.Singleton(typeof(IModule), implementationType));
     }
 }

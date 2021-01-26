@@ -75,10 +75,13 @@ namespace Stl.Tests.CommandR
                 });
             }
 
-            // Just to test [Module] attribute
-            services.AttributeScanner(ModuleAttribute.DefaultScope)
-                .WithTypeFilter(GetType().Namespace!)
-                .AddServicesFrom(Assembly.GetExecutingAssembly());
+            // [Module] attribute test
+            services.UseModules(); // Just to check you can call it twice
+            services.UseModules(b => b.ConfigureModuleServices(s => {
+                s.AttributeScanner(ModuleAttribute.DefaultScope)
+                    .WithTypeFilter(GetType().Namespace!)
+                    .AddServicesFrom(Assembly.GetExecutingAssembly());
+            }));
         }
     }
 }

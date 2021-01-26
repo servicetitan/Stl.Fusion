@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Stl.Extensibility
+namespace Stl.Pooling
 {
     public readonly struct Owned<TItem, TOwner> : IDisposable, IEquatable<Owned<TItem, TOwner>>
         where TOwner : IDisposable

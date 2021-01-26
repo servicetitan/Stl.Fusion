@@ -22,10 +22,10 @@ namespace Stl.Fusion.Bridge.Internal
         protected static readonly HandlerProvider<(ReplicatorChannelProcessor, CancellationToken), Task> OnStateMessageAsyncHandlers =
             new(typeof(StateMessageHandler<>));
 
-        protected class StateMessageHandler<T> : HandlerProvider<(ReplicatorChannelProcessor, CancellationToken), Task>.IHandler<T>
+        protected class StateMessageHandler<TMessageType> : HandlerProvider<(ReplicatorChannelProcessor, CancellationToken), Task>.IHandler<TMessageType>
         {
             public Task Handle(object target, (ReplicatorChannelProcessor, CancellationToken) arg)
-                => arg.Item1.OnStateMessageAsync((PublicationStateMessage<T>) target, arg.Item2);
+                => arg.Item1.OnStateMessageAsync((PublicationStateMessage<TMessageType>) target, arg.Item2);
         }
 
         protected readonly ILogger Log;
