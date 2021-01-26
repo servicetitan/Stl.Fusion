@@ -13,11 +13,9 @@ using Stl.Serialization;
 
 namespace Stl.Fusion.EntityFramework.Authentication
 {
-    public interface IAuthServiceBackend<in TDbContext>
+    public interface IDbAuthServiceBackend<in TDbContext>
         where TDbContext : DbContext
     {
-        string PrimaryAuthenticationType { get; }
-
         string ToJson<T>(T source);
         T? FromJson<T>(string json);
 
@@ -42,22 +40,21 @@ namespace Stl.Fusion.EntityFramework.Authentication
             TDbContext dbContext, Session session, CancellationToken cancellationToken = default);
     }
 
-    public class AuthServiceBackend<TDbContext, TDbSession, TDbUser, TDbExternalUser> : DbServiceBase<TDbContext>,
-        IAuthServiceBackend<TDbContext>
+    public class DbAuthServiceBackend<TDbContext, TDbSession, TDbUser, TDbExternalUser> : DbServiceBase<TDbContext>,
+        IDbAuthServiceBackend<TDbContext>
         where TDbContext : DbContext
         where TDbSession : DbSession, new()
         where TDbUser : DbUser, new()
         where TDbExternalUser : DbExternalUserRef, new()
     {
-        public class Options
+        private readonly Lazy<IDbAuthService> _authServiceLazy;
+        protected IDbAuthService AuthService => _authServiceLazy.Value;
+
+        public DbAuthServiceBackend(ServiceProvider services) : base(services)
         {
-            public string PrimaryAuthenticationType { get; set; } = "";
+            _authServiceLazy = new Lazy<IDbAuthService>(
+                () => (IDbAuthService) Services.GetRequiredService<IServerSideAuthService>());
         }
-
-        public string PrimaryAuthenticationType { get; }
-
-        public AuthServiceBackend(Options options, ServiceProvider services) : base(services)
-            => PrimaryAuthenticationType = options.PrimaryAuthenticationType;
 
         public virtual string ToJson<T>(T source)
             => JsonSerialized.New(source).SerializedValue;
@@ -65,10 +62,10 @@ namespace Stl.Fusion.EntityFramework.Authentication
         public virtual T? FromJson<T>(string json)
             => JsonSerialized.New<T>(json).Value;
 
-        public User CreateAnonymousUser(string sessionId)
+        public virtual User CreateAnonymousUser(string sessionId)
             => new($"Anonymous|{sessionId}");
 
-        public SessionInfo CreateSession(string sessionId)
+        public virtual SessionInfo CreateSession(string sessionId)
         {
             var now = Clock.Now;
             return new SessionInfo(sessionId) {
@@ -77,17 +74,17 @@ namespace Stl.Fusion.EntityFramework.Authentication
             };
         }
 
-        public ValueTask<User> FromDbEntityAsync(TDbContext dbContext, DbUser dbUser, CancellationToken cancellationToken)
+        public virtual ValueTask<User> FromDbEntityAsync(TDbContext dbContext, DbUser dbUser, CancellationToken cancellationToken)
         {
             var user = new User(
-                PrimaryAuthenticationType,
+                AuthService.PrimaryAuthenticationType,
                 dbUser.Id.ToString(), dbUser.Name,
                 new ReadOnlyDictionary<string, string>(
                     FromJson<Dictionary<string, string>>(dbUser.ClaimsJson) ?? new()));
             return ValueTaskEx.FromResult(user);
         }
 
-        public ValueTask<SessionInfo> FromDbEntityAsync(TDbContext dbContext, DbSession dbSession, CancellationToken cancellationToken)
+        public virtual ValueTask<SessionInfo> FromDbEntityAsync(TDbContext dbContext, DbSession dbSession, CancellationToken cancellationToken)
         {
             var sessionInfo = new SessionInfo() {
                 Id = dbSession.Id,
@@ -101,15 +98,15 @@ namespace Stl.Fusion.EntityFramework.Authentication
             return ValueTaskEx.FromResult(sessionInfo);
         }
 
-        public async Task<DbSession?> TryGetDbSessionAsync(
+        public virtual async Task<DbSession?> TryGetDbSessionAsync(
             TDbContext dbContext, string sessionId, CancellationToken cancellationToken)
             => await dbContext.Set<TDbSession>().FindAsync(sessionId, cancellationToken).ConfigureAwait(false);
 
-        public async Task<DbUser?> TryGetDbUserAsync(
+        public virtual async Task<DbUser?> TryGetDbUserAsync(
             TDbContext dbContext, long userId, CancellationToken cancellationToken)
             => await dbContext.Set<TDbUser>().FindAsync(userId, cancellationToken).ConfigureAwait(false);
 
-        public async Task<DbSession[]> GetUserDbSessionsAsync(
+        public virtual async Task<DbSession[]> GetUserDbSessionsAsync(
             TDbContext dbContext, long userId, CancellationToken cancellationToken = default)
         {
             var qSessions =
@@ -131,13 +128,14 @@ namespace Stl.Fusion.EntityFramework.Authentication
                 from eu in dbContext.Set<TDbExternalUser>().AsQueryable()
                 where eu.Id == user.Id
                 from u in dbContext.Set<TDbUser>().AsQueryable().Where(u => u.Id == eu.UserId)
-                select (u, eu)
+                select new {User = u, ExternalUserRef = eu}
                 ).Take(2);
             var dbUsers = await qFindUsers.ToListAsync(cancellationToken).ConfigureAwait(false);
 
             switch (dbUsers.Count) {
             case 1:
-                return dbUsers[0];
+                var dbUser0 = dbUsers[0];
+                return (dbUser0.User, dbUser0.ExternalUserRef);
             case 0:
                 var dbUser = new TDbUser() {
                     Name = user.Name,

@@ -14,15 +14,30 @@ using Stl.Fusion.Operations;
 
 namespace Stl.Fusion.EntityFramework.Authentication
 {
-    // [ComputeService]
-    // [ServiceAlias(typeof(IServerSideAuthService), typeof(AppAuthService))]
-    public class AuthService<TDbContext> : DbServiceBase<TDbContext>, IServerSideAuthService
+    public interface IDbAuthService : IServerSideAuthService
+    {
+        string PrimaryAuthenticationType { get; }
+    }
+
+    public class DbAuthService<TDbContext> : DbServiceBase<TDbContext>, IDbAuthService
         where TDbContext : DbContext
     {
-        protected IAuthServiceBackend<TDbContext> Backend { get; }
+        public class Options
+        {
+            public string PrimaryAuthenticationType { get; set; } = "";
+            public TimeSpan UpdatePresenceQuanta { get; set; } = TimeSpan.FromMinutes(3);
+        }
 
-        public AuthService(IServiceProvider services) : base(services)
-            => Backend = services.GetRequiredService<IAuthServiceBackend<TDbContext>>();
+        protected IDbAuthServiceBackend<TDbContext> Backend { get; }
+        protected TimeSpan UpdatePresenceQuanta { get; }
+        public string PrimaryAuthenticationType { get; }
+
+        public DbAuthService(Options options, IServiceProvider services) : base(services)
+        {
+            PrimaryAuthenticationType = options.PrimaryAuthenticationType;
+            UpdatePresenceQuanta = options.UpdatePresenceQuanta;
+            Backend = services.GetRequiredService<IDbAuthServiceBackend<TDbContext>>();
+        }
 
         // Commands
 
@@ -155,6 +170,8 @@ namespace Stl.Fusion.EntityFramework.Authentication
                 return Array.Empty<SessionInfo>();
             return await GetUserSessionsAsync(userId, cancellationToken).ConfigureAwait(false);
         }
+
+        // Protected methods
 
         [ComputeMethod]
         protected virtual async Task<SessionInfo[]> GetUserSessionsAsync(
