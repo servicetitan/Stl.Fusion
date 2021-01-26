@@ -132,7 +132,7 @@ namespace Stl.Fusion.Tests
             var s12 = await stateFactory.NewComputed<(int, int)>(
                 async (s, cancellationToken) => {
                     var a = await s1.UseAsync(cancellationToken);
-                    using var _ = Computed.IgnoreDependencies();
+                    using var _ = Computed.SuspendDependencyCapture();
                     var b = await s2.UseAsync(cancellationToken);
                     return (a, b);
                 }).UpdateAsync(false);

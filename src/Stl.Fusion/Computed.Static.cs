@@ -8,7 +8,7 @@ namespace Stl.Fusion
 {
     public static partial class Computed
     {
-        private static readonly AsyncLocal<IComputed?> CurrentLocal = new AsyncLocal<IComputed?>();
+        private static readonly AsyncLocal<IComputed?> CurrentLocal = new();
 
         // GetCurrent & ChangeCurrent
 
@@ -24,7 +24,7 @@ namespace Stl.Fusion
             throw Errors.ComputedCurrentIsOfIncompatibleType(typeof(IComputed<T>));
         }
 
-        public static ClosedDisposable<IComputed?> ChangeCurrent(IComputed? newCurrent)
+        internal static ClosedDisposable<IComputed?> ChangeCurrent(IComputed? newCurrent)
         {
             var oldCurrent = GetCurrent();
             if (newCurrent != null)
@@ -35,7 +35,7 @@ namespace Stl.Fusion
             return Disposable.NewClosed(oldCurrent, oldCurrent1 => CurrentLocal.Value = oldCurrent1);
         }
 
-        public static ClosedDisposable<IComputed?> IgnoreDependencies()
+        public static ClosedDisposable<IComputed?> SuspendDependencyCapture()
             => ChangeCurrent(null);
 
         // Invalidation
