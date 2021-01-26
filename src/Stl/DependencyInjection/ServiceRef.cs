@@ -11,10 +11,4 @@ namespace Stl.DependencyInjection
         public object Resolve(IServiceProvider services)
             => TryResolve(services) ?? throw Errors.NoService(this);
     }
-
-    public record ServiceTypeRef(Type Type) : ServiceRef
-    {
-        public override object? TryResolve(IServiceProvider services)
-            => services.GetService(Type);
-    }
 }

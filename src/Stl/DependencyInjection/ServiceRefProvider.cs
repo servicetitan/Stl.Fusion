@@ -3,6 +3,8 @@ using System.Collections.Concurrent;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.DependencyInjection.Internal;
+using Stl.Internal;
+using Errors = Stl.DependencyInjection.Internal.Errors;
 
 namespace Stl.DependencyInjection
 {
@@ -13,20 +15,33 @@ namespace Stl.DependencyInjection
 
     public class ServiceRefProvider : IServiceRefProvider
     {
+        public class Options
+        {
+            public IServiceCollection ServiceCollection { get; set; } = null!;
+            public bool UseServiceInstanceRefs { get; set; }
+        }
+
         protected IServiceCollection ServiceCollection { get; }
+        protected bool UseServiceInstanceRefs { get; }
         protected ConcurrentDictionary<Type, Type?> ServiceTypeCache { get; } = new();
 
-        public ServiceRefProvider(IServiceCollection serviceCollection)
-            => ServiceCollection = serviceCollection;
+        public ServiceRefProvider(Options options)
+        {
+            ServiceCollection = options.ServiceCollection
+                ?? throw new ArgumentNullException($"{nameof(options)}.{nameof(ServiceCollection)}");
+            UseServiceInstanceRefs = options.UseServiceInstanceRefs;
+        }
 
         public virtual ServiceRef GetServiceRef(object service)
         {
             if (service is IHasServiceRef hsr)
                 return hsr.ServiceRef;
             var serviceType = TryGetServiceType(service.GetType());
-            if (serviceType == null)
-                throw Errors.NoServiceRef(service.GetType());
-            return new ServiceTypeRef(service.GetType());
+            if (serviceType != null)
+                return new ServiceTypeRef(service.GetType());
+            if (UseServiceInstanceRefs)
+                return new ServiceInstanceRef(RefBox.New(service)!);
+            throw Errors.NoServiceRef(service.GetType());
         }
 
         protected Type? TryGetServiceType(Type implementationType)
@@ -40,9 +55,13 @@ namespace Stl.DependencyInjection
 
         protected virtual bool IsMatch(Type implementationType, ServiceDescriptor descriptor)
         {
+            if (descriptor.Lifetime == ServiceLifetime.Scoped)
+                return false;
             if (descriptor.ImplementationType == implementationType)
                 return true;
             if (descriptor.ImplementationInstance?.GetType() == implementationType)
+                return true;
+            if (descriptor.ImplementationFactory != null && descriptor.ServiceType.IsAssignableFrom(implementationType))
                 return true;
             return false;
         }
