@@ -4,6 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.CommandR;
+using Stl.DependencyInjection;
+using Stl.Fusion.Authentication;
+using Stl.Fusion.EntityFramework.Authentication;
 using Stl.Fusion.EntityFramework.Internal;
 using Stl.Fusion.EntityFramework.Operations;
 using Stl.Fusion.Operations;
@@ -26,6 +29,8 @@ namespace Stl.Fusion.EntityFramework
             return this;
         }
 
+        // Operations
+
         public DbContextBuilder<TDbContext> AddDbOperations(
             Action<IServiceProvider, DbOperationLogReader<TDbContext>.Options>? logReaderOptionsBuilder = null,
             Action<IServiceProvider, DbOperationLogTrimmer<TDbContext>.Options>? logTrimmerOptionsBuilder = null)
@@ -41,6 +46,12 @@ namespace Stl.Fusion.EntityFramework
             Services.TryAddSingleton<OperationCompletionNotifier.Options>();
             Services.TryAddSingleton<IOperationCompletionNotifier, OperationCompletionNotifier>();
             Services.TryAddSingleton<IDbOperationLog<TDbContext>, DbOperationLog<TDbContext, TDbOperation>>();
+
+            // DbOperationScope & its CommandR handler
+            Services.TryAddTransient<IDbOperationScope<TDbContext>, DbOperationScope<TDbContext>>();
+            Services.TryAddSingleton<DbOperationScopeHandler<TDbContext>.Options>();
+            Services.TryAddSingleton<DbOperationScopeHandler<TDbContext>>();
+            Services.AddCommander().AddHandlers<DbOperationScopeHandler<TDbContext>>();
 
             // DbOperationLogReader - hosted service!
             Services.TryAddSingleton(c => {
@@ -59,12 +70,6 @@ namespace Stl.Fusion.EntityFramework
             });
             Services.TryAddSingleton<DbOperationLogTrimmer<TDbContext>>();
             Services.AddHostedService(c => c.GetRequiredService<DbOperationLogTrimmer<TDbContext>>());
-
-            // DbOperationScope & its CommandR handler
-            Services.TryAddTransient<IDbOperationScope<TDbContext>, DbOperationScope<TDbContext>>();
-            Services.TryAddSingleton<DbOperationScopeHandler<TDbContext>.Options>();
-            Services.TryAddSingleton<DbOperationScopeHandler<TDbContext>>();
-            Services.AddCommander().AddHandlers<DbOperationScopeHandler<TDbContext>>();
             return this;
         }
 
@@ -100,6 +105,49 @@ namespace Stl.Fusion.EntityFramework
                 ServiceDescriptor.Singleton<
                     IOperationCompletionListener,
                     FileBasedDbOperationLogChangeNotifier<TDbContext>>());
+            return this;
+        }
+
+        // Authentication
+
+        public DbContextBuilder<TDbContext> AddDbAuthentication(
+            Action<IServiceProvider, DbAuthService<TDbContext>.Options>? authServiceOptionsBuilder = null,
+            Action<IServiceProvider, DbSessionInfoTrimmer<TDbContext>.Options>? sessionInfoTrimmerOptionsBuilder = null)
+            => AddDbAuthentication<DbSessionInfo, DbUser, DbExternalUser>(
+                authServiceOptionsBuilder, sessionInfoTrimmerOptionsBuilder);
+
+        public DbContextBuilder<TDbContext> AddDbAuthentication<TDbSessionInfo, TDbUser, TDbExternalUser>(
+            Action<IServiceProvider, DbAuthService<TDbContext>.Options>? authServiceOptionsBuilder = null,
+            Action<IServiceProvider, DbSessionInfoTrimmer<TDbContext>.Options>? sessionInfoTrimmerOptionsBuilder = null)
+            where TDbSessionInfo : DbSessionInfo, new()
+            where TDbUser : DbUser, new()
+            where TDbExternalUser : DbExternalUser, new()
+        {
+            if (!Services.HasService<IDbOperationScope<TDbContext>>())
+                throw Errors.NoOperationsFrameworkServices();
+
+            // DbAuthService & its dependencies
+            Services.TryAddSingleton(c => {
+                var options = new DbAuthService<TDbContext>.Options();
+                authServiceOptionsBuilder?.Invoke(c, options);
+                return options;
+            });
+            Services.TryAddSingleton<IDbSessionInfoBackend<TDbContext>, DbSessionInfoBackend<TDbContext, TDbSessionInfo>>();
+            Services.TryAddSingleton<IDbUserBackend<TDbContext>, DbUserBackend<TDbContext, TDbUser, TDbExternalUser>>();
+            Services.AddFusion(fusion => {
+                fusion.AddAuthentication(fusionAuth => {
+                    fusionAuth.AddServerSideAuthService<DbAuthService<TDbContext>>();
+                });
+            });
+
+            // DbSessionInfoTrimmer - hosted service!
+            Services.TryAddSingleton(c => {
+                var options = new DbSessionInfoTrimmer<TDbContext>.Options();
+                sessionInfoTrimmerOptionsBuilder?.Invoke(c, options);
+                return options;
+            });
+            Services.TryAddSingleton<DbSessionInfoTrimmer<TDbContext>>();
+            Services.AddHostedService(c => c.GetRequiredService<DbSessionInfoTrimmer<TDbContext>>());
             return this;
         }
     }

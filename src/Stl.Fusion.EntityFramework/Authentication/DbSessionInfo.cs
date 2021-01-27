@@ -10,7 +10,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
     [Index(nameof(LastSeenAt))]
     [Index(nameof(UserId))]
     [Index(nameof(IPAddress))]
-    public class DbSession : IHasId<string>
+    public class DbSessionInfo : IHasId<string>
     {
         [Key]
         public string Id { get; set; } = "";

@@ -14,29 +14,26 @@ using Stl.Fusion.Operations;
 
 namespace Stl.Fusion.EntityFramework.Authentication
 {
-    public interface IDbAuthService : IServerSideAuthService
-    {
-        string PrimaryAuthenticationType { get; }
-    }
-
-    public class DbAuthService<TDbContext> : DbServiceBase<TDbContext>, IDbAuthService
+    public class DbAuthService<TDbContext> : DbServiceBase<TDbContext>, IServerSideAuthService
         where TDbContext : DbContext
     {
         public class Options
         {
             public string PrimaryAuthenticationType { get; set; } = "";
-            public TimeSpan UpdatePresenceQuanta { get; set; } = TimeSpan.FromMinutes(3);
+            public TimeSpan MinUpdatePresencePeriod { get; set; } = TimeSpan.FromMinutes(3);
         }
 
-        protected IDbAuthServiceBackend<TDbContext> Backend { get; }
-        protected TimeSpan UpdatePresenceQuanta { get; }
+        protected IDbUserBackend<TDbContext> Users { get; }
+        protected IDbSessionInfoBackend<TDbContext> Sessions { get; }
+        protected TimeSpan MinUpdatePresencePeriod { get; }
         public string PrimaryAuthenticationType { get; }
 
         public DbAuthService(Options options, IServiceProvider services) : base(services)
         {
             PrimaryAuthenticationType = options.PrimaryAuthenticationType;
-            UpdatePresenceQuanta = options.UpdatePresenceQuanta;
-            Backend = services.GetRequiredService<IDbAuthServiceBackend<TDbContext>>();
+            MinUpdatePresencePeriod = options.MinUpdatePresencePeriod;
+            Users = services.GetRequiredService<IDbUserBackend<TDbContext>>();
+            Sessions = services.GetRequiredService<IDbSessionInfoBackend<TDbContext>>();
         }
 
         // Commands
@@ -57,14 +54,11 @@ namespace Stl.Fusion.EntityFramework.Authentication
                 throw Errors.ForcedSignOut();
 
             await using var dbContext = await CreateCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
-
-            var (dbUser, _) = await Backend.GetOrCreateDbUserAsync(dbContext, user, cancellationToken).ConfigureAwait(false);
-            var dbSession = await Backend.GetOrCreateDbSessionAsync(dbContext, session, cancellationToken).ConfigureAwait(false);
-            if (dbSession.UserId != dbUser.Id) {
-                dbSession.UserId = dbUser.Id;
-                await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            }
-            context.Items.Set(OperationItem.New(dbSession.UserId));
+            var dbUser = await Users.CreateOrUpdateAsync(dbContext, user, cancellationToken)
+                .ConfigureAwait(false);
+            var dbSessionInfo = await Sessions.CreateOrUpdateAsync(dbContext, session.Id, dbUser.Id, null, cancellationToken)
+                .ConfigureAwait(false);
+            context.Items.Set(OperationItem.New(dbSessionInfo.UserId));
         }
 
         public virtual async Task SignOutAsync(SignOutCommand command, CancellationToken cancellationToken = default)
@@ -82,10 +76,8 @@ namespace Stl.Fusion.EntityFramework.Authentication
             }
 
             await using var dbContext = await CreateCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
-
-            var dbSession = await Backend.GetOrCreateDbSessionAsync(dbContext, session, cancellationToken).ConfigureAwait(false);
-            dbSession.IsSignOutForced = force;
-            await dbContext.SaveChangesAsync(cancellationToken);
+            var dbSession = await Sessions.CreateOrUpdateAsync(dbContext, session.Id, null, force, cancellationToken)
+                .ConfigureAwait(false);
             context.Items.Set(OperationItem.New(dbSession.UserId));
         }
 
@@ -103,13 +95,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             sessionInfo = sessionInfo with { LastSeenAt = now };
 
             await using var dbContext = await CreateCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
-
-            var dbSession = await Backend.GetOrCreateDbSessionAsync(dbContext, session, cancellationToken).ConfigureAwait(false);
-            dbSession.LastSeenAt = sessionInfo.LastSeenAt;
-            dbSession.IPAddress = sessionInfo.IPAddress;
-            dbSession.UserAgent = sessionInfo.UserAgent;
-            dbSession.ExtraPropertiesJson = Backend.ToJson(sessionInfo.ExtraProperties!.ToDictionary(kv => kv.Key, kv => kv.Value));
-            await dbContext.SaveChangesAsync(cancellationToken);
+            await Sessions.CreateOrUpdateAsync(dbContext, sessionInfo, null, null, cancellationToken).ConfigureAwait(false);
         }
 
         public async Task UpdatePresenceAsync(Session session, CancellationToken cancellationToken = default)
@@ -129,7 +115,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
         public virtual async Task<bool> IsSignOutForcedAsync(Session session, CancellationToken cancellationToken = default)
         {
             await using var dbContext = CreateDbContext();
-            var dbSession = await Backend.TryGetDbSessionAsync(dbContext, session.Id, cancellationToken).ConfigureAwait(false);
+            var dbSession = await Sessions.FindAsync(dbContext, session.Id, cancellationToken).ConfigureAwait(false);
             return dbSession?.IsSignOutForced == true;
         }
 
@@ -141,13 +127,13 @@ namespace Stl.Fusion.EntityFramework.Authentication
             await using var dbContext = CreateDbContext();
             await using var tx = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
 
-            var dbSession = await Backend.TryGetDbSessionAsync(dbContext, session.Id, cancellationToken).ConfigureAwait(false);
+            var dbSession = await Sessions.FindAsync(dbContext, session.Id, cancellationToken).ConfigureAwait(false);
             if (dbSession?.UserId == null || dbSession.IsSignOutForced)
-                return Backend.CreateAnonymousUser(session.Id);
-            var dbUser = await Backend.TryGetDbUserAsync(dbContext, dbSession.UserId.Value, cancellationToken).ConfigureAwait(false);
+                return Users.CreateGuestUser(session.Id);
+            var dbUser = await Users.FindAsync(dbContext, dbSession.UserId.Value, cancellationToken).ConfigureAwait(false);
             if (dbUser == null)
-                return Backend.CreateAnonymousUser(session.Id);
-            return await Backend.FromDbEntityAsync(dbContext, dbUser, cancellationToken).ConfigureAwait(false);
+                return Users.CreateGuestUser(session.Id);
+            return await Users.FromDbEntityAsync(dbContext, dbUser, cancellationToken).ConfigureAwait(false);
         }
 
         public virtual async Task<SessionInfo> GetSessionInfoAsync(
@@ -156,10 +142,10 @@ namespace Stl.Fusion.EntityFramework.Authentication
             await using var dbContext = CreateDbContext();
             await using var tx = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
 
-            var dbSession = await Backend.TryGetDbSessionAsync(dbContext, session.Id, cancellationToken).ConfigureAwait(false);
+            var dbSession = await Sessions.FindAsync(dbContext, session.Id, cancellationToken).ConfigureAwait(false);
             if (dbSession == null)
-                return Backend.CreateSession(session.Id);
-            return await Backend.FromDbEntityAsync(dbContext, dbSession, cancellationToken).ConfigureAwait(false);
+                return Sessions.CreateGuestSessionInfo(session.Id);
+            return await Sessions.FromDbEntityAsync(dbContext, dbSession, cancellationToken).ConfigureAwait(false);
         }
 
         public virtual async Task<SessionInfo[]> GetUserSessionsAsync(
@@ -180,10 +166,10 @@ namespace Stl.Fusion.EntityFramework.Authentication
             await using var dbContext = CreateDbContext();
             await using var tx = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
 
-            var dbSessions = await Backend.GetUserDbSessionsAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
+            var dbSessions = await Sessions.ListByUserAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
             var sessions = new SessionInfo[dbSessions.Length];
             for (var i = 0; i < dbSessions.Length; i++)
-                sessions[i] = await Backend
+                sessions[i] = await Sessions
                     .FromDbEntityAsync(dbContext, dbSessions[i], cancellationToken)
                     .ConfigureAwait(false);
             return sessions;

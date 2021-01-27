@@ -13,4 +13,16 @@ namespace Stl.Fusion.EntityFramework.Authentication
         public string Name { get; set; } = "";
         public string ClaimsJson { get; set; } = "";
     }
+
+    [Table("ExternalUsers")]
+    [Index(nameof(ExternalId))]
+    public class DbExternalUser : IHasId<string>
+    {
+        [Key]
+        public string ExternalId { get; set; } = "";
+        public long UserId { get; set; }
+
+        [NotMapped]
+        string IHasId<string>.Id => ExternalId;
+    }
 }
