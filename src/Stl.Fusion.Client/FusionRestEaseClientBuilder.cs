@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -145,6 +146,8 @@ namespace Stl.Fusion.Client
             if (!(clientType.IsInterface && clientType.IsVisible))
                 throw Internal.Errors.InterfaceTypeExpected(clientType, true, nameof(clientType));
             clientName ??= clientType.FullName;
+            if (Services.Any(d => d.ServiceType == serviceType))
+                return this;
 
             object Factory(IServiceProvider c)
             {
@@ -174,7 +177,7 @@ namespace Stl.Fusion.Client
                 return client;
             }
 
-            Services.TryAddSingleton(serviceType, Factory);
+            Services.AddSingleton(serviceType, Factory);
             if (isCommandService)
                 Services.AddCommander().AddCommandService(serviceType);
             return this;

@@ -46,9 +46,11 @@ namespace Stl.Time.Internal
 
         static CoarseStopwatch()
         {
-            Start = SystemClock.Now;
+            var start = SystemClock.Now;
+            Start = start;
+            StartEpochOffsetTicks = start.EpochOffset.Ticks;
             Stopwatch = Stopwatch.StartNew();
-            StartEpochOffsetTicks = Start.EpochOffset.Ticks;
+            Update();
             var interval = TimeSpan.FromSeconds(1.0 / Frequency);
             Timer = NonCapturingTimer.Create(_ => Update(), null!, interval, interval);
         }

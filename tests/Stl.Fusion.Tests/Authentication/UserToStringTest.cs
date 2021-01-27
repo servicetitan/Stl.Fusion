@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using Stl.Fusion.Authentication;
+using Stl.Fusion.EntityFramework;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -12,9 +13,10 @@ namespace Stl.Fusion.Tests.Authentication
         [Fact]
         public void Test()
         {
-            var user = new User("") with {
+            var user = new User("none") with {
                 Claims = ImmutableDictionary<string, string>.Empty.Add("a", "b")
             };
+            user = user.WithExternalId("Google", "G:1");
             Out.WriteLine(user.ToString());
         }
     }

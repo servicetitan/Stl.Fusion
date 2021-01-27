@@ -12,11 +12,12 @@ namespace Stl.Fusion.EntityFramework.Internal
         public static Exception OperationCommitFailed()
             => new DbOperationFailedException("Couldn't commit the operation.");
 
-        public static Exception CannotCreateUnauthenticatedUser(string paramName)
-            => new ArgumentOutOfRangeException(paramName, "Can't create unauthenticated user.");
-        public static Exception CannotUseForcedSignOutSession()
-            => new InvalidOperationException("Can't use Session once a sign-out was forced there.");
-
+        public static Exception AuthenticatedUserRequired()
+            => new InvalidOperationException("This method requires an authenticated user.");
+        public static Exception UserNotFound()
+            => new InvalidOperationException("User with the specified Id is not found.");
+        public static Exception ForcedSignOut()
+            => Stl.Fusion.Authentication.Internal.Errors.ForcedSignOut();
         public static Exception NoOperationsFrameworkServices()
             => new InvalidOperationException(
                 "Operations Framework services aren't registered. " +

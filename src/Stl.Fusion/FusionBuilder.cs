@@ -73,7 +73,7 @@ namespace Stl.Fusion
             commander.AddHandlers<InvalidateOnCompletionCommandHandler>();
 
             // Operations
-            Services.TryAddSingleton<AgentInfo>();
+            Services.TryAddSingleton(_ => new AgentInfo());
             Services.TryAddSingleton<OperationCompletionNotifier.Options>();
             Services.TryAddSingleton<IOperationCompletionNotifier, OperationCompletionNotifier>();
             Services.TryAddSingleton<CompletionProducer.Options>();
@@ -149,6 +149,8 @@ namespace Stl.Fusion
         {
             if (!serviceType.IsAssignableFrom(implementationType))
                 throw new ArgumentOutOfRangeException(nameof(implementationType));
+            if (Services.Any(d => d.ServiceType == serviceType))
+                return this;
 
             object Factory(IServiceProvider c)
             {
@@ -163,7 +165,7 @@ namespace Stl.Fusion
             }
 
             var descriptor = new ServiceDescriptor(serviceType, Factory, lifetime);
-            Services.TryAdd(descriptor);
+            Services.Add(descriptor);
             Services.AddCommander().AddCommandService(serviceType, implementationType);
             return this;
         }

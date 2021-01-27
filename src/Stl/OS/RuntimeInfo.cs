@@ -9,8 +9,10 @@ namespace Stl.OS
         public static class Process
         {
             public static readonly Guid Guid = Guid.NewGuid();
-            public static readonly Symbol Id = Convert.ToBase64String(Guid.ToByteArray());
-            public static readonly Symbol MachinePrefixedId = $"{Environment.MachineName}:{Id.Value}";
+            public static readonly Symbol Id =
+                Convert.ToBase64String(Guid.ToByteArray()).TrimEnd('=');
+            public static readonly Symbol MachinePrefixedId =
+                $"{Environment.MachineName}:{Id.Value}";
         }
 
         public static class DotNetCore

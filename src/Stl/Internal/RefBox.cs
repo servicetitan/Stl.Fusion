@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 
 namespace Stl.Internal
 {
@@ -20,7 +21,8 @@ namespace Stl.Internal
             => ReferenceEquals(Target, other.Target);
         public override bool Equals(object? obj)
             => obj is RefBox<T> other && Equals(other);
-        public override int GetHashCode() => Target?.GetHashCode() ?? 0;
+        public override int GetHashCode()
+            => RuntimeHelpers.GetHashCode(Target!);
         public static bool operator ==(RefBox<T> left, RefBox<T> right)
             => left.Equals(right);
         public static bool operator !=(RefBox<T> left, RefBox<T> right)

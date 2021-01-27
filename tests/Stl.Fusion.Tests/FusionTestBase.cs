@@ -8,19 +8,19 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Stl.Async;
 using Stl.DependencyInjection;
 using Stl.IO;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Messages;
 using Stl.Fusion.Client;
 using Stl.Fusion.EntityFramework;
-using Stl.Fusion.EntityFramework.Internal;
 using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
 using Stl.Fusion.Tests.UIModels;
 using Stl.Fusion.Internal;
-using Stl.Fusion.Server;
 using Stl.Testing;
 using Stl.Testing.Internal;
 using Xunit;
@@ -58,10 +58,18 @@ namespace Stl.Fusion.Tests
 
         public virtual async Task InitializeAsync()
         {
-            if (File.Exists(DbPath))
-                File.Delete(DbPath);
+            for (var i = 0; i < 10 && File.Exists(DbPath); i++) {
+                try {
+                    File.Delete(DbPath);
+                    break;
+                }
+                catch {
+                    await DelayAsync(0.3);
+                }
+            }
             await using var dbContext = CreateDbContext();
             await dbContext.Database.EnsureCreatedAsync();
+            await StartHostedServicesAsync(Services);
         }
 
         public virtual Task DisposeAsync()
@@ -152,11 +160,12 @@ namespace Stl.Fusion.Tests
                     b.AddDbOperations((_, o) => {
                         o.UnconditionalWakeUpPeriod = TimeSpan.FromSeconds(5);
                         // Enable this if you debug multi-host invalidation
-                        // o.MaxCommitDuration = TimeSpan.FromMinutes(3);
+                        // o.MaxCommitDuration = TimeSpan.FromMinutes(5);
                     });
                     var dbOpLogChangedFilePath = DbPath + "_changed";
                     b.AddFileBasedDbOperationLogChangeNotifier(dbOpLogChangedFilePath);
                     b.AddFileBasedDbOperationLogChangeMonitor(dbOpLogChangedFilePath);
+                    b.AddDbAuthentication();
                 });
 
                 // WebHost
@@ -182,7 +191,7 @@ namespace Stl.Fusion.Tests
                         var clientBaseUri = isFusionService ? baseUri : apiUri;
                         options.HttpClientActions.Add(c => c.BaseAddress = clientBaseUri);
                     });
-                fusion.AddAuthentication(auth => auth.AddRestEaseClient());
+                fusion.AddAuthentication(fusionAuth => fusionAuth.AddRestEaseClient());
 
                 // Custom live state
                 fusion.AddState(c => c.StateFactory().NewLive<ServerTimeModel2>(
@@ -191,6 +200,28 @@ namespace Stl.Fusion.Tests
                         var time = await client.GetTimeAsync(cancellationToken).ConfigureAwait(false);
                         return new ServerTimeModel2(time);
                     }));
+            }
+        }
+
+        protected async Task StartHostedServicesAsync(
+            IServiceProvider services, CancellationToken cancellationToken = default)
+        {
+            var hostedServices = services.GetServices<IHostedService>();
+            foreach (var hostedService in hostedServices)
+                await hostedService.StartAsync(cancellationToken);
+        }
+
+        protected async Task StopHostedServicesAsync(
+            IServiceProvider services, CancellationToken cancellationToken = default)
+        {
+            var hostedServices = services.GetServices<IHostedService>();
+            foreach (var hostedService in hostedServices) {
+                try {
+                    await hostedService.StopAsync(cancellationToken);
+                }
+                catch {
+                    // Intended
+                }
             }
         }
 

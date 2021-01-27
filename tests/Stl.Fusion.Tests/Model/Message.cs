@@ -1,8 +1,10 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
 
 namespace Stl.Fusion.Tests.Model
 {
+    [Index(nameof(Date))]
     public record Message : LongKeyedEntity
     {
         public DateTime Date { get; init; }

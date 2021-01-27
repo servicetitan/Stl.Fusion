@@ -10,6 +10,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
     {
         [Key]
         public long Id { get; set; }
+        public string AuthenticationType { get; set; } = "";
         public string Name { get; set; } = "";
         public string ClaimsJson { get; set; } = "";
     }

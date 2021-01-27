@@ -34,7 +34,7 @@ namespace Stl.Fusion.Blazor
             SessionResolver = sessionResolver;
             State = stateFactory.NewLive<AuthState>(o => {
                 options.LiveStateOptionsBuilder.Invoke(o);
-                o.InitialOutputFactory = _ => new AuthState(new User(""));
+                o.InitialOutputFactory = _ => new AuthState(new User("none"));
                 o.EventConfigurator += state => state.AddEventHandler(StateEventKind.All, OnStateChanged);
             }, ComputeState);
         }

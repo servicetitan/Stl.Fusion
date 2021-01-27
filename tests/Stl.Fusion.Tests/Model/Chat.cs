@@ -1,7 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
 
 namespace Stl.Fusion.Tests.Model
 {
+    [Index(nameof(Title))]
     public record Chat : LongKeyedEntity
     {
         [Required, MaxLength(120)]

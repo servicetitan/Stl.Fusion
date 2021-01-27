@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -19,18 +18,15 @@ namespace Stl.Fusion.EntityFramework.Authentication
     {
         public class Options
         {
-            public string PrimaryAuthenticationType { get; set; } = "";
             public TimeSpan MinUpdatePresencePeriod { get; set; } = TimeSpan.FromMinutes(3);
         }
 
         protected IDbUserBackend<TDbContext> Users { get; }
         protected IDbSessionInfoBackend<TDbContext> Sessions { get; }
         protected TimeSpan MinUpdatePresencePeriod { get; }
-        public string PrimaryAuthenticationType { get; }
 
         public DbAuthService(Options options, IServiceProvider services) : base(services)
         {
-            PrimaryAuthenticationType = options.PrimaryAuthenticationType;
             MinUpdatePresencePeriod = options.MinUpdatePresencePeriod;
             Users = services.GetRequiredService<IDbUserBackend<TDbContext>>();
             Sessions = services.GetRequiredService<IDbSessionInfoBackend<TDbContext>>();
@@ -42,11 +38,11 @@ namespace Stl.Fusion.EntityFramework.Authentication
         {
             var (user, session) = command;
             var context = CommandContext.GetCurrent();
+            DbUser dbUser;
             if (Computed.IsInvalidating()) {
-                var userId = context.Items.TryGet<OperationItem<long?>>()?.Value;
                 GetUserAsync(session, default).Ignore();
-                if (userId.HasValue)
-                    GetUserSessionsAsync(userId.Value, default).Ignore();
+                dbUser = context.Items.Get<OperationItem<DbUser>>().Value;
+                GetUserSessionsAsync(dbUser.Id, default).Ignore();
                 return;
             }
 
@@ -54,31 +50,36 @@ namespace Stl.Fusion.EntityFramework.Authentication
                 throw Errors.ForcedSignOut();
 
             await using var dbContext = await CreateCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
-            var dbUser = await Users.CreateOrUpdateAsync(dbContext, user, cancellationToken)
+            dbUser = await Users
+                .CreateOrUpdateAsync(dbContext, user, cancellationToken)
                 .ConfigureAwait(false);
-            var dbSessionInfo = await Sessions.CreateOrUpdateAsync(dbContext, session.Id, dbUser.Id, null, cancellationToken)
+            var dbSessionInfo = await Sessions
+                .CreateOrUpdateAsync(dbContext, session.Id, dbUser.Id, false, cancellationToken)
                 .ConfigureAwait(false);
-            context.Items.Set(OperationItem.New(dbSessionInfo.UserId));
+            context.Items.Set(OperationItem.New(dbUser));
+            context.Items.Set(OperationItem.New(dbSessionInfo));
         }
 
         public virtual async Task SignOutAsync(SignOutCommand command, CancellationToken cancellationToken = default)
         {
             var (force, session) = command;
             var context = CommandContext.GetCurrent();
+            DbSessionInfo dbSessionInfo;
             if (Computed.IsInvalidating()) {
-                var userId = context.Items.TryGet<OperationItem<long?>>()?.Value;
                 GetUserAsync(session, default).Ignore();
-                if (userId.HasValue)
-                    GetUserSessionsAsync(userId.Value, default).Ignore();
                 if (force)
                     IsSignOutForcedAsync(session, default).Ignore();
+                dbSessionInfo = context.Items.Get<OperationItem<DbSessionInfo>>().Value;
+                if (dbSessionInfo.UserId.HasValue)
+                    GetUserSessionsAsync(dbSessionInfo.UserId.Value, default).Ignore();
                 return;
             }
 
             await using var dbContext = await CreateCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
-            var dbSession = await Sessions.CreateOrUpdateAsync(dbContext, session.Id, null, force, cancellationToken)
+            dbSessionInfo = await Sessions
+                .CreateOrUpdateAsync(dbContext, session.Id, null, force, cancellationToken)
                 .ConfigureAwait(false);
-            context.Items.Set(OperationItem.New(dbSession.UserId));
+            context.Items.Set(OperationItem.New(dbSessionInfo));
         }
 
         public virtual async Task SaveSessionInfoAsync(SaveSessionInfoCommand command, CancellationToken cancellationToken = default)
@@ -90,12 +91,14 @@ namespace Stl.Fusion.EntityFramework.Authentication
             }
 
             if (sessionInfo.Id != session.Id)
-                throw new ArgumentOutOfRangeException(nameof(sessionInfo));
+                throw new ArgumentOutOfRangeException(nameof(command));
             var now = Clock.Now.ToDateTime();
             sessionInfo = sessionInfo with { LastSeenAt = now };
 
             await using var dbContext = await CreateCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
-            await Sessions.CreateOrUpdateAsync(dbContext, sessionInfo, null, null, cancellationToken).ConfigureAwait(false);
+            await Sessions
+                .CreateOrUpdateAsync(dbContext, sessionInfo, cancellationToken)
+                .ConfigureAwait(false);
         }
 
         public async Task UpdatePresenceAsync(Session session, CancellationToken cancellationToken = default)
@@ -103,7 +106,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             var sessionInfo = await GetSessionInfoAsync(session, cancellationToken).ConfigureAwait(false);
             var now = Clock.Now.ToDateTime();
             var delta = now - sessionInfo.LastSeenAt;
-            if (delta < TimeSpan.FromMinutes(3))
+            if (delta < MinUpdatePresencePeriod)
                 return; // We don't want to update this too frequently
             sessionInfo = sessionInfo with { LastSeenAt = now };
             var command = new SaveSessionInfoCommand(sessionInfo, session).MarkServerSide();

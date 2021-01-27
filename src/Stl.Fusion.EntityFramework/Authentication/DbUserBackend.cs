@@ -1,11 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Stl.Async;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.EntityFramework.Internal;
@@ -30,7 +29,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
         Task<DbUser?> FindAsync(
             TDbContext dbContext, long userId, CancellationToken cancellationToken = default);
         Task<DbUser?> FindByExternalUserIdAsync(
-            TDbContext dbContext, string externalUserId, CancellationToken cancellationToken = default);
+            TDbContext dbContext, string? externalUserId, CancellationToken cancellationToken = default);
     }
 
     public class DbUserBackend<TDbContext, TDbUser, TDbExternalUser> : DbServiceBase<TDbContext>,
@@ -41,22 +40,22 @@ namespace Stl.Fusion.EntityFramework.Authentication
     {
         protected DbAuthService<TDbContext>.Options Options { get; }
 
-        public DbUserBackend(DbAuthService<TDbContext>.Options options, ServiceProvider services)
+        public DbUserBackend(DbAuthService<TDbContext>.Options options, IServiceProvider services)
             : base(services)
             => Options = options;
 
         public virtual User CreateGuestUser(string sessionId)
-            => new($"Anonymous|{sessionId}");
+            => new(sessionId);
 
         public virtual ValueTask<User> FromDbEntityAsync(
             TDbContext dbContext, DbUser dbUser, CancellationToken cancellationToken = default)
         {
             var user = new User(
-                Options.PrimaryAuthenticationType,
+                dbUser.AuthenticationType,
                 dbUser.Id.ToString(),
                 dbUser.Name,
-                new ReadOnlyDictionary<string, string>(
-                    FromJson<Dictionary<string, string>>(dbUser.ClaimsJson) ?? new()));
+                (FromJson<Dictionary<string, string>>(dbUser.ClaimsJson) ?? new())
+                    .ToImmutableDictionary());
             return ValueTaskEx.FromResult(user);
         }
 
@@ -65,26 +64,35 @@ namespace Stl.Fusion.EntityFramework.Authentication
         public virtual async Task<DbUser> CreateOrUpdateAsync(
             TDbContext dbContext, User user, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrEmpty(user.AuthenticationType))
-                throw Errors.CannotCreateUnauthenticatedUser(nameof(user));
-            var externalUserId = GetExternalUserId(user);
+            if (!user.IsAuthenticated)
+                throw Errors.AuthenticatedUserRequired();
 
-            var dbUser = long.TryParse(user.Id, out var userId)
-                ? await FindAsync(dbContext, userId, cancellationToken).ConfigureAwait(false)
+            // Trying to find user by its Id
+            var hasId = !string.IsNullOrEmpty(user.Id);
+            var dbUser = hasId
+                ? await FindAsync(dbContext, long.Parse(user.Id), cancellationToken).ConfigureAwait(false)
                 : null;
-            dbUser ??= await FindByExternalUserIdAsync(dbContext, externalUserId, cancellationToken).ConfigureAwait(false);
-            dbUser ??= dbContext.Add(new TDbUser()).Entity;
+            if (dbUser == null && hasId)
+                throw Errors.UserNotFound();
 
+            // Id wasn't provided, so let's try to find it by its external Id or just create a new one
+            var externalId = user.TryGetExternalId();
+            var userByExternalId = await FindByExternalUserIdAsync(dbContext, externalId, cancellationToken)
+                .ConfigureAwait(false);
+            dbUser ??= userByExternalId ?? dbContext.Add(new TDbUser()).Entity;
+
+            // Updating user properties
+            dbUser.AuthenticationType = user.AuthenticationType;
             dbUser.Name = user.Name;
             dbUser.ClaimsJson = ToJson(user.Claims.ToDictionary(kv => kv.Key, kv => kv.Value));
             await dbContext.SaveChangesAsync(cancellationToken);
 
-            if (null == await FindByExternalUserIdAsync(dbContext, externalUserId, cancellationToken).ConfigureAwait(false)) {
-                var dbExtUser = new TDbExternalUser() {
-                    ExternalId = externalUserId,
+            // Adding TDbExternalUser record, if needed
+            if (!string.IsNullOrEmpty(externalId) && userByExternalId == null) {
+                dbContext.Add(new TDbExternalUser() {
+                    ExternalId = externalId,
                     UserId = dbUser.Id,
-                };
-                dbContext.Add(dbExtUser);
+                });
                 await dbContext.SaveChangesAsync(cancellationToken);
             }
             return dbUser;
@@ -108,12 +116,18 @@ namespace Stl.Fusion.EntityFramework.Authentication
 
         public virtual async Task<DbUser?> FindAsync(
             TDbContext dbContext, long userId, CancellationToken cancellationToken)
-            => await dbContext.Set<TDbUser>().FindAsync(userId, cancellationToken).ConfigureAwait(false);
+            => await dbContext.Set<TDbUser>()
+                .FindAsync(Key(userId), cancellationToken)
+                .ConfigureAwait(false);
 
         public virtual async Task<DbUser?> FindByExternalUserIdAsync(
-            TDbContext dbContext, string externalUserId, CancellationToken cancellationToken = default)
+            TDbContext dbContext, string? externalUserId, CancellationToken cancellationToken = default)
         {
-            var externalUser = await dbContext.Set<TDbExternalUser>().FindAsync(externalUserId, cancellationToken).ConfigureAwait(false);
+            if (string.IsNullOrEmpty(externalUserId))
+                return null;
+            var externalUser = await dbContext.Set<TDbExternalUser>()
+                .FindAsync(Key(externalUserId), cancellationToken)
+                .ConfigureAwait(false);
             if (externalUser == null)
                 return null;
             var user = await FindAsync(dbContext, externalUser.UserId, cancellationToken).ConfigureAwait(false);
@@ -128,11 +142,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
         protected virtual T? FromJson<T>(string json)
             => JsonSerialized.New<T>(json).Value;
 
-        protected virtual string GetExternalUserId(User user)
-        {
-            var externalIdClaim = $"Id:{user.AuthenticationType}";
-            var externalId = user.Claims[externalIdClaim];
-            return externalId;
-        }
+        protected object[] Key(params object[] components)
+            => components;
     }
 }

@@ -6,10 +6,10 @@ using Microsoft.EntityFrameworkCore;
 namespace Stl.Fusion.EntityFramework.Authentication
 {
     [Table("Sessions")]
-    [Index(nameof(CreatedAt))]
-    [Index(nameof(LastSeenAt))]
-    [Index(nameof(UserId))]
-    [Index(nameof(IPAddress))]
+    [Index(nameof(CreatedAt), nameof(IsSignOutForced))]
+    [Index(nameof(LastSeenAt), nameof(IsSignOutForced))]
+    [Index(nameof(UserId), nameof(IsSignOutForced))]
+    [Index(nameof(IPAddress), nameof(IsSignOutForced))]
     public class DbSessionInfo : IHasId<string>
     {
         [Key]

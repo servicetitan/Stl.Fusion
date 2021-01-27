@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Fusion.Authentication;
@@ -9,12 +10,12 @@ namespace Stl.Fusion.Server
     public static class FusionAuthenticationBuilderEx
     {
         public static FusionAuthenticationBuilder AddServer(this FusionAuthenticationBuilder fusionAuth,
-            Action<IServiceProvider, SessionMiddleware.Options>? sessionMiddlewareOptionsBuilder = null,
-            Type? authServiceImplementationType = null)
+            Action<IServiceProvider, SessionMiddleware.Options>? sessionMiddlewareOptionsBuilder = null)
         {
-            fusionAuth.AddServerSideAuthService(authServiceImplementationType);
-
             var services = fusionAuth.Services;
+            if (services.All(d => d.ServiceType != typeof(IServerSideAuthService)))
+                fusionAuth.AddServerSideAuthService();
+
             services.TryAddSingleton(c => {
                 var options = new SessionMiddleware.Options();
                 sessionMiddlewareOptionsBuilder?.Invoke(c, options);

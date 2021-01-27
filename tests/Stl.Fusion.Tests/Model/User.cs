@@ -1,7 +1,11 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace Stl.Fusion.Tests.Model
 {
+    [Table("TestUsers")]
+    [Index(nameof(Name))]
     public record User : LongKeyedEntity
     {
         [Required, MaxLength(120)]

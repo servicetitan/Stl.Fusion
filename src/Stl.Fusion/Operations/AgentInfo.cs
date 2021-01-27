@@ -10,7 +10,7 @@ namespace Stl.Fusion.Operations
         private static long GetNextId() => Interlocked.Increment(ref _nextId);
 
         public AgentInfo()
-            : this($"{RuntimeInfo.Process.MachinePrefixedId}-{GetNextId()}")
+            : this($"{RuntimeInfo.Process.MachinePrefixedId}:{GetNextId()}")
         { }
     }
 }
