@@ -25,7 +25,7 @@ namespace Stl.Fusion.Tests
 
         public EdgeCaseServiceTest(ITestOutputHelper @out, FusionTestOptions? options = null) : base(@out, options) { }
 
-        [Fact]
+        [Fact(Timeout = 30_000)]
         public async Task TestService()
         {
             // await using var serving = await WebSocketHost.ServeAsync();
@@ -33,7 +33,7 @@ namespace Stl.Fusion.Tests
             await ActualTest(service);
         }
 
-        [Fact]
+        [Fact(Timeout = 30_000)]
         public async Task TestClient()
         {
             await using var serving = await WebHost.ServeAsync();
@@ -43,7 +43,7 @@ namespace Stl.Fusion.Tests
             await ActualTest(service);
         }
 
-        [Fact]
+        [Fact(Timeout = 30_000)]
         public async Task TestRewriteClient()
         {
             await using var serving = await WebHost.ServeAsync();
