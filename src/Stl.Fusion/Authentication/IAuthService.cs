@@ -14,9 +14,9 @@ namespace Stl.Fusion.Authentication
         [ComputeMethod(KeepAliveTime = 10)]
         Task<bool> IsSignOutForcedAsync(Session session, CancellationToken cancellationToken = default);
         [ComputeMethod(KeepAliveTime = 10)]
-        Task<User> GetUserAsync(Session session, CancellationToken cancellationToken = default);
-        [ComputeMethod(KeepAliveTime = 10)]
         Task<SessionInfo> GetSessionInfoAsync(Session session, CancellationToken cancellationToken = default);
+        [ComputeMethod(KeepAliveTime = 10)]
+        Task<User> GetUserAsync(Session session, CancellationToken cancellationToken = default);
         [ComputeMethod]
         Task<SessionInfo[]> GetUserSessionsAsync(Session session, CancellationToken cancellationToken = default);
     }
@@ -27,5 +27,7 @@ namespace Stl.Fusion.Authentication
         Task SignInAsync(SignInCommand command, CancellationToken cancellationToken = default);
         [CommandHandler]
         Task SaveSessionInfoAsync(SaveSessionInfoCommand command, CancellationToken cancellationToken = default);
+        [ComputeMethod]
+        Task<User?> TryGetUserAsync(string userId, CancellationToken cancellationToken = default);
     }
 }

@@ -17,12 +17,11 @@ namespace Stl.Fusion.EntityFramework.Operations
     public class DbOperation : IOperation
     {
         private readonly JsonSerialized<object?> _command = new(default(object?));
-        private readonly JsonSerialized<ImmutableOptionSet> _items = new(ImmutableOptionSet.Empty);
+        private readonly JsonSerialized<ImmutableOptionSet?> _items = new(ImmutableOptionSet.Empty);
         private DateTime _startTime;
         private DateTime _commitTime;
 
-        [Key]
-        public string Id { get; set; } = "";
+        [Key] public string Id { get; set; } = "";
         public string AgentId { get; set; } = "";
 
         public DateTime StartTime {
@@ -53,7 +52,7 @@ namespace Stl.Fusion.EntityFramework.Operations
 
         [NotMapped, JsonIgnore]
         public ImmutableOptionSet Items {
-            get => _items.Value;
+            get => _items.Value ?? ImmutableOptionSet.Empty;
             set => _items.Value = value;
         }
     }

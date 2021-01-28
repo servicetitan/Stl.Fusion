@@ -8,40 +8,60 @@ using Newtonsoft.Json;
 
 namespace Stl.Fusion.Authentication
 {
+
     public record User : IPrincipal, IIdentity, IHasId<string>
     {
-        public static string GuestName { get; set; } = "Guest";
+        public static string GuestIdPrefix { get; } = "@guest/";
+        public static string GuestName { get; } = "Guest";
 
         private readonly Lazy<ClaimsPrincipal> _claimsPrincipalLazy;
 
-        public string AuthenticationType { get; init; }
         public string Id { get; init; }
         public string Name { get; init; }
         public ImmutableDictionary<string, string> Claims { get; init; }
+        public ImmutableDictionary<UserIdentity, string> Identities { get; init; }
         [JsonIgnore]
-        public bool IsAuthenticated => !string.IsNullOrEmpty(AuthenticationType);
+        public bool IsAuthenticated => !(string.IsNullOrEmpty(Id) || Id.StartsWith(GuestIdPrefix));
         [JsonIgnore]
         public ClaimsPrincipal ClaimsPrincipal => _claimsPrincipalLazy.Value;
+
+        // Explicit interface implementations
+        string IIdentity.AuthenticationType => UserIdentity.DefaultAuthenticationType;
         IIdentity IPrincipal.Identity => this;
 
         // Guest user constructor
-        public User(string idSuffix) : this("", $"{GuestName}:{idSuffix}", GuestName) { }
-
+        public User(string guestIdSuffix) : this(GuestIdPrefix + guestIdSuffix, GuestName) { }
         // Primary constructor
         [JsonConstructor]
-        public User(string authenticationType,
-            string id, string name = "",
-            ImmutableDictionary<string, string>? claims = null)
+        public User(string id, string name)
         {
-            _claimsPrincipalLazy = new(ToClaimsPrincipal);
-            AuthenticationType = authenticationType;
             Id = id;
             Name = name;
-            Claims = claims ?? ImmutableDictionary<string, string>.Empty;
+            Claims = ImmutableDictionary<string, string>.Empty;
+            Identities = ImmutableDictionary<UserIdentity, string>.Empty;
+            _claimsPrincipalLazy = new(ToClaimsPrincipal);
         }
 
+        public User WithClaim(string name, string value)
+            => this with { Claims = Claims.SetItem(name, value) };
+        public User WithIdentity(UserIdentity identity, string secret = "")
+            => this with { Identities = Identities.SetItem(identity, secret) };
+
         public virtual bool IsInRole(string role)
-            => throw new NotSupportedException();
+            => Claims.ContainsKey($"{ClaimTypes.Role}/{role}");
+
+        public virtual User ToClientSideUser()
+            => this with {
+                Identities = ImmutableDictionary<UserIdentity, string>.Empty
+            };
+
+
+        // Equality is changed back to reference-based
+
+        public virtual bool Equals(User? other) => ReferenceEquals(this, other);
+        public override int GetHashCode() => RuntimeHelpers.GetHashCode(this);
+
+        // Protected methods
 
         protected virtual ClaimsPrincipal ToClaimsPrincipal()
         {
@@ -49,14 +69,9 @@ namespace Stl.Fusion.Authentication
                 new(ClaimTypes.NameIdentifier, Id, ClaimValueTypes.String),
                 new(ClaimTypes.Name, Name, ClaimValueTypes.String),
             };
-            foreach (var (type, value) in Claims)
-                claims.Add(new Claim(type, value));
-            return new ClaimsPrincipal(new ClaimsIdentity(claims, AuthenticationType));
+            foreach (var (key, value) in Claims)
+                claims.Add(new Claim(key, value));
+            return new ClaimsPrincipal(new ClaimsIdentity(claims, UserIdentity.DefaultAuthenticationType));
         }
-
-        public virtual bool Equals(User? other)
-            => ReferenceEquals(this, other);
-        public override int GetHashCode()
-            => RuntimeHelpers.GetHashCode(this);
     }
 }

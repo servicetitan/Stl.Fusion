@@ -113,15 +113,14 @@ namespace Stl.Fusion.EntityFramework
         public DbContextBuilder<TDbContext> AddDbAuthentication(
             Action<IServiceProvider, DbAuthService<TDbContext>.Options>? authServiceOptionsBuilder = null,
             Action<IServiceProvider, DbSessionInfoTrimmer<TDbContext>.Options>? sessionInfoTrimmerOptionsBuilder = null)
-            => AddDbAuthentication<DbSessionInfo, DbUser, DbExternalUser>(
+            => AddDbAuthentication<DbSessionInfo, DbUser>(
                 authServiceOptionsBuilder, sessionInfoTrimmerOptionsBuilder);
 
-        public DbContextBuilder<TDbContext> AddDbAuthentication<TDbSessionInfo, TDbUser, TDbExternalUser>(
+        public DbContextBuilder<TDbContext> AddDbAuthentication<TDbSessionInfo, TDbUser>(
             Action<IServiceProvider, DbAuthService<TDbContext>.Options>? authServiceOptionsBuilder = null,
             Action<IServiceProvider, DbSessionInfoTrimmer<TDbContext>.Options>? sessionInfoTrimmerOptionsBuilder = null)
             where TDbSessionInfo : DbSessionInfo, new()
             where TDbUser : DbUser, new()
-            where TDbExternalUser : DbExternalUser, new()
         {
             if (!Services.HasService<IDbOperationScope<TDbContext>>())
                 throw Errors.NoOperationsFrameworkServices();
@@ -133,7 +132,7 @@ namespace Stl.Fusion.EntityFramework
                 return options;
             });
             Services.TryAddSingleton<IDbSessionInfoBackend<TDbContext>, DbSessionInfoBackend<TDbContext, TDbSessionInfo>>();
-            Services.TryAddSingleton<IDbUserBackend<TDbContext>, DbUserBackend<TDbContext, TDbUser, TDbExternalUser>>();
+            Services.TryAddSingleton<IDbUserBackend<TDbContext>, DbUserBackend<TDbContext, TDbUser>>();
             Services.AddFusion(fusion => {
                 fusion.AddAuthentication(fusionAuth => {
                     fusionAuth.AddServerSideAuthService<DbAuthService<TDbContext>>();

@@ -14,7 +14,7 @@ namespace Stl.Fusion.Tests.Model
         // Stl.Fusion.EntityFramework tables
         public DbSet<DbOperation> Operations { get; protected set; } = null!;
         public DbSet<DbUser> AuthUsers { get; protected set; } = null!;
-        public DbSet<DbExternalUser> AuthExternalUsers { get; protected set; } = null!;
+        public DbSet<DbUserIdentity> AuthExternalUsers { get; protected set; } = null!;
         public DbSet<DbSessionInfo> AuthSessions { get; protected set; } = null!;
 
         public TestDbContext(DbContextOptions options) : base(options)

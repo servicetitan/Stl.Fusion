@@ -1,11 +1,8 @@
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Stl.Async;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.EntityFramework.Internal;
 using Stl.Serialization;
@@ -15,18 +12,11 @@ namespace Stl.Fusion.EntityFramework.Authentication
     public interface IDbSessionInfoBackend<in TDbContext>
         where TDbContext : DbContext
     {
-        ValueTask<SessionInfo> FromDbEntityAsync(
-            TDbContext dbContext, DbSessionInfo dbSessionInfo, CancellationToken cancellationToken = default);
-
         // Write methods
-        SessionInfo CreateGuestSessionInfo(string sessionId);
+        Task<DbSessionInfo> FindOrCreateAsync(
+            TDbContext dbContext, string sessionId, CancellationToken cancellationToken = default);
         Task<DbSessionInfo> CreateOrUpdateAsync(
-            TDbContext dbContext, string sessionId,
-            long? userId, bool isSignOutForced,
-            CancellationToken cancellationToken = default);
-        Task<DbSessionInfo> CreateOrUpdateAsync(
-            TDbContext dbContext, SessionInfo sessionInfo,
-            CancellationToken cancellationToken = default);
+            TDbContext dbContext, SessionInfo sessionInfo, CancellationToken cancellationToken = default);
         Task<int> TrimAsync(
             DateTime minLastSeenAt, int maxCount, CancellationToken cancellationToken = default);
 
@@ -47,78 +37,37 @@ namespace Stl.Fusion.EntityFramework.Authentication
             : base(services)
             => Options = options;
 
-        public virtual ValueTask<SessionInfo> FromDbEntityAsync(TDbContext dbContext, DbSessionInfo dbSessionInfo, CancellationToken cancellationToken)
-        {
-            if (dbSessionInfo.IsSignOutForced)
-                throw Errors.ForcedSignOut();
-
-            var sessionInfo = new SessionInfo() {
-                Id = dbSessionInfo.Id,
-                CreatedAt = dbSessionInfo.CreatedAt,
-                LastSeenAt = dbSessionInfo.LastSeenAt,
-                IPAddress = dbSessionInfo.IPAddress,
-                UserAgent = dbSessionInfo.UserAgent,
-                ExtraProperties = new ReadOnlyDictionary<string, object>(
-                    FromJson<Dictionary<string, object>>(dbSessionInfo.ExtraPropertiesJson) ?? new()),
-            };
-            return ValueTaskEx.FromResult(sessionInfo)!;
-        }
-
-        public virtual SessionInfo CreateGuestSessionInfo(string sessionId)
-        {
-            var now = Clock.Now;
-            return new SessionInfo(sessionId) {
-                CreatedAt = now,
-                LastSeenAt = now,
-            };
-        }
-
         // Write methods
 
-        public virtual async Task<DbSessionInfo> CreateOrUpdateAsync(
-            TDbContext dbContext, string sessionId,
-            long? userId, bool isSignOutForced,
-            CancellationToken cancellationToken = default)
+        public virtual async Task<DbSessionInfo> FindOrCreateAsync(
+            TDbContext dbContext, string sessionId, CancellationToken cancellationToken = default)
         {
             var dbSessionInfo = await FindAsync(dbContext, sessionId, cancellationToken).ConfigureAwait(false);
-            if (dbSessionInfo != null) {
-                if (dbSessionInfo.IsSignOutForced)
-                    throw Errors.ForcedSignOut();
-                dbSessionInfo.UserId = userId;
-                dbSessionInfo.IsSignOutForced = isSignOutForced;
+            if (dbSessionInfo?.IsSignOutForced == true)
+                throw Errors.ForcedSignOut();
+            if (dbSessionInfo == null) {
+                var sessionInfo = new SessionInfo(sessionId, Clock.Now);
+                dbSessionInfo = dbContext.Add(
+                    new TDbSessionInfo() {
+                        Id = sessionInfo.Id,
+                        CreatedAt = sessionInfo.CreatedAt,
+                    }).Entity;
+                dbSessionInfo.FromModel(sessionInfo);
                 await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-                return dbSessionInfo;
             }
-
-            var now = Clock.Now.ToDateTime();
-            dbSessionInfo = dbContext.Add(new TDbSessionInfo()).Entity;
-            dbSessionInfo.Id = sessionId;
-            dbSessionInfo.CreatedAt = now;
-            dbSessionInfo.LastSeenAt = now;
-            dbSessionInfo.UserId = userId;
-            dbSessionInfo.IsSignOutForced = isSignOutForced;
-            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             return dbSessionInfo;
         }
 
-        public virtual async Task<DbSessionInfo> CreateOrUpdateAsync(
-            TDbContext dbContext, SessionInfo sessionInfo,
-            CancellationToken cancellationToken = default)
+        public async Task<DbSessionInfo> CreateOrUpdateAsync(
+            TDbContext dbContext, SessionInfo sessionInfo, CancellationToken cancellationToken = default)
         {
             var dbSessionInfo = await FindAsync(dbContext, sessionInfo.Id, cancellationToken).ConfigureAwait(false);
-            if (dbSessionInfo == null) {
-                var now = Clock.Now.ToDateTime();
-                dbSessionInfo = dbContext.Add(new TDbSessionInfo()).Entity;
-                dbSessionInfo.Id = sessionInfo.Id;
-                dbSessionInfo.CreatedAt = now;
-            }
-            else if (dbSessionInfo.IsSignOutForced)
-                throw Errors.ForcedSignOut();
-
-            dbSessionInfo.LastSeenAt = sessionInfo.LastSeenAt;
-            dbSessionInfo.IPAddress = sessionInfo.IPAddress;
-            dbSessionInfo.UserAgent = sessionInfo.UserAgent;
-            dbSessionInfo.ExtraPropertiesJson = ToJson(sessionInfo.ExtraProperties!.ToDictionary(kv => kv.Key, kv => kv.Value));
+            dbSessionInfo ??= dbContext.Add(
+                new TDbSessionInfo() {
+                    Id = sessionInfo.Id,
+                    CreatedAt = sessionInfo.CreatedAt,
+                }).Entity;
+            dbSessionInfo.FromModel(sessionInfo);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             return dbSessionInfo;
         }
@@ -145,7 +94,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
         public virtual async Task<DbSessionInfo?> FindAsync(
             TDbContext dbContext, string sessionId, CancellationToken cancellationToken)
             => await dbContext.Set<TDbSessionInfo>()
-                .FindAsync(Key(sessionId), cancellationToken)
+                .FindAsync(ComposeKey(sessionId), cancellationToken)
                 .ConfigureAwait(false);
 
         public virtual async Task<DbSessionInfo[]> ListByUserAsync(
@@ -159,16 +108,5 @@ namespace Stl.Fusion.EntityFramework.Authentication
             var sessions = (DbSessionInfo[]) await qSessions.ToArrayAsync(cancellationToken).ConfigureAwait(false);
             return sessions;
         }
-
-        // Protected methods
-
-        protected virtual string ToJson<T>(T source)
-            => JsonSerialized.New(source).SerializedValue;
-
-        protected virtual T? FromJson<T>(string json)
-            => JsonSerialized.New<T>(json).Value;
-
-        protected object[] Key(params object[] components)
-            => components;
     }
 }

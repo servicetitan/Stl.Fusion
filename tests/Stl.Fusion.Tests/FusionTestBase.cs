@@ -154,6 +154,7 @@ namespace Stl.Fusion.Tests
                             });
                     else
                         builder.UseSqlite($"Data Source={DbPath}", sqlite => { });
+                    builder.EnableSensitiveDataLogging();
                 }, 256);
                 services.AddDbContextServices<TestDbContext>(b => {
                     b.AddDbEntityResolver<long, User>();

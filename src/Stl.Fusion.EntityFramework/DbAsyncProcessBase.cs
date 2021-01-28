@@ -42,5 +42,8 @@ namespace Stl.Fusion.EntityFramework
 
         protected IDbOperationScope<TDbContext> BeginOperation()
             => Services.GetRequiredService<IDbOperationScope<TDbContext>>();
+
+        protected object[] ComposeKey(params object[] components)
+            => components;
     }
 }

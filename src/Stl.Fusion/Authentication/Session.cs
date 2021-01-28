@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using Newtonsoft.Json;
 using Stl.Fusion.Authentication.Internal;
 using Stl.Text;
@@ -26,11 +27,16 @@ namespace Stl.Fusion.Authentication
             _id = id;
         }
 
-        public override string ToString() => Id;
-        public Symbol ToSymbol() => _id;
+        // Conversion
 
+        public Symbol ToSymbol() => _id;
+        public override string ToString() => Id;
+
+        public static implicit operator Symbol(Session session) => session.ToSymbol();
+        public static implicit operator string(Session session) => session.Id;
+
+        Symbol IConvertibleTo<Symbol>.Convert() => ToSymbol();
         string IConvertibleTo<string>.Convert() => Id;
-        Symbol IConvertibleTo<Symbol>.Convert() => _id;
 
         // Equality
 

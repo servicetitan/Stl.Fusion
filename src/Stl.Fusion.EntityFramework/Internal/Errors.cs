@@ -14,13 +14,16 @@ namespace Stl.Fusion.EntityFramework.Internal
 
         public static Exception AuthenticatedUserRequired()
             => new InvalidOperationException("This method requires an authenticated user.");
-        public static Exception UserNotFound()
-            => new InvalidOperationException("User with the specified Id is not found.");
         public static Exception ForcedSignOut()
             => Stl.Fusion.Authentication.Internal.Errors.ForcedSignOut();
         public static Exception NoOperationsFrameworkServices()
             => new InvalidOperationException(
                 "Operations Framework services aren't registered. " +
                 "Call DbContextBuilder<TDbContext>.AddDbOperations before calling this method to add them.");
+
+        public static Exception EntityNotFound<TEntity>()
+            => EntityNotFound(typeof(TEntity));
+        public static Exception EntityNotFound(Type entityType)
+            => new InvalidOperationException($"Requested {entityType.Name} entity is not found.");
     }
 }

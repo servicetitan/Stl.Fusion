@@ -10,6 +10,7 @@ namespace Stl.Text
     {
         public static readonly ListFormat Default = new('|');
         public static readonly ListFormat CommaSeparated = new(',');
+        public static readonly ListFormat SlashSeparated = new('/');
         public static readonly ListFormat TabSeparated = new('\t');
 
         public readonly char Delimiter;
@@ -103,7 +104,7 @@ namespace Stl.Text
 
     public ref struct ListParser
     {
-        public ListFormat Format => new ListFormat(Delimiter, Escape, NoItems);
+        public ListFormat Format => new(Delimiter, Escape, NoItems);
         public readonly char Delimiter;
         public readonly char Escape;
         public readonly string NoItems;

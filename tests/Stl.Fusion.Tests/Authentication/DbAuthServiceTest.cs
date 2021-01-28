@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
@@ -43,13 +44,12 @@ namespace Stl.Fusion.Tests.Authentication
             var sessionFactory = ClientServices.GetRequiredService<ISessionFactory>();
             var sessionA = sessionFactory.CreateSession();
             var sessionB = sessionFactory.CreateSession();
-            var bob   = new User("Local", "", "Bob");
+            var bob = new User("", "Bob");
 
             var session = sessionA;
             await WebServices.Commander().CallAsync(new SignInCommand(bob, session).MarkServerSide());
             var user = await authServer.GetUserAsync(session);
             user.Name.Should().Be(bob.Name);
-            user.AuthenticationType.Should().Be(bob.AuthenticationType);
             long.TryParse(user.Id, out var _).Should().BeTrue();
             user.Claims.Count.Should().Be(0);
             bob = user;
@@ -94,17 +94,17 @@ namespace Stl.Fusion.Tests.Authentication
             var sessionFactory = ClientServices.GetRequiredService<ISessionFactory>();
             var sessionA = sessionFactory.CreateSession();
             var sessionB = sessionFactory.CreateSession();
-            var bob = new User("Google", "", "Bob").WithExternalId("g:1");
+            var bob = new User("", "Bob")
+                .WithClaim("id", "bob")
+                .WithIdentity("g:1");
 
             var session = sessionA;
             await authServer.SignInAsync(new SignInCommand(bob, session).MarkServerSide());
             var user = await authServer.GetUserAsync(session);
             user.Name.Should().Be(bob.Name);
-            user.AuthenticationType.Should().Be(bob.AuthenticationType);
             long.TryParse(user.Id, out var _).Should().BeTrue();
             user.Claims.Count.Should().Be(1);
-            user.GetExternalId("Google").Should().Be("g:1");
-            user.ListExternalIds().Should().BeEquivalentTo(new[] {("Google", "g:1")});
+            user.Identities.Keys.Select(i => i.Id.Value).Should().BeEquivalentTo(new [] {"g:1"});
             bob = user;
 
             // Checking if the client is able to see the same user & sessions
@@ -145,7 +145,6 @@ namespace Stl.Fusion.Tests.Authentication
 
             var session = sessionFactory.CreateSession();
             var user = await authServer.GetUserAsync(session);
-            user.AuthenticationType.Should().Be("");
             user.Id.Should().Be(new User(session.Id).Id);
             user.Name.Should().Be(User.GuestName);
             user.IsAuthenticated.Should().BeFalse();
@@ -158,14 +157,14 @@ namespace Stl.Fusion.Tests.Authentication
             var sessionFactory = ClientServices.GetRequiredService<ISessionFactory>();
 
             var session = sessionFactory.CreateSession();
-            await Assert.ThrowsAsync<InvalidOperationException>(async() => {
-                var guest = new User("<guestId>");
+            await Assert.ThrowsAsync<FormatException>(async() => {
+                var guest = new User("notANumber", "Guest");
                 await authServer.SignInAsync(new SignInCommand(guest, session).MarkServerSide());
             });
-            await Assert.ThrowsAsync<InvalidOperationException>(async() => {
-                var guest = new User("");
-                await authServer.SignInAsync(new SignInCommand(guest, session).MarkServerSide());
-            });
+            var bob = new User("", "Bob");
+            await authServer.SignInAsync(new SignInCommand(bob, session).MarkServerSide());
+            var user = await authServer.GetUserAsync(session);
+            user.Name.Should().Be("Bob");
         }
     }
 }
