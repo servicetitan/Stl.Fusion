@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Stl.CommandR;
 using Stl.Fusion.Operations;
 using Stl.IO;
+using Stl.Text;
 
 namespace Stl.Fusion.EntityFramework.Operations
 {

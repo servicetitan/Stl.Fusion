@@ -93,7 +93,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
         public virtual async Task<DbUser?> FindByIdentityAsync(
             TDbContext dbContext, UserIdentity userIdentity, CancellationToken cancellationToken = default)
         {
-            if (!userIdentity.IsAuthenticated)
+            if (!userIdentity.IsValid)
                 return null;
             var dbUserIdentities = await dbContext.Set<DbUserIdentity>()
                 .FindAsync(ComposeKey(userIdentity.Id.Value), cancellationToken)

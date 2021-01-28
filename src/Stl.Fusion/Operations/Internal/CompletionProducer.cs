@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.CommandR;
+using Stl.Text;
 
 namespace Stl.Fusion.Operations.Internal
 {

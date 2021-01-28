@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Async;
 using Stl.Collections;
+using Stl.Text;
 using Stl.Time;
 
 namespace Stl.Fusion.Operations
@@ -28,8 +29,8 @@ namespace Stl.Fusion.Operations
         protected AgentInfo AgentInfo { get; }
         protected IMomentClock Clock { get; }
         protected IOperationCompletionListener[] OperationCompletionHandlers { get; }
-        protected BinaryHeap<Moment, string> KnownOperationHeap { get; } = new();
-        protected HashSet<string> KnownOperationSet { get; } = new();
+        protected BinaryHeap<Moment, Symbol> KnownOperationHeap { get; } = new();
+        protected HashSet<Symbol> KnownOperationSet { get; } = new();
         protected object Lock { get; } = new();
         protected ILogger Log { get; }
 
@@ -52,9 +53,10 @@ namespace Stl.Fusion.Operations
         {
             var now = Clock.Now;
             var minOperationStartTime = now - MaxKnownOperationAge;
-            var operationStartTime = operation.StartTime.DefaultKind(DateTimeKind.Utc).ToMoment();
+            var operationStartTime = operation.StartTime.ToMoment();
+            var operationId = (Symbol) operation.Id;
             lock (Lock) {
-                if (KnownOperationSet.Contains(operation.Id))
+                if (KnownOperationSet.Contains(operationId))
                     return false;
                 // Removing some operations if there are too many
                 while (KnownOperationSet.Count >= MaxKnownOperationCount) {
@@ -69,8 +71,8 @@ namespace Stl.Fusion.Operations
                     KnownOperationSet.Remove(value.Value);
                 }
                 // Adding the current one
-                if (KnownOperationSet.Add(operation.Id))
-                    KnownOperationHeap.Add(operationStartTime, operation.Id);
+                if (KnownOperationSet.Add(operationId))
+                    KnownOperationHeap.Add(operationStartTime, operationId);
             }
             using var _ = ExecutionContextEx.SuppressFlow();
             Task.Run(() => {

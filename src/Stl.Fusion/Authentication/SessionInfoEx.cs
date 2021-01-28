@@ -10,7 +10,9 @@ namespace Stl.Fusion.Authentication
             if (sessionInfo != null && !sessionInfo.IsSignOutForced)
                 return sessionInfo;
             clock ??= SystemClock.Instance;
-            return new SessionInfo(sessionId, clock.Now);
+            return new SessionInfo(sessionId, clock.Now) {
+                IsSignOutForced = sessionInfo?.IsSignOutForced ?? false,
+            };
         }
     }
 }

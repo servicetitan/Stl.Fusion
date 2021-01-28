@@ -56,7 +56,7 @@ namespace Stl.Fusion.Operations.Internal
                 var id = Interlocked.Increment(ref _surrogateOperationId);
                 var operation = new EphemeralOperation() {
                     Id = $"Local-{id}",
-                    AgentId = AgentInfo.Id.Value,
+                    AgentId = AgentInfo.Id,
                     Command = command,
                     StartTime = startTime,
                     CommitTime = Clock.Now,

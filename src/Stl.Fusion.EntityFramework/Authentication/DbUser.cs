@@ -56,7 +56,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             // Adding new identities
             var identities = Identities.ToDictionary(ui => ui.Id);
             foreach (var (userIdentity, secret) in source.Identities) {
-                if (!userIdentity.IsAuthenticated)
+                if (!userIdentity.IsValid)
                     continue;
                 var foundIdentity = identities.GetValueOrDefault(userIdentity.Id);
                 if (foundIdentity != null) {

@@ -8,21 +8,18 @@ namespace Stl.Fusion.Authentication
     {
         private static readonly ListFormat IdFormat = ListFormat.SlashSeparated;
         public static string DefaultAuthenticationType { get; } = "Default";
-        private readonly Symbol _id;
 
-        // Never returns Symbol.Null, though Symbol.Empty is allowed
-        public Symbol Id => ReferenceEquals(_id.Value, null!) ? Symbol.Empty : _id;
-
+        public Symbol Id { get; }
         [JsonIgnore]
-        public bool IsAuthenticated => !string.IsNullOrEmpty(Id.Value);
+        public bool IsValid => !Id.IsEmpty;
 
         [JsonConstructor]
         public UserIdentity(Symbol id)
-            => _id = id;
+            => Id = id;
         public UserIdentity(string id)
-            => _id = id;
+            => Id = id;
         public UserIdentity(string provider, string providerBoundId)
-            => _id = FormatId(provider, providerBoundId);
+            => Id = FormatId(provider, providerBoundId);
 
         // Conversion
 

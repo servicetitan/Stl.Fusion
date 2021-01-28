@@ -32,6 +32,7 @@ namespace Stl.Fusion.Tests
     public class FusionTestOptions
     {
         public bool UseInMemoryDatabase { get; set; }
+        public bool UseInProcessAuthService { get; set; }
     }
 
     public class FusionTestBase : TestBase, IAsyncLifetime
@@ -166,8 +167,11 @@ namespace Stl.Fusion.Tests
                     var dbOpLogChangedFilePath = DbPath + "_changed";
                     b.AddFileBasedDbOperationLogChangeNotifier(dbOpLogChangedFilePath);
                     b.AddFileBasedDbOperationLogChangeMonitor(dbOpLogChangedFilePath);
-                    b.AddDbAuthentication();
+                    if (!Options.UseInProcessAuthService)
+                        b.AddDbAuthentication();
                 });
+                if (Options.UseInProcessAuthService)
+                    fusion.AddAuthentication().AddServerSideAuthService();
 
                 // WebHost
                 var webHost = (FusionTestWebHost?) WebHost;

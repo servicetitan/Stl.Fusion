@@ -24,18 +24,18 @@ namespace Stl.Fusion.EntityFramework.Authentication
 
         [Key] public string Id { get; set; } = "";
         public DateTime CreatedAt {
-            get => _createdAt;
+            get => _createdAt.DefaultKind(DateTimeKind.Utc);
             set => _createdAt = value.DefaultKind(DateTimeKind.Utc);
         }
         public DateTime LastSeenAt {
-            get => _lastSeenAt;
+            get => _lastSeenAt.DefaultKind(DateTimeKind.Utc);
             set => _lastSeenAt = value.DefaultKind(DateTimeKind.Utc);
         }
         public string IPAddress { get; set; } = "";
         public string UserAgent { get; set; } = "";
 
         // Authentication
-        public string AuthenticatedAs { get; set; } = "";
+        public string AuthenticatedIdentity { get; set; } = "";
         public long? UserId { get; set; }
         public bool IsSignOutForced { get; set; }
 
@@ -62,7 +62,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
                 Options = Options,
 
                 // Authentication
-                AuthenticatedAs = AuthenticatedAs,
+                AuthenticatedIdentity = AuthenticatedIdentity,
                 UserId = UserId?.ToString() ?? "",
                 IsSignOutForced = IsSignOutForced,
             };
@@ -81,7 +81,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             UserAgent = source.UserAgent;
             Options = source.Options;
 
-            AuthenticatedAs = source.AuthenticatedAs;
+            AuthenticatedIdentity = source.AuthenticatedIdentity;
             UserId = string.IsNullOrEmpty(source.UserId)
                 ? null
                 : long.Parse(source.UserId);

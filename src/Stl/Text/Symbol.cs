@@ -12,16 +12,19 @@ namespace Stl.Text
     public readonly struct Symbol : IEquatable<Symbol>, IComparable<Symbol>,
         IConvertibleTo<string>, ISerializable
     {
-        public static readonly Symbol Null = default;
         public static readonly Symbol Empty = new("");
 
-        public readonly string Value;
-        public readonly int HashCode;
+        private readonly string? _value;
+        private readonly int _hashCode;
+
+        public string Value => _value ?? "";
+        public int HashCode => _hashCode;
+        public bool IsEmpty => Value.Length == 0;
 
         public Symbol(string value)
         {
-            Value = value;
-            HashCode = value?.GetHashCode() ?? 0;
+            _value = value ?? "";
+            _hashCode = _value.Length == 0 ? 0 : _value.GetHashCode();
         }
 
         public override string ToString() => Value;
@@ -50,8 +53,8 @@ namespace Stl.Text
 #pragma warning disable CS8618
         private Symbol(SerializationInfo info, StreamingContext context)
         {
-            Value = info.GetString(nameof(Value))!;
-            HashCode = Value?.GetHashCode() ?? 0;
+            _value = info.GetString(nameof(Value)) ?? "";
+            _hashCode = _value.Length == 0 ? 0 : _value.GetHashCode();
         }
 #pragma warning restore CS8618
 

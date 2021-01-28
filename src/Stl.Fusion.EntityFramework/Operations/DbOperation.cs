@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using Stl.Collections;
 using Stl.Fusion.Operations;
 using Stl.Serialization;
+using Stl.Text;
 using Stl.Time;
 
 namespace Stl.Fusion.EntityFramework.Operations
@@ -25,12 +26,12 @@ namespace Stl.Fusion.EntityFramework.Operations
         public string AgentId { get; set; } = "";
 
         public DateTime StartTime {
-            get => _startTime;
+            get => _startTime.DefaultKind(DateTimeKind.Utc);
             set => _startTime = value.DefaultKind(DateTimeKind.Utc);
         }
 
         public DateTime CommitTime {
-            get => _commitTime;
+            get => _commitTime.DefaultKind(DateTimeKind.Utc);
             set => _commitTime = value.DefaultKind(DateTimeKind.Utc);
         }
 

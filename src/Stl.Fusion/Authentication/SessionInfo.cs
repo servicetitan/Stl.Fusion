@@ -1,12 +1,13 @@
 using System;
 using System.Text.Json.Serialization;
 using Stl.Collections;
+using Stl.Text;
 
 namespace Stl.Fusion.Authentication
 {
-    public sealed record SessionInfo : IHasId<string>
+    public sealed record SessionInfo : IHasId<Symbol>
     {
-        public string Id { get; init; } = "";
+        public Symbol Id { get; init; } = Symbol.Empty;
         public DateTime CreatedAt { get; init; }
         public DateTime LastSeenAt { get; init; }
         public string IPAddress { get; init; } = "";
@@ -14,11 +15,11 @@ namespace Stl.Fusion.Authentication
         public ImmutableOptionSet Options { get; init; } = ImmutableOptionSet.Empty;
 
         // Authentication
-        public UserIdentity AuthenticatedAs { get; init; }
+        public UserIdentity AuthenticatedIdentity { get; init; }
         public string UserId { get; init; } = "";
         public bool IsSignOutForced { get; init; }
         [JsonIgnore]
-        public bool IsAuthenticated => !string.IsNullOrEmpty(UserId);
+        public bool HasUser => !string.IsNullOrEmpty(UserId);
 
         public SessionInfo() { }
         public SessionInfo(string id) => Id = id;

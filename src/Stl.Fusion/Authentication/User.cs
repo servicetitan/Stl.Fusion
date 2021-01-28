@@ -5,35 +5,37 @@ using System.Runtime.CompilerServices;
 using System.Security.Claims;
 using System.Security.Principal;
 using Newtonsoft.Json;
+using Stl.Text;
 
 namespace Stl.Fusion.Authentication
 {
 
-    public record User : IPrincipal, IIdentity, IHasId<string>
+    public record User : IPrincipal, IIdentity, IHasId<Symbol>
     {
         public static string GuestIdPrefix { get; } = "@guest/";
         public static string GuestName { get; } = "Guest";
 
         private readonly Lazy<ClaimsPrincipal> _claimsPrincipalLazy;
 
-        public string Id { get; init; }
+        public Symbol Id { get; init; }
         public string Name { get; init; }
         public ImmutableDictionary<string, string> Claims { get; init; }
         public ImmutableDictionary<UserIdentity, string> Identities { get; init; }
         [JsonIgnore]
-        public bool IsAuthenticated => !(string.IsNullOrEmpty(Id) || Id.StartsWith(GuestIdPrefix));
+        public bool IsGuest => Id.Value.StartsWith(GuestIdPrefix);
         [JsonIgnore]
         public ClaimsPrincipal ClaimsPrincipal => _claimsPrincipalLazy.Value;
 
         // Explicit interface implementations
         string IIdentity.AuthenticationType => UserIdentity.DefaultAuthenticationType;
+        bool IIdentity.IsAuthenticated => !IsGuest;
         IIdentity IPrincipal.Identity => this;
 
         // Guest user constructor
         public User(string guestIdSuffix) : this(GuestIdPrefix + guestIdSuffix, GuestName) { }
         // Primary constructor
         [JsonConstructor]
-        public User(string id, string name)
+        public User(Symbol id, string name)
         {
             Id = id;
             Name = name;

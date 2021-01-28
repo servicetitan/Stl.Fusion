@@ -59,7 +59,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             var userIdentity = user.Identities.FirstOrDefault().Key;
             var sessionInfo = dbSessionInfo.ToModel() with {
                 LastSeenAt = Clock.Now,
-                AuthenticatedAs = userIdentity,
+                AuthenticatedIdentity = userIdentity,
                 UserId = dbUser.Id.ToString(),
             };
             context.Items.Set(OperationItem.New(sessionInfo));
@@ -85,7 +85,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             context.Items.Set(OperationItem.New(sessionInfo));
             sessionInfo = sessionInfo with {
                 LastSeenAt = Clock.Now,
-                AuthenticatedAs = "",
+                AuthenticatedIdentity = "",
                 UserId = "",
                 IsSignOutForced = force,
             };
@@ -99,7 +99,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             if (Computed.IsInvalidating()) {
                 GetSessionInfoAsync(session, default).Ignore();
                 var invSessionInfo = context.Items.Get<OperationItem<SessionInfo>>().Value;
-                if (invSessionInfo.IsAuthenticated)
+                if (invSessionInfo.HasUser)
                     GetUserSessionsAsync(sessionInfo.UserId, default).Ignore();
                 return;
             }
@@ -148,7 +148,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
         public virtual async Task<User> GetUserAsync(Session session, CancellationToken cancellationToken = default)
         {
             var sessionInfo = await GetSessionInfoAsync(session, cancellationToken).ConfigureAwait(false);
-            if (sessionInfo.IsSignOutForced || !sessionInfo.IsAuthenticated)
+            if (sessionInfo.IsSignOutForced || !sessionInfo.HasUser)
                 return new User(session.Id);
             var user = await TryGetUserAsync(sessionInfo.UserId, cancellationToken).ConfigureAwait(false);
             return user ?? new User(session.Id);
@@ -172,7 +172,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             Session session, CancellationToken cancellationToken = default)
         {
             var user = await GetUserAsync(session, cancellationToken).ConfigureAwait(false);
-            if (!user.IsAuthenticated)
+            if (user.IsGuest)
                 return Array.Empty<SessionInfo>();
             return await GetUserSessionsAsync(user.Id, cancellationToken).ConfigureAwait(false);
         }

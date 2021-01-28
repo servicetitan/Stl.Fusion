@@ -1,13 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Operations;
-using Stl.Time;
+using Stl.Text;
 
 namespace Stl.Fusion.EntityFramework.Operations
 {
@@ -37,7 +36,7 @@ namespace Stl.Fusion.EntityFramework.Operations
         public IOperation New(string? id = null, string? agentId = null, object? command = null)
             => new TDbOperation() {
                 Id = id ?? Ulid.NewUlid().ToString(),
-                AgentId = agentId ?? AgentInfo.Id.Value,
+                AgentId = agentId ?? AgentInfo.Id,
                 StartTime = Clock.Now,
                 Command = command,
             };
@@ -59,7 +58,7 @@ namespace Stl.Fusion.EntityFramework.Operations
             var operation = await dbContext.Set<TDbOperation>().AsQueryable()
                 .FirstOrDefaultAsync(e => e.Id == id, cancellationToken)
                 .ConfigureAwait(false);
-            return AsOperation(operation);
+            return operation;
         }
 
         public virtual async Task<List<IOperation>> ListNewlyCommittedAsync(
@@ -70,7 +69,7 @@ namespace Stl.Fusion.EntityFramework.Operations
                 .Where(o => o.CommitTime >= minCommitTime)
                 .OrderBy(o => o.CommitTime)
                 .ToListAsync(cancellationToken).ConfigureAwait(false);
-            return operations.Select(AsOperation).ToList()!;
+            return operations.Cast<IOperation>().ToList()!;
         }
 
         public virtual async Task<int> TrimAsync(DateTime minCommitTime, int maxCount, CancellationToken cancellationToken)
@@ -88,16 +87,6 @@ namespace Stl.Fusion.EntityFramework.Operations
                 dbContext.Remove(operation);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             return operations.Count;
-        }
-
-        [return: NotNullIfNotNull("operation")]
-        protected IOperation? AsOperation(TDbOperation? operation)
-        {
-            if (operation == null)
-                return null;
-            operation.StartTime = operation.StartTime.DefaultKind(DateTimeKind.Utc);
-            operation.CommitTime = operation.CommitTime.DefaultKind(DateTimeKind.Utc);
-            return operation;
         }
     }
 }
