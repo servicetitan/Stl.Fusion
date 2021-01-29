@@ -18,7 +18,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             public LogLevel LogLevel { get; set; } = LogLevel.Information;
         }
 
-        protected IDbSessionInfoBackend<TDbContext> Sessions { get; }
+        protected IDbSessionInfoRepo<TDbContext> Sessions { get; }
         protected TimeSpan CheckInterval { get; }
         protected TimeSpan MaxSessionAge { get; }
         protected int BatchSize { get; }
@@ -35,7 +35,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             CheckInterval = options.CheckInterval;
             MaxSessionAge = options.MaxSessionAge;
             BatchSize = options.BatchSize;
-            Sessions = services.GetRequiredService<IDbSessionInfoBackend<TDbContext>>();
+            Sessions = services.GetRequiredService<IDbSessionInfoRepo<TDbContext>>();
             Random = new Random();
         }
 

@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
+    <RootNamespace>Templates.Blazor2.UI</RootNamespace>
+    <AssemblyName>Templates.Blazor2.UI</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Blazorise" />
+    <PackageReference Include="Blazorise.Bootstrap" />
+    <PackageReference Include="Blazorise.DataGrid" />
+    <PackageReference Include="Blazorise.Icons.FontAwesome" />
+    <PackageReference Include="Blazorise.Sidebar" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
+    <PackageReference Include="Pluralize.NET" />
+    <PackageReference Include="UAParser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Stl.Fusion.Blazor\Stl.Fusion.Blazor.csproj" />
+    <ProjectReference Include="..\Abstractions\Abstractions.csproj" />
+  </ItemGroup>
+
+</Project>

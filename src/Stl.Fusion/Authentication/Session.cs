@@ -12,6 +12,8 @@ namespace Stl.Fusion.Authentication
     public sealed class Session : IHasId<Symbol>, IEquatable<Session>,
         IConvertibleTo<string>, IConvertibleTo<Symbol>
     {
+        public static Session Null { get; } = null!; // To gracefully bypass some nullability checks
+
         public Symbol Id { get; }
 
         [JsonConstructor]

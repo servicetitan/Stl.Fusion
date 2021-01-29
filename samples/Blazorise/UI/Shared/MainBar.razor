@@ -1,0 +1,38 @@
+﻿@using RenderFragment = Microsoft.AspNetCore.Components.RenderFragment
+<Bar
+    Breakpoint="Breakpoint.Desktop"
+    Padding="Padding.Is1.Is3.FromRight"
+    Background="Background.Light"
+    ThemeContrast="ThemeContrast.Light">
+    <BarBrand>
+        <BarLink Title="Home" To="/" Match="@Match.All" Class="link-unstyled">Blazorise Template</BarLink>
+    </BarBrand>
+    <BarMenu>
+        <BarStart>
+            <BarItem>
+                @Link(IconName.Home, "Home", "/", Match.All)
+            </BarItem>
+            <BarItem>
+                @Link(IconName.Clock, "Server Time", "/serverTime", Match.All)
+            </BarItem>
+            <BarItem>
+                @Link(IconName.Key, "Authentication", "/authentication", Match.All)
+            </BarItem>
+        </BarStart>
+        <BarEnd>
+            <BarItem>
+                <BarBlazorModeSwitch/>
+            </BarItem>
+        </BarEnd>
+    </BarMenu>
+</Bar>
+
+@code {
+    private RenderFragment Link(object icon, string title, string href, Match match = Match.Prefix)
+    {
+        var target = href.StartsWith("http://") || href.StartsWith("https://") ? Target.Blank : Target.None;
+        return @<BarItem>
+                   <BarLink Title="@title" To="@href" Target="@target" Match="@match"><BarIcon IconName="@icon"></BarIcon> @title</BarLink>
+               </BarItem>;
+    }
+}

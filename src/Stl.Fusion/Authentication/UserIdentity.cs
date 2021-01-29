@@ -7,6 +7,7 @@ namespace Stl.Fusion.Authentication
     public readonly struct UserIdentity : IEquatable<UserIdentity>
     {
         private static readonly ListFormat IdFormat = ListFormat.SlashSeparated;
+        public static UserIdentity None { get; } = default;
         public static string DefaultAuthenticationType { get; } = "Default";
 
         public Symbol Id { get; }
@@ -43,9 +44,9 @@ namespace Stl.Fusion.Authentication
         public static bool operator ==(UserIdentity left, UserIdentity right) => left.Equals(right);
         public static bool operator !=(UserIdentity left, UserIdentity right) => !left.Equals(right);
 
-        // Static FormatId, ParseId
+        // Private methods
 
-        public static string FormatId(string authenticationType, string userId)
+        private static string FormatId(string authenticationType, string userId)
         {
             var formatter = IdFormat.CreateFormatter(StringBuilderEx.Acquire());
             try {
@@ -60,7 +61,7 @@ namespace Stl.Fusion.Authentication
             }
         }
 
-        public static (string AuthenticationType, string UserId) ParseId(string id)
+        private static (string AuthenticationType, string UserId) ParseId(string id)
         {
             if (string.IsNullOrEmpty(id))
                 return ("", "");

@@ -8,7 +8,7 @@ using Stl.Fusion.EntityFramework.Internal;
 
 namespace Stl.Fusion.EntityFramework.Authentication
 {
-    public interface IDbUserBackend<in TDbContext>
+    public interface IDbUserRepo<in TDbContext>
         where TDbContext : DbContext
     {
         // Write methods
@@ -24,14 +24,14 @@ namespace Stl.Fusion.EntityFramework.Authentication
             TDbContext dbContext, UserIdentity userIdentity, CancellationToken cancellationToken = default);
     }
 
-    public class DbUserBackend<TDbContext, TDbUser> : DbServiceBase<TDbContext>,
-        IDbUserBackend<TDbContext>
+    public class DbUserRepo<TDbContext, TDbUser> : DbServiceBase<TDbContext>,
+        IDbUserRepo<TDbContext>
         where TDbContext : DbContext
         where TDbUser : DbUser, new()
     {
         protected DbAuthService<TDbContext>.Options Options { get; }
 
-        public DbUserBackend(DbAuthService<TDbContext>.Options options, IServiceProvider services)
+        public DbUserRepo(DbAuthService<TDbContext>.Options options, IServiceProvider services)
             : base(services)
             => Options = options;
 

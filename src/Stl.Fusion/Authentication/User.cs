@@ -22,13 +22,13 @@ namespace Stl.Fusion.Authentication
         public ImmutableDictionary<string, string> Claims { get; init; }
         public ImmutableDictionary<UserIdentity, string> Identities { get; init; }
         [JsonIgnore]
-        public bool IsGuest => Id.Value.StartsWith(GuestIdPrefix);
+        public bool IsAuthenticated => !(Id.IsEmpty || Id.Value.StartsWith(GuestIdPrefix));
+        [JsonIgnore]
+        public string AuthenticationType => IsAuthenticated ? UserIdentity.DefaultAuthenticationType : "";
         [JsonIgnore]
         public ClaimsPrincipal ClaimsPrincipal => _claimsPrincipalLazy.Value;
 
         // Explicit interface implementations
-        string IIdentity.AuthenticationType => UserIdentity.DefaultAuthenticationType;
-        bool IIdentity.IsAuthenticated => !IsGuest;
         IIdentity IPrincipal.Identity => this;
 
         // Guest user constructor
@@ -43,6 +43,16 @@ namespace Stl.Fusion.Authentication
             Identities = ImmutableDictionary<UserIdentity, string>.Empty;
             _claimsPrincipalLazy = new(ToClaimsPrincipal);
         }
+        // Record copy constructor.
+        // Overriden to ensure _claimsPrincipalLazy is recreated.
+        protected User(User other)
+        {
+            Id = other.Id;
+            Name = other.Name;
+            Claims = other.Claims;
+            Identities = other.Identities;
+            _claimsPrincipalLazy = new(ToClaimsPrincipal);
+        }
 
         public User WithClaim(string name, string value)
             => this with { Claims = Claims.SetItem(name, value) };
@@ -53,10 +63,11 @@ namespace Stl.Fusion.Authentication
             => Claims.ContainsKey($"{ClaimTypes.Role}/{role}");
 
         public virtual User ToClientSideUser()
-            => this with {
-                Identities = ImmutableDictionary<UserIdentity, string>.Empty
-            };
-
+            => Identities.IsEmpty
+                ? this
+                : this with {
+                    Identities = ImmutableDictionary<UserIdentity, string>.Empty
+                };
 
         // Equality is changed back to reference-based
 
@@ -67,13 +78,15 @@ namespace Stl.Fusion.Authentication
 
         protected virtual ClaimsPrincipal ToClaimsPrincipal()
         {
-            var claims = new List<Claim>() {
-                new(ClaimTypes.NameIdentifier, Id, ClaimValueTypes.String),
-                new(ClaimTypes.Name, Name, ClaimValueTypes.String),
-            };
+            var claims = new List<Claim>();
+            if (!Id.IsEmpty)
+                claims.Add(new(ClaimTypes.NameIdentifier, Id, ClaimValueTypes.String));
+            if (!string.IsNullOrEmpty(Name))
+                claims.Add(new(ClaimTypes.Name, Name, ClaimValueTypes.String));
             foreach (var (key, value) in Claims)
                 claims.Add(new Claim(key, value));
-            return new ClaimsPrincipal(new ClaimsIdentity(claims, UserIdentity.DefaultAuthenticationType));
+            var claimsIdentity = new ClaimsIdentity(claims, AuthenticationType);
+            return new ClaimsPrincipal(claimsIdentity);
         }
     }
 }

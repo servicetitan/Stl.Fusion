@@ -26,7 +26,7 @@ namespace Stl.Fusion.Authentication
         [CommandHandler]
         Task SignInAsync(SignInCommand command, CancellationToken cancellationToken = default);
         [CommandHandler]
-        Task SaveSessionInfoAsync(SaveSessionInfoCommand command, CancellationToken cancellationToken = default);
+        Task<SessionInfo> SetupSessionAsync(SetupSessionCommand command, CancellationToken cancellationToken = default);
         [ComputeMethod]
         Task<User?> TryGetUserAsync(string userId, CancellationToken cancellationToken = default);
     }

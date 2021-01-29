@@ -14,5 +14,14 @@ namespace Stl.Fusion.Authentication
                 IsSignOutForced = sessionInfo?.IsSignOutForced ?? false,
             };
         }
+
+        public static SessionInfo OrDefault(this SessionInfo? sessionInfo, string sessionId, Moment now)
+        {
+            if (sessionInfo != null && !sessionInfo.IsSignOutForced)
+                return sessionInfo;
+            return new SessionInfo(sessionId, now) {
+                IsSignOutForced = sessionInfo?.IsSignOutForced ?? false,
+            };
+        }
     }
 }

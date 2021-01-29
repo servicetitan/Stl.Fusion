@@ -10,11 +10,18 @@
     <AspNetCoreVersion3>3.*</AspNetCoreVersion3>
     <BlazorVersion>5.*</BlazorVersion>
     <BlazorVersion3>3.*</BlazorVersion3>
+    <BlazoriseVersion>0.9.*</BlazoriseVersion>
     <SystemNetHttpJsonVersion>5.*</SystemNetHttpJsonVersion>
     <StlFusionVersion>0.*</StlFusionVersion>
   </PropertyGroup>
 
   <ItemGroup Label="Nupkg Versions">
+    <PackageReference Update="AspNet.Security.OAuth.GitHub" Version="5.*" />
+    <PackageReference Update="Blazorise" Version="$(BlazoriseVersion)" />
+    <PackageReference Update="Blazorise.Bootstrap" Version="$(BlazoriseVersion)" />
+    <PackageReference Update="Blazorise.DataGrid" Version="$(BlazoriseVersion)" />
+    <PackageReference Update="Blazorise.Icons.FontAwesome" Version="$(BlazoriseVersion)" />
+    <PackageReference Update="Blazorise.Sidebar" Version="$(BlazoriseVersion)" />
     <PackageReference Update="Bullseye" Version="3.7.*" />
     <PackageReference Update="Castle.Core" Version="4.4.*" />
     <PackageReference Update="Castle.Core.AsyncInterceptor" Version="1.7.*" />
@@ -22,6 +29,7 @@
     <PackageReference Update="DataAnnotationsValidatorNetStandard" Version="1.0.*" />
     <PackageReference Update="Enums.NET" Version="3.0.*" />
     <PackageReference Update="FluentAssertions" Version="5.10.*" />
+    <PackageReference Update="Microsoft.AspNetCore.Authentication.Cookies" Version="2.2.*" />
     <PackageReference Update="Microsoft.AspNetCore.Components" Version="$(AspNetCoreVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.Components.Authorization" Version="$(AspNetCoreVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.Components.Web" Version="$(AspNetCoreVersion)" />
@@ -49,6 +57,7 @@
     <PackageReference Update="Microsoft.EntityFrameworkCore.SqlServer" Version="$(EntityFrameworkCoreVersion)" />
     <PackageReference Update="MsgPack.Cli" Version="1.0.*" />
     <PackageReference Update="Newtonsoft.Json" Version="12.0.*" />
+    <PackageReference Update="Pluralize.NET" Version="1.0.*" />
     <PackageReference Update="Refit" Version="5.2.*" />
     <PackageReference Update="RestEase" Version="1.5.*" />
     <PackageReference Update="StackExchange.Redis" Version="2.2.*" />
@@ -74,6 +83,7 @@
     <PackageReference Update="System.Runtime.Loader" Version="4.3.*" />
     <PackageReference Update="System.Text.Json" Version="5.0.*" />
     <PackageReference Update="System.Threading.Channels" Version="5.0.*" />
+    <PackageReference Update="UAParser" Version="3.1.*" />
     <PackageReference Update="Ulid" Version="1.1.*" />
     <PackageReference Update="xunit" Version="2.4.*" />
     <PackageReference Update="Xunit.DependencyInjection.Logging" Version="2.1.*" />
@@ -81,6 +91,7 @@
     <!-- Build time only -->
     <PackageReference Update="Microsoft.NET.Test.Sdk" Version="16.8.*" />
     <PackageReference Update="Microsoft.AspNetCore.Components.WebAssembly.Build" Version="$(BlazorVersion)" PrivateAssets="all" />
+    <PackageReference Update="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="$(BlazorVersion)" PrivateAssets="all" />
     <PackageReference Update="xunit.analyzers" Version="0.10.*" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
     <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.0-beta-20204-02" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
     <PackageReference Update="Microsoft.EntityFrameworkCore.Design" Version="$(EntityFrameworkCoreVersion)" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers;" />

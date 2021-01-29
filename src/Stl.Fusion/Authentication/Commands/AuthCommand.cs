@@ -8,8 +8,11 @@ namespace Stl.Fusion.Authentication.Commands
         : ISessionCommand<Unit> { }
 
     // Server-side only!
-    public record SaveSessionInfoCommand(SessionInfo SessionInfo, Session Session)
-        : ServerSideCommandBase<Unit>, ISessionCommand<Unit> { }
+    public record SetupSessionCommand(string IPAddress, string UserAgent, Session Session)
+        : ServerSideCommandBase<SessionInfo>, ISessionCommand<SessionInfo>
+    {
+        public SetupSessionCommand(Session session) : this("", "", session) { }
+    }
     public record SignInCommand(User User, Session Session)
         : ServerSideCommandBase<Unit>, ISessionCommand<Unit> { }
 }

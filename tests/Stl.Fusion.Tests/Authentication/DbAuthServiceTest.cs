@@ -71,34 +71,34 @@ namespace Stl.Fusion.Tests.Authentication
             // Checking if the client is able to see the same user & sessions
             user = await authClient.GetUserAsync(sessionA);
             user.Id.Should().Be(bob.Id);
-            user.IsGuest.Should().BeFalse();
+            user.IsAuthenticated.Should().BeTrue();
             user = await authClient.GetUserAsync(session);
             user.Id.Should().Be(bob.Id);
-            user.IsGuest.Should().BeFalse();
+            user.IsAuthenticated.Should().BeTrue();
 
             // Checking if local service is able to see the same user & sessions
             if (!Options.UseInProcessAuthService) {
                 await DelayAsync(0.5);
                 user = await authLocal.GetUserAsync(session);
                 user.Id.Should().Be(bob.Id);
-                user.IsGuest.Should().BeFalse();
+                user.IsAuthenticated.Should().BeTrue();
             }
 
             // Checking guest session
             session = sessionB;
             user = await authClient.GetUserAsync(session);
-            user.IsGuest.Should().BeTrue();
+            user.IsAuthenticated.Should().BeFalse();
 
             // Checking sign-out
             await WebServices.Commander().CallAsync(new SignOutCommand(false, sessionA));
             user = await authServer.GetUserAsync(sessionA);
-            user.IsGuest.Should().BeTrue();
+            user.IsAuthenticated.Should().BeFalse();
             await DelayAsync(0.5);
             user = await authClient.GetUserAsync(sessionA);
-            user.IsGuest.Should().BeTrue();
+            user.IsAuthenticated.Should().BeFalse();
             if (!Options.UseInProcessAuthService) {
                 user = await authLocal.GetUserAsync(sessionA);
-                user.IsGuest.Should().BeTrue();
+                user.IsAuthenticated.Should().BeFalse();
             }
         }
 
@@ -122,40 +122,46 @@ namespace Stl.Fusion.Tests.Authentication
             user.Name.Should().Be(bob.Name);
             long.TryParse(user.Id, out var _).Should().BeTrue();
             user.Claims.Count.Should().Be(1);
-            user.Identities.Keys.Select(i => i.Id.Value).Should().BeEquivalentTo(new [] {"g:1"});
+            user.Identities.IsEmpty.Should().BeTrue(); // Client-side users shouldn't have them
+
+            // Server-side methods to get the same user
+            var sameUser = await authServer.TryGetUserAsync(user.Id);
+            sameUser!.Id.Should().Be(user.Id);
+            sameUser.Name.Should().Be(user.Name);
+            sameUser.Identities.Keys.Select(i => i.Id.Value).Should().BeEquivalentTo(new [] {"g:1"});
             bob = user;
 
             // Checking if the client is able to see the same user & sessions
             user = await authClient.GetUserAsync(sessionA);
             user.Id.Should().Be(bob.Id);
-            user.IsGuest.Should().BeFalse();
+            user.IsAuthenticated.Should().BeTrue();
             user = await authClient.GetUserAsync(session);
             user.Id.Should().Be(bob.Id);
-            user.IsGuest.Should().BeFalse();
+            user.IsAuthenticated.Should().BeTrue();
 
             // Checking if local service is able to see the same user & sessions
             if (!Options.UseInProcessAuthService) {
                 await DelayAsync(0.5);
                 user = await authLocal.GetUserAsync(session);
                 user.Id.Should().Be(bob.Id);
-                user.IsGuest.Should().BeFalse();
+                user.IsAuthenticated.Should().BeTrue();
             }
 
             // Checking guest session
             session = sessionB;
             user = await authClient.GetUserAsync(session);
-            user.IsGuest.Should().BeTrue();
+            user.IsAuthenticated.Should().BeFalse();
 
             // Checking sign-out
             await authServer.SignOutAsync(new(false, sessionA));
             user = await authServer.GetUserAsync(sessionA);
-            user.IsGuest.Should().BeTrue();
+            user.IsAuthenticated.Should().BeFalse();
             await DelayAsync(0.5);
             user = await authClient.GetUserAsync(sessionA);
-            user.IsGuest.Should().BeTrue();
+            user.IsAuthenticated.Should().BeFalse();
             if (!Options.UseInProcessAuthService) {
                 user = await authLocal.GetUserAsync(sessionA);
-                user.IsGuest.Should().BeTrue();
+                user.IsAuthenticated.Should().BeFalse();
             }
         }
 
@@ -169,7 +175,7 @@ namespace Stl.Fusion.Tests.Authentication
             var user = await authServer.GetUserAsync(session);
             user.Id.Should().Be(new User(session.Id).Id);
             user.Name.Should().Be(User.GuestName);
-            user.IsGuest.Should().BeTrue();
+            user.IsAuthenticated.Should().BeFalse();
         }
 
         [Fact]
@@ -228,7 +234,7 @@ namespace Stl.Fusion.Tests.Authentication
             await authServer.SignOutAsync(signOutCmd);
             (await authServer.IsSignOutForcedAsync(sessionB)).Should().BeFalse();
             user = await authServer.GetUserAsync(sessionA);
-            user.IsGuest.Should().Be(true);
+            user.IsAuthenticated.Should().BeFalse();
 
             sessions = await authServer.GetUserSessionsAsync(sessionA);
             sessions.Length.Should().Be(0);
@@ -250,7 +256,7 @@ namespace Stl.Fusion.Tests.Authentication
             (await authServer.IsSignOutForcedAsync(sessionB)).Should().BeTrue();
             (await authServer.GetSessionInfoAsync(sessionB)).IsSignOutForced.Should().BeTrue();
             user = await authServer.GetUserAsync(sessionB);
-            user.IsGuest.Should().Be(true);
+            user.IsAuthenticated.Should().BeFalse();
 
             sessions = await authServer.GetUserSessionsAsync(sessionA);
             sessions.Select(s => s.Id).Should().BeEquivalentTo(new[] { sessionA.Id });
@@ -259,8 +265,8 @@ namespace Stl.Fusion.Tests.Authentication
 
             await Assert.ThrowsAsync<AuthenticationException>(async() => {
                 var sessionInfo = await authServer.GetSessionInfoAsync(sessionB);
-                var saveSessionInfoCmd = new SaveSessionInfoCommand(sessionInfo, sessionB).MarkServerSide();
-                await authServer.SaveSessionInfoAsync(saveSessionInfoCmd);
+                var setupSessionCmd = new SetupSessionCommand(sessionB).MarkServerSide();
+                await authServer.SetupSessionAsync(setupSessionCmd);
             });
 
             await Assert.ThrowsAsync<AuthenticationException>(async() => {

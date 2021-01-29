@@ -15,10 +15,15 @@ namespace Stl.Fusion.Tests.Authentication
         [Fact]
         public void BasicTest()
         {
-            var user = new User("none")
+            var user = new User("none");
+            var cp = user.ClaimsPrincipal;
+            cp.Claims.Count().Should().Be(2);
+            var ci = cp.Identities.Single();
+            ci.IsAuthenticated.Should().BeFalse();
+
+            user = user
                 .WithClaim("a", "b")
                 .WithIdentity("Google/1", "Secret");
-
             user.Claims.Should().BeEquivalentTo(new [] {
                 KeyValuePair.Create("a", "b")
             });
@@ -28,7 +33,10 @@ namespace Stl.Fusion.Tests.Authentication
             userId.Should().Be("1");
             user.Identities[uid].Should().Be("Secret");
 
-            Out.WriteLine(user.ToString());
+            cp = user.ClaimsPrincipal;
+            cp.Claims.Count().Should().Be(3);
+            ci = cp.Identities.Single();
+            ci.IsAuthenticated.Should().BeFalse();
         }
 
         [Fact]

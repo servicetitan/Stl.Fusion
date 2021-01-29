@@ -5,11 +5,10 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.EntityFramework.Internal;
-using Stl.Serialization;
 
 namespace Stl.Fusion.EntityFramework.Authentication
 {
-    public interface IDbSessionInfoBackend<in TDbContext>
+    public interface IDbSessionInfoRepo<in TDbContext>
         where TDbContext : DbContext
     {
         // Write methods
@@ -27,13 +26,13 @@ namespace Stl.Fusion.EntityFramework.Authentication
             TDbContext dbContext, long userId, CancellationToken cancellationToken = default);
     }
 
-    public class DbSessionInfoBackend<TDbContext, TDbSessionInfo> : DbServiceBase<TDbContext>, IDbSessionInfoBackend<TDbContext>
+    public class DbSessionInfoRepo<TDbContext, TDbSessionInfo> : DbServiceBase<TDbContext>, IDbSessionInfoRepo<TDbContext>
         where TDbContext : DbContext
         where TDbSessionInfo : DbSessionInfo, new()
     {
         protected DbAuthService<TDbContext>.Options Options { get; }
 
-        public DbSessionInfoBackend(DbAuthService<TDbContext>.Options options, IServiceProvider services)
+        public DbSessionInfoRepo(DbAuthService<TDbContext>.Options options, IServiceProvider services)
             : base(services)
             => Options = options;
 

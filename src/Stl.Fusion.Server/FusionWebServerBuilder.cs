@@ -1,12 +1,13 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Stl.Fusion.Server.Controllers;
 using Stl.Reflection;
 using Stl.Serialization;
 
 namespace Stl.Fusion.Server
 {
-    public readonly struct FusionWebSocketServerBuilder
+    public readonly struct FusionWebServerBuilder
     {
         private class AddedTag { }
         private static readonly ServiceDescriptor AddedTagDescriptor =
@@ -15,8 +16,8 @@ namespace Stl.Fusion.Server
         public FusionBuilder Fusion { get; }
         public IServiceCollection Services => Fusion.Services;
 
-        internal FusionWebSocketServerBuilder(FusionBuilder fusion,
-            Action<IServiceProvider, WebSocketServer.Options>? optionsBuilder)
+        internal FusionWebServerBuilder(FusionBuilder fusion,
+            Action<IServiceProvider, WebSocketServer.Options>? webSocketServerOptionsBuilder)
         {
             Fusion = fusion;
             if (Services.Contains(AddedTagDescriptor))
@@ -27,7 +28,7 @@ namespace Stl.Fusion.Server
             Fusion.AddPublisher();
             Services.TryAddSingleton(c => {
                 var options = new WebSocketServer.Options();
-                optionsBuilder?.Invoke(c, options);
+                webSocketServerOptionsBuilder?.Invoke(c, options);
                 return options;
             });
             Services.TryAddSingleton<WebSocketServer>();
@@ -36,6 +37,13 @@ namespace Stl.Fusion.Server
                     options => MemberwiseCopier.Invoke(
                         JsonNetSerializer.DefaultSettings,
                         options.SerializerSettings));
+        }
+
+        public FusionWebServerBuilder AddControllers()
+        {
+            Services.AddMvcCore()
+                .AddApplicationPart(typeof(FusionAuthController).Assembly);
+            return this;
         }
     }
 }

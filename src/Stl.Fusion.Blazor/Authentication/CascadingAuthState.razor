@@ -3,6 +3,7 @@
 @using Stl.Async
 @using Stl.Fusion.Authentication
 @using Stl.OS
+@using Stl.Text
 @implements IDisposable
 @inject ISessionProvider SessionProvider
 @inject AuthStateProvider AuthStateProvider
@@ -21,9 +22,11 @@
     public string SessionIdJavaScriptExpression { get; set; } = "window.FusionAuth.sessionId";
     [Parameter]
     public string SessionId {
-        get => SessionProvider.HasSession ? SessionProvider.Session.Id : "";
+        get => SessionProvider.HasSession ? SessionProvider.Session : "";
         set {
-            if (SessionProvider.HasSession || string.IsNullOrEmpty(value))
+            if (string.IsNullOrEmpty(value))
+                return; // Blazor WASM component is created w/ empty SessionId
+            if (SessionProvider.HasSession)
                 return;
             SessionProvider.Session = new Session(value);
         }
@@ -33,7 +36,7 @@
 
     protected override void OnInitialized()
     {
-        if (SessionId == "" && OSInfo.IsWebAssembly) {
+        if (SessionId == Symbol.Empty && OSInfo.IsWebAssembly) {
             var inProcessJSRuntime = (IJSInProcessRuntime) JSRuntime;
             SessionId = inProcessJSRuntime.Invoke<string>("eval", SessionIdJavaScriptExpression);
         }

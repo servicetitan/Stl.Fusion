@@ -41,9 +41,22 @@ namespace Stl.Fusion.Authentication
             if (await IsSignOutForcedAsync(session, cancellationToken).ConfigureAwait(false))
                 throw Errors.ForcedSignOut();
 
+            var authenticatedIdentity = user.Identities.FirstOrDefault().Key;
             if (string.IsNullOrEmpty(user.Id)) {
-                // Generate User.Id
-                user = user with { Id = GetNextUserId() };
+                var isExistingUser = false;
+                if (authenticatedIdentity.IsValid) {
+                    // Let's try to find the user by its authenticated identity
+                    foreach (var existingUser in Users.Values) {
+                        if (existingUser.Identities.ContainsKey(authenticatedIdentity)) {
+                            user = existingUser;
+                            isExistingUser = true;
+                            break;
+                        }
+                    }
+                }
+                // Generate User.Id for the new user
+                if (!isExistingUser)
+                    user = user with { Id = GetNextUserId() };
             }
             else {
                 // Just to make sure it works like a similar EF service
@@ -53,13 +66,13 @@ namespace Stl.Fusion.Authentication
             // Update SessionInfo
             var sessionInfo = await GetSessionInfoAsync(session, cancellationToken).ConfigureAwait(false);
             sessionInfo = sessionInfo with {
-                AuthenticatedIdentity = user.Identities.FirstOrDefault().Key,
+                AuthenticatedIdentity = authenticatedIdentity,
                 UserId = user.Id,
             };
 
             // Persist changes
             Users[user.Id] = user;
-            sessionInfo = SaveSessionInfo(sessionInfo);
+            sessionInfo = AddOrUpdateSessionInfo(sessionInfo);
             context.Items.Set(OperationItem.New(sessionInfo));
         }
 
@@ -86,26 +99,28 @@ namespace Stl.Fusion.Authentication
                 UserId = "",
                 IsSignOutForced = force,
             };
-            SaveSessionInfo(sessionInfo);
+            AddOrUpdateSessionInfo(sessionInfo);
         }
 
-        public virtual Task SaveSessionInfoAsync(SaveSessionInfoCommand command, CancellationToken cancellationToken = default)
+        public virtual async Task<SessionInfo> SetupSessionAsync(SetupSessionCommand command, CancellationToken cancellationToken = default)
         {
-            var (sessionInfo, session) = command;
+            var (ipAddress, userAgent, session) = command;
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
                 GetSessionInfoAsync(session, default).Ignore();
                 var invSessionInfo = context.Items.Get<OperationItem<SessionInfo>>().Value;
                 if (invSessionInfo.HasUser)
-                    GetUserSessionsAsync(sessionInfo.UserId, default).Ignore();
-                return Task.CompletedTask;
+                    GetUserSessionsAsync(invSessionInfo.UserId, default).Ignore();
+                return null!;
             }
-            if (sessionInfo.Id != session.Id)
-                throw new ArgumentOutOfRangeException(nameof(sessionInfo));
-
-            sessionInfo = SaveSessionInfo(sessionInfo);
-            context.Items.Set(OperationItem.New(sessionInfo));
-            return Task.CompletedTask;
+            var oldSessionInfo = await GetSessionInfoAsync(session, cancellationToken).ConfigureAwait(false);
+            var newSessionInfo = oldSessionInfo with {
+                IPAddress = string.IsNullOrEmpty(ipAddress) ? oldSessionInfo.IPAddress : ipAddress,
+                UserAgent = string.IsNullOrEmpty(userAgent) ? oldSessionInfo.UserAgent : userAgent,
+            };
+            newSessionInfo = AddOrUpdateSessionInfo(newSessionInfo);
+            context.Items.Set(OperationItem.New(newSessionInfo));
+            return newSessionInfo;
         }
 
         public virtual async Task UpdatePresenceAsync(Session session, CancellationToken cancellationToken = default)
@@ -115,9 +130,8 @@ namespace Stl.Fusion.Authentication
             var delta = now - sessionInfo.LastSeenAt;
             if (delta < TimeSpan.FromSeconds(10))
                 return; // We don't want to update this too frequently
-            sessionInfo = sessionInfo with { LastSeenAt = now };
-            var command = new SaveSessionInfoCommand(sessionInfo, session).MarkServerSide();
-            await SaveSessionInfoAsync(command, cancellationToken).ConfigureAwait(false);
+            var command = new SetupSessionCommand(session).MarkServerSide();
+            await SetupSessionAsync(command, cancellationToken).ConfigureAwait(false);
         }
 
         // Compute methods
@@ -142,7 +156,7 @@ namespace Stl.Fusion.Authentication
             if (sessionInfo.IsSignOutForced || !sessionInfo.HasUser)
                 return new User(session.Id);
             var user = await TryGetUserAsync(sessionInfo.UserId, cancellationToken).ConfigureAwait(false);
-            return user ?? new User(session.Id);
+            return (user ?? new User(session.Id)).ToClientSideUser();
         }
 
         public virtual Task<User?> TryGetUserAsync(string userId, CancellationToken cancellationToken = default)
@@ -152,7 +166,7 @@ namespace Stl.Fusion.Authentication
             Session session, CancellationToken cancellationToken = default)
         {
             var user = await GetUserAsync(session, cancellationToken).ConfigureAwait(false);
-            if (user.IsGuest)
+            if (!user.IsAuthenticated)
                 return Array.Empty<SessionInfo>();
             return await GetUserSessionsAsync(user.Id, cancellationToken).ConfigureAwait(false);
         }
@@ -172,7 +186,7 @@ namespace Stl.Fusion.Authentication
             return Task.FromResult(result);
         }
 
-        protected virtual SessionInfo SaveSessionInfo(SessionInfo sessionInfo)
+        protected virtual SessionInfo AddOrUpdateSessionInfo(SessionInfo sessionInfo)
         {
             sessionInfo = sessionInfo with { LastSeenAt = Clock.Now };
             SessionInfos.AddOrUpdate(sessionInfo.Id, sessionInfo, (sessionId, oldSessionInfo) => {

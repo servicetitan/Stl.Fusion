@@ -28,7 +28,7 @@ namespace Stl.Fusion.Tests.Services
                 // Since we copy all services here,
                 // only web-related ones must be added to services
                 services.AddFusion(fusion => {
-                    fusion.AddWebSocketServer();
+                    fusion.AddWebServer();
                     fusion.AddAuthentication(auth => auth.AddServer());
                 });
 
