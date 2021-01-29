@@ -1,24 +1,28 @@
-using System;
 using System.Web;
 using Microsoft.AspNetCore.Components;
 using Stl.OS;
 
 namespace Stl.Fusion.Blazor
 {
-    public class FusionBlazorModeHelper
+    public class BlazorModeHelper
     {
         public static bool IsServerSideBlazor { get; } = OSInfo.Kind != OSKind.WebAssembly;
 
-        public static bool ChangeMode(NavigationManager navigator, bool isServerSideBlazor)
+        protected NavigationManager Navigator { get; }
+
+        public BlazorModeHelper(NavigationManager navigator)
+            => Navigator = navigator;
+
+        public virtual bool ChangeMode(bool isServerSideBlazor)
         {
             if (IsServerSideBlazor == isServerSideBlazor)
                 return false;
-            var switchUrl = GetModeChangeUrl(isServerSideBlazor, navigator.Uri);
-            navigator.NavigateTo(switchUrl, true);
+            var switchUrl = GetModeChangeUrl(isServerSideBlazor, Navigator.Uri);
+            Navigator.NavigateTo(switchUrl, true);
             return true;
         }
 
-        public static string GetModeChangeUrl(bool isServerSideBlazor, string? redirectTo = null)
+        public virtual string GetModeChangeUrl(bool isServerSideBlazor, string? redirectTo = null)
         {
             redirectTo ??= "/";
             var isSsbString = isServerSideBlazor.ToString().ToLowerInvariant();

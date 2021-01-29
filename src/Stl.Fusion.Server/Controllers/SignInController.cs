@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Stl.Fusion.Server.Controllers
 {
     [Route("fusion")]
-    public class FusionSignInController : Controller
+    public class SignInController : Controller
     {
         public class Options
         {
@@ -14,14 +14,14 @@ namespace Stl.Fusion.Server.Controllers
 
         public string DefaultScheme { get; }
 
-        public FusionSignInController(Options? options)
+        public SignInController(Options? options)
         {
             options ??= new();
             DefaultScheme = options.DefaultScheme;
         }
 
-        [HttpGet("signIn")]
-        [HttpGet("signIn/{scheme}")]
+        [HttpGet("~/signIn")]
+        [HttpGet("~/signIn/{scheme}")]
         public virtual IActionResult SignIn(string? scheme = null, string? returnUrl = null)
         {
             scheme ??= DefaultScheme;
@@ -29,7 +29,7 @@ namespace Stl.Fusion.Server.Controllers
             return Challenge(new AuthenticationProperties { RedirectUri = returnUrl }, scheme);
         }
 
-        [HttpGet("signOut")]
+        [HttpGet("~/signOut")]
         public virtual IActionResult SignOut(string? returnUrl = null)
         {
             // Instruct the cookies middleware to delete the local cookie created

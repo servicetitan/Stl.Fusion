@@ -8,12 +8,12 @@ namespace Stl.Fusion.Server.Controllers
 {
     [Route("fusion/auth")]
     [ApiController, JsonifyErrors(RewriteErrors = true)]
-    public class FusionAuthController : ControllerBase, IAuthService
+    public class AuthController : ControllerBase, IAuthService
     {
         protected IAuthService AuthService { get; }
         protected ISessionResolver SessionResolver { get; }
 
-        public FusionAuthController(IAuthService authService, ISessionResolver sessionResolver)
+        public AuthController(IAuthService authService, ISessionResolver sessionResolver)
         {
             AuthService = authService;
             SessionResolver = sessionResolver;

@@ -6,6 +6,6 @@ namespace Stl.Fusion.Server
     public static class ApplicationBuilderEx
     {
         public static IApplicationBuilder UseFusionSession(this IApplicationBuilder app)
-            => app.UseMiddleware<FusionSessionMiddleware>();
+            => app.UseMiddleware<SessionMiddleware>();
     }
 }

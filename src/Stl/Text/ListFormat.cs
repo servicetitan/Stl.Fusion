@@ -29,6 +29,35 @@ namespace Stl.Text
 
         public ListParser CreateParser(in ReadOnlySpan<char> source, StringBuilder item, int itemIndex = 0)
             => new(this, source, item, itemIndex);
+
+        public string Format(IEnumerable<string> source)
+        {
+            var formatter = CreateFormatter(StringBuilderEx.Acquire());
+            try {
+                foreach (var item in source)
+                    formatter.Append(item);
+                formatter.AppendEnd();
+                formatter.AppendEnd();
+                return formatter.Output;
+            }
+            finally {
+                formatter.OutputBuilder.Release();
+            }
+        }
+
+        public List<string> Parse(in ReadOnlySpan<char> source)
+        {
+            var result = new List<string>();
+            var parser = CreateParser(source, StringBuilderEx.Acquire());
+            try {
+                while (parser.TryParseNext())
+                    result.Add(parser.Item);
+                return result;
+            }
+            finally {
+                parser.ItemBuilder.Release();
+            }
+        }
     }
 
     public ref struct ListFormatter

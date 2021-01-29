@@ -5,13 +5,14 @@
 @using Stl.Fusion.Server.Authentication
 @using Stl.Fusion.Server.Controllers
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
-@inject FusionAuthHelper FusionAuthHelper
+@inject ServerAuthHelper ServerAuthHelper
 @inject ServerSettings ServerSettings
 @{
-    Task.Run(() => FusionAuthHelper.UpdateAuthStateAsync(HttpContext)).Ignore();
-    var sessionId = FusionAuthHelper.Session.Id.Value;
-    var isServerSideBlazor = FusionBlazorModeController.IsServerSideBlazor(HttpContext);
-    var isCloseWindowRequest = FusionAuthHelper.IsCloseWindowRequest(HttpContext, out var closeWindowFlowName);
+    Task.Run(() => ServerAuthHelper.UpdateAuthStateAsync(HttpContext)).Ignore();
+    var authSchemas = await ServerAuthHelper.GetSchemasAsync(HttpContext);
+    var sessionId = ServerAuthHelper.Session.Id.Value;
+    var isServerSideBlazor = BlazorModeController.IsServerSideBlazor(HttpContext);
+    var isCloseWindowRequest = ServerAuthHelper.IsCloseWindowRequest(HttpContext, out var closeWindowFlowName);
     Layout = null;
 }
 
@@ -28,7 +29,10 @@
     <partial name="Blazorise.Head" />
     <script src="_content/Stl.Fusion.Blazor/scripts/fusionAuth.js"></script>
     <script src="https://apis.google.com/js/platform.js" async defer></script>
-    <script>window.FusionAuth.sessionId = "@sessionId";</script>
+    <script>
+        window.FusionAuth.schemas = "@authSchemas";
+        window.FusionAuth.sessionId = "@sessionId";
+    </script>
 </head>
 <body>
 @if (isCloseWindowRequest) {

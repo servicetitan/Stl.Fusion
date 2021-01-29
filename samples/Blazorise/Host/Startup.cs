@@ -26,6 +26,7 @@ using Stl.Fusion.Server;
 using Blazorise.Bootstrap;
 using Blazorise.Icons.FontAwesome;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
 
 namespace Templates.Blazor2.Host
 {
@@ -78,7 +79,7 @@ namespace Templates.Blazor2.Host
                     options.DefaultScheme = GoogleDefaults.AuthenticationScheme;
                 },
                 authHelperOptionsBuilder: (_, options) => {
-                    options.NameClaimKey = "";
+                    options.NameClaimKeys = Array.Empty<string>();
                 });
 
             // This method registers services marked with any of ServiceAttributeBase descendants, including:
@@ -92,20 +93,24 @@ namespace Templates.Blazor2.Host
             services.AddAuthentication(options => {
                 options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
             }).AddCookie(options => {
-                options.LoginPath = "/fusion/signIn";
-                options.LogoutPath = "/fusion/signOut";
+                options.LoginPath = "/signIn";
+                options.LogoutPath = "/signOut";
             }).AddGoogle(options => {
                 options.Scope.Add("https://www.googleapis.com/auth/userinfo.profile");
                 options.Scope.Add("https://www.googleapis.com/auth/userinfo.email");
                 options.CorrelationCookie.SameSite = SameSiteMode.Lax;
+            }).AddMicrosoftAccount(options => {
+                options.CorrelationCookie.SameSite = SameSiteMode.Lax;
             });
-            // We want to get ClientId and ClientSecret from ServerSettings,
-            // and they're available only when IServiceProvider is already created,
-            // that's why this overload of Configure<TOptions> is used here.
             services.Configure<GoogleOptions>((c, name, options) => {
                 var serverSettings = c.GetRequiredService<ServerSettings>();
                 options.ClientId = serverSettings.GoogleClientId;
                 options.ClientSecret = serverSettings.GoogleClientSecret;
+            });
+            services.Configure<MicrosoftAccountOptions>((c, name, options) => {
+                var serverSettings = c.GetRequiredService<ServerSettings>();
+                options.ClientId = serverSettings.MicrosoftAccountClientId;
+                options.ClientSecret = serverSettings.MicrosoftAccountClientSecret;
             });
 
             // Web

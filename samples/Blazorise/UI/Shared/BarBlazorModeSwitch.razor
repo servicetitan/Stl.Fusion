@@ -1,6 +1,7 @@
 @using Stl.OS
 @using System.Web
-@inject NavigationManager Navigator
+@inject BlazorModeHelper BlazorModeHelper
+
 <BarDropdown Class="@CssClass">
     <BarDropdownToggle Color="Color.Primary">
         Blazor Mode
@@ -16,5 +17,5 @@
     public string CssClass { get; set; } = "";
 
     private void ChangeMode(bool isServerSideBlazor)
-        => FusionBlazorModeHelper.ChangeMode(Navigator, isServerSideBlazor);
+        => BlazorModeHelper.ChangeMode(isServerSideBlazor);
 }

@@ -16,10 +16,10 @@
 </CascadingAuthenticationState>
 
 @code {
+    public static string SessionIdJavaScriptExpression { get; set; } = "window.FusionAuth.sessionId";
+
     [Parameter]
     public RenderFragment ChildContent { get; set; } = _ => { };
-    [Parameter]
-    public string SessionIdJavaScriptExpression { get; set; } = "window.FusionAuth.sessionId";
     [Parameter]
     public string SessionId {
         get => SessionProvider.HasSession ? SessionProvider.Session : "";

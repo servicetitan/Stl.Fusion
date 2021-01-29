@@ -5,18 +5,19 @@ let openAuthWindow = function (action, flowName) {
 }
 
 window.FusionAuth = {
+    schemas: "",
     sessionId: "",
     windowTarget: "_blank",
     windowFeatures: "width=600,height=600",
-    signInPath: "/fusion/signIn",
-    signOutPath: "/fusion/signOut",
+    signInPath: "/signIn",
+    signOutPath: "/signOut",
     closePath: "/fusion/close",
 
-    signIn: function (provider) {
-        if (provider === undefined) {
+    signIn: function (schema) {
+        if (schema === undefined || schema === null || schema === "") {
             openAuthWindow(this.signInPath, "Sign-in");
         } else {
-            openAuthWindow(this.signInPath + "/" + provider, "Sign-in");
+            openAuthWindow(this.signInPath + "/" + schema, "Sign-in");
         }
     },
 

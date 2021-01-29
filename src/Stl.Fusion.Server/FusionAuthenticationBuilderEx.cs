@@ -5,32 +5,34 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Server.Authentication;
 using Stl.Fusion.Server.Controllers;
+using Stl.Fusion.Server.Internal;
 
 namespace Stl.Fusion.Server
 {
     public static class FusionAuthenticationBuilderEx
     {
         public static FusionAuthenticationBuilder AddServer(this FusionAuthenticationBuilder fusionAuth,
-            Action<IServiceProvider, FusionSessionMiddleware.Options>? sessionMiddlewareOptionsBuilder = null,
-            Action<IServiceProvider, FusionAuthHelper.Options>? authHelperOptionsBuilder = null,
-            Action<IServiceProvider, FusionSignInController.Options>? signInControllerOptionsBuilder = null)
+            Action<IServiceProvider, SessionMiddleware.Options>? sessionMiddlewareOptionsBuilder = null,
+            Action<IServiceProvider, ServerAuthHelper.Options>? authHelperOptionsBuilder = null,
+            Action<IServiceProvider, SignInController.Options>? signInControllerOptionsBuilder = null)
         {
             var fusion = fusionAuth.Fusion;
             var services = fusionAuth.Services;
             fusionAuth.AddServerSideAuthService();
 
             services.TryAddSingleton(c => {
-                var options = new FusionSessionMiddleware.Options();
+                var options = new SessionMiddleware.Options();
                 sessionMiddlewareOptionsBuilder?.Invoke(c, options);
                 return options;
             });
-            services.TryAddScoped<FusionSessionMiddleware>();
+            services.TryAddScoped<SessionMiddleware>();
             services.TryAddSingleton(c => {
-                var options = new FusionAuthHelper.Options();
+                var options = new ServerAuthHelper.Options();
                 authHelperOptionsBuilder?.Invoke(c, options);
                 return options;
             });
-            services.TryAddScoped<FusionAuthHelper>();
+            services.TryAddSingleton<AuthSchemasCache>();
+            services.TryAddScoped<ServerAuthHelper>();
 
             services.AddRouting();
             fusion.AddWebServer().AddControllers(signInControllerOptionsBuilder);

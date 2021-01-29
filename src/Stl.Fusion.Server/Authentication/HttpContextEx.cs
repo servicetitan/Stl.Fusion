@@ -9,11 +9,11 @@ namespace Stl.Fusion.Server.Authentication
 {
     public static class HttpContextEx
     {
-        public static async Task<AuthenticationScheme[]> GetAuthenticationSchemesAsync(this HttpContext context)
+        public static async Task<AuthenticationScheme[]> GetAuthenticationSchemasAsync(this HttpContext httpContext)
         {
-            if (context == null)
-                throw new ArgumentNullException(nameof(context));
-            var schemes = context.RequestServices.GetRequiredService<IAuthenticationSchemeProvider>();
+            if (httpContext == null)
+                throw new ArgumentNullException(nameof(httpContext));
+            var schemes = httpContext.RequestServices.GetRequiredService<IAuthenticationSchemeProvider>();
             return (
                 from scheme in await schemes.GetAllSchemesAsync()
                 where !string.IsNullOrEmpty(scheme.DisplayName)
@@ -21,12 +21,12 @@ namespace Stl.Fusion.Server.Authentication
                 ).ToArray();
         }
 
-        public static async Task<bool> IsAuthenticationSchemeSupportedAsync(this HttpContext context, string scheme)
+        public static async Task<bool> IsAuthenticationSchemeSupportedAsync(this HttpContext httpContext, string scheme)
         {
-            if (context == null)
-                throw new ArgumentNullException(nameof(context));
+            if (httpContext == null)
+                throw new ArgumentNullException(nameof(httpContext));
             return (
-                from s in await context.GetAuthenticationSchemesAsync()
+                from s in await httpContext.GetAuthenticationSchemasAsync()
                 where string.Equals(s.Name, scheme, StringComparison.OrdinalIgnoreCase)
                 select s
                 ).Any();

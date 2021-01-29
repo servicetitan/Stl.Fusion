@@ -2,12 +2,11 @@
 @using System.Threading
 @using UAParser
 @using System.Collections.Concurrent
-@using Stl.Async
 @inherits LiveComponentBase<List<Authentication.SessionModel>>
 @inject Session Session
 @inject IAuthService AuthService
+@inject ClientAuthHelper ClientAuthHelper
 @inject MomentsAgoService MomentsAgoService
-@inject IJSRuntime JSRuntime
 @inject NavigationManager Navigator
 
 @{
@@ -92,7 +91,7 @@
                                     <span>Current</span>
                                 } else {
                                     <button type="button" class="btn btn-sm btn-danger"
-                                            @onclick="_ => Kick(session.Id)">Kick</button>
+                                            @onclick="_ => ClientAuthHelper.SignOutAsync(session.Id)">Kick</button>
                                 }
                             </td>
                         </tr>
@@ -106,8 +105,12 @@
         <AuthorizeView>
             <Authorized>
                 <div class="mb-2">
-                    <button type="button" class="btn btn-warning" @onclick="SignOut">Sign out</button>
-                    <button type="button" class="btn btn-danger" @onclick="SignOutEverywhere">Sign out everywhere</button>
+                    <Buttons>
+                        <Button Color="Color.Warning"
+                                @onclick="_ => ClientAuthHelper.SignOutAsync()">Sign out</Button>
+                        <Button Color="Color.Danger"
+                                @onclick="_ => ClientAuthHelper.SignOutEverywhereAsync()">Sign out everywhere</Button>
+                    </Buttons>
                 </div>
                 <div class="alert alert-warning">
                     To sign out completely, you need to either sign out from Google,
@@ -116,7 +119,12 @@
                 </div>
             </Authorized>
             <NotAuthorized>
-                <div class="mb-2"><button class="btn btn-secondary" @onclick="SignIn">Sign in</button></div>
+                <Buttons>
+                    @foreach(var (name, displayName) in AuthSchemas) {
+                        <Button Color="Color.Primary"
+                                @onclick="_ => ClientAuthHelper.SignInAsync(name)">Sign in with @displayName</Button>
+                    }
+                </Buttons>
             </NotAuthorized>
         </AuthorizeView>
     </div>
@@ -137,11 +145,22 @@
 
     [CascadingParameter]
     private Task<AuthState> AuthStateTask { get; set; } = null!;
-    private AuthState AuthState { get; set; } = new AuthState(new User("")); // For SSB pre-render
+    private AuthState AuthState { get; set; } = new(new User("")); // For SSB pre-render
     private User User => AuthState.User;
-    private ConcurrentDictionary<string, UserAgent> UserAgentCache = new ConcurrentDictionary<string, UserAgent>();
+    private ConcurrentDictionary<string, UserAgent> UserAgentCache { get; } = new();
+    private (string Name, string DisplayName)[] AuthSchemas { get; set; } = Array.Empty<(string, string)>();
 
-    protected override async Task OnParametersSetAsync() => AuthState = await AuthStateTask;
+    protected override async Task OnParametersSetAsync()
+        => AuthState = await AuthStateTask;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            // GetSchemasAsync requires JS interop, so it can be called only at this point
+            AuthSchemas = await ClientAuthHelper.GetSchemasAsync();
+            StateHasChanged();
+        }
+    }
 
     protected override void ConfigureState(LiveState<List<SessionModel>>.Options options)
         => options.InitialOutputFactory = _ => new List<SessionModel>();
@@ -166,25 +185,5 @@
             result.Add(model);
         }
         return result;
-    }
-
-    private void SignIn() => JSRuntime.InvokeVoidAsync("FusionAuth.signIn");
-    private void SignOut() => JSRuntime.InvokeVoidAsync("FusionAuth.signOut");
-    private void Kick(string sessionId)
-    {
-        if (sessionId == Session.Id)
-            SignOut();
-        else
-            Task.Run(() => AuthService.SignOutAsync(new(true, new Session(sessionId)))).Ignore();
-    }
-
-    private void SignOutEverywhere()
-    {
-        // No server-side API endpoint for this action(yet), so let's do this on the client
-        var sessions = State.LastValue.Where(s => s.Id != Session.Id);
-        foreach (var sessionModel in sessions) {
-            Kick(sessionModel.Id);
-        }
-        SignOut();
     }
 }
