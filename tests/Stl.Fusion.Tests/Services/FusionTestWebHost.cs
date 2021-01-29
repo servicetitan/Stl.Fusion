@@ -34,7 +34,6 @@ namespace Stl.Fusion.Tests.Services
 
                 // Web
                 services.AddRouting();
-                services.AddControllers().AddApplicationPart(typeof(AuthController).Assembly);
                 services.AddControllers().AddApplicationPart(Assembly.GetExecutingAssembly());
 
                 // Testing

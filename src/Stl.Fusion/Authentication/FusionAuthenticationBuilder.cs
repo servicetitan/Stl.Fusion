@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Internal;
@@ -29,6 +30,9 @@ namespace Stl.Fusion.Authentication
 
         public FusionAuthenticationBuilder AddServerSideAuthService(Type? implementationType = null)
         {
+            if (Services.Any(d => d.ServiceType == typeof(IServerSideAuthService)))
+                return this;
+
             implementationType ??= typeof(InProcessAuthService);
             var serverSideServiceType = typeof(IServerSideAuthService);
             if (!serverSideServiceType.IsAssignableFrom(implementationType))

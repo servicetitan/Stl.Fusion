@@ -11,7 +11,7 @@ using Stl.Time;
 
 namespace Stl.Fusion.EntityFramework.Authentication
 {
-    [Table("Sessions")]
+    [Table("_Sessions")]
     [Index(nameof(CreatedAt), nameof(IsSignOutForced))]
     [Index(nameof(LastSeenAt), nameof(IsSignOutForced))]
     [Index(nameof(UserId), nameof(IsSignOutForced))]

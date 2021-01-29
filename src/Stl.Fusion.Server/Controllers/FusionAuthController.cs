@@ -1,46 +1,70 @@
-using System.Linq;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Http;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Stl.Fusion.Authentication;
+using Stl.Fusion.Authentication.Commands;
 
 namespace Stl.Fusion.Server.Controllers
 {
-    public class FusionAuthController : Controller
+    [Route("fusion/auth")]
+    [ApiController, JsonifyErrors(RewriteErrors = true)]
+    public class FusionAuthController : ControllerBase, IAuthService
     {
-        public static string DefaultScheme { get; set; } = "";
-        public static string CloseWindowRequestPath { get; set; } = "/fusion/close";
+        protected IAuthService AuthService { get; }
+        protected ISessionResolver SessionResolver { get; }
 
-        [HttpGet("~/fusion/signin")]
-        [HttpGet("~/fusion/signin/{provider}")]
-        public virtual IActionResult SignIn(string? scheme = null, string? returnUrl = null)
+        public FusionAuthController(IAuthService authService, ISessionResolver sessionResolver)
         {
-            scheme ??= DefaultScheme;
-            returnUrl ??= "/";
-            return Challenge(new AuthenticationProperties { RedirectUri = returnUrl }, scheme);
+            AuthService = authService;
+            SessionResolver = sessionResolver;
         }
 
-        [HttpGet("~/fusion/signout")]
-        [HttpPost("~/fusion/signout")]
-        public virtual IActionResult SignOut(string? returnUrl = null)
+        [HttpPost("signOut")]
+        public Task SignOutAsync([FromBody] SignOutCommand command, CancellationToken cancellationToken = default)
         {
-            // Instruct the cookies middleware to delete the local cookie created
-            // when the user agent is redirected from the external identity provider
-            // after a successful authentication flow (e.g Google or Facebook).
-            returnUrl ??= "/";
-            return SignOut(
-                new AuthenticationProperties { RedirectUri = returnUrl },
-                CookieAuthenticationDefaults.AuthenticationScheme);
+            command.UseDefaultSession(SessionResolver);
+            return AuthService.SignOutAsync(command, cancellationToken);
         }
 
-        public static bool IsCloseWindowRequest(HttpContext httpContext, out string closeWindowFlowName)
+        [HttpPost("updatePresence")]
+        public Task UpdatePresenceAsync([FromBody] Session? session = null, CancellationToken cancellationToken = default)
         {
-            var request = httpContext.Request;
-            var isCloseWindowRequest = request.Path.Value == CloseWindowRequestPath;
-            closeWindowFlowName = "";
-            if (isCloseWindowRequest && request.Query.TryGetValue("flow", out var flows))
-                closeWindowFlowName = flows.FirstOrDefault() ?? "";
-            return isCloseWindowRequest;
+            session ??= SessionResolver.Session;
+            return AuthService.UpdatePresenceAsync(session, cancellationToken);
+        }
+
+        // Compute methods
+
+        [HttpGet("isSignOutForced")]
+        [Publish]
+        public Task<bool> IsSignOutForcedAsync(Session? session = null, CancellationToken cancellationToken = default)
+        {
+            session ??= SessionResolver.Session;
+            return AuthService.IsSignOutForcedAsync(session, cancellationToken);
+        }
+
+        [HttpGet("getUser")]
+        [Publish]
+        public Task<User> GetUserAsync(Session? session = null, CancellationToken cancellationToken = default)
+        {
+            session ??= SessionResolver.Session;
+            return AuthService.GetUserAsync(session, cancellationToken);
+        }
+
+        [HttpGet("getSessionInfo")]
+        [Publish]
+        public Task<SessionInfo> GetSessionInfoAsync(Session? session = null, CancellationToken cancellationToken = default)
+        {
+            session ??= SessionResolver.Session;
+            return AuthService.GetSessionInfoAsync(session, cancellationToken);
+        }
+
+        [HttpGet("getUserSessions")]
+        [Publish]
+        public Task<SessionInfo[]> GetUserSessionsAsync(Session? session = null, CancellationToken cancellationToken = default)
+        {
+            session ??= SessionResolver.Session;
+            return AuthService.GetUserSessionsAsync(session, cancellationToken);
         }
     }
 }

@@ -5,11 +5,11 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Templates.Blazor2.Host.Services
+namespace Stl.Fusion.Server.Authentication
 {
-    public static class HttpContextExtensions
+    public static class HttpContextEx
     {
-        public static async Task<AuthenticationScheme[]> GetExternalProvidersAsync(this HttpContext context)
+        public static async Task<AuthenticationScheme[]> GetAuthenticationSchemesAsync(this HttpContext context)
         {
             if (context == null)
                 throw new ArgumentNullException(nameof(context));
@@ -21,14 +21,14 @@ namespace Templates.Blazor2.Host.Services
                 ).ToArray();
         }
 
-        public static async Task<bool> IsProviderSupportedAsync(this HttpContext context, string provider)
+        public static async Task<bool> IsAuthenticationSchemeSupportedAsync(this HttpContext context, string scheme)
         {
             if (context == null)
                 throw new ArgumentNullException(nameof(context));
             return (
-                from scheme in await context.GetExternalProvidersAsync()
-                where string.Equals(scheme.Name, provider, StringComparison.OrdinalIgnoreCase)
-                select scheme
+                from s in await context.GetAuthenticationSchemesAsync()
+                where string.Equals(s.Name, scheme, StringComparison.OrdinalIgnoreCase)
+                select s
                 ).Any();
         }
     }

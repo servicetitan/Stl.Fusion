@@ -4,26 +4,36 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Server.Authentication;
+using Stl.Fusion.Server.Controllers;
 
 namespace Stl.Fusion.Server
 {
     public static class FusionAuthenticationBuilderEx
     {
         public static FusionAuthenticationBuilder AddServer(this FusionAuthenticationBuilder fusionAuth,
-            Action<IServiceProvider, SessionMiddleware.Options>? sessionMiddlewareOptionsBuilder = null)
+            Action<IServiceProvider, FusionSessionMiddleware.Options>? sessionMiddlewareOptionsBuilder = null,
+            Action<IServiceProvider, FusionAuthHelper.Options>? authHelperOptionsBuilder = null,
+            Action<IServiceProvider, FusionSignInController.Options>? signInControllerOptionsBuilder = null)
         {
+            var fusion = fusionAuth.Fusion;
             var services = fusionAuth.Services;
-            if (services.All(d => d.ServiceType != typeof(IServerSideAuthService)))
-                fusionAuth.AddServerSideAuthService();
+            fusionAuth.AddServerSideAuthService();
 
             services.TryAddSingleton(c => {
-                var options = new SessionMiddleware.Options();
+                var options = new FusionSessionMiddleware.Options();
                 sessionMiddlewareOptionsBuilder?.Invoke(c, options);
                 return options;
             });
-            services.TryAddScoped<SessionMiddleware>();
+            services.TryAddScoped<FusionSessionMiddleware>();
+            services.TryAddSingleton(c => {
+                var options = new FusionAuthHelper.Options();
+                authHelperOptionsBuilder?.Invoke(c, options);
+                return options;
+            });
+            services.TryAddScoped<FusionAuthHelper>();
+
             services.AddRouting();
-            services.AddControllers().AddApplicationPart(typeof(AuthController).Assembly);
+            fusion.AddWebServer().AddControllers(signInControllerOptionsBuilder);
 
             return fusionAuth;
         }

@@ -17,7 +17,7 @@ namespace Stl.Fusion.Server
         public IServiceCollection Services => Fusion.Services;
 
         internal FusionWebServerBuilder(FusionBuilder fusion,
-            Action<IServiceProvider, WebSocketServer.Options>? webSocketServerOptionsBuilder)
+            Action<IServiceProvider, FusionWebSocketServer.Options>? webSocketServerOptionsBuilder)
         {
             Fusion = fusion;
             if (Services.Contains(AddedTagDescriptor))
@@ -27,11 +27,11 @@ namespace Stl.Fusion.Server
 
             Fusion.AddPublisher();
             Services.TryAddSingleton(c => {
-                var options = new WebSocketServer.Options();
+                var options = new FusionWebSocketServer.Options();
                 webSocketServerOptionsBuilder?.Invoke(c, options);
                 return options;
             });
-            Services.TryAddSingleton<WebSocketServer>();
+            Services.TryAddSingleton<FusionWebSocketServer>();
             Services.AddMvcCore()
                 .AddNewtonsoftJson(
                     options => MemberwiseCopier.Invoke(
@@ -39,9 +39,15 @@ namespace Stl.Fusion.Server
                         options.SerializerSettings));
         }
 
-        public FusionWebServerBuilder AddControllers()
+        public FusionWebServerBuilder AddControllers(
+            Action<IServiceProvider, FusionSignInController.Options>? signInControllerOptionsBuilder = null)
         {
-            Services.AddMvcCore()
+            Services.TryAddSingleton(c => {
+                var options = new FusionSignInController.Options();
+                signInControllerOptionsBuilder?.Invoke(c, options);
+                return options;
+            });
+            Services.AddControllers()
                 .AddApplicationPart(typeof(FusionAuthController).Assembly);
             return this;
         }

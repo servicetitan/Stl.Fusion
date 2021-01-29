@@ -10,7 +10,7 @@ namespace Stl.Fusion.Server
             this IEndpointRouteBuilder endpoints, string? pattern = null)
         {
             var services = endpoints.ServiceProvider;
-            var server = services.GetRequiredService<WebSocketServer>();
+            var server = services.GetRequiredService<FusionWebSocketServer>();
             return endpoints
                 .MapGet(pattern ?? server.RequestPath, ctx => server.HandleAsync(ctx))
                 .WithDisplayName("Stl.Fusion WebSocket Server");

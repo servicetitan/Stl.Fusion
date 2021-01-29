@@ -2,8 +2,6 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text.RegularExpressions;
-using AspNet.Security.OAuth.GitHub;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -27,7 +25,7 @@ using Stl.Fusion.Client;
 using Stl.Fusion.Server;
 using Blazorise.Bootstrap;
 using Blazorise.Icons.FontAwesome;
-using Stl.Fusion.Server.Controllers;
+using Microsoft.AspNetCore.Authentication.Google;
 
 namespace Templates.Blazor2.Host
 {
@@ -73,9 +71,15 @@ namespace Templates.Blazor2.Host
             });
             services.AddSingleton(new PresenceService.Options() { UpdatePeriod = TimeSpan.FromMinutes(1) });
             var fusion = services.AddFusion();
-            var fusionServer = fusion.AddWebServer().AddControllers();
+            var fusionServer = fusion.AddWebServer();
             var fusionClient = fusion.AddRestEaseClient();
-            var fusionAuth = fusion.AddAuthentication().AddServer();
+            var fusionAuth = fusion.AddAuthentication().AddServer(
+                signInControllerOptionsBuilder: (_, options) => {
+                    options.DefaultScheme = GoogleDefaults.AuthenticationScheme;
+                },
+                authHelperOptionsBuilder: (_, options) => {
+                    options.NameClaimKey = "";
+                });
 
             // This method registers services marked with any of ServiceAttributeBase descendants, including:
             // [Service], [ComputeService], [RestEaseReplicaService], [LiveStateUpdater]
@@ -88,21 +92,20 @@ namespace Templates.Blazor2.Host
             services.AddAuthentication(options => {
                 options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
             }).AddCookie(options => {
-                options.LoginPath = "/fusion/signin";
-                options.LogoutPath = "/fusion/signout";
-            }).AddGitHub(options => {
-                options.Scope.Add("read:user");
-                // options.Scope.Add("user:email");
+                options.LoginPath = "/fusion/signIn";
+                options.LogoutPath = "/fusion/signOut";
+            }).AddGoogle(options => {
+                options.Scope.Add("https://www.googleapis.com/auth/userinfo.profile");
+                options.Scope.Add("https://www.googleapis.com/auth/userinfo.email");
                 options.CorrelationCookie.SameSite = SameSiteMode.Lax;
             });
-            FusionAuthController.DefaultScheme = GitHubAuthenticationDefaults.AuthenticationScheme;
             // We want to get ClientId and ClientSecret from ServerSettings,
             // and they're available only when IServiceProvider is already created,
             // that's why this overload of Configure<TOptions> is used here.
-            services.Configure<GitHubAuthenticationOptions>((c, name, options) => {
+            services.Configure<GoogleOptions>((c, name, options) => {
                 var serverSettings = c.GetRequiredService<ServerSettings>();
-                options.ClientId = serverSettings.GitHubClientId;
-                options.ClientSecret = serverSettings.GitHubClientSecret;
+                options.ClientId = serverSettings.GoogleClientId;
+                options.ClientSecret = serverSettings.GoogleClientSecret;
             });
 
             // Web

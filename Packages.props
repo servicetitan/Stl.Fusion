@@ -30,6 +30,7 @@
     <PackageReference Update="Enums.NET" Version="3.0.*" />
     <PackageReference Update="FluentAssertions" Version="5.10.*" />
     <PackageReference Update="Microsoft.AspNetCore.Authentication.Cookies" Version="2.2.*" />
+    <PackageReference Update="Microsoft.AspNetCore.Authentication.Google" Version="$(AspNetCoreVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.Components" Version="$(AspNetCoreVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.Components.Authorization" Version="$(AspNetCoreVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.Components.Web" Version="$(AspNetCoreVersion)" />

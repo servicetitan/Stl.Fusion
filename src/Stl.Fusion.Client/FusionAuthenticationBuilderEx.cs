@@ -1,5 +1,5 @@
 using Stl.Fusion.Authentication;
-using Stl.Fusion.Client.Authentication;
+using Stl.Fusion.Client.Internal;
 
 namespace Stl.Fusion.Client
 {

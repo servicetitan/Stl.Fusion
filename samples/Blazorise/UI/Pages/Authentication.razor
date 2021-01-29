@@ -31,9 +31,9 @@
     </div>
     <div>
         If authentication doesn't work, most likely you need to provide
-        <code>ClientId</code> and <code>ClientSecret</code> for a GitHub application;
+        <code>ClientId</code> and <code>ClientSecret</code> for a Google application;
         you can create one:
-        <a href="https://github.com/settings/developers" target="_blank">https://github.com/settings/developers</a>.
+        <a href="https://developers.google.com/identity/sign-in/web/sign-in" target="_blank">https://developers.google.com/identity/sign-in/web/sign-in</a>.
     </div>
 </div>
 
@@ -110,9 +110,9 @@
                     <button type="button" class="btn btn-danger" @onclick="SignOutEverywhere">Sign out everywhere</button>
                 </div>
                 <div class="alert alert-warning">
-                    To sign out completely, you need to either sign out from GitHub,
+                    To sign out completely, you need to either sign out from Google,
                     or revoke access from this application here:
-                    <a href="https://github.com/settings/applications" target="_blank">https://github.com/settings/applications</a>.
+                    <a href="https://myaccount.google.com/permissions" target="_blank">https://myaccount.google.com/permissions</a>.
                 </div>
             </Authorized>
             <NotAuthorized>

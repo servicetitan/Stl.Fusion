@@ -7,7 +7,7 @@ using Stl.Fusion.Authentication;
 
 namespace Stl.Fusion.Server.Authentication
 {
-    public class SessionMiddleware : IMiddleware
+    public class FusionSessionMiddleware : IMiddleware
     {
         public class Options
         {
@@ -18,10 +18,10 @@ namespace Stl.Fusion.Server.Authentication
                 SameSite = SameSiteMode.Lax,
                 Expiration = TimeSpan.FromDays(28),
             };
-            public Func<SessionMiddleware, HttpContext, Task<bool>> ForcedSignOutHandler { get; set; } =
+            public Func<FusionSessionMiddleware, HttpContext, Task<bool>> ForcedSignOutHandler { get; set; } =
                 DefaultForcedSignOutHandler;
 
-            public static async Task<bool> DefaultForcedSignOutHandler(SessionMiddleware self, HttpContext httpContext)
+            public static async Task<bool> DefaultForcedSignOutHandler(FusionSessionMiddleware self, HttpContext httpContext)
             {
                 await httpContext.SignOutAsync();
                 var url = httpContext.Request.GetEncodedPathAndQuery();
@@ -36,9 +36,9 @@ namespace Stl.Fusion.Server.Authentication
         public ISessionFactory SessionFactory { get; }
         public IAuthService? AuthService { get; }
         public CookieBuilder Cookie { get; }
-        public Func<SessionMiddleware, HttpContext, Task<bool>> ForcedSignOutHandler { get; }
+        public Func<FusionSessionMiddleware, HttpContext, Task<bool>> ForcedSignOutHandler { get; }
 
-        public SessionMiddleware(
+        public FusionSessionMiddleware(
             Options? options,
             ISessionProvider sessionProvider,
             ISessionFactory sessionFactory,

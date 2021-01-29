@@ -4,7 +4,7 @@ using RestEase;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Authentication.Commands;
 
-namespace Stl.Fusion.Client.Authentication
+namespace Stl.Fusion.Client.Internal
 {
     [BasePath("fusion/auth")]
     public interface IAuthClient

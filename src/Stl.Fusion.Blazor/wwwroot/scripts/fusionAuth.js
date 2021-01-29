@@ -8,8 +8,8 @@ window.FusionAuth = {
     sessionId: "",
     windowTarget: "_blank",
     windowFeatures: "width=600,height=600",
-    signInPath: "/fusion/signin",
-    signOutPath: "/fusion/signout",
+    signInPath: "/fusion/signIn",
+    signOutPath: "/fusion/signOut",
     closePath: "/fusion/close",
 
     signIn: function (provider) {

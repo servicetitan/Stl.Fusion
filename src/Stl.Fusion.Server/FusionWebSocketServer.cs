@@ -12,7 +12,7 @@ using Stl.Serialization;
 
 namespace Stl.Fusion.Server
 {
-    public class WebSocketServer
+    public class FusionWebSocketServer
     {
         public class Options
         {
@@ -38,10 +38,10 @@ namespace Stl.Fusion.Server
         public string PublisherIdQueryParameterName { get; }
         public string ClientIdQueryParameterName { get; }
 
-        public WebSocketServer(Options? options, IPublisher publisher, ILogger<WebSocketServer>? log = null)
+        public FusionWebSocketServer(Options? options, IPublisher publisher, ILogger<FusionWebSocketServer>? log = null)
         {
             options ??= new();
-            Log = log ?? NullLogger<WebSocketServer>.Instance;
+            Log = log ?? NullLogger<FusionWebSocketServer>.Instance;
             RequestPath = options.RequestPath;
             PublisherIdQueryParameterName = options.PublisherIdQueryParameterName;
             ClientIdQueryParameterName = options.ClientIdQueryParameterName;
