@@ -1,3 +1,4 @@
 ignore:
   - "tests"
+  - "samples"
   - "src/Stl.Testing"
