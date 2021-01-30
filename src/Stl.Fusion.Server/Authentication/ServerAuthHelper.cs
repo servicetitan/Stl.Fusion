@@ -75,7 +75,9 @@ namespace Stl.Fusion.Server.Authentication
 
             var session = SessionResolver.Session;
             var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? "";
-            var userAgent = httpContext.Request.Headers["User-Agent"].ToString() ?? "";
+            var userAgent = httpContext.Request.Headers.TryGetValue("User-Agent", out var userAgentValues)
+                ? userAgentValues.FirstOrDefault() ?? ""
+                : "";
             var setupSessionCommand = new SetupSessionCommand(ipAddress, userAgent, session).MarkServerSide();
             var sessionInfo = await AuthService.SetupSessionAsync(setupSessionCommand, cancellationToken).ConfigureAwait(false);
             var userId = sessionInfo.UserId;

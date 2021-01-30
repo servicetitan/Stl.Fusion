@@ -35,7 +35,7 @@ namespace Stl.Fusion.Blazor
             State = stateFactory.NewLive<AuthState>(o => {
                 options.LiveStateOptionsBuilder.Invoke(o);
                 o.InitialOutputFactory = _ => new AuthState(new User("none"));
-                o.EventConfigurator += state => state.AddEventHandler(StateEventKind.All, OnStateChanged);
+                o.EventConfigurator += state => state.AddEventHandler(StateEventKind.Updated, OnStateChanged);
             }, ComputeState);
         }
 
@@ -58,9 +58,6 @@ namespace Stl.Fusion.Blazor
         }
 
         protected virtual void OnStateChanged(IState<AuthState> state, StateEventKind eventKind)
-        {
-            if (eventKind == StateEventKind.Updated)
-                NotifyAuthenticationStateChanged(Task.FromResult((AuthenticationState) state.LastValue));
-        }
+            => NotifyAuthenticationStateChanged(Task.FromResult((AuthenticationState) state.LastValue));
     }
 }

@@ -12,6 +12,8 @@
 @{
     var state = State.LastValue;
     var error = State.Error;
+    var usedAuthSchemas = User.Identities.Select(kv => kv.Key.Schema).ToHashSet();
+    var unusedAuthSchemas = AuthSchemas.Where(p => !usedAuthSchemas.Contains(p.Name)).ToArray();
 }
 
 <h1>Authentication</h1>
@@ -117,10 +119,10 @@
                         <Button Color="Color.Danger"
                                 @onclick="_ => ClientAuthHelper.SignOutEverywhereAsync()">Sign out everywhere</Button>
                     </Buttons>
-                    @if (UnusedAuthSchemas.Length != 0) {
+                    @if (unusedAuthSchemas.Length != 0) {
                         <span> or add account: </span>
                         <Buttons>
-                            @foreach (var (name, displayName) in UnusedAuthSchemas) {
+                            @foreach (var (name, displayName) in unusedAuthSchemas) {
                                 <Button Color="Color.Primary"
                                         @onclick="_ => ClientAuthHelper.SignInAsync(name)">@displayName</Button>
                             }
@@ -136,7 +138,7 @@
             <NotAuthorized>
                 <span>Sign in with: </span>
                 <Buttons>
-                    @foreach (var (name, displayName) in UnusedAuthSchemas) {
+                    @foreach (var (name, displayName) in unusedAuthSchemas) {
                         <Button Color="Color.Primary"
                                 @onclick="_ => ClientAuthHelper.SignInAsync(name)">@displayName</Button>
                     }
@@ -165,13 +167,10 @@
     private User User => AuthState.User;
     private ConcurrentDictionary<string, UserAgent> UserAgentCache { get; } = new();
     private (string Name, string DisplayName)[] AuthSchemas { get; set; } = Array.Empty<(string, string)>();
-    private (string Name, string DisplayName)[] UnusedAuthSchemas { get; set; } = Array.Empty<(string, string)>();
 
     protected override async Task OnParametersSetAsync()
     {
         AuthState = await AuthStateTask;
-        var usedAuthSchemas = User.Identities.Select(kv => kv.Key.Schema).ToHashSet();
-        UnusedAuthSchemas = AuthSchemas.Where(p => !usedAuthSchemas.Contains(p.Name)).ToArray();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
