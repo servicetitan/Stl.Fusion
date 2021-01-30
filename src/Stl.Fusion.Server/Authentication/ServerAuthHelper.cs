@@ -70,8 +70,8 @@ namespace Stl.Fusion.Server.Authentication
         public virtual async Task UpdateAuthStateAsync(HttpContext httpContext, CancellationToken cancellationToken = default)
         {
             var httpUser = httpContext.User;
-            var authenticationType = httpUser.Identity?.AuthenticationType ?? "";
-            var isAuthenticated = !string.IsNullOrEmpty(authenticationType);
+            var httpAuthenticationSchema = httpUser.Identity?.AuthenticationType ?? "";
+            var isAuthenticated = !string.IsNullOrEmpty(httpAuthenticationSchema);
 
             var session = SessionResolver.Session;
             var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? "";
@@ -86,9 +86,9 @@ namespace Stl.Fusion.Server.Authentication
                 : new User(session.Id); // Guest
 
             if (isAuthenticated) {
-                if (userIsAuthenticated && IsSameUser(user, httpUser, authenticationType))
+                if (userIsAuthenticated && IsSameUser(user, httpUser, httpAuthenticationSchema))
                     return;
-                var (newUser, authenticatedIdentity) = CreateOrUpdateUser(user, httpUser, authenticationType);
+                var (newUser, authenticatedIdentity) = CreateOrUpdateUser(user, httpUser, httpAuthenticationSchema);
                 var signInCommand = new SignInCommand(newUser, authenticatedIdentity, session).MarkServerSide();
                 await AuthService.SignInAsync(signInCommand, cancellationToken).ConfigureAwait(false);
             }
@@ -110,23 +110,23 @@ namespace Stl.Fusion.Server.Authentication
 
         // Protected methods
 
-        protected virtual bool IsSameUser(User user, ClaimsPrincipal httpUser, string authenticationType)
+        protected virtual bool IsSameUser(User user, ClaimsPrincipal httpUser, string schema)
         {
             var httpUserIdentityName = httpUser.Identity?.Name ?? "";
             var claims = httpUser.Claims.ToImmutableDictionary(c => c.Type, c => c.Value);
             var id = FirstClaimOrDefault(claims, IdClaimKeys) ?? httpUserIdentityName;
-            var identity = new UserIdentity(authenticationType, id);
+            var identity = new UserIdentity(schema, id);
             return user.Identities.ContainsKey(identity);
         }
 
         protected virtual (User User, UserIdentity AuthenticatedIdentity) CreateOrUpdateUser(
-            User user, ClaimsPrincipal httpUser, string authenticationType)
+            User user, ClaimsPrincipal httpUser, string schema)
         {
             var httpUserIdentityName = httpUser.Identity?.Name ?? "";
             var claims = httpUser.Claims.ToImmutableDictionary(c => c.Type, c => c.Value);
             var id = FirstClaimOrDefault(claims, IdClaimKeys) ?? httpUserIdentityName;
             var name = FirstClaimOrDefault(claims, NameClaimKeys) ?? httpUserIdentityName;
-            var identity = new UserIdentity(authenticationType, id);
+            var identity = new UserIdentity(schema, id);
             var identities = ImmutableDictionary<UserIdentity, string>.Empty.Add(identity, "");
 
             if (!user.IsAuthenticated)

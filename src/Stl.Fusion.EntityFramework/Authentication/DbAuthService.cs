@@ -51,8 +51,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             if (!user.Identities.ContainsKey(authenticatedIdentity))
                 throw new ArgumentOutOfRangeException(
                     $"{nameof(command)}.{nameof(SignInCommand.AuthenticatedIdentity)}");
-            var sessionInfo = await GetSessionInfoAsync(session, cancellationToken).ConfigureAwait(false);
-            if (sessionInfo.IsSignOutForced)
+            if (await IsSignOutForcedAsync(session, cancellationToken).ConfigureAwait(false))
                 throw Errors.ForcedSignOut();
 
             await using var dbContext = await CreateCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
@@ -60,9 +59,11 @@ namespace Stl.Fusion.EntityFramework.Authentication
             var dbUser = await Users
                 .FindOrCreateOnSignInAsync(dbContext, user, cancellationToken)
                 .ConfigureAwait(false);
-            sessionInfo = sessionInfo with {
+            var dbSessionInfo = await Sessions.FindOrCreateAsync(dbContext, session, cancellationToken).ConfigureAwait(false);
+            var userIdentity = user.Identities.FirstOrDefault().Key;
+            var sessionInfo = dbSessionInfo.ToModel() with {
                 LastSeenAt = Clock.Now,
-                AuthenticatedIdentity = authenticatedIdentity,
+                AuthenticatedIdentity = userIdentity,
                 UserId = dbUser.Id.ToString(),
             };
             context.Items.Set(OperationItem.New(sessionInfo));

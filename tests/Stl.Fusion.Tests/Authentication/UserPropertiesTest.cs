@@ -47,9 +47,9 @@ namespace Stl.Fusion.Tests.Authentication
                 return (authType, userId);
             }
 
-            Parse("1").Should().Be((UserIdentity.DefaultAuthenticationType, "1"));
+            Parse("1").Should().Be((UserIdentity.DefaultSchema, "1"));
             Parse("1/2").Should().Be(("1", "2"));
-            Parse("1\\/2").Should().Be((UserIdentity.DefaultAuthenticationType, "1/2"));
+            Parse("1\\/2").Should().Be((UserIdentity.DefaultSchema, "1/2"));
         }
     }
 }

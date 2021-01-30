@@ -12,9 +12,6 @@
 @{
     var state = State.LastValue;
     var error = State.Error;
-    var unusedAuthSchemas = AuthSchemas
-        .Where(p => !UsedAuthSchemas.Contains(p.Name))
-        .ToList();
 }
 
 <h1>Authentication</h1>
@@ -67,8 +64,8 @@
                 </ul>
                 <div class="card-subtitle">Identities:</div>
                 <ul>
-                    @foreach (var ((authenticationType, userId), _) in User.Identities) {
-                        <li><code>@authenticationType</code>: <b><code>@userId</code></b></li>
+                    @foreach (var ((schema, schemaBoundId), _) in User.Identities) {
+                        <li><code>@schema</code>: <b><code>@schemaBoundId</code></b></li>
                     }
                 </ul>
             }
@@ -120,10 +117,10 @@
                         <Button Color="Color.Danger"
                                 @onclick="_ => ClientAuthHelper.SignOutEverywhereAsync()">Sign out everywhere</Button>
                     </Buttons>
-                    @if (unusedAuthSchemas.Count > 0) {
+                    @if (UnusedAuthSchemas.Length != 0) {
                         <span> or add account: </span>
                         <Buttons>
-                            @foreach (var (name, displayName) in unusedAuthSchemas) {
+                            @foreach (var (name, displayName) in UnusedAuthSchemas) {
                                 <Button Color="Color.Primary"
                                         @onclick="_ => ClientAuthHelper.SignInAsync(name)">@displayName</Button>
                             }
@@ -139,7 +136,7 @@
             <NotAuthorized>
                 <span>Sign in with: </span>
                 <Buttons>
-                    @foreach (var (name, displayName) in unusedAuthSchemas) {
+                    @foreach (var (name, displayName) in UnusedAuthSchemas) {
                         <Button Color="Color.Primary"
                                 @onclick="_ => ClientAuthHelper.SignInAsync(name)">@displayName</Button>
                     }
@@ -168,16 +165,13 @@
     private User User => AuthState.User;
     private ConcurrentDictionary<string, UserAgent> UserAgentCache { get; } = new();
     private (string Name, string DisplayName)[] AuthSchemas { get; set; } = Array.Empty<(string, string)>();
-    private HashSet<string> UsedAuthSchemas { get; set; } = new();
+    private (string Name, string DisplayName)[] UnusedAuthSchemas { get; set; } = Array.Empty<(string, string)>();
 
     protected override async Task OnParametersSetAsync()
     {
         AuthState = await AuthStateTask;
-        UsedAuthSchemas = User.Identities
-            .Select(kv => {
-                var (authenticationType, _) = kv.Key;
-                return authenticationType;
-            }).ToHashSet();
+        var usedAuthSchemas = User.Identities.Select(kv => kv.Key.Schema).ToHashSet();
+        UnusedAuthSchemas = AuthSchemas.Where(p => !usedAuthSchemas.Contains(p.Name)).ToArray();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

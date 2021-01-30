@@ -58,10 +58,11 @@ namespace Stl.Fusion.Tests.Authentication
             var sessionFactory = ClientServices.GetRequiredService<ISessionFactory>();
             var sessionA = sessionFactory.CreateSession();
             var sessionB = sessionFactory.CreateSession();
-            var bob = new User("", "Bob");
+            var bob = new User("", "Bob").WithIdentity("g:1");
 
             var session = sessionA;
-            await WebServices.Commander().CallAsync(new SignInCommand(bob, session).MarkServerSide());
+            await WebServices.Commander().CallAsync(
+                new SignInCommand(bob, session).MarkServerSide());
             var user = await authServer.GetUserAsync(session);
             user.Name.Should().Be(bob.Name);
             long.TryParse(user.Id, out var _).Should().BeTrue();
@@ -122,7 +123,7 @@ namespace Stl.Fusion.Tests.Authentication
             user.Name.Should().Be(bob.Name);
             long.TryParse(user.Id, out var _).Should().BeTrue();
             user.Claims.Count.Should().Be(1);
-            user.Identities.IsEmpty.Should().BeTrue(); // Client-side users shouldn't have them
+            user.Identities.Single(); // Client-side users shouldn't have them
 
             // Server-side methods to get the same user
             var sameUser = await authServer.TryGetUserAsync(user.Id);
@@ -186,10 +187,10 @@ namespace Stl.Fusion.Tests.Authentication
 
             var session = sessionFactory.CreateSession();
             await Assert.ThrowsAsync<FormatException>(async() => {
-                var guest = new User("notANumber", "Guest");
+                var guest = new User("notANumber", "Guest").WithIdentity("n:1");
                 await authServer.SignInAsync(new SignInCommand(guest, session).MarkServerSide());
             });
-            var bob = new User("", "Bob");
+            var bob = new User("", "Bob").WithIdentity("b:1");
             await authServer.SignInAsync(new SignInCommand(bob, session).MarkServerSide());
             var user = await authServer.GetUserAsync(session);
             user.Name.Should().Be("Bob");
@@ -208,12 +209,13 @@ namespace Stl.Fusion.Tests.Authentication
             sessions = await authServer.GetUserSessionsAsync(sessionB);
             sessions.Length.Should().Be(0);
 
-            var bob = new User("", "Bob");
+            var bob = new User("", "Bob").WithIdentity("g:1");
             var signInCmd = new SignInCommand(bob, sessionA).MarkServerSide();
             await authServer.SignInAsync(signInCmd);
             var user = await authServer.GetUserAsync(sessionA);
             user.Name.Should().Be(bob.Name);
-            bob = user;
+            bob = await authServer.TryGetUserAsync(user.Id)
+                ?? throw new NullReferenceException();
 
             sessions = await authServer.GetUserSessionsAsync(sessionA);
             sessions.Select(s => s.Id).Should().BeEquivalentTo(new[] { sessionA.Id });

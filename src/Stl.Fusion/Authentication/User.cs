@@ -25,7 +25,7 @@ namespace Stl.Fusion.Authentication
         [JsonIgnore]
         public bool IsAuthenticated => !(Id.IsEmpty || Id.Value.StartsWith(GuestIdPrefix));
         [JsonIgnore]
-        public string AuthenticationType => IsAuthenticated ? UserIdentity.DefaultAuthenticationType : "";
+        string IIdentity.AuthenticationType => IsAuthenticated ? UserIdentity.DefaultSchema : "";
         [JsonIgnore]
         public ClaimsPrincipal ClaimsPrincipal => _claimsPrincipalLazy.Value;
 
@@ -68,11 +68,8 @@ namespace Stl.Fusion.Authentication
             if (Identities.IsEmpty)
                 return this;
             var maskedIdentities = ImmutableDictionary<UserIdentity, string>.Empty;
-            foreach (var (id, _) in Identities) {
-                var (authenticationType, _) = id;
-                var newId = new UserIdentity(authenticationType, "<hidden>");
-                maskedIdentities = maskedIdentities.Add(newId, "");
-            }
+            foreach (var (id, _) in Identities)
+                maskedIdentities = maskedIdentities.Add((id.Schema, "<hidden>"), "");
             return this with { Identities = maskedIdentities };
         }
 
@@ -92,7 +89,8 @@ namespace Stl.Fusion.Authentication
                 claims.Add(new(ClaimTypes.Name, Name, ClaimValueTypes.String));
             foreach (var (key, value) in Claims)
                 claims.Add(new Claim(key, value));
-            var claimsIdentity = new ClaimsIdentity(claims, AuthenticationType);
+            var identity = (IIdentity) this;
+            var claimsIdentity = new ClaimsIdentity(claims, identity.AuthenticationType);
             return new ClaimsPrincipal(claimsIdentity);
         }
     }
