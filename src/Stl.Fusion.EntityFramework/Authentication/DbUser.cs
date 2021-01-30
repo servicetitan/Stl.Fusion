@@ -51,7 +51,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
                 throw new ArgumentOutOfRangeException(nameof(source));
 
             // Updating user properties
-            Claims = source.Claims.AddRange(Claims);
+            Claims = source.Claims.SetItems(Claims);
 
             // Adding new identities
             var identities = Identities.ToDictionary(ui => ui.Id);

@@ -14,14 +14,14 @@ using Stl.Time;
 
 namespace Stl.Fusion.Authentication
 {
-    public class InProcessAuthService : IServerSideAuthService
+    public class InMemoryAuthService : IServerSideAuthService
     {
         private long _nextUserId;
         protected ConcurrentDictionary<string, User> Users { get; } = new();
         protected ConcurrentDictionary<string, SessionInfo> SessionInfos { get; } = new();
         protected IMomentClock Clock { get; }
 
-        public InProcessAuthService(IMomentClock clock)
+        public InMemoryAuthService(IMomentClock clock)
             => Clock = clock;
 
         // Command handlers
@@ -45,25 +45,20 @@ namespace Stl.Fusion.Authentication
             if (sessionInfo.IsSignOutForced)
                 throw Errors.ForcedSignOut();
 
+            var userWithAuthenticatedIdentity = FindByUserIdentity(authenticatedIdentity);
             if (string.IsNullOrEmpty(user.Id)) {
-                var isExistingUser = false;
-                if (authenticatedIdentity.IsValid) {
-                    // Let's try to find the user by its authenticated identity
-                    foreach (var existingUser in Users.Values) {
-                        if (existingUser.Identities.ContainsKey(authenticatedIdentity)) {
-                            user = existingUser;
-                            isExistingUser = true;
-                            break;
-                        }
-                    }
-                }
-                // Generate User.Id for the new user
-                if (!isExistingUser)
+                // No user.Id -> try to find existing user by authenticatedIdentity
+                if (userWithAuthenticatedIdentity == null)
                     user = user with { Id = GetNextUserId() };
+                else
+                    user = MergeUsers(userWithAuthenticatedIdentity, user);
             }
             else {
-                // Just to make sure it works like a similar EF service
-                var _ = long.Parse(user.Id);
+                // We have Id -> the user exists for sure, but we might need to switch
+                // to userWithAuthenticatedIdentity, otherwise we'll register the same
+                // UserIdentity for 2 or more users
+                var existingUser = Users[user.Id];
+                user = userWithAuthenticatedIdentity ?? MergeUsers(existingUser, user);
             }
 
             // Update SessionInfo
@@ -200,6 +195,17 @@ namespace Stl.Fusion.Authentication
             });
             return SessionInfos.GetValueOrDefault(sessionInfo.Id) ?? sessionInfo;
         }
+
+        protected virtual User? FindByUserIdentity(UserIdentity userIdentity)
+            => userIdentity.IsValid
+                ? Users.Values.FirstOrDefault(user => user.Identities.ContainsKey(userIdentity))
+                : null;
+
+        protected virtual User MergeUsers(User existingUser, User user)
+            => existingUser with {
+                Claims = user.Claims.SetItems(existingUser.Claims), // Add new claims
+                Identities = existingUser.Identities.SetItems(user.Identities), // Add + replace identities
+            };
 
         protected string GetNextUserId()
             => Interlocked.Increment(ref _nextUserId).ToString();

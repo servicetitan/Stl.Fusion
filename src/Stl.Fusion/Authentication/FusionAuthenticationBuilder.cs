@@ -33,7 +33,7 @@ namespace Stl.Fusion.Authentication
             if (Services.Any(d => d.ServiceType == typeof(IServerSideAuthService)))
                 return this;
 
-            implementationType ??= typeof(InProcessAuthService);
+            implementationType ??= typeof(InMemoryAuthService);
             var serverSideServiceType = typeof(IServerSideAuthService);
             if (!serverSideServiceType.IsAssignableFrom(implementationType))
                 throw Errors.MustImplement(implementationType, serverSideServiceType, nameof(implementationType));
