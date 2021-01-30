@@ -6,7 +6,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Stl.Fusion.EntityFramework\Stl.Fusion.EntityFramework.csproj" />
     <ProjectReference Include="..\Abstractions\Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
   </ItemGroup>
 
 </Project>

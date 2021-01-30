@@ -23,10 +23,10 @@ namespace Stl.Fusion.Tests.Authentication
     }
 
     [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-    public class InProcessAuthServiceTest : AuthServiceTestBase
+    public class InMemoryAuthServiceTest : AuthServiceTestBase
     {
-        public InProcessAuthServiceTest(ITestOutputHelper @out)
-            : base(@out, new FusionTestOptions() { UseInProcessAuthService = true } ) { }
+        public InMemoryAuthServiceTest(ITestOutputHelper @out)
+            : base(@out, new FusionTestOptions() { UseInMemoryAuthService = true } ) { }
     }
 
     public abstract class AuthServiceTestBase : FusionTestBase
@@ -78,7 +78,7 @@ namespace Stl.Fusion.Tests.Authentication
             user.IsAuthenticated.Should().BeTrue();
 
             // Checking if local service is able to see the same user & sessions
-            if (!Options.UseInProcessAuthService) {
+            if (!Options.UseInMemoryAuthService) {
                 await DelayAsync(0.5);
                 user = await authLocal.GetUserAsync(session);
                 user.Id.Should().Be(bob.Id);
@@ -97,7 +97,7 @@ namespace Stl.Fusion.Tests.Authentication
             await DelayAsync(0.5);
             user = await authClient.GetUserAsync(sessionA);
             user.IsAuthenticated.Should().BeFalse();
-            if (!Options.UseInProcessAuthService) {
+            if (!Options.UseInMemoryAuthService) {
                 user = await authLocal.GetUserAsync(sessionA);
                 user.IsAuthenticated.Should().BeFalse();
             }
@@ -141,7 +141,7 @@ namespace Stl.Fusion.Tests.Authentication
             user.IsAuthenticated.Should().BeTrue();
 
             // Checking if local service is able to see the same user & sessions
-            if (!Options.UseInProcessAuthService) {
+            if (!Options.UseInMemoryAuthService) {
                 await DelayAsync(0.5);
                 user = await authLocal.GetUserAsync(session);
                 user.Id.Should().Be(bob.Id);
@@ -160,7 +160,7 @@ namespace Stl.Fusion.Tests.Authentication
             await DelayAsync(0.5);
             user = await authClient.GetUserAsync(sessionA);
             user.IsAuthenticated.Should().BeFalse();
-            if (!Options.UseInProcessAuthService) {
+            if (!Options.UseInMemoryAuthService) {
                 user = await authLocal.GetUserAsync(sessionA);
                 user.IsAuthenticated.Should().BeFalse();
             }

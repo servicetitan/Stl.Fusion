@@ -11,18 +11,21 @@ namespace Stl.DependencyInjection
     public record ServiceAttributeScanner
     {
         public IServiceCollection Services { get; }
-        public Symbol Scope { get; set; } = Symbol.Empty;
-        public Func<Type, bool> TypeFilter { get; set; } = _ => true;
+        public Symbol Scope { get; init; }
+        public Func<Type, bool> TypeFilter { get; init; } = _ => true;
 
-        public ServiceAttributeScanner(IServiceCollection services)
-            => Services = services;
+        public ServiceAttributeScanner(IServiceCollection services, Symbol scope = default)
+        {
+            Services = services;
+            Scope = scope;
+        }
 
         public IServiceCollection BackToServices() => Services;
 
         // SetXxx, ResetXxx
 
         public ServiceAttributeScanner WithScope(Symbol scope)
-            => this with { Scope =  scope };
+            => Scope == scope ? this : this with { Scope =  scope };
         public ServiceAttributeScanner WithTypeFilter(Func<Type, bool> typeFilter)
             => this with { TypeFilter = typeFilter };
         public ServiceAttributeScanner WithTypeFilter(string fullNamePrefix)

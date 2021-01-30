@@ -141,7 +141,7 @@ namespace Stl.Fusion.Server.Authentication
                 // Update
                 user = user with {
                     Claims = claims.SetItems(user.Claims),
-                    Identities = identities.SetItems(user.Identities),
+                    Identities = identities,
                 };
             }
             return (user, identity);

@@ -19,7 +19,8 @@ namespace Stl.Fusion.EntityFramework.Authentication
     {
         public class Options
         {
-            public TimeSpan MinUpdatePresencePeriod { get; set; } = TimeSpan.FromMinutes(3);
+            // The default should be less than 3 min - see PresenceService.Options
+            public TimeSpan MinUpdatePresencePeriod { get; set; } = TimeSpan.FromMinutes(2.75);
         }
 
         protected IDbUserRepo<TDbContext> Users { get; }
@@ -57,13 +58,22 @@ namespace Stl.Fusion.EntityFramework.Authentication
             await using var dbContext = await CreateCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
 
             var dbUser = await Users
-                .FindOrCreateOnSignInAsync(dbContext, user, cancellationToken)
+                .FindByIdentityAsync(dbContext, authenticatedIdentity, cancellationToken)
                 .ConfigureAwait(false);
+            if (dbUser == null)
+                dbUser = await Users
+                    .FindOrCreateOnSignInAsync(dbContext, user, cancellationToken)
+                    .ConfigureAwait(false);
+            else {
+                user = user with {Id = dbUser.Id.ToString()};
+                dbUser.FromModel(user);
+                await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            }
+
             var dbSessionInfo = await Sessions.FindOrCreateAsync(dbContext, session, cancellationToken).ConfigureAwait(false);
-            var userIdentity = user.Identities.FirstOrDefault().Key;
             var sessionInfo = dbSessionInfo.ToModel() with {
                 LastSeenAt = Clock.Now,
-                AuthenticatedIdentity = userIdentity,
+                AuthenticatedIdentity = authenticatedIdentity,
                 UserId = dbUser.Id.ToString(),
             };
             context.Items.Set(OperationItem.New(sessionInfo));
@@ -176,11 +186,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             await using var tx = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
 
             var dbUser = await Users.FindAsync(dbContext, long.Parse(userId), cancellationToken).ConfigureAwait(false);
-            if (dbUser == null)
-                return null;
-            await dbContext.Entry(dbUser).Collection(nameof(DbUser.Identities))
-                .LoadAsync(cancellationToken).ConfigureAwait(false);
-            return dbUser.ToModel();
+            return dbUser?.ToModel();
         }
 
         public virtual async Task<SessionInfo[]> GetUserSessionsAsync(

@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components.Authorization;
+using Stl.Async;
 using Stl.Fusion.Authentication;
 
 namespace Stl.Fusion.Blazor
@@ -58,6 +59,10 @@ namespace Stl.Fusion.Blazor
         }
 
         protected virtual void OnStateChanged(IState<AuthState> state, StateEventKind eventKind)
-            => NotifyAuthenticationStateChanged(Task.FromResult((AuthenticationState) state.LastValue));
+        {
+            using var _ = ExecutionContextEx.SuppressFlow();
+            Task.Run(() =>
+                NotifyAuthenticationStateChanged(Task.FromResult((AuthenticationState) state.LastValue))).Ignore();
+        }
     }
 }

@@ -11,7 +11,7 @@ namespace Stl.Fusion.Authentication
     {
         public class Options
         {
-            public TimeSpan UpdatePeriod { get; set; } = TimeSpan.FromMinutes(10);
+            public TimeSpan UpdatePeriod { get; set; } = TimeSpan.FromMinutes(3);
         }
 
         protected ILogger Log { get; }

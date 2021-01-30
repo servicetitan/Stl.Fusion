@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -40,38 +39,22 @@ namespace Stl.Fusion.EntityFramework.Authentication
         public async Task<DbUser> FindOrCreateOnSignInAsync(
             TDbContext dbContext, User user, CancellationToken cancellationToken = default)
         {
-            // Try to find user by its Id first
-            var hasId = !string.IsNullOrEmpty(user.Id);
-            var dbUser = hasId
-                ? await FindAsync(dbContext, long.Parse(user.Id), cancellationToken).ConfigureAwait(false)
-                : null;
-            if (dbUser == null) {
-                if (hasId)
-                    throw Errors.EntityNotFound<TDbUser>();
-
-                // Id wasn't provided, so let's try to find it by its external Id or just create a new one
-                foreach (var userIdentity in user.Identities.Keys) {
-                    dbUser = await FindByIdentityAsync(dbContext, userIdentity, cancellationToken).ConfigureAwait(false);
-                    if (dbUser != null)
-                        break;
-                }
+            DbUser dbUser;
+            if (!string.IsNullOrEmpty(user.Id)) {
+                dbUser = await FindAsync(dbContext, long.Parse(user.Id), cancellationToken).ConfigureAwait(false)
+                    ?? throw Errors.EntityNotFound<TDbUser>();
+                return dbUser;
             }
 
             // No user found, let's create it
-            if (dbUser == null) {
-                dbUser = new TDbUser() {
-                    Name = user.Name,
-                    Claims = user.Claims,
-                };
-                dbContext.Add(dbUser);
-                await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-                user = user with { Id = dbUser.Id.ToString() };
-            }
-            else {
-                await dbContext.Entry(dbUser).Collection(nameof(DbUser.Identities))
-                    .LoadAsync(cancellationToken).ConfigureAwait(false);
-            }
+            dbUser = new TDbUser() {
+                Name = user.Name,
+                Claims = user.Claims,
+            };
+            dbContext.Add(dbUser);
+            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
+            user = user with { Id = dbUser.Id.ToString() };
             dbUser.FromModel(user);
             await dbContext.SaveChangesAsync(cancellationToken);
             return dbUser;
@@ -92,9 +75,15 @@ namespace Stl.Fusion.EntityFramework.Authentication
 
         public virtual async Task<DbUser?> FindAsync(
             TDbContext dbContext, long userId, CancellationToken cancellationToken)
-            => await dbContext.Set<TDbUser>()
+        {
+            var dbUser = await dbContext.Set<TDbUser>()
                 .FindAsync(ComposeKey(userId), cancellationToken)
                 .ConfigureAwait(false);
+            if (dbUser != null)
+                await dbContext.Entry(dbUser).Collection(nameof(DbUser.Identities))
+                    .LoadAsync(cancellationToken).ConfigureAwait(false);
+            return dbUser;
+        }
 
         public virtual async Task<DbUser?> FindByIdentityAsync(
             TDbContext dbContext, UserIdentity userIdentity, CancellationToken cancellationToken = default)

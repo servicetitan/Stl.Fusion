@@ -7,6 +7,7 @@ namespace Templates.Blazor2.Host
     [Settings("Server")]
     public class ServerSettings
     {
+        public bool UseInMemoryAuthService { get; set; } = false;
         public string PublisherId { get; set; } = "p";
 
         public string GoogleClientId { get; set; } = "77906554119-0jeq7cafi2l3qdtotmc8ndnpnvtkcvg8.apps.googleusercontent.com";

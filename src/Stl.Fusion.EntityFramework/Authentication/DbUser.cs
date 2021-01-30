@@ -50,10 +50,10 @@ namespace Stl.Fusion.EntityFramework.Authentication
             if (Id.ToString() != source.Id)
                 throw new ArgumentOutOfRangeException(nameof(source));
 
-            // Updating user properties
+            // Adding new Claims
             Claims = source.Claims.SetItems(Claims);
 
-            // Adding new identities
+            // Adding / updating identities
             var identities = Identities.ToDictionary(ui => ui.Id);
             foreach (var (userIdentity, secret) in source.Identities) {
                 if (!userIdentity.IsValid)

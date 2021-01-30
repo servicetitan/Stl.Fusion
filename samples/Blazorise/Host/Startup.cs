@@ -28,6 +28,9 @@ using Blazorise.Bootstrap;
 using Blazorise.Icons.FontAwesome;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
+using Microsoft.EntityFrameworkCore;
+using Stl.Fusion.EntityFramework;
+using Stl.IO;
 
 namespace Templates.Blazor2.Host
 {
@@ -45,6 +48,11 @@ namespace Templates.Blazor2.Host
 
         public void ConfigureServices(IServiceCollection services)
         {
+            var serverSettings = services
+                .AttributeScanner(s => s.AddService<ServerSettings>())
+                .BuildServiceProvider()
+                .GetRequiredService<ServerSettings>();
+
             services.AddResponseCompression(opts => {
                 opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
                     new[] { "application/octet-stream" });
@@ -54,30 +62,40 @@ namespace Templates.Blazor2.Host
                 logging.ClearProviders();
                 logging.AddConsole();
                 logging.SetMinimumLevel(LogLevel.Information);
-                logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Information);
+                if (Env.IsDevelopment())
+                    logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Information);
             });
 
             // DbContext & related services
-            /*
             var appTempDir = PathEx.GetApplicationTempDirectory("", true);
             var dbPath = appTempDir & "App.db";
             services.AddDbContextFactory<AppDbContext>(builder => {
                 builder.UseSqlite($"Data Source={dbPath}", sqlite => { });
+                if (Env.IsDevelopment())
+                    builder.EnableSensitiveDataLogging();
             });
-            */
+            services.AddDbContextServices<AppDbContext>(b => {
+                // This is the best way to add DbContext-related services from Stl.Fusion.EntityFramework
+                b.AddDbOperations((_, o) => {
+                    // We use FileBasedDbOperationLogChangeMonitor, so unconditional wake up period
+                    // can be arbitrary long - all depends on the reliability of Notifier-Monitor chain.
+                    o.UnconditionalWakeUpPeriod = TimeSpan.FromSeconds(Env.IsDevelopment() ? 60 : 5);
+                });
+                var operationLogChangeAlertPath = dbPath + "_changed";
+                b.AddFileBasedDbOperationLogChangeNotifier(operationLogChangeAlertPath);
+                b.AddFileBasedDbOperationLogChangeMonitor(operationLogChangeAlertPath);
+                if (!serverSettings.UseInMemoryAuthService)
+                    b.AddDbAuthentication();
+            });
 
             // Fusion services
-            services.AddSingleton(c => {
-                var serverSettings = c.GetRequiredService<ServerSettings>();
-                return new Publisher.Options() { Id = serverSettings.PublisherId };
-            });
-            services.AddSingleton(new PresenceService.Options() { UpdatePeriod = TimeSpan.FromMinutes(1) });
+            services.AddSingleton(new Publisher.Options() { Id = serverSettings.PublisherId });
             var fusion = services.AddFusion();
             var fusionServer = fusion.AddWebServer();
             var fusionClient = fusion.AddRestEaseClient();
             var fusionAuth = fusion.AddAuthentication().AddServer(
                 signInControllerOptionsBuilder: (_, options) => {
-                    options.DefaultScheme = GoogleDefaults.AuthenticationScheme;
+                    options.DefaultScheme = MicrosoftAccountDefaults.AuthenticationScheme;
                 },
                 authHelperOptionsBuilder: (_, options) => {
                     options.NameClaimKeys = Array.Empty<string>();
@@ -93,29 +111,25 @@ namespace Templates.Blazor2.Host
 
             services.AddAuthentication(options => {
                 options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-            }).AddCookie().AddGoogle().AddMicrosoftAccount().AddGitHub();
+            }).AddCookie().AddMicrosoftAccount().AddGoogle().AddGitHub();
 
             services.Configure<CookieAuthenticationOptions>((c, name, options) => {
-                var serverSettings = c.GetRequiredService<ServerSettings>();
                 options.LoginPath = "/signIn";
                 options.LogoutPath = "/signOut";
             });
+            services.Configure<MicrosoftAccountOptions>((c, name, options) => {
+                options.ClientId = serverSettings.MicrosoftAccountClientId;
+                options.ClientSecret = serverSettings.MicrosoftAccountClientSecret;
+                options.CorrelationCookie.SameSite = SameSiteMode.Lax;
+            });
             services.Configure<GoogleOptions>((c, name, options) => {
-                var serverSettings = c.GetRequiredService<ServerSettings>();
                 options.ClientId = serverSettings.GoogleClientId;
                 options.ClientSecret = serverSettings.GoogleClientSecret;
                 options.Scope.Add("https://www.googleapis.com/auth/userinfo.profile");
                 options.Scope.Add("https://www.googleapis.com/auth/userinfo.email");
                 options.CorrelationCookie.SameSite = SameSiteMode.Lax;
             });
-            services.Configure<MicrosoftAccountOptions>((c, name, options) => {
-                var serverSettings = c.GetRequiredService<ServerSettings>();
-                options.ClientId = serverSettings.MicrosoftAccountClientId;
-                options.ClientSecret = serverSettings.MicrosoftAccountClientSecret;
-                options.CorrelationCookie.SameSite = SameSiteMode.Lax;
-            });
             services.Configure<GitHubAuthenticationOptions>((c, name, options) => {
-                var serverSettings = c.GetRequiredService<ServerSettings>();
                 options.ClientId = serverSettings.GitHubClientId;
                 options.ClientSecret = serverSettings.GitHubClientSecret;
                 options.Scope.Add("read:user");
