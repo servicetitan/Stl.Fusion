@@ -1,0 +1,59 @@
+@using Icon = Blazorise.Icons.FontAwesome.Icon
+@inject BlazorModeHelper BlazorModeHelper
+@inject ClientAuthHelper ClientAuthHelper
+
+@{
+    var usedAuthSchemas = User.Identities.Select(kv => kv.Key.Schema).ToHashSet();
+    var unusedAuthSchemas = AuthSchemas.Where(p => !usedAuthSchemas.Contains(p.Name)).ToArray();
+    var signInOrAddFormat = User.IsAuthenticated ? "Add {0} account" : "Sign in with {0}";
+}
+
+<BarDropdown Class="@CssClass">
+    <BarDropdownToggle Color="Color.Primary">
+        @if (User.IsAuthenticated) {
+            <Icon Name="@IconName.UserCircle" IconStyle="@IconStyle.Solid" />
+        }
+        else {
+            <Icon Name="@IconName.UserCircle" />
+        }
+        <span class="pl-1">@User.Name</span>
+    </BarDropdownToggle>
+    <BarDropdownMenu>
+        @foreach (var (name, displayName) in unusedAuthSchemas) {
+            <BarDropdownItem Color="Color.Primary" Clicked="@(_ => ClientAuthHelper.SignInAsync(name))">
+                @(string.Format(signInOrAddFormat, displayName))
+            </BarDropdownItem>
+        }
+        <AuthorizeView>
+            <Authorized>
+                <BarDropdownItem Clicked="@(_ => ClientAuthHelper.SignOutAsync())">
+                    Sign out
+                </BarDropdownItem>
+            </Authorized>
+        </AuthorizeView>
+    </BarDropdownMenu>
+</BarDropdown>
+
+@code {
+    [Parameter]
+    public string CssClass { get; set; } = "";
+    [CascadingParameter]
+    private Task<AuthState> AuthStateTask { get; set; } = null!;
+    private AuthState AuthState { get; set; } = new(new User("")); // For SSB pre-render
+    private User User => AuthState.User;
+    private (string Name, string DisplayName)[] AuthSchemas { get; set; } = Array.Empty<(string, string)>();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        AuthState = await AuthStateTask;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            // GetSchemasAsync requires JS interop, so it can be called only at this point
+            AuthSchemas = await ClientAuthHelper.GetSchemasAsync();
+            StateHasChanged();
+        }
+    }
+}
