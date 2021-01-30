@@ -28,7 +28,7 @@ namespace Stl.Fusion.Authentication
 
         public virtual async Task SignInAsync(SignInCommand command, CancellationToken cancellationToken = default)
         {
-            var (user, session) = command;
+            var (user, authenticatedIdentity, session) = command;
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
                 GetSessionInfoAsync(session, default).Ignore();
@@ -38,10 +38,13 @@ namespace Stl.Fusion.Authentication
                 return;
             }
 
-            if (await IsSignOutForcedAsync(session, cancellationToken).ConfigureAwait(false))
+            if (!user.Identities.ContainsKey(authenticatedIdentity))
+                throw new ArgumentOutOfRangeException(
+                    $"{nameof(command)}.{nameof(SignInCommand.AuthenticatedIdentity)}");
+            var sessionInfo = await GetSessionInfoAsync(session, cancellationToken).ConfigureAwait(false);
+            if (sessionInfo.IsSignOutForced)
                 throw Errors.ForcedSignOut();
 
-            var authenticatedIdentity = user.Identities.FirstOrDefault().Key;
             if (string.IsNullOrEmpty(user.Id)) {
                 var isExistingUser = false;
                 if (authenticatedIdentity.IsValid) {
@@ -64,7 +67,6 @@ namespace Stl.Fusion.Authentication
             }
 
             // Update SessionInfo
-            var sessionInfo = await GetSessionInfoAsync(session, cancellationToken).ConfigureAwait(false);
             sessionInfo = sessionInfo with {
                 AuthenticatedIdentity = authenticatedIdentity,
                 UserId = user.Id,
@@ -109,7 +111,7 @@ namespace Stl.Fusion.Authentication
             if (Computed.IsInvalidating()) {
                 GetSessionInfoAsync(session, default).Ignore();
                 var invSessionInfo = context.Items.Get<OperationItem<SessionInfo>>().Value;
-                if (invSessionInfo.HasUser)
+                if (invSessionInfo.IsAuthenticated)
                     GetUserSessionsAsync(invSessionInfo.UserId, default).Ignore();
                 return null!;
             }
@@ -153,7 +155,7 @@ namespace Stl.Fusion.Authentication
         public virtual async Task<User> GetUserAsync(Session session, CancellationToken cancellationToken = default)
         {
             var sessionInfo = await GetSessionInfoAsync(session, cancellationToken).ConfigureAwait(false);
-            if (sessionInfo.IsSignOutForced || !sessionInfo.HasUser)
+            if (sessionInfo.IsSignOutForced || !sessionInfo.IsAuthenticated)
                 return new User(session.Id);
             var user = await TryGetUserAsync(sessionInfo.UserId, cancellationToken).ConfigureAwait(false);
             return (user ?? new User(session.Id)).ToClientSideUser();

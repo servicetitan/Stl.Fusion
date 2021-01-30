@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using AspNet.Security.OAuth.GitHub;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -92,25 +93,34 @@ namespace Templates.Blazor2.Host
 
             services.AddAuthentication(options => {
                 options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-            }).AddCookie(options => {
+            }).AddCookie().AddGoogle().AddMicrosoftAccount().AddGitHub();
+
+            services.Configure<CookieAuthenticationOptions>((c, name, options) => {
+                var serverSettings = c.GetRequiredService<ServerSettings>();
                 options.LoginPath = "/signIn";
                 options.LogoutPath = "/signOut";
-            }).AddGoogle(options => {
-                options.Scope.Add("https://www.googleapis.com/auth/userinfo.profile");
-                options.Scope.Add("https://www.googleapis.com/auth/userinfo.email");
-                options.CorrelationCookie.SameSite = SameSiteMode.Lax;
-            }).AddMicrosoftAccount(options => {
-                options.CorrelationCookie.SameSite = SameSiteMode.Lax;
             });
             services.Configure<GoogleOptions>((c, name, options) => {
                 var serverSettings = c.GetRequiredService<ServerSettings>();
                 options.ClientId = serverSettings.GoogleClientId;
                 options.ClientSecret = serverSettings.GoogleClientSecret;
+                options.Scope.Add("https://www.googleapis.com/auth/userinfo.profile");
+                options.Scope.Add("https://www.googleapis.com/auth/userinfo.email");
+                options.CorrelationCookie.SameSite = SameSiteMode.Lax;
             });
             services.Configure<MicrosoftAccountOptions>((c, name, options) => {
                 var serverSettings = c.GetRequiredService<ServerSettings>();
                 options.ClientId = serverSettings.MicrosoftAccountClientId;
                 options.ClientSecret = serverSettings.MicrosoftAccountClientSecret;
+                options.CorrelationCookie.SameSite = SameSiteMode.Lax;
+            });
+            services.Configure<GitHubAuthenticationOptions>((c, name, options) => {
+                var serverSettings = c.GetRequiredService<ServerSettings>();
+                options.ClientId = serverSettings.GitHubClientId;
+                options.ClientSecret = serverSettings.GitHubClientSecret;
+                options.Scope.Add("read:user");
+                options.Scope.Add("user:email");
+                options.CorrelationCookie.SameSite = SameSiteMode.Lax;
             });
 
             // Web

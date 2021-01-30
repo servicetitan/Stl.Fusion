@@ -19,7 +19,7 @@ namespace Stl.Fusion.Authentication
         public string UserId { get; init; } = "";
         public bool IsSignOutForced { get; init; }
         [JsonIgnore]
-        public bool HasUser => !string.IsNullOrEmpty(UserId);
+        public bool IsAuthenticated => !string.IsNullOrEmpty(UserId);
 
         public SessionInfo() { }
         public SessionInfo(string id) => Id = id;

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Security.Claims;
 using System.Security.Principal;
@@ -63,11 +64,17 @@ namespace Stl.Fusion.Authentication
             => Claims.ContainsKey($"{ClaimTypes.Role}/{role}");
 
         public virtual User ToClientSideUser()
-            => Identities.IsEmpty
-                ? this
-                : this with {
-                    Identities = ImmutableDictionary<UserIdentity, string>.Empty
-                };
+        {
+            if (Identities.IsEmpty)
+                return this;
+            var maskedIdentities = ImmutableDictionary<UserIdentity, string>.Empty;
+            foreach (var (id, _) in Identities) {
+                var (authenticationType, _) = id;
+                var newId = new UserIdentity(authenticationType, "<hidden>");
+                maskedIdentities = maskedIdentities.Add(newId, "");
+            }
+            return this with { Identities = maskedIdentities };
+        }
 
         // Equality is changed back to reference-based
 

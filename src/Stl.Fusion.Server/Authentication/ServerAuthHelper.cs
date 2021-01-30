@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -7,7 +6,6 @@ using System.Security.Principal;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Stl.Collections;
 using Stl.CommandR.Commands;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Authentication.Commands;
@@ -20,7 +18,6 @@ namespace Stl.Fusion.Server.Authentication
     {
         public class Options
         {
-            public Func<ClaimsPrincipal, User>? UserFactory { get; set; } = null;
             public string[] IdClaimKeys { get; set; } = { ClaimTypes.NameIdentifier };
             public string[] NameClaimKeys { get; set; } = { ClaimTypes.Name };
             public string CloseWindowRequestPath { get; set; } = "/fusion/close";
@@ -29,7 +26,6 @@ namespace Stl.Fusion.Server.Authentication
         protected IServerSideAuthService AuthService { get; }
         protected ISessionResolver SessionResolver { get; }
         protected AuthSchemasCache AuthSchemasCache { get; }
-        protected Func<ClaimsPrincipal, User> UserFactory { get; }
         public string[] IdClaimKeys { get; }
         public string[] NameClaimKeys { get; }
         public string CloseWindowRequestPath { get; }
@@ -44,7 +40,6 @@ namespace Stl.Fusion.Server.Authentication
             options ??= new();
             IdClaimKeys = options.IdClaimKeys;
             NameClaimKeys = options.NameClaimKeys;
-            UserFactory = options.UserFactory ?? CreateUser;
             CloseWindowRequestPath = options.CloseWindowRequestPath;
 
             AuthService = authService;
@@ -64,7 +59,7 @@ namespace Stl.Fusion.Server.Authentication
             var lSchemas = new List<string>();
             foreach (var authSchema in authSchemas) {
                 lSchemas.Add(authSchema.Name);
-                lSchemas.Add(authSchema.DisplayName);
+                lSchemas.Add(authSchema.DisplayName ?? authSchema.Name);
             }
             schemas = ListFormat.Default.Format(lSchemas);
             if (cache)
@@ -74,26 +69,32 @@ namespace Stl.Fusion.Server.Authentication
 
         public virtual async Task UpdateAuthStateAsync(HttpContext httpContext, CancellationToken cancellationToken = default)
         {
-            var principal = httpContext!.User;
-            var session = SessionResolver.Session;
+            var httpUser = httpContext.User;
+            var authenticationType = httpUser.Identity?.AuthenticationType ?? "";
+            var isAuthenticated = !string.IsNullOrEmpty(authenticationType);
 
+            var session = SessionResolver.Session;
             var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? "";
             var userAgent = httpContext.Request.Headers["User-Agent"].ToString() ?? "";
             var setupSessionCommand = new SetupSessionCommand(ipAddress, userAgent, session).MarkServerSide();
-            var sessionInfo = AuthService.SetupSessionAsync(setupSessionCommand, cancellationToken).ConfigureAwait(false);
+            var sessionInfo = await AuthService.SetupSessionAsync(setupSessionCommand, cancellationToken).ConfigureAwait(false);
+            var userId = sessionInfo.UserId;
+            var userIsAuthenticated = sessionInfo.IsAuthenticated && !sessionInfo.IsSignOutForced;
+            var user = userIsAuthenticated
+                ? (await AuthService.TryGetUserAsync(userId, cancellationToken).ConfigureAwait(false)
+                    ?? throw new KeyNotFoundException())
+                : new User(session.Id); // Guest
 
-            var user = await AuthService.GetUserAsync(session, cancellationToken).ConfigureAwait(false);
-            if (((IPrincipal) user).Identity?.Name == principal.Identity?.Name)
-                return;
-
-            var authenticationType = principal.Identity?.AuthenticationType ?? "";
-            if (authenticationType == "") {
-                await AuthService.SignOutAsync(new(false, session), cancellationToken).ConfigureAwait(false);
+            if (isAuthenticated) {
+                if (userIsAuthenticated && IsSameUser(user, httpUser, authenticationType))
+                    return;
+                var (newUser, authenticatedIdentity) = CreateOrUpdateUser(user, httpUser, authenticationType);
+                var signInCommand = new SignInCommand(newUser, authenticatedIdentity, session).MarkServerSide();
+                await AuthService.SignInAsync(signInCommand, cancellationToken).ConfigureAwait(false);
             }
             else {
-                user = UserFactory(principal);
-                var signInCommand = new SignInCommand(user, session).MarkServerSide();
-                await AuthService.SignInAsync(signInCommand, cancellationToken).ConfigureAwait(false);
+                if (userIsAuthenticated)
+                    await AuthService.SignOutAsync(new(false, session), cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -109,29 +110,47 @@ namespace Stl.Fusion.Server.Authentication
 
         // Protected methods
 
-        protected virtual User CreateUser(ClaimsPrincipal principal)
+        protected virtual bool IsSameUser(User user, ClaimsPrincipal httpUser, string authenticationType)
         {
-            string? GetFirstClaim(ImmutableDictionary<string, string> claims1, string[] keys)
-            {
-                foreach (var key in keys) {
-                    var v = claims1.GetValueOrDefault(key);
-                    if (v != null)
-                        return v;
-                }
-                return null;
-            }
+            var httpUserIdentityName = httpUser.Identity?.Name ?? "";
+            var claims = httpUser.Claims.ToImmutableDictionary(c => c.Type, c => c.Value);
+            var id = FirstClaimOrDefault(claims, IdClaimKeys) ?? httpUserIdentityName;
+            var identity = new UserIdentity(authenticationType, id);
+            return user.Identities.ContainsKey(identity);
+        }
 
-            var authenticationType = principal.Identity?.AuthenticationType ?? "";
-            var claims = principal.Claims.ToImmutableDictionary(c => c.Type, c => c.Value);
-            var identityName = principal.Identity?.Name ?? "";
-            var id = GetFirstClaim(claims, IdClaimKeys) ?? identityName;
-            var name = GetFirstClaim(claims, NameClaimKeys) ?? identityName;
-            var user = new User("", name) with {
-                Claims = claims,
-                Identities = ImmutableDictionary<UserIdentity, string>.Empty
-                    .Add((authenticationType, id), "")
-            };
-            return user;
+        protected virtual (User User, UserIdentity AuthenticatedIdentity) CreateOrUpdateUser(
+            User user, ClaimsPrincipal httpUser, string authenticationType)
+        {
+            var httpUserIdentityName = httpUser.Identity?.Name ?? "";
+            var claims = httpUser.Claims.ToImmutableDictionary(c => c.Type, c => c.Value);
+            var id = FirstClaimOrDefault(claims, IdClaimKeys) ?? httpUserIdentityName;
+            var name = FirstClaimOrDefault(claims, NameClaimKeys) ?? httpUserIdentityName;
+            var identity = new UserIdentity(authenticationType, id);
+            var identities = ImmutableDictionary<UserIdentity, string>.Empty.Add(identity, "");
+
+            if (!user.IsAuthenticated)
+                // Create
+                user = new User("", name) with {
+                    Claims = claims,
+                    Identities = identities,
+                };
+            else {
+                // Update
+                user = user with {
+                    Claims = claims.SetItems(user.Claims),
+                    Identities = identities.SetItems(user.Identities),
+                };
+            }
+            return (user, identity);
+        }
+
+        protected static string? FirstClaimOrDefault(IReadOnlyDictionary<string, string> claims, string[] keys)
+        {
+            foreach (var key in keys)
+                if (claims.TryGetValue(key, out var value) && !string.IsNullOrEmpty(value))
+                    return value;
+            return null;
         }
     }
 }

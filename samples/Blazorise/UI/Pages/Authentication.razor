@@ -12,6 +12,9 @@
 @{
     var state = State.LastValue;
     var error = State.Error;
+    var unusedAuthSchemas = AuthSchemas
+        .Where(p => !UsedAuthSchemas.Contains(p.Name))
+        .ToList();
 }
 
 <h1>Authentication</h1>
@@ -60,6 +63,12 @@
                 <ul>
                     @foreach (var (key, value) in User.Claims) {
                         <li><code>@key</code>: <b><code>@value</code></b></li>
+                    }
+                </ul>
+                <div class="card-subtitle">Identities:</div>
+                <ul>
+                    @foreach (var ((authenticationType, userId), _) in User.Identities) {
+                        <li><code>@authenticationType</code>: <b><code>@userId</code></b></li>
                     }
                 </ul>
             }
@@ -111,7 +120,16 @@
                         <Button Color="Color.Danger"
                                 @onclick="_ => ClientAuthHelper.SignOutEverywhereAsync()">Sign out everywhere</Button>
                     </Buttons>
-                </div>
+                    @if (unusedAuthSchemas.Count > 0) {
+                        <span> or add account: </span>
+                        <Buttons>
+                            @foreach (var (name, displayName) in unusedAuthSchemas) {
+                                <Button Color="Color.Primary"
+                                        @onclick="_ => ClientAuthHelper.SignInAsync(name)">@displayName</Button>
+                            }
+                        </Buttons>
+                    }
+                 </div>
                 <div class="alert alert-warning">
                     To sign out completely, you need to either sign out from Google,
                     or revoke access from this application here:
@@ -119,10 +137,11 @@
                 </div>
             </Authorized>
             <NotAuthorized>
+                <span>Sign in with: </span>
                 <Buttons>
-                    @foreach(var (name, displayName) in AuthSchemas) {
+                    @foreach (var (name, displayName) in unusedAuthSchemas) {
                         <Button Color="Color.Primary"
-                                @onclick="_ => ClientAuthHelper.SignInAsync(name)">Sign in with @displayName</Button>
+                                @onclick="_ => ClientAuthHelper.SignInAsync(name)">@displayName</Button>
                     }
                 </Buttons>
             </NotAuthorized>
@@ -149,9 +168,17 @@
     private User User => AuthState.User;
     private ConcurrentDictionary<string, UserAgent> UserAgentCache { get; } = new();
     private (string Name, string DisplayName)[] AuthSchemas { get; set; } = Array.Empty<(string, string)>();
+    private HashSet<string> UsedAuthSchemas { get; set; } = new();
 
     protected override async Task OnParametersSetAsync()
-        => AuthState = await AuthStateTask;
+    {
+        AuthState = await AuthStateTask;
+        UsedAuthSchemas = User.Identities
+            .Select(kv => {
+                var (authenticationType, _) = kv.Key;
+                return authenticationType;
+            }).ToHashSet();
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

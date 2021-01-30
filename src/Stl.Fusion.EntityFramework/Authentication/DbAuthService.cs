@@ -38,7 +38,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
         public virtual async Task SignInAsync(
             SignInCommand command, CancellationToken cancellationToken = default)
         {
-            var (user, session) = command;
+            var (user, authenticatedIdentity, session) = command;
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
                 GetSessionInfoAsync(session, default).Ignore();
@@ -48,7 +48,11 @@ namespace Stl.Fusion.EntityFramework.Authentication
                 return;
             }
 
-            if (await IsSignOutForcedAsync(session, cancellationToken).ConfigureAwait(false))
+            if (!user.Identities.ContainsKey(authenticatedIdentity))
+                throw new ArgumentOutOfRangeException(
+                    $"{nameof(command)}.{nameof(SignInCommand.AuthenticatedIdentity)}");
+            var sessionInfo = await GetSessionInfoAsync(session, cancellationToken).ConfigureAwait(false);
+            if (sessionInfo.IsSignOutForced)
                 throw Errors.ForcedSignOut();
 
             await using var dbContext = await CreateCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
@@ -56,11 +60,9 @@ namespace Stl.Fusion.EntityFramework.Authentication
             var dbUser = await Users
                 .FindOrCreateOnSignInAsync(dbContext, user, cancellationToken)
                 .ConfigureAwait(false);
-            var dbSessionInfo = await Sessions.FindOrCreateAsync(dbContext, session, cancellationToken).ConfigureAwait(false);
-            var userIdentity = user.Identities.FirstOrDefault().Key;
-            var sessionInfo = dbSessionInfo.ToModel() with {
+            sessionInfo = sessionInfo with {
                 LastSeenAt = Clock.Now,
-                AuthenticatedIdentity = userIdentity,
+                AuthenticatedIdentity = authenticatedIdentity,
                 UserId = dbUser.Id.ToString(),
             };
             context.Items.Set(OperationItem.New(sessionInfo));
@@ -102,7 +104,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             if (Computed.IsInvalidating()) {
                 GetSessionInfoAsync(session, default).Ignore();
                 var invSessionInfo = context.Items.Get<OperationItem<SessionInfo>>().Value;
-                if (invSessionInfo.HasUser)
+                if (invSessionInfo.IsAuthenticated)
                     GetUserSessionsAsync(invSessionInfo.UserId, default).Ignore();
                 return null!;
             }
@@ -159,7 +161,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             Session session, CancellationToken cancellationToken = default)
         {
             var sessionInfo = await GetSessionInfoAsync(session, cancellationToken).ConfigureAwait(false);
-            if (sessionInfo.IsSignOutForced || !sessionInfo.HasUser)
+            if (sessionInfo.IsSignOutForced || !sessionInfo.IsAuthenticated)
                 return new User(session.Id);
             var user = await TryGetUserAsync(sessionInfo.UserId, cancellationToken).ConfigureAwait(false);
             return (user ?? new User(session.Id)).ToClientSideUser();

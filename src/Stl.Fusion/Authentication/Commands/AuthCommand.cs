@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Reactive;
 using Stl.CommandR.Commands;
 
@@ -13,6 +14,9 @@ namespace Stl.Fusion.Authentication.Commands
     {
         public SetupSessionCommand(Session session) : this("", "", session) { }
     }
-    public record SignInCommand(User User, Session Session)
-        : ServerSideCommandBase<Unit>, ISessionCommand<Unit> { }
+    public record SignInCommand(User User, UserIdentity AuthenticatedIdentity, Session Session)
+        : ServerSideCommandBase<Unit>, ISessionCommand<Unit>
+    {
+        public SignInCommand(User user, Session session) : this(user, user.Identities.Single().Key, session) { }
+    }
 }
