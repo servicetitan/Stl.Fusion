@@ -55,5 +55,4 @@
   <ItemGroup Condition="$(DeterministicSourcePaths) == 'true'">
     <SourceRoot Include="$(SolutionDir)" />
   </ItemGroup>
-
 </Project>
