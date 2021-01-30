@@ -1,13 +1,10 @@
-using System;
 using System.Reflection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Stl.Collections;
 using Stl.Fusion.Server;
-using Stl.Fusion.Server.Authentication;
 using Stl.Testing;
 
 namespace Stl.Fusion.Tests.Services

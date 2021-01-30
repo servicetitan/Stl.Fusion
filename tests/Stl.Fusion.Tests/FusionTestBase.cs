@@ -57,7 +57,7 @@ namespace Stl.Fusion.Tests
             Log = (ILogger) Services.GetRequiredService(typeof(ILogger<>).MakeGenericType(GetType()));
         }
 
-        public virtual async Task InitializeAsync()
+        public override async Task InitializeAsync()
         {
             for (var i = 0; i < 10 && File.Exists(DbPath); i++) {
                 try {
@@ -73,20 +73,17 @@ namespace Stl.Fusion.Tests
             await StartHostedServicesAsync(Services);
         }
 
-        public virtual Task DisposeAsync()
+        public override async Task DisposeAsync()
         {
-            if (Services is IDisposable d1)
-                d1.Dispose();
-            if (ClientServices is IDisposable d2)
-                d2.Dispose();
-            return Task.CompletedTask;
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (!disposing)
-                return;
-            DisposeAsync().Wait();
+            if (ClientServices is IDisposable dcs)
+                dcs.Dispose();
+            try {
+                await StopHostedServicesAsync(Services);
+            }
+            finally {
+                if (Services is IDisposable ds)
+                    ds.Dispose();
+            }
         }
 
         protected IServiceProvider CreateServices(bool isClient = false)
@@ -211,7 +208,7 @@ namespace Stl.Fusion.Tests
         protected async Task StartHostedServicesAsync(
             IServiceProvider services, CancellationToken cancellationToken = default)
         {
-            var hostedServices = services.GetServices<IHostedService>();
+            var hostedServices = services.GetServices<IHostedService>().ToArray();
             foreach (var hostedService in hostedServices)
                 await hostedService.StartAsync(cancellationToken);
         }
@@ -219,7 +216,7 @@ namespace Stl.Fusion.Tests
         protected async Task StopHostedServicesAsync(
             IServiceProvider services, CancellationToken cancellationToken = default)
         {
-            var hostedServices = services.GetServices<IHostedService>();
+            var hostedServices = services.GetServices<IHostedService>().ToArray();
             foreach (var hostedService in hostedServices) {
                 try {
                     await hostedService.StopAsync(cancellationToken);

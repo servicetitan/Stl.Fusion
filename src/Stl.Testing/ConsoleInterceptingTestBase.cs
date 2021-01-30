@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Xunit.Abstractions;
 
 namespace Stl.Testing
@@ -13,12 +14,11 @@ namespace Stl.Testing
             _consoleInterceptorDisposable = ConsoleInterceptor.Activate(Out);
         }
 
-        protected override void Dispose(bool disposing)
+        public override Task DisposeAsync()
         {
-            if (!disposing)
-                return;
             _consoleInterceptorDisposable?.Dispose();
             _consoleInterceptorDisposable = null;
+            return Task.CompletedTask;
         }
     }
 }

@@ -1,20 +1,18 @@
 using System;
+using System.Threading.Tasks;
+using Xunit;
 using Xunit.Abstractions;
 
 namespace Stl.Testing
 {
-    public abstract class TestBase : IDisposable
+    public abstract class TestBase : IAsyncLifetime
     {
         public ITestOutputHelper Out { get; }
 
         protected TestBase(ITestOutputHelper @out) => Out = @out;
 
-        protected virtual void Dispose(bool disposing) {}
+        public virtual Task InitializeAsync() => Task.CompletedTask;
 
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
+        public virtual Task DisposeAsync() => Task.CompletedTask;
     }
 }
