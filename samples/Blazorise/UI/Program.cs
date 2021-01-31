@@ -65,7 +65,7 @@ namespace Templates.Blazor2.UI
 
             // This method registers services marked with any of ServiceAttributeBase descendants, including:
             // [Service], [ComputeService], [RestEaseReplicaService], [LiveStateUpdater]
-            services.AttributeScanner(ClientSideScope).AddServicesFrom(Assembly.GetExecutingAssembly());
+            services.UseAttributeScanner(ClientSideScope).AddServicesFrom(Assembly.GetExecutingAssembly());
             ConfigureSharedServices(services);
         }
 
@@ -84,7 +84,7 @@ namespace Templates.Blazor2.UI
 
             // This method registers services marked with any of ServiceAttributeBase descendants, including:
             // [Service], [ComputeService], [RestEaseReplicaService], [LiveStateUpdater]
-            services.AttributeScanner().AddServicesFrom(Assembly.GetExecutingAssembly());
+            services.UseAttributeScanner().AddServicesFrom(Assembly.GetExecutingAssembly());
         }
     }
 }

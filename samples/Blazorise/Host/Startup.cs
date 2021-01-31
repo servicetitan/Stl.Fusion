@@ -50,7 +50,7 @@ namespace Templates.Blazor2.Host
         {
             #pragma warning disable ASP0000
             var serverSettings = services
-                .AttributeScanner(s => s.AddService<ServerSettings>())
+                .UseAttributeScanner(s => s.AddService<ServerSettings>())
                 .BuildServiceProvider()
                 .GetRequiredService<ServerSettings>();
             #pragma warning restore ASP0000
@@ -105,7 +105,7 @@ namespace Templates.Blazor2.Host
 
             // This method registers services marked with any of ServiceAttributeBase descendants, including:
             // [Service], [ComputeService], [RestEaseReplicaService], [LiveStateUpdater]
-            services.AttributeScanner()
+            services.UseAttributeScanner()
                 .AddServicesFrom(typeof(TimeService).Assembly)
                 .AddServicesFrom(Assembly.GetExecutingAssembly());
             // Registering shared services from the client
