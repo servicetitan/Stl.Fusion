@@ -55,7 +55,7 @@ namespace Stl.DependencyInjection
 
         public static ServiceAttributeScanner UseAttributeScanner(
             this IServiceCollection services, Symbol scope = default)
-            => new ServiceAttributeScanner(services, scope);
+            => new(services, scope);
 
         public static IServiceCollection UseAttributeScanner(
             this IServiceCollection services,
