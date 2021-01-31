@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Stl.Async;
 using Stl.Fusion.EntityFramework.Internal;
 using Stl.OS;
@@ -24,16 +25,18 @@ namespace Stl.Fusion.EntityFramework
             public Func<DbEntityResolver<TDbContext, TKey, TEntity>, AsyncBatchProcessor<TKey, TEntity>>? BatchProcessorFactory { get; set; }
             public Func<Expression, Expression>? KeyExtractorExpressionBuilder { get; set; }
             public Func<IQueryable<TEntity>, IQueryable<TEntity>>? QueryTransformer { get; set; }
+            public Action<Dictionary<TKey, TEntity>>? PostProcessor { get; set; }
         }
 
         protected static MethodInfo ContainsMethod { get; } = typeof(HashSet<TKey>).GetMethod(nameof(HashSet<TKey>.Contains))!;
 
         private readonly Lazy<AsyncBatchProcessor<TKey, TEntity>> _batchProcessorLazy;
-        protected Func<DbEntityResolver<TDbContext, TKey, TEntity>, AsyncBatchProcessor<TKey, TEntity>> BatchProcessorFactory { get; set; }
+        protected Func<DbEntityResolver<TDbContext, TKey, TEntity>, AsyncBatchProcessor<TKey, TEntity>> BatchProcessorFactory { get; }
         protected AsyncBatchProcessor<TKey, TEntity> BatchProcessor => _batchProcessorLazy.Value;
-        protected Func<Expression, Expression> KeyExtractorExpressionBuilder { get; set; }
-        protected Func<TEntity, TKey> KeyExtractor { get; set; }
-        protected Func<IQueryable<TEntity>, IQueryable<TEntity>> QueryTransformer { get; set; }
+        protected Func<Expression, Expression> KeyExtractorExpressionBuilder { get; }
+        protected Func<TEntity, TKey> KeyExtractor { get; }
+        protected Func<IQueryable<TEntity>, IQueryable<TEntity>> QueryTransformer { get; }
+        protected Action<Dictionary<TKey, TEntity>> PostProcessor { get; }
 
         public DbEntityResolver(IServiceProvider services) : this(null, services) { }
         public DbEntityResolver(Options? options, IServiceProvider services) : base(services)
@@ -60,6 +63,7 @@ namespace Stl.Fusion.EntityFramework
             KeyExtractor = (Func<TEntity, TKey>) Expression.Lambda(eBody, pEntity).Compile();
 
             QueryTransformer = options.QueryTransformer ?? (q => q);
+            PostProcessor = options.PostProcessor ?? (_ => {});
         }
 
         void IDisposable.Dispose()
@@ -106,6 +110,7 @@ namespace Stl.Fusion.EntityFramework
             var entities = await query
                 .ToDictionaryAsync(KeyExtractor, cancellationToken)
                 .ConfigureAwait(false);
+            PostProcessor.Invoke(entities);
 
             foreach (var item in batch) {
                 entities.TryGetValue(item.Input, out var entity);

@@ -48,10 +48,12 @@ namespace Templates.Blazor2.Host
 
         public void ConfigureServices(IServiceCollection services)
         {
+            #pragma warning disable ASP0000
             var serverSettings = services
                 .AttributeScanner(s => s.AddService<ServerSettings>())
                 .BuildServiceProvider()
                 .GetRequiredService<ServerSettings>();
+            #pragma warning restore ASP0000
 
             services.AddResponseCompression(opts => {
                 opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
