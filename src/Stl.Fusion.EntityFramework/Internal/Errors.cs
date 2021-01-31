@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Stl.Fusion.EntityFramework.Operations;
 
 namespace Stl.Fusion.EntityFramework.Internal
@@ -24,6 +25,6 @@ namespace Stl.Fusion.EntityFramework.Internal
         public static Exception EntityNotFound<TEntity>()
             => EntityNotFound(typeof(TEntity));
         public static Exception EntityNotFound(Type entityType)
-            => new InvalidOperationException($"Requested {entityType.Name} entity is not found.");
+            => new KeyNotFoundException($"Requested {entityType.Name} entity is not found.");
     }
 }

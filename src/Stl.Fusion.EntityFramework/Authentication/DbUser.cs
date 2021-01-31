@@ -19,6 +19,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             new(ImmutableDictionary<string, string>.Empty);
 
         [Key] public long Id { get; set; }
+        [MinLength(3)]
         public string Name { get; set; } = "";
 
         public string ClaimsJson {

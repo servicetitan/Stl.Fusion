@@ -107,6 +107,30 @@ namespace Stl.Fusion.EntityFramework.Authentication
             await Sessions.CreateOrUpdateAsync(dbContext, sessionInfo, cancellationToken).ConfigureAwait(false);
         }
 
+        public virtual async Task EditUserAsync(EditUserCommand command, CancellationToken cancellationToken = default)
+        {
+            var session = command.Session;
+            var context = CommandContext.GetCurrent();
+            if (Computed.IsInvalidating()) {
+                var invSessionInfo = context.Items.Get<OperationItem<SessionInfo>>().Value;
+                TryGetUserAsync(invSessionInfo.UserId, default).Ignore();
+                return;
+            }
+
+            var sessionInfo = await GetSessionInfoAsync(session, cancellationToken).ConfigureAwait(false);
+            if (!sessionInfo.IsAuthenticated)
+                throw Errors.NotAuthenticated();
+
+            await using var dbContext = await CreateCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
+
+            var longUserId = long.Parse(sessionInfo.UserId);
+            var dbUser = await Users.FindAsync(dbContext, longUserId, cancellationToken).ConfigureAwait(false);
+            if (dbUser == null)
+                throw Internal.Errors.EntityNotFound(Users.UserEntityType);
+            await Users.EditAsync(dbContext, dbUser, command, cancellationToken).ConfigureAwait(false);
+            context.Items.Set(OperationItem.New(sessionInfo));
+        }
+
         public virtual async Task<SessionInfo> SetupSessionAsync(
             SetupSessionCommand command, CancellationToken cancellationToken = default)
         {
@@ -119,6 +143,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
                     GetUserSessionsAsync(invSessionInfo.UserId, default).Ignore();
                 return null!;
             }
+
             await using var dbContext = await CreateCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
 
             var dbSessionInfo = await Sessions.FindAsync(dbContext, session.Id, cancellationToken).ConfigureAwait(false);
@@ -159,13 +184,10 @@ namespace Stl.Fusion.EntityFramework.Authentication
         public virtual async Task<SessionInfo> GetSessionInfoAsync(
             Session session, CancellationToken cancellationToken = default)
         {
-            await using var dbContext = CreateDbContext();
-            await using var tx = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
-
-            var dbSession = await Sessions.FindAsync(dbContext, session.Id, cancellationToken).ConfigureAwait(false);
-            if (dbSession == null)
+            var dbSessionInfo = await Sessions.FindAsync(session.Id, cancellationToken).ConfigureAwait(false);
+            if (dbSessionInfo == null)
                 return new(session.Id, Clock.Now);
-            return dbSession.ToModel();
+            return dbSessionInfo.ToModel();
         }
 
         public virtual async Task<User> GetUserAsync(
@@ -181,11 +203,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
         public virtual async Task<User?> TryGetUserAsync(
             string userId, CancellationToken cancellationToken = default)
         {
-            await using var dbContext = CreateDbContext();
-            dbContext.EnableChangeTracking();
-            await using var tx = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
-
-            var dbUser = await Users.FindAsync(dbContext, long.Parse(userId), cancellationToken).ConfigureAwait(false);
+            var dbUser = await Users.FindAsync(long.Parse(userId), cancellationToken).ConfigureAwait(false);
             return dbUser?.ToModel();
         }
 

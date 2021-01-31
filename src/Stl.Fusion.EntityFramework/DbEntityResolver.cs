@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Stl.Async;
+using Stl.Fusion.EntityFramework.Internal;
 using Stl.OS;
 
 namespace Stl.Fusion.EntityFramework
@@ -18,6 +19,13 @@ namespace Stl.Fusion.EntityFramework
         where TKey : notnull
         where TEntity : class
     {
+        public class Options
+        {
+            public Func<DbEntityResolver<TDbContext, TKey, TEntity>, AsyncBatchProcessor<TKey, TEntity>>? BatchProcessorFactory { get; set; }
+            public Func<Expression, Expression>? KeyExtractorExpressionBuilder { get; set; }
+            public Func<IQueryable<TEntity>, IQueryable<TEntity>>? QueryTransformer { get; set; }
+        }
+
         protected static MethodInfo ContainsMethod { get; } = typeof(HashSet<TKey>).GetMethod(nameof(HashSet<TKey>.Contains))!;
 
         private readonly Lazy<AsyncBatchProcessor<TKey, TEntity>> _batchProcessorLazy;
@@ -25,26 +33,33 @@ namespace Stl.Fusion.EntityFramework
         protected AsyncBatchProcessor<TKey, TEntity> BatchProcessor => _batchProcessorLazy.Value;
         protected Func<Expression, Expression> KeyExtractorExpressionBuilder { get; set; }
         protected Func<TEntity, TKey> KeyExtractor { get; set; }
+        protected Func<IQueryable<TEntity>, IQueryable<TEntity>> QueryTransformer { get; set; }
 
-        public DbEntityResolver(IServiceProvider services) : base(services)
+        public DbEntityResolver(IServiceProvider services) : this(null, services) { }
+        public DbEntityResolver(Options? options, IServiceProvider services) : base(services)
         {
-            BatchProcessorFactory = self => new AsyncBatchProcessor<TKey, TEntity> {
-                MaxBatchSize = 16,
-                ConcurrencyLevel = Math.Min(HardwareInfo.ProcessorCount, 4),
-                BatchingDelayTaskFactory = cancellationToken => Task.Delay(1, cancellationToken),
-                BatchProcessor = self.ProcessBatchAsync,
-            };
+            options ??= new();
+            BatchProcessorFactory = options.BatchProcessorFactory ??
+                (self => new AsyncBatchProcessor<TKey, TEntity> {
+                    MaxBatchSize = 16,
+                    ConcurrencyLevel = Math.Min(HardwareInfo.ProcessorCount, 4),
+                    BatchingDelayTaskFactory = cancellationToken => Task.Delay(1, cancellationToken),
+                    BatchProcessor = self.ProcessBatchAsync,
+                });
             _batchProcessorLazy = new Lazy<AsyncBatchProcessor<TKey, TEntity>>(
                 () => BatchProcessorFactory.Invoke(this));
 
             using var dbContext = CreateDbContext();
             var entityType = dbContext.Model.FindEntityType(typeof(TEntity));
             var key = entityType.FindPrimaryKey();
-            KeyExtractorExpressionBuilder = eEntity => Expression.PropertyOrField(eEntity, key.Properties.Single().Name);
 
+            KeyExtractorExpressionBuilder = options.KeyExtractorExpressionBuilder ??
+                (eEntity => Expression.PropertyOrField(eEntity, key.Properties.Single().Name));
             var pEntity = Expression.Parameter(typeof(TEntity), "e");
             var eBody = KeyExtractorExpressionBuilder.Invoke(pEntity);
             KeyExtractor = (Func<TEntity, TKey>) Expression.Lambda(eBody, pEntity).Compile();
+
+            QueryTransformer = options.QueryTransformer ?? (q => q);
         }
 
         void IDisposable.Dispose()
@@ -56,13 +71,13 @@ namespace Stl.Fusion.EntityFramework
         public async Task<TEntity> GetAsync(TKey key, CancellationToken cancellationToken = default)
         {
             var entity = await TryGetAsync(key, cancellationToken).ConfigureAwait(false);
-            return entity ?? throw new KeyNotFoundException();
+            return entity ?? throw Errors.EntityNotFound<TEntity>();
         }
 
         public async Task<TEntity> TryGetAsync(TKey key, CancellationToken cancellationToken = default)
             => await BatchProcessor.ProcessAsync(key, cancellationToken).ConfigureAwait(false);
 
-        public async Task<Dictionary<TKey, TEntity>> GetManyAsync(IEnumerable<TKey> keys, CancellationToken cancellationToken)
+        public async Task<Dictionary<TKey, TEntity>> GetManyAsync(IEnumerable<TKey> keys, CancellationToken cancellationToken = default)
         {
             var tasks = keys.Distinct().Select(key => TryGetAsync(key, cancellationToken)).ToArray();
             var entities = await Task.WhenAll(tasks).ConfigureAwait(false);
@@ -87,8 +102,8 @@ namespace Stl.Fusion.EntityFramework
             var eKey = KeyExtractorExpressionBuilder.Invoke(pEntity);
             var eBody = Expression.Call(Expression.Constant(keys), ContainsMethod, eKey);
             var eLambda = (Expression<Func<TEntity, bool>>) Expression.Lambda(eBody, pEntity);
-            var entities = await dbContext.Set<TEntity>()
-                .Where(eLambda)
+            var query = QueryTransformer.Invoke(dbContext.Set<TEntity>().Where(eLambda));
+            var entities = await query
                 .ToDictionaryAsync(KeyExtractor, cancellationToken)
                 .ConfigureAwait(false);
 

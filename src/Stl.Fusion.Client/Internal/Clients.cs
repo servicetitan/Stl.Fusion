@@ -11,6 +11,8 @@ namespace Stl.Fusion.Client.Internal
     {
         [Post("signOut")]
         Task SignOutAsync([Body] SignOutCommand command, CancellationToken cancellationToken = default);
+        [Post("editUser")]
+        Task EditUserAsync([Body] EditUserCommand command, CancellationToken cancellationToken = default);
         [Post("updatePresence")]
         Task UpdatePresenceAsync([Body] Session session, CancellationToken cancellationToken = default);
 

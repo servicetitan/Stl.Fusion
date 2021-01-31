@@ -69,6 +69,13 @@ namespace Stl.Fusion.Tests.Authentication
             user.Claims.Count.Should().Be(0);
             bob = user;
 
+            // Trying to edit user name
+            var newName = "Bobby";
+            await authClient.EditUserAsync(new(newName, session));
+            user = await authServer.GetUserAsync(session);
+            user.Name.Should().Be(newName);
+            bob = bob with { Name = newName };
+
             // Checking if the client is able to see the same user & sessions
             user = await authClient.GetUserAsync(sessionA);
             user.Id.Should().Be(bob.Id);

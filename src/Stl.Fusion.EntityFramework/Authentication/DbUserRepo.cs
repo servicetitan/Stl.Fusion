@@ -2,7 +2,10 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Stl.Async;
 using Stl.Fusion.Authentication;
+using Stl.Fusion.Authentication.Commands;
 using Stl.Fusion.EntityFramework.Internal;
 
 namespace Stl.Fusion.EntityFramework.Authentication
@@ -10,13 +13,18 @@ namespace Stl.Fusion.EntityFramework.Authentication
     public interface IDbUserRepo<in TDbContext>
         where TDbContext : DbContext
     {
+        Type UserEntityType { get; }
+
         // Write methods
         Task<DbUser> FindOrCreateOnSignInAsync(
             TDbContext dbContext, User user, CancellationToken cancellationToken = default);
+        Task EditAsync(
+            TDbContext dbContext, DbUser dbUser, EditUserCommand command, CancellationToken cancellationToken = default);
         Task RemoveAsync(
             TDbContext dbContext, DbUser dbUser, CancellationToken cancellationToken = default);
 
         // Read methods
+        Task<DbUser?> FindAsync(long userId, CancellationToken cancellationToken = default);
         Task<DbUser?> FindAsync(
             TDbContext dbContext, long userId, CancellationToken cancellationToken = default);
         Task<DbUser?> FindByIdentityAsync(
@@ -29,10 +37,16 @@ namespace Stl.Fusion.EntityFramework.Authentication
         where TDbUser : DbUser, new()
     {
         protected DbAuthService<TDbContext>.Options Options { get; }
+        protected DbEntityResolver<TDbContext, long, TDbUser> EntityResolver { get; }
+
+        public Type UserEntityType => typeof(TDbUser);
 
         public DbUserRepo(DbAuthService<TDbContext>.Options options, IServiceProvider services)
             : base(services)
-            => Options = options;
+        {
+            Options = options;
+            EntityResolver = services.GetRequiredService<DbEntityResolver<TDbContext, long, TDbUser>>();
+        }
 
         // Write methods
 
@@ -60,6 +74,15 @@ namespace Stl.Fusion.EntityFramework.Authentication
             return dbUser;
         }
 
+        public virtual async Task EditAsync(TDbContext dbContext, DbUser dbUser, EditUserCommand command,
+            CancellationToken cancellationToken = default)
+        {
+            var (name, _) = command;
+            if (name != null)
+                dbUser.Name = name;
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
         public virtual async Task RemoveAsync(
             TDbContext dbContext, DbUser dbUser, CancellationToken cancellationToken = default)
         {
@@ -72,6 +95,9 @@ namespace Stl.Fusion.EntityFramework.Authentication
         }
 
         // Read methods
+
+        public async Task<DbUser?> FindAsync(long userId, CancellationToken cancellationToken = default)
+            => await EntityResolver.TryGetAsync(userId, cancellationToken).ConfigureAwait(false);
 
         public virtual async Task<DbUser?> FindAsync(
             TDbContext dbContext, long userId, CancellationToken cancellationToken)

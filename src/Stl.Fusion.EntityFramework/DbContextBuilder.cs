@@ -125,19 +125,28 @@ namespace Stl.Fusion.EntityFramework
             if (!Services.HasService<IDbOperationScope<TDbContext>>())
                 throw Errors.NoOperationsFrameworkServices();
 
-            // DbAuthService & its dependencies
+            // DbAuthService
             Services.TryAddSingleton(c => {
                 var options = new DbAuthService<TDbContext>.Options();
                 authServiceOptionsBuilder?.Invoke(c, options);
                 return options;
             });
-            Services.TryAddSingleton<IDbSessionInfoRepo<TDbContext>, DbSessionInfoRepo<TDbContext, TDbSessionInfo>>();
-            Services.TryAddSingleton<IDbUserRepo<TDbContext>, DbUserRepo<TDbContext, TDbUser>>();
             Services.AddFusion(fusion => {
                 fusion.AddAuthentication(fusionAuth => {
                     fusionAuth.AddServerSideAuthService<DbAuthService<TDbContext>>();
                 });
             });
+
+            // DbSessionInfoRepo
+            Services.TryAddSingleton<IDbSessionInfoRepo<TDbContext>, DbSessionInfoRepo<TDbContext, TDbSessionInfo>>();
+            Services.TryAddSingleton<DbEntityResolver<TDbContext, string, TDbSessionInfo>>();
+
+            // DbUserRepo
+            Services.TryAddSingleton<IDbUserRepo<TDbContext>, DbUserRepo<TDbContext, TDbUser>>();
+            Services.TryAddSingleton(new DbEntityResolver<TDbContext, long, TDbUser>.Options() {
+                QueryTransformer = q => q.Include(u => u.Identities),
+            });
+            Services.TryAddSingleton<DbEntityResolver<TDbContext, long, TDbUser>>();
 
             // DbSessionInfoTrimmer - hosted service!
             Services.TryAddSingleton(c => {

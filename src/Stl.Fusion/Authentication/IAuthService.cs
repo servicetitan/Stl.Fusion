@@ -9,6 +9,8 @@ namespace Stl.Fusion.Authentication
     {
         [CommandHandler]
         Task SignOutAsync(SignOutCommand command, CancellationToken cancellationToken = default);
+        [CommandHandler]
+        Task EditUserAsync(EditUserCommand command, CancellationToken cancellationToken = default);
         Task UpdatePresenceAsync(Session session, CancellationToken cancellationToken = default);
 
         [ComputeMethod(KeepAliveTime = 10)]

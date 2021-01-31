@@ -26,6 +26,13 @@ namespace Stl.Fusion.Server.Controllers
             return AuthService.SignOutAsync(command, cancellationToken);
         }
 
+        [HttpPost("editUser")]
+        public Task EditUserAsync(EditUserCommand command, CancellationToken cancellationToken = default)
+        {
+            command.UseDefaultSession(SessionResolver);
+            return AuthService.EditUserAsync(command, cancellationToken);
+        }
+
         [HttpPost("updatePresence")]
         public Task UpdatePresenceAsync([FromBody] Session? session = null, CancellationToken cancellationToken = default)
         {

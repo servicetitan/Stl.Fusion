@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.EntityFramework.Internal;
 
@@ -11,6 +12,8 @@ namespace Stl.Fusion.EntityFramework.Authentication
     public interface IDbSessionInfoRepo<in TDbContext>
         where TDbContext : DbContext
     {
+        Type SessionInfoEntityType { get; }
+
         // Write methods
         Task<DbSessionInfo> FindOrCreateAsync(
             TDbContext dbContext, string sessionId, CancellationToken cancellationToken = default);
@@ -20,6 +23,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             DateTime minLastSeenAt, int maxCount, CancellationToken cancellationToken = default);
 
         // Read methods
+        Task<DbSessionInfo?> FindAsync(string sessionId, CancellationToken cancellationToken = default);
         Task<DbSessionInfo?> FindAsync(
             TDbContext dbContext, string sessionId, CancellationToken cancellationToken = default);
         Task<DbSessionInfo[]> ListByUserAsync(
@@ -31,10 +35,16 @@ namespace Stl.Fusion.EntityFramework.Authentication
         where TDbSessionInfo : DbSessionInfo, new()
     {
         protected DbAuthService<TDbContext>.Options Options { get; }
+        protected DbEntityResolver<TDbContext, string, TDbSessionInfo> EntityResolver { get; }
+
+        public Type SessionInfoEntityType => typeof(TDbSessionInfo);
 
         public DbSessionInfoRepo(DbAuthService<TDbContext>.Options options, IServiceProvider services)
             : base(services)
-            => Options = options;
+        {
+            Options = options;
+            EntityResolver = services.GetRequiredService<DbEntityResolver<TDbContext, string, TDbSessionInfo>>();
+        }
 
         // Write methods
 
@@ -89,6 +99,9 @@ namespace Stl.Fusion.EntityFramework.Authentication
         }
 
         // Read methods
+
+        public async Task<DbSessionInfo?> FindAsync(string sessionId, CancellationToken cancellationToken = default)
+            => await EntityResolver.TryGetAsync(sessionId, cancellationToken).ConfigureAwait(false);
 
         public virtual async Task<DbSessionInfo?> FindAsync(
             TDbContext dbContext, string sessionId, CancellationToken cancellationToken)

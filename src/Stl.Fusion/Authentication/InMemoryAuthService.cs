@@ -10,6 +10,7 @@ using Stl.CommandR.Commands;
 using Stl.Fusion.Authentication.Commands;
 using Stl.Fusion.Authentication.Internal;
 using Stl.Fusion.Operations;
+using Stl.Text;
 using Stl.Time;
 
 namespace Stl.Fusion.Authentication
@@ -98,6 +99,29 @@ namespace Stl.Fusion.Authentication
                 IsSignOutForced = force,
             };
             AddOrUpdateSessionInfo(sessionInfo);
+        }
+
+        public virtual async Task EditUserAsync(EditUserCommand command, CancellationToken cancellationToken = default)
+        {
+            var session = command.Session;
+            var context = CommandContext.GetCurrent();
+            if (Computed.IsInvalidating()) {
+                var invSessionInfo = context.Items.Get<OperationItem<SessionInfo>>().Value;
+                TryGetUserAsync(invSessionInfo.UserId, default).Ignore();
+                return;
+            }
+
+            var sessionInfo = await GetSessionInfoAsync(session, cancellationToken).ConfigureAwait(false);
+            if (!sessionInfo.IsAuthenticated)
+                throw Errors.NotAuthenticated();
+            var user = await TryGetUserAsync(sessionInfo.UserId, cancellationToken).ConfigureAwait(false);
+            if (!(user?.IsAuthenticated ?? false))
+                throw Errors.NotAuthenticated();
+
+            context.Items.Set(OperationItem.New(sessionInfo));
+            if (command.Name != null)
+                user = user with { Name = command.Name };
+            Users[user.Id] = user;
         }
 
         public virtual async Task<SessionInfo> SetupSessionAsync(SetupSessionCommand command, CancellationToken cancellationToken = default)

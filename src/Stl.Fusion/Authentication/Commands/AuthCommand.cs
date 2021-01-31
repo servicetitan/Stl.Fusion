@@ -7,6 +7,8 @@ namespace Stl.Fusion.Authentication.Commands
     // Regular commands
     public record SignOutCommand(bool Force, Session Session)
         : ISessionCommand<Unit> { }
+    public record EditUserCommand(string? Name, Session Session)
+        : ISessionCommand<Unit> { }
 
     // Server-side only!
     public record SetupSessionCommand(string IPAddress, string UserAgent, Session Session)
