@@ -24,7 +24,7 @@
     <PackageReference Update="Blazorise.Sidebar" Version="$(BlazoriseVersion)" />
     <PackageReference Update="Bullseye" Version="3.7.*" />
     <PackageReference Update="Castle.Core" Version="4.4.*" />
-    <PackageReference Update="Castle.Core.AsyncInterceptor" Version="1.7.*" />
+    <PackageReference Update="Castle.Core.AsyncInterceptor" Version="2.0.*" />
     <PackageReference Update="CliWrap" Version="3.3.*" />
     <PackageReference Update="DataAnnotationsValidatorNetStandard" Version="1.0.*" />
     <PackageReference Update="Enums.NET" Version="3.0.*" />
