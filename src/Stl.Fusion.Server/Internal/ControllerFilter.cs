@@ -2,7 +2,7 @@ using System;
 using System.Reflection;
 using Microsoft.AspNetCore.Mvc.Controllers;
 
-namespace Stl.Fusion.Server
+namespace Stl.Fusion.Server.Internal
 {
     public class ControllerFilter : ControllerFeatureProvider
     {
