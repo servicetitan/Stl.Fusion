@@ -10,7 +10,7 @@
     <NotAuthorized>
         <Dropdown Class="@CssClass">
             <DropdownToggle Color="Color.Success">
-                <Icon Name="@IconName.Key" /> Sign in
+                <Blazorise.Icon Name="FontAwesomeIcons.Key" /> Sign in @Why
             </DropdownToggle>
             <DropdownMenu>
                 @foreach (var (name, displayName) in unusedAuthSchemas) {
@@ -26,6 +26,8 @@
 @code {
     [Parameter]
     public string CssClass { get; set; } = "";
+    [Parameter]
+    public string Why { get; set; } = "";
     [CascadingParameter]
     private Task<AuthState> AuthStateTask { get; set; } = null!;
     private AuthState AuthState { get; set; } = new(new User("")); // For SSB pre-render

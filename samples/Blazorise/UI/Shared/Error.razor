@@ -1,0 +1,11 @@
+<Alert Color="Color.Danger" Visible="true" Margin="Margin.Is3.OnY">
+    <AlertMessage>@Title</AlertMessage>
+    <AlertDescription>@ChildContent</AlertDescription>
+</Alert>
+
+@code {
+    [Parameter]
+    public string Title { get; set; } = "Error:";
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+}

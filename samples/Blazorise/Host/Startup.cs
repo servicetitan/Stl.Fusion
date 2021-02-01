@@ -119,6 +119,9 @@ namespace Templates.Blazor2.Host
             }).AddMicrosoftAccount(options => {
                 options.ClientId = serverSettings.MicrosoftAccountClientId;
                 options.ClientSecret = serverSettings.MicrosoftAccountClientSecret;
+                // That's for personal account authentication flow
+                options.AuthorizationEndpoint = "https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize";
+                options.TokenEndpoint = "https://login.microsoftonline.com/consumers/oauth2/v2.0/token";
                 options.CorrelationCookie.SameSite = SameSiteMode.Lax;
             }).AddGoogle(options => {
                 options.ClientId = serverSettings.GoogleClientId;

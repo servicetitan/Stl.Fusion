@@ -1,0 +1,11 @@
+<Alert Color="Color.Primary" Visible="true" Margin="Margin.Is3.OnY">
+    <AlertMessage>@Title</AlertMessage>
+    <AlertDescription>@ChildContent</AlertDescription>
+</Alert>
+
+@code {
+    [Parameter]
+    public string Title { get; set; } = "Note:";
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+}

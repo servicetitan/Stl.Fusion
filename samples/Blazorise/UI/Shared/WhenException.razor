@@ -1,0 +1,10 @@
+@if (Exception != null) {
+    <Error Title="@Title">@Exception.Message</Error>
+}
+
+@code {
+    [Parameter]
+    public string Title { get; set; } = "Error:";
+    [Parameter]
+    public Exception? Exception { get; set; }
+}

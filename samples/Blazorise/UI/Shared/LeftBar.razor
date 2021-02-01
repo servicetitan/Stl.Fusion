@@ -1,0 +1,28 @@
+﻿@using Blazorise.Icons.FontAwesome
+<Bar Mode="BarMode.VerticalInline" CollapseMode="BarCollapseMode.Small">
+    <BarToggler />
+    <BarBrand>
+        @Item(FontAwesomeIcons.Home, "Home", "")
+    </BarBrand>
+    <BarMenu>
+        <BarStart>
+            @Item(FontAwesomeIcons.Clock, "Server Time", "serverTime")
+            @Item(FontAwesomeIcons.Key, "Authentication", "authentication")
+            <BarItem Style="min-height: 20px"></BarItem>
+            @Item(FontAwesomeIcons.Code, "Source @ GitHub", "https://github.com/servicetitan/Stl.Fusion/samples/Blazorise")
+        </BarStart>
+    </BarMenu>
+</Bar>
+
+@code {
+    private RenderFragment Item(object icon, string title, string href, Match match = Match.All)
+    {
+        var target = href.StartsWith("http://") || href.StartsWith("https://") ? Target.Blank : Target.None;
+        return
+            @<BarItem>
+                <BarLink Title="@title" To="@href" Target="@target" Match="@match">
+                    <BarIcon IconName="@icon"></BarIcon> @title
+                </BarLink>
+            </BarItem>;
+    }
+}

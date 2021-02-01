@@ -1,0 +1,16 @@
+@using Stl.OS
+@using System.Web
+@inject BlazorModeHelper BlazorModeHelper
+
+<RadioGroup Class="@CssClass" TValue="bool"
+            Name="BlazorMode"
+            CheckedValue="@(BlazorModeHelper.IsServerSideBlazor)"
+            CheckedValueChanged="@(v => BlazorModeHelper.ChangeMode(v))">
+    <Radio TValue="bool" Value="@true">Server-Side Blazor</Radio>
+    <Radio TValue="bool" Value="@false">Blazor WebAssembly</Radio>
+</RadioGroup>
+
+@code {
+    [Parameter]
+    public string CssClass { get; set; } = "";
+}

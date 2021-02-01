@@ -1,4 +1,3 @@
-@using Icon = Blazorise.Icons.FontAwesome.Icon
 @inject BlazorModeHelper BlazorModeHelper
 @inject ClientAuthHelper ClientAuthHelper
 
@@ -11,10 +10,10 @@
 <BarDropdown Class="@CssClass">
     <BarDropdownToggle Color="Color.Primary">
         @if (User.IsAuthenticated) {
-            <Icon Name="@IconName.UserCircle" IconStyle="@IconStyle.Solid" />
+            <Blazorise.Icon Name="FontAwesomeIcons.UserCircle" IconStyle="@IconStyle.Solid" />
         }
         else {
-            <Icon Name="@IconName.UserCircle" />
+            <Blazorise.Icon Name="FontAwesomeIcons.UserCircle" />
         }
         <span class="pl-1">@User.Name</span>
     </BarDropdownToggle>

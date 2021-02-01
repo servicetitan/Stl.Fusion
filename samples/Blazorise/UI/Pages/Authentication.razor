@@ -18,39 +18,32 @@
 
 <h1>Authentication</h1>
 
-@if (error != null) {
-    <div class="alert alert-warning" role="alert">
-        Update error: @error.Message
-    </div>
-}
+<WhenException Title="Update error:" Exception="@error"></WhenException>
 
-<div class="alert alert-primary">
-    <div class="mb-1">
+<Note>
+    <Text Margin="Margin.Is1.FromBottom">
         Open <a href="@Navigator.Uri" target="_blank">this page</a> or
         <a href="/composition" target="_blank">Composition example</a>
         in another window to see how authentication state is synchronized everywhere.
-    </div>
-    <div>
+    </Text>
+    <Text>
         If authentication doesn't work, most likely you need to provide
         <code>ClientId</code> and <code>ClientSecret</code> for one of
         authentication providers.
-    </div>
-</div>
+    </Text>
+</Note>
 
-<div class="card">
-    <div class="card-body">
-        <div class="card-title">
-            Session properties:
-        </div>
-        <div class="card-text">
+<Card>
+    <CardBody>
+        <CardTitle>Session properties:</CardTitle>
+        <CardText>
             <ul>
                 <li><code>Session.Id</code>: <b><code>@Session.Id</code></b></li>
             </ul>
-        </div>
-        <div class="card-title">
-            User properties:
-        </div>
-        <div class="card-text">
+        </CardText>
+
+        <CardTitle>User properties:</CardTitle>
+        <CardText>
             <ul>
                 <li><code>User.IsAuthenticated</code>: <b><code>@User.IsAuthenticated</code></b></li>
                 <li><code>User.Id</code>: <b><code>@User.Id</code></b></li>
@@ -70,12 +63,10 @@
                     }
                 </ul>
             }
-        </div>
+        </CardText>
         @if (User.IsAuthenticated && state.Count > 0) {
-            <div class="card-title">
-                Sessions:
-            </div>
-            <div class="card-text">
+            <CardTitle>Sessions:</CardTitle>
+            <CardText>
                 <table class="table table-sm">
                     <thead>
                     <tr>
@@ -105,36 +96,34 @@
                     }
                     </tbody>
                 </table>
-            </div>
+            </CardText>
         }
-    </div> @* card-body *@
-    <div class="card-footer">
+    </CardBody>
+    <CardFooter>
         <AuthorizeView>
             <Authorized>
-                <div class="mb-2">
-                    <Buttons>
-                        <Button Color="Color.Warning"
-                                @onclick="_ => ClientAuthHelper.SignOutAsync()">Sign out</Button>
-                        <Button Color="Color.Danger"
-                                @onclick="_ => ClientAuthHelper.SignOutEverywhereAsync()">Sign out everywhere</Button>
+                <Buttons Margin="Margin.Is0">
+                    <Button Color="Color.Warning"
+                            @onclick="_ => ClientAuthHelper.SignOutAsync()">Sign out</Button>
+                    <Button Color="Color.Danger"
+                            @onclick="_ => ClientAuthHelper.SignOutEverywhereAsync()">Sign out everywhere</Button>
+                </Buttons>
+                @if (unusedAuthSchemas.Length != 0) {
+                    <span> or add account: </span>
+                    <Buttons Margin="Margin.Is0">
+                        @foreach (var (name, displayName) in unusedAuthSchemas) {
+                            <Button Color="Color.Primary"
+                                    @onclick="_ => ClientAuthHelper.SignInAsync(name)">@displayName</Button>
+                        }
                     </Buttons>
-                    @if (unusedAuthSchemas.Length != 0) {
-                        <span> or add account: </span>
-                        <Buttons>
-                            @foreach (var (name, displayName) in unusedAuthSchemas) {
-                                <Button Color="Color.Primary"
-                                        @onclick="_ => ClientAuthHelper.SignInAsync(name)">@displayName</Button>
-                            }
-                        </Buttons>
-                    }
-                 </div>
+                }
             </Authorized>
             <NotAuthorized>
                 <SignInDropdown/>
             </NotAuthorized>
         </AuthorizeView>
-    </div>
-</div>
+    </CardFooter>
+</Card>
 
 @code {
     public class SessionModel

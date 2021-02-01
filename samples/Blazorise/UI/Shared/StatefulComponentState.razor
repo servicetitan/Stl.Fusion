@@ -1,4 +1,4 @@
-<div>
+<Text Margin="Margin.Is1.OnY">
     <span>Component state: </span>
     @if (Component.IsLoading) {
         <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
@@ -13,7 +13,7 @@
         <span class="oi oi-check" aria-hidden="true"></span>
         <b>In sync.</b>
     }
-</div>
+</Text>
 
 @code {
     [Parameter]
