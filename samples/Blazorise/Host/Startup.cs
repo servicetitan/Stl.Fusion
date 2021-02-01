@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using AspNet.Security.OAuth.GitHub;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -19,14 +18,12 @@ using Microsoft.OpenApi.Models;
 using Templates.Blazor2.Services;
 using Stl.DependencyInjection;
 using Stl.Fusion;
-using Stl.Fusion.Authentication;
 using Stl.Fusion.Blazor;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Client;
 using Stl.Fusion.Server;
 using Blazorise.Bootstrap;
 using Blazorise.Icons.FontAwesome;
-using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework;
@@ -116,6 +113,8 @@ namespace Templates.Blazor2.Host
             }).AddCookie(options => {
                 options.LoginPath = "/signIn";
                 options.LogoutPath = "/signOut";
+                if (Env.IsDevelopment())
+                    options.Cookie.SecurePolicy = CookieSecurePolicy.None;
             }).AddMicrosoftAccount(options => {
                 options.ClientId = serverSettings.MicrosoftAccountClientId;
                 options.ClientSecret = serverSettings.MicrosoftAccountClientSecret;
