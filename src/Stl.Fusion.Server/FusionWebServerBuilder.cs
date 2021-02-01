@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Fusion.Server.Controllers;
@@ -32,8 +33,8 @@ namespace Stl.Fusion.Server
                 return options;
             });
             Services.TryAddSingleton<WebSocketServer>();
-            Services.AddMvcCore()
-                .AddNewtonsoftJson(
+
+            Services.AddMvcCore().AddNewtonsoftJson(
                     options => MemberwiseCopier.Invoke(
                         JsonNetSerializer.DefaultSettings,
                         options.SerializerSettings));
@@ -49,6 +50,14 @@ namespace Stl.Fusion.Server
             });
             Services.AddControllers()
                 .AddApplicationPart(typeof(AuthController).Assembly);
+            return this;
+        }
+
+        public FusionWebServerBuilder AddControllerFilter(Func<TypeInfo, bool> controllerFilter)
+        {
+            Services.AddControllers()
+                .ConfigureApplicationPartManager(m => m.FeatureProviders.Add(
+                    new ControllerFilter(controllerFilter)));
             return this;
         }
     }
