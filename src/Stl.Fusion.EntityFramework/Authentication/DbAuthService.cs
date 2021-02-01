@@ -57,15 +57,16 @@ namespace Stl.Fusion.EntityFramework.Authentication
 
             await using var dbContext = await CreateCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
 
+            var isNewUser = false;
             var dbUser = await Users
                 .FindByIdentityAsync(dbContext, authenticatedIdentity, cancellationToken)
                 .ConfigureAwait(false);
             if (dbUser == null)
-                dbUser = await Users
+                (dbUser, isNewUser) = await Users
                     .FindOrCreateOnSignInAsync(dbContext, user, cancellationToken)
                     .ConfigureAwait(false);
             else {
-                user = user with {Id = dbUser.Id.ToString()};
+                user = user with { Id = dbUser.Id.ToString() };
                 dbUser.FromModel(user);
                 await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             }
@@ -77,6 +78,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
                 UserId = dbUser.Id.ToString(),
             };
             context.Items.Set(OperationItem.New(sessionInfo));
+            context.Items.Set(OperationItem.New(isNewUser));
             await Sessions.CreateOrUpdateAsync(dbContext, sessionInfo, cancellationToken).ConfigureAwait(false);
         }
 

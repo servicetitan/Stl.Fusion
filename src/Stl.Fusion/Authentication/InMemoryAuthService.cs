@@ -46,11 +46,14 @@ namespace Stl.Fusion.Authentication
             if (sessionInfo.IsSignOutForced)
                 throw Errors.ForcedSignOut();
 
+            var isNewUser = false;
             var userWithAuthenticatedIdentity = FindByUserIdentity(authenticatedIdentity);
             if (string.IsNullOrEmpty(user.Id)) {
                 // No user.Id -> try to find existing user by authenticatedIdentity
-                if (userWithAuthenticatedIdentity == null)
+                if (userWithAuthenticatedIdentity == null) {
                     user = user with { Id = GetNextUserId() };
+                    isNewUser = true;
+                }
                 else
                     user = MergeUsers(userWithAuthenticatedIdentity, user);
             }
@@ -73,6 +76,7 @@ namespace Stl.Fusion.Authentication
             Users[user.Id] = user;
             sessionInfo = AddOrUpdateSessionInfo(sessionInfo);
             context.Items.Set(OperationItem.New(sessionInfo));
+            context.Items.Set(OperationItem.New(isNewUser));
         }
 
         public virtual async Task SignOutAsync(SignOutCommand command, CancellationToken cancellationToken = default)

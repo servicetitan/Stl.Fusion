@@ -3,7 +3,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Stl.Async;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Authentication.Commands;
 using Stl.Fusion.EntityFramework.Internal;
@@ -16,7 +15,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
         Type UserEntityType { get; }
 
         // Write methods
-        Task<DbUser> FindOrCreateOnSignInAsync(
+        Task<(DbUser DbUser, bool IsCreated)> FindOrCreateOnSignInAsync(
             TDbContext dbContext, User user, CancellationToken cancellationToken = default);
         Task EditAsync(
             TDbContext dbContext, DbUser dbUser, EditUserCommand command, CancellationToken cancellationToken = default);
@@ -50,14 +49,14 @@ namespace Stl.Fusion.EntityFramework.Authentication
 
         // Write methods
 
-        public async Task<DbUser> FindOrCreateOnSignInAsync(
-            TDbContext dbContext, User user, CancellationToken cancellationToken = default)
+        public virtual async Task<(DbUser DbUser, bool IsCreated)> FindOrCreateOnSignInAsync(
+            TDbContext dbContext, User user, CancellationToken cancellationToken)
         {
             DbUser dbUser;
             if (!string.IsNullOrEmpty(user.Id)) {
                 dbUser = await FindAsync(dbContext, long.Parse(user.Id), cancellationToken).ConfigureAwait(false)
                     ?? throw Errors.EntityNotFound<TDbUser>();
-                return dbUser;
+                return (dbUser, false);
             }
 
             // No user found, let's create it
@@ -71,7 +70,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             user = user with { Id = dbUser.Id.ToString() };
             dbUser.FromModel(user);
             await dbContext.SaveChangesAsync(cancellationToken);
-            return dbUser;
+            return (dbUser, true);
         }
 
         public virtual async Task EditAsync(TDbContext dbContext, DbUser dbUser, EditUserCommand command,

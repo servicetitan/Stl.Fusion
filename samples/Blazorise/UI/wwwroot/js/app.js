@@ -1,3 +1,1 @@
-export function setFocus(element) {
-    element.focus();
-}
+// Must be JS module
