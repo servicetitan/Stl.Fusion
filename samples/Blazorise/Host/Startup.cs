@@ -113,25 +113,20 @@ namespace Templates.Blazor2.Host
 
             services.AddAuthentication(options => {
                 options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-            }).AddCookie().AddMicrosoftAccount().AddGoogle().AddGitHub();
-
-            services.Configure<CookieAuthenticationOptions>((c, name, options) => {
+            }).AddCookie(options => {
                 options.LoginPath = "/signIn";
                 options.LogoutPath = "/signOut";
-            });
-            services.Configure<MicrosoftAccountOptions>((c, name, options) => {
+            }).AddMicrosoftAccount(options => {
                 options.ClientId = serverSettings.MicrosoftAccountClientId;
                 options.ClientSecret = serverSettings.MicrosoftAccountClientSecret;
                 options.CorrelationCookie.SameSite = SameSiteMode.Lax;
-            });
-            services.Configure<GoogleOptions>((c, name, options) => {
+            }).AddGoogle(options => {
                 options.ClientId = serverSettings.GoogleClientId;
                 options.ClientSecret = serverSettings.GoogleClientSecret;
                 options.Scope.Add("https://www.googleapis.com/auth/userinfo.profile");
                 options.Scope.Add("https://www.googleapis.com/auth/userinfo.email");
                 options.CorrelationCookie.SameSite = SameSiteMode.Lax;
-            });
-            services.Configure<GitHubAuthenticationOptions>((c, name, options) => {
+            }).AddGitHub(options => {
                 options.ClientId = serverSettings.GitHubClientId;
                 options.ClientSecret = serverSettings.GitHubClientSecret;
                 options.Scope.Add("read:user");
