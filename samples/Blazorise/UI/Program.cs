@@ -71,7 +71,10 @@ namespace Templates.Blazor2.UI
 
         public static void ConfigureSharedServices(IServiceCollection services)
         {
-            services.AddBlazorise(options => options.ChangeTextOnKeyPress = true)
+            services.AddBlazorise(options => {
+                    options.DelayTextOnKeyPress = true;
+                    options.DelayTextOnKeyPressInterval = 100;
+                })
                 .AddBootstrapProviders()
                 .AddFontAwesomeIcons();
 
