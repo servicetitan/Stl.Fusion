@@ -13,8 +13,15 @@ namespace Stl.Fusion.Tests.Services
 
     public interface IKeyValueService<TValue>
     {
-        public record SetCommand(string Key, TValue Value) : ICommand<Unit> { }
-        public record RemoveCommand(string Key) : ICommand<Unit> { }
+        public record SetCommand(string Key, TValue Value) : ICommand<Unit>
+        {
+            public SetCommand() : this(null!, default!) { }
+        }
+
+        public record RemoveCommand(string Key) : ICommand<Unit>
+        {
+            public RemoveCommand() : this(default(string)!) { }
+        }
 
         [ComputeMethod]
         Task<Option<TValue>> TryGetAsync(string key, CancellationToken cancellationToken = default);

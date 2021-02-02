@@ -16,9 +16,18 @@ namespace Stl.Fusion.Tests.Services
 {
     public interface IUserService
     {
-        public record AddCommand(User User, bool OrUpdate = false) : ICommand<Unit> { }
-        public record UpdateCommand(User User) : ICommand<Unit> { }
-        public record DeleteCommand(User User) : ICommand<bool> { }
+        public record AddCommand(User User, bool OrUpdate = false) : ICommand<Unit>
+        {
+            public AddCommand() : this(null!, false) { }
+        }
+        public record UpdateCommand(User User) : ICommand<Unit>
+        {
+            public UpdateCommand() : this(default(User)!) { }
+        }
+        public record DeleteCommand(User User) : ICommand<bool>
+        {
+            public DeleteCommand() : this(default(User)!) { }
+        }
 
         [CommandHandler]
         Task CreateAsync(AddCommand command, CancellationToken cancellationToken = default);
