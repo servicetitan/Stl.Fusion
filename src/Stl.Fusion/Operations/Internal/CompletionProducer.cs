@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.CommandR;
-using Stl.Text;
+using Stl.CommandR.Commands;
 
 namespace Stl.Fusion.Operations.Internal
 {
@@ -35,6 +35,8 @@ namespace Stl.Fusion.Operations.Internal
                 return; // Local completions are handled by LocalCompletionProducer
             if (!(operation.Command is ICommand command))
                 return; // We can't complete non-commands
+            if (command is IServerSideCommand serverSideCommand)
+                serverSideCommand.MarkServerSide(); // Server-side commands should be marked as such
 
             var logEnabled = LogLevel != LogLevel.None && Log.IsEnabled(LogLevel);
             if (logEnabled)
