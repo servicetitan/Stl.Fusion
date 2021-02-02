@@ -86,7 +86,7 @@
     <PackageReference Update="System.Text.Json" Version="5.0.*" />
     <PackageReference Update="System.Threading.Channels" Version="5.0.*" />
     <PackageReference Update="UAParser" Version="3.1.*" />
-    <PackageReference Update="Ulid" Version="1.1.*" />
+    <PackageReference Update="Ulid" Version="1.2.*" />
     <PackageReference Update="xunit" Version="2.4.*" />
     <PackageReference Update="Xunit.DependencyInjection.Logging" Version="2.1.*" />
     <PackageReference Update="ZString" Version="2.3.*" />
