@@ -29,7 +29,7 @@ namespace Stl.Fusion.Authentication
 
         public virtual async Task SignInAsync(SignInCommand command, CancellationToken cancellationToken = default)
         {
-            var (user, authenticatedIdentity, session) = command;
+            var (session, user, authenticatedIdentity) = command;
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
                 GetSessionInfoAsync(session, default).Ignore();
@@ -81,7 +81,7 @@ namespace Stl.Fusion.Authentication
 
         public virtual async Task SignOutAsync(SignOutCommand command, CancellationToken cancellationToken = default)
         {
-            var (force, session) = command;
+            var (session, force) = command;
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
                 if (force)
@@ -107,7 +107,7 @@ namespace Stl.Fusion.Authentication
 
         public virtual async Task EditUserAsync(EditUserCommand command, CancellationToken cancellationToken = default)
         {
-            var session = command.Session;
+            var (session, name) = command;
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
                 var invSessionInfo = context.Items.Get<OperationItem<SessionInfo>>().Value;
@@ -123,14 +123,14 @@ namespace Stl.Fusion.Authentication
                 throw Errors.NotAuthenticated();
 
             context.Items.Set(OperationItem.New(sessionInfo));
-            if (command.Name != null)
-                user = user with { Name = command.Name };
+            if (name != null)
+                user = user with { Name = name };
             Users[user.Id] = user;
         }
 
         public virtual async Task<SessionInfo> SetupSessionAsync(SetupSessionCommand command, CancellationToken cancellationToken = default)
         {
-            var (ipAddress, userAgent, session) = command;
+            var (session, ipAddress, userAgent) = command;
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
                 GetSessionInfoAsync(session, default).Ignore();

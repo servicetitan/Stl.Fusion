@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.JSInterop;
 using Stl.Fusion.Authentication;
+using Stl.Fusion.Authentication.Commands;
 using Stl.Text;
 
 namespace Stl.Fusion.Blazor
@@ -46,17 +47,15 @@ namespace Stl.Fusion.Blazor
 
         public virtual ValueTask SignOutAsync()
             => JSRuntime.InvokeVoidAsync("FusionAuth.signOut");
-        public virtual Task SignOutAsync(Symbol sessionId)
-            => SignOutAsync(new Session(sessionId));
-        public virtual async Task SignOutAsync(Session session)
+        public virtual Task SignOutAsync(Symbol sessionId, bool force = false)
+            => SignOutAsync(new Session(sessionId), force);
+        public virtual async Task SignOutAsync(Session session, bool force = false)
         {
-            if (session == Session)
-                await SignOutAsync();
-            else
-                await Task.Run(() => AuthService.SignOutAsync(new(true, session)));
+            var signOutCommand = new SignOutCommand(session, force);
+            await Task.Run(() => AuthService.SignOutAsync(signOutCommand));
         }
 
-        public virtual async Task SignOutEverywhereAsync()
+        public virtual async Task SignOutEverywhereAsync(bool force = true)
         {
             // No server-side API endpoint for this action(yet), so let's do this on the client
             while (true) {
@@ -68,9 +67,9 @@ namespace Stl.Fusion.Blazor
                 if (otherSessions.Count == 0)
                     break;
                 foreach (var otherSession in otherSessions)
-                    await SignOutAsync(otherSession);
+                    await SignOutAsync(otherSession, force);
             }
-            await SignOutAsync(Session);
+            await SignOutAsync(Session, force);
         }
     }
 }

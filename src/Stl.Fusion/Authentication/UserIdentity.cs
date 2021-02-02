@@ -1,5 +1,6 @@
 using System;
 using Newtonsoft.Json;
+using Stl.OS;
 using Stl.Text;
 
 namespace Stl.Fusion.Authentication
@@ -12,9 +13,9 @@ namespace Stl.Fusion.Authentication
 
         public Symbol Id { get; }
         [JsonIgnore]
-        public string Schema => ParseId(Id).Schema;
+        public string Schema => ParseId(Id.Value).Schema;
         [JsonIgnore]
-        public string SchemaBoundId => ParseId(Id).SchemaBoundId;
+        public string SchemaBoundId => ParseId(Id.Value).SchemaBoundId;
         [JsonIgnore]
         public bool IsValid => !Id.IsEmpty;
 
@@ -28,10 +29,13 @@ namespace Stl.Fusion.Authentication
 
         // Conversion
 
-        public override string ToString() => $"{GetType().Name}({Id})";
+        // NOTE: ToString() has to return Id.Value, otherwise dictionary key
+        // serialization will be broken, and UserIdentity is actually used
+        // as a dictionary key in User.Identities
+        public override string ToString() => Id.Value;
 
         public void Deconstruct(out string schema, out string schemaBoundId)
-            => (schema, schemaBoundId) = ParseId(Id);
+            => (schema, schemaBoundId) = ParseId(Id.Value);
 
         public static implicit operator UserIdentity((string Schema, string SchemaBoundId) source)
             => new(source.Schema, source.SchemaBoundId);

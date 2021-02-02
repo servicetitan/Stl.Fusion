@@ -76,7 +76,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
         public virtual async Task EditAsync(TDbContext dbContext, DbUser dbUser, EditUserCommand command,
             CancellationToken cancellationToken = default)
         {
-            var (name, _) = command;
+            var (_, name) = command;
             if (name != null)
                 dbUser.Name = name;
             await dbContext.SaveChangesAsync(cancellationToken);

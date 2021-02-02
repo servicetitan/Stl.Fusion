@@ -62,7 +62,7 @@ namespace Stl.Fusion.Tests.Authentication
 
             var session = sessionA;
             await WebServices.Commander().CallAsync(
-                new SignInCommand(bob, session).MarkServerSide());
+                new SignInCommand(session, bob).MarkServerSide());
             var user = await authServer.GetUserAsync(session);
             user.Name.Should().Be(bob.Name);
             long.TryParse(user.Id, out var _).Should().BeTrue();
@@ -71,7 +71,7 @@ namespace Stl.Fusion.Tests.Authentication
 
             // Trying to edit user name
             var newName = "Bobby";
-            await authClient.EditUserAsync(new(newName, session));
+            await authClient.EditUserAsync(new(session, newName));
             user = await authServer.GetUserAsync(session);
             user.Name.Should().Be(newName);
             bob = bob with { Name = newName };
@@ -98,7 +98,7 @@ namespace Stl.Fusion.Tests.Authentication
             user.IsAuthenticated.Should().BeFalse();
 
             // Checking sign-out
-            await WebServices.Commander().CallAsync(new SignOutCommand(false, sessionA));
+            await WebServices.Commander().CallAsync(new SignOutCommand(sessionA));
             user = await authServer.GetUserAsync(sessionA);
             user.IsAuthenticated.Should().BeFalse();
             await DelayAsync(0.5);
@@ -125,7 +125,7 @@ namespace Stl.Fusion.Tests.Authentication
                 .WithIdentity("g:1");
 
             var session = sessionA;
-            await authServer.SignInAsync(new SignInCommand(bob, session).MarkServerSide());
+            await authServer.SignInAsync(new SignInCommand(session, bob).MarkServerSide());
             var user = await authServer.GetUserAsync(session);
             user.Name.Should().Be(bob.Name);
             long.TryParse(user.Id, out var _).Should().BeTrue();
@@ -161,7 +161,7 @@ namespace Stl.Fusion.Tests.Authentication
             user.IsAuthenticated.Should().BeFalse();
 
             // Checking sign-out
-            await authServer.SignOutAsync(new(false, sessionA));
+            await authServer.SignOutAsync(new(sessionA));
             user = await authServer.GetUserAsync(sessionA);
             user.IsAuthenticated.Should().BeFalse();
             await DelayAsync(0.5);
@@ -195,10 +195,10 @@ namespace Stl.Fusion.Tests.Authentication
             var session = sessionFactory.CreateSession();
             await Assert.ThrowsAsync<FormatException>(async() => {
                 var guest = new User("notANumber", "Guest").WithIdentity("n:1");
-                await authServer.SignInAsync(new SignInCommand(guest, session).MarkServerSide());
+                await authServer.SignInAsync(new SignInCommand(session, guest).MarkServerSide());
             });
             var bob = new User("", "Bob").WithIdentity("b:1");
-            await authServer.SignInAsync(new SignInCommand(bob, session).MarkServerSide());
+            await authServer.SignInAsync(new SignInCommand(session, bob).MarkServerSide());
             var user = await authServer.GetUserAsync(session);
             user.Name.Should().Be("Bob");
         }
@@ -217,7 +217,7 @@ namespace Stl.Fusion.Tests.Authentication
             sessions.Length.Should().Be(0);
 
             var bob = new User("", "Bob").WithIdentity("g:1");
-            var signInCmd = new SignInCommand(bob, sessionA).MarkServerSide();
+            var signInCmd = new SignInCommand(sessionA, bob).MarkServerSide();
             await authServer.SignInAsync(signInCmd);
             var user = await authServer.GetUserAsync(sessionA);
             user.Name.Should().Be(bob.Name);
@@ -229,7 +229,7 @@ namespace Stl.Fusion.Tests.Authentication
             sessions = await authServer.GetUserSessionsAsync(sessionB);
             sessions.Length.Should().Be(0);
 
-            signInCmd = new SignInCommand(bob, sessionB).MarkServerSide();
+            signInCmd = new SignInCommand(sessionB, bob).MarkServerSide();
             await authServer.SignInAsync(signInCmd);
             user = await authServer.GetUserAsync(sessionB);
             user.Name.Should().Be(bob.Name);
@@ -239,7 +239,7 @@ namespace Stl.Fusion.Tests.Authentication
             sessions = await authServer.GetUserSessionsAsync(sessionB);
             sessions.Select(s => s.Id).Should().BeEquivalentTo(new[] { sessionA.Id, sessionB.Id });
 
-            var signOutCmd = new SignOutCommand(false, sessionA);
+            var signOutCmd = new SignOutCommand(sessionA);
             await authServer.SignOutAsync(signOutCmd);
             (await authServer.IsSignOutForcedAsync(sessionB)).Should().BeFalse();
             user = await authServer.GetUserAsync(sessionA);
@@ -250,7 +250,7 @@ namespace Stl.Fusion.Tests.Authentication
             sessions = await authServer.GetUserSessionsAsync(sessionB);
             sessions.Select(s => s.Id).Should().BeEquivalentTo(new[] { sessionB.Id });
 
-            signInCmd = new SignInCommand(bob, sessionA).MarkServerSide();
+            signInCmd = new SignInCommand(sessionA, bob).MarkServerSide();
             await authServer.SignInAsync(signInCmd);
             user = await authServer.GetUserAsync(sessionA);
             user.Name.Should().Be(bob.Name);
@@ -260,7 +260,7 @@ namespace Stl.Fusion.Tests.Authentication
             sessions = await authServer.GetUserSessionsAsync(sessionB);
             sessions.Select(s => s.Id).Should().BeEquivalentTo(new[] { sessionA.Id, sessionB.Id });
 
-            signOutCmd = new SignOutCommand(true, sessionB);
+            signOutCmd = new SignOutCommand(sessionB, true);
             await authServer.SignOutAsync(signOutCmd);
             (await authServer.IsSignOutForcedAsync(sessionB)).Should().BeTrue();
             (await authServer.GetSessionInfoAsync(sessionB)).IsSignOutForced.Should().BeTrue();
@@ -279,7 +279,7 @@ namespace Stl.Fusion.Tests.Authentication
             });
 
             await Assert.ThrowsAsync<AuthenticationException>(async() => {
-                signInCmd = new SignInCommand(bob, sessionB).MarkServerSide();
+                signInCmd = new SignInCommand(sessionB, bob).MarkServerSide();
                 await authServer.SignInAsync(signInCmd);
             });
         }

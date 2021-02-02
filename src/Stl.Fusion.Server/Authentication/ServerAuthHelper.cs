@@ -77,7 +77,7 @@ namespace Stl.Fusion.Server.Authentication
             var userAgent = httpContext.Request.Headers.TryGetValue("User-Agent", out var userAgentValues)
                 ? userAgentValues.FirstOrDefault() ?? ""
                 : "";
-            var setupSessionCommand = new SetupSessionCommand(ipAddress, userAgent, session).MarkServerSide();
+            var setupSessionCommand = new SetupSessionCommand(session, ipAddress, userAgent).MarkServerSide();
             var sessionInfo = await AuthService.SetupSessionAsync(setupSessionCommand, cancellationToken).ConfigureAwait(false);
             var userId = sessionInfo.UserId;
             var userIsAuthenticated = sessionInfo.IsAuthenticated && !sessionInfo.IsSignOutForced;
@@ -90,12 +90,14 @@ namespace Stl.Fusion.Server.Authentication
                 if (userIsAuthenticated && IsSameUser(user, httpUser, httpAuthenticationSchema))
                     return;
                 var (newUser, authenticatedIdentity) = CreateOrUpdateUser(user, httpUser, httpAuthenticationSchema);
-                var signInCommand = new SignInCommand(newUser, authenticatedIdentity, session).MarkServerSide();
+                var signInCommand = new SignInCommand(session, newUser, authenticatedIdentity).MarkServerSide();
                 await AuthService.SignInAsync(signInCommand, cancellationToken).ConfigureAwait(false);
             }
             else {
-                if (userIsAuthenticated)
-                    await AuthService.SignOutAsync(new(false, session), cancellationToken).ConfigureAwait(false);
+                if (userIsAuthenticated) {
+                    var signOutCommand = new SignOutCommand(session);
+                    await AuthService.SignOutAsync(signOutCommand, cancellationToken).ConfigureAwait(false);
+                }
             }
         }
 

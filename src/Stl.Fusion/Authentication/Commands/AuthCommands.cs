@@ -5,31 +5,30 @@ using Stl.CommandR.Commands;
 namespace Stl.Fusion.Authentication.Commands
 {
     // Regular commands
-    public record SignOutCommand(bool Force, Session Session)
+    public record SignOutCommand(Session Session, bool Force = false)
         : ISessionCommand<Unit>
     {
-        public SignOutCommand() : this(false, Session.Null) { }
+        public SignOutCommand() : this(Session.Null) { }
     }
 
-    public record EditUserCommand(string? Name, Session Session)
+    public record EditUserCommand(Session Session, string? Name = null)
         : ISessionCommand<Unit>
     {
-        public EditUserCommand() : this(null, Session.Null) { }
+        public EditUserCommand() : this(Session.Null) { }
     }
 
     // Server-side only!
-    public record SetupSessionCommand(string IPAddress, string UserAgent, Session Session)
+    public record SetupSessionCommand(Session Session, string IPAddress = "", string UserAgent = "")
         : ServerSideCommandBase<SessionInfo>, ISessionCommand<SessionInfo>
     {
         public SetupSessionCommand() : this(Session.Null) { }
-        public SetupSessionCommand(Session session) : this("", "", session) { }
     }
 
-    public record SignInCommand(User User, UserIdentity AuthenticatedIdentity, Session Session)
+    public record SignInCommand(Session Session, User User, UserIdentity AuthenticatedIdentity)
         : ServerSideCommandBase<Unit>, ISessionCommand<Unit>
     {
-        public SignInCommand() : this(null!, null!, Session.Null) { }
-        public SignInCommand(User user, Session session)
-            : this(user, user.Identities.Single().Key, session) { }
+        public SignInCommand() : this(Session.Null, null!, null!) { }
+        public SignInCommand(Session session, User user)
+            : this(session, user, user.Identities.Single().Key) { }
     }
 }
