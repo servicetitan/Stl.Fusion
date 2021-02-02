@@ -87,16 +87,20 @@ namespace Stl.Fusion.Authentication
                 if (force)
                     IsSignOutForcedAsync(session, default).Ignore();
                 GetSessionInfoAsync(session, default).Ignore();
-                var invSessionInfo = context.Items.Get<OperationItem<SessionInfo>>().Value;
-                TryGetUserAsync(invSessionInfo.UserId, default).Ignore();
-                GetUserSessionsAsync(invSessionInfo.UserId, default).Ignore();
+                var invSessionInfo = context.Items.TryGet<OperationItem<SessionInfo>>()?.Value;
+                if (invSessionInfo != null) {
+                    TryGetUserAsync(invSessionInfo.UserId, default).Ignore();
+                    GetUserSessionsAsync(invSessionInfo.UserId, default).Ignore();
+                }
                 return;
             }
 
             var sessionInfo = await GetSessionInfoAsync(session, cancellationToken).ConfigureAwait(false);
-            context.Items.Set(OperationItem.New(sessionInfo));
+            if (sessionInfo.IsSignOutForced)
+                return;
 
             // Updating SessionInfo
+            context.Items.Set(OperationItem.New(sessionInfo));
             sessionInfo = sessionInfo with {
                 AuthenticatedIdentity = "",
                 UserId = "",

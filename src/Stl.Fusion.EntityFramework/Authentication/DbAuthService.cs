@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Security.Authentication;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -77,7 +78,10 @@ namespace Stl.Fusion.EntityFramework.Authentication
             }
 
             var dbSessionInfo = await Sessions.FindOrCreateAsync(dbContext, session, cancellationToken).ConfigureAwait(false);
-            var sessionInfo = dbSessionInfo.ToModel() with {
+            var sessionInfo = dbSessionInfo.ToModel();
+            if (sessionInfo.IsSignOutForced)
+                throw Errors.ForcedSignOut();
+            sessionInfo = sessionInfo with {
                 LastSeenAt = Clock.Now,
                 AuthenticatedIdentity = authenticatedIdentity,
                 UserId = dbUser.Id.ToString(),
@@ -94,9 +98,11 @@ namespace Stl.Fusion.EntityFramework.Authentication
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
                 GetSessionInfoAsync(session, default).Ignore();
-                var invSessionInfo = context.Items.Get<OperationItem<SessionInfo>>().Value;
-                TryGetUserAsync(invSessionInfo.UserId, default).Ignore();
-                GetUserSessionsAsync(invSessionInfo.UserId, default).Ignore();
+                var invSessionInfo = context.Items.TryGet<OperationItem<SessionInfo>>()?.Value;
+                if (invSessionInfo != null) {
+                    TryGetUserAsync(invSessionInfo.UserId, default).Ignore();
+                    GetUserSessionsAsync(invSessionInfo.UserId, default).Ignore();
+                }
                 return;
             }
 
@@ -104,6 +110,9 @@ namespace Stl.Fusion.EntityFramework.Authentication
 
             var dbSessionInfo = await Sessions.FindOrCreateAsync(dbContext, session, cancellationToken).ConfigureAwait(false);
             var sessionInfo = dbSessionInfo.ToModel();
+            if (sessionInfo.IsSignOutForced)
+                return;
+
             context.Items.Set(OperationItem.New(sessionInfo));
             sessionInfo = sessionInfo with {
                 LastSeenAt = Clock.Now,

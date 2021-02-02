@@ -52,8 +52,6 @@ namespace Stl.Fusion.EntityFramework.Authentication
             TDbContext dbContext, string sessionId, CancellationToken cancellationToken = default)
         {
             var dbSessionInfo = await FindAsync(dbContext, sessionId, cancellationToken).ConfigureAwait(false);
-            if (dbSessionInfo?.IsSignOutForced == true)
-                throw Errors.ForcedSignOut();
             if (dbSessionInfo == null) {
                 var sessionInfo = new SessionInfo(sessionId, Clock.Now);
                 dbSessionInfo = dbContext.Add(
