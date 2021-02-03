@@ -7,11 +7,10 @@ using Stl.Fusion.Blazor.Internal;
 namespace Stl.Fusion.Blazor
 {
     /// <summary>
-    /// Finds and renders a component matching to <see cref="Source"/> type
+    /// Finds and renders a component matching <see cref="Source"/> type
     /// relying on <see cref="MatchingTypeFinder"/> / <see cref="MatchForAttribute"/>.
     /// </summary>
-    /// <typeparam name="TSource"><see cref="Source"/> property type.</typeparam>
-    public class MatchFor<TSource> : ComponentBase
+    public class MatchingComponentFor : ComponentBase
     {
         /// <summary>
         /// Matching type finder (auto-injected).
@@ -28,10 +27,11 @@ namespace Stl.Fusion.Blazor
         /// Source entity, which type determines the right component to pick.
         /// </summary>
         [Parameter]
-        public TSource Source { get; set; } = default!;
+        public object? Source { get; set; } = default!;
 
         /// <summary>
-        /// Name of the component's parameter to set <see cref="Source"/> to.
+        /// Name of the component's parameter to set <see cref="Source"/> value to.
+        /// Null or empty name indicates it shouldn't be set.
         /// </summary>
         [Parameter]
         public string SourceParameterName { get; set; } = "Source";
@@ -46,7 +46,7 @@ namespace Stl.Fusion.Blazor
         /// The content to render when no match is found.
         /// </summary>
         [Parameter]
-        public RenderFragment<TSource>? WhenNoMatchFound { get; set; }
+        public RenderFragment<object>? WhenNoMatchFound { get; set; }
 
         /// <summary>
         /// The parameters of the component to set.
@@ -72,7 +72,8 @@ namespace Stl.Fusion.Blazor
 
             var i = 0;
             builder.OpenComponent(i++, componentType);
-            builder.AddAttribute(i++, SourceParameterName, Source);
+            if (!string.IsNullOrEmpty(SourceParameterName))
+                builder.AddAttribute(i++, SourceParameterName, Source);
             if (Attributes != null)
                 foreach (var (key, value) in Attributes)
                     builder.AddAttribute(i++, key, value);
