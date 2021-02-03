@@ -120,11 +120,9 @@ namespace Stl.Fusion.Authentication
             }
 
             var sessionInfo = await GetSessionInfoAsync(session, cancellationToken).ConfigureAwait(false);
-            if (!sessionInfo.IsAuthenticated)
-                throw Errors.NotAuthenticated();
+            sessionInfo = sessionInfo.MustBeAuthenticated();
             var user = await TryGetUserAsync(sessionInfo.UserId, cancellationToken).ConfigureAwait(false);
-            if (!(user?.IsAuthenticated ?? false))
-                throw Errors.NotAuthenticated();
+            user = user.MustBeAuthenticated();
 
             context.Items.Set(OperationItem.New(sessionInfo));
             if (name != null)

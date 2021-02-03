@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Security;
 using System.Security.Authentication;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -272,13 +273,13 @@ namespace Stl.Fusion.Tests.Authentication
             sessions = await authServer.GetUserSessionsAsync(sessionB);
             sessions.Length.Should().Be(0);
 
-            await Assert.ThrowsAsync<AuthenticationException>(async() => {
+            await Assert.ThrowsAsync<SecurityException>(async() => {
                 var sessionInfo = await authServer.GetSessionInfoAsync(sessionB);
                 var setupSessionCmd = new SetupSessionCommand(sessionB).MarkServerSide();
                 await authServer.SetupSessionAsync(setupSessionCmd);
             });
 
-            await Assert.ThrowsAsync<AuthenticationException>(async() => {
+            await Assert.ThrowsAsync<SecurityException>(async() => {
                 signInCmd = new SignInCommand(sessionB, bob).MarkServerSide();
                 await authServer.SignInAsync(signInCmd);
             });
