@@ -10,7 +10,8 @@ namespace Stl.Fusion.EntityFramework
             where TDbContext : DbContext
             => new(services);
 
-        public static IServiceCollection AddDbContextServices<TDbContext>(this IServiceCollection services, Action<DbContextBuilder<TDbContext>> configureDbContext)
+        public static IServiceCollection AddDbContextServices<TDbContext>(this IServiceCollection services,
+            Action<DbContextBuilder<TDbContext>> configureDbContext)
             where TDbContext : DbContext
         {
             var dbContextServices = services.AddDbContextServices<TDbContext>();

@@ -21,10 +21,16 @@ namespace Stl.Fusion.EntityFramework
 
         internal DbContextBuilder(IServiceCollection services) => Services = services;
 
-        public DbContextBuilder<TDbContext> AddDbEntityResolver<TKey, TEntity>()
+        public DbContextBuilder<TDbContext> AddDbEntityResolver<TKey, TEntity>(
+            Action<IServiceProvider, DbEntityResolver<TDbContext, TKey, TEntity>.Options>? entityResolverOptionsBuilder = null)
             where TKey : notnull
             where TEntity : class
         {
+            Services.TryAddSingleton(c => {
+                var options = new DbEntityResolver<TDbContext, TKey, TEntity>.Options();
+                entityResolverOptionsBuilder?.Invoke(c, options);
+                return options;
+            });
             Services.TryAddSingleton<DbEntityResolver<TDbContext, TKey, TEntity>>();
             return this;
         }
@@ -112,13 +118,17 @@ namespace Stl.Fusion.EntityFramework
 
         public DbContextBuilder<TDbContext> AddDbAuthentication(
             Action<IServiceProvider, DbAuthService<TDbContext>.Options>? authServiceOptionsBuilder = null,
-            Action<IServiceProvider, DbSessionInfoTrimmer<TDbContext>.Options>? sessionInfoTrimmerOptionsBuilder = null)
+            Action<IServiceProvider, DbSessionInfoTrimmer<TDbContext>.Options>? sessionInfoTrimmerOptionsBuilder = null,
+            Action<IServiceProvider, DbEntityResolver<TDbContext, long, DbUser>.Options>? userEntityResolverOptionsBuilder = null)
             => AddDbAuthentication<DbSessionInfo, DbUser>(
-                authServiceOptionsBuilder, sessionInfoTrimmerOptionsBuilder);
+                authServiceOptionsBuilder,
+                sessionInfoTrimmerOptionsBuilder,
+                userEntityResolverOptionsBuilder);
 
         public DbContextBuilder<TDbContext> AddDbAuthentication<TDbSessionInfo, TDbUser>(
             Action<IServiceProvider, DbAuthService<TDbContext>.Options>? authServiceOptionsBuilder = null,
-            Action<IServiceProvider, DbSessionInfoTrimmer<TDbContext>.Options>? sessionInfoTrimmerOptionsBuilder = null)
+            Action<IServiceProvider, DbSessionInfoTrimmer<TDbContext>.Options>? sessionInfoTrimmerOptionsBuilder = null,
+            Action<IServiceProvider, DbEntityResolver<TDbContext, long, TDbUser>.Options>? userEntityResolverOptionsBuilder = null)
             where TDbSessionInfo : DbSessionInfo, new()
             where TDbUser : DbUser, new()
         {
@@ -137,16 +147,16 @@ namespace Stl.Fusion.EntityFramework
                 });
             });
 
-            // DbSessionInfoRepo
+            // Repositories and entity resolvers
             Services.TryAddSingleton<IDbSessionInfoRepo<TDbContext>, DbSessionInfoRepo<TDbContext, TDbSessionInfo>>();
-            Services.TryAddSingleton<DbEntityResolver<TDbContext, string, TDbSessionInfo>>();
-
-            // DbUserRepo
             Services.TryAddSingleton<IDbUserRepo<TDbContext>, DbUserRepo<TDbContext, TDbUser>>();
-            Services.TryAddSingleton(new DbEntityResolver<TDbContext, long, TDbUser>.Options() {
-                QueryTransformer = q => q.Include(u => u.Identities),
+            Services.AddDbContextServices<TDbContext>(dbContext => {
+                dbContext.AddDbEntityResolver<string, TDbSessionInfo>();
+                dbContext.AddDbEntityResolver<long, TDbUser>((c, options) => {
+                    options.QueryTransformer = q => q.Include(u => u.Identities);
+                    userEntityResolverOptionsBuilder?.Invoke(c, options);
+                });
             });
-            Services.TryAddSingleton<DbEntityResolver<TDbContext, long, TDbUser>>();
 
             // DbSessionInfoTrimmer - hosted service!
             Services.TryAddSingleton(c => {
