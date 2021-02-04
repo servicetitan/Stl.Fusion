@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Stl.Async;
 using Stl.Channels;
 using Xunit;
 
