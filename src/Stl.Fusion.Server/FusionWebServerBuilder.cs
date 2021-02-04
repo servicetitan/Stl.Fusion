@@ -35,11 +35,14 @@ namespace Stl.Fusion.Server
             });
             Services.TryAddSingleton<WebSocketServer>();
 
-            Services.AddMvcCore()
-                .AddNewtonsoftJson(
-                    options => MemberwiseCopier.Invoke(
+            Services.AddMvcCore().AddNewtonsoftJson(options => {
+                    MemberwiseCopier.Invoke(
                         JsonNetSerializer.DefaultSettings,
-                        options.SerializerSettings));
+                        options.SerializerSettings,
+                        copier => copier with {
+                            Filter = member => member.Name != "Binder",
+                        });
+                });
         }
 
         public FusionWebServerBuilder AddControllers(
