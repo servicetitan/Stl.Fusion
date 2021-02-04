@@ -31,6 +31,23 @@ namespace Stl.Collections
             }
         }
 
+        public static IEnumerable<T[]> PackBy<T>(this IEnumerable<T> source, int packSize)
+        {
+            if (packSize < 1)
+                throw new ArgumentOutOfRangeException(nameof(packSize));
+
+            var pack = new List<T>();
+            foreach (var item in source) {
+                pack.Add(item);
+                if (pack.Count < packSize)
+                    continue;
+                yield return pack.ToArray();
+                pack.Clear();
+            }
+            if (pack.Count > 0)
+                yield return pack.ToArray();
+        }
+
         // ToXxx
 
         public static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(
@@ -45,6 +62,8 @@ namespace Stl.Collections
 
         public static string ToDelimitedString<T>(this IEnumerable<T> source, string? delimiter = null)
             => string.Join(delimiter ?? ", ", source);
+
+        // OrderByDependency
 
         public static IEnumerable<T> OrderByDependency<T>(
             this IEnumerable<T> source,

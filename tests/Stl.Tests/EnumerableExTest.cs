@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using FluentAssertions;
 using Stl.Collections;
 using Stl.Testing;
 using Xunit;
@@ -12,6 +12,29 @@ namespace Stl.Tests
     public class EnumerableExTest : TestBase
     {
         public EnumerableExTest(ITestOutputHelper @out) : base(@out) { }
+
+        [Fact]
+        public void BasicTest()
+        {
+            var source1 = new [] { "A", "BB", "AA" };
+            var source2 = new [] { "A", "AA", "B", "BB" };
+            var source3 = new string[0];
+
+            source1.DistinctBy(i => i.Length).Should().BeEquivalentTo("A", "BB");
+            source2.DistinctBy(i => i.Length).Should().BeEquivalentTo("A", "AA");
+            source3.DistinctBy(i => i.Length).Should().BeEquivalentTo();
+
+            source1.PackBy(1).Select(p => p.Length).Should().BeEquivalentTo(1, 1, 1);
+            source1.PackBy(2).Select(p => p.Length).Should().BeEquivalentTo(2, 1);
+            source1.PackBy(3).Select(p => p.Length).Should().BeEquivalentTo(3);
+
+            source2.PackBy(1).Select(p => p.Length).Should().BeEquivalentTo(1, 1, 1, 1);
+            source2.PackBy(2).Select(p => p.Length).Should().BeEquivalentTo(2, 2);
+            source2.PackBy(3).Select(p => p.Length).Should().BeEquivalentTo(3, 1);
+            source2.PackBy(4).Select(p => p.Length).Should().BeEquivalentTo(4);
+
+            source3.PackBy(4).Select(p => p.Length).Should().BeEquivalentTo();
+        }
 
         [Fact]
         public void OrderByDependencyTest()
