@@ -31,7 +31,7 @@ namespace Stl.Reflection
                     continue;
                 field.SetValue(oTarget, field.GetValue(oSource));
             }
-            var properties = Type.GetProperties(FieldBindingFlags & PropertyOrFieldBindingFlagsMask);
+            var properties = Type.GetProperties(PropertyBindingFlags & PropertyOrFieldBindingFlagsMask);
             foreach (var property in properties) {
                 if (!(Filter?.Invoke(property) ?? true))
                     continue;
