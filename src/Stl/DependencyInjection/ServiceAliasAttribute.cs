@@ -7,10 +7,10 @@ namespace Stl.DependencyInjection
     public class ServiceAliasAttribute : ServiceAttributeBase
     {
         public Type ServiceType { get; set; }
-        public Type ActualServiceType { get; set; }
+        public Type? ActualServiceType { get; set; }
         public ServiceLifetime Lifetime { get; set; } = ServiceLifetime.Transient;
 
-        public ServiceAliasAttribute(Type serviceType, Type actualServiceType)
+        public ServiceAliasAttribute(Type serviceType, Type? actualServiceType = null)
         {
             ServiceType = serviceType;
             ActualServiceType = actualServiceType;
@@ -20,7 +20,7 @@ namespace Stl.DependencyInjection
         {
             var descriptor = new ServiceDescriptor(
                 ServiceType,
-                c => c.GetRequiredService(ActualServiceType),
+                c => c.GetRequiredService(ActualServiceType ?? implementationType),
                 Lifetime);
             services.TryAdd(descriptor);
         }
