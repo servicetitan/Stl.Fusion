@@ -23,14 +23,14 @@ namespace Stl.Time
                 init => _quanta = TimeSpanEx.Max(MinQuanta, value);
             }
 
-            public IMomentClock Clock { get; init; } = CoarseCpuClock.Instance;
+            public IMomentClock Clock { get; init; } = CpuClock.Instance;
         }
 
         private readonly Action<TTimer>? _fireHandler;
         private readonly RadixHeapSet<TTimer> _timers = new(45);
         private readonly Moment _start;
-        private readonly object _lock = new object();
-        private int minPriority = 0;
+        private readonly object _lock = new();
+        private int _minPriority = 0;
 
         public TimeSpan Quanta { get; }
         public IMomentClock Clock { get; }
@@ -99,8 +99,8 @@ namespace Stl.Time
                     await Clock.DelayAsync(dueAt, default).ConfigureAwait(false);
                 IReadOnlyDictionary<TTimer, long> minSet;
                 lock (_lock) {
-                    minSet = _timers.ExtractMinSet(minPriority);
-                    ++minPriority;
+                    minSet = _timers.ExtractMinSet(_minPriority);
+                    ++_minPriority;
                 }
                 if (_fireHandler != null && minSet.Count != 0) {
                     foreach (var (timer, _) in minSet) {
@@ -119,7 +119,7 @@ namespace Stl.Time
         private long GetPriority(Moment time)
         {
             var priority = (time - _start).Ticks / Quanta.Ticks;
-            return Math.Max(minPriority, priority);
+            return Math.Max(_minPriority, priority);
         }
     }
 }

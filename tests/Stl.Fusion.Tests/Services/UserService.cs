@@ -60,7 +60,7 @@ namespace Stl.Fusion.Tests.Services
             var existingUser = (User?) null;
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
-                existingUser = context.Items.TryGet<OperationItem<User>>()?.Value;
+                existingUser = context.Operation().Items.TryGet<User>();
                 TryGetAsync(user.Id, default).AssertCompleted().Ignore();
                 if (existingUser == null)
                     CountAsync(default).AssertCompleted().Ignore();
@@ -72,7 +72,7 @@ namespace Stl.Fusion.Tests.Services
             var userId = user.Id;
             if (orUpdate) {
                 existingUser = await dbContext.Users.FindAsync(new [] {(object) userId}, cancellationToken);
-                context.Items.Set(OperationItem.New(existingUser));
+                context.Operation().Items.Set(existingUser);
                 if (existingUser != null)
                     dbContext.Users.Update(user);
             }
@@ -99,7 +99,7 @@ namespace Stl.Fusion.Tests.Services
             var user = command.User;
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
-                var success = context.Items.TryGet<OperationItem<bool>>()?.Value ?? false;
+                var success = context.Operation().Items.TryGet<bool>();
                 if (success) {
                     TryGetAsync(user.Id, default).AssertCompleted().Ignore();
                     CountAsync(default).AssertCompleted().Ignore();
@@ -111,7 +111,7 @@ namespace Stl.Fusion.Tests.Services
             dbContext.Users.Remove(user);
             try {
                 await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-                context.Items.Set(OperationItem.New(true));
+                context.Operation().Items.Set(true);
                 return true;
             }
             catch (DbUpdateConcurrencyException) {

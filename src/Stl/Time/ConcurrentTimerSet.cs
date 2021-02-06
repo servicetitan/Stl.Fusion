@@ -3,7 +3,6 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Stl.Async;
-using Stl.DependencyInjection;
 using Stl.Mathematics;
 
 namespace Stl.Time
