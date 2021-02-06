@@ -5,6 +5,7 @@ using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Stl.Async;
 using Stl.CommandR.Commands;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Authentication.Commands;
@@ -86,18 +87,24 @@ namespace Stl.Fusion.Server.Authentication
                     ?? throw new KeyNotFoundException())
                 : new User(session.Id); // Guest
 
-            if (isAuthenticated) {
-                if (userIsAuthenticated && IsSameUser(user, httpUser, httpAuthenticationSchema))
-                    return;
-                var (newUser, authenticatedIdentity) = CreateOrUpdateUser(user, httpUser, httpAuthenticationSchema);
-                var signInCommand = new SignInCommand(session, newUser, authenticatedIdentity).MarkServerSide();
-                await AuthService.SignInAsync(signInCommand, cancellationToken).ConfigureAwait(false);
-            }
-            else {
-                if (userIsAuthenticated) {
-                    var signOutCommand = new SignOutCommand(session);
-                    await AuthService.SignOutAsync(signOutCommand, cancellationToken).ConfigureAwait(false);
+            try {
+                if (isAuthenticated) {
+                    if (userIsAuthenticated && IsSameUser(user, httpUser, httpAuthenticationSchema))
+                        return;
+                    var (newUser, authenticatedIdentity) = CreateOrUpdateUser(user, httpUser, httpAuthenticationSchema);
+                    var signInCommand = new SignInCommand(session, newUser, authenticatedIdentity).MarkServerSide();
+                    await AuthService.SignInAsync(signInCommand, cancellationToken).ConfigureAwait(false);
                 }
+                else {
+                    if (userIsAuthenticated) {
+                        var signOutCommand = new SignOutCommand(session);
+                        await AuthService.SignOutAsync(signOutCommand, cancellationToken).ConfigureAwait(false);
+                    }
+                }
+            }
+            finally {
+                // Ideally this should be done once important things are completed
+                Task.Run(() => AuthService.UpdatePresenceAsync(session, default), default).Ignore();
             }
         }
 
