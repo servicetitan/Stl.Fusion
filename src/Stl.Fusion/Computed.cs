@@ -173,7 +173,7 @@ namespace Stl.Fusion
                 ? _options.ErrorAutoInvalidateTime
                 : _options.AutoInvalidateTime;
             if (timeout != TimeSpan.MaxValue)
-                AutoInvalidate(timeout);
+                this.Invalidate(timeout);
         }
 
         public bool Invalidate()
@@ -346,29 +346,6 @@ namespace Stl.Fusion
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected void SetStateUnsafe(ConsistencyState newState)
             => _state = (int) newState;
-
-        protected void AutoInvalidate(TimeSpan timeout)
-        {
-            // This method is called just once for sure
-            var cts = new CancellationTokenSource(timeout);
-            Invalidated += _ => {
-                try {
-                    if (!cts.IsCancellationRequested)
-                        cts.Cancel(true);
-                } catch {
-                    // Intended: this method should never throw any exceptions
-                }
-            };
-            cts.Token.Register(() => {
-                cts.Dispose();
-                // No need to schedule this via Task.Run, since this code is
-                // either invoked from Invalidate method (via Invalidated handler),
-                // so Invalidate() call will do nothing & return immediately,
-                // or it's invoked via one of timer threads, i.e. where it's
-                // totally fine to invoke Invalidate directly as well.
-                Invalidate();
-            }, false);
-        }
     }
 
     public class Computed<T> : Computed<ComputeMethodInput, T>

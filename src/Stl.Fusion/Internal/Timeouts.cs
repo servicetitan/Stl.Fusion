@@ -9,11 +9,12 @@ namespace Stl.Fusion.Internal
     {
         public static readonly ConcurrentTimerSet<object> KeepAlive;
         public static readonly ConcurrentTimerSet<ISwappable> Swap;
+        public static readonly ConcurrentTimerSet<IComputed> Invalidate;
         public static readonly IMomentClock Clock;
 
         static Timeouts()
         {
-            Clock = CoarseCpuClock.Instance;
+            Clock = CpuClock.Instance;
             var concurrencyLevel = HardwareInfo.GetProcessorCountPo2Factor(8);
             KeepAlive = new ConcurrentTimerSet<object>(
                 new ConcurrentTimerSet<object>.Options() {
@@ -28,6 +29,13 @@ namespace Stl.Fusion.Internal
                     Clock = Clock,
                 },
                 t => t.SwapAsync());
+            Invalidate = new ConcurrentTimerSet<IComputed>(
+                new ConcurrentTimerSet<IComputed>.Options() {
+                    Quanta = TimeSpan.FromMilliseconds(250),
+                    ConcurrencyLevel = concurrencyLevel,
+                    Clock = Clock,
+                },
+                t => t.Invalidate());
         }
     }
 }

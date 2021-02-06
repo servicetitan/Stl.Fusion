@@ -11,7 +11,7 @@ using Stl.Fusion.Operations;
 
 namespace Stl.Fusion.EntityFramework.Operations
 {
-    public class DbOperationScopeHandler<TDbContext> : DbServiceBase<TDbContext>, ICommandHandler<ICommand>
+    public class DbOperationScopeProvider<TDbContext> : DbServiceBase<TDbContext>, ICommandHandler<ICommand>
         where TDbContext : DbContext
     {
         public class Options
@@ -19,19 +19,17 @@ namespace Stl.Fusion.EntityFramework.Operations
             public LogLevel LogLevel { get; set; } = LogLevel.None;
         }
 
-        protected IOperationCompletionNotifier? OperationCompletionNotifier { get; }
-        protected IInvalidationInfoProvider? InvalidationInfoProvider { get; }
+        protected IOperationCompletionNotifier OperationCompletionNotifier { get; }
         protected LogLevel LogLevel { get; }
 
-        public DbOperationScopeHandler(
+        public DbOperationScopeProvider(
             Options? options,
             IServiceProvider services)
             : base(services)
         {
             options ??= new();
             LogLevel = options.LogLevel;
-            OperationCompletionNotifier = services.GetService<IOperationCompletionNotifier>();
-            InvalidationInfoProvider = services.GetService<IInvalidationInfoProvider>();
+            OperationCompletionNotifier = services.GetRequiredService<IOperationCompletionNotifier>();
         }
 
         [CommandHandler(Priority = 1000, IsFilter = true)]
@@ -46,11 +44,11 @@ namespace Stl.Fusion.EntityFramework.Operations
                 return;
             }
 
-            var tScope = typeof(IDbOperationScope<TDbContext>);
+            var tScope = typeof(DbOperationScope<TDbContext>);
             if (context.Items[tScope] != null) // Safety check
                 throw Stl.Internal.Errors.InternalError($"'{tScope}' scope is already provided. Duplicate handler?");
 
-            await using var scope = Services.GetRequiredService<IDbOperationScope<TDbContext>>();
+            await using var scope = Services.GetRequiredService<DbOperationScope<TDbContext>>();
             var operation = scope.Operation;
             operation.Command = command;
             context.Items.Set(scope);
@@ -58,15 +56,14 @@ namespace Stl.Fusion.EntityFramework.Operations
             var logEnabled = LogLevel != LogLevel.None && Log.IsEnabled(LogLevel);
             try {
                 await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
-
-                operation.CaptureItems(context.Items);
                 await scope.CommitAsync(cancellationToken);
             }
             catch (OperationCanceledException) {
                 throw;
             }
             catch (Exception e) {
-                Log.LogError(e, "Operation failed: {Command}", command);
+                if (scope.IsUsed)
+                    Log.LogError(e, "Operation failed: {Command}", command);
                 try {
                     await scope.RollbackAsync();
                 }
@@ -78,8 +75,10 @@ namespace Stl.Fusion.EntityFramework.Operations
             if (scope.IsUsed) {
                 if (logEnabled)
                     Log.Log(LogLevel, "Operation succeeded: {Command}", command);
-                context.Items.Set(Completion.New(operation));
-                OperationCompletionNotifier?.NotifyCompleted(operation);
+                var completion = Completion.New(operation);
+                context.Items.Set(completion);
+                OperationCompletionNotifier.NotifyCompleted(operation);
+                await context.Commander.RunAsync(completion, true, default).ConfigureAwait(false);
             }
         }
     }

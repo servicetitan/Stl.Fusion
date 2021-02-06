@@ -33,7 +33,7 @@ namespace Stl.Fusion.Authentication
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
                 GetSessionInfoAsync(session, default).Ignore();
-                var invSessionInfo = context.Items.Get<OperationItem<SessionInfo>>().Value;
+                var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
                 TryGetUserAsync(invSessionInfo.UserId, default).Ignore();
                 GetUserSessionsAsync(invSessionInfo.UserId, default).Ignore();
                 return;
@@ -75,8 +75,8 @@ namespace Stl.Fusion.Authentication
             // Persist changes
             Users[user.Id] = user;
             sessionInfo = AddOrUpdateSessionInfo(sessionInfo);
-            context.Items.Set(OperationItem.New(sessionInfo));
-            context.Items.Set(OperationItem.New(isNewUser));
+            context.Operation().Items.Set(sessionInfo);
+            context.Operation().Items.Set(isNewUser);
         }
 
         public virtual async Task SignOutAsync(SignOutCommand command, CancellationToken cancellationToken = default)
@@ -87,7 +87,7 @@ namespace Stl.Fusion.Authentication
                 if (force)
                     IsSignOutForcedAsync(session, default).Ignore();
                 GetSessionInfoAsync(session, default).Ignore();
-                var invSessionInfo = context.Items.TryGet<OperationItem<SessionInfo>>()?.Value;
+                var invSessionInfo = context.Operation().Items.TryGet<SessionInfo>();
                 if (invSessionInfo != null) {
                     TryGetUserAsync(invSessionInfo.UserId, default).Ignore();
                     GetUserSessionsAsync(invSessionInfo.UserId, default).Ignore();
@@ -100,7 +100,7 @@ namespace Stl.Fusion.Authentication
                 return;
 
             // Updating SessionInfo
-            context.Items.Set(OperationItem.New(sessionInfo));
+            context.Operation().Items.Set(sessionInfo);
             sessionInfo = sessionInfo with {
                 AuthenticatedIdentity = "",
                 UserId = "",
@@ -114,7 +114,7 @@ namespace Stl.Fusion.Authentication
             var (session, name) = command;
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
-                var invSessionInfo = context.Items.Get<OperationItem<SessionInfo>>().Value;
+                var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
                 TryGetUserAsync(invSessionInfo.UserId, default).Ignore();
                 return;
             }
@@ -124,7 +124,7 @@ namespace Stl.Fusion.Authentication
             var user = await TryGetUserAsync(sessionInfo.UserId, cancellationToken).ConfigureAwait(false);
             user = user.MustBeAuthenticated();
 
-            context.Items.Set(OperationItem.New(sessionInfo));
+            context.Operation().Items.Set(sessionInfo);
             if (name != null)
                 user = user with { Name = name };
             Users[user.Id] = user;
@@ -136,7 +136,7 @@ namespace Stl.Fusion.Authentication
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
                 GetSessionInfoAsync(session, default).Ignore();
-                var invSessionInfo = context.Items.Get<OperationItem<SessionInfo>>().Value;
+                var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
                 if (invSessionInfo.IsAuthenticated)
                     GetUserSessionsAsync(invSessionInfo.UserId, default).Ignore();
                 return null!;
@@ -147,7 +147,7 @@ namespace Stl.Fusion.Authentication
                 UserAgent = string.IsNullOrEmpty(userAgent) ? oldSessionInfo.UserAgent : userAgent,
             };
             newSessionInfo = AddOrUpdateSessionInfo(newSessionInfo);
-            context.Items.Set(OperationItem.New(newSessionInfo));
+            context.Operation().Items.Set(newSessionInfo);
             return newSessionInfo;
         }
 

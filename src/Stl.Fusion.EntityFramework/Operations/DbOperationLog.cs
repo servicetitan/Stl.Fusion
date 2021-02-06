@@ -6,24 +6,23 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Operations;
-using Stl.Text;
 
 namespace Stl.Fusion.EntityFramework.Operations
 {
     public interface IDbOperationLog<in TDbContext>
         where TDbContext : DbContext
     {
-        IOperation New(string? id = null, string? agentId = null, object? command = null);
-        Task<IOperation> AddAsync(TDbContext dbContext, IOperation operation, CancellationToken cancellationToken);
-        Task<IOperation?> TryGetAsync(TDbContext dbContext, string id, CancellationToken cancellationToken);
+        DbOperation New(string? id = null, string? agentId = null, object? command = null);
+        Task<DbOperation> AddAsync(TDbContext dbContext, IOperation operation, CancellationToken cancellationToken);
+        Task<DbOperation?> TryGetAsync(TDbContext dbContext, string id, CancellationToken cancellationToken);
 
-        Task<List<IOperation>> ListNewlyCommittedAsync(DateTime minCommitTime, CancellationToken cancellationToken);
+        Task<List<DbOperation>> ListNewlyCommittedAsync(DateTime minCommitTime, CancellationToken cancellationToken);
         Task<int> TrimAsync(DateTime minCommitTime, int maxCount, CancellationToken cancellationToken);
     }
 
     public class DbOperationLog<TDbContext, TDbOperation> : DbServiceBase<TDbContext>, IDbOperationLog<TDbContext>
         where TDbContext : DbContext
-        where TDbOperation : class, IOperation, new()
+        where TDbOperation : DbOperation, new()
     {
         protected AgentInfo AgentInfo { get; }
 
@@ -33,7 +32,7 @@ namespace Stl.Fusion.EntityFramework.Operations
             AgentInfo = services.GetRequiredService<AgentInfo>();
         }
 
-        public IOperation New(string? id = null, string? agentId = null, object? command = null)
+        public DbOperation New(string? id = null, string? agentId = null, object? command = null)
             => new TDbOperation() {
                 Id = id ?? Ulid.NewUlid().ToString(),
                 AgentId = agentId ?? AgentInfo.Id,
@@ -41,27 +40,27 @@ namespace Stl.Fusion.EntityFramework.Operations
                 Command = command,
             };
 
-        public virtual async Task<IOperation> AddAsync(TDbContext dbContext,
+        public virtual async Task<DbOperation> AddAsync(TDbContext dbContext,
             IOperation operation, CancellationToken cancellationToken)
         {
             // dbContext shouldn't use tracking!
             var dbOperation = (TDbOperation) operation;
             await dbContext.AddAsync((object) dbOperation, cancellationToken).ConfigureAwait(false);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            return operation;
+            return dbOperation;
         }
 
-        public virtual async Task<IOperation?> TryGetAsync(TDbContext dbContext,
+        public virtual async Task<DbOperation?> TryGetAsync(TDbContext dbContext,
             string id, CancellationToken cancellationToken)
         {
             // dbContext shouldn't use tracking!
-            var operation = await dbContext.Set<TDbOperation>().AsQueryable()
+            var dbOperation = await dbContext.Set<TDbOperation>().AsQueryable()
                 .FirstOrDefaultAsync(e => e.Id == id, cancellationToken)
                 .ConfigureAwait(false);
-            return operation;
+            return dbOperation;
         }
 
-        public virtual async Task<List<IOperation>> ListNewlyCommittedAsync(
+        public virtual async Task<List<DbOperation>> ListNewlyCommittedAsync(
             DateTime minCommitTime, CancellationToken cancellationToken)
         {
             await using var dbContext = CreateDbContext();
@@ -69,7 +68,7 @@ namespace Stl.Fusion.EntityFramework.Operations
                 .Where(o => o.CommitTime >= minCommitTime)
                 .OrderBy(o => o.CommitTime)
                 .ToListAsync(cancellationToken).ConfigureAwait(false);
-            return operations.Cast<IOperation>().ToList()!;
+            return operations.Cast<DbOperation>().ToList()!;
         }
 
         public virtual async Task<int> TrimAsync(DateTime minCommitTime, int maxCount, CancellationToken cancellationToken)

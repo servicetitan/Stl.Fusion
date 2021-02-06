@@ -7,16 +7,10 @@ using Stl.CommandR.Commands;
 using Stl.CommandR.Configuration;
 using Stl.Fusion.Bridge.Interception;
 using Stl.Fusion.Interception;
-using Stl.Reflection;
 
 namespace Stl.Fusion.Operations
 {
-    public interface IInvalidationInfoProvider
-    {
-        bool RequiresInvalidation(ICommand? command);
-    }
-
-    public class InvalidationInfoProvider : IInvalidationInfoProvider
+    public class InvalidationInfoProvider
     {
         protected ICommander Commander { get; }
         protected ICommandHandlerResolver CommandHandlerResolver { get; }
@@ -28,7 +22,7 @@ namespace Stl.Fusion.Operations
             CommandHandlerResolver = commandHandlerResolver;
         }
 
-        public bool RequiresInvalidation(ICommand? command)
+        public virtual bool RequiresInvalidation(ICommand? command)
         {
             if (command == null)
                 return false;

@@ -14,12 +14,12 @@ namespace Stl.Fusion.Operations.Internal
             public LogLevel LogLevel { get; set; } = LogLevel.None;
         }
 
-        protected IInvalidationInfoProvider InvalidationInfoProvider { get; }
+        protected InvalidationInfoProvider InvalidationInfoProvider { get; }
         protected LogLevel LogLevel { get; }
         protected ILogger Log { get; }
 
         public InvalidateOnCompletionCommandHandler(Options? options,
-            IInvalidationInfoProvider invalidationInfoProvider,
+            InvalidationInfoProvider invalidationInfoProvider,
             ILogger<InvalidateOnCompletionCommandHandler>? log = null)
         {
             options ??= new();
@@ -40,20 +40,26 @@ namespace Stl.Fusion.Operations.Internal
                 return;
             }
 
-            var logEnabled = LogLevel != LogLevel.None && Log.IsEnabled(LogLevel);
-            using var _ = Computed.Invalidate();
-            command.Operation.RestoreItems(context.Items);
-
-            var finalHandler = context.ExecutionState.FindFinalHandler();
-            if (finalHandler != null) {
-                if (logEnabled)
-                    Log.Log(LogLevel, "Invalidating via dedicated command handler for '{CommandType}'", command.GetType());
-                await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
+            var oldOperation = context.Items.TryGet<IOperation>();
+            context.SetOperation(command.Operation);
+            var invalidateScope = Computed.Invalidate();
+            try {
+                var logEnabled = LogLevel != LogLevel.None && Log.IsEnabled(LogLevel);
+                var finalHandler = context.ExecutionState.FindFinalHandler();
+                if (finalHandler != null) {
+                    if (logEnabled)
+                        Log.Log(LogLevel, "Invalidating via dedicated command handler for '{CommandType}'", command.GetType());
+                    await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
+                }
+                else {
+                    if (logEnabled)
+                        Log.Log(LogLevel, "Invalidating via shared command handler for '{CommandType}'", originalCommand.GetType());
+                    await context.Commander.RunAsync(originalCommand, cancellationToken).ConfigureAwait(false);
+                }
             }
-            else {
-                if (logEnabled)
-                    Log.Log(LogLevel, "Invalidating via shared command handler for '{CommandType}'", originalCommand.GetType());
-                await context.Commander.RunAsync(originalCommand, cancellationToken).ConfigureAwait(false);
+            finally {
+                context.SetOperation(oldOperation);
+                invalidateScope.Dispose();
             }
         }
     }

@@ -17,25 +17,12 @@ using Stl.Time;
 
 namespace Stl.Fusion.EntityFramework
 {
-    public interface IDbOperationScope : IAsyncDisposable
+    public interface IDbOperationScope : IOperationScope
     {
-        IOperation Operation { get; }
-        bool IsUsed { get; }
-        bool IsClosed { get; }
-        bool? IsConfirmed { get; }
-
         Task<DbContext> CreateDbContextAsync(bool readWrite = true, CancellationToken cancellationToken = default);
-        Task CommitAsync(CancellationToken cancellationToken = default);
-        Task RollbackAsync();
     }
 
-    public interface IDbOperationScope<TDbContext> : IDbOperationScope
-        where TDbContext : DbContext
-    {
-        new Task<TDbContext> CreateDbContextAsync(bool readWrite = true, CancellationToken cancellationToken = default);
-    }
-
-    public class DbOperationScope<TDbContext> : AsyncDisposableBase, IDbOperationScope<TDbContext>
+    public class DbOperationScope<TDbContext> : AsyncDisposableBase, IDbOperationScope
         where TDbContext : DbContext
     {
         private bool _isInMemoryProvider;
@@ -50,7 +37,9 @@ namespace Stl.Fusion.EntityFramework
         protected AsyncLock AsyncLock { get; }
         protected ILogger Log { get; }
 
-        public IOperation Operation { get; }
+        IOperation IOperationScope.Operation => Operation;
+        public DbOperation Operation { get; }
+        public CommandContext CommandContext { get; }
         public bool IsUsed => DbContext != null;
         public bool IsClosed { get; private set; }
         public bool? IsConfirmed { get; private set; }
@@ -65,6 +54,7 @@ namespace Stl.Fusion.EntityFramework
             DbOperationLog = services.GetRequiredService<IDbOperationLog<TDbContext>>();
             AsyncLock = new AsyncLock(ReentryMode.CheckedPass);
             Operation = DbOperationLog.New();
+            CommandContext = services.GetRequiredService<CommandContext>();
         }
 
         protected override async ValueTask DisposeInternalAsync(bool disposing)
@@ -98,7 +88,7 @@ namespace Stl.Fusion.EntityFramework
         {
             using var _ = await AsyncLock.LockAsync(cancellationToken).ConfigureAwait(false);
             if (IsClosed)
-                throw Errors.OperationScopeIsAlreadyClosed();
+                throw Stl.Fusion.Operations.Internal.Errors.OperationScopeIsAlreadyClosed();
             TDbContext dbContext;
             if (DbContext == null) {
                 dbContext = DbContextFactory.CreateDbContext().ReadWrite();
@@ -116,6 +106,7 @@ namespace Stl.Fusion.EntityFramework
             dbContext.Database.AutoTransactionsEnabled = false;
             if (!_isInMemoryProvider)
                 dbContext.SetDbConnection(Connection);
+            CommandContext.SetOperation(Operation);
             return dbContext;
         }
 
@@ -123,7 +114,7 @@ namespace Stl.Fusion.EntityFramework
         {
             using var _ = await AsyncLock.LockAsync(cancellationToken).ConfigureAwait(false);
             if (IsClosed)
-                throw Errors.OperationScopeIsAlreadyClosed();
+                throw Stl.Fusion.Operations.Internal.Errors.OperationScopeIsAlreadyClosed();
             try {
                 if (!IsUsed) {
                     IsConfirmed = true;
@@ -151,7 +142,7 @@ namespace Stl.Fusion.EntityFramework
         {
             using var _ = await AsyncLock.LockAsync().ConfigureAwait(false);
             if (IsClosed)
-                throw Errors.OperationScopeIsAlreadyClosed();
+                throw Stl.Fusion.Operations.Internal.Errors.OperationScopeIsAlreadyClosed();
             try {
                 if (!IsUsed)
                     return;

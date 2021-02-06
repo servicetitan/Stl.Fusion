@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
@@ -7,7 +6,6 @@ using Newtonsoft.Json;
 using Stl.Collections;
 using Stl.Fusion.Operations;
 using Stl.Serialization;
-using Stl.Text;
 using Stl.Time;
 
 namespace Stl.Fusion.EntityFramework.Operations
@@ -18,7 +16,7 @@ namespace Stl.Fusion.EntityFramework.Operations
     public class DbOperation : IOperation
     {
         private readonly JsonSerialized<object?> _command = new(default(object?));
-        private readonly JsonSerialized<ImmutableOptionSet?> _items = new(ImmutableOptionSet.Empty);
+        private readonly JsonSerialized<OptionSet> _items = new(new OptionSet());
         private DateTime _startTime;
         private DateTime _commitTime;
 
@@ -52,8 +50,8 @@ namespace Stl.Fusion.EntityFramework.Operations
         }
 
         [NotMapped, JsonIgnore]
-        public ImmutableOptionSet Items {
-            get => _items.Value ?? ImmutableOptionSet.Empty;
+        public OptionSet Items {
+            get => _items.Value;
             set => _items.Value = value;
         }
     }

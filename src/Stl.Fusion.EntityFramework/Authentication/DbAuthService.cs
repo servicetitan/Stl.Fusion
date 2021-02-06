@@ -44,7 +44,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
                 GetSessionInfoAsync(session, default).Ignore();
-                var invSessionInfo = context.Items.Get<OperationItem<SessionInfo>>().Value;
+                var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
                 TryGetUserAsync(invSessionInfo.UserId, default).Ignore();
                 GetUserSessionsAsync(invSessionInfo.UserId, default).Ignore();
                 return;
@@ -86,8 +86,8 @@ namespace Stl.Fusion.EntityFramework.Authentication
                 AuthenticatedIdentity = authenticatedIdentity,
                 UserId = dbUser.Id.ToString(),
             };
-            context.Items.Set(OperationItem.New(sessionInfo));
-            context.Items.Set(OperationItem.New(isNewUser));
+            context.Operation().Items.Set(sessionInfo);
+            context.Operation().Items.Set(isNewUser);
             await Sessions.CreateOrUpdateAsync(dbContext, sessionInfo, cancellationToken).ConfigureAwait(false);
         }
 
@@ -98,7 +98,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
                 GetSessionInfoAsync(session, default).Ignore();
-                var invSessionInfo = context.Items.TryGet<OperationItem<SessionInfo>>()?.Value;
+                var invSessionInfo = context.Operation().Items.TryGet<SessionInfo>();
                 if (invSessionInfo != null) {
                     TryGetUserAsync(invSessionInfo.UserId, default).Ignore();
                     GetUserSessionsAsync(invSessionInfo.UserId, default).Ignore();
@@ -113,7 +113,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             if (sessionInfo.IsSignOutForced)
                 return;
 
-            context.Items.Set(OperationItem.New(sessionInfo));
+            context.Operation().Items.Set(sessionInfo);
             sessionInfo = sessionInfo with {
                 LastSeenAt = Clock.Now,
                 AuthenticatedIdentity = "",
@@ -128,7 +128,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             var session = command.Session;
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
-                var invSessionInfo = context.Items.Get<OperationItem<SessionInfo>>().Value;
+                var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
                 TryGetUserAsync(invSessionInfo.UserId, default).Ignore();
                 return;
             }
@@ -144,7 +144,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             if (dbUser == null)
                 throw Internal.Errors.EntityNotFound(Users.UserEntityType);
             await Users.EditAsync(dbContext, dbUser, command, cancellationToken).ConfigureAwait(false);
-            context.Items.Set(OperationItem.New(sessionInfo));
+            context.Operation().Items.Set(sessionInfo);
         }
 
         public virtual async Task<SessionInfo> SetupSessionAsync(
@@ -154,7 +154,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
                 GetSessionInfoAsync(session, default).Ignore();
-                var invSessionInfo = context.Items.Get<OperationItem<SessionInfo>>().Value;
+                var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
                 if (invSessionInfo.IsAuthenticated)
                     GetUserSessionsAsync(invSessionInfo.UserId, default).Ignore();
                 return null!;
@@ -172,7 +172,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             };
             dbSessionInfo = await Sessions.CreateOrUpdateAsync(dbContext, newSessionInfo, cancellationToken).ConfigureAwait(false);
             var sessionInfo = dbSessionInfo.ToModel();
-            context.Items.Set(OperationItem.New(sessionInfo));
+            context.Operation().Items.Set(sessionInfo);
             return sessionInfo;
         }
 

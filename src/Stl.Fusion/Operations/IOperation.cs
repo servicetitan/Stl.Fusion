@@ -10,6 +10,6 @@ namespace Stl.Fusion.Operations
         DateTime StartTime { get; set; } // Always UTC
         DateTime CommitTime { get; set; } // Always UTC
         object? Command { get; set; }
-        ImmutableOptionSet Items { get; set; }
+        OptionSet Items { get; set; }
     }
 }

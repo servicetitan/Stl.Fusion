@@ -5,7 +5,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.CommandR;
 using Stl.DependencyInjection;
-using Stl.Fusion.Authentication;
 using Stl.Fusion.EntityFramework.Authentication;
 using Stl.Fusion.EntityFramework.Internal;
 using Stl.Fusion.EntityFramework.Operations;
@@ -45,7 +44,7 @@ namespace Stl.Fusion.EntityFramework
         public DbContextBuilder<TDbContext> AddDbOperations<TDbOperation>(
             Action<IServiceProvider, DbOperationLogReader<TDbContext>.Options>? logReaderOptionsBuilder = null,
             Action<IServiceProvider, DbOperationLogTrimmer<TDbContext>.Options>? logTrimmerOptionsBuilder = null)
-            where TDbOperation : class, IOperation, new()
+            where TDbOperation : DbOperation, new()
         {
             // Common services
             Services.TryAddSingleton<AgentInfo>();
@@ -54,10 +53,10 @@ namespace Stl.Fusion.EntityFramework
             Services.TryAddSingleton<IDbOperationLog<TDbContext>, DbOperationLog<TDbContext, TDbOperation>>();
 
             // DbOperationScope & its CommandR handler
-            Services.TryAddTransient<IDbOperationScope<TDbContext>, DbOperationScope<TDbContext>>();
-            Services.TryAddSingleton<DbOperationScopeHandler<TDbContext>.Options>();
-            Services.TryAddSingleton<DbOperationScopeHandler<TDbContext>>();
-            Services.AddCommander().AddHandlers<DbOperationScopeHandler<TDbContext>>();
+            Services.TryAddTransient<DbOperationScope<TDbContext>>();
+            Services.TryAddSingleton<DbOperationScopeProvider<TDbContext>.Options>();
+            Services.TryAddSingleton<DbOperationScopeProvider<TDbContext>>();
+            Services.AddCommander().AddHandlers<DbOperationScopeProvider<TDbContext>>();
 
             // DbOperationLogReader - hosted service!
             Services.TryAddSingleton(c => {
@@ -132,7 +131,7 @@ namespace Stl.Fusion.EntityFramework
             where TDbSessionInfo : DbSessionInfo, new()
             where TDbUser : DbUser, new()
         {
-            if (!Services.HasService<IDbOperationScope<TDbContext>>())
+            if (!Services.HasService<DbOperationScope<TDbContext>>())
                 throw Errors.NoOperationsFrameworkServices();
 
             // DbAuthService

@@ -36,12 +36,9 @@ namespace Stl.Fusion.EntityFramework
         protected Task<TDbContext> CreateCommandDbContextAsync(bool readWrite = true, CancellationToken cancellationToken = default)
         {
             var commandContext = CommandContext.GetCurrent();
-            var operationScope = commandContext.Items.Get<IDbOperationScope<TDbContext>>();
+            var operationScope = commandContext.Items.Get<DbOperationScope<TDbContext>>();
             return operationScope.CreateDbContextAsync(readWrite, cancellationToken);
         }
-
-        protected IDbOperationScope<TDbContext> BeginOperation()
-            => Services.GetRequiredService<IDbOperationScope<TDbContext>>();
 
         protected object[] ComposeKey(params object[] components)
             => components;

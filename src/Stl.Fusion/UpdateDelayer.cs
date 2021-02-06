@@ -29,7 +29,7 @@ namespace Stl.Fusion
             public TimeSpan MinExtraErrorDelay { get; set; } =  TimeSpan.FromSeconds(5);
             public TimeSpan MaxExtraErrorDelay { get; set; } = TimeSpan.FromMinutes(2);
             public TimeSpan CancellationDelay { get; set; } = TimeSpan.FromSeconds(0.05);
-            public IMomentClock Clock { get; set; } = CoarseCpuClock.Instance;
+            public IMomentClock Clock { get; set; } = CpuClock.Instance;
         }
 
         private volatile Task<Unit>? _cancelDelaysTask;

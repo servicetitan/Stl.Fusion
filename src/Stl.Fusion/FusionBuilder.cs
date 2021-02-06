@@ -64,12 +64,13 @@ namespace Stl.Fusion
 
             // Command completion and invalidation - CommandR services
             var commander = Services.AddCommander();
-            Services.TryAddSingleton<IInvalidationInfoProvider, InvalidationInfoProvider>();
-            Services.TryAddSingleton<LocalCompletionProducer.Options>();
-            Services.TryAddSingleton<LocalCompletionProducer>();
+            Services.TryAddTransient<LocalOperationScope>();
+            Services.TryAddSingleton<LocalOperationScopeProvider.Options>();
+            Services.TryAddSingleton<LocalOperationScopeProvider>();
+            commander.AddHandlers<LocalOperationScopeProvider>();
+            Services.TryAddSingleton<InvalidationInfoProvider>();
             Services.TryAddSingleton<InvalidateOnCompletionCommandHandler.Options>();
             Services.TryAddSingleton<InvalidateOnCompletionCommandHandler>();
-            commander.AddHandlers<LocalCompletionProducer>();
             commander.AddHandlers<InvalidateOnCompletionCommandHandler>();
 
             // Operations
