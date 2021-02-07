@@ -59,7 +59,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
                         Id = sessionInfo.Id,
                         CreatedAt = sessionInfo.CreatedAt,
                     }).Entity;
-                dbSessionInfo.FromModel(sessionInfo);
+                dbSessionInfo.UpdateFrom(sessionInfo);
                 await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             }
             return dbSessionInfo;
@@ -74,7 +74,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
                     Id = sessionInfo.Id,
                     CreatedAt = sessionInfo.CreatedAt,
                 }).Entity;
-            dbSessionInfo.FromModel(sessionInfo);
+            dbSessionInfo.UpdateFrom(sessionInfo);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             return dbSessionInfo;
         }

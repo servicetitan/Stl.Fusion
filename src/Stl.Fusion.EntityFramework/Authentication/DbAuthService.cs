@@ -67,13 +67,13 @@ namespace Stl.Fusion.EntityFramework.Authentication
                     .FindOrCreateOnSignInAsync(dbContext, user, cancellationToken)
                     .ConfigureAwait(false);
                 if (isNewUser == false) {
-                    dbUser.FromModel(user);
+                    dbUser.UpdateFrom(user);
                     await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                 }
             }
             else {
                 user = user with { Id = dbUser.Id.ToString() };
-                dbUser.FromModel(user);
+                dbUser.UpdateFrom(user);
                 await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             }
 

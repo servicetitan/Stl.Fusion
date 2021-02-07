@@ -46,7 +46,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             return user;
         }
 
-        public virtual void FromModel(User source)
+        public virtual void UpdateFrom(User source)
         {
             if (Id.ToString() != source.Id)
                 throw new ArgumentOutOfRangeException(nameof(source));

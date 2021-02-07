@@ -68,7 +68,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
             user = user with { Id = dbUser.Id.ToString() };
-            dbUser.FromModel(user);
+            dbUser.UpdateFrom(user);
             await dbContext.SaveChangesAsync(cancellationToken);
             return (dbUser, true);
         }

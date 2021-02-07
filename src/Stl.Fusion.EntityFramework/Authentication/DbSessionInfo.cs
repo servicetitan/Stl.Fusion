@@ -69,7 +69,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             return sessionInfo.OrDefault(Id); // To mask signed out sessions
         }
 
-        public virtual void FromModel(SessionInfo source)
+        public virtual void UpdateFrom(SessionInfo source)
         {
             if (Id != source.Id)
                 throw new ArgumentOutOfRangeException(nameof(source));
