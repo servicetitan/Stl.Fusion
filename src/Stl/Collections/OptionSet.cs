@@ -49,12 +49,29 @@ namespace Stl.Collections
         public T? TryGet<T>()
             => (T?) this[typeof(T)]!;
 
+        public bool TryGet<T>(out T value)
+        {
+            var objValue = this[typeof(T)];
+            if (objValue == null) {
+                value = default!;
+                return false;
+            }
+            value = (T) objValue;
+            return true;
+        }
+
         public T Get<T>()
         {
             var value = this[typeof(T)];
             if (value == null)
                 throw new KeyNotFoundException();
             return (T) value;
+        }
+
+        public T GetOrDefault<T>(T @default)
+        {
+            var value = this[typeof(T)];
+            return value == null ? @default : (T) value;
         }
 
         // ReSharper disable once HeapView.PossibleBoxingAllocation
