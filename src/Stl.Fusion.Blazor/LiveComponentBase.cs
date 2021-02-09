@@ -8,25 +8,34 @@ namespace Stl.Fusion.Blazor
 {
     public abstract class LiveComponentBase<T> : StatefulComponentBase<ILiveState<T>>
     {
+        protected virtual bool SynchronizeComputeStateAsync { get; } = true;
+
         protected override ILiveState<T> CreateState()
-            => StateFactory.NewLive<T>(ConfigureState, async (_, ct) => {
-                // Default CreateState synchronizes ComputeStateAsync call
-                // as per https://github.com/servicetitan/Stl.Fusion/issues/202
-                // You can override it to implement a version w/o sync.
-                var ts = TaskSource.New<T>(false);
-                await InvokeAsync(async () => {
-                    try {
-                        ts.TrySetResult(await ComputeStateAsync(ct));
-                    }
-                    catch (OperationCanceledException) {
-                        ts.TrySetCanceled();
-                    }
-                    catch (Exception e) {
-                        ts.TrySetException(e);
-                    }
-                });
-                return await ts.Task.ConfigureAwait(false);
-            }, this);
+            => SynchronizeComputeStateAsync
+                ? StateFactory.NewLive<T>(ConfigureState,
+                    async (_, ct) => {
+                        // Default CreateState synchronizes ComputeStateAsync call
+                        // as per https://github.com/servicetitan/Stl.Fusion/issues/202
+                        // You can override it to implement a version w/o sync.
+                        var computed = Computed.GetCurrent();
+                        var ts = TaskSource.New<T>(false);
+                        using var _1 = ExecutionContextEx.SuppressFlow();
+                        await Task.Run(() => InvokeAsync(async () => {
+                            try {
+                                using var _2 = Computed.ChangeCurrent(computed);
+                                ts.TrySetResult(await ComputeStateAsync(ct));
+                            }
+                            catch (OperationCanceledException) {
+                                ts.TrySetCanceled();
+                            }
+                            catch (Exception e) {
+                                ts.TrySetException(e);
+                            }
+                        }), ct);
+                        return await ts.Task.ConfigureAwait(false);
+                    }, this)
+                : StateFactory.NewLive<T>(ConfigureState,
+                    (_, ct) => ComputeStateAsync(ct), this);
 
         protected virtual void ConfigureState(LiveState<T>.Options options) { }
         protected abstract Task<T> ComputeStateAsync(CancellationToken cancellationToken);

@@ -24,7 +24,7 @@ namespace Stl.Fusion
             throw Errors.ComputedCurrentIsOfIncompatibleType(typeof(IComputed<T>));
         }
 
-        internal static ClosedDisposable<IComputed?> ChangeCurrent(IComputed? newCurrent)
+        public static ClosedDisposable<IComputed?> ChangeCurrent(IComputed? newCurrent)
         {
             var oldCurrent = GetCurrent();
             if (newCurrent != null)
