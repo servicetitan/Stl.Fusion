@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
@@ -14,24 +15,26 @@ namespace Stl.Fusion.Blazor
             => SynchronizeComputeStateAsync
                 ? StateFactory.NewLive<T>(ConfigureState,
                     async (_, ct) => {
-                        // Default CreateState synchronizes ComputeStateAsync call
-                        // as per https://github.com/servicetitan/Stl.Fusion/issues/202
-                        // You can override it to implement a version w/o sync.
+                        // Synchronizes ComputeStateAsync call as per:
+                        // https://github.com/servicetitan/Stl.Fusion/issues/202
                         var computed = Computed.GetCurrent();
                         var ts = TaskSource.New<T>(false);
-                        using var _1 = ExecutionContextEx.SuppressFlow();
-                        await Task.Run(() => InvokeAsync(async () => {
-                            try {
-                                using var _2 = Computed.ChangeCurrent(computed);
-                                ts.TrySetResult(await ComputeStateAsync(ct));
-                            }
-                            catch (OperationCanceledException) {
-                                ts.TrySetCanceled();
-                            }
-                            catch (Exception e) {
-                                ts.TrySetException(e);
-                            }
-                        }), ct);
+                        Task invocationTask;
+                        using (ExecutionContextEx.SuppressFlow())
+                            invocationTask = Task.Run(() => InvokeAsync(async () => {
+                                // Debug.Assert(Computed.GetCurrent() == null);
+                                try {
+                                    using var _2 = Computed.ChangeCurrent(computed);
+                                    ts.TrySetResult(await ComputeStateAsync(ct));
+                                }
+                                catch (OperationCanceledException) {
+                                    ts.TrySetCanceled();
+                                }
+                                catch (Exception e) {
+                                    ts.TrySetException(e);
+                                }
+                            }), ct);
+                        await invocationTask.ConfigureAwait(false);
                         return await ts.Task.ConfigureAwait(false);
                     }, this)
                 : StateFactory.NewLive<T>(ConfigureState,
