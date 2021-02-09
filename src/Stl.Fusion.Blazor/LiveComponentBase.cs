@@ -17,12 +17,9 @@ namespace Stl.Fusion.Blazor
                     async (_, ct) => {
                         // Synchronizes ComputeStateAsync call as per:
                         // https://github.com/servicetitan/Stl.Fusion/issues/202
-                        var computed = Computed.GetCurrent();
-                        Computed.SuspendDependencyCapture(); // We intentionally omit dispose for this call!
                         var ts = TaskSource.New<T>(false);
                         await InvokeAsync(async () => {
                             try {
-                                using var _2 = Computed.ChangeCurrent(computed);
                                 ts.TrySetResult(await ComputeStateAsync(ct));
                             }
                             catch (OperationCanceledException) {
