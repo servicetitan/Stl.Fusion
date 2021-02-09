@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Immutable;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Extensibility.Internal;
 
 namespace Stl.Extensibility
@@ -25,6 +26,16 @@ namespace Stl.Extensibility
             if (_modulesLazy.IsValueCreated)
                 throw Errors.CannotConfigureModulesOnceTheyAreCreated();
             configureModuleServices?.Invoke(ModuleServices);
+            return this;
+        }
+
+        public ModuleBuilder Add<TModule>()
+            where TModule : IModule
+            => Add(typeof(TModule));
+
+        public ModuleBuilder Add(Type moduleType)
+        {
+            ModuleServices.TryAddEnumerable(ServiceDescriptor.Singleton(typeof(IModule), moduleType));
             return this;
         }
 
