@@ -30,8 +30,8 @@ namespace Stl.Extensibility
 
         public ModuleBuilder Use()
         {
-            foreach (var plugin in Modules)
-                plugin.Use();
+            foreach (var module in Modules)
+                module.Use();
             return this;
         }
 

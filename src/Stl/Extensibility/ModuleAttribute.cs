@@ -12,12 +12,12 @@ namespace Stl.Extensibility
 
         public ModuleAttribute()
         {
-            // Let's make sure Plugins aren't auto-registered together
+            // Let's make sure modules don't auto-register together
             // with regular services: most likely this isn't intentional.
             Scope = DefaultScope.Value;
         }
 
-        // This method registers plugin in ModuleBuilder.ModuleBuilderServices
+        // This method registers module in ModuleBuilder.ModuleBuilderServices
         public override void Register(IServiceCollection services, Type implementationType)
             => services.TryAddEnumerable(
                 ServiceDescriptor.Singleton(typeof(IModule), implementationType));
