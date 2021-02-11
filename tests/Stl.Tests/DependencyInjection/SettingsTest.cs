@@ -1,12 +1,10 @@
 using System.Collections.Generic;
-using System.Reflection;
 using System.Text.RegularExpressions;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.DependencyInjection;
-using Stl.Text;
 using Xunit;
 
 namespace Stl.Tests.DependencyInjection

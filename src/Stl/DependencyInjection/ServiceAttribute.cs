@@ -8,6 +8,7 @@ namespace Stl.DependencyInjection
     {
         public Type? ServiceType { get; set; }
         public ServiceLifetime Lifetime { get; set; } = ServiceLifetime.Singleton;
+        public bool IsEnumerable { get; set; }
 
         public ServiceAttribute(Type? serviceType = null)
             => ServiceType = serviceType;
@@ -16,7 +17,10 @@ namespace Stl.DependencyInjection
         {
             var descriptor = new ServiceDescriptor(
                 ServiceType ?? implementationType, implementationType, Lifetime);
-            services.TryAdd(descriptor);
+            if (IsEnumerable)
+                services.TryAddEnumerable(descriptor);
+            else
+                services.TryAdd(descriptor);
         }
     }
 }
