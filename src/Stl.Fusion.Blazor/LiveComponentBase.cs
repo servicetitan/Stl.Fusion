@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
@@ -10,6 +9,11 @@ namespace Stl.Fusion.Blazor
     public abstract class LiveComponentBase<T> : StatefulComponentBase<ILiveState<T>>
     {
         protected virtual bool SynchronizeComputeStateAsync { get; } = true;
+
+        // Typically State depends on component parameters,
+        // so this default looks reasonable:
+        protected override void OnParametersSet()
+            => State.Invalidate();
 
         protected override ILiveState<T> CreateState()
             => SynchronizeComputeStateAsync
