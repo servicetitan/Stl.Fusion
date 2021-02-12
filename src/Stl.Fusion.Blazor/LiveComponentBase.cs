@@ -6,17 +6,33 @@ using Stl.Internal;
 
 namespace Stl.Fusion.Blazor
 {
+    [Flags]
+    public enum LiveComponentOptions
+    {
+        SynchronizeComputeState = 0x1,
+        InvalidateOnParametersSet = 0x2,
+        CancelDelaysOnParametersSet = 0x4,
+        InvalidateAndCancelDelaysOnParametersSet = InvalidateOnParametersSet + CancelDelaysOnParametersSet,
+    }
+
     public abstract class LiveComponentBase<T> : StatefulComponentBase<ILiveState<T>>
     {
-        protected virtual bool SynchronizeComputeStateAsync { get; } = true;
+        protected LiveComponentOptions Options { get; set; } =
+            LiveComponentOptions.SynchronizeComputeState
+            | LiveComponentOptions.InvalidateAndCancelDelaysOnParametersSet;
 
         // Typically State depends on component parameters,
         // so this default looks reasonable:
         protected override void OnParametersSet()
-            => State.Invalidate();
+        {
+            if (0 != (Options & LiveComponentOptions.InvalidateOnParametersSet))
+                State.Invalidate();
+            if (0 != (Options & LiveComponentOptions.CancelDelaysOnParametersSet))
+                State.UpdateDelayer.CancelDelays();
+        }
 
         protected override ILiveState<T> CreateState()
-            => SynchronizeComputeStateAsync
+            => 0 != (Options & LiveComponentOptions.SynchronizeComputeState)
                 ? StateFactory.NewLive<T>(ConfigureState,
                     async (_, ct) => {
                         // Synchronizes ComputeStateAsync call as per:
