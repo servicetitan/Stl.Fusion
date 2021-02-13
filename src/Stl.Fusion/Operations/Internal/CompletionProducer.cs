@@ -1,3 +1,5 @@
+using System;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.CommandR;
@@ -40,10 +42,20 @@ namespace Stl.Fusion.Operations.Internal
 
             var logEnabled = LogLevel != LogLevel.None && Log.IsEnabled(LogLevel);
             if (logEnabled)
-                Log.Log(LogLevel, "External operation completed. Agent: '{AgentId}', Command: {Command}",
+                Log.Log(LogLevel,
+                    "External operation completed. Agent: '{AgentId}', Command: {Command}",
                     operation.AgentId, command);
 
-            Commander.Start(Completion.New(operation), true);
+            Task.Run(() => {
+                try {
+                    Commander.CallAsync(Completion.New(operation), true);
+                }
+                catch (Exception e) {
+                    Log.LogError(e,
+                        "External operation failed. Agent: '{AgentId}', Command: {Command}",
+                        operation.AgentId, command);
+                }
+            });
         }
     }
 }
