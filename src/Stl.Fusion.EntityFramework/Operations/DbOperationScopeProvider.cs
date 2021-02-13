@@ -78,7 +78,13 @@ namespace Stl.Fusion.EntityFramework.Operations
                 var completion = Completion.New(operation);
                 context.Items.Set(completion);
                 OperationCompletionNotifier.NotifyCompleted(operation);
-                await context.Commander.RunAsync(completion, true, default).ConfigureAwait(false);
+                try {
+                    await context.Commander.CallAsync(completion, true, default).ConfigureAwait(false);
+                }
+                catch (Exception e) {
+                    Log.LogError(e, "Local operation completion failed! Command: {Command}", command);
+                    // No throw: the operation itself succeeded
+                }
             }
         }
     }

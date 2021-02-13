@@ -86,7 +86,13 @@ namespace Stl.Fusion.Operations.Internal
                     Log.Log(LogLevel, "Operation succeeded: {Command}", command);
                 completion = Completion.New(operation);
                 OperationCompletionNotifier.NotifyCompleted(operation);
-                await context.Commander.RunAsync(completion, true, default).ConfigureAwait(false);
+                try {
+                    await context.Commander.CallAsync(completion, true, default).ConfigureAwait(false);
+                }
+                catch (Exception e) {
+                    Log.LogError(e, "Local operation completion failed! Command: {Command}", command);
+                    // No throw: the operation itself succeeded
+                }
             }
         }
     }
