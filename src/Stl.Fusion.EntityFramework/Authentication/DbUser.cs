@@ -66,7 +66,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
                 }
                 Identities.Add(new DbUserIdentity() {
                     Id = userIdentity.Id,
-                    UserId = Id,
+                    DbUserId = Id,
                     Secret = secret ?? "",
                 });
             }

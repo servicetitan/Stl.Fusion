@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Stl.Fusion.Internal;
-using Stl.Fusion.Swapping;
 using Stl.Testing;
 using Stl.Testing.Internal;
 using Xunit.Abstractions;

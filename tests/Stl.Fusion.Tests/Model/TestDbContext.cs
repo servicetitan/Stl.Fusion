@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework;
 using Stl.Fusion.EntityFramework.Authentication;
+using Stl.Fusion.EntityFramework.Extensions;
 using Stl.Fusion.EntityFramework.Operations;
 
 namespace Stl.Fusion.Tests.Model
@@ -16,6 +17,7 @@ namespace Stl.Fusion.Tests.Model
         public DbSet<DbUser> AuthUsers { get; protected set; } = null!;
         public DbSet<DbUserIdentity> AuthUserIdentities { get; protected set; } = null!;
         public DbSet<DbSessionInfo> AuthSessions { get; protected set; } = null!;
+        public DbSet<DbKeyValue> KeyValues { get; protected set; } = null!;
 
         public TestDbContext(DbContextOptions options) : base(options)
             => this.DisableChangeTracking();

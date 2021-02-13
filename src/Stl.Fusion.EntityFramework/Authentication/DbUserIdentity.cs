@@ -9,8 +9,10 @@ namespace Stl.Fusion.EntityFramework.Authentication
     [Index(nameof(Id))]
     public class DbUserIdentity : IHasId<string>
     {
-        [Key] public string Id { get; set; } = "";
-        public long UserId { get; set; }
+        [Key]
+        public string Id { get; set; } = "";
+        [Column("UserId")]
+        public long DbUserId { get; set; }
         public string Secret { get; set; } = "";
 
         public virtual UserIdentity ToModel() => new(Id);

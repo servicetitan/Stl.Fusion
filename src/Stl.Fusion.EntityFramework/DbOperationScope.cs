@@ -125,6 +125,7 @@ namespace Stl.Fusion.EntityFramework
                 if (Operation.Command == null)
                     throw Stl.Fusion.Operations.Internal.Errors.OperationHasNoCommand();
                 var dbContext = DbContext!;
+                dbContext.DisableChangeTracking(); // Just to speed up things a bit
                 var operation = await DbOperationLog.AddAsync(dbContext, Operation, cancellationToken).ConfigureAwait(false);
                 await Transaction!.CommitAsync(cancellationToken).ConfigureAwait(false);
                 operation = await DbOperationLog.TryGetAsync(dbContext, operation.Id, cancellationToken);

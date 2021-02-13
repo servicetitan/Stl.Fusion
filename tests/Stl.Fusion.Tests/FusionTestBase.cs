@@ -23,6 +23,8 @@ using Stl.Fusion.Tests.UIModels;
 using Stl.Fusion.Internal;
 using Stl.Testing;
 using Stl.Testing.Internal;
+using Stl.Time;
+using Stl.Time.Testing;
 using Xunit;
 using Xunit.Abstractions;
 using Xunit.DependencyInjection.Logging;
@@ -33,6 +35,7 @@ namespace Stl.Fusion.Tests
     {
         public bool UseInMemoryDatabase { get; set; }
         public bool UseInMemoryAuthService { get; set; }
+        public bool UseTestClock { get; set; }
     }
 
     public class FusionTestBase : TestBase, IAsyncLifetime
@@ -95,6 +98,8 @@ namespace Stl.Fusion.Tests
 
         protected virtual void ConfigureServices(IServiceCollection services, bool isClient = false)
         {
+            if (Options.UseTestClock)
+                services.AddSingleton<IMomentClock, TestClock>();
             services.AddSingleton(Out);
 
             // Logging
@@ -161,6 +166,7 @@ namespace Stl.Fusion.Tests
                         // Enable this if you debug multi-host invalidation
                         // o.MaxCommitDuration = TimeSpan.FromMinutes(5);
                     });
+                    b.AddKeyValueStore();
                     var dbOpLogChangedFilePath = DbPath + "_changed";
                     b.AddFileBasedDbOperationLogChangeNotifier(dbOpLogChangedFilePath);
                     b.AddFileBasedDbOperationLogChangeMonitor(dbOpLogChangedFilePath);

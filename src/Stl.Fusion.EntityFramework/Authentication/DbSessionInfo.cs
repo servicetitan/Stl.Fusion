@@ -22,7 +22,8 @@ namespace Stl.Fusion.EntityFramework.Authentication
         private DateTime _createdAt;
         private DateTime _lastSeenAt;
 
-        [Key] public string Id { get; set; } = "";
+        [Key, StringLength(32)]
+        public string Id { get; set; } = "";
         public DateTime CreatedAt {
             get => _createdAt.DefaultKind(DateTimeKind.Utc);
             set => _createdAt = value.DefaultKind(DateTimeKind.Utc);
@@ -31,6 +32,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             get => _lastSeenAt.DefaultKind(DateTimeKind.Utc);
             set => _lastSeenAt = value.DefaultKind(DateTimeKind.Utc);
         }
+
         public string IPAddress { get; set; } = "";
         public string UserAgent { get; set; } = "";
 

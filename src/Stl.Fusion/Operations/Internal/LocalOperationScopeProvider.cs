@@ -26,7 +26,6 @@ namespace Stl.Fusion.Operations.Internal
             public LogLevel LogLevel { get; set; } = LogLevel.None;
         }
 
-        protected CommandContext? CommandContext { get; }
         protected IOperationCompletionNotifier OperationCompletionNotifier { get; }
         protected IMomentClock Clock { get; }
         protected IServiceProvider Services { get; }
@@ -44,7 +43,6 @@ namespace Stl.Fusion.Operations.Internal
             Services = services;
             Clock = services.GetService<IMomentClock>() ?? SystemClock.Instance;
             OperationCompletionNotifier = services.GetRequiredService<IOperationCompletionNotifier>();
-            CommandContext = services.GetService<CommandContext>();
         }
 
         [CommandHandler(Priority = 10_000, IsFilter = true)]

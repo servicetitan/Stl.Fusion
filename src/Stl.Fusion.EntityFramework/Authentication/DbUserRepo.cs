@@ -120,7 +120,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
                 .ConfigureAwait(false);
             if (dbUserIdentities == null)
                 return null;
-            var user = await FindAsync(dbContext, dbUserIdentities.UserId, cancellationToken).ConfigureAwait(false);
+            var user = await FindAsync(dbContext, dbUserIdentities.DbUserId, cancellationToken).ConfigureAwait(false);
             return user;
         }
     }

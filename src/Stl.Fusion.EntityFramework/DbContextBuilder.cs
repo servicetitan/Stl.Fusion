@@ -6,8 +6,10 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.CommandR;
 using Stl.DependencyInjection;
 using Stl.Fusion.EntityFramework.Authentication;
+using Stl.Fusion.EntityFramework.Extensions;
 using Stl.Fusion.EntityFramework.Internal;
 using Stl.Fusion.EntityFramework.Operations;
+using Stl.Fusion.Extensions;
 using Stl.Fusion.Operations;
 using Stl.IO;
 
@@ -165,6 +167,31 @@ namespace Stl.Fusion.EntityFramework
             });
             Services.TryAddSingleton<DbSessionInfoTrimmer<TDbContext>>();
             Services.AddHostedService(c => c.GetRequiredService<DbSessionInfoTrimmer<TDbContext>>());
+            return this;
+        }
+
+        // KeyValueStore
+
+        public DbContextBuilder<TDbContext> AddKeyValueStore(
+            Action<IServiceProvider, DbKeyValueTrimmer<TDbContext, DbKeyValue>.Options>? keyValueTrimmerOptionsBuilder = null)
+            => AddKeyValueStore<DbKeyValue>(keyValueTrimmerOptionsBuilder);
+
+        public DbContextBuilder<TDbContext> AddKeyValueStore<TDbKeyValue>(
+            Action<IServiceProvider, DbKeyValueTrimmer<TDbContext, TDbKeyValue>.Options>? keyValueTrimmerOptionsBuilder = null)
+            where TDbKeyValue : DbKeyValue, new()
+        {
+            AddDbEntityResolver<string, TDbKeyValue>();
+            Services.AddFusion().AddComputeService<IKeyValueStore<TDbContext>, DbKeyValueStore<TDbContext, TDbKeyValue>>();
+            Services.TryAddTransient<IKeyValueStore>(c => c.GetRequiredService<IKeyValueStore<TDbContext>>());
+
+            // DbKeyValueTrimmer - hosted service!
+            Services.TryAddSingleton(c => {
+                var options = new DbKeyValueTrimmer<TDbContext, TDbKeyValue>.Options();
+                keyValueTrimmerOptionsBuilder?.Invoke(c, options);
+                return options;
+            });
+            Services.TryAddSingleton<DbKeyValueTrimmer<TDbContext, TDbKeyValue>>();
+            Services.AddHostedService(c => c.GetRequiredService<DbKeyValueTrimmer<TDbContext, TDbKeyValue>>());
             return this;
         }
     }

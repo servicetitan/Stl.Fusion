@@ -20,29 +20,26 @@ namespace Stl.Fusion.Operations.Internal
     /// </summary>
     public class NestedCommandLogger : ICommandHandler<ICommand>
     {
-        protected CommandContext? CommandContext { get; }
-        protected IMomentClock Clock { get; }
-        protected IServiceProvider Services { get; }
+        protected InvalidationInfoProvider InvalidationInfoProvider { get; }
         protected ILogger Log { get; }
 
         public NestedCommandLogger(
-            IServiceProvider services,
-            ILogger<InvalidateOnCompletionCommandHandler>? log = null)
+            InvalidationInfoProvider invalidationInfoProvider,
+            ILogger<NestedCommandLogger>? log = null)
         {
-            Log = log ?? NullLogger<InvalidateOnCompletionCommandHandler>.Instance;
-            Services = services;
-            CommandContext = services.GetService<CommandContext>();
+            Log = log ?? NullLogger<NestedCommandLogger>.Instance;
+            InvalidationInfoProvider = invalidationInfoProvider;
         }
 
         [CommandHandler(Priority = 11_000, IsFilter = true)]
         public async Task OnCommandAsync(ICommand command, CommandContext context, CancellationToken cancellationToken)
         {
             var operation = context.OuterContext != null ? context.Items.TryGet<IOperation>() : null;
-            var isNestedCommand =
+            var mustBeLogged =
                 operation != null // Should be a nested context inside a context w/ operation
-                && !(command is IMetaCommand) // No operations for "second-order" commands
+                && InvalidationInfoProvider.RequiresInvalidation(command) // Command requires invalidation
                 && !Computed.IsInvalidating();
-            if (!isNestedCommand) {
+            if (!mustBeLogged) {
                 await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
                 return;
             }
