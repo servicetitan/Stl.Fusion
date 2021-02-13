@@ -13,6 +13,5 @@ namespace Stl.Fusion.Operations
 
         public static void SetOperation(this CommandContext context, IOperation? operation)
             => context.Items.Set(operation);
-
     }
 }

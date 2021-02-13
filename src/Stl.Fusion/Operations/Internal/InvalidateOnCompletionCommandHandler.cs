@@ -1,7 +1,9 @@
+using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Stl.Collections;
 using Stl.CommandR;
 using Stl.CommandR.Configuration;
 
@@ -32,16 +34,17 @@ namespace Stl.Fusion.Operations.Internal
         public async Task OnCommandAsync(ICompletion command, CommandContext context, CancellationToken cancellationToken)
         {
             var originalCommand = command.UntypedCommand;
-            var requiredInvalidation =
+            var requiresInvalidation =
                 InvalidationInfoProvider.RequiresInvalidation(originalCommand)
                 && !Computed.IsInvalidating();
-            if (!requiredInvalidation) {
+            if (!requiresInvalidation) {
                 await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
                 return;
             }
 
             var oldOperation = context.Items.TryGet<IOperation>();
-            context.SetOperation(command.Operation);
+            var operation = command.Operation;
+            context.SetOperation(operation);
             var invalidateScope = Computed.Invalidate();
             try {
                 var logEnabled = LogLevel != LogLevel.None && Log.IsEnabled(LogLevel);
@@ -56,10 +59,37 @@ namespace Stl.Fusion.Operations.Internal
                         Log.Log(LogLevel, "Invalidating via shared command handler for '{CommandType}'", originalCommand.GetType());
                     await context.Commander.RunAsync(originalCommand, cancellationToken).ConfigureAwait(false);
                 }
+
+                var operationItems = operation.Items;
+                try {
+                    var nestedCommands = operationItems.GetOrDefault(ImmutableList<NestedCommand>.Empty);
+                    if (!nestedCommands.IsEmpty)
+                        await RunNestedCommandsAsync(context, operation, nestedCommands, cancellationToken);
+                }
+                finally {
+                    operation.Items = operationItems;
+                }
             }
             finally {
                 context.SetOperation(oldOperation);
                 invalidateScope.Dispose();
+            }
+        }
+
+        protected virtual async ValueTask RunNestedCommandsAsync(
+            CommandContext context,
+            IOperation operation,
+            ImmutableList<NestedCommand> nestedCommands,
+            CancellationToken cancellationToken)
+        {
+            foreach (var nestedCommand in nestedCommands) {
+                if (InvalidationInfoProvider.RequiresInvalidation(nestedCommand.Command)) {
+                    operation.Items = nestedCommand.Items;
+                    await context.Commander.RunAsync(nestedCommand.Command, cancellationToken).ConfigureAwait(false);
+                }
+                var nestedSubcommands = nestedCommand.Items.GetOrDefault(ImmutableList<NestedCommand>.Empty);
+                if (!nestedSubcommands.IsEmpty)
+                    await RunNestedCommandsAsync(context, operation, nestedSubcommands, cancellationToken);
             }
         }
     }
