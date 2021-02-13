@@ -40,19 +40,18 @@ namespace Stl.Fusion.Operations.Internal
             if (command is IServerSideCommand serverSideCommand)
                 serverSideCommand.MarkServerSide(); // Server-side commands should be marked as such
 
-            var logEnabled = LogLevel != LogLevel.None && Log.IsEnabled(LogLevel);
-            if (logEnabled)
-                Log.Log(LogLevel,
-                    "External operation completed. Agent: '{AgentId}', Command: {Command}",
-                    operation.AgentId, command);
-
             Task.Run(() => {
                 try {
                     Commander.CallAsync(Completion.New(operation), true);
+                    var logEnabled = LogLevel != LogLevel.None && Log.IsEnabled(LogLevel);
+                    if (logEnabled)
+                        Log.Log(LogLevel,
+                            "External operation completion succeeded. Agent: '{AgentId}', Command: {Command}",
+                            operation.AgentId, command);
                 }
                 catch (Exception e) {
                     Log.LogError(e,
-                        "External operation failed. Agent: '{AgentId}', Command: {Command}",
+                        "External operation completion failed! Agent: '{AgentId}', Command: {Command}",
                         operation.AgentId, command);
                 }
             });
