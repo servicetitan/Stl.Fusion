@@ -57,7 +57,7 @@ namespace Stl.Fusion.Operations.Internal
                 else {
                     if (logEnabled)
                         Log.Log(LogLevel, "Invalidating via shared command handler for '{CommandType}'", originalCommand.GetType());
-                    await context.Commander.RunAsync(originalCommand, cancellationToken).ConfigureAwait(false);
+                    await context.Commander.CallAsync(originalCommand, cancellationToken).ConfigureAwait(false);
                 }
 
                 var operationItems = operation.Items;
@@ -85,7 +85,7 @@ namespace Stl.Fusion.Operations.Internal
             foreach (var nestedCommand in nestedCommands) {
                 if (InvalidationInfoProvider.RequiresInvalidation(nestedCommand.Command)) {
                     operation.Items = nestedCommand.Items;
-                    await context.Commander.RunAsync(nestedCommand.Command, cancellationToken).ConfigureAwait(false);
+                    await context.Commander.CallAsync(nestedCommand.Command, cancellationToken).ConfigureAwait(false);
                 }
                 var nestedSubcommands = nestedCommand.Items.GetOrDefault(ImmutableList<NestedCommand>.Empty);
                 if (!nestedSubcommands.IsEmpty)
