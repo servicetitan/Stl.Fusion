@@ -40,9 +40,9 @@ namespace Stl.Fusion.Operations.Internal
             if (command is IServerSideCommand serverSideCommand)
                 serverSideCommand.MarkServerSide(); // Server-side commands should be marked as such
 
-            Task.Run(() => {
+            Task.Run(async () => {
                 try {
-                    Commander.CallAsync(Completion.New(operation), true);
+                    await Commander.CallAsync(Completion.New(operation), true).ConfigureAwait(false);
                     var logEnabled = LogLevel != LogLevel.None && Log.IsEnabled(LogLevel);
                     if (logEnabled)
                         Log.Log(LogLevel,
