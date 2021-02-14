@@ -6,8 +6,10 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Async;
+using Stl.CommandR;
 using Stl.Fusion.Extensions;
 using Stl.Fusion.Extensions.Commands;
+using Stl.Fusion.Operations;
 
 namespace Stl.Fusion.EntityFramework.Extensions
 {
@@ -25,10 +27,14 @@ namespace Stl.Fusion.EntityFramework.Extensions
         public virtual async Task SetAsync(SetCommand command, CancellationToken cancellationToken = default)
         {
             var (key, value, expiresAt) = command;
+            var context = CommandContext.GetCurrent();
             if (string.IsNullOrEmpty(key))
                 throw new ArgumentOutOfRangeException($"{nameof(command)}.{nameof(SetCommand.Key)}");
             if (Computed.IsInvalidating()) {
-                PseudoGetAllPrefixes(key);
+                if (context.Operation().Items.GetOrDefault(true))
+                    PseudoGetAllPrefixes(key);
+                else
+                    PseudoGetAsync(key).Ignore();
                 return;
             }
 
@@ -40,6 +46,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
                 dbContext.Add(dbKeyValue);
             }
             else {
+                context.Operation().Items.Set(false); // Don't invalidate prefixes
                 dbKeyValue.Value = value;
                 dbKeyValue.ExpiresAt = expiresAt;
                 dbContext.Update(dbKeyValue);
@@ -53,16 +60,20 @@ namespace Stl.Fusion.EntityFramework.Extensions
             var key = command.Key;
             if (string.IsNullOrEmpty(key))
                 throw new ArgumentOutOfRangeException($"{nameof(command)}.{nameof(RemoveCommand.Key)}");
+            var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
-                PseudoGetAllPrefixes(key);
+                if (context.Operation().Items.GetOrDefault(true))
+                    PseudoGetAllPrefixes(key);
                 return;
             }
 
             await using var dbContext = await CreateCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
             dbContext.DisableChangeTracking(); // Just to speed up things a bit
             var dbKeyValue = await dbContext.FindAsync<TDbKeyValue>(ComposeKey(key), cancellationToken).ConfigureAwait(false);
-            if (dbKeyValue == null)
+            if (dbKeyValue == null) {
+                context.Operation().Items.Set(false); // No need to invalidate anything
                 return;
+            }
             dbContext.Remove(dbKeyValue);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }

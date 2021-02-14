@@ -18,7 +18,6 @@ namespace Stl.Fusion.Authentication
         protected IAuthService AuthService { get; }
         protected ISessionResolver SessionResolver { get; }
         protected IUpdateDelayer UpdateDelayer { get; }
-        protected TimeSpan UpdatePeriod { get; }
 
         public PresenceService(
             Options? options,

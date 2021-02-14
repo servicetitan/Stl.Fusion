@@ -6,11 +6,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
 using Stl.CommandR;
-using Stl.CommandR.Commands;
 using Stl.Fusion.Authentication.Commands;
 using Stl.Fusion.Authentication.Internal;
 using Stl.Fusion.Operations;
-using Stl.Text;
 using Stl.Time;
 
 namespace Stl.Fusion.Authentication

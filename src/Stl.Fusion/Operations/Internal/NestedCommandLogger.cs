@@ -58,8 +58,8 @@ namespace Stl.Fusion.Operations.Internal
             finally {
                 operation.Items = operationItems;
                 if (error == null) {
-                    var nestedCommands = operationItems.GetOrDefault(ImmutableList<NestedCommand>.Empty);
-                    nestedCommands = nestedCommands.Add(new NestedCommand(command, commandItems));
+                    var nestedCommands = operationItems.GetOrDefault(ImmutableList<NestedCommandEntry>.Empty);
+                    nestedCommands = nestedCommands.Add(new NestedCommandEntry(command, commandItems));
                     operationItems.Set(nestedCommands);
                 }
             }

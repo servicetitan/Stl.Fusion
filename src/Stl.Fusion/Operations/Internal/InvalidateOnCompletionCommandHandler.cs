@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Collections;
 using Stl.CommandR;
+using Stl.CommandR.Commands;
 using Stl.CommandR.Configuration;
 
 namespace Stl.Fusion.Operations.Internal
@@ -62,9 +63,9 @@ namespace Stl.Fusion.Operations.Internal
 
                 var operationItems = operation.Items;
                 try {
-                    var nestedCommands = operationItems.GetOrDefault(ImmutableList<NestedCommand>.Empty);
+                    var nestedCommands = operationItems.GetOrDefault(ImmutableList<NestedCommandEntry>.Empty);
                     if (!nestedCommands.IsEmpty)
-                        await RunNestedCommandsAsync(context, operation, nestedCommands, cancellationToken);
+                        await InvokeNestedCommandsAsync(context, operation, nestedCommands, cancellationToken);
                 }
                 finally {
                     operation.Items = operationItems;
@@ -76,20 +77,23 @@ namespace Stl.Fusion.Operations.Internal
             }
         }
 
-        protected virtual async ValueTask RunNestedCommandsAsync(
+        protected virtual async ValueTask InvokeNestedCommandsAsync(
             CommandContext context,
             IOperation operation,
-            ImmutableList<NestedCommand> nestedCommands,
+            ImmutableList<NestedCommandEntry> nestedCommands,
             CancellationToken cancellationToken)
         {
-            foreach (var nestedCommand in nestedCommands) {
-                if (InvalidationInfoProvider.RequiresInvalidation(nestedCommand.Command)) {
-                    operation.Items = nestedCommand.Items;
-                    await context.Commander.CallAsync(nestedCommand.Command, cancellationToken).ConfigureAwait(false);
+            foreach (var commandEntry in nestedCommands) {
+                var (command, items) = commandEntry;
+                if (command is IServerSideCommand serverSideCommand)
+                    serverSideCommand.MarkServerSide(); // Server-side commands should be marked as such
+                if (InvalidationInfoProvider.RequiresInvalidation(command)) {
+                    operation.Items = items;
+                    await context.Commander.CallAsync(command, cancellationToken).ConfigureAwait(false);
                 }
-                var nestedSubcommands = nestedCommand.Items.GetOrDefault(ImmutableList<NestedCommand>.Empty);
-                if (!nestedSubcommands.IsEmpty)
-                    await RunNestedCommandsAsync(context, operation, nestedSubcommands, cancellationToken);
+                var subcommands = items.GetOrDefault(ImmutableList<NestedCommandEntry>.Empty);
+                if (!subcommands.IsEmpty)
+                    await InvokeNestedCommandsAsync(context, operation, subcommands, cancellationToken);
             }
         }
     }

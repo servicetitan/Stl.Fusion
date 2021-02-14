@@ -1,11 +1,12 @@
 using System;
+using System.Text.Json.Serialization;
 using Stl.CommandR.Internal;
 
 namespace Stl.CommandR.Commands
 {
     public interface IServerSideCommand : IPreparedCommand
     {
-        void MarkServerSide(bool isServerSide);
+        bool IsServerSide { get; set; }
     }
 
     public interface IServerSideCommand<TResult> : IServerSideCommand, ICommand<TResult>
@@ -13,14 +14,13 @@ namespace Stl.CommandR.Commands
 
     public abstract record ServerSideCommandBase<TResult> : IServerSideCommand<TResult>
     {
-        [NonSerialized]
-        private bool _isServerSide = false;
-
-        public void MarkServerSide(bool isServerSide) => _isServerSide = isServerSide;
+        [JsonIgnore]
+        [field: NonSerialized]
+        public bool IsServerSide { get; set; }
 
         public virtual void Prepare(CommandContext context)
         {
-            if (!_isServerSide)
+            if (!IsServerSide)
                 throw Errors.CommandIsServerSideOnly();
         }
     }
