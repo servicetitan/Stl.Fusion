@@ -15,12 +15,12 @@ namespace Stl.Fusion.Blazor
         {
             configure ??= _ => {}; // .NET 5.0 doesn't allow to pass null to AddAuthorizationCore
             var services = fusionAuth.Services;
+            fusionAuth.Fusion.AddBlazorUIComponents();
             services.AddAuthorizationCore(configure);
             services.RemoveAll(typeof(AuthenticationStateProvider));
             services.TryAddSingleton<AuthStateProvider.Options>();
             services.TryAddScoped<AuthenticationStateProvider, AuthStateProvider>();
             services.TryAddTransient(c => (AuthStateProvider) c.GetRequiredService<AuthenticationStateProvider>());
-            services.TryAddScoped<BlazorModeHelper>();
             services.TryAddScoped<ClientAuthHelper>();
             return fusionAuth;
         }

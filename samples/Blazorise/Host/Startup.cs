@@ -85,6 +85,7 @@ namespace Templates.Blazor2.Host
                 b.AddFileBasedDbOperationLogChangeMonitor(operationLogChangeAlertPath);
                 if (!serverSettings.UseInMemoryAuthService)
                     b.AddDbAuthentication();
+                b.AddKeyValueStore();
             });
 
             // Fusion services
@@ -103,7 +104,7 @@ namespace Templates.Blazor2.Host
             // This method registers services marked with any of ServiceAttributeBase descendants, including:
             // [Service], [ComputeService], [RestEaseReplicaService], [LiveStateUpdater]
             services.UseAttributeScanner()
-                .AddServicesFrom(typeof(TimeService).Assembly)
+                .AddServicesFrom(typeof(TodoService).Assembly)
                 .AddServicesFrom(Assembly.GetExecutingAssembly());
             // Registering shared services from the client
             UI.Program.ConfigureSharedServices(services);

@@ -11,7 +11,7 @@ namespace Stl.Fusion.Blazor
         protected IServiceProvider Services { get; set; } = null!;
         protected IStateFactory StateFactory => Services.StateFactory();
         protected bool OwnsState { get; set; } = true;
-        protected abstract IState UntypedState { get; }
+        protected internal abstract IState UntypedState { get; }
         protected Action<IState, StateEventKind> StateChanged { get; set; }
         protected StateEventKind StateHasChangedTriggers { get; set; } = StateEventKind.Updated;
 
@@ -40,9 +40,9 @@ namespace Stl.Fusion.Blazor
     {
         private TState? _state;
 
-        protected override IState UntypedState => State;
+        protected internal override IState UntypedState => State;
 
-        protected TState State {
+        protected internal TState State {
             get => _state!;
             set {
                 if (value == null)

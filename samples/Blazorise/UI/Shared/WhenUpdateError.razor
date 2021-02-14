@@ -1,0 +1,9 @@
+
+@if (Exception != null) {
+    <Error Title="Update failed!">@Exception.Message</Error>
+}
+
+@code {
+    [Parameter]
+    public Exception? Exception { get; set; }
+}

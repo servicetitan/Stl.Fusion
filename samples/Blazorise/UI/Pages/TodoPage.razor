@@ -1,0 +1,101 @@
+@page "/todo"
+@using System.Threading
+@using Stl.Fusion.Extensions
+@using Templates.Blazor2.Abstractions
+@inherits LiveComponentBase<Todo[]>
+@inject ITodoService Todos
+@inject Session Session
+@inject CommandRunner CommandRunner
+
+@{
+    var todos = State.LastValue ?? Array.Empty<Todo>();
+    var error = State.Error;
+}
+
+<h1>Todo List</h1>
+
+<AuthorizeView>
+    <NotAuthorized>
+        <SignInDropdown Why="to use this page"/>
+    </NotAuthorized>
+</AuthorizeView>
+
+<StatefulComponentState Component="@this"/>
+<WhenException Exception="error"/>
+<WhenCommandError Exception="CommandRunner.Error"/>
+
+<Row><Column ColumnSize="ColumnSize.Is6.Is12.OnTablet">
+
+    @foreach(var todo in todos) {
+        <Addons Margin="Margin.Is3.OnY">
+            <Addon AddonType="AddonType.Start">
+                <AddonLabel>
+                    <Blazorise.Icon Name="@(todo.IsDone ? FontAwesomeIcons.CheckSquare : FontAwesomeIcons.Square)"
+                                    @onclick="_ => InvertDoneAsync(todo)" />
+                </AddonLabel>
+            </Addon>
+            <TextEdit TextChanged="text => UpdateTitleAsync(todo, text)" ChangeTextOnKeyPress="false"
+                      Text="@todo.Title"/>
+            <Addon AddonType="AddonType.End">
+                <Button Clicked="_ => RemoveAsync(todo)" Color="Color.Warning">
+                    <Blazorise.Icon Name="FontAwesomeIcons.Minus"/>
+                </Button>
+            </Addon>
+        </Addons>
+    }
+
+    <Form @onsubmit="_ => CreateAsync()" Margin="Margin.Is3.OnY" >
+        <Addons>
+            <Addon AddonType="AddonType.Start">
+                <Button Type="@ButtonType.Submit" Color="Color.Primary">
+                    <Blazorise.Icon Name="@FontAwesomeIcons.PlusSquare"/>
+                </Button>
+            </Addon>
+            <input @bind="_newTodoTitle" @bind:event="onchange" class="form-control"/>
+        </Addons>
+    </Form>
+
+</Column></Row>
+
+@code {
+    private string _newTodoTitle = "";
+
+    protected override void OnInitialized()
+    {
+        StateHasChangedTriggers = StateEventKind.All;
+        CommandRunner.Component = this;
+        base.OnInitialized();
+    }
+
+    protected override Task<Todo[]> ComputeStateAsync(CancellationToken cancellationToken)
+        // You can do any transforms here, or call multiple Fusion endpoints -
+        // this method will be invoked again once one of these results changes
+        // and the invalidation delay passes.
+        => Todos.ListAsync(Session, 100, cancellationToken);
+
+    private Task InvertDoneAsync(Todo todo)
+    {
+        todo = todo with { IsDone = !todo.IsDone };
+        return CommandRunner.CallAsync(new AddOrUpdateTodoCommand(Session, todo));
+    }
+
+    private Task UpdateTitleAsync(Todo todo, string title)
+    {
+        title = title.Trim();
+        if (todo.Title == title)
+            return Task.CompletedTask;
+        todo = todo with { Title = title };
+        return CommandRunner.CallAsync(new AddOrUpdateTodoCommand(Session, todo));
+    }
+
+    private Task RemoveAsync(Todo todo)
+        => CommandRunner.CallAsync(new RemoveTodoCommand(Session, todo.Id));
+
+    private Task CreateAsync()
+    {
+        var todo = new Todo("", _newTodoTitle);
+        _newTodoTitle = "";
+        StateHasChanged();
+        return CommandRunner.CallAsync(new AddOrUpdateTodoCommand(Session, todo));
+    }
+}

@@ -35,7 +35,10 @@ namespace Stl.Fusion.Server
             });
             Services.TryAddSingleton<WebSocketServer>();
 
-            Services.AddMvcCore().AddNewtonsoftJson(options => {
+            var mvcBuilder = Services.AddMvcCore(options => {
+                options.ModelBinderProviders.Insert(0, new ParseRefModelBinderProvider());
+            });
+            mvcBuilder.AddNewtonsoftJson(options => {
                 MemberwiseCopier.Invoke(
                     JsonNetSerializer.DefaultSettings,
                     options.SerializerSettings,

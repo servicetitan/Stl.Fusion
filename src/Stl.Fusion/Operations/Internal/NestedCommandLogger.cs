@@ -2,14 +2,11 @@ using System;
 using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Collections;
 using Stl.CommandR;
-using Stl.CommandR.Commands;
 using Stl.CommandR.Configuration;
-using Stl.Time;
 
 namespace Stl.Fusion.Operations.Internal
 {
@@ -58,6 +55,13 @@ namespace Stl.Fusion.Operations.Internal
             finally {
                 operation.Items = operationItems;
                 if (error == null) {
+                    var newOperation = context.Operation();
+                    if (newOperation != operation) {
+                        // The operation might be changed by nested command in case
+                        // it's the one that started to use DbOperationScope first
+                        commandItems = newOperation.Items;
+                        newOperation.Items = operationItems = new OptionSet();
+                    }
                     var nestedCommands = operationItems.GetOrDefault(ImmutableList<NestedCommandEntry>.Empty);
                     nestedCommands = nestedCommands.Add(new NestedCommandEntry(command, commandItems));
                     operationItems.Set(nestedCommands);

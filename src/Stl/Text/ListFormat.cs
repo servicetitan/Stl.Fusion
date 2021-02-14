@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Stl.Collections;
 using Stl.Internal;
@@ -30,6 +31,7 @@ namespace Stl.Text
         public ListParser CreateParser(in ReadOnlySpan<char> source, StringBuilder item, int itemIndex = 0)
             => new(this, source, item, itemIndex);
 
+        public string Format(params string[] source) => Format((IEnumerable<string>) source);
         public string Format(IEnumerable<string> source)
         {
             var formatter = CreateFormatter(StringBuilderEx.Acquire());

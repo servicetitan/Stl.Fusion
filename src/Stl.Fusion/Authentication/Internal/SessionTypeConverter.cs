@@ -10,7 +10,8 @@ namespace Stl.Fusion.Authentication.Internal
         public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
             => sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
 
-        public override object? ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) {
+        public override object? ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+        {
             if (destinationType == typeof(string))
                 return ((Session?) value)?.Id;
             return base.ConvertTo(context, culture, value, destinationType);
