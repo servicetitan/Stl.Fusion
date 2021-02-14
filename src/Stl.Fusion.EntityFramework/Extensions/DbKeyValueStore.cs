@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reactive;
 using System.Threading;
@@ -10,6 +11,7 @@ using Stl.CommandR;
 using Stl.Fusion.Extensions;
 using Stl.Fusion.Extensions.Commands;
 using Stl.Fusion.Operations;
+using Stl.Time;
 
 namespace Stl.Fusion.EntityFramework.Extensions
 {
@@ -42,7 +44,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
             dbContext.DisableChangeTracking(); // Just to speed up things a bit
             var dbKeyValue = await dbContext.FindAsync<TDbKeyValue>(ComposeKey(key), cancellationToken).ConfigureAwait(false);
             if (dbKeyValue == null) {
-                dbKeyValue = CreateDbKeyValue(command);
+                dbKeyValue = CreateDbKeyValue(key, value, expiresAt);
                 dbContext.Add(dbKeyValue);
             }
             else {
@@ -54,6 +56,36 @@ namespace Stl.Fusion.EntityFramework.Extensions
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
+        public virtual async Task SetManyAsync(SetManyCommand command, CancellationToken cancellationToken = default)
+        {
+            var items = command.Items;
+            if (Computed.IsInvalidating()) {
+                foreach (var item in items)
+                    PseudoGetAllPrefixes(item.Key);
+                return;
+            }
+
+            await using var dbContext = await CreateCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
+            dbContext.DisableChangeTracking(); // Just to speed up things a bit
+            var keys = items.Select(i => i.Key).ToList();
+            var dbKeyValues = await dbContext.Set<TDbKeyValue>().AsQueryable()
+                .Where(e => keys.Contains(e.Key))
+                .ToDictionaryAsync(e => e.Key, cancellationToken)
+                .ConfigureAwait(false);
+            foreach (var item in items) {
+                var dbKeyValue = dbKeyValues.GetValueOrDefault(item.Key);
+                if (dbKeyValue == null) {
+                    dbKeyValue = CreateDbKeyValue(item.Key, item.Value, item.ExpiresAt);
+                    dbContext.Add(dbKeyValue);
+                }
+                else {
+                    dbKeyValue.Value = item.Value;
+                    dbKeyValue.ExpiresAt = item.ExpiresAt;
+                    dbContext.Update(dbKeyValue);
+                }
+            }
+            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
 
         public virtual async Task RemoveAsync(RemoveCommand command, CancellationToken cancellationToken = default)
         {
@@ -78,7 +110,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        public virtual async Task BulkRemoveAsync(BulkRemoveCommand command, CancellationToken cancellationToken = default)
+        public virtual async Task RemoveManyAsync(RemoveManyCommand command, CancellationToken cancellationToken = default)
         {
             var keys = command.Keys;
             if (Computed.IsInvalidating()) {
@@ -119,16 +151,28 @@ namespace Stl.Fusion.EntityFramework.Extensions
         }
 
         public virtual async Task<string[]> ListKeysByPrefixAsync(
-            string prefix, string startKey, int limit, CancellationToken cancellationToken = default)
+            string prefix,
+            PageRef<string> pageRef,
+            SortDirection sortDirection = SortDirection.Ascending,
+            CancellationToken cancellationToken = default)
         {
             PseudoGetAsync(prefix).Ignore();
             await using var dbContext = CreateDbContext();
-            var result = await dbContext.Set<TDbKeyValue>().AsQueryable()
-                // ReSharper disable once StringCompareIsCultureSpecific.1
-                .Where(e => e.Key.StartsWith(prefix) && string.Compare(e.Key, startKey) > 0)
+            var query = dbContext.Set<TDbKeyValue>().AsQueryable()
+                .Where(e => e.Key.StartsWith(prefix));
+            if (pageRef.AfterKey.IsSome(out var startKey))
+                query = sortDirection == SortDirection.Ascending
+                    // ReSharper disable once StringCompareIsCultureSpecific.1
+                    ? query.Where(e => string.Compare(e.Key, startKey) > 0)
+                    // ReSharper disable once StringCompareIsCultureSpecific.1
+                    : query.Where(e => string.Compare(e.Key, startKey) < 0);
+            query = sortDirection == SortDirection.Ascending
+                ? query.OrderBy(e => e.Key)
+                : query.OrderByDescending(e => e.Key);
+            var result = await query
                 .Select(e => e.Key)
-                .Take(limit)
-                .ToArrayAsync(cancellationToken);
+                .Take(pageRef.Count)
+                .ToArrayAsync(cancellationToken).ConfigureAwait(false);
             return result;
         }
 
@@ -148,11 +192,11 @@ namespace Stl.Fusion.EntityFramework.Extensions
             PseudoGetAsync(key).Ignore();
         }
 
-        protected virtual TDbKeyValue CreateDbKeyValue(SetCommand command)
+        protected virtual TDbKeyValue CreateDbKeyValue(string key, string value, Moment? expiresAt)
             => new() {
-                Key = command.Key,
-                Value = command.Value!,
-                ExpiresAt = command.ExpiresAt,
+                Key = key,
+                Value = value,
+                ExpiresAt = expiresAt
             };
     }
 }

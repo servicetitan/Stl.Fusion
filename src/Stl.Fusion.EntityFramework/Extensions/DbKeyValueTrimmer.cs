@@ -58,7 +58,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
 
             // This must be done via IKeyValueStore & operations,
             // otherwise invalidation won't happen for removed entries
-            await KeyValueStore.RemoveAsync(keys, cancellationToken).ConfigureAwait(false);
+            await KeyValueStore.RemoveManyAsync(keys, cancellationToken).ConfigureAwait(false);
             LastTrimCount = keys.Length;
 
             var logEnabled = LogLevel != LogLevel.None && Log.IsEnabled(LogLevel);

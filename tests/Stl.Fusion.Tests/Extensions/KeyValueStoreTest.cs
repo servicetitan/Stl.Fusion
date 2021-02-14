@@ -27,7 +27,7 @@ namespace Stl.Fusion.Tests.Extensions
         }
 
         [Fact]
-        public async Task PrefixTest()
+        public async Task ComplexTest()
         {
             var kvs = Services.GetRequiredService<IKeyValueStore>();
             await kvs.SetAsync("1/2", "12");
@@ -54,13 +54,34 @@ namespace Stl.Fusion.Tests.Extensions
             (await kvs.CountByPrefixAsync("1/2/3a")).Should().Be(1);
             (await kvs.ListKeysByPrefixAsync("1/2/3a", 100)).Length.Should().Be(1);
 
-            await kvs.RemoveAsync(new[] { "1/2/3c", "1/2/3b" });
+            (await kvs.ListKeysByPrefixAsync("1", 3))
+                .Should().BeEquivalentTo("1/2", "1/2/3a", "1/2/3b");
+            (await kvs.ListKeysByPrefixAsync("1", 2))
+                .Should().BeEquivalentTo("1/2", "1/2/3a");
+            (await kvs.ListKeysByPrefixAsync("1", PageRef.New(2, "1/2")))
+                .Should().BeEquivalentTo("1/2/3a", "1/2/3b");
+            (await kvs.ListKeysByPrefixAsync("1", PageRef.New(2, "1/2/3b"), SortDirection.Descending))
+                .Should().BeEquivalentTo("1/2/3a", "1/2");
+            (await kvs.ListKeysByPrefixAsync("1", PageRef.New(1, "1/2/3b"), SortDirection.Descending))
+                .Should().BeEquivalentTo("1/2/3a");
+            (await kvs.ListKeysByPrefixAsync("1", PageRef.New(0, "1/2/3b"), SortDirection.Descending))
+                .Should().BeEquivalentTo();
+
+            await kvs.RemoveManyAsync(new[] { "1/2/3c", "1/2/3b" });
             (await kvs.CountByPrefixAsync("1")).Should().Be(2);
             (await kvs.ListKeysByPrefixAsync("1", 100)).Length.Should().Be(2);
             (await kvs.CountByPrefixAsync("1/2")).Should().Be(2);
             (await kvs.ListKeysByPrefixAsync("1/2", 100)).Length.Should().Be(2);
             (await kvs.CountByPrefixAsync("1/2/3a")).Should().Be(1);
             (await kvs.ListKeysByPrefixAsync("1/2/3a", 100)).Length.Should().Be(1);
+
+            await kvs.SetManyAsync(new[] {
+                ("a/b", "ab", default(Moment?)),
+                ("a/c", "ac", default),
+            });
+            (await kvs.CountByPrefixAsync("1")).Should().Be(2);
+            (await kvs.CountByPrefixAsync("a")).Should().Be(2);
+            (await kvs.CountByPrefixAsync("")).Should().Be(4);
         }
 
         [Fact(Skip = "Intermittent failures due to TestClock on this test, to be fixed later.")]

@@ -15,9 +15,11 @@ namespace Stl.Fusion.Extensions
         [CommandHandler]
         Task SetAsync(SetCommand command, CancellationToken cancellationToken = default);
         [CommandHandler]
+        Task SetManyAsync(SetManyCommand command, CancellationToken cancellationToken = default);
+        [CommandHandler]
         Task RemoveAsync(RemoveCommand command, CancellationToken cancellationToken = default);
         [CommandHandler]
-        Task BulkRemoveAsync(BulkRemoveCommand command, CancellationToken cancellationToken = default);
+        Task RemoveManyAsync(RemoveManyCommand command, CancellationToken cancellationToken = default);
 
         [ComputeMethod]
         Task<string?> TryGetAsync(string key, CancellationToken cancellationToken = default);
@@ -25,7 +27,10 @@ namespace Stl.Fusion.Extensions
         Task<int> CountByPrefixAsync(string prefix, CancellationToken cancellationToken = default);
         [ComputeMethod]
         Task<string[]> ListKeysByPrefixAsync(
-            string prefix, string startKey, int limit, CancellationToken cancellationToken = default);
+            string prefix,
+            PageRef<string> pageRef,
+            SortDirection sortDirection = SortDirection.Ascending,
+            CancellationToken cancellationToken = default);
     }
 
     public interface IKeyValueStore<TContext> : IKeyValueStore { }

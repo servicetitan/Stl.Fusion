@@ -34,6 +34,16 @@ namespace Stl.Fusion.Extensions
             return keyValueStore.SetAsync(command, cancellationToken);
         }
 
+        // SetManyAsync
+
+        public static Task SetManyAsync(this IKeyValueStore keyValueStore,
+            (string Key, string Value, Moment? ExpiresAt)[] items,
+            CancellationToken cancellationToken = default)
+        {
+            var command = new SetManyCommand(items).MarkServerSide();
+            return keyValueStore.SetManyAsync(command, cancellationToken);
+        }
+
         // RemoveAsync
 
         public static Task RemoveAsync(this IKeyValueStore keyValueStore,
@@ -43,11 +53,13 @@ namespace Stl.Fusion.Extensions
             return keyValueStore.RemoveAsync(command, cancellationToken);
         }
 
-        public static Task RemoveAsync(this IKeyValueStore keyValueStore,
+        // RemoveManyAsync
+
+        public static Task RemoveManyAsync(this IKeyValueStore keyValueStore,
             string[] keys, CancellationToken cancellationToken = default)
         {
-            var command = new BulkRemoveCommand(keys).MarkServerSide();
-            return keyValueStore.BulkRemoveAsync(command, cancellationToken);
+            var command = new RemoveManyCommand(keys).MarkServerSide();
+            return keyValueStore.RemoveManyAsync(command, cancellationToken);
         }
 
         // TryGetAsync
@@ -78,8 +90,9 @@ namespace Stl.Fusion.Extensions
         // ListKeysByPrefix
 
         public static Task<string[]> ListKeysByPrefixAsync(this IKeyValueStore keyValueStore,
-            string prefix, int limit, CancellationToken cancellationToken = default)
-            => keyValueStore.ListKeysByPrefixAsync(prefix, "", limit, cancellationToken);
-
+            string prefix, PageRef<string> pageRef,
+            CancellationToken cancellationToken = default)
+            => keyValueStore.ListKeysByPrefixAsync(
+                prefix, pageRef, SortDirection.Ascending, cancellationToken);
     }
 }
