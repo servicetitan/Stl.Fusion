@@ -73,7 +73,7 @@
     <PackageReference Update="Stl.Fusion.Blazor" Version="$(StlFusionVersion)" />
     <PackageReference Update="Stl.Fusion.EntityFramework" Version="$(StlFusionVersion)" />
     <PackageReference Update="Stl.Testing" Version="$(StlFusionVersion)" />
-    <PackageReference Update="Swashbuckle.AspNetCore" Version="6.0.2" />
+    <PackageReference Update="Swashbuckle.AspNetCore" Version="6.0.4" />
     <PackageReference Update="System.Collections.Immutable" Version="5.0.*" />
     <PackageReference Update="System.ComponentModel.Annotations" Version="5.0.*" />
     <PackageReference Update="System.Configuration.ConfigurationManager" Version="5.0.*" />
