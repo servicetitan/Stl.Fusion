@@ -3,11 +3,13 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.CommandR;
 using Stl.Fusion.Extensions;
+using Stl.Tests;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace Stl.Fusion.Tests.Extensions
 {
+    [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
     public class NestedOperationLoggerTest : FusionTestBase
     {
         public NestedOperationLoggerTest(ITestOutputHelper @out)

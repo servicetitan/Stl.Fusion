@@ -15,6 +15,7 @@ using Stl.Fusion.Client;
 using Stl.OS;
 using Stl.DependencyInjection;
 using Stl.Fusion.Blazor;
+using Stl.Fusion.Extensions;
 
 namespace Templates.Blazor2.UI
 {
@@ -75,7 +76,10 @@ namespace Templates.Blazor2.UI
                 Delay = TimeSpan.FromSeconds(0.1),
             });
 
-            services.AddSingleton<IPluralize, Pluralizer>();
+            // Extensions
+            services.AddFusion(fusion => {
+                fusion.AddLiveClock();
+            });
 
             // This method registers services marked with any of ServiceAttributeBase descendants, including:
             // [Service], [ComputeService], [RestEaseReplicaService], [LiveStateUpdater]

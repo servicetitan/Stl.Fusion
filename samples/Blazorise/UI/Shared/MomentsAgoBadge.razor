@@ -1,7 +1,8 @@
 @using System.Threading
+@using Stl.Fusion.Extensions
 @using Templates.Blazor2.Abstractions
 @inherits LiveComponentBase<string>
-@inject IMomentsAgoService MomentsAgoService
+@inject ILiveClock LiveClock
 
 <span class="@CssClass">@State.Value</span>
 
@@ -15,5 +16,5 @@
     public string None { get; set; } = "n/a";
 
     protected override Task<string> ComputeStateAsync(CancellationToken cancellationToken)
-        => Value.HasValue ? MomentsAgoService.GetMomentsAgoAsync(Value.Value) : Task.FromResult(None);
+        => Value.HasValue ? LiveClock.GetMomentsAgoAsync(Value.Value) : Task.FromResult(None);
 }

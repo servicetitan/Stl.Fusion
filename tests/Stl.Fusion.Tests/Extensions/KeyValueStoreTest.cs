@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Extensions;
+using Stl.Tests;
 using Stl.Time;
 using Stl.Time.Testing;
 using Xunit;
@@ -10,6 +11,7 @@ using Xunit.Abstractions;
 
 namespace Stl.Fusion.Tests.Extensions
 {
+    [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
     public class KeyValueStoreTest : FusionTestBase
     {
         public KeyValueStoreTest(ITestOutputHelper @out)

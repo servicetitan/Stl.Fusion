@@ -2,12 +2,12 @@
 @using System.Threading
 @using UAParser
 @using System.Collections.Concurrent
-@using Templates.Blazor2.Abstractions
+@using Stl.Fusion.Extensions
 @inherits LiveComponentBase<List<AuthenticationPage.SessionModel>>
 @inject Session Session
 @inject IAuthService AuthService
 @inject ClientAuthHelper ClientAuthHelper
-@inject IMomentsAgoService MomentsAgoService
+@inject ILiveClock LiveClock
 @inject NavigationManager Navigator
 
 @{
@@ -168,8 +168,6 @@
         var sessions = await AuthService.GetUserSessionsAsync(Session, cancellationToken).ConfigureAwait(false);
         var result = new List<SessionModel>();
 
-        Task<string> GetMomentsAgo(DateTime dateTime) => MomentsAgoService.GetMomentsAgoAsync(dateTime);
-
         foreach (var session in sessions) {
             var userAgent = UserAgentCache.GetOrAdd(session.UserAgent, ua => Parser.ParseUserAgent(ua));
             var model = new SessionModel() {
@@ -177,8 +175,8 @@
                 IsCurrent = Session.Id == session.Id,
                 IPAddress = session.IPAddress,
                 UserAgent = $"{userAgent.Family} {userAgent.Major}.{userAgent.Minor}",
-                Created = await GetMomentsAgo(session.CreatedAt),
-                LastSeen = await GetMomentsAgo(session.LastSeenAt),
+                Created = await LiveClock.GetMomentsAgoAsync(session.CreatedAt),
+                LastSeen = await LiveClock.GetMomentsAgoAsync(session.LastSeenAt),
             };
             result.Add(model);
         }

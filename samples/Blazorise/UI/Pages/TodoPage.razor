@@ -26,7 +26,9 @@
 <WhenCommandError Exception="CommandRunner.Error"/>
 
 <Row><Column ColumnSize="ColumnSize.Is6.OnDesktop.Is12.OnTablet">
-    <Text>Updated: <MomentsAgoBadge Value="LastStateUpdateTime" /></Text>
+    <Text>
+        Updated: <b><MomentsAgoBadge Value="LastStateUpdateTime"/></b>
+    </Text>
 
     @foreach(var todo in todos) {
         <Addons Margin="Margin.Is3.OnY">

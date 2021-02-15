@@ -17,6 +17,7 @@ using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Messages;
 using Stl.Fusion.Client;
 using Stl.Fusion.EntityFramework;
+using Stl.Fusion.Extensions;
 using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
 using Stl.Fusion.Tests.UIModels;
@@ -133,6 +134,7 @@ namespace Stl.Fusion.Tests
 
             // Core Fusion services
             var fusion = services.AddFusion();
+            fusion.AddLiveClock();
 
             // Auto-discovered services
             var testType = GetType();
