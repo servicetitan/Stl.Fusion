@@ -45,7 +45,19 @@
         @(closeWindowFlowName) completed, you can close this window.
     </div>
 } else if (!isServerSideBlazor) {
-    <app id="app">Loading...</app>
+    <app id="app">
+        <div class="position-absolute h-100 w-100 absolute-center">
+            <div class="text-primary">
+                <div class="spinner-border" style="width: 6rem; height: 6rem;" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+                <div class="mt-3" style="font-size: 1.25rem">
+                    Welcome the Blazing Fusion!
+                    <i class="fa fa-sun"></i>
+                </div>
+            </div>
+        </div>
+    </app>
 
     <div id="blazor-error-ui">
         An unhandled error has occurred.

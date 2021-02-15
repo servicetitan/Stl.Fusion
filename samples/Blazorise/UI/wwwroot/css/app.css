@@ -1,4 +1,11 @@
-﻿.link-unstyled, .link-unstyled:link, .link-unstyled:hover {
+﻿.absolute-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.link-unstyled, .link-unstyled:link, .link-unstyled:hover {
     color: inherit;
     text-decoration: inherit;
 }
