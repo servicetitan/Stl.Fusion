@@ -22,6 +22,11 @@ namespace Stl.Fusion.EntityFramework
                     throw;
                 }
                 catch (Exception e) {
+                    if (e is ObjectDisposedException ode && ode.Message.Contains("'IServiceProvider'"))
+                        // Special case: this exception can be thrown on IoC container disposal,
+                        // and if we don't handle it in a special way, DbWakeSleepProcessBase
+                        // descendants may flood the log with exceptions till the moment they're stopped.
+                        throw;
                     error = e;
                     Log.LogError(e, "WakeAsync error");
                 }
