@@ -1,0 +1,19 @@
+@using System.Threading
+@using Templates.Blazor2.Abstractions
+@inherits LiveComponentBase<string>
+@inject IMomentsAgoService MomentsAgoService
+
+<span class="@CssClass">@State.Value</span>
+
+@code {
+    [Parameter]
+    public string CssClass { get; set; } = "";
+
+    [Parameter]
+    public DateTime? Value { get; set; }
+    [Parameter]
+    public string None { get; set; } = "n/a";
+
+    protected override Task<string> ComputeStateAsync(CancellationToken cancellationToken)
+        => Value.HasValue ? MomentsAgoService.GetMomentsAgoAsync(Value.Value) : Task.FromResult(None);
+}

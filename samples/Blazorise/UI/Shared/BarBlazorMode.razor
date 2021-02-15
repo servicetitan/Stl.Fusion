@@ -3,10 +3,10 @@
 @inject BlazorModeHelper BlazorModeHelper
 
 <BarDropdown Class="@CssClass">
-    <BarDropdownToggle Color="Color.Primary">
+    <BarDropdownToggle>
         Blazor Mode
     </BarDropdownToggle>
-    <BarDropdownMenu>
+    <BarDropdownMenu RightAligned="true">
         <BarDropdownItem Active="IsServerSideBlazor" Clicked="@(() => ChangeMode(true))" >Server</BarDropdownItem>
         <BarDropdownItem Active="!IsServerSideBlazor" Clicked="@(() => ChangeMode(false))">WebAssembly</BarDropdownItem>
     </BarDropdownMenu>

@@ -16,13 +16,13 @@ namespace Stl.Fusion.Server.Internal
                 throw new ArgumentNullException(nameof(bindingContext));
 
             try {
-                var sValue = bindingContext.ValueProvider.GetValue(bindingContext.ModelName).FirstValue;
+                var sValue = bindingContext.ValueProvider.GetValue(bindingContext.ModelName).FirstValue ?? "";
                 var result = ParseMethod
                     .MakeGenericMethod(bindingContext.ModelType.GetGenericArguments()[0])
                     .Invoke(null, new object[] { sValue });
                 bindingContext.Result = ModelBindingResult.Success(result);
             }
-            catch (Exception e) {
+            catch (Exception) {
                 bindingContext.Result = ModelBindingResult.Failed();
             }
             return Task.CompletedTask;

@@ -5,10 +5,11 @@
     var usedAuthSchemas = User.Identities.Select(kv => kv.Key.Schema).ToHashSet();
     var unusedAuthSchemas = AuthSchemas.Where(p => !usedAuthSchemas.Contains(p.Name)).ToArray();
     var signInOrAddFormat = User.IsAuthenticated ? "Add {0} account" : "Sign in with {0}";
+    var signInIconName = User.IsAuthenticated ? FontAwesomeIcons.Plus : FontAwesomeIcons.SignInAlt;
 }
 
 <BarDropdown Class="@CssClass">
-    <BarDropdownToggle Color="Color.Primary">
+    <BarDropdownToggle>
         @if (User.IsAuthenticated) {
             <Blazorise.Icon Name="FontAwesomeIcons.UserCircle" IconStyle="@IconStyle.Solid" />
         }
@@ -20,12 +21,14 @@
     <BarDropdownMenu>
         @foreach (var (name, displayName) in unusedAuthSchemas) {
             <BarDropdownItem Color="Color.Primary" Clicked="@(_ => ClientAuthHelper.SignInAsync(name))">
+                <Blazorise.Icon Name="@signInIconName" />
                 @(string.Format(signInOrAddFormat, displayName))
             </BarDropdownItem>
         }
         <AuthorizeView>
             <Authorized>
                 <BarDropdownItem Clicked="@(_ => ClientAuthHelper.SignOutAsync())">
+                    <Blazorise.Icon Name="FontAwesomeIcons.SignOutAlt" />
                     Sign out
                 </BarDropdownItem>
             </Authorized>
@@ -43,9 +46,7 @@
     private (string Name, string DisplayName)[] AuthSchemas { get; set; } = Array.Empty<(string, string)>();
 
     protected override async Task OnParametersSetAsync()
-    {
-        AuthState = await AuthStateTask;
-    }
+        => AuthState = await AuthStateTask;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

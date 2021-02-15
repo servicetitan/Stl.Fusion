@@ -1,8 +1,4 @@
 using System;
-using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.DependencyInjection.Internal;
 
@@ -12,6 +8,11 @@ namespace Stl.DependencyInjection
     {
         public static IServiceProvider Empty { get; } =
             new DefaultServiceProviderFactory().CreateServiceProvider(new ServiceCollection());
+
+        // Get HostedServiceManager
+
+        public static HostedServiceGroupManager HostedServices(this IServiceProvider services)
+            => new(services);
 
         // With/As helpers
 

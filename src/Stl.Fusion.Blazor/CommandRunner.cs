@@ -32,7 +32,7 @@ namespace Stl.Fusion.Blazor
             Error = null;
             try {
                 await Commander.CallAsync(command, cancellationToken);
-                TryInvalidateAndUpdate();
+                TryInvalidate();
             }
             catch (Exception e) {
                 Error = e;
@@ -44,7 +44,7 @@ namespace Stl.Fusion.Blazor
             Error = null;
             try {
                 var result = await Commander.CallAsync(command, cancellationToken);
-                TryInvalidateAndUpdate();
+                TryInvalidate();
                 return result;
             }
             catch (Exception e) {
@@ -53,7 +53,7 @@ namespace Stl.Fusion.Blazor
             }
         }
 
-        private void TryInvalidateAndUpdate()
+        private void TryInvalidate()
         {
             if (Component is not StatefulComponentBase statefulComponent)
                 return;

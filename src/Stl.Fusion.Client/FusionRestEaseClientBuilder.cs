@@ -9,6 +9,7 @@ using Stl.CommandR;
 using Stl.DependencyInjection;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Interception;
+using Stl.Fusion.Client.Internal;
 using Stl.Fusion.Client.RestEase.Internal;
 using Stl.Fusion.Interception;
 using Stl.Interception;
@@ -148,8 +149,9 @@ namespace Stl.Fusion.Client
             clientName ??= clientType.FullName;
             if (Services.Any(d => d.ServiceType == serviceType))
                 return this;
+            var clientAccessorType = typeof(ClientAccessor<>).MakeGenericType(serviceType);
 
-            object Factory(IServiceProvider c)
+            object ClientAccessorFactory(IServiceProvider c)
             {
                 // 1. Validate types
                 var replicaMethodInterceptor = c.GetRequiredService<ReplicaMethodInterceptor>();
@@ -169,6 +171,14 @@ namespace Stl.Fusion.Client
                 if (clientType != serviceType)
                     client = c.GetTypeViewFactory().CreateView(client, clientType, serviceType);
 
+                return clientAccessorType!.CreateInstance(client);
+            }
+
+            object ServiceFactory(IServiceProvider c)
+            {
+                var clientAccessor = (IClientAccessor) c.GetRequiredService(clientAccessorType);
+                var client = clientAccessor.Client;
+
                 // 4. Create Replica Client
                 var replicaProxyGenerator = c.GetRequiredService<IReplicaServiceProxyGenerator>();
                 var replicaProxyType = replicaProxyGenerator.GetProxyType(serviceType, isCommandService);
@@ -177,7 +187,8 @@ namespace Stl.Fusion.Client
                 return client;
             }
 
-            Services.AddSingleton(serviceType, Factory);
+            Services.AddSingleton(clientAccessorType, ClientAccessorFactory);
+            Services.AddSingleton(serviceType, ServiceFactory);
             if (isCommandService)
                 Services.AddCommander().AddCommandService(serviceType);
             return this;

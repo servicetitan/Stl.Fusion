@@ -11,8 +11,7 @@ namespace Stl.Fusion.Blazor
     {
         SynchronizeComputeState = 0x1,
         InvalidateOnParametersSet = 0x2,
-        CancelDelaysOnParametersSet = 0x4,
-        InvalidateAndCancelDelaysOnParametersSet = InvalidateOnParametersSet + CancelDelaysOnParametersSet,
+        InvalidateAndCancelDelaysOnParametersSet = 0x4 + InvalidateOnParametersSet,
     }
 
     public abstract class LiveComponentBase<T> : StatefulComponentBase<ILiveState<T>>
@@ -21,14 +20,31 @@ namespace Stl.Fusion.Blazor
             LiveComponentOptions.SynchronizeComputeState
             | LiveComponentOptions.InvalidateAndCancelDelaysOnParametersSet;
 
-        // Typically State depends on component parameters,
-        // so this default looks reasonable:
+        // Typically State depends on component parameters, so...
         protected override void OnParametersSet()
         {
-            if (0 != (Options & LiveComponentOptions.InvalidateOnParametersSet))
-                State.Invalidate();
-            if (0 != (Options & LiveComponentOptions.CancelDelaysOnParametersSet))
-                State.UpdateDelayer.CancelDelays();
+            var mustInvalidate = (Options & LiveComponentOptions.InvalidateOnParametersSet) != 0;
+            if (mustInvalidate) {
+                var mustCancelDelays =
+                    (Options & LiveComponentOptions.InvalidateAndCancelDelaysOnParametersSet)
+                    == LiveComponentOptions.InvalidateAndCancelDelaysOnParametersSet;
+                InvalidateState(mustCancelDelays);
+            }
+        }
+
+        /// <summary>
+        /// Typically you need to call this method after UI actions to ensure
+        /// the update from server is requested instantly.
+        /// </summary>
+        /// <param name="cancelUpdateDelay">Cancels update delay, i.e. requests instant update.</param>
+        /// <param name="cancellationDelay">The delay between this call and update delay cancellation.
+        /// The default (null) means it's governed by <see cref="IUpdateDelayer{T}"/>, which does this
+        /// in 50ms by default.</param>
+        protected void InvalidateState(bool cancelUpdateDelay = true, TimeSpan? cancellationDelay = null)
+        {
+            State.Invalidate();
+            if (cancelUpdateDelay)
+                State.UpdateDelayer.CancelDelays(cancellationDelay);
         }
 
         protected override ILiveState<T> CreateState()

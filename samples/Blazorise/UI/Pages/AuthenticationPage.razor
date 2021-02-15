@@ -2,11 +2,12 @@
 @using System.Threading
 @using UAParser
 @using System.Collections.Concurrent
+@using Templates.Blazor2.Abstractions
 @inherits LiveComponentBase<List<AuthenticationPage.SessionModel>>
 @inject Session Session
 @inject IAuthService AuthService
 @inject ClientAuthHelper ClientAuthHelper
-@inject MomentsAgoService MomentsAgoService
+@inject IMomentsAgoService MomentsAgoService
 @inject NavigationManager Navigator
 
 @{

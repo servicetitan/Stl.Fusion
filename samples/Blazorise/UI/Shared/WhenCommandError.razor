@@ -1,6 +1,6 @@
 
 @if (Exception != null) {
-    <Error Title="Action failed!">@Exception.Message</Error>
+    <Error @key="@Exception" Title="Action failed!">@Exception.Message</Error>
 }
 
 @code {
