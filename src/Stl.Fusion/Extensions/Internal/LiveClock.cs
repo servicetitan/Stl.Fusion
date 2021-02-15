@@ -34,14 +34,14 @@ namespace Stl.Fusion.Extensions.Internal
         [ComputeMethod]
         public virtual Task<DateTime> GetUtcNowAsync()
         {
-            Computed.GetCurrent()!.Invalidate(DefaultUpdatePeriod);
+            Computed.GetCurrent()!.Invalidate(TrimInvalidationDelay(DefaultUpdatePeriod));
             return Task.FromResult(Clock.Now.ToDateTime());
         }
 
         [ComputeMethod]
         public virtual Task<DateTime> GetUtcNowAsync(TimeSpan updatePeriod)
         {
-            Computed.GetCurrent()!.Invalidate(updatePeriod);
+            Computed.GetCurrent()!.Invalidate(TrimInvalidationDelay(updatePeriod));
             return Task.FromResult(Clock.Now.ToDateTime());
         }
 
@@ -63,8 +63,7 @@ namespace Stl.Fusion.Extensions.Internal
             }
 
             // Invalidate the result when it's supposed to change
-            var delay = ((unitCount + 1) * unit - delta) + TimeSpan.FromMilliseconds(100);
-            delay = TimeSpanEx.Min(delay, MaxInvalidationDelay); // A sort of mem leak prevention
+            var delay = TrimInvalidationDelay((unitCount + 1) * unit - delta + TimeSpan.FromMilliseconds(100));
             Computed.GetCurrent()!.Invalidate(delay, false);
             return Task.FromResult(result);
         }
@@ -81,5 +80,8 @@ namespace Stl.Fusion.Extensions.Internal
                 return (TimeSpan.FromDays(1), "day");
             return (TimeSpan.FromDays(7), "week");
         }
+
+        private TimeSpan TrimInvalidationDelay(TimeSpan delay)
+            => TimeSpanEx.Min(delay, MaxInvalidationDelay);
     }
 }
