@@ -12,7 +12,7 @@ namespace Stl.Fusion.Blazor
 
         public Exception? Error {
             get => _error;
-            private set {
+            set {
                 if (_error == value)
                     return;
                 _error = value;
