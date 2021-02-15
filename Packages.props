@@ -72,6 +72,7 @@
     <PackageReference Update="Stl.Fusion.Client" Version="$(StlFusionVersion)" />
     <PackageReference Update="Stl.Fusion.Blazor" Version="$(StlFusionVersion)" />
     <PackageReference Update="Stl.Fusion.EntityFramework" Version="$(StlFusionVersion)" />
+    <PackageReference Update="Stl.Fusion.EntityFramework.Npgsql" Version="$(StlFusionVersion)" />
     <PackageReference Update="Stl.Testing" Version="$(StlFusionVersion)" />
     <PackageReference Update="Swashbuckle.AspNetCore" Version="6.0.4" />
     <PackageReference Update="System.Collections.Immutable" Version="5.0.*" />
