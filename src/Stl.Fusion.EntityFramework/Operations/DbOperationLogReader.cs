@@ -22,12 +22,12 @@ namespace Stl.Fusion.EntityFramework.Operations
         protected IDbOperationLog<TDbContext> DbOperationLog { get; }
         protected TimeSpan MaxCommitDuration { get; }
         protected TimeSpan UnconditionalWakeUpPeriod { get; }
-        protected IDbOperationLogChangeMonitor<TDbContext>? OperationLogChangeMonitor { get; }
+        protected IDbOperationLogChangeTracker<TDbContext>? OperationLogChangeMonitor { get; }
         protected Moment MaxKnownCommitTime { get; set; }
 
         public DbOperationLogReader(Options? options,
             IServiceProvider services,
-            IDbOperationLogChangeMonitor<TDbContext>? operationLogChangeMonitor = null)
+            IDbOperationLogChangeTracker<TDbContext>? operationLogChangeMonitor = null)
             : base(services)
         {
             options ??= new();

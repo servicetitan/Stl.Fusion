@@ -4,10 +4,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Stl.Fusion.EntityFramework.Operations
 {
-    public interface IDbOperationLogChangeMonitor<TDbContext>
+    public interface IDbOperationLogChangeTracker<TDbContext>
         where TDbContext : DbContext
     {
-        // Should return immediately
         Task WaitForChangesAsync(CancellationToken cancellationToken = default);
     }
 }

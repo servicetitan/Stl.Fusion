@@ -81,8 +81,7 @@ namespace Templates.Blazor2.Host
                     o.UnconditionalWakeUpPeriod = TimeSpan.FromSeconds(Env.IsDevelopment() ? 60 : 5);
                 });
                 var operationLogChangeAlertPath = dbPath + "_changed";
-                b.AddFileBasedDbOperationLogChangeNotifier(operationLogChangeAlertPath);
-                b.AddFileBasedDbOperationLogChangeMonitor(operationLogChangeAlertPath);
+                b.AddFileBasedDbOperationLogChangeTracking(operationLogChangeAlertPath);
                 if (!serverSettings.UseInMemoryAuthService)
                     b.AddDbAuthentication();
                 b.AddKeyValueStore();

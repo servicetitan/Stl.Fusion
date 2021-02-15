@@ -96,7 +96,7 @@ namespace Stl.Fusion.EntityFramework
                 Transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
                 _isInMemoryProvider = dbContext.Database.ProviderName.EndsWith(".InMemory");
                 if (!_isInMemoryProvider) {
-                    Connection = dbContext.GetDbConnection();
+                    Connection = dbContext.Database.GetDbConnection();
                     if (Connection == null)
                         throw Stl.Internal.Errors.InternalError("No DbConnection.");
                 }
@@ -104,8 +104,10 @@ namespace Stl.Fusion.EntityFramework
             }
             dbContext = DbContextFactory.CreateDbContext().ReadWrite(readWrite);
             dbContext.Database.AutoTransactionsEnabled = false;
-            if (!_isInMemoryProvider)
-                dbContext.SetDbConnection(Connection);
+            if (!_isInMemoryProvider) {
+                dbContext.StopPooling();
+                dbContext.Database.SetDbConnection(Connection);
+            }
             CommandContext.SetOperation(Operation);
             return dbContext;
         }

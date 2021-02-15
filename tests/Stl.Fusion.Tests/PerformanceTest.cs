@@ -51,7 +51,7 @@ namespace Stl.Fusion.Tests
 
             var users = Services.GetRequiredService<IUserService>();
             var plainUsers = Services.GetRequiredService<UserService>();
-            var useImdb = Options.UseInMemoryDatabase;
+            var useImdb = Options.DbType == FusionTestDbType.InMemory;
             var opCountPerCore = 2_000_000;
             var readersPerCore = 4;
             var readerCount = HardwareInfo.GetProcessorCountFactor(readersPerCore);
@@ -151,14 +151,14 @@ namespace Stl.Fusion.Tests
     public class PerformanceTest_Sqlite : PerformanceTestBase
     {
         public PerformanceTest_Sqlite(ITestOutputHelper @out)
-            : base(@out, new FusionTestOptions() { UseInMemoryDatabase = false })
+            : base(@out, new FusionTestOptions())
         { }
     }
 
     public class PerformanceTest_InMemoryDb : PerformanceTestBase
     {
         public PerformanceTest_InMemoryDb(ITestOutputHelper @out)
-            : base(@out, new FusionTestOptions() { UseInMemoryDatabase = true })
+            : base(@out, new FusionTestOptions() { DbType = FusionTestDbType.InMemory })
         { }
     }
 }

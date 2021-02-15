@@ -1,12 +1,10 @@
 using System;
 using System.Linq;
 using System.Security;
-using System.Security.Authentication;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.CommandR;
-using Stl.CommandR.Commands;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Authentication.Commands;
 using Stl.Fusion.Operations;
@@ -17,10 +15,18 @@ using Xunit.Abstractions;
 namespace Stl.Fusion.Tests.Authentication
 {
     [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-    public class DbAuthServiceTest : AuthServiceTestBase
+    public class SqliteAuthServiceTest : AuthServiceTestBase
     {
-        public DbAuthServiceTest(ITestOutputHelper @out)
+        public SqliteAuthServiceTest(ITestOutputHelper @out)
             : base(@out, new FusionTestOptions()) { }
+    }
+
+    // Internal = disabled, currently GitHub can't run such tests
+    [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
+    internal class PostgreSqlAuthServiceTest : AuthServiceTestBase
+    {
+        public PostgreSqlAuthServiceTest(ITestOutputHelper @out)
+            : base(@out, new FusionTestOptions() { DbType = FusionTestDbType.PostgreSql }) { }
     }
 
     [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]

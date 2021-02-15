@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFrameworks>net5.0;netcoreapp3.1;netstandard2.1</TargetFrameworks>
     <PackageTags>servicetitan stl stl_fusion</PackageTags>
-    <Description>Stl.EntityFramework - a set of helpers related to EF Core.</Description>
+    <Description>Stl.Fusion.EntityFramework - Fusion services utilizing EF Core.</Description>
   </PropertyGroup>
 
   <ItemGroup>

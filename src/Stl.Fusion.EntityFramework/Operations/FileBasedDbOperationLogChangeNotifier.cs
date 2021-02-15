@@ -3,25 +3,20 @@ using System.IO;
 using Microsoft.EntityFrameworkCore;
 using Stl.CommandR;
 using Stl.Fusion.Operations;
-using Stl.IO;
-using Stl.Text;
 
 namespace Stl.Fusion.EntityFramework.Operations
 {
     public class FileBasedDbOperationLogChangeNotifier<TDbContext> : IOperationCompletionListener
         where TDbContext : DbContext
     {
-        public class Options
-        {
-            public PathString FilePath { get; set; } = PathString.Empty;
-        }
-
-        public PathString FilePath { get; }
+        protected FileBasedDbOperationLogChangeTrackingOptions<TDbContext> Options { get; }
         protected AgentInfo AgentInfo { get; }
 
-        public FileBasedDbOperationLogChangeNotifier(Options options, AgentInfo agentInfo)
+        public FileBasedDbOperationLogChangeNotifier(
+            FileBasedDbOperationLogChangeTrackingOptions<TDbContext> options,
+            AgentInfo agentInfo)
         {
-            FilePath = options.FilePath;
+            Options = options;
             AgentInfo = agentInfo;
         }
 
@@ -37,10 +32,11 @@ namespace Stl.Fusion.EntityFramework.Operations
             }
             // If it wasn't command, we pessimistically assume it changed something
 
-            if (!File.Exists(FilePath))
-                File.WriteAllText(FilePath, "");
+            var filePath = Options.FilePath;
+            if (!File.Exists(filePath))
+                File.WriteAllText(filePath, "");
             else
-                File.SetLastWriteTimeUtc(FilePath, DateTime.UtcNow);
+                File.SetLastWriteTimeUtc(filePath, DateTime.UtcNow);
         }
     }
 }

@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net5.0;netcoreapp3.1;netstandard2.1</TargetFrameworks>
+    <PackageTags>servicetitan stl stl_fusion</PackageTags>
+    <Description>Stl.Fusion.EntityFramework.Npgsql - <!--
+    -->Fusion services utilizing EF Core and Npgsql (PostgreSQL EF Core provider).</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Stl.Fusion.EntityFramework\Stl.Fusion.EntityFramework.csproj" />
+  </ItemGroup>
+
+</Project>

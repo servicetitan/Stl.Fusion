@@ -9,20 +9,21 @@ using Stl.IO;
 
 namespace Stl.Fusion.EntityFramework.Operations
 {
-    public class FileBasedDbOperationLogChangeMonitor<TDbContext> : IDbOperationLogChangeMonitor<TDbContext>, IDisposable
+    public class FileBasedDbOperationLogChangeTracker<TDbContext> : IDbOperationLogChangeTracker<TDbContext>, IDisposable
         where TDbContext : DbContext
     {
-        public FileSystemWatcher Watcher { get; }
-        public bool OwnsWatcher { get; }
+        protected FileBasedDbOperationLogChangeTrackingOptions<TDbContext> Options { get; }
+        protected FileSystemWatcher Watcher { get; }
         protected IObservable<FileSystemEventArgs> Observable { get; }
         protected IDisposable Subscription { get; }
         protected Task<Unit> NextEventTask { get; set; } = null!;
         protected object Lock { get; } = new();
 
-        public FileBasedDbOperationLogChangeMonitor(FileSystemWatcher watcher, bool ownsWatcher = true)
+        public FileBasedDbOperationLogChangeTracker(
+            FileBasedDbOperationLogChangeTrackingOptions<TDbContext> options)
         {
-            Watcher = watcher;
-            OwnsWatcher = ownsWatcher;
+            Options = options;
+            Watcher = new FileSystemWatcher(options.FilePath.DirectoryPath, options.FilePath.FileName);
             // ReSharper disable once VirtualMemberCallInConstructor
             ReplaceNextEventTask();
             Observable = Watcher.ToObservable();
@@ -35,8 +36,7 @@ namespace Stl.Fusion.EntityFramework.Operations
             if (!disposing)
                 return;
             Subscription.Dispose();
-            if (OwnsWatcher)
-                Watcher.Dispose();
+            Watcher.Dispose();
         }
 
         public void Dispose()

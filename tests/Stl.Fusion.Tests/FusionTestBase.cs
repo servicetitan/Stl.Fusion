@@ -17,6 +17,7 @@ using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Messages;
 using Stl.Fusion.Client;
 using Stl.Fusion.EntityFramework;
+using Stl.Fusion.EntityFramework.Npgsql;
 using Stl.Fusion.Extensions;
 using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
@@ -32,9 +33,16 @@ using Xunit.DependencyInjection.Logging;
 
 namespace Stl.Fusion.Tests
 {
+    public enum FusionTestDbType
+    {
+        Sqlite = 0,
+        InMemory = 1,
+        PostgreSql = 2,
+    }
+
     public class FusionTestOptions
     {
-        public bool UseInMemoryDatabase { get; set; }
+        public FusionTestDbType DbType { get; set; } = FusionTestDbType.Sqlite;
         public bool UseInMemoryAuthService { get; set; }
         public bool UseTestClock { get; set; }
     }
@@ -43,7 +51,9 @@ namespace Stl.Fusion.Tests
     {
         public FusionTestOptions Options { get; }
         public bool IsLoggingEnabled { get; set; } = true;
-        public PathString DbPath { get; protected set; }
+        public PathString SqliteDbPath { get; protected set; }
+        public string PostgreSqlConnectionString { get; protected set; } =
+            "Server=localhost;Database=stl_fusion_tests;Port=5432;User Id=postgres;Password=Fusion.0.to.1";
         public FusionTestWebHost WebHost { get; }
         public IServiceProvider Services { get; }
         public IServiceProvider WebServices { get; }
@@ -63,9 +73,9 @@ namespace Stl.Fusion.Tests
 
         public override async Task InitializeAsync()
         {
-            for (var i = 0; i < 10 && File.Exists(DbPath); i++) {
+            for (var i = 0; i < 10 && File.Exists(SqliteDbPath); i++) {
                 try {
-                    File.Delete(DbPath);
+                    File.Delete(SqliteDbPath);
                     break;
                 }
                 catch {
@@ -73,8 +83,10 @@ namespace Stl.Fusion.Tests
                 }
             }
             await using var dbContext = CreateDbContext();
+            if (Options.DbType != FusionTestDbType.Sqlite)
+                await dbContext.Database.EnsureDeletedAsync();
             await dbContext.Database.EnsureCreatedAsync();
-            await StartHostedServicesAsync(Services);
+            await Services.HostedServices().StartAsync();
         }
 
         public override async Task DisposeAsync()
@@ -82,7 +94,7 @@ namespace Stl.Fusion.Tests
             if (ClientServices is IDisposable dcs)
                 dcs.Dispose();
             try {
-                await StopHostedServicesAsync(Services);
+                await Services.HostedServices().StopAsync();
             }
             finally {
                 if (Services is IDisposable ds)
@@ -150,15 +162,24 @@ namespace Stl.Fusion.Tests
 
                 // DbContext & related services
                 var appTempDir = PathEx.GetApplicationTempDirectory("", true);
-                DbPath = appTempDir & PathEx.GetHashedName($"{testType.Name}_{testType.Namespace}.db");
+                SqliteDbPath = appTempDir & PathEx.GetHashedName($"{testType.Name}_{testType.Namespace}.db");
                 services.AddPooledDbContextFactory<TestDbContext>(builder => {
-                    if (Options.UseInMemoryDatabase)
-                        builder.UseInMemoryDatabase(DbPath)
+                    switch (Options.DbType) {
+                    case FusionTestDbType.Sqlite:
+                        builder.UseSqlite($"Data Source={SqliteDbPath}");
+                        break;
+                    case FusionTestDbType.InMemory:
+                        builder.UseInMemoryDatabase(SqliteDbPath)
                             .ConfigureWarnings(w => {
                                 w.Ignore(InMemoryEventId.TransactionIgnoredWarning);
                             });
-                    else
-                        builder.UseSqlite($"Data Source={DbPath}", sqlite => { });
+                        break;
+                    case FusionTestDbType.PostgreSql:
+                        builder.UseNpgsql(PostgreSqlConnectionString);
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                    }
                     builder.EnableSensitiveDataLogging();
                 }, 256);
                 services.AddDbContextServices<TestDbContext>(b => {
@@ -169,9 +190,10 @@ namespace Stl.Fusion.Tests
                         // o.MaxCommitDuration = TimeSpan.FromMinutes(5);
                     });
                     b.AddKeyValueStore();
-                    var dbOpLogChangedFilePath = DbPath + "_changed";
-                    b.AddFileBasedDbOperationLogChangeNotifier(dbOpLogChangedFilePath);
-                    b.AddFileBasedDbOperationLogChangeMonitor(dbOpLogChangedFilePath);
+                    if (Options.DbType == FusionTestDbType.PostgreSql)
+                        b.AddNpgsqlDbOperationLogChangeTracking();
+                    else
+                        b.AddFileBasedDbOperationLogChangeTracking();
                     if (!Options.UseInMemoryAuthService)
                         b.AddDbAuthentication();
                 });
@@ -210,28 +232,6 @@ namespace Stl.Fusion.Tests
                         var time = await client.GetTimeAsync(cancellationToken).ConfigureAwait(false);
                         return new ServerTimeModel2(time);
                     }));
-            }
-        }
-
-        protected async Task StartHostedServicesAsync(
-            IServiceProvider services, CancellationToken cancellationToken = default)
-        {
-            var hostedServices = services.GetServices<IHostedService>().ToArray();
-            foreach (var hostedService in hostedServices)
-                await hostedService.StartAsync(cancellationToken);
-        }
-
-        protected async Task StopHostedServicesAsync(
-            IServiceProvider services, CancellationToken cancellationToken = default)
-        {
-            var hostedServices = services.GetServices<IHostedService>().ToArray();
-            foreach (var hostedService in hostedServices) {
-                try {
-                    await hostedService.StopAsync(cancellationToken);
-                }
-                catch {
-                    // Intended
-                }
             }
         }
 

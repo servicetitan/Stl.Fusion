@@ -13,7 +13,7 @@ namespace Stl.Fusion.EntityFramework
 
         protected override async Task RunInternalAsync(CancellationToken cancellationToken)
         {
-            for (;;) {
+            while (!cancellationToken.IsCancellationRequested) {
                 var error = default(Exception?);
                 try {
                     await WakeUpAsync(cancellationToken).ConfigureAwait(false);

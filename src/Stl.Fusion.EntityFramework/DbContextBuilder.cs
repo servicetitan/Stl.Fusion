@@ -80,34 +80,22 @@ namespace Stl.Fusion.EntityFramework
             return this;
         }
 
-        public DbContextBuilder<TDbContext> AddFileBasedDbOperationLogChangeMonitor(
-            PathString filePath)
-        {
-            Services.TryAddSingleton<IDbOperationLogChangeMonitor<TDbContext>>(_ => {
-                var watcher = new FileSystemWatcher(filePath.DirectoryPath, filePath.FileName);
-                return new FileBasedDbOperationLogChangeMonitor<TDbContext>(watcher);
-            });
-            return this;
-        }
+        // File-based operation log change tracking
 
-        public DbContextBuilder<TDbContext> AddFileBasedDbOperationLogChangeMonitor(
-            PathString dirPath, string filters, bool includeSubdirectories = false)
-        {
-            Services.TryAddSingleton<IDbOperationLogChangeMonitor<TDbContext>>(_ => {
-                var watcher = new FileSystemWatcher(dirPath, filters) {
-                    IncludeSubdirectories = includeSubdirectories,
-                };
-                return new FileBasedDbOperationLogChangeMonitor<TDbContext>(watcher);
-            });
-            return this;
-        }
+        public DbContextBuilder<TDbContext> AddFileBasedDbOperationLogChangeTracking(PathString filePath)
+            => AddFileBasedDbOperationLogChangeTracking((_, o) => { o.FilePath = filePath; });
 
-        public DbContextBuilder<TDbContext> AddFileBasedDbOperationLogChangeNotifier(
-            PathString filePath)
+        public DbContextBuilder<TDbContext> AddFileBasedDbOperationLogChangeTracking(
+            Action<IServiceProvider, FileBasedDbOperationLogChangeTrackingOptions<TDbContext>>? configureOptions = null)
         {
-            Services.TryAddSingleton(_ => new FileBasedDbOperationLogChangeNotifier<TDbContext>.Options() {
-                FilePath = filePath
+            Services.TryAddSingleton(c => {
+                var options = new FileBasedDbOperationLogChangeTrackingOptions<TDbContext>();
+                configureOptions?.Invoke(c, options);
+                return options;
             });
+            Services.TryAddSingleton<
+                IDbOperationLogChangeTracker<TDbContext>,
+                FileBasedDbOperationLogChangeTracker<TDbContext>>();
             Services.TryAddEnumerable(
                 ServiceDescriptor.Singleton<
                     IOperationCompletionListener,
