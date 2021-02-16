@@ -14,6 +14,10 @@ namespace Stl.CommandR.Commands
 
     public abstract record ServerSideCommandBase<TResult> : IServerSideCommand<TResult>
     {
+#if NETSTANDARD2_0
+        Type ICommand.ResultType => typeof(TResult);
+#endif
+        
         [JsonIgnore]
         [field: NonSerialized]
         public bool IsServerSide { get; set; }
