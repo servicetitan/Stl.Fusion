@@ -1,5 +1,7 @@
+using System;
 using System.Linq;
 using System.Reactive;
+using Stl.CommandR;
 using Stl.CommandR.Commands;
 
 namespace Stl.Fusion.Authentication.Commands
@@ -8,12 +10,20 @@ namespace Stl.Fusion.Authentication.Commands
     public record SignOutCommand(Session Session, bool Force = false)
         : ISessionCommand<Unit>
     {
+        #if NETSTANDARD2_0
+        Type ICommand.ResultType => typeof(Unit);
+        #endif
+        
         public SignOutCommand() : this(Session.Null) { }
     }
 
     public record EditUserCommand(Session Session, string? Name = null)
         : ISessionCommand<Unit>
     {
+        #if NETSTANDARD2_0
+        Type ICommand.ResultType => typeof(Unit);
+        #endif
+        
         public EditUserCommand() : this(Session.Null) { }
     }
 

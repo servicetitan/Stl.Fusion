@@ -1,6 +1,8 @@
+using System.Collections.Generic;
+
 #if NETSTANDARD2_0
 
-namespace System.Collections.Generic
+namespace Stl
 {
     /// <summary>Creates instances of the <see cref="T:System.Collections.Generic.KeyValuePair`2" /> struct.</summary>
     public static class KeyValuePair
