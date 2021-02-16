@@ -74,7 +74,7 @@ namespace Stl.Reflection
                     name = GenericMethodNameTailRe.Replace(name, "");
                     var argumentNames = type1.GetGenericArguments()
                         .Select(t => t.ToIdentifierName(useFullArgumentNames1, useFullArgumentNames1));
-                    name = string.Join('_', EnumerableEx.One(name).Concat(argumentNames));
+                    name = string.Join("_", EnumerableEx.One(name).Concat(argumentNames));
                 }
                 name = MethodNameRe.Replace(name!, "_");
                 name = MethodNameTailRe.Replace(name, "");

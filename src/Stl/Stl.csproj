@@ -1,7 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net5.0;netcoreapp3.1;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>net5.0;netcoreapp3.1;netstandard2.1;netstandard2.0</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <PackageTags>servicetitan stl stl_fusion</PackageTags>
     <Description>Stl ("ServiceTitan Library") is a collection of <!--
@@ -21,6 +21,12 @@
     <PackageReference Include="System.Reactive" />
     <PackageReference Include="System.Threading.Channels" />
 <!--    <PackageReference Include="ZString" />-->
+  </ItemGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
+    <PackageReference Include="IndexRange" VersionOverride="1.0.*" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" VersionOverride="5.0.0" />
+    <PackageReference Include="System.Memory" VersionOverride="4.5.4" />
   </ItemGroup>
 
 </Project>

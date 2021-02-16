@@ -54,6 +54,7 @@ namespace Stl.Time.Testing
 
         // Other operations
 
+#if !NETSTANDARD2_0
         public Moment ToLocalTime(Moment realTime)
             => new Moment(LocalOffset + (realTime.EpochOffset + RealOffset) * Multiplier);
         public Moment ToRealTime(Moment localTime)
@@ -62,5 +63,17 @@ namespace Stl.Time.Testing
             => realDuration * Multiplier;
         public TimeSpan ToRealDuration(TimeSpan localDuration)
             => localDuration / Multiplier;
+#else
+        public Moment ToLocalTime(Moment realTime)
+            => new Moment(LocalOffset + (realTime.EpochOffset + RealOffset).Multiply(Multiplier));
+        public Moment ToRealTime(Moment localTime)
+            => new Moment((localTime.EpochOffset - LocalOffset).Divide(Multiplier) - RealOffset);
+        public TimeSpan ToLocalDuration(TimeSpan realDuration)
+            => realDuration.Multiply(Multiplier);
+        public TimeSpan ToRealDuration(TimeSpan localDuration)
+            => localDuration.Divide(Multiplier);
+#endif
+
+        
     }
 }

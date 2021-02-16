@@ -1,4 +1,6 @@
 using System;
+using System.Buffers;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Stl.Collections;
 using Stl.Mathematics;
@@ -36,6 +38,8 @@ namespace Stl.Generators
         public void Dispose() => Rng.Dispose();
 
         public override string Next() => Next(Length);
+        
+#if !NETSTANDARD2_0
         public string Next(int length, string? alphabet = null)
         {
             if (alphabet == null)
@@ -67,5 +71,31 @@ namespace Stl.Generators
                 buffer.Release();
             }
         }
+#else
+        public string Next(int length, string? alphabet = null)
+        {
+            if (alphabet == null)
+                alphabet = Alphabet;
+            else if (alphabet.Length < 1)
+                throw new ArgumentOutOfRangeException(nameof(alphabet));
+            var byteBuffer = new byte[length];
+            lock (Lock) {
+                Rng.GetBytes(byteBuffer);
+            }
+            var charBuffer = new char[length];
+            var alphabetLength = alphabet.Length;
+            if (Bits.IsPowerOf2((uint) alphabetLength)) {
+                var alphabetMask = alphabetLength - 1;
+                for (var i = 0; i < charBuffer.Length; i++)
+                    charBuffer[i] = alphabet[byteBuffer[i] & alphabetMask];
+            }
+            else {
+                for (var i = 0; i < charBuffer.Length; i++)
+                    charBuffer[i] = alphabet[byteBuffer[i] % alphabetLength];
+            }
+
+            return new string(charBuffer);
+        }
+#endif
     }
 }
