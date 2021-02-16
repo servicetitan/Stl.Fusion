@@ -11,25 +11,19 @@ namespace Stl.Fusion.Blazor
     {
         SynchronizeComputeState = 0x1,
         InvalidateOnParametersSet = 0x2,
-        InvalidateAndCancelDelaysOnParametersSet = 0x4 + InvalidateOnParametersSet,
     }
 
     public abstract class LiveComponentBase<T> : StatefulComponentBase<ILiveState<T>>
     {
         protected LiveComponentOptions Options { get; set; } =
             LiveComponentOptions.SynchronizeComputeState
-            | LiveComponentOptions.InvalidateAndCancelDelaysOnParametersSet;
+            | LiveComponentOptions.InvalidateOnParametersSet;
 
         // Typically State depends on component parameters, so...
         protected override void OnParametersSet()
         {
-            var mustInvalidate = (Options & LiveComponentOptions.InvalidateOnParametersSet) != 0;
-            if (mustInvalidate) {
-                var mustCancelDelays =
-                    (Options & LiveComponentOptions.InvalidateAndCancelDelaysOnParametersSet)
-                    == LiveComponentOptions.InvalidateAndCancelDelaysOnParametersSet;
-                InvalidateState(mustCancelDelays);
-            }
+            if (0 != (Options & LiveComponentOptions.InvalidateOnParametersSet))
+                InvalidateState();
         }
 
         /// <summary>

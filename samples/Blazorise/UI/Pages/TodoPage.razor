@@ -5,6 +5,7 @@
 @inject ITodoService Todos
 @inject Session Session
 @inject CommandRunner CommandRunner
+@inject AuthStateProvider AuthStateProvider
 
 @{
     var error = State.Error;
@@ -13,23 +14,22 @@
 
 <h1>Todo List</h1>
 
+<StatefulComponentState Component="@this"/>
+<Text Margin="Margin.Is1.OnY">
+    Updated: <b><MomentsAgoBadge Value="LastStateUpdateTime"/></b>
+</Text>
+
 <AuthorizeView>
     <NotAuthorized>
         <SignInDropdown Why="to use this page"/>
-        <Paragraph>
-            The error message below will go away as soon as you sign in.
-        </Paragraph>
     </NotAuthorized>
-</AuthorizeView>
+    <Authorized><!--
+This comment is here solely to reset the indent in VS / Rider -->
 
 <WhenException Exception="error"/>
 <WhenCommandError Exception="CommandRunner.Error"/>
 
 <Row><Column ColumnSize="ColumnSize.Is6.OnDesktop.Is12.OnTablet">
-    <Text>
-        Updated: <b><MomentsAgoBadge Value="LastStateUpdateTime"/></b>
-    </Text>
-
     @foreach(var todo in todos) {
         <Addons Margin="Margin.Is3.OnY">
             <Addon AddonType="AddonType.Start">
@@ -67,15 +67,25 @@
 
 </Column></Row>
 
+<!--
+ --></Authorized>
+</AuthorizeView>
+
+
 @code {
     private int PageSize { get; set; } = 5;
     private bool HasMore { get; set; }
     private string NewTodoTitle { get; set; } = "";
     private DateTime LastStateUpdateTime { get; set; } = DateTime.UtcNow;
+    // AuthState property below seemingly does nothing, right?
+    // But try to comment out this line & sign-in + sign-out. See the error badge stays there for a while now?
+    // Check your explanation on our Discord: https://discord.gg/EKEwv6d
+    [CascadingParameter] protected Task<AuthState> AuthState { get; set; }
 
     protected override void OnInitialized()
     {
         CommandRunner.Component = this;
+        StateHasChangedTriggers = StateEventKind.All;
         base.OnInitialized();
     }
 
