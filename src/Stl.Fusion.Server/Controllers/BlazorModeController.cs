@@ -7,6 +7,7 @@ namespace Stl.Fusion.Server.Controllers
     [Route("~/fusion/blazorMode")]
     public class BlazorModeController : ControllerBase
     {
+        public static bool IsServerSideBlazorDefault { get; set; } = true;
         public static string CookieName { get; set; } = "_ssb_";
 
         [HttpGet("{isServerSideBlazor}")]
@@ -26,7 +27,7 @@ namespace Stl.Fusion.Server.Controllers
             var cookies = httpContext.Request.Cookies;
             var isSsb = cookies.TryGetValue(CookieName, out var v) ? v : "";
             if (!int.TryParse(isSsb, out var isSsbInt))
-                return true; // This is the default
+                return IsServerSideBlazorDefault;
             return isSsbInt != 0;
         }
     }
