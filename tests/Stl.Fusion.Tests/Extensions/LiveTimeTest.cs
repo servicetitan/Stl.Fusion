@@ -35,7 +35,7 @@ namespace Stl.Fusion.Tests.Extensions
             var now = DateTime.UtcNow;
             var ago = await liveClock.GetMomentsAgoAsync(now);
             ago.Should().Be("just now");
-            await DelayAsync(1.3);
+            await DelayAsync(1.8);
             ago = await liveClock.GetMomentsAgoAsync(now);
             ago.Should().Be("1 second ago");
         }
