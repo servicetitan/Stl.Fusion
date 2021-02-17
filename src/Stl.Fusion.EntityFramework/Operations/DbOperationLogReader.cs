@@ -54,10 +54,11 @@ namespace Stl.Fusion.EntityFramework.Operations
 
             // Processing them
             foreach (var operation in operations) {
-                if (!OperationCompletionNotifier.NotifyCompleted(operation))
-                    continue; // We saw this operation already
+                OperationCompletionNotifier.NotifyCompleted(operation);
                 var commitTime = operation.CommitTime.ToMoment();
                 if (MaxKnownCommitTime < commitTime)
+                    // This update should happen even for locally executed operations,
+                    // i.e. when NotifyCompleted(...) returns false!
                     MaxKnownCommitTime = commitTime;
             }
         }
