@@ -56,7 +56,6 @@ namespace Stl.Fusion.EntityFramework
 
             // DbOperationScope & its CommandR handler
             Services.TryAddTransient<DbOperationScope<TDbContext>>();
-            Services.TryAddSingleton<DbOperationScopeProvider<TDbContext>.Options>();
             Services.TryAddSingleton<DbOperationScopeProvider<TDbContext>>();
             Services.AddCommander().AddHandlers<DbOperationScopeProvider<TDbContext>>();
 

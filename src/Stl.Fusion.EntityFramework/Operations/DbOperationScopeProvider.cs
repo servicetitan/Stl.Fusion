@@ -14,23 +14,10 @@ namespace Stl.Fusion.EntityFramework.Operations
     public class DbOperationScopeProvider<TDbContext> : DbServiceBase<TDbContext>, ICommandHandler<ICommand>
         where TDbContext : DbContext
     {
-        public class Options
-        {
-            public LogLevel LogLevel { get; set; } = LogLevel.None;
-        }
-
         protected IOperationCompletionNotifier OperationCompletionNotifier { get; }
-        protected LogLevel LogLevel { get; }
 
-        public DbOperationScopeProvider(
-            Options? options,
-            IServiceProvider services)
-            : base(services)
-        {
-            options ??= new();
-            LogLevel = options.LogLevel;
-            OperationCompletionNotifier = services.GetRequiredService<IOperationCompletionNotifier>();
-        }
+        public DbOperationScopeProvider(IServiceProvider services) : base(services)
+            => OperationCompletionNotifier = services.GetRequiredService<IOperationCompletionNotifier>();
 
         [CommandHandler(Priority = 1000, IsFilter = true)]
         public async Task OnCommandAsync(ICommand command, CommandContext context, CancellationToken cancellationToken)
@@ -53,7 +40,6 @@ namespace Stl.Fusion.EntityFramework.Operations
             operation.Command = command;
             context.Items.Set(scope);
 
-            var logEnabled = LogLevel != LogLevel.None && Log.IsEnabled(LogLevel);
             try {
                 await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
                 await scope.CommitAsync(cancellationToken);
@@ -72,8 +58,6 @@ namespace Stl.Fusion.EntityFramework.Operations
                 }
                 throw;
             }
-            if (scope.IsUsed && logEnabled)
-                Log.Log(LogLevel, "Operation succeeded: {Command}", command);
         }
     }
 }

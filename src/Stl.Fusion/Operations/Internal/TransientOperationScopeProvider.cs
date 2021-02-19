@@ -21,25 +21,16 @@ namespace Stl.Fusion.Operations.Internal
     /// </summary>
     public class TransientOperationScopeProvider : ICommandHandler<ICommand>
     {
-        public class Options
-        {
-            public LogLevel LogLevel { get; set; } = LogLevel.None;
-        }
-
         protected IOperationCompletionNotifier OperationCompletionNotifier { get; }
         protected IMomentClock Clock { get; }
         protected IServiceProvider Services { get; }
-        protected LogLevel LogLevel { get; }
         protected ILogger Log { get; }
 
         public TransientOperationScopeProvider(
-            Options? options,
             IServiceProvider services,
             ILogger<InvalidateOnCompletionCommandHandler>? log = null)
         {
-            options ??= new();
             Log = log ?? NullLogger<InvalidateOnCompletionCommandHandler>.Instance;
-            LogLevel = options.LogLevel;
             Services = services;
             Clock = services.GetService<IMomentClock>() ?? SystemClock.Instance;
             OperationCompletionNotifier = services.GetRequiredService<IOperationCompletionNotifier>();
@@ -63,7 +54,6 @@ namespace Stl.Fusion.Operations.Internal
             context.Items.Set(scope);
             context.SetOperation(operation);
 
-            var logEnabled = LogLevel != LogLevel.None && Log.IsEnabled(LogLevel);
             try {
                 await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
                 await scope.CommitAsync(cancellationToken);

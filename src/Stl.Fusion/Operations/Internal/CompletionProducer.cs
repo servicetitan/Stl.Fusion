@@ -11,7 +11,7 @@ namespace Stl.Fusion.Operations.Internal
     {
         public class Options
         {
-            public LogLevel LogLevel { get; set; } = LogLevel.None;
+            public LogLevel LogLevel { get; set; } = LogLevel.Information;
         }
 
         protected ICommander Commander { get; }

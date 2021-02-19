@@ -62,27 +62,32 @@ namespace Stl.Fusion
             Services.TryAddSingleton(new UpdateDelayer.Options());
             Services.TryAddTransient<IUpdateDelayer, UpdateDelayer>();
 
-            // Command completion and invalidation - CommandR services
+            // CommandR, command completion and invalidation
             var commander = Services.AddCommander();
+            Services.TryAddSingleton(_ => new AgentInfo());
+            Services.TryAddSingleton<InvalidationInfoProvider>();
+
+            // Transient operation scope & its provider
             Services.TryAddTransient<TransientOperationScope>();
-            Services.TryAddSingleton<TransientOperationScopeProvider.Options>();
             Services.TryAddSingleton<TransientOperationScopeProvider>();
             commander.AddHandlers<TransientOperationScopeProvider>();
-            Services.TryAddSingleton<InvalidationInfoProvider>();
-            Services.TryAddSingleton<InvalidateOnCompletionCommandHandler.Options>();
-            Services.TryAddSingleton<InvalidateOnCompletionCommandHandler>();
-            commander.AddHandlers<InvalidateOnCompletionCommandHandler>();
+
+            // Nested command logger
             Services.TryAddSingleton<NestedCommandLogger>();
             commander.AddHandlers<NestedCommandLogger>();
 
-            // Operations
-            Services.TryAddSingleton(_ => new AgentInfo());
+            // Operation completion - notifier & producer
             Services.TryAddSingleton<OperationCompletionNotifier.Options>();
             Services.TryAddSingleton<IOperationCompletionNotifier, OperationCompletionNotifier>();
             Services.TryAddSingleton<CompletionProducer.Options>();
             Services.TryAddEnumerable(ServiceDescriptor.Singleton(
                 typeof(IOperationCompletionListener),
                 typeof(CompletionProducer)));
+
+            // Command completion handler performing invalidations
+            Services.TryAddSingleton<InvalidateOnCompletionCommandHandler.Options>();
+            Services.TryAddSingleton<InvalidateOnCompletionCommandHandler>();
+            commander.AddHandlers<InvalidateOnCompletionCommandHandler>();
         }
 
         static FusionBuilder()

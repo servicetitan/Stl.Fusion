@@ -80,7 +80,7 @@ This comment is here solely to reset the indent in VS / Rider -->
     // AuthState property below seemingly does nothing, right?
     // But try to comment out this line & sign-in + sign-out. See the error badge stays there for a while now?
     // Check your explanation on our Discord: https://discord.gg/EKEwv6d
-    [CascadingParameter] protected Task<AuthState> AuthState { get; set; }
+    [CascadingParameter] protected Task<AuthState> AuthState { get; set; } = null!;
 
     protected override void OnInitialized()
     {

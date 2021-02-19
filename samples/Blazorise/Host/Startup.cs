@@ -61,8 +61,10 @@ namespace Templates.Blazor2.Host
                 logging.ClearProviders();
                 logging.AddConsole();
                 logging.SetMinimumLevel(LogLevel.Information);
-                if (Env.IsDevelopment())
+                if (Env.IsDevelopment()) {
                     logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Information);
+                    logging.AddFilter("Stl.Fusion.Operations", LogLevel.Information);
+                }
             });
 
             // DbContext & related services
