@@ -64,7 +64,7 @@ namespace Stl.Fusion
 
             // CommandR, command completion and invalidation
             var commander = Services.AddCommander();
-            Services.TryAddSingleton(_ => new AgentInfo());
+            Services.TryAddSingleton<AgentInfo>();
             Services.TryAddSingleton<InvalidationInfoProvider>();
 
             // Transient operation scope & its provider

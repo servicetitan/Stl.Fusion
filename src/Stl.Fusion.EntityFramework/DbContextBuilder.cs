@@ -49,9 +49,6 @@ namespace Stl.Fusion.EntityFramework
             where TDbOperation : DbOperation, new()
         {
             // Common services
-            Services.TryAddSingleton<AgentInfo>();
-            Services.TryAddSingleton<OperationCompletionNotifier.Options>();
-            Services.TryAddSingleton<IOperationCompletionNotifier, OperationCompletionNotifier>();
             Services.TryAddSingleton<IDbOperationLog<TDbContext>, DbOperationLog<TDbContext, TDbOperation>>();
 
             // DbOperationScope & its CommandR handler
