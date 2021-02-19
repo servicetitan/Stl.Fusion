@@ -129,11 +129,25 @@ namespace Stl.Fusion.EntityFramework
                 var dbContext = DbContext!;
                 dbContext.DisableChangeTracking(); // Just to speed up things a bit
                 var operation = await DbOperationLog.AddAsync(dbContext, Operation, cancellationToken).ConfigureAwait(false);
-                await Transaction!.CommitAsync(cancellationToken).ConfigureAwait(false);
-                operation = await DbOperationLog.TryGetAsync(dbContext, operation.Id, cancellationToken);
-                if (operation == null)
-                    throw Errors.OperationCommitFailed();
-                IsConfirmed = true;
+                try {
+                    await Transaction!.CommitAsync(cancellationToken).ConfigureAwait(false);
+                    IsConfirmed = true;
+                }
+                catch (Exception) {
+                    // See https://docs.microsoft.com/en-us/ef/ef6/fundamentals/connection-resiliency/commit-failures
+                    try {
+                        // We need a new connection here, since the old one might be broken
+                        dbContext = DbContextFactory.CreateDbContext();
+                        var committedOperation = await DbOperationLog.TryGetAsync(dbContext, operation.Id, cancellationToken);
+                        if (committedOperation != null)
+                            IsConfirmed = true;
+                    }
+                    catch {
+                        // Intended
+                    }
+                    if (IsConfirmed != true)
+                        throw;
+                }
             }
             finally {
                 IsConfirmed ??= false;
