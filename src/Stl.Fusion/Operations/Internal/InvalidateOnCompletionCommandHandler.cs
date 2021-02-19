@@ -3,7 +3,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Stl.Collections;
 using Stl.CommandR;
 using Stl.CommandR.Commands;
 using Stl.CommandR.Configuration;

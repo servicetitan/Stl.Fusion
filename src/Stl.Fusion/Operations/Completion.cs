@@ -35,9 +35,9 @@ namespace Stl.Fusion.Operations
         {
             var command = (ICommand?) operation.Command
                 ?? throw Errors.OperationHasNoCommand(nameof(operation));
-            var tInvalidate = typeof(Completion<>).MakeGenericType(command.GetType());
-            var invalidate = (ICompletion) tInvalidate.CreateInstance(operation)!;
-            return invalidate.MarkServerSide();
+            var tCompletion = typeof(Completion<>).MakeGenericType(command.GetType());
+            var completion = (ICompletion) tCompletion.CreateInstance(operation)!;
+            return completion.MarkServerSide();
         }
     }
 }
