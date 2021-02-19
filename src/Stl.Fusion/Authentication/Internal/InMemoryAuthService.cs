@@ -7,11 +7,10 @@ using System.Threading.Tasks;
 using Stl.Async;
 using Stl.CommandR;
 using Stl.Fusion.Authentication.Commands;
-using Stl.Fusion.Authentication.Internal;
 using Stl.Fusion.Operations;
 using Stl.Time;
 
-namespace Stl.Fusion.Authentication
+namespace Stl.Fusion.Authentication.Internal
 {
     public class InMemoryAuthService : IServerSideAuthService
     {

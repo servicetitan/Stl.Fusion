@@ -173,7 +173,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             return sessionInfo;
         }
 
-        public async Task UpdatePresenceAsync(
+        public virtual async Task UpdatePresenceAsync(
             Session session, CancellationToken cancellationToken = default)
         {
             var sessionInfo = await GetSessionInfoAsync(session, cancellationToken).ConfigureAwait(false);

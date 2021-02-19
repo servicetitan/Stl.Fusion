@@ -2,7 +2,8 @@ using System;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Stl.Internal;
+using Stl.Fusion.Authentication.Internal;
+using Errors = Stl.Internal.Errors;
 
 namespace Stl.Fusion.Authentication
 {
