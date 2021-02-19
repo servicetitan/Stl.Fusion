@@ -78,22 +78,10 @@ namespace Stl.Fusion.Operations.Internal
                 throw;
             }
 
-            // Since this is the outermost scope handler, it's reasonable to run the
-            // ICompletion command right from it for any other scope too.
-            var completion = context.Items.TryGet<ICompletion>();
-            if (completion == null) { // Also means scope.IsUsed == true
-                if (logEnabled)
-                    Log.Log(LogLevel, "Operation succeeded: {Command}", command);
-                completion = Completion.New(operation);
-                OperationCompletionNotifier.NotifyCompleted(operation);
-                try {
-                    await context.Commander.CallAsync(completion, true, default).ConfigureAwait(false);
-                }
-                catch (Exception e) {
-                    Log.LogError(e, "Local operation completion failed! Command: {Command}", command);
-                    // No throw: the operation itself succeeded
-                }
-            }
+            // Since this is the outermost scope handler, it's reasonable to
+            // call OperationCompletionNotifier.NotifyCompletedAsync from it
+            var actualOperation = context.Items.GetOrDefault<IOperation>(operation);
+            await OperationCompletionNotifier.NotifyCompletedAsync(actualOperation).ConfigureAwait(false);
         }
     }
 }

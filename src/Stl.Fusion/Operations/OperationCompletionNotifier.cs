@@ -13,7 +13,7 @@ namespace Stl.Fusion.Operations
 {
     public interface IOperationCompletionNotifier
     {
-        bool NotifyCompleted(IOperation operation);
+        Task<bool> NotifyCompletedAsync(IOperation operation);
     }
 
     public class OperationCompletionNotifier : IOperationCompletionNotifier
@@ -28,7 +28,7 @@ namespace Stl.Fusion.Operations
         protected TimeSpan MaxKnownOperationAge { get; }
         protected AgentInfo AgentInfo { get; }
         protected IMomentClock Clock { get; }
-        protected IOperationCompletionListener[] OperationCompletionHandlers { get; }
+        protected IOperationCompletionListener[] OperationCompletionListeners { get; }
         protected BinaryHeap<Moment, Symbol> KnownOperationHeap { get; } = new();
         protected HashSet<Symbol> KnownOperationSet { get; } = new();
         protected object Lock { get; } = new();
@@ -46,10 +46,10 @@ namespace Stl.Fusion.Operations
             MaxKnownOperationCount = options.MaxKnownOperationCount;
             MaxKnownOperationAge = options.MaxKnownOperationAge;
             AgentInfo = agentInfo;
-            OperationCompletionHandlers = operationCompletionHandlers.ToArray();
+            OperationCompletionListeners = operationCompletionHandlers.ToArray();
         }
 
-        public bool NotifyCompleted(IOperation operation)
+        public Task<bool> NotifyCompletedAsync(IOperation operation)
         {
             var now = Clock.Now;
             var minOperationStartTime = now - MaxKnownOperationAge;
@@ -57,7 +57,7 @@ namespace Stl.Fusion.Operations
             var operationId = (Symbol) operation.Id;
             lock (Lock) {
                 if (KnownOperationSet.Contains(operationId))
-                    return false;
+                    return TaskEx.FalseTask;
                 // Removing some operations if there are too many
                 while (KnownOperationSet.Count >= MaxKnownOperationCount) {
                     if (KnownOperationHeap.ExtractMin().IsSome(out var value))
@@ -74,18 +74,28 @@ namespace Stl.Fusion.Operations
                 if (KnownOperationSet.Add(operationId))
                     KnownOperationHeap.Add(operationStartTime, operationId);
             }
+
             using var _ = ExecutionContextEx.SuppressFlow();
-            Task.Run(() => {
-                foreach (var handler in OperationCompletionHandlers) {
+            return Task.Run(async () => {
+                var tasks = new Task[OperationCompletionListeners.Length];
+                for (var i = 0; i < OperationCompletionListeners.Length; i++) {
+                    var handler = OperationCompletionListeners[i];
                     try {
-                        handler.OnOperationCompleted(operation);
+                        tasks[i] = handler.OnOperationCompletedAsync(operation);
                     }
                     catch (Exception e) {
-                        Log.LogError(e, "Error in operation completion handler of type '{HandlerType}'", handler.GetType());
+                        Log.LogError(e, "Error in operation completion handler of type '{HandlerType}'",
+                            handler.GetType());
                     }
                 }
+                try {
+                    await Task.WhenAll(tasks).ConfigureAwait(false);
+                }
+                catch (Exception e) {
+                    Log.LogError(e, "Error in one of operation completion handlers");
+                }
+                return true;
             });
-            return true;
         }
     }
 }

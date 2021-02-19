@@ -16,25 +16,34 @@ namespace Stl.Fusion.EntityFramework.Operations
         {
             public TimeSpan MaxCommitDuration { get; set; } = TimeSpan.FromSeconds(1);
             public TimeSpan UnconditionalWakeUpPeriod { get; set; } = TimeSpan.FromSeconds(0.25);
+            public int BatchSize { get; set; } = 256;
+            public TimeSpan ErrorDelay { get; set; } = TimeSpan.FromSeconds(0.25);
         }
 
-        protected IOperationCompletionNotifier OperationCompletionNotifier { get; }
-        protected IDbOperationLog<TDbContext> DbOperationLog { get; }
         protected TimeSpan MaxCommitDuration { get; }
         protected TimeSpan UnconditionalWakeUpPeriod { get; }
-        protected IDbOperationLogChangeTracker<TDbContext>? OperationLogChangeMonitor { get; }
-        protected Moment MaxKnownCommitTime { get; set; }
+        protected int BatchSize { get; }
+        protected TimeSpan ErrorDelay { get; }
 
-        public DbOperationLogReader(Options? options,
-            IServiceProvider services,
-            IDbOperationLogChangeTracker<TDbContext>? operationLogChangeMonitor = null)
+        protected AgentInfo AgentInfo { get; }
+        protected IOperationCompletionNotifier OperationCompletionNotifier { get; }
+        protected IDbOperationLogChangeTracker<TDbContext>? OperationLogChangeMonitor { get; }
+        protected IDbOperationLog<TDbContext> DbOperationLog { get; }
+        protected Moment MaxKnownCommitTime { get; set; }
+        protected int LastCount { get; set; }
+
+        public DbOperationLogReader(Options? options, IServiceProvider services)
             : base(services)
         {
             options ??= new();
             MaxCommitDuration = options.MaxCommitDuration;
             UnconditionalWakeUpPeriod = options.UnconditionalWakeUpPeriod;
+            BatchSize = options.BatchSize;
+            ErrorDelay = options.ErrorDelay;
+
             MaxKnownCommitTime = Clock.Now;
-            OperationLogChangeMonitor = operationLogChangeMonitor;
+            AgentInfo = services.GetRequiredService<AgentInfo>();
+            OperationLogChangeMonitor = services.GetService<IDbOperationLogChangeTracker<TDbContext>>();
             OperationCompletionNotifier = services.GetRequiredService<IOperationCompletionNotifier>();
             DbOperationLog = services.GetRequiredService<IDbOperationLog<TDbContext>>();
         }
@@ -45,27 +54,44 @@ namespace Stl.Fusion.EntityFramework.Operations
 
             // Fetching potentially new operations
             var operations = await DbOperationLog
-                .ListNewlyCommittedAsync(minCommitTime, cancellationToken)
+                .ListNewlyCommittedAsync(minCommitTime, BatchSize, cancellationToken)
                 .ConfigureAwait(false);
 
-            // var secondsAgo = (Clock.Now.ToDateTime() - minCommitTime).TotalSeconds;
-            // Log.LogInformation("({Ago:F2}s ago ... now): {OpCount} operations",
-            //     secondsAgo, operations.Count);
-
             // Processing them
-            foreach (var operation in operations) {
-                OperationCompletionNotifier.NotifyCompleted(operation);
+            var tasks = new Task[operations.Count];
+            for (var i = 0; i < operations.Count; i++) {
+                var operation = operations[i];
+                var isLocal = operation.AgentId == AgentInfo.Id.Value;
+                // Local completions are invoked by TransientOperationScopeProvider
+                // _inside_ the command processing pipeline. Trying to trigger them here
+                // means a tiny chance of running them _outside_ of command processing
+                // pipeline, which makes it possible to see command completing
+                // prior to its invalidation logic completion.
+                tasks[i] = isLocal
+                    ? Task.CompletedTask // Skips local operation!
+                    : OperationCompletionNotifier.NotifyCompletedAsync(operation);
                 var commitTime = operation.CommitTime.ToMoment();
                 if (MaxKnownCommitTime < commitTime)
-                    // This update should happen even for locally executed operations,
-                    // i.e. when NotifyCompleted(...) returns false!
                     MaxKnownCommitTime = commitTime;
             }
+
+            // Let's wait when all of these tasks complete, otherwise
+            // we might end up creating too many tasks
+            await Task.WhenAll(tasks).ConfigureAwait(false);
+            LastCount = operations.Count;
         }
 
         protected override Task SleepAsync(Exception? error, CancellationToken cancellationToken)
-            => OperationLogChangeMonitor?.WaitForChangesAsync(cancellationToken)
-                .WithTimeout(Clock, UnconditionalWakeUpPeriod, cancellationToken)
-            ?? Clock.DelayAsync(UnconditionalWakeUpPeriod, cancellationToken);
+        {
+            if (error != null)
+                return Clock.DelayAsync(ErrorDelay, cancellationToken);
+            if (LastCount == BatchSize)
+                return Task.CompletedTask;
+            if (OperationLogChangeMonitor == null)
+                return Clock.DelayAsync(UnconditionalWakeUpPeriod, cancellationToken);
+            return OperationLogChangeMonitor
+                .WaitForChangesAsync(cancellationToken)
+                .WithTimeout(Clock, UnconditionalWakeUpPeriod, cancellationToken);
+        }
     }
 }

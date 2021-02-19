@@ -16,7 +16,7 @@ namespace Stl.Fusion.EntityFramework.Operations
         Task<DbOperation> AddAsync(TDbContext dbContext, IOperation operation, CancellationToken cancellationToken);
         Task<DbOperation?> TryGetAsync(TDbContext dbContext, string id, CancellationToken cancellationToken);
 
-        Task<List<DbOperation>> ListNewlyCommittedAsync(DateTime minCommitTime, CancellationToken cancellationToken);
+        Task<List<DbOperation>> ListNewlyCommittedAsync(DateTime minCommitTime, int maxCount, CancellationToken cancellationToken);
         Task<int> TrimAsync(DateTime minCommitTime, int maxCount, CancellationToken cancellationToken);
     }
 
@@ -61,12 +61,13 @@ namespace Stl.Fusion.EntityFramework.Operations
         }
 
         public virtual async Task<List<DbOperation>> ListNewlyCommittedAsync(
-            DateTime minCommitTime, CancellationToken cancellationToken)
+            DateTime minCommitTime, int maxCount, CancellationToken cancellationToken)
         {
             await using var dbContext = CreateDbContext();
             var operations = await dbContext.Set<TDbOperation>().AsQueryable()
                 .Where(o => o.CommitTime >= minCommitTime)
                 .OrderBy(o => o.CommitTime)
+                .Take(maxCount)
                 .ToListAsync(cancellationToken).ConfigureAwait(false);
             return operations.Cast<DbOperation>().ToList()!;
         }

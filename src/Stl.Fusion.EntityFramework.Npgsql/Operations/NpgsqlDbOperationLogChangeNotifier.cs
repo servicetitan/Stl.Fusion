@@ -55,18 +55,19 @@ namespace Stl.Fusion.EntityFramework.Npgsql.Operations
             }).Ignore();
         }
 
-        public void OnOperationCompleted(IOperation operation)
+        public Task OnOperationCompletedAsync(IOperation operation)
         {
             if (operation.AgentId != AgentInfo.Id.Value) // Only local commands require notification
-                return;
+                return Task.CompletedTask;
             var commandContext = CommandContext.Current;
             if (commandContext != null) { // It's a command
                 var operationScope = commandContext.Items.TryGet<DbOperationScope<TDbContext>>();
                 if (operationScope == null || !operationScope.IsUsed) // But it didn't change anything related to TDbContext
-                    return;
+                    return Task.CompletedTask;
             }
             // If it wasn't command, we pessimistically assume it changed something
             Notify();
+            return Task.CompletedTask;
         }
 
         // Protected methods

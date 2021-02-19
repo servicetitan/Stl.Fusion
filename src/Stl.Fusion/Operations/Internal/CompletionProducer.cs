@@ -31,28 +31,27 @@ namespace Stl.Fusion.Operations.Internal
             Commander = commander;
         }
 
-        public virtual void OnOperationCompleted(IOperation operation)
+        public virtual Task OnOperationCompletedAsync(IOperation operation)
         {
-            if (operation.AgentId == AgentInfo.Id.Value)
-                return; // Local completions are handled by LocalCompletionProducer
             if (!(operation.Command is ICommand command))
-                return; // We can't complete non-commands
-            if (command is IServerSideCommand serverSideCommand)
-                serverSideCommand.MarkServerSide(); // Server-side commands should be marked as such
-
-            Task.Run(async () => {
+                return Task.CompletedTask; // We can't complete non-commands
+            return Task.Run(async () => {
+                var isLocal = operation.AgentId == AgentInfo.Id.Value;
+                var operationType = isLocal ? "Local" : "External";
                 try {
+                    if (command is IServerSideCommand serverSideCommand)
+                        serverSideCommand.MarkServerSide(); // Server-side commands should be marked as such
                     await Commander.CallAsync(Completion.New(operation), true).ConfigureAwait(false);
                     var logEnabled = LogLevel != LogLevel.None && Log.IsEnabled(LogLevel);
                     if (logEnabled)
                         Log.Log(LogLevel,
-                            "External operation completion succeeded. Agent: '{AgentId}', Command: {Command}",
-                            operation.AgentId, command);
+                            "{OperationType} operation completion succeeded. Agent: '{AgentId}', Command: {Command}",
+                            operationType, operation.AgentId, command);
                 }
                 catch (Exception e) {
                     Log.LogError(e,
-                        "External operation completion failed! Agent: '{AgentId}', Command: {Command}",
-                        operation.AgentId, command);
+                        "{OperationType} operation completion failed! Agent: '{AgentId}', Command: {Command}",
+                        operationType, operation.AgentId, command);
                 }
             });
         }

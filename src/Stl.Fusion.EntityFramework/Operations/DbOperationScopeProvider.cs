@@ -72,20 +72,8 @@ namespace Stl.Fusion.EntityFramework.Operations
                 }
                 throw;
             }
-            if (scope.IsUsed) {
-                if (logEnabled)
-                    Log.Log(LogLevel, "Operation succeeded: {Command}", command);
-                var completion = Completion.New(operation);
-                context.Items.Set(completion);
-                OperationCompletionNotifier.NotifyCompleted(operation);
-                try {
-                    await context.Commander.CallAsync(completion, true, default).ConfigureAwait(false);
-                }
-                catch (Exception e) {
-                    Log.LogError(e, "Local operation completion failed! Command: {Command}", command);
-                    // No throw: the operation itself succeeded
-                }
-            }
+            if (scope.IsUsed && logEnabled)
+                Log.Log(LogLevel, "Operation succeeded: {Command}", command);
         }
     }
 }
