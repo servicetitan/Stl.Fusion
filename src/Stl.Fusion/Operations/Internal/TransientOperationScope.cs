@@ -14,7 +14,7 @@ namespace Stl.Fusion.Operations.Internal
     /// This scope serves as the outermost, "catch-all" operation scope for
     /// commands that don't use any other scopes.
     /// </summary>
-    public class LocalOperationScope : AsyncDisposableBase, IOperationScope
+    public class TransientOperationScope : AsyncDisposableBase, IOperationScope
     {
         protected IServiceProvider Services { get; }
         protected AgentInfo AgentInfo { get; }
@@ -22,20 +22,20 @@ namespace Stl.Fusion.Operations.Internal
         protected ILogger Log { get; }
 
         IOperation IOperationScope.Operation => Operation;
-        public LocalOperation Operation { get; }
+        public TransientOperation Operation { get; }
         public CommandContext CommandContext { get; }
         public bool IsUsed => CommandContext.Items.TryGet<ICompletion>() == null;
         public bool IsClosed { get; private set; }
         public bool? IsConfirmed { get; private set; }
 
-        public LocalOperationScope(IServiceProvider services)
+        public TransientOperationScope(IServiceProvider services)
         {
             var loggerFactory = services.GetService<ILoggerFactory>();
             Log = loggerFactory?.CreateLogger(GetType()) ?? NullLogger.Instance;
             Services = services;
             Clock = services.GetService<IMomentClock>() ?? SystemClock.Instance;
             AgentInfo = services.GetRequiredService<AgentInfo>();
-            Operation = new LocalOperation(true) {
+            Operation = new TransientOperation(true) {
                 AgentId = AgentInfo.Id,
                 StartTime = Clock.Now,
             };

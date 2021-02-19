@@ -4,7 +4,7 @@ using Stl.Collections;
 
 namespace Stl.Fusion.Operations.Internal
 {
-    public class LocalOperation : IOperation
+    public class TransientOperation : IOperation
     {
         private static long _operationId;
 
@@ -15,8 +15,8 @@ namespace Stl.Fusion.Operations.Internal
         public object? Command { get; set; }
         public OptionSet Items { get; set; } = new();
 
-        public LocalOperation() { }
-        public LocalOperation(bool autogenerateId)
+        public TransientOperation() { }
+        public TransientOperation(bool autogenerateId)
         {
             if (autogenerateId)
                 Id = "Local-" + Interlocked.Increment(ref _operationId).ToString();

@@ -19,7 +19,7 @@ namespace Stl.Fusion.Operations.Internal
     /// In addition, this scope actually "sends" this notification from
     /// any other (nested) scope.
     /// </summary>
-    public class LocalOperationScopeProvider : ICommandHandler<ICommand>
+    public class TransientOperationScopeProvider : ICommandHandler<ICommand>
     {
         public class Options
         {
@@ -32,7 +32,7 @@ namespace Stl.Fusion.Operations.Internal
         protected LogLevel LogLevel { get; }
         protected ILogger Log { get; }
 
-        public LocalOperationScopeProvider(
+        public TransientOperationScopeProvider(
             Options? options,
             IServiceProvider services,
             ILogger<InvalidateOnCompletionCommandHandler>? log = null)
@@ -57,7 +57,7 @@ namespace Stl.Fusion.Operations.Internal
                 return;
             }
 
-            await using var scope = Services.GetRequiredService<LocalOperationScope>();
+            await using var scope = Services.GetRequiredService<TransientOperationScope>();
             var operation = scope.Operation;
             operation.Command = command;
             context.Items.Set(scope);
