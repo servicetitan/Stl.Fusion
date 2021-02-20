@@ -60,9 +60,22 @@ namespace Stl.Fusion.EntityFramework
         }
 
         public static void EnableSaveChanges(this DbContext dbContext)
-            => dbContext.SavingChanges -= FailOnSaveChanges;
+        {
+#if !NETSTANDARD2_0
+            dbContext.SavingChanges -= FailOnSaveChanges;
+#else
+            throw new NotImplementedException();
+#endif
+
+        }
 
         public static void DisableSaveChanges(this DbContext dbContext)
-            => dbContext.SavingChanges += FailOnSaveChanges;
+        {
+#if !NETSTANDARD2_0
+            dbContext.SavingChanges += FailOnSaveChanges;
+#else
+            throw new NotImplementedException();
+#endif
+        }
     }
 }

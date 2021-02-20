@@ -1,14 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net5.0;netcoreapp3.1;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>net5.0;netcoreapp3.1;netstandard2.1;netstandard2.0</TargetFrameworks>
     <PackageTags>servicetitan stl stl_fusion</PackageTags>
     <Description>Stl.Fusion.EntityFramework - Fusion services utilizing EF Core.</Description>
   </PropertyGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' != 'netstandard2.0' ">
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Ulid" />
+  </ItemGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
+    <PackageReference Include="Microsoft.EntityFrameworkCore" VersionOverride="3.1.12" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" VersionOverride="3.1.12" />
     <PackageReference Include="Ulid" />
   </ItemGroup>
 

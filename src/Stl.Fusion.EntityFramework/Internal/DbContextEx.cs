@@ -10,8 +10,14 @@ namespace Stl.Fusion.EntityFramework.Internal
             .GetField("_lease", BindingFlags.Instance | BindingFlags.NonPublic)!;
 
         public static void StopPooling(this DbContext dbContext)
+        {
+#if !NETSTANDARD2_0
 #pragma warning disable EF1001
-            => LeaseField.SetValue(dbContext, DbContextLease.InactiveLease);
-#pragma warning restore EF1001
+            LeaseField.SetValue(dbContext, DbContextLease.InactiveLease);
+#pragma warning restore
+#else
+            throw new NotImplementedException();
+#endif
+        }
     }
 }
