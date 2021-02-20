@@ -51,11 +51,11 @@ The sample supports **both (!)** Server-Side Blazor and Blazor WebAssembly
 
 ![](https://github.com/servicetitan/Stl.Fusion.Samples/raw/master/docs/img/Samples-Blazor-Auth.gif)
 
-<img src="https://img.shields.io/badge/-New!-brightgreen" valign="middle"> Play 
-with these samples hosted in a small 1-core K8s cluster
-[right now](https://fusion-samples.servicetitan.com)!
+<img src="https://img.shields.io/badge/-Live!-red" valign="middle"> Play with [live version of this sample](https://fusion-samples.servicetitan.com) right now!
 
-Check out ["Why real-time UI is inevitable future for web apps?"](https://medium.com/@alexyakunin/features-of-the-future-web-apps-part-1-e32cf4e4e4f4?source=friends_link&sk=65dacdbf670ef9b5d961c4c666e223e2) to learn why "Refresh" action is getting obsolete.
+<img src="https://img.shields.io/badge/-New!-brightgreen" valign="middle"> Check out [Board Games](https://github.com/alexyakunin/BoardGames) - the newest Fusion sample that implements both Blazor Server and WASM modes, 2 games, chat, online presence, OAuth sign-in, user session tracking, and a number of other 100% real-time features. All of this is powered by Fusion + just 35 lines of code related to real-time updates!
+
+Read ["Why real-time UI is inevitable future for web apps?"](https://medium.com/@alexyakunin/features-of-the-future-web-apps-part-1-e32cf4e4e4f4?source=friends_link&sk=65dacdbf670ef9b5d961c4c666e223e2) to learn why "Refresh" is so obsolete nowadays.
 
 ### Speedup Your Service By Caching Everything
 
@@ -174,7 +174,7 @@ In other words, Fusion-based web apps should scale much better than MMORPG.
 
 Check out 
 ["Scaling Fusion Services" part of the Tutorial](https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/Part08.md)
-to see a much more robust description on how Fusion scales.
+to see a much more robust description of how Fusion scales.
 
 ## Enough talk. Show me the code!
 
