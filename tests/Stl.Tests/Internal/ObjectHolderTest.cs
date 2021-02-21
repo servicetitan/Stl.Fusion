@@ -8,6 +8,7 @@ using Xunit;
 
 namespace Stl.Tests.Internal
 {
+    [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
     public class ObjectHolderTest
     {
         [Fact]

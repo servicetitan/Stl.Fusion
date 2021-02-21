@@ -8,7 +8,7 @@ using Stl.Time;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Stl.Tests.Collections
+namespace Stl.Tests.Time
 {
     [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
     public class ConcurrentTimerSetTest : TestBase
