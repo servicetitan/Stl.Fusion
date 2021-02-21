@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
 using Stl.Internal;
+using Stl.Testing;
 using Xunit;
 
 namespace Stl.Tests.Internal
@@ -13,7 +14,8 @@ namespace Stl.Tests.Internal
         public void BasicTest()
         {
             var holder = new ObjectHolder();
-            var objects = Enumerable.Range(0, 10_000).Select(i => i.ToString()).ToArray();
+            var count = TestRunnerInfo.IsBuildAgent() ? 100 : 1000;
+            var objects = Enumerable.Range(0, count).Select(i => i.ToString()).ToArray();
 
             var holds = new HashSet<IDisposable>();
             for (var i = 0; i < objects.Length; i++)
