@@ -18,8 +18,9 @@ namespace Stl.Tests.Internal
             var objects = Enumerable.Range(0, count).Select(i => i.ToString()).ToArray();
 
             var holds = new HashSet<IDisposable>();
-            for (var i = 0; i < objects.Length; i++)
-                holds.Add(holder.Hold(objects[i]));
+            foreach (var o in objects)
+                holds.Add(holder.Hold(o));
+
             holder.IsEmpty.Should().BeFalse();
 
             // HashSet randomizes the order of disposal
