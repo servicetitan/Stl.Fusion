@@ -2,7 +2,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Stl.CommandR;
 using Stl.CommandR.Configuration;
@@ -23,7 +22,7 @@ namespace Stl.Tests.CommandR.Services
             CancellationToken cancellationToken)
         {
             CommandContext.GetCurrent().Should().Be(context);
-            context.ExecutionState.Handlers.Count.Should().Be(3);
+            context.ExecutionState.Handlers.Count.Should().Be(5);
 
             await using var dbContext = await CreateCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
             await using var anotherDbContext = await CreateCommandDbContextAsync(cancellationToken).ConfigureAwait(false);

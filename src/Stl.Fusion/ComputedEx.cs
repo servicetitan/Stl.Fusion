@@ -4,11 +4,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
 using Stl.Fusion.Internal;
+using Stl.Internal;
+using Errors = Stl.Fusion.Internal.Errors;
 
 namespace Stl.Fusion
 {
     public static class ComputedEx
     {
+        private static readonly ObjectHolder ObjectHolder = new();
+
         public static void Invalidate(this IComputed computed, TimeSpan delay, bool? usePreciseTimer = null)
         {
             if (delay <= TimeSpan.Zero) {
@@ -43,13 +47,18 @@ namespace Stl.Fusion
             });
         }
 
-        public static Task WhenInvalidatedAsync(this IComputed computed, CancellationToken cancellationToken = default)
+        public static async Task WhenInvalidatedAsync(this IComputed computed, CancellationToken cancellationToken = default)
         {
             if (computed.ConsistencyState == ConsistencyState.Invalidated)
-                return Task.CompletedTask;
+                return;
+            // Why holding? If the calling task isn't referenced from alive set,
+            // (e.g. it is simply started w/ Run), there is nothing that may
+            // prevent GC from collecting it + computed, even though WhenInvalidatedAsync
+            // implies waiting, right?
+            using var _ = ObjectHolder.Hold(computed);
             var ts = TaskSource.New<Unit>(true);
-            computed.Invalidated += c => ts.SetResult(default);
-            return ts.Task.WithFakeCancellation(cancellationToken);
+            computed.Invalidated += _ => ts.SetResult(default);
+            await ts.Task.WithFakeCancellation(cancellationToken).ConfigureAwait(false);
         }
 
         public static void SetOutput<T>(this IComputed<T> computed, Result<T> output)

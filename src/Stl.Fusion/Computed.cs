@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Collections;
 using Stl.Collections.Slim;
-using Stl.Extensibility;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Internal;
 
@@ -205,6 +204,7 @@ namespace Stl.Fusion
                 catch {
                     // We should never throw errors during the invalidation
                 }
+                _invalidated = null;
                 var computedRegistry = ComputedRegistry.Instance;
                 var usedBySpan = usedBy.Span;
                 for (var i = 0; i < usedBySpan.Length; i++) {

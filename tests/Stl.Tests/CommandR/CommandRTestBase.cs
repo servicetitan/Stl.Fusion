@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using Stl.CommandR;
 using Stl.DependencyInjection;
 using Stl.Extensibility;
+using Stl.Fusion;
 using Stl.Fusion.EntityFramework;
 using Stl.IO;
 using Stl.Testing;
@@ -60,7 +61,8 @@ namespace Stl.Tests.CommandR
                     LogFilter));
             });
 
-            var commandR = services.AddCommander();
+            var commander = services.AddCommander();
+            var fusion = services.AddFusion();
 
             if (UseDbContext) {
                 var testType = GetType();
