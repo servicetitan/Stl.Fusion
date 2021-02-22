@@ -30,12 +30,12 @@ namespace Stl.Fusion.EntityFramework
         protected static MethodInfo ContainsMethod { get; } = typeof(HashSet<TKey>).GetMethod(nameof(HashSet<TKey>.Contains))!;
 
         private readonly Lazy<AsyncBatchProcessor<TKey, TEntity>> _batchProcessorLazy;
-        protected Func<DbEntityResolver<TDbContext, TKey, TEntity>, AsyncBatchProcessor<TKey, TEntity>> BatchProcessorFactory { get; }
+        protected Func<DbEntityResolver<TDbContext, TKey, TEntity>, AsyncBatchProcessor<TKey, TEntity>> BatchProcessorFactory { get; set; }
         protected AsyncBatchProcessor<TKey, TEntity> BatchProcessor => _batchProcessorLazy.Value;
-        protected Func<Expression, Expression> KeyExtractorExpressionBuilder { get; }
-        protected Func<TEntity, TKey> KeyExtractor { get; }
-        protected Func<IQueryable<TEntity>, IQueryable<TEntity>> QueryTransformer { get; }
-        protected Action<Dictionary<TKey, TEntity>> PostProcessor { get; }
+        protected Func<Expression, Expression> KeyExtractorExpressionBuilder { get; set; }
+        protected Func<TEntity, TKey> KeyExtractor { get; set; }
+        protected Func<IQueryable<TEntity>, IQueryable<TEntity>> QueryTransformer { get; set; }
+        protected Action<Dictionary<TKey, TEntity>> PostProcessor { get; set; }
 
         public DbEntityResolver(IServiceProvider services) : this(null, services) { }
         public DbEntityResolver(Options? options, IServiceProvider services) : base(services)
