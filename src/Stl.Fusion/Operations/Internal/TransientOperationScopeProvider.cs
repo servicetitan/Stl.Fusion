@@ -28,9 +28,9 @@ namespace Stl.Fusion.Operations.Internal
 
         public TransientOperationScopeProvider(
             IServiceProvider services,
-            ILogger<InvalidateOnCompletionCommandHandler>? log = null)
+            ILogger<TransientOperationScopeProvider>? log = null)
         {
-            Log = log ?? NullLogger<InvalidateOnCompletionCommandHandler>.Instance;
+            Log = log ?? NullLogger<TransientOperationScopeProvider>.Instance;
             Services = services;
             Clock = services.GetService<IMomentClock>() ?? SystemClock.Instance;
             OperationCompletionNotifier = services.GetRequiredService<IOperationCompletionNotifier>();

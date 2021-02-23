@@ -88,6 +88,10 @@ namespace Stl.Fusion
             Services.TryAddSingleton<InvalidateOnCompletionCommandHandler.Options>();
             Services.TryAddSingleton<InvalidateOnCompletionCommandHandler>();
             commander.AddHandlers<InvalidateOnCompletionCommandHandler>();
+
+            // Catch-all completion handler
+            Services.TryAddSingleton<CatchAllCompletionHandler>();
+            commander.AddHandlers<CatchAllCompletionHandler>();
         }
 
         static FusionBuilder()

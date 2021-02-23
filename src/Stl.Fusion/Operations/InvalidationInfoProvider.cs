@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
-using Stl.Async;
 using Stl.CommandR;
 using Stl.CommandR.Commands;
 using Stl.CommandR.Configuration;
