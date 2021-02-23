@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Stl.CommandR;
 using Stl.CommandR.Commands;
 using Stl.CommandR.Configuration;
+using Stl.Fusion.Bridge.Interception;
 
 namespace Stl.Fusion.Operations.Internal
 {
@@ -49,15 +50,25 @@ namespace Stl.Fusion.Operations.Internal
             try {
                 var logEnabled = LogLevel != LogLevel.None && Log.IsEnabled(LogLevel);
                 var finalHandler = context.ExecutionState.FindFinalHandler();
-                if (finalHandler != null) {
+                var useOriginalCommandHandler = finalHandler == null
+                    || finalHandler.GetHandlerService(command, context) is CatchAllCompletionHandler;
+                if (useOriginalCommandHandler) {
+                    if (InvalidationInfoProvider.IsReplicaServiceCommand(originalCommand)) {
+                        if (logEnabled)
+                            Log.Log(LogLevel, "No invalidation for replica service command '{CommandType}'",
+                                originalCommand.GetType());
+                        return;
+                    }
                     if (logEnabled)
-                        Log.Log(LogLevel, "Invalidating via dedicated command handler for '{CommandType}'", command.GetType());
-                    await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
+                        Log.Log(LogLevel, "Invalidating via original command handler for '{CommandType}'",
+                            originalCommand.GetType());
+                    await context.Commander.CallAsync(originalCommand, cancellationToken).ConfigureAwait(false);
                 }
                 else {
                     if (logEnabled)
-                        Log.Log(LogLevel, "Invalidating via shared command handler for '{CommandType}'", originalCommand.GetType());
-                    await context.Commander.CallAsync(originalCommand, cancellationToken).ConfigureAwait(false);
+                        Log.Log(LogLevel, "Invalidating via dedicated command handler for '{CommandType}'",
+                            command.GetType());
+                    await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
                 }
 
                 var operationItems = operation.Items;
