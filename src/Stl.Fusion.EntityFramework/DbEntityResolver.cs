@@ -77,7 +77,7 @@ namespace Stl.Fusion.EntityFramework
             return entity ?? throw Errors.EntityNotFound<TEntity>();
         }
 
-        public async Task<TEntity> TryGetAsync(TKey key, CancellationToken cancellationToken = default)
+        public async Task<TEntity?> TryGetAsync(TKey key, CancellationToken cancellationToken = default)
             => await BatchProcessor.ProcessAsync(key, cancellationToken).ConfigureAwait(false);
 
         public async Task<Dictionary<TKey, TEntity>> GetManyAsync(IEnumerable<TKey> keys, CancellationToken cancellationToken = default)
