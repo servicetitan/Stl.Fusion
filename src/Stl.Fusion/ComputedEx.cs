@@ -55,10 +55,22 @@ namespace Stl.Fusion
             // (e.g. it is simply started w/ Run), there is nothing that may
             // prevent GC from collecting it + computed, even though WhenInvalidatedAsync
             // implies waiting, right?
-            using var _ = ObjectHolder.Hold(computed);
             var ts = TaskSource.New<Unit>(true);
-            computed.Invalidated += _ => ts.SetResult(default);
-            await ts.Task.WithFakeCancellation(cancellationToken).ConfigureAwait(false);
+            var onInvalidated = (Action<IComputed>) (_ => ts.SetResult(default));
+            computed.Invalidated += onInvalidated;
+            var holder = ObjectHolder.Hold(computed);
+            try {
+                await ts.Task.WithFakeCancellation(cancellationToken).ConfigureAwait(false);
+                // No need to remove onInvalidated handler in case of success:
+                // all handlers are auto-removed on invalidation.
+            }
+            catch {
+                computed.Invalidated -= onInvalidated;
+                throw;
+            }
+            finally {
+                holder.Dispose();
+            }
         }
 
         public static void SetOutput<T>(this IComputed<T> computed, Result<T> output)
