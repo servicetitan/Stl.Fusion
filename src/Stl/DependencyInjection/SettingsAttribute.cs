@@ -5,7 +5,7 @@ namespace Stl.DependencyInjection
 {
     public class SettingsAttribute : ServiceAttributeBase
     {
-        public string SectionName { get; set; } = "";
+        public string SectionName { get; set; }
 
         public SettingsAttribute(string sectionName)
             => SectionName = sectionName;
