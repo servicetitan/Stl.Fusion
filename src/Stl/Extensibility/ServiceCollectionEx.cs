@@ -22,13 +22,11 @@ namespace Stl.Extensibility
         }
 
         public static IServiceCollection UseModules(this IServiceCollection services,
-            Action<ModuleBuilder> configureModuleBuilder,
-            Action<ModuleBuilder>? useModules = null)
+            Action<ModuleBuilder> configureModules)
         {
             var moduleBuilder = services.UseModules();
-            configureModuleBuilder.Invoke(moduleBuilder);
-            useModules ??= m => m.Use();
-            useModules.Invoke(moduleBuilder);
+            configureModules.Invoke(moduleBuilder);
+            moduleBuilder.Use();
             return services;
         }
     }
