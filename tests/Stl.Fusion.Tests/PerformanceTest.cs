@@ -7,11 +7,9 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using Stl.Async;
-using Stl.Concurrency;
 using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
 using Stl.OS;
-using Stl.Pooling;
 using Stl.Testing;
 using Stl.Tests;
 using Stl.Time;
@@ -151,14 +149,19 @@ namespace Stl.Fusion.Tests
     public class PerformanceTest_Sqlite : PerformanceTestBase
     {
         public PerformanceTest_Sqlite(ITestOutputHelper @out)
-            : base(@out, new FusionTestOptions())
+            : base(@out, new FusionTestOptions() {
+                UseLogging = false,
+            })
         { }
     }
 
     public class PerformanceTest_InMemoryDb : PerformanceTestBase
     {
         public PerformanceTest_InMemoryDb(ITestOutputHelper @out)
-            : base(@out, new FusionTestOptions() { DbType = FusionTestDbType.InMemory })
+            : base(@out, new FusionTestOptions() {
+                DbType = FusionTestDbType.InMemory,
+                UseLogging = false,
+            })
         { }
     }
 }

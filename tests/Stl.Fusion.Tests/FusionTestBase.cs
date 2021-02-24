@@ -45,6 +45,7 @@ namespace Stl.Fusion.Tests
         public FusionTestDbType DbType { get; set; } = FusionTestDbType.Sqlite;
         public bool UseInMemoryAuthService { get; set; }
         public bool UseTestClock { get; set; }
+        public bool UseLogging { get; set; } = true;
     }
 
     public class FusionTestBase : TestBase, IAsyncLifetime
@@ -116,33 +117,34 @@ namespace Stl.Fusion.Tests
             services.AddSingleton(Out);
 
             // Logging
-            services.AddLogging(logging => {
-                var debugCategories = new List<string> {
-                    "Stl.Fusion",
-                    "Stl.CommandR",
-                    "Stl.Tests.Fusion",
-                    // DbLoggerCategory.Database.Transaction.Name,
-                    // DbLoggerCategory.Database.Connection.Name,
-                    // DbLoggerCategory.Database.Command.Name,
-                    // DbLoggerCategory.Query.Name,
-                    // DbLoggerCategory.Update.Name,
-                };
+            if (Options.UseLogging)
+                services.AddLogging(logging => {
+                    var debugCategories = new List<string> {
+                        "Stl.Fusion",
+                        "Stl.CommandR",
+                        "Stl.Tests.Fusion",
+                        // DbLoggerCategory.Database.Transaction.Name,
+                        // DbLoggerCategory.Database.Connection.Name,
+                        // DbLoggerCategory.Database.Command.Name,
+                        // DbLoggerCategory.Query.Name,
+                        // DbLoggerCategory.Update.Name,
+                    };
 
-                bool LogFilter(string category, LogLevel level)
-                    => IsLoggingEnabled &&
-                        debugCategories.Any(category.StartsWith)
-                        && level >= LogLevel.Debug;
+                    bool LogFilter(string category, LogLevel level)
+                        => IsLoggingEnabled &&
+                            debugCategories.Any(category.StartsWith)
+                            && level >= LogLevel.Debug;
 
-                logging.ClearProviders();
-                logging.SetMinimumLevel(LogLevel.Debug);
-                logging.AddFilter(LogFilter);
-                logging.AddDebug();
-                // XUnit logging requires weird setup b/c otherwise it filters out
-                // everything below LogLevel.Information
-                logging.AddProvider(new XunitTestOutputLoggerProvider(
-                    new TestOutputHelperAccessor(Out),
-                    LogFilter));
-            });
+                    logging.ClearProviders();
+                    logging.SetMinimumLevel(LogLevel.Debug);
+                    logging.AddFilter(LogFilter);
+                    logging.AddDebug();
+                    // XUnit logging requires weird setup b/c otherwise it filters out
+                    // everything below LogLevel.Information
+                    logging.AddProvider(new XunitTestOutputLoggerProvider(
+                        new TestOutputHelperAccessor(Out),
+                        LogFilter));
+                });
 
             // Core Fusion services
             var fusion = services.AddFusion();
