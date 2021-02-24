@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Stl.DependencyInjection.Internal;
 using Stl.Text;
@@ -27,7 +28,7 @@ namespace Stl.DependencyInjection
             if (configureOptions == null)
                 throw new ArgumentNullException(nameof(configureOptions));
             services.AddOptions();
-            services.AddSingleton<IConfigureOptions<TOptions>>(
+            services.TryAddSingleton<IConfigureOptions<TOptions>>(
                 c => new ConfigureAllNamedOptions<TOptions>(c, configureOptions));
             return services;
         }
@@ -43,12 +44,13 @@ namespace Stl.DependencyInjection
         {
             if (sectionName == null)
                 throw new ArgumentNullException(sectionName);
-            return services.AddSingleton(settingsType, c => {
+            services.TryAddSingleton(settingsType, c => {
                 var settings = c.Activate(settingsType);
                 var cfg = c.GetRequiredService<IConfiguration>();
                 cfg.GetSection(sectionName)?.Bind(settings);
                 return settings;
             });
+            return services;
         }
 
         // Attribute-based configuration
