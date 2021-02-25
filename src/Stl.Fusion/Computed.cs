@@ -186,7 +186,6 @@ namespace Stl.Fusion
             if (ConsistencyState == ConsistencyState.Invalidated)
                 return false;
             // Debug.WriteLine($"{nameof(Invalidate)}: {this}");
-            Action<IComputed>? invalidated;
             lock (Lock) {
                 switch (ConsistencyState) {
                 case ConsistencyState.Invalidated:
