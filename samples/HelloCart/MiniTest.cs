@@ -1,8 +1,8 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Stl.Async;
 using Stl.CommandR;
-using static System.Console;
 
 namespace Samples.HelloCart
 {
@@ -12,13 +12,11 @@ namespace Samples.HelloCart
         {
             var rnd = new Random(10);
             for (var i = 0;; i++) {
-                var productId = i <= 0 ? "carrot" : "banana";
-                var product = await app.ClientProductService.FindAsync(productId);
-                var price = 0;
-                var command = new EditCommand<Product>(product! with { Price = price });
-                WriteLine(command);
-                await app.ClientServices.Commander().CallAsync(command);
-                await Task.Delay(2000);
+                for (var j = 0; j<200; j++) {
+                    var command = new EditCommand<Product>(app.ExistingProducts[1] with { Price = 0 });
+                    app.ClientServices.Commander().CallAsync(command).Ignore();
+                }
+                await Task.Delay(500);
             }
         }
     }

@@ -210,7 +210,7 @@ namespace Stl.Collections.Slim
             if (_tuple.Item3 == null) return;
             target[index++] = _tuple.Item3;
             if (_tuple.Item4 == null) return;
-            target[index++] = _tuple.Item4;
+            target[index] = _tuple.Item4;
         }
     }
 }

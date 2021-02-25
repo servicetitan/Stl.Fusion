@@ -82,37 +82,25 @@ namespace Samples.HelloCart
 
         public async Task WatchProductAsync(string productId, CancellationToken cancellationToken = default)
         {
-            WriteLine($"++{productId}");
-            try {
-                var productService = WatchServices.GetRequiredService<IProductService>();
-                var computed = await Computed.CaptureAsync(ct => productService.FindAsync(productId, ct), cancellationToken);
-                while (true) {
-                    WriteLine($"  {computed.Value}");
-                    await computed.WhenInvalidatedAsync(cancellationToken);
-                    computed = await computed.UpdateAsync(false, cancellationToken);
-                }
-            }
-            finally {
-                WriteLine($"--{productId}");
+            var productService = WatchServices.GetRequiredService<IProductService>();
+            var computed = await Computed.CaptureAsync(ct => productService.FindAsync(productId, ct), cancellationToken);
+            while (true) {
+                WriteLine($"  {computed.Value}");
+                await computed.WhenInvalidatedAsync(cancellationToken);
+                computed = await computed.UpdateAsync(false, cancellationToken);
             }
         }
 
         public async Task WatchCartTotalAsync(string cartId, CancellationToken cancellationToken = default)
         {
-            WriteLine($"++{cartId}");
-            try {
-                var cartService = WatchServices.GetRequiredService<ICartService>();
-                var computed = await Computed.CaptureAsync(ct => cartService.GetTotalAsync(cartId, ct), cancellationToken);
-                while (true) {
-                    Interlocked.Increment(ref cartTotalChangeCount);
-                    lastCartComputeds[cartId] = computed;
-                    WriteLine($"  {cartId}: total = {computed.Value}");
-                    await computed.WhenInvalidatedAsync(cancellationToken);
-                    computed = await computed.UpdateAsync(false, cancellationToken);
-                }
-            }
-            finally {
-                WriteLine($"--{cartId}");
+            var cartService = WatchServices.GetRequiredService<ICartService>();
+            var computed = await Computed.CaptureAsync(ct => cartService.GetTotalAsync(cartId, ct), cancellationToken);
+            while (true) {
+                Interlocked.Increment(ref cartTotalChangeCount);
+                lastCartComputeds[cartId] = computed;
+                WriteLine($"  {cartId}: total = {computed.Value}");
+                await computed.WhenInvalidatedAsync(cancellationToken);
+                computed = await computed.UpdateAsync(false, cancellationToken);
             }
         }
     }

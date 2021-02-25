@@ -46,7 +46,6 @@ namespace Stl.Collections.Slim
                 _item, item
             };
             _item = default!;
-            _count = -1;
             return true;
         }
 
@@ -127,7 +126,7 @@ namespace Stl.Collections.Slim
                 return;
             }
             if (_count < 1) return;
-            target[index++] = _item;
+            target[index] = _item;
         }
     }
 }

@@ -155,6 +155,16 @@ namespace Stl.Fusion.Tests
         { }
     }
 
+    public class PerformanceTest_Npgsql : PerformanceTestBase
+    {
+        public PerformanceTest_Npgsql(ITestOutputHelper @out)
+            : base(@out, new FusionTestOptions() {
+                UseLogging = false,
+                DbType = FusionTestDbType.PostgreSql,
+            })
+        { }
+    }
+
     public class PerformanceTest_InMemoryDb : PerformanceTestBase
     {
         public PerformanceTest_InMemoryDb(ITestOutputHelper @out)

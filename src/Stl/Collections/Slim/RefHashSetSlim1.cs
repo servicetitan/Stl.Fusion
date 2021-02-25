@@ -134,7 +134,7 @@ namespace Stl.Collections.Slim
                 return;
             }
             if (_item == null) return;
-            target[index++] = _item;
+            target[index] = _item;
         }
     }
 }

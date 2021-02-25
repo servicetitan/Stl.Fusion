@@ -62,7 +62,6 @@ namespace Stl.Collections.Slim
                 .Add(_tuple.Item2)
                 .Add(item);
             _tuple = default;
-            _count = -1;
             return true;
         }
 
@@ -166,7 +165,7 @@ namespace Stl.Collections.Slim
             if (_count < 1) return;
             target[index++] = _tuple.Item1;
             if (_count < 2) return;
-            target[index++] = _tuple.Item2;
+            target[index] = _tuple.Item2;
         }
     }
 }

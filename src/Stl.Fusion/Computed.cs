@@ -1,11 +1,11 @@
 using System;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Reactive;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
-using Stl.Collections;
+using Microsoft.Extensions.Logging;
 using Stl.Collections.Slim;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Internal;
@@ -65,8 +65,8 @@ namespace Stl.Fusion
         private readonly ComputedOptions _options;
         private volatile int _state;
         private Result<TOut> _output;
-        private RefHashSetSlim2<IComputedImpl> _used;
-        private HashSetSlim2<(ComputedInput Input, LTag Version)> _usedBy;
+        private RefHashSetSlim3<IComputedImpl> _used;
+        private HashSetSlim3<(ComputedInput Input, LTag Version)> _usedBy;
         // ReSharper disable once InconsistentNaming
         private event Action<IComputed>? _invalidated;
         private bool _invalidateOnSetOutput;
@@ -113,13 +113,19 @@ namespace Stl.Fusion
                 }
                 lock (Lock) {
                     if (ConsistencyState == ConsistencyState.Invalidated) {
-                        value?.Invoke(this);
+                        value.Invoke(this);
                         return;
                     }
                     _invalidated += value;
                 }
             }
-            remove => _invalidated -= value;
+            remove {
+                lock (Lock) {
+                    if (ConsistencyState == ConsistencyState.Invalidated)
+                        return;
+                    _invalidated -= value;
+                }
+            }
         }
 
         protected Computed(ComputedOptions options, TIn input, LTag version)
@@ -180,50 +186,41 @@ namespace Stl.Fusion
             if (ConsistencyState == ConsistencyState.Invalidated)
                 return false;
             // Debug.WriteLine($"{nameof(Invalidate)}: {this}");
-            MemoryBuffer<(ComputedInput Input, LTag Version)> usedBy = default;
-            var invalidateOnSetOutput = false;
-            try {
-                Action<IComputed>? invalidated;
-                lock (Lock) {
-                    switch (ConsistencyState) {
-                    case ConsistencyState.Invalidated:
-                        return false;
-                    case ConsistencyState.Computing:
-                        invalidateOnSetOutput = true;
-                        return true;
-                    }
-                    SetStateUnsafe(ConsistencyState.Invalidated);
-                    invalidated = _invalidated;
-                    _invalidated = null;
-                    usedBy = MemoryBuffer<(ComputedInput, LTag)>.LeaseAndSetCount(true, _usedBy.Count);
-                    _usedBy.CopyTo(usedBy.Span);
-                    _usedBy.Clear();
-                    _used.Apply(this, (self, c) => c.RemoveUsedBy(self));
-                    _used.Clear();
+            Action<IComputed>? invalidated;
+            lock (Lock) {
+                switch (ConsistencyState) {
+                case ConsistencyState.Invalidated:
+                    return false;
+                case ConsistencyState.Computing:
+                    _invalidateOnSetOutput = true;
+                    return true;
                 }
+                SetStateUnsafe(ConsistencyState.Invalidated);
+            }
+            try {
+                _used.Apply(this, (self, c) => c.RemoveUsedBy(self));
+                _used.Clear();
+                _invalidated?.Invoke(this);
+                _usedBy.Apply(default(Unit), (_, usedByEntry) => {
+                    var c = ComputedRegistry.Instance.TryGet(usedByEntry.Input);
+                    if (c != null && c.Version == usedByEntry.Version)
+                        c.Invalidate();
+                });
+                _usedBy.Clear();
+                OnInvalidated();
+            }
+            catch (Exception e) {
+                // We should never throw errors during the invalidation
                 try {
-                    invalidated?.Invoke(this);
+                    var log = Input.Function.Services.GetService<ILogger<Computed<TIn, TOut>>>();
+                    log?.LogError(e, "Error on invalidation");
                 }
                 catch {
-                    // We should never throw errors during the invalidation
+                    // Intended
                 }
-                var computedRegistry = ComputedRegistry.Instance;
-                var usedBySpan = usedBy.Span;
-                for (var i = 0; i < usedBySpan.Length; i++) {
-                    ref var user = ref usedBySpan[i];
-                    var c = computedRegistry.TryGet(user.Input);
-                    if (c != null && c.Version == user.Version)
-                        c.Invalidate();
-                }
-                return true;
             }
-            finally {
-                usedBy.Release();
-                if (invalidateOnSetOutput)
-                    _invalidateOnSetOutput = true;
-                else
-                    OnInvalidated();
-            }
+            _invalidated = null;
+            return true;
         }
 
         protected virtual void OnInvalidated()
@@ -306,23 +303,19 @@ namespace Stl.Fusion
                     return;
                 }
 
-                // The invalidation could happen here -
-                // that's why there is a second check later
-                // in this method
                 var usedByRef = (usedBy.Input, usedBy.Version);
                 _usedBy.Add(usedByRef);
-
-                // Second check
-                if (ConsistencyState == ConsistencyState.Invalidated) {
-                    _usedBy.Remove(usedByRef);
-                    usedBy.Invalidate();
-                }
             }
         }
 
         void IComputedImpl.RemoveUsedBy(IComputedImpl usedBy)
         {
             lock (Lock) {
+                if (ConsistencyState == ConsistencyState.Invalidated)
+                    // _usedBy is already empty or going to be empty soon;
+                    // moreover, only Invalidated code can modify
+                    // _used/_usedBy once invalidation flag is set
+                    return;
                 _usedBy.Remove((usedBy.Input, usedBy.Version));
             }
         }
