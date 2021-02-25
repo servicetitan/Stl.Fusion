@@ -183,6 +183,7 @@ namespace Stl.Fusion
             MemoryBuffer<(ComputedInput Input, LTag Version)> usedBy = default;
             var invalidateOnSetOutput = false;
             try {
+                Action<IComputed>? invalidated;
                 lock (Lock) {
                     switch (ConsistencyState) {
                     case ConsistencyState.Invalidated:
@@ -192,6 +193,8 @@ namespace Stl.Fusion
                         return true;
                     }
                     SetStateUnsafe(ConsistencyState.Invalidated);
+                    invalidated = _invalidated;
+                    _invalidated = null;
                     usedBy = MemoryBuffer<(ComputedInput, LTag)>.LeaseAndSetCount(true, _usedBy.Count);
                     _usedBy.CopyTo(usedBy.Span);
                     _usedBy.Clear();
@@ -199,18 +202,17 @@ namespace Stl.Fusion
                     _used.Clear();
                 }
                 try {
-                    _invalidated?.Invoke(this);
+                    invalidated?.Invoke(this);
                 }
                 catch {
                     // We should never throw errors during the invalidation
                 }
-                _invalidated = null;
                 var computedRegistry = ComputedRegistry.Instance;
                 var usedBySpan = usedBy.Span;
                 for (var i = 0; i < usedBySpan.Length; i++) {
-                    ref var d = ref usedBySpan[i];
-                    var c = computedRegistry.TryGet(d.Input);
-                    if (c != null && c.Version == d.Version)
+                    ref var user = ref usedBySpan[i];
+                    var c = computedRegistry.TryGet(user.Input);
+                    if (c != null && c.Version == user.Version)
                         c.Invalidate();
                 }
                 return true;
