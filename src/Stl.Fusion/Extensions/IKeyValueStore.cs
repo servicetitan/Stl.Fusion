@@ -7,10 +7,20 @@ using Stl.Text;
 
 namespace Stl.Fusion.Extensions
 {
-    public interface IKeyValueStore
+#if NETSTANDARD2_0
+    public class IKeyValueStoreFields
     {
         public static ListFormat ListFormat { get; } = ListFormat.SlashSeparated;
         public static char Delimiter => ListFormat.Delimiter;
+    }
+#endif
+    
+    public interface IKeyValueStore
+    {
+#if !NETSTANDARD2_0       
+        public static ListFormat ListFormat { get; } = ListFormat.SlashSeparated;
+        public static char Delimiter => ListFormat.Delimiter;
+#endif        
 
         [CommandHandler]
         Task Set(SetCommand command, CancellationToken cancellationToken = default);

@@ -83,7 +83,11 @@ namespace Stl.Async
         {
             var tTcs = typeof(TaskCompletionSource<T>);
             var tTask = typeof(Task<T>);
+#if !NETSTANDARD2_0            
             var fTask = tTcs.GetField("_task", BindingFlags.Instance | BindingFlags.NonPublic);
+#else
+            var fTask = tTcs.GetField("m_task", BindingFlags.Instance | BindingFlags.NonPublic);
+#endif
             var pState = Expression.Parameter(typeof(object), "state");
             var pTco = Expression.Parameter(typeof(TaskCreationOptions), "taskCreationOptions");
             var pTcs = Expression.Parameter(tTcs, "tcs");
@@ -107,8 +111,15 @@ namespace Stl.Async
                 exampleAssign.GetType(),
                 privateCtorBindingFlags, null,
                 new object[] {Expression.Field(pTcs, fTask!), pTask}, null)!;
-            SetTask = Expression.Lambda<Action<TaskCompletionSource<T>, Task<T>>>(
-                realAssign, pTcs, pTask).Compile();
+            var setTaskLambda = Expression.Lambda<Action<TaskCompletionSource<T>, Task<T>>>(
+                realAssign, pTcs, pTask);
+#if !NETSTANDARD2_0
+            SetTask = setTaskLambda.Compile();
+#else
+            SetTask = (tcs, task) => {
+                fTask!.SetValue(tcs, task);
+            };
+#endif
         }
 
         // Equality

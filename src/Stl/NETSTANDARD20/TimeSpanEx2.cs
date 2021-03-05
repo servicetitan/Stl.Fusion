@@ -2,7 +2,7 @@
 
 namespace System
 {
-    public static class TimeSpanEx
+    public static class TimeSpanEx2
     {
         private static TimeSpan IntervalFromDoubleTicks(double ticks)
         {
