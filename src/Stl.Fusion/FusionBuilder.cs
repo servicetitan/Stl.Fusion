@@ -178,7 +178,7 @@ namespace Stl.Fusion
 
             var descriptor = new ServiceDescriptor(serviceType, Factory, lifetime);
             Services.Add(descriptor);
-            Services.AddCommander().AddCommandService(serviceType, implementationType);
+            Services.AddCommander().AddHandlers(serviceType, implementationType);
             return this;
         }
 
