@@ -1,13 +1,10 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion;
-using Stl.Fusion.Internal;
 using static System.Console;
 
 namespace Samples.HelloCart
@@ -25,8 +22,6 @@ namespace Samples.HelloCart
         public Product[] ExistingProducts { get; set; } = Array.Empty<Product>();
         public Cart[] ExistingCarts { get; set; } = Array.Empty<Cart>();
         public virtual IServiceProvider WatchServices => ClientServices;
-        private int cartTotalChangeCount = 0;
-        private ConcurrentDictionary<string, IComputed> lastCartComputeds = new();
 
         public virtual async Task InitializeAsync()
         {
@@ -67,16 +62,6 @@ namespace Samples.HelloCart
                 tasks.Add(WatchProductAsync(product.Id, cancellationToken));
             foreach (var cart in ExistingCarts)
                 tasks.Add(WatchCartTotalAsync(cart.Id, cancellationToken));
-            var dumpTask = Task.Run(async () => {
-                while (true) {
-                    await Task.Delay(10000);
-                    WriteLine(cartTotalChangeCount);
-                    foreach (var (k, c) in lastCartComputeds) {
-                        WriteLine($"{k} -> {c}");
-                    }
-                }
-            });
-            tasks.Add(dumpTask);
             return Task.WhenAll(tasks);
         }
 
@@ -96,8 +81,6 @@ namespace Samples.HelloCart
             var cartService = WatchServices.GetRequiredService<ICartService>();
             var computed = await Computed.CaptureAsync(ct => cartService.GetTotalAsync(cartId, ct), cancellationToken);
             while (true) {
-                Interlocked.Increment(ref cartTotalChangeCount);
-                lastCartComputeds[cartId] = computed;
                 WriteLine($"  {cartId}: total = {computed.Value}");
                 await computed.WhenInvalidatedAsync(cancellationToken);
                 computed = await computed.UpdateAsync(false, cancellationToken);

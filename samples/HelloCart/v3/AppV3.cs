@@ -6,7 +6,6 @@ using Microsoft.Extensions.Logging;
 using Samples.HelloCart.V2;
 using Stl.Fusion;
 using Stl.Fusion.EntityFramework;
-using Stl.Fusion.Operations.Internal;
 using Stl.IO;
 
 namespace Samples.HelloCart.V3
@@ -37,9 +36,6 @@ namespace Samples.HelloCart.V3
                 b.EnableSensitiveDataLogging();
             });
             services.AddDbContextServices<AppDbContext>(b => {
-                services.AddSingleton(new CompletionProducer.Options() {
-                    LogLevel = LogLevel.Information,
-                });
                 b.AddDbOperations((_, o) => {
                     o.UnconditionalWakeUpPeriod = TimeSpan.FromSeconds(5);
                 });

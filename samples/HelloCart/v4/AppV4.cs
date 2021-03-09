@@ -12,7 +12,6 @@ using Samples.HelloCart.V2;
 using Stl.Fusion;
 using Stl.Fusion.Client;
 using Stl.Fusion.EntityFramework;
-using Stl.Fusion.Operations.Internal;
 using Stl.Fusion.Server;
 using Stl.IO;
 
@@ -57,9 +56,6 @@ namespace Samples.HelloCart.V4
                             b.EnableSensitiveDataLogging();
                         });
                         services.AddDbContextServices<AppDbContext>(b => {
-                            services.AddSingleton(new CompletionProducer.Options() {
-                                LogLevel = LogLevel.Information,
-                            });
                             b.AddDbOperations((_, o) => { o.UnconditionalWakeUpPeriod = TimeSpan.FromSeconds(5); });
                             b.AddFileBasedDbOperationLogChangeTracking(dbPath + "_changed");
                             b.AddDbEntityResolver<string, DbProduct>();

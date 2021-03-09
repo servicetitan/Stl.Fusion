@@ -5,7 +5,6 @@ using Stl.Fusion.Server;
 
 namespace Samples.HelloCart.V4
 {
-
     [Route("api/[controller]")]
     [ApiController, JsonifyErrors]
     public class CartController : ControllerBase, ICartService

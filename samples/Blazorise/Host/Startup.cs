@@ -22,8 +22,6 @@ using Stl.Fusion.Blazor;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Client;
 using Stl.Fusion.Server;
-using Blazorise.Bootstrap;
-using Blazorise.Icons.FontAwesome;
 using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework;
@@ -197,7 +195,6 @@ namespace Templates.Blazor2.Host
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();
-            app.ApplicationServices.UseBootstrapProviders().UseFontAwesomeIcons(); // Blazorise
             app.UseEndpoints(endpoints => {
                 endpoints.MapBlazorHub();
                 endpoints.MapFusionWebSocketServer();

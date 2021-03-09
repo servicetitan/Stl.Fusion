@@ -22,7 +22,6 @@ namespace Samples.HelloCart.V1
                 throw new ArgumentOutOfRangeException(nameof(command));
             if (Computed.IsInvalidating()) {
                 FindAsync(cartId, default).Ignore();
-                GetTotalAsync(cartId, default).Ignore();
                 return Task.CompletedTask;
             }
 

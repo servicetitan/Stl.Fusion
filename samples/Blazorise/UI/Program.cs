@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
 using Blazorise;
@@ -7,9 +6,7 @@ using Blazorise.Bootstrap;
 using Blazorise.Icons.FontAwesome;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Pluralize.NET;
 using Stl.Fusion;
 using Stl.Fusion.Client;
 using Stl.OS;
@@ -33,7 +30,6 @@ namespace Templates.Blazor2.UI
             builder.RootComponents.Add<App>("#app");
             var host = builder.Build();
 
-            host.Services.UseBootstrapProviders().UseFontAwesomeIcons(); // Blazorise
             host.Services.HostedServices().StartAsync();
             return host.RunAsync();
         }
