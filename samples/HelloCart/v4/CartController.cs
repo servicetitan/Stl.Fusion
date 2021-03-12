@@ -5,7 +5,7 @@ using Stl.Fusion.Server;
 
 namespace Samples.HelloCart.V4
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[action]")]
     [ApiController, JsonifyErrors]
     public class CartController : ControllerBase, ICartService
     {
@@ -15,17 +15,17 @@ namespace Samples.HelloCart.V4
 
         // Commands
 
-        [HttpPost("edit")]
+        [HttpPost]
         public Task Edit([FromBody] EditCommand<Cart> command, CancellationToken cancellationToken = default)
             => _cartService.Edit(command, cancellationToken);
 
         // Queries
 
-        [HttpGet("tryGet"), Publish]
+        [HttpGet, Publish]
         public Task<Cart?> TryGet(string id, CancellationToken cancellationToken = default)
             => _cartService.TryGet(id, cancellationToken);
 
-        [HttpGet("getTotal"), Publish]
+        [HttpGet, Publish]
         public Task<decimal> GetTotal(string id, CancellationToken cancellationToken = default)
             => _cartService.GetTotal(id, cancellationToken);
     }
