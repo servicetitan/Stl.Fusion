@@ -12,7 +12,7 @@
 @inject IJSRuntime JSRuntime
 
 <CascadingAuthenticationState>
-    <CascadingValue TValue="Task<AuthState>" Value="@GetAuthStateAsync()" ChildContent="@ChildContent"/>
+    <CascadingValue TValue="Task<AuthState>" Value="@GetAuthState()" ChildContent="@ChildContent"/>
 </CascadingAuthenticationState>
 
 @code {
@@ -41,7 +41,7 @@
             SessionId = inProcessJSRuntime.Invoke<string>("eval", SessionIdJavaScriptExpression);
         }
         if (StartPresenceService)
-            Task.Run(() => PresenceService.StartAsync(default)).Ignore();
+            Task.Run(() => PresenceService.Start(default)).Ignore();
         AuthStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
         OnAuthenticationStateChanged(AuthStateProvider.GetAuthenticationStateAsync());
     }
@@ -63,6 +63,6 @@
         }).Ignore();
     }
 
-    private Task<AuthState> GetAuthStateAsync()
+    private Task<AuthState> GetAuthState()
         => AuthStateProvider.GetAuthenticationStateAsync().ContinueWith(t => (AuthState) t.Result);
 }

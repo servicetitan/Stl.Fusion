@@ -32,21 +32,21 @@ namespace Stl.Fusion.Extensions.Internal
         }
 
         [ComputeMethod]
-        public virtual Task<DateTime> GetUtcNowAsync()
+        public virtual Task<DateTime> GetUtcNow()
         {
             Computed.GetCurrent()!.Invalidate(TrimInvalidationDelay(DefaultUpdatePeriod));
             return Task.FromResult(Clock.Now.ToDateTime());
         }
 
         [ComputeMethod]
-        public virtual Task<DateTime> GetUtcNowAsync(TimeSpan updatePeriod)
+        public virtual Task<DateTime> GetUtcNow(TimeSpan updatePeriod)
         {
             Computed.GetCurrent()!.Invalidate(TrimInvalidationDelay(updatePeriod));
             return Task.FromResult(Clock.Now.ToDateTime());
         }
 
         [ComputeMethod]
-        public virtual Task<string> GetMomentsAgoAsync(DateTime time)
+        public virtual Task<string> GetMomentsAgo(DateTime time)
         {
             // TODO: Make this method stop leaking some memory due to timers that don't die unless timeout
             var delta = DateTime.UtcNow - time.DefaultKind(DateTimeKind.Utc).ToUniversalTime();

@@ -29,9 +29,9 @@ namespace Stl.Fusion.Tests.UIModels
         public ServerTimeModel1State(Options options, IServiceProvider services, object? argument = null)
             : base(options, services, argument) { }
 
-        protected override async Task<ServerTimeModel1> ComputeValueAsync(CancellationToken cancellationToken)
+        protected override async Task<ServerTimeModel1> Compute(CancellationToken cancellationToken)
         {
-            var time = await Client.GetTimeAsync(cancellationToken).ConfigureAwait(false);
+            var time = await Client.GetTime(cancellationToken).ConfigureAwait(false);
             return new ServerTimeModel1(time);
         }
     }

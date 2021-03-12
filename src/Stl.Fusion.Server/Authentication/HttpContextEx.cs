@@ -9,7 +9,7 @@ namespace Stl.Fusion.Server.Authentication
 {
     public static class HttpContextEx
     {
-        public static async Task<AuthenticationScheme[]> GetAuthenticationSchemasAsync(this HttpContext httpContext)
+        public static async Task<AuthenticationScheme[]> GetAuthenticationSchemas(this HttpContext httpContext)
         {
             if (httpContext == null)
                 throw new ArgumentNullException(nameof(httpContext));
@@ -21,12 +21,12 @@ namespace Stl.Fusion.Server.Authentication
                 ).ToArray();
         }
 
-        public static async Task<bool> IsAuthenticationSchemeSupportedAsync(this HttpContext httpContext, string scheme)
+        public static async Task<bool> IsAuthenticationSchemeSupported(this HttpContext httpContext, string scheme)
         {
             if (httpContext == null)
                 throw new ArgumentNullException(nameof(httpContext));
             return (
-                from s in await httpContext.GetAuthenticationSchemasAsync()
+                from s in await httpContext.GetAuthenticationSchemas()
                 where string.Equals(s.Name, scheme, StringComparison.OrdinalIgnoreCase)
                 select s
                 ).Any();

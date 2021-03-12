@@ -11,17 +11,17 @@ namespace Samples.HelloCart.V2
     {
         public DbProductService(IServiceProvider services) : base(services) { }
 
-        public virtual async Task EditAsync(EditCommand<Product> command, CancellationToken cancellationToken = default)
+        public virtual async Task Edit(EditCommand<Product> command, CancellationToken cancellationToken = default)
         {
             var (productId, product) = command;
             if (string.IsNullOrEmpty(productId))
                 throw new ArgumentOutOfRangeException(nameof(command));
             if (Computed.IsInvalidating()) {
-                FindAsync(productId, default).Ignore();
+                TryGet(productId, default).Ignore();
                 return;
             }
 
-            await using var dbContext = await CreateCommandDbContextAsync(cancellationToken);
+            await using var dbContext = await CreateCommandDbContext(cancellationToken);
             var dbProduct = await dbContext.Products.FindAsync(ComposeKey(productId), cancellationToken);
             if (product == null) {
                 if (dbProduct != null)
@@ -36,7 +36,7 @@ namespace Samples.HelloCart.V2
             await dbContext.SaveChangesAsync(cancellationToken);
         }
 
-        public virtual async Task<Product?> FindAsync(string id, CancellationToken cancellationToken = default)
+        public virtual async Task<Product?> TryGet(string id, CancellationToken cancellationToken = default)
         {
             await using var dbContext = CreateDbContext();
             var dbProduct = await dbContext.Products.FindAsync(ComposeKey(id), cancellationToken);

@@ -41,27 +41,29 @@ namespace Stl.Fusion.Server
             responseHeaders[FusionHeaders.Publication] = JsonConvert.SerializeObject(psi);
         }
 
-        public static async Task<IComputed<T>> PublishAsync<T>(
-            this HttpContext httpContext, IPublisher publisher,
+        public static async Task<IComputed<T>> Publish<T>(
+            this HttpContext httpContext,
+            IPublisher publisher,
             Func<CancellationToken, Task<T>> producer,
             CancellationToken cancellationToken = default)
         {
-            var p = await publisher.PublishAsync(producer, cancellationToken).ConfigureAwait(false);
+            var p = await publisher.Publish(producer, cancellationToken).ConfigureAwait(false);
             var c = p.State.Computed;
             httpContext.Publish(p);
             return c;
         }
 
-        public static Task<IComputed<T>> MaybePublishAsync<T>(
-            this HttpContext httpContext, IPublisher publisher,
+        public static Task<IComputed<T>> MaybePublish<T>(
+            this HttpContext httpContext,
+            IPublisher publisher,
             Func<CancellationToken, Task<T>> producer,
             CancellationToken cancellationToken = default)
         {
             var headers = httpContext.Request.Headers;
             var mustPublish = headers.TryGetValue(FusionHeaders.RequestPublication, out var _);
             return mustPublish
-                ? httpContext.PublishAsync(publisher, producer, cancellationToken)
-                : Computed.CaptureAsync(producer, cancellationToken);
+                ? httpContext.Publish(publisher, producer, cancellationToken)
+                : Computed.Capture(producer, cancellationToken);
         }
     }
 }

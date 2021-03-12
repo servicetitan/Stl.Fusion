@@ -8,19 +8,19 @@ namespace Samples.HelloCart.V4
     public interface IProductClient
     {
         [Post("edit")]
-        Task EditAsync([Body] EditCommand<Product> command, CancellationToken cancellationToken);
-        [Get("find")]
-        Task<Product?> FindAsync(string id, CancellationToken cancellationToken);
+        Task Edit([Body] EditCommand<Product> command, CancellationToken cancellationToken);
+        [Get("tryGet")]
+        Task<Product?> TryGet(string id, CancellationToken cancellationToken);
     }
 
     [BasePath("cart")]
     public interface ICartClient
     {
         [Post("edit")]
-        Task EditAsync([Body] EditCommand<Cart> command, CancellationToken cancellationToken);
-        [Get("find")]
-        Task<Cart?> FindAsync(string id, CancellationToken cancellationToken);
+        Task Edit([Body] EditCommand<Cart> command, CancellationToken cancellationToken);
+        [Get("tryGet")]
+        Task<Cart?> TryGet(string id, CancellationToken cancellationToken);
         [Get("getTotal")]
-        Task<decimal> GetTotalAsync(string id, CancellationToken cancellationToken);
+        Task<decimal> GetTotal(string id, CancellationToken cancellationToken);
     }
 }

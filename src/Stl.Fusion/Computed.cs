@@ -24,8 +24,8 @@ namespace Stl.Fusion
         bool Invalidate();
         TResult Apply<TArg, TResult>(IComputedApplyHandler<TArg, TResult> handler, TArg arg);
 
-        ValueTask<IComputed> UpdateAsync(bool addDependency, CancellationToken cancellationToken = default);
-        ValueTask<object> UseAsync(CancellationToken cancellationToken = default);
+        ValueTask<IComputed> Update(bool addDependency, CancellationToken cancellationToken = default);
+        ValueTask<object> Use(CancellationToken cancellationToken = default);
     }
 
     public interface IComputed<TOut> : IComputed, IResult<TOut>
@@ -33,8 +33,8 @@ namespace Stl.Fusion
         new Result<TOut> Output { get; }
         bool TrySetOutput(Result<TOut> output);
 
-        new ValueTask<IComputed<TOut>> UpdateAsync(bool addDependency, CancellationToken cancellationToken = default);
-        new ValueTask<TOut> UseAsync(CancellationToken cancellationToken = default);
+        new ValueTask<IComputed<TOut>> Update(bool addDependency, CancellationToken cancellationToken = default);
+        new ValueTask<TOut> Use(CancellationToken cancellationToken = default);
     }
 
     public interface IAsyncComputed : IComputed
@@ -230,9 +230,9 @@ namespace Stl.Fusion
 
         // UpdateAsync
 
-        async ValueTask<IComputed> IComputed.UpdateAsync(bool addDependency, CancellationToken cancellationToken)
-            => await UpdateAsync(addDependency, cancellationToken).ConfigureAwait(false);
-        public async ValueTask<IComputed<TOut>> UpdateAsync(bool addDependency, CancellationToken cancellationToken = default)
+        async ValueTask<IComputed> IComputed.Update(bool addDependency, CancellationToken cancellationToken)
+            => await Update(addDependency, cancellationToken).ConfigureAwait(false);
+        public async ValueTask<IComputed<TOut>> Update(bool addDependency, CancellationToken cancellationToken = default)
         {
             var usedBy = addDependency ? Computed.GetCurrent() : null;
             var context = ComputeContext.Current;
@@ -240,17 +240,17 @@ namespace Stl.Fusion
             if (this.TryUseExisting(context, usedBy))
                 return this;
             return await Function
-                .InvokeAsync(Input, usedBy, context, cancellationToken)
+                .Invoke(Input, usedBy, context, cancellationToken)
                 .ConfigureAwait(false);
         }
 
         // UseAsync
 
-        async ValueTask<object> IComputed.UseAsync(CancellationToken cancellationToken)
-            => (await UseAsync(cancellationToken).ConfigureAwait(false))!;
-        public async ValueTask<TOut> UseAsync(CancellationToken cancellationToken = default)
+        async ValueTask<object> IComputed.Use(CancellationToken cancellationToken)
+            => (await Use(cancellationToken).ConfigureAwait(false))!;
+        public async ValueTask<TOut> Use(CancellationToken cancellationToken = default)
         {
-            var computed = await UpdateAsync(true, cancellationToken).ConfigureAwait(false);
+            var computed = await Update(true, cancellationToken).ConfigureAwait(false);
             return computed.Value;
         }
 

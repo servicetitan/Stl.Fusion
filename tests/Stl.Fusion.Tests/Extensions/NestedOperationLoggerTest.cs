@@ -20,9 +20,9 @@ namespace Stl.Fusion.Tests.Extensions
         public async Task BasicTest()
         {
             var kvs = Services.GetRequiredService<IKeyValueStore>();
-            var c1 = await Computed.CaptureAsync(_ => kvs.TryGetAsync("1"));
-            var c2 = await Computed.CaptureAsync(_ => kvs.TryGetAsync("2"));
-            var c3 = await Computed.CaptureAsync(_ => kvs.TryGetAsync("3"));
+            var c1 = await Computed.Capture(_ => kvs.TryGet("1"));
+            var c2 = await Computed.Capture(_ => kvs.TryGet("2"));
+            var c3 = await Computed.Capture(_ => kvs.TryGet("3"));
             c1.Value.Should().BeNull();
             c2.Value.Should().BeNull();
             c3.Value.Should().BeNull();
@@ -30,14 +30,14 @@ namespace Stl.Fusion.Tests.Extensions
             var commander = Services.Commander();
             var command = new NestedOperationLoggerTester.SetManyCommand(
                 new[] {"1", "2", "3"}, "v");
-            await commander.CallAsync(command);
+            await commander.Call(command);
 
             c1.IsInvalidated().Should().BeTrue();
             c2.IsInvalidated().Should().BeTrue();
             c3.IsInvalidated().Should().BeTrue();
-            c1 = await c1.UpdateAsync(false);
-            c2 = await c2.UpdateAsync(false);
-            c3 = await c3.UpdateAsync(false);
+            c1 = await c1.Update(false);
+            c2 = await c2.Update(false);
+            c3 = await c3.Update(false);
             c1.Value.Should().Be("v3");
             c2.Value.Should().Be("v2");
             c3.Value.Should().Be("v1");

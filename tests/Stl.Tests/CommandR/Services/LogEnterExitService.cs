@@ -14,14 +14,14 @@ namespace Stl.Tests.CommandR.Services
         public LogEnterExitService(IServiceProvider services) : base(services) { }
 
         [CommandHandler(1000, IsFilter = true)]
-        public async Task OnAnyCommandAsync(
+        public async Task OnAnyCommand(
             ICommand command, CommandContext context,
             CancellationToken cancellationToken)
         {
             Log.LogInformation("+ {Command}", command);
             try {
-                await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
-                await LogResultAsync((dynamic) command);
+                await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);
+                await LogResult((dynamic) command);
             }
             catch (Exception e) {
                 Log.LogError(e, "- {Command} !-> error", command);
@@ -29,7 +29,7 @@ namespace Stl.Tests.CommandR.Services
             }
         }
 
-        protected async Task LogResultAsync<T>(ICommand<T> command)
+        protected async Task LogResult<T>(ICommand<T> command)
         {
             var context = (CommandContext<T>) CommandContext.Current!;
             var resultTask = context.ResultTask;

@@ -48,13 +48,13 @@ namespace Stl.Fusion.EntityFramework.Operations
             DbOperationLog = services.GetRequiredService<IDbOperationLog<TDbContext>>();
         }
 
-        protected override async Task WakeUpAsync(CancellationToken cancellationToken)
+        protected override async Task WakeUp(CancellationToken cancellationToken)
         {
             var minCommitTime = (MaxKnownCommitTime - MaxCommitDuration).ToDateTime();
 
             // Fetching potentially new operations
             var operations = await DbOperationLog
-                .ListNewlyCommittedAsync(minCommitTime, BatchSize, cancellationToken)
+                .ListNewlyCommitted(minCommitTime, BatchSize, cancellationToken)
                 .ConfigureAwait(false);
 
             // Processing them
@@ -69,7 +69,7 @@ namespace Stl.Fusion.EntityFramework.Operations
                 // prior to its invalidation logic completion.
                 tasks[i] = isLocal
                     ? Task.CompletedTask // Skips local operation!
-                    : OperationCompletionNotifier.NotifyCompletedAsync(operation);
+                    : OperationCompletionNotifier.NotifyCompleted(operation);
                 var commitTime = operation.CommitTime.ToMoment();
                 if (MaxKnownCommitTime < commitTime)
                     MaxKnownCommitTime = commitTime;
@@ -81,16 +81,16 @@ namespace Stl.Fusion.EntityFramework.Operations
             LastCount = operations.Count;
         }
 
-        protected override Task SleepAsync(Exception? error, CancellationToken cancellationToken)
+        protected override Task Sleep(Exception? error, CancellationToken cancellationToken)
         {
             if (error != null)
-                return Clock.DelayAsync(ErrorDelay, cancellationToken);
+                return Clock.Delay(ErrorDelay, cancellationToken);
             if (LastCount == BatchSize)
                 return Task.CompletedTask;
             if (OperationLogChangeMonitor == null)
-                return Clock.DelayAsync(UnconditionalWakeUpPeriod, cancellationToken);
+                return Clock.Delay(UnconditionalWakeUpPeriod, cancellationToken);
             return OperationLogChangeMonitor
-                .WaitForChangesAsync(cancellationToken)
+                .WaitForChanges(cancellationToken)
                 .WithTimeout(Clock, UnconditionalWakeUpPeriod, cancellationToken);
         }
     }

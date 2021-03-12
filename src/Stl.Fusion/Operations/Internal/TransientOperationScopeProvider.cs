@@ -37,14 +37,14 @@ namespace Stl.Fusion.Operations.Internal
         }
 
         [CommandHandler(Priority = 10_000, IsFilter = true)]
-        public async Task OnCommandAsync(ICommand command, CommandContext context, CancellationToken cancellationToken)
+        public async Task OnCommand(ICommand command, CommandContext context, CancellationToken cancellationToken)
         {
             var operationRequired =
                 context.OuterContext == null // Should be top-level command
                 && !(command is IMetaCommand) // No operations for "second-order" commands
                 && !Computed.IsInvalidating();
             if (!operationRequired) {
-                await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
+                await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);
                 return;
             }
 
@@ -55,8 +55,8 @@ namespace Stl.Fusion.Operations.Internal
             context.SetOperation(operation);
 
             try {
-                await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
-                await scope.CommitAsync(cancellationToken);
+                await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);
+                await scope.Commit(cancellationToken);
             }
             catch (OperationCanceledException) {
                 throw;
@@ -64,14 +64,14 @@ namespace Stl.Fusion.Operations.Internal
             catch (Exception e) {
                 if (scope.IsUsed)
                     Log.LogError(e, "Operation failed: {Command}", command);
-                await scope.RollbackAsync();
+                await scope.Rollback();
                 throw;
             }
 
             // Since this is the outermost scope handler, it's reasonable to
             // call OperationCompletionNotifier.NotifyCompletedAsync from it
             var actualOperation = context.Items.GetOrDefault<IOperation>(operation);
-            await OperationCompletionNotifier.NotifyCompletedAsync(actualOperation).ConfigureAwait(false);
+            await OperationCompletionNotifier.NotifyCompleted(actualOperation).ConfigureAwait(false);
         }
     }
 }

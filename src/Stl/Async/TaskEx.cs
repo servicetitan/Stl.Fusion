@@ -50,13 +50,13 @@ namespace Stl.Async
             if (cancellationToken == default)
                 return task;
 
-            async Task<T> InnerAsync() {
+            async Task<T> TaskOrCancellationTokenTask() {
                 using var dTask = cancellationToken.ToTask<T>(task.CreationOptions);
                 var winner = await Task.WhenAny(task, dTask.Resource).ConfigureAwait(false);
                 return await winner;
             }
 
-            return InnerAsync();
+            return TaskOrCancellationTokenTask();
         }
 
         public static Task WithFakeCancellation(
@@ -66,13 +66,13 @@ namespace Stl.Async
             if (cancellationToken == default)
                 return task;
 
-            async Task InnerAsync() {
+            async Task TaskOrCancellationTokenTask() {
                 using var dTask = cancellationToken.ToTask(task.CreationOptions);
                 var winner = await Task.WhenAny(task, dTask.Resource).ConfigureAwait(false);
                 await winner;
             }
 
-            return InnerAsync();
+            return TaskOrCancellationTokenTask();
         }
 
         // WithTimeout
@@ -94,7 +94,7 @@ namespace Stl.Async
             var ctsToken = cts.Token;
             await using var _ = cancellationToken.Register(state => ((CancellationTokenSource) state!).Cancel(), cts);
 
-            var delayTask = clock.DelayAsync(timeout, ctsToken);
+            var delayTask = clock.Delay(timeout, ctsToken);
             completedTask = await Task.WhenAny(task, delayTask).ConfigureAwait(false);
 
             if (completedTask != task)
@@ -121,7 +121,7 @@ namespace Stl.Async
             var ctsToken = cts.Token;
             await using var _ = cancellationToken.Register(state => ((CancellationTokenSource) state!).Cancel(), cts);
 
-            var delayTask = clock.DelayAsync(timeout, ctsToken);
+            var delayTask = clock.Delay(timeout, ctsToken);
             completedTask = await Task.WhenAny(task, delayTask).ConfigureAwait(false);
 
             if (completedTask != task)

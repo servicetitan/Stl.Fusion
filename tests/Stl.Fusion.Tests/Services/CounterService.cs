@@ -14,23 +14,23 @@ namespace Stl.Fusion.Tests.Services
             => _offset = offset;
 
         [ComputeMethod(KeepAliveTime = 0.3)]
-        public virtual async Task<int> GetAsync(string key, CancellationToken cancellationToken = default)
+        public virtual async Task<int> Get(string key, CancellationToken cancellationToken = default)
         {
-            var offset = await _offset.UseAsync(cancellationToken).ConfigureAwait(false);
+            var offset = await _offset.Use(cancellationToken).ConfigureAwait(false);
             return offset + (_counters.TryGetValue(key, out var value) ? value : 0);
         }
 
-        public Task IncrementAsync(string key, CancellationToken cancellationToken = default)
+        public Task Increment(string key, CancellationToken cancellationToken = default)
         {
             _counters.AddOrUpdate(key, k => 1, (k, v) => v + 1);
 
             using (Computed.Invalidate()) {
-                GetAsync(key, default).AssertCompleted();
+                Get(key, default).AssertCompleted();
             }
             return Task.CompletedTask;
         }
 
-        public Task SetOffsetAsync(int offset, CancellationToken cancellationToken = default)
+        public Task SetOffset(int offset, CancellationToken cancellationToken = default)
         {
             _offset.Set(offset);
             return Task.CompletedTask;

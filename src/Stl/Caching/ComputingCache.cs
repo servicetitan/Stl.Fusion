@@ -17,32 +17,32 @@ namespace Stl.Caching
             Locks = lockSet ?? new AsyncLockSet<TKey>(ReentryMode.CheckedFail);
         }
 
-        public override async ValueTask<TValue> GetAsync(TKey key, CancellationToken cancellationToken = default)
+        public override async ValueTask<TValue> Get(TKey key, CancellationToken cancellationToken = default)
         {
             // Read-Lock-RetryRead-Compute-Store pattern
 
-            var maybeValue = await Cache.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
+            var maybeValue = await Cache.TryGet(key, cancellationToken).ConfigureAwait(false);
             if (maybeValue.IsSome(out var value))
                 return value;
 
-            using var @lock = await Locks.LockAsync(key, cancellationToken).ConfigureAwait(false);
+            using var @lock = await Locks.Lock(key, cancellationToken).ConfigureAwait(false);
 
-            maybeValue = await Cache.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
+            maybeValue = await Cache.TryGet(key, cancellationToken).ConfigureAwait(false);
             if (maybeValue.IsSome(out value))
                 return value;
 
-            var result = await ComputeAsync(key, cancellationToken).ConfigureAwait(false);
-            await Cache.SetAsync(key, result, cancellationToken).ConfigureAwait(false);
+            var result = await Compute(key, cancellationToken).ConfigureAwait(false);
+            await Cache.Set(key, result, cancellationToken).ConfigureAwait(false);
             return result;
         }
 
-        public override async ValueTask<Option<TValue>> TryGetAsync(TKey key, CancellationToken cancellationToken = default)
+        public override async ValueTask<Option<TValue>> TryGet(TKey key, CancellationToken cancellationToken = default)
         {
-            var value = await GetAsync(key, cancellationToken).ConfigureAwait(false);
+            var value = await Get(key, cancellationToken).ConfigureAwait(false);
             return Option.Some(value);
         }
 
-        protected abstract ValueTask<TValue> ComputeAsync(TKey key, CancellationToken cancellationToken = default);
+        protected abstract ValueTask<TValue> Compute(TKey key, CancellationToken cancellationToken = default);
     }
 
     public class ComputingCache<TKey, TValue> : ComputingCacheBase<TKey, TValue>
@@ -58,7 +58,7 @@ namespace Stl.Caching
             : base(cache, lockSet)
             => Computer = computer;
 
-        protected override ValueTask<TValue> ComputeAsync(TKey key, CancellationToken cancellationToken = default)
+        protected override ValueTask<TValue> Compute(TKey key, CancellationToken cancellationToken = default)
             => Computer.Invoke(key, cancellationToken);
     }
 }

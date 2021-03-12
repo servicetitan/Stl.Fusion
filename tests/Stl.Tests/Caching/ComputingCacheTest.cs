@@ -19,7 +19,7 @@ namespace Stl.Tests.Caching
         [Fact]
         public async Task ComputingCache_OrderByDependencyTest()
         {
-            await OrderByDependencyTestAsync(computer => new ComputingCache<char, char>(
+            await OrderByDependencyTest(computer => new ComputingCache<char, char>(
                 new MemoizingCache<char, char>(),
                 computer));
         }
@@ -27,10 +27,10 @@ namespace Stl.Tests.Caching
         [Fact]
         public async Task FastComputingCache_OrderByDependencyTest()
         {
-            await OrderByDependencyTestAsync(computer => new FastComputingCache<char, char>(computer));
+            await OrderByDependencyTest(computer => new FastComputingCache<char, char>(computer));
         }
 
-        private async Task OrderByDependencyTestAsync(
+        private async Task OrderByDependencyTest(
             Func<
                 Func<char, CancellationToken, ValueTask<char>>,
                 IAsyncKeyResolver<char, char>> cacheFactory)
@@ -46,7 +46,7 @@ namespace Stl.Tests.Caching
                     .Select(i => (char) ('0' + (c - '0' + i) % 10));
 
 
-            async Task<string> OBD(string s, Func<char, IEnumerable<char>> depSelector)
+            async Task<string> OrderByDependency(string s, Func<char, IEnumerable<char>> depSelector)
             {
                 var result = new List<char>();
 
@@ -58,7 +58,7 @@ namespace Stl.Tests.Caching
                         throw new NullReferenceException();
                     foreach (var d in depSelector(c))
                         // ReSharper disable once AccessToModifiedClosure
-                        await cache.GetAsync(d).ConfigureAwait(false);
+                        await cache.Get(d).ConfigureAwait(false);
                     result.Add(c);
                     return c;
                 }
@@ -68,17 +68,17 @@ namespace Stl.Tests.Caching
                 return result.ToDelimitedString("");
             }
 
-            Assert.Equal("", await OBD("", DepSelector1));
-            Assert.Equal("01", await OBD("1", DepSelector1));
-            Assert.Equal("012", await OBD("12", DepSelector1));
-            Assert.Equal("012", await OBD("21", DepSelector1));
-            Assert.Equal("0123", await OBD("231", DepSelector1));
+            Assert.Equal("", await OrderByDependency("", DepSelector1));
+            Assert.Equal("01", await OrderByDependency("1", DepSelector1));
+            Assert.Equal("012", await OrderByDependency("12", DepSelector1));
+            Assert.Equal("012", await OrderByDependency("21", DepSelector1));
+            Assert.Equal("0123", await OrderByDependency("231", DepSelector1));
 
             await Assert.ThrowsAsync<InvalidOperationException>(async () => {
-                var _ = await OBD("0", BadDepSelector1);
+                var _ = await OrderByDependency("0", BadDepSelector1);
             });
             await Assert.ThrowsAsync<InvalidOperationException>(async () => {
-                var _ = await OBD("0", BadDepSelector2);
+                var _ = await OrderByDependency("0", BadDepSelector2);
             });
         }
     }

@@ -16,7 +16,7 @@ namespace Stl.Tests.CommandR.Services
         public MathService(IServiceProvider services) : base(services) { }
 
         [CommandHandler(Priority = 2)]
-        protected virtual Task<double> DivAsync(DivCommand command, CancellationToken cancellationToken = default)
+        protected virtual Task<double> Divide(DivCommand command, CancellationToken cancellationToken = default)
         {
             var context = CommandContext.GetCurrent<double>();
             var handler = context.ExecutionState.Handlers[^1];
@@ -32,7 +32,7 @@ namespace Stl.Tests.CommandR.Services
         }
 
         [CommandHandler(Priority = 1)]
-        public virtual async Task<double> RecSumAsync(RecSumCommand command, CancellationToken cancellationToken = default)
+        public virtual async Task<double> RecSum(RecSumCommand command, CancellationToken cancellationToken = default)
         {
             var context = CommandContext.GetCurrent<double>();
             var handler = context.ExecutionState.Handlers[^1];
@@ -58,8 +58,8 @@ namespace Stl.Tests.CommandR.Services
                 Isolate = command.Isolate,
             };
             var tailSumTask = command.Isolate
-                ? context.Commander.CallAsync(tailCommand, command.Isolate, cancellationToken)
-                : RecSumAsync(tailCommand, cancellationToken);
+                ? context.Commander.Call(tailCommand, command.Isolate, cancellationToken)
+                : RecSum(tailCommand, cancellationToken);
             var tailSum = await tailSumTask.ConfigureAwait(false);
             return command.Arguments[0] + tailSum;
         }

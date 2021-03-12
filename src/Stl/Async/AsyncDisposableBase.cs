@@ -69,7 +69,7 @@ namespace Stl.Async
                 return;
             }
             try {
-                await DisposeInternalAsync(disposing).ConfigureAwait(false);
+                await DisposeInternal(disposing).ConfigureAwait(false);
             }
             catch {
                 // DisposeAsync should never throw
@@ -79,7 +79,7 @@ namespace Stl.Async
             }
         }
 
-        protected virtual ValueTask DisposeInternalAsync(bool disposing) =>
+        protected virtual ValueTask DisposeInternal(bool disposing) =>
             new ValueTask(Task.CompletedTask);
 
         protected bool MarkDisposed()

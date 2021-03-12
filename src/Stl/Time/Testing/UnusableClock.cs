@@ -24,7 +24,7 @@ namespace Stl.Time.Testing
 
         public CancellationToken SettingsChangedToken => default;
 
-        public Task DelayAsync(TimeSpan dueIn, CancellationToken cancellationToken = default)
+        public Task Delay(TimeSpan dueIn, CancellationToken cancellationToken = default)
             => throw Errors.UnusableClock();
     }
 }

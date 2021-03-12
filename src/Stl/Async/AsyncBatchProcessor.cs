@@ -22,22 +22,22 @@ namespace Stl.Async
         protected AsyncBatchProcessorBase(Channel<BatchItem<TIn, TOut>> queue)
             => Queue = queue;
 
-        public async Task<TOut> ProcessAsync(TIn input, CancellationToken cancellationToken = default)
+        public async Task<TOut> Process(TIn input, CancellationToken cancellationToken = default)
         {
-            RunAsync().Ignore();;
+            Run().Ignore();;
             var outputTask = TaskSource.New<TOut>(false).Task;
             var batchItem = new BatchItem<TIn, TOut>(input, cancellationToken, outputTask);
             await Queue.Writer.WriteAsync(batchItem, cancellationToken).ConfigureAwait(false);
             return await outputTask.ConfigureAwait(false);
         }
 
-        protected override Task RunInternalAsync(CancellationToken cancellationToken)
+        protected override Task RunInternal(CancellationToken cancellationToken)
         {
             var readLock = Queue;
             var concurrencyLevel = ConcurrencyLevel;
             var maxBatchSize = MaxBatchSize;
 
-            async Task WorkerAsync()
+            async Task Worker()
             {
                 var reader = Queue.Reader;
                 var batch = new List<BatchItem<TIn, TOut>>(maxBatchSize);
@@ -53,7 +53,7 @@ namespace Stl.Async
                         continue;
                     }
                     try {
-                        await ProcessBatchAsync(batch, cancellationToken).ConfigureAwait(false);
+                        await ProcessBatch(batch, cancellationToken).ConfigureAwait(false);
                     }
                     finally {
                         batch.Clear();
@@ -63,11 +63,11 @@ namespace Stl.Async
 
             var workerTasks = new Task[concurrencyLevel];
             for (var i = 0; i < concurrencyLevel; i++)
-                workerTasks[i] = Task.Run(WorkerAsync, cancellationToken);
+                workerTasks[i] = Task.Run(Worker, cancellationToken);
             return Task.WhenAll(workerTasks);
         }
 
-        protected abstract Task ProcessBatchAsync(List<BatchItem<TIn, TOut>> batch, CancellationToken cancellationToken);
+        protected abstract Task ProcessBatch(List<BatchItem<TIn, TOut>> batch, CancellationToken cancellationToken);
     }
 
     public class AsyncBatchProcessor<TIn, TOut> : AsyncBatchProcessorBase<TIn, TOut>
@@ -79,7 +79,7 @@ namespace Stl.Async
         public AsyncBatchProcessor(BoundedChannelOptions options) : base(options) { }
         public AsyncBatchProcessor(Channel<BatchItem<TIn, TOut>> queue) : base(queue) { }
 
-        protected override async Task ProcessBatchAsync(List<BatchItem<TIn, TOut>> batch, CancellationToken cancellationToken)
+        protected override async Task ProcessBatch(List<BatchItem<TIn, TOut>> batch, CancellationToken cancellationToken)
         {
             try {
                 await BatchProcessor.Invoke(batch, cancellationToken).ConfigureAwait(false);

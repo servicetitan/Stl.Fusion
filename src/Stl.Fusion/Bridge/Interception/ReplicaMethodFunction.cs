@@ -30,7 +30,7 @@ namespace Stl.Fusion.Bridge.Interception
             Replicator = replicator;
         }
 
-        protected override async ValueTask<IComputed<T>> ComputeAsync(
+        protected override async ValueTask<IComputed<T>> Compute(
             ComputeMethodInput input, IComputed<T>? existing,
             CancellationToken cancellationToken)
         {
@@ -45,7 +45,7 @@ namespace Stl.Fusion.Bridge.Interception
                     replica = rsc.Replica;
                     using (ComputeContext.Suppress()) {
                         replicaComputed = (IReplicaComputed<T>) await replica.Computed
-                            .UpdateAsync(true, cancellationToken).ConfigureAwait(false);
+                            .Update(true, cancellationToken).ConfigureAwait(false);
                     }
                     result = new (method.Options, input, replicaComputed);
                     ComputeContext.Current.TryCapture(result);
@@ -107,7 +107,7 @@ namespace Stl.Fusion.Bridge.Interception
             using (ComputeContext.Suppress()) {
                 replica = Replicator.GetOrAdd(new PublicationStateInfo<T>(psi, output));
                 replicaComputed = (IReplicaComputed<T>) await replica.Computed
-                    .UpdateAsync(true, cancellationToken).ConfigureAwait(false);
+                    .Update(true, cancellationToken).ConfigureAwait(false);
             }
             result = new ReplicaMethodComputed<T>(method.Options, input, replicaComputed);
             ComputeContext.Current.TryCapture(result);

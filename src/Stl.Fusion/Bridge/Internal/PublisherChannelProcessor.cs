@@ -35,7 +35,7 @@ namespace Stl.Fusion.Bridge.Internal
             Subscriptions = new ConcurrentDictionary<Symbol, SubscriptionProcessor>();
         }
 
-        protected override async Task RunInternalAsync(CancellationToken cancellationToken)
+        protected override async Task RunInternal(CancellationToken cancellationToken)
         {
             try {
                 var reader = Channel.Reader;
@@ -44,10 +44,10 @@ namespace Stl.Fusion.Bridge.Internal
                         continue;
                     switch (message) {
                     case ReplicaMessage rm:
-                        await OnReplicaMessageAsync(rm, cancellationToken).ConfigureAwait(false);
+                        await OnReplicaMessage(rm, cancellationToken).ConfigureAwait(false);
                         break;
                     default:
-                        await OnUnsupportedMessageAsync(message, cancellationToken).ConfigureAwait(false);
+                        await OnUnsupportedMessage(message, cancellationToken).ConfigureAwait(false);
                         break;
                     }
                 }
@@ -60,7 +60,7 @@ namespace Stl.Fusion.Bridge.Internal
             }
         }
 
-        protected virtual async ValueTask OnUnsupportedMessageAsync(BridgeMessage message, CancellationToken cancellationToken)
+        protected virtual async ValueTask OnUnsupportedMessage(BridgeMessage message, CancellationToken cancellationToken)
         {
             if (message is ReplicaMessage rm) {
                 var response = new PublicationAbsentsMessage() {
@@ -73,16 +73,16 @@ namespace Stl.Fusion.Bridge.Internal
             }
         }
 
-        public virtual async ValueTask OnReplicaMessageAsync(ReplicaMessage message, CancellationToken cancellationToken)
+        public virtual async ValueTask OnReplicaMessage(ReplicaMessage message, CancellationToken cancellationToken)
         {
             if (message.PublisherId != Publisher.Id) {
-                await OnUnsupportedMessageAsync(message, cancellationToken).ConfigureAwait(false);
+                await OnUnsupportedMessage(message, cancellationToken).ConfigureAwait(false);
                 return;
             }
             var publicationId = message.PublicationId;
             var publication = Publisher.TryGet(publicationId);
             if (publication == null) {
-                await OnUnsupportedMessageAsync(message, cancellationToken).ConfigureAwait(false);
+                await OnUnsupportedMessage(message, cancellationToken).ConfigureAwait(false);
                 return;
             }
             if (Subscriptions.TryGetValue(publicationId, out var subscriptionProcessor))
@@ -98,15 +98,15 @@ namespace Stl.Fusion.Bridge.Internal
                     PublisherImpl.Clock, LoggerFactory);
                 Subscriptions[publicationId] = subscriptionProcessor;
             }
-            subscriptionProcessor.RunAsync()
-                .ContinueWith(_ => UnsubscribeAsync(publication, default), CancellationToken.None)
+            subscriptionProcessor.Run()
+                .ContinueWith(_ => Unsubscribe(publication, default), CancellationToken.None)
                 .Ignore();
         subscriptionExists:
             await subscriptionProcessor.IncomingChannel.Writer
                 .WriteAsync(message, cancellationToken).ConfigureAwait(false);
         }
 
-        public virtual async ValueTask UnsubscribeAsync(
+        public virtual async ValueTask Unsubscribe(
             IPublication publication, CancellationToken cancellationToken)
         {
             var publicationId = publication.Id;
@@ -115,7 +115,7 @@ namespace Stl.Fusion.Bridge.Internal
             await subscriptionProcessor.DisposeAsync().ConfigureAwait(false);
         }
 
-        protected virtual async Task RemoveSubscriptionsAsync()
+        protected virtual async Task RemoveSubscriptions()
         {
             // We can unsubscribe in parallel
             var subscriptions = Subscriptions;
@@ -128,7 +128,7 @@ namespace Stl.Fusion.Bridge.Internal
                             var (publicationId, _) = (p.Key, p.Value);
                             var publication = Publisher.TryGet(publicationId);
                             if (publication != null)
-                                await UnsubscribeAsync(publication, default).ConfigureAwait(false);
+                                await Unsubscribe(publication, default).ConfigureAwait(false);
                         }));
                     await Task.WhenAll(tasks).ConfigureAwait(false);
                 }
@@ -140,10 +140,10 @@ namespace Stl.Fusion.Bridge.Internal
             }
         }
 
-        protected override async ValueTask DisposeInternalAsync(bool disposing)
+        protected override async ValueTask DisposeInternal(bool disposing)
         {
-            await base.DisposeInternalAsync(disposing);
-            await RemoveSubscriptionsAsync().ConfigureAwait(false);
+            await base.DisposeInternal(disposing);
+            await RemoveSubscriptions().ConfigureAwait(false);
             PublisherImpl.OnChannelProcessorDisposed(this);
         }
     }

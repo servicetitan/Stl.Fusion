@@ -45,7 +45,7 @@ namespace Stl.Fusion.EntityFramework.Operations
             GC.SuppressFinalize(this);
         }
 
-        public Task WaitForChangesAsync(CancellationToken cancellationToken = default)
+        public Task WaitForChanges(CancellationToken cancellationToken = default)
         {
             lock (Lock) {
                 var task = NextEventTask;

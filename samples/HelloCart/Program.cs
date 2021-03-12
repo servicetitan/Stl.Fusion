@@ -49,7 +49,7 @@ await app.InitializeAsync();
 // Starting watch tasks
 WriteLine("Initial state:");
 using var cts = new CancellationTokenSource();
-app.WatchAsync(cts.Token).Ignore();
+app.Watch(cts.Token).Ignore();
 await Task.Delay(700); // Just to make sure watch tasks print whatever they want before our prompt appears
 // await AutoRunner.RunAsync(app);
 
@@ -69,11 +69,11 @@ while (true) {
             throw new ApplicationException("Invalid price expression.");
         var productId = parts[0].Trim();
         var price = decimal.Parse(parts[1].Trim());
-        var product = await app.ClientProductService.FindAsync(productId);
+        var product = await app.ClientProductService.TryGet(productId);
         if (product == null)
             throw new KeyNotFoundException("Specified product doesn't exist.");
         var command = new EditCommand<Product>(product with { Price = price });
-        await app.ClientProductService.EditAsync(command);
+        await app.ClientProductService.Edit(command);
         // You can run absolutely identical action with:
         // await app.ClientServices.Commander().CallAsync(command);
     }

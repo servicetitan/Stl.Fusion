@@ -12,7 +12,7 @@ namespace Stl.Pooling
 {
     public interface ISharedResourcePool<TKey, TResource>
     {
-        Task<SharedResourceHandle<TKey, TResource>> TryAcquireAsync(TKey key, CancellationToken cancellationToken = default);
+        Task<SharedResourceHandle<TKey, TResource>> TryAcquire(TKey key, CancellationToken cancellationToken = default);
     }
 
     public abstract class SharedResourcePoolBase<TKey, TResource> : ISharedResourcePool<TKey, TResource>
@@ -31,18 +31,18 @@ namespace Stl.Pooling
             ReentryMode lockReentryMode = ReentryMode.UncheckedDeadlock,
             bool useConcurrentDispose = false)
         {
-            _cachedReleaser = ReleaseResourceAsync; // That's just to avoid closure allocation on every call
+            _cachedReleaser = ReleaseResource; // That's just to avoid closure allocation on every call
             Resources = new ConcurrentDictionary<TKey, (TResource? Resource, int Count)>();
             ResourceDisposeCancellers = new ConcurrentDictionary<TKey, CancellationTokenSource>();
             UseConcurrentDispose = useConcurrentDispose;
             LocksSet = new AsyncLockSet<TKey>(lockReentryMode);
         }
 
-        public async Task<SharedResourceHandle<TKey, TResource>> TryAcquireAsync(TKey key, CancellationToken cancellationToken = default)
+        public async Task<SharedResourceHandle<TKey, TResource>> TryAcquire(TKey key, CancellationToken cancellationToken = default)
         {
-            using var @lock = await LocksSet.LockAsync(key, cancellationToken).ConfigureAwait(false);
+            using var @lock = await LocksSet.Lock(key, cancellationToken).ConfigureAwait(false);
             if (!Resources.TryGetValue(key, out var pair)) {
-                var resource = await CreateResourceAsync(key, cancellationToken).ConfigureAwait(false);
+                var resource = await CreateResource(key, cancellationToken).ConfigureAwait(false);
                 if (resource == null)
                     return new SharedResourceHandle<TKey, TResource>();
                 if (!Resources.TryAdd(key, (resource, 1)!))
@@ -59,12 +59,12 @@ namespace Stl.Pooling
             return new SharedResourceHandle<TKey, TResource>(key, pair.Resource!, _cachedReleaser);
         }
 
-        protected async ValueTask ReleaseResourceAsync(TKey key, TResource resource)
+        protected async ValueTask ReleaseResource(TKey key, TResource resource)
         {
             var delayedDisposeCts = (CancellationTokenSource?) null;
             try {
                 // ReSharper disable once MethodSupportsCancellation
-                using (await LocksSet.LockAsync(key).ConfigureAwait(false)) {
+                using (await LocksSet.Lock(key).ConfigureAwait(false)) {
                     if (!Resources.TryGetValue(key, out var pair))
                         return;
                     var newPair = (pair.Resource, Count: pair.Count - 1 );
@@ -77,7 +77,7 @@ namespace Stl.Pooling
                 }
                 // This can be done outside of the lock
                 if (delayedDisposeCts != null)
-                    await DelayedDisposeAsync(key, resource, delayedDisposeCts.Token)
+                    await DelayedDisposeResource(key, resource, delayedDisposeCts.Token)
                         .SuppressCancellation()
                         .ConfigureAwait(false);
             }
@@ -89,10 +89,10 @@ namespace Stl.Pooling
             }
         }
 
-        protected async Task DelayedDisposeAsync(TKey key, TResource resource, CancellationToken cancellationToken)
+        protected async Task DelayedDisposeResource(TKey key, TResource resource, CancellationToken cancellationToken)
         {
-            await DisposeResourceDelayAsync(key, resource, cancellationToken);
-            using (await LocksSet.LockAsync(key, cancellationToken).ConfigureAwait(false)) {
+            await DisposeResourceDelay(key, resource, cancellationToken);
+            using (await LocksSet.Lock(key, cancellationToken).ConfigureAwait(false)) {
                 cancellationToken.ThrowIfCancellationRequested();
                 if (!Resources.TryRemove(key, (resource, 0)!))
                     throw Errors.InternalError(AsyncLockFailureMessage);
@@ -100,17 +100,17 @@ namespace Stl.Pooling
                     ResourceDisposeCancellers.TryRemove(key, cts);
                 if (!UseConcurrentDispose)
                     // It happens inside the lock in this case
-                    await DisposeResourceAsync(key, resource).ConfigureAwait(false);
+                    await DisposeResource(key, resource).ConfigureAwait(false);
             }
             // This can be done outside of the lock
             if (UseConcurrentDispose)
                 // ReSharper disable once MethodSupportsCancellation
-                Task.Run(() => DisposeResourceAsync(key, resource)).Ignore();
+                Task.Run(() => DisposeResource(key, resource)).Ignore();
         }
 
-        protected abstract ValueTask<TResource?> CreateResourceAsync(TKey key, CancellationToken cancellationToken);
-        protected abstract ValueTask DisposeResourceAsync(TKey key, TResource resource);
-        protected abstract ValueTask DisposeResourceDelayAsync(TKey key, TResource resource, CancellationToken cancellationToken);
+        protected abstract ValueTask<TResource?> CreateResource(TKey key, CancellationToken cancellationToken);
+        protected abstract ValueTask DisposeResource(TKey key, TResource resource);
+        protected abstract ValueTask DisposeResourceDelay(TKey key, TResource resource, CancellationToken cancellationToken);
     }
 
     public sealed class SharedResourcePool<TKey, TResource> : SharedResourcePoolBase<TKey, TResource>
@@ -134,11 +134,11 @@ namespace Stl.Pooling
                 ?? ((key, resource, cancellationToken) => ValueTaskEx.CompletedTask); // No delay
         }
 
-        protected override ValueTask<TResource?> CreateResourceAsync(TKey key, CancellationToken cancellationToken)
+        protected override ValueTask<TResource?> CreateResource(TKey key, CancellationToken cancellationToken)
             => _resourceFactory.Invoke(key, cancellationToken);
-        protected override ValueTask DisposeResourceAsync(TKey key, TResource resource)
+        protected override ValueTask DisposeResource(TKey key, TResource resource)
             => _resourceDisposer.Invoke(key, resource);
-        protected override ValueTask DisposeResourceDelayAsync(TKey key, TResource resource, CancellationToken cancellationToken)
+        protected override ValueTask DisposeResourceDelay(TKey key, TResource resource, CancellationToken cancellationToken)
             => _resourceDisposeDelayer.Invoke(key, resource, cancellationToken);
     }
 }

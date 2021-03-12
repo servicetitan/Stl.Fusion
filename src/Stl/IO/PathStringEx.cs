@@ -48,13 +48,13 @@ namespace Stl.IO
 
         // ReadXxx
 
-        public static Task<string> ReadTextAsync(
+        public static Task<string> ReadText(
             this PathString path,
             Encoding? encoding = null,
             CancellationToken cancellationToken = default)
             => File.ReadAllTextAsync(path, encoding ?? Encoding.UTF8, cancellationToken);
 
-        public static async IAsyncEnumerable<string> ReadLinesAsync(
+        public static async IAsyncEnumerable<string> ReadLines(
             this PathString path,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {

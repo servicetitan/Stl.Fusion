@@ -130,7 +130,7 @@ namespace Stl.Fusion.Bridge
             return true;
         }
 
-        public Task PruneAsync()
+        public Task Prune()
         {
             lock (Lock) {
                 if (_pruneTask == null || _pruneTask.IsCompleted)
@@ -157,7 +157,7 @@ namespace Stl.Fusion.Bridge
                 if (_opCounter.ApproximateValue <= _pruneCounterThreshold)
                     return;
                 _opCounter.ApproximateValue = 0;
-                PruneAsync();
+                Prune();
             }
         }
 

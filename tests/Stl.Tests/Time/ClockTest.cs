@@ -33,7 +33,7 @@ namespace Stl.Tests.Time
             ShouldEqual(clockStart, clock.ToLocalTime(realStart), epsilon10);
             ShouldEqual(clockStart, realStart + TimeSpan.FromSeconds(1), epsilon);
 
-            await clock.DelayAsync(TimeSpan.FromSeconds(5));
+            await clock.Delay(TimeSpan.FromSeconds(5));
             ShouldEqual(realStart + TimeSpan.FromSeconds(0.5), SystemClock.Now, epsilon);
             ShouldEqual(clockStart + TimeSpan.FromSeconds(5), clock.Now, epsilon10);
             Out.WriteLine(clock.Now.ToString());
@@ -42,7 +42,7 @@ namespace Stl.Tests.Time
             ShouldEqual(clockStart + TimeSpan.FromSeconds(6), clock.Now, epsilon10);
 
             clock.SpeedupBy(0.1);
-            await clock.DelayAsync(TimeSpan.FromSeconds(0.5));
+            await clock.Delay(TimeSpan.FromSeconds(0.5));
             ShouldEqual(realStart + TimeSpan.FromSeconds(1), SystemClock.Now, epsilon);
             ShouldEqual(clockStart + TimeSpan.FromSeconds(6.5), clock.Now, epsilon10);
         }
@@ -125,31 +125,31 @@ namespace Stl.Tests.Time
                 // Negative value (but not infinity)
                 await ((Func<Task>) (async () => {
                     var cts = new CancellationTokenSource(100);
-                    await clock1.DelayAsync(-2, cts.Token);
+                    await clock1.Delay(-2, cts.Token);
                 })).Should().ThrowAsync<ArgumentOutOfRangeException>();
                 await ((Func<Task>) (async () => {
                     var cts = new CancellationTokenSource(100);
-                    await clock1.DelayAsync(TimeSpan.FromMilliseconds(-2), cts.Token);
+                    await clock1.Delay(TimeSpan.FromMilliseconds(-2), cts.Token);
                 })).Should().ThrowAsync<ArgumentOutOfRangeException>();
 
                 // Infinity
                 await ((Func<Task>) (async () => {
                     var cts = new CancellationTokenSource(100);
-                    await clock1.DelayAsync(Timeout.Infinite, cts.Token).SuppressCancellation();
+                    await clock1.Delay(Timeout.Infinite, cts.Token).SuppressCancellation();
                 })).Should().CompleteWithinAsync(TimeSpan.FromMilliseconds(1000));
                 await ((Func<Task>) (async () => {
                     var cts = new CancellationTokenSource(100);
-                    await clock1.DelayAsync(Timeout.InfiniteTimeSpan, cts.Token).SuppressCancellation();
+                    await clock1.Delay(Timeout.InfiniteTimeSpan, cts.Token).SuppressCancellation();
                 })).Should().CompleteWithinAsync(TimeSpan.FromMilliseconds(1000));
 
                 // Zero
                 await ((Func<Task>) (async () => {
                     var cts = new CancellationTokenSource(1000);
-                    await clock1.DelayAsync(0, cts.Token).SuppressCancellation();
+                    await clock1.Delay(0, cts.Token).SuppressCancellation();
                 })).Should().CompleteWithinAsync(TimeSpan.FromMilliseconds(500));
                 await ((Func<Task>) (async () => {
                     var cts = new CancellationTokenSource(1000);
-                    await clock1.DelayAsync(TimeSpan.Zero, cts.Token).SuppressCancellation();
+                    await clock1.Delay(TimeSpan.Zero, cts.Token).SuppressCancellation();
                 })).Should().CompleteWithinAsync(TimeSpan.FromMilliseconds(500));
             }
 

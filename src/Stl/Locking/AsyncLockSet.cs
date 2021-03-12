@@ -16,7 +16,7 @@ namespace Stl.Locking
         int AcquiredLockCount { get; }
         bool IsLocked(TKey key);
         bool? IsLockedLocally(TKey key);
-        ValueTask<IDisposable> LockAsync(TKey key, CancellationToken cancellationToken = default);
+        ValueTask<IDisposable> Lock(TKey key, CancellationToken cancellationToken = default);
     }
 
     public class AsyncLockSet<TKey> : IAsyncLockSet<TKey>
@@ -27,7 +27,6 @@ namespace Stl.Locking
 
         private readonly ConcurrentDictionary<TKey, Entry> _entries;
         private readonly ConcurrentPool<AsyncLock> _lockPool;
-        private readonly TaskCreationOptions _taskCreationOptions;
 
         public ReentryMode ReentryMode { get; }
         public int AcquiredLockCount => _entries.Count;
@@ -45,10 +44,9 @@ namespace Stl.Locking
             int concurrencyLevel, int capacity)
         {
             ReentryMode = reentryMode;
-            _taskCreationOptions = taskCreationOptions;
             _entries = new ConcurrentDictionary<TKey, Entry>(concurrencyLevel, capacity);
             _lockPool = new ConcurrentPool<AsyncLock>(
-                () => new AsyncLock(ReentryMode, _taskCreationOptions));
+                () => new AsyncLock(ReentryMode, taskCreationOptions));
         }
 
         public bool IsLocked(TKey key)
@@ -67,14 +65,14 @@ namespace Stl.Locking
             return entry!.AsyncLock?.IsLockedLocally;
         }
 
-        ValueTask<IDisposable> IAsyncLockSet<TKey>.LockAsync(
+        ValueTask<IDisposable> IAsyncLockSet<TKey>.Lock(
             TKey key, CancellationToken cancellationToken)
         {
             // This has to be non-async method, otherwise AsyncLocals
             // created inside it won't be available in caller's ExecutionContext.
             var (asyncLock, entry) = PrepareLock(key);
             try {
-                var task = asyncLock.LockAsync(cancellationToken);
+                var task = asyncLock.Lock(cancellationToken);
                 return ToReleaserTaskSlow(entry, task);
             }
             catch {
@@ -83,14 +81,14 @@ namespace Stl.Locking
             }
         }
 
-        public ValueTask<Releaser> LockAsync(
+        public ValueTask<Releaser> Lock(
             TKey key, CancellationToken cancellationToken = default)
         {
             // This has to be non-async method, otherwise AsyncLocals
             // created inside it won't be available in caller's ExecutionContext.
             var (asyncLock, entry) = PrepareLock(key);
             try {
-                var task = asyncLock.LockAsync(cancellationToken);
+                var task = asyncLock.Lock(cancellationToken);
                 return ToReleaserTaskFast(entry, task);
             }
             catch {

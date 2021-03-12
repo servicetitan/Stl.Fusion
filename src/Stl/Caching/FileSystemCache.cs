@@ -13,11 +13,11 @@ namespace Stl.Caching
     public abstract class FileSystemCacheBase<TKey, TValue> : AsyncCacheBase<TKey, TValue>
         where TKey : notnull
     {
-        public override async ValueTask<Option<TValue>> TryGetAsync(TKey key, CancellationToken cancellationToken = default)
+        public override async ValueTask<Option<TValue>> TryGet(TKey key, CancellationToken cancellationToken = default)
         {
             try {
                 await using var fileStream = OpenFile(GetFileName(key), false, cancellationToken);
-                var pairs = Deserialize(await GetTextAsync(fileStream, cancellationToken).ConfigureAwait(false));
+                var pairs = Deserialize(await GetText(fileStream, cancellationToken).ConfigureAwait(false));
                 return pairs?.GetOption(key) ?? default;
             }
             catch (IOException) {
@@ -25,7 +25,7 @@ namespace Stl.Caching
             }
         }
 
-        protected override async ValueTask SetAsync(TKey key, Option<TValue> value, CancellationToken cancellationToken = default)
+        protected override async ValueTask Set(TKey key, Option<TValue> value, CancellationToken cancellationToken = default)
         {
             try {
                 // The logic here is more complex than it seems to make sure the update is atomic,
@@ -33,13 +33,13 @@ namespace Stl.Caching
                 var fileName = GetFileName(key);
                 var newText = (string?) null;
                 await using (var fileStream = OpenFile(fileName, true, cancellationToken)) {
-                    var originalText = await GetTextAsync(fileStream, cancellationToken).ConfigureAwait(false);
+                    var originalText = await GetText(fileStream, cancellationToken).ConfigureAwait(false);
                     var pairs =
                         Deserialize(originalText)
                         ?? new Dictionary<TKey, TValue>();
                     pairs.SetOption(key, value);
                     newText = Serialize(pairs);
-                    await SetTextAsync(fileStream, newText, cancellationToken).ConfigureAwait(false);
+                    await SetText(fileStream, newText, cancellationToken).ConfigureAwait(false);
                 }
                 if (newText == null)
                     File.Delete(fileName);
@@ -60,7 +60,7 @@ namespace Stl.Caching
             return File.Open(fileName, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
         }
 
-        protected virtual async Task<string?> GetTextAsync(FileStream? fileStream, CancellationToken cancellationToken)
+        protected virtual async Task<string?> GetText(FileStream? fileStream, CancellationToken cancellationToken)
         {
             if (fileStream == null)
                 return null;
@@ -75,7 +75,7 @@ namespace Stl.Caching
             }
         }
 
-        protected virtual async ValueTask SetTextAsync(FileStream? fileStream, string? text, CancellationToken cancellationToken)
+        protected virtual async ValueTask SetText(FileStream? fileStream, string? text, CancellationToken cancellationToken)
         {
             if (fileStream == null)
                 return;

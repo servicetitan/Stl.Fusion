@@ -39,11 +39,11 @@ namespace Stl.Fusion.EntityFramework.Authentication
             Random = new Random();
         }
 
-        protected override async Task WakeUpAsync(CancellationToken cancellationToken)
+        protected override async Task WakeUp(CancellationToken cancellationToken)
         {
             var minLastSeenAt = (Clock.Now - MaxSessionAge).ToDateTime();
             LastTrimCount = await Sessions
-                .TrimAsync(minLastSeenAt, BatchSize, cancellationToken)
+                .Trim(minLastSeenAt, BatchSize, cancellationToken)
                 .ConfigureAwait(false);
 
             var logEnabled = LogLevel != LogLevel.None && Log.IsEnabled(LogLevel);
@@ -51,14 +51,14 @@ namespace Stl.Fusion.EntityFramework.Authentication
                 Log.Log(LogLevel, "Trimmed {Count} sessions", LastTrimCount);
         }
 
-        protected override Task SleepAsync(Exception? error, CancellationToken cancellationToken)
+        protected override Task Sleep(Exception? error, CancellationToken cancellationToken)
         {
             var delay = default(TimeSpan);
             if (error != null)
                 delay = TimeSpan.FromMilliseconds(1000 * Random.NextDouble());
             else if (LastTrimCount < BatchSize)
                 delay = CheckInterval + TimeSpan.FromMilliseconds(100 * Random.NextDouble());
-            return Clock.DelayAsync(delay, cancellationToken);
+            return Clock.Delay(delay, cancellationToken);
         }
     }
 }

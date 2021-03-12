@@ -80,14 +80,14 @@ namespace Stl.Fusion.Tests
                     break;
                 }
                 catch {
-                    await DelayAsync(0.3);
+                    await Delay(0.3);
                 }
             }
             await using var dbContext = CreateDbContext();
             if (Options.DbType != FusionTestDbType.Sqlite)
                 await dbContext.Database.EnsureDeletedAsync();
             await dbContext.Database.EnsureCreatedAsync();
-            await Services.HostedServices().StartAsync();
+            await Services.HostedServices().Start();
         }
 
         public override async Task DisposeAsync()
@@ -95,7 +95,7 @@ namespace Stl.Fusion.Tests
             if (ClientServices is IDisposable dcs)
                 dcs.Dispose();
             try {
-                await Services.HostedServices().StopAsync();
+                await Services.HostedServices().Stop();
             }
             finally {
                 if (Services is IDisposable ds)
@@ -231,7 +231,7 @@ namespace Stl.Fusion.Tests
                 fusion.AddState(c => c.StateFactory().NewLive<ServerTimeModel2>(
                     async (state, cancellationToken) => {
                         var client = c.GetRequiredService<IClientTimeService>();
-                        var time = await client.GetTimeAsync(cancellationToken).ConfigureAwait(false);
+                        var time = await client.GetTime(cancellationToken).ConfigureAwait(false);
                         return new ServerTimeModel2(time);
                     }));
             }
@@ -240,19 +240,19 @@ namespace Stl.Fusion.Tests
         protected TestDbContext CreateDbContext()
             => Services.GetRequiredService<IDbContextFactory<TestDbContext>>().CreateDbContext();
 
-        protected Task<Channel<BridgeMessage>> ConnectToPublisherAsync(CancellationToken cancellationToken = default)
+        protected Task<Channel<BridgeMessage>> ConnectToPublisher(CancellationToken cancellationToken = default)
         {
             var publisher = WebServices.GetRequiredService<IPublisher>();
             var channelProvider = ClientServices.GetRequiredService<IChannelProvider>();
-            return channelProvider.CreateChannelAsync(publisher.Id, cancellationToken);
+            return channelProvider.CreateChannel(publisher.Id, cancellationToken);
         }
 
         protected virtual TestChannelPair<BridgeMessage> CreateChannelPair(
             string name, bool dump = true)
             => new(name, dump ? Out : null);
 
-        protected virtual Task DelayAsync(double seconds)
-            => Timeouts.Clock.DelayAsync(TimeSpan.FromSeconds(seconds));
+        protected virtual Task Delay(double seconds)
+            => Timeouts.Clock.Delay(TimeSpan.FromSeconds(seconds));
 
         protected void GCCollect()
         {

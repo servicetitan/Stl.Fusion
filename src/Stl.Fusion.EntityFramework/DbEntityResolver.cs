@@ -46,7 +46,7 @@ namespace Stl.Fusion.EntityFramework
                     MaxBatchSize = 16,
                     ConcurrencyLevel = Math.Min(HardwareInfo.ProcessorCount, 4),
                     BatchingDelayTaskFactory = cancellationToken => Task.Delay(1, cancellationToken),
-                    BatchProcessor = self.ProcessBatchAsync,
+                    BatchProcessor = self.ProcessBatch,
                 });
             _batchProcessorLazy = new Lazy<AsyncBatchProcessor<TKey, TEntity>>(
                 () => BatchProcessorFactory.Invoke(this));
@@ -71,18 +71,18 @@ namespace Stl.Fusion.EntityFramework
                 BatchProcessor.Dispose();
         }
 
-        public async Task<TEntity> GetAsync(TKey key, CancellationToken cancellationToken = default)
+        public async Task<TEntity> Get(TKey key, CancellationToken cancellationToken = default)
         {
-            var entity = await TryGetAsync(key, cancellationToken).ConfigureAwait(false);
+            var entity = await TryGet(key, cancellationToken).ConfigureAwait(false);
             return entity ?? throw Errors.EntityNotFound<TEntity>();
         }
 
-        public async Task<TEntity?> TryGetAsync(TKey key, CancellationToken cancellationToken = default)
-            => await BatchProcessor.ProcessAsync(key, cancellationToken).ConfigureAwait(false);
+        public async Task<TEntity?> TryGet(TKey key, CancellationToken cancellationToken = default)
+            => await BatchProcessor.Process(key, cancellationToken).ConfigureAwait(false);
 
-        public async Task<Dictionary<TKey, TEntity>> GetManyAsync(IEnumerable<TKey> keys, CancellationToken cancellationToken = default)
+        public async Task<Dictionary<TKey, TEntity>> GetMany(IEnumerable<TKey> keys, CancellationToken cancellationToken = default)
         {
-            var tasks = keys.Distinct().Select(key => TryGetAsync(key, cancellationToken)).ToArray();
+            var tasks = keys.Distinct().Select(key => TryGet(key, cancellationToken)).ToArray();
             var entities = await Task.WhenAll(tasks).ConfigureAwait(false);
             var result = new Dictionary<TKey, TEntity>();
             foreach (var entity in entities)
@@ -93,7 +93,7 @@ namespace Stl.Fusion.EntityFramework
 
         // Protected methods
 
-        protected virtual async Task ProcessBatchAsync(List<BatchItem<TKey, TEntity>> batch, CancellationToken cancellationToken)
+        protected virtual async Task ProcessBatch(List<BatchItem<TKey, TEntity>> batch, CancellationToken cancellationToken)
         {
             await using var dbContext = CreateDbContext();
             var keys = new HashSet<TKey>();

@@ -17,10 +17,10 @@ namespace Stl.Async
             _lock = this;
         }
 
-        protected override ValueTask DisposeInternalAsync(bool disposing)
-            => WhenZeroAsync();
+        protected override ValueTask DisposeInternal(bool disposing)
+            => WhenZero();
 
-        public ValueTask WhenZeroAsync()
+        public ValueTask WhenZero()
         {
             TaskSource<Unit> zeroSource;
             lock (_lock) {

@@ -26,7 +26,7 @@ namespace Stl.Time
         public TimeSpan ToRealDuration(TimeSpan localDuration) => localDuration;
         public TimeSpan ToLocalDuration(TimeSpan realDuration) => realDuration;
 
-        public Task DelayAsync(TimeSpan dueIn, CancellationToken cancellationToken = default)
+        public Task Delay(TimeSpan dueIn, CancellationToken cancellationToken = default)
             // TODO: Make it work properly, i.e. taking into account time changes, sleep/resume, etc.
             => Task.Delay(dueIn, cancellationToken);
     }

@@ -14,7 +14,7 @@
             </DropdownToggle>
             <DropdownMenu>
                 @foreach (var (name, displayName) in unusedAuthSchemas) {
-                    <DropdownItem Color="Color.Primary" Clicked="@(_ => ClientAuthHelper.SignInAsync(name))">
+                    <DropdownItem Color="Color.Primary" Clicked="@(_ => ClientAuthHelper.SignIn(name))">
                         With @displayName
                     </DropdownItem>
                 }
@@ -43,7 +43,7 @@
     {
         if (firstRender) {
             // GetSchemasAsync requires JS interop, so it can be called only at this point
-            AuthSchemas = await ClientAuthHelper.GetSchemasAsync();
+            AuthSchemas = await ClientAuthHelper.GetSchemas();
             StateHasChanged();
         }
     }

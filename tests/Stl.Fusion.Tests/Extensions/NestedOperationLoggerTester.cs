@@ -24,15 +24,15 @@ namespace Stl.Fusion.Tests.Extensions
             => KeyValueStore = keyValueStore;
 
         [CommandHandler]
-        public virtual async Task SetManyAsync(SetManyCommand command, CancellationToken cancellationToken = default)
+        public virtual async Task SetMany(SetManyCommand command, CancellationToken cancellationToken = default)
         {
             var (keys, valuePrefix) = command;
             var first = keys.FirstOrDefault();
             if (first == null)
                 return;
-            await KeyValueStore.SetAsync(first, valuePrefix + keys.Length, cancellationToken);
+            await KeyValueStore.Set(first, valuePrefix + keys.Length, cancellationToken);
             var nextCommand = new SetManyCommand(keys[1..], valuePrefix);
-            await SetManyAsync(nextCommand, cancellationToken).ConfigureAwait(false);
+            await SetMany(nextCommand, cancellationToken).ConfigureAwait(false);
         }
     }
 }

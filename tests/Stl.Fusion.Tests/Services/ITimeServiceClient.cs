@@ -11,9 +11,9 @@ namespace Stl.Fusion.Tests.Services
     public interface ITimeServiceClient
     {
         [Get("getTime")]
-        Task<DateTime> GetTimeAsync(CancellationToken cancellationToken = default);
+        Task<DateTime> GetTime(CancellationToken cancellationToken = default);
         [Get("getFormattedTime")]
-        Task<string?> GetFormattedTimeAsync(string format, CancellationToken cancellationToken = default);
+        Task<string?> GetFormattedTime(string format, CancellationToken cancellationToken = default);
     }
 
     public interface IClientTimeService : ITimeService { }

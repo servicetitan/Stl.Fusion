@@ -21,7 +21,7 @@ namespace Stl.CommandR.Internal
         OptionSet Items { get; }
 
         CommandContext<TResult> Cast<TResult>() => (CommandContext<TResult>) this;
-        Task InvokeRemainingHandlersAsync(CancellationToken cancellationToken = default);
+        Task InvokeRemainingHandlers(CancellationToken cancellationToken = default);
 
         // SetXxx & TrySetXxx
         void SetDefaultResult();

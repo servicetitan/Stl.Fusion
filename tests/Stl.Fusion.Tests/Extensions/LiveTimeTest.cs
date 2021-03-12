@@ -21,22 +21,22 @@ namespace Stl.Fusion.Tests.Extensions
         {
             var liveClock = Services.GetRequiredService<ILiveClock>();
 
-            var cTime = await Computed.CaptureAsync(_ => liveClock.GetUtcNowAsync());
+            var cTime = await Computed.Capture(_ => liveClock.GetUtcNow());
             cTime.IsConsistent().Should().BeTrue();
             (DateTime.UtcNow - cTime.Value).Should().BeLessThan(TimeSpan.FromSeconds(1.1));
-            await DelayAsync(1.3);
+            await Delay(1.3);
             cTime.IsConsistent().Should().BeFalse();
 
-            cTime = await Computed.CaptureAsync(_ => liveClock.GetUtcNowAsync(TimeSpan.FromMilliseconds(200)));
+            cTime = await Computed.Capture(_ => liveClock.GetUtcNow(TimeSpan.FromMilliseconds(200)));
             cTime.IsConsistent().Should().BeTrue();
-            await DelayAsync(0.25);
+            await Delay(0.25);
             cTime.IsConsistent().Should().BeFalse();
 
             var now = DateTime.UtcNow;
-            var ago = await liveClock.GetMomentsAgoAsync(now);
+            var ago = await liveClock.GetMomentsAgo(now);
             ago.Should().Be("just now");
-            await DelayAsync(1.8);
-            ago = await liveClock.GetMomentsAgoAsync(now);
+            await Delay(1.8);
+            ago = await liveClock.GetMomentsAgo(now);
             ago.Should().Be("1 second ago");
         }
     }

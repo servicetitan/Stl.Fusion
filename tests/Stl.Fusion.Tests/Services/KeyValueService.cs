@@ -10,7 +10,6 @@ using Stl.CommandR.Configuration;
 
 namespace Stl.Fusion.Tests.Services
 {
-
     public interface IKeyValueService<TValue>
     {
         public record SetCommand(string Key, TValue Value) : ICommand<Unit>
@@ -24,26 +23,26 @@ namespace Stl.Fusion.Tests.Services
         }
 
         [ComputeMethod]
-        Task<Option<TValue>> TryGetAsync(string key, CancellationToken cancellationToken = default);
+        Task<Option<TValue>> TryGet(string key, CancellationToken cancellationToken = default);
         [ComputeMethod]
-        Task<TValue> GetAsync(string key, CancellationToken cancellationToken = default);
-        Task SetAsync(string key, TValue value, CancellationToken cancellationToken = default);
-        Task RemoveAsync(string key, CancellationToken cancellationToken = default);
+        Task<TValue> Get(string key, CancellationToken cancellationToken = default);
+        Task Set(string key, TValue value, CancellationToken cancellationToken = default);
+        Task Remove(string key, CancellationToken cancellationToken = default);
         [CommandHandler]
-        Task SetCommandAsync(SetCommand cmd, CancellationToken cancellationToken = default);
+        Task SetCmd(SetCommand cmd, CancellationToken cancellationToken = default);
         [CommandHandler]
-        Task RemoveCommandAsync(RemoveCommand cmd, CancellationToken cancellationToken = default);
+        Task RemoveCmd(RemoveCommand cmd, CancellationToken cancellationToken = default);
     }
 
     public class KeyValueService<TValue> : IKeyValueService<TValue>
     {
         private readonly ConcurrentDictionary<string, TValue> _values = new();
 
-        public virtual Task<Option<TValue>> TryGetAsync(string key, CancellationToken cancellationToken = default)
+        public virtual Task<Option<TValue>> TryGet(string key, CancellationToken cancellationToken = default)
             => Task.FromResult(_values.TryGetValue(key, out var v) ? Option.Some(v) : default);
 
 #pragma warning disable 1998
-        public virtual async Task<TValue> GetAsync(string key, CancellationToken cancellationToken = default)
+        public virtual async Task<TValue> Get(string key, CancellationToken cancellationToken = default)
 #pragma warning restore 1998
         {
             if (key.EndsWith("error"))
@@ -51,17 +50,17 @@ namespace Stl.Fusion.Tests.Services
             return _values.GetValueOrDefault(key)!;
         }
 
-        public virtual Task SetAsync(string key, TValue value, CancellationToken cancellationToken = default)
-            => SetCommandAsync(new IKeyValueService<TValue>.SetCommand(key, value), cancellationToken);
+        public virtual Task Set(string key, TValue value, CancellationToken cancellationToken = default)
+            => SetCmd(new IKeyValueService<TValue>.SetCommand(key, value), cancellationToken);
 
-        public virtual Task RemoveAsync(string key, CancellationToken cancellationToken = default)
-            => RemoveCommandAsync(new IKeyValueService<TValue>.RemoveCommand(key), cancellationToken);
+        public virtual Task Remove(string key, CancellationToken cancellationToken = default)
+            => RemoveCmd(new IKeyValueService<TValue>.RemoveCommand(key), cancellationToken);
 
-        public virtual Task SetCommandAsync(IKeyValueService<TValue>.SetCommand cmd, CancellationToken cancellationToken = default)
+        public virtual Task SetCmd(IKeyValueService<TValue>.SetCommand cmd, CancellationToken cancellationToken = default)
         {
             if (Computed.IsInvalidating()) {
-                TryGetAsync(cmd.Key, default).AssertCompleted();
-                GetAsync(cmd.Key, default).AssertCompleted();
+                TryGet(cmd.Key, default).AssertCompleted();
+                Get(cmd.Key, default).AssertCompleted();
                 return Task.CompletedTask;
             }
 
@@ -69,11 +68,11 @@ namespace Stl.Fusion.Tests.Services
             return Task.CompletedTask;
         }
 
-        public virtual Task RemoveCommandAsync(IKeyValueService<TValue>.RemoveCommand cmd, CancellationToken cancellationToken = default)
+        public virtual Task RemoveCmd(IKeyValueService<TValue>.RemoveCommand cmd, CancellationToken cancellationToken = default)
         {
             if (Computed.IsInvalidating()) {
-                TryGetAsync(cmd.Key, default).AssertCompleted();
-                GetAsync(cmd.Key, default).AssertCompleted();
+                TryGet(cmd.Key, default).AssertCompleted();
+                Get(cmd.Key, default).AssertCompleted();
                 return Task.CompletedTask;
             }
 

@@ -5,6 +5,6 @@ namespace Stl.Fusion.Swapping
 {
     public interface ISwappable
     {
-        ValueTask SwapAsync(CancellationToken cancellationToken = default);
+        ValueTask Swap(CancellationToken cancellationToken = default);
     }
 }

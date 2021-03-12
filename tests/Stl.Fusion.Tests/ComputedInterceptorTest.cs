@@ -22,17 +22,17 @@ namespace Stl.Fusion.Tests
         {
             var stateFactory = Services.StateFactory();
             var time = Services.GetRequiredService<ITimeService>();
-            var c = await Computed.CaptureAsync(
-                _ => time.GetTimeWithOffsetAsync(TimeSpan.FromSeconds(1)));
+            var c = await Computed.Capture(
+                _ => time.GetTimeWithOffset(TimeSpan.FromSeconds(1)));
 
             var count = 0L;
             using var state = stateFactory.NewLive<DateTime>(
                 o => o.WithInstantUpdates(),
-                async (_, ct) => await c.UseAsync(ct));
+                async (_, ct) => await c.Use(ct));
             state.Updated += (s, _)
                 => Log.LogInformation($"{++count} -> {s.Value:hh:mm:ss:fff}");
 
-            await TestEx.WhenMetAsync(
+            await TestEx.WhenMet(
                 () => count.Should().BeGreaterThan(2),
                 TimeSpan.FromSeconds(5));
             var lastCount = count;
@@ -50,7 +50,7 @@ namespace Stl.Fusion.Tests
             for (var i = 0; i < 5; i++) {
                 await Task.Delay(300);
                 var cts = new CancellationTokenSource();
-                var task = time.GetTimeWithDelayAsync(cts.Token);
+                var task = time.GetTimeWithDelay(cts.Token);
                 cts.Cancel();
                 try {
                     await task.ConfigureAwait(false);
@@ -60,8 +60,8 @@ namespace Stl.Fusion.Tests
                 }
                 task.IsCanceled.Should().BeTrue();
 
-                task = time.GetTimeWithDelayAsync(default);
-                await TestEx.WhenMetAsync(
+                task = time.GetTimeWithDelay(default);
+                await TestEx.WhenMet(
                     () => task.IsCompletedSuccessfully.Should().BeTrue(),
                     TimeSpan.FromSeconds(1));
             }
@@ -72,14 +72,14 @@ namespace Stl.Fusion.Tests
         {
             var time = Services.GetRequiredService<ITimeService>();
 
-            var c1 = await Computed.CaptureAsync(_ => time.GetTimeAsync());
+            var c1 = await Computed.Capture(_ => time.GetTime());
 
             // Wait for time invalidation
             await Task.Delay(500);
 
-            var c2a = await Computed.CaptureAsync(_ => time.GetTimeAsync());
+            var c2a = await Computed.Capture(_ => time.GetTime());
             c2a.Should().NotBeSameAs(c1);
-            var c2b = await Computed.CaptureAsync(_ => time.GetTimeAsync());
+            var c2b = await Computed.Capture(_ => time.GetTime());
             c2b.Should().BeSameAs(c2a);
         }
 
@@ -90,22 +90,22 @@ namespace Stl.Fusion.Tests
             // otherwise it has a tiny chance of failure
             var time = Services.GetRequiredService<ITimeService>();
 
-            var c1 = await Computed.CaptureAsync(_ => time.GetTimeWithOffsetAsync(TimeSpan.FromSeconds(1)));
+            var c1 = await Computed.Capture(_ => time.GetTimeWithOffset(TimeSpan.FromSeconds(1)));
             c1.Should().NotBeNull();
-            var c2 = await Computed.CaptureAsync(_ => time.GetTimeWithOffsetAsync(TimeSpan.FromSeconds(2)));
+            var c2 = await Computed.Capture(_ => time.GetTimeWithOffset(TimeSpan.FromSeconds(2)));
             c2.Should().NotBeNull();
             c1.Should().NotBeSameAs(c2);
 
-            var c1a = await Computed.CaptureAsync(_ => time.GetTimeWithOffsetAsync(TimeSpan.FromSeconds(1)));
-            var c2a = await Computed.CaptureAsync(_ => time.GetTimeWithOffsetAsync(TimeSpan.FromSeconds(2)));
+            var c1a = await Computed.Capture(_ => time.GetTimeWithOffset(TimeSpan.FromSeconds(1)));
+            var c2a = await Computed.Capture(_ => time.GetTimeWithOffset(TimeSpan.FromSeconds(2)));
             c1.Should().BeSameAs(c1a);
             c2.Should().BeSameAs(c2a);
 
             // Wait for time invalidation
             await Task.Delay(500);
 
-            c1a = await Computed.CaptureAsync(_ => time.GetTimeWithOffsetAsync(TimeSpan.FromSeconds(1)));
-            c2a = await Computed.CaptureAsync(_ => time.GetTimeWithOffsetAsync(TimeSpan.FromSeconds(2)));
+            c1a = await Computed.Capture(_ => time.GetTimeWithOffset(TimeSpan.FromSeconds(1)));
+            c2a = await Computed.Capture(_ => time.GetTimeWithOffset(TimeSpan.FromSeconds(2)));
             c1.Should().NotBeSameAs(c1a);
             c2.Should().NotBeSameAs(c2a);
         }

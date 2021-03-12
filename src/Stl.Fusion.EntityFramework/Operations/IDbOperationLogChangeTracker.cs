@@ -7,6 +7,6 @@ namespace Stl.Fusion.EntityFramework.Operations
     public interface IDbOperationLogChangeTracker<TDbContext>
         where TDbContext : DbContext
     {
-        Task WaitForChangesAsync(CancellationToken cancellationToken = default);
+        Task WaitForChanges(CancellationToken cancellationToken = default);
     }
 }

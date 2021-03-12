@@ -31,7 +31,7 @@ namespace Stl.Fusion.Tests.Services
     public interface IScreenshotService
     {
         [ComputeMethod(KeepAliveTime = 0.3)]
-        Task<Screenshot> GetScreenshotAsync(int width, CancellationToken cancellationToken = default);
+        Task<Screenshot> GetScreenshot(int width, CancellationToken cancellationToken = default);
     }
 
     [ComputeService(typeof(IScreenshotService), Scope = ServiceScope.Services)]
@@ -53,9 +53,9 @@ namespace Stl.Fusion.Tests.Services
                 ?? new Rectangle(0, 0, 1920, 1080);
         }
 
-        public virtual async Task<Screenshot> GetScreenshotAsync(int width, CancellationToken cancellationToken = default)
+        public virtual async Task<Screenshot> GetScreenshot(int width, CancellationToken cancellationToken = default)
         {
-            var bScreen = await GetScreenshotAsync(cancellationToken).ConfigureAwait(false);
+            var bScreen = await GetScreenshot(cancellationToken).ConfigureAwait(false);
             // The code below scales a full-resolution screenshot to a desirable resolution
             var (w, h) = (_displayDimensions.Width, _displayDimensions.Height);
             var ow = width;
@@ -74,7 +74,7 @@ namespace Stl.Fusion.Tests.Services
         }
 
         [ComputeMethod(AutoInvalidateTime = 0.01)]
-        protected virtual Task<Bitmap> GetScreenshotAsync(CancellationToken cancellationToken = default)
+        protected virtual Task<Bitmap> GetScreenshot(CancellationToken cancellationToken = default)
         {
             // This method takes a full-resolution screenshot
             var (w, h) = (_displayDimensions.Width, _displayDimensions.Height);

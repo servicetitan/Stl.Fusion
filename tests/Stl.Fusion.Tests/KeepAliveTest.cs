@@ -17,7 +17,7 @@ namespace Stl.Fusion.Tests
             public int CallCount { get; set; }
 
             [ComputeMethod(KeepAliveTime = 0.5)]
-            public virtual async Task<double> SumAsync(double a, double b)
+            public virtual async Task<double> Sum(double a, double b)
             {
                 await Task.Yield();
                 CallCount++;
@@ -25,7 +25,7 @@ namespace Stl.Fusion.Tests
             }
 
             [ComputeMethod]
-            public virtual async Task<double> MulAsync(double a, double b)
+            public virtual async Task<double> Multiply(double a, double b)
             {
                 await Task.Yield();
                 CallCount++;
@@ -57,13 +57,13 @@ namespace Stl.Fusion.Tests
             var service = services.GetRequiredService<Service>();
 
             service.CallCount = 0;
-            await service.MulAsync(1, 1);
+            await service.Multiply(1, 1);
             service.CallCount.Should().Be(1);
-            await service.MulAsync(1, 1);
+            await service.Multiply(1, 1);
             service.CallCount.Should().Be(1);
 
-            await GCCollectAsync();
-            await service.MulAsync(1, 1);
+            await GCCollect();
+            await service.Multiply(1, 1);
             service.CallCount.Should().Be(2);
         }
 
@@ -78,23 +78,23 @@ namespace Stl.Fusion.Tests
             var service = services.GetRequiredService<Service>();
 
             service.CallCount = 0;
-            await service.SumAsync(1, 1);
+            await service.Sum(1, 1);
             service.CallCount.Should().Be(1);
-            await service.SumAsync(1, 1);
+            await service.Sum(1, 1);
             service.CallCount.Should().Be(1);
 
             await Task.Delay(250);
-            await GCCollectAsync();
-            await service.SumAsync(1, 1);
+            await GCCollect();
+            await service.Sum(1, 1);
             service.CallCount.Should().Be(1);
 
             await Task.Delay(1000);
-            await GCCollectAsync();
-            await service.SumAsync(1, 1);
+            await GCCollect();
+            await service.Sum(1, 1);
             service.CallCount.Should().Be(2);
         }
 
-        private async Task GCCollectAsync()
+        private async Task GCCollect()
         {
             GC.Collect();
             await Task.Delay(10);

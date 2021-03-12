@@ -47,7 +47,7 @@ namespace Stl.Time
             Clock = options.Clock;
             _fireHandler = fireHandler;
             _start = Clock.Now;
-            RunAsync().Ignore();
+            Run().Ignore();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -87,7 +87,7 @@ namespace Stl.Time
 
         // Protected & private methods
 
-        protected override async Task RunInternalAsync(CancellationToken cancellationToken)
+        protected override async Task RunInternal(CancellationToken cancellationToken)
         {
             var dueAt = _start + Quanta;
             for (;; dueAt += Quanta) {
@@ -96,7 +96,7 @@ namespace Stl.Time
                     // We intentionally don't pass CancellationToken here:
                     // the delay is supposed to be short & we want to save on
                     // CancellationToken registration/unregistration.
-                    await Clock.DelayAsync(dueAt, default).ConfigureAwait(false);
+                    await Clock.Delay(dueAt, default).ConfigureAwait(false);
                 IReadOnlyDictionary<TTimer, long> minSet;
                 lock (_lock) {
                     minSet = _timers.ExtractMinSet(_minPriority);

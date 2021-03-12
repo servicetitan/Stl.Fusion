@@ -20,14 +20,14 @@ namespace Stl.Fusion.EntityFramework.Operations
             => OperationCompletionNotifier = services.GetRequiredService<IOperationCompletionNotifier>();
 
         [CommandHandler(Priority = 1000, IsFilter = true)]
-        public async Task OnCommandAsync(ICommand command, CommandContext context, CancellationToken cancellationToken)
+        public async Task OnCommand(ICommand command, CommandContext context, CancellationToken cancellationToken)
         {
             var operationRequired =
                 context.OuterContext == null // Should be top-level command
                 && !(command is IMetaCommand) // No operations for "second-order" commands
                 && !Computed.IsInvalidating();
             if (!operationRequired) {
-                await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
+                await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);
                 return;
             }
 
@@ -41,8 +41,8 @@ namespace Stl.Fusion.EntityFramework.Operations
             context.Items.Set(scope);
 
             try {
-                await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
-                await scope.CommitAsync(cancellationToken);
+                await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);
+                await scope.Commit(cancellationToken);
             }
             catch (OperationCanceledException) {
                 throw;
@@ -51,7 +51,7 @@ namespace Stl.Fusion.EntityFramework.Operations
                 if (scope.IsUsed)
                     Log.LogError(e, "Operation failed: {Command}", command);
                 try {
-                    await scope.RollbackAsync();
+                    await scope.Rollback();
                 }
                 catch {
                     // Intended

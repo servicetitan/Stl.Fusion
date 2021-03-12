@@ -10,15 +10,15 @@ namespace Stl.Time
 {
     public static class ClockEx
     {
-        public static Task DelayAsync(this IMomentClock clock, Moment dueAt, CancellationToken cancellationToken = default)
-            => clock.DelayAsync((dueAt - clock.Now).NonNegative(), cancellationToken);
-        public static Task DelayAsync(this IMomentClock clock, long dueInMilliseconds, CancellationToken cancellationToken = default)
+        public static Task Delay(this IMomentClock clock, Moment dueAt, CancellationToken cancellationToken = default)
+            => clock.Delay((dueAt - clock.Now).NonNegative(), cancellationToken);
+        public static Task Delay(this IMomentClock clock, long dueInMilliseconds, CancellationToken cancellationToken = default)
         {
             if (dueInMilliseconds == Timeout.Infinite)
-                return clock.DelayAsync(Timeout.InfiniteTimeSpan, cancellationToken);
+                return clock.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
             if (dueInMilliseconds < 0)
                 throw new ArgumentOutOfRangeException(nameof(dueInMilliseconds));
-            return clock.DelayAsync(TimeSpan.FromMilliseconds(dueInMilliseconds), cancellationToken);
+            return clock.Delay(TimeSpan.FromMilliseconds(dueInMilliseconds), cancellationToken);
         }
 
         public static IObservable<long> Timer(this IMomentClock clock, long delayInMilliseconds)
@@ -30,7 +30,7 @@ namespace Stl.Time
             return Observable.Create<long>(async observer => {
                 var completed = false;
                 try {
-                    await clock.DelayAsync(dueIn).ConfigureAwait(false);
+                    await clock.Delay(dueIn).ConfigureAwait(false);
                     observer.OnNext(0);
                     completed = true;
                     observer.OnCompleted();
@@ -61,7 +61,7 @@ namespace Stl.Time
                     var index = 0L;
                     while (e.MoveNext()) {
                         var dueAt = clock.Now + e.Current;
-                        await clock.DelayAsync(dueAt, ct).SuppressCancellation().ConfigureAwait(false);
+                        await clock.Delay(dueAt, ct).SuppressCancellation().ConfigureAwait(false);
                         if (ct.IsCancellationRequested)
                             break;
                         observer.OnNext(index++);

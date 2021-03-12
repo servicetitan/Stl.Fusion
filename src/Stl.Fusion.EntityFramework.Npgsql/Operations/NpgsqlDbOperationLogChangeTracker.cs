@@ -31,7 +31,7 @@ namespace Stl.Fusion.EntityFramework.Npgsql.Operations
             ReplaceNextEventTask();
         }
 
-        public Task WaitForChangesAsync(CancellationToken cancellationToken = default)
+        public Task WaitForChanges(CancellationToken cancellationToken = default)
         {
             lock (Lock) {
                 var task = NextEventTask;
@@ -43,7 +43,7 @@ namespace Stl.Fusion.EntityFramework.Npgsql.Operations
 
         // Protected methods
 
-        protected override async Task WakeUpAsync(CancellationToken cancellationToken)
+        protected override async Task WakeUp(CancellationToken cancellationToken)
         {
             await using var dbContext = CreateDbContext();
             var database = dbContext.Database;
@@ -60,9 +60,9 @@ namespace Stl.Fusion.EntityFramework.Npgsql.Operations
                 await dbConnection.WaitAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        protected override Task SleepAsync(Exception? error, CancellationToken cancellationToken)
+        protected override Task Sleep(Exception? error, CancellationToken cancellationToken)
             => error != null
-                ? Clock.DelayAsync(Options.RetryDelay, cancellationToken)
+                ? Clock.Delay(Options.RetryDelay, cancellationToken)
                 : Task.CompletedTask;
 
         protected virtual void ReleaseWaitForChanges()

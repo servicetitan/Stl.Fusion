@@ -4,6 +4,6 @@ namespace Stl.Fusion.Operations
 {
     public interface IOperationCompletionListener
     {
-        Task OnOperationCompletedAsync(IOperation operation);
+        Task OnOperationCompleted(IOperation operation);
     }
 }

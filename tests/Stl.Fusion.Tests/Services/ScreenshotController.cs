@@ -14,10 +14,10 @@ namespace Stl.Fusion.Tests.Services
         public ScreenshotController(IScreenshotService service) => Service = service;
 
         [HttpGet, Publish]
-        public Task<Screenshot> GetScreenshotAsync(int width)
+        public Task<Screenshot> GetScreenshot(int width)
         {
             CallCount++;
-            return Service.GetScreenshotAsync(width, HttpContext.RequestAborted);
+            return Service.GetScreenshot(width, HttpContext.RequestAborted);
         }
     }
 }

@@ -9,7 +9,7 @@ namespace Stl.Async
     {
         CancellationToken StopToken { get; }
         Task? RunningTask { get; }
-        Task RunAsync();
+        Task Run();
     }
 
     public abstract class AsyncProcessBase : AsyncDisposableBase, IAsyncProcess
@@ -26,7 +26,7 @@ namespace Stl.Async
             StopToken = StopTokenSource.Token;
         }
 
-        public Task RunAsync()
+        public Task Run()
         {
             if (RunningTask != null)
                 return RunningTask;
@@ -41,30 +41,32 @@ namespace Stl.Async
                     : Disposable.NewClosed<AsyncFlowControl>(default, _ => {});
                 using (flowSuppressor)
                     RunningTask = Task
-                        .Run(() => RunInternalAsync(StopToken), CancellationToken.None)
+                        .Run(() => RunInternal(StopToken), CancellationToken.None)
                         .SuppressCancellation();
             }
             return RunningTask;
         }
 
-        protected abstract Task RunInternalAsync(CancellationToken cancellationToken);
+        protected abstract Task RunInternal(CancellationToken cancellationToken);
 
-        public Task StartAsync(CancellationToken cancellationToken)
+        Task IHostedService.StartAsync(CancellationToken cancellationToken) => Start(cancellationToken);
+        public Task Start(CancellationToken cancellationToken = default)
         {
-            RunAsync();
+            Run();
             return Task.CompletedTask;
         }
 
-        public async Task StopAsync(CancellationToken cancellationToken)
+        Task IHostedService.StopAsync(CancellationToken cancellationToken) => Stop(cancellationToken);
+        public async Task Stop(CancellationToken cancellationToken = default)
             => await DisposeAsync();
 
-        protected override async ValueTask DisposeInternalAsync(bool disposing)
+        protected override async ValueTask DisposeInternal(bool disposing)
         {
             if (!StopTokenSource.IsCancellationRequested)
                 StopTokenSource.Cancel();
             await (RunningTask ?? Task.CompletedTask).ConfigureAwait(false);
             StopTokenSource?.Dispose();
-            await base.DisposeInternalAsync(disposing);
+            await base.DisposeInternal(disposing);
         }
     }
 }

@@ -22,7 +22,7 @@ namespace Stl.Fusion.EntityFramework.Operations
             AgentInfo = agentInfo;
         }
 
-        public Task OnOperationCompletedAsync(IOperation operation)
+        public Task OnOperationCompleted(IOperation operation)
         {
             if (operation.AgentId != AgentInfo.Id.Value) // Only local commands require notification
                 return Task.CompletedTask;

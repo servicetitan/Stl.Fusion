@@ -12,8 +12,8 @@ namespace Stl.Fusion.Bridge
         IComputed Computed { get; }
         bool IsDisposed { get; }
 
-        Task WhenInvalidatedAsync();
-        Task WhenOutdatedAsync();
+        Task WhenInvalidated();
+        Task WhenOutdated();
     }
 
     public interface IPublicationState<T> : IPublicationState
@@ -58,8 +58,8 @@ namespace Stl.Fusion.Bridge
             computed.Invalidated += _ => WhenInvalidatedSource.TrySetResult(default);
         }
 
-        public Task WhenInvalidatedAsync() => WhenInvalidatedSource.Task;
-        public Task WhenOutdatedAsync() => WhenOutdatedSource.Task;
+        public Task WhenInvalidated() => WhenInvalidatedSource.Task;
+        public Task WhenOutdated() => WhenOutdatedSource.Task;
 
         bool IPublicationStateImpl.TryMarkOutdated()
         {

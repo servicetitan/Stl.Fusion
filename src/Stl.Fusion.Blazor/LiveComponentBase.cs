@@ -50,7 +50,7 @@ namespace Stl.Fusion.Blazor
                         var ts = TaskSource.New<T>(false);
                         await InvokeAsync(async () => {
                             try {
-                                ts.TrySetResult(await ComputeStateAsync(ct));
+                                ts.TrySetResult(await ComputeState(ct));
                             }
                             catch (OperationCanceledException) {
                                 ts.TrySetCanceled();
@@ -62,10 +62,10 @@ namespace Stl.Fusion.Blazor
                         return await ts.Task.ConfigureAwait(false);
                     }, this)
                 : StateFactory.NewLive<T>(ConfigureState,
-                    (_, ct) => ComputeStateAsync(ct), this);
+                    (_, ct) => ComputeState(ct), this);
 
         protected virtual void ConfigureState(LiveState<T>.Options options) { }
-        protected abstract Task<T> ComputeStateAsync(CancellationToken cancellationToken);
+        protected abstract Task<T> ComputeState(CancellationToken cancellationToken);
     }
 
     public abstract class LiveComponentBase<T, TLocals> : LiveComponentBase<T>

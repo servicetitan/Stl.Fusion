@@ -30,7 +30,7 @@ namespace Templates.Blazor2.UI
             builder.RootComponents.Add<App>("#app");
             var host = builder.Build();
 
-            host.Services.HostedServices().StartAsync();
+            host.Services.HostedServices().Start();
             return host.RunAsync();
         }
 
@@ -69,7 +69,7 @@ namespace Templates.Blazor2.UI
 
             // Default delay for update delayers
             services.AddSingleton(c => new UpdateDelayer.Options() {
-                Delay = TimeSpan.FromSeconds(0.1),
+                DelayDuration = TimeSpan.FromSeconds(0.1),
             });
 
             // Extensions

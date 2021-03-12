@@ -1,12 +1,9 @@
 using System;
-using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
+using Microsoft.Extensions.Logging;
 using Stl.Async;
 using Stl.CommandR;
-using Stl.Fusion.EntityFramework.Internal;
 using Stl.Fusion.Operations;
 using Stl.Locking;
 using Errors = Stl.Internal.Errors;
@@ -47,7 +44,7 @@ namespace Stl.Fusion.EntityFramework.Npgsql.Operations
             IsDisposed = true;
             using var _ = ExecutionContextEx.SuppressFlow();
             Task.Run(async () => {
-                using (await AsyncLock.LockAsync()) {
+                using (await AsyncLock.Lock()) {
                     var dbContext = DbContext;
                     if (dbContext != null)
                         await dbContext.DisposeAsync();
@@ -55,7 +52,7 @@ namespace Stl.Fusion.EntityFramework.Npgsql.Operations
             }).Ignore();
         }
 
-        public Task OnOperationCompletedAsync(IOperation operation)
+        public Task OnOperationCompleted(IOperation operation)
         {
             if (operation.AgentId != AgentInfo.Id.Value) // Only local commands require notification
                 return Task.CompletedTask;
@@ -66,39 +63,35 @@ namespace Stl.Fusion.EntityFramework.Npgsql.Operations
                     return Task.CompletedTask;
             }
             // If it wasn't command, we pessimistically assume it changed something
-            Notify();
+            using var _ = ExecutionContextEx.SuppressFlow();
+            Task.Run(Notify);
             return Task.CompletedTask;
         }
 
         // Protected methods
 
-        protected virtual void Notify(TimeSpan delay = default)
-        {
-            using var _ = ExecutionContextEx.SuppressFlow();
-            if (delay == default)
-                Task.Run(NotifyAsync);
-            else
-                Task.Delay(delay).ContinueWith(_ => NotifyAsync());
-        }
-
-        protected virtual async Task NotifyAsync()
+        protected virtual async Task Notify()
         {
             var qPayload = AgentInfo.Id.Value.Replace("'", "''");
             TDbContext? dbContext = null;
-            try {
-                using (await AsyncLock.LockAsync()) {
-                    if (IsDisposed)
-                        throw Errors.AlreadyDisposed();
-                    dbContext = DbContext ??= CreateDbContext();
-                    await dbContext.Database
-                        .ExecuteSqlRawAsync($"NOTIFY {Options.ChannelName}, '{qPayload}'")
-                        .ConfigureAwait(false);
+            for (;;) {
+                try {
+                    using (await AsyncLock.Lock()) {
+                        if (IsDisposed)
+                            return;
+                        dbContext = DbContext ??= CreateDbContext();
+                        await dbContext.Database
+                            .ExecuteSqlRawAsync($"NOTIFY {Options.ChannelName}, '{qPayload}'")
+                            .ConfigureAwait(false);
+                    }
+                    return;
                 }
-            }
-            catch {
-                DbContext = null;
-                Notify(Options.RetryDelay); // Retry
-                dbContext?.DisposeAsync().Ignore(); // Doesn't matter if it fails
+                catch (Exception e) {
+                    Log.LogError(e, "Notification failed - retrying");
+                    DbContext = null;
+                    dbContext?.DisposeAsync().Ignore(); // Doesn't matter if it fails
+                    await Clock.Delay(Options.RetryDelay).ConfigureAwait(false);
+                }
             }
         }
     }

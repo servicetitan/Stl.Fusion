@@ -30,28 +30,28 @@ namespace Stl.Fusion.Authentication
             AuthService = authService;
             SessionResolver = sessionResolver;
             UpdateDelayer = new UpdateDelayer(new UpdateDelayer.Options() {
-                Delay = options.UpdatePeriod,
+                DelayDuration = options.UpdatePeriod,
                 CancellationDelay = TimeSpan.Zero,
             });
         }
 
         public virtual void UpdatePresence() => UpdateDelayer.CancelDelays();
 
-        protected override async Task RunInternalAsync(CancellationToken cancellationToken)
+        protected override async Task RunInternal(CancellationToken cancellationToken)
         {
-            var session = await SessionResolver.GetSessionAsync(cancellationToken).ConfigureAwait(false);
+            var session = await SessionResolver.GetSession(cancellationToken).ConfigureAwait(false);
             var retryCount = 0;
             while (!cancellationToken.IsCancellationRequested) {
-                await UpdateDelayer.DelayAsync(retryCount, cancellationToken).ConfigureAwait(false);
-                var success = await UpdatePresenceAsync(session, cancellationToken).ConfigureAwait(false);
+                await UpdateDelayer.Delay(retryCount, cancellationToken).ConfigureAwait(false);
+                var success = await UpdatePresence(session, cancellationToken).ConfigureAwait(false);
                 retryCount = success ? 0 : 1 + retryCount;
             }
         }
 
-        protected virtual async Task<bool> UpdatePresenceAsync(Session session, CancellationToken cancellationToken)
+        protected virtual async Task<bool> UpdatePresence(Session session, CancellationToken cancellationToken)
         {
             try {
-                await AuthService.UpdatePresenceAsync(session, cancellationToken).ConfigureAwait(false);
+                await AuthService.UpdatePresence(session, cancellationToken).ConfigureAwait(false);
                 return true;
             }
             catch (OperationCanceledException) {

@@ -19,18 +19,18 @@ namespace Stl.Fusion.Tests
         [Fact(Timeout = 120_000)]
         public async Task BasicTest()
         {
-            await using var serving = await WebHost.ServeAsync();
+            await using var serving = await WebHost.Serve();
             var publisher = WebServices.GetRequiredService<IPublisher>();
             var replicator = ClientServices.GetRequiredService<IReplicator>();
             using var scope = WebServices.CreateScope();
             var sp = scope.ServiceProvider.GetRequiredService<ISimplestProvider>();
 
             sp.SetValue("");
-            var p1 = await publisher.PublishAsync(_ => sp.GetValueAsync());
+            var p1 = await publisher.Publish(_ => sp.GetValue());
             p1.Should().NotBeNull();
 
             var r1 = replicator.GetOrAdd<string>(p1.Ref, true);
-            var r1c = await r1.Computed.UpdateAsync(false);
+            var r1c = await r1.Computed.Update(false);
             r1c.IsConsistent().Should().BeTrue();
             r1c.Value.Should().Be("");
             r1.Computed.Should().Be(r1c);
@@ -40,34 +40,34 @@ namespace Stl.Fusion.Tests
             r1c.IsConsistent().Should().BeFalse();
             r1.Computed.Should().Be(r1c);
 
-            r1c = await r1c.UpdateAsync(false);
+            r1c = await r1c.Update(false);
             r1c.Value.Should().Be("1");
 
-            var r1c1 = await r1c.UpdateAsync(false);
+            var r1c1 = await r1c.Update(false);
             r1c1.Should().Be(r1c);
         }
 
         [Fact(Timeout = 120_000)]
         public async Task TimerTest()
         {
-            await using var serving = await WebHost.ServeAsync();
+            await using var serving = await WebHost.Serve();
             var publisher = WebServices.GetRequiredService<IPublisher>();
             var replicator = ClientServices.GetRequiredService<IReplicator>();
             var tp = WebServices.GetRequiredService<ITimeService>();
 
-            var pub = await publisher.PublishAsync(_ => tp.GetTimeAsync());
+            var pub = await publisher.Publish(_ => tp.GetTime());
             var rep = replicator.GetOrAdd<DateTime>(pub.Ref);
 
             var count = 0;
             using var state = Services.StateFactory().NewLive<DateTime>(
                 o => o.WithInstantUpdates(),
-                async (_, ct) => await rep.Computed.UseAsync(ct));
+                async (_, ct) => await rep.Computed.Use(ct));
             state.Updated += (s, _) => {
                 Out.WriteLine($"{s.Value}");
                 count++;
             };
 
-            await TestEx.WhenMetAsync(
+            await TestEx.WhenMet(
                 () => count.Should().BeGreaterThan(2),
                 TimeSpan.FromSeconds(5));
         }

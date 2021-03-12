@@ -14,13 +14,13 @@ namespace Stl.Fusion.Bridge
 
         // TryPublishAsync
 
-        public static async Task<IPublication?> TryPublishAsync(
+        public static async Task<IPublication?> TryPublish(
             this IPublisher publisher,
             Func<CancellationToken, Task> producer,
             CancellationToken cancellationToken = default)
         {
             var computed = await Computed
-                .CaptureAsync(producer, cancellationToken)
+                .Capture(producer, cancellationToken)
                 .ConfigureAwait(false);
             if (computed == null)
                 return null;
@@ -30,7 +30,7 @@ namespace Stl.Fusion.Bridge
             // we requested it for (i.e. it might still point to its older,
             // inconsistent version), so we have to update it here.
             try {
-                await publication.UpdateAsync(cancellationToken);
+                await publication.Update(cancellationToken);
             }
             catch (OperationCanceledException) {
                 throw;
@@ -41,13 +41,13 @@ namespace Stl.Fusion.Bridge
             return publication;
         }
 
-        public static async Task<IPublication<T>?> TryPublishAsync<T>(
+        public static async Task<IPublication<T>?> TryPublish<T>(
             this IPublisher publisher,
             Func<CancellationToken, Task<T>> producer,
             CancellationToken cancellationToken = default)
         {
             var computed = await Computed
-                .CaptureAsync(producer, cancellationToken)
+                .Capture(producer, cancellationToken)
                 .ConfigureAwait(false);
             if (computed == null)
                 return null;
@@ -57,7 +57,7 @@ namespace Stl.Fusion.Bridge
             // we requested it for (i.e. it might still point to its older,
             // inconsistent version), so we have to update it here.
             try {
-                await publication.UpdateAsync(cancellationToken);
+                await publication.Update(cancellationToken);
             }
             catch (OperationCanceledException) {
                 throw;
@@ -70,13 +70,13 @@ namespace Stl.Fusion.Bridge
 
         // PublishAsync
 
-        public static async Task<IPublication> PublishAsync(
+        public static async Task<IPublication> Publish(
             this IPublisher publisher,
             Func<CancellationToken, Task> producer,
             CancellationToken cancellationToken = default)
         {
             var computed = await Computed
-                .CaptureAsync(producer, cancellationToken)
+                .Capture(producer, cancellationToken)
                 .ConfigureAwait(false);
 
             var publication = publisher.Publish(computed);
@@ -84,7 +84,7 @@ namespace Stl.Fusion.Bridge
             // we requested it for (i.e. it might still point to its older,
             // inconsistent version), so we have to update it here.
             try {
-                await publication.UpdateAsync(cancellationToken);
+                await publication.Update(cancellationToken);
             }
             catch (OperationCanceledException) {
                 throw;
@@ -95,13 +95,13 @@ namespace Stl.Fusion.Bridge
             return publication;
         }
 
-        public static async Task<IPublication<T>> PublishAsync<T>(
+        public static async Task<IPublication<T>> Publish<T>(
             this IPublisher publisher,
             Func<CancellationToken, Task<T>> producer,
             CancellationToken cancellationToken = default)
         {
             var computed = await Computed
-                .CaptureAsync(producer, cancellationToken)
+                .Capture(producer, cancellationToken)
                 .ConfigureAwait(false);
 
             var publication = (IPublication<T>) publisher.Publish(computed);
@@ -109,7 +109,7 @@ namespace Stl.Fusion.Bridge
             // we requested it for (i.e. it might still point to its older,
             // inconsistent version), so we have to update it here.
             try {
-                await publication.UpdateAsync(cancellationToken);
+                await publication.Update(cancellationToken);
             }
             catch (OperationCanceledException) {
                 throw;

@@ -18,7 +18,7 @@ namespace Stl.Tests.CommandR
         {
             var services = CreateServices();
             var command = new LogCommand() { Message = "Hi!" };
-            await services.Commander().CallAsync(command);
+            await services.Commander().Call(command);
         }
 
         [Fact]
@@ -27,7 +27,7 @@ namespace Stl.Tests.CommandR
             var services = CreateServices();
 
             var command = new DivCommand() { Divisible = 4, Divisor = 2 };
-            var result = await services.Commander().CallAsync(command);
+            var result = await services.Commander().Call(command);
             result.Should().Be(2);
         }
 
@@ -38,7 +38,7 @@ namespace Stl.Tests.CommandR
 
             var command = new DivCommand() { Divisible = 4, Divisor = 0 };
             await Assert.ThrowsAsync<DivideByZeroException>(async () => {
-                await services.Commander().CallAsync(command);
+                await services.Commander().Call(command);
             });
         }
 
@@ -48,12 +48,12 @@ namespace Stl.Tests.CommandR
             var services = CreateServices();
             RecSumCommand.Tag.Value = new();
 
-            var result = await services.Commander().CallAsync(new RecSumCommand() {
+            var result = await services.Commander().Call(new RecSumCommand() {
                 Arguments = new double[] {1, 2, 3}
             });
             result.Should().Be(6);
 
-            result = await services.Commander().CallAsync(new RecSumCommand() {
+            result = await services.Commander().Call(new RecSumCommand() {
                 Arguments = new double[] {1, 2, 3, 4},
                 Isolate = true,
             }, true);

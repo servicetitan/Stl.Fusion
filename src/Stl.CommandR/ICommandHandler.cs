@@ -9,7 +9,7 @@ namespace Stl.CommandR
     public interface ICommandHandler<in TCommand> : ICommandHandler
         where TCommand : class, ICommand
     {
-        Task OnCommandAsync(
+        Task OnCommand(
             TCommand command, CommandContext context,
             CancellationToken cancellationToken);
     }
@@ -17,12 +17,12 @@ namespace Stl.CommandR
     public interface ICommandHandler<in TCommand, TResult> : ICommandHandler<TCommand>
         where TCommand : class, ICommand<TResult>
     {
-        Task ICommandHandler<TCommand>.OnCommandAsync(
+        Task ICommandHandler<TCommand>.OnCommand(
             TCommand command, CommandContext context,
             CancellationToken cancellationToken)
-            => OnCommandAsync(command, (CommandContext<TResult>) context, cancellationToken);
+            => OnCommand(command, (CommandContext<TResult>) context, cancellationToken);
 
-        Task<TResult> OnCommandAsync(
+        Task<TResult> OnCommand(
             TCommand command, CommandContext<TResult> context,
             CancellationToken cancellationToken);
     }

@@ -14,11 +14,11 @@ namespace Stl.Fusion.Tests.Services
         public TimeController(ITimeService service) => Service = service;
 
         [HttpGet, Publish]
-        public Task<DateTime> GetTimeAsync()
-            => Service.GetTimeAsync(HttpContext.RequestAborted);
+        public Task<DateTime> GetTime()
+            => Service.GetTime(HttpContext.RequestAborted);
 
         [HttpGet, Publish]
-        public Task<string?> GetFormattedTimeAsync(string? format)
-            => Service.GetFormattedTimeAsync(format ?? "", HttpContext.RequestAborted);
+        public Task<string?> GetFormattedTime(string? format)
+            => Service.GetFormattedTime(format ?? "", HttpContext.RequestAborted);
     }
 }

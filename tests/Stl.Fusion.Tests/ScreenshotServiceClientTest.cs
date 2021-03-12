@@ -24,12 +24,12 @@ namespace Stl.Fusion.Tests
 
             var epsilon = TimeSpan.FromSeconds(0.5);
 
-            await using var serving = await WebHost.ServeAsync();
+            await using var serving = await WebHost.Serve();
             var service = ClientServices.GetRequiredService<IScreenshotServiceClient>();
 
             ScreenshotController.CallCount = 0;
             for (int i = 0; i < 20; i++) {
-                var screenshot = await service.GetScreenshotAsync(100);
+                var screenshot = await service.GetScreenshot(100);
                 (DateTime.Now - screenshot.CapturedAt).Should().BeLessThan(epsilon);
                 await Task.Delay(TimeSpan.FromSeconds(0.1));
             }

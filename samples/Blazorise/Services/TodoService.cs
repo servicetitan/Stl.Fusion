@@ -23,51 +23,51 @@ namespace Templates.Blazor2.Services
 
         // Commands
 
-        public virtual async Task<Todo> AddOrUpdateAsync(AddOrUpdateTodoCommand command, CancellationToken cancellationToken = default)
+        public virtual async Task<Todo> AddOrUpdate(AddOrUpdateTodoCommand command, CancellationToken cancellationToken = default)
         {
             if (Computed.IsInvalidating()) return default!;
             var (session, todo) = command;
-            var user = await _auth.GetUserAsync(session, cancellationToken);
+            var user = await _auth.GetUser(session, cancellationToken);
             user.MustBeAuthenticated();
 
             if (string.IsNullOrEmpty(todo.Id))
                 todo = todo with { Id = Ulid.NewUlid().ToString() };
             var key = GetTodoKey(user, todo.Id);
-            await _keyValueStore.SetAsync(key, todo, cancellationToken);
+            await _keyValueStore.Set(key, todo, cancellationToken);
             return todo;
         }
 
-        public virtual async Task RemoveAsync(RemoveTodoCommand command, CancellationToken cancellationToken = default)
+        public virtual async Task Remove(RemoveTodoCommand command, CancellationToken cancellationToken = default)
         {
             if (Computed.IsInvalidating()) return;
             var (session, id) = command;
-            var user = await _auth.GetUserAsync(session, cancellationToken);
+            var user = await _auth.GetUser(session, cancellationToken);
             user.MustBeAuthenticated();
 
             var key = GetTodoKey(user, id);
-            await _keyValueStore.RemoveAsync(key, cancellationToken);
+            await _keyValueStore.Remove(key, cancellationToken);
         }
 
         // Queries
 
-        public virtual async Task<Todo?> FindAsync(Session session, string id, CancellationToken cancellationToken = default)
+        public virtual async Task<Todo?> TryGet(Session session, string id, CancellationToken cancellationToken = default)
         {
-            var user = await _auth.GetUserAsync(session, cancellationToken);
+            var user = await _auth.GetUser(session, cancellationToken);
             user.MustBeAuthenticated();
 
             var key = GetTodoKey(user, id);
-            var todoOpt = await _keyValueStore.TryGetAsync<Todo>(key, cancellationToken);
+            var todoOpt = await _keyValueStore.TryGet<Todo>(key, cancellationToken);
             return todoOpt.IsSome(out var todo) ? todo : null;
         }
 
-        public virtual async Task<Todo[]> ListAsync(Session session, PageRef<string> pageRef, CancellationToken cancellationToken = default)
+        public virtual async Task<Todo[]> List(Session session, PageRef<string> pageRef, CancellationToken cancellationToken = default)
         {
-            var user = await _auth.GetUserAsync(session, cancellationToken);
+            var user = await _auth.GetUser(session, cancellationToken);
             user.MustBeAuthenticated();
 
             var keyPrefix = GetTodoKeyPrefix(user);
-            var keys = await _keyValueStore.ListKeysByPrefixAsync(keyPrefix, pageRef, cancellationToken);
-            var tasks = keys.Select(key => _keyValueStore.TryGetAsync<Todo>(key, cancellationToken));
+            var keys = await _keyValueStore.ListKeysByPrefix(keyPrefix, pageRef, cancellationToken);
+            var tasks = keys.Select(key => _keyValueStore.TryGet<Todo>(key, cancellationToken));
             var todoOpts = await Task.WhenAll(tasks);
             return todoOpts.Where(todo => todo.HasValue).Select(todo => todo.Value).ToArray();
         }

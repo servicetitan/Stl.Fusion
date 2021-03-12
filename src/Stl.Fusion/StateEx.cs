@@ -6,11 +6,11 @@ namespace Stl.Fusion
 {
     public static class StateEx
     {
-        public static async ValueTask<TState> UpdateAsync<TState>(
+        public static async ValueTask<TState> Update<TState>(
             this TState state, bool addDependency, CancellationToken cancellationToken = default)
             where TState : class, IState
         {
-            await state.Computed.UpdateAsync(addDependency, cancellationToken).ConfigureAwait(false);
+            await state.Computed.Update(addDependency, cancellationToken).ConfigureAwait(false);
             return state;
         }
 

@@ -15,18 +15,18 @@ namespace Stl.Fusion.EntityFramework.Authentication
         Type UserEntityType { get; }
 
         // Write methods
-        Task<(DbUser DbUser, bool IsCreated)> FindOrCreateOnSignInAsync(
+        Task<(DbUser DbUser, bool IsCreated)> GetOrCreateOnSignIn(
             TDbContext dbContext, User user, CancellationToken cancellationToken = default);
-        Task EditAsync(
+        Task Edit(
             TDbContext dbContext, DbUser dbUser, EditUserCommand command, CancellationToken cancellationToken = default);
-        Task RemoveAsync(
+        Task Remove(
             TDbContext dbContext, DbUser dbUser, CancellationToken cancellationToken = default);
 
         // Read methods
-        Task<DbUser?> FindAsync(long userId, CancellationToken cancellationToken = default);
-        Task<DbUser?> FindAsync(
+        Task<DbUser?> TryGet(long userId, CancellationToken cancellationToken = default);
+        Task<DbUser?> TryGet(
             TDbContext dbContext, long userId, CancellationToken cancellationToken = default);
-        Task<DbUser?> FindByIdentityAsync(
+        Task<DbUser?> TryGet(
             TDbContext dbContext, UserIdentity userIdentity, CancellationToken cancellationToken = default);
     }
 
@@ -49,12 +49,12 @@ namespace Stl.Fusion.EntityFramework.Authentication
 
         // Write methods
 
-        public virtual async Task<(DbUser DbUser, bool IsCreated)> FindOrCreateOnSignInAsync(
+        public virtual async Task<(DbUser DbUser, bool IsCreated)> GetOrCreateOnSignIn(
             TDbContext dbContext, User user, CancellationToken cancellationToken)
         {
             DbUser dbUser;
             if (!string.IsNullOrEmpty(user.Id)) {
-                dbUser = await FindAsync(dbContext, long.Parse(user.Id), cancellationToken).ConfigureAwait(false)
+                dbUser = await TryGet(dbContext, long.Parse(user.Id), cancellationToken).ConfigureAwait(false)
                     ?? throw Errors.EntityNotFound<TDbUser>();
                 return (dbUser, false);
             }
@@ -73,7 +73,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             return (dbUser, true);
         }
 
-        public virtual async Task EditAsync(TDbContext dbContext, DbUser dbUser, EditUserCommand command,
+        public virtual async Task Edit(TDbContext dbContext, DbUser dbUser, EditUserCommand command,
             CancellationToken cancellationToken = default)
         {
             var (_, name) = command;
@@ -82,7 +82,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             await dbContext.SaveChangesAsync(cancellationToken);
         }
 
-        public virtual async Task RemoveAsync(
+        public virtual async Task Remove(
             TDbContext dbContext, DbUser dbUser, CancellationToken cancellationToken = default)
         {
             await dbContext.Entry(dbUser).Collection(nameof(DbUser.Identities))
@@ -95,10 +95,10 @@ namespace Stl.Fusion.EntityFramework.Authentication
 
         // Read methods
 
-        public async Task<DbUser?> FindAsync(long userId, CancellationToken cancellationToken = default)
-            => await EntityResolver.TryGetAsync(userId, cancellationToken).ConfigureAwait(false);
+        public async Task<DbUser?> TryGet(long userId, CancellationToken cancellationToken = default)
+            => await EntityResolver.TryGet(userId, cancellationToken).ConfigureAwait(false);
 
-        public virtual async Task<DbUser?> FindAsync(
+        public virtual async Task<DbUser?> TryGet(
             TDbContext dbContext, long userId, CancellationToken cancellationToken)
         {
             var dbUser = await dbContext.Set<TDbUser>()
@@ -110,7 +110,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             return dbUser;
         }
 
-        public virtual async Task<DbUser?> FindByIdentityAsync(
+        public virtual async Task<DbUser?> TryGet(
             TDbContext dbContext, UserIdentity userIdentity, CancellationToken cancellationToken = default)
         {
             if (!userIdentity.IsValid)
@@ -120,7 +120,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
                 .ConfigureAwait(false);
             if (dbUserIdentities == null)
                 return null;
-            var user = await FindAsync(dbContext, dbUserIdentities.DbUserId, cancellationToken).ConfigureAwait(false);
+            var user = await TryGet(dbContext, dbUserIdentities.DbUserId, cancellationToken).ConfigureAwait(false);
             return user;
         }
     }

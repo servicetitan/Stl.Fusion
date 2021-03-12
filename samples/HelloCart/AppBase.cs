@@ -30,7 +30,7 @@ namespace Samples.HelloCart
             var pCarrot = new Product { Id = "carrot", Price = 1M };
             ExistingProducts = new [] { pApple, pBanana, pCarrot };
             foreach (var product in ExistingProducts)
-                await HostProductService.EditAsync(new EditCommand<Product>(product));
+                await HostProductService.Edit(new EditCommand<Product>(product));
 
             var cart1 = new Cart() { Id = "cart:apple=1,banana=2",
                 Items = ImmutableDictionary<string, decimal>.Empty
@@ -44,7 +44,7 @@ namespace Samples.HelloCart
             };
             ExistingCarts = new [] { cart1, cart2 };
             foreach (var cart in ExistingCarts)
-                await HostCartService.EditAsync(new EditCommand<Cart>(cart));
+                await HostCartService.Edit(new EditCommand<Cart>(cart));
         }
 
         public virtual async ValueTask DisposeAsync()
@@ -55,35 +55,35 @@ namespace Samples.HelloCart
                 await sd.DisposeAsync();
         }
 
-        public Task WatchAsync(CancellationToken cancellationToken = default)
+        public Task Watch(CancellationToken cancellationToken = default)
         {
             var tasks = new List<Task>();
             foreach (var product in ExistingProducts)
-                tasks.Add(WatchProductAsync(product.Id, cancellationToken));
+                tasks.Add(WatchProduct(product.Id, cancellationToken));
             foreach (var cart in ExistingCarts)
-                tasks.Add(WatchCartTotalAsync(cart.Id, cancellationToken));
+                tasks.Add(WatchCartTotal(cart.Id, cancellationToken));
             return Task.WhenAll(tasks);
         }
 
-        public async Task WatchProductAsync(string productId, CancellationToken cancellationToken = default)
+        public async Task WatchProduct(string productId, CancellationToken cancellationToken = default)
         {
             var productService = WatchServices.GetRequiredService<IProductService>();
-            var computed = await Computed.CaptureAsync(ct => productService.FindAsync(productId, ct), cancellationToken);
+            var computed = await Computed.Capture(ct => productService.TryGet(productId, ct), cancellationToken);
             while (true) {
                 WriteLine($"  {computed.Value}");
-                await computed.WhenInvalidatedAsync(cancellationToken);
-                computed = await computed.UpdateAsync(false, cancellationToken);
+                await computed.WhenInvalidated(cancellationToken);
+                computed = await computed.Update(false, cancellationToken);
             }
         }
 
-        public async Task WatchCartTotalAsync(string cartId, CancellationToken cancellationToken = default)
+        public async Task WatchCartTotal(string cartId, CancellationToken cancellationToken = default)
         {
             var cartService = WatchServices.GetRequiredService<ICartService>();
-            var computed = await Computed.CaptureAsync(ct => cartService.GetTotalAsync(cartId, ct), cancellationToken);
+            var computed = await Computed.Capture(ct => cartService.GetTotal(cartId, ct), cancellationToken);
             while (true) {
                 WriteLine($"  {cartId}: total = {computed.Value}");
-                await computed.WhenInvalidatedAsync(cancellationToken);
-                computed = await computed.UpdateAsync(false, cancellationToken);
+                await computed.WhenInvalidated(cancellationToken);
+                computed = await computed.Update(false, cancellationToken);
             }
         }
     }

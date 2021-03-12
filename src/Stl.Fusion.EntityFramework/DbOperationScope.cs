@@ -19,7 +19,7 @@ namespace Stl.Fusion.EntityFramework
 {
     public interface IDbOperationScope : IOperationScope
     {
-        Task<DbContext> CreateDbContextAsync(bool readWrite = true, CancellationToken cancellationToken = default);
+        Task<DbContext> CreateDbContext(bool readWrite = true, CancellationToken cancellationToken = default);
     }
 
     public class DbOperationScope<TDbContext> : AsyncDisposableBase, IDbOperationScope
@@ -57,7 +57,7 @@ namespace Stl.Fusion.EntityFramework
             CommandContext = services.GetRequiredService<CommandContext>();
         }
 
-        protected override async ValueTask DisposeInternalAsync(bool disposing)
+        protected override async ValueTask DisposeInternal(bool disposing)
         {
             void SafeDispose(IDisposable? d) {
                 try {
@@ -68,10 +68,10 @@ namespace Stl.Fusion.EntityFramework
                 }
             }
 
-            using var _ = await AsyncLock.LockAsync().ConfigureAwait(false);
+            using var _ = await AsyncLock.Lock().ConfigureAwait(false);
             try {
                 if (IsUsed && !IsClosed)
-                    await RollbackAsync().ConfigureAwait(false);
+                    await Rollback().ConfigureAwait(false);
             }
             finally {
                 IsClosed = true;
@@ -80,13 +80,12 @@ namespace Stl.Fusion.EntityFramework
             }
         }
 
-        async Task<DbContext> IDbOperationScope.CreateDbContextAsync(bool readWrite, CancellationToken cancellationToken)
-            => await CreateDbContextAsync(readWrite, cancellationToken).ConfigureAwait(false);
-
-        public virtual async Task<TDbContext> CreateDbContextAsync(
+        async Task<DbContext> IDbOperationScope.CreateDbContext(bool readWrite, CancellationToken cancellationToken)
+            => await CreateDbContext(readWrite, cancellationToken).ConfigureAwait(false);
+        public virtual async Task<TDbContext> CreateDbContext(
             bool readWrite = true, CancellationToken cancellationToken = default)
         {
-            using var _ = await AsyncLock.LockAsync(cancellationToken).ConfigureAwait(false);
+            using var _ = await AsyncLock.Lock(cancellationToken).ConfigureAwait(false);
             if (IsClosed)
                 throw Stl.Fusion.Operations.Internal.Errors.OperationScopeIsAlreadyClosed();
             TDbContext dbContext;
@@ -112,9 +111,9 @@ namespace Stl.Fusion.EntityFramework
             return dbContext;
         }
 
-        public virtual async Task CommitAsync(CancellationToken cancellationToken = default)
+        public virtual async Task Commit(CancellationToken cancellationToken = default)
         {
-            using var _ = await AsyncLock.LockAsync(cancellationToken).ConfigureAwait(false);
+            using var _ = await AsyncLock.Lock(cancellationToken).ConfigureAwait(false);
             if (IsClosed)
                 throw Stl.Fusion.Operations.Internal.Errors.OperationScopeIsAlreadyClosed();
             try {
@@ -128,7 +127,7 @@ namespace Stl.Fusion.EntityFramework
                     throw Stl.Fusion.Operations.Internal.Errors.OperationHasNoCommand();
                 var dbContext = DbContext!;
                 dbContext.DisableChangeTracking(); // Just to speed up things a bit
-                var operation = await DbOperationLog.AddAsync(dbContext, Operation, cancellationToken).ConfigureAwait(false);
+                var operation = await DbOperationLog.Add(dbContext, Operation, cancellationToken).ConfigureAwait(false);
                 try {
                     await Transaction!.CommitAsync(cancellationToken).ConfigureAwait(false);
                     IsConfirmed = true;
@@ -138,7 +137,7 @@ namespace Stl.Fusion.EntityFramework
                     try {
                         // We need a new connection here, since the old one might be broken
                         dbContext = DbContextFactory.CreateDbContext();
-                        var committedOperation = await DbOperationLog.TryGetAsync(dbContext, operation.Id, cancellationToken);
+                        var committedOperation = await DbOperationLog.TryGet(dbContext, operation.Id, cancellationToken);
                         if (committedOperation != null)
                             IsConfirmed = true;
                     }
@@ -155,9 +154,9 @@ namespace Stl.Fusion.EntityFramework
             }
         }
 
-        public virtual async Task RollbackAsync()
+        public virtual async Task Rollback()
         {
-            using var _ = await AsyncLock.LockAsync().ConfigureAwait(false);
+            using var _ = await AsyncLock.Lock().ConfigureAwait(false);
             if (IsClosed)
                 throw Stl.Fusion.Operations.Internal.Errors.OperationScopeIsAlreadyClosed();
             try {

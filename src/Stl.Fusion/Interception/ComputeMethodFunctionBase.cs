@@ -23,7 +23,7 @@ namespace Stl.Fusion.Interception
             VersionGenerator = versionGenerator;
         }
 
-        protected override async ValueTask<IComputed<T>> ComputeAsync(
+        protected override async ValueTask<IComputed<T>> Compute(
             ComputeMethodInput input, IComputed<T>? existing,
             CancellationToken cancellationToken)
         {

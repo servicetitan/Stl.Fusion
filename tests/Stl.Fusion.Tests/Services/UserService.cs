@@ -30,16 +30,16 @@ namespace Stl.Fusion.Tests.Services
         }
 
         [CommandHandler]
-        Task CreateAsync(AddCommand command, CancellationToken cancellationToken = default);
+        Task Create(AddCommand command, CancellationToken cancellationToken = default);
         [CommandHandler]
-        Task UpdateAsync(UpdateCommand command, CancellationToken cancellationToken = default);
+        Task Update(UpdateCommand command, CancellationToken cancellationToken = default);
         [CommandHandler]
-        Task<bool> DeleteAsync(DeleteCommand command, CancellationToken cancellationToken = default);
+        Task<bool> Delete(DeleteCommand command, CancellationToken cancellationToken = default);
 
         [ComputeMethod(KeepAliveTime = 1)]
-        Task<User?> TryGetAsync(long userId, CancellationToken cancellationToken = default);
+        Task<User?> TryGet(long userId, CancellationToken cancellationToken = default);
         [ComputeMethod(KeepAliveTime = 1)]
-        Task<long> CountAsync(CancellationToken cancellationToken = default);
+        Task<long> Count(CancellationToken cancellationToken = default);
         void Invalidate();
     }
 
@@ -54,20 +54,20 @@ namespace Stl.Fusion.Tests.Services
             IsProxy = GetType().Name.EndsWith("Proxy");
         }
 
-        public virtual async Task CreateAsync(IUserService.AddCommand command, CancellationToken cancellationToken = default)
+        public virtual async Task Create(IUserService.AddCommand command, CancellationToken cancellationToken = default)
         {
             var (user, orUpdate) = command;
             var existingUser = (User?) null;
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
                 existingUser = context.Operation().Items.TryGet<User>();
-                TryGetAsync(user.Id, default).AssertCompleted().Ignore();
+                TryGet(user.Id, default).AssertCompleted().Ignore();
                 if (existingUser == null)
-                    CountAsync(default).AssertCompleted().Ignore();
+                    Count(default).AssertCompleted().Ignore();
                 return;
             }
 
-            await using var dbContext = await CreateCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
+            await using var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
             dbContext.DisableChangeTracking();
             var userId = user.Id;
             if (orUpdate) {
@@ -81,33 +81,33 @@ namespace Stl.Fusion.Tests.Services
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        public virtual async Task UpdateAsync(IUserService.UpdateCommand command, CancellationToken cancellationToken = default)
+        public virtual async Task Update(IUserService.UpdateCommand command, CancellationToken cancellationToken = default)
         {
             var user = command.User;
             if (Computed.IsInvalidating()) {
-                TryGetAsync(user.Id, default).AssertCompleted().Ignore();
+                TryGet(user.Id, default).AssertCompleted().Ignore();
                 return;
             }
 
-            await using var dbContext = await CreateCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
+            await using var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
             dbContext.Users.Update(user);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        public virtual async Task<bool> DeleteAsync(IUserService.DeleteCommand command, CancellationToken cancellationToken = default)
+        public virtual async Task<bool> Delete(IUserService.DeleteCommand command, CancellationToken cancellationToken = default)
         {
             var user = command.User;
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
                 var success = context.Operation().Items.TryGet<bool>();
                 if (success) {
-                    TryGetAsync(user.Id, default).AssertCompleted().Ignore();
-                    CountAsync(default).AssertCompleted().Ignore();
+                    TryGet(user.Id, default).AssertCompleted().Ignore();
+                    Count(default).AssertCompleted().Ignore();
                 }
                 return false;
             }
 
-            await using var dbContext = await CreateCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
+            await using var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
             dbContext.Users.Remove(user);
             try {
                 await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -119,7 +119,7 @@ namespace Stl.Fusion.Tests.Services
             }
         }
 
-        public virtual async Task<User?> TryGetAsync(long userId, CancellationToken cancellationToken = default)
+        public virtual async Task<User?> TryGet(long userId, CancellationToken cancellationToken = default)
         {
             // Debug.WriteLine($"TryGetAsync {userId}");
             await Everything().ConfigureAwait(false);
@@ -130,7 +130,7 @@ namespace Stl.Fusion.Tests.Services
             return user;
         }
 
-        public virtual async Task<long> CountAsync(CancellationToken cancellationToken = default)
+        public virtual async Task<long> Count(CancellationToken cancellationToken = default)
         {
             await Everything().ConfigureAwait(false);
             await using var dbContext = DbContextFactory.CreateDbContext();
@@ -154,10 +154,10 @@ namespace Stl.Fusion.Tests.Services
         [ComputeMethod]
         protected virtual Task<Unit> Everything() => TaskEx.UnitTask;
 
-        private new Task<TestDbContext> CreateCommandDbContextAsync(CancellationToken cancellationToken = default)
+        private new Task<TestDbContext> CreateCommandDbContext(CancellationToken cancellationToken = default)
         {
             if (IsProxy)
-                return base.CreateCommandDbContextAsync(cancellationToken);
+                return base.CreateCommandDbContext(cancellationToken);
             return Task.FromResult(CreateDbContext().ReadWrite());
         }
     }

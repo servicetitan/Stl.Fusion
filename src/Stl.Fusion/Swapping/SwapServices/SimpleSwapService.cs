@@ -43,7 +43,7 @@ namespace Stl.Fusion.Swapping
                 key => Storage.TryRemove(key, out _));
         }
 
-        protected override ValueTask<Option<string>> LoadAsync(string key, CancellationToken cancellationToken)
+        protected override ValueTask<Option<string>> Load(string key, CancellationToken cancellationToken)
         {
             if (!Storage.TryGetValue(key, out var value))
                 return ValueTaskEx.FromResult(Option.None<string>());
@@ -51,7 +51,7 @@ namespace Stl.Fusion.Swapping
             return ValueTaskEx.FromResult(Option.Some(value));
         }
 
-        protected override ValueTask<bool> RenewAsync(string key, CancellationToken cancellationToken)
+        protected override ValueTask<bool> Renew(string key, CancellationToken cancellationToken)
         {
             if (!Storage.TryGetValue(key, out var value))
                 return ValueTaskEx.FalseTask;
@@ -59,7 +59,7 @@ namespace Stl.Fusion.Swapping
             return ValueTaskEx.TrueTask;
         }
 
-        protected override ValueTask StoreAsync(string key, string value, CancellationToken cancellationToken)
+        protected override ValueTask Store(string key, string value, CancellationToken cancellationToken)
         {
             Storage[key] = value;
             ExpirationTimers.AddOrUpdateToLater(key, Clock.Now + ExpirationTime);

@@ -19,13 +19,13 @@ namespace Stl.Fusion.Bridge.Internal
 {
     public class ReplicatorChannelProcessor : AsyncProcessBase
     {
-        protected static readonly HandlerProvider<(ReplicatorChannelProcessor, CancellationToken), Task> OnStateMessageAsyncHandlers =
+        protected static readonly HandlerProvider<(ReplicatorChannelProcessor, CancellationToken), Task> OnStateMessageHandlers =
             new(typeof(StateMessageHandler<>));
 
         protected class StateMessageHandler<TMessageType> : HandlerProvider<(ReplicatorChannelProcessor, CancellationToken), Task>.IHandler<TMessageType>
         {
             public Task Handle(object target, (ReplicatorChannelProcessor, CancellationToken) arg)
-                => arg.Item1.OnStateMessageAsync((PublicationStateMessage<TMessageType>) target, arg.Item2);
+                => arg.Item1.OnStateMessage((PublicationStateMessage<TMessageType>) target, arg.Item2);
         }
 
         protected readonly ILogger Log;
@@ -54,7 +54,7 @@ namespace Stl.Fusion.Bridge.Internal
             Reconnect();
         }
 
-        protected override async Task RunInternalAsync(CancellationToken cancellationToken)
+        protected override async Task RunInternal(CancellationToken cancellationToken)
         {
             try {
                 var lastChannelTask = (Task<Channel<BridgeMessage>>?) null;
@@ -66,7 +66,7 @@ namespace Stl.Fusion.Bridge.Internal
                         if (channelTask != lastChannelTask)
                             channel = await ChannelTask.WithFakeCancellation(cancellationToken).ConfigureAwait(false);
                         var message = await channel.Reader.ReadAsync(cancellationToken).AsTask();
-                        await OnMessageAsync(message, cancellationToken).ConfigureAwait(false);
+                        await OnMessage(message, cancellationToken).ConfigureAwait(false);
                     }
                     catch (OperationCanceledException) {
                         if (cancellationToken.IsCancellationRequested)
@@ -144,12 +144,12 @@ namespace Stl.Fusion.Bridge.Internal
             }
         }
 
-        protected virtual Task OnMessageAsync(BridgeMessage message, CancellationToken cancellationToken)
+        protected virtual Task OnMessage(BridgeMessage message, CancellationToken cancellationToken)
         {
             switch (message) {
             case PublicationStateMessage psm:
                 // Fast dispatch to OnUpdatedMessageAsync<T>
-                return OnStateMessageAsyncHandlers[psm.GetResultType()].Handle(psm, (this, cancellationToken));
+                return OnStateMessageHandlers[psm.GetResultType()].Handle(psm, (this, cancellationToken));
             case PublicationAbsentsMessage pam:
                 var replica = (IReplicaImpl?) Replicator.TryGet((PublisherId, pam.PublicationId));
                 replica?.ApplyFailedUpdate(Errors.PublicationAbsents(), default);
@@ -158,7 +158,7 @@ namespace Stl.Fusion.Bridge.Internal
             return Task.CompletedTask;
         }
 
-        protected virtual Task OnStateMessageAsync<T>(PublicationStateMessage<T> message, CancellationToken cancellationToken)
+        protected virtual Task OnStateMessage<T>(PublicationStateMessage<T> message, CancellationToken cancellationToken)
         {
             // Debug.WriteLine($"#{message.MessageIndex} -> {message.Version}, {message.IsConsistent}, {message.Output.HasValue}");
             var psi = new PublicationStateInfo<T>(
@@ -208,7 +208,7 @@ namespace Stl.Fusion.Bridge.Internal
 
                 var channelProvider = ReplicatorImpl.ChannelProvider;
                 var channel = await channelProvider
-                    .CreateChannelAsync(PublisherId, cancellationToken)
+                    .CreateChannel(PublisherId, cancellationToken)
                     .ConfigureAwait(false);
 
                 foreach (var publicationId in GetSubscriptions()) {

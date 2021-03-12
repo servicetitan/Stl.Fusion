@@ -40,8 +40,9 @@ namespace Stl.Channels
             }
         }
 
-        public static async Task CopyAsync<T>(
-            this ChannelReader<T> reader, ChannelWriter<T> writer,
+        public static async Task Copy<T>(
+            this ChannelReader<T> reader,
+            ChannelWriter<T> writer,
             ChannelCompletionMode channelCompletionMode = ChannelCompletionMode.CompleteAndPropagateError,
             CancellationToken cancellationToken = default)
         {
@@ -64,30 +65,31 @@ namespace Stl.Channels
             }
         }
 
-        public static Task ConnectAsync<T>(
-            this Channel<T> channel1, Channel<T> channel2,
+        public static Task Connect<T>(
+            this Channel<T> channel1,
+            Channel<T> channel2,
             ChannelCompletionMode channelCompletionMode = ChannelCompletionMode.CompleteAndPropagateError,
             CancellationToken cancellationToken = default)
             => Task.WhenAll(
-                Task.Run(() => channel1.Reader.CopyAsync(
+                Task.Run(() => channel1.Reader.Copy(
                     channel2, channelCompletionMode, cancellationToken), CancellationToken.None),
-                Task.Run(() => channel2.Reader.CopyAsync(
+                Task.Run(() => channel2.Reader.Copy(
                     channel1, channelCompletionMode, cancellationToken), CancellationToken.None)
             );
 
-        public static Task ConnectAsync<T1, T2>(
+        public static Task Connect<T1, T2>(
             this Channel<T1> channel1, Channel<T2> channel2,
             Func<T1, T2> adapter12, Func<T2, T1> adapter21,
             ChannelCompletionMode channelCompletionMode = ChannelCompletionMode.CompleteAndPropagateError,
             CancellationToken cancellationToken = default)
             => Task.WhenAll(
-                Task.Run(() => channel1.Reader.TransformAsync(
+                Task.Run(() => channel1.Reader.Transform(
                     channel2, adapter12, channelCompletionMode, cancellationToken), CancellationToken.None),
-                Task.Run(() => channel2.Reader.TransformAsync(
+                Task.Run(() => channel2.Reader.Transform(
                     channel1, adapter21, channelCompletionMode, cancellationToken), CancellationToken.None)
             );
 
-        public static async Task ConsumeAsync<T>(
+        public static async Task Consume<T>(
             this ChannelReader<T> reader,
             CancellationToken cancellationToken = default)
         {
@@ -95,7 +97,7 @@ namespace Stl.Channels
                 reader.TryRead(out var v);
         }
 
-        public static async Task ConsumeSilentAsync<T>(
+        public static async Task ConsumeSilent<T>(
             this ChannelReader<T> reader,
             CancellationToken cancellationToken = default)
         {
@@ -134,7 +136,7 @@ namespace Stl.Channels
                 Channel.CreateBounded<T>(channelOptions),
                 Channel.CreateBounded<T>(channelOptions));
 
-            downstreamChannel.ConnectAsync(pair.Channel1,
+            downstreamChannel.Connect(pair.Channel1,
                 deserializer.Deserialize, serializer.Serialize,
                 ChannelCompletionMode.CompleteAndPropagateError,
                 cancellationToken);
@@ -171,7 +173,7 @@ namespace Stl.Channels
                 return message;
             }
 
-            channel.ConnectAsync(pair.Channel1,
+            channel.Connect(pair.Channel1,
                 m => LogMessage(m, true),
                 m => LogMessage(m, false),
                 ChannelCompletionMode.CompleteAndPropagateError,

@@ -20,7 +20,7 @@ namespace Stl.Testing
         IServer Server { get; }
         Uri ServerUri { get; }
 
-        Task<IAsyncDisposable> ServeAsync();
+        Task<IAsyncDisposable> Serve();
         HttpClient CreateClient();
     }
 
@@ -57,7 +57,7 @@ namespace Stl.Testing
                 Host.Dispose();
         }
 
-        public async Task<IAsyncDisposable> ServeAsync()
+        public async Task<IAsyncDisposable> Serve()
         {
             var host = Host;
             await host.StartAsync().ConfigureAwait(false);

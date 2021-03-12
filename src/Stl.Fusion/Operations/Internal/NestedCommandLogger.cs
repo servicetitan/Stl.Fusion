@@ -29,7 +29,7 @@ namespace Stl.Fusion.Operations.Internal
         }
 
         [CommandHandler(Priority = 11_000, IsFilter = true)]
-        public async Task OnCommandAsync(ICommand command, CommandContext context, CancellationToken cancellationToken)
+        public async Task OnCommand(ICommand command, CommandContext context, CancellationToken cancellationToken)
         {
             var operation = context.OuterContext != null ? context.Items.TryGet<IOperation>() : null;
             var mustBeLogged =
@@ -37,7 +37,7 @@ namespace Stl.Fusion.Operations.Internal
                 && InvalidationInfoProvider.RequiresInvalidation(command) // Command requires invalidation
                 && !Computed.IsInvalidating();
             if (!mustBeLogged) {
-                await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
+                await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);
                 return;
             }
 
@@ -46,7 +46,7 @@ namespace Stl.Fusion.Operations.Internal
             operation.Items = commandItems;
             Exception? error = null;
             try {
-                await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
+                await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);
             }
             catch (Exception? e) {
                 error = e;

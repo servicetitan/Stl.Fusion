@@ -20,14 +20,14 @@
     </BarDropdownToggle>
     <BarDropdownMenu>
         @foreach (var (name, displayName) in unusedAuthSchemas) {
-            <BarDropdownItem Color="Color.Primary" Clicked="@(_ => ClientAuthHelper.SignInAsync(name))">
+            <BarDropdownItem Color="Color.Primary" Clicked="@(_ => ClientAuthHelper.SignIn(name))">
                 <Blazorise.Icon Name="@signInIconName" />
                 @(string.Format(signInOrAddFormat, displayName))
             </BarDropdownItem>
         }
         <AuthorizeView>
             <Authorized>
-                <BarDropdownItem Clicked="@(_ => ClientAuthHelper.SignOutAsync())">
+                <BarDropdownItem Clicked="@(_ => ClientAuthHelper.SignOut())">
                     <Blazorise.Icon Name="FontAwesomeIcons.SignOutAlt" />
                     Sign out
                 </BarDropdownItem>
@@ -52,7 +52,7 @@
     {
         if (firstRender) {
             // GetSchemasAsync requires JS interop, so it can be called only at this point
-            AuthSchemas = await ClientAuthHelper.GetSchemasAsync();
+            AuthSchemas = await ClientAuthHelper.GetSchemas();
             StateHasChanged();
         }
     }

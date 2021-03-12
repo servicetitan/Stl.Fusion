@@ -23,19 +23,19 @@ namespace Stl.Tests.Caching
                 Directory.Delete(cacheDir, true);
             var cache = new FileSystemCache<int, int>(cacheDir);
 
-            (await cache.TryGetAsync(1)).Should().Be(Option.None<int>());
-            await Assert.ThrowsAsync<KeyNotFoundException>(async () => await cache.GetAsync(1));
+            (await cache.TryGet(1)).Should().Be(Option.None<int>());
+            await Assert.ThrowsAsync<KeyNotFoundException>(async () => await cache.Get(1));
 
-            await cache.SetAsync(1, 1);
-            (await cache.TryGetAsync(1)).Should().Be(Option.Some<int>(1));
-            (await cache.GetAsync(1)).Should().Be(1);
+            await cache.Set(1, 1);
+            (await cache.TryGet(1)).Should().Be(Option.Some<int>(1));
+            (await cache.Get(1)).Should().Be(1);
 
-            (await cache.TryGetAsync(2)).Should().Be(Option.None<int>());
-            await Assert.ThrowsAsync<KeyNotFoundException>(async () => await cache.GetAsync(2));
+            (await cache.TryGet(2)).Should().Be(Option.None<int>());
+            await Assert.ThrowsAsync<KeyNotFoundException>(async () => await cache.Get(2));
 
-            await cache.RemoveAsync(1);
-            (await cache.TryGetAsync(1)).Should().Be(Option.None<int>());
-            await Assert.ThrowsAsync<KeyNotFoundException>(async () => await cache.GetAsync(1));
+            await cache.Remove(1);
+            (await cache.TryGet(1)).Should().Be(Option.None<int>());
+            await Assert.ThrowsAsync<KeyNotFoundException>(async () => await cache.Get(1));
         }
 
         private static PathString GetCacheDir(string id = "", Assembly? assembly = null)

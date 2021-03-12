@@ -54,7 +54,7 @@ namespace Stl.Fusion.Interception
 
                 // InvokeAndStripAsync allows to get rid of one extra allocation
                 // of a task stripping the result of regular InvokeAsync.
-                var task = function.InvokeAndStripAsync(input, usedBy, null, cancellationToken);
+                var task = function.InvokeAndStrip(input, usedBy, null, cancellationToken);
                 if (cancellationTokenIndex >= 0)
                     // We don't want memory leaks + unexpected cancellation later
                     arguments[cancellationTokenIndex] = NoCancellationTokenBoxed;

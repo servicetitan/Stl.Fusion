@@ -36,7 +36,7 @@ namespace Stl.Locking
             RetryIntervals = retryIntervals ?? DefaultRetryIntervals;
         }
 
-        public async ValueTask<IDisposable> LockAsync(CancellationToken cancellationToken = default)
+        public async ValueTask<IDisposable> Lock(CancellationToken cancellationToken = default)
         {
             try {
                 if (!File.Exists(Path))
@@ -71,12 +71,12 @@ namespace Stl.Locking
             return fs;
         }
 
-        public static ValueTask<IDisposable> LockAsync(PathString path, CancellationToken cancellationToken = default)
-            => LockAsync(path, null, cancellationToken);
-        public static ValueTask<IDisposable> LockAsync(PathString path, IEnumerable<TimeSpan>? retryIntervals = null, CancellationToken cancellationToken = default)
+        public static ValueTask<IDisposable> Lock(PathString path, CancellationToken cancellationToken = default)
+            => Lock(path, null, cancellationToken);
+        public static ValueTask<IDisposable> Lock(PathString path, IEnumerable<TimeSpan>? retryIntervals = null, CancellationToken cancellationToken = default)
         {
             var fileLock = new FileLock(path, retryIntervals);
-            return fileLock.LockAsync(cancellationToken);
+            return fileLock.Lock(cancellationToken);
         }
     }
 }

@@ -19,7 +19,7 @@ namespace Stl.Fusion.Internal
             Initialize(options);
         }
 
-        protected override Task<T> ComputeValueAsync(CancellationToken cancellationToken)
+        protected override Task<T> Compute(CancellationToken cancellationToken)
             => Computer.Invoke(this, cancellationToken);
     }
 }

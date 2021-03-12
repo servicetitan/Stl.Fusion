@@ -12,19 +12,19 @@ namespace Stl.Testing
     {
         public static readonly IEnumerable<TimeSpan> DefaultCheckIntervals = Intervals.Fixed(TimeSpan.FromMilliseconds(50));
 
-        public static Task WhenMetAsync(Action condition,
+        public static Task WhenMet(Action condition,
             TimeSpan waitDuration)
-            => WhenMetAsync(condition, null, waitDuration);
+            => WhenMet(condition, null, waitDuration);
 
-        public static async Task WhenMetAsync(Action condition,
+        public static async Task WhenMet(Action condition,
             IEnumerable<TimeSpan>? checkIntervals,
             TimeSpan waitDuration)
         {
             using var cts = new CancellationTokenSource(waitDuration);
-            await WhenMetAsync(condition, checkIntervals, cts.Token);
+            await WhenMet(condition, checkIntervals, cts.Token);
         }
 
-        public static async Task WhenMetAsync(Action condition,
+        public static async Task WhenMet(Action condition,
             IEnumerable<TimeSpan>? checkIntervals,
             CancellationToken cancellationToken)
         {

@@ -15,16 +15,16 @@ namespace Stl.Fusion.Tests.Services
     public interface IStringKeyValueClient
     {
         [Get("tryGet/{key}")]
-        Task<Option<string>> TryGetAsync([Path] string key, CancellationToken cancellationToken = default);
+        Task<Option<string>> TryGet([Path] string key, CancellationToken cancellationToken = default);
         [Get("get/{key}")]
-        Task<JsonString> GetAsync([Path] string key, CancellationToken cancellationToken = default);
+        Task<JsonString> Get([Path] string key, CancellationToken cancellationToken = default);
         [Post("set/{key}")]
-        Task SetAsync([Path] string key, [Body] string value, CancellationToken cancellationToken = default);
+        Task Set([Path] string key, [Body] string value, CancellationToken cancellationToken = default);
         [Get("remove/{key}")]
-        Task RemoveAsync([Path] string key, CancellationToken cancellationToken = default);
-        [Post("setCommand")]
-        Task SetCommandAsync([Body] IKeyValueService<string>.SetCommand cmd, CancellationToken cancellationToken = default);
-        [Post("removeCommand")]
-        Task RemoveCommandAsync([Body] IKeyValueService<string>.RemoveCommand cmd, CancellationToken cancellationToken = default);
+        Task Remove([Path] string key, CancellationToken cancellationToken = default);
+        [Post("setCmd")]
+        Task SetCmd([Body] IKeyValueService<string>.SetCommand cmd, CancellationToken cancellationToken = default);
+        [Post("removeCmd")]
+        Task RemoveCmd([Body] IKeyValueService<string>.RemoveCommand cmd, CancellationToken cancellationToken = default);
     }
 }

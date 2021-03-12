@@ -42,7 +42,7 @@ namespace Stl.Time.Testing
         public TimeSpan ToRealDuration(TimeSpan localDuration) => Settings.ToLocalDuration(localDuration);
         public TimeSpan ToLocalDuration(TimeSpan realDuration) => Settings.ToRealDuration(realDuration);
 
-        public async Task DelayAsync(TimeSpan dueIn, CancellationToken cancellationToken = default)
+        public async Task Delay(TimeSpan dueIn, CancellationToken cancellationToken = default)
         {
             var isInfinite = dueIn == Timeout.InfiniteTimeSpan;
             if (dueIn < TimeSpan.Zero && !isInfinite)

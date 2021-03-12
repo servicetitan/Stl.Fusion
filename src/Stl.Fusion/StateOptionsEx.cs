@@ -35,7 +35,7 @@ namespace Stl.Fusion
             TimeSpan delay, TimeSpan? maxExtraErrorDelay = null)
             where TOptions : class, ILiveState.IOptions
         {
-            var o = new UpdateDelayer.Options() { Delay = delay };
+            var o = new UpdateDelayer.Options() { DelayDuration = delay };
             if (maxExtraErrorDelay.HasValue)
                 o.MaxExtraErrorDelay = maxExtraErrorDelay.GetValueOrDefault();
             return options.WithUpdateDelayer(o);
@@ -46,7 +46,7 @@ namespace Stl.Fusion
             double delayInSeconds, double? maxExtraErrorDelayInSeconds = null)
             where TOptions : class, ILiveState.IOptions
         {
-            var o = new UpdateDelayer.Options() { Delay = TimeSpan.FromSeconds(delayInSeconds) };
+            var o = new UpdateDelayer.Options() { DelayDuration = TimeSpan.FromSeconds(delayInSeconds) };
             if (maxExtraErrorDelayInSeconds.HasValue)
                 o.MaxExtraErrorDelay = TimeSpan.FromSeconds(maxExtraErrorDelayInSeconds.GetValueOrDefault());
             return options.WithUpdateDelayer(o);

@@ -30,36 +30,36 @@ namespace Stl.Tests.Async
                 }
             };
 
-            async Task BeginAsync()
+            async Task Begin()
             {
                 Interlocked.Exchange(ref batchIndex, -2);
-                var t1 = processor.ProcessAsync(-1);
+                var t1 = processor.Process(-1);
                 await Task.Delay(25);
-                var t2 = processor.ProcessAsync(-2);
+                var t2 = processor.Process(-2);
                 await Task.Delay(25);
             }
 
             // Batch formation tests
-            await BeginAsync();
-            var r = await processor.ProcessAsync(1);
+            await Begin();
+            var r = await processor.Process(1);
             r.Should().Be((1, 1));
 
-            await BeginAsync();
-            var tasks = Enumerable.Range(0, 4).Select(i => processor.ProcessAsync(i)).ToArray();
+            await Begin();
+            var tasks = Enumerable.Range(0, 4).Select(i => processor.Process(i)).ToArray();
             await Task.WhenAll(tasks);
             tasks.Count(t => t.Result.Item1 == 1).Should().Be(3);
             tasks.Count(t => t.Result.Item1 == 2).Should().Be(1);
             tasks.Select(t => t.Result.Item2).Should().BeEquivalentTo(Enumerable.Range(0, 4));
 
-            await BeginAsync();
-            tasks = Enumerable.Range(0, 6).Select(i => processor.ProcessAsync(i)).ToArray();
+            await Begin();
+            tasks = Enumerable.Range(0, 6).Select(i => processor.Process(i)).ToArray();
             await Task.WhenAll(tasks);
             tasks.Count(t => t.Result.Item1 == 1).Should().Be(3);
             tasks.Count(t => t.Result.Item1 == 2).Should().Be(3);
             tasks.Select(t => t.Result.Item2).Should().BeEquivalentTo(Enumerable.Range(0, 6));
 
-            await BeginAsync();
-            tasks = Enumerable.Range(0, 10).Select(i => processor.ProcessAsync(i)).ToArray();
+            await Begin();
+            tasks = Enumerable.Range(0, 10).Select(i => processor.Process(i)).ToArray();
             await Task.WhenAll(tasks);
             tasks.Count(t => t.Result.Item1 == 1).Should().Be(3);
             tasks.Count(t => t.Result.Item1 == 2).Should().Be(3);
@@ -68,11 +68,11 @@ namespace Stl.Tests.Async
             tasks.Select(t => t.Result.Item2).Should().BeEquivalentTo(Enumerable.Range(0, 10));
 
             // Cancellation test
-            await BeginAsync();
+            await Begin();
             using var cts1 = new CancellationTokenSource();
             using var cts2 = new CancellationTokenSource();
             tasks = Enumerable.Range(0, 4)
-                .Select(i => processor.ProcessAsync(i, i % 2 == 0 ? cts1.Token : cts2.Token))
+                .Select(i => processor.Process(i, i % 2 == 0 ? cts1.Token : cts2.Token))
                 .Select(t => t.SuppressCancellation())
                 .ToArray();
             cts1.Cancel();
@@ -82,9 +82,9 @@ namespace Stl.Tests.Async
             tasks.Count(t => t.Result.Item1 == 2).Should().Be(1);
 
             // Error test
-            await BeginAsync();
+            await Begin();
             tasks = new [] {0, 1, 2, -1000}
-                .Select(i => processor.ProcessAsync(i, default))
+                .Select(i => processor.Process(i, default))
                 .ToArray();
             try {
                 await Task.WhenAll(tasks);

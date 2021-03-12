@@ -13,7 +13,7 @@ namespace Stl.Fusion.Operations
 {
     public interface IOperationCompletionNotifier
     {
-        Task<bool> NotifyCompletedAsync(IOperation operation);
+        Task<bool> NotifyCompleted(IOperation operation);
     }
 
     public class OperationCompletionNotifier : IOperationCompletionNotifier
@@ -49,7 +49,7 @@ namespace Stl.Fusion.Operations
             OperationCompletionListeners = operationCompletionHandlers.ToArray();
         }
 
-        public Task<bool> NotifyCompletedAsync(IOperation operation)
+        public Task<bool> NotifyCompleted(IOperation operation)
         {
             var now = Clock.Now;
             var minOperationStartTime = now - MaxKnownOperationAge;
@@ -81,7 +81,7 @@ namespace Stl.Fusion.Operations
                 for (var i = 0; i < OperationCompletionListeners.Length; i++) {
                     var handler = OperationCompletionListeners[i];
                     try {
-                        tasks[i] = handler.OnOperationCompletedAsync(operation);
+                        tasks[i] = handler.OnOperationCompleted(operation);
                     }
                     catch (Exception e) {
                         Log.LogError(e, "Error in operation completion handler of type '{HandlerType}'",

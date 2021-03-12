@@ -20,58 +20,58 @@ namespace Stl.Fusion.Server.Controllers
         }
 
         [HttpPost("signOut")]
-        public Task SignOutAsync([FromBody] SignOutCommand command, CancellationToken cancellationToken = default)
+        public Task SignOut([FromBody] SignOutCommand command, CancellationToken cancellationToken = default)
         {
             command.UseDefaultSession(SessionResolver);
-            return AuthService.SignOutAsync(command, cancellationToken);
+            return AuthService.SignOut(command, cancellationToken);
         }
 
         [HttpPost("editUser")]
-        public Task EditUserAsync(EditUserCommand command, CancellationToken cancellationToken = default)
+        public Task EditUser(EditUserCommand command, CancellationToken cancellationToken = default)
         {
             command.UseDefaultSession(SessionResolver);
-            return AuthService.EditUserAsync(command, cancellationToken);
+            return AuthService.EditUser(command, cancellationToken);
         }
 
         [HttpPost("updatePresence")]
-        public Task UpdatePresenceAsync([FromBody] Session? session = null, CancellationToken cancellationToken = default)
+        public Task UpdatePresence([FromBody] Session? session = null, CancellationToken cancellationToken = default)
         {
             session ??= SessionResolver.Session;
-            return AuthService.UpdatePresenceAsync(session, cancellationToken);
+            return AuthService.UpdatePresence(session, cancellationToken);
         }
 
         // Compute methods
 
         [HttpGet("isSignOutForced")]
         [Publish]
-        public Task<bool> IsSignOutForcedAsync(Session? session = null, CancellationToken cancellationToken = default)
+        public Task<bool> IsSignOutForced(Session? session = null, CancellationToken cancellationToken = default)
         {
             session ??= SessionResolver.Session;
-            return AuthService.IsSignOutForcedAsync(session, cancellationToken);
+            return AuthService.IsSignOutForced(session, cancellationToken);
         }
 
         [HttpGet("getUser")]
         [Publish]
-        public Task<User> GetUserAsync(Session? session = null, CancellationToken cancellationToken = default)
+        public Task<User> GetUser(Session? session = null, CancellationToken cancellationToken = default)
         {
             session ??= SessionResolver.Session;
-            return AuthService.GetUserAsync(session, cancellationToken);
+            return AuthService.GetUser(session, cancellationToken);
         }
 
         [HttpGet("getSessionInfo")]
         [Publish]
-        public Task<SessionInfo> GetSessionInfoAsync(Session? session = null, CancellationToken cancellationToken = default)
+        public Task<SessionInfo> GetSessionInfo(Session? session = null, CancellationToken cancellationToken = default)
         {
             session ??= SessionResolver.Session;
-            return AuthService.GetSessionInfoAsync(session, cancellationToken);
+            return AuthService.GetSessionInfo(session, cancellationToken);
         }
 
         [HttpGet("getUserSessions")]
         [Publish]
-        public Task<SessionInfo[]> GetUserSessionsAsync(Session? session = null, CancellationToken cancellationToken = default)
+        public Task<SessionInfo[]> GetUserSessions(Session? session = null, CancellationToken cancellationToken = default)
         {
             session ??= SessionResolver.Session;
-            return AuthService.GetUserSessionsAsync(session, cancellationToken);
+            return AuthService.GetUserSessions(session, cancellationToken);
         }
     }
 }

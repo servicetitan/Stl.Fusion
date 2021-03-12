@@ -17,17 +17,17 @@ namespace Samples.HelloCart.V2
             : base(services)
             => _products = products;
 
-        public virtual async Task EditAsync(EditCommand<Cart> command, CancellationToken cancellationToken = default)
+        public virtual async Task Edit(EditCommand<Cart> command, CancellationToken cancellationToken = default)
         {
             var (cartId, cart) = command;
             if (string.IsNullOrEmpty(cartId))
                 throw new ArgumentOutOfRangeException(nameof(command));
             if (Computed.IsInvalidating()) {
-                FindAsync(cartId, default).Ignore();
+                TryGet(cartId, default).Ignore();
                 return;
             }
 
-            await using var dbContext = await CreateCommandDbContextAsync(cancellationToken);
+            await using var dbContext = await CreateCommandDbContext(cancellationToken);
             var dbCart = await dbContext.Carts.FindAsync(ComposeKey(cartId), cancellationToken);
             if (cart == null) {
                 if (dbCart != null)
@@ -65,7 +65,7 @@ namespace Samples.HelloCart.V2
             await dbContext.SaveChangesAsync(cancellationToken);
         }
 
-        public virtual async Task<Cart?> FindAsync(string id, CancellationToken cancellationToken = default)
+        public virtual async Task<Cart?> TryGet(string id, CancellationToken cancellationToken = default)
         {
             await using var dbContext = CreateDbContext();
             dbContext.EnableChangeTracking(); // Otherwise LoadAsync below won't work
@@ -79,14 +79,14 @@ namespace Samples.HelloCart.V2
             };
         }
 
-        public virtual async Task<decimal> GetTotalAsync(string id, CancellationToken cancellationToken = default)
+        public virtual async Task<decimal> GetTotal(string id, CancellationToken cancellationToken = default)
         {
-            var cart = await FindAsync(id, cancellationToken);
+            var cart = await TryGet(id, cancellationToken);
             if (cart == null)
                 return 0;
             var total = 0M;
             foreach (var (productId, quantity) in cart.Items) {
-                var product = await _products.FindAsync(productId, cancellationToken);
+                var product = await _products.TryGet(productId, cancellationToken);
                 total += (product?.Price ?? 0M) * quantity;
             }
             return total;

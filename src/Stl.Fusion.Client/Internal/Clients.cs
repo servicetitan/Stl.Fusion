@@ -10,19 +10,19 @@ namespace Stl.Fusion.Client.Internal
     public interface IAuthClient
     {
         [Post("signOut")]
-        Task SignOutAsync([Body] SignOutCommand command, CancellationToken cancellationToken = default);
+        Task SignOut([Body] SignOutCommand command, CancellationToken cancellationToken = default);
         [Post("editUser")]
-        Task EditUserAsync([Body] EditUserCommand command, CancellationToken cancellationToken = default);
+        Task EditUser([Body] EditUserCommand command, CancellationToken cancellationToken = default);
         [Post("updatePresence")]
-        Task UpdatePresenceAsync([Body] Session session, CancellationToken cancellationToken = default);
+        Task UpdatePresence([Body] Session session, CancellationToken cancellationToken = default);
 
         [Get("isSignOutForced"), ComputeMethod]
-        Task<bool> IsSignOutForcedAsync(Session session, CancellationToken cancellationToken = default);
+        Task<bool> IsSignOutForced(Session session, CancellationToken cancellationToken = default);
         [Get("getUser"), ComputeMethod]
-        Task<User> GetUserAsync(Session session, CancellationToken cancellationToken = default);
+        Task<User> GetUser(Session session, CancellationToken cancellationToken = default);
         [Get("getSessionInfo"), ComputeMethod]
-        Task<SessionInfo> GetSessionInfoAsync(Session session, CancellationToken cancellationToken = default);
+        Task<SessionInfo> GetSessionInfo(Session session, CancellationToken cancellationToken = default);
         [Get("getUserSessions"), ComputeMethod]
-        Task<SessionInfo[]> GetUserSessionsAsync(Session session, CancellationToken cancellationToken = default);
+        Task<SessionInfo[]> GetUserSessions(Session session, CancellationToken cancellationToken = default);
     }
 }

@@ -8,28 +8,28 @@ namespace Stl.Fusion.Authentication
     public interface IAuthService
     {
         [CommandHandler]
-        Task SignOutAsync(SignOutCommand command, CancellationToken cancellationToken = default);
+        Task SignOut(SignOutCommand command, CancellationToken cancellationToken = default);
         [CommandHandler]
-        Task EditUserAsync(EditUserCommand command, CancellationToken cancellationToken = default);
-        Task UpdatePresenceAsync(Session session, CancellationToken cancellationToken = default);
+        Task EditUser(EditUserCommand command, CancellationToken cancellationToken = default);
+        Task UpdatePresence(Session session, CancellationToken cancellationToken = default);
 
         [ComputeMethod(KeepAliveTime = 10)]
-        Task<bool> IsSignOutForcedAsync(Session session, CancellationToken cancellationToken = default);
+        Task<bool> IsSignOutForced(Session session, CancellationToken cancellationToken = default);
         [ComputeMethod(KeepAliveTime = 10)]
-        Task<SessionInfo> GetSessionInfoAsync(Session session, CancellationToken cancellationToken = default);
+        Task<SessionInfo> GetSessionInfo(Session session, CancellationToken cancellationToken = default);
         [ComputeMethod(KeepAliveTime = 10)]
-        Task<User> GetUserAsync(Session session, CancellationToken cancellationToken = default);
+        Task<User> GetUser(Session session, CancellationToken cancellationToken = default);
         [ComputeMethod]
-        Task<SessionInfo[]> GetUserSessionsAsync(Session session, CancellationToken cancellationToken = default);
+        Task<SessionInfo[]> GetUserSessions(Session session, CancellationToken cancellationToken = default);
     }
 
     public interface IServerSideAuthService : IAuthService
     {
         [CommandHandler]
-        Task SignInAsync(SignInCommand command, CancellationToken cancellationToken = default);
+        Task SignIn(SignInCommand command, CancellationToken cancellationToken = default);
         [CommandHandler]
-        Task<SessionInfo> SetupSessionAsync(SetupSessionCommand command, CancellationToken cancellationToken = default);
+        Task<SessionInfo> SetupSession(SetupSessionCommand command, CancellationToken cancellationToken = default);
         [ComputeMethod]
-        Task<User?> TryGetUserAsync(string userId, CancellationToken cancellationToken = default);
+        Task<User?> TryGetUser(string userId, CancellationToken cancellationToken = default);
     }
 }

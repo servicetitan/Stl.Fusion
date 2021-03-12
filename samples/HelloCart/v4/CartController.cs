@@ -16,17 +16,17 @@ namespace Samples.HelloCart.V4
         // Commands
 
         [HttpPost("edit")]
-        public Task EditAsync([FromBody] EditCommand<Cart> command, CancellationToken cancellationToken = default)
-            => _cartService.EditAsync(command, cancellationToken);
+        public Task Edit([FromBody] EditCommand<Cart> command, CancellationToken cancellationToken = default)
+            => _cartService.Edit(command, cancellationToken);
 
         // Queries
 
-        [HttpGet("find"), Publish]
-        public Task<Cart?> FindAsync(string id, CancellationToken cancellationToken = default)
-            => _cartService.FindAsync(id, cancellationToken);
+        [HttpGet("tryGet"), Publish]
+        public Task<Cart?> TryGet(string id, CancellationToken cancellationToken = default)
+            => _cartService.TryGet(id, cancellationToken);
 
         [HttpGet("getTotal"), Publish]
-        public Task<decimal> GetTotalAsync(string id, CancellationToken cancellationToken = default)
-            => _cartService.GetTotalAsync(id, cancellationToken);
+        public Task<decimal> GetTotal(string id, CancellationToken cancellationToken = default)
+            => _cartService.GetTotal(id, cancellationToken);
     }
 }

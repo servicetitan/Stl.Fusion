@@ -22,12 +22,12 @@ namespace Stl.Fusion.Tests.Services
 
         void SetValue(string value);
         [ComputeMethod(KeepAliveTime = 10)]
-        Task<string> GetValueAsync();
+        Task<string> GetValue();
         [ComputeMethod(KeepAliveTime = 0.5, ErrorAutoInvalidateTime = 0.5)]
-        Task<int> GetCharCountAsync();
+        Task<int> GetCharCount();
 
         [CommandHandler]
-        Task SetValueAsync(SetValueCommand command, CancellationToken cancellationToken = default);
+        Task SetValue(SetValueCommand command, CancellationToken cancellationToken = default);
     }
 
     [ComputeService(typeof(ISimplestProvider), Lifetime = ServiceLifetime.Scoped, Scope = ServiceScope.Services)]
@@ -49,20 +49,20 @@ namespace Stl.Fusion.Tests.Services
             Invalidate();
         }
 
-        public virtual Task<string> GetValueAsync()
+        public virtual Task<string> GetValue()
         {
             GetValueCallCount++;
             return Task.FromResult(_value);
         }
 
-        public virtual async Task<int> GetCharCountAsync()
+        public virtual async Task<int> GetCharCount()
         {
             GetCharCountCallCount++;
-            var value = await GetValueAsync().ConfigureAwait(false);
+            var value = await GetValue().ConfigureAwait(false);
             return value.Length;
         }
 
-        public virtual Task SetValueAsync(SetValueCommand command, CancellationToken cancellationToken = default)
+        public virtual Task SetValue(SetValueCommand command, CancellationToken cancellationToken = default)
         {
             SetValue(command.Value);
             return Task.CompletedTask;
@@ -74,7 +74,7 @@ namespace Stl.Fusion.Tests.Services
                 return;
 
             using (Computed.Invalidate()) {
-                GetValueAsync().AssertCompleted();
+                GetValue().AssertCompleted();
             }
             // No need to invalidate GetCharCountAsync,
             // since it will be invalidated automatically.

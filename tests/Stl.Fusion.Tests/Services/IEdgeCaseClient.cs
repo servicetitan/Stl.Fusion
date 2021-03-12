@@ -10,16 +10,16 @@ namespace Stl.Fusion.Tests.Services
     public interface IEdgeCaseClient
     {
         [Get("GetSuffix")]
-        Task<string> GetSuffixAsync(CancellationToken cancellationToken = default);
+        Task<string> GetSuffix(CancellationToken cancellationToken = default);
         [Post("SetSuffix")]
-        Task SetSuffixAsync(string suffix, CancellationToken cancellationToken = default);
+        Task SetSuffix(string suffix, CancellationToken cancellationToken = default);
 
         [Get("ThrowIfContainsError"), ComputeMethod(KeepAliveTime = 10)]
-        Task<string> ThrowIfContainsErrorAsync(string source, CancellationToken cancellationToken = default);
+        Task<string> ThrowIfContainsError(string source, CancellationToken cancellationToken = default);
         [Get("ThrowIfContainsErrorRewriteErrors"), ComputeMethod(KeepAliveTime = 10)]
-        Task<string> ThrowIfContainsErrorRewriteErrorsAsync(string source, CancellationToken cancellationToken = default);
+        Task<string> ThrowIfContainsErrorRewriteErrors(string source, CancellationToken cancellationToken = default);
         [Get("ThrowIfContainsErrorNonCompute")]
-        Task<string> ThrowIfContainsErrorNonComputeAsync(string source, CancellationToken cancellationToken = default);
+        Task<string> ThrowIfContainsErrorNonCompute(string source, CancellationToken cancellationToken = default);
     }
 
     [RestEaseReplicaService]

@@ -21,7 +21,7 @@ namespace Stl.Fusion.Bridge
         Type GetResultType();
         Disposable<IPublication> Use();
         bool Touch();
-        ValueTask UpdateAsync(CancellationToken cancellationToken);
+        ValueTask Update(CancellationToken cancellationToken);
 
         // Convenience helpers
         TResult Apply<TArg, TResult>(IPublicationApplyHandler<TArg, TResult> handler, TArg arg);
@@ -92,13 +92,13 @@ namespace Stl.Fusion.Bridge
             });
         }
 
-        public async ValueTask UpdateAsync(CancellationToken cancellationToken)
+        public async ValueTask Update(CancellationToken cancellationToken)
         {
             var state = StateField;
             if (state.IsDisposed || state.Computed.IsConsistent())
                 return;
             var newComputed = await state.Computed
-                .UpdateAsync(false, cancellationToken).ConfigureAwait(false);
+                .Update(false, cancellationToken).ConfigureAwait(false);
             var newState = CreatePublicationState(newComputed);
             ChangeState(newState, state);
         }
@@ -112,10 +112,10 @@ namespace Stl.Fusion.Bridge
             IComputed<T> computed, bool isDisposed = false)
             => new PublicationState<T>(this, computed, Clock.Now, isDisposed);
 
-        protected override async Task RunInternalAsync(CancellationToken cancellationToken)
+        protected override async Task RunInternal(CancellationToken cancellationToken)
         {
             try {
-                await ExpireAsync(cancellationToken).ConfigureAwait(false);
+                await Expire(cancellationToken).ConfigureAwait(false);
             }
             finally {
                 // Awaiting for disposal here = cyclic task dependency;
@@ -125,7 +125,7 @@ namespace Stl.Fusion.Bridge
             }
         }
 
-        protected virtual async Task ExpireAsync(CancellationToken cancellationToken)
+        protected virtual async Task Expire(CancellationToken cancellationToken)
         {
             var expirationTime = PublisherImpl.PublicationExpirationTime;
 
@@ -170,9 +170,9 @@ namespace Stl.Fusion.Bridge
             return base.DisposeAsync(disposing);
         }
 
-        protected override async ValueTask DisposeInternalAsync(bool disposing)
+        protected override async ValueTask DisposeInternal(bool disposing)
         {
-            await base.DisposeInternalAsync(disposing).ConfigureAwait(false);
+            await base.DisposeInternal(disposing).ConfigureAwait(false);
             if (Publisher is IPublisherImpl pi)
                 pi.OnPublicationDisposed(this);
         }

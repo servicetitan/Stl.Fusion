@@ -11,12 +11,12 @@ namespace Stl.Fusion.EntityFramework
     {
         protected DbWakeSleepProcessBase(IServiceProvider services) : base(services) { }
 
-        protected override async Task RunInternalAsync(CancellationToken cancellationToken)
+        protected override async Task RunInternal(CancellationToken cancellationToken)
         {
             while (!cancellationToken.IsCancellationRequested) {
                 var error = default(Exception?);
                 try {
-                    await WakeUpAsync(cancellationToken).ConfigureAwait(false);
+                    await WakeUp(cancellationToken).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException) {
                     throw;
@@ -30,11 +30,11 @@ namespace Stl.Fusion.EntityFramework
                     error = e;
                     Log.LogError(e, "WakeAsync error");
                 }
-                await SleepAsync(error, cancellationToken).ConfigureAwait(false);
+                await Sleep(error, cancellationToken).ConfigureAwait(false);
             }
         }
 
-        protected abstract Task WakeUpAsync(CancellationToken cancellationToken);
-        protected abstract Task SleepAsync(Exception? error, CancellationToken cancellationToken);
+        protected abstract Task WakeUp(CancellationToken cancellationToken);
+        protected abstract Task Sleep(Exception? error, CancellationToken cancellationToken);
     }
 }

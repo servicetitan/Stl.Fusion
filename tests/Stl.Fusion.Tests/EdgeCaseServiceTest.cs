@@ -36,7 +36,7 @@ namespace Stl.Fusion.Tests
         [Fact(Timeout = 30_000)]
         public async Task TestClient()
         {
-            await using var serving = await WebHost.ServeAsync();
+            await using var serving = await WebHost.Serve();
             var client = ClientServices.GetRequiredService<IEdgeCaseClient>();
             var tfv = ClientServices.GetTypeViewFactory<IEdgeCaseService>();
             var service = tfv.CreateView(client);
@@ -46,7 +46,7 @@ namespace Stl.Fusion.Tests
         [Fact(Timeout = 30_000)]
         public async Task TestRewriteClient()
         {
-            await using var serving = await WebHost.ServeAsync();
+            await using var serving = await WebHost.Serve();
             var client = ClientServices.GetRequiredService<IEdgeCaseRewriteClient>();
             var tfv = ClientServices.GetTypeViewFactory<IEdgeCaseService>();
             var service = tfv.CreateView(client);
@@ -72,70 +72,70 @@ namespace Stl.Fusion.Tests
         private async Task ActualTest(IEdgeCaseService service)
         {
             var error = (Exception?) null;
-            await service.SetSuffixAsync("");
-            (await service.GetSuffixAsync()).Should().Be("");
+            await service.SetSuffix("");
+            (await service.GetSuffix()).Should().Be("");
 
             // ThrowIfContainsErrorAsync method test
-            var c1 = await Computed.CaptureAsync(
-                ct => service.ThrowIfContainsErrorAsync("a", ct));
+            var c1 = await Computed.Capture(
+                ct => service.ThrowIfContainsError("a", ct));
             c1.Value.Should().Be("a");
 
-            var c2 = await Computed.CaptureAsync(
-                ct => service.ThrowIfContainsErrorAsync("error", ct));
+            var c2 = await Computed.Capture(
+                ct => service.ThrowIfContainsError("error", ct));
             c2.Error!.GetType().Should().Be(ThrowIfContainsErrorExceptionType);
             c2.Error.Message.Should().Be("!");
 
-            await service.SetSuffixAsync("z");
-            c1 = await UpdateAsync(c1);
+            await service.SetSuffix("z");
+            c1 = await Update(c1);
             c1.Value.Should().Be("az");
 
-            c2 = await UpdateAsync(c2);
+            c2 = await Update(c2);
             c2.Error!.GetType().Should().Be(ThrowIfContainsErrorExceptionType);
             c2.Error.Message.Should().Be("!");
-            await service.SetSuffixAsync("");
+            await service.SetSuffix("");
 
             // ThrowIfContainsErrorRewriteErrorsAsync method test
-            c1 = await Computed.CaptureAsync(
-                ct => service.ThrowIfContainsErrorRewriteErrorsAsync("a", ct));
+            c1 = await Computed.Capture(
+                ct => service.ThrowIfContainsErrorRewriteErrors("a", ct));
             c1.Value.Should().Be("a");
 
-            c2 = await Computed.CaptureAsync(
-                ct => service.ThrowIfContainsErrorRewriteErrorsAsync("error", ct));
+            c2 = await Computed.Capture(
+                ct => service.ThrowIfContainsErrorRewriteErrors("error", ct));
             c2.Error!.GetType().Should().Be(ThrowIfContainsErrorRewriteErrorsExceptionType);
             c2.Error.Message.Should().Be("!");
 
-            await service.SetSuffixAsync("z");
-            c1 = await UpdateAsync(c1);
+            await service.SetSuffix("z");
+            c1 = await Update(c1);
             c1.Value.Should().Be("az");
 
-            c2 = await UpdateAsync(c2);
+            c2 = await Update(c2);
             c2.Error!.GetType().Should().Be(ThrowIfContainsErrorRewriteErrorsExceptionType);
             c2.Error.Message.Should().Be("!");
-            await service.SetSuffixAsync("");
+            await service.SetSuffix("");
 
             // ThrowIfContainsErrorRewriteErrorsAsync method test
-            (await service.ThrowIfContainsErrorNonComputeAsync("a")).Should().Be("a");
+            (await service.ThrowIfContainsErrorNonCompute("a")).Should().Be("a");
             try {
-                await service.ThrowIfContainsErrorNonComputeAsync("error");
+                await service.ThrowIfContainsErrorNonCompute("error");
             } catch (Exception e) { error = e; }
             error!.GetType().Should().Be(ThrowIfContainsErrorNonComputeExceptionType);
             error.Message.Should().Be("!");
 
-            await service.SetSuffixAsync("z");
-            (await service.ThrowIfContainsErrorNonComputeAsync("a")).Should().Be("az");
+            await service.SetSuffix("z");
+            (await service.ThrowIfContainsErrorNonCompute("a")).Should().Be("az");
             try {
-                await service.ThrowIfContainsErrorNonComputeAsync("error");
+                await service.ThrowIfContainsErrorNonCompute("error");
             } catch (Exception e) { error = e; }
             error!.GetType().Should().Be(ThrowIfContainsErrorNonComputeExceptionType);
             error.Message.Should().Be("!");
-            await service.SetSuffixAsync("");
+            await service.SetSuffix("");
         }
 
-        private async Task<IComputed<T>> UpdateAsync<T>(IComputed<T> computed, CancellationToken cancellationToken = default)
+        private async Task<IComputed<T>> Update<T>(IComputed<T> computed, CancellationToken cancellationToken = default)
         {
             if (computed is IReplicaMethodComputed rc)
-                await rc.Replica!.RequestUpdateAsync(cancellationToken);
-            return await computed.UpdateAsync(false, cancellationToken);
+                await rc.Replica!.RequestUpdate(cancellationToken);
+            return await computed.Update(false, cancellationToken);
         }
     }
 }

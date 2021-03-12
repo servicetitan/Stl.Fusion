@@ -42,14 +42,14 @@ namespace Stl.Fusion.Operations.Internal
             CommandContext = services.GetRequiredService<CommandContext>();
         }
 
-        protected override ValueTask DisposeInternalAsync(bool disposing)
+        protected override ValueTask DisposeInternal(bool disposing)
         {
             IsConfirmed ??= true;
             IsClosed = true;
             return ValueTaskEx.CompletedTask;
         }
 
-        public virtual Task CommitAsync(CancellationToken cancellationToken = default)
+        public virtual Task Commit(CancellationToken cancellationToken = default)
         {
             if (IsClosed)
                 throw Errors.OperationScopeIsAlreadyClosed();
@@ -59,7 +59,7 @@ namespace Stl.Fusion.Operations.Internal
             return Task.CompletedTask;
         }
 
-        public virtual Task RollbackAsync()
+        public virtual Task Rollback()
         {
             if (IsClosed)
                 throw Errors.OperationScopeIsAlreadyClosed();

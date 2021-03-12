@@ -41,8 +41,8 @@ namespace Stl.Fusion.Tests
 
         protected abstract void ConfigureCommonServices(ServiceCollection services);
 
-        protected virtual Task DelayAsync(double seconds)
-            => Timeouts.Clock.DelayAsync(TimeSpan.FromSeconds(seconds));
+        protected virtual Task Delay(double seconds)
+            => Timeouts.Clock.Delay(TimeSpan.FromSeconds(seconds));
 
         protected void GCCollect()
         {

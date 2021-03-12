@@ -47,7 +47,7 @@ namespace Stl.Fusion
             });
         }
 
-        public static async Task WhenInvalidatedAsync(this IComputed computed, CancellationToken cancellationToken = default)
+        public static async Task WhenInvalidated(this IComputed computed, CancellationToken cancellationToken = default)
         {
             if (computed.ConsistencyState == ConsistencyState.Invalidated)
                 return;

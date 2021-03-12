@@ -35,13 +35,13 @@ This comment is here solely to reset the indent in VS / Rider -->
             <Addon AddonType="AddonType.Start">
                 <AddonLabel>
                     <Blazorise.Icon Name="@(todo.IsDone ? FontAwesomeIcons.CheckSquare : FontAwesomeIcons.Square)"
-                                    @onclick="_ => InvertDoneAsync(todo)" />
+                                    @onclick="_ => InvertDone(todo)" />
                 </AddonLabel>
             </Addon>
-            <TextEdit TextChanged="text => UpdateTitleAsync(todo, text)" ChangeTextOnKeyPress="false"
+            <TextEdit TextChanged="text => UpdateTitle(todo, text)" ChangeTextOnKeyPress="false"
                       Text="@todo.Title"/>
             <Addon AddonType="AddonType.End">
-                <Button Clicked="_ => RemoveAsync(todo)" Color="Color.Warning">
+                <Button Clicked="_ => Remove(todo)" Color="Color.Warning">
                     <Blazorise.Icon Name="FontAwesomeIcons.Minus"/>
                 </Button>
             </Addon>
@@ -54,7 +54,7 @@ This comment is here solely to reset the indent in VS / Rider -->
         </Button>
     }
 
-    <Form @onsubmit="_ => CreateAsync()" Margin="Margin.Is3.OnY" >
+    <Form @onsubmit="_ => Create()" Margin="Margin.Is3.OnY" >
         <Addons>
             <Addon AddonType="AddonType.Start">
                 <Button Type="@ButtonType.Submit" Color="Color.Primary">
@@ -89,9 +89,9 @@ This comment is here solely to reset the indent in VS / Rider -->
         base.OnInitialized();
     }
 
-    protected override async Task<Todo[]> ComputeStateAsync(CancellationToken cancellationToken)
+    protected override async Task<Todo[]> ComputeState(CancellationToken cancellationToken)
     {
-        var items = await Todos.ListAsync(Session, PageSize + 1, cancellationToken);
+        var items = await Todos.List(Session, PageSize + 1, cancellationToken);
         HasMore = items.Length > PageSize;
         if (HasMore)
             items = items[0..PageSize];
@@ -105,29 +105,29 @@ This comment is here solely to reset the indent in VS / Rider -->
         InvalidateState();
     }
 
-    private Task InvertDoneAsync(Todo todo)
+    private Task InvertDone(Todo todo)
     {
         todo = todo with { IsDone = !todo.IsDone };
-        return CommandRunner.CallAsync(new AddOrUpdateTodoCommand(Session, todo));
+        return CommandRunner.Call(new AddOrUpdateTodoCommand(Session, todo));
     }
 
-    private Task UpdateTitleAsync(Todo todo, string title)
+    private Task UpdateTitle(Todo todo, string title)
     {
         title = title.Trim();
         if (todo.Title == title)
             return Task.CompletedTask;
         todo = todo with { Title = title };
-        return CommandRunner.CallAsync(new AddOrUpdateTodoCommand(Session, todo));
+        return CommandRunner.Call(new AddOrUpdateTodoCommand(Session, todo));
     }
 
-    private Task RemoveAsync(Todo todo)
-        => CommandRunner.CallAsync(new RemoveTodoCommand(Session, todo.Id));
+    private Task Remove(Todo todo)
+        => CommandRunner.Call(new RemoveTodoCommand(Session, todo.Id));
 
-    private Task CreateAsync()
+    private Task Create()
     {
         var todo = new Todo("", NewTodoTitle);
         NewTodoTitle = "";
         StateHasChanged();
-        return CommandRunner.CallAsync(new AddOrUpdateTodoCommand(Session, todo));
+        return CommandRunner.Call(new AddOrUpdateTodoCommand(Session, todo));
     }
 }

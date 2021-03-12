@@ -10,7 +10,7 @@ namespace Stl.Fusion.Authentication
         public Task<Session> SessionTask { get; }
         public bool HasSession { get; }
         public Session Session { get; }
-        public Task<Session> GetSessionAsync(CancellationToken cancellationToken = default);
+        public Task<Session> GetSession(CancellationToken cancellationToken = default);
     }
 
     public interface ISessionProvider : ISessionResolver
@@ -28,7 +28,7 @@ namespace Stl.Fusion.Authentication
             set => SessionTaskSource.TrySetResult(value.AssertNotNull());
         }
 
-        public virtual Task<Session> GetSessionAsync(CancellationToken cancellationToken = default)
+        public virtual Task<Session> GetSession(CancellationToken cancellationToken = default)
             => SessionTask.WithFakeCancellation(cancellationToken);
     }
 }

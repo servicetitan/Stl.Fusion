@@ -20,17 +20,17 @@ namespace Stl.Fusion.Tests
             var services = CreateServiceProviderFor<CounterService>();
             var counters = services.GetRequiredService<CounterService>();
 
-            var c = Computed.TryGetExisting(() => counters.GetAsync("a"));
+            var c = Computed.TryGetExisting(() => counters.Get("a"));
             c.Should().BeNull();
 
-            c = await Computed.CaptureAsync(_ => counters.GetAsync("a"));
+            c = await Computed.Capture(_ => counters.Get("a"));
             c.Value.Should().Be(0);
-            var c1 = Computed.TryGetExisting(() => counters.GetAsync("a"));
+            var c1 = Computed.TryGetExisting(() => counters.Get("a"));
             c1.Should().BeSameAs(c);
 
-            await counters.IncrementAsync("a");
+            await counters.Increment("a");
             c.IsConsistent().Should().BeFalse();
-            c1 = Computed.TryGetExisting(() => counters.GetAsync("a"));
+            c1 = Computed.TryGetExisting(() => counters.Get("a"));
             c1.Should().BeNull();
         }
     }

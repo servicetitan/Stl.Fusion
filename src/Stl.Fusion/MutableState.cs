@@ -77,10 +77,10 @@ namespace Stl.Fusion
         {
             base.OnInvalidated(computed);
             if (Snapshot.Computed == computed)
-                computed.UpdateAsync(false);
+                computed.Update(false);
         }
 
-        protected override Task<IComputed<T>> InvokeAsync(
+        protected override Task<IComputed<T>> Invoke(
             State<T> input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)
         {
@@ -109,7 +109,7 @@ namespace Stl.Fusion
             }
         }
 
-        protected override Task<T> InvokeAndStripAsync(
+        protected override Task<T> InvokeAndStrip(
             State<T> input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)
         {
@@ -146,7 +146,7 @@ namespace Stl.Fusion
             return computed;
         }
 
-        protected override Task<T> ComputeValueAsync(CancellationToken cancellationToken)
+        protected override Task<T> Compute(CancellationToken cancellationToken)
             => throw Errors.InternalError("This method should never be called.");
     }
 }

@@ -9,8 +9,8 @@ namespace Stl.Fusion
 {
     public interface IUpdateDelayer
     {
-        Task DelayAsync(IState state, CancellationToken cancellationToken = default);
-        Task DelayAsync(int retryCount, CancellationToken cancellationToken = default);
+        Task Delay(IState state, CancellationToken cancellationToken = default);
+        Task Delay(int retryCount, CancellationToken cancellationToken = default);
         void CancelDelays(TimeSpan? cancellationDelay = null);
     }
 
@@ -21,11 +21,11 @@ namespace Stl.Fusion
         public class Options
         {
             public static Options InstantUpdates => new() {
-                Delay = TimeSpan.FromSeconds(0.01),
+                DelayDuration = TimeSpan.FromSeconds(0.01),
                 MinExtraErrorDelay = TimeSpan.FromSeconds(1),
             };
 
-            public TimeSpan Delay { get; set; } = TimeSpan.FromSeconds(1);
+            public TimeSpan DelayDuration { get; set; } = TimeSpan.FromSeconds(1);
             public TimeSpan MinExtraErrorDelay { get; set; } =  TimeSpan.FromSeconds(5);
             public TimeSpan MaxExtraErrorDelay { get; set; } = TimeSpan.FromMinutes(2);
             public TimeSpan CancellationDelay { get; set; } = TimeSpan.FromSeconds(0.05);
@@ -36,7 +36,7 @@ namespace Stl.Fusion
         protected Task<Unit> CancelDelaysTask => _cancelDelaysTask!;
         protected IMomentClock Clock { get; }
 
-        public TimeSpan Delay { get; set; }
+        public TimeSpan DelayDuration { get; set; }
         public TimeSpan MinExtraErrorDelay { get; set; }
         public TimeSpan MaxExtraErrorDelay { get; set; }
         public TimeSpan CancellationDelay { get; set; }
@@ -44,7 +44,7 @@ namespace Stl.Fusion
         public UpdateDelayer(Options? options = null)
         {
             options ??= new();
-            Delay = options.Delay;
+            DelayDuration = options.DelayDuration;
             MinExtraErrorDelay = options.MinExtraErrorDelay;
             MaxExtraErrorDelay = options.MaxExtraErrorDelay;
             CancellationDelay = options.CancellationDelay;
@@ -52,11 +52,11 @@ namespace Stl.Fusion
             CancelDelays(TimeSpan.Zero);
         }
 
-        public virtual Task DelayAsync(IState state, CancellationToken cancellationToken = default)
-            => DelayAsync(state.Snapshot.RetryCount, cancellationToken);
-        public virtual async Task DelayAsync(int retryCount, CancellationToken cancellationToken = default)
+        public virtual Task Delay(IState state, CancellationToken cancellationToken = default)
+            => Delay(state.Snapshot.RetryCount, cancellationToken);
+        public virtual async Task Delay(int retryCount, CancellationToken cancellationToken = default)
         {
-            var delay = Math.Max(0, Delay.TotalSeconds);
+            var delay = Math.Max(0, DelayDuration.TotalSeconds);
             var start = Clock.Now;
 
             if (retryCount > 0) {
@@ -74,8 +74,8 @@ namespace Stl.Fusion
                 // If it's an error, we still want to enforce at least
                 // the default delay -- even if the delay was cancelled.
                 var elapsed = Clock.Now - start;
-                if (elapsed < Delay)
-                    await Clock.DelayAsync(Delay - elapsed, cancellationToken).ConfigureAwait(false);
+                if (elapsed < DelayDuration)
+                    await Clock.Delay(DelayDuration - elapsed, cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -83,7 +83,7 @@ namespace Stl.Fusion
         {
             var delay = Math.Max(0, (cancellationDelay ?? CancellationDelay).TotalSeconds);
             if (delay > 0) {
-                Clock.DelayAsync(TimeSpan.FromSeconds(delay)).ContinueWith(_ => CancelDelays(TimeSpan.Zero));
+                Clock.Delay(TimeSpan.FromSeconds(delay)).ContinueWith(_ => CancelDelays(TimeSpan.Zero));
                 return;
             }
             var newTask = TaskSource.New<Unit>(true).Task;

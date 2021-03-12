@@ -6,11 +6,13 @@ namespace Stl.Fusion.EntityFramework
 {
     public static class DbOperationScopeEx
     {
-        public static Task<DbContext> CreateDbContextAsync(this IDbOperationScope scope, CancellationToken cancellationToken = default)
-            => scope.CreateDbContextAsync(true, cancellationToken);
+        public static Task<DbContext> CreateDbContext(
+            this IDbOperationScope scope, CancellationToken cancellationToken = default)
+            => scope.CreateDbContext(true, cancellationToken);
 
-        public static Task<TDbContext> CreateDbContextAsync<TDbContext>(this DbOperationScope<TDbContext> scope, CancellationToken cancellationToken = default)
+        public static Task<TDbContext> CreateDbContext<TDbContext>(
+            this DbOperationScope<TDbContext> scope, CancellationToken cancellationToken = default)
             where TDbContext : DbContext
-            => scope.CreateDbContextAsync(true, cancellationToken);
+            => scope.CreateDbContext(true, cancellationToken);
     }
 }

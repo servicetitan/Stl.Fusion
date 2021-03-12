@@ -47,7 +47,7 @@ namespace Stl.Fusion.Server.Authentication
             AuthSchemasCache = authSchemasCache;
         }
 
-        public virtual async ValueTask<string> GetSchemasAsync(HttpContext httpContext, bool cache = true)
+        public virtual async ValueTask<string> GetSchemas(HttpContext httpContext, bool cache = true)
         {
             string? schemas;
             if (cache) {
@@ -55,7 +55,7 @@ namespace Stl.Fusion.Server.Authentication
                 if (schemas != null)
                     return schemas;
             }
-            var authSchemas = await httpContext.GetAuthenticationSchemasAsync().ConfigureAwait(false);
+            var authSchemas = await httpContext.GetAuthenticationSchemas().ConfigureAwait(false);
             var lSchemas = new List<string>();
             foreach (var authSchema in authSchemas) {
                 lSchemas.Add(authSchema.Name);
@@ -67,7 +67,7 @@ namespace Stl.Fusion.Server.Authentication
             return schemas;
         }
 
-        public virtual async Task UpdateAuthStateAsync(HttpContext httpContext, CancellationToken cancellationToken = default)
+        public virtual async Task UpdateAuthState(HttpContext httpContext, CancellationToken cancellationToken = default)
         {
             var httpUser = httpContext.User;
             var httpAuthenticationSchema = httpUser.Identity?.AuthenticationType ?? "";
@@ -79,11 +79,11 @@ namespace Stl.Fusion.Server.Authentication
                 ? userAgentValues.FirstOrDefault() ?? ""
                 : "";
             var setupSessionCommand = new SetupSessionCommand(session, ipAddress, userAgent).MarkServerSide();
-            var sessionInfo = await AuthService.SetupSessionAsync(setupSessionCommand, cancellationToken).ConfigureAwait(false);
+            var sessionInfo = await AuthService.SetupSession(setupSessionCommand, cancellationToken).ConfigureAwait(false);
             var userId = sessionInfo.UserId;
             var userIsAuthenticated = sessionInfo.IsAuthenticated && !sessionInfo.IsSignOutForced;
             var user = userIsAuthenticated
-                ? (await AuthService.TryGetUserAsync(userId, cancellationToken).ConfigureAwait(false)
+                ? (await AuthService.TryGetUser(userId, cancellationToken).ConfigureAwait(false)
                     ?? throw new KeyNotFoundException())
                 : new User(session.Id); // Guest
 
@@ -93,18 +93,18 @@ namespace Stl.Fusion.Server.Authentication
                         return;
                     var (newUser, authenticatedIdentity) = CreateOrUpdateUser(user, httpUser, httpAuthenticationSchema);
                     var signInCommand = new SignInCommand(session, newUser, authenticatedIdentity).MarkServerSide();
-                    await AuthService.SignInAsync(signInCommand, cancellationToken).ConfigureAwait(false);
+                    await AuthService.SignIn(signInCommand, cancellationToken).ConfigureAwait(false);
                 }
                 else {
                     if (userIsAuthenticated) {
                         var signOutCommand = new SignOutCommand(session);
-                        await AuthService.SignOutAsync(signOutCommand, cancellationToken).ConfigureAwait(false);
+                        await AuthService.SignOut(signOutCommand, cancellationToken).ConfigureAwait(false);
                     }
                 }
             }
             finally {
                 // Ideally this should be done once important things are completed
-                Task.Run(() => AuthService.UpdatePresenceAsync(session, default), default).Ignore();
+                Task.Run(() => AuthService.UpdatePresence(session, default), default).Ignore();
             }
         }
 

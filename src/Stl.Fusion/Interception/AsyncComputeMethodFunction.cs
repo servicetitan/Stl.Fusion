@@ -22,7 +22,7 @@ namespace Stl.Fusion.Interception
                     $"This type shouldn't be used with {nameof(ComputedOptions)}.{nameof(ComputedOptions.IsAsyncComputed)} == false option.");
         }
 
-        public override async Task<T> InvokeAndStripAsync(
+        public override async Task<T> InvokeAndStrip(
             ComputeMethodInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken = default)
         {
@@ -33,23 +33,23 @@ namespace Stl.Fusion.Interception
 
             var computed = TryGetExisting(input);
             if (computed != null) {
-                output = await computed.TryUseExistingAsync(context, usedBy, cancellationToken)
+                output = await computed.TryUseExisting(context, usedBy, cancellationToken)
                     .ConfigureAwait(false);
                 if (output != null)
                     return output.Value;
             }
 
-            using var @lock = await Locks.LockAsync(input, cancellationToken).ConfigureAwait(false);
+            using var @lock = await Locks.Lock(input, cancellationToken).ConfigureAwait(false);
 
             computed = TryGetExisting(input);
             if (computed != null) {
-                output = await computed.TryUseExistingAsync(context, usedBy, cancellationToken)
+                output = await computed.TryUseExisting(context, usedBy, cancellationToken)
                     .ConfigureAwait(false);
                 if (output != null)
                     return output.Value;
             }
 
-            computed = (IAsyncComputed<T>) await ComputeAsync(input, computed, cancellationToken)
+            computed = (IAsyncComputed<T>) await Compute(input, computed, cancellationToken)
                 .ConfigureAwait(false);
             var rOutput = computed.Output; // RenewTimeouts isn't called yet, so it's ok
             computed.UseNew(context, usedBy);

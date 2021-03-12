@@ -15,26 +15,26 @@ namespace Stl.Tests.Channels
         [Fact]
         public async Task BasicTest()
         {
-            await TestAsync(3, 2);
-            await TestAsync(20, 7);
+            await Test(3, 2);
+            await Test(20, 7);
         }
 
         [Fact]
         public async Task ComplexTest()
         {
             var tests = new [] {
-                TestAsync(1, 1),
-                TestAsync(2, 1),
-                TestAsync(2, 2),
-                TestAsync(3, 2),
-                TestAsync(3, 1),
-                TestAsync(4, 2),
-                TestAsync(4, 3),
+                Test(1, 1),
+                Test(2, 1),
+                Test(2, 2),
+                Test(3, 2),
+                Test(3, 1),
+                Test(4, 2),
+                Test(4, 3),
             };
             await Task.WhenAll(tests);
         }
 
-        private async Task TestAsync(int itemCount, int concurrencyLevel)
+        private async Task Test(int itemCount, int concurrencyLevel)
         {
             async Task TestOne(int? roundDuration, Func<Channel<int>, Channel<int>, Task> transform)
             {
@@ -55,19 +55,19 @@ namespace Stl.Tests.Channels
 
             }
 
-            await TestOne(100, (s, t) => s.Reader.ConcurrentTransformAsync(t.Writer,
+            await TestOne(100, (s, t) => s.Reader.ConcurrentTransform(t.Writer,
                 async i => {
                     await Task.Delay(100).ConfigureAwait(false);
                     return i;
                 }, concurrencyLevel));
-            await TestOne(null, (s, t) => s.Reader.ConcurrentTransformAsync(t.Writer,
+            await TestOne(null, (s, t) => s.Reader.ConcurrentTransform(t.Writer,
                 i => i, concurrencyLevel));
-            await TestOne(null, (s, t) => s.Reader.TransformAsync(t.Writer,
+            await TestOne(null, (s, t) => s.Reader.Transform(t.Writer,
                 async i => {
                     await Task.Delay(1).ConfigureAwait(false);
                     return i;
                 }));
-            await TestOne(null, (s, t) => s.Reader.TransformAsync(t.Writer,
+            await TestOne(null, (s, t) => s.Reader.Transform(t.Writer,
                 i => i));
         }
     }

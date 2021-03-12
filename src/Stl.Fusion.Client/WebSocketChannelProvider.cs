@@ -104,7 +104,7 @@ namespace Stl.Fusion.Client
             ConnectionUrlResolver = options.ConnectionUrlResolver;
         }
 
-        public async Task<Channel<BridgeMessage>> CreateChannelAsync(
+        public async Task<Channel<BridgeMessage>> CreateChannel(
             Symbol publisherId, CancellationToken cancellationToken)
         {
             var clientId = ClientId.Value;
@@ -126,7 +126,7 @@ namespace Stl.Fusion.Client
                         MessageMaxLength);
                 var serializers = ChannelSerializerPairFactory.Invoke(Services);
                 var resultChannel = stringChannel.WithSerializers(serializers);
-                wsChannel.WhenCompletedAsync(default).ContinueWith(async _ => {
+                wsChannel.WhenCompleted(default).ContinueWith(async _ => {
                     await Task.Delay(1000, default).ConfigureAwait(false);
                     await wsChannel.DisposeAsync().ConfigureAwait(false);
                 }, CancellationToken.None).Ignore();

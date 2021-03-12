@@ -26,7 +26,7 @@ namespace Stl.Tests.CommandR
                 new User() { Id = "a", Name = "Alice" },
                 new User() { Id = "b", Name = "Bob" },
             }};
-            await services.Commander().CallAsync(command);
+            await services.Commander().Call(command);
 
             var f = services.GetRequiredService<IDbContextFactory<TestDbContext>>();
             await using var dbContext = f.CreateDbContext().ReadWrite(false);
@@ -44,7 +44,7 @@ namespace Stl.Tests.CommandR
                 new User() { Id = "b", Name = "Bob" },
             }};
             await Assert.ThrowsAsync<InvalidOperationException>(async () => {
-                await services.Commander().CallAsync(command);
+                await services.Commander().Call(command);
             });
 
             var f = services.GetRequiredService<IDbContextFactory<TestDbContext>>();

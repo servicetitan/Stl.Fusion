@@ -10,17 +10,17 @@ namespace Stl.CommandR.Internal
         ICommandHandler<IAsyncPreparedCommand>
     {
         [CommandHandler(Priority = 1000_000_001, IsFilter = true)]
-        public async Task OnCommandAsync(IPreparedCommand command, CommandContext context, CancellationToken cancellationToken)
+        public async Task OnCommand(IPreparedCommand command, CommandContext context, CancellationToken cancellationToken)
         {
             command.Prepare(context);
-            await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
+            await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);
         }
 
         [CommandHandler(Priority = 1000_000_000, IsFilter = true)]
-        public async Task OnCommandAsync(IAsyncPreparedCommand command, CommandContext context, CancellationToken cancellationToken)
+        public async Task OnCommand(IAsyncPreparedCommand command, CommandContext context, CancellationToken cancellationToken)
         {
             await command.PrepareAsync(context, cancellationToken).ConfigureAwait(false);
-            await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
+            await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);
         }
     }
 }

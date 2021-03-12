@@ -18,12 +18,12 @@ namespace Stl.CommandR.Configuration
         public override object GetHandlerService(ICommand command, CommandContext context)
             => context.Services.GetRequiredService(ServiceType);
 
-        public override Task InvokeAsync(
+        public override Task Invoke(
             ICommand command, CommandContext context,
             CancellationToken cancellationToken)
         {
             var handler = (ICommandHandler<TCommand>) context.Services.GetRequiredService(ServiceType);
-            return handler.OnCommandAsync((TCommand) command, context, cancellationToken);
+            return handler.OnCommand((TCommand) command, context, cancellationToken);
         }
     }
 

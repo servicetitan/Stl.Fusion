@@ -6,12 +6,12 @@ namespace Stl.Caching
     public abstract class AsyncCacheBase<TKey, TValue> : AsyncKeyResolverBase<TKey, TValue>, IAsyncCache<TKey, TValue>
         where TKey : notnull
     {
-        public ValueTask SetAsync(TKey key, TValue value, CancellationToken cancellationToken = default)
-            => SetAsync(key, Option.Some(value), cancellationToken);
+        public ValueTask Set(TKey key, TValue value, CancellationToken cancellationToken = default)
+            => Set(key, Option.Some(value), cancellationToken);
 
-        public ValueTask RemoveAsync(TKey key, CancellationToken cancellationToken = default)
-            => SetAsync(key, Option.None<TValue>(), cancellationToken);
+        public ValueTask Remove(TKey key, CancellationToken cancellationToken = default)
+            => Set(key, Option.None<TValue>(), cancellationToken);
 
-        protected abstract ValueTask SetAsync(TKey key, Option<TValue> value, CancellationToken cancellationToken = default);
+        protected abstract ValueTask Set(TKey key, Option<TValue> value, CancellationToken cancellationToken = default);
     }
 }

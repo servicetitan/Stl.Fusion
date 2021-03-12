@@ -18,7 +18,7 @@ namespace Stl.Channels
         int ChannelCount { get; }
         bool Attach(Channel<T> channel);
         bool IsAttached(Channel<T> channel);
-        ValueTask<bool> DetachAsync(Channel<T> channel);
+        ValueTask<bool> Detach(Channel<T> channel);
 
         event ChannelAttachedHandler<T> Attached;
         event ChannelDetachedHandler<T> Detached;
@@ -51,7 +51,7 @@ namespace Stl.Channels
             return true;
         }
 
-        public virtual async ValueTask<bool> DetachAsync(Channel<T> channel)
+        public virtual async ValueTask<bool> Detach(Channel<T> channel)
         {
             if (channel == null)
                 throw new ArgumentNullException(nameof(channel));
@@ -59,7 +59,7 @@ namespace Stl.Channels
 
             if (!Channels.TryRemove(channel, out _))
                 return false;
-            await OnDetachedAsync(channel).ConfigureAwait(false);
+            await OnDetached(channel).ConfigureAwait(false);
             return true;
         }
 
@@ -69,12 +69,12 @@ namespace Stl.Channels
         protected virtual void OnAttached(Channel<T> channel)
         {
             channel.Reader.Completion.ContinueWith(async _ => {
-                await DetachAsync(channel);
+                await Detach(channel);
             });
             Attached?.Invoke(channel);
         }
 
-        protected virtual async ValueTask OnDetachedAsync(Channel<T> channel)
+        protected virtual async ValueTask OnDetached(Channel<T> channel)
         {
             var taskCollector = Collector<ValueTask>.New(true);
             try {
@@ -115,7 +115,7 @@ namespace Stl.Channels
             }
         }
 
-        protected override async ValueTask DisposeInternalAsync(bool disposing)
+        protected override async ValueTask DisposeInternal(bool disposing)
         {
             while (!Channels.IsEmpty) {
                 var tasks = Channels
@@ -126,7 +126,7 @@ namespace Stl.Channels
                         if (!Channels.TryRemove(channel, out _))
                             return;
                         try {
-                            await OnDetachedAsync(channel).ConfigureAwait(false);
+                            await OnDetached(channel).ConfigureAwait(false);
                         }
                         catch {
                             // Ignore: we did what we could, Dispose shouldn't throw anything

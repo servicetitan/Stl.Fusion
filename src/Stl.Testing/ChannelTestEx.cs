@@ -9,7 +9,7 @@ namespace Stl.Testing
 {
     public static class ChannelTestEx
     {
-        public static async Task AssertWriteAsync<T>(
+        public static async Task AssertWrite<T>(
             this ChannelWriter<T> writer, T item, TimeSpan? timeout = default)
         {
             timeout ??= TimeSpan.FromSeconds(1);
@@ -26,7 +26,7 @@ namespace Stl.Testing
             }
         }
 
-        public static async Task<T> AssertReadAsync<T>(
+        public static async Task<T> AssertRead<T>(
             this ChannelReader<T> reader, TimeSpan? timeout = default)
         {
             timeout ??= TimeSpan.FromSeconds(1);
@@ -46,7 +46,7 @@ namespace Stl.Testing
             }
         }
 
-        public static async Task AssertCompletedAsync<T>(
+        public static async Task AssertCompleted<T>(
             this ChannelReader<T> reader, TimeSpan? timeout = default)
         {
             timeout ??= TimeSpan.FromSeconds(1);
@@ -59,7 +59,7 @@ namespace Stl.Testing
             reader.Completion.IsCompleted.Should().BeTrue();
         }
 
-        public static async Task AssertCannotReadAsync<T>(
+        public static async Task AssertCannotRead<T>(
             this ChannelReader<T> reader, TimeSpan? timeout = default)
         {
             timeout ??= TimeSpan.FromSeconds(0.1);

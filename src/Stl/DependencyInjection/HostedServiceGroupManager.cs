@@ -23,13 +23,13 @@ namespace Stl.DependencyInjection
         public IEnumerator<IHostedService> GetEnumerator()
             => Services.GetServices<IHostedService>().GetEnumerator();
 
-        public async Task StartAsync(CancellationToken cancellationToken = default)
+        public async Task Start(CancellationToken cancellationToken = default)
         {
             var tasks = this.Select(s => s.StartAsync(cancellationToken));
             await Task.WhenAll(tasks);
         }
 
-        public async Task StopAsync(CancellationToken cancellationToken = default)
+        public async Task Stop(CancellationToken cancellationToken = default)
         {
             var tasks = this.Select(s => s.StopAsync(cancellationToken));
             await Task.WhenAll(tasks);

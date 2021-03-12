@@ -33,7 +33,7 @@ namespace Stl.Fusion.Tests
             var users = Services.GetRequiredService<IUserService>();
             var tasks = new List<Task>();
             for (var i = 0; i < UserCount; i++)
-                tasks.Add(users.CreateAsync(new IUserService.AddCommand(new User() {
+                tasks.Add(users.Create(new IUserService.AddCommand(new User() {
                     Id = i,
                     Name = $"User_{i}",
                 }, true)));
@@ -88,11 +88,11 @@ namespace Stl.Fusion.Tests
                     cancellationToken.ThrowIfCancellationRequested();
                     var userId = (long) rnd.Next(UserCount);
                     // Log.LogDebug($"{name}: R {userId}");
-                    var user = await users.TryGetAsync(userId, cancellationToken)
+                    var user = await users.TryGet(userId, cancellationToken)
                         .ConfigureAwait(false);
                     user = user! with { Email = $"{++count}@counter.org" };
                     // Log.LogDebug($"{name}: R done, U {user}");
-                    await users.UpdateAsync(new(user), cancellationToken).ConfigureAwait(false);
+                    await users.Update(new(user), cancellationToken).ConfigureAwait(false);
                     // Log.LogDebug($"{name}: U {user} done");
                     await Task.Delay(10, cancellationToken).ConfigureAwait(false);
                 }
@@ -105,7 +105,7 @@ namespace Stl.Fusion.Tests
                 for (; iterationCount > 0; iterationCount--) {
                     var userId = (long) rnd.Next(UserCount);
                     // Log.LogDebug($"{name}: R {userId}");
-                    var user = await users.TryGetAsync(userId).ConfigureAwait(false);
+                    var user = await users.TryGet(userId).ConfigureAwait(false);
                     // Log.LogDebug($"{name}: R {userId} done");
                     if (user!.Id == userId)
                         count++;

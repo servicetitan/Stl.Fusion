@@ -34,18 +34,18 @@ namespace Stl.IO
             return o1.Merge(o2).Publish().RefCount();
         }
 
-        public static Task<FileSystemEventArgs> FirstAsync(
+        public static Task<FileSystemEventArgs> GetFirstEvent(
             this FileSystemWatcher watcher,
             CancellationToken cancellationToken = default)
-            => FirstAsync(watcher, TaskCreationOptions.None, cancellationToken);
+            => GetFirstEvent(watcher, TaskCreationOptions.None, cancellationToken);
 
-        public static async Task<FileSystemEventArgs> FirstAsync(
+        public static async Task<FileSystemEventArgs> GetFirstEvent(
             this FileSystemWatcher watcher,
             TaskCreationOptions taskCreationOptions,
             CancellationToken cancellationToken = default)
         {
             var ts = TaskSource.New<FileSystemEventArgs>(taskCreationOptions);
-            var handler = (FileSystemEventHandler) ((sender, args) => ts.TrySetResult(args));
+            var handler = (FileSystemEventHandler) ((_, args) => ts.TrySetResult(args));
             try {
                 watcher.Changed += handler;
                 watcher.Created += handler;

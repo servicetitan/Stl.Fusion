@@ -16,7 +16,7 @@ namespace Stl.Tests.CommandR.Services
         public UserService(IServiceProvider services) : base(services) { }
 
         [CommandHandler]
-        private async Task RecAddUsersAsync(
+        private async Task RecAddUsers(
             RecAddUsersCommand command,
             CommandContext context,
             CancellationToken cancellationToken)
@@ -24,8 +24,8 @@ namespace Stl.Tests.CommandR.Services
             CommandContext.GetCurrent().Should().Be(context);
             context.ExecutionState.Handlers.Count.Should().Be(5);
 
-            await using var dbContext = await CreateCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
-            await using var anotherDbContext = await CreateCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
+            await using var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
+            await using var anotherDbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
             dbContext.Should().NotBeNull();
             anotherDbContext.Should().NotBeNull();
             anotherDbContext.Should().NotBe(dbContext);
@@ -34,7 +34,7 @@ namespace Stl.Tests.CommandR.Services
             if (command.Users.Length == 0)
                 return;
 
-            await Services.Commander().CallAsync(
+            await Services.Commander().Call(
                     new RecAddUsersCommand() { Users = command.Users[1..] },
                     cancellationToken)
                 .ConfigureAwait(false);

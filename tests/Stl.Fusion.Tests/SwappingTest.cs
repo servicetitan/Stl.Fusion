@@ -22,7 +22,7 @@ namespace Stl.Fusion.Tests
 
             [ComputeMethod(KeepAliveTime = 0.5)]
             [Swap(1)]
-            public virtual async Task<object> SameValueAsync(object x)
+            public virtual async Task<object> SameValue(object x)
             {
                 await Task.Yield();
                 CallCount++;
@@ -38,22 +38,22 @@ namespace Stl.Fusion.Tests
 
             public SwapService(Options? options = null) : base(options) { }
 
-            protected override ValueTask<Option<string>> LoadAsync(string key, CancellationToken cancellationToken)
+            protected override ValueTask<Option<string>> Load(string key, CancellationToken cancellationToken)
             {
                 LoadCallCount++;
-                return base.LoadAsync(key, cancellationToken);
+                return base.Load(key, cancellationToken);
             }
 
-            protected override ValueTask<bool> RenewAsync(string key, CancellationToken cancellationToken)
+            protected override ValueTask<bool> Renew(string key, CancellationToken cancellationToken)
             {
                 RenewCallCount++;
-                return base.RenewAsync(key, cancellationToken);
+                return base.Renew(key, cancellationToken);
             }
 
-            protected override ValueTask StoreAsync(string key, string value, CancellationToken cancellationToken)
+            protected override ValueTask Store(string key, string value, CancellationToken cancellationToken)
             {
                 StoreCallCount++;
-                return base.StoreAsync(key, value, cancellationToken);
+                return base.Store(key, value, cancellationToken);
             }
         }
 
@@ -86,18 +86,18 @@ namespace Stl.Fusion.Tests
 
             service.CallCount = 0;
             var a = "a";
-            var v = await service.SameValueAsync(a);
+            var v = await service.SameValue(a);
             service.CallCount.Should().Be(1);
             swapService.LoadCallCount.Should().Be(0);
             swapService.StoreCallCount.Should().Be(0);
             swapService.RenewCallCount.Should().Be(0);
             v.Should().BeSameAs(a);
 
-            await DelayAsync(1.4);
+            await Delay(1.4);
             swapService.LoadCallCount.Should().Be(0);
             swapService.RenewCallCount.Should().Be(1);
             swapService.StoreCallCount.Should().Be(1);
-            v = await service.SameValueAsync(a);
+            v = await service.SameValue(a);
             service.CallCount.Should().Be(1);
             swapService.LoadCallCount.Should().Be(1);
             swapService.RenewCallCount.Should().Be(1);
@@ -108,17 +108,17 @@ namespace Stl.Fusion.Tests
             // We accessed the value, so we need to wait for
             // SwapTime + KeepAliveTime to make sure it's
             // available for GC
-            await DelayAsync(1.9);
+            await Delay(1.9);
             swapService.LoadCallCount.Should().Be(1);
             swapService.RenewCallCount.Should().Be(2);
             swapService.StoreCallCount.Should().Be(1);
 
             for (var i = 0; i < 10; i++) {
                 GCCollect();
-                v = await service.SameValueAsync(a);
+                v = await service.SameValue(a);
                 if (service.CallCount != 1)
                     break;
-                await DelayAsync(0.1);
+                await Delay(0.1);
             }
             service.CallCount.Should().Be(2);
             swapService.LoadCallCount.Should().Be(1);

@@ -29,7 +29,7 @@ namespace Stl.Time
         public TimeSpan ToRealDuration(TimeSpan localDuration) => localDuration;
         public TimeSpan ToLocalDuration(TimeSpan realDuration) => realDuration;
 
-        public Task DelayAsync(TimeSpan dueIn, CancellationToken cancellationToken = default)
+        public Task Delay(TimeSpan dueIn, CancellationToken cancellationToken = default)
             => Task.Delay(dueIn, cancellationToken);
     }
 }

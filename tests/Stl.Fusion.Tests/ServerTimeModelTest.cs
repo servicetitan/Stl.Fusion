@@ -18,7 +18,7 @@ namespace Stl.Fusion.Tests
         [Fact]
         public async Task ServerTimeModelTest1()
         {
-            await using var serving = await WebHost.ServeAsync();
+            await using var serving = await WebHost.Serve();
             using var stm = ClientServices.GetRequiredService<ILiveState<ServerTimeModel1>>();
 
             var c = stm.Computed;
@@ -28,7 +28,7 @@ namespace Stl.Fusion.Tests
             Debug.WriteLine("0");
             stm.CancelUpdateDelay();
             Debug.WriteLine("1");
-            await c.UpdateAsync(false);
+            await c.Update(false);
             Debug.WriteLine("2");
 
             c = stm.Computed;
@@ -54,7 +54,7 @@ namespace Stl.Fusion.Tests
         [Fact]
         public async Task ServerTimeModelTest2()
         {
-            await using var serving = await WebHost.ServeAsync();
+            await using var serving = await WebHost.Serve();
             using var stm = ClientServices.GetRequiredService<ILiveState<ServerTimeModel2>>();
 
             var c = stm.Computed;
@@ -64,7 +64,7 @@ namespace Stl.Fusion.Tests
             Debug.WriteLine("0");
             stm.CancelUpdateDelay();
             Debug.WriteLine("1");
-            await c.UpdateAsync(false);
+            await c.Update(false);
             Debug.WriteLine("2");
 
             c = stm.Computed;

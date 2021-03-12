@@ -40,9 +40,9 @@ namespace Stl.Tests.Time
             timerSet.AddOrUpdateToLater(t, clock.Now + TimeSpan.FromMilliseconds(200))
                 .Should().BeTrue();
             t.FiredAt.Should().Be(default);
-            await clock.DelayAsync(150);
+            await clock.Delay(150);
             t.FiredAt.Should().Be(default);
-            await clock.DelayAsync(100);
+            await clock.Delay(100);
             t.FiredAt.Should().NotBe(default);
 
             // AddOrUpdateToEarlier
@@ -53,7 +53,7 @@ namespace Stl.Tests.Time
             timerSet.AddOrUpdateToEarlier(t, clock.Now + TimeSpan.FromMilliseconds(100))
                 .Should().BeTrue();
             t.FiredAt.Should().Be(default);
-            await clock.DelayAsync(150);
+            await clock.Delay(150);
             t.FiredAt.Should().NotBe(default);
 
             // Remove
@@ -62,7 +62,7 @@ namespace Stl.Tests.Time
             timerSet.AddOrUpdate(t, clock.Now + TimeSpan.FromMilliseconds(100));
             timerSet.Remove(t).Should().BeTrue();
             t.FiredAt.Should().Be(default);
-            await clock.DelayAsync(150);
+            await clock.Delay(150);
             t.FiredAt.Should().Be(default);
         }
 
@@ -116,9 +116,9 @@ namespace Stl.Tests.Time
             foreach (var timer in timers)
                 timerSet.AddOrUpdate(timer, timer.DueAt);
 
-            await timerSet.Clock.DelayAsync(TimeSpan.FromMilliseconds(maxDuration));
+            await timerSet.Clock.Delay(TimeSpan.FromMilliseconds(maxDuration));
             while (timerSet.Count != 0)
-                await timerSet.Clock.DelayAsync(100);
+                await timerSet.Clock.Delay(100);
 
             foreach (var timer in timers) {
                 var delta = timer.FiredAt - timer.DueAt;

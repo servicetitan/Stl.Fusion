@@ -83,7 +83,7 @@ namespace Stl.Fusion.Bridge
         protected virtual ReplicatorChannelProcessor CreateChannelProcessor(Symbol publisherId)
         {
             var channelProcessor = new ReplicatorChannelProcessor(this, publisherId);
-            channelProcessor.RunAsync().ContinueWith(_ => {
+            channelProcessor.Run().ContinueWith(_ => {
                 // Since ChannelProcessor is AsyncProcessorBase desc.,
                 // its disposal will shut down RunAsync as well,
                 // so "subscribing" to RunAsync completion is the
@@ -111,7 +111,7 @@ namespace Stl.Fusion.Bridge
             GetChannelProcessor(replica.PublicationRef.PublisherId).Unsubscribe(replica);
         }
 
-        protected override async ValueTask DisposeInternalAsync(bool disposing)
+        protected override async ValueTask DisposeInternal(bool disposing)
         {
             var channelProcessors = ChannelProcessors;
             while (!channelProcessors.IsEmpty) {
@@ -124,7 +124,7 @@ namespace Stl.Fusion.Bridge
                     });
                 await Task.WhenAll(tasks).ConfigureAwait(false);
             }
-            await base.DisposeInternalAsync(disposing).ConfigureAwait(false);
+            await base.DisposeInternal(disposing).ConfigureAwait(false);
         }
     }
 }

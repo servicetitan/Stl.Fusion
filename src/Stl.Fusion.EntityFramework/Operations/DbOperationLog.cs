@@ -13,11 +13,11 @@ namespace Stl.Fusion.EntityFramework.Operations
         where TDbContext : DbContext
     {
         DbOperation New(string? id = null, string? agentId = null, object? command = null);
-        Task<DbOperation> AddAsync(TDbContext dbContext, IOperation operation, CancellationToken cancellationToken);
-        Task<DbOperation?> TryGetAsync(TDbContext dbContext, string id, CancellationToken cancellationToken);
+        Task<DbOperation> Add(TDbContext dbContext, IOperation operation, CancellationToken cancellationToken);
+        Task<DbOperation?> TryGet(TDbContext dbContext, string id, CancellationToken cancellationToken);
 
-        Task<List<DbOperation>> ListNewlyCommittedAsync(DateTime minCommitTime, int maxCount, CancellationToken cancellationToken);
-        Task<int> TrimAsync(DateTime minCommitTime, int maxCount, CancellationToken cancellationToken);
+        Task<List<DbOperation>> ListNewlyCommitted(DateTime minCommitTime, int maxCount, CancellationToken cancellationToken);
+        Task<int> Trim(DateTime minCommitTime, int maxCount, CancellationToken cancellationToken);
     }
 
     public class DbOperationLog<TDbContext, TDbOperation> : DbServiceBase<TDbContext>, IDbOperationLog<TDbContext>
@@ -40,7 +40,7 @@ namespace Stl.Fusion.EntityFramework.Operations
                 Command = command,
             };
 
-        public virtual async Task<DbOperation> AddAsync(TDbContext dbContext,
+        public virtual async Task<DbOperation> Add(TDbContext dbContext,
             IOperation operation, CancellationToken cancellationToken)
         {
             // dbContext shouldn't use tracking!
@@ -50,7 +50,7 @@ namespace Stl.Fusion.EntityFramework.Operations
             return dbOperation;
         }
 
-        public virtual async Task<DbOperation?> TryGetAsync(TDbContext dbContext,
+        public virtual async Task<DbOperation?> TryGet(TDbContext dbContext,
             string id, CancellationToken cancellationToken)
         {
             // dbContext shouldn't use tracking!
@@ -60,7 +60,7 @@ namespace Stl.Fusion.EntityFramework.Operations
             return dbOperation;
         }
 
-        public virtual async Task<List<DbOperation>> ListNewlyCommittedAsync(
+        public virtual async Task<List<DbOperation>> ListNewlyCommitted(
             DateTime minCommitTime, int maxCount, CancellationToken cancellationToken)
         {
             await using var dbContext = CreateDbContext();
@@ -72,7 +72,7 @@ namespace Stl.Fusion.EntityFramework.Operations
             return operations.Cast<DbOperation>().ToList()!;
         }
 
-        public virtual async Task<int> TrimAsync(DateTime minCommitTime, int maxCount, CancellationToken cancellationToken)
+        public virtual async Task<int> Trim(DateTime minCommitTime, int maxCount, CancellationToken cancellationToken)
         {
             await using var dbContext = CreateDbContext(true);
             dbContext.DisableChangeTracking();

@@ -50,7 +50,7 @@ namespace Stl.Fusion
 
         // TryCaptureAsync
 
-        public static async Task<IComputed?> TryCaptureAsync(Func<CancellationToken, Task> producer, CancellationToken cancellationToken = default)
+        public static async Task<IComputed?> TryCapture(Func<CancellationToken, Task> producer, CancellationToken cancellationToken = default)
         {
             using var ccs = ComputeContext.New(CallOptions.Capture).Activate();
             IComputed? result;
@@ -70,7 +70,7 @@ namespace Stl.Fusion
             return result;
         }
 
-        public static async Task<IComputed<T>?> TryCaptureAsync<T>(Func<CancellationToken, Task<T>> producer, CancellationToken cancellationToken = default)
+        public static async Task<IComputed<T>?> TryCapture<T>(Func<CancellationToken, Task<T>> producer, CancellationToken cancellationToken = default)
         {
             using var ccs = ComputeContext.New(CallOptions.Capture).Activate();
             IComputed<T>? result;
@@ -90,7 +90,7 @@ namespace Stl.Fusion
             return result;
         }
 
-        public static async Task<IComputed?> TryCaptureAsync(Func<CancellationToken, ValueTask> producer, CancellationToken cancellationToken = default)
+        public static async Task<IComputed?> TryCapture(Func<CancellationToken, ValueTask> producer, CancellationToken cancellationToken = default)
         {
             using var ccs = ComputeContext.New(CallOptions.Capture).Activate();
             IComputed? result;
@@ -110,7 +110,7 @@ namespace Stl.Fusion
             return result;
         }
 
-        public static async Task<IComputed<T>?> TryCaptureAsync<T>(Func<CancellationToken, ValueTask<T>> producer, CancellationToken cancellationToken = default)
+        public static async Task<IComputed<T>?> TryCapture<T>(Func<CancellationToken, ValueTask<T>> producer, CancellationToken cancellationToken = default)
         {
             using var ccs = ComputeContext.New(CallOptions.Capture).Activate();
             IComputed<T>? result;
@@ -132,7 +132,7 @@ namespace Stl.Fusion
 
         // CaptureAsync
 
-        public static async Task<IComputed> CaptureAsync(Func<CancellationToken, Task> producer, CancellationToken cancellationToken = default)
+        public static async Task<IComputed> Capture(Func<CancellationToken, Task> producer, CancellationToken cancellationToken = default)
         {
             using var ccs = ComputeContext.New(CallOptions.Capture).Activate();
             IComputed? result;
@@ -154,7 +154,7 @@ namespace Stl.Fusion
             return result;
         }
 
-        public static async Task<IComputed<T>> CaptureAsync<T>(Func<CancellationToken, Task<T>> producer, CancellationToken cancellationToken = default)
+        public static async Task<IComputed<T>> Capture<T>(Func<CancellationToken, Task<T>> producer, CancellationToken cancellationToken = default)
         {
             using var ccs = ComputeContext.New(CallOptions.Capture).Activate();
             IComputed<T>? result;
@@ -176,7 +176,7 @@ namespace Stl.Fusion
             return result;
         }
 
-        public static async Task<IComputed> CaptureAsync(Func<CancellationToken, ValueTask> producer, CancellationToken cancellationToken = default)
+        public static async Task<IComputed> Capture(Func<CancellationToken, ValueTask> producer, CancellationToken cancellationToken = default)
         {
             using var ccs = ComputeContext.New(CallOptions.Capture).Activate();
             IComputed? result;
@@ -198,7 +198,7 @@ namespace Stl.Fusion
             return result;
         }
 
-        public static async Task<IComputed<T>> CaptureAsync<T>(Func<CancellationToken, ValueTask<T>> producer, CancellationToken cancellationToken = default)
+        public static async Task<IComputed<T>> Capture<T>(Func<CancellationToken, ValueTask<T>> producer, CancellationToken cancellationToken = default)
         {
             using var ccs = ComputeContext.New(CallOptions.Capture).Activate();
             IComputed<T>? result;

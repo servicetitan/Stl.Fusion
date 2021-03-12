@@ -25,10 +25,10 @@ namespace Stl.Fusion.Bridge
 
         IPublication Publish(IComputed computed);
         IPublication? TryGet(Symbol publicationId);
-        ValueTask SubscribeAsync(
+        ValueTask Subscribe(
             Channel<BridgeMessage> channel, IPublication publication,
             bool isUpdateRequested, CancellationToken cancellationToken = default);
-        ValueTask UnsubscribeAsync(
+        ValueTask Unsubscribe(
             Channel<BridgeMessage> channel, IPublication publication,
             CancellationToken cancellationToken = default);
     }
@@ -126,7 +126,7 @@ namespace Stl.Fusion.Bridge
                          var id = this1.PublicationIdGenerator.Next();
                          var p1 = this1.PublicationFactory.Create(this1.PublicationGeneric, this1, computed1, id, Clock);
                          this1.PublicationsById[id] = p1;
-                         p1.RunAsync();
+                         p1.Run();
                          return p1;
                      }, (this, computed));
                 if (p.Touch())
@@ -138,7 +138,7 @@ namespace Stl.Fusion.Bridge
         public virtual IPublication? TryGet(Symbol publicationId)
             => PublicationsById.TryGetValue(publicationId, out var p) ? p : null;
 
-        public virtual ValueTask SubscribeAsync(
+        public virtual ValueTask Subscribe(
             Channel<BridgeMessage> channel, IPublication publication,
             bool isUpdateRequested, CancellationToken cancellationToken = default)
         {
@@ -152,16 +152,16 @@ namespace Stl.Fusion.Bridge
                 PublicationId = publication.Id,
                 IsUpdateRequested = isUpdateRequested,
             };
-            return channelProcessor.OnReplicaMessageAsync(message, cancellationToken);
+            return channelProcessor.OnReplicaMessage(message, cancellationToken);
         }
 
-        public virtual ValueTask UnsubscribeAsync(
+        public virtual ValueTask Unsubscribe(
             Channel<BridgeMessage> channel, IPublication publication,
             CancellationToken cancellationToken = default)
         {
             if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
                 return ValueTaskEx.CompletedTask;
-            return channelProcessor.UnsubscribeAsync(publication, cancellationToken);
+            return channelProcessor.Unsubscribe(publication, cancellationToken);
         }
 
         void IPublisherImpl.OnPublicationDisposed(IPublication publication)
@@ -191,7 +191,7 @@ namespace Stl.Fusion.Bridge
             var channelProcessor = CreateChannelProcessor(channel);
             if (!ChannelProcessors.TryAdd(channel, channelProcessor))
                 return;
-            channelProcessor.RunAsync().ContinueWith(_ => {
+            channelProcessor.Run().ContinueWith(_ => {
                 // Since ChannelProcessor is AsyncProcessorBase desc.,
                 // its disposal will shut down RunAsync as well,
                 // so "subscribing" to RunAsync completion is the
@@ -208,7 +208,7 @@ namespace Stl.Fusion.Bridge
             taskCollector.Add(channelProcessor.DisposeAsync());
         }
 
-        protected override async ValueTask DisposeInternalAsync(bool disposing)
+        protected override async ValueTask DisposeInternal(bool disposing)
         {
             ChannelHub.Attached -= OnChannelAttachedHandler; // Must go first
             ChannelHub.Detached -= OnChannelDetachedHandler;
@@ -236,7 +236,7 @@ namespace Stl.Fusion.Bridge
             }
             if (OwnsChannelHub)
                 await ChannelHub.DisposeAsync().ConfigureAwait(false);
-            await base.DisposeInternalAsync(disposing).ConfigureAwait(false);
+            await base.DisposeInternal(disposing).ConfigureAwait(false);
         }
     }
 }

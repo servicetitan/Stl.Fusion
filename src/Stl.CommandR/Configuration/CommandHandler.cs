@@ -20,7 +20,7 @@ namespace Stl.CommandR.Configuration
         public abstract object GetHandlerService(
             ICommand command, CommandContext context);
 
-        public abstract Task InvokeAsync(
+        public abstract Task Invoke(
             ICommand command, CommandContext context,
             CancellationToken cancellationToken);
     }

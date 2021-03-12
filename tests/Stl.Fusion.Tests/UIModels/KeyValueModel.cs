@@ -22,7 +22,7 @@ namespace Stl.Fusion.Tests.UIModels
             {
                 UpdateDelayerFactory = _ => {
                     var options = new UpdateDelayer.Options() {
-                        Delay = TimeSpan.FromSeconds(0.5),
+                        DelayDuration = TimeSpan.FromSeconds(0.5),
                     };
                     return new UpdateDelayer(options);
                 };
@@ -41,11 +41,11 @@ namespace Stl.Fusion.Tests.UIModels
             Locals.AddEventHandler(StateEventKind.Updated, (s, e) => this.CancelUpdateDelay());
         }
 
-        protected override async Task<KeyValueModel<string>> ComputeValueAsync(CancellationToken cancellationToken)
+        protected override async Task<KeyValueModel<string>> Compute(CancellationToken cancellationToken)
         {
             var updateCount = UnsafeValue?.UpdateCount ?? 0;
             var key = Locals.UnsafeValue ?? "";
-            var value = await KeyValueServiceClient.GetAsync(key, cancellationToken).ConfigureAwait(false);
+            var value = await KeyValueServiceClient.Get(key, cancellationToken).ConfigureAwait(false);
             return new KeyValueModel<string>() {
                 Key = key,
                 Value = value,

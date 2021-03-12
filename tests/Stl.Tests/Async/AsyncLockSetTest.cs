@@ -30,8 +30,8 @@ namespace Stl.Tests.Async
             public ReentryMode ReentryMode => LockSet.ReentryMode;
             public bool IsLocked => LockSet.IsLocked(Key);
             public bool? IsLockedLocally => LockSet.IsLockedLocally(Key);
-            public ValueTask<IDisposable> LockAsync(CancellationToken cancellationToken = default)
-                => LockSet.LockAsync(Key, cancellationToken);
+            public ValueTask<IDisposable> Lock(CancellationToken cancellationToken = default)
+                => LockSet.Lock(Key, cancellationToken);
 
             public AsyncSetLock(IAsyncLockSet<TKey> lockSet, TKey key)
             {

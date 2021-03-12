@@ -33,7 +33,7 @@ namespace Stl.Fusion.Internal
             return true;
         }
 
-        internal static async ValueTask<ResultBox<T>?> TryUseExistingAsync<T>(
+        internal static async ValueTask<ResultBox<T>?> TryUseExisting<T>(
             this IAsyncComputed<T>? existing, ComputeContext context, IComputed? usedBy,
             CancellationToken cancellationToken)
         {

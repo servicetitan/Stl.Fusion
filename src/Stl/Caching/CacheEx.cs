@@ -14,7 +14,7 @@ namespace Stl.Caching
             where TKey : notnull
         {
             await foreach (var key in keys.ConfigureAwait(false))
-                yield return await cache.GetAsync(key, cancellationToken).ConfigureAwait(false);
+                yield return await cache.Get(key, cancellationToken).ConfigureAwait(false);
         }
 
         public static async IAsyncEnumerable<Option<TValue>> TryGetManyAsync<TKey, TValue>(
@@ -24,7 +24,7 @@ namespace Stl.Caching
             where TKey : notnull
         {
             await foreach (var key in keys.ConfigureAwait(false))
-                yield return await cache.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
+                yield return await cache.TryGet(key, cancellationToken).ConfigureAwait(false);
         }
     }
 }

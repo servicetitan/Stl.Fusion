@@ -25,17 +25,17 @@ namespace Samples.HelloCart.V3
             _cartResolver = cartResolver;
         }
 
-        public virtual async Task EditAsync(EditCommand<Cart> command, CancellationToken cancellationToken = default)
+        public virtual async Task Edit(EditCommand<Cart> command, CancellationToken cancellationToken = default)
         {
             var (cartId, cart) = command;
             if (string.IsNullOrEmpty(cartId))
                 throw new ArgumentOutOfRangeException(nameof(command));
             if (Computed.IsInvalidating()) {
-                FindAsync(cartId, default).Ignore();
+                TryGet(cartId, default).Ignore();
                 return;
             }
 
-            await using var dbContext = await CreateCommandDbContextAsync(cancellationToken);
+            await using var dbContext = await CreateCommandDbContext(cancellationToken);
             var dbCart = await dbContext.Carts.FindAsync(ComposeKey(cartId), cancellationToken);
             if (cart == null) {
                 if (dbCart != null)
@@ -73,9 +73,9 @@ namespace Samples.HelloCart.V3
             await dbContext.SaveChangesAsync(cancellationToken);
         }
 
-        public virtual async Task<Cart?> FindAsync(string id, CancellationToken cancellationToken = default)
+        public virtual async Task<Cart?> TryGet(string id, CancellationToken cancellationToken = default)
         {
-            var dbCart = await _cartResolver.TryGetAsync(id, cancellationToken);
+            var dbCart = await _cartResolver.TryGet(id, cancellationToken);
             if (dbCart == null)
                 return null;
             return new Cart() {
@@ -84,13 +84,13 @@ namespace Samples.HelloCart.V3
             };
         }
 
-        public virtual async Task<decimal> GetTotalAsync(string id, CancellationToken cancellationToken = default)
+        public virtual async Task<decimal> GetTotal(string id, CancellationToken cancellationToken = default)
         {
-            var cart = await FindAsync(id, cancellationToken);
+            var cart = await TryGet(id, cancellationToken);
             if (cart == null)
                 return 0;
             var itemTotals = await Task.WhenAll(cart.Items.Select(async item => {
-                var product = await _products.FindAsync(item.Key, cancellationToken);
+                var product = await _products.TryGet(item.Key, cancellationToken);
                 return item.Value * (product?.Price ?? 0M);
             }));
             return itemTotals.Sum();

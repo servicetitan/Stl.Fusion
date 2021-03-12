@@ -51,7 +51,7 @@ namespace Stl.Fusion.Bridge.Internal
             : base(publication, outgoingChannel, expirationTime, clock, loggerFactory)
             => Publication = publication;
 
-        protected override async Task RunInternalAsync(CancellationToken cancellationToken)
+        protected override async Task RunInternal(CancellationToken cancellationToken)
         {
             var publicationUseScope = Publication.Use();
             var state = Publication.State;
@@ -85,7 +85,7 @@ namespace Stl.Fusion.Bridge.Internal
                         var cts = new CancellationTokenSource();
                         currentCts = cts;
                         try {
-                            await Publication.UpdateAsync(cts.Token).ConfigureAwait(false);
+                            await Publication.Update(cts.Token).ConfigureAwait(false);
                             state = Publication.State;
                         }
                         finally {
@@ -93,7 +93,7 @@ namespace Stl.Fusion.Bridge.Internal
                             cts.Dispose();
                         }
                     }
-                    await TrySendUpdateAsync(state, isSoftUpdateRequested | isHardUpdateRequested, cancellationToken)
+                    await TrySendUpdate(state, isSoftUpdateRequested | isHardUpdateRequested, cancellationToken)
                         .ConfigureAwait(false);
 
                     incomingMessageTask = incomingChannelReader.ReadAsync(cancellationToken).AsTask();
@@ -104,7 +104,7 @@ namespace Stl.Fusion.Bridge.Internal
                         continue;
 
                     // Awaiting for state change
-                    var whenInvalidatedTask = state.WhenInvalidatedAsync();
+                    var whenInvalidatedTask = state.WhenInvalidated();
                     var completedTask = await Task
                         .WhenAny(whenInvalidatedTask, incomingMessageTask)
                         .ConfigureAwait(false);
@@ -113,7 +113,7 @@ namespace Stl.Fusion.Bridge.Internal
                         continue;
 
                     // And finally, sending the invalidation message
-                    await TrySendUpdateAsync(state, false, cancellationToken).ConfigureAwait(false);
+                    await TrySendUpdate(state, false, cancellationToken).ConfigureAwait(false);
                 }
             }
             finally {
@@ -125,14 +125,14 @@ namespace Stl.Fusion.Bridge.Internal
             }
         }
 
-        protected virtual async ValueTask TrySendUpdateAsync(
+        protected virtual async ValueTask TrySendUpdate(
             IPublicationState<T>? state, bool isUpdateRequested, CancellationToken cancellationToken)
         {
             if (state == null || state.IsDisposed) {
                 var absentsMessage = new PublicationAbsentsMessage() {
                     IsDisposed = true,
                 };
-                await SendAsync(absentsMessage, cancellationToken).ConfigureAwait(false);
+                await Send(absentsMessage, cancellationToken).ConfigureAwait(false);
                 LastSentVersion = default;
                 return;
             }
@@ -150,11 +150,11 @@ namespace Stl.Fusion.Bridge.Internal
             if (isConsistent || LastSentVersion.Version != computed.Version)
                 message.Output = computed.Output;
 
-            await SendAsync(message, cancellationToken).ConfigureAwait(false);
+            await Send(message, cancellationToken).ConfigureAwait(false);
             LastSentVersion = version;
         }
 
-        protected virtual async ValueTask SendAsync(PublicationMessage message, CancellationToken cancellationToken)
+        protected virtual async ValueTask Send(PublicationMessage message, CancellationToken cancellationToken)
         {
             message.MessageIndex = ++MessageIndex;
             message.PublisherId = Publisher.Id;

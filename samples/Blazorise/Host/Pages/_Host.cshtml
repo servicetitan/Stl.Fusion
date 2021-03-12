@@ -8,8 +8,8 @@
 @inject ServerAuthHelper ServerAuthHelper
 @inject ServerSettings ServerSettings
 @{
-    Task.Run(() => ServerAuthHelper.UpdateAuthStateAsync(HttpContext)).Ignore();
-    var authSchemas = await ServerAuthHelper.GetSchemasAsync(HttpContext);
+    Task.Run(() => ServerAuthHelper.UpdateAuthState(HttpContext)).Ignore();
+    var authSchemas = await ServerAuthHelper.GetSchemas(HttpContext);
     var sessionId = ServerAuthHelper.Session.Id.Value;
     var isServerSideBlazor = BlazorModeController.IsServerSideBlazor(HttpContext);
     var isCloseWindowRequest = ServerAuthHelper.IsCloseWindowRequest(HttpContext, out var closeWindowFlowName);

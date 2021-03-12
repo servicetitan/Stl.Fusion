@@ -15,13 +15,13 @@ namespace Samples.HelloCart.V1
 
         public InMemoryCartService(IProductService products) => _products = products;
 
-        public virtual Task EditAsync(EditCommand<Cart> command, CancellationToken cancellationToken = default)
+        public virtual Task Edit(EditCommand<Cart> command, CancellationToken cancellationToken = default)
         {
             var (cartId, cart) = command;
             if (string.IsNullOrEmpty(cartId))
                 throw new ArgumentOutOfRangeException(nameof(command));
             if (Computed.IsInvalidating()) {
-                FindAsync(cartId, default).Ignore();
+                TryGet(cartId, default).Ignore();
                 return Task.CompletedTask;
             }
 
@@ -32,17 +32,17 @@ namespace Samples.HelloCart.V1
             return Task.CompletedTask;
         }
 
-        public virtual Task<Cart?> FindAsync(string id, CancellationToken cancellationToken = default)
+        public virtual Task<Cart?> TryGet(string id, CancellationToken cancellationToken = default)
             => Task.FromResult(_carts.GetValueOrDefault(id));
 
-        public virtual async Task<decimal> GetTotalAsync(string id, CancellationToken cancellationToken = default)
+        public virtual async Task<decimal> GetTotal(string id, CancellationToken cancellationToken = default)
         {
-            var cart = await FindAsync(id, cancellationToken);
+            var cart = await TryGet(id, cancellationToken);
             if (cart == null)
                 return 0;
             var total = 0M;
             foreach (var (productId, quantity) in cart.Items) {
-                var product = await _products.FindAsync(productId, cancellationToken);
+                var product = await _products.TryGet(productId, cancellationToken);
                 total += (product?.Price ?? 0M) * quantity;
             }
             return total;

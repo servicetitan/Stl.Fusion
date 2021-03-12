@@ -32,14 +32,14 @@ namespace Stl.Fusion.Operations.Internal
         }
 
         [CommandHandler(Priority = 100, IsFilter = true)]
-        public async Task OnCommandAsync(ICompletion command, CommandContext context, CancellationToken cancellationToken)
+        public async Task OnCommand(ICompletion command, CommandContext context, CancellationToken cancellationToken)
         {
             var originalCommand = command.UntypedCommand;
             var requiresInvalidation =
                 InvalidationInfoProvider.RequiresInvalidation(originalCommand)
                 && !Computed.IsInvalidating();
             if (!requiresInvalidation) {
-                await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
+                await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);
                 return;
             }
 
@@ -62,20 +62,20 @@ namespace Stl.Fusion.Operations.Internal
                     if (logEnabled)
                         Log.Log(LogLevel, "Invalidating via original command handler for '{CommandType}'",
                             originalCommand.GetType());
-                    await context.Commander.CallAsync(originalCommand, cancellationToken).ConfigureAwait(false);
+                    await context.Commander.Call(originalCommand, cancellationToken).ConfigureAwait(false);
                 }
                 else {
                     if (logEnabled)
                         Log.Log(LogLevel, "Invalidating via dedicated command handler for '{CommandType}'",
                             command.GetType());
-                    await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
+                    await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);
                 }
 
                 var operationItems = operation.Items;
                 try {
                     var nestedCommands = operationItems.GetOrDefault(ImmutableList<NestedCommandEntry>.Empty);
                     if (!nestedCommands.IsEmpty)
-                        await InvokeNestedCommandsAsync(context, operation, nestedCommands, cancellationToken);
+                        await InvokeNestedCommands(context, operation, nestedCommands, cancellationToken);
                 }
                 finally {
                     operation.Items = operationItems;
@@ -87,7 +87,7 @@ namespace Stl.Fusion.Operations.Internal
             }
         }
 
-        protected virtual async ValueTask InvokeNestedCommandsAsync(
+        protected virtual async ValueTask InvokeNestedCommands(
             CommandContext context,
             IOperation operation,
             ImmutableList<NestedCommandEntry> nestedCommands,
@@ -99,11 +99,11 @@ namespace Stl.Fusion.Operations.Internal
                     serverSideCommand.MarkServerSide(); // Server-side commands should be marked as such
                 if (InvalidationInfoProvider.RequiresInvalidation(command)) {
                     operation.Items = items;
-                    await context.Commander.CallAsync(command, cancellationToken).ConfigureAwait(false);
+                    await context.Commander.Call(command, cancellationToken).ConfigureAwait(false);
                 }
                 var subcommands = items.GetOrDefault(ImmutableList<NestedCommandEntry>.Empty);
                 if (!subcommands.IsEmpty)
-                    await InvokeNestedCommandsAsync(context, operation, subcommands, cancellationToken);
+                    await InvokeNestedCommands(context, operation, subcommands, cancellationToken);
             }
         }
     }

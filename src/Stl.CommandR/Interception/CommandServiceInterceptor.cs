@@ -39,8 +39,8 @@ namespace Stl.CommandR.Interception
                     invocation.Proceed();
                 else {
                     invocation.ReturnValue = methodDef.IsAsyncVoidMethod
-                        ? Commander.CallAsync(command, false, cancellationToken1)
-                        : Commander.CallAsync((ICommand<T>) command, false, cancellationToken1);
+                        ? Commander.Call(command, false, cancellationToken1)
+                        : Commander.Call((ICommand<T>) command, false, cancellationToken1);
                 }
             };
 

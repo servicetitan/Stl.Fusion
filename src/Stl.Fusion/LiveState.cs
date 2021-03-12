@@ -71,36 +71,41 @@ namespace Stl.Fusion
         {
             UpdateDelayer = UpdateDelayerFactory.Invoke(this);
             base.Initialize(options);
-            Task.Run(RunAsync, StopToken);
+            Task.Run(Run, StopToken);
         }
+
+        // ~LiveState() => Dispose();
 
         public virtual void Dispose()
         {
             if (StopToken.IsCancellationRequested)
                 return;
+            GC.SuppressFinalize(this);
             try {
                 _stopCts.Cancel();
             }
             catch {
+                // Intended
+            }
+            finally {
                 _stopCts.Dispose();
             }
-            GC.SuppressFinalize(this);
         }
 
-        protected virtual async Task RunAsync()
+        protected virtual async Task Run()
         {
             var cancellationToken = StopToken;
             while (!cancellationToken.IsCancellationRequested) {
                 try {
                     var snapshot = Snapshot;
                     var computed = snapshot.Computed;
-                    var updatedTask = WhenUpdatedAsync(default);
-                    await computed.WhenInvalidatedAsync(cancellationToken).ConfigureAwait(false);
+                    var updatedTask = WhenUpdated(default);
+                    await computed.WhenInvalidated(cancellationToken).ConfigureAwait(false);
                     if (snapshot.UpdateCount != 0 || DelayFirstUpdate) {
-                        var delayTask = UpdateDelayer.DelayAsync(this, cancellationToken);
+                        var delayTask = UpdateDelayer.Delay(this, cancellationToken);
                         await Task.WhenAny(delayTask, updatedTask).ConfigureAwait(false);
                     }
-                    await computed.UpdateAsync(false, cancellationToken).ConfigureAwait(false);
+                    await computed.Update(false, cancellationToken).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException) {
                     // Will break from "while" loop later if it's due to cancellationToken cancellation

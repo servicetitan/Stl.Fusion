@@ -33,20 +33,20 @@ namespace Stl.Fusion.Swapping
             IsEnabled = LogLevel != LogLevel.None && Log.IsEnabled(LogLevel);
         }
 
-        public async ValueTask<IResult?> LoadAsync((ComputeMethodInput Input, LTag Version) key, CancellationToken cancellationToken = default)
+        public async ValueTask<IResult?> Load((ComputeMethodInput Input, LTag Version) key, CancellationToken cancellationToken = default)
         {
-            var value = await SwapService.LoadAsync(key, cancellationToken).ConfigureAwait(false);
+            var value = await SwapService.Load(key, cancellationToken).ConfigureAwait(false);
             if (IsEnabled)
-                Log.Log(LogLevel, $"[?] {key} -> {value}");
+                Log.Log(LogLevel, "[?] {Key} -> {Value}", key, value);
             return value;
         }
 
-        public ValueTask StoreAsync((ComputeMethodInput Input, LTag Version) key, IResult value,
+        public ValueTask Store((ComputeMethodInput Input, LTag Version) key, IResult value,
             CancellationToken cancellationToken = default)
         {
             if (IsEnabled)
-                Log.Log(LogLevel, $"[=] {key} <- {value}");
-            return SwapService.StoreAsync(key, value, cancellationToken);
+                Log.Log(LogLevel, "[=] {Key} <- {Value}", key, value);
+            return SwapService.Store(key, value, cancellationToken);
         }
     }
 }

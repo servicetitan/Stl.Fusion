@@ -17,7 +17,7 @@ namespace Stl.Tests.Async
 
             public AsyncDisposableWithDelay(TimeSpan disposeDelay) => DisposeDelay = disposeDelay;
 
-            protected override async ValueTask DisposeInternalAsync(bool disposing)
+            protected override async ValueTask DisposeInternal(bool disposing)
             {
                 await Task.Delay(DisposeDelay);
             }

@@ -61,7 +61,7 @@ namespace Stl.Fusion.Server.Authentication
             var session = string.IsNullOrEmpty(sessionId) ? null : new Session(sessionId);
             if (session != null) {
                 if (AuthService != null) {
-                    var isSignOutForced = await AuthService.IsSignOutForcedAsync(session, cancellationToken);
+                    var isSignOutForced = await AuthService.IsSignOutForced(session, cancellationToken);
                     if (isSignOutForced) {
                         if (await ForcedSignOutHandler(this, httpContext)) {
                             var responseCookies = httpContext.Response.Cookies;

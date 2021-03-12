@@ -49,7 +49,7 @@ namespace Stl.Fusion.Server
             ChannelSerializerPairFactory = options.ChannelSerializerPairFactory;
         }
 
-        public async Task HandleAsync(HttpContext context)
+        public async Task HandleRequest(HttpContext context)
         {
             if (!context.WebSockets.IsWebSocketRequest) {
                 context.Response.StatusCode = 400;
@@ -70,7 +70,7 @@ namespace Stl.Fusion.Server
                 .WithId(clientId);
             Publisher.ChannelHub.Attach(channel);
             try {
-                await wsChannel.WhenCompletedAsync().ConfigureAwait(false);
+                await wsChannel.WhenCompleted().ConfigureAwait(false);
             }
             catch (OperationCanceledException) {
                 throw;

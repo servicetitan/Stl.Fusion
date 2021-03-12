@@ -24,18 +24,18 @@ namespace Stl.CommandR.Internal
             HandlerResolver = services.GetRequiredService<ICommandHandlerResolver>();
         }
 
-        public Task RunAsync(
+        public Task Run(
             CommandContext context, bool isolate,
             CancellationToken cancellationToken = default)
         {
             if (!isolate)
-                return RunInternalAsync(context, cancellationToken);
+                return RunInternal(context, cancellationToken);
 
             using var _ = ExecutionContextEx.SuppressFlow();
-            return Task.Run(() => RunInternalAsync(context, cancellationToken), default);
+            return Task.Run(() => RunInternal(context, cancellationToken), default);
         }
 
-        protected virtual async Task RunInternalAsync(
+        protected virtual async Task RunInternal(
             CommandContext context, CancellationToken cancellationToken = default)
         {
             using var _1 = context;
@@ -45,8 +45,8 @@ namespace Stl.CommandR.Internal
                 var handlers = HandlerResolver.GetCommandHandlers(command.GetType());
                 context.ExecutionState = new CommandExecutionState(handlers);
                 if (handlers!.Count == 0)
-                    await OnUnhandledCommandAsync(command, context, cancellationToken).ConfigureAwait(false);
-                await context.InvokeRemainingHandlersAsync(cancellationToken).ConfigureAwait(false);
+                    await OnUnhandledCommand(command, context, cancellationToken).ConfigureAwait(false);
+                await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException) {
                 context.TrySetCancelled(
@@ -57,7 +57,7 @@ namespace Stl.CommandR.Internal
             }
         }
 
-        protected virtual Task OnUnhandledCommandAsync(
+        protected virtual Task OnUnhandledCommand(
             ICommand command, CommandContext context,
             CancellationToken cancellationToken)
             => throw Errors.NoHandlerFound(command.GetType());

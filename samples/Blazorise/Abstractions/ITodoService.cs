@@ -26,13 +26,13 @@ namespace Templates.Blazor2.Abstractions
     public interface ITodoService
     {
         [CommandHandler]
-        Task<Todo> AddOrUpdateAsync(AddOrUpdateTodoCommand command, CancellationToken cancellationToken = default);
+        Task<Todo> AddOrUpdate(AddOrUpdateTodoCommand command, CancellationToken cancellationToken = default);
         [CommandHandler]
-        Task RemoveAsync(RemoveTodoCommand command, CancellationToken cancellationToken = default);
+        Task Remove(RemoveTodoCommand command, CancellationToken cancellationToken = default);
 
         [ComputeMethod]
-        Task<Todo?> FindAsync(Session session, string id, CancellationToken cancellationToken = default);
+        Task<Todo?> TryGet(Session session, string id, CancellationToken cancellationToken = default);
         [ComputeMethod]
-        Task<Todo[]> ListAsync(Session session, PageRef<string> pageRef, CancellationToken cancellationToken = default);
+        Task<Todo[]> List(Session session, PageRef<string> pageRef, CancellationToken cancellationToken = default);
     }
 }

@@ -24,27 +24,27 @@ namespace Stl.Fusion.Authentication.Internal
 
         // Command handlers
 
-        public virtual async Task SignInAsync(SignInCommand command, CancellationToken cancellationToken = default)
+        public virtual async Task SignIn(SignInCommand command, CancellationToken cancellationToken = default)
         {
             var (session, user, authenticatedIdentity) = command;
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
-                GetSessionInfoAsync(session, default).Ignore();
+                GetSessionInfo(session, default).Ignore();
                 var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
-                TryGetUserAsync(invSessionInfo.UserId, default).Ignore();
-                GetUserSessionsAsync(invSessionInfo.UserId, default).Ignore();
+                TryGetUser(invSessionInfo.UserId, default).Ignore();
+                GetUserSessions(invSessionInfo.UserId, default).Ignore();
                 return;
             }
 
             if (!user.Identities.ContainsKey(authenticatedIdentity))
                 throw new ArgumentOutOfRangeException(
                     $"{nameof(command)}.{nameof(SignInCommand.AuthenticatedIdentity)}");
-            var sessionInfo = await GetSessionInfoAsync(session, cancellationToken).ConfigureAwait(false);
+            var sessionInfo = await GetSessionInfo(session, cancellationToken).ConfigureAwait(false);
             if (sessionInfo.IsSignOutForced)
                 throw Errors.ForcedSignOut();
 
             var isNewUser = false;
-            var userWithAuthenticatedIdentity = FindByUserIdentity(authenticatedIdentity);
+            var userWithAuthenticatedIdentity = TryGetByUserIdentity(authenticatedIdentity);
             if (string.IsNullOrEmpty(user.Id)) {
                 // No user.Id -> try to find existing user by authenticatedIdentity
                 if (userWithAuthenticatedIdentity == null) {
@@ -76,23 +76,23 @@ namespace Stl.Fusion.Authentication.Internal
             context.Operation().Items.Set(isNewUser);
         }
 
-        public virtual async Task SignOutAsync(SignOutCommand command, CancellationToken cancellationToken = default)
+        public virtual async Task SignOut(SignOutCommand command, CancellationToken cancellationToken = default)
         {
             var (session, force) = command;
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
                 if (force)
-                    IsSignOutForcedAsync(session, default).Ignore();
-                GetSessionInfoAsync(session, default).Ignore();
+                    IsSignOutForced(session, default).Ignore();
+                GetSessionInfo(session, default).Ignore();
                 var invSessionInfo = context.Operation().Items.TryGet<SessionInfo>();
                 if (invSessionInfo != null) {
-                    TryGetUserAsync(invSessionInfo.UserId, default).Ignore();
-                    GetUserSessionsAsync(invSessionInfo.UserId, default).Ignore();
+                    TryGetUser(invSessionInfo.UserId, default).Ignore();
+                    GetUserSessions(invSessionInfo.UserId, default).Ignore();
                 }
                 return;
             }
 
-            var sessionInfo = await GetSessionInfoAsync(session, cancellationToken).ConfigureAwait(false);
+            var sessionInfo = await GetSessionInfo(session, cancellationToken).ConfigureAwait(false);
             if (sessionInfo.IsSignOutForced)
                 return;
 
@@ -106,19 +106,19 @@ namespace Stl.Fusion.Authentication.Internal
             AddOrUpdateSessionInfo(sessionInfo);
         }
 
-        public virtual async Task EditUserAsync(EditUserCommand command, CancellationToken cancellationToken = default)
+        public virtual async Task EditUser(EditUserCommand command, CancellationToken cancellationToken = default)
         {
             var (session, name) = command;
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
                 var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
-                TryGetUserAsync(invSessionInfo.UserId, default).Ignore();
+                TryGetUser(invSessionInfo.UserId, default).Ignore();
                 return;
             }
 
-            var sessionInfo = await GetSessionInfoAsync(session, cancellationToken).ConfigureAwait(false);
+            var sessionInfo = await GetSessionInfo(session, cancellationToken).ConfigureAwait(false);
             sessionInfo = sessionInfo.MustBeAuthenticated();
-            var user = await TryGetUserAsync(sessionInfo.UserId, cancellationToken).ConfigureAwait(false);
+            var user = await TryGetUser(sessionInfo.UserId, cancellationToken).ConfigureAwait(false);
             user = user.MustBeAuthenticated();
 
             context.Operation().Items.Set(sessionInfo);
@@ -127,18 +127,18 @@ namespace Stl.Fusion.Authentication.Internal
             Users[user.Id] = user;
         }
 
-        public virtual async Task<SessionInfo> SetupSessionAsync(SetupSessionCommand command, CancellationToken cancellationToken = default)
+        public virtual async Task<SessionInfo> SetupSession(SetupSessionCommand command, CancellationToken cancellationToken = default)
         {
             var (session, ipAddress, userAgent) = command;
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
-                GetSessionInfoAsync(session, default).Ignore();
+                GetSessionInfo(session, default).Ignore();
                 var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
                 if (invSessionInfo.IsAuthenticated)
-                    GetUserSessionsAsync(invSessionInfo.UserId, default).Ignore();
+                    GetUserSessions(invSessionInfo.UserId, default).Ignore();
                 return null!;
             }
-            var oldSessionInfo = await GetSessionInfoAsync(session, cancellationToken).ConfigureAwait(false);
+            var oldSessionInfo = await GetSessionInfo(session, cancellationToken).ConfigureAwait(false);
             var newSessionInfo = oldSessionInfo with {
                 IPAddress = string.IsNullOrEmpty(ipAddress) ? oldSessionInfo.IPAddress : ipAddress,
                 UserAgent = string.IsNullOrEmpty(userAgent) ? oldSessionInfo.UserAgent : userAgent,
@@ -148,26 +148,26 @@ namespace Stl.Fusion.Authentication.Internal
             return newSessionInfo;
         }
 
-        public virtual async Task UpdatePresenceAsync(Session session, CancellationToken cancellationToken = default)
+        public virtual async Task UpdatePresence(Session session, CancellationToken cancellationToken = default)
         {
-            var sessionInfo = await GetSessionInfoAsync(session, cancellationToken).ConfigureAwait(false);
+            var sessionInfo = await GetSessionInfo(session, cancellationToken).ConfigureAwait(false);
             var now = Clock.Now.ToDateTime();
             var delta = now - sessionInfo.LastSeenAt;
             if (delta < TimeSpan.FromSeconds(10))
                 return; // We don't want to update this too frequently
             var command = new SetupSessionCommand(session).MarkServerSide();
-            await SetupSessionAsync(command, cancellationToken).ConfigureAwait(false);
+            await SetupSession(command, cancellationToken).ConfigureAwait(false);
         }
 
         // Compute methods
 
-        public virtual async Task<bool> IsSignOutForcedAsync(Session session, CancellationToken cancellationToken = default)
+        public virtual async Task<bool> IsSignOutForced(Session session, CancellationToken cancellationToken = default)
         {
-            var sessionInfo = await GetSessionInfoAsync(session, cancellationToken).ConfigureAwait(false);
+            var sessionInfo = await GetSessionInfo(session, cancellationToken).ConfigureAwait(false);
             return sessionInfo.IsSignOutForced;
         }
 
-        public virtual Task<SessionInfo> GetSessionInfoAsync(
+        public virtual Task<SessionInfo> GetSessionInfo(
             Session session, CancellationToken cancellationToken = default)
         {
             var sessionInfo = SessionInfos.GetValueOrDefault(session);
@@ -175,31 +175,31 @@ namespace Stl.Fusion.Authentication.Internal
             return Task.FromResult(sessionInfo);
         }
 
-        public virtual async Task<User> GetUserAsync(Session session, CancellationToken cancellationToken = default)
+        public virtual async Task<User> GetUser(Session session, CancellationToken cancellationToken = default)
         {
-            var sessionInfo = await GetSessionInfoAsync(session, cancellationToken).ConfigureAwait(false);
+            var sessionInfo = await GetSessionInfo(session, cancellationToken).ConfigureAwait(false);
             if (sessionInfo.IsSignOutForced || !sessionInfo.IsAuthenticated)
                 return new User(session.Id);
-            var user = await TryGetUserAsync(sessionInfo.UserId, cancellationToken).ConfigureAwait(false);
+            var user = await TryGetUser(sessionInfo.UserId, cancellationToken).ConfigureAwait(false);
             return (user ?? new User(session.Id)).ToClientSideUser();
         }
 
-        public virtual Task<User?> TryGetUserAsync(string userId, CancellationToken cancellationToken = default)
+        public virtual Task<User?> TryGetUser(string userId, CancellationToken cancellationToken = default)
             => Task.FromResult(Users.TryGetValue(userId, out var user) ? user : null);
 
-        public virtual async Task<SessionInfo[]> GetUserSessionsAsync(
+        public virtual async Task<SessionInfo[]> GetUserSessions(
             Session session, CancellationToken cancellationToken = default)
         {
-            var user = await GetUserAsync(session, cancellationToken).ConfigureAwait(false);
+            var user = await GetUser(session, cancellationToken).ConfigureAwait(false);
             if (!user.IsAuthenticated)
                 return Array.Empty<SessionInfo>();
-            return await GetUserSessionsAsync(user.Id, cancellationToken).ConfigureAwait(false);
+            return await GetUserSessions(user.Id, cancellationToken).ConfigureAwait(false);
         }
 
         // Protected methods
 
         [ComputeMethod]
-        protected virtual Task<SessionInfo[]> GetUserSessionsAsync(
+        protected virtual Task<SessionInfo[]> GetUserSessions(
             string userId, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(userId))
@@ -224,7 +224,7 @@ namespace Stl.Fusion.Authentication.Internal
             return SessionInfos.GetValueOrDefault(sessionInfo.Id) ?? sessionInfo;
         }
 
-        protected virtual User? FindByUserIdentity(UserIdentity userIdentity)
+        protected virtual User? TryGetByUserIdentity(UserIdentity userIdentity)
             => userIdentity.IsValid
                 ? Users.Values.FirstOrDefault(user => user.Identities.ContainsKey(userIdentity))
                 : null;

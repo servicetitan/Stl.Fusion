@@ -31,13 +31,13 @@ namespace Stl.Fusion.EntityFramework
         protected TDbContext CreateDbContext(bool readWrite = false)
             => DbContextFactory.CreateDbContext().ReadWrite(readWrite);
 
-        protected Task<TDbContext> CreateCommandDbContextAsync(CancellationToken cancellationToken = default)
-            => CreateCommandDbContextAsync(true, cancellationToken);
-        protected Task<TDbContext> CreateCommandDbContextAsync(bool readWrite = true, CancellationToken cancellationToken = default)
+        protected Task<TDbContext> CreateCommandDbContext(CancellationToken cancellationToken = default)
+            => CreateCommandDbContext(true, cancellationToken);
+        protected Task<TDbContext> CreateCommandDbContext(bool readWrite = true, CancellationToken cancellationToken = default)
         {
             var commandContext = CommandContext.GetCurrent();
             var operationScope = commandContext.Items.Get<DbOperationScope<TDbContext>>();
-            return operationScope.CreateDbContextAsync(readWrite, cancellationToken);
+            return operationScope.CreateDbContext(readWrite, cancellationToken);
         }
 
         protected object[] ComposeKey(params object[] components)

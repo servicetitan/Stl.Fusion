@@ -48,7 +48,7 @@ namespace Stl.Tests.Channels
             var cp2 = ChannelPair.CreateTwisted(
                 Channel.CreateBounded<int>(options),
                 Channel.CreateBounded<int>(options));
-            var _ = cp1.Channel2.ConnectAsync(cp2.Channel1, ChannelCompletionMode.CompleteAndPropagateError);
+            var _ = cp1.Channel2.Connect(cp2.Channel1, ChannelCompletionMode.CompleteAndPropagateError);
 
             await PassThroughTest(cp1.Channel1, cp2.Channel2);
             await PassThroughTest(cp2.Channel2, cp1.Channel1);
@@ -66,7 +66,7 @@ namespace Stl.Tests.Channels
             var cp2 = ChannelPair.CreateTwisted(
                 Channel.CreateBounded<int>(options),
                 Channel.CreateBounded<int>(options));
-            var _ = cp1.Channel2.ConnectAsync(cp2.Channel1,
+            var _ = cp1.Channel2.Connect(cp2.Channel1,
                 m => {
                     Out.WriteLine($"-> {m}");
                     return m;
@@ -85,18 +85,18 @@ namespace Stl.Tests.Channels
         {
             c2.Reader.Completion.IsCompleted.Should().BeFalse();
 
-            var t1 = c1.Writer.AssertWriteAsync(1);
-            var t2 = c2.Reader.AssertReadAsync();
+            var t1 = c1.Writer.AssertWrite(1);
+            var t2 = c2.Reader.AssertRead();
             await t1;
             (await t2).Should().Be(1);
 
-            t1 = c1.Writer.AssertWriteAsync(2);
-            t2 = c2.Reader.AssertReadAsync();
+            t1 = c1.Writer.AssertWrite(2);
+            t2 = c2.Reader.AssertRead();
             await t1;
             (await t2).Should().Be(2);
 
             c1.Writer.TryComplete().Should().BeTrue();
-            await c2.Reader.AssertCompletedAsync();
+            await c2.Reader.AssertCompleted();
         }
     }
 }

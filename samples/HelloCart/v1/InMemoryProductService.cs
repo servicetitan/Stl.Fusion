@@ -12,13 +12,13 @@ namespace Samples.HelloCart.V1
     {
         private readonly ConcurrentDictionary<string, Product> _products = new();
 
-        public virtual Task EditAsync(EditCommand<Product> command, CancellationToken cancellationToken = default)
+        public virtual Task Edit(EditCommand<Product> command, CancellationToken cancellationToken = default)
         {
             var (productId, product) = command;
             if (string.IsNullOrEmpty(productId))
                 throw new ArgumentOutOfRangeException(nameof(command));
             if (Computed.IsInvalidating()) {
-                FindAsync(productId, default).Ignore();
+                TryGet(productId, default).Ignore();
                 return Task.CompletedTask;
             }
 
@@ -29,7 +29,7 @@ namespace Samples.HelloCart.V1
             return Task.CompletedTask;
         }
 
-        public virtual Task<Product?> FindAsync(string id, CancellationToken cancellationToken = default)
+        public virtual Task<Product?> TryGet(string id, CancellationToken cancellationToken = default)
             => Task.FromResult(_products.GetValueOrDefault(id));
     }
 }

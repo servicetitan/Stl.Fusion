@@ -13,7 +13,7 @@ namespace Stl.Fusion.Operations
         bool IsClosed { get; }
         bool? IsConfirmed { get; }
 
-        Task CommitAsync(CancellationToken cancellationToken = default);
-        Task RollbackAsync();
+        Task Commit(CancellationToken cancellationToken = default);
+        Task Rollback();
     }
 }

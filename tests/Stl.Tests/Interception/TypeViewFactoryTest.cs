@@ -78,7 +78,7 @@ namespace Stl.Tests.Interception
                 .AddSingleton<IService, Service>()
                 .BuildServiceProvider();
 
-            async Task TestViewAsync(IView view)
+            async Task Test(IView view)
             {
                 // ReSharper disable once MethodHasAsyncOverload
                 view.One("").Should().Be("");
@@ -107,8 +107,8 @@ namespace Stl.Tests.Interception
             var viewFactory = services.GetTypeViewFactory<IView>();
             var classView = viewFactory.CreateView(services.GetRequiredService<Service>());
             var interfaceView = viewFactory.CreateView(services.GetRequiredService<IService>());
-            await TestViewAsync(classView);
-            await TestViewAsync(interfaceView);
+            await Test(classView);
+            await Test(interfaceView);
         }
     }
 }

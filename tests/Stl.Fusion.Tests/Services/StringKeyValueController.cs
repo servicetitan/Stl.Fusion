@@ -1,8 +1,6 @@
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Stl.Async;
 using Stl.Fusion.Server;
 using Stl.Serialization;
 
@@ -17,31 +15,31 @@ namespace Stl.Fusion.Tests.Services
         public StringKeyValueController(IKeyValueService<string> service) => Service = service;
 
         [HttpGet("{key?}"), Publish]
-        public Task<Option<string>> TryGetAsync(string? key)
-            => Service.TryGetAsync(key ?? "", HttpContext.RequestAborted);
+        public Task<Option<string>> TryGet(string? key)
+            => Service.TryGet(key ?? "", HttpContext.RequestAborted);
 
         [HttpGet("{key?}"), Publish]
-        public async Task<JsonString> GetAsync(string? key)
-            => await Service.GetAsync(key ?? "", HttpContext.RequestAborted);
+        public async Task<JsonString> Get(string? key)
+            => await Service.Get(key ?? "", HttpContext.RequestAborted);
 
         [HttpPost("{key?}")]
-        public async Task SetAsync(string? key)
+        public async Task Set(string? key)
         {
             using var reader = new StreamReader(Request.Body);
             var value = await reader.ReadToEndAsync();
-            await Service.SetAsync(key ?? "", value ?? "", HttpContext.RequestAborted);
+            await Service.Set(key ?? "", value ?? "", HttpContext.RequestAborted);
         }
 
         [HttpGet("{key?}")]
-        public Task RemoveAsync(string? key)
-            => Service.RemoveAsync(key ?? "", HttpContext.RequestAborted);
+        public Task Remove(string? key)
+            => Service.Remove(key ?? "", HttpContext.RequestAborted);
 
         [HttpPost]
-        public Task SetCommandAsync([FromBody] IKeyValueService<string>.SetCommand cmd)
-            => Service.SetCommandAsync(cmd, HttpContext.RequestAborted);
+        public Task SetCmd([FromBody] IKeyValueService<string>.SetCommand cmd)
+            => Service.SetCmd(cmd, HttpContext.RequestAborted);
 
         [HttpPost]
-        public virtual Task RemoveCommandAsync([FromBody] IKeyValueService<string>.RemoveCommand cmd)
-            => Service.RemoveCommandAsync(cmd, HttpContext.RequestAborted);
+        public virtual Task RemoveCmd([FromBody] IKeyValueService<string>.RemoveCommand cmd)
+            => Service.RemoveCmd(cmd, HttpContext.RequestAborted);
     }
 }

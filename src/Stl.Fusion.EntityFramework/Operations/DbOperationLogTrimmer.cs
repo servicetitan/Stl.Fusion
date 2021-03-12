@@ -39,11 +39,11 @@ namespace Stl.Fusion.EntityFramework.Operations
             Random = new Random();
         }
 
-        protected override async Task WakeUpAsync(CancellationToken cancellationToken)
+        protected override async Task WakeUp(CancellationToken cancellationToken)
         {
             var minCommitTime = (Clock.Now - MaxCommitAge).ToDateTime();
             LastTrimCount = await DbOperationLog
-                .TrimAsync(minCommitTime, BatchSize, cancellationToken)
+                .Trim(minCommitTime, BatchSize, cancellationToken)
                 .ConfigureAwait(false);
 
             var logEnabled = LogLevel != LogLevel.None && Log.IsEnabled(LogLevel);
@@ -51,14 +51,14 @@ namespace Stl.Fusion.EntityFramework.Operations
                 Log.Log(LogLevel, "Trimmed {Count} operations", LastTrimCount);
         }
 
-        protected override Task SleepAsync(Exception? error, CancellationToken cancellationToken)
+        protected override Task Sleep(Exception? error, CancellationToken cancellationToken)
         {
             var delay = default(TimeSpan);
             if (error != null)
                 delay = TimeSpan.FromMilliseconds(1000 * Random.NextDouble());
             else if (LastTrimCount < BatchSize)
                 delay = CheckInterval + TimeSpan.FromMilliseconds(100 * Random.NextDouble());
-            return Clock.DelayAsync(delay, cancellationToken);
+            return Clock.Delay(delay, cancellationToken);
         }
     }
 }

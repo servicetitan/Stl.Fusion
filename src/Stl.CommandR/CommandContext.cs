@@ -87,7 +87,7 @@ namespace Stl.CommandR
         public CommandContext<TResult> Cast<TResult>()
             => (CommandContext<TResult>) this;
 
-        public abstract Task InvokeRemainingHandlersAsync(CancellationToken cancellationToken = default);
+        public abstract Task InvokeRemainingHandlers(CancellationToken cancellationToken = default);
 
         // SetXxx & TrySetXxx
 
@@ -145,14 +145,14 @@ namespace Stl.CommandR
             }
         }
 
-        public override async Task InvokeRemainingHandlersAsync(CancellationToken cancellationToken)
+        public override async Task InvokeRemainingHandlers(CancellationToken cancellationToken)
         {
             try {
                 if (ExecutionState.IsFinal)
                     throw Errors.NoFinalHandlerFound(UntypedCommand.GetType());
                 var handler = ExecutionState.NextHandler;
                 ExecutionState = ExecutionState.NextExecutionState;
-                var handlerTask = handler.InvokeAsync(UntypedCommand, this, cancellationToken);
+                var handlerTask = handler.Invoke(UntypedCommand, this, cancellationToken);
                 if (handlerTask is Task<TResult> typedHandlerTask) {
                     var result = await typedHandlerTask.ConfigureAwait(false);
                     TrySetResult(result);

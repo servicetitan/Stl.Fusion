@@ -20,21 +20,21 @@ namespace Stl.Fusion.Tests
         {
             var epsilon = TimeSpan.FromSeconds(0.5);
 
-            await using var serving = await WebHost.ServeAsync();
+            await using var serving = await WebHost.Serve();
             var client = ClientServices.GetRequiredService<IClientTimeService>();
-            var cTime = await Computed.CaptureAsync(_ => client.GetTimeAsync(default));
+            var cTime = await Computed.Capture(_ => client.GetTime(default));
 
             cTime.Options.AutoInvalidateTime.Should().Be(ComputedOptions.Default.AutoInvalidateTime);
             if (!cTime.IsConsistent()) {
-                cTime = await cTime.UpdateAsync(false);
+                cTime = await cTime.Update(false);
                 cTime.IsConsistent().Should().BeTrue();
             }
             (DateTime.Now - cTime.Value).Should().BeLessThan(epsilon);
 
-            await TestEx.WhenMetAsync(
+            await TestEx.WhenMet(
                 () => cTime.IsConsistent().Should().BeFalse(),
                 TimeSpan.FromSeconds(5));
-            var time = await cTime.UseAsync();
+            var time = await cTime.Use();
             (DateTime.Now - time).Should().BeLessThan(epsilon);
         }
 
@@ -45,11 +45,11 @@ namespace Stl.Fusion.Tests
             if (TestRunnerInfo.IsBuildAgent())
                 epsilon *= 2;
 
-            await using var serving = await WebHost.ServeAsync();
+            await using var serving = await WebHost.Serve();
             var service = ClientServices.GetRequiredService<IClientTimeService>();
 
             for (int i = 0; i < 20; i++) {
-                var time = await service.GetTimeAsync();
+                var time = await service.GetTime();
                 (DateTime.Now - time).Should().BeLessThan(epsilon);
                 await Task.Delay(TimeSpan.FromSeconds(0.1));
             }
@@ -58,17 +58,17 @@ namespace Stl.Fusion.Tests
         [Fact]
         public async Task TestFormattedTime()
         {
-            await using var serving = await WebHost.ServeAsync();
+            await using var serving = await WebHost.Serve();
             var service = ClientServices.GetRequiredService<IClientTimeService>();
 
-            (await service.GetFormattedTimeAsync("")).Should().Be("");
-            (await service.GetFormattedTimeAsync("null")).Should().Be("");
+            (await service.GetFormattedTime("")).Should().Be("");
+            (await service.GetFormattedTime("null")).Should().Be("");
 
             var format = "{0}";
             var matchCount = 0;
             for (int i = 0; i < 20; i++) {
-                var time = await service.GetTimeAsync();
-                var formatted = await service.GetFormattedTimeAsync(format);
+                var time = await service.GetTime();
+                var formatted = await service.GetFormattedTime(format);
                 var expected = string.Format(format, time);
                 if (formatted == expected)
                     matchCount++;

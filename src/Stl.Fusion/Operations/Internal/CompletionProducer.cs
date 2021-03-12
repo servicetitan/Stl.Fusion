@@ -31,7 +31,7 @@ namespace Stl.Fusion.Operations.Internal
             Commander = commander;
         }
 
-        public virtual Task OnOperationCompletedAsync(IOperation operation)
+        public virtual Task OnOperationCompleted(IOperation operation)
         {
             if (!(operation.Command is ICommand command))
                 return Task.CompletedTask; // We can't complete non-commands
@@ -41,7 +41,7 @@ namespace Stl.Fusion.Operations.Internal
                 try {
                     if (command is IServerSideCommand serverSideCommand)
                         serverSideCommand.MarkServerSide(); // Server-side commands should be marked as such
-                    await Commander.CallAsync(Completion.New(operation), true).ConfigureAwait(false);
+                    await Commander.Call(Completion.New(operation), true).ConfigureAwait(false);
                     var logEnabled = LogLevel != LogLevel.None && Log.IsEnabled(LogLevel);
                     if (logEnabled)
                         Log.Log(LogLevel,

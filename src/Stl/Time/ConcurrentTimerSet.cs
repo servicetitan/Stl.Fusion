@@ -40,7 +40,7 @@ namespace Stl.Time
                 _timerSets[i] = new TimerSet<TTimer>(options, fireHandler);
         }
 
-        protected override async ValueTask DisposeInternalAsync(bool disposing)
+        protected override async ValueTask DisposeInternal(bool disposing)
         {
             foreach (var timerSet in _timerSets)
                 await timerSet.DisposeAsync();

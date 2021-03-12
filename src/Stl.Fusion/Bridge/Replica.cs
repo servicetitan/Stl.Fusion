@@ -17,7 +17,7 @@ namespace Stl.Fusion.Bridge
         bool IsUpdateRequested { get; }
         Exception? UpdateError { get; }
 
-        Task RequestUpdateAsync(CancellationToken cancellationToken = default);
+        Task RequestUpdate(CancellationToken cancellationToken = default);
     }
 
     public interface IReplica<T> : IReplica
@@ -89,16 +89,16 @@ namespace Stl.Fusion.Bridge
         // publishers only while they're used.
         ~Replica() => DisposeAsync(false);
 
-        protected override ValueTask DisposeInternalAsync(bool disposing)
+        protected override ValueTask DisposeInternal(bool disposing)
         {
             Input.ReplicatorImpl.OnReplicaDisposed(this);
             ReplicaRegistry.Instance.Remove(this);
             return ValueTaskEx.CompletedTask;
         }
 
-        Task IReplica.RequestUpdateAsync(CancellationToken cancellationToken)
-            => RequestUpdateAsync(cancellationToken);
-        public virtual Task RequestUpdateAsync(CancellationToken cancellationToken = default)
+        Task IReplica.RequestUpdate(CancellationToken cancellationToken)
+            => RequestUpdate(cancellationToken);
+        public virtual Task RequestUpdate(CancellationToken cancellationToken = default)
         {
             var updateRequestTask = UpdateRequestTask;
             if (updateRequestTask != null)
@@ -186,7 +186,7 @@ namespace Stl.Fusion.Bridge
             }
         }
 
-        protected async Task<IComputed<T>> InvokeAsync(
+        protected async Task<IComputed<T>> Invoke(
             ReplicaInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)
         {
@@ -201,13 +201,13 @@ namespace Stl.Fusion.Bridge
                 return result;
 
             // No async locking here b/c RequestUpdateAsync is, in fact, doing this
-            await RequestUpdateAsync(cancellationToken).ConfigureAwait(false);
+            await RequestUpdate(cancellationToken).ConfigureAwait(false);
             result = Computed;
             result.UseNew(context, usedBy);
             return result;
         }
 
-        protected async Task<T> InvokeAndStripAsync(
+        protected async Task<T> InvokeAndStrip(
             ReplicaInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)
         {
@@ -222,7 +222,7 @@ namespace Stl.Fusion.Bridge
                 return result.Strip(context);
 
             // No async locking here b/c RequestUpdateAsync is, in fact, doing this
-            await RequestUpdateAsync(cancellationToken).ConfigureAwait(false);
+            await RequestUpdate(cancellationToken).ConfigureAwait(false);
             result = Computed;
             result.UseNew(context, usedBy);
             return result.Value;
@@ -230,21 +230,21 @@ namespace Stl.Fusion.Bridge
 
         #region Explicit impl. of IFunction & IFunction<...>
 
-        async Task<IComputed> IFunction.InvokeAsync(ComputedInput input, IComputed? usedBy, ComputeContext? context,
+        async Task<IComputed> IFunction.Invoke(ComputedInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)
-            => await InvokeAsync((ReplicaInput) input, usedBy, context, cancellationToken);
+            => await Invoke((ReplicaInput) input, usedBy, context, cancellationToken);
 
-        Task IFunction.InvokeAndStripAsync(ComputedInput input, IComputed? usedBy, ComputeContext? context,
+        Task IFunction.InvokeAndStrip(ComputedInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)
-            => InvokeAndStripAsync((ReplicaInput) input, usedBy, context, cancellationToken);
+            => InvokeAndStrip((ReplicaInput) input, usedBy, context, cancellationToken);
 
-        Task<IComputed<T>> IFunction<ReplicaInput, T>.InvokeAsync(ReplicaInput input, IComputed? usedBy, ComputeContext? context,
+        Task<IComputed<T>> IFunction<ReplicaInput, T>.Invoke(ReplicaInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)
-            => InvokeAsync(input, usedBy, context, cancellationToken);
+            => Invoke(input, usedBy, context, cancellationToken);
 
-        Task<T> IFunction<ReplicaInput, T>.InvokeAndStripAsync(ReplicaInput input, IComputed? usedBy, ComputeContext? context,
+        Task<T> IFunction<ReplicaInput, T>.InvokeAndStrip(ReplicaInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)
-            => InvokeAndStripAsync(input, usedBy, context, cancellationToken);
+            => InvokeAndStrip(input, usedBy, context, cancellationToken);
 
         #endregion
     }

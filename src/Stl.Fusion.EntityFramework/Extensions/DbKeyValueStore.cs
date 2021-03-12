@@ -26,7 +26,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
 
         // Commands
 
-        public virtual async Task SetAsync(SetCommand command, CancellationToken cancellationToken = default)
+        public virtual async Task Set(SetCommand command, CancellationToken cancellationToken = default)
         {
             var (key, value, expiresAt) = command;
             var context = CommandContext.GetCurrent();
@@ -36,11 +36,11 @@ namespace Stl.Fusion.EntityFramework.Extensions
                 if (context.Operation().Items.GetOrDefault(true))
                     PseudoGetAllPrefixes(key);
                 else
-                    PseudoGetAsync(key).Ignore();
+                    PseudoGet(key).Ignore();
                 return;
             }
 
-            await using var dbContext = await CreateCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
+            await using var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
             dbContext.DisableChangeTracking(); // Just to speed up things a bit
             var dbKeyValue = await dbContext.FindAsync<TDbKeyValue>(ComposeKey(key), cancellationToken).ConfigureAwait(false);
             if (dbKeyValue == null) {
@@ -56,7 +56,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        public virtual async Task SetManyAsync(SetManyCommand command, CancellationToken cancellationToken = default)
+        public virtual async Task SetMany(SetManyCommand command, CancellationToken cancellationToken = default)
         {
             var items = command.Items;
             if (Computed.IsInvalidating()) {
@@ -65,7 +65,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
                 return;
             }
 
-            await using var dbContext = await CreateCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
+            await using var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
             dbContext.DisableChangeTracking(); // Just to speed up things a bit
             var keys = items.Select(i => i.Key).ToList();
             var dbKeyValues = await dbContext.Set<TDbKeyValue>().AsQueryable()
@@ -87,7 +87,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        public virtual async Task RemoveAsync(RemoveCommand command, CancellationToken cancellationToken = default)
+        public virtual async Task Remove(RemoveCommand command, CancellationToken cancellationToken = default)
         {
             var key = command.Key;
             if (string.IsNullOrEmpty(key))
@@ -99,7 +99,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
                 return;
             }
 
-            await using var dbContext = await CreateCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
+            await using var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
             dbContext.DisableChangeTracking(); // Just to speed up things a bit
             var dbKeyValue = await dbContext.FindAsync<TDbKeyValue>(ComposeKey(key), cancellationToken).ConfigureAwait(false);
             if (dbKeyValue == null) {
@@ -110,7 +110,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        public virtual async Task RemoveManyAsync(RemoveManyCommand command, CancellationToken cancellationToken = default)
+        public virtual async Task RemoveMany(RemoveManyCommand command, CancellationToken cancellationToken = default)
         {
             var keys = command.Keys;
             if (Computed.IsInvalidating()) {
@@ -119,7 +119,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
                 return;
             }
 
-            await using var dbContext = await CreateCommandDbContextAsync(cancellationToken).ConfigureAwait(false);
+            await using var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
             dbContext.DisableChangeTracking(); // Just to speed up things a bit
             var dbKeyValues = await dbContext.Set<TDbKeyValue>().AsQueryable()
                 .Where(e => keys.Contains(e.Key))
@@ -132,17 +132,17 @@ namespace Stl.Fusion.EntityFramework.Extensions
 
         // Queries
 
-        public virtual async Task<string?> TryGetAsync(string key, CancellationToken cancellationToken = default)
+        public virtual async Task<string?> TryGet(string key, CancellationToken cancellationToken = default)
         {
-            PseudoGetAsync(key).Ignore();
-            var dbKeyValue = await DbKeyValueResolver.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
+            PseudoGet(key).Ignore();
+            var dbKeyValue = await DbKeyValueResolver.TryGet(key, cancellationToken).ConfigureAwait(false);
             return dbKeyValue?.Value;
         }
 
-        public virtual async Task<int> CountByPrefixAsync(
+        public virtual async Task<int> CountByPrefix(
             string prefix, CancellationToken cancellationToken = default)
         {
-            PseudoGetAsync(prefix).Ignore();
+            PseudoGet(prefix).Ignore();
             await using var dbContext = CreateDbContext();
             var count = await dbContext.Set<TDbKeyValue>().AsQueryable()
                 .CountAsync(e => e.Key.StartsWith(prefix), cancellationToken)
@@ -150,13 +150,13 @@ namespace Stl.Fusion.EntityFramework.Extensions
             return count;
         }
 
-        public virtual async Task<string[]> ListKeysByPrefixAsync(
+        public virtual async Task<string[]> ListKeysByPrefix(
             string prefix,
             PageRef<string> pageRef,
             SortDirection sortDirection = SortDirection.Ascending,
             CancellationToken cancellationToken = default)
         {
-            PseudoGetAsync(prefix).Ignore();
+            PseudoGet(prefix).Ignore();
             await using var dbContext = CreateDbContext();
             var query = dbContext.Set<TDbKeyValue>().AsQueryable()
                 .Where(e => e.Key.StartsWith(prefix));
@@ -180,7 +180,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
         // Protected methods
 
         [ComputeMethod]
-        protected virtual Task<Unit> PseudoGetAsync(string keyPart) => TaskEx.UnitTask;
+        protected virtual Task<Unit> PseudoGet(string keyPart) => TaskEx.UnitTask;
 
         protected void PseudoGetAllPrefixes(string key)
         {
@@ -188,9 +188,9 @@ namespace Stl.Fusion.EntityFramework.Extensions
             var delimiterIndex = key.IndexOf(delimiter, 0);
             for (; delimiterIndex >= 0; delimiterIndex = key.IndexOf(delimiter, delimiterIndex + 1)) {
                 var keyPart = key.Substring(0, delimiterIndex);
-                PseudoGetAsync(keyPart).Ignore();
+                PseudoGet(keyPart).Ignore();
             }
-            PseudoGetAsync(key).Ignore();
+            PseudoGet(key).Ignore();
         }
 
         protected virtual TDbKeyValue CreateDbKeyValue(string key, string value, Moment? expiresAt)

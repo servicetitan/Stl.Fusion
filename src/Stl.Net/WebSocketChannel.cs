@@ -57,8 +57,8 @@ namespace Stl.Net
 
             StopCts = new CancellationTokenSource();
             var cancellationToken = StopToken = StopCts.Token;
-            ReaderTask = Task.Run(() => RunReaderAsync(cancellationToken));
-            WriterTask = Task.Run(() => RunWriterAsync(cancellationToken));
+            ReaderTask = Task.Run(() => RunReader(cancellationToken));
+            WriterTask = Task.Run(() => RunWriter(cancellationToken));
         }
 
         public async ValueTask DisposeAsync()
@@ -74,7 +74,7 @@ namespace Stl.Net
                 // Dispose shouldn't throw exceptions
             }
             try {
-                await WhenCompletedAsync(default).ConfigureAwait(false);
+                await WhenCompleted(default).ConfigureAwait(false);
             }
             catch {
                 // Dispose shouldn't throw exceptions
@@ -83,10 +83,10 @@ namespace Stl.Net
                 WebSocket.Dispose();
         }
 
-        public Task WhenCompletedAsync(CancellationToken cancellationToken = default)
+        public Task WhenCompleted(CancellationToken cancellationToken = default)
             => Task.WhenAll(ReaderTask, WriterTask).WithFakeCancellation(cancellationToken);
 
-        protected virtual async Task TryCloseWebSocketAsync(CancellationToken cancellationToken)
+        protected virtual async Task TryCloseWebSocket(CancellationToken cancellationToken)
         {
             var status = WebSocketCloseStatus.NormalClosure;
             var message = "Ok.";
@@ -100,11 +100,11 @@ namespace Stl.Net
             await WebSocket.CloseAsync(status, message, cancellationToken).ConfigureAwait(false);
         }
 
-        protected async Task RunReaderAsync(CancellationToken cancellationToken)
+        protected async Task RunReader(CancellationToken cancellationToken)
         {
             var error = (Exception?) null;
             try {
-                await RunReaderAsyncUnsafe(cancellationToken).ConfigureAwait(false);
+                await RunReaderUnsafe(cancellationToken).ConfigureAwait(false);
             }
             catch (Exception e) {
                 error = e;
@@ -117,10 +117,10 @@ namespace Stl.Net
             }
         }
 
-        protected async Task RunWriterAsync(CancellationToken cancellationToken)
+        protected async Task RunWriter(CancellationToken cancellationToken)
         {
             try {
-                await RunWriterAsyncUnsafe(cancellationToken).ConfigureAwait(false);
+                await RunWriterUnsafe(cancellationToken).ConfigureAwait(false);
             }
             catch (Exception e) {
                 if (!(e is OperationCanceledException))
@@ -129,11 +129,11 @@ namespace Stl.Net
             }
             finally {
                 if (OwnsWebSocket)
-                    await TryCloseWebSocketAsync(cancellationToken).ConfigureAwait(false);
+                    await TryCloseWebSocket(cancellationToken).ConfigureAwait(false);
             }
         }
 
-        protected virtual async Task RunReaderAsyncUnsafe(CancellationToken cancellationToken)
+        protected virtual async Task RunReaderUnsafe(CancellationToken cancellationToken)
         {
             using var bytesOwner = MemoryPool<byte>.Shared.Rent(ReadBufferSize);
             using var charsOwner = MemoryPool<char>.Shared.Rent(ReadBufferSize);
@@ -200,7 +200,7 @@ namespace Stl.Net
             }
         }
 
-        protected virtual async Task RunWriterAsyncUnsafe(CancellationToken cancellationToken)
+        protected virtual async Task RunWriterUnsafe(CancellationToken cancellationToken)
         {
             using var bytesOwner = MemoryPool<byte>.Shared.Rent(WriteBufferSize);
 

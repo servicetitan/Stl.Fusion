@@ -43,18 +43,18 @@ namespace Stl.Fusion.Blazor
         public void Dispose() => State.Dispose();
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
-            var state = await State.UpdateAsync(false).ConfigureAwait(false);
+            var state = await State.Update(false).ConfigureAwait(false);
             return state.LastValue;
         }
 
         protected virtual async Task<AuthState> ComputeState(ILiveState<AuthState> state, CancellationToken cancellationToken)
         {
-            var session = await SessionResolver.GetSessionAsync(cancellationToken).ConfigureAwait(false);
-            var user = await AuthService.GetUserAsync(session, cancellationToken).ConfigureAwait(false);
+            var session = await SessionResolver.GetSession(cancellationToken).ConfigureAwait(false);
+            var user = await AuthService.GetUser(session, cancellationToken).ConfigureAwait(false);
             // AuthService.GetUserAsync checks for forced sign-out as well, so
             // we should explicitly query its state for unauthenticated users only
             var isSignOutForced = !user.IsAuthenticated
-                && await AuthService.IsSignOutForcedAsync(session, cancellationToken).ConfigureAwait(false);
+                && await AuthService.IsSignOutForced(session, cancellationToken).ConfigureAwait(false);
             return new AuthState(user, isSignOutForced);
         }
 

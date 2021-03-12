@@ -14,24 +14,24 @@ namespace Stl.Fusion.Tests.Services
         public EdgeCaseController(IEdgeCaseService service) => Service = service;
 
         [HttpGet]
-        public Task<string> GetSuffixAsync(CancellationToken cancellationToken)
-            => Service.GetSuffixAsync(cancellationToken);
+        public Task<string> GetSuffix(CancellationToken cancellationToken)
+            => Service.GetSuffix(cancellationToken);
 
         [HttpPost]
-        public Task SetSuffixAsync([FromQuery] string? suffix, CancellationToken cancellationToken)
-            => Service.SetSuffixAsync(suffix ?? "", cancellationToken);
+        public Task SetSuffix([FromQuery] string? suffix, CancellationToken cancellationToken)
+            => Service.SetSuffix(suffix ?? "", cancellationToken);
 
         [HttpGet, Publish]
-        public Task<string> ThrowIfContainsErrorAsync(string? source, CancellationToken cancellationToken)
-            => Service.ThrowIfContainsErrorAsync(source ?? "", cancellationToken);
+        public Task<string> ThrowIfContainsError(string? source, CancellationToken cancellationToken)
+            => Service.ThrowIfContainsError(source ?? "", cancellationToken);
 
         [HttpGet, Publish]
-        public Task<string> ThrowIfContainsErrorRewriteErrorsAsync(string? source, CancellationToken cancellationToken)
-            => Service.ThrowIfContainsErrorRewriteErrorsAsync(source ?? "", cancellationToken);
+        public Task<string> ThrowIfContainsErrorRewriteErrors(string? source, CancellationToken cancellationToken)
+            => Service.ThrowIfContainsErrorRewriteErrors(source ?? "", cancellationToken);
 
         [HttpGet, Publish]
-        public Task<string> ThrowIfContainsErrorNonComputeAsync(string? source, CancellationToken cancellationToken)
-            => Service.ThrowIfContainsErrorNonComputeAsync(source ?? "", cancellationToken);
+        public Task<string> ThrowIfContainsErrorNonCompute(string? source, CancellationToken cancellationToken)
+            => Service.ThrowIfContainsErrorNonCompute(source ?? "", cancellationToken);
     }
 
     [JsonifyErrors(RewriteErrors = true, Order = 1)]

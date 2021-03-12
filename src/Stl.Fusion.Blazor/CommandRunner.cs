@@ -27,11 +27,11 @@ namespace Stl.Fusion.Blazor
         public CommandRunner(ICommander commander)
             => Commander = commander;
 
-        public async Task CallAsync<TResult>(ICommand command, CancellationToken cancellationToken = default)
+        public async Task Call<TResult>(ICommand command, CancellationToken cancellationToken = default)
         {
             Error = null;
             try {
-                await Commander.CallAsync(command, cancellationToken);
+                await Commander.Call(command, cancellationToken);
                 TryInvalidate();
             }
             catch (Exception e) {
@@ -39,11 +39,11 @@ namespace Stl.Fusion.Blazor
             }
         }
 
-        public async Task<TResult> CallAsync<TResult>(ICommand<TResult> command, CancellationToken cancellationToken = default)
+        public async Task<TResult> Call<TResult>(ICommand<TResult> command, CancellationToken cancellationToken = default)
         {
             Error = null;
             try {
-                var result = await Commander.CallAsync(command, cancellationToken);
+                var result = await Commander.Call(command, cancellationToken);
                 TryInvalidate();
                 return result;
             }

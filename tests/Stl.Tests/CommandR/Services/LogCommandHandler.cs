@@ -15,7 +15,7 @@ namespace Stl.Tests.CommandR.Services
     {
         public LogCommandHandler(IServiceProvider services) : base(services) { }
 
-        public Task OnCommandAsync(
+        public Task OnCommand(
             LogCommand command, CommandContext context,
             CancellationToken cancellationToken)
         {

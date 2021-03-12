@@ -6,6 +6,6 @@ namespace Stl.CommandR
 {
     public interface ICommander : IHasServices
     {
-        Task RunAsync(CommandContext context, bool isolate, CancellationToken cancellationToken = default);
+        Task Run(CommandContext context, bool isolate, CancellationToken cancellationToken = default);
     }
 }

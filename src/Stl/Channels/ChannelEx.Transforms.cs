@@ -10,7 +10,7 @@ namespace Stl.Channels
     {
         // TransformAsync
 
-        public static async Task TransformAsync<TIn, TOut>(
+        public static async Task Transform<TIn, TOut>(
             this ChannelReader<TIn> reader,
             ChannelWriter<TOut> writer,
             Func<TIn, TOut> transformer,
@@ -38,7 +38,7 @@ namespace Stl.Channels
             }
         }
 
-        public static async Task TransformAsync<TIn, TOut>(
+        public static async Task Transform<TIn, TOut>(
             this ChannelReader<TIn> reader,
             ChannelWriter<TOut> writer,
             Func<TIn, ValueTask<TOut>> transformer,
@@ -68,7 +68,7 @@ namespace Stl.Channels
 
         // ConcurrentTransformAsync
 
-        public static async Task ConcurrentTransformAsync<TIn, TOut>(
+        public static async Task ConcurrentTransform<TIn, TOut>(
             this ChannelReader<TIn> reader,
             ChannelWriter<TOut> writer,
             Func<TIn, TOut> transformer,
@@ -118,7 +118,7 @@ namespace Stl.Channels
                 writer.TryComplete(error);
         }
 
-        public static async Task ConcurrentTransformAsync<TIn, TOut>(
+        public static async Task ConcurrentTransform<TIn, TOut>(
             this ChannelReader<TIn> reader,
             ChannelWriter<TOut> writer,
             Func<TIn, ValueTask<TOut>> transformer,

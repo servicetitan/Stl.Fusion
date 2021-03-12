@@ -10,8 +10,8 @@ namespace Stl.Fusion
     {
         public new interface IOptions : IState.IOptions { }
 
-        Task WhenUpdatingAsync(CancellationToken cancellationToken = default);
-        Task WhenUpdatedAsync(CancellationToken cancellationToken = default);
+        Task WhenUpdating(CancellationToken cancellationToken = default);
+        Task WhenUpdated(CancellationToken cancellationToken = default);
     }
 
     public interface IComputedState<T> : IState<T>, IComputedState { }
@@ -35,10 +35,10 @@ namespace Stl.Fusion
             if (initialize) Initialize(options);
         }
 
-        public Task WhenUpdatingAsync(CancellationToken cancellationToken = default)
+        public Task WhenUpdating(CancellationToken cancellationToken = default)
             => _updatingTask.WithFakeCancellation(cancellationToken);
 
-        public Task WhenUpdatedAsync(CancellationToken cancellationToken = default)
+        public Task WhenUpdated(CancellationToken cancellationToken = default)
             => _updatedTask.WithFakeCancellation(cancellationToken);
 
 

@@ -8,15 +8,16 @@ namespace Stl.Fusion.Tests.Services
 {
     public interface ITimeService
     {
-        DateTime GetTime();
+        DateTime Time { get; }
+
         [ComputeMethod]
-        Task<DateTime> GetTimeAsync(CancellationToken cancellationToken = default);
+        Task<DateTime> GetTime(CancellationToken cancellationToken = default);
         [ComputeMethod]
-        Task<DateTime> GetTimeWithDelayAsync(CancellationToken cancellationToken = default);
+        Task<DateTime> GetTimeWithDelay(CancellationToken cancellationToken = default);
         [ComputeMethod]
-        Task<string?> GetFormattedTimeAsync(string format, CancellationToken cancellationToken = default);
+        Task<string?> GetFormattedTime(string format, CancellationToken cancellationToken = default);
         [ComputeMethod]
-        Task<DateTime> GetTimeWithOffsetAsync(TimeSpan offset);
+        Task<DateTime> GetTimeWithOffset(TimeSpan offset);
     }
 
     [ComputeService(typeof(ITimeService), Scope = ServiceScope.Services)]
@@ -31,35 +32,36 @@ namespace Stl.Fusion.Tests.Services
             IsCaching = GetType().Name.EndsWith("Proxy");
         }
 
-        public DateTime GetTime()
-        {
-            var now = DateTime.Now;
-            _log.LogDebug($"GetTime() -> {now}");
-            return now;
+        public DateTime Time {
+            get {
+                var now = DateTime.Now;
+                _log.LogDebug($"GetTime() -> {now}");
+                return now;
+            }
         }
 
         [ComputeMethod(AutoInvalidateTime = 0.25)]
-        public virtual Task<DateTime> GetTimeAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(GetTime());
+        public virtual Task<DateTime> GetTime(CancellationToken cancellationToken = default)
+            => Task.FromResult(Time);
 
         [ComputeMethod(AutoInvalidateTime = 0.25)]
-        public virtual async Task<DateTime> GetTimeWithDelayAsync(CancellationToken cancellationToken = default)
+        public virtual async Task<DateTime> GetTimeWithDelay(CancellationToken cancellationToken = default)
         {
             await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken).ConfigureAwait(false);
-            return GetTime();
+            return Time;
         }
 
         [ComputeMethod]
-        public virtual async Task<string?> GetFormattedTimeAsync(string format, CancellationToken cancellationToken = default)
+        public virtual async Task<string?> GetFormattedTime(string format, CancellationToken cancellationToken = default)
         {
-            var time = await GetTimeAsync(cancellationToken).ConfigureAwait(false);
+            var time = await GetTime(cancellationToken).ConfigureAwait(false);
             var result = string.Format(format, time);
             return result == "null" ? null : result;
         }
 
-        public virtual async Task<DateTime> GetTimeWithOffsetAsync(TimeSpan offset)
+        public virtual async Task<DateTime> GetTimeWithOffset(TimeSpan offset)
         {
-            var now = await GetTimeAsync().ConfigureAwait(false);
+            var now = await GetTime().ConfigureAwait(false);
             return now + offset;
         }
     }

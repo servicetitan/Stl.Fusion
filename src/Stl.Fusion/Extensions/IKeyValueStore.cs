@@ -13,20 +13,20 @@ namespace Stl.Fusion.Extensions
         public static char Delimiter => ListFormat.Delimiter;
 
         [CommandHandler]
-        Task SetAsync(SetCommand command, CancellationToken cancellationToken = default);
+        Task Set(SetCommand command, CancellationToken cancellationToken = default);
         [CommandHandler]
-        Task SetManyAsync(SetManyCommand command, CancellationToken cancellationToken = default);
+        Task SetMany(SetManyCommand command, CancellationToken cancellationToken = default);
         [CommandHandler]
-        Task RemoveAsync(RemoveCommand command, CancellationToken cancellationToken = default);
+        Task Remove(RemoveCommand command, CancellationToken cancellationToken = default);
         [CommandHandler]
-        Task RemoveManyAsync(RemoveManyCommand command, CancellationToken cancellationToken = default);
+        Task RemoveMany(RemoveManyCommand command, CancellationToken cancellationToken = default);
 
         [ComputeMethod]
-        Task<string?> TryGetAsync(string key, CancellationToken cancellationToken = default);
+        Task<string?> TryGet(string key, CancellationToken cancellationToken = default);
         [ComputeMethod]
-        Task<int> CountByPrefixAsync(string prefix, CancellationToken cancellationToken = default);
+        Task<int> CountByPrefix(string prefix, CancellationToken cancellationToken = default);
         [ComputeMethod]
-        Task<string[]> ListKeysByPrefixAsync(
+        Task<string[]> ListKeysByPrefix(
             string prefix,
             PageRef<string> pageRef,
             SortDirection sortDirection = SortDirection.Ascending,

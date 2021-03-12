@@ -29,7 +29,7 @@ namespace Stl.Fusion.Blazor
             JSRuntime = jsRuntime;
         }
 
-        public virtual async ValueTask<(string Name, string DisplayName)[]> GetSchemasAsync()
+        public virtual async ValueTask<(string Name, string DisplayName)[]> GetSchemas()
         {
             if (CachedSchemas != null)
                 return CachedSchemas;
@@ -42,24 +42,24 @@ namespace Stl.Fusion.Blazor
             return CachedSchemas;
         }
 
-        public virtual ValueTask SignInAsync(string? schema = null)
+        public virtual ValueTask SignIn(string? schema = null)
             => JSRuntime.InvokeVoidAsync("FusionAuth.signIn", schema ?? "");
 
-        public virtual ValueTask SignOutAsync()
+        public virtual ValueTask SignOut()
             => JSRuntime.InvokeVoidAsync("FusionAuth.signOut");
-        public virtual Task SignOutAsync(Symbol sessionId, bool force = false)
-            => SignOutAsync(new Session(sessionId), force);
-        public virtual async Task SignOutAsync(Session session, bool force = false)
+        public virtual Task SignOut(Symbol sessionId, bool force = false)
+            => SignOut(new Session(sessionId), force);
+        public virtual async Task SignOut(Session session, bool force = false)
         {
             var signOutCommand = new SignOutCommand(session, force);
-            await Task.Run(() => AuthService.SignOutAsync(signOutCommand));
+            await Task.Run(() => AuthService.SignOut(signOutCommand));
         }
 
-        public virtual async Task SignOutEverywhereAsync(bool force = true)
+        public virtual async Task SignOutEverywhere(bool force = true)
         {
             // No server-side API endpoint for this action(yet), so let's do this on the client
             while (true) {
-                var sessionInfos = await AuthService.GetUserSessionsAsync(Session);
+                var sessionInfos = await AuthService.GetUserSessions(Session);
                 var otherSessions = sessionInfos
                     .Where(si => si.Id != Session.Id)
                     .Select(si => new Session(si.Id))
@@ -67,9 +67,9 @@ namespace Stl.Fusion.Blazor
                 if (otherSessions.Count == 0)
                     break;
                 foreach (var otherSession in otherSessions)
-                    await SignOutAsync(otherSession, force);
+                    await SignOut(otherSession, force);
             }
-            await SignOutAsync(Session, force);
+            await SignOut(Session, force);
         }
     }
 }

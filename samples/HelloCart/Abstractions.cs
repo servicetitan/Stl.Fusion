@@ -32,18 +32,18 @@ namespace Samples.HelloCart
     public interface IProductService
     {
         [CommandHandler]
-        Task EditAsync(EditCommand<Product> command, CancellationToken cancellationToken = default);
+        Task Edit(EditCommand<Product> command, CancellationToken cancellationToken = default);
         [ComputeMethod]
-        Task<Product?> FindAsync(string id, CancellationToken cancellationToken = default);
+        Task<Product?> TryGet(string id, CancellationToken cancellationToken = default);
     }
 
     public interface ICartService
     {
         [CommandHandler]
-        Task EditAsync(EditCommand<Cart> command, CancellationToken cancellationToken = default);
+        Task Edit(EditCommand<Cart> command, CancellationToken cancellationToken = default);
         [ComputeMethod]
-        Task<Cart?> FindAsync(string id, CancellationToken cancellationToken = default);
+        Task<Cart?> TryGet(string id, CancellationToken cancellationToken = default);
         [ComputeMethod]
-        Task<decimal> GetTotalAsync(string id, CancellationToken cancellationToken = default);
+        Task<decimal> GetTotal(string id, CancellationToken cancellationToken = default);
     }
 }

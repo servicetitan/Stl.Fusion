@@ -28,7 +28,7 @@ namespace Stl.Fusion.Internal
                     ConcurrencyLevel = concurrencyLevel,
                     Clock = Clock,
                 },
-                t => t.SwapAsync());
+                t => t.Swap());
             Invalidate = new ConcurrentTimerSet<IComputed>(
                 new ConcurrentTimerSet<IComputed>.Options() {
                     Quanta = TimeSpan.FromMilliseconds(250),

@@ -40,7 +40,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
             KeyValueStore = services.GetRequiredService<IKeyValueStore<TDbContext>>();
         }
 
-        protected override async Task WakeUpAsync(CancellationToken cancellationToken)
+        protected override async Task WakeUp(CancellationToken cancellationToken)
         {
             await using var dbContext = CreateDbContext(true);
             dbContext.DisableChangeTracking();
@@ -58,7 +58,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
 
             // This must be done via IKeyValueStore & operations,
             // otherwise invalidation won't happen for removed entries
-            await KeyValueStore.RemoveManyAsync(keys, cancellationToken).ConfigureAwait(false);
+            await KeyValueStore.RemoveMany(keys, cancellationToken).ConfigureAwait(false);
             LastTrimCount = keys.Length;
 
             var logEnabled = LogLevel != LogLevel.None && Log.IsEnabled(LogLevel);
@@ -66,14 +66,14 @@ namespace Stl.Fusion.EntityFramework.Extensions
                 Log.Log(LogLevel, "Trimmed {Count} entries", LastTrimCount);
         }
 
-        protected override Task SleepAsync(Exception? error, CancellationToken cancellationToken)
+        protected override Task Sleep(Exception? error, CancellationToken cancellationToken)
         {
             var delay = default(TimeSpan);
             if (error != null)
                 delay = TimeSpan.FromMilliseconds(1000 * Random.NextDouble());
             else if (LastTrimCount < BatchSize)
                 delay = CheckInterval + TimeSpan.FromMilliseconds(10 * Random.NextDouble());
-            return Clock.DelayAsync(delay, cancellationToken);
+            return Clock.Delay(delay, cancellationToken);
         }
     }
 }

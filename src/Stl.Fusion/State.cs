@@ -5,7 +5,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
 using Stl.DependencyInjection;
-using Stl.Extensibility;
 using Stl.Fusion.Internal;
 using Stl.Generators;
 using Stl.Locking;
@@ -47,8 +46,8 @@ namespace Stl.Fusion
         new event Action<IState<T>, StateEventKind>? Updating;
         new event Action<IState<T>, StateEventKind>? Updated;
 
-        Task WhenInvalidatedAsync<TState>(CancellationToken cancellationToken = default);
-        ValueTask<T> UseAsync(CancellationToken cancellationToken = default);
+        Task WhenInvalidated<TState>(CancellationToken cancellationToken = default);
+        ValueTask<T> Use(CancellationToken cancellationToken = default);
     }
 
     public abstract class State<T> : ComputedInput,
@@ -153,8 +152,6 @@ namespace Stl.Fusion
             if (initialize) Initialize(options);
         }
 
-        public virtual ValueTask DisposeAsync() => ValueTaskEx.CompletedTask;
-
         public override string ToString()
             => $"{GetType().Name}(#{HashCode})";
 
@@ -175,10 +172,10 @@ namespace Stl.Fusion
 
         public bool Invalidate()
             => Computed.Invalidate();
-        public Task WhenInvalidatedAsync<TState>(CancellationToken cancellationToken = default)
-            => Computed.WhenInvalidatedAsync(cancellationToken);
-        public ValueTask<T> UseAsync(CancellationToken cancellationToken = default)
-            => Computed.UseAsync(cancellationToken);
+        public Task WhenInvalidated<TState>(CancellationToken cancellationToken = default)
+            => Computed.WhenInvalidated(cancellationToken);
+        public ValueTask<T> Use(CancellationToken cancellationToken = default)
+            => Computed.Use(cancellationToken);
 
         // Equality
 
@@ -229,14 +226,14 @@ namespace Stl.Fusion
 
         // IFunction<T> & IFunction
 
-        Task<IComputed<T>> IFunction<State<T>, T>.InvokeAsync(State<T> input, IComputed? usedBy, ComputeContext? context,
+        Task<IComputed<T>> IFunction<State<T>, T>.Invoke(State<T> input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)
-            => InvokeAsync(input, usedBy, context, cancellationToken);
-        async Task<IComputed> IFunction.InvokeAsync(ComputedInput input, IComputed? usedBy, ComputeContext? context,
+            => Invoke(input, usedBy, context, cancellationToken);
+        async Task<IComputed> IFunction.Invoke(ComputedInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)
-            => await InvokeAsync((State<T>) input, usedBy, context, cancellationToken).ConfigureAwait(false);
+            => await Invoke((State<T>) input, usedBy, context, cancellationToken).ConfigureAwait(false);
 
-        protected virtual async Task<IComputed<T>> InvokeAsync(
+        protected virtual async Task<IComputed<T>> Invoke(
             State<T> input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)
         {
@@ -250,27 +247,27 @@ namespace Stl.Fusion
             if (result.TryUseExisting(context, usedBy))
                 return result;
 
-            using var _ = await AsyncLock.LockAsync(cancellationToken);
+            using var _ = await AsyncLock.Lock(cancellationToken);
 
             result = Computed;
             if (result.TryUseExisting(context, usedBy))
                 return result;
 
             OnUpdating();
-            result = await ComputeAsync(cancellationToken).ConfigureAwait(false);
+            result = await GetComputed(cancellationToken).ConfigureAwait(false);
             result.UseNew(context, usedBy);
             return result;
         }
 
-        async Task IFunction.InvokeAndStripAsync(
+        async Task IFunction.InvokeAndStrip(
             ComputedInput input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)
-            => await InvokeAndStripAsync((State<T>) input, usedBy, context, cancellationToken).ConfigureAwait(false);
-        Task<T> IFunction<State<T>, T>.InvokeAndStripAsync(State<T> input, IComputed? usedBy, ComputeContext? context,
+            => await InvokeAndStrip((State<T>) input, usedBy, context, cancellationToken).ConfigureAwait(false);
+        Task<T> IFunction<State<T>, T>.InvokeAndStrip(State<T> input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)
-            => InvokeAndStripAsync(input, usedBy, context, cancellationToken);
+            => InvokeAndStrip(input, usedBy, context, cancellationToken);
 
-        protected virtual async Task<T> InvokeAndStripAsync(
+        protected virtual async Task<T> InvokeAndStrip(
             State<T> input, IComputed? usedBy, ComputeContext? context,
             CancellationToken cancellationToken)
         {
@@ -284,25 +281,25 @@ namespace Stl.Fusion
             if (result.TryUseExisting(context, usedBy))
                 return result.Strip(context);
 
-            using var _ = await AsyncLock.LockAsync(cancellationToken);
+            using var _ = await AsyncLock.Lock(cancellationToken);
 
             result = Computed;
             if (result.TryUseExisting(context, usedBy))
                 return result.Strip(context);
 
             OnUpdating();
-            result = await ComputeAsync(cancellationToken).ConfigureAwait(false);
+            result = await GetComputed(cancellationToken).ConfigureAwait(false);
             result.UseNew(context, usedBy);
             return result.Value;
         }
 
-        protected async ValueTask<StateBoundComputed<T>> ComputeAsync(CancellationToken cancellationToken)
+        protected async ValueTask<StateBoundComputed<T>> GetComputed(CancellationToken cancellationToken)
         {
             var computed = CreateComputed();
             using var _ = Fusion.Computed.ChangeCurrent(computed);
 
             try {
-                var value = await ComputeValueAsync(cancellationToken).ConfigureAwait(false);
+                var value = await Compute(cancellationToken).ConfigureAwait(false);
                 computed.TrySetOutput(Result.New(value));
             }
             catch (OperationCanceledException) {
@@ -316,7 +313,7 @@ namespace Stl.Fusion
             return computed;
         }
 
-        protected abstract Task<T> ComputeValueAsync(CancellationToken cancellationToken);
+        protected abstract Task<T> Compute(CancellationToken cancellationToken);
 
         protected virtual StateBoundComputed<T> CreateComputed()
             => new(ComputedOptions, this, VersionGenerator.Next());

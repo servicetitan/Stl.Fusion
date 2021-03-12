@@ -158,7 +158,7 @@ namespace Stl.Fusion
         public virtual IAsyncLockSet<ComputedInput> GetLocksFor(IFunction function)
             => _locksProvider.Invoke(function);
 
-        public Task PruneAsync()
+        public Task Prune()
         {
             lock (Lock) {
                 if (_pruneTask == null || _pruneTask.IsCompleted)
@@ -185,7 +185,7 @@ namespace Stl.Fusion
                 if (_opCounter.ApproximateValue <= _pruneCounterThreshold)
                     return;
                 _opCounter.ApproximateValue = 0;
-                PruneAsync();
+                Prune();
             }
         }
 

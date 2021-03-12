@@ -60,14 +60,14 @@ namespace Stl.Fusion.Swapping
                 return maybeOutput;
 
             // Double-check locking
-            using var _ = await SwapOutputLock.LockAsync(cancellationToken).ConfigureAwait(false);
+            using var _ = await SwapOutputLock.Lock(cancellationToken).ConfigureAwait(false);
 
             maybeOutput = MaybeOutput;
             if (maybeOutput != null)
                 return maybeOutput;
 
             var swapService = Function.Services.GetService<ISwapService>() ?? NoSwapService.Instance;
-            maybeOutput = await swapService.LoadAsync((Input, Version), cancellationToken) as ResultBox<T>;
+            maybeOutput = await swapService.Load((Input, Version), cancellationToken) as ResultBox<T>;
             if (maybeOutput == null) {
                 Invalidate();
                 return null;
@@ -76,14 +76,14 @@ namespace Stl.Fusion.Swapping
             return maybeOutput;
         }
 
-        public async ValueTask SwapAsync(CancellationToken cancellationToken = default)
+        public async ValueTask Swap(CancellationToken cancellationToken = default)
         {
             this.AssertConsistencyStateIsNot(ConsistencyState.Computing);
-            using var _ = await SwapOutputLock.LockAsync(cancellationToken).ConfigureAwait(false);
+            using var _ = await SwapOutputLock.Lock(cancellationToken).ConfigureAwait(false);
             if (MaybeOutput == null)
                 return;
             var swapService = Function.Services.GetService<ISwapService>() ?? NoSwapService.Instance;
-            await swapService.StoreAsync((Input, Version), MaybeOutput, cancellationToken);
+            await swapService.Store((Input, Version), MaybeOutput, cancellationToken);
             Interlocked.Exchange(ref _maybeOutput, null);
             RenewTimeouts();
         }

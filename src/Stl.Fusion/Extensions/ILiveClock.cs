@@ -5,8 +5,8 @@ namespace Stl.Fusion.Extensions
 {
     public interface ILiveClock
     {
-        Task<DateTime> GetUtcNowAsync();
-        Task<DateTime> GetUtcNowAsync(TimeSpan updatePeriod);
-        Task<string> GetMomentsAgoAsync(DateTime time);
+        Task<DateTime> GetUtcNow();
+        Task<DateTime> GetUtcNow(TimeSpan updatePeriod);
+        Task<string> GetMomentsAgo(DateTime time);
     }
 }
