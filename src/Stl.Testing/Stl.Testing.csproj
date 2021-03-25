@@ -1,15 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net5.0;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>net5.0;netcoreapp3.1;netstandard2.0</TargetFrameworks>
     <IsTestProject>false</IsTestProject>
     <PackageTags>servicetitan stl testing</PackageTags>
     <Description>Stl.Testing is a collection of <!--
     -->testing helpers used by Stl.Fusion tests.</Description>
   </PropertyGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' != 'netstandard2.0'">
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <Compile Remove="ApplicationPartsLogger.cs" />
+    <Compile Remove="TestWebHost.cs" />
+    <Compile Remove="WebTestEx.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,10 +28,19 @@
     <PackageReference Include="Xunit.DependencyInjection.Logging" />
   </ItemGroup>
 
-  <ItemGroup Condition="$(TargetFramework.StartsWith('net5'))">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
+    <PackageReference Include="IndexRange" VersionOverride="1.0.*" />
+    <PackageReference Include="System.Memory" VersionOverride="4.5.4" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <Test>'$(TargetFramework)' == 'netcoreapp3.1'</Test>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net5'">
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
   </ItemGroup>
-  <ItemGroup Condition="!$(TargetFramework.StartsWith('net5'))">
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" VersionOverride="$(AspNetCoreVersion3)" />
   </ItemGroup>
 
