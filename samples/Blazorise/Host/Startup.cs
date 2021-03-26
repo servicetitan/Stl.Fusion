@@ -34,6 +34,7 @@ namespace Templates.Blazor2.Host
         private IConfiguration Cfg { get; }
         private IWebHostEnvironment Env { get; }
         private ILogger Log { get; set; } = NullLogger<Startup>.Instance;
+        private HostSettings HostSettings { get; set; }
 
         public Startup(IConfiguration cfg, IWebHostEnvironment environment)
         {
@@ -43,17 +44,6 @@ namespace Templates.Blazor2.Host
 
         public void ConfigureServices(IServiceCollection services)
         {
-            #pragma warning disable ASP0000
-            var serverSettings = services
-                .UseAttributeScanner(s => s.AddService<ServerSettings>())
-                .BuildServiceProvider()
-                .GetRequiredService<ServerSettings>();
-            #pragma warning restore ASP0000
-
-            services.AddResponseCompression(opts => {
-                opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
-                    new[] { "application/octet-stream" });
-            });
             // Logging
             services.AddLogging(logging => {
                 logging.ClearProviders();
@@ -65,11 +55,28 @@ namespace Templates.Blazor2.Host
                 }
             });
 
+            #pragma warning disable ASP0000
+            HostSettings = services
+                .UseAttributeScanner(s => s.AddService<HostSettings>())
+                .BuildServiceProvider()
+                .GetRequiredService<HostSettings>();
+            #pragma warning restore ASP0000
+
+            services.AddResponseCompression(opts => {
+                opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
+                    new[] { "application/octet-stream" });
+            });
+
             // DbContext & related services
             var appTempDir = PathEx.GetApplicationTempDirectory("", true);
             var dbPath = appTempDir & "App.db";
             services.AddDbContextFactory<AppDbContext>(builder => {
-                builder.UseSqlite($"Data Source={dbPath}", sqlite => { });
+                if (!string.IsNullOrEmpty(HostSettings.UseSqlServer))
+                    builder.UseSqlServer(HostSettings.UseSqlServer);
+                else if (!string.IsNullOrEmpty(HostSettings.UsePostgreSql))
+                    builder.UseNpgsql(HostSettings.UsePostgreSql);
+                else
+                    builder.UseSqlite($"Data Source={dbPath}");
                 if (Env.IsDevelopment())
                     builder.EnableSensitiveDataLogging();
             });
@@ -82,13 +89,13 @@ namespace Templates.Blazor2.Host
                 });
                 var operationLogChangeAlertPath = dbPath + "_changed";
                 b.AddFileBasedDbOperationLogChangeTracking(operationLogChangeAlertPath);
-                if (!serverSettings.UseInMemoryAuthService)
+                if (!HostSettings.UseInMemoryAuthService)
                     b.AddDbAuthentication();
                 b.AddKeyValueStore();
             });
 
             // Fusion services
-            services.AddSingleton(new Publisher.Options() { Id = serverSettings.PublisherId });
+            services.AddSingleton(new Publisher.Options() { Id = HostSettings.PublisherId });
             var fusion = services.AddFusion();
             var fusionServer = fusion.AddWebServer();
             var fusionClient = fusion.AddRestEaseClient();
@@ -116,21 +123,21 @@ namespace Templates.Blazor2.Host
                 if (Env.IsDevelopment())
                     options.Cookie.SecurePolicy = CookieSecurePolicy.None;
             }).AddMicrosoftAccount(options => {
-                options.ClientId = serverSettings.MicrosoftAccountClientId;
-                options.ClientSecret = serverSettings.MicrosoftAccountClientSecret;
+                options.ClientId = HostSettings.MicrosoftAccountClientId;
+                options.ClientSecret = HostSettings.MicrosoftAccountClientSecret;
                 // That's for personal account authentication flow
                 options.AuthorizationEndpoint = "https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize";
                 options.TokenEndpoint = "https://login.microsoftonline.com/consumers/oauth2/v2.0/token";
                 options.CorrelationCookie.SameSite = SameSiteMode.Lax;
             }).AddGoogle(options => {
-                options.ClientId = serverSettings.GoogleClientId;
-                options.ClientSecret = serverSettings.GoogleClientSecret;
+                options.ClientId = HostSettings.GoogleClientId;
+                options.ClientSecret = HostSettings.GoogleClientSecret;
                 options.Scope.Add("https://www.googleapis.com/auth/userinfo.profile");
                 options.Scope.Add("https://www.googleapis.com/auth/userinfo.email");
                 options.CorrelationCookie.SameSite = SameSiteMode.Lax;
             }).AddGitHub(options => {
-                options.ClientId = serverSettings.GitHubClientId;
-                options.ClientSecret = serverSettings.GitHubClientSecret;
+                options.ClientId = HostSettings.GitHubClientId;
+                options.ClientSecret = HostSettings.GitHubClientSecret;
                 options.Scope.Add("read:user");
                 options.Scope.Add("user:email");
                 options.CorrelationCookie.SameSite = SameSiteMode.Lax;

@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Reactive;
-using System.Reflection;
+using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -84,7 +82,7 @@ namespace Stl.Fusion.Bridge.Internal
                         break;
                     case OperationCanceledException oce:
                         if (cancellationToken.IsCancellationRequested)
-                            throw oce;
+                            ExceptionDispatchInfo.Capture(oce).Throw();
                         break;
                     default:
                         Reconnect(error);

@@ -6,7 +6,7 @@
 @using Stl.Fusion.Server.Controllers
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @inject ServerAuthHelper ServerAuthHelper
-@inject ServerSettings ServerSettings
+@inject HostSettings HostSettings
 @{
     Task.Run(() => ServerAuthHelper.UpdateAuthState(HttpContext)).Ignore();
     var authSchemas = await ServerAuthHelper.GetSchemas(HttpContext);
@@ -21,7 +21,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="google-signin-client_id" content="@ServerSettings.GoogleClientId">
+    <meta name="google-signin-client_id" content="@HostSettings.GoogleClientId">
     <title>Fusion+Blazorise Template</title>
     <base href="~/" />
     <link href="css/app.css" rel="stylesheet" />

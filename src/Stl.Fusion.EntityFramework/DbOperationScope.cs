@@ -106,6 +106,7 @@ namespace Stl.Fusion.EntityFramework
             if (!_isInMemoryProvider) {
                 dbContext.StopPooling();
                 dbContext.Database.SetDbConnection(Connection);
+                await dbContext.Database.UseTransactionAsync(Transaction!.GetDbTransaction(), cancellationToken).ConfigureAwait(false);
             }
             CommandContext.SetOperation(Operation);
             return dbContext;
