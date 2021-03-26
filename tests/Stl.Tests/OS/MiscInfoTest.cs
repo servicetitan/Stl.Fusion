@@ -27,6 +27,8 @@ namespace Stl.Tests.OS
             processorCount.Should().BeGreaterThan(0);
             WriteLine($"CPU core count: {processorCount}");
         }
+        
+        #if !NET471
 
         [Fact]
         public void DotNetCoreInfoTest()
@@ -35,5 +37,7 @@ namespace Stl.Tests.OS
             version.Should().BeGreaterThan(Version.Parse("3.0"));
             WriteLine($".NET Core version: {version}");
         }
+
+        #endif
     }
 }

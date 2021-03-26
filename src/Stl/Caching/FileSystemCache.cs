@@ -13,6 +13,13 @@ namespace Stl.Caching
     public abstract class FileSystemCacheBase<TKey, TValue> : AsyncCacheBase<TKey, TValue>
         where TKey : notnull
     {
+#if !NETSTANDARD2_0
+        private const int BufferSize = -1;
+#else
+        private const int MinAllowedBufferSize = 128;
+        private const int BufferSize = MinAllowedBufferSize;
+#endif
+        
         public override async ValueTask<Option<TValue>> TryGet(TKey key, CancellationToken cancellationToken = default)
         {
             try {
@@ -74,7 +81,9 @@ namespace Stl.Caching
                 return null;
             try {
                 fileStream.Seek(0, SeekOrigin.Begin);
-                using var reader = new StreamReader(fileStream, Encoding.UTF8, true, -1, true);
+
+                
+                using var reader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize, true);
                 var text = await reader.ReadToEndAsync().ConfigureAwait(false);
                 return string.IsNullOrEmpty(text) ? null : text;
             }
@@ -89,9 +98,9 @@ namespace Stl.Caching
                 return;
             fileStream.Seek(0, SeekOrigin.Begin);
             #if !NETSTANDARD2_0
-            await using var writer = new StreamWriter(fileStream, Encoding.UTF8, -1, true);
+            await using var writer = new StreamWriter(fileStream, Encoding.UTF8, BufferSize, true);
             #else
-            using var writer = new StreamWriter(fileStream, Encoding.UTF8, -1, true);
+            using var writer = new StreamWriter(fileStream, Encoding.UTF8, BufferSize, true);
             #endif
             await writer.WriteAsync(text ?? "").ConfigureAwait(false);
             fileStream.SetLength(fileStream.Position);

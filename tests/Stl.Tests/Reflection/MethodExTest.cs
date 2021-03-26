@@ -139,7 +139,7 @@ namespace Stl.Tests.Reflection
             {
                 var attrs = method!.GetAttributes<DisplayNameAttribute>(true, true);
                 attrs.Count.Should().Be(expected.Length);
-                foreach (var (a, s) in attrs.Zip(expected))
+                foreach (var (a, s) in attrs.Zip(expected, (a, s) => (a, s)))
                     a.DisplayName.Should().Be(s);
                 var attr = method!.GetAttribute<DisplayNameAttribute>(true, true);
                 if (attr == null)

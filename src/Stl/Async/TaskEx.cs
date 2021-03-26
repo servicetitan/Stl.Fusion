@@ -142,7 +142,11 @@ namespace Stl.Async
         
         public static bool IsCompletedSuccessfully(this Task task)
         {
+            #if NETSTANDARD2_0
             return task.Status == TaskStatus.RanToCompletion;
+            #else
+            return task.IsCompletedSuccessfully;
+            #endif
         }
 
         // SuppressXxx

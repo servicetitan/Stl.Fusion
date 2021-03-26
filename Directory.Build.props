@@ -52,6 +52,13 @@
     <PathMap>'$(SolutionDir)'=/_/</PathMap>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <NetFrameworkSupport>true</NetFrameworkSupport>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)'== 'net471'">
+    <NetFrameworkSupport>true</NetFrameworkSupport>
+  </PropertyGroup>
+
   <ItemGroup Condition="$(DeterministicSourcePaths) == 'true'">
     <SourceRoot Include="$(SolutionDir)" />
   </ItemGroup>

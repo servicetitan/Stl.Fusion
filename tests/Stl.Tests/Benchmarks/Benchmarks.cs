@@ -1,6 +1,6 @@
 using System;
 using System.Diagnostics;
-using System.Runtime.Intrinsics.X86;
+//using System.Runtime.Intrinsics.X86;
 using System.Threading;
 using Stl.Testing;
 using Stl.Time;
@@ -58,7 +58,11 @@ namespace Stl.Tests.Benchmarks
             RunOne("Read Environment.TickCount64", baseOpCount, opCount => {
                 var sum = 0L;
                 for (; opCount > 0; opCount--) {
+                    #if NET471
+                    sum += Environment.TickCount;
+                    #else
                     sum += Environment.TickCount64;
+                    #endif
                 }
                 return sum;
             });

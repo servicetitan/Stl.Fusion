@@ -6,13 +6,19 @@
 
   <PropertyGroup>
     <MicrosoftExtensionsVersion>5.0.0</MicrosoftExtensionsVersion>
-    <EntityFrameworkCoreVersion>5.0.4</EntityFrameworkCoreVersion>
     <AspNetCoreVersion>5.0.4</AspNetCoreVersion>
     <AspNetCoreVersion3>3.*</AspNetCoreVersion3>
     <BlazorVersion>5.0.3</BlazorVersion>
     <BlazoriseVersion>0.9.*</BlazoriseVersion>
     <SystemNetHttpJsonVersion>5.0.3</SystemNetHttpJsonVersion>
     <StlFusionVersion>0.*</StlFusionVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(NetFrameworkSupport)' != 'true'">
+    <EntityFrameworkCoreVersion>5.0.4</EntityFrameworkCoreVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(NetFrameworkSupport)' == 'true'">
+    <EntityFrameworkCoreVersion>3.*</EntityFrameworkCoreVersion>
   </PropertyGroup>
 
   <ItemGroup Label="Nupkg Versions">

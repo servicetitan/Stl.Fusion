@@ -64,7 +64,7 @@ namespace Stl.Fusion.EntityFramework
 #if !NETSTANDARD2_0
             dbContext.SavingChanges -= FailOnSaveChanges;
 #else
-            throw new NotImplementedException();
+            Stl.Skips.MissingFeature_NonCritical("DbContext has no SavingChanges event");
 #endif
 
         }
@@ -74,7 +74,7 @@ namespace Stl.Fusion.EntityFramework
 #if !NETSTANDARD2_0
             dbContext.SavingChanges += FailOnSaveChanges;
 #else
-            throw new NotImplementedException();
+            Stl.Skips.MissingFeature_NonCritical("DbContext has no SavingChanges event");
 #endif
         }
     }

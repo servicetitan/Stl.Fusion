@@ -16,7 +16,7 @@ namespace Stl.Fusion.EntityFramework.Internal
             LeaseField.SetValue(dbContext, DbContextLease.InactiveLease);
 #pragma warning restore
 #else
-            throw new System.NotImplementedException();
+            Stl.Skips.MissingFeature_NonCritical("DbContext has no LeaseField");
 #endif
         }
     }

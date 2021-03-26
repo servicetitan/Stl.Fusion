@@ -23,7 +23,7 @@ namespace Stl.Tests.Time
         public async Task BasicTest()
         {
             var epsilon = TimeSpan.FromSeconds(1);
-            var epsilon10 = epsilon * 10;
+            var epsilon10 = epsilon.Multiply(10);
             using var clock = new TestClock().SpeedupBy(10).OffsetBy(1000);
             var realStart = SystemClock.Now;
             var clockStart = clock.Now;
@@ -51,7 +51,7 @@ namespace Stl.Tests.Time
         public async Task TimerTest1()
         {
             var epsilon = TimeSpan.FromSeconds(0.9);
-            var epsilon10 = epsilon * 10;
+            var epsilon10 = epsilon.Multiply(10);
             using var clock = new TestClock().SpeedupBy(10).OffsetBy(1000);
             var realStart = SystemClock.Now;
             var clockStart = clock.Now;
@@ -66,7 +66,7 @@ namespace Stl.Tests.Time
         public async Task TimerTest2()
         {
             var epsilon = TimeSpan.FromSeconds(0.9);
-            var epsilon10 = epsilon * 10;
+            var epsilon10 = epsilon.Multiply(10);
             using var clock = new TestClock().SpeedupBy(10).OffsetBy(1000);
             var realStart = SystemClock.Now;
             var clockStart = clock.Now;
