@@ -49,6 +49,8 @@ namespace Stl.Testing.Internal
 
 }
 
+
+#if NETSTANDARD2_0
 namespace System.Runtime.CompilerServices
 {
     public static class RuntimeHelpers
@@ -64,3 +66,4 @@ namespace System.Runtime.CompilerServices
         }
     }
 }
+#endif

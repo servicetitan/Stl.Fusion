@@ -1,3 +1,5 @@
+#if NETSTANDARD2_0
+
 namespace Microsoft.EntityFrameworkCore
 {
     /// <summary>
@@ -20,3 +22,5 @@ namespace Microsoft.EntityFrameworkCore
         TContext CreateDbContext();
     }
 }
+
+#endif
