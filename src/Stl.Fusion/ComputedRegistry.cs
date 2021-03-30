@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Concurrent;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Concurrency;
@@ -82,7 +84,7 @@ namespace Stl.Fusion
         public virtual IComputed? TryGet(ComputedInput key)
         {
             var s = InnerTryGet(key);
-            ComputedLog.Log($"ComputedRegistry.TryGet: {s!=null}, key: {key}, result: {s}");
+            ComputedLog.Log($"ComputedRegistry.TryGet: result='{s!=null}', key hash='{key.HashCode}', key='{key}', output='{s}'");
             return s;
         }
 
@@ -106,10 +108,12 @@ namespace Stl.Fusion
             // Debug.WriteLine($"{nameof(Register)}: {computed}");
             var key = computed.Input;
             
-            ComputedLog.Log($"ComputedRegistry.Register: {computed}, key hash: {key.HashCode}, key: {key}");
+            ComputedLog.Log($"ComputedRegistry.Register: computed='{computed}', key hash='{key.HashCode}', key='{key}'.");
             
             var random = Randomize(key.HashCode);
             OnOperation(random);
+
+            ComputedLog.Log($"ComputedRegistry.Register.Dump.Before:" + Dump());
 
             var spinWait = new SpinWait();
             GCHandle? newHandle = null;
@@ -140,6 +144,20 @@ namespace Stl.Fusion
                 }
                 spinWait.SpinOnce();
             }
+            
+            ComputedLog.Log($"ComputedRegistry.Register.Dump.After:" + Dump());
+        }
+
+        private string Dump()
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine();
+            var computedInputs = _storage.Keys;
+            sb.AppendLine($"             keys number = {computedInputs.Count}");
+            foreach (var key in computedInputs) {
+                sb.AppendLine($"             key hash='{key.HashCode}', key='{key}'");
+            }
+            return sb.ToString();
         }
 
         public virtual bool Unregister(IComputed computed)
@@ -150,9 +168,10 @@ namespace Stl.Fusion
             if (computed.ConsistencyState != ConsistencyState.Invalidated)
                 throw Errors.WrongComputedState(computed.ConsistencyState);
             
-            ComputedLog.Log($"ComputedRegistry.Unregister: {computed}");
-
             var key = computed.Input;
+            
+            ComputedLog.Log($"ComputedRegistry.Unregister: computed='{computed}', key hash='{key.HashCode}', key='{key}'.");
+            
             var random = Randomize(key.HashCode);
             OnOperation(random);
             if (!_storage.TryGetValue(key, out var handle))
@@ -175,6 +194,7 @@ namespace Stl.Fusion
         public Task Prune()
         {
             lock (Lock) {
+                ComputedLog.Log("ComputedRegistry.Prune");
                 if (_pruneTask == null || _pruneTask.IsCompleted)
                     _pruneTask = Task.Run(PruneInternal);
                 return _pruneTask;

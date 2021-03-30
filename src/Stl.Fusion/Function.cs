@@ -111,8 +111,10 @@ namespace Stl.Fusion
         protected IComputed<TOut>? TryGetExisting(TIn input)
         {
             var computed = ComputedRegistry.Instance.TryGet(input);
-            ComputedLog.Log($"TryGetExisting: input={input}, computed={computed}, cast={(computed as IComputed<TIn, TOut>)!=null}");
-            return computed as IComputed<TIn, TOut>;
+            var cast = computed as IComputed<TIn, TOut>;
+            var ok = cast != null;
+            ComputedLog.Log($"FunctionBase.TryGetExisting: result='{ok}', input='{input}', output='{computed}'.");
+            return cast;
         }
 
         // Protected & private
