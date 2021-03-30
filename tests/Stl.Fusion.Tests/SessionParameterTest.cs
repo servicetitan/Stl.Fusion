@@ -42,11 +42,12 @@ namespace Stl.Fusion.Tests
             var sessionA = sessionFactory.CreateSession();
             var sessionB = sessionFactory.CreateSession();
             
-            Stl.Fusion.Internal.ComputedLog.LogAction = m => {
-                lock (syncObject) {
-                    Out.WriteLine(Thread.CurrentThread.ManagedThreadId.ToString("000") + "      " + m);
-                }
-            };
+            // turn on only for tests debug
+            //Stl.Fusion.Internal.ComputedLog.LogAction = m => {
+            //    lock (syncObject) {
+            //        Out.WriteLine(Thread.CurrentThread.ManagedThreadId.ToString("000") + "      " + m);
+            //    }
+            //};
 
             var session = sessionA;
             var aaComputed = await Computed.Capture(_ => counters.Get("a", session));
