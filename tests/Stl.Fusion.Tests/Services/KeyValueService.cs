@@ -15,11 +15,15 @@ namespace Stl.Fusion.Tests.Services
         public record SetCommand(string Key, TValue Value) : ICommand<Unit>
         {
             public SetCommand() : this(null!, default!) { }
+            
+            public Type ResultType => typeof(Unit);
         }
 
         public record RemoveCommand(string Key) : ICommand<Unit>
         {
             public RemoveCommand() : this(default(string)!) { }
+            
+            public Type ResultType => typeof(Unit);
         }
 
         [ComputeMethod]

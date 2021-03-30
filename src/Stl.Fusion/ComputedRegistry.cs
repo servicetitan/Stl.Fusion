@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Concurrency;
+using Stl.Fusion.Internal;
 using Stl.Locking;
 using Stl.Mathematics;
 using Stl.OS;
@@ -80,15 +81,23 @@ namespace Stl.Fusion
 
         public virtual IComputed? TryGet(ComputedInput key)
         {
+            var s = InnerTryGet(key);
+            ComputedLog.Log($"ComputedRegistry.TryGet: {s!=null}, key: {key}, result: {s}");
+            return s;
+        }
+
+        private IComputed? InnerTryGet(ComputedInput key)
+        {
             var random = Randomize(key.HashCode);
             OnOperation(random);
             if (_storage.TryGetValue(key, out var handle)) {
-                var value = (IComputed?) handle.Target;
-                if (value != null)
+                var value = (IComputed?)handle.Target;
+                if (value!=null)
                     return value;
                 if (_storage.TryRemove(key, handle))
                     _gcHandlePool.Release(handle, random);
             }
+
             return null;
         }
 
@@ -96,6 +105,9 @@ namespace Stl.Fusion
         {
             // Debug.WriteLine($"{nameof(Register)}: {computed}");
             var key = computed.Input;
+            
+            ComputedLog.Log($"ComputedRegistry.Register: {computed}, key hash: {key.HashCode}, key: {key}");
+            
             var random = Randomize(key.HashCode);
             OnOperation(random);
 
@@ -137,6 +149,8 @@ namespace Stl.Fusion
             // since "usedBy" links are resolved via this registry
             if (computed.ConsistencyState != ConsistencyState.Invalidated)
                 throw Errors.WrongComputedState(computed.ConsistencyState);
+            
+            ComputedLog.Log($"ComputedRegistry.Unregister: {computed}");
 
             var key = computed.Input;
             var random = Randomize(key.HashCode);
@@ -181,6 +195,7 @@ namespace Stl.Fusion
         protected void TryPrune()
         {
             lock (Lock) {
+                ComputedLog.Log("ComputedRegistry.TryPrune");
                 // Double check locking
                 if (_opCounter.ApproximateValue <= _pruneCounterThreshold)
                     return;

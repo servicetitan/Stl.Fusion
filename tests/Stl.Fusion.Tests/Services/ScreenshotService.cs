@@ -66,7 +66,11 @@ namespace Stl.Fusion.Tests.Services
             gOut.InterpolationMode = InterpolationMode.Default;
             gOut.CompositingMode = CompositingMode.SourceCopy;
             gOut.DrawImage(bScreen, 0, 0, ow, oh);
+            #if NET461_OR_GREATER
+            using var stream = new MemoryStream();
+            #else
             await using var stream = new MemoryStream();
+            #endif
             bOut.Save(stream, _jpegEncoder, _jpegEncoderParameters);
             var bytes = stream.ToArray();
             var base64Content = Convert.ToBase64String(bytes);

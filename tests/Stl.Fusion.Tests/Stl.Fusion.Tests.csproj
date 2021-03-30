@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <ServerGarbageCollection>true</ServerGarbageCollection>
@@ -7,22 +7,68 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Authentication\**" />
+    <Compile Remove="Blazor\**" />
+    <Compile Remove="Extensions\**" />
+    <Compile Remove="UIModels\**" />
+    <EmbeddedResource Remove="Authentication\**" />
+    <EmbeddedResource Remove="Blazor\**" />
+    <EmbeddedResource Remove="Extensions\**" />
+    <EmbeddedResource Remove="UIModels\**" />
+    <None Remove="Authentication\**" />
+    <None Remove="Blazor\**" />
+    <None Remove="Extensions\**" />
+    <None Remove="UIModels\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="ClientTimeServiceTest.cs" />
+    <Compile Remove="ComputedInterceptorTest.cs" />
+    <Compile Remove="DbContextTest.cs" />
+    <Compile Remove="EdgeCaseServiceTest.cs" />
+    <Compile Remove="FusionTestBase.cs" />
+    <Compile Remove="KeyValueModelTest.cs" />
+    <Compile Remove="PerformanceTest.cs" />
+    <Compile Remove="PublicationTest.cs" />
+    <Compile Remove="ReplicationTest.cs" />
+    <Compile Remove="ScreenshotServiceClientTest.cs" />
+    <Compile Remove="ScreenshotServiceTest.cs" />
+    <Compile Remove="ServerTimeModelTest.cs" />
+    <Compile Remove="Services\EdgeCaseController.cs" />
+    <Compile Remove="Services\FusionTestWebHost.cs" />
+    <Compile Remove="Services\IEdgeCaseClient.cs" />
+    <Compile Remove="Services\IScreenshotServiceClient.cs" />
+    <Compile Remove="Services\IStringKeyValueClient.cs" />
+    <Compile Remove="Services\ITimeServiceClient.cs" />
+    <Compile Remove="Services\ScreenshotController.cs" />
+    <Compile Remove="Services\StringKeyValueController.cs" />
+    <Compile Remove="Services\TimeController.cs" />
+    <Compile Remove="SimplestProviderTest.cs" />
+    <Compile Remove="UserProviderTest.cs" />
+    <Compile Remove="WebSocketTest.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
     <PackageReference Include="System.Drawing.Common" />
     <PackageReference Include="System.Net.WebSockets.Client" />
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' != 'net471'">
     <ProjectReference Include="..\..\src\Stl.Fusion.EntityFramework\Stl.Fusion.EntityFramework.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.EntityFramework.Npgsql\Stl.Fusion.EntityFramework.Npgsql.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.Blazor\Stl.Fusion.Blazor.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.Client\Stl.Fusion.Client.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.Server\Stl.Fusion.Server.csproj" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\..\src\Stl.Fusion\Stl.Fusion.csproj" />
     <ProjectReference Include="..\..\src\Stl.Testing\Stl.Testing.csproj" />
     <ProjectReference Include="..\Stl.Tests\Stl.Tests.csproj" />
   </ItemGroup>
+
+
 
   <ItemGroup>
     <None Update="*.xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />

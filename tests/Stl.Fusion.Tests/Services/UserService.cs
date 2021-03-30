@@ -19,14 +19,20 @@ namespace Stl.Fusion.Tests.Services
         public record AddCommand(User User, bool OrUpdate = false) : ICommand<Unit>
         {
             public AddCommand() : this(null!, false) { }
+            
+            public Type ResultType => typeof(Unit);
         }
         public record UpdateCommand(User User) : ICommand<Unit>
         {
             public UpdateCommand() : this(default(User)!) { }
+            
+            public Type ResultType => typeof(Unit);
         }
         public record DeleteCommand(User User) : ICommand<bool>
         {
             public DeleteCommand() : this(default(User)!) { }
+            
+            public Type ResultType => typeof(bool);
         }
 
         [CommandHandler]
