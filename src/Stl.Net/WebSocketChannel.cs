@@ -135,7 +135,7 @@ namespace Stl.Net
             }
         }
 
-#if !NETFRAMEWORK
+#if !NETSTANDARD2_0
 
         protected virtual async Task RunReaderUnsafe(CancellationToken cancellationToken)
         {

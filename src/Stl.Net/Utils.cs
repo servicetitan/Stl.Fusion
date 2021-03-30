@@ -2,7 +2,7 @@ using System;
 using System.Buffers;
 using System.Text;
 
-#if NETFRAMEWORK
+#if NETSTANDARD2_0
 
 namespace Stl.Net
 {
