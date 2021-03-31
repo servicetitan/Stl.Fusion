@@ -7,8 +7,9 @@ using Stl.Fusion.Server;
 namespace HelloClientServerFx
 {
     // We need Web API controller to publish the service
-    //[Route("api/[controller]/[action]")]
     //[ApiController, JsonifyErrors]
+    //[Route("api/[controller]/[action]")]
+    [RoutePrefix("api/counter/")]
     public class CounterController
         : ApiController
         //: ControllerBase
@@ -22,7 +23,6 @@ namespace HelloClientServerFx
         // - Publication is created
         // - Its Id is shared in response header.
         [HttpGet, Publish]
-        [Route("api/counter/{key}")]
         public Task<int> Get(string key)
         {
             key = key ?? ""; // Empty value is bound to null value by default
