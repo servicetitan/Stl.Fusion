@@ -16,8 +16,7 @@ namespace Stl.Fusion.Blazor
                 if (_error == value)
                     return;
                 _error = value;
-                if (Component != null)
-                    ComponentEx.StateHasChanges(Component);
+                Component?.StateHasChangedAsync();
             }
         }
 

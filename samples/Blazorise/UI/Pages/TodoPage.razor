@@ -1,6 +1,5 @@
 @page "/todo"
 @using System.Threading
-@using Templates.Blazor2.Abstractions
 @inherits LiveComponentBase<Todo[]>
 @inject ITodoService Todos
 @inject Session Session
@@ -31,21 +30,7 @@ This comment is here solely to reset the indent in VS / Rider -->
 
 <Row><Column ColumnSize="ColumnSize.Is6.OnDesktop.Is12.OnTablet">
     @foreach(var todo in todos) {
-        <Addons Margin="Margin.Is3.OnY">
-            <Addon AddonType="AddonType.Start">
-                <AddonLabel>
-                    <Blazorise.Icon Name="@(todo.IsDone ? FontAwesomeIcons.CheckSquare : FontAwesomeIcons.Square)"
-                                    @onclick="_ => InvertDone(todo)" />
-                </AddonLabel>
-            </Addon>
-            <TextEdit TextChanged="text => UpdateTitle(todo, text)" ChangeTextOnKeyPress="false"
-                      Text="@todo.Title"/>
-            <Addon AddonType="AddonType.End">
-                <Button Clicked="_ => Remove(todo)" Color="Color.Warning">
-                    <Blazorise.Icon Name="FontAwesomeIcons.Minus"/>
-                </Button>
-            </Addon>
-        </Addons>
+        <TodoItem @key="@todo.Id" Value="@todo" />
     }
 
     @if (HasMore) {
@@ -70,7 +55,6 @@ This comment is here solely to reset the indent in VS / Rider -->
 <!--
  --></Authorized>
 </AuthorizeView>
-
 
 @code {
     private int PageSize { get; set; } = 5;
@@ -105,29 +89,10 @@ This comment is here solely to reset the indent in VS / Rider -->
         InvalidateState();
     }
 
-    private Task InvertDone(Todo todo)
-    {
-        todo = todo with { IsDone = !todo.IsDone };
-        return CommandRunner.Call(new AddOrUpdateTodoCommand(Session, todo));
-    }
-
-    private Task UpdateTitle(Todo todo, string title)
-    {
-        title = title.Trim();
-        if (todo.Title == title)
-            return Task.CompletedTask;
-        todo = todo with { Title = title };
-        return CommandRunner.Call(new AddOrUpdateTodoCommand(Session, todo));
-    }
-
-    private Task Remove(Todo todo)
-        => CommandRunner.Call(new RemoveTodoCommand(Session, todo.Id));
-
     private Task Create()
     {
         var todo = new Todo("", NewTodoTitle);
         NewTodoTitle = "";
-        StateHasChanged();
         return CommandRunner.Call(new AddOrUpdateTodoCommand(Session, todo));
     }
 }

@@ -1,0 +1,49 @@
+@inject CommandRunner CommandRunner
+@inject Session Session
+
+@{
+    Debug.WriteLine($"Rendering {Value.Id}");
+}
+
+<Addons Margin="Margin.Is3.OnY">
+    <Addon AddonType="AddonType.Start">
+        <AddonLabel>
+            <Blazorise.Icon Name="@(Value.IsDone ? FontAwesomeIcons.CheckSquare : FontAwesomeIcons.Square)"
+                            @onclick="InvertDone" />
+        </AddonLabel>
+    </Addon>
+    <TextEdit TextChanged="EventEx.NonRenderingHandler<string>(UpdateTitle)"
+              ChangeTextOnKeyPress="false"
+              Text="@Value.Title"/>
+    <Addon AddonType="AddonType.End">
+        <Button Clicked="Remove" Color="Color.Warning">
+            <Blazorise.Icon Name="FontAwesomeIcons.Minus"/>
+        </Button>
+    </Addon>
+</Addons>
+
+@code {
+    [Parameter]
+    public Todo Value { get; set; }
+
+    protected override void OnInitialized()
+        => CommandRunner.Component = this;
+
+    private Task InvertDone()
+    {
+        var todo = Value with { IsDone = !Value.IsDone };
+        return CommandRunner.Call(new AddOrUpdateTodoCommand(Session, todo));
+    }
+
+    private Task UpdateTitle(string title)
+    {
+        title = title.Trim();
+        if (Value.Title == title)
+            return Task.CompletedTask;
+        var todo = Value with { Title = title };
+        return CommandRunner.Call(new AddOrUpdateTodoCommand(Session, todo));
+    }
+
+    private Task Remove()
+        => CommandRunner.Call(new RemoveTodoCommand(Session, Value.Id));
+}
