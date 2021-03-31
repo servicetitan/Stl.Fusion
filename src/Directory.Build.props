@@ -23,7 +23,7 @@
     -->
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(MSBuildProjectExtension)' != '.dcproj' and '$(MSBuildProjectName)' != 'Stl.Fusion.Server.Fx'">
+  <ItemGroup Condition="'$(MSBuildProjectExtension)' != '.dcproj' and '$(MSBuildProjectName)' != 'Stl.Fusion.Server.Fx' and '$(MSBuildProjectName)' != 'Stl.Fusion.Server.Fx2'" >
     <PackageReference Include="Nerdbank.GitVersioning" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" />
   </ItemGroup>

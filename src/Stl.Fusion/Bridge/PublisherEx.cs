@@ -67,6 +67,34 @@ namespace Stl.Fusion.Bridge
             }
             return publication;
         }
+        
+        #if NETSTANDARD2_0
+        
+        public static async Task<IPublication> Publish(
+            this IPublisher publisher,
+            IComputed computed,
+            CancellationToken cancellationToken = default)
+        {
+            if (computed==null)
+                throw new ArgumentNullException(nameof(computed));
+
+            var publication = publisher.Publish(computed);
+            // Publication doesn't have to be "in sync" with the computed
+            // we requested it for (i.e. it might still point to its older,
+            // inconsistent version), so we have to update it here.
+            try {
+                await publication.Update(cancellationToken);
+            }
+            catch (OperationCanceledException) {
+                throw;
+            }
+            catch {
+                // Intended, it's fine to publish a computed w/ an error
+            }
+            return publication;
+        }
+        
+        #endif
 
         // PublishAsync
 

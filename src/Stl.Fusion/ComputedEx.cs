@@ -78,5 +78,28 @@ namespace Stl.Fusion
             if (!computed.TrySetOutput(output))
                 throw Errors.WrongComputedState(ConsistencyState.Computing, computed.ConsistencyState);
         }
+        
+        #if NETSTANDARD2_0
+
+        public static IComputed CompleteCapture(this ComputeContextScope ccs, bool wasError)
+        {
+            try {
+                var result = ccs.Context.GetCapturedComputed();
+
+                if (wasError) {
+                    if (result?.Error!=null)
+                        return result;
+                }
+
+                if (result==null)
+                    throw Errors.NoComputedCaptured();
+                return result;
+            }
+            finally {
+                ccs.Dispose();
+            }
+        }
+
+        #endif
     }
 }

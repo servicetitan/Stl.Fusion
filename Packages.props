@@ -22,6 +22,10 @@
   </PropertyGroup>
 
   <ItemGroup Label="Nupkg Versions">
+    <PackageReference Update="Microsoft.AspNet.Mvc" Version="5.2.7"/>
+    <PackageReference Update="Microsoft.AspNet.WebApi.Core" Version="5.2.7" />
+    <PackageReference Update="Microsoft.AspNet.WebApi.OwinSelfHost" Version="5.2.7" />
+
     <PackageReference Update="AspNet.Security.OAuth.GitHub" Version="5.0.2" />
     <PackageReference Update="Blazorise" Version="$(BlazoriseVersion)" />
     <PackageReference Update="Blazorise.Bootstrap" Version="$(BlazoriseVersion)" />
