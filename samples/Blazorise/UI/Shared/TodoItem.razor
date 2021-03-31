@@ -2,7 +2,7 @@
 @inject Session Session
 
 @{
-    Debug.WriteLine($"Rendering {Value.Id}");
+    Debug.WriteLine($"Rendering {Value}");
 }
 
 <Addons Margin="Margin.Is3.OnY">
@@ -23,11 +23,23 @@
 </Addons>
 
 @code {
+    private Todo _prevValue;
+    private bool _shouldRender = true;
+
     [Parameter]
     public Todo Value { get; set; }
 
     protected override void OnInitialized()
         => CommandRunner.Component = this;
+
+    protected override void OnParametersSet()
+    {
+        _shouldRender = _prevValue != Value;
+        _prevValue = Value;
+    }
+
+    protected override bool ShouldRender()
+        => _shouldRender;
 
     private Task InvertDone()
     {
