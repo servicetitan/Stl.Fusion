@@ -40,6 +40,9 @@
             {
                 _stateEventKind = stateEventKind;
                 Debug.WriteLine($"ComponentStateLabel state changed: {stateEventKind} {state.Computed.ConsistencyState}");
+                // We don't call StateHasChanged() because this event handler is called from a thread-pool thread
+                // and StateHasChanged() sometimes synchronously re-renders the component. Instead we call 
+                // StateHasChangedAsync which queues a call to StateHasChanged() on the Blazor UI thread for this component
                 this.StateHasChangedAsync().Ignore();
             }
         };
