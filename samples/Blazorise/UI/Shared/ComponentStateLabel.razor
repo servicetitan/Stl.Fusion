@@ -1,0 +1,55 @@
+@using Stl.Fusion
+@using Stl.Async; 
+@using System.Threading
+@using Templates.Blazor2.Abstractions
+@implements IDisposable
+@inherits ComponentBase
+@*
+    ComponentStateLabel:
+    - shows the current state of the Computed passed in as 'StateToWatch'. States are Invalidated/Updating/Updated.
+    - renders on state change without a rerender of the parent component
+*@
+
+<Text Margin="Margin.Is1.OnY">
+    <span>Component state: </span>
+    @if (_stateEventKind != StateEventKind.Updated)
+    {
+        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+    }
+    else
+    {
+        <span class="oi oi-check" aria-hidden="true"></span>
+    }
+    <b>@_stateEventKind</b>
+</Text>
+
+@code {
+    [Parameter]
+    public IState? StateToWatch { get; set; } = null;
+
+    private StateEventKind _stateEventKind = StateEventKind.Updated;
+    private Action<IState, StateEventKind>? _handleStateChanged;
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+
+        _handleStateChanged = (state, stateEventKind) =>
+        {
+            if (_stateEventKind != stateEventKind)
+            {
+                _stateEventKind = stateEventKind;
+                Debug.WriteLine($"ComponentStateLabel state changed: {stateEventKind} {state.Computed.ConsistencyState}");
+                this.StateHasChangedAsync().Ignore();
+            }
+        };
+
+        StateToWatch?.AddEventHandler(StateEventKind.All, _handleStateChanged);
+    }
+
+    public virtual void Dispose()
+    {
+        if (_handleStateChanged != null)
+            StateToWatch?.RemoveEventHandler(StateEventKind.All, _handleStateChanged);
+    }
+}
