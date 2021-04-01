@@ -54,5 +54,6 @@
 
   <ItemGroup Condition="$(DeterministicSourcePaths) == 'true'">
     <SourceRoot Include="$(SolutionDir)" />
+    <MappedPath Include="$(SolutionDir)" />
   </ItemGroup>
 </Project>
