@@ -44,11 +44,12 @@ namespace Stl.Fusion.Blazor
             var shouldAwaitTask =
                 task.Status != TaskStatus.RanToCompletion &&
                 task.Status != TaskStatus.Canceled;
+            if (shouldAwaitTask)
+                return CallStateHasChangedOnAsyncCompletion(task);
 
-            if (EnableStateHasChangedCallAfterEvent) // But this line is added
+            if (EnableStateHasChangedCallAfterEvent)
                 StateHasChanged();
-
-            return shouldAwaitTask ? CallStateHasChangedOnAsyncCompletion(task) : Task.CompletedTask;
+            return Task.CompletedTask;
         }
 
         private async Task CallStateHasChangedOnAsyncCompletion(Task task)
@@ -63,7 +64,8 @@ namespace Stl.Fusion.Blazor
                     return;
                 throw;
             }
-            StateHasChanged();
+            if (EnableStateHasChangedCallAfterEvent)
+                StateHasChanged();
         }
     }
 
