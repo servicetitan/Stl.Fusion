@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Http;
 using Microsoft.Owin.Hosting;
 using Stl.Async;
@@ -84,9 +85,20 @@ namespace HelloClientServerFx
         private static IServiceProvider CreateClientServices(string baseUri)
         {
             var services = new ServiceCollection();
+            
+            services.AddLogging(c => {
+                c.ClearProviders();
+                c.AddConsole();
+            });
+            
+            ConfigureClientServices(services, baseUri);
+            return services.BuildServiceProvider();
+        }
+
+        private static void ConfigureClientServices(IServiceCollection services, string baseUri)
+        {
             var apiBaseUri = new Uri($"{baseUri}api/");
-            services.ConfigureAll<HttpClientFactoryOptions>(options =>
-            {
+            services.ConfigureAll<HttpClientFactoryOptions>(options => {
                 // Replica Services construct HttpClients using IHttpClientFactory, so this is
                 // the right way to make all HttpClients to have BaseAddress = apiBaseUri by default.
                 options.HttpClientActions.Add(client => client.BaseAddress = apiBaseUri);
@@ -94,7 +106,6 @@ namespace HelloClientServerFx
             var fusion = services.AddFusion();
             var fusionClient = fusion.AddRestEaseClient((c, options) => options.BaseUri = new Uri(baseUri));
             fusionClient.AddReplicaService<ICounterService, ICounterServiceClient>();
-            return services.BuildServiceProvider();
         }
     }
 }
