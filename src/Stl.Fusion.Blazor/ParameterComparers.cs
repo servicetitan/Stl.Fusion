@@ -66,4 +66,10 @@ namespace Stl.Fusion.Blazor
         public override bool AreEqual(object? oldValue, object? newValue)
             => ReferenceEquals(oldValue, newValue);
     }
+
+    public class AlwaysEqualParameterComparer : ParameterComparer
+    {
+        public override bool AreEqual(object? oldValue, object? newValue)
+            => true;
+    }
 }

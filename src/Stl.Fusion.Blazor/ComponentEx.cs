@@ -8,7 +8,6 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.RenderTree;
-using Stl.Fusion.Blazor.Internal;
 
 namespace Stl.Fusion.Blazor
 {
@@ -16,7 +15,10 @@ namespace Stl.Fusion.Blazor
     {
         public record ComponentParameterInfo
         {
-            public string Name { get; init; } = "";
+            public PropertyInfo Property { get; init; }
+            public bool IsCascading { get; init; }
+            public bool IsCapturingUnmatchedValues { get; init; }
+            public string? CascadingParameterName { get; init; }
             public Func<IComponent, object> Getter { get; init; } = null!;
             public Action<IComponent, object> Setter { get; init; } = null!;
             public ParameterComparer Comparer { get; init; } = ParameterComparer.Default;
@@ -39,8 +41,12 @@ namespace Stl.Fusion.Blazor
                 var parameters = new Dictionary<string, ComponentParameterInfo>();
                 foreach (var property in type.GetProperties(bindingFlags)) {
                     var pa = property.GetCustomAttribute<ParameterAttribute>(true);
-                    if (pa == null)
-                        continue;
+                    CascadingParameterAttribute? cpa = null;
+                    if (pa == null) {
+                        cpa = property.GetCustomAttribute<CascadingParameterAttribute>(true);
+                        if (cpa == null)
+                            continue;
+                    }
                     var pca = property.GetCustomAttribute<ParameterComparerAttribute>(true);
                     var comparerType = pca?.ComparerType;
                     var comparer = comparerType != null
@@ -61,12 +67,15 @@ namespace Stl.Fusion.Blazor
                         pComponent, pValue
                     ).Compile();
                     var parameter = new ComponentParameterInfo() {
-                        Name = property.Name,
+                        Property = property,
+                        IsCascading = cpa != null,
+                        IsCapturingUnmatchedValues = pa?.CaptureUnmatchedValues ?? false,
+                        CascadingParameterName = cpa?.Name,
                         Getter = getter,
                         Setter = setter,
                         Comparer = comparer,
                     };
-                    parameters.Add(parameter.Name, parameter);
+                    parameters.Add(parameter.Property.Name, parameter);
                 }
                 Type = type;
                 Parameters = new ReadOnlyDictionary<string, ComponentParameterInfo>(parameters);
@@ -118,7 +127,7 @@ namespace Stl.Fusion.Blazor
             var parameters = componentInfo.Parameters;
             foreach (var parameterValue in parameterView) {
                 if (!parameters.TryGetValue(parameterValue.Name, out var parameterInfo))
-                    throw Errors.UnknownComponentParameter(componentInfo.Type, parameterValue.Name);
+                    return true;
                 var oldValue = parameterInfo.Getter.Invoke(component);
                 if (!parameterInfo.Comparer.AreEqual(oldValue, parameterValue.Value))
                     return true;
