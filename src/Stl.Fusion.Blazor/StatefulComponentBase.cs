@@ -19,10 +19,6 @@ namespace Stl.Fusion.Blazor
         // and trigger StateHasChanged only as a result of this or parameter changes.
         protected bool EnableStateHasChangedCallAfterEvent { get; set; } = false;
 
-        public bool IsLoading => UntypedState == null! || UntypedState.Snapshot.UpdateCount == 0;
-        public bool IsUpdating => UntypedState == null! || UntypedState.Snapshot.IsUpdating;
-        public bool IsUpdatePending => UntypedState == null! || UntypedState.Snapshot.Computed.IsInvalidated();
-
         protected StatefulComponentBase()
         {
             StateChanged = (_, eventKind) => {
