@@ -55,7 +55,7 @@ namespace Stl.Fusion.Blazor
                 || type == typeof(decimal);
     }
 
-    public class ByEqualityParameterComparer : ParameterComparer
+    public class ByValueParameterComparer : ParameterComparer
     {
         public override bool AreEqual(object? oldValue, object? newValue)
             => Equals(oldValue, newValue);
