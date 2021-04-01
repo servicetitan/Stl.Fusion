@@ -42,18 +42,14 @@
     <!-- NU5048: The 'PackageIconUrl'/'iconUrl' element is deprecated -->
     <NoWarn>$(NoWarn);NU5105;NU5048;</NoWarn>
     <WarningsAsErrors>true</WarningsAsErrors>
-  </PropertyGroup>
 
-  <!-- Rider doesn't support deterministic build with SourceMap -->
-  <PropertyGroup Condition="'$(IDEA_INITIAL_DIRECTORY)' == ''">
-    <Deterministic>true</Deterministic>
-    <DeterministicSourcePaths>true</DeterministicSourcePaths>
+    <!-- Deterministic -->
+    <Deterministic>false</Deterministic>
     <ContinuousIntegrationBuild>false</ContinuousIntegrationBuild>
     <PathMap>'$(SolutionDir)'=/_/</PathMap>
   </PropertyGroup>
 
   <ItemGroup Condition="$(DeterministicSourcePaths) == 'true'">
     <SourceRoot Include="$(SolutionDir)" />
-    <MappedPath Include="$(SolutionDir)" />
   </ItemGroup>
 </Project>
