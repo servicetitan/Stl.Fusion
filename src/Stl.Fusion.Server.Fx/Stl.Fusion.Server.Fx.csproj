@@ -12,6 +12,8 @@
     </PackageReference>-->
     <PackageReference Include="Microsoft.AspNet.WebApi.Core" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Owin" />
+    <PackageReference Include="Owin" />
     
   </ItemGroup>
 

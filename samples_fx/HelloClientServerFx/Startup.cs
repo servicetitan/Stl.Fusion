@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Web.Http;
 using System.Web.Http.Controllers;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Owin;
 using Owin;
 using Stl.Fusion;
 using Stl.Fusion.Server;
@@ -19,6 +20,10 @@ namespace HelloClientServerFx
             // Configure Web API for self-host. 
             var config = new HttpConfiguration();
             Configure(config);
+
+            var serviceProvider = config.DependencyResolver.GetService<IServiceProvider>();
+            appBuilder.MapFusionWebSocketServer(serviceProvider);
+
             appBuilder.UseWebApi(config); 
         }
 
@@ -35,6 +40,8 @@ namespace HelloClientServerFx
                 routeTemplate: "api/{controller}/{id}",
                 defaults: new {id = RouteParameter.Optional}
             );
+            
+            
         }
 
         private ServiceProvider CreateServiceProvider()

@@ -25,6 +25,8 @@
     <PackageReference Update="Microsoft.AspNet.Mvc" Version="5.2.7"/>
     <PackageReference Update="Microsoft.AspNet.WebApi.Core" Version="5.2.7" />
     <PackageReference Update="Microsoft.AspNet.WebApi.OwinSelfHost" Version="5.2.7" />
+    <PackageReference Update="Microsoft.Owin" Version="4.1.1" />
+    <PackageReference Update="Owin" Version="1.0.0" />
 
     <PackageReference Update="AspNet.Security.OAuth.GitHub" Version="5.0.2" />
     <PackageReference Update="Blazorise" Version="$(BlazoriseVersion)" />

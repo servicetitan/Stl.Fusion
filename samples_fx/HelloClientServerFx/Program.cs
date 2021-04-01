@@ -86,14 +86,17 @@ namespace HelloClientServerFx
         {
             var services = new ServiceCollection();
             
-            services.AddLogging(c => {
-                c.ClearProviders();
-                c.AddConsole();
-            });
+            //ConfigureClientServicesLogging(services);
             
             ConfigureClientServices(services, baseUri);
             return services.BuildServiceProvider();
         }
+
+        private static void ConfigureClientServicesLogging(ServiceCollection services) =>
+            services.AddLogging(c => {
+                c.ClearProviders();
+                c.AddConsole();
+            });
 
         private static void ConfigureClientServices(IServiceCollection services, string baseUri)
         {
