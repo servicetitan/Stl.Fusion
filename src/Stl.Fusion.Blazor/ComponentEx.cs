@@ -1,29 +1,95 @@
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Collections.ObjectModel;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.RenderTree;
+using Stl.Fusion.Blazor.Internal;
 
 namespace Stl.Fusion.Blazor
 {
     public static class ComponentEx
     {
+        public record ComponentParameterInfo
+        {
+            public string Name { get; init; } = "";
+            public Func<IComponent, object> Getter { get; init; } = null!;
+            public Action<IComponent, object> Setter { get; init; } = null!;
+            public ParameterComparer Comparer { get; init; } = ParameterComparer.Default;
+        }
+
+        public record ComponentInfo
+        {
+            public Type Type { get; init; } = null!;
+            public IReadOnlyDictionary<string, ComponentParameterInfo> Parameters { get; init; } =
+                ImmutableDictionary<string, ComponentParameterInfo>.Empty;
+
+            internal ComponentInfo(Type type)
+            {
+                if (!typeof(IComponent).IsAssignableFrom(type))
+                    throw new ArgumentOutOfRangeException(nameof(type));
+
+                var bindingFlags = BindingFlags.FlattenHierarchy
+                    | BindingFlags.Instance
+                    | BindingFlags.Public | BindingFlags.NonPublic;
+                var parameters = new Dictionary<string, ComponentParameterInfo>();
+                foreach (var property in type.GetProperties(bindingFlags)) {
+                    var pa = property.GetCustomAttribute<ParameterAttribute>(true);
+                    if (pa == null)
+                        continue;
+                    var pca = property.GetCustomAttribute<ParameterComparerAttribute>(true);
+                    var comparerType = pca?.ComparerType;
+                    var comparer = comparerType != null
+                        ? ParameterComparer.Get(comparerType)
+                        : ParameterComparer.Default;
+                    var pComponent = Expression.Parameter(typeof(IComponent), "component");
+                    var pValue = Expression.Parameter(typeof(object), "value");
+                    var getter = Expression.Lambda<Func<IComponent, object>>(
+                        Expression.Property(
+                            Expression.ConvertChecked(pComponent, type),
+                            property),
+                        pComponent
+                    ).Compile();
+                    var setter = Expression.Lambda<Action<IComponent, object>>(
+                        Expression.Assign(
+                            Expression.Property(Expression.ConvertChecked(pComponent, type), property),
+                            Expression.ConvertChecked(pValue, property.PropertyType)),
+                        pComponent, pValue
+                    ).Compile();
+                    var parameter = new ComponentParameterInfo() {
+                        Name = property.Name,
+                        Getter = getter,
+                        Setter = setter,
+                        Comparer = comparer,
+                    };
+                    parameters.Add(parameter.Name, parameter);
+                }
+                Type = type;
+                Parameters = new ReadOnlyDictionary<string, ComponentParameterInfo>(parameters);
+            }
+        }
+
+        private static readonly ConcurrentDictionary<Type, ComponentInfo> ComponentInfoCache = new();
         private static readonly Action<ComponentBase> CompiledStateHasChanged;
         private static readonly Func<ComponentBase, RenderHandle> CompiledGetRenderHandle;
-        private static readonly Func<RenderHandle, object> CompiledGetOptionalComponentState;
+        private static readonly Func<RenderHandle, object?> CompiledGetOptionalComponentState;
 
-        // InvokeAsync
+        public static ComponentInfo GetComponentInfo(Type componentType)
+            => ComponentInfoCache.GetOrAdd(componentType, componentType1 => new ComponentInfo(componentType1));
+        public static ComponentInfo GetComponentInfo(this IComponent component)
+            => GetComponentInfo(component.GetType());
 
-        public static RenderHandle GetRenderHandle(this ComponentBase component)
-            => CompiledGetRenderHandle.Invoke(component);
-
-        public static bool IsDisposed(this RenderHandle renderHandle)
-            => CompiledGetOptionalComponentState.Invoke(renderHandle) == null;
+        public static bool IsDisposed(this ComponentBase component)
+            => component.GetRenderHandle().IsDisposed();
 
         /// <summary>
-        /// Calls StateHasChanged() in the Blazor SynchronizationContext of the component
-        /// Therefore it works even when called from another context such as threadpool thread
+        /// Calls <see cref="ComponentBase.StateHasChanged"/> in the Blazor synchronization context
+        /// of the component, therefore it works even when called from another synchronization context
+        /// (e.g. a thread-pool thread).
         /// </summary>
         public static Task StateHasChangedAsync(this ComponentBase component)
         {
@@ -31,11 +97,10 @@ namespace Stl.Fusion.Blazor
             async Task Invoker()
 #pragma warning restore 1998
             {
-                // The component's renderer may already be disposed while the component is not yet disposed
+                // The component's renderer may already be disposed while the component is not yet disposed.
                 // Just calling StateHasChanged() will then cause an ObjectDisposedException.
-                // Workaround: To figure out if the renderer is already disposed, we reflect into private
-                // and protected members of the component
-                if (component.GetRenderHandle().IsDisposed())
+                // Workaround: use compiled expressions accessing private members of the component to find this out.
+                if (component.IsDisposed())
                     return;
                 try {
                     CompiledStateHasChanged.Invoke(component);
@@ -46,6 +111,27 @@ namespace Stl.Fusion.Blazor
             }
             return component.GetRenderHandle().Dispatcher.InvokeAsync(Invoker);
         }
+
+        public static bool HasChangedParameters(this IComponent component, ParameterView parameterView)
+        {
+            var componentInfo = component.GetComponentInfo();
+            var parameters = componentInfo.Parameters;
+            foreach (var parameterValue in parameterView) {
+                if (!parameters.TryGetValue(parameterValue.Name, out var parameterInfo))
+                    throw Errors.UnknownComponentParameter(componentInfo.Type, parameterValue.Name);
+                var oldValue = parameterInfo.Getter.Invoke(component);
+                if (!parameterInfo.Comparer.AreEqual(oldValue, parameterValue.Value))
+                    return true;
+            }
+            return false;
+        }
+
+        // Internal and private methods
+
+        internal static RenderHandle GetRenderHandle(this ComponentBase component)
+            => CompiledGetRenderHandle.Invoke(component);
+        internal static bool IsDisposed(this RenderHandle renderHandle)
+            => CompiledGetOptionalComponentState.Invoke(renderHandle) == null;
 
         static ComponentEx()
         {
@@ -65,7 +151,7 @@ namespace Stl.Fusion.Blazor
                 Expression.Call(pComponent, mStateHasChanged), pComponent).Compile();
             CompiledGetRenderHandle = Expression.Lambda<Func<ComponentBase, RenderHandle>>(
                 Expression.Field(pComponent, fRenderHandle), pComponent).Compile();
-            CompiledGetOptionalComponentState = Expression.Lambda<Func<RenderHandle, object>>(
+            CompiledGetOptionalComponentState = Expression.Lambda<Func<RenderHandle, object?>>(
                 Expression.Call(
                     Expression.Field(pRenderHandle, fRenderer),
                     mGetOptionalComponentState,

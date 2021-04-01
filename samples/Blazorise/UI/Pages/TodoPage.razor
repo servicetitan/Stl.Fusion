@@ -8,15 +8,13 @@
 
 @{
     Debug.WriteLine($"Rendering TodoPage. ConsistencyState: {State.Computed.ConsistencyState}");
-
     var error = State.Error;
     var todos = State.UnsafeValue ?? Array.Empty<Todo>(); // UnsafeValue returns default if there is an Error
 }
 
 <h1>Todo List</h1>
 
-<ComponentStateLabel StateToWatch="@State" />
-<StatefulComponentState Component="@this" />
+<StateOfStateBadge State="@State" />
 <Text Margin="Margin.Is1.OnY">
     Updated: <b><MomentsAgoBadge Value="LastStateUpdateTime" /></b>
 </Text>
@@ -30,13 +28,11 @@
         <WhenCommandError Exception="CommandRunner.Error" />
         <Row>
             <Column ColumnSize="ColumnSize.Is6.OnDesktop.Is12.OnTablet">
-                @foreach (var todo in todos)
-                {
+                @foreach (var todo in todos) {
                     <TodoItem @key="@todo.Id" Value="@todo" />
                 }
 
-                @if (HasMore)
-                {
+                @if (HasMore) {
                     <Button Clicked="_ => LoadMore()" Color="Color.Primary" Margin="Margin.Is3.OnY">
                         Load more <Blazorise.Icon Name="FontAwesomeIcons.AngleDoubleDown" />
                     </Button>

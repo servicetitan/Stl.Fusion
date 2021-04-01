@@ -23,23 +23,14 @@
 </Addons>
 
 @code {
-    private Todo _prevValue;
-    private bool _shouldRender = true;
-
-    [Parameter]
-    public Todo Value { get; set; }
+    [Parameter, ParameterComparer(typeof(ByReferenceParameterComparer))]
+    public Todo Value { get; set; } = null!;
 
     protected override void OnInitialized()
         => CommandRunner.Component = this;
 
-    protected override void OnParametersSet()
-    {
-        _shouldRender = _prevValue != Value;
-        _prevValue = Value;
-    }
-
-    protected override bool ShouldRender()
-        => _shouldRender;
+    public override Task SetParametersAsync(ParameterView parameters)
+        => this.HasChangedParameters(parameters) ? base.SetParametersAsync(parameters) : Task.CompletedTask;
 
     private Task InvertDone()
     {
