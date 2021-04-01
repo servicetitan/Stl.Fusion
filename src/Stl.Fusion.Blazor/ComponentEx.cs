@@ -15,7 +15,7 @@ namespace Stl.Fusion.Blazor
     {
         public record ComponentParameterInfo
         {
-            public PropertyInfo Property { get; init; }
+            public PropertyInfo Property { get; init; } = null!;
             public bool IsCascading { get; init; }
             public bool IsCapturingUnmatchedValues { get; init; }
             public string? CascadingParameterName { get; init; }
