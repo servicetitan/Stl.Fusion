@@ -42,6 +42,8 @@ namespace Stl.Fusion.Blazor
         Task IHandleEvent.HandleEventAsync(EventCallbackWorkItem callback, object? arg)
         {
             // This code is copied from ComponentBase
+            // Remove this implementation when 'MustTriggerStateHasChangedOnEvent' becomes a regular Blazor feature 
+            // https://github.com/dotnet/aspnetcore/issues/18919#issuecomment-803005864
             var task = callback.InvokeAsync(arg);
             var shouldAwaitTask =
                 task.Status != TaskStatus.RanToCompletion &&

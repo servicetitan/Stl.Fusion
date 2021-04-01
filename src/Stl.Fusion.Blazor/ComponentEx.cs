@@ -21,17 +21,20 @@ namespace Stl.Fusion.Blazor
         public static bool IsDisposed(this RenderHandle renderHandle)
             => CompiledGetOptionalComponentState.Invoke(renderHandle) == null;
 
-        public static Task StateHasChangedAsync(this ComponentBase component, bool async = true)
+        /// <summary>
+        /// Calls StateHasChanged() in the Blazor SynchronizationContext of the component
+        /// Therefore it works even when called from another context such as threadpool thread
+        /// </summary>
+        public static Task StateHasChangedAsync(this ComponentBase component)
         {
-            if (async == false) {
-                CompiledStateHasChanged.Invoke(component);
-                return Task.CompletedTask;
-            }
-
 #pragma warning disable 1998
             async Task Invoker()
 #pragma warning restore 1998
             {
+                // The component's renderer may already be disposed while the component is not yet disposed
+                // Just calling StateHasChanged() will then cause an ObjectDisposedException.
+                // Workaround: To figure out if the renderer is already disposed, we reflect into private
+                // and protected members of the component
                 if (component.GetRenderHandle().IsDisposed())
                     return;
                 try {
