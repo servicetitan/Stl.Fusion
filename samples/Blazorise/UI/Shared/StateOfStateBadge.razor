@@ -1,0 +1,51 @@
+@using Stl.Async;
+@implements IDisposable
+@*
+    StateOfStateBadge:
+    - Displays the current state of provided 'State' (Invalidated/Updating/Updated).
+    - Updates on state change without re-rendering the parent component.
+*@
+
+<Text Margin="Margin.Is1.OnY">
+    <span>Component state: </span>
+    @if (IsLoading) {
+        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+        <b>Loading...</b>
+    } else if (IsUpdating) {
+        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+        <b>Updating...</b>
+    } else if (IsUpdatePending) {
+        <div class="spinner-grow spinner-grow-sm text-secondary" role="status"></div>
+        <b class="text-secondary">Update pending...</b>
+    } else {
+        <span class="oi oi-check" aria-hidden="true"></span>
+        <b>In sync.</b>
+    }
+</Text>
+
+@code {
+    private readonly Action<IState, StateEventKind> _stateChangedHandler;
+    private IState _state = null!;
+
+    [Parameter]
+    public IState State {
+        get => _state;
+        set {
+            if (_state == value)
+                return;
+            _state?.RemoveEventHandler(StateEventKind.All, _stateChangedHandler);
+            _state = value;
+            _state?.AddEventHandler(StateEventKind.All, _stateChangedHandler);
+        }
+    }
+
+    public bool IsLoading => State == null! || State.Snapshot.UpdateCount == 0;
+    public bool IsUpdating => State == null! || State.Snapshot.IsUpdating;
+    public bool IsUpdatePending => State == null! || State.Snapshot.Computed.IsInvalidated();
+
+    public StateOfStateBadge()
+        => _stateChangedHandler = (_1, _2) => this.StateHasChangedAsync().Ignore();
+
+    public virtual void Dispose()
+        => State = null!;
+}

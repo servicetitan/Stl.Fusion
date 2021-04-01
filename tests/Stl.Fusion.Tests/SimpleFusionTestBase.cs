@@ -17,9 +17,6 @@ namespace Stl.Fusion.Tests
 
         protected IServiceProvider CreateServiceProvider(Action<IServiceCollection>? configureServices = null)
         {
-            ComputedRegistry.Instance = new ComputedRegistry(new ComputedRegistry.Options() {
-                InitialCapacity = 16,
-            });
             var services = new ServiceCollection();
             services.AddLogging(logging => {
                 logging.ClearProviders();

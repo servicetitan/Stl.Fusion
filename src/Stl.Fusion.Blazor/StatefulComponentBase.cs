@@ -1,11 +1,12 @@
 using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Internal;
 
 namespace Stl.Fusion.Blazor
 {
-    public abstract class StatefulComponentBase : ComponentBase, IDisposable
+    public abstract class StatefulComponentBase : ComponentBase, IDisposable, IHandleEvent
     {
         [Inject]
         protected IServiceProvider Services { get; set; } = null!;
@@ -14,17 +15,17 @@ namespace Stl.Fusion.Blazor
         protected internal abstract IState UntypedState { get; }
         protected Action<IState, StateEventKind> StateChanged { get; set; }
         protected StateEventKind StateHasChangedTriggers { get; set; } = StateEventKind.Updated;
-
-        public bool IsLoading => UntypedState == null! || UntypedState.Snapshot.UpdateCount == 0;
-        public bool IsUpdating => UntypedState == null! || UntypedState.Snapshot.IsUpdating;
-        public bool IsUpdatePending => UntypedState == null! || UntypedState.Snapshot.Computed.IsInvalidated();
+        // It's typically much more natural for stateful components to recompute State
+        // and trigger StateHasChanged only as a result of this or parameter changes.
+        protected bool EnableStateHasChangedCallAfterEvent { get; set; } = false;
 
         protected StatefulComponentBase()
         {
-            StateChanged = (state, eventKind) => InvokeAsync(() => {
-                if ((eventKind & StateHasChangedTriggers) != 0)
-                    StateHasChanged();
-            });
+            StateChanged = (_, eventKind) => {
+                if ((eventKind & StateHasChangedTriggers) == 0)
+                    return;
+                this.StateHasChangedAsync();
+            };
         }
 
         public virtual void Dispose()
@@ -32,6 +33,37 @@ namespace Stl.Fusion.Blazor
             UntypedState.RemoveEventHandler(StateEventKind.All, StateChanged);
             if (OwnsState && UntypedState is IDisposable d)
                 d.Dispose();
+        }
+
+        Task IHandleEvent.HandleEventAsync(EventCallbackWorkItem callback, object? arg)
+        {
+            // This code is copied from ComponentBase
+            // Remove this implementation when 'MustTriggerStateHasChangedOnEvent' becomes a regular Blazor feature
+            // https://github.com/dotnet/aspnetcore/issues/18919#issuecomment-803005864
+            var task = callback.InvokeAsync(arg);
+            var shouldAwaitTask =
+                task.Status != TaskStatus.RanToCompletion &&
+                task.Status != TaskStatus.Canceled;
+
+            if (EnableStateHasChangedCallAfterEvent) // But this line is added
+                StateHasChanged();
+
+            return shouldAwaitTask ? CallStateHasChangedOnAsyncCompletion(task) : Task.CompletedTask;
+        }
+
+        private async Task CallStateHasChangedOnAsyncCompletion(Task task)
+        {
+            try {
+                await task;
+            }
+            catch {
+                // Avoiding exception filters for AOT runtime support.
+                // Ignore exceptions from task cancelletions, but don't bother issuing a state change.
+                if (task.IsCanceled)
+                    return;
+                throw;
+            }
+            StateHasChanged();
         }
     }
 
