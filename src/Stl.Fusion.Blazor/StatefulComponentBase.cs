@@ -17,7 +17,7 @@ namespace Stl.Fusion.Blazor
         protected StateEventKind StateHasChangedTriggers { get; set; } = StateEventKind.Updated;
         // It's typically much more natural for stateful components to recompute State
         // and trigger StateHasChanged only as a result of this or parameter changes.
-        protected bool MustTriggerStateHasChangedOnEvent { get; set; } = false;
+        protected bool EnableStateHasChangedCallAfterEvent { get; set; } = false;
 
         public bool IsLoading => UntypedState == null! || UntypedState.Snapshot.UpdateCount == 0;
         public bool IsUpdating => UntypedState == null! || UntypedState.Snapshot.IsUpdating;
@@ -42,14 +42,14 @@ namespace Stl.Fusion.Blazor
         Task IHandleEvent.HandleEventAsync(EventCallbackWorkItem callback, object? arg)
         {
             // This code is copied from ComponentBase
-            // Remove this implementation when 'MustTriggerStateHasChangedOnEvent' becomes a regular Blazor feature 
+            // Remove this implementation when 'MustTriggerStateHasChangedOnEvent' becomes a regular Blazor feature
             // https://github.com/dotnet/aspnetcore/issues/18919#issuecomment-803005864
             var task = callback.InvokeAsync(arg);
             var shouldAwaitTask =
                 task.Status != TaskStatus.RanToCompletion &&
                 task.Status != TaskStatus.Canceled;
 
-            if (MustTriggerStateHasChangedOnEvent) // But this line is added
+            if (EnableStateHasChangedCallAfterEvent) // But this line is added
                 StateHasChanged();
 
             return shouldAwaitTask ? CallStateHasChangedOnAsyncCompletion(task) : Task.CompletedTask;
