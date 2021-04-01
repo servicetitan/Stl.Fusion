@@ -25,7 +25,7 @@ namespace Stl.Fusion.Server
             items.Add(typeof(ComputeContextScope), ccs);
         }
 
-        public override void OnActionExecuted(HttpActionExecutedContext actionExecutedContext)
+        public override async Task OnActionExecutedAsync(HttpActionExecutedContext actionExecutedContext, CancellationToken cancellationToken)
         {
             var actionContext = actionExecutedContext.ActionContext;
             var items = actionContext.GetItems();
@@ -36,11 +36,23 @@ namespace Stl.Fusion.Server
                 var appServices = actionContext.GetAppServices();
                 var publisher = appServices.GetService<IPublisher>();
                 var publication = publisher.Publish(computed);
-                publication.Update(CancellationToken.None); // Надо ли делать Update и как правильно его вызвать?
+                // Publication doesn't have to be "in sync" with the computed
+                // we requested it for (i.e. it might still point to its older,
+                // inconsistent version), so we have to update it here.
+                try {
+                    // TODO: should we call configure await false or not
+                    await publication.Update(cancellationToken).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) {
+                    throw;
+                }
+                catch {
+                    // Intended, it's fine to publish a computed w/ an error
+                }
                 actionContext.Publish(publication);
             }
             
-            base.OnActionExecuted(actionExecutedContext);
+            await base.OnActionExecutedAsync(actionExecutedContext, cancellationToken);
         }
     }
 }
