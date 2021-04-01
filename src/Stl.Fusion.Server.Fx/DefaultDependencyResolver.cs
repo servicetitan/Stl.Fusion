@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Web.Http.Dependencies;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace HelloClientServerFx
+namespace Stl.Fusion.Server
 {
-    internal class DefaultDependencyResolver : IDependencyResolver
+    public class DefaultDependencyResolver : IDependencyResolver
     {
         private IServiceProvider serviceProvider;
         

@@ -7,14 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!--<PackageReference Include="Microsoft.AspNet.Mvc">
-      --><!--<OverrideVersion>5.2.7</OverrideVersion>--><!--
-    </PackageReference>-->
     <PackageReference Include="Microsoft.AspNet.WebApi.Core" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="Microsoft.Owin" />
     <PackageReference Include="Owin" />
-    
   </ItemGroup>
 
   <ItemGroup>
