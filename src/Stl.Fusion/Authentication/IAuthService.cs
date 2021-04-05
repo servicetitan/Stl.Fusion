@@ -7,12 +7,14 @@ namespace Stl.Fusion.Authentication
 {
     public interface IAuthService
     {
+        // Commands
         [CommandHandler]
         Task SignOut(SignOutCommand command, CancellationToken cancellationToken = default);
         [CommandHandler]
         Task EditUser(EditUserCommand command, CancellationToken cancellationToken = default);
         Task UpdatePresence(Session session, CancellationToken cancellationToken = default);
 
+        // Queries
         [ComputeMethod(KeepAliveTime = 10)]
         Task<bool> IsSignOutForced(Session session, CancellationToken cancellationToken = default);
         [ComputeMethod(KeepAliveTime = 10)]
@@ -21,6 +23,9 @@ namespace Stl.Fusion.Authentication
         Task<User> GetUser(Session session, CancellationToken cancellationToken = default);
         [ComputeMethod]
         Task<SessionInfo[]> GetUserSessions(Session session, CancellationToken cancellationToken = default);
+
+        // Non-[ComputeMethod] queries
+        Task<Session> GetSession(CancellationToken cancellationToken = default);
     }
 
     public interface IServerSideAuthService : IAuthService

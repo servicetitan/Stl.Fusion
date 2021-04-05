@@ -16,13 +16,16 @@ namespace Stl.Fusion.Client.Internal
         [Post("updatePresence")]
         Task UpdatePresence([Body] Session session, CancellationToken cancellationToken = default);
 
-        [Get("isSignOutForced"), ComputeMethod]
+        [Get("isSignOutForced")]
         Task<bool> IsSignOutForced(Session session, CancellationToken cancellationToken = default);
-        [Get("getUser"), ComputeMethod]
+        [Get("getUser")]
         Task<User> GetUser(Session session, CancellationToken cancellationToken = default);
-        [Get("getSessionInfo"), ComputeMethod]
+        [Get("getSessionInfo")]
         Task<SessionInfo> GetSessionInfo(Session session, CancellationToken cancellationToken = default);
-        [Get("getUserSessions"), ComputeMethod]
+        [Get("getUserSessions")]
         Task<SessionInfo[]> GetUserSessions(Session session, CancellationToken cancellationToken = default);
+
+        [Get("getSession")]
+        Task<Session> GetSession(CancellationToken cancellationToken = default);
     }
 }

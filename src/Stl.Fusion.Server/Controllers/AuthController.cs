@@ -19,6 +19,8 @@ namespace Stl.Fusion.Server.Controllers
             SessionResolver = sessionResolver;
         }
 
+        // Commands
+
         [HttpPost("signOut")]
         public Task SignOut([FromBody] SignOutCommand command, CancellationToken cancellationToken = default)
         {
@@ -40,7 +42,7 @@ namespace Stl.Fusion.Server.Controllers
             return AuthService.UpdatePresence(session, cancellationToken);
         }
 
-        // Compute methods
+        // Queries
 
         [HttpGet("isSignOutForced")]
         [Publish]
@@ -73,5 +75,11 @@ namespace Stl.Fusion.Server.Controllers
             session ??= SessionResolver.Session;
             return AuthService.GetUserSessions(session, cancellationToken);
         }
+
+        // Non-[ComputeMethod] queries
+
+        [HttpGet("getSession")]
+        public Task<Session> GetSession(CancellationToken cancellationToken = default)
+            => Task.FromResult(SessionResolver.Session);
     }
 }

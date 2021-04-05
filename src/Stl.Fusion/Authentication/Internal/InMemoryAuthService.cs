@@ -17,10 +17,14 @@ namespace Stl.Fusion.Authentication.Internal
         private long _nextUserId;
         protected ConcurrentDictionary<string, User> Users { get; } = new();
         protected ConcurrentDictionary<string, SessionInfo> SessionInfos { get; } = new();
+        protected ISessionFactory SessionFactory { get; }
         protected IMomentClock Clock { get; }
 
-        public InMemoryAuthService(IMomentClock clock)
-            => Clock = clock;
+        public InMemoryAuthService(ISessionFactory sessionFactory, IMomentClock clock)
+        {
+            SessionFactory = sessionFactory;
+            Clock = clock;
+        }
 
         // Command handlers
 
@@ -195,6 +199,11 @@ namespace Stl.Fusion.Authentication.Internal
                 return Array.Empty<SessionInfo>();
             return await GetUserSessions(user.Id, cancellationToken).ConfigureAwait(false);
         }
+
+        // Non-[ComputeMethod] queries
+
+        public virtual Task<Session> GetSession(CancellationToken cancellationToken = default)
+            => Task.FromResult(SessionFactory.CreateSession());
 
         // Protected methods
 

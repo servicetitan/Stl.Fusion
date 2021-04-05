@@ -23,6 +23,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
 
         protected IDbUserRepo<TDbContext> Users { get; }
         protected IDbSessionInfoRepo<TDbContext> Sessions { get; }
+        protected ISessionFactory SessionFactory { get; }
         protected TimeSpan MinUpdatePresencePeriod { get; }
 
         public DbAuthService(Options options, IServiceProvider services) : base(services)
@@ -30,6 +31,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             MinUpdatePresencePeriod = options.MinUpdatePresencePeriod;
             Users = services.GetRequiredService<IDbUserRepo<TDbContext>>();
             Sessions = services.GetRequiredService<IDbSessionInfoRepo<TDbContext>>();
+            SessionFactory = services.GetRequiredService<ISessionFactory>();
         }
 
         // Commands
@@ -228,6 +230,11 @@ namespace Stl.Fusion.EntityFramework.Authentication
                 return Array.Empty<SessionInfo>();
             return await GetUserSessions(user.Id, cancellationToken).ConfigureAwait(false);
         }
+
+        // Non-[ComputeMethod] queries
+
+        public virtual Task<Session> GetSession(CancellationToken cancellationToken = default)
+            => Task.FromResult(SessionFactory.CreateSession());
 
         // Protected methods
 
