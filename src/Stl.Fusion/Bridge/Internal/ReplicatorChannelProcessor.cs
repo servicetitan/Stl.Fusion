@@ -146,7 +146,7 @@ namespace Stl.Fusion.Bridge.Internal
         {
             switch (message) {
             case PublicationStateMessage psm:
-                // Fast dispatch to OnUpdatedMessageAsync<T>
+                // Fast dispatch to OnStateMessage<T>
                 return OnStateMessageHandlers[psm.GetResultType()].Handle(psm, (this, cancellationToken));
             case PublicationAbsentsMessage pam:
                 var replica = (IReplicaImpl?) Replicator.TryGet((PublisherId, pam.PublicationId));

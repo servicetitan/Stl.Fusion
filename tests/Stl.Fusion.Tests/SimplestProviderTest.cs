@@ -76,7 +76,7 @@ namespace Stl.Fusion.Tests
             p.SetValue("");
             var (gv, gcc) = (p.GetValueCallCount, p.GetCharCountCallCount);
 
-            p.SetValue(null!); // Will cause an exception in GetCharCountAsync
+            p.SetValue(null!); // Will cause an exception in GetCharCount
             (await p.GetValue()).Should().Be(null);
             p.GetValueCallCount.Should().Be(++gv);
             p.GetCharCountCallCount.Should().Be(gcc);
@@ -101,7 +101,7 @@ namespace Stl.Fusion.Tests
         public async Task ExceptionCaptureTest()
         {
             var p = Services.GetRequiredService<ISimplestProvider>();
-            p.SetValue(null!); // Will cause an exception in GetCharCountAsync
+            p.SetValue(null!); // Will cause an exception in GetCharCount
             var c1 = await Computed.TryCapture(_ => p.GetCharCount());
             var c2 = await Computed.Capture(_ => p.GetCharCount());
             c1!.Error!.GetType().Should().Be(typeof(NullReferenceException));

@@ -51,7 +51,7 @@
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender) {
-            // GetSchemasAsync requires JS interop, so it can be called only at this point
+            // GetSchemas requires JS interop, so it can be called only at this point
             AuthSchemas = await ClientAuthHelper.GetSchemas();
             StateHasChanged();
         }

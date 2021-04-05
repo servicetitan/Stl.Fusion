@@ -28,7 +28,7 @@ namespace Stl.Fusion.Tests
         [Fact(Timeout = 30_000)]
         public async Task TestService()
         {
-            // await using var serving = await WebSocketHost.ServeAsync();
+            // await using var serving = await WebSocketHost.Serve();
             var service = Services.GetRequiredService<IEdgeCaseService>();
             await ActualTest(service);
         }
@@ -75,7 +75,7 @@ namespace Stl.Fusion.Tests
             await service.SetSuffix("");
             (await service.GetSuffix()).Should().Be("");
 
-            // ThrowIfContainsErrorAsync method test
+            // ThrowIfContainsError method test
             var c1 = await Computed.Capture(
                 ct => service.ThrowIfContainsError("a", ct));
             c1.Value.Should().Be("a");
@@ -94,7 +94,7 @@ namespace Stl.Fusion.Tests
             c2.Error.Message.Should().Be("!");
             await service.SetSuffix("");
 
-            // ThrowIfContainsErrorRewriteErrorsAsync method test
+            // ThrowIfContainsErrorRewriteErrors method test
             c1 = await Computed.Capture(
                 ct => service.ThrowIfContainsErrorRewriteErrors("a", ct));
             c1.Value.Should().Be("a");
@@ -113,7 +113,7 @@ namespace Stl.Fusion.Tests
             c2.Error.Message.Should().Be("!");
             await service.SetSuffix("");
 
-            // ThrowIfContainsErrorRewriteErrorsAsync method test
+            // ThrowIfContainsErrorRewriteErrors method test
             (await service.ThrowIfContainsErrorNonCompute("a")).Should().Be("a");
             try {
                 await service.ThrowIfContainsErrorNonCompute("error");

@@ -53,7 +53,7 @@ namespace Stl.Fusion
                 return;
             // Why holding? If the calling task isn't referenced from alive set,
             // (e.g. it is simply started w/ Run), there is nothing that may
-            // prevent GC from collecting it + computed, even though WhenInvalidatedAsync
+            // prevent GC from collecting it + computed, even though WhenInvalidated
             // implies waiting, right?
             var ts = TaskSource.New<Unit>(true);
             var onInvalidated = (Action<IComputed>) (_ => ts.SetResult(default));

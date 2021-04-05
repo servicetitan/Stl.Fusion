@@ -20,7 +20,7 @@ namespace Stl.CommandR
             return context;
         }
 
-        // RunAsync overloads
+        // Run overloads
 
         public static Task<CommandContext> Run(this ICommander commander,
             ICommand command, CancellationToken cancellationToken = default)
@@ -34,7 +34,7 @@ namespace Stl.CommandR
             return context;
         }
 
-        // CallAsync overloads
+        // Call overloads
 
         public static async Task<TResult> Call<TResult>(this ICommander commander,
             ICommand<TResult> command, bool isolate, CancellationToken cancellationToken = default)

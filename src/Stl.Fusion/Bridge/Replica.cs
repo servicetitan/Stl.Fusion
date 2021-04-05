@@ -200,7 +200,7 @@ namespace Stl.Fusion.Bridge
             if (result.TryUseExisting(context, usedBy))
                 return result;
 
-            // No async locking here b/c RequestUpdateAsync is, in fact, doing this
+            // No async locking here b/c RequestUpdate is, in fact, doing this
             await RequestUpdate(cancellationToken).ConfigureAwait(false);
             result = Computed;
             result.UseNew(context, usedBy);
@@ -221,7 +221,7 @@ namespace Stl.Fusion.Bridge
             if (result.TryUseExisting(context, usedBy))
                 return result.Strip(context);
 
-            // No async locking here b/c RequestUpdateAsync is, in fact, doing this
+            // No async locking here b/c RequestUpdate is, in fact, doing this
             await RequestUpdate(cancellationToken).ConfigureAwait(false);
             result = Computed;
             result.UseNew(context, usedBy);

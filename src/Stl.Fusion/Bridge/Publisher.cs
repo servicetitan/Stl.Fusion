@@ -193,8 +193,8 @@ namespace Stl.Fusion.Bridge
                 return;
             channelProcessor.Run().ContinueWith(_ => {
                 // Since ChannelProcessor is AsyncProcessorBase desc.,
-                // its disposal will shut down RunAsync as well,
-                // so "subscribing" to RunAsync completion is the
+                // its disposal will shut down Run as well,
+                // so "subscribing" to Run completion is the
                 // same as subscribing to its disposal.
                 ChannelProcessors.TryRemove(channel, channelProcessor);
             });

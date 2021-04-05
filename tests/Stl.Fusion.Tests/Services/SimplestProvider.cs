@@ -76,7 +76,7 @@ namespace Stl.Fusion.Tests.Services
             using (Computed.Invalidate()) {
                 GetValue().AssertCompleted();
             }
-            // No need to invalidate GetCharCountAsync,
+            // No need to invalidate GetCharCount,
             // since it will be invalidated automatically.
         }
     }

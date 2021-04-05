@@ -10,7 +10,7 @@ namespace Stl.Fusion.Extensions
 {
     public static class KeyValueStoreEx
     {
-        // SetAsync
+        // Set
 
         public static Task Set<T>(this IKeyValueStore keyValueStore,
             string key, T value, CancellationToken cancellationToken = default)
@@ -34,7 +34,7 @@ namespace Stl.Fusion.Extensions
             return keyValueStore.Set(command, cancellationToken);
         }
 
-        // SetManyAsync
+        // SetMany
 
         public static Task SetMany(this IKeyValueStore keyValueStore,
             (string Key, string Value, Moment? ExpiresAt)[] items,
@@ -44,7 +44,7 @@ namespace Stl.Fusion.Extensions
             return keyValueStore.SetMany(command, cancellationToken);
         }
 
-        // RemoveAsync
+        // Remove
 
         public static Task Remove(this IKeyValueStore keyValueStore,
             string key, CancellationToken cancellationToken = default)
@@ -53,7 +53,7 @@ namespace Stl.Fusion.Extensions
             return keyValueStore.Remove(command, cancellationToken);
         }
 
-        // RemoveManyAsync
+        // RemoveMany
 
         public static Task RemoveMany(this IKeyValueStore keyValueStore,
             string[] keys, CancellationToken cancellationToken = default)
@@ -62,7 +62,7 @@ namespace Stl.Fusion.Extensions
             return keyValueStore.RemoveMany(command, cancellationToken);
         }
 
-        // TryGetAsync
+        // TryGet
 
         public static async Task<Option<T>> TryGet<T>(this IKeyValueStore keyValueStore,
             string key, CancellationToken cancellationToken = default)
@@ -71,7 +71,7 @@ namespace Stl.Fusion.Extensions
             return sValue == null ? default(Option<T>) : JsonSerialized.New<T>(sValue).Value;
         }
 
-        // GetAsync
+        // Get
 
         public static async Task<string> Get(this IKeyValueStore keyValueStore,
             string key, CancellationToken cancellationToken = default)

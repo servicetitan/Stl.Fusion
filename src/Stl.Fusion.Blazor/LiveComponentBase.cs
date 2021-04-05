@@ -45,7 +45,7 @@ namespace Stl.Fusion.Blazor
             => 0 != (Options & LiveComponentOptions.SynchronizeComputeState)
                 ? StateFactory.NewLive<T>(ConfigureState,
                     async (_, ct) => {
-                        // Synchronizes ComputeStateAsync call as per:
+                        // Synchronizes ComputeState call as per:
                         // https://github.com/servicetitan/Stl.Fusion/issues/202
                         var ts = TaskSource.New<T>(false);
                         await InvokeAsync(async () => {

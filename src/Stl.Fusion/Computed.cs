@@ -228,7 +228,7 @@ namespace Stl.Fusion
             CancelTimeouts();
         }
 
-        // UpdateAsync
+        // Update
 
         async ValueTask<IComputed> IComputed.Update(bool addDependency, CancellationToken cancellationToken)
             => await Update(addDependency, cancellationToken).ConfigureAwait(false);
@@ -244,7 +244,7 @@ namespace Stl.Fusion
                 .ConfigureAwait(false);
         }
 
-        // UseAsync
+        // Use
 
         async ValueTask<object> IComputed.Use(CancellationToken cancellationToken)
             => (await Use(cancellationToken).ConfigureAwait(false))!;

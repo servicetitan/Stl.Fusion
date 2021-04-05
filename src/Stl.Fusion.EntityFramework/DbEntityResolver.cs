@@ -12,8 +12,13 @@ using Stl.OS;
 
 namespace Stl.Fusion.EntityFramework
 {
-    // This type queues (when needed) & batches calls to TryGetAsync with AsyncBatchProcessor
-    // to reduce the rate of underlying DB queries.
+    /// <summary>
+    /// This type queues (when needed) & batches calls to <see cref="TryGet"/> with
+    /// <see cref="AsyncBatchProcessor{TIn,TOut}"/> to reduce the rate of underlying DB queries.
+    /// </summary>
+    /// <typeparam name="TDbContext">The type of <see cref="DbContext"/>.</typeparam>
+    /// <typeparam name="TKey">The type of entity key.</typeparam>
+    /// <typeparam name="TEntity">The type of entity to pipeline batch for.</typeparam>
     public class DbEntityResolver<TDbContext, TKey, TEntity> : DbServiceBase<TDbContext>, IDisposable
         where TDbContext : DbContext
         where TKey : notnull

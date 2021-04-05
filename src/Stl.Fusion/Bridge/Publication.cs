@@ -152,8 +152,7 @@ namespace Stl.Fusion.Bridge
                 }
             }
             catch (OperationCanceledException) {
-                // RunExpirationAsync is called w/o Task.Run, so there is a chance
-                // it throws this exception synchronously (if cts got cancelled already).
+                // Intended
             }
         }
 

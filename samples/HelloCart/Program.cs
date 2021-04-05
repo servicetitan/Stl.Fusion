@@ -51,7 +51,7 @@ WriteLine("Initial state:");
 using var cts = new CancellationTokenSource();
 app.Watch(cts.Token).Ignore();
 await Task.Delay(700); // Just to make sure watch tasks print whatever they want before our prompt appears
-// await AutoRunner.RunAsync(app);
+// await AutoRunner.Run(app);
 
 WriteLine();
 WriteLine("Change product price by typing [productId]=[price], e.g. \"apple=0\".");
@@ -75,7 +75,7 @@ while (true) {
         var command = new EditCommand<Product>(product with { Price = price });
         await app.ClientProductService.Edit(command);
         // You can run absolutely identical action with:
-        // await app.ClientServices.Commander().CallAsync(command);
+        // await app.ClientServices.Commander().Call(command);
     }
     catch (Exception e) {
         WriteLine($"Error: {e.Message}");

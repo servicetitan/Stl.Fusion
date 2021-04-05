@@ -8,7 +8,7 @@ namespace Stl.Channels
 {
     public static partial class ChannelEx
     {
-        // TransformAsync
+        // Transform
 
         public static async Task Transform<TIn, TOut>(
             this ChannelReader<TIn> reader,
@@ -66,7 +66,7 @@ namespace Stl.Channels
             }
         }
 
-        // ConcurrentTransformAsync
+        // ConcurrentTransform
 
         public static async Task ConcurrentTransform<TIn, TOut>(
             this ChannelReader<TIn> reader,

@@ -51,7 +51,7 @@ namespace Stl.Fusion.Blazor
         {
             var session = await SessionResolver.GetSession(cancellationToken).ConfigureAwait(false);
             var user = await AuthService.GetUser(session, cancellationToken).ConfigureAwait(false);
-            // AuthService.GetUserAsync checks for forced sign-out as well, so
+            // AuthService.GetUser checks for forced sign-out as well, so
             // we should explicitly query its state for unauthenticated users only
             var isSignOutForced = !user.IsAuthenticated
                 && await AuthService.IsSignOutForced(session, cancellationToken).ConfigureAwait(false);

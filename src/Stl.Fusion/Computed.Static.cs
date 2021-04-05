@@ -48,7 +48,7 @@ namespace Stl.Fusion
         public static ComputeContextScope SuspendInvalidate()
             => ComputeContext.Default.Activate();
 
-        // TryCaptureAsync
+        // TryCapture
 
         public static async Task<IComputed?> TryCapture(Func<CancellationToken, Task> producer, CancellationToken cancellationToken = default)
         {
@@ -130,7 +130,7 @@ namespace Stl.Fusion
             return result;
         }
 
-        // CaptureAsync
+        // Capture
 
         public static async Task<IComputed> Capture(Func<CancellationToken, Task> producer, CancellationToken cancellationToken = default)
         {

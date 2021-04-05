@@ -69,7 +69,7 @@ namespace Stl.Fusion.Operations.Internal
             }
 
             // Since this is the outermost scope handler, it's reasonable to
-            // call OperationCompletionNotifier.NotifyCompletedAsync from it
+            // call OperationCompletionNotifier.NotifyCompleted from it
             var actualOperation = context.Items.GetOrDefault<IOperation>(operation);
             await OperationCompletionNotifier.NotifyCompleted(actualOperation).ConfigureAwait(false);
         }

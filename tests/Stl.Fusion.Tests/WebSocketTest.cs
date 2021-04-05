@@ -122,7 +122,7 @@ namespace Stl.Fusion.Tests
 
             // The remaining part of this test shouldn't work:
             // since the underlying web host is actually re-created on
-            // every ServeAsync call, its endpoints change,
+            // every Serve call, its endpoints change,
             // and moreover, IPublisher, etc. dies there,
             // so reconnect won't happen in this case.
             //

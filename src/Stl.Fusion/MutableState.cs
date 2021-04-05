@@ -68,7 +68,7 @@ namespace Stl.Fusion
                 snapshot = Snapshot;
                 _output = result;
                 // Better to do this inside the lock, since it will be
-                // re-acquired later - see InvokeAsync and InvokeAndStripAsync overloads
+                // re-acquired later - see InvokeAsync and InvokeAndStrip overloads
                 snapshot.Computed.Invalidate();
             }
         }

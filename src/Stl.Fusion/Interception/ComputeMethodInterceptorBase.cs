@@ -52,8 +52,8 @@ namespace Stl.Fusion.Interception
                 // Invoking the function
                 var usedBy = Computed.GetCurrent();
 
-                // InvokeAndStripAsync allows to get rid of one extra allocation
-                // of a task stripping the result of regular InvokeAsync.
+                // InvokeAndStrip allows to get rid of one extra allocation
+                // of a task stripping the result of regular Invoke.
                 var task = function.InvokeAndStrip(input, usedBy, null, cancellationToken);
                 if (cancellationTokenIndex >= 0)
                     // We don't want memory leaks + unexpected cancellation later

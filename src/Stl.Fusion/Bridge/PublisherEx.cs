@@ -12,7 +12,7 @@ namespace Stl.Fusion.Bridge
             this IPublisher publisher, Symbol publicationId)
             => publisher.TryGet(publicationId) ?? throw new KeyNotFoundException();
 
-        // TryPublishAsync
+        // TryPublish
 
         public static async Task<IPublication?> TryPublish(
             this IPublisher publisher,
@@ -68,7 +68,7 @@ namespace Stl.Fusion.Bridge
             return publication;
         }
 
-        // PublishAsync
+        // Publish
 
         public static async Task<IPublication> Publish(
             this IPublisher publisher,
