@@ -9,7 +9,6 @@ using Templates.Blazor2.Abstractions;
 
 namespace Templates.Blazor2.Services
 {
-    [ComputeService(typeof(ITodoService))]
     public class TodoService : ITodoService
     {
         private readonly IKeyValueStore _keyValueStore;
@@ -30,10 +29,21 @@ namespace Templates.Blazor2.Services
             var user = await _auth.GetUser(session, cancellationToken);
             user.MustBeAuthenticated();
 
+            Todo? oldTodo = null;
             if (string.IsNullOrEmpty(todo.Id))
                 todo = todo with { Id = Ulid.NewUlid().ToString() };
+            else
+                oldTodo = await TryGet(session, todo.Id, cancellationToken);
+
             var key = GetTodoKey(user, todo.Id);
             await _keyValueStore.Set(key, todo, cancellationToken);
+            if (oldTodo?.IsDone != todo.IsDone) {
+                var doneKey = GetDoneKey(user, todo.Id);
+                if (todo.IsDone)
+                    await _keyValueStore.Set(doneKey, true, cancellationToken);
+                else
+                    await _keyValueStore.Remove(doneKey, cancellationToken);
+            }
             return todo;
         }
 
@@ -45,7 +55,9 @@ namespace Templates.Blazor2.Services
             user.MustBeAuthenticated();
 
             var key = GetTodoKey(user, id);
+            var doneKey = GetDoneKey(user, id);
             await _keyValueStore.Remove(key, cancellationToken);
+            await _keyValueStore.Remove(doneKey, cancellationToken);
         }
 
         // Queries
@@ -72,12 +84,26 @@ namespace Templates.Blazor2.Services
             return todoOpts.Where(todo => todo.HasValue).Select(todo => todo.Value).ToArray();
         }
 
+        public virtual async Task<TodoSummary> GetSummary(Session session, CancellationToken cancellationToken = default)
+        {
+            var user = await _auth.GetUser(session, cancellationToken);
+            user.MustBeAuthenticated();
+
+            var count = await _keyValueStore.CountByPrefix(GetTodoKeyPrefix(user), cancellationToken);
+            var doneCount = await _keyValueStore.CountByPrefix(GetDoneKeyPrefix(user), cancellationToken);
+            return new TodoSummary(count, doneCount);
+        }
+
         // Private methods
 
         private string GetTodoKey(User user, string id)
             => $"{GetTodoKeyPrefix(user)}/{id}";
+        private string GetDoneKey(User user, string id)
+            => $"{GetDoneKeyPrefix(user)}/{id}";
 
         private string GetTodoKeyPrefix(User user)
             => $"todo/{user.Id}/items";
+        private string GetDoneKeyPrefix(User user)
+            => $"todo/{user.Id}/done";
     }
 }

@@ -1,0 +1,20 @@
+@using System.Threading
+@inherits LiveComponentBase<TodoSummary>
+@inject ITodoService Todos
+@inject Session Session
+@inject ILogger<TodoSummaryBadge> Log
+
+@{
+    Log.LogInformation("Rendering");
+    var summary = State.UnsafeValue;
+}
+
+@if (summary != null) {
+    <Badge Color="Color.Success"><b>@summary.DoneCount</b> done</Badge>
+    <Badge Color="Color.Primary"><b>@summary.Count</b> total</Badge>
+}
+
+@code {
+    protected override Task<TodoSummary> ComputeState(CancellationToken cancellationToken)
+        => Todos.GetSummary(Session, cancellationToken);
+}

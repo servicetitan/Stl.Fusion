@@ -53,5 +53,12 @@ namespace Templates.Blazor2.Host.Controllers
             session ??= _sessionResolver.Session;
             return _todos.List(session, pageRef, cancellationToken);
         }
+
+        [HttpGet, Publish]
+        public Task<TodoSummary> GetSummary(Session? session, CancellationToken cancellationToken = default)
+        {
+            session ??= _sessionResolver.Session;
+            return _todos.GetSummary(session, cancellationToken);
+        }
     }
 }

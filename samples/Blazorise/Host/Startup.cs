@@ -26,6 +26,8 @@ using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework;
 using Stl.IO;
+using Templates.Blazor2.Abstractions;
+using Templates.Blazor2.UI;
 
 namespace Templates.Blazor2.Host
 {
@@ -48,8 +50,9 @@ namespace Templates.Blazor2.Host
             services.AddLogging(logging => {
                 logging.ClearProviders();
                 logging.AddConsole();
-                logging.SetMinimumLevel(LogLevel.Information);
+                logging.SetMinimumLevel(LogLevel.Warning);
                 if (Env.IsDevelopment()) {
+                    logging.AddFilter(typeof(App).Namespace, LogLevel.Information);
                     logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Information);
                     logging.AddFilter("Stl.Fusion.Operations", LogLevel.Information);
                 }
@@ -106,13 +109,9 @@ namespace Templates.Blazor2.Host
                 authHelperOptionsBuilder: (_, options) => {
                     options.NameClaimKeys = Array.Empty<string>();
                 });
+            fusion.AddComputeService<ITodoService, TodoService>();
 
-            // This method registers services marked with any of ServiceAttributeBase descendants, including:
-            // [Service], [ComputeService], [RestEaseReplicaService], [LiveStateUpdater]
-            services.UseAttributeScanner()
-                .AddServicesFrom(typeof(TodoService).Assembly)
-                .AddServicesFrom(Assembly.GetExecutingAssembly());
-            // Registering shared services from the client
+            // Shared services
             UI.Program.ConfigureSharedServices(services);
 
             services.AddAuthentication(options => {

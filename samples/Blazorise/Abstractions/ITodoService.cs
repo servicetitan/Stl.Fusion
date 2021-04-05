@@ -13,6 +13,9 @@ namespace Templates.Blazor2.Abstractions
         public Todo() : this("", "") { }
     }
 
+    public record TodoSummary(int Count, int DoneCount)
+    { }
+
     public record AddOrUpdateTodoCommand(Session Session, Todo Item) : ISessionCommand<Todo>
     {
         public AddOrUpdateTodoCommand() : this(Session.Null, default(Todo)!) { }
@@ -25,14 +28,18 @@ namespace Templates.Blazor2.Abstractions
 
     public interface ITodoService
     {
+        // Commands
         [CommandHandler]
         Task<Todo> AddOrUpdate(AddOrUpdateTodoCommand command, CancellationToken cancellationToken = default);
         [CommandHandler]
         Task Remove(RemoveTodoCommand command, CancellationToken cancellationToken = default);
 
+        // Fusion queries
         [ComputeMethod]
         Task<Todo?> TryGet(Session session, string id, CancellationToken cancellationToken = default);
         [ComputeMethod]
         Task<Todo[]> List(Session session, PageRef<string> pageRef, CancellationToken cancellationToken = default);
+        [ComputeMethod]
+        Task<TodoSummary> GetSummary(Session session, CancellationToken cancellationToken = default);
     }
 }

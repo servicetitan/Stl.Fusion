@@ -1,8 +1,9 @@
 @inject CommandRunner CommandRunner
 @inject Session Session
+@inject ILogger<TodoItemView> Log
 
 @{
-    Debug.WriteLine($"Rendering {Value}");
+    Log.LogInformation("Rendering, Item = {Item}", Value);
 }
 
 <Addons Margin="Margin.Is3.OnY">

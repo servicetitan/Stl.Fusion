@@ -5,9 +5,10 @@
 @inject Session Session
 @inject CommandRunner CommandRunner
 @inject AuthStateProvider AuthStateProvider
+@inject ILogger<TodoPage> Log
 
 @{
-    Debug.WriteLine($"Rendering TodoPage. ConsistencyState: {State.Computed.ConsistencyState}");
+    Log.LogInformation("Rendering, State.Computed.Version = {Version}", State.Computed.Version);
     var error = State.Error;
     var todos = State.UnsafeValue ?? Array.Empty<Todo>(); // UnsafeValue returns default if there is an Error
 }
@@ -28,13 +29,17 @@
         <WhenCommandError Exception="CommandRunner.Error" />
         <Row>
             <Column ColumnSize="ColumnSize.Is6.OnDesktop.Is12.OnTablet">
+                <Paragraph>
+                    <TodoSummaryBadge/>
+                </Paragraph>
+
                 @foreach (var todo in todos) {
-                    <TodoItem @key="@todo.Id" Value="@todo" />
+                    <TodoItemView @key="@todo.Id" Value="@todo"/>
                 }
 
                 @if (HasMore) {
                     <Button Clicked="_ => LoadMore()" Color="Color.Primary" Margin="Margin.Is3.OnY">
-                        Load more <Blazorise.Icon Name="FontAwesomeIcons.AngleDoubleDown" />
+                        Load more <Blazorise.Icon Name="FontAwesomeIcons.AngleDoubleDown"/>
                     </Button>
                 }
 
@@ -42,10 +47,10 @@
                     <Addons>
                         <Addon AddonType="AddonType.Start">
                             <Button Type="@ButtonType.Submit" Color="Color.Primary">
-                                <Blazorise.Icon Name="@FontAwesomeIcons.PlusSquare" />
+                                <Blazorise.Icon Name="@FontAwesomeIcons.PlusSquare"/>
                             </Button>
                         </Addon>
-                        <input @bind="NewTodoTitle" @bind:event="onchange" class="form-control" />
+                        <input @bind="NewTodoTitle" @bind:event="onchange" class="form-control"/>
                     </Addons>
                 </Form>
             </Column>
