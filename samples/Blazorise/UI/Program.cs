@@ -15,6 +15,7 @@ using Stl.Fusion.Blazor;
 using Stl.Fusion.Extensions;
 using Templates.Blazor2.Abstractions;
 using Templates.Blazor2.Abstractions.Clients;
+using Templates.Blazor2.UI.Services;
 
 namespace Templates.Blazor2.UI
 {
@@ -53,8 +54,10 @@ namespace Templates.Blazor2.UI
                 var clientBaseUri = isFusionClient ? baseUri : apiBaseUri;
                 o.HttpClientActions.Add(client => client.BaseAddress = clientBaseUri);
             });
-            fusionClient.AddReplicaService<ITodoService, ITodoClient>();
             fusion.AddAuthentication().AddRestEaseClient().AddBlazor();
+
+            fusionClient.AddReplicaService<ITodoService, ITodoClient>();
+            // fusion.AddComputeService<ITodoService, SimpleTodoService>();
 
             ConfigureSharedServices(services);
         }
