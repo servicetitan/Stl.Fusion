@@ -21,6 +21,9 @@ namespace HelloClientServerFx
             var serviceProvider = config.DependencyResolver.GetService<IServiceProvider>();
             appBuilder.MapFusionWebSocketServer(serviceProvider);
 
+            // run ensure initialized explicitly to see configuration errors;
+            config.EnsureInitialized();
+
             appBuilder.UseWebApi(config); 
         }
 

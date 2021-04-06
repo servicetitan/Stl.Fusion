@@ -9,7 +9,7 @@ namespace HelloClientServerFx
     // We need Web API controller to publish the service
     //[ApiController, JsonifyErrors]
     //[Route("api/[controller]/[action]")]
-    [RoutePrefix("api/counter/")]
+    [RoutePrefix("api/counter")]
     public class CounterController
         : ApiController
         //: ControllerBase
@@ -23,6 +23,7 @@ namespace HelloClientServerFx
         // - Publication is created
         // - Its Id is shared in response header.
         [HttpGet, Publish]
+        [Route("Get")]
         public Task<int> Get(string key)
         {
             key = key ?? ""; // Empty value is bound to null value by default
@@ -31,6 +32,7 @@ namespace HelloClientServerFx
         }
 
         [HttpPost]
+        [Route("Increment")]
         public Task Increment(string key)
         {
             key = key ?? ""; // Empty value is bound to null value by default
@@ -39,6 +41,7 @@ namespace HelloClientServerFx
         }
 
         [HttpPost]
+        [Route("SetOffset")]
         public Task SetOffset(int offset)
         {
             Console.WriteLine($"{GetType().Name}.{nameof(SetOffset)}({offset})");

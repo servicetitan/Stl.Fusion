@@ -22,7 +22,6 @@
   </PropertyGroup>
 
   <ItemGroup Label="Nupkg Versions">
-    <PackageReference Update="Microsoft.AspNet.Mvc" Version="5.2.7"/>
     <PackageReference Update="Microsoft.AspNet.WebApi.Core" Version="5.2.7" />
     <PackageReference Update="Microsoft.AspNet.WebApi.OwinSelfHost" Version="5.2.7" />
     <PackageReference Update="Microsoft.Owin" Version="4.1.1" />

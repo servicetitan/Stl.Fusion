@@ -19,7 +19,7 @@ namespace HelloClientServerFx
     {
         static async Task Main(string[] args)
         {
-            string baseAddress = "http://localhost:9000/"; 
+            string baseAddress = "http://localhost:9001/"; 
 
             // Start OWIN host 
             using (WebApp.Start(url: baseAddress, new Startup().Configuration)) 
