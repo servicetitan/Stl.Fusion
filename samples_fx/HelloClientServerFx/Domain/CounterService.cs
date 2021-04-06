@@ -13,7 +13,7 @@ namespace HelloClientServerFx
         private readonly IMutableState<int> _offset;
 
         public CounterService(IStateFactory stateFactory)
-            => _offset = stateFactory.NewMutable<int>(1);
+            => _offset = stateFactory.NewMutable<int>(0);
 
         [ComputeMethod] // Optional: this attribute is inherited from interface
         public virtual async Task<int> Get(string key, CancellationToken cancellationToken = default)
