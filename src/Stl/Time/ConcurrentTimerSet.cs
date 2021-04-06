@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
@@ -46,32 +47,19 @@ namespace Stl.Time
                 await timerSet.DisposeAsync();
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddOrUpdate(TTimer timer, Moment time)
-        {
-            var timerSet = _timerSets[timer.GetHashCode() & _concurrencyLevelMask];
-            timerSet.AddOrUpdate(timer, time);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            => GetTimerSet(timer).AddOrUpdate(timer, time);
         public bool AddOrUpdateToEarlier(TTimer timer, Moment time)
-        {
-            var timerSet = _timerSets[timer.GetHashCode() & _concurrencyLevelMask];
-            return timerSet.AddOrUpdateToEarlier(timer, time);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            => GetTimerSet(timer).AddOrUpdateToEarlier(timer, time);
         public bool AddOrUpdateToLater(TTimer timer, Moment time)
-        {
-            var timerSet = _timerSets[timer.GetHashCode() & _concurrencyLevelMask];
-            return timerSet.AddOrUpdateToLater(timer, time);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            => GetTimerSet(timer).AddOrUpdateToLater(timer, time);
         public bool Remove(TTimer timer)
+            => GetTimerSet(timer).Remove(timer);
+
+        private TimerSet<TTimer> GetTimerSet(TTimer timer)
         {
-            var timerSet = _timerSets[timer.GetHashCode() & _concurrencyLevelMask];
-            return timerSet.Remove(timer);
+            var hashCode = timer.GetHashCode();
+            return _timerSets[hashCode & _concurrencyLevelMask];
         }
     }
 }

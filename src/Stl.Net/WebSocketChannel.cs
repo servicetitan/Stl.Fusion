@@ -145,7 +145,7 @@ namespace Stl.Net
             var mChars = charsOwner.Memory;
             var mFreeBytes = mBytes;
 
-            while (true) {
+            for (;;) {
                 var r = await WebSocket.ReceiveAsync(mFreeBytes, cancellationToken).ConfigureAwait(false);
                 switch (r.MessageType) {
                 case WebSocketMessageType.Binary:
@@ -224,7 +224,7 @@ namespace Stl.Net
                     return completed;
                 }
 
-                while (true) {
+                for (;;) {
                     var isEndOfMessage = CreateMessagePart(out var buffer);
                     await WebSocket
                         .SendAsync(buffer, WebSocketMessageType.Text, isEndOfMessage, cancellationToken)

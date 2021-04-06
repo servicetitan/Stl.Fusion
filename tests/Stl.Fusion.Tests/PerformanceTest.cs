@@ -40,8 +40,8 @@ namespace Stl.Fusion.Tests
             await Task.WhenAll(tasks);
         }
 
-        // [Fact]
-        [Fact(Skip = "Performance")]
+        [Fact]
+        // [Fact(Skip = "Performance")]
         public async Task ComputedPerformanceTest()
         {
             if (TestRunnerInfo.IsBuildAgent())
@@ -84,7 +84,7 @@ namespace Stl.Fusion.Tests
             {
                 var rnd = new Random();
                 var count = 0L;
-                while (true) {
+                for (;;) {
                     cancellationToken.ThrowIfCancellationRequested();
                     var userId = (long) rnd.Next(UserCount);
                     // Log.LogDebug($"{name}: R {userId}");

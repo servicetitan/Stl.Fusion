@@ -43,7 +43,7 @@ namespace Stl.Fusion.Blazor
         public void Dispose() => State.Dispose();
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
-            var state = await State.Update(false).ConfigureAwait(false);
+            var state = await State.Update().ConfigureAwait(false);
             return state.LastValue;
         }
 

@@ -52,7 +52,9 @@ namespace Stl.Collections
                     break;
             }
         }
-
+#if !NETSTANDARD
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+#endif
         public bool Add(long priority, T value)
         {
             var index = GetBucketIndex(priority);
@@ -62,6 +64,9 @@ namespace Stl.Collections
             return true;
         }
 
+#if !NETSTANDARD
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+#endif
         public void AddOrUpdate(long priority, T value)
         {
             var index = GetBucketIndex(priority);
@@ -77,6 +82,9 @@ namespace Stl.Collections
             bucket.Add(value, priority);
         }
 
+#if !NETSTANDARD
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+#endif
         public bool AddOrUpdateToLower(long priority, T value)
         {
             var index = GetBucketIndex(priority);
@@ -102,6 +110,9 @@ namespace Stl.Collections
             return true;
         }
 
+#if !NETSTANDARD
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+#endif
         public bool AddOrUpdateToHigher(long priority, T value)
         {
             var index = GetBucketIndex(priority);
@@ -127,6 +138,9 @@ namespace Stl.Collections
             return true;
         }
 
+#if !NETSTANDARD
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+#endif
         public bool Remove(T value, out long priority)
         {
             if (!_bucketIndexes.Remove(value, out var index)) {
@@ -137,6 +151,9 @@ namespace Stl.Collections
             return true;
         }
 
+#if !NETSTANDARD
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+#endif
         public Option<(long Priority, T Value)> PeekMin()
         {
             UpdateMinPriority();
@@ -153,6 +170,9 @@ namespace Stl.Collections
             return _buckets[0];
         }
 
+#if !NETSTANDARD
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+#endif
         public Option<(long Priority, T Value)> ExtractMin()
         {
             UpdateMinPriority();
@@ -230,7 +250,6 @@ namespace Stl.Collections
                 $"{GetType().Name}'s internal structure is corrupted.");
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private IReadOnlyDictionary<T, long> ExtractBucket0()
         {
             var bucket = _buckets[0];
@@ -242,7 +261,6 @@ namespace Stl.Collections
             return bucket;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private int GetBucketIndex(long priority)
         {
             if (priority < MinPriority)
@@ -251,7 +269,6 @@ namespace Stl.Collections
             return xor == 0 ? 0 : 1 + Bits.MsbIndex((ulong) xor);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private int GetBucketIndexUnchecked(long priority)
         {
             var xor = MinPriority ^ priority;

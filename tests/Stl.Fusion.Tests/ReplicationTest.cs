@@ -30,7 +30,7 @@ namespace Stl.Fusion.Tests
             p1.Should().NotBeNull();
 
             var r1 = replicator.GetOrAdd<string>(p1.Ref, true);
-            var r1c = await r1.Computed.Update(false);
+            var r1c = await r1.Computed.Update();
             r1c.IsConsistent().Should().BeTrue();
             r1c.Value.Should().Be("");
             r1.Computed.Should().Be(r1c);
@@ -40,10 +40,10 @@ namespace Stl.Fusion.Tests
             r1c.IsConsistent().Should().BeFalse();
             r1.Computed.Should().Be(r1c);
 
-            r1c = await r1c.Update(false);
+            r1c = await r1c.Update();
             r1c.Value.Should().Be("1");
 
-            var r1c1 = await r1c.Update(false);
+            var r1c1 = await r1c.Update();
             r1c1.Should().Be(r1c);
         }
 

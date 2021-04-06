@@ -7,10 +7,10 @@ namespace Stl.Fusion
     public static class StateEx
     {
         public static async ValueTask<TState> Update<TState>(
-            this TState state, bool addDependency, CancellationToken cancellationToken = default)
+            this TState state, CancellationToken cancellationToken = default)
             where TState : class, IState
         {
-            await state.Computed.Update(addDependency, cancellationToken).ConfigureAwait(false);
+            await state.Computed.Update(cancellationToken).ConfigureAwait(false);
             return state;
         }
 

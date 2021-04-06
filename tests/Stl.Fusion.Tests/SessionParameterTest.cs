@@ -30,7 +30,7 @@ namespace Stl.Fusion.Tests
                     Out.WriteLine($"{name}: {computed.Value}, {computed}");
                     await computed.WhenInvalidated(cancellationToken);
                     Out.WriteLine($"{name}: {computed.Value}, {computed}");
-                    computed = await computed.Update(false, cancellationToken);
+                    computed = await computed.Update(cancellationToken);
                 }
             }
 
@@ -52,23 +52,23 @@ namespace Stl.Fusion.Tests
 
             session = sessionA;
             await counters.Increment("a", session);
-            (await aaComputed.Update(false)).Value.Should().Be(1);
-            (await abComputed.Update(false)).Value.Should().Be(0);
-            (await baComputed.Update(false)).Value.Should().Be(0);
+            (await aaComputed.Update()).Value.Should().Be(1);
+            (await abComputed.Update()).Value.Should().Be(0);
+            (await baComputed.Update()).Value.Should().Be(0);
             await counters.Increment("b", session);
-            (await aaComputed.Update(false)).Value.Should().Be(1);
-            (await abComputed.Update(false)).Value.Should().Be(1);
-            (await baComputed.Update(false)).Value.Should().Be(0);
+            (await aaComputed.Update()).Value.Should().Be(1);
+            (await abComputed.Update()).Value.Should().Be(1);
+            (await baComputed.Update()).Value.Should().Be(0);
 
             session = sessionB;
             await counters.Increment("a", session);
-            (await aaComputed.Update(false)).Value.Should().Be(1);
-            (await abComputed.Update(false)).Value.Should().Be(1);
-            (await baComputed.Update(false)).Value.Should().Be(1);
+            (await aaComputed.Update()).Value.Should().Be(1);
+            (await abComputed.Update()).Value.Should().Be(1);
+            (await baComputed.Update()).Value.Should().Be(1);
             await counters.Increment("b", session);
-            (await aaComputed.Update(false)).Value.Should().Be(1);
-            (await abComputed.Update(false)).Value.Should().Be(1);
-            (await baComputed.Update(false)).Value.Should().Be(1);
+            (await aaComputed.Update()).Value.Should().Be(1);
+            (await abComputed.Update()).Value.Should().Be(1);
+            (await baComputed.Update()).Value.Should().Be(1);
 
             stopCts.Cancel();
         }

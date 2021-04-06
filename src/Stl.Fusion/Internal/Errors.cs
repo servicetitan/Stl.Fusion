@@ -65,5 +65,9 @@ namespace Stl.Fusion.Internal
             => new NotSupportedException($"Specified {nameof(ComputedOptions)} aren't supported by '{unsupportedBy}'.");
         public static Exception OutputIsUnloaded()
             => new InvalidOperationException($"{nameof(IAsyncComputed.MaybeOutput)} is unloaded.");
+
+        public static Exception InvalidContextCallOptions(CallOptions callOptions)
+            => new InvalidOperationException(
+                $"{nameof(ComputeContext)} with {nameof(CallOptions)} = {callOptions} cannot be used here.");
     }
 }

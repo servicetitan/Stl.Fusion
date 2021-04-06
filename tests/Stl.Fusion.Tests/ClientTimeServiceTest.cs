@@ -26,7 +26,7 @@ namespace Stl.Fusion.Tests
 
             cTime.Options.AutoInvalidateTime.Should().Be(ComputedOptions.Default.AutoInvalidateTime);
             if (!cTime.IsConsistent()) {
-                cTime = await cTime.Update(false);
+                cTime = await cTime.Update();
                 cTime.IsConsistent().Should().BeTrue();
             }
             (DateTime.Now - cTime.Value).Should().BeLessThan(epsilon);

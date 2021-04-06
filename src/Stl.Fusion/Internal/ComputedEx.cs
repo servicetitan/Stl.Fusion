@@ -14,12 +14,13 @@ namespace Stl.Fusion.Internal
         internal static bool TryUseExisting<T>(this IComputed<T>? existing, ComputeContext context, IComputed? usedBy)
         {
             var callOptions = context.CallOptions;
-            var useExisting = (callOptions & CallOptions.TryGetExisting) != 0;
+            var mustUseExisting = (callOptions & CallOptions.TryGetExisting) != 0;
 
             if (existing == null)
-                return useExisting;
-            if (!(useExisting || existing.IsConsistent()))
+                return mustUseExisting;
+            if (!(mustUseExisting || existing.IsConsistent()))
                 return false;
+            // We're here, if (existing != null && (mustUseExisting || existing.IsConsistent()))
 
             context.TryCapture(existing);
             var invalidate = (callOptions & CallOptions.Invalidate) == CallOptions.Invalidate;
@@ -27,7 +28,7 @@ namespace Stl.Fusion.Internal
                 existing.Invalidate();
                 return true;
             }
-            if (!useExisting)
+            if (!mustUseExisting)
                 ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) existing!);
             ((IComputedImpl?) existing)?.RenewTimeouts();
             return true;
@@ -38,11 +39,11 @@ namespace Stl.Fusion.Internal
             CancellationToken cancellationToken)
         {
             var callOptions = context.CallOptions;
-            var useExisting = (callOptions & CallOptions.TryGetExisting) != 0;
+            var mustUseExisting = (callOptions & CallOptions.TryGetExisting) != 0;
 
             if (existing == null)
-                return useExisting ? ResultBox<T>.Default : null;
-            if (!(useExisting || existing.IsConsistent()))
+                return mustUseExisting ? ResultBox<T>.Default : null;
+            if (!(mustUseExisting || existing.IsConsistent()))
                 return null;
 
             var invalidate = (callOptions & CallOptions.Invalidate) == CallOptions.Invalidate;
@@ -54,14 +55,44 @@ namespace Stl.Fusion.Internal
 
             var result = existing.MaybeOutput;
             if (result == null) {
-                result = await existing.GetOutputAsync(cancellationToken).ConfigureAwait(false);
+                result = await existing.GetOutput(cancellationToken).ConfigureAwait(false);
                 if (result == null)
                     return null;
             }
 
-            if (!useExisting)
-                ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) existing!);
             context.TryCapture(existing);
+            if (!mustUseExisting)
+                ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) existing!);
+            ((IComputedImpl?) existing)?.RenewTimeouts();
+            return result;
+        }
+
+        internal static bool TryUseExistingFromUse<T>(this IComputed<T>? existing, ComputeContext context, IComputed? usedBy)
+        {
+            if (existing == null || !existing.IsConsistent())
+                return false;
+            context.TryCapture(existing);
+            ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) existing!);
+            ((IComputedImpl?) existing)?.RenewTimeouts();
+            return true;
+        }
+
+        internal static async ValueTask<ResultBox<T>?> TryUseExistingFromUse<T>(
+            this IAsyncComputed<T>? existing, ComputeContext context, IComputed? usedBy,
+            CancellationToken cancellationToken)
+        {
+            if (existing == null || !existing.IsConsistent())
+                return null;
+
+            var result = existing.MaybeOutput;
+            if (result == null) {
+                result = await existing.GetOutput(cancellationToken).ConfigureAwait(false);
+                if (result == null)
+                    return null;
+            }
+
+            context.TryCapture(existing);
+            ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) existing!);
             ((IComputedImpl?) existing)?.RenewTimeouts();
             return result;
         }

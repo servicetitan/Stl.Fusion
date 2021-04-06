@@ -104,7 +104,7 @@ namespace Stl.Fusion.Tests
                     var norris = await users.TryGet(int.MaxValue, cancellationToken).ConfigureAwait(false);
                     var now = await time.GetTime().ConfigureAwait(false);
                     return $"@ {now:hh:mm:ss.fff}: {norris?.Name ?? "(none)"}";
-                }).Update(false);
+                }).Update();
             sText.Updated += (s, _) => Log.LogInformation($"{s.Value}");
 
             for (var i = 1; i <= 10; i += 1) {
@@ -126,8 +126,8 @@ namespace Stl.Fusion.Tests
             var count2 = 0;
 
 #pragma warning disable 1998
-            var s1 = await stateFactory.NewComputed<int>(async (s, ct) => count1++).Update(false);
-            var s2 = await stateFactory.NewComputed<int>(async (s, ct) => count2++).Update(false);
+            var s1 = await stateFactory.NewComputed<int>(async (s, ct) => count1++).Update();
+            var s2 = await stateFactory.NewComputed<int>(async (s, ct) => count2++).Update();
 #pragma warning restore 1998
             var s12 = await stateFactory.NewComputed<(int, int)>(
                 async (s, cancellationToken) => {
@@ -135,7 +135,7 @@ namespace Stl.Fusion.Tests
                     using var _ = Computed.SuspendDependencyCapture();
                     var b = await s2.Use(cancellationToken);
                     return (a, b);
-                }).Update(false);
+                }).Update();
 
             var v12a = await s12.Use();
             s1.Computed.Invalidate(); // Should increment c1 & impact c12

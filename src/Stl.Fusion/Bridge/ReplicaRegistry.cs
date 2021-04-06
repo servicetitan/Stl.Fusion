@@ -89,7 +89,7 @@ namespace Stl.Fusion.Bridge
             OnOperation(random);
             var spinWait = new SpinWait();
             var newReplica = (IReplica?) null; // Just to make sure we store this ref
-            while (true) {
+            for (;;) {
                 // ReSharper disable once HeapView.CanAvoidClosure
                 var handle = _handles.GetOrAdd(publicationRef, _ => {
                     newReplica = replicaFactory.Invoke();

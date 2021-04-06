@@ -13,8 +13,8 @@ namespace Stl.Tests.Mathematics
         public void BasicTest()
         {
             Assert.Equal(64, Bits.Count(ulong.MaxValue));
-            Assert.Equal(63, Bits.MsbIndex(0));
-            Assert.Equal(63, Bits.LsbIndex(0));
+            Assert.Equal(64, Bits.MsbIndex(0));
+            Assert.Equal(64, Bits.LsbIndex(0));
             for (var i = 0; i < 64; i++) {
                 var x = 1ul << i;
                 var xl = x | (x >> 1) | (x >> 5);

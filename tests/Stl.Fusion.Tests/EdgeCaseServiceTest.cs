@@ -135,7 +135,7 @@ namespace Stl.Fusion.Tests
         {
             if (computed is IReplicaMethodComputed rc)
                 await rc.Replica!.RequestUpdate(cancellationToken);
-            return await computed.Update(false, cancellationToken);
+            return await computed.Update(cancellationToken);
         }
     }
 }

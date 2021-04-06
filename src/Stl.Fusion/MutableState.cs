@@ -77,7 +77,7 @@ namespace Stl.Fusion
         {
             base.OnInvalidated(computed);
             if (Snapshot.Computed == computed)
-                computed.Update(false);
+                computed.Update();
         }
 
         protected override Task<IComputed<T>> Invoke(

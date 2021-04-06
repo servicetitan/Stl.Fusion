@@ -59,7 +59,7 @@ namespace Stl.Fusion.Interception
         protected override IComputed<T> CreateComputed(ComputeMethodInput input, LTag tag)
             => new SwappingComputed<T>(Options, input, tag);
 
-        new protected IAsyncComputed<T>? TryGetExisting(ComputeMethodInput input)
+        protected new IAsyncComputed<T>? TryGetExisting(ComputeMethodInput input)
         {
             var computed = ComputedRegistry.Instance.TryGet(input);
             return computed as IAsyncComputed<T>;

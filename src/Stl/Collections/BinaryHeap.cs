@@ -74,7 +74,7 @@ namespace Stl.Collections
 
         private void FixTopDown(int i)
         {
-            while (true) {
+            for (;;) {
                 var l = GetFirstChildIndex(i);
                 var r = l + 1;
                 var minIndex = i;

@@ -51,9 +51,9 @@ namespace Stl.Fusion.Swapping
             return true;
         }
 
-        async ValueTask<IResult?> IAsyncComputed.GetOutputAsync(CancellationToken cancellationToken)
-            => await GetOutputAsync(cancellationToken).ConfigureAwait(false);
-        public async ValueTask<ResultBox<T>?> GetOutputAsync(CancellationToken cancellationToken)
+        async ValueTask<IResult?> IAsyncComputed.GetOutput(CancellationToken cancellationToken)
+            => await GetOutput(cancellationToken).ConfigureAwait(false);
+        public async ValueTask<ResultBox<T>?> GetOutput(CancellationToken cancellationToken)
         {
             var maybeOutput = MaybeOutput;
             if (maybeOutput != null)
@@ -74,6 +74,24 @@ namespace Stl.Fusion.Swapping
             }
             Interlocked.Exchange(ref _maybeOutput, maybeOutput);
             return maybeOutput;
+        }
+
+        public override async ValueTask<T> Use(CancellationToken cancellationToken = default)
+        {
+            var usedBy = Computed.GetCurrent();
+            var context = ComputeContext.Current;
+            if ((context.CallOptions & CallOptions.TryGetExisting) != 0) // Both TryGetExisting & Invalidate
+                throw Errors.InvalidContextCallOptions(context.CallOptions);
+            if (IsConsistent()) {
+                var resultBox = await this.TryUseExistingFromUse(context, usedBy, cancellationToken)
+                    .ConfigureAwait(false);
+                if (resultBox != null)
+                    return resultBox.Value;
+            }
+            var computed = await Function
+                .Invoke(Input, usedBy, context, cancellationToken)
+                .ConfigureAwait(false);
+            return computed.Value;
         }
 
         public async ValueTask Swap(CancellationToken cancellationToken = default)

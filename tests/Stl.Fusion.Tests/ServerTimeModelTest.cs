@@ -28,7 +28,7 @@ namespace Stl.Fusion.Tests
             Debug.WriteLine("0");
             stm.CancelUpdateDelay();
             Debug.WriteLine("1");
-            await c.Update(false);
+            await c.Update();
             Debug.WriteLine("2");
 
             c = stm.Computed;
@@ -64,7 +64,7 @@ namespace Stl.Fusion.Tests
             Debug.WriteLine("0");
             stm.CancelUpdateDelay();
             Debug.WriteLine("1");
-            await c.Update(false);
+            await c.Update();
             Debug.WriteLine("2");
 
             c = stm.Computed;

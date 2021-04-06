@@ -31,7 +31,7 @@ namespace Stl.Mathematics
             var prefix = new List<int>(8);
             for (var i = 0; i < k; i++)
                 prefix.Add(i);
-            while (true) {
+            for (;;) {
                 var lastIndex = prefix.Count - 1;
                 var next = prefix[lastIndex] + 1;
                 if (prefix.Count == k || (next == n && !exactlyK))

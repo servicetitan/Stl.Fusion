@@ -56,7 +56,7 @@ await Task.Delay(700); // Just to make sure watch tasks print whatever they want
 WriteLine();
 WriteLine("Change product price by typing [productId]=[price], e.g. \"apple=0\".");
 WriteLine("See the total of every affected cart changes.");
-while (true) {
+for (;;) {
     await Task.Delay(500);
     WriteLine();
     Write("[productId]=[price]: ");

@@ -124,7 +124,7 @@ namespace Stl.Fusion.Bridge
                 UpdateErrorField = null;
                 var oldComputed = ComputedField;
 
-                if (oldComputed == null || oldComputed.Version != version)
+                if (oldComputed == null! || oldComputed.Version != version)
                     ReplaceComputedUnsafe(oldComputed, output, version, isConsistent);
                 else if (oldComputed.IsConsistent() != isConsistent) {
                     if (isConsistent)

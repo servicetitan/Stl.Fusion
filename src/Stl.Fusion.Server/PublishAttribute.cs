@@ -20,7 +20,7 @@ namespace Stl.Fusion.Server
 
             var publisher = httpContext.RequestServices.GetRequiredService<IPublisher>();
             var publication = await publisher
-                .Publish(ct => (Task) (next.Invoke()), httpContext.RequestAborted)
+                .Publish(_ => (Task) next.Invoke(), httpContext.RequestAborted)
                 .ConfigureAwait(false);
             httpContext.Publish(publication);
         }

@@ -105,13 +105,13 @@ namespace Stl.Fusion
                         var delayTask = UpdateDelayer.Delay(this, cancellationToken);
                         await Task.WhenAny(delayTask, updatedTask).ConfigureAwait(false);
                     }
-                    await computed.Update(false, cancellationToken).ConfigureAwait(false);
+                    await computed.Update(cancellationToken).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException) {
                     // Will break from "while" loop later if it's due to cancellationToken cancellation
                 }
                 catch (Exception e) {
-                    Log.LogError(e, $"Error in LiveState.RunAsync().");
+                    Log.LogError(e, "Failure inside Run()");
                 }
             }
         }

@@ -69,10 +69,10 @@ namespace Samples.HelloCart
         {
             var productService = WatchServices.GetRequiredService<IProductService>();
             var computed = await Computed.Capture(ct => productService.TryGet(productId, ct), cancellationToken);
-            while (true) {
+            for (;;) {
                 WriteLine($"  {computed.Value}");
                 await computed.WhenInvalidated(cancellationToken);
-                computed = await computed.Update(false, cancellationToken);
+                computed = await computed.Update(cancellationToken);
             }
         }
 
@@ -80,10 +80,10 @@ namespace Samples.HelloCart
         {
             var cartService = WatchServices.GetRequiredService<ICartService>();
             var computed = await Computed.Capture(ct => cartService.GetTotal(cartId, ct), cancellationToken);
-            while (true) {
+            for (;;) {
                 WriteLine($"  {cartId}: total = {computed.Value}");
                 await computed.WhenInvalidated(cancellationToken);
-                computed = await computed.Update(false, cancellationToken);
+                computed = await computed.Update(cancellationToken);
             }
         }
     }

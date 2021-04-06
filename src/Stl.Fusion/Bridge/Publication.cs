@@ -94,13 +94,15 @@ namespace Stl.Fusion.Bridge
 
         public async ValueTask Update(CancellationToken cancellationToken)
         {
-            var state = StateField;
-            if (state.IsDisposed || state.Computed.IsConsistent())
-                return;
-            var newComputed = await state.Computed
-                .Update(false, cancellationToken).ConfigureAwait(false);
-            var newState = CreatePublicationState(newComputed);
-            ChangeState(newState, state);
+            for (;;) {
+                var state = StateField;
+                if (state.IsDisposed || state.Computed.IsConsistent())
+                    return;
+                var newComputed = await state.Computed.Update(cancellationToken).ConfigureAwait(false);
+                var newState = CreatePublicationState(newComputed);
+                if (ChangeState(newState, state))
+                    return;
+            }
         }
 
         public TResult Apply<TArg, TResult>(IPublicationApplyHandler<TArg, TResult> handler, TArg arg)
@@ -140,7 +142,7 @@ namespace Stl.Fusion.Bridge
             try {
                 var start = CoarseCpuClock.Now;
                 var lastUseTime = GetLastUseTime();
-                while (true) {
+                for (;;) {
                     var nextCheckTime = GetNextCheckTime(start, lastUseTime);
                     var delay = TimeSpan.FromTicks(Math.Max(0, (nextCheckTime - Clock.Now).Ticks));
                     if (delay > TimeSpan.Zero)

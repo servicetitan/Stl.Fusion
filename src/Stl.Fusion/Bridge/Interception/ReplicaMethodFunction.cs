@@ -43,10 +43,8 @@ namespace Stl.Fusion.Bridge.Interception
             if (existing is IReplicaMethodComputed<T> rsc && rsc.Replica != null) {
                 try {
                     replica = rsc.Replica;
-                    using (ComputeContext.Suppress()) {
-                        replicaComputed = (IReplicaComputed<T>) await replica.Computed
-                            .Update(true, cancellationToken).ConfigureAwait(false);
-                    }
+                    replicaComputed = (IReplicaComputed<T>)
+                        await replica.Computed.Update(cancellationToken).ConfigureAwait(false);
                     result = new (method.Options, input, replicaComputed);
                     ComputeContext.Current.TryCapture(result);
                     return result;
@@ -104,11 +102,9 @@ namespace Stl.Fusion.Bridge.Interception
                 if (psi.Version == default)
                     psi.Version = new LTag(VersionGenerator.Next().Value ^ (1L << 62));
             }
-            using (ComputeContext.Suppress()) {
-                replica = Replicator.GetOrAdd(new PublicationStateInfo<T>(psi, output));
-                replicaComputed = (IReplicaComputed<T>) await replica.Computed
-                    .Update(true, cancellationToken).ConfigureAwait(false);
-            }
+            replica = Replicator.GetOrAdd(new PublicationStateInfo<T>(psi, output));
+            replicaComputed = (IReplicaComputed<T>)
+                await replica.Computed.Update(cancellationToken).ConfigureAwait(false);
             result = new ReplicaMethodComputed<T>(method.Options, input, replicaComputed);
             ComputeContext.Current.TryCapture(result);
             return result;

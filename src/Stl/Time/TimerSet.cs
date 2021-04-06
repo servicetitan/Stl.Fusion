@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
@@ -50,39 +49,31 @@ namespace Stl.Time
             Run().Ignore();
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddOrUpdate(TTimer timer, Moment time)
         {
-            lock (_lock) {
-                var priority = GetPriority(time);
+            var priority = GetPriority(time);
+            lock (_lock)
                 _timers.AddOrUpdate(priority, timer);
-            }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool AddOrUpdateToEarlier(TTimer timer, Moment time)
         {
-            lock (_lock) {
-                var priority = GetPriority(time);
+            var priority = GetPriority(time);
+            lock (_lock)
                 return _timers.AddOrUpdateToLower(priority, timer);
-            }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool AddOrUpdateToLater(TTimer timer, Moment time)
         {
-            lock (_lock) {
-                var priority = GetPriority(time);
+            var priority = GetPriority(time);
+            lock (_lock)
                 return _timers.AddOrUpdateToHigher(priority, timer);
-            }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Remove(TTimer timer)
         {
-            lock (_lock) {
+            lock (_lock)
                 return _timers.Remove(timer, out var _);
-            }
         }
 
         // Protected & private methods
@@ -115,7 +106,6 @@ namespace Stl.Time
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private long GetPriority(Moment time)
         {
             var priority = (time - _start).Ticks / Quanta.Ticks;

@@ -35,24 +35,24 @@ namespace Stl.Fusion.Tests
                 return $"{value1}{value2}";
             });
             var c = cs.Computed;
-            c = await c.Update(false);
+            c = await c.Update();
             c.Value.Should().Be("AB");
 
             ms1.Value = "X";
             ms1.Value.Should().Be("X");
-            c = await c.Update(false);
+            c = await c.Update();
             c.Value.Should().Be("XB");
 
             ms2.Value = "Y";
             ms2.Value.Should().Be("Y");
-            c = await c.Update(false);
+            c = await c.Update();
             c.Value.Should().Be("XY");
 
             ms1.Error = new NullReferenceException();
             ms1.HasError.Should().BeTrue();
             ms1.HasValue.Should().BeFalse();
             ms1.Error.Should().BeOfType<NullReferenceException>();
-            c = await c.Update(false);
+            c = await c.Update();
             c.HasError.Should().BeTrue();
             c.HasValue.Should().BeFalse();
             c.Error.Should().BeOfType<NullReferenceException>();
@@ -70,7 +70,7 @@ namespace Stl.Fusion.Tests
                     Out.WriteLine($"{name}: {computed.Value}, {computed}");
                     await computed.WhenInvalidated(cancellationToken);
                     Out.WriteLine($"{name}: {computed.Value}, {computed}");
-                    computed = await computed.Update(false, cancellationToken);
+                    computed = await computed.Update(cancellationToken);
                 }
             }
 
@@ -84,11 +84,11 @@ namespace Stl.Fusion.Tests
             await counters.Increment("a");
             await counters.SetOffset(10);
 
-            aComputed = await aComputed.Update(false);
+            aComputed = await aComputed.Update();
             aComputed.Value.Should().Be(11);
             aComputed.IsConsistent().Should().BeTrue();
 
-            bComputed = await bComputed.Update(false);
+            bComputed = await bComputed.Update();
             bComputed.Value.Should().Be(10);
             bComputed.IsConsistent().Should().BeTrue();
 

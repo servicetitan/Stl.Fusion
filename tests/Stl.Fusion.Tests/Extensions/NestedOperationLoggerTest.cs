@@ -35,9 +35,9 @@ namespace Stl.Fusion.Tests.Extensions
             c1.IsInvalidated().Should().BeTrue();
             c2.IsInvalidated().Should().BeTrue();
             c3.IsInvalidated().Should().BeTrue();
-            c1 = await c1.Update(false);
-            c2 = await c2.Update(false);
-            c3 = await c3.Update(false);
+            c1 = await c1.Update();
+            c2 = await c2.Update();
+            c3 = await c3.Update();
             c1.Value.Should().Be("v3");
             c2.Value.Should().Be("v2");
             c3.Value.Should().Be("v1");

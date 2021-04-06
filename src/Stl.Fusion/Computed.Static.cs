@@ -6,7 +6,7 @@ using Stl.Fusion.Internal;
 
 namespace Stl.Fusion
 {
-    public static partial class Computed
+    public static class Computed
     {
         private static readonly AsyncLocal<IComputed?> CurrentLocal = new();
 
