@@ -59,31 +59,33 @@ namespace Stl.Fusion.Bridge.Interception
             }
 
             // 2. Replica update failed, let's refresh it
-            using var psiCapture = new PublicationStateInfoCapture();
             Result<T> output;
-            try {
-                var rpcResult = input.InvokeOriginalFunction(cancellationToken);
-                if (method.ReturnsValueTask) {
-                    var task = (ValueTask<T>) rpcResult;
-                    output = Result.Value(await task.ConfigureAwait(false));
+            PublicationStateInfo? psi;
+            using (var psiCapture = new PublicationStateInfoCapture()) {
+                try {
+                    var rpcResult = input.InvokeOriginalFunction(cancellationToken);
+                    if (method.ReturnsValueTask) {
+                        var task = (ValueTask<T>) rpcResult;
+                        output = Result.Value(await task.ConfigureAwait(false));
+                    }
+                    else {
+                        var task = (Task<T>) rpcResult;
+                        output = Result.Value(await task.ConfigureAwait(false));
+                    }
                 }
-                else {
-                    var task = (Task<T>) rpcResult;
-                    output = Result.Value(await task.ConfigureAwait(false));
+                catch (OperationCanceledException) {
+                    throw;
                 }
-            }
-            catch (OperationCanceledException) {
-                throw;
-            }
-            catch (Exception e) {
-                if (IsLogDebugEnabled)
-                    Log.LogError(e, "ComputeAsync: error on update");
-                if (e is AggregateException ae)
-                    e = ae.GetFirstInnerException();
-                output = Result.Error<T>(e);
+                catch (Exception e) {
+                    if (IsLogDebugEnabled)
+                        Log.LogError(e, "ComputeAsync: error on update");
+                    if (e is AggregateException ae)
+                        e = ae.GetFirstInnerException();
+                    output = Result.Error<T>(e);
+                }
+                psi = psiCapture.Captured;
             }
 
-            var psi = psiCapture.Captured;
             if (psi == null) {
                 output = new Result<T>(default!, Errors.NoPublicationStateInfoCaptured());
                 // We need a unique LTag here, so we use a range that's supposed to be unused by LTagGenerators.

@@ -89,10 +89,10 @@ namespace Stl.Fusion.Extensions
 
         // ListKeysByPrefix
 
-        public static Task<string[]> ListKeysByPrefix(this IKeyValueStore keyValueStore,
-            string prefix, PageRef<string> pageRef,
+        public static Task<string[]> ListKeySuffixes(this IKeyValueStore keyValueStore,
+            string prefix,
+            PageRef<string> pageRef,
             CancellationToken cancellationToken = default)
-            => keyValueStore.ListKeysByPrefix(
-                prefix, pageRef, SortDirection.Ascending, cancellationToken);
+            => keyValueStore.ListKeySuffixes(prefix, pageRef, SortDirection.Ascending, cancellationToken);
     }
 }

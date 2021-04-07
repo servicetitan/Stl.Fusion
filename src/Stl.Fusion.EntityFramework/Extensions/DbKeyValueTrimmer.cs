@@ -25,7 +25,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
         protected int LastTrimCount { get; set; }
         protected Random Random { get; }
         protected LogLevel LogLevel { get; }
-        protected IKeyValueStore<TDbContext> KeyValueStore { get; }
+        protected IDbKeyValueStore<TDbContext> KeyValueStore { get; }
 
         public DbKeyValueTrimmer(Options? options, IServiceProvider services)
             : base(services)
@@ -37,7 +37,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
             BatchSize = options.BatchSize;
             Random = new Random();
 
-            KeyValueStore = services.GetRequiredService<IKeyValueStore<TDbContext>>();
+            KeyValueStore = services.GetRequiredService<IDbKeyValueStore<TDbContext>>();
         }
 
         protected override async Task WakeUp(CancellationToken cancellationToken)

@@ -33,57 +33,57 @@ namespace Stl.Fusion.Tests.Extensions
         {
             var kvs = Services.GetRequiredService<IKeyValueStore>();
             await kvs.Set("1/2", "12");
-            (await kvs.CountByPrefix("1")).Should().Be(1);
-            (await kvs.ListKeysByPrefix("1", 100)).Length.Should().Be(1);
-            (await kvs.CountByPrefix("1/2")).Should().Be(1);
-            (await kvs.ListKeysByPrefix("1/2", 100)).Length.Should().Be(1);
-            (await kvs.CountByPrefix("1/2/3a")).Should().Be(0);
-            (await kvs.ListKeysByPrefix("1/2/3a", 100)).Length.Should().Be(0);
+            (await kvs.Count("1")).Should().Be(1);
+            (await kvs.ListKeySuffixes("1", 100)).Length.Should().Be(1);
+            (await kvs.Count("1/2")).Should().Be(1);
+            (await kvs.ListKeySuffixes("1/2", 100)).Length.Should().Be(1);
+            (await kvs.Count("1/2/3a")).Should().Be(0);
+            (await kvs.ListKeySuffixes("1/2/3a", 100)).Length.Should().Be(0);
 
             await kvs.Set("1/2/3a", "123");
-            (await kvs.CountByPrefix("1")).Should().Be(2);
-            (await kvs.ListKeysByPrefix("1", 100)).Length.Should().Be(2);
-            (await kvs.CountByPrefix("1/2")).Should().Be(2);
-            (await kvs.ListKeysByPrefix("1/2", 100)).Length.Should().Be(2);
-            (await kvs.CountByPrefix("1/2/3a")).Should().Be(1);
-            (await kvs.ListKeysByPrefix("1/2/3a", 100)).Length.Should().Be(1);
+            (await kvs.Count("1")).Should().Be(2);
+            (await kvs.ListKeySuffixes("1", 100)).Length.Should().Be(2);
+            (await kvs.Count("1/2")).Should().Be(2);
+            (await kvs.ListKeySuffixes("1/2", 100)).Length.Should().Be(2);
+            (await kvs.Count("1/2/3a")).Should().Be(1);
+            (await kvs.ListKeySuffixes("1/2/3a", 100)).Length.Should().Be(1);
 
             await kvs.Set("1/2/3b", "123");
-            (await kvs.CountByPrefix("1")).Should().Be(3);
-            (await kvs.ListKeysByPrefix("1", 100)).Length.Should().Be(3);
-            (await kvs.CountByPrefix("1/2")).Should().Be(3);
-            (await kvs.ListKeysByPrefix("1/2", 100)).Length.Should().Be(3);
-            (await kvs.CountByPrefix("1/2/3a")).Should().Be(1);
-            (await kvs.ListKeysByPrefix("1/2/3a", 100)).Length.Should().Be(1);
+            (await kvs.Count("1")).Should().Be(3);
+            (await kvs.ListKeySuffixes("1", 100)).Length.Should().Be(3);
+            (await kvs.Count("1/2")).Should().Be(3);
+            (await kvs.ListKeySuffixes("1/2", 100)).Length.Should().Be(3);
+            (await kvs.Count("1/2/3a")).Should().Be(1);
+            (await kvs.ListKeySuffixes("1/2/3a", 100)).Length.Should().Be(1);
 
-            (await kvs.ListKeysByPrefix("1", 3))
-                .Should().BeEquivalentTo("1/2", "1/2/3a", "1/2/3b");
-            (await kvs.ListKeysByPrefix("1", 2))
-                .Should().BeEquivalentTo("1/2", "1/2/3a");
-            (await kvs.ListKeysByPrefix("1", PageRef.New(2, "1/2")))
-                .Should().BeEquivalentTo("1/2/3a", "1/2/3b");
-            (await kvs.ListKeysByPrefix("1", PageRef.New(2, "1/2/3b"), SortDirection.Descending))
-                .Should().BeEquivalentTo("1/2/3a", "1/2");
-            (await kvs.ListKeysByPrefix("1", PageRef.New(1, "1/2/3b"), SortDirection.Descending))
-                .Should().BeEquivalentTo("1/2/3a");
-            (await kvs.ListKeysByPrefix("1", PageRef.New(0, "1/2/3b"), SortDirection.Descending))
+            (await kvs.ListKeySuffixes("1", 3))
+                .Should().BeEquivalentTo("/2", "/2/3a", "/2/3b");
+            (await kvs.ListKeySuffixes("1", 2))
+                .Should().BeEquivalentTo("/2", "/2/3a");
+            (await kvs.ListKeySuffixes("1", PageRef.New(2, "1/2")))
+                .Should().BeEquivalentTo("/2/3a", "/2/3b");
+            (await kvs.ListKeySuffixes("1", PageRef.New(2, "1/2/3b"), SortDirection.Descending))
+                .Should().BeEquivalentTo("/2/3a", "/2");
+            (await kvs.ListKeySuffixes("1", PageRef.New(1, "1/2/3b"), SortDirection.Descending))
+                .Should().BeEquivalentTo("/2/3a");
+            (await kvs.ListKeySuffixes("1", PageRef.New(0, "1/2/3b"), SortDirection.Descending))
                 .Should().BeEquivalentTo();
 
             await kvs.RemoveMany(new[] { "1/2/3c", "1/2/3b" });
-            (await kvs.CountByPrefix("1")).Should().Be(2);
-            (await kvs.ListKeysByPrefix("1", 100)).Length.Should().Be(2);
-            (await kvs.CountByPrefix("1/2")).Should().Be(2);
-            (await kvs.ListKeysByPrefix("1/2", 100)).Length.Should().Be(2);
-            (await kvs.CountByPrefix("1/2/3a")).Should().Be(1);
-            (await kvs.ListKeysByPrefix("1/2/3a", 100)).Length.Should().Be(1);
+            (await kvs.Count("1")).Should().Be(2);
+            (await kvs.ListKeySuffixes("1", 100)).Length.Should().Be(2);
+            (await kvs.Count("1/2")).Should().Be(2);
+            (await kvs.ListKeySuffixes("1/2", 100)).Length.Should().Be(2);
+            (await kvs.Count("1/2/3a")).Should().Be(1);
+            (await kvs.ListKeySuffixes("1/2/3a", 100)).Length.Should().Be(1);
 
             await kvs.SetMany(new[] {
                 ("a/b", "ab", default(Moment?)),
                 ("a/c", "ac", default),
             });
-            (await kvs.CountByPrefix("1")).Should().Be(2);
-            (await kvs.CountByPrefix("a")).Should().Be(2);
-            (await kvs.CountByPrefix("")).Should().Be(4);
+            (await kvs.Count("1")).Should().Be(2);
+            (await kvs.Count("a")).Should().Be(2);
+            (await kvs.Count("")).Should().Be(4);
         }
 
         [Fact(Skip = "Intermittent failures due to TestClock on this test, to be fixed later.")]

@@ -12,10 +12,11 @@ using Stl.Fusion.Client;
 using Stl.OS;
 using Stl.DependencyInjection;
 using Stl.Fusion.Blazor;
+using Stl.Fusion.Client.Internal;
 using Stl.Fusion.Extensions;
 using Templates.Blazor2.Abstractions;
 using Templates.Blazor2.Abstractions.Clients;
-using Templates.Blazor2.UI.Services;
+using Templates.Blazor2.Services;
 
 namespace Templates.Blazor2.UI
 {
@@ -56,8 +57,15 @@ namespace Templates.Blazor2.UI
             });
             fusion.AddAuthentication().AddRestEaseClient().AddBlazor();
 
-            fusionClient.AddReplicaService<ITodoService, ITodoClient>();
+            // Option 1: Client-side SimpleTodoService (no RPC)
             // fusion.AddComputeService<ITodoService, SimpleTodoService>();
+
+            // Option 2: Client-side TodoService + IKeyValueStoreClient (remote IKeyValueStore)
+            // fusionClient.AddReplicaService<IKeyValueStore, IKeyValueStoreClient>();
+            // fusion.AddComputeService<ITodoService, TodoService>();
+
+            // Option 3: ITodoClient (remote ITodoService)
+            fusionClient.AddReplicaService<ITodoService, ITodoClient>();
 
             ConfigureSharedServices(services);
         }
@@ -74,10 +82,6 @@ namespace Templates.Blazor2.UI
             // Extensions
             var fusion = services.AddFusion();
             fusion.AddLiveClock();
-
-            // This method registers services marked with any of ServiceAttributeBase descendants, including:
-            // [Service], [ComputeService], [RestEaseReplicaService], [LiveStateUpdater]
-            services.UseAttributeScanner().AddServicesFrom(Assembly.GetExecutingAssembly());
         }
     }
 }

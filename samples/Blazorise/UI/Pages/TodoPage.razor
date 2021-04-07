@@ -19,6 +19,11 @@
 <Text Margin="Margin.Is1.OnY">
     Updated: <b><MomentsAgoBadge Value="LastStateUpdateTime" /></b>
 </Text>
+<Text Margin="Margin.Is1.OnY">
+    Call:
+    <Button Color="Color.Danger" Size="Size.Small" Clicked="_ => StateHasChanged()">StateHasChanged()</Button>
+    <Button Color="Color.Danger" Size="Size.Small" Clicked="_ => InvalidateState()">InvalidateState()</Button>
+</Text>
 
 <AuthorizeView>
     <NotAuthorized>

@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Stl.Fusion.Server.Controllers
 {
-    [Route("fusion")]
     public class SignInController : Controller
     {
         public class Options

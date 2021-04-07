@@ -80,7 +80,7 @@ namespace Stl.Interception.Interceptors
 
         protected virtual Action<IInvocation>? CreateHandlerUntyped(MethodInfo methodInfo, IInvocation initialInvocation)
         {
-            var proxyMethodInfo = initialInvocation.MethodInvocationTarget;
+            var proxyMethodInfo = initialInvocation.Method;
             var method = _interceptedMethodCache.GetOrAddChecked(proxyMethodInfo, _createInterceptedMethod, initialInvocation);
             if (method == null)
                 return null;

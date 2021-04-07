@@ -8,16 +8,29 @@ namespace Stl.Fusion.Extensions
     public static class FusionBuilderEx
     {
         public static FusionBuilder AddLiveClock(this FusionBuilder fusion,
-            Action<IServiceProvider, LiveClock.Options>? liveTimeOptionsBuilder = null)
+            Action<IServiceProvider, LiveClock.Options>? optionsBuilder = null)
         {
             var services = fusion.Services;
             services.TryAddSingleton<IPluralize>(new Pluralizer());
             services.TryAddSingleton(c => {
                 var options = new LiveClock.Options();
-                liveTimeOptionsBuilder?.Invoke(c, options);
+                optionsBuilder?.Invoke(c, options);
                 return options;
             });
             fusion.AddComputeService<ILiveClock, LiveClock>();
+            return fusion;
+        }
+
+        public static FusionBuilder AddKeyValueStoreSandbox(this FusionBuilder fusion,
+            Action<IServiceProvider, KeyValueStoreSandboxProvider.Options>? optionsBuilder = null)
+        {
+            var services = fusion.Services;
+            services.TryAddSingleton(c => {
+                var options = new KeyValueStoreSandboxProvider.Options();
+                optionsBuilder?.Invoke(c, options);
+                return options;
+            });
+            services.TryAddSingleton<IKeyValueStoreSandboxProvider, KeyValueStoreSandboxProvider>();
             return fusion;
         }
     }

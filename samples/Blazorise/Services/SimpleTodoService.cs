@@ -10,7 +10,7 @@ using Stl.Fusion.Authentication;
 using Stl.Fusion.Extensions;
 using Templates.Blazor2.Abstractions;
 
-namespace Templates.Blazor2.UI.Services
+namespace Templates.Blazor2.Services
 {
     public class SimpleTodoService : ITodoService
     {

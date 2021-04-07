@@ -25,6 +25,7 @@ using Stl.Fusion.Server;
 using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework;
+using Stl.Fusion.Extensions;
 using Stl.IO;
 using Templates.Blazor2.Abstractions;
 using Templates.Blazor2.UI;
@@ -110,9 +111,10 @@ namespace Templates.Blazor2.Host
                     options.NameClaimKeys = Array.Empty<string>();
                 });
             fusion.AddComputeService<ITodoService, TodoService>();
+            fusion.AddKeyValueStoreSandbox();
 
             // Shared services
-            UI.Program.ConfigureSharedServices(services);
+            Program.ConfigureSharedServices(services);
 
             services.AddAuthentication(options => {
                 options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;

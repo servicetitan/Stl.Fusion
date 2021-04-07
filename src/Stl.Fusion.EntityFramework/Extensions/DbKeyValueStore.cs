@@ -15,7 +15,11 @@ using Stl.Time;
 
 namespace Stl.Fusion.EntityFramework.Extensions
 {
-    public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext>, IKeyValueStore<TDbContext>
+    public interface IDbKeyValueStore<TDbContext> : IKeyValueStore
+        where TDbContext : DbContext
+    { }
+
+    public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext>, IDbKeyValueStore<TDbContext>
         where TDbContext : DbContext
         where TDbKeyValue : DbKeyValue, new()
     {
@@ -139,7 +143,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
             return dbKeyValue?.Value;
         }
 
-        public virtual async Task<int> CountByPrefix(
+        public virtual async Task<int> Count(
             string prefix, CancellationToken cancellationToken = default)
         {
             PseudoGet(prefix).Ignore();
@@ -150,7 +154,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
             return count;
         }
 
-        public virtual async Task<string[]> ListKeysByPrefix(
+        public virtual async Task<string[]> ListKeySuffixes(
             string prefix,
             PageRef<string> pageRef,
             SortDirection sortDirection = SortDirection.Ascending,
@@ -173,6 +177,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
             var result = await query
                 .Select(e => e.Key)
                 .Take(pageRef.Count)
+                .Select(k => k.Substring(prefix.Length))
                 .ToArrayAsync(cancellationToken).ConfigureAwait(false);
             return result;
         }

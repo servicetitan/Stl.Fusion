@@ -9,23 +9,23 @@ namespace Stl.Fusion.Client.Internal
     [BasePath("fusion/auth")]
     public interface IAuthClient
     {
-        [Post("signOut")]
+        [Post(nameof(SignOut))]
         Task SignOut([Body] SignOutCommand command, CancellationToken cancellationToken = default);
-        [Post("editUser")]
+        [Post(nameof(EditUser))]
         Task EditUser([Body] EditUserCommand command, CancellationToken cancellationToken = default);
-        [Post("updatePresence")]
+        [Post(nameof(UpdatePresence))]
         Task UpdatePresence([Body] Session session, CancellationToken cancellationToken = default);
 
-        [Get("isSignOutForced")]
+        [Get(nameof(IsSignOutForced))]
         Task<bool> IsSignOutForced(Session session, CancellationToken cancellationToken = default);
-        [Get("getUser")]
+        [Get(nameof(GetUser))]
         Task<User> GetUser(Session session, CancellationToken cancellationToken = default);
-        [Get("getSessionInfo")]
+        [Get(nameof(GetSessionInfo))]
         Task<SessionInfo> GetSessionInfo(Session session, CancellationToken cancellationToken = default);
-        [Get("getUserSessions")]
+        [Get(nameof(GetUserSessions))]
         Task<SessionInfo[]> GetUserSessions(Session session, CancellationToken cancellationToken = default);
 
-        [Get("getSession")]
+        [Get(nameof(GetSession))]
         Task<Session> GetSession(CancellationToken cancellationToken = default);
     }
 }

@@ -46,8 +46,15 @@ namespace Stl.CommandR.Interception
 
         protected override MethodDef? CreateMethodDef(MethodInfo methodInfo, IInvocation initialInvocation)
         {
-            var methodDef = new CommandHandlerMethodDef(this, methodInfo);
-            return methodDef.IsValid ? methodDef : null;
+            try {
+                var methodDef = new CommandHandlerMethodDef(this, methodInfo);
+                return methodDef.IsValid ? methodDef : null;
+            }
+            catch {
+                // CommandHandlerMethodDef may throw an exception,
+                // which means methodDef isn't valid as well.
+                return null;
+            }
         }
 
         protected override void ValidateTypeInternal(Type type)

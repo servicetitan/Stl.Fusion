@@ -24,14 +24,12 @@ namespace Stl.Fusion.Extensions
         [ComputeMethod]
         Task<string?> TryGet(string key, CancellationToken cancellationToken = default);
         [ComputeMethod]
-        Task<int> CountByPrefix(string prefix, CancellationToken cancellationToken = default);
+        Task<int> Count(string prefix, CancellationToken cancellationToken = default);
         [ComputeMethod]
-        Task<string[]> ListKeysByPrefix(
+        Task<string[]> ListKeySuffixes(
             string prefix,
             PageRef<string> pageRef,
             SortDirection sortDirection = SortDirection.Ascending,
             CancellationToken cancellationToken = default);
     }
-
-    public interface IKeyValueStore<TContext> : IKeyValueStore { }
 }
