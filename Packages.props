@@ -6,17 +6,17 @@
 
   <PropertyGroup>
     <MicrosoftExtensionsVersion>5.0.0</MicrosoftExtensionsVersion>
-    <EntityFrameworkCoreVersion>5.0.4</EntityFrameworkCoreVersion>
+    <EntityFrameworkCoreVersion>5.0.5</EntityFrameworkCoreVersion>
     <AspNetCoreVersion>5.0.5</AspNetCoreVersion>
     <AspNetCoreVersion3>3.*</AspNetCoreVersion3>
-    <BlazorVersion>5.0.4</BlazorVersion>
+    <BlazorVersion>5.0.5</BlazorVersion>
     <BlazoriseVersion>0.9.*</BlazoriseVersion>
     <SystemNetHttpJsonVersion>5.0.3</SystemNetHttpJsonVersion>
     <StlFusionVersion>0.*</StlFusionVersion>
   </PropertyGroup>
 
   <ItemGroup Label="Nupkg Versions">
-    <PackageReference Update="AspNet.Security.OAuth.GitHub" Version="5.0.3" />
+    <PackageReference Update="AspNet.Security.OAuth.GitHub" Version="5.0.4" />
     <PackageReference Update="Blazorise" Version="$(BlazoriseVersion)" />
     <PackageReference Update="Blazorise.Bootstrap" Version="$(BlazoriseVersion)" />
     <PackageReference Update="Blazorise.DataGrid" Version="$(BlazoriseVersion)" />
@@ -103,7 +103,7 @@
     <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.0-beta-20204-02" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
     <PackageReference Update="Microsoft.EntityFrameworkCore.Design" Version="$(EntityFrameworkCoreVersion)" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers;" />
     <PackageReference Update="Microsoft.EntityFrameworkCore.Tools" Version="$(EntityFrameworkCoreVersion)" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers;" />
-    <PackageReference Update="Nerdbank.GitVersioning" Version="3.4.190" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
+    <PackageReference Update="Nerdbank.GitVersioning" Version="3.4.194" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
     <PackageReference Update="coverlet.collector" Version="3.0.3" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
     <PackageReference Update="xunit.runner.visualstudio" Version="2.4.3" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
   </ItemGroup>
