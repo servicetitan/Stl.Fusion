@@ -165,8 +165,9 @@ namespace Stl.Fusion.EntityFramework
             where TDbKeyValue : DbKeyValue, new()
         {
             AddDbEntityResolver<string, TDbKeyValue>();
-            Services.AddFusion().AddComputeService<IDbKeyValueStore<TDbContext>, DbKeyValueStore<TDbContext, TDbKeyValue>>();
-            Services.TryAddTransient<IKeyValueStore>(c => c.GetRequiredService<IDbKeyValueStore<TDbContext>>());
+            var fusion = Services.AddFusion();
+            fusion.AddComputeService<IDbKeyValueStore<TDbContext>, DbKeyValueStore<TDbContext, TDbKeyValue>>();
+            Services.TryAddSingleton<IKeyValueStore>(c => c.GetRequiredService<IDbKeyValueStore<TDbContext>>());
 
             // DbKeyValueTrimmer - hosted service!
             Services.TryAddSingleton(c => {

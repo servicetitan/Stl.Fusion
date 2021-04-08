@@ -8,9 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Stl.Async;
 using Stl.DependencyInjection;
 using Stl.IO;
 using Stl.Fusion.Bridge;
@@ -43,6 +41,7 @@ namespace Stl.Fusion.Tests
     public class FusionTestOptions
     {
         public FusionTestDbType DbType { get; set; } = FusionTestDbType.Sqlite;
+        public bool UseInMemoryKeyValueStore { get; set; }
         public bool UseInMemoryAuthService { get; set; }
         public bool UseTestClock { get; set; }
         public bool UseLogging { get; set; } = true;
@@ -185,20 +184,24 @@ namespace Stl.Fusion.Tests
                     builder.EnableSensitiveDataLogging();
                 }, 256);
                 services.AddDbContextServices<TestDbContext>(b => {
-                    b.AddDbEntityResolver<long, User>();
                     b.AddDbOperations((_, o) => {
                         o.UnconditionalWakeUpPeriod = TimeSpan.FromSeconds(5);
                         // Enable this if you debug multi-host invalidation
                         // o.MaxCommitDuration = TimeSpan.FromMinutes(5);
                     });
-                    b.AddKeyValueStore();
                     if (Options.DbType == FusionTestDbType.PostgreSql)
                         b.AddNpgsqlDbOperationLogChangeTracking();
                     else
                         b.AddFileBasedDbOperationLogChangeTracking();
                     if (!Options.UseInMemoryAuthService)
                         b.AddDbAuthentication();
+
+                    if (!Options.UseInMemoryKeyValueStore)
+                        b.AddKeyValueStore();
+                    b.AddDbEntityResolver<long, User>();
                 });
+                if (Options.UseInMemoryKeyValueStore)
+                    fusion.AddInMemoryKeyValueStore();
                 if (Options.UseInMemoryAuthService)
                     fusion.AddAuthentication().AddServerSideAuthService();
 

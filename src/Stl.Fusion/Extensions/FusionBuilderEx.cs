@@ -1,4 +1,5 @@
 using System;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Pluralize.NET;
 using Stl.Fusion.Extensions.Internal;
@@ -18,6 +19,20 @@ namespace Stl.Fusion.Extensions
                 return options;
             });
             fusion.AddComputeService<ILiveClock, LiveClock>();
+            return fusion;
+        }
+
+        public static FusionBuilder AddInMemoryKeyValueStore(this FusionBuilder fusion,
+            Action<IServiceProvider, InMemoryKeyValueStore.Options>? optionsBuilder = null)
+        {
+            var services = fusion.Services;
+            services.TryAddSingleton(c => {
+                var options = new InMemoryKeyValueStore.Options();
+                optionsBuilder?.Invoke(c, options);
+                return options;
+            });
+            fusion.AddComputeService<IKeyValueStore, InMemoryKeyValueStore>();
+            services.AddHostedService(c => (InMemoryKeyValueStore) c.GetRequiredService<IKeyValueStore>());
             return fusion;
         }
 

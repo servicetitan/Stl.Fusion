@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -157,6 +158,18 @@ namespace Stl.Fusion
 
         public virtual IAsyncLockSet<ComputedInput> GetLocksFor(IFunction function)
             => _locksProvider.Invoke(function);
+
+        public virtual void InvalidateEverything()
+        {
+            var keys = _storage.Keys.ToList();
+            foreach (var key in keys) {
+                var computed = TryGet(key);
+                if (computed == null)
+                    continue;
+                if (computed.IsConsistent())
+                    computed.Invalidate();
+            }
+        }
 
         public Task Prune()
         {

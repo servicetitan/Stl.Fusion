@@ -1,17 +1,12 @@
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.CommandR.Configuration;
 using Stl.Fusion.Extensions.Commands;
-using Stl.Text;
 
 namespace Stl.Fusion.Extensions
 {
     public interface IKeyValueStore
     {
-        public static ListFormat ListFormat { get; } = ListFormat.SlashSeparated;
-        public static char Delimiter => ListFormat.Delimiter;
-
         [CommandHandler]
         Task Set(SetCommand command, CancellationToken cancellationToken = default);
         [CommandHandler]

@@ -4,7 +4,6 @@ using System.Linq;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Stl.Collections;
 using Stl.CommandR.Configuration;
 using Stl.CommandR.Interception;
 using Stl.CommandR.Internal;

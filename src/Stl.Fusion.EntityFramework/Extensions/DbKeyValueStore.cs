@@ -189,7 +189,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
 
         protected void PseudoGetAllPrefixes(string key)
         {
-            var delimiter = IKeyValueStore.Delimiter;
+            var delimiter = KeyValueStoreEx.Delimiter;
             var delimiterIndex = key.IndexOf(delimiter, 0);
             for (; delimiterIndex >= 0; delimiterIndex = key.IndexOf(delimiter, delimiterIndex + 1)) {
                 var keyPart = key.Substring(0, delimiterIndex);

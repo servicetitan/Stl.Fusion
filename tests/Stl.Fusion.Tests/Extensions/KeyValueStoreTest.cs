@@ -12,10 +12,24 @@ using Xunit.Abstractions;
 namespace Stl.Fusion.Tests.Extensions
 {
     [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-    public class KeyValueStoreTest : FusionTestBase
+    public class InMemoryKeyValueStoreTest : KeyValueStoreTestBase
     {
-        public KeyValueStoreTest(ITestOutputHelper @out)
-            : base(@out, new FusionTestOptions() { UseTestClock = true })
+        public InMemoryKeyValueStoreTest(ITestOutputHelper @out) : base(@out, true) { }
+    }
+
+    [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
+    public class DbKeyValueStoreTest : KeyValueStoreTestBase
+    {
+        public DbKeyValueStoreTest(ITestOutputHelper @out) : base(@out, false) { }
+    }
+
+    public abstract class KeyValueStoreTestBase : FusionTestBase
+    {
+        public KeyValueStoreTestBase(ITestOutputHelper @out, bool useInMemoryKeyValueStore)
+            : base(@out, new FusionTestOptions() {
+                UseTestClock = true,
+                UseInMemoryKeyValueStore = useInMemoryKeyValueStore,
+            })
         { }
 
         [Fact]
@@ -86,11 +100,11 @@ namespace Stl.Fusion.Tests.Extensions
             (await kvs.Count("")).Should().Be(4);
         }
 
-        [Fact(Skip = "Intermittent failures due to TestClock on this test, to be fixed later.")]
-        public async Task TrimmerTest()
+        [Fact]
+        public async Task ExpirationTest()
         {
-            var clock = (TestClock) Services.GetRequiredService<IMomentClock>();
             var kvs = Services.GetRequiredService<IKeyValueStore>();
+            var clock = (TestClock) Services.GetRequiredService<IMomentClock>();
             await kvs.Set("1", "1v", clock.Now + TimeSpan.FromSeconds(5));
             (await kvs.Get("1")).Should().Be("1v");
             await kvs.Set("2", "2v", clock.Now + TimeSpan.FromMinutes(10));
@@ -102,6 +116,8 @@ namespace Stl.Fusion.Tests.Extensions
 
             clock.Settings = new TestClockSettings(TimeSpan.FromMinutes(6));
             await Delay(3); // Let trimmer to kick in
+            ComputedRegistry.Instance.InvalidateEverything();
+
             (await kvs.TryGet("1")).Should().Be(null);
             (await kvs.Get("2")).Should().Be("2v");
             (await kvs.Get("3")).Should().Be("3v");

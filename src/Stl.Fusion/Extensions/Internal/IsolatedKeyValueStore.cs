@@ -19,13 +19,13 @@ namespace Stl.Fusion.Extensions.Internal
             public IMomentClock? Clock { get; set; } = null;
         }
 
+        protected IKeyValueStore Store { get; }
+        protected IAuthService AuthService { get; }
+        protected IMomentClock Clock { get; }
         public string SessionKeyPrefixFormat { get; }
         public TimeSpan? SessionKeyExpirationTime { get; }
         public string UserKeyPrefixFormat { get; }
         public TimeSpan? UserKeyExpirationTime { get; }
-        protected IKeyValueStore Store { get; }
-        protected IAuthService AuthService { get; }
-        protected IMomentClock Clock { get; }
 
         public IsolatedKeyValueStore(Options? options, IServiceProvider services)
         {

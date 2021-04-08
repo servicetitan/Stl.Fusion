@@ -3,15 +3,11 @@ using System.Threading.Tasks;
 using Stl.CommandR.Configuration;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Extensions.Commands;
-using Stl.Text;
 
 namespace Stl.Fusion.Extensions
 {
     public interface IIsolatedKeyValueStore
     {
-        public static ListFormat ListFormat { get; } = IKeyValueStore.ListFormat;
-        public static char Delimiter => IKeyValueStore.Delimiter;
-
         [CommandHandler]
         Task Set(IsolatedSetCommand command, CancellationToken cancellationToken = default);
         [CommandHandler]

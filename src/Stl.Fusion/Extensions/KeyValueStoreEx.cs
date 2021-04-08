@@ -4,12 +4,16 @@ using System.Threading.Tasks;
 using Stl.CommandR;
 using Stl.Fusion.Extensions.Commands;
 using Stl.Serialization;
+using Stl.Text;
 using Stl.Time;
 
 namespace Stl.Fusion.Extensions
 {
     public static class KeyValueStoreEx
     {
+        public static ListFormat ListFormat { get; } = ListFormat.SlashSeparated;
+        public static char Delimiter => ListFormat.Delimiter;
+
         // Set
 
         public static Task Set<T>(this IKeyValueStore keyValueStore,
