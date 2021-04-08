@@ -60,8 +60,8 @@ namespace Templates.Blazor2.UI
             // Option 1: Client-side SimpleTodoService (no RPC)
             // fusion.AddComputeService<ITodoService, SimpleTodoService>();
 
-            // Option 2: Client-side TodoService + IKeyValueStoreClient (remote IKeyValueStore)
-            // fusionClient.AddReplicaService<IKeyValueStore, IKeyValueStoreClient>();
+            // Option 2: Client-side TodoService + IIsolatedKeyValueStoreClient (remote IIsolatedKeyValueStore)
+            // fusionClient.AddReplicaService<IIsolatedKeyValueStore, IIsolatedKeyValueStoreClient>();
             // fusion.AddComputeService<ITodoService, TodoService>();
 
             // Option 3: ITodoClient (remote ITodoService)

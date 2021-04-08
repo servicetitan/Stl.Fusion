@@ -111,7 +111,7 @@ namespace Templates.Blazor2.Host
                     options.NameClaimKeys = Array.Empty<string>();
                 });
             fusion.AddComputeService<ITodoService, TodoService>();
-            fusion.AddKeyValueStoreSandbox();
+            fusion.AddIsolatedKeyValueStore();
 
             // Shared services
             Program.ConfigureSharedServices(services);

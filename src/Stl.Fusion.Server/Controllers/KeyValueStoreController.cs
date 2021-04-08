@@ -4,120 +4,80 @@ using Microsoft.AspNetCore.Mvc;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Extensions;
 using Stl.Fusion.Extensions.Commands;
-using Stl.Fusion.Extensions.Internal;
 
 namespace Stl.Fusion.Server.Controllers
 {
-    [Route("fusion/kvs/[action]")]
+    [Route("fusion/ikvs/[action]")]
     [ApiController, JsonifyErrors(RewriteErrors = true)]
-    public class KeyValueStoreController : ControllerBase, IKeyValueStore
+    public class IsolatedKeyValueStoreController : ControllerBase, IIsolatedKeyValueStore
     {
-        protected IKeyValueStore KeyValueStore { get; }
-        protected IKeyValueStoreSandboxProvider KeyValueStoreSandboxProvider { get; }
+        protected IIsolatedKeyValueStore Store { get; }
         protected ISessionResolver SessionResolver { get; }
 
-        public KeyValueStoreController(
-            IKeyValueStore keyValueStore,
-            IKeyValueStoreSandboxProvider keyValueStoreSandboxProvider,
+        public IsolatedKeyValueStoreController(
+            IIsolatedKeyValueStore store,
             ISessionResolver sessionResolver)
         {
-            KeyValueStore = keyValueStore;
-            KeyValueStoreSandboxProvider = keyValueStoreSandboxProvider;
+            Store = store;
             SessionResolver = sessionResolver;
         }
 
         // Commands
 
         [HttpPost]
-        public async Task Set([FromBody] SetCommand command, CancellationToken cancellationToken = default)
+        public Task Set([FromBody] IsolatedSetCommand command, CancellationToken cancellationToken = default)
         {
-            var session = SessionResolver.Session;
-            var keySandbox = await KeyValueStoreSandboxProvider.GetSandbox(session, cancellationToken);
-            command = command with {
-                Key = keySandbox.Apply(command.Key),
-                ExpiresAt = keySandbox.Apply(command.ExpiresAt),
-                IsServerSide = true
-            };
-            await KeyValueStore.Set(command, cancellationToken);
+            command.UseDefaultSession(SessionResolver);
+            return Store.Set(command, cancellationToken);
         }
 
         [HttpPost]
-        public async Task SetMany([FromBody] SetManyCommand command, CancellationToken cancellationToken = default)
+        public Task SetMany([FromBody] IsolatedSetManyCommand command, CancellationToken cancellationToken = default)
         {
-            var session = SessionResolver.Session;
-            var keySandbox = await KeyValueStoreSandboxProvider.GetSandbox(session, cancellationToken);
-            var items = command.Items;
-            for (var i = 0; i < items.Length; i++) {
-                var item = items[i];
-                items[i] = (keySandbox.Apply(item.Key), item.Value, keySandbox.Apply(item.ExpiresAt));
-            }
-            command = command with {
-                Items = items,
-                IsServerSide = true,
-            };
-            await KeyValueStore.SetMany(command, cancellationToken);
+            command.UseDefaultSession(SessionResolver);
+            return Store.SetMany(command, cancellationToken);
         }
 
         [HttpPost]
-        public async Task Remove([FromBody] RemoveCommand command, CancellationToken cancellationToken = default)
+        public Task Remove([FromBody] IsolatedRemoveCommand command, CancellationToken cancellationToken = default)
         {
-            var session = SessionResolver.Session;
-            var keySandbox = await KeyValueStoreSandboxProvider.GetSandbox(session, cancellationToken);
-            command = command with {
-                Key = keySandbox.Apply(command.Key),
-                IsServerSide = true
-            };
-            await KeyValueStore.Remove(command, cancellationToken);
+            command.UseDefaultSession(SessionResolver);
+            return Store.Remove(command, cancellationToken);
         }
 
         [HttpPost]
-        public async Task RemoveMany([FromBody] RemoveManyCommand command, CancellationToken cancellationToken = default)
+        public Task RemoveMany([FromBody] IsolatedRemoveManyCommand command, CancellationToken cancellationToken = default)
         {
-            var session = SessionResolver.Session;
-            var keySandbox = await KeyValueStoreSandboxProvider.GetSandbox(session, cancellationToken);
-            var keys = command.Keys;
-            for (var i = 0; i < keys.Length; i++)
-                keys[i] = keySandbox.Apply(keys[i]);
-            command = command with {
-                Keys = keys,
-                IsServerSide = true,
-            };
-            await KeyValueStore.RemoveMany(command, cancellationToken);
+            command.UseDefaultSession(SessionResolver);
+            return Store.RemoveMany(command, cancellationToken);
         }
 
         // Queries
 
         [HttpGet, Publish]
-        public async Task<string?> TryGet(string key, CancellationToken cancellationToken = default)
+        public Task<string?> TryGet(Session? session, string key, CancellationToken cancellationToken = default)
         {
-            var session = SessionResolver.Session;
-            var keySandbox = await KeyValueStoreSandboxProvider.GetSandbox(session, cancellationToken);
-            key = keySandbox.Apply(key);
-            return await KeyValueStore.TryGet(key, cancellationToken);
+            session ??= SessionResolver.Session;
+            return Store.TryGet(session, key, cancellationToken);
         }
 
         [HttpGet, Publish]
-        public async Task<int> Count(string prefix, CancellationToken cancellationToken = default)
+        public Task<int> Count(Session? session, string prefix, CancellationToken cancellationToken = default)
         {
-            var session = SessionResolver.Session;
-            var keySandbox = await KeyValueStoreSandboxProvider.GetSandbox(session, cancellationToken);
-            prefix = keySandbox.Apply(prefix);
-            return await KeyValueStore.Count(prefix, cancellationToken);
+            session ??= SessionResolver.Session;
+            return Store.Count(session, prefix, cancellationToken);
         }
 
         [HttpGet, Publish]
-        public async Task<string[]> ListKeySuffixes(
+        public Task<string[]> ListKeySuffixes(
+            Session? session,
             string prefix,
             PageRef<string> pageRef,
             SortDirection sortDirection = SortDirection.Ascending,
             CancellationToken cancellationToken = default)
         {
-            var session = SessionResolver.Session;
-            var keySandbox = await KeyValueStoreSandboxProvider.GetSandbox(session, cancellationToken);
-            prefix = keySandbox.Apply(prefix);
-            if (pageRef.AfterKey != null)
-                pageRef = new PageRef<string>(pageRef.Count, keySandbox.Apply(pageRef.AfterKey));
-            return await KeyValueStore.ListKeySuffixes(prefix, pageRef, sortDirection, cancellationToken);
+            session ??= SessionResolver.Session;
+            return Store.ListKeySuffixes(session, prefix, pageRef, sortDirection, cancellationToken);
         }
     }
 }

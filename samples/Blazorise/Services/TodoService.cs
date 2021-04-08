@@ -11,12 +11,12 @@ namespace Templates.Blazor2.Services
 {
     public class TodoService : ITodoService
     {
-        private readonly IKeyValueStore _keyValueStore;
+        private readonly IIsolatedKeyValueStore _store;
         private readonly IAuthService _authService;
 
-        public TodoService(IKeyValueStore keyValueStore, IAuthService authService)
+        public TodoService(IIsolatedKeyValueStore store, IAuthService authService)
         {
-            _keyValueStore = keyValueStore;
+            _store = store;
             _authService = authService;
         }
 
@@ -36,13 +36,13 @@ namespace Templates.Blazor2.Services
                 oldTodo = await TryGet(session, todo.Id, cancellationToken);
 
             var key = GetTodoKey(user, todo.Id);
-            await _keyValueStore.Set(key, todo, cancellationToken);
+            await _store.Set(session, key, todo, cancellationToken);
             if (oldTodo?.IsDone != todo.IsDone) {
                 var doneKey = GetDoneKey(user, todo.Id);
                 if (todo.IsDone)
-                    await _keyValueStore.Set(doneKey, true, cancellationToken);
+                    await _store.Set(session, doneKey, true, cancellationToken);
                 else
-                    await _keyValueStore.Remove(doneKey, cancellationToken);
+                    await _store.Remove(session, doneKey, cancellationToken);
             }
             return todo;
         }
@@ -56,8 +56,8 @@ namespace Templates.Blazor2.Services
 
             var key = GetTodoKey(user, id);
             var doneKey = GetDoneKey(user, id);
-            await _keyValueStore.Remove(key, cancellationToken);
-            await _keyValueStore.Remove(doneKey, cancellationToken);
+            await _store.Remove(session, key, cancellationToken);
+            await _store.Remove(session, doneKey, cancellationToken);
         }
 
         // Queries
@@ -68,7 +68,7 @@ namespace Templates.Blazor2.Services
             user.MustBeAuthenticated();
 
             var key = GetTodoKey(user, id);
-            var todoOpt = await _keyValueStore.TryGet<Todo>(key, cancellationToken);
+            var todoOpt = await _store.TryGet<Todo>(session, key, cancellationToken);
             return todoOpt.IsSome(out var todo) ? todo : null;
         }
 
@@ -78,8 +78,8 @@ namespace Templates.Blazor2.Services
             user.MustBeAuthenticated();
 
             var keyPrefix = GetTodoKeyPrefix(user);
-            var keySuffixes = await _keyValueStore.ListKeySuffixes(keyPrefix, pageRef, cancellationToken);
-            var tasks = keySuffixes.Select(suffix => _keyValueStore.TryGet<Todo>(keyPrefix + suffix, cancellationToken));
+            var keySuffixes = await _store.ListKeySuffixes(session, keyPrefix, pageRef, cancellationToken);
+            var tasks = keySuffixes.Select(suffix => _store.TryGet<Todo>(session, keyPrefix + suffix, cancellationToken));
             var todoOpts = await Task.WhenAll(tasks);
             return todoOpts.Where(todo => todo.HasValue).Select(todo => todo.Value).ToArray();
         }
@@ -89,8 +89,8 @@ namespace Templates.Blazor2.Services
             var user = await _authService.GetUser(session, cancellationToken);
             user.MustBeAuthenticated();
 
-            var count = await _keyValueStore.Count(GetTodoKeyPrefix(user), cancellationToken);
-            var doneCount = await _keyValueStore.Count(GetDoneKeyPrefix(user), cancellationToken);
+            var count = await _store.Count(session, GetTodoKeyPrefix(user), cancellationToken);
+            var doneCount = await _store.Count(session, GetDoneKeyPrefix(user), cancellationToken);
             return new TodoSummary(count, doneCount);
         }
 
@@ -102,8 +102,8 @@ namespace Templates.Blazor2.Services
             => $"{GetDoneKeyPrefix(user)}/{id}";
 
         private string GetTodoKeyPrefix(User user)
-            => $"todo/{user.Id}/items";
+            => $"@user/{user.Id}/todo/items";
         private string GetDoneKeyPrefix(User user)
-            => $"todo/{user.Id}/done";
+            => $"@user/{user.Id}/todo/done";
     }
 }

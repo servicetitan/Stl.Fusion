@@ -21,16 +21,16 @@ namespace Stl.Fusion.Extensions
             return fusion;
         }
 
-        public static FusionBuilder AddKeyValueStoreSandbox(this FusionBuilder fusion,
-            Action<IServiceProvider, KeyValueStoreSandboxProvider.Options>? optionsBuilder = null)
+        public static FusionBuilder AddIsolatedKeyValueStore(this FusionBuilder fusion,
+            Action<IServiceProvider, IsolatedKeyValueStore.Options>? optionsBuilder = null)
         {
             var services = fusion.Services;
             services.TryAddSingleton(c => {
-                var options = new KeyValueStoreSandboxProvider.Options();
+                var options = new IsolatedKeyValueStore.Options();
                 optionsBuilder?.Invoke(c, options);
                 return options;
             });
-            services.TryAddSingleton<IKeyValueStoreSandboxProvider, KeyValueStoreSandboxProvider>();
+            fusion.AddComputeService<IIsolatedKeyValueStore, IsolatedKeyValueStore>();
             return fusion;
         }
     }

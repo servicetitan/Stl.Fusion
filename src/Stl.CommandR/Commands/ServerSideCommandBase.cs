@@ -1,5 +1,7 @@
 using System;
 using System.Text.Json.Serialization;
+using System.Threading;
+using System.Threading.Tasks;
 using Stl.CommandR.Internal;
 
 namespace Stl.CommandR.Commands
@@ -18,10 +20,11 @@ namespace Stl.CommandR.Commands
         [field: NonSerialized]
         public bool IsServerSide { get; set; }
 
-        public virtual void Prepare(CommandContext context)
+        public virtual Task Prepare(CommandContext context, CancellationToken cancellationToken)
         {
             if (!IsServerSide)
                 throw Errors.CommandIsServerSideOnly();
+            return Task.CompletedTask;
         }
     }
 }
