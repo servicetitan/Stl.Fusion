@@ -36,7 +36,7 @@ namespace Templates.TodoApp.Abstractions
         [CommandHandler]
         Task Remove(RemoveTodoCommand command, CancellationToken cancellationToken = default);
 
-        // Fusion queries
+        // Queries
         [ComputeMethod]
         Task<Todo?> TryGet(Session session, string id, CancellationToken cancellationToken = default);
         [ComputeMethod]

@@ -23,7 +23,7 @@ namespace Templates.TodoApp.Services
             var (session, todo) = command;
             if (Computed.IsInvalidating()) {
                 TryGet(session, todo.Id, CancellationToken.None).Ignore();
-                PseudoAnyItem(session).Ignore();
+                PseudoGetAllItems(session).Ignore();
                 return Task.FromResult(default(Todo)!);
             }
 
@@ -38,7 +38,7 @@ namespace Templates.TodoApp.Services
             var (session, id) = command;
             if (Computed.IsInvalidating()) {
                 TryGet(session, id, CancellationToken.None).Ignore();
-                PseudoAnyItem(session).Ignore();
+                PseudoGetAllItems(session).Ignore();
                 return Task.CompletedTask;
             }
 
@@ -53,7 +53,7 @@ namespace Templates.TodoApp.Services
 
         public virtual async Task<Todo[]> List(Session session, PageRef<string> pageRef, CancellationToken cancellationToken = default)
         {
-            await PseudoAnyItem(session);
+            await PseudoGetAllItems(session);
             var todos = _store.AsEnumerable();
             if (pageRef.AfterKey != null)
                 todos = todos.Where(i => string.CompareOrdinal(i.Id, pageRef.AfterKey) > 0);
@@ -63,7 +63,7 @@ namespace Templates.TodoApp.Services
 
         public virtual async Task<TodoSummary> GetSummary(Session session, CancellationToken cancellationToken = default)
         {
-            await PseudoAnyItem(session);
+            await PseudoGetAllItems(session);
             var count = _store.Count();
             var doneCount = _store.Count(i => i.IsDone);
             return new TodoSummary(count, doneCount);
@@ -72,7 +72,7 @@ namespace Templates.TodoApp.Services
         // Pseudo queries
 
         [ComputeMethod]
-        protected virtual Task<Unit> PseudoAnyItem(Session session)
+        protected virtual Task<Unit> PseudoGetAllItems(Session session)
             => TaskEx.UnitTask;
     }
 }
