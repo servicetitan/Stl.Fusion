@@ -2,8 +2,8 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
-    <RootNamespace>Templates.Blazor2.UI</RootNamespace>
-    <AssemblyName>Templates.Blazor2.UI</AssemblyName>
+    <RootNamespace>Templates.TodoApp.UI</RootNamespace>
+    <AssemblyName>Templates.TodoApp.UI</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

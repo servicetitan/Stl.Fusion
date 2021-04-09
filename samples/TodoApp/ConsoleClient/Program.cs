@@ -4,8 +4,8 @@ using Microsoft.Extensions.Logging;
 using Stl.Fusion;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Client;
-using Templates.Blazor2.Abstractions;
-using Templates.Blazor2.Abstractions.Clients;
+using Templates.TodoApp.Abstractions;
+using Templates.TodoApp.Abstractions.Clients;
 using static System.Console;
 
 Write("Enter SessionId to use: ");

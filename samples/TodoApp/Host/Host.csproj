@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <RootNamespace>Templates.Blazor2.Host</RootNamespace>
-    <AssemblyName>Templates.Blazor2.Host</AssemblyName>
+    <RootNamespace>Templates.TodoApp.Host</RootNamespace>
+    <AssemblyName>Templates.TodoApp.Host</AssemblyName>
     <ServerGarbageCollection>true</ServerGarbageCollection>
   </PropertyGroup>
 

@@ -5,7 +5,7 @@ using RestEase;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Extensions;
 
-namespace Templates.Blazor2.Abstractions.Clients
+namespace Templates.TodoApp.Abstractions.Clients
 {
     [BasePath("todo")]
     public interface ITodoClient

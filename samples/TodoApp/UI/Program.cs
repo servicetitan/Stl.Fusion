@@ -14,11 +14,11 @@ using Stl.DependencyInjection;
 using Stl.Fusion.Blazor;
 using Stl.Fusion.Client.Internal;
 using Stl.Fusion.Extensions;
-using Templates.Blazor2.Abstractions;
-using Templates.Blazor2.Abstractions.Clients;
-using Templates.Blazor2.Services;
+using Templates.TodoApp.Abstractions;
+using Templates.TodoApp.Abstractions.Clients;
+using Templates.TodoApp.Services;
 
-namespace Templates.Blazor2.UI
+namespace Templates.TodoApp.UI
 {
     public class Program
     {

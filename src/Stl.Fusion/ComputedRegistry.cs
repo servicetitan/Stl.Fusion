@@ -162,13 +162,8 @@ namespace Stl.Fusion
         public virtual void InvalidateEverything()
         {
             var keys = _storage.Keys.ToList();
-            foreach (var key in keys) {
-                var computed = TryGet(key);
-                if (computed == null)
-                    continue;
-                if (computed.IsConsistent())
-                    computed.Invalidate();
-            }
+            foreach (var key in keys)
+                TryGet(key)?.Invalidate();
         }
 
         public Task Prune()

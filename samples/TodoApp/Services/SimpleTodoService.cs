@@ -8,9 +8,9 @@ using Stl.Async;
 using Stl.Fusion;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Extensions;
-using Templates.Blazor2.Abstractions;
+using Templates.TodoApp.Abstractions;
 
-namespace Templates.Blazor2.Services
+namespace Templates.TodoApp.Services
 {
     public class SimpleTodoService : ITodoService
     {

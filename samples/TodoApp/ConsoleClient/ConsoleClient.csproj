@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <RootNamespace>Templates.Blazor2.ConsoleClient</RootNamespace>
-    <AssemblyName>Templates.Blazor2.ConsoleClient</AssemblyName>
+    <RootNamespace>Templates.TodoApp.ConsoleClient</RootNamespace>
+    <AssemblyName>Templates.TodoApp.ConsoleClient</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

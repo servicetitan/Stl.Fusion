@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <RootNamespace>Templates.Blazor2.Abstractions</RootNamespace>
-    <AssemblyName>Templates.Blazor2.Abstractions</AssemblyName>
+    <RootNamespace>Templates.TodoApp.Abstractions</RootNamespace>
+    <AssemblyName>Templates.TodoApp.Abstractions</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

@@ -5,9 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Extensions;
 using Stl.Fusion.Server;
-using Templates.Blazor2.Abstractions;
+using Templates.TodoApp.Abstractions;
 
-namespace Templates.Blazor2.Host.Controllers
+namespace Templates.TodoApp.Host.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController, JsonifyErrors]

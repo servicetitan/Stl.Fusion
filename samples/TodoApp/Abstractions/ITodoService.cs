@@ -6,7 +6,7 @@ using Stl.Fusion;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Extensions;
 
-namespace Templates.Blazor2.Abstractions
+namespace Templates.TodoApp.Abstractions
 {
     public record Todo(string Id, string Title, bool IsDone = false)
     {
@@ -14,7 +14,9 @@ namespace Templates.Blazor2.Abstractions
     }
 
     public record TodoSummary(int Count, int DoneCount)
-    { }
+    {
+        public TodoSummary() : this(0, 0) { }
+    }
 
     public record AddOrUpdateTodoCommand(Session Session, Todo Item) : ISessionCommand<Todo>
     {

@@ -55,26 +55,26 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Net", "src\Stl.Net\Stl.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Fusion.EntityFramework", "src\Stl.Fusion.EntityFramework\Stl.Fusion.EntityFramework.csproj", "{552B176A-6AEC-44BC-8F9A-2BE1B686A7AC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Fusion.EntityFramework.Npgsql", "src\Stl.Fusion.EntityFramework.Npgsql\Stl.Fusion.EntityFramework.Npgsql.csproj", "{714DE49F-1754-4EA7-BC37-402EFAA59400}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{61E78666-E338-4F6B-8CD8-8CD5E13B7C54}"
 ProjectSection(SolutionItems) = preProject
 	samples\Directory.Build.props = samples\Directory.Build.props
 EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Abstractions", "samples\Blazorise\Abstractions\Abstractions.csproj", "{4B93DBF5-4C3D-41DC-B48B-CBD802E9EB24}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TodoApp", "TodoApp", "{C5CE238B-B8CD-44C3-9BBA-8C29ADC3DDE8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Host", "samples\Blazorise\Host\Host.csproj", "{79EBDD95-4AD1-4227-AB03-F72DB6BE191D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Abstractions", "samples\TodoApp\Abstractions\Abstractions.csproj", "{4B93DBF5-4C3D-41DC-B48B-CBD802E9EB24}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Services", "samples\Blazorise\Services\Services.csproj", "{32A94FC6-C1BD-4A1B-8840-F415BB293ABB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Host", "samples\TodoApp\Host\Host.csproj", "{79EBDD95-4AD1-4227-AB03-F72DB6BE191D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UI", "samples\Blazorise\UI\UI.csproj", "{45A20CA6-E4E7-4594-9F11-6F993AC6B09B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Services", "samples\TodoApp\Services\Services.csproj", "{32A94FC6-C1BD-4A1B-8840-F415BB293ABB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Fusion.EntityFramework.Npgsql", "src\Stl.Fusion.EntityFramework.Npgsql\Stl.Fusion.EntityFramework.Npgsql.csproj", "{714DE49F-1754-4EA7-BC37-402EFAA59400}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UI", "samples\TodoApp\UI\UI.csproj", "{45A20CA6-E4E7-4594-9F11-6F993AC6B09B}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Blazorise", "Blazorise", "{C5CE238B-B8CD-44C3-9BBA-8C29ADC3DDE8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleClient", "samples\TodoApp\ConsoleClient\ConsoleClient.csproj", "{3402D928-10F5-42D1-8F81-1C097A3860ED}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HelloCart", "samples\HelloCart\HelloCart.csproj", "{65B59CAC-B814-4D02-9A36-58BD8F8D7783}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleClient", "samples\Blazorise\ConsoleClient\ConsoleClient.csproj", "{3402D928-10F5-42D1-8F81-1C097A3860ED}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
