@@ -2,6 +2,9 @@ using System;
 
 namespace Stl
 {
+    /// <summary>
+    /// Extension methods for <see cref="AggregateException"/>.
+    /// </summary>
     public static class AggregateExceptionEx
     {
         public static Exception GetFirstInnerException(this AggregateException exception)

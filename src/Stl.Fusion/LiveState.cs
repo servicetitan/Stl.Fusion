@@ -54,16 +54,15 @@ namespace Stl.Fusion
         public IUpdateDelayer UpdateDelayer { get; private set; } = null!;
         public bool DelayFirstUpdate { get; }
 
-        protected LiveState(
-            Options options, IServiceProvider services,
-            object? argument = null, bool initialize = true)
-            : base(options, services, argument, false)
+        protected LiveState(Options options, IServiceProvider services, bool initialize = true)
+            : base(options, services, false)
         {
             _stopCts = new CancellationTokenSource();
             StopToken = _stopCts.Token;
             Log = Services.GetService<ILoggerFactory>()?.CreateLogger(GetType()) ?? NullLogger.Instance;
             UpdateDelayerFactory = options.UpdateDelayerFactory;
             DelayFirstUpdate = options.DelayFirstUpdate;
+            // ReSharper disable once VirtualMemberCallInConstructor
             if (initialize) Initialize(options);
         }
 

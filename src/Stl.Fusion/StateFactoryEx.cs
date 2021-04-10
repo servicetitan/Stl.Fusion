@@ -10,38 +10,34 @@ namespace Stl.Fusion
 
         public static IMutableState<T> NewMutable<T>(
             this IStateFactory factory,
-            Result<T> initialOutput,
-            object? argument = null)
+            Result<T> initialOutput)
         {
             var options = new MutableState<T>.Options();
-            return factory.NewMutable(options, initialOutput, argument);
+            return factory.NewMutable(options, initialOutput);
         }
 
         public static IMutableState<T> NewMutable<T>(
             this IStateFactory factory,
-            Option<Result<T>> initialOutput = default,
-            object? argument = null)
+            Option<Result<T>> initialOutput = default)
         {
             var options = new MutableState<T>.Options();
-            return factory.NewMutable(options, initialOutput, argument);
+            return factory.NewMutable(options, initialOutput);
         }
 
         public static IComputedState<T> NewComputed<T>(
             this IStateFactory factory,
-            Func<IComputedState<T>, CancellationToken, Task<T>> computer,
-            object? argument = null)
+            Func<IComputedState<T>, CancellationToken, Task<T>> computer)
         {
             var options = new ComputedState<T>.Options();
-            return factory.NewComputed(options, computer, argument);
+            return factory.NewComputed(options, computer);
         }
 
         public static ILiveState<T> NewLive<T>(
             this IStateFactory factory,
-            Func<ILiveState<T>, CancellationToken, Task<T>> computer,
-            object? argument = null)
+            Func<ILiveState<T>, CancellationToken, Task<T>> computer)
         {
             var options = new LiveState<T>.Options();
-            return factory.NewLive(options, computer, argument);
+            return factory.NewLive(options, computer);
         }
 
         // With builder
@@ -49,45 +45,41 @@ namespace Stl.Fusion
         public static IMutableState<T> NewMutable<T>(
             this IStateFactory factory,
             Action<MutableState<T>.Options> optionsBuilder,
-            Result<T> initialOutput,
-            object? argument = null)
+            Result<T> initialOutput)
         {
             var options = new MutableState<T>.Options();
             optionsBuilder.Invoke(options);
-            return factory.NewMutable(options, initialOutput, argument);
+            return factory.NewMutable(options, initialOutput);
         }
 
         public static IMutableState<T> NewMutable<T>(
             this IStateFactory factory,
             Action<MutableState<T>.Options> optionsBuilder,
-            Option<Result<T>> initialOutput = default,
-            object? argument = null)
+            Option<Result<T>> initialOutput = default)
         {
             var options = new MutableState<T>.Options();
             optionsBuilder.Invoke(options);
-            return factory.NewMutable(options, initialOutput, argument);
+            return factory.NewMutable(options, initialOutput);
         }
 
         public static IComputedState<T> NewComputed<T>(
             this IStateFactory factory,
             Action<ComputedState<T>.Options> optionsBuilder,
-            Func<IComputedState<T>, CancellationToken, Task<T>> computer,
-            object? argument = null)
+            Func<IComputedState<T>, CancellationToken, Task<T>> computer)
         {
             var options = new ComputedState<T>.Options();
             optionsBuilder.Invoke(options);
-            return factory.NewComputed(options, computer, argument);
+            return factory.NewComputed(options, computer);
         }
 
         public static ILiveState<T> NewLive<T>(
             this IStateFactory factory,
             Action<LiveState<T>.Options> optionsBuilder,
-            Func<ILiveState<T>, CancellationToken, Task<T>> computer,
-            object? argument = null)
+            Func<ILiveState<T>, CancellationToken, Task<T>> computer)
         {
             var options = new LiveState<T>.Options();
             optionsBuilder.Invoke(options);
-            return factory.NewLive(options, computer, argument);
+            return factory.NewLive(options, computer);
         }
     }
 }

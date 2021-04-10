@@ -47,9 +47,8 @@ namespace Stl.Fusion
             Options options,
             IServiceProvider services,
             Option<Result<T>> initialOutput = default,
-            object? argument = null,
             bool initialize = true)
-            : base(options, services, argument, false)
+            : base(options, services, false)
         {
             _output = initialOutput.IsSome(out var o) ? o : options.InitialOutputFactory.Invoke(this);
             // ReSharper disable once VirtualMemberCallInConstructor

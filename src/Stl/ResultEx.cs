@@ -5,6 +5,9 @@ using Stl.Async;
 
 namespace Stl
 {
+    /// <summary>
+    /// Misc. helpers and extensions related to <see cref="Result{T}"/> and <see cref="IResult{T}"/> types.
+    /// </summary>
     public static class ResultEx
     {
         // AsTask & AsValueTask

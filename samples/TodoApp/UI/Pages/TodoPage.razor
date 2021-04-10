@@ -10,7 +10,7 @@
 @{
     Log.LogInformation("Rendering, State.Computed.Version = {Version}", State.Computed.Version);
     var error = State.Error;
-    var todos = State.UnsafeValue ?? Array.Empty<Todo>(); // UnsafeValue returns default if there is an Error
+    var todos = State.ValueOrDefault ?? Array.Empty<Todo>(); // UnsafeValue returns default if there is an Error
 }
 
 <h1>Todo List</h1>
@@ -44,7 +44,7 @@
 
                 @if (HasMore) {
                     <Button Clicked="_ => LoadMore()" Color="Color.Primary" Margin="Margin.Is3.OnY">
-                        Load more <Blazorise.Icon Name="FontAwesomeIcons.AngleDoubleDown"/>
+                        Load @PageSize more <Blazorise.Icon Name="FontAwesomeIcons.AngleDoubleDown"/>
                     </Button>
                 }
 
@@ -69,7 +69,8 @@
     private string NewTodoTitle { get; set; } = "";
     private DateTime LastStateUpdateTime { get; set; } = DateTime.UtcNow;
     // AuthState property below seemingly does nothing, right?
-    // But try to comment out this line & sign-in + sign-out. See the error badge stays there for a while now?
+    // But try to comment out this line & sign-in + sign-out.
+    // See the error badge stays there for a while now?
     // Check your explanation on our Discord: https://discord.gg/EKEwv6d
     [CascadingParameter] protected Task<AuthState> AuthState { get; set; } = null!;
 

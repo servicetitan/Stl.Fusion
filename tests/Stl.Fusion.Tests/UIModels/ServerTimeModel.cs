@@ -26,8 +26,8 @@ namespace Stl.Fusion.Tests.UIModels
         private IClientTimeService Client
             => Services.GetRequiredService<IClientTimeService>();
 
-        public ServerTimeModel1State(Options options, IServiceProvider services, object? argument = null)
-            : base(options, services, argument) { }
+        public ServerTimeModel1State(Options options, IServiceProvider services)
+            : base(options, services) { }
 
         protected override async Task<ServerTimeModel1> Compute(CancellationToken cancellationToken)
         {

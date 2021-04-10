@@ -93,15 +93,13 @@ namespace Stl.Fusion
         public Exception? Error => Output.Error;
         public bool HasValue => Output.HasValue;
         public bool HasError => Output.HasError;
-        public TOut UnsafeValue => Output.UnsafeValue;
+        public TOut ValueOrDefault => Output.ValueOrDefault;
         public TOut Value => Output.Value;
 
         // "Untyped" versions of properties
         ComputedInput IComputed.Input => Input;
         // ReSharper disable once HeapView.BoxingAllocation
         IResult IComputed.Output => Output;
-        // ReSharper disable once HeapView.BoxingAllocation
-        object? IResult.UnsafeValue => Output.UnsafeValue;
         // ReSharper disable once HeapView.BoxingAllocation
         object? IResult.Value => Output.Value;
 

@@ -34,8 +34,8 @@ namespace Stl.Fusion.Tests.UIModels
         private IKeyValueServiceClient<string> KeyValueServiceClient
             => Services.GetRequiredService<IKeyValueServiceClient<string>>();
 
-        public StringKeyValueModelState(Options options, IServiceProvider services, object? argument = null)
-            : base(options, services, argument)
+        public StringKeyValueModelState(Options options, IServiceProvider services)
+            : base(options, services)
         {
             Locals = new MutableState<string>(services);
             Locals.AddEventHandler(StateEventKind.Updated, (s, e) => this.CancelUpdateDelay());
@@ -43,8 +43,8 @@ namespace Stl.Fusion.Tests.UIModels
 
         protected override async Task<KeyValueModel<string>> Compute(CancellationToken cancellationToken)
         {
-            var updateCount = UnsafeValue?.UpdateCount ?? 0;
-            var key = Locals.UnsafeValue ?? "";
+            var updateCount = ValueOrDefault?.UpdateCount ?? 0;
+            var key = Locals.ValueOrDefault ?? "";
             var value = await KeyValueServiceClient.Get(key, cancellationToken).ConfigureAwait(false);
             return new KeyValueModel<string>() {
                 Key = key,

@@ -11,7 +11,7 @@
 @inject NavigationManager Navigator
 
 @{
-    var state = State.LastValue;
+    var state = State.LatestNonErrorValue;
     var error = State.Error;
     var usedAuthSchemas = User.Identities.Select(kv => kv.Key.Schema).ToHashSet();
     var unusedAuthSchemas = AuthSchemas.Where(p => !usedAuthSchemas.Contains(p.Name)).ToArray();

@@ -6,10 +6,10 @@ namespace Stl.Fusion
     public interface IStateSnapshot
     {
         IComputed Computed { get; }
-        IComputed LastValueComputed { get; }
-        object? LastValue { get; }
+        IComputed LatestNonErrorComputed { get; }
+
         int UpdateCount { get; }
-        int FailureCount { get; }
+        int ErrorCount { get; }
         int RetryCount { get; }
         bool IsUpdating { get; set; }
     }
@@ -17,8 +17,7 @@ namespace Stl.Fusion
     public interface IStateSnapshot<T> : IStateSnapshot
     {
         new IComputed<T> Computed { get; }
-        new IComputed<T> LastValueComputed { get; }
-        new T LastValue { get; }
+        new IComputed<T> LatestNonErrorComputed { get; }
     }
 
     public class StateSnapshot<T> : IStateSnapshot<T>
@@ -35,23 +34,21 @@ namespace Stl.Fusion
         }
 
         public IComputed<T> Computed { get; }
-        public IComputed<T> LastValueComputed { get; }
-        public T LastValue => LastValueComputed.Value;
+        public IComputed<T> LatestNonErrorComputed { get; }
         public int UpdateCount { get; }
-        public int FailureCount { get; }
+        public int ErrorCount { get; }
         public int RetryCount { get; }
 
         // ReSharper disable once HeapView.PossibleBoxingAllocation
-        object? IStateSnapshot.LastValue => LastValue;
         IComputed IStateSnapshot.Computed => Computed;
-        IComputed IStateSnapshot.LastValueComputed => LastValueComputed;
+        IComputed IStateSnapshot.LatestNonErrorComputed => LatestNonErrorComputed;
 
         public StateSnapshot(IComputed<T> computed)
         {
             Computed = computed;
-            LastValueComputed = computed;
+            LatestNonErrorComputed = computed;
             UpdateCount = 0;
-            FailureCount = 0;
+            ErrorCount = 0;
             RetryCount = 0;
         }
 
@@ -59,20 +56,20 @@ namespace Stl.Fusion
         {
             Computed = computed;
             if (computed.HasValue) {
-                LastValueComputed = computed;
+                LatestNonErrorComputed = computed;
                 UpdateCount = 1 + lastSnapshot.UpdateCount;
-                FailureCount = lastSnapshot.FailureCount;
+                ErrorCount = lastSnapshot.ErrorCount;
                 RetryCount = 0;
             }
             else {
-                LastValueComputed = lastSnapshot.LastValueComputed;
+                LatestNonErrorComputed = lastSnapshot.LatestNonErrorComputed;
                 UpdateCount = 1 + lastSnapshot.UpdateCount;
-                FailureCount = 1 + lastSnapshot.FailureCount;
+                ErrorCount = 1 + lastSnapshot.ErrorCount;
                 RetryCount = 1 + lastSnapshot.RetryCount;
             }
         }
 
         public override string ToString()
-            => $"{GetType()}({Computed}, [{UpdateCount} update(s) / {FailureCount} failure(s)])";
+            => $"{GetType()}({Computed}, [{UpdateCount} update(s) / {ErrorCount} failure(s)])";
     }
 }

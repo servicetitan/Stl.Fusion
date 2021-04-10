@@ -61,13 +61,13 @@ namespace Stl.Fusion.Tests
 
         protected override void ConfigureCommonServices(ServiceCollection services)
         {
-            services.AddSingleton<SwappingTest.SwapService>();
+            services.AddSingleton<SwapService>();
             services.AddSingleton(c => new SimpleSwapService.Options {
                 TimerQuanta = TimeSpan.FromSeconds(0.1),
                 ExpirationTime = TimeSpan.FromSeconds(3),
             });
-            services.AddSingleton<ISwapService, LoggingSwapServiceWrapper<SwappingTest.SwapService>>();
-            services.AddSingleton(c => new LoggingSwapServiceWrapper<SwappingTest.SwapService>.Options() {
+            services.AddSingleton<ISwapService, LoggingSwapServiceWrapper<SwapService>>();
+            services.AddSingleton(c => new LoggingSwapServiceWrapper<SwapService>.Options() {
                 LogLevel = LogLevel.Information,
             });
         }

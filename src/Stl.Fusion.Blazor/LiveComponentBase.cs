@@ -60,9 +60,9 @@ namespace Stl.Fusion.Blazor
                             }
                         });
                         return await ts.Task.ConfigureAwait(false);
-                    }, this)
+                    })
                 : StateFactory.NewLive<T>(ConfigureState,
-                    (_, ct) => ComputeState(ct), this);
+                    (_, ct) => ComputeState(ct));
 
         protected virtual void ConfigureState(LiveState<T>.Options options) { }
         protected abstract Task<T> ComputeState(CancellationToken cancellationToken);

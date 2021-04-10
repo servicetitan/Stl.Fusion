@@ -11,9 +11,8 @@ namespace Stl.Fusion.Internal
         public FuncLiveState(
             Options options,
             IServiceProvider services,
-            Func<ILiveState<T>, CancellationToken, Task<T>> computer,
-            object? argument = null)
-            : base(options, services, argument, false)
+            Func<ILiveState<T>, CancellationToken, Task<T>> computer)
+            : base(options, services, false)
         {
             Computer = computer;
             Initialize(options);

@@ -6,7 +6,7 @@
 
 @{
     Log.LogInformation("Rendering");
-    var summary = State.UnsafeValue;
+    var summary = State.ValueOrDefault;
 }
 
 @if (summary != null) {

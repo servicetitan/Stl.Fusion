@@ -7,80 +7,107 @@ using Newtonsoft.Json;
 
 namespace Stl
 {
-    [DebuggerDisplay("({" + nameof(UnsafeValue) + "}, Error = {" + nameof(Error) + "})")]
+    /// <summary>
+    /// A class describing strongly typed result of a computation.
+    /// Complements <see cref="Result{T}"/> (struct).
+    /// </summary>
+    /// <typeparam name="T">The type of <see cref="Value"/>.</typeparam>
+    [DebuggerDisplay("({" + nameof(ValueOrDefault) + "}, Error = {" + nameof(Error) + "})")]
     public sealed class ResultBox<T> : IResult<T>
     {
         public static readonly ResultBox<T> Default = new(default!, null);
 
-        public T UnsafeValue { get; }
+        /// <inheritdoc />
+        public T ValueOrDefault { get; }
+        /// <inheritdoc />
         public Exception? Error { get; }
 
+        /// <inheritdoc />
         [JsonIgnore] public bool HasValue {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => Error == null;
         }
 
+        /// <inheritdoc />
         [JsonIgnore] public bool HasError {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => Error != null;
         }
 
+        /// <inheritdoc />
         [JsonIgnore]
         public T Value {
             get {
                 if (Error == null)
-                    return UnsafeValue;
+                    return ValueOrDefault;
                 // That's the right way to re-throw an exception and preserve its stack trace
                 ExceptionDispatchInfo.Capture(Error).Throw();
                 return default!; // Never executed, but no way to get rid of this
             }
         }
 
+        /// <inheritdoc />
         // ReSharper disable once HeapView.BoxingAllocation
         object? IResult.Value => Value;
-        // ReSharper disable once HeapView.BoxingAllocation
-        object? IResult.UnsafeValue => UnsafeValue;
 
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="result">A result to copy the properties from.</param>
         public ResultBox(Result<T> result)
-            : this(result.UnsafeValue, result.Error) { }
+            : this(result.ValueOrDefault, result.Error) { }
+
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="valueOrDefault"><see cref="ValueOrDefault"/> value.</param>
+        /// <param name="error"><see cref="Error"/> value.</param>
         [JsonConstructor]
-        public ResultBox(T unsafeValue, Exception? error)
+        public ResultBox(T valueOrDefault, Exception? error)
         {
-            if (error != null) unsafeValue = default!;
-            UnsafeValue = unsafeValue;
+            if (error != null) valueOrDefault = default!;
+            ValueOrDefault = valueOrDefault;
             Error = error;
         }
 
+        /// <inheritdoc />
         public override string? ToString() => Value?.ToString();
 
+        /// <inheritdoc />
         public void Deconstruct(out T value, out Exception? error)
         {
-            value = UnsafeValue;
+            value = ValueOrDefault;
             error = Error;
         }
 
+        /// <inheritdoc />
         public bool IsValue([MaybeNullWhen(false)] out T value)
         {
-            value = HasError ? default! : UnsafeValue;
+            value = HasError ? default! : ValueOrDefault;
             return !HasError;
         }
 
+        /// <inheritdoc />
         public bool IsValue([MaybeNullWhen(false)] out T value, [MaybeNullWhen(true)] out Exception error)
         {
             error = Error!;
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             var hasValue = error == null;
-            value = hasValue ? UnsafeValue : default!;
+            value = hasValue ? ValueOrDefault : default!;
 #pragma warning disable CS8762
             return hasValue;
 #pragma warning restore CS8762
         }
 
+        /// <inheritdoc />
         public Result<T> AsResult()
-            => new(UnsafeValue, Error);
+            => new(ValueOrDefault, Error);
+        /// <inheritdoc />
         public Result<TOther> Cast<TOther>()
-            => new((TOther) (object) UnsafeValue!, Error);
+            => new((TOther) (object) ValueOrDefault!, Error);
+        /// <inheritdoc />
         T IConvertibleTo<T>.Convert() => Value;
+        /// <inheritdoc />
         Result<T> IConvertibleTo<Result<T>>.Convert() => AsResult();
 
         // Operators

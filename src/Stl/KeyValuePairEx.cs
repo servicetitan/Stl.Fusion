@@ -3,6 +3,9 @@ using System.Runtime.CompilerServices;
 
 namespace Stl
 {
+    /// <summary>
+    /// Extension methods for <see cref="ToKeyValuePair{TKey,TValue}"/>.
+    /// </summary>
     public static class KeyValuePairEx
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

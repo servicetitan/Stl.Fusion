@@ -23,9 +23,7 @@ namespace Stl.Fusion
 
         IStateSnapshot Snapshot { get; }
         IComputed Computed { get; }
-        IComputed LastValueComputed { get; }
-        object? LastValue { get; }
-        object? Argument { get; }
+        object? LatestNonErrorValue { get; }
 
         event Action<IState, StateEventKind>? Invalidated;
         event Action<IState, StateEventKind>? Updating;
@@ -36,10 +34,9 @@ namespace Stl.Fusion
 
     public interface IState<T> : IState, IResult<T>
     {
-        new IStateSnapshot<T> Snapshot { get; }
+        new StateSnapshot<T> Snapshot { get; }
         new IComputed<T> Computed { get; }
-        new IComputed<T> LastValueComputed { get; }
-        new T LastValue { get; }
+        new T LatestNonErrorValue { get; }
 
         new event Action<IState<T>, StateEventKind>? Invalidated;
         new event Action<IState<T>, StateEventKind>? Updating;
@@ -74,9 +71,8 @@ namespace Stl.Fusion
         protected AsyncLock AsyncLock { get; }
         protected object Lock => AsyncLock;
 
-        public IStateSnapshot<T> Snapshot => _snapshot!;
+        public StateSnapshot<T> Snapshot => _snapshot!;
         public IServiceProvider Services { get; }
-        public object? Argument { get; }
 
         public IComputed<T> Computed {
             get => Snapshot.Computed;
@@ -94,22 +90,18 @@ namespace Stl.Fusion
                 }
             }
         }
-        public IComputed<T> LastValueComputed => Snapshot.LastValueComputed;
-        public T LastValue => Snapshot.LastValue;
-
-        public T UnsafeValue => Computed.UnsafeValue;
+        public T LatestNonErrorValue => Snapshot.LatestNonErrorComputed.ValueOrDefault;
+        public T ValueOrDefault => Computed.ValueOrDefault;
         public T Value => Computed.Value;
         public Exception? Error => Computed.Error;
         public bool HasValue => Computed.HasValue;
         public bool HasError => Computed.HasError;
 
-        IComputed IState.LastValueComputed => LastValueComputed;
         // ReSharper disable once HeapView.PossibleBoxingAllocation
-        object? IState.LastValue => LastValue;
+        object? IState.LatestNonErrorValue => LatestNonErrorValue;
         IStateSnapshot IState.Snapshot => Snapshot;
         IComputed<T> IState<T>.Computed => Computed;
         IComputed IState.Computed => Computed;
-        object? IResult.UnsafeValue => Computed.UnsafeValue;
         object? IResult.Value => Computed.Value;
 
         public event Action<IState<T>, StateEventKind>? Invalidated;
@@ -133,12 +125,9 @@ namespace Stl.Fusion
         protected event Action<IState<T>, StateEventKind>? UntypedUpdating;
         protected event Action<IState<T>, StateEventKind>? UntypedUpdated;
 
-        protected State(
-            Options options, IServiceProvider services,
-            object? argument = null, bool initialize = true)
+        protected State(Options options, IServiceProvider services, bool initialize = true)
         {
             Services = services;
-            Argument = argument;
             ComputedOptions = options.ComputedOptions;
             VersionGenerator = options.VersionGenerator;
             options.EventConfigurator?.Invoke(this);

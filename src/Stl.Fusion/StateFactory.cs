@@ -10,18 +10,15 @@ namespace Stl.Fusion
     {
         IMutableState<T> NewMutable<T>(
             MutableState<T>.Options options,
-            Option<Result<T>> initialOutput = default,
-            object? argument = null);
+            Option<Result<T>> initialOutput = default);
 
         IComputedState<T> NewComputed<T>(
             ComputedState<T>.Options options,
-            Func<IComputedState<T>, CancellationToken, Task<T>> computer,
-            object? argument = null);
+            Func<IComputedState<T>, CancellationToken, Task<T>> computer);
 
         ILiveState<T> NewLive<T>(
             LiveState<T>.Options options,
-            Func<ILiveState<T>, CancellationToken, Task<T>> computer,
-            object? argument = null);
+            Func<ILiveState<T>, CancellationToken, Task<T>> computer);
     }
 
     public class StateFactory : IStateFactory
@@ -33,20 +30,17 @@ namespace Stl.Fusion
 
         public IMutableState<T> NewMutable<T>(
             MutableState<T>.Options options,
-            Option<Result<T>> initialOutput = default,
-            object? argument = null)
-            => new MutableState<T>(options, Services, initialOutput, argument);
+            Option<Result<T>> initialOutput = default)
+            => new MutableState<T>(options, Services, initialOutput);
 
         public IComputedState<T> NewComputed<T>(
             ComputedState<T>.Options options,
-            Func<IComputedState<T>, CancellationToken, Task<T>> computer,
-            object? argument = null)
-            => new FuncComputedState<T>(options, Services, computer, argument);
+            Func<IComputedState<T>, CancellationToken, Task<T>> computer)
+            => new FuncComputedState<T>(options, Services, computer);
 
         public ILiveState<T> NewLive<T>(
             LiveState<T>.Options options,
-            Func<ILiveState<T>, CancellationToken, Task<T>> computer,
-            object? argument = null)
-            => new FuncLiveState<T>(options, Services, computer, argument);
+            Func<ILiveState<T>, CancellationToken, Task<T>> computer)
+            => new FuncLiveState<T>(options, Services, computer);
     }
 }

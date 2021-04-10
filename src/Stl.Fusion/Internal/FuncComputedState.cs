@@ -11,9 +11,8 @@ namespace Stl.Fusion.Internal
         public FuncComputedState(
             Options options,
             IServiceProvider services,
-            Func<IComputedState<T>, CancellationToken, Task<T>> computer,
-            object? argument = null)
-            : base(options, services, argument, false)
+            Func<IComputedState<T>, CancellationToken, Task<T>> computer)
+            : base(options, services, false)
         {
             Computer = computer;
             Initialize(options);

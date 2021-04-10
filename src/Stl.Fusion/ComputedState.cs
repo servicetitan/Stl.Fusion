@@ -23,15 +23,14 @@ namespace Stl.Fusion
 
         public new class Options : State<T>.Options, IComputedState.IOptions { }
 
-        public ComputedState(
-            Options options, IServiceProvider services,
-            object? argument = null, bool initialize = true)
-            : base(options, services, argument, false)
+        public ComputedState(Options options, IServiceProvider services, bool initialize = true)
+            : base(options, services, false)
         {
 #pragma warning disable 420
             ReplaceRefTask(ref _updatingTask);
             ReplaceRefTask(ref _updatedTask);
 #pragma warning restore 420
+            // ReSharper disable once VirtualMemberCallInConstructor
             if (initialize) Initialize(options);
         }
 

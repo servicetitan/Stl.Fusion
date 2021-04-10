@@ -44,7 +44,7 @@ namespace Stl.Fusion.Blazor
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
             var state = await State.Update().ConfigureAwait(false);
-            return state.LastValue;
+            return state.LatestNonErrorValue;
         }
 
         protected virtual async Task<AuthState> ComputeState(ILiveState<AuthState> state, CancellationToken cancellationToken)
@@ -61,8 +61,10 @@ namespace Stl.Fusion.Blazor
         protected virtual void OnStateChanged(IState<AuthState> state, StateEventKind eventKind)
         {
             using var _ = ExecutionContextEx.SuppressFlow();
-            Task.Run(() =>
-                NotifyAuthenticationStateChanged(Task.FromResult((AuthenticationState) state.LastValue))).Ignore();
+            Task.Run(() => {
+                var authStateTask = Task.FromResult((AuthenticationState) state.LatestNonErrorValue);
+                NotifyAuthenticationStateChanged(authStateTask);
+            }).Ignore();
         }
     }
 }

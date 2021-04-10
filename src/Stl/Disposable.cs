@@ -3,6 +3,9 @@ using System.Runtime.CompilerServices;
 
 namespace Stl
 {
+    /// <summary>
+    /// A set of helper methods related to <see cref="IDisposable"/>.
+    /// </summary>
     public static class Disposable
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
