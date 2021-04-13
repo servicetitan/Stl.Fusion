@@ -24,7 +24,7 @@ namespace Stl.Fusion
         private static readonly HashSet<Type> GenericStateInterfaces = new() {
             typeof(IState<>),
             typeof(IMutableState<>),
-            typeof(ILiveState<>),
+            typeof(IComputedState<>),
         };
 
         public IServiceCollection Services { get; }
@@ -57,7 +57,7 @@ namespace Stl.Fusion
             // States & their dependencies
             Services.TryAddTransient<IStateFactory, StateFactory>();
             Services.TryAddTransient(typeof(IMutableState<>), typeof(MutableState<>));
-            Services.TryAddTransient<ILiveStateTimer>(_ => LiveStateTimer.Default);
+            Services.TryAddTransient<IUpdateDelayer>(_ => UpdateDelayer.Default);
 
             // CommandR, command completion and invalidation
             var commander = Services.AddCommander();

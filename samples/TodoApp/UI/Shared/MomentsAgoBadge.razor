@@ -1,7 +1,7 @@
 @using System.Threading
 @using Stl.Fusion.Extensions
-@inherits LiveComponentBase<string>
-@inject ILiveClock LiveClock
+@inherits ComputedStateComponent<string>
+@inject IFusionTime _fusionTime
 
 <span class="@CssClass">@State.Value</span>
 
@@ -15,5 +15,5 @@
     public string None { get; set; } = "n/a";
 
     protected override Task<string> ComputeState(CancellationToken cancellationToken)
-        => Value.HasValue ? LiveClock.GetMomentsAgo(Value.Value) : Task.FromResult(None);
+        => Value.HasValue ? _fusionTime.GetMomentsAgo(Value.Value) : Task.FromResult(None);
 }

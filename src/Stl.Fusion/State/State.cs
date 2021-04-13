@@ -77,10 +77,10 @@ namespace Stl.Fusion
                     var prevSnapshot = _snapshot;
                     if (prevSnapshot != null) {
                         prevSnapshot.Computed.Invalidate();
-                        _snapshot = new StateSnapshot<T>(value, prevSnapshot);
+                        _snapshot = new StateSnapshot<T>(prevSnapshot, value);
                     }
                     else
-                        _snapshot = new StateSnapshot<T>(value);
+                        _snapshot = new StateSnapshot<T>(this, value);
                     OnSetSnapshot(_snapshot, prevSnapshot);
                 }
             }

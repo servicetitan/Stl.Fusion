@@ -41,8 +41,8 @@ namespace Stl.Fusion.Tests
                 .Should().CompleteWithinAsync(TimeSpan.FromMinutes(1));
 
             var count = 0;
-            using var state = WebServices.StateFactory().NewLive<DateTime>(
-                o => o.LiveStateTimer = LiveStateTimer.ZeroUpdateDelay,
+            using var state = WebServices.StateFactory().NewComputed<DateTime>(
+                UpdateDelayer.ZeroUpdateDelay,
                 async (_, ct) => await rep.Computed.Use(ct));
             state.Updated += (s, _) => {
                 Out.WriteLine($"Client: {s.Value}");

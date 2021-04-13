@@ -24,12 +24,25 @@ namespace Stl.Fusion
             return factory.NewMutable(options, initialOutput);
         }
 
-        public static ILiveState<T> NewLive<T>(
+        public static IComputedState<T> NewComputed<T>(
             this IStateFactory factory,
-            Func<ILiveState<T>, CancellationToken, Task<T>> computer)
+            Func<IComputedState<T>, CancellationToken, Task<T>> computer)
         {
-            var options = new LiveState<T>.Options();
-            return factory.NewLive(options, computer);
+            var options = new ComputedState<T>.Options();
+            return factory.NewComputed(options, computer);
+        }
+
+        // With update delayer
+
+        public static IComputedState<T> NewComputed<T>(
+            this IStateFactory factory,
+            IUpdateDelayer updateDelayer,
+            Func<IComputedState<T>, CancellationToken, Task<T>> computer)
+        {
+            var options = new ComputedState<T>.Options() {
+                UpdateDelayer = updateDelayer,
+            };
+            return factory.NewComputed(options, computer);
         }
 
         // With builder
@@ -54,14 +67,14 @@ namespace Stl.Fusion
             return factory.NewMutable(options, initialOutput);
         }
 
-        public static ILiveState<T> NewLive<T>(
+        public static IComputedState<T> NewComputed<T>(
             this IStateFactory factory,
-            Action<LiveState<T>.Options> optionsBuilder,
-            Func<ILiveState<T>, CancellationToken, Task<T>> computer)
+            Action<ComputedState<T>.Options> optionsBuilder,
+            Func<IComputedState<T>, CancellationToken, Task<T>> computer)
         {
-            var options = new LiveState<T>.Options();
+            var options = new ComputedState<T>.Options();
             optionsBuilder.Invoke(options);
-            return factory.NewLive(options, computer);
+            return factory.NewComputed(options, computer);
         }
     }
 }

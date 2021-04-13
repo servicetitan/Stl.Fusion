@@ -8,17 +8,17 @@ namespace Stl.Fusion.Extensions
 {
     public static class FusionBuilderEx
     {
-        public static FusionBuilder AddLiveClock(this FusionBuilder fusion,
-            Action<IServiceProvider, LiveClock.Options>? optionsBuilder = null)
+        public static FusionBuilder AddFusionTime(this FusionBuilder fusion,
+            Action<IServiceProvider, FusionTime.Options>? optionsBuilder = null)
         {
             var services = fusion.Services;
             services.TryAddSingleton<IPluralize>(new Pluralizer());
             services.TryAddSingleton(c => {
-                var options = new LiveClock.Options();
+                var options = new FusionTime.Options();
                 optionsBuilder?.Invoke(c, options);
                 return options;
             });
-            fusion.AddComputeService<ILiveClock, LiveClock>();
+            fusion.AddComputeService<IFusionTime, Internal.FusionTime>();
             return fusion;
         }
 

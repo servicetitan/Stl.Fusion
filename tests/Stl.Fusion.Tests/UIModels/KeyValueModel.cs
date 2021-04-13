@@ -14,8 +14,8 @@ namespace Stl.Fusion.Tests.UIModels
         public int UpdateCount { get; set; }
     }
 
-    [Service(typeof(ILiveState<KeyValueModel<string>>))]
-    public class StringKeyValueModelState : LiveState<KeyValueModel<string>>
+    [Service(typeof(IComputedState<KeyValueModel<string>>))]
+    public class StringKeyValueModelState : ComputedState<KeyValueModel<string>>
     {
         protected IMutableState<string> Locals { get; }
 
@@ -25,7 +25,7 @@ namespace Stl.Fusion.Tests.UIModels
         public StringKeyValueModelState(IServiceProvider services)
             : base(
                 new Options() {
-                    LiveStateTimer = Fusion.LiveStateTimer.Default with {
+                    UpdateDelayer = Fusion.UpdateDelayer.Default with {
                         UpdateDelayDuration = TimeSpan.FromSeconds(0.5)
                     }
                 },

@@ -7,6 +7,7 @@ namespace Stl.Fusion
 {
     public interface IStateSnapshot
     {
+        IState State { get; }
         IComputed Computed { get; }
         IComputed LatestNonErrorComputed { get; }
         int UpdateCount { get; }
@@ -20,6 +21,7 @@ namespace Stl.Fusion
 
     public interface IStateSnapshot<T> : IStateSnapshot
     {
+        new IState<T> State { get; }
         new IComputed<T> Computed { get; }
         new IComputed<T> LatestNonErrorComputed { get; }
     }
@@ -29,18 +31,20 @@ namespace Stl.Fusion
         private TaskSource<Unit> WhenUpdatingSource { get; }
         private TaskSource<Unit> WhenUpdatedSource { get; }
 
+        public IState<T> State { get; }
         public IComputed<T> Computed { get; }
         public IComputed<T> LatestNonErrorComputed { get; }
         public int UpdateCount { get; }
         public int ErrorCount { get; }
         public int RetryCount { get; }
 
-        // ReSharper disable once HeapView.PossibleBoxingAllocation
+        IState IStateSnapshot.State => State;
         IComputed IStateSnapshot.Computed => Computed;
         IComputed IStateSnapshot.LatestNonErrorComputed => LatestNonErrorComputed;
 
-        public StateSnapshot(IComputed<T> computed)
+        public StateSnapshot(IState<T> state, IComputed<T> computed)
         {
+            State = state;
             Computed = computed;
             LatestNonErrorComputed = computed;
             WhenUpdatingSource = TaskSource.New<Unit>(true);
@@ -50,8 +54,9 @@ namespace Stl.Fusion
             RetryCount = 0;
         }
 
-        public StateSnapshot(IComputed<T> computed, StateSnapshot<T> prevSnapshot)
+        public StateSnapshot(StateSnapshot<T> prevSnapshot, IComputed<T> computed)
         {
+            State = prevSnapshot.State;
             Computed = computed;
             WhenUpdatingSource = TaskSource.New<Unit>(true);
             WhenUpdatedSource = TaskSource.New<Unit>(true);

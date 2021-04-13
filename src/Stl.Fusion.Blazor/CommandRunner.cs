@@ -56,9 +56,9 @@ namespace Stl.Fusion.Blazor
         {
             if (Component is not StatefulComponentBase statefulComponent)
                 return;
-            if (statefulComponent.UntypedState is not ILiveState liveState)
+            if (statefulComponent.UntypedState is not IComputedState computedState)
                 return;
-            liveState.ApplyUserCausedUpdate();
+            computedState.ApplyUserCausedUpdate();
         }
     }
 }

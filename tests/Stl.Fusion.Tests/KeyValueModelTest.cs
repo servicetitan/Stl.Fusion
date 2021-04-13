@@ -29,7 +29,7 @@ namespace Stl.Fusion.Tests
             (await kv.TryGet("")).Should().Be(Option.Some("1"));
             (await kv.Get("")).Should().Be("1");
 
-            using var kvm = ClientServices.GetRequiredService<ILiveState<KeyValueModel<string>>>();
+            using var kvm = ClientServices.GetRequiredService<IComputedState<KeyValueModel<string>>>();
             var kvc = ClientServices.GetRequiredService<IKeyValueServiceClient<string>>();
 
             // First read

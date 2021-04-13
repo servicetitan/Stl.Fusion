@@ -1,6 +1,6 @@
 @page "/todo"
 @using System.Threading
-@inherits LiveComponentBase<Todo[]>
+@inherits ComputedStateComponent<Todo[]>
 @inject ITodoService Todos
 @inject Session Session
 @inject CommandRunner CommandRunner

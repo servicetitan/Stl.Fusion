@@ -11,13 +11,13 @@ namespace Stl.Fusion.Blazor
     {
         public class Options
         {
-            public Action<LiveState<AuthState>.Options> LiveStateOptionsBuilder { get; } =
-                DefaultLiveStateOptionsBuilder;
+            public Action<ComputedState<AuthState>.Options> AuthStateOptionsBuilder { get; } =
+                DefaultAuthStateOptionsBuilder;
 
-            public static void DefaultLiveStateOptionsBuilder(LiveState<AuthState>.Options options)
-                => options.LiveStateTimer =
-                    LiveStateTimer.MinUpdateDelay with {
-                        MaxErrorDelayDuration = TimeSpan.FromSeconds(10),
+            public static void DefaultAuthStateOptionsBuilder(ComputedState<AuthState>.Options options)
+                => options.UpdateDelayer =
+                    UpdateDelayer.MinUpdateDelay with {
+                        MaxRetryDelayDuration = TimeSpan.FromSeconds(10),
                     };
         }
 
@@ -25,7 +25,7 @@ namespace Stl.Fusion.Blazor
         // e.g. State is quite handy to consume in other compute methods or states
         public ISessionResolver SessionResolver { get; }
         public IAuthService AuthService { get; }
-        public ILiveState<AuthState> State { get; }
+        public IComputedState<AuthState> AuthState { get; }
 
         public AuthStateProvider(
             Options? options,
@@ -36,21 +36,21 @@ namespace Stl.Fusion.Blazor
             options ??= new();
             AuthService = authService;
             SessionResolver = sessionResolver;
-            State = stateFactory.NewLive<AuthState>(o => {
-                options.LiveStateOptionsBuilder.Invoke(o);
+            AuthState = stateFactory.NewComputed<AuthState>(o => {
+                options.AuthStateOptionsBuilder.Invoke(o);
                 o.InitialOutputFactory = _ => new AuthState(new User("none"));
                 o.EventConfigurator += state => state.AddEventHandler(StateEventKind.Updated, OnStateChanged);
             }, ComputeState);
         }
 
-        public void Dispose() => State.Dispose();
+        public void Dispose() => AuthState.Dispose();
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
-            var state = await State.Update().ConfigureAwait(false);
+            var state = await AuthState.Update().ConfigureAwait(false);
             return state.LatestNonErrorValue;
         }
 
-        protected virtual async Task<AuthState> ComputeState(ILiveState<AuthState> state, CancellationToken cancellationToken)
+        protected virtual async Task<AuthState> ComputeState(IComputedState<AuthState> state, CancellationToken cancellationToken)
         {
             var session = await SessionResolver.GetSession(cancellationToken).ConfigureAwait(false);
             var user = await AuthService.GetUser(session, cancellationToken).ConfigureAwait(false);

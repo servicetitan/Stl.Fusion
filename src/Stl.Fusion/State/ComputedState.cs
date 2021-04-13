@@ -7,56 +7,56 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Stl.Fusion
 {
-    public interface ILiveState : IState, IDisposable
+    public interface IComputedState : IState, IDisposable
     {
         public new interface IOptions : IState.IOptions
         {
-            ILiveStateTimer? LiveStateTimer { get; set; }
-            Func<ILiveState, ILiveStateTimer>? LiveStateTimerFactory { get; set; }
+            IUpdateDelayer? UpdateDelayer { get; set; }
+            Func<IComputedState, IUpdateDelayer>? UpdateDelayerFactory { get; set; }
             bool DelayFirstUpdate { get; set; }
         }
 
-        ILiveStateTimer LiveStateTimer { get; }
+        IUpdateDelayer UpdateDelayer { get; }
     }
 
-    public interface ILiveState<T> : IState<T>, ILiveState
+    public interface IComputedState<T> : IState<T>, IComputedState
     { }
 
-    public abstract class LiveState<T> : State<T>, ILiveState<T>
+    public abstract class ComputedState<T> : State<T>, IComputedState<T>
     {
-        public new class Options : State<T>.Options, ILiveState.IOptions
+        public new class Options : State<T>.Options, IComputedState.IOptions
         {
-            public ILiveStateTimer? LiveStateTimer { get; set; }
-            public Func<ILiveState, ILiveStateTimer>? LiveStateTimerFactory { get; set; }
+            public IUpdateDelayer? UpdateDelayer { get; set; }
+            public Func<IComputedState, IUpdateDelayer>? UpdateDelayerFactory { get; set; }
             public bool DelayFirstUpdate { get; set; } = false;
         }
 
         private readonly CancellationTokenSource _stopCts;
 
         protected CancellationToken StopToken { get; }
-        protected Func<ILiveState<T>, ILiveStateTimer>? LiveStateTimerFactory { get; }
+        protected Func<IComputedState<T>, IUpdateDelayer>? UpdateDelayerFactory { get; }
         protected ILogger Log { get; }
 
-        public ILiveStateTimer LiveStateTimer { get; private set; } = null!;
+        public IUpdateDelayer UpdateDelayer { get; private set; } = null!;
         public bool DelayFirstUpdate { get; }
 
-        protected LiveState(IServiceProvider services, bool initialize = true)
+        protected ComputedState(IServiceProvider services, bool initialize = true)
             : this(new(), services, initialize) { }
-        protected LiveState(Options options, IServiceProvider services, bool initialize = true)
+        protected ComputedState(Options options, IServiceProvider services, bool initialize = true)
             : base(options, services, false)
         {
             _stopCts = new CancellationTokenSource();
             StopToken = _stopCts.Token;
             Log = Services.GetService<ILoggerFactory>()?.CreateLogger(GetType()) ?? NullLogger.Instance;
-            if (options.LiveStateTimer != null) {
-                if (options.LiveStateTimerFactory != null)
+            if (options.UpdateDelayer != null) {
+                if (options.UpdateDelayerFactory != null)
                     throw new ArgumentOutOfRangeException(nameof(options));
-                LiveStateTimer = options.LiveStateTimer;
+                UpdateDelayer = options.UpdateDelayer;
             }
-            else if (options.LiveStateTimerFactory != null)
-                LiveStateTimerFactory = options.LiveStateTimerFactory;
+            else if (options.UpdateDelayerFactory != null)
+                UpdateDelayerFactory = options.UpdateDelayerFactory;
             else
-                LiveStateTimerFactory = state => state.Services.GetRequiredService<ILiveStateTimer>();
+                UpdateDelayerFactory = state => state.Services.GetRequiredService<IUpdateDelayer>();
             DelayFirstUpdate = options.DelayFirstUpdate;
             // ReSharper disable once VirtualMemberCallInConstructor
             if (initialize) Initialize(options);
@@ -64,13 +64,13 @@ namespace Stl.Fusion
 
         protected override void Initialize(State<T>.Options options)
         {
-            if (LiveStateTimer == null!)
-                LiveStateTimer = LiveStateTimerFactory!.Invoke(this);
+            if (UpdateDelayer == null!)
+                UpdateDelayer = UpdateDelayerFactory!.Invoke(this);
             base.Initialize(options);
             Task.Run(Run, StopToken);
         }
 
-        // ~LiveState() => Dispose();
+        // ~ComputedState() => Dispose();
 
         public virtual void Dispose()
         {
@@ -95,13 +95,10 @@ namespace Stl.Fusion
                 try {
                     var snapshot = Snapshot;
                     var computed = snapshot.Computed;
-                    var whenUpdatedTask = snapshot.WhenUpdated();
                     await computed.WhenInvalidated(cancellationToken).ConfigureAwait(false);
-                    if (snapshot.UpdateCount != 0 || DelayFirstUpdate) {
-                        var delayTask = LiveStateTimer.UpdateDelay(snapshot.RetryCount, cancellationToken);
-                        await Task.WhenAny(delayTask, whenUpdatedTask).ConfigureAwait(false);
-                    }
-                    if (!whenUpdatedTask.IsCompleted)
+                    if (snapshot.UpdateCount != 0 || DelayFirstUpdate)
+                        await UpdateDelayer.UpdateDelay(snapshot, cancellationToken).ConfigureAwait(false);
+                    if (!snapshot.WhenUpdated().IsCompleted)
                         await computed.Update(cancellationToken).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException) {

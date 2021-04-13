@@ -5,7 +5,7 @@ using Stl.Time;
 
 namespace Stl.Fusion.Extensions.Internal
 {
-    public class LiveClock : ILiveClock
+    public class FusionTime : IFusionTime
     {
         public class Options
         {
@@ -20,7 +20,7 @@ namespace Stl.Fusion.Extensions.Internal
         protected IPluralize Pluralize { get; set; }
         protected IMomentClock Clock { get; set; }
 
-        public LiveClock(Options? options = null,
+        public FusionTime(Options? options = null,
             IPluralize? pluralize = null,
             IMomentClock? momentClock = null)
         {

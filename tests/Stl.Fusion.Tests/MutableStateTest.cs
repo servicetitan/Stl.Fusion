@@ -29,8 +29,8 @@ namespace Stl.Fusion.Tests
             ms2.Updated += (s, _)  => Out.WriteLine($"ms2 = {s.ValueOrDefault}");
             ms2.Value.Should().Be("B");
 
-            var cs = factory.NewLive<string>(
-                o => o.LiveStateTimer = LiveStateTimer.ZeroUpdateDelay,
+            var cs = factory.NewComputed<string>(
+                UpdateDelayer.ZeroUpdateDelay,
                 async (s, ct) => {
                     var value1 = await ms1.Computed.Use(ct);
                     var value2 = await ms2.Computed.Use(ct);

@@ -147,7 +147,7 @@ namespace Stl.Fusion.Tests
 
             // Core Fusion services
             var fusion = services.AddFusion();
-            fusion.AddLiveClock();
+            fusion.AddFusionTime();
 
             // Auto-discovered services
             var testType = GetType();
@@ -230,8 +230,8 @@ namespace Stl.Fusion.Tests
                     });
                 fusion.AddAuthentication(fusionAuth => fusionAuth.AddRestEaseClient());
 
-                // Custom live state
-                services.AddSingleton(c => c.StateFactory().NewLive<ServerTimeModel2>(
+                // Custom computed state
+                services.AddSingleton(c => c.StateFactory().NewComputed<ServerTimeModel2>(
                     async (_, cancellationToken) => {
                         var client = c.GetRequiredService<IClientTimeService>();
                         var time = await client.GetTime(cancellationToken).ConfigureAwait(false);

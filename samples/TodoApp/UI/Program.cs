@@ -79,14 +79,14 @@ namespace Templates.TodoApp.UI
         {
             services.AddBlazorise().AddBootstrapProviders().AddFontAwesomeIcons();
 
-            // Default ILiveStateTimer
-            services.AddSingleton<ILiveStateTimer>(_ => LiveStateTimer.Default with {
+            // Default IUpdateDelayer
+            services.AddSingleton<IUpdateDelayer>(_ => UpdateDelayer.Default with {
                 UpdateDelayDuration = TimeSpan.FromSeconds(0.5)
             });
 
             // Extensions
             var fusion = services.AddFusion();
-            fusion.AddLiveClock();
+            fusion.AddFusionTime();
         }
     }
 }

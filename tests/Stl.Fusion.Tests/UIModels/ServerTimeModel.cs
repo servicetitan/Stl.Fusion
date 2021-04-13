@@ -21,8 +21,8 @@ namespace Stl.Fusion.Tests.UIModels
         public ServerTimeModel2(DateTime time) : base(time) { }
     }
 
-    [Service(typeof(ILiveState<ServerTimeModel1>))]
-    public class ServerTimeModel1State : LiveState<ServerTimeModel1>
+    [Service(typeof(IComputedState<ServerTimeModel1>))]
+    public class ServerTimeModel1State : ComputedState<ServerTimeModel1>
     {
         private IClientTimeService Client
             => Services.GetRequiredService<IClientTimeService>();
