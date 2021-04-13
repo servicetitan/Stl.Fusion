@@ -32,7 +32,7 @@ namespace Stl.Fusion.Tests.UIModels
                 services)
         {
             Locals = new MutableState<string>(services);
-            Locals.AddEventHandler(StateEventKind.Updated, (self, _) => self.Recompute());
+            Locals.AddEventHandler(StateEventKind.Updated, (_, _) => this.Recompute());
         }
 
         protected override async Task<KeyValueModel<string>> Compute(CancellationToken cancellationToken)

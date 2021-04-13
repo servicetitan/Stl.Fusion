@@ -74,7 +74,7 @@ namespace Stl.Fusion.Blazor
         {
             // ReSharper disable once ConstantNullCoalescingCondition
             Locals ??= CreateLocals();
-            Locals.Updated += (self, _) => self.Recompute();
+            Locals.Updated += (_, _) => State.Recompute();
             base.OnInitialized();
         }
 

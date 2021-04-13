@@ -43,8 +43,8 @@ namespace Stl.Fusion
         {
             Computed = computed;
             LatestNonErrorComputed = computed;
-            WhenUpdatingSource = TaskSource.New<Unit>(false);
-            WhenUpdatedSource = TaskSource.New<Unit>(false);
+            WhenUpdatingSource = TaskSource.New<Unit>(true);
+            WhenUpdatedSource = TaskSource.New<Unit>(true);
             UpdateCount = 0;
             ErrorCount = 0;
             RetryCount = 0;
@@ -53,8 +53,8 @@ namespace Stl.Fusion
         public StateSnapshot(IComputed<T> computed, StateSnapshot<T> prevSnapshot)
         {
             Computed = computed;
-            WhenUpdatingSource = TaskSource.New<Unit>(false);
-            WhenUpdatedSource = TaskSource.New<Unit>(false);
+            WhenUpdatingSource = TaskSource.New<Unit>(true);
+            WhenUpdatedSource = TaskSource.New<Unit>(true);
             if (computed.HasValue) {
                 LatestNonErrorComputed = computed;
                 UpdateCount = 1 + prevSnapshot.UpdateCount;
