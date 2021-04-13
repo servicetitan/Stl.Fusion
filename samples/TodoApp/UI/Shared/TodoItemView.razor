@@ -1,4 +1,3 @@
-@inject CommandRunner CommandRunner
 @inject Session Session
 @inject ILogger<TodoItemView> Log
 
@@ -26,9 +25,8 @@
 @code {
     [Parameter, ParameterComparer(typeof(ByReferenceParameterComparer))]
     public Todo Value { get; set; } = null!;
-
-    protected override void OnInitialized()
-        => CommandRunner.Component = this;
+    [Parameter, ParameterComparer(typeof(ByReferenceParameterComparer))]
+    public CommandRunner CommandRunner { get; set; } = null!;
 
     public override Task SetParametersAsync(ParameterView parameters)
         => this.HasChangedParameters(parameters) ? base.SetParametersAsync(parameters) : Task.CompletedTask;

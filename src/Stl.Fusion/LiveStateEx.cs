@@ -1,12 +1,15 @@
-using System;
+using System.Threading.Tasks;
 
 namespace Stl.Fusion
 {
     public static class LiveStateEx
     {
-        public static void CancelUpdateDelay<TLiveState>(
-            this TLiveState liveState, TimeSpan? postCancellationDelay = null)
-            where TLiveState : class, ILiveState
-            => liveState.UpdateDelayer.CancelDelays(postCancellationDelay);
+        public static async Task ApplyUserCausedUpdate(this ILiveState liveState)
+        {
+            var snapshot = liveState.Snapshot;
+            await liveState.LiveStateTimer.UserCausedUpdateDelay(snapshot.Computed).ConfigureAwait(false);
+            if (!snapshot.WhenUpdated().IsCompleted)
+                await snapshot.Computed.Update().ConfigureAwait(false);
+        }
     }
 }

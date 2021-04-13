@@ -99,7 +99,7 @@ namespace Stl.Fusion.Tests
             await users.Create(new(u));
 
             using var sText = await stateFactory.NewLive<string>(
-                o => o.WithInstantUpdates(),
+                o => o.LiveStateTimer = LiveStateTimer.ZeroUpdateDelay,
                 async (s, cancellationToken) => {
                     var norris = await users.TryGet(int.MaxValue, cancellationToken).ConfigureAwait(false);
                     var now = await time.GetTime().ConfigureAwait(false);
@@ -126,10 +126,15 @@ namespace Stl.Fusion.Tests
             var count2 = 0;
 
 #pragma warning disable 1998
-            var s1 = await stateFactory.NewComputed<int>(async (s, ct) => count1++).Update();
-            var s2 = await stateFactory.NewComputed<int>(async (s, ct) => count2++).Update();
+            var s1 = await stateFactory.NewLive<int>(
+                o => o.LiveStateTimer = LiveStateTimer.ZeroUpdateDelay,
+                async (s, ct) => count1++).Update();
+            var s2 = await stateFactory.NewLive<int>(
+                o => o.LiveStateTimer = LiveStateTimer.ZeroUpdateDelay,
+                async (s, ct) => count2++).Update();
 #pragma warning restore 1998
-            var s12 = await stateFactory.NewComputed<(int, int)>(
+            var s12 = await stateFactory.NewLive<(int, int)>(
+                o => o.LiveStateTimer = LiveStateTimer.ZeroUpdateDelay,
                 async (s, cancellationToken) => {
                     var a = await s1.Use(cancellationToken);
                     using var _ = Computed.SuspendDependencyCapture();

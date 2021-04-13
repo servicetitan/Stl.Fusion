@@ -6,11 +6,31 @@ namespace Stl.Fusion
 {
     public static class StateEx
     {
+        // Computed-like methods
+
+        public static ValueTask<T> Use<T>(
+            this IState<T> state, CancellationToken cancellationToken = default)
+            => state.Computed.Use(cancellationToken);
+
+        public static bool Invalidate(this IState state)
+            => state.Computed.Invalidate();
+
         public static async ValueTask<TState> Update<TState>(
             this TState state, CancellationToken cancellationToken = default)
             where TState : class, IState
         {
             await state.Computed.Update(cancellationToken).ConfigureAwait(false);
+            return state;
+        }
+
+        public static async ValueTask<TState> Recompute<TState>(
+            this TState state, CancellationToken cancellationToken = default)
+            where TState : class, IState
+        {
+            var snapshot = state.Snapshot;
+            var computed = snapshot.Computed;
+            computed.Invalidate();
+            await computed.Update(cancellationToken).ConfigureAwait(false);
             return state;
         }
 

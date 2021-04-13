@@ -22,7 +22,8 @@
 <Text Margin="Margin.Is1.OnY">
     Call:
     <Button Color="Color.Danger" Size="Size.Small" Clicked="_ => StateHasChanged()">StateHasChanged()</Button>
-    <Button Color="Color.Danger" Size="Size.Small" Clicked="_ => InvalidateState()">InvalidateState()</Button>
+    <Button Color="Color.Danger" Size="Size.Small" Clicked="_ => State.Invalidate()">State.Invalidate()</Button>
+    <Button Color="Color.Danger" Size="Size.Small" Clicked="_ => State.Recompute()">State.Recompute()</Button>
 </Text>
 
 <AuthorizeView>
@@ -39,7 +40,7 @@
                 </Paragraph>
 
                 @foreach (var todo in todos) {
-                    <TodoItemView @key="@todo.Id" Value="@todo"/>
+                    <TodoItemView @key="@todo.Id" Value="@todo" CommandRunner="@CommandRunner"/>
                 }
 
                 @if (HasMore) {
@@ -93,7 +94,7 @@
     private void LoadMore()
     {
         PageSize *= 2;
-        InvalidateState();
+        State.Recompute();
     }
 
     private Task Create()

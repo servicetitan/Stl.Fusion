@@ -1,5 +1,7 @@
-using System;
+using System.Reactive;
 using System.Threading;
+using System.Threading.Tasks;
+using Stl.Async;
 
 namespace Stl.Fusion
 {
@@ -7,11 +9,13 @@ namespace Stl.Fusion
     {
         IComputed Computed { get; }
         IComputed LatestNonErrorComputed { get; }
-
         int UpdateCount { get; }
         int ErrorCount { get; }
         int RetryCount { get; }
-        bool IsUpdating { get; set; }
+
+        Task WhenInvalidated(CancellationToken cancellationToken);
+        Task WhenUpdating();
+        Task WhenUpdated();
     }
 
     public interface IStateSnapshot<T> : IStateSnapshot
@@ -22,16 +26,8 @@ namespace Stl.Fusion
 
     public class StateSnapshot<T> : IStateSnapshot<T>
     {
-        private volatile int _isUpdating = 0;
-
-        public bool IsUpdating {
-            get => _isUpdating != 0;
-            set {
-                if (value == false)
-                    throw new ArgumentOutOfRangeException(nameof(value));
-                Interlocked.CompareExchange(ref _isUpdating, 1, 0);
-            }
-        }
+        private TaskSource<Unit> WhenUpdatingSource { get; }
+        private TaskSource<Unit> WhenUpdatedSource { get; }
 
         public IComputed<T> Computed { get; }
         public IComputed<T> LatestNonErrorComputed { get; }
@@ -47,29 +43,47 @@ namespace Stl.Fusion
         {
             Computed = computed;
             LatestNonErrorComputed = computed;
+            WhenUpdatingSource = TaskSource.New<Unit>(false);
+            WhenUpdatedSource = TaskSource.New<Unit>(false);
             UpdateCount = 0;
             ErrorCount = 0;
             RetryCount = 0;
         }
 
-        public StateSnapshot(IComputed<T> computed, StateSnapshot<T> lastSnapshot)
+        public StateSnapshot(IComputed<T> computed, StateSnapshot<T> prevSnapshot)
         {
             Computed = computed;
+            WhenUpdatingSource = TaskSource.New<Unit>(false);
+            WhenUpdatedSource = TaskSource.New<Unit>(false);
             if (computed.HasValue) {
                 LatestNonErrorComputed = computed;
-                UpdateCount = 1 + lastSnapshot.UpdateCount;
-                ErrorCount = lastSnapshot.ErrorCount;
+                UpdateCount = 1 + prevSnapshot.UpdateCount;
+                ErrorCount = prevSnapshot.ErrorCount;
                 RetryCount = 0;
             }
             else {
-                LatestNonErrorComputed = lastSnapshot.LatestNonErrorComputed;
-                UpdateCount = 1 + lastSnapshot.UpdateCount;
-                ErrorCount = 1 + lastSnapshot.ErrorCount;
-                RetryCount = 1 + lastSnapshot.RetryCount;
+                LatestNonErrorComputed = prevSnapshot.LatestNonErrorComputed;
+                UpdateCount = 1 + prevSnapshot.UpdateCount;
+                ErrorCount = 1 + prevSnapshot.ErrorCount;
+                RetryCount = 1 + prevSnapshot.RetryCount;
             }
         }
 
         public override string ToString()
             => $"{GetType()}({Computed}, [{UpdateCount} update(s) / {ErrorCount} failure(s)])";
+
+        public Task WhenInvalidated(CancellationToken cancellationToken)
+            => Computed.WhenInvalidated(cancellationToken);
+        public Task WhenUpdating() => WhenUpdatingSource.Task;
+        public Task WhenUpdated() => WhenUpdatedSource.Task;
+
+        protected internal void OnUpdating()
+            => WhenUpdatingSource.TrySetResult(default);
+
+        protected internal void OnUpdated()
+        {
+            WhenUpdatingSource.TrySetResult(default);
+            WhenUpdatedSource.TrySetResult(default);
+        }
     }
 }

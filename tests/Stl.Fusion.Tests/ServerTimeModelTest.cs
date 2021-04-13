@@ -26,7 +26,7 @@ namespace Stl.Fusion.Tests
             c.Value.Time.Should().Be(default);
 
             Debug.WriteLine("0");
-            stm.CancelUpdateDelay();
+            await stm.ApplyUserCausedUpdate();
             Debug.WriteLine("1");
             await c.Update();
             Debug.WriteLine("2");
@@ -38,7 +38,7 @@ namespace Stl.Fusion.Tests
             Debug.WriteLine("3");
             await Task.Delay(TimeSpan.FromSeconds(3));
             Debug.WriteLine("4");
-            stm.CancelUpdateDelay();
+            await stm.ApplyUserCausedUpdate();
             Debug.WriteLine("5");
             await Task.Delay(300); // Let's just wait for the updates to happen
             Debug.WriteLine("6");
@@ -62,7 +62,7 @@ namespace Stl.Fusion.Tests
             c.Value.Time.Should().Be(default);
 
             Debug.WriteLine("0");
-            stm.CancelUpdateDelay();
+            await stm.ApplyUserCausedUpdate();
             Debug.WriteLine("1");
             await c.Update();
             Debug.WriteLine("2");
@@ -74,7 +74,7 @@ namespace Stl.Fusion.Tests
             Debug.WriteLine("3");
             await Task.Delay(TimeSpan.FromSeconds(3));
             Debug.WriteLine("4");
-            stm.CancelUpdateDelay();
+            await stm.ApplyUserCausedUpdate();
             Debug.WriteLine("5");
             await Task.Delay(300); // Let's just wait for the updates to happen
             Debug.WriteLine("6");

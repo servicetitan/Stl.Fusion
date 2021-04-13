@@ -28,8 +28,6 @@ namespace Stl.Fusion
         event Action<IState, StateEventKind>? Invalidated;
         event Action<IState, StateEventKind>? Updating;
         event Action<IState, StateEventKind>? Updated;
-
-        bool Invalidate();
     }
 
     public interface IState<T> : IState, IResult<T>
@@ -41,9 +39,6 @@ namespace Stl.Fusion
         new event Action<IState<T>, StateEventKind>? Invalidated;
         new event Action<IState<T>, StateEventKind>? Updating;
         new event Action<IState<T>, StateEventKind>? Updated;
-
-        Task WhenInvalidated<TState>(CancellationToken cancellationToken = default);
-        ValueTask<T> Use(CancellationToken cancellationToken = default);
     }
 
     public abstract class State<T> : ComputedInput,
@@ -79,14 +74,14 @@ namespace Stl.Fusion
             protected set {
                 value.AssertConsistencyStateIsNot(ConsistencyState.Computing);
                 lock (Lock) {
-                    var oldSnapshot = _snapshot;
-                    if (oldSnapshot != null) {
-                        oldSnapshot.Computed.Invalidate();
-                        _snapshot = new StateSnapshot<T>(value, oldSnapshot);
+                    var prevSnapshot = _snapshot;
+                    if (prevSnapshot != null) {
+                        prevSnapshot.Computed.Invalidate();
+                        _snapshot = new StateSnapshot<T>(value, prevSnapshot);
                     }
                     else
                         _snapshot = new StateSnapshot<T>(value);
-                    OnUpdated(oldSnapshot);
+                    OnSetSnapshot(_snapshot, prevSnapshot);
                 }
             }
         }
@@ -97,11 +92,12 @@ namespace Stl.Fusion
         public bool HasValue => Computed.HasValue;
         public bool HasError => Computed.HasError;
 
-        // ReSharper disable once HeapView.PossibleBoxingAllocation
-        object? IState.LatestNonErrorValue => LatestNonErrorValue;
         IStateSnapshot IState.Snapshot => Snapshot;
         IComputed<T> IState<T>.Computed => Computed;
         IComputed IState.Computed => Computed;
+        // ReSharper disable once HeapView.PossibleBoxingAllocation
+        object? IState.LatestNonErrorValue => LatestNonErrorValue;
+        // ReSharper disable once HeapView.PossibleBoxingAllocation
         object? IResult.Value => Computed.Value;
 
         public event Action<IState<T>, StateEventKind>? Invalidated;
@@ -158,13 +154,6 @@ namespace Stl.Fusion
         T IConvertibleTo<T>.Convert() => Value;
         Result<T> IConvertibleTo<Result<T>>.Convert() => AsResult();
 
-        public bool Invalidate()
-            => Computed.Invalidate();
-        public Task WhenInvalidated<TState>(CancellationToken cancellationToken = default)
-            => Computed.WhenInvalidated(cancellationToken);
-        public ValueTask<T> Use(CancellationToken cancellationToken = default)
-            => Computed.Use(cancellationToken);
-
         // Equality
 
         public bool Equals(State<T>? other)
@@ -189,25 +178,32 @@ namespace Stl.Fusion
 
         protected internal virtual void OnInvalidated(IComputed<T> computed)
         {
+            var snapshot = Snapshot;
+            if (computed != snapshot.Computed)
+                return;
             Invalidated?.Invoke(this, StateEventKind.Invalidated);
             UntypedInvalidated?.Invoke(this, StateEventKind.Invalidated);
         }
 
-        protected virtual void OnUpdating()
+        protected virtual void OnUpdating(IComputed<T> computed)
         {
-            Snapshot.IsUpdating = true;
+            var snapshot = Snapshot;
+            if (computed != snapshot.Computed)
+                return;
+            snapshot.OnUpdating();
             Updating?.Invoke(this, StateEventKind.Updating);
             UntypedUpdating?.Invoke(this, StateEventKind.Updating);
         }
 
-        protected virtual void OnUpdated(IStateSnapshot<T>? oldSnapshot)
+        protected virtual void OnSetSnapshot(StateSnapshot<T> snapshot, StateSnapshot<T>? prevSnapshot)
         {
-            if (oldSnapshot == null) {
+            if (prevSnapshot == null) {
                 // First assignment / initialization
-                var computed = Computed;
-                if (computed.Options.IsAsyncComputed)
-                    throw Errors.UnsupportedComputedOptions(computed.GetType());
+                if (snapshot.Computed.Options.IsAsyncComputed)
+                    throw Errors.UnsupportedComputedOptions(snapshot.Computed.GetType());
+                return;
             }
+            prevSnapshot.OnUpdated();
             Updated?.Invoke(this, StateEventKind.Updated);
             UntypedUpdated?.Invoke(this, StateEventKind.Updated);
         }
@@ -241,7 +237,7 @@ namespace Stl.Fusion
             if (result.TryUseExisting(context, usedBy))
                 return result;
 
-            OnUpdating();
+            OnUpdating(result);
             result = await GetComputed(cancellationToken).ConfigureAwait(false);
             result.UseNew(context, usedBy);
             return result;
@@ -275,7 +271,7 @@ namespace Stl.Fusion
             if (result.TryUseExisting(context, usedBy))
                 return result.Strip(context);
 
-            OnUpdating();
+            OnUpdating(result);
             result = await GetComputed(cancellationToken).ConfigureAwait(false);
             result.UseNew(context, usedBy);
             return result.Value;

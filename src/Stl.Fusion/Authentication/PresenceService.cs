@@ -1,9 +1,11 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Async;
+using Stl.Time;
 
 namespace Stl.Fusion.Authentication
 {
@@ -12,37 +14,34 @@ namespace Stl.Fusion.Authentication
         public class Options
         {
             public TimeSpan UpdatePeriod { get; set; } = TimeSpan.FromMinutes(3);
+            public IMomentClock? Clock { get; set; }
         }
 
-        protected ILogger Log { get; }
+        protected TimeSpan UpdatePeriod { get; }
         protected IAuthService AuthService { get; }
         protected ISessionResolver SessionResolver { get; }
-        protected IUpdateDelayer UpdateDelayer { get; }
+        protected IMomentClock Clock { get; }
+        protected ILogger Log { get; }
 
         public PresenceService(
             Options? options,
-            IAuthService authService,
-            ISessionResolver sessionResolver,
+            IServiceProvider services,
             ILogger<PresenceService>? log = null)
         {
             options ??= new();
             Log = log ?? NullLogger<PresenceService>.Instance;
-            AuthService = authService;
-            SessionResolver = sessionResolver;
-            UpdateDelayer = new UpdateDelayer(new UpdateDelayer.Options() {
-                DelayDuration = options.UpdatePeriod,
-                CancellationDelay = TimeSpan.Zero,
-            });
+            UpdatePeriod = options.UpdatePeriod;
+            Clock = options.Clock ?? services.GetService<IMomentClock>() ?? CpuClock.Instance;
+            AuthService = services.GetRequiredService<IAuthService>();
+            SessionResolver = services.GetRequiredService<ISessionResolver>();
         }
-
-        public virtual void UpdatePresence() => UpdateDelayer.CancelDelays();
 
         protected override async Task RunInternal(CancellationToken cancellationToken)
         {
             var session = await SessionResolver.GetSession(cancellationToken).ConfigureAwait(false);
             var retryCount = 0;
             while (!cancellationToken.IsCancellationRequested) {
-                await UpdateDelayer.Delay(retryCount, cancellationToken).ConfigureAwait(false);
+                await Clock.Delay(UpdatePeriod, cancellationToken).ConfigureAwait(false);
                 var success = await UpdatePresence(session, cancellationToken).ConfigureAwait(false);
                 retryCount = success ? 0 : 1 + retryCount;
             }

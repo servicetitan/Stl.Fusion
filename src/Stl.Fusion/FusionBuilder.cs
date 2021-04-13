@@ -14,7 +14,6 @@ using Stl.Fusion.Operations;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Operations.Internal;
 using Stl.Time;
-using Errors = Stl.Internal.Errors;
 
 namespace Stl.Fusion
 {
@@ -25,7 +24,6 @@ namespace Stl.Fusion
         private static readonly HashSet<Type> GenericStateInterfaces = new() {
             typeof(IState<>),
             typeof(IMutableState<>),
-            typeof(IComputedState<>),
             typeof(ILiveState<>),
         };
 
@@ -59,8 +57,7 @@ namespace Stl.Fusion
             // States & their dependencies
             Services.TryAddTransient<IStateFactory, StateFactory>();
             Services.TryAddTransient(typeof(IMutableState<>), typeof(MutableState<>));
-            Services.TryAddSingleton(new UpdateDelayer.Options());
-            Services.TryAddTransient<IUpdateDelayer, UpdateDelayer>();
+            Services.TryAddTransient<ILiveStateTimer>(_ => LiveStateTimer.Default);
 
             // CommandR, command completion and invalidation
             var commander = Services.AddCommander();
@@ -181,72 +178,6 @@ namespace Stl.Fusion
             Services.AddCommander().AddHandlers(serviceType, implementationType);
             return this;
         }
-
-        // AddState
-
-        public FusionBuilder AddState(
-            Type implementationType,
-            Func<IServiceProvider, IState>? factory = null)
-        {
-            if (implementationType.IsValueType)
-                throw new ArgumentOutOfRangeException(nameof(implementationType));
-            var isRegistered = false;
-
-            var tInterfaces = new List<Type>();
-            if (implementationType.IsInterface) {
-                tInterfaces.Add(implementationType);
-                if (factory == null)
-                    throw new ArgumentNullException(nameof(factory));
-            }
-            tInterfaces.AddRange(implementationType.GetInterfaces());
-
-            foreach (var tInterface in tInterfaces) {
-                if (!tInterface.IsConstructedGenericType)
-                    continue;
-                var gInterface = tInterface.GetGenericTypeDefinition();
-                if (GenericStateInterfaces.Contains(gInterface)) {
-                    if (factory != null)
-                        Services.TryAddTransient(tInterface, factory);
-                    else
-                        Services.TryAddTransient(tInterface, implementationType);
-                    isRegistered = true;
-                }
-            }
-            if (!isRegistered)
-                throw Errors.MustImplement(implementationType, typeof(IState<>), nameof(implementationType));
-
-            if (!implementationType.IsInterface) {
-                if (factory != null)
-                    Services.TryAddTransient(implementationType, factory);
-                else
-                    Services.TryAddTransient(implementationType);
-            }
-
-            // Try register Options type based for .ctor(Options options, ...)
-            foreach (var ctor in implementationType.GetConstructors()) {
-                if (!ctor.IsPublic)
-                    continue;
-                var pOptions = ctor.GetParameters().FirstOrDefault();
-                if (pOptions == null)
-                    continue; // Must be the first .ctor parameter
-                if (pOptions.Name != "options")
-                    continue; // Must be named "options"
-                var tOptions = pOptions.ParameterType;
-                if (tOptions.GetConstructor(Array.Empty<Type>()) == null)
-                    continue; // Must have new() constructor
-                Services.TryAddTransient(tOptions);
-            }
-            return this;
-        }
-
-        public FusionBuilder AddState<TImplementation>()
-            where TImplementation : class, IState
-            => AddState(typeof(TImplementation));
-
-        public FusionBuilder AddState<TImplementation>(
-            Func<IServiceProvider, TImplementation> factory)
-            where TImplementation : class, IState
-            => AddState(typeof(TImplementation), factory);
 
         // AddAuthentication
 

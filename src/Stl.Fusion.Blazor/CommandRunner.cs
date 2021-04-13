@@ -31,7 +31,7 @@ namespace Stl.Fusion.Blazor
             Error = null;
             try {
                 await Commander.Call(command, cancellationToken);
-                TryInvalidate();
+                TryApplyUserCausedUpdate();
             }
             catch (Exception e) {
                 Error = e;
@@ -43,7 +43,7 @@ namespace Stl.Fusion.Blazor
             Error = null;
             try {
                 var result = await Commander.Call(command, cancellationToken);
-                TryInvalidate();
+                TryApplyUserCausedUpdate();
                 return result;
             }
             catch (Exception e) {
@@ -52,14 +52,13 @@ namespace Stl.Fusion.Blazor
             }
         }
 
-        private void TryInvalidate()
+        private void TryApplyUserCausedUpdate()
         {
             if (Component is not StatefulComponentBase statefulComponent)
                 return;
             if (statefulComponent.UntypedState is not ILiveState liveState)
                 return;
-            liveState.Invalidate();
-            liveState.UpdateDelayer.CancelDelays();
+            liveState.ApplyUserCausedUpdate();
         }
     }
 }

@@ -48,9 +48,9 @@ IServiceProvider CreateServiceProvider()
     fusionClient.AddReplicaService<ITodoService, ITodoClient>();
     fusion.AddAuthentication().AddRestEaseClient();
 
-    // Default delay for update delayers
-    services.AddSingleton(c => new UpdateDelayer.Options() {
-        DelayDuration = TimeSpan.FromSeconds(0.1),
+    // Default ILiveStateTimer
+    services.AddSingleton<ILiveStateTimer>(_ => LiveStateTimer.Default with {
+        UpdateDelayDuration = TimeSpan.FromSeconds(0.1)
     });
     return services.BuildServiceProvider();
 }

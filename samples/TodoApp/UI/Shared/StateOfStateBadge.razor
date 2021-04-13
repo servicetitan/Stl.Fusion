@@ -40,11 +40,11 @@
     }
 
     public bool IsLoading => State == null! || State.Snapshot.UpdateCount == 0;
-    public bool IsUpdating => State == null! || State.Snapshot.IsUpdating;
+    public bool IsUpdating => State == null! || State.Snapshot.WhenUpdating().IsCompleted;
     public bool IsUpdatePending => State == null! || State.Snapshot.Computed.IsInvalidated();
 
     public StateOfStateBadge()
-        => _stateChangedHandler = (_1, _2) => this.StateHasChangedAsync().Ignore();
+        => _stateChangedHandler = (_, _) => this.StateHasChangedAsync().Ignore();
 
     public virtual void Dispose()
         => State = null!;

@@ -60,7 +60,7 @@ namespace Stl.Fusion.Tests
 
             var count = 0;
             using var state = Services.StateFactory().NewLive<DateTime>(
-                o => o.WithInstantUpdates(),
+                o => o.LiveStateTimer = LiveStateTimer.ZeroUpdateDelay,
                 async (_, ct) => await rep.Computed.Use(ct));
             state.Updated += (s, _) => {
                 Out.WriteLine($"{s.Value}");

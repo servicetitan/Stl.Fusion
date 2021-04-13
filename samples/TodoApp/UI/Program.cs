@@ -79,9 +79,9 @@ namespace Templates.TodoApp.UI
         {
             services.AddBlazorise().AddBootstrapProviders().AddFontAwesomeIcons();
 
-            // Default delay for update delayers
-            services.AddSingleton(c => new UpdateDelayer.Options() {
-                DelayDuration = TimeSpan.FromSeconds(0.1),
+            // Default ILiveStateTimer
+            services.AddSingleton<ILiveStateTimer>(_ => LiveStateTimer.Default with {
+                UpdateDelayDuration = TimeSpan.FromSeconds(0.5)
             });
 
             // Extensions

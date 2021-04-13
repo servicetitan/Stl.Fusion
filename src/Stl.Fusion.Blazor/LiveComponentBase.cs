@@ -10,35 +10,20 @@ namespace Stl.Fusion.Blazor
     public enum LiveComponentOptions
     {
         SynchronizeComputeState = 0x1,
-        InvalidateOnParametersSet = 0x2,
+        RecomputeOnParametersSet = 0x2,
     }
 
     public abstract class LiveComponentBase<T> : StatefulComponentBase<ILiveState<T>>
     {
         protected LiveComponentOptions Options { get; set; } =
             LiveComponentOptions.SynchronizeComputeState
-            | LiveComponentOptions.InvalidateOnParametersSet;
+            | LiveComponentOptions.RecomputeOnParametersSet;
 
         // Typically State depends on component parameters, so...
         protected override void OnParametersSet()
         {
-            if (0 != (Options & LiveComponentOptions.InvalidateOnParametersSet))
-                InvalidateState();
-        }
-
-        /// <summary>
-        /// Typically you need to call this method after UI actions to ensure
-        /// the update from server is requested instantly.
-        /// </summary>
-        /// <param name="cancelUpdateDelay">Cancels update delay, i.e. requests instant update.</param>
-        /// <param name="cancellationDelay">The delay between this call and update delay cancellation.
-        /// The default (null) means it's governed by <see cref="IUpdateDelayer{T}"/>, which does this
-        /// in 50ms by default.</param>
-        protected void InvalidateState(bool cancelUpdateDelay = true, TimeSpan? cancellationDelay = null)
-        {
-            State.Invalidate();
-            if (cancelUpdateDelay)
-                State.UpdateDelayer.CancelDelays(cancellationDelay);
+            if (0 != (Options & LiveComponentOptions.RecomputeOnParametersSet))
+                State.Recompute();
         }
 
         protected override ILiveState<T> CreateState()
@@ -89,10 +74,7 @@ namespace Stl.Fusion.Blazor
         {
             // ReSharper disable once ConstantNullCoalescingCondition
             Locals ??= CreateLocals();
-            Locals.Updated += (s, e) => {
-                State.Invalidate();
-                State.CancelUpdateDelay();
-            };
+            Locals.Updated += (self, _) => self.Recompute();
             base.OnInitialized();
         }
 

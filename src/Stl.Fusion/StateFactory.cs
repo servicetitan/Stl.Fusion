@@ -12,10 +12,6 @@ namespace Stl.Fusion
             MutableState<T>.Options options,
             Option<Result<T>> initialOutput = default);
 
-        IComputedState<T> NewComputed<T>(
-            ComputedState<T>.Options options,
-            Func<IComputedState<T>, CancellationToken, Task<T>> computer);
-
         ILiveState<T> NewLive<T>(
             LiveState<T>.Options options,
             Func<ILiveState<T>, CancellationToken, Task<T>> computer);
@@ -32,11 +28,6 @@ namespace Stl.Fusion
             MutableState<T>.Options options,
             Option<Result<T>> initialOutput = default)
             => new MutableState<T>(options, Services, initialOutput);
-
-        public IComputedState<T> NewComputed<T>(
-            ComputedState<T>.Options options,
-            Func<IComputedState<T>, CancellationToken, Task<T>> computer)
-            => new FuncComputedState<T>(options, Services, computer);
 
         public ILiveState<T> NewLive<T>(
             LiveState<T>.Options options,

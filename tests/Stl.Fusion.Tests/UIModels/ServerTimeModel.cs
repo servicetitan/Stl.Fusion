@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using Stl.DependencyInjection;
 using Stl.Fusion.Tests.Services;
 
 namespace Stl.Fusion.Tests.UIModels
@@ -20,14 +21,14 @@ namespace Stl.Fusion.Tests.UIModels
         public ServerTimeModel2(DateTime time) : base(time) { }
     }
 
-    [State]
+    [Service(typeof(ILiveState<ServerTimeModel1>))]
     public class ServerTimeModel1State : LiveState<ServerTimeModel1>
     {
         private IClientTimeService Client
             => Services.GetRequiredService<IClientTimeService>();
 
-        public ServerTimeModel1State(Options options, IServiceProvider services)
-            : base(options, services) { }
+        public ServerTimeModel1State(IServiceProvider services)
+            : base(services) { }
 
         protected override async Task<ServerTimeModel1> Compute(CancellationToken cancellationToken)
         {

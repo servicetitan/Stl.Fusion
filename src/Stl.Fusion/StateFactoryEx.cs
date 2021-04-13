@@ -24,14 +24,6 @@ namespace Stl.Fusion
             return factory.NewMutable(options, initialOutput);
         }
 
-        public static IComputedState<T> NewComputed<T>(
-            this IStateFactory factory,
-            Func<IComputedState<T>, CancellationToken, Task<T>> computer)
-        {
-            var options = new ComputedState<T>.Options();
-            return factory.NewComputed(options, computer);
-        }
-
         public static ILiveState<T> NewLive<T>(
             this IStateFactory factory,
             Func<ILiveState<T>, CancellationToken, Task<T>> computer)
@@ -60,16 +52,6 @@ namespace Stl.Fusion
             var options = new MutableState<T>.Options();
             optionsBuilder.Invoke(options);
             return factory.NewMutable(options, initialOutput);
-        }
-
-        public static IComputedState<T> NewComputed<T>(
-            this IStateFactory factory,
-            Action<ComputedState<T>.Options> optionsBuilder,
-            Func<IComputedState<T>, CancellationToken, Task<T>> computer)
-        {
-            var options = new ComputedState<T>.Options();
-            optionsBuilder.Invoke(options);
-            return factory.NewComputed(options, computer);
         }
 
         public static ILiveState<T> NewLive<T>(

@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using Stl.DependencyInjection;
 using Stl.Fusion.Tests.Services;
 
 namespace Stl.Fusion.Tests.UIModels
@@ -13,32 +14,25 @@ namespace Stl.Fusion.Tests.UIModels
         public int UpdateCount { get; set; }
     }
 
-    [State]
+    [Service(typeof(ILiveState<KeyValueModel<string>>))]
     public class StringKeyValueModelState : LiveState<KeyValueModel<string>>
     {
-        public new class Options : LiveState<KeyValueModel<string>>.Options
-        {
-            public Options()
-            {
-                UpdateDelayerFactory = _ => {
-                    var options = new UpdateDelayer.Options() {
-                        DelayDuration = TimeSpan.FromSeconds(0.5),
-                    };
-                    return new UpdateDelayer(options);
-                };
-            }
-        }
-
         protected IMutableState<string> Locals { get; }
 
         private IKeyValueServiceClient<string> KeyValueServiceClient
             => Services.GetRequiredService<IKeyValueServiceClient<string>>();
 
-        public StringKeyValueModelState(Options options, IServiceProvider services)
-            : base(options, services)
+        public StringKeyValueModelState(IServiceProvider services)
+            : base(
+                new Options() {
+                    LiveStateTimer = Fusion.LiveStateTimer.Default with {
+                        UpdateDelayDuration = TimeSpan.FromSeconds(0.5)
+                    }
+                },
+                services)
         {
             Locals = new MutableState<string>(services);
-            Locals.AddEventHandler(StateEventKind.Updated, (s, e) => this.CancelUpdateDelay());
+            Locals.AddEventHandler(StateEventKind.Updated, (self, _) => self.Recompute());
         }
 
         protected override async Task<KeyValueModel<string>> Compute(CancellationToken cancellationToken)

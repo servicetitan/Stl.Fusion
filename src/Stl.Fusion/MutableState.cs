@@ -10,6 +10,7 @@ namespace Stl.Fusion
     {
         public new interface IOptions : IState.IOptions { }
     }
+
     public interface IMutableState<T> : IState<T>, IMutableResult<T>, IMutableState
     { }
 
@@ -35,6 +36,7 @@ namespace Stl.Fusion
             set => Set(Result.Error<T>(value));
         }
         object? IMutableResult.UntypedValue {
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             get => Value;
             set => Set(Result.Value((T) value!));
         }
@@ -62,15 +64,16 @@ namespace Stl.Fusion
             => Set(result.Cast<T>());
         public void Set(Result<T> result)
         {
-            IStateSnapshot<T> snapshot;
             lock (Lock) {
-                snapshot = Snapshot;
+                var snapshot = Snapshot;
                 _output = result;
                 // Better to do this inside the lock, since it will be
                 // re-acquired later - see InvokeAsync and InvokeAndStrip overloads
                 snapshot.Computed.Invalidate();
             }
         }
+
+        // Protected methods
 
         protected internal override void OnInvalidated(IComputed<T> computed)
         {
@@ -100,7 +103,7 @@ namespace Stl.Fusion
                 if (result.TryUseExisting(context, usedBy))
                     return Task.FromResult(result);
 
-                OnUpdating();
+                OnUpdating(result);
                 result = CreateComputed();
                 result.UseNew(context, usedBy);
                 context.TryCapture(result);
@@ -129,7 +132,7 @@ namespace Stl.Fusion
                 if (result.TryUseExisting(context, usedBy))
                     return result.StripToTask(context);
 
-                OnUpdating();
+                OnUpdating(result);
                 result = CreateComputed();
                 result.UseNew(context, usedBy);
                 context.TryCapture(result);

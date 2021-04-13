@@ -15,7 +15,10 @@ namespace Stl.Fusion.Blazor
                 DefaultLiveStateOptionsBuilder;
 
             public static void DefaultLiveStateOptionsBuilder(LiveState<AuthState>.Options options)
-                => options.WithUpdateDelayer(0.1, 10);
+                => options.LiveStateTimer =
+                    LiveStateTimer.MinUpdateDelay with {
+                        MaxErrorDelayDuration = TimeSpan.FromSeconds(10),
+                    };
         }
 
         // These properties are intentionally public -

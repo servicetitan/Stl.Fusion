@@ -231,8 +231,8 @@ namespace Stl.Fusion.Tests
                 fusion.AddAuthentication(fusionAuth => fusionAuth.AddRestEaseClient());
 
                 // Custom live state
-                fusion.AddState(c => c.StateFactory().NewLive<ServerTimeModel2>(
-                    async (state, cancellationToken) => {
+                services.AddSingleton(c => c.StateFactory().NewLive<ServerTimeModel2>(
+                    async (_, cancellationToken) => {
                         var client = c.GetRequiredService<IClientTimeService>();
                         var time = await client.GetTime(cancellationToken).ConfigureAwait(false);
                         return new ServerTimeModel2(time);
