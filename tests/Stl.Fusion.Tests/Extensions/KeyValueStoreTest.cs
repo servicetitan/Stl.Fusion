@@ -115,7 +115,6 @@ namespace Stl.Fusion.Tests.Extensions
             (await kvs.Get("4")).Should().Be("4v");
 
             clock.Settings = new TestClockSettings(TimeSpan.FromMinutes(6));
-            ComputedRegistry.Instance.InvalidateEverything();
             await Delay(3); // Let trimmer to kick in
             ComputedRegistry.Instance.InvalidateEverything();
 
