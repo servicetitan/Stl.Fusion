@@ -49,8 +49,6 @@ IServiceProvider CreateServiceProvider()
     fusion.AddAuthentication().AddRestEaseClient();
 
     // Default IUpdateDelayer
-    services.AddSingleton<IUpdateDelayer>(_ => UpdateDelayer.Default with {
-        UpdateDelayDuration = TimeSpan.FromSeconds(0.1)
-    });
+    services.AddSingleton<IUpdateDelayer>(_ => new UpdateDelayer(0.1));
     return services.BuildServiceProvider();
 }

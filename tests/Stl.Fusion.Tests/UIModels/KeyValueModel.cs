@@ -24,11 +24,7 @@ namespace Stl.Fusion.Tests.UIModels
 
         public StringKeyValueModelState(IServiceProvider services)
             : base(
-                new Options() {
-                    UpdateDelayer = Fusion.UpdateDelayer.Default with {
-                        UpdateDelayDuration = TimeSpan.FromSeconds(0.5)
-                    }
-                },
+                new Options() { UpdateDelayer = new UpdateDelayer(0.5) },
                 services)
         {
             Locals = new MutableState<string>(services);

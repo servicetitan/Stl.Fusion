@@ -16,7 +16,7 @@ namespace Stl.Fusion
             bool DelayFirstUpdate { get; set; }
         }
 
-        IUpdateDelayer UpdateDelayer { get; }
+        IUpdateDelayer UpdateDelayer { get; set; }
     }
 
     public interface IComputedState<T> : IState<T>, IComputedState
@@ -32,13 +32,21 @@ namespace Stl.Fusion
         }
 
         private readonly CancellationTokenSource _stopCts;
+        private volatile IUpdateDelayer? _updateDelayer;
 
         protected CancellationToken StopToken { get; }
         protected Func<IComputedState<T>, IUpdateDelayer>? UpdateDelayerFactory { get; }
+        protected bool DelayFirstUpdate { get; }
         protected ILogger Log { get; }
 
-        public IUpdateDelayer UpdateDelayer { get; private set; } = null!;
-        public bool DelayFirstUpdate { get; }
+        public IUpdateDelayer UpdateDelayer {
+            get => _updateDelayer!;
+            set {
+                if (value == null!)
+                    throw new ArgumentNullException(nameof(value));
+                _updateDelayer = value;
+            }
+        }
 
         protected ComputedState(IServiceProvider services, bool initialize = true)
             : this(new(), services, initialize) { }
@@ -64,8 +72,8 @@ namespace Stl.Fusion
 
         protected override void Initialize(State<T>.Options options)
         {
-            if (UpdateDelayer == null!)
-                UpdateDelayer = UpdateDelayerFactory!.Invoke(this);
+            // ReSharper disable once NonAtomicCompoundOperator
+            _updateDelayer ??= UpdateDelayerFactory!.Invoke(this);
             base.Initialize(options);
             Task.Run(Run, StopToken);
         }

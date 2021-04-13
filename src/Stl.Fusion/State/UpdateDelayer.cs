@@ -16,13 +16,8 @@ namespace Stl.Fusion
     public record UpdateDelayer : IUpdateDelayer
     {
         public static UpdateDelayer Default { get; } = new();
-        public static UpdateDelayer ZeroUpdateDelay { get; } = Default with {
-            UpdateDelayDuration = default,
-            UserCausedUpdateDelayDuration = default,
-        };
-        public static UpdateDelayer MinUpdateDelay { get; } = Default with {
-            UpdateDelayDuration = Default.UserCausedUpdateDelayDuration,
-        };
+        public static UpdateDelayer ZeroUpdateDelay { get; } = new(0, 0);
+        public static UpdateDelayer MinUpdateDelay { get; } = new(Default.UserCausedUpdateDelayDuration);
 
         public IMomentClock Clock { get; init; } = CpuClock.Instance;
         public TimeSpan UpdateDelayDuration { get; init; } = TimeSpan.FromSeconds(1);
@@ -30,6 +25,19 @@ namespace Stl.Fusion
         public TimeSpan MaxRetryDelayDuration { get; init; } = TimeSpan.FromMinutes(2);
         public TimeSpan UserCausedUpdateWaitDuration { get; init; } = TimeSpan.FromSeconds(2);
         public TimeSpan UserCausedUpdateDelayDuration { get; init; } = TimeSpan.FromMilliseconds(50);
+
+        public UpdateDelayer() { }
+        public UpdateDelayer(double updateDelaySeconds)
+            : this(TimeSpan.FromSeconds(updateDelaySeconds)) { }
+        public UpdateDelayer(double updateDelaySeconds, double userCausedUpdateDelaySeconds)
+            : this(TimeSpan.FromSeconds(updateDelaySeconds), TimeSpan.FromSeconds(userCausedUpdateDelaySeconds)) { }
+        public UpdateDelayer(TimeSpan updateDelayDuration)
+            => UpdateDelayDuration = updateDelayDuration;
+        public UpdateDelayer(TimeSpan updateDelayDuration, TimeSpan userCausedUpdateDelayDuration)
+        {
+            UpdateDelayDuration = updateDelayDuration;
+            UserCausedUpdateDelayDuration = userCausedUpdateDelayDuration;
+        }
 
         public virtual async Task UpdateDelay(
             IStateSnapshot stateSnapshot, CancellationToken cancellationToken = default)
