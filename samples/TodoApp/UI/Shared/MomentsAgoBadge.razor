@@ -1,4 +1,3 @@
-@using System.Threading
 @using Stl.Fusion.Extensions
 @inherits ComputedStateComponent<string>
 @inject IFusionTime _fusionTime
@@ -8,7 +7,6 @@
 @code {
     [Parameter]
     public string CssClass { get; set; } = "";
-
     [Parameter]
     public DateTime? Value { get; set; }
     [Parameter]

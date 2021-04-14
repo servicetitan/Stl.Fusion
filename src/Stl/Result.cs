@@ -67,12 +67,13 @@ namespace Stl
     /// Describes strongly typed result of a computation.
     /// </summary>
     /// <typeparam name="T">The type of <see cref="Value"/>.</typeparam>
+    // ReSharper disable once PossibleInterfaceMemberAmbiguity
     public interface IResult<T> : IResult, IConvertibleTo<T>, IConvertibleTo<Result<T>>
     {
         /// <summary>
         /// Retrieves result's value. Returns <code>default</code> when <see cref="IResult.HasError"/>.
         /// </summary>
-        T ValueOrDefault { get; }
+        [MaybeNull] T ValueOrDefault { get; }
         /// <summary>
         /// Retrieves result's value. Throws an <see cref="Error"/> when <see cref="IResult.HasError"/>.
         /// </summary>
@@ -120,6 +121,7 @@ namespace Stl
     public readonly struct Result<T> : IResult<T>, IEquatable<Result<T>>
     {
         /// <inheritdoc />
+        [MaybeNull]
         public T ValueOrDefault { get; }
         /// <inheritdoc />
         public Exception? Error { get; }

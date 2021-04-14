@@ -85,12 +85,14 @@ namespace Stl.Fusion
                 }
             }
         }
-        public T LatestNonErrorValue => Snapshot.LatestNonErrorComputed.ValueOrDefault;
+
+        [MaybeNull]
         public T ValueOrDefault => Computed.ValueOrDefault;
         public T Value => Computed.Value;
         public Exception? Error => Computed.Error;
         public bool HasValue => Computed.HasValue;
         public bool HasError => Computed.HasError;
+        public T LatestNonErrorValue => Snapshot.LatestNonErrorComputed.Value;
 
         IStateSnapshot IState.Snapshot => Snapshot;
         IComputed<T> IState<T>.Computed => Computed;

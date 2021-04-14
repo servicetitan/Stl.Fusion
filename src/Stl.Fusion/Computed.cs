@@ -90,11 +90,12 @@ namespace Stl.Fusion
         }
 
         // IResult<T> properties
+        [MaybeNull]
+        public TOut ValueOrDefault => Output.ValueOrDefault;
+        public TOut Value => Output.Value;
         public Exception? Error => Output.Error;
         public bool HasValue => Output.HasValue;
         public bool HasError => Output.HasError;
-        public TOut ValueOrDefault => Output.ValueOrDefault;
-        public TOut Value => Output.Value;
 
         // "Untyped" versions of properties
         ComputedInput IComputed.Input => Input;

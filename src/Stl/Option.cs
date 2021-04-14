@@ -32,7 +32,8 @@ namespace Stl
         /// <summary>
         /// Retrieves option's value. Returns <code>default(T)</code> in case option doesn't have one.
         /// </summary>
-        [MaybeNull] public T ValueOrDefault { get; }
+        [MaybeNull]
+        public T ValueOrDefault { get; }
         /// <summary>
         /// Retrieves option's value. Throws <see cref="InvalidOperationException"/> in case option doesn't have one.
         /// </summary>
@@ -85,7 +86,7 @@ namespace Stl
         public static implicit operator Option<T>((bool HasValue, T Value) source)
             => new(source.HasValue, source.Value);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Option<T>(T source) => new Option<T>(true, source);
+        public static implicit operator Option<T>(T source) => new(true, source);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator T(Option<T> source) => source.Value;
 

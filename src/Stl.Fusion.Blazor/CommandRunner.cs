@@ -26,39 +26,55 @@ namespace Stl.Fusion.Blazor
         public CommandRunner(ICommander commander)
             => Commander = commander;
 
-        public async Task Call<TResult>(ICommand command, CancellationToken cancellationToken = default)
+        public Task Call(ICommand command, CancellationToken cancellationToken = default)
+            => Call(command, false, cancellationToken);
+
+        public async Task Call(
+            ICommand command,
+            bool throwOnError,
+            CancellationToken cancellationToken = default)
         {
             Error = null;
             try {
                 await Commander.Call(command, cancellationToken);
-                TryApplyUserCausedUpdate();
             }
             catch (Exception e) {
                 Error = e;
+                if (throwOnError)
+                    throw;
+            }
+            finally {
+                TryApplyUserCausedUpdate();
             }
         }
 
-        public async Task<TResult> Call<TResult>(ICommand<TResult> command, CancellationToken cancellationToken = default)
+        public Task<TResult> Call<TResult>(ICommand<TResult> command, CancellationToken cancellationToken = default)
+            => Call(command, false, cancellationToken);
+
+        public async Task<TResult> Call<TResult>(
+            ICommand<TResult> command,
+            bool throwOnError,
+            CancellationToken cancellationToken = default)
         {
             Error = null;
             try {
-                var result = await Commander.Call(command, cancellationToken);
-                TryApplyUserCausedUpdate();
-                return result;
+                return await Commander.Call(command, cancellationToken);
             }
             catch (Exception e) {
                 Error = e;
+                if (throwOnError)
+                    throw;
                 return default!;
+            }
+            finally {
+                TryApplyUserCausedUpdate();
             }
         }
 
         private void TryApplyUserCausedUpdate()
         {
-            if (Component is not StatefulComponentBase statefulComponent)
-                return;
-            if (statefulComponent.UntypedState is not IComputedState computedState)
-                return;
-            computedState.ApplyUserCausedUpdate();
+            if (Component is StatefulComponentBase { UntypedState: IComputedState computedState })
+                computedState.ApplyUserCausedUpdate();
         }
     }
 }

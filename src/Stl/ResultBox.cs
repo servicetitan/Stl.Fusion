@@ -18,6 +18,7 @@ namespace Stl
         public static readonly ResultBox<T> Default = new(default!, null);
 
         /// <inheritdoc />
+        [MaybeNull]
         public T ValueOrDefault { get; }
         /// <inheritdoc />
         public Exception? Error { get; }
