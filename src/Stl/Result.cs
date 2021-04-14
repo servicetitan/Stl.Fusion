@@ -144,7 +144,7 @@ namespace Stl
             get {
                 if (Error != null)
                     ExceptionDispatchInfo.Capture(Error).Throw();
-                return ValueOrDefault;
+                return ValueOrDefault!;
             }
         }
 
@@ -171,14 +171,14 @@ namespace Stl
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Deconstruct(out T value, out Exception? error)
         {
-            value = ValueOrDefault;
+            value = ValueOrDefault!;
             error = Error;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsValue([MaybeNullWhen(false)] out T value)
         {
-            value = HasError ? default! : ValueOrDefault;
+            value = HasError ? default! : ValueOrDefault!;
             return !HasError;
         }
 
@@ -189,9 +189,7 @@ namespace Stl
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             var hasValue = error == null;
             value = hasValue ? ValueOrDefault : default!;
-#pragma warning disable CS8762
             return hasValue;
-#pragma warning restore CS8762
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -205,10 +203,10 @@ namespace Stl
         // Equality
 
         public bool Equals(Result<T> other) =>
-            Error != other.Error && EqualityComparer<T>.Default.Equals(ValueOrDefault, other.ValueOrDefault);
+            Error == other.Error && EqualityComparer<T>.Default.Equals(ValueOrDefault!, other.ValueOrDefault!);
         public override bool Equals(object? obj) =>
             obj is Result<T> o && Equals(o);
-        public override int GetHashCode() => HashCode.Combine(ValueOrDefault, Error);
+        public override int GetHashCode() => HashCode.Combine(ValueOrDefault!, Error);
         public static bool operator ==(Result<T> left, Result<T> right) => left.Equals(right);
         public static bool operator !=(Result<T> left, Result<T> right) => !left.Equals(right);
 

@@ -40,7 +40,7 @@ namespace Stl
         public T Value {
             get {
                 if (Error == null)
-                    return ValueOrDefault;
+                    return ValueOrDefault!;
                 // That's the right way to re-throw an exception and preserve its stack trace
                 ExceptionDispatchInfo.Capture(Error).Throw();
                 return default!; // Never executed, but no way to get rid of this
@@ -56,7 +56,7 @@ namespace Stl
         /// </summary>
         /// <param name="result">A result to copy the properties from.</param>
         public ResultBox(Result<T> result)
-            : this(result.ValueOrDefault, result.Error) { }
+            : this(result.ValueOrDefault!, result.Error) { }
 
         /// <summary>
         /// Constructor.
@@ -77,14 +77,14 @@ namespace Stl
         /// <inheritdoc />
         public void Deconstruct(out T value, out Exception? error)
         {
-            value = ValueOrDefault;
+            value = ValueOrDefault!;
             error = Error;
         }
 
         /// <inheritdoc />
         public bool IsValue([MaybeNullWhen(false)] out T value)
         {
-            value = HasError ? default! : ValueOrDefault;
+            value = HasError ? default! : ValueOrDefault!;
             return !HasError;
         }
 
@@ -94,15 +94,13 @@ namespace Stl
             error = Error!;
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             var hasValue = error == null;
-            value = hasValue ? ValueOrDefault : default!;
-#pragma warning disable CS8762
+            value = hasValue ? ValueOrDefault! : default!;
             return hasValue;
-#pragma warning restore CS8762
         }
 
         /// <inheritdoc />
         public Result<T> AsResult()
-            => new(ValueOrDefault, Error);
+            => new(ValueOrDefault!, Error);
         /// <inheritdoc />
         public Result<TOther> Cast<TOther>()
             => new((TOther) (object) ValueOrDefault!, Error);
@@ -117,8 +115,8 @@ namespace Stl
         public static implicit operator Result<T>(ResultBox<T> source) => source.AsResult();
         public static implicit operator ResultBox<T>(Result<T> source) => new(source);
         public static implicit operator ResultBox<T>(T source) => new(source, null);
-        public static implicit operator ResultBox<T>((T Value, Exception? Error) source) =>
-            new ResultBox<T>(source.Value, source.Error);
+        public static implicit operator ResultBox<T>((T Value, Exception? Error) source)
+            => new(source.Value, source.Error);
     }
 
     public static class ResultBox
