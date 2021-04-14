@@ -31,21 +31,18 @@ namespace Stl.Fusion.Extensions.Internal
             Clock = options.Clock ?? momentClock ?? SystemClock.Instance;
         }
 
-        [ComputeMethod]
         public virtual Task<DateTime> GetUtcNow()
         {
             Computed.GetCurrent()!.Invalidate(TrimInvalidationDelay(DefaultUpdatePeriod));
             return Task.FromResult(Clock.Now.ToDateTime());
         }
 
-        [ComputeMethod]
         public virtual Task<DateTime> GetUtcNow(TimeSpan updatePeriod)
         {
             Computed.GetCurrent()!.Invalidate(TrimInvalidationDelay(updatePeriod));
             return Task.FromResult(Clock.Now.ToDateTime());
         }
 
-        [ComputeMethod]
         public virtual Task<string> GetMomentsAgo(DateTime time)
         {
             // TODO: Make this method stop leaking some memory due to timers that don't die unless timeout

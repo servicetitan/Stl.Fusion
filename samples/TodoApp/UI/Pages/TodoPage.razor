@@ -3,13 +3,12 @@
 @inject ITodoService Todos
 @inject Session Session
 @inject CommandRunner CommandRunner
-@inject AuthStateProvider AuthStateProvider
 @inject ILogger<TodoPage> Log
 
 @{
     Log.LogInformation("Rendering, State.Computed.Version = {Version}", State.Computed.Version);
     var error = State.Error;
-    var todos = State.ValueOrDefault ?? Array.Empty<Todo>(); // UnsafeValue returns default if there is an Error
+    var todos = State.ValueOrDefault ?? Array.Empty<Todo>(); // ValueOrDefault returns default if there is an Error
 }
 
 <h1>Todo List</h1>
@@ -48,7 +47,7 @@
                     </Button>
                 }
 
-                <Form @onsubmit="_ => Create()" Margin="Margin.Is3.OnY">
+                <Form @onsubmit="Create" Margin="Margin.Is3.OnY">
                     <Addons>
                         <Addon AddonType="AddonType.Start">
                             <Button Type="@ButtonType.Submit" Color="Color.Primary">
@@ -96,10 +95,10 @@
         State.Recompute();
     }
 
-    private Task Create()
+    private void Create()
     {
         var todo = new Todo("", NewTodoTitle);
         NewTodoTitle = "";
-        return CommandRunner.Call(new AddOrUpdateTodoCommand(Session, todo));
+        CommandRunner.Call(new AddOrUpdateTodoCommand(Session, todo));
     }
 }
