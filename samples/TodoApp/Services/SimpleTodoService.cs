@@ -18,33 +18,34 @@ namespace Templates.TodoApp.Services
 
         // Commands
 
-        public virtual Task<Todo> AddOrUpdate(AddOrUpdateTodoCommand command, CancellationToken cancellationToken = default)
+#pragma warning disable 1998
+        public virtual async Task<Todo> AddOrUpdate(AddOrUpdateTodoCommand command, CancellationToken cancellationToken = default)
         {
-            var (session, todo) = command;
-            if (Computed.IsInvalidating()) {
-                TryGet(session, todo.Id, CancellationToken.None).Ignore();
-                PseudoGetAllItems(session).Ignore();
-                return Task.FromResult(default(Todo)!);
-            }
+            if (Computed.IsInvalidating()) return null!;
 
+            var (session, todo) = command;
             if (string.IsNullOrEmpty(todo.Id))
                 todo = todo with { Id = Ulid.NewUlid().ToString() };
             _store = _store.RemoveAll(i => i.Id == todo.Id).Add(todo);
-            return Task.FromResult(todo);
+
+            using var _ = Computed.Invalidate();
+            TryGet(session, todo.Id, CancellationToken.None).Ignore();
+            PseudoGetAllItems(session).Ignore();
+            return todo;
         }
 
-        public virtual Task Remove(RemoveTodoCommand command, CancellationToken cancellationToken = default)
+        public virtual async Task Remove(RemoveTodoCommand command, CancellationToken cancellationToken = default)
         {
-            var (session, id) = command;
-            if (Computed.IsInvalidating()) {
-                TryGet(session, id, CancellationToken.None).Ignore();
-                PseudoGetAllItems(session).Ignore();
-                return Task.CompletedTask;
-            }
+            if (Computed.IsInvalidating()) return;
 
-            _store = _store.RemoveAll(i => i.Id == id);
-            return Task.CompletedTask;
+            var (session, todoId) = command;
+            _store = _store.RemoveAll(i => i.Id == todoId);
+
+            using var _ = Computed.Invalidate();
+            TryGet(session, todoId, CancellationToken.None).Ignore();
+            PseudoGetAllItems(session).Ignore();
         }
+#pragma warning restore 1998
 
         // Queries
 
