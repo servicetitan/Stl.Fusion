@@ -8,7 +8,7 @@ using Stl.Time;
 
 namespace Stl.Fusion.Extensions.Internal
 {
-    public partial class IsolatedKeyValueStore : IIsolatedKeyValueStore
+    public partial class SandboxedKeyValueStore : ISandboxedKeyValueStore
     {
         public class Options
         {
@@ -27,7 +27,7 @@ namespace Stl.Fusion.Extensions.Internal
         public string UserKeyPrefixFormat { get; }
         public TimeSpan? UserKeyExpirationTime { get; }
 
-        public IsolatedKeyValueStore(Options? options, IServiceProvider services)
+        public SandboxedKeyValueStore(Options? options, IServiceProvider services)
         {
             options ??= new Options();
             SessionKeyPrefixFormat = options.SessionKeyPrefixFormat;
@@ -39,7 +39,7 @@ namespace Stl.Fusion.Extensions.Internal
             Clock = options.Clock ?? services.GetService<IMomentClock>() ?? SystemClock.Instance;
         }
 
-        public virtual async Task Set(IsolatedSetCommand command, CancellationToken cancellationToken = default)
+        public virtual async Task Set(SandboxedSetCommand command, CancellationToken cancellationToken = default)
         {
             if (Computed.IsInvalidating()) return;
             var keyChecker = await GetKeyChecker(command.Session, cancellationToken).ConfigureAwait(false);
@@ -48,7 +48,7 @@ namespace Stl.Fusion.Extensions.Internal
             await Store.Set(command.Key, command.Value, expiresAt, cancellationToken).ConfigureAwait(false);
         }
 
-        public virtual async Task SetMany(IsolatedSetManyCommand command, CancellationToken cancellationToken = default)
+        public virtual async Task SetMany(SandboxedSetManyCommand command, CancellationToken cancellationToken = default)
         {
             if (Computed.IsInvalidating()) return;
             var keyChecker = await GetKeyChecker(command.Session, cancellationToken).ConfigureAwait(false);
@@ -63,7 +63,7 @@ namespace Stl.Fusion.Extensions.Internal
             await Store.SetMany(newItems, cancellationToken).ConfigureAwait(false);
         }
 
-        public virtual async Task Remove(IsolatedRemoveCommand command, CancellationToken cancellationToken = default)
+        public virtual async Task Remove(SandboxedRemoveCommand command, CancellationToken cancellationToken = default)
         {
             if (Computed.IsInvalidating()) return;
             var keyChecker = await GetKeyChecker(command.Session, cancellationToken).ConfigureAwait(false);
@@ -71,7 +71,7 @@ namespace Stl.Fusion.Extensions.Internal
             await Store.Remove(command.Key, cancellationToken).ConfigureAwait(false);
         }
 
-        public virtual async Task RemoveMany(IsolatedRemoveManyCommand command, CancellationToken cancellationToken = default)
+        public virtual async Task RemoveMany(SandboxedRemoveManyCommand command, CancellationToken cancellationToken = default)
         {
             if (Computed.IsInvalidating()) return;
             var keyChecker = await GetKeyChecker(command.Session, cancellationToken).ConfigureAwait(false);
@@ -109,7 +109,7 @@ namespace Stl.Fusion.Extensions.Internal
             Session session, CancellationToken cancellationToken = default)
         {
             if (session == Session.Null)
-                throw Errors.KeyViolatesIsolatedKeyValueStoreConstraints();
+                throw Errors.KeyViolatesSandboxedKeyValueStoreConstraints();
             var user = await AuthService.GetUser(session, cancellationToken);
             if (!user.IsAuthenticated)
                 return new KeyChecker() {

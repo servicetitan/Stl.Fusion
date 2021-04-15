@@ -11,10 +11,10 @@ namespace Templates.TodoApp.Services
 {
     public class TodoService : ITodoService
     {
-        private readonly IIsolatedKeyValueStore _store;
+        private readonly ISandboxedKeyValueStore _store;
         private readonly IAuthService _authService;
 
-        public TodoService(IIsolatedKeyValueStore store, IAuthService authService)
+        public TodoService(ISandboxedKeyValueStore store, IAuthService authService)
         {
             _store = store;
             _authService = authService;

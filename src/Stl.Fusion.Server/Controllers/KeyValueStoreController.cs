@@ -7,15 +7,15 @@ using Stl.Fusion.Extensions.Commands;
 
 namespace Stl.Fusion.Server.Controllers
 {
-    [Route("fusion/ikvs/[action]")]
+    [Route("fusion/kvs/[action]")]
     [ApiController, JsonifyErrors(RewriteErrors = true)]
-    public class IsolatedKeyValueStoreController : ControllerBase, IIsolatedKeyValueStore
+    public class SandboxedKeyValueStoreController : ControllerBase, ISandboxedKeyValueStore
     {
-        protected IIsolatedKeyValueStore Store { get; }
+        protected ISandboxedKeyValueStore Store { get; }
         protected ISessionResolver SessionResolver { get; }
 
-        public IsolatedKeyValueStoreController(
-            IIsolatedKeyValueStore store,
+        public SandboxedKeyValueStoreController(
+            ISandboxedKeyValueStore store,
             ISessionResolver sessionResolver)
         {
             Store = store;
@@ -25,28 +25,28 @@ namespace Stl.Fusion.Server.Controllers
         // Commands
 
         [HttpPost]
-        public Task Set([FromBody] IsolatedSetCommand command, CancellationToken cancellationToken = default)
+        public Task Set([FromBody] SandboxedSetCommand command, CancellationToken cancellationToken = default)
         {
             command.UseDefaultSession(SessionResolver);
             return Store.Set(command, cancellationToken);
         }
 
         [HttpPost]
-        public Task SetMany([FromBody] IsolatedSetManyCommand command, CancellationToken cancellationToken = default)
+        public Task SetMany([FromBody] SandboxedSetManyCommand command, CancellationToken cancellationToken = default)
         {
             command.UseDefaultSession(SessionResolver);
             return Store.SetMany(command, cancellationToken);
         }
 
         [HttpPost]
-        public Task Remove([FromBody] IsolatedRemoveCommand command, CancellationToken cancellationToken = default)
+        public Task Remove([FromBody] SandboxedRemoveCommand command, CancellationToken cancellationToken = default)
         {
             command.UseDefaultSession(SessionResolver);
             return Store.Remove(command, cancellationToken);
         }
 
         [HttpPost]
-        public Task RemoveMany([FromBody] IsolatedRemoveManyCommand command, CancellationToken cancellationToken = default)
+        public Task RemoveMany([FromBody] SandboxedRemoveManyCommand command, CancellationToken cancellationToken = default)
         {
             command.UseDefaultSession(SessionResolver);
             return Store.RemoveMany(command, cancellationToken);

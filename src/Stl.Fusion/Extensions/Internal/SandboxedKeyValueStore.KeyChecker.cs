@@ -3,7 +3,7 @@ using Stl.Time;
 
 namespace Stl.Fusion.Extensions.Internal
 {
-    public partial class IsolatedKeyValueStore
+    public partial class SandboxedKeyValueStore
     {
         public record KeyChecker
         {
@@ -19,7 +19,7 @@ namespace Stl.Fusion.Extensions.Internal
                     return;
                 if (SecondaryPrefix != null && keyPrefix.StartsWith(SecondaryPrefix))
                     return;
-                throw Errors.KeyViolatesIsolatedKeyValueStoreConstraints();
+                throw Errors.KeyViolatesSandboxedKeyValueStoreConstraints();
             }
 
             public virtual void CheckKey(string key)
@@ -45,7 +45,7 @@ namespace Stl.Fusion.Extensions.Internal
                         : maxExpiresAt;
                     return;
                 }
-                throw Errors.KeyViolatesIsolatedKeyValueStoreConstraints();
+                throw Errors.KeyViolatesSandboxedKeyValueStoreConstraints();
             }
         }
     }

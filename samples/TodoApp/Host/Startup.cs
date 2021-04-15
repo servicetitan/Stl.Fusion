@@ -111,7 +111,7 @@ namespace Templates.TodoApp.Host
                     options.NameClaimKeys = Array.Empty<string>();
                 });
             fusion.AddComputeService<ITodoService, TodoService>();
-            fusion.AddIsolatedKeyValueStore();
+            fusion.AddSandboxedKeyValueStore();
 
             // Shared services
             Program.ConfigureSharedServices(services);

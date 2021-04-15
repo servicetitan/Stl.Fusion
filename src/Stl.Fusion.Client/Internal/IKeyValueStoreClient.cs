@@ -7,17 +7,17 @@ using Stl.Fusion.Extensions.Commands;
 
 namespace Stl.Fusion.Client.Internal
 {
-    [BasePath("fusion/ikvs")]
-    public interface IIsolatedKeyValueStoreClient
+    [BasePath("fusion/kvs")]
+    public interface ISandboxedKeyValueStoreClient
     {
         [Post(nameof(Set))]
-        Task Set([Body] IsolatedSetCommand command, CancellationToken cancellationToken = default);
+        Task Set([Body] SandboxedSetCommand command, CancellationToken cancellationToken = default);
         [Post(nameof(SetMany))]
-        Task SetMany([Body] IsolatedSetManyCommand command, CancellationToken cancellationToken = default);
+        Task SetMany([Body] SandboxedSetManyCommand command, CancellationToken cancellationToken = default);
         [Post(nameof(Remove))]
-        Task Remove([Body] IsolatedRemoveCommand command, CancellationToken cancellationToken = default);
+        Task Remove([Body] SandboxedRemoveCommand command, CancellationToken cancellationToken = default);
         [Post(nameof(RemoveMany))]
-        Task RemoveMany([Body] IsolatedRemoveManyCommand command, CancellationToken cancellationToken = default);
+        Task RemoveMany([Body] SandboxedRemoveManyCommand command, CancellationToken cancellationToken = default);
 
         [Get(nameof(TryGet))]
         Task<string?> TryGet(Session session, string key, CancellationToken cancellationToken = default);

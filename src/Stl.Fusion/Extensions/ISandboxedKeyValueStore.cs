@@ -6,16 +6,16 @@ using Stl.Fusion.Extensions.Commands;
 
 namespace Stl.Fusion.Extensions
 {
-    public interface IIsolatedKeyValueStore
+    public interface ISandboxedKeyValueStore
     {
         [CommandHandler]
-        Task Set(IsolatedSetCommand command, CancellationToken cancellationToken = default);
+        Task Set(SandboxedSetCommand command, CancellationToken cancellationToken = default);
         [CommandHandler]
-        Task SetMany(IsolatedSetManyCommand command, CancellationToken cancellationToken = default);
+        Task SetMany(SandboxedSetManyCommand command, CancellationToken cancellationToken = default);
         [CommandHandler]
-        Task Remove(IsolatedRemoveCommand command, CancellationToken cancellationToken = default);
+        Task Remove(SandboxedRemoveCommand command, CancellationToken cancellationToken = default);
         [CommandHandler]
-        Task RemoveMany(IsolatedRemoveManyCommand command, CancellationToken cancellationToken = default);
+        Task RemoveMany(SandboxedRemoveManyCommand command, CancellationToken cancellationToken = default);
 
         [ComputeMethod]
         Task<string?> TryGet(Session session, string key, CancellationToken cancellationToken = default);
