@@ -5,7 +5,7 @@
 
 @{
     Log.LogInformation("Rendering");
-    var summary = State.ValueOrDefault;
+    var summary = State.ValueOrDefault ?? new();
 }
 
 @if (summary != null) {
