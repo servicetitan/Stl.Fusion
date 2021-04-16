@@ -60,16 +60,16 @@ namespace Templates.TodoApp.UI
             // Option 1: Client-side SimpleTodoService (no RPC)
             // fusion.AddComputeService<ITodoService, SimpleTodoService>();
 
-            // Option 2: Client-side TodoService (no RPC) & local in-memory store
+            // Option 2: Client-side TodoService and SandboxedKeyValueStore using InMemoryKeyValueStore (no RPC)
             // fusion.AddInMemoryKeyValueStore();
             // fusion.AddSandboxedKeyValueStore();
             // fusion.AddComputeService<ITodoService, TodoService>();
 
-            // Option 3: Client-side TodoService + ISandboxedKeyValueStoreClient (remote ISandboxedKeyValueStore)
+            // Option 3: Client-side TodoService + remote SandboxedKeyValueStore -> DbKeyValueStore
             // fusionClient.AddReplicaService<ISandboxedKeyValueStore, ISandboxedKeyValueStoreClient>();
             // fusion.AddComputeService<ITodoService, TodoService>();
 
-            // Option 4: ITodoClient (remote ITodoService)
+            // Option 4: Remote TodoService, SandboxedKeyValueStore, and DbKeyValueStore
             fusionClient.AddReplicaService<ITodoService, ITodoClient>();
 
             ConfigureSharedServices(services);
