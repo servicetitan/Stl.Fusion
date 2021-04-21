@@ -94,5 +94,14 @@ namespace Stl.Reflection
                 type.IsGenericType
                     ? type.GetGenericTypeDefinition() == typeof(ValueTask<>)
                     : type == typeof(ValueTask));
+
+        public static Type? GetTaskOrValueTaskArgument(this Type type)
+        {
+            if (!type.IsTaskOrValueTask())
+                throw new ArgumentOutOfRangeException(nameof(type));
+            return type.IsGenericType
+                ? type.GenericTypeArguments.SingleOrDefault()
+                : null;
+        }
     }
 }

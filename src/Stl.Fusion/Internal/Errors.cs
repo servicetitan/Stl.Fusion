@@ -56,6 +56,9 @@ namespace Stl.Fusion.Internal
             => new InvalidOperationException($"{nameof(ComputeMethodAttribute)} is applied to non-virtual method '{method}'.");
         public static Exception ComputeServiceMethodAttributeOnNonAsyncMethod(MethodInfo method)
             => new InvalidOperationException($"{nameof(ComputeMethodAttribute)} is applied to non-async method '{method}'.");
+        public static Exception ComputeServiceMethodAttributeOnAsyncMethodReturningNonGenericTask(MethodInfo method)
+            => new InvalidOperationException($"{nameof(ComputeMethodAttribute)} is applied to a method " +
+                $"returning non-generic Task/ValueTask: '{method}'.");
 
         public static Exception UnsupportedReplicaType(Type replicaType)
             => new NotSupportedException(

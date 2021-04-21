@@ -49,8 +49,11 @@ namespace Stl.Fusion.Interception
                     // All implemented interface members are marked as "virtual final"
                     // unless they are truly virtual
                     throw Errors.ComputeServiceMethodAttributeOnNonVirtualMethod(method);
-                if (!method.ReturnType.IsTaskOrValueTask())
+                var returnType = method.ReturnType;
+                if (!returnType.IsTaskOrValueTask())
                     throw Errors.ComputeServiceMethodAttributeOnNonAsyncMethod(method);
+                if (returnType.GetTaskOrValueTaskArgument() == null)
+                    throw Errors.ComputeServiceMethodAttributeOnAsyncMethodReturningNonGenericTask(method);
 
                 var attributeName = nameof(ComputeMethodAttribute).Replace(nameof(Attribute), "");
                 if (!attr.IsEnabled)
