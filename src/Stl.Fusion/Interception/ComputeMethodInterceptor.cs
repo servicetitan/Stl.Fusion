@@ -3,6 +3,7 @@ using System.Reflection;
 using Microsoft.Extensions.Logging;
 using Stl.Fusion.Internal;
 using Stl.Generators;
+using Stl.Reflection;
 
 namespace Stl.Fusion.Interception
 {
@@ -48,6 +49,8 @@ namespace Stl.Fusion.Interception
                     // All implemented interface members are marked as "virtual final"
                     // unless they are truly virtual
                     throw Errors.ComputeServiceMethodAttributeOnNonVirtualMethod(method);
+                if (!method.ReturnType.IsTaskOrValueTask())
+                    throw Errors.ComputeServiceMethodAttributeOnNonAsyncMethod(method);
 
                 var attributeName = nameof(ComputeMethodAttribute).Replace(nameof(Attribute), "");
                 if (!attr.IsEnabled)

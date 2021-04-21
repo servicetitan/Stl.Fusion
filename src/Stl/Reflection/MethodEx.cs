@@ -11,15 +11,6 @@ namespace Stl.Reflection
     {
         private static readonly ConcurrentDictionary<MethodInfo, MethodInfo?> BaseOrDeclaringMethodCache = new();
 
-        private static MethodInfo GetDeclaringMethod(MethodInfo method)
-        {
-            if (method.IsConstructedGenericMethod)
-                method = method.GetGenericMethodDefinition();
-            if (method.ReflectedType != method.DeclaringType)
-                method = method.GetBaseOrDeclaringMethod()!;
-            return method;
-        }
-
         public static MethodInfo? GetBaseOrDeclaringMethod(this MethodInfo method)
         {
             if (method == null)
@@ -136,7 +127,7 @@ namespace Stl.Reflection
             if (inheritFromBaseTypes && baseType != null && !isEndOfChain) {
                 var baseMethod = method.GetBaseOrDeclaringMethod();
                 if (baseMethod != null)
-                    AddAttributes<TAttr>(result, excluded, baseMethod, methodDef, inheritFromInterfaces, inheritFromBaseTypes);
+                    AddAttributes(result, excluded, baseMethod, methodDef, inheritFromInterfaces, inheritFromBaseTypes);
             }
         }
     }

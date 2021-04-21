@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Stl.Collections;
 using Stl.Concurrency;
 using Stl.Text;
@@ -87,5 +88,11 @@ namespace Stl.Reflection
                 ? ToSymbolCache.GetOrAddChecked(type, type1 =>
                     new Symbol(SymbolPrefix + type1.ToIdentifierName(true, true)))
                 : (Symbol) type.ToIdentifierName(true, true);
+
+        public static bool IsTaskOrValueTask(this Type type)
+            => typeof(Task).IsAssignableFrom(type) || (
+                type.IsGenericType
+                    ? type.GetGenericTypeDefinition() == typeof(ValueTask<>)
+                    : type == typeof(ValueTask));
     }
 }
