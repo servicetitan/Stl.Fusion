@@ -31,12 +31,14 @@ a tiny fraction of a complete game state, and thus all you need is to ensure
 this part of the state fits in RAM + you have enough computing power 
 to process state changes for every player.
 
-Under the hood, Fusion turns any response of your internal and public API 
-into ~ `(Result<T> Response, Task Invalidated)` pair, where the second part tells 
-when this pair has to be recomputed. But you rarely need to deal with this &ndash;
-Fusion-based services return regular result types, and these pairs
-(actually, [`IComputed<T>`] instances) are created, consumed, and composed into
-complex dependency graphs transparently for you.
+Under the hood, Fusion "backs" any result of your internal or public API 
+by [`IComputed<T>`] instance, which stores the result of this computation,
+and tells when this result becomes inconsistent with the ground truth,
+so you might want to recompute it. 
+But you rarely need to deal with this type directly - contrary to `async` methods, 
+Fusion-based services return the same result type as they would return normally,
+and `IComputed<T>` instances are created, consumed, and composed into
+complex dependency graphs behind the scene.
 
 ### Build a Real-Time UI
 
@@ -96,13 +98,19 @@ Note that:
 
 ## How Fusion works?
 
-Fusion provides three key abstractions:
+If you prefer slides, [check out a detective-style story about Fusion, real-time, and 10+ other things it somehow connects together](https://alexyakunin.github.io/Stl.Fusion.Materials/Slides/Fusion_v2/Slides.html). We'll add a link to video in a couple more days.
+
+Overall, Fusion provides three key abstractions:
 * [Compute Services] are services exposing methods "backed" by Fusion's 
   version of "computed observables". Compute Services are responsible for 
   "spawning" parts of the state on-demand.
 * [Replica Services] - remote proxies of Compute Services.
   They allow remote clients to consume ("observe") the parts of server-side state.
   They typically "substitute" similar [Compute Services] on the client side.
+* `IState<T>` - more specifically, `IComputedState<T>` and `IMutableState<T>`.
+  States are quite similar to observables in Knockout or MobX, but
+  designed to follow Fusion game rules. And yes, you mostly use them in UI and
+  almost never - on the server-side.
 * And finally, [`IComputed<T>`] &ndash; an observable [Computed Value]
   that's in some ways similar to the one you can find in Knockout, MobX, or Vue.js,
   but very different, if you look at its fundamental properties.
@@ -156,9 +164,6 @@ automatically for any method that uses Fusion-based services (+ its own logic)
 to produce the output, and implementing this without Fusion is not only hard,
 but quite error prone problem.
 
-Of course you still can use events, event sourcing, CQRS, etc. - 
-you'll just need maybe 100&times; fewer event types.
-
 Check out [how Fusion differs from SignalR](https://medium.com/@alexyakunin/ow-similar-is-stl-fusion-to-signalr-e751c14b70c3?source=friends_link&sk=241d5293494e352f3db338d93c352249)
 &ndash; this post takes a real app example (Slack-like chat) and describes
 what has to be done in both these cases to implement it.
@@ -177,6 +182,10 @@ Check out
 to see a much more robust description of how Fusion scales.
 
 ## Enough talk. Show me the code!
+
+> The code on screenshots below is a bit outdated - we'll
+> update this part soon. Though conceptually it's still the 
+> same code as you'd have with the most recent version of Fusion.
 
 [Compute Services] is where a majority of Fusion-based code is supposed to live.
 [CounterService](https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/src/HelloBlazorServer/Services/CounterService.cs)
@@ -264,6 +273,7 @@ and
 * Join our [Discord Server] or [Gitter] to ask questions and track project updates.
 
 ## Posts And Other Content
+* [Can I jump the F5 ship straight into the real-time hyperspace?](https://alexyakunin.github.io/Stl.Fusion.Materials/Slides/Fusion_v2/Slides.html) - slides for [Alex Yakunin's talk at DotNext 2021](https://dotnext-piter.ru/en/2021/spb/talks/3zzrjtesxkx1oonsymqknw/)
 * [Fusion: Current State and Upcoming Features](https://alexyakunin.medium.com/fusion-current-state-and-upcoming-features-88bc4201594b?source=friends_link&sk=375290c4538167fe99419a744f3d42d5)
 * [The Ungreen Web: Why our web apps are terribly inefficient?](https://alexyakunin.medium.com/the-ungreen-web-why-our-web-apps-are-terribly-inefficient-28791ed48035?source=friends_link&sk=74fb46086ca13ff4fea387d6245cb52b)
 * [Why real-time UI is inevitable future for web apps?](https://medium.com/@alexyakunin/features-of-the-future-web-apps-part-1-e32cf4e4e4f4?source=friends_link&sk=65dacdbf670ef9b5d961c4c666e223e2)
