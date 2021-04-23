@@ -98,9 +98,11 @@ Note that:
 
 ## How Fusion works?
 
-If you prefer slides, [check out a detective-style story about Fusion, real-time, and 10+ other things it somehow connects together](https://alexyakunin.github.io/Stl.Fusion.Materials/Slides/Fusion_v2/Slides.html). We'll add a link to video in a couple more days.
+[![](./docs/img/FusionSlides.jpg)](https://alexyakunin.github.io/Stl.Fusion.Materials/Slides/Fusion_v2/Slides.html)
 
-Overall, Fusion provides three key abstractions:
+If you prefer slides, [check out a detective-style story about Fusion, real-time, and 10+ other things it somehow connects together](https://alexyakunin.github.io/Stl.Fusion.Materials/Slides/Fusion_v2/Slides.html). The video will be added in a couple more days.
+
+Fusion provides three key abstractions:
 * [Compute Services] are services exposing methods "backed" by Fusion's 
   version of "computed observables". Compute Services are responsible for 
   "spawning" parts of the state on-demand.
