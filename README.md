@@ -21,8 +21,7 @@ no way to fit such a huge state in RAM, Fusion:
   every dependency of this state triggers cascading invalidation once it gets 
   changed.
 * And finally, **it does all of this automatically and transparently for you**, 
-  so Fusion-based code is [almost identical](#enough-talk-show-me-the-code)
-  to the code you'd write without it.
+  so Fusion-based code is almost identical to the code you'd write without it.
 
 This is quite similar to what any [MMORPG] game engine does: 
 even though the complete game state is huge, it's still possible to 
