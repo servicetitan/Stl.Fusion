@@ -1,10 +1,8 @@
 using System;
 using System.Text;
-using Stl.DependencyInjection;
 
 namespace Templates.TodoApp.Host
 {
-    [Settings("Host")]
     public class HostSettings
     {
         public bool UseInMemoryAuthService { get; set; } = false;

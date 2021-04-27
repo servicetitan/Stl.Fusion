@@ -62,7 +62,7 @@ namespace Templates.TodoApp.Host
 
             #pragma warning disable ASP0000
             HostSettings = services
-                .UseAttributeScanner(s => s.AddService<HostSettings>())
+                .AddSettings<HostSettings>("Host")
                 .BuildServiceProvider()
                 .GetRequiredService<HostSettings>();
             #pragma warning restore ASP0000
