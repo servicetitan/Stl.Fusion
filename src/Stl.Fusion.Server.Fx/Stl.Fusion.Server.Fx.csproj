@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>library</OutputType>
-    <TargetFramework>net471</TargetFramework>
+    <TargetFrameworks>net471</TargetFrameworks>
     <RootNamespace>Stl.Fusion.Server</RootNamespace>
   </PropertyGroup>
 

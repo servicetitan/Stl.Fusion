@@ -54,9 +54,18 @@
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
     <NetFrameworkSupport>true</NetFrameworkSupport>
+    <Legacy>true</Legacy>
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetFramework)'== 'net471'">
     <NetFrameworkSupport>true</NetFrameworkSupport>
+    <Legacy>true</Legacy>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Legacy)'== 'true'">
+    <SigningFilePath>$(SolutionDir)</SigningFilePath>
+    <SigningFileName>SharedKey.snk</SigningFileName>
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(SigningFilePath)$(SigningFileName)</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <ItemGroup Condition="$(DeterministicSourcePaths) == 'true'">
