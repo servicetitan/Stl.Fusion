@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web.Http;
@@ -14,6 +15,14 @@ namespace Stl.Fusion.Server
 {
     public static class HttpContextEx
     {
+        public static T GetRequiredService<T>(this IDependencyScope dependencyScope)
+        {
+            var service = GetService<T>(dependencyScope);
+            if (service == null)
+                throw new InvalidOperationException($"Required service '{typeof(T)}' is not registered.");
+            return service;
+        }
+        
         public static T GetService<T>(this IDependencyScope dependencyScope)
         {
             var service = (T)dependencyScope.GetService(typeof(T));
@@ -66,16 +75,29 @@ namespace Stl.Fusion.Server
             var computed = publicationState.Computed;
             var isConsistent = computed.IsConsistent();
 
-            var responseHeaders = httpContext.Response.Headers;
-            if (responseHeaders.Contains(FusionHeaders.Publication))
+            // If exception occurred, response is empty, and we can not assign publication header.
+            // If JsonifyAttribute is used, it will do it.
+            var responseHeaders = httpContext.Response?.Headers;
+            if (responseHeaders!=null && responseHeaders.Contains(FusionHeaders.Publication))
                 throw Errors.AlreadyPublished();
             var psi = new PublicationStateInfo(publication.Ref, computed.Version, isConsistent);
             
             var items = httpContext.GetItems();
             items[typeof(IPublicationState)] = publicationState;
             items[typeof(PublicationStateInfo)] = psi;
-            responseHeaders.Add(FusionHeaders.Publication, JsonConvert.SerializeObject(psi));
+            
+            if (responseHeaders!=null)
+                responseHeaders.AddPublicationStateInfoHeader(psi);
         }
+
+        internal static bool AddPublicationStateInfoHeader(this HttpResponseHeaders responseHeaders, PublicationStateInfo psi)
+        {
+            if (responseHeaders.Contains(FusionHeaders.Publication))
+                return false;
+            responseHeaders.Add(FusionHeaders.Publication, JsonConvert.SerializeObject(psi));
+            return true;
+        }
+
 
         //public static async Task<IComputed<T>> Publish<T>(
         //    this HttpContext httpContext,

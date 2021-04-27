@@ -34,7 +34,7 @@ namespace Stl.Fusion.Server
                 var computed = ccs.CompleteCapture(wasError);
                 
                 var appServices = actionContext.GetAppServices();
-                var publisher = appServices.GetService<IPublisher>();
+                var publisher = appServices.GetRequiredService<IPublisher>();
                 var publication = publisher.Publish(computed);
                 // Publication doesn't have to be "in sync" with the computed
                 // we requested it for (i.e. it might still point to its older,
