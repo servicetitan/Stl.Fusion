@@ -142,7 +142,7 @@ namespace Stl.Fusion.Bridge.Internal
 
         protected override async ValueTask DisposeInternal(bool disposing)
         {
-            await base.DisposeInternal(disposing);
+            await base.DisposeInternal(disposing).ConfigureAwait(false);
             await RemoveSubscriptions().ConfigureAwait(false);
             PublisherImpl.OnChannelProcessorDisposed(this);
         }

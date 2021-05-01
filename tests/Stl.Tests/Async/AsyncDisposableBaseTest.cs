@@ -1,8 +1,9 @@
 using System;
-using System.Threading;
 using System.Threading.Tasks;
+using FluentAssertions;
 using Stl.Async;
 using Stl.Testing;
+using Stl.Time;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -31,43 +32,51 @@ namespace Stl.Tests.Async
             if (TestRunnerInfo.IsBuildAgent())
                 // TODO: Fix intermittent failures on GitHub
                 return;
-            AsyncDisposableWithDelay? copy = null;
-            var task = Task.Run(async () => {
-                await Task.Delay(200);
-                Assert.Equal(DisposalState.Disposing, copy!.DisposalState);
-                Out.WriteLine("Disposing check passed.");
-            });
-            await using (var instance = new AsyncDisposableWithDelay(TimeSpan.FromMilliseconds(400))) {
-                Assert.Equal(DisposalState.Active, instance.DisposalState);
+            AsyncDisposableWithDelay d;
+            Task task;
+            Moment start;
+            await using (d = new AsyncDisposableWithDelay(TimeSpan.FromMilliseconds(500))) {
+                Assert.Equal(DisposalState.Active, d.DisposalState);
                 Out.WriteLine("Active.");
-                copy = instance;
                 Out.WriteLine("Dispose started.");
+                task = Task.Run(async () => {
+                    await Task.Delay(100);
+                    Assert.Equal(DisposalState.Disposing, d!.DisposalState);
+                    Out.WriteLine("Disposing check passed.");
+                });
+                start = CpuClock.Now;
             }
+            Assert.Equal(DisposalState.Disposed, d.DisposalState);
+            (CpuClock.Now - start).Should().BeCloseTo(d.DisposeDelay, TimeSpan.FromMilliseconds(200));
             await task;
-            Assert.Equal(DisposalState.Disposed, copy.DisposalState);
             Out.WriteLine("Dispose completed.");
         }
 
         [Fact]
         public void DisposeTest()
         {
-            AsyncDisposableWithDelay? copy = null;
-            var task = Task.Run(async () => {
-                await Task.Delay(200);
-                Assert.Equal(DisposalState.Disposing, copy!.DisposalState);
-                Out.WriteLine("Disposing check 2 passed.");
-            });
-            using (var instance = new AsyncDisposableWithDelay(TimeSpan.FromMilliseconds(400))) {
-                Assert.Equal(DisposalState.Active, instance.DisposalState);
+            AsyncDisposableWithDelay d;
+            Task task;
+            Moment start;
+            using (d = new AsyncDisposableWithDelay(TimeSpan.FromMilliseconds(500))) {
+                Assert.Equal(DisposalState.Active, d.DisposalState);
                 Out.WriteLine("Active.");
-                copy = instance;
                 Out.WriteLine("Dispose started.");
+                task = Task.Run(async () => {
+                    await Task.Delay(100);
+                    Assert.Equal(DisposalState.Disposing, d.DisposalState);
+                    Out.WriteLine("Disposing check 2 passed.");
+                });
+                start = CpuClock.Now;
             }
-            Assert.Equal(DisposalState.Disposing, copy.DisposalState);
+            Assert.Equal(DisposalState.Disposing, d.DisposalState);
             Out.WriteLine("Disposing check 1 passed.");
             task.Wait();
-            Thread.Sleep(600);
-            Assert.Equal(DisposalState.Disposed, copy.DisposalState);
+            task = TestEx.WhenMet(
+                () => d.DisposalState.Should().Be(DisposalState.Disposed),
+                Intervals.Fixed(TimeSpan.FromMilliseconds(50)),
+                d.DisposeDelay);
+            task.Wait();
             Out.WriteLine("Dispose completed.");
         }
     }

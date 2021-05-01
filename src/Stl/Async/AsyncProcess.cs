@@ -65,8 +65,7 @@ namespace Stl.Async
             if (!StopTokenSource.IsCancellationRequested)
                 StopTokenSource.Cancel();
             await (RunningTask ?? Task.CompletedTask).ConfigureAwait(false);
-            StopTokenSource?.Dispose();
-            await base.DisposeInternal(disposing);
+            StopTokenSource.Dispose();
         }
     }
 }

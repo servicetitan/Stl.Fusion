@@ -140,6 +140,11 @@ namespace Stl.Fusion.EntityFramework.Extensions
         {
             PseudoGet(key).Ignore();
             var dbKeyValue = await DbKeyValueResolver.TryGet(key, cancellationToken).ConfigureAwait(false);
+            if (dbKeyValue == null)
+                return null;
+            var expiresAt = dbKeyValue.ExpiresAt;
+            if (expiresAt.HasValue && expiresAt.GetValueOrDefault() < Clock.Now.ToDateTime())
+                return null;
             return dbKeyValue?.Value;
         }
 

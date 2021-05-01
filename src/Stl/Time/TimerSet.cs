@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
@@ -51,23 +52,26 @@ namespace Stl.Time
 
         public void AddOrUpdate(TTimer timer, Moment time)
         {
-            var priority = GetPriority(time);
-            lock (_lock)
+            lock (_lock) {
+                var priority = GetPriority(time); // Should be inside the "lock" block
                 _timers.AddOrUpdate(priority, timer);
+            }
         }
 
         public bool AddOrUpdateToEarlier(TTimer timer, Moment time)
         {
-            var priority = GetPriority(time);
-            lock (_lock)
+            lock (_lock) {
+                var priority = GetPriority(time); // Should be inside the "lock" block
                 return _timers.AddOrUpdateToLower(priority, timer);
+            }
         }
 
         public bool AddOrUpdateToLater(TTimer timer, Moment time)
         {
-            var priority = GetPriority(time);
-            lock (_lock)
+            lock (_lock) {
+                var priority = GetPriority(time); // Should be inside the "lock" block
                 return _timers.AddOrUpdateToHigher(priority, timer);
+            }
         }
 
         public bool Remove(TTimer timer)
@@ -86,8 +90,10 @@ namespace Stl.Time
                 if (dueAt > Clock.Now)
                     // We intentionally don't pass CancellationToken here:
                     // the delay is supposed to be short & we want to save on
-                    // CancellationToken registration/unregistration.
-                    await Clock.Delay(dueAt, default).ConfigureAwait(false);
+                    // CancellationToken registration/de-registration.
+                    await Clock
+                        .Delay(dueAt, CancellationToken.None)
+                        .ConfigureAwait(false);
                 IReadOnlyDictionary<TTimer, long> minSet;
                 lock (_lock) {
                     minSet = _timers.ExtractMinSet(_minPriority);

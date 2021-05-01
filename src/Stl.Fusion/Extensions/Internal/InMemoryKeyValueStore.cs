@@ -105,9 +105,12 @@ namespace Stl.Fusion.Extensions.Internal
         public virtual Task<string?> TryGet(string key, CancellationToken cancellationToken = default)
         {
             PseudoGet(key).Ignore();
-            return Store.TryGetValue(key, out var item)
-                ? Task.FromResult((string?) item.Value)
-                : Task.FromResult((string?) null);
+            if (!Store.TryGetValue(key, out var item))
+                return Task.FromResult((string?) null);
+            var expiresAt = item.ExpiresAt;
+            if (expiresAt.HasValue && expiresAt.GetValueOrDefault() < Clock.Now)
+                return Task.FromResult((string?) null);
+            return Task.FromResult((string?) item.Value);
         }
 
         public virtual Task<int> Count(string prefix, CancellationToken cancellationToken = default)

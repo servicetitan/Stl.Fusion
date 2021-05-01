@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Stl.OS;
@@ -19,18 +20,20 @@ namespace Stl.Tests.Time
             public Moment FiredAt { get; set; }
         }
 
+        private int _runnerId;
+
         public ConcurrentTimerSetTest(ITestOutputHelper @out) : base(@out) { }
 
         [Fact]
         public async Task BasicTest()
         {
-            var clock = SystemClock.Instance;
+            var clock = CpuClock.Instance;
             await using var timerSet = new ConcurrentTimerSet<Timer>(
                 new ConcurrentTimerSet<Timer>.Options() {
                     Quanta = TimeSpan.FromMilliseconds(10),
                     Clock = clock,
                 },
-                timer => timer.FiredAt = CoarseCpuClock.Now);
+                timer => timer.FiredAt = clock.Now);
 
             // AddOrUpdateToLater
             var t = new Timer();
@@ -69,61 +72,72 @@ namespace Stl.Tests.Time
         [Fact]
         public async Task RandomTimerTest()
         {
-            var taskCount = (TestRunnerInfo.IsBuildAgent() ? 1 : HardwareInfo.GetProcessorCountFactor(10));
-            var maxDelta = TestRunnerInfo.IsBuildAgent() ? 20000 : 400;
+            var taskCount = TestRunnerInfo.IsBuildAgent() ? 1 : HardwareInfo.GetProcessorCountFactor(10);
+            var maxDelta = TestRunnerInfo.IsBuildAgent() ? 1000 : 500;
             var rnd = new Random();
             var tasks = Enumerable.Range(0, taskCount)
-                .Select(i => Task.Run(() => OneRandomTest(rnd.Next(100), 3000, maxDelta)))
+                .Select(_ => Task.Run(() => OneRandomTest(rnd.Next(100), 3000, maxDelta)))
                 .ToArray();
             await Task.WhenAll(tasks);
         }
 
+        // [Fact]
         [Fact(Skip = "Performance")]
         public async Task TimerPerformanceTest()
         {
-            await using var timerSet = new ConcurrentTimerSet<Timer>(
+            var timerSet = new ConcurrentTimerSet<Timer>(
                 new ConcurrentTimerSet<Timer>.Options() {
-                    ConcurrencyLevel = HardwareInfo.ProcessorCountPo2 << 5,
                     Quanta = TimeSpan.FromMilliseconds(100),
                 },
-                timer => timer.FiredAt = CoarseCpuClock.Now);
-            var tasks = Enumerable.Range(0, HardwareInfo.GetProcessorCountFactor())
-                .Select(i => Task.Run(() => OneRandomTest(timerSet, 500_000, 1000, 5000)))
-                .ToArray();
-            await Task.WhenAll(tasks);
+                timer => timer.FiredAt = CoarseCpuClock.Instance.Now);
+            await using (timerSet) {
+                var tasks = Enumerable.Range(0, HardwareInfo.GetProcessorCountFactor())
+                    .Select(_ => Task.Run(() => OneRandomTest(timerSet, 100_000, 5000, 1000)))
+                    .ToArray();
+                await Task.WhenAll(tasks);
+                Out.WriteLine("ConcurrentTimerSet is disposing...");
+            }
+            Out.WriteLine("ConcurrentTimerSet is disposed.");
         }
 
-        private static async Task OneRandomTest(int timerCount, int maxDuration, int maxDelta)
+        private async Task OneRandomTest(int timerCount, int maxDuration, int maxDelta)
         {
             await using var timerSet = new ConcurrentTimerSet<Timer>(
                 new ConcurrentTimerSet<Timer>.Options() {
                     Quanta = TimeSpan.FromMilliseconds(100),
                 },
-                timer => timer.FiredAt = CoarseCpuClock.Now);
+                timer => timer.FiredAt = CoarseCpuClock.Instance.Now);
             await OneRandomTest(timerSet, timerCount, maxDuration, maxDelta);
         }
 
-        private static async Task OneRandomTest(ConcurrentTimerSet<Timer> timerSet, int timerCount, int maxDuration, int maxDelta)
+        private async Task OneRandomTest(ConcurrentTimerSet<Timer> timerSet, int timerCount, int maxDuration, int maxDelta)
         {
+            var runner = $"Runner {Interlocked.Increment(ref _runnerId)}";
             var rnd = new Random();
-            var start = CoarseCpuClock.Now + TimeSpan.FromSeconds(0.5);
+            var clock = timerSet.Clock;
+            var start = clock.Now + TimeSpan.FromSeconds(0.5);
             var timers = Enumerable
                 .Range(0, timerCount)
-                .Select(i => new Timer() {
+                .Select(_ => new Timer() {
                     DueAt = start + TimeSpan.FromMilliseconds(rnd.Next(maxDuration))
                 })
                 .ToList();
+            Out.WriteLine($"{runner}: Timers created.");
+
             foreach (var timer in timers)
                 timerSet.AddOrUpdate(timer, timer.DueAt);
+            Out.WriteLine($"{runner}: Timers enqueued.");
 
-            await timerSet.Clock.Delay(TimeSpan.FromMilliseconds(maxDuration));
-            while (timerSet.Count != 0)
-                await timerSet.Clock.Delay(100);
+            var maxDueAt = timers.Any() ? timers.Max(t => t.DueAt) : start;
+            await clock.Delay(maxDueAt);
+            await TestEx.WhenMet(() => timerSet.Count.Should().Be(0), TimeSpan.FromSeconds(1));
+            Out.WriteLine($"{runner}: All timers should be fired.");
 
             foreach (var timer in timers) {
                 var delta = timer.FiredAt - timer.DueAt;
-                delta.TotalMilliseconds.Should().BeInRange(-maxDelta, maxDelta);
+                delta.Should().BeCloseTo(TimeSpan.Zero, maxDelta);
             }
+            Out.WriteLine($"{runner}: Checks completed.");
         }
     }
 }

@@ -38,8 +38,7 @@ namespace Stl.Async
             // Completes when either DisposeAsync turns DisposeState to Disposing,
             // or if it's already in non-Active state.
             // The rest of disposal is supposed to be asynchronous.
-            if (this is IAsyncDisposable ad)
-                ad.DisposeAsync();
+            DisposeAsync(true).Ignore();
         }
 
         public async ValueTask DisposeAsync()
@@ -79,8 +78,8 @@ namespace Stl.Async
             }
         }
 
-        protected virtual ValueTask DisposeInternal(bool disposing) =>
-            new ValueTask(Task.CompletedTask);
+        protected virtual ValueTask DisposeInternal(bool disposing)
+            => ValueTaskEx.CompletedTask;
 
         protected bool MarkDisposed()
         {

@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Stl.Async;
 using Stl.Mathematics;
+using Stl.OS;
 
 namespace Stl.Time
 {
@@ -13,12 +14,7 @@ namespace Stl.Time
     {
         public record Options : TimerSet<TTimer>.Options
         {
-            private readonly int _concurrencyLevel;
-
-            public int ConcurrencyLevel {
-                get => _concurrencyLevel;
-                init => _concurrencyLevel = Math.Max(1, value);
-            }
+            public int ConcurrencyLevel { get; init; } = HardwareInfo.GetProcessorCountPo2Factor(5);
         }
 
         private readonly TimerSet<TTimer>[] _timerSets;
@@ -43,8 +39,10 @@ namespace Stl.Time
 
         protected override async ValueTask DisposeInternal(bool disposing)
         {
+            var tasks = new List<Task>(_timerSets.Length);
             foreach (var timerSet in _timerSets)
-                await timerSet.DisposeAsync();
+                tasks.Add(timerSet.DisposeAsync().AsTask());
+            await Task.WhenAll(tasks).ConfigureAwait(false);
         }
 
         public void AddOrUpdate(TTimer timer, Moment time)
