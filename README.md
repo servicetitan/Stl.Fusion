@@ -365,26 +365,28 @@ from [HelloBlazorServer sample](https://github.com/servicetitan/Stl.Fusion.Sampl
 - [ChatMessageCountBadge.razor](https://github.com/alexyakunin/BoardGames/blob/main/src/UI/Chat/ChatMessageCountBadge.razor) 
 and [AppUserBadge.razor](https://github.com/alexyakunin/BoardGames/blob/main/src/UI/Game/AppUserBadge.razor) from [Board Games].
 
-## What all of this means for the UI?
+### What all of this means for the UI?
 
 **Fusion allows you to create truly independent UI components.**
 You can embed them in any parts of UI you like without any need
 to worry of how they'll interact with each other.
 
-Which means that **Fusion is probably the #1 tool you need to
-build [micro-frontends](https://martinfowler.com/articles/micro-frontends.html)
-on Blazor** - the ability to have such components is absolutely
-crucial there.
+So **Fusion is one of crucial tools needed to build 
+[micro-frontends](https://martinfowler.com/articles/micro-frontends.html)
+on Blazor**: the ability to create loosely coupled UI components 
+is paramount in any micro-frontend.
 
 Besides that, if your invalidation logic is correct, 
-**Fusion guarantees that your UI state is eventually consistent 
-with the ground truth.**
+**Fusion guarantees that your UI state is eventually consistent.** 
 
 Finally, you might think all of this works only in Blazor Server mode. 
-But no, **exactly the same UI components work in Blazor WebAssembly 
-mode as well, which is another unique feature Fusion provides you with.**
-If you need to support both modes, Fusion is currently the only library 
-solving this problem.
+But no, **all these UI components work in Blazor WebAssembly 
+mode as well, which is another unique feature Fusion provides.**
+Any [Compute Service] can be substituted with [Replica Service] on
+the client, which not simply proxies the calls, but also completely 
+kills the chattiness you'd expect from a regular client-side proxy.
+So if you need to support both modes, Fusion is currently the only 
+library solving this problem gracefully.
 
 ## Next Steps
 
@@ -410,6 +412,7 @@ please help us to make it better by completing [Fusion Feedback Form]
 [Computed Value]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/Part02.md
 [Live State]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/Part03.md
 [Replica Services]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/Part04.md
+[Replica Service]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/Part04.md
 
 [Overview]: docs/Overview.md
 [Documentation Home]: docs/README.md
