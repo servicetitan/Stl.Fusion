@@ -22,6 +22,12 @@ namespace Stl.Fusion.Swapping
         protected LogLevel LogLevel { get; set; }
 
         public LoggingSwapServiceWrapper(
+            TSwapService swapService,
+            ILoggerFactory? loggerFactory = null)
+            : this(null, swapService, loggerFactory)
+        { }
+
+        public LoggingSwapServiceWrapper(
             Options? options,
             TSwapService swapService,
             ILoggerFactory? loggerFactory = null)
