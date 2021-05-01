@@ -225,33 +225,35 @@ A typical Compute Service looks as follows:
 public class ExampleService
 {
     [ComputeMethod]
-    public virtual async Task<string> GetNonFusionData(string key)
+    public virtual async Task<string> GetValue(string key)
     { 
-        // This method reads the data from non-Fusion data sources,
-        // so it requires invalidation on write
+        // This method reads the data from non-Fusion "sources",
+        // so it requires invalidation on write (see SetValue)
         return await File.ReadAllTextAsync(_prefix + key);
     }
 
     [ComputeMethod]
-    public virtual async Task<string> ProduceFusionData(string key1, string key2)
+    public virtual async Task<string> GetPair(string key1, string key2)
     { 
-        // This method uses only Fusion data sources or static data,
+        // This method uses only other [ComputeMethod]-s or static data,
         // thus it doesn't require invalidation on write
         var v1 = await GetNonFusionData(key1);
         var v2 = await GetNonFusionData(key2);
-        return v1 + v2;
+        return $"{v1}, {v2}";
     }
 
-    public async Task SetNonFusionData(string key, string value)
+    public async Task SetValue(string key, string value)
     { 
-        // This method changes the data read by one of [ComputeMethod]-s,
-        // so it has to invalidate its results for all "matching" 
-        // sets of parameters (in this case it's just one)
+        // This method changes the data read by GetValue and GetPair,
+        // but since GetPair uses GetValue, it will be invalidated 
+        // automatically once we invalidate GetValue.
         await File.WriteAllTextAsync(_prefix + key, value);
         using (Computed.Invalidate()) {
-            // This is how you invalidate what's changed by this method
-            GetNonFusionData(key).Ignore();
-            // Note that we don't invalidate ProduceFusionData here
+            // This is how you invalidate what's changed by this method.
+            // Call arguments matter: you invalidate only a result of a 
+            // call with matching arguments rather than every GetValue 
+            // call result!
+            GetValue(key).Ignore(); // Ignore() suppresses "unused result" warning
         }
     }
 }
