@@ -54,7 +54,7 @@ The sample supports **both (!)** Server-Side Blazor and Blazor WebAssembly
 
 <img src="https://img.shields.io/badge/-Live!-red" valign="middle"> Play with [live version of this sample](https://fusion-samples.servicetitan.com) right now!
 
-<img src="https://img.shields.io/badge/-New!-brightgreen" valign="middle"> Check out [Board Games](https://github.com/alexyakunin/BoardGames) - the newest Fusion sample that implements both Blazor Server and WASM modes, 2 games, chat, online presence, OAuth sign-in, user session tracking, and a number of other 100% real-time features. All of this is powered by Fusion + just 35 lines of code related to real-time updates!
+<img src="https://img.shields.io/badge/-New!-brightgreen" valign="middle"> Check out [Board Games] - the newest Fusion sample that implements both Blazor Server and WASM modes, 2 games, chat, online presence, OAuth sign-in, user session tracking, and a number of other 100% real-time features. All of this is powered by Fusion + just 35 lines of code related to real-time updates!
 
 Read ["Why real-time UI is inevitable future for web apps?"](https://medium.com/@alexyakunin/features-of-the-future-web-apps-part-1-e32cf4e4e4f4?source=friends_link&sk=65dacdbf670ef9b5d961c4c666e223e2) to learn why "Refresh" is so obsolete nowadays.
 
@@ -155,15 +155,45 @@ But there is more &ndash; any [Computed Value]:
 
 ### Why these features are game changing?
 
-Real-time typically implies you need one or another flavor of
-[*event-driven architecture*](https://martinfowler.com/articles/201701-event-driven.html)
-(CQRS, event sourcing, actors, etc.). And all these options are more complex than
-a simple and familiar *request-response model*, which Fusion allows you to use.
+Real-time typically implies you use events to deliver change 
+notifications to every client which state might be impacted by
+this change. Which means you have to:
 
-Besides that, Fusion solves a complex problem of identifying and tracking dependencies 
-automatically for any method that uses Fusion-based services (+ its own logic) 
-to produce the output, and implementing this without Fusion is not only hard,
-but quite error prone problem.
+1. *Know which clients to notify about a particular event.* This alone is 
+   a fairly hard problem - in particular, you need to know what every client
+   "sees" now. Sending events for anything that's out of the "viewport" 
+   (e.g. a post you may see, but don't see right now) doesn't make sense,
+   because it's a huge waste that severely limits the scalability. 
+   Similarly to [MMORPG], the "visible" part of the state is 
+   tiny in comparison to the "available" one for most of web apps too.
+2. *Throttle down the rate of certain events* 
+   (e.g. "like" events for every popular post).
+   Easy on paper, but more complex if you want to ensure the user sees 
+   *eventually consistent view* on your system. 
+   In particular, this implies that every event you send "summarizes" 
+   the changes made by it and every event you discard, so likely,
+   you'll need a dedicated type, producer, and handlers for each of such 
+   events.
+3. *Apply events to the client-side state.* Kind of an easy problem too,
+   but note that you should do the same on server side as well, and
+   keeping the logic in two completely different handlers in sync 
+   for every event is a source of potential problems in future.
+4. *Make UI to properly update its event subscriptions on every
+   client-side state change.* This is what client-side code has
+   to do to ensure p.1 properly works on server side. And again,
+   this looks like a solvable problem on paper, but things get 
+   much more complex if you want to ensure your UI provides 
+   a truly eventually consistent view. Just think in which order
+   you'd run "query the initial data" and "subscribe to the subsequent events"
+   actions to see some issues here.
+   
+And interestingly, Fusion solves all these problems using a single
+abstraction allowing it to identifying and track data dependencies 
+automatically. Not only it knows a "recipe" of how every bit of data 
+user sees in the "viewport" is produced, but also the whole graph of
+dependencies of this data down to its very basic "ingredients". 
+So once one of such ingredients changes, Fusion knows how to identify
+everything impacted by this change.
 
 Check out [how Fusion differs from SignalR](https://medium.com/@alexyakunin/ow-similar-is-stl-fusion-to-signalr-e751c14b70c3?source=friends_link&sk=241d5293494e352f3db338d93c352249)
 &ndash; this post takes a real app example (Slack-like chat) and describes
@@ -184,93 +214,179 @@ to see a much more robust description of how Fusion scales.
 
 ## Enough talk. Show me the code!
 
-> The code on screenshots below is a bit outdated - we'll
-> update this part soon. Though conceptually it's still the 
-> same code as you'd have with the most recent version of Fusion.
+Most of Fusion-based code lives in [Compute Services].
+Such services are resolved by DI containers to their Fusion-generated proxies,
+which allows their methods to track dependencies on other compute service methods 
+they call.
 
-[Compute Services] is where a majority of Fusion-based code is supposed to live.
+A typical Compute Service looks as follows:
+
+```cs
+public class ExampleService
+{
+    [ComputeMethod]
+    public virtual async Task<string> GetNonFusionData(string key)
+    { 
+        // This method reads the data from non-Fusion data sources,
+        // so it requires invalidation on write
+        return await File.ReadAllTextAsync(_prefix + key);
+    }
+
+    [ComputeMethod]
+    public virtual async Task<string> ProduceFusionData(string key1, string key2)
+    { 
+        // This method uses only Fusion data sources or static data,
+        // thus it doesn't require invalidation on write
+        var v1 = await GetNonFusionData(key1);
+        var v2 = await GetNonFusionData(key2);
+        return v1 + v2;
+    }
+
+    public async Task SetNonFusionData(string key, string value)
+    { 
+        // This method changes the data read by one of [ComputeMethod]-s,
+        // so it has to invalidate its results for all "matching" 
+        // sets of parameters (in this case it's just one)
+        await File.WriteAllTextAsync(_prefix + key, value);
+        using (Computed.Invalidate()) {
+            // This is how you invalidate what's changed by this method
+            GetNonFusionData(key).Ignore();
+            // Note that we don't invalidate ProduceFusionData here
+        }
+    }
+}
+```
+
+As you might guess:
+* `[ComputeMethod]` indicates that every time you call this method,
+  its result is "backed" by [Computed Value], and thus it captures
+  dependencies (depends on results of any other compute method it calls)
+  and allows other compute methods to depend on its own results.
+  This attribute works only when you register a service as [Compute Service] 
+  in IoC container and the method it is applied to is async and virtual.
+* `Computed.Invalidate()` call creates a "scope" (`IDisposable`) which
+  makes every `[ComputeMethod]` you call inside it to invalidate
+  the result for this call, which triggers synchronous cascading 
+  (i.e. recursive) invalidation of every dependency it has,
+  except remote ones (they are invalidated asynchronously).
+
+Compute services are registered ~ almost like singletons:
+```cs
+var services = new ServiceCollection();
+var fusion = services.AddFusion(); // It's ok to call it many times
+// ~ Like service.AddSingleton<[TService, ]TImplementation>()
+fusion.AddComputeService<ExampleService>();
+```
+
+Check out [CounterService](https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/src/HelloBlazorServer/Services/CounterService.cs)
+from [HelloBlazorServer sample](https://github.com/servicetitan/Stl.Fusion.Samples)
+to see the actual code of compute service.
+
+
+> **Note:** Most of [Fusion Samples] use 
+> [attribute-based service registration](https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/Part01.md),
+> which is just another way of doing the same.
+> So you might need to look for `[ComputeService]` attribute there
+> to find out which compute services are registered there.
+
+Now, I guess you're curious how the UI code looks like with Fusion.
+You'll be surprised, but it's as simple as it could be:
+
+```cs
+// MomentsAgoBadge.razor
+@inherits ComputedStateComponent<string>
+@inject IFusionTime _fusionTime
+
+<span>@State.Value</span>
+
+@code {
+    [Parameter] 
+    public DateTime Value { get; set; }
+
+    protected override Task<string> ComputeState()
+        => _fusionTime.GetMomentsAgo(Value) ;
+}
+```
+
+`MomentsAgoBadge` is Blazor component displays 
+`"N [seconds/minutes/...] ago"` string. It is used in a few samples,
+including [Board Games].
+The code above is *almost identical* to its 
+[actual code](https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/templates/Blazorise/UI/Shared/MomentsAgoBadge.razor), 
+which is a bit more complex due to `null` handling.
+
+You see it uses `IFusionTime` - one of built-in compute services that 
+provides `GetUtcNow` and `GetMomentsAgo` methods. As you might guess,
+the results of these methods are invalidated automatically;
+check out [`FusionTime` service](https://github.com/servicetitan/Stl.Fusion/blob/master/src/Stl.Fusion/Extensions/Internal/FusionTime.cs#L46) to see how it works.
+
+But what's important here is that `MomentsAgoBadge` is inherited from 
+[ComputedStateComponent<T>](https://github.com/servicetitan/Stl.Fusion/blob/master/src/Stl.Fusion.Blazor/ComputedStateComponent.cs) - 
+an abstract type which provides `ComputeState` method.
+As you might guess, this method is a [Compute Method] too,
+so captures its dependencies & its result gets invalidated once 
+cascading invalidation from one of its "ingredients" "hits" it.
+
+`ComputedStateComponent<T>` exposes `State` property (of `ComputedState<T>` type), 
+which allows you to get the most recent output of  `ComputeState()`' via its 
+`Value` property.
+"State" is another key Fusion abstraction - it implements a 
+["wait for invalidation and recompute" loop 
+similar to this one](https://github.com/servicetitan/Stl.Fusion/blob/master/samples/TodoApp/ConsoleClient/Program.cs#L18):
+```cs
+var computed = await Computed.Capture(_ => service.Method(...));
+for (;;) {
+    await computed.WhenInvalidated();
+    computed = await computed.Update();
+}
+```
+
+The only difference is that it does this in a more robust way - in particular,
+it allows you to control the delays between the invalidation and the update, 
+access the most recent non-error value, etc.
+
+Finally, `ComputedStateComponent` automatically calls `StateHasChanged()` 
+once its `State` gets updated to make sure the new value is displayed.
+
+**So if you use Fusion, you don't need to code any reactions in the UI.**
+Reactions (i.e. partial updates and re-renders) happen automatically due
+to dependency chains that connect your UI components with the
+data providers they use, which in turn are connected to data
+providers they use, and so on - till the very basic "ingredient providers",
+i.e. compute methods that are invalidated on changes.
+
+If you want to see a few more examples of similarly simple UI components,
+check out:
+- [Counter.razor](https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/src/HelloBlazorServer/Pages/Counter.razor) - a Blazor component that uses
 [CounterService](https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/src/HelloBlazorServer/Services/CounterService.cs)
 from [HelloBlazorServer sample](https://github.com/servicetitan/Stl.Fusion.Samples)
-is a good example of such a service:
+- [ChatMessageCountBadge.razor](https://github.com/alexyakunin/BoardGames/blob/main/src/UI/Chat/ChatMessageCountBadge.razor) 
+and [AppUserBadge.razor](https://github.com/alexyakunin/BoardGames/blob/main/src/UI/Game/AppUserBadge.razor) from [Board Games].
 
-![](docs/img/CounterService.gif)
+## What all of this means for the UI?
 
-Lime-colored parts show additions to a similar singleton service
-you'd probably have in case when real-time updates aren't needed:
-* `[ComputeMethod]` indicates that any `GetCounterAsync` result should be 
-  "backed" by [Computed Value]. 
-  This attribute works only when you register a service as [Compute Service] 
-  in IoC container and the method it is applied to is virtual.
-* `Computed.Invalidate` call finds a [Computed Value] "backing" the most recent
-  `GetCounterAsync` call with the same arguments (no arguments in this case) 
-  and invalidates it - unless it doesn't exist or was invalidated earlier.
-  We have to manually invalidate this value because `GetCounterAsync`
-  doesn't call any other [Compute Services], and thus its result doesn't
-  have any dependencies which otherwise would auto-invalidate it.
+**Fusion allows you to create truly independent UI components.**
+You can embed them in any parts of UI you like without any need
+to worry of how they'll interact with each other.
 
-[Counter.razor](https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/src/HelloBlazorServer/Pages/Counter.razor) is a Blazor Component that uses
-`CounterService`:
+Which means that **Fusion is probably the #1 tool you need to
+build [micro-frontends](https://martinfowler.com/articles/micro-frontends.html)
+on Blazor** - the ability to have such components is absolutely
+crucial there.
 
-![](docs/img/CounterRazor.gif)
+Besides that, if your invalidation logic is correct, 
+**Fusion guarantees that your UI state is eventually consistent 
+with the ground truth.**
 
-Again, lime-colored parts show additions to a similar Blazor Component without 
-real-time updates:
-* It inherits from [LiveComponentBase<T>](https://github.com/servicetitan/Stl.Fusion/blob/master/src/Stl.Fusion.Blazor/LiveComponentBase.cs) - a small wrapper over
-  `ComponentBase` (base class for any Blazor component), which adds
-  `State` property and abstract `ComputeStateAsync` method allowing to
-  (re)compute the `State.Value` once any of its dependencies changes.
-* `LiveComponent<T>.State` property is a [Live State] - an object exposing 
-  the most current [Computed Value] produced by a computation (`Func<...>`)
-  and making sure it gets recomputed with a controllable delay 
-  after any of its dependencies change.
-* As you might guess, `ComputeStateAsync` defines `State.Value` computation logic
-  in any `LiveComponentBase<T>` descendant.
-
-Blue-colored parts show how `State` is used:
-* `State.LastValue` is the most recent non-error value produced by the computation.
-  It's a "safe pair" to `State.Value` (true most recent computation result), 
-  which throws an error if `State.Error != null`.
-* `State.Error` contains an exception thrown by `ComputeStateAsync` when it fails,
-  otherwise `null`.
-
-That's *almost literally* (minus IoC registration) all you need to have this:
-![](docs/img/Stl-Fusion-HelloBlazorServer-Counter-Sample.gif)
-
-And if you're curious how "X seconds ago" gets updated,
-notice that `ComputeStateAsync` invokes `TimeService.GetMomentsAgoAsync`,
-which looks as follows:
-
-![](docs/img/TimeService.gif)
-
-In other words, `ComputeStateAsync` becomes dependent on "moments ago"
-value, and this value self-invalidates ~ at the right moment triggering 
-cascading `ComputeStateAsync` invalidation.
-
-"Simple Chat" is a bit more complex example showing another interesting
-aspect of this approach:
-> Since *any event* describes *a change*, Fusion's only "invalidated" event 
-> ("the output of f(...) changed") allows you to implement a reaction to 
-> *nearly any* change without a need for a special event!
-
-"Simple Chat" features a chat bot that listens to new chat messages and
-responds to them:
-
-![](docs/img/Stl-Fusion-HelloBlazorServer-SimpleChat-Sample.gif)
-
-`ChatService` source code doesn't have any special logic to support chat bots - 
-similarly to `CounterService`, it's almost the same as a similar service that
-doesn't support any kind of real-time behavior at all:
-
-![](docs/img/ChatService.gif)
-
-But since `ChatService` is a [Compute Service], you can implement a "listener" 
-reacting to changes in `GetMessagesAsync` output relying on e.g. [Live State] - 
-and 
-[that's exactly what `ChatBotService` does](https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/src/HelloBlazorServer/Services/ChatBotService.cs).
+Finally, you might think all of this works only in Blazor Server mode. 
+But no, **exactly the same UI components work in Blazor WebAssembly 
+mode as well, which is another unique feature Fusion provides you with.**
+If you need to support both modes, Fusion is currently the only library 
+solving this problem.
 
 ## Next Steps
 
-* Check out [Tutorial], [Samples], or go to [Documentation Home]
+* Check out [Slides], [Tutorial], [Samples], or go to [Documentation Home]
 * Join our [Discord Server] or [Gitter] to ask questions and track project updates.
 
 ## Posts And Other Content
@@ -293,10 +409,14 @@ please help us to make it better by completing [Fusion Feedback Form]
 [Computed Value]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/Part02.md
 [Live State]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/Part03.md
 [Replica Services]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/Part04.md
+
 [Overview]: docs/Overview.md
 [Documentation Home]: docs/README.md
+[Fusion Samples]: https://github.com/servicetitan/Stl.Fusion.Samples
 [Samples]: https://github.com/servicetitan/Stl.Fusion.Samples
+[Board Games]: https://github.com/alexyakunin/BoardGames
 [Tutorial]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/README.md
+[Slides]: https://alexyakunin.github.io/Stl.Fusion.Materials/Slides/Fusion_v2/Slides.html
 [MMORPG]: https://en.wikipedia.org/wiki/Massively_multiplayer_online_role-playing_game
 
 [Gitter]: https://gitter.im/Stl-Fusion/community

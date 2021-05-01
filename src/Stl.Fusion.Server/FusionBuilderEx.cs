@@ -9,11 +9,11 @@ namespace Stl.Fusion.Server
             => new(fusion, optionsBuilder);
 
         public static FusionBuilder AddWebServer(this FusionBuilder fusion,
-            Action<FusionWebServerBuilder> configureWebSocketServer,
+            Action<FusionWebServerBuilder> configureWebServer,
             Action<IServiceProvider, WebSocketServer.Options>? optionsBuilder = null)
         {
-            var webSocketServer = fusion.AddWebServer(optionsBuilder);
-            configureWebSocketServer.Invoke(webSocketServer);
+            var fusionWebServer = fusion.AddWebServer(optionsBuilder);
+            configureWebServer.Invoke(fusionWebServer);
             return fusion;
         }
     }
