@@ -1,0 +1,49 @@
+version: 2
+updates:
+- package-ecosystem: nuget
+  directory: "/"
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 10
+  reviewers:
+  - alexyakunin
+  assignees:
+  - alexyakunin
+  ignore:
+  - dependency-name: Nerdbank.GitVersioning
+    versions:
+    - 3.4.194
+  - dependency-name: AspNet.Security.OAuth.GitHub
+    versions:
+    - 5.0.4
+  - dependency-name: Microsoft.AspNetCore.DataProtection.EntityFrameworkCore
+    versions:
+    - 5.0.5
+  - dependency-name: Microsoft.AspNetCore.Authentication.MicrosoftAccount
+    versions:
+    - 5.0.5
+  - dependency-name: Microsoft.AspNetCore.Authentication.Google
+    versions:
+    - 5.0.5
+  - dependency-name: Microsoft.AspNetCore.Mvc.Testing
+    versions:
+    - 5.0.5
+  - dependency-name: Microsoft.AspNetCore.Components.Authorization
+    versions:
+    - 5.0.5
+  - dependency-name: Microsoft.AspNetCore.Components.Web
+    versions:
+    - 5.0.5
+  - dependency-name: Microsoft.AspNetCore.Components
+    versions:
+    - 5.0.5
+  - dependency-name: Microsoft.AspNetCore.Mvc.NewtonsoftJson
+    versions:
+    - 5.0.5
+  - dependency-name: System.IO.Abstractions
+    versions:
+    - 13.2.17
+  - dependency-name: Swashbuckle.AspNetCore
+    versions:
+    - 6.0.2
+    - 6.0.4
