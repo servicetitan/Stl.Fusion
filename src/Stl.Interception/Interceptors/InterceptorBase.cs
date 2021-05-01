@@ -15,8 +15,7 @@ namespace Stl.Interception.Interceptors
     {
         public class Options
         {
-            public LogLevel LogLevel { get; set; } = LogLevel.Debug;
-            public LogLevel ValidationLogLevel { get; set; } = LogLevel.Information;
+            public bool IsLoggingEnabled { get; set; } = true;
         }
 
         private readonly MethodInfo _createTypedHandlerMethod;
@@ -28,8 +27,9 @@ namespace Stl.Interception.Interceptors
 
         protected ILoggerFactory LoggerFactory { get; }
         protected ILogger Log { get; }
-        protected LogLevel LogLevel { get; }
-        protected LogLevel ValidationLogLevel { get; }
+        protected bool IsLoggingEnabled { get; set; }
+        protected LogLevel LogLevel { get; set; } = LogLevel.Debug;
+        protected LogLevel ValidationLogLevel { get; set; } = LogLevel.Information;
 
         public IServiceProvider Services { get; }
 
@@ -40,10 +40,9 @@ namespace Stl.Interception.Interceptors
         {
             LoggerFactory = loggerFactory ??= NullLoggerFactory.Instance;
             Log = LoggerFactory.CreateLogger(GetType());
-            LogLevel = options.LogLevel;
-            ValidationLogLevel = options.ValidationLogLevel;
-            Services = services;
+            IsLoggingEnabled = options.IsLoggingEnabled && Log.IsEnabled(LogLevel);
 
+            Services = services;
             _createHandlerUntyped = CreateHandlerUntyped;
             _createInterceptedMethod = CreateMethodDef;
             _createTypedHandlerMethod = GetType()

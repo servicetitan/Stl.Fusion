@@ -219,7 +219,7 @@ namespace Stl.Fusion.Tests
                 var fusionClient = fusion.AddRestEaseClient(
                     (c, options) => {
                         options.BaseUri = WebHost.ServerUri;
-                        options.MessageLogLevel = LogLevel.Information;
+                        options.IsMessageLoggingEnabled = true;
                     }).ConfigureHttpClientFactory(
                     (c, name, options) => {
                         var baseUri = WebHost.ServerUri;

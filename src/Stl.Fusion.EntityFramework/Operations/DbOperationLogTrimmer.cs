@@ -15,7 +15,7 @@ namespace Stl.Fusion.EntityFramework.Operations
             public TimeSpan CheckInterval { get; set; } = TimeSpan.FromMinutes(5);
             public TimeSpan MaxOperationAge { get; set; } = TimeSpan.FromMinutes(6);
             public int BatchSize { get; set; } = 1000;
-            public LogLevel LogLevel { get; set; } = LogLevel.Information;
+            public bool IsLoggingEnabled { get; set; } = true;
         }
 
         protected IDbOperationLog<TDbContext> DbOperationLog { get; }
@@ -24,13 +24,14 @@ namespace Stl.Fusion.EntityFramework.Operations
         protected int BatchSize { get; }
         protected int LastTrimCount { get; set; }
         protected Random Random { get; }
-        protected LogLevel LogLevel { get; }
+        protected bool IsLoggingEnabled { get; set; }
+        protected LogLevel LogLevel { get; set; } = LogLevel.Information;
 
         public DbOperationLogTrimmer(Options? options, IServiceProvider services)
             : base(services)
         {
             options ??= new();
-            LogLevel = options.LogLevel;
+            IsLoggingEnabled = options.IsLoggingEnabled && Log.IsEnabled(LogLevel);
 
             CheckInterval = options.CheckInterval;
             MaxCommitAge = options.MaxOperationAge;
@@ -46,8 +47,7 @@ namespace Stl.Fusion.EntityFramework.Operations
                 .Trim(minCommitTime, BatchSize, cancellationToken)
                 .ConfigureAwait(false);
 
-            var logEnabled = LogLevel != LogLevel.None && Log.IsEnabled(LogLevel);
-            if (LastTrimCount > 0 && logEnabled)
+            if (LastTrimCount > 0 && IsLoggingEnabled)
                 Log.Log(LogLevel, "Trimmed {Count} operations", LastTrimCount);
         }
 

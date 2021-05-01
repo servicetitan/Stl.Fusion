@@ -27,7 +27,6 @@ namespace Stl.Fusion.Client
             public string PublisherIdQueryParameterName { get; set; } = "publisherId";
             public string ClientIdQueryParameterName { get; set; } = "clientId";
             public TimeSpan ConnectTimeout { get; set; } = TimeSpan.FromSeconds(10);
-            public LogLevel? MessageLogLevel { get; set; }
             public int? MessageMaxLength { get; set; } = 2048;
             public Func<IServiceProvider, ChannelSerializerPair<BridgeMessage, string>> ChannelSerializerPairFactory { get; set; } =
                 DefaultChannelSerializerPairFactory;
@@ -35,6 +34,8 @@ namespace Stl.Fusion.Client
                 DefaultClientWebSocketFactory;
             public Func<WebSocketChannelProvider, Symbol, Uri> ConnectionUrlResolver { get; set; } =
                 DefaultConnectionUrlResolver;
+            public bool IsLoggingEnabled { get; set; } = true;
+            public bool IsMessageLoggingEnabled { get; set; } = false;
 
             public static ChannelSerializerPair<BridgeMessage, string> DefaultChannelSerializerPairFactory(IServiceProvider services)
                 => new(
@@ -68,11 +69,14 @@ namespace Stl.Fusion.Client
 
         protected Func<IServiceProvider, ChannelSerializerPair<BridgeMessage, string>> ChannelSerializerPairFactory { get; }
         protected Func<IServiceProvider, ClientWebSocket> ClientWebSocketFactory { get; }
-        protected LogLevel? MessageLogLevel { get; }
         protected int? MessageMaxLength { get; }
         protected Lazy<IReplicator>? ReplicatorLazy { get; }
         protected Symbol ClientId => ReplicatorLazy?.Value.Id ?? Symbol.Empty;
         protected ILogger Log { get; }
+        protected bool IsLoggingEnabled { get; set; }
+        protected bool IsMessageLoggingEnabled { get; set; }
+        protected LogLevel LogLevel { get; set; } = LogLevel.Information;
+        protected LogLevel MessageLogLevel { get; set; } = LogLevel.Information;
 
         public Uri BaseUri { get; }
         public Func<WebSocketChannelProvider, Symbol, Uri> ConnectionUrlResolver { get; }
@@ -89,13 +93,14 @@ namespace Stl.Fusion.Client
         {
             options ??= new();
             Log = log ?? NullLogger<WebSocketChannelProvider>.Instance;
+            IsLoggingEnabled = options.IsLoggingEnabled && Log.IsEnabled(LogLevel);
+            IsMessageLoggingEnabled = options.IsMessageLoggingEnabled && Log.IsEnabled(MessageLogLevel);
 
             Services = services;
             BaseUri = options.BaseUri;
             RequestPath = options.RequestPath;
             PublisherIdQueryParameterName = options.PublisherIdQueryParameterName;
             ClientIdQueryParameterName = options.ClientIdQueryParameterName;
-            MessageLogLevel = options.MessageLogLevel;
             MessageMaxLength = options.MessageMaxLength;
             ConnectTimeout = options.ConnectTimeout;
             ReplicatorLazy = new Lazy<IReplicator>(services.GetRequiredService<IReplicator>);
@@ -110,23 +115,22 @@ namespace Stl.Fusion.Client
             var clientId = ClientId.Value;
             try {
                 var connectionUri = ConnectionUrlResolver.Invoke(this, publisherId);
-                Log.LogInformation("{ClientId}: connecting to {ConnectionUri}...", clientId, connectionUri);
+                if (IsLoggingEnabled)
+                    Log.Log(LogLevel, "{ClientId}: connecting to {ConnectionUri}...", clientId, connectionUri);
                 var ws = ClientWebSocketFactory.Invoke(Services);
                 using var cts = new CancellationTokenSource(ConnectTimeout);
                 using var lts = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken);
                 await ws.ConnectAsync(connectionUri, lts.Token).ConfigureAwait(false);
-                Log.LogInformation("{ClientId}: connected", clientId);
+                if (IsLoggingEnabled)
+                    Log.Log(LogLevel, "{ClientId}: connected", clientId);
 
                 var wsChannel = new WebSocketChannel(ws);
                 Channel<string> stringChannel = wsChannel;
-                if (MessageLogLevel.HasValue)
-                    stringChannel = stringChannel.WithLogger(
-                        clientId, Log,
-                        MessageLogLevel.GetValueOrDefault(),
-                        MessageMaxLength);
+                if (IsMessageLoggingEnabled)
+                    stringChannel = stringChannel.WithLogger(clientId, Log, MessageLogLevel, MessageMaxLength);
                 var serializers = ChannelSerializerPairFactory.Invoke(Services);
                 var resultChannel = stringChannel.WithSerializers(serializers);
-                wsChannel.WhenCompleted(default).ContinueWith(async _ => {
+                wsChannel.WhenCompleted(CancellationToken.None).ContinueWith(async _ => {
                     await Task.Delay(1000, default).ConfigureAwait(false);
                     await wsChannel.DisposeAsync().ConfigureAwait(false);
                 }, CancellationToken.None).Ignore();

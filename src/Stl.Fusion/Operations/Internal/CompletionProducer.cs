@@ -11,13 +11,14 @@ namespace Stl.Fusion.Operations.Internal
     {
         public class Options
         {
-            public LogLevel LogLevel { get; set; } = LogLevel.Information;
+            public bool IsLoggingEnabled { get; set; } = true;
         }
 
         protected ICommander Commander { get; }
         protected AgentInfo AgentInfo { get; }
-        protected LogLevel LogLevel { get; }
         protected ILogger Log { get; }
+        protected bool IsLoggingEnabled { get; set; }
+        protected LogLevel LogLevel { get; set; } = LogLevel.Information;
 
         public CompletionProducer(Options? options,
             ICommander commander,
@@ -26,7 +27,8 @@ namespace Stl.Fusion.Operations.Internal
         {
             options ??= new();
             Log = log ?? NullLogger<CompletionProducer>.Instance;
-            LogLevel = options.LogLevel;
+            IsLoggingEnabled = options.IsLoggingEnabled && Log.IsEnabled(LogLevel);
+
             AgentInfo = agentInfo;
             Commander = commander;
         }
@@ -42,8 +44,7 @@ namespace Stl.Fusion.Operations.Internal
                     if (command is IServerSideCommand serverSideCommand)
                         serverSideCommand.MarkServerSide(); // Server-side commands should be marked as such
                     await Commander.Call(Completion.New(operation), true).ConfigureAwait(false);
-                    var logEnabled = LogLevel != LogLevel.None && Log.IsEnabled(LogLevel);
-                    if (logEnabled)
+                    if (IsLoggingEnabled)
                         Log.Log(LogLevel,
                             "{OperationType} operation completion succeeded. Agent: '{AgentId}', Command: {Command}",
                             operationType, operation.AgentId, command);

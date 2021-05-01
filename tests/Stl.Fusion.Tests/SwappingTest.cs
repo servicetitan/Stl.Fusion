@@ -67,9 +67,6 @@ namespace Stl.Fusion.Tests
                 ExpirationTime = TimeSpan.FromSeconds(3),
             });
             services.AddSingleton<ISwapService, LoggingSwapServiceWrapper<SwapService>>();
-            services.AddSingleton(c => new LoggingSwapServiceWrapper<SwapService>.Options() {
-                LogLevel = LogLevel.Information,
-            });
         }
 
         [Fact]

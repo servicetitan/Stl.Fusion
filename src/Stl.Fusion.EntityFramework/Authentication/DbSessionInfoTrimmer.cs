@@ -15,7 +15,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             public TimeSpan CheckInterval { get; set; } = TimeSpan.FromHours(1);
             public TimeSpan MaxSessionAge { get; set; } = TimeSpan.FromDays(60);
             public int BatchSize { get; set; } = 1000;
-            public LogLevel LogLevel { get; set; } = LogLevel.Information;
+            public bool IsLoggingEnabled { get; set; } = true;
         }
 
         protected IDbSessionInfoRepo<TDbContext> Sessions { get; }
@@ -24,13 +24,14 @@ namespace Stl.Fusion.EntityFramework.Authentication
         protected int BatchSize { get; }
         protected int LastTrimCount { get; set; }
         protected Random Random { get; }
-        protected LogLevel LogLevel { get; }
+        protected bool IsLoggingEnabled { get; set; }
+        protected LogLevel LogLevel { get; set; } = LogLevel.Information;
 
         public DbSessionInfoTrimmer(Options? options, IServiceProvider services)
             : base(services)
         {
             options ??= new();
-            LogLevel = options.LogLevel;
+            IsLoggingEnabled = options.IsLoggingEnabled && Log.IsEnabled(LogLevel);
 
             CheckInterval = options.CheckInterval;
             MaxSessionAge = options.MaxSessionAge;
@@ -46,8 +47,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
                 .Trim(minLastSeenAt, BatchSize, cancellationToken)
                 .ConfigureAwait(false);
 
-            var logEnabled = LogLevel != LogLevel.None && Log.IsEnabled(LogLevel);
-            if (LastTrimCount > 0 && logEnabled)
+            if (LastTrimCount > 0 && IsLoggingEnabled)
                 Log.Log(LogLevel, "Trimmed {Count} sessions", LastTrimCount);
         }
 

@@ -48,7 +48,6 @@ namespace Templates.TodoApp.UI
             var fusion = services.AddFusion();
             var fusionClient = fusion.AddRestEaseClient((_, o) => {
                 o.BaseUri = baseUri;
-                o.MessageLogLevel = LogLevel.Information;
             });
             fusionClient.ConfigureHttpClientFactory((c, name, o) => {
                 var isFusionClient = (name ?? "").StartsWith("Stl.Fusion");

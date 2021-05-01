@@ -17,21 +17,22 @@ namespace Stl.Fusion.EntityFramework.Extensions
         {
             public TimeSpan CheckInterval { get; set; } = TimeSpan.FromMinutes(5);
             public int BatchSize { get; set; } = 100;
-            public LogLevel LogLevel { get; set; } = LogLevel.Information;
+            public bool IsLoggingEnabled { get; set; } = true;
         }
 
         protected TimeSpan CheckInterval { get; }
         protected int BatchSize { get; }
         protected int LastTrimCount { get; set; }
         protected Random Random { get; }
-        protected LogLevel LogLevel { get; }
         protected IDbKeyValueStore<TDbContext> KeyValueStore { get; }
+        protected bool IsLoggingEnabled { get; set; }
+        protected LogLevel LogLevel { get; set; } = LogLevel.Information;
 
         public DbKeyValueTrimmer(Options? options, IServiceProvider services)
             : base(services)
         {
             options ??= new();
-            LogLevel = options.LogLevel;
+            IsLoggingEnabled = options.IsLoggingEnabled && Log.IsEnabled(LogLevel);
 
             CheckInterval = options.CheckInterval;
             BatchSize = options.BatchSize;
@@ -61,8 +62,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
             await KeyValueStore.RemoveMany(keys, cancellationToken).ConfigureAwait(false);
             LastTrimCount = keys.Length;
 
-            var logEnabled = LogLevel != LogLevel.None && Log.IsEnabled(LogLevel);
-            if (LastTrimCount > 0 && logEnabled)
+            if (LastTrimCount > 0 && IsLoggingEnabled)
                 Log.Log(LogLevel, "Trimmed {Count} entries", LastTrimCount);
         }
 

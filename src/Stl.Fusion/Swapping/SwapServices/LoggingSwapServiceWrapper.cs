@@ -12,13 +12,14 @@ namespace Stl.Fusion.Swapping
     {
         public class Options
         {
-            public LogLevel LogLevel { get; set; } = LogLevel.Debug;
+            public bool IsLoggingEnabled { get; set; } = true;
+            public LogLevel LogLevel { get; set; } = LogLevel.Information;
         }
 
-        protected readonly ILogger Log;
         protected readonly TSwapService SwapService;
-        protected LogLevel LogLevel;
-        protected bool IsEnabled;
+        protected ILogger Log { get; }
+        protected bool IsLoggingEnabled { get; set; }
+        protected LogLevel LogLevel { get; set; }
 
         public LoggingSwapServiceWrapper(
             Options? options,
@@ -27,16 +28,17 @@ namespace Stl.Fusion.Swapping
         {
             options ??= new();
             loggerFactory ??= NullLoggerFactory.Instance;
-            SwapService = swapService;
             Log = loggerFactory.CreateLogger(swapService.GetType());
             LogLevel = options.LogLevel;
-            IsEnabled = LogLevel != LogLevel.None && Log.IsEnabled(LogLevel);
+            IsLoggingEnabled = options.IsLoggingEnabled && Log.IsEnabled(LogLevel);
+
+            SwapService = swapService;
         }
 
         public async ValueTask<IResult?> Load((ComputeMethodInput Input, LTag Version) key, CancellationToken cancellationToken = default)
         {
             var value = await SwapService.Load(key, cancellationToken).ConfigureAwait(false);
-            if (IsEnabled)
+            if (IsLoggingEnabled)
                 Log.Log(LogLevel, "[?] {Key} -> {Value}", key, value);
             return value;
         }
@@ -44,7 +46,7 @@ namespace Stl.Fusion.Swapping
         public ValueTask Store((ComputeMethodInput Input, LTag Version) key, IResult value,
             CancellationToken cancellationToken = default)
         {
-            if (IsEnabled)
+            if (IsLoggingEnabled)
                 Log.Log(LogLevel, "[=] {Key} <- {Value}", key, value);
             return SwapService.Store(key, value, cancellationToken);
         }
