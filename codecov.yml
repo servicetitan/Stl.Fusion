@@ -2,3 +2,17 @@ ignore:
   - "tests"
   - "samples"
   - "src/Stl.Testing"
+coverage:
+  precision: 2
+  round: down
+  range: "65...100"
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 2%
+        base: auto 
+        branches: 
+          - master
+        if_ci_failed: error # success, failure, error, ignore
+        only_pulls: false
