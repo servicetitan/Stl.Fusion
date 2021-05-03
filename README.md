@@ -99,7 +99,10 @@ Note that:
 
 [![](./docs/img/FusionSlides.jpg)](https://alexyakunin.github.io/Stl.Fusion.Materials/Slides/Fusion_v2/Slides.html)
 
-If you love slides, [check out a detective story about Fusion, real-time, and 10+ other things it somehow connects together](https://alexyakunin.github.io/Stl.Fusion.Materials/Slides/Fusion_v2/Slides.html). The video will be added in a couple more days.
+If you prefer video, check out 
+["Jump the F5 ship straight into the real-time hyperspace with Blazor and Fusion" talk](https://www.youtube.com/watch?v=HRknXVXla9s).
+A less time-consuming alternative to this talk is 
+[its slides](https://alexyakunin.github.io/Stl.Fusion.Materials/Slides/Fusion_v2/Slides.html).
 
 Fusion provides three key abstractions:
 * [Compute Services] are services exposing methods "backed" by Fusion's 
