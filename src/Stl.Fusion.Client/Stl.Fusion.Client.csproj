@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFrameworks>net5.0;netcoreapp3.1;netstandard2.1</TargetFrameworks>
-    <OutputType>Library</OutputType>
     <PackageTags>servicetitan stl stl_fusion client</PackageTags>
     <Description>Client-side components of Stl.Fusion - <!--
     -->a new implementation of "computed observables" <!--
