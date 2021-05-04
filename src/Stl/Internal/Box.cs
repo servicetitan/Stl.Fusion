@@ -30,7 +30,7 @@ namespace Stl.Internal
         }
 
         [JsonConstructor]
-        public Box(T value = default) => Value = value!;
+        public Box(T value = default!) => Value = value!;
         public override string ToString() => $"{GetType().Name}({Value})";
     }
 }
