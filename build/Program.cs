@@ -113,8 +113,11 @@ namespace Build
                     .ExecuteAsync(cancellationToken).Task.ConfigureAwait(false);
             });
 
-            Target("pack", DependsOn("clean", "restore", "build"), async () => {
-                await Cli.Wrap(dotnetExePath).WithArguments($"pack -noLogo {Option("-c", configuration)} {Option("-f", framework)} --no-build {publicReleaseProperty}")
+            // Technically it should depend on "build" target, but such a setup fails
+            // due to https://github.com/dotnet/orleans/issues/6073 ,
+            // that's why we make "pack" to run "build" too here
+            Target("pack", DependsOn("clean", "restore"), async () => {
+                await Cli.Wrap(dotnetExePath).WithArguments($"pack -noLogo {Option("-c", configuration)} {Option("-f", framework)} --no-restore {publicReleaseProperty}")
                     .ToConsole()
                     .ExecuteAsync(cancellationToken).Task.ConfigureAwait(false);
             });

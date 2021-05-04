@@ -5,7 +5,7 @@
     <BaseIntermediateOutputPath>$(SolutionDir)artifacts\obj\$(MSBuildProjectName)</BaseIntermediateOutputPath>
     <OutputPath>$(SolutionDir)artifacts\bin\$(MSBuildProjectName)</OutputPath>
     <PublishConfiguration>Release</PublishConfiguration>
-    <IsPackable>True</IsPackable>
+    <IsPackable>true</IsPackable>
     <!-- Include the PDB in the built .nupkg -->
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
     <!-- Nerdbank.GitVersioning props -->
