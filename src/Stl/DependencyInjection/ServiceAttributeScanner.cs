@@ -20,8 +20,6 @@ namespace Stl.DependencyInjection
             Scope = scope;
         }
 
-        public IServiceCollection BackToServices() => Services;
-
         // SetXxx, ResetXxx
 
         public ServiceAttributeScanner WithScope(Symbol scope)

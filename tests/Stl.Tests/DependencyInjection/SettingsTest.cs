@@ -40,12 +40,12 @@ namespace Stl.Tests.DependencyInjection
                 .AddSingleton(cfg)
                 .AddSingleton<IConfiguration>(cfg)
                 .UseAttributeScanner()
-                .WithScope(nameof(SettingsTest))
-                .WithTypeFilter(new Regex(".*"))
-                .AddServicesFrom(typeof(bool).Assembly)
-                .AddService<TestSettings>()
-                .AddServices(typeof(TestSettings))
-                .BackToServices()
+                    .WithScope(nameof(SettingsTest))
+                    .WithTypeFilter(new Regex(".*"))
+                    .AddServicesFrom(typeof(bool).Assembly)
+                    .AddService<TestSettings>()
+                    .AddServices(typeof(TestSettings))
+                    .Services
                 .BuildServiceProvider();
             var testSettings = services.GetRequiredService<TestSettings>();
             testSettings.Value.Should().Be("1");
