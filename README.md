@@ -52,8 +52,6 @@ solution for a number of problems:
 | 🤬 Network chattiness | A fair amount of code |
 | 📪 Automatic & transparent pub/sub | A fair amount of code |
 
-All of this is achieved with a ! 
-
 We know it's hard to believe this is true &ndash; that's why there are
 many visual proofs in the remaining part of this document.
 But if you'll find anything concerning in Fusion's source code 
