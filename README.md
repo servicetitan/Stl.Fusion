@@ -34,10 +34,37 @@ Under the hood, Fusion "backs" any result of your internal or public API
 by [`IComputed<T>`] instance, which stores the result of this computation,
 and tells when this result becomes inconsistent with the ground truth,
 so you might want to recompute it. 
-But you rarely need to deal with this type directly - contrary to `async` methods, 
+You rarely need to deal with this type directly - contrary to `async` methods, 
 Fusion-based services return the same result type as they would return normally,
-and `IComputed<T>` instances are created, consumed, and composed into
-complex dependency graphs behind the scene.
+and `IComputed<T>` instances are created, consumed, and destroyed behind the scenes
+completely transparently for you, forming an evolving dependency graph 
+that spans through multiple machines.
+
+Surprisingly, this 🦄 **single abstraction** is a one-size-fits-all 
+solution for a number of hard problems:
+
+| Problem | So you don't need... |
+|-|-|
+| 📱 Client-side state management | Fluxor, Redux, MobX, Recoil, ... |
+| 🚀 Real-time update notifications | SignalR, Pusher, ... |
+| 📇 In-memory cache | Redis, memcached, ... |
+| 🤹 Real-time cache invalidation | No good solutions - <br/>it's an [infamously hard problem](https://martinfowler.com/bliki/TwoHardThings.html) |
+| 📨 Network chattiness | A fair amount of code |
+| 📪 Automatic & transparent pub/sub | A fair amount of code |
+
+All of this is achieved with a ! 
+
+We know it's hard to believe this is true &ndash; that's why there are
+many visual proofs in the remaining part of this document.
+But if you'll find anything concerning in Fusion's source code 
+or [samples], please feel free to grill us with questions on [Discord]!
+
+[<img align="right" width="150" src="./docs/img/FusionSlides.jpg"/>](https://alexyakunin.github.io/Stl.Fusion.Materials/Slides/Fusion_v2/Slides.html)
+If you like slides and 🕵 detective stories, check out
+["Jump the F5 ship straight into the real-time hyperspace with Blazor and Fusion" talk](https://alexyakunin.github.io/Stl.Fusion.Materials/Slides/Fusion_v2/Slides.html) -
+it explains how all these problems are connected and
+describes how you can code a simplified version of 
+Fusion's key abstraction in C#.
 
 ### Build a Real-Time UI
 
@@ -64,11 +91,9 @@ Read ["Why real-time UI is inevitable future for web apps?"](https://medium.com/
 compares "raw" [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/) - 
 based Data Access Layer (DAL) against its version relying on Fusion. 
 Both tests run *almost* identical code - in fact, the only difference is that Fusion
-version of this test uses Fusion-provided proxy wrapping the 
+version of this test uses Fusion-provided [Compute Service] wrapping the 
 [`UserService`](https://github.com/servicetitan/Stl.Fusion/blob/master/tests/Stl.Fusion.Tests/Services/UserService.cs)
 (the DAL used in this test) instead of the actual type.
-
-The performance difference looks shocking at first:
 
 ![](docs/img/Performance.gif)
 
@@ -76,41 +101,34 @@ The speedup is:
 * ~31,500x for [Sqlite EF Core Provider](https://www.sqlite.org/index.html) 
 * ~1,000x for [In-memory EF Core Provider](https://docs.microsoft.com/en-us/ef/core/providers/in-memory/?tabs=dotnet-core-cli)  
 
-Such a speedup is possible because Fusion ensures that every output 
-Fusion service produces or consumes &ndash; even the intermediate one &ndash;
-**is computed just once** and **reused without recomputation** while it stays
-consistent with the ground truth.
-
-In other words, Fusion acts as a **transparent cache + incremental build system** 
-for any computation your code runs, and as you can see, it's fast enough to be
-able to speed up even a code relying on in-memory EF Core provider by 1000x!
-
-Note that:
-* Similarly to real-time updates, *you get this speedup for free* in terms of extra code.
-* You also get *almost always consistent* cache. 
-  It's still an *eventually consistent* cache, of course, but the inconsistency periods 
-  for cache entries are so short that normally don't need to worry about the inconsistencies.
-* The speedup you're expected to see in production may differ from these numbers a lot. 
-  Even though the results presented here are absolutely real, they are produced on a synthetic test.
+Fusion's transparent caching ensures every computation your code runs
+re-uses as many of cached dependencies as possible & caches its own output.
+As you can see, this feature allows to speed up even a very basic logic 
+(fetching a single random user) using **in-memory** EF Core provider by **1000x**,
+and the more complex logic you have, the larger performance gain is.
 
 ["The Ungreen Web: Why our web apps are terribly inefficient?"](https://alexyakunin.medium.com/the-ungreen-web-why-our-web-apps-are-terribly-inefficient-28791ed48035?source=friends_link&sk=74fb46086ca13ff4fea387d6245cb52b) lits more light on why this matters.
 
 ## How Fusion works?
 
-[![](./docs/img/FusionSlides.jpg)](https://alexyakunin.github.io/Stl.Fusion.Materials/Slides/Fusion_v2/Slides.html)
-
-If you prefer video, check out 
-["Jump the F5 ship straight into the real-time hyperspace with Blazor and Fusion" talk](https://www.youtube.com/watch?v=HRknXVXla9s).
-A less time-consuming alternative to this talk is 
-[its slides](https://alexyakunin.github.io/Stl.Fusion.Materials/Slides/Fusion_v2/Slides.html).
-
-Fusion provides three key abstractions:
+Fusion provides 4 key abstractions:
 * [Compute Services] are services exposing methods "backed" by Fusion's 
-  version of "computed observables". Compute Services are responsible for 
-  "spawning" parts of the state on-demand.
-* [Replica Services] - remote proxies of Compute Services.
-  They allow remote clients to consume ("observe") the parts of server-side state.
-  They typically "substitute" similar [Compute Services] on the client side.
+  version of "computed observables". When such methods run, they produce
+  [Computed Values] (instances of `IComputed<T>`) under the hood, even
+  though the results they return are usual (i.e. are of their return type). 
+  But `IComputed<T>` instances are cached and reused on future calls to 
+  the same method with the same arguments; moreover, they form dependency graphs, 
+  so once some "deep" `IComputed<T>` gets invalidated, all of its dependencies
+  are invalidated too.
+* [Replica Services] are remote proxies of Compute Services.
+  They substitute [Compute Services] they "replicate" on the client side
+  exposing their interface, but more importantly, they also "connect" 
+  `IComputed<T>` instances they create on the client with their server-side 
+  counterparts.
+  Any Replica Service is also a Compute Service, so any other client-side 
+  Compute Service method that calls it becomes dependent on its output too.
+  And since any Compute Service never runs the same computation twice
+  (unless it is invalidated), they kill any network chattiness.
 * `IState<T>` - more specifically, `IComputedState<T>` and `IMutableState<T>`.
   States are quite similar to observables in Knockout or MobX, but
   designed to follow Fusion game rules. And yes, you mostly use them in UI and
@@ -133,30 +151,11 @@ Fusion provides three key abstractions:
   so any dependent [Computed Value] is available for GC unless it's referenced by something 
   else (i.e. used).
 
-All above make it possible to use [`IComputed<T>`] on the server side &ndash; 
+Above properties make it possible to use [`IComputed<T>`] on the server side &ndash; 
 you don't have to synchronize access to it, you can use it everywhere, including
 async functions, and you don't need to worry about GC.
 
-But there is more &ndash; any [Computed Value]:
-
-* **Is computed just once** &ndash; when you request the same Computed Value at the same time 
-  from multiple (async) threads and it's not cached yet, just one of these threads will
-  actually run the computation.  Every other async thread will await till its completion 
-  and return the newly cached instance.
-* **Updated on demand** &ndash; once you have an [`IComputed<T>`], you can ask for its
-  consistent version at any time. If the current version is consistent, you'll get the 
-  same object, otherwise you'll get a *newly computed* consistent version, 
-  and every other version of it  is guaranteed to be marked inconsistent.
-  At glance, it doesn't look like a useful property, but together with immutability and
-  "computed just once" model, it de-couples invalidations (change notifications) 
-  from updates, so ultimately, you are free to decide for how long to delay the 
-  update once you know certain state is inconsistent.
-* **Supports remote replicas** &ndash; any Computed Value instance can be *published*, 
-  which allows any other code that knows the publication endpoint and publication ID 
-  to create a replica of this [`IComputed<T>`] instance in their own process. 
-  [Replica Services] mentioned above rely on this feature.
-
-### Why these features are game changing?
+## Why these features are game changing?
 
 Real-time typically implies you use events to deliver change 
 notifications to every client which state might be impacted by
@@ -202,7 +201,7 @@ Check out [how Fusion differs from SignalR](https://medium.com/@alexyakunin/ow-s
 &ndash; this post takes a real app example (Slack-like chat) and describes
 what has to be done in both these cases to implement it.
 
-### Does Fusion scale?
+## Does Fusion scale?
 
 Yes. [MMORPG] example provided earlier hints on how Fusion-based apps scale. 
 But contrary to games, web apps rarely have a strong upper limit on update delay
@@ -218,9 +217,10 @@ to see a much more robust description of how Fusion scales.
 ## Enough talk. Show me the code!
 
 Most of Fusion-based code lives in [Compute Services].
-Such services are resolved by DI containers to their Fusion-generated proxies,
-which allows their methods to track dependencies on other compute service methods 
-they call.
+Such services are resolved via DI containers to their Fusion-generated proxies
+producing [Computed Values] while they run.
+Proxies cache and reuse these `IComputed<T>` instances on future calls to 
+the same method with the same arguments.
 
 A typical Compute Service looks as follows:
 
@@ -413,6 +413,7 @@ please help us to make it better by completing [Fusion Feedback Form]
 [Compute Service]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/Part01.md
 [`IComputed<T>`]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/Part02.md
 [Computed Value]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/Part02.md
+[Computed Values]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/Part02.md
 [Live State]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/Part03.md
 [Replica Services]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/Part04.md
 [Replica Service]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/Part04.md
@@ -427,5 +428,6 @@ please help us to make it better by completing [Fusion Feedback Form]
 [MMORPG]: https://en.wikipedia.org/wiki/Massively_multiplayer_online_role-playing_game
 
 [Gitter]: https://gitter.im/Stl-Fusion/community
+[Discord]: https://discord.gg/EKEwv6d
 [Discord Server]: https://discord.gg/EKEwv6d
 [Fusion Feedback Form]: https://forms.gle/TpGkmTZttukhDMRB6
