@@ -49,7 +49,7 @@ solution for a number of problems:
 | 🚀 Real-time update notifications | SignalR, Pusher, ... |
 | 📇 In-memory cache | Redis, memcached, ... |
 | 🤹 Real-time cache invalidation | No good solutions - <br/>it's an [infamously hard problem](https://martinfowler.com/bliki/TwoHardThings.html) |
-| 📨 Network chattiness | A fair amount of code |
+| 🤬 Network chattiness | A fair amount of code |
 | 📪 Automatic & transparent pub/sub | A fair amount of code |
 
 All of this is achieved with a ! 
