@@ -41,7 +41,7 @@ completely transparently for you, forming an evolving dependency graph
 that spans through multiple machines.
 
 Surprisingly, this 🦄 **single abstraction** is a one-size-fits-all 
-solution for a number of hard problems:
+solution for a number of problems:
 
 | Problem | So you don't need... |
 |-|-|
