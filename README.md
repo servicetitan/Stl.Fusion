@@ -1,4 +1,4 @@
-# Fusion: an "impossible" distributed state sync API
+# 🌞 Fusion: an "impossible" distributed state sync API
 
 [![Build](https://github.com/servicetitan/Stl.Fusion/workflows/Build/badge.svg)](https://github.com/servicetitan/Stl.Fusion/actions?query=workflow%3A%22Build%22)
 [![Coverage](https://codecov.io/gh/servicetitan/Stl.Fusion/branch/master/graph/badge.svg)](https://codecov.io/gh/servicetitan/Stl.Fusion)
@@ -13,7 +13,7 @@ Fusion is a [.NET 5 / .NET Core 3.1](https://en.wikipedia.org/wiki/.NET_Core) li
 that implements a new real-time distributed state sync abstraction.
 **Contrary to MobX and Recoil, it's designed to track and sync changes in arbitrary large state** -
 in fact, the state it tracks typically covers every piece of data Fusion application has, 
-and "lives" your servers, microservices, service meshes, and even on the clients!
+and "lives" on your servers, microservices, service meshes, and even on the clients!
 Obviously, there is no way to fit such a large state in RAM, so Fusion:
 - Spawns the *observed part* of the state on-demand
 - Ensures the *dependency graph* of this part of the state *stays in memory*
@@ -69,7 +69,7 @@ it explains how all these problems are connected and
 describes how you can code a simplified version of 
 Fusion's key abstraction in C#.
 
-## What is your evidence?<sup><a href="https://www.youtube.com/watch?v=7O-aNYTtx44<">*</a></sup>
+## "What is your evidence?"<sup><a href="https://www.youtube.com/watch?v=7O-aNYTtx44<">*</a></sup>
 
 This is [Fusion+Blazor Sample](https://github.com/servicetitan/Stl.Fusion.Samples#3-blazor-samples)
 delivering real-time updates to 3 browser windows:
