@@ -114,7 +114,7 @@ and the more complex logic you have, the larger performance gain is.
 
 ## How Fusion works?
 
-🦄 Single abstraction we've mentioned actually consists of 4 components 
+Single abstraction we've mentioned actually consists of 4 components 
 working together:
 1. [Compute Services] are services exposing methods "backed" by Fusion's 
   version of "computed observables". When such methods run, they produce
