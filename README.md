@@ -13,7 +13,7 @@
 [![Discord Server](https://img.shields.io/discord/729970863419424788.svg)](https://discord.gg/EKEwv6d)  
 
 Fusion is a [.NET 5 / .NET Core 3.1](https://en.wikipedia.org/wiki/.NET_Core) library
-implementing a new and *seemingly impossible* state change tracking abstraction. 
+that implements a new, seemingly impossible state change tracking abstraction. 
 **Contrary to MobX and Recoil, it's designed to track changes in arbitrary large state** -
 in fact, the state it tracks typically includes every piece of data Fusion app has, 
 and lives on your servers, microservices, service meshes, and even on the clients!
