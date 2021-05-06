@@ -24,9 +24,7 @@
   <ItemGroup>
     <Compile Remove="ClientTimeServiceTest.cs" />
     <Compile Remove="ComputedInterceptorTest.cs" />
-    <Compile Remove="DbContextTest.cs" />
     <Compile Remove="EdgeCaseServiceTest.cs" />
-    <Compile Remove="FusionTestBase.cs" />
     <Compile Remove="KeyValueModelTest.cs" />
     <Compile Remove="PerformanceTest.cs" />
     <Compile Remove="PublicationTest.cs" />
@@ -35,17 +33,18 @@
     <Compile Remove="ScreenshotServiceTest.cs" />
     <Compile Remove="ServerTimeModelTest.cs" />
     <Compile Remove="Services\EdgeCaseController.cs" />
-    <Compile Remove="Services\FusionTestWebHost.cs" />
     <Compile Remove="Services\IEdgeCaseClient.cs" />
     <Compile Remove="Services\IScreenshotServiceClient.cs" />
     <Compile Remove="Services\IStringKeyValueClient.cs" />
-    <Compile Remove="Services\ITimeServiceClient.cs" />
     <Compile Remove="Services\ScreenshotController.cs" />
     <Compile Remove="Services\StringKeyValueController.cs" />
     <Compile Remove="Services\TimeController.cs" />
-    <Compile Remove="SimplestProviderTest.cs" />
     <Compile Remove="UserProviderTest.cs" />
     <Compile Remove="WebSocketTest.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="UIModels\ServerTimeModel.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -61,6 +60,9 @@
     <ProjectReference Include="..\..\src\Stl.Fusion.Blazor\Stl.Fusion.Blazor.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.Client\Stl.Fusion.Client.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.Server\Stl.Fusion.Server.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net471'">
+    <ProjectReference Include="..\..\src\Stl.Fusion.Server.Fx\Stl.Fusion.Server.Fx.csproj" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Stl.Fusion\Stl.Fusion.csproj" />

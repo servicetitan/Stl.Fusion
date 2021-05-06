@@ -17,7 +17,9 @@ using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Messages;
 using Stl.Fusion.Client;
 using Stl.Fusion.EntityFramework;
+#if NETCOREAPP 
 using Stl.Fusion.EntityFramework.Npgsql;
+#endif
 using Stl.Fusion.Extensions;
 using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
@@ -177,7 +179,11 @@ namespace Stl.Fusion.Tests
                             });
                         break;
                     case FusionTestDbType.PostgreSql:
+#if NETCOREAPP
                         builder.UseNpgsql(PostgreSqlConnectionString);
+#else
+                        throw Errors.SupportedOnlyInNetCore();
+#endif
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
@@ -193,7 +199,11 @@ namespace Stl.Fusion.Tests
                     });
                     b.AddKeyValueStore();
                     if (Options.DbType == FusionTestDbType.PostgreSql)
+#if NETCOREAPP
                         b.AddNpgsqlDbOperationLogChangeTracking();
+#else
+                        throw Errors.SupportedOnlyInNetCore();
+#endif
                     else
                         b.AddFileBasedDbOperationLogChangeTracking();
                     if (!Options.UseInMemoryAuthService)

@@ -20,6 +20,7 @@ namespace Stl.Fusion.Tests.UIModels
         public ServerTimeModel2(DateTime time) : base(time) { }
     }
 
+
     [State]
     public class ServerTimeModel1State : LiveState<ServerTimeModel1>
     {

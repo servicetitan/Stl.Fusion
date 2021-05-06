@@ -3,13 +3,16 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Hosting.Server;
-using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Stl.Async;
 using Stl.IO;
+
+#if NETCOREAPP
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
+#endif
 
 namespace Stl.Testing
 {
@@ -86,6 +89,8 @@ namespace Stl.Testing
                 options.ValidateScopes = true;
                 options.ValidateOnBuild = true;
             });
+
+#if NETCOREAPP
             builder.ConfigureWebHost(b => {
                 var serverUri = ServerUriLazy.IsValueCreated
                     ? ServerUri.ToString()
@@ -95,11 +100,19 @@ namespace Stl.Testing
                 b.UseContentRoot(emptyDir);
                 ConfigureWebHost(b);
             });
+#endif
+            
+            
             ConfigureHost(builder);
             return builder;
         }
-
+        
         protected virtual void ConfigureHost(IHostBuilder builder) { }
+
+#if NETCOREAPP
         protected virtual void ConfigureWebHost(IWebHostBuilder builder) { }
+#endif
+        
+        
     }
 }

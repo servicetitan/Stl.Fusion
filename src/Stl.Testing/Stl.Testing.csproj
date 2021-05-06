@@ -14,8 +14,6 @@
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
     <Compile Remove="ApplicationPartsLogger.cs" />
-    <Compile Remove="TestWebHost.cs" />
-    <Compile Remove="WebTestEx.cs" />
   </ItemGroup>
 
   <ItemGroup>

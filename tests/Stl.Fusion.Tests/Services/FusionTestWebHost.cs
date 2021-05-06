@@ -1,11 +1,15 @@
 using System.Reflection;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Stl.Collections;
 using Stl.Fusion.Server;
 using Stl.Testing;
+
+#if NETCOREAPP
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+#endif
 
 namespace Stl.Fusion.Tests.Services
 {
@@ -15,6 +19,8 @@ namespace Stl.Fusion.Tests.Services
 
         public FusionTestWebHost(IServiceCollection baseServices)
             => BaseServices = baseServices;
+
+#if NETCOREAPP
 
         protected override void ConfigureHost(IHostBuilder builder)
         {
@@ -52,5 +58,48 @@ namespace Stl.Fusion.Tests.Services
                 });
             });
         }
+#endif
+
+#if NET461_OR_GREATER
+        protected override void ConfigureHost(IHostBuilder builder)
+        {
+            builder.ConfigureServices(services => {
+                // Copy all services from the base service provider here
+                services.AddRange(BaseServices);
+
+                // Since we copy all services here,
+                // only web-related ones must be added to services
+                services.AddFusion(fusion => {
+                    fusion.AddWebServer();
+                    // TODO: restore later
+                    //fusion.AddAuthentication(auth => auth.AddServer());
+                });
+
+                // TODO: restore later
+                //// Web
+                //services.AddRouting();
+                //services.AddControllers().AddApplicationPart(Assembly.GetExecutingAssembly());
+
+                //// Testing
+                //services.AddHostedService<ApplicationPartsLogger>();
+            });
+        }
+
+        // TODO: restore later with using IAppBuilder
+        //protected override void ConfigureWebHost(IWebHostBuilder builder)
+        //{
+        //    builder.Configure((ctx, app) => {
+        //        app.UseWebSockets();
+        //        app.UseFusionSession();
+
+        //        // API controllers
+        //        app.UseRouting();
+        //        app.UseEndpoints(endpoints => {
+        //            endpoints.MapControllers();
+        //            endpoints.MapFusionWebSocketServer();
+        //        });
+        //    });
+        //}
+#endif
     }
 }

@@ -61,12 +61,12 @@
     <Legacy>true</Legacy>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Legacy)'== 'true'">
+  <!--<PropertyGroup Condition="'$(Legacy)'== 'true'">
     <SigningFilePath>$(SolutionDir)</SigningFilePath>
     <SigningFileName>SharedKey.snk</SigningFileName>
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>$(SigningFilePath)$(SigningFileName)</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
+  </PropertyGroup>-->
 
   <ItemGroup Condition="$(DeterministicSourcePaths) == 'true'">
     <SourceRoot Include="$(SolutionDir)" />
