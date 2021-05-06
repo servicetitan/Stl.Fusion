@@ -60,7 +60,6 @@ a number of well-known problems:
 | 📪 Automatic & transparent pub/sub | A fair amount of code |
 | 🤬 Network chattiness | A fair amount of code |
 | 🛸 Blazor WebAssembly and <br/>&nbsp;✈ Blazor Server support | No good alternatives |
-|||
 
 We know it's hard to believe this is true &ndash; that's why there are
 many visual proofs in the remaining part of this document.
