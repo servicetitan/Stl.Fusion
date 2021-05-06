@@ -13,44 +13,52 @@
 [![Discord Server](https://img.shields.io/discord/729970863419424788.svg)](https://discord.gg/EKEwv6d)  
 
 Fusion is a [.NET 5 / .NET Core 3.1](https://en.wikipedia.org/wiki/.NET_Core) library
-providing a new change tracking abstraction built in assumption that **every piece of data 
-you have is a part of the observable state / model**, and since there is 
-no way to fit such a huge state in RAM, Fusion:
-* Spawns the **observed part** of this state on-demand
-* **Holds the dependency graph of any observed state in memory** to make sure 
-  every dependency of this state triggers cascading invalidation once it gets 
-  changed.
-* And finally, **it does all of this automatically and transparently for you**, 
-  so Fusion-based code is almost identical to the code you'd write without it.
+implementing a new state change tracking abstraction, that works on the client,
+server, and even on a cluster of machines. 
+**Contrary to MobX and Recoil, it's designed to track changes in arbitrary large state -
+in fact, it typically includes every piece of data Fusion app stores!** 
+And since there is no way to fit such state in RAM, Fusion:
+- Spawns the *observed part* of the state on-demand
+- Ensures the *dependency graph* of this part of state stays in memory
+- Destroys every part of *dependency graph* that isn't "used" by one of "observed" components.
 
-This is quite similar to what any [MMORPG] game engine does: 
-even though the complete game state is huge, it's still possible to 
-run the game in real time for 1M+ players, because every player observes 
-a tiny fraction of a complete game state, and thus all you need is to ensure
-this part of the state fits in RAM + you have enough computing power 
-to process state changes for every player.
+[Lot traceability](https://en.wikipedia.org/wiki/Traceability) is probably the 
+best real-world analogy of what Fusion does:
+- For every "product" 🥗 ([computed value]), Fusion keeps track of
+  its "recipe" 📝 (function and its arguments), but more importantly, 
+  all of its "ingredients" 🥬🥦🍅, i.e. intermediate or "basic" products
+  used to produce it: 🥗 = 📝←🥬🥦🍅
+- Now imagine 🍅 gets "contaminated" (invalidated = marked as changed). 
+  Once this happens, Fusion immediately marks everything that uses 🍅 
+  directly or indirectly as "contaminated" as well.
+- So next time you call 📝 with the same set of parameters, it will
+  produce a new 🥗 using new 🍅 instead of reusing the old 🥗.
 
-Under the hood, Fusion "backs" any result of your internal or public API 
-by [`IComputed<T>`] instance, which stores the result of this computation,
-and tells when this result becomes inconsistent with the ground truth,
-so you might want to recompute it. 
-You rarely need to deal with this type directly - contrary to `async` methods, 
-Fusion-based services return the same result type as they would return normally,
-and `IComputed<T>` instances are created, consumed, and destroyed behind the scenes
-completely transparently for you, forming an evolving dependency graph 
-that spans through multiple machines.
+Fusion's key innovation is that 
+**it does all of this automatically and transparently for you,**
+so Fusion-based code is almost identical to the code you'd write without it.
+Not only it captures dependencies automatically, but also 
+"spawns" and "forgets" them, and all of this is happening
+behind the scenes while your code runs.
 
-Surprisingly, this 🦄 **single abstraction** is a one-size-fits-all 
-solution for a number of problems:
+In above lot traceability example this would correspond to automatic
+trace capturing for every intermediate product when it's produced, 
+and forgetting it as soon as all the "final" products using this
+"ingredient" are consumed.
+
+Surprisingly, this 🦄 single abstraction helps to solve
+a number of well-known problems:
 
 | Problem | So you don't need... |
 |-|-|
 | 📱 Client-side state management | Fluxor, Redux, MobX, Recoil, ... |
-| 🚀 Real-time update notifications | SignalR, Pusher, ... |
+| 🚀 Real-time updates | SignalR, Pusher, ... |
 | 📇 In-memory cache | Redis, memcached, ... |
 | 🤹 Real-time cache invalidation | No good solutions - <br/>it's an [infamously hard problem](https://martinfowler.com/bliki/TwoHardThings.html) |
-| 🤬 Network chattiness | A fair amount of code |
 | 📪 Automatic & transparent pub/sub | A fair amount of code |
+| 🤬 Network chattiness | A fair amount of code |
+| 🛸 Blazor WebAssembly and <br/>&nbsp;✈ Blazor Server support | No good alternatives |
+|||
 
 We know it's hard to believe this is true &ndash; that's why there are
 many visual proofs in the remaining part of this document.
@@ -64,40 +72,37 @@ it explains how all these problems are connected and
 describes how you can code a simplified version of 
 Fusion's key abstraction in C#.
 
-### Build a Real-Time UI
+## What is your evidence?<sup><a href="https://www.youtube.com/watch?v=7O-aNYTtx44<">*</a></sup>
 
-This is [Fusion+Blazor Sample](https://github.com/servicetitan/Stl.Fusion.Samples#3-blazor-samples),
+This is [Fusion+Blazor Sample](https://github.com/servicetitan/Stl.Fusion.Samples#3-blazor-samples)
 delivering real-time updates to 3 browser windows:
 
 ![](docs/img/Stl-Fusion-Chat-Sample.gif)
 
-The sample supports **both (!)** Server-Side Blazor and Blazor WebAssembly 
-[hosting modes](https://docs.microsoft.com/en-us/aspnet/core/blazor/hosting-models?view=aspnetcore-3.1)
-&ndash; you can switch the mode on its "Home" page.
+<img src="https://img.shields.io/badge/-Live!-red" valign="middle"> Play with [live version of this sample](https://fusion-samples.servicetitan.com) right now!
+
+The sample supports [**both** Blazor Server and Blazor WebAssembly 
+hosting modes](https://docs.microsoft.com/en-us/aspnet/core/blazor/hosting-models?view=aspnetcore-3.1).
+And even if you use different modes in different windows, 
+Fusion still keeps in sync literally every piece of shared state there,
+including sign-in state:
 
 ![](https://github.com/servicetitan/Stl.Fusion.Samples/raw/master/docs/img/Samples-Blazor-Auth.gif)
 
-<img src="https://img.shields.io/badge/-Live!-red" valign="middle"> Play with [live version of this sample](https://fusion-samples.servicetitan.com) right now!
-
-<img src="https://img.shields.io/badge/-New!-brightgreen" valign="middle"> Check out [Board Games] - the newest Fusion sample that implements both Blazor Server and WASM modes, 2 games, chat, online presence, OAuth sign-in, user session tracking, and a number of other 100% real-time features. All of this is powered by Fusion + just 35 lines of code related to real-time updates!
-
-Read ["Why real-time UI is inevitable future for web apps?"](https://medium.com/@alexyakunin/features-of-the-future-web-apps-part-1-e32cf4e4e4f4?source=friends_link&sk=65dacdbf670ef9b5d961c4c666e223e2) to learn why "Refresh" is so obsolete nowadays.
-
-### Speedup Your Service By Caching Everything
+<img src="https://img.shields.io/badge/-New!-brightgreen" valign="middle"> If you're looking for more complex example, check out [Board Games] - it's the newest Fusion sample that runs on 3-node GKS cluster and implements 2 games, chat, online presence, OAuth sign-in, user session tracking and a number of other 100% real-time features. All of this is powered by Fusion + **just 35 lines of code related to real-time updates!**
 
 [A small benchmark in Fusion test suite](https://github.com/servicetitan/Stl.Fusion/blob/master/tests/Stl.Fusion.Tests/PerformanceTest.cs) 
-compares "raw" [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/) - 
-based Data Access Layer (DAL) against its version relying on Fusion. 
-Both tests run *almost* identical code - in fact, the only difference is that Fusion
-version of this test uses Fusion-provided [Compute Service] wrapping the 
-[`UserService`](https://github.com/servicetitan/Stl.Fusion/blob/master/tests/Stl.Fusion.Tests/Services/UserService.cs)
-(the DAL used in this test) instead of the actual type.
+compares "raw" [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/)-based
+Data Access Layer (DAL) against its version relying on Fusion:
 
 ![](docs/img/Performance.gif)
 
-The speedup is:
-* ~31,500x for [Sqlite EF Core Provider](https://www.sqlite.org/index.html) 
-* ~1,000x for [In-memory EF Core Provider](https://docs.microsoft.com/en-us/ef/core/providers/in-memory/?tabs=dotnet-core-cli)  
+The speedup you see is:
+* ~31,500x for [Sqlite EF Core Provider](https://www.sqlite.org/index.html)
+* ~1,000x for [In-memory EF Core Provider](https://docs.microsoft.com/en-us/ef/core/providers/in-memory/?tabs=dotnet-core-cli)
+* These numbers are 
+  [slightly smaller](https://alexyakunin.github.io/Stl.Fusion.Materials/Slides/Fusion_v2/Slides.html#109) 
+  on the most recent Fusion version, but the difference is still huge.
 
 Fusion's transparent caching ensures every computation your code runs
 re-uses as many of cached dependencies as possible & caches its own output.
@@ -105,12 +110,11 @@ As you can see, this feature allows to speed up even a very basic logic
 (fetching a single random user) using **in-memory** EF Core provider by **1000x**,
 and the more complex logic you have, the larger performance gain is.
 
-["The Ungreen Web: Why our web apps are terribly inefficient?"](https://alexyakunin.medium.com/the-ungreen-web-why-our-web-apps-are-terribly-inefficient-28791ed48035?source=friends_link&sk=74fb46086ca13ff4fea387d6245cb52b) lits more light on why this matters.
-
 ## How Fusion works?
 
-Fusion provides 4 key abstractions:
-* [Compute Services] are services exposing methods "backed" by Fusion's 
+🦄 Single abstraction we've mentioned actually consists of 4 components 
+working together:
+1. [Compute Services] are services exposing methods "backed" by Fusion's 
   version of "computed observables". When such methods run, they produce
   [Computed Values] (instances of `IComputed<T>`) under the hood, even
   though the results they return are usual (i.e. are of their return type). 
@@ -118,7 +122,7 @@ Fusion provides 4 key abstractions:
   the same method with the same arguments; moreover, they form dependency graphs, 
   so once some "deep" `IComputed<T>` gets invalidated, all of its dependencies
   are invalidated too.
-* [Replica Services] are remote proxies of Compute Services.
+2. [Replica Services] are remote proxies of Compute Services.
   They substitute [Compute Services] they "replicate" on the client side
   exposing their interface, but more importantly, they also "connect" 
   `IComputed<T>` instances they create on the client with their server-side 
@@ -127,11 +131,11 @@ Fusion provides 4 key abstractions:
   Compute Service method that calls it becomes dependent on its output too.
   And since any Compute Service never runs the same computation twice
   (unless it is invalidated), they kill any network chattiness.
-* `IState<T>` - more specifically, `IComputedState<T>` and `IMutableState<T>`.
+3. `IState<T>` - more specifically, `IComputedState<T>` and `IMutableState<T>`.
   States are quite similar to observables in Knockout or MobX, but
   designed to follow Fusion game rules. And yes, you mostly use them in UI and
   almost never - on the server-side.
-* And finally, [`IComputed<T>`] &ndash; an observable [Computed Value]
+4. And finally, [`IComputed<T>`] &ndash; an observable [Computed Value]
   that's in some ways similar to the one you can find in Knockout, MobX, or Vue.js,
   but very different, if you look at its fundamental properties.
     
@@ -149,51 +153,9 @@ Fusion provides 4 key abstractions:
   so any dependent [Computed Value] is available for GC unless it's referenced by something 
   else (i.e. used).
 
-Above properties make it possible to use [`IComputed<T>`] on the server side &ndash; 
+All of this makes it possible to use [`IComputed<T>`] on the server side &ndash; 
 you don't have to synchronize access to it, you can use it everywhere, including
 async functions, and you don't need to worry about GC.
-
-## Why these features are game changing?
-
-Real-time typically implies you use events to deliver change 
-notifications to every client which state might be impacted by
-this change. Which means you have to:
-
-1. *Know which clients to notify about a particular event.* This alone is 
-   a fairly hard problem - in particular, you need to know what every client
-   "sees" now. Sending events for anything that's out of the "viewport" 
-   (e.g. a post you may see, but don't see right now) doesn't make sense,
-   because it's a huge waste that severely limits the scalability. 
-   Similarly to [MMORPG], the "visible" part of the state is 
-   tiny in comparison to the "available" one for most of web apps too.
-2. *Throttle down the rate of certain events* 
-   (e.g. "like" events for every popular post).
-   Easy on paper, but more complex if you want to ensure the user sees 
-   *eventually consistent view* on your system. 
-   In particular, this implies that every event you send "summarizes" 
-   the changes made by it and every event you discard, so likely,
-   you'll need a dedicated type, producer, and handlers for each of such 
-   events.
-3. *Apply events to the client-side state.* Kind of an easy problem too,
-   but note that you should do the same on server side as well, and
-   keeping the logic in two completely different handlers in sync 
-   for every event is a source of potential problems in future.
-4. *Make UI to properly update its event subscriptions on every
-   client-side state change.* This is what client-side code has
-   to do to ensure p.1 properly works on server side. And again,
-   this looks like a solvable problem on paper, but things get 
-   much more complex if you want to ensure your UI provides 
-   a truly eventually consistent view. Just think in which order
-   you'd run "query the initial data" and "subscribe to the subsequent events"
-   actions to see some issues here.
-   
-And interestingly, Fusion solves all these problems using a single
-abstraction allowing it to identifying and track data dependencies 
-automatically. Not only it knows a "recipe" of how every bit of data 
-user sees in the "viewport" is produced, but also the whole graph of
-dependencies of this data down to its very basic "ingredients". 
-So once one of such ingredients changes, Fusion knows how to identify
-everything impacted by this change.
 
 Check out [how Fusion differs from SignalR](https://medium.com/@alexyakunin/ow-similar-is-stl-fusion-to-signalr-e751c14b70c3?source=friends_link&sk=241d5293494e352f3db338d93c352249)
 &ndash; this post takes a real app example (Slack-like chat) and describes
@@ -201,12 +163,12 @@ what has to be done in both these cases to implement it.
 
 ## Does Fusion scale?
 
-Yes. [MMORPG] example provided earlier hints on how Fusion-based apps scale. 
-But contrary to games, web apps rarely have a strong upper limit on update delay
-&ndash; at least for a majority of content they present. 
-This means you can always increase these delays to throttle down the rate of 
-outgoing invalidation and update messages, and vice versa.
-In other words, Fusion-based web apps should scale much better than MMORPG.
+Yes. Fusion does something similar to what any [MMORPG] game engine does: 
+even though the complete game state is huge, it's still possible to 
+run the game in real time for 1M+ players, because every player observes 
+a tiny fraction of a complete game state, and thus all you need is to ensure
+this part of the state fits in RAM + you have enough computing power 
+to process state changes for every player.
 
 Check out 
 ["Scaling Fusion Services" part of the Tutorial](https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/Part08.md)
@@ -366,16 +328,53 @@ from [HelloBlazorServer sample](https://github.com/servicetitan/Stl.Fusion.Sampl
 - [ChatMessageCountBadge.razor](https://github.com/alexyakunin/BoardGames/blob/main/src/UI/Chat/ChatMessageCountBadge.razor) 
 and [AppUserBadge.razor](https://github.com/alexyakunin/BoardGames/blob/main/src/UI/Game/AppUserBadge.razor) from [Board Games].
 
-### What all of this means for the UI?
+## Why Fusion is a game changer for real-time apps?
+
+Real-time typically implies you use events to deliver change 
+notifications to every client which state might be impacted by
+this change. Which means you have to:
+
+1. *Know which clients to notify about a particular event.* This alone is 
+   a fairly hard problem - in particular, you need to know what every client
+   "sees" now. Sending events for anything that's out of the "viewport" 
+   (e.g. a post you may see, but don't see right now) doesn't make sense,
+   because it's a huge waste that severely limits the scalability. 
+   Similarly to [MMORPG], the "visible" part of the state is 
+   tiny in comparison to the "available" one for most of web apps too.
+2. *Apply events to the client-side state.* Kind of an easy problem too,
+   but note that you should do the same on server side as well, and
+   keeping the logic in two completely different handlers in sync 
+   for every event is a source of potential problems in future.
+3. *Make UI to properly update its event subscriptions on every
+   client-side state change.* This is what client-side code has
+   to do to ensure p.1 properly works on server side. And again,
+   this looks like a solvable problem on paper, but things get 
+   much more complex if you want to ensure your UI provides 
+   a truly eventually consistent view. Just think in which order
+   you'd run "query the initial data" and "subscribe to the subsequent events"
+   actions to see some issues here.
+4. *Throttle down the rate of certain events* 
+   (e.g. "like" events for every popular post).
+   Easy on paper, but more complex if you want to ensure the user sees 
+   *eventually consistent view* on your system. 
+   In particular, this implies that every event you send "summarizes" 
+   the changes made by it and every event you discard, so likely,
+   you'll need a dedicated type, producer, and handlers for each of such 
+   events.
+   
+And Fusion solves all these problems using a single abstraction allowing it 
+to identifying and track data dependencies automatically. 
+
+## Why Fusion is a game changer for Blazor apps with complex UI?
 
 **Fusion allows you to create truly independent UI components.**
 You can embed them in any parts of UI you like without any need
 to worry of how they'll interact with each other.
 
-So **Fusion is one of crucial tools needed to build 
+**This makes Fusion a perfect fit for
 [micro-frontends](https://martinfowler.com/articles/micro-frontends.html)
 on Blazor**: the ability to create loosely coupled UI components 
-is paramount in any micro-frontend.
+is paramount there.
 
 Besides that, if your invalidation logic is correct, 
 **Fusion guarantees that your UI state is eventually consistent.** 
