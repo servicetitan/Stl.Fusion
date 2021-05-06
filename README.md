@@ -72,7 +72,7 @@ it explains how all these problems are connected and
 describes how you can code a simplified version of 
 Fusion's key abstraction in C#.
 
-## What is your evidence?<sup><a href="https://www.youtube.com/watch?v=7O-aNYTtx44<">*</a></sup>
+## What is your evidence?<sup><a href="https://www.youtube.com/watch?v=7O-aNYTtx44<" target="_blank">*</a></sup>
 
 This is [Fusion+Blazor Sample](https://github.com/servicetitan/Stl.Fusion.Samples#3-blazor-samples)
 delivering real-time updates to 3 browser windows:
