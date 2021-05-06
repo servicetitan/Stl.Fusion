@@ -1,22 +1,19 @@
-![](docs/img/Banner.gif)
+# Fusion: an "impossible" distributed state sync API
 
-> All project updates are published on its [Discord Server]; it's also the best place for Q/A.\
-> [![Build](https://github.com/servicetitan/Stl.Fusion/workflows/Build/badge.svg)](https://github.com/servicetitan/Stl.Fusion/actions?query=workflow%3A%22Build%22)
-> [![Coverage](https://codecov.io/gh/servicetitan/Stl.Fusion/branch/master/graph/badge.svg)](https://codecov.io/gh/servicetitan/Stl.Fusion)
-> [![NuGet Version](https://img.shields.io/nuget/v/Stl.Fusion)](https://www.nuget.org/packages?q=Owner%3Aservicetitan+Tags%3Astl_fusion)
-
-## What is Fusion?
-
+[![Build](https://github.com/servicetitan/Stl.Fusion/workflows/Build/badge.svg)](https://github.com/servicetitan/Stl.Fusion/actions?query=workflow%3A%22Build%22)
+[![Coverage](https://codecov.io/gh/servicetitan/Stl.Fusion/branch/master/graph/badge.svg)](https://codecov.io/gh/servicetitan/Stl.Fusion)
+[![NuGet Version](https://img.shields.io/nuget/v/Stl.Fusion)](https://www.nuget.org/packages?q=Owner%3Aservicetitan+Tags%3Astl_fusion)
 [![MIT License](https://img.shields.io/github/license/servicetitan/Stl.Fusion?)](https://github.com/servicetitan/Stl.Fusion/blob/master/LICENSE)
+<br/>
+[![Discord Server](https://img.shields.io/discord/729970863419424788.svg)](https://discord.gg/EKEwv6d) 
 ![Commit Activity](https://img.shields.io/github/commit-activity/m/servicetitan/Stl.Fusion)
 [![Downloads](https://img.shields.io/nuget/dt/Stl)](https://www.nuget.org/packages?q=Owner%3Aservicetitan+Tags%3Astl_fusion)
-[![Discord Server](https://img.shields.io/discord/729970863419424788.svg)](https://discord.gg/EKEwv6d)  
 
 Fusion is a [.NET 5 / .NET Core 3.1](https://en.wikipedia.org/wiki/.NET_Core) library
-that implements a new, seemingly impossible state change tracking abstraction. 
-**Contrary to MobX and Recoil, it's designed to track changes in arbitrary large state** -
-in fact, the state it tracks typically includes every piece of data Fusion app has, 
-and lives on your servers, microservices, service meshes, and even on the clients!
+that implements a new real-time distributed state sync abstraction.
+**Contrary to MobX and Recoil, it's designed to track and sync changes in arbitrary large state** -
+in fact, the state it tracks typically covers every piece of data Fusion application has, 
+and "lives" your servers, microservices, service meshes, and even on the clients!
 Obviously, there is no way to fit such a large state in RAM, so Fusion:
 - Spawns the *observed part* of the state on-demand
 - Ensures the *dependency graph* of this part of the state *stays in memory*
