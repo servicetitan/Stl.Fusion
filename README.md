@@ -19,7 +19,7 @@ in fact, the state it tracks typically includes every piece of data Fusion app h
 and lives on your servers, microservices, service meshes, and even on the clients!
 Obviously, there is no way to fit such a large state in RAM, so Fusion:
 - Spawns the *observed part* of the state on-demand
-- Ensures the *dependency graph* of this part of state stays in memory
+- Ensures the *dependency graph* of this part of the state stays in memory
 - Destroys every part of *dependency graph* that isn't "used" by one of "observed" components.
 
 [Lot traceability](https://en.wikipedia.org/wiki/Traceability) is probably the 
