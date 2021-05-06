@@ -24,12 +24,17 @@ best real-world analogy of what Fusion does:
 - For every "product" 🥗 ([computed value]), Fusion keeps track of
   its "recipe" 📝 (function and its arguments), but more importantly, 
   all of its "ingredients" 🥬🥦🍅, i.e. intermediate or "basic" products
-  used to produce it: 🥗 = 📝←🥬🥦🍅
-- Now imagine 🍅 gets "contaminated" (invalidated = marked as changed). 
-  Once this happens, Fusion immediately marks everything that uses 🍅 
-  directly or indirectly as "contaminated" as well.
-- So next time you call 📝 with the same set of parameters, it will
-  produce a new 🥗 using new 🍅 instead of reusing the old 🥗.
+  used to produce it.<br/>
+  E.g. 🥗<sub>v1</sub> = `📝("salad")` + 🥬<sub>v1</sub>🥦<sub>v1</sub>🍅<sub>v1</sub>
+- While all the "ingredients" used to produce 🥗<sub>v1</sub> are "valid", Fusion 
+  ensures that calling a recipe `📝("salad")`
+  resolves to the same cached product instance 🥗<sub>v1</sub>
+- But once one of such ingredients 🍅<sub>v1</sub> gets "contaminated" 
+  ("invalidated" in Fusion terms, i.e. marked as changed),
+  Fusion immediately marks everything that uses this product
+  directly or indirectly as "contaminated" as well, including 🥗<sub>v1</sub>
+- So next time you call `📝("salad")`, it will produce a new
+  🥗<sub>v2</sub> = `📝("salad")` + 🥬<sub>v1</sub>🥦<sub>v1</sub>🍅<sub>v2</sub>
 
 Fusion's key innovation is that 
 **it does all of this automatically and transparently for you,**
