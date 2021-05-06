@@ -23,14 +23,11 @@
 
   <ItemGroup>
     <Compile Remove="ClientTimeServiceTest.cs" />
-    <Compile Remove="ComputedInterceptorTest.cs" />
     <Compile Remove="EdgeCaseServiceTest.cs" />
     <Compile Remove="KeyValueModelTest.cs" />
-    <Compile Remove="PerformanceTest.cs" />
     <Compile Remove="PublicationTest.cs" />
     <Compile Remove="ReplicationTest.cs" />
     <Compile Remove="ScreenshotServiceClientTest.cs" />
-    <Compile Remove="ScreenshotServiceTest.cs" />
     <Compile Remove="ServerTimeModelTest.cs" />
     <Compile Remove="Services\EdgeCaseController.cs" />
     <Compile Remove="Services\IEdgeCaseClient.cs" />

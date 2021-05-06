@@ -71,7 +71,8 @@ namespace Stl.Fusion.Tests
             WebHost = Services.GetRequiredService<FusionTestWebHost>();
             WebServices = WebHost.Services;
             ClientServices = CreateServices(true);
-            Log = (ILogger) Services.GetRequiredService(typeof(ILogger<>).MakeGenericType(GetType()));
+            if (Options.UseLogging)
+                Log = (ILogger) Services.GetRequiredService(typeof(ILogger<>).MakeGenericType(GetType()));
         }
 
         public override async Task InitializeAsync()
