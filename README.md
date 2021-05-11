@@ -61,11 +61,12 @@ But if you'll find anything concerning in Fusion's source code
 or [samples], please feel free to grill us with questions on [Discord]!
 
 [<img align="right" width="150" src="./docs/img/FusionSlides.jpg"/>](https://alexyakunin.github.io/Stl.Fusion.Materials/Slides/Fusion_v2/Slides.html)
-If you like slides and 🕵 detective stories, check out
+If you prefer slides and 🕵 detective stories, check out
 ["Jump the F5 ship straight into the real-time hyperspace with Blazor and Fusion" talk](https://alexyakunin.github.io/Stl.Fusion.Materials/Slides/Fusion_v2/Slides.html) -
 it explains how all these problems are connected and
 describes how you can code a simplified version of 
-Fusion's key abstraction in C#.
+Fusion's key abstraction in C#. And if you prefer text - 
+just continue reading!
 
 ## "What is your evidence?"<sup><a href="https://www.youtube.com/watch?v=7O-aNYTtx44<">*</a></sup>
 
