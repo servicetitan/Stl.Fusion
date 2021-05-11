@@ -387,7 +387,7 @@ library solving this problem gracefully.
 
 ## Next Steps
 
-* Check out [Slides], [Tutorial], [Samples], or go to [Documentation Home]
+* Check out [Samples], [Tutorial], [Slides], or go to [Documentation Home]
 * Join our [Discord Server] or [Gitter] to ask questions and track project updates.
 
 ## Posts And Other Content
