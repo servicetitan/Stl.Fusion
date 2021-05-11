@@ -38,18 +38,12 @@ best real-world analogy of what Fusion does:
 
 Fusion's key innovation is that 
 **it does all of this automatically and transparently for you,**
-so Fusion-based code is almost identical to the code you'd write without it.
+so code you write is almost identical to the code you'd write without it.
 Not only it captures dependencies automatically, but also 
 "spawns" and "forgets" them, and all of this is happening
-behind the scenes while your code runs.
+behind the scenes.
 
-In above lot traceability example this would correspond to automatic
-trace capturing for every intermediate product when it's produced, 
-and forgetting it as soon as all the "final" products using this
-"ingredient" are consumed.
-
-Surprisingly, this 🦄 single abstraction helps to solve
-a number of well-known problems:
+Surprisingly, this approach helps to solve a number of well-known problems:
 
 | Problem | So you don't need... |
 |-|-|
