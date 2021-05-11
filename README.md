@@ -65,8 +65,9 @@ If you prefer slides and 🕵 detective stories, check out
 ["Jump the F5 ship straight into the real-time hyperspace with Blazor and Fusion" talk](https://alexyakunin.github.io/Stl.Fusion.Materials/Slides/Fusion_v2/Slides.html) -
 it explains how all these problems are connected and
 describes how you can code a simplified version of 
-Fusion's key abstraction in C#. And if you prefer text - 
-just continue reading!
+Fusion's key abstraction in C#. 
+
+And if you prefer text - just continue reading!
 
 ## "What is your evidence?"<sup><a href="https://www.youtube.com/watch?v=7O-aNYTtx44<">*</a></sup>
 
