@@ -35,15 +35,14 @@ namespace Stl.DependencyInjection
 
         public static IServiceCollection AddSettings<TSettings>(
             this IServiceCollection services,
-            string sectionName)
+            string? sectionName = null)
             => services.AddSettings(typeof(TSettings), sectionName);
         public static IServiceCollection AddSettings(
             this IServiceCollection services,
             Type settingsType,
-            string sectionName)
+            string? sectionName = null)
         {
-            if (sectionName == null)
-                throw new ArgumentNullException(sectionName);
+            sectionName ??= settingsType.Name.TrimSuffix("Settings", "Cfg", "Config", "Configuration");
             services.TryAddSingleton(settingsType, c => {
                 var settings = c.Activate(settingsType);
                 var cfg = c.GetRequiredService<IConfiguration>();

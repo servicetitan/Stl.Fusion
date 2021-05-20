@@ -1,13 +1,11 @@
 using System;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.StaticWebAssets;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
@@ -60,17 +58,10 @@ namespace Templates.TodoApp.Host
                 }
             });
 
+            services.AddSettings<HostSettings>();
             #pragma warning disable ASP0000
-            HostSettings = services
-                .AddSettings<HostSettings>("Host")
-                .BuildServiceProvider()
-                .GetRequiredService<HostSettings>();
+            HostSettings = services.BuildServiceProvider().GetRequiredService<HostSettings>();
             #pragma warning restore ASP0000
-
-            services.AddResponseCompression(opts => {
-                opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
-                    new[] { "application/octet-stream" });
-            });
 
             // DbContext & related services
             var appTempDir = PathEx.GetApplicationTempDirectory("", true);

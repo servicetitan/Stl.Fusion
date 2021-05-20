@@ -49,5 +49,18 @@ namespace Stl.Text
                 return hash1 + (hash2 * 1566083941);
             }
         }
+
+        public static string TrimSuffix(this string source, params string[] suffixes)
+        {
+            foreach (var suffix in suffixes) {
+                var result = source.TrimSuffix(suffix);
+                if (!ReferenceEquals(result, source))
+                    return result;
+            }
+            return source;
+        }
+
+        public static string TrimSuffix(this string source, string suffix)
+            => source.EndsWith(suffix) ? source.Substring(0, source.Length - suffix.Length) : source;
     }
 }
