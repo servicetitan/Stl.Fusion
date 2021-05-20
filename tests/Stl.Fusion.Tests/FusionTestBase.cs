@@ -151,13 +151,13 @@ namespace Stl.Fusion.Tests
 
             // Auto-discovered services
             var testType = GetType();
-            services.WithRegisterAttributeScanner()
+            services.UseRegisterAttributeScanner()
                 .WithTypeFilter(testType.Namespace!)
                 .RegisterFrom(testType.Assembly);
 
             if (!isClient) {
                 // Configuring Services and ServerServices
-                services.WithRegisterAttributeScanner(ServiceScope.Services)
+                services.UseRegisterAttributeScanner(ServiceScope.Services)
                     .WithTypeFilter(testType.Namespace!)
                     .RegisterFrom(testType.Assembly);
 
@@ -211,7 +211,7 @@ namespace Stl.Fusion.Tests
             }
             else {
                 // Configuring ClientServices
-                services.WithRegisterAttributeScanner(ServiceScope.ClientServices)
+                services.UseRegisterAttributeScanner(ServiceScope.ClientServices)
                     .WithTypeFilter(testType.Namespace!)
                     .RegisterFrom(testType.Assembly);
 

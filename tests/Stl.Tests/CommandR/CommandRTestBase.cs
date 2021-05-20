@@ -80,7 +80,7 @@ namespace Stl.Tests.CommandR
             // [Module] attribute test
             services.UseModules(); // Just to check you can call it twice
             services.UseModules(b => b.ConfigureModuleServices(s => {
-                s.WithRegisterAttributeScanner(RegisterModuleAttribute.DefaultScope)
+                s.UseRegisterAttributeScanner(RegisterModuleAttribute.DefaultScope)
                     .WithTypeFilter(GetType().Namespace!)
                     .RegisterFrom(Assembly.GetExecutingAssembly());
             }));

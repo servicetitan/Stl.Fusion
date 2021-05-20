@@ -11,7 +11,7 @@ namespace Stl.Tests.CommandR.Services
 
         public override void Use()
         {
-            Services.WithRegisterAttributeScanner()
+            Services.UseRegisterAttributeScanner()
                 .WithTypeFilter(GetType().Namespace!)
                 .RegisterFrom(GetType().Assembly);
         }
