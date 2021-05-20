@@ -94,7 +94,7 @@ namespace Stl.Fusion
         static FusionBuilder()
         {
             var nonReplicableAttributeTypes = new HashSet<Type>() {
-                typeof(ServiceAttributeBase),
+                typeof(RegisterAttribute),
                 typeof(AsyncStateMachineAttribute),
                 typeof(ComputeMethodAttribute),
             };

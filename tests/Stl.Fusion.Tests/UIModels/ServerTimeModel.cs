@@ -21,7 +21,7 @@ namespace Stl.Fusion.Tests.UIModels
         public ServerTimeModel2(DateTime time) : base(time) { }
     }
 
-    [Service(typeof(IComputedState<ServerTimeModel1>))]
+    [RegisterService(typeof(IComputedState<ServerTimeModel1>))]
     public class ServerTimeModel1State : ComputedState<ServerTimeModel1>
     {
         private IClientTimeService Client

@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Stl.Fusion.Tests.Services
 {
-    [ComputeService(typeof(IEdgeCaseService), Scope = ServiceScope.Services)]
+    [RegisterComputeService(typeof(IEdgeCaseService), Scope = ServiceScope.Services)]
     public class EdgeCaseService : IEdgeCaseService
     {
         public IMutableState<string> SuffixState { get; }

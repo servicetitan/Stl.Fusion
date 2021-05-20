@@ -6,11 +6,11 @@ using Stl.Text;
 
 namespace Stl.Extensibility
 {
-    public class ModuleAttribute : ServiceAttributeBase
+    public class RegisterModuleAttribute : RegisterAttribute
     {
         public static Symbol DefaultScope { get; } = "Module";
 
-        public ModuleAttribute()
+        public RegisterModuleAttribute()
         {
             // Let's make sure modules don't auto-register together
             // with regular services: most likely this isn't intentional.

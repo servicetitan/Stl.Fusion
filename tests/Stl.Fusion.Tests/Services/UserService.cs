@@ -43,8 +43,8 @@ namespace Stl.Fusion.Tests.Services
         void Invalidate();
     }
 
-    [ComputeService(typeof(IUserService), Scope = ServiceScope.Services)] // Fusion version
-    [Service] // "No Fusion" version
+    [RegisterComputeService(typeof(IUserService), Scope = ServiceScope.Services)] // Fusion version
+    [RegisterService] // "No Fusion" version
     public class UserService : DbServiceBase<TestDbContext>, IUserService
     {
         protected bool IsProxy { get; }

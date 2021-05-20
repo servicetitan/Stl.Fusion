@@ -5,7 +5,7 @@ using Stl.Fusion.Client;
 
 namespace Stl.Fusion.Tests.Services
 {
-    [RestEaseReplicaService(Scope = ServiceScope.ClientServices)]
+    [RegisterRestEaseReplicaService(Scope = ServiceScope.ClientServices)]
     [BasePath("EdgeCase")]
     public interface IEdgeCaseClient
     {
@@ -22,7 +22,7 @@ namespace Stl.Fusion.Tests.Services
         Task<string> ThrowIfContainsErrorNonCompute(string source, CancellationToken cancellationToken = default);
     }
 
-    [RestEaseReplicaService]
+    [RegisterRestEaseReplicaService]
     [BasePath("EdgeCaseRewrite")]
     public interface IEdgeCaseRewriteClient : IEdgeCaseClient { }
 }

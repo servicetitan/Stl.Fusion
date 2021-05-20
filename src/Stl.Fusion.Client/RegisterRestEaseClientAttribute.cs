@@ -5,11 +5,11 @@ using Stl.DependencyInjection;
 namespace Stl.Fusion.Client
 {
     [AttributeUsage(AttributeTargets.Interface, AllowMultiple = true)]
-    public class RestEaseClientServiceAttribute : ServiceAttributeBase
+    public class RegisterRestEaseClientAttribute : RegisterAttribute
     {
         public Type? ServiceType { get; set; }
 
-        public RestEaseClientServiceAttribute(Type? serviceType = null)
+        public RegisterRestEaseClientAttribute(Type? serviceType = null)
             => ServiceType = serviceType;
 
         public override void Register(IServiceCollection services, Type implementationType)

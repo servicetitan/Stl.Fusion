@@ -14,7 +14,7 @@ namespace Stl.Fusion.Tests.UIModels
         public int UpdateCount { get; set; }
     }
 
-    [Service(typeof(IComputedState<KeyValueModel<string>>))]
+    [RegisterService(typeof(IComputedState<KeyValueModel<string>>))]
     public class StringKeyValueModelState : ComputedState<KeyValueModel<string>>
     {
         protected IMutableState<string> Locals { get; }

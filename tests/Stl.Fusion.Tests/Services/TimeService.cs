@@ -20,7 +20,7 @@ namespace Stl.Fusion.Tests.Services
         Task<DateTime> GetTimeWithOffset(TimeSpan offset);
     }
 
-    [ComputeService(typeof(ITimeService), Scope = ServiceScope.Services)]
+    [RegisterComputeService(typeof(ITimeService), Scope = ServiceScope.Services)]
     public class TimeService : ITimeService
     {
         private readonly ILogger _log;

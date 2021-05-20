@@ -4,16 +4,16 @@ using Stl.Extensibility;
 
 namespace Stl.Tests.CommandR.Services
 {
-    [Module]
+    [RegisterModule]
     public class Module : ModuleBase
     {
         public Module(IServiceCollection services) : base(services) { }
 
         public override void Use()
         {
-            Services.UseAttributeScanner()
+            Services.WithRegisterAttributeScanner()
                 .WithTypeFilter(GetType().Namespace!)
-                .AddServicesFrom(GetType().Assembly);
+                .RegisterFrom(GetType().Assembly);
         }
     }
 }

@@ -4,9 +4,9 @@ using Stl.DependencyInjection;
 
 namespace Stl.Fusion
 {
-    public class ComputeServiceAttribute : ServiceAttribute
+    public class RegisterComputeServiceAttribute : RegisterServiceAttribute
     {
-        public ComputeServiceAttribute(Type? serviceType = null) : base(serviceType) { }
+        public RegisterComputeServiceAttribute(Type? serviceType = null) : base(serviceType) { }
 
         public override void Register(IServiceCollection services, Type implementationType)
             => services.AddFusion().AddComputeService(

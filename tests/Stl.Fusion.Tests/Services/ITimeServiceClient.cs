@@ -6,7 +6,7 @@ using Stl.Fusion.Client;
 
 namespace Stl.Fusion.Tests.Services
 {
-    [RestEaseReplicaService(typeof(IClientTimeService), Scope = ServiceScope.ClientServices)]
+    [RegisterRestEaseReplicaService(typeof(IClientTimeService), Scope = ServiceScope.ClientServices)]
     [BasePath("time")]
     public interface ITimeServiceClient
     {

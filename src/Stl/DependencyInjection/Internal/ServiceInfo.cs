@@ -14,18 +14,18 @@ namespace Stl.DependencyInjection.Internal
         private static ConcurrentDictionary<(Assembly, Symbol), ServiceInfo[]> ScopedServiceInfoCache { get; } = new();
 
         public Type ImplementationType { get; }
-        public ServiceAttributeBase[] Attributes { get; }
+        public RegisterAttribute[] Attributes { get; }
 
-        public ServiceInfo(Type implementationType, ServiceAttributeBase[]? attributes = null)
+        public ServiceInfo(Type implementationType, RegisterAttribute[]? attributes = null)
         {
             ImplementationType = implementationType;
-            Attributes = attributes ?? Array.Empty<ServiceAttributeBase>();
+            Attributes = attributes ?? Array.Empty<RegisterAttribute>();
         }
 
         public static ServiceInfo For(Type implementationType)
         {
-            using var buffer = ArrayBuffer<ServiceAttributeBase>.Lease(true);
-            foreach (var attr in implementationType.GetCustomAttributes<ServiceAttributeBase>(false))
+            using var buffer = ArrayBuffer<RegisterAttribute>.Lease(true);
+            foreach (var attr in implementationType.GetCustomAttributes<RegisterAttribute>(false))
                 buffer.Add(attr);
             if (buffer.Count == 0)
                 return new ServiceInfo(implementationType);
@@ -34,8 +34,8 @@ namespace Stl.DependencyInjection.Internal
 
         public static ServiceInfo For(Type implementationType, Symbol scope)
         {
-            using var buffer = ArrayBuffer<ServiceAttributeBase>.Lease(true);
-            foreach (var attr in implementationType.GetCustomAttributes<ServiceAttributeBase>(false)) {
+            using var buffer = ArrayBuffer<RegisterAttribute>.Lease(true);
+            foreach (var attr in implementationType.GetCustomAttributes<RegisterAttribute>(false)) {
                 if (attr.Scope == scope.Value)
                     buffer.Add(attr);
             }

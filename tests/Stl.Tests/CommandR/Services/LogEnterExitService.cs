@@ -8,7 +8,7 @@ using Stl.DependencyInjection;
 
 namespace Stl.Tests.CommandR.Services
 {
-    [Service, AddCommandHandlers]
+    [RegisterService, RegisterCommandHandlers]
     public class LogEnterExitService : ServiceBase
     {
         public LogEnterExitService(IServiceProvider services) : base(services) { }

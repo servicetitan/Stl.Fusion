@@ -6,11 +6,10 @@ using Microsoft.Extensions.Logging;
 using Stl.Collections;
 using Stl.CommandR;
 using Stl.CommandR.Configuration;
-using Stl.CommandR.Internal;
 
 namespace Stl.Tests.CommandR.Services
 {
-    [CommandService]
+    [RegisterCommandService]
     public class MathService : ServiceBase
     {
         public MathService(IServiceProvider services) : base(services) { }

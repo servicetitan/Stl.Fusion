@@ -3,11 +3,11 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Stl.DependencyInjection
 {
-    public class SettingsAttribute : ServiceAttributeBase
+    public class RegisterSettingsAttribute : RegisterAttribute
     {
         public string SectionName { get; set; }
 
-        public SettingsAttribute(string sectionName)
+        public RegisterSettingsAttribute(string sectionName)
             => SectionName = sectionName;
 
         public override void Register(IServiceCollection services, Type implementationType)

@@ -10,7 +10,7 @@ using Stl.Fusion.Extensions;
 
 namespace Stl.Fusion.Tests.Extensions
 {
-    [ComputeService(Scope = ServiceScope.Services)]
+    [RegisterComputeService(Scope = ServiceScope.Services)]
     public class NestedOperationLoggerTester
     {
         public record SetManyCommand(string[] Keys, string ValuePrefix) : ICommand<Unit>

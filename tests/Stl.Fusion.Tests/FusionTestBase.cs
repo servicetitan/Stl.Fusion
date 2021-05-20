@@ -151,15 +151,15 @@ namespace Stl.Fusion.Tests
 
             // Auto-discovered services
             var testType = GetType();
-            services.UseAttributeScanner()
+            services.WithRegisterAttributeScanner()
                 .WithTypeFilter(testType.Namespace!)
-                .AddServicesFrom(testType.Assembly);
+                .RegisterFrom(testType.Assembly);
 
             if (!isClient) {
                 // Configuring Services and ServerServices
-                services.UseAttributeScanner(ServiceScope.Services)
+                services.WithRegisterAttributeScanner(ServiceScope.Services)
                     .WithTypeFilter(testType.Namespace!)
-                    .AddServicesFrom(testType.Assembly);
+                    .RegisterFrom(testType.Assembly);
 
                 // DbContext & related services
                 var appTempDir = PathEx.GetApplicationTempDirectory("", true);
@@ -211,9 +211,9 @@ namespace Stl.Fusion.Tests
             }
             else {
                 // Configuring ClientServices
-                services.UseAttributeScanner(ServiceScope.ClientServices)
+                services.WithRegisterAttributeScanner(ServiceScope.ClientServices)
                     .WithTypeFilter(testType.Namespace!)
-                    .AddServicesFrom(testType.Assembly);
+                    .RegisterFrom(testType.Assembly);
 
                 // Fusion client
                 var fusionClient = fusion.AddRestEaseClient(

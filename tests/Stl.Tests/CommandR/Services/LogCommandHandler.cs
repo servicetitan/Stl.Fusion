@@ -10,7 +10,7 @@ using Stl.DependencyInjection;
 
 namespace Stl.Tests.CommandR.Services
 {
-    [Service, AddCommandHandlers]
+    [RegisterService, RegisterCommandHandlers]
     public class LogCommandHandler : ServiceBase, ICommandHandler<LogCommand>
     {
         public LogCommandHandler(IServiceProvider services) : base(services) { }

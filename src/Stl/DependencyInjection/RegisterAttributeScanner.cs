@@ -8,13 +8,13 @@ using Stl.Text;
 
 namespace Stl.DependencyInjection
 {
-    public record ServiceAttributeScanner
+    public record RegisterAttributeScanner
     {
         public IServiceCollection Services { get; }
         public Symbol Scope { get; init; }
         public Func<Type, bool> TypeFilter { get; init; } = _ => true;
 
-        public ServiceAttributeScanner(IServiceCollection services, Symbol scope = default)
+        public RegisterAttributeScanner(IServiceCollection services, Symbol scope = default)
         {
             Services = services;
             Scope = scope;
@@ -22,26 +22,26 @@ namespace Stl.DependencyInjection
 
         // SetXxx, ResetXxx
 
-        public ServiceAttributeScanner WithScope(Symbol scope)
+        public RegisterAttributeScanner WithScope(Symbol scope)
             => Scope == scope ? this : this with { Scope =  scope };
-        public ServiceAttributeScanner WithTypeFilter(Func<Type, bool> typeFilter)
+        public RegisterAttributeScanner WithTypeFilter(Func<Type, bool> typeFilter)
             => this with { TypeFilter = typeFilter };
-        public ServiceAttributeScanner WithTypeFilter(string fullNamePrefix)
+        public RegisterAttributeScanner WithTypeFilter(string fullNamePrefix)
             => this with { TypeFilter = t => (t.FullName ?? "").StartsWith(fullNamePrefix) };
-        public ServiceAttributeScanner WithTypeFilter(Regex fullNameRegex)
+        public RegisterAttributeScanner WithTypeFilter(Regex fullNameRegex)
             => this with { TypeFilter = t => fullNameRegex.IsMatch(t.FullName ?? "") };
 
         // AddService
 
-        public ServiceAttributeScanner AddService<TImplementation>()
-            => AddService(typeof(TImplementation));
+        public RegisterAttributeScanner Register<TImplementation>()
+            => Register(typeof(TImplementation));
 
-        public ServiceAttributeScanner AddService(Type implementationType)
+        public RegisterAttributeScanner Register(Type implementationType)
         {
             if (!TypeFilter.Invoke(implementationType))
                 return this;
 
-            var attrs = ServiceAttributeBase.GetAll(implementationType, Scope);
+            var attrs = RegisterAttribute.GetAll(implementationType, Scope);
             if (attrs.Length == 0)
                 throw Errors.NoServiceAttribute(implementationType);
             foreach (var attr in attrs)
@@ -51,35 +51,35 @@ namespace Stl.DependencyInjection
 
         // AddServices
 
-        public ServiceAttributeScanner AddServices(params Type[] implementationTypes)
+        public RegisterAttributeScanner Register(params Type[] implementationTypes)
         {
             foreach (var implementationType in implementationTypes)
-                AddService(implementationType);
+                Register(implementationType);
             return this;
         }
 
-        public ServiceAttributeScanner AddServices(IEnumerable<Type> implementationTypes)
+        public RegisterAttributeScanner Register(IEnumerable<Type> implementationTypes)
         {
             foreach (var implementationType in implementationTypes)
-                AddService(implementationType);
+                Register(implementationType);
             return this;
         }
 
         // AddServicesFrom
 
-        public ServiceAttributeScanner AddServicesFrom(Assembly assembly)
-            => AddServices(ServiceInfo.ForAll(assembly, Scope), false, true);
+        public RegisterAttributeScanner RegisterFrom(Assembly assembly)
+            => Register(ServiceInfo.ForAll(assembly, Scope), false, true);
 
-        public ServiceAttributeScanner AddServicesFrom(params Assembly[] assemblies)
+        public RegisterAttributeScanner RegisterFrom(params Assembly[] assemblies)
         {
             foreach (var assembly in assemblies)
-                AddServicesFrom(assembly);
+                RegisterFrom(assembly);
             return this;
         }
 
         // Private methods
 
-        private ServiceAttributeScanner AddServices(
+        private RegisterAttributeScanner Register(
             IEnumerable<ServiceInfo> services, bool filterByScope, bool filterByType)
         {
             foreach (var service in services) {

@@ -17,8 +17,8 @@ namespace Stl.Tests.DependencyInjection
 {
     public class HostedServiceTest
     {
-        [Service(Scope = nameof(HostedServiceTest))]
-        [AddHostedService(Scope = nameof(HostedServiceTest))]
+        [RegisterService(Scope = nameof(HostedServiceTest))]
+        [RegisterHostedService(Scope = nameof(HostedServiceTest))]
         public class TestHostedService : IHostedService
         {
             public bool IsStarted { get; set; }
@@ -52,8 +52,8 @@ namespace Stl.Tests.DependencyInjection
             var services = new ServiceCollection()
                 .AddSingleton(cfg)
                 .AddSingleton<IConfiguration>(cfg)
-                .UseAttributeScanner(nameof(HostedServiceTest))
-                    .AddServicesFrom(Assembly.GetExecutingAssembly())
+                .WithRegisterAttributeScanner(nameof(HostedServiceTest))
+                    .RegisterFrom(Assembly.GetExecutingAssembly())
                     .Services
                 .BuildServiceProvider();
             var hostedServices = services.GetServices<IHostedService>().ToArray();

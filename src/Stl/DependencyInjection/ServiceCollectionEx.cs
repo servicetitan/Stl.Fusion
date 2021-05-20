@@ -54,20 +54,20 @@ namespace Stl.DependencyInjection
 
         // Attribute-based configuration
 
-        public static ServiceAttributeScanner UseAttributeScanner(
+        public static RegisterAttributeScanner WithRegisterAttributeScanner(
             this IServiceCollection services, Symbol scope = default)
             => new(services, scope);
 
-        public static IServiceCollection UseAttributeScanner(
+        public static IServiceCollection WithRegisterAttributeScanner(
             this IServiceCollection services,
-            Action<ServiceAttributeScanner> attributeScannerBuilder)
-            => services.UseAttributeScanner(default, attributeScannerBuilder);
+            Action<RegisterAttributeScanner> attributeScannerBuilder)
+            => services.WithRegisterAttributeScanner(default, attributeScannerBuilder);
 
-        public static IServiceCollection UseAttributeScanner(
+        public static IServiceCollection WithRegisterAttributeScanner(
             this IServiceCollection services, Symbol scope,
-            Action<ServiceAttributeScanner> attributeScannerBuilder)
+            Action<RegisterAttributeScanner> attributeScannerBuilder)
         {
-            var builder = services.UseAttributeScanner(scope);
+            var builder = services.WithRegisterAttributeScanner(scope);
             attributeScannerBuilder.Invoke(builder);
             return services;
         }

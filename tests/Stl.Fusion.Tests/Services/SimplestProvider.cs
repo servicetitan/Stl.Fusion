@@ -30,7 +30,7 @@ namespace Stl.Fusion.Tests.Services
         Task SetValue(SetValueCommand command, CancellationToken cancellationToken = default);
     }
 
-    [ComputeService(typeof(ISimplestProvider), Lifetime = ServiceLifetime.Scoped, Scope = ServiceScope.Services)]
+    [RegisterComputeService(typeof(ISimplestProvider), Lifetime = ServiceLifetime.Scoped, Scope = ServiceScope.Services)]
     public class SimplestProvider : ISimplestProvider, IHasId<Type>
     {
         private static volatile string _value = "";

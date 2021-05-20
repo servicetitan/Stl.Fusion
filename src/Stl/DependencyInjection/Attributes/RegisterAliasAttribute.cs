@@ -5,10 +5,10 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Stl.DependencyInjection
 {
-    public class ServiceAliasAttribute : ServiceAttributeBase
+    public class RegisterAliasAttribute : RegisterAttribute
     {
         private static readonly MethodInfo ServiceFactoryMethod =
-            typeof(ServiceAliasAttribute).GetMethod(
+            typeof(RegisterAliasAttribute).GetMethod(
                 nameof(ServiceFactory), BindingFlags.Static | BindingFlags.NonPublic)!;
 
         public Type ServiceType { get; set; }
@@ -16,7 +16,7 @@ namespace Stl.DependencyInjection
         public ServiceLifetime Lifetime { get; set; } = ServiceLifetime.Transient;
         public bool IsEnumerable { get; set; }
 
-        public ServiceAliasAttribute(Type serviceType, Type? actualServiceType = null)
+        public RegisterAliasAttribute(Type serviceType, Type? actualServiceType = null)
         {
             ServiceType = serviceType;
             ActualServiceType = actualServiceType;

@@ -4,13 +4,13 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Stl.DependencyInjection
 {
-    public class ServiceAttribute : ServiceAttributeBase
+    public class RegisterServiceAttribute : RegisterAttribute
     {
         public Type? ServiceType { get; set; }
         public ServiceLifetime Lifetime { get; set; } = ServiceLifetime.Singleton;
         public bool IsEnumerable { get; set; }
 
-        public ServiceAttribute(Type? serviceType = null)
+        public RegisterServiceAttribute(Type? serviceType = null)
             => ServiceType = serviceType;
 
         public override void Register(IServiceCollection services, Type implementationType)

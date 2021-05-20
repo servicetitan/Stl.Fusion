@@ -16,8 +16,8 @@ namespace Stl.Tests.DependencyInjection
             string Value { get; set; }
         }
 
-        [Settings("TestSettings", Scope = nameof(SettingsTest))]
-        [ServiceAlias(typeof(ITestSettings), typeof(TestSettings), Scope = nameof(SettingsTest))]
+        [RegisterSettings("TestSettings", Scope = nameof(SettingsTest))]
+        [RegisterAlias(typeof(ITestSettings), typeof(TestSettings), Scope = nameof(SettingsTest))]
         public class TestSettings : ITestSettings
         {
             public string Value { get; set; } = "";
@@ -39,12 +39,11 @@ namespace Stl.Tests.DependencyInjection
             var services = new ServiceCollection()
                 .AddSingleton(cfg)
                 .AddSingleton<IConfiguration>(cfg)
-                .UseAttributeScanner()
-                    .WithScope(nameof(SettingsTest))
-                    .WithTypeFilter(new Regex(".*"))
-                    .AddServicesFrom(typeof(bool).Assembly)
-                    .AddService<TestSettings>()
-                    .AddServices(typeof(TestSettings))
+                .WithRegisterAttributeScanner()
+                .WithScope(nameof(SettingsTest))
+                .WithTypeFilter(new Regex(".*"))
+                .RegisterFrom(typeof(bool).Assembly)
+                .Register<TestSettings>().Register(new[] {typeof(TestSettings)})
                     .Services
                 .BuildServiceProvider();
             var testSettings = services.GetRequiredService<TestSettings>();
