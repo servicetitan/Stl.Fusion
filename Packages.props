@@ -6,13 +6,13 @@
 
   <PropertyGroup>
     <MicrosoftExtensionsVersion>5.0.0</MicrosoftExtensionsVersion>
-    <EntityFrameworkCoreVersion>5.0.5</EntityFrameworkCoreVersion>
+    <EntityFrameworkCoreVersion>5.0.6</EntityFrameworkCoreVersion>
     <AspNetCoreVersion>5.0.6</AspNetCoreVersion>
     <AspNetCoreVersion3>3.*</AspNetCoreVersion3>
-    <BlazorVersion>5.0.5</BlazorVersion>
+    <BlazorVersion>5.0.6</BlazorVersion>
     <BlazoriseVersion>0.9.*</BlazoriseVersion>
     <SystemNetHttpJsonVersion>5.0.3</SystemNetHttpJsonVersion>
-    <StlFusionVersion>1.0.*</StlFusionVersion>
+    <StlFusionVersion>1.1.*</StlFusionVersion>
   </PropertyGroup>
 
   <ItemGroup Label="Nupkg Versions">
