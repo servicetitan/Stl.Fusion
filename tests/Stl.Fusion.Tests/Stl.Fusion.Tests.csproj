@@ -22,7 +22,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="ClientTimeServiceTest.cs" />
     <Compile Remove="EdgeCaseServiceTest.cs" />
     <Compile Remove="KeyValueModelTest.cs" />
     <Compile Remove="PublicationTest.cs" />
@@ -35,7 +34,6 @@
     <Compile Remove="Services\IStringKeyValueClient.cs" />
     <Compile Remove="Services\ScreenshotController.cs" />
     <Compile Remove="Services\StringKeyValueController.cs" />
-    <Compile Remove="Services\TimeController.cs" />
     <Compile Remove="UserProviderTest.cs" />
     <Compile Remove="WebSocketTest.cs" />
   </ItemGroup>

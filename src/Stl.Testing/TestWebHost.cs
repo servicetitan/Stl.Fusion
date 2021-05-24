@@ -12,6 +12,8 @@ using Stl.IO;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
+#else
+using Owin;
 #endif
 
 namespace Stl.Testing
@@ -101,6 +103,22 @@ namespace Stl.Testing
                 ConfigureWebHost(b);
             });
 #endif
+
+#if NET461_OR_GREATER
+            builder.ConfigureServices(
+                (ctx, services) => {
+                    var serverUri = ServerUriLazy.IsValueCreated
+                        ? ServerUri.ToString()
+                        : "http://localhost:9000/";
+                    services.Configure<OwinWebApiServerOptions>(c => {
+                        c.Urls = serverUri;
+                        c.ConfigureBuilder = ConfigureWebHost;
+                    });
+                    services.AddHostedService<GenericWebHostService>();
+                    services.AddSingleton<IServer, OwinWebApiServer>();
+                }
+            );
+#endif
             
             
             ConfigureHost(builder);
@@ -112,7 +130,11 @@ namespace Stl.Testing
 #if NETCOREAPP
         protected virtual void ConfigureWebHost(IWebHostBuilder builder) { }
 #endif
-        
-        
+ 
+#if NET461_OR_GREATER
+        protected virtual void ConfigureWebHost(IServiceProvider svp, IAppBuilder builder) { }
+#endif
+
+
     }
 }

@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using Stl.Fusion.Client;
 using Stl.Fusion.Tests.Services;
 using Stl.Testing;
 using Stl.Tests;
@@ -15,10 +16,20 @@ namespace Stl.Fusion.Tests
     {
         public ClientTimeServiceTest(ITestOutputHelper @out, FusionTestOptions? options = null) : base(@out, options) { }
 
+        private TimeSpan GetEpsilon()
+        {
+#if NETCOREAPP
+            var epsilon = TimeSpan.FromSeconds(0.5);
+#else
+            var epsilon = TimeSpan.FromSeconds(0.7);
+#endif
+            return epsilon;
+        }
+
         [Fact]
         public async Task Test1()
         {
-            var epsilon = TimeSpan.FromSeconds(0.5);
+            var epsilon = GetEpsilon();
 
             await using var serving = await WebHost.Serve();
             var client = ClientServices.GetRequiredService<IClientTimeService>();
@@ -41,9 +52,9 @@ namespace Stl.Fusion.Tests
         [Fact]
         public async Task Test2()
         {
-            var epsilon = TimeSpan.FromSeconds(0.5);
+            var epsilon = GetEpsilon();
             if (TestRunnerInfo.IsBuildAgent())
-                epsilon *= 2;
+                epsilon = epsilon.Multiply(2);
 
             await using var serving = await WebHost.Serve();
             var service = ClientServices.GetRequiredService<IClientTimeService>();
@@ -61,8 +72,21 @@ namespace Stl.Fusion.Tests
             await using var serving = await WebHost.Serve();
             var service = ClientServices.GetRequiredService<IClientTimeService>();
 
+            //var client = ClientServices.GetRequiredService<ClientAccessor<IClientTimeService>>();
+            //var x = await client.Client.GetFormattedTime("");
+            //var x2 = await client.Client.GetFormattedTime("null");
+            
+            #if NET461_OR_GREATER
+
+            (await service.GetFormattedTime("")).Should().Be("\"\"");
+            (await service.GetFormattedTime("null")).Should().Be("null");
+            
+            #else
+            
             (await service.GetFormattedTime("")).Should().Be("");
             (await service.GetFormattedTime("null")).Should().Be("");
+
+            #endif
 
             var format = "{0}";
             var matchCount = 0;

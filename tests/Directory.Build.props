@@ -8,6 +8,7 @@
     <IsPublishable>false</IsPublishable>
     <!--<TargetFrameworks>net5.0;netcoreapp3.1;net471</TargetFrameworks>-->
     <TargetFrameworks>net471</TargetFrameworks>
+    <!--<TargetFrameworks>net5.0</TargetFrameworks>-->
     <!-- Copy all references to output folder (important for coverage tools) -->
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>

@@ -33,7 +33,7 @@ namespace Stl.Testing.Internal
             if (value == null)
                 throw new ArgumentNullException(nameof(value));
             Prefix.Append(value);
-            #if NETSTANDARD2_0
+            #if !NETCOREAPP
             if (!value.Contains(LastEnvNewLineString))
             #else
             if (!value.Contains(LastEnvNewLineChar))

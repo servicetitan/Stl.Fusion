@@ -1,3 +1,4 @@
+using System;
 using System.Reflection;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -9,6 +10,8 @@ using Stl.Testing;
 #if NETCOREAPP
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+#else
+using Owin;
 #endif
 
 namespace Stl.Fusion.Tests.Services
@@ -74,6 +77,8 @@ namespace Stl.Fusion.Tests.Services
                     // TODO: restore later
                     //fusion.AddAuthentication(auth => auth.AddServer());
                 });
+                
+                services.AddControllersAsServices(this.GetType().Assembly);
 
                 // TODO: restore later
                 //// Web
@@ -83,6 +88,13 @@ namespace Stl.Fusion.Tests.Services
                 //// Testing
                 //services.AddHostedService<ApplicationPartsLogger>();
             });
+        }
+
+        protected override void ConfigureWebHost(IServiceProvider svp, IAppBuilder builder)
+        {
+            base.ConfigureWebHost(svp, builder);
+
+            builder.MapFusionWebSocketServer(svp);
         }
 
         // TODO: restore later with using IAppBuilder
