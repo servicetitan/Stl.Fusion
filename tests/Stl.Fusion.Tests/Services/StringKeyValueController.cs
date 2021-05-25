@@ -51,7 +51,6 @@ namespace Stl.Fusion.Tests.Services
         public virtual Task RemoveCmd([FromBody] IKeyValueService<string>.RemoveCommand cmd)
             => Service.RemoveCmd(cmd, HttpContext.RequestAborted);
     }
-}
 
 #else
 

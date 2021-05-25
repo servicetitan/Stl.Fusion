@@ -1,17 +1,16 @@
 using System;
 using System.Reflection;
-using System.Web.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Stl.Collections;
 using Stl.Fusion.Server;
 using Stl.Testing;
-
 #if NETCOREAPP
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 #else
 using Owin;
+using System.Web.Http;
 #endif
 
 namespace Stl.Fusion.Tests.Services

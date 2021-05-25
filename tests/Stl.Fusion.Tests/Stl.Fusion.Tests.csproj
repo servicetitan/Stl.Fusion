@@ -6,7 +6,7 @@
     <NoWarn>$(NoWarn);EF1001;</NoWarn>
   </PropertyGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net471'">
     <Compile Remove="Authentication\**" />
     <Compile Remove="Blazor\**" />
     <Compile Remove="Extensions\**" />
@@ -21,7 +21,7 @@
     <None Remove="UIModels\**" />
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net471'">
     <Compile Include="UIModels\KeyValueModel.cs" />
     <Compile Include="UIModels\ServerTimeModel.cs" />
   </ItemGroup>
@@ -34,10 +34,8 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' != 'net471'">
-    <ProjectReference Include="..\..\src\Stl.Fusion.EntityFramework\Stl.Fusion.EntityFramework.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.EntityFramework.Npgsql\Stl.Fusion.EntityFramework.Npgsql.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.Blazor\Stl.Fusion.Blazor.csproj" />
-    <ProjectReference Include="..\..\src\Stl.Fusion.Client\Stl.Fusion.Client.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.Server\Stl.Fusion.Server.csproj" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net471'">
@@ -47,9 +45,9 @@
     <ProjectReference Include="..\..\src\Stl.Fusion\Stl.Fusion.csproj" />
     <ProjectReference Include="..\..\src\Stl.Testing\Stl.Testing.csproj" />
     <ProjectReference Include="..\Stl.Tests\Stl.Tests.csproj" />
+    <ProjectReference Include="..\..\src\Stl.Fusion.Client\Stl.Fusion.Client.csproj" />
+    <ProjectReference Include="..\..\src\Stl.Fusion.EntityFramework\Stl.Fusion.EntityFramework.csproj" />
   </ItemGroup>
-
-
 
   <ItemGroup>
     <None Update="*.xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
