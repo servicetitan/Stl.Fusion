@@ -78,8 +78,8 @@ namespace Templates.TodoApp.UI
         {
             services.AddBlazorise().AddBootstrapProviders().AddFontAwesomeIcons();
 
-            // Default IUpdateDelayer
-            services.AddSingleton<IUpdateDelayer>(_ => new UpdateDelayer(0.5));
+            // Default update delay is 0.5s
+            services.AddTransient<IUpdateDelayer>(_ => new UpdateDelayer(0.5));
 
             // Extensions
             var fusion = services.AddFusion();
