@@ -15,14 +15,28 @@ using System.Web.Http;
 
 namespace Stl.Fusion.Tests.Services
 {
+    public class FusionTestWebHostOptions
+    {
+#if NET471
+        public Type[]? ControllerTypes { get; set; }
+#endif
+    }
+    
     public class FusionTestWebHost : TestWebHostBase
     {
         public IServiceCollection BaseServices { get; }
+        public FusionTestWebHostOptions Options { get; }
+        
+        public FusionTestWebHost(IServiceCollection baseServices, FusionTestWebHostOptions options)
+        {
+            BaseServices = baseServices;
+            Options = options;
+        }
+
+#if NETCOREAPP
 
         public FusionTestWebHost(IServiceCollection baseServices)
             => BaseServices = baseServices;
-
-#if NETCOREAPP
 
         protected override void ConfigureHost(IHostBuilder builder)
         {
@@ -76,8 +90,9 @@ namespace Stl.Fusion.Tests.Services
                     // TODO: restore later
                     //fusion.AddAuthentication(auth => auth.AddServer());
                 });
-                
-                services.AddControllersAsServices(this.GetType().Assembly);
+
+                if (Options.ControllerTypes!=null)
+                    services.AddControllersAsServices(Options.ControllerTypes);
 
                 // TODO: restore later
                 //// Web

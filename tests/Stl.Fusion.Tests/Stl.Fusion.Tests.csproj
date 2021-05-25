@@ -9,7 +9,7 @@
   <ItemGroup Condition="'$(TargetFramework)' == 'net471'">
     <Compile Remove="Authentication\**" />
     <Compile Remove="Blazor\**" />
-    <Compile Remove="Extensions\**" />
+    <!--<Compile Remove="Extensions\**" />-->
   </ItemGroup>
 
   <ItemGroup>

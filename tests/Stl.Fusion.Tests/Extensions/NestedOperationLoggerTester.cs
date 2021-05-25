@@ -15,6 +15,10 @@ namespace Stl.Fusion.Tests.Extensions
     {
         public record SetManyCommand(string[] Keys, string ValuePrefix) : ICommand<Unit>
         {
+#if NET471
+            Type ICommand.ResultType => typeof(Unit);
+#endif
+            
             public SetManyCommand() : this(Array.Empty<string>(), "") { }
         }
 

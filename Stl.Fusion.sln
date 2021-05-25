@@ -46,6 +46,9 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl.Tests", "tests\Stl.Tests\Stl.Tests.csproj", "{E6FDC8B7-93ED-4364-B617-961DEBFCDC0C}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl.Fusion.Tests", "tests\Stl.Fusion.Tests\Stl.Fusion.Tests.csproj", "{EE2B810A-689E-469B-9A3A-219C1B27C9A2}"
+	ProjectSection(ProjectDependencies) = postProject
+		{987BA792-35CB-4B3B-A6E7-FDAC87C2B731} = {987BA792-35CB-4B3B-A6E7-FDAC87C2B731}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl.CommandR", "src\Stl.CommandR\Stl.CommandR.csproj", "{2FC93CE9-CA5A-4F04-803C-A5DA67B28519}"
 EndProject

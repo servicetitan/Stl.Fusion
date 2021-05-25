@@ -25,6 +25,7 @@ using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
 using Stl.Fusion.Tests.UIModels;
 using Stl.Fusion.Internal;
+using Stl.Fusion.Server;
 using Stl.Testing;
 using Stl.Testing.Internal;
 using Stl.Time;
@@ -215,7 +216,15 @@ namespace Stl.Fusion.Tests
 
                 // WebHost
                 var webHost = (FusionTestWebHost?) WebHost;
-                services.AddSingleton(c => webHost ?? new FusionTestWebHost(services));
+                if (webHost == null) {
+                    var webHostOptions = new FusionTestWebHostOptions();
+#if NET471
+                    var controllerTypes = testType.Assembly.GetControllerTypes(testType.Namespace).ToArray();
+                    webHostOptions.ControllerTypes = controllerTypes;
+#endif
+                    webHost = new FusionTestWebHost(services, webHostOptions);
+                }
+                services.AddSingleton(c => webHost);
             }
             else {
                 // Configuring ClientServices

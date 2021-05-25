@@ -9,6 +9,20 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Stl.Fusion.Server
 {
+    public static class AssemblyEx
+    {
+        public static IEnumerable<Type> GetControllerTypes(this Assembly assembly, string? fullNamePrefixFilter = null)
+        {
+            var q = assembly.GetExportedTypes()
+                .Where(t => !t.IsAbstract && !t.IsGenericTypeDefinition)
+                .Where(t => typeof(IHttpController).IsAssignableFrom(t)
+                            || t.Name.EndsWith("Controller", StringComparison.OrdinalIgnoreCase));
+            if (fullNamePrefixFilter != null)
+                q = q.Where(c => (c.FullName ?? string.Empty).StartsWith(fullNamePrefixFilter));
+            return q;
+        }
+    }
+    
     public static class ServiceProviderEx
     {
         public static IServiceCollection AddControllersAsServices(this IServiceCollection services,
@@ -29,10 +43,7 @@ namespace Stl.Fusion.Server
 
         public static IServiceCollection AddControllersAsServices(this IServiceCollection services, Assembly assembly)
         {
-            services.AddControllersAsServices(assembly.GetExportedTypes()
-                .Where(t => !t.IsAbstract && !t.IsGenericTypeDefinition)
-                .Where(t => typeof(IHttpController).IsAssignableFrom(t)
-                            || t.Name.EndsWith("Controller", StringComparison.OrdinalIgnoreCase)));
+            services.AddControllersAsServices(assembly.GetControllerTypes());
             return services;
         }
 
