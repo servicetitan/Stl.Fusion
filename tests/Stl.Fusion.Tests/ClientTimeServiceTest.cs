@@ -2,7 +2,6 @@ using System;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using Stl.Fusion.Client;
 using Stl.Fusion.Tests.Services;
 using Stl.Testing;
 using Stl.Tests;
@@ -72,21 +71,8 @@ namespace Stl.Fusion.Tests
             await using var serving = await WebHost.Serve();
             var service = ClientServices.GetRequiredService<IClientTimeService>();
 
-            //var client = ClientServices.GetRequiredService<ClientAccessor<IClientTimeService>>();
-            //var x = await client.Client.GetFormattedTime("");
-            //var x2 = await client.Client.GetFormattedTime("null");
-            
-            #if NET461_OR_GREATER
-
-            (await service.GetFormattedTime("")).Should().Be("\"\"");
-            (await service.GetFormattedTime("null")).Should().Be("null");
-            
-            #else
-            
             (await service.GetFormattedTime("")).Should().Be("");
             (await service.GetFormattedTime("null")).Should().Be("");
-
-            #endif
 
             var format = "{0}";
             var matchCount = 0;
