@@ -22,7 +22,11 @@ namespace Stl.Fusion.Tests
                 // Screenshots don't work on Unix
                 return;
 
+            #if NETCOREAPP
             var epsilon = TimeSpan.FromSeconds(0.5);
+            #else
+            var epsilon = TimeSpan.FromSeconds(0.8);
+            #endif
 
             await using var serving = await WebHost.Serve();
             var service = ClientServices.GetRequiredService<IScreenshotServiceClient>();

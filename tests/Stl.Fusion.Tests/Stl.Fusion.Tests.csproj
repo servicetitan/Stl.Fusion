@@ -23,11 +23,8 @@
 
   <ItemGroup>
     <Compile Remove="EdgeCaseServiceTest.cs" />
-    <Compile Remove="ScreenshotServiceClientTest.cs" />
     <Compile Remove="Services\EdgeCaseController.cs" />
     <Compile Remove="Services\IEdgeCaseClient.cs" />
-    <Compile Remove="Services\IScreenshotServiceClient.cs" />
-    <Compile Remove="Services\ScreenshotController.cs" />
   </ItemGroup>
 
   <ItemGroup>
