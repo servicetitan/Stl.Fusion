@@ -18,6 +18,7 @@ namespace Stl.Testing
     {
         public string Urls { get; set; }
         public Action<IServiceProvider,IAppBuilder> ConfigureBuilder { get; set; }
+        public Action<IServiceProvider,HttpConfiguration> SetupHttpConfiguration { get; set; }
     }
     
     public class OwinWebApiServer : IServer
@@ -47,7 +48,8 @@ namespace Stl.Testing
             //string baseAddress = "http://localhost:9000/"; // TODO: replace with address provided
             string baseAddress = options.Urls;
             Action<IAppBuilder> configureBuilder = (appBuilder) => options.ConfigureBuilder(_serviceProvider, appBuilder);
-            _application = WebApp.Start(url: baseAddress, new WebApiStartup(_serviceProvider, configureBuilder).Configuration);
+            Action<HttpConfiguration> setupConfiguration = (config) => options.SetupHttpConfiguration(_serviceProvider, config);
+            _application = WebApp.Start(url: baseAddress, new WebApiStartup(_serviceProvider, setupConfiguration, configureBuilder).Configuration);
             
             return Task.CompletedTask;
         }
@@ -78,11 +80,14 @@ namespace Stl.Testing
     public class WebApiStartup
     {
         private readonly IServiceProvider serviceProvider;
-        private readonly Action<IAppBuilder>? _configureAppBuilder;
+        private readonly Action<HttpConfiguration> _setupConfiguration;
+        private readonly Action<IAppBuilder> _configureAppBuilder;
 
-        public WebApiStartup(IServiceProvider serviceProvider, Action<IAppBuilder>? configureAppBuilder)
+        public WebApiStartup(IServiceProvider serviceProvider, Action<HttpConfiguration> setupConfiguration,
+            Action<IAppBuilder> configureAppBuilder)
         {
             this.serviceProvider = serviceProvider;
+            _setupConfiguration = setupConfiguration;
             _configureAppBuilder = configureAppBuilder;
         }
 
@@ -106,6 +111,12 @@ namespace Stl.Testing
 
         private void Configure(HttpConfiguration config)
         {
+            if (_setupConfiguration != null)
+                _setupConfiguration(config);
+            var configBuilders = serviceProvider.GetServices<Action<HttpConfiguration>>();
+            foreach (var service in configBuilders) {
+                service(config);
+            }
             //config.DependencyResolver = serviceProvider.GetRequiredService<IDependencyResolver>();
             config.DependencyResolver = new DefaultDependencyResolver(serviceProvider);
             

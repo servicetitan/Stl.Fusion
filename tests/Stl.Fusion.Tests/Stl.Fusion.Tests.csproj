@@ -22,12 +22,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="EdgeCaseServiceTest.cs" />
-    <Compile Remove="Services\EdgeCaseController.cs" />
-    <Compile Remove="Services\IEdgeCaseClient.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Compile Include="UIModels\KeyValueModel.cs" />
     <Compile Include="UIModels\ServerTimeModel.cs" />
   </ItemGroup>

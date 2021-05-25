@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 #else
 using Owin;
+using System.Web.Http;
 #endif
 
 namespace Stl.Testing
@@ -113,6 +114,7 @@ namespace Stl.Testing
                     services.Configure<OwinWebApiServerOptions>(c => {
                         c.Urls = serverUri;
                         c.ConfigureBuilder = ConfigureWebHost;
+                        c.SetupHttpConfiguration = SetupHttpConfiguration;
                     });
                     services.AddHostedService<GenericWebHostService>();
                     services.AddSingleton<IServer, OwinWebApiServer>();
@@ -132,6 +134,8 @@ namespace Stl.Testing
 #endif
  
 #if NET461_OR_GREATER
+        protected virtual void SetupHttpConfiguration(IServiceProvider svp, HttpConfiguration config) { }
+
         protected virtual void ConfigureWebHost(IServiceProvider svp, IAppBuilder builder) { }
 #endif
 

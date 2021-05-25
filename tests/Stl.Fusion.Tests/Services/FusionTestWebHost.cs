@@ -1,6 +1,6 @@
 using System;
 using System.Reflection;
-
+using System.Web.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Stl.Collections;
@@ -88,6 +88,13 @@ namespace Stl.Fusion.Tests.Services
                 //// Testing
                 //services.AddHostedService<ApplicationPartsLogger>();
             });
+        }
+
+        protected override void SetupHttpConfiguration(IServiceProvider svp, HttpConfiguration config)
+        {
+            base.SetupHttpConfiguration(svp, config);
+            
+            config.Formatters.Insert(0, new TextMediaTypeFormatter());
         }
 
         protected override void ConfigureWebHost(IServiceProvider svp, IAppBuilder builder)
