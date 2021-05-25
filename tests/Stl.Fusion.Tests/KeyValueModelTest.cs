@@ -88,7 +88,11 @@ namespace Stl.Fusion.Tests
             (await kvc.Get("")).Should().Be("1");
 
             await ClientServices.Commander().Call(new IKeyValueService<string>.SetCommand("", "2"));
+            #if NETCOREAPP
             await Task.Delay(100); // Remote invalidation takes some time
+            #else
+            await Task.Delay(250); // Remote invalidation takes some time
+            #endif
             (await kvc.Get("")).Should().Be("2");
         }
 

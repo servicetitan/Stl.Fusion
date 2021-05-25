@@ -23,17 +23,15 @@
 
   <ItemGroup>
     <Compile Remove="EdgeCaseServiceTest.cs" />
-    <Compile Remove="KeyValueModelTest.cs" />
     <Compile Remove="ScreenshotServiceClientTest.cs" />
     <Compile Remove="Services\EdgeCaseController.cs" />
     <Compile Remove="Services\IEdgeCaseClient.cs" />
     <Compile Remove="Services\IScreenshotServiceClient.cs" />
-    <Compile Remove="Services\IStringKeyValueClient.cs" />
     <Compile Remove="Services\ScreenshotController.cs" />
-    <Compile Remove="Services\StringKeyValueController.cs" />
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="UIModels\KeyValueModel.cs" />
     <Compile Include="UIModels\ServerTimeModel.cs" />
   </ItemGroup>
 
