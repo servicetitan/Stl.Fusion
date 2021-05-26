@@ -30,11 +30,6 @@
     <PackageReference Include="System.Memory" VersionOverride="4.5.4" />
     <PackageReference Include="Microsoft.AspNet.WebApi.OwinSelfHost" />
   </ItemGroup>
-
-  <PropertyGroup>
-    <Test>'$(TargetFramework)' == 'netcoreapp3.1'</Test>
-  </PropertyGroup>
-
   <ItemGroup Condition="'$(TargetFramework)' == 'net5'">
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
   </ItemGroup>
