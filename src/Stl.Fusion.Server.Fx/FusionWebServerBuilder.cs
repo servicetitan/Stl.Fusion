@@ -35,7 +35,7 @@ namespace Stl.Fusion.Server
             });
             Services.TryAddSingleton<WebSocketServer>();
 
-            // TODO : restore
+            // TODO : restore?
             //var mvcBuilder = Services.AddMvc(options => {
             //    options.ModelBinderProviders.Insert(0, new ParseRefModelBinderProvider());
             //});
@@ -49,6 +49,7 @@ namespace Stl.Fusion.Server
             //});
         }
 
+        // TODO : restore?
         //public FusionWebServerBuilder AddControllers(
         //    Action<IServiceProvider, SignInController.Options>? signInControllerOptionsBuilder = null)
         //{
