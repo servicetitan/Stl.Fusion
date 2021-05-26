@@ -6,8 +6,10 @@ namespace Stl.Fusion.EntityFramework
 {
     public static class DbContextEx
     {
+#if !NETSTANDARD2_0
         private static readonly EventHandler<SavingChangesEventArgs> FailOnSaveChanges =
             (sender, args) => throw Errors.DbContextIsReadOnly();
+#endif
 
         // ConfigureMode
 

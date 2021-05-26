@@ -94,7 +94,7 @@ namespace Microsoft.Extensions.DependencyInjection
             int poolSize = 128)
             where TContext : DbContext
         {
-            Check.NotNull(optionsAction, nameof(optionsAction));
+            if (optionsAction == null) throw new ArgumentNullException(nameof(optionsAction));
 
             return AddPooledDbContextFactory<TContext>(serviceCollection, (_, ob) => optionsAction(ob), poolSize);
         }
