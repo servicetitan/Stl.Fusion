@@ -1,6 +1,5 @@
 using System;
 using System.Diagnostics;
-//using System.Runtime.Intrinsics.X86;
 using System.Threading;
 using Stl.Testing;
 using Stl.Time;
