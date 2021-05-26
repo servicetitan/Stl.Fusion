@@ -92,7 +92,12 @@ namespace Stl.Async
             Task? completedTask = null;
             using var cts = new CancellationTokenSource();
             var ctsToken = cts.Token;
+            
+            #if !NETSTANDARD2_0
             await using var _ = cancellationToken.Register(state => ((CancellationTokenSource) state!).Cancel(), cts);
+            #else
+            using var _ = cancellationToken.Register(state => ((CancellationTokenSource) state!).Cancel(), cts);
+            #endif
 
             var delayTask = clock.Delay(timeout, ctsToken);
             completedTask = await Task.WhenAny(task, delayTask).ConfigureAwait(false);
@@ -119,7 +124,11 @@ namespace Stl.Async
             Task? completedTask = null;
             using var cts = new CancellationTokenSource();
             var ctsToken = cts.Token;
+            #if !NETSTANDARD2_0
             await using var _ = cancellationToken.Register(state => ((CancellationTokenSource) state!).Cancel(), cts);
+            #else
+            using var _ = cancellationToken.Register(state => ((CancellationTokenSource) state!).Cancel(), cts);
+            #endif
 
             var delayTask = clock.Delay(timeout, ctsToken);
             completedTask = await Task.WhenAny(task, delayTask).ConfigureAwait(false);
@@ -130,11 +139,22 @@ namespace Stl.Async
             cts.Cancel(); // Ensures delayTask is cancelled to avoid memory leak
             return await task.ConfigureAwait(false);
         }
+        
+        public static bool IsCompletedSuccessfully(this Task task)
+        {
+            #if NETSTANDARD2_0
+            return task.Status == TaskStatus.RanToCompletion;
+            #else
+            return task.IsCompletedSuccessfully;
+            #endif
+        }
 
         // SuppressXxx
 
         public static Task SuppressExceptions(this Task task)
             => task.ContinueWith(t => { });
+        
+        #if !NETSTANDARD2_0
         public static Task<T> SuppressExceptions<T>(this Task<T> task)
             => task.ContinueWith(t => t.IsCompletedSuccessfully ? t.Result : default!);
 
@@ -144,6 +164,18 @@ namespace Stl.Async
                     return;
                 ExceptionDispatchInfo.Throw(t.Exception!);
             });
+        #else
+        
+        public static Task<T> SuppressExceptions<T>(this Task<T> task)
+            => task.ContinueWith(t => t.IsCompletedSuccessfully() ? t.Result : default!);
+
+        public static Task SuppressCancellation(this Task task)
+            => task.ContinueWith(t => {
+                if (t.IsCompletedSuccessfully() || t.IsCanceled)
+                    return;
+                ExceptionDispatchInfo.Capture(t.Exception!).Throw();
+            });
+        #endif
         public static Task<T> SuppressCancellation<T>(this Task<T> task)
             => task.ContinueWith(t => !t.IsCanceled ? t.Result : default!);
 

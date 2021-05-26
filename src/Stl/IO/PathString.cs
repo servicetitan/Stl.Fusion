@@ -48,7 +48,11 @@ namespace Stl.IO
 
         // Useful helpers
         public bool IsEmpty => string.IsNullOrEmpty(_value);
+#if !NETSTANDARD2_0
         public bool IsFullyQualified => Path.IsPathFullyQualified(Value);
+#else
+        public bool IsFullyQualified => System.IO.PathEx2.IsPathFullyQualified(Value);
+#endif
         public bool IsRooted => Path.IsPathRooted(Value);
         public bool HasExtension => Path.HasExtension(Value);
         public string Extension => Path.GetExtension(Value);
@@ -58,8 +62,12 @@ namespace Stl.IO
         public PathString FullPath => Path.GetFullPath(Value);
 
         public PathString ChangeExtension(string newExtension) => Path.ChangeExtension(Value, newExtension);
+#if !NETSTANDARD2_0
         public PathString RelativeTo(PathString relativeTo) => Path.GetRelativePath(relativeTo, Value);
-
+#else
+        public PathString RelativeTo(PathString relativeTo) => System.IO.PathEx2.GetRelativePath(relativeTo, Value);
+#endif
+        
         public PathString Normalize() => Value
             .Replace('\\', Path.DirectorySeparatorChar)
             .Replace('/', Path.DirectorySeparatorChar);
@@ -67,7 +75,11 @@ namespace Stl.IO
         public PathString ToAbsolute(PathString? basePath = null)
         {
             if (basePath != null)
+#if !NETSTANDARD2_0
                 return Path.GetFullPath(Value, basePath.Value);
+#else
+                return System.IO.PathEx2.GetFullPath(Value, basePath.Value);
+#endif
             if (!IsFullyQualified)
                 throw Errors.PathIsRelative(null);
             return Path.GetFullPath(Value);
@@ -75,11 +87,20 @@ namespace Stl.IO
 
         public static PathString JoinOrTakeSecond(string s1, string s2)
             => Path.Combine(s1, s2);
+#if !NETSTANDARD2_0
         public static PathString Join(string s1, string s2)
             => string.IsNullOrEmpty(s2)
                 ? s1
                 : Path.IsPathFullyQualified(s2)
                     ? throw new ArgumentOutOfRangeException(s2)
                     : Path.Join(s1, s2);
+#else
+        public static PathString Join(string s1, string s2)
+            => string.IsNullOrEmpty(s2)
+                ? s1
+                : System.IO.PathEx2.IsPathFullyQualified(s2)
+                    ? throw new ArgumentOutOfRangeException(s2)
+                    : System.IO.PathEx2.Join(s1, s2);
+#endif
     }
 }

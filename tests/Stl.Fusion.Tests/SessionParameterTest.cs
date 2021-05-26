@@ -18,6 +18,8 @@ namespace Stl.Fusion.Tests
         protected override void ConfigureCommonServices(ServiceCollection services)
             => services.AddFusion().AddAuthentication();
 
+        private static object syncObject = new Object();
+
         [Fact]
         public async Task BasicTest()
         {

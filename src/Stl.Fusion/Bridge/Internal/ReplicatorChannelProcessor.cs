@@ -225,7 +225,7 @@ namespace Stl.Fusion.Bridge.Internal
             });
             connectTask.ContinueWith(ct => {
                 channelTaskSource.SetFromTask(ct);
-                if (ct.IsCompletedSuccessfully)
+                if (ct.IsCompletedSuccessfully())
                     IsConnected.Value = true;
             });
 

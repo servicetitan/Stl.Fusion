@@ -14,6 +14,10 @@ namespace Stl.Fusion.Tests.Services
         [ComputeMethod]
         public virtual Task<int> Get(string key, Session session, CancellationToken cancellationToken = default)
         {
+            var computed = Computed.GetCurrent();
+            Console.WriteLine("computed current:" + computed);
+            var isInvalidating = Computed.IsInvalidating();
+            Console.WriteLine("computed IsInvalidating:" + isInvalidating);
             var result = _counters.TryGetValue((session.Id, key), out var value) ? value : 0;
             return Task.FromResult(result);
         }

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
+using Stl.Async;
 using Stl.Locking;
 using Stl.OS;
 using Stl.Testing;
@@ -72,7 +73,11 @@ namespace Stl.Tests.Async
                 var sw = new SpinWait();
                 var spinCount = (delayMs * 347) & 7;
                 for (var i = 0; i < spinCount; i++)
+#if !NET471
                     sw.SpinOnce(-1);
+#else
+                    sw.SpinOnce();
+#endif
             }
         }
 
@@ -95,7 +100,7 @@ namespace Stl.Tests.Async
                 Task.Run(() => r.Access(2, 3, NoCancel)),
             };
             await Task.WhenAll(tasks);
-            tasks.All(t => t.IsCompletedSuccessfully).Should().BeTrue();
+            tasks.All(t => t.IsCompletedSuccessfully()).Should().BeTrue();
 
             AssertResourcesReleased();
         }
@@ -145,7 +150,7 @@ namespace Stl.Tests.Async
             var runtime = CpuClock.Now - start;
             Out.WriteLine($"Actual runtime:   {runtime.Seconds:f1}s");
 
-            tasks.All(t => t.IsCompletedSuccessfully).Should().BeTrue();
+            tasks.All(t => t.IsCompletedSuccessfully()).Should().BeTrue();
 
             AssertResourcesReleased();
         }

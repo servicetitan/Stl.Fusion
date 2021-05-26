@@ -129,6 +129,15 @@ namespace Stl.Fusion
             result = ccs.Context.GetCapturedComputed<T>();
             return result;
         }
+        
+#if NETSTANDARD2_0
+        // Capture sync
+        public static ComputeContextScope BeginCapture()
+        {
+            var ccs = ComputeContext.New(CallOptions.Capture).Activate();
+            return ccs;
+        }
+#endif
 
         // Capture
 

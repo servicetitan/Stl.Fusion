@@ -15,10 +15,20 @@ namespace Stl.Fusion.Tests
     {
         public ClientTimeServiceTest(ITestOutputHelper @out, FusionTestOptions? options = null) : base(@out, options) { }
 
+        private TimeSpan GetEpsilon()
+        {
+#if NETCOREAPP
+            var epsilon = TimeSpan.FromSeconds(0.5);
+#else
+            var epsilon = TimeSpan.FromSeconds(0.7);
+#endif
+            return epsilon;
+        }
+
         [Fact]
         public async Task Test1()
         {
-            var epsilon = TimeSpan.FromSeconds(0.5);
+            var epsilon = GetEpsilon();
 
             await using var serving = await WebHost.Serve();
             var client = ClientServices.GetRequiredService<IClientTimeService>();
@@ -41,9 +51,9 @@ namespace Stl.Fusion.Tests
         [Fact]
         public async Task Test2()
         {
-            var epsilon = TimeSpan.FromSeconds(0.5);
+            var epsilon = GetEpsilon();
             if (TestRunnerInfo.IsBuildAgent())
-                epsilon *= 2;
+                epsilon = epsilon.Multiply(2);
 
             await using var serving = await WebHost.Serve();
             var service = ClientServices.GetRequiredService<IClientTimeService>();

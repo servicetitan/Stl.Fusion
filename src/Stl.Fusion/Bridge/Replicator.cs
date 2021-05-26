@@ -2,6 +2,8 @@ using System;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Stl.Async;
 using Stl.Concurrency;
 using Stl.DependencyInjection;
@@ -82,7 +84,8 @@ namespace Stl.Fusion.Bridge
 
         protected virtual ReplicatorChannelProcessor CreateChannelProcessor(Symbol publisherId)
         {
-            var channelProcessor = new ReplicatorChannelProcessor(this, publisherId);
+            var logger = Services.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(ReplicatorChannelProcessor));
+            var channelProcessor = new ReplicatorChannelProcessor(this, publisherId, logger);
             channelProcessor.Run().ContinueWith(_ => {
                 // Since ChannelProcessor is AsyncProcessorBase desc.,
                 // its disposal will shut down Run as well,

@@ -20,7 +20,9 @@ namespace Stl.CommandR.Internal
         CommandExecutionState ExecutionState { get; set; }
         OptionSet Items { get; }
 
+        #if !NETSTANDARD2_0
         CommandContext<TResult> Cast<TResult>() => (CommandContext<TResult>) this;
+        #endif
         Task InvokeRemainingHandlers(CancellationToken cancellationToken = default);
 
         // SetXxx & TrySetXxx

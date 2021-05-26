@@ -15,7 +15,19 @@
     <StlFusionVersion>1.1.*</StlFusionVersion>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(NetFrameworkSupport)' != 'true'">
+    <EntityFrameworkCoreVersion>5.0.6</EntityFrameworkCoreVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(NetFrameworkSupport)' == 'true'">
+    <EntityFrameworkCoreVersion>3.*</EntityFrameworkCoreVersion>
+  </PropertyGroup>
+
   <ItemGroup Label="Nupkg Versions">
+    <PackageReference Update="Microsoft.AspNet.WebApi.Core" Version="5.2.7" />
+    <PackageReference Update="Microsoft.AspNet.WebApi.OwinSelfHost" Version="5.2.7" />
+    <PackageReference Update="Microsoft.Owin" Version="4.1.1" />
+    <PackageReference Update="Owin" Version="1.0.0" />
+
     <PackageReference Update="AspNet.Security.OAuth.GitHub" Version="5.0.4" />
     <PackageReference Update="Blazorise" Version="$(BlazoriseVersion)" />
     <PackageReference Update="Blazorise.Bootstrap" Version="$(BlazoriseVersion)" />
@@ -49,6 +61,7 @@
     <PackageReference Update="Microsoft.Extensions.Hosting.Abstractions" Version="$(MicrosoftExtensionsVersion)" />
     <PackageReference Update="Microsoft.Extensions.Hosting" Version="$(MicrosoftExtensionsVersion)" />
     <PackageReference Update="Microsoft.Extensions.Logging" Version="$(MicrosoftExtensionsVersion)" />
+    <PackageReference Update="Microsoft.Extensions.Logging.Console" Version="$(MicrosoftExtensionsVersion)" />
     <PackageReference Update="Microsoft.Extensions.Logging.Debug" Version="$(MicrosoftExtensionsVersion)" />
     <PackageReference Update="Microsoft.Extensions.Logging.Abstractions" Version="$(MicrosoftExtensionsVersion)" />
     <PackageReference Update="Microsoft.EntityFrameworkCore" Version="$(EntityFrameworkCoreVersion)" />

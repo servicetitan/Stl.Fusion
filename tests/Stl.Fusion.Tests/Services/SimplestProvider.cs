@@ -12,6 +12,8 @@ namespace Stl.Fusion.Tests.Services
     public record SetValueCommand : ICommand<Unit>
     {
         public string Value { get; init; } = "";
+        
+        public Type ResultType => typeof(Unit);
     }
 
     public interface ISimplestProvider

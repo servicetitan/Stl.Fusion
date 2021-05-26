@@ -23,8 +23,10 @@ namespace Stl.IO
             => Directory.EnumerateFiles(path).Select(PathString.New);
         public static IEnumerable<PathString> EnumerateFiles(this PathString path, string searchPattern)
             => Directory.EnumerateFiles(path, searchPattern).Select(PathString.New);
+#if !NETSTANDARD2_0
         public static IEnumerable<PathString> EnumerateFiles(this PathString path, string searchPattern, EnumerationOptions enumerationOptions)
             => Directory.EnumerateFiles(path, searchPattern, enumerationOptions).Select(PathString.New);
+#endif
         public static IEnumerable<PathString> EnumerateFiles(this PathString path, string searchPattern, SearchOption searchOption)
             => Directory.EnumerateFiles(path, searchPattern, searchOption).Select(PathString.New);
 
@@ -32,8 +34,10 @@ namespace Stl.IO
             => Directory.EnumerateDirectories(path).Select(PathString.New);
         public static IEnumerable<PathString> EnumerateDirectories(this PathString path, string searchPattern)
             => Directory.EnumerateDirectories(path, searchPattern).Select(PathString.New);
+#if !NETSTANDARD2_0
         public static IEnumerable<PathString> EnumerateDirectories(this PathString path, string searchPattern, EnumerationOptions enumerationOptions)
             => Directory.EnumerateDirectories(path, searchPattern, enumerationOptions).Select(PathString.New);
+#endif
         public static IEnumerable<PathString> EnumerateDirectories(this PathString path, string searchPattern, SearchOption searchOption)
             => Directory.EnumerateDirectories(path, searchPattern, searchOption).Select(PathString.New);
 
@@ -41,8 +45,10 @@ namespace Stl.IO
             => Directory.EnumerateFileSystemEntries(path).Select(PathString.New);
         public static IEnumerable<PathString> EnumerateFileSystemEntries(this PathString path, string searchPattern)
             => Directory.EnumerateFileSystemEntries(path, searchPattern).Select(PathString.New);
+#if !NETSTANDARD2_0
         public static IEnumerable<PathString> EnumerateFileSystemEntries(this PathString path, string searchPattern, EnumerationOptions enumerationOptions)
             => Directory.EnumerateFileSystemEntries(path, searchPattern, enumerationOptions).Select(PathString.New);
+#endif
         public static IEnumerable<PathString> EnumerateFileSystemEntries(this PathString path, string searchPattern, SearchOption searchOption)
             => Directory.EnumerateFileSystemEntries(path, searchPattern, searchOption).Select(PathString.New);
 
@@ -52,7 +58,7 @@ namespace Stl.IO
             this PathString path,
             Encoding? encoding = null,
             CancellationToken cancellationToken = default)
-            => File.ReadAllTextAsync(path, encoding ?? Encoding.UTF8, cancellationToken);
+            => FileEx.ReadAllTextAsync(path, encoding ?? Encoding.UTF8, cancellationToken);
 
         public static async IAsyncEnumerable<string> ReadLines(
             this PathString path,

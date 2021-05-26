@@ -20,7 +20,7 @@ namespace Stl.Tests.Async
             ts.Task.IsCompleted.Should().BeFalse();
             ts.SetResult(1);
             ts.TrySetResult(2).Should().BeFalse();
-            ts.Task.IsCompletedSuccessfully.Should().BeTrue();
+            ts.Task.IsCompletedSuccessfully().Should().BeTrue();
             ts.Task.Result.Should().Be(1);
 
             ts = TaskSource.New<int>(TaskCreationOptions.None);

@@ -40,8 +40,13 @@ namespace Stl.Locking
         {
             try {
                 if (!File.Exists(Path))
+                #if !NETSTANDARD2_0
                     await File.WriteAllTextAsync(Path, "", cancellationToken)
                         .ConfigureAwait(false);
+                #else
+                    await FileEx.WriteAllTextAsync(Path, "", cancellationToken)
+                        .ConfigureAwait(false);
+                #endif
             }
             catch (IOException) {}
             catch (UnauthorizedAccessException) {}
@@ -64,7 +69,11 @@ namespace Stl.Locking
                 if (fs != null)
                     break;
                 if (!retryInterval.MoveNext())
+                    #if !NETSTANDARD2_0
                     ExceptionDispatchInfo.Throw(error!);
+                    #else
+                    ExceptionDispatchInfo.Capture(error!).Throw();
+                    #endif
                 await Task.Delay(retryInterval.Current, cancellationToken)
                     .ConfigureAwait(false);
             }
