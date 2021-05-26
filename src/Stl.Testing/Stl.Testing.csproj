@@ -26,8 +26,8 @@
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net471' ">
-    <PackageReference Include="IndexRange" VersionOverride="1.0.*" />
-    <PackageReference Include="System.Memory" VersionOverride="4.5.4" />
+    <PackageReference Include="IndexRange" />
+    <PackageReference Include="System.Memory" />
     <PackageReference Include="Microsoft.AspNet.WebApi.OwinSelfHost" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net5'">

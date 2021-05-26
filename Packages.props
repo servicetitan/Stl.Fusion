@@ -103,7 +103,10 @@
     <PackageReference Update="xunit" Version="2.4.1" />
     <PackageReference Update="Xunit.DependencyInjection.Logging" Version="2.1.*" />
     <PackageReference Update="ZString" Version="2.4.*" />
-    <!-- Lagacy ASP.NET -->
+    <!-- Legacy support only -->
+    <PackageReference Update="IndexRange" Version="1.0.*" />
+    <PackageReference Update="Microsoft.Bcl.AsyncInterfaces" Version="5.0.0" />
+    <PackageReference Update="System.Memory" Version="4.5.4" />
     <PackageReference Update="Microsoft.AspNet.WebApi.Core" Version="5.2.7" />
     <PackageReference Update="Microsoft.AspNet.WebApi.OwinSelfHost" Version="5.2.7" />
     <PackageReference Update="Microsoft.Owin" Version="4.1.1" />
