@@ -50,15 +50,14 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-    <NetFrameworkSupport>true</NetFrameworkSupport>
     <Legacy>true</Legacy>
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetFramework)'== 'net471'">
-    <NetFrameworkSupport>true</NetFrameworkSupport>
     <Legacy>true</Legacy>
   </PropertyGroup>
 
-  <!--<PropertyGroup Condition="'$(Legacy)'== 'true'">
+  <!-- TODO: find a way how to sign .netstandard and .net471 assebmlies
+    <PropertyGroup Condition="'$(Legacy)'== 'true'">
     <SigningFilePath>$(SolutionDir)</SigningFilePath>
     <SigningFileName>SharedKey.snk</SigningFileName>
     <SignAssembly>True</SignAssembly>

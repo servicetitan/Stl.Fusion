@@ -15,19 +15,14 @@
     <StlFusionVersion>1.1.*</StlFusionVersion>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(NetFrameworkSupport)' != 'true'">
+  <PropertyGroup Condition="'$(Legacy)' != 'true'">
     <EntityFrameworkCoreVersion>5.0.6</EntityFrameworkCoreVersion>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(NetFrameworkSupport)' == 'true'">
+  <PropertyGroup Condition="'$(Legacy)' == 'true'">
     <EntityFrameworkCoreVersion>3.*</EntityFrameworkCoreVersion>
   </PropertyGroup>
 
   <ItemGroup Label="Nupkg Versions">
-    <PackageReference Update="Microsoft.AspNet.WebApi.Core" Version="5.2.7" />
-    <PackageReference Update="Microsoft.AspNet.WebApi.OwinSelfHost" Version="5.2.7" />
-    <PackageReference Update="Microsoft.Owin" Version="4.1.1" />
-    <PackageReference Update="Owin" Version="1.0.0" />
-
     <PackageReference Update="AspNet.Security.OAuth.GitHub" Version="5.0.4" />
     <PackageReference Update="Blazorise" Version="$(BlazoriseVersion)" />
     <PackageReference Update="Blazorise.Bootstrap" Version="$(BlazoriseVersion)" />
@@ -108,6 +103,11 @@
     <PackageReference Update="xunit" Version="2.4.1" />
     <PackageReference Update="Xunit.DependencyInjection.Logging" Version="2.1.*" />
     <PackageReference Update="ZString" Version="2.4.*" />
+    <!-- Lagacy ASP.NET -->
+    <PackageReference Update="Microsoft.AspNet.WebApi.Core" Version="5.2.7" />
+    <PackageReference Update="Microsoft.AspNet.WebApi.OwinSelfHost" Version="5.2.7" />
+    <PackageReference Update="Microsoft.Owin" Version="4.1.1" />
+    <PackageReference Update="Owin" Version="1.0.0" />
     <!-- Build time only -->
     <PackageReference Update="Microsoft.NET.Test.Sdk" Version="16.9.4" />
     <PackageReference Update="Microsoft.AspNetCore.Components.WebAssembly.Build" Version="$(BlazorVersion)" PrivateAssets="all" />
