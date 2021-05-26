@@ -105,15 +105,15 @@ namespace Stl.Testing
             });
 #endif
 
-#if NET461_OR_GREATER
+#if NET471
             builder.ConfigureServices(
                 (ctx, services) => {
                     var serverUri = ServerUriLazy.IsValueCreated
                         ? ServerUri.ToString()
-                        : "http://localhost:9000/";
+                        : "http://localhost:9000/"; // TODO: implement dynamic port assignment
                     services.Configure<OwinWebApiServerOptions>(c => {
                         c.Urls = serverUri;
-                        c.ConfigureBuilder = ConfigureWebHost;
+                        c.ConfigureBuilder = ConfigureAppBuilder;
                         c.SetupHttpConfiguration = SetupHttpConfiguration;
                     });
                     services.AddHostedService<GenericWebHostService>();
@@ -121,7 +121,6 @@ namespace Stl.Testing
                 }
             );
 #endif
-            
             
             ConfigureHost(builder);
             return builder;
@@ -133,12 +132,10 @@ namespace Stl.Testing
         protected virtual void ConfigureWebHost(IWebHostBuilder builder) { }
 #endif
  
-#if NET461_OR_GREATER
+#if NET471
         protected virtual void SetupHttpConfiguration(IServiceProvider svp, HttpConfiguration config) { }
 
-        protected virtual void ConfigureWebHost(IServiceProvider svp, IAppBuilder builder) { }
+        protected virtual void ConfigureAppBuilder(IServiceProvider svp, IAppBuilder builder) { }
 #endif
-
-
     }
 }

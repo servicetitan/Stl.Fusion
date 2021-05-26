@@ -66,7 +66,7 @@ namespace Stl.Fusion.Tests.Services
             gOut.InterpolationMode = InterpolationMode.Default;
             gOut.CompositingMode = CompositingMode.SourceCopy;
             gOut.DrawImage(bScreen, 0, 0, ow, oh);
-            #if NET461_OR_GREATER
+            #if NET471
             using var stream = new MemoryStream();
             #else
             await using var stream = new MemoryStream();

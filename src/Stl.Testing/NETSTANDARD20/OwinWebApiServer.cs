@@ -39,18 +39,13 @@ namespace Stl.Testing
         public Task StartAsync<TContext>(IHttpApplication<TContext> application, CancellationToken cancellationToken)
         {
             if (_hasStarted)
-            {
-                // The server has already started and/or has not been cleaned up yet
-                throw new InvalidOperationException("ServerAlreadyStarted");
-            }
+                throw new InvalidOperationException("The server has already started and/or has not been cleaned up yet");
             _hasStarted = true;
             
-            //string baseAddress = "http://localhost:9000/"; // TODO: replace with address provided
             string baseAddress = options.Urls;
             Action<IAppBuilder> configureBuilder = (appBuilder) => options.ConfigureBuilder(_serviceProvider, appBuilder);
             Action<HttpConfiguration> setupConfiguration = (config) => options.SetupHttpConfiguration(_serviceProvider, config);
             _application = WebApp.Start(url: baseAddress, new WebApiStartup(_serviceProvider, setupConfiguration, configureBuilder).Configuration);
-            
             return Task.CompletedTask;
         }
 
@@ -117,7 +112,6 @@ namespace Stl.Testing
             foreach (var service in configBuilders) {
                 service(config);
             }
-            //config.DependencyResolver = serviceProvider.GetRequiredService<IDependencyResolver>();
             config.DependencyResolver = new DefaultDependencyResolver(serviceProvider);
             
             config.MapHttpAttributeRoutes();
@@ -160,7 +154,7 @@ namespace Stl.Testing
             return this;
         }
     }
-
+    
     internal class GenericWebHostService : IHostedService
     {
         private readonly IServer server;
