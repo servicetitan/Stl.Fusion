@@ -8,10 +8,8 @@ namespace Stl.Testing.Internal
     public class TestOutputWriter : TextWriter
     {
         protected static readonly string EnvNewLine = Environment.NewLine;
-
         protected static readonly string LastEnvNewLineString = EnvNewLine[^1].ToString();
         protected static readonly char LastEnvNewLineChar = EnvNewLine[^1];
-
 
         protected StringBuilder Prefix = new();
         public ITestOutputHelper TestOutput { get; }

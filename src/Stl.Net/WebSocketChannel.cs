@@ -73,14 +73,12 @@ namespace Stl.Net
             catch {
                 // Dispose shouldn't throw exceptions
             }
-
             try {
                 await WhenCompleted(default).ConfigureAwait(false);
             }
             catch {
                 // Dispose shouldn't throw exceptions
             }
-
             if (OwnsWebSocket)
                 WebSocket.Dispose();
         }
@@ -104,7 +102,7 @@ namespace Stl.Net
 
         protected async Task RunReader(CancellationToken cancellationToken)
         {
-            var error = (Exception?)null;
+            var error = (Exception?) null;
             try {
                 await RunReaderUnsafe(cancellationToken).ConfigureAwait(false);
             }
