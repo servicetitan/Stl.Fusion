@@ -23,7 +23,7 @@
     -->
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(MSBuildProjectExtension)' != '.dcproj'" >
+  <ItemGroup Condition="'$(MSBuildProjectExtension)' != '.dcproj'">
     <PackageReference Include="Nerdbank.GitVersioning" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" />
   </ItemGroup>
