@@ -111,10 +111,9 @@ namespace Stl.Async
                 exampleAssign.GetType(),
                 privateCtorBindingFlags, null,
                 new object[] {Expression.Field(pTcs, fTask!), pTask}, null)!;
-            var setTaskLambda = Expression.Lambda<Action<TaskCompletionSource<T>, Task<T>>>(
-                realAssign, pTcs, pTask);
 #if !NETSTANDARD2_0
-            SetTask = setTaskLambda.Compile();
+            SetTask = Expression.Lambda<Action<TaskCompletionSource<T>, Task<T>>>(
+                realAssign, pTcs, pTask).Compile();
 #else
             SetTask = (tcs, task) => {
                 // TODO: look fora another more productive solution.
