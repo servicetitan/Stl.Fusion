@@ -4,22 +4,6 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace System.Collections.Generic
 {
-    //public static class DictionaryEx
-    //{
-    //    public static bool Remove<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, TKey key, out TValue value)
-    //    {
-    //        if (!dictionary.TryGetValue(key, out value)) {
-    //            value = default;
-    //            return false;
-    //        }
-    //        if (!dictionary.Remove(key)) {
-    //            value = default;
-    //            return false;
-    //        }
-    //        return true;
-    //    }
-    //}
-
     public static class CollectionExtensions
     {
         public static TValue? GetValueOrDefault<TKey, TValue>(
