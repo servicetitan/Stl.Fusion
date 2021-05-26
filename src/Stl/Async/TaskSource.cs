@@ -117,6 +117,7 @@ namespace Stl.Async
             SetTask = setTaskLambda.Compile();
 #else
             SetTask = (tcs, task) => {
+                // TODO: look fora another more productive solution.
                 fTask!.SetValue(tcs, task);
             };
 #endif

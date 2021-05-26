@@ -18,7 +18,7 @@ namespace Stl.CommandR
         where TCommand : class, ICommand<TResult>
     {
         #if !NETSTANDARD2_0
-        // TODO: This can affects command handlers search
+        // TODO: Can this skip affect command handlers search?
         Task ICommandHandler<TCommand>.OnCommand(
             TCommand command, CommandContext context,
             CancellationToken cancellationToken)
