@@ -6,8 +6,6 @@ namespace Stl.Fusion.Internal
 {
     public static class ComputedEx
     {
-        
-        
         private static class TaskCache<T>
         {
             public static readonly Task<T> DefaultResultTask = Task.FromResult(default(T)!);
@@ -17,9 +15,6 @@ namespace Stl.Fusion.Internal
         {
             var callOptions = context.CallOptions;
             var mustUseExisting = (callOptions & CallOptions.TryGetExisting) != 0;
-
-            var existingToString = existing != null ? existing.ToString() : "<null>";
-            ComputedLog.Log($"ComputedEx.TryUseExisting: {existingToString}, {context}, {usedBy}. ");
 
             if (existing == null)
                 return mustUseExisting;
