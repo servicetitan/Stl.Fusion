@@ -1,10 +1,10 @@
 {
-  //"diagnosticMessages": true,
-  //"parallelizeAssembly": true,
-  //"parallelizeTestCollections": true,
-  //"maxParallelThreads": 1,
-  //"methodDisplay": "classAndMethod",
-  //"preEnumerateTheories": true,
-  //"longRunningTestSeconds": 120,
-  //"shadowCopy": false
+  "diagnosticMessages": true,
+  "parallelizeAssembly": true,
+  "parallelizeTestCollections": true,
+  "maxParallelThreads": 1,
+  "methodDisplay": "classAndMethod",
+  "preEnumerateTheories": true,
+  "longRunningTestSeconds": 120,
+  "shadowCopy": false
 }
