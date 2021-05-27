@@ -27,6 +27,7 @@
     <PackageReference Include="IndexRange" />
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
     <PackageReference Include="System.Memory" />
+    <PackageReference Include="System.Reflection.Emit.Lightweight" />
   </ItemGroup>
 
 </Project>

@@ -111,6 +111,7 @@
     <PackageReference Update="Microsoft.AspNet.WebApi.OwinSelfHost" Version="5.2.7" />
     <PackageReference Update="Microsoft.Owin" Version="4.1.1" />
     <PackageReference Update="Owin" Version="1.0.0" />
+    <PackageReference Update="System.Reflection.Emit.Lightweight" Version="4.7.0" />
     <!-- Build time only -->
     <PackageReference Update="Microsoft.NET.Test.Sdk" Version="16.9.4" />
     <PackageReference Update="Microsoft.AspNetCore.Components.WebAssembly.Build" Version="$(BlazorVersion)" PrivateAssets="all" />
