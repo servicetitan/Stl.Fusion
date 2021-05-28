@@ -65,12 +65,12 @@ namespace Stl.Fusion.Tests.Services
         [HttpGet, Publish]
         [Route("tryGet/{key?}")]
         public Task<Option<string>> TryGet(string? key = null)
-            => Service.TryGet(key ?? "" /*, ActionContext.RequestAborted()*/);
+            => Service.TryGet(key ?? "" , ActionContext.RequestAborted());
 
         [HttpGet, Publish]
         [Route("get/{key?}")]
         public async Task<JsonString> Get(string? key = null)
-            => await Service.Get(key ?? "" /*, ActionContext.RequestAborted()*/);
+            => await Service.Get(key ?? "" , ActionContext.RequestAborted());
 
         [HttpPost]
         [Route("set/{key?}")]
