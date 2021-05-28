@@ -32,7 +32,7 @@ namespace Microsoft.EntityFrameworkCore.Internal
         ///     doing so can result in application failures when updating to a new Entity Framework Core release.
         /// </summary>
         public virtual TContext CreateDbContext()
-            => _pool.Rent(); // (TContext)new DbContextLease(_pool, standalone: true).Context;
+            => new DbContextPool<TContext>.Lease(_pool).Context; // (TContext)new DbContextLease(_pool, standalone: true).Context;
     }
 }
 
