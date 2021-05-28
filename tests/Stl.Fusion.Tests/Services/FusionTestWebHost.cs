@@ -72,6 +72,7 @@ namespace Stl.Fusion.Tests.Services
                 // API controllers
                 app.UseRouting();
                 app.UseEndpoints(endpoints => {
+                    endpoints.MapControllerRoute(name: "DefaultApi", pattern: "api/{controller}/{action}");
                     endpoints.MapControllers();
                     endpoints.MapFusionWebSocketServer();
                 });

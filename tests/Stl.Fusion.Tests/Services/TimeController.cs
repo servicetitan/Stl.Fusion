@@ -1,23 +1,16 @@
 using System;
-using System.Net.Http;
 using System.Threading.Tasks;
-using System.Threading;
 #if NETCOREAPP
 using Microsoft.AspNetCore.Mvc;
 #else
-using System.Web;
 using System.Web.Http;
+using ControllerBase = System.Web.Http.ApiController;
 #endif
-
 using Stl.Fusion.Server;
-
 
 namespace Stl.Fusion.Tests.Services
 {
-    #if NETCOREAPP
-
-    [Route("api/[controller]/[action]")]
-    [ApiController, JsonifyErrors]
+    [JsonifyErrors]
     public class TimeController : ControllerBase
     {
         protected ITimeService Service { get; }
@@ -26,31 +19,10 @@ namespace Stl.Fusion.Tests.Services
 
         [HttpGet, Publish]
         public Task<DateTime> GetTime()
-            => Service.GetTime(HttpContext.RequestAborted);
+            => Service.GetTime(this.RequestAborted());
 
         [HttpGet, Publish]
         public Task<string?> GetFormattedTime(string? format)
-            => Service.GetFormattedTime(format ?? "", HttpContext.RequestAborted);
+            => Service.GetFormattedTime(format ?? "", this.RequestAborted());
     }
-
-    #else
-
-    // use default route template
-    [JsonifyErrors]
-    public class TimeController : ApiController
-    {
-        protected ITimeService Service { get; }
-
-        public TimeController(ITimeService service) => Service = service;
-
-        [HttpGet, Publish]
-        public Task<DateTime> GetTime()
-            => Service.GetTime(ActionContext.RequestAborted());
-
-        [HttpGet, Publish]
-        public Task<string?> GetFormattedTime(string? format)
-            => Service.GetFormattedTime(format ?? "", ActionContext.RequestAborted());
-    }
-
-    #endif
 }
