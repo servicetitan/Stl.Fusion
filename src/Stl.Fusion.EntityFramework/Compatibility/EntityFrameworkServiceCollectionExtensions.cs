@@ -6,14 +6,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Internal;
-using Microsoft.EntityFrameworkCore.Utilities;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 // ReSharper disable once CheckNamespace
@@ -31,9 +28,7 @@ namespace Microsoft.Extensions.DependencyInjection
             where TContext : DbContext
         {
             if (poolSize <= 0)
-            {
                 throw new ArgumentOutOfRangeException(nameof(poolSize), CoreStrings.InvalidPoolSize);
-            }
 
             CheckContextConstructors<TContext>();
 
@@ -147,7 +142,6 @@ namespace Microsoft.Extensions.DependencyInjection
 
             AddPoolingOptions<TContext>(serviceCollection, optionsAction, poolSize);
 
-            //serviceCollection.TryAddSingleton<IDbContextPool<TContext>, DbContextPool<TContext>>();
             serviceCollection.TryAddSingleton<DbContextPool<TContext>>();
             serviceCollection.TryAddSingleton<IDbContextFactory<TContext>, PooledDbContextFactory<TContext>>();
 

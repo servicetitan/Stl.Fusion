@@ -3,16 +3,13 @@
 using System;
 using System.Data.Common;
 using System.Reflection;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
-using Stl.Async;
 
-namespace Stl.Fusion.EntityFramework.Internal
+namespace Microsoft.EntityFrameworkCore
 {
-    public static class DbContextConnectionEx
+    internal static class RelationalDatabaseFacadeExtensions
     {
         private static readonly FieldInfo ConnectionField = typeof(RelationalConnection)
             .GetField("_connection", BindingFlags.Instance | BindingFlags.NonPublic)!;
