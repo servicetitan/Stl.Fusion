@@ -1,4 +1,4 @@
-#if NET461_OR_GREATER
+#if NET471
 
 using System;
 using System.Collections.Generic;
@@ -21,7 +21,7 @@ namespace Stl.Testing
         public Action<IServiceProvider,HttpConfiguration> SetupHttpConfiguration { get; set; }
     }
     
-    public class OwinWebApiServer : IServer
+    internal class OwinWebApiServer : IServer
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly ServerAddressesFeature _serverAddresses;
@@ -72,7 +72,7 @@ namespace Stl.Testing
         }
     }
     
-    public class WebApiStartup
+    internal class WebApiStartup
     {
         private readonly IServiceProvider serviceProvider;
         private readonly Action<HttpConfiguration> _setupConfiguration;

@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Stl.DependencyInjection;
 using Stl.IO;
 using Stl.Fusion.Bridge;
@@ -73,6 +74,8 @@ namespace Stl.Fusion.Tests
             ClientServices = CreateServices(true);
             if (Options.UseLogging)
                 Log = (ILogger) Services.GetRequiredService(typeof(ILogger<>).MakeGenericType(GetType()));
+            else
+                Log = NullLogger.Instance;
         }
 
         public override async Task InitializeAsync()
@@ -183,7 +186,7 @@ namespace Stl.Fusion.Tests
 #if NETCOREAPP
                         builder.UseNpgsql(PostgreSqlConnectionString);
 #else
-                        throw Errors.SupportedOnlyInNetCore();
+                        throw new NotSupportedException("PostgreSql is supported only for .net core.");
 #endif
                         break;
                     default:
@@ -201,7 +204,7 @@ namespace Stl.Fusion.Tests
 #if NETCOREAPP
                         b.AddNpgsqlDbOperationLogChangeTracking();
 #else
-                        throw Errors.SupportedOnlyInNetCore();
+                        throw new NotSupportedException("PostgreSql is supported only for .net core.");
 #endif
                     else
                         b.AddFileBasedDbOperationLogChangeTracking();

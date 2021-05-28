@@ -1,4 +1,4 @@
-#if NET461_OR_GREATER
+#if NET471
 
 using System;
 using System.Collections;
