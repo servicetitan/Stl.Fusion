@@ -35,40 +35,10 @@ namespace Stl.Fusion.Server
             });
             Services.TryAddSingleton<WebSocketServer>();
 
-            // TODO : restore?
-            //var mvcBuilder = Services.AddMvc(options => {
-            //    options.ModelBinderProviders.Insert(0, new ParseRefModelBinderProvider());
-            //});
-            //mvcBuilder.AddNewtonsoftJson(options => {
-            //    MemberwiseCopier.Invoke(
-            //        JsonNetSerializer.DefaultSettings,
-            //        options.SerializerSettings,
-            //        copier => copier with {
-            //            Filter = member => member.Name != "Binder",
-            //        });
-            //});
+            // TODO: configure ParseRefModelBinderProvider/PageRefModelBinderProvider 
+            // TODO: configure NewtonsoftJson with JsonNetSerializer.DefaultSettings
         }
 
-        // TODO : restore?
-        //public FusionWebServerBuilder AddControllers(
-        //    Action<IServiceProvider, SignInController.Options>? signInControllerOptionsBuilder = null)
-        //{
-        //    Services.TryAddSingleton(c => {
-        //        var options = new SignInController.Options();
-        //        signInControllerOptionsBuilder?.Invoke(c, options);
-        //        return options;
-        //    });
-        //    Services.AddControllers()
-        //        .AddApplicationPart(typeof(AuthController).Assembly);
-        //    return this;
-        //}
-
-        //public FusionWebServerBuilder AddControllerFilter(Func<TypeInfo, bool> controllerFilter)
-        //{
-        //    Services.AddControllers()
-        //        .ConfigureApplicationPartManager(m => m.FeatureProviders.Add(
-        //            new ControllerFilter(controllerFilter)));
-        //    return this;
-        //}
+        //TODO: add AddControllers and AddControllerFilter;
     }
 }

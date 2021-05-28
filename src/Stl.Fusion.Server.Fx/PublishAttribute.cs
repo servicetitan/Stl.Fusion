@@ -40,7 +40,6 @@ namespace Stl.Fusion.Server
                 // we requested it for (i.e. it might still point to its older,
                 // inconsistent version), so we have to update it here.
                 try {
-                    // TODO: should we call configure await false or not
                     await publication.Update(cancellationToken).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException) {
