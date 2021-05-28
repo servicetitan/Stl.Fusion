@@ -73,7 +73,5 @@ namespace Stl.Time.Testing
         public TimeSpan ToRealDuration(TimeSpan localDuration)
             => localDuration.Divide(Multiplier);
 #endif
-
-        
     }
 }

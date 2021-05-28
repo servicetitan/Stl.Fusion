@@ -58,7 +58,7 @@ namespace Stl.IO
             this PathString path,
             Encoding? encoding = null,
             CancellationToken cancellationToken = default)
-            => FileEx.ReadAllTextAsync(path, encoding ?? Encoding.UTF8, cancellationToken);
+            => FileCompatEx.ReadAllTextAsync(path, encoding ?? Encoding.UTF8, cancellationToken);
 
         public static async IAsyncEnumerable<string> ReadLines(
             this PathString path,

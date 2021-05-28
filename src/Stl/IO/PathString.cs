@@ -51,7 +51,7 @@ namespace Stl.IO
 #if !NETSTANDARD2_0
         public bool IsFullyQualified => Path.IsPathFullyQualified(Value);
 #else
-        public bool IsFullyQualified => System.IO.PathEx2.IsPathFullyQualified(Value);
+        public bool IsFullyQualified => PathCompatEx.IsPathFullyQualified(Value);
 #endif
         public bool IsRooted => Path.IsPathRooted(Value);
         public bool HasExtension => Path.HasExtension(Value);
@@ -65,7 +65,7 @@ namespace Stl.IO
 #if !NETSTANDARD2_0
         public PathString RelativeTo(PathString relativeTo) => Path.GetRelativePath(relativeTo, Value);
 #else
-        public PathString RelativeTo(PathString relativeTo) => System.IO.PathEx2.GetRelativePath(relativeTo, Value);
+        public PathString RelativeTo(PathString relativeTo) => PathCompatEx.GetRelativePath(relativeTo, Value);
 #endif
         
         public PathString Normalize() => Value
@@ -78,7 +78,7 @@ namespace Stl.IO
 #if !NETSTANDARD2_0
                 return Path.GetFullPath(Value, basePath.Value);
 #else
-                return System.IO.PathEx2.GetFullPath(Value, basePath.Value);
+                return PathCompatEx.GetFullPath(Value, basePath.Value);
 #endif
             if (!IsFullyQualified)
                 throw Errors.PathIsRelative(null);
@@ -98,9 +98,9 @@ namespace Stl.IO
         public static PathString Join(string s1, string s2)
             => string.IsNullOrEmpty(s2)
                 ? s1
-                : System.IO.PathEx2.IsPathFullyQualified(s2)
+                : PathCompatEx.IsPathFullyQualified(s2)
                     ? throw new ArgumentOutOfRangeException(s2)
-                    : System.IO.PathEx2.Join(s1, s2);
+                    : PathCompatEx.Join(s1, s2);
 #endif
     }
 }

@@ -122,9 +122,9 @@ namespace Stl.Async
         
         private static Action<TaskCompletionSource<T>, Task<T>> GenerateSetFieldMethod(FieldInfo field)
         {
-            var dm = new DynamicMethod(String.Concat ("_Set", field.Name, "_"), typeof(void),
+            var dm = new DynamicMethod(string.Concat ("_Set", field.Name, "_"), typeof(void),
                 new Type[] { typeof(TaskCompletionSource<T>), typeof(Task<T>) },
-                field.DeclaringType, true);
+                field.DeclaringType!, true);
             ILGenerator generator = dm.GetILGenerator ();
 
             generator.Emit (OpCodes.Ldarg_0);

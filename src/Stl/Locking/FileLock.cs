@@ -44,7 +44,7 @@ namespace Stl.Locking
                     await File.WriteAllTextAsync(Path, "", cancellationToken)
                         .ConfigureAwait(false);
                 #else
-                    await FileEx.WriteAllTextAsync(Path, "", cancellationToken)
+                    await FileCompatEx.WriteAllTextAsync(Path, "", cancellationToken)
                         .ConfigureAwait(false);
                 #endif
             }

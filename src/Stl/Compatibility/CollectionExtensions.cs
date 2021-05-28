@@ -10,13 +10,13 @@ namespace System.Collections.Generic
             this IReadOnlyDictionary<TKey, TValue> dictionary,
             TKey key)
         {
-            return dictionary.GetValueOrDefault<TKey, TValue>(key, default(TValue));
+            return dictionary.GetValueOrDefault<TKey, TValue>(key, default);
         }
 
-        public static TValue GetValueOrDefault<TKey, TValue>(
+        public static TValue? GetValueOrDefault<TKey, TValue>(
             this IReadOnlyDictionary<TKey, TValue> dictionary,
             TKey key,
-            TValue defaultValue)
+            TValue? defaultValue)
         {
             if (dictionary == null)
                 throw new ArgumentNullException(nameof(dictionary));
@@ -53,7 +53,7 @@ namespace System.Collections.Generic
             return false;
         }
 
-        public static bool TryPop<T>(this Stack<T> stack, out T? value)
+        public static bool TryPop<T>(this Stack<T> stack, [MaybeNullWhen(false)] out T value)
         {
             if (stack.Count == 0) {
                 value = default;

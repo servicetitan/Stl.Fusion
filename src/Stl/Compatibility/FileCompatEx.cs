@@ -5,19 +5,19 @@ using Stl.IO;
 
 namespace System.IO
 {
-    public static class FileEx
+    internal static class FileCompatEx
     {
         private static Encoding? s_UTF8NoBOM;
         private static Encoding UTF8NoBOM => s_UTF8NoBOM ?? (s_UTF8NoBOM = new UTF8Encoding(false, true));
         
-        public static Task WriteAllTextAsync(string path, string? contents, CancellationToken cancellationToken = default(CancellationToken))
-            => FileEx.WriteAllTextAsync(path, contents, UTF8NoBOM, cancellationToken);
+        public static Task WriteAllTextAsync(string path, string? contents, CancellationToken cancellationToken = default)
+            => WriteAllTextAsync(path, contents, UTF8NoBOM, cancellationToken);
 
         public static Task WriteAllTextAsync(
             string path,
             string? contents,
             Encoding encoding,
-            CancellationToken cancellationToken = default (CancellationToken))
+            CancellationToken cancellationToken = default)
         {
             if (path == null)
                 throw new ArgumentNullException(nameof (path));
@@ -36,13 +36,13 @@ namespace System.IO
             return Task.CompletedTask;
         }
         
-        public static Task<string> ReadAllTextAsync(string path, CancellationToken cancellationToken = default (CancellationToken))
-            => FileEx.ReadAllTextAsync(path, Encoding.UTF8, cancellationToken);
+        public static Task<string> ReadAllTextAsync(string path, CancellationToken cancellationToken = default)
+            => ReadAllTextAsync(path, Encoding.UTF8, cancellationToken);
 
         public static Task<string> ReadAllTextAsync(
             string path,
             Encoding encoding,
-            CancellationToken cancellationToken = default (CancellationToken))
+            CancellationToken cancellationToken = default)
         {
             if (path == null)
                 throw new ArgumentNullException(nameof (path));

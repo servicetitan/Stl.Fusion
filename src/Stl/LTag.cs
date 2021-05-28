@@ -52,7 +52,7 @@ namespace Stl
                 #if !NETSTANDARD2_0
                 return new string(slice);
                 #else
-                return StringEx.Create(slice);
+                return new string(slice.ToArray());
                 #endif
             }
         }

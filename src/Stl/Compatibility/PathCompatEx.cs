@@ -1,10 +1,10 @@
-using System.Runtime.CompilerServices;
-
 #if NETSTANDARD2_0
+
+using System.Runtime.CompilerServices;
 
 namespace System.IO
 {
-    public static class PathEx2
+    internal static class PathCompatEx
     {
         public static bool IsPathFullyQualified(string path)
             => !PartiallyQualified(path);
@@ -30,8 +30,8 @@ namespace System.IO
         {
             // implementation is taken from https://stackoverflow.com/questions/275689/how-to-get-relative-path-from-absolute-path
             
-            if (String.IsNullOrEmpty(relativeTo)) throw new ArgumentNullException("relativeTo");
-            if (String.IsNullOrEmpty(path))   throw new ArgumentNullException("path");
+            if (string.IsNullOrEmpty(relativeTo)) throw new ArgumentNullException("relativeTo");
+            if (string.IsNullOrEmpty(path))   throw new ArgumentNullException("path");
 
             Uri fromUri = new Uri(relativeTo);
             Uri toUri = new Uri(path);
@@ -39,7 +39,7 @@ namespace System.IO
             if (fromUri.Scheme != toUri.Scheme) { return path; } // path can't be made relative.
 
             Uri relativeUri = fromUri.MakeRelativeUri(toUri);
-            String relativePath = Uri.UnescapeDataString(relativeUri.ToString());
+            string relativePath = Uri.UnescapeDataString(relativeUri.ToString());
 
             if (toUri.Scheme.Equals("file", StringComparison.InvariantCultureIgnoreCase))
             {

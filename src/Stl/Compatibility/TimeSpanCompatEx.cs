@@ -2,7 +2,7 @@
 
 namespace System
 {
-    public static class TimeSpanEx2
+    public static class TimeSpanCompatEx
     {
         private static TimeSpan IntervalFromDoubleTicks(double ticks)
         {
@@ -17,7 +17,6 @@ namespace System
                 throw new ArgumentException("Argument can not be NaN", nameof (factor));
             return IntervalFromDoubleTicks(Math.Round(timeSpan.Ticks * factor));
         }
-
 
         public static TimeSpan Divide(this TimeSpan timeSpan, double divisor)
         {
