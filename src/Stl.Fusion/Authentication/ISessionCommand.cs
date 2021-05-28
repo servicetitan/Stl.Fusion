@@ -9,4 +9,8 @@ namespace Stl.Fusion.Authentication
 
     public interface ISessionCommand<TResult> : ICommand<TResult>, ISessionCommand
     { }
+
+    public record SessionCommandBase<TResult>(Session Session) : CommandBase<TResult>, ISessionCommand
+    {
+    }
 }

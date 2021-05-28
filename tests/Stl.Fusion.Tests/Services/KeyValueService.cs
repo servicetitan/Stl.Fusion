@@ -12,18 +12,14 @@ namespace Stl.Fusion.Tests.Services
 {
     public interface IKeyValueService<TValue>
     {
-        public record SetCommand(string Key, TValue Value) : ICommand<Unit>
+        public record SetCommand(string Key, TValue Value) : CommandBase<Unit>
         {
             public SetCommand() : this(null!, default!) { }
-            
-            public Type ResultType => typeof(Unit);
         }
 
-        public record RemoveCommand(string Key) : ICommand<Unit>
+        public record RemoveCommand(string Key) : CommandBase<Unit>
         {
             public RemoveCommand() : this(default(string)!) { }
-            
-            public Type ResultType => typeof(Unit);
         }
 
         [ComputeMethod]
