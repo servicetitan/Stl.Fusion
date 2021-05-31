@@ -58,11 +58,7 @@ namespace Stl.Fusion.Bridge.Internal
             var incomingChannelReader = IncomingChannel.Reader;
 
             var currentCts = (CancellationTokenSource?) null;
-            #if !NETSTANDARD2_0
-            await using var _ = cancellationToken.Register(() => currentCts?.Cancel());
-            #else
-            using var _ = cancellationToken.Register(() => currentCts?.Cancel());
-            #endif
+            await using var _ = cancellationToken.Register(() => currentCts?.Cancel()).AsAsyncDisposable();
             try {
                 var incomingMessageTask = incomingChannelReader.ReadAsync(cancellationToken).AsTask();
                 for (;;) {

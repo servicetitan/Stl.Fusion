@@ -23,11 +23,8 @@ namespace Stl.Caching
         public override async ValueTask<Option<TValue>> TryGet(TKey key, CancellationToken cancellationToken = default)
         {
             try {
-                #if !NETSTANDARD2_0
-                await using var fileStream = OpenFile(GetFileName(key), false, cancellationToken);
-                #else
-                using var fileStream = OpenFile(GetFileName(key), false, cancellationToken);
-                #endif
+                await using var fileStreamWrapper = OpenFile(GetFileName(key), false, cancellationToken).AsAsyncDisposable();
+                var fileStream = fileStreamWrapper.Component;
                 var pairs = Deserialize(await GetText(fileStream, cancellationToken).ConfigureAwait(false));
                 return pairs?.GetOption(key) ?? default;
             }
@@ -43,11 +40,8 @@ namespace Stl.Caching
                 // i.e. the file is locked for modifications between read & write operations.
                 var fileName = GetFileName(key);
                 var newText = (string?) null;
-                #if !NETSTANDARD2_0
-                await using (var fileStream = OpenFile(fileName, true, cancellationToken)) {
-                #else
-                using (var fileStream = OpenFile(fileName, true, cancellationToken)) {
-                #endif
+                await using (var fileStreamWrapper = OpenFile(fileName, true, cancellationToken).AsAsyncDisposable()) {
+                    var fileStream = fileStreamWrapper.Component;
                     var originalText = await GetText(fileStream, cancellationToken).ConfigureAwait(false);
                     var pairs =
                         Deserialize(originalText)
@@ -97,11 +91,8 @@ namespace Stl.Caching
             if (fileStream == null)
                 return;
             fileStream.Seek(0, SeekOrigin.Begin);
-            #if !NETSTANDARD2_0
-            await using var writer = new StreamWriter(fileStream, Encoding.UTF8, BufferSize, true);
-            #else
-            using var writer = new StreamWriter(fileStream, Encoding.UTF8, BufferSize, true);
-            #endif
+            await using var writerWrapper = new StreamWriter(fileStream, Encoding.UTF8, BufferSize, true).AsAsyncDisposable();
+            var writer = writerWrapper.Component!;
             await writer.WriteAsync(text ?? "").ConfigureAwait(false);
             fileStream.SetLength(fileStream.Position);
         }
