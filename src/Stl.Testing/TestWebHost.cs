@@ -7,7 +7,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Stl.Async;
 using Stl.IO;
-
 #if NETCOREAPP
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server;
@@ -125,13 +124,13 @@ namespace Stl.Testing
             ConfigureHost(builder);
             return builder;
         }
-        
+
         protected virtual void ConfigureHost(IHostBuilder builder) { }
 
 #if NETCOREAPP
         protected virtual void ConfigureWebHost(IWebHostBuilder builder) { }
 #endif
- 
+
 #if NET471
         protected virtual void SetupHttpConfiguration(IServiceProvider svp, HttpConfiguration config) { }
 

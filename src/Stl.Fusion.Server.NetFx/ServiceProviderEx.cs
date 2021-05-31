@@ -70,5 +70,4 @@ namespace Stl.Fusion.Server
             return config;
         }
     }
-
 }

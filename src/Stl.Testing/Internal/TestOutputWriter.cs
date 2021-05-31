@@ -44,5 +44,4 @@ namespace Stl.Testing.Internal
             Prefix.Append(lines[^1]);
         }
     }
-
 }
