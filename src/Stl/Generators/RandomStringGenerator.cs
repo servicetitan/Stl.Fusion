@@ -39,6 +39,21 @@ namespace Stl.Generators
 
         public override string Next() => Next(Length);
         
+        private static void FillInCharSpan(Span<char> charSpan, string alphabet, ReadOnlySpan<byte> bufferSpan)
+        {
+            var alphabetSpan = alphabet.AsSpan();
+            var alphabetLength = alphabetSpan.Length;
+            if (Bits.IsPowerOf2((uint)alphabetLength)) {
+                var alphabetMask = alphabetLength - 1;
+                for (var i = 0; i<charSpan.Length; i++)
+                    charSpan[i] = alphabetSpan[bufferSpan[i] & alphabetMask];
+            }
+            else {
+                for (var i = 0; i<charSpan.Length; i++)
+                    charSpan[i] = alphabetSpan[bufferSpan[i] % alphabetLength];
+            }
+        }
+        
 #if !NETSTANDARD2_0
         public string Next(int length, string? alphabet = null)
         {
@@ -54,17 +69,7 @@ namespace Stl.Generators
                 return string.Create(length, (buffer.BufferMemory, alphabet), (charSpan, arg) => {
                     var (bufferMemory, alphabet1) = arg;
                     var bufferSpan = bufferMemory.Span;
-                    var alphabetSpan = alphabet1.AsSpan();
-                    var alphabetLength = alphabetSpan.Length;
-                    if (Bits.IsPowerOf2((uint) alphabetLength)) {
-                        var alphabetMask = alphabetLength - 1;
-                        for (var i = 0; i < charSpan.Length; i++)
-                            charSpan[i] = alphabetSpan[bufferSpan[i] & alphabetMask];
-                    }
-                    else {
-                        for (var i = 0; i < charSpan.Length; i++)
-                            charSpan[i] = alphabetSpan[bufferSpan[i] % alphabetLength];
-                    }
+                    FillInCharSpan(charSpan, alphabet1!, bufferSpan);
                 });
             }
             finally {
@@ -78,23 +83,22 @@ namespace Stl.Generators
                 alphabet = Alphabet;
             else if (alphabet.Length < 1)
                 throw new ArgumentOutOfRangeException(nameof(alphabet));
-            var byteBuffer = new byte[length];
-            lock (Lock) {
-                Rng.GetBytes(byteBuffer);
+            var byteArrayPool = ArrayPool<byte>.Shared;
+            var charArrayPool = ArrayPool<char>.Shared;
+            var byteBuffer = byteArrayPool.Rent(length);
+            var charBuffer = charArrayPool.Rent(length);
+            try {
+                lock (Lock) {
+                    Rng.GetBytes(byteBuffer, 0, length);
+                }
+                var charSpan = charBuffer.AsSpan(0, length);
+                FillInCharSpan(charSpan, alphabet, byteBuffer.AsSpan());
+                return new string(charBuffer, 0, length);
             }
-            var charBuffer = new char[length];
-            var alphabetLength = alphabet.Length;
-            if (Bits.IsPowerOf2((uint) alphabetLength)) {
-                var alphabetMask = alphabetLength - 1;
-                for (var i = 0; i < charBuffer.Length; i++)
-                    charBuffer[i] = alphabet[byteBuffer[i] & alphabetMask];
+            finally {
+                charArrayPool.Return(charBuffer);
+                byteArrayPool.Return(byteBuffer);
             }
-            else {
-                for (var i = 0; i < charBuffer.Length; i++)
-                    charBuffer[i] = alphabet[byteBuffer[i] % alphabetLength];
-            }
-
-            return new string(charBuffer);
         }
 #endif
     }
