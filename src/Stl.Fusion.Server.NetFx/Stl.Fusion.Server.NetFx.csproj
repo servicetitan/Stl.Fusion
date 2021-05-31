@@ -4,6 +4,7 @@
     <OutputType>library</OutputType>
     <TargetFrameworks>net471</TargetFrameworks>
     <RootNamespace>Stl.Fusion.Server</RootNamespace>
+    <AssemblyName>Stl.Fusion.Server.NetFx</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

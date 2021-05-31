@@ -76,7 +76,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleClient", "samples\To
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HelloCart", "samples\HelloCart\HelloCart.csproj", "{65B59CAC-B814-4D02-9A36-58BD8F8D7783}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl.Fusion.Server.Fx", "src\Stl.Fusion.Server.Fx\Stl.Fusion.Server.Fx.csproj", "{FB874EC5-D868-4065-B14F-1710C451857F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stl.Fusion.Server.NetFx", "src\Stl.Fusion.Server.NetFx\Stl.Fusion.Server.NetFx.csproj", "{FB874EC5-D868-4065-B14F-1710C451857F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

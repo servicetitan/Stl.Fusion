@@ -24,7 +24,7 @@
     <ProjectReference Include="..\..\src\Stl.Fusion.Server\Stl.Fusion.Server.csproj" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net471'">
-    <ProjectReference Include="..\..\src\Stl.Fusion.Server.Fx\Stl.Fusion.Server.Fx.csproj" />
+    <ProjectReference Include="..\..\src\Stl.Fusion.Server.NetFx\Stl.Fusion.Server.NetFx.csproj" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Stl.Fusion\Stl.Fusion.csproj" />
