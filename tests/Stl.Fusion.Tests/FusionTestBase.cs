@@ -185,10 +185,10 @@ namespace Stl.Fusion.Tests
                     case FusionTestDbType.PostgreSql:
 #if NETCOREAPP
                         builder.UseNpgsql(PostgreSqlConnectionString);
+                        break;
 #else
                         throw new NotSupportedException("PostgreSql is supported only for .net core.");
 #endif
-                        break;
                     default:
                         throw new ArgumentOutOfRangeException();
                     }
