@@ -89,12 +89,22 @@ namespace Stl.Fusion.Tests
         }
         
         [Fact]
-        public async Task Concat()
+        public async Task ConcatQueryAndPath()
         {
             await using var serving = await WebHost.Serve();
             var service = ClientServices.GetRequiredService<IRestEaseClient>();
 
-            var jsonString = (await service.ConcatFromPath("ab", "cD"));
+            var jsonString = (await service.ConcatQueryAndPath("ab", "cD"));
+            jsonString.Value.Should().Be("abcD");
+        }
+        
+        [Fact]
+        public async Task ConcatPathAndBody()
+        {
+            await using var serving = await WebHost.Serve();
+            var service = ClientServices.GetRequiredService<IRestEaseClient>();
+
+            var jsonString = (await service.ConcatPathAndBody("ab", "cD"));
             jsonString.Value.Should().Be("abcD");
         }
     }

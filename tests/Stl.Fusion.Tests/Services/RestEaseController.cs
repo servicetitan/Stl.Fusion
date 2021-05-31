@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 #if NETCOREAPP
@@ -90,17 +91,37 @@ namespace Stl.Fusion.Tests.Services
         }
         
 #if NETCOREAPP
-        [HttpPost("api/restease/concatFromPath/{b}")]
-        public Task<JsonString> ConcatFromPath(string a, string b, CancellationToken cancellationToken)
+        [HttpPost("api/restease/concatQueryAndPath/{b}")]
+        public Task<JsonString> ConcatQueryAndPath(string a, string b, CancellationToken cancellationToken)
 #else
         [HttpPost]
-        [Route("api/restease/concatFromPath/{b}")]
-        public Task<JsonString> ConcatFromPath(string a, string b, CancellationToken cancellationToken)
+        [Route("api/restease/concatQueryAndPath/{b}")]
+        public Task<JsonString> ConcatQueryAndPath(string a, string b, CancellationToken cancellationToken)
 #endif
         {
             var str = string.Concat(a, b);
             var jsonString = new JsonString(str);
             return Task.FromResult(jsonString);
+        }
+        
+#if NETCOREAPP
+        [HttpPost("api/restease/concatPathAndBody/{a}")]
+        public async Task<JsonString> ConcatPathAndBody(string a, CancellationToken cancellationToken)
+#else
+        [HttpPost]
+        [Route("api/restease/concatPathAndBody/{a}")]
+        public async Task<JsonString> ConcatPathAndBody(string a, CancellationToken cancellationToken)
+#endif
+        {
+#if NETCOREAPP
+            using var reader = new StreamReader(Request.Body);
+            var b = await reader.ReadToEndAsync();
+#else
+            var b = await Request.Content.ReadAsStringAsync();
+#endif            
+            var str = string.Concat(a, b);
+            var jsonString = new JsonString(str);
+            return jsonString;
         }
     }
     

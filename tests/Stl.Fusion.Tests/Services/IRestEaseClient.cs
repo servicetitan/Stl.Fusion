@@ -27,7 +27,9 @@ namespace Stl.Fusion.Tests.Services
         Task<JsonString> PostFromPath([Path]string str, CancellationToken cancellationToken = default);
         [Post("postWithBody")]
         Task<JsonString> PostWithBody([Body]StringWrapper str, CancellationToken cancellationToken = default);
-        [Post("concatFromPath/{b}")]
-        Task<JsonString> ConcatFromPath(string a, [Path]string b, CancellationToken cancellationToken = default);
+        [Post("concatQueryAndPath/{b}")]
+        Task<JsonString> ConcatQueryAndPath(string a, [Path]string b, CancellationToken cancellationToken = default);
+        [Post("concatPathAndBody/{a}")]
+        Task<JsonString> ConcatPathAndBody([Path]string a, [Body]string b, CancellationToken cancellationToken = default);
     }
 }
