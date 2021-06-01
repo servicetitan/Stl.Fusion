@@ -1,45 +1,54 @@
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
+#if NETCOREAPP
 using Microsoft.AspNetCore.Mvc;
+#else
+using System.Web.Http;
+using ControllerBase = System.Web.Http.ApiController;
+#endif
 using Stl.Fusion.Server;
 using Stl.Serialization;
 
 namespace Stl.Fusion.Tests.Services
 {
-    [Route("api/[controller]/[action]")]
-    [ApiController, JsonifyErrors]
+    [JsonifyErrors]
     public class StringKeyValueController : ControllerBase
     {
         protected IKeyValueService<string> Service { get; }
 
         public StringKeyValueController(IKeyValueService<string> service) => Service = service;
 
-        [HttpGet("{key?}"), Publish]
+        [HttpGet, Publish]
         public Task<Option<string>> TryGet(string? key)
-            => Service.TryGet(key ?? "", HttpContext.RequestAborted);
+            => Service.TryGet(key ?? "", this.RequestAborted());
 
-        [HttpGet("{key?}"), Publish]
+        [HttpGet, Publish]
         public async Task<JsonString> Get(string? key)
-            => await Service.Get(key ?? "", HttpContext.RequestAborted);
+            => await Service.Get(key ?? "", this.RequestAborted());
 
-        [HttpPost("{key?}")]
+        [HttpPost]
         public async Task Set(string? key)
         {
+            #if NETCOREAPP
             using var reader = new StreamReader(Request.Body);
             var value = await reader.ReadToEndAsync();
-            await Service.Set(key ?? "", value ?? "", HttpContext.RequestAborted);
+            #else
+            var value = await Request.Content.ReadAsStringAsync();
+            #endif
+            await Service.Set(key ?? "", value ?? "", this.RequestAborted());
         }
 
-        [HttpGet("{key?}")]
+        [HttpGet]
         public Task Remove(string? key)
-            => Service.Remove(key ?? "", HttpContext.RequestAborted);
+            => Service.Remove(key ?? "", this.RequestAborted());
 
         [HttpPost]
         public Task SetCmd([FromBody] IKeyValueService<string>.SetCommand cmd)
-            => Service.SetCmd(cmd, HttpContext.RequestAborted);
+            => Service.SetCmd(cmd, this.RequestAborted());
 
         [HttpPost]
         public virtual Task RemoveCmd([FromBody] IKeyValueService<string>.RemoveCommand cmd)
-            => Service.RemoveCmd(cmd, HttpContext.RequestAborted);
+            => Service.RemoveCmd(cmd, this.RequestAborted());
     }
 }

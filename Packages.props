@@ -15,6 +15,13 @@
     <StlFusionVersion>1.1.*</StlFusionVersion>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Legacy)' != 'true'">
+    <EntityFrameworkCoreVersion>5.0.6</EntityFrameworkCoreVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Legacy)' == 'true'">
+    <EntityFrameworkCoreVersion>3.*</EntityFrameworkCoreVersion>
+  </PropertyGroup>
+
   <ItemGroup Label="Nupkg Versions">
     <PackageReference Update="AspNet.Security.OAuth.GitHub" Version="5.0.4" />
     <PackageReference Update="Blazorise" Version="$(BlazoriseVersion)" />
@@ -49,6 +56,7 @@
     <PackageReference Update="Microsoft.Extensions.Hosting.Abstractions" Version="$(MicrosoftExtensionsVersion)" />
     <PackageReference Update="Microsoft.Extensions.Hosting" Version="$(MicrosoftExtensionsVersion)" />
     <PackageReference Update="Microsoft.Extensions.Logging" Version="$(MicrosoftExtensionsVersion)" />
+    <PackageReference Update="Microsoft.Extensions.Logging.Console" Version="$(MicrosoftExtensionsVersion)" />
     <PackageReference Update="Microsoft.Extensions.Logging.Debug" Version="$(MicrosoftExtensionsVersion)" />
     <PackageReference Update="Microsoft.Extensions.Logging.Abstractions" Version="$(MicrosoftExtensionsVersion)" />
     <PackageReference Update="Microsoft.EntityFrameworkCore" Version="$(EntityFrameworkCoreVersion)" />
@@ -95,6 +103,15 @@
     <PackageReference Update="xunit" Version="2.4.1" />
     <PackageReference Update="Xunit.DependencyInjection.Logging" Version="2.1.*" />
     <PackageReference Update="ZString" Version="2.4.*" />
+    <!-- Legacy support only -->
+    <PackageReference Update="IndexRange" Version="1.0.*" />
+    <PackageReference Update="Microsoft.Bcl.AsyncInterfaces" Version="5.0.0" />
+    <PackageReference Update="System.Memory" Version="4.5.4" />
+    <PackageReference Update="Microsoft.AspNet.WebApi.Core" Version="5.2.7" />
+    <PackageReference Update="Microsoft.AspNet.WebApi.OwinSelfHost" Version="5.2.7" />
+    <PackageReference Update="Microsoft.Owin" Version="4.1.1" />
+    <PackageReference Update="Owin" Version="1.0.0" />
+    <PackageReference Update="System.Reflection.Emit.Lightweight" Version="4.7.0" />
     <!-- Build time only -->
     <PackageReference Update="Microsoft.NET.Test.Sdk" Version="16.9.4" />
     <PackageReference Update="Microsoft.AspNetCore.Components.WebAssembly.Build" Version="$(BlazorVersion)" PrivateAssets="all" />

@@ -9,18 +9,22 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Stl.DependencyInjection;
 using Stl.IO;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Messages;
 using Stl.Fusion.Client;
 using Stl.Fusion.EntityFramework;
+#if NETCOREAPP 
 using Stl.Fusion.EntityFramework.Npgsql;
+#endif
 using Stl.Fusion.Extensions;
 using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
 using Stl.Fusion.Tests.UIModels;
 using Stl.Fusion.Internal;
+using Stl.Fusion.Server;
 using Stl.Testing;
 using Stl.Testing.Internal;
 using Stl.Time;
@@ -68,7 +72,10 @@ namespace Stl.Fusion.Tests
             WebHost = Services.GetRequiredService<FusionTestWebHost>();
             WebServices = WebHost.Services;
             ClientServices = CreateServices(true);
-            Log = (ILogger) Services.GetRequiredService(typeof(ILogger<>).MakeGenericType(GetType()));
+            if (Options.UseLogging)
+                Log = (ILogger) Services.GetRequiredService(typeof(ILogger<>).MakeGenericType(GetType()));
+            else
+                Log = NullLogger.Instance;
         }
 
         public override async Task InitializeAsync()
@@ -176,8 +183,12 @@ namespace Stl.Fusion.Tests
                             });
                         break;
                     case FusionTestDbType.PostgreSql:
+#if NETCOREAPP
                         builder.UseNpgsql(PostgreSqlConnectionString);
                         break;
+#else
+                        throw new NotSupportedException("PostgreSql is supported only for .net core.");
+#endif
                     default:
                         throw new ArgumentOutOfRangeException();
                     }
@@ -190,7 +201,11 @@ namespace Stl.Fusion.Tests
                         // o.MaxCommitDuration = TimeSpan.FromMinutes(5);
                     });
                     if (Options.DbType == FusionTestDbType.PostgreSql)
+#if NETCOREAPP
                         b.AddNpgsqlDbOperationLogChangeTracking();
+#else
+                        throw new NotSupportedException("PostgreSql is supported only for .net core.");
+#endif
                     else
                         b.AddFileBasedDbOperationLogChangeTracking();
                     if (!Options.UseInMemoryAuthService)
@@ -207,7 +222,15 @@ namespace Stl.Fusion.Tests
 
                 // WebHost
                 var webHost = (FusionTestWebHost?) WebHost;
-                services.AddSingleton(c => webHost ?? new FusionTestWebHost(services));
+                if (webHost == null) {
+                    var webHostOptions = new FusionTestWebHostOptions();
+#if NET471
+                    var controllerTypes = testType.Assembly.GetControllerTypes(testType.Namespace).ToArray();
+                    webHostOptions.ControllerTypes = controllerTypes;
+#endif
+                    webHost = new FusionTestWebHost(services, webHostOptions);
+                }
+                services.AddSingleton(c => webHost);
             }
             else {
                 // Configuring ClientServices

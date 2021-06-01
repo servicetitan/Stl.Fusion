@@ -15,9 +15,17 @@ namespace Stl.Concurrency
             static Cache()
             {
                 var eSrc = Expression.Parameter(typeof(ConcurrentDictionary<TKey, TValue>), "source");
+
+#if !NETSTANDARD2_0
                 var body = Expression.PropertyOrField(
                     Expression.Field(Expression.Field(eSrc, "_tables"), "_buckets"),
+                    "Length"); 
+#else
+                var body = Expression.PropertyOrField(
+                    Expression.Field(Expression.Field(eSrc, "m_tables"), "m_buckets"),
                     "Length");
+#endif
+                
                 CapacityReader = (Func<ConcurrentDictionary<TKey, TValue>, int>)
                     Expression.Lambda(body, eSrc).Compile();
             }

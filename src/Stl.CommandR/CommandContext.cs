@@ -163,7 +163,7 @@ namespace Stl.CommandR
                 }
                 // We want to ensure we re-throw any exception even if
                 // it wasn't explicitly thrown (i.e. set via TrySetException)
-                if (UntypedResultTask.IsCompleted && !UntypedResultTask.IsCompletedSuccessfully)
+                if (UntypedResultTask.IsCompleted && !UntypedResultTask.IsCompletedSuccessfully())
                     await UntypedResultTask.ConfigureAwait(false);
             }
             catch (OperationCanceledException) {

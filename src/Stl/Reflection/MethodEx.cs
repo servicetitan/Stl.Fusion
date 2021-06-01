@@ -15,7 +15,7 @@ namespace Stl.Reflection
         {
             if (method == null)
                 throw new ArgumentNullException(nameof(method));
-            if (method.IsConstructedGenericMethod)
+            if (method.IsConstructedGenericMethod())
                 return method.GetGenericMethodDefinition();
             if (!method.IsVirtual || method.IsStatic || method.DeclaringType!.IsInterface)
                 return null!;
@@ -37,7 +37,7 @@ namespace Stl.Reflection
         public static TAttr? GetAttribute<TAttr>(this MethodInfo method, bool inheritFromInterfaces, bool inheritFromBaseTypes)
             where TAttr : Attribute
         {
-            if (method.IsConstructedGenericMethod)
+            if (method.IsConstructedGenericMethod())
                 method = method.GetGenericMethodDefinition();
             var methodDef = method.GetBaseDefinition();
             return GetAttributeInternal<TAttr>(method, methodDef, inheritFromInterfaces, inheritFromBaseTypes);
@@ -46,7 +46,7 @@ namespace Stl.Reflection
         public static List<TAttr> GetAttributes<TAttr>(this MethodInfo method, bool inheritFromInterfaces, bool inheritFromBaseTypes)
             where TAttr : Attribute
         {
-            if (method.IsConstructedGenericMethod)
+            if (method.IsConstructedGenericMethod())
                 method = method.GetGenericMethodDefinition();
             var methodDef = method.GetBaseDefinition();
             var result = new List<TAttr>();

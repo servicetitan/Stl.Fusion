@@ -9,6 +9,7 @@ namespace Stl.Testing.Internal
     {
         protected static readonly string EnvNewLine = Environment.NewLine;
         protected static readonly char LastEnvNewLineChar = EnvNewLine[^1];
+        protected static readonly string LastEnvNewLineString = LastEnvNewLineChar.ToString();
 
         protected StringBuilder Prefix = new();
         public ITestOutputHelper TestOutput { get; }
@@ -30,7 +31,11 @@ namespace Stl.Testing.Internal
             if (value == null)
                 throw new ArgumentNullException(nameof(value));
             Prefix.Append(value);
+            #if !NETCOREAPP
+            if (!value.Contains(LastEnvNewLineString))
+            #else
             if (!value.Contains(LastEnvNewLineChar))
+            #endif
                 return;
             var lines = Prefix.ToString().Split(EnvNewLine);
             foreach (var line in lines[..^1])
@@ -39,5 +44,4 @@ namespace Stl.Testing.Internal
             Prefix.Append(lines[^1]);
         }
     }
-
 }

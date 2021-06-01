@@ -13,7 +13,7 @@ namespace Stl.Fusion.Tests.Extensions
     [RegisterComputeService(Scope = ServiceScope.Services)]
     public class NestedOperationLoggerTester
     {
-        public record SetManyCommand(string[] Keys, string ValuePrefix) : ICommand<Unit>
+        public record SetManyCommand(string[] Keys, string ValuePrefix) : CommandBase<Unit>
         {
             public SetManyCommand() : this(Array.Empty<string>(), "") { }
         }

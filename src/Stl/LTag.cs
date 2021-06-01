@@ -48,7 +48,12 @@ namespace Stl
                 Span<char> buffer = stackalloc char[16];
                 buffer[0] = '@';
                 var n = MathEx.FormatTo(Value, Base62Digits, buffer.Slice(1));
-                return new string(buffer.Slice(0, n.Length + 1));
+                var slice = buffer.Slice(0, n.Length + 1);
+                #if !NETSTANDARD2_0
+                return new string(slice);
+                #else
+                return new string(slice.ToArray());
+                #endif
             }
         }
 

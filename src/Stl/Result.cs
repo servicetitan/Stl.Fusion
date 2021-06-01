@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Stl.Async;
 using Stl.Internal;
 
 namespace Stl
@@ -236,7 +237,7 @@ namespace Stl
         {
             if (!task.IsCompleted)
                 throw Errors.TaskIsNotCompleted();
-            if (task.IsCompletedSuccessfully)
+            if (task.IsCompletedSuccessfully())
                 return Value(task.Result);
             return Error<T>(task.Exception
                 ?? Errors.InternalError("Task hasn't completed successfully but has no Exception."));

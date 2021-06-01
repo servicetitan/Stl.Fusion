@@ -72,7 +72,6 @@ namespace Stl.Collections
             var processing = new HashSet<T>();
             var processed = new HashSet<T>();
             var stack = new Stack<T>(source);
-
             while (stack.TryPop(out var item)) {
                 if (processed.Contains(item))
                     continue;

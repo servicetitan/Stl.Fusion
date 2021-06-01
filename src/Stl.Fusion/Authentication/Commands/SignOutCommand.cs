@@ -3,7 +3,7 @@ using System.Reactive;
 namespace Stl.Fusion.Authentication.Commands
 {
     public record SignOutCommand(Session Session, bool Force = false)
-        : ISessionCommand<Unit>
+        : SessionCommandBase<Unit>(Session)
     {
         public SignOutCommand() : this(Session.Null) { }
     }

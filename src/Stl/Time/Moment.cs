@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -26,29 +26,49 @@ namespace Stl.Time
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Moment(TimeSpan epochOffset)
             => EpochOffsetTicks = epochOffset.Ticks;
+
+#if !NETSTANDARD2_0
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Moment(DateTime value)
             : this(value.ToUniversalTime() - DateTime.UnixEpoch) { }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Moment(DateTimeOffset value)
             : this(value.ToUniversalTime() - DateTimeOffset.UnixEpoch) { }
+        
+#else
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Moment(DateTime value)
+            : this(value.ToUniversalTime() - System.DateTimeCompatEx.UnixEpoch) { }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Moment(DateTimeOffset value)
+            : this(value.ToUniversalTime() - System.DateTimeOffsetCompatEx.UnixEpoch) { }
+
+#endif
 
         #region Parse functions
 
         public static Moment Parse(string source) => DateTime.Parse(source, CultureInfo.InvariantCulture);
+        
+#if !NETSTANDARD2_0
         public static Moment Parse(ReadOnlySpan<char> source) => DateTime.Parse(source, CultureInfo.InvariantCulture);
+#endif
         public static bool TryParse(string source, out Moment result)
         {
             var success = DateTime.TryParse(source, CultureInfo.InvariantCulture, DateTimeStyles.None, out var r);
             result = r;
             return success;
         }
+        
+#if !NETSTANDARD2_0
         public static bool TryParse(ReadOnlySpan<char> source, out Moment result)
         {
             var success = DateTime.TryParse(source, CultureInfo.InvariantCulture, DateTimeStyles.None, out var r);
             result = r;
             return success;
         }
+#endif
 
         #endregion
 
@@ -63,16 +83,28 @@ namespace Stl.Time
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator DateTimeOffset(Moment source) => source.ToDateTimeOffset();
 
+#if !NETSTANDARD2_0
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public DateTime ToDateTime() => DateTime.UnixEpoch + EpochOffset;
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public DateTime ToDateTime() => System.DateTimeCompatEx.UnixEpoch + EpochOffset;
+#endif
+
         public DateTime ToDateTime(DateTime min, DateTime max)
             => Clamp(new Moment(min), new Moment(max)).ToDateTime();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public DateTime ToDateTimeClamped()
             => ToDateTime(DateTime.MinValue.ToUniversalTime(), DateTime.MaxValue.ToUniversalTime());
 
+#if !NETSTANDARD2_0
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public DateTimeOffset ToDateTimeOffset() => DateTimeOffset.UnixEpoch + EpochOffset;
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public DateTimeOffset ToDateTimeOffset() => System.DateTimeOffsetCompatEx.UnixEpoch + EpochOffset;
+#endif
+        
         public DateTimeOffset ToDateTimeOffset(DateTimeOffset min, DateTimeOffset max)
             => Clamp(new Moment(min), new Moment(max)).ToDateTimeOffset();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

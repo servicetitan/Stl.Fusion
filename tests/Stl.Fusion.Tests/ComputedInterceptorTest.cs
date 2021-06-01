@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Stl.Async;
 using Stl.Fusion.Tests.Services;
 using Stl.Testing;
 using Stl.Tests;
@@ -62,7 +63,7 @@ namespace Stl.Fusion.Tests
 
                 task = time.GetTimeWithDelay(default);
                 await TestEx.WhenMet(
-                    () => task.IsCompletedSuccessfully.Should().BeTrue(),
+                    () => task.IsCompletedSuccessfully().Should().BeTrue(),
                     TimeSpan.FromSeconds(1));
             }
         }

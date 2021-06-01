@@ -1,20 +1,23 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net5.0;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>net5.0;netcoreapp3.1;net471</TargetFrameworks>
     <IsTestProject>false</IsTestProject>
     <PackageTags>servicetitan stl testing</PackageTags>
     <Description>Stl.Testing is a collection of <!--
     -->testing helpers used by Stl.Fusion tests.</Description>
   </PropertyGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' != 'net471'">
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net471'">
+    <Compile Remove="ApplicationPartsLogger.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="FluentAssertions" />
-
     <PackageReference Include="System.CommandLine" />
 
     <PackageReference Include="xunit" />
@@ -22,10 +25,15 @@
     <PackageReference Include="Xunit.DependencyInjection.Logging" />
   </ItemGroup>
 
-  <ItemGroup Condition="$(TargetFramework.StartsWith('net5'))">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net471' ">
+    <PackageReference Include="IndexRange" />
+    <PackageReference Include="System.Memory" />
+    <PackageReference Include="Microsoft.AspNet.WebApi.OwinSelfHost" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net5'">
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
   </ItemGroup>
-  <ItemGroup Condition="!$(TargetFramework.StartsWith('net5'))">
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" VersionOverride="$(AspNetCoreVersion3)" />
   </ItemGroup>
 

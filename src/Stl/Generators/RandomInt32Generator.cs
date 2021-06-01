@@ -6,7 +6,7 @@ namespace Stl.Generators
 {
     public sealed class RandomInt32Generator : Generator<long>
     {
-        private readonly int[] _buffer = new int[1];
+        private readonly byte[] _buffer = new byte[sizeof(int)];
         private readonly RandomNumberGenerator _rng;
 
         public RandomInt32Generator(RandomNumberGenerator? rng = null)
@@ -14,9 +14,9 @@ namespace Stl.Generators
 
         public override long Next()
         {
-            var bufferSpan = MemoryMarshal.Cast<int, byte>(_buffer.AsSpan());
-            _rng!.GetBytes(bufferSpan);
-            return _buffer![0];
+            _rng!.GetBytes(_buffer);
+            var bufferSpan = MemoryMarshal.Cast<byte, int>(_buffer.AsSpan());
+            return bufferSpan![0];
         }
     }
 }

@@ -1,10 +1,15 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <ServerGarbageCollection>true</ServerGarbageCollection>
     <!--  EF1001: X is an internal API that supports the Entity Framework Core infrastructure ... -->
     <NoWarn>$(NoWarn);EF1001;</NoWarn>
   </PropertyGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net471'">
+    <Compile Remove="Authentication\**" />
+    <Compile Remove="Blazor\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
@@ -13,15 +18,20 @@
     <PackageReference Include="System.Net.WebSockets.Client" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\Stl.Fusion.EntityFramework\Stl.Fusion.EntityFramework.csproj" />
+  <ItemGroup Condition="'$(TargetFramework)' != 'net471'">
     <ProjectReference Include="..\..\src\Stl.Fusion.EntityFramework.Npgsql\Stl.Fusion.EntityFramework.Npgsql.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.Blazor\Stl.Fusion.Blazor.csproj" />
-    <ProjectReference Include="..\..\src\Stl.Fusion.Client\Stl.Fusion.Client.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.Server\Stl.Fusion.Server.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net471'">
+    <ProjectReference Include="..\..\src\Stl.Fusion.Server.NetFx\Stl.Fusion.Server.NetFx.csproj" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\..\src\Stl.Fusion\Stl.Fusion.csproj" />
     <ProjectReference Include="..\..\src\Stl.Testing\Stl.Testing.csproj" />
     <ProjectReference Include="..\Stl.Tests\Stl.Tests.csproj" />
+    <ProjectReference Include="..\..\src\Stl.Fusion.Client\Stl.Fusion.Client.csproj" />
+    <ProjectReference Include="..\..\src\Stl.Fusion.EntityFramework\Stl.Fusion.EntityFramework.csproj" />
   </ItemGroup>
 
   <ItemGroup>

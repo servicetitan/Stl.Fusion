@@ -3,13 +3,18 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Hosting.Server;
-using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Stl.Async;
 using Stl.IO;
+#if NETCOREAPP
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
+#else
+using Owin;
+using System.Web.Http;
+#endif
 
 namespace Stl.Testing
 {
@@ -86,6 +91,8 @@ namespace Stl.Testing
                 options.ValidateScopes = true;
                 options.ValidateOnBuild = true;
             });
+
+#if NETCOREAPP
             builder.ConfigureWebHost(b => {
                 var serverUri = ServerUriLazy.IsValueCreated
                     ? ServerUri.ToString()
@@ -95,11 +102,39 @@ namespace Stl.Testing
                 b.UseContentRoot(emptyDir);
                 ConfigureWebHost(b);
             });
+#endif
+
+#if NET471
+            builder.ConfigureServices(
+                (ctx, services) => {
+                    var serverUri = ServerUriLazy.IsValueCreated
+                        ? ServerUri.ToString()
+                        : "http://localhost:9000/"; // TODO: implement dynamic port assignment
+                    services.Configure<OwinWebApiServerOptions>(c => {
+                        c.Urls = serverUri;
+                        c.ConfigureBuilder = ConfigureAppBuilder;
+                        c.SetupHttpConfiguration = SetupHttpConfiguration;
+                    });
+                    services.AddHostedService<GenericWebHostService>();
+                    services.AddSingleton<IServer, OwinWebApiServer>();
+                }
+            );
+#endif
+            
             ConfigureHost(builder);
             return builder;
         }
 
         protected virtual void ConfigureHost(IHostBuilder builder) { }
+
+#if NETCOREAPP
         protected virtual void ConfigureWebHost(IWebHostBuilder builder) { }
+#endif
+
+#if NET471
+        protected virtual void SetupHttpConfiguration(IServiceProvider svp, HttpConfiguration config) { }
+
+        protected virtual void ConfigureAppBuilder(IServiceProvider svp, IAppBuilder builder) { }
+#endif
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -83,7 +84,11 @@ namespace Stl.Async
         {
             var tTcs = typeof(TaskCompletionSource<T>);
             var tTask = typeof(Task<T>);
+#if !NETSTANDARD2_0            
             var fTask = tTcs.GetField("_task", BindingFlags.Instance | BindingFlags.NonPublic);
+#else
+            var fTask = tTcs.GetField("m_task", BindingFlags.Instance | BindingFlags.NonPublic);
+#endif
             var pState = Expression.Parameter(typeof(object), "state");
             var pTco = Expression.Parameter(typeof(TaskCreationOptions), "taskCreationOptions");
             var pTcs = Expression.Parameter(tTcs, "tcs");
@@ -99,6 +104,7 @@ namespace Stl.Async
             CreateTask2 = Expression.Lambda<Func<object?, TaskCreationOptions, Task<T>>>(
                 Expression.New(_taskCtor2!, pState, pTco), pState, pTco).Compile();
 
+#if !NETSTANDARD2_0
             // Creating assign expression via reflection b/c otherwise
             // it fails "lvalue must be writeable" check -- well,
             // obviously, because we're assigning a read-only field value here.
@@ -109,6 +115,26 @@ namespace Stl.Async
                 new object[] {Expression.Field(pTcs, fTask!), pTask}, null)!;
             SetTask = Expression.Lambda<Action<TaskCompletionSource<T>, Task<T>>>(
                 realAssign, pTcs, pTask).Compile();
+#else
+            SetTask = GenerateSetFieldMethod(fTask);
+#endif
+        }
+        
+        private static Action<TaskCompletionSource<T>, Task<T>> GenerateSetFieldMethod(FieldInfo field)
+        {
+            var dm = new DynamicMethod(string.Concat ("_Set", field.Name, "_"), typeof(void),
+                new Type[] { typeof(TaskCompletionSource<T>), typeof(Task<T>) },
+                field.DeclaringType!, true);
+            ILGenerator generator = dm.GetILGenerator ();
+
+            generator.Emit (OpCodes.Ldarg_0);
+            generator.Emit (OpCodes.Ldarg_1);
+            if (field.FieldType.IsValueType)
+                generator.Emit (OpCodes.Unbox_Any, field.FieldType);
+            generator.Emit (OpCodes.Stfld, field);
+            generator.Emit (OpCodes.Ret);
+
+            return (Action<TaskCompletionSource<T>, Task<T>>)dm.CreateDelegate (typeof(Action<TaskCompletionSource<T>, Task<T>>));
         }
 
         // Equality

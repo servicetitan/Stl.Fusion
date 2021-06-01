@@ -9,7 +9,7 @@ using Stl.CommandR.Configuration;
 
 namespace Stl.Fusion.Tests.Services
 {
-    public record SetValueCommand : ICommand<Unit>
+    public record SetValueCommand : CommandBase<Unit>
     {
         public string Value { get; init; } = "";
     }

@@ -13,10 +13,18 @@ namespace Stl.Caching
     public abstract class FileSystemCacheBase<TKey, TValue> : AsyncCacheBase<TKey, TValue>
         where TKey : notnull
     {
+#if !NETSTANDARD2_0
+        private const int BufferSize = -1;
+#else
+        private const int MinAllowedBufferSize = 128;
+        private const int BufferSize = MinAllowedBufferSize;
+#endif
+        
         public override async ValueTask<Option<TValue>> TryGet(TKey key, CancellationToken cancellationToken = default)
         {
             try {
-                await using var fileStream = OpenFile(GetFileName(key), false, cancellationToken);
+                await using var fileStreamWrapper = OpenFile(GetFileName(key), false, cancellationToken).AsAsyncDisposable();
+                var fileStream = fileStreamWrapper.Component;
                 var pairs = Deserialize(await GetText(fileStream, cancellationToken).ConfigureAwait(false));
                 return pairs?.GetOption(key) ?? default;
             }
@@ -32,7 +40,8 @@ namespace Stl.Caching
                 // i.e. the file is locked for modifications between read & write operations.
                 var fileName = GetFileName(key);
                 var newText = (string?) null;
-                await using (var fileStream = OpenFile(fileName, true, cancellationToken)) {
+                await using (var fileStreamWrapper = OpenFile(fileName, true, cancellationToken).AsAsyncDisposable()) {
+                    var fileStream = fileStreamWrapper.Component;
                     var originalText = await GetText(fileStream, cancellationToken).ConfigureAwait(false);
                     var pairs =
                         Deserialize(originalText)
@@ -66,7 +75,9 @@ namespace Stl.Caching
                 return null;
             try {
                 fileStream.Seek(0, SeekOrigin.Begin);
-                using var reader = new StreamReader(fileStream, Encoding.UTF8, true, -1, true);
+
+                
+                using var reader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize, true);
                 var text = await reader.ReadToEndAsync().ConfigureAwait(false);
                 return string.IsNullOrEmpty(text) ? null : text;
             }
@@ -80,7 +91,8 @@ namespace Stl.Caching
             if (fileStream == null)
                 return;
             fileStream.Seek(0, SeekOrigin.Begin);
-            await using var writer = new StreamWriter(fileStream, Encoding.UTF8, -1, true);
+            await using var writerWrapper = new StreamWriter(fileStream, Encoding.UTF8, BufferSize, true).AsAsyncDisposable();
+            var writer = writerWrapper.Component!;
             await writer.WriteAsync(text ?? "").ConfigureAwait(false);
             fileStream.SetLength(fileStream.Position);
         }

@@ -49,6 +49,21 @@
     <PathMap>'$(SolutionDir)'=/_/</PathMap>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <Legacy>true</Legacy>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)'== 'net471'">
+    <Legacy>true</Legacy>
+  </PropertyGroup>
+
+  <!-- TODO: find a way how to sign .netstandard and .net471 assebmlies
+    <PropertyGroup Condition="'$(Legacy)'== 'true'">
+    <SigningFilePath>$(SolutionDir)</SigningFilePath>
+    <SigningFileName>SharedKey.snk</SigningFileName>
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(SigningFilePath)$(SigningFileName)</AssemblyOriginatorKeyFile>
+  </PropertyGroup>-->
+
   <ItemGroup Condition="$(DeterministicSourcePaths) == 'true'">
     <SourceRoot Include="$(SolutionDir)" />
   </ItemGroup>

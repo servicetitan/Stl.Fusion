@@ -28,6 +28,11 @@ namespace Stl.Text
         public ListFormatter CreateFormatter(StringBuilder output, int itemIndex = 0)
             => new(this, output, itemIndex);
 
+#if NETSTANDARD2_0
+        public ListParser CreateParser(in string source, StringBuilder item, int itemIndex = 0)
+            => CreateParser(source.AsSpan(), item, itemIndex);
+#endif
+
         public ListParser CreateParser(in ReadOnlySpan<char> source, StringBuilder item, int itemIndex = 0)
             => new(this, source, item, itemIndex);
 
@@ -80,6 +85,21 @@ namespace Stl.Text
             OutputBuilder = outputBuilder;
             ItemIndex = itemIndex;
         }
+        
+#if NETSTANDARD2_0
+        
+        public void Append(in string item)
+        {
+            if (ItemIndex++ != 0)
+                OutputBuilder.Append(Delimiter);
+            foreach (var c in item) {
+                if (c == Delimiter || c == Escape)
+                    OutputBuilder.Append(Escape);
+                OutputBuilder.Append(c);
+            }
+        }
+        
+#endif
 
         public void Append(in ReadOnlySpan<char> item)
         {

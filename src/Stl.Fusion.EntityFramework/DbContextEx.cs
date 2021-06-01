@@ -6,8 +6,10 @@ namespace Stl.Fusion.EntityFramework
 {
     public static class DbContextEx
     {
+#if !NETSTANDARD2_0
         private static readonly EventHandler<SavingChangesEventArgs> FailOnSaveChanges =
             (sender, args) => throw Errors.DbContextIsReadOnly();
+#endif
 
         // ConfigureMode
 
@@ -60,9 +62,21 @@ namespace Stl.Fusion.EntityFramework
         }
 
         public static void EnableSaveChanges(this DbContext dbContext)
-            => dbContext.SavingChanges -= FailOnSaveChanges;
+        {
+#if !NETSTANDARD2_0
+            dbContext.SavingChanges -= FailOnSaveChanges;
+#else
+            // Do nothing. DbContext has no SavingChanges event.
+#endif
+        }
 
         public static void DisableSaveChanges(this DbContext dbContext)
-            => dbContext.SavingChanges += FailOnSaveChanges;
+        {
+#if !NETSTANDARD2_0
+            dbContext.SavingChanges += FailOnSaveChanges;
+#else
+            // Do nothing. DbContext has no SavingChanges event.
+#endif
+        }
     }
 }
