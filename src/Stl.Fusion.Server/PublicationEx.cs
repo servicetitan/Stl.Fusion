@@ -52,18 +52,5 @@ namespace Stl.Fusion.Server
             httpContext.Publish(p);
             return c;
         }
-
-        public static Task<IComputed<T>> MaybePublish<T>(
-            this HttpContext httpContext,
-            IPublisher publisher,
-            Func<CancellationToken, Task<T>> producer,
-            CancellationToken cancellationToken = default)
-        {
-            var headers = httpContext.Request.Headers;
-            var mustPublish = headers.TryGetValue(FusionHeaders.RequestPublication, out var _);
-            return mustPublish
-                ? httpContext.Publish(publisher, producer, cancellationToken)
-                : Computed.Capture(producer, cancellationToken);
-        }
     }
 }

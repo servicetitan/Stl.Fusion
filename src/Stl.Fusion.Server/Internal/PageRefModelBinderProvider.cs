@@ -4,7 +4,7 @@ using Stl.Fusion.Extensions;
 
 namespace Stl.Fusion.Server.Internal
 {
-    public class ParseRefModelBinderProvider  : IModelBinderProvider
+    public class PageRefModelBinderProvider  : IModelBinderProvider
     {
         public IModelBinder? GetBinder(ModelBinderProviderContext context)
         {
