@@ -9,8 +9,7 @@
 ![Commit Activity](https://img.shields.io/github/commit-activity/m/servicetitan/Stl.Fusion)
 [![Downloads](https://img.shields.io/nuget/dt/Stl)](https://www.nuget.org/packages?q=Owner%3Aservicetitan+Tags%3Astl_fusion)
 
-Fusion is a [.NET 5 / .NET Core 3.1](https://en.wikipedia.org/wiki/.NET_Core) library
-that implements a new real-time distributed state sync abstraction.
+Fusion is a .NET library that implements a new real-time distributed state sync abstraction.
 **Contrary to MobX and Recoil, it's designed to track and sync changes in arbitrary large state** -
 in fact, the state it tracks typically covers every piece of data Fusion application has, 
 and "lives" on your servers, microservices, service meshes, and even on the clients!
