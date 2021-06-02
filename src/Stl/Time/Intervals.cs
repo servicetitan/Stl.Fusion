@@ -17,11 +17,7 @@ namespace Stl.Time
                 if (maxDelay.HasValue && delay > maxDelay.GetValueOrDefault())
                     delay = maxDelay.GetValueOrDefault();
                 yield return delay;
-                #if !NETSTANDARD2_0
-                delay *= factor;
-                #else
                 delay = delay.Multiply(factor);
-                #endif
             }
         }
     }

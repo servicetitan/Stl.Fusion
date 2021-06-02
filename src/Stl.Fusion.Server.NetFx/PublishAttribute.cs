@@ -13,7 +13,7 @@ namespace Stl.Fusion.Server
         public override void OnActionExecuting(HttpActionContext actionContext)
         {
             base.OnActionExecuting(actionContext);
-            
+
             var request = actionContext.Request;
             var headers = request.Headers;
             var mustPublish = headers.TryGetValues(FusionHeaders.RequestPublication, out var _);
@@ -21,18 +21,18 @@ namespace Stl.Fusion.Server
                 return;
 
             var items = actionContext.GetItems();
-            var ccs = Computed.BeginCapture();
-            items.Add(typeof(ComputeContextScope), ccs);
+            var computeContextScope = Computed.BeginCapture();
+            items.Add(typeof(ComputeContextScope), computeContextScope);
         }
 
         public override async Task OnActionExecutedAsync(HttpActionExecutedContext actionExecutedContext, CancellationToken cancellationToken)
         {
             var actionContext = actionExecutedContext.ActionContext;
             var items = actionContext.GetItems();
-            if (items.TryGetValue(typeof(ComputeContextScope), out var obj) && obj is ComputeContextScope ccs) {
-                var wasError = actionExecutedContext.Exception != null;
-                var computed = ccs.CompleteCapture(wasError);
-                
+            if (items.TryGetValue(typeof(ComputeContextScope), out var obj) && obj is ComputeContextScope computeContextScope) {
+                computeContextScope.Dispose();
+                var computed = computeContextScope.Context.GetCapturedComputed();
+
                 var appServices = actionContext.GetAppServices();
                 var publisher = appServices.GetRequiredService<IPublisher>();
                 var publication = publisher.Publish(computed);
@@ -50,7 +50,7 @@ namespace Stl.Fusion.Server
                 }
                 actionContext.Publish(publication);
             }
-            
+
             await base.OnActionExecutedAsync(actionExecutedContext, cancellationToken);
         }
     }

@@ -71,7 +71,7 @@ namespace Stl.Mathematics
             var size = radix < 10 ? 65 : 21; // Just to simplify the calc.
             Span<char> buffer = stackalloc char[size];
 #if !NETSTANDARD2_0
-            return new string(FormatTo(number, digits, buffer));
+            return new String(FormatTo(number, digits, buffer));
 #else
             return FormatTo(number, digits, buffer).ToString();
 #endif

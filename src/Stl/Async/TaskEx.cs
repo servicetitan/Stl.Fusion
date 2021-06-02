@@ -139,11 +139,11 @@ namespace Stl.Async
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsCompletedSuccessfully(this Task task)
         {
-            #if NETSTANDARD2_0
+#if NETSTANDARD2_0
             return task.Status == TaskStatus.RanToCompletion;
-            #else
+#else
             return task.IsCompletedSuccessfully;
-            #endif
+#endif
         }
 
         // SuppressXxx

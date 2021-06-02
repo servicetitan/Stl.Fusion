@@ -84,7 +84,7 @@ namespace Stl.Async
         {
             var tTcs = typeof(TaskCompletionSource<T>);
             var tTask = typeof(Task<T>);
-#if !NETSTANDARD2_0            
+#if !NETSTANDARD2_0
             var fTask = tTcs.GetField("_task", BindingFlags.Instance | BindingFlags.NonPublic);
 #else
             var fTask = tTcs.GetField("m_task", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -95,14 +95,14 @@ namespace Stl.Async
             var pTask = Expression.Parameter(tTask, "task");
             var privateCtorBindingFlags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.CreateInstance;
 
-            var _taskCtor0 = tTask.GetConstructor(privateCtorBindingFlags, null,
+            var taskCtor0 = tTask.GetConstructor(privateCtorBindingFlags, null,
                 Array.Empty<Type>(), null);
-            var _taskCtor2 = tTask.GetConstructor(privateCtorBindingFlags, null,
+            var taskCtor2 = tTask.GetConstructor(privateCtorBindingFlags, null,
                 new [] {typeof(object), typeof(TaskCreationOptions)}, null);
             CreateTask0 = Expression.Lambda<Func<Task<T>>>(
-                Expression.New(_taskCtor0!)).Compile();
+                Expression.New(taskCtor0!)).Compile();
             CreateTask2 = Expression.Lambda<Func<object?, TaskCreationOptions, Task<T>>>(
-                Expression.New(_taskCtor2!, pState, pTco), pState, pTco).Compile();
+                Expression.New(taskCtor2!, pState, pTco), pState, pTco).Compile();
 
 #if !NETSTANDARD2_0
             // Creating assign expression via reflection b/c otherwise
@@ -116,25 +116,24 @@ namespace Stl.Async
             SetTask = Expression.Lambda<Action<TaskCompletionSource<T>, Task<T>>>(
                 realAssign, pTcs, pTask).Compile();
 #else
-            SetTask = GenerateSetFieldMethod(fTask);
+            // .NET Standard version fails even on above code,
+            // so IL emit is used to generate private field assignment code.
+            var setTaskMethod = new DynamicMethod(
+                string.Concat("_Set", fTask!.Name, "_"),
+                typeof(void),
+                new [] { typeof(TaskCompletionSource<T>), typeof(Task<T>) },
+                fTask.DeclaringType!,
+                true);
+            var il = setTaskMethod.GetILGenerator();
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldarg_1);
+            if (fTask.FieldType.IsValueType)
+                il.Emit(OpCodes.Unbox_Any, fTask.FieldType);
+            il.Emit(OpCodes.Stfld, fTask);
+            il.Emit(OpCodes.Ret);
+            SetTask = (Action<TaskCompletionSource<T>, Task<T>>) setTaskMethod.CreateDelegate(
+                typeof(Action<TaskCompletionSource<T>, Task<T>>));
 #endif
-        }
-        
-        private static Action<TaskCompletionSource<T>, Task<T>> GenerateSetFieldMethod(FieldInfo field)
-        {
-            var dm = new DynamicMethod(string.Concat ("_Set", field.Name, "_"), typeof(void),
-                new Type[] { typeof(TaskCompletionSource<T>), typeof(Task<T>) },
-                field.DeclaringType!, true);
-            ILGenerator generator = dm.GetILGenerator ();
-
-            generator.Emit (OpCodes.Ldarg_0);
-            generator.Emit (OpCodes.Ldarg_1);
-            if (field.FieldType.IsValueType)
-                generator.Emit (OpCodes.Unbox_Any, field.FieldType);
-            generator.Emit (OpCodes.Stfld, field);
-            generator.Emit (OpCodes.Ret);
-
-            return (Action<TaskCompletionSource<T>, Task<T>>)dm.CreateDelegate (typeof(Action<TaskCompletionSource<T>, Task<T>>));
         }
 
         // Equality

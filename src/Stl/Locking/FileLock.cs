@@ -63,11 +63,11 @@ namespace Stl.Locking
                 if (fs != null)
                     break;
                 if (!retryInterval.MoveNext())
-                    #if !NETSTANDARD2_0
+#if !NETSTANDARD2_0
                     ExceptionDispatchInfo.Throw(error!);
-                    #else
+#else
                     ExceptionDispatchInfo.Capture(error!).Throw();
-                    #endif
+#endif
                 await Task.Delay(retryInterval.Current, cancellationToken)
                     .ConfigureAwait(false);
             }

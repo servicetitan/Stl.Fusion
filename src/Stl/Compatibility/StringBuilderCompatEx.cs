@@ -1,11 +1,9 @@
 #if NETSTANDARD2_0
 
-using System;
-using System.Text;
-
-namespace Stl.Net
+// ReSharper disable once CheckNamespace
+namespace System.Text
 {
-    internal static class StringBuilderEx
+    public static class StringBuilderCompatEx
     {
         public static void Append(this StringBuilder sb, ArraySegment<char> chars)
         {

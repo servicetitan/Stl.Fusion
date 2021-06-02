@@ -47,6 +47,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Stl.Compatibility;
 
+// ReSharper disable once CheckNamespace
 namespace System
 {
     // xxHash32 is used for the hash code.

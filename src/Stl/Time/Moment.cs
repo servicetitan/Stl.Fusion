@@ -36,7 +36,8 @@ namespace Stl.Time
 
         // (Try)Parse
 
-        public static Moment Parse(string source) => DateTime.Parse(source, CultureInfo.InvariantCulture);
+        public static Moment Parse(string source)
+            => DateTime.Parse(source, CultureInfo.InvariantCulture);
 
 #if !NETSTANDARD2_0
         public static Moment Parse(ReadOnlySpan<char> source)

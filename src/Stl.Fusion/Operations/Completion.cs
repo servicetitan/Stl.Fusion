@@ -21,10 +21,10 @@ namespace Stl.Fusion.Operations
         : ServerSideCommandBase<Unit>, ICompletion<TCommand>
         where TCommand : class, ICommand
     {
-        #if NETSTANDARD2_0
+#if NETSTANDARD2_0
         ICommand IMetaCommand.UntypedCommand => Command;
-        #endif
-        
+#endif
+
         public Completion(IOperation operation)
             : this((TCommand?) operation.Command ?? throw Errors.OperationHasNoCommand(nameof(operation)), operation)
         { }

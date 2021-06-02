@@ -50,28 +50,17 @@ namespace Stl.Time.Testing
         }
 
         public static implicit operator TestClockSettings((TimeSpan LocalOffset, TimeSpan RealOffset, double Multiplier) settings)
-            => new TestClockSettings(settings.LocalOffset, settings.RealOffset, settings.Multiplier);
+            => new(settings.LocalOffset, settings.RealOffset, settings.Multiplier);
 
         // Other operations
 
-#if !NETSTANDARD2_0
         public Moment ToLocalTime(Moment realTime)
-            => new Moment(LocalOffset + (realTime.EpochOffset + RealOffset) * Multiplier);
+            => new(LocalOffset + (realTime.EpochOffset + RealOffset).Multiply(Multiplier));
         public Moment ToRealTime(Moment localTime)
-            => new Moment((localTime.EpochOffset - LocalOffset) / Multiplier - RealOffset);
-        public TimeSpan ToLocalDuration(TimeSpan realDuration)
-            => realDuration * Multiplier;
-        public TimeSpan ToRealDuration(TimeSpan localDuration)
-            => localDuration / Multiplier;
-#else
-        public Moment ToLocalTime(Moment realTime)
-            => new Moment(LocalOffset + (realTime.EpochOffset + RealOffset).Multiply(Multiplier));
-        public Moment ToRealTime(Moment localTime)
-            => new Moment((localTime.EpochOffset - LocalOffset).Divide(Multiplier) - RealOffset);
+            => new((localTime.EpochOffset - LocalOffset).Divide(Multiplier) - RealOffset);
         public TimeSpan ToLocalDuration(TimeSpan realDuration)
             => realDuration.Multiply(Multiplier);
         public TimeSpan ToRealDuration(TimeSpan localDuration)
             => localDuration.Divide(Multiplier);
-#endif
     }
 }

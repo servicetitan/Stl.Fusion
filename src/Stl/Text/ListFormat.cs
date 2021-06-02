@@ -85,10 +85,10 @@ namespace Stl.Text
             OutputBuilder = outputBuilder;
             ItemIndex = itemIndex;
         }
-        
+
 #if NETSTANDARD2_0
-        
-        public void Append(in string item)
+
+        public void Append(string item)
         {
             if (ItemIndex++ != 0)
                 OutputBuilder.Append(Delimiter);
@@ -98,7 +98,7 @@ namespace Stl.Text
                 OutputBuilder.Append(c);
             }
         }
-        
+
 #endif
 
         public void Append(in ReadOnlySpan<char> item)

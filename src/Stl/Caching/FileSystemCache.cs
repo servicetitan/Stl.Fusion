@@ -75,8 +75,6 @@ namespace Stl.Caching
                 return null;
             try {
                 fileStream.Seek(0, SeekOrigin.Begin);
-
-
                 using var reader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize, true);
                 var text = await reader.ReadToEndAsync().ConfigureAwait(false);
                 return string.IsNullOrEmpty(text) ? null : text;

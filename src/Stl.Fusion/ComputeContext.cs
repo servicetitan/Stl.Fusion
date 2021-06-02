@@ -1,5 +1,7 @@
+using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Stl.Fusion.Internal;
 
 namespace Stl.Fusion
 {
@@ -63,8 +65,15 @@ namespace Stl.Fusion
             Interlocked.CompareExchange(ref CapturedComputed, computed, null);
         }
 
-        public IComputed? GetCapturedComputed() => CapturedComputed;
-        public IComputed<T>? GetCapturedComputed<T>() => (IComputed<T>?) CapturedComputed;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public IComputed GetCapturedComputed() => CapturedComputed ?? throw Errors.NoComputedCaptured();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public IComputed<T> GetCapturedComputed<T>() => (IComputed<T>) GetCapturedComputed();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public IComputed? TryGetCapturedComputed() => CapturedComputed;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public IComputed<T>? TryGetCapturedComputed<T>() => (IComputed<T>?) TryGetCapturedComputed();
 
         internal bool Acquire()
             => 0 == Interlocked.CompareExchange(ref _isUsed, 1, 0);

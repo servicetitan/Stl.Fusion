@@ -1,5 +1,6 @@
 #if NETSTANDARD2_0
 
+// ReSharper disable once CheckNamespace
 namespace System.Collections.Generic
 {
     /// <summary>Creates instances of the <see cref="T:System.Collections.Generic.KeyValuePair`2" /> struct.</summary>

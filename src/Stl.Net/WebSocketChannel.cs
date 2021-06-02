@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Stl.Async;
+using Stl.Pooling;
 
 namespace Stl.Net
 {
@@ -238,10 +239,11 @@ namespace Stl.Net
         }
 
 #else
+
         protected virtual async Task RunReaderUnsafe(CancellationToken cancellationToken)
         {
-            using var bytesOwner = ArrayPool<byte>.Shared.RentAsOwner(ReadBufferSize);
-            using var charsOwner = ArrayPool<char>.Shared.RentAsOwner(ReadBufferSize);
+            using var bytesOwner = ArrayPool<byte>.Shared.Lease(ReadBufferSize);
+            using var charsOwner = ArrayPool<char>.Shared.Lease(ReadBufferSize);
 
             var decoder = Encoding.UTF8.GetDecoder();
             var writer = ReadChannel.Writer;
@@ -275,7 +277,7 @@ namespace Stl.Net
                         freeChars.Array, freeChars.Offset, freeChars.Count,
                         r.EndOfMessage,
                         out var usedByteCount, out var usedCharCount, out var completed);
-                    
+
                     Debug.Assert(completed);
                     var readChars = freeChars.Slice(0, usedCharCount);
                     var undecoded = readBytes.Slice(usedByteCount);
@@ -295,7 +297,7 @@ namespace Stl.Net
                     }
 
                     if (r.EndOfMessage)
-                        return readChars.ToStringEx();
+                        return ArraySegmentCompatEx.ToString(readChars);
 
                     decodedPart = new StringBuilder(readChars.Count);
                     decodedPart.Append(readChars);
@@ -312,7 +314,7 @@ namespace Stl.Net
 
         protected virtual async Task RunWriterUnsafe(CancellationToken cancellationToken)
         {
-            using var bytesOwner = ArrayPool<byte>.Shared.RentAsOwner(WriteBufferSize);
+            using var bytesOwner = ArrayPool<byte>.Shared.Lease(WriteBufferSize);
 
             var encoder = Encoding.UTF8.GetEncoder();
             var reader = WriteChannel.Reader;
@@ -350,7 +352,6 @@ namespace Stl.Net
             }
 
         }
-
 #endif
     }
 }

@@ -67,9 +67,9 @@ namespace Stl.Fusion.Bridge
             }
             return publication;
         }
-        
-        #if NETSTANDARD2_0
-        
+
+#if NETSTANDARD2_0
+
         public static async Task<IPublication> Publish(
             this IPublisher publisher,
             IComputed computed,
@@ -93,8 +93,8 @@ namespace Stl.Fusion.Bridge
             }
             return publication;
         }
-        
-        #endif
+
+#endif
 
         // Publish
 

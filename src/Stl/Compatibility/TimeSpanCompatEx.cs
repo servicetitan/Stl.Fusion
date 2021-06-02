@@ -1,5 +1,6 @@
 #if NETSTANDARD2_0
 
+// ReSharper disable once CheckNamespace
 namespace System
 {
     public static class TimeSpanCompatEx
@@ -8,7 +9,7 @@ namespace System
             => IntervalFromDoubleTicks(Math.Round(timeSpan.Ticks * factor));
 
         public static TimeSpan Divide(this TimeSpan timeSpan, double divisor)
-            => IntervalFromDoubleTicks(Math.Round((double) timeSpan.Ticks / divisor));
+            => IntervalFromDoubleTicks(Math.Round(timeSpan.Ticks / divisor));
 
         public static double Divide(this TimeSpan dividend, TimeSpan divisor)
             => dividend.Ticks / (double) divisor.Ticks;

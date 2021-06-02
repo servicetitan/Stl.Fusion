@@ -14,9 +14,9 @@ namespace Stl.CommandR.Commands
         where TCommand : class, ICommand
     {
         TCommand Command { get; }
-        
-        #if !NETSTANDARD2_0
+
+#if !NETSTANDARD2_0
         ICommand IMetaCommand.UntypedCommand => Command;
-        #endif
+#endif
     }
 }

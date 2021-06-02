@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
@@ -48,11 +49,17 @@ namespace Stl.Fusion
         public static ComputeContextScope SuspendInvalidate()
             => ComputeContext.Default.Activate();
 
+        // BeginCapture (sync Capture API)
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ComputeContextScope BeginCapture()
+            => ComputeContext.New(CallOptions.Capture).Activate();
+
         // TryCapture
 
         public static async Task<IComputed?> TryCapture(Func<CancellationToken, Task> producer, CancellationToken cancellationToken = default)
         {
-            using var ccs = ComputeContext.New(CallOptions.Capture).Activate();
+            using var ccs = BeginCapture();
             IComputed? result;
             try {
                 await producer.Invoke(cancellationToken).ConfigureAwait(false);
@@ -61,18 +68,18 @@ namespace Stl.Fusion
                 throw;
             }
             catch (Exception) {
-                result = ccs.Context.GetCapturedComputed();
+                result = ccs.Context.TryGetCapturedComputed();
                 if (result?.Error != null)
                     return result;
                 throw;
             }
-            result = ccs.Context.GetCapturedComputed();
+            result = ccs.Context.TryGetCapturedComputed();
             return result;
         }
 
         public static async Task<IComputed<T>?> TryCapture<T>(Func<CancellationToken, Task<T>> producer, CancellationToken cancellationToken = default)
         {
-            using var ccs = ComputeContext.New(CallOptions.Capture).Activate();
+            using var ccs = BeginCapture();
             IComputed<T>? result;
             try {
                 await producer.Invoke(cancellationToken).ConfigureAwait(false);
@@ -81,18 +88,18 @@ namespace Stl.Fusion
                 throw;
             }
             catch (Exception) {
-                result = ccs.Context.GetCapturedComputed<T>();
+                result = ccs.Context.TryGetCapturedComputed<T>();
                 if (result?.Error != null)
                     return result;
                 throw;
             }
-            result = ccs.Context.GetCapturedComputed<T>();
+            result = ccs.Context.TryGetCapturedComputed<T>();
             return result;
         }
 
         public static async Task<IComputed?> TryCapture(Func<CancellationToken, ValueTask> producer, CancellationToken cancellationToken = default)
         {
-            using var ccs = ComputeContext.New(CallOptions.Capture).Activate();
+            using var ccs = BeginCapture();
             IComputed? result;
             try {
                 await producer.Invoke(cancellationToken).ConfigureAwait(false);
@@ -101,18 +108,18 @@ namespace Stl.Fusion
                 throw;
             }
             catch (Exception) {
-                result = ccs.Context.GetCapturedComputed();
+                result = ccs.Context.TryGetCapturedComputed();
                 if (result?.Error != null)
                     return result;
                 throw;
             }
-            result = ccs.Context.GetCapturedComputed();
+            result = ccs.Context.TryGetCapturedComputed();
             return result;
         }
 
         public static async Task<IComputed<T>?> TryCapture<T>(Func<CancellationToken, ValueTask<T>> producer, CancellationToken cancellationToken = default)
         {
-            using var ccs = ComputeContext.New(CallOptions.Capture).Activate();
+            using var ccs = BeginCapture();
             IComputed<T>? result;
             try {
                 await producer.Invoke(cancellationToken).ConfigureAwait(false);
@@ -121,30 +128,20 @@ namespace Stl.Fusion
                 throw;
             }
             catch (Exception) {
-                result = ccs.Context.GetCapturedComputed<T>();
+                result = ccs.Context.TryGetCapturedComputed<T>();
                 if (result?.Error != null)
                     return result;
                 throw;
             }
-            result = ccs.Context.GetCapturedComputed<T>();
+            result = ccs.Context.TryGetCapturedComputed<T>();
             return result;
         }
-        
-#if NETSTANDARD2_0
-        // Capture sync
-        public static ComputeContextScope BeginCapture()
-        {
-            var ccs = ComputeContext.New(CallOptions.Capture).Activate();
-            return ccs;
-        }
-#endif
 
         // Capture
 
         public static async Task<IComputed> Capture(Func<CancellationToken, Task> producer, CancellationToken cancellationToken = default)
         {
-            using var ccs = ComputeContext.New(CallOptions.Capture).Activate();
-            IComputed? result;
+            using var ccs = BeginCapture();
             try {
                 await producer.Invoke(cancellationToken).ConfigureAwait(false);
             }
@@ -152,21 +149,17 @@ namespace Stl.Fusion
                 throw;
             }
             catch (Exception) {
-                result = ccs.Context.GetCapturedComputed();
+                var result = ccs.Context.TryGetCapturedComputed();
                 if (result?.Error != null)
-                    return result;
+                    return result; // Suppress only when the error is captured too
                 throw;
             }
-            result = ccs.Context.GetCapturedComputed();
-            if (result == null)
-                throw Errors.NoComputedCaptured();
-            return result;
+            return ccs.Context.GetCapturedComputed();
         }
 
         public static async Task<IComputed<T>> Capture<T>(Func<CancellationToken, Task<T>> producer, CancellationToken cancellationToken = default)
         {
-            using var ccs = ComputeContext.New(CallOptions.Capture).Activate();
-            IComputed<T>? result;
+            using var ccs = BeginCapture();
             try {
                 await producer.Invoke(cancellationToken).ConfigureAwait(false);
             }
@@ -174,21 +167,17 @@ namespace Stl.Fusion
                 throw;
             }
             catch (Exception) {
-                result = ccs.Context.GetCapturedComputed<T>();
+                var result = ccs.Context.TryGetCapturedComputed<T>();
                 if (result?.Error != null)
                     return result;
                 throw;
             }
-            result = ccs.Context.GetCapturedComputed<T>();
-            if (result == null)
-                throw Errors.NoComputedCaptured();
-            return result;
+            return ccs.Context.GetCapturedComputed<T>();
         }
 
         public static async Task<IComputed> Capture(Func<CancellationToken, ValueTask> producer, CancellationToken cancellationToken = default)
         {
-            using var ccs = ComputeContext.New(CallOptions.Capture).Activate();
-            IComputed? result;
+            using var ccs = BeginCapture();
             try {
                 await producer.Invoke(cancellationToken).ConfigureAwait(false);
             }
@@ -196,21 +185,17 @@ namespace Stl.Fusion
                 throw;
             }
             catch (Exception) {
-                result = ccs.Context.GetCapturedComputed();
+                var result = ccs.Context.TryGetCapturedComputed();
                 if (result?.Error != null)
                     return result;
                 throw;
             }
-            result = ccs.Context.GetCapturedComputed();
-            if (result == null)
-                throw Errors.NoComputedCaptured();
-            return result;
+            return ccs.Context.GetCapturedComputed();
         }
 
         public static async Task<IComputed<T>> Capture<T>(Func<CancellationToken, ValueTask<T>> producer, CancellationToken cancellationToken = default)
         {
-            using var ccs = ComputeContext.New(CallOptions.Capture).Activate();
-            IComputed<T>? result;
+            using var ccs = BeginCapture();
             try {
                 await producer.Invoke(cancellationToken).ConfigureAwait(false);
             }
@@ -218,15 +203,12 @@ namespace Stl.Fusion
                 throw;
             }
             catch (Exception) {
-                result = ccs.Context.GetCapturedComputed<T>();
+                var result = ccs.Context.TryGetCapturedComputed<T>();
                 if (result?.Error != null)
                     return result;
                 throw;
             }
-            result = ccs.Context.GetCapturedComputed<T>();
-            if (result == null)
-                throw Errors.NoComputedCaptured();
-            return result;
+            return ccs.Context.GetCapturedComputed<T>();
         }
 
         // TryGetExisting
@@ -236,7 +218,7 @@ namespace Stl.Fusion
             using var ccs = ComputeContext.New(CallOptions.TryGetExisting | CallOptions.Capture).Activate();
             var task = producer.Invoke();
             task.AssertCompleted(); // The must be always synchronous in this case
-            return ccs.Context.GetCapturedComputed<T>();
+            return ccs.Context.TryGetCapturedComputed<T>();
         }
 
         public static IComputed<T>? TryGetExisting<T>(Func<ValueTask<T>> producer)
@@ -244,7 +226,7 @@ namespace Stl.Fusion
             using var ccs = ComputeContext.New(CallOptions.TryGetExisting | CallOptions.Capture).Activate();
             var task = producer.Invoke();
             task.AssertCompleted(); // The must be always synchronous in this case
-            return ccs.Context.GetCapturedComputed<T>();
+            return ccs.Context.TryGetCapturedComputed<T>();
         }
     }
 }
