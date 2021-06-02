@@ -1,4 +1,4 @@
-# 🌞 Fusion: an "impossible" distributed state sync API
+# 🌞 Fusion: the #1 abstraction your real-time .NET and Blazor apps need
 
 [![Build](https://github.com/servicetitan/Stl.Fusion/workflows/Build/badge.svg)](https://github.com/servicetitan/Stl.Fusion/actions?query=workflow%3A%22Build%22)
 [![Coverage](https://codecov.io/gh/servicetitan/Stl.Fusion/branch/master/graph/badge.svg)](https://codecov.io/gh/servicetitan/Stl.Fusion)
@@ -9,7 +9,7 @@
 ![Commit Activity](https://img.shields.io/github/commit-activity/m/servicetitan/Stl.Fusion)
 [![Downloads](https://img.shields.io/nuget/dt/Stl)](https://www.nuget.org/packages?q=Owner%3Aservicetitan+Tags%3Astl_fusion)
 
-Fusion is a .NET library that implements a new real-time distributed state sync abstraction.
+Fusion is a .NET library that implements a novel real-time distributed state sync abstraction.
 **Contrary to MobX and Recoil, it's designed to track and sync changes in arbitrary large state** -
 in fact, the state it tracks typically covers every piece of data Fusion application has, 
 and "lives" on your servers, microservices, service meshes, and even on the clients!
