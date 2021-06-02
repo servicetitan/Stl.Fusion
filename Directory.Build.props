@@ -50,19 +50,14 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-    <Legacy>true</Legacy>
+    <LegacyBuild>true</LegacyBuild>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(TargetFramework)'== 'net471'">
-    <Legacy>true</Legacy>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net471'">
+    <LegacyBuild>true</LegacyBuild>
   </PropertyGroup>
-
-  <!-- TODO: find a way how to sign .netstandard and .net471 assebmlies
-    <PropertyGroup Condition="'$(Legacy)'== 'true'">
-    <SigningFilePath>$(SolutionDir)</SigningFilePath>
-    <SigningFileName>SharedKey.snk</SigningFileName>
-    <SignAssembly>True</SignAssembly>
-    <AssemblyOriginatorKeyFile>$(SigningFilePath)$(SigningFileName)</AssemblyOriginatorKeyFile>
-  </PropertyGroup>-->
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net480'">
+    <LegacyBuild>true</LegacyBuild>
+  </PropertyGroup>
 
   <ItemGroup Condition="$(DeterministicSourcePaths) == 'true'">
     <SourceRoot Include="$(SolutionDir)" />

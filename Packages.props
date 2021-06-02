@@ -15,10 +15,10 @@
     <StlFusionVersion>1.1.*</StlFusionVersion>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Legacy)' != 'true'">
+  <PropertyGroup Condition="'$(LegacyBuild)' != 'true'">
     <EntityFrameworkCoreVersion>5.0.6</EntityFrameworkCoreVersion>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Legacy)' == 'true'">
+  <PropertyGroup Condition="'$(LegacyBuild)' == 'true'">
     <EntityFrameworkCoreVersion>3.*</EntityFrameworkCoreVersion>
   </PropertyGroup>
 
