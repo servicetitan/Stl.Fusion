@@ -47,7 +47,7 @@ Surprisingly, this approach helps to solve a number of well-known problems:
 | Problem | So you don't need... |
 |-|-|
 | 📱 Client-side state management | Fluxor, Redux, MobX, Recoil, ... |
-| 🚀 Real-time updates | SignalR, Pusher, ... |
+| 🚀 Real-time updates | SignalR, WebSockets, gRPC streaming, ... |
 | 📇 In-memory cache | Redis, memcached, ... |
 | 🤹 Real-time cache invalidation | No good solutions - <br/>it's an [infamously hard problem](https://martinfowler.com/bliki/TwoHardThings.html) |
 | 📪 Automatic & transparent pub/sub | A fair amount of code |
