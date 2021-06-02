@@ -23,7 +23,7 @@ namespace Stl.Caching
         public override async ValueTask<Option<TValue>> TryGet(TKey key, CancellationToken cancellationToken = default)
         {
             try {
-                await using var fileStreamWrapper = OpenFile(GetFileName(key), false, cancellationToken).UsingAsyncDisposableAdapter();
+                await using var fileStreamWrapper = OpenFile(GetFileName(key), false, cancellationToken).ToAsyncDisposableAdapter();
                 var fileStream = fileStreamWrapper.Target;
                 var pairs = Deserialize(await GetText(fileStream, cancellationToken).ConfigureAwait(false));
                 return pairs?.GetOption(key) ?? default;
@@ -40,7 +40,7 @@ namespace Stl.Caching
                 // i.e. the file is locked for modifications between read & write operations.
                 var fileName = GetFileName(key);
                 var newText = (string?) null;
-                await using (var fileStreamWrapper = OpenFile(fileName, true, cancellationToken).UsingAsyncDisposableAdapter()) {
+                await using (var fileStreamWrapper = OpenFile(fileName, true, cancellationToken).ToAsyncDisposableAdapter()) {
                     var fileStream = fileStreamWrapper.Target;
                     var originalText = await GetText(fileStream, cancellationToken).ConfigureAwait(false);
                     var pairs =
@@ -91,7 +91,7 @@ namespace Stl.Caching
             if (fileStream == null)
                 return;
             fileStream.Seek(0, SeekOrigin.Begin);
-            await using var writerWrapper = new StreamWriter(fileStream, Encoding.UTF8, BufferSize, true).UsingAsyncDisposableAdapter();
+            await using var writerWrapper = new StreamWriter(fileStream, Encoding.UTF8, BufferSize, true).ToAsyncDisposableAdapter();
             var writer = writerWrapper.Target!;
             await writer.WriteAsync(text ?? "").ConfigureAwait(false);
             fileStream.SetLength(fileStream.Position);

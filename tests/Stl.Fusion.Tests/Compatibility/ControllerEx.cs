@@ -1,4 +1,4 @@
-#if NET471
+#if NETFRAMEWORK
 
 using System.Threading;
 using System.Web.Http;

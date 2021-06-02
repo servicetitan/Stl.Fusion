@@ -73,7 +73,7 @@ namespace Stl.Tests.Async
                 var sw = new SpinWait();
                 var spinCount = (delayMs * 347) & 7;
                 for (var i = 0; i < spinCount; i++)
-#if !NET471
+#if !NETFRAMEWORK
                     sw.SpinOnce(-1);
 #else
                     sw.SpinOnce();

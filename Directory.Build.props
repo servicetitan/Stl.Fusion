@@ -49,13 +49,17 @@
     <PathMap>'$(SolutionDir)'=/_/</PathMap>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-    <LegacyBuild>true</LegacyBuild>
+  <PropertyGroup>
+    <NetFxBuild>false</NetFxBuild>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net471'">
-    <LegacyBuild>true</LegacyBuild>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net480' or '$(TargetFramework)' == 'net471'">
+    <NetFxBuild>true</NetFxBuild>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net480'">
+
+  <PropertyGroup>
+    <LegacyBuild>false</LegacyBuild>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0' or '$(NetFxBuild)' == 'true'">
     <LegacyBuild>true</LegacyBuild>
   </PropertyGroup>
 

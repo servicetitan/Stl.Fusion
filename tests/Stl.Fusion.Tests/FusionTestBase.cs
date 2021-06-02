@@ -16,7 +16,7 @@ using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Messages;
 using Stl.Fusion.Client;
 using Stl.Fusion.EntityFramework;
-#if NETCOREAPP 
+#if NETCOREAPP
 using Stl.Fusion.EntityFramework.Npgsql;
 #endif
 using Stl.Fusion.Extensions;
@@ -224,7 +224,7 @@ namespace Stl.Fusion.Tests
                 var webHost = (FusionTestWebHost?) WebHost;
                 if (webHost == null) {
                     var webHostOptions = new FusionTestWebHostOptions();
-#if NET471
+#if NETFRAMEWORK
                     var controllerTypes = testType.Assembly.GetControllerTypes(testType.Namespace).ToArray();
                     webHostOptions.ControllerTypes = controllerTypes;
 #endif

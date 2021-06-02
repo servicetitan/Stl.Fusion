@@ -104,7 +104,7 @@ namespace Stl.Testing
             });
 #endif
 
-#if NET471
+#if NETFRAMEWORK
             builder.ConfigureServices(
                 (ctx, services) => {
                     var serverUri = ServerUriLazy.IsValueCreated
@@ -120,7 +120,7 @@ namespace Stl.Testing
                 }
             );
 #endif
-            
+
             ConfigureHost(builder);
             return builder;
         }
@@ -131,7 +131,7 @@ namespace Stl.Testing
         protected virtual void ConfigureWebHost(IWebHostBuilder builder) { }
 #endif
 
-#if NET471
+#if NETFRAMEWORK
         protected virtual void SetupHttpConfiguration(IServiceProvider svp, HttpConfiguration config) { }
 
         protected virtual void ConfigureAppBuilder(IServiceProvider svp, IAppBuilder builder) { }

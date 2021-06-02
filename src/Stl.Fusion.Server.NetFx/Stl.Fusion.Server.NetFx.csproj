@@ -2,9 +2,15 @@
 
   <PropertyGroup>
     <OutputType>library</OutputType>
-    <TargetFrameworks>net471</TargetFrameworks>
+    <TargetFrameworks>net480;net471</TargetFrameworks>
     <RootNamespace>Stl.Fusion.Server</RootNamespace>
     <AssemblyName>Stl.Fusion.Server.NetFx</AssemblyName>
+    <PackageTags>servicetitan stl stl_fusion server netfx</PackageTags>
+    <Description>.NET Framework version of Stl.Fusion.Server. <!--
+    -->Fusion is a new implementation of "computed observables" <!--
+    -->designed to power distributed apps. Thread-safe, asynchronous, immutable,  <!--
+    -->and ready to serve replicas of computed instances to remote clients.<!--
+    --></Description>
   </PropertyGroup>
 
   <ItemGroup>

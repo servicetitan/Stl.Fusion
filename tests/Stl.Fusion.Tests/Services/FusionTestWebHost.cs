@@ -17,16 +17,16 @@ namespace Stl.Fusion.Tests.Services
 {
     public class FusionTestWebHostOptions
     {
-#if NET471
+#if NETFRAMEWORK
         public Type[]? ControllerTypes { get; set; }
 #endif
     }
-    
+
     public class FusionTestWebHost : TestWebHostBase
     {
         public IServiceCollection BaseServices { get; }
         public FusionTestWebHostOptions Options { get; }
-        
+
         public FusionTestWebHost(IServiceCollection baseServices, FusionTestWebHostOptions options)
         {
             BaseServices = baseServices;
@@ -48,7 +48,7 @@ namespace Stl.Fusion.Tests.Services
 #endif
                 });
 
-#if NET471
+#if NETFRAMEWORK
                 if (Options.ControllerTypes!=null)
                     services.AddControllersAsServices(Options.ControllerTypes);
 #else
@@ -82,7 +82,7 @@ namespace Stl.Fusion.Tests.Services
         protected override void SetupHttpConfiguration(IServiceProvider svp, HttpConfiguration config)
         {
             base.SetupHttpConfiguration(svp, config);
-            
+
             config.Formatters.Insert(0, new TextMediaTypeFormatter());
         }
 

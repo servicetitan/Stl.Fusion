@@ -27,8 +27,8 @@ namespace Stl.Tests.OS
             processorCount.Should().BeGreaterThan(0);
             WriteLine($"CPU core count: {processorCount}");
         }
-        
-        #if !NET471
+
+        #if !NETFRAMEWORK
 
         [Fact]
         public void DotNetCoreInfoTest()

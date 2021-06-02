@@ -1,4 +1,4 @@
-#if NET471
+#if NETFRAMEWORK
 
 namespace System.Runtime.CompilerServices
 {

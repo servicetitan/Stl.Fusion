@@ -1,4 +1,4 @@
-#if NET471
+#if NETFRAMEWORK
 
 using System;
 using System.Collections.Generic;
@@ -47,7 +47,7 @@ namespace Stl.Testing
             string baseAddress = options.Urls;
             Action<IAppBuilder> configureBuilder = (appBuilder) => options.ConfigureBuilder(_serviceProvider, appBuilder);
             Action<HttpConfiguration> setupConfiguration = (config) => options.SetupHttpConfiguration(_serviceProvider, config);
-            _application = WebApp.Start(url: baseAddress, new WebApiStartup(_serviceProvider, setupConfiguration, configureBuilder).Configuration);
+            _application = WebApp.Start(baseAddress, new WebApiStartup(_serviceProvider, setupConfiguration, configureBuilder).Configuration);
             return Task.CompletedTask;
         }
 

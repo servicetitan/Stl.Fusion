@@ -73,7 +73,7 @@ namespace Stl.Tests.Time
         public async Task RandomTimerTest()
         {
             var taskCount = TestRunnerInfo.IsBuildAgent() ? 1 : HardwareInfo.GetProcessorCountFactor(10);
-            var maxDelta = TestRunnerInfo.IsBuildAgent() ? 1000 : 500;
+            var maxDelta = 1000;
             var rnd = new Random();
             var tasks = Enumerable.Range(0, taskCount)
                 .Select(_ => Task.Run(() => OneRandomTest(rnd.Next(100), 3000, maxDelta)))

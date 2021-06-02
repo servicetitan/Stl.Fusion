@@ -1,4 +1,4 @@
-#if NET471
+#if NETFRAMEWORK
 
 using System;
 using System.Collections;
@@ -111,7 +111,7 @@ namespace Stl.Testing
                     return;
                 }
 
-                if (_features == null) 
+                if (_features == null)
                     _features = new Dictionary<Type, object>(_initialCapacity);
                 _features[key] = value;
                 _containerRevision++;

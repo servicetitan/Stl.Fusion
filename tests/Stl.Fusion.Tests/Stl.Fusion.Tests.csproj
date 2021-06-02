@@ -6,7 +6,7 @@
     <NoWarn>$(NoWarn);EF1001;</NoWarn>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net471'">
+  <ItemGroup Condition="'$(NetFxBuild)' == 'true'">
     <Compile Remove="Authentication\**" />
     <Compile Remove="Blazor\**" />
   </ItemGroup>
@@ -18,12 +18,12 @@
     <PackageReference Include="System.Net.WebSockets.Client" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' != 'net471'">
+  <ItemGroup Condition="'$(NetFxBuild)' != 'true'">
     <ProjectReference Include="..\..\src\Stl.Fusion.EntityFramework.Npgsql\Stl.Fusion.EntityFramework.Npgsql.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.Blazor\Stl.Fusion.Blazor.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.Server\Stl.Fusion.Server.csproj" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net471'">
+  <ItemGroup Condition="'$(NetFxBuild)' == 'true'">
     <ProjectReference Include="..\..\src\Stl.Fusion.Server.NetFx\Stl.Fusion.Server.NetFx.csproj" />
   </ItemGroup>
   <ItemGroup>

@@ -57,11 +57,11 @@ namespace Stl.Tests.Benchmarks
             RunOne("Read Environment.TickCount64", baseOpCount, opCount => {
                 var sum = 0L;
                 for (; opCount > 0; opCount--) {
-                    #if NET471
+#if NETFRAMEWORK
                     sum += Environment.TickCount;
-                    #else
+#else
                     sum += Environment.TickCount64;
-                    #endif
+#endif
                 }
                 return sum;
             });
