@@ -5,7 +5,7 @@ using Stl.Time;
 namespace Stl.Fusion.Extensions.Commands
 {
     public record SandboxedSetCommand(Session Session, string Key, string Value, Moment? ExpiresAt = null)
-        : SessionCommandBase<Unit>(Session)
+        : ISessionCommand<Unit>
     {
         public SandboxedSetCommand() : this(Session.Null, "", "") { }
     }

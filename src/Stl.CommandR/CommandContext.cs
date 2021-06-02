@@ -34,7 +34,8 @@ namespace Stl.CommandR
             ICommander commander, ICommand command, bool isolate = false)
         {
             var previousContext = isolate ? null : Current;
-            var tContext = typeof(CommandContext<>).MakeGenericType(command.ResultType);
+            var tCommandResult = command.GetResultType();
+            var tContext = typeof(CommandContext<>).MakeGenericType(tCommandResult);
             return (CommandContext) tContext.CreateInstance(commander, command, previousContext);
         }
 
@@ -127,8 +128,9 @@ namespace Stl.CommandR
             : base(commander)
         {
             var tResult = typeof(TResult);
-            if (command.ResultType != tResult)
-                throw Errors.CommandResultTypeMismatch(tResult, command.ResultType);
+            var tCommandResult = command.GetResultType();
+            if (tCommandResult != tResult)
+                throw Errors.CommandResultTypeMismatch(tResult, tCommandResult);
             Command = (ICommand<TResult>) command;
             ResultTaskSource = TaskSource.New<TResult>(true);
             if (previousContext?.Commander != commander) {

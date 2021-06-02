@@ -5,18 +5,18 @@ using Stl.CommandR;
 
 namespace Stl.Tests.CommandR.Services
 {
-    public record LogCommand : CommandBase<Unit>
+    public record LogCommand : ICommand<Unit>
     {
         public string Message { get; set; } = "";
     }
 
-    public record DivCommand : CommandBase<double>
+    public record DivCommand : ICommand<double>
     {
         public double Divisible { get; set; }
         public double Divisor { get; set; }
     }
 
-    public record RecSumCommand : CommandBase<double>
+    public record RecSumCommand : ICommand<double>
     {
         public static AsyncLocal<object> Tag { get; } = new();
 
@@ -24,7 +24,7 @@ namespace Stl.Tests.CommandR.Services
         public bool Isolate { get; set; }
     }
 
-    public record RecAddUsersCommand : CommandBase<Unit>
+    public record RecAddUsersCommand : ICommand<Unit>
     {
         public User[] Users { get; set; } = Array.Empty<User>();
     }

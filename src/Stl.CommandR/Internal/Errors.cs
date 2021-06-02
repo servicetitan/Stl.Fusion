@@ -1,6 +1,5 @@
 using System;
 using System.Reflection;
-using Stl.CommandR.Configuration;
 
 namespace Stl.CommandR.Internal
 {
@@ -42,6 +41,9 @@ namespace Stl.CommandR.Internal
             => new InvalidOperationException(
                 $"Type '{type}' is registered as a service with intercepted command handlers, " +
                 "so it can't declare regular (e.g. interface) command handlers.");
+
+        public static Exception CommandMustImplementICommandOfTResult(Type commandType)
+            => new InvalidOperationException($"Command type '{commandType}' must implement {typeof(ICommand<>)}.");
 
         public static Exception CommandIsServerSideOnly()
             => new InvalidOperationException("The command is server-side only.");

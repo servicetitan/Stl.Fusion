@@ -3,7 +3,8 @@ using Stl.Fusion.Authentication;
 
 namespace Stl.Fusion.Extensions.Commands
 {
-    public record SandboxedRemoveCommand(Session Session, string Key) : SessionCommandBase<Unit>(Session)
+    public record SandboxedRemoveCommand(Session Session, string Key)
+        : ISessionCommand<Unit>
     {
         public SandboxedRemoveCommand() : this(Session.Null, "") { }
     }
