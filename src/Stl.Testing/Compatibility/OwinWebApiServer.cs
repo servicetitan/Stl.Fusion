@@ -16,23 +16,25 @@ namespace Stl.Testing
 {
     public class OwinWebApiServerOptions
     {
-        public string Urls { get; set; }
-        public Action<IServiceProvider,IAppBuilder> ConfigureBuilder { get; set; }
-        public Action<IServiceProvider,HttpConfiguration> SetupHttpConfiguration { get; set; }
+        public string Urls { get; set; } = null!;
+        public Action<IServiceProvider,IAppBuilder> ConfigureBuilder { get; set; } = null!;
+        public Action<IServiceProvider,HttpConfiguration> SetupHttpConfiguration { get; set; } = null!;
     }
-    
+
     internal class OwinWebApiServer : IServer
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly ServerAddressesFeature _serverAddresses;
         private bool _hasStarted;
+#pragma warning disable 169
         private int _stopping;
+#pragma warning restore 169
 
         private readonly OwinWebApiServerOptions options;
         //private readonly CancellationTokenSource _stopCts = new CancellationTokenSource();
         //private readonly TaskCompletionSource _stoppedTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        
-        private IDisposable _application;
+
+        private IDisposable _application = null!;
 
         public IFeatureCollection Features { get; }
 
@@ -41,7 +43,7 @@ namespace Stl.Testing
             if (_hasStarted)
                 throw new InvalidOperationException("The server has already started and/or has not been cleaned up yet");
             _hasStarted = true;
-            
+
             string baseAddress = options.Urls;
             Action<IAppBuilder> configureBuilder = (appBuilder) => options.ConfigureBuilder(_serviceProvider, appBuilder);
             Action<HttpConfiguration> setupConfiguration = (config) => options.SetupHttpConfiguration(_serviceProvider, config);
@@ -52,7 +54,7 @@ namespace Stl.Testing
         public Task StopAsync(CancellationToken cancellationToken)
         {
             _application?.Dispose();
-            _application = null;
+            _application = null!;
             return Task.CompletedTask;
         }
 
@@ -71,7 +73,7 @@ namespace Stl.Testing
             _serverAddresses.Addresses.Add(options.Urls);
         }
     }
-    
+
     internal class WebApiStartup
     {
         private readonly IServiceProvider serviceProvider;
@@ -89,8 +91,8 @@ namespace Stl.Testing
         public void Configuration(IAppBuilder appBuilder)
         {
             // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=316888
-               
-            // Configure Web API for self-host. 
+
+            // Configure Web API for self-host.
             var config = new HttpConfiguration();
             Configure(config);
 
@@ -101,7 +103,7 @@ namespace Stl.Testing
                 service(appBuilder);
             }
 
-            appBuilder.UseWebApi(config); 
+            appBuilder.UseWebApi(config);
         }
 
         private void Configure(HttpConfiguration config)
@@ -113,7 +115,7 @@ namespace Stl.Testing
                 service(config);
             }
             config.DependencyResolver = new DefaultDependencyResolver(serviceProvider);
-            
+
             config.MapHttpAttributeRoutes();
 
             config.Routes.MapHttpRoute(
@@ -122,28 +124,28 @@ namespace Stl.Testing
             );
         }
     }
-    
+
     public class DefaultDependencyResolver : IDependencyResolver
     {
         private IServiceProvider serviceProvider;
-        
+
         public DefaultDependencyResolver(IServiceProvider serviceProvider)
         {
             this.serviceProvider = serviceProvider;
         }
- 
+
         public object GetService(Type serviceType)
         {
             var service = this.serviceProvider.GetService(serviceType);
             return service;
         }
- 
+
         public IEnumerable<object> GetServices(Type serviceType)
         {
             var services = this.serviceProvider.GetServices(serviceType);
-            return services;
+            return services!;
         }
-        
+
         public void Dispose()
         {
         }
@@ -153,7 +155,7 @@ namespace Stl.Testing
             return this;
         }
     }
-    
+
     internal class GenericWebHostService : IHostedService
     {
         private readonly IServer server;

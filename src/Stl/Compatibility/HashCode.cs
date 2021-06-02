@@ -44,8 +44,8 @@ https://raw.githubusercontent.com/Cyan4973/xxHash/5c174cfa4e45a42f94082dc0d4539b
 
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Numerics;
 using System.Runtime.CompilerServices;
+using Stl.Compatibility;
 
 namespace System
 {
@@ -421,7 +421,7 @@ namespace System
         public override bool Equals(object? obj) => throw new NotSupportedException("SR.HashCode_EqualityNotSupported");
 #pragma warning restore 0809
     }
-    
+
     internal static class BitOperations
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

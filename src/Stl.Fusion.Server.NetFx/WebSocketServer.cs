@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Net;
 using System.Net.WebSockets;
@@ -58,32 +59,27 @@ namespace Stl.Fusion.Server
             Publisher = publisher;
             ChannelSerializerPairFactory = options.ChannelSerializerPairFactory;
         }
-        
-        T GetValue<T>(IDictionary<string, object> env, string key) {
-            object value;
-            return env.TryGetValue(key, out value) && value is T ? (T)value : default(T);
-        }
-        
+
         public HttpStatusCode HandleRequest(IOwinContext owinContext)
         {
             // written based on https://stackoverflow.com/questions/41848095/websockets-using-owin
-            
+
             var acceptToken = owinContext.Get<WebSocketAccept>("websocket.Accept");
             if (acceptToken == null)
                 return HttpStatusCode.BadRequest;
-            
+
             var publisherId = owinContext.Request.Query[PublisherIdQueryParameterName];
             if (Publisher.Id != publisherId)
                 return HttpStatusCode.BadRequest;
 
             var clientId = owinContext.Request.Query[ClientIdQueryParameterName];
 
-            var requestHeaders = GetValue<IDictionary<string, string[]>>(owinContext.Environment, "owin.RequestHeaders");
+            var requestHeaders =
+                GetValue<IDictionary<string, string[]>>(owinContext.Environment, "owin.RequestHeaders")
+                ?? ImmutableDictionary<string, string[]>.Empty;
 
-            Dictionary<string, object>? acceptOptions = null;
-            string[] subProtocols;
-            if (requestHeaders.TryGetValue("Sec-WebSocket-Protocol", out subProtocols) && subProtocols.Length > 0) {
-                acceptOptions = new Dictionary<string, object>();
+            var acceptOptions = new Dictionary<string, object>();
+            if (requestHeaders.TryGetValue("Sec-WebSocket-Protocol", out string[] subProtocols) && subProtocols.Length > 0) {
                 // Select the first one from the client
                 acceptOptions.Add("websocket.SubProtocol", subProtocols[0].Split(',').First().Trim());
             }
@@ -95,7 +91,7 @@ namespace Stl.Fusion.Server
 
             return HttpStatusCode.SwitchingProtocols;
         }
-        
+
         private async Task HandleWebSocket(WebSocketContext wsContext, string clientId)
         {
             var serializers = ChannelSerializerPairFactory.Invoke();
@@ -115,5 +111,8 @@ namespace Stl.Fusion.Server
                 Log.LogWarning(e, "WebSocket connection was closed with an error");
             }
         }
+
+        private static T? GetValue<T>(IDictionary<string, object?> env, string key)
+            => env.TryGetValue(key, out var value) && value is T result ? result : default;
     }
 }

@@ -44,7 +44,7 @@ namespace Stl.Fusion.Client.RestEase.Internal
             if (string.IsNullOrEmpty(psiJson))
                 throw Fusion.Internal.Errors.NoPublicationStateInfoCaptured();
 
-            var psi = JsonConvert.DeserializeObject<PublicationStateInfo>(psiJson)!;
+            var psi = JsonConvert.DeserializeObject<PublicationStateInfo>(psiJson!)!;
             if (response.StatusCode == HttpStatusCode.InternalServerError) {
                 var error = await DeserializeError(response).ConfigureAwait(false);
                 psi = new PublicationStateInfo<object>(psi, Result.Error<object>(error));
@@ -72,7 +72,7 @@ namespace Stl.Fusion.Client.RestEase.Internal
                     var message = jError[nameof(ServiceException.Message)]?.Value<string>();
                     return string.IsNullOrEmpty(message)
                         ? Errors.UnknownServerSideError()
-                        : new ServiceException(message);
+                        : new ServiceException(message!);
                 }
                 catch (Exception) {
                     return Errors.UnknownServerSideError();

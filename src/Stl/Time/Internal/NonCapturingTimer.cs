@@ -12,7 +12,7 @@ namespace Stl.Time.Internal
             TimeSpan period)
         {
             if (callback == null)
-                throw new ArgumentNullException(nameof (callback));
+                throw new ArgumentNullException(nameof(callback));
             var isFlowSuppressed = false;
             try {
                 if (!ExecutionContext.IsFlowSuppressed()) {

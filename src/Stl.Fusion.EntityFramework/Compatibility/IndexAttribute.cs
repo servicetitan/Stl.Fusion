@@ -13,7 +13,7 @@ namespace Microsoft.EntityFrameworkCore
     public sealed class IndexAttribute : Attribute
     {
         private bool? _isUnique;
-        private string _name;
+        private string _name = null!;
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="T:Microsoft.EntityFrameworkCore.IndexAttribute" /> class.

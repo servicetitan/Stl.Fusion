@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -56,21 +57,72 @@ namespace Stl.IO
 
         public static Task<string> ReadText(
             this PathString path,
-            Encoding? encoding = null,
             CancellationToken cancellationToken = default)
-            => FileCompatEx.ReadAllTextAsync(path, encoding ?? Encoding.UTF8, cancellationToken);
+            => path.ReadText(null, cancellationToken);
+
+        public static Task<string> ReadText(
+            this PathString path,
+            Encoding? encoding,
+            CancellationToken cancellationToken = default)
+            => FileEx.ReadText(path, encoding, cancellationToken);
+
+        public static IAsyncEnumerable<string> ReadLines(
+            this PathString path,
+            CancellationToken cancellationToken = default)
+            => path.ReadLines(null, false, cancellationToken);
 
         public static async IAsyncEnumerable<string> ReadLines(
             this PathString path,
+            Encoding? encoding,
+            bool detectEncodingFromByteOrderMarks,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            using var reader = File.OpenText(path);
-            while (!reader.EndOfStream) {
+            encoding ??= FileEx.DefaultReadEncoding;
+            using var reader = File.OpenRead(path);
+            using var textReader = new StreamReader(reader, encoding, detectEncodingFromByteOrderMarks);
+            while (!textReader.EndOfStream) {
                 cancellationToken.ThrowIfCancellationRequested();
-                var line = await reader.ReadLineAsync().ConfigureAwait(false);
+                var line = await textReader.ReadLineAsync().ConfigureAwait(false);
                 if (line == null)
                     break;
                 yield return line;
+            }
+        }
+
+        // WriteXxx
+
+        public static Task WriteText(
+            this PathString path,
+            string contents,
+            CancellationToken cancellationToken = default)
+            => path.WriteText(contents, null, cancellationToken);
+
+        public static Task WriteText(
+            this PathString path,
+            string contents,
+            Encoding? encoding = null,
+            CancellationToken cancellationToken = default)
+            => FileEx.WriteText(path, contents, encoding, cancellationToken);
+
+        public static Task WriteLines(
+            this PathString path,
+            IAsyncEnumerable<string> lines,
+            CancellationToken cancellationToken = default)
+            => path.WriteLines(lines, null, cancellationToken);
+
+        public static async Task WriteLines(
+            this PathString path,
+            IAsyncEnumerable<string> lines,
+            Encoding? encoding = null,
+            CancellationToken cancellationToken = default)
+        {
+            encoding ??= FileEx.DefaultWriteEncoding;
+            using var writer = File.OpenWrite(path);
+            using var textWriter = new StreamWriter(writer, encoding);
+            await foreach (var line in lines.WithCancellation(cancellationToken)) {
+                if (line == null)
+                    continue;
+                await textWriter.WriteLineAsync(line);
             }
         }
     }

@@ -11,7 +11,7 @@ namespace Stl.Reflection
             this Expression<Func<T, TValue>> expression)
         {
             if (expression == null)
-                throw new ArgumentNullException(nameof (expression));
+                throw new ArgumentNullException(nameof(expression));
             var memberExpression = expression.Body as MemberExpression;
 
             (Type memberType, string memberName) TypeAndName(MemberExpression me) =>

@@ -40,13 +40,7 @@ namespace Stl.Locking
         {
             try {
                 if (!File.Exists(Path))
-                #if !NETSTANDARD2_0
-                    await File.WriteAllTextAsync(Path, "", cancellationToken)
-                        .ConfigureAwait(false);
-                #else
-                    await FileCompatEx.WriteAllTextAsync(Path, "", cancellationToken)
-                        .ConfigureAwait(false);
-                #endif
+                    await FileEx.WriteText(Path, "", cancellationToken).ConfigureAwait(false);
             }
             catch (IOException) {}
             catch (UnauthorizedAccessException) {}

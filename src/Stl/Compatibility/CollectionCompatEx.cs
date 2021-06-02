@@ -4,14 +4,12 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace System.Collections.Generic
 {
-    public static class CollectionExtensions
+    public static class CollectionCompatEx
     {
         public static TValue? GetValueOrDefault<TKey, TValue>(
             this IReadOnlyDictionary<TKey, TValue> dictionary,
             TKey key)
-        {
-            return dictionary.GetValueOrDefault<TKey, TValue>(key, default);
-        }
+            => dictionary.GetValueOrDefault<TKey, TValue>(key, default);
 
         public static TValue? GetValueOrDefault<TKey, TValue>(
             this IReadOnlyDictionary<TKey, TValue> dictionary,
@@ -20,8 +18,7 @@ namespace System.Collections.Generic
         {
             if (dictionary == null)
                 throw new ArgumentNullException(nameof(dictionary));
-            TValue obj;
-            return !dictionary.TryGetValue(key, out obj) ? defaultValue : obj;
+            return !dictionary.TryGetValue(key, out var obj) ? defaultValue : obj;
         }
 
         public static bool TryAdd<TKey, TValue>(
@@ -49,7 +46,7 @@ namespace System.Collections.Generic
                 return true;
             }
 
-            value = default(TValue);
+            value = default;
             return false;
         }
 

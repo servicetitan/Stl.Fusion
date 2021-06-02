@@ -9,11 +9,11 @@ namespace Stl.IO
     public static class PathEx
     {
         private static readonly Regex NonAlphaOrNumberRe =
-            new Regex("[^a-z0-9_]+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            new("[^a-z0-9_]+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static readonly Regex LeadingUnderscoresRe =
-            new Regex("^_+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            new("^_+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static readonly Regex TrailingUnderscoresRe =
-            new Regex("_+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            new("_+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         public static PathString GetHashedName(
             string key, string? prefix = null,

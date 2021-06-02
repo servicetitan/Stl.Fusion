@@ -4,11 +4,10 @@ namespace System
 {
     public static class StringCompatEx
     {
-        public static string[] Split(this string self, string? separator,
+        public static string[] Split(this string self,
+            string? separator,
             StringSplitOptions options = StringSplitOptions.None)
-        {
-            return self.Split(new[] {separator}, options);
-        }
+            => self.Split(new[] {separator}, options);
     }
 }
 

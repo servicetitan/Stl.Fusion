@@ -14,9 +14,11 @@ namespace Stl.Fusion.EntityFramework.Internal
 #if !NETSTANDARD2_0
 #pragma warning disable EF1001
             LeaseField.SetValue(dbContext, DbContextLease.InactiveLease);
-#pragma warning restore
+#pragma warning restore EF1001
 #else
-            ((IDbContextPoolable)dbContext).SetPool(null);
+#pragma warning disable EF1001
+            ((IDbContextPoolable) dbContext).SetPool(null);
+#pragma warning restore EF1001
             LeaseField.SetValue(dbContext, 0);
 #endif
         }

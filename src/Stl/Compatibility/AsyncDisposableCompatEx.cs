@@ -1,50 +1,23 @@
-using System;
-using System.Threading.Tasks;
-using Stl.Async;
+using Stl.Compatibility;
 
 namespace System
 {
-    public struct AsyncDisposableCompatWrapper<T> : IAsyncDisposable
-#if !NETSTANDARD2_0    
-        where T : IAsyncDisposable
-#else    
-        where T : IDisposable
-#endif
-    {
-        public T? Component { get; }
-        
-        public ValueTask DisposeAsync()
-        {
-#if !NETSTANDARD2_0               
-            return Component?.DisposeAsync() ?? ValueTaskEx.CompletedTask;
-#else
-            Component?.Dispose();
-            return ValueTaskEx.CompletedTask;
-#endif
-        }
-
-        public AsyncDisposableCompatWrapper(T? component)
-        {
-            this.Component = component;
-        }
-    }
-    
     public static class AsyncDisposableCompatEx
     {
         /// <summary>
-        /// Use only to avoid conditional compilation directives in parts where component in one of legacy targets does not supports IAsyncDisposable.
+        /// Use only to avoid conditional compilation directives
+        /// in parts where component in one of legacy targets
+        /// does not supports <see cref="IAsyncDisposable"/>.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="component"></param>
+        /// <typeparam name="T">The type of disposable.</typeparam>
+        /// <param name="target"></param>
         /// <returns></returns>
-        public static AsyncDisposableCompatWrapper<T> AsAsyncDisposable<T>(this T? component)
+        public static AsyncDisposableAdapter<T> UsingAsyncDisposableAdapter<T>(this T target)
 #if !NETSTANDARD2_0
-            where T : IAsyncDisposable
+            where T : IAsyncDisposable?
 #else
-            where T : IDisposable
+            where T : IDisposable?
 #endif
-        {
-            return new AsyncDisposableCompatWrapper<T>(component);
-        }
+            => new(target);
     }
 }
