@@ -1,4 +1,4 @@
-# 🌞 Fusion: the #1 abstraction your real-time .NET and Blazor apps need
+# 🌞 Fusion: the "alien 👽 engine" for stunning real-time .NET and Blazor apps
 
 [![Build](https://github.com/servicetitan/Stl.Fusion/workflows/Build/badge.svg)](https://github.com/servicetitan/Stl.Fusion/actions?query=workflow%3A%22Build%22)
 [![Coverage](https://codecov.io/gh/servicetitan/Stl.Fusion/branch/master/graph/badge.svg)](https://codecov.io/gh/servicetitan/Stl.Fusion)
