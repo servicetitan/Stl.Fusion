@@ -15,10 +15,10 @@ namespace Stl.Tests.Serialization
         public void BlazorTypeInfoSerializerTest()
         {
             var serializer = new JsonNetSerializer().ToTyped<Box<DateTime>>();
-            var serialized = serializer.Serialize(new Box<DateTime>(DateTime.Now));
+            var serialized = serializer.Serializer.Invoke(new Box<DateTime>(DateTime.Now));
             Out.WriteLine(serialized);
 
-            var deserialized = serializer.Deserialize(serialized);
+            var deserialized = serializer.Deserializer.Invoke(serialized);
             Out.WriteLine(deserialized.Value.ToString());
         }
     }

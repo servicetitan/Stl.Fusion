@@ -1,22 +1,35 @@
+using System;
+
 namespace Stl.Serialization
 {
-    public interface ITypedSerializer<T, TSerialized>
+    public readonly struct TypedSerializer<T, TSerialized> : IEquatable<TypedSerializer<T, TSerialized>>
     {
-        TSerialized Serialize(T native);
-        T Deserialize(TSerialized serialized);
-    }
+        public Func<T, TSerialized> Serializer { get; }
+        public Func<TSerialized, T> Deserializer { get; }
 
-    public sealed class TypedSerializer<T, TSerialized> : ITypedSerializer<T, TSerialized>
-    {
-        private readonly ISerializer<TSerialized> _serializer;
+        public TypedSerializer(Func<T, TSerialized> serializer, Func<TSerialized, T> deserializer)
+        {
+            Serializer = serializer;
+            Deserializer = deserializer;
+        }
 
-        public TypedSerializer(ISerializer<TSerialized> serializer)
-            => _serializer = serializer;
+        public void Deconstruct(out Func<T, TSerialized> serializer, out Func<TSerialized, T> deserializer)
+        {
+            serializer = Serializer;
+            deserializer = Deserializer;
+        }
 
-        public TSerialized Serialize(T native)
-            => _serializer.Serialize(native);
+        // Equality
 
-        public T Deserialize(TSerialized serialized)
-            => _serializer.Deserialize<T>(serialized);
+        public bool Equals(TypedSerializer<T, TSerialized> other)
+            => Serializer.Equals(other.Serializer) && Deserializer.Equals(other.Deserializer);
+        public override bool Equals(object? obj)
+            => obj is TypedSerializer<T, TSerialized> other && Equals(other);
+        public override int GetHashCode()
+            => HashCode.Combine(Serializer, Deserializer);
+        public static bool operator ==(TypedSerializer<T, TSerialized> left, TypedSerializer<T, TSerialized> right)
+            => left.Equals(right);
+        public static bool operator !=(TypedSerializer<T, TSerialized> left, TypedSerializer<T, TSerialized> right)
+            => !left.Equals(right);
     }
 }

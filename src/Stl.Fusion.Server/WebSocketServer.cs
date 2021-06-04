@@ -21,17 +21,17 @@ namespace Stl.Fusion.Server
             public string RequestPath { get; set; } = DefaultClientOptions.RequestPath;
             public string PublisherIdQueryParameterName { get; set; } = DefaultClientOptions.PublisherIdQueryParameterName;
             public string ClientIdQueryParameterName { get; set; } = DefaultClientOptions.ClientIdQueryParameterName;
-            public Func<ChannelSerializerPair<BridgeMessage, string>> ChannelSerializerPairFactory { get; set; } =
-                DefaultChannelSerializerPairFactory;
+            public Func<TypedSerializer<BridgeMessage, string>> TypedSerializerFactory { get; set; } =
+                DefaultTypedSerializerFactory;
 
-            public static ChannelSerializerPair<BridgeMessage, string> DefaultChannelSerializerPairFactory()
+            public static TypedSerializer<BridgeMessage, string> DefaultTypedSerializerFactory()
                 => new(
-                    new JsonNetSerializer().ToTyped<BridgeMessage>(),
-                    new SafeJsonNetSerializer(t => typeof(ReplicatorMessage).IsAssignableFrom(t)).ToTyped<BridgeMessage>());
+                    new JsonNetSerializer().ToTyped<BridgeMessage>().Serializer,
+                    new SafeJsonNetSerializer(t => typeof(ReplicatorMessage).IsAssignableFrom(t)).ToTyped<BridgeMessage>().Deserializer);
         }
 
         protected IPublisher Publisher { get; }
-        protected Func<ChannelSerializerPair<BridgeMessage, string>> ChannelSerializerPairFactory { get; }
+        protected Func<TypedSerializer<BridgeMessage, string>> TypedSerializerFactory { get; }
         protected ILogger Log { get; }
 
         public string RequestPath { get; }
@@ -46,7 +46,7 @@ namespace Stl.Fusion.Server
             PublisherIdQueryParameterName = options.PublisherIdQueryParameterName;
             ClientIdQueryParameterName = options.ClientIdQueryParameterName;
             Publisher = publisher;
-            ChannelSerializerPairFactory = options.ChannelSerializerPairFactory;
+            TypedSerializerFactory = options.TypedSerializerFactory;
         }
 
         public async Task HandleRequest(HttpContext context)
@@ -61,7 +61,7 @@ namespace Stl.Fusion.Server
                 return;
             }
 
-            var serializers = ChannelSerializerPairFactory.Invoke();
+            var serializers = TypedSerializerFactory.Invoke();
             var clientId = context.Request.Query[ClientIdQueryParameterName];
             var webSocket = await context.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
             await using var wsChannel = new WebSocketChannel(webSocket);

@@ -13,7 +13,9 @@ namespace Stl.Serialization
 
         public static JsonSerializerSettings DefaultSettings { get; set; } =
             new() {
+#if !NET5
                 SerializationBinder = CrossPlatformSerializationBinder.Instance,
+#endif
                 TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
                 TypeNameHandling = TypeNameHandling.Auto,
                 NullValueHandling = NullValueHandling.Ignore,
