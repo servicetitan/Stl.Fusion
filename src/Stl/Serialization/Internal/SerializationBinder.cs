@@ -7,7 +7,7 @@ using Newtonsoft.Json.Serialization;
 using Stl.Concurrency;
 using Stl.Reflection;
 
-namespace Stl.Serialization
+namespace Stl.Serialization.Internal
 {
     public class SerializationBinder : ISerializationBinder
     {

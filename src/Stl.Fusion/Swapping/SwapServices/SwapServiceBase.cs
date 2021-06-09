@@ -8,12 +8,12 @@ using Stl.Text;
 
 namespace Stl.Fusion.Swapping
 {
-    public abstract class SwapServiceBase<TSerialized> : ISwapService
+    public abstract class SwapServiceBase : ISwapService
     {
-        protected Func<ISerializer<TSerialized>> SerializerFactory { get; set; } = null!;
+        protected Func<IUtf16Serializer<object>> SerializerFactory { get; set; } = null!;
 
         protected SwapServiceBase() { }
-        protected SwapServiceBase(Func<ISerializer<TSerialized>> serializerFactory)
+        protected SwapServiceBase(Func<IUtf16Serializer<object>> serializerFactory)
             => SerializerFactory = serializerFactory;
 
         public async ValueTask<IResult?> Load(
@@ -21,10 +21,10 @@ namespace Stl.Fusion.Swapping
             CancellationToken cancellationToken = default)
         {
             var serializedKey = SerializeKey(key.Input, key.Version);
-            var serializedValueOpt = await Load(serializedKey, cancellationToken).ConfigureAwait(false);
-            if (!serializedValueOpt.IsSome(out var serializedValue))
-                return null!;
-            return SerializerFactory.Invoke().Deserialize<object>(serializedValue) as IResult;
+            var data = await Load(serializedKey, cancellationToken).ConfigureAwait(false);
+            if (data == null)
+                return null;
+            return SerializerFactory.Invoke().Reader.Read(data) as IResult;
         }
 
         public async ValueTask Store(
@@ -34,15 +34,15 @@ namespace Stl.Fusion.Swapping
             var serializedKey = SerializeKey(key.Input, key.Version);
             if (await Renew(serializedKey, cancellationToken).ConfigureAwait(false))
                 return;
-            var serializedValue = SerializerFactory.Invoke().Serialize<object>(value);
-            await Store(serializedKey, serializedValue, cancellationToken).ConfigureAwait(false);
+            var data = SerializerFactory.Invoke().Writer.Write(value);
+            await Store(serializedKey, data, cancellationToken).ConfigureAwait(false);
         }
 
         // Protected methods
 
-        protected abstract ValueTask<Option<TSerialized>> Load(string key, CancellationToken cancellationToken);
+        protected abstract ValueTask<string?> Load(string key, CancellationToken cancellationToken);
         protected abstract ValueTask<bool> Renew(string key, CancellationToken cancellationToken);
-        protected abstract ValueTask Store(string key, TSerialized value, CancellationToken cancellationToken);
+        protected abstract ValueTask Store(string key, string value, CancellationToken cancellationToken);
 
         protected virtual string SerializeKey(ComputeMethodInput input, LTag version)
         {

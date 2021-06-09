@@ -2,7 +2,7 @@ using System;
 using System.Runtime.Serialization;
 using Newtonsoft.Json.Serialization;
 
-namespace Stl.Serialization
+namespace Stl.Serialization.Internal
 {
     public class PreferSerializableContractResolver : DefaultContractResolver
     {

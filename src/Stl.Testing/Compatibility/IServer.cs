@@ -139,16 +139,14 @@ namespace Stl.Testing
         }
 
         /// <inheritdoc />
+#pragma warning disable 8766
         public TFeature? Get<TFeature>()
-        {
-            return (TFeature?)this[typeof(TFeature)];
-        }
+#pragma warning restore 8766
+            => (TFeature?)this[typeof(TFeature)];
 
         /// <inheritdoc />
         public void Set<TFeature>(TFeature? instance)
-        {
-            this[typeof(TFeature)] = instance;
-        }
+            => this[typeof(TFeature)] = instance;
 
         private class KeyComparer : IEqualityComparer<KeyValuePair<Type, object>>
         {

@@ -47,10 +47,10 @@ namespace Stl.Fusion.Client
 
             // ResponseDeserializer & ReplicaResponseDeserializer
             Services.TryAddTransient<ResponseDeserializer>(c => new JsonResponseDeserializer() {
-                JsonSerializerSettings = JsonNetSerializer.DefaultSettings
+                JsonSerializerSettings = NewtonsoftJsonSerializer.DefaultSettings
             });
             Services.TryAddTransient<RequestBodySerializer>(c => new JsonRequestBodySerializer() {
-                JsonSerializerSettings = JsonNetSerializer.DefaultSettings
+                JsonSerializerSettings = NewtonsoftJsonSerializer.DefaultSettings
             });
         }
 

@@ -40,7 +40,7 @@ namespace Stl.Fusion.Server
             });
             mvcBuilder.AddNewtonsoftJson(options => {
                 MemberwiseCopier.Invoke(
-                    JsonNetSerializer.DefaultSettings,
+                    NewtonsoftJsonSerializer.DefaultSettings,
                     options.SerializerSettings,
                     copier => copier with {
                         Filter = member => member.Name != "Binder",

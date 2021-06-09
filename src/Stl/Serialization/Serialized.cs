@@ -3,25 +3,25 @@ using Newtonsoft.Json;
 
 namespace Stl.Serialization
 {
-    public abstract class Serialized<TValue>
+    public abstract class Serialized<T>
     {
-        private Option<TValue> _valueOption;
-        private Option<string> _serializedValueOption;
+        private Option<T> _valueOption;
+        private Option<string> _dataOption;
 
         [JsonIgnore]
-        public TValue Value {
+        public T Value {
             get => _valueOption.IsSome(out var v) ? v : Deserialize();
             set {
                 _valueOption = value;
-                _serializedValueOption = Option<string>.None;
+                _dataOption = Option<string>.None;
             }
         }
 
-        public string SerializedValue {
-            get => _serializedValueOption.IsSome(out var v) ? v : Serialize();
+        public string Data {
+            get => _dataOption.IsSome(out var v) ? v : Serialize();
             set {
-                _valueOption = Option<TValue>.None;
-                _serializedValueOption = value;
+                _valueOption = Option<T>.None;
+                _dataOption = value;
             }
         }
 
@@ -29,24 +29,24 @@ namespace Stl.Serialization
         {
             if (!_valueOption.IsSome(out var value))
                 throw new InvalidOperationException($"{nameof(Value)} isn't set.");
-            var serializedValue = !typeof(TValue).IsValueType && ReferenceEquals(value, null)
+            var serializedValue = !typeof(T).IsValueType && ReferenceEquals(value, null)
                 ? ""
-                : CreateSerializer().Serialize(value);
-            _serializedValueOption = serializedValue;
+                : CreateSerializer().Writer.Write(value);
+            _dataOption = serializedValue;
             return serializedValue;
         }
 
-        private TValue Deserialize()
+        private T Deserialize()
         {
-            if (!_serializedValueOption.IsSome(out var serializedValue))
-                throw new InvalidOperationException($"{nameof(SerializedValue)} isn't set.");
+            if (!_dataOption.IsSome(out var serializedValue))
+                throw new InvalidOperationException($"{nameof(Data)} isn't set.");
             var value = string.IsNullOrEmpty(serializedValue)
                 ? default!
-                : CreateSerializer().Deserialize<TValue>(serializedValue);
+                : CreateSerializer().Reader.Read(serializedValue);
             _valueOption = value;
             return value;
         }
 
-        protected abstract ISerializer<string> CreateSerializer();
+        protected abstract IUtf16Serializer<T> CreateSerializer();
     }
 }

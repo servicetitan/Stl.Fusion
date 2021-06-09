@@ -28,8 +28,8 @@ namespace Stl.Fusion.Client
             public string ClientIdQueryParameterName { get; set; } = "clientId";
             public TimeSpan ConnectTimeout { get; set; } = TimeSpan.FromSeconds(10);
             public int? MessageMaxLength { get; set; } = 2048;
-            public Func<IServiceProvider, TypedSerializer<BridgeMessage, string>> TypedSerializerFactory { get; set; } =
-                DefaultTypedSerializerFactory;
+            public Func<IServiceProvider, IUtf16Serializer<BridgeMessage>> SerializerFactory { get; set; } =
+                DefaultSerializerFactory;
             public Func<IServiceProvider, ClientWebSocket> ClientWebSocketFactory { get; set; } =
                 DefaultClientWebSocketFactory;
             public Func<WebSocketChannelProvider, Symbol, Uri> ConnectionUrlResolver { get; set; } =
@@ -37,10 +37,13 @@ namespace Stl.Fusion.Client
             public bool IsLoggingEnabled { get; set; } = true;
             public bool IsMessageLoggingEnabled { get; set; } = false;
 
-            public static TypedSerializer<BridgeMessage, string> DefaultTypedSerializerFactory(IServiceProvider services)
-                => new(
-                    new SafeJsonNetSerializer(t => typeof(ReplicatorMessage).IsAssignableFrom(t)).ToTyped<BridgeMessage>().Serializer,
-                    new JsonNetSerializer().ToTyped<BridgeMessage>().Deserializer);
+            public static IUtf16Serializer<BridgeMessage> DefaultSerializerFactory(IServiceProvider services)
+                => new Utf16Serializer(
+                    new NewtonsoftJsonSerializer().Reader,
+                    new SafeUtf16Serializer(
+                        new NewtonsoftJsonSerializer(),
+                        t => typeof(ReplicatorMessage).IsAssignableFrom(t)).Writer
+                    ).ToTyped<BridgeMessage>();
 
             public static ClientWebSocket DefaultClientWebSocketFactory(IServiceProvider services)
                 => services?.GetService<ClientWebSocket>() ?? new ClientWebSocket();
@@ -67,7 +70,7 @@ namespace Stl.Fusion.Client
             }
         }
 
-        protected Func<IServiceProvider, TypedSerializer<BridgeMessage, string>> TypedSerializerFactory { get; }
+        protected Func<IServiceProvider, IUtf16Serializer<BridgeMessage>> SerializerFactory { get; }
         protected Func<IServiceProvider, ClientWebSocket> ClientWebSocketFactory { get; }
         protected int? MessageMaxLength { get; }
         protected Lazy<IReplicator>? ReplicatorLazy { get; }
@@ -104,7 +107,7 @@ namespace Stl.Fusion.Client
             MessageMaxLength = options.MessageMaxLength;
             ConnectTimeout = options.ConnectTimeout;
             ReplicatorLazy = new Lazy<IReplicator>(services.GetRequiredService<IReplicator>);
-            TypedSerializerFactory = options.TypedSerializerFactory;
+            SerializerFactory = options.SerializerFactory;
             ClientWebSocketFactory = options.ClientWebSocketFactory;
             ConnectionUrlResolver = options.ConnectionUrlResolver;
         }
@@ -128,8 +131,8 @@ namespace Stl.Fusion.Client
                 Channel<string> stringChannel = wsChannel;
                 if (IsMessageLoggingEnabled)
                     stringChannel = stringChannel.WithLogger(clientId, Log, MessageLogLevel, MessageMaxLength);
-                var serializers = TypedSerializerFactory.Invoke(Services);
-                var resultChannel = stringChannel.WithSerializers(serializers);
+                var serializers = SerializerFactory.Invoke(Services);
+                var resultChannel = stringChannel.WithSerializer(serializers);
                 wsChannel.WhenCompleted(CancellationToken.None).ContinueWith(async _ => {
                     await Task.Delay(1000, default).ConfigureAwait(false);
                     await wsChannel.DisposeAsync().ConfigureAwait(false);

@@ -19,7 +19,7 @@ namespace Stl.Fusion.Extensions
         public static Task Set<T>(this ISandboxedKeyValueStore keyValueStore,
             Session session, string key, T value, Moment? expiresAt, CancellationToken cancellationToken = default)
         {
-            var sValue = JsonSerialized.New(value).SerializedValue;
+            var sValue = JsonSerialized.New(value).Data;
             return keyValueStore.Set(session, key, sValue, expiresAt, cancellationToken);
         }
 

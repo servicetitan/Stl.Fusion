@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace Stl.Serialization
 {
-    public class DefaultJsonSerializer : SerializerBase<string>
+    public class DefaultJsonSerializer : Utf16SerializerBase
     {
         public static JsonSerializerOptions DefaultOptions { get; set; } = new();
 
@@ -12,16 +12,10 @@ namespace Stl.Serialization
         public DefaultJsonSerializer(JsonSerializerOptions? options = null)
             => Options = options ??= DefaultOptions;
 
-        public override string Serialize(object? native, Type? type)
-        {
-            type ??= native?.GetType() ?? typeof(object);
-            return JsonSerializer.Serialize(native, type, Options);
-        }
+        public override object? Read(string data, Type type)
+            => JsonSerializer.Deserialize(data, type, Options);
 
-        public override object? Deserialize(string serialized, Type? type)
-        {
-            type ??= typeof(object);
-            return JsonSerializer.Deserialize(serialized, type, Options);
-        }
+        public override string Write(object? value, Type type)
+            => JsonSerializer.Serialize(value, type, Options);
     }
 }

@@ -17,16 +17,16 @@ namespace Stl.Fusion.Server
             var exception = actionExecutedContext.Exception;
             var actionContext = actionExecutedContext.ActionContext;
             var appServices = actionContext.GetAppServices();
-            
+
             if (actionExecutedContext.Response!=null)
                 return; // response already setup, log, do nothing
-            
+
             if (RewriteErrors) {
                 var rewriter = appServices.GetRequiredService<IErrorRewriter>();
                 exception = rewriter.Rewrite(actionContext, exception, true);
             }
-            var serializer = new JsonNetSerializer(JsonNetSerializer.DefaultSettings);
-            var content = serializer.Serialize(exception);
+            var serializer = new NewtonsoftJsonSerializer(NewtonsoftJsonSerializer.DefaultSettings);
+            var content = serializer.Writer.Write(exception);
 
             actionExecutedContext.Exception = null; // mark exception as handled;
 

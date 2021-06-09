@@ -19,8 +19,8 @@ namespace Stl.Fusion.Server
                 var rewriter = context.HttpContext.RequestServices.GetRequiredService<IErrorRewriter>();
                 exception = rewriter.Rewrite(context, exception, true);
             }
-            var serializer = new JsonNetSerializer(JsonNetSerializer.DefaultSettings);
-            var content = serializer.Serialize(exception);
+            var serializer = new NewtonsoftJsonSerializer(NewtonsoftJsonSerializer.DefaultSettings);
+            var content = serializer.Writer.Write(exception);
             var result = new ContentResult() {
                 Content = content,
                 ContentType = "application/json",

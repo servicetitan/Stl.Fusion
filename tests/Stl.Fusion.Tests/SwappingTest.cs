@@ -38,7 +38,7 @@ namespace Stl.Fusion.Tests
 
             public SwapService(Options? options = null) : base(options) { }
 
-            protected override ValueTask<Option<string>> Load(string key, CancellationToken cancellationToken)
+            protected override ValueTask<string?> Load(string key, CancellationToken cancellationToken)
             {
                 LoadCallCount++;
                 return base.Load(key, cancellationToken);

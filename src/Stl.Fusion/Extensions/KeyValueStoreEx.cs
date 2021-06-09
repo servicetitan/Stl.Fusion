@@ -23,7 +23,7 @@ namespace Stl.Fusion.Extensions
         public static Task Set<T>(this IKeyValueStore keyValueStore,
             string key, T value, Moment? expiresAt, CancellationToken cancellationToken = default)
         {
-            var sValue = JsonSerialized.New(value).SerializedValue;
+            var sValue = JsonSerialized.New(value).Data;
             return keyValueStore.Set(key, sValue, expiresAt, cancellationToken);
         }
 

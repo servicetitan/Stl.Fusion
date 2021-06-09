@@ -43,8 +43,8 @@ namespace Stl.Fusion.EntityFramework.Authentication
 
         // Options
         public string OptionsJson {
-            get => _options.SerializedValue;
-            set => _options.SerializedValue = value;
+            get => _options.Data;
+            set => _options.Data = value;
         }
 
         [NotMapped, JsonIgnore]

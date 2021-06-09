@@ -9,13 +9,14 @@ namespace Stl.Serialization
         public static JsonSerialized<TValue> New<TValue>(string serializedValue) => new(serializedValue);
     }
 
-    public class JsonSerialized<TValue> : Serialized<TValue>
+    public class JsonSerialized<T> : Serialized<T>
     {
         public JsonSerialized() { }
-        public JsonSerialized(TValue value) => Value = value;
+        public JsonSerialized(T value) => Value = value;
         [JsonConstructor]
-        public JsonSerialized(string serializedValue) => SerializedValue = serializedValue;
+        public JsonSerialized(string data) => Data = data;
 
-        protected override ISerializer<string> CreateSerializer() => new JsonNetSerializer();
+        protected override IUtf16Serializer<T> CreateSerializer()
+            => new NewtonsoftJsonSerializer().ToTyped<T>(typeof(object));
     }
 }

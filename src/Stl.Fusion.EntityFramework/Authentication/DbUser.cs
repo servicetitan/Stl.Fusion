@@ -23,8 +23,8 @@ namespace Stl.Fusion.EntityFramework.Authentication
         public string Name { get; set; } = "";
 
         public string ClaimsJson {
-            get => _claims.SerializedValue;
-            set => _claims.SerializedValue = value;
+            get => _claims.Data;
+            set => _claims.Data = value;
         }
 
         [NotMapped, JsonIgnore]

@@ -14,11 +14,11 @@ namespace Stl.Tests.Serialization
         [Fact]
         public void BlazorTypeInfoSerializerTest()
         {
-            var serializer = new JsonNetSerializer().ToTyped<Box<DateTime>>();
-            var serialized = serializer.Serializer.Invoke(new Box<DateTime>(DateTime.Now));
+            var serializer = new NewtonsoftJsonSerializer().ToTyped<Box<DateTime>>();
+            var serialized = serializer.Writer.Write(new Box<DateTime>(DateTime.Now));
             Out.WriteLine(serialized);
 
-            var deserialized = serializer.Deserializer.Invoke(serialized);
+            var deserialized = serializer.Reader.Read(serialized);
             Out.WriteLine(deserialized.Value.ToString());
         }
     }

@@ -9,14 +9,15 @@ using Stl.Time;
 
 namespace Stl.Fusion.Swapping
 {
-    public class SimpleSwapService : SwapServiceBase<string>
+    public class SimpleSwapService : SwapServiceBase
     {
         public class Options
         {
             public TimeSpan ExpirationTime { get; set; } = TimeSpan.FromMinutes(1);
             public TimeSpan TimerQuanta { get; set; } = TimeSpan.FromSeconds(1);
             public int ConcurrencyLevel { get; set; } = HardwareInfo.GetProcessorCountPo2Factor();
-            public Func<ISerializer<string>> SerializerFactory { get; set; } = () => new JsonNetSerializer();
+            public Func<IUtf16Serializer<object>> SerializerFactory { get; set; } =
+                () => new NewtonsoftJsonSerializer().ToTyped<object>();
             public IMomentClock Clock { get; set; } = CoarseCpuClock.Instance;
         }
 
@@ -43,12 +44,12 @@ namespace Stl.Fusion.Swapping
                 key => Storage.TryRemove(key, out _));
         }
 
-        protected override ValueTask<Option<string>> Load(string key, CancellationToken cancellationToken)
+        protected override ValueTask<string?> Load(string key, CancellationToken cancellationToken)
         {
             if (!Storage.TryGetValue(key, out var value))
-                return ValueTaskEx.FromResult(Option.None<string>());
+                return ValueTaskEx.FromResult((string?) null);
             ExpirationTimers.AddOrUpdateToLater(key, Clock.Now + ExpirationTime);
-            return ValueTaskEx.FromResult(Option.Some(value));
+            return ValueTaskEx.FromResult(value)!;
         }
 
         protected override ValueTask<bool> Renew(string key, CancellationToken cancellationToken)

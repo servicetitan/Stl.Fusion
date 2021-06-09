@@ -2,28 +2,28 @@ using System;
 
 namespace Stl.Serialization
 {
-    public class CustomSerialized<TValue> : Serialized<TValue>
+    public class CustomSerialized<T> : Serialized<T>
     {
-        private Func<ISerializer<string>> SerializerFactory { get; set; }
+        private Func<IUtf16Serializer<T>> SerializerFactory { get; set; }
 
-        public CustomSerialized(Func<ISerializer<string>> serializerFactory)
+        public CustomSerialized(Func<IUtf16Serializer<T>> serializerFactory)
             => SerializerFactory = serializerFactory;
-        public CustomSerialized(Func<ISerializer<string>> serializerFactory, TValue value)
+        public CustomSerialized(Func<IUtf16Serializer<T>> serializerFactory, T value)
             : this(serializerFactory)
             => Value = value;
-        public CustomSerialized(Func<ISerializer<string>> serializerFactory, string serializedValue)
+        public CustomSerialized(Func<IUtf16Serializer<T>> serializerFactory, string data)
             : this(serializerFactory)
-            => SerializedValue = serializedValue;
+            => Data = data;
 
-        protected override ISerializer<string> CreateSerializer() => SerializerFactory.Invoke();
+        protected override IUtf16Serializer<T> CreateSerializer() => SerializerFactory.Invoke();
     }
 
     public static class CustomSerialized
     {
-        public static CustomSerialized<TValue> New<TValue>(Func<ISerializer<string>> serializer) => new(serializer);
-        public static CustomSerialized<TValue> New<TValue>(Func<ISerializer<string>> serializer, TValue value)
+        public static CustomSerialized<T> New<T>(Func<IUtf16Serializer<T>> serializer) => new(serializer);
+        public static CustomSerialized<T> New<T>(Func<IUtf16Serializer<T>> serializer, T value)
             => new(serializer, value);
-        public static CustomSerialized<TValue> New<TValue>(Func<ISerializer<string>> serializer, string serializedValue)
-            => new(serializer, serializedValue);
+        public static CustomSerialized<T> New<T>(Func<IUtf16Serializer<T>> serializer, string data)
+            => new(serializer, data);
     }
 }

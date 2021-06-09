@@ -20,7 +20,7 @@
     <PackageReference Include="System.Linq.Async" />
     <PackageReference Include="System.Reactive" />
     <PackageReference Include="System.Threading.Channels" />
-<!--    <PackageReference Include="ZString" />-->
+    <PackageReference Include="ZString" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">

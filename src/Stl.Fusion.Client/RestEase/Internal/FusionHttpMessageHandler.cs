@@ -62,9 +62,9 @@ namespace Stl.Fusion.Client.RestEase.Internal
             if (contentType?.MediaType != "application/json")
                 return new ServiceException(content);
 
-            var serializer = new JsonNetSerializer(JsonNetSerializer.DefaultSettings);
+            var serializer = new NewtonsoftJsonSerializer(NewtonsoftJsonSerializer.DefaultSettings);
             try {
-                return serializer.Deserialize<Exception>(content);
+                return serializer.Reader.Read<Exception>(content);
             }
             catch (Exception) {
                 try {

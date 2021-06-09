@@ -34,13 +34,13 @@ namespace Stl.Fusion.EntityFramework.Operations
         }
 
         public string CommandJson {
-            get => _command.SerializedValue;
-            set => _command.SerializedValue = value;
+            get => _command.Data;
+            set => _command.Data = value;
         }
 
         public string ItemsJson {
-            get => _items.SerializedValue;
-            set => _items.SerializedValue = value;
+            get => _items.Data;
+            set => _items.Data = value;
         }
 
         [NotMapped, JsonIgnore]

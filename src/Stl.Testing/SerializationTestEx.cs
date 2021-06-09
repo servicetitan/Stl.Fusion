@@ -1,15 +1,14 @@
 using System;
-using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
 using Newtonsoft.Json;
 using Stl.Internal;
 using Stl.Serialization;
+using Stl.Serialization.Internal;
 
 namespace Stl.Testing
 {
     public static class SerializationTestEx
     {
-        public static JsonSerializerSettings JsonSerializerSettings = new JsonSerializerSettings() {
+        public static JsonSerializerSettings JsonSerializerSettings = new() {
             SerializationBinder = CrossPlatformSerializationBinder.Instance,
             Formatting = Formatting.Indented,
 //            ContractResolver = new PreferSerializableContractResolver(),
@@ -24,7 +23,6 @@ namespace Stl.Testing
 
         public static (T, string[]) PassThroughAllSerializersWithOutput<T>(this T value)
         {
-            var delimiter = Environment.NewLine + Environment.NewLine;
             var (v1, json1) = value.PassThroughJsonConvertWithOutput();
             var (v2, json2) = v1.PassThroughJsonSerializedWithOutput();
             return (v2, new [] {json1, json2});
@@ -49,15 +47,15 @@ namespace Stl.Testing
         public static T PassThroughJsonSerialized<T>(this T value)
         {
             var v1 = JsonSerialized.New(value);
-            var v2 = JsonSerialized.New<T>(v1.SerializedValue);
+            var v2 = JsonSerialized.New<T>(v1.Data);
             return v2.Value;
         }
 
         public static (T, string) PassThroughJsonSerializedWithOutput<T>(this T value)
         {
             var v1 = JsonSerialized.New(value);
-            var v2 = JsonSerialized.New<T>(v1.SerializedValue);
-            return (v2.Value, v1.SerializedValue);
+            var v2 = JsonSerialized.New<T>(v1.Data);
+            return (v2.Value, v1.Data);
         }
     }
 }

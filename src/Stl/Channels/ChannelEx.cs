@@ -110,19 +110,9 @@ namespace Stl.Channels
             }
         }
 
-        public static Channel<T> WithSerializers<T, TSerialized>(
-            this Channel<TSerialized> downstreamChannel,
-            TypedSerializer<T, TSerialized> serializer,
-            BoundedChannelOptions? channelOptions = null,
-            CancellationToken cancellationToken = default)
-            => downstreamChannel.WithSerializers(
-                serializer.Serializer, serializer.Deserializer,
-                channelOptions, cancellationToken);
-
-        public static Channel<T> WithSerializers<T, TSerialized>(
-            this Channel<TSerialized> downstreamChannel,
-            Func<T, TSerialized> serializer,
-            Func<TSerialized, T> deserializer,
+        public static Channel<T> WithSerializer<T>(
+            this Channel<string> downstreamChannel,
+            IUtf16Serializer<T> serializer,
             BoundedChannelOptions? channelOptions = null,
             CancellationToken cancellationToken = default)
         {
@@ -137,7 +127,8 @@ namespace Stl.Channels
                 Channel.CreateBounded<T>(channelOptions));
 
             downstreamChannel.Connect(pair.Channel1,
-                deserializer, serializer,
+                serializer.Reader.Read,
+                serializer.Writer.Write,
                 ChannelCompletionMode.CompleteAndPropagateError,
                 cancellationToken);
             return pair.Channel2;
@@ -183,6 +174,6 @@ namespace Stl.Channels
 
         public static CustomChannelWithId<TId, T> WithId<TId, T>(
             this Channel<T> channel, TId id)
-            => new CustomChannelWithId<TId, T>(id, channel.Reader, channel.Writer);
+            => new(id, channel.Reader, channel.Writer);
     }
 }
