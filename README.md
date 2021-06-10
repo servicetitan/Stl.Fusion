@@ -37,8 +37,8 @@ in a few words:
   part means that Fusion allows you to create 
   *invalidation-aware remote clients* for functions like `GetUser`. 
   They act like "normal" RPC clients, but:
-  - Since they know when a result of any call gets inconsistent, they
-    resolve a majority of calls via local cache.
+  - Since they know when a result of any call becomes invalidated (i.e. has to be recomputed), 
+  - they resolve a majority of calls from a local cache.
   - Moreover, such clients behave like other Fusion functions,
     so if you client-side code declares `GetUserName(id) => server.GetUser(id).Name`
     function, `GetUserName(id)` result will be invalidated once `GetUser(id)`
