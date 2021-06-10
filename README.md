@@ -9,7 +9,7 @@
 ![Commit Activity](https://img.shields.io/github/commit-activity/m/servicetitan/Stl.Fusion)
 [![Downloads](https://img.shields.io/nuget/dt/Stl)](https://www.nuget.org/packages?q=Owner%3Aservicetitan+Tags%3Astl_fusion)
 
-Fusion is a .NET library that implements a **DREAM** &ndash;
+Fusion is a .NET library that implements **DREAM** &ndash;
 **D**istributed **Rea**l-time **Rea**ctive **M**emoization.
 The acronym was invented by us and our [Discord] users to capture what Fusion does 
 in just a few words:
