@@ -32,9 +32,8 @@ in a few words:
 - All of this happens in **[real-time](https://en.wikipedia.org/wiki/Real-time_computing)**;
   moreover, local invalidations are synchronous, so typically they complete in microseconds.
 - **[Distributed](https://en.wikipedia.org/wiki/Distributed_computing)** 
-  part means that Fusion allows you to create 
-  *invalidation-aware remote clients* for functions like `GetUser`. 
-  They act like "normal" RPC clients, but:
+  part indicates that Fusion can generate *invalidation-aware remote clients* 
+  for any of such functions. They act almost like "normal" RPC clients, but:
   - Since they know when a result of any call becomes invalidated (i.e. has to be recomputed), 
   - they resolve a majority of calls from a local cache.
   - Moreover, such clients behave like other Fusion functions,
