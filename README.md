@@ -22,12 +22,10 @@ in a few words:
   part of your Fusion code reacts to changes by triggering *cascading invalidation*.
   Invalidation is simply a call to `GetUser(id)` performed inside
   a special `using (Computed.Invalidate()) { ... }` block, which:
-  - Marks cached `GetUser(id)` result as *inconsistent with the ground truth*,
-    so it will be recomputed on the next *actual* `GetUser(id)` call.
-  - *Recursively* invalidates every other call result that "depends" on `GetUser(id)`,
-    so e.g. if you have `GetUserName(id) => GetUser(id).Name`, its result
-    (for the same `id`) will be invalidated automatically once you invalidate
-    `GetUser(id)`.
+  - Marks the cached `GetUser(id)` result as *inconsistent with the ground truth*,
+    so it will be recomputed on the next actual `GetUser(id)` call.
+  - Automatically invalidates every other call result that *depends on* `GetUser(id)` -
+    e.g. it could be `GetUserName(id) => GetUser(id).Name` call result for the same `id`.
   - The last part indicates that Fusion captures and tracks the inter-dependencies
     between the results of such calls, which happens transparently for you.
     Fusion ensures the dependency graph is always consistent.
