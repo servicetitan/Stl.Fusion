@@ -12,7 +12,7 @@
 Fusion is a .NET library that implements **DREAM** &ndash;
 **D**istributed **Rea**l-time **Rea**ctive **M**emoization.
 The acronym was invented by us and our [Discord] users to capture what Fusion does 
-in just a few words:
+in a few words:
 - **[Memoization](https://en.wikipedia.org/wiki/Memoization)** is a technique used
   to speed up function calls by caching the output for a given input. Fusion
   provides a *transparent memoization* for any function you like, so
