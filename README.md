@@ -35,7 +35,7 @@ in a few words:
   part indicates that Fusion can generate *invalidation-aware remote clients* 
   for any of such functions. They act almost like "normal" RPC clients, but:
   - Since they know when a result of any call becomes invalidated (i.e. has to be recomputed), 
-  - they resolve a majority of calls from a local cache.
+    they resolve a majority of calls via the local cache.
   - Moreover, such clients behave like other Fusion functions,
     so if you client-side code declares `GetUserName(id) => server.GetUser(id).Name`
     function, `GetUserName(id)` result will be invalidated once `GetUser(id)`
