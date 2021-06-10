@@ -70,7 +70,7 @@ best real-world analogy of how it works:
 - So next time you call `📝("salad")`, it will produce a new
   🥗<sub>v2</sub> = `📝("salad")` + 🥬<sub>v1</sub>🥦<sub>v1</sub>🍅<sub>v2</sub>
 
-We know it's hard to believe this is true &ndash; that's why there are
+We know it's hard to believe the DREAM is true. That's why there are
 many visual proofs in the remaining part of this document.
 But if you'll find anything concerning in Fusion's source code 
 or [samples], please feel free to grill us with questions on [Discord]!
