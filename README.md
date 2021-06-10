@@ -19,18 +19,18 @@ in a few words:
   when you call `GetUser(id)` multiple times, its actual computation
   happens just once for every `id` assuming there is enough RAM to cache every result.
 - **[Reactive](https://en.wikipedia.org/wiki/Reactive_programming)** 
-  part of your Fusion code reacts changes by triggering *cascading invalidations*.
+  part of your Fusion code reacts to changes by triggering *cascading invalidation*.
   Invalidation is simply a call to `GetUser(id)` performed inside
   a special `using (Computed.Invalidate()) { ... }` block, which:
   - Marks cached `GetUser(id)` result as *inconsistent with the ground truth*,
     so it will be recomputed on the next *actual* `GetUser(id)` call.
-  - Recursively invalidates every other call result that "depends" on `GetUser(id)`,
+  - *Recursively* invalidates every other call result that "depends" on `GetUser(id)`,
     so e.g. if you have `GetUserName(id) => GetUser(id).Name`, its result
     (for the same `id`) will be invalidated automatically once you invalidate
     `GetUser(id)`.
-  - The last part implies Fusion captures and tracks the inter-dependencies
-    between the results of such calls. This happens transparently as well;
-    Fusion ensures this graph is always consistent.
+  - The last part indicates that Fusion captures and tracks the inter-dependencies
+    between the results of such calls, which happens transparently for you.
+    Fusion ensures the dependency graph is always consistent.
 - All of this happens in **[real-time](https://en.wikipedia.org/wiki/Real-time_computing)**;
   moreover, local invalidations are synchronous, so typically they complete in microseconds.
 - **[Distributed](https://en.wikipedia.org/wiki/Distributed_computing)** 
