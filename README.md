@@ -10,7 +10,7 @@
 [![Downloads](https://img.shields.io/nuget/dt/Stl)](https://www.nuget.org/packages?q=Owner%3Aservicetitan+Tags%3Astl_fusion)
 
 Fusion is a .NET library that implements **DREAM** &ndash;
-**D**istributed **Rea**l-time **Rea**ctive **M**emoization.
+**D**istributed **Rea**ctive **M**emoization.
 The acronym was invented by us and our [Discord] users to capture what Fusion does 
 in a few words:
 - **[Memoization](https://en.wikipedia.org/wiki/Memoization)** is a technique used
@@ -29,17 +29,24 @@ in a few words:
   - The last part implies Fusion captures and tracks the inter-dependencies
     between the results of such calls. And it really does this  &ndash; automatically 
     and transparently for you.
-- All of this happens in **[real-time](https://en.wikipedia.org/wiki/Real-time_computing)**;
-  moreover, local invalidations are synchronous, so typically they complete in microseconds.
 - **[Distributed](https://en.wikipedia.org/wiki/Distributed_computing)** 
   part indicates that Fusion can generate *invalidation-aware remote clients* 
   for any of such functions. They act almost like "normal" RPC clients, but:
-  - Since they know when a result of any call becomes invalidated (i.e. has to be recomputed), 
-    they resolve a majority of calls via the local cache.
+  - Since they know when a result of any call becomes invalidated 
+    (i.e. has to be recomputed), they resolve a majority of calls 
+    via local cache.
   - Moreover, such clients behave like other Fusion functions,
     so if you client-side code declares `GetUserName(id) => server.GetUser(id).Name`
     function, `GetUserName(id)` result will be invalidated once `GetUser(id)`
     gets invalidated on the server side! 
+  - As you might guess, the pub/sub, delivery, and processing of invalidation messages 
+    happen automatically and transparently for you when you use such clients.
+  - Fusion's invalidation-aware RPC protocol is actually an extension to 
+    regular Web API, which kicks in only when a client submits a 
+    special header, but otherwise the endpoint acts as a regular one.
+    So any of such APIs is callable even without Fusion! Try to 
+    [open this page in one window](https://fusion-samples.servicetitan.com/consistency) in and call `​/api​/Sum​/Accumulate` and `/api/Sum/GetAccumulator` 
+    [on this Swagger page in another window](https://fusion-samples.servicetitan.com/swagger).
 
 Surprisingly, DREAM solves a set of well-known problems:
 
