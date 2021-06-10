@@ -61,7 +61,7 @@ Surprisingly, Fusion nails a set of well-known problems with its DREAM hammer:
 | 💰 Single codebase for Blazor WebAssembly, Server, and hybrid | No good alternatives |
 
 [Lot traceability](https://en.wikipedia.org/wiki/Traceability) is probably the 
-best real-world analogy of how it works:
+best real-world analogy of how this approach works:
 - For every "product" 🥗 ([computed value]), Fusion keeps track of
   its "recipe" 📝 (function and its arguments), but more importantly, 
   all of its "ingredients" 🥬🥦🍅, i.e. intermediate or "basic" products
