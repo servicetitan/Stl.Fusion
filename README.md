@@ -26,9 +26,9 @@ in a few words:
     so it will be recomputed on the next actual `GetUser(id)` call.
   - Automatically invalidates every other call result that *depends on* `GetUser(id)` -
     e.g. it could be `GetUserName(id) => GetUser(id).Name` call result for the same `id`.
-  - The last part indicates that Fusion captures and tracks the inter-dependencies
-    between the results of such calls, which happens transparently for you.
-    Fusion ensures the dependency graph is always consistent.
+  - The last part implies Fusion captures and tracks the inter-dependencies
+    between the results of such calls, and it really does this automatically 
+    and transparently for you.
 - All of this happens in **[real-time](https://en.wikipedia.org/wiki/Real-time_computing)**;
   moreover, local invalidations are synchronous, so typically they complete in microseconds.
 - **[Distributed](https://en.wikipedia.org/wiki/Distributed_computing)** 
