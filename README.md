@@ -9,17 +9,55 @@
 ![Commit Activity](https://img.shields.io/github/commit-activity/m/servicetitan/Stl.Fusion)
 [![Downloads](https://img.shields.io/nuget/dt/Stl)](https://www.nuget.org/packages?q=Owner%3Aservicetitan+Tags%3Astl_fusion)
 
-Fusion is a .NET library that implements a novel real-time distributed state sync abstraction.
-**Contrary to MobX and Recoil, it's designed to track and sync changes in arbitrary large state** -
-in fact, the state it tracks typically covers every piece of data Fusion application has, 
-and "lives" on your servers, microservices, service meshes, and even on the clients!
-Obviously, there is no way to fit such a large state in RAM, so Fusion:
-- Spawns the *observed part* of the state on-demand
-- Ensures the *dependency graph* of this part of the state *stays in memory*
-- *Destroys* every part of the dependency graph that isn't "used" by one of "observed" components.
+Fusion is a .NET library that implements a **DREAM** &ndash;
+**D**istributed **Rea**l-time **Rea**ctive **M**emoization.
+The acronym was invented by us and our [Discord] users to capture what Fusion does 
+in just a few words:
+- **[Memoization](https://en.wikipedia.org/wiki/Memoization)** is a technique used
+  to speed up function calls by caching the output for a given input. Fusion
+  provides a *transparent memoization* for any function you like, so
+  when you call `GetUser(id)` multiple times, actual `GetUser(id)` computation
+  happens just once per every `id`, assuming there is enough RAM to cache every result.
+- **[Reactive](https://en.wikipedia.org/wiki/Reactive_programming)** 
+  part of your Fusion code reacts changes by triggering *cascading invalidations*.
+  Invalidation is simply a call to `GetUser(id)` performed inside
+  a special `using (Computed.Invalidate()) { ... }` block, which:
+  - Marks cached `GetUser(id)` result as *inconsistent with the ground truth*,
+    so it will be recomputed on the next *actual* `GetUser(id)` call.
+  - Recursively invalidates every other call result that "depends" on `GetUser(id)`,
+    so e.g. if you have `GetUserName(id) => GetUser(id).Name`, its result
+    (for the same `id`) will be invalidated automatically once you invalidate
+    `GetUser(id)`.
+  - The last part implies Fusion captures and tracks the inter-dependencies
+    between the results of such calls. This happens transparently as well;
+    Fusion ensures this graph is always consistent.
+- All of this happens in **[real-time](https://en.wikipedia.org/wiki/Real-time_computing)**;
+  moreover, local invalidations are synchronous, so typically they complete in microseconds.
+- **[Distributed](https://en.wikipedia.org/wiki/Distributed_computing)** 
+  part means that Fusion allows you to create 
+  *invalidation-aware remote clients* for functions like `GetUser`. 
+  They act like "normal" RPC clients, but:
+  - Since they know when a result of any call gets inconsistent, they
+    resolve a majority of calls via local cache.
+  - Moreover, such clients behave like other Fusion functions,
+    so if you client-side code declares `GetUserName(id) => server.GetUser(id).Name`
+    function, `GetUserName(id)` result will be invalidated once `GetUser(id)`
+    gets invalidated on the server side! 
+
+Surprisingly, DREAM solves a set of well-known problems:
+
+| Problem | So you don't need... |
+|-|-|
+| 📱 Client-side state management | Fluxor, Redux, MobX, Recoil, ... |
+| 🚀 Real-time updates | SignalR, WebSockets, gRPC streaming, ... |
+| 📇 In-memory cache | Redis, memcached, ... |
+| 🤹 Real-time cache invalidation | No good solutions - <br/>it's an [infamously hard problem](https://martinfowler.com/bliki/TwoHardThings.html) |
+| 📪 Automatic & transparent pub/sub | A fair amount of code |
+| 🤬 Network chattiness | A fair amount of code |
+| 🛸 Blazor WebAssembly and <br/>&nbsp;✈ Blazor Server support | No good alternatives |
 
 [Lot traceability](https://en.wikipedia.org/wiki/Traceability) is probably the 
-best real-world analogy of what Fusion does:
+best real-world analogy of how it works:
 - For every "product" 🥗 ([computed value]), Fusion keeps track of
   its "recipe" 📝 (function and its arguments), but more importantly, 
   all of its "ingredients" 🥬🥦🍅, i.e. intermediate or "basic" products
@@ -34,25 +72,6 @@ best real-world analogy of what Fusion does:
   directly or indirectly as "contaminated" as well, including 🥗<sub>v1</sub>
 - So next time you call `📝("salad")`, it will produce a new
   🥗<sub>v2</sub> = `📝("salad")` + 🥬<sub>v1</sub>🥦<sub>v1</sub>🍅<sub>v2</sub>
-
-Fusion's key innovation is that 
-**it does all of this automatically and transparently for you,**
-so code you write is almost identical to the code you'd write without it.
-Not only it captures dependencies automatically, but also 
-"spawns" and "forgets" them, and all of this is happening
-behind the scenes.
-
-Surprisingly, this approach helps to solve a number of well-known problems:
-
-| Problem | So you don't need... |
-|-|-|
-| 📱 Client-side state management | Fluxor, Redux, MobX, Recoil, ... |
-| 🚀 Real-time updates | SignalR, WebSockets, gRPC streaming, ... |
-| 📇 In-memory cache | Redis, memcached, ... |
-| 🤹 Real-time cache invalidation | No good solutions - <br/>it's an [infamously hard problem](https://martinfowler.com/bliki/TwoHardThings.html) |
-| 📪 Automatic & transparent pub/sub | A fair amount of code |
-| 🤬 Network chattiness | A fair amount of code |
-| 🛸 Blazor WebAssembly and <br/>&nbsp;✈ Blazor Server support | No good alternatives |
 
 We know it's hard to believe this is true &ndash; that's why there are
 many visual proofs in the remaining part of this document.
@@ -163,8 +182,12 @@ Yes. Fusion does something similar to what any [MMORPG] game engine does:
 even though the complete game state is huge, it's still possible to 
 run the game in real time for 1M+ players, because every player observes 
 a tiny fraction of a complete game state, and thus all you need is to ensure
-this part of the state fits in RAM + you have enough computing power 
-to process state changes for every player.
+*the observed part* of the state fits in RAM.
+
+And that's exactly what Fusion does:
+- It spawns the observed part of the state on-demand (i.e. when you call a [Compute Service] method)
+- Ensures the dependency graph of this part of the state stays in memory
+- Destroys every part of the dependency graph that isn't "used" by one of "observed" components.
 
 Check out 
 ["Scaling Fusion Services" part of the Tutorial](https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/Part08.md)
