@@ -30,7 +30,7 @@ in a few words:
     between the results of such calls. And it really does this  &ndash; automatically 
     and transparently for you.
 - **[Distributed](https://en.wikipedia.org/wiki/Distributed_computing)** 
-  part indicates that Fusion can generate *invalidation-aware remote clients* 
+  part indicates that Fusion can create *invalidation-aware remote clients* 
   for any of such functions. They act almost like "normal" RPC clients, but:
   - Since they know when a result of any call becomes invalidated 
     (i.e. has to be recomputed), they resolve a majority of calls 
