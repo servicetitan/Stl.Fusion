@@ -51,7 +51,7 @@ Surprisingly, DREAM solves a set of well-known problems:
 | 🤹 Real-time cache invalidation | No good solutions - <br/>it's an [infamously hard problem](https://martinfowler.com/bliki/TwoHardThings.html) |
 | 📪 Automatic & transparent pub/sub | A fair amount of code |
 | 🤬 Network chattiness | A fair amount of code |
-| 🛸 Blazor WebAssembly and <br/>&nbsp;✈ Blazor Server support | No good alternatives |
+| 💰 Single codebase for Blazor WebAssembly, Server, and hybrid | No good alternatives |
 
 [Lot traceability](https://en.wikipedia.org/wiki/Traceability) is probably the 
 best real-world analogy of how it works:
