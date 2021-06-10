@@ -10,7 +10,7 @@
 [![Downloads](https://img.shields.io/nuget/dt/Stl)](https://www.nuget.org/packages?q=Owner%3Aservicetitan+Tags%3Astl_fusion)
 
 Fusion is a .NET library that implements **DREAM** &ndash;
-**D**istributed **Rea**ctive **M**emoization.
+**D**istributed **REA**ctive **M**emoization.
 The acronym was invented by us and our [Discord] users to capture what Fusion does 
 in a few words:
 - **[Memoization](https://en.wikipedia.org/wiki/Memoization)** is a technique used
