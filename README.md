@@ -32,15 +32,15 @@ in a few words:
 - **[Distributed](https://en.wikipedia.org/wiki/Distributed_computing)** 
   part indicates that Fusion can create *invalidation-aware remote clients* 
   for any of such functions. They act almost like "normal" RPC clients, but:
-  - Since they know when a result of any call becomes invalidated 
-    (i.e. has to be recomputed), they resolve a majority of calls 
-    via local cache.
+  - Since they know when a cached call result gets invalidated on the server side,
+    they perform RPC only when there is no cached result or they know
+    for certain it is invalidated.
+    The pub/sub, delivery, and processing of invalidation messages 
+    happen automatically and transparently for you.
   - Moreover, such clients behave like other Fusion functions,
     so if you client-side code declares `GetUserName(id) => server.GetUser(id).Name`
     function, `GetUserName(id)` result will be invalidated once `GetUser(id)`
     gets invalidated on the server side! 
-  - As you might guess, the pub/sub, delivery, and processing of invalidation messages 
-    happen automatically and transparently for you when you use such clients.
   - Fusion's invalidation-aware RPC protocol is actually an extension to 
     regular Web API, which kicks in only when a client submits a 
     special header, but otherwise the endpoint acts as a regular one.
