@@ -48,7 +48,7 @@ in a few words:
     [open this page in one window](https://fusion-samples.servicetitan.com/consistency) in and call `​/api​/Sum​/Accumulate` and `/api/Sum/GetAccumulator` 
     [on this Swagger page in another window](https://fusion-samples.servicetitan.com/swagger).
 
-Surprisingly, DREAM solves a set of well-known problems:
+Surprisingly, Fusion nails a set of well-known problems with its DREAM hammer:
 
 | Problem | So you don't need... |
 |-|-|
