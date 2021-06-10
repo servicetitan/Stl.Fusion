@@ -16,8 +16,8 @@ in a few words:
 - **[Memoization](https://en.wikipedia.org/wiki/Memoization)** is a technique used
   to speed up function calls by caching the output for a given input. Fusion
   provides a *transparent memoization* for any function you like, so
-  when you call `GetUser(id)` multiple times, actual `GetUser(id)` computation
-  happens just once per every `id`, assuming there is enough RAM to cache every result.
+  when you call `GetUser(id)` multiple times, its actual computation
+  happens just once for every `id` assuming there is enough RAM to cache every result.
 - **[Reactive](https://en.wikipedia.org/wiki/Reactive_programming)** 
   part of your Fusion code reacts changes by triggering *cascading invalidations*.
   Invalidation is simply a call to `GetUser(id)` performed inside
