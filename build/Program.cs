@@ -147,7 +147,7 @@ namespace Build
                     .Select(PathString.New)
                     .ToArray();
                 foreach (var nupkgPath in nupkgPaths) {
-                    await Cli.Wrap(dotnetExePath).WithArguments(new[] {
+                    await Cli.Wrap(dotnetExePath).WithArguments(new string[] {
                             "nuget",
                             "push",
                             nupkgPath,
