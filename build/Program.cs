@@ -91,35 +91,50 @@ namespace Build
             });
 
             Target("restore-tools", async () => {
-                await Cli.Wrap(dotnetExePath).WithArguments($"tool restore --ignore-failed-sources")
+                await Cli.Wrap(dotnetExePath).WithArguments(new[] {"tool", "restore", "--ignore-failed-sources"})
                     .ToConsole()
-                    .ExecuteAsync(cancellationToken).Task.ConfigureAwait(false);
+                    .ExecuteAsync(cancellationToken).ConfigureAwait(false);
             });
 
             Target("restore", async () => {
-                await Cli.Wrap(dotnetExePath).WithArguments($"msbuild" +
-                        " -noLogo " +
-                        "-t:Restore " +
-                        "-p:RestoreForce=true " +
-                        "-p:RestoreIgnoreFailedSources=True " +
+                await Cli.Wrap(dotnetExePath).WithArguments(new[] {
+                        "msbuild",
+                        "-noLogo",
+                        "-t:Restore",
+                        "-p:RestoreForce=true",
+                        "-p:RestoreIgnoreFailedSources=True",
                         publicReleaseProperty
-                    ).ToConsole()
-                    .ExecuteAsync(cancellationToken).Task.ConfigureAwait(false);
+                    }).ToConsole()
+                    .ExecuteAsync(cancellationToken).ConfigureAwait(false);
             });
 
             Target("build", async () => {
-                await Cli.Wrap(dotnetExePath).WithArguments($"build -noLogo {Option("-c", configuration)} {Option("-f", framework)} --no-restore {publicReleaseProperty}")
+                await Cli.Wrap(dotnetExePath).WithArguments(args => args
+                        .Add("build")
+                        .Add("-noLogo")
+                        .AddOption("-c", configuration)
+                        .AddOption("-f", framework)
+                        .Add("--no-restore")
+                        .Add(publicReleaseProperty)
+                    )
                     .ToConsole()
-                    .ExecuteAsync(cancellationToken).Task.ConfigureAwait(false);
+                    .ExecuteAsync(cancellationToken).ConfigureAwait(false);
             });
 
             // Technically it should depend on "build" target, but such a setup fails
             // due to https://github.com/dotnet/orleans/issues/6073 ,
             // that's why we make "pack" to run "build" too here
             Target("pack", DependsOn("clean", "restore"), async () => {
-                await Cli.Wrap(dotnetExePath).WithArguments($"pack -noLogo {Option("-c", configuration)} {Option("-f", framework)} --no-restore {publicReleaseProperty}")
+                await Cli.Wrap(dotnetExePath).WithArguments(args => args
+                        .Add("pack")
+                        .Add("-noLogo")
+                        .AddOption("-c", configuration)
+                        .AddOption("-f", framework)
+                        .Add("--no-restore")
+                        .Add(publicReleaseProperty)
+                    )
                     .ToConsole()
-                    .ExecuteAsync(cancellationToken).Task.ConfigureAwait(false);
+                    .ExecuteAsync(cancellationToken).ConfigureAwait(false);
             });
 
             Target("publish", DependsOn("clean-nupkg", "pack"), async () => {
@@ -132,32 +147,39 @@ namespace Build
                     .Select(PathString.New)
                     .ToArray();
                 foreach (var nupkgPath in nupkgPaths) {
-                    await Cli.Wrap(dotnetExePath).WithArguments($"nuget push \"{nupkgPath}\" " +
-                            $"--force-english-output " +
-                            $"--timeout 60 " +
-                            $"--api-key \"{nugetOrgApiKey}\" " +
-                            $"--source \"{feed}\" " +
-                            $"--skip-duplicate")
+                    await Cli.Wrap(dotnetExePath).WithArguments(new[] {
+                            "nuget",
+                            "push",
+                            nupkgPath,
+                            "--force-english-output",
+                            "--timeout", "60",
+                            "--api-key", nugetOrgApiKey,
+                            "--source", feed,
+                            "--skip-duplicate"
+                        })
                         .ToConsole()
                         .ExecuteAsync(cancellationToken)
-                        .Task.ConfigureAwait(false);
+                        .ConfigureAwait(false);
                 }
             });
 
             Target("coverage", DependsOn("build"), async () => {
                 CreateDir(testOutputPath);
                 var cmd = await Cli.Wrap(dotnetExePath)
-                    .WithArguments($"test " +
-                        "--nologo " +
-                        "--no-restore " +
-                        "--blame " +
-                        $"--collect:\"XPlat Code Coverage\" --results-directory {testOutputPath} " +
-                        $"{Option("-c", configuration)} " +
-                        $"{Option("-f", framework)} " +
-                        "-- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=json,cobertura"
+                    .WithArguments(args => args
+                        .Add("test")
+                        .Add("--nologo")
+                        .Add("--no-restore")
+                        .Add("--blame")
+                        .Add("--collect:\"XPlat Code Coverage\"")
+                        .Add("--results-directory").Add(testOutputPath)
+                        .AddOption("-c", configuration)
+                        .AddOption("-f", framework)
+                        .Add("--")
+                        .Add("DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=json,cobertura")
                     ).ToConsole()
                     .ExecuteBufferedAsync(cancellationToken)
-                    .Task.ConfigureAwait(false);
+                    .ConfigureAwait(false);
 
                 MoveCoverageOutputFiles(testOutputPath);
 
@@ -301,13 +323,6 @@ namespace Build
                     throw;
                 return false;
             }
-        }
-
-        private static string Option(string name, string value)
-        {
-            if (string.IsNullOrEmpty(value))
-                return "";
-            return $"{name} {value}";
         }
     }
 }
