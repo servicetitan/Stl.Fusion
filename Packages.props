@@ -9,7 +9,7 @@
     <EntityFrameworkCoreVersion>5.0.7</EntityFrameworkCoreVersion>
     <AspNetCoreVersion>5.0.7</AspNetCoreVersion>
     <AspNetCoreVersion3>3.*</AspNetCoreVersion3>
-    <BlazorVersion>5.0.6</BlazorVersion>
+    <BlazorVersion>5.0.7</BlazorVersion>
     <BlazoriseVersion>0.9.*</BlazoriseVersion>
     <SystemNetHttpJsonVersion>5.0.3</SystemNetHttpJsonVersion>
     <StlFusionVersion>1.1.*</StlFusionVersion>
