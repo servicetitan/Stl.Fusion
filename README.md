@@ -82,7 +82,7 @@ best real-world analogy of how this approach works:
 Lot traceability allows to identify every product that uses certain ingredient,
 and consequently, even every buyer of a product that has certain ingredient. 
 So if you want every consumer to have the most up-to-date version of every product 
-it bought &ndash; the most up-to-date 🚗, 🤳, or 👠 (a DREAM of this century, 
+they bought &ndash; the most up-to-date 🚗, 🤳, or 👠 (a DREAM of this century, 
 right? 🤑) &ndash; lot traceability makes this possible.
 And assuming every purchase order triggers the whole build chain and uses
 the most recent ingredients, merely notifying the consumers they can buy 
