@@ -80,15 +80,15 @@ best real-world analogy of how this approach works:
   🥗<sub>v2</sub> = `📝salad("weird_mix")` + (🥬<sub>v1</sub> 🥦<sub>v1</sub> 🍅<sub>v2</sub>)
 
 Lot traceability allows to identify every product that uses certain ingredient,
-and consequently, even every consumer of a product that has certain ingredient. 
+and consequently, even every buyer of a product that has certain ingredient. 
 So if you want every consumer to have the most up-to-date version of every product 
-it bought &ndash; the most up-to-date 🚗, 🤳, or 👠 (that's the
-real origin of DREAM acronym 🤑) &ndash; lot traceability allows to
-identify every consumer of a product impacted by a change in any ingredient.
+it bought &ndash; the most up-to-date 🚗, 🤳, or 👠 (a DREAM of this century, 
+right? 🤑) &ndash; lot traceability makes this possible.
 And assuming every purchase order triggers the whole build chain and uses
-the most recent ingredients, merely notifying the customers they can buy 
-a newer version of a product is enough to let them use the most recent version 
-of every product most of the time.
+the most recent ingredients, merely notifying the consumers they can buy 
+a newer version of a product is enough. It's up to them to decide when to update -
+they can do this immediately or postpone this till some better moment, but
+the important piece is: they know they are using the obsolete product now.
 
 We know all of this sounds weird. That's why there are lots of
 visual proofs in the remaining part of this document.
