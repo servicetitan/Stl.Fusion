@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Cors.Infrastructure;
-using Stl.Fusion.Client;
+using Stl.Fusion.Bridge;
 
 namespace Stl.Fusion.Server
 {

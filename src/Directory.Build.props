@@ -6,6 +6,8 @@
     <OutputPath>$(SolutionDir)artifacts\bin\$(MSBuildProjectName)</OutputPath>
     <PublishConfiguration>Release</PublishConfiguration>
     <IsPackable>true</IsPackable>
+    <!-- Signing -->
+    <DefineConstants Condition="'$(PUBLIC_BUILD)' != ''">$(DefineConstants);SIGN_ASSEMBLIES</DefineConstants>
     <!-- Include the PDB in the built .nupkg -->
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
     <!-- Nerdbank.GitVersioning props -->

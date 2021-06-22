@@ -1,4 +1,4 @@
-namespace Stl.Fusion.Client
+namespace Stl.Fusion.Bridge
 {
     public static class FusionHeaders
     {

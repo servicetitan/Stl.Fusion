@@ -2,7 +2,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Bridge;
-using Stl.Fusion.Client;
 
 namespace Stl.Fusion.Server
 {

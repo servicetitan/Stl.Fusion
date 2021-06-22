@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using Stl.Fusion.Bridge;
-using Stl.Fusion.Client;
 using Stl.Fusion.Server.Internal;
 
 namespace Stl.Fusion.Server

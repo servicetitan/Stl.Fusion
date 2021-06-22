@@ -1,7 +1,6 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Pluralize.NET;
 using Stl.Fusion.Extensions.Internal;
 
 namespace Stl.Fusion.Extensions
@@ -12,7 +11,6 @@ namespace Stl.Fusion.Extensions
             Action<IServiceProvider, FusionTime.Options>? optionsBuilder = null)
         {
             var services = fusion.Services;
-            services.TryAddSingleton<IPluralize>(new Pluralizer());
             services.TryAddSingleton(c => {
                 var options = new FusionTime.Options();
                 optionsBuilder?.Invoke(c, options);

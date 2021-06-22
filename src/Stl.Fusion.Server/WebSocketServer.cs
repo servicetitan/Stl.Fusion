@@ -6,7 +6,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Channels;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Messages;
-using Stl.Fusion.Client;
 using Stl.Net;
 using Stl.Serialization;
 
@@ -16,11 +15,9 @@ namespace Stl.Fusion.Server
     {
         public class Options
         {
-            private static readonly WebSocketChannelProvider.Options DefaultClientOptions = new();
-
-            public string RequestPath { get; set; } = DefaultClientOptions.RequestPath;
-            public string PublisherIdQueryParameterName { get; set; } = DefaultClientOptions.PublisherIdQueryParameterName;
-            public string ClientIdQueryParameterName { get; set; } = DefaultClientOptions.ClientIdQueryParameterName;
+            public string RequestPath { get; set; } = "/fusion/ws";
+            public string PublisherIdQueryParameterName { get; set; } = "publisherId";
+            public string ClientIdQueryParameterName { get; set; } = "clientId";
             public Func<IUtf16Serializer<BridgeMessage>> SerializerFactory { get; set; } = DefaultSerializerFactory;
 
             public static IUtf16Serializer<BridgeMessage> DefaultSerializerFactory()

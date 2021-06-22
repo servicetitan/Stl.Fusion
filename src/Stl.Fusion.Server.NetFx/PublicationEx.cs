@@ -6,7 +6,6 @@ using System.Web.Http.Controllers;
 using System.Web.Http.Dependencies;
 using Newtonsoft.Json;
 using Stl.Fusion.Bridge;
-using Stl.Fusion.Client;
 using Stl.Fusion.Server.Internal;
 
 namespace Stl.Fusion.Server

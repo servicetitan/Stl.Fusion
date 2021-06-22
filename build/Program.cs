@@ -222,6 +222,7 @@ namespace Build
             Environment.SetEnvironmentVariable("POWERSHELL_TELEMETRY_OPTOUT", "1");
             Environment.SetEnvironmentVariable("POWERSHELL_UPDATECHECK_OPTOUT", "1");
             Environment.SetEnvironmentVariable("DOTNET_CLI_UI_LANGUAGE", "en");
+            Environment.SetEnvironmentVariable("PUBLIC_BUILD", "1");
         }
 
         static void MoveCoverageOutputFiles(PathString testOutputPath)

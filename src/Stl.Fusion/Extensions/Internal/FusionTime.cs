@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using Pluralize.NET;
 using Stl.Time;
 
 namespace Stl.Fusion.Extensions.Internal
@@ -11,23 +10,19 @@ namespace Stl.Fusion.Extensions.Internal
         {
             public TimeSpan DefaultUpdatePeriod { get; set; } = TimeSpan.FromSeconds(1);
             public TimeSpan MaxInvalidationDelay { get; set; } = TimeSpan.FromMinutes(10);
-            public IPluralize? Pluralize { get; set; }
             public IMomentClock? Clock { get; set; }
         }
 
         protected TimeSpan DefaultUpdatePeriod { get; set; }
         protected TimeSpan MaxInvalidationDelay { get; set; }
-        protected IPluralize Pluralize { get; set; }
         protected IMomentClock Clock { get; set; }
 
         public FusionTime(Options? options = null,
-            IPluralize? pluralize = null,
             IMomentClock? momentClock = null)
         {
             options ??= new Options();
             DefaultUpdatePeriod = options.DefaultUpdatePeriod;
             MaxInvalidationDelay = options.MaxInvalidationDelay;
-            Pluralize = options.Pluralize ?? pluralize ?? new Pluralizer();
             Clock = options.Clock ?? momentClock ?? SystemClock.Instance;
         }
 
@@ -55,8 +50,8 @@ namespace Stl.Fusion.Extensions.Internal
             if (unitCount == 0 && unit == TimeSpan.FromSeconds(1))
                 result = $"just now";
             else {
-                var pluralizedUnitName = Pluralize.Format(unitName, unitCount);
-                result = $"{unitCount} {pluralizedUnitName} ago";
+                unitName = MaybePluralize(unitName, unitCount);
+                result = $"{unitCount} {unitName} ago";
             }
 
             // Invalidate the result when it's supposed to change
@@ -65,7 +60,12 @@ namespace Stl.Fusion.Extensions.Internal
             return Task.FromResult(result);
         }
 
-        private static (TimeSpan Unit, string UnitName) GetMomentsAgoUnit(TimeSpan delta)
+        // Protected methods
+
+        protected virtual string MaybePluralize(string word, int count)
+            => count == 1 ? word : word + "s"; // Override this in your own descendant :)
+
+        protected virtual (TimeSpan Unit, string SingularUnitName) GetMomentsAgoUnit(TimeSpan delta)
         {
             if (delta.TotalSeconds < 60)
                 return (TimeSpan.FromSeconds(1), "second");
@@ -78,7 +78,7 @@ namespace Stl.Fusion.Extensions.Internal
             return (TimeSpan.FromDays(7), "week");
         }
 
-        private TimeSpan TrimInvalidationDelay(TimeSpan delay)
+        protected virtual TimeSpan TrimInvalidationDelay(TimeSpan delay)
             => TimeSpanEx.Min(delay, MaxInvalidationDelay);
     }
 }

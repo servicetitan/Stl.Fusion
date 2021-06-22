@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using System.Web.Http.Controllers;
 using System.Web.Http.Filters;
 using Stl.Fusion.Bridge;
-using Stl.Fusion.Client;
 
 namespace Stl.Fusion.Server
 {
