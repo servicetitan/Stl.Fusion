@@ -58,7 +58,8 @@ So what DREAM means?
     regular Web API, which kicks in only when a client submits a 
     special header, but otherwise the endpoint acts as a regular one.
     So any of such APIs is callable even without Fusion! Try to 
-    [open this page in one window](https://fusion-samples.servicetitan.com/consistency) in and call `​/api​/Sum​/Accumulate` and `/api/Sum/GetAccumulator` 
+    [open this page in one window](https://fusion-samples.servicetitan.com/consistency) in 
+    and call `​/api​/Sum​/Accumulate` and `/api/Sum/GetAccumulator` 
     [on this Swagger page in another window](https://fusion-samples.servicetitan.com/swagger).
 
 [Lot traceability](https://en.wikipedia.org/wiki/Traceability) is probably the 
@@ -67,19 +68,30 @@ best real-world analogy of how this approach works:
   its "recipe" 📝 (function and its arguments), but more importantly, 
   all of its "ingredients" 🥬🥦🍅, i.e. intermediate or "basic" products
   used to produce it.<br/>
-  E.g. 🥗<sub>v1</sub> = `📝("salad")` + 🥬<sub>v1</sub>🥦<sub>v1</sub>🍅<sub>v1</sub>
+  E.g. 🥗<sub>v1</sub> = `📝salad("weird_mix")` + (🥬<sub>v1</sub> 🥦<sub>v1</sub> 🍅<sub>v1</sub>)
 - While all the "ingredients" used to produce 🥗<sub>v1</sub> are "valid", Fusion 
-  ensures that calling a recipe `📝("salad")`
+  ensures that calling a recipe `📝salad("weird_mix")`
   resolves to the same cached product instance 🥗<sub>v1</sub>
 - But once one of such ingredients 🍅<sub>v1</sub> gets "contaminated" 
   ("invalidated" in Fusion terms, i.e. marked as changed),
   Fusion immediately marks everything that uses this product
   directly or indirectly as "contaminated" as well, including 🥗<sub>v1</sub>
-- So next time you call `📝("salad")`, it will produce a new
-  🥗<sub>v2</sub> = `📝("salad")` + 🥬<sub>v1</sub>🥦<sub>v1</sub>🍅<sub>v2</sub>
+- So next time you call `📝salad("weird_mix")`, it will produce a new
+  🥗<sub>v2</sub> = `📝salad("weird_mix")` + (🥬<sub>v1</sub> 🥦<sub>v1</sub> 🍅<sub>v2</sub>)
 
-We know it's hard to believe the DREAM is true. That's why there are
-many visual proofs in the remaining part of this document.
+Lot traceability allows to identify every product that uses certain ingredient,
+and consequently, even every consumer of a product that has certain ingredient. 
+So if you want every consumer to have the most up-to-date version of every product 
+it bought &ndash; the most up-to-date 🚗, 🤳, or 👠 (that's the
+real origin of DREAM acronym 🤑) &ndash; lot traceability allows to
+identify every consumer of a product impacted by a change in any ingredient.
+And assuming every purchase order triggers the whole build chain and uses
+the most recent ingredients, merely notifying the customers they can buy 
+a newer version of a product is enough to let them use the most recent version 
+of every product most of the time.
+
+We know all of this sounds weird. That's why there are lots of
+visual proofs in the remaining part of this document.
 But if you'll find anything concerning in Fusion's source code 
 or [samples], please feel free to grill us with questions on [Discord]!
 
