@@ -86,9 +86,9 @@ they bought &ndash; the most up-to-date 🚗, 🤳, or 👠 (a DREAM of this cen
 right? 🤑) &ndash; lot traceability makes this possible.
 And assuming every purchase order triggers the whole build chain and uses
 the most recent ingredients, merely notifying the consumers they can buy 
-a newer version of a product is enough. It's up to them to decide when to update -
-they can do this immediately or postpone this till some better moment, but
-the important piece is: they know they are using the obsolete product now.
+a newer version of 📱 is enough. It's up to them to decide when to update -
+they can do this immediately or postpone this till the next 💰, but
+the important piece is: they know the product they have is obsolete now.
 
 We know all of this sounds weird. That's why there are lots of
 visual proofs in the remaining part of this document.
