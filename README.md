@@ -10,9 +10,22 @@
 [![Downloads](https://img.shields.io/nuget/dt/Stl)](https://www.nuget.org/packages?q=Owner%3Aservicetitan+Tags%3Astl_fusion)
 
 Fusion is a .NET library that implements **DREAM** &ndash;
-**D**istributed **REA**ctive **M**emoization.
-The acronym was invented by us and our [Discord] users to capture what Fusion does 
-in a few words:
+**D**istributed **REA**ctive **M**emoization. 
+The acronym was invented by us and our [Discord] users, so don't be
+surprised you don't know it. What's important is that it
+**gracefully** solves a number of well-known problems:
+
+| Problem | So you don't need... |
+|-|-|
+| 📱 Client-side state management | Fluxor, Redux, MobX, Recoil, ... |
+| 🚀 Real-time updates | SignalR, WebSockets, gRPC streaming, ... |
+| 📇 In-memory cache | Redis, memcached, ... |
+| 🤹 Real-time cache invalidation | No good solutions - <br/>it's an [infamously hard problem](https://martinfowler.com/bliki/TwoHardThings.html) |
+| 📪 Automatic & transparent pub/sub | A fair amount of code |
+| 🤬 Network chattiness | A fair amount of code |
+| 💰 Single codebase for Blazor WebAssembly, Server, and Hybrid | No good alternatives |
+
+So what DREAM means?
 - **[Memoization](https://en.wikipedia.org/wiki/Memoization)** is a technique used
   to speed up function calls by caching the output for a given input. Fusion
   provides a *transparent memoization* for any function you like, so
@@ -47,18 +60,6 @@ in a few words:
     So any of such APIs is callable even without Fusion! Try to 
     [open this page in one window](https://fusion-samples.servicetitan.com/consistency) in and call `​/api​/Sum​/Accumulate` and `/api/Sum/GetAccumulator` 
     [on this Swagger page in another window](https://fusion-samples.servicetitan.com/swagger).
-
-Surprisingly, Fusion nails a set of well-known problems with its DREAM hammer:
-
-| Problem | So you don't need... |
-|-|-|
-| 📱 Client-side state management | Fluxor, Redux, MobX, Recoil, ... |
-| 🚀 Real-time updates | SignalR, WebSockets, gRPC streaming, ... |
-| 📇 In-memory cache | Redis, memcached, ... |
-| 🤹 Real-time cache invalidation | No good solutions - <br/>it's an [infamously hard problem](https://martinfowler.com/bliki/TwoHardThings.html) |
-| 📪 Automatic & transparent pub/sub | A fair amount of code |
-| 🤬 Network chattiness | A fair amount of code |
-| 💰 Single codebase for Blazor WebAssembly, Server, and Hybrid | No good alternatives |
 
 [Lot traceability](https://en.wikipedia.org/wiki/Traceability) is probably the 
 best real-world analogy of how this approach works:
