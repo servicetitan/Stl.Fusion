@@ -9,11 +9,9 @@
 ![Commit Activity](https://img.shields.io/github/commit-activity/m/servicetitan/Stl.Fusion)
 [![Downloads](https://img.shields.io/nuget/dt/Stl)](https://www.nuget.org/packages?q=Owner%3Aservicetitan+Tags%3Astl_fusion)
 
-Fusion is a .NET library that implements **DREAM** &ndash;
-**D**istributed **REA**ctive **M**emoization. 
-The acronym was invented by us and our [Discord] users, so don't be
-surprised you don't know it. What's important is that it
-**gracefully** solves a number of well-known problems:
+Fusion is a .NET library that implements 
+**D**istributed **REA**ctive **M**emoization (**DREAM**) &ndash; 
+a novel technique that gracefully solves a number of well-known problems:
 
 | Problem | So you don't need... |
 |-|-|
@@ -32,63 +30,60 @@ So what DREAM means?
   when you call `GetUser(id)` multiple times, its actual computation
   happens just once for every `id` assuming there is enough RAM to cache every result.
 - **[Reactive](https://en.wikipedia.org/wiki/Reactive_programming)** 
-  part of your Fusion code reacts to changes by triggering *cascading invalidation*.
-  Invalidation is simply a call to `GetUser(id)` performed inside
-  a special `using (Computed.Invalidate()) { ... }` block, which:
-  - Marks the cached `GetUser(id)` result as *inconsistent with the ground truth*,
-    so it will be recomputed on the next actual `GetUser(id)` call.
-  - Automatically invalidates every other call result that *depends on* `GetUser(id)` -
-    e.g. it could be `GetUserName(id) => GetUser(id).Name` call result for the same `id`.
-  - The last part implies Fusion captures and tracks the inter-dependencies
-    between the results of such calls. And it really does this  &ndash; automatically 
-    and transparently for you.
-- **[Distributed](https://en.wikipedia.org/wiki/Distributed_computing)** 
-  indicates that Fusion can create *invalidation-aware remote clients* 
-  for any of such functions. They act almost like "normal" RPC clients, but:
-  - Since they know when a cached call result gets invalidated on the server side,
-    they perform RPC only when there is no cached result or they know
-    for certain it is invalidated.
+  part of your Fusion-based code reacts to changes by triggering 
+  *invalidations*. Invalidation is a call to memoizing function inside
+  special `using (Computed.Invalidate()) { ... }` block, which
+  marks the cached result for this specific call (e.g. `GetUser(3)`) 
+  and every other result that depends on it (e.g. `GetUserPic(3)`, which
+  calls `GetUser(3)`) directly or indirectly as *inconsistent with the ground truth*
+  to ensure they'll be recomputed on the next *actual* (non-invalidating) call.
+  This also means Fusion tracks dependencies between the computation results;
+  the dependency graph is updated in the runtime, and this process is 
+  completely transparent for the developers.
+- These computation graphs can be 
+  **[Distributed](https://en.wikipedia.org/wiki/Distributed_computing)**:
+  Fusion allows you to create *invalidation-aware caching RPC clients* 
+  for any of such functions. They:
+  - Eliminate network chattiness by re-using locally cached results while
+    it's known they aren't invalidated on the server side yet.
     The pub/sub, delivery, and processing of invalidation messages 
-    happen automatically and transparently for you.
-  - Moreover, such clients behave like other Fusion functions,
-    so if you client-side code declares `GetUserName(id) => server.GetUser(id).Name`
-    function, `GetUserName(id)` result will be invalidated once `GetUser(id)`
-    gets invalidated on the server side! 
-  - Fusion's invalidation-aware RPC protocol is actually an extension to 
-    regular Web API, which kicks in only when a client submits a 
-    special header, but otherwise the endpoint acts as a regular one.
-    So any of such APIs is callable even without Fusion! Try to 
-    [open this page in one window](https://fusion-samples.servicetitan.com/consistency) in 
-    and call `​/api​/Sum​/Accumulate` and `/api/Sum/GetAccumulator` 
-    [on this Swagger page in another window](https://fusion-samples.servicetitan.com/swagger).
-
-[Lot traceability](https://en.wikipedia.org/wiki/Traceability) is probably the 
-best real-world analogy of how this approach works:
-- For every "product" 🥗 ([computed value]), Fusion keeps track of
-  its "recipe" 📝 (function and its arguments), but more importantly, 
-  all of its "ingredients" 🥬🥦🍅, i.e. intermediate or "basic" products
-  used to produce it.<br/>
-  E.g. 🥗<sub>v1</sub> = `📝salad("weird_mix")` + (🥬<sub>v1</sub> 🥦<sub>v1</sub> 🍅<sub>v1</sub>)
-- While all the "ingredients" used to produce 🥗<sub>v1</sub> are "valid", Fusion 
-  ensures that calling a recipe `📝salad("weird_mix")`
-  resolves to the same cached product instance 🥗<sub>v1</sub>
-- But once one of such ingredients 🍅<sub>v1</sub> gets "contaminated" 
-  ("invalidated" in Fusion terms, i.e. marked as changed),
-  Fusion immediately marks everything that uses this product
-  directly or indirectly as "contaminated" as well, including 🥗<sub>v1</sub>
-- So next time you call `📝salad("weird_mix")`, it will produce a new
-  🥗<sub>v2</sub> = `📝salad("weird_mix")` + (🥬<sub>v1</sub> 🥦<sub>v1</sub> 🍅<sub>v2</sub>)
-
-Lot traceability allows to identify every product that uses certain ingredient,
-and consequently, even every buyer of a product that has certain ingredient. 
-So if you want every consumer to have the most up-to-date version of every product 
-they bought &ndash; the most up-to-date 🚗, 🤳, or 👠 (a DREAM of this century, 
-right? 🤑) &ndash; lot traceability makes this possible.
-And assuming every purchase order triggers the whole build chain and uses
-the most recent ingredients, merely notifying the consumers they can buy 
-a newer version of 📱 is enough. It's up to them to decide when to update -
-they can do this immediately or postpone this till the next 💰, but
-the important piece is: they are aware the product they have is obsolete now.
+    happens automatically and transparently for you.
+  - Moreover, such clients register their results in Fusion's dependency graph
+    like any other Fusion functions, so if you client-side code declares 
+    `GetUserProfileUI(id) => renderUserProfile(server.GetUser(id))` function, 
+    `GetUserName(id)` result will be invalidated once `GetUser(id)`
+    gets invalidated on the server side. That's what makes
+    pieces of UI to update on the client side in real-time.
+  
+> [Lot traceability](https://en.wikipedia.org/wiki/Traceability) is probably the 
+> best real-world analogy of how this approach works:
+> - For every "product" 🥗 ([computed value]), Fusion keeps track of
+>   its "recipe" 📝 (function and its arguments), but more importantly, 
+>   all of its "ingredients" 🥬🥦🍅, i.e. intermediate or "basic" products
+>   used to produce it.<br/>
+>   E.g. 🥗<sub>v1</sub> = `📝salad("weird_mix")` + 
+>   (🥬<sub>v1</sub> 🥦<sub>v1</sub> 🍅<sub>v1</sub>)
+> - While all the "ingredients" used to produce 🥗<sub>v1</sub> are "valid", Fusion 
+>   ensures that calling a recipe `📝salad("weird_mix")`
+>   resolves to the same cached product instance 🥗<sub>v1</sub>
+> - But once one of such ingredients 🍅<sub>v1</sub> gets "contaminated" 
+>   ("invalidated" in Fusion terms, i.e. marked as changed),
+>   Fusion immediately marks everything that uses this product
+>   directly or indirectly as "contaminated" as well, including 🥗<sub>v1</sub>
+> - So next time you call `📝salad("weird_mix")`, it will produce a new
+>   🥗<sub>v2</sub> = `📝salad("weird_mix")` + 
+>   (🥬<sub>v1</sub> 🥦<sub>v1</sub> 🍅<sub>v2</sub>)
+> 
+> Lot traceability allows to identify every product that uses certain ingredient,
+> and consequently, even every buyer of a product that has certain ingredient. 
+> So if you want every consumer to have the most up-to-date version of every product 
+> they bought &ndash; the most up-to-date 🚗, 🤳, or 👠 &ndash; 
+> lot traceability makes this possible.
+> And assuming every purchase order triggers the whole build chain and uses
+> the most recent ingredients, merely notifying the consumers they can buy 
+> a newer version of 📱 is enough. It's up to them to decide when to update -
+> they can do this immediately or postpone this till the next 💰, but
+> the important piece is: they are aware the product they have is obsolete now.
 
 We know all of this sounds weird. That's why there are lots of
 visual proofs in the remaining part of this document.
@@ -144,8 +139,7 @@ and the more complex logic you have, the larger performance gain is.
 
 ## How Fusion works?
 
-Single abstraction we've mentioned actually consists of 4 components 
-working together:
+There are 4 components:
 1. [Compute Services] are services exposing methods "backed" by Fusion's 
   version of "computed observables". When such methods run, they produce
   [Computed Values] (instances of `IComputed<T>`) under the hood, even
@@ -167,7 +161,7 @@ working together:
   States are quite similar to observables in Knockout or MobX, but
   designed to follow Fusion game rules. And yes, you mostly use them in UI and
   almost never - on the server-side.
-4. And finally, [`IComputed<T>`] &ndash; an observable [Computed Value]
+4. And finally, there is [`IComputed<T>`] &ndash; an observable [Computed Value]
   that's in some ways similar to the one you can find in Knockout, MobX, or Vue.js,
   but very different, if you look at its fundamental properties.
     
@@ -181,7 +175,8 @@ working together:
   [Pure Computed Observables](https://knockoutjs.com/documentation/computed-pure.html) 
   from Knockout, you understand the problem. [`IComputed<T>`] solves it even better &ndash;
   dependent-dependency relationships are explicit there, and the reference pointing
-  from dependency to dependent is [weak](https://en.wikipedia.org/wiki/Weak_reference), 
+  from dependency to dependent is 
+  [weak](https://en.wikipedia.org/wiki/Weak_reference), 
   so any dependent [Computed Value] is available for GC unless it's referenced by something 
   else (i.e. used).
 
@@ -415,7 +410,7 @@ is paramount there.
 Besides that, if your invalidation logic is correct, 
 **Fusion guarantees that your UI state is eventually consistent.** 
 
-Finally, you might think all of this works only in Blazor Server mode. 
+You might think all of this works only in Blazor Server mode. 
 But no, **all these UI components work in Blazor WebAssembly 
 mode as well, which is another unique feature Fusion provides.**
 Any [Compute Service] can be substituted with [Replica Service] on
@@ -423,6 +418,14 @@ the client, which not simply proxies the calls, but also completely
 kills the chattiness you'd expect from a regular client-side proxy.
 So if you need to support both modes, Fusion is currently the only 
 library solving this problem gracefully.
+
+[Replica Service]'s RPC protocol is actually an extension to 
+regular Web API, which kicks in only when a client submits a 
+special header, but otherwise the endpoint acts as a regular one.
+So any of such APIs is callable even without Fusion! Try to 
+[open this page in one window](https://fusion-samples.servicetitan.com/consistency) in 
+and call `​/api​/Sum​/Accumulate` and `/api/Sum/GetAccumulator` 
+[on this Swagger page in another window](https://fusion-samples.servicetitan.com/swagger).
 
 ## Next Steps
 
