@@ -16,7 +16,6 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" PrivateAssets="all" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
     <PackageReference Include="UAParser" />
-    <PackageReference Include="Ulid" />
   </ItemGroup>
 
   <ItemGroup>

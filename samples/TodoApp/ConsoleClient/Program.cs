@@ -44,7 +44,7 @@ IServiceProvider CreateServiceProvider()
             var clientBaseUri = isFusionClient ? baseUri : apiBaseUri;
             o.HttpClientActions.Add(client => client.BaseAddress = clientBaseUri);
         });
-    fusionClient.AddReplicaService<ITodoService, ITodoClient>();
+    fusionClient.AddReplicaService<ITodoService, ITodoClientDef>();
     fusion.AddAuthentication().AddRestEaseClient();
 
     // Default update delay is 0.1s

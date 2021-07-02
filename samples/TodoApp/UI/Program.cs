@@ -1,5 +1,4 @@
 using System;
-using System.Reflection;
 using System.Threading.Tasks;
 using Blazorise;
 using Blazorise.Bootstrap;
@@ -29,9 +28,7 @@ namespace Templates.TodoApp.UI
 
             var builder = WebAssemblyHostBuilder.CreateDefault(args);
             ConfigureServices(builder.Services, builder);
-            builder.RootComponents.Add<App>("#app");
             var host = builder.Build();
-
             host.Services.HostedServices().Start();
             return host.RunAsync();
         }
@@ -48,6 +45,8 @@ namespace Templates.TodoApp.UI
             var fusion = services.AddFusion();
             var fusionClient = fusion.AddRestEaseClient((_, o) => {
                 o.BaseUri = baseUri;
+                o.IsLoggingEnabled = true;
+                o.IsMessageLoggingEnabled = false;
             });
             fusionClient.ConfigureHttpClientFactory((c, name, o) => {
                 var isFusionClient = (name ?? "").StartsWith("Stl.Fusion");
@@ -69,21 +68,22 @@ namespace Templates.TodoApp.UI
             // fusion.AddComputeService<ITodoService, TodoService>();
 
             // Option 4: Remote TodoService, SandboxedKeyValueStore, and DbKeyValueStore
-            fusionClient.AddReplicaService<ITodoService, ITodoClient>();
+            fusionClient.AddReplicaService<ITodoService, ITodoClientDef>();
 
             ConfigureSharedServices(services);
         }
 
         public static void ConfigureSharedServices(IServiceCollection services)
         {
+            // Blazorise
             services.AddBlazorise().AddBootstrapProviders().AddFontAwesomeIcons();
+
+            // Other UI-related services
+            var fusion = services.AddFusion();
+            fusion.AddFusionTime();
 
             // Default update delay is 0.5s
             services.AddTransient<IUpdateDelayer>(_ => new UpdateDelayer(0.5));
-
-            // Extensions
-            var fusion = services.AddFusion();
-            fusion.AddFusionTime();
         }
     }
 }

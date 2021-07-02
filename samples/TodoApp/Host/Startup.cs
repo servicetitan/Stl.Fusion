@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -34,8 +35,8 @@ namespace Templates.TodoApp.Host
     {
         private IConfiguration Cfg { get; }
         private IWebHostEnvironment Env { get; }
-        private ILogger Log { get; set; } = NullLogger<Startup>.Instance;
         private HostSettings HostSettings { get; set; } = null!;
+        private ILogger Log { get; set; } = NullLogger<Startup>.Instance;
 
         public Startup(IConfiguration cfg, IWebHostEnvironment environment)
         {
@@ -108,6 +109,7 @@ namespace Templates.TodoApp.Host
             // Shared services
             Program.ConfigureSharedServices(services);
 
+            // ASP.NET Core authentication providers
             services.AddAuthentication(options => {
                 options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
             }).AddCookie(options => {
@@ -121,12 +123,6 @@ namespace Templates.TodoApp.Host
                 // That's for personal account authentication flow
                 options.AuthorizationEndpoint = "https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize";
                 options.TokenEndpoint = "https://login.microsoftonline.com/consumers/oauth2/v2.0/token";
-                options.CorrelationCookie.SameSite = SameSiteMode.Lax;
-            }).AddGoogle(options => {
-                options.ClientId = HostSettings.GoogleClientId;
-                options.ClientSecret = HostSettings.GoogleClientSecret;
-                options.Scope.Add("https://www.googleapis.com/auth/userinfo.profile");
-                options.Scope.Add("https://www.googleapis.com/auth/userinfo.email");
                 options.CorrelationCookie.SameSite = SameSiteMode.Lax;
             }).AddGitHub(options => {
                 options.ClientId = HostSettings.GitHubClientId;
