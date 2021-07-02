@@ -4,7 +4,7 @@ namespace Stl.Serialization
 {
     public class CustomSerialized<T> : Serialized<T>
     {
-        private Func<IUtf16Serializer<T>> SerializerFactory { get; set; }
+        private Func<IUtf16Serializer<T>> SerializerFactory { get; }
 
         public CustomSerialized(Func<IUtf16Serializer<T>> serializerFactory)
             => SerializerFactory = serializerFactory;

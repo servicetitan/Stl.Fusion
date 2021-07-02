@@ -9,7 +9,6 @@ namespace Stl.Serialization
         public IUtf16Reader<T> Reader => this;
         public IUtf16Writer<T> Writer => this;
 
-
         public UntypedToTypedUtf16Serializer(IUtf16Serializer serializer, Type serializedType)
         {
             Serializer = serializer;

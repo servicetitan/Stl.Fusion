@@ -17,6 +17,6 @@ namespace Stl.Serialization
         public JsonSerialized(string data) => Data = data;
 
         protected override IUtf16Serializer<T> CreateSerializer()
-            => new NewtonsoftJsonSerializer().ToTyped<T>(typeof(object));
+            => new NewtonsoftJsonSerializer().ToTyped<T>();
     }
 }
