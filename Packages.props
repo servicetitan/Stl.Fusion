@@ -7,7 +7,7 @@
   <PropertyGroup>
     <MicrosoftExtensionsVersion>5.0.0</MicrosoftExtensionsVersion>
     <EntityFrameworkCoreVersion>5.0.7</EntityFrameworkCoreVersion>
-    <AspNetCoreVersion>5.0.7</AspNetCoreVersion>
+    <AspNetCoreVersion>5.0.8</AspNetCoreVersion>
     <AspNetCoreVersion3>3.*</AspNetCoreVersion3>
     <BlazorVersion>5.0.7</BlazorVersion>
     <BlazoriseVersion>0.9.*</BlazoriseVersion>
