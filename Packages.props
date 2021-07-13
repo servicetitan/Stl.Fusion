@@ -50,7 +50,7 @@
     <PackageReference Update="Microsoft.Extensions.Caching.Abstractions" Version="$(MicrosoftExtensionsVersion)" />
     <PackageReference Update="Microsoft.Extensions.Configuration.Abstractions" Version="$(MicrosoftExtensionsVersion)" />
     <PackageReference Update="Microsoft.Extensions.Configuration" Version="$(MicrosoftExtensionsVersion)" />
-    <PackageReference Update="Microsoft.Extensions.DependencyInjection" Version="5.0.1" />
+    <PackageReference Update="Microsoft.Extensions.DependencyInjection" Version="5.0.2" />
     <PackageReference Update="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(MicrosoftExtensionsVersion)" />
     <PackageReference Update="Microsoft.Extensions.Http" Version="$(MicrosoftExtensionsVersion)" />
     <PackageReference Update="Microsoft.Extensions.Hosting.Abstractions" Version="$(MicrosoftExtensionsVersion)" />
