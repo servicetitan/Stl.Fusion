@@ -1,4 +1,4 @@
-namespace Stl.Fusion.Client
+namespace Stl.Fusion.Client.Internal
 {
     /// <summary>
     /// The common interface for all <see cref="ClientAccessor{TClient}"/>-s.

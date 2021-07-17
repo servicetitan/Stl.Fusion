@@ -9,6 +9,7 @@ using Stl.CommandR;
 using Stl.DependencyInjection;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Interception;
+using Stl.Fusion.Client.Internal;
 using Stl.Fusion.Client.RestEase.Internal;
 using Stl.Fusion.Interception;
 using Stl.Interception;
