@@ -6,7 +6,7 @@
 
   <PropertyGroup>
     <MicrosoftExtensionsVersion>5.0.0</MicrosoftExtensionsVersion>
-    <EntityFrameworkCoreVersion>5.0.7</EntityFrameworkCoreVersion>
+    <EntityFrameworkCoreVersion>5.0.8</EntityFrameworkCoreVersion>
     <AspNetCoreVersion>5.0.8</AspNetCoreVersion>
     <AspNetCoreVersion3>3.*</AspNetCoreVersion3>
     <BlazorVersion>5.0.8</BlazorVersion>
@@ -66,7 +66,7 @@
     <PackageReference Update="Microsoft.EntityFrameworkCore.Sqlite" Version="$(EntityFrameworkCoreVersion)" />
     <PackageReference Update="Microsoft.EntityFrameworkCore.SqlServer" Version="$(EntityFrameworkCoreVersion)" />
     <PackageReference Update="Npgsql" Version="$(EntityFrameworkCoreVersion)" />
-    <PackageReference Update="Npgsql.EntityFrameworkCore.PostgreSQL" Version="5.0.7.*" />
+    <PackageReference Update="Npgsql.EntityFrameworkCore.PostgreSQL" Version="$(EntityFrameworkCoreVersion)" />
     <PackageReference Update="Microsoft.Identity.Web" Version="1.14.*" />
     <PackageReference Update="MsgPack.Cli" Version="1.0.*" />
     <PackageReference Update="Newtonsoft.Json" Version="13.0.*" />
