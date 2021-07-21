@@ -1,15 +1,15 @@
 using System;
 
-namespace Stl.Serialization
+namespace Stl.Serialization.Internal
 {
-    public class UntypedToTypedUtf16Serializer<T> : IUtf16Serializer<T>, IUtf16Reader<T>, IUtf16Writer<T>
+    public class CastingUtf16Serializer<T> : IUtf16Serializer<T>, IUtf16Reader<T>, IUtf16Writer<T>
     {
         public IUtf16Serializer Serializer { get; }
         public Type SerializedType { get; }
         public IUtf16Reader<T> Reader => this;
         public IUtf16Writer<T> Writer => this;
 
-        public UntypedToTypedUtf16Serializer(IUtf16Serializer serializer, Type serializedType)
+        public CastingUtf16Serializer(IUtf16Serializer serializer, Type serializedType)
         {
             Serializer = serializer;
             SerializedType = serializedType;

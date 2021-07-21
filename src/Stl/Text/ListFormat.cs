@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
+using Cysharp.Text;
 using Stl.Collections;
 using Stl.Internal;
 

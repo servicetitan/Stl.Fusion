@@ -8,20 +8,20 @@ using Stl.Text;
 
 namespace Stl.Serialization
 {
-    public class SafeUtf16Serializer : Utf16SerializerBase
+    public class TypeWritingUtf16Serializer : Utf16SerializerBase
     {
         private readonly ISerializationBinder _serializationBinder;
         private readonly StringBuilder _stringBuilder;
 
-        public Func<Type, bool> Verifier { get; }
-        public IUtf16Serializer UnsafeSerializer { get; }
+        public IUtf16Serializer Serializer { get; }
+        public Func<Type, bool> TypeFilter { get; }
 
-        public SafeUtf16Serializer(IUtf16Serializer unsafeSerializer, Func<Type, bool> verifier)
+        public TypeWritingUtf16Serializer(IUtf16Serializer serializer, Func<Type, bool> typeFilter)
         {
-            UnsafeSerializer = unsafeSerializer;
-            Verifier = verifier;
-            var serializationBinder = (UnsafeSerializer as NewtonsoftJsonSerializer)?.Settings?.SerializationBinder;
-#if NET5
+            Serializer = serializer;
+            TypeFilter = typeFilter;
+            var serializationBinder = (Serializer as NewtonsoftJsonSerializer)?.Settings?.SerializationBinder;
+#if NET5_0
             serializationBinder ??= SerializationBinder.Instance;
 #else
             serializationBinder ??= CrossPlatformSerializationBinder.Instance;
@@ -42,13 +42,13 @@ namespace Stl.Serialization
 
             TypeNameHelpers.SplitAssemblyQualifiedName(p.Item, out var assemblyName, out var typeName);
             var actualType = _serializationBinder.BindToType(assemblyName, typeName);
-            if (!type.IsAssignableFrom(actualType))
+            if (!TypeFilter.Invoke(actualType))
                 throw Errors.UnsupportedTypeForJsonSerialization(actualType);
-            if (!Verifier.Invoke(actualType))
+            if (!type.IsAssignableFrom(actualType))
                 throw Errors.UnsupportedTypeForJsonSerialization(actualType);
 
             p.ParseNext();
-            return UnsafeSerializer.Reader.Read(p.Item, actualType);
+            return Serializer.Reader.Read(p.Item, actualType);
         }
 
         public override string Write(object? value, Type type)
@@ -62,10 +62,10 @@ namespace Stl.Serialization
             }
             else {
                 var actualType = value.GetType();
-                if (!Verifier.Invoke(actualType))
+                if (!TypeFilter.Invoke(actualType))
                     throw Errors.UnsupportedTypeForJsonSerialization(type);
                 var aqn = actualType.GetAssemblyQualifiedName(false, _serializationBinder);
-                var json = UnsafeSerializer.Writer.Write(value, type);
+                var json = Serializer.Writer.Write(value, type);
                 f.Append(aqn);
                 f.Append(json);
                 f.AppendEnd();
