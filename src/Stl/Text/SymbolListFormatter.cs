@@ -31,20 +31,19 @@ namespace Stl.Text
 
         public string ToString(SymbolList source)
         {
-            var formatter = ListFormat.CreateFormatter(StringBuilderEx.Acquire());
+            using var f = ListFormat.CreateFormatter();
             foreach (var segment in source.GetSegments())
-                formatter.Append(segment.Value);
-            formatter.AppendEnd();
-            return formatter.OutputBuilder.ToStringAndRelease();
+                f.Append(segment.Value);
+            f.AppendEnd();
+            return f.Output;
         }
 
         public SymbolList Parse(string source)
         {
-            var parser = ListFormat.CreateParser(source, StringBuilderEx.Acquire());
+            using var p = ListFormat.CreateParser(source);
             var list = (SymbolList?) null;
-            while (parser.TryParseNext())
-                list = new SymbolList(list, parser.Item);
-            parser.ItemBuilder.Release();
+            while (p.TryParseNext())
+                list = new SymbolList(list, p.Item);
             return list ?? SymbolList.Empty;
         }
     }

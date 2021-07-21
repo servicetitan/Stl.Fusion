@@ -1,9 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using Cysharp.Text;
-using Stl.Collections;
-using Stl.Internal;
 
 namespace Stl.Text
 {
@@ -25,215 +22,44 @@ namespace Stl.Text
             NoItems = noItems;
         }
 
-        public ListFormatter CreateFormatter(StringBuilder output, int itemIndex = 0)
-            => new(this, output, itemIndex);
+        public ListFormatter CreateFormatter(int itemIndex = 0)
+            => new(this, ZString.CreateStringBuilder(), true, itemIndex);
+        public ListFormatter CreateFormatter(in Utf16ValueStringBuilder output, int itemIndex = 0)
+            => new(this, output, false, itemIndex);
 
-#if NETSTANDARD2_0
-        public ListParser CreateParser(in string source, StringBuilder item, int itemIndex = 0)
+        public ListParser CreateParser(in string source, int itemIndex = 0)
+            => CreateParser(source.AsSpan(), itemIndex);
+        public ListParser CreateParser(in string source, in Utf16ValueStringBuilder item, int itemIndex = 0)
             => CreateParser(source.AsSpan(), item, itemIndex);
-#endif
 
-        public ListParser CreateParser(in ReadOnlySpan<char> source, StringBuilder item, int itemIndex = 0)
-            => new(this, source, item, itemIndex);
+        public ListParser CreateParser(in ReadOnlySpan<char> source, int itemIndex = 0)
+            => new(this, source, ZString.CreateStringBuilder(), true, itemIndex);
+        public ListParser CreateParser(in ReadOnlySpan<char> source, in Utf16ValueStringBuilder item, int itemIndex = 0)
+            => new(this, source, item, false, itemIndex);
 
         public string Format(params string[] source) => Format((IEnumerable<string>) source);
         public string Format(IEnumerable<string> source)
         {
-            var formatter = CreateFormatter(StringBuilderEx.Acquire());
-            try {
-                foreach (var item in source)
-                    formatter.Append(item);
-                formatter.AppendEnd();
-                formatter.AppendEnd();
-                return formatter.Output;
-            }
-            finally {
-                formatter.OutputBuilder.Release();
-            }
+            using var f = CreateFormatter();
+            foreach (var item in source)
+                f.Append(item);
+            f.AppendEnd();
+            f.AppendEnd();
+            return f.Output;
         }
 
         public List<string> Parse(in ReadOnlySpan<char> source)
         {
             var result = new List<string>();
-            var parser = CreateParser(source, StringBuilderEx.Acquire());
+            var p = CreateParser(source, ZString.CreateStringBuilder());
             try {
-                while (parser.TryParseNext())
-                    result.Add(parser.Item);
+                while (p.TryParseNext())
+                    result.Add(p.Item);
                 return result;
             }
             finally {
-                parser.ItemBuilder.Release();
+                p.ItemBuilder.Dispose();
             }
-        }
-    }
-
-    public ref struct ListFormatter
-    {
-        public ListFormat Format => new(Delimiter, Escape, NoItems);
-        public readonly char Delimiter;
-        public readonly char Escape;
-        public readonly string NoItems;
-        public readonly StringBuilder OutputBuilder;
-        public string Output => OutputBuilder.ToString();
-        public int ItemIndex;
-
-        internal ListFormatter(ListFormat format, StringBuilder outputBuilder, int itemIndex)
-        {
-            Delimiter = format.Delimiter;
-            Escape = format.Escape;
-            NoItems = format.NoItems;
-            OutputBuilder = outputBuilder;
-            ItemIndex = itemIndex;
-        }
-
-#if NETSTANDARD2_0
-
-        public void Append(string item)
-        {
-            if (ItemIndex++ != 0)
-                OutputBuilder.Append(Delimiter);
-            foreach (var c in item) {
-                if (c == Delimiter || c == Escape)
-                    OutputBuilder.Append(Escape);
-                OutputBuilder.Append(c);
-            }
-        }
-
-#endif
-
-        public void Append(in ReadOnlySpan<char> item)
-        {
-            if (ItemIndex++ != 0)
-                OutputBuilder.Append(Delimiter);
-            foreach (var c in item) {
-                if (c == Delimiter || c == Escape)
-                    OutputBuilder.Append(Escape);
-                OutputBuilder.Append(c);
-            }
-        }
-
-        public void AppendWithEscape(in ReadOnlySpan<char> item)
-        {
-            if (ItemIndex++ != 0)
-                OutputBuilder.Append(Delimiter);
-            var isFirst = true;
-            foreach (var c in item) {
-                if (isFirst || c == Delimiter || c == Escape)
-                    OutputBuilder.Append(Escape);
-                OutputBuilder.Append(c);
-                isFirst = false;
-            }
-        }
-
-        public void AppendEnd()
-        {
-            if (ItemIndex == 0) {
-                // Special case: an empty list marker
-                foreach (var c in NoItems) {
-                    OutputBuilder.Append(Escape);
-                    OutputBuilder.Append(c);
-                }
-            }
-        }
-
-        public void Append(IEnumerator<string> enumerator, bool appendEndOfList = true)
-        {
-            while (enumerator.MoveNext())
-                Append(enumerator.Current);
-            if (appendEndOfList)
-                AppendEnd();
-        }
-
-        public void Append(IEnumerable<string> sequence, bool appendEndOfList = true)
-        {
-            foreach (var item in sequence)
-                Append(item);
-            if (appendEndOfList)
-                AppendEnd();
-        }
-    }
-
-    public ref struct ListParser
-    {
-        public ListFormat Format => new(Delimiter, Escape, NoItems);
-        public readonly char Delimiter;
-        public readonly char Escape;
-        public readonly string NoItems;
-        public readonly StringBuilder ItemBuilder;
-        public ReadOnlySpan<char> Source;
-        public string Item => ItemBuilder.ToString();
-        public int ItemIndex;
-
-        internal ListParser(ListFormat format, in ReadOnlySpan<char> source, StringBuilder itemBuilder, int itemIndex)
-        {
-            Delimiter = format.Delimiter;
-            Escape = format.Escape;
-            NoItems = format.NoItems;
-            Source = source;
-            ItemBuilder = itemBuilder;
-            ItemIndex = itemIndex;
-        }
-
-        public bool TryParseNext(bool clearItemBuilder = true)
-        {
-            if (clearItemBuilder)
-                ItemBuilder.Clear();
-            ItemIndex++;
-            var startLength = ItemBuilder.Length;
-            for (var index = 0; index < Source.Length; index++) {
-                var c = Source[index];
-                if (c == Escape) {
-                    if (++index >= Source.Length) {
-                        ItemBuilder.Append(Escape);
-                        break;
-                    }
-                }
-                else if (c == Delimiter) {
-                    Source = Source[(index + 1)..];
-                    return true;
-                }
-                ItemBuilder.Append(Source[index]);
-            }
-
-            if (ItemIndex == 1
-                && (ItemBuilder.Length - startLength) == NoItems.Length
-                && Source.Length == (NoItems.Length << 1)) {
-                // Special case: possibly it's an empty list marker
-                var noItems = true;
-                for (var i = 1; i < Source.Length; i += 2) {
-                    if (NoItems[i >> 1] != Source[i]) {
-                        noItems = false;
-                        break;
-                    }
-                }
-                if (noItems) {
-                    Source = Source[..0];
-                    return false;
-                }
-            }
-
-            Source = Source[..0];
-            return ItemIndex == 1 || ItemBuilder.Length > 0;
-        }
-
-        public void ParseNext(bool clearItemBuilder = true)
-        {
-            if (!TryParseNext(clearItemBuilder))
-                throw Errors.InvalidListFormat();
-        }
-
-        public List<string> ParseAll()
-        {
-            var result = new List<string>();
-            while (TryParseNext())
-                result.Add(Item);
-            return result;
-        }
-
-        public void ParseAll(MemoryBuffer<string> buffer)
-        {
-            while (TryParseNext())
-                buffer.Add(Item);
         }
     }
 }

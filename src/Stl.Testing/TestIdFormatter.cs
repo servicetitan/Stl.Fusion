@@ -1,7 +1,6 @@
 using System;
-using System.Text;
+using Cysharp.Text;
 using Stl.IO;
-using Stl.Text;
 
 namespace Stl.Testing
 {
@@ -27,14 +26,24 @@ namespace Stl.Testing
             int? maxLength = null,
             bool? alwaysHash = null)
         {
-            var sb = StringBuilderEx.Acquire();
-            if (withMachineId)
-                sb.Append(MachineId).Append("_");
-            if (withTestId)
-                sb.Append(TestId).Append("_");
-            if (withRunId)
-                sb.Append(RunId).Append("_");
-            var r = sb.ToStringAndRelease(0, Math.Max(0, sb.Length - 1));
+            using var sb = ZString.CreateStringBuilder(true);
+            if (withMachineId) {
+                sb.Append(MachineId);
+                sb.Append("_");
+            }
+            if (withTestId) {
+                sb.Append(TestId);
+                sb.Append("_");
+            }
+            if (withRunId) {
+                sb.Append(RunId);
+                sb.Append("_");
+            }
+#if NETFRAMEWORK
+            var r = sb.ToString()[.. Math.Max(0, sb.Length - 1)];
+#else
+            var r = new string(sb.AsSpan()[.. Math.Max(0, sb.Length - 1)]);
+#endif
             r = PathEx.GetHashedName(r, null, maxLength ?? MaxLength, alwaysHash ?? AlwaysHash);
             r = PostProcess(r);
             return r;

@@ -1,5 +1,4 @@
 using System.Linq;
-using System.Text;
 using FluentAssertions;
 using Stl.Testing;
 using Stl.Text;
@@ -24,13 +23,13 @@ namespace Stl.Tests.Text
         {
             expectedFormat ??= format;
 
-            var parser = ListFormat.Default.CreateParser(format, new StringBuilder());
-            var list = parser.ParseAll().ToList();
+            using var p = ListFormat.Default.CreateParser(format);
+            var list = p.ParseAll().ToList();
             list.Count.Should().Be(length);
 
-            var formatter = ListFormat.Default.CreateFormatter(new StringBuilder());
-            formatter.Append(list);
-            formatter.Output.Should().Be(expectedFormat);
+            using var f = ListFormat.Default.CreateFormatter();
+            f.Append(list);
+            f.Output.Should().Be(expectedFormat);
         }
     }
 }

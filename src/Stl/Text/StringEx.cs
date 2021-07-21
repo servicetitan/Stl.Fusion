@@ -9,11 +9,11 @@ namespace Stl.Text
         public static string ManyToOne(IEnumerable<string> values) => ManyToOne(values, ListFormat.Default);
         public static string ManyToOne(IEnumerable<string> values, ListFormat listFormat)
         {
-            var formatter = listFormat.CreateFormatter(StringBuilderEx.Acquire());
+            using var f = listFormat.CreateFormatter();
             foreach (var value in values)
-                formatter.Append(value);
-            formatter.AppendEnd();
-            return formatter.OutputBuilder.ToStringAndRelease();
+                f.Append(value);
+            f.AppendEnd();
+            return f.OutputBuilder.ToString();
         }
 
         public static string[] OneToMany(string value) => OneToMany(value, ListFormat.Default);
@@ -21,17 +21,15 @@ namespace Stl.Text
         {
             if (value == "")
                 return Array.Empty<string>();
-            var parser = listFormat.CreateParser(value, StringBuilderEx.Acquire());
+            using var p = listFormat.CreateParser(value);
             var buffer = MemoryBuffer<string>.Lease(true);
             try {
-                while (parser.TryParseNext()) {
-                    buffer.Add(parser.Item);
-                }
+                while (p.TryParseNext())
+                    buffer.Add(p.Item);
                 return buffer.ToArray();
             }
             finally {
                 buffer.Release();
-                parser.ItemBuilder.Release();
             }
         }
 

@@ -1,5 +1,4 @@
 using System;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Fusion.Interception;
@@ -46,8 +45,7 @@ namespace Stl.Fusion.Swapping
 
         protected virtual string SerializeKey(ComputeMethodInput input, LTag version)
         {
-            var sb = StringBuilderEx.Acquire(256);
-            var f = ListFormat.Default.CreateFormatter(sb);
+            using var f = ListFormat.Default.CreateFormatter();
             var method = input.Method;
             f.Append(method.InvocationTargetHandler.ToStringFunc.Invoke(input.Target));
             f.Append(version.ToString());
@@ -57,7 +55,7 @@ namespace Stl.Fusion.Swapping
                 f.Append(handler.ToStringFunc.Invoke(arguments[i]));
             }
             f.AppendEnd();
-            return sb.ToStringAndRelease();
+            return f.Output;
         }
     }
 }

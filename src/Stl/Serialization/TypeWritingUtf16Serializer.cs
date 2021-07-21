@@ -1,5 +1,4 @@
 using System;
-using System.Text;
 using Newtonsoft.Json.Serialization;
 using Stl.Internal;
 using Stl.Reflection;
@@ -11,7 +10,6 @@ namespace Stl.Serialization
     public class TypeWritingUtf16Serializer : Utf16SerializerBase
     {
         private readonly ISerializationBinder _serializationBinder;
-        private readonly StringBuilder _stringBuilder;
 
         public IUtf16Serializer Serializer { get; }
         public Func<Type, bool> TypeFilter { get; }
@@ -27,13 +25,11 @@ namespace Stl.Serialization
             serializationBinder ??= CrossPlatformSerializationBinder.Instance;
 #endif
             _serializationBinder = serializationBinder;
-            _stringBuilder = new StringBuilder(256);
         }
 
         public override object? Read(string data, Type type)
         {
-            _stringBuilder.Clear();
-            var p = ListFormat.Default.CreateParser(data, _stringBuilder);
+            using var p = ListFormat.Default.CreateParser(data);
 
             p.ParseNext();
             if (string.IsNullOrEmpty(p.Item))
@@ -53,8 +49,7 @@ namespace Stl.Serialization
 
         public override string Write(object? value, Type type)
         {
-            _stringBuilder.Clear();
-            var f = ListFormat.Default.CreateFormatter(_stringBuilder);
+            using var f = ListFormat.Default.CreateFormatter();
             if (value == null) {
                 // Special case: null serialization
                 f.Append("");
@@ -70,7 +65,7 @@ namespace Stl.Serialization
                 f.Append(json);
                 f.AppendEnd();
             }
-            return _stringBuilder.ToString();
+            return f.Output;
         }
     }
 }

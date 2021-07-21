@@ -1,6 +1,5 @@
 using System;
 using Newtonsoft.Json;
-using Stl.OS;
 using Stl.Text;
 
 namespace Stl.Fusion.Authentication
@@ -56,33 +55,23 @@ namespace Stl.Fusion.Authentication
 
         private static string FormatId(string schema, string schemaBoundId)
         {
-            var formatter = IdFormat.CreateFormatter(StringBuilderEx.Acquire());
-            try {
-                if (schema != DefaultSchema)
-                    formatter.Append(schema);
-                formatter.Append(schemaBoundId);
-                formatter.AppendEnd();
-                return formatter.Output;
-            }
-            finally {
-                formatter.OutputBuilder.Release();
-            }
+            using var f = IdFormat.CreateFormatter();
+            if (schema != DefaultSchema)
+                f.Append(schema);
+            f.Append(schemaBoundId);
+            f.AppendEnd();
+            return f.Output;
         }
 
         private static (string Schema, string SchemaBoundId) ParseId(string id)
         {
             if (string.IsNullOrEmpty(id))
                 return ("", "");
-            var parser = IdFormat.CreateParser(id, StringBuilderEx.Acquire());
-            try {
-                if (!parser.TryParseNext())
-                    return (DefaultSchema, id);
-                var firstItem = parser.Item;
-                return parser.TryParseNext() ? (firstItem, parser.Item) : (DefaultSchema, firstItem);
-            }
-            finally {
-                parser.ItemBuilder.Release();
-            }
+            using var p = IdFormat.CreateParser(id);
+            if (!p.TryParseNext())
+                return (DefaultSchema, id);
+            var firstItem = p.Item;
+            return p.TryParseNext() ? (firstItem, p.Item) : (DefaultSchema, firstItem);
         }
     }
 }

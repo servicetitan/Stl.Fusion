@@ -3,6 +3,8 @@ using System.Text;
 
 namespace Stl.Text
 {
+    // StringBuilder caching.
+    // Prefer ZString.CreateStringBuilder instead, if possible.
     // See https://referencesource.microsoft.com/#mscorlib/system/text/stringbuildercache.cs,a6dbe82674916ac0
     public static class StringBuilderEx
     {
