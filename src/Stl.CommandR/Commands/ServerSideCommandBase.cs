@@ -16,7 +16,7 @@ namespace Stl.CommandR.Commands
 
     public abstract record ServerSideCommandBase<TResult> : IServerSideCommand<TResult>
     {
-        [JsonIgnore]
+        [JsonIgnore, Newtonsoft.Json.JsonIgnore]
         [field: NonSerialized]
         public bool IsServerSide { get; set; }
 

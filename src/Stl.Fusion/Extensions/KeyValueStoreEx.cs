@@ -23,7 +23,7 @@ namespace Stl.Fusion.Extensions
         public static Task Set<T>(this IKeyValueStore keyValueStore,
             string key, T value, Moment? expiresAt, CancellationToken cancellationToken = default)
         {
-            var sValue = JsonSerialized.New(value).Data;
+            var sValue = NewtonsoftJsonSerialized.New(value).Data;
             return keyValueStore.Set(key, sValue, expiresAt, cancellationToken);
         }
 
@@ -72,7 +72,7 @@ namespace Stl.Fusion.Extensions
             string key, CancellationToken cancellationToken = default)
         {
             var sValue = await keyValueStore.TryGet(key, cancellationToken).ConfigureAwait(false);
-            return sValue == null ? default(Option<T>) : JsonSerialized.New<T>(sValue).Value;
+            return sValue == null ? default(Option<T>) : NewtonsoftJsonSerialized.New<T>(sValue).Value;
         }
 
         // Get

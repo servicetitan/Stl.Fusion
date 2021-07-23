@@ -1,5 +1,5 @@
 using System;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 using Stl.Text;
 
 namespace Stl.Fusion.Bridge
@@ -10,7 +10,7 @@ namespace Stl.Fusion.Bridge
         public Symbol PublisherId { get; }
         public Symbol PublicationId { get; }
 
-        [JsonConstructor]
+        [JsonConstructor, Newtonsoft.Json.JsonConstructor]
         public PublicationRef(Symbol publisherId, Symbol publicationId)
         {
             PublisherId = publisherId;

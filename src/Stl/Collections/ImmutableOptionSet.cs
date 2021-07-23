@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using Newtonsoft.Json;
+using System.Linq;
+using System.Text.Json.Serialization;
 using Stl.Reflection;
+using Stl.Serialization;
 using Stl.Text;
 
 namespace Stl.Collections
@@ -13,14 +15,26 @@ namespace Stl.Collections
 
         private readonly ImmutableDictionary<Symbol, object>? _items;
 
-        public ImmutableDictionary<Symbol, object> Items => _items ?? ImmutableDictionary<Symbol, object>.Empty;
+        [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        public ImmutableDictionary<Symbol, object> Items
+            => _items ?? ImmutableDictionary<Symbol, object>.Empty;
+
+        [JsonPropertyName(nameof(Items)),  Newtonsoft.Json.JsonProperty(nameof(Items))]
+        public Dictionary<string, NewtonsoftJsonSerialized<object>> JsonCompatibleItems
+            => Items.ToDictionary(
+                p => p.Key.Value,
+                p => NewtonsoftJsonSerialized.New(p.Value));
 
         public object? this[Symbol key] => Items.TryGetValue(key, out var v) ? v : null;
         public object? this[Type type] => this[type.ToSymbol()];
 
-        [JsonConstructor]
         public ImmutableOptionSet(ImmutableDictionary<Symbol, object>? items)
             => _items = items ?? ImmutableDictionary<Symbol, object>.Empty;
+
+        [JsonConstructor, Newtonsoft.Json.JsonConstructor]
+        public ImmutableOptionSet(Dictionary<string, NewtonsoftJsonSerialized<object>>? jsonCompatibleItems)
+            : this(jsonCompatibleItems?.ToImmutableDictionary(p => (Symbol) p.Key, p => p.Value.Value))
+        { }
 
         public object? GetService(Type serviceType)
             => this[serviceType];

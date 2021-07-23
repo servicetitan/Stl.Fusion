@@ -1,13 +1,14 @@
 using System;
 using System.ComponentModel;
 using System.IO;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 using Stl.Internal;
 
 namespace Stl.IO
 {
     [Serializable]
     [JsonConverter(typeof(PathStringJsonConverter))]
+    [Newtonsoft.Json.JsonConverter(typeof(PathStringNewtonsoftJsonConverter))]
     [TypeConverter(typeof(PathStringTypeConverter))]
     public readonly struct PathString : IEquatable<PathString>, IComparable<PathString>
     {
@@ -18,7 +19,6 @@ namespace Stl.IO
         public string Value => _value ?? "";
         public int Length => Value.Length;
 
-        [JsonConstructor]
         public PathString(string? value) => _value = value;
         public static PathString New(string? value) => new PathString(value ?? "");
 
@@ -67,7 +67,7 @@ namespace Stl.IO
 #else
         public PathString RelativeTo(PathString relativeTo) => PathCompatEx.GetRelativePath(relativeTo, Value);
 #endif
-        
+
         public PathString Normalize() => Value
             .Replace('\\', Path.DirectorySeparatorChar)
             .Replace('/', Path.DirectorySeparatorChar);

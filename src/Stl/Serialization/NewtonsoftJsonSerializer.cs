@@ -21,6 +21,7 @@ namespace Stl.Serialization
                 TypeNameHandling = TypeNameHandling.Auto,
                 NullValueHandling = NullValueHandling.Ignore,
                 ReferenceLoopHandling = ReferenceLoopHandling.Serialize,
+                DateParseHandling = DateParseHandling.None, // This makes sure all strings are deserialized as-is
                 ContractResolver = new DefaultContractResolver(),
             };
 

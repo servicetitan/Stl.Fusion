@@ -1,8 +1,8 @@
 using System;
 using System.Reactive.PlatformServices;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using Stl.Async;
 using Stl.Internal;
 
@@ -12,7 +12,7 @@ namespace Stl.Time.Testing
     {
         private volatile TestClockSettings _settings;
 
-        [JsonIgnore] public TestClockSettings Settings {
+        public TestClockSettings Settings {
             get => _settings;
             set {
                 if (!value.IsUsable)
@@ -23,6 +23,7 @@ namespace Stl.Time.Testing
             }
         }
 
+        [JsonConstructor, Newtonsoft.Json.JsonConstructor]
         public TestClock(TestClockSettings settings)
             => _settings = settings;
         public TestClock(TimeSpan localOffset = default, TimeSpan realOffset = default, double multiplier = 1)

@@ -1,24 +1,15 @@
 using System;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Stl.Internal
 {
-    public class LTagJsonConverter : JsonConverter
+    public class LTagJsonConverter : JsonConverter<LTag>
     {
-        public override bool CanConvert(Type objectType)
-            => objectType == typeof(LTag);
+        public override LTag Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            => LTag.Parse(reader.GetString());
 
-        public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
-        {
-            var moment = (LTag) value!;
-            writer.WriteValue(moment.ToString());
-        }
-
-        public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
-        {
-            var value = (string) reader.Value!;
-            // ReSharper disable once HeapView.BoxingAllocation
-            return LTag.Parse(value);
-        }
+        public override void Write(Utf8JsonWriter writer, LTag value, JsonSerializerOptions options)
+            => writer.WriteStringValue(value.ToString());
     }
 }

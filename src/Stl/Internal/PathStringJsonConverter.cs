@@ -1,25 +1,16 @@
 using System;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Stl.IO;
 
 namespace Stl.Internal
 {
-    public class PathStringJsonConverter : JsonConverter
+    public class PathStringJsonConverter : JsonConverter<PathString>
     {
-        public override bool CanConvert(Type objectType)
-            => objectType == typeof(PathString);
+        public override PathString Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            => new(reader.GetString());
 
-        public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
-        {
-            var typeRef = (PathString) value!;
-            writer.WriteValue(typeRef.Value);
-        }
-
-        public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
-        {
-            var value = (string) reader.Value!;
-            // ReSharper disable once HeapView.BoxingAllocation
-            return new PathString(value);
-        }
+        public override void Write(Utf8JsonWriter writer, PathString value, JsonSerializerOptions options)
+            => writer.WriteStringValue(value.Value);
     }
 }

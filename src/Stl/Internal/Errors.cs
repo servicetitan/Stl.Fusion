@@ -12,7 +12,17 @@ namespace Stl.Internal
         {
             var message = $"'{type}' must implement '{expectedType}'.";
             return string.IsNullOrEmpty(argumentName)
-                ? (Exception) new InvalidOperationException(message)
+                ? new InvalidOperationException(message)
+                : new ArgumentOutOfRangeException(argumentName, message);
+        }
+
+        public static Exception MustBeAssignableTo<TExpected>(Type type, string? argumentName = null)
+            => MustBeAssignableTo(type, typeof(TExpected), argumentName);
+        public static Exception MustBeAssignableTo(Type type, Type mustBeAssignableToType, string? argumentName = null)
+        {
+            var message = $"'{type}' must be assignable to '{mustBeAssignableToType}'.";
+            return string.IsNullOrEmpty(argumentName)
+                ? new InvalidOperationException(message)
                 : new ArgumentOutOfRangeException(argumentName, message);
         }
 

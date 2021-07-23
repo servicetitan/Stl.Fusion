@@ -1,25 +1,16 @@
 using System;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Stl.Text;
 
 namespace Stl.Internal
 {
-    public class SymbolListJsonConverter : JsonConverter
+    public class SymbolListJsonConverter : JsonConverter<SymbolList>
     {
-        public override bool CanConvert(Type objectType)
-            => objectType == typeof(SymbolList);
+        public override SymbolList? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            => SymbolList.Parse(reader.GetString()!);
 
-        public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
-        {
-            var typeRef = (SymbolList) value!;
-            writer.WriteValue(typeRef.FormattedValue);
-        }
-
-        public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
-        {
-            var value = (string) reader.Value!;
-            // ReSharper disable once HeapView.BoxingAllocation
-            return SymbolList.Parse(value);
-        }
+        public override void Write(Utf8JsonWriter writer, SymbolList value, JsonSerializerOptions options)
+            => writer.WriteStringValue(value.FormattedValue);
     }
 }

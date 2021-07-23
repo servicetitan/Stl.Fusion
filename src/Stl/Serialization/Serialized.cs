@@ -1,5 +1,5 @@
 using System;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Stl.Serialization
 {
@@ -8,7 +8,7 @@ namespace Stl.Serialization
         private Option<T> _valueOption;
         private Option<string> _dataOption;
 
-        [JsonIgnore]
+        [JsonIgnore, Newtonsoft.Json.JsonIgnore]
         public T Value {
             get => _valueOption.IsSome(out var v) ? v : Deserialize();
             set {
@@ -31,7 +31,7 @@ namespace Stl.Serialization
                 throw new InvalidOperationException($"{nameof(Value)} isn't set.");
             var serializedValue = !typeof(T).IsValueType && ReferenceEquals(value, null)
                 ? ""
-                : CreateSerializer().Writer.Write(value);
+                : GetSerializer().Writer.Write(value);
             _dataOption = serializedValue;
             return serializedValue;
         }
@@ -42,11 +42,11 @@ namespace Stl.Serialization
                 throw new InvalidOperationException($"{nameof(Data)} isn't set.");
             var value = string.IsNullOrEmpty(serializedValue)
                 ? default!
-                : CreateSerializer().Reader.Read(serializedValue);
+                : GetSerializer().Reader.Read(serializedValue);
             _valueOption = value;
             return value;
         }
 
-        protected abstract IUtf16Serializer<T> CreateSerializer();
+        protected abstract IUtf16Serializer<T> GetSerializer();
     }
 }

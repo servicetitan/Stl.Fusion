@@ -2,13 +2,14 @@ using System;
 using System.ComponentModel;
 using System.Globalization;
 using System.Runtime.CompilerServices;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 using Stl.Time.Internal;
 
 namespace Stl.Time
 {
     [Serializable]
     [JsonConverter(typeof(MomentJsonConverter))]
+    [Newtonsoft.Json.JsonConverter(typeof(MomentNewtonsoftJsonConverter))]
     [TypeConverter(typeof(MomentTypeConverter))]
     public readonly struct Moment : IEquatable<Moment>, IComparable<Moment>
     {
@@ -18,7 +19,7 @@ namespace Stl.Time
 
         // AKA Unix Time
         public long EpochOffsetTicks { get; }
-        public TimeSpan EpochOffset => new TimeSpan(EpochOffsetTicks);
+        public TimeSpan EpochOffset => new(EpochOffsetTicks);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Moment(long epochOffsetTicks)
@@ -37,25 +38,31 @@ namespace Stl.Time
         // (Try)Parse
 
         public static Moment Parse(string source)
-            => DateTime.Parse(source, CultureInfo.InvariantCulture);
+            => DateTime
+                .Parse(source, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind)
+                .DefaultKind(DateTimeKind.Utc);
 
 #if !NETSTANDARD2_0
         public static Moment Parse(ReadOnlySpan<char> source)
-            => DateTime.Parse(source, CultureInfo.InvariantCulture);
+            => DateTime
+                .Parse(source, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind)
+                .DefaultKind(DateTimeKind.Utc);
 #endif
 
         public static bool TryParse(string source, out Moment result)
         {
-            var success = DateTime.TryParse(source, CultureInfo.InvariantCulture, DateTimeStyles.None, out var r);
-            result = r;
+            var success = DateTime.TryParse(source,
+                CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var r);
+            result = r.DefaultKind(DateTimeKind.Utc);
             return success;
         }
 
 #if !NETSTANDARD2_0
         public static bool TryParse(ReadOnlySpan<char> source, out Moment result)
         {
-            var success = DateTime.TryParse(source, CultureInfo.InvariantCulture, DateTimeStyles.None, out var r);
-            result = r;
+            var success = DateTime.TryParse(source,
+                CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var r);
+            result = r.DefaultKind(DateTimeKind.Utc);
             return success;
         }
 #endif
@@ -99,7 +106,7 @@ namespace Stl.Time
             => new(Math.Max(min.EpochOffsetTicks, Math.Min(max.EpochOffsetTicks, EpochOffsetTicks)));
 
         public override string ToString()
-            => ToDateTimeClamped().ToString(CultureInfo.InvariantCulture);
+            => ToDateTimeClamped().ToString("o", CultureInfo.InvariantCulture);
         public string ToString(string format)
             => ToDateTimeClamped().ToString(format, CultureInfo.InvariantCulture);
         public string ToString(string format, CultureInfo cultureInfo)

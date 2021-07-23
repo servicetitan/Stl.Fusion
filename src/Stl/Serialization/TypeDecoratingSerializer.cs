@@ -7,17 +7,19 @@ using Stl.Text;
 
 namespace Stl.Serialization
 {
-    public class TypeWritingUtf16Serializer : Utf16SerializerBase
+    public class TypeDecoratingSerializer : Utf16SerializerBase
     {
+        public static TypeDecoratingSerializer Default { get; } = new(SystemJsonSerializer.Default);
+
         private readonly ISerializationBinder _serializationBinder;
 
         public IUtf16Serializer Serializer { get; }
         public Func<Type, bool> TypeFilter { get; }
 
-        public TypeWritingUtf16Serializer(IUtf16Serializer serializer, Func<Type, bool> typeFilter)
+        public TypeDecoratingSerializer(IUtf16Serializer serializer, Func<Type, bool>? typeFilter = null)
         {
             Serializer = serializer;
-            TypeFilter = typeFilter;
+            TypeFilter = typeFilter ?? (_ => true);
             var serializationBinder = (Serializer as NewtonsoftJsonSerializer)?.Settings?.SerializationBinder;
 #if NET5_0
             serializationBinder ??= SerializationBinder.Instance;
@@ -57,10 +59,12 @@ namespace Stl.Serialization
             }
             else {
                 var actualType = value.GetType();
+                if (!type.IsAssignableFrom(actualType))
+                    throw Errors.MustBeAssignableTo(actualType, type, nameof(type));
                 if (!TypeFilter.Invoke(actualType))
-                    throw Errors.UnsupportedTypeForJsonSerialization(type);
+                    throw Errors.UnsupportedTypeForJsonSerialization(actualType);
                 var aqn = actualType.GetAssemblyQualifiedName(false, _serializationBinder);
-                var json = Serializer.Writer.Write(value, type);
+                var json = Serializer.Writer.Write(value, actualType);
                 f.Append(aqn);
                 f.Append(json);
                 f.AppendEnd();

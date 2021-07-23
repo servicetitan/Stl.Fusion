@@ -1,61 +1,102 @@
 using System;
+using System.IO;
+using System.Text.Json;
+using FluentAssertions;
+using FluentAssertions.Common;
 using Newtonsoft.Json;
 using Stl.Internal;
+using Stl.Reflection;
 using Stl.Serialization;
 using Stl.Serialization.Internal;
+using Xunit.Abstractions;
 
 namespace Stl.Testing
 {
     public static class SerializationTestEx
     {
-        public static JsonSerializerSettings JsonSerializerSettings = new() {
-            SerializationBinder = CrossPlatformSerializationBinder.Instance,
-            Formatting = Formatting.Indented,
-//            ContractResolver = new PreferSerializableContractResolver(),
-        };
+        public static JsonSerializerOptions SystemJsonOptions;
+        public static JsonSerializerSettings NewtonsoftJsonSettings;
 
-        public static T PassThroughAllSerializers<T>(this T value)
+        static SerializationTestEx()
         {
-            var v = value.PassThroughJsonConvert();
-            v = v.PassThroughJsonSerialized();
+            SystemJsonOptions = MemberwiseCloner.Invoke(SystemJsonSerializer.DefaultOptions);
+            SystemJsonOptions.WriteIndented = true;
+            NewtonsoftJsonSettings = MemberwiseCloner.Invoke(NewtonsoftJsonSerializer.DefaultSettings);
+            NewtonsoftJsonSettings.Formatting = Formatting.Indented;
+        }
+
+        public static T AssertPassesThroughAllSerializers<T>(this T value, ITestOutputHelper? output = null)
+        {
+            var v = value;
+            v = v.PassThroughSystemJsonSerializer(output);
+            v.Should().IsSameOrEqualTo(value);
+            v = v.PassThroughNewtonsoftJsonSerializer(output);
+            v.Should().IsSameOrEqualTo(value);
+            v = v.PassThroughTypeWritingSerializer(output);
+            v.Should().IsSameOrEqualTo(value);
+            v = v.PassThroughSystemJsonSerialized(output);
+            v.Should().IsSameOrEqualTo(value);
+            v = v.PassThroughNewtonsoftJsonSerialized(output);
+            v.Should().IsSameOrEqualTo(value);
             return v;
         }
 
-        public static (T, string[]) PassThroughAllSerializersWithOutput<T>(this T value)
+        public static T PassThroughAllSerializers<T>(this T value, ITestOutputHelper? output = null)
         {
-            var (v1, json1) = value.PassThroughJsonConvertWithOutput();
-            var (v2, json2) = v1.PassThroughJsonSerializedWithOutput();
-            return (v2, new [] {json1, json2});
+            var v = value;
+            v = v.PassThroughSystemJsonSerializer(output);
+            v = v.PassThroughNewtonsoftJsonSerializer(output);
+            v = v.PassThroughTypeWritingSerializer(output);
+            v = v.PassThroughSystemJsonSerialized(output);
+            v = v.PassThroughNewtonsoftJsonSerialized(output);
+            return v;
         }
 
-        public static T PassThroughJsonConvert<T>(this T value)
+        // TypeWritingSerializer
+
+        public static T PassThroughTypeWritingSerializer<T>(this T value, ITestOutputHelper? output = null)
         {
-            var box = Box.New(value);
-            var json = JsonConvert.SerializeObject(box, JsonSerializerSettings);
-            box = JsonConvert.DeserializeObject<Box<T>>(json, JsonSerializerSettings)!;
-            return box.Value;
+            var sInner = new SystemJsonSerializer(SystemJsonOptions);
+            var s = new TypeDecoratingSerializer(sInner);
+            var json = s.Writer.Write(value, typeof(object));
+            output?.WriteLine($"TypeWritingUtf16Serializer: {json}");
+            return (T) s.Reader.Read<object>(json);
         }
 
-        public static (T, string) PassThroughJsonConvertWithOutput<T>(this T value)
+        // System.Text.Json serializer
+
+        public static T PassThroughSystemJsonSerializer<T>(this T value, ITestOutputHelper? output = null)
         {
-            var box = Box.New(value);
-            var json = JsonConvert.SerializeObject(box, JsonSerializerSettings);
-            box = JsonConvert.DeserializeObject<Box<T>>(json, JsonSerializerSettings)!;
-            return (box.Value, json);
+            var s = new SystemJsonSerializer(SystemJsonOptions).ToTyped<T>();
+            var json = s.Writer.Write(value);
+            output?.WriteLine($"SystemJsonSerializer: {json}");
+            return s.Reader.Read(json);
         }
 
-        public static T PassThroughJsonSerialized<T>(this T value)
+        public static T PassThroughSystemJsonSerialized<T>(this T value, ITestOutputHelper? output = null)
         {
-            var v1 = JsonSerialized.New(value);
-            var v2 = JsonSerialized.New<T>(v1.Data);
+            var v1 = SystemJsonSerialized.New(value);
+            output?.WriteLine($"SystemJsonSerialized: {v1.Data}");
+            var v2 = NewtonsoftJsonSerialized.New<T>(v1.Data);
             return v2.Value;
         }
 
-        public static (T, string) PassThroughJsonSerializedWithOutput<T>(this T value)
+        // Newtonsoft.Json serializer
+
+        public static T PassThroughNewtonsoftJsonSerializer<T>(this T value, ITestOutputHelper? output = null)
         {
-            var v1 = JsonSerialized.New(value);
-            var v2 = JsonSerialized.New<T>(v1.Data);
-            return (v2.Value, v1.Data);
+            var s = new NewtonsoftJsonSerializer(NewtonsoftJsonSettings).ToTyped<T>();
+            var json = s.Writer.Write(value);
+            output?.WriteLine($"NewtonsoftJsonSerializer: {json}");
+            return s.Reader.Read(json);
+        }
+
+        public static T PassThroughNewtonsoftJsonSerialized<T>(this T value, ITestOutputHelper? output = null)
+        {
+            var v1 = NewtonsoftJsonSerialized.New(value);
+            output?.WriteLine($"NewtonsoftJsonSerialized: {v1.Data}");
+            var v2 = NewtonsoftJsonSerialized.New<T>(v1.Data);
+            return v2.Value;
         }
     }
 }

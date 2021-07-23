@@ -1,17 +1,21 @@
 using System;
 using System.ComponentModel;
 using System.Runtime.Serialization;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 using Stl.Serialization.Internal;
 
 namespace Stl.Serialization
 {
     [Serializable]
     [JsonConverter(typeof(JsonStringJsonConverter))]
+    [Newtonsoft.Json.JsonConverter(typeof(JsonStringNewtonsoftJsonConverter))]
     [TypeConverter(typeof(JsonStringTypeConverter))]
     public class JsonString : IEquatable<JsonString>, IComparable<JsonString>,
         IConvertibleTo<string?>, ISerializable
     {
+        public static JsonString Null = new(null);
+        public static JsonString Empty = new("");
+
         public string? Value { get; }
 
         public JsonString(string? value) => Value = value;

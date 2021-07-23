@@ -1,6 +1,6 @@
 using System;
 using System.ComponentModel;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 using Stl.Fusion.Authentication.Internal;
 using Stl.Text;
 
@@ -8,6 +8,7 @@ namespace Stl.Fusion.Authentication
 {
     [Serializable]
     [JsonConverter(typeof(SessionJsonConverter))]
+    [Newtonsoft.Json.JsonConverter(typeof(SessionNewtonsoftJsonConverter))]
     [TypeConverter(typeof(SessionTypeConverter))]
     public sealed class Session : IHasId<Symbol>, IEquatable<Session>,
         IConvertibleTo<string>, IConvertibleTo<Symbol>
@@ -16,7 +17,6 @@ namespace Stl.Fusion.Authentication
 
         public Symbol Id { get; }
 
-        [JsonConstructor]
         public Session(Symbol id)
         {
             // The check is here to prevent use of sessions with empty or other special Ids,

@@ -1,13 +1,14 @@
 using System;
 using System.ComponentModel;
 using System.Runtime.Serialization;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 using Stl.Internal;
 
 namespace Stl.Text
 {
     [Serializable]
     [JsonConverter(typeof(SymbolJsonConverter))]
+    [Newtonsoft.Json.JsonConverter(typeof(SymbolNewtonsoftJsonConverter))]
     [TypeConverter(typeof(SymbolTypeConverter))]
     public readonly struct Symbol : IEquatable<Symbol>, IComparable<Symbol>,
         IConvertibleTo<string>, ISerializable

@@ -129,9 +129,7 @@ namespace Stl.Fusion.Bridge.Internal
             IPublicationState<T>? state, bool isUpdateRequested, CancellationToken cancellationToken)
         {
             if (state == null || state.IsDisposed) {
-                var absentsMessage = new PublicationAbsentsMessage() {
-                    IsDisposed = true,
-                };
+                var absentsMessage = new PublicationAbsentsMessage();
                 await Send(absentsMessage, cancellationToken).ConfigureAwait(false);
                 LastSentVersion = default;
                 return;

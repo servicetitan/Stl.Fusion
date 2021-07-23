@@ -34,7 +34,7 @@ namespace Stl.Fusion.Server
 
             public static IUtf16Serializer<BridgeMessage> DefaultSerializerFactory()
                 => new Utf16Serializer(
-                    new TypeWritingUtf16Serializer(new NewtonsoftJsonSerializer(),
+                    new TypeDecoratingSerializer(new NewtonsoftJsonSerializer(),
                         t => typeof(ReplicatorMessage).IsAssignableFrom(t)).Reader,
                     new NewtonsoftJsonSerializer().Writer
                 ).ToTyped<BridgeMessage>();

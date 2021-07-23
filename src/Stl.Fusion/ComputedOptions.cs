@@ -1,5 +1,5 @@
 using System;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Swapping;
 
@@ -27,10 +27,10 @@ namespace Stl.Fusion
         public SwappingOptions SwappingOptions { get; }
         public bool RewriteErrors { get; }
         public Type ComputeMethodDefType { get; }
-        [JsonIgnore]
+        [JsonIgnore, Newtonsoft.Json.JsonIgnore]
         public bool IsAsyncComputed { get; }
 
-        [JsonConstructor]
+        [JsonConstructor, Newtonsoft.Json.JsonConstructor]
         public ComputedOptions(
             TimeSpan keepAliveTime,
             TimeSpan errorAutoInvalidateTime,

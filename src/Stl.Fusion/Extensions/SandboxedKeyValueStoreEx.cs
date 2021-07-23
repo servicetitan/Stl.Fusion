@@ -19,7 +19,7 @@ namespace Stl.Fusion.Extensions
         public static Task Set<T>(this ISandboxedKeyValueStore keyValueStore,
             Session session, string key, T value, Moment? expiresAt, CancellationToken cancellationToken = default)
         {
-            var sValue = JsonSerialized.New(value).Data;
+            var sValue = NewtonsoftJsonSerialized.New(value).Data;
             return keyValueStore.Set(session, key, sValue, expiresAt, cancellationToken);
         }
 
@@ -68,7 +68,7 @@ namespace Stl.Fusion.Extensions
             Session session, string key, CancellationToken cancellationToken = default)
         {
             var sValue = await keyValueStore.TryGet(session, key, cancellationToken).ConfigureAwait(false);
-            return sValue == null ? default(Option<T>) : JsonSerialized.New<T>(sValue).Value;
+            return sValue == null ? default(Option<T>) : NewtonsoftJsonSerialized.New<T>(sValue).Value;
         }
 
         // Get

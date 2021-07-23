@@ -26,12 +26,11 @@ namespace Stl.Tests.Text
         [InlineData("a|\\", new[] {"a", "\\"}, "a|\\\\")]
         public void CombinedTest(string value, string[] segments, string? expectedValue = null)
         {
-            var p = SymbolList.Parse(value);
-            p.SegmentCount.Should().Be(segments.Length);
-            p.GetSegments().Should().BeEquivalentTo(segments.Select(s => (Symbol) s));
-            p.FormattedValue.Should().Be(expectedValue ?? value);
-
-            p.PassThroughJsonConvert().Should().Be(p);
+            var l = SymbolList.Parse(value);
+            l.SegmentCount.Should().Be(segments.Length);
+            l.GetSegments().Should().BeEquivalentTo(segments.Select(s => (Symbol) s));
+            l.FormattedValue.Should().Be(expectedValue ?? value);
+            l.AssertPassesThroughAllSerializers();
         }
     }
 }

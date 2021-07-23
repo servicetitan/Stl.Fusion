@@ -1,7 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.Runtime.Serialization;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 using Stl.Internal;
 using Stl.Text;
 
@@ -9,6 +9,7 @@ namespace Stl.Reflection
 {
     [Serializable]
     [JsonConverter(typeof(TypeRefJsonConverter))]
+    [Newtonsoft.Json.JsonConverter(typeof(TypeRefNewtonsoftJsonConverter))]
     [TypeConverter(typeof(TypeRefTypeConverter))]
     public struct TypeRef : IEquatable<TypeRef>, IComparable<TypeRef>, ISerializable
     {

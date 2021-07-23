@@ -1,5 +1,5 @@
 using System;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Stl.Fusion.Swapping
 {
@@ -21,7 +21,7 @@ namespace Stl.Fusion.Swapping
         public Type SwapServiceType { get; }
         public TimeSpan SwapTime { get; }
 
-        [JsonConstructor]
+        [JsonConstructor, Newtonsoft.Json.JsonConstructor]
         public SwappingOptions(
             bool isEnabled,
             Type swapServiceType,

@@ -4,8 +4,8 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using Stl.Async;
 using Stl.Internal;
 
@@ -128,19 +128,21 @@ namespace Stl
         public Exception? Error { get; }
 
         /// <inheritdoc />
-        [JsonIgnore] public bool HasValue {
+        [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        public bool HasValue {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => Error == null;
         }
 
         /// <inheritdoc />
-        [JsonIgnore] public bool HasError {
+        [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        public bool HasError {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => Error != null;
         }
 
         /// <inheritdoc />
-        [JsonIgnore]
+        [JsonIgnore, Newtonsoft.Json.JsonIgnore]
         public T Value {
             get {
                 if (Error != null)
@@ -158,7 +160,7 @@ namespace Stl
         /// </summary>
         /// <param name="valueOrDefault"><see cref="ValueOrDefault"/> value.</param>
         /// <param name="error"><see cref="Error"/> value.</param>
-        [JsonConstructor]
+        [JsonConstructor, Newtonsoft.Json.JsonConstructor]
         public Result(T valueOrDefault, Exception? error)
         {
             if (error != null) valueOrDefault = default!;

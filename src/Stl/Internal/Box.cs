@@ -1,5 +1,5 @@
 using System;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Stl.Internal
 {
@@ -29,8 +29,9 @@ namespace Stl.Internal
             set => Value = (T) value!;
         }
 
-        [JsonConstructor]
-        public Box(T value = default!) => Value = value!;
+        public Box() => Value = default!;
+        [JsonConstructor, Newtonsoft.Json.JsonConstructor]
+        public Box(T value) => Value = value!;
         public override string ToString() => $"{GetType().Name}({Value})";
     }
 }

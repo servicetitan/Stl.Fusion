@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 using Stl.Internal;
 
 namespace Stl
@@ -37,7 +37,8 @@ namespace Stl
         /// <summary>
         /// Retrieves option's value. Throws <see cref="InvalidOperationException"/> in case option doesn't have one.
         /// </summary>
-        [JsonIgnore] public T Value {
+        [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        public T Value {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { AssertHasValue(); return ValueOrDefault!; }
         }
@@ -63,7 +64,7 @@ namespace Stl
         /// </summary>
         /// <param name="hasValue"><see cref="HasValue"/> value.</param>
         /// <param name="valueOrDefault"><see cref="ValueOrDefault"/> value.</param>
-        [JsonConstructor]
+        [JsonConstructor, Newtonsoft.Json.JsonConstructor]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private Option(bool hasValue, T valueOrDefault)
         {

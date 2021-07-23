@@ -2,13 +2,14 @@ using System;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.Serialization;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 using Stl.Internal;
 
 namespace Stl.Text
 {
     [Serializable]
     [JsonConverter(typeof(SymbolListJsonConverter))]
+    [Newtonsoft.Json.JsonConverter(typeof(SymbolListNewtonsoftJsonConverter))]
     [TypeConverter(typeof(SymbolListTypeConverter))]
     public sealed class SymbolList : IEquatable<SymbolList>, IComparable<SymbolList>, ISerializable
     {
@@ -46,7 +47,7 @@ namespace Stl.Text
         }
 
         public SymbolList Concat(Symbol tail)
-            => new SymbolList(this, tail);
+            => new(this, tail);
         public SymbolList Concat(SymbolList other)
             => other.GetSegments().Aggregate(this, (current, tail) => current.Concat(tail));
 

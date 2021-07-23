@@ -1,5 +1,5 @@
 using System;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 using Stl.Text;
 
 namespace Stl.Fusion.Authentication
@@ -11,14 +11,14 @@ namespace Stl.Fusion.Authentication
         public static string DefaultSchema { get; } = "Default";
 
         public Symbol Id { get; }
-        [JsonIgnore]
+        [JsonIgnore, Newtonsoft.Json.JsonIgnore]
         public string Schema => ParseId(Id.Value).Schema;
-        [JsonIgnore]
+        [JsonIgnore, Newtonsoft.Json.JsonIgnore]
         public string SchemaBoundId => ParseId(Id.Value).SchemaBoundId;
-        [JsonIgnore]
+        [JsonIgnore, Newtonsoft.Json.JsonIgnore]
         public bool IsValid => !Id.IsEmpty;
 
-        [JsonConstructor]
+        [JsonConstructor, Newtonsoft.Json.JsonConstructor]
         public UserIdentity(Symbol id)
             => Id = id;
         public UserIdentity(string id)

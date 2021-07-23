@@ -1,4 +1,5 @@
 using System;
+using System.Buffers;
 using Stl.Serialization.Internal;
 
 namespace Stl.Serialization

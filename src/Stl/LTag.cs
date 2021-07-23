@@ -1,7 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 using Stl.Internal;
 using Stl.Mathematics;
 
@@ -12,6 +12,7 @@ namespace Stl
     /// </summary>
     [Serializable]
     [JsonConverter(typeof(LTagJsonConverter))]
+    [Newtonsoft.Json.JsonConverter(typeof(LTagNewtonsoftJsonConverter))]
     [TypeConverter(typeof(LTagTypeConverter))]
     public readonly struct LTag : IEquatable<LTag>
     {

@@ -4,9 +4,9 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using Stl.OS;
 
 namespace Stl.Fusion.Tests.Services
@@ -18,7 +18,7 @@ namespace Stl.Fusion.Tests.Services
         public DateTime CapturedAt { get; }
         public string Base64Content { get; }
 
-        [JsonConstructor]
+        [JsonConstructor, Newtonsoft.Json.JsonConstructor]
         public Screenshot(int width, int height, DateTime capturedAt, string base64Content)
         {
             Width = width;

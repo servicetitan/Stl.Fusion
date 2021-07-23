@@ -1,15 +1,17 @@
 using System;
+using System.Buffers;
 using System.Text.Json;
 
 namespace Stl.Serialization
 {
-    public class DefaultJsonSerializer : Utf16SerializerBase
+    public class SystemJsonSerializer : Utf16SerializerBase
     {
         public static JsonSerializerOptions DefaultOptions { get; set; } = new();
+        public static SystemJsonSerializer Default { get; } = new();
 
         public JsonSerializerOptions Options { get; }
 
-        public DefaultJsonSerializer(JsonSerializerOptions? options = null)
+        public SystemJsonSerializer(JsonSerializerOptions? options = null)
             => Options = options ??= DefaultOptions;
 
         public override object? Read(string data, Type type)
