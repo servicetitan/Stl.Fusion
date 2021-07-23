@@ -78,7 +78,7 @@ namespace Stl.Fusion.Server
                 ?? ImmutableDictionary<string, string[]>.Empty;
 
             var acceptOptions = new Dictionary<string, object>();
-            if (requestHeaders.TryGetValue("Sec-WebSocket-Protocol", out string[] subProtocols) && subProtocols.Length > 0) {
+            if (requestHeaders.TryGetValue("Sec-WebSocket-Protocol", out string[]? subProtocols) && subProtocols.Length > 0) {
                 // Select the first one from the client
                 acceptOptions.Add("websocket.SubProtocol", subProtocols[0].Split(',').First().Trim());
             }

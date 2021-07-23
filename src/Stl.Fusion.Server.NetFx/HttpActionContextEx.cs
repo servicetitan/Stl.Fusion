@@ -13,7 +13,9 @@ namespace Stl.Fusion.Server
         {
             // https://stackoverflow.com/questions/18690500/how-to-store-global-per-request-data-in-a-net-web-api-project
 
+#pragma warning disable 618
             var requestProperties = httpContext.Request.Properties;
+#pragma warning restore 618
             IDictionary<object, object>? items = null;
             if (requestProperties.TryGetValue(ItemsKey, out var obj)) {
                 items = obj as IDictionary<object,object>;

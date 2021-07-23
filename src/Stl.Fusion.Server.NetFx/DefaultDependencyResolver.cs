@@ -17,7 +17,7 @@ namespace Stl.Fusion.Server
         public object GetService(Type serviceType)
         {
             var service = this.serviceProvider.GetService(serviceType);
-            return service;
+            return service!;
         }
 
         public IEnumerable<object> GetServices(Type serviceType)
