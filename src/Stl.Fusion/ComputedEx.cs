@@ -3,15 +3,14 @@ using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
+using Stl.Caching;
 using Stl.Fusion.Internal;
-using Stl.Internal;
-using Errors = Stl.Fusion.Internal.Errors;
 
 namespace Stl.Fusion
 {
     public static class ComputedEx
     {
-        private static readonly ObjectHolder ObjectHolder = new();
+        private static readonly RefHolder RefHolder = new();
 
         public static void Invalidate(this IComputed computed, TimeSpan delay, bool? usePreciseTimer = null)
         {
@@ -58,7 +57,7 @@ namespace Stl.Fusion
             var ts = TaskSource.New<Unit>(true);
             var onInvalidated = (Action<IComputed>) (_ => ts.SetResult(default));
             computed.Invalidated += onInvalidated;
-            var holder = ObjectHolder.Hold(computed);
+            var holder = RefHolder.Hold(computed);
             try {
                 await ts.Task.WithFakeCancellation(cancellationToken).ConfigureAwait(false);
                 // No need to remove onInvalidated handler in case of success:

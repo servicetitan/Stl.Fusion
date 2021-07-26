@@ -1,8 +1,7 @@
 using System;
 using Newtonsoft.Json;
-using Stl.Reflection;
 
-namespace Stl.Internal
+namespace Stl.Reflection.Internal
 {
     public class TypeRefNewtonsoftJsonConverter : JsonConverter<TypeRef>
     {

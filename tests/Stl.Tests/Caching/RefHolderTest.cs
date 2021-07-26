@@ -2,19 +2,19 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
-using Stl.Internal;
+using Stl.Caching;
 using Stl.Testing;
 using Xunit;
 
-namespace Stl.Tests.Internal
+namespace Stl.Tests.Caching
 {
     [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-    public class ObjectHolderTest
+    public class RefHolderTest
     {
         [Fact]
         public void BasicTest()
         {
-            var holder = new ObjectHolder();
+            var holder = new RefHolder();
             var count = TestRunnerInfo.IsBuildAgent() ? 100 : 1000;
             var objects = Enumerable.Range(0, count).Select(i => i.ToString()).ToArray();
 

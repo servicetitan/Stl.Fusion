@@ -1,8 +1,7 @@
 using System;
 using Newtonsoft.Json;
-using Stl.IO;
 
-namespace Stl.Internal
+namespace Stl.IO.Internal
 {
     public class PathStringNewtonsoftJsonConverter : JsonConverter<PathString>
     {

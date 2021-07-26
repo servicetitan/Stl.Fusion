@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Stl.Fusion.Internal;
 using Stl.Fusion.Swapping;
 using Stl.Generators;
+using Stl.Internal;
 
 namespace Stl.Fusion.Interception
 {

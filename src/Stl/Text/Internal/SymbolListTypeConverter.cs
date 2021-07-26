@@ -1,12 +1,11 @@
 using System;
 using System.ComponentModel;
 using System.Globalization;
-using Stl.Reflection;
 
-namespace Stl.Internal
+namespace Stl.Text.Internal
 {
     // Used by JSON.NET to serialize dictionary keys of this type
-    public class TypeRefTypeConverter : TypeConverter
+    public class SymbolListTypeConverter : TypeConverter
     {
         public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
             => sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
@@ -14,7 +13,7 @@ namespace Stl.Internal
         public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
         {
             if (destinationType == typeof(string))
-                return ((TypeRef) value).AssemblyQualifiedName.Value;
+                return ((SymbolList) value).FormattedValue;
             return base.ConvertTo(context, culture, value, destinationType)!;
         }
 
@@ -22,7 +21,7 @@ namespace Stl.Internal
         {
             if (value is string s)
                 // ReSharper disable once HeapView.BoxingAllocation
-                return new TypeRef(s);
+                return SymbolList.Parse(s);
             return base.ConvertFrom(context, culture, value)!;
         }
     }

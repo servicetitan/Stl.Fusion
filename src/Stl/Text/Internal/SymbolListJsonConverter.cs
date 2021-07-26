@@ -1,9 +1,8 @@
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Stl.Text;
 
-namespace Stl.Internal
+namespace Stl.Text.Internal
 {
     public class SymbolListJsonConverter : JsonConverter<SymbolList>
     {

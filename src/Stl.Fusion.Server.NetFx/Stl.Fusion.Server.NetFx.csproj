@@ -10,6 +10,7 @@
     -->designed to power distributed apps. Thread-safe, asynchronous, immutable,  <!--
     -->and ready to serve replicas of computed instances to remote clients.<!--
     --></Description>
+    <NoWarn>$(NoWarn);NU1701</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Text.Json.Serialization;
 
-namespace Stl
+namespace Stl.Internal
 {
     /// <summary>
     /// A class describing strongly typed result of a computation.

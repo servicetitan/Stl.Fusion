@@ -4,9 +4,9 @@ using System.Runtime.CompilerServices;
 using Stl.Mathematics;
 using Stl.OS;
 
-namespace Stl.Internal
+namespace Stl.Caching
 {
-    public class ObjectHolder
+    public class RefHolder
     {
         private readonly LinkedList<object>[] _lists;
         private readonly int _concurrencyMask;
@@ -23,7 +23,7 @@ namespace Stl.Internal
             }
         }
 
-        public ObjectHolder(int concurrencyLevel = -1)
+        public RefHolder(int concurrencyLevel = -1)
         {
             if (concurrencyLevel < 0)
                 concurrencyLevel = HardwareInfo.ProcessorCount << 2;

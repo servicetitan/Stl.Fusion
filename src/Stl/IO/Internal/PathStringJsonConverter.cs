@@ -1,9 +1,8 @@
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Stl.IO;
 
-namespace Stl.Internal
+namespace Stl.IO.Internal
 {
     public class PathStringJsonConverter : JsonConverter<PathString>
     {

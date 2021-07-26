@@ -1,8 +1,7 @@
 using System;
 using Newtonsoft.Json;
-using Stl.Text;
 
-namespace Stl.Internal
+namespace Stl.Text.Internal
 {
     public class SymbolListNewtonsoftJsonConverter : JsonConverter<SymbolList>
     {

@@ -2,7 +2,7 @@ using System;
 using System.ComponentModel;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
-using Stl.Internal;
+using Stl.Text.Internal;
 
 namespace Stl.Text
 {
