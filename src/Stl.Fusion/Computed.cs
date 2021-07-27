@@ -9,8 +9,6 @@ using Microsoft.Extensions.Logging;
 using Stl.Collections.Slim;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Internal;
-using Stl.Internal;
-using Errors = Stl.Fusion.Internal.Errors;
 
 namespace Stl.Fusion
 {

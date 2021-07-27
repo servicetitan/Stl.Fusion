@@ -1,5 +1,5 @@
 using System;
-using Newtonsoft.Json;
+using Stl.Serialization;
 
 namespace Stl.Fusion.Bridge.Messages
 {
@@ -8,7 +8,7 @@ namespace Stl.Fusion.Bridge.Messages
     {
         public override string ToString()
         {
-            var json = JsonConvert.SerializeObject(this, Formatting.Indented);
+            var json = SystemJsonSerializer.Readable.Write(this, GetType());
             return $"{GetType().Name} {json}";
         }
     }

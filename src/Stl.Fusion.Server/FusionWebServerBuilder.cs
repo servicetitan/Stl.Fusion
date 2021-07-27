@@ -38,6 +38,8 @@ namespace Stl.Fusion.Server
             var mvcBuilder = Services.AddMvcCore(options => {
                 options.ModelBinderProviders.Insert(0, new PageRefModelBinderProvider());
             });
+            // Newtonsoft.Json serializer is optional starting from v1.4+
+            /*
             mvcBuilder.AddNewtonsoftJson(options => {
                 MemberwiseCopier.Invoke(
                     NewtonsoftJsonSerializer.DefaultSettings,
@@ -46,6 +48,7 @@ namespace Stl.Fusion.Server
                         Filter = member => member.Name != "Binder",
                     });
             });
+            */
         }
 
         public FusionWebServerBuilder AddControllers(

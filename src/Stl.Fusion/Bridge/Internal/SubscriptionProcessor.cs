@@ -20,7 +20,7 @@ namespace Stl.Fusion.Bridge.Internal
         public IPublisher Publisher => Publication.Publisher;
         public readonly IPublication Publication;
         public readonly Channel<BridgeMessage> OutgoingChannel;
-        public readonly Channel<ReplicaMessage> IncomingChannel;
+        public readonly Channel<ReplicaRequest> IncomingChannel;
 
         protected SubscriptionProcessor(
             IPublication publication,
@@ -33,7 +33,7 @@ namespace Stl.Fusion.Bridge.Internal
             Clock = clock;
             Publication = publication;
             OutgoingChannel = outgoingChannel;
-            IncomingChannel = Channel.CreateBounded<ReplicaMessage>(new BoundedChannelOptions(16));
+            IncomingChannel = Channel.CreateBounded<ReplicaRequest>(new BoundedChannelOptions(16));
             ExpirationTime = expirationTime;
         }
     }
@@ -72,7 +72,7 @@ namespace Stl.Fusion.Bridge.Internal
                     // Maybe sending an update
                     var isHardUpdateRequested = false;
                     var isSoftUpdateRequested = false;
-                    if (incomingMessage is SubscribeMessage sm) {
+                    if (incomingMessage is SubscribeRequest sm) {
                         if (MessageIndex == 0)
                             LastSentVersion = (sm.Version, sm.IsConsistent);
                         isHardUpdateRequested |= sm.IsUpdateRequested;
@@ -129,7 +129,7 @@ namespace Stl.Fusion.Bridge.Internal
             IPublicationState<T>? state, bool isUpdateRequested, CancellationToken cancellationToken)
         {
             if (state == null || state.IsDisposed) {
-                var absentsMessage = new PublicationAbsentsMessage();
+                var absentsMessage = new PublicationAbsentsReply();
                 await Send(absentsMessage, cancellationToken).ConfigureAwait(false);
                 LastSentVersion = default;
                 return;
@@ -141,24 +141,23 @@ namespace Stl.Fusion.Bridge.Internal
             if ((!isUpdateRequested) && LastSentVersion == version)
                 return;
 
-            var message = new PublicationStateMessage<T>() {
-                Version = computed.Version,
-                IsConsistent = isConsistent,
-            };
-            if (isConsistent || LastSentVersion.Version != computed.Version)
-                message.Output = computed.Output;
+            var reply = isConsistent || LastSentVersion.Version != computed.Version
+                ? PublicationStateReply<T>.New(computed.Output)
+                : new PublicationStateReply<T>();
+            reply.Version = computed.Version;
+            reply.IsConsistent = isConsistent;
 
-            await Send(message, cancellationToken).ConfigureAwait(false);
+            await Send(reply, cancellationToken).ConfigureAwait(false);
             LastSentVersion = version;
         }
 
-        protected virtual async ValueTask Send(PublicationMessage message, CancellationToken cancellationToken)
+        protected virtual async ValueTask Send(PublicationReply reply, CancellationToken cancellationToken)
         {
-            message.MessageIndex = ++MessageIndex;
-            message.PublisherId = Publisher.Id;
-            message.PublicationId = Publication.Id;
+            reply.MessageIndex = ++MessageIndex;
+            reply.PublisherId = Publisher.Id;
+            reply.PublicationId = Publication.Id;
 
-            await OutgoingChannel.Writer.WriteAsync(message, cancellationToken).ConfigureAwait(false);
+            await OutgoingChannel.Writer.WriteAsync(reply, cancellationToken).ConfigureAwait(false);
         }
     }
 }

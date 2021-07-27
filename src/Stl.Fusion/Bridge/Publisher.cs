@@ -147,12 +147,12 @@ namespace Stl.Fusion.Bridge
                 throw Errors.UnknownChannel(channel);
             if (publication.Publisher != this)
                 throw Errors.WrongPublisher(this, publication.Publisher.Id);
-            var message = new SubscribeMessage() {
+            var message = new SubscribeRequest() {
                 PublisherId = Id,
                 PublicationId = publication.Id,
                 IsUpdateRequested = isUpdateRequested,
             };
-            return channelProcessor.OnReplicaMessage(message, cancellationToken);
+            return channelProcessor.OnReplicaRequest(message, cancellationToken);
         }
 
         public virtual ValueTask Unsubscribe(

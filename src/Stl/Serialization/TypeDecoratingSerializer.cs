@@ -9,7 +9,8 @@ namespace Stl.Serialization
 {
     public class TypeDecoratingSerializer : Utf16SerializerBase
     {
-        public static TypeDecoratingSerializer Default { get; } = new(SystemJsonSerializer.Default);
+        public static TypeDecoratingSerializer Default { get; } =
+            new(SystemJsonSerializer.Default);
 
         private readonly ISerializationBinder _serializationBinder;
 

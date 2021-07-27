@@ -1,5 +1,4 @@
 using System;
-using System.Buffers;
 using System.Text.Json;
 
 namespace Stl.Serialization
@@ -7,7 +6,9 @@ namespace Stl.Serialization
     public class SystemJsonSerializer : Utf16SerializerBase
     {
         public static JsonSerializerOptions DefaultOptions { get; set; } = new();
-        public static SystemJsonSerializer Default { get; } = new();
+        public static JsonSerializerOptions ReadableOptions { get; set; } = new() { WriteIndented = true };
+        public static SystemJsonSerializer Default { get; } = new(DefaultOptions);
+        public static SystemJsonSerializer Readable { get; } = new(ReadableOptions);
 
         public JsonSerializerOptions Options { get; }
 

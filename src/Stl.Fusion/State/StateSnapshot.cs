@@ -75,7 +75,7 @@ namespace Stl.Fusion
         }
 
         public override string ToString()
-            => $"{GetType()}({Computed}, [{UpdateCount} update(s) / {ErrorCount} failure(s)])";
+            => $"{GetType().Name}({Computed}, [{UpdateCount} update(s) / {ErrorCount} failure(s)])";
 
         public Task WhenInvalidated(CancellationToken cancellationToken)
             => Computed.WhenInvalidated(cancellationToken);

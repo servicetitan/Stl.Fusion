@@ -23,7 +23,7 @@ namespace Stl.Serialization
         }
 
         public Base64Encoded(byte[] data) => Data = data;
-        public override string ToString() => $"{GetType()}({Count} byte(s))";
+        public override string ToString() => $"{GetType().Name}({Count} byte(s))";
 
         // IEnumerable
         IEnumerator IEnumerable.GetEnumerator() => Data.GetEnumerator();

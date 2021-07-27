@@ -4,9 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Internal;
-using Stl.Internal;
 using Stl.Locking;
-using Errors = Stl.Fusion.Internal.Errors;
 
 namespace Stl.Fusion.Swapping
 {

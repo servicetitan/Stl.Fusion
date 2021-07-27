@@ -1,6 +1,6 @@
 using System;
 
-namespace Stl
+namespace Stl.Resilience
 {
     public interface IRetryPolicy<in TTarget>
     {

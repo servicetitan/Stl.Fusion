@@ -10,7 +10,7 @@ namespace Stl.Fusion.Extensions
         public override string ToString()
             => AfterKey == null
                 ? Count.ToString()
-                : new NewtonsoftJsonSerializer().Writer.Write(this);
+                : SystemJsonSerializer.Default.Write(this, GetType());
 
         public static implicit operator PageRef<TKey>(int count)
             => new(count);
@@ -28,6 +28,6 @@ namespace Stl.Fusion.Extensions
         public static PageRef<TKey> Parse<TKey>(string value)
             => int.TryParse(value, out var count)
                 ? new PageRef<TKey>(count)
-                : new NewtonsoftJsonSerializer().Reader.Read<PageRef<TKey>>(value);
+                : SystemJsonSerializer.Default.Reader.Read<PageRef<TKey>>(value);
     }
 }

@@ -22,9 +22,12 @@ namespace Stl.Fusion.Server
 
             public static IUtf16Serializer<BridgeMessage> DefaultSerializerFactory()
                 => new Utf16Serializer(
-                    new TypeDecoratingSerializer(new NewtonsoftJsonSerializer(),
-                        t => typeof(ReplicatorMessage).IsAssignableFrom(t)).Reader,
-                    new NewtonsoftJsonSerializer().Writer
+                    new TypeDecoratingSerializer(
+                        SystemJsonSerializer.Default,
+                        t => typeof(ReplicatorRequest).IsAssignableFrom(t)).Reader,
+                    new TypeDecoratingSerializer(
+                        SystemJsonSerializer.Default,
+                        t => typeof(PublisherReply).IsAssignableFrom(t)).Writer
                     ).ToTyped<BridgeMessage>();
         }
 

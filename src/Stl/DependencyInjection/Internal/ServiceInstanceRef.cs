@@ -1,9 +1,9 @@
 using System;
-using Stl.Internal;
+using Stl.Comparison;
 
 namespace Stl.DependencyInjection.Internal
 {
-    public record ServiceInstanceRef(RefBox<object?> ServiceInstance) : ServiceRef
+    public record ServiceInstanceRef(Ref<object?> ServiceInstance) : ServiceRef
     {
         public override object? TryResolve(IServiceProvider services)
             => ServiceInstance.Target;

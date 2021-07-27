@@ -3,6 +3,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
+using Stl.Async;
+using Stl.Mathematics;
 using Stl.OS;
 using Stl.Testing;
 using Stl.Time;
@@ -75,7 +77,11 @@ namespace Stl.Tests.Time
             var taskCount = TestRunnerInfo.IsBuildAgent() ? 1 : HardwareInfo.GetProcessorCountFactor(10);
             var maxDelta = 1000;
             var rnd = new Random();
-            var tasks = Enumerable.Range(0, taskCount)
+            var tasks = Enumerable.Range(0, (int) MathEx.Max(taskCount / 10, 1))
+                .Select(_ => Task.Run(() => OneRandomTest(rnd.Next(100), 3000, maxDelta)).SuppressExceptions())
+                .ToArray();
+            await Task.WhenAll(tasks);
+            Enumerable.Range(0, taskCount)
                 .Select(_ => Task.Run(() => OneRandomTest(rnd.Next(100), 3000, maxDelta)))
                 .ToArray();
             await Task.WhenAll(tasks);

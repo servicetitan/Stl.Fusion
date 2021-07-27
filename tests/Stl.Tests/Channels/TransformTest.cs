@@ -52,7 +52,6 @@ namespace Stl.Tests.Channels
                     (itemCount % concurrencyLevel != 0 ? 1 : 0);
                 if (roundDuration.HasValue)
                     (elapsed - roundDuration * expectedRounds).Should().BeInRange(-50, roundDuration.Value - 1);
-
             }
 
             await TestOne(100, (s, t) => s.Reader.ConcurrentTransform(t.Writer,

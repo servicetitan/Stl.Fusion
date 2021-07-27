@@ -4,7 +4,7 @@ using Stl.Text;
 namespace Stl.Fusion.Bridge.Messages
 {
     [Serializable]
-    public abstract class PublicationMessage : PublisherMessage
+    public abstract class PublicationReply : PublisherReply
     {
         public Symbol PublicationId { get; set; }
     }

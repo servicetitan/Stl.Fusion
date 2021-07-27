@@ -39,10 +39,12 @@ namespace Stl.Fusion.Client
 
             public static IUtf16Serializer<BridgeMessage> DefaultSerializerFactory(IServiceProvider services)
                 => new Utf16Serializer(
-                    new NewtonsoftJsonSerializer().Reader,
                     new TypeDecoratingSerializer(
-                        new NewtonsoftJsonSerializer(),
-                        t => typeof(ReplicatorMessage).IsAssignableFrom(t)).Writer
+                        SystemJsonSerializer.Default,
+                        t => typeof(PublisherReply).IsAssignableFrom(t)).Reader,
+                    new TypeDecoratingSerializer(
+                        SystemJsonSerializer.Default,
+                        t => typeof(ReplicatorRequest).IsAssignableFrom(t)).Writer
                     ).ToTyped<BridgeMessage>();
 
             public static ClientWebSocket DefaultClientWebSocketFactory(IServiceProvider services)

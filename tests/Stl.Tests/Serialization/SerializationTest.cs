@@ -2,7 +2,6 @@ using System;
 using FluentAssertions;
 using Stl.Collections;
 using Stl.Fusion.Authentication;
-using Stl.Internal;
 using Stl.IO;
 using Stl.Reflection;
 using Stl.Serialization;
@@ -19,25 +18,33 @@ namespace Stl.Tests.Serialization
         public SerializationTest(ITestOutputHelper @out) : base(@out) { }
 
         [Fact]
-        public void TypeWritingSerializerTest()
+        public void ExceptionParcelTest()
         {
-            var serializer = TypeDecoratingSerializer.Default;
+            var n = default(ExceptionParcel);
+            n.ToException().Should().BeNull();
+            n = new ExceptionParcel(null!);
+            n = n.AssertPassesThroughAllSerializers();
+            n.ToException().Should().BeNull();
 
-            var value = new Box<DateTime>(DateTime.Now);
-            var json = serializer.Writer.Write(value);
-            Out.WriteLine(json);
-
-            var deserialized = (Box<DateTime>) serializer.Reader.Read<object>(json);
-            deserialized.Value.Should().Equals(value.Value);
+            var e = new InvalidOperationException("Fail!");
+            var p = new ExceptionParcel(e);
+            p = p.AssertPassesThroughAllSerializers();
+            var e1 = p.ToException();
+            e1.Should().BeOfType<InvalidOperationException>();
+            e1.Message.Should().Be(e.Message);
         }
 
         [Fact]
-        public void BoxSerialization()
+        public void TypeDecoratingSerializerTest()
         {
-            default(Box<string>).AssertPassesThroughAllSerializers(Out);
-            Box.New(default(string)).AssertPassesThroughAllSerializers(Out);
-            Box.New("").AssertPassesThroughAllSerializers(Out);
-            Box.New("1").AssertPassesThroughAllSerializers(Out);
+            var serializer = TypeDecoratingSerializer.Default;
+
+            var value = new Tuple<DateTime>(DateTime.Now);
+            var json = serializer.Writer.Write(value);
+            Out.WriteLine(json);
+
+            var deserialized = (Tuple<DateTime>) serializer.Reader.Read<object>(json);
+            deserialized.Item1.Should().Equals(value.Item1);
         }
 
         [Fact]

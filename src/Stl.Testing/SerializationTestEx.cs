@@ -19,8 +19,7 @@ namespace Stl.Testing
 
         static SerializationTestEx()
         {
-            SystemJsonOptions = MemberwiseCloner.Invoke(SystemJsonSerializer.DefaultOptions);
-            SystemJsonOptions.WriteIndented = true;
+            SystemJsonOptions = new JsonSerializerOptions() { WriteIndented = true };
             NewtonsoftJsonSettings = MemberwiseCloner.Invoke(NewtonsoftJsonSerializer.DefaultSettings);
             NewtonsoftJsonSettings.Formatting = Formatting.Indented;
         }

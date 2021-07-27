@@ -1,4 +1,5 @@
 using System;
+using System.Security;
 using Newtonsoft.Json;
 using Stl.Async;
 
@@ -48,6 +49,8 @@ namespace Stl.Internal
 
         public static Exception UnsupportedTypeForJsonSerialization(Type type)
             => new JsonSerializationException($"Unsupported type: '{type}'.");
+        public static Exception WrongExceptionType(Type type)
+            => new SecurityException($"Wrong exception type: '{type}'.");
 
         public static Exception AlreadyDisposed() =>
             new ObjectDisposedException("unknown", "The object is already disposed.");
