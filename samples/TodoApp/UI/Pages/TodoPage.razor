@@ -14,15 +14,15 @@
 <h1>Todo List</h1>
 
 <StateOfStateBadge State="@State" />
-<Text Margin="Margin.Is1.OnY">
+<Div Margin="Margin.Is1.OnY">
     Updated: <b><MomentsAgoBadge Value="LastStateUpdateTime" /></b>
-</Text>
-<Text Margin="Margin.Is1.OnY">
+</Div>
+<Div Margin="Margin.Is1.OnY">
     Call:
     <Button Color="Color.Danger" Size="Size.Small" Clicked="_ => StateHasChanged()">StateHasChanged()</Button>
     <Button Color="Color.Danger" Size="Size.Small" Clicked="_ => State.Invalidate()">State.Invalidate()</Button>
     <Button Color="Color.Danger" Size="Size.Small" Clicked="_ => State.Recompute()">State.Recompute()</Button>
-</Text>
+</Div>
 
 <AuthorizeView>
     <NotAuthorized>

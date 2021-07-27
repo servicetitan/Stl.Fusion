@@ -6,7 +6,7 @@
     - Updates on state change without re-rendering the parent component.
 *@
 
-<Text Margin="Margin.Is1.OnY">
+<Div Margin="Margin.Is1.OnY">
     <span>Component state: </span>
     @if (IsLoading) {
         <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
@@ -21,7 +21,7 @@
         <span class="oi oi-check" aria-hidden="true"></span>
         <b>In sync.</b>
     }
-</Text>
+</Div>
 
 @code {
     private readonly Action<IState, StateEventKind> _stateChangedHandler;
