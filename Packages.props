@@ -12,6 +12,7 @@
     <BlazoriseVersion>0.9.*</BlazoriseVersion>
     <SystemNetHttpJsonVersion>5.0.3</SystemNetHttpJsonVersion>
     <MicrosoftExtensionsVersion>5.0.0</MicrosoftExtensionsVersion>
+    <StlFusionVersion>1.4.*</StlFusionVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(LegacyBuild)' != 'true'">
@@ -104,6 +105,7 @@
     <PackageReference Update="Owin" Version="1.0.0" />
     <PackageReference Update="System.Reflection.Emit.Lightweight" Version="4.7.0" />
     <!-- Build time only -->
+    <PackageReference Update="Stl" Version="$(StlFusionVersion)" />
     <PackageReference Update="Microsoft.NET.Test.Sdk" Version="16.10.0" />
     <PackageReference Update="Microsoft.AspNetCore.Components.WebAssembly.Build" Version="$(BlazorVersion)" PrivateAssets="all" />
     <PackageReference Update="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="$(BlazorVersion)" PrivateAssets="all" />
