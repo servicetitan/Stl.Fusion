@@ -43,7 +43,7 @@ So what DREAM means?
   result that depends on `GetUser(3)` directly or indirectly.
   This means Fusion tracks dependencies between cached computation results;
   the dependency graph is built and updated in the runtime, and this process
-  is completely transparent for developers.
+  is completely transparent for the developers.
 - The dependency graph can be 
   **[Distributed](https://en.wikipedia.org/wiki/Distributed_computing)**:
   Fusion allows you to create *invalidation-aware caching RPC clients* 
