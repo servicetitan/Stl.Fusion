@@ -38,17 +38,17 @@ So what DREAM means?
   *inconsistent with the ground truth*, which guarantees it will be 
   recomputed on the next *actual* (non-invalidating) call.
   Suprisingly, invalidation is *cascading*: 
-  if `GetUserPic(3)` calls `GetUser(3)`, its result will be invalidated 
-  as well in this case, and the same happens with every other computed
-  result that directly or indirectly depends on `GetUser(3)`.
+  if `GetUserPic("user@gmail.com")` calls `GetUser(3)`, its result will be invalidated 
+  as well in this case, and the same will happen with every other computed
+  result that depends on `GetUser(3)` directly or indirectly.
   This means Fusion tracks dependencies between cached computation results;
   the dependency graph is built and updated in the runtime, and this process
   is completely transparent for developers.
-- This dependency graph can be 
+- The dependency graph can be 
   **[Distributed](https://en.wikipedia.org/wiki/Distributed_computing)**:
   Fusion allows you to create *invalidation-aware caching RPC clients* 
-  for any of such functions. They:
-  - Eliminate network chattiness by re-using locally cached results while
+  for any of such functions.
+  - They eliminate network chattiness by re-using locally cached results while
     it's known they aren't invalidated on the server side yet.
     The pub/sub, delivery, and processing of invalidation messages 
     happens automatically and transparently for you.
