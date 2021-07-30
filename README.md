@@ -24,23 +24,27 @@ a novel technique that gracefully solves a number of well-known problems:
 | 💰 Single codebase for Blazor WebAssembly, Server, and Hybrid | No good alternatives |
 
 So what DREAM means?
-- **[Memoization](https://en.wikipedia.org/wiki/Memoization)** is a technique used
-  to speed up function calls by caching the output for a given input. Fusion
-  provides a *transparent memoization* for any function you like, so
+- **[Memoization](https://en.wikipedia.org/wiki/Memoization)** is a way
+  to speed up function calls by caching their output for a given input. 
+  Fusion provides a *transparent memoization* for any function, so
   when you call `GetUser(id)` multiple times, its actual computation
-  happens just once for every `id` assuming there is enough RAM to cache every result.
+  happens just once for every `id` assuming there is enough RAM to cache 
+  every result.
 - **[Reactive](https://en.wikipedia.org/wiki/Reactive_programming)** 
   part of your Fusion-based code reacts to changes by triggering 
   *invalidations*. Invalidation is a call to memoizing function inside
-  special `using (Computed.Invalidate()) { ... }` block, which
-  marks the cached result for this specific call (e.g. `GetUser(3)`) 
-  and every other result that depends on it (e.g. `GetUserPic(3)`, which
-  calls `GetUser(3)`) directly or indirectly as *inconsistent with the ground truth*
-  to ensure they'll be recomputed on the next *actual* (non-invalidating) call.
-  This also means Fusion tracks dependencies between the computation results;
-  the dependency graph is updated in the runtime, and this process is 
-  completely transparent for the developers.
-- These computation graphs can be 
+  a special `using (Computed.Invalidate()) { ... }` block, which
+  marks the cached result for some specific call (e.g. `GetUser(3)`) as
+  *inconsistent with the ground truth*, which guarantees it will be 
+  recomputed on the next *actual* (non-invalidating) call.
+  Suprisingly, invalidation is *cascading*: 
+  if `GetUserPic(3)` calls `GetUser(3)`, its result will be invalidated 
+  as well in this case, and the same happens with every other computed
+  result that directly or indirectly depends on `GetUser(3)`.
+  This means Fusion tracks dependencies between cached computation results;
+  the dependency graph is built and updated in the runtime, and this process
+  is completely transparent for developers.
+- This dependency graph can be 
   **[Distributed](https://en.wikipedia.org/wiki/Distributed_computing)**:
   Fusion allows you to create *invalidation-aware caching RPC clients* 
   for any of such functions. They:
