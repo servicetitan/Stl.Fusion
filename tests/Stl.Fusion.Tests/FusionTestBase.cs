@@ -26,7 +26,7 @@ using Stl.Fusion.Tests.UIModels;
 using Stl.Fusion.Internal;
 using Stl.Fusion.Server;
 using Stl.Testing;
-using Stl.Testing.Internal;
+using Stl.Testing.Output;
 using Stl.Time;
 using Stl.Time.Testing;
 using Xunit;

@@ -1,34 +1,33 @@
 using System.CommandLine;
 using System.CommandLine.IO;
 using FluentAssertions.Primitives;
-using Stl.Testing.Internal;
 using Xunit.Abstractions;
 
-namespace Stl.Testing
+namespace Stl.Testing.Output
 {
-    public class TestOutputConsole : IConsole
+    public class TestConsole : IConsole
     {
         IStandardStreamWriter IStandardOut.Out => Out;
         IStandardStreamWriter IStandardError.Error => Error;
-        public TestStreamWriter Out { get; protected set; } = new();
-        public TestStreamWriter Error { get; protected set; } = new();
+        public TestOutputCapture Out { get; protected set; } = new();
+        public TestOutputCapture Error { get; protected set; } = new();
 
         public bool IsOutputRedirected { get; set; }
         public bool IsErrorRedirected { get; set; }
         public bool IsInputRedirected { get; set; }
 
-        public TestOutputConsole(ITestOutputHelper? testOutput = null)
+        public TestConsole(ITestOutputHelper? testOutput = null)
         {
             if (testOutput != null) {
-                var wrapper = new TestOutputWriter(testOutput);
-                Out.TextWriter = wrapper;
-                Error.TextWriter = wrapper;
+                var testTextWriter = new TestTextWriter(testOutput);
+                Out.Downstream = testTextWriter;
+                Error.Downstream = testTextWriter;
             }
         }
 
         public override string ToString() => Out.ToString();
 
-        public TestOutputConsole Clear()
+        public TestConsole Clear()
         {
             Out.Clear();
             Error.Clear();

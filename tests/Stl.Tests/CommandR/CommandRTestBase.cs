@@ -12,7 +12,7 @@ using Stl.Fusion;
 using Stl.Fusion.EntityFramework;
 using Stl.IO;
 using Stl.Testing;
-using Stl.Testing.Internal;
+using Stl.Testing.Output;
 using Stl.Tests.CommandR.Services;
 using Xunit.Abstractions;
 using Xunit.DependencyInjection.Logging;

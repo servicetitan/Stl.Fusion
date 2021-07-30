@@ -26,8 +26,9 @@ namespace Stl.Fusion.EntityFramework.Authentication
         protected ISessionFactory SessionFactory { get; }
         protected TimeSpan MinUpdatePresencePeriod { get; }
 
-        public DbAuthService(Options options, IServiceProvider services) : base(services)
+        public DbAuthService(Options? options, IServiceProvider services) : base(services)
         {
+            options ??= new();
             MinUpdatePresencePeriod = options.MinUpdatePresencePeriod;
             Users = services.GetRequiredService<IDbUserRepo<TDbContext>>();
             Sessions = services.GetRequiredService<IDbSessionInfoRepo<TDbContext>>();

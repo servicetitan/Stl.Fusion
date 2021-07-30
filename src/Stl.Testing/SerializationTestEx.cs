@@ -76,7 +76,7 @@ namespace Stl.Testing
         {
             var v1 = SystemJsonSerialized.New(value);
             output?.WriteLine($"SystemJsonSerialized: {v1.Data}");
-            var v2 = NewtonsoftJsonSerialized.New<T>(v1.Data);
+            var v2 = SystemJsonSerialized.New<T>(v1.Data);
             return v2.Value;
         }
 

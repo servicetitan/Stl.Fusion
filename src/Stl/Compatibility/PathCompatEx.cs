@@ -35,7 +35,7 @@ namespace System.IO
         {
             if (path1.Length == 0)
                 return path2;
-            return path2.Length == 0 ? path1 : string.Concat(path1, path2);
+            return path2.Length == 0 ? path1 : Path.Combine(path1, path2);
         }
 
         public static string GetFullPath(string path, string basePath)

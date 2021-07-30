@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Text;
 using System.Threading;
-using Stl.Testing.Internal;
+using Stl.Testing.Output;
 using Xunit.Abstractions;
 
 namespace Stl.Testing
@@ -17,14 +17,14 @@ namespace Stl.Testing
         }
 
         public static readonly TextWriter TextWriter = new ProxyWriter();
-        public static readonly AsyncLocal<TestOutputWriter?> TestOutput = new AsyncLocal<TestOutputWriter?>();
+        public static readonly AsyncLocal<TestTextWriter?> TestOutput = new AsyncLocal<TestTextWriter?>();
 
-        public static ClosedDisposable<(TestOutputWriter?, TextWriter)> Activate(ITestOutputHelper testOutput)
+        public static ClosedDisposable<(TestTextWriter?, TextWriter)> Activate(ITestOutputHelper testOutput)
         {
             var oldTestOut = TestOutput.Value;
             var oldConsoleOut = Console.Out;
             Console.SetOut(TextWriter);
-            TestOutput.Value = new TestOutputWriter(testOutput);
+            TestOutput.Value = new TestTextWriter(testOutput);
             return Disposable.NewClosed((oldTestOut, oldConsoleOut), state => {
                 var (oldTestOut1, oldConsoleOut1) = state;
                 TestOutput.Value = oldTestOut1;

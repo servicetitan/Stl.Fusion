@@ -31,7 +31,7 @@ namespace Stl.Tests.Serialization
             p = p.AssertPassesThroughAllSerializers();
             var e1 = p.ToException();
             e1.Should().BeOfType<InvalidOperationException>();
-            e1.Message.Should().Be(e.Message);
+            e1!.Message.Should().Be(e.Message);
         }
 
         [Fact]

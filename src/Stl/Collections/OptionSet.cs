@@ -14,10 +14,10 @@ namespace Stl.Collections
     {
         private volatile ImmutableDictionary<Symbol, object> _items;
 
-        [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        [JsonIgnore]
         public ImmutableDictionary<Symbol, object> Items => _items;
 
-        [JsonPropertyName(nameof(Items)),  Newtonsoft.Json.JsonProperty(nameof(Items))]
+        [JsonPropertyName(nameof(Items)),  Newtonsoft.Json.JsonIgnore]
         public Dictionary<string, NewtonsoftJsonSerialized<object>> JsonCompatibleItems
             => Items.ToDictionary(
                 p => p.Key.Value,
@@ -48,10 +48,12 @@ namespace Stl.Collections
 
         public OptionSet()
             => _items = ImmutableDictionary<Symbol, object>.Empty;
+
+        [Newtonsoft.Json.JsonConstructor]
         public OptionSet(ImmutableDictionary<Symbol, object>? items)
             => _items = items ?? ImmutableDictionary<Symbol, object>.Empty;
 
-        [JsonConstructor, Newtonsoft.Json.JsonConstructor]
+        [JsonConstructor]
         public OptionSet(Dictionary<string, NewtonsoftJsonSerialized<object>>? jsonCompatibleItems)
             : this(jsonCompatibleItems?.ToImmutableDictionary(p => (Symbol) p.Key, p => p.Value.Value))
         { }
