@@ -14,6 +14,7 @@ using Stl.Fusion.Operations;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Operations.Internal;
 using Stl.Fusion.UI;
+using Stl.Fusion.UI.Internal;
 using Stl.Time;
 
 namespace Stl.Fusion
@@ -88,6 +89,10 @@ namespace Stl.Fusion
             Services.TryAddSingleton<InvalidateOnCompletionCommandHandler.Options>();
             Services.TryAddSingleton<InvalidateOnCompletionCommandHandler>();
             commander.AddHandlers<InvalidateOnCompletionCommandHandler>();
+
+            // Local command handler
+            Services.TryAddSingleton<LocalCommandHandler>();
+            commander.AddHandlers<LocalCommandHandler>();
 
             // Catch-all completion handler
             Services.TryAddSingleton<CatchAllCompletionHandler>();
