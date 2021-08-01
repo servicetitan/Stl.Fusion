@@ -12,8 +12,23 @@ namespace Stl.Fusion.UI
         [JsonIgnore, Newtonsoft.Json.JsonIgnore]
         public Func<Task>? Handler { get; init; }
 
+        public LocalCommand(Action handler)
+            => Handler = () => {
+                handler.Invoke();
+                return Task.CompletedTask;
+            };
+
         public LocalCommand(Func<Task> handler)
             => Handler = handler;
+
+        public LocalCommand(string title, Action handler)
+        {
+            Title = title;
+            Handler = () => {
+                handler.Invoke();
+                return Task.CompletedTask;
+            };
+        }
 
         public LocalCommand(string title, Func<Task> handler)
         {
