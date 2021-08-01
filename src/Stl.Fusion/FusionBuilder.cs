@@ -13,6 +13,7 @@ using Stl.Fusion.Bridge.Interception;
 using Stl.Fusion.Operations;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Operations.Internal;
+using Stl.Fusion.UI;
 using Stl.Time;
 
 namespace Stl.Fusion
@@ -57,7 +58,9 @@ namespace Stl.Fusion
             // States & their dependencies
             Services.TryAddTransient<IStateFactory, StateFactory>();
             Services.TryAddTransient(typeof(IMutableState<>), typeof(MutableState<>));
-            Services.TryAddTransient<IUpdateDelayer>(_ => UpdateDelayer.Default);
+            Services.TryAddSingleton<UICommandTracker.Options>();
+            Services.TryAddScoped<IUICommandTracker, UICommandTracker>();
+            Services.TryAddTransient<IUpdateDelayer>(c => new UpdateDelayer(c.UICommandTracker()));
 
             // CommandR, command completion and invalidation
             var commander = Services.AddCommander();

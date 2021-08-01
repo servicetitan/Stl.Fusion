@@ -13,6 +13,7 @@ using Stl.DependencyInjection;
 using Stl.Fusion.Blazor;
 using Stl.Fusion.Client.Internal;
 using Stl.Fusion.Extensions;
+using Stl.Fusion.UI;
 using Templates.TodoApp.Abstractions;
 using Templates.TodoApp.Abstractions.Clients;
 using Templates.TodoApp.Services;
@@ -83,7 +84,7 @@ namespace Templates.TodoApp.UI
             fusion.AddFusionTime();
 
             // Default update delay is 0.5s
-            services.AddTransient<IUpdateDelayer>(_ => new UpdateDelayer(0.5));
+            services.AddTransient<IUpdateDelayer>(c => new UpdateDelayer(c.UICommandTracker(), 0.5));
         }
     }
 }

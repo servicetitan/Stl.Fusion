@@ -8,6 +8,8 @@ namespace Stl.Comparison
 
         public bool Equals(IHasId<T>? x, IHasId<T>? y)
         {
+            if (ReferenceEquals(x, y))
+                return true;
             if (x == null)
                 return y == null;
             return y != null && EqualityComparer<T>.Default.Equals(x.Id, y.Id);

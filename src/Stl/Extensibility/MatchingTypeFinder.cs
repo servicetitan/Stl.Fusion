@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
+using Stl.Collections;
 using Stl.Concurrency;
 using Stl.Internal;
 using Stl.Reflection;
@@ -17,13 +20,19 @@ namespace Stl.Extensibility
 
     public class MatchingTypeFinder : IMatchingTypeFinder
     {
+        public static volatile ImmutableHashSet<Assembly> Assemblies = ImmutableHashSet<Assembly>.Empty;
+
         private readonly Dictionary<(Type Source, Symbol Scope), Type> _matches;
         private readonly ConcurrentDictionary<(Type Source, Symbol Scope), Type?> _cache = new();
 
+        public MatchingTypeFinder()
+            : this(Assemblies) { }
+        public MatchingTypeFinder(params Assembly[] assemblies)
+            : this((IEnumerable<Assembly>) assemblies) { }
+        public MatchingTypeFinder(IEnumerable<Assembly> assemblies)
+            : this(assemblies.SelectMany(a => a.GetTypes())) { }
         public MatchingTypeFinder(Dictionary<(Type Source, Symbol Scope), Type> matches)
             => _matches = matches;
-        public MatchingTypeFinder(params Assembly[] assemblies)
-            : this(assemblies.SelectMany(a => a.GetTypes())) { }
         public MatchingTypeFinder(IEnumerable<Type> candidates)
         {
             _matches = new Dictionary<(Type, Symbol), Type>();
@@ -34,7 +43,7 @@ namespace Stl.Extensibility
             }
         }
 
-        public Type? TryFind(Type source, Symbol scope)
+        public virtual Type? TryFind(Type source, Symbol scope)
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
@@ -62,6 +71,38 @@ namespace Stl.Extensibility
                 }
                 return null;
             }, this);
+        }
+
+        // AddSearchAssemblies
+
+        public static void AddAssembly(Assembly assembly)
+        {
+            var spinWait = new SpinWait();
+            while (true) {
+                var oldSet = Assemblies;
+                var newSet = oldSet.Add(assembly);
+                if (Interlocked.CompareExchange(ref Assemblies, newSet, oldSet) == oldSet)
+                    return;
+                spinWait.SpinOnce();
+            }
+        }
+
+        public static void AddAssemblies(params Assembly[] assemblies)
+            => AddAssemblies((IEnumerable<Assembly>) assemblies);
+
+        public static void AddAssemblies(IEnumerable<Assembly> assemblies)
+        {
+            var spinWait = new SpinWait();
+            while (true) {
+                var oldSet = Assemblies;
+                var newSet = oldSet;
+                // ReSharper disable once PossibleMultipleEnumeration
+                foreach (var searchAssembly in assemblies)
+                    newSet = newSet.Add(searchAssembly);
+                if (Interlocked.CompareExchange(ref Assemblies, newSet, oldSet) == oldSet)
+                    return;
+                spinWait.SpinOnce();
+            }
         }
     }
 }

@@ -1,5 +1,5 @@
 @if (Exception != null) {
-    <Error @key="@Exception" Title="@Title">@Exception.Message</Error>
+    <Error @key="@Exception" Title="@Title" Dismissed="@Dismissed">@Exception.Message</Error>
 }
 
 @code {
@@ -7,4 +7,6 @@
     public string Title { get; set; } = "Error!";
     [Parameter]
     public Exception? Exception { get; set; }
+    [Parameter]
+    public EventCallback Dismissed { get; set; }
 }

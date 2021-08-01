@@ -12,13 +12,14 @@ namespace Stl.Reflection
 {
     public static class TypeEx
     {
-        public static readonly string SymbolPrefix = "@";
-
         private static readonly Regex MethodNameRe = new("[^\\w\\d]+", RegexOptions.Compiled);
         private static readonly Regex MethodNameTailRe = new("_+$", RegexOptions.Compiled);
         private static readonly Regex GenericMethodNameTailRe = new("_\\d+$", RegexOptions.Compiled);
         private static readonly ConcurrentDictionary<(Type, bool, bool), Symbol> ToIdentifierNameCache = new();
         private static readonly ConcurrentDictionary<Type, Symbol> ToSymbolCache = new();
+        private static readonly ConcurrentDictionary<Type, Type?> GetTaskOrValueTaskTypeCache = new();
+
+        public static readonly string SymbolPrefix = "@";
 
         public static IEnumerable<Type> GetAllBaseTypes(this Type type, bool addSelf = false, bool addInterfaces = false)
         {
@@ -90,17 +91,33 @@ namespace Stl.Reflection
                 : (Symbol) type.ToIdentifierName(true, true);
 
         public static bool IsTaskOrValueTask(this Type type)
-            => typeof(Task).IsAssignableFrom(type) || (
-                type.IsGenericType
-                    ? type.GetGenericTypeDefinition() == typeof(ValueTask<>)
-                    : type == typeof(ValueTask));
+            => type.GetTaskOrValueTaskType() != null;
+
+        public static Type? GetTaskOrValueTaskType(this Type type)
+        {
+            return GetTaskOrValueTaskTypeCache.GetOrAdd(type, type1 => {
+                if (type1 == typeof(object))
+                    return null;
+                if (type1 == typeof(ValueTask) || type1 == typeof(Task))
+                    return type1;
+                if (type1.IsGenericType) {
+                    var gtd = type1.GetGenericTypeDefinition();
+                    if (gtd == typeof(ValueTask<>) || gtd == typeof(Task<>))
+                        return type1;
+                }
+
+                var baseType = type1.BaseType;
+                return baseType == null ? null : GetTaskOrValueTaskType(baseType);
+            });
+        }
 
         public static Type? GetTaskOrValueTaskArgument(this Type type)
         {
-            if (!type.IsTaskOrValueTask())
+            var taskType = type.GetTaskOrValueTaskType();
+            if (taskType == null)
                 throw new ArgumentOutOfRangeException(nameof(type));
-            return type.IsGenericType
-                ? type.GenericTypeArguments.SingleOrDefault()
+            return taskType.IsGenericType
+                ? taskType.GenericTypeArguments.SingleOrDefault()
                 : null;
         }
     }

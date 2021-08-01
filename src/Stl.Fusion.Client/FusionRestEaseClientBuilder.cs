@@ -117,7 +117,7 @@ namespace Stl.Fusion.Client
 
                 // 2. Create view mapping clientType to serviceType
                 if (clientType != serviceType)
-                    client = c.GetTypeViewFactory().CreateView(client, clientType, serviceType);
+                    client = c.TypeViewFactory().CreateView(client, clientType, serviceType);
 
                 return client;
             }
@@ -169,7 +169,7 @@ namespace Stl.Fusion.Client
 
                 // 3. Create view mapping clientType to serviceType
                 if (clientType != serviceType)
-                    client = c.GetTypeViewFactory().CreateView(client, clientType, serviceType);
+                    client = c.TypeViewFactory().CreateView(client, clientType, serviceType);
 
                 return clientAccessorType!.CreateInstance(client);
             }

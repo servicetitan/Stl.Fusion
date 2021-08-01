@@ -15,8 +15,11 @@ namespace Stl.Fusion.Interception
     {
         public class Options
         {
-            public IMatchingTypeFinder MatchingTypeFinder { get; set; } =
-                new MatchingTypeFinder(Assembly.GetExecutingAssembly());
+            public IMatchingTypeFinder MatchingTypeFinder { get; set; } = new MatchingTypeFinder();
+
+            static Options()
+                // We need to add the current assembly as a default one to search handlers in
+                => Extensibility.MatchingTypeFinder.AddAssembly(typeof(Options).Assembly);
         }
 
         protected IMatchingTypeFinder MatchingTypeFinder { get; }

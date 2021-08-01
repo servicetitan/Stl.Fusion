@@ -104,7 +104,7 @@ namespace Stl.Tests.Interception
                 (await view.ThreeXAsync()).Should().Be("1");
             }
 
-            var viewFactory = services.GetTypeViewFactory<IView>();
+            var viewFactory = services.TypeViewFactory<IView>();
             var classView = viewFactory.CreateView(services.GetRequiredService<Service>());
             var interfaceView = viewFactory.CreateView(services.GetRequiredService<IService>());
             await Test(classView);

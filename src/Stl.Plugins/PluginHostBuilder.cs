@@ -1,17 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
-using Stl.DependencyInjection;
 using Stl.Plugins.Internal;
-using Stl.Plugins.Metadata;
-using Stl.Reflection;
 
 namespace Stl.Plugins
 {
@@ -24,10 +19,9 @@ namespace Stl.Plugins
         public Func<IServiceCollection, IServiceProvider> ServiceProviderFactory { get; set; } =
             services => new DefaultServiceProviderFactory().CreateServiceProvider(services);
 
-        public PluginHostBuilder()
-            : this(new ServiceCollection()) { }
-        public PluginHostBuilder(IServiceCollection services)
+        public PluginHostBuilder(IServiceCollection? services = null)
         {
+            services ??= new ServiceCollection();
             Services = services;
             Services.AddLogging(logging => logging.ClearProviders());
 

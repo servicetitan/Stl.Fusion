@@ -7,11 +7,11 @@ namespace Stl.Interception
     {
         // GetTypeViewFactory
 
-        public static ITypeViewFactory GetTypeViewFactory(this IServiceProvider services)
-            => services.GetService<ITypeViewFactory>() ?? TypeViewFactory.Default;
+        public static ITypeViewFactory TypeViewFactory(this IServiceProvider services)
+            => services.GetService<ITypeViewFactory>() ?? Interception.TypeViewFactory.Default;
 
-        public static TypeViewFactory<TView> GetTypeViewFactory<TView>(this IServiceProvider services)
+        public static TypeViewFactory<TView> TypeViewFactory<TView>(this IServiceProvider services)
             where TView : class
-            => services.GetTypeViewFactory().For<TView>();
+            => services.TypeViewFactory().For<TView>();
     }
 }

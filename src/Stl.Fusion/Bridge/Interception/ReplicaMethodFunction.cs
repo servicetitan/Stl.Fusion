@@ -98,7 +98,7 @@ namespace Stl.Fusion.Bridge.Interception
                 // Try to pull the actual error first
                 var errorPsi = (PublicationStateInfo<object>) psi;
                 if (errorPsi.Output.HasError)
-                    output = Result.Error<T>(errorPsi.Output.Error);
+                    output = Result.Error<T>(errorPsi.Output.Error!);
                 // We need a unique LTag here, so we use a range that's supposed
                 // to be unused by LTagGenerators.
                 if (psi.Version == default)

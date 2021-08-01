@@ -43,6 +43,8 @@ namespace Stl.Internal
 
         public static Exception TaskIsNotCompleted() =>
             new InvalidOperationException("Task is expected to be completed at this point, but it's not.");
+        public static Exception TaskHasNotCompletedSuccessfullyButNoException() =>
+            new InvalidOperationException("Task hasn't completed successfully but has no Exception.");
 
         public static Exception PathIsRelative(string? paramName) =>
             new ArgumentException("Path is relative.", paramName);

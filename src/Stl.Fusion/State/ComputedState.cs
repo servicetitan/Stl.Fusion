@@ -103,7 +103,8 @@ namespace Stl.Fusion
                 try {
                     var snapshot = Snapshot;
                     var computed = snapshot.Computed;
-                    await computed.WhenInvalidated(cancellationToken).ConfigureAwait(false);
+                    if (!computed.IsInvalidated())
+                        await computed.WhenInvalidated(cancellationToken);
                     if (snapshot.UpdateCount != 0 || DelayFirstUpdate)
                         await UpdateDelayer.UpdateDelay(snapshot, cancellationToken).ConfigureAwait(false);
                     if (!snapshot.WhenUpdated().IsCompleted)

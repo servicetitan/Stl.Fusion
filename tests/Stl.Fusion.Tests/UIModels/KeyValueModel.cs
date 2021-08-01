@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.DependencyInjection;
 using Stl.Fusion.Tests.Services;
+using Stl.Fusion.UI;
 
 namespace Stl.Fusion.Tests.UIModels
 {
@@ -24,7 +25,7 @@ namespace Stl.Fusion.Tests.UIModels
 
         public StringKeyValueModelState(IServiceProvider services)
             : base(
-                new Options() { UpdateDelayer = new UpdateDelayer(0.5) },
+                new Options() { UpdateDelayer = new UpdateDelayer(services.UICommandTracker(), 0.5) },
                 services)
         {
             Locals = new MutableState<string>(services);

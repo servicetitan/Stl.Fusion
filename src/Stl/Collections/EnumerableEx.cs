@@ -21,6 +21,17 @@ namespace Stl.Collections
             return result;
         }
 
+        // Extensions
+
+        public static IEnumerable<T> Apply<T>(this IEnumerable<T> source, Action<T> action)
+        {
+            // ReSharper disable once PossibleMultipleEnumeration
+            foreach (var item in source)
+                action.Invoke(item);
+            // ReSharper disable once PossibleMultipleEnumeration
+            return source;
+        }
+
         public static IEnumerable<T> DistinctBy<T, TKey>(this IEnumerable<T> source, Func<T, TKey> keySelector)
         {
             var hashSet = new HashSet<TKey>();

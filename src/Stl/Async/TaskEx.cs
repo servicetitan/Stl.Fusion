@@ -93,7 +93,10 @@ namespace Stl.Async
             using var cts = new CancellationTokenSource();
             var ctsToken = cts.Token;
 
-            await using var _ = cancellationToken.Register(state => ((CancellationTokenSource) state!).Cancel(), cts).ToAsyncDisposableAdapter();
+            await using var _ = cancellationToken
+                .Register(state => ((CancellationTokenSource) state!).Cancel(), cts)
+                .ToAsyncDisposableAdapter();
+
             var delayTask = clock.Delay(timeout, ctsToken);
             completedTask = await Task.WhenAny(task, delayTask).ConfigureAwait(false);
 
@@ -119,7 +122,9 @@ namespace Stl.Async
             Task? completedTask = null;
             using var cts = new CancellationTokenSource();
             var ctsToken = cts.Token;
-            await using var _ = cancellationToken.Register(state => ((CancellationTokenSource) state!).Cancel(), cts).ToAsyncDisposableAdapter();
+            await using var _ = cancellationToken
+                .Register(state => ((CancellationTokenSource) state!).Cancel(), cts)
+                .ToAsyncDisposableAdapter();
 
             var delayTask = clock.Delay(timeout, ctsToken);
             completedTask = await Task.WhenAny(task, delayTask).ConfigureAwait(false);

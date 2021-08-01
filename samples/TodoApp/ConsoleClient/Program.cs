@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Stl.Fusion;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Client;
+using Stl.Fusion.UI;
 using Templates.TodoApp.Abstractions;
 using Templates.TodoApp.Abstractions.Clients;
 using static System.Console;
@@ -48,7 +49,7 @@ IServiceProvider CreateServiceProvider()
     fusion.AddAuthentication().AddRestEaseClient();
 
     // Default update delay is 0.1s
-    services.AddTransient<IUpdateDelayer>(_ => new UpdateDelayer(0.1));
+    services.AddTransient<IUpdateDelayer>(c => new UpdateDelayer(c.UICommandTracker(), 0.1));
 
     return services.BuildServiceProvider();
 }

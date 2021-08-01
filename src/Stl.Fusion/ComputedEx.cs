@@ -46,30 +46,16 @@ namespace Stl.Fusion
             });
         }
 
-        public static async Task WhenInvalidated(this IComputed computed, CancellationToken cancellationToken = default)
+        public static Task WhenInvalidated(this IComputed computed, CancellationToken cancellationToken = default)
         {
             if (computed.ConsistencyState == ConsistencyState.Invalidated)
-                return;
-            // Why holding? If the calling task isn't referenced from alive set,
-            // (e.g. it is simply started w/ Run), there is nothing that may
-            // prevent GC from collecting it + computed, even though WhenInvalidated
-            // implies waiting, right?
-            var ts = TaskSource.New<Unit>(true);
-            var onInvalidated = (Action<IComputed>) (_ => ts.SetResult(default));
-            computed.Invalidated += onInvalidated;
-            var holder = RefHolder.Hold(computed);
-            try {
-                await ts.Task.WithFakeCancellation(cancellationToken).ConfigureAwait(false);
-                // No need to remove onInvalidated handler in case of success:
-                // all handlers are auto-removed on invalidation.
-            }
-            catch {
-                computed.Invalidated -= onInvalidated;
-                throw;
-            }
-            finally {
-                holder.Dispose();
-            }
+                return Task.CompletedTask;
+            var taskSource = TaskSource.New<Unit>(true);
+            if (cancellationToken != CancellationToken.None)
+                return new WhenInvalidatedClosure(taskSource, computed, cancellationToken).Task;
+            // No way to cancel / unregister the handler here
+            computed.Invalidated += _ => taskSource.TrySetResult(default);
+            return taskSource.Task;
         }
 
         public static void SetOutput<T>(this IComputed<T> computed, Result<T> output)

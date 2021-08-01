@@ -14,7 +14,7 @@ namespace Stl.Fusion
         int ErrorCount { get; }
         int RetryCount { get; }
 
-        Task WhenInvalidated(CancellationToken cancellationToken);
+        Task WhenInvalidated(CancellationToken cancellationToken = default);
         Task WhenUpdating();
         Task WhenUpdated();
     }
@@ -77,7 +77,7 @@ namespace Stl.Fusion
         public override string ToString()
             => $"{GetType().Name}({Computed}, [{UpdateCount} update(s) / {ErrorCount} failure(s)])";
 
-        public Task WhenInvalidated(CancellationToken cancellationToken)
+        public Task WhenInvalidated(CancellationToken cancellationToken = default)
             => Computed.WhenInvalidated(cancellationToken);
         public Task WhenUpdating() => WhenUpdatingSource.Task;
         public Task WhenUpdated() => WhenUpdatedSource.Task;
