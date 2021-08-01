@@ -10,7 +10,7 @@ namespace Stl.Fusion.UI
     {
         public ICommander Commander { get; init; }
         public IUICommandTracker UICommandTracker { get; init; }
-        public bool ThrowOnError { get; init; } = false;
+        public bool ThrowOnError { get; init; } = true;
 
         public UICommandRunner(ICommander commander, IUICommandTracker uiCommandTracker)
         {
