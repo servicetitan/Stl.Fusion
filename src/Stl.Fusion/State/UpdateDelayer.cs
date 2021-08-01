@@ -83,14 +83,18 @@ namespace Stl.Fusion
                     return;
 
                 // 2. Wait a bit to see if the invalidation is caused by UI command
-                var commandCompletedTask = CommandTracker.LastOrWhenCommandCompleted(UICommandRecencyDelta);
                 var delayStart = Clock.Now;
-                if (!commandCompletedTask.IsCompleted)
-                    await Task.WhenAny(whenUpdatedTask, commandCompletedTask)
-                        .WithTimeout(Clock, UICommandRecencyDelta, cancellationToken)
-                        .ConfigureAwait(false);
-                if (whenUpdatedTask.IsCompleted)
-                    return;
+                var commandCompletedTask = CommandTracker.LastOrWhenCommandCompleted(UICommandRecencyDelta);
+                if (UpdateDelayDuration > TimeSpan.Zero) {
+                    if (!commandCompletedTask.IsCompleted) {
+                        var waitDuration = TimeSpanEx.Min(UpdateDelayDuration, UICommandRecencyDelta);
+                        await Task.WhenAny(whenUpdatedTask, commandCompletedTask)
+                            .WithTimeout(Clock, waitDuration, cancellationToken)
+                            .ConfigureAwait(false);
+                        if (whenUpdatedTask.IsCompleted)
+                            return;
+                    }
+                }
 
                 // 3. Actual delay
                 var retryCount = stateSnapshot.RetryCount;
@@ -109,7 +113,8 @@ namespace Stl.Fusion
 
         public virtual TimeSpan GetUpdateDelay(bool isUICommandCaused, int retryCount)
         {
-            var baseDelay = isUICommandCaused ? UICommandUpdateDelayDuration : UpdateDelayDuration;
+            var uiCommandUpdateDelayDuration = TimeSpanEx.Min(UpdateDelayDuration, UICommandUpdateDelayDuration);
+            var baseDelay = isUICommandCaused ? uiCommandUpdateDelayDuration : UpdateDelayDuration;
             if (retryCount <= 0)
                 return baseDelay;
             var retryDelay = Math.Pow(Math.Sqrt(2), retryCount) * MinRetryDelayDuration.TotalSeconds;
