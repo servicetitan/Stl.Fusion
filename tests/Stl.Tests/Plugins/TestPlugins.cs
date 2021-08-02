@@ -52,7 +52,7 @@ namespace Stl.Tests.Plugins
             .Set("Client", true)
             .Set("Server", false);
 
-        public TestPlugin2(IPluginInfoProvider _) { }
+        public TestPlugin2(IPluginInfoProvider.Query _) { }
 
         [ServiceConstructor]
         public TestPlugin2(IServiceProvider services)
