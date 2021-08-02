@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
+using Stl.DependencyInjection;
 using Stl.Plugins.Internal;
 
 namespace Stl.Plugins
@@ -23,7 +24,8 @@ namespace Stl.Plugins
         {
             services ??= new ServiceCollection();
             Services = services;
-            Services.AddLogging(logging => logging.ClearProviders());
+            if (!Services.HasService<ILoggerFactory>())
+                Services.AddLogging();
 
             // Own services
             Services.TryAddSingleton<IPluginHost, PluginHost>();

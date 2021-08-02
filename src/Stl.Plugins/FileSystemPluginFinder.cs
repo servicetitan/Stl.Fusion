@@ -87,10 +87,11 @@ namespace Stl.Plugins
 #endif
                     foreach (var type in assembly.ExportedTypes) {
                         cancellationToken.ThrowIfCancellationRequested();
-                        var pluginAttribute = type.GetCustomAttribute<PluginAttribute>(false);
-                        if (pluginAttribute == null)
+                        if (type.IsAbstract || type.IsNotPublic)
                             continue;
-                        plugins.Add(type);
+                        var attr = type.GetCustomAttribute<PluginAttribute>();
+                        if (attr?.IsEnabled == true)
+                            plugins.Add(type);
                     }
                 }
                 catch (FileNotFoundException e) {

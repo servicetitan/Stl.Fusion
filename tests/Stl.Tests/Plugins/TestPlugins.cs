@@ -22,22 +22,29 @@ namespace Stl.Tests.Plugins
         string GetVersion();
     }
 
+    [Plugin]
     public abstract class TestPlugin : ITestPlugin
     {
         public virtual string GetName() => GetType().Name;
     }
 
-    [Plugin]
+    [Plugin(IsEnabled = false)]
+    public class DisabledTestPlugin : TestPlugin, IHasDependencies, ITestSingletonPlugin
+    {
+        public IEnumerable<Type> Dependencies { get; } = Array.Empty<Type>();
+
+        [ServiceConstructor]
+        public DisabledTestPlugin() { }
+    }
+
     public class TestPlugin1 : TestPlugin, IHasDependencies, ITestSingletonPlugin
     {
         public IEnumerable<Type> Dependencies { get; } = new [] { typeof(TestPlugin2) };
 
-        public TestPlugin1(IPluginInfoProvider _) { }
         [ServiceConstructor]
         public TestPlugin1() { }
     }
 
-    [Plugin]
     public class TestPlugin2 : TestPlugin, ITestPluginEx, IHasCapabilities, ITestSingletonPlugin
     {
         public virtual string GetVersion() => "1.0";
@@ -59,7 +66,6 @@ namespace Stl.Tests.Plugins
     {
         public IEnumerable<Type> Dependencies { get; } = new [] { typeof(TestPlugin2) };
 
-        public WrongPlugin(IPluginInfoProvider _) { }
         [ServiceConstructor]
         public WrongPlugin() { }
     }

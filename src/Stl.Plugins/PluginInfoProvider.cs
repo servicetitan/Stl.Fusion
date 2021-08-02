@@ -40,7 +40,10 @@ namespace Stl.Plugins
         protected virtual object? GetPlugin(Type pluginType)
             => _pluginCache.GetOrAdd(pluginType, (type, self) => {
                 var ctor = type.GetConstructor(new [] {typeof(IPluginInfoProvider)});
-                return ctor?.Invoke(new object[] { self });
+                if (ctor != null)
+                    return ctor.Invoke(new object[] { self });
+                ctor = type.GetConstructor(new Type[0]);
+                return ctor?.Invoke(new object[0]);
             }, this);
     }
 }
