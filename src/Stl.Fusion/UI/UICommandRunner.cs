@@ -17,6 +17,11 @@ namespace Stl.Fusion.UI
             UICommandTracker = uiCommandTracker;
         }
 
+        public Task<(TResult Result, UICommandEvent CommandEvent)> Run<TResult>(
+            ICommand<TResult> command,
+            CancellationToken cancellationToken = default)
+            => Run(command, false, cancellationToken);
+
         public async Task<(TResult Result, UICommandEvent CommandEvent)> Run<TResult>(
             ICommand<TResult> command,
             bool throwOnError,
@@ -26,6 +31,11 @@ namespace Stl.Fusion.UI
             var result = completedEvent.Result!.Cast<TResult>().Value;
             return (result, completedEvent);
         }
+
+        public Task<UICommandEvent> Run(
+            ICommand command,
+            CancellationToken cancellationToken = default)
+            => Run(command, false, cancellationToken);
 
         public virtual async Task<UICommandEvent> Run(
             ICommand command,

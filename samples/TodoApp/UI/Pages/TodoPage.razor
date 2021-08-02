@@ -92,6 +92,6 @@
     {
         var todo = new Todo("", NewTodoTitle);
         NewTodoTitle = "";
-        CommandRunner.Run(new AddOrUpdateTodoCommand(Session, todo), false);
+        CommandRunner.Run(new AddOrUpdateTodoCommand(Session, todo));
     }
 }
