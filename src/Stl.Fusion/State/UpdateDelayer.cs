@@ -24,43 +24,43 @@ namespace Stl.Fusion
             public static TimeSpan UICommandUpdateDelayDuration { get; set; } =  TimeSpan.FromMilliseconds(50);
         }
 
-        public static UpdateDelayer ZeroDelay { get; } = new(UICommandTracker.None, 0, 0);
-        public static UpdateDelayer MinDelay { get; } = new(UICommandTracker.None, Defaults.UICommandUpdateDelayDuration);
+        public static UpdateDelayer ZeroDelay { get; } = new(UI.UICommandTracker.None, 0, 0);
+        public static UpdateDelayer MinDelay { get; } = new(UI.UICommandTracker.None, Defaults.UICommandUpdateDelayDuration);
 
-        public IUICommandTracker CommandTracker { get; init; }
+        public IUICommandTracker UICommandTracker { get; init; }
         public TimeSpan UpdateDelayDuration { get; init; } = Defaults.UpdateDelayDuration;
         public TimeSpan MinRetryDelayDuration { get; init; } =  Defaults.MinRetryDelayDuration;
         public TimeSpan MaxRetryDelayDuration { get; init; } = Defaults.MaxRetryDelayDuration;
         public TimeSpan UICommandRecencyDelta { get; init; } = Defaults.UICommandRecencyDelta;
         public TimeSpan UICommandUpdateDelayDuration { get; init; } = Defaults.UICommandUpdateDelayDuration;
-        public IMomentClock Clock => CommandTracker.Clock;
+        public IMomentClock Clock => UICommandTracker.Clock;
 
-        public UpdateDelayer(IUICommandTracker commandTracker)
-            => CommandTracker = commandTracker;
+        public UpdateDelayer(IUICommandTracker uiCommandTracker)
+            => UICommandTracker = uiCommandTracker;
 
-        public UpdateDelayer(IUICommandTracker commandTracker, double updateDelaySeconds)
-            : this(commandTracker, TimeSpan.FromSeconds(updateDelaySeconds)) { }
+        public UpdateDelayer(IUICommandTracker uiCommandTracker, double updateDelaySeconds)
+            : this(uiCommandTracker, TimeSpan.FromSeconds(updateDelaySeconds)) { }
 
-        public UpdateDelayer(IUICommandTracker commandTracker, TimeSpan updateDelayDuration)
+        public UpdateDelayer(IUICommandTracker uiCommandTracker, TimeSpan updateDelayDuration)
         {
-            CommandTracker = commandTracker;
+            UICommandTracker = uiCommandTracker;
             UpdateDelayDuration = updateDelayDuration;
         }
 
         public UpdateDelayer(
-            IUICommandTracker commandTracker,
+            IUICommandTracker uiCommandTracker,
             double updateDelaySeconds,
             double uiCommandUpdateDelaySeconds)
-            : this(commandTracker,
+            : this(uiCommandTracker,
                 TimeSpan.FromSeconds(updateDelaySeconds),
                 TimeSpan.FromSeconds(uiCommandUpdateDelaySeconds)) { }
 
         public UpdateDelayer(
-            IUICommandTracker commandTracker,
+            IUICommandTracker uiCommandTracker,
             TimeSpan updateDelayDuration,
             TimeSpan uiCommandUpdateDelayDuration)
         {
-            CommandTracker = commandTracker;
+            UICommandTracker = uiCommandTracker;
             UpdateDelayDuration = updateDelayDuration;
             UICommandUpdateDelayDuration = uiCommandUpdateDelayDuration;
         }
@@ -75,7 +75,7 @@ namespace Stl.Fusion
 
             // 2. Wait a bit to see if the invalidation is caused by a UI command
             var delayStart = Clock.Now;
-            var commandCompletedTask = CommandTracker.LastOrWhenCommandCompleted(UICommandRecencyDelta);
+            var commandCompletedTask = UICommandTracker.LastOrWhenCommandCompleted(UICommandRecencyDelta);
             if (UpdateDelayDuration > TimeSpan.Zero) {
                 if (!commandCompletedTask.IsCompleted) {
                     var waitDuration = TimeSpanEx.Min(UpdateDelayDuration, UICommandRecencyDelta);
