@@ -28,7 +28,7 @@ namespace Stl.Fusion.UI
             CancellationToken cancellationToken = default)
         {
             var completedEvent = await Run((ICommand) command, throwOnError, cancellationToken).ConfigureAwait(false);
-            var result = completedEvent.Result!.Cast<TResult>().Value;
+            var result = completedEvent.IsFailed ? default! : completedEvent.Result!.Cast<TResult>().Value;
             return (result, completedEvent);
         }
 
