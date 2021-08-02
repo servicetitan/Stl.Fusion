@@ -47,5 +47,8 @@ namespace Stl.CommandR.Internal
 
         public static Exception CommandIsServerSideOnly()
             => new InvalidOperationException("The command is server-side only.");
+
+        public static Exception LocalCommandHasNoHandler()
+            => new NullReferenceException("LocalCommand.Handler is null.");
     }
 }

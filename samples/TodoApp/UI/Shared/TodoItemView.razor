@@ -33,7 +33,7 @@
     private Task InvertDone()
     {
         var todo = Value with { IsDone = !Value.IsDone };
-        return CommandRunner.Run(new AddOrUpdateTodoCommand(Session, todo));
+        return CommandRunner.Run(new AddOrUpdateTodoCommand(Session, todo), false);
     }
 
     private Task UpdateTitle(string title)
@@ -42,9 +42,9 @@
         if (Value.Title == title)
             return Task.CompletedTask;
         var todo = Value with { Title = title };
-        return CommandRunner.Run(new AddOrUpdateTodoCommand(Session, todo));
+        return CommandRunner.Run(new AddOrUpdateTodoCommand(Session, todo), false);
     }
 
     private Task Remove()
-        => CommandRunner.Run(new RemoveTodoCommand(Session, Value.Id));
+        => CommandRunner.Run(new RemoveTodoCommand(Session, Value.Id), false);
 }

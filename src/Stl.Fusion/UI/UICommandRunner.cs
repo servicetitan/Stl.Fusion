@@ -10,7 +10,6 @@ namespace Stl.Fusion.UI
     {
         public ICommander Commander { get; init; }
         public IUICommandTracker UICommandTracker { get; init; }
-        public bool ThrowOnError { get; init; } = false;
 
         public UICommandRunner(ICommander commander, IUICommandTracker uiCommandTracker)
         {
@@ -18,28 +17,23 @@ namespace Stl.Fusion.UI
             UICommandTracker = uiCommandTracker;
         }
 
-        public Task<TResult> Run<TResult>(ICommand<TResult> command, CancellationToken cancellationToken = default)
-            => Run(command, ThrowOnError, cancellationToken);
-
-        public async Task<TResult> Run<TResult>(
+        public async Task<(TResult Result, UICommandEvent CommandEvent)> Run<TResult>(
             ICommand<TResult> command,
             bool throwOnError,
             CancellationToken cancellationToken = default)
         {
             var completedEvent = await Run((ICommand) command, throwOnError, cancellationToken).ConfigureAwait(false);
-            return completedEvent.Result!.Cast<TResult>().Value;
+            var result = completedEvent.Result!.Cast<TResult>().Value;
+            return (result, completedEvent);
         }
-
-        public Task<UICommandEvent> Run(ICommand command, CancellationToken cancellationToken = default)
-            => Run(command, ThrowOnError, cancellationToken);
 
         public virtual async Task<UICommandEvent> Run(
             ICommand command,
             bool throwOnError,
             CancellationToken cancellationToken = default)
         {
-            var commandEvent = CreateCommandEvent(command);
-            commandEvent = UICommandTracker.ProcessEvent(commandEvent);
+            var startedEvent = CreateCommandEvent(command);
+            startedEvent = UICommandTracker.ProcessEvent(startedEvent);
 
             IResult result;
             try {
@@ -51,7 +45,7 @@ namespace Stl.Fusion.UI
                 result = Result.Error(command.GetResultType(), e);
             }
 
-            var completedEvent = commandEvent with { Result = result };
+            var completedEvent = startedEvent with { Result = result };
             completedEvent = UICommandTracker.ProcessEvent(completedEvent);
 
             if (result.HasError && throwOnError)

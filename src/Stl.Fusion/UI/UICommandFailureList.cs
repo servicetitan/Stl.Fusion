@@ -18,11 +18,11 @@ namespace Stl.Fusion.UI
         bool ICollection<UICommandEvent>.IsReadOnly => false;
 
         public UICommandFailureList() { }
-        public UICommandFailureList(IUICommandTracker uiCommandTracker)
+        public UICommandFailureList(IUICommandTracker commandTracker)
         {
-            // !!! This task will run till the moment userActionTracker is disposed
+            // !!! This task will run till the moment commandTracker is disposed
             Task.Run(async () => {
-                var failures = uiCommandTracker.Events.Where(e => e.IsFailed);
+                var failures = commandTracker.Events.Where(e => e.IsFailed);
                 await foreach (var failure in failures)
                     Add(failure);
             });

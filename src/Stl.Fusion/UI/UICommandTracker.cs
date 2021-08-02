@@ -94,18 +94,9 @@ namespace Stl.Fusion.UI
             lock (Lock) {
                 if (IsDisposed)
                     return;
+                IsDisposed = true;
                 foreach (var channel in _channels)
                     channel.Writer.Complete();
-                var exception = Errors.AlreadyDisposed();
-                if (_whenAnyEventTask != null!)
-                    TaskSource.For(_whenAnyEventTask).TrySetException(exception);
-                if (_whenCommandStartedTask != null!)
-                    TaskSource.For(_whenCommandStartedTask).TrySetException(exception);
-                if (_whenCommandCompletedTask != null!)
-                    TaskSource.For(_whenCommandCompletedTask).TrySetException(exception);
-                if (_whenCommandFailedTask != null!)
-                    TaskSource.For(_whenCommandFailedTask).TrySetException(exception);
-                IsDisposed = true;
             }
         }
 
@@ -121,7 +112,7 @@ namespace Stl.Fusion.UI
             }
             lock (Lock) {
                 if (IsDisposed)
-                    throw Errors.AlreadyDisposed();
+                    return commandEvent;
                 LastEvent = commandEvent;
                 TaskSource.For(_whenAnyEventTask).SetResult(commandEvent);
                 if (commandEvent.IsCompleted) {
@@ -151,7 +142,7 @@ namespace Stl.Fusion.UI
             var channel = Channel.CreateUnbounded<UICommandEvent>(ChannelOptions);
             lock (Lock) {
                 if (IsDisposed)
-                    throw Errors.AlreadyDisposed();
+                    yield break;
                 _channels.Add(channel);
             }
             var reader = channel.Reader;

@@ -49,6 +49,8 @@ namespace Stl.CommandR
             // Default handlers
             Services.AddSingleton<PreparedCommandHandler>();
             AddHandlers<PreparedCommandHandler>();
+            Services.AddSingleton<LocalCommandHandler>();
+            AddHandlers<LocalCommandHandler>();
         }
 
         private static ICommandHandlerRegistry? TryGetCommandHandlerRegistry(IServiceCollection services)
