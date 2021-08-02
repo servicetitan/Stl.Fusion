@@ -68,47 +68,34 @@ namespace Stl.Fusion
         public virtual async Task UpdateDelay(
             IStateSnapshot stateSnapshot, CancellationToken cancellationToken = default)
         {
-            var computed = stateSnapshot.Computed;
-            using var doneCts = new CancellationTokenSource();
-            var doneCancellationToken = doneCts.Token;
-            // ReSharper disable once AccessToDisposedClosure
-            using var _ = cancellationToken.Register(() => doneCts.Cancel());
-            try {
-                var whenInvalidatedTask = computed.WhenInvalidated(doneCancellationToken);
-                var whenUpdatedTask = stateSnapshot.WhenUpdated();
+            // 1. The update already happened? No need for delay.
+            var whenUpdatedTask = stateSnapshot.WhenUpdated();
+            if (whenUpdatedTask.IsCompleted)
+                return;
 
-                // 1. Wait for invalidation
-                await whenInvalidatedTask.ConfigureAwait(false);
-                if (whenUpdatedTask.IsCompleted)
-                    return;
-
-                // 2. Wait a bit to see if the invalidation is caused by UI command
-                var delayStart = Clock.Now;
-                var commandCompletedTask = CommandTracker.LastOrWhenCommandCompleted(UICommandRecencyDelta);
-                if (UpdateDelayDuration > TimeSpan.Zero) {
-                    if (!commandCompletedTask.IsCompleted) {
-                        var waitDuration = TimeSpanEx.Min(UpdateDelayDuration, UICommandRecencyDelta);
-                        await Task.WhenAny(whenUpdatedTask, commandCompletedTask)
-                            .WithTimeout(Clock, waitDuration, cancellationToken)
-                            .ConfigureAwait(false);
-                        if (whenUpdatedTask.IsCompleted)
-                            return;
-                    }
+            // 2. Wait a bit to see if the invalidation is caused by a UI command
+            var delayStart = Clock.Now;
+            var commandCompletedTask = CommandTracker.LastOrWhenCommandCompleted(UICommandRecencyDelta);
+            if (UpdateDelayDuration > TimeSpan.Zero) {
+                if (!commandCompletedTask.IsCompleted) {
+                    var waitDuration = TimeSpanEx.Min(UpdateDelayDuration, UICommandRecencyDelta);
+                    await Task.WhenAny(whenUpdatedTask, commandCompletedTask)
+                        .WithTimeout(Clock, waitDuration, cancellationToken)
+                        .ConfigureAwait(false);
+                    if (whenUpdatedTask.IsCompleted)
+                        return;
                 }
+            }
 
-                // 3. Actual delay
-                var retryCount = stateSnapshot.RetryCount;
-                var retryDelay = GetUpdateDelay(commandCompletedTask.IsCompleted, retryCount);
-                var remainingDelay = delayStart + retryDelay - Clock.Now;
-                if (remainingDelay < TimeSpan.Zero)
-                    return;
-                await whenUpdatedTask
-                    .WithTimeout(Clock, remainingDelay, cancellationToken)
-                    .ConfigureAwait(false);
-            }
-            finally {
-                doneCts.Cancel();
-            }
+            // 3. Actual delay
+            var retryCount = stateSnapshot.RetryCount;
+            var retryDelay = GetUpdateDelay(commandCompletedTask.IsCompleted, retryCount);
+            var remainingDelay = delayStart + retryDelay - Clock.Now;
+            if (remainingDelay < TimeSpan.Zero)
+                return;
+            await whenUpdatedTask
+                .WithTimeout(Clock, remainingDelay, cancellationToken)
+                .ConfigureAwait(false);
         }
 
         public virtual TimeSpan GetUpdateDelay(bool isUICommandCaused, int retryCount)
