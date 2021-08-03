@@ -13,7 +13,9 @@ namespace Stl.Serialization
     [TypeConverter(typeof(Base64EncodedTypeConverter))]
     public readonly struct Base64Encoded : IEquatable<Base64Encoded>, IReadOnlyCollection<byte>
     {
-        public readonly byte[] Data;
+        private readonly byte[]? _data;
+
+        public byte[] Data => _data ?? Array.Empty<byte>();
 
         // Convenience shortcuts
         public int Count => Data.Length;
@@ -22,7 +24,7 @@ namespace Stl.Serialization
             set => Data[index] = value;
         }
 
-        public Base64Encoded(byte[] data) => Data = data;
+        public Base64Encoded(byte[] data) => _data = data;
         public override string ToString() => $"{GetType().Name}({Count} byte(s))";
 
         // IEnumerable
@@ -31,12 +33,12 @@ namespace Stl.Serialization
 
         // Conversion
         public string? Encode()
-            => Data == null! ? null : Convert.ToBase64String(Data);
+            => Convert.ToBase64String(Data);
         public static Base64Encoded Decode(string? encodedData)
-            => encodedData == null ? new Base64Encoded(null!) : Convert.FromBase64String(encodedData);
+            => string.IsNullOrEmpty(encodedData) ? Array.Empty<byte>() : Convert.FromBase64String(encodedData);
 
         // Operators
-        public static implicit operator Base64Encoded(byte[] data) => new Base64Encoded(data);
+        public static implicit operator Base64Encoded(byte[] data) => new(data);
         public static implicit operator Base64Encoded(string encodedData) => Decode(encodedData);
 
         // Equality
