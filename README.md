@@ -56,8 +56,8 @@ So what DREAM means?
     like any other Fusion functions, so if you client-side code declares 
     `GetUserName(id) => server.GetUser(id).Name` function, 
     `GetUserName(id)` result will be invalidated once `GetUser(id)`
-    gets invalidated on the server side. That's what makes
-    pieces of UI to update on the client side in real-time.
+    gets invalidated on the server side. And that's what powers
+    all real-time UI updates on the client side in Fusion samples.
   
 > [Lot traceability](https://en.wikipedia.org/wiki/Traceability) is probably the 
 > best real-world analogy of how this approach works:
