@@ -54,7 +54,7 @@ So what DREAM means?
     happens automatically and transparently for you.
   - Moreover, such clients register their results in Fusion's dependency graph
     like any other Fusion functions, so if you client-side code declares 
-    `GetUserProfileUI(id) => renderUserProfile(server.GetUser(id))` function, 
+    `GetUserName(id) => server.GetUser(id).Name` function, 
     `GetUserName(id)` result will be invalidated once `GetUser(id)`
     gets invalidated on the server side. That's what makes
     pieces of UI to update on the client side in real-time.
