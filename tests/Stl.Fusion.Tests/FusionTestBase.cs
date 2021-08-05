@@ -209,7 +209,7 @@ namespace Stl.Fusion.Tests
                     else
                         b.AddFileBasedDbOperationLogChangeTracking();
                     if (!Options.UseInMemoryAuthService)
-                        b.AddDbAuthentication();
+                        b.AddDbAuthentication<DbAuthUser, DbAuthSessionInfo>();
 
                     if (!Options.UseInMemoryKeyValueStore)
                         b.AddKeyValueStore();

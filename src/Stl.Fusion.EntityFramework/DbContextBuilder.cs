@@ -105,15 +105,16 @@ namespace Stl.Fusion.EntityFramework
             Action<IServiceProvider, DbAuthService<TDbContext>.Options>? authServiceOptionsBuilder = null,
             Action<IServiceProvider, DbSessionInfoTrimmer<TDbContext>.Options>? sessionInfoTrimmerOptionsBuilder = null,
             Action<IServiceProvider, DbEntityResolver<TDbContext, long, DbUser>.Options>? userEntityResolverOptionsBuilder = null)
-            => AddDbAuthentication<DbSessionInfo, DbUser>(
+            => AddDbAuthentication<DbUser, DbSessionInfo>(
                 authServiceOptionsBuilder,
                 sessionInfoTrimmerOptionsBuilder,
                 userEntityResolverOptionsBuilder);
 
-        public DbContextBuilder<TDbContext> AddDbAuthentication<TDbSessionInfo, TDbUser>(
+        public DbContextBuilder<TDbContext> AddDbAuthentication<TDbUser, TDbSessionInfo>(
             Action<IServiceProvider, DbAuthService<TDbContext>.Options>? authServiceOptionsBuilder = null,
             Action<IServiceProvider, DbSessionInfoTrimmer<TDbContext>.Options>? sessionInfoTrimmerOptionsBuilder = null,
-            Action<IServiceProvider, DbEntityResolver<TDbContext, long, TDbUser>.Options>? userEntityResolverOptionsBuilder = null)
+            Action<IServiceProvider, DbEntityResolver<TDbContext, long, TDbUser>.Options>? userEntityResolverOptionsBuilder = null,
+            Action<IServiceProvider, DbEntityResolver<TDbContext, string, TDbSessionInfo>.Options>? sessionEntityResolverOptionsBuilder = null)
             where TDbSessionInfo : DbSessionInfo, new()
             where TDbUser : DbUser, new()
         {
@@ -133,13 +134,15 @@ namespace Stl.Fusion.EntityFramework
             });
 
             // Repositories and entity resolvers
-            Services.TryAddSingleton<IDbSessionInfoRepo<TDbContext>, DbSessionInfoRepo<TDbContext, TDbSessionInfo>>();
             Services.TryAddSingleton<IDbUserRepo<TDbContext>, DbUserRepo<TDbContext, TDbUser>>();
+            Services.TryAddSingleton<IDbSessionInfoRepo<TDbContext>, DbSessionInfoRepo<TDbContext, TDbSessionInfo>>();
             Services.AddDbContextServices<TDbContext>(dbContext => {
-                dbContext.AddDbEntityResolver<string, TDbSessionInfo>();
                 dbContext.AddDbEntityResolver<long, TDbUser>((c, options) => {
                     options.QueryTransformer = q => q.Include(u => u.Identities);
                     userEntityResolverOptionsBuilder?.Invoke(c, options);
+                });
+                dbContext.AddDbEntityResolver<string, TDbSessionInfo>((c, options) => {
+                    sessionEntityResolverOptionsBuilder?.Invoke(c, options);
                 });
             });
 
