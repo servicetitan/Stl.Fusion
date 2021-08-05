@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Stl.DependencyInjection
 {
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface, AllowMultiple = true)]
     public class RegisterAliasAttribute : RegisterAttribute
     {
         private static readonly MethodInfo ServiceFactoryMethod =
