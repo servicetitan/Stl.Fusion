@@ -161,7 +161,7 @@ There are 4 components:
   Compute Service method that calls it becomes dependent on its output too.
   And since any Compute Service never runs the same computation twice
   (unless it is invalidated), they kill any network chattiness.
-3. `IState<T>` - more specifically, `IComputedState<T>` and `IMutableState<T>`.
+3. [State] - more specifically, `IComputedState<T>` and `IMutableState<T>`.
   States are quite similar to observables in Knockout or MobX, but
   designed to follow Fusion game rules. And yes, you mostly use them in UI and
   almost never - on the server-side.
