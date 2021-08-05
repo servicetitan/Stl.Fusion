@@ -112,7 +112,7 @@ namespace Stl.Fusion.Authentication.Internal
 
         public virtual async Task EditUser(EditUserCommand command, CancellationToken cancellationToken = default)
         {
-            var (session, name) = command;
+            var session = command.Session;
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
                 var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
@@ -126,8 +126,8 @@ namespace Stl.Fusion.Authentication.Internal
             user = user.MustBeAuthenticated();
 
             context.Operation().Items.Set(sessionInfo);
-            if (name != null)
-                user = user with { Name = name };
+            if (command.Name != null)
+                user = user with { Name = command.Name };
             Users[user.Id] = user;
         }
 

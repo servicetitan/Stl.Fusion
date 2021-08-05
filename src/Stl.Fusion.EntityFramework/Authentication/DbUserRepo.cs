@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Authentication.Commands;
 using Stl.Fusion.EntityFramework.Internal;
@@ -15,6 +16,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
         Type UserEntityType { get; }
 
         // Write methods
+        Task<DbUser> Create(TDbContext dbContext, User user, CancellationToken cancellationToken = default);
         Task<(DbUser DbUser, bool IsCreated)> GetOrCreateOnSignIn(
             TDbContext dbContext, User user, CancellationToken cancellationToken = default);
         Task Edit(
@@ -26,7 +28,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
         Task<DbUser?> TryGet(long userId, CancellationToken cancellationToken = default);
         Task<DbUser?> TryGet(
             TDbContext dbContext, long userId, CancellationToken cancellationToken = default);
-        Task<DbUser?> TryGet(
+        Task<DbUser?> TryGetByUserIdentity(
             TDbContext dbContext, UserIdentity userIdentity, CancellationToken cancellationToken = default);
     }
 
@@ -49,6 +51,21 @@ namespace Stl.Fusion.EntityFramework.Authentication
 
         // Write methods
 
+        public virtual async Task<DbUser> Create(
+            TDbContext dbContext, User user, CancellationToken cancellationToken = default)
+        {
+            var dbUser = new TDbUser() {
+                Name = user.Name,
+                Claims = user.Claims,
+            };
+            dbContext.Add(dbUser);
+            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            user = user with { Id = dbUser.Id.ToString() };
+            dbUser.UpdateFrom(user);
+            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            return dbUser;
+        }
+
         public virtual async Task<(DbUser DbUser, bool IsCreated)> GetOrCreateOnSignIn(
             TDbContext dbContext, User user, CancellationToken cancellationToken)
         {
@@ -60,25 +77,15 @@ namespace Stl.Fusion.EntityFramework.Authentication
             }
 
             // No user found, let's create it
-            dbUser = new TDbUser() {
-                Name = user.Name,
-                Claims = user.Claims,
-            };
-            dbContext.Add(dbUser);
-            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-
-            user = user with { Id = dbUser.Id.ToString() };
-            dbUser.UpdateFrom(user);
-            await dbContext.SaveChangesAsync(cancellationToken);
+            dbUser = await Create(dbContext, user, cancellationToken).ConfigureAwait(false);
             return (dbUser, true);
         }
 
         public virtual async Task Edit(TDbContext dbContext, DbUser dbUser, EditUserCommand command,
             CancellationToken cancellationToken = default)
         {
-            var (_, name) = command;
-            if (name != null)
-                dbUser.Name = name;
+            if (command.Name != null)
+                dbUser.Name = command.Name;
             await dbContext.SaveChangesAsync(cancellationToken);
         }
 
@@ -110,7 +117,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             return dbUser;
         }
 
-        public virtual async Task<DbUser?> TryGet(
+        public virtual async Task<DbUser?> TryGetByUserIdentity(
             TDbContext dbContext, UserIdentity userIdentity, CancellationToken cancellationToken = default)
         {
             if (!userIdentity.IsValid)

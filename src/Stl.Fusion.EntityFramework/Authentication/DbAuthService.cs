@@ -60,7 +60,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
 
             var isNewUser = false;
             var dbUser = await Users
-                .TryGet(dbContext, authenticatedIdentity, cancellationToken)
+                .TryGetByUserIdentity(dbContext, authenticatedIdentity, cancellationToken)
                 .ConfigureAwait(false);
             if (dbUser == null) {
                 (dbUser, isNewUser) = await Users
