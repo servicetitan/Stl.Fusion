@@ -39,8 +39,9 @@ namespace Stl.Fusion.Authentication
             if (!serverSideServiceType.IsAssignableFrom(implementationType))
                 throw Errors.MustImplement(implementationType, serverSideServiceType, nameof(implementationType));
 
-            Fusion.AddComputeService(serverSideServiceType, implementationType);
-            Services.TryAddTransient<IAuthService>(c => c.GetRequiredService<IServerSideAuthService>());
+            Fusion.AddComputeService(implementationType);
+            Services.TryAddTransient(c => (IServerSideAuthService) c.GetRequiredService(implementationType));
+            Services.TryAddTransient(c => (IAuthService) c.GetRequiredService(implementationType));
             return this;
         }
     }
