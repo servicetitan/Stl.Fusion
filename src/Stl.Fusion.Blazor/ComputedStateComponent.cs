@@ -9,13 +9,17 @@ namespace Stl.Fusion.Blazor
     {
         protected ComputedStateComponentOptions Options { get; set; } =
             ComputedStateComponentOptions.SynchronizeComputeState
-            | ComputedStateComponentOptions.RecomputeOnParametersSet;
+            | ComputedStateComponentOptions.AwaitRecomputeOnParametersSet;
 
-        // Typically State depends on component parameters, so...
+        // State frequently depends on component parameters, so...
         protected override async Task OnParametersSetAsync()
         {
-            if (0 != (Options & ComputedStateComponentOptions.RecomputeOnParametersSet))
-                await State.Recompute();
+            if (0 != (Options & ComputedStateComponentOptions.RecomputeOnParametersSet)) {
+                if (0 != (Options & ComputedStateComponentOptions.AwaitRecomputeOnParametersSet))
+                    await State.Recompute();
+                else
+                    State.Recompute().Ignore();
+            }
         }
 
         protected override IComputedState<TState> CreateState()
