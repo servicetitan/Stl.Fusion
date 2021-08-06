@@ -6,10 +6,9 @@ namespace Stl.Text
 {
     public ref struct ListFormatter
     {
-        public ListFormat Format => new(Delimiter, Escape, NoItems);
+        public ListFormat Format => new(Delimiter, Escape);
         public readonly char Delimiter;
         public readonly char Escape;
-        public readonly string NoItems;
         public Utf16ValueStringBuilder OutputBuilder;
         public readonly bool OwnsOutputBuilder;
         public int ItemIndex;
@@ -23,7 +22,6 @@ namespace Stl.Text
         {
             Delimiter = format.Delimiter;
             Escape = format.Escape;
-            NoItems = format.NoItems;
             OutputBuilder = outputBuilder;
             OwnsOutputBuilder = ownsOutputBuilder;
             ItemIndex = itemIndex;
@@ -72,13 +70,9 @@ namespace Stl.Text
 
         public void AppendEnd()
         {
-            if (ItemIndex == 0) {
-                // Special case: an empty list marker
-                foreach (var c in NoItems) {
-                    OutputBuilder.Append(Escape);
-                    OutputBuilder.Append(c);
-                }
-            }
+            if (ItemIndex == 0)
+                // Special case: single Escape = an empty list
+                OutputBuilder.Append(Escape);
         }
 
         public void Append(IEnumerator<string> enumerator, bool appendEndOfList = true)

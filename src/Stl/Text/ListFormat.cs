@@ -13,13 +13,11 @@ namespace Stl.Text
 
         public readonly char Delimiter;
         public readonly char Escape;
-        public readonly string NoItems;
 
-        public ListFormat(char delimiter, char escape = '\\', string noItems = "[]")
+        public ListFormat(char delimiter, char escape = '\\')
         {
             Delimiter = delimiter;
             Escape = escape;
-            NoItems = noItems;
         }
 
         public ListFormatter CreateFormatter(int itemIndex = 0)
@@ -37,25 +35,46 @@ namespace Stl.Text
         public ListParser CreateParser(in ReadOnlySpan<char> source, in Utf16ValueStringBuilder item, int itemIndex = 0)
             => new(this, source, item, false, itemIndex);
 
-        public string Format(params string[] source) => Format((IEnumerable<string>) source);
+        public string Format(params string[] source)
+        {
+            using var f = CreateFormatter();
+            foreach (var item in source)
+                f.Append(item);
+            f.AppendEnd();
+            return f.Output;
+        }
+
         public string Format(IEnumerable<string> source)
         {
             using var f = CreateFormatter();
             foreach (var item in source)
                 f.Append(item);
             f.AppendEnd();
-            f.AppendEnd();
             return f.Output;
         }
 
-        public List<string> Parse(in ReadOnlySpan<char> source)
+        public List<string> Parse(string source, List<string>? target = null)
         {
-            var result = new List<string>();
+            target ??= new List<string>();
             var p = CreateParser(source, ZString.CreateStringBuilder());
             try {
                 while (p.TryParseNext())
-                    result.Add(p.Item);
-                return result;
+                    target.Add(p.Item);
+                return target;
+            }
+            finally {
+                p.ItemBuilder.Dispose();
+            }
+        }
+
+        public List<string> Parse(in ReadOnlySpan<char> source, List<string>? target = null)
+        {
+            target ??= new List<string>();
+            var p = CreateParser(source, ZString.CreateStringBuilder());
+            try {
+                while (p.TryParseNext())
+                    target.Add(p.Item);
+                return target;
             }
             finally {
                 p.ItemBuilder.Dispose();

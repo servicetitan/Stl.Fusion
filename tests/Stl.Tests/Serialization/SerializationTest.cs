@@ -84,15 +84,6 @@ namespace Stl.Tests.Serialization
         }
 
         [Fact]
-        public void SymbolListSerialization()
-        {
-            default(SymbolList).AssertPassesThroughAllSerializers(Out);
-            SymbolList.Empty.AssertPassesThroughAllSerializers(Out);
-            new SymbolList("a").AssertPassesThroughAllSerializers(Out);
-            new SymbolList("a", "b").AssertPassesThroughAllSerializers(Out);
-        }
-
-        [Fact]
         public void PathStringSerialization()
         {
             default(PathString).AssertPassesThroughAllSerializers(Out);

@@ -8,10 +8,9 @@ namespace Stl.Text
 {
     public ref struct ListParser
     {
-        public ListFormat Format => new(Delimiter, Escape, NoItems);
+        public ListFormat Format => new(Delimiter, Escape);
         public readonly char Delimiter;
         public readonly char Escape;
-        public readonly string NoItems;
         public ReadOnlySpan<char> Source;
         public Utf16ValueStringBuilder ItemBuilder;
         public readonly bool OwnsItemBuilder;
@@ -27,7 +26,6 @@ namespace Stl.Text
         {
             Delimiter = format.Delimiter;
             Escape = format.Escape;
-            NoItems = format.NoItems;
             Source = source;
             ItemBuilder = itemBuilder;
             OwnsItemBuilder = ownsItemBuilder;
@@ -50,6 +48,11 @@ namespace Stl.Text
                 var c = Source[index];
                 if (c == Escape) {
                     if (++index >= Source.Length) {
+                        if (ItemIndex == 1 && ItemBuilder.Length == 0) {
+                            // Special case: single Escape = an empty list
+                            Source = Source[..0];
+                            return false;
+                        }
                         ItemBuilder.Append(Escape);
                         break;
                     }
@@ -59,23 +62,6 @@ namespace Stl.Text
                     return true;
                 }
                 ItemBuilder.Append(Source[index]);
-            }
-
-            if (ItemIndex == 1
-                && (ItemBuilder.Length - startLength) == NoItems.Length
-                && Source.Length == (NoItems.Length << 1)) {
-                // Special case: possibly it's an empty list marker
-                var noItems = true;
-                for (var i = 1; i < Source.Length; i += 2) {
-                    if (NoItems[i >> 1] != Source[i]) {
-                        noItems = false;
-                        break;
-                    }
-                }
-                if (noItems) {
-                    Source = Source[..0];
-                    return false;
-                }
             }
 
             Source = Source[..0];
