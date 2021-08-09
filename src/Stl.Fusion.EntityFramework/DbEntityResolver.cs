@@ -27,6 +27,7 @@ namespace Stl.Fusion.EntityFramework
         public class Options
         {
             public Func<DbEntityResolver<TDbContext, TKey, TEntity>, AsyncBatchProcessor<TKey, TEntity>>? BatchProcessorFactory { get; set; }
+            public string? KeyPropertyName { get; set; }
             public Func<Expression, Expression>? KeyExtractorExpressionBuilder { get; set; }
             public Func<IQueryable<TEntity>, IQueryable<TEntity>>? QueryTransformer { get; set; }
             public Action<Dictionary<TKey, TEntity>>? PostProcessor { get; set; }
@@ -57,11 +58,10 @@ namespace Stl.Fusion.EntityFramework
                 () => BatchProcessorFactory.Invoke(this));
 
             using var dbContext = CreateDbContext();
-            var entityType = dbContext.Model.FindEntityType(typeof(TEntity));
-            var key = entityType.FindPrimaryKey();
-
-            KeyExtractorExpressionBuilder = options.KeyExtractorExpressionBuilder ??
-                (eEntity => Expression.PropertyOrField(eEntity, key.Properties.Single().Name));
+            var keyPropertyName = options.KeyPropertyName
+                ?? dbContext.Model.FindEntityType(typeof(TEntity)).FindPrimaryKey().Properties.Single().Name;
+            KeyExtractorExpressionBuilder = options.KeyExtractorExpressionBuilder
+                ?? (eEntity => Expression.PropertyOrField(eEntity, keyPropertyName));
             var pEntity = Expression.Parameter(typeof(TEntity), "e");
             var eBody = KeyExtractorExpressionBuilder.Invoke(pEntity);
             KeyExtractor = (Func<TEntity, TKey>) Expression.Lambda(eBody, pEntity).Compile();
