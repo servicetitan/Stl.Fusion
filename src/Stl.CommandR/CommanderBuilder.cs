@@ -206,5 +206,44 @@ namespace Stl.CommandR
             Handlers.Clear();
             return this;
         }
+
+        // Filters
+
+        public CommanderBuilder AddHandlerFilter(CommandHandlerFilter commandHandlerFilter)
+        {
+            Services.AddSingleton(commandHandlerFilter);
+            return this;
+        }
+
+        public CommanderBuilder AddHandlerFilter<TCommandHandlerFilter>()
+            where TCommandHandlerFilter : CommandHandlerFilter
+        {
+            Services.AddSingleton<CommandHandlerFilter, TCommandHandlerFilter>();
+            return this;
+        }
+
+        public CommanderBuilder AddHandlerFilter<TCommandHandlerFilter>(
+            Func<IServiceProvider, TCommandHandlerFilter> factory)
+            where TCommandHandlerFilter : CommandHandlerFilter
+        {
+            Services.AddSingleton<CommandHandlerFilter, TCommandHandlerFilter>(factory);
+            return this;
+        }
+
+        public CommanderBuilder AddHandlerFilter(Func<CommandHandler, Type, bool> commandHandlerFilter)
+            => AddHandlerFilter(c => new FuncCommandHandlerFilter(commandHandlerFilter));
+
+        public CommanderBuilder AddHandlerFilter(
+            Func<IServiceProvider, Func<CommandHandler, Type, bool>> commandHandlerFilterFactory)
+            => AddHandlerFilter(c => {
+                var filter = commandHandlerFilterFactory.Invoke(c);
+                return new FuncCommandHandlerFilter(filter);
+            });
+
+        public CommanderBuilder ClearHandlerFilters()
+        {
+            Services.RemoveAll<CommandHandlerFilter>();
+            return this;
+        }
     }
 }

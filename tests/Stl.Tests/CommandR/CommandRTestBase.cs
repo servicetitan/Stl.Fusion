@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Stl.CommandR;
+using Stl.CommandR.Configuration;
 using Stl.DependencyInjection;
 using Stl.Extensibility;
 using Stl.Fusion;
@@ -22,6 +23,7 @@ namespace Stl.Tests.CommandR
     public class CommandRTestBase : TestBase
     {
         protected bool UseDbContext { get; set; }
+        protected Func<CommandHandler, Type, bool>? CommandHandlerFilter { get; set; }
 
         public CommandRTestBase(ITestOutputHelper @out) : base(@out) { }
 
@@ -62,6 +64,9 @@ namespace Stl.Tests.CommandR
             });
 
             var commander = services.AddCommander();
+            if (CommandHandlerFilter != null)
+                commander.AddHandlerFilter(CommandHandlerFilter);
+
             var fusion = services.AddFusion();
 
             if (UseDbContext) {
