@@ -61,11 +61,12 @@ namespace Stl.Fusion.Bridge
             IComputed<T> computed, Symbol id,
             IMomentClock? clock)
         {
-            Clock = clock ??= CoarseCpuClock.Instance;
+            Clock = clock ??= MomentClockSet.Default.CoarseCpuClock;
             PublicationType = publicationType;
             Publisher = publisher;
             Id = id;
             LastTouchTime = clock.Now;
+            // ReSharper disable once VirtualMemberCallInConstructor
             StateField = CreatePublicationState(computed);
         }
 
@@ -76,7 +77,7 @@ namespace Stl.Fusion.Bridge
         {
             if (State.IsDisposed)
                 return false;
-            LastTouchTime = CoarseCpuClock.Now;
+            LastTouchTime = Clock.Now;
             return true;
         }
 
@@ -132,7 +133,7 @@ namespace Stl.Fusion.Bridge
             var expirationTime = PublisherImpl.PublicationExpirationTime;
 
             Moment GetLastUseTime()
-                => UseCount > 0 ? CoarseCpuClock.Now : LastTouchTime;
+                => UseCount > 0 ? Clock.Now : LastTouchTime;
             Moment GetNextCheckTime(Moment start, Moment lastUseTime)
                 => lastUseTime + expirationTime;
 
@@ -140,7 +141,7 @@ namespace Stl.Fusion.Bridge
             // await Task.Delay(TimeSpan.FromMinutes(10), cancellationToken).ConfigureAwait(false);
 
             try {
-                var start = CoarseCpuClock.Now;
+                var start = Clock.Now;
                 var lastUseTime = GetLastUseTime();
                 for (;;) {
                     var nextCheckTime = GetNextCheckTime(start, lastUseTime);

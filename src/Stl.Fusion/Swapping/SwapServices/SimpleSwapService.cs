@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Stl.Async;
 using Stl.OS;
 using Stl.Serialization;
@@ -18,7 +19,7 @@ namespace Stl.Fusion.Swapping
             public int ConcurrencyLevel { get; set; } = HardwareInfo.GetProcessorCountPo2Factor();
             public Func<IUtf16Serializer<object>> SerializerFactory { get; set; } =
                 () => new NewtonsoftJsonSerializer().ToTyped<object>();
-            public IMomentClock Clock { get; set; } = CoarseCpuClock.Instance;
+            public IMomentClock? Clock { get; set; }
         }
 
         protected readonly ConcurrentDictionary<string, string> Storage;
@@ -26,12 +27,12 @@ namespace Stl.Fusion.Swapping
         public TimeSpan ExpirationTime { get; }
         public IMomentClock Clock { get; }
 
-        public SimpleSwapService(Options? options = null)
+        public SimpleSwapService(Options? options, IServiceProvider services)
         {
             options ??= new();
             SerializerFactory = options.SerializerFactory;
             ExpirationTime = options.ExpirationTime;
-            Clock = options.Clock;
+            Clock = options.Clock ?? services.GetRequiredService<MomentClockSet>().CoarseCpuClock;
             Storage = new ConcurrentDictionary<string, string>(
                 options.ConcurrencyLevel,
                 ComputedRegistry.Options.DefaultInitialCapacity);

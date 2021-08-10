@@ -82,7 +82,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             if (sessionInfo.IsSignOutForced)
                 throw Errors.ForcedSignOut();
             sessionInfo = sessionInfo with {
-                LastSeenAt = Clock.Now,
+                LastSeenAt = Clocks.SystemClock.Now,
                 AuthenticatedIdentity = authenticatedIdentity,
                 UserId = dbUser.Id.ToString(),
             };
@@ -115,7 +115,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
 
             context.Operation().Items.Set(sessionInfo);
             sessionInfo = sessionInfo with {
-                LastSeenAt = Clock.Now,
+                LastSeenAt = Clocks.SystemClock.Now,
                 AuthenticatedIdentity = "",
                 UserId = "",
                 IsSignOutForced = force,
@@ -163,7 +163,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             await using var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
 
             var dbSessionInfo = await Sessions.TryGet(dbContext, session.Id, cancellationToken).ConfigureAwait(false);
-            var now = Clock.Now;
+            var now = Clocks.SystemClock.Now;
             var oldSessionInfo = dbSessionInfo?.ToModel() ?? new SessionInfo(session.Id, now);
             var newSessionInfo = oldSessionInfo with {
                 LastSeenAt = now,
@@ -180,7 +180,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             Session session, CancellationToken cancellationToken = default)
         {
             var sessionInfo = await GetSessionInfo(session, cancellationToken).ConfigureAwait(false);
-            var now = Clock.Now.ToDateTime();
+            var now = Clocks.SystemClock.Now.ToDateTime();
             var delta = now - sessionInfo.LastSeenAt;
             if (delta < MinUpdatePresencePeriod)
                 return; // We don't want to update this too frequently
@@ -202,7 +202,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
         {
             var dbSessionInfo = await Sessions.TryGet(session.Id, cancellationToken).ConfigureAwait(false);
             if (dbSessionInfo == null)
-                return new(session.Id, Clock.Now);
+                return new(session.Id, Clocks.SystemClock.Now);
             return dbSessionInfo.ToModel();
         }
 

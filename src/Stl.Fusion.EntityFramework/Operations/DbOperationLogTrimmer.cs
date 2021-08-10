@@ -42,7 +42,7 @@ namespace Stl.Fusion.EntityFramework.Operations
 
         protected override async Task WakeUp(CancellationToken cancellationToken)
         {
-            var minCommitTime = (Clock.Now - MaxCommitAge).ToDateTime();
+            var minCommitTime = (Clocks.SystemClock.Now - MaxCommitAge).ToDateTime();
             LastTrimCount = await DbOperationLog
                 .Trim(minCommitTime, BatchSize, cancellationToken)
                 .ConfigureAwait(false);
@@ -58,7 +58,7 @@ namespace Stl.Fusion.EntityFramework.Operations
                 delay = TimeSpan.FromMilliseconds(1000 * Random.NextDouble());
             else if (LastTrimCount < BatchSize)
                 delay = CheckInterval + TimeSpan.FromMilliseconds(100 * Random.NextDouble());
-            return Clock.Delay(delay, cancellationToken);
+            return Clocks.CoarseCpuClock.Delay(delay, cancellationToken);
         }
     }
 }

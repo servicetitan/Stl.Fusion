@@ -53,7 +53,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
         {
             var dbSessionInfo = await TryGet(dbContext, sessionId, cancellationToken).ConfigureAwait(false);
             if (dbSessionInfo == null) {
-                var sessionInfo = new SessionInfo(sessionId, Clock.Now);
+                var sessionInfo = new SessionInfo(sessionId, Clocks.SystemClock.Now);
                 dbSessionInfo = dbContext.Add(
                     new TDbSessionInfo() {
                         Id = sessionInfo.Id,

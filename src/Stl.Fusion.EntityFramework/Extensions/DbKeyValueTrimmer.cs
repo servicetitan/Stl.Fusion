@@ -47,7 +47,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
             dbContext.DisableChangeTracking();
             LastTrimCount = 0;
 
-            var minExpiresAt = Clock.Now.ToDateTime();
+            var minExpiresAt = Clocks.SystemClock.Now.ToDateTime();
             var keys = await dbContext.Set<TDbKeyValue>().AsQueryable()
                 .Where(o => o.ExpiresAt < minExpiresAt)
                 .OrderBy(o => o.ExpiresAt)
@@ -73,7 +73,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
                 delay = TimeSpan.FromMilliseconds(1000 * Random.NextDouble());
             else if (LastTrimCount < BatchSize)
                 delay = CheckInterval + TimeSpan.FromMilliseconds(10 * Random.NextDouble());
-            return Clock.Delay(delay, cancellationToken);
+            return Clocks.CoarseCpuClock.Delay(delay, cancellationToken);
         }
     }
 }

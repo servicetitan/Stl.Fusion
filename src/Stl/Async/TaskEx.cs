@@ -81,7 +81,7 @@ namespace Stl.Async
             this Task task,
             TimeSpan timeout,
             CancellationToken cancellationToken = default)
-            => task.WithTimeout(SystemClock.Instance, timeout, cancellationToken);
+            => task.WithTimeout(MomentClockSet.Default.CpuClock, timeout, cancellationToken);
 
         public static async Task<bool> WithTimeout(
             this Task task,
@@ -111,7 +111,7 @@ namespace Stl.Async
             this Task<T> task,
             TimeSpan timeout,
             CancellationToken cancellationToken = default)
-            => task.WithTimeout(SystemClock.Instance, timeout, cancellationToken);
+            => task.WithTimeout(MomentClockSet.Default.CpuClock, timeout, cancellationToken);
 
         public static async Task<Option<T>> WithTimeout<T>(
             this Task<T> task,

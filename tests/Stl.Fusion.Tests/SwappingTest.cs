@@ -36,7 +36,8 @@ namespace Stl.Fusion.Tests
             public int RenewCallCount { get; set; }
             public int StoreCallCount { get; set; }
 
-            public SwapService(Options? options = null) : base(options) { }
+            public SwapService(Options? options, IServiceProvider services)
+                : base(options, services) { }
 
             protected override ValueTask<string?> Load(string key, CancellationToken cancellationToken)
             {

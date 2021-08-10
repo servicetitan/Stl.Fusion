@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Stl.Async;
 using Stl.CommandR;
 using Stl.Fusion.Authentication.Commands;
@@ -18,12 +19,12 @@ namespace Stl.Fusion.Authentication.Internal
         protected ConcurrentDictionary<string, User> Users { get; } = new();
         protected ConcurrentDictionary<string, SessionInfo> SessionInfos { get; } = new();
         protected ISessionFactory SessionFactory { get; }
-        protected IMomentClock Clock { get; }
+        protected MomentClockSet Clocks { get; }
 
-        public InMemoryAuthService(ISessionFactory sessionFactory, IMomentClock clock)
+        public InMemoryAuthService(IServiceProvider services)
         {
-            SessionFactory = sessionFactory;
-            Clock = clock;
+            SessionFactory = services.GetRequiredService<ISessionFactory>();
+            Clocks = services.Clocks();
         }
 
         // Command handlers
@@ -155,7 +156,7 @@ namespace Stl.Fusion.Authentication.Internal
         public virtual async Task UpdatePresence(Session session, CancellationToken cancellationToken = default)
         {
             var sessionInfo = await GetSessionInfo(session, cancellationToken).ConfigureAwait(false);
-            var now = Clock.Now.ToDateTime();
+            var now = Clocks.SystemClock.Now.ToDateTime();
             var delta = now - sessionInfo.LastSeenAt;
             if (delta < TimeSpan.FromSeconds(10))
                 return; // We don't want to update this too frequently
@@ -175,7 +176,7 @@ namespace Stl.Fusion.Authentication.Internal
             Session session, CancellationToken cancellationToken = default)
         {
             var sessionInfo = SessionInfos.GetValueOrDefault(session);
-            sessionInfo = sessionInfo.OrDefault(session, Clock); // To mask signed out sessions
+            sessionInfo = sessionInfo.OrDefault(session, Clocks); // To mask signed out sessions
             return Task.FromResult(sessionInfo);
         }
 
@@ -222,7 +223,7 @@ namespace Stl.Fusion.Authentication.Internal
 
         protected virtual SessionInfo AddOrUpdateSessionInfo(SessionInfo sessionInfo)
         {
-            sessionInfo = sessionInfo with { LastSeenAt = Clock.Now };
+            sessionInfo = sessionInfo with { LastSeenAt = Clocks.SystemClock.Now };
             SessionInfos.AddOrUpdate(sessionInfo.Id, sessionInfo, (sessionId, oldSessionInfo) => {
                 if (oldSessionInfo.IsSignOutForced)
                     throw Errors.ForcedSignOut();

@@ -32,7 +32,7 @@ namespace Stl.Fusion.EntityFramework
         protected IDbContextTransaction? Transaction { get; set; }
         protected IDbContextFactory<TDbContext> DbContextFactory { get; }
         protected IDbOperationLog<TDbContext> DbOperationLog { get; }
-        protected IMomentClock Clock { get; }
+        protected MomentClockSet Clocks { get; }
         protected IServiceProvider Services { get; }
         protected AsyncLock AsyncLock { get; }
         protected ILogger Log { get; }
@@ -49,7 +49,7 @@ namespace Stl.Fusion.EntityFramework
             var loggerFactory = services.GetService<ILoggerFactory>();
             Log = loggerFactory?.CreateLogger(GetType()) ?? NullLogger.Instance;
             Services = services;
-            Clock = services.GetService<IMomentClock>() ?? SystemClock.Instance;
+            Clocks = services.Clocks();
             DbContextFactory = services.GetRequiredService<IDbContextFactory<TDbContext>>();
             DbOperationLog = services.GetRequiredService<IDbOperationLog<TDbContext>>();
             AsyncLock = new AsyncLock(ReentryMode.CheckedPass);
@@ -123,7 +123,7 @@ namespace Stl.Fusion.EntityFramework
                     return;
                 }
 
-                Operation.CommitTime = Clock.Now;
+                Operation.CommitTime = Clocks.SystemClock.Now;
                 if (Operation.Command == null)
                     throw Stl.Fusion.Operations.Internal.Errors.OperationHasNoCommand();
                 var dbContext = DbContext!;

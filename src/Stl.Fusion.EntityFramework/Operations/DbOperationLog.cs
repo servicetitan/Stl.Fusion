@@ -36,7 +36,7 @@ namespace Stl.Fusion.EntityFramework.Operations
             => new TDbOperation() {
                 Id = id ?? Ulid.NewUlid().ToString(),
                 AgentId = agentId ?? AgentInfo.Id,
-                StartTime = Clock.Now,
+                StartTime = Clocks.SystemClock.Now,
                 Command = command,
             };
 

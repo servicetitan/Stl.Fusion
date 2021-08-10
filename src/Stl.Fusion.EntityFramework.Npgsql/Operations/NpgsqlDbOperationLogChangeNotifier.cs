@@ -90,7 +90,7 @@ namespace Stl.Fusion.EntityFramework.Npgsql.Operations
                     Log.LogError(e, "Notification failed - retrying");
                     DbContext = null;
                     dbContext?.DisposeAsync().Ignore(); // Doesn't matter if it fails
-                    await Clock.Delay(Options.RetryDelay).ConfigureAwait(false);
+                    await Clocks.CoarseCpuClock.Delay(Options.RetryDelay).ConfigureAwait(false);
                 }
             }
         }

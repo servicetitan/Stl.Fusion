@@ -62,7 +62,7 @@ namespace Stl.Fusion.EntityFramework.Npgsql.Operations
 
         protected override Task Sleep(Exception? error, CancellationToken cancellationToken)
             => error != null
-                ? Clock.Delay(Options.RetryDelay, cancellationToken)
+                ? Clocks.CoarseCpuClock.Delay(Options.RetryDelay, cancellationToken)
                 : Task.CompletedTask;
 
         protected virtual void ReleaseWaitForChanges()

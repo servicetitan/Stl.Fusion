@@ -12,7 +12,7 @@ namespace Stl.Fusion.Bridge.Internal
     public abstract class SubscriptionProcessor : AsyncProcessBase
     {
         protected readonly ILogger Log;
-        protected readonly IMomentClock Clock;
+        protected readonly MomentClockSet Clocks;
         protected readonly TimeSpan ExpirationTime;
         protected long MessageIndex;
         protected (LTag Version, bool IsConsistent) LastSentVersion;
@@ -26,11 +26,11 @@ namespace Stl.Fusion.Bridge.Internal
             IPublication publication,
             Channel<BridgeMessage> outgoingChannel,
             TimeSpan expirationTime,
-            IMomentClock clock,
+            MomentClockSet clocks,
             ILoggerFactory loggerFactory)
         {
             Log = loggerFactory.CreateLogger(GetType());
-            Clock = clock;
+            Clocks = clocks;
             Publication = publication;
             OutgoingChannel = outgoingChannel;
             IncomingChannel = Channel.CreateBounded<ReplicaRequest>(new BoundedChannelOptions(16));
@@ -46,9 +46,9 @@ namespace Stl.Fusion.Bridge.Internal
             IPublication<T> publication,
             Channel<BridgeMessage> outgoingChannel,
             TimeSpan expirationTime,
-            IMomentClock clock,
+            MomentClockSet clocks,
             ILoggerFactory loggerFactory)
-            : base(publication, outgoingChannel, expirationTime, clock, loggerFactory)
+            : base(publication, outgoingChannel, expirationTime, clocks, loggerFactory)
             => Publication = publication;
 
         protected override async Task RunInternal(CancellationToken cancellationToken)
@@ -64,7 +64,7 @@ namespace Stl.Fusion.Bridge.Internal
                 for (;;) {
                     // Awaiting for new SubscribeMessage
                     var messageOpt = await incomingMessageTask
-                        .WithTimeout(Clock, ExpirationTime, cancellationToken)
+                        .WithTimeout(Clocks.CoarseCpuClock, ExpirationTime, cancellationToken)
                         .ConfigureAwait(false);
                     if (!messageOpt.IsSome(out var incomingMessage))
                         break; // Timeout

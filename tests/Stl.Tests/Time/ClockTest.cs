@@ -153,7 +153,7 @@ namespace Stl.Tests.Time
                 })).Should().CompleteWithinAsync(TimeSpan.FromMilliseconds(500));
             }
 
-            await Test(SystemClock.Instance);
+            await Test(MomentClockSet.Default.SystemClock);
             await Test(new TestClock());
         }
 

@@ -31,7 +31,7 @@ namespace Stl.Fusion.Extensions.Internal
         {
             options ??= new();
             CleanupPeriod = options.CleanupPeriod;
-            Clock = options.Clock ?? services.GetService<IMomentClock>() ?? SystemClock.Instance;
+            Clock = options.Clock ?? services.SystemClock();
         }
 
         // Commands

@@ -42,7 +42,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
 
         protected override async Task WakeUp(CancellationToken cancellationToken)
         {
-            var minLastSeenAt = (Clock.Now - MaxSessionAge).ToDateTime();
+            var minLastSeenAt = (Clocks.SystemClock.Now - MaxSessionAge).ToDateTime();
             LastTrimCount = await Sessions
                 .Trim(minLastSeenAt, BatchSize, cancellationToken)
                 .ConfigureAwait(false);
@@ -58,7 +58,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
                 delay = TimeSpan.FromMilliseconds(1000 * Random.NextDouble());
             else if (LastTrimCount < BatchSize)
                 delay = CheckInterval + TimeSpan.FromMilliseconds(100 * Random.NextDouble());
-            return Clock.Delay(delay, cancellationToken);
+            return Clocks.CoarseCpuClock.Delay(delay, cancellationToken);
         }
     }
 }

@@ -13,8 +13,7 @@ namespace Stl.Fusion.UI
 {
     public interface IUICommandTracker : IDisposable
     {
-        IMomentClock Clock { get; }
-
+        MomentClockSet Clocks { get; }
         IAsyncEnumerable<UICommandEvent> Events { get; }
 
         UICommandEvent? LastEvent { get; }
@@ -32,11 +31,6 @@ namespace Stl.Fusion.UI
 
     public class UICommandTracker : IUICommandTracker
     {
-        public class Options
-        {
-            public IMomentClock Clock { get; set; } = CpuClock.Instance;
-        }
-
         private class NoUICommandTracker : UICommandTracker
         {
             public override UICommandEvent ProcessEvent(UICommandEvent commandEvent)
@@ -45,7 +39,7 @@ namespace Stl.Fusion.UI
             protected override IAsyncEnumerable<UICommandEvent> GetAny(CancellationToken cancellationToken)
                 => AsyncEnumerable.Empty<UICommandEvent>();
 
-            internal NoUICommandTracker() : base(new()) { }
+            internal NoUICommandTracker() : base(MomentClockSet.Default) { }
         }
 
         private static readonly UnboundedChannelOptions ChannelOptions =
@@ -63,7 +57,7 @@ namespace Stl.Fusion.UI
         protected object Lock => _channels;
         protected bool IsDisposed { get; private set; }
 
-        public IMomentClock Clock { get; }
+        public MomentClockSet Clocks { get; }
         public IAsyncEnumerable<UICommandEvent> Events => GetAny();
 
         public UICommandEvent? LastEvent { get; protected set; }
@@ -76,10 +70,9 @@ namespace Stl.Fusion.UI
         public Task<UICommandEvent> WhenCommandCompleted() => _whenCommandCompletedTask;
         public Task<UICommandEvent> WhenCommandFailed() => _whenCommandFailedTask;
 
-        public UICommandTracker(Options? options)
+        public UICommandTracker(MomentClockSet clocks)
         {
-            options ??= new();
-            Clock = options.Clock;
+            Clocks = clocks;
             RenewTasks();
         }
 
@@ -104,11 +97,11 @@ namespace Stl.Fusion.UI
         {
             if (!commandEvent.IsCompleted) {
                 if (!commandEvent.CreatedAt.HasValue)
-                    commandEvent = commandEvent with { CreatedAt = Clock.Now };
+                    commandEvent = commandEvent with { CreatedAt = Clocks.UIClock.Now };
             }
             else {
                 if (!commandEvent.CompletedAt.HasValue)
-                    commandEvent = commandEvent with { CompletedAt = Clock.Now };
+                    commandEvent = commandEvent with { CompletedAt = Clocks.UIClock.Now };
             }
             lock (Lock) {
                 if (IsDisposed)

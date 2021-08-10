@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Stl.Time;
 
 namespace Stl.Fusion.Extensions.Internal
@@ -17,13 +18,12 @@ namespace Stl.Fusion.Extensions.Internal
         protected TimeSpan MaxInvalidationDelay { get; set; }
         protected IMomentClock Clock { get; set; }
 
-        public FusionTime(Options? options = null,
-            IMomentClock? momentClock = null)
+        public FusionTime(Options? options, IServiceProvider services)
         {
             options ??= new Options();
             DefaultUpdatePeriod = options.DefaultUpdatePeriod;
             MaxInvalidationDelay = options.MaxInvalidationDelay;
-            Clock = options.Clock ?? momentClock ?? SystemClock.Instance;
+            Clock = options.Clock ?? services.SystemClock();
         }
 
         public virtual Task<DateTime> GetUtcNow()

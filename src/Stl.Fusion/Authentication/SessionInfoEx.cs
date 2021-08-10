@@ -5,12 +5,12 @@ namespace Stl.Fusion.Authentication
 {
     public static class SessionInfoEx
     {
-        public static SessionInfo OrDefault(this SessionInfo? sessionInfo, string sessionId, IMomentClock? clock = null)
+        public static SessionInfo OrDefault(this SessionInfo? sessionInfo, string sessionId, MomentClockSet? clocks = null)
         {
             if (sessionInfo != null && !sessionInfo.IsSignOutForced)
                 return sessionInfo;
-            clock ??= SystemClock.Instance;
-            return new SessionInfo(sessionId, clock.Now) {
+            clocks ??= MomentClockSet.Default;
+            return new SessionInfo(sessionId, clocks.SystemClock.Now) {
                 IsSignOutForced = sessionInfo?.IsSignOutForced ?? false,
             };
         }

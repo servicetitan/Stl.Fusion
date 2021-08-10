@@ -28,12 +28,12 @@ namespace Stl.Fusion
         public static UpdateDelayer MinDelay { get; } = new(UI.UICommandTracker.None, Defaults.UICommandUpdateDelayDuration);
 
         public IUICommandTracker UICommandTracker { get; init; }
+        public MomentClockSet Clocks => UICommandTracker.Clocks;
         public TimeSpan UpdateDelayDuration { get; init; } = Defaults.UpdateDelayDuration;
         public TimeSpan MinRetryDelayDuration { get; init; } =  Defaults.MinRetryDelayDuration;
         public TimeSpan MaxRetryDelayDuration { get; init; } = Defaults.MaxRetryDelayDuration;
         public TimeSpan UICommandRecencyDelta { get; init; } = Defaults.UICommandRecencyDelta;
         public TimeSpan UICommandUpdateDelayDuration { get; init; } = Defaults.UICommandUpdateDelayDuration;
-        public IMomentClock Clock => UICommandTracker.Clock;
 
         public UpdateDelayer(IUICommandTracker uiCommandTracker)
             => UICommandTracker = uiCommandTracker;
@@ -74,13 +74,13 @@ namespace Stl.Fusion
                 return;
 
             // 2. Wait a bit to see if the invalidation is caused by a UI command
-            var delayStart = Clock.Now;
+            var delayStart = Clocks.UIClock.Now;
             var commandCompletedTask = UICommandTracker.LastOrWhenCommandCompleted(UICommandRecencyDelta);
             if (UpdateDelayDuration > TimeSpan.Zero) {
                 if (!commandCompletedTask.IsCompleted) {
                     var waitDuration = TimeSpanEx.Min(UpdateDelayDuration, UICommandRecencyDelta);
                     await Task.WhenAny(whenUpdatedTask, commandCompletedTask)
-                        .WithTimeout(Clock, waitDuration, cancellationToken)
+                        .WithTimeout(Clocks.UIClock, waitDuration, cancellationToken)
                         .ConfigureAwait(false);
                     if (whenUpdatedTask.IsCompleted)
                         return;
@@ -90,11 +90,11 @@ namespace Stl.Fusion
             // 3. Actual delay
             var retryCount = stateSnapshot.RetryCount;
             var retryDelay = GetUpdateDelay(commandCompletedTask.IsCompleted, retryCount);
-            var remainingDelay = delayStart + retryDelay - Clock.Now;
+            var remainingDelay = delayStart + retryDelay - Clocks.UIClock.Now;
             if (remainingDelay < TimeSpan.Zero)
                 return;
             await whenUpdatedTask
-                .WithTimeout(Clock, remainingDelay, cancellationToken)
+                .WithTimeout(Clocks.UIClock, remainingDelay, cancellationToken)
                 .ConfigureAwait(false);
         }
 

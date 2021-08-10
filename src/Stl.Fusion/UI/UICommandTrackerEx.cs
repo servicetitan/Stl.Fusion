@@ -6,12 +6,11 @@ namespace Stl.Fusion.UI
 {
     public static class UICommandTrackerEx
     {
-        public static Task<UICommandEvent> LastOrWhenCommandCompleted(this IUICommandTracker uiCommandTracker,
-            TimeSpan maxRecency,
-            IMomentClock? clock = null)
+        public static Task<UICommandEvent> LastOrWhenCommandCompleted(
+            this IUICommandTracker uiCommandTracker,
+            TimeSpan maxRecency)
         {
-            clock ??= CpuClock.Instance;
-            var cutoff = clock.Now - maxRecency;
+            var cutoff = uiCommandTracker.Clocks.UIClock.Now - maxRecency;
             var lastCommand = uiCommandTracker.LastCommandCompleted;
             return lastCommand?.CompletedAt >= cutoff
                 ? Task.FromResult(lastCommand)

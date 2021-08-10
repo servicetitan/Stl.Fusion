@@ -143,7 +143,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
             if (dbKeyValue == null)
                 return null;
             var expiresAt = dbKeyValue.ExpiresAt;
-            if (expiresAt.HasValue && expiresAt.GetValueOrDefault() < Clock.Now.ToDateTime())
+            if (expiresAt.HasValue && expiresAt.GetValueOrDefault() < Clocks.SystemClock.Now.ToDateTime())
                 return null;
             return dbKeyValue?.Value;
         }

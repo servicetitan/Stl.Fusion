@@ -41,7 +41,7 @@ namespace Stl.Fusion.EntityFramework.Operations
             BatchSize = options.BatchSize;
             ErrorDelay = options.ErrorDelay;
 
-            MaxKnownCommitTime = Clock.Now;
+            MaxKnownCommitTime = Clocks.SystemClock.Now;
             AgentInfo = services.GetRequiredService<AgentInfo>();
             OperationLogChangeMonitor = services.GetService<IDbOperationLogChangeTracker<TDbContext>>();
             OperationCompletionNotifier = services.GetRequiredService<IOperationCompletionNotifier>();
@@ -84,14 +84,14 @@ namespace Stl.Fusion.EntityFramework.Operations
         protected override Task Sleep(Exception? error, CancellationToken cancellationToken)
         {
             if (error != null)
-                return Clock.Delay(ErrorDelay, cancellationToken);
+                return Clocks.CoarseCpuClock.Delay(ErrorDelay, cancellationToken);
             if (LastCount == BatchSize)
                 return Task.CompletedTask;
             if (OperationLogChangeMonitor == null)
-                return Clock.Delay(UnconditionalWakeUpPeriod, cancellationToken);
+                return Clocks.CpuClock.Delay(UnconditionalWakeUpPeriod, cancellationToken);
             return OperationLogChangeMonitor
                 .WaitForChanges(cancellationToken)
-                .WithTimeout(Clock, UnconditionalWakeUpPeriod, cancellationToken);
+                .WithTimeout(Clocks.CpuClock, UnconditionalWakeUpPeriod, cancellationToken);
         }
     }
 }

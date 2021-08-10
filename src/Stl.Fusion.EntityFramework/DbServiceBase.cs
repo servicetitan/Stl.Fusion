@@ -15,14 +15,14 @@ namespace Stl.Fusion.EntityFramework
     {
         protected IServiceProvider Services { get; }
         protected IDbContextFactory<TDbContext> DbContextFactory { get; }
-        protected IMomentClock Clock { get; }
+        protected MomentClockSet Clocks { get; }
         protected ILogger Log { get; }
 
         protected DbServiceBase(IServiceProvider services)
         {
             Services = services;
             DbContextFactory = services.GetRequiredService<IDbContextFactory<TDbContext>>();
-            Clock = services.GetService<IMomentClock>() ?? SystemClock.Instance;
+            Clocks = services.Clocks();
             var loggerFactory = services.GetService<ILoggerFactory>();
             Log = loggerFactory?.CreateLogger(GetType()) ?? NullLogger.Instance;
         }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Async;
@@ -22,6 +23,7 @@ namespace Stl.Fusion.Operations
         {
             public int MaxKnownOperationCount { get; set; } = 10_000;
             public TimeSpan MaxKnownOperationAge { get; set; } = TimeSpan.FromHours(1);
+            public IMomentClock? Clock { get; set; }
         }
 
         protected int MaxKnownOperationCount { get; }
@@ -35,18 +37,16 @@ namespace Stl.Fusion.Operations
         protected ILogger Log { get; }
 
         public OperationCompletionNotifier(Options? options,
-            AgentInfo agentInfo,
-            IEnumerable<IOperationCompletionListener> operationCompletionHandlers,
-            IMomentClock? clock = null,
+            IServiceProvider services,
             ILogger<OperationCompletionNotifier>? log = null)
         {
             options ??= new();
             Log = log ?? NullLogger<OperationCompletionNotifier>.Instance;
-            Clock = clock ?? SystemClock.Instance;
             MaxKnownOperationCount = options.MaxKnownOperationCount;
             MaxKnownOperationAge = options.MaxKnownOperationAge;
-            AgentInfo = agentInfo;
-            OperationCompletionListeners = operationCompletionHandlers.ToArray();
+            Clock = options.Clock ?? services.SystemClock();
+            AgentInfo = services.GetRequiredService<AgentInfo>();
+            OperationCompletionListeners = services.GetServices<IOperationCompletionListener>().ToArray();
         }
 
         public Task<bool> NotifyCompleted(IOperation operation)

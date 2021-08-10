@@ -42,7 +42,7 @@ namespace Stl.Fusion.Bridge
         TimeSpan PublicationExpirationTime { get; }
         TimeSpan SubscriptionExpirationTime { get; }
         Generator<Symbol> PublicationIdGenerator { get; }
-        IMomentClock Clock { get; }
+        MomentClockSet Clocks { get; }
 
         void OnPublicationDisposed(IPublication publication);
         void OnChannelProcessorDisposed(PublisherChannelProcessor channelProcessor);
@@ -64,7 +64,7 @@ namespace Stl.Fusion.Bridge
             public ISubscriptionProcessorFactory SubscriptionProcessorFactory { get; set; } = Internal.SubscriptionProcessorFactory.Instance;
             public Type SubscriptionProcessorGeneric { get; set; } = typeof(SubscriptionProcessor<>);
             public TimeSpan SubscriptionExpirationTime { get; set; } = TimeSpan.FromSeconds(60);
-            public IMomentClock Clock { get; set; } = CoarseCpuClock.Instance;
+            public MomentClockSet? Clocks { get; set; }
         }
 
         protected ConcurrentDictionary<ComputedInput, IPublication> Publications { get; }
@@ -83,7 +83,7 @@ namespace Stl.Fusion.Bridge
         public ISubscriptionProcessorFactory SubscriptionProcessorFactory { get; }
         public Type SubscriptionProcessorGeneric { get; }
         public TimeSpan SubscriptionExpirationTime { get; }
-        public IMomentClock Clock { get; }
+        public MomentClockSet Clocks { get; }
 
         public Publisher(Options? options = null)
         {
@@ -99,7 +99,7 @@ namespace Stl.Fusion.Bridge
             SubscriptionProcessorFactory = options.SubscriptionProcessorFactory;
             SubscriptionProcessorGeneric = options.SubscriptionProcessorGeneric;
             SubscriptionExpirationTime = options.SubscriptionExpirationTime;
-            Clock = options.Clock;
+            Clocks = options.Clocks ?? MomentClockSet.Default;
 
             var concurrencyLevel = HardwareInfo.GetProcessorCountPo2Factor(4);
             var capacity = OSInfo.IsWebAssembly ? 509 : 7919;
@@ -124,7 +124,8 @@ namespace Stl.Fusion.Bridge
                      (key, arg) => {
                          var (this1, computed1) = arg;
                          var id = this1.PublicationIdGenerator.Next();
-                         var p1 = this1.PublicationFactory.Create(this1.PublicationGeneric, this1, computed1, id, Clock);
+                         var p1 = this1.PublicationFactory.Create(
+                             this1.PublicationGeneric, this1, computed1, id, this1.Clocks.CoarseCpuClock);
                          this1.PublicationsById[id] = p1;
                          p1.Run();
                          return p1;

@@ -119,7 +119,7 @@ namespace Stl.Fusion.Tests
         protected virtual void ConfigureServices(IServiceCollection services, bool isClient = false)
         {
             if (Options.UseTestClock)
-                services.AddSingleton<IMomentClock, TestClock>();
+                services.AddSingleton(new MomentClockSet(new TestClock()));
             services.AddSingleton(Out);
 
             // Logging

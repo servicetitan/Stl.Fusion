@@ -95,7 +95,7 @@ namespace Stl.Fusion.Bridge.Internal
                 subscriptionProcessor = PublisherImpl.SubscriptionProcessorFactory.Create(
                     PublisherImpl.SubscriptionProcessorGeneric,
                     publication, Channel, PublisherImpl.SubscriptionExpirationTime,
-                    PublisherImpl.Clock, LoggerFactory);
+                    PublisherImpl.Clocks, LoggerFactory);
                 Subscriptions[publicationId] = subscriptionProcessor;
             }
             subscriptionProcessor.Run()

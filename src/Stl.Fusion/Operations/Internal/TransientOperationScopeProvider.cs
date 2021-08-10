@@ -22,7 +22,6 @@ namespace Stl.Fusion.Operations.Internal
     public class TransientOperationScopeProvider : ICommandHandler<ICommand>
     {
         protected IOperationCompletionNotifier OperationCompletionNotifier { get; }
-        protected IMomentClock Clock { get; }
         protected IServiceProvider Services { get; }
         protected ILogger Log { get; }
 
@@ -32,7 +31,6 @@ namespace Stl.Fusion.Operations.Internal
         {
             Log = log ?? NullLogger<TransientOperationScopeProvider>.Instance;
             Services = services;
-            Clock = services.GetService<IMomentClock>() ?? SystemClock.Instance;
             OperationCompletionNotifier = services.GetRequiredService<IOperationCompletionNotifier>();
         }
 

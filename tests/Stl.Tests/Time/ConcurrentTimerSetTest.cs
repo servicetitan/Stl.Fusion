@@ -29,7 +29,7 @@ namespace Stl.Tests.Time
         [Fact]
         public async Task BasicTest()
         {
-            var clock = CpuClock.Instance;
+            var clock = MomentClockSet.Default.CpuClock;
             await using var timerSet = new ConcurrentTimerSet<Timer>(
                 new ConcurrentTimerSet<Timer>.Options() {
                     Quanta = TimeSpan.FromMilliseconds(10),
@@ -91,11 +91,14 @@ namespace Stl.Tests.Time
         [Fact(Skip = "Performance")]
         public async Task TimerPerformanceTest()
         {
+            var clock = MomentClockSet.Default.CoarseCpuClock;
             var timerSet = new ConcurrentTimerSet<Timer>(
                 new ConcurrentTimerSet<Timer>.Options() {
                     Quanta = TimeSpan.FromMilliseconds(100),
                 },
-                timer => timer.FiredAt = CoarseCpuClock.Instance.Now);
+                timer => {
+                    timer.FiredAt = clock.Now;
+                });
             await using (timerSet) {
                 var tasks = Enumerable.Range(0, HardwareInfo.GetProcessorCountFactor())
                     .Select(_ => Task.Run(() => OneRandomTest(timerSet, 100_000, 5000, 1000)))
@@ -108,11 +111,12 @@ namespace Stl.Tests.Time
 
         private async Task OneRandomTest(int timerCount, int maxDuration, int maxDelta)
         {
+            var clock = MomentClockSet.Default.CoarseCpuClock;
             await using var timerSet = new ConcurrentTimerSet<Timer>(
                 new ConcurrentTimerSet<Timer>.Options() {
                     Quanta = TimeSpan.FromMilliseconds(100),
                 },
-                timer => timer.FiredAt = CoarseCpuClock.Instance.Now);
+                timer => timer.FiredAt = clock.Now);
             await OneRandomTest(timerSet, timerCount, maxDuration, maxDelta);
         }
 

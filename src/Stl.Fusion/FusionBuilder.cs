@@ -41,7 +41,8 @@ namespace Stl.Fusion
 
             // Common services
             Services.AddOptions();
-            Services.TryAddSingleton(SystemClock.Instance);
+            Services.TryAddSingleton(MomentClockSet.Default);
+            Services.TryAddSingleton(c => c.GetRequiredService<MomentClockSet>().SystemClock);
 
             // Compute services & their dependencies
             Services.TryAddSingleton(_ => ComputeServiceProxyGenerator.Default);
@@ -58,7 +59,6 @@ namespace Stl.Fusion
             // States & their dependencies
             Services.TryAddTransient<IStateFactory, StateFactory>();
             Services.TryAddTransient(typeof(IMutableState<>), typeof(MutableState<>));
-            Services.TryAddSingleton<UICommandTracker.Options>();
             Services.TryAddScoped<IUICommandTracker, UICommandTracker>();
             Services.TryAddTransient<IUpdateDelayer>(c => new UpdateDelayer(c.UICommandTracker()));
 

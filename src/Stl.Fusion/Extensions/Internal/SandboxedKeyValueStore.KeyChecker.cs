@@ -7,11 +7,11 @@ namespace Stl.Fusion.Extensions.Internal
     {
         public record KeyChecker
         {
+            public IMomentClock Clock { get; init; } = null!;
             public string Prefix { get; init; } = "";
             public string? SecondaryPrefix { get; init; }
             public TimeSpan? ExpirationTime { get; init; }
             public TimeSpan? SecondaryExpirationTime { get; init; }
-            public IMomentClock Clock { get; init; } = SystemClock.Instance;
 
             public virtual void CheckKeyPrefix(string keyPrefix)
             {

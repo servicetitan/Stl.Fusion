@@ -23,7 +23,7 @@ namespace Stl.Time
                 init => _quanta = TimeSpanEx.Max(MinQuanta, value);
             }
 
-            public IMomentClock Clock { get; init; } = CpuClock.Instance;
+            public IMomentClock Clock { get; init; } = MomentClockSet.Default.CpuClock;
         }
 
         private readonly Action<TTimer>? _fireHandler;
