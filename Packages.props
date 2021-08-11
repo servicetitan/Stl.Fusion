@@ -12,7 +12,7 @@
     <BlazoriseVersion>0.9.*</BlazoriseVersion>
     <SystemNetHttpJsonVersion>5.0.3</SystemNetHttpJsonVersion>
     <MicrosoftExtensionsVersion>5.0.0</MicrosoftExtensionsVersion>
-    <StlFusionVersion>1.6.*</StlFusionVersion>
+    <StlFusionVersion>1.7.*</StlFusionVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(LegacyBuild)' != 'true'">
