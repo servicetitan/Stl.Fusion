@@ -3,6 +3,7 @@ using Stl.Text;
 
 namespace Stl.Generators
 {
+    // Thread-safe!
     public class RandomSymbolGenerator : Generator<Symbol>
     {
         public static readonly RandomSymbolGenerator Default = new();

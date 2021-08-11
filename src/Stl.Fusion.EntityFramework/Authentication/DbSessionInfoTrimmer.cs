@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Stl.Fusion.EntityFramework.Authentication
 {
-    public class DbSessionInfoTrimmer<TDbContext> : DbWakeSleepProcessBase<TDbContext>
+    public abstract class DbSessionInfoTrimmer<TDbContext> : DbWakeSleepProcessBase<TDbContext>
         where TDbContext : DbContext
     {
         public class Options
@@ -18,12 +18,11 @@ namespace Stl.Fusion.EntityFramework.Authentication
             public bool IsLoggingEnabled { get; set; } = true;
         }
 
-        protected IDbSessionInfoRepo<TDbContext> Sessions { get; }
         protected TimeSpan CheckInterval { get; }
         protected TimeSpan MaxSessionAge { get; }
         protected int BatchSize { get; }
-        protected int LastTrimCount { get; set; }
         protected Random Random { get; }
+        protected int LastTrimCount { get; set; }
         protected bool IsLoggingEnabled { get; set; }
         protected LogLevel LogLevel { get; set; } = LogLevel.Information;
 
@@ -36,9 +35,20 @@ namespace Stl.Fusion.EntityFramework.Authentication
             CheckInterval = options.CheckInterval;
             MaxSessionAge = options.MaxSessionAge;
             BatchSize = options.BatchSize;
-            Sessions = services.GetRequiredService<IDbSessionInfoRepo<TDbContext>>();
             Random = new Random();
         }
+    }
+
+    public class DbSessionInfoTrimmer<TDbContext, TDbSessionInfo, TDbUserId> : DbSessionInfoTrimmer<TDbContext>
+        where TDbContext : DbContext
+        where TDbSessionInfo : DbSessionInfo<TDbUserId>, new()
+        where TDbUserId : notnull
+    {
+        protected IDbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId> Sessions { get; }
+
+        public DbSessionInfoTrimmer(Options? options, IServiceProvider services)
+            : base(options ??= new(), services)
+            => Sessions = services.GetRequiredService<IDbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId>>();
 
         protected override async Task WakeUp(CancellationToken cancellationToken)
         {

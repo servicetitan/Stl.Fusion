@@ -200,7 +200,7 @@ namespace Stl.Fusion.Tests.Authentication
             var sessionFactory = ClientServices.GetRequiredService<ISessionFactory>();
 
             var session = sessionFactory.CreateSession();
-            await Assert.ThrowsAsync<FormatException>(async() => {
+            await Assert.ThrowsAsync<InvalidOperationException>(async() => {
                 var guest = new User("notANumber", "Guest").WithIdentity("n:1");
                 await authServer.SignIn(new SignInCommand(session, guest).MarkServerSide());
             });

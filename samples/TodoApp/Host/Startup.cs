@@ -87,7 +87,7 @@ namespace Templates.TodoApp.Host
                 var operationLogChangeAlertPath = dbPath + "_changed";
                 b.AddFileBasedDbOperationLogChangeTracking(operationLogChangeAlertPath);
                 if (!HostSettings.UseInMemoryAuthService)
-                    b.AddDbAuthentication();
+                    b.AddDbAuthentication<string>();
                 b.AddKeyValueStore();
             });
 

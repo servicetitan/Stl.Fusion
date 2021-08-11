@@ -5,37 +5,41 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Authentication;
-using Stl.Fusion.EntityFramework.Internal;
 
 namespace Stl.Fusion.EntityFramework.Authentication
 {
-    public interface IDbSessionInfoRepo<in TDbContext>
+    public interface IDbSessionInfoRepo<in TDbContext, TDbSessionInfo, TDbUserId>
         where TDbContext : DbContext
+        where TDbSessionInfo : DbSessionInfo<TDbUserId>, new()
+        where TDbUserId : notnull
     {
         Type SessionInfoEntityType { get; }
 
         // Write methods
-        Task<DbSessionInfo> GetOrCreate(
+        Task<TDbSessionInfo> GetOrCreate(
             TDbContext dbContext, string sessionId, CancellationToken cancellationToken = default);
-        Task<DbSessionInfo> CreateOrUpdate(
+        Task<TDbSessionInfo> CreateOrUpdate(
             TDbContext dbContext, SessionInfo sessionInfo, CancellationToken cancellationToken = default);
         Task<int> Trim(
             DateTime minLastSeenAt, int maxCount, CancellationToken cancellationToken = default);
 
         // Read methods
-        Task<DbSessionInfo?> TryGet(string sessionId, CancellationToken cancellationToken = default);
-        Task<DbSessionInfo?> TryGet(
+        Task<TDbSessionInfo?> TryGet(string sessionId, CancellationToken cancellationToken = default);
+        Task<TDbSessionInfo?> TryGet(
             TDbContext dbContext, string sessionId, CancellationToken cancellationToken = default);
-        Task<DbSessionInfo[]> ListByUser(
-            TDbContext dbContext, long userId, CancellationToken cancellationToken = default);
+        Task<TDbSessionInfo[]> ListByUser(
+            TDbContext dbContext, TDbUserId userId, CancellationToken cancellationToken = default);
     }
 
-    public class DbSessionInfoRepo<TDbContext, TDbSessionInfo> : DbServiceBase<TDbContext>, IDbSessionInfoRepo<TDbContext>
+    public class DbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId>
+        : DbServiceBase<TDbContext>, IDbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId>
         where TDbContext : DbContext
-        where TDbSessionInfo : DbSessionInfo, new()
+        where TDbSessionInfo : DbSessionInfo<TDbUserId>, new()
+        where TDbUserId : notnull
     {
         protected DbAuthService<TDbContext>.Options Options { get; }
         protected DbEntityResolver<TDbContext, string, TDbSessionInfo> EntityResolver { get; }
+        protected IDbUserIdHandler<TDbUserId> DbUserIdHandler { get; }
 
         public Type SessionInfoEntityType => typeof(TDbSessionInfo);
 
@@ -44,11 +48,12 @@ namespace Stl.Fusion.EntityFramework.Authentication
         {
             Options = options;
             EntityResolver = services.GetRequiredService<DbEntityResolver<TDbContext, string, TDbSessionInfo>>();
+            DbUserIdHandler = services.GetRequiredService<IDbUserIdHandler<TDbUserId>>();
         }
 
         // Write methods
 
-        public virtual async Task<DbSessionInfo> GetOrCreate(
+        public virtual async Task<TDbSessionInfo> GetOrCreate(
             TDbContext dbContext, string sessionId, CancellationToken cancellationToken = default)
         {
             var dbSessionInfo = await TryGet(dbContext, sessionId, cancellationToken).ConfigureAwait(false);
@@ -59,13 +64,13 @@ namespace Stl.Fusion.EntityFramework.Authentication
                         Id = sessionInfo.Id,
                         CreatedAt = sessionInfo.CreatedAt,
                     }).Entity;
-                dbSessionInfo.UpdateFrom(sessionInfo);
+                dbSessionInfo.UpdateFrom(Services, sessionInfo);
                 await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             }
             return dbSessionInfo;
         }
 
-        public async Task<DbSessionInfo> CreateOrUpdate(
+        public async Task<TDbSessionInfo> CreateOrUpdate(
             TDbContext dbContext, SessionInfo sessionInfo, CancellationToken cancellationToken = default)
         {
             var dbSessionInfo = await TryGet(dbContext, sessionInfo.Id, cancellationToken).ConfigureAwait(false);
@@ -74,7 +79,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
                     Id = sessionInfo.Id,
                     CreatedAt = sessionInfo.CreatedAt,
                 }).Entity;
-            dbSessionInfo.UpdateFrom(sessionInfo);
+            dbSessionInfo.UpdateFrom(Services, sessionInfo);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             return dbSessionInfo;
         }
@@ -98,24 +103,24 @@ namespace Stl.Fusion.EntityFramework.Authentication
 
         // Read methods
 
-        public async Task<DbSessionInfo?> TryGet(string sessionId, CancellationToken cancellationToken = default)
+        public async Task<TDbSessionInfo?> TryGet(string sessionId, CancellationToken cancellationToken = default)
             => await EntityResolver.TryGet(sessionId, cancellationToken).ConfigureAwait(false);
 
-        public virtual async Task<DbSessionInfo?> TryGet(
+        public virtual async Task<TDbSessionInfo?> TryGet(
             TDbContext dbContext, string sessionId, CancellationToken cancellationToken)
             => await dbContext.Set<TDbSessionInfo>()
                 .FindAsync(ComposeKey(sessionId), cancellationToken)
                 .ConfigureAwait(false);
 
-        public virtual async Task<DbSessionInfo[]> ListByUser(
-            TDbContext dbContext, long userId, CancellationToken cancellationToken = default)
+        public virtual async Task<TDbSessionInfo[]> ListByUser(
+            TDbContext dbContext, TDbUserId userId, CancellationToken cancellationToken = default)
         {
             var qSessions =
-                from s in  dbContext.Set<TDbSessionInfo>().AsQueryable()
-                where s.UserId == userId
+                from s in dbContext.Set<TDbSessionInfo>().AsQueryable()
+                where Equals(s.UserId, userId)
                 orderby s.LastSeenAt descending
                 select s;
-            var sessions = (DbSessionInfo[]) await qSessions.ToArrayAsync(cancellationToken).ConfigureAwait(false);
+            var sessions = (TDbSessionInfo[]) await qSessions.ToArrayAsync(cancellationToken).ConfigureAwait(false);
             return sessions;
         }
     }
