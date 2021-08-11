@@ -29,12 +29,32 @@ namespace Stl.Conversion.Internal
             var tSource = typeof(TSource);
             var tTarget = typeof(TTarget);
 
-            // 1. Trying IConverter<,>
+            // 0. Can we simply cast to base / descendant?
+            if (tTarget.IsAssignableFrom(tSource)) {
+                var pInstance =
+                    typeof(CastToBaseConverter<,>)
+                        .MakeGenericType(tSource, tTarget)
+                        .GetProperty(
+                            nameof(CastToBaseConverter<TTarget, TTarget>.Instance),
+                            BindingFlags.Static | BindingFlags.Public);
+                return (Converter<TSource, TTarget>) pInstance!.GetValue(null);
+            }
+            if (tSource.IsAssignableFrom(tTarget)) {
+                var pInstance =
+                    typeof(CastToDescendantConverter<,>)
+                        .MakeGenericType(tSource, tTarget)
+                        .GetProperty(
+                            nameof(CastToDescendantConverter<TTarget, TTarget>.Instance),
+                            BindingFlags.Static | BindingFlags.Public);
+                return (Converter<TSource, TTarget>) pInstance!.GetValue(null);
+            }
+
+            // 1. Is there IConverter<,> service?
             var tConverter = typeof(IConverter<,>).MakeGenericType(tSource, tTarget);
             if (Services.GetService(tConverter) is IConverter<TSource, TTarget> converter)
                 return new InterfaceConverter<TSource, TTarget>(converter);
 
-            // 2. Trying Func<,>
+            // 2. Is there Func<,> service?
             var tryConverterFn = Services.GetService<Func<TSource, Option<TTarget>>>();
             var converterFn = Services.GetService<Func<TSource, TTarget>>();
             if (tryConverterFn != null)
@@ -42,7 +62,7 @@ namespace Stl.Conversion.Internal
             if (converterFn != null)
                 return FuncConverter<TSource>.New(converterFn);
 
-            // 3. Trying IConvertibleTo<>
+            // 3. Does TSource impl. IConvertibleTo<Option<TTarget>> or IConvertibleTo<TTarget>?
             if (typeof(IConvertibleTo<Option<TTarget>>).IsAssignableFrom(tSource))
                 return FuncConverter<TSource>.New(
                     s => s is IConvertibleTo<Option<TTarget>> c ? c.Convert() : Option.None<TTarget>(), null);
@@ -50,12 +70,12 @@ namespace Stl.Conversion.Internal
                 return FuncConverter<TSource>.New(
                     s => s is IConvertibleTo<TTarget> c ? c.Convert() : default!);
 
-            // 4. Trying .ToString()
+            // 4. Can we use .ToString()?
             if (tTarget == typeof(string))
                 return (Converter<TSource, TTarget>) (object) FuncConverter<TSource>.New(
                     s => s is null ? null : s.ToString());
 
-            // 5. Trying static TryParse(string, out TTarget) & Parse(string)
+            // 5. Can we use static TryParse(string, out TTarget) or Parse(string)?
             if (tSource == typeof(string)) {
                 var pSource = Expression.Parameter(tSource, "source");
 
@@ -101,7 +121,7 @@ namespace Stl.Conversion.Internal
                 }
             }
 
-            // 6. Trying TypeConverter
+            // 6. Is there a TypeConverter (slow)?
             var tc = TypeDescriptor.GetConverter(tSource);
             if (tc.CanConvertTo(tTarget))
                 return FuncConverter<TSource>.New(s => (TTarget) tc.ConvertTo(s!, tTarget)!);

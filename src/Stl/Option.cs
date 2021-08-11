@@ -110,8 +110,13 @@ namespace Stl
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Option<TCast> Cast<TCast>()
-            where TCast : T
-            => HasValue ? Option<TCast>.Some((TCast) ValueOrDefault!) : default;
+        {
+            if (!HasValue)
+                return Option.None<TCast>();
+            if (ValueOrDefault is TCast value)
+                return Option.Some(value);
+            throw new InvalidCastException();
+        }
 
         // Equality
 

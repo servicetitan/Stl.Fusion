@@ -9,15 +9,12 @@ namespace Stl.Conversion
         public Type TargetType { get; init; } = null!;
         public abstract bool IsAvailable { get; }
 
-        public abstract object? ConvertFromUntyped(object? source);
-        public abstract Option<object?> TryConvertFromUntyped(object? source);
+        public abstract object? ConvertUntyped(object? source);
+        public abstract Option<object?> TryConvertUntyped(object? source);
     }
 
     public abstract class Converter<TSource> : Converter
     {
-        public abstract object? ConvertToUntyped(TSource source);
-        public abstract Option<object?> TryConvertToUntyped(TSource source);
-
         protected Converter() => SourceType = typeof(TSource);
     }
 

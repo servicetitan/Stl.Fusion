@@ -6,17 +6,13 @@ namespace Stl.Conversion.Internal
 
         public override TTarget Convert(TSource source)
             => Converter.Convert(source);
-        public override object? ConvertToUntyped(TSource source)
-            => Converter.Convert(source);
-        public override object? ConvertFromUntyped(object? source)
+        public override object? ConvertUntyped(object? source)
             => Converter.Convert((TSource) source!);
 
         public override Option<TTarget> TryConvert(TSource source)
-            => Converter.TryConvert(source);
-        public override Option<object?> TryConvertToUntyped(TSource source)
-            => Converter.TryConvert(source);
-        public override Option<object?> TryConvertFromUntyped(object? source)
-            => source is TSource t ? Converter.TryConvert(t) : Option<object?>.None;
+            => Converter.TryConvert(source).Cast<TTarget>();
+        public override Option<object?> TryConvertUntyped(object? source)
+            => source is TSource t ? Converter.TryConvert(t).Cast<object?>() : Option<object?>.None;
 
         public InterfaceConverter(IConverter<TSource, TTarget> converter)
             => Converter = converter;

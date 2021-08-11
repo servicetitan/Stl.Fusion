@@ -9,17 +9,13 @@ namespace Stl.Conversion.Internal
 
         public override TTarget Convert(TSource source)
             => Converter.Invoke(source);
-        public override object? ConvertToUntyped(TSource source)
-            => Converter(source);
-        public override object? ConvertFromUntyped(object? source)
+        public override object? ConvertUntyped(object? source)
             => Converter((TSource) source!);
 
         public override Option<TTarget> TryConvert(TSource source)
-            => TryConverter.Invoke(source);
-        public override Option<object?> TryConvertToUntyped(TSource source)
-            => TryConverter.Invoke(source);
-        public override Option<object?> TryConvertFromUntyped(object? source)
-            => source is TSource t ? TryConverter.Invoke(t) : Option<object?>.None;
+            => TryConverter.Invoke(source).Cast<TTarget>();
+        public override Option<object?> TryConvertUntyped(object? source)
+            => source is TSource t ? TryConverter.Invoke(t).Cast<object?>() : Option<object?>.None;
 
         public FuncConverter(
             Func<TSource, TTarget> converter,

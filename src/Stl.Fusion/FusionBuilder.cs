@@ -6,6 +6,7 @@ using Castle.DynamicProxy.Generators;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.CommandR;
+using Stl.Conversion;
 using Stl.DependencyInjection;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Bridge;
@@ -41,6 +42,7 @@ namespace Stl.Fusion
 
             // Common services
             Services.AddOptions();
+            Services.AddConverters();
             Services.TryAddSingleton(MomentClockSet.Default);
             Services.TryAddSingleton(c => c.GetRequiredService<MomentClockSet>().SystemClock);
 
