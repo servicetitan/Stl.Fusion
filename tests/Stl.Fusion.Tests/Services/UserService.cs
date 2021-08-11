@@ -2,15 +2,14 @@ using System;
 using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
-using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Stl.Async;
 using Stl.CommandR;
 using Stl.CommandR.Configuration;
-using Stl.DependencyInjection;
 using Stl.Fusion.EntityFramework;
 using Stl.Fusion.Operations;
 using Stl.Fusion.Tests.Model;
+using Stl.RegisterAttributes;
 
 namespace Stl.Fusion.Tests.Services
 {

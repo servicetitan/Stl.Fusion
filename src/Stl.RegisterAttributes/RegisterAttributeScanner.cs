@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.DependencyInjection;
-using Stl.DependencyInjection.Internal;
+using Stl.RegisterAttributes.Internal;
 using Stl.Text;
 
-namespace Stl.DependencyInjection
+namespace Stl.RegisterAttributes
 {
     public record RegisterAttributeScanner
     {
@@ -39,6 +39,8 @@ namespace Stl.DependencyInjection
         public RegisterAttributeScanner Register(Type implementationType)
         {
             if (!TypeFilter.Invoke(implementationType))
+                return this;
+            if (IsDynamicProxy(implementationType))
                 return this;
 
             var attrs = RegisterAttribute.GetAll(implementationType, Scope);
@@ -94,5 +96,8 @@ namespace Stl.DependencyInjection
             }
             return this;
         }
+
+        private bool IsDynamicProxy(Type type)
+            => type.Assembly.FullName.StartsWith("DynamicProxyGenAssembly2");
     }
 }

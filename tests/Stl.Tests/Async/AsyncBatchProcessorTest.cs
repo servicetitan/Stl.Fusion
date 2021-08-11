@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Stl.Async;
+using Stl.Testing.Collections;
 using Xunit;
 
 namespace Stl.Tests.Async

@@ -7,6 +7,7 @@ using Stl.Async;
 using Stl.Mathematics;
 using Stl.OS;
 using Stl.Testing;
+using Stl.Testing.Collections;
 using Stl.Time;
 using Xunit;
 using Xunit.Abstractions;

@@ -1,9 +1,9 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
-using Stl.DependencyInjection.Internal;
+using Stl.RegisterAttributes.Internal;
 using Stl.Text;
 
-namespace Stl.DependencyInjection
+namespace Stl.RegisterAttributes
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public abstract class RegisterAttribute : Attribute

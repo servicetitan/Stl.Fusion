@@ -1,11 +1,7 @@
 using Xunit;
 
-namespace Stl.Tests
+namespace Stl.Testing.Collections
 {
-    [CollectionDefinition(nameof(PerformanceTests), DisableParallelization = true)]
-    public class PerformanceTests
-    { }
-
     [CollectionDefinition(nameof(TimeSensitiveTests), DisableParallelization = true)]
     public class TimeSensitiveTests
     { }

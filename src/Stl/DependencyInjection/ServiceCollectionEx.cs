@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,12 +11,14 @@ namespace Stl.DependencyInjection
 {
     public static class ServiceCollectionEx
     {
+        // HasService
+
         public static bool HasService<TService>(this IServiceCollection services)
             => services.HasService(typeof(TService));
         public static bool HasService(this IServiceCollection services, Type serviceType)
             => services.Any(d => d.ServiceType == serviceType);
 
-        // Options & Settings
+        // Options
 
         public static IServiceCollection Configure<TOptions>(
             this IServiceCollection services,
@@ -33,6 +34,8 @@ namespace Stl.DependencyInjection
                 c => new ConfigureAllNamedOptions<TOptions>(c, configureOptions));
             return services;
         }
+
+        // Settings
 
         public static IServiceCollection AddSettings<TSettings>(
             this IServiceCollection services,
@@ -50,26 +53,6 @@ namespace Stl.DependencyInjection
                 cfg.GetSection(sectionName)?.Bind(settings);
                 return settings;
             });
-            return services;
-        }
-
-        // Attribute-based configuration
-
-        public static RegisterAttributeScanner UseRegisterAttributeScanner(
-            this IServiceCollection services, Symbol scope = default)
-            => new(services, scope);
-
-        public static IServiceCollection UseRegisterAttributeScanner(
-            this IServiceCollection services,
-            Action<RegisterAttributeScanner> attributeScannerBuilder)
-            => services.UseRegisterAttributeScanner(default, attributeScannerBuilder);
-
-        public static IServiceCollection UseRegisterAttributeScanner(
-            this IServiceCollection services, Symbol scope,
-            Action<RegisterAttributeScanner> attributeScannerBuilder)
-        {
-            var builder = services.UseRegisterAttributeScanner(scope);
-            attributeScannerBuilder.Invoke(builder);
             return services;
         }
     }

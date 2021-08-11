@@ -6,7 +6,7 @@ using Stl.Collections;
 using Stl.Concurrency;
 using Stl.Text;
 
-namespace Stl.DependencyInjection.Internal
+namespace Stl.RegisterAttributes.Internal
 {
     internal readonly struct ServiceInfo
     {

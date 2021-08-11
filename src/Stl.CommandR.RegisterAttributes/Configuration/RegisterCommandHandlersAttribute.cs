@@ -1,6 +1,6 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
-using Stl.DependencyInjection;
+using Stl.RegisterAttributes;
 
 namespace Stl.CommandR.Configuration
 {

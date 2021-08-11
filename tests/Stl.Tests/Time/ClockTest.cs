@@ -7,6 +7,7 @@ using FluentAssertions;
 using Stl.Async;
 using Stl.Collections;
 using Stl.Testing;
+using Stl.Testing.Collections;
 using Stl.Time;
 using Stl.Time.Testing;
 using Xunit;

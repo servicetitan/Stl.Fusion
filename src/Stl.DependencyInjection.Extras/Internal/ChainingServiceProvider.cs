@@ -1,6 +1,6 @@
 using System;
 
-namespace Stl.DependencyInjection.Internal
+namespace Stl.DependencyInjection.Extras.Internal
 {
     public sealed class ChainingServiceProvider : IServiceProvider
     {

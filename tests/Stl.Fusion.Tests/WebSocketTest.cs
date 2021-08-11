@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Tests.Services;
 using Stl.Testing;
-using Stl.Tests;
+using Stl.Testing.Collections;
 using Xunit;
 using Xunit.Abstractions;
 

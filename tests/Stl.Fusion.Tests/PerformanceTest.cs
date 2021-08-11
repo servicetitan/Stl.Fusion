@@ -11,7 +11,7 @@ using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
 using Stl.OS;
 using Stl.Testing;
-using Stl.Tests;
+using Stl.Testing.Collections;
 using Stl.Time;
 using Xunit;
 using Xunit.Abstractions;

@@ -3,9 +3,9 @@ using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
-using Stl.DependencyInjection.Internal;
+using Stl.RegisterAttributes.Internal;
 
-namespace Stl.DependencyInjection
+namespace Stl.RegisterAttributes
 {
     public class RegisterHostedServiceAttribute : RegisterServiceAttribute
     {

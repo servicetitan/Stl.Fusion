@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Stl.CommandR;
 using Stl.CommandR.Configuration;
-using Stl.DependencyInjection;
+using Stl.RegisterAttributes;
 
 namespace Stl.Tests.CommandR.Services
 {

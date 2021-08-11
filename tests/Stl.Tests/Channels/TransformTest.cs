@@ -5,6 +5,7 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Stl.Channels;
+using Stl.Testing.Collections;
 using Xunit;
 
 namespace Stl.Tests.Channels

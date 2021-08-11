@@ -2,7 +2,7 @@ using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
-namespace Stl.DependencyInjection
+namespace Stl.RegisterAttributes
 {
     public class RegisterServiceAttribute : RegisterAttribute
     {

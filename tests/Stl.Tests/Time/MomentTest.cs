@@ -1,8 +1,7 @@
 using System;
-using Cysharp.Text;
 using FluentAssertions;
-using Stl.Collections;
 using Stl.Testing;
+using Stl.Testing.Collections;
 using Stl.Time;
 using Xunit;
 using Xunit.Abstractions;

@@ -5,8 +5,8 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Stl.CommandR;
 using Stl.CommandR.Configuration;
-using Stl.DependencyInjection;
 using Stl.Fusion.EntityFramework;
+using Stl.RegisterAttributes;
 
 namespace Stl.Tests.CommandR.Services
 {

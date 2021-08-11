@@ -4,7 +4,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Memory;
 using Microsoft.Extensions.DependencyInjection;
-using Stl.DependencyInjection;
+using Stl.RegisterAttributes;
 using Xunit;
 
 namespace Stl.Tests.DependencyInjection

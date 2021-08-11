@@ -4,6 +4,7 @@ using System.Linq;
 using FluentAssertions;
 using Stl.Caching;
 using Stl.Testing;
+using Stl.Testing.Collections;
 using Xunit;
 
 namespace Stl.Tests.Caching

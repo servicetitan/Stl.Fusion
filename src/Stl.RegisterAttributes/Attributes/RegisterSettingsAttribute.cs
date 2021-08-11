@@ -1,7 +1,7 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Stl.DependencyInjection
+namespace Stl.RegisterAttributes
 {
     public class RegisterSettingsAttribute : RegisterAttribute
     {

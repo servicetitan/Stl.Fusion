@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using Stl.Testing;
+using Stl.Testing.Collections;
 using Stl.Time;
 using Stl.Time.Internal;
 using Xunit;

@@ -25,6 +25,7 @@ using Stl.Fusion.Tests.Services;
 using Stl.Fusion.Tests.UIModels;
 using Stl.Fusion.Internal;
 using Stl.Fusion.Server;
+using Stl.RegisterAttributes;
 using Stl.Testing;
 using Stl.Testing.Output;
 using Stl.Time;

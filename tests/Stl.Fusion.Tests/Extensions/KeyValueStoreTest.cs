@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Extensions;
-using Stl.Tests;
+using Stl.Testing.Collections;
 using Stl.Time;
 using Stl.Time.Testing;
 using Xunit;

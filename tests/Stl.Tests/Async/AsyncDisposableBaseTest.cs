@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Stl.Async;
 using Stl.Testing;
+using Stl.Testing.Collections;
 using Stl.Time;
 using Xunit;
 using Xunit.Abstractions;

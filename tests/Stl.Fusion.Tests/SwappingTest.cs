@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 using Stl.Fusion.Internal;
 using Stl.Fusion.Swapping;
 using Stl.Testing;
-using Stl.Tests;
+using Stl.Testing.Collections;
 using Xunit;
 using Xunit.Abstractions;
 
