@@ -11,6 +11,7 @@ using System.Runtime.ExceptionServices;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Stl.Async;
+using Stl.Conversion;
 using Stl.Internal;
 using Stl.Reflection;
 

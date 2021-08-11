@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
+using Stl.Conversion;
 using Stl.Serialization.Internal;
 
 namespace Stl.Serialization

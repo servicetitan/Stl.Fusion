@@ -6,8 +6,7 @@ namespace Stl.DependencyInjection
 {
     public static class ServiceProviderEx
     {
-        public static IServiceProvider Empty { get; } =
-            new DefaultServiceProviderFactory().CreateServiceProvider(new ServiceCollection());
+        public static IServiceProvider Empty { get; } = new ServiceCollection().BuildServiceProvider();
 
         // Get HostedServiceManager
 

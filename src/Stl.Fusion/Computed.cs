@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Stl.Collections.Slim;
+using Stl.Conversion;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Internal;
 

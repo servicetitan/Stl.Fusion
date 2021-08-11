@@ -41,8 +41,6 @@ namespace Stl.Interception.Interceptors
                 => emitter.CreateField("__interceptors", Options.InterceptorType.MakeArrayType());
         }
 
-        public static ITypeViewProxyGenerator Default { get; } = new TypeViewProxyGenerator();
-
         protected ConcurrentDictionary<(Type, Type), Type> Cache { get; } = new();
 
         public TypeViewProxyGenerator(
