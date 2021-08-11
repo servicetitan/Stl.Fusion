@@ -201,8 +201,14 @@ namespace Stl.Fusion.Tests.Authentication
 
             var session = sessionFactory.CreateSession();
             await Assert.ThrowsAsync<InvalidOperationException>(async() => {
-                var guest = new User("notANumber", "Guest").WithIdentity("n:1");
-                await authServer.SignIn(new SignInCommand(session, guest).MarkServerSide());
+                try {
+                    var guest = new User("notANumber", "Guest").WithIdentity("n:1");
+                    await authServer.SignIn(new SignInCommand(session, guest).MarkServerSide());
+                }
+                catch (FormatException) {
+                    // Thrown by InMemoryAuthService
+                    throw new InvalidOperationException();
+                }
             });
             var bob = new User("", "Bob").WithIdentity("b:1");
             await authServer.SignIn(new SignInCommand(session, bob).MarkServerSide());
