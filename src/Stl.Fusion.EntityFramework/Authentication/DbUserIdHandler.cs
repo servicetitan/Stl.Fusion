@@ -16,9 +16,9 @@ namespace Stl.Fusion.EntityFramework.Authentication
     public class DbUserIdHandler<TDbUserId> : IDbUserIdHandler<TDbUserId>
         where TDbUserId : notnull
     {
-        protected IConverter<string, TDbUserId> Parser { get; }
-        protected IConverter<TDbUserId, string> Formatter { get; }
-        protected Func<TDbUserId> Generator { get; }
+        protected IConverter<string, TDbUserId> Parser { get; init; }
+        protected IConverter<TDbUserId, string> Formatter { get; init; }
+        protected Func<TDbUserId> Generator { get; init; }
 
         public DbUserIdHandler(IConverterProvider converters, Func<TDbUserId>? generator = null)
         {
