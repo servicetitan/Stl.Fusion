@@ -74,12 +74,16 @@ namespace Stl.Fusion.EntityFramework.Authentication
             TDbContext dbContext, SessionInfo sessionInfo, CancellationToken cancellationToken = default)
         {
             var dbSessionInfo = await TryGet(dbContext, sessionInfo.Id, cancellationToken).ConfigureAwait(false);
-            dbSessionInfo ??= dbContext.Add(
-                new TDbSessionInfo() {
-                    Id = sessionInfo.Id,
-                    CreatedAt = sessionInfo.CreatedAt,
-                }).Entity;
+            var isDbSessionInfoFound = dbSessionInfo != null;
+            dbSessionInfo ??= new TDbSessionInfo() {
+                Id = sessionInfo.Id,
+                CreatedAt = sessionInfo.CreatedAt,
+            };
             dbSessionInfo.UpdateFrom(Services, sessionInfo);
+            if (isDbSessionInfoFound)
+                dbContext.Update(dbSessionInfo);
+            else
+                dbContext.Add(dbSessionInfo);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             return dbSessionInfo;
         }

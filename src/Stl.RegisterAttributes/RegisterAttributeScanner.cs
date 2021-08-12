@@ -98,6 +98,6 @@ namespace Stl.RegisterAttributes
         }
 
         private bool IsDynamicProxy(Type type)
-            => type.Assembly.FullName.StartsWith("DynamicProxyGenAssembly2");
+            => (type.Assembly.FullName ?? "").StartsWith("DynamicProxyGenAssembly2");
     }
 }

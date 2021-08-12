@@ -37,7 +37,7 @@ namespace Stl.Conversion.Internal
                         .GetProperty(
                             nameof(CastToBaseConverter<TTarget, TTarget>.Instance),
                             BindingFlags.Static | BindingFlags.Public);
-                return (Converter<TSource, TTarget>) pInstance!.GetValue(null);
+                return (Converter<TSource, TTarget>) pInstance!.GetValue(null)!;
             }
             if (tSource.IsAssignableFrom(tTarget)) {
                 var pInstance =
@@ -46,7 +46,7 @@ namespace Stl.Conversion.Internal
                         .GetProperty(
                             nameof(CastToDescendantConverter<TTarget, TTarget>.Instance),
                             BindingFlags.Static | BindingFlags.Public);
-                return (Converter<TSource, TTarget>) pInstance!.GetValue(null);
+                return (Converter<TSource, TTarget>) pInstance!.GetValue(null)!;
             }
 
             // 1. Is there IConverter<,> service?

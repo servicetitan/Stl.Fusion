@@ -5,19 +5,18 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <AspNetCoreVersion>5.0.8</AspNetCoreVersion>
+    <AspNetCoreVersion>5.0.9</AspNetCoreVersion>
     <AspNetCoreVersion3>3.*</AspNetCoreVersion3>
     <EntityFrameworkCoreVersion>$(AspNetCoreVersion)</EntityFrameworkCoreVersion>
+    <NpgsqlVersion>$(EntityFrameworkCoreVersion)</NpgsqlVersion>
+    <EntityFrameworkCoreNpgsqlVersion>5.0.7</EntityFrameworkCoreNpgsqlVersion>
     <BlazorVersion>$(AspNetCoreVersion)</BlazorVersion>
     <BlazoriseVersion>0.9.*</BlazoriseVersion>
     <SystemNetHttpJsonVersion>5.0.3</SystemNetHttpJsonVersion>
     <MicrosoftExtensionsVersion>5.0.0</MicrosoftExtensionsVersion>
-    <StlFusionVersion>1.6.*</StlFusionVersion>
+    <StlFusionVersion>1.7.*</StlFusionVersion>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(LegacyBuild)' != 'true'">
-    <EntityFrameworkCoreVersion>5.0.6</EntityFrameworkCoreVersion>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(LegacyBuild)' == 'true'">
     <EntityFrameworkCoreVersion>3.*</EntityFrameworkCoreVersion>
   </PropertyGroup>
@@ -66,7 +65,7 @@
     <PackageReference Update="Microsoft.EntityFrameworkCore.Sqlite" Version="$(EntityFrameworkCoreVersion)" />
     <PackageReference Update="Microsoft.EntityFrameworkCore.SqlServer" Version="$(EntityFrameworkCoreVersion)" />
     <PackageReference Update="Npgsql" Version="$(EntityFrameworkCoreVersion)" />
-    <PackageReference Update="Npgsql.EntityFrameworkCore.PostgreSQL" Version="$(EntityFrameworkCoreVersion)" />
+    <PackageReference Update="Npgsql.EntityFrameworkCore.PostgreSQL" Version="$(EntityFrameworkCoreNpgsqlVersion)" />
     <PackageReference Update="Microsoft.Identity.Web" Version="1.15.*" />
     <PackageReference Update="MsgPack.Cli" Version="1.0.*" />
     <PackageReference Update="Newtonsoft.Json" Version="13.0.*" />
