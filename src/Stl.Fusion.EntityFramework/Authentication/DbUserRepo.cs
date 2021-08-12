@@ -60,6 +60,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
         public virtual async Task<TDbUser> Create(
             TDbContext dbContext, User user, CancellationToken cancellationToken = default)
         {
+            // Creating "base" dbUser
             var dbUser = new TDbUser() {
                 Id = DbUserIdHandler.NewId(),
                 Name = user.Name,
@@ -67,10 +68,17 @@ namespace Stl.Fusion.EntityFramework.Authentication
             };
             dbContext.Add(dbUser);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+            // Reading back the model
+            dbUser = await TryGet(dbContext, dbUser.Id, cancellationToken).ConfigureAwait(false);
+            if (dbUser == null)
+                throw Errors.EntityNotFound<TDbUser>();
             user = user with {
                 Id = DbUserIdHandler.Format(dbUser.Id)
             };
+            // Updating dbUser from the model to persist user.Identities
             dbUser.UpdateFrom(Services, user);
+            dbContext.Update(dbUser);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             return dbUser;
         }
