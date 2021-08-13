@@ -94,6 +94,6 @@ namespace Stl.Fusion.EntityFramework.Reprocessing
         }
 
         protected virtual TimeSpan GetReprocessingDelay(CommandReprocessingState reprocessingState)
-            => TimeSpan.FromMilliseconds(10) + TimeSpan.FromMilliseconds(Rng.Next() % 200);
+            => TimeSpan.FromMilliseconds(10 + Math.Abs(Rng.Next() % 100));
     }
 }
