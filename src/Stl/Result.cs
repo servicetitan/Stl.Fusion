@@ -80,7 +80,7 @@ namespace Stl
         /// <summary>
         /// Retrieves result's value. Returns <code>default</code> when <see cref="IResult.HasError"/>.
         /// </summary>
-        [MaybeNull] T ValueOrDefault { get; }
+        T? ValueOrDefault { get; }
         /// <summary>
         /// Retrieves result's value. Throws an <see cref="Error"/> when <see cref="IResult.HasError"/>.
         /// </summary>
