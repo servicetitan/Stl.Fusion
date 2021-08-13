@@ -75,7 +75,7 @@ namespace Stl.Fusion.EntityFramework.Reprocessing
                     if (!decision.ShouldReprocess)
                         throw;
                     reprocessingState = reprocessingState with { Decision = decision };
-                    Log.LogWarning(error,
+                    Log.LogWarning(
                         "Reprocessing: {Command}, state = {ReprocessingState}",
                         command, reprocessingState);
                     await DelayClock.Delay(decision.ReprocessingDelay, cancellationToken).ConfigureAwait(false);
