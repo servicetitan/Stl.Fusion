@@ -8,15 +8,15 @@ using Templates.TodoApp.Host;
 using Templates.TodoApp.Services;
 
 var host = Host.CreateDefaultBuilder()
-    .ConfigureHostConfiguration(builder => {
+    .ConfigureHostConfiguration(cfg => {
         // Looks like there is no better way to set _default_ URL
-        builder.Sources.Insert(0, new MemoryConfigurationSource() {
+        cfg.Sources.Insert(0, new MemoryConfigurationSource() {
             InitialData = new Dictionary<string, string>() {
                 {WebHostDefaults.ServerUrlsKey, "http://localhost:5005"},
             }
         });
     })
-    .ConfigureWebHostDefaults(builder => builder
+    .ConfigureWebHostDefaults(webHost => webHost
         .UseDefaultServiceProvider((ctx, options) => {
             if (ctx.HostingEnvironment.IsDevelopment()) {
                 options.ValidateScopes = true;
@@ -29,7 +29,7 @@ var host = Host.CreateDefaultBuilder()
 // Ensure the DB is created
 var dbContextFactory = host.Services.GetRequiredService<IDbContextFactory<AppDbContext>>();
 await using var dbContext = dbContextFactory.CreateDbContext();
-// await dbContext.Database.EnsureDeletedAsync();
+await dbContext.Database.EnsureDeletedAsync();
 await dbContext.Database.EnsureCreatedAsync();
 
 await host.RunAsync();

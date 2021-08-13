@@ -15,7 +15,6 @@ namespace Stl.Fusion.EntityFramework.Authentication
     [Index(nameof(UserId), nameof(IsSignOutForced))]
     [Index(nameof(IPAddress), nameof(IsSignOutForced))]
     public class DbSessionInfo<TDbUserId> : IHasId<string>
-        where TDbUserId : notnull
     {
         private readonly NewtonsoftJsonSerialized<ImmutableOptionSet?> _options = new(ImmutableOptionSet.Empty);
         private DateTime _createdAt;
@@ -37,7 +36,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
 
         // Authentication
         public string AuthenticatedIdentity { get; set; } = "";
-        public TDbUserId? UserId { get; set; }
+        public TDbUserId UserId { get; set; } = default!;
         public bool IsSignOutForced { get; set; }
 
         // Options

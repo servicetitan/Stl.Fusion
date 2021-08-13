@@ -33,9 +33,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             target.Options = source.Options;
 
             target.AuthenticatedIdentity = source.AuthenticatedIdentity;
-            target.UserId = string.IsNullOrEmpty(source.UserId)
-                ? default
-                : DbUserIdHandler.Parse(source.UserId);
+            target.UserId = DbUserIdHandler.Parse(source.UserId);
             target.IsSignOutForced = source.IsSignOutForced;
         }
 
@@ -51,7 +49,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
 
                 // Authentication
                 AuthenticatedIdentity = source.AuthenticatedIdentity,
-                UserId = source.UserId == null ? "" : DbUserIdHandler.Format(source.UserId),
+                UserId = DbUserIdHandler.Format(source.UserId),
                 IsSignOutForced = source.IsSignOutForced,
             };
             return target.OrDefault(source.Id); // To mask signed out sessions

@@ -64,6 +64,7 @@ namespace Stl.Fusion.EntityFramework.Reprocessing
                 context.Items.Set(reprocessingState);
                 try {
                     await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);
+                    break;
                 }
                 catch (Exception? error) {
                     reprocessingState = context.Items.Get<CommandReprocessingState>();

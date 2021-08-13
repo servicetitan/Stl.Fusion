@@ -63,17 +63,13 @@ namespace Stl.Fusion.EntityFramework.Authentication
         {
             // Creating "base" dbUser
             var dbUser = new TDbUser() {
-                Id = DbUserIdHandler.NewId(),
+                Id = DbUserIdHandler.New(),
                 Name = user.Name,
                 Claims = user.Claims,
             };
             dbContext.Add(dbUser);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-            // Reading back the model
-            dbUser = await TryGet(dbContext, dbUser.Id, cancellationToken).ConfigureAwait(false);
-            if (dbUser == null)
-                throw Errors.EntityNotFound<TDbUser>();
             user = user with {
                 Id = DbUserIdHandler.Format(dbUser.Id)
             };
