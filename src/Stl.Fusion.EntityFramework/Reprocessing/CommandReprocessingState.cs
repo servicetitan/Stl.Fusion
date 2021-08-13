@@ -1,17 +1,26 @@
 using System;
+using Microsoft.EntityFrameworkCore;
+using Stl.Generators;
 
 namespace Stl.Fusion.EntityFramework.Reprocessing
 {
-    public record CommandReprocessingState(int FailureCount)
+    public record CommandReprocessingState
     {
-        public Exception? LastError { get; init; }
+        public static Generator<long> Rng = new RandomInt32Generator();
 
-        public CommandReprocessingState() : this(0) { }
+        public int MaxAttemptCount { get; init; } = 3;
+        public int FailureCount { get; init; }
+        public Exception? Error { get; init; }
+        public CommandReprocessingDecision Decision { get; init; } = new(true);
 
-        public virtual CommandReprocessingState Next(Exception error)
-            => this with {
-                FailureCount = FailureCount + 1,
-                LastError = error
-            };
+        public virtual CommandReprocessingDecision ComputeDecision()
+        {
+            if (FailureCount >= MaxAttemptCount)
+                return new(false);
+            if (Error is not DbUpdateException)
+                return new(false);
+            var delay = TimeSpan.FromMilliseconds(10 + Math.Abs(Rng.Next() % 100));
+            return new(true, delay);
+        }
     }
 }

@@ -19,19 +19,16 @@ namespace Stl.Fusion.EntityFramework.Reprocessing
     {
         public class Options
         {
-            public int MaxAttemptCount { get; init; } = 3;
-            public Func<CommandReprocessingState, bool>? ShouldReprocessFunc { get; init; }
-            public Func<CommandReprocessingState, TimeSpan>? GetReprocessingDelayFunc { get; init; }
-            public Func<CommandReprocessingState>? ReprocessingStateFactory { get; init; }
+            public Func<CommandReprocessingState> ReprocessingStateFactory { get; init; } =
+                () => new CommandReprocessingState();
+            public Func<CommandReprocessingState, CommandReprocessingDecision> DecisionFactory { get; init; } =
+                state => state.ComputeDecision();
             public IMomentClock? DelayClock { get; init; }
         }
 
-        protected int MaxAttemptCount { get; init; }
-        protected Func<CommandReprocessingState, bool> ShouldReprocessFunc { get; init; }
-        protected Func<CommandReprocessingState, TimeSpan> GetReprocessingDelayFunc { get; init; }
-        protected Func<CommandReprocessingState> ReprocessingStateFactory { get; init; }
+        public Func<CommandReprocessingState> ReprocessingStateFactory { get; init; }
+        public Func<CommandReprocessingState, CommandReprocessingDecision> DecisionFactory { get; init; }
         protected IMomentClock DelayClock { get; init; }
-        protected Generator<long> Rng { get; init; } = new RandomInt64Generator();
         protected IServiceProvider Services { get; init; }
         protected ILogger Log { get; init; }
 
@@ -43,10 +40,8 @@ namespace Stl.Fusion.EntityFramework.Reprocessing
             options ??= new();
             Log = log ?? NullLogger<CommandReprocessor>.Instance;
             Services = services;
-            MaxAttemptCount = options.MaxAttemptCount;
-            ShouldReprocessFunc = options.ShouldReprocessFunc ?? ShouldReprocess;
-            GetReprocessingDelayFunc = options.GetReprocessingDelayFunc ?? GetReprocessingDelay;
-            ReprocessingStateFactory = options.ReprocessingStateFactory ?? (() => new CommandReprocessingState());
+            ReprocessingStateFactory = options.ReprocessingStateFactory;
+            DecisionFactory = options.DecisionFactory;
             DelayClock = options.DelayClock ?? services.Clocks().CpuClock;
         }
 
@@ -72,28 +67,22 @@ namespace Stl.Fusion.EntityFramework.Reprocessing
                 }
                 catch (Exception? error) {
                     reprocessingState = context.Items.Get<CommandReprocessingState>();
-                    reprocessingState = reprocessingState.Next(error);
-                    if (!ShouldReprocessFunc.Invoke(reprocessingState))
+                    reprocessingState = reprocessingState with {
+                        FailureCount = reprocessingState.FailureCount + 1,
+                        Error = error,
+                    };
+                    var decision = DecisionFactory(reprocessingState);
+                    if (!decision.ShouldReprocess)
                         throw;
-                    var delay = GetReprocessingDelayFunc.Invoke(reprocessingState);
-                    Log.LogWarning(error, "Reprocessing: {Command} with delay = {Delay}", command, delay);
-                    await DelayClock.Delay(delay, cancellationToken).ConfigureAwait(false);
+                    reprocessingState = reprocessingState with { Decision = decision };
+                    Log.LogWarning(error,
+                        "Reprocessing: {Command}, state = {ReprocessingState}",
+                        command, reprocessingState);
+                    await DelayClock.Delay(decision.ReprocessingDelay, cancellationToken).ConfigureAwait(false);
                     context.ExecutionState = executionStateBackup;
                     context.Items.Items = itemsBackup;
                 }
             }
         }
-
-        // Protected methods
-
-        protected virtual bool ShouldReprocess(CommandReprocessingState reprocessingState)
-        {
-            if (reprocessingState.FailureCount >= MaxAttemptCount)
-                return false;
-            return reprocessingState.LastError is DbUpdateException;
-        }
-
-        protected virtual TimeSpan GetReprocessingDelay(CommandReprocessingState reprocessingState)
-            => TimeSpan.FromMilliseconds(10 + Math.Abs(Rng.Next() % 100));
     }
 }
