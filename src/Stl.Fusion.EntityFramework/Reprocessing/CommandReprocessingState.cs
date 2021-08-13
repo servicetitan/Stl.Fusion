@@ -30,7 +30,7 @@ namespace Stl.Fusion.EntityFramework.Reprocessing
                 return new(false);
             if (Error is not DbUpdateException)
                 return new(false);
-            var delay = TimeSpan.FromMilliseconds(10 + Math.Abs(Rng.Next() % 100));
+            var delay = TimeSpan.FromMilliseconds(53 + Math.Abs(Rng.Next() % 198));
             return new(true, delay);
         }
 
