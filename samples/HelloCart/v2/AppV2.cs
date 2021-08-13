@@ -38,7 +38,7 @@ namespace Samples.HelloCart.V2
                 b.AddOperations((_, o) => {
                     o.UnconditionalWakeUpPeriod = TimeSpan.FromSeconds(5);
                 });
-                b.AddFileBasedDbOperationLogChangeTracking(dbPath + "_changed");
+                b.AddFileBasedOperationLogChangeTracking(dbPath + "_changed");
             });
             ClientServices = HostServices = services.BuildServiceProvider();
         }

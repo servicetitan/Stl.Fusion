@@ -10,7 +10,7 @@ namespace Stl.Fusion.EntityFramework.Npgsql
 {
     public static class DbContextBuilderEx
     {
-        public static DbContextBuilder<TDbContext> AddNpgsqlDbOperationLogChangeTracking<TDbContext>(
+        public static DbContextBuilder<TDbContext> AddNpgsqlOperationLogChangeTracking<TDbContext>(
             this DbContextBuilder<TDbContext> dbContextBuilder,
             Action<IServiceProvider, NpgsqlDbOperationLogChangeTrackingOptions<TDbContext>>? configureOptions = null)
             where TDbContext : DbContext

@@ -90,7 +90,7 @@ namespace Templates.TodoApp.Host
                     o.UnconditionalWakeUpPeriod = TimeSpan.FromSeconds(Env.IsDevelopment() ? 60 : 5);
                 });
                 var operationLogChangeAlertPath = dbPath + "_changed";
-                b.AddFileBasedDbOperationLogChangeTracking(operationLogChangeAlertPath);
+                b.AddFileBasedOperationLogChangeTracking(operationLogChangeAlertPath);
                 if (!HostSettings.UseInMemoryAuthService)
                     b.AddAuthentication<string>();
                 b.AddKeyValueStore();

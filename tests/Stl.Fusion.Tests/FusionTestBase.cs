@@ -203,12 +203,12 @@ namespace Stl.Fusion.Tests
                     });
                     if (Options.DbType == FusionTestDbType.PostgreSql)
 #if NETCOREAPP
-                        b.AddNpgsqlDbOperationLogChangeTracking();
+                        b.AddNpgsqlOperationLogChangeTracking();
 #else
                         throw new NotSupportedException("PostgreSql is supported only for .net core.");
 #endif
                     else
-                        b.AddFileBasedDbOperationLogChangeTracking();
+                        b.AddFileBasedOperationLogChangeTracking();
                     if (!Options.UseInMemoryAuthService)
                         b.AddAuthentication<DbAuthSessionInfo, DbAuthUser, long>();
 

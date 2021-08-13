@@ -57,7 +57,7 @@ namespace Samples.HelloCart.V4
                         });
                         services.AddDbContextServices<AppDbContext>(b => {
                             b.AddOperations((_, o) => { o.UnconditionalWakeUpPeriod = TimeSpan.FromSeconds(5); });
-                            b.AddFileBasedDbOperationLogChangeTracking(dbPath + "_changed");
+                            b.AddFileBasedOperationLogChangeTracking(dbPath + "_changed");
                             b.AddEntityResolver<string, DbProduct>();
                             b.AddEntityResolver<string, DbCart>((_, options) => {
                                 // Cart is always loaded together with items

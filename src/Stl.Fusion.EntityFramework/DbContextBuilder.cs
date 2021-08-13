@@ -115,10 +115,10 @@ namespace Stl.Fusion.EntityFramework
 
         // File-based operation log change tracking
 
-        public DbContextBuilder<TDbContext> AddFileBasedDbOperationLogChangeTracking(PathString filePath)
-            => AddFileBasedDbOperationLogChangeTracking((_, o) => { o.FilePath = filePath; });
+        public DbContextBuilder<TDbContext> AddFileBasedOperationLogChangeTracking(PathString filePath)
+            => AddFileBasedOperationLogChangeTracking((_, o) => { o.FilePath = filePath; });
 
-        public DbContextBuilder<TDbContext> AddFileBasedDbOperationLogChangeTracking(
+        public DbContextBuilder<TDbContext> AddFileBasedOperationLogChangeTracking(
             Action<IServiceProvider, FileBasedDbOperationLogChangeTrackingOptions<TDbContext>>? configureOptions = null)
         {
             Services.TryAddSingleton(c => {
