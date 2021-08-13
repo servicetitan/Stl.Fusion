@@ -15,7 +15,5 @@ namespace Stl.Fusion.EntityFramework.Authentication
         [Column("UserId")]
         public TDbUserId DbUserId { get; set; } = default!;
         public string Secret { get; set; } = "";
-
-        public virtual UserIdentity ToModel() => new(Id);
     }
 }

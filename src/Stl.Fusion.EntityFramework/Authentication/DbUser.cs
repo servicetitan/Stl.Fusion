@@ -1,14 +1,9 @@
-using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
-using Stl.Conversion;
-using Stl.Fusion.Authentication;
 using Stl.Serialization;
 
 namespace Stl.Fusion.EntityFramework.Authentication
@@ -37,44 +32,5 @@ namespace Stl.Fusion.EntityFramework.Authentication
         }
 
         public List<DbUserIdentity<TDbUserId>> Identities { get; } = new();
-
-        public virtual User ToModel(IServiceProvider services)
-        {
-            var dbUserIdHandler = services.GetRequiredService<IDbUserIdHandler<TDbUserId>>();
-            var user = new User(dbUserIdHandler.Format(Id), Name) {
-                Claims = Claims,
-                Identities = Identities.ToImmutableDictionary(
-                    ui => new UserIdentity(ui.Id),
-                    ui => ui.Secret)
-            };
-            return user;
-        }
-
-        public virtual void UpdateFrom(IServiceProvider services, User source)
-        {
-            var dbUserIdHandler = services.GetRequiredService<IDbUserIdHandler<TDbUserId>>();
-            if (dbUserIdHandler.Format(Id) != source.Id)
-                throw new ArgumentOutOfRangeException(nameof(source));
-
-            // Adding new Claims
-            Claims = source.Claims.SetItems(Claims);
-
-            // Adding / updating identities
-            var identities = Identities.ToDictionary(ui => ui.Id);
-            foreach (var (userIdentity, secret) in source.Identities) {
-                if (!userIdentity.IsValid)
-                    continue;
-                var foundIdentity = identities.GetValueOrDefault(userIdentity.Id);
-                if (foundIdentity != null) {
-                    foundIdentity.Secret = secret;
-                    continue;
-                }
-                Identities.Add(new DbUserIdentity<TDbUserId>() {
-                    Id = userIdentity.Id,
-                    DbUserId = Id,
-                    Secret = secret ?? "",
-                });
-            }
-        }
     }
 }

@@ -40,9 +40,10 @@ namespace Stl.Fusion.EntityFramework.Authentication
         where TDbUser : DbUser<TDbUserId>, new()
         where TDbUserId : notnull
     {
-        protected DbAuthService<TDbContext>.Options Options { get; }
-        protected DbEntityResolver<TDbContext, TDbUserId, TDbUser> EntityResolver { get; }
-        protected IDbUserIdHandler<TDbUserId> DbUserIdHandler { get; }
+        protected DbAuthService<TDbContext>.Options Options { get; init; }
+        protected IDbUserIdHandler<TDbUserId> DbUserIdHandler { get; init; }
+        protected IDbEntityResolver<TDbUserId, TDbUser> UserResolver { get; init; }
+        protected IDbEntityConverter<TDbUser, User> UserConverter { get; init; }
 
         public Type UserEntityType => typeof(TDbUser);
 
@@ -50,8 +51,9 @@ namespace Stl.Fusion.EntityFramework.Authentication
             : base(services)
         {
             Options = options;
-            EntityResolver = services.GetRequiredService<DbEntityResolver<TDbContext, TDbUserId, TDbUser>>();
             DbUserIdHandler = services.GetRequiredService<IDbUserIdHandler<TDbUserId>>();
+            UserResolver = services.DbEntityResolver<TDbUserId, TDbUser>();
+            UserConverter = services.DbEntityConverter<TDbUser, User>();
         }
 
         // Write methods
@@ -76,7 +78,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
                 Id = DbUserIdHandler.Format(dbUser.Id)
             };
             // Updating dbUser from the model to persist user.Identities
-            dbUser.UpdateFrom(Services, user);
+            UserConverter.UpdateEntity(user, dbUser);
             dbContext.Update(dbUser);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             return dbUser;
@@ -119,7 +121,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
         // Read methods
 
         public async Task<TDbUser?> TryGet(TDbUserId userId, CancellationToken cancellationToken = default)
-            => await EntityResolver.TryGet(userId, cancellationToken).ConfigureAwait(false);
+            => await UserResolver.TryGet(userId, cancellationToken).ConfigureAwait(false);
 
         public virtual async Task<TDbUser?> TryGet(
             TDbContext dbContext, TDbUserId userId, CancellationToken cancellationToken)

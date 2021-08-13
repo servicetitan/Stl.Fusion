@@ -196,7 +196,7 @@ namespace Stl.Fusion.Tests
                     builder.EnableSensitiveDataLogging();
                 }, 256);
                 services.AddDbContextServices<TestDbContext>(b => {
-                    b.AddDbOperations((_, o) => {
+                    b.AddOperations((_, o) => {
                         o.UnconditionalWakeUpPeriod = TimeSpan.FromSeconds(5);
                         // Enable this if you debug multi-host invalidation
                         // o.MaxCommitDuration = TimeSpan.FromMinutes(5);
@@ -210,11 +210,11 @@ namespace Stl.Fusion.Tests
                     else
                         b.AddFileBasedDbOperationLogChangeTracking();
                     if (!Options.UseInMemoryAuthService)
-                        b.AddDbAuthentication<DbAuthSessionInfo, DbAuthUser, long>();
+                        b.AddAuthentication<DbAuthSessionInfo, DbAuthUser, long>();
 
                     if (!Options.UseInMemoryKeyValueStore)
                         b.AddKeyValueStore();
-                    b.AddDbEntityResolver<long, User>();
+                    b.AddEntityResolver<long, User>();
                 });
                 if (Options.UseInMemoryKeyValueStore)
                     fusion.AddInMemoryKeyValueStore();

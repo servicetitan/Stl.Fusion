@@ -37,9 +37,10 @@ namespace Stl.Fusion.EntityFramework.Authentication
         where TDbSessionInfo : DbSessionInfo<TDbUserId>, new()
         where TDbUserId : notnull
     {
-        protected DbAuthService<TDbContext>.Options Options { get; }
-        protected DbEntityResolver<TDbContext, string, TDbSessionInfo> EntityResolver { get; }
-        protected IDbUserIdHandler<TDbUserId> DbUserIdHandler { get; }
+        protected DbAuthService<TDbContext>.Options Options { get; init; }
+        protected IDbUserIdHandler<TDbUserId> DbUserIdHandler { get; init; }
+        protected IDbEntityResolver<string, TDbSessionInfo> SessionResolver { get; init; }
+        protected IDbEntityConverter<TDbSessionInfo, SessionInfo> SessionConverter { get; init; }
 
         public Type SessionInfoEntityType => typeof(TDbSessionInfo);
 
@@ -47,8 +48,9 @@ namespace Stl.Fusion.EntityFramework.Authentication
             : base(services)
         {
             Options = options;
-            EntityResolver = services.GetRequiredService<DbEntityResolver<TDbContext, string, TDbSessionInfo>>();
             DbUserIdHandler = services.GetRequiredService<IDbUserIdHandler<TDbUserId>>();
+            SessionResolver = services.DbEntityResolver<string, TDbSessionInfo>();
+            SessionConverter = services.DbEntityConverter<TDbSessionInfo, SessionInfo>();
         }
 
         // Write methods
@@ -64,7 +66,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
                         Id = sessionInfo.Id,
                         CreatedAt = sessionInfo.CreatedAt,
                     }).Entity;
-                dbSessionInfo.UpdateFrom(Services, sessionInfo);
+                SessionConverter.UpdateEntity(sessionInfo, dbSessionInfo);
                 await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             }
             return dbSessionInfo;
@@ -79,7 +81,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
                 Id = sessionInfo.Id,
                 CreatedAt = sessionInfo.CreatedAt,
             };
-            dbSessionInfo.UpdateFrom(Services, sessionInfo);
+            SessionConverter.UpdateEntity(sessionInfo, dbSessionInfo);
             if (isDbSessionInfoFound)
                 dbContext.Update(dbSessionInfo);
             else
@@ -108,7 +110,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
         // Read methods
 
         public async Task<TDbSessionInfo?> TryGet(string sessionId, CancellationToken cancellationToken = default)
-            => await EntityResolver.TryGet(sessionId, cancellationToken).ConfigureAwait(false);
+            => await SessionResolver.TryGet(sessionId, cancellationToken).ConfigureAwait(false);
 
         public virtual async Task<TDbSessionInfo?> TryGet(
             TDbContext dbContext, string sessionId, CancellationToken cancellationToken)

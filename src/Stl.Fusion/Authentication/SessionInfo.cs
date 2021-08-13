@@ -22,9 +22,8 @@ namespace Stl.Fusion.Authentication
         public bool IsAuthenticated => !string.IsNullOrEmpty(UserId);
 
         public SessionInfo() { }
-        public SessionInfo(string id) => Id = id;
-        public SessionInfo(string id, DateTime now)
-            : this(id)
+        public SessionInfo(Symbol id) => Id = id;
+        public SessionInfo(Symbol id, DateTime now) : this(id)
         {
             CreatedAt = now;
             LastSeenAt = now;

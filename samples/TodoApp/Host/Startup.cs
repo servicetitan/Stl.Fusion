@@ -1,4 +1,5 @@
 using System;
+using System.Data;
 using System.IO;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -77,9 +78,13 @@ namespace Templates.TodoApp.Host
                 if (Env.IsDevelopment())
                     builder.EnableSensitiveDataLogging();
             });
+            services.AddCommandReprocessor();
+            services.AddTransient(c => new DbOperationScope<AppDbContext>(c) {
+                IsolationLevel = IsolationLevel.Serializable,
+            });
             services.AddDbContextServices<AppDbContext>(b => {
                 // This is the best way to add DbContext-related services from Stl.Fusion.EntityFramework
-                b.AddDbOperations((_, o) => {
+                b.AddOperations((_, o) => {
                     // We use FileBasedDbOperationLogChangeMonitor, so unconditional wake up period
                     // can be arbitrary long - all depends on the reliability of Notifier-Monitor chain.
                     o.UnconditionalWakeUpPeriod = TimeSpan.FromSeconds(Env.IsDevelopment() ? 60 : 5);
@@ -87,10 +92,9 @@ namespace Templates.TodoApp.Host
                 var operationLogChangeAlertPath = dbPath + "_changed";
                 b.AddFileBasedDbOperationLogChangeTracking(operationLogChangeAlertPath);
                 if (!HostSettings.UseInMemoryAuthService)
-                    b.AddDbAuthentication<string>();
+                    b.AddAuthentication<string>();
                 b.AddKeyValueStore();
             });
-            services.AddCommandReprocessor();
 
             // Fusion services
             services.AddSingleton(new Publisher.Options() { Id = HostSettings.PublisherId });

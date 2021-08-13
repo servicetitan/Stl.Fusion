@@ -18,12 +18,13 @@ namespace Stl.Fusion.EntityFramework.Operations
             public bool IsLoggingEnabled { get; set; } = true;
         }
 
-        protected IDbOperationLog<TDbContext> DbOperationLog { get; }
-        protected TimeSpan CheckInterval { get; }
-        protected TimeSpan MaxCommitAge { get; }
-        protected int BatchSize { get; }
+        protected IDbOperationLog<TDbContext> DbOperationLog { get; init; }
+        protected TimeSpan CheckInterval { get; init; }
+        protected TimeSpan MaxCommitAge { get; init; }
+        protected int BatchSize { get; init; }
+        protected Random Random { get; init; }
+
         protected int LastTrimCount { get; set; }
-        protected Random Random { get; }
         protected bool IsLoggingEnabled { get; set; }
         protected LogLevel LogLevel { get; set; } = LogLevel.Information;
 

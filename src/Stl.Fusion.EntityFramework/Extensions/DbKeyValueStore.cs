@@ -15,18 +15,14 @@ using Stl.Time;
 
 namespace Stl.Fusion.EntityFramework.Extensions
 {
-    public interface IDbKeyValueStore<TDbContext> : IKeyValueStore
-        where TDbContext : DbContext
-    { }
-
-    public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext>, IDbKeyValueStore<TDbContext>
+    public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext>, IKeyValueStore
         where TDbContext : DbContext
         where TDbKeyValue : DbKeyValue, new()
     {
-        public DbEntityResolver<TDbContext, string, TDbKeyValue> DbKeyValueResolver { get; }
+        public IDbEntityResolver<string, TDbKeyValue> KeyValueResolver { get; init; }
 
         public DbKeyValueStore(IServiceProvider services) : base(services)
-            => DbKeyValueResolver = services.GetRequiredService<DbEntityResolver<TDbContext, string, TDbKeyValue>>();
+            => KeyValueResolver = services.DbEntityResolver<string, TDbKeyValue>();
 
         // Commands
 
@@ -139,7 +135,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
         public virtual async Task<string?> TryGet(string key, CancellationToken cancellationToken = default)
         {
             PseudoGet(key).Ignore();
-            var dbKeyValue = await DbKeyValueResolver.TryGet(key, cancellationToken).ConfigureAwait(false);
+            var dbKeyValue = await KeyValueResolver.TryGet(key, cancellationToken).ConfigureAwait(false);
             if (dbKeyValue == null)
                 return null;
             var expiresAt = dbKeyValue.ExpiresAt;

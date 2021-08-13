@@ -36,12 +36,12 @@ namespace Samples.HelloCart.V3
                 b.EnableSensitiveDataLogging();
             });
             services.AddDbContextServices<AppDbContext>(b => {
-                b.AddDbOperations((_, o) => {
+                b.AddOperations((_, o) => {
                     o.UnconditionalWakeUpPeriod = TimeSpan.FromSeconds(5);
                 });
                 b.AddFileBasedDbOperationLogChangeTracking(dbPath + "_changed");
-                b.AddDbEntityResolver<string, DbProduct>();
-                b.AddDbEntityResolver<string, DbCart>((_, options) => {
+                b.AddEntityResolver<string, DbProduct>();
+                b.AddEntityResolver<string, DbCart>((_, options) => {
                     // Cart is always loaded together with items
                     options.QueryTransformer = carts => carts.Include(c => c.Items);
                 });

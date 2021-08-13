@@ -10,11 +10,11 @@ namespace Samples.HelloCart.V3
 {
     public class DbProductService2 : DbServiceBase<AppDbContext>, IProductService
     {
-        private readonly DbEntityResolver<AppDbContext, string, DbProduct> _productResolver;
+        private readonly IDbEntityResolver<string, DbProduct> _productResolver;
 
         public DbProductService2(
             IServiceProvider services,
-            DbEntityResolver<AppDbContext, string, DbProduct> productResolver)
+            IDbEntityResolver<string, DbProduct> productResolver)
             : base(services)
             => _productResolver = productResolver;
 

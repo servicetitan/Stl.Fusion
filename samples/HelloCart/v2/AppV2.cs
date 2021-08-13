@@ -35,7 +35,7 @@ namespace Samples.HelloCart.V2
                 b.EnableSensitiveDataLogging();
             });
             services.AddDbContextServices<AppDbContext>(b => {
-                b.AddDbOperations((_, o) => {
+                b.AddOperations((_, o) => {
                     o.UnconditionalWakeUpPeriod = TimeSpan.FromSeconds(5);
                 });
                 b.AddFileBasedDbOperationLogChangeTracking(dbPath + "_changed");

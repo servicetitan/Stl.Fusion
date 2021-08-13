@@ -13,10 +13,10 @@ namespace Stl.Fusion.EntityFramework
     public abstract class DbServiceBase<TDbContext>
         where TDbContext : DbContext
     {
-        protected IServiceProvider Services { get; }
-        protected IDbContextFactory<TDbContext> DbContextFactory { get; }
-        protected MomentClockSet Clocks { get; }
-        protected ILogger Log { get; }
+        protected IServiceProvider Services { get; init; }
+        protected IDbContextFactory<TDbContext> DbContextFactory { get; init; }
+        protected MomentClockSet Clocks { get; init; }
+        protected ILogger Log { get; init; }
 
         protected DbServiceBase(IServiceProvider services)
         {

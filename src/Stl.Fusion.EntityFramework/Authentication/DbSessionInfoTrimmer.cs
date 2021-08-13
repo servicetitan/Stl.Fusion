@@ -18,10 +18,11 @@ namespace Stl.Fusion.EntityFramework.Authentication
             public bool IsLoggingEnabled { get; set; } = true;
         }
 
-        protected TimeSpan CheckInterval { get; }
-        protected TimeSpan MaxSessionAge { get; }
-        protected int BatchSize { get; }
-        protected Random Random { get; }
+        protected TimeSpan CheckInterval { get; init; }
+        protected TimeSpan MaxSessionAge { get; init; }
+        protected int BatchSize { get; init; }
+        protected Random Random { get; init; }
+
         protected int LastTrimCount { get; set; }
         protected bool IsLoggingEnabled { get; set; }
         protected LogLevel LogLevel { get; set; } = LogLevel.Information;

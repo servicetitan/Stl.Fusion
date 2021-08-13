@@ -31,17 +31,18 @@ namespace Stl.Fusion.EntityFramework
         protected TDbContext? DbContext { get; set; }
         protected DbConnection? Connection { get; set; }
         protected IDbContextTransaction? Transaction { get; set; }
-        protected IDbContextFactory<TDbContext> DbContextFactory { get; }
-        protected IDbOperationLog<TDbContext> DbOperationLog { get; }
-        protected MomentClockSet Clocks { get; }
-        protected IServiceProvider Services { get; }
-        protected AsyncLock AsyncLock { get; }
-        protected ILogger Log { get; }
+
+        protected IDbContextFactory<TDbContext> DbContextFactory { get; init; }
+        protected IDbOperationLog<TDbContext> DbOperationLog { get; init; }
+        protected MomentClockSet Clocks { get; init; }
+        protected IServiceProvider Services { get; init; }
+        protected AsyncLock AsyncLock { get; init; }
+        protected ILogger Log { get; init; }
 
         public IsolationLevel IsolationLevel { get; init; } = IsolationLevel.Unspecified;
         IOperation IOperationScope.Operation => Operation;
-        public DbOperation Operation { get; }
-        public CommandContext CommandContext { get; }
+        public DbOperation Operation { get; protected init; }
+        public CommandContext CommandContext { get; protected init; }
         public bool IsUsed => DbContext != null;
         public bool IsClosed { get; private set; }
         public bool? IsConfirmed { get; private set; }

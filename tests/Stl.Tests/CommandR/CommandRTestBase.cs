@@ -75,8 +75,8 @@ namespace Stl.Tests.CommandR
                     builder.UseSqlite($"Data Source={dbPath}", sqlite => { });
                 }, 256);
                 services.AddDbContextServices<TestDbContext>(dbServices => {
-                    dbServices.AddDbOperations();
-                    dbServices.AddDbEntityResolver<string, User>();
+                    dbServices.AddOperations();
+                    dbServices.AddEntityResolver<string, User>();
                 });
             }
 

@@ -20,11 +20,12 @@ namespace Stl.Fusion.EntityFramework.Extensions
             public bool IsLoggingEnabled { get; set; } = true;
         }
 
-        protected TimeSpan CheckInterval { get; }
-        protected int BatchSize { get; }
+        protected TimeSpan CheckInterval { get; init; }
+        protected int BatchSize { get; init; }
+        protected IKeyValueStore KeyValueStore { get; init; }
+        protected Random Random { get; init; }
+
         protected int LastTrimCount { get; set; }
-        protected Random Random { get; }
-        protected IDbKeyValueStore<TDbContext> KeyValueStore { get; }
         protected bool IsLoggingEnabled { get; set; }
         protected LogLevel LogLevel { get; set; } = LogLevel.Information;
 
@@ -38,7 +39,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
             BatchSize = options.BatchSize;
             Random = new Random();
 
-            KeyValueStore = services.GetRequiredService<IDbKeyValueStore<TDbContext>>();
+            KeyValueStore = services.GetRequiredService<IKeyValueStore>();
         }
 
         protected override async Task WakeUp(CancellationToken cancellationToken)
