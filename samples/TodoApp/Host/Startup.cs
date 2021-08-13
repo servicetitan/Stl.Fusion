@@ -90,6 +90,7 @@ namespace Templates.TodoApp.Host
                     b.AddDbAuthentication<string>();
                 b.AddKeyValueStore();
             });
+            services.AddCommandReprocessor();
 
             // Fusion services
             services.AddSingleton(new Publisher.Options() { Id = HostSettings.PublisherId });
