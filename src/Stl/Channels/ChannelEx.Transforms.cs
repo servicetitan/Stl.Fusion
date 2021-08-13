@@ -84,7 +84,7 @@ namespace Stl.Channels
             async Task Worker()
             {
                 try {
-                    for (;;) {
+                    while (true) {
                         await semaphore!.WaitAsync(cancellationToken).ConfigureAwait(false);
                         try {
                             if (!await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
@@ -134,7 +134,7 @@ namespace Stl.Channels
             async Task Worker()
             {
                 try {
-                    for (;;) {
+                    while (true) {
                         await semaphore!.WaitAsync(cancellationToken).ConfigureAwait(false);
                         try {
                             if (!await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))

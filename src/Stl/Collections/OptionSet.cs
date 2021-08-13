@@ -31,7 +31,7 @@ namespace Stl.Collections
             set {
                 var spinWait = new SpinWait();
                 var items = _items;
-                for (;;) {
+                while (true) {
                     var newItems = value != null
                         ? items.SetItem(key, value)
                         : items.Remove(key);
@@ -100,7 +100,7 @@ namespace Stl.Collections
         {
             var spinWait = new SpinWait();
             var items = _items;
-            for (;;) {
+            while (true) {
                 var oldItems = Interlocked.CompareExchange(
                     ref _items, ImmutableDictionary<Symbol, object>.Empty, items);
                 if (oldItems == items || oldItems.Count == 0)

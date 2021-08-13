@@ -77,7 +77,7 @@ namespace Stl.Locking
             var newLockSrc = TaskSource.New<Unit>(_taskCreationOptions);
             var dCancellationTokenTask = new Disposable<Task, CancellationTokenRegistration>();
             try {
-                for (;;) {
+                while (true) {
                     cancellationToken.ThrowIfCancellationRequested();
                     if (reentryCounter?.TryReenter(ReentryMode) == true)
                         return new Releaser(this, default, reentryCounter);

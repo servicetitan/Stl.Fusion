@@ -84,7 +84,7 @@ namespace Stl.Fusion.Tests
             {
                 var rnd = new Random();
                 var count = 0L;
-                for (;;) {
+                while (true) {
                     cancellationToken.ThrowIfCancellationRequested();
                     var userId = (long) rnd.Next(UserCount);
                     // Log.LogDebug($"{name}: R {userId}");

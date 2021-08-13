@@ -44,7 +44,7 @@ namespace Stl.Collections
         public IEnumerator<(long Priority, T Value)> GetEnumerator()
         {
             var copy = new RadixHeapSet<T>(this);
-            for (;;) {
+            while (true) {
                 var min = copy.ExtractMin();
                 if (min.IsSome(out var result))
                     yield return result;

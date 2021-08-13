@@ -171,7 +171,7 @@ namespace Stl.Fusion.Extensions.Internal
         protected bool AddOrUpdate(string key, string value, Moment? expiresAt)
         {
             var spinWait = new SpinWait();
-            for (;;) {
+            while (true) {
                 if (Store.TryGetValue(key, out var item) && Store.TryUpdate(key, (value, expiresAt), item))
                     return false;
                 if (Store.TryAdd(key, (value, expiresAt)))

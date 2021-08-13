@@ -252,7 +252,7 @@ namespace Build
         private static PathString? FindNearest(PathString basePath, string fileName)
         {
             var path = basePath.ToAbsolute();
-            for (;;) {
+            while (true) {
                 if (File.Exists(path & fileName))
                     return path & fileName;
                 var nextPath = (path & "..").FullPath;

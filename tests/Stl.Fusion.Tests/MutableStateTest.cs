@@ -68,7 +68,7 @@ namespace Stl.Fusion.Tests
 
             async Task Watch<T>(string name, IComputed<T> computed)
             {
-                for (;;) {
+                while (true) {
                     Out.WriteLine($"{name}: {computed.Value}, {computed}");
                     await computed.WhenInvalidated(cancellationToken);
                     Out.WriteLine($"{name}: {computed.Value}, {computed}");

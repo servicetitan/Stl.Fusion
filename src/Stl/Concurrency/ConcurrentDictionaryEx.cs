@@ -66,7 +66,7 @@ namespace Stl.Concurrency
         public static int Increment<TKey>(this ConcurrentDictionary<TKey, int> dictionary, TKey key)
             where TKey : notnull
         {
-            for (;;) {
+            while (true) {
                 if (dictionary.TryGetValue(key, out var value)) {
                     var newValue = value + 1;
                     if (dictionary.TryUpdate(key, newValue, value))
@@ -82,7 +82,7 @@ namespace Stl.Concurrency
         public static int Decrement<TKey>(this ConcurrentDictionary<TKey, int> dictionary, TKey key)
             where TKey : notnull
         {
-            for (;;) {
+            while (true) {
                 var value = dictionary[key];
                 if (value > 1) {
                     var newValue = value - 1;

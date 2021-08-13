@@ -118,7 +118,7 @@ namespace Stl.Fusion.Bridge
         {
             ThrowIfDisposedOrDisposing();
             var spinWait = new SpinWait();
-            for (;;) {
+            while (true) {
                  var p = Publications.GetOrAddChecked(
                      computed.Input,
                      (key, arg) => {

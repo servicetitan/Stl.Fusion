@@ -95,7 +95,7 @@ namespace Stl.Fusion.Bridge
 
         public async ValueTask Update(CancellationToken cancellationToken)
         {
-            for (;;) {
+            while (true) {
                 var state = StateField;
                 if (state.IsDisposed || state.Computed.IsConsistent())
                     return;
@@ -143,7 +143,7 @@ namespace Stl.Fusion.Bridge
             try {
                 var start = Clock.Now;
                 var lastUseTime = GetLastUseTime();
-                for (;;) {
+                while (true) {
                     var nextCheckTime = GetNextCheckTime(start, lastUseTime);
                     var delay = TimeSpan.FromTicks(Math.Max(0, (nextCheckTime - Clock.Now).Ticks));
                     if (delay > TimeSpan.Zero)

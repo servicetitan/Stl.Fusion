@@ -58,7 +58,7 @@ namespace Stl.Fusion.Blazor
         public virtual async Task SignOutEverywhere(bool force = true)
         {
             // No server-side API endpoint for this action(yet), so let's do this on the client
-            for (;;) {
+            while (true) {
                 var sessionInfos = await AuthService.GetUserSessions(Session);
                 var otherSessions = sessionInfos
                     .Where(si => si.Id != Session.Id)

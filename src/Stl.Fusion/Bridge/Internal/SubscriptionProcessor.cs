@@ -61,7 +61,7 @@ namespace Stl.Fusion.Bridge.Internal
             await using var _ = cancellationToken.Register(() => currentCts?.Cancel()).ToAsyncDisposableAdapter();
             try {
                 var incomingMessageTask = incomingChannelReader.ReadAsync(cancellationToken).AsTask();
-                for (;;) {
+                while (true) {
                     // Awaiting for new SubscribeMessage
                     var messageOpt = await incomingMessageTask
                         .WithTimeout(Clocks.CoarseCpuClock, ExpirationTime, cancellationToken)

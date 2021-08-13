@@ -29,7 +29,7 @@ namespace Stl.Testing
         public static int GetRandomPort()
         {
             lock (RecentlyUsedPorts) {
-                for (;;) {
+                while (true) {
                     var port = 25000 + Random.Next(25000);
                     if (RecentlyUsedPorts.Add(port)) {
                         RecentlyUsedPortQueue.Enqueue(port);

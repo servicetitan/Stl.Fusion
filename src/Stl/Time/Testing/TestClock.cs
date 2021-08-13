@@ -51,7 +51,7 @@ namespace Stl.Time.Testing
 
             TestClockSettings? settings = Settings;
             var dueAt = settings.Now + dueIn;
-            for (;;) {
+            while (true) {
                 settings ??= Settings;
                 var settingsChangedToken = settings.ChangedToken;
                 var delta = settings.ToRealTime(dueAt) - CpuClock.Now;

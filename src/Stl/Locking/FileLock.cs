@@ -49,7 +49,7 @@ namespace Stl.Locking
             // ReSharper disable once GenericEnumeratorNotDisposed
             using var retryInterval = RetryIntervals.GetEnumerator();
             var fs = (FileStream?) null;
-            for (;;) {
+            while (true) {
                 var error = (Exception?) null;
                 try {
                     fs = File.OpenWrite(Path);

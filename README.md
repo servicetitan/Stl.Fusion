@@ -335,7 +335,7 @@ which allows you to get the most recent output of  `ComputeState()`' via its
 similar to this one](https://github.com/servicetitan/Stl.Fusion/blob/master/samples/TodoApp/ConsoleClient/Program.cs#L18):
 ```cs
 var computed = await Computed.Capture(_ => service.Method(...));
-for (;;) {
+while (true) {
     await computed.WhenInvalidated();
     computed = await computed.Update();
 }

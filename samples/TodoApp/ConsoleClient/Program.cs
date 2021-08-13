@@ -16,7 +16,7 @@ var session = new Session(sessionId);
 var services = CreateServiceProvider();
 var todoService = services.GetRequiredService<ITodoService>();
 var computed = await Computed.Capture(ct => todoService.GetSummary(session, ct));
-for (;;) {
+while (true) {
     WriteLine($"- {computed.Value}");
     await computed.WhenInvalidated();
     computed = await computed.Update();

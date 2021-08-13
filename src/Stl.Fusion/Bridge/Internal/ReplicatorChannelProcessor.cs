@@ -57,7 +57,7 @@ namespace Stl.Fusion.Bridge.Internal
             try {
                 var lastChannelTask = (Task<Channel<BridgeMessage>>?) null;
                 var channel = (Channel<BridgeMessage>) null!;
-                for (;;) {
+                while (true) {
                     var error = (Exception?) null;
                     try {
                         var channelTask = ChannelTask;

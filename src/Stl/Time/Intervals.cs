@@ -13,7 +13,7 @@ namespace Stl.Time
 
         public static IEnumerable<TimeSpan> Exponential(TimeSpan delay, double factor, TimeSpan? maxDelay = null)
         {
-            for (;;) {
+            while (true) {
                 if (maxDelay.HasValue && delay > maxDelay.GetValueOrDefault())
                     delay = maxDelay.GetValueOrDefault();
                 yield return delay;

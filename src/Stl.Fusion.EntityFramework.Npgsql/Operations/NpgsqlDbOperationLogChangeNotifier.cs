@@ -74,7 +74,7 @@ namespace Stl.Fusion.EntityFramework.Npgsql.Operations
         {
             var qPayload = AgentInfo.Id.Value.Replace("'", "''");
             TDbContext? dbContext = null;
-            for (;;) {
+            while (true) {
                 try {
                     using (await AsyncLock.Lock()) {
                         if (IsDisposed)
