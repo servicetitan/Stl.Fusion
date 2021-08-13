@@ -105,7 +105,7 @@
     <PackageReference Update="System.Reflection.Emit.Lightweight" Version="4.7.0" />
     <!-- Build time only -->
     <PackageReference Update="Stl" Version="$(StlFusionVersion)" />
-    <PackageReference Update="Microsoft.NET.Test.Sdk" Version="16.10.0" />
+    <PackageReference Update="Microsoft.NET.Test.Sdk" Version="16.11.0" />
     <PackageReference Update="Microsoft.AspNetCore.Components.WebAssembly.Build" Version="$(BlazorVersion)" PrivateAssets="all" />
     <PackageReference Update="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="$(BlazorVersion)" PrivateAssets="all" />
     <PackageReference Update="xunit.analyzers" Version="0.10.*" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
