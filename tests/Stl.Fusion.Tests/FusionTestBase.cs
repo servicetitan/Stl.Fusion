@@ -220,6 +220,7 @@ namespace Stl.Fusion.Tests
                     fusion.AddInMemoryKeyValueStore();
                 if (Options.UseInMemoryAuthService)
                     fusion.AddAuthentication().AddServerSideAuthService();
+                services.AddCommandReprocessor();
 
                 // WebHost
                 var webHost = (FusionTestWebHost?) WebHost;

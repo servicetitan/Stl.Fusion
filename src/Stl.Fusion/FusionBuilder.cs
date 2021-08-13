@@ -71,12 +71,16 @@ namespace Stl.Fusion
 
             // Transient operation scope & its provider
             Services.TryAddTransient<TransientOperationScope>();
-            Services.TryAddSingleton<TransientOperationScopeProvider>();
-            commander.AddHandlers<TransientOperationScopeProvider>();
+            if (!Services.HasService<TransientOperationScopeProvider>()) {
+                Services.AddSingleton<TransientOperationScopeProvider>();
+                commander.AddHandlers<TransientOperationScopeProvider>();
+            }
 
             // Nested command logger
-            Services.TryAddSingleton<NestedCommandLogger>();
-            commander.AddHandlers<NestedCommandLogger>();
+            if (!Services.HasService<NestedCommandLogger>()) {
+                Services.AddSingleton<NestedCommandLogger>();
+                commander.AddHandlers<NestedCommandLogger>();
+            }
 
             // Operation completion - notifier & producer
             Services.TryAddSingleton<OperationCompletionNotifier.Options>();
@@ -88,12 +92,16 @@ namespace Stl.Fusion
 
             // Command completion handler performing invalidations
             Services.TryAddSingleton<InvalidateOnCompletionCommandHandler.Options>();
-            Services.TryAddSingleton<InvalidateOnCompletionCommandHandler>();
-            commander.AddHandlers<InvalidateOnCompletionCommandHandler>();
+            if (!Services.HasService<InvalidateOnCompletionCommandHandler>()) {
+                Services.AddSingleton<InvalidateOnCompletionCommandHandler>();
+                commander.AddHandlers<InvalidateOnCompletionCommandHandler>();
+            }
 
             // Catch-all completion handler
-            Services.TryAddSingleton<CatchAllCompletionHandler>();
-            commander.AddHandlers<CatchAllCompletionHandler>();
+            if (!Services.HasService<CatchAllCompletionHandler>()) {
+                Services.AddSingleton<CatchAllCompletionHandler>();
+                commander.AddHandlers<CatchAllCompletionHandler>();
+            }
         }
 
         static FusionBuilder()

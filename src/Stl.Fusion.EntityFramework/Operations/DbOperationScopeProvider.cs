@@ -23,8 +23,8 @@ namespace Stl.Fusion.EntityFramework.Operations
         public async Task OnCommand(ICommand command, CommandContext context, CancellationToken cancellationToken)
         {
             var operationRequired =
-                context.OuterContext == null // Should be top-level command
-                && !(command is IMetaCommand) // No operations for "second-order" commands
+                context.OuterContext == null // Should be a top-level command
+                && !(command is IMetaCommand) // No operations for meta commands
                 && !Computed.IsInvalidating();
             if (!operationRequired) {
                 await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);

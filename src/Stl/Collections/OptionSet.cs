@@ -15,7 +15,10 @@ namespace Stl.Collections
         private volatile ImmutableDictionary<Symbol, object> _items;
 
         [JsonIgnore]
-        public ImmutableDictionary<Symbol, object> Items => _items;
+        public ImmutableDictionary<Symbol, object> Items {
+            get => _items;
+            set => _items = value;
+        }
 
         [JsonPropertyName(nameof(Items)),  Newtonsoft.Json.JsonIgnore]
         public Dictionary<string, NewtonsoftJsonSerialized<object>> JsonCompatibleItems

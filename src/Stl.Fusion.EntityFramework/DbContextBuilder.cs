@@ -53,8 +53,10 @@ namespace Stl.Fusion.EntityFramework
 
             // DbOperationScope & its CommandR handler
             Services.TryAddTransient<DbOperationScope<TDbContext>>();
-            Services.TryAddSingleton<DbOperationScopeProvider<TDbContext>>();
-            Services.AddCommander().AddHandlers<DbOperationScopeProvider<TDbContext>>();
+            if (!Services.HasService<DbOperationScopeProvider<TDbContext>>()) {
+                Services.AddSingleton<DbOperationScopeProvider<TDbContext>>();
+                Services.AddCommander().AddHandlers<DbOperationScopeProvider<TDbContext>>();
+            }
 
             // DbOperationLogReader - hosted service!
             Services.TryAddSingleton(c => {
