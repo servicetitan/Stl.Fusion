@@ -1,4 +1,5 @@
 using System;
+using System.Data;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
@@ -37,6 +38,7 @@ namespace Stl.Fusion.EntityFramework
         protected AsyncLock AsyncLock { get; }
         protected ILogger Log { get; }
 
+        public IsolationLevel IsolationLevel { get; init; } = IsolationLevel.Unspecified;
         IOperation IOperationScope.Operation => Operation;
         public DbOperation Operation { get; }
         public CommandContext CommandContext { get; }
@@ -90,9 +92,11 @@ namespace Stl.Fusion.EntityFramework
                 throw Stl.Fusion.Operations.Internal.Errors.OperationScopeIsAlreadyClosed();
             TDbContext dbContext;
             if (DbContext == null) {
+                // Creating "own" DbContext the operation scope is going to use to
+                // commit its own changes
                 dbContext = DbContextFactory.CreateDbContext().ReadWrite();
                 dbContext.Database.AutoTransactionsEnabled = false;
-                Transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+                Transaction = await BeginTransaction(cancellationToken, dbContext).ConfigureAwait(false);
                 _isInMemoryProvider = dbContext.Database.ProviderName.EndsWith(".InMemory");
                 if (!_isInMemoryProvider) {
                     Connection = dbContext.Database.GetDbConnection();
@@ -101,6 +105,8 @@ namespace Stl.Fusion.EntityFramework
                 }
                 DbContext = dbContext;
             }
+            // Creating requested DbContext, which is going to share
+            // the same transaction as scope's own DbContext
             dbContext = DbContextFactory.CreateDbContext().ReadWrite(readWrite);
             dbContext.Database.AutoTransactionsEnabled = false;
             if (!_isInMemoryProvider) {
@@ -170,5 +176,11 @@ namespace Stl.Fusion.EntityFramework
                 IsClosed = true;
             }
         }
+
+        // Protected methods
+
+        protected virtual Task<IDbContextTransaction> BeginTransaction(
+            CancellationToken cancellationToken, TDbContext dbContext)
+            => dbContext.Database.BeginTransactionAsync(IsolationLevel, cancellationToken);
     }
 }
