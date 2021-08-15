@@ -12,6 +12,7 @@ using Stl.Fusion.EntityFramework.Internal;
 using Stl.Fusion.EntityFramework.Operations;
 using Stl.Fusion.Extensions;
 using Stl.Fusion.Operations;
+using Stl.Fusion.Operations.Reprocessing;
 using Stl.IO;
 
 namespace Stl.Fusion.EntityFramework
@@ -110,6 +111,7 @@ namespace Stl.Fusion.EntityFramework
             });
             Services.TryAddSingleton<DbOperationLogTrimmer<TDbContext>>();
             Services.AddHostedService(c => c.GetRequiredService<DbOperationLogTrimmer<TDbContext>>());
+
             return this;
         }
 

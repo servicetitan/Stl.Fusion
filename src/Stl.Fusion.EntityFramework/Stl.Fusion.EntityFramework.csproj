@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <Folder Include="Authentication\Internal" />
+    <Folder Include="Reprocessing" />
   </ItemGroup>
 
 </Project>

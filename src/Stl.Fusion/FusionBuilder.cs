@@ -14,6 +14,7 @@ using Stl.Fusion.Bridge.Interception;
 using Stl.Fusion.Operations;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Operations.Internal;
+using Stl.Fusion.Operations.Reprocessing;
 using Stl.Fusion.UI;
 using Stl.Time;
 
@@ -199,6 +200,29 @@ namespace Stl.Fusion
         {
             var fusionAuth = AddAuthentication();
             configureFusionAuthentication.Invoke(fusionAuth);
+            return this;
+        }
+
+        // AddOperationReprocessor
+
+        public FusionBuilder AddOperationReprocessor(
+            Action<IServiceProvider, OperationReprocessor.Options>? optionsBuilder = null)
+            => AddOperationReprocessor<OperationReprocessor>(optionsBuilder);
+
+        public FusionBuilder AddOperationReprocessor<TOperationReprocessor>(
+            Action<IServiceProvider, OperationReprocessor.Options>? optionsBuilder = null)
+            where TOperationReprocessor : class, IOperationReprocessor
+        {
+            Services.TryAddSingleton(c => {
+                var options = new OperationReprocessor.Options();
+                optionsBuilder?.Invoke(c, options);
+                return options;
+            });
+            if (!Services.HasService<IOperationReprocessor>()) {
+                Services.AddTransient<TOperationReprocessor>();
+                Services.AddTransient<IOperationReprocessor>(c => c.GetRequiredService<TOperationReprocessor>());
+                Services.AddCommander().AddHandlers<TOperationReprocessor>();
+            }
             return this;
         }
     }

@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Stl.Fusion;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Extensions;
@@ -48,6 +49,12 @@ namespace Templates.TodoApp.Services
                 else
                     await _store.Remove(session, doneKey, cancellationToken);
             }
+
+            if (todo.Title.Contains("#"))
+                throw new DbUpdateConcurrencyException(
+                    "Simulated concurrency conflict. " +
+                    "Check the log to see if OperationReprocessor retried the command 3 times.");
+
             return todo;
         }
 

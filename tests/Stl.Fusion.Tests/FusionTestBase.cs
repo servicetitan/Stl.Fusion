@@ -155,6 +155,7 @@ namespace Stl.Fusion.Tests
 
             // Core Fusion services
             var fusion = services.AddFusion();
+            fusion.AddOperationReprocessor();
             fusion.AddFusionTime();
 
             // Auto-discovered services
@@ -220,7 +221,6 @@ namespace Stl.Fusion.Tests
                     fusion.AddInMemoryKeyValueStore();
                 if (Options.UseInMemoryAuthService)
                     fusion.AddAuthentication().AddServerSideAuthService();
-                services.AddCommandReprocessor();
 
                 // WebHost
                 var webHost = (FusionTestWebHost?) WebHost;

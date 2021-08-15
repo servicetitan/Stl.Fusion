@@ -24,8 +24,10 @@ using Stl.Fusion.Client;
 using Stl.Fusion.Server;
 using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Fusion.EntityFramework;
 using Stl.Fusion.Extensions;
+using Stl.Fusion.Operations.Reprocessing;
 using Stl.IO;
 using Templates.TodoApp.Abstractions;
 using Templates.TodoApp.UI;
@@ -79,7 +81,6 @@ namespace Templates.TodoApp.Host
                 if (Env.IsDevelopment())
                     dbContext.EnableSensitiveDataLogging();
             });
-            services.AddCommandReprocessor();
             services.AddTransient(c => new DbOperationScope<AppDbContext>(c) {
                 IsolationLevel = IsolationLevel.Serializable,
             });
@@ -109,8 +110,13 @@ namespace Templates.TodoApp.Host
                 authHelperOptionsBuilder: (_, options) => {
                     options.NameClaimKeys = Array.Empty<string>();
                 });
-            fusion.AddComputeService<ITodoService, TodoService>();
+            fusion.AddOperationReprocessor();
+            services.TryAddEnumerable(
+                ServiceDescriptor.Singleton(
+                    TransientFailureDetector.New(e => e.Message.StartsWith("Simulated concurrency conflict."))));
             fusion.AddSandboxedKeyValueStore();
+
+            fusion.AddComputeService<ITodoService, TodoService>();
 
             // Shared services
             Program.ConfigureSharedServices(services);
