@@ -44,7 +44,6 @@ namespace Stl.Fusion.Server
                 var newModelBinderProviders = new IModelBinderProvider[] {
                     new SimpleModelBinderProvider<Moment, MomentModelBinder>(),
                     new SimpleModelBinderProvider<Symbol, SymbolModelBinder>(),
-                    new SimpleModelBinderProvider<Ulid, UlidModelBinder>(),
                     new SimpleModelBinderProvider<Session, SessionModelBinder>(),
                     new PageRefModelBinderProvider(),
                 };
