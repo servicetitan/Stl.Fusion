@@ -132,19 +132,8 @@ namespace Stl.Fusion.Extensions.Internal
             // but fine for client-side use cases & testing.
             PseudoGet(prefix).Ignore();
             var query = Store.Keys.Where(k => k.StartsWith(prefix));
-            var afterKey = pageRef.AfterKey;
-            if (afterKey != null)
-                query = sortDirection == SortDirection.Ascending
-                    // ReSharper disable once StringCompareIsCultureSpecific.1
-                    ? query.Where(k => string.Compare(k, afterKey) > 0)
-                    // ReSharper disable once StringCompareIsCultureSpecific.1
-                    : query.Where(k => string.Compare(k, afterKey) < 0);
-            query = sortDirection == SortDirection.Ascending
-                ? query.OrderBy(k => k)
-                : query.OrderByDescending(k => k);
-
+            query = query.OrderByAndTakePage(k => k, pageRef, sortDirection);
             var result = query
-                .Take(pageRef.Count)
                 .Select(k => k.Substring(prefix.Length))
                 .ToArray();
             return Task.FromResult(result);

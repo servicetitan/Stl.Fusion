@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Stl.Serialization
 {
-    public abstract class Serialized<T>
+    public abstract class Serialized<T> : IEquatable<Serialized<T>>
     {
         private Option<T> _valueOption;
         private Option<string> _dataOption;
@@ -24,6 +24,13 @@ namespace Stl.Serialization
                 _dataOption = value;
             }
         }
+
+        // ToString
+
+        public override string ToString()
+            => $"{GetType().Name} {{ Data = {SystemJsonSerializer.Default.Write(Data)} }}";
+
+        // Private & protected methods
 
         private string Serialize()
         {
@@ -48,5 +55,32 @@ namespace Stl.Serialization
         }
 
         protected abstract IUtf16Serializer<T> GetSerializer();
+
+        // Equality
+
+        public bool Equals(Serialized<T>? other)
+        {
+            if (ReferenceEquals(null, other))
+                return false;
+            if (ReferenceEquals(this, other))
+                return true;
+            return Data.Equals(other.Data);
+        }
+
+        public override bool Equals(object? obj)
+        {
+            if (ReferenceEquals(null, obj))
+                return false;
+            if (ReferenceEquals(this, obj))
+                return true;
+            return Equals((Serialized<T>)obj);
+        }
+
+        public override int GetHashCode()
+            => Data.GetHashCode();
+        public static bool operator ==(Serialized<T>? left, Serialized<T>? right)
+            => Equals(left, right);
+        public static bool operator !=(Serialized<T>? left, Serialized<T>? right)
+            => !Equals(left, right);
     }
 }

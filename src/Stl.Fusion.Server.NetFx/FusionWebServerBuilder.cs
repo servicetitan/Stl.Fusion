@@ -30,10 +30,9 @@ namespace Stl.Fusion.Server
             });
             Services.TryAddSingleton<WebSocketServer>();
 
-            // TODO: configure ParseRefModelBinderProvider/PageRefModelBinderProvider 
-            // TODO: configure NewtonsoftJson with JsonNetSerializer.DefaultSettings
+            // TODO: configure model binder providers
         }
 
-        //TODO: add AddControllers and AddControllerFilter;
+        // TODO: add AddControllers and AddControllerFilter
     }
 }

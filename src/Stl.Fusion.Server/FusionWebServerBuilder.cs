@@ -1,11 +1,15 @@
 using System;
+using System.Linq;
 using System.Reflection;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Stl.Collections;
+using Stl.Fusion.Authentication;
 using Stl.Fusion.Server.Controllers;
 using Stl.Fusion.Server.Internal;
-using Stl.Reflection;
-using Stl.Serialization;
+using Stl.Text;
+using Stl.Time;
 
 namespace Stl.Fusion.Server
 {
@@ -36,8 +40,19 @@ namespace Stl.Fusion.Server
             Services.TryAddSingleton<WebSocketServer>();
 
             var mvcBuilder = Services.AddMvcCore(options => {
-                options.ModelBinderProviders.Insert(0, new PageRefModelBinderProvider());
+                var oldModelBinderProviders = options.ModelBinderProviders.ToList();
+                var newModelBinderProviders = new IModelBinderProvider[] {
+                    new SimpleModelBinderProvider<Moment, MomentModelBinder>(),
+                    new SimpleModelBinderProvider<Symbol, SymbolModelBinder>(),
+                    new SimpleModelBinderProvider<Ulid, UlidModelBinder>(),
+                    new SimpleModelBinderProvider<Session, SessionModelBinder>(),
+                    new PageRefModelBinderProvider(),
+                };
+                options.ModelBinderProviders.Clear();
+                options.ModelBinderProviders.AddRange(newModelBinderProviders);
+                options.ModelBinderProviders.AddRange(oldModelBinderProviders);
             });
+
             // Newtonsoft.Json serializer is optional starting from v1.4+
             /*
             mvcBuilder.AddNewtonsoftJson(options => {

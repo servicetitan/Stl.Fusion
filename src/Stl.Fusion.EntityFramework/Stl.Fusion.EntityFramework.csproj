@@ -16,9 +16,4 @@
     <ProjectReference Include="..\Stl.Fusion\Stl.Fusion.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Authentication\Internal" />
-    <Folder Include="Reprocessing" />
-  </ItemGroup>
-
 </Project>

@@ -165,16 +165,15 @@ namespace Stl.Fusion.EntityFramework.Extensions
             await using var dbContext = CreateDbContext();
             var query = dbContext.Set<TDbKeyValue>().AsQueryable()
                 .Where(e => e.Key.StartsWith(prefix));
-            var afterKey = pageRef.AfterKey;
-            if (afterKey != null)
+            query = query.OrderByAndTakePage(e => e.Key, pageRef, sortDirection);
+            /*
+            if (pager.After.IsSome(out var after)) {
                 query = sortDirection == SortDirection.Ascending
                     // ReSharper disable once StringCompareIsCultureSpecific.1
-                    ? query.Where(e => string.Compare(e.Key, afterKey) > 0)
+                    ? query.Where(e => string.Compare(e.Key, after) > 0)
                     // ReSharper disable once StringCompareIsCultureSpecific.1
-                    : query.Where(e => string.Compare(e.Key, afterKey) < 0);
-            query = sortDirection == SortDirection.Ascending
-                ? query.OrderBy(e => e.Key)
-                : query.OrderByDescending(e => e.Key);
+                    : query.Where(e => string.Compare(e.Key, after) < 0);
+            */
             var result = await query
                 .Select(e => e.Key)
                 .Take(pageRef.Count)

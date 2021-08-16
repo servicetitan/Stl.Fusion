@@ -18,6 +18,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Ulid" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Stl.Fusion\Stl.Fusion.csproj" />
     <ProjectReference Include="..\Stl.Net\Stl.Net.csproj" />
   </ItemGroup>

@@ -55,11 +55,7 @@ namespace Templates.TodoApp.Services
         public virtual async Task<Todo[]> List(Session session, PageRef<string> pageRef, CancellationToken cancellationToken = default)
         {
             await PseudoGetAllItems(session);
-            var todos = _store.OrderBy(i => i.Id).AsEnumerable();
-            if (pageRef.AfterKey != null)
-                todos = todos.Where(i => string.CompareOrdinal(i.Id, pageRef.AfterKey) > 0);
-            todos = todos.Take(pageRef.Count);
-            return todos.ToArray();
+            return _store.OrderByAndTakePage(i => i.Id, pageRef).ToArray();
         }
 
         public virtual async Task<TodoSummary> GetSummary(Session session, CancellationToken cancellationToken = default)
