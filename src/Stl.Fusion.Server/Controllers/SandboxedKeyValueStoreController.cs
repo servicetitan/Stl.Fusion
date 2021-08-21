@@ -26,58 +26,37 @@ namespace Stl.Fusion.Server.Controllers
 
         [HttpPost]
         public Task Set([FromBody] SandboxedSetCommand command, CancellationToken cancellationToken = default)
-        {
-            command.UseDefaultSession(SessionResolver);
-            return Store.Set(command, cancellationToken);
-        }
+            => Store.Set(command.UseDefaultSession(SessionResolver), cancellationToken);
 
         [HttpPost]
         public Task SetMany([FromBody] SandboxedSetManyCommand command, CancellationToken cancellationToken = default)
-        {
-            command.UseDefaultSession(SessionResolver);
-            return Store.SetMany(command, cancellationToken);
-        }
+            => Store.SetMany(command.UseDefaultSession(SessionResolver), cancellationToken);
 
         [HttpPost]
         public Task Remove([FromBody] SandboxedRemoveCommand command, CancellationToken cancellationToken = default)
-        {
-            command.UseDefaultSession(SessionResolver);
-            return Store.Remove(command, cancellationToken);
-        }
+            => Store.Remove(command.UseDefaultSession(SessionResolver), cancellationToken);
 
         [HttpPost]
         public Task RemoveMany([FromBody] SandboxedRemoveManyCommand command, CancellationToken cancellationToken = default)
-        {
-            command.UseDefaultSession(SessionResolver);
-            return Store.RemoveMany(command, cancellationToken);
-        }
+            => Store.RemoveMany(command.UseDefaultSession(SessionResolver), cancellationToken);
 
         // Queries
 
         [HttpGet, Publish]
-        public Task<string?> TryGet(Session? session, string key, CancellationToken cancellationToken = default)
-        {
-            session ??= SessionResolver.Session;
-            return Store.TryGet(session, key, cancellationToken);
-        }
+        public Task<string?> TryGet(Session session, string key, CancellationToken cancellationToken = default)
+            => Store.TryGet(session, key, cancellationToken);
 
         [HttpGet, Publish]
-        public Task<int> Count(Session? session, string prefix, CancellationToken cancellationToken = default)
-        {
-            session ??= SessionResolver.Session;
-            return Store.Count(session, prefix, cancellationToken);
-        }
+        public Task<int> Count(Session session, string prefix, CancellationToken cancellationToken = default)
+            => Store.Count(session, prefix, cancellationToken);
 
         [HttpGet, Publish]
         public Task<string[]> ListKeySuffixes(
-            Session? session,
+            Session session,
             string prefix,
             PageRef<string> pageRef,
             SortDirection sortDirection = SortDirection.Ascending,
             CancellationToken cancellationToken = default)
-        {
-            session ??= SessionResolver.Session;
-            return Store.ListKeySuffixes(session, prefix, pageRef, sortDirection, cancellationToken);
-        }
+            => Store.ListKeySuffixes(session, prefix, pageRef, sortDirection, cancellationToken);
     }
 }
