@@ -13,15 +13,16 @@ namespace Stl.Fusion.Server.Internal
             if (bindingContext == null)
                 throw new ArgumentNullException(nameof(bindingContext));
 
-            async Task UseDefaultSession()
+            Task UseDefaultSession()
             {
                 try {
                     var sessionResolver = bindingContext.HttpContext.RequestServices.GetRequiredService<ISessionResolver>();
-                    var session = await sessionResolver.GetSession().ConfigureAwait(false);
-                    bindingContext.Result = ModelBindingResult.Success(session);
+                    bindingContext.Result = ModelBindingResult.Success(sessionResolver.Session);
+                    return Task.CompletedTask;
                 }
                 catch (Exception) {
                     bindingContext.Result = ModelBindingResult.Failed();
+                    return Task.CompletedTask;
                 }
             }
 
