@@ -20,7 +20,7 @@ namespace Stl.Tests.Reflection
         public void GetAllBaseTypesTest()
         {
             var baseTypes = GetType().GetAllBaseTypes().ToArray();
-            baseTypes.Should().BeEquivalentTo(typeof(TestBase), typeof(object));
+            baseTypes.Should().BeEquivalentTo(new [] {typeof(TestBase), typeof(object)});
 
             baseTypes = typeof(AsyncProcessBase).GetAllBaseTypes(true, true).ToArray();
             var adwdsIndex = Array.IndexOf(baseTypes, typeof(IAsyncDisposableWithDisposalState));

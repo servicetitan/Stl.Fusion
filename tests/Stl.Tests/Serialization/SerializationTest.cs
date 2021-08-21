@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using FluentAssertions;
 using Stl.Collections;
 using Stl.Fusion.Authentication;
@@ -112,11 +113,17 @@ namespace Stl.Tests.Serialization
         [Fact]
         public void Base64DataSerialization()
         {
-            default(Base64Encoded).AssertPassesThroughAllSerializers(Out);
-            new Base64Encoded(null!).AssertPassesThroughAllSerializers(Out);
-            new Base64Encoded(new byte[] {}).AssertPassesThroughAllSerializers(Out);
-            new Base64Encoded(new byte[] { 1 }).AssertPassesThroughAllSerializers(Out);
-            new Base64Encoded(new byte[] { 1, 2 }).AssertPassesThroughAllSerializers(Out);
+            void Test(Base64Encoded src)
+            {
+                var dst = src.PassThroughAllSerializers(Out);
+                src.Data.SequenceEqual(dst.Data).Should().BeTrue();
+            }
+
+            Test(default);
+            Test(new Base64Encoded(null!));
+            Test(new Base64Encoded(new byte[] {}));
+            Test(new Base64Encoded(new byte[] {1}));
+            Test(new Base64Encoded(new byte[] {1, 2}));
         }
 
         [Fact]

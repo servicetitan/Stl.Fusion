@@ -122,7 +122,7 @@ namespace Stl.Tests.Plugins
 
             // Dependencies extraction
             var testPlugin1Deps = plugins.InfoByType[typeof(TestPlugin1)].Dependencies;
-            testPlugin1Deps.Should().BeEquivalentTo((TypeRef)typeof(TestPlugin2));
+            testPlugin1Deps.Should().BeEquivalentTo(new [] {(TypeRef)typeof(TestPlugin2)});
             var testPlugin1AllDeps = plugins.InfoByType[typeof(TestPlugin1)].AllDependencies;
             testPlugin1AllDeps.Should().Contain((TypeRef)typeof(TestPlugin2));
 

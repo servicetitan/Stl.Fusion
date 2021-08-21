@@ -128,8 +128,7 @@ namespace Stl
     public readonly struct Result<T> : IResult<T>, IEquatable<Result<T>>
     {
         /// <inheritdoc />
-        [MaybeNull]
-        public T ValueOrDefault { get; }
+        public T? ValueOrDefault { get; }
         /// <inheritdoc />
         public Exception? Error { get; }
 

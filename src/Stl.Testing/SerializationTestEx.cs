@@ -28,15 +28,15 @@ namespace Stl.Testing
         {
             var v = value;
             v = v.PassThroughSystemJsonSerializer(output);
-            v.Should().IsSameOrEqualTo(value);
+            v.Should().Be(value);
             v = v.PassThroughNewtonsoftJsonSerializer(output);
-            v.Should().IsSameOrEqualTo(value);
+            v.Should().Be(value);
             v = v.PassThroughTypeWritingSerializer(output);
-            v.Should().IsSameOrEqualTo(value);
+            v.Should().Be(value);
             v = v.PassThroughSystemJsonSerialized(output);
-            v.Should().IsSameOrEqualTo(value);
+            v.Should().Be(value);
             v = v.PassThroughNewtonsoftJsonSerialized(output);
-            v.Should().IsSameOrEqualTo(value);
+            v.Should().Be(value);
             return v;
         }
 

@@ -11,6 +11,6 @@ namespace Stl.Serialization.Internal
         public override JsonString? ReadJson(JsonReader reader, Type objectType,
             JsonString? existingValue, bool hasExistingValue,
             JsonSerializer serializer)
-            => new((string?) reader.Value);
+            => JsonString.New((string?) reader.Value);
     }
 }

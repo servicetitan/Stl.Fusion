@@ -146,7 +146,7 @@ namespace Stl.Tests.Time
 
             foreach (var timer in timers) {
                 var delta = timer.FiredAt - timer.DueAt;
-                delta.Should().BeCloseTo(TimeSpan.Zero, maxDelta);
+                delta.Should().BeCloseTo(TimeSpan.Zero, TimeSpan.FromMilliseconds(maxDelta));
             }
             Out.WriteLine($"{runner}: Checks completed.");
         }

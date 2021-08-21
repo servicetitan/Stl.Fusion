@@ -13,7 +13,7 @@ namespace Stl.Serialization.Internal
         public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
         {
             if (destinationType == typeof(string))
-                return ((JsonString) value).Value!;
+                return ((JsonString) value).Value;
             return base.ConvertTo(context, culture, value, destinationType)!;
         }
 
