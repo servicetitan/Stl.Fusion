@@ -7,8 +7,5 @@ namespace Stl.Fusion.Blazor
     {
         SynchronizeComputeState = 0x1,
         RecomputeOnParametersSet = 0x2,
-        AwaitUpdateOnInitialized = 0x100,
-        AwaitUpdateOnParametersSet = 0x200,
-        AwaitUpdate = 0x300,
     }
 }

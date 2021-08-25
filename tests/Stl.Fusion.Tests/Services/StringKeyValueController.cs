@@ -25,7 +25,7 @@ namespace Stl.Fusion.Tests.Services
 
         [HttpGet, Publish]
         public async Task<JsonString> Get(string? key)
-            => await Service.Get(key ?? "", this.RequestAborted());
+            => (await Service.Get(key ?? "", this.RequestAborted()))!;
 
         [HttpPost]
         public async Task Set(string? key)

@@ -49,7 +49,7 @@ namespace Stl.Tests.Interception
                 => source.Length;
 
             public JsonString Three()
-                => "1";
+                => new("1");
 
             public Task<string> OneAsync(string source)
                 => Task.FromResult(One(source));

@@ -18,7 +18,7 @@ namespace Stl.Fusion.Tests.Services
         Task<JsonString> GetJsonString(string str, CancellationToken cancellationToken = default);
         [Get("getFromPath/{str}")]
         Task<string> GetFromPath([Path]string str, CancellationToken cancellationToken = default);
-        
+
         [Post("postFromQueryImplicit")]
         Task<JsonString> PostFromQueryImplicit(string str, CancellationToken cancellationToken = default);
         [Post("postFromQuery")]
