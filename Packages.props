@@ -33,7 +33,7 @@
     <PackageReference Update="CliWrap" Version="3.3.*" />
     <PackageReference Update="DataAnnotationsValidatorNetStandard" Version="1.0.*" />
     <PackageReference Update="Enums.NET" Version="4.0.*" />
-    <PackageReference Update="FluentAssertions" Version="6.0.*" />
+    <PackageReference Update="FluentAssertions" Version="6.1.*" />
     <PackageReference Update="Microsoft.AspNetCore.Authentication.Cookies" Version="2.2.*" />
     <PackageReference Update="Microsoft.AspNetCore.Authentication.Google" Version="$(AspNetCoreVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.Authentication.MicrosoftAccount" Version="$(AspNetCoreVersion)" />
