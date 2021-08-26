@@ -6,7 +6,7 @@ using Stl.Generators;
 
 namespace Stl.Time.Internal
 {
-    public static class CoarseStopwatch
+    public static class CoarseClockHelper
     {
         public static readonly int Frequency = 20;
         public static readonly Moment Start;
@@ -15,6 +15,7 @@ namespace Stl.Time.Internal
         private static readonly Timer Timer;
         private static readonly Stopwatch Stopwatch;
         private static readonly RandomInt64Generator Rng = new();
+        private static Moment _systemNow;
         private static long _elapsedTicks;
         private static long _randomInt64;
         private static volatile int _randomInt32;
@@ -34,6 +35,11 @@ namespace Stl.Time.Internal
             get => new(NowEpochOffsetTicks);
         }
 
+        public static Moment SystemNow {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _systemNow;
+        }
+
         public static long RandomInt64 {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => Volatile.Read(ref _randomInt64);
@@ -44,9 +50,9 @@ namespace Stl.Time.Internal
             get => _randomInt32;
         }
 
-        static CoarseStopwatch()
+        static CoarseClockHelper()
         {
-            var start = SystemClock.Now;
+            var start = _systemNow = SystemClock.Now;
             Start = start;
             StartEpochOffsetTicks = start.EpochOffset.Ticks;
             Stopwatch = Stopwatch.StartNew();
@@ -58,13 +64,16 @@ namespace Stl.Time.Internal
         [DebuggerStepThrough]
         private static void Update()
         {
-            // Updating _elapsedTicks
+            // Update _elapsedTicks
             Interlocked.Exchange(ref _elapsedTicks, Stopwatch.ElapsedTicks);
 
-            // Updating _random*
+            // Update _random*
             var rnd = Rng.Next();
             Interlocked.Exchange(ref _randomInt64, rnd);
             _randomInt32 = unchecked((int) rnd);
+
+            // Update _systemNow
+            _systemNow = SystemClock.Now;
         }
     }
 }

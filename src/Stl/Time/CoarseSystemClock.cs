@@ -7,19 +7,19 @@ using Stl.Time.Internal;
 
 namespace Stl.Time
 {
-    public sealed class CoarseCpuClock : IMomentClock
+    public sealed class CoarseSystemClock : IMomentClock
     {
-        public static readonly IMomentClock Instance = new CoarseCpuClock();
+        public static readonly IMomentClock Instance = new CoarseSystemClock();
 
         public static Moment Now {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => CoarseClockHelper.Now;
+            get => CoarseClockHelper.SystemNow;
         }
 
         Moment IMomentClock.Now => Now;
         DateTimeOffset ISystemClock.UtcNow => Now;
 
-        private CoarseCpuClock() { }
+        private CoarseSystemClock() { }
 
         public override string ToString() => $"{GetType().Name}()";
         public Moment ToRealTime(Moment localTime) => localTime;

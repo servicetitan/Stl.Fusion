@@ -6,7 +6,7 @@ namespace Stl.Generators
 {
     public static class ConcurrentLTagGenerator
     {
-        public static readonly ConcurrentGenerator<LTag> Default = New(CoarseStopwatch.RandomInt64);
+        public static readonly ConcurrentGenerator<LTag> Default = New(CoarseClockHelper.RandomInt64);
 
         public static ConcurrentGenerator<LTag> New(long start, int concurrencyLevel = -1)
         {

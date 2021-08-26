@@ -4,12 +4,14 @@ namespace Stl.Time
     {
         public static MomentClockSet Default { get; set; } = new(Stl.Time.SystemClock.Instance) {
             CpuClock = Stl.Time.CpuClock.Instance,
+            CoarseSystemClock = Stl.Time.CoarseSystemClock.Instance,
             CoarseCpuClock = Stl.Time.CoarseCpuClock.Instance,
             UIClock = Stl.Time.CpuClock.Instance,
         };
 
         public IMomentClock SystemClock { get; init; }
         public IMomentClock CpuClock { get; init; }
+        public IMomentClock CoarseSystemClock { get; init; }
         public IMomentClock CoarseCpuClock { get; init; }
         public IMomentClock UIClock { get; init; }
 
@@ -17,6 +19,7 @@ namespace Stl.Time
         {
             SystemClock = Default.SystemClock;
             CpuClock = Default.CpuClock;
+            CoarseSystemClock = Default.CoarseSystemClock;
             CoarseCpuClock = Default.CoarseCpuClock;
             UIClock = Default.UIClock;
         }
@@ -25,6 +28,7 @@ namespace Stl.Time
         {
             SystemClock = anyClock;
             CpuClock = anyClock;
+            CoarseSystemClock = anyClock;
             CoarseCpuClock = anyClock;
             UIClock = anyClock;
         }
