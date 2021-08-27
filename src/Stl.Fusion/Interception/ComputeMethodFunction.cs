@@ -2,6 +2,7 @@ using System;
 using Microsoft.Extensions.Logging;
 using Stl.Generators;
 using Stl.Internal;
+using Stl.Versioning;
 
 namespace Stl.Fusion.Interception
 {
@@ -9,7 +10,7 @@ namespace Stl.Fusion.Interception
     {
         public ComputeMethodFunction(
             ComputeMethodDef method,
-            Generator<LTag> versionGenerator,
+            VersionGenerator<LTag> versionGenerator,
             IServiceProvider services,
             ILogger<ComputeMethodFunction<T>>? log = null)
             : base(method, versionGenerator, services, log)

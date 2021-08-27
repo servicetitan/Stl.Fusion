@@ -9,6 +9,8 @@ using Stl.Fusion.Internal;
 using Stl.Generators;
 using Stl.Locking;
 using Stl.Reflection;
+using Stl.Versioning;
+using Stl.Versioning.Providers;
 
 namespace Stl.Fusion
 {
@@ -17,9 +19,9 @@ namespace Stl.Fusion
         public interface IOptions
         {
             ComputedOptions ComputedOptions { get; set; }
-            Generator<LTag> VersionGenerator { get; set; }
-            bool InitialIsConsistent { get; set; }
+            VersionGenerator<LTag>? VersionGenerator { get; set; }
             Action<IState>? EventConfigurator { get; set; }
+            bool InitialIsConsistent { get; set; }
         }
 
         IStateSnapshot Snapshot { get; }
@@ -53,7 +55,7 @@ namespace Stl.Fusion
                 state => Result.Value(ActivatorEx.New<T>(false));
 
             public ComputedOptions ComputedOptions { get; set; } = ComputedOptions.Default;
-            public Generator<LTag> VersionGenerator { get; set; } = ConcurrentLTagGenerator.Default;
+            public VersionGenerator<LTag>? VersionGenerator { get; set; }
             public Func<IState<T>, Result<T>> InitialOutputFactory { get; set; } = DefaultInitialOutputFactory;
             public bool InitialIsConsistent { get; set; }
 
@@ -62,7 +64,7 @@ namespace Stl.Fusion
         }
 
         private volatile StateSnapshot<T>? _snapshot;
-        protected Generator<LTag> VersionGenerator { get; set; }
+        protected VersionGenerator<LTag> VersionGenerator { get; set; }
         protected ComputedOptions ComputedOptions { get; }
         protected AsyncLock AsyncLock { get; }
         protected object Lock => AsyncLock;
@@ -128,7 +130,7 @@ namespace Stl.Fusion
         {
             Services = services;
             ComputedOptions = options.ComputedOptions;
-            VersionGenerator = options.VersionGenerator;
+            VersionGenerator = options.VersionGenerator ?? services.VersionGenerator<LTag>();
             options.EventConfigurator?.Invoke(this);
             var untypedOptions = (IState.IOptions) options;
             untypedOptions.EventConfigurator?.Invoke(this);
@@ -303,6 +305,6 @@ namespace Stl.Fusion
         protected abstract Task<T> Compute(CancellationToken cancellationToken);
 
         protected virtual StateBoundComputed<T> CreateComputed()
-            => new(ComputedOptions, this, VersionGenerator.Next());
+            => new(ComputedOptions, this, VersionGenerator.NextVersion());
     }
 }

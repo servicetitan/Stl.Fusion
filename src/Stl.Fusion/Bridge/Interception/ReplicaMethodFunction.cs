@@ -7,6 +7,7 @@ using Stl.Fusion.Bridge.Internal;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Internal;
 using Stl.Generators;
+using Stl.Versioning;
 
 namespace Stl.Fusion.Bridge.Interception
 {
@@ -14,13 +15,13 @@ namespace Stl.Fusion.Bridge.Interception
     {
         protected readonly ILogger Log;
         protected readonly bool IsLogDebugEnabled;
-        protected readonly Generator<LTag> VersionGenerator;
+        protected readonly VersionGenerator<LTag> VersionGenerator;
         protected readonly IReplicator Replicator;
 
         public ReplicaMethodFunction(
             ComputeMethodDef method,
             IReplicator replicator,
-            Generator<LTag> versionGenerator,
+            VersionGenerator<LTag> versionGenerator,
             ILogger<ReplicaMethodFunction<T>>? log = null)
             : base(method, ((IReplicatorImpl) replicator).Services)
         {
@@ -89,7 +90,7 @@ namespace Stl.Fusion.Bridge.Interception
             if (psi == null) {
                 output = new Result<T>(default!, Errors.NoPublicationStateInfoCaptured());
                 // We need a unique LTag here, so we use a range that's supposed to be unused by LTagGenerators.
-                var version = new LTag(VersionGenerator.Next().Value ^ (1L << 62));
+                var version = new LTag(VersionGenerator.NextVersion().Value ^ (1L << 62));
                 result = new (method.Options, input, output.Error!, version);
                 ComputeContext.Current.TryCapture(result);
                 return result;
@@ -102,7 +103,7 @@ namespace Stl.Fusion.Bridge.Interception
                 // We need a unique LTag here, so we use a range that's supposed
                 // to be unused by LTagGenerators.
                 if (psi.Version == default)
-                    psi.Version = new LTag(VersionGenerator.Next().Value ^ (1L << 62));
+                    psi.Version = new LTag(VersionGenerator.NextVersion().Value ^ (1L << 62));
             }
             replica = Replicator.GetOrAdd(new PublicationStateInfo<T>(psi, output));
             replicaComputed = (IReplicaComputed<T>)

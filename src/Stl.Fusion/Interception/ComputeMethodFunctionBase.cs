@@ -4,17 +4,18 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Generators;
+using Stl.Versioning;
 
 namespace Stl.Fusion.Interception
 {
     public abstract class ComputeMethodFunctionBase<T> : ComputeFunctionBase<T>
     {
         protected readonly ILogger Log;
-        protected readonly Generator<LTag> VersionGenerator;
+        protected readonly VersionGenerator<LTag> VersionGenerator;
 
         public ComputeMethodFunctionBase(
             ComputeMethodDef method,
-            Generator<LTag> versionGenerator,
+            VersionGenerator<LTag> versionGenerator,
             IServiceProvider services,
             ILogger<ComputeMethodFunction<T>>? log = null)
             : base(method, services)
@@ -27,8 +28,8 @@ namespace Stl.Fusion.Interception
             ComputeMethodInput input, IComputed<T>? existing,
             CancellationToken cancellationToken)
         {
-            var tag = VersionGenerator.Next();
-            var computed = CreateComputed(input, tag);
+            var version = VersionGenerator.NextVersion(existing?.Version ?? default);
+            var computed = CreateComputed(input, version);
             try {
                 using var _ = Computed.ChangeCurrent(computed);
                 var result = input.InvokeOriginalFunction(cancellationToken);

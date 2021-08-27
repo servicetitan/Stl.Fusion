@@ -4,6 +4,8 @@ using Microsoft.Extensions.Logging;
 using Stl.Fusion.Internal;
 using Stl.Generators;
 using Stl.Reflection;
+using Stl.Versioning;
+using Stl.Versioning.Providers;
 
 namespace Stl.Fusion.Interception
 {
@@ -11,17 +13,17 @@ namespace Stl.Fusion.Interception
     {
         public new class Options : ComputeMethodInterceptorBase.Options
         {
-            public Generator<LTag> VersionGenerator { get; set; } = ConcurrentLTagGenerator.Default;
+            public VersionGenerator<LTag>? VersionGenerator { get; set; }
         }
 
-        protected readonly Generator<LTag> VersionGenerator;
+        protected readonly VersionGenerator<LTag> VersionGenerator;
 
         public ComputeMethodInterceptor(
             Options? options,
             IServiceProvider services,
             ILoggerFactory? loggerFactory = null)
             : base(options ??= new(), services, loggerFactory)
-            => VersionGenerator = options.VersionGenerator;
+            => VersionGenerator = options.VersionGenerator ?? services.VersionGenerator<LTag>();
 
         protected override ComputeFunctionBase<T> CreateFunction<T>(ComputeMethodDef method)
         {

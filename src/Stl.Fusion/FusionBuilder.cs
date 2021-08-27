@@ -17,6 +17,8 @@ using Stl.Fusion.Operations.Internal;
 using Stl.Fusion.Operations.Reprocessing;
 using Stl.Fusion.UI;
 using Stl.Time;
+using Stl.Versioning;
+using Stl.Versioning.Providers;
 
 namespace Stl.Fusion
 {
@@ -46,6 +48,8 @@ namespace Stl.Fusion
             Services.AddConverters();
             Services.TryAddSingleton(MomentClockSet.Default);
             Services.TryAddSingleton(c => c.GetRequiredService<MomentClockSet>().SystemClock);
+            Services.TryAddSingleton(LTagVersionGenerator.Default);
+            Services.TryAddSingleton(ClockBasedVersionGenerator.DefaultCoarse);
 
             // Compute services & their dependencies
             Services.TryAddSingleton(_ => ComputeServiceProxyGenerator.Default);
