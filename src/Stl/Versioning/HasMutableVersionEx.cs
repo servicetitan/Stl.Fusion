@@ -1,11 +1,11 @@
 namespace Stl.Versioning
 {
-    public static class VersionGeneratorEx
+    public static class HasMutableVersionEx
     {
         public static TEntity UpdateVersion<TEntity, TVersion>(
-            this VersionGenerator<TVersion> versionGenerator,
-            TEntity entity)
-            where TEntity : IHasWritableVersion<TVersion>
+            this TEntity entity,
+            VersionGenerator<TVersion> versionGenerator)
+            where TEntity : IHasMutableVersion<TVersion>
             where TVersion : notnull
         {
             entity.Version = versionGenerator.NextVersion(entity.Version);

@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using Stl.Collections;
 using Stl.Serialization;
 using Stl.Time;
+using Stl.Versioning;
 
 namespace Stl.Fusion.EntityFramework.Authentication
 {
@@ -14,7 +15,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
     [Index(nameof(LastSeenAt), nameof(IsSignOutForced))]
     [Index(nameof(UserId), nameof(IsSignOutForced))]
     [Index(nameof(IPAddress), nameof(IsSignOutForced))]
-    public class DbSessionInfo<TDbUserId> : IHasId<string>
+    public class DbSessionInfo<TDbUserId> : IHasId<string>, IHasMutableVersion<long>
     {
         private readonly NewtonsoftJsonSerialized<ImmutableOptionSet?> _options = new(ImmutableOptionSet.Empty);
         private DateTime _createdAt;
@@ -22,6 +23,8 @@ namespace Stl.Fusion.EntityFramework.Authentication
 
         [Key, StringLength(32)]
         public string Id { get; set; } = "";
+        [ConcurrencyCheck] public long Version { get; set; }
+
         public DateTime CreatedAt {
             get => _createdAt.DefaultKind(DateTimeKind.Utc);
             set => _createdAt = value.DefaultKind(DateTimeKind.Utc);

@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Authentication;
 using Stl.Text;
+using Stl.Versioning;
 
 namespace Stl.Fusion.EntityFramework.Authentication
 {
@@ -26,6 +27,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
         {
             if (DbUserIdHandler.Format(target.Id) != source.Id)
                 throw new ArgumentOutOfRangeException(nameof(source));
+            target.UpdateVersion(VersionGenerator);
 
             // Adding new Claims
             target.Claims = source.Claims.SetItems(target.Claims);
@@ -51,6 +53,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
         public override User UpdateModel(TDbUser source, User target)
             => target with {
                 Id = DbUserIdHandler.Format(source.Id),
+                Version = source.Version,
                 Name = source.Name,
                 Claims = source.Claims,
                 Identities = source.Identities.ToImmutableDictionary(

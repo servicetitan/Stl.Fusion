@@ -1,6 +1,6 @@
 @page "/authentication"
 @using UAParser
-@inherits ComputedStateComponent<List<AuthenticationPage.SessionModel>>
+@inherits ComputedStateComponent<List<AuthenticationPage.SessionInfoModel>>
 @inject Session Session
 @inject IAuthService AuthService
 @inject ClientAuthHelper ClientAuthHelper
@@ -46,6 +46,7 @@
                 <li><code>User.IsAuthenticated</code>: <b><code>@User.IsAuthenticated</code></b></li>
                 <li><code>User.Id</code>: <b><code>@User.Id</code></b></li>
                 <li><code>User.Name</code>: <b><code>@User.Name</code></b></li>
+                <li><code>User.Version</code>: <b><code>@User.Version</code></b></li>
             </ul>
             @if (User.IsAuthenticated) {
                 <div class="card-subtitle">Claims:</div>
@@ -72,6 +73,7 @@
                         <th scope="col">Browser</th>
                         <th scope="col">Created</th>
                         <th scope="col">Last Seen</th>
+                        <th scope="col">Version</th>
                         <th scope="col"></th>
                     </tr>
                     </thead>
@@ -82,6 +84,7 @@
                             <td>@session.UserAgent</td>
                             <td>@session.Created</td>
                             <td>@session.LastSeen</td>
+                            <td>@session.Version</td>
                             <td>
                                 @if (session.IsCurrent) {
                                     <span>Current</span>
@@ -124,13 +127,14 @@
 </Card>
 
 @code {
-    public class SessionModel
+    public class SessionInfoModel
     {
         public string Id { get; set; } = "";
         public string IPAddress { get; set; } = "";
         public string UserAgent { get; set; } = "";
         public string Created { get; set; } = "";
         public string LastSeen { get; set; } = "";
+        public long Version { get; set; }
         public bool IsCurrent { get; set; }
     }
 
@@ -157,23 +161,24 @@
         }
     }
 
-    protected override void ConfigureState(ComputedState<List<SessionModel>>.Options options)
-        => options.InitialOutputFactory = _ => new List<SessionModel>();
+    protected override void ConfigureState(ComputedState<List<SessionInfoModel>>.Options options)
+        => options.InitialOutputFactory = _ => new List<SessionInfoModel>();
 
-    protected override async Task<List<SessionModel>> ComputeState(CancellationToken cancellationToken)
+    protected override async Task<List<SessionInfoModel>> ComputeState(CancellationToken cancellationToken)
     {
         var sessions = await AuthService.GetUserSessions(Session, cancellationToken).ConfigureAwait(false);
-        var result = new List<SessionModel>();
+        var result = new List<SessionInfoModel>();
 
         foreach (var session in sessions) {
             var userAgent = UserAgentCache.GetOrAdd(session.UserAgent, ua => Parser.ParseUserAgent(ua));
-            var model = new SessionModel() {
+            var model = new SessionInfoModel() {
                 Id = session.Id,
                 IsCurrent = Session.Id == session.Id,
                 IPAddress = session.IPAddress,
                 UserAgent = $"{userAgent.Family} {userAgent.Major}.{userAgent.Minor}",
                 Created = await _fusionTime.GetMomentsAgo(session.CreatedAt),
                 LastSeen = await _fusionTime.GetMomentsAgo(session.LastSeenAt),
+                Version = session.Version,
             };
             result.Add(model);
         }

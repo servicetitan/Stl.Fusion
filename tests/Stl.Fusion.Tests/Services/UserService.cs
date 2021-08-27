@@ -10,6 +10,7 @@ using Stl.Fusion.EntityFramework;
 using Stl.Fusion.Operations;
 using Stl.Fusion.Tests.Model;
 using Stl.RegisterAttributes;
+using Stl.Versioning;
 
 namespace Stl.Fusion.Tests.Services
 {
@@ -72,7 +73,7 @@ namespace Stl.Fusion.Tests.Services
             dbContext.DisableChangeTracking();
             var userId = user.Id;
             if (orUpdate) {
-                existingUser = await dbContext.Users.FindAsync(new [] {(object) userId}, cancellationToken);
+                existingUser = await dbContext.Users.FindAsync(ComposeKey(userId), cancellationToken);
                 context.Operation().Items.Set(existingUser);
                 if (existingUser != null)
                     dbContext.Users.Update(user);

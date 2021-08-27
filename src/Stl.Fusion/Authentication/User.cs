@@ -7,10 +7,11 @@ using System.Security.Claims;
 using System.Security.Principal;
 using System.Text.Json.Serialization;
 using Stl.Text;
+using Stl.Versioning;
 
 namespace Stl.Fusion.Authentication
 {
-    public record User : IPrincipal, IIdentity, IHasId<Symbol>
+    public record User : IPrincipal, IIdentity, IHasId<Symbol>, IHasVersion<long>
     {
         public static string GuestIdPrefix { get; } = "@guest/";
         public static string GuestName { get; } = "Guest";
@@ -19,6 +20,7 @@ namespace Stl.Fusion.Authentication
 
         public Symbol Id { get; init; }
         public string Name { get; init; }
+        public long Version { get; init; }
         public ImmutableDictionary<string, string> Claims { get; init; }
         [JsonIgnore, Newtonsoft.Json.JsonIgnore]
         public ImmutableDictionary<UserIdentity, string> Identities { get; init; }
@@ -56,6 +58,7 @@ namespace Stl.Fusion.Authentication
         protected User(User other)
         {
             Id = other.Id;
+            Version = other.Version;
             Name = other.Name;
             Claims = other.Claims;
             Identities = other.Identities;
@@ -92,6 +95,7 @@ namespace Stl.Fusion.Authentication
             var claims = new List<Claim>();
             if (!Id.IsEmpty)
                 claims.Add(new(ClaimTypes.NameIdentifier, Id, ClaimValueTypes.String));
+            claims.Add(new(ClaimTypes.Version, Version.ToString(), ClaimValueTypes.String));
             if (!string.IsNullOrEmpty(Name))
                 claims.Add(new(ClaimTypes.Name, Name, ClaimValueTypes.String));
             foreach (var (key, value) in Claims)

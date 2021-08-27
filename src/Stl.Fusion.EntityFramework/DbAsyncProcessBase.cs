@@ -8,25 +8,30 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Async;
 using Stl.CommandR;
 using Stl.Time;
+using Stl.Versioning;
 
 namespace Stl.Fusion.EntityFramework
 {
     public abstract class DbAsyncProcessBase<TDbContext> : AsyncProcessBase
         where TDbContext : DbContext
     {
-        protected IServiceProvider Services { get; }
-        protected IDbContextFactory<TDbContext> DbContextFactory { get; }
-        protected MomentClockSet Clocks { get; }
-        protected ILogger Log { get; }
+        private IDbContextFactory<TDbContext>? _dbContextFactory;
+        private MomentClockSet? _clocks;
+        private VersionGenerator<long>? _versionGenerator;
+        private ILogger? _log;
+
+        protected IServiceProvider Services { get; init; }
+        protected IDbContextFactory<TDbContext> DbContextFactory => _dbContextFactory
+            ??= Services.GetRequiredService<IDbContextFactory<TDbContext>>();
+        protected MomentClockSet Clocks => _clocks
+            ??= Services.Clocks();
+        protected VersionGenerator<long> VersionGenerator => _versionGenerator
+            ??= Services.VersionGenerator<long>();
+        protected ILogger Log => _log
+            ??= Services.GetService<ILoggerFactory>()?.CreateLogger(GetType()) ?? NullLogger.Instance;
 
         protected DbAsyncProcessBase(IServiceProvider services)
-        {
-            Services = services;
-            DbContextFactory = services.GetRequiredService<IDbContextFactory<TDbContext>>();
-            Clocks = services.Clocks();
-            var loggerFactory = services.GetService<ILoggerFactory>();
-            Log = loggerFactory?.CreateLogger(GetType()) ?? NullLogger.Instance;
-        }
+            => Services = services;
 
         protected TDbContext CreateDbContext(bool readWrite = false)
             => DbContextFactory.CreateDbContext().ReadWrite(readWrite);

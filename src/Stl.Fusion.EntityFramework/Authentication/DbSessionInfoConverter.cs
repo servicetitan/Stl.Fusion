@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Authentication.Internal;
 using Stl.Text;
+using Stl.Versioning;
 
 namespace Stl.Fusion.EntityFramework.Authentication
 {
@@ -27,6 +28,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             if (target.IsSignOutForced)
                 throw Errors.ForcedSignOut();
 
+            target.UpdateVersion(VersionGenerator);
             target.LastSeenAt = source.LastSeenAt;
             target.IPAddress = source.IPAddress;
             target.UserAgent = source.UserAgent;
@@ -41,6 +43,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
         {
             target = target with {
                 Id = source.Id,
+                Version = source.Version,
                 CreatedAt = source.CreatedAt,
                 LastSeenAt = source.LastSeenAt,
                 IPAddress = source.IPAddress,

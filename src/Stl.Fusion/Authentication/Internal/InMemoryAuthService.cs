@@ -10,6 +10,7 @@ using Stl.CommandR;
 using Stl.Fusion.Authentication.Commands;
 using Stl.Fusion.Operations;
 using Stl.Time;
+using Stl.Versioning;
 
 namespace Stl.Fusion.Authentication.Internal
 {
@@ -20,11 +21,13 @@ namespace Stl.Fusion.Authentication.Internal
         protected ConcurrentDictionary<string, SessionInfo> SessionInfos { get; } = new();
         protected ISessionFactory SessionFactory { get; }
         protected MomentClockSet Clocks { get; }
+        protected VersionGenerator<long> VersionGenerator { get; }
 
         public InMemoryAuthService(IServiceProvider services)
         {
             SessionFactory = services.GetRequiredService<ISessionFactory>();
             Clocks = services.Clocks();
+            VersionGenerator = services.VersionGenerator<long>();
         }
 
         // Command handlers
@@ -67,6 +70,11 @@ namespace Stl.Fusion.Authentication.Internal
                 var existingUser = Users[user.Id];
                 user = userWithAuthenticatedIdentity ?? MergeUsers(existingUser, user);
             }
+
+            // Update user.Version
+            user = user with {
+                Version = VersionGenerator.NextVersion(user.Version),
+            };
 
             // Update SessionInfo
             sessionInfo = sessionInfo with {
@@ -128,7 +136,10 @@ namespace Stl.Fusion.Authentication.Internal
 
             context.Operation().Items.Set(sessionInfo);
             if (command.Name != null)
-                user = user with { Name = command.Name };
+                user = user with {
+                    Name = command.Name,
+                    Version = VersionGenerator.NextVersion(user.Version),
+                };
             Users[user.Id] = user;
         }
 
@@ -223,13 +234,18 @@ namespace Stl.Fusion.Authentication.Internal
 
         protected virtual SessionInfo AddOrUpdateSessionInfo(SessionInfo sessionInfo)
         {
-            sessionInfo = sessionInfo with { LastSeenAt = Clocks.SystemClock.Now };
+            sessionInfo = sessionInfo with {
+                Version = VersionGenerator.NextVersion(sessionInfo.Version),
+                LastSeenAt = Clocks.SystemClock.Now,
+            };
             SessionInfos.AddOrUpdate(sessionInfo.Id, sessionInfo, (sessionId, oldSessionInfo) => {
                 if (oldSessionInfo.IsSignOutForced)
                     throw Errors.ForcedSignOut();
                 return sessionInfo.CreatedAt == oldSessionInfo.CreatedAt
                     ? sessionInfo
-                    : sessionInfo with { CreatedAt = oldSessionInfo.CreatedAt };
+                    : sessionInfo with {
+                        CreatedAt = oldSessionInfo.CreatedAt
+                    };
             });
             return SessionInfos.GetValueOrDefault(sessionInfo.Id) ?? sessionInfo;
         }

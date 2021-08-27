@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Authentication.Commands;
 using Stl.Fusion.EntityFramework.Internal;
+using Stl.Versioning;
 
 namespace Stl.Fusion.EntityFramework.Authentication
 {
@@ -64,6 +65,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             // Creating "base" dbUser
             var dbUser = new TDbUser() {
                 Id = DbUserIdHandler.New(),
+                Version = VersionGenerator.NextVersion(),
                 Name = user.Name,
                 Claims = user.Claims,
             };
@@ -98,8 +100,10 @@ namespace Stl.Fusion.EntityFramework.Authentication
         public virtual async Task Edit(TDbContext dbContext, TDbUser dbUser, EditUserCommand command,
             CancellationToken cancellationToken = default)
         {
-            if (command.Name != null)
+            if (command.Name != null) {
                 dbUser.Name = command.Name;
+                dbUser.UpdateVersion(VersionGenerator);
+            }
             await dbContext.SaveChangesAsync(cancellationToken);
         }
 

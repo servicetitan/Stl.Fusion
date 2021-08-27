@@ -5,18 +5,20 @@ using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Stl.Serialization;
+using Stl.Versioning;
 
 namespace Stl.Fusion.EntityFramework.Authentication
 {
     [Table("Users")]
     [Index(nameof(Name))]
-    public class DbUser<TDbUserId> : IHasId<TDbUserId>
+    public class DbUser<TDbUserId> : IHasId<TDbUserId>, IHasMutableVersion<long>
         where TDbUserId : notnull
     {
         private readonly NewtonsoftJsonSerialized<ImmutableDictionary<string, string>?> _claims =
             new(ImmutableDictionary<string, string>.Empty);
 
         [Key] public TDbUserId Id { get; set; } = default!;
+        [ConcurrencyCheck] public long Version { get; set; }
         [MinLength(3)]
         public string Name { get; set; } = "";
 
