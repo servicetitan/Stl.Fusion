@@ -24,6 +24,7 @@ namespace Stl.Fusion.Server.Authentication
             public string[] NameClaimKeys { get; set; } = { ClaimTypes.Name };
             public string CloseWindowRequestPath { get; set; } = "/fusion/close";
             public TimeSpan SessionInfoUpdatePeriod { get; set; } = TimeSpan.FromSeconds(30);
+            public bool KeepSignedIn { get; set; }
         }
 
         protected IServerSideAuthService AuthService { get; }
@@ -35,6 +36,7 @@ namespace Stl.Fusion.Server.Authentication
         public string[] NameClaimKeys { get; }
         public string CloseWindowRequestPath { get; }
         public TimeSpan SessionInfoUpdatePeriod { get; }
+        public bool KeepSignedIn { get; }
         public Session Session => SessionResolver.Session;
 
         public ServerAuthHelper(
@@ -49,6 +51,7 @@ namespace Stl.Fusion.Server.Authentication
             NameClaimKeys = options.NameClaimKeys;
             CloseWindowRequestPath = options.CloseWindowRequestPath;
             SessionInfoUpdatePeriod = options.SessionInfoUpdatePeriod;
+            KeepSignedIn = options.KeepSignedIn;
 
             AuthService = authService;
             SessionResolver = sessionResolver;
@@ -90,8 +93,7 @@ namespace Stl.Fusion.Server.Authentication
 
             var sessionInfo = await AuthService.GetSessionInfo(session, cancellationToken).ConfigureAwait(false);
             var mustUpdateSessionInfo =
-                sessionInfo.IsAuthenticated != isAuthenticated
-                || sessionInfo.IPAddress != ipAddress
+                sessionInfo.IPAddress != ipAddress
                 || sessionInfo.UserAgent != userAgent
                 || sessionInfo.LastSeenAt.ToMoment() + SessionInfoUpdatePeriod < Clocks.SystemClock.Now;
             if (mustUpdateSessionInfo) {
@@ -114,11 +116,9 @@ namespace Stl.Fusion.Server.Authentication
                     var signInCommand = new SignInCommand(session, newUser, authenticatedIdentity).MarkServerSide();
                     await AuthService.SignIn(signInCommand, cancellationToken).ConfigureAwait(false);
                 }
-                else {
-                    if (userIsAuthenticated) {
-                        var signOutCommand = new SignOutCommand(session);
-                        await AuthService.SignOut(signOutCommand, cancellationToken).ConfigureAwait(false);
-                    }
+                else if (userIsAuthenticated && !KeepSignedIn) {
+                    var signOutCommand = new SignOutCommand(session);
+                    await AuthService.SignOut(signOutCommand, cancellationToken).ConfigureAwait(false);
                 }
             }
             finally {
