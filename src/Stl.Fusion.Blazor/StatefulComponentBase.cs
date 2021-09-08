@@ -2,11 +2,12 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
+using Stl.Async;
 using Stl.Internal;
 
 namespace Stl.Fusion.Blazor
 {
-    public abstract class StatefulComponentBase : ComponentBase, IDisposable, IHandleEvent
+    public abstract class StatefulComponentBase : ComponentBase, IAsyncDisposable, IHandleEvent
     {
         [Inject]
         protected IServiceProvider Services { get; set; } = null!;
@@ -28,11 +29,12 @@ namespace Stl.Fusion.Blazor
             };
         }
 
-        public virtual void Dispose()
+        public virtual ValueTask DisposeAsync()
         {
             UntypedState.RemoveEventHandler(StateEventKind.All, StateChanged);
             if (OwnsState && UntypedState is IDisposable d)
                 d.Dispose();
+            return ValueTaskEx.CompletedTask;
         }
 
         Task IHandleEvent.HandleEventAsync(EventCallbackWorkItem callback, object? arg)
@@ -69,7 +71,7 @@ namespace Stl.Fusion.Blazor
         }
     }
 
-    public abstract class StatefulComponentBase<TState> : StatefulComponentBase, IDisposable
+    public abstract class StatefulComponentBase<TState> : StatefulComponentBase
         where TState : class, IState
     {
         private TState? _state;
