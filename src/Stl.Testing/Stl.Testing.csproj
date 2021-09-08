@@ -19,9 +19,7 @@
   <ItemGroup>
     <PackageReference Include="FluentAssertions" />
     <PackageReference Include="System.CommandLine" />
-
     <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.analyzers" />
     <PackageReference Include="Xunit.DependencyInjection.Logging" />
   </ItemGroup>
 

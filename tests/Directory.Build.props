@@ -18,6 +18,5 @@
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.analyzers" />
     <PackageReference Include="xunit.runner.visualstudio" />
-    <PackageReference Include="Xunit.DependencyInjection.Logging" />
   </ItemGroup>
 </Project>
