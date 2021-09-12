@@ -65,7 +65,7 @@ namespace Stl.Time.Internal
         private static void Update()
         {
             // Update _elapsedTicks
-            Interlocked.Exchange(ref _elapsedTicks, Stopwatch.ElapsedTicks);
+            Interlocked.Exchange(ref _elapsedTicks, Stopwatch.Elapsed.Ticks);
 
             // Update _random*
             var rnd = Rng.Next();
