@@ -27,15 +27,6 @@ namespace Stl.Async
             UnitTaskCompletionSource = unitTcs;
         }
 
-        // Ignore
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Ignore(this Task task) { }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Ignore(this ValueTask valueTask) { }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Ignore<T>(this ValueTask<T> valueTask) { }
-
         // ToXxx
 
         public static ValueTask<T> ToValueTask<T>(this Task<T> source) => new ValueTask<T>(source);

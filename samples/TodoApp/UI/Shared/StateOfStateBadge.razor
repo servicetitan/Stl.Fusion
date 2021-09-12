@@ -44,7 +44,9 @@
     public bool IsUpdatePending => State == null! || State.Snapshot.Computed.IsInvalidated();
 
     public StateOfStateBadge()
-        => _stateChangedHandler = (_, _) => this.StateHasChangedAsync().Ignore();
+        => _stateChangedHandler = (_, _) => {
+            _ = this.StateHasChangedAsync();
+        };
 
     public virtual void Dispose()
         => State = null!;

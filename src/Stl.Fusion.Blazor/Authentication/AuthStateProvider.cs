@@ -84,11 +84,11 @@ namespace Stl.Fusion.Blazor
 
         protected virtual void OnStateChanged(IState<AuthState> state, StateEventKind eventKind)
         {
-            using var _ = ExecutionContextEx.SuppressFlow();
-            Task.Run(() => {
+            using var suppressing = ExecutionContextEx.SuppressFlow();
+            _ = Task.Run(() => {
                 var authStateTask = Task.FromResult((AuthenticationState) state.LatestNonErrorValue);
                 NotifyAuthenticationStateChanged(authStateTask);
-            }).Ignore();
+            });
         }
     }
 }

@@ -251,7 +251,7 @@ public class ExampleService
             // Call arguments matter: you invalidate only a result of a 
             // call with matching arguments rather than every GetValue 
             // call result!
-            GetValue(key).Ignore(); // Ignore() suppresses "unused result" warning
+            _ = GetValue(key);
         }
     }
 }

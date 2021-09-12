@@ -70,7 +70,7 @@ namespace Stl.Testing
             return AsyncDisposable.New(async self => {
                 var host1 = self.Host;
                 await host1.StopAsync().SuppressExceptions().ConfigureAwait(false);
-                Task.Run(() => host1.Dispose()).Ignore();
+                _ = Task.Run(() => host1.Dispose());
                 self.HostLazy = new Lazy<IHost>(CreateHost);
             }, this);
         }

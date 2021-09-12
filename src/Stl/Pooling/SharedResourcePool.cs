@@ -105,7 +105,7 @@ namespace Stl.Pooling
             // This can be done outside of the lock
             if (UseConcurrentDispose)
                 // ReSharper disable once MethodSupportsCancellation
-                Task.Run(() => DisposeResource(key, resource)).Ignore();
+                _ = Task.Run(() => DisposeResource(key, resource));
         }
 
         protected abstract ValueTask<TResource?> CreateResource(TKey key, CancellationToken cancellationToken);

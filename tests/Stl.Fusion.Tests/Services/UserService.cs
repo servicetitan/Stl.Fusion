@@ -63,9 +63,9 @@ namespace Stl.Fusion.Tests.Services
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
                 existingUser = context.Operation().Items.TryGet<User>();
-                TryGet(user.Id, default).AssertCompleted().Ignore();
+                _ = TryGet(user.Id, default).AssertCompleted();
                 if (existingUser == null)
-                    Count(default).AssertCompleted().Ignore();
+                    _ = Count(default).AssertCompleted();
                 return;
             }
 
@@ -87,7 +87,7 @@ namespace Stl.Fusion.Tests.Services
         {
             var user = command.User;
             if (Computed.IsInvalidating()) {
-                TryGet(user.Id, default).AssertCompleted().Ignore();
+                _ = TryGet(user.Id, default).AssertCompleted();
                 return;
             }
 
@@ -103,8 +103,8 @@ namespace Stl.Fusion.Tests.Services
             if (Computed.IsInvalidating()) {
                 var success = context.Operation().Items.TryGet<bool>();
                 if (success) {
-                    TryGet(user.Id, default).AssertCompleted().Ignore();
-                    Count(default).AssertCompleted().Ignore();
+                    _ = TryGet(user.Id, default).AssertCompleted();
+                    _ = Count(default).AssertCompleted();
                 }
                 return false;
             }

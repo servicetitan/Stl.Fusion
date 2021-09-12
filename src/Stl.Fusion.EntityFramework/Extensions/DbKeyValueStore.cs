@@ -36,7 +36,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
                 if (context.Operation().Items.GetOrDefault(true))
                     PseudoGetAllPrefixes(key);
                 else
-                    PseudoGet(key).Ignore();
+                    _ = PseudoGet(key);
                 return;
             }
 
@@ -134,7 +134,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
 
         public virtual async Task<string?> TryGet(string key, CancellationToken cancellationToken = default)
         {
-            PseudoGet(key).Ignore();
+            _ = PseudoGet(key);
             var dbKeyValue = await KeyValueResolver.TryGet(key, cancellationToken).ConfigureAwait(false);
             if (dbKeyValue == null)
                 return null;
@@ -147,7 +147,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
         public virtual async Task<int> Count(
             string prefix, CancellationToken cancellationToken = default)
         {
-            PseudoGet(prefix).Ignore();
+            _ = PseudoGet(prefix);
             await using var dbContext = CreateDbContext();
             var count = await dbContext.Set<TDbKeyValue>().AsQueryable()
                 .CountAsync(e => e.Key.StartsWith(prefix), cancellationToken)
@@ -161,7 +161,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
             SortDirection sortDirection = SortDirection.Ascending,
             CancellationToken cancellationToken = default)
         {
-            PseudoGet(prefix).Ignore();
+            _ = PseudoGet(prefix);
             await using var dbContext = CreateDbContext();
             var query = dbContext.Set<TDbKeyValue>().AsQueryable()
                 .Where(e => e.Key.StartsWith(prefix));
@@ -193,9 +193,9 @@ namespace Stl.Fusion.EntityFramework.Extensions
             var delimiterIndex = key.IndexOf(delimiter, 0);
             for (; delimiterIndex >= 0; delimiterIndex = key.IndexOf(delimiter, delimiterIndex + 1)) {
                 var keyPart = key.Substring(0, delimiterIndex);
-                PseudoGet(keyPart).Ignore();
+                _ = PseudoGet(keyPart);
             }
-            PseudoGet(key).Ignore();
+            _ = PseudoGet(key);
         }
 
         protected virtual TDbKeyValue CreateDbKeyValue(string key, string value, Moment? expiresAt)

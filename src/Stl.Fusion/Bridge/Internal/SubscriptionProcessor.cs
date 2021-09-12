@@ -58,7 +58,7 @@ namespace Stl.Fusion.Bridge.Internal
             var incomingChannelReader = IncomingChannel.Reader;
 
             var currentCts = (CancellationTokenSource?) null;
-            await using var _ = cancellationToken.Register(() => currentCts?.Cancel()).ToAsyncDisposableAdapter();
+            await using var registered = cancellationToken.Register(() => currentCts?.Cancel()).ToAsyncDisposableAdapter();
             try {
                 var incomingMessageTask = incomingChannelReader.ReadAsync(cancellationToken).AsTask();
                 while (true) {
@@ -121,7 +121,7 @@ namespace Stl.Fusion.Bridge.Internal
                 // Awaiting for disposal here = cyclic task dependency;
                 // we should just ensure it starts right when this method
                 // completes.
-                DisposeAsync().Ignore();
+                _ = DisposeAsync();
             }
         }
 

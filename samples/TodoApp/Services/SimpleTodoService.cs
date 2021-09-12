@@ -28,9 +28,9 @@ namespace Templates.TodoApp.Services
                 todo = todo with { Id = Ulid.NewUlid().ToString() };
             _store = _store.RemoveAll(i => i.Id == todo.Id).Add(todo);
 
-            using var _ = Computed.Invalidate();
-            TryGet(session, todo.Id, CancellationToken.None).Ignore();
-            PseudoGetAllItems(session).Ignore();
+            using var invalidating = Computed.Invalidate();
+            _ = TryGet(session, todo.Id, CancellationToken.None);
+            _ = PseudoGetAllItems(session);
             return todo;
         }
 
@@ -41,9 +41,9 @@ namespace Templates.TodoApp.Services
             var (session, todoId) = command;
             _store = _store.RemoveAll(i => i.Id == todoId);
 
-            using var _ = Computed.Invalidate();
-            TryGet(session, todoId, CancellationToken.None).Ignore();
-            PseudoGetAllItems(session).Ignore();
+            using var invalidating = Computed.Invalidate();
+            _ = TryGet(session, todoId, CancellationToken.None);
+            _ = PseudoGetAllItems(session);
         }
 #pragma warning restore 1998
 

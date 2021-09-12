@@ -47,7 +47,7 @@ namespace Stl.Time
             Clock = options.Clock;
             _fireHandler = fireHandler;
             _start = Clock.Now;
-            Run().Ignore();
+            _ = Run();
         }
 
         public void AddOrUpdate(TTimer timer, Moment time)

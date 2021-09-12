@@ -37,10 +37,10 @@ namespace Stl.Fusion.Authentication.Internal
             var (session, user, authenticatedIdentity) = command;
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
-                GetSessionInfo(session, default).Ignore();
+                _ = GetSessionInfo(session, default);
                 var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
-                TryGetUser(invSessionInfo.UserId, default).Ignore();
-                GetUserSessions(invSessionInfo.UserId, default).Ignore();
+                _ = TryGetUser(invSessionInfo.UserId, default);
+                _ = GetUserSessions(invSessionInfo.UserId, default);
                 return;
             }
 
@@ -95,12 +95,12 @@ namespace Stl.Fusion.Authentication.Internal
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
                 if (force)
-                    IsSignOutForced(session, default).Ignore();
-                GetSessionInfo(session, default).Ignore();
+                    _ = IsSignOutForced(session, default);
+                _ = GetSessionInfo(session, default);
                 var invSessionInfo = context.Operation().Items.TryGet<SessionInfo>();
                 if (invSessionInfo != null) {
-                    TryGetUser(invSessionInfo.UserId, default).Ignore();
-                    GetUserSessions(invSessionInfo.UserId, default).Ignore();
+                    _ = TryGetUser(invSessionInfo.UserId, default);
+                    _ = GetUserSessions(invSessionInfo.UserId, default);
                 }
                 return;
             }
@@ -125,7 +125,7 @@ namespace Stl.Fusion.Authentication.Internal
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
                 var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
-                TryGetUser(invSessionInfo.UserId, default).Ignore();
+                _ = TryGetUser(invSessionInfo.UserId, default);
                 return;
             }
 
@@ -148,10 +148,10 @@ namespace Stl.Fusion.Authentication.Internal
             var (session, ipAddress, userAgent) = command;
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
-                GetSessionInfo(session, default).Ignore();
+                _ = GetSessionInfo(session, default);
                 var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
                 if (invSessionInfo.IsAuthenticated)
-                    GetUserSessions(invSessionInfo.UserId, default).Ignore();
+                    _ = GetUserSessions(invSessionInfo.UserId, default);
                 return null!;
             }
             var oldSessionInfo = await GetSessionInfo(session, cancellationToken).ConfigureAwait(false);

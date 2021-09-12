@@ -180,8 +180,8 @@ namespace Stl.Fusion.Tests
                         break;
                     case FusionTestDbType.InMemory:
                         builder.UseInMemoryDatabase(SqliteDbPath)
-                            .ConfigureWarnings(w => {
-                                w.Ignore(InMemoryEventId.TransactionIgnoredWarning);
+                            .ConfigureWarnings(warnings => {
+                                warnings.Ignore(InMemoryEventId.TransactionIgnoredWarning);
                             });
                         break;
                     case FusionTestDbType.PostgreSql:

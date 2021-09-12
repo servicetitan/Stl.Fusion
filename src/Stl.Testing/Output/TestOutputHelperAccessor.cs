@@ -5,9 +5,9 @@ namespace Stl.Testing.Output
 {
     public class TestOutputHelperAccessor : ITestOutputHelperAccessor
     {
-        public ITestOutputHelper Output { get; set; }
+        public ITestOutputHelper? Output { get; set; }
 
-        public TestOutputHelperAccessor(ITestOutputHelper output)
+        public TestOutputHelperAccessor(ITestOutputHelper? output)
             => Output = output;
     }
 }

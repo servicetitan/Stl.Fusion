@@ -16,7 +16,7 @@ namespace Stl.CommandR
             ICommand command, bool isolate, CancellationToken cancellationToken = default)
         {
             var context = CommandContext.New(commander, command, isolate);
-            commander.Run(context, isolate, cancellationToken).Ignore();
+            _ = commander.Run(context, isolate, cancellationToken);
             return context;
         }
 

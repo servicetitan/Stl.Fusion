@@ -79,9 +79,9 @@ namespace Stl.Fusion.Tests
             var services = CreateServiceProviderFor<CounterService>();
             var counters = services.GetRequiredService<CounterService>();
             var aComputed = await Computed.Capture(_ => counters.Get("a"));
-            Task.Run(() => Watch(nameof(aComputed), aComputed)).Ignore();
+            _ = Task.Run(() => Watch(nameof(aComputed), aComputed));
             var bComputed = await Computed.Capture(_ => counters.Get("b"));
-            Task.Run(() => Watch(nameof(bComputed), bComputed)).Ignore();
+            _ = Task.Run(() => Watch(nameof(bComputed), bComputed));
 
             await counters.Increment("a");
             await counters.SetOffset(10);

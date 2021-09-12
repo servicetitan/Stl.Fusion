@@ -123,7 +123,7 @@ namespace Stl.Fusion.Server.Authentication
             }
             finally {
                 // Ideally this should be done once important things are completed
-                Task.Run(() => AuthService.UpdatePresence(session, default), default).Ignore();
+                _ = Task.Run(() => AuthService.UpdatePresence(session, default), default);
             }
         }
 

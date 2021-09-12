@@ -38,7 +38,7 @@ namespace Stl.Async
             // Completes when either DisposeAsync turns DisposeState to Disposing,
             // or if it's already in non-Active state.
             // The rest of disposal is supposed to be asynchronous.
-            DisposeAsync(true).Ignore();
+            _ = DisposeAsync(true);
         }
 
         public async ValueTask DisposeAsync()

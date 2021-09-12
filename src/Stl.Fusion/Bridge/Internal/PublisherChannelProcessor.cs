@@ -98,9 +98,8 @@ namespace Stl.Fusion.Bridge.Internal
                     PublisherImpl.Clocks, LoggerFactory);
                 Subscriptions[publicationId] = subscriptionProcessor;
             }
-            subscriptionProcessor.Run()
-                .ContinueWith(_ => Unsubscribe(publication, default), CancellationToken.None)
-                .Ignore();
+            _ = subscriptionProcessor.Run()
+                .ContinueWith(_ => Unsubscribe(publication, default), CancellationToken.None);
         subscriptionExists:
             await subscriptionProcessor.IncomingChannel.Writer
                 .WriteAsync(request, cancellationToken).ConfigureAwait(false);

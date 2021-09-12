@@ -72,10 +72,10 @@ namespace Stl.Fusion.EntityFramework.Authentication
             var (session, user, authenticatedIdentity) = command;
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
-                GetSessionInfo(session, default).Ignore();
+                _ = GetSessionInfo(session, default);
                 var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
-                TryGetUser(invSessionInfo.UserId, default).Ignore();
-                GetUserSessions(invSessionInfo.UserId, default).Ignore();
+                _ = TryGetUser(invSessionInfo.UserId, default);
+                _ = GetUserSessions(invSessionInfo.UserId, default);
                 return;
             }
 
@@ -128,11 +128,11 @@ namespace Stl.Fusion.EntityFramework.Authentication
             var (session, force) = command;
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
-                GetSessionInfo(session, default).Ignore();
+                _ = GetSessionInfo(session, default);
                 var invSessionInfo = context.Operation().Items.TryGet<SessionInfo>();
                 if (invSessionInfo != null) {
-                    TryGetUser(invSessionInfo.UserId, default).Ignore();
-                    GetUserSessions(invSessionInfo.UserId, default).Ignore();
+                    _ = TryGetUser(invSessionInfo.UserId, default);
+                    _ = GetUserSessions(invSessionInfo.UserId, default);
                 }
                 return;
             }
@@ -160,7 +160,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
                 var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
-                TryGetUser(invSessionInfo.UserId, default).Ignore();
+                _ = TryGetUser(invSessionInfo.UserId, default);
                 return;
             }
 
@@ -184,10 +184,10 @@ namespace Stl.Fusion.EntityFramework.Authentication
             var (session, ipAddress, userAgent) = command;
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
-                GetSessionInfo(session, default).Ignore();
+                _ = GetSessionInfo(session, default);
                 var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
                 if (invSessionInfo.IsAuthenticated)
-                    GetUserSessions(invSessionInfo.UserId, default).Ignore();
+                    _ = GetUserSessions(invSessionInfo.UserId, default);
                 return null!;
             }
 

@@ -42,14 +42,14 @@ namespace Stl.Fusion.EntityFramework.Npgsql.Operations
             if (IsDisposed || !disposing)
                 return;
             IsDisposed = true;
-            using var _ = ExecutionContextEx.SuppressFlow();
-            Task.Run(async () => {
+            using var suppressing = ExecutionContextEx.SuppressFlow();
+            _ = Task.Run(async () => {
                 using (await AsyncLock.Lock()) {
                     var dbContext = DbContext;
                     if (dbContext != null)
                         await dbContext.DisposeAsync();
                 }
-            }).Ignore();
+            });
         }
 
         public Task OnOperationCompleted(IOperation operation)
@@ -89,7 +89,7 @@ namespace Stl.Fusion.EntityFramework.Npgsql.Operations
                 catch (Exception e) {
                     Log.LogError(e, "Notification failed - retrying");
                     DbContext = null;
-                    dbContext?.DisposeAsync().Ignore(); // Doesn't matter if it fails
+                    _ = dbContext?.DisposeAsync(); // Doesn't matter if it fails
                     await Clocks.CoarseCpuClock.Delay(Options.RetryDelay).ConfigureAwait(false);
                 }
             }

@@ -46,7 +46,7 @@ namespace Stl.Fusion.Extensions.Internal
                 if (context.Operation().Items.GetOrDefault(true))
                     PseudoGetAllPrefixes(key);
                 else
-                    PseudoGet(key).Ignore();
+                    _ = PseudoGet(key);
                 return Task.CompletedTask;
             }
 
@@ -104,7 +104,7 @@ namespace Stl.Fusion.Extensions.Internal
 
         public virtual Task<string?> TryGet(string key, CancellationToken cancellationToken = default)
         {
-            PseudoGet(key).Ignore();
+            _ = PseudoGet(key);
             if (!Store.TryGetValue(key, out var item))
                 return Task.FromResult((string?) null);
             var expiresAt = item.ExpiresAt;
@@ -117,7 +117,7 @@ namespace Stl.Fusion.Extensions.Internal
         {
             // O(Store.Count) cost - definitely not for prod,
             // but fine for client-side use cases & testing.
-            PseudoGet(prefix).Ignore();
+            _ = PseudoGet(prefix);
             var count = Store.Keys.Count(k => k.StartsWith(prefix));
             return Task.FromResult(count);
         }
@@ -130,7 +130,7 @@ namespace Stl.Fusion.Extensions.Internal
         {
             // O(Store.Count) cost - definitely not for prod,
             // but fine for client-side use cases & testing.
-            PseudoGet(prefix).Ignore();
+            _ = PseudoGet(prefix);
             var query = Store.Keys.Where(k => k.StartsWith(prefix));
             query = query.OrderByAndTakePage(k => k, pageRef, sortDirection);
             var result = query
@@ -150,9 +150,9 @@ namespace Stl.Fusion.Extensions.Internal
             var delimiterIndex = key.IndexOf(delimiter, 0);
             for (; delimiterIndex >= 0; delimiterIndex = key.IndexOf(delimiter, delimiterIndex + 1)) {
                 var keyPart = key.Substring(0, delimiterIndex);
-                PseudoGet(keyPart).Ignore();
+                _ = PseudoGet(keyPart);
             }
-            PseudoGet(key).Ignore();
+            _ = PseudoGet(key);
         }
 
         // Private / protected
