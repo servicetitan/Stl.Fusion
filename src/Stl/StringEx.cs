@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Stl
@@ -5,7 +6,11 @@ namespace Stl
     public static class StringEx
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NETSTANDARD2_0
         public static bool IsNullOrEmpty(this string? source)
+#else
+        public static bool IsNullOrEmpty([NotNullWhen(false)] this string? source)
+#endif
             => string.IsNullOrEmpty(source);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
