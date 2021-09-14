@@ -8,7 +8,7 @@ namespace Stl.Fusion.Client
         public static FusionAuthenticationBuilder AddRestEaseClient(this FusionAuthenticationBuilder fusionAuth)
         {
             var fusionClient = fusionAuth.Fusion.AddRestEaseClient();
-            fusionClient.AddReplicaService<IAuthService, IAuthClient>();
+            fusionClient.AddReplicaService<IAuthService, IAuthClientDef>();
             return fusionAuth;
         }
     }

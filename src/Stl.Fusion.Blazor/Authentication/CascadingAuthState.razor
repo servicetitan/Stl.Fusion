@@ -40,14 +40,15 @@
             var inProcessJSRuntime = (IJSInProcessRuntime) JSRuntime;
             SessionId = inProcessJSRuntime.Invoke<string>("eval", SessionIdJavaScriptExpression);
         }
-        if (StartPresenceService)
-            _ = Task.Run(() => PresenceService.Start(default));
         AuthStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
         OnAuthenticationStateChanged(AuthStateProvider.GetAuthenticationStateAsync());
+        if (StartPresenceService)
+            PresenceService.Start();
     }
 
     void IDisposable.Dispose()
         => AuthStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
+
 
     private void OnAuthenticationStateChanged(Task<AuthenticationState> newAuthStateTask)
     {

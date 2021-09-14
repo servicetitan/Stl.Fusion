@@ -8,7 +8,7 @@ using Stl.Fusion.Extensions.Commands;
 namespace Stl.Fusion.Client.Internal
 {
     [BasePath("fusion/kvs")]
-    public interface ISandboxedKeyValueStoreClient
+    public interface ISandboxedKeyValueStoreClientDef
     {
         [Post(nameof(Set))]
         Task Set([Body] SandboxedSetCommand command, CancellationToken cancellationToken = default);

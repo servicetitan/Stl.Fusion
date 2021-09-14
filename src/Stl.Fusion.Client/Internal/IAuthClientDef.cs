@@ -7,7 +7,7 @@ using Stl.Fusion.Authentication.Commands;
 namespace Stl.Fusion.Client.Internal
 {
     [BasePath("fusion/auth")]
-    public interface IAuthClient
+    public interface IAuthClientDef
     {
         [Post(nameof(SignOut))]
         Task SignOut([Body] SignOutCommand command, CancellationToken cancellationToken = default);

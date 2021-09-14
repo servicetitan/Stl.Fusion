@@ -65,7 +65,7 @@ namespace Templates.TodoApp.UI
             // fusion.AddComputeService<ITodoService, TodoService>();
 
             // Option 3: Client-side TodoService + remote SandboxedKeyValueStore -> DbKeyValueStore
-            // fusionClient.AddReplicaService<ISandboxedKeyValueStore, ISandboxedKeyValueStoreClient>();
+            // fusionClient.AddReplicaService<ISandboxedKeyValueStore, ISandboxedKeyValueStoreClientDef>();
             // fusion.AddComputeService<ITodoService, TodoService>();
 
             // Option 4: Remote TodoService, SandboxedKeyValueStore, and DbKeyValueStore
