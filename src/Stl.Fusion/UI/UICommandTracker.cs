@@ -95,14 +95,10 @@ namespace Stl.Fusion.UI
 
         public virtual UICommandEvent ProcessEvent(UICommandEvent commandEvent)
         {
-            if (!commandEvent.IsCompleted) {
-                if (!commandEvent.CreatedAt.HasValue)
-                    commandEvent = commandEvent with { CreatedAt = Clocks.UIClock.Now };
-            }
-            else {
-                if (!commandEvent.CompletedAt.HasValue)
-                    commandEvent = commandEvent with { CompletedAt = Clocks.UIClock.Now };
-            }
+            if (!commandEvent.CreatedAt.HasValue)
+                commandEvent = commandEvent with { CreatedAt = Clocks.UIClock.Now };
+            if (commandEvent.IsCompleted && !commandEvent.CompletedAt.HasValue)
+                commandEvent = commandEvent with { CompletedAt = Clocks.UIClock.Now };
             lock (Lock) {
                 if (IsDisposed)
                     return commandEvent;

@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components.Authorization;
 using Stl.Async;
 using Stl.Fusion.Authentication;
+using Stl.Fusion.Blazor.Internal;
+using Stl.Fusion.UI;
 
 namespace Stl.Fusion.Blazor
 {
@@ -28,17 +30,20 @@ namespace Stl.Fusion.Blazor
         // e.g. State is quite handy to consume in other compute methods or states
         public ISessionResolver SessionResolver { get; }
         public IAuthService AuthService { get; }
+        public IUICommandTracker UICommandTracker { get; }
         public IComputedState<AuthState> State { get; }
 
         public AuthStateProvider(
             Options? options,
-            IAuthService authService,
             ISessionResolver sessionResolver,
+            IAuthService authService,
+            IUICommandTracker uiCommandTracker,
             IStateFactory stateFactory)
         {
             options ??= new();
-            AuthService = authService;
             SessionResolver = sessionResolver;
+            AuthService = authService;
+            UICommandTracker = uiCommandTracker;
             State = stateFactory.NewComputed<AuthState>(o => {
                 options.AuthStateOptionsBuilder.Invoke(o);
                 o.InitialOutputFactory = _ => new AuthState(new User("none"));
@@ -88,6 +93,10 @@ namespace Stl.Fusion.Blazor
             _ = Task.Run(() => {
                 var authStateTask = Task.FromResult((AuthenticationState) state.LatestNonErrorValue);
                 NotifyAuthenticationStateChanged(authStateTask);
+                var startedEvent = new UICommandEvent(new ChangeAuthStateUICommand());
+                UICommandTracker.ProcessEvent(startedEvent);
+                var completedEvent = new UICommandEvent(startedEvent.Command, Result.New(state));
+                UICommandTracker.ProcessEvent(completedEvent);
             });
         }
     }
