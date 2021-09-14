@@ -100,8 +100,13 @@ namespace Stl.Fusion.Blazor
         /// of the component, therefore it works even when called from another synchronization context
         /// (e.g. a thread-pool thread).
         /// </summary>
-        public static Task StateHasChangedAsync(this ComponentBase component)
+        public static Task StateHasChangedAsync(this ComponentBase component, BlazorCircuitContext? blazorCircuitContext = null)
         {
+            if (component.IsDisposed())
+                return Task.CompletedTask;
+            if (blazorCircuitContext?.IsDisposing ?? false)
+                return Task.CompletedTask;
+
 #pragma warning disable 1998
             async Task Invoker()
 #pragma warning restore 1998
@@ -109,7 +114,10 @@ namespace Stl.Fusion.Blazor
                 // The component's renderer may already be disposed while the component is not yet disposed.
                 // Just calling StateHasChanged() will then cause an ObjectDisposedException.
                 // Workaround: use compiled expressions accessing private members of the component to find this out.
+
                 if (component.IsDisposed())
+                    return;
+                if (blazorCircuitContext?.IsDisposing ?? false)
                     return;
                 try {
                     CompiledStateHasChanged.Invoke(component);

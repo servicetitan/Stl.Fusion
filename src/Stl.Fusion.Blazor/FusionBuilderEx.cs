@@ -11,6 +11,7 @@ namespace Stl.Fusion.Blazor
             services.TryAddScoped<UICommandRunner>();
             services.TryAddScoped<UICommandFailureList>();
             services.TryAddScoped<BlazorModeHelper>();
+            services.TryAddScoped<BlazorCircuitContext>();
             return fusion;
         }
     }

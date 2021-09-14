@@ -9,8 +9,8 @@ namespace Stl.Fusion.Blazor
 {
     public abstract class StatefulComponentBase : ComponentBase, IAsyncDisposable, IHandleEvent
     {
-        [Inject]
-        protected IServiceProvider Services { get; set; } = null!;
+        [Inject] protected IServiceProvider Services { get; set; } = null!;
+        [Inject] protected BlazorCircuitContext BlazorCircuitContext { get; set; } = null!;
         protected IStateFactory StateFactory => Services.StateFactory();
         protected bool OwnsState { get; set; } = true;
         protected internal abstract IState UntypedState { get; }
@@ -25,7 +25,7 @@ namespace Stl.Fusion.Blazor
             StateChanged = (_, eventKind) => {
                 if ((eventKind & StateHasChangedTriggers) == 0)
                     return;
-                this.StateHasChangedAsync();
+                this.StateHasChangedAsync(BlazorCircuitContext);
             };
         }
 

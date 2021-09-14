@@ -1,4 +1,6 @@
 @using Stl.Text
+@implements IDisposable
+@inject BlazorCircuitContext _blazorCircuitContext
 
 <CascadingAuthState SessionId="@SessionId">
 <ThemeProvider Theme="@Theme">
@@ -20,4 +22,7 @@
 
     [Parameter]
     public string SessionId { get; set; } = Symbol.Empty;
+
+    public void Dispose()
+        => _blazorCircuitContext.Dispose();
 }

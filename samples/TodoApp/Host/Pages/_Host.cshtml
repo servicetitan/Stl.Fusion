@@ -1,11 +1,14 @@
 ﻿@page "/"
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @namespace Templates.TodoApp.Host.Pages
+@using Microsoft.AspNetCore.Html
+@using Stl.Fusion.Blazor
 @using Templates.TodoApp.UI
 @using Stl.Fusion.Server.Authentication
 @using Stl.Fusion.Server.Controllers
 @inject ServerAuthHelper _serverAuthHelper
 @inject HostSettings _hostSettings
+@inject BlazorCircuitContext _blazorCircuitContext
 @{
     await _serverAuthHelper.UpdateAuthState(HttpContext);
     var authSchemas = await _serverAuthHelper.GetSchemas(HttpContext);
@@ -42,9 +45,13 @@
     </div>
 } else {
     <app id="app">
-        @(await Html.RenderComponentAsync<App>(
-            isServerSideBlazor ? RenderMode.ServerPrerendered : RenderMode.WebAssemblyPrerendered,
-            new { SessionId = sessionId }))
+        @{
+            using var prerendering = _blazorCircuitContext.Prerendering();
+            var prerenderedApp = await Html.RenderComponentAsync<App>(
+                isServerSideBlazor ? RenderMode.ServerPrerendered : RenderMode.WebAssemblyPrerendered,
+                new { SessionId = sessionId });
+        }
+        @(prerenderedApp)
     </app>
 
     <div id="blazor-error-ui">
