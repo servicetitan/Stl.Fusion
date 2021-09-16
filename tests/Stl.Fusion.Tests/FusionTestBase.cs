@@ -171,8 +171,8 @@ namespace Stl.Fusion.Tests
                     .RegisterFrom(testType.Assembly);
 
                 // DbContext & related services
-                var appTempDir = PathEx.GetApplicationTempDirectory("", true);
-                SqliteDbPath = appTempDir & PathEx.GetHashedName($"{testType.Name}_{testType.Namespace}.db");
+                var appTempDir = PathExt.GetApplicationTempDirectory("", true);
+                SqliteDbPath = appTempDir & PathExt.GetHashedName($"{testType.Name}_{testType.Namespace}.db");
                 services.AddPooledDbContextFactory<TestDbContext>(builder => {
                     switch (Options.DbType) {
                     case FusionTestDbType.Sqlite:

@@ -30,10 +30,10 @@ namespace Stl.Time
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Moment(DateTime value)
-            : this(value.ToUniversalTime() - DateTimeEx.UnixEpoch) { }
+            : this(value.ToUniversalTime() - DateTimeExt.UnixEpoch) { }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Moment(DateTimeOffset value)
-            : this(value.ToUniversalTime() - DateTimeOffsetEx.UnixEpoch) { }
+            : this(value.ToUniversalTime() - DateTimeOffsetExt.UnixEpoch) { }
 
         // (Try)Parse
 
@@ -80,7 +80,7 @@ namespace Stl.Time
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public DateTime ToDateTime()
-            => DateTimeEx.UnixEpoch + EpochOffset;
+            => DateTimeExt.UnixEpoch + EpochOffset;
         public DateTime ToDateTime(DateTime min, DateTime max)
             => Clamp(new Moment(min), new Moment(max)).ToDateTime();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -89,7 +89,7 @@ namespace Stl.Time
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public DateTimeOffset ToDateTimeOffset()
-            => DateTimeOffsetEx.UnixEpoch + EpochOffset;
+            => DateTimeOffsetExt.UnixEpoch + EpochOffset;
         public DateTimeOffset ToDateTimeOffset(DateTimeOffset min, DateTimeOffset max)
             => Clamp(new Moment(min), new Moment(max)).ToDateTimeOffset();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

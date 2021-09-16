@@ -57,7 +57,7 @@ namespace Stl.Fusion.Operations
             var operationId = (Symbol) operation.Id;
             lock (Lock) {
                 if (KnownOperationSet.Contains(operationId))
-                    return TaskEx.FalseTask;
+                    return TaskExt.FalseTask;
                 // Removing some operations if there are too many
                 while (KnownOperationSet.Count >= MaxKnownOperationCount) {
                     if (KnownOperationHeap.ExtractMin().IsSome(out var value))
@@ -75,7 +75,7 @@ namespace Stl.Fusion.Operations
                     KnownOperationHeap.Add(operationStartTime, operationId);
             }
 
-            using var _ = ExecutionContextEx.SuppressFlow();
+            using var _ = ExecutionContextExt.SuppressFlow();
             return Task.Run(async () => {
                 var tasks = new Task[OperationCompletionListeners.Length];
                 for (var i = 0; i < OperationCompletionListeners.Length; i++) {

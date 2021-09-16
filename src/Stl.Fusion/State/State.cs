@@ -52,7 +52,7 @@ namespace Stl.Fusion
         public class Options : IState.IOptions
         {
             public static readonly Func<IState<T>, Result<T>> DefaultInitialOutputFactory =
-                state => Result.Value(ActivatorEx.New<T>(false));
+                state => Result.Value(ActivatorExt.New<T>(false));
 
             public ComputedOptions ComputedOptions { get; set; } = ComputedOptions.Default;
             public VersionGenerator<LTag>? VersionGenerator { get; set; }

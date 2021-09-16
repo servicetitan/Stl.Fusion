@@ -34,7 +34,7 @@ namespace Stl.Fusion.Blazor
             UntypedState.RemoveEventHandler(StateEventKind.All, StateChanged);
             if (OwnsState && UntypedState is IDisposable d)
                 d.Dispose();
-            return ValueTaskEx.CompletedTask;
+            return ValueTaskExt.CompletedTask;
         }
 
         Task IHandleEvent.HandleEventAsync(EventCallbackWorkItem callback, object? arg)

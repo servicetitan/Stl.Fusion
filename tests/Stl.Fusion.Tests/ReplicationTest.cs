@@ -67,7 +67,7 @@ namespace Stl.Fusion.Tests
                 count++;
             };
 
-            await TestEx.WhenMet(
+            await TestExt.WhenMet(
                 () => count.Should().BeGreaterThan(2),
                 TimeSpan.FromSeconds(5));
         }

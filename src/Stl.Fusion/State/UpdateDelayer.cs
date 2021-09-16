@@ -78,7 +78,7 @@ namespace Stl.Fusion
             var commandCompletedTask = UICommandTracker.LastOrWhenCommandCompleted(UICommandRecencyDelta);
             if (UpdateDelayDuration > TimeSpan.Zero) {
                 if (!commandCompletedTask.IsCompleted) {
-                    var waitDuration = TimeSpanEx.Min(UpdateDelayDuration, UICommandRecencyDelta);
+                    var waitDuration = TimeSpanExt.Min(UpdateDelayDuration, UICommandRecencyDelta);
                     await Task.WhenAny(whenUpdatedTask, commandCompletedTask)
                         .WithTimeout(Clocks.UIClock, waitDuration, cancellationToken)
                         .ConfigureAwait(false);
@@ -100,7 +100,7 @@ namespace Stl.Fusion
 
         public virtual TimeSpan GetUpdateDelay(bool isUICommandCaused, int retryCount)
         {
-            var uiCommandUpdateDelayDuration = TimeSpanEx.Min(UpdateDelayDuration, UICommandUpdateDelayDuration);
+            var uiCommandUpdateDelayDuration = TimeSpanExt.Min(UpdateDelayDuration, UICommandUpdateDelayDuration);
             var baseDelay = isUICommandCaused ? uiCommandUpdateDelayDuration : UpdateDelayDuration;
             if (retryCount <= 0)
                 return baseDelay;

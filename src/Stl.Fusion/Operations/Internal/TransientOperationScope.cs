@@ -46,7 +46,7 @@ namespace Stl.Fusion.Operations.Internal
         {
             IsConfirmed ??= true;
             IsClosed = true;
-            return ValueTaskEx.CompletedTask;
+            return ValueTaskExt.CompletedTask;
         }
 
         public virtual Task Commit(CancellationToken cancellationToken = default)

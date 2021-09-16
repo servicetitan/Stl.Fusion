@@ -161,7 +161,7 @@ namespace Stl.Fusion.Bridge
             CancellationToken cancellationToken = default)
         {
             if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
-                return ValueTaskEx.CompletedTask;
+                return ValueTaskExt.CompletedTask;
             return channelProcessor.Unsubscribe(publication, cancellationToken);
         }
 

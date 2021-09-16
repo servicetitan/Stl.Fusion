@@ -20,7 +20,7 @@ namespace Stl.Time
 
             public TimeSpan Quanta {
                 get => _quanta;
-                init => _quanta = TimeSpanEx.Max(MinQuanta, value);
+                init => _quanta = TimeSpanExt.Max(MinQuanta, value);
             }
 
             public IMomentClock Clock { get; init; } = MomentClockSet.Default.CpuClock;

@@ -61,13 +61,13 @@ namespace Stl.Tests.Interception
                 => Task.FromResult(Three());
 
             public ValueTask<string> OneXAsync(string source)
-                => ValueTaskEx.FromResult(One(source));
+                => ValueTaskExt.FromResult(One(source));
 
             public ValueTask<int> TwoXAsync(string source)
-                => ValueTaskEx.FromResult(Two(source));
+                => ValueTaskExt.FromResult(Two(source));
 
             public ValueTask<JsonString> ThreeXAsync()
-                => ValueTaskEx.FromResult(Three());
+                => ValueTaskExt.FromResult(Three());
         }
 
         [Fact]

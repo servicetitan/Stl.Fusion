@@ -142,11 +142,11 @@ namespace Stl.Fusion.Extensions.Internal
         // PseudoXxx query-like methods
 
         [ComputeMethod]
-        protected virtual Task<Unit> PseudoGet(string keyPart) => TaskEx.UnitTask;
+        protected virtual Task<Unit> PseudoGet(string keyPart) => TaskExt.UnitTask;
 
         protected void PseudoGetAllPrefixes(string key)
         {
-            var delimiter = KeyValueStoreEx.Delimiter;
+            var delimiter = KeyValueStoreExt.Delimiter;
             var delimiterIndex = key.IndexOf(delimiter, 0);
             for (; delimiterIndex >= 0; delimiterIndex = key.IndexOf(delimiter, delimiterIndex + 1)) {
                 var keyPart = key.Substring(0, delimiterIndex);

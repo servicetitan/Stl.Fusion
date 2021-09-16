@@ -78,7 +78,7 @@ namespace Stl.Tests.Time
             var taskCount = TestRunnerInfo.IsBuildAgent() ? 1 : HardwareInfo.GetProcessorCountFactor(10);
             var maxDelta = 1000;
             var rnd = new Random();
-            var tasks = Enumerable.Range(0, (int) MathEx.Max(taskCount / 10, 1))
+            var tasks = Enumerable.Range(0, (int) MathExt.Max(taskCount / 10, 1))
                 .Select(_ => Task.Run(() => OneRandomTest(rnd.Next(100), 3000, maxDelta)).SuppressExceptions())
                 .ToArray();
             await Task.WhenAll(tasks);
@@ -141,7 +141,7 @@ namespace Stl.Tests.Time
 
             var maxDueAt = timers.Any() ? timers.Max(t => t.DueAt) : start;
             await clock.Delay(maxDueAt);
-            await TestEx.WhenMet(() => timerSet.Count.Should().Be(0), TimeSpan.FromSeconds(1));
+            await TestExt.WhenMet(() => timerSet.Count.Should().Be(0), TimeSpan.FromSeconds(1));
             Out.WriteLine($"{runner}: All timers should be fired.");
 
             foreach (var timer in timers) {

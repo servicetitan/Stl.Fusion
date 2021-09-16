@@ -27,7 +27,7 @@ namespace Stl.Plugins
         public virtual ValueTask DisposeAsync()
             => Services is IAsyncDisposable ad
                 ? ad.DisposeAsync()
-                : ValueTaskEx.CompletedTask;
+                : ValueTaskExt.CompletedTask;
 
         public virtual void Dispose()
         {

@@ -111,7 +111,7 @@ namespace Stl.Caching
     {
         protected static readonly string DefaultExtension = ".tmp";
         protected static readonly Func<TKey, PathString> DefaultKeyToFileNameConverter =
-            key => PathEx.GetHashedName(key?.ToString() ?? "0_0");
+            key => PathExt.GetHashedName(key?.ToString() ?? "0_0");
 
         public string CacheDirectory { get; }
         public string FileExtension { get; }

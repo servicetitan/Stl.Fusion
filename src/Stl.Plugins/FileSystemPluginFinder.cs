@@ -117,7 +117,7 @@ namespace Stl.Plugins
 
             public string AssemblyNamePattern { get; set; } = "*.dll";
             public bool UseCache { get; set; } = true;
-            public PathString CacheDir { get; set; } = PathEx.GetApplicationTempDirectory();
+            public PathString CacheDir { get; set; } = PathExt.GetApplicationTempDirectory();
         }
     }
 }

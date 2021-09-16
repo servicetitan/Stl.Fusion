@@ -42,7 +42,7 @@ namespace Stl.Fusion.EntityFramework.Npgsql.Operations
             if (IsDisposed || !disposing)
                 return;
             IsDisposed = true;
-            using var suppressing = ExecutionContextEx.SuppressFlow();
+            using var suppressing = ExecutionContextExt.SuppressFlow();
             _ = Task.Run(async () => {
                 using (await AsyncLock.Lock()) {
                     var dbContext = DbContext;
@@ -63,7 +63,7 @@ namespace Stl.Fusion.EntityFramework.Npgsql.Operations
                     return Task.CompletedTask;
             }
             // If it wasn't command, we pessimistically assume it changed something
-            using var _ = ExecutionContextEx.SuppressFlow();
+            using var _ = ExecutionContextExt.SuppressFlow();
             Task.Run(Notify);
             return Task.CompletedTask;
         }

@@ -27,7 +27,7 @@ namespace Stl.Fusion.Tests
             var c = await GetScreenshotComputed();
             for (var i = 0; i < 10; i++) {
                 c.Value.Base64Content.Length.Should().BeGreaterThan(0);
-                await TestEx.WhenMet(
+                await TestExt.WhenMet(
                     () => c.IsConsistent().Should().BeFalse(),
                     TimeSpan.FromSeconds(0.5));
                 c = await GetScreenshotComputed();

@@ -131,7 +131,7 @@ namespace Stl.Pooling
             _resourceFactory = resourceFactory;
             _resourceDisposer = resourceDisposer;
             _resourceDisposeDelayer = resourceDisposeDelayer
-                ?? ((key, resource, cancellationToken) => ValueTaskEx.CompletedTask); // No delay
+                ?? ((key, resource, cancellationToken) => ValueTaskExt.CompletedTask); // No delay
         }
 
         protected override ValueTask<TResource?> CreateResource(TKey key, CancellationToken cancellationToken)

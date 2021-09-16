@@ -154,7 +154,7 @@ namespace Stl.Fusion.Tests.Services
         // Protected & private methods
 
         [ComputeMethod]
-        protected virtual Task<Unit> Everything() => TaskEx.UnitTask;
+        protected virtual Task<Unit> Everything() => TaskExt.UnitTask;
 
         private new Task<TestDbContext> CreateCommandDbContext(CancellationToken cancellationToken = default)
         {

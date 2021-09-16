@@ -79,6 +79,6 @@ namespace Stl.Fusion.Extensions.Internal
         }
 
         protected virtual TimeSpan TrimInvalidationDelay(TimeSpan delay)
-            => TimeSpanEx.Min(delay, MaxInvalidationDelay);
+            => TimeSpanExt.Min(delay, MaxInvalidationDelay);
     }
 }

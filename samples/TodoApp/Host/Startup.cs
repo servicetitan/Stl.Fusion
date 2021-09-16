@@ -69,7 +69,7 @@ namespace Templates.TodoApp.Host
             #pragma warning restore ASP0000
 
             // DbContext & related services
-            var appTempDir = PathEx.GetApplicationTempDirectory("", true);
+            var appTempDir = PathExt.GetApplicationTempDirectory("", true);
             var dbPath = appTempDir & "App.db";
             services.AddDbContextFactory<AppDbContext>(dbContext => {
                 if (!string.IsNullOrEmpty(HostSettings.UseSqlServer))

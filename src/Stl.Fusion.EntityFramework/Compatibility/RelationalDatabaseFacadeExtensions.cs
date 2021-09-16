@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 
+// ReSharper disable once CheckNamespace
 namespace Microsoft.EntityFrameworkCore
 {
     internal static class RelationalDatabaseFacadeExtensions
@@ -15,7 +16,7 @@ namespace Microsoft.EntityFrameworkCore
             .GetField("_connection", BindingFlags.Instance | BindingFlags.NonPublic)!;
         private static readonly FieldInfo ConnectionOwnedField = typeof(RelationalConnection)
             .GetField("_connectionOwned", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        
+
         public static void SetDbConnection(this DatabaseFacade database,
             DbConnection? dbConnection, bool isOwned = false)
         {
@@ -26,7 +27,7 @@ namespace Microsoft.EntityFrameworkCore
             var oldIsOwned = (bool) ConnectionOwnedField.GetValue(relationalConnection)!;
             if (oldIsOwned)
                 oldDbConnection?.Dispose();
-                
+
             ConnectionField.SetValue(relationalConnection, dbConnection);
             ConnectionOwnedField.SetValue(relationalConnection, isOwned);
         }

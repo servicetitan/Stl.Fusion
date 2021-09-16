@@ -16,7 +16,7 @@ namespace Stl.Interception
 
     public class TypeViewFactory : ITypeViewFactory
     {
-        public static TypeViewFactory Default { get; } = new(DependencyInjection.ServiceProviderEx.Empty);
+        public static TypeViewFactory Default { get; } = new(DependencyInjection.ServiceProviderExt.Empty);
 
         protected IServiceProvider Services { get; }
         protected ITypeViewProxyGenerator ProxyGenerator { get; }

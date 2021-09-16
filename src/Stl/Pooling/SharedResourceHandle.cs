@@ -20,7 +20,7 @@ namespace Stl.Pooling
         }
 
         public ValueTask DisposeAsync()
-            => _releaser?.Invoke(Key, Resource) ?? ValueTaskEx.CompletedTask;
+            => _releaser?.Invoke(Key, Resource) ?? ValueTaskExt.CompletedTask;
 
         public void Deconstruct(out TKey key, out TResource resource)
         {

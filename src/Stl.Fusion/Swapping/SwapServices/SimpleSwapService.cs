@@ -48,24 +48,24 @@ namespace Stl.Fusion.Swapping
         protected override ValueTask<string?> Load(string key, CancellationToken cancellationToken)
         {
             if (!Storage.TryGetValue(key, out var value))
-                return ValueTaskEx.FromResult((string?) null);
+                return ValueTaskExt.FromResult((string?) null);
             ExpirationTimers.AddOrUpdateToLater(key, Clock.Now + ExpirationTime);
-            return ValueTaskEx.FromResult(value)!;
+            return ValueTaskExt.FromResult(value)!;
         }
 
         protected override ValueTask<bool> Renew(string key, CancellationToken cancellationToken)
         {
             if (!Storage.TryGetValue(key, out var value))
-                return ValueTaskEx.FalseTask;
+                return ValueTaskExt.FalseTask;
             ExpirationTimers.AddOrUpdateToLater(key, Clock.Now + ExpirationTime);
-            return ValueTaskEx.TrueTask;
+            return ValueTaskExt.TrueTask;
         }
 
         protected override ValueTask Store(string key, string value, CancellationToken cancellationToken)
         {
             Storage[key] = value;
             ExpirationTimers.AddOrUpdateToLater(key, Clock.Now + ExpirationTime);
-            return ValueTaskEx.CompletedTask;
+            return ValueTaskExt.CompletedTask;
         }
     }
 }

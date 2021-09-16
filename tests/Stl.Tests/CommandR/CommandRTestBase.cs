@@ -69,8 +69,8 @@ namespace Stl.Tests.CommandR
 
             if (UseDbContext) {
                 var testType = GetType();
-                var appTempDir = PathEx.GetApplicationTempDirectory("", true);
-                var dbPath = appTempDir & PathEx.GetHashedName($"{testType.Name}_{testType.Namespace}.db");
+                var appTempDir = PathExt.GetApplicationTempDirectory("", true);
+                var dbPath = appTempDir & PathExt.GetHashedName($"{testType.Name}_{testType.Namespace}.db");
                 services.AddPooledDbContextFactory<TestDbContext>(builder => {
                     builder.UseSqlite($"Data Source={dbPath}", sqlite => { });
                 }, 256);

@@ -73,7 +73,7 @@ namespace Stl.Tests.Async
             Assert.Equal(DisposalState.Disposing, d.DisposalState);
             Out.WriteLine("Disposing check 1 passed.");
             task.Wait();
-            task = TestEx.WhenMet(
+            task = TestExt.WhenMet(
                 () => d.DisposalState.Should().Be(DisposalState.Disposed),
                 Intervals.Fixed(TimeSpan.FromMilliseconds(50)),
                 d.DisposeDelay);

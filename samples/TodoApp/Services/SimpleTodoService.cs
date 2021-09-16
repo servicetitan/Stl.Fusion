@@ -70,6 +70,6 @@ namespace Templates.TodoApp.Services
 
         [ComputeMethod]
         protected virtual Task<Unit> PseudoGetAllItems(Session session)
-            => TaskEx.UnitTask;
+            => TaskExt.UnitTask;
     }
 }

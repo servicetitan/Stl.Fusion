@@ -17,16 +17,16 @@ namespace Stl.Tests.Reflection
         [Fact]
         public void NewTest()
         {
-            ActivatorEx.New<int>().Should().Be(0);
-            ActivatorEx.New<int>(false).Should().Be(0);
-            ActivatorEx.New<Unit>().Should().Be(default(Unit));
-            ActivatorEx.New<Unit>(false).Should().Be(default(Unit));
-            ActivatorEx.New<SimpleClass>().Should().BeOfType(typeof(SimpleClass));
-            ActivatorEx.New<SimpleClass>(false).Should().BeOfType(typeof(SimpleClass));
+            ActivatorExt.New<int>().Should().Be(0);
+            ActivatorExt.New<int>(false).Should().Be(0);
+            ActivatorExt.New<Unit>().Should().Be(default(Unit));
+            ActivatorExt.New<Unit>(false).Should().Be(default(Unit));
+            ActivatorExt.New<SimpleClass>().Should().BeOfType(typeof(SimpleClass));
+            ActivatorExt.New<SimpleClass>(false).Should().BeOfType(typeof(SimpleClass));
 
-            ((Func<string>) (() => ActivatorEx.New<string>()))
+            ((Func<string>) (() => ActivatorExt.New<string>()))
                 .Should().Throw<InvalidOperationException>();
-            ActivatorEx.New<string>(false).Should().Be(null);
+            ActivatorExt.New<string>(false).Should().Be(null);
         }
     }
 }

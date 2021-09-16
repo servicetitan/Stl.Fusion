@@ -24,6 +24,6 @@ namespace Stl.Async
         }
 
         public ValueTask DisposeAsync()
-            => _disposeHandler?.Invoke(_state) ?? ValueTaskEx.CompletedTask;
+            => _disposeHandler?.Invoke(_state) ?? ValueTaskExt.CompletedTask;
     }
 }

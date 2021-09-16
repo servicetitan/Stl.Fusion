@@ -28,7 +28,7 @@ namespace Samples.HelloCart.V2
             });
 
             // Add AppDbContext & related services
-            var appTempDir = PathEx.GetApplicationTempDirectory("", true);
+            var appTempDir = PathExt.GetApplicationTempDirectory("", true);
             var dbPath = appTempDir & "HelloCart_v01.db";
             services.AddDbContextFactory<AppDbContext>(b => {
                 b.UseSqlite($"Data Source={dbPath}");

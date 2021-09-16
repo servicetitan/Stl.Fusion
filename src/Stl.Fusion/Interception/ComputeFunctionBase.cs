@@ -30,8 +30,8 @@ namespace Stl.Fusion.Interception
                 input.Invocation.ReturnValue =
                     // ReSharper disable once HeapView.BoxingAllocation
                     output.IsValue(out var v)
-                        ? ValueTaskEx.FromResult(v)
-                        : ValueTaskEx.FromException<TOut>(output.Error!);
+                        ? ValueTaskExt.FromResult(v)
+                        : ValueTaskExt.FromException<TOut>(output.Error!);
             else
                 input.Invocation.ReturnValue =
                     output.IsValue(out var v)

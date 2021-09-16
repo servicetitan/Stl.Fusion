@@ -79,11 +79,11 @@ namespace Stl.Async
         }
 
         protected virtual ValueTask DisposeInternal(bool disposing)
-            => ValueTaskEx.CompletedTask;
+            => ValueTaskExt.CompletedTask;
 
         protected bool MarkDisposed()
         {
-            var success = null == Interlocked.CompareExchange(ref _disposeCompleted, TaskEx.UnitTask, null);
+            var success = null == Interlocked.CompareExchange(ref _disposeCompleted, TaskExt.UnitTask, null);
             if (success)
                 GC.SuppressFinalize(this);
             return success;

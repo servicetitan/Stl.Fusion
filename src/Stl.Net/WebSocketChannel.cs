@@ -297,7 +297,7 @@ namespace Stl.Net
                     }
 
                     if (r.EndOfMessage)
-                        return ArraySegmentCompatEx.ToString(readChars);
+                        return ArraySegmentCompatExt.ToString(readChars);
 
                     decodedPart = new StringBuilder(readChars.Count);
                     decodedPart.Append(readChars);

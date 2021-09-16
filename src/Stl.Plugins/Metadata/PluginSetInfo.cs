@@ -61,7 +61,7 @@ namespace Stl.Plugins.Metadata
             }
 
 #if NETFRAMEWORK
-            var hAssemblies = EnumerableCompatEx.ToHashSet(ci.Plugins.Select(t => t.Assembly));
+            var hAssemblies = EnumerableCompatExt.ToHashSet(ci.Plugins.Select(t => t.Assembly));
 #else
             var hAssemblies = ci.Plugins.Select(t => t.Assembly).ToHashSet();
 #endif
@@ -69,7 +69,7 @@ namespace Stl.Plugins.Metadata
                 .Select(a => (
                     Assembly: a,
 #if NETFRAMEWORK
-                    Refs: EnumerableCompatEx.ToHashSet(
+                    Refs: EnumerableCompatExt.ToHashSet(
                         GetAllDependencies(a)
                             .Where(a => hAssemblies.Contains(a)))
 #else

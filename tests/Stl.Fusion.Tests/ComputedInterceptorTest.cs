@@ -33,7 +33,7 @@ namespace Stl.Fusion.Tests
             state.Updated += (s, _)
                 => Log.LogInformation($"{++count} -> {s.Value:hh:mm:ss:fff}");
 
-            await TestEx.WhenMet(
+            await TestExt.WhenMet(
                 () => count.Should().BeGreaterThan(2),
                 TimeSpan.FromSeconds(5));
             var lastCount = count;
@@ -62,7 +62,7 @@ namespace Stl.Fusion.Tests
                 task.IsCanceled.Should().BeTrue();
 
                 task = time.GetTimeWithDelay(default);
-                await TestEx.WhenMet(
+                await TestExt.WhenMet(
                     () => task.IsCompletedSuccessfully().Should().BeTrue(),
                     TimeSpan.FromSeconds(1));
             }
