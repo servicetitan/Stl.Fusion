@@ -1,8 +1,11 @@
 using System;
+using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 
 namespace Stl.Serialization
 {
+    [DataContract]
+    [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
     public abstract class Serialized<T> : IEquatable<Serialized<T>>
     {
         private Option<T> _valueOption;
@@ -17,6 +20,7 @@ namespace Stl.Serialization
             }
         }
 
+        [DataMember(Order = 0)]
         public string Data {
             get => _dataOption.IsSome(out var v) ? v : Serialize();
             set {

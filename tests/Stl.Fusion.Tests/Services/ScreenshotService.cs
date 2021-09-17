@@ -4,28 +4,21 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Text.Json.Serialization;
+using System.Runtime.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.OS;
+using Stl.Serialization;
 
 namespace Stl.Fusion.Tests.Services
 {
-    public class Screenshot
+    [DataContract]
+    public record Screenshot
     {
-        public int Width { get; }
-        public int Height { get; }
-        public DateTime CapturedAt { get; }
-        public string Base64Content { get; }
-
-        [JsonConstructor, Newtonsoft.Json.JsonConstructor]
-        public Screenshot(int width, int height, DateTime capturedAt, string base64Content)
-        {
-            Width = width;
-            Height = height;
-            CapturedAt = capturedAt;
-            Base64Content = base64Content;
-        }
+        [DataMember] public int Width { get; init; }
+        [DataMember] public int Height { get; init; }
+        [DataMember] public DateTime CapturedAt { get; init; }
+        [DataMember] public Base64Encoded Image { get; init; } = "";
     }
 
     public interface IScreenshotService
@@ -71,7 +64,12 @@ namespace Stl.Fusion.Tests.Services
             bOut.Save(stream, _jpegEncoder, _jpegEncoderParameters);
             var bytes = stream.ToArray();
             var base64Content = Convert.ToBase64String(bytes);
-            return new Screenshot(ow, oh, DateTime.Now, base64Content);
+            return new Screenshot {
+                Width = ow,
+                Height = oh,
+                CapturedAt = DateTime.Now,
+                Image = base64Content
+            };
         }
 
         [ComputeMethod(AutoInvalidateTime = 0.01)]

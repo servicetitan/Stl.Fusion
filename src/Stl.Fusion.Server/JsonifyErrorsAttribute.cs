@@ -20,7 +20,7 @@ namespace Stl.Fusion.Server
                 exception = rewriter.Rewrite(context, exception, true);
             }
             var serializer = TypeDecoratingSerializer.Default;
-            var content = serializer.Write(new ExceptionParcel(exception));
+            var content = serializer.Write(exception.ToExceptionInfo());
             var result = new ContentResult() {
                 Content = content,
                 ContentType = "application/json",

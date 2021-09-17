@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using Stl.Internal;
 
@@ -23,15 +24,17 @@ namespace Stl
         object? Value { get; }
     }
 
-    [Serializable]
+    [DataContract]
     [DebuggerDisplay("{" + nameof(DebugValue) + "}")]
     public readonly struct Option<T> : IEquatable<Option<T>>, IOption
     {
         /// <inheritdoc />
+        [DataMember(Order = 0)]
         public bool HasValue { get; }
         /// <summary>
         /// Retrieves option's value. Returns <code>default(T)</code> in case option doesn't have one.
         /// </summary>
+        [DataMember(Order = 1)]
         public T? ValueOrDefault { get; }
         /// <summary>
         /// Retrieves option's value. Throws <see cref="InvalidOperationException"/> in case option doesn't have one.

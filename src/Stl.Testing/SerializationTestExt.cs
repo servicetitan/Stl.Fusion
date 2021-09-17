@@ -1,10 +1,8 @@
-using System;
 using System.IO;
 using System.Text.Json;
 using FluentAssertions;
-using FluentAssertions.Common;
+using MessagePack;
 using Newtonsoft.Json;
-using Stl.Internal;
 using Stl.Reflection;
 using Stl.Serialization;
 using Xunit.Abstractions;
@@ -36,6 +34,8 @@ namespace Stl.Testing
             v.Should().Be(value);
             v = v.PassThroughNewtonsoftJsonSerialized(output);
             v.Should().Be(value);
+            v = v.PassThroughMessagePackSerializer(output);
+            v.Should().Be(value);
             return v;
         }
 
@@ -47,6 +47,7 @@ namespace Stl.Testing
             v = v.PassThroughTypeWritingSerializer(output);
             v = v.PassThroughSystemJsonSerialized(output);
             v = v.PassThroughNewtonsoftJsonSerialized(output);
+            v = v.PassThroughMessagePackSerializer(output);
             return v;
         }
 
@@ -95,6 +96,18 @@ namespace Stl.Testing
             output?.WriteLine($"NewtonsoftJsonSerialized: {v1.Data}");
             var v2 = NewtonsoftJsonSerialized.New<T>(v1.Data);
             return v2.Value;
+        }
+
+        // MessagePack serializer
+
+        public static T PassThroughMessagePackSerializer<T>(this T value, ITestOutputHelper? output = null)
+        {
+            var options = MessagePackSerializer.DefaultOptions;
+            using var ms = new MemoryStream();
+            MessagePackSerializer.Serialize(ms, value, options);
+            ms.Position = 0;
+            var v1 = MessagePackSerializer.Deserialize<T>(ms, options);
+            return v1;
         }
     }
 }

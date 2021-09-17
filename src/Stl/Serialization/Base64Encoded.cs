@@ -2,12 +2,14 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using Stl.Serialization.Internal;
+using Stl.Versioning;
 
 namespace Stl.Serialization
 {
-    [Serializable]
+    [DataContract]
     [JsonConverter(typeof(Base64EncodedJsonConverter))]
     [Newtonsoft.Json.JsonConverter(typeof(Base64EncodedNewtonsoftJsonConverter))]
     [TypeConverter(typeof(Base64EncodedTypeConverter))]
@@ -15,6 +17,7 @@ namespace Stl.Serialization
     {
         private readonly byte[]? _data;
 
+        [DataMember(Order = 0)]
         public byte[] Data => _data ?? Array.Empty<byte>();
 
         // Convenience shortcuts
@@ -42,9 +45,11 @@ namespace Stl.Serialization
         public static implicit operator Base64Encoded(string encodedData) => Decode(encodedData);
 
         // Equality
-        public bool Equals(Base64Encoded other) => Data == other.Data;
+        public bool Equals(Base64Encoded other)
+            => StructuralComparisons.StructuralEqualityComparer.Equals(Data, other.Data);
         public override bool Equals(object? obj) => obj is Base64Encoded other && Equals(other);
-        public override int GetHashCode() => Data.GetHashCode();
+        public override int GetHashCode()
+            => StructuralComparisons.StructuralEqualityComparer.GetHashCode(Data);
         public static bool operator ==(Base64Encoded left, Base64Encoded right) => left.Equals(right);
         public static bool operator !=(Base64Encoded left, Base64Encoded right) => !left.Equals(right);
     }

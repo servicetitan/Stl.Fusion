@@ -1,5 +1,6 @@
 using System;
 using System.Reactive;
+using System.Runtime.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -10,23 +11,32 @@ using Stl.Fusion.EntityFramework;
 using Stl.Fusion.Operations;
 using Stl.Fusion.Tests.Model;
 using Stl.RegisterAttributes;
-using Stl.Versioning;
 
 namespace Stl.Fusion.Tests.Services
 {
     public interface IUserService
     {
-        public record AddCommand(User User, bool OrUpdate = false) : ICommand<Unit>
+        [DataContract]
+        public record AddCommand(
+            [property: DataMember] User User,
+            [property: DataMember] bool OrUpdate = false
+            ) : ICommand<Unit>
         {
             public AddCommand() : this(null!, false) { }
         }
 
-        public record UpdateCommand(User User) : ICommand<Unit>
+        [DataContract]
+        public record UpdateCommand(
+            [property: DataMember] User User
+            ) : ICommand<Unit>
         {
             public UpdateCommand() : this(default(User)!) { }
         }
 
-        public record DeleteCommand(User User) : ICommand<bool>
+        [DataContract]
+        public record DeleteCommand(
+            [property: DataMember] User User
+            ) : ICommand<bool>
         {
             public DeleteCommand() : this(default(User)!) { }
         }

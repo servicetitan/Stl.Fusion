@@ -102,7 +102,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
         {
             if (command.Name != null) {
                 dbUser.Name = command.Name;
-                dbUser.UpdateVersion(VersionGenerator);
+                dbUser.Version = VersionGenerator.NextVersion(dbUser.Version);
             }
             await dbContext.SaveChangesAsync(cancellationToken);
         }

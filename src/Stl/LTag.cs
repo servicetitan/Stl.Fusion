@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using Stl.Internal;
 using Stl.Mathematics;
@@ -10,7 +11,7 @@ namespace Stl
     /// <summary>
     /// Encapsulates <see cref="Int64"/>-typed version.
     /// </summary>
-    [Serializable]
+    [DataContract]
     [JsonConverter(typeof(LTagJsonConverter))]
     [Newtonsoft.Json.JsonConverter(typeof(LTagNewtonsoftJsonConverter))]
     [TypeConverter(typeof(LTagTypeConverter))]
@@ -22,7 +23,8 @@ namespace Stl
         /// <summary>
         /// Version value.
         /// </summary>
-        public readonly long Value;
+        [DataMember(Order = 0)]
+        public long Value { get; }
         /// <summary>
         /// Indicates whether this version is a special one.
         /// Special versions are just versions with negative numbers, which

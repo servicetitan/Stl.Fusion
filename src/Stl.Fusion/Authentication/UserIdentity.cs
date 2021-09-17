@@ -1,15 +1,19 @@
 using System;
+using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using Stl.Text;
 
 namespace Stl.Fusion.Authentication
 {
+    [DataContract]
+    [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
     public readonly struct UserIdentity : IEquatable<UserIdentity>
     {
         private static readonly ListFormat IdFormat = ListFormat.SlashSeparated;
         public static UserIdentity None { get; } = default;
         public static string DefaultSchema { get; } = "Default";
 
+        [DataMember(Order = 0)]
         public Symbol Id { get; }
         [JsonIgnore, Newtonsoft.Json.JsonIgnore]
         public string Schema => ParseId(Id.Value).Schema;

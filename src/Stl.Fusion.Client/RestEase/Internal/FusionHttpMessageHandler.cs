@@ -64,7 +64,7 @@ namespace Stl.Fusion.Client.RestEase.Internal
 
             try {
                 var serializer = TypeDecoratingSerializer.Default;
-                return serializer.Reader.Read<ExceptionParcel>(content).ToException()!;
+                return serializer.Reader.Read<ExceptionInfo>(content).ToException()!;
             }
             catch (Exception) {
                 try {

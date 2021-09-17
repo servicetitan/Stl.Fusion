@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using System.Threading;
 using Stl.Reflection;
@@ -10,6 +11,8 @@ using Stl.Text;
 
 namespace Stl.Collections
 {
+    [DataContract]
+    [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
     public class OptionSet : IServiceProvider
     {
         private volatile ImmutableDictionary<Symbol, object> _items;
@@ -20,6 +23,7 @@ namespace Stl.Collections
             set => _items = value;
         }
 
+        [DataMember(Order = 0)]
         [JsonPropertyName(nameof(Items)),  Newtonsoft.Json.JsonIgnore]
         public Dictionary<string, NewtonsoftJsonSerialized<object>> JsonCompatibleItems
             => Items.ToDictionary(

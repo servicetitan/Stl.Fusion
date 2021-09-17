@@ -6,7 +6,6 @@ using Stl.Time.Internal;
 
 namespace Stl.Time.Testing
 {
-    [Serializable]
     public sealed class UnusableClock : IMomentClock
     {
         public static readonly IMomentClock Instance = new UnusableClock();

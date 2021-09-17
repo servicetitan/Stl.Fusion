@@ -13,6 +13,7 @@
     <BlazorVersion>$(AspNetCoreVersion)</BlazorVersion>
     <BlazoriseVersion>0.9.*</BlazoriseVersion>
     <SystemNetHttpJsonVersion>5.0.3</SystemNetHttpJsonVersion>
+    <MessagePackVersion>2.3.*</MessagePackVersion>
     <MicrosoftExtensionsVersion>5.0.0</MicrosoftExtensionsVersion>
     <StlFusionVersion>1.9.*</StlFusionVersion>
   </PropertyGroup>
@@ -34,6 +35,7 @@
     <PackageReference Update="DataAnnotationsValidatorNetStandard" Version="1.0.*" />
     <PackageReference Update="Enums.NET" Version="4.0.*" />
     <PackageReference Update="FluentAssertions" Version="6.1.*" />
+    <PackageReference Update="MessagePack" Version="$(MessagePackVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.Authentication.Cookies" Version="2.2.*" />
     <PackageReference Update="Microsoft.AspNetCore.Authentication.Google" Version="$(AspNetCoreVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.Authentication.MicrosoftAccount" Version="$(AspNetCoreVersion)" />

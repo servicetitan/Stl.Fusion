@@ -1,13 +1,14 @@
 using System;
 using System.ComponentModel;
 using System.IO;
+using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using Stl.Internal;
 using Stl.IO.Internal;
 
 namespace Stl.IO
 {
-    [Serializable]
+    [DataContract]
     [JsonConverter(typeof(PathStringJsonConverter))]
     [Newtonsoft.Json.JsonConverter(typeof(PathStringNewtonsoftJsonConverter))]
     [TypeConverter(typeof(PathStringTypeConverter))]
@@ -17,6 +18,7 @@ namespace Stl.IO
 
         private readonly string? _value;
 
+        [DataMember(Order = 0)]
         public string Value => _value ?? "";
         public int Length => Value.Length;
 

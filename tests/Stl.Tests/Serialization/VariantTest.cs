@@ -1,4 +1,4 @@
-using System;
+using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using FluentAssertions;
 using Stl.Serialization;
@@ -15,29 +15,38 @@ namespace Stl.Tests.Serialization
             public double Area { get; init; }
         }
 
+        [DataContract]
         public record Circle : Shape
         {
+            [DataMember(Order = 0)]
             public double R { get; init; }
         }
 
+        [DataContract]
         public record Box : Shape
         {
+            [DataMember(Order = 0)]
             public double Width { get; init; }
+            [DataMember(Order = 1)]
             public double Height { get; init; }
         }
 
-        [Serializable]
+        [DataContract]
+        [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
         public class ShapeVariant : Variant<Shape>
         {
-            [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull), Newtonsoft.Json.JsonIgnore]
+            [DataMember]
+            [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
             public Circle? Circle { get => Get<Circle>(); init => Set(value); }
-            [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull), Newtonsoft.Json.JsonIgnore]
+
+            [DataMember]
+            [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
             public Box? Box { get => Get<Box>(); init => Set(value); }
 
-            [JsonConstructor]
             public ShapeVariant() { }
-            [Newtonsoft.Json.JsonConstructor]
-            public ShapeVariant(Shape? value) : base(value) { }
+            [JsonConstructor, Newtonsoft.Json.JsonConstructor]
+            public ShapeVariant(Circle? circle, Box? box)
+                : base((Shape?) circle ?? box) { }
         }
 
         public VariantTest(ITestOutputHelper @out) : base(@out) { }

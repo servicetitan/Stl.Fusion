@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using Stl.Conversion;
 using Stl.Fusion.Authentication.Internal;
@@ -7,7 +8,7 @@ using Stl.Text;
 
 namespace Stl.Fusion.Authentication
 {
-    [Serializable]
+    [DataContract]
     [JsonConverter(typeof(SessionJsonConverter))]
     [Newtonsoft.Json.JsonConverter(typeof(SessionNewtonsoftJsonConverter))]
     [TypeConverter(typeof(SessionTypeConverter))]
@@ -16,6 +17,7 @@ namespace Stl.Fusion.Authentication
     {
         public static Session Null { get; } = null!; // To gracefully bypass some nullability checks
 
+        [DataMember(Order = 0)]
         public Symbol Id { get; }
 
         public Session(Symbol id)

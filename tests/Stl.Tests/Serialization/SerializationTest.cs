@@ -2,6 +2,8 @@ using System;
 using System.Linq;
 using FluentAssertions;
 using Stl.Collections;
+using Stl.Comparison;
+using Stl.DependencyInjection.Internal;
 using Stl.Fusion.Authentication;
 using Stl.IO;
 using Stl.Reflection;
@@ -19,17 +21,17 @@ namespace Stl.Tests.Serialization
         public SerializationTest(ITestOutputHelper @out) : base(@out) { }
 
         [Fact]
-        public void ExceptionParcelTest()
+        public void ExceptionInfoSerialization()
         {
-            var n = default(ExceptionParcel);
+            var n = default(ExceptionInfo);
             n.ToException().Should().BeNull();
-            n = new ExceptionParcel(null!);
-            n = n.AssertPassesThroughAllSerializers();
+            n = new ExceptionInfo(null!);
+            n = n.AssertPassesThroughAllSerializers(Out);
             n.ToException().Should().BeNull();
 
             var e = new InvalidOperationException("Fail!");
-            var p = new ExceptionParcel(e);
-            p = p.AssertPassesThroughAllSerializers();
+            var p = e.ToExceptionInfo();
+            p = p.AssertPassesThroughAllSerializers(Out);
             var e1 = p.ToException();
             e1.Should().BeOfType<InvalidOperationException>();
             e1!.Message.Should().Be(e.Message);
@@ -93,11 +95,10 @@ namespace Stl.Tests.Serialization
         }
 
         [Fact]
-        public void SessionSerialization()
+        public void ServiceTypeRefSerialization()
         {
-            default(Session).AssertPassesThroughAllSerializers(Out);
-            Session.Null.AssertPassesThroughAllSerializers(Out);
-            new Session("0123456789-0123456789").AssertPassesThroughAllSerializers(Out);
+            var s1 = new ServiceTypeRef(typeof(bool)).PassThroughAllSerializers(Out);
+            s1.TypeRef.Resolve().Should().Be(typeof(bool));
         }
 
         [Fact]

@@ -1,8 +1,8 @@
-using System;
+using System.Runtime.Serialization;
 
 namespace Stl.Fusion.Bridge.Messages
 {
-    [Serializable]
+    [DataContract]
     public class PublicationAbsentsReply : PublicationReply
     { }
 }

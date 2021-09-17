@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using System.Threading;
 using Stl.CommandR;
@@ -6,7 +7,6 @@ using Stl.Time;
 
 namespace Stl.Fusion.UI
 {
-    [Serializable]
     public record UICommandEvent
     {
         private static long _nextCommandId;
@@ -20,11 +20,8 @@ namespace Stl.Fusion.UI
         public TimeSpan? Duration => CompletedAt - CreatedAt;
 
         public IResult? Result { get; init; }
-        [JsonIgnore, Newtonsoft.Json.JsonIgnore]
         public bool IsCompleted => Result != null;
-        [JsonIgnore, Newtonsoft.Json.JsonIgnore]
         public bool IsCompletedSuccessfully => Result?.HasValue ?? false;
-        [JsonIgnore, Newtonsoft.Json.JsonIgnore]
         public bool IsFailed => Result?.Error != null;
 
         public UICommandEvent() { }

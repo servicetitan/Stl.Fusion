@@ -5,7 +5,6 @@ using Stl.Fusion.Swapping;
 
 namespace Stl.Fusion
 {
-    [Serializable]
     public class ComputedOptions
     {
         public static readonly ComputedOptions Default =
@@ -27,10 +26,8 @@ namespace Stl.Fusion
         public SwappingOptions SwappingOptions { get; }
         public bool RewriteErrors { get; }
         public Type ComputeMethodDefType { get; }
-        [JsonIgnore, Newtonsoft.Json.JsonIgnore]
         public bool IsAsyncComputed { get; }
 
-        [JsonConstructor, Newtonsoft.Json.JsonConstructor]
         public ComputedOptions(
             TimeSpan keepAliveTime,
             TimeSpan errorAutoInvalidateTime,

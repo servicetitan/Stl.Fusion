@@ -1,10 +1,14 @@
 using System.Reactive;
+using System.Runtime.Serialization;
 using Stl.Fusion.Authentication;
 
 namespace Stl.Fusion.Extensions.Commands
 {
-    public record SandboxedRemoveCommand(Session Session, string Key)
-        : ISessionCommand<Unit>
+    [DataContract]
+    public record SandboxedRemoveCommand(
+        [property: DataMember] Session Session,
+        [property: DataMember] string Key
+        ) : ISessionCommand<Unit>
     {
         public SandboxedRemoveCommand() : this(Session.Null, "") { }
     }

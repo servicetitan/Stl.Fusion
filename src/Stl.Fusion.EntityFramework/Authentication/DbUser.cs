@@ -11,7 +11,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
 {
     [Table("Users")]
     [Index(nameof(Name))]
-    public class DbUser<TDbUserId> : IHasId<TDbUserId>, IHasMutableVersion<long>
+    public class DbUser<TDbUserId> : IHasId<TDbUserId>, IHasVersion<long>
         where TDbUserId : notnull
     {
         private readonly NewtonsoftJsonSerialized<ImmutableDictionary<string, string>?> _claims =

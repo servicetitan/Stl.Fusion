@@ -3,7 +3,6 @@ using System.Text.Json.Serialization;
 
 namespace Stl.Fusion.Swapping
 {
-    [Serializable]
     public class SwappingOptions
     {
         public static readonly SwappingOptions Default =
@@ -21,7 +20,6 @@ namespace Stl.Fusion.Swapping
         public Type SwapServiceType { get; }
         public TimeSpan SwapTime { get; }
 
-        [JsonConstructor, Newtonsoft.Json.JsonConstructor]
         public SwappingOptions(
             bool isEnabled,
             Type swapServiceType,

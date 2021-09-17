@@ -7,16 +7,20 @@ using Stl.Text;
 
 namespace Stl.Reflection
 {
-    [Serializable]
+    [DataContract]
     [JsonConverter(typeof(TypeRefJsonConverter))]
     [Newtonsoft.Json.JsonConverter(typeof(TypeRefNewtonsoftJsonConverter))]
     [TypeConverter(typeof(TypeRefTypeConverter))]
     public struct TypeRef : IEquatable<TypeRef>, IComparable<TypeRef>, ISerializable
     {
+        public static readonly TypeRef None = default;
+
+        [DataMember(Order = 0)]
         public Symbol AssemblyQualifiedName { get; }
         public string Name => AssemblyQualifiedName.Value.Substring(0, AssemblyQualifiedName.Value.IndexOf(','));
 
         public TypeRef(Type type) : this(type.AssemblyQualifiedName!) { }
+        public TypeRef(Symbol assemblyQualifiedName) => AssemblyQualifiedName = assemblyQualifiedName;
         public TypeRef(string assemblyQualifiedName) => AssemblyQualifiedName = assemblyQualifiedName;
 
         public override string ToString() => $"{Name}";

@@ -1,12 +1,15 @@
-using System;
+using System.Runtime.Serialization;
 
 namespace Stl.Fusion.Bridge
 {
-    [Serializable]
+    [DataContract]
     public class PublicationStateInfo
     {
+        [DataMember(Order = 0)]
         public PublicationRef PublicationRef { get; set; }
+        [DataMember(Order = 1)]
         public LTag Version { get; set; }
+        [DataMember(Order = 2)]
         public bool IsConsistent { get; set; }
 
         public PublicationStateInfo() { }
@@ -20,9 +23,10 @@ namespace Stl.Fusion.Bridge
         }
     }
 
-    [Serializable]
+    [DataContract]
     public class PublicationStateInfo<T> : PublicationStateInfo
     {
+        [DataMember(Order = 3)]
         public Result<T> Output { get; set; }
 
         public PublicationStateInfo() { }

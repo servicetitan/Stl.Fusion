@@ -1,11 +1,12 @@
-using System;
+using System.Runtime.Serialization;
 using Stl.Text;
 
 namespace Stl.Fusion.Bridge.Messages
 {
-    [Serializable]
+    [DataContract]
     public abstract class ReplicatorRequest : BridgeMessage
     {
+        [DataMember(Order = 0)]
         public Symbol ReplicatorId { get; set; }
     }
 }

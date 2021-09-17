@@ -1,10 +1,14 @@
 using System;
 using System.Reactive;
+using System.Runtime.Serialization;
 using Stl.CommandR.Commands;
 
 namespace Stl.Fusion.Extensions.Commands
 {
-    public record RemoveManyCommand(params string[] Keys) : ServerSideCommandBase<Unit>
+    [DataContract]
+    public record RemoveManyCommand(
+        [property: DataMember] params string[] Keys
+        ) : ServerSideCommandBase<Unit>
     {
         public RemoveManyCommand() : this(Array.Empty<string>()) { }
     }

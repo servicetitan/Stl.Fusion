@@ -51,13 +51,5 @@ namespace Stl.Fusion.Tests.Authentication
             Parse("1/2").Should().Be(("1", "2"));
             Parse("1\\/2").Should().Be((UserIdentity.DefaultSchema, "1/2"));
         }
-
-        [Fact]
-        public void SerializationTest()
-        {
-            var user = new User("b", "bob").WithIdentity("google/1", "s");
-            var sUser = user.PassThroughAllSerializers();
-            sUser.Identities.Single().Should().Be(user.Identities.Single());
-        }
     }
 }

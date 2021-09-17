@@ -1,16 +1,19 @@
 using System;
+using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using Stl.Text;
 
 namespace Stl.Fusion.Bridge
 {
-    [Serializable]
+    [DataContract]
     public readonly struct PublicationRef : IEquatable<PublicationRef>
     {
+        [DataMember(Order = 0)]
         public Symbol PublisherId { get; }
+        [DataMember(Order = 1)]
         public Symbol PublicationId { get; }
 
-        [JsonConstructor, Newtonsoft.Json.JsonConstructor]
+        [JsonConstructor]
         public PublicationRef(Symbol publisherId, Symbol publicationId)
         {
             PublisherId = publisherId;

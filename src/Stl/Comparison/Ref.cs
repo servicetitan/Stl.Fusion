@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace Stl.Comparison
 {
+    // Shouldn't be serializable!
     public readonly struct Ref<T> : IEquatable<Ref<T>>
         where T: class?
     {
@@ -14,7 +15,6 @@ namespace Stl.Comparison
             => $"{GetType().Name}({Target?.ToString() ?? "␀"})";
 
         // Equality
-
         public bool Equals(Ref<T> other)
             => ReferenceEquals(Target, other.Target);
         public override bool Equals(object? obj)

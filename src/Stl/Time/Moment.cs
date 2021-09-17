@@ -2,12 +2,13 @@ using System;
 using System.ComponentModel;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using Stl.Time.Internal;
 
 namespace Stl.Time
 {
-    [Serializable]
+    [DataContract]
     [JsonConverter(typeof(MomentJsonConverter))]
     [Newtonsoft.Json.JsonConverter(typeof(MomentNewtonsoftJsonConverter))]
     [TypeConverter(typeof(MomentTypeConverter))]
@@ -18,6 +19,7 @@ namespace Stl.Time
         public static readonly Moment EpochStart = new(0); // AKA Unix Epoch
 
         // AKA Unix Time
+        [DataMember(Order = 0)]
         public long EpochOffsetTicks { get; }
         public TimeSpan EpochOffset => new(EpochOffsetTicks);
 

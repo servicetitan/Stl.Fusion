@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,7 +9,7 @@ namespace Stl.CommandR.Internal
 {
     public record LocalFuncCommand<T> : LocalCommand, ICommand<T>
     {
-        [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        [IgnoreDataMember, JsonIgnore, Newtonsoft.Json.JsonIgnore]
         public Func<CancellationToken, Task<T>>? Handler { get; init; }
 
         public override async Task Run(CancellationToken cancellationToken)

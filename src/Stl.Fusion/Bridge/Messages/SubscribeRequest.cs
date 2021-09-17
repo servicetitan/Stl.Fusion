@@ -1,12 +1,15 @@
-using System;
+using System.Runtime.Serialization;
 
 namespace Stl.Fusion.Bridge.Messages
 {
-    [Serializable]
+    [DataContract]
     public class SubscribeRequest : ReplicaRequest
     {
+        [DataMember(Order = 3)]
         public LTag Version { get; set; }
+        [DataMember(Order = 4)]
         public bool IsConsistent { get; set; }
+        [DataMember(Order = 5)]
         public bool IsUpdateRequested { get; set; }
     }
 }

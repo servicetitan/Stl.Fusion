@@ -1,11 +1,14 @@
 using System.Reactive;
+using System.Runtime.Serialization;
 
 namespace Stl.Fusion.Authentication.Commands
 {
-    public record EditUserCommand(Session Session)
-        : ISessionCommand<Unit>
+    [DataContract]
+    public record EditUserCommand(
+        [property: DataMember] Session Session
+        ) : ISessionCommand<Unit>
     {
-        public string? Name { get; init; }
+        [DataMember] public string? Name { get; init; }
 
         public EditUserCommand() : this(Session.Null) { }
         public EditUserCommand(Session session, string? name = null) : this(session)

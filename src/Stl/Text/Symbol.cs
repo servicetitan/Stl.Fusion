@@ -7,7 +7,7 @@ using Stl.Text.Internal;
 
 namespace Stl.Text
 {
-    [Serializable]
+    [DataContract]
     [JsonConverter(typeof(SymbolJsonConverter))]
     [Newtonsoft.Json.JsonConverter(typeof(SymbolNewtonsoftJsonConverter))]
     [TypeConverter(typeof(SymbolTypeConverter))]
@@ -19,6 +19,7 @@ namespace Stl.Text
         private readonly string? _value;
         private readonly int _hashCode;
 
+        [DataMember(Order = 0)]
         public string Value => _value ?? "";
         public int HashCode => _hashCode;
         public bool IsEmpty => Value.Length == 0;

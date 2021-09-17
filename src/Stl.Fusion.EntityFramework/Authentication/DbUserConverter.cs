@@ -27,7 +27,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
         {
             if (DbUserIdHandler.Format(target.Id) != source.Id)
                 throw new ArgumentOutOfRangeException(nameof(source));
-            target.UpdateVersion(VersionGenerator);
+            target.Version = VersionGenerator.NextVersion(target.Version);
 
             // Adding new Claims
             target.Claims = source.Claims.SetItems(target.Claims);

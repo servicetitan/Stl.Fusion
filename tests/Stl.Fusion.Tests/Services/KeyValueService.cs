@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reactive;
+using System.Runtime.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.Async;
@@ -12,12 +13,19 @@ namespace Stl.Fusion.Tests.Services
 {
     public interface IKeyValueService<TValue>
     {
-        public record SetCommand(string Key, TValue Value) : ICommand<Unit>
+        [DataContract]
+        public record SetCommand(
+            [property: DataMember] string Key,
+            [property: DataMember] TValue Value
+            ) : ICommand<Unit>
         {
             public SetCommand() : this(null!, default!) { }
         }
 
-        public record RemoveCommand(string Key) : ICommand<Unit>
+        [DataContract]
+        public record RemoveCommand(
+            [property: DataMember] string Key
+            ) : ICommand<Unit>
         {
             public RemoveCommand() : this(default(string)!) { }
         }

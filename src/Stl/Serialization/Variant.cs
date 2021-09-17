@@ -1,15 +1,17 @@
 using System;
+using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 
 namespace Stl.Serialization
 {
+    [DataContract]
     public abstract class Variant<TValue> : IEquatable<Variant<TValue>>
         where TValue : class
     {
         private TValue? _value;
 
+        [IgnoreDataMember]
         [JsonIgnore]
-        [Newtonsoft.Json.JsonProperty(NullValueHandling = Newtonsoft.Json.NullValueHandling.Include)]
         public TValue? Value {
             get => _value;
             init => _value = value;

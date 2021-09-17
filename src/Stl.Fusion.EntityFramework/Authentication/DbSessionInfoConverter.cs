@@ -28,7 +28,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
             if (target.IsSignOutForced)
                 throw Errors.ForcedSignOut();
 
-            target.UpdateVersion(VersionGenerator);
+            target.Version = VersionGenerator.NextVersion(target.Version);
             target.LastSeenAt = source.LastSeenAt;
             target.IPAddress = source.IPAddress;
             target.UserAgent = source.UserAgent;

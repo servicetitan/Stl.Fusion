@@ -131,7 +131,7 @@ namespace Stl.Fusion.Operations.Reprocessing
                     var delay = RetryDelayProvider.Invoke(error);
                     Log.LogWarning(
                         "Retry #{TryCount}/{MaxTryCount} on {Error}: {Command} with {Delay}ms delay",
-                        FailedTryCount + 1, MaxTryCount, new ErrorInfo(error), command, delay.TotalMilliseconds);
+                        FailedTryCount + 1, MaxTryCount, new ExceptionInfo(error), command, delay.TotalMilliseconds);
                     context.ExecutionState = executionStateBackup;
                     context.Items.Items = itemsBackup;
                 }

@@ -1,9 +1,9 @@
-using System;
+using System.Runtime.Serialization;
 using Stl.Serialization;
 
 namespace Stl.Fusion.Bridge.Messages
 {
-    [Serializable]
+    [DataContract]
     public abstract class BridgeMessage
     {
         public override string ToString()

@@ -8,7 +8,7 @@ using Stl.Serialization.Internal;
 
 namespace Stl.Serialization
 {
-    [Serializable]
+    [DataContract]
     [JsonConverter(typeof(JsonStringJsonConverter))]
     [Newtonsoft.Json.JsonConverter(typeof(JsonStringNewtonsoftJsonConverter))]
     [TypeConverter(typeof(JsonStringTypeConverter))]
@@ -22,6 +22,7 @@ namespace Stl.Serialization
 
         private readonly string? _value;
 
+        [DataMember(Order = 0)]
         public string Value => _value ?? string.Empty;
 
         public static JsonString? New(string? value)

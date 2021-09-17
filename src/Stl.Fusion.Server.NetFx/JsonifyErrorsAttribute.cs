@@ -26,7 +26,7 @@ namespace Stl.Fusion.Server
                 exception = rewriter.Rewrite(actionContext, exception, true);
             }
             var serializer = TypeDecoratingSerializer.Default;
-            var content = serializer.Write(new ExceptionParcel(exception));
+            var content = serializer.Write(exception.ToExceptionInfo());
             actionExecutedContext.Exception = null; // mark exception as handled;
             var response = new HttpResponseMessage {
                 Content = new StringContent(content, null, "application/json"),

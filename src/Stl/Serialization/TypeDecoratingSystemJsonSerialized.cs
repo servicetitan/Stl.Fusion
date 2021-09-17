@@ -1,5 +1,5 @@
 using System;
-using System.Text.Json.Serialization;
+using System.Runtime.Serialization;
 
 namespace Stl.Serialization
 {
@@ -10,13 +10,14 @@ namespace Stl.Serialization
         public static TypeDecoratingSystemJsonSerialized<TValue> New<TValue>(string serializedValue) => new(serializedValue);
     }
 
+    [DataContract]
+    [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
     public class TypeDecoratingSystemJsonSerialized<T> : Serialized<T>
     {
         [ThreadStatic] private static IUtf16Serializer<T>? _serializer;
 
         public TypeDecoratingSystemJsonSerialized() { }
         public TypeDecoratingSystemJsonSerialized(T value) => Value = value;
-        [JsonConstructor, Newtonsoft.Json.JsonConstructor]
         public TypeDecoratingSystemJsonSerialized(string data) => Data = data;
 
         protected override IUtf16Serializer<T> GetSerializer()
