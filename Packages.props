@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <AspNetCoreVersion>5.0.9</AspNetCoreVersion>
+    <AspNetCoreVersion>5.0.10</AspNetCoreVersion>
     <AspNetCoreVersion3>3.*</AspNetCoreVersion3>
     <EntityFrameworkCoreVersion>$(AspNetCoreVersion)</EntityFrameworkCoreVersion>
     <NpgsqlVersion>$(EntityFrameworkCoreVersion)</NpgsqlVersion>
