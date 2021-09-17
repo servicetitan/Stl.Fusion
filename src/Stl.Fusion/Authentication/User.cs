@@ -73,6 +73,7 @@ namespace Stl.Fusion.Authentication
             Name = name;
             Version = version;
             Claims = claims;
+            Identities = ImmutableDictionary<UserIdentity, string>.Empty;
             JsonCompatibleIdentities = jsonCompatibleIdentities;
             _claimsPrincipalLazy = new(ToClaimsPrincipal);
         }
