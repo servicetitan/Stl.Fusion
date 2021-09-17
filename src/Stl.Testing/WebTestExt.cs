@@ -16,10 +16,10 @@ namespace Stl.Testing
             return uri;
         }
 
-        public static Uri GetLocalUri(int port)
-            => new Uri($"http://localhost:{port}");
+        public static Uri GetLocalUri(int port, string protocol = "http")
+            => new($"{protocol}://localhost:{port}");
 
-        private static int GetUnusedTcpPort()
+        public static int GetUnusedTcpPort()
         {
             var listener = new TcpListener(IPAddress.Any, 0);
             listener.Start();
