@@ -5,7 +5,7 @@ using RestEase;
 namespace Samples.HelloCart.V4
 {
     [BasePath("product")]
-    public interface IProductClient
+    public interface IProductClientDef
     {
         [Post("edit")]
         Task Edit([Body] EditCommand<Product> command, CancellationToken cancellationToken);
@@ -14,7 +14,7 @@ namespace Samples.HelloCart.V4
     }
 
     [BasePath("cart")]
-    public interface ICartClient
+    public interface ICartClientDef
     {
         [Post("edit")]
         Task Edit([Body] EditCommand<Cart> command, CancellationToken cancellationToken);

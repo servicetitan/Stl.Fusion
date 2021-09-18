@@ -30,15 +30,15 @@ namespace Samples.HelloCart.V2
             // Add AppDbContext & related services
             var appTempDir = PathExt.GetApplicationTempDirectory("", true);
             var dbPath = appTempDir & "HelloCart_v01.db";
-            services.AddDbContextFactory<AppDbContext>(b => {
-                b.UseSqlite($"Data Source={dbPath}");
-                b.EnableSensitiveDataLogging();
+            services.AddDbContextFactory<AppDbContext>(dbContext => {
+                dbContext.UseSqlite($"Data Source={dbPath}");
+                dbContext.EnableSensitiveDataLogging();
             });
-            services.AddDbContextServices<AppDbContext>(b => {
-                b.AddOperations((_, o) => {
+            services.AddDbContextServices<AppDbContext>(dbContext => {
+                dbContext.AddOperations((_, o) => {
                     o.UnconditionalWakeUpPeriod = TimeSpan.FromSeconds(5);
                 });
-                b.AddFileBasedOperationLogChangeTracking(dbPath + "_changed");
+                dbContext.AddFileBasedOperationLogChangeTracking(dbPath + "_changed");
             });
             ClientServices = HostServices = services.BuildServiceProvider();
         }
