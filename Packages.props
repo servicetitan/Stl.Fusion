@@ -15,7 +15,7 @@
     <SystemNetHttpJsonVersion>5.0.3</SystemNetHttpJsonVersion>
     <MessagePackVersion>2.3.*</MessagePackVersion>
     <MicrosoftExtensionsVersion>5.0.0</MicrosoftExtensionsVersion>
-    <StlFusionVersion>1.9.*</StlFusionVersion>
+    <StlFusionVersion>1.10.*</StlFusionVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(LegacyBuild)' == 'true'">
