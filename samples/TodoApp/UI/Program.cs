@@ -84,7 +84,7 @@ namespace Templates.TodoApp.UI
             fusion.AddFusionTime();
 
             // Default update delay is 0.5s
-            services.AddTransient<IUpdateDelayer>(c => new UpdateDelayer(c.UICommandTracker(), 5));
+            services.AddTransient<IUpdateDelayer>(c => new UpdateDelayer(c.UICommandTracker(), 0.5));
         }
     }
 }
