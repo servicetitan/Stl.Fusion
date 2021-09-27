@@ -2,13 +2,20 @@ using System;
 using System.Collections;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
-using Microsoft.Toolkit.HighPerformance.Buffers;
+using Stl.Text;
 
 namespace Stl.Serialization
 {
+    public static class ByteSerialized
+    {
+        public static ByteSerialized<TValue> New<TValue>() => new();
+        public static ByteSerialized<TValue> New<TValue>(TValue value) => new() { Value = value };
+        public static ByteSerialized<TValue> New<TValue>(byte[] data) => new(data);
+    }
+
     [DataContract]
     [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
-    public abstract class ByteSerialized<T> : IEquatable<ByteSerialized<T>>
+    public class ByteSerialized<T> : IEquatable<ByteSerialized<T>>
     {
         private Option<T> _valueOption;
         private Option<byte[]> _dataOption;
@@ -31,10 +38,14 @@ namespace Stl.Serialization
             }
         }
 
+        public ByteSerialized() { }
+        public ByteSerialized(byte[] data)
+            => _dataOption = data;
+
         // ToString
 
         public override string ToString()
-            => $"{GetType().Name} {{ Data = {SystemJsonSerializer.Default.Write(Data)} }}";
+            => $"{GetType().Name} {{ Data = {JsonFormatter.Format(Data)} }}";
 
         // Private & protected methods
 
@@ -64,7 +75,8 @@ namespace Stl.Serialization
             return value;
         }
 
-        protected abstract IByteSerializer<T> GetSerializer();
+        protected virtual IByteSerializer<T> GetSerializer()
+            => ByteSerializer.Default.ToTyped<T>();
 
         // Equality
 

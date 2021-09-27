@@ -7,7 +7,7 @@ namespace Stl.Serialization
     {
         public static MessagePackSerialized<TValue> New<TValue>() => new();
         public static MessagePackSerialized<TValue> New<TValue>(TValue value) => new() { Value = value };
-        public static MessagePackSerialized<TValue> New<TValue>(byte[] serializedValue) => new(serializedValue);
+        public static MessagePackSerialized<TValue> New<TValue>(byte[] data) => new(data);
     }
 
     [DataContract]
@@ -17,7 +17,7 @@ namespace Stl.Serialization
         [ThreadStatic] private static IByteSerializer<T>? _serializer;
 
         public MessagePackSerialized() { }
-        public MessagePackSerialized(byte[] data) => Data = data;
+        public MessagePackSerialized(byte[] data) : base(data) { }
 
         protected override IByteSerializer<T> GetSerializer()
             => _serializer ??= MessagePackByteSerializer.Default.ToTyped<T>();

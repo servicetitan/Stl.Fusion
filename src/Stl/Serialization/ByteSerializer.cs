@@ -1,9 +1,12 @@
 using System;
+using MessagePack;
 
 namespace Stl.Serialization
 {
     public class ByteSerializer : IByteSerializer
     {
+        public static IByteSerializer Default { get; set; } = MessagePackByteSerializer.Default;
+
         public IByteReader Reader { get; }
         public IByteWriter Writer { get; }
 

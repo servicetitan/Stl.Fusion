@@ -3,6 +3,7 @@ using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using Stl.Internal;
 using Stl.Reflection;
+using Stl.Text;
 
 namespace Stl.Serialization
 {
@@ -47,7 +48,7 @@ namespace Stl.Serialization
         {
             return TypeRef.AssemblyQualifiedName.IsEmpty
                 ? $"{GetType().Name}()"
-                : $"{GetType().Name}({TypeRef}, {SystemJsonSerializer.Default.Write(Message)})";
+                : $"{GetType().Name}({TypeRef}, {JsonFormatter.Format(Message)})";
         }
 
         public Exception? ToException()

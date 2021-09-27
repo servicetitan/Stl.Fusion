@@ -4,6 +4,8 @@ namespace Stl.Serialization
 {
     public class Utf16Serializer : IUtf16Serializer
     {
+        public static IUtf16Serializer Default { get; set; } = SystemJsonSerializer.Default;
+
         public IUtf16Reader Reader { get; }
         public IUtf16Writer Writer { get; }
 

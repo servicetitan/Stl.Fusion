@@ -5,6 +5,7 @@ using MessagePack;
 using Newtonsoft.Json;
 using Stl.Reflection;
 using Stl.Serialization;
+using Stl.Text;
 using Xunit.Abstractions;
 
 namespace Stl.Testing
@@ -108,7 +109,7 @@ namespace Stl.Testing
             var s = new MessagePackByteSerializer().ToTyped<T>();
             using var bufferWriter = s.Writer.Write(value);
             var data = bufferWriter.WrittenMemory.ToArray();
-            output?.WriteLine($"MessagePackByteSerializer: {SystemJsonSerializer.Default.Write(data)}");
+            output?.WriteLine($"MessagePackByteSerializer: {JsonFormatter.Format(data)}");
             var v1 = s.Reader.Read(data);
             return v1;
         }
