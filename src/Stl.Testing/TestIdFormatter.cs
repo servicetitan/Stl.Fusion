@@ -44,7 +44,7 @@ namespace Stl.Testing
 #else
             var r = new string(sb.AsSpan()[.. Math.Max(0, sb.Length - 1)]);
 #endif
-            r = PathExt.GetHashedName(r, null, maxLength ?? MaxLength, alwaysHash ?? AlwaysHash);
+            r = FilePath.GetHashedName(r, null, maxLength ?? MaxLength, alwaysHash ?? AlwaysHash);
             r = PostProcess(r);
             return r;
         }

@@ -32,10 +32,10 @@ namespace Stl.Plugins
             CacheDir = options.CacheDir;
         }
 
-        public PathString PluginDir { get; }
+        public FilePath PluginDir { get; }
         public string AssemblyNamePattern { get; }
         public bool UseCache { get; }
-        public PathString CacheDir { get; }
+        public FilePath CacheDir { get; }
 
         protected override IAsyncCache<string, string> CreateCache()
         {
@@ -61,11 +61,11 @@ namespace Stl.Plugins
             return files.ToDelimitedString();
         }
 
-        protected virtual PathString[] GetPluginAssemblyNames()
+        protected virtual FilePath[] GetPluginAssemblyNames()
             => Directory
                 .EnumerateFiles(
                     PluginDir, AssemblyNamePattern, SearchOption.TopDirectoryOnly)
-                .Select(PathString.New)
+                .Select(FilePath.New)
                 .OrderBy(name => name)
                 .ToArray();
 
@@ -112,12 +112,12 @@ namespace Stl.Plugins
 
         public new class Options : CachingPluginFinderBase.Options
         {
-            public PathString PluginDir { get; set; } =
+            public FilePath PluginDir { get; set; } =
                 Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? ".";
 
             public string AssemblyNamePattern { get; set; } = "*.dll";
             public bool UseCache { get; set; } = true;
-            public PathString CacheDir { get; set; } = PathExt.GetApplicationTempDirectory();
+            public FilePath CacheDir { get; set; } = FilePath.GetApplicationTempDirectory();
         }
     }
 }

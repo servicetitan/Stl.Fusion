@@ -56,7 +56,7 @@ namespace Stl.Fusion.Tests
     {
         public FusionTestOptions Options { get; }
         public bool IsLoggingEnabled { get; set; } = true;
-        public PathString SqliteDbPath { get; protected set; }
+        public FilePath SqliteDbPath { get; protected set; }
         public string PostgreSqlConnectionString { get; protected set; } =
             "Server=localhost;Database=stl_fusion_tests;Port=5432;User Id=postgres;Password=Fusion.0.to.1";
         public FusionTestWebHost WebHost { get; }
@@ -171,8 +171,8 @@ namespace Stl.Fusion.Tests
                     .RegisterFrom(testType.Assembly);
 
                 // DbContext & related services
-                var appTempDir = PathExt.GetApplicationTempDirectory("", true);
-                SqliteDbPath = appTempDir & PathExt.GetHashedName($"{testType.Name}_{testType.Namespace}.db");
+                var appTempDir = FilePath.GetApplicationTempDirectory("", true);
+                SqliteDbPath = appTempDir & FilePath.GetHashedName($"{testType.Name}_{testType.Namespace}.db");
                 services.AddPooledDbContextFactory<TestDbContext>(builder => {
                     switch (Options.DbType) {
                     case FusionTestDbType.Sqlite:

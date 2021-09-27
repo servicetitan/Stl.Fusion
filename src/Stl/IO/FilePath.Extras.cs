@@ -6,7 +6,7 @@ using Stl.Text;
 
 namespace Stl.IO
 {
-    public static class PathExt
+    public readonly partial struct FilePath
     {
         private static readonly Regex NonAlphaOrNumberRe =
             new("[^a-z0-9_]+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -15,7 +15,7 @@ namespace Stl.IO
         private static readonly Regex TrailingUnderscoresRe =
             new("_+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-        public static PathString GetHashedName(
+        public static FilePath GetHashedName(
             string key, string? prefix = null,
             int maxLength = 40, bool alwaysHash = false)
         {
@@ -39,7 +39,7 @@ namespace Stl.IO
             return result;
         }
 
-        public static PathString GetApplicationDirectory()
+        public static FilePath GetApplicationDirectory()
         {
             var assembly = Assembly.GetEntryAssembly();
             if (assembly?.GetName()?.Name?.StartsWith("testhost") ?? false) // Unit tests
@@ -47,7 +47,7 @@ namespace Stl.IO
             return Path.GetDirectoryName(assembly?.Location) ?? Environment.CurrentDirectory;
         }
 
-        public static PathString GetApplicationTempDirectory(string appId = "", bool createIfAbsents = false)
+        public static FilePath GetApplicationTempDirectory(string appId = "", bool createIfAbsents = false)
         {
             if (string.IsNullOrEmpty(appId))
                 appId = Assembly.GetEntryAssembly()?.GetName()?.Name ?? "unknown";

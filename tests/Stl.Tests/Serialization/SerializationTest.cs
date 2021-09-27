@@ -87,11 +87,11 @@ namespace Stl.Tests.Serialization
         }
 
         [Fact]
-        public void PathStringSerialization()
+        public void FilePathSerialization()
         {
-            default(PathString).AssertPassesThroughAllSerializers(Out);
-            PathString.Empty.AssertPassesThroughAllSerializers(Out);
-            PathString.New("C:\\").AssertPassesThroughAllSerializers(Out);
+            default(FilePath).AssertPassesThroughAllSerializers(Out);
+            FilePath.Empty.AssertPassesThroughAllSerializers(Out);
+            FilePath.New("C:\\").AssertPassesThroughAllSerializers(Out);
         }
 
         [Fact]

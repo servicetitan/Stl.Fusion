@@ -83,7 +83,7 @@ namespace Stl.Testing
 
         protected virtual IHostBuilder CreateHostBuilder()
         {
-            var emptyDir = PathExt.GetApplicationDirectory() & "Empty";
+            var emptyDir = FilePath.GetApplicationDirectory() & "Empty";
             Directory.CreateDirectory(emptyDir);
 
             var builder = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder();
