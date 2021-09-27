@@ -1,6 +1,5 @@
 using System;
 using Newtonsoft.Json.Serialization;
-using Stl.Internal;
 using Stl.Reflection;
 using Stl.Serialization.Internal;
 using Stl.Text;
@@ -42,9 +41,9 @@ namespace Stl.Serialization
             TypeNameHelpers.SplitAssemblyQualifiedName(p.Item, out var assemblyName, out var typeName);
             var actualType = _serializationBinder.BindToType(assemblyName, typeName);
             if (!TypeFilter.Invoke(actualType))
-                throw Errors.UnsupportedTypeForJsonSerialization(actualType);
+                throw Errors.UnsupportedSerializedType(actualType);
             if (!type.IsAssignableFrom(actualType))
-                throw Errors.UnsupportedTypeForJsonSerialization(actualType);
+                throw Errors.UnsupportedSerializedType(actualType);
 
             p.ParseNext();
             return Serializer.Reader.Read(p.Item, actualType);
@@ -61,9 +60,9 @@ namespace Stl.Serialization
             else {
                 var actualType = value.GetType();
                 if (!type.IsAssignableFrom(actualType))
-                    throw Errors.MustBeAssignableTo(actualType, type, nameof(type));
+                    throw Stl.Internal.Errors.MustBeAssignableTo(actualType, type, nameof(type));
                 if (!TypeFilter.Invoke(actualType))
-                    throw Errors.UnsupportedTypeForJsonSerialization(actualType);
+                    throw Errors.UnsupportedSerializedType(actualType);
                 var aqn = actualType.GetAssemblyQualifiedName(false, _serializationBinder);
                 var json = Serializer.Writer.Write(value, actualType);
                 f.Append(aqn);

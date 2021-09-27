@@ -134,7 +134,7 @@ namespace Stl.Fusion.Client
                 if (IsMessageLoggingEnabled)
                     stringChannel = stringChannel.WithLogger(clientId, Log, MessageLogLevel, MessageMaxLength);
                 var serializers = SerializerFactory.Invoke(Services);
-                var resultChannel = stringChannel.WithSerializer(serializers);
+                var resultChannel = stringChannel.WithUtf16Serializer(serializers);
                 _ = wsChannel.WhenCompleted(CancellationToken.None).ContinueWith(async _ => {
                     await Task.Delay(1000, default).ConfigureAwait(false);
                     await wsChannel.DisposeAsync().ConfigureAwait(false);

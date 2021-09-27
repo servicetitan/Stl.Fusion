@@ -17,7 +17,8 @@ namespace Stl.Fusion.EntityFramework.Authentication
     [Index(nameof(IPAddress), nameof(IsSignOutForced))]
     public class DbSessionInfo<TDbUserId> : IHasId<string>, IHasVersion<long>
     {
-        private readonly NewtonsoftJsonSerialized<ImmutableOptionSet?> _options = new(ImmutableOptionSet.Empty);
+        private readonly NewtonsoftJsonSerialized<ImmutableOptionSet> _options =
+            NewtonsoftJsonSerialized.New(ImmutableOptionSet.Empty);
         private DateTime _createdAt;
         private DateTime _lastSeenAt;
 
@@ -50,7 +51,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
 
         [NotMapped, JsonIgnore]
         public ImmutableOptionSet Options {
-            get => _options.Value ?? ImmutableOptionSet.Empty;
+            get => _options.Value;
             set => _options.Value = value;
         }
     }

@@ -37,7 +37,7 @@ namespace Stl.Fusion.Tests
                 (DateTime.Now - screenshot.CapturedAt).Should().BeLessThan(epsilon);
                 await Task.Delay(TimeSpan.FromSeconds(0.1));
             }
-            ScreenshotController.CallCount.Should().BeLessThan(10);
+            ScreenshotController.CallCount.Should().BeLessThan(15);
         }
     }
 }

@@ -100,7 +100,7 @@ namespace Stl.Fusion.Server
             var webSocket = wsContext.WebSocket;
             await using var wsChannel = new WebSocketChannel(webSocket);
             var channel = wsChannel
-                .WithSerializer(serializers)
+                .WithUtf16Serializer(serializers)
                 .WithId(clientId);
             Publisher.ChannelHub.Attach(channel);
             try {

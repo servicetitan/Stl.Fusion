@@ -110,7 +110,7 @@ namespace Stl.Channels
             }
         }
 
-        public static Channel<T> WithSerializer<T>(
+        public static Channel<T> WithUtf16Serializer<T>(
             this Channel<string> downstreamChannel,
             IUtf16Serializer<T> serializer,
             BoundedChannelOptions? channelOptions = null,
@@ -132,6 +132,36 @@ namespace Stl.Channels
                 ChannelCompletionMode.CompleteAndPropagateError,
                 cancellationToken);
             return pair.Channel2;
+        }
+
+
+        public static Channel<T> WithByteSerializer<T>(
+            this Channel<ReadOnlyMemory<byte>> downstreamChannel,
+            ByteSerializer<T> serializer,
+            BoundedChannelOptions? channelOptions = null,
+            CancellationToken cancellationToken = default)
+        {
+            channelOptions ??= new BoundedChannelOptions(16) {
+                FullMode = BoundedChannelFullMode.Wait,
+                SingleReader = true,
+                SingleWriter = true,
+                AllowSynchronousContinuations = true,
+            };
+            var pair = ChannelPair.CreateTwisted(
+                Channel.CreateBounded<T>(channelOptions),
+                Channel.CreateBounded<T>(channelOptions));
+
+            downstreamChannel.Connect(pair.Channel1,
+                serializer.Reader.Read,
+                Write,
+                ChannelCompletionMode.CompleteAndPropagateError,
+                cancellationToken);
+            return pair.Channel2;
+
+            ReadOnlyMemory<byte> Write(T value) {
+                using var bufferWriter = serializer.Writer.Write(value);
+                return bufferWriter.WrittenMemory.ToArray();
+            }
         }
 
         public static Channel<T> WithLogger<T>(

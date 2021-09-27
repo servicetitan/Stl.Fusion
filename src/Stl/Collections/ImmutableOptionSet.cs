@@ -38,7 +38,9 @@ namespace Stl.Collections
 
         [JsonConstructor]
         public ImmutableOptionSet(Dictionary<string, NewtonsoftJsonSerialized<object>>? jsonCompatibleItems)
-            : this(jsonCompatibleItems?.ToImmutableDictionary(p => (Symbol) p.Key, p => p.Value.Value))
+            : this(jsonCompatibleItems?.ToImmutableDictionary(
+                p => (Symbol) p.Key,
+                p => p.Value.Value))
         { }
 
         public object? GetService(Type serviceType)

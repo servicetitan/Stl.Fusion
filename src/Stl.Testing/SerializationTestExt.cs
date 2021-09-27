@@ -34,7 +34,9 @@ namespace Stl.Testing
             v.Should().Be(value);
             v = v.PassThroughNewtonsoftJsonSerialized(output);
             v.Should().Be(value);
-            v = v.PassThroughMessagePackSerializer(output);
+            v = v.PassThroughMessagePackByteSerializer(output);
+            v.Should().Be(value);
+            v = v.PassThroughMessagePackSerialized(output);
             v.Should().Be(value);
             return v;
         }
@@ -47,7 +49,8 @@ namespace Stl.Testing
             v = v.PassThroughTypeWritingSerializer(output);
             v = v.PassThroughSystemJsonSerialized(output);
             v = v.PassThroughNewtonsoftJsonSerialized(output);
-            v = v.PassThroughMessagePackSerializer(output);
+            v = v.PassThroughMessagePackByteSerializer(output);
+            v = v.PassThroughMessagePackSerialized(output);
             return v;
         }
 
@@ -100,14 +103,22 @@ namespace Stl.Testing
 
         // MessagePack serializer
 
-        public static T PassThroughMessagePackSerializer<T>(this T value, ITestOutputHelper? output = null)
+        public static T PassThroughMessagePackByteSerializer<T>(this T value, ITestOutputHelper? output = null)
         {
-            var options = MessagePackSerializer.DefaultOptions;
-            using var ms = new MemoryStream();
-            MessagePackSerializer.Serialize(ms, value, options);
-            ms.Position = 0;
-            var v1 = MessagePackSerializer.Deserialize<T>(ms, options);
+            var s = new MessagePackByteSerializer().ToTyped<T>();
+            using var bufferWriter = s.Writer.Write(value);
+            var data = bufferWriter.WrittenMemory.ToArray();
+            output?.WriteLine($"MessagePackByteSerializer: {SystemJsonSerializer.Default.Write(data)}");
+            var v1 = s.Reader.Read(data);
             return v1;
+        }
+
+        public static T PassThroughMessagePackSerialized<T>(this T value, ITestOutputHelper? output = null)
+        {
+            var v1 = MessagePackSerialized.New(value);
+            output?.WriteLine($"MessagePackSerialized: {v1.Data}");
+            var v2 = MessagePackSerialized.New<T>(v1.Data);
+            return v2.Value;
         }
     }
 }

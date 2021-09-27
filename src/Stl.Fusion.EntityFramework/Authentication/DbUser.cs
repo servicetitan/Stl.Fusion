@@ -14,8 +14,8 @@ namespace Stl.Fusion.EntityFramework.Authentication
     public class DbUser<TDbUserId> : IHasId<TDbUserId>, IHasVersion<long>
         where TDbUserId : notnull
     {
-        private readonly NewtonsoftJsonSerialized<ImmutableDictionary<string, string>?> _claims =
-            new(ImmutableDictionary<string, string>.Empty);
+        private readonly NewtonsoftJsonSerialized<ImmutableDictionary<string, string>> _claims =
+            NewtonsoftJsonSerialized.New(ImmutableDictionary<string, string>.Empty);
 
         [Key] public TDbUserId Id { get; set; } = default!;
         [ConcurrencyCheck] public long Version { get; set; }
@@ -29,7 +29,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
 
         [NotMapped, JsonIgnore]
         public ImmutableDictionary<string, string> Claims {
-            get => _claims.Value ?? ImmutableDictionary<string, string>.Empty;
+            get => _claims.Value;
             set => _claims.Value = value;
         }
 

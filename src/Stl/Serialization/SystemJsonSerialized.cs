@@ -6,7 +6,7 @@ namespace Stl.Serialization
     public static class SystemJsonSerialized
     {
         public static SystemJsonSerialized<TValue> New<TValue>() => new();
-        public static SystemJsonSerialized<TValue> New<TValue>(TValue value) => new(value);
+        public static SystemJsonSerialized<TValue> New<TValue>(TValue value) => new() { Value = value };
         public static SystemJsonSerialized<TValue> New<TValue>(string serializedValue) => new(serializedValue);
     }
 
@@ -17,7 +17,6 @@ namespace Stl.Serialization
         [ThreadStatic] private static IUtf16Serializer<T>? _serializer;
 
         public SystemJsonSerialized() { }
-        public SystemJsonSerialized(T value) => Value = value;
         public SystemJsonSerialized(string data) => Data = data;
 
         protected override IUtf16Serializer<T> GetSerializer()

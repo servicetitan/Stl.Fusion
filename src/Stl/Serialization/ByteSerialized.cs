@@ -1,27 +1,29 @@
 using System;
+using System.Collections;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
+using Microsoft.Toolkit.HighPerformance.Buffers;
 
 namespace Stl.Serialization
 {
     [DataContract]
     [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
-    public abstract class Serialized<T> : IEquatable<Serialized<T>>
+    public abstract class ByteSerialized<T> : IEquatable<ByteSerialized<T>>
     {
         private Option<T> _valueOption;
-        private Option<string> _dataOption;
+        private Option<byte[]> _dataOption;
 
         [JsonIgnore, Newtonsoft.Json.JsonIgnore]
         public T Value {
             get => _valueOption.IsSome(out var v) ? v : Deserialize();
             set {
                 _valueOption = value;
-                _dataOption = Option<string>.None;
+                _dataOption = Option<byte[]>.None;
             }
         }
 
         [DataMember(Order = 0)]
-        public string Data {
+        public byte[] Data {
             get => _dataOption.IsSome(out var v) ? v : Serialize();
             set {
                 _valueOption = Option<T>.None;
@@ -36,13 +38,17 @@ namespace Stl.Serialization
 
         // Private & protected methods
 
-        private string Serialize()
+        private byte[] Serialize()
         {
             if (!_valueOption.IsSome(out var value))
                 throw new InvalidOperationException($"{nameof(Value)} isn't set.");
-            var serializedValue = !typeof(T).IsValueType && ReferenceEquals(value, null)
-                ? ""
-                : GetSerializer().Writer.Write(value);
+            byte[] serializedValue;
+            if (!typeof(T).IsValueType && ReferenceEquals(value, null)) {
+                serializedValue = Array.Empty<byte>();
+            } else {
+                using var bufferWriter = GetSerializer().Writer.Write(value);
+                serializedValue = bufferWriter.WrittenSpan.ToArray();
+            }
             _dataOption = serializedValue;
             return serializedValue;
         }
@@ -51,24 +57,24 @@ namespace Stl.Serialization
         {
             if (!_dataOption.IsSome(out var serializedValue))
                 throw new InvalidOperationException($"{nameof(Data)} isn't set.");
-            var value = serializedValue.IsNullOrEmpty()
+            var value = serializedValue.Length == 0
                 ? default!
                 : GetSerializer().Reader.Read(serializedValue);
             _valueOption = value;
             return value;
         }
 
-        protected abstract IUtf16Serializer<T> GetSerializer();
+        protected abstract IByteSerializer<T> GetSerializer();
 
         // Equality
 
-        public bool Equals(Serialized<T>? other)
+        public bool Equals(ByteSerialized<T>? other)
         {
             if (ReferenceEquals(null, other))
                 return false;
             if (ReferenceEquals(this, other))
                 return true;
-            return Data.Equals(other.Data);
+            return StructuralComparisons.StructuralEqualityComparer.Equals(Data, other.Data);
         }
 
         public override bool Equals(object? obj)
@@ -77,14 +83,14 @@ namespace Stl.Serialization
                 return false;
             if (ReferenceEquals(this, obj))
                 return true;
-            return Equals((Serialized<T>)obj);
+            return Equals((ByteSerialized<T>)obj);
         }
 
         public override int GetHashCode()
             => Data.GetHashCode();
-        public static bool operator ==(Serialized<T>? left, Serialized<T>? right)
+        public static bool operator ==(ByteSerialized<T>? left, ByteSerialized<T>? right)
             => Equals(left, right);
-        public static bool operator !=(Serialized<T>? left, Serialized<T>? right)
+        public static bool operator !=(ByteSerialized<T>? left, ByteSerialized<T>? right)
             => !Equals(left, right);
     }
 }

@@ -49,8 +49,6 @@ namespace Stl.Internal
         public static Exception PathIsRelative(string? paramName) =>
             new ArgumentException("Path is relative.", paramName);
 
-        public static Exception UnsupportedTypeForJsonSerialization(Type type)
-            => new JsonSerializationException($"Unsupported type: '{type}'.");
         public static Exception WrongExceptionType(Type type)
             => new SecurityException($"Wrong exception type: '{type}'.");
 

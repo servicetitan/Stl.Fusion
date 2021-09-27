@@ -1,8 +1,6 @@
 using System;
-using System.Buffers;
-using Stl.Serialization.Internal;
 
-namespace Stl.Serialization
+namespace Stl.Serialization.Internal
 {
     public abstract class Utf16SerializerBase : IUtf16Serializer, IUtf16Reader, IUtf16Writer
     {

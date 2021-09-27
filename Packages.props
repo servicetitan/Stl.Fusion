@@ -66,6 +66,7 @@
     <PackageReference Update="Microsoft.EntityFrameworkCore.Relational" Version="$(EntityFrameworkCoreVersion)" />
     <PackageReference Update="Microsoft.EntityFrameworkCore.Sqlite" Version="$(EntityFrameworkCoreVersion)" />
     <PackageReference Update="Microsoft.EntityFrameworkCore.SqlServer" Version="$(EntityFrameworkCoreVersion)" />
+    <PackageReference Update="Microsoft.Toolkit.HighPerformance" Version="7.0.*" />
     <PackageReference Update="Npgsql" Version="$(EntityFrameworkCoreVersion)" />
     <PackageReference Update="Npgsql.EntityFrameworkCore.PostgreSQL" Version="$(EntityFrameworkCoreNpgsqlVersion)" />
     <PackageReference Update="Microsoft.Identity.Web" Version="1.16.*" />

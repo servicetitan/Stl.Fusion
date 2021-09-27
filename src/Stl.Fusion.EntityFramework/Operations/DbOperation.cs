@@ -15,8 +15,8 @@ namespace Stl.Fusion.EntityFramework.Operations
     [Index(nameof(CommitTime), Name = "IX_CommitTime")]
     public class DbOperation : IOperation
     {
-        private readonly NewtonsoftJsonSerialized<object?> _command = new(default(object?));
-        private readonly NewtonsoftJsonSerialized<OptionSet> _items = new(new OptionSet());
+        private readonly NewtonsoftJsonSerialized<object?> _command = NewtonsoftJsonSerialized.New(default(object?));
+        private readonly NewtonsoftJsonSerialized<OptionSet> _items = NewtonsoftJsonSerialized.New(new OptionSet());
         private DateTime _startTime;
         private DateTime _commitTime;
 
