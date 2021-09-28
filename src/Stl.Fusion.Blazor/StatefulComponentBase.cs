@@ -25,7 +25,8 @@ namespace Stl.Fusion.Blazor
             StateChanged = (_, eventKind) => {
                 if ((eventKind & StateHasChangedTriggers) == 0)
                     return;
-                this.StateHasChangedAsync(BlazorCircuitContext);
+                using var suppressing = ExecutionContextExt.SuppressFlow();
+                Task.Run(() => this.StateHasChangedAsync(BlazorCircuitContext));
             };
         }
 
