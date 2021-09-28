@@ -53,7 +53,7 @@ namespace Build
             // Our own options
             string configuration = "",
             string framework = "",
-            bool isPublicRelease = true)
+            bool isPublicRelease = false)
         {
             SetDefaults("Stl.Fusion.sln");
             var options = new Options {
