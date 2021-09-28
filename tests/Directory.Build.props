@@ -2,11 +2,11 @@
 <Project ToolsVersion="latest" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
   <PropertyGroup>
-    <BaseIntermediateOutputPath>$(SolutionDir)artifacts\obj\$(MSBuildProjectName)</BaseIntermediateOutputPath>
-    <OutputPath>$(SolutionDir)artifacts\tests</OutputPath>
+    <BaseIntermediateOutputPath>$(RepoRoot)artifacts\obj\$(MSBuildProjectName)</BaseIntermediateOutputPath>
+    <OutputPath>$(RepoRoot)artifacts\tests</OutputPath>
     <IsPackable>false</IsPackable>
     <IsPublishable>false</IsPublishable>
-    <TargetFrameworks>net6.0;net5.0;netcoreapp3.1;net480;net471</TargetFrameworks>
+    <TargetFrameworks>net6.0;net5.0;netcoreapp3.1;net48;net471</TargetFrameworks>
     <!-- Copy all references to output folder (important for coverage tools) -->
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>

@@ -5,7 +5,7 @@
     "precision": "revision"
   },
   "publicReleaseRefSpec": [
-    "^refs/heads/master$" // we release out of master
+    "^refs/heads/master$"
   ],
   "cloudBuild": {
     "setVersionVariables": true,

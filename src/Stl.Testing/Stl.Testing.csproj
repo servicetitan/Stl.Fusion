@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net5.0;netcoreapp3.1;net480;net471</TargetFrameworks>
+    <TargetFrameworks>net6.0;net5.0;netcoreapp3.1;net48;net471</TargetFrameworks>
     <IsTestProject>false</IsTestProject>
     <PackageTags>servicetitan stl testing</PackageTags>
     <Description>Stl.Testing is a collection of <!--

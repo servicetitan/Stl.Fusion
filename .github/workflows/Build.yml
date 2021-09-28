@@ -25,16 +25,17 @@ jobs:
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: 5.0.400
+          dotnet-version: "6.0.x"
+          include-prerelease: true
 
       - name: Restore NuGet Packages & Tools
         run: dotnet run -p build -c Release --no-launch-profile -- restore restore-tools
 
       - name: Build
-        run: dotnet run -p build -c Release --no-launch-profile -- --configuration Debug --framework net5.0 build
+        run: dotnet run -p build -c Release --no-launch-profile -- --configuration Debug --framework net6.0 build
 
       - name: Run tests
-        run: dotnet run -p build -c Release --no-launch-profile -- --configuration Debug --framework net5.0 coverage
+        run: dotnet run -p build -c Release --no-launch-profile -- --configuration Debug --framework net6.0 coverage
 
       - name: Codecov
         uses: codecov/codecov-action@v1.0.13

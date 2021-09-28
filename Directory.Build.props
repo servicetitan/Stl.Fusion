@@ -1,6 +1,7 @@
 <Project ToolsVersion="latest" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <SolutionDir Condition="$(SolutionDir) == ''">$(MSBuildThisFileDirectory.TrimEnd('\').TrimEnd('/'))\</SolutionDir>
+    <RepoRoot>$([MSBuild]::EnsureTrailingSlash('$(MSBuildThisFileDirectory)'))</RepoRoot>
+    <SolutionDir Condition="$(SolutionDir) == ''">$(RepoRoot)</SolutionDir>
     <Authors>ServiceTitan, Inc.</Authors>
     <Company>ServiceTitan, Inc.</Company>
     <Copyright>Copyright ServiceTitan, Inc.</Copyright>
@@ -20,8 +21,8 @@
     <NoPackageAnalysis>false</NoPackageAnalysis>
     <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
-    <OutputPath>$(SolutionDir)artifacts\</OutputPath>
-    <PackageOutputPath>$(SolutionDir)artifacts\nupkg</PackageOutputPath>
+    <OutputPath>$(RepoRoot)artifacts\</OutputPath>
+    <PackageOutputPath>$(RepoRoot)artifacts\nupkg</PackageOutputPath>
     <DefaultLanguage>en-US</DefaultLanguage>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <!-- Embedded not recommended yet for libs and nupkg, track this in https://github.com/dotnet/sdk/issues/2679 -->
@@ -43,11 +44,33 @@
     <NoWarn>$(NoWarn);NU5105;NU5048;</NoWarn>
     <WarningsAsErrors>true</WarningsAsErrors>
 
-    <!-- Deterministic -->
-    <Deterministic>false</Deterministic>
-    <ContinuousIntegrationBuild>false</ContinuousIntegrationBuild>
-    <PathMap>'$(SolutionDir)'=/_/</PathMap>
+    <!-- SourceLink props: https://github.com/dotnet/sourcelink/issues/159 -->
+    <EnableSourceLink>false</EnableSourceLink>
+    <EnableSourceLink Condition="'$(GitCommitId)' != '' and '$(Configuration)' != 'Debug' and '$(DesignTimeBuild)' != 'true' and '$(BuildingForLiveUnitTesting)' != 'true'">true</EnableSourceLink>
+    <UseSourceLink>$(EnableSourceLink)</UseSourceLink>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <RepositoryType>git</RepositoryType>
+    <PrivateRepositoryUrl>$(RepositoryUrl)</PrivateRepositoryUrl>
+    <ScmRepositoryUrl>$(RepositoryUrl)</ScmRepositoryUrl>
+    <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
+    <RevisionId>$(GitCommitId)</RevisionId>
+    <SourceRevisionId>$(GitCommitId)</SourceRevisionId>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <SourceLinkHasSingleProvider>true</SourceLinkHasSingleProvider>
+    <EnableSourceControlManagerQueries>$(EnableSourceLink)</EnableSourceControlManagerQueries>
+    <GitVersionBaseDirectory>$(RepoRoot)</GitVersionBaseDirectory>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(EnableSourceLink)' == 'true'">
+    <Deterministic>true</Deterministic>
+    <Features>strict;pdb-path-determinism</Features>
+    <DeterministicSourcePaths>true</DeterministicSourcePaths>
+    <ContinuousIntegrationBuild>false</ContinuousIntegrationBuild>
+    <PathMap>'$(RepoRoot)'=/_/</PathMap>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(DeterministicSourcePaths)' =='true'">
+    <SourceRoot Include="$(RepoRoot)" RepositoryUrl="$(RepositoryUrl)" SourceControl="git" RevisionId="$(GitCommitId)" />
+  </ItemGroup>
 
   <PropertyGroup>
     <PrereleaseBuild>false</PrereleaseBuild>
@@ -61,6 +84,6 @@
   </PropertyGroup>
 
   <ItemGroup Condition="$(DeterministicSourcePaths) == 'true'">
-    <SourceRoot Include="$(SolutionDir)" />
+    <SourceRoot Include="$(RepoRoot)" />
   </ItemGroup>
 </Project>
