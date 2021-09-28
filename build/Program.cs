@@ -134,9 +134,6 @@ namespace Build
                         .Add(publicReleaseProperty)
                     )
                     .ToConsole()
-                    // TODO: Remove this once MS team resolves this:
-                    // - https://github.com/dotnet/aspnetcore/issues/30427
-                    .WithValidation(CommandResultValidation.None)
                     .ExecuteAsync(cancellationToken).ConfigureAwait(false);
             });
 

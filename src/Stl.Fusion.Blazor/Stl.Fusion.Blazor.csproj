@@ -22,7 +22,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Components" VersionOverride="$(AspNetCoreVersion5)" />
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" VersionOverride="$(AspNetCoreVersion5)" />
     <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" VersionOverride="$(AspNetCoreVersion5)" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" VersionOverride="$(AspNetCoreVersion5)"/>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" VersionOverride="$(AspNetCoreVersion5)" />
   </ItemGroup>
   <ItemGroup Condition="$(TargetFramework.StartsWith('netcore')) or $(TargetFramework.StartsWith('netstandard'))">
     <PackageReference Include="Microsoft.AspNetCore.Components" VersionOverride="$(AspNetCoreVersion3)" />
