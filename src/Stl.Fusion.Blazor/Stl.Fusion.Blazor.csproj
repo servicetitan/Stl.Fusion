@@ -11,6 +11,15 @@
     --></Description>
     <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
   </PropertyGroup>
+  <!-- <workaround for https://github.com/dotnet/aspnetcore/issues/30427 > -->
+  <PropertyGroup>
+    <DisableScopedCssBundling>none</DisableScopedCssBundling>
+    <EnableDefaultScopedCssItems>false</EnableDefaultScopedCssItems>
+    <ScopedCssEnabled>false</ScopedCssEnabled>
+    <NoWarn>$(NoWarn);NU5118</NoWarn>
+  </PropertyGroup>
+  <Target Name="PrepareProjectReferences"></Target>
+  <!-- </workaround for https://github.com/dotnet/aspnetcore/issues/30427 > -->
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components" />
