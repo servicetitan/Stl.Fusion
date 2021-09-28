@@ -44,7 +44,7 @@ namespace Stl.Fusion.Tests
             (await dbContext2.Users.AsQueryable().CountAsync()).Should().Be(1);
             (await dbContext2.Messages.AsQueryable().CountAsync()).Should().Be(1);
             u1 = await dbContext2.Users.FindAsync(u1.Id);
-            u1.Name.Should().Be("realDonaldTrump");
+            u1!.Name.Should().Be("realDonaldTrump");
 
             m1 = await dbContext2.Messages.AsQueryable()
                 .Where(p => p.Id == p.Id)

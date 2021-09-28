@@ -50,16 +50,13 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <NetFxBuild>false</NetFxBuild>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net480' or '$(TargetFramework)' == 'net471'">
-    <NetFxBuild>true</NetFxBuild>
-  </PropertyGroup>
-
-  <PropertyGroup>
+    <PrereleaseBuild>false</PrereleaseBuild>
     <LegacyBuild>false</LegacyBuild>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0' or '$(NetFxBuild)' == 'true'">
+  <PropertyGroup Condition="$(TargetFramework.StartsWith('net6'))">
+    <PrereleaseBuild>true</PrereleaseBuild>
+  </PropertyGroup>
+  <PropertyGroup Condition="$(TargetFramework.StartsWith('net4')) or $(TargetFramework.StartsWith('netstandard'))">
     <LegacyBuild>true</LegacyBuild>
   </PropertyGroup>
 

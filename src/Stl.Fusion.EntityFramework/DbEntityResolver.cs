@@ -70,7 +70,7 @@ namespace Stl.Fusion.EntityFramework
 
             using var dbContext = CreateDbContext();
             var keyPropertyName = options.KeyPropertyName
-                ?? dbContext.Model.FindEntityType(typeof(TDbEntity)).FindPrimaryKey().Properties.Single().Name;
+                ?? dbContext.Model.FindEntityType(typeof(TDbEntity))!.FindPrimaryKey()!.Properties.Single().Name;
             KeyExtractorExpressionBuilder = options.KeyExtractorExpressionBuilder
                 ?? (eEntity => Expression.PropertyOrField(eEntity, keyPropertyName));
             var pEntity = Expression.Parameter(typeof(TDbEntity), "e");
