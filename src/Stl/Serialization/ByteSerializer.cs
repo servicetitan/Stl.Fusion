@@ -24,6 +24,8 @@ namespace Stl.Serialization
 
     public class ByteSerializer<T> : IByteSerializer<T>
     {
+        public static IByteSerializer<T> Default => ByteSerializer.Default.ToTyped<T>();
+
         public IByteReader<T> Reader { get; }
         public IByteWriter<T> Writer { get; }
 

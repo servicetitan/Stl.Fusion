@@ -76,7 +76,7 @@ namespace Stl.Serialization
         }
 
         protected virtual IByteSerializer<T> GetSerializer()
-            => ByteSerializer.Default.ToTyped<T>();
+            => ByteSerializer<T>.Default;
 
         // Equality
 

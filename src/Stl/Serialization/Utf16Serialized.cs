@@ -71,7 +71,7 @@ namespace Stl.Serialization
         }
 
         protected virtual IUtf16Serializer<T> GetSerializer()
-            => Utf16Serializer.Default.ToTyped<T>();
+            => Utf16Serializer<T>.Default;
 
         // Equality
 

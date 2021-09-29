@@ -23,6 +23,8 @@ namespace Stl.Serialization
 
     public class Utf16Serializer<T> : IUtf16Serializer<T>
     {
+        public static IUtf16Serializer<T> Default => Utf16Serializer.Default.ToTyped<T>();
+
         public IUtf16Reader<T> Reader { get; }
         public IUtf16Writer<T> Writer { get; }
 
