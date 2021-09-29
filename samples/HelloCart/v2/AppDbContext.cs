@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
+using Stl.Fusion.EntityFramework;
 using Stl.Fusion.EntityFramework.Operations;
 
 namespace Samples.HelloCart.V2
@@ -24,7 +25,7 @@ namespace Samples.HelloCart.V2
         public decimal Quantity { get; set; }
     }
 
-    public class AppDbContext : DbContext
+    public class AppDbContext : DbContextBase
     {
         public DbSet<DbProduct> Products { get; protected set; } = null!;
         public DbSet<DbCart> Carts { get; protected set; } = null!;
