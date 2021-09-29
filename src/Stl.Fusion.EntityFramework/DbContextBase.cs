@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Internal;
 
 namespace Stl.Fusion.EntityFramework
 {
@@ -14,44 +15,42 @@ namespace Stl.Fusion.EntityFramework
     /// them unusable after disposal.
     /// Details: https://github.com/dotnet/efcore/issues/26202
     /// </summary>
-    public abstract class DbContextBase :
-#if NET6_0
-        DbContext, IResettableService
-#else
-        DbContext
-#endif
+    public abstract class DbContextBase : DbContext
     {
 #if NET6_0
+        private static readonly FieldInfo LeaseField =
+            typeof(DbContext).GetField("_lease", BindingFlags.Instance | BindingFlags.NonPublic)!;
         private static readonly FieldInfo DisposedField =
             typeof(DbContext).GetField("_disposed", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        private static readonly MethodInfo GetResettableServicesMethod =
-            typeof(DbContext).GetMethod("GetResettableServices", BindingFlags.Instance | BindingFlags.NonPublic)!;
 #endif
 
         protected DbContextBase() { }
         protected DbContextBase(DbContextOptions options) : base(options) { }
 
 #if NET6_0
-        void IResettableService.ResetState()
+        public override void Dispose()
         {
-            var services = GetResettableServices2();
-            foreach (var service in services)
-                service.ResetState();
+            var hadActiveLease = ((DbContextLease) LeaseField.GetValue(this)!).IsActive;
+            base.Dispose();
+            if (!hadActiveLease)
+                return;
+            var hasActiveLease = ((DbContextLease) LeaseField.GetValue(this)!).IsActive;
+            if (hasActiveLease)
+                return;
             DisposedField.SetValue(this, false);
         }
 
-        async Task IResettableService.ResetStateAsync(CancellationToken cancellationToken = default)
+        public override async ValueTask DisposeAsync()
         {
-            var services = GetResettableServices2();
-            foreach (var service in services)
-                await service.ResetStateAsync(cancellationToken).ConfigureAwait(false);
+            var hadActiveLease = ((DbContextLease) LeaseField.GetValue(this)!).IsActive;
+            await base.DisposeAsync().ConfigureAwait(false);
+            if (!hadActiveLease)
+                return;
+            var hasActiveLease = ((DbContextLease) LeaseField.GetValue(this)!).IsActive;
+            if (hasActiveLease)
+                return;
             DisposedField.SetValue(this, false);
         }
-
-        private IEnumerable<IResettableService> GetResettableServices2()
-            => (IEnumerable<IResettableService>) GetResettableServicesMethod.Invoke(
-                this,
-                Array.Empty<object>())!;
 #endif
     }
 }
