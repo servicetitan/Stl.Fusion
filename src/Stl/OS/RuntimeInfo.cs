@@ -28,10 +28,8 @@ namespace Stl.OS
                 var netCoreAppIndex = Array.IndexOf(assemblyPath, "Microsoft.NETCore.App");
                 if (netCoreAppIndex > 0 && netCoreAppIndex < assemblyPath.Length - 2) {
                     VersionString = assemblyPath[netCoreAppIndex + 1];
-                    if (Version.TryParse(VersionString ?? "", out var version))
+                    if (Version.TryParse(VersionString.NullIfEmpty() ?? "", out var version))
                         Version = version;
-                    else
-                        VersionString = null;
                 }
             }
         }
