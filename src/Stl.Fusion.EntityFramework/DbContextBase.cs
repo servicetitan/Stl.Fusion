@@ -37,7 +37,7 @@ namespace Stl.Fusion.EntityFramework
             var fDisposed = tDbContext.GetField("_disposed", BindingFlags.Instance | BindingFlags.NonPublic);
             DisposedSetter = Expression.Lambda<Func<DbContext, bool, bool>>(
                 Expression.Assign(
-                    Expression.Field(pDbContext, fDisposed),
+                    Expression.Field(pDbContext, fDisposed!),
                     pValue),
                 pDbContext, pValue
             ).Compile();
@@ -50,6 +50,7 @@ namespace Stl.Fusion.EntityFramework
 #if NET6_0
         public override void Dispose()
         {
+#pragma warning disable EF1001
             var hadActiveLease = LeaseGetter.Invoke(this).IsActive;
             base.Dispose();
             if (!hadActiveLease)
@@ -58,10 +59,12 @@ namespace Stl.Fusion.EntityFramework
             if (hasActiveLease)
                 return;
             DisposedSetter.Invoke(this, false);
+#pragma warning restore EF1001
         }
 
         public override async ValueTask DisposeAsync()
         {
+#pragma warning disable EF1001
             var hadActiveLease = LeaseGetter.Invoke(this).IsActive;
             await base.DisposeAsync().ConfigureAwait(false);
             if (!hadActiveLease)
@@ -70,6 +73,7 @@ namespace Stl.Fusion.EntityFramework
             if (hasActiveLease)
                 return;
             DisposedSetter.Invoke(this, false);
+#pragma warning restore EF1001
         }
 #endif
     }
