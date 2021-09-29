@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,10 +19,29 @@ namespace Stl.Fusion.EntityFramework
     public abstract class DbContextBase : DbContext
     {
 #if NET6_0
-        private static readonly FieldInfo LeaseField =
-            typeof(DbContext).GetField("_lease", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        private static readonly FieldInfo DisposedField =
-            typeof(DbContext).GetField("_disposed", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        private static readonly Func<DbContext, DbContextLease> LeaseGetter;
+        private static readonly Func<DbContext, bool, bool> DisposedSetter;
+
+        static DbContextBase()
+        {
+            var tDbContext = typeof(DbContext);
+            var pDbContext = Expression.Parameter(tDbContext, "dbContext");
+            var pValue = Expression.Parameter(typeof(bool), "value");
+
+            var fLease = tDbContext.GetField("_lease", BindingFlags.Instance | BindingFlags.NonPublic);
+            LeaseGetter = Expression.Lambda<Func<DbContext, DbContextLease>>(
+                Expression.Field(pDbContext, fLease!),
+                pDbContext
+            ).Compile();
+
+            var fDisposed = tDbContext.GetField("_disposed", BindingFlags.Instance | BindingFlags.NonPublic);
+            DisposedSetter = Expression.Lambda<Func<DbContext, bool, bool>>(
+                Expression.Assign(
+                    Expression.Field(pDbContext, fDisposed),
+                    pValue),
+                pDbContext, pValue
+            ).Compile();
+        }
 #endif
 
         protected DbContextBase() { }
@@ -30,26 +50,26 @@ namespace Stl.Fusion.EntityFramework
 #if NET6_0
         public override void Dispose()
         {
-            var hadActiveLease = ((DbContextLease) LeaseField.GetValue(this)!).IsActive;
+            var hadActiveLease = LeaseGetter.Invoke(this).IsActive;
             base.Dispose();
             if (!hadActiveLease)
                 return;
-            var hasActiveLease = ((DbContextLease) LeaseField.GetValue(this)!).IsActive;
+            var hasActiveLease = LeaseGetter.Invoke(this).IsActive;
             if (hasActiveLease)
                 return;
-            DisposedField.SetValue(this, false);
+            DisposedSetter.Invoke(this, false);
         }
 
         public override async ValueTask DisposeAsync()
         {
-            var hadActiveLease = ((DbContextLease) LeaseField.GetValue(this)!).IsActive;
+            var hadActiveLease = LeaseGetter.Invoke(this).IsActive;
             await base.DisposeAsync().ConfigureAwait(false);
             if (!hadActiveLease)
                 return;
-            var hasActiveLease = ((DbContextLease) LeaseField.GetValue(this)!).IsActive;
+            var hasActiveLease = LeaseGetter.Invoke(this).IsActive;
             if (hasActiveLease)
                 return;
-            DisposedField.SetValue(this, false);
+            DisposedSetter.Invoke(this, false);
         }
 #endif
     }
