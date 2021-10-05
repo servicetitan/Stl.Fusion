@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -13,31 +12,12 @@ namespace Stl.Channels
     public static partial class ChannelExt
     {
         public static async IAsyncEnumerable<T> ToAsyncEnumerable<T>(
-            this Channel<(T Item, ExceptionDispatchInfo? Error)> channel,
+            this ChannelReader<T> channel,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            var reader = channel.Reader;
-            while (await reader.WaitToReadAsync(cancellationToken)) {
-                if (!reader.TryRead(out var pair))
-                    continue;
-                var (item, error) = pair;
-                if (error == null)
-                    yield return item;
-                else
-                    error.Throw();
-            }
-        }
-
-        public static async IAsyncEnumerable<T> ToAsyncEnumerable<T>(
-            this Channel<T> channel,
-            [EnumeratorCancellation] CancellationToken cancellationToken = default)
-        {
-            var reader = channel.Reader;
-            while (await reader.WaitToReadAsync(cancellationToken)) {
-                if (!reader.TryRead(out var item))
-                    continue;
+            while (await channel.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
+            while (channel.TryRead(out var item))
                 yield return item;
-            }
         }
 
         public static async Task Copy<T>(
@@ -47,10 +27,9 @@ namespace Stl.Channels
             CancellationToken cancellationToken = default)
         {
             try {
-                while (await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false)) {
-                    if (reader.TryRead(out var value))
-                        await writer.WriteAsync(value, cancellationToken).ConfigureAwait(false);
-                }
+                while (await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
+                while (reader.TryRead(out var value))
+                    await writer.WriteAsync(value, cancellationToken).ConfigureAwait(false);
                 if ((channelCompletionMode & ChannelCompletionMode.Complete) != 0)
                     writer.TryComplete();
             }
@@ -94,7 +73,9 @@ namespace Stl.Channels
             CancellationToken cancellationToken = default)
         {
             while (await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
-                reader.TryRead(out var v);
+            while (reader.TryRead(out _)) {
+                // Do nothing
+            }
         }
 
         public static async Task ConsumeSilent<T>(
@@ -103,7 +84,9 @@ namespace Stl.Channels
         {
             try {
                 while (await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
-                    reader.TryRead(out var v);
+                while (reader.TryRead(out _)) {
+                    // Do nothing
+                }
             }
             catch {
                 // Silent means silent :)

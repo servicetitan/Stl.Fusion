@@ -39,9 +39,8 @@ namespace Stl.Fusion.Bridge.Internal
         {
             try {
                 var reader = Channel.Reader;
-                while (await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false)) {
-                    if (!reader.TryRead(out var request))
-                        continue;
+                while (await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
+                while (reader.TryRead(out var request)) {
                     switch (request) {
                     case ReplicaRequest rr:
                         await OnReplicaRequest(rr, cancellationToken).ConfigureAwait(false);

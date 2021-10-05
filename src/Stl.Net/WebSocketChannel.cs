@@ -211,10 +211,8 @@ namespace Stl.Net
             var reader = WriteChannel.Reader;
             var mBytes = bytesOwner.Memory;
 
-            while (await reader.WaitToReadAsync(cancellationToken)) {
-                if (!reader.TryRead(out var message))
-                    continue;
-
+            while (await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
+            while (reader.TryRead(out var message)) {
                 var processedCount = 0;
 
                 bool CreateMessagePart(out Memory<byte> buffer)
@@ -320,10 +318,8 @@ namespace Stl.Net
             var reader = WriteChannel.Reader;
             var aBytes = bytesOwner.Array;
 
-            while (await reader.WaitToReadAsync(cancellationToken)) {
-                if (!reader.TryRead(out var message))
-                    continue;
-
+            while (await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
+            while (reader.TryRead(out var message)) {
                 var messageChars = message.ToCharArray(); // TODO: rework, very inefficient, use chars array buffer.
                 var processedCount = 0;
 
