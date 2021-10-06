@@ -36,7 +36,7 @@
     <Nullable>enable</Nullable>
     <Features>strict;pdb-path-determinism</Features>
     <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
-    <TypeScriptCompilerBlocked>true</TypeScriptCompilerBlocked>
+    <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
     <!-- NU5105: The package version uses SemVer 2.0.0 or components of SemVer 1.0.0 that are not supported on legacy clients -->
