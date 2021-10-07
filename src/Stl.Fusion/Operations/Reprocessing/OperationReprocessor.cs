@@ -44,7 +44,7 @@ namespace Stl.Fusion.Operations.Reprocessing
             public IMomentClock? DelayClock { get; set; }
         }
 
-        public static Generator<long> Random = new RandomInt32Generator();
+        public static Generator<long> Random = new RandomInt64Generator();
 
         public int MaxTryCount { get; init; }
         public int FailedTryCount { get; protected set; }
