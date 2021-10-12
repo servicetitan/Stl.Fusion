@@ -52,19 +52,10 @@ namespace Stl.Internal
         public static Exception WrongExceptionType(Type type)
             => new SecurityException($"Wrong exception type: '{type}'.");
 
-        public static Exception AlreadyDisposed() =>
-            new ObjectDisposedException("unknown", "The object is already disposed.");
-        public static Exception AlreadyDisposedOrDisposing(DisposalState disposalState = DisposalState.Disposed)
-        {
-            switch (disposalState) {
-            case DisposalState.Disposing:
-                return new ObjectDisposedException("unknown", "The object is disposing.");
-            case DisposalState.Disposed:
-                return new ObjectDisposedException("unknown", "The object is already disposed.");
-            default:
-                return new InvalidOperationException($"Invalid disposal state: {disposalState}.");
-            }
-        }
+        public static Exception AlreadyDisposed()
+            => new ObjectDisposedException("unknown", "The object is already disposed.");
+        public static Exception AlreadyDisposedOrDisposing()
+            => new ObjectDisposedException("unknown", "The object is already disposed or disposing.");
 
         public static Exception KeyAlreadyExists() =>
             new ArgumentException("Specified key already exists.");

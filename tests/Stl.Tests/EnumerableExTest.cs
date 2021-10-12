@@ -60,10 +60,10 @@ namespace Stl.Tests
             Assert.Equal("0123", OBD("231", DepSelector1));
 
             Assert.Throws<InvalidOperationException>(() => {
-                var _ = OBD("0", BadDepSelector1);
+                _ = OBD("0", BadDepSelector1);
             });
             Assert.Throws<InvalidOperationException>(() => {
-                var _ = OBD("0", BadDepSelector2);
+                _ = OBD("0", BadDepSelector2);
             });
         }
     }

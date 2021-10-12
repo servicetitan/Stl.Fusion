@@ -55,7 +55,7 @@ namespace Stl.Fusion.Bridge.Internal
                 // Awaiting for disposal here = cyclic task dependency;
                 // we should just ensure it starts right when this method
                 // completes.
-                var _ = DisposeAsync();
+                _ = DisposeAsync();
             }
         }
 
@@ -138,9 +138,9 @@ namespace Stl.Fusion.Bridge.Internal
             }
         }
 
-        protected override async ValueTask DisposeInternal(bool disposing)
+        protected override async ValueTask DisposeAsyncCore()
         {
-            await base.DisposeInternal(disposing).ConfigureAwait(false);
+            await base.DisposeAsyncCore().ConfigureAwait(false);
             await RemoveSubscriptions().ConfigureAwait(false);
             PublisherImpl.OnChannelProcessorDisposed(this);
         }

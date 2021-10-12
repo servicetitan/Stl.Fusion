@@ -66,7 +66,7 @@ namespace Stl.Fusion.Authentication.Internal
                 // We have Id -> the user exists for sure, but we might need to switch
                 // to userWithAuthenticatedIdentity, otherwise we'll register the same
                 // UserIdentity for 2 or more users
-                var _ = long.Parse(user.Id); // Ensure exception is the same as for DbAuthService
+                _ = long.Parse(user.Id); // Ensure exception is the same as for DbAuthService
                 var existingUser = Users[user.Id];
                 user = userWithAuthenticatedIdentity ?? MergeUsers(existingUser, user);
             }

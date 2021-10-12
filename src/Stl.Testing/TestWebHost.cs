@@ -56,8 +56,8 @@ namespace Stl.Testing
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposing)
-                return;
+            if (!disposing) return;
+
             if (HostLazy.IsValueCreated)
                 Host.Dispose();
         }

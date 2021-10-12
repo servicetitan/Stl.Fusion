@@ -145,7 +145,7 @@ namespace Stl.Async
         // SuppressXxx
 
         public static Task SuppressExceptions(this Task task)
-            => task.ContinueWith(t => { });
+            => task.ContinueWith(_ => { });
 
         public static Task<T> SuppressExceptions<T>(this Task<T> task)
             => task.ContinueWith(t => t.IsCompletedSuccessfully() ? t.Result : default!);

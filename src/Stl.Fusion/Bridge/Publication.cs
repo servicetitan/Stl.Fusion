@@ -124,7 +124,7 @@ namespace Stl.Fusion.Bridge
                 // Awaiting for disposal here = cyclic task dependency;
                 // we should just ensure it starts right when this method
                 // completes.
-                var _ = DisposeAsync();
+                _ = DisposeAsync();
             }
         }
 
@@ -159,24 +159,19 @@ namespace Stl.Fusion.Bridge
             }
         }
 
-        protected override Task DisposeAsync(bool disposing)
+        protected override ValueTask DisposeAsyncCore()
         {
             // We override this method to make sure State is the first thing
             // to reflect the disposal.
             var state = StateField;
             if (state.IsDisposed)
-                return Task.CompletedTask;
+                return ValueTaskExt.CompletedTask;
             var newState = CreatePublicationState(state.Computed, true);
             if (!ChangeState(newState, state))
-                return Task.CompletedTask;
-            return base.DisposeAsync(disposing);
-        }
-
-        protected override async ValueTask DisposeInternal(bool disposing)
-        {
-            await base.DisposeInternal(disposing).ConfigureAwait(false);
+                return ValueTaskExt.CompletedTask;
             if (Publisher is IPublisherImpl pi)
                 pi.OnPublicationDisposed(this);
+            return base.DisposeAsyncCore();
         }
 
         // State change & other low-level stuff

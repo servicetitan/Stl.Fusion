@@ -8,7 +8,7 @@ using Stl.Async;
 
 namespace Stl.Fusion
 {
-    public interface IComputedState : IState, IDisposable
+    public interface IComputedState : IState, IDisposable, IHasDisposeStarted
     {
         public new interface IOptions : IState.IOptions
         {
@@ -52,6 +52,7 @@ namespace Stl.Fusion
 
         public CancellationToken DisposeToken { get; }
         public Task UpdateTask { get; private set; } = null!;
+        public bool IsDisposeStarted => DisposeToken.IsCancellationRequested;
 
         protected ComputedState(IServiceProvider services, bool initialize = true)
             : this(new(), services, initialize) { }

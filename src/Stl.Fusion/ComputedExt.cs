@@ -27,15 +27,7 @@ namespace Stl.Fusion
             }
 
             var cts = new CancellationTokenSource(delay);
-            computed.Invalidated += _ => {
-                try {
-                    if (!cts.IsCancellationRequested)
-                        cts.Cancel(true);
-                } catch {
-                    // Intended: this method should never throw any exceptions
-                }
-            };
-            cts.Token.Register(() => {
+            var registration = cts.Token.Register(() => {
                 // No need to schedule this via Task.Run, since this code is
                 // either invoked from Invalidate method (via Invalidated handler),
                 // so Invalidate() call will do nothing & return immediately,
@@ -44,6 +36,18 @@ namespace Stl.Fusion
                 computed.Invalidate();
                 cts.Dispose();
             });
+            computed.Invalidated += _ => {
+                try {
+                    if (!cts.IsCancellationRequested)
+                        cts.Cancel(true);
+                } catch {
+                    // Intended: this method should never throw any exceptions
+                }
+                finally {
+                    registration.Dispose();
+                    cts.Dispose();
+                }
+            };
         }
 
         public static Task WhenInvalidated(this IComputed computed, CancellationToken cancellationToken = default)

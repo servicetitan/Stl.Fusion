@@ -100,7 +100,7 @@ namespace Stl.Fusion.Bridge.Internal
                 // Awaiting for disposal here = cyclic task dependency;
                 // we should just ensure it starts right when this method
                 // completes.
-                var _ = DisposeAsync();
+                _ = DisposeAsync();
             }
         }
 

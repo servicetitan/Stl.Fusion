@@ -60,8 +60,8 @@ namespace Stl.Fusion.Bridge
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposing)
-                return;
+            if (!disposing) return;
+
             _gcHandlePool.Dispose();
         }
 

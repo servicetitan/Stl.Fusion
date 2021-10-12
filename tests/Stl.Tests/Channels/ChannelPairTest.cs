@@ -48,7 +48,7 @@ namespace Stl.Tests.Channels
             var cp2 = ChannelPair.CreateTwisted(
                 Channel.CreateBounded<int>(options),
                 Channel.CreateBounded<int>(options));
-            var _ = cp1.Channel2.Connect(cp2.Channel1, ChannelCompletionMode.CompleteAndPropagateError);
+            _ = cp1.Channel2.Connect(cp2.Channel1, ChannelCompletionMode.CompleteAndPropagateError);
 
             await PassThroughTest(cp1.Channel1, cp2.Channel2);
             await PassThroughTest(cp2.Channel2, cp1.Channel1);
@@ -66,7 +66,7 @@ namespace Stl.Tests.Channels
             var cp2 = ChannelPair.CreateTwisted(
                 Channel.CreateBounded<int>(options),
                 Channel.CreateBounded<int>(options));
-            var _ = cp1.Channel2.Connect(cp2.Channel1,
+            _ = cp1.Channel2.Connect(cp2.Channel1,
                 m => {
                     Out.WriteLine($"-> {m}");
                     return m;

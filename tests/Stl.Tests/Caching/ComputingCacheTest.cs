@@ -75,10 +75,10 @@ namespace Stl.Tests.Caching
             Assert.Equal("0123", await OrderByDependency("231", DepSelector1));
 
             await Assert.ThrowsAsync<InvalidOperationException>(async () => {
-                var _ = await OrderByDependency("0", BadDepSelector1);
+                _ = await OrderByDependency("0", BadDepSelector1);
             });
             await Assert.ThrowsAsync<InvalidOperationException>(async () => {
-                var _ = await OrderByDependency("0", BadDepSelector2);
+                _ = await OrderByDependency("0", BadDepSelector2);
             });
         }
     }

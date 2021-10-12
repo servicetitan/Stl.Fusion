@@ -19,7 +19,7 @@ namespace Stl.Tests.Benchmarks
         {
             action.Invoke(Math.Min(1, opCount / 10));
             var sw = Stopwatch.StartNew();
-            var _ = action.Invoke(opCount);
+            _ = action.Invoke(opCount);
             sw.Stop();
             var rate = opCount / sw.Elapsed.TotalSeconds;
             Out.WriteLine($"{title} ({opCount}): {rate:N3} ops/s");

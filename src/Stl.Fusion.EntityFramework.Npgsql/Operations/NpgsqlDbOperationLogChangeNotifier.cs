@@ -39,8 +39,8 @@ namespace Stl.Fusion.EntityFramework.Npgsql.Operations
 
         protected virtual void Dispose(bool disposing)
         {
-            if (IsDisposed || !disposing)
-                return;
+            if (IsDisposed || !disposing) return;
+
             IsDisposed = true;
             using var suppressing = ExecutionContextExt.SuppressFlow();
             _ = Task.Run(async () => {

@@ -48,7 +48,7 @@ namespace Stl.Fusion.Bridge
         void OnChannelProcessorDisposed(PublisherChannelProcessor channelProcessor);
     }
 
-    public class Publisher : AsyncDisposableBase, IPublisherImpl
+    public class Publisher : SafeAsyncDisposableBase, IPublisherImpl
     {
         public class Options
         {
@@ -116,7 +116,7 @@ namespace Stl.Fusion.Bridge
 
         public virtual IPublication Publish(IComputed computed)
         {
-            ThrowIfDisposedOrDisposing();
+            this.ThrowIfDisposedOrDisposing();
             var spinWait = new SpinWait();
             while (true) {
                  var p = Publications.GetOrAddChecked(
@@ -143,7 +143,7 @@ namespace Stl.Fusion.Bridge
             Channel<BridgeMessage> channel, IPublication publication,
             bool isUpdateRequested, CancellationToken cancellationToken = default)
         {
-            ThrowIfDisposedOrDisposing();
+            this.ThrowIfDisposedOrDisposing();
             if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
                 throw Errors.UnknownChannel(channel);
             if (publication.Publisher != this)
@@ -209,8 +209,10 @@ namespace Stl.Fusion.Bridge
             taskCollector.Add(channelProcessor.DisposeAsync());
         }
 
-        protected override async ValueTask DisposeInternal(bool disposing)
+        protected override async Task DisposeAsync(bool disposing)
         {
+            if (!disposing) return;
+
             ChannelHub.Attached -= OnChannelAttachedHandler; // Must go first
             ChannelHub.Detached -= OnChannelDetachedHandler;
             var channelProcessors = ChannelProcessors;
@@ -237,7 +239,6 @@ namespace Stl.Fusion.Bridge
             }
             if (OwnsChannelHub)
                 await ChannelHub.DisposeAsync().ConfigureAwait(false);
-            await base.DisposeInternal(disposing).ConfigureAwait(false);
         }
     }
 }

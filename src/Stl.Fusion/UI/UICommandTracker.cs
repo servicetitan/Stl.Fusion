@@ -84,6 +84,7 @@ namespace Stl.Fusion.UI
 
         protected virtual void Dispose(bool disposing)
         {
+            // Intentionally ignore disposing flag here
             lock (Lock) {
                 if (IsDisposed)
                     return;

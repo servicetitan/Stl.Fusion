@@ -83,6 +83,8 @@ namespace Stl.Fusion.EntityFramework
 
         protected virtual void Dispose(bool disposing)
         {
+            if (!disposing) return;
+
             if (_batchProcessorLazy.IsValueCreated)
                 BatchProcessor.Dispose();
         }
