@@ -91,6 +91,8 @@ namespace Stl.Fusion.Blazor
             => ComponentInfoCache.GetOrAdd(componentType, componentType1 => new ComponentInfo(componentType1));
         public static ComponentInfo GetComponentInfo(this IComponent component)
             => GetComponentInfo(component.GetType());
+        public static Dispatcher GetDispatcher(this ComponentBase component)
+            => component.GetRenderHandle().Dispatcher;
 
         public static bool IsDisposed(this ComponentBase component)
             => component.GetRenderHandle().IsDisposed();
@@ -117,7 +119,7 @@ namespace Stl.Fusion.Blazor
         {
             if (component.IsDisposedOrDisposing())
                 return Task.CompletedTask;
-            return component.GetRenderHandle().Dispatcher.InvokeAsync(Invoker);
+            return component.GetDispatcher().InvokeAsync(Invoker);
 
             void Invoker()
             {
