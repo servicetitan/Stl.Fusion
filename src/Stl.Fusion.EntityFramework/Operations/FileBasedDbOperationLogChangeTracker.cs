@@ -12,10 +12,11 @@ namespace Stl.Fusion.EntityFramework.Operations
     public class FileBasedDbOperationLogChangeTracker<TDbContext> : IDbOperationLogChangeTracker<TDbContext>, IDisposable
         where TDbContext : DbContext
     {
-        protected FileBasedDbOperationLogChangeTrackingOptions<TDbContext> Options { get; }
-        protected FileSystemWatcher Watcher { get; }
-        protected IObservable<FileSystemEventArgs> Observable { get; }
-        protected IDisposable Subscription { get; }
+        protected FileBasedDbOperationLogChangeTrackingOptions<TDbContext> Options { get; init; }
+        protected FileSystemWatcher Watcher { get; init; }
+        protected IObservable<FileSystemEventArgs> Observable { get; init; }
+        protected IDisposable Subscription { get; init; }
+
         protected Task<Unit> NextEventTask { get; set; } = null!;
         protected object Lock { get; } = new();
 

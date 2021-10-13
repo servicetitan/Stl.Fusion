@@ -4,10 +4,9 @@ using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Stl.Collections;
-using Stl.Fusion.Authentication;
-using Stl.Fusion.EntityFramework.Internal;
 using Stl.Serialization;
 using Stl.Time;
+using Stl.Versioning;
 
 namespace Stl.Fusion.EntityFramework.Authentication
 {
@@ -16,14 +15,17 @@ namespace Stl.Fusion.EntityFramework.Authentication
     [Index(nameof(LastSeenAt), nameof(IsSignOutForced))]
     [Index(nameof(UserId), nameof(IsSignOutForced))]
     [Index(nameof(IPAddress), nameof(IsSignOutForced))]
-    public class DbSessionInfo : IHasId<string>
+    public class DbSessionInfo<TDbUserId> : IHasId<string>, IHasVersion<long>
     {
-        private readonly JsonSerialized<ImmutableOptionSet?> _options = new(ImmutableOptionSet.Empty);
+        private readonly NewtonsoftJsonSerialized<ImmutableOptionSet> _options =
+            NewtonsoftJsonSerialized.New(ImmutableOptionSet.Empty);
         private DateTime _createdAt;
         private DateTime _lastSeenAt;
 
         [Key, StringLength(32)]
         public string Id { get; set; } = "";
+        [ConcurrencyCheck] public long Version { get; set; }
+
         public DateTime CreatedAt {
             get => _createdAt.DefaultKind(DateTimeKind.Utc);
             set => _createdAt = value.DefaultKind(DateTimeKind.Utc);
@@ -38,7 +40,7 @@ namespace Stl.Fusion.EntityFramework.Authentication
 
         // Authentication
         public string AuthenticatedIdentity { get; set; } = "";
-        public long? UserId { get; set; }
+        public TDbUserId UserId { get; set; } = default!;
         public bool IsSignOutForced { get; set; }
 
         // Options
@@ -49,45 +51,8 @@ namespace Stl.Fusion.EntityFramework.Authentication
 
         [NotMapped, JsonIgnore]
         public ImmutableOptionSet Options {
-            get => _options.Value ?? ImmutableOptionSet.Empty;
+            get => _options.Value;
             set => _options.Value = value;
-        }
-
-        public virtual SessionInfo ToModel()
-        {
-            var sessionInfo = new SessionInfo() {
-                Id = Id,
-                CreatedAt = CreatedAt,
-                LastSeenAt = LastSeenAt,
-                IPAddress = IPAddress,
-                UserAgent = UserAgent,
-                Options = Options,
-
-                // Authentication
-                AuthenticatedIdentity = AuthenticatedIdentity,
-                UserId = UserId?.ToString() ?? "",
-                IsSignOutForced = IsSignOutForced,
-            };
-            return sessionInfo.OrDefault(Id); // To mask signed out sessions
-        }
-
-        public virtual void UpdateFrom(SessionInfo source)
-        {
-            if (Id != source.Id)
-                throw new ArgumentOutOfRangeException(nameof(source));
-            if (IsSignOutForced)
-                throw Errors.ForcedSignOut();
-
-            LastSeenAt = source.LastSeenAt;
-            IPAddress = source.IPAddress;
-            UserAgent = source.UserAgent;
-            Options = source.Options;
-
-            AuthenticatedIdentity = source.AuthenticatedIdentity;
-            UserId = string.IsNullOrEmpty(source.UserId)
-                ? null
-                : long.Parse(source.UserId);
-            IsSignOutForced = source.IsSignOutForced;
         }
     }
 }

@@ -9,6 +9,7 @@ using Stl.Async;
 using Stl.Locking;
 using Stl.OS;
 using Stl.Testing;
+using Stl.Testing.Collections;
 using Stl.Time;
 using Xunit;
 using Xunit.Abstractions;

@@ -1,4 +1,5 @@
 using Stl.Locking;
+using Stl.Testing.Collections;
 using Xunit;
 using Xunit.Abstractions;
 

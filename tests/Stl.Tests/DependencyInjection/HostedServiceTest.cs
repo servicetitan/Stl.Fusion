@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -9,8 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Stl.DependencyInjection;
-using Stl.Text;
+using Stl.RegisterAttributes;
 using Xunit;
 
 namespace Stl.Tests.DependencyInjection

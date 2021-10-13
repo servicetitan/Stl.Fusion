@@ -33,7 +33,7 @@ namespace Stl.Collections
         public IEnumerator<(TPriority Priority, TValue Value)> GetEnumerator()
         {
             var copy = new BinaryHeap<TPriority, TValue>(this);
-            for (;;) {
+            while (true) {
                 var min = copy.ExtractMin();
                 if (min.IsSome(out var result))
                     yield return result;
@@ -74,7 +74,7 @@ namespace Stl.Collections
 
         private void FixTopDown(int i)
         {
-            for (;;) {
+            while (true) {
                 var l = GetFirstChildIndex(i);
                 var r = l + 1;
                 var minIndex = i;

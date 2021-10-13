@@ -18,7 +18,7 @@ namespace Stl.Fusion.Operations.Internal
     {
         protected IServiceProvider Services { get; }
         protected AgentInfo AgentInfo { get; }
-        protected IMomentClock Clock { get; }
+        protected MomentClockSet Clocks { get; }
         protected ILogger Log { get; }
 
         IOperation IOperationScope.Operation => Operation;
@@ -33,11 +33,11 @@ namespace Stl.Fusion.Operations.Internal
             var loggerFactory = services.GetService<ILoggerFactory>();
             Log = loggerFactory?.CreateLogger(GetType()) ?? NullLogger.Instance;
             Services = services;
-            Clock = services.GetService<IMomentClock>() ?? SystemClock.Instance;
+            Clocks = services.Clocks();
             AgentInfo = services.GetRequiredService<AgentInfo>();
             Operation = new TransientOperation(true) {
                 AgentId = AgentInfo.Id,
-                StartTime = Clock.Now,
+                StartTime = Clocks.SystemClock.Now,
             };
             CommandContext = services.GetRequiredService<CommandContext>();
         }
@@ -46,14 +46,14 @@ namespace Stl.Fusion.Operations.Internal
         {
             IsConfirmed ??= true;
             IsClosed = true;
-            return ValueTaskEx.CompletedTask;
+            return ValueTaskExt.CompletedTask;
         }
 
         public virtual Task Commit(CancellationToken cancellationToken = default)
         {
             if (IsClosed)
                 throw Errors.OperationScopeIsAlreadyClosed();
-            Operation.CommitTime = Clock.Now;
+            Operation.CommitTime = Clocks.SystemClock.Now;
             IsConfirmed = true;
             IsClosed = true;
             return Task.CompletedTask;

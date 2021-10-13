@@ -15,18 +15,14 @@ using Stl.Time;
 
 namespace Stl.Fusion.EntityFramework.Extensions
 {
-    public interface IDbKeyValueStore<TDbContext> : IKeyValueStore
-        where TDbContext : DbContext
-    { }
-
-    public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext>, IDbKeyValueStore<TDbContext>
+    public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext>, IKeyValueStore
         where TDbContext : DbContext
         where TDbKeyValue : DbKeyValue, new()
     {
-        public DbEntityResolver<TDbContext, string, TDbKeyValue> DbKeyValueResolver { get; }
+        public IDbEntityResolver<string, TDbKeyValue> KeyValueResolver { get; init; }
 
         public DbKeyValueStore(IServiceProvider services) : base(services)
-            => DbKeyValueResolver = services.GetRequiredService<DbEntityResolver<TDbContext, string, TDbKeyValue>>();
+            => KeyValueResolver = services.DbEntityResolver<string, TDbKeyValue>();
 
         // Commands
 
@@ -40,7 +36,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
                 if (context.Operation().Items.GetOrDefault(true))
                     PseudoGetAllPrefixes(key);
                 else
-                    PseudoGet(key).Ignore();
+                    _ = PseudoGet(key);
                 return;
             }
 
@@ -138,12 +134,12 @@ namespace Stl.Fusion.EntityFramework.Extensions
 
         public virtual async Task<string?> TryGet(string key, CancellationToken cancellationToken = default)
         {
-            PseudoGet(key).Ignore();
-            var dbKeyValue = await DbKeyValueResolver.TryGet(key, cancellationToken).ConfigureAwait(false);
+            _ = PseudoGet(key);
+            var dbKeyValue = await KeyValueResolver.TryGet(key, cancellationToken).ConfigureAwait(false);
             if (dbKeyValue == null)
                 return null;
             var expiresAt = dbKeyValue.ExpiresAt;
-            if (expiresAt.HasValue && expiresAt.GetValueOrDefault() < Clock.Now.ToDateTime())
+            if (expiresAt.HasValue && expiresAt.GetValueOrDefault() < Clocks.SystemClock.Now.ToDateTime())
                 return null;
             return dbKeyValue?.Value;
         }
@@ -151,7 +147,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
         public virtual async Task<int> Count(
             string prefix, CancellationToken cancellationToken = default)
         {
-            PseudoGet(prefix).Ignore();
+            _ = PseudoGet(prefix);
             await using var dbContext = CreateDbContext();
             var count = await dbContext.Set<TDbKeyValue>().AsQueryable()
                 .CountAsync(e => e.Key.StartsWith(prefix), cancellationToken)
@@ -165,20 +161,19 @@ namespace Stl.Fusion.EntityFramework.Extensions
             SortDirection sortDirection = SortDirection.Ascending,
             CancellationToken cancellationToken = default)
         {
-            PseudoGet(prefix).Ignore();
+            _ = PseudoGet(prefix);
             await using var dbContext = CreateDbContext();
             var query = dbContext.Set<TDbKeyValue>().AsQueryable()
                 .Where(e => e.Key.StartsWith(prefix));
-            var afterKey = pageRef.AfterKey;
-            if (afterKey != null)
+            query = query.OrderByAndTakePage(e => e.Key, pageRef, sortDirection);
+            /*
+            if (pager.After.IsSome(out var after)) {
                 query = sortDirection == SortDirection.Ascending
                     // ReSharper disable once StringCompareIsCultureSpecific.1
-                    ? query.Where(e => string.Compare(e.Key, afterKey) > 0)
+                    ? query.Where(e => string.Compare(e.Key, after) > 0)
                     // ReSharper disable once StringCompareIsCultureSpecific.1
-                    : query.Where(e => string.Compare(e.Key, afterKey) < 0);
-            query = sortDirection == SortDirection.Ascending
-                ? query.OrderBy(e => e.Key)
-                : query.OrderByDescending(e => e.Key);
+                    : query.Where(e => string.Compare(e.Key, after) < 0);
+            */
             var result = await query
                 .Select(e => e.Key)
                 .Take(pageRef.Count)
@@ -190,17 +185,17 @@ namespace Stl.Fusion.EntityFramework.Extensions
         // Protected methods
 
         [ComputeMethod]
-        protected virtual Task<Unit> PseudoGet(string keyPart) => TaskEx.UnitTask;
+        protected virtual Task<Unit> PseudoGet(string keyPart) => TaskExt.UnitTask;
 
         protected void PseudoGetAllPrefixes(string key)
         {
-            var delimiter = KeyValueStoreEx.Delimiter;
+            var delimiter = KeyValueStoreExt.Delimiter;
             var delimiterIndex = key.IndexOf(delimiter, 0);
             for (; delimiterIndex >= 0; delimiterIndex = key.IndexOf(delimiter, delimiterIndex + 1)) {
                 var keyPart = key.Substring(0, delimiterIndex);
-                PseudoGet(keyPart).Ignore();
+                _ = PseudoGet(keyPart);
             }
-            PseudoGet(key).Ignore();
+            _ = PseudoGet(key);
         }
 
         protected virtual TDbKeyValue CreateDbKeyValue(string key, string value, Moment? expiresAt)

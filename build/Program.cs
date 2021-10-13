@@ -70,7 +70,7 @@ namespace Build
                 Verbose = verbose,
             };
 
-            var artifactsPath = PathString.New("artifacts").FullPath;
+            var artifactsPath = FilePath.New("artifacts").FullPath;
             var nupkgPath = artifactsPath & "nupkg";
             var testOutputPath = artifactsPath & "tests" & "output";
             var dotnetExePath = TryFindDotNetExePath() ?? throw new FileNotFoundException(
@@ -144,7 +144,7 @@ namespace Build
                     throw new InvalidOperationException("NUGET_ORG_API_KEY env. var isn't set.");
                 var nupkgPaths = Directory
                     .EnumerateFiles(nupkgPath.FullPath, "*.nupkg", SearchOption.TopDirectoryOnly)
-                    .Select(PathString.New)
+                    .Select(FilePath.New)
                     .ToArray();
                 foreach (var nupkgPath in nupkgPaths) {
                     await Cli.Wrap(dotnetExePath).WithArguments(new string[] {
@@ -184,7 +184,7 @@ namespace Build
                 MoveCoverageOutputFiles(testOutputPath);
 
                 // Removes all files in inner folders, workaround for https://github.com/microsoft/vstest/issues/2334
-                foreach (var path in Directory.EnumerateDirectories(testOutputPath).Select(PathString.New))
+                foreach (var path in Directory.EnumerateDirectories(testOutputPath).Select(FilePath.New))
                     DeleteDir(path);
             });
 
@@ -211,7 +211,7 @@ namespace Build
         private static void SetDefaults(string solutionName)
         {
             var slnPath = FindNearest(Environment.CurrentDirectory, solutionName)
-                ?? FindNearest(PathString.New(Assembly.GetExecutingAssembly().Location).DirectoryPath, solutionName)
+                ?? FindNearest(FilePath.New(Assembly.GetExecutingAssembly().Location).DirectoryPath, solutionName)
                 ?? throw new InvalidOperationException($"Can't find '{solutionName}'.");
 
             Environment.CurrentDirectory = slnPath.DirectoryPath;
@@ -225,13 +225,13 @@ namespace Build
             Environment.SetEnvironmentVariable("PUBLIC_BUILD", "1");
         }
 
-        static void MoveCoverageOutputFiles(PathString testOutputPath)
+        static void MoveCoverageOutputFiles(FilePath testOutputPath)
         {
             // Moves coverage reports from GUID folders to the output path. A workaround for:
             // - https://github.com/microsoft/vstest/issues/2378
             // - https://github.com/microsoft/vstest/issues/2334
             var dirPaths = (
-                from dirPath in Directory.EnumerateDirectories(testOutputPath).Select(PathString.New)
+                from dirPath in Directory.EnumerateDirectories(testOutputPath).Select(FilePath.New)
                 let createTime = Directory.GetCreationTime(dirPath)
                 orderby createTime
                 select dirPath
@@ -239,7 +239,7 @@ namespace Build
             var dirIndex = 1;
             foreach (var dirPath in dirPaths) {
                 var dirName = dirPath.FileName;
-                foreach (var filePath in Directory.EnumerateFiles(dirPath, "coverage.*").Select(PathString.New).ToArray()) {
+                foreach (var filePath in Directory.EnumerateFiles(dirPath, "coverage.*").Select(FilePath.New).ToArray()) {
                     var newFilePath = testOutputPath & $"{dirIndex}-{filePath.FileName}";
                     Console.WriteLine($"Moving: {filePath} -> {newFilePath}");
                     File.Move(filePath, newFilePath, true);
@@ -249,10 +249,10 @@ namespace Build
             }
         }
 
-        private static PathString? FindNearest(PathString basePath, string fileName)
+        private static FilePath? FindNearest(FilePath basePath, string fileName)
         {
             var path = basePath.ToAbsolute();
-            for (;;) {
+            while (true) {
                 if (File.Exists(path & fileName))
                     return path & fileName;
                 var nextPath = (path & "..").FullPath;
@@ -263,38 +263,38 @@ namespace Build
         }
 
 
-        private static PathString? TryFindDotNetExePath()
+        private static FilePath? TryFindDotNetExePath()
         {
             var dotnetExe = "dotnet";
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 dotnetExe += ".exe";
 
-            var mainModulePath = PathString.New(Process.GetCurrentProcess().MainModule?.FileName);
+            var mainModulePath = FilePath.New(Process.GetCurrentProcess().MainModule?.FileName);
             if (mainModulePath.Value != "" && mainModulePath.FileName.Value.Equals(dotnetExe, StringComparison.OrdinalIgnoreCase))
                 return mainModulePath;
 
-            var dotnetRoot = PathString.New(Environment.GetEnvironmentVariable("DOTNET_ROOT"));
+            var dotnetRoot = FilePath.New(Environment.GetEnvironmentVariable("DOTNET_ROOT"));
             if (dotnetRoot.Value != "")
                 return dotnetRoot & dotnetExe;
 
             return FindInPath(dotnetExe);
         }
 
-        private static PathString? FindInPath(string fileName)
+        private static FilePath? FindInPath(string fileName)
         {
             var paths = Environment.GetEnvironmentVariable("PATH");
             if (paths == null)
                 return null;
 
             foreach (var path in paths.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)) {
-                var fullPath = PathString.New(path) & fileName;
+                var fullPath = FilePath.New(path) & fileName;
                 if (File.Exists(fullPath))
                     return fullPath;
             }
             return null;
         }
 
-        private static bool CreateDir(PathString path, bool failOnError = false)
+        private static bool CreateDir(FilePath path, bool failOnError = false)
         {
             if (Directory.Exists(path))
                 return true;
@@ -310,7 +310,7 @@ namespace Build
             }
         }
 
-        private static bool DeleteDir(PathString path, bool failOnError = false)
+        private static bool DeleteDir(FilePath path, bool failOnError = false)
         {
             if (!Directory.Exists(path))
                 return true;

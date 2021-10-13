@@ -13,7 +13,7 @@ namespace Stl.Time
 
         public static Moment Now {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => CoarseStopwatch.Now;
+            get => CoarseClockHelper.Now;
         }
 
         Moment IMomentClock.Now => Now;

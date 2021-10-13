@@ -1,5 +1,6 @@
 using System;
 using System.Reactive;
+using System.Runtime.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,8 +10,10 @@ using Stl.CommandR.Configuration;
 
 namespace Stl.Fusion.Tests.Services
 {
+    [DataContract]
     public record SetValueCommand : ICommand<Unit>
     {
+        [DataMember]
         public string Value { get; init; } = "";
     }
 

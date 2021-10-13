@@ -32,12 +32,14 @@ namespace Stl.Tests.Extensibility
         public class MatchForG1<T> { }
 
         public MatchingTypeFinderTest(ITestOutputHelper @out) : base(@out) { }
+        static MatchingTypeFinderTest()
+            => MatchingTypeFinder.AddAssembly(typeof(MatchingTypeFinderTest).Assembly);
 
         [Fact]
         public void BasicMatchTest()
         {
             var scope = GetType();
-            var finder = new MatchingTypeFinder(scope.Assembly);
+            var finder = new MatchingTypeFinder();
             finder.TryFind(typeof(object), null!).Should().BeNull();
             finder.TryFind(typeof(int), scope).Should().Be(typeof(MatchForInt));
             finder.TryFind(typeof(bool), scope).Should().Be(typeof(MatchForValueType));
@@ -50,7 +52,7 @@ namespace Stl.Tests.Extensibility
         public void GenericMatchTest()
         {
             var scope = GetType();
-            var finder = new MatchingTypeFinder(scope.Assembly);
+            var finder = new MatchingTypeFinder();
 
             finder.TryFind(typeof(NoMatch<int>), scope).Should().BeNull();
 

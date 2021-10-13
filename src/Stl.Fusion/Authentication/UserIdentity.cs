@@ -1,25 +1,28 @@
 using System;
-using Newtonsoft.Json;
-using Stl.OS;
+using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 using Stl.Text;
 
 namespace Stl.Fusion.Authentication
 {
+    [DataContract]
+    [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
     public readonly struct UserIdentity : IEquatable<UserIdentity>
     {
         private static readonly ListFormat IdFormat = ListFormat.SlashSeparated;
         public static UserIdentity None { get; } = default;
         public static string DefaultSchema { get; } = "Default";
 
+        [DataMember(Order = 0)]
         public Symbol Id { get; }
-        [JsonIgnore]
+        [JsonIgnore, Newtonsoft.Json.JsonIgnore]
         public string Schema => ParseId(Id.Value).Schema;
-        [JsonIgnore]
+        [JsonIgnore, Newtonsoft.Json.JsonIgnore]
         public string SchemaBoundId => ParseId(Id.Value).SchemaBoundId;
-        [JsonIgnore]
+        [JsonIgnore, Newtonsoft.Json.JsonIgnore]
         public bool IsValid => !Id.IsEmpty;
 
-        [JsonConstructor]
+        [JsonConstructor, Newtonsoft.Json.JsonConstructor]
         public UserIdentity(Symbol id)
             => Id = id;
         public UserIdentity(string id)
@@ -56,33 +59,23 @@ namespace Stl.Fusion.Authentication
 
         private static string FormatId(string schema, string schemaBoundId)
         {
-            var formatter = IdFormat.CreateFormatter(StringBuilderEx.Acquire());
-            try {
-                if (schema != DefaultSchema)
-                    formatter.Append(schema);
-                formatter.Append(schemaBoundId);
-                formatter.AppendEnd();
-                return formatter.Output;
-            }
-            finally {
-                formatter.OutputBuilder.Release();
-            }
+            using var f = IdFormat.CreateFormatter();
+            if (schema != DefaultSchema)
+                f.Append(schema);
+            f.Append(schemaBoundId);
+            f.AppendEnd();
+            return f.Output;
         }
 
         private static (string Schema, string SchemaBoundId) ParseId(string id)
         {
             if (string.IsNullOrEmpty(id))
                 return ("", "");
-            var parser = IdFormat.CreateParser(id, StringBuilderEx.Acquire());
-            try {
-                if (!parser.TryParseNext())
-                    return (DefaultSchema, id);
-                var firstItem = parser.Item;
-                return parser.TryParseNext() ? (firstItem, parser.Item) : (DefaultSchema, firstItem);
-            }
-            finally {
-                parser.ItemBuilder.Release();
-            }
+            using var p = IdFormat.CreateParser(id);
+            if (!p.TryParseNext())
+                return (DefaultSchema, id);
+            var firstItem = p.Item;
+            return p.TryParseNext() ? (firstItem, p.Item) : (DefaultSchema, firstItem);
         }
     }
 }

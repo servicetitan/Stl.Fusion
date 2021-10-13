@@ -1,10 +1,8 @@
 using System;
 using System.Threading;
-using Newtonsoft.Json;
 
 namespace Stl.Time.Testing
 {
-    [Serializable]
     public sealed class TestClockSettings : IDisposable
     {
         private CancellationTokenSource? _changedTokenSource;
@@ -13,12 +11,14 @@ namespace Stl.Time.Testing
         public TimeSpan RealOffset { get; }
         public double Multiplier { get; }
 
-        [JsonIgnore] public Moment Now => ToLocalTime(CpuClock.Now);
-        [JsonIgnore] public CancellationToken ChangedToken { get; }
-        [JsonIgnore] public bool IsUsable => !(_changedTokenSource?.IsCancellationRequested ?? true);
+        public Moment Now => ToLocalTime(CpuClock.Now);
+        public CancellationToken ChangedToken { get; }
+        public bool IsUsable => !(_changedTokenSource?.IsCancellationRequested ?? true);
 
-        [JsonConstructor]
-        public TestClockSettings(TimeSpan localOffset = default, TimeSpan realOffset = default, double multiplier = 1)
+        public TestClockSettings(
+            TimeSpan localOffset = default,
+            TimeSpan realOffset = default,
+            double multiplier = 1)
         {
             LocalOffset = localOffset;
             RealOffset = realOffset;
@@ -28,9 +28,7 @@ namespace Stl.Time.Testing
         }
 
         public void Changed()
-        {
-            _changedTokenSource?.Cancel();
-        }
+            => _changedTokenSource?.Cancel();
 
         public void Dispose()
         {

@@ -26,39 +26,24 @@ namespace Templates.TodoApp.Host.Controllers
 
         [HttpPost]
         public Task<Todo> AddOrUpdate([FromBody] AddOrUpdateTodoCommand command, CancellationToken cancellationToken = default)
-        {
-            command.UseDefaultSession(_sessionResolver);
-            return _todos.AddOrUpdate(command, cancellationToken);
-        }
+            => _todos.AddOrUpdate(command.UseDefaultSession(_sessionResolver), cancellationToken);
 
         [HttpPost]
         public Task Remove([FromBody] RemoveTodoCommand command, CancellationToken cancellationToken = default)
-        {
-            command.UseDefaultSession(_sessionResolver);
-            return _todos.Remove(command, cancellationToken);
-        }
+            => _todos.Remove(command.UseDefaultSession(_sessionResolver), cancellationToken);
 
         // Queries
 
         [HttpGet, Publish]
-        public Task<Todo?> TryGet(Session? session, string id, CancellationToken cancellationToken = default)
-        {
-            session ??= _sessionResolver.Session;
-            return _todos.TryGet(session, id, cancellationToken);
-        }
+        public Task<Todo?> TryGet(Session session, string id, CancellationToken cancellationToken = default)
+            => _todos.TryGet(session, id, cancellationToken);
 
         [HttpGet, Publish]
-        public Task<Todo[]> List(Session? session, PageRef<string> pageRef, CancellationToken cancellationToken = default)
-        {
-            session ??= _sessionResolver.Session;
-            return _todos.List(session, pageRef, cancellationToken);
-        }
+        public Task<Todo[]> List(Session session, PageRef<string> pageRef, CancellationToken cancellationToken = default)
+            => _todos.List(session, pageRef, cancellationToken);
 
         [HttpGet, Publish]
-        public Task<TodoSummary> GetSummary(Session? session, CancellationToken cancellationToken = default)
-        {
-            session ??= _sessionResolver.Session;
-            return _todos.GetSummary(session, cancellationToken);
-        }
+        public Task<TodoSummary> GetSummary(Session session, CancellationToken cancellationToken = default)
+            => _todos.GetSummary(session, cancellationToken);
     }
 }

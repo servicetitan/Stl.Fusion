@@ -6,37 +6,45 @@ using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Authentication.Commands;
 using Stl.Fusion.EntityFramework.Internal;
+using Stl.Versioning;
 
 namespace Stl.Fusion.EntityFramework.Authentication
 {
-    public interface IDbUserRepo<in TDbContext>
+    // ReSharper disable once TypeParameterCanBeVariant
+    public interface IDbUserRepo<in TDbContext, TDbUser, TDbUserId>
         where TDbContext : DbContext
+        where TDbUser : DbUser<TDbUserId>, new()
+        where TDbUserId : notnull
     {
         Type UserEntityType { get; }
 
         // Write methods
-        Task<(DbUser DbUser, bool IsCreated)> GetOrCreateOnSignIn(
+        Task<TDbUser> Create(TDbContext dbContext, User user, CancellationToken cancellationToken = default);
+        Task<(TDbUser DbUser, bool IsCreated)> GetOrCreateOnSignIn(
             TDbContext dbContext, User user, CancellationToken cancellationToken = default);
         Task Edit(
-            TDbContext dbContext, DbUser dbUser, EditUserCommand command, CancellationToken cancellationToken = default);
+            TDbContext dbContext, TDbUser dbUser, EditUserCommand command, CancellationToken cancellationToken = default);
         Task Remove(
-            TDbContext dbContext, DbUser dbUser, CancellationToken cancellationToken = default);
+            TDbContext dbContext, TDbUser dbUser, CancellationToken cancellationToken = default);
 
         // Read methods
-        Task<DbUser?> TryGet(long userId, CancellationToken cancellationToken = default);
-        Task<DbUser?> TryGet(
-            TDbContext dbContext, long userId, CancellationToken cancellationToken = default);
-        Task<DbUser?> TryGet(
+        Task<TDbUser?> TryGet(TDbUserId userId, CancellationToken cancellationToken = default);
+        Task<TDbUser?> TryGet(
+            TDbContext dbContext, TDbUserId userId, CancellationToken cancellationToken = default);
+        Task<TDbUser?> TryGetByUserIdentity(
             TDbContext dbContext, UserIdentity userIdentity, CancellationToken cancellationToken = default);
     }
 
-    public class DbUserRepo<TDbContext, TDbUser> : DbServiceBase<TDbContext>,
-        IDbUserRepo<TDbContext>
+    public class DbUserRepo<TDbContext, TDbUser, TDbUserId> : DbServiceBase<TDbContext>,
+        IDbUserRepo<TDbContext, TDbUser, TDbUserId>
         where TDbContext : DbContext
-        where TDbUser : DbUser, new()
+        where TDbUser : DbUser<TDbUserId>, new()
+        where TDbUserId : notnull
     {
-        protected DbAuthService<TDbContext>.Options Options { get; }
-        protected DbEntityResolver<TDbContext, long, TDbUser> EntityResolver { get; }
+        protected DbAuthService<TDbContext>.Options Options { get; init; }
+        protected IDbUserIdHandler<TDbUserId> DbUserIdHandler { get; init; }
+        protected IDbEntityResolver<TDbUserId, TDbUser> UserResolver { get; init; }
+        protected IDbEntityConverter<TDbUser, User> UserConverter { get; init; }
 
         public Type UserEntityType => typeof(TDbUser);
 
@@ -44,48 +52,65 @@ namespace Stl.Fusion.EntityFramework.Authentication
             : base(services)
         {
             Options = options;
-            EntityResolver = services.GetRequiredService<DbEntityResolver<TDbContext, long, TDbUser>>();
+            DbUserIdHandler = services.GetRequiredService<IDbUserIdHandler<TDbUserId>>();
+            UserResolver = services.DbEntityResolver<TDbUserId, TDbUser>();
+            UserConverter = services.DbEntityConverter<TDbUser, User>();
         }
 
         // Write methods
 
-        public virtual async Task<(DbUser DbUser, bool IsCreated)> GetOrCreateOnSignIn(
-            TDbContext dbContext, User user, CancellationToken cancellationToken)
+        public virtual async Task<TDbUser> Create(
+            TDbContext dbContext, User user, CancellationToken cancellationToken = default)
         {
-            DbUser dbUser;
-            if (!string.IsNullOrEmpty(user.Id)) {
-                dbUser = await TryGet(dbContext, long.Parse(user.Id), cancellationToken).ConfigureAwait(false)
-                    ?? throw Errors.EntityNotFound<TDbUser>();
-                return (dbUser, false);
-            }
-
-            // No user found, let's create it
-            dbUser = new TDbUser() {
+            // Creating "base" dbUser
+            var dbUser = new TDbUser() {
+                Id = DbUserIdHandler.New(),
+                Version = VersionGenerator.NextVersion(),
                 Name = user.Name,
                 Claims = user.Claims,
             };
             dbContext.Add(dbUser);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-            user = user with { Id = dbUser.Id.ToString() };
-            dbUser.UpdateFrom(user);
-            await dbContext.SaveChangesAsync(cancellationToken);
+            user = user with {
+                Id = DbUserIdHandler.Format(dbUser.Id)
+            };
+            // Updating dbUser from the model to persist user.Identities
+            UserConverter.UpdateEntity(user, dbUser);
+            dbContext.Update(dbUser);
+            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            return dbUser;
+        }
+
+        public virtual async Task<(TDbUser DbUser, bool IsCreated)> GetOrCreateOnSignIn(
+            TDbContext dbContext, User user, CancellationToken cancellationToken)
+        {
+            TDbUser dbUser;
+            if (!string.IsNullOrEmpty(user.Id)) {
+                dbUser = await TryGet(dbContext, DbUserIdHandler.Parse(user.Id), cancellationToken).ConfigureAwait(false)
+                    ?? throw Errors.EntityNotFound<TDbUser>();
+                return (dbUser, false);
+            }
+
+            // No user found, let's create it
+            dbUser = await Create(dbContext, user, cancellationToken).ConfigureAwait(false);
             return (dbUser, true);
         }
 
-        public virtual async Task Edit(TDbContext dbContext, DbUser dbUser, EditUserCommand command,
+        public virtual async Task Edit(TDbContext dbContext, TDbUser dbUser, EditUserCommand command,
             CancellationToken cancellationToken = default)
         {
-            var (_, name) = command;
-            if (name != null)
-                dbUser.Name = name;
+            if (command.Name != null) {
+                dbUser.Name = command.Name;
+                dbUser.Version = VersionGenerator.NextVersion(dbUser.Version);
+            }
             await dbContext.SaveChangesAsync(cancellationToken);
         }
 
         public virtual async Task Remove(
-            TDbContext dbContext, DbUser dbUser, CancellationToken cancellationToken = default)
+            TDbContext dbContext, TDbUser dbUser, CancellationToken cancellationToken = default)
         {
-            await dbContext.Entry(dbUser).Collection(nameof(DbUser.Identities))
+            await dbContext.Entry(dbUser).Collection(nameof(DbUser<object>.Identities))
                 .LoadAsync(cancellationToken).ConfigureAwait(false);
             if (dbUser.Identities.Count > 0)
                 dbContext.RemoveRange(dbUser.Identities);
@@ -95,27 +120,27 @@ namespace Stl.Fusion.EntityFramework.Authentication
 
         // Read methods
 
-        public async Task<DbUser?> TryGet(long userId, CancellationToken cancellationToken = default)
-            => await EntityResolver.TryGet(userId, cancellationToken).ConfigureAwait(false);
+        public async Task<TDbUser?> TryGet(TDbUserId userId, CancellationToken cancellationToken = default)
+            => await UserResolver.TryGet(userId, cancellationToken).ConfigureAwait(false);
 
-        public virtual async Task<DbUser?> TryGet(
-            TDbContext dbContext, long userId, CancellationToken cancellationToken)
+        public virtual async Task<TDbUser?> TryGet(
+            TDbContext dbContext, TDbUserId userId, CancellationToken cancellationToken)
         {
             var dbUser = await dbContext.Set<TDbUser>()
                 .FindAsync(ComposeKey(userId), cancellationToken)
                 .ConfigureAwait(false);
             if (dbUser != null)
-                await dbContext.Entry(dbUser).Collection(nameof(DbUser.Identities))
+                await dbContext.Entry(dbUser).Collection(nameof(DbUser<object>.Identities))
                     .LoadAsync(cancellationToken).ConfigureAwait(false);
             return dbUser;
         }
 
-        public virtual async Task<DbUser?> TryGet(
+        public virtual async Task<TDbUser?> TryGetByUserIdentity(
             TDbContext dbContext, UserIdentity userIdentity, CancellationToken cancellationToken = default)
         {
             if (!userIdentity.IsValid)
                 return null;
-            var dbUserIdentities = await dbContext.Set<DbUserIdentity>()
+            var dbUserIdentities = await dbContext.Set<DbUserIdentity<TDbUserId>>()
                 .FindAsync(ComposeKey(userIdentity.Id.Value), cancellationToken)
                 .ConfigureAwait(false);
             if (dbUserIdentities == null)

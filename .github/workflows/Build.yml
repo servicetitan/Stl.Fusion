@@ -25,7 +25,7 @@ jobs:
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: 5.0.100
+          dotnet-version: 5.0.400
 
       - name: Restore NuGet Packages & Tools
         run: dotnet run -p build -c Release --no-launch-profile -- restore restore-tools

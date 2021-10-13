@@ -1,4 +1,3 @@
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 using RestEase;
@@ -8,7 +7,7 @@ using Stl.Fusion.Extensions;
 namespace Templates.TodoApp.Abstractions.Clients
 {
     [BasePath("todo")]
-    public interface ITodoClient
+    public interface ITodoClientDef
     {
         [Post(nameof(AddOrUpdate))]
         Task<Todo> AddOrUpdate([Body] AddOrUpdateTodoCommand command, CancellationToken cancellationToken = default);

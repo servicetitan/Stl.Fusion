@@ -1,21 +1,37 @@
 @using Stl.OS
 @using System.Web
+@using System.Reflection
 @inject BlazorModeHelper BlazorModeHelper
+@inject IJSRuntime JSRuntime
 
 <BarDropdown Class="@CssClass">
-    <BarDropdownToggle>
-        Blazor Mode
-    </BarDropdownToggle>
+    <BarDropdownToggle>@(_isPrerendering ? "Loading..." : GetModeName(_isServerSideBlazor))</BarDropdownToggle>
     <BarDropdownMenu RightAligned="true">
-        <BarDropdownItem Active="IsServerSideBlazor" Clicked="@(() => ChangeMode(true))" >Server</BarDropdownItem>
-        <BarDropdownItem Active="!IsServerSideBlazor" Clicked="@(() => ChangeMode(false))">WebAssembly</BarDropdownItem>
+        @foreach(var mode in new [] {true, false}) {
+            <BarDropdownItem Clicked="@(() => BlazorModeHelper.ChangeMode(mode))">@GetModeName(mode)</BarDropdownItem>
+        }
     </BarDropdownMenu>
 </BarDropdown>
 
 @code {
+    private bool _isPrerendering;
+    private bool _isServerSideBlazor = BlazorModeHelper.IsServerSideBlazor;
+
     [Parameter]
     public string CssClass { get; set; } = "";
 
-    private void ChangeMode(bool isServerSideBlazor)
-        => BlazorModeHelper.ChangeMode(isServerSideBlazor);
+    protected override void OnInitialized()
+    {
+        var jsRuntimeType = JSRuntime.GetType();
+        if (jsRuntimeType.Name != "RemoteJSRuntime") {
+            _isPrerendering = false;
+            return;
+        }
+        var fClientProxy = jsRuntimeType.GetField("_clientProxy", BindingFlags.Instance | BindingFlags.NonPublic);
+        var clientProxy = fClientProxy?.GetValue(JSRuntime);
+        _isPrerendering = fClientProxy != null && clientProxy == null;
+    }
+
+    private string GetModeName(bool isServerSideBlazor)
+        => isServerSideBlazor ? "Blazor Server" : "Blazor WASM";
 }

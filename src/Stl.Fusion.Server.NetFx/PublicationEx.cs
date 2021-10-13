@@ -10,7 +10,7 @@ using Stl.Fusion.Server.Internal;
 
 namespace Stl.Fusion.Server
 {
-    public static class HttpContextEx
+    public static class HttpContextExt
     {
         public static T GetRequiredService<T>(this IDependencyScope dependencyScope)
         {

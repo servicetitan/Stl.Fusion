@@ -20,11 +20,12 @@ namespace Stl.Fusion.EntityFramework.Extensions
             public bool IsLoggingEnabled { get; set; } = true;
         }
 
-        protected TimeSpan CheckInterval { get; }
-        protected int BatchSize { get; }
+        protected TimeSpan CheckInterval { get; init; }
+        protected int BatchSize { get; init; }
+        protected IKeyValueStore KeyValueStore { get; init; }
+        protected Random Random { get; init; }
+
         protected int LastTrimCount { get; set; }
-        protected Random Random { get; }
-        protected IDbKeyValueStore<TDbContext> KeyValueStore { get; }
         protected bool IsLoggingEnabled { get; set; }
         protected LogLevel LogLevel { get; set; } = LogLevel.Information;
 
@@ -38,7 +39,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
             BatchSize = options.BatchSize;
             Random = new Random();
 
-            KeyValueStore = services.GetRequiredService<IDbKeyValueStore<TDbContext>>();
+            KeyValueStore = services.GetRequiredService<IKeyValueStore>();
         }
 
         protected override async Task WakeUp(CancellationToken cancellationToken)
@@ -47,7 +48,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
             dbContext.DisableChangeTracking();
             LastTrimCount = 0;
 
-            var minExpiresAt = Clock.Now.ToDateTime();
+            var minExpiresAt = Clocks.SystemClock.Now.ToDateTime();
             var keys = await dbContext.Set<TDbKeyValue>().AsQueryable()
                 .Where(o => o.ExpiresAt < minExpiresAt)
                 .OrderBy(o => o.ExpiresAt)
@@ -73,7 +74,7 @@ namespace Stl.Fusion.EntityFramework.Extensions
                 delay = TimeSpan.FromMilliseconds(1000 * Random.NextDouble());
             else if (LastTrimCount < BatchSize)
                 delay = CheckInterval + TimeSpan.FromMilliseconds(10 * Random.NextDouble());
-            return Clock.Delay(delay, cancellationToken);
+            return Clocks.CoarseCpuClock.Delay(delay, cancellationToken);
         }
     }
 }

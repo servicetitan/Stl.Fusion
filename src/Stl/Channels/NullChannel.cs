@@ -12,7 +12,7 @@ namespace Stl.Channels
 
         private class NullChannelReader : ChannelReader<T>
         {
-            public override Task Completion => TaskEx.InfiniteUnitTask;
+            public override Task Completion => TaskExt.InfiniteUnitTask;
 
             public override bool TryRead(out T item)
             {
@@ -21,7 +21,7 @@ namespace Stl.Channels
             }
 
             public override ValueTask<bool> WaitToReadAsync(CancellationToken cancellationToken = new CancellationToken())
-                => ValueTaskEx.FalseTask;
+                => ValueTaskExt.FalseTask;
         }
 
         private class NullChannelWriter : ChannelWriter<T>
@@ -33,7 +33,7 @@ namespace Stl.Channels
                 => true;
 
             public override ValueTask<bool> WaitToWriteAsync(CancellationToken cancellationToken = new CancellationToken())
-                => ValueTaskEx.TrueTask;
+                => ValueTaskExt.TrueTask;
         }
 
         private NullChannel()

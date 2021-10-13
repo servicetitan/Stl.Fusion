@@ -1,9 +1,9 @@
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Stl.Async;
 using Stl.Channels;
 using Stl.Testing;
+using Stl.Testing.Collections;
 using Xunit;
 using Xunit.Abstractions;
 

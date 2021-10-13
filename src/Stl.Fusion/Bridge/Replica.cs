@@ -93,7 +93,7 @@ namespace Stl.Fusion.Bridge
         {
             Input.ReplicatorImpl.OnReplicaDisposed(this);
             ReplicaRegistry.Instance.Remove(this);
-            return ValueTaskEx.CompletedTask;
+            return ValueTaskExt.CompletedTask;
         }
 
         Task IReplica.RequestUpdate(CancellationToken cancellationToken)

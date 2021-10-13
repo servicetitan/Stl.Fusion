@@ -14,7 +14,7 @@ namespace Stl.Fusion.Bridge.Internal
     {
         public SubscriptionProcessor Create(Type genericType,
             IPublication publication, Channel<BridgeMessage> outgoingMessages,
-            TimeSpan subscriptionExpirationTime, IMomentClock clock,
+            TimeSpan subscriptionExpirationTime, MomentClockSet clocks,
             ILoggerFactory loggerFactory);
     }
 
@@ -22,7 +22,7 @@ namespace Stl.Fusion.Bridge.Internal
     {
         private delegate SubscriptionProcessor Constructor(
             IPublication publication, Channel<BridgeMessage> outgoingMessages,
-            TimeSpan subscriptionExpirationTime, IMomentClock clock,
+            TimeSpan subscriptionExpirationTime, MomentClockSet clocks,
             ILoggerFactory loggerFactory);
 
         private static readonly ConcurrentDictionary<Type, Constructor> ConstructorCache = new();
@@ -34,10 +34,10 @@ namespace Stl.Fusion.Bridge.Internal
 
         public SubscriptionProcessor Create(Type genericType,
             IPublication publication, Channel<BridgeMessage> outgoingMessages,
-            TimeSpan subscriptionExpirationTime, IMomentClock clock, ILoggerFactory loggerFactory)
+            TimeSpan subscriptionExpirationTime, MomentClockSet clocks, ILoggerFactory loggerFactory)
             => ConstructorCache
                 .GetOrAddChecked(genericType, CreateCache)
-                .Invoke(publication, outgoingMessages, subscriptionExpirationTime, clock, loggerFactory);
+                .Invoke(publication, outgoingMessages, subscriptionExpirationTime, clocks, loggerFactory);
 
         private static Constructor Create(Type genericType)
         {
@@ -48,14 +48,15 @@ namespace Stl.Fusion.Bridge.Internal
 
             SubscriptionProcessor Factory(
                 IPublication publication, Channel<BridgeMessage> outgoingMessages,
-                TimeSpan subscribeTimeout, IMomentClock clock, ILoggerFactory loggerFactory)
-                => publication.Apply(handler, (outgoingMessages, subscribeTimeout, clock, loggerFactory));
+                TimeSpan subscribeTimeout, MomentClockSet clocks, ILoggerFactory loggerFactory)
+                => publication.Apply(handler, (outgoingMessages, subscribeTimeout, clocks, loggerFactory));
 
             return Factory;
         }
 
         private class FactoryApplyHandler : IPublicationApplyHandler<
-            (Channel<BridgeMessage> OutgoingMessages, TimeSpan SubscriptionExpirationTime, IMomentClock Clock, ILoggerFactory loggerFactory),
+            (Channel<BridgeMessage> OutgoingMessages, TimeSpan SubscriptionExpirationTime,
+            MomentClockSet Clocks, ILoggerFactory loggerFactory),
             SubscriptionProcessor>
         {
             private readonly Type _genericType;
@@ -66,14 +67,17 @@ namespace Stl.Fusion.Bridge.Internal
 
             public SubscriptionProcessor Apply<T>(
                 IPublication<T> publication,
-                (Channel<BridgeMessage> OutgoingMessages, TimeSpan SubscriptionExpirationTime, IMomentClock Clock, ILoggerFactory loggerFactory) arg)
+                (Channel<BridgeMessage> OutgoingMessages,
+                    TimeSpan SubscriptionExpirationTime,
+                    MomentClockSet Clocks,
+                    ILoggerFactory loggerFactory) arg)
             {
                 var closedType = _closedTypeCache.GetOrAddChecked(
                     typeof(T),
                     (tArg, tGeneric) => tGeneric.MakeGenericType(tArg),
                     _genericType);
                 return (SubscriptionProcessor) closedType.CreateInstance(
-                    publication, arg.OutgoingMessages, arg.SubscriptionExpirationTime, arg.Clock, arg.loggerFactory);
+                    publication, arg.OutgoingMessages, arg.SubscriptionExpirationTime, arg.Clocks, arg.loggerFactory);
             }
         }
     }

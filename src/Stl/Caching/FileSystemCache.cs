@@ -56,9 +56,9 @@ namespace Stl.Caching
             catch (IOException) {}
         }
 
-        protected abstract PathString GetFileName(TKey key);
+        protected abstract FilePath GetFileName(TKey key);
 
-        protected virtual FileStream? OpenFile(PathString fileName, bool forWrite,
+        protected virtual FileStream? OpenFile(FilePath fileName, bool forWrite,
             CancellationToken cancellationToken)
         {
             if (!forWrite)
@@ -110,14 +110,14 @@ namespace Stl.Caching
         where TKey : notnull
     {
         protected static readonly string DefaultExtension = ".tmp";
-        protected static readonly Func<TKey, PathString> DefaultKeyToFileNameConverter =
-            key => PathEx.GetHashedName(key?.ToString() ?? "0_0");
+        protected static readonly Func<TKey, FilePath> DefaultKeyToFileNameConverter =
+            key => FilePath.GetHashedName(key?.ToString() ?? "0_0");
 
         public string CacheDirectory { get; }
         public string FileExtension { get; }
-        public Func<TKey, PathString> KeyToFileNameConverter { get; }
+        public Func<TKey, FilePath> KeyToFileNameConverter { get; }
 
-        public FileSystemCache(PathString cacheDirectory, string? extension = null, Func<TKey, PathString>? keyToFileNameConverter = null)
+        public FileSystemCache(FilePath cacheDirectory, string? extension = null, Func<TKey, FilePath>? keyToFileNameConverter = null)
         {
             CacheDirectory = cacheDirectory;
             FileExtension = extension ?? DefaultExtension;
@@ -135,7 +135,7 @@ namespace Stl.Caching
                 File.Delete(name);
         }
 
-        protected override PathString GetFileName(TKey key)
+        protected override FilePath GetFileName(TKey key)
             => CacheDirectory & (KeyToFileNameConverter(key) + FileExtension);
     }
 }

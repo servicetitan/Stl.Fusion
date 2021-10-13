@@ -31,7 +31,7 @@ namespace Stl.CommandR.Configuration
             CancellationToken cancellationToken)
         {
             var services = context.Services;
-            var service = services.GetRequiredService(ServiceType);
+            var service = GetHandlerService(command, context);
             var parameters = _cachedParameters ??= MethodInfo.GetParameters();
             var arguments = new object[parameters.Length];
             arguments[0] = command;

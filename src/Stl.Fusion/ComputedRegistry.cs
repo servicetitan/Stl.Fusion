@@ -223,6 +223,6 @@ namespace Stl.Fusion
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected int Randomize(int random)
-            => random + CoarseStopwatch.RandomInt32;
+            => random + CoarseClockHelper.RandomInt32;
     }
 }

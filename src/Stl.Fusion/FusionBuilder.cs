@@ -6,6 +6,7 @@ using Castle.DynamicProxy.Generators;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.CommandR;
+using Stl.Conversion;
 using Stl.DependencyInjection;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Bridge;
@@ -13,7 +14,11 @@ using Stl.Fusion.Bridge.Interception;
 using Stl.Fusion.Operations;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Operations.Internal;
+using Stl.Fusion.Operations.Reprocessing;
+using Stl.Fusion.UI;
 using Stl.Time;
+using Stl.Versioning;
+using Stl.Versioning.Providers;
 
 namespace Stl.Fusion
 {
@@ -40,7 +45,11 @@ namespace Stl.Fusion
 
             // Common services
             Services.AddOptions();
-            Services.TryAddSingleton(SystemClock.Instance);
+            Services.AddConverters();
+            Services.TryAddSingleton(MomentClockSet.Default);
+            Services.TryAddSingleton(c => c.GetRequiredService<MomentClockSet>().SystemClock);
+            Services.TryAddSingleton(LTagVersionGenerator.Default);
+            Services.TryAddSingleton(ClockBasedVersionGenerator.DefaultCoarse);
 
             // Compute services & their dependencies
             Services.TryAddSingleton(_ => ComputeServiceProxyGenerator.Default);
@@ -57,7 +66,8 @@ namespace Stl.Fusion
             // States & their dependencies
             Services.TryAddTransient<IStateFactory, StateFactory>();
             Services.TryAddTransient(typeof(IMutableState<>), typeof(MutableState<>));
-            Services.TryAddTransient<IUpdateDelayer>(_ => UpdateDelayer.Default);
+            Services.TryAddScoped<IUICommandTracker, UICommandTracker>();
+            Services.TryAddTransient<IUpdateDelayer>(c => new UpdateDelayer(c.UICommandTracker()));
 
             // CommandR, command completion and invalidation
             var commander = Services.AddCommander();
@@ -66,12 +76,16 @@ namespace Stl.Fusion
 
             // Transient operation scope & its provider
             Services.TryAddTransient<TransientOperationScope>();
-            Services.TryAddSingleton<TransientOperationScopeProvider>();
-            commander.AddHandlers<TransientOperationScopeProvider>();
+            if (!Services.HasService<TransientOperationScopeProvider>()) {
+                Services.AddSingleton<TransientOperationScopeProvider>();
+                commander.AddHandlers<TransientOperationScopeProvider>();
+            }
 
             // Nested command logger
-            Services.TryAddSingleton<NestedCommandLogger>();
-            commander.AddHandlers<NestedCommandLogger>();
+            if (!Services.HasService<NestedCommandLogger>()) {
+                Services.AddSingleton<NestedCommandLogger>();
+                commander.AddHandlers<NestedCommandLogger>();
+            }
 
             // Operation completion - notifier & producer
             Services.TryAddSingleton<OperationCompletionNotifier.Options>();
@@ -83,18 +97,21 @@ namespace Stl.Fusion
 
             // Command completion handler performing invalidations
             Services.TryAddSingleton<InvalidateOnCompletionCommandHandler.Options>();
-            Services.TryAddSingleton<InvalidateOnCompletionCommandHandler>();
-            commander.AddHandlers<InvalidateOnCompletionCommandHandler>();
+            if (!Services.HasService<InvalidateOnCompletionCommandHandler>()) {
+                Services.AddSingleton<InvalidateOnCompletionCommandHandler>();
+                commander.AddHandlers<InvalidateOnCompletionCommandHandler>();
+            }
 
             // Catch-all completion handler
-            Services.TryAddSingleton<CatchAllCompletionHandler>();
-            commander.AddHandlers<CatchAllCompletionHandler>();
+            if (!Services.HasService<CatchAllCompletionHandler>()) {
+                Services.AddSingleton<CatchAllCompletionHandler>();
+                commander.AddHandlers<CatchAllCompletionHandler>();
+            }
         }
 
         static FusionBuilder()
         {
             var nonReplicableAttributeTypes = new HashSet<Type>() {
-                typeof(RegisterAttribute),
                 typeof(AsyncStateMachineAttribute),
                 typeof(ComputeMethodAttribute),
             };
@@ -187,6 +204,29 @@ namespace Stl.Fusion
         {
             var fusionAuth = AddAuthentication();
             configureFusionAuthentication.Invoke(fusionAuth);
+            return this;
+        }
+
+        // AddOperationReprocessor
+
+        public FusionBuilder AddOperationReprocessor(
+            Action<IServiceProvider, OperationReprocessor.Options>? optionsBuilder = null)
+            => AddOperationReprocessor<OperationReprocessor>(optionsBuilder);
+
+        public FusionBuilder AddOperationReprocessor<TOperationReprocessor>(
+            Action<IServiceProvider, OperationReprocessor.Options>? optionsBuilder = null)
+            where TOperationReprocessor : class, IOperationReprocessor
+        {
+            Services.TryAddSingleton(c => {
+                var options = new OperationReprocessor.Options();
+                optionsBuilder?.Invoke(c, options);
+                return options;
+            });
+            if (!Services.HasService<IOperationReprocessor>()) {
+                Services.AddTransient<TOperationReprocessor>();
+                Services.AddTransient<IOperationReprocessor>(c => c.GetRequiredService<TOperationReprocessor>());
+                Services.AddCommander().AddHandlers<TOperationReprocessor>();
+            }
             return this;
         }
     }

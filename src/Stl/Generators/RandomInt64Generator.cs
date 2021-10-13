@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 
 namespace Stl.Generators
 {
+    // Thread-safe!
     public sealed class RandomInt64Generator : Generator<long>
     {
         private readonly byte[] _buffer = new byte[sizeof(long)];
@@ -14,7 +15,9 @@ namespace Stl.Generators
 
         public override long Next()
         {
-            _rng!.GetBytes(_buffer);
+            lock (_rng) {
+                _rng!.GetBytes(_buffer);
+            }
             var bufferSpan = MemoryMarshal.Cast<byte, long>(_buffer.AsSpan());
             return bufferSpan![0];
         }

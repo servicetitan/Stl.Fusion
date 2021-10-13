@@ -18,7 +18,7 @@ namespace Samples.HelloCart.V1
             if (string.IsNullOrEmpty(productId))
                 throw new ArgumentOutOfRangeException(nameof(command));
             if (Computed.IsInvalidating()) {
-                TryGet(productId, default).Ignore();
+                _ = TryGet(productId, default);
                 return Task.CompletedTask;
             }
 

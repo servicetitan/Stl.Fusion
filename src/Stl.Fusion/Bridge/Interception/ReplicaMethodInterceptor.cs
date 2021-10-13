@@ -2,6 +2,8 @@ using System;
 using Microsoft.Extensions.Logging;
 using Stl.Fusion.Interception;
 using Stl.Generators;
+using Stl.Versioning;
+using Stl.Versioning.Providers;
 
 namespace Stl.Fusion.Bridge.Interception
 {
@@ -9,11 +11,11 @@ namespace Stl.Fusion.Bridge.Interception
     {
         public new class Options : ComputeMethodInterceptorBase.Options
         {
-            public Generator<LTag> VersionGenerator { get; set; } = ConcurrentLTagGenerator.Default;
+            public VersionGenerator<LTag>? VersionGenerator { get; set; }
         }
 
         protected readonly IReplicator Replicator;
-        protected readonly Generator<LTag> VersionGenerator;
+        protected readonly VersionGenerator<LTag> VersionGenerator;
 
         public ReplicaMethodInterceptor(
             Options? options,
@@ -23,7 +25,7 @@ namespace Stl.Fusion.Bridge.Interception
             : base(options ??= new(), services, loggerFactory)
         {
             Replicator = replicator;
-            VersionGenerator = options.VersionGenerator;
+            VersionGenerator = options.VersionGenerator ?? services.VersionGenerator<LTag>();
         }
 
         protected override ComputeFunctionBase<T> CreateFunction<T>(ComputeMethodDef method)

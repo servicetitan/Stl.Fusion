@@ -2,7 +2,6 @@ using System;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Stl.CommandR;
-using Stl.Testing;
 using Stl.Tests.CommandR.Services;
 using Xunit;
 using Xunit.Abstractions;
@@ -58,7 +57,6 @@ namespace Stl.Tests.CommandR
                 Isolate = true,
             }, true);
             result.Should().Be(10);
-
         }
     }
 }

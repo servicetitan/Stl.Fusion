@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,9 +15,10 @@ namespace Stl.CommandR.Commands
     public interface IServerSideCommand<TResult> : IServerSideCommand, ICommand<TResult>
     { }
 
+    [DataContract]
     public abstract record ServerSideCommandBase<TResult> : IServerSideCommand<TResult>
     {
-        [JsonIgnore]
+        [JsonIgnore, IgnoreDataMember]
         [field: NonSerialized]
         public bool IsServerSide { get; set; }
 

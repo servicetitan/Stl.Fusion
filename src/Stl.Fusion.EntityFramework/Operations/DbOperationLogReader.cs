@@ -20,15 +20,16 @@ namespace Stl.Fusion.EntityFramework.Operations
             public TimeSpan ErrorDelay { get; set; } = TimeSpan.FromSeconds(0.25);
         }
 
-        protected TimeSpan MaxCommitDuration { get; }
-        protected TimeSpan UnconditionalWakeUpPeriod { get; }
-        protected int BatchSize { get; }
-        protected TimeSpan ErrorDelay { get; }
+        protected TimeSpan MaxCommitDuration { get; init; }
+        protected TimeSpan UnconditionalWakeUpPeriod { get; init; }
+        protected int BatchSize { get; init; }
+        protected TimeSpan ErrorDelay { get; init; }
 
-        protected AgentInfo AgentInfo { get; }
-        protected IOperationCompletionNotifier OperationCompletionNotifier { get; }
-        protected IDbOperationLogChangeTracker<TDbContext>? OperationLogChangeMonitor { get; }
-        protected IDbOperationLog<TDbContext> DbOperationLog { get; }
+        protected AgentInfo AgentInfo { get; init; }
+        protected IOperationCompletionNotifier OperationCompletionNotifier { get; init; }
+        protected IDbOperationLogChangeTracker<TDbContext>? OperationLogChangeMonitor { get; init; }
+        protected IDbOperationLog<TDbContext> DbOperationLog { get; init; }
+
         protected Moment MaxKnownCommitTime { get; set; }
         protected int LastCount { get; set; }
 
@@ -41,7 +42,7 @@ namespace Stl.Fusion.EntityFramework.Operations
             BatchSize = options.BatchSize;
             ErrorDelay = options.ErrorDelay;
 
-            MaxKnownCommitTime = Clock.Now;
+            MaxKnownCommitTime = Clocks.SystemClock.Now;
             AgentInfo = services.GetRequiredService<AgentInfo>();
             OperationLogChangeMonitor = services.GetService<IDbOperationLogChangeTracker<TDbContext>>();
             OperationCompletionNotifier = services.GetRequiredService<IOperationCompletionNotifier>();
@@ -84,14 +85,14 @@ namespace Stl.Fusion.EntityFramework.Operations
         protected override Task Sleep(Exception? error, CancellationToken cancellationToken)
         {
             if (error != null)
-                return Clock.Delay(ErrorDelay, cancellationToken);
+                return Clocks.CoarseCpuClock.Delay(ErrorDelay, cancellationToken);
             if (LastCount == BatchSize)
                 return Task.CompletedTask;
             if (OperationLogChangeMonitor == null)
-                return Clock.Delay(UnconditionalWakeUpPeriod, cancellationToken);
+                return Clocks.CpuClock.Delay(UnconditionalWakeUpPeriod, cancellationToken);
             return OperationLogChangeMonitor
                 .WaitForChanges(cancellationToken)
-                .WithTimeout(Clock, UnconditionalWakeUpPeriod, cancellationToken);
+                .WithTimeout(Clocks.CpuClock, UnconditionalWakeUpPeriod, cancellationToken);
         }
     }
 }

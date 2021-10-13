@@ -23,7 +23,7 @@ namespace Samples.HelloCart.V2
             if (string.IsNullOrEmpty(cartId))
                 throw new ArgumentOutOfRangeException(nameof(command));
             if (Computed.IsInvalidating()) {
-                TryGet(cartId, default).Ignore();
+                _ = TryGet(cartId, default);
                 return;
             }
 

@@ -9,7 +9,7 @@ namespace Stl.Generators
     {
         internal static int DefaultConcurrencyLevel => HardwareInfo.ProcessorCountPo2 << 1;
 
-        public static readonly ConcurrentGenerator<int> Default = New(CoarseStopwatch.RandomInt32);
+        public static readonly ConcurrentGenerator<int> Default = New(CoarseClockHelper.RandomInt32);
 
         public static ConcurrentGenerator<int> New(int start, int concurrencyLevel = -1)
         {

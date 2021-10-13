@@ -14,13 +14,13 @@ namespace Stl.Fusion.Authentication
         public class Options
         {
             public TimeSpan UpdatePeriod { get; set; } = TimeSpan.FromMinutes(3);
-            public IMomentClock? Clock { get; set; }
+            public MomentClockSet? Clocks { get; set; }
         }
 
         protected TimeSpan UpdatePeriod { get; }
         protected IAuthService AuthService { get; }
         protected ISessionResolver SessionResolver { get; }
-        protected IMomentClock Clock { get; }
+        protected MomentClockSet Clocks { get; }
         protected ILogger Log { get; }
 
         public PresenceService(
@@ -31,7 +31,7 @@ namespace Stl.Fusion.Authentication
             options ??= new();
             Log = log ?? NullLogger<PresenceService>.Instance;
             UpdatePeriod = options.UpdatePeriod;
-            Clock = options.Clock ?? services.GetService<IMomentClock>() ?? CpuClock.Instance;
+            Clocks = options.Clocks ?? services.Clocks();
             AuthService = services.GetRequiredService<IAuthService>();
             SessionResolver = services.GetRequiredService<ISessionResolver>();
         }
@@ -41,7 +41,7 @@ namespace Stl.Fusion.Authentication
             var session = await SessionResolver.GetSession(cancellationToken).ConfigureAwait(false);
             var retryCount = 0;
             while (!cancellationToken.IsCancellationRequested) {
-                await Clock.Delay(UpdatePeriod, cancellationToken).ConfigureAwait(false);
+                await Clocks.CoarseCpuClock.Delay(UpdatePeriod, cancellationToken).ConfigureAwait(false);
                 var success = await UpdatePresence(session, cancellationToken).ConfigureAwait(false);
                 retryCount = success ? 0 : 1 + retryCount;
             }

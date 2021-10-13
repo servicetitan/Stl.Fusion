@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -6,7 +7,7 @@ using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Messages;
 using Stl.Fusion.Tests.Services;
 using Stl.Testing;
-using Stl.Tests;
+using Stl.Testing.Collections;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -38,7 +39,7 @@ namespace Stl.Fusion.Tests
             await publisher.Subscribe(cp.Channel1, p1, true);
             Debug.WriteLine("a2");
             var m = await cReader.AssertRead();
-            m.Should().BeOfType<PublicationStateMessage<string>>()
+            m.Should().BeOfType<PublicationStateReply<string, string>>()
                 .Which.Output!.Value.Value.Should().Be("");
             Debug.WriteLine("a3");
             await cReader.AssertCannotRead();
@@ -48,10 +49,10 @@ namespace Stl.Fusion.Tests
             Debug.WriteLine("b2");
             m = await cReader.AssertRead();
             Debug.WriteLine("b3");
-            m.Should().BeOfType<PublicationStateMessage<string>>()
+            m.Should().BeOfType<PublicationStateReply<string>>()
                 .Which.IsConsistent.Should().BeFalse();
             Debug.WriteLine("b4");
-            var pm = (PublicationMessage) m;
+            var pm = (PublicationReply) m;
             pm.PublisherId.Should().Be(publisher.Id);
             pm.PublicationId.Should().Be(p1.Id);
             Debug.WriteLine("b5");
@@ -68,9 +69,9 @@ namespace Stl.Fusion.Tests
             Debug.WriteLine("d2");
             m = await cReader.AssertRead();
             Debug.WriteLine("d3");
-            m.Should().BeOfType<PublicationStateMessage<string>>()
+            m.Should().BeOfType<PublicationStateReply<string, string>>()
                 .Which.IsConsistent.Should().BeTrue();
-            m.Should().BeOfType<PublicationStateMessage<string>>()
+            m.Should().BeOfType<PublicationStateReply<string, string>>()
                 .Which.Output!.Value.Value.Should().Be("12");
             Debug.WriteLine("d4");
             await cReader.AssertCannotRead();
@@ -85,7 +86,7 @@ namespace Stl.Fusion.Tests
             Debug.WriteLine("f2");
             m = await cReader.AssertRead();
             Debug.WriteLine("f3");
-            m.Should().BeOfType<PublicationAbsentsMessage>();
+            m.Should().BeOfType<PublicationAbsentsReply>();
         }
     }
 }

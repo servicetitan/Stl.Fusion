@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Reactive;
@@ -28,9 +28,9 @@ namespace Templates.TodoApp.Services
                 todo = todo with { Id = Ulid.NewUlid().ToString() };
             _store = _store.RemoveAll(i => i.Id == todo.Id).Add(todo);
 
-            using var _ = Computed.Invalidate();
-            TryGet(session, todo.Id, CancellationToken.None).Ignore();
-            PseudoGetAllItems(session).Ignore();
+            using var invalidating = Computed.Invalidate();
+            _ = TryGet(session, todo.Id, CancellationToken.None);
+            _ = PseudoGetAllItems(session);
             return todo;
         }
 
@@ -41,9 +41,9 @@ namespace Templates.TodoApp.Services
             var (session, todoId) = command;
             _store = _store.RemoveAll(i => i.Id == todoId);
 
-            using var _ = Computed.Invalidate();
-            TryGet(session, todoId, CancellationToken.None).Ignore();
-            PseudoGetAllItems(session).Ignore();
+            using var invalidating = Computed.Invalidate();
+            _ = TryGet(session, todoId, CancellationToken.None);
+            _ = PseudoGetAllItems(session);
         }
 #pragma warning restore 1998
 
@@ -55,11 +55,7 @@ namespace Templates.TodoApp.Services
         public virtual async Task<Todo[]> List(Session session, PageRef<string> pageRef, CancellationToken cancellationToken = default)
         {
             await PseudoGetAllItems(session);
-            var todos = _store.OrderBy(i => i.Id).AsEnumerable();
-            if (pageRef.AfterKey != null)
-                todos = todos.Where(i => string.CompareOrdinal(i.Id, pageRef.AfterKey) > 0);
-            todos = todos.Take(pageRef.Count);
-            return todos.ToArray();
+            return _store.OrderByAndTakePage(i => i.Id, pageRef).ToArray();
         }
 
         public virtual async Task<TodoSummary> GetSummary(Session session, CancellationToken cancellationToken = default)
@@ -74,6 +70,6 @@ namespace Templates.TodoApp.Services
 
         [ComputeMethod]
         protected virtual Task<Unit> PseudoGetAllItems(Session session)
-            => TaskEx.UnitTask;
+            => TaskExt.UnitTask;
     }
 }

@@ -70,7 +70,7 @@ namespace Stl.Testing
             return AsyncDisposable.New(async self => {
                 var host1 = self.Host;
                 await host1.StopAsync().SuppressExceptions().ConfigureAwait(false);
-                Task.Run(() => host1.Dispose()).Ignore();
+                _ = Task.Run(() => host1.Dispose());
                 self.HostLazy = new Lazy<IHost>(CreateHost);
             }, this);
         }
@@ -83,7 +83,7 @@ namespace Stl.Testing
 
         protected virtual IHostBuilder CreateHostBuilder()
         {
-            var emptyDir = PathEx.GetApplicationDirectory() & "Empty";
+            var emptyDir = FilePath.GetApplicationDirectory() & "Empty";
             Directory.CreateDirectory(emptyDir);
 
             var builder = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder();

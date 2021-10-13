@@ -100,7 +100,7 @@ namespace Stl.Locking
         private (AsyncLock, Entry) PrepareLock(TKey key)
         {
             var spinWait = new SpinWait();
-            for (;;) {
+            while (true) {
                 var entry = _entries.GetOrAdd(key, (key1, self) => new Entry(self, key1), this);
                 var asyncLock = entry.TryBeginUse();
                 if (asyncLock != null)

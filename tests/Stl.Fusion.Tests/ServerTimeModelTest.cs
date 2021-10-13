@@ -1,10 +1,11 @@
 using System;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Tests.UIModels;
-using Stl.Tests;
+using Stl.Testing.Collections;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -26,7 +27,7 @@ namespace Stl.Fusion.Tests
             c.Value.Time.Should().Be(default);
 
             Debug.WriteLine("0");
-            await stm.ApplyUserCausedUpdate();
+            await Update(stm);
             Debug.WriteLine("1");
             await c.Update();
             Debug.WriteLine("2");
@@ -38,7 +39,7 @@ namespace Stl.Fusion.Tests
             Debug.WriteLine("3");
             await Task.Delay(TimeSpan.FromSeconds(3));
             Debug.WriteLine("4");
-            await stm.ApplyUserCausedUpdate();
+            await Update(stm);
             Debug.WriteLine("5");
             await Task.Delay(300); // Let's just wait for the updates to happen
             Debug.WriteLine("6");
@@ -62,7 +63,7 @@ namespace Stl.Fusion.Tests
             c.Value.Time.Should().Be(default);
 
             Debug.WriteLine("0");
-            await stm.ApplyUserCausedUpdate();
+            await Update(stm);
             Debug.WriteLine("1");
             await c.Update();
             Debug.WriteLine("2");
@@ -74,7 +75,7 @@ namespace Stl.Fusion.Tests
             Debug.WriteLine("3");
             await Task.Delay(TimeSpan.FromSeconds(3));
             Debug.WriteLine("4");
-            await stm.ApplyUserCausedUpdate();
+            await Update(stm);
             Debug.WriteLine("5");
             await Task.Delay(300); // Let's just wait for the updates to happen
             Debug.WriteLine("6");
@@ -86,5 +87,11 @@ namespace Stl.Fusion.Tests
             Debug.WriteLine(delta.TotalSeconds);
             delta.Should().BeLessThan(TimeSpan.FromSeconds(1));
         }
+
+        // Private methods
+
+        private static ValueTask<IComputedState<T>> Update<T>(
+            IComputedState<T> state, CancellationToken cancellationToken = default)
+            => state.Update(cancellationToken);
     }
 }

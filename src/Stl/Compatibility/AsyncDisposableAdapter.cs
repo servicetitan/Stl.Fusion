@@ -19,12 +19,12 @@ namespace Stl.Compatibility
         public ValueTask DisposeAsync()
         {
 #if !NETSTANDARD2_0
-            return Target?.DisposeAsync() ?? ValueTaskEx.CompletedTask;
+            return Target?.DisposeAsync() ?? ValueTaskExt.CompletedTask;
 #else
             if (Target is IAsyncDisposable ad)
                 return ad.DisposeAsync();
             Target?.Dispose();
-            return ValueTaskEx.CompletedTask;
+            return ValueTaskExt.CompletedTask;
 #endif
         }
     }

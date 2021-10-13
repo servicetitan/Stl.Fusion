@@ -34,9 +34,12 @@ namespace Stl.Fusion.Server
 
             public static IUtf16Serializer<BridgeMessage> DefaultSerializerFactory()
                 => new Utf16Serializer(
-                    new SafeUtf16Serializer(new NewtonsoftJsonSerializer(),
-                        t => typeof(ReplicatorMessage).IsAssignableFrom(t)).Reader,
-                    new NewtonsoftJsonSerializer().Writer
+                    new TypeDecoratingSerializer(
+                        SystemJsonSerializer.Default,
+                        t => typeof(ReplicatorRequest).IsAssignableFrom(t)).Reader,
+                    new TypeDecoratingSerializer(
+                        SystemJsonSerializer.Default,
+                        t => typeof(PublisherReply).IsAssignableFrom(t)).Writer
                 ).ToTyped<BridgeMessage>();
         }
 
@@ -78,7 +81,7 @@ namespace Stl.Fusion.Server
                 ?? ImmutableDictionary<string, string[]>.Empty;
 
             var acceptOptions = new Dictionary<string, object>();
-            if (requestHeaders.TryGetValue("Sec-WebSocket-Protocol", out string[] subProtocols) && subProtocols.Length > 0) {
+            if (requestHeaders.TryGetValue("Sec-WebSocket-Protocol", out string[]? subProtocols) && subProtocols.Length > 0) {
                 // Select the first one from the client
                 acceptOptions.Add("websocket.SubProtocol", subProtocols[0].Split(',').First().Trim());
             }
@@ -97,7 +100,7 @@ namespace Stl.Fusion.Server
             var webSocket = wsContext.WebSocket;
             await using var wsChannel = new WebSocketChannel(webSocket);
             var channel = wsChannel
-                .WithSerializer(serializers)
+                .WithUtf16Serializer(serializers)
                 .WithId(clientId);
             Publisher.ChannelHub.Attach(channel);
             try {

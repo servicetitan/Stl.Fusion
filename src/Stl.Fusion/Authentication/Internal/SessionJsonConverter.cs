@@ -1,23 +1,18 @@
 using System;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Stl.Fusion.Authentication.Internal
 {
-    public class SessionJsonConverter : JsonConverter
+    public class SessionJsonConverter : JsonConverter<Session?>
     {
-        public override bool CanConvert(Type objectType)
-            => objectType == typeof(Session);
-
-        public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
+        public override Session? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            var session = (Session?) value!;
-            writer.WriteValue(session?.Id);
-        }
-
-        public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
-        {
-            var value = (string?) reader.Value!;
+            var value = reader.GetString();
             return value == null! ? null : new Session(value);
         }
+
+        public override void Write(Utf8JsonWriter writer, Session? value, JsonSerializerOptions options)
+            => writer.WriteStringValue(value?.Id);
     }
 }

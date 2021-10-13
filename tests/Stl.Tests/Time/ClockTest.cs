@@ -7,6 +7,7 @@ using FluentAssertions;
 using Stl.Async;
 using Stl.Collections;
 using Stl.Testing;
+using Stl.Testing.Collections;
 using Stl.Time;
 using Stl.Time.Testing;
 using Xunit;
@@ -153,7 +154,7 @@ namespace Stl.Tests.Time
                 })).Should().CompleteWithinAsync(TimeSpan.FromMilliseconds(500));
             }
 
-            await Test(SystemClock.Instance);
+            await Test(MomentClockSet.Default.SystemClock);
             await Test(new TestClock());
         }
 

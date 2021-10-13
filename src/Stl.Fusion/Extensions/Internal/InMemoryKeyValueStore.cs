@@ -31,7 +31,7 @@ namespace Stl.Fusion.Extensions.Internal
         {
             options ??= new();
             CleanupPeriod = options.CleanupPeriod;
-            Clock = options.Clock ?? services.GetService<IMomentClock>() ?? SystemClock.Instance;
+            Clock = options.Clock ?? services.SystemClock();
         }
 
         // Commands
@@ -46,7 +46,7 @@ namespace Stl.Fusion.Extensions.Internal
                 if (context.Operation().Items.GetOrDefault(true))
                     PseudoGetAllPrefixes(key);
                 else
-                    PseudoGet(key).Ignore();
+                    _ = PseudoGet(key);
                 return Task.CompletedTask;
             }
 
@@ -104,7 +104,7 @@ namespace Stl.Fusion.Extensions.Internal
 
         public virtual Task<string?> TryGet(string key, CancellationToken cancellationToken = default)
         {
-            PseudoGet(key).Ignore();
+            _ = PseudoGet(key);
             if (!Store.TryGetValue(key, out var item))
                 return Task.FromResult((string?) null);
             var expiresAt = item.ExpiresAt;
@@ -117,7 +117,7 @@ namespace Stl.Fusion.Extensions.Internal
         {
             // O(Store.Count) cost - definitely not for prod,
             // but fine for client-side use cases & testing.
-            PseudoGet(prefix).Ignore();
+            _ = PseudoGet(prefix);
             var count = Store.Keys.Count(k => k.StartsWith(prefix));
             return Task.FromResult(count);
         }
@@ -130,21 +130,10 @@ namespace Stl.Fusion.Extensions.Internal
         {
             // O(Store.Count) cost - definitely not for prod,
             // but fine for client-side use cases & testing.
-            PseudoGet(prefix).Ignore();
+            _ = PseudoGet(prefix);
             var query = Store.Keys.Where(k => k.StartsWith(prefix));
-            var afterKey = pageRef.AfterKey;
-            if (afterKey != null)
-                query = sortDirection == SortDirection.Ascending
-                    // ReSharper disable once StringCompareIsCultureSpecific.1
-                    ? query.Where(k => string.Compare(k, afterKey) > 0)
-                    // ReSharper disable once StringCompareIsCultureSpecific.1
-                    : query.Where(k => string.Compare(k, afterKey) < 0);
-            query = sortDirection == SortDirection.Ascending
-                ? query.OrderBy(k => k)
-                : query.OrderByDescending(k => k);
-
+            query = query.OrderByAndTakePage(k => k, pageRef, sortDirection);
             var result = query
-                .Take(pageRef.Count)
                 .Select(k => k.Substring(prefix.Length))
                 .ToArray();
             return Task.FromResult(result);
@@ -153,17 +142,17 @@ namespace Stl.Fusion.Extensions.Internal
         // PseudoXxx query-like methods
 
         [ComputeMethod]
-        protected virtual Task<Unit> PseudoGet(string keyPart) => TaskEx.UnitTask;
+        protected virtual Task<Unit> PseudoGet(string keyPart) => TaskExt.UnitTask;
 
         protected void PseudoGetAllPrefixes(string key)
         {
-            var delimiter = KeyValueStoreEx.Delimiter;
+            var delimiter = KeyValueStoreExt.Delimiter;
             var delimiterIndex = key.IndexOf(delimiter, 0);
             for (; delimiterIndex >= 0; delimiterIndex = key.IndexOf(delimiter, delimiterIndex + 1)) {
                 var keyPart = key.Substring(0, delimiterIndex);
-                PseudoGet(keyPart).Ignore();
+                _ = PseudoGet(keyPart);
             }
-            PseudoGet(key).Ignore();
+            _ = PseudoGet(key);
         }
 
         // Private / protected
@@ -171,7 +160,7 @@ namespace Stl.Fusion.Extensions.Internal
         protected bool AddOrUpdate(string key, string value, Moment? expiresAt)
         {
             var spinWait = new SpinWait();
-            for (;;) {
+            while (true) {
                 if (Store.TryGetValue(key, out var item) && Store.TryUpdate(key, (value, expiresAt), item))
                     return false;
                 if (Store.TryAdd(key, (value, expiresAt)))

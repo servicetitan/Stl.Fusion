@@ -1,6 +1,8 @@
 using System;
+using System.Data;
 using System.IO;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -22,8 +24,10 @@ using Stl.Fusion.Client;
 using Stl.Fusion.Server;
 using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Fusion.EntityFramework;
 using Stl.Fusion.Extensions;
+using Stl.Fusion.Operations.Reprocessing;
 using Stl.IO;
 using Templates.TodoApp.Abstractions;
 using Templates.TodoApp.UI;
@@ -34,8 +38,8 @@ namespace Templates.TodoApp.Host
     {
         private IConfiguration Cfg { get; }
         private IWebHostEnvironment Env { get; }
-        private ILogger Log { get; set; } = NullLogger<Startup>.Instance;
         private HostSettings HostSettings { get; set; } = null!;
+        private ILogger Log { get; set; } = NullLogger<Startup>.Instance;
 
         public Startup(IConfiguration cfg, IWebHostEnvironment environment)
         {
@@ -49,9 +53,10 @@ namespace Templates.TodoApp.Host
             services.AddLogging(logging => {
                 logging.ClearProviders();
                 logging.AddConsole();
-                logging.SetMinimumLevel(LogLevel.Warning);
+                logging.SetMinimumLevel(LogLevel.Information);
                 if (Env.IsDevelopment()) {
                     logging.AddFilter(typeof(App).Namespace, LogLevel.Information);
+                    logging.AddFilter("Microsoft", LogLevel.Warning);
                     logging.AddFilter("Microsoft.AspNetCore.Hosting", LogLevel.Information);
                     logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Information);
                     logging.AddFilter("Stl.Fusion.Operations", LogLevel.Information);
@@ -64,30 +69,33 @@ namespace Templates.TodoApp.Host
             #pragma warning restore ASP0000
 
             // DbContext & related services
-            var appTempDir = PathEx.GetApplicationTempDirectory("", true);
+            var appTempDir = FilePath.GetApplicationTempDirectory("", true);
             var dbPath = appTempDir & "App.db";
-            services.AddDbContextFactory<AppDbContext>(builder => {
+            services.AddDbContextFactory<AppDbContext>(dbContext => {
                 if (!string.IsNullOrEmpty(HostSettings.UseSqlServer))
-                    builder.UseSqlServer(HostSettings.UseSqlServer);
+                    dbContext.UseSqlServer(HostSettings.UseSqlServer);
                 else if (!string.IsNullOrEmpty(HostSettings.UsePostgreSql))
-                    builder.UseNpgsql(HostSettings.UsePostgreSql);
+                    dbContext.UseNpgsql(HostSettings.UsePostgreSql);
                 else
-                    builder.UseSqlite($"Data Source={dbPath}");
+                    dbContext.UseSqlite($"Data Source={dbPath}");
                 if (Env.IsDevelopment())
-                    builder.EnableSensitiveDataLogging();
+                    dbContext.EnableSensitiveDataLogging();
             });
-            services.AddDbContextServices<AppDbContext>(b => {
+            services.AddTransient(c => new DbOperationScope<AppDbContext>(c) {
+                IsolationLevel = IsolationLevel.Serializable,
+            });
+            services.AddDbContextServices<AppDbContext>(dbContext => {
                 // This is the best way to add DbContext-related services from Stl.Fusion.EntityFramework
-                b.AddDbOperations((_, o) => {
+                dbContext.AddOperations((_, o) => {
                     // We use FileBasedDbOperationLogChangeMonitor, so unconditional wake up period
                     // can be arbitrary long - all depends on the reliability of Notifier-Monitor chain.
                     o.UnconditionalWakeUpPeriod = TimeSpan.FromSeconds(Env.IsDevelopment() ? 60 : 5);
                 });
                 var operationLogChangeAlertPath = dbPath + "_changed";
-                b.AddFileBasedDbOperationLogChangeTracking(operationLogChangeAlertPath);
+                dbContext.AddFileBasedOperationLogChangeTracking(operationLogChangeAlertPath);
                 if (!HostSettings.UseInMemoryAuthService)
-                    b.AddDbAuthentication();
-                b.AddKeyValueStore();
+                    dbContext.AddAuthentication<string>();
+                dbContext.AddKeyValueStore();
             });
 
             // Fusion services
@@ -102,12 +110,24 @@ namespace Templates.TodoApp.Host
                 authHelperOptionsBuilder: (_, options) => {
                     options.NameClaimKeys = Array.Empty<string>();
                 });
-            fusion.AddComputeService<ITodoService, TodoService>();
             fusion.AddSandboxedKeyValueStore();
+            fusion.AddOperationReprocessor();
+            // You don't need to manually add TransientFailureDetector -
+            // it's here only to show that operation reprocessor works
+            // when TodoService.AddOrUpdate throws this exception.
+            // Database-related transient errors are auto-detected by
+            // DbOperationScopeProvider<TDbContext> (it uses DbContext's
+            // IExecutionStrategy to do this).
+            services.TryAddEnumerable(ServiceDescriptor.Singleton(
+                TransientFailureDetector.New(e => e is DbUpdateConcurrencyException)));
+
+            // Compute service(s)
+            fusion.AddComputeService<ITodoService, TodoService>();
 
             // Shared services
             Program.ConfigureSharedServices(services);
 
+            // ASP.NET Core authentication providers
             services.AddAuthentication(options => {
                 options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
             }).AddCookie(options => {
@@ -121,12 +141,6 @@ namespace Templates.TodoApp.Host
                 // That's for personal account authentication flow
                 options.AuthorizationEndpoint = "https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize";
                 options.TokenEndpoint = "https://login.microsoftonline.com/consumers/oauth2/v2.0/token";
-                options.CorrelationCookie.SameSite = SameSiteMode.Lax;
-            }).AddGoogle(options => {
-                options.ClientId = HostSettings.GoogleClientId;
-                options.ClientSecret = HostSettings.GoogleClientSecret;
-                options.Scope.Add("https://www.googleapis.com/auth/userinfo.profile");
-                options.Scope.Add("https://www.googleapis.com/auth/userinfo.email");
                 options.CorrelationCookie.SameSite = SameSiteMode.Lax;
             }).AddGitHub(options => {
                 options.ClientId = HostSettings.GitHubClientId;

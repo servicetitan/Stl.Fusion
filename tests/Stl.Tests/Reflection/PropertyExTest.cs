@@ -74,10 +74,10 @@ namespace Stl.Tests.Reflection
             untypedSetter.Invoke(this, true);
             BoolProperty.Should().BeTrue();
 
-            PropertyEx.Set(this, propertyName, false);
-            PropertyEx.Get<bool>(this, propertyName).Should().BeFalse();
-            PropertyEx.SetUntyped(this, propertyName, true);
-            PropertyEx.GetUntyped(this, propertyName).Should().Be(true);
+            PropertyInfoExt.Set(this, propertyName, false);
+            PropertyInfoExt.Get<bool>(this, propertyName).Should().BeFalse();
+            PropertyInfoExt.SetUntyped(this, propertyName, true);
+            PropertyInfoExt.GetUntyped(this, propertyName).Should().Be(true);
         }
 
         [Fact]

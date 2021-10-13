@@ -14,13 +14,14 @@ namespace Stl.Serialization
 
         public static JsonSerializerSettings DefaultSettings { get; set; } =
             new() {
-#if !NET5
+#if !NET5_0
                 SerializationBinder = CrossPlatformSerializationBinder.Instance,
 #endif
                 TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
                 TypeNameHandling = TypeNameHandling.Auto,
                 NullValueHandling = NullValueHandling.Ignore,
                 ReferenceLoopHandling = ReferenceLoopHandling.Serialize,
+                DateParseHandling = DateParseHandling.None, // This makes sure all strings are deserialized as-is
                 ContractResolver = new DefaultContractResolver(),
             };
 

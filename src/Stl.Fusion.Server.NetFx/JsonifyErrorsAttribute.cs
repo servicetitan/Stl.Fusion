@@ -25,11 +25,9 @@ namespace Stl.Fusion.Server
                 var rewriter = appServices.GetRequiredService<IErrorRewriter>();
                 exception = rewriter.Rewrite(actionContext, exception, true);
             }
-            var serializer = new NewtonsoftJsonSerializer(NewtonsoftJsonSerializer.DefaultSettings);
-            var content = serializer.Writer.Write(exception);
-
+            var serializer = TypeDecoratingSerializer.Default;
+            var content = serializer.Write(exception.ToExceptionInfo());
             actionExecutedContext.Exception = null; // mark exception as handled;
-
             var response = new HttpResponseMessage {
                 Content = new StringContent(content, null, "application/json"),
                 StatusCode = HttpStatusCode.InternalServerError

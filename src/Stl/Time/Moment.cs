@@ -2,13 +2,15 @@ using System;
 using System.ComponentModel;
 using System.Globalization;
 using System.Runtime.CompilerServices;
-using Newtonsoft.Json;
+using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 using Stl.Time.Internal;
 
 namespace Stl.Time
 {
-    [Serializable]
+    [DataContract]
     [JsonConverter(typeof(MomentJsonConverter))]
+    [Newtonsoft.Json.JsonConverter(typeof(MomentNewtonsoftJsonConverter))]
     [TypeConverter(typeof(MomentTypeConverter))]
     public readonly struct Moment : IEquatable<Moment>, IComparable<Moment>
     {
@@ -17,8 +19,9 @@ namespace Stl.Time
         public static readonly Moment EpochStart = new(0); // AKA Unix Epoch
 
         // AKA Unix Time
+        [DataMember(Order = 0)]
         public long EpochOffsetTicks { get; }
-        public TimeSpan EpochOffset => new TimeSpan(EpochOffsetTicks);
+        public TimeSpan EpochOffset => new(EpochOffsetTicks);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Moment(long epochOffsetTicks)
@@ -29,33 +32,39 @@ namespace Stl.Time
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Moment(DateTime value)
-            : this(value.ToUniversalTime() - DateTimeEx.UnixEpoch) { }
+            : this(value.ToUniversalTime() - DateTimeExt.UnixEpoch) { }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Moment(DateTimeOffset value)
-            : this(value.ToUniversalTime() - DateTimeOffsetEx.UnixEpoch) { }
+            : this(value.ToUniversalTime() - DateTimeOffsetExt.UnixEpoch) { }
 
         // (Try)Parse
 
         public static Moment Parse(string source)
-            => DateTime.Parse(source, CultureInfo.InvariantCulture);
+            => DateTime
+                .Parse(source, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind)
+                .DefaultKind(DateTimeKind.Utc);
 
 #if !NETSTANDARD2_0
         public static Moment Parse(ReadOnlySpan<char> source)
-            => DateTime.Parse(source, CultureInfo.InvariantCulture);
+            => DateTime
+                .Parse(source, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind)
+                .DefaultKind(DateTimeKind.Utc);
 #endif
 
         public static bool TryParse(string source, out Moment result)
         {
-            var success = DateTime.TryParse(source, CultureInfo.InvariantCulture, DateTimeStyles.None, out var r);
-            result = r;
+            var success = DateTime.TryParse(source,
+                CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var r);
+            result = r.DefaultKind(DateTimeKind.Utc);
             return success;
         }
 
 #if !NETSTANDARD2_0
         public static bool TryParse(ReadOnlySpan<char> source, out Moment result)
         {
-            var success = DateTime.TryParse(source, CultureInfo.InvariantCulture, DateTimeStyles.None, out var r);
-            result = r;
+            var success = DateTime.TryParse(source,
+                CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var r);
+            result = r.DefaultKind(DateTimeKind.Utc);
             return success;
         }
 #endif
@@ -73,7 +82,7 @@ namespace Stl.Time
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public DateTime ToDateTime()
-            => DateTimeEx.UnixEpoch + EpochOffset;
+            => DateTimeExt.UnixEpoch + EpochOffset;
         public DateTime ToDateTime(DateTime min, DateTime max)
             => Clamp(new Moment(min), new Moment(max)).ToDateTime();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -82,7 +91,7 @@ namespace Stl.Time
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public DateTimeOffset ToDateTimeOffset()
-            => DateTimeOffsetEx.UnixEpoch + EpochOffset;
+            => DateTimeOffsetExt.UnixEpoch + EpochOffset;
         public DateTimeOffset ToDateTimeOffset(DateTimeOffset min, DateTimeOffset max)
             => Clamp(new Moment(min), new Moment(max)).ToDateTimeOffset();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -99,7 +108,7 @@ namespace Stl.Time
             => new(Math.Max(min.EpochOffsetTicks, Math.Min(max.EpochOffsetTicks, EpochOffsetTicks)));
 
         public override string ToString()
-            => ToDateTimeClamped().ToString(CultureInfo.InvariantCulture);
+            => ToDateTimeClamped().ToString("o", CultureInfo.InvariantCulture);
         public string ToString(string format)
             => ToDateTimeClamped().ToString(format, CultureInfo.InvariantCulture);
         public string ToString(string format, CultureInfo cultureInfo)

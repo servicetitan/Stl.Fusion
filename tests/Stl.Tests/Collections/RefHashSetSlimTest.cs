@@ -4,6 +4,7 @@ using System.Linq;
 using FluentAssertions;
 using Stl.Collections.Slim;
 using Stl.Internal;
+using Stl.Testing;
 using Xunit;
 
 namespace Stl.Tests.Collections

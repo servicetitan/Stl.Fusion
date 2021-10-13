@@ -40,14 +40,14 @@ namespace Stl.Fusion.Bridge.Internal
             try {
                 var reader = Channel.Reader;
                 while (await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false)) {
-                    if (!reader.TryRead(out var message))
+                    if (!reader.TryRead(out var request))
                         continue;
-                    switch (message) {
-                    case ReplicaMessage rm:
-                        await OnReplicaMessage(rm, cancellationToken).ConfigureAwait(false);
+                    switch (request) {
+                    case ReplicaRequest rr:
+                        await OnReplicaRequest(rr, cancellationToken).ConfigureAwait(false);
                         break;
                     default:
-                        await OnUnsupportedMessage(message, cancellationToken).ConfigureAwait(false);
+                        await OnUnsupportedRequest(request, cancellationToken).ConfigureAwait(false);
                         break;
                     }
                 }
@@ -60,29 +60,29 @@ namespace Stl.Fusion.Bridge.Internal
             }
         }
 
-        protected virtual async ValueTask OnUnsupportedMessage(BridgeMessage message, CancellationToken cancellationToken)
+        protected virtual async ValueTask OnUnsupportedRequest(BridgeMessage request, CancellationToken cancellationToken)
         {
-            if (message is ReplicaMessage rm) {
-                var response = new PublicationAbsentsMessage() {
-                    PublisherId = rm.PublisherId,
-                    PublicationId = rm.PublicationId,
+            if (request is ReplicaRequest rr) {
+                var reply = new PublicationAbsentsReply() {
+                    PublisherId = rr.PublisherId,
+                    PublicationId = rr.PublicationId,
                 };
                 await Channel.Writer
-                    .WriteAsync(response, cancellationToken)
+                    .WriteAsync(reply, cancellationToken)
                     .ConfigureAwait(false);
             }
         }
 
-        public virtual async ValueTask OnReplicaMessage(ReplicaMessage message, CancellationToken cancellationToken)
+        public virtual async ValueTask OnReplicaRequest(ReplicaRequest request, CancellationToken cancellationToken)
         {
-            if (message.PublisherId != Publisher.Id) {
-                await OnUnsupportedMessage(message, cancellationToken).ConfigureAwait(false);
+            if (request.PublisherId != Publisher.Id) {
+                await OnUnsupportedRequest(request, cancellationToken).ConfigureAwait(false);
                 return;
             }
-            var publicationId = message.PublicationId;
+            var publicationId = request.PublicationId;
             var publication = Publisher.TryGet(publicationId);
             if (publication == null) {
-                await OnUnsupportedMessage(message, cancellationToken).ConfigureAwait(false);
+                await OnUnsupportedRequest(request, cancellationToken).ConfigureAwait(false);
                 return;
             }
             if (Subscriptions.TryGetValue(publicationId, out var subscriptionProcessor))
@@ -95,15 +95,14 @@ namespace Stl.Fusion.Bridge.Internal
                 subscriptionProcessor = PublisherImpl.SubscriptionProcessorFactory.Create(
                     PublisherImpl.SubscriptionProcessorGeneric,
                     publication, Channel, PublisherImpl.SubscriptionExpirationTime,
-                    PublisherImpl.Clock, LoggerFactory);
+                    PublisherImpl.Clocks, LoggerFactory);
                 Subscriptions[publicationId] = subscriptionProcessor;
             }
-            subscriptionProcessor.Run()
-                .ContinueWith(_ => Unsubscribe(publication, default), CancellationToken.None)
-                .Ignore();
+            _ = subscriptionProcessor.Run()
+                .ContinueWith(_ => Unsubscribe(publication, default), CancellationToken.None);
         subscriptionExists:
             await subscriptionProcessor.IncomingChannel.Writer
-                .WriteAsync(message, cancellationToken).ConfigureAwait(false);
+                .WriteAsync(request, cancellationToken).ConfigureAwait(false);
         }
 
         public virtual async ValueTask Unsubscribe(

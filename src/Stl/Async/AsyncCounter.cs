@@ -27,7 +27,7 @@ namespace Stl.Async
                 zeroSource = _zeroSource;
             }
             if (zeroSource.IsEmpty)
-                return ValueTaskEx.CompletedTask;
+                return ValueTaskExt.CompletedTask;
             return ((Task) zeroSource.Task).ToValueTask();
         }
 

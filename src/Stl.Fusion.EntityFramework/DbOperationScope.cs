@@ -1,4 +1,5 @@
 using System;
+using System.Data;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,6 +20,11 @@ namespace Stl.Fusion.EntityFramework
 {
     public interface IDbOperationScope : IOperationScope
     {
+        DbContext? MasterDbContext { get; }
+        DbConnection? Connection { get; }
+        IDbContextTransaction? Transaction { get; }
+        IsolationLevel IsolationLevel { get; }
+
         Task<DbContext> CreateDbContext(bool readWrite = true, CancellationToken cancellationToken = default);
     }
 
@@ -27,29 +33,32 @@ namespace Stl.Fusion.EntityFramework
     {
         private bool _isInMemoryProvider;
 
-        protected TDbContext? DbContext { get; set; }
-        protected DbConnection? Connection { get; set; }
-        protected IDbContextTransaction? Transaction { get; set; }
-        protected IDbContextFactory<TDbContext> DbContextFactory { get; }
-        protected IDbOperationLog<TDbContext> DbOperationLog { get; }
-        protected IMomentClock Clock { get; }
-        protected IServiceProvider Services { get; }
-        protected AsyncLock AsyncLock { get; }
-        protected ILogger Log { get; }
+        DbContext? IDbOperationScope.MasterDbContext => MasterDbContext;
+        public TDbContext? MasterDbContext { get; protected set; }
+        public DbConnection? Connection { get; protected set; }
+        public IDbContextTransaction? Transaction { get; protected set; }
+        public IsolationLevel IsolationLevel { get; init; } = IsolationLevel.Unspecified;
 
         IOperation IOperationScope.Operation => Operation;
-        public DbOperation Operation { get; }
-        public CommandContext CommandContext { get; }
-        public bool IsUsed => DbContext != null;
+        public DbOperation Operation { get; protected init; }
+        public CommandContext CommandContext { get; protected init; }
+        public bool IsUsed => MasterDbContext != null;
         public bool IsClosed { get; private set; }
         public bool? IsConfirmed { get; private set; }
+
+        protected IDbContextFactory<TDbContext> DbContextFactory { get; init; }
+        protected IDbOperationLog<TDbContext> DbOperationLog { get; init; }
+        protected MomentClockSet Clocks { get; init; }
+        protected AsyncLock AsyncLock { get; init; }
+        protected IServiceProvider Services { get; init; }
+        protected ILogger Log { get; init; }
 
         public DbOperationScope(IServiceProvider services)
         {
             var loggerFactory = services.GetService<ILoggerFactory>();
             Log = loggerFactory?.CreateLogger(GetType()) ?? NullLogger.Instance;
             Services = services;
-            Clock = services.GetService<IMomentClock>() ?? SystemClock.Instance;
+            Clocks = services.Clocks();
             DbContextFactory = services.GetRequiredService<IDbContextFactory<TDbContext>>();
             DbOperationLog = services.GetRequiredService<IDbOperationLog<TDbContext>>();
             AsyncLock = new AsyncLock(ReentryMode.CheckedPass);
@@ -76,7 +85,7 @@ namespace Stl.Fusion.EntityFramework
             finally {
                 IsClosed = true;
                 SafeDispose(Transaction);
-                SafeDispose(DbContext);
+                SafeDispose(MasterDbContext);
             }
         }
 
@@ -88,20 +97,21 @@ namespace Stl.Fusion.EntityFramework
             using var _ = await AsyncLock.Lock(cancellationToken).ConfigureAwait(false);
             if (IsClosed)
                 throw Stl.Fusion.Operations.Internal.Errors.OperationScopeIsAlreadyClosed();
-            TDbContext dbContext;
-            if (DbContext == null) {
-                dbContext = DbContextFactory.CreateDbContext().ReadWrite();
-                dbContext.Database.AutoTransactionsEnabled = false;
-                Transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
-                _isInMemoryProvider = dbContext.Database.ProviderName.EndsWith(".InMemory");
+            if (MasterDbContext == null) {
+                // Creating MasterDbContext
+                var masterDbContext = DbContextFactory.CreateDbContext().ReadWrite();
+                masterDbContext.Database.AutoTransactionsEnabled = false;
+                Transaction = await BeginTransaction(cancellationToken, masterDbContext).ConfigureAwait(false);
+                _isInMemoryProvider = masterDbContext.Database.ProviderName.EndsWith(".InMemory");
                 if (!_isInMemoryProvider) {
-                    Connection = dbContext.Database.GetDbConnection();
+                    Connection = masterDbContext.Database.GetDbConnection();
                     if (Connection == null)
                         throw Stl.Internal.Errors.InternalError("No DbConnection.");
                 }
-                DbContext = dbContext;
+                MasterDbContext = masterDbContext;
             }
-            dbContext = DbContextFactory.CreateDbContext().ReadWrite(readWrite);
+            // Creating requested DbContext, which is going to share MasterDbContext's transaction
+            var dbContext = DbContextFactory.CreateDbContext().ReadWrite(readWrite);
             dbContext.Database.AutoTransactionsEnabled = false;
             if (!_isInMemoryProvider) {
                 dbContext.StopPooling();
@@ -123,12 +133,14 @@ namespace Stl.Fusion.EntityFramework
                     return;
                 }
 
-                Operation.CommitTime = Clock.Now;
+                Operation.CommitTime = Clocks.SystemClock.Now;
                 if (Operation.Command == null)
                     throw Stl.Fusion.Operations.Internal.Errors.OperationHasNoCommand();
-                var dbContext = DbContext!;
-                dbContext.DisableChangeTracking(); // Just to speed up things a bit
-                var operation = await DbOperationLog.Add(dbContext, Operation, cancellationToken).ConfigureAwait(false);
+                var masterDbContext = MasterDbContext!;
+                masterDbContext.DisableChangeTracking(); // Just to speed up things a bit
+                var operation = await DbOperationLog
+                    .Add(masterDbContext, Operation, cancellationToken)
+                    .ConfigureAwait(false);
                 try {
                     await Transaction!.CommitAsync(cancellationToken).ConfigureAwait(false);
                     IsConfirmed = true;
@@ -137,8 +149,9 @@ namespace Stl.Fusion.EntityFramework
                     // See https://docs.microsoft.com/en-us/ef/ef6/fundamentals/connection-resiliency/commit-failures
                     try {
                         // We need a new connection here, since the old one might be broken
-                        dbContext = DbContextFactory.CreateDbContext();
-                        var committedOperation = await DbOperationLog.TryGet(dbContext, operation.Id, cancellationToken);
+                        masterDbContext = DbContextFactory.CreateDbContext();
+                        masterDbContext.Database.AutoTransactionsEnabled = true;
+                        var committedOperation = await DbOperationLog.TryGet(masterDbContext, operation.Id, cancellationToken);
                         if (committedOperation != null)
                             IsConfirmed = true;
                     }
@@ -170,5 +183,11 @@ namespace Stl.Fusion.EntityFramework
                 IsClosed = true;
             }
         }
+
+        // Protected methods
+
+        protected virtual Task<IDbContextTransaction> BeginTransaction(
+            CancellationToken cancellationToken, TDbContext dbContext)
+            => dbContext.Database.BeginTransactionAsync(IsolationLevel, cancellationToken);
     }
 }

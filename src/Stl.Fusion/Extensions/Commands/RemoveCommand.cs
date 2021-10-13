@@ -1,9 +1,13 @@
 using System.Reactive;
+using System.Runtime.Serialization;
 using Stl.CommandR.Commands;
 
 namespace Stl.Fusion.Extensions.Commands
 {
-    public record RemoveCommand(string Key) : ServerSideCommandBase<Unit>
+    [DataContract]
+    public record RemoveCommand(
+        [property: DataMember] string Key
+        ) : ServerSideCommandBase<Unit>
     {
         public RemoveCommand() : this("") { }
     }

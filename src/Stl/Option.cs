@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using Newtonsoft.Json;
+using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 using Stl.Internal;
 
 namespace Stl
@@ -23,21 +24,23 @@ namespace Stl
         object? Value { get; }
     }
 
-    [Serializable]
+    [DataContract]
     [DebuggerDisplay("{" + nameof(DebugValue) + "}")]
     public readonly struct Option<T> : IEquatable<Option<T>>, IOption
     {
         /// <inheritdoc />
+        [DataMember(Order = 0)]
         public bool HasValue { get; }
         /// <summary>
         /// Retrieves option's value. Returns <code>default(T)</code> in case option doesn't have one.
         /// </summary>
-        [MaybeNull]
-        public T ValueOrDefault { get; }
+        [DataMember(Order = 1)]
+        public T? ValueOrDefault { get; }
         /// <summary>
         /// Retrieves option's value. Throws <see cref="InvalidOperationException"/> in case option doesn't have one.
         /// </summary>
-        [JsonIgnore] public T Value {
+        [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        public T Value {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { AssertHasValue(); return ValueOrDefault!; }
         }
@@ -63,9 +66,9 @@ namespace Stl
         /// </summary>
         /// <param name="hasValue"><see cref="HasValue"/> value.</param>
         /// <param name="valueOrDefault"><see cref="ValueOrDefault"/> value.</param>
-        [JsonConstructor]
+        [JsonConstructor, Newtonsoft.Json.JsonConstructor]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private Option(bool hasValue, T valueOrDefault)
+        public Option(bool hasValue, T? valueOrDefault)
         {
             HasValue = hasValue;
             ValueOrDefault = valueOrDefault;
@@ -76,7 +79,7 @@ namespace Stl
             => IsSome(out var v) ? $"Some({v})" : "None";
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Deconstruct(out bool hasValue, [MaybeNull] out T value)
+        public void Deconstruct(out bool hasValue, [MaybeNullWhen(false)] out T value)
         {
             hasValue = HasValue;
             value = ValueOrDefault!;
@@ -102,15 +105,19 @@ namespace Stl
         public bool IsNone() => !HasValue;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [return: MaybeNull]
         public Option<TCast?> CastAs<TCast>()
             where TCast : class
             => HasValue ? Option<TCast?>.Some(ValueOrDefault as TCast) : default;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Option<TCast> Cast<TCast>()
-            where TCast : T
-            => HasValue ? Option<TCast>.Some((TCast) ValueOrDefault!) : default;
+        {
+            if (!HasValue)
+                return Option.None<TCast>();
+            if (ValueOrDefault is TCast value)
+                return Option.Some(value);
+            throw new InvalidCastException();
+        }
 
         // Equality
 

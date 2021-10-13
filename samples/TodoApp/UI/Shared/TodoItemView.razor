@@ -1,5 +1,6 @@
 @inject Session Session
 @inject ILogger<TodoItemView> Log
+@inject UICommandRunner CommandRunner
 
 @{
     Log.LogInformation("Rendering, Item = {Item}", Value);
@@ -12,7 +13,7 @@
                             @onclick="InvertDone" />
         </AddonLabel>
     </Addon>
-    <TextEdit TextChanged="EventEx.NonRenderingHandler<string>(UpdateTitle)"
+    <TextEdit TextChanged="BlazorEventHelper.NonRendering<string>(UpdateTitle)"
               ChangeTextOnKeyPress="false"
               Text="@Value.Title"/>
     <Addon AddonType="AddonType.End">
@@ -25,8 +26,6 @@
 @code {
     [Parameter, ParameterComparer(typeof(ByReferenceParameterComparer))]
     public Todo Value { get; set; } = null!;
-    [Parameter, ParameterComparer(typeof(ByReferenceParameterComparer))]
-    public CommandRunner CommandRunner { get; set; } = null!;
 
     public override Task SetParametersAsync(ParameterView parameters)
         => this.HasChangedParameters(parameters) ? base.SetParametersAsync(parameters) : Task.CompletedTask;
@@ -34,7 +33,7 @@
     private Task InvertDone()
     {
         var todo = Value with { IsDone = !Value.IsDone };
-        return CommandRunner.Call(new AddOrUpdateTodoCommand(Session, todo));
+        return CommandRunner.Run(new AddOrUpdateTodoCommand(Session, todo));
     }
 
     private Task UpdateTitle(string title)
@@ -43,9 +42,9 @@
         if (Value.Title == title)
             return Task.CompletedTask;
         var todo = Value with { Title = title };
-        return CommandRunner.Call(new AddOrUpdateTodoCommand(Session, todo));
+        return CommandRunner.Run(new AddOrUpdateTodoCommand(Session, todo));
     }
 
     private Task Remove()
-        => CommandRunner.Call(new RemoveTodoCommand(Session, Value.Id));
+        => CommandRunner.Run(new RemoveTodoCommand(Session, Value.Id));
 }

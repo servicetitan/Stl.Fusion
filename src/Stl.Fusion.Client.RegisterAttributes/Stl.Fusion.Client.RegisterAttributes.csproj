@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net5.0;netcoreapp3.1;netstandard2.1;netstandard2.0</TargetFrameworks>
+    <PackageTags>servicetitan stl stl_fusion</PackageTags>
+    <Description>Stl.Fusion.Client.RegisterAttributes - [RegisterXxx] attributes for Fusion Client.</Description>
+    <RootNamespace>Stl.Fusion.Client</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Stl.Fusion.Client\Stl.Fusion.Client.csproj" />
+    <ProjectReference Include="..\Stl.RegisterAttributes\Stl.RegisterAttributes.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Stl.Async;
 using Stl.OS;
 using Stl.Serialization;
@@ -18,7 +19,7 @@ namespace Stl.Fusion.Swapping
             public int ConcurrencyLevel { get; set; } = HardwareInfo.GetProcessorCountPo2Factor();
             public Func<IUtf16Serializer<object>> SerializerFactory { get; set; } =
                 () => new NewtonsoftJsonSerializer().ToTyped<object>();
-            public IMomentClock Clock { get; set; } = CoarseCpuClock.Instance;
+            public IMomentClock? Clock { get; set; }
         }
 
         protected readonly ConcurrentDictionary<string, string> Storage;
@@ -26,12 +27,12 @@ namespace Stl.Fusion.Swapping
         public TimeSpan ExpirationTime { get; }
         public IMomentClock Clock { get; }
 
-        public SimpleSwapService(Options? options = null)
+        public SimpleSwapService(Options? options, IServiceProvider services)
         {
             options ??= new();
             SerializerFactory = options.SerializerFactory;
             ExpirationTime = options.ExpirationTime;
-            Clock = options.Clock;
+            Clock = options.Clock ?? services.GetRequiredService<MomentClockSet>().CoarseCpuClock;
             Storage = new ConcurrentDictionary<string, string>(
                 options.ConcurrencyLevel,
                 ComputedRegistry.Options.DefaultInitialCapacity);
@@ -47,24 +48,24 @@ namespace Stl.Fusion.Swapping
         protected override ValueTask<string?> Load(string key, CancellationToken cancellationToken)
         {
             if (!Storage.TryGetValue(key, out var value))
-                return ValueTaskEx.FromResult((string?) null);
+                return ValueTaskExt.FromResult((string?) null);
             ExpirationTimers.AddOrUpdateToLater(key, Clock.Now + ExpirationTime);
-            return ValueTaskEx.FromResult(value)!;
+            return ValueTaskExt.FromResult(value)!;
         }
 
         protected override ValueTask<bool> Renew(string key, CancellationToken cancellationToken)
         {
             if (!Storage.TryGetValue(key, out var value))
-                return ValueTaskEx.FalseTask;
+                return ValueTaskExt.FalseTask;
             ExpirationTimers.AddOrUpdateToLater(key, Clock.Now + ExpirationTime);
-            return ValueTaskEx.TrueTask;
+            return ValueTaskExt.TrueTask;
         }
 
         protected override ValueTask Store(string key, string value, CancellationToken cancellationToken)
         {
             Storage[key] = value;
             ExpirationTimers.AddOrUpdateToLater(key, Clock.Now + ExpirationTime);
-            return ValueTaskEx.CompletedTask;
+            return ValueTaskExt.CompletedTask;
         }
     }
 }

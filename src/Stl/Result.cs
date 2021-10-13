@@ -1,13 +1,19 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq.Expressions;
+using System.Reactive;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using Stl.Async;
+using Stl.Conversion;
 using Stl.Internal;
+using Stl.Reflection;
 
 namespace Stl
 {
@@ -74,7 +80,7 @@ namespace Stl
         /// <summary>
         /// Retrieves result's value. Returns <code>default</code> when <see cref="IResult.HasError"/>.
         /// </summary>
-        [MaybeNull] T ValueOrDefault { get; }
+        T? ValueOrDefault { get; }
         /// <summary>
         /// Retrieves result's value. Throws an <see cref="Error"/> when <see cref="IResult.HasError"/>.
         /// </summary>
@@ -122,25 +128,26 @@ namespace Stl
     public readonly struct Result<T> : IResult<T>, IEquatable<Result<T>>
     {
         /// <inheritdoc />
-        [MaybeNull]
-        public T ValueOrDefault { get; }
+        public T? ValueOrDefault { get; }
         /// <inheritdoc />
         public Exception? Error { get; }
 
         /// <inheritdoc />
-        [JsonIgnore] public bool HasValue {
+        [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        public bool HasValue {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => Error == null;
         }
 
         /// <inheritdoc />
-        [JsonIgnore] public bool HasError {
+        [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        public bool HasError {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => Error != null;
         }
 
         /// <inheritdoc />
-        [JsonIgnore]
+        [JsonIgnore, Newtonsoft.Json.JsonIgnore]
         public T Value {
             get {
                 if (Error != null)
@@ -158,7 +165,7 @@ namespace Stl
         /// </summary>
         /// <param name="valueOrDefault"><see cref="ValueOrDefault"/> value.</param>
         /// <param name="error"><see cref="Error"/> value.</param>
-        [JsonConstructor]
+        [JsonConstructor, Newtonsoft.Json.JsonConstructor]
         public Result(T valueOrDefault, Exception? error)
         {
             if (error != null) valueOrDefault = default!;
@@ -226,12 +233,56 @@ namespace Stl
     /// </summary>
     public static class Result
     {
+        private static readonly ConcurrentDictionary<Type, Func<Task, IResult>> FromUntypedTaskCache = new();
+        private static readonly ConcurrentDictionary<Type, Func<Exception, IResult>> ErrorCache = new();
+        private static readonly MethodInfo FromTypedTaskInternalMethod =
+            typeof(Result).GetMethod(nameof(FromTypedTaskInternal), BindingFlags.Static | BindingFlags.NonPublic)!;
+        private static readonly MethodInfo ErrorInternalMethod =
+            typeof(Result).GetMethod(nameof(ErrorInternal), BindingFlags.Static | BindingFlags.NonPublic)!;
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Result<T> New<T>(T value, Exception? error = null) => new(value, error);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Result<T> Value<T>(T value) => new(value, null);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<T> Error<T>(Exception? error) => new(default!, error);
+        public static Result<T> Error<T>(Exception error) => new(default!, error);
+
+        public static IResult Error(Type resultType, Exception error)
+            => ErrorCache.GetOrAdd(resultType, tResult => {
+                var mErrorInternal = ErrorInternalMethod.MakeGenericMethod(tResult);
+                var pError = Expression.Parameter(typeof(Exception));
+                var fn = Expression.Lambda<Func<Exception, IResult>>(
+                    Expression.Call(mErrorInternal, pError),
+                    pError
+                ).Compile();
+                return fn;
+            }).Invoke(error);
+
+        public static IResult FromTypedTask(Task task)
+        {
+            if (!task.IsCompleted)
+                throw Errors.TaskIsNotCompleted();
+
+            var tValue = task.GetType().GetTaskOrValueTaskArgument();
+            if (tValue == null) {
+                if (task.IsCompletedSuccessfully())
+                    // ReSharper disable once HeapView.BoxingAllocation
+                    return Value(default(Unit));
+                // ReSharper disable once HeapView.BoxingAllocation
+                return Error<Unit>(task.Exception
+                    ?? Errors.TaskHasNotCompletedSuccessfullyButNoException());
+            }
+
+            return FromUntypedTaskCache.GetOrAdd(tValue, tValue1 => {
+                var mFromUntypedTaskInternal = FromTypedTaskInternalMethod.MakeGenericMethod(tValue1);
+                var pTask = Expression.Parameter(typeof(Task));
+                var fn = Expression.Lambda<Func<Task, IResult>>(
+                    Expression.Call(mFromUntypedTaskInternal, pTask),
+                    pTask
+                ).Compile();
+                return fn;
+            }).Invoke(task);
+        }
 
         public static Result<T> FromTask<T>(Task<T> task)
         {
@@ -240,7 +291,7 @@ namespace Stl
             if (task.IsCompletedSuccessfully())
                 return Value(task.Result);
             return Error<T>(task.Exception
-                ?? Errors.InternalError("Task hasn't completed successfully but has no Exception."));
+                ?? Errors.TaskHasNotCompletedSuccessfullyButNoException());
         }
 
         public static Result<T> FromFunc<T, TState>(TState state, Func<TState, T> func)
@@ -262,5 +313,21 @@ namespace Stl
                 return Error<T>(e);
             }
         }
+
+        // Private methods
+
+        private static IResult FromTypedTaskInternal<T>(Task task)
+        {
+            if (task.IsCompletedSuccessfully())
+                // ReSharper disable once HeapView.BoxingAllocation
+                return Value(((Task<T>) task).Result);
+            // ReSharper disable once HeapView.BoxingAllocation
+            return Error<T>(task.Exception
+                ?? Errors.TaskHasNotCompletedSuccessfullyButNoException());
+        }
+
+        private static IResult ErrorInternal<T>(Exception error)
+            // ReSharper disable once HeapView.BoxingAllocation
+            => new Result<T>(default!, error);
     }
 }

@@ -24,7 +24,7 @@ namespace Stl.Async
 
         public async Task<TOut> Process(TIn input, CancellationToken cancellationToken = default)
         {
-            Run().Ignore();;
+            _ = Run();
             var outputTask = TaskSource.New<TOut>(false).Task;
             var batchItem = new BatchItem<TIn, TOut>(input, cancellationToken, outputTask);
             await Queue.Writer.WriteAsync(batchItem, cancellationToken).ConfigureAwait(false);

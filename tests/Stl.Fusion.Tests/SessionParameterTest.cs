@@ -28,7 +28,7 @@ namespace Stl.Fusion.Tests
 
             async Task Watch<T>(string name, IComputed<T> computed)
             {
-                for (;;) {
+                while (true) {
                     Out.WriteLine($"{name}: {computed.Value}, {computed}");
                     await computed.WhenInvalidated(cancellationToken);
                     Out.WriteLine($"{name}: {computed.Value}, {computed}");
@@ -44,13 +44,13 @@ namespace Stl.Fusion.Tests
 
             var session = sessionA;
             var aaComputed = await Computed.Capture(_ => counters.Get("a", session));
-            Task.Run(() => Watch(nameof(aaComputed), aaComputed)).Ignore();
+            _ = Task.Run(() => Watch(nameof(aaComputed), aaComputed));
             var abComputed = await Computed.Capture(_ => counters.Get("b", session));
-            Task.Run(() => Watch(nameof(abComputed), abComputed)).Ignore();
+            _ = Task.Run(() => Watch(nameof(abComputed), abComputed));
 
             session = sessionB;
             var baComputed = await Computed.Capture(_ => counters.Get("a", session));
-            Task.Run(() => Watch(nameof(baComputed), baComputed)).Ignore();
+            _ = Task.Run(() => Watch(nameof(baComputed), baComputed));
 
             session = sessionA;
             await counters.Increment("a", session);

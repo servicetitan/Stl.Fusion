@@ -20,7 +20,7 @@ namespace Stl.Tests.Reflection
         public void GetAllBaseTypesTest()
         {
             var baseTypes = GetType().GetAllBaseTypes().ToArray();
-            baseTypes.Should().BeEquivalentTo(typeof(TestBase), typeof(object));
+            baseTypes.Should().BeEquivalentTo(new [] {typeof(TestBase), typeof(object)});
 
             baseTypes = typeof(AsyncProcessBase).GetAllBaseTypes(true, true).ToArray();
             var adwdsIndex = Array.IndexOf(baseTypes, typeof(IAsyncDisposableWithDisposalState));
@@ -39,24 +39,24 @@ namespace Stl.Tests.Reflection
         [Fact]
         public void ToIdentifierNameTest()
         {
-            typeof(Box).ToIdentifierName().Should().Equals("Box");
-            typeof(Box).ToIdentifierName(true).Should().Equals("Stl_Internal_Box");
+            typeof(Tuple).ToIdentifierName().Should().Equals("Tuple");
+            typeof(Tuple).ToIdentifierName(true).Should().Equals("System_Tuple");
 
-            typeof(Box<>).ToIdentifierName().Should().Equals("Box_1");
-            typeof(Box<>).ToIdentifierName(true).Should().Equals("Stl_Internal_Box_1");
+            typeof(Tuple<>).ToIdentifierName().Should().Equals("Tuple_1");
+            typeof(Tuple<>).ToIdentifierName(true).Should().Equals("System_Tuple_1");
 
-            typeof(Box<object>).ToIdentifierName().Should().Equals("Box_Object");
-            typeof(Box<object>).ToIdentifierName(true).Should().Equals("Stl_Internal_Box_Object");
-            typeof(Box<object>).ToIdentifierName(true, true).Should().Equals("Stl_Internal_Box_System_Object");
+            typeof(Tuple<object>).ToIdentifierName().Should().Equals("Tuple_Object");
+            typeof(Tuple<object>).ToIdentifierName(true).Should().Equals("System_Tuple_Object");
+            typeof(Tuple<object>).ToIdentifierName(true, true).Should().Equals("System_Tuple_System_Object");
 
             typeof(Dictionary<,>).ToIdentifierName().Should().Equals("Dictionary_2");
             typeof(Dictionary<,>).ToIdentifierName(true).Should().Equals("System_Collections_Generic_Dictionary_2");
             typeof(Dictionary<int, byte>).ToIdentifierName().Should().Equals("Dictionary_Int32_Byte");
 
-            typeof(Box<Box<int>>).ToIdentifierName().Should().Equals("Box_Int_Int");
-            typeof(Box<Box<int>>).ToIdentifierName(true).Should().Equals("Stl_Internal_Box_Int_Int");
-            typeof(Box<Box<int>>).ToIdentifierName(false, true).Should().Equals("Box_System_Int_System_Int");
-            typeof(Box<Box<int>>).ToIdentifierName(true, true).Should().Equals("Stl_Internal_Box_System_Int_System_Int");
+            typeof(Tuple<Tuple<int>>).ToIdentifierName().Should().Equals("Tuple_Int_Int");
+            typeof(Tuple<Tuple<int>>).ToIdentifierName(true).Should().Equals("System_Tuple_Box_Int_Int");
+            typeof(Tuple<Tuple<int>>).ToIdentifierName(false, true).Should().Equals("Tuple_System_Int_System_Int");
+            typeof(Tuple<Tuple<int>>).ToIdentifierName(true, true).Should().Equals("System_Tuple_System_Int_System_Int");
         }
     }
 }

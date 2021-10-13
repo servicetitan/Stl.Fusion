@@ -15,7 +15,7 @@ namespace Stl.Fusion.Blazor
                 if (_mutableState == value)
                     return;
                 if (_mutableState != null)
-                    throw Errors.AlreadyInitialized(nameof(State));
+                    throw Errors.AlreadyInitialized(nameof(MutableState));
                 _mutableState = value;
             }
         }

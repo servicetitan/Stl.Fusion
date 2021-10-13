@@ -36,7 +36,7 @@ namespace Stl.Fusion.Extensions.Internal
             UserKeyExpirationTime = options.UserKeyExpirationTime;
             Store = services.GetRequiredService<IKeyValueStore>();
             AuthService = services.GetRequiredService<IAuthService>();
-            Clock = options.Clock ?? services.GetService<IMomentClock>() ?? SystemClock.Instance;
+            Clock = options.Clock ?? services.SystemClock();
         }
 
         public virtual async Task Set(SandboxedSetCommand command, CancellationToken cancellationToken = default)

@@ -7,6 +7,7 @@ using Stl.Mathematics;
 
 namespace Stl.Generators
 {
+    // Thread-safe!
     public class RandomStringGenerator : Generator<string>, IDisposable
     {
         public static readonly string DefaultAlphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_";
@@ -38,7 +39,7 @@ namespace Stl.Generators
         public void Dispose() => Rng.Dispose();
 
         public override string Next() => Next(Length);
-        
+
         private static void FillInCharSpan(Span<char> charSpan, string alphabet, ReadOnlySpan<byte> bufferSpan)
         {
             var alphabetSpan = alphabet.AsSpan();
@@ -53,7 +54,7 @@ namespace Stl.Generators
                     charSpan[i] = alphabetSpan[bufferSpan[i] % alphabetLength];
             }
         }
-        
+
 #if !NETSTANDARD2_0
         public string Next(int length, string? alphabet = null)
         {

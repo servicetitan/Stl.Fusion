@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using Stl.Testing;
+using Stl.Testing.Collections;
 using Stl.Time;
 using Stl.Time.Internal;
 using Xunit;
@@ -36,14 +37,14 @@ namespace Stl.Tests.Benchmarks
             RunOne("Read CoarseStopwatch.ElapsedTicks", baseOpCount, opCount => {
                 var sum = 0L;
                 for (; opCount > 0; opCount--) {
-                    sum += CoarseStopwatch.ElapsedTicks;
+                    sum += CoarseClockHelper.ElapsedTicks;
                 }
                 return sum;
             });
             RunOne("Read CoarseStopwatch.NowEpochOffsetTicks", baseOpCount, opCount => {
                 var sum = 0L;
                 for (; opCount > 0; opCount--) {
-                    sum += CoarseStopwatch.NowEpochOffsetTicks;
+                    sum += CoarseClockHelper.NowEpochOffsetTicks;
                 }
                 return sum;
             });

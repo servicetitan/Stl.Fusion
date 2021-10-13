@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Stl.Fusion;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Client;
+using Stl.Fusion.UI;
 using Templates.TodoApp.Abstractions;
 using Templates.TodoApp.Abstractions.Clients;
 using static System.Console;
@@ -15,7 +16,7 @@ var session = new Session(sessionId);
 var services = CreateServiceProvider();
 var todoService = services.GetRequiredService<ITodoService>();
 var computed = await Computed.Capture(ct => todoService.GetSummary(session, ct));
-for (;;) {
+while (true) {
     WriteLine($"- {computed.Value}");
     await computed.WhenInvalidated();
     computed = await computed.Update();
@@ -25,10 +26,10 @@ IServiceProvider CreateServiceProvider()
 {
     // ReSharper disable once VariableHidesOuterVariable
     var services = new ServiceCollection();
-    services.AddLogging(b => {
-        b.ClearProviders();
-        b.SetMinimumLevel(LogLevel.Warning);
-        b.AddConsole();
+    services.AddLogging(logging => {
+        logging.ClearProviders();
+        logging.SetMinimumLevel(LogLevel.Warning);
+        logging.AddConsole();
     });
 
     var baseUri = new Uri("http://localhost:5005");
@@ -44,11 +45,11 @@ IServiceProvider CreateServiceProvider()
             var clientBaseUri = isFusionClient ? baseUri : apiBaseUri;
             o.HttpClientActions.Add(client => client.BaseAddress = clientBaseUri);
         });
-    fusionClient.AddReplicaService<ITodoService, ITodoClient>();
+    fusionClient.AddReplicaService<ITodoService, ITodoClientDef>();
     fusion.AddAuthentication().AddRestEaseClient();
 
     // Default update delay is 0.1s
-    services.AddTransient<IUpdateDelayer>(_ => new UpdateDelayer(0.1));
+    services.AddTransient<IUpdateDelayer>(c => new UpdateDelayer(c.UICommandTracker(), 0.1));
 
     return services.BuildServiceProvider();
 }

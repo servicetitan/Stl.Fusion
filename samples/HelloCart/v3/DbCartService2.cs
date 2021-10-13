@@ -13,12 +13,12 @@ namespace Samples.HelloCart.V3
     public class DbCartService2 : DbServiceBase<AppDbContext>, ICartService
     {
         private readonly IProductService _products;
-        private readonly DbEntityResolver<AppDbContext, string, DbCart> _cartResolver;
+        private readonly IDbEntityResolver<string, DbCart> _cartResolver;
 
         public DbCartService2(
             IServiceProvider services,
             IProductService products,
-            DbEntityResolver<AppDbContext, string, DbCart> cartResolver)
+            IDbEntityResolver<string, DbCart> cartResolver)
             : base(services)
         {
             _products = products;
@@ -31,7 +31,7 @@ namespace Samples.HelloCart.V3
             if (string.IsNullOrEmpty(cartId))
                 throw new ArgumentOutOfRangeException(nameof(command));
             if (Computed.IsInvalidating()) {
-                TryGet(cartId, default).Ignore();
+                _ = TryGet(cartId, default);
                 return;
             }
 

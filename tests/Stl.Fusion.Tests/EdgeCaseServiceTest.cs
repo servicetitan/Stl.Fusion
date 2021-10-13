@@ -7,7 +7,7 @@ using Stl.Fusion.Bridge.Interception;
 using Stl.Fusion.Tests.Services;
 using Stl.Interception;
 using Stl.Interception.Interceptors;
-using Stl.Tests;
+using Stl.Testing.Collections;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -38,7 +38,7 @@ namespace Stl.Fusion.Tests
         {
             await using var serving = await WebHost.Serve();
             var client = ClientServices.GetRequiredService<IEdgeCaseClient>();
-            var tfv = ClientServices.GetTypeViewFactory<IEdgeCaseService>();
+            var tfv = ClientServices.TypeViewFactory<IEdgeCaseService>();
             var service = tfv.CreateView(client);
             await ActualTest(service);
         }
@@ -48,7 +48,7 @@ namespace Stl.Fusion.Tests
         {
             await using var serving = await WebHost.Serve();
             var client = ClientServices.GetRequiredService<IEdgeCaseRewriteClient>();
-            var tfv = ClientServices.GetTypeViewFactory<IEdgeCaseService>();
+            var tfv = ClientServices.TypeViewFactory<IEdgeCaseService>();
             var service = tfv.CreateView(client);
 
             // ReSharper disable once SuspiciousTypeConversion.Global

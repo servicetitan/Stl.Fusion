@@ -1,18 +1,17 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Stl.CommandR;
-using Stl.DependencyInjection;
-using Stl.Extensibility;
+using Stl.CommandR.Configuration;
 using Stl.Fusion;
 using Stl.Fusion.EntityFramework;
 using Stl.IO;
+using Stl.RegisterAttributes;
 using Stl.Testing;
-using Stl.Testing.Internal;
+using Stl.Testing.Output;
 using Stl.Tests.CommandR.Services;
 using Xunit.Abstractions;
 using Xunit.DependencyInjection.Logging;
@@ -22,6 +21,7 @@ namespace Stl.Tests.CommandR
     public class CommandRTestBase : TestBase
     {
         protected bool UseDbContext { get; set; }
+        protected Func<CommandHandler, Type, bool>? CommandHandlerFilter { get; set; }
 
         public CommandRTestBase(ITestOutputHelper @out) : base(@out) { }
 
@@ -62,28 +62,27 @@ namespace Stl.Tests.CommandR
             });
 
             var commander = services.AddCommander();
+            if (CommandHandlerFilter != null)
+                commander.AddHandlerFilter(CommandHandlerFilter);
+
             var fusion = services.AddFusion();
 
             if (UseDbContext) {
                 var testType = GetType();
-                var appTempDir = PathEx.GetApplicationTempDirectory("", true);
-                var dbPath = appTempDir & PathEx.GetHashedName($"{testType.Name}_{testType.Namespace}.db");
+                var appTempDir = FilePath.GetApplicationTempDirectory("", true);
+                var dbPath = appTempDir & FilePath.GetHashedName($"{testType.Name}_{testType.Namespace}.db");
                 services.AddPooledDbContextFactory<TestDbContext>(builder => {
                     builder.UseSqlite($"Data Source={dbPath}", sqlite => { });
                 }, 256);
                 services.AddDbContextServices<TestDbContext>(dbServices => {
-                    dbServices.AddDbOperations();
-                    dbServices.AddDbEntityResolver<string, User>();
+                    dbServices.AddOperations();
+                    dbServices.AddEntityResolver<string, User>();
                 });
             }
 
-            // [Module] attribute test
-            services.UseModules(); // Just to check you can call it twice
-            services.UseModules(b => b.ConfigureModuleServices(s => {
-                s.UseRegisterAttributeScanner(RegisterModuleAttribute.DefaultScope)
-                    .WithTypeFilter(GetType().Namespace!)
-                    .RegisterFrom(Assembly.GetExecutingAssembly());
-            }));
+            services.UseRegisterAttributeScanner()
+                .WithTypeFilter(GetType().Namespace!)
+                .RegisterFrom(GetType().Assembly);
         }
     }
 }

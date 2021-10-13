@@ -2,8 +2,8 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
-using Stl.DependencyInjection;
 using Stl.Fusion.Tests.Services;
+using Stl.RegisterAttributes;
 
 namespace Stl.Fusion.Tests.UIModels
 {

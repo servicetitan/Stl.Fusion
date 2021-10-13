@@ -49,7 +49,7 @@ namespace Stl.Tests.Interception
                 => source.Length;
 
             public JsonString Three()
-                => "1";
+                => new("1");
 
             public Task<string> OneAsync(string source)
                 => Task.FromResult(One(source));
@@ -61,13 +61,13 @@ namespace Stl.Tests.Interception
                 => Task.FromResult(Three());
 
             public ValueTask<string> OneXAsync(string source)
-                => ValueTaskEx.FromResult(One(source));
+                => ValueTaskExt.FromResult(One(source));
 
             public ValueTask<int> TwoXAsync(string source)
-                => ValueTaskEx.FromResult(Two(source));
+                => ValueTaskExt.FromResult(Two(source));
 
             public ValueTask<JsonString> ThreeXAsync()
-                => ValueTaskEx.FromResult(Three());
+                => ValueTaskExt.FromResult(Three());
         }
 
         [Fact]
@@ -104,7 +104,7 @@ namespace Stl.Tests.Interception
                 (await view.ThreeXAsync()).Should().Be("1");
             }
 
-            var viewFactory = services.GetTypeViewFactory<IView>();
+            var viewFactory = services.TypeViewFactory<IView>();
             var classView = viewFactory.CreateView(services.GetRequiredService<Service>());
             var interfaceView = viewFactory.CreateView(services.GetRequiredService<IService>());
             await Test(classView);

@@ -31,7 +31,7 @@ namespace Stl.CommandR.Internal
             if (!isolate)
                 return RunInternal(context, cancellationToken);
 
-            using var _ = ExecutionContextEx.SuppressFlow();
+            using var _ = ExecutionContextExt.SuppressFlow();
             return Task.Run(() => RunInternal(context, cancellationToken), default);
         }
 

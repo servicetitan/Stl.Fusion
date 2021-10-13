@@ -1,7 +1,7 @@
 using System;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Reactive;
+using System.Runtime.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Stl.CommandR;
@@ -13,7 +13,11 @@ namespace Stl.Fusion.Tests.Extensions
     [RegisterComputeService(Scope = ServiceScope.Services)]
     public class NestedOperationLoggerTester
     {
-        public record SetManyCommand(string[] Keys, string ValuePrefix) : ICommand<Unit>
+        [DataContract]
+        public record SetManyCommand(
+            [property: DataMember] string[] Keys,
+            [property: DataMember] string ValuePrefix
+            ) : ICommand<Unit>
         {
             public SetManyCommand() : this(Array.Empty<string>(), "") { }
         }

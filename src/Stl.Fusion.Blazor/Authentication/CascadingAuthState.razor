@@ -40,18 +40,19 @@
             var inProcessJSRuntime = (IJSInProcessRuntime) JSRuntime;
             SessionId = inProcessJSRuntime.Invoke<string>("eval", SessionIdJavaScriptExpression);
         }
-        if (StartPresenceService)
-            Task.Run(() => PresenceService.Start(default)).Ignore();
         AuthStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
         OnAuthenticationStateChanged(AuthStateProvider.GetAuthenticationStateAsync());
+        if (StartPresenceService)
+            PresenceService.Start();
     }
 
     void IDisposable.Dispose()
         => AuthStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
 
+
     private void OnAuthenticationStateChanged(Task<AuthenticationState> newAuthStateTask)
     {
-        newAuthStateTask.ContinueWith(t => {
+        _ = newAuthStateTask.ContinueWith(t => {
             if (!t.IsCompletedSuccessfully)
                 return; // Will react to the next change
             var authState = (AuthState) t.Result;
@@ -59,8 +60,8 @@
                 return;
             // Current Session is unusable due to forced sign-out.
             // The only way to get an usable one is to reload the page.
-            InvokeAsync(() => Navigator.NavigateTo(Navigator.Uri, true)).Ignore();
-        }).Ignore();
+            _ = InvokeAsync(() => Navigator.NavigateTo(Navigator.Uri, true));
+        });
     }
 
     private Task<AuthState> GetAuthState()

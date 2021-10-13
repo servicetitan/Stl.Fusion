@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
+using Stl.Comparison;
 using Stl.DependencyInjection.Internal;
 using Stl.Internal;
 using Errors = Stl.DependencyInjection.Internal.Errors;
@@ -40,7 +41,7 @@ namespace Stl.DependencyInjection
             if (serviceType != null)
                 return new ServiceTypeRef(service.GetType());
             if (UseServiceInstanceRefs)
-                return new ServiceInstanceRef(RefBox.New(service)!);
+                return new ServiceInstanceRef(Ref.New(service)!);
             throw Errors.NoServiceRef(service.GetType());
         }
 

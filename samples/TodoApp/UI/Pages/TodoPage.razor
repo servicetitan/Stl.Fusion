@@ -2,7 +2,7 @@
 @inherits ComputedStateComponent<Todo[]>
 @inject ITodoService Todos
 @inject Session Session
-@inject CommandRunner CommandRunner
+@inject UICommandRunner CommandRunner
 @inject ILogger<TodoPage> Log
 
 @{
@@ -14,15 +14,15 @@
 <h1>Todo List</h1>
 
 <StateOfStateBadge State="@State" />
-<Text Margin="Margin.Is1.OnY">
+<Div Margin="Margin.Is1.OnY">
     Updated: <b><MomentsAgoBadge Value="LastStateUpdateTime" /></b>
-</Text>
-<Text Margin="Margin.Is1.OnY">
+</Div>
+<Div Margin="Margin.Is1.OnY">
     Call:
     <Button Color="Color.Danger" Size="Size.Small" Clicked="_ => StateHasChanged()">StateHasChanged()</Button>
     <Button Color="Color.Danger" Size="Size.Small" Clicked="_ => State.Invalidate()">State.Invalidate()</Button>
     <Button Color="Color.Danger" Size="Size.Small" Clicked="_ => State.Recompute()">State.Recompute()</Button>
-</Text>
+</Div>
 
 <AuthorizeView>
     <NotAuthorized>
@@ -30,7 +30,6 @@
     </NotAuthorized>
     <Authorized>
         <WhenException Exception="error" />
-        <WhenCommandError Exception="CommandRunner.Error" />
         <Row>
             <Column ColumnSize="ColumnSize.Is6.OnDesktop.Is12.OnTablet">
                 <Paragraph>
@@ -38,7 +37,7 @@
                 </Paragraph>
 
                 @foreach (var todo in todos) {
-                    <TodoItemView @key="@todo.Id" Value="@todo" CommandRunner="@CommandRunner"/>
+                    <TodoItemView @key="@todo.Id" Value="@todo" />
                 }
 
                 @if (HasMore) {
@@ -73,12 +72,6 @@
     // Check your explanation on our Discord: https://discord.gg/EKEwv6d
     [CascadingParameter] protected Task<AuthState> AuthState { get; set; } = null!;
 
-    protected override void OnInitialized()
-    {
-        CommandRunner.Component = this;
-        base.OnInitialized();
-    }
-
     protected override async Task<Todo[]> ComputeState(CancellationToken cancellationToken)
     {
         var items = await Todos.List(Session, PageSize + 1, cancellationToken);
@@ -99,6 +92,6 @@
     {
         var todo = new Todo("", NewTodoTitle);
         NewTodoTitle = "";
-        CommandRunner.Call(new AddOrUpdateTodoCommand(Session, todo));
+        CommandRunner.Run(new AddOrUpdateTodoCommand(Session, todo));
     }
 }

@@ -5,6 +5,7 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Stl.Channels;
+using Stl.Testing.Collections;
 using Xunit;
 
 namespace Stl.Tests.Channels
@@ -52,7 +53,6 @@ namespace Stl.Tests.Channels
                     (itemCount % concurrencyLevel != 0 ? 1 : 0);
                 if (roundDuration.HasValue)
                     (elapsed - roundDuration * expectedRounds).Should().BeInRange(-50, roundDuration.Value - 1);
-
             }
 
             await TestOne(100, (s, t) => s.Reader.ConcurrentTransform(t.Writer,

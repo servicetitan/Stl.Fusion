@@ -24,16 +24,16 @@ namespace Stl.Tests
             source2.DistinctBy(i => i.Length).Should().BeEquivalentTo("A", "AA");
             source3.DistinctBy(i => i.Length).Should().BeEquivalentTo();
 
-            source1.PackBy(1).Select(p => p.Length).Should().BeEquivalentTo(1, 1, 1);
-            source1.PackBy(2).Select(p => p.Length).Should().BeEquivalentTo(2, 1);
-            source1.PackBy(3).Select(p => p.Length).Should().BeEquivalentTo(3);
+            source1.PackBy(1).Select(p => p.Length).Should().BeEquivalentTo(new[] {1, 1, 1});
+            source1.PackBy(2).Select(p => p.Length).Should().BeEquivalentTo(new[] {2, 1});
+            source1.PackBy(3).Select(p => p.Length).Should().BeEquivalentTo(new[] {3});
 
-            source2.PackBy(1).Select(p => p.Length).Should().BeEquivalentTo(1, 1, 1, 1);
-            source2.PackBy(2).Select(p => p.Length).Should().BeEquivalentTo(2, 2);
-            source2.PackBy(3).Select(p => p.Length).Should().BeEquivalentTo(3, 1);
-            source2.PackBy(4).Select(p => p.Length).Should().BeEquivalentTo(4);
+            source2.PackBy(1).Select(p => p.Length).Should().BeEquivalentTo(new[] {1, 1, 1, 1});
+            source2.PackBy(2).Select(p => p.Length).Should().BeEquivalentTo(new[] {2, 2});
+            source2.PackBy(3).Select(p => p.Length).Should().BeEquivalentTo(new[] {3, 1});
+            source2.PackBy(4).Select(p => p.Length).Should().BeEquivalentTo(new[] {4});
 
-            source3.PackBy(4).Select(p => p.Length).Should().BeEquivalentTo();
+            source3.PackBy(4).Select(p => p.Length).Should().BeEquivalentTo(Array.Empty<int>());
         }
 
         [Fact]

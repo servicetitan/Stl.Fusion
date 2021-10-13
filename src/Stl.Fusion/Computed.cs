@@ -7,18 +7,19 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Stl.Collections.Slim;
+using Stl.Conversion;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Internal;
+using Stl.Versioning;
 
 namespace Stl.Fusion
 {
-    public interface IComputed : IHasConsistencyState, IResult
+    public interface IComputed : IHasConsistencyState, IResult, IHasVersion<LTag>
     {
         ComputedOptions Options { get; }
         ComputedInput Input { get; }
         Type OutputType { get; }
         IResult Output { get; }
-        LTag Version { get; } // ~ Unique for the specific (Func, Key) pair
         event Action<IComputed> Invalidated;
 
         bool Invalidate();

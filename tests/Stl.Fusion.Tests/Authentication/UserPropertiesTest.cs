@@ -17,7 +17,7 @@ namespace Stl.Fusion.Tests.Authentication
         {
             var user = new User("none");
             var cp = user.ClaimsPrincipal;
-            cp.Claims.Count().Should().Be(2);
+            cp.Claims.Count().Should().Be(3);
             var ci = cp.Identities.Single();
             ci.IsAuthenticated.Should().BeFalse();
 
@@ -34,7 +34,7 @@ namespace Stl.Fusion.Tests.Authentication
             user.Identities[uid].Should().Be("Secret");
 
             cp = user.ClaimsPrincipal;
-            cp.Claims.Count().Should().Be(3);
+            cp.Claims.Count().Should().Be(4);
             ci = cp.Identities.Single();
             ci.IsAuthenticated.Should().BeFalse();
         }
@@ -50,14 +50,6 @@ namespace Stl.Fusion.Tests.Authentication
             Parse("1").Should().Be((UserIdentity.DefaultSchema, "1"));
             Parse("1/2").Should().Be(("1", "2"));
             Parse("1\\/2").Should().Be((UserIdentity.DefaultSchema, "1/2"));
-        }
-
-        [Fact]
-        public void SerializationTest()
-        {
-            var user = new User("b", "bob").WithIdentity("google/1", "s");
-            var sUser = user.PassThroughAllSerializers();
-            sUser.Identities.Single().Should().Be(user.Identities.Single());
         }
     }
 }

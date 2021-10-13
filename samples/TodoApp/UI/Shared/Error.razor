@@ -16,8 +16,13 @@
     [Parameter]
     public string Title { get; set; } = "Error:";
     [Parameter]
+    public EventCallback Dismissed { get; set; }
+    [Parameter]
     public RenderFragment? ChildContent { get; set; }
 
-    private void Close()
-        => _isClosed = true;
+    private Task Close()
+    {
+        _isClosed = true;
+        return Dismissed.InvokeAsync(null);
+    }
 }

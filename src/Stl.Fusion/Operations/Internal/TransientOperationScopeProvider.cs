@@ -22,7 +22,6 @@ namespace Stl.Fusion.Operations.Internal
     public class TransientOperationScopeProvider : ICommandHandler<ICommand>
     {
         protected IOperationCompletionNotifier OperationCompletionNotifier { get; }
-        protected IMomentClock Clock { get; }
         protected IServiceProvider Services { get; }
         protected ILogger Log { get; }
 
@@ -32,7 +31,6 @@ namespace Stl.Fusion.Operations.Internal
         {
             Log = log ?? NullLogger<TransientOperationScopeProvider>.Instance;
             Services = services;
-            Clock = services.GetService<IMomentClock>() ?? SystemClock.Instance;
             OperationCompletionNotifier = services.GetRequiredService<IOperationCompletionNotifier>();
         }
 
@@ -40,8 +38,8 @@ namespace Stl.Fusion.Operations.Internal
         public async Task OnCommand(ICommand command, CommandContext context, CancellationToken cancellationToken)
         {
             var operationRequired =
-                context.OuterContext == null // Should be top-level command
-                && !(command is IMetaCommand) // No operations for "second-order" commands
+                context.OuterContext == null // Should be a top-level command
+                && !(command is IMetaCommand) // No operations for meta commands
                 && !Computed.IsInvalidating();
             if (!operationRequired) {
                 await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);

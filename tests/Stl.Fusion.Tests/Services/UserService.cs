@@ -1,32 +1,42 @@
 using System;
 using System.Reactive;
+using System.Runtime.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Stl.Async;
 using Stl.CommandR;
 using Stl.CommandR.Configuration;
-using Stl.DependencyInjection;
 using Stl.Fusion.EntityFramework;
 using Stl.Fusion.Operations;
 using Stl.Fusion.Tests.Model;
+using Stl.RegisterAttributes;
 
 namespace Stl.Fusion.Tests.Services
 {
     public interface IUserService
     {
-        public record AddCommand(User User, bool OrUpdate = false) : ICommand<Unit>
+        [DataContract]
+        public record AddCommand(
+            [property: DataMember] User User,
+            [property: DataMember] bool OrUpdate = false
+            ) : ICommand<Unit>
         {
             public AddCommand() : this(null!, false) { }
         }
 
-        public record UpdateCommand(User User) : ICommand<Unit>
+        [DataContract]
+        public record UpdateCommand(
+            [property: DataMember] User User
+            ) : ICommand<Unit>
         {
             public UpdateCommand() : this(default(User)!) { }
         }
 
-        public record DeleteCommand(User User) : ICommand<bool>
+        [DataContract]
+        public record DeleteCommand(
+            [property: DataMember] User User
+            ) : ICommand<bool>
         {
             public DeleteCommand() : this(default(User)!) { }
         }
@@ -63,9 +73,9 @@ namespace Stl.Fusion.Tests.Services
             var context = CommandContext.GetCurrent();
             if (Computed.IsInvalidating()) {
                 existingUser = context.Operation().Items.TryGet<User>();
-                TryGet(user.Id, default).AssertCompleted().Ignore();
+                _ = TryGet(user.Id, default).AssertCompleted();
                 if (existingUser == null)
-                    Count(default).AssertCompleted().Ignore();
+                    _ = Count(default).AssertCompleted();
                 return;
             }
 
@@ -73,7 +83,7 @@ namespace Stl.Fusion.Tests.Services
             dbContext.DisableChangeTracking();
             var userId = user.Id;
             if (orUpdate) {
-                existingUser = await dbContext.Users.FindAsync(new [] {(object) userId}, cancellationToken);
+                existingUser = await dbContext.Users.FindAsync(ComposeKey(userId), cancellationToken);
                 context.Operation().Items.Set(existingUser);
                 if (existingUser != null)
                     dbContext.Users.Update(user);
@@ -87,7 +97,7 @@ namespace Stl.Fusion.Tests.Services
         {
             var user = command.User;
             if (Computed.IsInvalidating()) {
-                TryGet(user.Id, default).AssertCompleted().Ignore();
+                _ = TryGet(user.Id, default).AssertCompleted();
                 return;
             }
 
@@ -103,8 +113,8 @@ namespace Stl.Fusion.Tests.Services
             if (Computed.IsInvalidating()) {
                 var success = context.Operation().Items.TryGet<bool>();
                 if (success) {
-                    TryGet(user.Id, default).AssertCompleted().Ignore();
-                    Count(default).AssertCompleted().Ignore();
+                    _ = TryGet(user.Id, default).AssertCompleted();
+                    _ = Count(default).AssertCompleted();
                 }
                 return false;
             }
@@ -154,7 +164,7 @@ namespace Stl.Fusion.Tests.Services
         // Protected & private methods
 
         [ComputeMethod]
-        protected virtual Task<Unit> Everything() => TaskEx.UnitTask;
+        protected virtual Task<Unit> Everything() => TaskExt.UnitTask;
 
         private new Task<TestDbContext> CreateCommandDbContext(CancellationToken cancellationToken = default)
         {

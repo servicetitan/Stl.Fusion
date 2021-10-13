@@ -4,7 +4,7 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Tests.Services;
 using Stl.Testing;
-using Stl.Tests;
+using Stl.Testing.Collections;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -41,7 +41,7 @@ namespace Stl.Fusion.Tests
             }
             (DateTime.Now - cTime.Value).Should().BeLessThan(epsilon);
 
-            await TestEx.WhenMet(
+            await TestExt.WhenMet(
                 () => cTime.IsConsistent().Should().BeFalse(),
                 TimeSpan.FromSeconds(5));
             var time = await cTime.Use();

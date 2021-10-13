@@ -33,7 +33,7 @@ namespace Stl.Fusion
         }
         public new Exception? Error {
             get => base.Error;
-            set => Set(Result.Error<T>(value));
+            set => Set(Result.Error<T>(value!));
         }
         object? IMutableResult.UntypedValue {
             // ReSharper disable once HeapView.PossibleBoxingAllocation

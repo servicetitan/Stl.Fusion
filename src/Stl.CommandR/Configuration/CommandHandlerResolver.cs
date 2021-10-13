@@ -18,14 +18,18 @@ namespace Stl.CommandR.Configuration
     public class CommandHandlerResolver : ICommandHandlerResolver
     {
         protected ICommandHandlerRegistry Registry { get; }
+        protected Func<CommandHandler, Type, bool> Filter { get; }
         protected ConcurrentDictionary<Type, IReadOnlyList<CommandHandler>> Cache { get; } = new();
         protected ILogger Log { get; }
 
         public CommandHandlerResolver(
             ICommandHandlerRegistry registry,
+            IEnumerable<CommandHandlerFilter>? filters = null,
             ILogger<CommandHandlerRegistry>? log = null)
         {
             Registry = registry;
+            var aFilters = filters?.ToArray() ?? Array.Empty<CommandHandlerFilter>();
+            Filter = (commandHandler, type) => aFilters.All(f => f.IsCommandHandlerUsed(commandHandler, type));
             Log = log ?? new NullLogger<CommandHandlerRegistry>();
         }
 
@@ -36,7 +40,8 @@ namespace Stl.CommandR.Configuration
                     .ToArray();
                 var handlers = (
                     from typeEntry in baseTypes
-                    from handler in self.Registry.Handlers.Where(h => h.CommandType == typeEntry.Type)
+                    from handler in self.Registry.Handlers
+                    where handler.CommandType == typeEntry.Type && self.Filter(handler, commandType)
                     orderby handler.Priority descending, typeEntry.Index descending
                     select handler
                 ).Distinct().ToArray();

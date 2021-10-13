@@ -1,11 +1,16 @@
 using System.Linq;
 using System.Reactive;
+using System.Runtime.Serialization;
 using Stl.CommandR.Commands;
 
 namespace Stl.Fusion.Authentication.Commands
 {
-    public record SignInCommand(Session Session, User User, UserIdentity AuthenticatedIdentity)
-        : ServerSideCommandBase<Unit>, ISessionCommand<Unit>
+    [DataContract]
+    public record SignInCommand(
+        [property: DataMember] Session Session,
+        [property: DataMember] User User,
+        [property: DataMember] UserIdentity AuthenticatedIdentity
+        ) : ServerSideCommandBase<Unit>, ISessionCommand<Unit>
     {
         public SignInCommand() : this(Session.Null, null!, null!) { }
         public SignInCommand(Session session, User user)

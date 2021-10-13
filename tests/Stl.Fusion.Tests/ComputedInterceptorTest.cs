@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 using Stl.Async;
 using Stl.Fusion.Tests.Services;
 using Stl.Testing;
-using Stl.Tests;
+using Stl.Testing.Collections;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -28,12 +28,12 @@ namespace Stl.Fusion.Tests
 
             var count = 0L;
             using var state = stateFactory.NewComputed<DateTime>(
-                UpdateDelayer.ZeroUpdateDelay,
+                UpdateDelayer.ZeroDelay,
                 async (_, ct) => await c.Use(ct));
             state.Updated += (s, _)
                 => Log.LogInformation($"{++count} -> {s.Value:hh:mm:ss:fff}");
 
-            await TestEx.WhenMet(
+            await TestExt.WhenMet(
                 () => count.Should().BeGreaterThan(2),
                 TimeSpan.FromSeconds(5));
             var lastCount = count;
@@ -62,7 +62,7 @@ namespace Stl.Fusion.Tests
                 task.IsCanceled.Should().BeTrue();
 
                 task = time.GetTimeWithDelay(default);
-                await TestEx.WhenMet(
+                await TestExt.WhenMet(
                     () => task.IsCompletedSuccessfully().Should().BeTrue(),
                     TimeSpan.FromSeconds(1));
             }

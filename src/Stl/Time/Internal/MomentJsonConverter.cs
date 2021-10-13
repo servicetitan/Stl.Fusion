@@ -1,24 +1,15 @@
 using System;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Stl.Time.Internal
 {
-    public class MomentJsonConverter : JsonConverter
+    public class MomentJsonConverter : JsonConverter<Moment>
     {
-        public override bool CanConvert(Type objectType)
-            => objectType == typeof(Moment);
+        public override Moment Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            => Moment.Parse(reader.GetString()!);
 
-        public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
-        {
-            var moment = (Moment) value!;
-            writer.WriteValue(moment.ToDateTime());
-        }
-
-        public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
-        {
-            var value = (DateTime) reader.Value!;
-            // ReSharper disable once HeapView.BoxingAllocation
-            return (Moment) value;
-        }
+        public override void Write(Utf8JsonWriter writer, Moment value, JsonSerializerOptions options)
+            => writer.WriteStringValue(value.ToString());
     }
 }

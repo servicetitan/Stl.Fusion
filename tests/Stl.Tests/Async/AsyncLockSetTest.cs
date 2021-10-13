@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Stl.Locking;
 using Stl.Generators;
+using Stl.Testing.Collections;
 using Xunit;
 using Xunit.Abstractions;
 

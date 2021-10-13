@@ -1,6 +1,5 @@
-
 using System;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 using Stl.Collections;
 using Stl.CommandR;
 
@@ -11,7 +10,7 @@ namespace Stl.Fusion.Operations.Internal
         public ICommand Command { get; }
         public OptionSet Items { get; }
 
-        [JsonConstructor]
+        [JsonConstructor, Newtonsoft.Json.JsonConstructor]
         public NestedCommandEntry(ICommand command, OptionSet items)
         {
             Command = command;

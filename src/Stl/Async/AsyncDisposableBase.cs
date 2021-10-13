@@ -38,7 +38,7 @@ namespace Stl.Async
             // Completes when either DisposeAsync turns DisposeState to Disposing,
             // or if it's already in non-Active state.
             // The rest of disposal is supposed to be asynchronous.
-            DisposeAsync(true).Ignore();
+            _ = DisposeAsync(true);
         }
 
         public async ValueTask DisposeAsync()
@@ -79,11 +79,11 @@ namespace Stl.Async
         }
 
         protected virtual ValueTask DisposeInternal(bool disposing)
-            => ValueTaskEx.CompletedTask;
+            => ValueTaskExt.CompletedTask;
 
         protected bool MarkDisposed()
         {
-            var success = null == Interlocked.CompareExchange(ref _disposeCompleted, TaskEx.UnitTask, null);
+            var success = null == Interlocked.CompareExchange(ref _disposeCompleted, TaskExt.UnitTask, null);
             if (success)
                 GC.SuppressFinalize(this);
             return success;

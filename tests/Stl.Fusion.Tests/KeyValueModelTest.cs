@@ -6,7 +6,7 @@ using Stl.CommandR;
 using Stl.Fusion.Tests.Services;
 using Stl.Fusion.Tests.UIModels;
 using Stl.Testing;
-using Stl.Tests;
+using Stl.Testing.Collections;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -39,7 +39,7 @@ namespace Stl.Fusion.Tests
             c.Value.Value.Should().BeNull();
             c.Value.UpdateCount.Should().Be(0);
 
-            await TestEx.WhenMet(() => {
+            await TestExt.WhenMet(() => {
                 var snapshot = kvm.Snapshot;
                 snapshot.Computed.HasValue.Should().BeTrue();
                 var c = snapshot.Computed;

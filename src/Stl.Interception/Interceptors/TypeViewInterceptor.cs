@@ -7,21 +7,23 @@ using System.Threading.Tasks;
 using Castle.DynamicProxy;
 using Stl.Async;
 using Stl.Concurrency;
+using Stl.Conversion;
 
 namespace Stl.Interception.Interceptors
 {
     public class TypeViewInterceptor : IInterceptor
     {
-        public static TypeViewInterceptor Default { get; } = new TypeViewInterceptor();
-
         private readonly Func<(MethodInfo, Type), IInvocation, Action<IInvocation>?> _createHandler;
         private readonly ConcurrentDictionary<(MethodInfo, Type), Action<IInvocation>?> _handlerCache = new();
         private readonly MethodInfo _createConvertingHandlerMethod;
         private readonly MethodInfo _createTaskConvertingHandlerMethod;
         private readonly MethodInfo _createValueTaskConvertingHandlerMethod;
 
-        public TypeViewInterceptor()
+        protected IServiceProvider Services { get; }
+
+        public TypeViewInterceptor(IServiceProvider services)
         {
+            Services = services;
             _createHandler = CreateHandler;
             _createConvertingHandlerMethod = GetType()
                 .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
@@ -116,100 +118,51 @@ namespace Stl.Interception.Interceptors
         protected virtual Action<IInvocation>? CreateConvertingHandler<TSource, TTarget>(
             IInvocation initialInvocation, FieldInfo fTarget, MethodInfo mTarget)
         {
-            var tSource = typeof(TSource);
-            var tTarget = typeof(TTarget);
-
-            // Fast conversion via IConvertibleTo<T>
-            if (typeof(IConvertibleTo<>).MakeGenericType(tSource).IsAssignableFrom(tTarget)) {
-                return invocation => {
-                    var target = fTarget.GetValue(invocation.Proxy);
-                    var result = (TTarget) mTarget.Invoke(target, invocation.Arguments)!;
-                    // ReSharper disable once HeapView.PossibleBoxingAllocation
-                    invocation.ReturnValue = result is IConvertibleTo<TSource> c ? c.Convert() : default!;
-                };
-            }
-
-            // Slow conversion via TypeConverter(s)
-            var d = TypeDescriptor.GetConverter(tTarget);
-            if (!d.CanConvertTo(tSource))
+            // !!! Note that TSource is type to convert to here, and TTarget is type to convert from
+            var converter = Services.Converters().From<TTarget>().To<TSource>();
+            if (!converter.IsAvailable)
                 return null;
 
             return invocation => {
-                // TODO: Get rid of reflection here (not critical)
                 var target = fTarget.GetValue(invocation.Proxy);
                 var result = (TTarget) mTarget.Invoke(target, invocation.Arguments)!;
-                // ReSharper disable once HeapView.PossibleBoxingAllocation
-                invocation.ReturnValue = (TSource) d.ConvertTo(result, tSource)!;
+                invocation.ReturnValue = converter.Convert(result);
             };
         }
 
         protected virtual Action<IInvocation>? CreateTaskConvertingHandler<TSource, TTarget>(
             IInvocation initialInvocation, FieldInfo fTarget, MethodInfo mTarget)
         {
-            var tSource = typeof(TSource);
-            var tTarget = typeof(TTarget);
-
-            // Fast conversion via IConvertibleTo<T>
-            if (typeof(IConvertibleTo<>).MakeGenericType(tSource).IsAssignableFrom(tTarget)) {
-                return invocation => {
-                    var target = fTarget.GetValue(invocation.Proxy);
-                    var untypedResult = mTarget.Invoke(target, invocation.Arguments);
-                    var result = (Task<TTarget>) untypedResult!;
-                    invocation.ReturnValue = result.ContinueWith(t =>
-                        // ReSharper disable once HeapView.PossibleBoxingAllocation
-                        t.Result is IConvertibleTo<TSource> c ? c.Convert() : default!);
-                };
-            }
-
-            // Slow conversion via TypeConverter(s)
-            var d = TypeDescriptor.GetConverter(tTarget);
-            if (!d.CanConvertTo(tSource))
+            // !!! Note that TSource is type to convert to here, and TTarget is type to convert from
+            var converter = Services.Converters().From<TTarget>().To<TSource>();
+            if (!converter.IsAvailable)
                 return null;
 
             return invocation => {
-                // TODO: Get rid of reflection here (not critical)
                 var target = fTarget.GetValue(invocation.Proxy);
                 var untypedResult = mTarget.Invoke(target, invocation.Arguments);
                 var result = (Task<TTarget>) untypedResult!;
-                invocation.ReturnValue = result.ContinueWith(t =>
-                    // ReSharper disable once HeapView.PossibleBoxingAllocation
-                    (TSource) d.ConvertTo(t.Result!, tSource)!);
+                invocation.ReturnValue = result
+                    .ContinueWith(t => converter.Convert(t.Result));
             };
         }
 
         protected virtual Action<IInvocation>? CreateValueTaskConvertingHandler<TSource, TTarget>(
             IInvocation initialInvocation, FieldInfo fTarget, MethodInfo mTarget)
         {
-            var tSource = typeof(TSource);
-            var tTarget = typeof(TTarget);
-
-            // Fast conversion via IConvertibleTo<T>
-            if (typeof(IConvertibleTo<>).MakeGenericType(tSource).IsAssignableFrom(tTarget)) {
-                return invocation => {
-                    var target = fTarget.GetValue(invocation.Proxy);
-                    var untypedResult = mTarget.Invoke(target, invocation.Arguments);
-                    var result = (ValueTask<TTarget>) untypedResult!;
-                    // ReSharper disable once HeapView.BoxingAllocation
-                    invocation.ReturnValue = result.AsTask().ContinueWith(t =>
-                        // ReSharper disable once HeapView.PossibleBoxingAllocation
-                        t.Result is IConvertibleTo<TSource> c ? c.Convert() : default!).ToValueTask();
-                };
-            }
-
-            // Slow conversion via TypeConverter(s)
-            var d = TypeDescriptor.GetConverter(tTarget);
-            if (!d.CanConvertTo(tSource))
+            // !!! Note that TSource is type to convert to here, and TTarget is type to convert from
+            var converter = Services.Converters().From<TTarget>().To<TSource>();
+            if (!converter.IsAvailable)
                 return null;
 
             return invocation => {
-                // TODO: Get rid of reflection here (not critical)
                 var target = fTarget.GetValue(invocation.Proxy);
                 var untypedResult = mTarget.Invoke(target, invocation.Arguments);
                 var result = (ValueTask<TTarget>) untypedResult!;
-                // ReSharper disable once HeapView.BoxingAllocation
-                invocation.ReturnValue = result.AsTask().ContinueWith(t =>
-                    // ReSharper disable once HeapView.PossibleBoxingAllocation
-                    (TSource) d.ConvertTo(t.Result!, tSource)!).ToValueTask();
+                invocation.ReturnValue = result
+                    .AsTask()
+                    .ContinueWith(t => converter.Convert(t.Result))
+                    .ToValueTask();
             };
         }
     }

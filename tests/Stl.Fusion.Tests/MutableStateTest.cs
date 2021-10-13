@@ -30,7 +30,7 @@ namespace Stl.Fusion.Tests
             ms2.Value.Should().Be("B");
 
             var cs = factory.NewComputed<string>(
-                UpdateDelayer.ZeroUpdateDelay,
+                UpdateDelayer.ZeroDelay,
                 async (s, ct) => {
                     var value1 = await ms1.Computed.Use(ct);
                     var value2 = await ms2.Computed.Use(ct);
@@ -68,7 +68,7 @@ namespace Stl.Fusion.Tests
 
             async Task Watch<T>(string name, IComputed<T> computed)
             {
-                for (;;) {
+                while (true) {
                     Out.WriteLine($"{name}: {computed.Value}, {computed}");
                     await computed.WhenInvalidated(cancellationToken);
                     Out.WriteLine($"{name}: {computed.Value}, {computed}");
@@ -79,9 +79,9 @@ namespace Stl.Fusion.Tests
             var services = CreateServiceProviderFor<CounterService>();
             var counters = services.GetRequiredService<CounterService>();
             var aComputed = await Computed.Capture(_ => counters.Get("a"));
-            Task.Run(() => Watch(nameof(aComputed), aComputed)).Ignore();
+            _ = Task.Run(() => Watch(nameof(aComputed), aComputed));
             var bComputed = await Computed.Capture(_ => counters.Get("b"));
-            Task.Run(() => Watch(nameof(bComputed), bComputed)).Ignore();
+            _ = Task.Run(() => Watch(nameof(bComputed), bComputed));
 
             await counters.Increment("a");
             await counters.SetOffset(10);

@@ -6,7 +6,7 @@ namespace Stl.Generators
 {
     public static class ConcurrentInt64Generator
     {
-        public static readonly ConcurrentGenerator<long> Default = New(CoarseStopwatch.RandomInt64);
+        public static readonly ConcurrentGenerator<long> Default = New(CoarseClockHelper.RandomInt64);
 
         public static ConcurrentGenerator<long> New(long start, int concurrencyLevel = -1)
         {

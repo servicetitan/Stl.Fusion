@@ -4,7 +4,7 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.CommandR;
 using Stl.Fusion.Tests.Services;
-using Stl.Tests;
+using Stl.Testing.Collections;
 using Xunit;
 using Xunit.Abstractions;
 

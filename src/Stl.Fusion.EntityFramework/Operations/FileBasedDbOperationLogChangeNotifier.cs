@@ -11,8 +11,8 @@ namespace Stl.Fusion.EntityFramework.Operations
     public class FileBasedDbOperationLogChangeNotifier<TDbContext> : IOperationCompletionListener
         where TDbContext : DbContext
     {
-        protected FileBasedDbOperationLogChangeTrackingOptions<TDbContext> Options { get; }
-        protected AgentInfo AgentInfo { get; }
+        protected FileBasedDbOperationLogChangeTrackingOptions<TDbContext> Options { get; init; }
+        protected AgentInfo AgentInfo { get; init; }
 
         public FileBasedDbOperationLogChangeNotifier(
             FileBasedDbOperationLogChangeTrackingOptions<TDbContext> options,

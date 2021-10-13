@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net480;net471</TargetFrameworks>
+    <TargetFrameworks>net480;net471;net5.0</TargetFrameworks>
     <RootNamespace>Stl.Fusion.Server</RootNamespace>
     <AssemblyName>Stl.Fusion.Server.NetFx</AssemblyName>
     <PackageTags>servicetitan stl stl_fusion server netfx</PackageTags>
@@ -10,6 +10,7 @@
     -->designed to power distributed apps. Thread-safe, asynchronous, immutable,  <!--
     -->and ready to serve replicas of computed instances to remote clients.<!--
     --></Description>
+    <NoWarn>$(NoWarn);NU1701</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

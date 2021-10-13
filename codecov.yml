@@ -1,7 +1,9 @@
 ignore:
   - "tests"
   - "samples"
+  - "src/**/Compatibility"
   - "src/Stl.Testing"
+  - "src/Stl.DependencyInjection.Extras"
 coverage:
   precision: 2
   round: down

@@ -25,8 +25,9 @@ using Stl.Fusion.Tests.Services;
 using Stl.Fusion.Tests.UIModels;
 using Stl.Fusion.Internal;
 using Stl.Fusion.Server;
+using Stl.RegisterAttributes;
 using Stl.Testing;
-using Stl.Testing.Internal;
+using Stl.Testing.Output;
 using Stl.Time;
 using Stl.Time.Testing;
 using Xunit;
@@ -55,7 +56,7 @@ namespace Stl.Fusion.Tests
     {
         public FusionTestOptions Options { get; }
         public bool IsLoggingEnabled { get; set; } = true;
-        public PathString SqliteDbPath { get; protected set; }
+        public FilePath SqliteDbPath { get; protected set; }
         public string PostgreSqlConnectionString { get; protected set; } =
             "Server=localhost;Database=stl_fusion_tests;Port=5432;User Id=postgres;Password=Fusion.0.to.1";
         public FusionTestWebHost WebHost { get; }
@@ -119,7 +120,7 @@ namespace Stl.Fusion.Tests
         protected virtual void ConfigureServices(IServiceCollection services, bool isClient = false)
         {
             if (Options.UseTestClock)
-                services.AddSingleton<IMomentClock, TestClock>();
+                services.AddSingleton(new MomentClockSet(new TestClock()));
             services.AddSingleton(Out);
 
             // Logging
@@ -154,6 +155,7 @@ namespace Stl.Fusion.Tests
 
             // Core Fusion services
             var fusion = services.AddFusion();
+            fusion.AddOperationReprocessor();
             fusion.AddFusionTime();
 
             // Auto-discovered services
@@ -169,8 +171,8 @@ namespace Stl.Fusion.Tests
                     .RegisterFrom(testType.Assembly);
 
                 // DbContext & related services
-                var appTempDir = PathEx.GetApplicationTempDirectory("", true);
-                SqliteDbPath = appTempDir & PathEx.GetHashedName($"{testType.Name}_{testType.Namespace}.db");
+                var appTempDir = FilePath.GetApplicationTempDirectory("", true);
+                SqliteDbPath = appTempDir & FilePath.GetHashedName($"{testType.Name}_{testType.Namespace}.db");
                 services.AddPooledDbContextFactory<TestDbContext>(builder => {
                     switch (Options.DbType) {
                     case FusionTestDbType.Sqlite:
@@ -178,8 +180,8 @@ namespace Stl.Fusion.Tests
                         break;
                     case FusionTestDbType.InMemory:
                         builder.UseInMemoryDatabase(SqliteDbPath)
-                            .ConfigureWarnings(w => {
-                                w.Ignore(InMemoryEventId.TransactionIgnoredWarning);
+                            .ConfigureWarnings(warnings => {
+                                warnings.Ignore(InMemoryEventId.TransactionIgnoredWarning);
                             });
                         break;
                     case FusionTestDbType.PostgreSql:
@@ -195,25 +197,25 @@ namespace Stl.Fusion.Tests
                     builder.EnableSensitiveDataLogging();
                 }, 256);
                 services.AddDbContextServices<TestDbContext>(b => {
-                    b.AddDbOperations((_, o) => {
+                    b.AddOperations((_, o) => {
                         o.UnconditionalWakeUpPeriod = TimeSpan.FromSeconds(5);
                         // Enable this if you debug multi-host invalidation
                         // o.MaxCommitDuration = TimeSpan.FromMinutes(5);
                     });
                     if (Options.DbType == FusionTestDbType.PostgreSql)
 #if NETCOREAPP
-                        b.AddNpgsqlDbOperationLogChangeTracking();
+                        b.AddNpgsqlOperationLogChangeTracking();
 #else
                         throw new NotSupportedException("PostgreSql is supported only for .net core.");
 #endif
                     else
-                        b.AddFileBasedDbOperationLogChangeTracking();
+                        b.AddFileBasedOperationLogChangeTracking();
                     if (!Options.UseInMemoryAuthService)
-                        b.AddDbAuthentication();
+                        b.AddAuthentication<DbAuthSessionInfo, DbAuthUser, long>();
 
                     if (!Options.UseInMemoryKeyValueStore)
                         b.AddKeyValueStore();
-                    b.AddDbEntityResolver<long, User>();
+                    b.AddEntityResolver<long, User>();
                 });
                 if (Options.UseInMemoryKeyValueStore)
                     fusion.AddInMemoryKeyValueStore();

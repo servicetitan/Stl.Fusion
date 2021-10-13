@@ -12,7 +12,7 @@ namespace Stl.Fusion.Bridge.Internal
     public abstract class SubscriptionProcessor : AsyncProcessBase
     {
         protected readonly ILogger Log;
-        protected readonly IMomentClock Clock;
+        protected readonly MomentClockSet Clocks;
         protected readonly TimeSpan ExpirationTime;
         protected long MessageIndex;
         protected (LTag Version, bool IsConsistent) LastSentVersion;
@@ -20,20 +20,20 @@ namespace Stl.Fusion.Bridge.Internal
         public IPublisher Publisher => Publication.Publisher;
         public readonly IPublication Publication;
         public readonly Channel<BridgeMessage> OutgoingChannel;
-        public readonly Channel<ReplicaMessage> IncomingChannel;
+        public readonly Channel<ReplicaRequest> IncomingChannel;
 
         protected SubscriptionProcessor(
             IPublication publication,
             Channel<BridgeMessage> outgoingChannel,
             TimeSpan expirationTime,
-            IMomentClock clock,
+            MomentClockSet clocks,
             ILoggerFactory loggerFactory)
         {
             Log = loggerFactory.CreateLogger(GetType());
-            Clock = clock;
+            Clocks = clocks;
             Publication = publication;
             OutgoingChannel = outgoingChannel;
-            IncomingChannel = Channel.CreateBounded<ReplicaMessage>(new BoundedChannelOptions(16));
+            IncomingChannel = Channel.CreateBounded<ReplicaRequest>(new BoundedChannelOptions(16));
             ExpirationTime = expirationTime;
         }
     }
@@ -46,9 +46,9 @@ namespace Stl.Fusion.Bridge.Internal
             IPublication<T> publication,
             Channel<BridgeMessage> outgoingChannel,
             TimeSpan expirationTime,
-            IMomentClock clock,
+            MomentClockSet clocks,
             ILoggerFactory loggerFactory)
-            : base(publication, outgoingChannel, expirationTime, clock, loggerFactory)
+            : base(publication, outgoingChannel, expirationTime, clocks, loggerFactory)
             => Publication = publication;
 
         protected override async Task RunInternal(CancellationToken cancellationToken)
@@ -58,13 +58,13 @@ namespace Stl.Fusion.Bridge.Internal
             var incomingChannelReader = IncomingChannel.Reader;
 
             var currentCts = (CancellationTokenSource?) null;
-            await using var _ = cancellationToken.Register(() => currentCts?.Cancel()).ToAsyncDisposableAdapter();
+            await using var registered = cancellationToken.Register(() => currentCts?.Cancel()).ToAsyncDisposableAdapter();
             try {
                 var incomingMessageTask = incomingChannelReader.ReadAsync(cancellationToken).AsTask();
-                for (;;) {
+                while (true) {
                     // Awaiting for new SubscribeMessage
                     var messageOpt = await incomingMessageTask
-                        .WithTimeout(Clock, ExpirationTime, cancellationToken)
+                        .WithTimeout(Clocks.CoarseCpuClock, ExpirationTime, cancellationToken)
                         .ConfigureAwait(false);
                     if (!messageOpt.IsSome(out var incomingMessage))
                         break; // Timeout
@@ -72,7 +72,7 @@ namespace Stl.Fusion.Bridge.Internal
                     // Maybe sending an update
                     var isHardUpdateRequested = false;
                     var isSoftUpdateRequested = false;
-                    if (incomingMessage is SubscribeMessage sm) {
+                    if (incomingMessage is SubscribeRequest sm) {
                         if (MessageIndex == 0)
                             LastSentVersion = (sm.Version, sm.IsConsistent);
                         isHardUpdateRequested |= sm.IsUpdateRequested;
@@ -121,7 +121,7 @@ namespace Stl.Fusion.Bridge.Internal
                 // Awaiting for disposal here = cyclic task dependency;
                 // we should just ensure it starts right when this method
                 // completes.
-                DisposeAsync().Ignore();
+                _ = DisposeAsync();
             }
         }
 
@@ -129,9 +129,7 @@ namespace Stl.Fusion.Bridge.Internal
             IPublicationState<T>? state, bool isUpdateRequested, CancellationToken cancellationToken)
         {
             if (state == null || state.IsDisposed) {
-                var absentsMessage = new PublicationAbsentsMessage() {
-                    IsDisposed = true,
-                };
+                var absentsMessage = new PublicationAbsentsReply();
                 await Send(absentsMessage, cancellationToken).ConfigureAwait(false);
                 LastSentVersion = default;
                 return;
@@ -143,24 +141,23 @@ namespace Stl.Fusion.Bridge.Internal
             if ((!isUpdateRequested) && LastSentVersion == version)
                 return;
 
-            var message = new PublicationStateMessage<T>() {
-                Version = computed.Version,
-                IsConsistent = isConsistent,
-            };
-            if (isConsistent || LastSentVersion.Version != computed.Version)
-                message.Output = computed.Output;
+            var reply = isConsistent || LastSentVersion.Version != computed.Version
+                ? PublicationStateReply<T>.New(computed.Output)
+                : new PublicationStateReply<T>();
+            reply.Version = computed.Version;
+            reply.IsConsistent = isConsistent;
 
-            await Send(message, cancellationToken).ConfigureAwait(false);
+            await Send(reply, cancellationToken).ConfigureAwait(false);
             LastSentVersion = version;
         }
 
-        protected virtual async ValueTask Send(PublicationMessage message, CancellationToken cancellationToken)
+        protected virtual async ValueTask Send(PublicationReply reply, CancellationToken cancellationToken)
         {
-            message.MessageIndex = ++MessageIndex;
-            message.PublisherId = Publisher.Id;
-            message.PublicationId = Publication.Id;
+            reply.MessageIndex = ++MessageIndex;
+            reply.PublisherId = Publisher.Id;
+            reply.PublicationId = Publication.Id;
 
-            await OutgoingChannel.Writer.WriteAsync(message, cancellationToken).ConfigureAwait(false);
+            await OutgoingChannel.Writer.WriteAsync(reply, cancellationToken).ConfigureAwait(false);
         }
     }
 }

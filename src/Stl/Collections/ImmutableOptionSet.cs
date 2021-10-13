@@ -1,26 +1,47 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using Newtonsoft.Json;
+using System.Linq;
+using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 using Stl.Reflection;
+using Stl.Serialization;
 using Stl.Text;
 
 namespace Stl.Collections
 {
+    [DataContract]
+    [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
     public readonly struct ImmutableOptionSet : IServiceProvider, IEquatable<ImmutableOptionSet>
     {
         public static readonly ImmutableOptionSet Empty = new(ImmutableDictionary<Symbol, object>.Empty);
 
         private readonly ImmutableDictionary<Symbol, object>? _items;
 
-        public ImmutableDictionary<Symbol, object> Items => _items ?? ImmutableDictionary<Symbol, object>.Empty;
+        [JsonIgnore]
+        public ImmutableDictionary<Symbol, object> Items
+            => _items ?? ImmutableDictionary<Symbol, object>.Empty;
+
+        [DataMember(Order = 0)]
+        [JsonPropertyName(nameof(Items)),  Newtonsoft.Json.JsonIgnore]
+        public Dictionary<string, NewtonsoftJsonSerialized<object>> JsonCompatibleItems
+            => Items.ToDictionary(
+                p => p.Key.Value,
+                p => NewtonsoftJsonSerialized.New(p.Value));
 
         public object? this[Symbol key] => Items.TryGetValue(key, out var v) ? v : null;
         public object? this[Type type] => this[type.ToSymbol()];
 
-        [JsonConstructor]
+        [Newtonsoft.Json.JsonConstructor]
         public ImmutableOptionSet(ImmutableDictionary<Symbol, object>? items)
             => _items = items ?? ImmutableDictionary<Symbol, object>.Empty;
+
+        [JsonConstructor]
+        public ImmutableOptionSet(Dictionary<string, NewtonsoftJsonSerialized<object>>? jsonCompatibleItems)
+            : this(jsonCompatibleItems?.ToImmutableDictionary(
+                p => (Symbol) p.Key,
+                p => p.Value.Value))
+        { }
 
         public object? GetService(Type serviceType)
             => this[serviceType];

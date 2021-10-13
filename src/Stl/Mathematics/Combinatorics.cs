@@ -7,7 +7,7 @@ namespace Stl.Mathematics
     public static class Combinatorics
     {
         public static BigInteger Cnk(int n, int k) =>
-            MathEx.Factorial(n) / (MathEx.Factorial(n - k) * MathEx.Factorial(k));
+            MathExt.Factorial(n) / (MathExt.Factorial(n - k) * MathExt.Factorial(k));
 
         public static IEnumerable<Memory<T>> Tails<T>(Memory<T> source, bool withEmptySubset = true)
         {
@@ -31,7 +31,7 @@ namespace Stl.Mathematics
             var prefix = new List<int>(8);
             for (var i = 0; i < k; i++)
                 prefix.Add(i);
-            for (;;) {
+            while (true) {
                 var lastIndex = prefix.Count - 1;
                 var next = prefix[lastIndex] + 1;
                 if (prefix.Count == k || (next == n && !exactlyK))
@@ -71,7 +71,7 @@ namespace Stl.Mathematics
                 yield break;
             var setSize = source.Length;
             var subsetCount = 1UL << setSize;
-            var bufferSize = setSize * (int) MathEx.Min((ulong) maxBufferSize, subsetCount);
+            var bufferSize = setSize * (int) MathExt.Min((ulong) maxBufferSize, subsetCount);
 
             var buffer = Memory<T>.Empty;
             var lastBufferIndex = 0;

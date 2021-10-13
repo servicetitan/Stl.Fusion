@@ -49,14 +49,14 @@ await app.InitializeAsync();
 // Starting watch tasks
 WriteLine("Initial state:");
 using var cts = new CancellationTokenSource();
-app.Watch(cts.Token).Ignore();
+_ = app.Watch(cts.Token);
 await Task.Delay(700); // Just to make sure watch tasks print whatever they want before our prompt appears
 // await AutoRunner.Run(app);
 
 WriteLine();
 WriteLine("Change product price by typing [productId]=[price], e.g. \"apple=0\".");
 WriteLine("See the total of every affected cart changes.");
-for (;;) {
+while (true) {
     await Task.Delay(500);
     WriteLine();
     Write("[productId]=[price]: ");

@@ -1,9 +1,10 @@
-
 @if (Exception != null) {
-    <Error @key="@Exception" Title="Update failed!">@Exception.Message</Error>
+    <Error @key="@Exception" Title="Update failed!" Dismissed="@Dismissed">@Exception.Message</Error>
 }
 
 @code {
     [Parameter]
     public Exception? Exception { get; set; }
+    [Parameter]
+    public EventCallback Dismissed { get; set; }
 }

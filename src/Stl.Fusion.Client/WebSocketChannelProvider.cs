@@ -39,10 +39,12 @@ namespace Stl.Fusion.Client
 
             public static IUtf16Serializer<BridgeMessage> DefaultSerializerFactory(IServiceProvider services)
                 => new Utf16Serializer(
-                    new NewtonsoftJsonSerializer().Reader,
-                    new SafeUtf16Serializer(
-                        new NewtonsoftJsonSerializer(),
-                        t => typeof(ReplicatorMessage).IsAssignableFrom(t)).Writer
+                    new TypeDecoratingSerializer(
+                        SystemJsonSerializer.Default,
+                        t => typeof(PublisherReply).IsAssignableFrom(t)).Reader,
+                    new TypeDecoratingSerializer(
+                        SystemJsonSerializer.Default,
+                        t => typeof(ReplicatorRequest).IsAssignableFrom(t)).Writer
                     ).ToTyped<BridgeMessage>();
 
             public static ClientWebSocket DefaultClientWebSocketFactory(IServiceProvider services)
@@ -132,11 +134,11 @@ namespace Stl.Fusion.Client
                 if (IsMessageLoggingEnabled)
                     stringChannel = stringChannel.WithLogger(clientId, Log, MessageLogLevel, MessageMaxLength);
                 var serializers = SerializerFactory.Invoke(Services);
-                var resultChannel = stringChannel.WithSerializer(serializers);
-                wsChannel.WhenCompleted(CancellationToken.None).ContinueWith(async _ => {
+                var resultChannel = stringChannel.WithUtf16Serializer(serializers);
+                _ = wsChannel.WhenCompleted(CancellationToken.None).ContinueWith(async _ => {
                     await Task.Delay(1000, default).ConfigureAwait(false);
                     await wsChannel.DisposeAsync().ConfigureAwait(false);
-                }, CancellationToken.None).Ignore();
+                }, CancellationToken.None);
                 return resultChannel;
             }
             catch (OperationCanceledException) {

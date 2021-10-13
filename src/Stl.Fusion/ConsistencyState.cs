@@ -15,7 +15,7 @@ namespace Stl.Fusion
         ConsistencyState ConsistencyState { get; }
     }
 
-    public static class ConsistencyStateEx
+    public static class ConsistencyStateExt
     {
         // IsXxx
 

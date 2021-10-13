@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Stl.Fusion.Internal;
 using Stl.Testing;
-using Stl.Testing.Internal;
+using Stl.Testing.Output;
 using Xunit.Abstractions;
 using Xunit.DependencyInjection.Logging;
 
@@ -24,7 +24,8 @@ namespace Stl.Fusion.Tests
                 logging.AddDebug();
                 logging.AddProvider(
                     new XunitTestOutputLoggerProvider(
-                        new TestOutputHelperAccessor(Out)));
+                        new TestOutputHelperAccessor(Out),
+                        (category, level) => level >= LogLevel.Debug));
             });
             services.AddFusion();
             ConfigureCommonServices(services);

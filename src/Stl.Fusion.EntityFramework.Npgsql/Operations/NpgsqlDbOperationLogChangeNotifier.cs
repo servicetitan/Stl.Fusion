@@ -42,14 +42,14 @@ namespace Stl.Fusion.EntityFramework.Npgsql.Operations
             if (IsDisposed || !disposing)
                 return;
             IsDisposed = true;
-            using var _ = ExecutionContextEx.SuppressFlow();
-            Task.Run(async () => {
+            using var suppressing = ExecutionContextExt.SuppressFlow();
+            _ = Task.Run(async () => {
                 using (await AsyncLock.Lock()) {
                     var dbContext = DbContext;
                     if (dbContext != null)
                         await dbContext.DisposeAsync();
                 }
-            }).Ignore();
+            });
         }
 
         public Task OnOperationCompleted(IOperation operation)
@@ -63,7 +63,7 @@ namespace Stl.Fusion.EntityFramework.Npgsql.Operations
                     return Task.CompletedTask;
             }
             // If it wasn't command, we pessimistically assume it changed something
-            using var _ = ExecutionContextEx.SuppressFlow();
+            using var _ = ExecutionContextExt.SuppressFlow();
             Task.Run(Notify);
             return Task.CompletedTask;
         }
@@ -74,7 +74,7 @@ namespace Stl.Fusion.EntityFramework.Npgsql.Operations
         {
             var qPayload = AgentInfo.Id.Value.Replace("'", "''");
             TDbContext? dbContext = null;
-            for (;;) {
+            while (true) {
                 try {
                     using (await AsyncLock.Lock()) {
                         if (IsDisposed)
@@ -89,8 +89,8 @@ namespace Stl.Fusion.EntityFramework.Npgsql.Operations
                 catch (Exception e) {
                     Log.LogError(e, "Notification failed - retrying");
                     DbContext = null;
-                    dbContext?.DisposeAsync().Ignore(); // Doesn't matter if it fails
-                    await Clock.Delay(Options.RetryDelay).ConfigureAwait(false);
+                    _ = dbContext?.DisposeAsync(); // Doesn't matter if it fails
+                    await Clocks.CoarseCpuClock.Delay(Options.RetryDelay).ConfigureAwait(false);
                 }
             }
         }

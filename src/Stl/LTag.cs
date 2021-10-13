@@ -1,7 +1,8 @@
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using Newtonsoft.Json;
+using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 using Stl.Internal;
 using Stl.Mathematics;
 
@@ -10,8 +11,9 @@ namespace Stl
     /// <summary>
     /// Encapsulates <see cref="Int64"/>-typed version.
     /// </summary>
-    [Serializable]
+    [DataContract]
     [JsonConverter(typeof(LTagJsonConverter))]
+    [Newtonsoft.Json.JsonConverter(typeof(LTagNewtonsoftJsonConverter))]
     [TypeConverter(typeof(LTagTypeConverter))]
     public readonly struct LTag : IEquatable<LTag>
     {
@@ -21,7 +23,8 @@ namespace Stl
         /// <summary>
         /// Version value.
         /// </summary>
-        public readonly long Value;
+        [DataMember(Order = 0)]
+        public long Value { get; }
         /// <summary>
         /// Indicates whether this version is a special one.
         /// Special versions are just versions with negative numbers, which
@@ -47,7 +50,7 @@ namespace Stl
             unsafe {
                 Span<char> buffer = stackalloc char[16];
                 buffer[0] = '@';
-                var n = MathEx.FormatTo(Value, Base62Digits, buffer.Slice(1));
+                var n = MathExt.FormatTo(Value, Base62Digits, buffer.Slice(1));
                 var slice = buffer.Slice(0, n.Length + 1);
                 #if !NETSTANDARD2_0
                 return new string(slice);
@@ -81,7 +84,7 @@ namespace Stl
                 return false;
             if (formattedLTag[0] != '@')
                 return false;
-            if (!MathEx.TryParse(formattedLTag.AsSpan().Slice(1), Base62Digits, out var value))
+            if (!MathExt.TryParse(formattedLTag.AsSpan().Slice(1), Base62Digits, out var value))
                 return false;
             lTag = new LTag(value);
             return true;

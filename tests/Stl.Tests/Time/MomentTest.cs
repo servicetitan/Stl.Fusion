@@ -1,7 +1,7 @@
 using System;
 using FluentAssertions;
-using Stl.Collections;
 using Stl.Testing;
+using Stl.Testing.Collections;
 using Stl.Time;
 using Xunit;
 using Xunit.Abstractions;
@@ -22,11 +22,8 @@ namespace Stl.Tests.Time
             m1 = m.ToDateTime();
             m1.Should().Equals(m);
 
-            var e = Event.New("Test", m);
-            var (e1, json) = e.PassThroughAllSerializersWithOutput();
-            Out.WriteLine(e.ToString());
-            Out.WriteLine(json.ToDelimitedString(Environment.NewLine));
-            e1.Should().Equals(e);
+            m1 = m.PassThroughAllSerializers(Out);
+            m1.Should().Equals(m);
         }
 
         [Fact]

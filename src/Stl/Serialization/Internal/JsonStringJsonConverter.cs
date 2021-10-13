@@ -1,23 +1,15 @@
 using System;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Stl.Serialization.Internal
 {
-    public class JsonStringJsonConverter : JsonConverter
+    public class JsonStringJsonConverter : JsonConverter<JsonString>
     {
-        public override bool CanConvert(Type objectType)
-            => objectType == typeof(JsonString);
+        public override JsonString? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            => JsonString.New(reader.GetString());
 
-        public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
-        {
-            var rs = (JsonString) value!;
-            writer.WriteValue(rs.Value);
-        }
-
-        public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
-        {
-            var value = (string) reader.Value!;
-            return new JsonString(value);
-        }
+        public override void Write(Utf8JsonWriter writer, JsonString value, JsonSerializerOptions options)
+            => writer.WriteStringValue(value?.Value);
     }
 }

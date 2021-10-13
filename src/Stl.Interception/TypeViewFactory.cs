@@ -1,5 +1,7 @@
 using System;
 using Castle.DynamicProxy;
+using Microsoft.Extensions.DependencyInjection;
+using Stl.DependencyInjection;
 using Stl.Interception.Interceptors;
 using Stl.Reflection;
 
@@ -14,23 +16,35 @@ namespace Stl.Interception
 
     public class TypeViewFactory : ITypeViewFactory
     {
-        public static TypeViewFactory Default { get; } = new();
+        public static TypeViewFactory Default { get; } = new(DependencyInjection.ServiceProviderExt.Empty);
 
+        protected IServiceProvider Services { get; }
         protected ITypeViewProxyGenerator ProxyGenerator { get; }
         protected IInterceptor[] Interceptors { get; }
 
-        public TypeViewFactory()
-            : this(TypeViewProxyGenerator.Default, TypeViewInterceptor.Default)
+        public TypeViewFactory(IServiceProvider services)
+            : this(
+                services,
+                services.GetService<ITypeViewProxyGenerator>() ?? services.Activate<TypeViewProxyGenerator>(),
+                services.GetOrActivate<TypeViewInterceptor>())
         { }
 
-        public TypeViewFactory(ITypeViewProxyGenerator proxyGenerator, TypeViewInterceptor interceptor)
+        public TypeViewFactory(
+            IServiceProvider services,
+            ITypeViewProxyGenerator proxyGenerator,
+            TypeViewInterceptor interceptor)
         {
+            Services = services;
             ProxyGenerator = proxyGenerator;
             Interceptors = new IInterceptor[] { interceptor };
         }
 
-        public TypeViewFactory(ITypeViewProxyGenerator proxyGenerator, IInterceptor[] interceptors)
+        public TypeViewFactory(
+            IServiceProvider services,
+            ITypeViewProxyGenerator proxyGenerator,
+            IInterceptor[] interceptors)
         {
+            Services = services;
             ProxyGenerator = proxyGenerator;
             Interceptors = interceptors;
         }

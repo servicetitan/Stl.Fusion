@@ -11,7 +11,7 @@ using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
 using Stl.OS;
 using Stl.Testing;
-using Stl.Tests;
+using Stl.Testing.Collections;
 using Stl.Time;
 using Xunit;
 using Xunit.Abstractions;
@@ -84,7 +84,7 @@ namespace Stl.Fusion.Tests
             {
                 var rnd = new Random();
                 var count = 0L;
-                for (;;) {
+                while (true) {
                     cancellationToken.ThrowIfCancellationRequested();
                     var userId = (long) rnd.Next(UserCount);
                     // Log.LogDebug($"{name}: R {userId}");

@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Tests.Services;
 using Stl.Testing;
-using Stl.Tests;
+using Stl.Testing.Collections;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -60,14 +60,14 @@ namespace Stl.Fusion.Tests
 
             var count = 0;
             using var state = Services.StateFactory().NewComputed<DateTime>(
-                UpdateDelayer.ZeroUpdateDelay,
+                UpdateDelayer.ZeroDelay,
                 async (_, ct) => await rep.Computed.Use(ct));
             state.Updated += (s, _) => {
                 Out.WriteLine($"{s.Value}");
                 count++;
             };
 
-            await TestEx.WhenMet(
+            await TestExt.WhenMet(
                 () => count.Should().BeGreaterThan(2),
                 TimeSpan.FromSeconds(5));
         }

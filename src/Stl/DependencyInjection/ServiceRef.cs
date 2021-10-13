@@ -3,7 +3,6 @@ using Stl.DependencyInjection.Internal;
 
 namespace Stl.DependencyInjection
 {
-    [Serializable]
     public abstract record ServiceRef
     {
         public abstract object? TryResolve(IServiceProvider services);

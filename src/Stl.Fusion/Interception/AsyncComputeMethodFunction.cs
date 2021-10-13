@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Stl.Fusion.Internal;
 using Stl.Fusion.Swapping;
 using Stl.Generators;
+using Stl.Versioning;
 
 namespace Stl.Fusion.Interception
 {
@@ -12,7 +13,7 @@ namespace Stl.Fusion.Interception
     {
         public AsyncComputeMethodFunction(
             ComputeMethodDef method,
-            Generator<LTag> versionGenerator,
+            VersionGenerator<LTag> versionGenerator,
             IServiceProvider services,
             ILogger<ComputeMethodFunction<T>>? log = null)
             : base(method, versionGenerator, services, log)

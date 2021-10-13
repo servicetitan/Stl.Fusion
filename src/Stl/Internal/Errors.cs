@@ -1,4 +1,5 @@
 using System;
+using System.Security;
 using Newtonsoft.Json;
 using Stl.Async;
 
@@ -12,7 +13,17 @@ namespace Stl.Internal
         {
             var message = $"'{type}' must implement '{expectedType}'.";
             return string.IsNullOrEmpty(argumentName)
-                ? (Exception) new InvalidOperationException(message)
+                ? new InvalidOperationException(message)
+                : new ArgumentOutOfRangeException(argumentName, message);
+        }
+
+        public static Exception MustBeAssignableTo<TExpected>(Type type, string? argumentName = null)
+            => MustBeAssignableTo(type, typeof(TExpected), argumentName);
+        public static Exception MustBeAssignableTo(Type type, Type mustBeAssignableToType, string? argumentName = null)
+        {
+            var message = $"'{type}' must be assignable to '{mustBeAssignableToType}'.";
+            return string.IsNullOrEmpty(argumentName)
+                ? new InvalidOperationException(message)
                 : new ArgumentOutOfRangeException(argumentName, message);
         }
 
@@ -32,12 +43,14 @@ namespace Stl.Internal
 
         public static Exception TaskIsNotCompleted() =>
             new InvalidOperationException("Task is expected to be completed at this point, but it's not.");
+        public static Exception TaskHasNotCompletedSuccessfullyButNoException() =>
+            new InvalidOperationException("Task hasn't completed successfully but has no Exception.");
 
         public static Exception PathIsRelative(string? paramName) =>
             new ArgumentException("Path is relative.", paramName);
 
-        public static Exception UnsupportedTypeForJsonSerialization(Type type)
-            => new JsonSerializationException($"Unsupported type: '{type}'.");
+        public static Exception WrongExceptionType(Type type)
+            => new SecurityException($"Wrong exception type: '{type}'.");
 
         public static Exception AlreadyDisposed() =>
             new ObjectDisposedException("unknown", "The object is already disposed.");

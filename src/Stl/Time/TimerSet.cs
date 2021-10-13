@@ -20,10 +20,10 @@ namespace Stl.Time
 
             public TimeSpan Quanta {
                 get => _quanta;
-                init => _quanta = TimeSpanEx.Max(MinQuanta, value);
+                init => _quanta = TimeSpanExt.Max(MinQuanta, value);
             }
 
-            public IMomentClock Clock { get; init; } = CpuClock.Instance;
+            public IMomentClock Clock { get; init; } = MomentClockSet.Default.CpuClock;
         }
 
         private readonly Action<TTimer>? _fireHandler;
@@ -47,7 +47,7 @@ namespace Stl.Time
             Clock = options.Clock;
             _fireHandler = fireHandler;
             _start = Clock.Now;
-            Run().Ignore();
+            _ = Run();
         }
 
         public void AddOrUpdate(TTimer timer, Moment time)

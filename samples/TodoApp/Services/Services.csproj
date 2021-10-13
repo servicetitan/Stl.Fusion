@@ -10,8 +10,4 @@
     <ProjectReference Include="..\Abstractions\Abstractions.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" />
-  </ItemGroup>
-
 </Project>

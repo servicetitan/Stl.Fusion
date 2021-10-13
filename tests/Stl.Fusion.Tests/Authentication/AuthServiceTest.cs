@@ -8,7 +8,7 @@ using Stl.CommandR;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Authentication.Commands;
 using Stl.Fusion.Operations;
-using Stl.Tests;
+using Stl.Testing.Collections;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -200,9 +200,15 @@ namespace Stl.Fusion.Tests.Authentication
             var sessionFactory = ClientServices.GetRequiredService<ISessionFactory>();
 
             var session = sessionFactory.CreateSession();
-            await Assert.ThrowsAsync<FormatException>(async() => {
-                var guest = new User("notANumber", "Guest").WithIdentity("n:1");
-                await authServer.SignIn(new SignInCommand(session, guest).MarkServerSide());
+            await Assert.ThrowsAsync<InvalidOperationException>(async() => {
+                try {
+                    var guest = new User("notANumber", "Guest").WithIdentity("n:1");
+                    await authServer.SignIn(new SignInCommand(session, guest).MarkServerSide());
+                }
+                catch (FormatException) {
+                    // Thrown by InMemoryAuthService
+                    throw new InvalidOperationException();
+                }
             });
             var bob = new User("", "Bob").WithIdentity("b:1");
             await authServer.SignIn(new SignInCommand(session, bob).MarkServerSide());
