@@ -30,7 +30,8 @@
 
     <!-- Testing-specific -->
     <!-- [MA0004] Use Task.ConfigureAwait(false) as the current SynchronizationContext is not needed -->
-    <NoWarn>$(NoWarn);MA0004</NoWarn>
+    <!-- [MA0051] Method is too long (41 lines; maximum allowed: 40)-->
+    <NoWarn>$(NoWarn);MA0004;MA0051</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

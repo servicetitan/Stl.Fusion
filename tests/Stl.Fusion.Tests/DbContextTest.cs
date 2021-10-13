@@ -37,7 +37,7 @@ namespace Stl.Fusion.Tests
                 Chat = c1,
             };
 
-            dbContext1.AddRange(u1, c1, m1);
+            await dbContext1.AddRangeAsync(u1, c1, m1);
             await dbContext1.SaveChangesAsync();
 
             await using var dbContext2 = CreateDbContext();
