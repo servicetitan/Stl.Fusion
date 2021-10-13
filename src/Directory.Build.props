@@ -44,11 +44,12 @@
     <NoWarn>$(NoWarn);VSTHRD200;VSTHRD110;VSTHRD003;VSTHRD002</NoWarn>
   </PropertyGroup>
 
+  <!--
   <ItemGroup>
-    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
     <InternalsVisibleTo Include="Stl.Tests" />
     <InternalsVisibleTo Include="Stl.Fusion.Tests" />
   </ItemGroup>
+  -->
 
   <ItemGroup>
     <PackageReference Include="Nerdbank.GitVersioning" />
