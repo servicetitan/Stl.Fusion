@@ -13,8 +13,8 @@ namespace Stl.Fusion.Client.RestEase.Internal
         public FusionHttpMessageHandlerBuilderFilter(IServiceProvider services)
             => Services = services;
 
-        public Action<HttpMessageHandlerBuilder> Configure(Action<HttpMessageHandlerBuilder> next) =>
-            builder => {
+        public Action<HttpMessageHandlerBuilder> Configure(Action<HttpMessageHandlerBuilder> next)
+            => builder => {
                 // Run other builders first
                 next(builder);
                 builder.AdditionalHandlers.Insert(0, Services.GetRequiredService<FusionHttpMessageHandler>());

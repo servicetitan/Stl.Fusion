@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <PropertyGroup Label="ASP.NET Core Versions">
-    <AspNetCoreVersion>6.0.0-rc.1*</AspNetCoreVersion>
+    <AspNetCoreVersion>6.0.0-rc.2*</AspNetCoreVersion>
     <AspNetCoreVersion5>5.0.10</AspNetCoreVersion5>
     <AspNetCoreVersion3>3.*</AspNetCoreVersion3>
   </PropertyGroup>

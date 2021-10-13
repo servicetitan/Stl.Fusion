@@ -35,13 +35,13 @@ namespace Stl.Tests.Caching
                 Func<char, CancellationToken, ValueTask<char>>,
                 IAsyncKeyResolver<char, char>> cacheFactory)
         {
-            IEnumerable<char> DepSelector1(char c) =>
-                Enumerable
+            IEnumerable<char> DepSelector1(char c)
+                => Enumerable
                     .Range(0, c - '0')
                     .Select(i => (char) ('0' + i));
             IEnumerable<char> BadDepSelector1(char c) => new [] {c};
-            IEnumerable<char> BadDepSelector2(char c) =>
-                Enumerable
+            IEnumerable<char> BadDepSelector2(char c)
+                => Enumerable
                     .Range(1, 5)
                     .Select(i => (char) ('0' + (c - '0' + i) % 10));
 

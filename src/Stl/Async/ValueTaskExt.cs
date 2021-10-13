@@ -14,7 +14,7 @@ namespace Stl.Async
         public static ValueTask<T> FromException<T>(Exception error)
             => new ValueTask<T>(Task.FromException<T>(error));
 
-        public static T ResultOrThrow<T>(this ValueTask<T> task) =>
-            task.IsCompleted ? task.Result : throw Errors.TaskIsNotCompleted();
+        public static T ResultOrThrow<T>(this ValueTask<T> task)
+            => task.IsCompleted ? task.Result : throw Errors.TaskIsNotCompleted();
     }
 }

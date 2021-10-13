@@ -13,7 +13,8 @@ namespace Samples.HelloCart.V1
         private readonly ConcurrentDictionary<string, Cart> _carts = new();
         private readonly IProductService _products;
 
-        public InMemoryCartService(IProductService products) => _products = products;
+        public InMemoryCartService(IProductService products)
+            => _products = products;
 
         public virtual Task Edit(EditCommand<Cart> command, CancellationToken cancellationToken = default)
         {

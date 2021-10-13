@@ -14,8 +14,8 @@ namespace Stl.Fusion.Blazor
         public bool IsPrerendering => _isPrerendering != 0;
         public bool IsDisposing => _isDisposing != 0;
 
-        public ComponentBase? RootComponent {
-            get => _rootComponent;
+        public ComponentBase RootComponent {
+            get => _rootComponent ?? throw Errors.NotInitialized(nameof(RootComponent));
             set {
                 if (_rootComponent == value)
                     return;
@@ -24,6 +24,9 @@ namespace Stl.Fusion.Blazor
                 _rootComponent = value;
             }
         }
+
+        public Dispatcher Dispatcher
+            => RootComponent.GetDispatcher();
 
         public ClosedDisposable<(BlazorCircuitContext, int)> Prerendering(bool isPrerendering = true)
         {

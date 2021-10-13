@@ -24,7 +24,8 @@ namespace Stl.CommandR
             nextHandlerIndex = NextHandlerIndex;
         }
 
-        public override string ToString() => $"{GetType().Name}({NextHandlerIndex}/{Handlers.Count})";
+        public override string ToString()
+            => $"{GetType().Name}({NextHandlerIndex}/{Handlers.Count})";
 
         public CommandHandler? FindFinalHandler()
             => FindFinalHandler(NextHandlerIndex);
