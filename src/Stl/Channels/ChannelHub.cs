@@ -69,7 +69,7 @@ namespace Stl.Channels
         protected virtual void OnAttached(Channel<T> channel)
         {
             channel.Reader.Completion.ContinueWith(async _ => {
-                await Detach(channel);
+                await Detach(channel).ConfigureAwait(false);
             }, TaskScheduler.Default);
             Attached?.Invoke(channel);
         }

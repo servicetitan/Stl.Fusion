@@ -26,12 +26,12 @@ public readonly struct ListFormat
 
     public ListParser CreateParser(in string source, int itemIndex = 0)
         => CreateParser(source.AsSpan(), itemIndex);
-    public ListParser CreateParser(in string source, in Utf16ValueStringBuilder item, int itemIndex = 0)
-        => CreateParser(source.AsSpan(), item, itemIndex);
+    public ListParser CreateParser(in string source, ref Utf16ValueStringBuilder item, int itemIndex = 0)
+        => CreateParser(source.AsSpan(), ref item, itemIndex);
 
     public ListParser CreateParser(in ReadOnlySpan<char> source, int itemIndex = 0)
         => new(this, source, ZString.CreateStringBuilder(), true, itemIndex);
-    public ListParser CreateParser(in ReadOnlySpan<char> source, in Utf16ValueStringBuilder item, int itemIndex = 0)
+    public ListParser CreateParser(in ReadOnlySpan<char> source, ref Utf16ValueStringBuilder item, int itemIndex = 0)
         => new(this, source, item, false, itemIndex);
 
     public string Format(params string[] source)
@@ -55,28 +55,30 @@ public readonly struct ListFormat
     public List<string> Parse(string source, List<string>? target = null)
     {
         target ??= new List<string>();
-        var p = CreateParser(source, ZString.CreateStringBuilder());
+        var sb = ZString.CreateStringBuilder();
+        var p = CreateParser(source, ref sb);
         try {
             while (p.TryParseNext())
                 target.Add(p.Item);
             return target;
         }
         finally {
-            p.ItemBuilder.Dispose();
+            sb.Dispose();
         }
     }
 
     public List<string> Parse(in ReadOnlySpan<char> source, List<string>? target = null)
     {
         target ??= new List<string>();
-        var p = CreateParser(source, ZString.CreateStringBuilder());
+        var sb = ZString.CreateStringBuilder();
+        var p = CreateParser(source, ref sb);
         try {
             while (p.TryParseNext())
                 target.Add(p.Item);
             return target;
         }
         finally {
-            p.ItemBuilder.Dispose();
+            sb.Dispose();
         }
     }
 }
