@@ -21,7 +21,7 @@ public readonly struct ListFormat
 
     public ListFormatter CreateFormatter(int itemIndex = 0)
         => new(this, ZString.CreateStringBuilder(), true, itemIndex);
-    public ListFormatter CreateFormatter(in Utf16ValueStringBuilder output, int itemIndex = 0)
+    public ListFormatter CreateFormatter(ref Utf16ValueStringBuilder output, int itemIndex = 0)
         => new(this, output, false, itemIndex);
 
     public ListParser CreateParser(in string source, int itemIndex = 0)

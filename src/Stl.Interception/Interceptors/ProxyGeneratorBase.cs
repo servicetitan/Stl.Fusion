@@ -8,7 +8,7 @@ namespace Stl.Interception.Interceptors
         protected TOptions ProxyGeneratorOptions { get; }
         protected ModuleScope ModuleScope { get; }
 
-        public ProxyGeneratorBase(
+        protected ProxyGeneratorBase(
             TOptions options,
             ModuleScope? moduleScope = null)
         {

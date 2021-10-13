@@ -26,13 +26,13 @@ namespace Stl.DependencyInjection
         public async Task Start(CancellationToken cancellationToken = default)
         {
             var tasks = this.Select(s => s.StartAsync(cancellationToken));
-            await Task.WhenAll(tasks);
+            await Task.WhenAll(tasks).ConfigureAwait(false);
         }
 
         public async Task Stop(CancellationToken cancellationToken = default)
         {
             var tasks = this.Select(s => s.StopAsync(cancellationToken));
-            await Task.WhenAll(tasks);
+            await Task.WhenAll(tasks).ConfigureAwait(false);
         }
     }
 }

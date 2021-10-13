@@ -70,7 +70,7 @@ namespace Stl.Channels
         {
             channel.Reader.Completion.ContinueWith(async _ => {
                 await Detach(channel);
-            });
+            }, TaskScheduler.Default);
             Attached?.Invoke(channel);
         }
 

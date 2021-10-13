@@ -59,7 +59,7 @@ namespace Stl.Text
         private Symbol(SerializationInfo info, StreamingContext context)
         {
             _value = info.GetString(nameof(Value)) ?? "";
-            _hashCode = _value.Length == 0 ? 0 : _value.GetHashCode();
+            _hashCode = _value.Length == 0 ? 0 : StringComparer.Ordinal.GetHashCode(_value);
         }
 #pragma warning restore CS8618
 

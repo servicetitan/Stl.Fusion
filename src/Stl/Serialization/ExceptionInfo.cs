@@ -64,11 +64,12 @@ public readonly struct ExceptionInfo : IEquatable<ExceptionInfo>
     // Equality
 
     public bool Equals(ExceptionInfo other)
-        => TypeRef.Equals(other.TypeRef) && Message == other.Message;
+        => TypeRef.Equals(other.TypeRef)
+            && StringComparer.Ordinal.Equals(Message, other.Message);
     public override bool Equals(object? obj)
         => obj is ExceptionInfo other && Equals(other);
     public override int GetHashCode()
-        => HashCode.Combine(TypeRef, Message);
+        => HashCode.Combine(TypeRef, StringComparer.Ordinal.GetHashCode(Message));
     public static bool operator ==(ExceptionInfo left, ExceptionInfo right)
         => left.Equals(right);
     public static bool operator !=(ExceptionInfo left, ExceptionInfo right)
