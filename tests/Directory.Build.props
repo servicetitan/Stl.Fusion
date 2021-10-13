@@ -11,20 +11,46 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
+  <!-- Suppressed warnings -->
+  <PropertyGroup>
+    <!-- [MA0048] File name must match type name -->
+    <!-- [MA0018] Do not declare static members on generic types -->
+    <!-- [MA0026] To-do : ... -->
+    <!-- [MA0046] The delegate must have 2 parameters -->
+    <!-- [MA0016] Prefer return collection abstraction instead of implementation -->
+    <!-- [MA0097] A class that implements IComparable<T> or IComparable should override comparison operators -->
+    <!-- [MA0009] Regular expressions should not be vulnerable to Denial of Service attacks -->
+    <!-- [MA0056] Do not call overridable members in constructor -->
+    <NoWarn>$(NoWarn);MA0048;MA0018;MA0026;MA0046;MA0016;MA0097;MA0009;MA0056</NoWarn>
+    <!-- [VSTHRD200] Use "Async" suffix in names of methods that return an awaitable type. -->
+    <!-- [VSTHRD110] Observe the awaitable result of this method call by awaiting it, assigning to a variable, or passing it to another method. -->
+    <!-- [VSTHRD003] Avoid awaiting or returning a Task representing work that was not started within your context as that can lead to deadlocks. -->
+    <!-- [VSTHRD002] Synchronously waiting on tasks or awaiters may cause deadlocks. Use await or JoinableTaskFactory.Run instead. -->
+    <NoWarn>$(NoWarn);VSTHRD200;VSTHRD110;VSTHRD003;VSTHRD002</NoWarn>
+
+    <!-- Testing-specific -->
+    <!-- [MA0004] Use Task.ConfigureAwait(false) as the current SynchronizationContext is not needed -->
+    <NoWarn>$(NoWarn);MA0004</NoWarn>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="coverlet.collector" />
     <PackageReference Include="FluentAssertions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
+  </ItemGroup>
 
-    <!-- Analyzers -->
+  <!-- Analyzers -->
+  <ItemGroup>
     <PackageReference Include="xunit.analyzers" />
     <PackageReference Include="Roslynator.Analyzers" />
     <PackageReference Include="Meziantou.Analyzer" />
     <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" />
+  </ItemGroup>
 
-    <!-- Global usings -->
+  <!-- Global usings -->
+  <ItemGroup>
     <Using Include="System.Console" Static="True" />
     <Using Include="System.Collections" />
     <Using Include="System.Collections.Immutable" />
@@ -51,7 +77,6 @@
 
     <!-- Testing-related global usings -->
     <Using Include="FluentAssertions" />
-<!--    <Using Include="Moq" />-->
     <Using Include="Stl.Testing" />
     <Using Include="Xunit" />
     <Using Include="Xunit.Abstractions" />
