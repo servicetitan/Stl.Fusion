@@ -16,7 +16,45 @@
     <PackageReference Include="FluentAssertions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.analyzers" />
     <PackageReference Include="xunit.runner.visualstudio" />
+
+    <!-- Analyzers -->
+    <PackageReference Include="xunit.analyzers" />
+    <PackageReference Include="Roslynator.Analyzers" />
+    <PackageReference Include="Meziantou.Analyzer" />
+    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" />
+
+    <!-- Global usings -->
+    <Using Include="System.Console" Static="True" />
+    <Using Include="System.Collections" />
+    <Using Include="System.Collections.Immutable" />
+    <Using Include="System.Diagnostics" />
+    <Using Include="System.Linq" />
+    <Using Include="System.Reactive" /> <!-- Mainly for Unit type -->
+    <Using Include="System.Runtime.CompilerServices" />
+    <Using Include="System.Runtime.InteropServices" />
+    <Using Include="System.Runtime.Serialization" />
+    <Using Include="System.Threading.Channels" />
+    <Using Include="Stl" />
+    <Using Include="Stl.Async" />
+    <Using Include="Stl.Channels" />
+    <Using Include="Stl.Collections" />
+    <Using Include="Stl.Serialization" />
+    <Using Include="Stl.Text" />
+    <Using Include="Stl.Time" />
+    <Using Include="Stl.Fusion" />
+    <Using Include="Stl.Fusion.Operations" />
+    <Using Include="Stl.CommandR" />
+    <Using Include="Stl.CommandR.Configuration" />
+    <Using Include="Stl.CommandR.Commands" />
+    <Using Include="Microsoft.Extensions.Logging" />
+
+    <!-- Testing-related global usings -->
+    <Using Include="FluentAssertions" />
+<!--    <Using Include="Moq" />-->
+    <Using Include="Stl.Testing" />
+    <Using Include="Xunit" />
+    <Using Include="Xunit.Abstractions" />
   </ItemGroup>
+
 </Project>

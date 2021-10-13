@@ -1,4 +1,3 @@
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
@@ -13,9 +12,9 @@ public abstract class AsyncProcessBase : AsyncDisposableBase, IAsyncProcess
     private readonly object _lock;
 
     protected bool MustFlowExecutionContext { get; init; } = false;
+    protected CancellationToken StopToken { get; }
 
     public bool IsDisposeStarted => _isDisposed != 0;
-    public CancellationToken StopToken { get; }
     public Task? RunningTask { get; private set; }
     public Task? DisposeTask => IsDisposeStarted ? RunningTask ?? Task.CompletedTask : null;
 
@@ -43,10 +42,15 @@ public abstract class AsyncProcessBase : AsyncDisposableBase, IAsyncProcess
         _stopTokenSource.Dispose();
     }
 
-    public async Task Run(CancellationToken cancellationToken)
+    public Task Run(CancellationToken cancellationToken)
     {
-        await using var _ = cancellationToken.Register(StopInternal).ToAsyncDisposableAdapter();
-        await Run().ConfigureAwait(false);
+        if (cancellationToken == default)
+            return Run();
+
+        var registration = cancellationToken.Register(StopInternal);
+        var result = Run();
+        result.ContinueWith(_ => registration.Dispose(), TaskScheduler.Default);
+        return result;
     }
 
     // Returns a task that always succeeds
@@ -58,7 +62,7 @@ public abstract class AsyncProcessBase : AsyncDisposableBase, IAsyncProcess
             if (RunningTask != null)
                 return RunningTask;
             if (StopToken.IsCancellationRequested)
-                throw Errors.AlreadyDisposedOrDisposing();
+                throw Errors.AlreadyStopped();
 
             var flowSuppressor =
                 (MustFlowExecutionContext && !ExecutionContext.IsFlowSuppressed())

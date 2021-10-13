@@ -1,7 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-
-namespace Stl.Async;
+﻿namespace Stl.Async;
 
 /// <summary>
 /// A template from

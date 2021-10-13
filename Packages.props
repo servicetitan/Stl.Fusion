@@ -17,7 +17,7 @@
     <NpgsqlVersion>$(EntityFrameworkCoreVersion)</NpgsqlVersion>
     <NpgsqlVersion5>$(EntityFrameworkCoreVersion5)</NpgsqlVersion5>
     <NpgsqlVersion3>$(EntityFrameworkCoreVersion3)</NpgsqlVersion3>
-    <EntityFrameworkCoreNpgsqlVersion>$(EntityFrameworkCoreVersion)</EntityFrameworkCoreNpgsqlVersion>
+    <EntityFrameworkCoreNpgsqlVersion>6.0.0-rc.1*</EntityFrameworkCoreNpgsqlVersion>
     <EntityFrameworkCoreNpgsqlVersion5>$(EntityFrameworkCoreVersion5)</EntityFrameworkCoreNpgsqlVersion5>
     <EntityFrameworkCoreNpgsqlVersion3>$(EntityFrameworkCoreVersion3)</EntityFrameworkCoreNpgsqlVersion3>
   </PropertyGroup>
@@ -116,6 +116,7 @@
     <PackageReference Update="xunit" Version="2.4.1" />
     <PackageReference Update="Xunit.DependencyInjection.Logging" Version="7.5.*" />
     <PackageReference Update="ZString" Version="2.4.*" />
+
     <!-- Legacy support only -->
     <PackageReference Update="IndexRange" Version="1.0.*" />
     <PackageReference Update="Microsoft.Bcl.AsyncInterfaces" Version="5.0.0" />
@@ -125,17 +126,24 @@
     <PackageReference Update="Microsoft.Owin" Version="4.2.0" />
     <PackageReference Update="Owin" Version="1.0.0" />
     <PackageReference Update="System.Reflection.Emit.Lightweight" Version="4.7.0" />
+
     <!-- Build time only -->
     <PackageReference Update="Stl" Version="$(StlFusionVersion)" />
     <PackageReference Update="Microsoft.NET.Test.Sdk" Version="16.11.0" />
     <PackageReference Update="Microsoft.AspNetCore.Components.WebAssembly.Build" Version="$(BlazorVersion)" PrivateAssets="all" />
     <PackageReference Update="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="$(BlazorVersion)" PrivateAssets="all" />
-    <PackageReference Update="xunit.analyzers" Version="0.10.*" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
     <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.0-beta-20204-02" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
     <PackageReference Update="Microsoft.EntityFrameworkCore.Design" Version="$(EntityFrameworkCoreVersion)" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers;" />
     <PackageReference Update="Microsoft.EntityFrameworkCore.Tools" Version="$(EntityFrameworkCoreVersion)" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers;" />
     <PackageReference Update="Nerdbank.GitVersioning" Version="3.4.240" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
     <PackageReference Update="coverlet.collector" Version="3.1.0" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
     <PackageReference Update="xunit.runner.visualstudio" Version="2.4.3" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
+
+    <!-- Analyzers -->
+    <PackageReference Update="Moq.Analyzers" Version="0.0.8" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers"/>
+    <PackageReference Update="xunit.analyzers" Version="0.10.0" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
+    <PackageReference Update="Microsoft.VisualStudio.Threading.Analyzers" Version="17.0.63" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
+    <PackageReference Update="Roslynator.Analyzers" Version="3.2.2" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers"/>
+    <PackageReference Update="Meziantou.Analyzer" Version="1.0.670" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers"/>
   </ItemGroup>
 </Project>

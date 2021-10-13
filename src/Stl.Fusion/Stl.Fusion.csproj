@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFrameworks>net6.0;net5.0;netcoreapp3.1;netstandard2.1;netstandard2.0</TargetFrameworks>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <PackageTags>servicetitan stl stl_fusion blazor knockout mobx</PackageTags>
     <Description>Core components of Stl.Fusion - <!--
     -->a new implementation of "computed observables" <!--

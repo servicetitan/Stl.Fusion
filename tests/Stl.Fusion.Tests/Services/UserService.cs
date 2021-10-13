@@ -146,7 +146,7 @@ namespace Stl.Fusion.Tests.Services
         {
             await Everything().ConfigureAwait(false);
             await using var dbContext = CreateDbContext();
-            var count = await dbContext.Users.LongCountAsync(cancellationToken).ConfigureAwait(false);
+            var count = await dbContext.Users.AsQueryable().LongCountAsync(cancellationToken).ConfigureAwait(false);
             // _log.LogDebug($"Users.Count query: {count}");
             return count;
         }

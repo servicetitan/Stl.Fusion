@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Drawing;
+using System.Globalization;
 using System.Linq;
 
 namespace Stl.OS
@@ -29,8 +30,8 @@ namespace Stl.OS
                     var wh = p.StandardOutput.ReadToEnd().TrimEnd()
                         .Split("\r\n").Last()
                         .Split(" ", StringSplitOptions.RemoveEmptyEntries);
-                    var w = int.Parse(wh[0]);
-                    var h = int.Parse(wh[1]);
+                    var w = int.Parse(wh[0], NumberStyles.Integer, CultureInfo.InvariantCulture);
+                    var h = int.Parse(wh[1], NumberStyles.Integer, CultureInfo.InvariantCulture);
                     PrimaryDisplayDimensions = new Rectangle(0, 0, w, h);
                     break;
                 }

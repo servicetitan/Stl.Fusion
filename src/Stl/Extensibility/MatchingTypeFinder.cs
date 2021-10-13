@@ -1,15 +1,6 @@
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Linq;
-using System.Reflection;
-using System.Threading;
-using Stl.Collections;
 using Stl.Concurrency;
 using Stl.Internal;
 using Stl.Reflection;
-using Stl.Text;
 
 namespace Stl.Extensibility
 {
@@ -20,7 +11,12 @@ namespace Stl.Extensibility
 
     public class MatchingTypeFinder : IMatchingTypeFinder
     {
-        public static volatile ImmutableHashSet<Assembly> Assemblies = ImmutableHashSet<Assembly>.Empty;
+        private static volatile ImmutableHashSet<Assembly> _assemblies = ImmutableHashSet<Assembly>.Empty;
+
+        public static ImmutableHashSet<Assembly> Assemblies {
+            get => _assemblies;
+            set => Interlocked.Exchange(ref _assemblies, value);
+        }
 
         private readonly Dictionary<(Type Source, Symbol Scope), Type> _matches;
         private readonly ConcurrentDictionary<(Type Source, Symbol Scope), Type?> _cache = new();
@@ -81,7 +77,7 @@ namespace Stl.Extensibility
             while (true) {
                 var oldSet = Assemblies;
                 var newSet = oldSet.Add(assembly);
-                if (Interlocked.CompareExchange(ref Assemblies, newSet, oldSet) == oldSet)
+                if (Interlocked.CompareExchange(ref _assemblies, newSet, oldSet) == oldSet)
                     return;
                 spinWait.SpinOnce();
             }
@@ -99,7 +95,7 @@ namespace Stl.Extensibility
                 // ReSharper disable once PossibleMultipleEnumeration
                 foreach (var searchAssembly in assemblies)
                     newSet = newSet.Add(searchAssembly);
-                if (Interlocked.CompareExchange(ref Assemblies, newSet, oldSet) == oldSet)
+                if (Interlocked.CompareExchange(ref _assemblies, newSet, oldSet) == oldSet)
                     return;
                 spinWait.SpinOnce();
             }

@@ -17,8 +17,8 @@ namespace Stl.Serialization
         IComparable<JsonString>,
         IConvertibleTo<string?>
     {
-        public static JsonString? Null = null;
-        public static JsonString Empty = new("");
+        public static readonly JsonString? Null = null;
+        public static readonly JsonString Empty= new("");
 
         private readonly string? _value;
 

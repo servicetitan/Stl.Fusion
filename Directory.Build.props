@@ -30,10 +30,13 @@
     <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>
     <GenerateFullPaths Condition="'$(TERM_PROGRAM)' == 'vscode'">true</GenerateFullPaths>
+
     <!-- Defaults for .csproj -->
     <OutputType>Library</OutputType>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Features>strict;pdb-path-determinism</Features>
     <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
     <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>

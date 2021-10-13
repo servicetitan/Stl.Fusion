@@ -27,7 +27,7 @@ namespace Stl.Text
         public Symbol(string value)
         {
             _value = value ?? "";
-            _hashCode = _value.Length == 0 ? 0 : _value.GetHashCode();
+            _hashCode = _value.Length == 0 ? 0 : StringComparer.Ordinal.GetHashCode(_value);
         }
 
         public override string ToString() => Value;
@@ -44,7 +44,9 @@ namespace Stl.Text
 
         // Equality & comparison
 
-        public bool Equals(Symbol other) => HashCode == other.HashCode && Value == other.Value;
+        public bool Equals(Symbol other)
+            => HashCode == other.HashCode
+                && StringComparer.Ordinal.Equals(Value, other.Value);
         public override bool Equals(object? obj) => obj is Symbol other && Equals(other);
         public override int GetHashCode() => HashCode;
         public int CompareTo(Symbol other) => string.CompareOrdinal(Value, other.Value);

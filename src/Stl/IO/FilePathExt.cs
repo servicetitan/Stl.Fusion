@@ -119,10 +119,10 @@ namespace Stl.IO
             encoding ??= FileExt.DefaultWriteEncoding;
             using var writer = File.OpenWrite(path);
             using var textWriter = new StreamWriter(writer, encoding);
-            await foreach (var line in lines.WithCancellation(cancellationToken)) {
-                if (line == null)
+            await foreach (var line in lines.WithCancellation(cancellationToken).ConfigureAwait(false)) {
+                if (line == null!)
                     continue;
-                await textWriter.WriteLineAsync(line);
+                await textWriter.WriteLineAsync(line).ConfigureAwait(false);
             }
         }
     }
