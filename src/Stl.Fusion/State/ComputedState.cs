@@ -4,10 +4,11 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Stl.Async;
 
 namespace Stl.Fusion
 {
-    public interface IComputedState : IState, IDisposable
+    public interface IComputedState : IState, IDisposable, IHasDisposeStarted
     {
         public new interface IOptions : IState.IOptions
         {
@@ -17,6 +18,8 @@ namespace Stl.Fusion
         }
 
         IUpdateDelayer UpdateDelayer { get; set; }
+        Task UpdateTask { get; }
+        CancellationToken DisposeToken { get; }
     }
 
     public interface IComputedState<T> : IState<T>, IComputedState
@@ -31,10 +34,9 @@ namespace Stl.Fusion
             public bool DelayFirstUpdate { get; set; } = false;
         }
 
-        private readonly CancellationTokenSource _stopCts;
+        private readonly CancellationTokenSource _disposeCts;
         private volatile IUpdateDelayer? _updateDelayer;
 
-        protected CancellationToken StopToken { get; }
         protected Func<IComputedState<T>, IUpdateDelayer>? UpdateDelayerFactory { get; }
         protected bool DelayFirstUpdate { get; }
         protected ILogger Log { get; }
@@ -48,13 +50,17 @@ namespace Stl.Fusion
             }
         }
 
+        public CancellationToken DisposeToken { get; }
+        public Task UpdateTask { get; private set; } = null!;
+        public bool IsDisposeStarted => DisposeToken.IsCancellationRequested;
+
         protected ComputedState(IServiceProvider services, bool initialize = true)
             : this(new(), services, initialize) { }
         protected ComputedState(Options options, IServiceProvider services, bool initialize = true)
             : base(options, services, false)
         {
-            _stopCts = new CancellationTokenSource();
-            StopToken = _stopCts.Token;
+            _disposeCts = new CancellationTokenSource();
+            DisposeToken = _disposeCts.Token;
             Log = Services.GetService<ILoggerFactory>()?.CreateLogger(GetType()) ?? NullLogger.Instance;
             if (options.UpdateDelayer != null) {
                 if (options.UpdateDelayerFactory != null)
@@ -75,30 +81,30 @@ namespace Stl.Fusion
             // ReSharper disable once NonAtomicCompoundOperator
             _updateDelayer ??= UpdateDelayerFactory!.Invoke(this);
             base.Initialize(options);
-            Task.Run(Run, StopToken);
+            UpdateTask = Task.Run(Update, CancellationToken.None);
         }
 
         // ~ComputedState() => Dispose();
 
         public virtual void Dispose()
         {
-            if (StopToken.IsCancellationRequested)
+            if (DisposeToken.IsCancellationRequested)
                 return;
             GC.SuppressFinalize(this);
             try {
-                _stopCts.Cancel();
+                _disposeCts.Cancel();
             }
             catch {
                 // Intended
             }
             finally {
-                _stopCts.Dispose();
+                _disposeCts.Dispose();
             }
         }
 
-        protected virtual async Task Run()
+        protected virtual async Task Update()
         {
-            var cancellationToken = StopToken;
+            var cancellationToken = DisposeToken;
             while (!cancellationToken.IsCancellationRequested) {
                 try {
                     var snapshot = Snapshot;

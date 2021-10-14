@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 #if !NETFRAMEWORK
 using System.Runtime.Loader;
 #endif
@@ -20,6 +21,12 @@ namespace Stl.Plugins
 {
     public class FileSystemPluginFinder : CachingPluginFinderBase
     {
+        public FilePath PluginDir { get; }
+        public string AssemblyNamePattern { get; }
+        public Regex ExcludedAssemblyNamesRegex { get; }
+        public bool UseCache { get; }
+        public FilePath CacheDir { get; }
+
         public FileSystemPluginFinder(
             Options? options,
             IPluginInfoProvider pluginInfoProvider,
@@ -28,14 +35,10 @@ namespace Stl.Plugins
         {
             PluginDir = options.PluginDir;
             AssemblyNamePattern = options.AssemblyNamePattern;
+            ExcludedAssemblyNamesRegex = options.ExcludedAssemblyNamesRegex;
             UseCache = options.UseCache;
             CacheDir = options.CacheDir;
         }
-
-        public FilePath PluginDir { get; }
-        public string AssemblyNamePattern { get; }
-        public bool UseCache { get; }
-        public FilePath CacheDir { get; }
 
         protected override IAsyncCache<string, string> CreateCache()
         {
@@ -63,10 +66,10 @@ namespace Stl.Plugins
 
         protected virtual FilePath[] GetPluginAssemblyNames()
             => Directory
-                .EnumerateFiles(
-                    PluginDir, AssemblyNamePattern, SearchOption.TopDirectoryOnly)
+                .EnumerateFiles(PluginDir, AssemblyNamePattern, SearchOption.TopDirectoryOnly)
                 .Select(FilePath.New)
-                .OrderBy(name => name)
+                .Where(path => !ExcludedAssemblyNamesRegex.IsMatch(path.Value))
+                .OrderBy(path => path)
                 .ToArray();
 
 #pragma warning disable 1998
@@ -116,6 +119,9 @@ namespace Stl.Plugins
                 Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? ".";
 
             public string AssemblyNamePattern { get; set; } = "*.dll";
+            public Regex ExcludedAssemblyNamesRegex { get; set; } = new(
+                @"((System)|(Microsoft)|(Google)|(WindowsBase)|(mscorlib))\.(.*)\.dll",
+                RegexOptions.Singleline | RegexOptions.IgnoreCase);
             public bool UseCache { get; set; } = true;
             public FilePath CacheDir { get; set; } = FilePath.GetApplicationTempDirectory();
         }

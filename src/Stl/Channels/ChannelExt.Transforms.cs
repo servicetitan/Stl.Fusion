@@ -18,11 +18,10 @@ namespace Stl.Channels
             CancellationToken cancellationToken = default)
         {
             try {
-                while (await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false)) {
-                    if (reader.TryRead(out var item)) {
-                        var newItem = transformer.Invoke(item);
-                        await writer.WriteAsync(newItem, cancellationToken).ConfigureAwait(false);
-                    }
+                while (await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
+                while (reader.TryRead(out var item)) {
+                    var newItem = transformer.Invoke(item);
+                    await writer.WriteAsync(newItem, cancellationToken).ConfigureAwait(false);
                 }
                 if ((channelCompletionMode & ChannelCompletionMode.Complete) != 0)
                     writer.TryComplete();
@@ -46,11 +45,10 @@ namespace Stl.Channels
             CancellationToken cancellationToken = default)
         {
             try {
-                while (await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false)) {
-                    if (reader.TryRead(out var item)) {
-                        var newItem = await transformer.Invoke(item).ConfigureAwait(false);
-                        await writer.WriteAsync(newItem, cancellationToken).ConfigureAwait(false);
-                    }
+                while (await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
+                while (reader.TryRead(out var item)) {
+                    var newItem = await transformer.Invoke(item).ConfigureAwait(false);
+                    await writer.WriteAsync(newItem, cancellationToken).ConfigureAwait(false);
                 }
                 if ((channelCompletionMode & ChannelCompletionMode.Complete) != 0)
                     writer.TryComplete();
@@ -89,10 +87,10 @@ namespace Stl.Channels
                         try {
                             if (!await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
                                 break;
-                            if (!reader.TryRead(out var item))
-                                continue;
-                            var newItem = transformer.Invoke(item);
-                            await writer.WriteAsync(newItem, cancellationToken).ConfigureAwait(false);
+                            while (reader.TryRead(out var item)) {
+                                var newItem = transformer.Invoke(item);
+                                await writer.WriteAsync(newItem, cancellationToken).ConfigureAwait(false);
+                            }
                         }
                         finally {
                             semaphore.Release();
@@ -139,10 +137,10 @@ namespace Stl.Channels
                         try {
                             if (!await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
                                 break;
-                            if (!reader.TryRead(out var item))
-                                continue;
-                            var newItem = await transformer.Invoke(item).ConfigureAwait(false);
-                            await writer.WriteAsync(newItem, cancellationToken).ConfigureAwait(false);
+                            while (reader.TryRead(out var item)) {
+                                var newItem = await transformer.Invoke(item).ConfigureAwait(false);
+                                await writer.WriteAsync(newItem, cancellationToken).ConfigureAwait(false);
+                            }
                         }
                         finally {
                             semaphore.Release();

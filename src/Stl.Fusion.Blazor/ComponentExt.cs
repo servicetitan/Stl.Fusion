@@ -91,9 +91,24 @@ namespace Stl.Fusion.Blazor
             => ComponentInfoCache.GetOrAdd(componentType, componentType1 => new ComponentInfo(componentType1));
         public static ComponentInfo GetComponentInfo(this IComponent component)
             => GetComponentInfo(component.GetType());
+        public static Dispatcher GetDispatcher(this ComponentBase component)
+            => component.GetRenderHandle().Dispatcher;
 
         public static bool IsDisposed(this ComponentBase component)
             => component.GetRenderHandle().IsDisposed();
+
+        public static bool IsDisposedOrDisposing(this ComponentBase component, BlazorCircuitContext? blazorCircuitContext = null)
+        {
+            if (blazorCircuitContext?.IsDisposing ?? false)
+                return true;
+            if (component is StatefulComponentBase {
+                    UntypedState: IComputedState {
+                        DisposeToken: { IsCancellationRequested: true }
+                    }
+                })
+                return true;
+            return component.IsDisposed();
+        }
 
         /// <summary>
         /// Calls <see cref="ComponentBase.StateHasChanged"/> in the Blazor synchronization context
@@ -102,31 +117,21 @@ namespace Stl.Fusion.Blazor
         /// </summary>
         public static Task StateHasChangedAsync(this ComponentBase component, BlazorCircuitContext? blazorCircuitContext = null)
         {
-            if (component.IsDisposed())
+            if (component.IsDisposedOrDisposing())
                 return Task.CompletedTask;
-            if (blazorCircuitContext?.IsDisposing ?? false)
-                return Task.CompletedTask;
+            return component.GetDispatcher().InvokeAsync(Invoker);
 
-#pragma warning disable 1998
-            async Task Invoker()
-#pragma warning restore 1998
+            void Invoker()
             {
-                // The component's renderer may already be disposed while the component is not yet disposed.
-                // Just calling StateHasChanged() will then cause an ObjectDisposedException.
-                // Workaround: use compiled expressions accessing private members of the component to find this out.
-
-                if (component.IsDisposed())
-                    return;
-                if (blazorCircuitContext?.IsDisposing ?? false)
+                if (component.IsDisposedOrDisposing())
                     return;
                 try {
                     CompiledStateHasChanged.Invoke(component);
                 }
                 catch (ObjectDisposedException) {
-                    // Intended
+                    // Intended: it might still happen
                 }
             }
-            return component.GetRenderHandle().Dispatcher.InvokeAsync(Invoker);
         }
 
         public static bool HasChangedParameters(this IComponent component, ParameterView parameterView)

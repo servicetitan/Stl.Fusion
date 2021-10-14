@@ -35,13 +35,13 @@ namespace Stl.Tests.Caching
                 Func<char, CancellationToken, ValueTask<char>>,
                 IAsyncKeyResolver<char, char>> cacheFactory)
         {
-            IEnumerable<char> DepSelector1(char c) =>
-                Enumerable
+            IEnumerable<char> DepSelector1(char c)
+                => Enumerable
                     .Range(0, c - '0')
                     .Select(i => (char) ('0' + i));
             IEnumerable<char> BadDepSelector1(char c) => new [] {c};
-            IEnumerable<char> BadDepSelector2(char c) =>
-                Enumerable
+            IEnumerable<char> BadDepSelector2(char c)
+                => Enumerable
                     .Range(1, 5)
                     .Select(i => (char) ('0' + (c - '0' + i) % 10));
 
@@ -75,10 +75,10 @@ namespace Stl.Tests.Caching
             Assert.Equal("0123", await OrderByDependency("231", DepSelector1));
 
             await Assert.ThrowsAsync<InvalidOperationException>(async () => {
-                var _ = await OrderByDependency("0", BadDepSelector1);
+                _ = await OrderByDependency("0", BadDepSelector1);
             });
             await Assert.ThrowsAsync<InvalidOperationException>(async () => {
-                var _ = await OrderByDependency("0", BadDepSelector2);
+                _ = await OrderByDependency("0", BadDepSelector2);
             });
         }
     }

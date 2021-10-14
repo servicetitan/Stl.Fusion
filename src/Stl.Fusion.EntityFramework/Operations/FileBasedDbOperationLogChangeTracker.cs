@@ -34,8 +34,8 @@ namespace Stl.Fusion.EntityFramework.Operations
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposing)
-                return;
+            if (!disposing) return;
+
             Subscription.Dispose();
             Watcher.Dispose();
         }

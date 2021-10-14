@@ -45,8 +45,8 @@ namespace Stl.Caching
             }
         }
 
-        private static ValueTask<TValue> Unwrap((Task<TValue>? Task, Result<TValue> Result) entry) =>
-            entry.Task?.ToValueTask() ?? entry.Result.AsValueTask();
+        private static ValueTask<TValue> Unwrap((Task<TValue>? Task, Result<TValue> Result) entry)
+            => entry.Task?.ToValueTask() ?? entry.Result.AsValueTask();
 
         private static async Task<TValue> ComputeAndUpdate(
             FastComputingCacheBase<TKey, TValue> self,

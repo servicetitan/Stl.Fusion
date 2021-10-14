@@ -125,7 +125,7 @@ namespace Templates.TodoApp.Host
             fusion.AddComputeService<ITodoService, TodoService>();
 
             // Shared services
-            Program.ConfigureSharedServices(services);
+            StartupHelper.ConfigureSharedServices(services);
 
             // ASP.NET Core authentication providers
             services.AddAuthentication(options => {
@@ -177,7 +177,7 @@ namespace Templates.TodoApp.Host
             if (!Directory.Exists(Path.Combine(wwwRootPath, "_framework")))
                 // This is a regular build, not a build produced w/ "publish",
                 // so we remap wwwroot to the client's wwwroot folder
-                wwwRootPath = Path.GetFullPath(Path.Combine(baseDir, $"../../UI/net5.0/wwwroot"));
+                wwwRootPath = Path.GetFullPath(Path.Combine(baseDir, "../../UI/net6.0/wwwroot"));
             Env.WebRootPath = wwwRootPath;
             Env.WebRootFileProvider = new PhysicalFileProvider(Env.WebRootPath);
             StaticWebAssetsLoader.UseStaticWebAssets(Env, Cfg);

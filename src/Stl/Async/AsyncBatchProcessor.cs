@@ -73,7 +73,7 @@ namespace Stl.Async
     public class AsyncBatchProcessor<TIn, TOut> : AsyncBatchProcessorBase<TIn, TOut>
     {
         public Func<List<BatchItem<TIn, TOut>>, CancellationToken, Task> BatchProcessor { get; set; } =
-            (batch, cancellationToken) => throw new NotImplementedException();
+            (batch, cancellationToken) => throw new NotSupportedException("Set the delegate property to make it work.");
 
         public AsyncBatchProcessor(int capacity = DefaultCapacity) : base(capacity) { }
         public AsyncBatchProcessor(BoundedChannelOptions options) : base(options) { }

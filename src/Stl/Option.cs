@@ -26,6 +26,7 @@ namespace Stl
 
     [DataContract]
     [DebuggerDisplay("{" + nameof(DebugValue) + "}")]
+    [StructLayout(LayoutKind.Sequential)]
     public readonly struct Option<T> : IEquatable<Option<T>>, IOption
     {
         /// <inheritdoc />

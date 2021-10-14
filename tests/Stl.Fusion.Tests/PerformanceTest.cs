@@ -59,6 +59,7 @@ namespace Stl.Fusion.Tests
             var withoutSerialization = (Action<User>) (u => { });
             var withSerialization = (Action<User>) (u => JsonConvert.SerializeObject(u));
 
+            Out.WriteLine($".NET: {RuntimeInfo.DotNetCore.VersionString}");
             Out.WriteLine($"Database: {(useImdb ? "In-memory" : "Sqlite")}");
             Out.WriteLine("With Stl.Fusion:");
             await Test("Standard test", users, withoutSerialization,

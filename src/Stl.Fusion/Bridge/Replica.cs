@@ -8,7 +8,7 @@ using Stl.Fusion.Internal;
 
 namespace Stl.Fusion.Bridge
 {
-    public interface IReplica : IAsyncDisposableWithDisposalState
+    public interface IReplica : IAsyncDisposable
     {
         IReplicator Replicator { get; }
         PublicationRef PublicationRef { get; }
@@ -36,7 +36,7 @@ namespace Stl.Fusion.Bridge
         bool ApplySuccessfulUpdate(Result<T>? output, LTag version, bool isConsistent);
     }
 
-    public class Replica<T> : AsyncDisposableBase, IReplicaImpl<T>
+    public class Replica<T> : SafeAsyncDisposableBase, IReplicaImpl<T>
     {
         private volatile ComputedOptions _computedOptions = ComputedOptions.Default;
 
@@ -87,13 +87,15 @@ namespace Stl.Fusion.Bridge
 
         // We want to make sure the replicas are connected to
         // publishers only while they're used.
-        ~Replica() => DisposeAsync(false);
+        ~Replica() => DisposeAsync();
 
-        protected override ValueTask DisposeInternal(bool disposing)
+        protected override Task DisposeAsync(bool disposing)
         {
+            // Intentionally ignore disposing flag here
+
             Input.ReplicatorImpl.OnReplicaDisposed(this);
             ReplicaRegistry.Instance.Remove(this);
-            return ValueTaskExt.CompletedTask;
+            return Task.CompletedTask;
         }
 
         Task IReplica.RequestUpdate(CancellationToken cancellationToken)

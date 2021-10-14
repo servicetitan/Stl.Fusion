@@ -14,8 +14,8 @@ namespace Stl.Reflection
                 throw new ArgumentNullException(nameof(expression));
             var memberExpression = expression.Body as MemberExpression;
 
-            (Type memberType, string memberName) TypeAndName(MemberExpression me) =>
-                (me.Member.ReturnType(), me.Member.Name);
+            (Type memberType, string memberName) TypeAndName(MemberExpression me)
+                => (me.Member.ReturnType(), me.Member.Name);
 
             if (memberExpression != null)
                 return TypeAndName(memberExpression);
@@ -27,8 +27,8 @@ namespace Stl.Reflection
             return TypeAndName(memberExpression);
         }
 
-        public static Type ReturnType(this MemberInfo memberInfo) =>
-            memberInfo switch {
+        public static Type ReturnType(this MemberInfo memberInfo)
+            => memberInfo switch {
                 PropertyInfo propertyInfo => propertyInfo.PropertyType,
                 FieldInfo fieldInfo => fieldInfo.FieldType,
                 MethodInfo methodInfo => methodInfo.ReturnType,

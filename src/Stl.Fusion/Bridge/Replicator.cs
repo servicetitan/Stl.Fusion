@@ -33,7 +33,7 @@ namespace Stl.Fusion.Bridge
         void OnReplicaDisposed(IReplica replica);
     }
 
-    public class Replicator : AsyncDisposableBase, IReplicatorImpl
+    public class Replicator : SafeAsyncDisposableBase, IReplicatorImpl
     {
         public class Options
         {
@@ -114,8 +114,10 @@ namespace Stl.Fusion.Bridge
             GetChannelProcessor(replica.PublicationRef.PublisherId).Unsubscribe(replica);
         }
 
-        protected override async ValueTask DisposeInternal(bool disposing)
+        protected override async Task DisposeAsync(bool disposing)
         {
+            // Intentionally ignore disposing flag here
+
             var channelProcessors = ChannelProcessors;
             while (!channelProcessors.IsEmpty) {
                 var tasks = channelProcessors
@@ -127,7 +129,6 @@ namespace Stl.Fusion.Bridge
                     });
                 await Task.WhenAll(tasks).ConfigureAwait(false);
             }
-            await base.DisposeInternal(disposing).ConfigureAwait(false);
         }
     }
 }

@@ -5,7 +5,7 @@ using Stl.Testing.Output;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Stl.Testing
+namespace Stl.Fusion.Tests
 {
     public abstract class TestBase : IAsyncLifetime
     {

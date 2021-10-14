@@ -58,7 +58,7 @@ namespace Stl.Tests.Text
             l.Should().BeEquivalentTo(segments);
             var l2 = listFormat.Parse(value);
             l2.Should().BeEquivalentTo(l);
-    #if NET5_0 || NETCOREAPP
+    #if NET5_0_OR_GREATER || NETCOREAPP
             l2 = listFormat.Parse((ReadOnlySpan<char>) value, new List<string>());
             l2.Should().BeEquivalentTo(l);
             l2 = listFormat.Parse((ReadOnlySpan<char>) value);

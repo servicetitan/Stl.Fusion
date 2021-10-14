@@ -32,6 +32,7 @@ namespace Stl.Collections
             return source;
         }
 
+#if !NET6_0
         public static IEnumerable<T> DistinctBy<T, TKey>(this IEnumerable<T> source, Func<T, TKey> keySelector)
         {
             var hashSet = new HashSet<TKey>();
@@ -41,6 +42,7 @@ namespace Stl.Collections
                     yield return item;
             }
         }
+#endif
 
         public static IEnumerable<T[]> PackBy<T>(this IEnumerable<T> source, int packSize)
         {

@@ -202,18 +202,18 @@ namespace Stl
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Result<T> AsResult() => this;
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Result<TOther> Cast<TOther>() =>
-            new((TOther) (object) ValueOrDefault!, Error);
+        public Result<TOther> Cast<TOther>() => new((TOther) (object) ValueOrDefault!, Error);
         T IConvertibleTo<T>.Convert() => Value;
         Result<T> IConvertibleTo<Result<T>>.Convert() => AsResult();
 
         // Equality
 
-        public bool Equals(Result<T> other) =>
-            Error == other.Error && EqualityComparer<T>.Default.Equals(ValueOrDefault!, other.ValueOrDefault!);
-        public override bool Equals(object? obj) =>
-            obj is Result<T> o && Equals(o);
+        public bool Equals(Result<T> other)
+            => Error == other.Error && EqualityComparer<T>.Default.Equals(ValueOrDefault!, other.ValueOrDefault!);
+        public override bool Equals(object? obj)
+            => obj is Result<T> o && Equals(o);
         public override int GetHashCode() => HashCode.Combine(ValueOrDefault!, Error);
         public static bool operator ==(Result<T> left, Result<T> right) => left.Equals(right);
         public static bool operator !=(Result<T> left, Result<T> right) => !left.Equals(right);

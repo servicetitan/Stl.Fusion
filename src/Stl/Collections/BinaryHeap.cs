@@ -16,8 +16,8 @@ namespace Stl.Collections
             get => _heap.Count;
         }
 
-        public BinaryHeap(IComparer<TPriority>? comparer = null) =>
-            _comparer = comparer ?? Comparer<TPriority>.Default;
+        public BinaryHeap(IComparer<TPriority>? comparer = null)
+            => _comparer = comparer ?? Comparer<TPriority>.Default;
 
         public BinaryHeap(BinaryHeap<TPriority, TValue> other)
         {
@@ -26,8 +26,8 @@ namespace Stl.Collections
         }
 
         public BinaryHeap(IEnumerable<(TPriority, TValue)> source, IComparer<TPriority>? comparer = null)
-            : this(comparer) =>
-            _heap = source.OrderBy(i => i.Item1, _comparer).ToList();
+            : this(comparer)
+            => _heap = source.OrderBy(i => i.Item1, _comparer).ToList();
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         public IEnumerator<(TPriority Priority, TValue Value)> GetEnumerator()

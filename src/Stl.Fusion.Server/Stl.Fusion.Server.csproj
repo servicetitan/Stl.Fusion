@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
-    <TargetFrameworks>net5.0;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>net6.0;net5.0;netcoreapp3.1</TargetFrameworks>
     <PackageTags>servicetitan stl stl_fusion server</PackageTags>
     <Description>Server-side components of Stl.Fusion - <!--
     -->a new implementation of "computed observables" <!--
@@ -10,10 +10,13 @@
     --></Description>
   </PropertyGroup>
 
-  <ItemGroup Condition="$(TargetFramework.StartsWith('net5'))">
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" />
   </ItemGroup>
-  <ItemGroup Condition="!$(TargetFramework.StartsWith('net5'))">
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net5'))">
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" VersionOverride="$(AspNetCoreVersion5)" />
+  </ItemGroup>
+  <ItemGroup Condition="$(TargetFramework.StartsWith('netcore'))">
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" VersionOverride="$(AspNetCoreVersion3)" />
   </ItemGroup>
 

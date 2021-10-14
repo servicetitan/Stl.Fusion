@@ -1,5 +1,7 @@
 using System;
 using System.Threading;
+using Microsoft.AspNetCore.Components;
+using Stl.Internal;
 
 namespace Stl.Fusion.Blazor
 {
@@ -7,9 +9,24 @@ namespace Stl.Fusion.Blazor
     {
         private volatile int _isDisposing;
         private volatile int _isPrerendering;
+        private ComponentBase? _rootComponent;
 
         public bool IsPrerendering => _isPrerendering != 0;
         public bool IsDisposing => _isDisposing != 0;
+
+        public ComponentBase RootComponent {
+            get => _rootComponent ?? throw Errors.NotInitialized(nameof(RootComponent));
+            set {
+                if (_rootComponent == value)
+                    return;
+                if (_rootComponent != null)
+                    throw Errors.AlreadyInitialized(nameof(RootComponent));
+                _rootComponent = value;
+            }
+        }
+
+        public Dispatcher Dispatcher
+            => RootComponent.GetDispatcher();
 
         public ClosedDisposable<(BlazorCircuitContext, int)> Prerendering(bool isPrerendering = true)
         {

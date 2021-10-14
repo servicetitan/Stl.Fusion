@@ -6,8 +6,8 @@ namespace Stl.Mathematics
 {
     public static class Combinatorics
     {
-        public static BigInteger Cnk(int n, int k) =>
-            MathExt.Factorial(n) / (MathExt.Factorial(n - k) * MathExt.Factorial(k));
+        public static BigInteger Cnk(int n, int k)
+            => MathExt.Factorial(n) / (MathExt.Factorial(n - k) * MathExt.Factorial(k));
 
         public static IEnumerable<Memory<T>> Tails<T>(Memory<T> source, bool withEmptySubset = true)
         {

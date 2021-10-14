@@ -42,11 +42,18 @@ namespace Stl.Fusion.Operations.Internal
             CommandContext = services.GetRequiredService<CommandContext>();
         }
 
-        protected override ValueTask DisposeInternal(bool disposing)
+        protected override ValueTask DisposeAsyncCore()
         {
             IsConfirmed ??= true;
             IsClosed = true;
             return ValueTaskExt.CompletedTask;
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            // Intentionally ignore disposing flag here
+            IsConfirmed ??= true;
+            IsClosed = true;
         }
 
         public virtual Task Commit(CancellationToken cancellationToken = default)

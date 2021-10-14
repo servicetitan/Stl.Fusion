@@ -23,17 +23,18 @@ namespace Stl.Tests.Reflection
             baseTypes.Should().BeEquivalentTo(new [] {typeof(TestBase), typeof(object)});
 
             baseTypes = typeof(AsyncProcessBase).GetAllBaseTypes(true, true).ToArray();
-            var adwdsIndex = Array.IndexOf(baseTypes, typeof(IAsyncDisposableWithDisposalState));
+            var adbIndex = Array.IndexOf(baseTypes, typeof(AsyncDisposableBase));
             var apIndex = Array.IndexOf(baseTypes, typeof(IAsyncProcess));
             var adIndex = Array.IndexOf(baseTypes, typeof(IAsyncDisposable));
             var dIndex = Array.IndexOf(baseTypes, typeof(IDisposable));
             var hsIndex = Array.IndexOf(baseTypes, typeof(IHostedService));
+            var hdsIndex = Array.IndexOf(baseTypes, typeof(IHasDisposeStarted));
             var oIndex = Array.IndexOf(baseTypes, typeof(object));
-            oIndex.Should().Be(baseTypes.Length - 1);
-            adwdsIndex.Should().BeLessThan(adIndex);
-            adwdsIndex.Should().BeLessThan(dIndex);
-            apIndex.Should().BeLessThan(adIndex);
+            adbIndex.Should().BeLessThan(adIndex);
+            adbIndex.Should().BeLessThan(dIndex);
+            apIndex.Should().BeLessThan(hdsIndex);
             apIndex.Should().BeLessThan(hsIndex);
+            oIndex.Should().Be(baseTypes.Length - 1);
         }
 
         [Fact]

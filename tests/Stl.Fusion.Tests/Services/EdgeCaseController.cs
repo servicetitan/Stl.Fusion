@@ -18,7 +18,7 @@ namespace Stl.Fusion.Tests.Services
         public EdgeCaseController(IEdgeCaseService service) => Service = service;
 
         [HttpGet]
-        public Task<string> GetSuffix(CancellationToken cancellationToken)
+        public Task<string> GetSuffix(CancellationToken cancellationToken = default)
             => Service.GetSuffix(cancellationToken);
 
         [HttpPost]
@@ -26,23 +26,23 @@ namespace Stl.Fusion.Tests.Services
         public Task SetSuffix([FromQuery] string? suffix, CancellationToken cancellationToken)
 #else
         // TODO: add tests for RestEase calls with different options FromQuery, FromBody, from path segment;
-        public Task SetSuffix(string? suffix, CancellationToken cancellationToken)
-#endif        
+        public Task SetSuffix(string? suffix, CancellationToken cancellationToken = default)
+#endif
             => Service.SetSuffix(suffix ?? "", cancellationToken);
 
         [HttpGet, Publish]
-        public Task<string> ThrowIfContainsError(string? source, CancellationToken cancellationToken)
+        public Task<string> ThrowIfContainsError(string? source, CancellationToken cancellationToken = default)
             => Service.ThrowIfContainsError(source ?? "", cancellationToken);
 
         [HttpGet, Publish]
-        public Task<string> ThrowIfContainsErrorRewriteErrors(string? source, CancellationToken cancellationToken)
+        public Task<string> ThrowIfContainsErrorRewriteErrors(string? source, CancellationToken cancellationToken = default)
             => Service.ThrowIfContainsErrorRewriteErrors(source ?? "", cancellationToken);
 
         [HttpGet, Publish]
-        public Task<string> ThrowIfContainsErrorNonCompute(string? source, CancellationToken cancellationToken)
+        public Task<string> ThrowIfContainsErrorNonCompute(string? source, CancellationToken cancellationToken = default)
             => Service.ThrowIfContainsErrorNonCompute(source ?? "", cancellationToken);
     }
-    
+
     #if NETCOREAPP
     [JsonifyErrors(RewriteErrors = true, Order = 1)]
     #else

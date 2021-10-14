@@ -21,8 +21,8 @@ namespace Stl.Serialization
             Serializer = serializer;
             TypeFilter = typeFilter ?? (_ => true);
             var serializationBinder = (Serializer as NewtonsoftJsonSerializer)?.Settings?.SerializationBinder;
-#if NET5_0
-            serializationBinder ??= SerializationBinder.Instance;
+#if NET5_0_OR_GREATER
+            serializationBinder ??= Internal.SerializationBinder.Instance;
 #else
             serializationBinder ??= CrossPlatformSerializationBinder.Instance;
 #endif

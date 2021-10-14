@@ -30,6 +30,7 @@ namespace Stl.Fusion.Tests.Services
     [RegisterComputeService(typeof(IScreenshotService), Scope = ServiceScope.Services)]
     public class ScreenshotService : IScreenshotService
     {
+#pragma warning disable CA1416
         private readonly ImageCodecInfo _jpegEncoder;
         private readonly EncoderParameters _jpegEncoderParameters;
         private readonly Rectangle _displayDimensions;
@@ -90,5 +91,6 @@ namespace Stl.Fusion.Tests.Services
             };
             return Task.FromResult(bScreen);
         }
+#pragma warning restore CA1416
     }
 }

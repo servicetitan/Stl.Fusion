@@ -1,18 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net5.0;netcoreapp3.1;net480;net471</TargetFrameworks>
+    <TargetFrameworks>net6.0;net5.0;netcoreapp3.1;net48;net471</TargetFrameworks>
     <IsTestProject>false</IsTestProject>
     <PackageTags>servicetitan stl testing</PackageTags>
     <Description>Stl.Testing is a collection of <!--
     -->testing helpers used by Stl.Fusion tests.</Description>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(NetFxBuild)' != 'true'">
+  <ItemGroup Condition="!$(TargetFramework.StartsWith('net4'))">
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
-
-  <ItemGroup Condition="'$(NetFxBuild)' == 'true'">
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
     <Compile Remove="ApplicationPartsLogger.cs" />
   </ItemGroup>
 
@@ -24,16 +23,19 @@
     <PackageReference Include="Xunit.DependencyInjection.Logging" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(NetFxBuild)' == 'true'">
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net6'))">
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+  </ItemGroup>
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net5'))">
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" VersionOverride="$(AspNetCoreVersion5)" />
+  </ItemGroup>
+  <ItemGroup Condition="$(TargetFramework.StartsWith('netcore'))">
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" VersionOverride="$(AspNetCoreVersion3)" />
+  </ItemGroup>
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
     <PackageReference Include="IndexRange" />
     <PackageReference Include="System.Memory" />
     <PackageReference Include="Microsoft.AspNet.WebApi.OwinSelfHost" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net5'">
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" VersionOverride="$(AspNetCoreVersion3)" />
   </ItemGroup>
 
   <ItemGroup>

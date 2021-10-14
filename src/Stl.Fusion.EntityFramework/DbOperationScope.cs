@@ -28,7 +28,7 @@ namespace Stl.Fusion.EntityFramework
         Task<DbContext> CreateDbContext(bool readWrite = true, CancellationToken cancellationToken = default);
     }
 
-    public class DbOperationScope<TDbContext> : AsyncDisposableBase, IDbOperationScope
+    public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperationScope
         where TDbContext : DbContext
     {
         private bool _isInMemoryProvider;
@@ -66,16 +66,9 @@ namespace Stl.Fusion.EntityFramework
             CommandContext = services.GetRequiredService<CommandContext>();
         }
 
-        protected override async ValueTask DisposeInternal(bool disposing)
+        protected override async Task DisposeAsync(bool disposing)
         {
-            void SafeDispose(IDisposable? d) {
-                try {
-                    d?.Dispose();
-                }
-                catch {
-                    // Intended
-                }
-            }
+            // Intentionally ignore disposing flag here
 
             using var _ = await AsyncLock.Lock().ConfigureAwait(false);
             try {
@@ -84,8 +77,17 @@ namespace Stl.Fusion.EntityFramework
             }
             finally {
                 IsClosed = true;
-                SafeDispose(Transaction);
-                SafeDispose(MasterDbContext);
+                SilentDispose(Transaction);
+                SilentDispose(MasterDbContext);
+            }
+
+            void SilentDispose(IDisposable? d) {
+                try {
+                    d?.Dispose();
+                }
+                catch {
+                    // Intended
+                }
             }
         }
 
@@ -102,7 +104,7 @@ namespace Stl.Fusion.EntityFramework
                 var masterDbContext = DbContextFactory.CreateDbContext().ReadWrite();
                 masterDbContext.Database.AutoTransactionsEnabled = false;
                 Transaction = await BeginTransaction(cancellationToken, masterDbContext).ConfigureAwait(false);
-                _isInMemoryProvider = masterDbContext.Database.ProviderName.EndsWith(".InMemory");
+                _isInMemoryProvider = (masterDbContext.Database.ProviderName ?? "").EndsWith(".InMemory");
                 if (!_isInMemoryProvider) {
                     Connection = masterDbContext.Database.GetDbConnection();
                     if (Connection == null)

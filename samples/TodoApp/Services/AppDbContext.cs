@@ -1,11 +1,12 @@
 using Microsoft.EntityFrameworkCore;
+using Stl.Fusion.EntityFramework;
 using Stl.Fusion.EntityFramework.Authentication;
 using Stl.Fusion.EntityFramework.Extensions;
 using Stl.Fusion.EntityFramework.Operations;
 
 namespace Templates.TodoApp.Services
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext : DbContextBase
     {
         // Stl.Fusion.EntityFramework tables
         public DbSet<DbUser<string>> Users { get; protected set; } = null!;

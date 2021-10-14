@@ -100,7 +100,7 @@ namespace Stl.Fusion.Bridge.Internal
                 // Awaiting for disposal here = cyclic task dependency;
                 // we should just ensure it starts right when this method
                 // completes.
-                var _ = DisposeAsync();
+                _ = DisposeAsync();
             }
         }
 
@@ -235,11 +235,10 @@ namespace Stl.Fusion.Bridge.Internal
                 try {
                     var sendChannelReader = sendChannel.Reader;
                     var channel = (Channel<BridgeMessage>?) null;
-                    while (await sendChannelReader.WaitToReadAsync(cancellationToken).ConfigureAwait(false)) {
+                    while (await sendChannelReader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
+                    while (sendChannelReader.TryRead(out var message)) {
                         if (sendChannel != SendChannel)
                             break;
-                        if (!sendChannelReader.TryRead(out var message))
-                            continue;
                         channel ??= await channelTask.ConfigureAwait(false);
                         await channel.Writer.WriteAsync(message, cancellationToken).ConfigureAwait(false);
                     }

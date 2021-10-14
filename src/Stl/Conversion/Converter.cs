@@ -20,7 +20,7 @@ namespace Stl.Conversion
 
     public abstract class Converter<TSource, TTarget> : Converter<TSource>, IConverter<TSource, TTarget>
     {
-        public static Converter<TSource, TTarget> Unavailable =
+        public static Converter<TSource, TTarget> Unavailable { get; set; } =
             FuncConverter<TSource>.New<TTarget>(
                 _ => throw Errors.NoConverter(typeof(TSource), typeof(TTarget)),
                 _ => throw Errors.NoConverter(typeof(TSource), typeof(TTarget)));

@@ -33,11 +33,11 @@ namespace Stl.Reflection
 
         public static Delegate? GetConstructorDelegate(this Type type)
             => CtorDelegate0Cache.GetOrAddChecked(type, tObject => {
-                var argTypes = new Type[0];
+                var argTypes = Type.EmptyTypes;
                 var ctor = tObject.GetConstructor(argTypes);
                 if (ctor == null) return null;
 
-                var eCtor = Expression.New(ctor, new Expression[0]);
+                var eCtor = Expression.New(ctor, Array.Empty<Expression>());
                 return Expression.Lambda(eCtor).Compile();
             });
 

@@ -6,11 +6,9 @@ using System.Threading.Tasks;
 using Stl.Conversion;
 using Stl.DependencyInjection;
 using Stl.Fusion.Internal;
-using Stl.Generators;
 using Stl.Locking;
 using Stl.Reflection;
 using Stl.Versioning;
-using Stl.Versioning.Providers;
 
 namespace Stl.Fusion
 {

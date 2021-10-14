@@ -1,9 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
     <RootNamespace>Templates.TodoApp.UI</RootNamespace>
     <AssemblyName>Templates.TodoApp.UI</AssemblyName>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <BlazorEnableTimeZoneSupport>false</BlazorEnableTimeZoneSupport>
+    <RunAOTCompilation>true</RunAOTCompilation>
   </PropertyGroup>
 
   <ItemGroup>

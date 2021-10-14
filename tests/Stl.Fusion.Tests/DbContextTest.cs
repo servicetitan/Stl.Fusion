@@ -37,14 +37,14 @@ namespace Stl.Fusion.Tests
                 Chat = c1,
             };
 
-            dbContext1.AddRange(u1, c1, m1);
+            await dbContext1.AddRangeAsync(u1, c1, m1);
             await dbContext1.SaveChangesAsync();
 
             await using var dbContext2 = CreateDbContext();
             (await dbContext2.Users.AsQueryable().CountAsync()).Should().Be(1);
             (await dbContext2.Messages.AsQueryable().CountAsync()).Should().Be(1);
             u1 = await dbContext2.Users.FindAsync(u1.Id);
-            u1.Name.Should().Be("realDonaldTrump");
+            u1!.Name.Should().Be("realDonaldTrump");
 
             m1 = await dbContext2.Messages.AsQueryable()
                 .Where(p => p.Id == p.Id)

@@ -84,6 +84,7 @@ namespace Stl.Fusion.UI
 
         protected virtual void Dispose(bool disposing)
         {
+            // Intentionally ignore disposing flag here
             lock (Lock) {
                 if (IsDisposed)
                     return;
@@ -135,11 +136,9 @@ namespace Stl.Fusion.UI
                 _channels.Add(channel);
             }
             var reader = channel.Reader;
-            while (await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false)) {
-                if (!reader.TryRead(out var item))
-                    continue;
+            while (await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
+            while (reader.TryRead(out var item))
                 yield return item;
-            }
             lock (Lock) {
                 _channels.Remove(channel);
             }

@@ -27,16 +27,16 @@ namespace Stl.Testing
         }
 
         public static async Task<T> AssertRead<T>(
-            this ChannelReader<T> reader, TimeSpan? timeout = default)
+            this ChannelReader<T> channel, TimeSpan? timeout = default)
         {
             timeout ??= TimeSpan.FromSeconds(1);
             using var timeoutCts = new CancellationTokenSource();
             var timeoutToken = timeoutCts.Token;
             timeoutCts.CancelAfter(timeout.GetValueOrDefault());
             try {
-                var hasMoreItems = await reader.WaitToReadAsync(timeoutToken).ConfigureAwait(false);
+                var hasMoreItems = await channel.WaitToReadAsync(timeoutToken).ConfigureAwait(false);
                 hasMoreItems.Should().BeTrue();
-                reader.TryRead(out var m).Should().BeTrue();
+                channel.TryRead(out var m).Should().BeTrue();
                 return m!;
             }
             catch (OperationCanceledException) {
@@ -47,7 +47,7 @@ namespace Stl.Testing
         }
 
         public static async Task AssertCompleted<T>(
-            this ChannelReader<T> reader, TimeSpan? timeout = default)
+            this ChannelReader<T> channel, TimeSpan? timeout = default)
         {
             timeout ??= TimeSpan.FromSeconds(1);
             using var timeoutCts = new CancellationTokenSource();
@@ -55,19 +55,19 @@ namespace Stl.Testing
             timeoutCts.CancelAfter(timeout.GetValueOrDefault());
 
             using var dTimeoutTask = timeoutToken.ToTask();
-            await Task.WhenAny(reader.Completion, dTimeoutTask.Resource).ConfigureAwait(false);
-            reader.Completion.IsCompleted.Should().BeTrue();
+            await Task.WhenAny(channel.Completion, dTimeoutTask.Resource).ConfigureAwait(false);
+            channel.Completion.IsCompleted.Should().BeTrue();
         }
 
         public static async Task AssertCannotRead<T>(
-            this ChannelReader<T> reader, TimeSpan? timeout = default)
+            this ChannelReader<T> channel, TimeSpan? timeout = default)
         {
             timeout ??= TimeSpan.FromSeconds(0.1);
             using var timeoutCts = new CancellationTokenSource();
             var timeoutToken = timeoutCts.Token;
             timeoutCts.CancelAfter(timeout.GetValueOrDefault());
 
-            Func<Task> tryRead = () => reader.WaitToReadAsync(timeoutToken).AsTask();
+            Func<Task> tryRead = () => channel.WaitToReadAsync(timeoutToken).AsTask();
             await tryRead.Should().ThrowAsync<OperationCanceledException>().ConfigureAwait(false);
         }
     }

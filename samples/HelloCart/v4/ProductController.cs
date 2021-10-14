@@ -11,7 +11,8 @@ namespace Samples.HelloCart.V4
     {
         private readonly IProductService _productService;
 
-        public ProductController(IProductService productService) => _productService = productService;
+        public ProductController(IProductService productService)
+            => _productService = productService;
 
         // Commands
 

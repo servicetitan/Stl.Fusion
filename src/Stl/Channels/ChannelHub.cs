@@ -24,7 +24,7 @@ namespace Stl.Channels
         event ChannelDetachedHandler<T> Detached;
     }
 
-    public class ChannelHub<T> : AsyncDisposableBase, IChannelHub<T>
+    public class ChannelHub<T> : SafeAsyncDisposableBase, IChannelHub<T>
     {
         protected ConcurrentDictionary<Channel<T>, Unit> Channels { get; }
 
@@ -43,7 +43,7 @@ namespace Stl.Channels
         {
             if (channel == null)
                 throw new ArgumentNullException(nameof(channel));
-            ThrowIfDisposedOrDisposing();
+            this.ThrowIfDisposedOrDisposing();
 
             if (!Channels.TryAdd(channel, default))
                 return false;
@@ -55,7 +55,7 @@ namespace Stl.Channels
         {
             if (channel == null)
                 throw new ArgumentNullException(nameof(channel));
-            ThrowIfDisposedOrDisposing();
+            this.ThrowIfDisposedOrDisposing();
 
             if (!Channels.TryRemove(channel, out _))
                 return false;
@@ -69,8 +69,8 @@ namespace Stl.Channels
         protected virtual void OnAttached(Channel<T> channel)
         {
             channel.Reader.Completion.ContinueWith(async _ => {
-                await Detach(channel);
-            });
+                await Detach(channel).ConfigureAwait(false);
+            }, TaskScheduler.Default);
             Attached?.Invoke(channel);
         }
 
@@ -98,25 +98,15 @@ namespace Stl.Channels
                 taskCollector.Dispose();
             }
 
-            switch (channel) {
-            case IAsyncDisposable ad:
+            if (channel is IAsyncDisposable ad)
                 await ad.DisposeAsync().ConfigureAwait(false);
-                break;
-            case IDisposable d:
-                d.Dispose();
-                break;
-            default:
-                for (var i = 0; i < 3; i++) {
-                    if (channel.Writer.TryComplete())
-                        break;
-                    await Task.Delay(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
-                }
-                break;
-            }
+            channel.Writer.TryComplete();
         }
 
-        protected override async ValueTask DisposeInternal(bool disposing)
+        protected override async Task DisposeAsync(bool disposing)
         {
+            if (!disposing) return;
+
             while (!Channels.IsEmpty) {
                 var tasks = Channels
                     .Take(HardwareInfo.GetProcessorCountFactor(4, 4))

@@ -47,7 +47,7 @@ namespace Stl.Tests.Channels
                 await transform.Invoke(cSource, cTarget).ConfigureAwait(false);
 
                 var elapsed = start.ElapsedMilliseconds;
-                var target = cTarget.ToAsyncEnumerable().ToEnumerable().ToArray();
+                var target = cTarget.Reader.ToAsyncEnumerable().ToEnumerable().ToArray();
                 target.Should().BeEquivalentTo(source);
                 var expectedRounds = itemCount / concurrencyLevel +
                     (itemCount % concurrencyLevel != 0 ? 1 : 0);

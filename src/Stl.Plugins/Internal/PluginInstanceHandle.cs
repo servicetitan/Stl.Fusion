@@ -41,6 +41,8 @@ namespace Stl.Plugins.Internal
 
         protected virtual void Dispose(bool disposing)
         {
+            if (!disposing) return;
+
             var lazyInstance = _lazyInstance;
             _lazyInstance = null;
             var disposable = lazyInstance == null ? null : lazyInstance.Value as IDisposable;

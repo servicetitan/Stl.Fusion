@@ -25,7 +25,8 @@ namespace Stl.Fusion.Blazor
             StateChanged = (_, eventKind) => {
                 if ((eventKind & StateHasChangedTriggers) == 0)
                     return;
-                this.StateHasChangedAsync(BlazorCircuitContext);
+                using var suppressing = ExecutionContextExt.SuppressFlow();
+                Task.Run(() => this.StateHasChangedAsync(BlazorCircuitContext));
             };
         }
 
@@ -39,9 +40,8 @@ namespace Stl.Fusion.Blazor
 
         Task IHandleEvent.HandleEventAsync(EventCallbackWorkItem callback, object? arg)
         {
-            // This code is copied from ComponentBase
-            // Remove this implementation when 'MustTriggerStateHasChangedOnEvent' becomes a regular Blazor feature
-            // https://github.com/dotnet/aspnetcore/issues/18919#issuecomment-803005864
+            // This code provides support for EnableStateHasChangedCallAfterEvent option
+            // See https://github.com/dotnet/aspnetcore/issues/18919#issuecomment-803005864
             var task = callback.InvokeAsync(arg);
             var shouldAwaitTask =
                 task.Status != TaskStatus.RanToCompletion &&

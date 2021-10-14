@@ -34,7 +34,11 @@ namespace Stl.Tests.OS
         public void DotNetCoreInfoTest()
         {
             var version = RuntimeInfo.DotNetCore.Version;
-            version.Should().BeGreaterThan(Version.Parse("3.0"));
+            var versionString = RuntimeInfo.DotNetCore.VersionString;
+            if (version == null)
+                versionString.Should().StartWith("6.");
+            else
+                version.Should().BeGreaterThan(Version.Parse("3.0"));
             WriteLine($".NET Core version: {version}");
         }
 

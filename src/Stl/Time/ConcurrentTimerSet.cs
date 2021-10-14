@@ -9,7 +9,7 @@ using Stl.OS;
 
 namespace Stl.Time
 {
-    public sealed class ConcurrentTimerSet<TTimer> : AsyncDisposableBase
+    public sealed class ConcurrentTimerSet<TTimer> : SafeAsyncDisposableBase
         where TTimer : notnull
     {
         public record Options : TimerSet<TTimer>.Options
@@ -37,12 +37,14 @@ namespace Stl.Time
                 _timerSets[i] = new TimerSet<TTimer>(options, fireHandler);
         }
 
-        protected override async ValueTask DisposeInternal(bool disposing)
+        protected override Task DisposeAsync(bool disposing)
         {
+            if (!disposing) return Task.CompletedTask;
+
             var tasks = new List<Task>(_timerSets.Length);
             foreach (var timerSet in _timerSets)
                 tasks.Add(timerSet.DisposeAsync().AsTask());
-            await Task.WhenAll(tasks).ConfigureAwait(false);
+            return Task.WhenAll(tasks);
         }
 
         public void AddOrUpdate(TTimer timer, Moment time)

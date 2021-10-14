@@ -12,6 +12,16 @@
     <PackageReference Include="System.Drawing.Common" />
     <PackageReference Include="System.Net.WebSockets.Client" />
   </ItemGroup>
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net5')) or $(TargetFramework.StartsWith('netcore'))">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" VersionOverride="$(EntityFrameworkCoreVersion5)" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" VersionOverride="$(EntityFrameworkCoreVersion5)" />
+    <PackageReference Include="System.Drawing.Common" VersionOverride="$(SystemDrawingVersion5)" />
+  </ItemGroup>
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" VersionOverride="$(EntityFrameworkCoreVersion3)" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" VersionOverride="$(EntityFrameworkCoreVersion3)" />
+    <PackageReference Include="System.Drawing.Common" VersionOverride="$(SystemDrawingVersion5)" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Stl\Stl.csproj" />

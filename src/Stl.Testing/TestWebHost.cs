@@ -44,7 +44,7 @@ namespace Stl.Testing
             HostLazy = new Lazy<IHost>(CreateHost);
             ServerUriLazy = new Lazy<Uri>(() => {
                 var addresses = Server.Features.Get<IServerAddressesFeature>();
-                return new Uri(addresses.Addresses.First());
+                return new Uri(addresses!.Addresses.First());
             });
         }
 
@@ -56,8 +56,8 @@ namespace Stl.Testing
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposing)
-                return;
+            if (!disposing) return;
+
             if (HostLazy.IsValueCreated)
                 Host.Dispose();
         }

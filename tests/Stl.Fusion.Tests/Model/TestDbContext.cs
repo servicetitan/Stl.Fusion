@@ -12,7 +12,7 @@ namespace Stl.Fusion.Tests.Model
     public class DbAuthSessionInfo : DbSessionInfo<long>
     { }
 
-    public class TestDbContext : DbContext
+    public class TestDbContext : DbContextBase
     {
         public DbSet<User> Users { get; protected set; } = null!;
         public DbSet<Message> Messages { get; protected set; } = null!;

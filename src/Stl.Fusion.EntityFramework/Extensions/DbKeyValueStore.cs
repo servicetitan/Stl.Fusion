@@ -185,7 +185,8 @@ namespace Stl.Fusion.EntityFramework.Extensions
         // Protected methods
 
         [ComputeMethod]
-        protected virtual Task<Unit> PseudoGet(string keyPart) => TaskExt.UnitTask;
+        protected virtual Task<Unit> PseudoGet(string keyPart)
+            => TaskExt.UnitTask;
 
         protected void PseudoGetAllPrefixes(string key)
         {

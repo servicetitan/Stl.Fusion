@@ -76,8 +76,8 @@ namespace Stl.CommandR
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposing)
-                return;
+            if (!disposing) return;
+
             if (IsOutermost)
                 ServiceScope.Dispose();
         }

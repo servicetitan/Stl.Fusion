@@ -39,9 +39,8 @@ namespace Stl.Fusion.Bridge.Internal
         {
             try {
                 var reader = Channel.Reader;
-                while (await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false)) {
-                    if (!reader.TryRead(out var request))
-                        continue;
+                while (await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
+                while (reader.TryRead(out var request)) {
                     switch (request) {
                     case ReplicaRequest rr:
                         await OnReplicaRequest(rr, cancellationToken).ConfigureAwait(false);
@@ -56,7 +55,7 @@ namespace Stl.Fusion.Bridge.Internal
                 // Awaiting for disposal here = cyclic task dependency;
                 // we should just ensure it starts right when this method
                 // completes.
-                var _ = DisposeAsync();
+                _ = DisposeAsync();
             }
         }
 
@@ -139,9 +138,9 @@ namespace Stl.Fusion.Bridge.Internal
             }
         }
 
-        protected override async ValueTask DisposeInternal(bool disposing)
+        protected override async ValueTask DisposeAsyncCore()
         {
-            await base.DisposeInternal(disposing).ConfigureAwait(false);
+            await base.DisposeAsyncCore().ConfigureAwait(false);
             await RemoveSubscriptions().ConfigureAwait(false);
             PublisherImpl.OnChannelProcessorDisposed(this);
         }

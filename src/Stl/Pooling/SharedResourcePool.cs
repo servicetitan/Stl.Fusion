@@ -91,7 +91,7 @@ namespace Stl.Pooling
 
         protected async Task DelayedDisposeResource(TKey key, TResource resource, CancellationToken cancellationToken)
         {
-            await DisposeResourceDelay(key, resource, cancellationToken);
+            await DisposeResourceDelay(key, resource, cancellationToken).ConfigureAwait(false);
             using (await LocksSet.Lock(key, cancellationToken).ConfigureAwait(false)) {
                 cancellationToken.ThrowIfCancellationRequested();
                 if (!Resources.TryRemove(key, (resource, 0)!))

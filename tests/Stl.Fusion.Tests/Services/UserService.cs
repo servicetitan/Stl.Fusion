@@ -135,7 +135,7 @@ namespace Stl.Fusion.Tests.Services
         {
             // Debug.WriteLine($"TryGetAsync {userId}");
             await Everything().ConfigureAwait(false);
-            await using var dbContext = DbContextFactory.CreateDbContext();
+            await using var dbContext = CreateDbContext();
             var user = await dbContext.Users
                 .FindAsync(new[] {(object) userId}, cancellationToken)
                 .ConfigureAwait(false);
@@ -145,8 +145,8 @@ namespace Stl.Fusion.Tests.Services
         public virtual async Task<long> Count(CancellationToken cancellationToken = default)
         {
             await Everything().ConfigureAwait(false);
-            await using var dbContext = DbContextFactory.CreateDbContext();
-            var count = await dbContext.Users.LongCountAsync(cancellationToken).ConfigureAwait(false);
+            await using var dbContext = CreateDbContext();
+            var count = await dbContext.Users.AsQueryable().LongCountAsync(cancellationToken).ConfigureAwait(false);
             // _log.LogDebug($"Users.Count query: {count}");
             return count;
         }

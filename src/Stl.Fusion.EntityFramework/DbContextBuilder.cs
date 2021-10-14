@@ -22,7 +22,8 @@ namespace Stl.Fusion.EntityFramework
     {
         public IServiceCollection Services { get; }
 
-        internal DbContextBuilder(IServiceCollection services) => Services = services;
+        internal DbContextBuilder(IServiceCollection services)
+            => Services = services;
 
         // Entity converters
 
