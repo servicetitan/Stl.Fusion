@@ -75,6 +75,9 @@ namespace Stl.Fusion.EntityFramework
                 if (IsUsed && !IsClosed)
                     await Rollback().ConfigureAwait(false);
             }
+            catch (Exception e) {
+                Log.LogWarning(e, "DisposeAsync: error on rollback");
+            }
             finally {
                 IsClosed = true;
                 SilentDispose(Transaction);
