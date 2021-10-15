@@ -1,11 +1,10 @@
 using Microsoft.AspNetCore.Builder;
 using Stl.Fusion.Server.Authentication;
 
-namespace Stl.Fusion.Server
+namespace Stl.Fusion.Server;
+
+public static class ApplicationBuilderExt
 {
-    public static class ApplicationBuilderExt
-    {
-        public static IApplicationBuilder UseFusionSession(this IApplicationBuilder app)
-            => app.UseMiddleware<SessionMiddleware>();
-    }
+    public static IApplicationBuilder UseFusionSession(this IApplicationBuilder app)
+        => app.UseMiddleware<SessionMiddleware>();
 }

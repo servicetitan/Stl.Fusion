@@ -1,18 +1,12 @@
-using System.Threading;
-using System.Threading.Tasks;
-using Stl.CommandR.Commands;
-using Stl.CommandR.Configuration;
+namespace Stl.CommandR.Internal;
 
-namespace Stl.CommandR.Internal
+public class PreparedCommandHandler :
+    ICommandHandler<IPreparedCommand>
 {
-    public class PreparedCommandHandler :
-        ICommandHandler<IPreparedCommand>
+    [CommandHandler(Priority = 1000_000_000, IsFilter = true)]
+    public async Task OnCommand(IPreparedCommand command, CommandContext context, CancellationToken cancellationToken)
     {
-        [CommandHandler(Priority = 1000_000_000, IsFilter = true)]
-        public async Task OnCommand(IPreparedCommand command, CommandContext context, CancellationToken cancellationToken)
-        {
-            await command.Prepare(context, cancellationToken).ConfigureAwait(false);
-            await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);
-        }
+        await command.Prepare(context, cancellationToken).ConfigureAwait(false);
+        await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);
     }
 }

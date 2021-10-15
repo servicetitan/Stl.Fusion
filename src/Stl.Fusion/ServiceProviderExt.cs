@@ -1,11 +1,9 @@
-using System;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Stl.Fusion
+namespace Stl.Fusion;
+
+public static class ServiceProviderExt
 {
-    public static class ServiceProviderExt
-    {
-        public static IStateFactory StateFactory(this IServiceProvider services)
-            => services.GetRequiredService<IStateFactory>();
-    }
+    public static IStateFactory StateFactory(this IServiceProvider services)
+        => services.GetRequiredService<IStateFactory>();
 }

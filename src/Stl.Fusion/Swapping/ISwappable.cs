@@ -1,10 +1,6 @@
-using System.Threading;
-using System.Threading.Tasks;
+namespace Stl.Fusion.Swapping;
 
-namespace Stl.Fusion.Swapping
+public interface ISwappable
 {
-    public interface ISwappable
-    {
-        ValueTask Swap(CancellationToken cancellationToken = default);
-    }
+    ValueTask Swap(CancellationToken cancellationToken = default);
 }

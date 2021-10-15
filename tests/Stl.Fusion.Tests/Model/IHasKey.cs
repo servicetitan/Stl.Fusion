@@ -1,8 +1,7 @@
-namespace Stl.Fusion.Tests.Model
+namespace Stl.Fusion.Tests.Model;
+
+public interface IHasKey<out TKey>
+    where TKey : notnull
 {
-    public interface IHasKey<out TKey>
-        where TKey : notnull
-    {
-        TKey Key { get; }
-    }
+    TKey Key { get; }
 }

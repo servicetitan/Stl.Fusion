@@ -1,7 +1,4 @@
-using Stl.CommandR;
+namespace Stl.Fusion.Blazor.Internal;
 
-namespace Stl.Fusion.Blazor.Internal
-{
-    public class ChangeAuthStateUICommand : ICommand<AuthState>
-    { }
-}
+public class ChangeAuthStateUICommand : ICommand<AuthState>
+{ }

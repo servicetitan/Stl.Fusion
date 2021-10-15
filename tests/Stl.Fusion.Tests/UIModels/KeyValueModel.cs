@@ -1,47 +1,43 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Tests.Services;
 using Stl.Fusion.UI;
 using Stl.RegisterAttributes;
 
-namespace Stl.Fusion.Tests.UIModels
+namespace Stl.Fusion.Tests.UIModels;
+
+public class KeyValueModel<TValue>
 {
-    public class KeyValueModel<TValue>
+    public string Key { get; set; } = "";
+    public TValue Value { get; set; } = default!;
+    public int UpdateCount { get; set; }
+}
+
+[RegisterService(typeof(IComputedState<KeyValueModel<string>>))]
+public class StringKeyValueModelState : ComputedState<KeyValueModel<string>>
+{
+    protected IMutableState<string> Locals { get; }
+
+    private IKeyValueServiceClient<string> KeyValueServiceClient
+        => Services.GetRequiredService<IKeyValueServiceClient<string>>();
+
+    public StringKeyValueModelState(IServiceProvider services)
+        : base(
+            new Options() { UpdateDelayer = new UpdateDelayer(services.UICommandTracker(), 0.5) },
+            services)
     {
-        public string Key { get; set; } = "";
-        public TValue Value { get; set; } = default!;
-        public int UpdateCount { get; set; }
+        Locals = new MutableState<string>(services);
+        Locals.AddEventHandler(StateEventKind.Updated, (_, _) => this.Recompute());
     }
 
-    [RegisterService(typeof(IComputedState<KeyValueModel<string>>))]
-    public class StringKeyValueModelState : ComputedState<KeyValueModel<string>>
+    protected override async Task<KeyValueModel<string>> Compute(CancellationToken cancellationToken)
     {
-        protected IMutableState<string> Locals { get; }
-
-        private IKeyValueServiceClient<string> KeyValueServiceClient
-            => Services.GetRequiredService<IKeyValueServiceClient<string>>();
-
-        public StringKeyValueModelState(IServiceProvider services)
-            : base(
-                new Options() { UpdateDelayer = new UpdateDelayer(services.UICommandTracker(), 0.5) },
-                services)
-        {
-            Locals = new MutableState<string>(services);
-            Locals.AddEventHandler(StateEventKind.Updated, (_, _) => this.Recompute());
-        }
-
-        protected override async Task<KeyValueModel<string>> Compute(CancellationToken cancellationToken)
-        {
-            var updateCount = ValueOrDefault?.UpdateCount ?? 0;
-            var key = Locals.ValueOrDefault ?? "";
-            var value = await KeyValueServiceClient.Get(key, cancellationToken).ConfigureAwait(false);
-            return new KeyValueModel<string>() {
-                Key = key,
-                Value = value,
-                UpdateCount = updateCount + 1,
-            };
-        }
+        var updateCount = ValueOrDefault?.UpdateCount ?? 0;
+        var key = Locals.ValueOrDefault ?? "";
+        var value = await KeyValueServiceClient.Get(key, cancellationToken).ConfigureAwait(false);
+        return new KeyValueModel<string>() {
+            Key = key,
+            Value = value,
+            UpdateCount = updateCount + 1,
+        };
     }
 }

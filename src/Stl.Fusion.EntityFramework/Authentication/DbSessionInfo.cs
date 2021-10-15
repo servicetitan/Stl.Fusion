@@ -1,11 +1,7 @@
-using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
-using Stl.Collections;
-using Stl.Serialization;
-using Stl.Time;
 using Stl.Versioning;
 
 namespace Stl.Fusion.EntityFramework.Authentication;

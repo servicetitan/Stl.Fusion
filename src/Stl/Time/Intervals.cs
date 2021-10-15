@@ -1,24 +1,20 @@
-using System;
-using System.Collections.Generic;
+namespace Stl.Time;
 
-namespace Stl.Time
+public static class Intervals
 {
-    public static class Intervals
+    public static IEnumerable<TimeSpan> Fixed(TimeSpan delay)
     {
-        public static IEnumerable<TimeSpan> Fixed(TimeSpan delay)
-        {
-            while (true)
-                yield return delay;
-        }
+        while (true)
+            yield return delay;
+    }
 
-        public static IEnumerable<TimeSpan> Exponential(TimeSpan delay, double factor, TimeSpan? maxDelay = null)
-        {
-            while (true) {
-                if (maxDelay.HasValue && delay > maxDelay.GetValueOrDefault())
-                    delay = maxDelay.GetValueOrDefault();
-                yield return delay;
-                delay = delay.Multiply(factor);
-            }
+    public static IEnumerable<TimeSpan> Exponential(TimeSpan delay, double factor, TimeSpan? maxDelay = null)
+    {
+        while (true) {
+            if (maxDelay.HasValue && delay > maxDelay.GetValueOrDefault())
+                delay = maxDelay.GetValueOrDefault();
+            yield return delay;
+            delay = delay.Multiply(factor);
         }
     }
 }

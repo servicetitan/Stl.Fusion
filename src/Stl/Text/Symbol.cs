@@ -1,69 +1,66 @@
-using System;
 using System.ComponentModel;
-using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using Stl.Conversion;
 using Stl.Text.Internal;
 
-namespace Stl.Text
+namespace Stl.Text;
+
+[DataContract]
+[JsonConverter(typeof(SymbolJsonConverter))]
+[Newtonsoft.Json.JsonConverter(typeof(SymbolNewtonsoftJsonConverter))]
+[TypeConverter(typeof(SymbolTypeConverter))]
+public readonly struct Symbol : IEquatable<Symbol>, IComparable<Symbol>,
+    IConvertibleTo<string>, ISerializable
 {
-    [DataContract]
-    [JsonConverter(typeof(SymbolJsonConverter))]
-    [Newtonsoft.Json.JsonConverter(typeof(SymbolNewtonsoftJsonConverter))]
-    [TypeConverter(typeof(SymbolTypeConverter))]
-    public readonly struct Symbol : IEquatable<Symbol>, IComparable<Symbol>,
-        IConvertibleTo<string>, ISerializable
+    public static readonly Symbol Empty = new("");
+
+    private readonly string? _value;
+    private readonly int _hashCode;
+
+    [DataMember(Order = 0)]
+    public string Value => _value ?? "";
+    public int HashCode => _hashCode;
+    public bool IsEmpty => Value.Length == 0;
+
+    public Symbol(string value)
     {
-        public static readonly Symbol Empty = new("");
+        _value = value ?? "";
+        _hashCode = _value.Length == 0 ? 0 : StringComparer.Ordinal.GetHashCode(_value);
+    }
 
-        private readonly string? _value;
-        private readonly int _hashCode;
+    public override string ToString() => Value;
 
-        [DataMember(Order = 0)]
-        public string Value => _value ?? "";
-        public int HashCode => _hashCode;
-        public bool IsEmpty => Value.Length == 0;
+    // Conversion
 
-        public Symbol(string value)
-        {
-            _value = value ?? "";
-            _hashCode = _value.Length == 0 ? 0 : StringComparer.Ordinal.GetHashCode(_value);
-        }
+    string IConvertibleTo<string>.Convert() => Value;
+    public static implicit operator Symbol(string source) => new(source);
+    public static implicit operator string(Symbol source) => source.Value;
 
-        public override string ToString() => Value;
+    // Operators
 
-        // Conversion
+    public static Symbol operator +(Symbol left, Symbol right) => new(left.Value + right.Value);
 
-        string IConvertibleTo<string>.Convert() => Value;
-        public static implicit operator Symbol(string source) => new(source);
-        public static implicit operator string(Symbol source) => source.Value;
+    // Equality & comparison
 
-        // Operators
+    public bool Equals(Symbol other)
+        => HashCode == other.HashCode
+            && StringComparer.Ordinal.Equals(Value, other.Value);
+    public override bool Equals(object? obj) => obj is Symbol other && Equals(other);
+    public override int GetHashCode() => HashCode;
+    public int CompareTo(Symbol other) => string.CompareOrdinal(Value, other.Value);
+    public static bool operator ==(Symbol left, Symbol right) => left.Equals(right);
+    public static bool operator !=(Symbol left, Symbol right) => !left.Equals(right);
 
-        public static Symbol operator +(Symbol left, Symbol right) => new(left.Value + right.Value);
-
-        // Equality & comparison
-
-        public bool Equals(Symbol other)
-            => HashCode == other.HashCode
-                && StringComparer.Ordinal.Equals(Value, other.Value);
-        public override bool Equals(object? obj) => obj is Symbol other && Equals(other);
-        public override int GetHashCode() => HashCode;
-        public int CompareTo(Symbol other) => string.CompareOrdinal(Value, other.Value);
-        public static bool operator ==(Symbol left, Symbol right) => left.Equals(right);
-        public static bool operator !=(Symbol left, Symbol right) => !left.Equals(right);
-
-        // Serialization
+    // Serialization
 
 #pragma warning disable CS8618
-        private Symbol(SerializationInfo info, StreamingContext context)
-        {
-            _value = info.GetString(nameof(Value)) ?? "";
-            _hashCode = _value.Length == 0 ? 0 : StringComparer.Ordinal.GetHashCode(_value);
-        }
+    private Symbol(SerializationInfo info, StreamingContext context)
+    {
+        _value = info.GetString(nameof(Value)) ?? "";
+        _hashCode = _value.Length == 0 ? 0 : StringComparer.Ordinal.GetHashCode(_value);
+    }
 #pragma warning restore CS8618
 
-        void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
-            => info.AddValue(nameof(Value), Value);
-    }
+    void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
+        => info.AddValue(nameof(Value), Value);
 }

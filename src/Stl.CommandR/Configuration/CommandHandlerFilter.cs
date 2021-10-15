@@ -1,9 +1,6 @@
-using System;
+namespace Stl.CommandR.Configuration;
 
-namespace Stl.CommandR.Configuration
+public abstract class CommandHandlerFilter
 {
-    public abstract class CommandHandlerFilter
-    {
-        public abstract bool IsCommandHandlerUsed(CommandHandler commandHandler, Type commandType);
-    }
+    public abstract bool IsCommandHandlerUsed(CommandHandler commandHandler, Type commandType);
 }

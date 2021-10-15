@@ -1,128 +1,120 @@
-using System;
 using System.Reflection;
-using System.Threading.Tasks;
-using FluentAssertions;
-using FluentAssertions.Common;
 using FluentAssertions.Execution;
-using Stl.Async;
 using Stl.Reflection;
-using Stl.Text;
-using Xunit;
 
-namespace Stl.Tests.Reflection
+namespace Stl.Tests.Reflection;
+
+public class PropertyExTest
 {
-    public class PropertyExTest
+    public Task TaskProperty { get; set; } = Task.CompletedTask;
+    public bool BoolProperty { get; set; }
+
+    [Fact]
+    public void FindPropertiesTest()
     {
-        public Task TaskProperty { get; set; } = Task.CompletedTask;
-        public bool BoolProperty { get; set; }
+        var type = GetType();
+        var boolPropertyName = new Symbol(nameof(BoolProperty));
+        var taskPropertyName = new Symbol(nameof(TaskProperty));
 
-        [Fact]
-        public void FindPropertiesTest()
-        {
-            var type = GetType();
-            var boolPropertyName = new Symbol(nameof(BoolProperty));
-            var taskPropertyName = new Symbol(nameof(TaskProperty));
+        type.FindProperties(_ => true,
+                BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+            .ToArray().Should().BeEquivalentTo(new[] { boolPropertyName, taskPropertyName });
+        type.FindProperties(p => p.DeclaringType == type)
+            .ToArray().Should().BeEquivalentTo(new[] { boolPropertyName, taskPropertyName });
+        type.FindProperties(p => typeof(Task).IsAssignableFrom(p.PropertyType))
+            .ToArray().Should().BeEquivalentTo(new[] { taskPropertyName });
+    }
 
-            type.FindProperties(_ => true,
-                    BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
-                .ToArray().Should().BeEquivalentTo(new[] { boolPropertyName, taskPropertyName });
-            type.FindProperties(p => p.DeclaringType == type)
-                .ToArray().Should().BeEquivalentTo(new[] { boolPropertyName, taskPropertyName });
-            type.FindProperties(p => typeof(Task).IsAssignableFrom(p.PropertyType))
-                .ToArray().Should().BeEquivalentTo(new[] { taskPropertyName });
+    [Fact]
+    public void BoolPropertyTest()
+    {
+        var type = GetType();
+        var propertyName = new Symbol(nameof(BoolProperty));
+
+        Action action = () => type.GetGetter<string>(propertyName);
+        action.Should().Throw<InvalidCastException>();
+        action = () => type.GetGetter<bool>(propertyName, true);
+        action.Should().Throw<InvalidCastException>();
+        action = () => type.GetSetter<string>(propertyName);
+        action.Should().Throw<InvalidCastException>();
+        action = () => type.GetSetter<bool>(propertyName, true);
+        action.Should().Throw<InvalidCastException>();
+
+        var getter = type.GetGetter<bool>(propertyName);
+        var untypedGetter = type.GetGetter<object>(propertyName, true);
+        var setter = type.GetSetter<bool>(propertyName);
+        var untypedSetter = type.GetSetter<object>(propertyName, true);
+
+        if (getter == null || untypedGetter == null || setter == null || untypedSetter == null) {
+            getter.Should().NotBeNull();
+            untypedGetter.Should().NotBeNull();
+            setter.Should().NotBeNull();
+            untypedSetter.Should().NotBeNull();
+            throw new AssertionFailedException(
+                "We shouldn't get here - this throw is solely to suppress later nullability warnings.");
         }
 
-        [Fact]
-        public void BoolPropertyTest()
-        {
-            var type = GetType();
-            var propertyName = new Symbol(nameof(BoolProperty));
+        BoolProperty = false;
+        getter.Invoke(this).Should().BeFalse();
+        untypedGetter.Invoke(this).Should().Equals(false);
 
-            Action action = () => type.GetGetter<string>(propertyName);
-            action.Should().Throw<InvalidCastException>();
-            action = () => type.GetGetter<bool>(propertyName, true);
-            action.Should().Throw<InvalidCastException>();
-            action = () => type.GetSetter<string>(propertyName);
-            action.Should().Throw<InvalidCastException>();
-            action = () => type.GetSetter<bool>(propertyName, true);
-            action.Should().Throw<InvalidCastException>();
+        BoolProperty = true;
+        getter.Invoke(this).Should().BeTrue();
+        untypedGetter.Invoke(this).Should().Equals(true);
 
-            var getter = type.GetGetter<bool>(propertyName);
-            var untypedGetter = type.GetGetter<object>(propertyName, true);
-            var setter = type.GetSetter<bool>(propertyName);
-            var untypedSetter = type.GetSetter<object>(propertyName, true);
+        setter.Invoke(this, false);
+        BoolProperty.Should().BeFalse();
+        untypedSetter.Invoke(this, true);
+        BoolProperty.Should().BeTrue();
 
-            if (getter == null || untypedGetter == null || setter == null || untypedSetter == null) {
-                getter.Should().NotBeNull();
-                untypedGetter.Should().NotBeNull();
-                setter.Should().NotBeNull();
-                untypedSetter.Should().NotBeNull();
-                throw new AssertionFailedException(
-                    "We shouldn't get here - this throw is solely to suppress later nullability warnings.");
-            }
+        PropertyInfoExt.Set(this, propertyName, false);
+        PropertyInfoExt.Get<bool>(this, propertyName).Should().BeFalse();
+        PropertyInfoExt.SetUntyped(this, propertyName, true);
+        PropertyInfoExt.GetUntyped(this, propertyName).Should().Be(true);
+    }
 
-            BoolProperty = false;
-            getter.Invoke(this).Should().BeFalse();
-            untypedGetter.Invoke(this).Should().Equals(false);
+    [Fact]
+    public void TaskPropertyTest()
+    {
+        var type = GetType();
+        var propertyName = new Symbol(nameof(TaskProperty));
 
-            BoolProperty = true;
-            getter.Invoke(this).Should().BeTrue();
-            untypedGetter.Invoke(this).Should().Equals(true);
+        Action action = () => type.GetGetter<string>(propertyName);
+        action.Should().Throw<InvalidCastException>();
+        action = () => type.GetGetter<Task>(propertyName, true);
+        action.Should().Throw<InvalidCastException>();
+        action = () => type.GetSetter<string>(propertyName);
+        action.Should().Throw<InvalidCastException>();
+        _ = type.GetSetter<Task>(propertyName, true); // This should work for setters
 
-            setter.Invoke(this, false);
-            BoolProperty.Should().BeFalse();
-            untypedSetter.Invoke(this, true);
-            BoolProperty.Should().BeTrue();
+        var getter = type.GetGetter<Task>(propertyName);
+        var untypedGetter = type.GetGetter<object>(propertyName, true);
+        var setter = type.GetSetter<Task>(propertyName);
+        var untypedSetter = type.GetSetter<object>(propertyName, true);
 
-            PropertyInfoExt.Set(this, propertyName, false);
-            PropertyInfoExt.Get<bool>(this, propertyName).Should().BeFalse();
-            PropertyInfoExt.SetUntyped(this, propertyName, true);
-            PropertyInfoExt.GetUntyped(this, propertyName).Should().Be(true);
+        if (getter == null || untypedGetter == null || setter == null || untypedSetter == null) {
+            getter.Should().NotBeNull();
+            untypedGetter.Should().NotBeNull();
+            setter.Should().NotBeNull();
+            untypedSetter.Should().NotBeNull();
+            throw new AssertionFailedException(
+                "We shouldn't get here - this throw is solely to suppress later nullability warnings.");
         }
 
-        [Fact]
-        public void TaskPropertyTest()
-        {
-            var type = GetType();
-            var propertyName = new Symbol(nameof(TaskProperty));
+        var falseTask = Task.FromResult(false);
+        var trueTask = Task.FromResult(true);
 
-            Action action = () => type.GetGetter<string>(propertyName);
-            action.Should().Throw<InvalidCastException>();
-            action = () => type.GetGetter<Task>(propertyName, true);
-            action.Should().Throw<InvalidCastException>();
-            action = () => type.GetSetter<string>(propertyName);
-            action.Should().Throw<InvalidCastException>();
-            _ = type.GetSetter<Task>(propertyName, true); // This should work for setters
+        TaskProperty = falseTask;
+        getter.Invoke(this).Should().BeSameAs(falseTask);
+        untypedGetter.Invoke(this).Should().BeSameAs(falseTask);
 
-            var getter = type.GetGetter<Task>(propertyName);
-            var untypedGetter = type.GetGetter<object>(propertyName, true);
-            var setter = type.GetSetter<Task>(propertyName);
-            var untypedSetter = type.GetSetter<object>(propertyName, true);
+        TaskProperty = trueTask;
+        getter.Invoke(this).Should().BeSameAs(trueTask);
+        untypedGetter.Invoke(this).Should().BeSameAs(trueTask);
 
-            if (getter == null || untypedGetter == null || setter == null || untypedSetter == null) {
-                getter.Should().NotBeNull();
-                untypedGetter.Should().NotBeNull();
-                setter.Should().NotBeNull();
-                untypedSetter.Should().NotBeNull();
-                throw new AssertionFailedException(
-                    "We shouldn't get here - this throw is solely to suppress later nullability warnings.");
-            }
-
-            var falseTask = Task.FromResult(false);
-            var trueTask = Task.FromResult(true);
-
-            TaskProperty = falseTask;
-            getter.Invoke(this).Should().BeSameAs(falseTask);
-            untypedGetter.Invoke(this).Should().BeSameAs(falseTask);
-
-            TaskProperty = trueTask;
-            getter.Invoke(this).Should().BeSameAs(trueTask);
-            untypedGetter.Invoke(this).Should().BeSameAs(trueTask);
-
-            setter.Invoke(this, falseTask);
-            TaskProperty.Should().BeSameAs(falseTask);
-            untypedSetter.Invoke(this, trueTask);
-            TaskProperty.Should().BeSameAs(trueTask);
-        }
+        setter.Invoke(this, falseTask);
+        TaskProperty.Should().BeSameAs(falseTask);
+        untypedSetter.Invoke(this, trueTask);
+        TaskProperty.Should().BeSameAs(trueTask);
     }
 }

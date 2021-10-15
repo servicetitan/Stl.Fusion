@@ -1,11 +1,8 @@
-using System;
+namespace Stl.Channels;
 
-namespace Stl.Channels
+public enum ChannelCompletionMode
 {
-    public enum ChannelCompletionMode
-    {
-        KeepOpen = 0,
-        Complete = 1,
-        CompleteAndPropagateError = 3,
-    }
+    KeepOpen = 0,
+    Complete = 1,
+    CompleteAndPropagateError = 3,
 }

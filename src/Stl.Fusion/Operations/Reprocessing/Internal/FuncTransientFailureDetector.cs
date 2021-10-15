@@ -1,15 +1,12 @@
-using System;
+namespace Stl.Fusion.Operations.Reprocessing.Internal;
 
-namespace Stl.Fusion.Operations.Reprocessing.Internal
+internal class FuncTransientFailureDetector : TransientFailureDetector
 {
-    internal class FuncTransientFailureDetector : TransientFailureDetector
-    {
-        public Func<Exception, bool> Detector { get; }
+    public Func<Exception, bool> Detector { get; }
 
-        public FuncTransientFailureDetector(Func<Exception, bool> detector)
-            => Detector = detector;
+    public FuncTransientFailureDetector(Func<Exception, bool> detector)
+        => Detector = detector;
 
-        public override bool IsTransient(Exception error)
-            => Detector.Invoke(error);
-    }
+    public override bool IsTransient(Exception error)
+        => Detector.Invoke(error);
 }

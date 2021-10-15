@@ -1,9 +1,6 @@
-using System;
+namespace Stl.DependencyInjection;
 
-namespace Stl.DependencyInjection
+public interface IHasServices
 {
-    public interface IHasServices
-    {
-        IServiceProvider Services { get; }
-    }
+    IServiceProvider Services { get; }
 }

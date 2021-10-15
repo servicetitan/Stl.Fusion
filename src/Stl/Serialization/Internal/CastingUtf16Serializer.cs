@@ -1,25 +1,22 @@
-using System;
+namespace Stl.Serialization.Internal;
 
-namespace Stl.Serialization.Internal
+public class CastingUtf16Serializer<T> : IUtf16Serializer<T>, IUtf16Reader<T>, IUtf16Writer<T>
 {
-    public class CastingUtf16Serializer<T> : IUtf16Serializer<T>, IUtf16Reader<T>, IUtf16Writer<T>
+    public IUtf16Serializer Serializer { get; }
+    public Type SerializedType { get; }
+    public IUtf16Reader<T> Reader => this;
+    public IUtf16Writer<T> Writer => this;
+
+    public CastingUtf16Serializer(IUtf16Serializer serializer, Type serializedType)
     {
-        public IUtf16Serializer Serializer { get; }
-        public Type SerializedType { get; }
-        public IUtf16Reader<T> Reader => this;
-        public IUtf16Writer<T> Writer => this;
-
-        public CastingUtf16Serializer(IUtf16Serializer serializer, Type serializedType)
-        {
-            Serializer = serializer;
-            SerializedType = serializedType;
-        }
-
-        public T Read(string data)
-            => (T) Serializer.Reader.Read(data, SerializedType)!;
-
-        public string Write(T value)
-            // ReSharper disable once HeapView.PossibleBoxingAllocation
-            => Serializer.Writer.Write(value, SerializedType);
+        Serializer = serializer;
+        SerializedType = serializedType;
     }
+
+    public T Read(string data)
+        => (T) Serializer.Reader.Read(data, SerializedType)!;
+
+    public string Write(T value)
+        // ReSharper disable once HeapView.PossibleBoxingAllocation
+        => Serializer.Writer.Write(value, SerializedType);
 }

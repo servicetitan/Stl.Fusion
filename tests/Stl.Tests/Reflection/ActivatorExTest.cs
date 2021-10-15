@@ -1,32 +1,25 @@
-using System;
-using System.Reactive;
-using FluentAssertions;
 using Stl.Reflection;
-using Stl.Testing;
-using Xunit;
-using Xunit.Abstractions;
 
-namespace Stl.Tests.Reflection
+namespace Stl.Tests.Reflection;
+
+public class ActivatorExTest : TestBase
 {
-    public class ActivatorExTest : TestBase
+    public class SimpleClass { }
+
+    public ActivatorExTest(ITestOutputHelper @out) : base(@out) { }
+
+    [Fact]
+    public void NewTest()
     {
-        public class SimpleClass { }
+        ActivatorExt.New<int>().Should().Be(0);
+        ActivatorExt.New<int>(false).Should().Be(0);
+        ActivatorExt.New<Unit>().Should().Be(default(Unit));
+        ActivatorExt.New<Unit>(false).Should().Be(default(Unit));
+        ActivatorExt.New<SimpleClass>().Should().BeOfType(typeof(SimpleClass));
+        ActivatorExt.New<SimpleClass>(false).Should().BeOfType(typeof(SimpleClass));
 
-        public ActivatorExTest(ITestOutputHelper @out) : base(@out) { }
-
-        [Fact]
-        public void NewTest()
-        {
-            ActivatorExt.New<int>().Should().Be(0);
-            ActivatorExt.New<int>(false).Should().Be(0);
-            ActivatorExt.New<Unit>().Should().Be(default(Unit));
-            ActivatorExt.New<Unit>(false).Should().Be(default(Unit));
-            ActivatorExt.New<SimpleClass>().Should().BeOfType(typeof(SimpleClass));
-            ActivatorExt.New<SimpleClass>(false).Should().BeOfType(typeof(SimpleClass));
-
-            ((Func<string>) (() => ActivatorExt.New<string>()))
-                .Should().Throw<InvalidOperationException>();
-            ActivatorExt.New<string>(false).Should().Be(null);
-        }
+        ((Func<string>) (() => ActivatorExt.New<string>()))
+            .Should().Throw<InvalidOperationException>();
+        ActivatorExt.New<string>(false).Should().Be(null);
     }
 }

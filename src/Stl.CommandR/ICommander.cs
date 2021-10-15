@@ -1,11 +1,8 @@
-using System.Threading;
-using System.Threading.Tasks;
 using Stl.DependencyInjection;
 
-namespace Stl.CommandR
+namespace Stl.CommandR;
+
+public interface ICommander : IHasServices
 {
-    public interface ICommander : IHasServices
-    {
-        Task Run(CommandContext context, bool isolate, CancellationToken cancellationToken = default);
-    }
+    Task Run(CommandContext context, bool isolate, CancellationToken cancellationToken = default);
 }
