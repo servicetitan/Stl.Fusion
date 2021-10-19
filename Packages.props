@@ -76,7 +76,7 @@
     <PackageReference Update="Refit" Version="6.1.*" />
     <PackageReference Update="RestEase" Version="1.5.*" />
     <PackageReference Update="StackExchange.Redis" Version="2.2.*" />
-    <PackageReference Update="Swashbuckle.AspNetCore" Version="6.2.2" />
+    <PackageReference Update="Swashbuckle.AspNetCore" Version="6.2.3" />
     <PackageReference Update="System.Collections.Immutable" Version="5.0.*" />
     <PackageReference Update="System.ComponentModel.Annotations" Version="5.0.*" />
     <PackageReference Update="System.Configuration.ConfigurationManager" Version="5.0.*" />
