@@ -1,12 +1,9 @@
-using System;
+namespace Stl.Fusion;
 
-namespace Stl.Fusion
+[Flags]
+public enum CallOptions
 {
-    [Flags]
-    public enum CallOptions
-    {
-        TryGetExisting = 1,
-        Invalidate = 2 + TryGetExisting,
-        Capture = 4,
-    }
+    TryGetExisting = 1,
+    Invalidate = 2 + TryGetExisting,
+    Capture = 4,
 }

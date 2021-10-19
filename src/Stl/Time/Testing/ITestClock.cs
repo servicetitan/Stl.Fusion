@@ -1,7 +1,6 @@
-namespace Stl.Time.Testing
+namespace Stl.Time.Testing;
+
+public interface ITestClock : IMomentClock
 {
-    public interface ITestClock : IMomentClock
-    {
-        TestClockSettings Settings { get; set; }
-    }
+    TestClockSettings Settings { get; set; }
 }

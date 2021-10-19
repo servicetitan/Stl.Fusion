@@ -1,14 +1,8 @@
-using System.Threading;
-using System.Threading.Tasks;
-using Stl.CommandR;
-using Stl.CommandR.Configuration;
+namespace Stl.Fusion.Operations.Internal;
 
-namespace Stl.Fusion.Operations.Internal
+public class CatchAllCompletionHandler : ICommandHandler<ICompletion>
 {
-    public class CatchAllCompletionHandler : ICommandHandler<ICompletion>
-    {
-        [CommandHandler(Priority = -1000_000_000, IsFilter = false)]
-        public Task OnCommand(ICompletion command, CommandContext context, CancellationToken cancellationToken)
-            => Task.CompletedTask;
-    }
+    [CommandHandler(Priority = -1000_000_000, IsFilter = false)]
+    public Task OnCommand(ICompletion command, CommandContext context, CancellationToken cancellationToken)
+        => Task.CompletedTask;
 }

@@ -1,45 +1,38 @@
-using System;
-using System.Threading;
-using System.Threading.Channels;
-using System.Threading.Tasks;
-using Stl.Async;
+namespace Stl.Channels;
 
-namespace Stl.Channels
+public class NullChannel<T> : Channel<T, T>
 {
-    public class NullChannel<T> : Channel<T, T>
+    public static readonly NullChannel<T> Instance = new();
+
+    private class NullChannelReader : ChannelReader<T>
     {
-        public static readonly NullChannel<T> Instance = new();
+        public override Task Completion => TaskExt.InfiniteUnitTask;
 
-        private class NullChannelReader : ChannelReader<T>
+        public override bool TryRead(out T item)
         {
-            public override Task Completion => TaskExt.InfiniteUnitTask;
-
-            public override bool TryRead(out T item)
-            {
-                item = default!;
-                return false;
-            }
-
-            public override ValueTask<bool> WaitToReadAsync(CancellationToken cancellationToken = new CancellationToken())
-                => ValueTaskExt.FalseTask;
+            item = default!;
+            return false;
         }
 
-        private class NullChannelWriter : ChannelWriter<T>
-        {
-            public override bool TryComplete(Exception? error = null)
-                => false;
+        public override ValueTask<bool> WaitToReadAsync(CancellationToken cancellationToken = new CancellationToken())
+            => ValueTaskExt.FalseTask;
+    }
 
-            public override bool TryWrite(T item)
-                => true;
+    private class NullChannelWriter : ChannelWriter<T>
+    {
+        public override bool TryComplete(Exception? error = null)
+            => false;
 
-            public override ValueTask<bool> WaitToWriteAsync(CancellationToken cancellationToken = new CancellationToken())
-                => ValueTaskExt.TrueTask;
-        }
+        public override bool TryWrite(T item)
+            => true;
 
-        private NullChannel()
-        {
-            Reader = new NullChannelReader();
-            Writer = new NullChannelWriter();
-        }
+        public override ValueTask<bool> WaitToWriteAsync(CancellationToken cancellationToken = new CancellationToken())
+            => ValueTaskExt.TrueTask;
+    }
+
+    private NullChannel()
+    {
+        Reader = new NullChannelReader();
+        Writer = new NullChannelWriter();
     }
 }

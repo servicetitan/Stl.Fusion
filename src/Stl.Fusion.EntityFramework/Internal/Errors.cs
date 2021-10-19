@@ -1,5 +1,3 @@
-using Stl.Fusion.EntityFramework.Operations;
-
 namespace Stl.Fusion.EntityFramework.Internal;
 
 public static class Errors

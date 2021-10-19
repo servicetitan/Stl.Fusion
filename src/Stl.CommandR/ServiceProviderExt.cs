@@ -1,11 +1,9 @@
-using System;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Stl.CommandR
+namespace Stl.CommandR;
+
+public static class ServiceProviderExt
 {
-    public static class ServiceProviderExt
-    {
-        public static ICommander Commander(this IServiceProvider services)
-            => services.GetRequiredService<ICommander>();
-    }
+    public static ICommander Commander(this IServiceProvider services)
+        => services.GetRequiredService<ICommander>();
 }

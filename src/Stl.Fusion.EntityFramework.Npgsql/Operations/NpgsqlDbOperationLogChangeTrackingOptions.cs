@@ -1,10 +1,7 @@
-using System;
+namespace Stl.Fusion.EntityFramework.Npgsql.Operations;
 
-namespace Stl.Fusion.EntityFramework.Npgsql.Operations
+public class NpgsqlDbOperationLogChangeTrackingOptions<TDbContext>
 {
-    public class NpgsqlDbOperationLogChangeTrackingOptions<TDbContext>
-    {
-        public string ChannelName { get; set; } = "_Operations";
-        public TimeSpan RetryDelay { get; set; } = TimeSpan.FromSeconds(1);
-    }
+    public string ChannelName { get; set; } = "_Operations";
+    public TimeSpan RetryDelay { get; set; } = TimeSpan.FromSeconds(1);
 }

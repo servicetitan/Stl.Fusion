@@ -1,10 +1,6 @@
-using System.Threading;
-using System.Threading.Tasks;
+namespace Stl.CommandR.Commands;
 
-namespace Stl.CommandR.Commands
+public interface IPreparedCommand : ICommand
 {
-    public interface IPreparedCommand : ICommand
-    {
-        Task Prepare(CommandContext context, CancellationToken cancellationToken);
-    }
+    Task Prepare(CommandContext context, CancellationToken cancellationToken);
 }

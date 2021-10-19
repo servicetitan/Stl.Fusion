@@ -1,6 +1,5 @@
-namespace Stl.CommandR.Interception
-{
-    // A tagging interface for proxy types
-    public interface ICommandService
-    { }
-}
+namespace Stl.CommandR.Interception;
+
+// A tagging interface for proxy types
+public interface ICommandService
+{ }

@@ -1,14 +1,11 @@
-using System.Threading;
+namespace Stl.Fusion.Server.Internal;
 
-namespace Stl.Fusion.Server.Internal
+public class AuthSchemasCache
 {
-    public class AuthSchemasCache
-    {
-        private string? _schemas;
+    private string? _schemas;
 
-        public string? Schemas {
-            get => _schemas;
-            set => Interlocked.Exchange(ref _schemas, value);
-        }
+    public string? Schemas {
+        get => _schemas;
+        set => Interlocked.Exchange(ref _schemas, value);
     }
 }

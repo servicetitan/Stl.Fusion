@@ -1,8 +1,7 @@
-namespace Stl.CommandR
-{
-    public interface ICommand
-    { }
+namespace Stl.CommandR;
 
-    public interface ICommand<TResult> : ICommand
-    { }
-}
+public interface ICommand
+{ }
+
+public interface ICommand<TResult> : ICommand
+{ }

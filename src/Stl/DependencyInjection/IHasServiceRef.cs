@@ -1,7 +1,6 @@
-namespace Stl.DependencyInjection
+namespace Stl.DependencyInjection;
+
+public interface IHasServiceRef
 {
-    public interface IHasServiceRef
-    {
-        ServiceRef ServiceRef { get; }
-    }
+    ServiceRef ServiceRef { get; }
 }

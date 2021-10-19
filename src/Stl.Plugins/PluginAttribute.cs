@@ -1,10 +1,7 @@
-using System;
+namespace Stl.Plugins;
 
-namespace Stl.Plugins
+[AttributeUsage(AttributeTargets.Class)]
+public class PluginAttribute : Attribute
 {
-    [AttributeUsage(AttributeTargets.Class)]
-    public class PluginAttribute : Attribute
-    {
-        public bool IsEnabled { get; set; } = true;
-    }
+    public bool IsEnabled { get; set; } = true;
 }

@@ -1,15 +1,13 @@
-using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Stl.Internal
-{
-    public class LTagJsonConverter : JsonConverter<LTag>
-    {
-        public override LTag Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-            => LTag.Parse(reader.GetString());
+namespace Stl.Internal;
 
-        public override void Write(Utf8JsonWriter writer, LTag value, JsonSerializerOptions options)
-            => writer.WriteStringValue(value.ToString());
-    }
+public class LTagJsonConverter : JsonConverter<LTag>
+{
+    public override LTag Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        => LTag.Parse(reader.GetString());
+
+    public override void Write(Utf8JsonWriter writer, LTag value, JsonSerializerOptions options)
+        => writer.WriteStringValue(value.ToString());
 }

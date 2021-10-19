@@ -3,14 +3,13 @@
 using System.Threading;
 using System.Web.Http;
 
-namespace Stl.Fusion.Tests
+namespace Stl.Fusion.Tests;
+
+internal static class ControllerExt
 {
-    internal static class ControllerExt
+    public static CancellationToken RequestAborted(this ApiController controller)
     {
-        public static CancellationToken RequestAborted(this ApiController controller)
-        {
-            return controller.ActionContext.RequestAborted();
-        }
+        return controller.ActionContext.RequestAborted();
     }
 }
 
@@ -19,14 +18,13 @@ namespace Stl.Fusion.Tests
 using System.Threading;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Stl.Fusion.Tests
+namespace Stl.Fusion.Tests;
+
+internal static class ControllerExt
 {
-    internal static class ControllerExt
+    public static CancellationToken RequestAborted(this ControllerBase controller)
     {
-        public static CancellationToken RequestAborted(this ControllerBase controller)
-        {
-            return controller.HttpContext.RequestAborted;
-        }
+        return controller.HttpContext.RequestAborted;
     }
 }
 

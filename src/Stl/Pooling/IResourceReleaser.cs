@@ -1,7 +1,6 @@
-namespace Stl.Pooling
+namespace Stl.Pooling;
+
+public interface IResourceReleaser<in T>
 {
-    public interface IResourceReleaser<in T>
-    {
-        bool Release(T resource);
-    }
+    bool Release(T resource);
 }

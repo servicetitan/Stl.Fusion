@@ -1,10 +1,6 @@
-using System;
-using System.Collections.Generic;
+namespace Stl.Plugins;
 
-namespace Stl.Plugins
+public interface IHasDependencies
 {
-    public interface IHasDependencies
-    {
-        IEnumerable<Type> Dependencies { get; }
-    }
+    IEnumerable<Type> Dependencies { get; }
 }

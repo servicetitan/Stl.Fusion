@@ -1,8 +1,7 @@
-namespace Stl.Versioning
+namespace Stl.Versioning;
+
+public interface IHasVersion<out TVersion>
+    where TVersion : notnull
 {
-    public interface IHasVersion<out TVersion>
-        where TVersion : notnull
-    {
-        TVersion Version { get; }
-    }
+    TVersion Version { get; }
 }

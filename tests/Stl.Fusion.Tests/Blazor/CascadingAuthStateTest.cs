@@ -1,14 +1,12 @@
 using Stl.Fusion.Blazor.Authentication;
-using Xunit;
 
-namespace Stl.Fusion.Tests.Blazor
+namespace Stl.Fusion.Tests.Blazor;
+
+public class CascadingAuthStateTest
 {
-    public class CascadingAuthStateTest
+    [Fact]
+    public void BasicTest()
     {
-        [Fact]
-        public void BasicTest()
-        {
-            var cas = new CascadingAuthState();
-        }
+        var cas = new CascadingAuthState();
     }
 }

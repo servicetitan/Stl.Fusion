@@ -1,8 +1,8 @@
 using System.ComponentModel;
 
 // ReSharper disable once CheckNamespace
-namespace System.Runtime.CompilerServices
-{
+namespace System.Runtime.CompilerServices;
+
 #if !NET5_0_OR_GREATER
     /// <summary>
     /// Reserved to be used by the compiler for tracking metadata.
@@ -25,5 +25,4 @@ namespace System.Runtime.CompilerServices
         }
     }
 #endif
-}
 
