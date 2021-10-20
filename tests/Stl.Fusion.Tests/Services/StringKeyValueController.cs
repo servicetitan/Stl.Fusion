@@ -5,7 +5,6 @@ using System.Web.Http;
 using ControllerBase = System.Web.Http.ApiController;
 #endif
 using Stl.Fusion.Server;
-using Stl.Serialization;
 
 namespace Stl.Fusion.Tests.Services;
 

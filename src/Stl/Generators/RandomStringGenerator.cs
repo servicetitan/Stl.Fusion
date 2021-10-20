@@ -52,13 +52,13 @@ public class RandomStringGenerator : Generator<string>, IDisposable
         }
     }
 
-#if !NETSTANDARD2_0
     public string Next(int length, string? alphabet = null)
     {
         if (alphabet == null)
             alphabet = Alphabet;
         else if (alphabet.Length < 1)
             throw new ArgumentOutOfRangeException(nameof(alphabet));
+#if !NETSTANDARD2_0
         var buffer = MemoryBuffer<byte>.LeaseAndSetCount(false, length);
         try {
             lock (Lock) {
@@ -73,14 +73,7 @@ public class RandomStringGenerator : Generator<string>, IDisposable
         finally {
             buffer.Release();
         }
-    }
 #else
-    public string Next(int length, string? alphabet = null)
-    {
-        if (alphabet == null)
-            alphabet = Alphabet;
-        else if (alphabet.Length < 1)
-            throw new ArgumentOutOfRangeException(nameof(alphabet));
         var byteArrayPool = ArrayPool<byte>.Shared;
         var charArrayPool = ArrayPool<char>.Shared;
         var byteBuffer = byteArrayPool.Rent(length);
@@ -97,6 +90,6 @@ public class RandomStringGenerator : Generator<string>, IDisposable
             charArrayPool.Return(charBuffer);
             byteArrayPool.Return(byteBuffer);
         }
-    }
 #endif
+    }
 }

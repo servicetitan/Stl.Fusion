@@ -1,3 +1,5 @@
+using Stl.Conversion.Internal;
+
 namespace Stl.Conversion;
 
 public interface IConverter<in TSource, TTarget>

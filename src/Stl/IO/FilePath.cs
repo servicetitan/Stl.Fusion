@@ -87,15 +87,15 @@ public readonly partial struct FilePath : IEquatable<FilePath>, IComparable<File
 
     public static FilePath JoinOrTakeSecond(string s1, string s2)
         => Path.Combine(s1, s2);
-#if !NETSTANDARD2_0
+
     public static FilePath Join(string s1, string s2)
+#if !NETSTANDARD2_0
         => string.IsNullOrEmpty(s2)
             ? s1
             : Path.IsPathFullyQualified(s2)
                 ? throw new ArgumentOutOfRangeException(s2)
                 : Path.Join(s1, s2);
 #else
-    public static FilePath Join(string s1, string s2)
         => string.IsNullOrEmpty(s2)
             ? s1
             : PathCompatExt.IsPathFullyQualified(s2)

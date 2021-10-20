@@ -82,7 +82,7 @@ public readonly struct TaskSource<T> : IEquatable<TaskSource<T>>
 #if !NETSTANDARD2_0
         var fTask = tTcs.GetField("_task", BindingFlags.Instance | BindingFlags.NonPublic);
 #else
-            var fTask = tTcs.GetField("m_task", BindingFlags.Instance | BindingFlags.NonPublic);
+        var fTask = tTcs.GetField("m_task", BindingFlags.Instance | BindingFlags.NonPublic);
 #endif
         var pState = Expression.Parameter(typeof(object), "state");
         var pTco = Expression.Parameter(typeof(TaskCreationOptions), "taskCreationOptions");
