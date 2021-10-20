@@ -148,7 +148,9 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
                     // We need a new connection here, since the old one might be broken
                     masterDbContext = DbContextFactory.CreateDbContext();
                     masterDbContext.Database.AutoTransactionsEnabled = true;
-                    var committedOperation = await DbOperationLog.TryGet(masterDbContext, operation.Id, cancellationToken);
+                    var committedOperation = await DbOperationLog
+                        .TryGet(masterDbContext, operation.Id, cancellationToken)
+                        .ConfigureAwait(false);
                     if (committedOperation != null)
                         IsConfirmed = true;
                 }

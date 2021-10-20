@@ -56,7 +56,7 @@ public class DbOperationLogReader<TDbContext> : DbWakeSleepProcessBase<TDbContex
         var tasks = new Task[operations.Count];
         for (var i = 0; i < operations.Count; i++) {
             var operation = operations[i];
-            var isLocal = operation.AgentId == AgentInfo.Id.Value;
+            var isLocal = StringComparer.Ordinal.Equals(operation.AgentId, AgentInfo.Id.Value);
             // Local completions are invoked by TransientOperationScopeProvider
             // _inside_ the command processing pipeline. Trying to trigger them here
             // means a tiny chance of running them _outside_ of command processing

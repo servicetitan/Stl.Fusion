@@ -36,7 +36,7 @@ public class DbOperationScopeProvider<TDbContext> : DbServiceBase<TDbContext>, I
 
         try {
             await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);
-            await scope.Commit(cancellationToken);
+            await scope.Commit(cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException) {
             throw;
@@ -44,7 +44,7 @@ public class DbOperationScopeProvider<TDbContext> : DbServiceBase<TDbContext>, I
         catch (Exception error) {
             // 1. Ensure everything is rolled back
             try {
-                await scope.Rollback();
+                await scope.Rollback().ConfigureAwait(false);
             }
             catch {
                 // Intended

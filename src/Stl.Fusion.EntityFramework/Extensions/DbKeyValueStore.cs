@@ -20,7 +20,9 @@ public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext
         var (key, value, expiresAt) = command;
         var context = CommandContext.GetCurrent();
         if (string.IsNullOrEmpty(key))
+#pragma warning disable MA0015
             throw new ArgumentOutOfRangeException($"{nameof(command)}.{nameof(SetCommand.Key)}");
+#pragma warning restore MA0015
         if (Computed.IsInvalidating()) {
             if (context.Operation().Items.GetOrDefault(true))
                 PseudoGetAllPrefixes(key);

@@ -74,8 +74,10 @@ public class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId> : DbA
         }
 
         if (!user.Identities.ContainsKey(authenticatedIdentity))
+#pragma warning disable MA0015
             throw new ArgumentOutOfRangeException(
                 $"{nameof(command)}.{nameof(SignInCommand.AuthenticatedIdentity)}");
+#pragma warning restore MA0015
         if (await IsSignOutForced(session, cancellationToken).ConfigureAwait(false))
             throw Errors.ForcedSignOut();
 
