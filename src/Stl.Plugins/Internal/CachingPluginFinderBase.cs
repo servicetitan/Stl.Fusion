@@ -40,7 +40,7 @@ public abstract class CachingPluginFinderBase : IPluginFinder
         if (cacheKey == null) {
             // Caching is off
             Log.LogDebug("Plugin cache is disabled (cache key is null)");
-            return await FindPlugins(cancellationToken);
+            return await FindPlugins(cancellationToken).ConfigureAwait(false);
         }
         PluginSetInfo pluginSetInfo;
         var result = await Cache.TryGet(cacheKey, cancellationToken).ConfigureAwait(false);

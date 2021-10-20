@@ -25,7 +25,9 @@ public class ServiceRefProvider : IServiceRefProvider
     public ServiceRefProvider(Options options)
     {
         ServiceCollection = options.ServiceCollection
+#pragma warning disable MA0015
             ?? throw new ArgumentNullException($"{nameof(options)}.{nameof(ServiceCollection)}");
+#pragma warning restore MA0015
         UseServiceInstanceRefs = options.UseServiceInstanceRefs;
     }
 

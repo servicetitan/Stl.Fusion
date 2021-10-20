@@ -19,7 +19,8 @@ public readonly struct ImmutableOptionSet : IServiceProvider, IEquatable<Immutab
     public Dictionary<string, NewtonsoftJsonSerialized<object>> JsonCompatibleItems
         => Items.ToDictionary(
             p => p.Key.Value,
-            p => NewtonsoftJsonSerialized.New(p.Value));
+            p => NewtonsoftJsonSerialized.New(p.Value),
+            StringComparer.Ordinal);
 
     public object? this[Symbol key] => Items.TryGetValue(key, out var v) ? v : null;
     public object? this[Type type] => this[type.ToSymbol()];

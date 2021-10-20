@@ -7,7 +7,7 @@ namespace Stl.Testing.Output;
 
 public class TestOutputCapture : IStandardStreamWriter, ITestOutputHelper
 {
-    protected object Lock = new();
+    private readonly object _lock = new();
     public StringBuilder StringBuilder = new();
     public TestTextWriter? Downstream { get; set; }
 
@@ -18,7 +18,7 @@ public class TestOutputCapture : IStandardStreamWriter, ITestOutputHelper
 
     public override string ToString()
     {
-        lock (Lock) {
+        lock (_lock) {
             return StringBuilder.ToString();
         }
     }
@@ -31,7 +31,7 @@ public class TestOutputCapture : IStandardStreamWriter, ITestOutputHelper
 
     public void Write(char value)
     {
-        lock (Lock) {
+        lock (_lock) {
             StringBuilder.Append(value);
             Downstream?.Write(value);
         }
@@ -39,7 +39,7 @@ public class TestOutputCapture : IStandardStreamWriter, ITestOutputHelper
 
     public void Write(string value)
     {
-        lock (Lock) {
+        lock (_lock) {
             StringBuilder.Append(value);
             Downstream?.Write(value);
         }
@@ -47,7 +47,7 @@ public class TestOutputCapture : IStandardStreamWriter, ITestOutputHelper
 
     public TestOutputCapture Clear()
     {
-        lock (Lock) {
+        lock (_lock) {
             StringBuilder.Clear();
             return this;
         }

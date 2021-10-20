@@ -24,14 +24,14 @@ public static class TestExt
         TimeSpan waitDuration)
     {
         using var cts = new CancellationTokenSource(waitDuration);
-        await WhenMet(condition, checkIntervals, cts.Token);
+        await WhenMet(condition, checkIntervals, cts.Token).ConfigureAwait(false);
     }
 
     public static async Task WhenMet(Action condition,
         IEnumerable<TimeSpan>? checkIntervals,
         CancellationToken cancellationToken)
     {
-        foreach (var timeout in (checkIntervals ?? DefaultCheckIntervals)) {
+        foreach (var timeout in checkIntervals ?? DefaultCheckIntervals) {
             using (var scope = new AssertionScope()) {
                 condition.Invoke();
                 if (!scope.HasFailures())
@@ -39,7 +39,7 @@ public static class TestExt
                 if (!cancellationToken.IsCancellationRequested)
                     scope.Discard();
             }
-            await Task.Delay(timeout, cancellationToken).SuppressCancellation();
+            await Task.Delay(timeout, cancellationToken).SuppressCancellation().ConfigureAwait(false);
         }
     }
 }

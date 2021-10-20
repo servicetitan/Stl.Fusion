@@ -36,11 +36,17 @@ public ref struct MemoryBuffer<T>
 
     public T this[int index] {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => index < Count ? BufferSpan[index] : throw new IndexOutOfRangeException();
+        get => index < Count
+            ? BufferSpan[index]
+#pragma warning disable MA0015
+            : throw new IndexOutOfRangeException();
+#pragma warning restore MA0015
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         set {
             if (index >= Count)
+#pragma warning disable MA0015
                 throw new IndexOutOfRangeException();
+#pragma warning restore MA0015
             BufferSpan[index] = value;
         }
     }

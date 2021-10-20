@@ -43,8 +43,8 @@ public class PluginInfoProvider : IPluginInfoProvider
             var ctor = type.GetConstructor(new [] {typeof(IPluginInfoProvider.Query)});
             if (ctor != null)
                 return ctor.Invoke(new object[] { IPluginInfoProvider.Query.Instance });
-            ctor = type.GetConstructor(new Type[0]);
-            return ctor?.Invoke(new object[0]);
+            ctor = type.GetConstructor(Type.EmptyTypes);
+            return ctor?.Invoke(Array.Empty<object>());
         }, this);
 }
 

@@ -81,7 +81,10 @@ public struct ArrayBuffer<T> : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetItem(int index, T item)
     {
-        if (index >= Count) throw new IndexOutOfRangeException();
+        if (index >= Count)
+#pragma warning disable MA0015
+            throw new IndexOutOfRangeException();
+#pragma warning restore MA0015
         Buffer[index] = item;
     }
 

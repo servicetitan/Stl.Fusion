@@ -30,7 +30,9 @@ public class GCHandlePool : IDisposable
         Capacity = options.Capacity;
     }
 
+#pragma warning disable MA0055
     ~GCHandlePool() => Dispose();
+#pragma warning restore MA0055
 
     public void Dispose()
     {
