@@ -12,7 +12,7 @@ public static class CancellationTokenExt
         TaskCreationOptions taskCreationOptions = default)
     {
         var ts = TaskSource.New<T>(taskCreationOptions);
-        var r = token.Register(arg => TaskSource.For((Task<T>) arg!).SetCanceled(), ts.Task);
+        var r = token.Register(() => ts.SetCanceled(token));
 #if NETSTANDARD
         return Disposable.New(ts.Task, r, (_, r1) => r1.Dispose());
 #else
@@ -63,7 +63,7 @@ public static class CancellationTokenExt
         TaskCreationOptions taskCreationOptions = default)
     {
         var ts = TaskSource.New<Unit>(taskCreationOptions);
-        var r = token.Register(arg => TaskSource.For((Task<Unit>) arg!).SetCanceled(), ts.Task);
+        var r = token.Register(() => ts.SetCanceled(token));
 #if NETSTANDARD
         return Disposable.New((Task) ts.Task, r, (_, r1) => r1.Dispose());
 #else

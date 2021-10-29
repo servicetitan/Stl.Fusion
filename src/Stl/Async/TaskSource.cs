@@ -72,6 +72,13 @@ public readonly struct TaskSource<T> : IEquatable<TaskSource<T>>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetCanceled()
         => Wrap(Task).SetCanceled();
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void SetCanceled(CancellationToken cancellationToken)
+#if NET5_0_OR_GREATER
+        => Wrap(Task).SetCanceled(cancellationToken);
+#else
+        => Wrap(Task).SetCanceled();
+#endif
 
     // Type initializer
 

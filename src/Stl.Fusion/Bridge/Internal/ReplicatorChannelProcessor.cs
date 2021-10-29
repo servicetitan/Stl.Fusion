@@ -77,11 +77,10 @@ public class ReplicatorChannelProcessor : AsyncProcessBase
                     break;
                 default:
                     Reconnect(error);
-                    var ct = cancellationToken.IsCancellationRequested ? cancellationToken : default;
                     foreach (var publicationId in GetSubscriptions()) {
                         var publicationRef = new PublicationRef(PublisherId, publicationId);
                         var replicaImpl = (IReplicaImpl?) Replicator.TryGet(publicationRef);
-                        replicaImpl?.ApplyFailedUpdate(error, ct);
+                        replicaImpl?.ApplyFailedUpdate(error, cancellationToken);
                     }
                     break;
                 }
@@ -214,9 +213,9 @@ public class ReplicatorChannelProcessor : AsyncProcessBase
 
             return channel;
         });
-        connectTask.ContinueWith(ct => {
-            channelTaskSource.SetFromTask(ct);
-            if (ct.IsCompletedSuccessfully())
+        connectTask.ContinueWith(connectTask1 => {
+            channelTaskSource.SetFromTask(connectTask1, CancellationToken.None);
+            if (connectTask1.IsCompletedSuccessfully())
                 IsConnected.Value = true;
         });
 

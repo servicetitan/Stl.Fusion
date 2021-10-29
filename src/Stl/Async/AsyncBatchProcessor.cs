@@ -89,7 +89,7 @@ public class AsyncBatchProcessor<TIn, TOut> : AsyncBatchProcessorBase<TIn, TOut>
         catch (Exception e) {
             var result = Result.Error<TOut>(e);
             foreach (var item in batch)
-                item.SetResult(result, default);
+                item.SetResult(result, cancellationToken);
             throw;
         }
     }

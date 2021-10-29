@@ -13,6 +13,6 @@ public record LocalFuncCommand<T> : LocalCommand, ICommand<T>
             throw Errors.LocalCommandHasNoHandler();
         var context = CommandContext.GetCurrent<T>();
         var result = await Handler.Invoke(cancellationToken);
-        context.TrySetResult(result);
+        context.SetResult(result);
     }
 }

@@ -42,12 +42,11 @@ public class Commander : ICommander
                 await OnUnhandledCommand(command, context, cancellationToken).ConfigureAwait(false);
             await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);
         }
-        catch (OperationCanceledException) {
-            context.TrySetCancelled(
-                cancellationToken.IsCancellationRequested ? cancellationToken : default);
-        }
         catch (Exception e) {
-            context.TrySetException(e);
+            context.SetResult(e);
+        }
+        finally {
+            context.TryComplete(cancellationToken);
         }
     }
 

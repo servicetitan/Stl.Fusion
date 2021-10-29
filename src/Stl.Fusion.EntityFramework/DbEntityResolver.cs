@@ -130,7 +130,7 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
 
         foreach (var item in batch) {
             entities.TryGetValue(item.Input, out var entity);
-            item.SetResult(Result.Value(entity)!, CancellationToken.None);
+            item.SetResult(Result.Value(entity)!, cancellationToken);
         }
     }
 }

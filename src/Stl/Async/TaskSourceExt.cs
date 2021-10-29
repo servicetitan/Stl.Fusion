@@ -4,47 +4,41 @@ public static class TaskSourceExt
 {
     // (Try)SetFromTask
 
-    public static void SetFromTask<T>(this TaskSource<T> target, Task<T> source)
+    public static void SetFromTask<T>(this TaskSource<T> target, Task<T> source, CancellationToken candidateToken)
     {
         if (source.IsCanceled)
-            target.SetCanceled();
+            target.SetCanceled(candidateToken.IsCancellationRequested ? candidateToken : CancellationToken.None);
         else if (source.Exception != null)
             target.SetException(source.Exception);
         else
             target.SetResult(source.Result);
     }
 
-    public static void TrySetFromTask<T>(this TaskSource<T> target, Task<T> source)
-    {
-        if (source.IsCanceled)
-            target.TrySetCanceled();
-        else if (source.Exception != null)
-            target.TrySetException(source.Exception);
-        else
-            target.TrySetResult(source.Result);
-    }
+    public static bool TrySetFromTask<T>(this TaskSource<T> target, Task<T> source, CancellationToken candidateToken)
+        => source.IsCanceled
+            ? target.TrySetCanceled(candidateToken.IsCancellationRequested ? candidateToken : CancellationToken.None)
+            : source.Exception != null
+                ? target.TrySetException(source.Exception)
+                : target.TrySetResult(source.Result);
 
     // (Try)SetFromResult
 
-    public static void SetFromResult<T>(this TaskSource<T> target, Result<T> source, CancellationToken cancellationToken)
+    public static void SetFromResult<T>(this TaskSource<T> target, Result<T> source, CancellationToken candidateToken)
     {
-        if (cancellationToken.IsCancellationRequested)
-            target.SetCanceled();
-        else if (source.Error != null)
-            target.SetException(source.Error);
+        if (source.IsValue(out var v, out var e))
+            target.SetResult(v);
+        else if (e is OperationCanceledException && candidateToken.IsCancellationRequested)
+            target.SetCanceled(candidateToken);
         else
-            target.SetResult(source.Value);
+            target.SetException(e);
     }
 
-    public static void TrySetFromResult<T>(this TaskSource<T> target, Result<T> source, CancellationToken cancellationToken)
-    {
-        if (cancellationToken.IsCancellationRequested)
-            target.TrySetCanceled();
-        else if (source.Error != null)
-            target.TrySetException(source.Error);
-        else
-            target.TrySetResult(source.Value);
-    }
+    public static bool TrySetFromResult<T>(this TaskSource<T> target, Result<T> source, CancellationToken candidateToken)
+        => source.IsValue(out var v, out var e)
+            ? target.TrySetResult(v)
+            : e is OperationCanceledException && candidateToken.IsCancellationRequested
+                ? target.TrySetCanceled(candidateToken)
+                : target.TrySetException(e);
 
     // WithCancellation
 

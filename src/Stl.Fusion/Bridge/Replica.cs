@@ -23,7 +23,7 @@ public interface IReplica<T> : IReplica
 public interface IReplicaImpl : IReplica, IFunction
 {
     void DisposeTemporaryReplica();
-    bool ApplyFailedUpdate(Exception? error, CancellationToken cancellationToken);
+    bool ApplyFailedUpdate(Exception? error, CancellationToken cancelledToken);
 }
 
 public interface IReplicaImpl<T> : IReplica<T>, IFunction<ReplicaInput, T>, IReplicaImpl
@@ -141,9 +141,9 @@ public class Replica<T> : SafeAsyncDisposableBase, IReplicaImpl<T>
         return true;
     }
 
-    bool IReplicaImpl.ApplyFailedUpdate(Exception? error, CancellationToken cancellationToken)
-        => ApplyFailedUpdate(error, cancellationToken);
-    protected virtual bool ApplyFailedUpdate(Exception? error, CancellationToken cancellationToken)
+    bool IReplicaImpl.ApplyFailedUpdate(Exception? error, CancellationToken cancelledToken)
+        => ApplyFailedUpdate(error, cancelledToken);
+    protected virtual bool ApplyFailedUpdate(Exception? error, CancellationToken cancelledToken)
     {
         IReplicaComputed<T>? computed;
         Task<Unit>? updateRequestTask;
@@ -161,7 +161,7 @@ public class Replica<T> : SafeAsyncDisposableBase, IReplicaImpl<T>
         if (updateRequestTask != null) {
             var result = new Result<Unit>(default, error);
             var updateRequestTaskSource = TaskSource.For(updateRequestTask);
-            updateRequestTaskSource.TrySetFromResult(result, cancellationToken);
+            updateRequestTaskSource.TrySetFromResult(result, cancelledToken);
         }
         return true;
     }

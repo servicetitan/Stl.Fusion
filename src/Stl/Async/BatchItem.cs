@@ -31,6 +31,6 @@ public readonly struct BatchItem<TIn, TOut>
         return OutputTask.IsCanceled;
     }
 
-    public void SetResult(Result<TOut> result, CancellationToken cancellationToken = default)
-        => TaskSource.For(OutputTask).TrySetFromResult(result, cancellationToken);
+    public void SetResult(Result<TOut> result, CancellationToken candidateToken)
+        => TaskSource.For(OutputTask).TrySetFromResult(result, candidateToken);
 }

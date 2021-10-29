@@ -1,3 +1,4 @@
+using System.Runtime.ExceptionServices;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.CommandR.Internal;
 using Stl.DependencyInjection;
@@ -13,7 +14,9 @@ public abstract class CommandContext : ICommandContext, IHasServices, IDisposabl
     public ICommander Commander { get; }
     public abstract ICommand UntypedCommand { get; }
     public abstract Task UntypedResultTask { get; }
-    public abstract Result<object> UntypedResult { get; set; }
+    public abstract Result<object> UntypedResult { get; }
+    public abstract bool IsCompleted { get; }
+
     public CommandContext? OuterContext { get; protected set; }
     public CommandContext OutermostContext { get; protected set; } = null!;
     public bool IsOutermost => OutermostContext == this;
@@ -83,39 +86,34 @@ public abstract class CommandContext : ICommandContext, IHasServices, IDisposabl
 
     public abstract Task InvokeRemainingHandlers(CancellationToken cancellationToken = default);
 
-    // SetXxx & TrySetXxx
+    public abstract void ResetResult();
+    public abstract void SetResult(object value);
+    public abstract void SetResult(Exception exception);
 
-    public abstract void SetDefaultResult();
-    public abstract void SetException(Exception exception);
-    public abstract void SetCancelled();
-
-    public abstract void TrySetDefaultResult();
-    public abstract void TrySetException(Exception exception);
-    public abstract void TrySetCancelled(CancellationToken cancellationToken);
+    public abstract bool TryComplete(CancellationToken candidateToken);
 }
 
-public class CommandContext<TResult> : CommandContext
+public sealed class CommandContext<TResult> : CommandContext
 {
-    protected TaskSource<TResult> ResultTaskSource { get; }
-
+    private Result<TResult> _result;
     public ICommand<TResult> Command { get; }
-    public Task<TResult> ResultTask => ResultTaskSource.Task;
+    public Task<TResult> ResultTask; // Set at the very end of the pipeline (via Complete)
+
+    // Result may change while the pipeline runs
     public Result<TResult> Result {
-        get => Stl.Result.FromTask(ResultTask);
+        get => _result;
         set {
-            if (value.IsValue(out var v, out var e))
-                SetResult(v);
-            else
-                SetException(e);
+            if (IsCompleted)
+                return;
+            _result = value;
         }
     }
 
-    public override Task UntypedResultTask => ResultTask;
+    public override bool IsCompleted => ResultTask.IsCompleted;
+
     public override ICommand UntypedCommand => Command;
-    public override Result<object> UntypedResult {
-        get => Result.Cast<object>();
-        set => Result = value.Cast<TResult>();
-    }
+    public override Task UntypedResultTask => ResultTask;
+    public override Result<object> UntypedResult => Result.Cast<object>();
 
     public CommandContext(ICommander commander, ICommand command, CommandContext? previousContext)
         : base(commander)
@@ -125,7 +123,7 @@ public class CommandContext<TResult> : CommandContext
         if (tCommandResult != tResult)
             throw Errors.CommandResultTypeMismatch(tResult, tCommandResult);
         Command = (ICommand<TResult>) command;
-        ResultTaskSource = TaskSource.New<TResult>(true);
+        ResultTask = TaskSource.New<TResult>(true).Task;
         if (previousContext?.Commander != commander) {
             OuterContext = null;
             OutermostContext = this;
@@ -140,7 +138,7 @@ public class CommandContext<TResult> : CommandContext
         }
     }
 
-    public override async Task InvokeRemainingHandlers(CancellationToken cancellationToken)
+    public override async Task InvokeRemainingHandlers(CancellationToken cancellationToken = default)
     {
         try {
             if (ExecutionState.IsFinal)
@@ -149,47 +147,32 @@ public class CommandContext<TResult> : CommandContext
             ExecutionState = ExecutionState.NextExecutionState;
             var handlerTask = handler.Invoke(UntypedCommand, this, cancellationToken);
             if (handlerTask is Task<TResult> typedHandlerTask) {
-                var result = await typedHandlerTask.ConfigureAwait(false);
-                TrySetResult(result);
+                Result = await typedHandlerTask.ConfigureAwait(false);
             }
             else {
                 await handlerTask.ConfigureAwait(false);
-                TrySetDefaultResult();
             }
-            // We want to ensure we re-throw any exception even if
-            // it wasn't explicitly thrown (i.e. set via TrySetException)
-            if (UntypedResultTask.IsCompleted && !UntypedResultTask.IsCompletedSuccessfully())
-                await UntypedResultTask.ConfigureAwait(false);
         }
-        catch (OperationCanceledException) {
-            TrySetCancelled(
-                cancellationToken.IsCancellationRequested ? cancellationToken : default);
+        catch (Exception ex) {
+            SetResult(ex);
             throw;
         }
-        catch (Exception e) {
-            TrySetException(e);
-            throw;
-        }
+        // We want to ensure we re-throw any exception even if
+        // it wasn't explicitly thrown (i.e. set via SetResult)
+        if (!Result.IsValue(out var v, out var e))
+            ExceptionDispatchInfo.Capture(e).Throw();
     }
 
-    // SetXxx & TrySetXxx
+    public override void ResetResult()
+        => Result = default;
 
-    public virtual void SetResult(TResult result)
-        => ResultTaskSource.SetResult(result);
-    public virtual void TrySetResult(TResult result)
-        => ResultTaskSource.TrySetResult(result);
+    public override void SetResult(Exception exception)
+        => Result = new Result<TResult>(default!, exception);
+    public override void SetResult(object value)
+        => Result = new Result<TResult>((TResult) value, null);
+    public void SetResult(TResult result)
+        => Result = new Result<TResult>(result, null);
 
-    public override void SetDefaultResult()
-        => ResultTaskSource.SetResult(default!);
-    public override void SetException(Exception exception)
-        => ResultTaskSource.SetException(exception);
-    public override void SetCancelled()
-        => ResultTaskSource.SetCanceled();
-
-    public override void TrySetDefaultResult()
-        => ResultTaskSource.TrySetResult(default!);
-    public override void TrySetException(Exception exception)
-        => ResultTaskSource.TrySetException(exception);
-    public override void TrySetCancelled(CancellationToken cancellationToken)
-        => ResultTaskSource.TrySetCanceled(cancellationToken);
+    public override bool TryComplete(CancellationToken candidateToken)
+        => TaskSource.For(ResultTask).TrySetFromResult(Result, candidateToken);
 }
