@@ -195,7 +195,7 @@ public class Computed<TIn, TOut> : IComputed<TIn, TOut>, IComputedImpl
             _used.Clear();
             _invalidated?.Invoke(this);
             _usedBy.Apply(default(Unit), (_, usedByEntry) => {
-                var c = ComputedRegistry.Instance.TryGet(usedByEntry.Input);
+                var c = ComputedRegistry.Instance.Get(usedByEntry.Input);
                 if (c != null && c.Version == usedByEntry.Version)
                     c.Invalidate();
             });

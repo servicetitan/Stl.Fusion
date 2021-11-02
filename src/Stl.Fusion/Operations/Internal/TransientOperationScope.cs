@@ -17,7 +17,7 @@ public class TransientOperationScope : AsyncDisposableBase, IOperationScope
     IOperation IOperationScope.Operation => Operation;
     public TransientOperation Operation { get; }
     public CommandContext CommandContext { get; }
-    public bool IsUsed => CommandContext.Items.TryGet<ICompletion>() == null;
+    public bool IsUsed => !CommandContext.Items.Contains<ICompletion>();
     public bool IsClosed { get; private set; }
     public bool? IsConfirmed { get; private set; }
 

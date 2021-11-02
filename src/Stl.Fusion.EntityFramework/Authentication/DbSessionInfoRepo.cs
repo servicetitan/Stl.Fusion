@@ -20,8 +20,8 @@ public interface IDbSessionInfoRepo<in TDbContext, TDbSessionInfo, TDbUserId>
         DateTime minLastSeenAt, int maxCount, CancellationToken cancellationToken = default);
 
     // Read methods
-    Task<TDbSessionInfo?> TryGet(string sessionId, CancellationToken cancellationToken = default);
-    Task<TDbSessionInfo?> TryGet(
+    Task<TDbSessionInfo?> Get(string sessionId, CancellationToken cancellationToken = default);
+    Task<TDbSessionInfo?> Get(
         TDbContext dbContext, string sessionId, CancellationToken cancellationToken = default);
     Task<TDbSessionInfo[]> ListByUser(
         TDbContext dbContext, TDbUserId userId, CancellationToken cancellationToken = default);
@@ -54,7 +54,7 @@ public class DbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId>
     public virtual async Task<TDbSessionInfo> GetOrCreate(
         TDbContext dbContext, string sessionId, CancellationToken cancellationToken = default)
     {
-        var dbSessionInfo = await TryGet(dbContext, sessionId, cancellationToken).ConfigureAwait(false);
+        var dbSessionInfo = await Get(dbContext, sessionId, cancellationToken).ConfigureAwait(false);
         if (dbSessionInfo == null) {
             var sessionInfo = new SessionInfo(sessionId, Clocks.SystemClock.Now);
             dbSessionInfo = dbContext.Add(
@@ -71,7 +71,7 @@ public class DbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId>
     public async Task<TDbSessionInfo> CreateOrUpdate(
         TDbContext dbContext, SessionInfo sessionInfo, CancellationToken cancellationToken = default)
     {
-        var dbSessionInfo = await TryGet(dbContext, sessionInfo.Id, cancellationToken).ConfigureAwait(false);
+        var dbSessionInfo = await Get(dbContext, sessionInfo.Id, cancellationToken).ConfigureAwait(false);
         var isDbSessionInfoFound = dbSessionInfo != null;
         dbSessionInfo ??= new TDbSessionInfo() {
             Id = sessionInfo.Id,
@@ -105,10 +105,10 @@ public class DbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId>
 
     // Read methods
 
-    public async Task<TDbSessionInfo?> TryGet(string sessionId, CancellationToken cancellationToken = default)
-        => await SessionResolver.TryGet(sessionId, cancellationToken).ConfigureAwait(false);
+    public async Task<TDbSessionInfo?> Get(string sessionId, CancellationToken cancellationToken = default)
+        => await SessionResolver.Get(sessionId, cancellationToken).ConfigureAwait(false);
 
-    public virtual async Task<TDbSessionInfo?> TryGet(
+    public virtual async Task<TDbSessionInfo?> Get(
         TDbContext dbContext, string sessionId, CancellationToken cancellationToken)
         => await dbContext.Set<TDbSessionInfo>()
             .FindAsync(ComposeKey(sessionId), cancellationToken)

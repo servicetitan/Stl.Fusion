@@ -32,7 +32,7 @@ public interface IProductService
     [CommandHandler]
     Task Edit(EditCommand<Product> command, CancellationToken cancellationToken = default);
     [ComputeMethod]
-    Task<Product?> TryGet(string id, CancellationToken cancellationToken = default);
+    Task<Product?> Get(string id, CancellationToken cancellationToken = default);
 }
 
 public interface ICartService
@@ -40,7 +40,7 @@ public interface ICartService
     [CommandHandler]
     Task Edit(EditCommand<Cart> command, CancellationToken cancellationToken = default);
     [ComputeMethod]
-    Task<Cart?> TryGet(string id, CancellationToken cancellationToken = default);
+    Task<Cart?> Get(string id, CancellationToken cancellationToken = default);
     [ComputeMethod]
     Task<decimal> GetTotal(string id, CancellationToken cancellationToken = default);
 }

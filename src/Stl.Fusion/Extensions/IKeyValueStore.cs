@@ -14,7 +14,7 @@ public interface IKeyValueStore
     Task RemoveMany(RemoveManyCommand command, CancellationToken cancellationToken = default);
 
     [ComputeMethod]
-    Task<string?> TryGet(string key, CancellationToken cancellationToken = default);
+    Task<string?> Get(string key, CancellationToken cancellationToken = default);
     [ComputeMethod]
     Task<int> Count(string prefix, CancellationToken cancellationToken = default);
     [ComputeMethod]

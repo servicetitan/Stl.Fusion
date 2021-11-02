@@ -57,29 +57,20 @@ public static class SandboxedKeyValueStoreExt
         return keyValueStore.RemoveMany(command, cancellationToken);
     }
 
-    // TryGet
+    // TryGet & Get
 
-    public static async Task<Option<T>> TryGet<T>(this ISandboxedKeyValueStore keyValueStore,
+    public static async ValueTask<Option<T>> TryGet<T>(this ISandboxedKeyValueStore keyValueStore,
         Session session, string key, CancellationToken cancellationToken = default)
     {
-        var sValue = await keyValueStore.TryGet(session, key, cancellationToken).ConfigureAwait(false);
-        return sValue == null ? default(Option<T>) : NewtonsoftJsonSerialized.New<T>(sValue).Value;
+        var sValue = await keyValueStore.Get(session, key, cancellationToken).ConfigureAwait(false);
+        return sValue == null ? Option<T>.None : NewtonsoftJsonSerialized.New<T>(sValue).Value;
     }
 
-    // Get
-
-    public static async Task<string> Get(this ISandboxedKeyValueStore keyValueStore,
+    public static async ValueTask<T?> Get<T>(this ISandboxedKeyValueStore keyValueStore,
         Session session, string key, CancellationToken cancellationToken = default)
     {
-        var value = await keyValueStore.TryGet(session, key, cancellationToken).ConfigureAwait(false);
-        return value ?? throw new KeyNotFoundException();
-    }
-
-    public static async Task<T> Get<T>(this ISandboxedKeyValueStore keyValueStore,
-        Session session, string key, CancellationToken cancellationToken = default)
-    {
-        var value = await keyValueStore.TryGet<T>(session, key, cancellationToken).ConfigureAwait(false);
-        return value.IsSome(out var v) ? v : throw new KeyNotFoundException();
+        var sValue = await keyValueStore.Get(session, key, cancellationToken).ConfigureAwait(false);
+        return sValue == null ? default : NewtonsoftJsonSerialized.New<T>(sValue).Value;
     }
 
     // ListKeysByPrefix

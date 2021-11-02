@@ -77,11 +77,11 @@ public partial class SandboxedKeyValueStore : ISandboxedKeyValueStore
         await Store.RemoveMany(keys, cancellationToken).ConfigureAwait(false);
     }
 
-    public virtual async Task<string?> TryGet(Session session, string key, CancellationToken cancellationToken = default)
+    public virtual async Task<string?> Get(Session session, string key, CancellationToken cancellationToken = default)
     {
         var keyChecker = await GetKeyChecker(session, cancellationToken).ConfigureAwait(false);
         keyChecker.CheckKey(key);
-        return await Store.TryGet(key, cancellationToken).ConfigureAwait(false);
+        return await Store.Get(key, cancellationToken).ConfigureAwait(false);
     }
 
     public virtual async Task<int> Count(Session session, string prefix, CancellationToken cancellationToken = default)

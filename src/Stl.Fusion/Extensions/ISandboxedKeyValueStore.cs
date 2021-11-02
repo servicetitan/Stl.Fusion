@@ -15,7 +15,7 @@ public interface ISandboxedKeyValueStore
     Task RemoveMany(SandboxedRemoveManyCommand command, CancellationToken cancellationToken = default);
 
     [ComputeMethod]
-    Task<string?> TryGet(Session session, string key, CancellationToken cancellationToken = default);
+    Task<string?> Get(Session session, string key, CancellationToken cancellationToken = default);
     [ComputeMethod]
     Task<int> Count(Session session, string prefix, CancellationToken cancellationToken = default);
     [ComputeMethod]

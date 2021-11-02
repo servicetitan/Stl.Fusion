@@ -37,7 +37,7 @@ public class InvalidateOnCompletionCommandHandler : ICommandHandler<ICompletion>
             return;
         }
 
-        var oldOperation = context.Items.TryGet<IOperation>();
+        var oldOperation = context.Items.GetOrDefault<IOperation>();
         var operation = command.Operation;
         context.SetOperation(operation);
         var invalidateScope = Computed.Invalidate();

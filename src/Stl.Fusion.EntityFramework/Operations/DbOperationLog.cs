@@ -8,7 +8,7 @@ public interface IDbOperationLog<in TDbContext>
 {
     DbOperation New(string? id = null, string? agentId = null, object? command = null);
     Task<DbOperation> Add(TDbContext dbContext, IOperation operation, CancellationToken cancellationToken);
-    Task<DbOperation?> TryGet(TDbContext dbContext, string id, CancellationToken cancellationToken);
+    Task<DbOperation?> Get(TDbContext dbContext, string id, CancellationToken cancellationToken);
 
     Task<List<DbOperation>> ListNewlyCommitted(DateTime minCommitTime, int maxCount, CancellationToken cancellationToken);
     Task<int> Trim(DateTime minCommitTime, int maxCount, CancellationToken cancellationToken);
@@ -44,7 +44,7 @@ public class DbOperationLog<TDbContext, TDbOperation> : DbServiceBase<TDbContext
         return dbOperation;
     }
 
-    public virtual async Task<DbOperation?> TryGet(TDbContext dbContext,
+    public virtual async Task<DbOperation?> Get(TDbContext dbContext,
         string id, CancellationToken cancellationToken)
     {
         // dbContext shouldn't use tracking!

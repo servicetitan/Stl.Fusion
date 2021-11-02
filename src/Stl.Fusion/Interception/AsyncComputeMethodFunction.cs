@@ -57,7 +57,7 @@ public class AsyncComputeMethodFunction<T> : ComputeMethodFunctionBase<T>
 
     protected new IAsyncComputed<T>? TryGetExisting(ComputeMethodInput input)
     {
-        var computed = ComputedRegistry.Instance.TryGet(input);
+        var computed = ComputedRegistry.Instance.Get(input);
         return computed as IAsyncComputed<T>;
     }
 }

@@ -149,7 +149,7 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
                     masterDbContext = DbContextFactory.CreateDbContext();
                     masterDbContext.Database.AutoTransactionsEnabled = true;
                     var committedOperation = await DbOperationLog
-                        .TryGet(masterDbContext, operation.Id, cancellationToken)
+                        .Get(masterDbContext, operation.Id, cancellationToken)
                         .ConfigureAwait(false);
                     if (committedOperation != null)
                         IsConfirmed = true;

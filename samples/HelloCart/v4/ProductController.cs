@@ -21,6 +21,6 @@ public class ProductController : ControllerBase, IProductService
     // Queries
 
     [HttpGet, Publish]
-    public Task<Product?> TryGet(string id, CancellationToken cancellationToken = default)
-        => _productService.TryGet(id, cancellationToken);
+    public Task<Product?> Get(string id, CancellationToken cancellationToken = default)
+        => _productService.Get(id, cancellationToken);
 }

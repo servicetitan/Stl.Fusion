@@ -63,7 +63,7 @@ public abstract class AppBase
     public async Task WatchProduct(string productId, CancellationToken cancellationToken = default)
     {
         var productService = WatchServices.GetRequiredService<IProductService>();
-        var computed = await Computed.Capture(ct => productService.TryGet(productId, ct), cancellationToken);
+        var computed = await Computed.Capture(ct => productService.Get(productId, ct), cancellationToken);
         while (true) {
             WriteLine($"  {computed.Value}");
             await computed.WhenInvalidated(cancellationToken);

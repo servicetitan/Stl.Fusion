@@ -13,7 +13,7 @@ public class DbProductService : DbServiceBase<AppDbContext>, IProductService
         if (string.IsNullOrEmpty(productId))
             throw new ArgumentOutOfRangeException(nameof(command));
         if (Computed.IsInvalidating()) {
-            _ = TryGet(productId, default);
+            _ = Get(productId, default);
             return;
         }
 
@@ -32,7 +32,7 @@ public class DbProductService : DbServiceBase<AppDbContext>, IProductService
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public virtual async Task<Product?> TryGet(string id, CancellationToken cancellationToken = default)
+    public virtual async Task<Product?> Get(string id, CancellationToken cancellationToken = default)
     {
         await using var dbContext = CreateDbContext();
         var dbProduct = await dbContext.Products.FindAsync(ComposeKey(id), cancellationToken);

@@ -123,10 +123,10 @@ public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext
 
     // Queries
 
-    public virtual async Task<string?> TryGet(string key, CancellationToken cancellationToken = default)
+    public virtual async Task<string?> Get(string key, CancellationToken cancellationToken = default)
     {
         _ = PseudoGet(key);
-        var dbKeyValue = await KeyValueResolver.TryGet(key, cancellationToken).ConfigureAwait(false);
+        var dbKeyValue = await KeyValueResolver.Get(key, cancellationToken).ConfigureAwait(false);
         if (dbKeyValue == null)
             return null;
         var expiresAt = dbKeyValue.ExpiresAt;

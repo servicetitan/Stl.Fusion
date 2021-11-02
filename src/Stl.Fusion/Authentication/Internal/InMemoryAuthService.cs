@@ -87,8 +87,7 @@ public class InMemoryAuthService : IServerSideAuthService
             if (force)
                 _ = IsSignOutForced(session, default);
             _ = GetSessionInfo(session, default);
-            var invSessionInfo = context.Operation().Items.TryGet<SessionInfo>();
-            if (invSessionInfo != null) {
+            if (context.Operation().Items.TryGet<SessionInfo>(out var invSessionInfo)) {
                 _ = TryGetUser(invSessionInfo.UserId, default);
                 _ = GetUserSessions(invSessionInfo.UserId, default);
             }

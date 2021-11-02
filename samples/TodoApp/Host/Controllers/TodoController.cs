@@ -32,8 +32,8 @@ public class TodoController : ControllerBase, ITodoService
     // Queries
 
     [HttpGet, Publish]
-    public Task<Todo?> TryGet(Session session, string id, CancellationToken cancellationToken = default)
-        => _todos.TryGet(session, id, cancellationToken);
+    public Task<Todo?> Get(Session session, string id, CancellationToken cancellationToken = default)
+        => _todos.Get(session, id, cancellationToken);
 
     [HttpGet, Publish]
     public Task<Todo[]> List(Session session, PageRef<string> pageRef, CancellationToken cancellationToken = default)

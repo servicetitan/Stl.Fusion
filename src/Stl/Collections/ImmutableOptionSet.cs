@@ -23,7 +23,7 @@ public readonly struct ImmutableOptionSet : IServiceProvider, IEquatable<Immutab
             StringComparer.Ordinal);
 
     public object? this[Symbol key] => Items.TryGetValue(key, out var v) ? v : null;
-    public object? this[Type type] => this[type.ToSymbol()];
+    public object? this[Type optionType] => this[optionType.ToSymbol()];
 
     [Newtonsoft.Json.JsonConstructor]
     public ImmutableOptionSet(ImmutableDictionary<Symbol, object>? items)
@@ -39,8 +39,11 @@ public readonly struct ImmutableOptionSet : IServiceProvider, IEquatable<Immutab
     public object? GetService(Type serviceType)
         => this[serviceType];
 
-    public T? TryGet<T>()
-        => (T?) this[typeof(T)]!;
+    public bool Contains(Type optionType)
+        => this[optionType] != null;
+
+    public bool Contains<T>()
+        => this[typeof(T)] != null;
 
     public bool TryGet<T>(out T value)
     {
@@ -61,7 +64,7 @@ public readonly struct ImmutableOptionSet : IServiceProvider, IEquatable<Immutab
         return (T) value;
     }
 
-    public T GetOrDefault<T>(T @default)
+    public T? GetOrDefault<T>(T? @default = default!)
     {
         var value = this[typeof(T)];
         return value == null ? @default : (T) value;
@@ -69,8 +72,8 @@ public readonly struct ImmutableOptionSet : IServiceProvider, IEquatable<Immutab
 
     public ImmutableOptionSet Set(Symbol key, object? value)
         => new(value != null ? Items.SetItem(key, value) : Items.Remove(key));
-    public ImmutableOptionSet Set(Type type, object? value)
-        => Set(type.ToSymbol(), value);
+    public ImmutableOptionSet Set(Type optionType, object? value)
+        => Set(optionType.ToSymbol(), value);
     // ReSharper disable once HeapView.PossibleBoxingAllocation
     public ImmutableOptionSet Set<T>(T value) => Set(typeof(T), value);
     public ImmutableOptionSet Remove<T>() => Set(typeof(T), null);

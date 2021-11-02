@@ -14,7 +14,7 @@ public interface IPublisher : IHasId<Symbol>
     bool OwnsChannelHub { get; }
 
     IPublication Publish(IComputed computed);
-    IPublication? TryGet(Symbol publicationId);
+    IPublication? Get(Symbol publicationId);
     ValueTask Subscribe(
         Channel<BridgeMessage> channel, IPublication publication,
         bool isUpdateRequested, CancellationToken cancellationToken = default);
@@ -126,7 +126,7 @@ public class Publisher : SafeAsyncDisposableBase, IPublisherImpl
         }
     }
 
-    public virtual IPublication? TryGet(Symbol publicationId)
+    public virtual IPublication? Get(Symbol publicationId)
         => PublicationsById.TryGetValue(publicationId, out var p) ? p : null;
 
     public virtual ValueTask Subscribe(

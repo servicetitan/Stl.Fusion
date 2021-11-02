@@ -39,7 +39,9 @@ public class NpgsqlDbOperationLogChangeTracker<TDbContext> : DbWakeSleepProcessB
 
     protected override async Task WakeUp(CancellationToken cancellationToken)
     {
-        await using var dbContext = CreateDbContext();
+        var dbContext = CreateDbContext();
+        await using var _ = dbContext.ConfigureAwait(false);
+
         var database = dbContext.Database;
         await database.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         var dbConnection = (NpgsqlConnection) database.GetDbConnection()!;

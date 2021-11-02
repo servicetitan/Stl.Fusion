@@ -31,7 +31,7 @@ public class TodoService : ITodoService
         if (string.IsNullOrEmpty(todo.Id))
             todo = todo with { Id = Ulid.NewUlid().ToString() };
         else
-            oldTodo = await TryGet(session, todo.Id, cancellationToken);
+            oldTodo = await Get(session, todo.Id, cancellationToken);
 
         if (todo.Title.Contains("@"))
             throw new ValidationException("Todo title can't contain '@' symbol.");
@@ -69,14 +69,13 @@ public class TodoService : ITodoService
 
     // Queries
 
-    public virtual async Task<Todo?> TryGet(Session session, string id, CancellationToken cancellationToken = default)
+    public virtual async Task<Todo?> Get(Session session, string id, CancellationToken cancellationToken = default)
     {
         var user = await _authService.GetUser(session, cancellationToken);
         user.MustBeAuthenticated();
 
         var key = GetTodoKey(user, id);
-        var todoOpt = await _store.TryGet<Todo>(session, key, cancellationToken);
-        return todoOpt.IsSome(out var todo) ? todo : null;
+        return await _store.Get<Todo>(session, key, cancellationToken);
     }
 
     public virtual async Task<Todo[]> List(Session session, PageRef<string> pageRef, CancellationToken cancellationToken = default)
@@ -86,9 +85,9 @@ public class TodoService : ITodoService
 
         var keyPrefix = GetTodoKeyPrefix(user);
         var keySuffixes = await _store.ListKeySuffixes(session, keyPrefix, pageRef, cancellationToken);
-        var tasks = keySuffixes.Select(suffix => _store.TryGet<Todo>(session, keyPrefix + suffix, cancellationToken));
-        var todoOpts = await Task.WhenAll(tasks);
-        return todoOpts.Where(todo => todo.HasValue).Select(todo => todo.Value).ToArray();
+        var tasks = keySuffixes.Select(suffix => _store.Get<Todo>(session, keyPrefix + suffix, cancellationToken).AsTask());
+        var todos = await Task.WhenAll(tasks);
+        return todos.Where(todo => todo != null).ToArray()!;
     }
 
     public virtual async Task<TodoSummary> GetSummary(Session session, CancellationToken cancellationToken = default)

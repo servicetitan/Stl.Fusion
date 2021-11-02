@@ -72,7 +72,7 @@ public class ComputedRegistry : IDisposable
         _gcHandlePool.Dispose();
     }
 
-    public virtual IComputed? TryGet(ComputedInput key)
+    public virtual IComputed? Get(ComputedInput key)
     {
         var random = Randomize(key.HashCode);
         OnOperation(random);
@@ -156,7 +156,7 @@ public class ComputedRegistry : IDisposable
     {
         var keys = _storage.Keys.ToList();
         foreach (var key in keys)
-            TryGet(key)?.Invalidate();
+            Get(key)?.Invalidate();
     }
 
     public Task Prune()

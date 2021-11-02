@@ -33,7 +33,7 @@ public abstract class KeyValueStoreTestBase : FusionTestBase
         await kvs.Set("1", "1v");
         (await kvs.Get("1")).Should().Be("1v");
         await kvs.Remove("1");
-        (await kvs.TryGet("1")).Should().Be(null);
+        (await kvs.Get("1")).Should().Be(null);
     }
 
     [Fact]
@@ -112,9 +112,9 @@ public abstract class KeyValueStoreTestBase : FusionTestBase
         await Delay(3); // Let trimmer to kick in
         ComputedRegistry.Instance.InvalidateEverything();
 
-        (await kvs.TryGet("1")).Should().Be(null);
+        (await kvs.Get("1")).Should().Be(null);
         (await kvs.Get("2")).Should().Be("2v");
         (await kvs.Get("3")).Should().Be("3v");
-        (await kvs.TryGet("4")).Should().Be(null);
+        (await kvs.Get("4")).Should().Be(null);
     }
 }

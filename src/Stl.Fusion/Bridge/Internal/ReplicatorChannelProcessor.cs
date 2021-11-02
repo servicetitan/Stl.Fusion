@@ -79,7 +79,7 @@ public class ReplicatorChannelProcessor : AsyncProcessBase
                     Reconnect(error);
                     foreach (var publicationId in GetSubscriptions()) {
                         var publicationRef = new PublicationRef(PublisherId, publicationId);
-                        var replicaImpl = (IReplicaImpl?) Replicator.TryGet(publicationRef);
+                        var replicaImpl = (IReplicaImpl?) Replicator.Get(publicationRef);
                         replicaImpl?.ApplyFailedUpdate(error, cancellationToken);
                     }
                     break;
@@ -139,7 +139,7 @@ public class ReplicatorChannelProcessor : AsyncProcessBase
             // Fast dispatch to OnStateMessage<T>
             return OnPublicationStateReplyHandlers[psr.GetResultType()].Handle(psr, (this, cancellationToken));
         case PublicationAbsentsReply pam:
-            var replica = (IReplicaImpl?) Replicator.TryGet((PublisherId, pam.PublicationId));
+            var replica = (IReplicaImpl?) Replicator.Get((PublisherId, pam.PublicationId));
             replica?.ApplyFailedUpdate(Errors.PublicationAbsents(), default);
             break;
         }
@@ -201,7 +201,7 @@ public class ReplicatorChannelProcessor : AsyncProcessBase
 
             foreach (var publicationId in GetSubscriptions()) {
                 var publicationRef = new PublicationRef(PublisherId, publicationId);
-                var replica = Replicator.TryGet(publicationRef);
+                var replica = Replicator.Get(publicationRef);
                 if (replica != null)
                     Subscribe(replica);
                 else {

@@ -24,10 +24,9 @@ public interface IDbUserRepo<in TDbContext, TDbUser, TDbUserId>
         TDbContext dbContext, TDbUser dbUser, CancellationToken cancellationToken = default);
 
     // Read methods
-    Task<TDbUser?> TryGet(TDbUserId userId, CancellationToken cancellationToken = default);
-    Task<TDbUser?> TryGet(
-        TDbContext dbContext, TDbUserId userId, CancellationToken cancellationToken = default);
-    Task<TDbUser?> TryGetByUserIdentity(
+    Task<TDbUser?> Get(TDbUserId userId, CancellationToken cancellationToken = default);
+    Task<TDbUser?> Get(TDbContext dbContext, TDbUserId userId, CancellationToken cancellationToken = default);
+    Task<TDbUser?> GetByUserIdentity(
         TDbContext dbContext, UserIdentity userIdentity, CancellationToken cancellationToken = default);
 }
 
@@ -83,7 +82,7 @@ public class DbUserRepo<TDbContext, TDbUser, TDbUserId> : DbServiceBase<TDbConte
     {
         TDbUser dbUser;
         if (!string.IsNullOrEmpty(user.Id)) {
-            dbUser = await TryGet(dbContext, DbUserIdHandler.Parse(user.Id), cancellationToken).ConfigureAwait(false)
+            dbUser = await Get(dbContext, DbUserIdHandler.Parse(user.Id), cancellationToken).ConfigureAwait(false)
                 ?? throw Errors.EntityNotFound<TDbUser>();
             return (dbUser, false);
         }
@@ -116,10 +115,10 @@ public class DbUserRepo<TDbContext, TDbUser, TDbUserId> : DbServiceBase<TDbConte
 
     // Read methods
 
-    public async Task<TDbUser?> TryGet(TDbUserId userId, CancellationToken cancellationToken = default)
-        => await UserResolver.TryGet(userId, cancellationToken).ConfigureAwait(false);
+    public async Task<TDbUser?> Get(TDbUserId userId, CancellationToken cancellationToken = default)
+        => await UserResolver.Get(userId, cancellationToken).ConfigureAwait(false);
 
-    public virtual async Task<TDbUser?> TryGet(
+    public virtual async Task<TDbUser?> Get(
         TDbContext dbContext, TDbUserId userId, CancellationToken cancellationToken)
     {
         var dbUser = await dbContext.Set<TDbUser>()
@@ -131,7 +130,7 @@ public class DbUserRepo<TDbContext, TDbUser, TDbUserId> : DbServiceBase<TDbConte
         return dbUser;
     }
 
-    public virtual async Task<TDbUser?> TryGetByUserIdentity(
+    public virtual async Task<TDbUser?> GetByUserIdentity(
         TDbContext dbContext, UserIdentity userIdentity, CancellationToken cancellationToken = default)
     {
         if (!userIdentity.IsValid)
@@ -141,7 +140,7 @@ public class DbUserRepo<TDbContext, TDbUser, TDbUserId> : DbServiceBase<TDbConte
             .ConfigureAwait(false);
         if (dbUserIdentities == null)
             return null;
-        var user = await TryGet(dbContext, dbUserIdentities.DbUserId, cancellationToken).ConfigureAwait(false);
+        var user = await Get(dbContext, dbUserIdentities.DbUserId, cancellationToken).ConfigureAwait(false);
         return user;
     }
 }

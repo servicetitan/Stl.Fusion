@@ -85,7 +85,7 @@ public class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId> : DbA
 
         var isNewUser = false;
         var dbUser = await Users
-            .TryGetByUserIdentity(dbContext, authenticatedIdentity, cancellationToken)
+            .GetByUserIdentity(dbContext, authenticatedIdentity, cancellationToken)
             .ConfigureAwait(false);
         if (dbUser == null) {
             (dbUser, isNewUser) = await Users
@@ -125,8 +125,7 @@ public class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId> : DbA
         var context = CommandContext.GetCurrent();
         if (Computed.IsInvalidating()) {
             _ = GetSessionInfo(session, default);
-            var invSessionInfo = context.Operation().Items.TryGet<SessionInfo>();
-            if (invSessionInfo != null) {
+            if (context.Operation().Items.TryGet<SessionInfo>(out var invSessionInfo)) {
                 _ = TryGetUser(invSessionInfo.UserId, default);
                 _ = GetUserSessions(invSessionInfo.UserId, default);
             }
@@ -167,7 +166,7 @@ public class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId> : DbA
         await using var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
 
         var dbUserId = DbUserIdHandler.Parse(sessionInfo.UserId);
-        var dbUser = await Users.TryGet(dbContext, dbUserId, cancellationToken).ConfigureAwait(false);
+        var dbUser = await Users.Get(dbContext, dbUserId, cancellationToken).ConfigureAwait(false);
         if (dbUser == null)
             throw EntityFramework.Internal.Errors.EntityNotFound(Users.UserEntityType);
         await Users.Edit(dbContext, dbUser, command, cancellationToken).ConfigureAwait(false);
@@ -189,7 +188,7 @@ public class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId> : DbA
 
         await using var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
 
-        var dbSessionInfo = await Sessions.TryGet(dbContext, session.Id, cancellationToken).ConfigureAwait(false);
+        var dbSessionInfo = await Sessions.Get(dbContext, session.Id, cancellationToken).ConfigureAwait(false);
         var now = Clocks.SystemClock.Now;
         var oldSessionInfo = SessionConverter.ToModel(dbSessionInfo)
             ?? SessionConverter.NewModel() with { Id = session.Id };
@@ -228,7 +227,7 @@ public class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId> : DbA
     public override async Task<SessionInfo> GetSessionInfo(
         Session session, CancellationToken cancellationToken = default)
     {
-        var dbSessionInfo = await Sessions.TryGet(session.Id, cancellationToken).ConfigureAwait(false);
+        var dbSessionInfo = await Sessions.Get(session.Id, cancellationToken).ConfigureAwait(false);
         if (dbSessionInfo == null)
             return new(session.Id, Clocks.SystemClock.Now);
         var sessionInfo = SessionConverter.ToModel(dbSessionInfo);
@@ -249,7 +248,7 @@ public class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId> : DbA
         string userId, CancellationToken cancellationToken = default)
     {
         var dbUserId = DbUserIdHandler.Parse(userId);
-        var dbUser = await Users.TryGet(dbUserId, cancellationToken).ConfigureAwait(false);
+        var dbUser = await Users.Get(dbUserId, cancellationToken).ConfigureAwait(false);
         return UserConverter.ToModel(dbUser);
     }
 

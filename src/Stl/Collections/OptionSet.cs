@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
 namespace Stl.Collections;
@@ -39,9 +40,9 @@ public class OptionSet : IServiceProvider
         }
     }
 
-    public object? this[Type type] {
-        get => this[type.ToSymbol()];
-        set => this[type.ToSymbol()] = value;
+    public object? this[Type optionType] {
+        get => this[optionType.ToSymbol()];
+        set => this[optionType.ToSymbol()] = value;
     }
 
     public OptionSet()
@@ -59,8 +60,11 @@ public class OptionSet : IServiceProvider
     public object? GetService(Type serviceType)
         => this[serviceType];
 
-    public T? TryGet<T>()
-        => (T?) this[typeof(T)]!;
+    public bool Contains(Type optionType)
+        => this[optionType] != null;
+
+    public bool Contains<T>()
+        => this[typeof(T)] != null;
 
     public bool TryGet<T>(out T value)
     {
@@ -81,7 +85,7 @@ public class OptionSet : IServiceProvider
         return (T) value;
     }
 
-    public T GetOrDefault<T>(T @default)
+    public T? GetOrDefault<T>(T? @default = default)
     {
         var value = this[typeof(T)];
         return value == null ? @default : (T) value;

@@ -63,7 +63,7 @@ public class UserService : DbServiceBase<TestDbContext>, IUserService
         var existingUser = (User?) null;
         var context = CommandContext.GetCurrent();
         if (Computed.IsInvalidating()) {
-            existingUser = context.Operation().Items.TryGet<User>();
+            existingUser = context.Operation().Items.GetOrDefault<User>();
             _ = TryGet(user.Id, default).AssertCompleted();
             if (existingUser == null)
                 _ = Count(default).AssertCompleted();
@@ -102,7 +102,7 @@ public class UserService : DbServiceBase<TestDbContext>, IUserService
         var user = command.User;
         var context = CommandContext.GetCurrent();
         if (Computed.IsInvalidating()) {
-            var success = context.Operation().Items.TryGet<bool>();
+            var success = context.Operation().Items.GetOrDefault<bool>();
             if (success) {
                 _ = TryGet(user.Id, default).AssertCompleted();
                 _ = Count(default).AssertCompleted();

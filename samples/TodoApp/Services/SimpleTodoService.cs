@@ -25,7 +25,7 @@ public class SimpleTodoService : ITodoService
         _store = _store.RemoveAll(i => i.Id == todo.Id).Add(todo);
 
         using var invalidating = Computed.Invalidate();
-        _ = TryGet(session, todo.Id, CancellationToken.None);
+        _ = Get(session, todo.Id, CancellationToken.None);
         _ = PseudoGetAllItems(session);
         return todo;
     }
@@ -38,14 +38,14 @@ public class SimpleTodoService : ITodoService
         _store = _store.RemoveAll(i => i.Id == todoId);
 
         using var invalidating = Computed.Invalidate();
-        _ = TryGet(session, todoId, CancellationToken.None);
+        _ = Get(session, todoId, CancellationToken.None);
         _ = PseudoGetAllItems(session);
     }
 #pragma warning restore 1998
 
     // Queries
 
-    public virtual Task<Todo?> TryGet(Session session, string id, CancellationToken cancellationToken = default)
+    public virtual Task<Todo?> Get(Session session, string id, CancellationToken cancellationToken = default)
         => Task.FromResult(_store.SingleOrDefault(i => i.Id == id));
 
     public virtual async Task<Todo[]> List(Session session, PageRef<string> pageRef, CancellationToken cancellationToken = default)

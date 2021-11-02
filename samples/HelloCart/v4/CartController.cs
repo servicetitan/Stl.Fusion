@@ -21,8 +21,8 @@ public class CartController : ControllerBase, ICartService
     // Queries
 
     [HttpGet, Publish]
-    public Task<Cart?> TryGet(string id, CancellationToken cancellationToken = default)
-        => _cartService.TryGet(id, cancellationToken);
+    public Task<Cart?> Get(string id, CancellationToken cancellationToken = default)
+        => _cartService.Get(id, cancellationToken);
 
     [HttpGet, Publish]
     public Task<decimal> GetTotal(string id, CancellationToken cancellationToken = default)

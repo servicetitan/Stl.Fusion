@@ -70,7 +70,7 @@ public abstract class AsyncLockTestBase : TestBase
         }
     }
 
-    public AsyncLockTestBase(ITestOutputHelper @out) : base(@out) { }
+    protected AsyncLockTestBase(ITestOutputHelper @out) : base(@out) { }
 
     protected abstract IAsyncLock CreateAsyncLock(ReentryMode reentryMode);
     protected abstract void AssertResourcesReleased();

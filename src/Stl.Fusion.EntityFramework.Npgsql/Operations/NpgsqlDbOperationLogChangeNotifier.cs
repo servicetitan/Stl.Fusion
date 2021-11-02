@@ -37,21 +37,21 @@ public class NpgsqlDbOperationLogChangeNotifier<TDbContext> : DbServiceBase<TDbC
         IsDisposed = true;
         using var suppressing = ExecutionContextExt.SuppressFlow();
         _ = Task.Run(async () => {
-            using (await AsyncLock.Lock()) {
+            using (await AsyncLock.Lock().ConfigureAwait(false)) {
                 var dbContext = DbContext;
                 if (dbContext != null)
-                    await dbContext.DisposeAsync();
+                    await dbContext.DisposeAsync().ConfigureAwait(false);
             }
         });
     }
 
     public Task OnOperationCompleted(IOperation operation)
     {
-        if (operation.AgentId != AgentInfo.Id.Value) // Only local commands require notification
+        if (!StringComparer.Ordinal.Equals(operation.AgentId, AgentInfo.Id.Value)) // Only local commands require notification
             return Task.CompletedTask;
         var commandContext = CommandContext.Current;
         if (commandContext != null) { // It's a command
-            var operationScope = commandContext.Items.TryGet<DbOperationScope<TDbContext>>();
+            var operationScope = commandContext.Items.GetOrDefault<DbOperationScope<TDbContext>>();
             if (operationScope == null || !operationScope.IsUsed) // But it didn't change anything related to TDbContext
                 return Task.CompletedTask;
         }
@@ -65,11 +65,13 @@ public class NpgsqlDbOperationLogChangeNotifier<TDbContext> : DbServiceBase<TDbC
 
     protected virtual async Task Notify()
     {
+#pragma warning disable MA0074
         var qPayload = AgentInfo.Id.Value.Replace("'", "''");
+#pragma warning restore MA0074
         TDbContext? dbContext = null;
         while (true) {
             try {
-                using (await AsyncLock.Lock()) {
+                using (await AsyncLock.Lock().ConfigureAwait(false)) {
                     if (IsDisposed)
                         return;
                     dbContext = DbContext ??= CreateDbContext();

@@ -4,7 +4,7 @@ public static class PublisherExt
 {
     public static IPublication Get(
         this IPublisher publisher, Symbol publicationId)
-        => publisher.TryGet(publicationId) ?? throw new KeyNotFoundException();
+        => publisher.Get(publicationId) ?? throw new KeyNotFoundException();
 
     // TryPublish
 

@@ -90,7 +90,7 @@ public class InMemoryKeyValueStore : AsyncProcessBase, IKeyValueStore
 
     // Queries
 
-    public virtual Task<string?> TryGet(string key, CancellationToken cancellationToken = default)
+    public virtual Task<string?> Get(string key, CancellationToken cancellationToken = default)
     {
         _ = PseudoGet(key);
         if (!Store.TryGetValue(key, out var item))

@@ -15,9 +15,9 @@ public class NestedOperationLoggerTest : FusionTestBase
     public async Task BasicTest()
     {
         var kvs = Services.GetRequiredService<IKeyValueStore>();
-        var c1 = await Computed.Capture(_ => kvs.TryGet("1"));
-        var c2 = await Computed.Capture(_ => kvs.TryGet("2"));
-        var c3 = await Computed.Capture(_ => kvs.TryGet("3"));
+        var c1 = await Computed.Capture(_ => kvs.Get("1"));
+        var c2 = await Computed.Capture(_ => kvs.Get("2"));
+        var c3 = await Computed.Capture(_ => kvs.Get("3"));
         c1.Value.Should().BeNull();
         c2.Value.Should().BeNull();
         c3.Value.Should().BeNull();

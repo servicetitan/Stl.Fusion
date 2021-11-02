@@ -17,7 +17,7 @@ public class InMemoryCartService : ICartService
         if (string.IsNullOrEmpty(cartId))
             throw new ArgumentOutOfRangeException(nameof(command));
         if (Computed.IsInvalidating()) {
-            _ = TryGet(cartId, default);
+            _ = Get(cartId, default);
             return Task.CompletedTask;
         }
 
@@ -28,17 +28,17 @@ public class InMemoryCartService : ICartService
         return Task.CompletedTask;
     }
 
-    public virtual Task<Cart?> TryGet(string id, CancellationToken cancellationToken = default)
+    public virtual Task<Cart?> Get(string id, CancellationToken cancellationToken = default)
         => Task.FromResult(_carts.GetValueOrDefault(id));
 
     public virtual async Task<decimal> GetTotal(string id, CancellationToken cancellationToken = default)
     {
-        var cart = await TryGet(id, cancellationToken);
+        var cart = await Get(id, cancellationToken);
         if (cart == null)
             return 0;
         var total = 0M;
         foreach (var (productId, quantity) in cart.Items) {
-            var product = await _products.TryGet(productId, cancellationToken);
+            var product = await _products.Get(productId, cancellationToken);
             total += (product?.Price ?? 0M) * quantity;
         }
         return total;

@@ -26,7 +26,7 @@ public class DbCartService2 : DbServiceBase<AppDbContext>, ICartService
         if (string.IsNullOrEmpty(cartId))
             throw new ArgumentOutOfRangeException(nameof(command));
         if (Computed.IsInvalidating()) {
-            _ = TryGet(cartId, default);
+            _ = Get(cartId, default);
             return;
         }
 
@@ -68,12 +68,10 @@ public class DbCartService2 : DbServiceBase<AppDbContext>, ICartService
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public virtual async Task<Cart?> TryGet(string id, CancellationToken cancellationToken = default)
+    public virtual async Task<Cart?> Get(string id, CancellationToken cancellationToken = default)
     {
-        var dbCart = await _cartResolver.TryGet(id, cancellationToken);
-        if (dbCart == null)
-            return null;
-        return new Cart() {
+        var dbCart = await _cartResolver.Get(id, cancellationToken);
+        return dbCart == null ? null : new Cart() {
             Id = dbCart.Id,
             Items = dbCart.Items.ToImmutableDictionary(i => i.DbProductId, i => i.Quantity),
         };
@@ -81,11 +79,11 @@ public class DbCartService2 : DbServiceBase<AppDbContext>, ICartService
 
     public virtual async Task<decimal> GetTotal(string id, CancellationToken cancellationToken = default)
     {
-        var cart = await TryGet(id, cancellationToken);
+        var cart = await Get(id, cancellationToken);
         if (cart == null)
             return 0;
         var itemTotals = await Task.WhenAll(cart.Items.Select(async item => {
-            var product = await _products.TryGet(item.Key, cancellationToken);
+            var product = await _products.Get(item.Key, cancellationToken);
             return item.Value * (product?.Price ?? 0M);
         }));
         return itemTotals.Sum();

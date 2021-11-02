@@ -13,7 +13,7 @@ public class InMemoryProductService : IProductService
         if (string.IsNullOrEmpty(productId))
             throw new ArgumentOutOfRangeException(nameof(command));
         if (Computed.IsInvalidating()) {
-            _ = TryGet(productId, default);
+            _ = Get(productId, default);
             return Task.CompletedTask;
         }
 
@@ -24,6 +24,6 @@ public class InMemoryProductService : IProductService
         return Task.CompletedTask;
     }
 
-    public virtual Task<Product?> TryGet(string id, CancellationToken cancellationToken = default)
+    public virtual Task<Product?> Get(string id, CancellationToken cancellationToken = default)
         => Task.FromResult(_products.GetValueOrDefault(id));
 }

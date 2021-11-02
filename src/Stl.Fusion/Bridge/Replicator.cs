@@ -11,7 +11,7 @@ public interface IReplicator
 {
     Symbol Id { get; }
 
-    IReplica? TryGet(PublicationRef publicationRef);
+    IReplica? Get(PublicationRef publicationRef);
     IReplica<T> GetOrAdd<T>(PublicationStateInfo<T> publicationStateInfo, bool requestUpdate = false);
 
     IState<bool> GetPublisherConnectionState(Symbol publisherId);
@@ -54,8 +54,8 @@ public class Replicator : SafeAsyncDisposableBase, IReplicatorImpl
         CreateChannelProcessorHandler = CreateChannelProcessor;
     }
 
-    public IReplica? TryGet(PublicationRef publicationRef)
-        => ReplicaRegistry.Instance.TryGet(publicationRef);
+    public IReplica? Get(PublicationRef publicationRef)
+        => ReplicaRegistry.Instance.Get(publicationRef);
 
     public IReplica<T> GetOrAdd<T>(PublicationStateInfo<T> publicationStateInfo, bool requestUpdate = false)
     {

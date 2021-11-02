@@ -59,7 +59,7 @@ public class ReplicaRegistry : IDisposable
         _gcHandlePool.Dispose();
     }
 
-    public virtual IReplica? TryGet(PublicationRef publicationRef)
+    public virtual IReplica? Get(PublicationRef publicationRef)
     {
         var random = publicationRef.PublicationId.HashCode;
         OnOperation(random);

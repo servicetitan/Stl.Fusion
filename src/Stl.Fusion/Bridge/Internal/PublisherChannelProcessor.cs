@@ -70,7 +70,7 @@ public class PublisherChannelProcessor : AsyncProcessBase
             return;
         }
         var publicationId = request.PublicationId;
-        var publication = Publisher.TryGet(publicationId);
+        var publication = Publisher.Get(publicationId);
         if (publication == null) {
             await OnUnsupportedRequest(request, cancellationToken).ConfigureAwait(false);
             return;
@@ -115,7 +115,7 @@ public class PublisherChannelProcessor : AsyncProcessBase
                     .ToList()
                     .Select(p => Task.Run(async () => {
                         var (publicationId, _) = (p.Key, p.Value);
-                        var publication = Publisher.TryGet(publicationId);
+                        var publication = Publisher.Get(publicationId);
                         if (publication != null)
                             await Unsubscribe(publication, default).ConfigureAwait(false);
                     }));

@@ -12,8 +12,8 @@ public interface ITodoClientDef
     [Post(nameof(Remove))]
     Task Remove([Body] RemoveTodoCommand command, CancellationToken cancellationToken = default);
 
-    [Get(nameof(TryGet))]
-    Task<Todo?> TryGet(Session session, string id, CancellationToken cancellationToken = default);
+    [Get(nameof(Get))]
+    Task<Todo?> Get(Session session, string id, CancellationToken cancellationToken = default);
     [Get(nameof(List))]
     Task<Todo[]> List(Session session, PageRef<string> pageRef, CancellationToken cancellationToken = default);
     [Get(nameof(GetSummary))]

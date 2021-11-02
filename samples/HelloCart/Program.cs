@@ -69,7 +69,7 @@ while (true) {
             throw new ApplicationException("Invalid price expression.");
         var productId = parts[0].Trim();
         var price = decimal.Parse(parts[1].Trim());
-        var product = await app.ClientProductService.TryGet(productId);
+        var product = await app.ClientProductService.Get(productId);
         if (product == null)
             throw new KeyNotFoundException("Specified product doesn't exist.");
         var command = new EditCommand<Product>(product with { Price = price });

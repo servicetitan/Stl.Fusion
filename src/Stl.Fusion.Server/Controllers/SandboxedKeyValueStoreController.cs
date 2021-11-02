@@ -41,8 +41,8 @@ public class SandboxedKeyValueStoreController : ControllerBase, ISandboxedKeyVal
     // Queries
 
     [HttpGet, Publish]
-    public Task<string?> TryGet(Session session, string key, CancellationToken cancellationToken = default)
-        => Store.TryGet(session, key, cancellationToken);
+    public Task<string?> Get(Session session, string key, CancellationToken cancellationToken = default)
+        => Store.Get(session, key, cancellationToken);
 
     [HttpGet, Publish]
     public Task<int> Count(Session session, string prefix, CancellationToken cancellationToken = default)

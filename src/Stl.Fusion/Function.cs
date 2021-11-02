@@ -106,7 +106,7 @@ public abstract class FunctionBase<TIn, TOut> : IFunction<TIn, TOut>
 
     protected IComputed<TOut>? TryGetExisting(TIn input)
     {
-        var computed = ComputedRegistry.Instance.TryGet(input);
+        var computed = ComputedRegistry.Instance.Get(input);
         return computed as IComputed<TIn, TOut>;
     }
 

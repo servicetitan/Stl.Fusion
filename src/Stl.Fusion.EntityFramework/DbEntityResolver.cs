@@ -9,13 +9,12 @@ public interface IDbEntityResolver<TKey, TDbEntity>
     where TKey : notnull
     where TDbEntity : class
 {
-    Task<TDbEntity> Get(TKey key, CancellationToken cancellationToken = default);
-    Task<TDbEntity?> TryGet(TKey key, CancellationToken cancellationToken = default);
+    Task<TDbEntity?> Get(TKey key, CancellationToken cancellationToken = default);
     Task<Dictionary<TKey, TDbEntity>> GetMany(IEnumerable<TKey> keys, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
-/// This type queues (when needed) & batches calls to <see cref="TryGet"/> with
+/// This type queues (when needed) & batches calls to <see cref="Get"/> with
 /// <see cref="AsyncBatchProcessor{TIn,TOut}"/> to reduce the rate of underlying DB queries.
 /// </summary>
 /// <typeparam name="TDbContext">The type of <see cref="DbContext"/>.</typeparam>
@@ -88,18 +87,12 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
         GC.SuppressFinalize(this);
     }
 
-    public virtual async Task<TDbEntity> Get(TKey key, CancellationToken cancellationToken = default)
-    {
-        var entity = await TryGet(key, cancellationToken).ConfigureAwait(false);
-        return entity ?? throw Errors.EntityNotFound<TDbEntity>();
-    }
-
-    public virtual async Task<TDbEntity?> TryGet(TKey key, CancellationToken cancellationToken = default)
+    public virtual async Task<TDbEntity?> Get(TKey key, CancellationToken cancellationToken = default)
         => await BatchProcessor.Process(key, cancellationToken).ConfigureAwait(false);
 
     public virtual async Task<Dictionary<TKey, TDbEntity>> GetMany(IEnumerable<TKey> keys, CancellationToken cancellationToken = default)
     {
-        var tasks = keys.Distinct().Select(key => TryGet(key, cancellationToken)).ToArray();
+        var tasks = keys.Distinct().Select(key => Get(key, cancellationToken)).ToArray();
         var entities = await Task.WhenAll(tasks).ConfigureAwait(false);
         var result = new Dictionary<TKey, TDbEntity>();
         foreach (var entity in entities)

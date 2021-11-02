@@ -17,8 +17,8 @@ public interface ISandboxedKeyValueStoreClientDef
     [Post(nameof(RemoveMany))]
     Task RemoveMany([Body] SandboxedRemoveManyCommand command, CancellationToken cancellationToken = default);
 
-    [Get(nameof(TryGet))]
-    Task<string?> TryGet(Session session, string key, CancellationToken cancellationToken = default);
+    [Get(nameof(Get))]
+    Task<string?> Get(Session session, string key, CancellationToken cancellationToken = default);
     [Get(nameof(Count))]
     Task<int> Count(Session session, string prefix, CancellationToken cancellationToken = default);
     [Get(nameof(ListKeySuffixes))]
