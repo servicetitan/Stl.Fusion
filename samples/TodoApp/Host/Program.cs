@@ -29,7 +29,7 @@ var host = Host.CreateDefaultBuilder()
 // Ensure the DB is created
 var dbContextFactory = host.Services.GetRequiredService<IDbContextFactory<AppDbContext>>();
 await using var dbContext = dbContextFactory.CreateDbContext();
-await dbContext.Database.EnsureDeletedAsync();
+// await dbContext.Database.EnsureDeletedAsync();
 await dbContext.Database.EnsureCreatedAsync();
 
 await host.RunAsync();

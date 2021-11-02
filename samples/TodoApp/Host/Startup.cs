@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Fusion.EntityFramework;
+using Stl.Fusion.EntityFramework.Redis;
 using Stl.Fusion.Extensions;
 using Stl.Fusion.Operations.Reprocessing;
 using Stl.IO;
@@ -83,6 +84,8 @@ public class Startup
             });
             var operationLogChangeAlertPath = dbPath + "_changed";
             dbContext.AddFileBasedOperationLogChangeTracking(operationLogChangeAlertPath);
+            // dbContext.AddRedisDb("localhost", "Fusion.Samples.TodoApp");
+            // dbContext.AddRedisOperationLogChangeTracking();
             if (!HostSettings.UseInMemoryAuthService)
                 dbContext.AddAuthentication<string>();
             dbContext.AddKeyValueStore();

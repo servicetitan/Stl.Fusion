@@ -39,10 +39,11 @@ public class DbKeyValueTrimmer<TDbContext, TDbKeyValue> : DbWakeSleepProcessBase
 
     protected override async Task WakeUp(CancellationToken cancellationToken)
     {
-        await using var dbContext = CreateDbContext(true);
+        var dbContext = CreateDbContext(true);
+        await using var _ = dbContext.ConfigureAwait(false);
         dbContext.DisableChangeTracking();
-        LastTrimCount = 0;
 
+        LastTrimCount = 0;
         var minExpiresAt = Clocks.SystemClock.Now.ToDateTime();
         var keys = await dbContext.Set<TDbKeyValue>().AsQueryable()
             .Where(o => o.ExpiresAt < minExpiresAt)

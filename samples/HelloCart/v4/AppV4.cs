@@ -4,8 +4,10 @@ using Samples.HelloCart.V2;
 using Stl.Fusion;
 using Stl.Fusion.Client;
 using Stl.Fusion.EntityFramework;
+using Stl.Fusion.EntityFramework.Redis;
 using Stl.Fusion.Server;
 using Stl.IO;
+using Stl.Redis;
 
 namespace Samples.HelloCart.V4;
 
@@ -50,6 +52,8 @@ public class AppV4 : AppBase
                     services.AddDbContextServices<AppDbContext>(dbContext => {
                         dbContext.AddOperations((_, o) => { o.UnconditionalWakeUpPeriod = TimeSpan.FromSeconds(5); });
                         dbContext.AddFileBasedOperationLogChangeTracking(dbPath + "_changed");
+                        // dbContext.AddRedisDb("localhost", "Fusion.Samples.HelloCart");
+                        // dbContext.AddRedisOperationLogChangeTracking();
                         dbContext.AddEntityResolver<string, DbProduct>();
                         dbContext.AddEntityResolver<string, DbCart>((_, options) => {
                             // Cart is always loaded together with items
