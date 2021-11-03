@@ -48,7 +48,7 @@ public class ComputingCacheTest : TestBase
                     throw new NullReferenceException();
                 foreach (var d in depSelector(c))
                     // ReSharper disable once AccessToModifiedClosure
-                    await cache.Get(d).ConfigureAwait(false);
+                    await cache.Get(d, ct).ConfigureAwait(false);
                 result.Add(c);
                 return c;
             }

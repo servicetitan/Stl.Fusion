@@ -22,7 +22,7 @@ public class FileBasedDbOperationLogChangeNotifier<TDbContext> : IOperationCompl
             return Task.CompletedTask;
         var commandContext = CommandContext.Current;
         if (commandContext != null) { // It's a command
-            var operationScope = commandContext.Items.GetOrDefault<DbOperationScope<TDbContext>>();
+            var operationScope = commandContext.Items.Get<DbOperationScope<TDbContext>>();
             if (operationScope == null || !operationScope.IsUsed) // But it didn't change anything related to TDbContext
                 return Task.CompletedTask;
         }

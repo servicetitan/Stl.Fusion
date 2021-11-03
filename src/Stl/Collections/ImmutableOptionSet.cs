@@ -56,15 +56,10 @@ public readonly struct ImmutableOptionSet : IServiceProvider, IEquatable<Immutab
         return true;
     }
 
-    public T Get<T>()
-    {
-        var value = this[typeof(T)];
-        if (value == null)
-            throw new KeyNotFoundException();
-        return (T) value;
-    }
+    public T? Get<T>()
+        => (T?) this[typeof(T)];
 
-    public T? GetOrDefault<T>(T? @default = default!)
+    public T GetOrDefault<T>(T @default)
     {
         var value = this[typeof(T)];
         return value == null ? @default : (T) value;

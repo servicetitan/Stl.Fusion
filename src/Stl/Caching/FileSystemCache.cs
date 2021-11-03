@@ -20,7 +20,7 @@ public abstract class FileSystemCacheBase<TKey, TValue> : AsyncCacheBase<TKey, T
             await using var fileStreamWrapper = OpenFile(GetFileName(key), false, cancellationToken).ToAsyncDisposableAdapter();
             var fileStream = fileStreamWrapper.Target;
             var pairs = Deserialize(await GetText(fileStream, cancellationToken).ConfigureAwait(false));
-            return pairs?.GetOption(key) ?? default;
+            return pairs != null && pairs.TryGetValue(key, out var v) ? v : Option<TValue>.None;
         }
         catch (IOException) {
             return default;
@@ -40,7 +40,7 @@ public abstract class FileSystemCacheBase<TKey, TValue> : AsyncCacheBase<TKey, T
                 var pairs =
                     Deserialize(originalText)
                     ?? new Dictionary<TKey, TValue>();
-                pairs.SetOption(key, value);
+                pairs.SetOrRemove(key, value);
                 newText = Serialize(pairs);
                 await SetText(fileStream, newText, cancellationToken).ConfigureAwait(false);
             }

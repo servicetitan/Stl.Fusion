@@ -17,18 +17,18 @@ public class FileSystemCacheTest : TestBase
         var cache = new FileSystemCache<int, int>(cacheDir);
 
         (await cache.TryGet(1)).Should().Be(Option.None<int>());
-        await Assert.ThrowsAsync<KeyNotFoundException>(async () => await cache.Get(1));
+        (await cache.Get(1)).Should().Be(0);
 
         await cache.Set(1, 1);
         (await cache.TryGet(1)).Should().Be(Option.Some<int>(1));
         (await cache.Get(1)).Should().Be(1);
 
         (await cache.TryGet(2)).Should().Be(Option.None<int>());
-        await Assert.ThrowsAsync<KeyNotFoundException>(async () => await cache.Get(2));
+        (await cache.Get(2)).Should().Be(0);
 
         await cache.Remove(1);
         (await cache.TryGet(1)).Should().Be(Option.None<int>());
-        await Assert.ThrowsAsync<KeyNotFoundException>(async () => await cache.Get(1));
+        (await cache.Get(1)).Should().Be(0);
     }
 
     private static FilePath GetCacheDir(string id = "", Assembly? assembly = null)

@@ -29,7 +29,8 @@ public class DbOperationScopeProvider<TDbContext> : DbServiceBase<TDbContext>, I
         if (context.Items[tScope] != null) // Safety check
             throw Stl.Internal.Errors.InternalError($"'{tScope}' scope is already provided. Duplicate handler?");
 
-        await using var scope = Services.GetRequiredService<DbOperationScope<TDbContext>>();
+        var scope = Services.GetRequiredService<DbOperationScope<TDbContext>>();
+        await using var _ = scope.ConfigureAwait(false);
         var operation = scope.Operation;
         operation.Command = command;
         context.Items.Set(scope);

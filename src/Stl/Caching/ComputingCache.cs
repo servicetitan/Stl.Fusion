@@ -14,18 +14,21 @@ public abstract class ComputingCacheBase<TKey, TValue> : AsyncKeyResolverBase<TK
         Locks = lockSet ?? new AsyncLockSet<TKey>(ReentryMode.CheckedFail);
     }
 
-    public override async ValueTask<TValue> Get(TKey key, CancellationToken cancellationToken = default)
+    // Note that Get is the primary method here, not TryGet -
+    // that's because computing cache _always_ produces a result,
+    // i.e. there is no "miss" concept
+    public override async ValueTask<TValue?> Get(TKey key, CancellationToken cancellationToken = default)
     {
-        // Read-Lock-RetryRead-Compute-Store pattern
+        // Read-Lock-RetryRead-Compute-Store pattern;
 
-        var maybeValue = await Cache.TryGet(key, cancellationToken).ConfigureAwait(false);
-        if (maybeValue.IsSome(out var value))
+        var valueOpt = await Cache.TryGet(key, cancellationToken).ConfigureAwait(false);
+        if (valueOpt.IsSome(out var value))
             return value;
 
         using var @lock = await Locks.Lock(key, cancellationToken).ConfigureAwait(false);
 
-        maybeValue = await Cache.TryGet(key, cancellationToken).ConfigureAwait(false);
-        if (maybeValue.IsSome(out value))
+        valueOpt = await Cache.TryGet(key, cancellationToken).ConfigureAwait(false);
+        if (valueOpt.IsSome(out value))
             return value;
 
         var result = await Compute(key, cancellationToken).ConfigureAwait(false);
@@ -33,10 +36,10 @@ public abstract class ComputingCacheBase<TKey, TValue> : AsyncKeyResolverBase<TK
         return result;
     }
 
-    public override async ValueTask<Option<TValue>> TryGet(TKey key, CancellationToken cancellationToken = default)
+    public sealed override async ValueTask<Option<TValue>> TryGet(TKey key, CancellationToken cancellationToken = default)
     {
         var value = await Get(key, cancellationToken).ConfigureAwait(false);
-        return Option.Some(value);
+        return Option.Some(value!);
     }
 
     protected abstract ValueTask<TValue> Compute(TKey key, CancellationToken cancellationToken = default);

@@ -67,9 +67,10 @@ public class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId> : DbA
         var context = CommandContext.GetCurrent();
         if (Computed.IsInvalidating()) {
             _ = GetSessionInfo(session, default);
-            var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
-            _ = TryGetUser(invSessionInfo.UserId, default);
-            _ = GetUserSessions(invSessionInfo.UserId, default);
+            if (context.Operation().Items.TryGet<SessionInfo>(out var invSessionInfo)) {
+                _ = TryGetUser(invSessionInfo.UserId, default);
+                _ = GetUserSessions(invSessionInfo.UserId, default);
+            }
             return;
         }
 
@@ -154,8 +155,9 @@ public class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId> : DbA
         var session = command.Session;
         var context = CommandContext.GetCurrent();
         if (Computed.IsInvalidating()) {
-            var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
-            _ = TryGetUser(invSessionInfo.UserId, default);
+            if (context.Operation().Items.TryGet<SessionInfo>(out var invSessionInfo)) {
+                _ = TryGetUser(invSessionInfo.UserId, default);
+            }
             return;
         }
 
@@ -180,9 +182,10 @@ public class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId> : DbA
         var context = CommandContext.GetCurrent();
         if (Computed.IsInvalidating()) {
             _ = GetSessionInfo(session, default);
-            var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
-            if (invSessionInfo.IsAuthenticated)
-                _ = GetUserSessions(invSessionInfo.UserId, default);
+            if (context.Operation().Items.TryGet<SessionInfo>(out var invSessionInfo)) {
+                if (invSessionInfo.IsAuthenticated)
+                    _ = GetUserSessions(invSessionInfo.UserId, default);
+            }
             return null!;
         }
 

@@ -3,7 +3,7 @@ namespace Stl.Caching;
 public interface IAsyncKeyResolver<in TKey, TValue>
     where TKey : notnull
 {
-    ValueTask<TValue> Get(TKey key, CancellationToken cancellationToken = default);
+    ValueTask<TValue?> Get(TKey key, CancellationToken cancellationToken = default);
     ValueTask<Option<TValue>> TryGet(TKey key, CancellationToken cancellationToken = default);
 }
 

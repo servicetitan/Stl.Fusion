@@ -12,10 +12,10 @@ public static class AsyncKeyResolverExt
         return result.IsSome(out var value) ? value : default;
     }
 
-    public static async ValueTask<TValue?> GetOrDefault<TKey, TValue>(
+    public static async ValueTask<TValue> GetOrDefault<TKey, TValue>(
         this IAsyncKeyResolver<TKey, TValue> keyResolver,
         TKey key,
-        TValue? @default,
+        TValue @default,
         CancellationToken cancellationToken = default)
         where TKey : notnull
     {

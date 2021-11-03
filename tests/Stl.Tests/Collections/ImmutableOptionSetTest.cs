@@ -25,10 +25,8 @@ public class ImmutableOptionSetTest
 
         options = options.Remove<string>();
         options = options.PassThroughAllSerializers();
-        options.GetOrDefault<string>().Should().Be(null);
-        Assert.Throws<KeyNotFoundException>(() => {
-            options.Get<string>();
-        });
+        options.GetOrDefault<string>("").Should().Be("");
+        options.Get<string>().Should().BeNull();
         options.GetService<string>().Should().Be(null);
         options.Items.Count.Should().Be(0);
 

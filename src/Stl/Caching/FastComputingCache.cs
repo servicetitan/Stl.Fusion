@@ -10,19 +10,19 @@ public abstract class FastComputingCacheBase<TKey, TValue> : AsyncKeyResolverBas
 
     protected abstract ValueTask<TValue> Compute(TKey key, CancellationToken cancellationToken = default);
 
-    public override ValueTask<TValue> Get(TKey key, CancellationToken cancellationToken = default)
+    public override ValueTask<TValue?> Get(TKey key, CancellationToken cancellationToken = default)
     {
         if (Cache.TryGetValue(key, out var cached))
-            return Unwrap(cached);
+            return Unwrap(cached)!;
         return Unwrap(Cache.GetOrAdd(key,
-            (k, s) => (ComputeAndUpdate(s.self, k, s.cancellationToken), default)!,
-            (self: this, cancellationToken)));
+            static (k, s) => (ComputeAndUpdate(s.self, k, s.cancellationToken), default)!,
+            (self: this, cancellationToken)))!;
     }
 
-    public override async ValueTask<Option<TValue>> TryGet(TKey key, CancellationToken cancellationToken = default)
+    public sealed override async ValueTask<Option<TValue>> TryGet(TKey key, CancellationToken cancellationToken = default)
     {
         var value = await Get(key, cancellationToken).ConfigureAwait(false);
-        return Option.Some(value);
+        return Option.Some(value!);
     }
 
     protected async ValueTask<TValue> SafeCompute(TKey key, CancellationToken cancellationToken = default)

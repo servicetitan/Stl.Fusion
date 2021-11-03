@@ -34,7 +34,8 @@ public abstract class DbAsyncProcessBase<TDbContext> : AsyncProcessBase
     protected Task<TDbContext> CreateCommandDbContext(bool readWrite = true, CancellationToken cancellationToken = default)
     {
         var commandContext = CommandContext.GetCurrent();
-        var operationScope = commandContext.Items.Get<DbOperationScope<TDbContext>>();
+        var operationScope = commandContext.Items.Get<DbOperationScope<TDbContext>>()
+            ?? throw new KeyNotFoundException();
         return operationScope.CreateDbContext(readWrite, cancellationToken);
     }
 

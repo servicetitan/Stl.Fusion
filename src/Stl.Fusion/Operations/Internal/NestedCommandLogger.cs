@@ -23,7 +23,7 @@ public class NestedCommandLogger : ICommandHandler<ICommand>
     [CommandHandler(Priority = 11_000, IsFilter = true)]
     public async Task OnCommand(ICommand command, CommandContext context, CancellationToken cancellationToken)
     {
-        var operation = context.OuterContext != null ? context.Items.GetOrDefault<IOperation>() : null;
+        var operation = context.OuterContext != null ? context.Items.Get<IOperation>() : null;
         var mustBeLogged =
             operation != null // Should be a nested context inside a context w/ operation
             && InvalidationInfoProvider.RequiresInvalidation(command) // Command requires invalidation
