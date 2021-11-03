@@ -168,9 +168,9 @@ public class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId> : DbA
         await using var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
 
         var dbUserId = DbUserIdHandler.Parse(sessionInfo.UserId);
-        var dbUser = await Users.Get(dbContext, dbUserId, cancellationToken).ConfigureAwait(false);
+        var dbUser = await Users.Get(dbContext, dbUserId, true, cancellationToken).ConfigureAwait(false);
         if (dbUser == null)
-            throw EntityFramework.Internal.Errors.EntityNotFound(Users.UserEntityType);
+            throw Internal.Errors.EntityNotFound(Users.UserEntityType);
         await Users.Edit(dbContext, dbUser, command, cancellationToken).ConfigureAwait(false);
         context.Operation().Items.Set(sessionInfo);
     }
@@ -191,7 +191,7 @@ public class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId> : DbA
 
         await using var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
 
-        var dbSessionInfo = await Sessions.Get(dbContext, session.Id, cancellationToken).ConfigureAwait(false);
+        var dbSessionInfo = await Sessions.Get(dbContext, session.Id, true, cancellationToken).ConfigureAwait(false);
         var now = Clocks.SystemClock.Now;
         var oldSessionInfo = SessionConverter.ToModel(dbSessionInfo)
             ?? SessionConverter.NewModel() with { Id = session.Id };

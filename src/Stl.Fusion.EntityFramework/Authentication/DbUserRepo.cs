@@ -25,7 +25,7 @@ public interface IDbUserRepo<in TDbContext, TDbUser, TDbUserId>
 
     // Read methods
     Task<TDbUser?> Get(TDbUserId userId, CancellationToken cancellationToken = default);
-    Task<TDbUser?> Get(TDbContext dbContext, TDbUserId userId, CancellationToken cancellationToken = default);
+    Task<TDbUser?> Get(TDbContext dbContext, TDbUserId userId, bool forUpdate, CancellationToken cancellationToken = default);
     Task<TDbUser?> GetByUserIdentity(
         TDbContext dbContext, UserIdentity userIdentity, CancellationToken cancellationToken = default);
 }
@@ -82,7 +82,7 @@ public class DbUserRepo<TDbContext, TDbUser, TDbUserId> : DbServiceBase<TDbConte
     {
         TDbUser dbUser;
         if (!string.IsNullOrEmpty(user.Id)) {
-            dbUser = await Get(dbContext, DbUserIdHandler.Parse(user.Id), cancellationToken).ConfigureAwait(false)
+            dbUser = await Get(dbContext, DbUserIdHandler.Parse(user.Id), false, cancellationToken).ConfigureAwait(false)
                 ?? throw Errors.EntityNotFound<TDbUser>();
             return (dbUser, false);
         }
@@ -119,10 +119,11 @@ public class DbUserRepo<TDbContext, TDbUser, TDbUserId> : DbServiceBase<TDbConte
         => await UserResolver.Get(userId, cancellationToken).ConfigureAwait(false);
 
     public virtual async Task<TDbUser?> Get(
-        TDbContext dbContext, TDbUserId userId, CancellationToken cancellationToken)
+        TDbContext dbContext, TDbUserId userId, bool forUpdate, CancellationToken cancellationToken)
     {
-        var dbUser = await dbContext.Set<TDbUser>()
-            .FindAsync(ComposeKey(userId), cancellationToken)
+        var dbUsers = forUpdate ? dbContext.Set<TDbUser>().ForUpdate() : dbContext.Set<TDbUser>();
+        var dbUser = await dbUsers
+            .SingleOrDefaultAsync(u => Equals(u.Id, userId), cancellationToken)
             .ConfigureAwait(false);
         if (dbUser != null)
             await dbContext.Entry(dbUser).Collection(nameof(DbUser<object>.Identities))
@@ -140,7 +141,7 @@ public class DbUserRepo<TDbContext, TDbUser, TDbUserId> : DbServiceBase<TDbConte
             .ConfigureAwait(false);
         if (dbUserIdentities == null)
             return null;
-        var user = await Get(dbContext, dbUserIdentities.DbUserId, cancellationToken).ConfigureAwait(false);
+        var user = await Get(dbContext, dbUserIdentities.DbUserId, false, cancellationToken).ConfigureAwait(false);
         return user;
     }
 }

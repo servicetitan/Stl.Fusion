@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Fusion.EntityFramework;
+using Stl.Fusion.EntityFramework.Npgsql;
 using Stl.Fusion.EntityFramework.Redis;
 using Stl.Fusion.Extensions;
 using Stl.Fusion.Operations.Reprocessing;
@@ -65,8 +66,10 @@ public class Startup
         services.AddDbContextFactory<AppDbContext>(dbContext => {
             if (!string.IsNullOrEmpty(HostSettings.UseSqlServer))
                 dbContext.UseSqlServer(HostSettings.UseSqlServer);
-            else if (!string.IsNullOrEmpty(HostSettings.UsePostgreSql))
+            else if (!string.IsNullOrEmpty(HostSettings.UsePostgreSql)) {
                 dbContext.UseNpgsql(HostSettings.UsePostgreSql);
+                // dbContext.UseNpgsqlHintFormatter();
+            }
             else
                 dbContext.UseSqlite($"Data Source={dbPath}");
             if (Env.IsDevelopment())

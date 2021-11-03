@@ -14,4 +14,7 @@ public static class Errors
         => EntityNotFound(typeof(TEntity));
     public static Exception EntityNotFound(Type entityType)
         => new KeyNotFoundException($"Requested {entityType.Name} entity is not found.");
+
+    public static Exception UnsupportedDbHint(DbHint hint)
+        => new NotSupportedException($"Unsupported DbHint: {hint}");
 }
