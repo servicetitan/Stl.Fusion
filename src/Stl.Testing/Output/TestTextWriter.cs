@@ -29,8 +29,8 @@ public class TestTextWriter : TextWriter, ITestOutputHelper
         if (value == null)
             throw new ArgumentNullException(nameof(value));
         Prefix.Append(value);
-#if !NETCOREAPP
-        if (!value.Contains(LastEnvNewLineString))
+#if NETCOREAPP3_1_OR_GREATER
+        if (!value.Contains(LastEnvNewLineChar, StringComparison.Ordinal))
 #else
         if (!value.Contains(LastEnvNewLineChar))
 #endif

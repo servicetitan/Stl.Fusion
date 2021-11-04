@@ -72,7 +72,7 @@ public static class Computed
         return ccs.Context.TryGetCaptured(out result!) ? Option.Some(result) : default;
     }
 
-    public static async Task<Option<IComputed<T>>> TryCapture<T>(
+    public static async ValueTask<Option<IComputed<T>>> TryCapture<T>(
         Func<CancellationToken, Task<T>> producer,
         CancellationToken cancellationToken = default)
     {
@@ -92,7 +92,7 @@ public static class Computed
         return ccs.Context.TryGetCaptured(out result!) ? Option.Some(result) : default;
     }
 
-    public static async Task<Option<IComputed>> TryCapture(
+    public static async ValueTask<Option<IComputed>> TryCapture(
         Func<CancellationToken, ValueTask> producer,
         CancellationToken cancellationToken = default)
     {
@@ -112,7 +112,7 @@ public static class Computed
         return ccs.Context.TryGetCaptured(out result!) ? Option.Some(result) : default;
     }
 
-    public static async Task<Option<IComputed<T>>> TryCapture<T>(
+    public static async ValueTask<Option<IComputed<T>>> TryCapture<T>(
         Func<CancellationToken, ValueTask<T>> producer,
         CancellationToken cancellationToken = default)
     {
@@ -134,7 +134,7 @@ public static class Computed
 
     // Capture
 
-    public static async Task<IComputed> Capture(Func<CancellationToken, Task> producer, CancellationToken cancellationToken = default)
+    public static async ValueTask<IComputed> Capture(Func<CancellationToken, Task> producer, CancellationToken cancellationToken = default)
     {
         using var ccs = BeginCapture();
         try {
@@ -151,7 +151,7 @@ public static class Computed
         return ccs.Context.GetCaptured();
     }
 
-    public static async Task<IComputed<T>> Capture<T>(Func<CancellationToken, Task<T>> producer, CancellationToken cancellationToken = default)
+    public static async ValueTask<IComputed<T>> Capture<T>(Func<CancellationToken, Task<T>> producer, CancellationToken cancellationToken = default)
     {
         using var ccs = BeginCapture();
         try {
@@ -168,7 +168,7 @@ public static class Computed
         return ccs.Context.GetCaptured<T>();
     }
 
-    public static async Task<IComputed> Capture(Func<CancellationToken, ValueTask> producer, CancellationToken cancellationToken = default)
+    public static async ValueTask<IComputed> Capture(Func<CancellationToken, ValueTask> producer, CancellationToken cancellationToken = default)
     {
         using var ccs = BeginCapture();
         try {
@@ -185,7 +185,7 @@ public static class Computed
         return ccs.Context.GetCaptured();
     }
 
-    public static async Task<IComputed<T>> Capture<T>(Func<CancellationToken, ValueTask<T>> producer, CancellationToken cancellationToken = default)
+    public static async ValueTask<IComputed<T>> Capture<T>(Func<CancellationToken, ValueTask<T>> producer, CancellationToken cancellationToken = default)
     {
         using var ccs = BeginCapture();
         try {

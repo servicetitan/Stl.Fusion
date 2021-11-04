@@ -7,8 +7,8 @@ namespace Stl.Testing;
 
 public static class SerializationTestExt
 {
-    public static JsonSerializerOptions SystemJsonOptions;
-    public static JsonSerializerSettings NewtonsoftJsonSettings;
+    public static JsonSerializerOptions SystemJsonOptions { get; set; }
+    public static JsonSerializerSettings NewtonsoftJsonSettings { get; set; }
 
     static SerializationTestExt()
     {

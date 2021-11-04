@@ -26,7 +26,7 @@ public record User : IPrincipal, IIdentity, IHasId<Symbol>, IHasVersion<long>
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public ImmutableDictionary<UserIdentity, string> Identities { get; init; }
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
-    public bool IsAuthenticated => !(Id.IsEmpty || Id.Value.StartsWith(GuestIdPrefix));
+    public bool IsAuthenticated => !(Id.IsEmpty || Id.Value.StartsWith(GuestIdPrefix, StringComparison.Ordinal));
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     string IIdentity.AuthenticationType => IsAuthenticated ? UserIdentity.DefaultSchema : "";
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
@@ -35,7 +35,7 @@ public record User : IPrincipal, IIdentity, IHasId<Symbol>, IHasVersion<long>
     [DataMember(Name = nameof(Identities))]
     [JsonPropertyName(nameof(Identities)),  Newtonsoft.Json.JsonProperty(nameof(Identities))]
     public Dictionary<string, string> JsonCompatibleIdentities {
-        get => Identities.ToDictionary(p => p.Key.Id.Value, p => p.Value);
+        get => Identities.ToDictionary(p => p.Key.Id.Value, p => p.Value, StringComparer.Ordinal);
         init => Identities = value.ToImmutableDictionary(p => new UserIdentity(p.Key), p => p.Value);
     }
 

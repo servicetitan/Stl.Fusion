@@ -57,7 +57,7 @@ public readonly struct UserIdentity : IEquatable<UserIdentity>
     private static string FormatId(string schema, string schemaBoundId)
     {
         using var f = IdFormat.CreateFormatter();
-        if (schema != DefaultSchema)
+        if (!StringComparer.Ordinal.Equals(schema, DefaultSchema))
             f.Append(schema);
         f.Append(schemaBoundId);
         f.AppendEnd();

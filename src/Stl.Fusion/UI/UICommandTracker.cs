@@ -27,7 +27,7 @@ public class UICommandTracker : IUICommandTracker
         public override UICommandEvent ProcessEvent(UICommandEvent commandEvent)
             => throw Errors.InternalError($"{GetType().Name}.{nameof(ProcessEvent)} cannot be called.");
 
-        protected override IAsyncEnumerable<UICommandEvent> GetAny(CancellationToken cancellationToken)
+        protected override IAsyncEnumerable<UICommandEvent> GetAny(CancellationToken cancellationToken = default)
             => AsyncEnumerable.Empty<UICommandEvent>();
 
         internal NoUICommandTracker() : base(MomentClockSet.Default) { }

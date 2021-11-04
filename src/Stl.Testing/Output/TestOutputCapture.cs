@@ -27,7 +27,9 @@ public class TestOutputCapture : IStandardStreamWriter, ITestOutputHelper
         => Write(message + Environment.NewLine);
 
     public void WriteLine(string format, params object[] args)
+#pragma warning disable MA0011
         => WriteLine(string.Format(format, args));
+#pragma warning restore MA0011
 
     public void Write(char value)
     {

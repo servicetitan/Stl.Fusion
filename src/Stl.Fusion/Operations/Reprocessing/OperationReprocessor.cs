@@ -34,7 +34,7 @@ public class OperationReprocessor : IOperationReprocessor
         public IMomentClock? DelayClock { get; set; }
     }
 
-    public static Generator<long> Random = new RandomInt64Generator();
+    public static Generator<long> Random { get; } = new RandomInt64Generator();
 
     public int MaxTryCount { get; init; }
     public int FailedTryCount { get; protected set; }

@@ -137,7 +137,7 @@ public class TypeViewInterceptor : IInterceptor
             var untypedResult = mTarget.Invoke(target, invocation.Arguments);
             var result = (Task<TTarget>) untypedResult!;
             invocation.ReturnValue = result
-                .ContinueWith(t => converter.Convert(t.Result));
+                .ContinueWith(t => converter.Convert(t.Result), TaskScheduler.Default);
         };
     }
 
@@ -156,7 +156,7 @@ public class TypeViewInterceptor : IInterceptor
             // ReSharper disable once HeapView.BoxingAllocation
             invocation.ReturnValue = result
                 .AsTask()
-                .ContinueWith(t => converter.Convert(t.Result))
+                .ContinueWith(t => converter.Convert(t.Result), TaskScheduler.Default)
                 .ToValueTask();
         };
     }

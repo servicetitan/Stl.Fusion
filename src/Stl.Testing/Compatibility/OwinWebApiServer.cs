@@ -162,15 +162,11 @@ internal class GenericWebHostService : IHostedService
 
     public GenericWebHostService(IServer server) => this.server = server;
 
-    public async Task StartAsync(CancellationToken cancellationToken)
-    {
-        await server.StartAsync(new HostingApplication(), cancellationToken);
-    }
+    public Task StartAsync(CancellationToken cancellationToken)
+        => server.StartAsync(new HostingApplication(), cancellationToken);
 
-    public async Task StopAsync(CancellationToken cancellationToken)
-    {
-        await server.StopAsync(cancellationToken);
-    }
+    public Task StopAsync(CancellationToken cancellationToken)
+        => server.StopAsync(cancellationToken);
 }
 
 #endif

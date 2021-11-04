@@ -1,10 +1,12 @@
 namespace Stl.Fusion;
 
 [Serializable]
-public class ServiceException : ApplicationException
+public class ServiceException : Exception
 {
     public Type? OriginalExceptionType { get; private set; }
 
+    public ServiceException()
+        => OriginalExceptionType = null;
     public ServiceException(string message) : base(message)
         => OriginalExceptionType = null;
     public ServiceException(Type? originalExceptionType, string message) : base(message)

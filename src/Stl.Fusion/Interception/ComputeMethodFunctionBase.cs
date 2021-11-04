@@ -8,7 +8,7 @@ public abstract class ComputeMethodFunctionBase<T> : ComputeFunctionBase<T>
     protected readonly ILogger Log;
     protected readonly VersionGenerator<LTag> VersionGenerator;
 
-    public ComputeMethodFunctionBase(
+    protected ComputeMethodFunctionBase(
         ComputeMethodDef method,
         VersionGenerator<LTag> versionGenerator,
         IServiceProvider services,

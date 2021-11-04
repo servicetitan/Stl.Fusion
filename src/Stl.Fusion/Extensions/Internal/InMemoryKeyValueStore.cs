@@ -11,7 +11,7 @@ public class InMemoryKeyValueStore : AsyncProcessBase, IKeyValueStore
         public TimeSpan CleanupPeriod { get; set; } = TimeSpan.FromMinutes(1);
     }
 
-    protected ConcurrentDictionary<string, (string Value, Moment? ExpiresAt)> Store { get; } = new();
+    protected ConcurrentDictionary<string, (string Value, Moment? ExpiresAt)> Store { get; } = new(StringComparer.Ordinal);
     protected IMomentClock Clock { get; }
     public TimeSpan CleanupPeriod { get; }
 

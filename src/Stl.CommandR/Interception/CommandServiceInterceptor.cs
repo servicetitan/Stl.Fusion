@@ -64,7 +64,12 @@ public class CommandServiceInterceptor : InterceptorBase
                 continue;
 
             var methodDef = new CommandHandlerMethodDef(this, method);
-            var attributeName = nameof(CommandHandlerAttribute).Replace(nameof(Attribute), "");
+            var attributeName = nameof(CommandHandlerAttribute)
+#if NETSTANDARD2_0
+                .Replace(nameof(Attribute), "");
+#else
+                .Replace(nameof(Attribute), "", StringComparison.Ordinal);
+#endif
             if (!methodDef.IsValid) // attr.IsEnabled == false
                 Log.Log(ValidationLogLevel,
                     "- {Method}: has [{Attribute}(false)]", method.ToString(), attributeName);

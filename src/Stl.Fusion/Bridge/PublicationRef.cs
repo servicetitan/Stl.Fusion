@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 namespace Stl.Fusion.Bridge;
 
 [DataContract]
+[StructLayout(LayoutKind.Sequential)]
 public readonly struct PublicationRef : IEquatable<PublicationRef>
 {
     [DataMember(Order = 0)]
