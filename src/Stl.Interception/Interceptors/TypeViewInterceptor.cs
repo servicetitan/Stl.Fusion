@@ -41,14 +41,14 @@ public class TypeViewInterceptor : IInterceptor
 
     protected virtual Action<IInvocation>? CreateHandler((MethodInfo, Type) key, IInvocation initialInvocation)
     {
-        var (methodInfo, tProxy) = key;
+        var (_, tProxy) = key;
         var tTarget = initialInvocation.TargetType;
         var mSource = initialInvocation.Method;
         var mArgTypes = mSource.GetParameters().Select(p => p.ParameterType).ToArray();
         var mTarget = tTarget.GetMethod(mSource.Name, mArgTypes);
         var fTarget = tProxy.GetField("__target", BindingFlags.Instance | BindingFlags.NonPublic);
 
-        Type? TryGetTaskOfTArgument(Type t) {
+        Type? GetTaskOfTArgument(Type t) {
             if (!t.IsGenericType)
                 return null;
             var tg = t.GetGenericTypeDefinition();
@@ -57,7 +57,7 @@ public class TypeViewInterceptor : IInterceptor
             return t.GetGenericArguments()[0];
         }
 
-        Type? TryGetValueTaskOfTArgument(Type t) {
+        Type? GetValueTaskOfTArgument(Type t) {
             if (!t.IsGenericType)
                 return null;
             var tg = t.GetGenericTypeDefinition();
@@ -70,8 +70,8 @@ public class TypeViewInterceptor : IInterceptor
             Action<IInvocation>? result;
 
             // Trying Task<T>
-            var rtSource = TryGetTaskOfTArgument(mSource.ReturnType);
-            var rtTarget = TryGetTaskOfTArgument(mTarget.ReturnType);
+            var rtSource = GetTaskOfTArgument(mSource.ReturnType);
+            var rtTarget = GetTaskOfTArgument(mTarget.ReturnType);
             if (rtSource != null && rtTarget != null) {
                 result = (Action<IInvocation>?) _createTaskConvertingHandlerMethod
                     .MakeGenericMethod(rtSource, rtTarget)
@@ -81,8 +81,8 @@ public class TypeViewInterceptor : IInterceptor
             }
 
             // Trying ValueTask<T>
-            rtSource = TryGetValueTaskOfTArgument(mSource.ReturnType);
-            rtTarget = TryGetValueTaskOfTArgument(mTarget.ReturnType);
+            rtSource = GetValueTaskOfTArgument(mSource.ReturnType);
+            rtTarget = GetValueTaskOfTArgument(mTarget.ReturnType);
             if (rtSource != null && rtTarget != null) {
                 result = (Action<IInvocation>?) _createValueTaskConvertingHandlerMethod
                     .MakeGenericMethod(rtSource, rtTarget)
@@ -119,6 +119,7 @@ public class TypeViewInterceptor : IInterceptor
         return invocation => {
             var target = fTarget.GetValue(invocation.Proxy);
             var result = (TTarget) mTarget.Invoke(target, invocation.Arguments)!;
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             invocation.ReturnValue = converter.Convert(result);
         };
     }
@@ -152,6 +153,7 @@ public class TypeViewInterceptor : IInterceptor
             var target = fTarget.GetValue(invocation.Proxy);
             var untypedResult = mTarget.Invoke(target, invocation.Arguments);
             var result = (ValueTask<TTarget>) untypedResult!;
+            // ReSharper disable once HeapView.BoxingAllocation
             invocation.ReturnValue = result
                 .AsTask()
                 .ContinueWith(t => converter.Convert(t.Result))

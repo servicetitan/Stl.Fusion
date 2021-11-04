@@ -35,7 +35,7 @@ public class ServiceRefProvider : IServiceRefProvider
     {
         if (service is IHasServiceRef hsr)
             return hsr.ServiceRef;
-        var serviceType = TryGetServiceType(service.GetType());
+        var serviceType = GetServiceType(service.GetType());
         if (serviceType != null)
             return new ServiceTypeRef(service.GetType());
         if (UseServiceInstanceRefs)
@@ -43,7 +43,7 @@ public class ServiceRefProvider : IServiceRefProvider
         throw Errors.NoServiceRef(service.GetType());
     }
 
-    protected Type? TryGetServiceType(Type implementationType)
+    protected Type? GetServiceType(Type implementationType)
         => ServiceTypeCache.GetOrAdd(
             implementationType,
             (implementationType1, self) => self.ServiceCollection

@@ -19,7 +19,7 @@ public class DbKeyValueStoreTest : KeyValueStoreTestBase
 
 public abstract class KeyValueStoreTestBase : FusionTestBase
 {
-    public KeyValueStoreTestBase(ITestOutputHelper @out, bool useInMemoryKeyValueStore)
+    protected KeyValueStoreTestBase(ITestOutputHelper @out, bool useInMemoryKeyValueStore)
         : base(@out, new FusionTestOptions() {
             UseTestClock = true,
             UseInMemoryKeyValueStore = useInMemoryKeyValueStore,

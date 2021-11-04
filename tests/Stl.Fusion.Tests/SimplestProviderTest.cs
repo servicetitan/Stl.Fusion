@@ -96,10 +96,10 @@ public class SimplestProviderTest : FusionTestBase
     {
         var p = Services.GetRequiredService<ISimplestProvider>();
         p.SetValue(null!); // Will cause an exception in GetCharCount
-        var c1 = await Computed.TryCapture(_ => p.GetCharCount());
+        var c1Opt = await Computed.TryCapture(_ => p.GetCharCount());
         var c2 = await Computed.Capture(_ => p.GetCharCount());
-        c1!.Error!.GetType().Should().Be(typeof(NullReferenceException));
-        c2.Should().BeSameAs(c1);
+        c1Opt.Value.Error!.GetType().Should().Be(typeof(NullReferenceException));
+        c2.Should().BeSameAs(c1Opt.Value);
     }
 
     [Fact]

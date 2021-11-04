@@ -4,7 +4,7 @@ namespace Stl.Fusion.Tests.Services;
 
 public class CounterService
 {
-    private readonly ConcurrentDictionary<string, int> _counters = new ConcurrentDictionary<string, int>();
+    private readonly ConcurrentDictionary<string, int> _counters = new(StringComparer.Ordinal);
     private readonly IMutableState<int> _offset;
 
     public CounterService(IMutableState<int> offset)

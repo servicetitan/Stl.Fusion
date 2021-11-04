@@ -28,8 +28,9 @@ public class InMemoryAuthService : IServerSideAuthService
         var context = CommandContext.GetCurrent();
         if (Computed.IsInvalidating()) {
             _ = GetSessionInfo(session, default);
-            if (context.Operation().Items.TryGet<SessionInfo>(out var invSessionInfo)) {
-                _ = TryGetUser(invSessionInfo.UserId, default);
+            var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
+            if (invSessionInfo != null) {
+                _ = GetUser(invSessionInfo.UserId, default);
                 _ = GetUserSessions(invSessionInfo.UserId, default);
             }
             return;
@@ -43,7 +44,7 @@ public class InMemoryAuthService : IServerSideAuthService
             throw Errors.ForcedSignOut();
 
         var isNewUser = false;
-        var userWithAuthenticatedIdentity = TryGetByUserIdentity(authenticatedIdentity);
+        var userWithAuthenticatedIdentity = GetByUserIdentity(authenticatedIdentity);
         if (string.IsNullOrEmpty(user.Id)) {
             // No user.Id -> try to find existing user by authenticatedIdentity
             if (userWithAuthenticatedIdentity == null) {
@@ -88,8 +89,9 @@ public class InMemoryAuthService : IServerSideAuthService
             if (force)
                 _ = IsSignOutForced(session, default);
             _ = GetSessionInfo(session, default);
-            if (context.Operation().Items.TryGet<SessionInfo>(out var invSessionInfo)) {
-                _ = TryGetUser(invSessionInfo.UserId, default);
+            var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
+            if (invSessionInfo != null) {
+                _ = GetUser(invSessionInfo.UserId, default);
                 _ = GetUserSessions(invSessionInfo.UserId, default);
             }
             return;
@@ -114,15 +116,15 @@ public class InMemoryAuthService : IServerSideAuthService
         var session = command.Session;
         var context = CommandContext.GetCurrent();
         if (Computed.IsInvalidating()) {
-            if (context.Operation().Items.TryGet<SessionInfo>(out var invSessionInfo)) {
-                _ = TryGetUser(invSessionInfo.UserId, default);
-            }
+            var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
+            if (invSessionInfo != null)
+                _ = GetUser(invSessionInfo.UserId, default);
             return;
         }
 
         var sessionInfo = await GetSessionInfo(session, cancellationToken).ConfigureAwait(false);
         sessionInfo = sessionInfo.MustBeAuthenticated();
-        var user = await TryGetUser(sessionInfo.UserId, cancellationToken).ConfigureAwait(false);
+        var user = await GetUser(sessionInfo.UserId, cancellationToken).ConfigureAwait(false);
         user = user.MustBeAuthenticated();
 
         context.Operation().Items.Set(sessionInfo);
@@ -140,7 +142,8 @@ public class InMemoryAuthService : IServerSideAuthService
         var context = CommandContext.GetCurrent();
         if (Computed.IsInvalidating()) {
             _ = GetSessionInfo(session, default);
-            if (context.Operation().Items.TryGet<SessionInfo>(out var invSessionInfo)) {
+            var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
+            if (invSessionInfo != null) {
                 if (invSessionInfo.IsAuthenticated)
                     _ = GetUserSessions(invSessionInfo.UserId, default);
             }
@@ -188,11 +191,11 @@ public class InMemoryAuthService : IServerSideAuthService
         var sessionInfo = await GetSessionInfo(session, cancellationToken).ConfigureAwait(false);
         if (sessionInfo.IsSignOutForced || !sessionInfo.IsAuthenticated)
             return new User(session.Id);
-        var user = await TryGetUser(sessionInfo.UserId, cancellationToken).ConfigureAwait(false);
+        var user = await GetUser(sessionInfo.UserId, cancellationToken).ConfigureAwait(false);
         return (user ?? new User(session.Id)).ToClientSideUser();
     }
 
-    public virtual Task<User?> TryGetUser(string userId, CancellationToken cancellationToken = default)
+    public virtual Task<User?> GetUser(string userId, CancellationToken cancellationToken = default)
         => Task.FromResult(Users.TryGetValue(userId, out var user) ? user : null);
 
     public virtual async Task<SessionInfo[]> GetUserSessions(
@@ -242,7 +245,7 @@ public class InMemoryAuthService : IServerSideAuthService
         return SessionInfos.GetValueOrDefault(sessionInfo.Id) ?? sessionInfo;
     }
 
-    protected virtual User? TryGetByUserIdentity(UserIdentity userIdentity)
+    protected virtual User? GetByUserIdentity(UserIdentity userIdentity)
         => userIdentity.IsValid
             ? Users.Values.FirstOrDefault(user => user.Identities.ContainsKey(userIdentity))
             : null;

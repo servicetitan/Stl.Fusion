@@ -10,7 +10,7 @@ public static class ComputedExt
     internal static bool TryUseExisting<T>(this IComputed<T>? existing, ComputeContext context, IComputed? usedBy)
     {
         var callOptions = context.CallOptions;
-        var mustUseExisting = (callOptions & CallOptions.TryGetExisting) != 0;
+        var mustUseExisting = (callOptions & CallOptions.GetExisting) != 0;
 
         if (existing == null)
             return mustUseExisting;
@@ -35,7 +35,7 @@ public static class ComputedExt
         CancellationToken cancellationToken)
     {
         var callOptions = context.CallOptions;
-        var mustUseExisting = (callOptions & CallOptions.TryGetExisting) != 0;
+        var mustUseExisting = (callOptions & CallOptions.GetExisting) != 0;
 
         if (existing == null)
             return mustUseExisting ? ResultBox<T>.Default : null;

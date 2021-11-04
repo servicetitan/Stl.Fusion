@@ -77,7 +77,7 @@ public class SwappingComputed<T> : Computed<T>, IAsyncComputed<T>, ISwappable
     {
         var usedBy = Computed.GetCurrent();
         var context = ComputeContext.Current;
-        if ((context.CallOptions & CallOptions.TryGetExisting) != 0) // Both TryGetExisting & Invalidate
+        if ((context.CallOptions & CallOptions.GetExisting) != 0) // Both GetExisting & Invalidate
             throw Errors.InvalidContextCallOptions(context.CallOptions);
         if (IsConsistent()) {
             var resultBox = await this.TryUseExistingFromUse(context, usedBy, cancellationToken)

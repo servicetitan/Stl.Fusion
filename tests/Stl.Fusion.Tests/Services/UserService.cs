@@ -40,7 +40,7 @@ public interface IUserService
     Task<bool> Delete(DeleteCommand command, CancellationToken cancellationToken = default);
 
     [ComputeMethod(KeepAliveTime = 1)]
-    Task<User?> TryGet(long userId, CancellationToken cancellationToken = default);
+    Task<User?> Get(long userId, CancellationToken cancellationToken = default);
     [ComputeMethod(KeepAliveTime = 1)]
     Task<long> Count(CancellationToken cancellationToken = default);
     void Invalidate();
@@ -63,7 +63,7 @@ public class UserService : DbServiceBase<TestDbContext>, IUserService
         var existingUser = (User?) null;
         var context = CommandContext.GetCurrent();
         if (Computed.IsInvalidating()) {
-            _ = TryGet(user.Id, default).AssertCompleted();
+            _ = Get(user.Id, default).AssertCompleted();
             existingUser = context.Operation().Items.Get<User>();
             if (existingUser == null)
                 _ = Count(default).AssertCompleted();
@@ -88,7 +88,7 @@ public class UserService : DbServiceBase<TestDbContext>, IUserService
     {
         var user = command.User;
         if (Computed.IsInvalidating()) {
-            _ = TryGet(user.Id, default).AssertCompleted();
+            _ = Get(user.Id, default).AssertCompleted();
             return;
         }
 
@@ -104,7 +104,7 @@ public class UserService : DbServiceBase<TestDbContext>, IUserService
         if (Computed.IsInvalidating()) {
             var success = context.Operation().Items.GetOrDefault(false);
             if (success) {
-                _ = TryGet(user.Id, default).AssertCompleted();
+                _ = Get(user.Id, default).AssertCompleted();
                 _ = Count(default).AssertCompleted();
             }
             return false;
@@ -122,9 +122,9 @@ public class UserService : DbServiceBase<TestDbContext>, IUserService
         }
     }
 
-    public virtual async Task<User?> TryGet(long userId, CancellationToken cancellationToken = default)
+    public virtual async Task<User?> Get(long userId, CancellationToken cancellationToken = default)
     {
-        // Debug.WriteLine($"TryGetAsync {userId}");
+        // Debug.WriteLine($"Get {userId}");
         await Everything().ConfigureAwait(false);
         await using var dbContext = CreateDbContext();
         var user = await dbContext.Users

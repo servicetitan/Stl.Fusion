@@ -27,7 +27,7 @@ public class PublishAttribute : ActionFilterAttribute
         var items = actionContext.GetItems();
         if (items.TryGetValue(typeof(ComputeContextScope), out var obj) && obj is ComputeContextScope computeContextScope) {
             computeContextScope.Dispose();
-            var computed = computeContextScope.Context.GetCapturedComputed();
+            var computed = computeContextScope.Context.GetCaptured();
 
             var appServices = actionContext.GetAppServices();
             var publisher = appServices.GetRequiredService<IPublisher>();

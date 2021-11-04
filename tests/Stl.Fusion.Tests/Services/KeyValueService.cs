@@ -35,7 +35,7 @@ public interface IKeyValueService<TValue>
 
 public class KeyValueService<TValue> : IKeyValueService<TValue>
 {
-    private readonly ConcurrentDictionary<string, TValue> _values = new();
+    private readonly ConcurrentDictionary<string, TValue> _values = new(StringComparer.Ordinal);
 
     public virtual Task<Option<TValue>> TryGet(string key, CancellationToken cancellationToken = default)
         => Task.FromResult(_values.TryGetValue(key, out var v) ? Option.Some(v) : default);

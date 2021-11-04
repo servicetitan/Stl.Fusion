@@ -57,13 +57,13 @@ public abstract class FunctionBase<TIn, TOut> : IFunction<TIn, TOut>
 
         // Read-Lock-RetryRead-Compute-Store pattern
 
-        var result = TryGetExisting(input);
+        var result = GetExisting(input);
         if (result.TryUseExisting(context, usedBy))
             return result!;
 
         using var @lock = await Locks.Lock(input, cancellationToken).ConfigureAwait(false);
 
-        result = TryGetExisting(input);
+        result = GetExisting(input);
         if (result.TryUseExisting(context, usedBy))
             return result!;
 
@@ -88,13 +88,13 @@ public abstract class FunctionBase<TIn, TOut> : IFunction<TIn, TOut>
 
         // Read-Lock-RetryRead-Compute-Store pattern
 
-        var result = TryGetExisting(input);
+        var result = GetExisting(input);
         if (result.TryUseExisting(context, usedBy))
             return result.Strip(context);
 
         using var @lock = await Locks.Lock(input, cancellationToken).ConfigureAwait(false);
 
-        result = TryGetExisting(input);
+        result = GetExisting(input);
         if (result.TryUseExisting(context, usedBy))
             return result.Strip(context);
 
@@ -104,7 +104,7 @@ public abstract class FunctionBase<TIn, TOut> : IFunction<TIn, TOut>
         return output.Value;
     }
 
-    protected IComputed<TOut>? TryGetExisting(TIn input)
+    protected IComputed<TOut>? GetExisting(TIn input)
     {
         var computed = ComputedRegistry.Instance.Get(input);
         return computed as IComputed<TIn, TOut>;

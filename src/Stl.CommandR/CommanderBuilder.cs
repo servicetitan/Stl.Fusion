@@ -18,7 +18,7 @@ public readonly struct CommanderBuilder
     {
         Services = services;
         if (Services.Contains(AddedTagDescriptor)) {
-            Handlers = TryGetCommandHandlerRegistry(services)
+            Handlers = GetCommandHandlerRegistry(services)
                 ?? throw Errors.CommandHandlerRegistryInstanceIsNotRegistered();
             return;
         }
@@ -38,7 +38,7 @@ public readonly struct CommanderBuilder
         Services.TryAddSingleton<CommandServiceInterceptor>();
         Services.TryAddSingleton(c => new [] { c.GetRequiredService<CommandServiceInterceptor>() });
 
-        Handlers = TryGetCommandHandlerRegistry(services)
+        Handlers = GetCommandHandlerRegistry(services)
             ?? throw Errors.CommandHandlerRegistryInstanceIsNotRegistered();
 
         // Default handlers
@@ -48,7 +48,7 @@ public readonly struct CommanderBuilder
         AddHandlers<LocalCommandHandler>();
     }
 
-    private static ICommandHandlerRegistry? TryGetCommandHandlerRegistry(IServiceCollection services)
+    private static ICommandHandlerRegistry? GetCommandHandlerRegistry(IServiceCollection services)
     {
         for (var i = 0; i < services.Count; i++) {
             var descriptor = services[i];

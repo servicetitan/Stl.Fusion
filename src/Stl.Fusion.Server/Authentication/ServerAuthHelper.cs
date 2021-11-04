@@ -94,8 +94,8 @@ public class ServerAuthHelper
         var userId = sessionInfo.UserId;
         var userIsAuthenticated = sessionInfo.IsAuthenticated && !sessionInfo.IsSignOutForced;
         var user = userIsAuthenticated
-            ? (await AuthService.TryGetUser(userId, cancellationToken).ConfigureAwait(false)
-                ?? throw new KeyNotFoundException())
+            ? await AuthService.GetUser(userId, cancellationToken).ConfigureAwait(false)
+                ?? throw new KeyNotFoundException()
             : new User(session.Id); // Guest
 
         try {

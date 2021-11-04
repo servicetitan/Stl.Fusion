@@ -52,7 +52,8 @@ public class DbOperationScopeProvider<TDbContext> : DbServiceBase<TDbContext>, I
             }
 
             // 2. Check if operation reprocessor is there
-            if (!context.Items.TryGet<IOperationReprocessor>(out var operationReprocessor))
+            var operationReprocessor = context.Items.Get<IOperationReprocessor>();
+            if (operationReprocessor == null)
                 throw;
 
             // 3. Check if it's a transient failure

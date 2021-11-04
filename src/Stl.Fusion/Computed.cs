@@ -244,7 +244,7 @@ public class Computed<TIn, TOut> : IComputed<TIn, TOut>, IComputedImpl
     {
         var usedBy = Computed.GetCurrent();
         var context = ComputeContext.Current;
-        if ((context.CallOptions & CallOptions.TryGetExisting) != 0) // Both TryGetExisting & Invalidate
+        if ((context.CallOptions & CallOptions.GetExisting) != 0) // Both GetExisting & Invalidate
             throw Errors.InvalidContextCallOptions(context.CallOptions);
         if (IsConsistent() && this.TryUseExistingFromUse(context, usedBy))
             return Value;

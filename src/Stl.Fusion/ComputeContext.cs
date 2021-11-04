@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Fusion.Internal;
 
 namespace Stl.Fusion;
@@ -35,7 +36,7 @@ public class ComputeContext
 
     static ComputeContext()
     {
-        var allCallOptions = CallOptions.TryGetExisting |  CallOptions.Invalidate;
+        var allCallOptions = CallOptions.GetExisting |  CallOptions.Invalidate;
         var cache = new ComputeContext[1 + (int) allCallOptions];
         for (var i = 0; i <= (int) allCallOptions; i++) {
             var action = (CallOptions) i;
@@ -63,14 +64,23 @@ public class ComputeContext
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public IComputed GetCapturedComputed() => CapturedComputed ?? throw Errors.NoComputedCaptured();
+    public IComputed GetCaptured() => CapturedComputed ?? throw Errors.NoComputedCaptured();
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public IComputed<T> GetCapturedComputed<T>() => (IComputed<T>) GetCapturedComputed();
+    public IComputed<T> GetCaptured<T>() => (IComputed<T>) GetCaptured();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public IComputed? TryGetCapturedComputed() => CapturedComputed;
+    public bool TryGetCaptured([MaybeNullWhen(false)] out IComputed computed)
+    {
+        computed = CapturedComputed;
+        return computed != null;
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public IComputed<T>? TryGetCapturedComputed<T>() => (IComputed<T>?) TryGetCapturedComputed();
+    public bool TryGetCaptured<T>([MaybeNullWhen(false)] out IComputed<T> computed)
+    {
+        computed = CapturedComputed as IComputed<T>;
+        return computed != null;
+    }
 
     internal bool Acquire()
         => 0 == Interlocked.CompareExchange(ref _isUsed, 1, 0);

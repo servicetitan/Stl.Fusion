@@ -27,7 +27,7 @@ public class AsyncComputeMethodFunction<T> : ComputeMethodFunctionBase<T>
 
         // Read-Lock-RetryRead-Compute-Store pattern
 
-        var computed = TryGetExisting(input);
+        var computed = GetExisting(input);
         if (computed != null) {
             output = await computed.TryUseExisting(context, usedBy, cancellationToken)
                 .ConfigureAwait(false);
@@ -37,7 +37,7 @@ public class AsyncComputeMethodFunction<T> : ComputeMethodFunctionBase<T>
 
         using var @lock = await Locks.Lock(input, cancellationToken).ConfigureAwait(false);
 
-        computed = TryGetExisting(input);
+        computed = GetExisting(input);
         if (computed != null) {
             output = await computed.TryUseExisting(context, usedBy, cancellationToken)
                 .ConfigureAwait(false);
@@ -55,7 +55,7 @@ public class AsyncComputeMethodFunction<T> : ComputeMethodFunctionBase<T>
     protected override IComputed<T> CreateComputed(ComputeMethodInput input, LTag tag)
         => new SwappingComputed<T>(Options, input, tag);
 
-    protected new IAsyncComputed<T>? TryGetExisting(ComputeMethodInput input)
+    protected new IAsyncComputed<T>? GetExisting(ComputeMethodInput input)
     {
         var computed = ComputedRegistry.Instance.Get(input);
         return computed as IAsyncComputed<T>;

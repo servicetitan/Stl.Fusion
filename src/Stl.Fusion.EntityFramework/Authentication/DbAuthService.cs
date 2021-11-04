@@ -28,7 +28,7 @@ public abstract class DbAuthService<TDbContext> : DbServiceBase<TDbContext>, ISe
     public abstract Task<User> GetUser(Session session, CancellationToken cancellationToken = default);
     public abstract Task<SessionInfo[]> GetUserSessions(Session session, CancellationToken cancellationToken = default);
     public abstract Task<Session> GetSession(CancellationToken cancellationToken = default);
-    public abstract Task<User?> TryGetUser(string userId, CancellationToken cancellationToken = default);
+    public abstract Task<User?> GetUser(string userId, CancellationToken cancellationToken = default);
 }
 
 public class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId> : DbAuthService<TDbContext>
@@ -67,8 +67,9 @@ public class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId> : DbA
         var context = CommandContext.GetCurrent();
         if (Computed.IsInvalidating()) {
             _ = GetSessionInfo(session, default);
-            if (context.Operation().Items.TryGet<SessionInfo>(out var invSessionInfo)) {
-                _ = TryGetUser(invSessionInfo.UserId, default);
+            var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
+            if (invSessionInfo != null) {
+                _ = GetUser(invSessionInfo.UserId, default);
                 _ = GetUserSessions(invSessionInfo.UserId, default);
             }
             return;
@@ -126,8 +127,9 @@ public class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId> : DbA
         var context = CommandContext.GetCurrent();
         if (Computed.IsInvalidating()) {
             _ = GetSessionInfo(session, default);
-            if (context.Operation().Items.TryGet<SessionInfo>(out var invSessionInfo)) {
-                _ = TryGetUser(invSessionInfo.UserId, default);
+            var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
+            if (invSessionInfo != null) {
+                _ = GetUser(invSessionInfo.UserId, default);
                 _ = GetUserSessions(invSessionInfo.UserId, default);
             }
             return;
@@ -155,9 +157,9 @@ public class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId> : DbA
         var session = command.Session;
         var context = CommandContext.GetCurrent();
         if (Computed.IsInvalidating()) {
-            if (context.Operation().Items.TryGet<SessionInfo>(out var invSessionInfo)) {
-                _ = TryGetUser(invSessionInfo.UserId, default);
-            }
+            var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
+            if (invSessionInfo != null)
+                _ = GetUser(invSessionInfo.UserId, default);
             return;
         }
 
@@ -182,10 +184,9 @@ public class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId> : DbA
         var context = CommandContext.GetCurrent();
         if (Computed.IsInvalidating()) {
             _ = GetSessionInfo(session, default);
-            if (context.Operation().Items.TryGet<SessionInfo>(out var invSessionInfo)) {
-                if (invSessionInfo.IsAuthenticated)
-                    _ = GetUserSessions(invSessionInfo.UserId, default);
-            }
+            var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
+            if (invSessionInfo is { IsAuthenticated: true })
+                _ = GetUserSessions(invSessionInfo.UserId, default);
             return null!;
         }
 
@@ -243,11 +244,11 @@ public class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId> : DbA
         var sessionInfo = await GetSessionInfo(session, cancellationToken).ConfigureAwait(false);
         if (sessionInfo.IsSignOutForced || !sessionInfo.IsAuthenticated)
             return new User(session.Id);
-        var user = await TryGetUser(sessionInfo.UserId, cancellationToken).ConfigureAwait(false);
+        var user = await GetUser(sessionInfo.UserId, cancellationToken).ConfigureAwait(false);
         return (user ?? new User(session.Id)).ToClientSideUser();
     }
 
-    public override async Task<User?> TryGetUser(
+    public override async Task<User?> GetUser(
         string userId, CancellationToken cancellationToken = default)
     {
         var dbUserId = DbUserIdHandler.Parse(userId);

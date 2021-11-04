@@ -20,12 +20,12 @@ public class UserProviderTest : FusionTestBase
             Name = "Chuck Norris",
         }));
 
-        var u1 = await users.TryGet(int.MaxValue);
+        var u1 = await users.Get(int.MaxValue);
         var c1 = await Computed.Capture(_ => users.Count());
 
         users.Invalidate();
 
-        var u2 = await users.TryGet(int.MaxValue);
+        var u2 = await users.Get(int.MaxValue);
         var c2 = await Computed.Capture(_ => users.Count());
 
         u2.Should().NotBeSameAs(u1);
@@ -58,20 +58,20 @@ public class UserProviderTest : FusionTestBase
         // But after this line the could should change
         await users.Create(new(u));
 
-        var u1 = await users.TryGet(u.Id);
+        var u1 = await users.Get(u.Id);
         u1.Should().NotBeNull();
         u1.Should().NotBeSameAs(u); // Because it's fetched
         u1!.Id.Should().Be(u.Id);
         u1.Name.Should().Be(u.Name);
         (await users.Count()).Should().Be(++userCount);
 
-        var u2 = await users.TryGet(u.Id);
+        var u2 = await users.Get(u.Id);
         u2.Should().BeSameAs(u1);
 
         u = u with { Name = "Jackie Chan" };
         await users.Update(new(u)); // u.Name change
 
-        var u3 = await users.TryGet(u.Id);
+        var u3 = await users.Get(u.Id);
         u3.Should().NotBeNull();
         u3.Should().NotBeSameAs(u2);
         u3!.Id.Should().Be(u.Id);
@@ -95,7 +95,7 @@ public class UserProviderTest : FusionTestBase
         using var sText = await stateFactory.NewComputed<string>(
             UpdateDelayer.ZeroDelay,
             async (s, cancellationToken) => {
-                var norris = await users.TryGet(int.MaxValue, cancellationToken).ConfigureAwait(false);
+                var norris = await users.Get(int.MaxValue, cancellationToken).ConfigureAwait(false);
                 var now = await time.GetTime().ConfigureAwait(false);
                 return $"@ {now:hh:mm:ss.fff}: {norris?.Name ?? "(none)"}";
             }).Update();
@@ -150,7 +150,7 @@ public class UserProviderTest : FusionTestBase
     {
         var users = Services.GetRequiredService<IUserService>();
 
-        var cUser0 = await Computed.Capture(_ => users.TryGet(0));
+        var cUser0 = await Computed.Capture(_ => users.Get(0));
         var cCount = await Computed.Capture(_ => users.Count());
 
         cUser0!.Options.KeepAliveTime.Should().Be(TimeSpan.FromSeconds(1));
@@ -174,7 +174,7 @@ public class UserProviderTest : FusionTestBase
 
             await Delay(0.5);
 
-            var user2 = await users2.TryGet(user.Id);
+            var user2 = await users2.Get(user.Id);
             user2.Should().NotBeNull();
             user2!.Id.Should().Be(user.Id);
             (await users2.Count()).Should().Be(count0);

@@ -52,10 +52,12 @@ public static class Computed
 
     // TryCapture
 
-    public static async Task<IComputed?> TryCapture(Func<CancellationToken, Task> producer, CancellationToken cancellationToken = default)
+    public static async ValueTask<Option<IComputed>> TryCapture(
+        Func<CancellationToken, Task> producer,
+        CancellationToken cancellationToken = default)
     {
         using var ccs = BeginCapture();
-        IComputed? result;
+        IComputed result;
         try {
             await producer.Invoke(cancellationToken).ConfigureAwait(false);
         }
@@ -63,19 +65,19 @@ public static class Computed
             throw;
         }
         catch (Exception) {
-            result = ccs.Context.TryGetCapturedComputed();
-            if (result?.Error != null)
-                return result;
+            if (ccs.Context.TryGetCaptured(out result!) && result.HasError)
+                return Option.Some(result); // Return the original error, if possible
             throw;
         }
-        result = ccs.Context.TryGetCapturedComputed();
-        return result;
+        return ccs.Context.TryGetCaptured(out result!) ? Option.Some(result) : default;
     }
 
-    public static async Task<IComputed<T>?> TryCapture<T>(Func<CancellationToken, Task<T>> producer, CancellationToken cancellationToken = default)
+    public static async Task<Option<IComputed<T>>> TryCapture<T>(
+        Func<CancellationToken, Task<T>> producer,
+        CancellationToken cancellationToken = default)
     {
         using var ccs = BeginCapture();
-        IComputed<T>? result;
+        IComputed<T> result;
         try {
             await producer.Invoke(cancellationToken).ConfigureAwait(false);
         }
@@ -83,19 +85,19 @@ public static class Computed
             throw;
         }
         catch (Exception) {
-            result = ccs.Context.TryGetCapturedComputed<T>();
-            if (result?.Error != null)
-                return result;
+            if (ccs.Context.TryGetCaptured(out result!) && result.HasError)
+                return Option.Some(result); // Return the original error, if possible
             throw;
         }
-        result = ccs.Context.TryGetCapturedComputed<T>();
-        return result;
+        return ccs.Context.TryGetCaptured(out result!) ? Option.Some(result) : default;
     }
 
-    public static async Task<IComputed?> TryCapture(Func<CancellationToken, ValueTask> producer, CancellationToken cancellationToken = default)
+    public static async Task<Option<IComputed>> TryCapture(
+        Func<CancellationToken, ValueTask> producer,
+        CancellationToken cancellationToken = default)
     {
         using var ccs = BeginCapture();
-        IComputed? result;
+        IComputed result;
         try {
             await producer.Invoke(cancellationToken).ConfigureAwait(false);
         }
@@ -103,19 +105,19 @@ public static class Computed
             throw;
         }
         catch (Exception) {
-            result = ccs.Context.TryGetCapturedComputed();
-            if (result?.Error != null)
-                return result;
+            if (ccs.Context.TryGetCaptured(out result!) && result.HasError)
+                return Option.Some(result); // Return the original error, if possible
             throw;
         }
-        result = ccs.Context.TryGetCapturedComputed();
-        return result;
+        return ccs.Context.TryGetCaptured(out result!) ? Option.Some(result) : default;
     }
 
-    public static async Task<IComputed<T>?> TryCapture<T>(Func<CancellationToken, ValueTask<T>> producer, CancellationToken cancellationToken = default)
+    public static async Task<Option<IComputed<T>>> TryCapture<T>(
+        Func<CancellationToken, ValueTask<T>> producer,
+        CancellationToken cancellationToken = default)
     {
         using var ccs = BeginCapture();
-        IComputed<T>? result;
+        IComputed<T> result;
         try {
             await producer.Invoke(cancellationToken).ConfigureAwait(false);
         }
@@ -123,13 +125,11 @@ public static class Computed
             throw;
         }
         catch (Exception) {
-            result = ccs.Context.TryGetCapturedComputed<T>();
-            if (result?.Error != null)
-                return result;
+            if (ccs.Context.TryGetCaptured(out result!) && result.HasError)
+                return Option.Some(result); // Return the original error, if possible
             throw;
         }
-        result = ccs.Context.TryGetCapturedComputed<T>();
-        return result;
+        return ccs.Context.TryGetCaptured(out result!) ? Option.Some(result) : default;
     }
 
     // Capture
@@ -144,12 +144,11 @@ public static class Computed
             throw;
         }
         catch (Exception) {
-            var result = ccs.Context.TryGetCapturedComputed();
-            if (result?.Error != null)
-                return result; // Suppress only when the error is captured too
+            if (ccs.Context.TryGetCaptured(out var result) && result.HasError)
+                return result; // Return the original error, if possible
             throw;
         }
-        return ccs.Context.GetCapturedComputed();
+        return ccs.Context.GetCaptured();
     }
 
     public static async Task<IComputed<T>> Capture<T>(Func<CancellationToken, Task<T>> producer, CancellationToken cancellationToken = default)
@@ -162,12 +161,11 @@ public static class Computed
             throw;
         }
         catch (Exception) {
-            var result = ccs.Context.TryGetCapturedComputed<T>();
-            if (result?.Error != null)
-                return result;
+            if (ccs.Context.TryGetCaptured<T>(out var result) && result.HasError)
+                return result; // Return the original error, if possible
             throw;
         }
-        return ccs.Context.GetCapturedComputed<T>();
+        return ccs.Context.GetCaptured<T>();
     }
 
     public static async Task<IComputed> Capture(Func<CancellationToken, ValueTask> producer, CancellationToken cancellationToken = default)
@@ -180,12 +178,11 @@ public static class Computed
             throw;
         }
         catch (Exception) {
-            var result = ccs.Context.TryGetCapturedComputed();
-            if (result?.Error != null)
-                return result;
+            if (ccs.Context.TryGetCaptured(out var result) && result.HasError)
+                return result; // Return the original error, if possible
             throw;
         }
-        return ccs.Context.GetCapturedComputed();
+        return ccs.Context.GetCaptured();
     }
 
     public static async Task<IComputed<T>> Capture<T>(Func<CancellationToken, ValueTask<T>> producer, CancellationToken cancellationToken = default)
@@ -198,29 +195,28 @@ public static class Computed
             throw;
         }
         catch (Exception) {
-            var result = ccs.Context.TryGetCapturedComputed<T>();
-            if (result?.Error != null)
-                return result;
+            if (ccs.Context.TryGetCaptured<T>(out var result) && result.HasError)
+                return result; // Return the original error, if possible
             throw;
         }
-        return ccs.Context.GetCapturedComputed<T>();
+        return ccs.Context.GetCaptured<T>();
     }
 
-    // TryGetExisting
+    // GetExisting
 
-    public static IComputed<T>? TryGetExisting<T>(Func<Task<T>> producer)
+    public static IComputed<T>? GetExisting<T>(Func<Task<T>> producer)
     {
-        using var ccs = ComputeContext.New(CallOptions.TryGetExisting | CallOptions.Capture).Activate();
+        using var ccs = ComputeContext.New(CallOptions.GetExisting | CallOptions.Capture).Activate();
         var task = producer.Invoke();
         task.AssertCompleted(); // The must be always synchronous in this case
-        return ccs.Context.TryGetCapturedComputed<T>();
+        return ccs.Context.TryGetCaptured<T>(out var result) ? result : default;
     }
 
-    public static IComputed<T>? TryGetExisting<T>(Func<ValueTask<T>> producer)
+    public static IComputed<T>? GetExisting<T>(Func<ValueTask<T>> producer)
     {
-        using var ccs = ComputeContext.New(CallOptions.TryGetExisting | CallOptions.Capture).Activate();
+        using var ccs = ComputeContext.New(CallOptions.GetExisting | CallOptions.Capture).Activate();
         var task = producer.Invoke();
         task.AssertCompleted(); // The must be always synchronous in this case
-        return ccs.Context.TryGetCapturedComputed<T>();
+        return ccs.Context.TryGetCaptured<T>(out var result) ? result : default;
     }
 }

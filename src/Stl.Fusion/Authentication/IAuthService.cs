@@ -32,5 +32,5 @@ public interface IServerSideAuthService : IAuthService
     [CommandHandler]
     Task<SessionInfo> SetupSession(SetupSessionCommand command, CancellationToken cancellationToken = default);
     [ComputeMethod]
-    Task<User?> TryGetUser(string userId, CancellationToken cancellationToken = default);
+    Task<User?> GetUser(string userId, CancellationToken cancellationToken = default);
 }

@@ -3,7 +3,7 @@ namespace Stl.Fusion;
 [Flags]
 public enum CallOptions
 {
-    TryGetExisting = 1,
-    Invalidate = 2 + TryGetExisting,
+    GetExisting = 1,
+    Invalidate = 2 + GetExisting,
     Capture = 4,
 }

@@ -189,7 +189,7 @@ public class FusionTestBase : TestBase, IAsyncLifetime
                     builder.UseNpgsql(PostgreSqlConnectionString);
                     break;
 #else
-                    throw new NotSupportedException("PostgreSql is supported only for .net core.");
+                    throw new NotSupportedException("PostgreSql is supported only in .NET Core tests.");
 #endif
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -206,7 +206,7 @@ public class FusionTestBase : TestBase, IAsyncLifetime
 #if NETCOREAPP
                     b.AddNpgsqlOperationLogChangeTracking();
 #else
-                    throw new NotSupportedException("PostgreSql is supported only for .net core.");
+                    throw new NotSupportedException("PostgreSql is supported only in .NET Core tests.");
 #endif
                 else
                     b.AddFileBasedOperationLogChangeTracking();
