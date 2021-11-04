@@ -1,3 +1,5 @@
+using Stl.Versioning;
+
 namespace Stl.Fusion.Blazor;
 
 public abstract class ParameterComparer
@@ -61,6 +63,64 @@ public class ByReferenceParameterComparer : ParameterComparer
 {
     public override bool AreEqual(object? oldValue, object? newValue)
         => ReferenceEquals(oldValue, newValue);
+}
+
+public class ByIdParameterComparer<TId> : ParameterComparer
+{
+    public override bool AreEqual(object? oldValue, object? newValue)
+    {
+        if (ReferenceEquals(oldValue, newValue))
+            return true; // Might be the most frequent case
+        if (oldValue == null)
+            return newValue == null;
+        if (newValue == null)
+            return false;
+
+        var oldId = ((IHasId<TId>) oldValue).Id;
+        var newId = ((IHasId<TId>) newValue).Id;
+        return EqualityComparer<TId>.Default.Equals(oldId, newId);
+    }
+}
+
+public class ByVersionParameterComparer<TVersion> : ParameterComparer
+    where TVersion : notnull
+{
+    public override bool AreEqual(object? oldValue, object? newValue)
+    {
+        if (ReferenceEquals(oldValue, newValue))
+            return true; // Might be the most frequent case
+        if (oldValue == null)
+            return newValue == null;
+        if (newValue == null)
+            return false;
+
+        var oldVersion = ((IHasVersion<TVersion>) oldValue).Version;
+        var newVersion = ((IHasVersion<TVersion>) newValue).Version;
+        return EqualityComparer<TVersion>.Default.Equals(oldVersion, newVersion);
+    }
+}
+
+public class ByIdAndVersionParameterComparer<TId, TVersion> : ParameterComparer
+    where TVersion : notnull
+{
+    public override bool AreEqual(object? oldValue, object? newValue)
+    {
+        if (ReferenceEquals(oldValue, newValue))
+            return true; // Might be the most frequent case
+        if (oldValue == null)
+            return newValue == null;
+        if (newValue == null)
+            return false;
+
+        var oldVersion = ((IHasVersion<TVersion>) oldValue).Version;
+        var newVersion = ((IHasVersion<TVersion>) newValue).Version;
+        if (!EqualityComparer<TVersion>.Default.Equals(oldVersion, newVersion))
+            return false;
+
+        var oldId = ((IHasId<TId>) oldValue).Id;
+        var newId = ((IHasId<TId>) newValue).Id;
+        return EqualityComparer<TId>.Default.Equals(oldId, newId);
+    }
 }
 
 public class AlwaysEqualParameterComparer : ParameterComparer
