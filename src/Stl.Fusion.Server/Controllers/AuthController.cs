@@ -38,12 +38,12 @@ public class AuthController : ControllerBase, IAuthService
         => AuthService.IsSignOutForced(session, cancellationToken);
 
     [HttpGet, Publish]
-    public Task<User> GetUser(Session session, CancellationToken cancellationToken = default)
-        => AuthService.GetUser(session, cancellationToken);
-
-    [HttpGet, Publish]
     public Task<SessionInfo> GetSessionInfo(Session session, CancellationToken cancellationToken = default)
         => AuthService.GetSessionInfo(session, cancellationToken);
+
+    [HttpGet, Publish]
+    public Task<User> GetSessionUser(Session session, CancellationToken cancellationToken = default)
+        => AuthService.GetSessionUser(session, cancellationToken);
 
     [HttpGet, Publish]
     public Task<SessionInfo[]> GetUserSessions(Session session, CancellationToken cancellationToken = default)

@@ -22,7 +22,7 @@
     public RenderFragment ChildContent { get; set; } = _ => { };
     [Parameter]
     public string SessionId {
-        get => SessionProvider.HasSession ? SessionProvider.Session : "";
+        get => SessionProvider.HasSession ? SessionProvider.Session.Id : "";
         set {
             if (string.IsNullOrEmpty(value))
                 return; // Blazor WASM component is created w/ empty SessionId

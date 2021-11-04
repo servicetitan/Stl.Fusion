@@ -62,8 +62,8 @@ public abstract class AuthServiceTestBase : FusionTestBase
         var session = sessionA;
         await WebServices.Commander().Call(
             new SignInCommand(session, bob).MarkServerSide());
-        var user = await authServer.GetUser(session);
-        user!.Name.Should().Be(bob.Name);
+        var user = await authServer.GetSessionUser(session);
+        user.Name.Should().Be(bob.Name);
         long.TryParse(user.Id, out var _).Should().BeTrue();
         user.Claims.Count.Should().Be(0);
         bob = user;
@@ -71,41 +71,41 @@ public abstract class AuthServiceTestBase : FusionTestBase
         // Trying to edit user name
         var newName = "Bobby";
         await authClient.EditUser(new(session, newName));
-        user = await authServer.GetUser(session);
-        user!.Name.Should().Be(newName);
+        user = await authServer.GetSessionUser(session);
+        user.Name.Should().Be(newName);
         bob = bob with { Name = newName };
 
         // Checking if the client is able to see the same user & sessions
-        user = await authClient.GetUser(sessionA);
+        user = await authClient.GetSessionUser(sessionA);
         user.Id.Should().Be(bob.Id);
         user.IsAuthenticated.Should().BeTrue();
-        user = await authClient.GetUser(session);
+        user = await authClient.GetSessionUser(session);
         user.Id.Should().Be(bob.Id);
         user.IsAuthenticated.Should().BeTrue();
 
         // Checking if local service is able to see the same user & sessions
         if (!Options.UseInMemoryAuthService) {
             await Delay(0.5);
-            user = await authLocal.GetUser(session);
-            user!.Id.Should().Be(bob.Id);
+            user = await authLocal.GetSessionUser(session);
+            user.Id.Should().Be(bob.Id);
             user.IsAuthenticated.Should().BeTrue();
         }
 
         // Checking guest session
         session = sessionB;
-        user = await authClient.GetUser(session);
+        user = await authClient.GetSessionUser(session);
         user.IsAuthenticated.Should().BeFalse();
 
         // Checking sign-out
         await WebServices.Commander().Call(new SignOutCommand(sessionA));
-        user = await authServer.GetUser(sessionA);
-        user!.IsAuthenticated.Should().BeFalse();
+        user = await authServer.GetSessionUser(sessionA);
+        user.IsAuthenticated.Should().BeFalse();
         await Delay(0.5);
-        user = await authClient.GetUser(sessionA);
+        user = await authClient.GetSessionUser(sessionA);
         user.IsAuthenticated.Should().BeFalse();
         if (!Options.UseInMemoryAuthService) {
-            user = await authLocal.GetUser(sessionA);
-            user!.IsAuthenticated.Should().BeFalse();
+            user = await authLocal.GetSessionUser(sessionA);
+            user.IsAuthenticated.Should().BeFalse();
         }
     }
 
@@ -125,8 +125,8 @@ public abstract class AuthServiceTestBase : FusionTestBase
 
         var session = sessionA;
         await authServer.SignIn(new SignInCommand(session, bob).MarkServerSide());
-        var user = await authServer.GetUser(session);
-        user!.Name.Should().Be(bob.Name);
+        var user = await authServer.GetSessionUser(session);
+        user.Name.Should().Be(bob.Name);
         long.TryParse(user.Id, out var _).Should().BeTrue();
         user.Claims.Count.Should().Be(1);
         user.Identities.Single(); // Client-side users shouldn't have them
@@ -139,36 +139,36 @@ public abstract class AuthServiceTestBase : FusionTestBase
         bob = user;
 
         // Checking if the client is able to see the same user & sessions
-        user = await authClient.GetUser(sessionA);
+        user = await authClient.GetSessionUser(sessionA);
         user.Id.Should().Be(bob.Id);
         user.IsAuthenticated.Should().BeTrue();
-        user = await authClient.GetUser(session);
+        user = await authClient.GetSessionUser(session);
         user.Id.Should().Be(bob.Id);
         user.IsAuthenticated.Should().BeTrue();
 
         // Checking if local service is able to see the same user & sessions
         if (!Options.UseInMemoryAuthService) {
             await Delay(0.5);
-            user = await authLocal.GetUser(session);
+            user = await authLocal.GetSessionUser(session);
             user.Id.Should().Be(bob.Id);
             user.IsAuthenticated.Should().BeTrue();
         }
 
         // Checking guest session
         session = sessionB;
-        user = await authClient.GetUser(session);
+        user = await authClient.GetSessionUser(session);
         user.IsAuthenticated.Should().BeFalse();
 
         // Checking sign-out
         await authServer.SignOut(new(sessionA));
-        user = await authServer.GetUser(sessionA);
-        user!.IsAuthenticated.Should().BeFalse();
+        user = await authServer.GetSessionUser(sessionA);
+        user.IsAuthenticated.Should().BeFalse();
         await Delay(0.5);
-        user = await authClient.GetUser(sessionA);
+        user = await authClient.GetSessionUser(sessionA);
         user.IsAuthenticated.Should().BeFalse();
         if (!Options.UseInMemoryAuthService) {
-            user = await authLocal.GetUser(sessionA);
-            user!.IsAuthenticated.Should().BeFalse();
+            user = await authLocal.GetSessionUser(sessionA);
+            user.IsAuthenticated.Should().BeFalse();
         }
     }
 
@@ -179,8 +179,8 @@ public abstract class AuthServiceTestBase : FusionTestBase
         var sessionFactory = ClientServices.GetRequiredService<ISessionFactory>();
 
         var session = sessionFactory.CreateSession();
-        var user = await authServer.GetUser(session);
-        user!.Id.Should().Be(new User(session.Id).Id);
+        var user = await authServer.GetSessionUser(session);
+        user.Id.Should().Be(new User(session.Id).Id);
         user.Name.Should().Be(User.GuestName);
         user.IsAuthenticated.Should().BeFalse();
     }
@@ -204,8 +204,8 @@ public abstract class AuthServiceTestBase : FusionTestBase
         });
         var bob = new User("", "Bob").WithIdentity("b:1");
         await authServer.SignIn(new SignInCommand(session, bob).MarkServerSide());
-        var user = await authServer.GetUser(session);
-        user!.Name.Should().Be("Bob");
+        var user = await authServer.GetSessionUser(session);
+        user.Name.Should().Be("Bob");
     }
 
     [Fact]
@@ -224,8 +224,8 @@ public abstract class AuthServiceTestBase : FusionTestBase
         var bob = new User("", "Bob").WithIdentity("g:1");
         var signInCmd = new SignInCommand(sessionA, bob).MarkServerSide();
         await authServer.SignIn(signInCmd);
-        var user = await authServer.GetUser(sessionA);
-        user!.Name.Should().Be(bob.Name);
+        var user = await authServer.GetSessionUser(sessionA);
+        user.Name.Should().Be(bob.Name);
         bob = await authServer.GetUser(user.Id)
             ?? throw new NullReferenceException();
 
@@ -236,8 +236,8 @@ public abstract class AuthServiceTestBase : FusionTestBase
 
         signInCmd = new SignInCommand(sessionB, bob).MarkServerSide();
         await authServer.SignIn(signInCmd);
-        user = await authServer.GetUser(sessionB);
-        user!.Name.Should().Be(bob.Name);
+        user = await authServer.GetSessionUser(sessionB);
+        user.Name.Should().Be(bob.Name);
 
         sessions = await authServer.GetUserSessions(sessionA);
         sessions.Select(s => s.Id).Should().BeEquivalentTo(new[] { sessionA.Id, sessionB.Id });
@@ -247,8 +247,8 @@ public abstract class AuthServiceTestBase : FusionTestBase
         var signOutCmd = new SignOutCommand(sessionA);
         await authServer.SignOut(signOutCmd);
         (await authServer.IsSignOutForced(sessionB)).Should().BeFalse();
-        user = await authServer.GetUser(sessionA);
-        user!.IsAuthenticated.Should().BeFalse();
+        user = await authServer.GetSessionUser(sessionA);
+        user.IsAuthenticated.Should().BeFalse();
 
         sessions = await authServer.GetUserSessions(sessionA);
         sessions.Length.Should().Be(0);
@@ -257,8 +257,8 @@ public abstract class AuthServiceTestBase : FusionTestBase
 
         signInCmd = new SignInCommand(sessionA, bob).MarkServerSide();
         await authServer.SignIn(signInCmd);
-        user = await authServer.GetUser(sessionA);
-        user!.Name.Should().Be(bob.Name);
+        user = await authServer.GetSessionUser(sessionA);
+        user.Name.Should().Be(bob.Name);
 
         sessions = await authServer.GetUserSessions(sessionA);
         sessions.Select(s => s.Id).Should().BeEquivalentTo(new[] { sessionA.Id, sessionB.Id });
@@ -269,8 +269,8 @@ public abstract class AuthServiceTestBase : FusionTestBase
         await authServer.SignOut(signOutCmd);
         (await authServer.IsSignOutForced(sessionB)).Should().BeTrue();
         (await authServer.GetSessionInfo(sessionB)).IsSignOutForced.Should().BeTrue();
-        user = await authServer.GetUser(sessionB);
-        user!.IsAuthenticated.Should().BeFalse();
+        user = await authServer.GetSessionUser(sessionB);
+        user.IsAuthenticated.Should().BeFalse();
 
         sessions = await authServer.GetUserSessions(sessionA);
         sessions.Select(s => s.Id).Should().BeEquivalentTo(new[] { sessionA.Id });

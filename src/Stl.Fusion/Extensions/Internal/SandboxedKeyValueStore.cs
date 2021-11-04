@@ -106,7 +106,7 @@ public partial class SandboxedKeyValueStore : ISandboxedKeyValueStore
     {
         if (session == Session.Null)
             throw Errors.KeyViolatesSandboxedKeyValueStoreConstraints();
-        var user = await AuthService.GetUser(session, cancellationToken);
+        var user = await AuthService.GetSessionUser(session, cancellationToken);
         if (!user.IsAuthenticated)
             return new KeyChecker() {
                 Clock = Clock,

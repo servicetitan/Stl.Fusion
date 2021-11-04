@@ -9,7 +9,7 @@ public class EnumerableExTest : TestBase
     {
         var source1 = new [] { "A", "BB", "AA" };
         var source2 = new [] { "A", "AA", "B", "BB" };
-        var source3 = new string[0];
+        var source3 = Array.Empty<string>();
 
         source1.DistinctBy(i => i.Length).Should().BeEquivalentTo("A", "BB");
         source2.DistinctBy(i => i.Length).Should().BeEquivalentTo("A", "AA");

@@ -25,7 +25,7 @@ public abstract class DbAuthService<TDbContext> : DbServiceBase<TDbContext>, ISe
 
     public abstract Task<SessionInfo> SetupSession(SetupSessionCommand command, CancellationToken cancellationToken = default);
     public abstract Task<SessionInfo> GetSessionInfo(Session session, CancellationToken cancellationToken = default);
-    public abstract Task<User> GetUser(Session session, CancellationToken cancellationToken = default);
+    public abstract Task<User> GetSessionUser(Session session, CancellationToken cancellationToken = default);
     public abstract Task<SessionInfo[]> GetUserSessions(Session session, CancellationToken cancellationToken = default);
     public abstract Task<Session> GetSession(CancellationToken cancellationToken = default);
     public abstract Task<User?> GetUser(string userId, CancellationToken cancellationToken = default);
@@ -106,7 +106,7 @@ public class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId> : DbA
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        var dbSessionInfo = await Sessions.GetOrCreate(dbContext, session, cancellationToken).ConfigureAwait(false);
+        var dbSessionInfo = await Sessions.GetOrCreate(dbContext, session.Id, cancellationToken).ConfigureAwait(false);
         var sessionInfo = SessionConverter.ToModel(dbSessionInfo);
         if (sessionInfo!.IsSignOutForced)
             throw Errors.ForcedSignOut();
@@ -137,7 +137,7 @@ public class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId> : DbA
 
         await using var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
 
-        var dbSessionInfo = await Sessions.GetOrCreate(dbContext, session, cancellationToken).ConfigureAwait(false);
+        var dbSessionInfo = await Sessions.GetOrCreate(dbContext, session.Id, cancellationToken).ConfigureAwait(false);
         var sessionInfo = SessionConverter.ToModel(dbSessionInfo);
         if (sessionInfo!.IsSignOutForced)
             return;
@@ -238,7 +238,7 @@ public class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId> : DbA
         return sessionInfo!;
     }
 
-    public override async Task<User> GetUser(
+    public override async Task<User> GetSessionUser(
         Session session, CancellationToken cancellationToken = default)
     {
         var sessionInfo = await GetSessionInfo(session, cancellationToken).ConfigureAwait(false);
@@ -259,7 +259,7 @@ public class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId> : DbA
     public override async Task<SessionInfo[]> GetUserSessions(
         Session session, CancellationToken cancellationToken = default)
     {
-        var user = await GetUser(session, cancellationToken).ConfigureAwait(false);
+        var user = await GetSessionUser(session, cancellationToken).ConfigureAwait(false);
         if (!user.IsAuthenticated)
             return Array.Empty<SessionInfo>();
         return await GetUserSessions(user.Id, cancellationToken).ConfigureAwait(false);

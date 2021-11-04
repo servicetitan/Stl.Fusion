@@ -30,9 +30,6 @@ public sealed class Session : IHasId<Symbol>, IEquatable<Session>,
 
     public override string ToString() => Id.Value;
 
-    public static implicit operator Symbol(Session session) => session.Id;
-    public static implicit operator string(Session session) => session.Id.Value;
-
     Symbol IConvertibleTo<Symbol>.Convert() => Id;
     string IConvertibleTo<string>.Convert() => Id.Value;
 

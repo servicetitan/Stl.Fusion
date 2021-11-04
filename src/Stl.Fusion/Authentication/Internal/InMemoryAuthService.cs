@@ -7,8 +7,8 @@ namespace Stl.Fusion.Authentication.Internal;
 public class InMemoryAuthService : IServerSideAuthService
 {
     private long _nextUserId;
-    protected ConcurrentDictionary<string, User> Users { get; } = new();
-    protected ConcurrentDictionary<string, SessionInfo> SessionInfos { get; } = new();
+    protected ConcurrentDictionary<Symbol, User> Users { get; } = new();
+    protected ConcurrentDictionary<Symbol, SessionInfo> SessionInfos { get; } = new();
     protected ISessionFactory SessionFactory { get; }
     protected MomentClockSet Clocks { get; }
     protected VersionGenerator<long> VersionGenerator { get; }
@@ -181,12 +181,12 @@ public class InMemoryAuthService : IServerSideAuthService
     public virtual Task<SessionInfo> GetSessionInfo(
         Session session, CancellationToken cancellationToken = default)
     {
-        var sessionInfo = SessionInfos.GetValueOrDefault(session);
-        sessionInfo = sessionInfo.OrDefault(session, Clocks); // To mask signed out sessions
+        var sessionInfo = SessionInfos.GetValueOrDefault(session.Id);
+        sessionInfo = sessionInfo.OrDefault(session.Id, Clocks); // To mask signed out sessions
         return Task.FromResult(sessionInfo);
     }
 
-    public virtual async Task<User> GetUser(Session session, CancellationToken cancellationToken = default)
+    public virtual async Task<User> GetSessionUser(Session session, CancellationToken cancellationToken = default)
     {
         var sessionInfo = await GetSessionInfo(session, cancellationToken).ConfigureAwait(false);
         if (sessionInfo.IsSignOutForced || !sessionInfo.IsAuthenticated)
@@ -201,7 +201,7 @@ public class InMemoryAuthService : IServerSideAuthService
     public virtual async Task<SessionInfo[]> GetUserSessions(
         Session session, CancellationToken cancellationToken = default)
     {
-        var user = await GetUser(session, cancellationToken).ConfigureAwait(false);
+        var user = await GetSessionUser(session, cancellationToken).ConfigureAwait(false);
         if (!user.IsAuthenticated)
             return Array.Empty<SessionInfo>();
         return await GetUserSessions(user.Id, cancellationToken).ConfigureAwait(false);

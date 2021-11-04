@@ -16,10 +16,11 @@ public interface IAuthClientDef
 
     [Get(nameof(IsSignOutForced))]
     Task<bool> IsSignOutForced(Session session, CancellationToken cancellationToken = default);
-    [Get(nameof(GetUser))]
-    Task<User> GetUser(Session session, CancellationToken cancellationToken = default);
     [Get(nameof(GetSessionInfo))]
     Task<SessionInfo> GetSessionInfo(Session session, CancellationToken cancellationToken = default);
+    [Get(nameof(GetSessionUser))]
+    Task<User> GetSessionUser(Session session, CancellationToken cancellationToken = default);
+
     [Get(nameof(GetUserSessions))]
     Task<SessionInfo[]> GetUserSessions(Session session, CancellationToken cancellationToken = default);
 

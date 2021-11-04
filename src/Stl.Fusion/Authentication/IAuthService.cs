@@ -17,7 +17,7 @@ public interface IAuthService
     [ComputeMethod(KeepAliveTime = 10)]
     Task<SessionInfo> GetSessionInfo(Session session, CancellationToken cancellationToken = default);
     [ComputeMethod(KeepAliveTime = 10)]
-    Task<User> GetUser(Session session, CancellationToken cancellationToken = default);
+    Task<User> GetSessionUser(Session session, CancellationToken cancellationToken = default);
     [ComputeMethod]
     Task<SessionInfo[]> GetUserSessions(Session session, CancellationToken cancellationToken = default);
 
@@ -31,6 +31,6 @@ public interface IServerSideAuthService : IAuthService
     Task SignIn(SignInCommand command, CancellationToken cancellationToken = default);
     [CommandHandler]
     Task<SessionInfo> SetupSession(SetupSessionCommand command, CancellationToken cancellationToken = default);
-    [ComputeMethod]
+    [ComputeMethod(KeepAliveTime = 1)]
     Task<User?> GetUser(string userId, CancellationToken cancellationToken = default);
 }
