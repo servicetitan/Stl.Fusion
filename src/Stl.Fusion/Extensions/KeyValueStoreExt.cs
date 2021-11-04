@@ -27,7 +27,7 @@ public static class KeyValueStoreExt
     public static Task Set(this IKeyValueStore keyValueStore,
         string key, string value, Moment? expiresAt, CancellationToken cancellationToken = default)
     {
-        var command = new SetCommand(key, value, expiresAt).MarkServerSide();
+        var command = new SetCommand(key, value, expiresAt).MarkValid();
         return keyValueStore.Set(command, cancellationToken);
     }
 
@@ -37,7 +37,7 @@ public static class KeyValueStoreExt
         (string Key, string Value, Moment? ExpiresAt)[] items,
         CancellationToken cancellationToken = default)
     {
-        var command = new SetManyCommand(items).MarkServerSide();
+        var command = new SetManyCommand(items).MarkValid();
         return keyValueStore.SetMany(command, cancellationToken);
     }
 
@@ -46,7 +46,7 @@ public static class KeyValueStoreExt
     public static Task Remove(this IKeyValueStore keyValueStore,
         string key, CancellationToken cancellationToken = default)
     {
-        var command = new RemoveCommand(key).MarkServerSide();
+        var command = new RemoveCommand(key).MarkValid();
         return keyValueStore.Remove(command, cancellationToken);
     }
 
@@ -55,7 +55,7 @@ public static class KeyValueStoreExt
     public static Task RemoveMany(this IKeyValueStore keyValueStore,
         string[] keys, CancellationToken cancellationToken = default)
     {
-        var command = new RemoveManyCommand(keys).MarkServerSide();
+        var command = new RemoveManyCommand(keys).MarkValid();
         return keyValueStore.RemoveMany(command, cancellationToken);
     }
 

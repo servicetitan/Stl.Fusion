@@ -23,23 +23,23 @@ public readonly struct FusionAuthenticationBuilder
         Services.TryAddScoped<PresenceService>();
     }
 
-    public FusionAuthenticationBuilder AddServerSideAuthService<TAuthService>()
-        where TAuthService : class, IServerSideAuthService
-        => AddServerSideAuthService(typeof(TAuthService));
+    public FusionAuthenticationBuilder AddAuthBackend<TAuthService>()
+        where TAuthService : class, IAuthBackend
+        => AddAuthBackend(typeof(TAuthService));
 
-    public FusionAuthenticationBuilder AddServerSideAuthService(Type? implementationType = null)
+    public FusionAuthenticationBuilder AddAuthBackend(Type? implementationType = null)
     {
-        if (Services.Any(d => d.ServiceType == typeof(IServerSideAuthService)))
+        if (Services.Any(d => d.ServiceType == typeof(IAuthBackend)))
             return this;
 
         implementationType ??= typeof(InMemoryAuthService);
-        var serverSideServiceType = typeof(IServerSideAuthService);
+        var serverSideServiceType = typeof(IAuthBackend);
         if (!serverSideServiceType.IsAssignableFrom(implementationType))
             throw Errors.MustImplement(implementationType, serverSideServiceType, nameof(implementationType));
 
         Fusion.AddComputeService(implementationType);
-        Services.TryAddTransient(c => (IServerSideAuthService) c.GetRequiredService(implementationType));
-        Services.TryAddTransient(c => (IAuthService) c.GetRequiredService(implementationType));
+        Services.TryAddTransient(c => (IAuthBackend) c.GetRequiredService(implementationType));
+        Services.TryAddTransient(c => (IAuth) c.GetRequiredService(implementationType));
         return this;
     }
 }

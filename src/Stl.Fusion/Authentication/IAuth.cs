@@ -2,7 +2,7 @@ using Stl.Fusion.Authentication.Commands;
 
 namespace Stl.Fusion.Authentication;
 
-public interface IAuthService
+public interface IAuth
 {
     // Commands
     [CommandHandler]
@@ -25,7 +25,7 @@ public interface IAuthService
     Task<Session> GetSession(CancellationToken cancellationToken = default);
 }
 
-public interface IServerSideAuthService : IAuthService
+public interface IAuthBackend
 {
     [CommandHandler]
     Task SignIn(SignInCommand command, CancellationToken cancellationToken = default);

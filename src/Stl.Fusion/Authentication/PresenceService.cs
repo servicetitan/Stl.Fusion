@@ -12,7 +12,7 @@ public class PresenceService : AsyncProcessBase
     }
 
     protected TimeSpan UpdatePeriod { get; }
-    protected IAuthService AuthService { get; }
+    protected IAuth Auth { get; }
     protected ISessionResolver SessionResolver { get; }
     protected MomentClockSet Clocks { get; }
     protected ILogger Log { get; }
@@ -26,7 +26,7 @@ public class PresenceService : AsyncProcessBase
         Log = log ?? NullLogger<PresenceService>.Instance;
         UpdatePeriod = options.UpdatePeriod;
         Clocks = options.Clocks ?? services.Clocks();
-        AuthService = services.GetRequiredService<IAuthService>();
+        Auth = services.GetRequiredService<IAuth>();
         SessionResolver = services.GetRequiredService<ISessionResolver>();
     }
 
@@ -44,7 +44,7 @@ public class PresenceService : AsyncProcessBase
     protected virtual async Task<bool> UpdatePresence(Session session, CancellationToken cancellationToken)
     {
         try {
-            await AuthService.UpdatePresence(session, cancellationToken).ConfigureAwait(false);
+            await Auth.UpdatePresence(session, cancellationToken).ConfigureAwait(false);
             return true;
         }
         catch (OperationCanceledException) {

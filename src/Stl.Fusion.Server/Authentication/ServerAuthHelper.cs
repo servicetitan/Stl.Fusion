@@ -17,7 +17,8 @@ public class ServerAuthHelper
         public bool KeepSignedIn { get; set; }
     }
 
-    protected IServerSideAuthService AuthService { get; }
+    protected IAuth Auth { get; }
+    protected IAuthBackend AuthBackend { get; }
     protected ISessionResolver SessionResolver { get; }
     protected AuthSchemasCache AuthSchemasCache { get; }
     protected MomentClockSet Clocks { get; }
@@ -31,7 +32,8 @@ public class ServerAuthHelper
 
     public ServerAuthHelper(
         Options? options,
-        IServerSideAuthService authService,
+        IAuth auth,
+        IAuthBackend authBackend,
         ISessionResolver sessionResolver,
         AuthSchemasCache authSchemasCache,
         MomentClockSet clocks)
@@ -43,7 +45,8 @@ public class ServerAuthHelper
         SessionInfoUpdatePeriod = options.SessionInfoUpdatePeriod;
         KeepSignedIn = options.KeepSignedIn;
 
-        AuthService = authService;
+        Auth = auth;
+        AuthBackend = authBackend;
         SessionResolver = sessionResolver;
         AuthSchemasCache = authSchemasCache;
         Clocks = clocks;
@@ -81,20 +84,20 @@ public class ServerAuthHelper
             ? userAgentValues.FirstOrDefault() ?? ""
             : "";
 
-        var sessionInfo = await AuthService.GetSessionInfo(session, cancellationToken).ConfigureAwait(false);
+        var sessionInfo = await Auth.GetSessionInfo(session, cancellationToken).ConfigureAwait(false);
         var mustUpdateSessionInfo =
             sessionInfo.IPAddress != ipAddress
             || sessionInfo.UserAgent != userAgent
             || sessionInfo.LastSeenAt.ToMoment() + SessionInfoUpdatePeriod < Clocks.SystemClock.Now;
         if (mustUpdateSessionInfo) {
-            var setupSessionCommand = new SetupSessionCommand(session, ipAddress, userAgent).MarkServerSide();
-            sessionInfo = await AuthService.SetupSession(setupSessionCommand, cancellationToken).ConfigureAwait(false);
+            var setupSessionCommand = new SetupSessionCommand(session, ipAddress, userAgent).MarkValid();
+            sessionInfo = await AuthBackend.SetupSession(setupSessionCommand, cancellationToken).ConfigureAwait(false);
         }
 
         var userId = sessionInfo.UserId;
         var userIsAuthenticated = sessionInfo.IsAuthenticated && !sessionInfo.IsSignOutForced;
         var user = userIsAuthenticated
-            ? await AuthService.GetUser(userId, cancellationToken).ConfigureAwait(false)
+            ? await AuthBackend.GetUser(userId, cancellationToken).ConfigureAwait(false)
                 ?? throw new KeyNotFoundException()
             : new User(session.Id); // Guest
 
@@ -103,17 +106,17 @@ public class ServerAuthHelper
                 if (userIsAuthenticated && IsSameUser(user, httpUser, httpAuthenticationSchema))
                     return;
                 var (newUser, authenticatedIdentity) = CreateOrUpdateUser(user, httpUser, httpAuthenticationSchema);
-                var signInCommand = new SignInCommand(session, newUser, authenticatedIdentity).MarkServerSide();
-                await AuthService.SignIn(signInCommand, cancellationToken).ConfigureAwait(false);
+                var signInCommand = new SignInCommand(session, newUser, authenticatedIdentity).MarkValid();
+                await AuthBackend.SignIn(signInCommand, cancellationToken).ConfigureAwait(false);
             }
             else if (userIsAuthenticated && !KeepSignedIn) {
                 var signOutCommand = new SignOutCommand(session);
-                await AuthService.SignOut(signOutCommand, cancellationToken).ConfigureAwait(false);
+                await Auth.SignOut(signOutCommand, cancellationToken).ConfigureAwait(false);
             }
         }
         finally {
             // Ideally this should be done once important things are completed
-            _ = Task.Run(() => AuthService.UpdatePresence(session, default), default);
+            _ = Task.Run(() => Auth.UpdatePresence(session, default), default);
         }
     }
 

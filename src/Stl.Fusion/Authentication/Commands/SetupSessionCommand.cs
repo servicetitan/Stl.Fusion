@@ -5,7 +5,7 @@ public record SetupSessionCommand(
     [property: DataMember] Session Session,
     [property: DataMember] string IPAddress = "",
     [property: DataMember] string UserAgent = ""
-    ) : ServerSideCommandBase<SessionInfo>, ISessionCommand<SessionInfo>
+    ) : BackendCommand<SessionInfo>, ISessionCommand<SessionInfo>
 {
     public SetupSessionCommand() : this(Session.Null) { }
 }

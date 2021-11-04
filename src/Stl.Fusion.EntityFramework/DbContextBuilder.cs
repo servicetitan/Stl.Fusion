@@ -178,7 +178,7 @@ public readonly struct DbContextBuilder<TDbContext>
         });
         Services.AddFusion(fusion => {
             fusion.AddAuthentication(fusionAuth => {
-                fusionAuth.AddServerSideAuthService<DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId>>();
+                fusionAuth.AddAuthBackend<DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId>>();
             });
         });
 

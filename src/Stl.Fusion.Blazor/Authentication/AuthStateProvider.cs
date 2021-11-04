@@ -25,20 +25,20 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
     // These properties are intentionally public -
     // e.g. State is quite handy to consume in other compute methods or states
     public ISessionResolver SessionResolver { get; }
-    public IAuthService AuthService { get; }
+    public IAuth Auth { get; }
     public IUICommandTracker UICommandTracker { get; }
     public IComputedState<AuthState> State { get; }
 
     public AuthStateProvider(
         Options? options,
         ISessionResolver sessionResolver,
-        IAuthService authService,
+        IAuth auth,
         IUICommandTracker uiCommandTracker,
         IStateFactory stateFactory)
     {
         options ??= new();
         SessionResolver = sessionResolver;
-        AuthService = authService;
+        Auth = auth;
         UICommandTracker = uiCommandTracker;
         State = stateFactory.NewComputed<AuthState>(o => {
             options.AuthStateOptionsBuilder.Invoke(o);
@@ -75,11 +75,11 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
     protected virtual async Task<AuthState> ComputeState(IComputedState<AuthState> state, CancellationToken cancellationToken)
     {
         var session = await SessionResolver.GetSession(cancellationToken).ConfigureAwait(false);
-        var user = await AuthService.GetSessionUser(session, cancellationToken).ConfigureAwait(false);
+        var user = await Auth.GetSessionUser(session, cancellationToken).ConfigureAwait(false);
         // AuthService.GetUser checks for forced sign-out as well, so
         // we should explicitly query its state for unauthenticated users only
         var isSignOutForced = !user.IsAuthenticated
-            && await AuthService.IsSignOutForced(session, cancellationToken).ConfigureAwait(false);
+            && await Auth.IsSignOutForced(session, cancellationToken).ConfigureAwait(false);
         return new AuthState(user, isSignOutForced);
     }
 

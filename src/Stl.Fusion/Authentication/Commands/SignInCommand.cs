@@ -5,7 +5,7 @@ public record SignInCommand(
     [property: DataMember] Session Session,
     [property: DataMember] User User,
     [property: DataMember] UserIdentity AuthenticatedIdentity
-    ) : ServerSideCommandBase<Unit>, ISessionCommand<Unit>
+    ) : BackendCommand<Unit>, ISessionCommand<Unit>
 {
     public SignInCommand() : this(Session.Null, null!, null!) { }
     public SignInCommand(Session session, User user)

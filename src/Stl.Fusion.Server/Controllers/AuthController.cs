@@ -6,14 +6,14 @@ namespace Stl.Fusion.Server.Controllers;
 
 [Route("fusion/auth/[action]")]
 [ApiController, JsonifyErrors(RewriteErrors = true)]
-public class AuthController : ControllerBase, IAuthService
+public class AuthController : ControllerBase, IAuth
 {
-    protected IAuthService AuthService { get; }
+    protected IAuth Auth { get; }
     protected ISessionResolver SessionResolver { get; }
 
-    public AuthController(IAuthService authService, ISessionResolver sessionResolver)
+    public AuthController(IAuth auth, ISessionResolver sessionResolver)
     {
-        AuthService = authService;
+        Auth = auth;
         SessionResolver = sessionResolver;
     }
 
@@ -21,33 +21,33 @@ public class AuthController : ControllerBase, IAuthService
 
     [HttpPost]
     public Task SignOut([FromBody] SignOutCommand command, CancellationToken cancellationToken = default)
-        => AuthService.SignOut(command.UseDefaultSession(SessionResolver), cancellationToken);
+        => Auth.SignOut(command.UseDefaultSession(SessionResolver), cancellationToken);
 
     [HttpPost]
     public Task EditUser(EditUserCommand command, CancellationToken cancellationToken = default)
-        => AuthService.EditUser(command.UseDefaultSession(SessionResolver), cancellationToken);
+        => Auth.EditUser(command.UseDefaultSession(SessionResolver), cancellationToken);
 
     [HttpPost]
     public Task UpdatePresence([FromBody] Session session, CancellationToken cancellationToken = default)
-        => AuthService.UpdatePresence(session, cancellationToken);
+        => Auth.UpdatePresence(session, cancellationToken);
 
     // Queries
 
     [HttpGet, Publish]
     public Task<bool> IsSignOutForced(Session session, CancellationToken cancellationToken = default)
-        => AuthService.IsSignOutForced(session, cancellationToken);
+        => Auth.IsSignOutForced(session, cancellationToken);
 
     [HttpGet, Publish]
     public Task<SessionInfo> GetSessionInfo(Session session, CancellationToken cancellationToken = default)
-        => AuthService.GetSessionInfo(session, cancellationToken);
+        => Auth.GetSessionInfo(session, cancellationToken);
 
     [HttpGet, Publish]
     public Task<User> GetSessionUser(Session session, CancellationToken cancellationToken = default)
-        => AuthService.GetSessionUser(session, cancellationToken);
+        => Auth.GetSessionUser(session, cancellationToken);
 
     [HttpGet, Publish]
     public Task<SessionInfo[]> GetUserSessions(Session session, CancellationToken cancellationToken = default)
-        => AuthService.GetUserSessions(session, cancellationToken);
+        => Auth.GetUserSessions(session, cancellationToken);
 
     // Non-[ComputeMethod] queries
 

@@ -4,7 +4,7 @@ using Stl.Versioning;
 
 namespace Stl.Fusion.Authentication.Internal;
 
-public class InMemoryAuthService : IServerSideAuthService
+public class InMemoryAuthService : IAuth, IAuthBackend
 {
     private long _nextUserId;
     protected ConcurrentDictionary<Symbol, User> Users { get; } = new();
@@ -166,7 +166,7 @@ public class InMemoryAuthService : IServerSideAuthService
         var delta = now - sessionInfo.LastSeenAt;
         if (delta < TimeSpan.FromSeconds(10))
             return; // We don't want to update this too frequently
-        var command = new SetupSessionCommand(session).MarkServerSide();
+        var command = new SetupSessionCommand(session).MarkValid();
         await SetupSession(command, cancellationToken).ConfigureAwait(false);
     }
 

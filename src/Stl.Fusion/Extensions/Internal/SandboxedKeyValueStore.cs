@@ -16,7 +16,7 @@ public partial class SandboxedKeyValueStore : ISandboxedKeyValueStore
     }
 
     protected IKeyValueStore Store { get; }
-    protected IAuthService AuthService { get; }
+    protected IAuth Auth { get; }
     protected IMomentClock Clock { get; }
     public string SessionKeyPrefixFormat { get; }
     public TimeSpan? SessionKeyExpirationTime { get; }
@@ -31,7 +31,7 @@ public partial class SandboxedKeyValueStore : ISandboxedKeyValueStore
         UserKeyPrefixFormat = options.UserKeyPrefixFormat;
         UserKeyExpirationTime = options.UserKeyExpirationTime;
         Store = services.GetRequiredService<IKeyValueStore>();
-        AuthService = services.GetRequiredService<IAuthService>();
+        Auth = services.GetRequiredService<IAuth>();
         Clock = options.Clock ?? services.SystemClock();
     }
 
@@ -106,7 +106,7 @@ public partial class SandboxedKeyValueStore : ISandboxedKeyValueStore
     {
         if (session == Session.Null)
             throw Errors.KeyViolatesSandboxedKeyValueStoreConstraints();
-        var user = await AuthService.GetSessionUser(session, cancellationToken);
+        var user = await Auth.GetSessionUser(session, cancellationToken);
         if (!user.IsAuthenticated)
             return new KeyChecker() {
                 Clock = Clock,

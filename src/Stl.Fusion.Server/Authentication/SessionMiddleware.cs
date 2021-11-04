@@ -32,7 +32,7 @@ public class SessionMiddleware : IMiddleware
 
     public ISessionProvider SessionProvider { get; }
     public ISessionFactory SessionFactory { get; }
-    public IAuthService? AuthService { get; }
+    public IAuth? Auth { get; }
     public CookieBuilder Cookie { get; }
     public Func<SessionMiddleware, HttpContext, Task<bool>> ForcedSignOutHandler { get; }
 
@@ -40,14 +40,14 @@ public class SessionMiddleware : IMiddleware
         Options? options,
         ISessionProvider sessionProvider,
         ISessionFactory sessionFactory,
-        IAuthService? authService = null)
+        IAuth? auth = null)
     {
         options ??= new();
         Cookie = options.Cookie;
         ForcedSignOutHandler = options.ForcedSignOutHandler;
         SessionProvider = sessionProvider;
         SessionFactory = sessionFactory;
-        AuthService = authService;
+        Auth = auth;
     }
 
     public async Task InvokeAsync(HttpContext httpContext, RequestDelegate next)
@@ -58,8 +58,8 @@ public class SessionMiddleware : IMiddleware
         cookies.TryGetValue(cookieName, out var sessionId);
         var session = string.IsNullOrEmpty(sessionId) ? null : new Session(sessionId);
         if (session != null) {
-            if (AuthService != null) {
-                var isSignOutForced = await AuthService.IsSignOutForced(session, cancellationToken);
+            if (Auth != null) {
+                var isSignOutForced = await Auth.IsSignOutForced(session, cancellationToken);
                 if (isSignOutForced) {
                     if (await ForcedSignOutHandler(this, httpContext)) {
                         var responseCookies = httpContext.Response.Cookies;

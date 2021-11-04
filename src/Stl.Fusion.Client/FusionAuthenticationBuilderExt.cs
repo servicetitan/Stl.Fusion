@@ -8,7 +8,7 @@ public static class FusionAuthenticationBuilderExt
     public static FusionAuthenticationBuilder AddRestEaseClient(this FusionAuthenticationBuilder fusionAuth)
     {
         var fusionClient = fusionAuth.Fusion.AddRestEaseClient();
-        fusionClient.AddReplicaService<IAuthService, IAuthClientDef>();
+        fusionClient.AddReplicaService<IAuth, IAuthClientDef>();
         return fusionAuth;
     }
 }

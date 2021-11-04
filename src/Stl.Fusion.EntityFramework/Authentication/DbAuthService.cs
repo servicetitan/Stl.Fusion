@@ -6,7 +6,7 @@ using Stl.Fusion.Authentication.Internal;
 
 namespace Stl.Fusion.EntityFramework.Authentication;
 
-public abstract class DbAuthService<TDbContext> : DbServiceBase<TDbContext>, IServerSideAuthService
+public abstract class DbAuthService<TDbContext> : DbServiceBase<TDbContext>, IAuth, IAuthBackend
     where TDbContext : DbContext
 {
     public class Options
@@ -215,7 +215,7 @@ public class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId> : DbA
         var delta = now - sessionInfo.LastSeenAt;
         if (delta < MinUpdatePresencePeriod)
             return; // We don't want to update this too frequently
-        var command = new SetupSessionCommand(session).MarkServerSide();
+        var command = new SetupSessionCommand(session).MarkValid();
         await SetupSession(command, cancellationToken).ConfigureAwait(false);
     }
 

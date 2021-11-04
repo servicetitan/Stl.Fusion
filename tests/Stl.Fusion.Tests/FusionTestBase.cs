@@ -220,7 +220,7 @@ public class FusionTestBase : TestBase, IAsyncLifetime
             if (Options.UseInMemoryKeyValueStore)
                 fusion.AddInMemoryKeyValueStore();
             if (Options.UseInMemoryAuthService)
-                fusion.AddAuthentication().AddServerSideAuthService();
+                fusion.AddAuthentication().AddAuthBackend();
 
             // WebHost
             var webHost = (FusionTestWebHost?) WebHost;

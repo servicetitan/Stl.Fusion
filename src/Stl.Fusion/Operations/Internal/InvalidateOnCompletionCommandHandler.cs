@@ -88,8 +88,8 @@ public class InvalidateOnCompletionCommandHandler : ICommandHandler<ICompletion>
     {
         foreach (var commandEntry in nestedCommands) {
             var (command, items) = commandEntry;
-            if (command is IServerSideCommand serverSideCommand)
-                serverSideCommand.MarkServerSide(); // Server-side commands should be marked as such
+            if (command is IBackendCommand serverSideCommand)
+                serverSideCommand.MarkValid(); // Server-side commands should be marked as such
             if (InvalidationInfoProvider.RequiresInvalidation(command)) {
                 operation.Items = items;
                 await context.Commander.Call(command, cancellationToken).ConfigureAwait(false);

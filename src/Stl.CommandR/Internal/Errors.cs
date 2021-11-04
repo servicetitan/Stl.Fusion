@@ -42,8 +42,8 @@ public static class Errors
     public static Exception CommandMustImplementICommandOfTResult(Type commandType)
         => new InvalidOperationException($"Command type '{commandType}' must implement {typeof(ICommand<>)}.");
 
-    public static Exception CommandIsServerSideOnly()
-        => new InvalidOperationException("The command is server-side only.");
+    public static Exception BackendCommandMustBeStartedOnBackend()
+        => new InvalidOperationException("Backend command must be started on backend.");
 
     public static Exception LocalCommandHasNoHandler()
         => new NullReferenceException("LocalCommand.Handler is null.");

@@ -36,8 +36,8 @@ public class CompletionProducer : IOperationCompletionListener
             var isLocal = operation.AgentId == AgentInfo.Id.Value;
             var operationType = isLocal ? "Local" : "External";
             try {
-                if (command is IServerSideCommand serverSideCommand)
-                    serverSideCommand.MarkServerSide(); // Server-side commands should be marked as such
+                if (command is IBackendCommand serverSideCommand)
+                    serverSideCommand.MarkValid(); // Server-side commands should be marked as such
                 await Commander.Call(Completion.New(operation), true).ConfigureAwait(false);
                 if (IsLoggingEnabled)
                     Log.Log(LogLevel,

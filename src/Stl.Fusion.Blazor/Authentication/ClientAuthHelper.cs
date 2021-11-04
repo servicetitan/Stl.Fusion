@@ -11,16 +11,16 @@ public class ClientAuthHelper
     protected (string Schema, string SchemaName)[]? CachedSchemas { get; set; }
     protected IJSRuntime JSRuntime { get; }
 
-    public IAuthService AuthService { get; }
+    public IAuth Auth { get; }
     public ISessionResolver SessionResolver { get; }
     public Session Session => SessionResolver.Session;
 
     public ClientAuthHelper(
-        IAuthService authService,
+        IAuth auth,
         ISessionResolver sessionResolver,
         IJSRuntime jsRuntime)
     {
-        AuthService = authService;
+        Auth = auth;
         SessionResolver = sessionResolver;
         JSRuntime = jsRuntime;
     }
@@ -48,14 +48,14 @@ public class ClientAuthHelper
     public virtual async Task SignOut(Session session, bool force = false)
     {
         var signOutCommand = new SignOutCommand(session, force);
-        await Task.Run(() => AuthService.SignOut(signOutCommand));
+        await Task.Run(() => Auth.SignOut(signOutCommand));
     }
 
     public virtual async Task SignOutEverywhere(bool force = true)
     {
         // No server-side API endpoint for this action(yet), so let's do this on the client
         while (true) {
-            var sessionInfos = await AuthService.GetUserSessions(Session);
+            var sessionInfos = await Auth.GetUserSessions(Session);
             var otherSessions = sessionInfos
                 .Where(si => si.Id != Session.Id)
                 .Select(si => new Session(si.Id))
