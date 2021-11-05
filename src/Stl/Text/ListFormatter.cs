@@ -13,11 +13,13 @@ public ref struct ListFormatter
     public int ItemIndex;
     public string Output => OutputBuilder.ToString();
 
+#pragma warning disable RCS1242
     internal ListFormatter(
         ListFormat format,
         in Utf16ValueStringBuilder outputBuilder,
         bool ownsOutputBuilder,
         int itemIndex)
+#pragma warning restore RCS1242
     {
         Delimiter = format.Delimiter;
         Escape = format.Escape;

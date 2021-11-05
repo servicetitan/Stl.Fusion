@@ -1,5 +1,7 @@
 #if NETSTANDARD2_0
 
+#pragma warning disable MA0006
+
 using System.Runtime.CompilerServices;
 
 // ReSharper disable once CheckNamespace

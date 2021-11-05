@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Stl.Fusion.EntityFramework.Operations;
 
+#pragma warning disable RCS1194
+
 [Serializable]
 public class DbOperationFailedException : DbUpdateException
 {

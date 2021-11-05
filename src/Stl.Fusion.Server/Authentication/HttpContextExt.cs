@@ -11,8 +11,9 @@ public static class HttpContextExt
         if (httpContext == null)
             throw new ArgumentNullException(nameof(httpContext));
         var schemes = httpContext.RequestServices.GetRequiredService<IAuthenticationSchemeProvider>();
+        var allSchemes = await schemes.GetAllSchemesAsync().ConfigureAwait(false);
         return (
-            from scheme in await schemes.GetAllSchemesAsync()
+            from scheme in allSchemes
             where !string.IsNullOrEmpty(scheme.DisplayName)
             select scheme
             ).ToArray();
@@ -22,8 +23,9 @@ public static class HttpContextExt
     {
         if (httpContext == null)
             throw new ArgumentNullException(nameof(httpContext));
+        var authenticationSchemas = await httpContext.GetAuthenticationSchemas().ConfigureAwait(false);
         return (
-            from s in await httpContext.GetAuthenticationSchemas()
+            from s in authenticationSchemas
             where string.Equals(s.Name, scheme, StringComparison.OrdinalIgnoreCase)
             select s
             ).Any();

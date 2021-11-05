@@ -41,7 +41,7 @@ public abstract class InterceptorBase : IOptionalInterceptor, IHasServices
         _createInterceptedMethod = CreateMethodDef;
         _createTypedHandlerMethod = GetType()
             .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
-            .Single(m => m.Name == nameof(CreateHandler));
+            .Single(m => StringComparer.Ordinal.Equals(m.Name, nameof(CreateHandler)));
     }
 
     public void Intercept(IInvocation invocation)

@@ -68,7 +68,7 @@ public class InvalidateOnCompletionCommandHandler : ICommandHandler<ICompletion>
             try {
                 var nestedCommands = operationItems.GetOrDefault(ImmutableList<NestedCommandEntry>.Empty);
                 if (!nestedCommands.IsEmpty)
-                    await InvokeNestedCommands(context, operation, nestedCommands, cancellationToken);
+                    await InvokeNestedCommands(context, operation, nestedCommands, cancellationToken).ConfigureAwait(false);
             }
             finally {
                 operation.Items = operationItems;
@@ -88,15 +88,15 @@ public class InvalidateOnCompletionCommandHandler : ICommandHandler<ICompletion>
     {
         foreach (var commandEntry in nestedCommands) {
             var (command, items) = commandEntry;
-            if (command is IBackendCommand serverSideCommand)
-                serverSideCommand.MarkValid(); // Server-side commands should be marked as such
+            // if (command is IBackendCommand backendCommand)
+            //     backendCommand.MarkValid();
             if (InvalidationInfoProvider.RequiresInvalidation(command)) {
                 operation.Items = items;
                 await context.Commander.Call(command, cancellationToken).ConfigureAwait(false);
             }
             var subcommands = items.GetOrDefault(ImmutableList<NestedCommandEntry>.Empty);
             if (!subcommands.IsEmpty)
-                await InvokeNestedCommands(context, operation, subcommands, cancellationToken);
+                await InvokeNestedCommands(context, operation, subcommands, cancellationToken).ConfigureAwait(false);
         }
     }
 }

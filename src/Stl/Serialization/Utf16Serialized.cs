@@ -78,7 +78,7 @@ public class Utf16Serialized<T> : IEquatable<Utf16Serialized<T>>
             return false;
         if (ReferenceEquals(this, other))
             return true;
-        return Data.Equals(other.Data);
+        return StringComparer.Ordinal.Equals(Data, other.Data);
     }
 
     public override bool Equals(object? obj)
@@ -91,7 +91,7 @@ public class Utf16Serialized<T> : IEquatable<Utf16Serialized<T>>
     }
 
     public override int GetHashCode()
-        => Data.GetHashCode();
+        => StringComparer.Ordinal.GetHashCode(Data);
     public static bool operator ==(Utf16Serialized<T>? left, Utf16Serialized<T>? right)
         => Equals(left, right);
     public static bool operator !=(Utf16Serialized<T>? left, Utf16Serialized<T>? right)

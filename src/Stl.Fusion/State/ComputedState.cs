@@ -105,7 +105,7 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
                 var snapshot = Snapshot;
                 var computed = snapshot.Computed;
                 if (!computed.IsInvalidated())
-                    await computed.WhenInvalidated(cancellationToken);
+                    await computed.WhenInvalidated(cancellationToken).ConfigureAwait(false);
                 if (snapshot.UpdateCount != 0 || DelayFirstUpdate)
                     await UpdateDelayer.UpdateDelay(snapshot, cancellationToken).ConfigureAwait(false);
                 if (!snapshot.WhenUpdated().IsCompleted)

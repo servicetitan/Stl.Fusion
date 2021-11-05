@@ -88,8 +88,10 @@ public class DbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId>
 
     public virtual async Task<int> Trim(DateTime minLastSeenAt, int maxCount, CancellationToken cancellationToken = default)
     {
-        await using var dbContext = CreateDbContext(true);
+        var dbContext = CreateDbContext(true);
+        await using var _ = dbContext.ConfigureAwait(false);
         dbContext.DisableChangeTracking();
+
         var entities = await dbContext.Set<TDbSessionInfo>().AsQueryable()
             .Where(o => o.LastSeenAt < minLastSeenAt)
             .OrderBy(o => o.LastSeenAt)
@@ -109,7 +111,7 @@ public class DbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId>
         => await SessionResolver.Get(sessionId, cancellationToken).ConfigureAwait(false);
 
     public virtual async Task<TDbSessionInfo?> Get(
-        TDbContext dbContext, string sessionId, bool forUpdate, CancellationToken cancellationToken)
+        TDbContext dbContext, string sessionId, bool forUpdate, CancellationToken cancellationToken = default)
     {
         var dbSessionInfos = forUpdate ? dbContext.Set<TDbSessionInfo>().ForUpdate() : dbContext.Set<TDbSessionInfo>();
         return await dbSessionInfos

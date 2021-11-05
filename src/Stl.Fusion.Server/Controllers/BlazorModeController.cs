@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,7 +15,8 @@ public class BlazorModeController : ControllerBase
     {
         if (isServerSideBlazor != IsServerSideBlazor(HttpContext)) {
             var response = HttpContext.Response;
-            response.Cookies.Append(CookieName, Convert.ToInt32(isServerSideBlazor).ToString());
+            var isServerSideBlazor01 = Convert.ToInt32(isServerSideBlazor).ToString(CultureInfo.InvariantCulture);
+            response.Cookies.Append(CookieName, isServerSideBlazor01);
         }
         if (string.IsNullOrEmpty(redirectTo))
             redirectTo = "~/";
@@ -25,7 +27,7 @@ public class BlazorModeController : ControllerBase
     {
         var cookies = httpContext.Request.Cookies;
         var isSsb = cookies.TryGetValue(CookieName, out var v) ? v : "";
-        if (!int.TryParse(isSsb, out var isSsbInt))
+        if (!int.TryParse(isSsb, NumberStyles.Integer, CultureInfo.InvariantCulture, out var isSsbInt))
             return IsServerSideBlazorDefault;
         return isSsbInt != 0;
     }

@@ -51,7 +51,12 @@ public class ComputeMethodInterceptor : ComputeMethodInterceptorBase
             if (returnType.GetTaskOrValueTaskArgument() == null)
                 throw Errors.ComputeServiceMethodAttributeOnAsyncMethodReturningNonGenericTask(method);
 
-            var attributeName = nameof(ComputeMethodAttribute).Replace(nameof(Attribute), "");
+            var attributeName = nameof(ComputeMethodAttribute)
+#if NETSTANDARD2_0
+                .Replace(nameof(Attribute), "");
+#else
+                .Replace(nameof(Attribute), "", StringComparison.Ordinal);
+#endif
             if (!attr.IsEnabled)
                 Log.Log(ValidationLogLevel,
                     "- {Method}: has [{Attribute}(false)]", method.ToString(), attributeName);

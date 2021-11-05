@@ -23,7 +23,7 @@ public abstract class DbSessionInfoTrimmer<TDbContext> : DbWakeSleepProcessBase<
     protected bool IsLoggingEnabled { get; set; }
     protected LogLevel LogLevel { get; set; } = LogLevel.Information;
 
-    public DbSessionInfoTrimmer(Options? options, IServiceProvider services)
+    protected DbSessionInfoTrimmer(Options? options, IServiceProvider services)
         : base(services)
     {
         options ??= new();

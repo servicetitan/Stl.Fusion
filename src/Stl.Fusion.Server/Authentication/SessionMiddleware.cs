@@ -21,7 +21,7 @@ public class SessionMiddleware : IMiddleware
 
         public static async Task<bool> DefaultForcedSignOutHandler(SessionMiddleware self, HttpContext httpContext)
         {
-            await httpContext.SignOutAsync();
+            await httpContext.SignOutAsync().ConfigureAwait(false);
             var url = httpContext.Request.GetEncodedPathAndQuery();
             httpContext.Response.Redirect(url);
             // true:  reload: redirect w/o invoking the next middleware
@@ -59,9 +59,9 @@ public class SessionMiddleware : IMiddleware
         var session = string.IsNullOrEmpty(sessionId) ? null : new Session(sessionId);
         if (session != null) {
             if (Auth != null) {
-                var isSignOutForced = await Auth.IsSignOutForced(session, cancellationToken);
+                var isSignOutForced = await Auth.IsSignOutForced(session, cancellationToken).ConfigureAwait(false);
                 if (isSignOutForced) {
-                    if (await ForcedSignOutHandler(this, httpContext)) {
+                    if (await ForcedSignOutHandler(this, httpContext).ConfigureAwait(false)) {
                         var responseCookies = httpContext.Response.Cookies;
                         responseCookies.Delete(cookieName);
                         return;
@@ -76,6 +76,6 @@ public class SessionMiddleware : IMiddleware
             responseCookies.Append(cookieName, session.Id, Cookie.Build(httpContext));
         }
         SessionProvider.Session = session;
-        await next(httpContext);
+        await next(httpContext).ConfigureAwait(false);
     }
 }

@@ -31,8 +31,10 @@ public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext
             return;
         }
 
-        await using var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
+        var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
+        await using var _1 = dbContext.ConfigureAwait(false);
         dbContext.DisableChangeTracking(); // Just to speed up things a bit
+
         var dbKeyValue = await dbContext.FindAsync<TDbKeyValue>(ComposeKey(key), cancellationToken).ConfigureAwait(false);
         if (dbKeyValue == null) {
             dbKeyValue = CreateDbKeyValue(key, value, expiresAt);
@@ -56,11 +58,15 @@ public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext
             return;
         }
 
-        await using var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
+        var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
+        await using var _ = dbContext.ConfigureAwait(false);
         dbContext.DisableChangeTracking(); // Just to speed up things a bit
+
         var keys = items.Select(i => i.Key).ToList();
         var dbKeyValues = await dbContext.Set<TDbKeyValue>().AsQueryable()
+#pragma warning disable MA0002
             .Where(e => keys.Contains(e.Key))
+#pragma warning restore MA0002
             .ToDictionaryAsync(e => e.Key, cancellationToken)
             .ConfigureAwait(false);
         foreach (var item in items) {
@@ -90,8 +96,10 @@ public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext
             return;
         }
 
-        await using var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
+        var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
+        await using var _ = dbContext.ConfigureAwait(false);
         dbContext.DisableChangeTracking(); // Just to speed up things a bit
+
         var dbKeyValue = await dbContext.FindAsync<TDbKeyValue>(ComposeKey(key), cancellationToken).ConfigureAwait(false);
         if (dbKeyValue == null) {
             context.Operation().Items.Set(false); // No need to invalidate anything
@@ -110,10 +118,14 @@ public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext
             return;
         }
 
-        await using var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
+        var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
+        await using var _ = dbContext.ConfigureAwait(false);
         dbContext.DisableChangeTracking(); // Just to speed up things a bit
+
         var dbKeyValues = await dbContext.Set<TDbKeyValue>().AsQueryable()
+#pragma warning disable MA0002
             .Where(e => keys.Contains(e.Key))
+#pragma warning restore MA0002
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
         foreach (var dbKeyValue in dbKeyValues)
@@ -139,7 +151,10 @@ public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext
         string prefix, CancellationToken cancellationToken = default)
     {
         _ = PseudoGet(prefix);
-        await using var dbContext = CreateDbContext();
+
+        var dbContext = CreateDbContext();
+        await using var _1 = dbContext.ConfigureAwait(false);
+
         var count = await dbContext.Set<TDbKeyValue>().AsQueryable()
             .CountAsync(e => e.Key.StartsWith(prefix), cancellationToken)
             .ConfigureAwait(false);
@@ -153,7 +168,10 @@ public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext
         CancellationToken cancellationToken = default)
     {
         _ = PseudoGet(prefix);
-        await using var dbContext = CreateDbContext();
+
+        var dbContext = CreateDbContext();
+        await using var _1 = dbContext.ConfigureAwait(false);
+
         var query = dbContext.Set<TDbKeyValue>().AsQueryable()
             .Where(e => e.Key.StartsWith(prefix));
         query = query.OrderByAndTakePage(e => e.Key, pageRef, sortDirection);

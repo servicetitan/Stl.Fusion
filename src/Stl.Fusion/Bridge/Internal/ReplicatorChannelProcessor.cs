@@ -54,7 +54,7 @@ public class ReplicatorChannelProcessor : AsyncProcessBase
                     var channelTask = ChannelTask;
                     if (channelTask != lastChannelTask)
                         channel = await ChannelTask.WithFakeCancellation(cancellationToken).ConfigureAwait(false);
-                    var reply = await channel.Reader.ReadAsync(cancellationToken).AsTask();
+                    var reply = await channel.Reader.ReadAsync(cancellationToken).ConfigureAwait(false);
                     await OnReply(reply, cancellationToken).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException) {
@@ -217,7 +217,7 @@ public class ReplicatorChannelProcessor : AsyncProcessBase
             channelTaskSource.SetFromTask(connectTask1, CancellationToken.None);
             if (connectTask1.IsCompletedSuccessfully())
                 IsConnected.Value = true;
-        });
+        }, TaskScheduler.Default);
 
         // Copy task
         Task.Run(async () => {

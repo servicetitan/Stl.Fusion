@@ -40,7 +40,7 @@ public class Replica<T> : SafeAsyncDisposableBase, IReplicaImpl<T>
     protected volatile Exception? UpdateErrorField;
     protected volatile Task<Unit>? UpdateRequestTask;
     protected IReplicatorImpl ReplicatorImpl => (IReplicatorImpl) Replicator;
-    protected object Lock = new object();
+    protected object Lock = new();
 
     public IReplicator Replicator { get; }
     public PublicationRef PublicationRef => Input.PublicationRef;
@@ -82,7 +82,9 @@ public class Replica<T> : SafeAsyncDisposableBase, IReplicaImpl<T>
 
     // We want to make sure the replicas are connected to
     // publishers only while they're used.
+#pragma warning disable MA0055
     ~Replica() => DisposeAsync();
+#pragma warning restore MA0055
 
     protected override Task DisposeAsync(bool disposing)
     {
@@ -229,7 +231,7 @@ public class Replica<T> : SafeAsyncDisposableBase, IReplicaImpl<T>
 
     async Task<IComputed> IFunction.Invoke(ComputedInput input, IComputed? usedBy, ComputeContext? context,
         CancellationToken cancellationToken)
-        => await Invoke((ReplicaInput) input, usedBy, context, cancellationToken);
+        => await Invoke((ReplicaInput) input, usedBy, context, cancellationToken).ConfigureAwait(false);
 
     Task IFunction.InvokeAndStrip(ComputedInput input, IComputed? usedBy, ComputeContext? context,
         CancellationToken cancellationToken)

@@ -42,9 +42,9 @@
     <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
-    <!-- NU5105: The package version uses SemVer 2.0.0 or components of SemVer 1.0.0 that are not supported on legacy clients -->
     <!-- NU5048: The 'PackageIconUrl'/'iconUrl' element is deprecated -->
-    <NoWarn>$(NoWarn);NU5105;NU5048;</NoWarn>
+    <!-- NU5105: The package version uses SemVer 2.0.0 or components of SemVer 1.0.0 that are not supported on legacy clients -->
+    <NoWarn>$(NoWarn);NU5048;NU5105</NoWarn>
     <WarningsAsErrors>true</WarningsAsErrors>
 
     <!-- SourceLink props: https://github.com/dotnet/sourcelink/issues/159 -->

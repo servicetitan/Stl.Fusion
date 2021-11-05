@@ -16,7 +16,7 @@ public class UICommandFailureList : ICollection<UICommandEvent>
         // !!! This task will run till the moment commandTracker is disposed
         Task.Run(async () => {
             var failures = uiCommandTracker.Events.Where(e => e.IsFailed);
-            await foreach (var failure in failures)
+            await foreach (var failure in failures.ConfigureAwait(false))
                 Add(failure);
         });
     }
@@ -27,7 +27,7 @@ public class UICommandFailureList : ICollection<UICommandEvent>
     // Read methods
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    public IEnumerator<UICommandEvent> GetEnumerator() => throw new NotImplementedException();
+    public IEnumerator<UICommandEvent> GetEnumerator() => Items.GetEnumerator();
 
     public bool Contains(UICommandEvent item)
         => Items.Contains(item);

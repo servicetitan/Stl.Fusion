@@ -15,12 +15,14 @@ public ref struct ListParser
     public int ItemIndex;
     public string Item => ItemBuilder.ToString();
 
+#pragma warning disable RCS1242
     internal ListParser(
         ListFormat format,
         in ReadOnlySpan<char> source,
         in Utf16ValueStringBuilder itemBuilder,
         bool ownsItemBuilder,
         int itemIndex)
+#pragma warning restore RCS1242
     {
         Delimiter = format.Delimiter;
         Escape = format.Escape;

@@ -33,11 +33,11 @@ public class CompletionProducer : IOperationCompletionListener
         if (!(operation.Command is ICommand command))
             return Task.CompletedTask; // We can't complete non-commands
         return Task.Run(async () => {
-            var isLocal = operation.AgentId == AgentInfo.Id.Value;
+            var isLocal = StringComparer.Ordinal.Equals(operation.AgentId, AgentInfo.Id.Value);
             var operationType = isLocal ? "Local" : "External";
             try {
-                if (command is IBackendCommand serverSideCommand)
-                    serverSideCommand.MarkValid(); // Server-side commands should be marked as such
+                // if (command is IBackendCommand backendCommand)
+                //     backendCommand.MarkValid();
                 await Commander.Call(Completion.New(operation), true).ConfigureAwait(false);
                 if (IsLoggingEnabled)
                     Log.Log(LogLevel,

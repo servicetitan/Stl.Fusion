@@ -11,7 +11,7 @@ public static class AssemblyExt
             .Where(t => typeof(IHttpController).IsAssignableFrom(t)
                 || t.Name.EndsWith("Controller", StringComparison.OrdinalIgnoreCase));
         if (fullNamePrefixFilter != null)
-            q = q.Where(c => (c.FullName ?? string.Empty).StartsWith(fullNamePrefixFilter));
+            q = q.Where(c => (c.FullName ?? string.Empty).StartsWith(fullNamePrefixFilter, StringComparison.Ordinal));
         return q;
     }
 }

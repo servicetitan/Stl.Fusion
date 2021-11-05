@@ -17,7 +17,8 @@ public abstract class FileSystemCacheBase<TKey, TValue> : AsyncCacheBase<TKey, T
     public override async ValueTask<Option<TValue>> TryGet(TKey key, CancellationToken cancellationToken = default)
     {
         try {
-            await using var fileStreamWrapper = OpenFile(GetFileName(key), false, cancellationToken).ToAsyncDisposableAdapter();
+            await using var fileStreamWrapper = OpenFile(GetFileName(key), false, cancellationToken)
+                .ToAsyncDisposableAdapter();
             var fileStream = fileStreamWrapper.Target;
             var pairs = Deserialize(await GetText(fileStream, cancellationToken).ConfigureAwait(false));
             return pairs != null && pairs.TryGetValue(key, out var v) ? v : Option<TValue>.None;
@@ -83,7 +84,8 @@ public abstract class FileSystemCacheBase<TKey, TValue> : AsyncCacheBase<TKey, T
         if (fileStream == null)
             return;
         fileStream.Seek(0, SeekOrigin.Begin);
-        await using var writerWrapper = new StreamWriter(fileStream, Encoding.UTF8, BufferSize, true).ToAsyncDisposableAdapter();
+        await using var writerWrapper = new StreamWriter(fileStream, Encoding.UTF8, BufferSize, true)
+            .ToAsyncDisposableAdapter();
         var writer = writerWrapper.Target!;
         await writer.WriteAsync(text ?? "").ConfigureAwait(false);
         fileStream.SetLength(fileStream.Position);

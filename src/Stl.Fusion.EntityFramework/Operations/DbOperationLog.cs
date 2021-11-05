@@ -57,7 +57,9 @@ public class DbOperationLog<TDbContext, TDbOperation> : DbServiceBase<TDbContext
     public virtual async Task<List<DbOperation>> ListNewlyCommitted(
         DateTime minCommitTime, int maxCount, CancellationToken cancellationToken)
     {
-        await using var dbContext = CreateDbContext();
+        var dbContext = CreateDbContext();
+        await using var _ = dbContext.ConfigureAwait(false);
+
         var operations = await dbContext.Set<TDbOperation>().AsQueryable()
             .Where(o => o.CommitTime >= minCommitTime)
             .OrderBy(o => o.CommitTime)
@@ -68,8 +70,10 @@ public class DbOperationLog<TDbContext, TDbOperation> : DbServiceBase<TDbContext
 
     public virtual async Task<int> Trim(DateTime minCommitTime, int maxCount, CancellationToken cancellationToken)
     {
-        await using var dbContext = CreateDbContext(true);
+        var dbContext = CreateDbContext(true);
+        await using var _ = dbContext.ConfigureAwait(false);
         dbContext.DisableChangeTracking();
+
         var operations = await dbContext.Set<TDbOperation>().AsQueryable()
             .Where(o => o.CommitTime < minCommitTime)
             .OrderBy(o => o.CommitTime)

@@ -106,7 +106,7 @@ public class InMemoryKeyValueStore : AsyncProcessBase, IKeyValueStore
         // O(Store.Count) cost - definitely not for prod,
         // but fine for client-side use cases & testing.
         _ = PseudoGet(prefix);
-        var count = Store.Keys.Count(k => k.StartsWith(prefix));
+        var count = Store.Keys.Count(k => k.StartsWith(prefix, StringComparison.Ordinal));
         return Task.FromResult(count);
     }
 
@@ -119,7 +119,7 @@ public class InMemoryKeyValueStore : AsyncProcessBase, IKeyValueStore
         // O(Store.Count) cost - definitely not for prod,
         // but fine for client-side use cases & testing.
         _ = PseudoGet(prefix);
-        var query = Store.Keys.Where(k => k.StartsWith(prefix));
+        var query = Store.Keys.Where(k => k.StartsWith(prefix, StringComparison.Ordinal));
         query = query.OrderByAndTakePage(k => k, pageRef, sortDirection);
         var result = query
             .Select(k => k.Substring(prefix.Length))
@@ -163,7 +163,7 @@ public class InMemoryKeyValueStore : AsyncProcessBase, IKeyValueStore
     {
         while (!cancellationToken.IsCancellationRequested) {
             await Clock.Delay(CleanupPeriod, cancellationToken).ConfigureAwait(false);
-            await Cleanup(cancellationToken);
+            await Cleanup(cancellationToken).ConfigureAwait(false);
         }
     }
 

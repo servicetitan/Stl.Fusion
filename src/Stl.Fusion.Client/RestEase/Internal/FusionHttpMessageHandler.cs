@@ -53,7 +53,7 @@ public class FusionHttpMessageHandler : DelegatingHandler, IHasServices
     {
         var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
         var contentType = response.Content.Headers.ContentType;
-        if (contentType?.MediaType != "application/json")
+        if (!StringComparer.Ordinal.Equals(contentType?.MediaType ?? "", "application/json"))
             return new ServiceException(content);
 
         try {

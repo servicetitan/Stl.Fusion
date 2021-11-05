@@ -47,6 +47,6 @@ public class PublishAttribute : ActionFilterAttribute
             actionContext.Publish(publication);
         }
 
-        await base.OnActionExecutedAsync(actionExecutedContext, cancellationToken);
+        await base.OnActionExecutedAsync(actionExecutedContext, cancellationToken).ConfigureAwait(false);
     }
 }

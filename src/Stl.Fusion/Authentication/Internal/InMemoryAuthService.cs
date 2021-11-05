@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Authentication.Commands;
 using Stl.Versioning;
@@ -58,7 +59,7 @@ public class InMemoryAuthService : IAuth, IAuthBackend
             // We have Id -> the user exists for sure, but we might need to switch
             // to userWithAuthenticatedIdentity, otherwise we'll register the same
             // UserIdentity for 2 or more users
-            _ = long.Parse(user.Id); // Ensure exception is the same as for DbAuthService
+            _ = long.Parse(user.Id, NumberStyles.Integer, CultureInfo.InvariantCulture);
             var existingUser = Users[user.Id];
             user = userWithAuthenticatedIdentity ?? MergeUsers(existingUser, user);
         }
@@ -166,7 +167,7 @@ public class InMemoryAuthService : IAuth, IAuthBackend
         var delta = now - sessionInfo.LastSeenAt;
         if (delta < TimeSpan.FromSeconds(10))
             return; // We don't want to update this too frequently
-        var command = new SetupSessionCommand(session).MarkValid();
+        var command = new SetupSessionCommand(session);
         await SetupSession(command, cancellationToken).ConfigureAwait(false);
     }
 
@@ -221,7 +222,7 @@ public class InMemoryAuthService : IAuth, IAuthBackend
         if (string.IsNullOrEmpty(userId))
             return Task.FromResult(Array.Empty<SessionInfo>());
         var result = SessionInfos.Values
-            .Where(si => si.UserId == userId)
+            .Where(si => StringComparer.Ordinal.Equals(si.UserId, userId))
             .OrderByDescending(si => si.LastSeenAt)
             .ToArray();
         return Task.FromResult(result);
@@ -257,5 +258,5 @@ public class InMemoryAuthService : IAuth, IAuthBackend
         };
 
     protected string GetNextUserId()
-        => Interlocked.Increment(ref _nextUserId).ToString();
+        => Interlocked.Increment(ref _nextUserId).ToString(CultureInfo.InvariantCulture);
 }

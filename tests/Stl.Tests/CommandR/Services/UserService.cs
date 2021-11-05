@@ -17,8 +17,12 @@ public class UserService : DbServiceBase<TestDbContext>
         CommandContext.GetCurrent().Should().Be(context);
         context.ExecutionState.Handlers.Count.Should().Be(5);
 
-        await using var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
-        await using var anotherDbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
+        var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
+        await using var _1 = dbContext.ConfigureAwait(false);
+
+        var anotherDbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
+        await using var _2 = anotherDbContext.ConfigureAwait(false);
+
         dbContext.Should().NotBeNull();
         anotherDbContext.Should().NotBeNull();
         anotherDbContext.Should().NotBe(dbContext);

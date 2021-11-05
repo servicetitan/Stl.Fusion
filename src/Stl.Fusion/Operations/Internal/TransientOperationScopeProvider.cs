@@ -38,7 +38,9 @@ public class TransientOperationScopeProvider : ICommandHandler<ICommand>
             return;
         }
 
-        await using var scope = Services.GetRequiredService<TransientOperationScope>();
+        var scope = Services.GetRequiredService<TransientOperationScope>();
+        await using var _ = scope.ConfigureAwait(false);
+
         var operation = scope.Operation;
         operation.Command = command;
         context.Items.Set(scope);
@@ -46,7 +48,7 @@ public class TransientOperationScopeProvider : ICommandHandler<ICommand>
 
         try {
             await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);
-            await scope.Commit(cancellationToken);
+            await scope.Commit(cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException) {
             throw;
@@ -54,7 +56,7 @@ public class TransientOperationScopeProvider : ICommandHandler<ICommand>
         catch (Exception e) {
             if (scope.IsUsed)
                 Log.LogError(e, "Operation failed: {Command}", command);
-            await scope.Rollback();
+            await scope.Rollback().ConfigureAwait(false);
             throw;
         }
 

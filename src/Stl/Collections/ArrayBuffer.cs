@@ -82,9 +82,9 @@ public struct ArrayBuffer<T> : IDisposable
     public void SetItem(int index, T item)
     {
         if (index >= Count)
-#pragma warning disable MA0015
+#pragma warning disable MA0012
             throw new IndexOutOfRangeException();
-#pragma warning restore MA0015
+#pragma warning restore MA0012
         Buffer[index] = item;
     }
 

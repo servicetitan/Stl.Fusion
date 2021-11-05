@@ -7,7 +7,7 @@ public static class Errors
     public static Exception CommandHandlerRegistryInstanceIsNotRegistered()
         => new InvalidOperationException("ICommandHandlerRegistry instance is not registered.");
     public static Exception CommandResultTypeMismatch(Type expectedType, Type actualType)
-        => new ArgumentException($"Command result type mismatch: expected '{expectedType}', got '{actualType}'");
+        => new InvalidOperationException($"Command result type mismatch: expected '{expectedType}', got '{actualType}'");
 
     public static Exception NoCurrentCommandContext()
         => new InvalidOperationException("CommandContext.Current is null - no command is running.");

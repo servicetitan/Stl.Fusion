@@ -99,7 +99,8 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
             var masterDbContext = DbContextFactory.CreateDbContext().ReadWrite();
             masterDbContext.Database.AutoTransactionsEnabled = false;
             Transaction = await BeginTransaction(cancellationToken, masterDbContext).ConfigureAwait(false);
-            _isInMemoryProvider = (masterDbContext.Database.ProviderName ?? "").EndsWith(".InMemory");
+            _isInMemoryProvider = (masterDbContext.Database.ProviderName ?? "")
+                .EndsWith(".InMemory", StringComparison.Ordinal);
             if (!_isInMemoryProvider) {
                 Connection = masterDbContext.Database.GetDbConnection();
                 if (Connection == null)

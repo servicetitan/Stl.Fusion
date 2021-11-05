@@ -78,7 +78,7 @@ public class DbUserRepo<TDbContext, TDbUser, TDbUserId> : DbServiceBase<TDbConte
     }
 
     public virtual async Task<(TDbUser DbUser, bool IsCreated)> GetOrCreateOnSignIn(
-        TDbContext dbContext, User user, CancellationToken cancellationToken)
+        TDbContext dbContext, User user, CancellationToken cancellationToken = default)
     {
         TDbUser dbUser;
         if (!string.IsNullOrEmpty(user.Id)) {
@@ -99,7 +99,7 @@ public class DbUserRepo<TDbContext, TDbUser, TDbUserId> : DbServiceBase<TDbConte
             dbUser.Name = command.Name;
             dbUser.Version = VersionGenerator.NextVersion(dbUser.Version);
         }
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public virtual async Task Remove(
@@ -119,7 +119,7 @@ public class DbUserRepo<TDbContext, TDbUser, TDbUserId> : DbServiceBase<TDbConte
         => await UserResolver.Get(userId, cancellationToken).ConfigureAwait(false);
 
     public virtual async Task<TDbUser?> Get(
-        TDbContext dbContext, TDbUserId userId, bool forUpdate, CancellationToken cancellationToken)
+        TDbContext dbContext, TDbUserId userId, bool forUpdate, CancellationToken cancellationToken = default)
     {
         var dbUsers = forUpdate ? dbContext.Set<TDbUser>().ForUpdate() : dbContext.Set<TDbUser>();
         var dbUser = await dbUsers

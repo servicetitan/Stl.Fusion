@@ -73,7 +73,7 @@ public class WebSocketServer
             GetValue<IDictionary<string, string[]>>(owinContext.Environment, "owin.RequestHeaders")
             ?? ImmutableDictionary<string, string[]>.Empty;
 
-        var acceptOptions = new Dictionary<string, object>();
+        var acceptOptions = new Dictionary<string, object>(StringComparer.Ordinal);
         if (requestHeaders.TryGetValue("Sec-WebSocket-Protocol", out string[]? subProtocols) && subProtocols.Length > 0) {
             // Select the first one from the client
             acceptOptions.Add("websocket.SubProtocol", subProtocols[0].Split(',').First().Trim());
@@ -91,7 +91,10 @@ public class WebSocketServer
     {
         var serializers = SerializerFactory.Invoke();
         var webSocket = wsContext.WebSocket;
-        await using var wsChannel = new WebSocketChannel(webSocket);
+
+        var wsChannel = new WebSocketChannel(webSocket);
+        await using var _ = wsChannel.ConfigureAwait(false);
+
         var channel = wsChannel
             .WithUtf16Serializer(serializers)
             .WithId(clientId);

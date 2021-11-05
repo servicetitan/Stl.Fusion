@@ -24,7 +24,7 @@ public static class PublisherExt
         // we requested it for (i.e. it might still point to its older,
         // inconsistent version), so we have to update it here.
         try {
-            await publication.Update(cancellationToken);
+            await publication.Update(cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException) {
             throw;
@@ -51,7 +51,7 @@ public static class PublisherExt
         // we requested it for (i.e. it might still point to its older,
         // inconsistent version), so we have to update it here.
         try {
-            await publication.Update(cancellationToken);
+            await publication.Update(cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException) {
             throw;
@@ -77,7 +77,7 @@ public static class PublisherExt
         // we requested it for (i.e. it might still point to its older,
         // inconsistent version), so we have to update it here.
         try {
-            await publication.Update(cancellationToken);
+            await publication.Update(cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException) {
             throw;
@@ -106,7 +106,7 @@ public static class PublisherExt
         // we requested it for (i.e. it might still point to its older,
         // inconsistent version), so we have to update it here.
         try {
-            await publication.Update(cancellationToken);
+            await publication.Update(cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException) {
             throw;
@@ -131,7 +131,7 @@ public static class PublisherExt
         // we requested it for (i.e. it might still point to its older,
         // inconsistent version), so we have to update it here.
         try {
-            await publication.Update(cancellationToken);
+            await publication.Update(cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException) {
             throw;

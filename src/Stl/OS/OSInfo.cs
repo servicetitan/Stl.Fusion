@@ -22,14 +22,15 @@ public static class OSInfo
     static OSInfo()
     {
         // WebAssembly w/ .NET 5.0
-        if (RuntimeInformation.OSDescription.ToLowerInvariant() == "browser") {
+        if (StringComparer.Ordinal.Equals("browser", RuntimeInformation.OSDescription.ToLowerInvariant())) {
             Kind = OSKind.WebAssembly;
             UserHomePath = "";
             return;
         }
 
         // WebAssembly w/ .NET Core 3.1
-        if (RuntimeInformation.OSDescription == "web" && RuntimeInformation.FrameworkDescription.StartsWith("Mono")) {
+        if (StringComparer.Ordinal.Equals("web", RuntimeInformation.OSDescription)
+            && RuntimeInformation.FrameworkDescription.StartsWith("Mono", StringComparison.Ordinal)) {
             Kind = OSKind.WebAssembly;
             UserHomePath = "";
             return;

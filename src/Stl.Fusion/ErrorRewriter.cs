@@ -7,7 +7,7 @@ public interface IErrorRewriter
 
 public class ErrorRewriter : IErrorRewriter
 {
-    public Exception Rewrite(object requester, Exception error, bool rewriteOperationCancelledException)
+    public Exception Rewrite(object requester, Exception error, bool rewriteOperationCancelledException = false)
         => error switch {
             OperationCanceledException _ => rewriteOperationCancelledException ? new ServiceException(error) : error,
             ServiceException _ => error,

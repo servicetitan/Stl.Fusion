@@ -61,6 +61,7 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
             () => BatchProcessorFactory.Invoke(this));
 
         using var dbContext = CreateDbContext();
+
         var keyPropertyName = options.KeyPropertyName
             ?? dbContext.Model.FindEntityType(typeof(TDbEntity))!.FindPrimaryKey()!.Properties.Single().Name;
         KeyExtractorExpressionBuilder = options.KeyExtractorExpressionBuilder
@@ -105,7 +106,9 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
 
     protected virtual async Task ProcessBatch(List<BatchItem<TKey, TDbEntity>> batch, CancellationToken cancellationToken)
     {
-        await using var dbContext = CreateDbContext();
+        var dbContext = CreateDbContext();
+        await using var _ = dbContext.ConfigureAwait(false);
+
         var keys = new HashSet<TKey>();
         foreach (var item in batch) {
             if (!item.TryCancel(cancellationToken))

@@ -12,21 +12,11 @@ public class TextMediaTypeFormatter : MediaTypeFormatter
         SupportedMediaTypes.Add(new MediaTypeHeaderValue("text/plain"));
     }
 
-    public override Task<object> ReadFromStreamAsync(Type type, Stream readStream, HttpContent content, IFormatterLogger formatterLogger)
+    public override async Task<object> ReadFromStreamAsync(Type type, Stream readStream, HttpContent content, IFormatterLogger formatterLogger)
     {
-        var taskCompletionSource = new TaskCompletionSource<object>();
-        try
-        {
-            var memoryStream = new MemoryStream();
-            readStream.CopyTo(memoryStream);
-            var s = System.Text.Encoding.UTF8.GetString(memoryStream.ToArray());
-            taskCompletionSource.SetResult(s);
-        }
-        catch (Exception e)
-        {
-            taskCompletionSource.SetException(e);
-        }
-        return taskCompletionSource.Task;
+        var memoryStream = new MemoryStream();
+        await readStream.CopyToAsync(memoryStream).ConfigureAwait(false);
+        return System.Text.Encoding.UTF8.GetString(memoryStream.ToArray());
     }
 
     public override Task WriteToStreamAsync(Type type, object? value, Stream writeStream, HttpContent content, System.Net.TransportContext transportContext, System.Threading.CancellationToken cancellationToken)

@@ -18,7 +18,12 @@ public abstract class DbWakeSleepProcessBase<TDbContext> : DbAsyncProcessBase<TD
                 throw;
             }
             catch (Exception e) {
-                if (e is ObjectDisposedException ode && ode.Message.Contains("'IServiceProvider'"))
+                if (e is ObjectDisposedException ode
+#if NETSTANDARD2_0
+                    && ode.Message.Contains("'IServiceProvider'"))
+#else
+                    && ode.Message.Contains("'IServiceProvider'", StringComparison.Ordinal))
+#endif
                     // Special case: this exception can be thrown on IoC container disposal,
                     // and if we don't handle it in a special way, DbWakeSleepProcessBase
                     // descendants may flood the log with exceptions till the moment they're stopped.

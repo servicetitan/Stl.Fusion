@@ -63,7 +63,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
 
         var session = sessionA;
         await WebServices.Commander().Call(
-            new SignInCommand(session, bob).MarkValid());
+            new SignInCommand(session, bob));
         var user = await webAuth.GetSessionUser(session);
         user.Name.Should().Be(bob.Name);
         long.TryParse(user.Id, out var _).Should().BeTrue();
@@ -128,7 +128,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
             .WithIdentity("g:1");
 
         var session = sessionA;
-        await webAuthBackend.SignIn(new SignInCommand(session, bob).MarkValid());
+        await webAuthBackend.SignIn(new SignInCommand(session, bob));
         var user = await webAuth.GetSessionUser(session);
         user.Name.Should().Be(bob.Name);
         long.TryParse(user.Id, out var _).Should().BeTrue();
@@ -201,7 +201,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         await Assert.ThrowsAsync<InvalidOperationException>(async() => {
             try {
                 var guest = new User("notANumber", "Guest").WithIdentity("n:1");
-                await authBackend.SignIn(new SignInCommand(session, guest).MarkValid());
+                await authBackend.SignIn(new SignInCommand(session, guest));
             }
             catch (FormatException) {
                 // Thrown by InMemoryAuthService
@@ -209,7 +209,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
             }
         });
         var bob = new User("", "Bob").WithIdentity("b:1");
-        await authBackend.SignIn(new SignInCommand(session, bob).MarkValid());
+        await authBackend.SignIn(new SignInCommand(session, bob));
         var user = await auth.GetSessionUser(session);
         user.Name.Should().Be("Bob");
     }
@@ -229,7 +229,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         sessions.Length.Should().Be(0);
 
         var bob = new User("", "Bob").WithIdentity("g:1");
-        var signInCmd = new SignInCommand(sessionA, bob).MarkValid();
+        var signInCmd = new SignInCommand(sessionA, bob);
         await authBackend.SignIn(signInCmd);
         var user = await auth.GetSessionUser(sessionA);
         user.Name.Should().Be(bob.Name);
@@ -241,7 +241,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         sessions = await auth.GetUserSessions(sessionB);
         sessions.Length.Should().Be(0);
 
-        signInCmd = new SignInCommand(sessionB, bob).MarkValid();
+        signInCmd = new SignInCommand(sessionB, bob);
         await authBackend.SignIn(signInCmd);
         user = await auth.GetSessionUser(sessionB);
         user.Name.Should().Be(bob.Name);
@@ -262,7 +262,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         sessions = await auth.GetUserSessions(sessionB);
         sessions.Select(s => s.Id).Should().BeEquivalentTo(new[] { sessionB.Id });
 
-        signInCmd = new SignInCommand(sessionA, bob).MarkValid();
+        signInCmd = new SignInCommand(sessionA, bob);
         await authBackend.SignIn(signInCmd);
         user = await auth.GetSessionUser(sessionA);
         user.Name.Should().Be(bob.Name);
@@ -286,12 +286,12 @@ public abstract class AuthServiceTestBase : FusionTestBase
 
         await Assert.ThrowsAsync<SecurityException>(async() => {
             var sessionInfo = await auth.GetSessionInfo(sessionB);
-            var setupSessionCmd = new SetupSessionCommand(sessionB).MarkValid();
+            var setupSessionCmd = new SetupSessionCommand(sessionB);
             await authBackend.SetupSession(setupSessionCmd);
         });
 
         await Assert.ThrowsAsync<SecurityException>(async() => {
-            signInCmd = new SignInCommand(sessionB, bob).MarkValid();
+            signInCmd = new SignInCommand(sessionB, bob);
             await authBackend.SignIn(signInCmd);
         });
     }

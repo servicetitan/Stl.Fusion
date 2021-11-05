@@ -112,7 +112,7 @@ public class FileSystemPluginFinder : CachingPluginFinderBase
         public string AssemblyNamePattern { get; set; } = "*.dll";
         public Regex ExcludedAssemblyNamesRegex { get; set; } = new(
             @"((System)|(Microsoft)|(Google)|(WindowsBase)|(mscorlib))\.(.*)\.dll",
-            RegexOptions.Singleline | RegexOptions.IgnoreCase);
+            RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture);
         public bool UseCache { get; set; } = true;
         public FilePath CacheDir { get; set; } = FilePath.GetApplicationTempDirectory();
     }

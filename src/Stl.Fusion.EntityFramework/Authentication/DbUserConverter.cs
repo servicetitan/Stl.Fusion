@@ -27,7 +27,7 @@ public class DbUserConverter<TDbContext, TDbUser, TDbUserId> : DbEntityConverter
         target.Claims = source.Claims.SetItems(target.Claims);
 
         // Adding / updating identities
-        var identities = target.Identities.ToDictionary(ui => ui.Id);
+        var identities = target.Identities.ToDictionary(ui => ui.Id, StringComparer.Ordinal);
         foreach (var (userIdentity, secret) in source.Identities) {
             if (!userIdentity.IsValid)
                 continue;

@@ -30,7 +30,7 @@ internal readonly struct ServiceInfo
     {
         using var buffer = ArrayBuffer<RegisterAttribute>.Lease(true);
         foreach (var attr in implementationType.GetCustomAttributes<RegisterAttribute>(false)) {
-            if (attr.Scope == scope.Value)
+            if (StringComparer.Ordinal.Equals(attr.Scope, scope.Value))
                 buffer.Add(attr);
         }
         return new ServiceInfo(implementationType, buffer.ToArray());

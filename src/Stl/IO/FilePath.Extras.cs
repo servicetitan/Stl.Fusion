@@ -22,7 +22,7 @@ public readonly partial struct FilePath
         result = NonAlphaOrNumberRe.Replace(result, "_");
         result = TrailingUnderscoresRe.Replace(result, "");
 
-        var mustAddHash = alwaysHash || result != key;
+        var mustAddHash = alwaysHash || !StringComparer.Ordinal.Equals(result, key);
         if (mustAddHash || result.Length > maxLength) {
             var hash = Convert.ToBase64String(BitConverter.GetBytes(key.GetDeterministicHashCode()));
             hash = NonAlphaOrNumberRe.Replace(hash, "_");
@@ -38,7 +38,7 @@ public readonly partial struct FilePath
     public static FilePath GetApplicationDirectory()
     {
         var assembly = Assembly.GetEntryAssembly();
-        if (assembly?.GetName()?.Name?.StartsWith("testhost") ?? false) // Unit tests
+        if (assembly?.GetName()?.Name?.StartsWith("testhost", StringComparison.Ordinal) ?? false) // Unit tests
             assembly = Assembly.GetExecutingAssembly();
         return Path.GetDirectoryName(assembly?.Location) ?? Environment.CurrentDirectory;
     }

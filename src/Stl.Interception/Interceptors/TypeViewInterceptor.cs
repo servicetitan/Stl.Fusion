@@ -20,13 +20,13 @@ public class TypeViewInterceptor : IInterceptor
         _createHandler = CreateHandler;
         _createConvertingHandlerMethod = GetType()
             .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
-            .Single(m => m.Name == nameof(CreateConvertingHandler));
+            .Single(m => StringComparer.Ordinal.Equals(m.Name, nameof(CreateConvertingHandler)));
         _createTaskConvertingHandlerMethod = GetType()
             .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
-            .Single(m => m.Name == nameof(CreateTaskConvertingHandler));
+            .Single(m => StringComparer.Ordinal.Equals(m.Name, nameof(CreateTaskConvertingHandler)));
         _createValueTaskConvertingHandlerMethod = GetType()
             .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
-            .Single(m => m.Name == nameof(CreateValueTaskConvertingHandler));
+            .Single(m => StringComparer.Ordinal.Equals(m.Name, nameof(CreateValueTaskConvertingHandler)));
     }
 
     public void Intercept(IInvocation invocation)

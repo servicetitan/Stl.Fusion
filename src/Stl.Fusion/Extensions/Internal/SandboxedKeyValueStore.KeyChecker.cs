@@ -12,9 +12,9 @@ public partial class SandboxedKeyValueStore
 
         public virtual void CheckKeyPrefix(string keyPrefix)
         {
-            if (keyPrefix.StartsWith(Prefix))
+            if (keyPrefix.StartsWith(Prefix, StringComparison.Ordinal))
                 return;
-            if (SecondaryPrefix != null && keyPrefix.StartsWith(SecondaryPrefix))
+            if (SecondaryPrefix != null && keyPrefix.StartsWith(SecondaryPrefix, StringComparison.Ordinal))
                 return;
             throw Errors.KeyViolatesSandboxedKeyValueStoreConstraints();
         }
@@ -24,7 +24,7 @@ public partial class SandboxedKeyValueStore
 
         public virtual void CheckKey(string key, ref Moment? expiresAt)
         {
-            if (key.StartsWith(Prefix)) {
+            if (key.StartsWith(Prefix, StringComparison.Ordinal)) {
                 if (!ExpirationTime.HasValue)
                     return;
                 var maxExpiresAt = Clock.Now + ExpirationTime.GetValueOrDefault();
@@ -33,7 +33,7 @@ public partial class SandboxedKeyValueStore
                     : maxExpiresAt;
                 return;
             }
-            if (SecondaryPrefix != null && key.StartsWith(SecondaryPrefix)) {
+            if (SecondaryPrefix != null && key.StartsWith(SecondaryPrefix, StringComparison.Ordinal)) {
                 if (!SecondaryExpirationTime.HasValue)
                     return;
                 var maxExpiresAt = Clock.Now + SecondaryExpirationTime.GetValueOrDefault();

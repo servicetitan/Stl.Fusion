@@ -7,8 +7,10 @@ public class ServiceException : Exception
 
     public ServiceException()
         => OriginalExceptionType = null;
-    public ServiceException(string message) : base(message)
+    public ServiceException(string? message) : base(message)
         => OriginalExceptionType = null;
+    public ServiceException(string? message, Exception? innerException) : base(message, innerException)
+        => OriginalExceptionType = innerException?.GetType();
     public ServiceException(Type? originalExceptionType, string message) : base(message)
         => OriginalExceptionType = originalExceptionType;
     public ServiceException(Exception original) : base(original.Message)

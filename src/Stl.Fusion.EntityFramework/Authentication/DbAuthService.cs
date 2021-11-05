@@ -83,7 +83,8 @@ public class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId> : DbA
         if (await IsSignOutForced(session, cancellationToken).ConfigureAwait(false))
             throw Errors.ForcedSignOut();
 
-        await using var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
+        var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
+        await using var _1 = dbContext.ConfigureAwait(false);
 
         var isNewUser = false;
         var dbUser = await Users
@@ -135,7 +136,8 @@ public class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId> : DbA
             return;
         }
 
-        await using var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
+        var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
+        await using var _1 = dbContext.ConfigureAwait(false);
 
         var dbSessionInfo = await Sessions.GetOrCreate(dbContext, session.Id, cancellationToken).ConfigureAwait(false);
         var sessionInfo = SessionConverter.ToModel(dbSessionInfo);
@@ -167,7 +169,8 @@ public class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId> : DbA
         if (!sessionInfo.IsAuthenticated)
             throw Errors.NotAuthenticated();
 
-        await using var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
+        var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
+        await using var _1 = dbContext.ConfigureAwait(false);
 
         var dbUserId = DbUserIdHandler.Parse(sessionInfo.UserId);
         var dbUser = await Users.Get(dbContext, dbUserId, true, cancellationToken).ConfigureAwait(false);
@@ -190,7 +193,8 @@ public class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId> : DbA
             return null!;
         }
 
-        await using var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
+        var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
+        await using var _1 = dbContext.ConfigureAwait(false);
 
         var dbSessionInfo = await Sessions.Get(dbContext, session.Id, true, cancellationToken).ConfigureAwait(false);
         var now = Clocks.SystemClock.Now;
@@ -215,7 +219,7 @@ public class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId> : DbA
         var delta = now - sessionInfo.LastSeenAt;
         if (delta < MinUpdatePresencePeriod)
             return; // We don't want to update this too frequently
-        var command = new SetupSessionCommand(session).MarkValid();
+        var command = new SetupSessionCommand(session);
         await SetupSession(command, cancellationToken).ConfigureAwait(false);
     }
 
@@ -279,8 +283,10 @@ public class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId> : DbA
         if (!DbUserIdHandler.TryParse(userId).IsSome(out var dbUserId))
             return Array.Empty<SessionInfo>();
 
-        await using var dbContext = CreateDbContext();
-        await using var tx = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        var dbContext = CreateDbContext();
+        await using var _1 = dbContext.ConfigureAwait(false);
+        var tx = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        await using var _2 = tx.ConfigureAwait(false);
 
         var dbSessions = await Sessions.ListByUser(dbContext, dbUserId, cancellationToken).ConfigureAwait(false);
         var sessions = new SessionInfo[dbSessions.Length];

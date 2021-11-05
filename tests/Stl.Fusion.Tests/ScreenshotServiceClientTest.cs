@@ -24,10 +24,11 @@ public class ScreenshotServiceClientTest : FusionTestBase
 #endif
 
         await using var serving = await WebHost.Serve();
+        await Delay(0.25);
         var service = ClientServices.GetRequiredService<IScreenshotServiceClient>();
 
         ScreenshotController.CallCount = 0;
-        for (int i = 0; i < 20; i++) {
+        for (var i = 0; i < 20; i++) {
             var screenshot = await service.GetScreenshot(100);
             (DateTime.Now - screenshot.CapturedAt).Should().BeLessThan(epsilon);
             await Task.Delay(TimeSpan.FromSeconds(0.1));

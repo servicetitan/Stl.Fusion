@@ -32,7 +32,7 @@ public static class ComponentExt
             var bindingFlags = BindingFlags.FlattenHierarchy
                 | BindingFlags.Instance
                 | BindingFlags.Public | BindingFlags.NonPublic;
-            var parameters = new Dictionary<string, ComponentParameterInfo>();
+            var parameters = new Dictionary<string, ComponentParameterInfo>(StringComparer.Ordinal);
             foreach (var property in type.GetProperties(bindingFlags)) {
                 var pa = property.GetCustomAttribute<ParameterAttribute>(true);
                 CascadingParameterAttribute? cpa = null;

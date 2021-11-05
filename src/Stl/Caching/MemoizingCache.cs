@@ -5,8 +5,8 @@ public class MemoizingCache<TKey, TValue> : AsyncCacheBase<TKey, TValue>
 {
     private readonly ConcurrentDictionary<TKey, TValue> _dictionary = new();
 
-    public override ValueTask<TValue> Get(TKey key, CancellationToken cancellationToken = default)
-        => ValueTaskExt.FromResult(_dictionary[key]);
+    public override ValueTask<TValue?> Get(TKey key, CancellationToken cancellationToken = default)
+        => ValueTaskExt.FromResult(_dictionary[key])!;
 
     public override ValueTask<Option<TValue>> TryGet(TKey key, CancellationToken cancellationToken = default)
         => ValueTaskExt.FromResult(

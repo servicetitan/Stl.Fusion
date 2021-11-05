@@ -15,14 +15,15 @@ public class EquatableArgumentHandler<T> : ArgumentHandler
 
         var mGetHashCode = tType
             .GetMethods()
-            .Single(m => m.Name == nameof(GetHashCode)
+            .Single(m => StringComparer.Ordinal.Equals(m.Name, nameof(GetHashCode))
                 && m.IsVirtual
                 && m.ReturnType == typeof(int)
                 && m.GetParameters().Length == 0);
         var tEqMap = tType.GetInterfaceMap(tEq);
         var mEqualsIndex = tEqMap.InterfaceMethods
             .Select((mi, index) => (mi, index))
-            .Single(p => p.mi.Name == nameof(Equals)).index;
+            .Single(p => StringComparer.Ordinal.Equals(p.mi.Name, nameof(Equals)))
+            .index;
         var mEquals = tEqMap.TargetMethods[mEqualsIndex];
 
         var eNull = Expression.Constant(null);

@@ -28,7 +28,8 @@ public class SimpleSwapService : SwapServiceBase
         Clock = options.Clock ?? services.GetRequiredService<MomentClockSet>().CoarseCpuClock;
         Storage = new ConcurrentDictionary<string, string>(
             options.ConcurrencyLevel,
-            ComputedRegistry.Options.DefaultInitialCapacity);
+            ComputedRegistry.Options.DefaultInitialCapacity,
+            StringComparer.Ordinal);
         ExpirationTimers = new ConcurrentTimerSet<string>(
             new ConcurrentTimerSet<string>.Options() {
                 Clock = Clock,

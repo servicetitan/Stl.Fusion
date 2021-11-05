@@ -5,7 +5,7 @@ public record SetCommand(
     [property: DataMember] string Key,
     [property: DataMember] string Value,
     [property: DataMember] Moment? ExpiresAt = null
-    ) : BackendCommand<Unit>
+    ) : ICommand<Unit>, IBackendCommand
 {
     public SetCommand() : this("", "") { }
 }

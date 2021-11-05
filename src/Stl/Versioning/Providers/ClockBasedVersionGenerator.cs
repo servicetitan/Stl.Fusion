@@ -10,7 +10,9 @@ public sealed class ClockBasedVersionGenerator : VersionGenerator<long>
     public ClockBasedVersionGenerator(IMomentClock clock)
         => _clock = clock;
 
-    public override long NextVersion(long currentVersion = default)
+#pragma warning disable MA0061
+    public override long NextVersion(long currentVersion = 0)
+#pragma warning restore MA0061
     {
         var nextVersion = _clock.Now.EpochOffset.Ticks;
         return nextVersion > currentVersion ? nextVersion : ++currentVersion;

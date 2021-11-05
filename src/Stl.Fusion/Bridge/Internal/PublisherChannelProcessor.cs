@@ -88,8 +88,8 @@ public class PublisherChannelProcessor : AsyncProcessBase
                 PublisherImpl.Clocks, LoggerFactory);
             Subscriptions[publicationId] = subscriptionProcessor;
         }
-        _ = subscriptionProcessor.Run()
-            .ContinueWith(_ => Unsubscribe(publication, default), CancellationToken.None);
+        _ = subscriptionProcessor.Run(default)
+            .ContinueWith(_ => Unsubscribe(publication, default), TaskScheduler.Default);
     subscriptionExists:
         await subscriptionProcessor.IncomingChannel.Writer
             .WriteAsync(request, cancellationToken).ConfigureAwait(false);
@@ -125,7 +125,7 @@ public class PublisherChannelProcessor : AsyncProcessBase
             // were still in process while we were unsubscribing.
             // Since we don't know for sure how long it might take,
             // we optimistically assume 10 seconds is enough for this.
-            await Task.Delay(TimeSpan.FromSeconds(10));
+            await Task.Delay(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
         }
     }
 

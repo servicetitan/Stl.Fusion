@@ -62,8 +62,10 @@ public class DbCartService : DbServiceBase<AppDbContext>, ICartService
 
     public virtual async Task<Cart?> Get(string id, CancellationToken cancellationToken = default)
     {
-        await using var dbContext = CreateDbContext();
+        var dbContext = CreateDbContext();
+        await using var _ = dbContext.ConfigureAwait(false);
         dbContext.EnableChangeTracking(); // Otherwise LoadAsync below won't work
+
         var dbCart = await dbContext.Carts.FindAsync(ComposeKey(id), cancellationToken);
         if (dbCart == null)
             return null;

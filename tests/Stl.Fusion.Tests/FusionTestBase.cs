@@ -90,7 +90,10 @@ public class FusionTestBase : TestBase, IAsyncLifetime
                 await Delay(0.3);
             }
         }
-        await using var dbContext = CreateDbContext();
+
+        var dbContext = CreateDbContext();
+        await using var _ = dbContext.ConfigureAwait(false);
+
         if (Options.DbType != FusionTestDbType.Sqlite)
             await dbContext.Database.EnsureDeletedAsync();
         await dbContext.Database.EnsureCreatedAsync();

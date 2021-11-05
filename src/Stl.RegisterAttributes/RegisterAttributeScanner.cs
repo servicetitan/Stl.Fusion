@@ -23,7 +23,7 @@ public record RegisterAttributeScanner
     public RegisterAttributeScanner WithTypeFilter(Func<Type, bool> typeFilter)
         => this with { TypeFilter = typeFilter };
     public RegisterAttributeScanner WithTypeFilter(string fullNamePrefix)
-        => this with { TypeFilter = t => (t.FullName ?? "").StartsWith(fullNamePrefix) };
+        => this with { TypeFilter = t => (t.FullName ?? "").StartsWith(fullNamePrefix, StringComparison.Ordinal) };
     public RegisterAttributeScanner WithTypeFilter(Regex fullNameRegex)
         => this with { TypeFilter = t => fullNameRegex.IsMatch(t.FullName ?? "") };
 
@@ -94,5 +94,5 @@ public record RegisterAttributeScanner
     }
 
     private bool IsDynamicProxy(Type type)
-        => (type.Assembly.FullName ?? "").StartsWith("DynamicProxyGenAssembly2");
+        => (type.Assembly.FullName ?? "").StartsWith("DynamicProxyGenAssembly2", StringComparison.Ordinal);
 }

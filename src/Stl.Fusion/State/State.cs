@@ -229,7 +229,7 @@ public abstract class State<T> : ComputedInput,
         if (result.TryUseExisting(context, usedBy))
             return result;
 
-        using var _ = await AsyncLock.Lock(cancellationToken);
+        using var _ = await AsyncLock.Lock(cancellationToken).ConfigureAwait(false);
 
         result = Computed;
         if (result.TryUseExisting(context, usedBy))
@@ -263,7 +263,7 @@ public abstract class State<T> : ComputedInput,
         if (result.TryUseExisting(context, usedBy))
             return result.Strip(context);
 
-        using var _ = await AsyncLock.Lock(cancellationToken);
+        using var _ = await AsyncLock.Lock(cancellationToken).ConfigureAwait(false);
 
         result = Computed;
         if (result.TryUseExisting(context, usedBy))

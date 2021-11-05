@@ -29,7 +29,9 @@ public class ClientAuthHelper
     {
         if (CachedSchemas != null)
             return CachedSchemas;
-        var sSchemas = await JSRuntime.InvokeAsync<string>("eval", SchemasJavaScriptExpression);
+        var sSchemas = await JSRuntime
+            .InvokeAsync<string>("eval", SchemasJavaScriptExpression)
+            .ConfigureAwait(false); // The rest of this method doesn't depend on Blazor
         var lSchemas = ListFormat.Default.Parse(sSchemas);
         var schemas = new (string, string)[lSchemas.Count / 2];
         for (int i = 0, j = 0; i < schemas.Length; i++, j += 2)
@@ -48,14 +50,14 @@ public class ClientAuthHelper
     public virtual async Task SignOut(Session session, bool force = false)
     {
         var signOutCommand = new SignOutCommand(session, force);
-        await Task.Run(() => Auth.SignOut(signOutCommand));
+        await Task.Run(() => Auth.SignOut(signOutCommand)).ConfigureAwait(false);
     }
 
     public virtual async Task SignOutEverywhere(bool force = true)
     {
         // No server-side API endpoint for this action(yet), so let's do this on the client
         while (true) {
-            var sessionInfos = await Auth.GetUserSessions(Session);
+            var sessionInfos = await Auth.GetUserSessions(Session).ConfigureAwait(false);
             var otherSessions = sessionInfos
                 .Where(si => si.Id != Session.Id)
                 .Select(si => new Session(si.Id))
@@ -63,8 +65,8 @@ public class ClientAuthHelper
             if (otherSessions.Count == 0)
                 break;
             foreach (var otherSession in otherSessions)
-                await SignOut(otherSession, force);
+                await SignOut(otherSession, force).ConfigureAwait(false);
         }
-        await SignOut(Session, force);
+        await SignOut(Session, force).ConfigureAwait(false);
     }
 }

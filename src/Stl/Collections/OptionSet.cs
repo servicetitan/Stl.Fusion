@@ -20,7 +20,8 @@ public class OptionSet : IServiceProvider
     public Dictionary<string, NewtonsoftJsonSerialized<object>> JsonCompatibleItems
         => Items.ToDictionary(
             p => p.Key.Value,
-            p => NewtonsoftJsonSerialized.New(p.Value));
+            p => NewtonsoftJsonSerialized.New(p.Value),
+            StringComparer.Ordinal);
 
     public object? this[Symbol key] {
         get => _items.TryGetValue(key, out var v) ? v : null;

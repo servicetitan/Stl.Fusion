@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Extensions.Commands;
@@ -106,18 +107,18 @@ public partial class SandboxedKeyValueStore : ISandboxedKeyValueStore
     {
         if (session == Session.Null)
             throw Errors.KeyViolatesSandboxedKeyValueStoreConstraints();
-        var user = await Auth.GetSessionUser(session, cancellationToken);
+        var user = await Auth.GetSessionUser(session, cancellationToken).ConfigureAwait(false);
         if (!user.IsAuthenticated)
             return new KeyChecker() {
                 Clock = Clock,
-                Prefix = string.Format(SessionKeyPrefixFormat, session.Id),
+                Prefix = string.Format(CultureInfo.InvariantCulture, SessionKeyPrefixFormat, session.Id),
                 ExpirationTime = SessionKeyExpirationTime,
             };
         return new KeyChecker() {
             Clock = Clock,
-            Prefix = string.Format(SessionKeyPrefixFormat, session.Id),
+            Prefix = string.Format(CultureInfo.InvariantCulture, SessionKeyPrefixFormat, session.Id),
             ExpirationTime = SessionKeyExpirationTime,
-            SecondaryPrefix = string.Format(UserKeyPrefixFormat, user.Id),
+            SecondaryPrefix = string.Format(CultureInfo.InvariantCulture, UserKeyPrefixFormat, user.Id),
             SecondaryExpirationTime = UserKeyExpirationTime,
         };
     }

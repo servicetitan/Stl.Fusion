@@ -45,11 +45,11 @@ public class WebSocketChannelProvider : IChannelProvider, IHasServices
         public static Uri DefaultConnectionUrlResolver(WebSocketChannelProvider channelProvider, Symbol publisherId)
         {
             var url = channelProvider.BaseUri.ToString();
-            if (url.StartsWith("http://"))
+            if (url.StartsWith("http://", StringComparison.Ordinal))
                 url = "ws://" + url.Substring(7);
-            else if (url.StartsWith("https://"))
+            else if (url.StartsWith("https://", StringComparison.Ordinal))
                 url = "wss://" + url.Substring(8);
-            if (url.EndsWith("/"))
+            if (url.EndsWith("/", StringComparison.Ordinal))
                 url = url.Substring(0, url.Length - 1);
             url += channelProvider.RequestPath;
             var uriBuilder = new UriBuilder(url);
@@ -127,10 +127,11 @@ public class WebSocketChannelProvider : IChannelProvider, IHasServices
                 stringChannel = stringChannel.WithLogger(clientId, Log, MessageLogLevel, MessageMaxLength);
             var serializers = SerializerFactory.Invoke(Services);
             var resultChannel = stringChannel.WithUtf16Serializer(serializers);
-            _ = wsChannel.WhenCompleted(CancellationToken.None).ContinueWith(async _ => {
-                await Task.Delay(1000, default).ConfigureAwait(false);
-                await wsChannel.DisposeAsync().ConfigureAwait(false);
-            }, CancellationToken.None);
+            _ = wsChannel.WhenCompleted(CancellationToken.None)
+                .ContinueWith(async _ => {
+                    await Task.Delay(1000, default).ConfigureAwait(false);
+                    await wsChannel.DisposeAsync().ConfigureAwait(false);
+                }, TaskScheduler.Default);
             return resultChannel;
         }
         catch (OperationCanceledException) {

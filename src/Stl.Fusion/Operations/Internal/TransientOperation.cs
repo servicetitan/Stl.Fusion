@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace Stl.Fusion.Operations.Internal;
 
 public class TransientOperation : IOperation
@@ -15,6 +17,6 @@ public class TransientOperation : IOperation
     public TransientOperation(bool autogenerateId)
     {
         if (autogenerateId)
-            Id = "Local-" + Interlocked.Increment(ref _operationId).ToString();
+            Id = "Local-" + Interlocked.Increment(ref _operationId).ToString(CultureInfo.InvariantCulture);
     }
 }

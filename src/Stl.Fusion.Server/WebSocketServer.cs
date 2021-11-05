@@ -61,7 +61,10 @@ public class WebSocketServer
         var serializers = SerializerFactory.Invoke();
         var clientId = context.Request.Query[ClientIdQueryParameterName];
         var webSocket = await context.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
-        await using var wsChannel = new WebSocketChannel(webSocket);
+
+        var wsChannel = new WebSocketChannel(webSocket);
+        await using var _ = wsChannel.ConfigureAwait(false);
+
         var channel = wsChannel
             .WithUtf16Serializer(serializers)
             .WithId(clientId);

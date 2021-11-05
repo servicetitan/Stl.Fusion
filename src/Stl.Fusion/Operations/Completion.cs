@@ -3,7 +3,7 @@ using Stl.Fusion.Operations.Internal;
 
 namespace Stl.Fusion.Operations;
 
-public interface ICompletion : IBackendCommand<Unit>, IMetaCommand
+public interface ICompletion : IMetaCommand, IBackendCommand
 {
     IOperation Operation { get; }
 }
@@ -13,7 +13,7 @@ public interface ICompletion<out TCommand> : IMetaCommand<TCommand>, ICompletion
 { }
 
 public record Completion<TCommand>(TCommand Command, IOperation Operation)
-    : BackendCommand<Unit>, ICompletion<TCommand>
+    : ICompletion<TCommand>
     where TCommand : class, ICommand
 {
 #if NETSTANDARD2_0
@@ -38,6 +38,6 @@ public static class Completion
             ?? throw Errors.OperationHasNoCommand(nameof(operation));
         var tCompletion = typeof(Completion<>).MakeGenericType(command.GetType());
         var completion = (ICompletion) tCompletion.CreateInstance(operation)!;
-        return completion.MarkValid();
+        return completion;
     }
 }

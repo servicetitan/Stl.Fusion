@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace Stl.Fusion.Extensions;
 
 public record PageRef<TKey>(int Count, Option<TKey> After = default)
@@ -6,7 +8,7 @@ public record PageRef<TKey>(int Count, Option<TKey> After = default)
 
     public override string ToString()
         => After.IsNone()
-            ? Count.ToString()
+            ? Count.ToString(CultureInfo.InvariantCulture)
             : SystemJsonSerializer.Default.Write(this, GetType());
 
     public static implicit operator PageRef<TKey>(int count)
@@ -27,7 +29,7 @@ public static class PageRef
         => new(count, after);
 
     public static PageRef<TKey> Parse<TKey>(string value)
-        => int.TryParse(value, out var count)
+        => int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var count)
             ? new PageRef<TKey>(count)
             : SystemJsonSerializer.Default.Reader.Read<PageRef<TKey>>(value);
 }

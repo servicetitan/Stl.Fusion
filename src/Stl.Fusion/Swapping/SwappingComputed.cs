@@ -50,7 +50,7 @@ public class SwappingComputed<T> : Computed<T>, IAsyncComputed<T>, ISwappable
 
     async ValueTask<IResult?> IAsyncComputed.GetOutput(CancellationToken cancellationToken)
         => await GetOutput(cancellationToken).ConfigureAwait(false);
-    public async ValueTask<ResultBox<T>?> GetOutput(CancellationToken cancellationToken)
+    public async ValueTask<ResultBox<T>?> GetOutput(CancellationToken cancellationToken = default)
     {
         var maybeOutput = MaybeOutput;
         if (maybeOutput != null)
@@ -64,7 +64,7 @@ public class SwappingComputed<T> : Computed<T>, IAsyncComputed<T>, ISwappable
             return maybeOutput;
 
         var swapService = Function.Services.GetService<ISwapService>() ?? NoSwapService.Instance;
-        maybeOutput = await swapService.Load((Input, Version), cancellationToken) as ResultBox<T>;
+        maybeOutput = await swapService.Load((Input, Version), cancellationToken).ConfigureAwait(false) as ResultBox<T>;
         if (maybeOutput == null) {
             Invalidate();
             return null;
@@ -98,7 +98,7 @@ public class SwappingComputed<T> : Computed<T>, IAsyncComputed<T>, ISwappable
         if (MaybeOutput == null)
             return;
         var swapService = Function.Services.GetService<ISwapService>() ?? NoSwapService.Instance;
-        await swapService.Store((Input, Version), MaybeOutput, cancellationToken);
+        await swapService.Store((Input, Version), MaybeOutput, cancellationToken).ConfigureAwait(false);
         Interlocked.Exchange(ref _maybeOutput, null);
         RenewTimeouts();
     }

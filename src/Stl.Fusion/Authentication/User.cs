@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Claims;
 using System.Security.Principal;
 using System.Text.Json.Serialization;
@@ -113,7 +114,7 @@ public record User : IPrincipal, IIdentity, IHasId<Symbol>, IHasVersion<long>
         var claims = new List<Claim>();
         if (!Id.IsEmpty)
             claims.Add(new(ClaimTypes.NameIdentifier, Id, ClaimValueTypes.String));
-        claims.Add(new(ClaimTypes.Version, Version.ToString(), ClaimValueTypes.String));
+        claims.Add(new(ClaimTypes.Version, Version.ToString(CultureInfo.InvariantCulture), ClaimValueTypes.String));
         if (!string.IsNullOrEmpty(Name))
             claims.Add(new(ClaimTypes.Name, Name, ClaimValueTypes.String));
         foreach (var (key, value) in Claims)
