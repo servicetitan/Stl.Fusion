@@ -153,9 +153,9 @@ public class ServerAuthHelper
 
         if (!user.IsAuthenticated)
             // Create
-            user = new User("", name) with {
+            user = new User("", name) {
                 Claims = claims,
-                Identities = identities,
+                Identities = identities
             };
         else {
             // Update
