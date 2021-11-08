@@ -79,7 +79,7 @@
     <PackageReference Update="Swashbuckle.AspNetCore" Version="6.2.3" />
     <PackageReference Update="System.Collections.Immutable" Version="5.0.*" />
     <PackageReference Update="System.ComponentModel.Annotations" Version="5.0.*" />
-    <PackageReference Update="System.Configuration.ConfigurationManager" Version="5.0.*" />
+    <PackageReference Update="System.Configuration.ConfigurationManager" Version="6.0.*" />
     <PackageReference Update="System.CommandLine" Version="2.0.0-beta1.20303.1" />
     <PackageReference Update="System.CommandLine.DragonFruit" Version="0.3.0-alpha.20303.1" />
     <PackageReference Update="System.Drawing.Common" Version="5.0.*" />
