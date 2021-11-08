@@ -91,7 +91,7 @@
     <PackageReference Update="System.Reactive" Version="5.0.*" />
     <PackageReference Update="System.Runtime.Loader" Version="4.3.*" />
     <PackageReference Update="System.Text.Json" Version="5.0.*" />
-    <PackageReference Update="System.Threading.Channels" Version="5.0.*" />
+    <PackageReference Update="System.Threading.Channels" Version="6.0.*" />
     <PackageReference Update="UAParser" Version="3.1.*" />
     <PackageReference Update="Ulid" Version="1.2.*" />
     <PackageReference Update="xunit" Version="2.4.1" />
