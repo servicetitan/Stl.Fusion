@@ -434,7 +434,7 @@ and call `​/api​/Sum​/Accumulate` and `/api/Sum/GetAccumulator`
 ## Next Steps
 
 * Check out [Samples], [Tutorial], [Slides], or go to [Documentation Home]
-* Join our [Discord Server] or [Gitter] to ask questions and track project updates.
+* Join our [Discord Server] to ask questions and track project updates.
 
 ## Posts And Other Content
 * [Fusion: 1st birthday, 1K+ stars on GitHub, System.Text.Json support in v1.4](https://alexyakunin.medium.com/fusion-1st-birthday-1k-stars-on-github-system-text-json-support-in-v1-4-c73e9feb45c7?source=friends_link&sk=2e261e0dacce92f05d31baac400c3032)
@@ -469,7 +469,6 @@ please help us to make it better by completing [Fusion Feedback Form]
 [Slides]: https://alexyakunin.github.io/Stl.Fusion.Materials/Slides/Fusion_v2/Slides.html
 [MMORPG]: https://en.wikipedia.org/wiki/Massively_multiplayer_online_role-playing_game
 
-[Gitter]: https://gitter.im/Stl-Fusion/community
 [Discord]: https://discord.gg/EKEwv6d
 [Discord Server]: https://discord.gg/EKEwv6d
 [Fusion Feedback Form]: https://forms.gle/TpGkmTZttukhDMRB6
