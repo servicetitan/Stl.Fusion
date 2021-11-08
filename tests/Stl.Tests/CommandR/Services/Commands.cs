@@ -1,31 +1,25 @@
-using System;
-using System.Reactive;
-using System.Threading;
-using Stl.CommandR;
+namespace Stl.Tests.CommandR.Services;
 
-namespace Stl.Tests.CommandR.Services
+public record LogCommand : ICommand<Unit>
 {
-    public record LogCommand : ICommand<Unit>
-    {
-        public string Message { get; set; } = "";
-    }
+    public string Message { get; set; } = "";
+}
 
-    public record DivCommand : ICommand<double>
-    {
-        public double Divisible { get; set; }
-        public double Divisor { get; set; }
-    }
+public record DivCommand : ICommand<double>
+{
+    public double Divisible { get; set; }
+    public double Divisor { get; set; }
+}
 
-    public record RecSumCommand : ICommand<double>
-    {
-        public static AsyncLocal<object> Tag { get; } = new();
+public record RecSumCommand : ICommand<double>
+{
+    public static AsyncLocal<object> Tag { get; } = new();
 
-        public double[] Arguments { get; set; } = Array.Empty<double>();
-        public bool Isolate { get; set; }
-    }
+    public double[] Arguments { get; set; } = Array.Empty<double>();
+    public bool Isolate { get; set; }
+}
 
-    public record RecAddUsersCommand : ICommand<Unit>
-    {
-        public User[] Users { get; set; } = Array.Empty<User>();
-    }
+public record RecAddUsersCommand : ICommand<Unit>
+{
+    public User[] Users { get; set; } = Array.Empty<User>();
 }

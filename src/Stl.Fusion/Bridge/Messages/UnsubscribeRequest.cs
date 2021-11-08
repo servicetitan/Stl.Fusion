@@ -1,8 +1,5 @@
-using System.Runtime.Serialization;
+namespace Stl.Fusion.Bridge.Messages;
 
-namespace Stl.Fusion.Bridge.Messages
-{
-    [DataContract]
-    public class UnsubscribeRequest : ReplicaRequest
-    { }
-}
+[DataContract]
+public class UnsubscribeRequest : ReplicaRequest
+{ }

@@ -47,5 +47,5 @@
         => CommandFailureList.Clear();
 
     private void OnCommandFailureListChanged()
-        => InvokeAsync(StateHasChanged);
+        => this.StateHasChangedAsync();
 }

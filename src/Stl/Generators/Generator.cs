@@ -1,7 +1,6 @@
-namespace Stl.Generators
+namespace Stl.Generators;
+
+public abstract class Generator<T>
 {
-    public abstract class Generator<T>
-    {
-        public abstract T Next();
-    }
+    public abstract T Next();
 }

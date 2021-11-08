@@ -1,13 +1,12 @@
 // ReSharper disable once CheckNamespace
-namespace System.Reflection
+namespace System.Reflection;
+
+public static class MethodInfoCompatExt
 {
-    public static class MethodInfoCompatExt
-    {
-        public static bool IsConstructedGenericMethod(this MethodInfo methodInfo)
+    public static bool IsConstructedGenericMethod(this MethodInfo methodInfo)
 #if !NETSTANDARD2_0
-            => methodInfo.IsConstructedGenericMethod;
+        => methodInfo.IsConstructedGenericMethod;
 #else
-            => methodInfo.IsGenericMethod && !methodInfo.IsGenericMethodDefinition;
+        => methodInfo.IsGenericMethod && !methodInfo.IsGenericMethodDefinition;
 #endif
-    }
 }

@@ -1,6 +1,7 @@
 <Project ToolsVersion="latest" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <SolutionDir Condition="$(SolutionDir) == ''">$(MSBuildThisFileDirectory.TrimEnd('\').TrimEnd('/'))\</SolutionDir>
+    <RepoRoot>$([MSBuild]::EnsureTrailingSlash('$(MSBuildThisFileDirectory)'))</RepoRoot>
+    <SolutionDir Condition="$(SolutionDir) == ''">$(RepoRoot)</SolutionDir>
     <Authors>ServiceTitan, Inc.</Authors>
     <Company>ServiceTitan, Inc.</Company>
     <Copyright>Copyright ServiceTitan, Inc.</Copyright>
@@ -20,8 +21,8 @@
     <NoPackageAnalysis>false</NoPackageAnalysis>
     <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
-    <OutputPath>$(SolutionDir)artifacts\</OutputPath>
-    <PackageOutputPath>$(SolutionDir)artifacts\nupkg</PackageOutputPath>
+    <OutputPath>$(RepoRoot)artifacts\</OutputPath>
+    <PackageOutputPath>$(RepoRoot)artifacts\nupkg</PackageOutputPath>
     <DefaultLanguage>en-US</DefaultLanguage>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <!-- Embedded not recommended yet for libs and nupkg, track this in https://github.com/dotnet/sdk/issues/2679 -->
@@ -29,41 +30,63 @@
     <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>
     <GenerateFullPaths Condition="'$(TERM_PROGRAM)' == 'vscode'">true</GenerateFullPaths>
+
     <!-- Defaults for .csproj -->
     <OutputType>Library</OutputType>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Features>strict;pdb-path-determinism</Features>
     <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
-    <TypeScriptCompilerBlocked>true</TypeScriptCompilerBlocked>
+    <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
-    <!-- NU5105: The package version uses SemVer 2.0.0 or components of SemVer 1.0.0 that are not supported on legacy clients -->
     <!-- NU5048: The 'PackageIconUrl'/'iconUrl' element is deprecated -->
-    <NoWarn>$(NoWarn);NU5105;NU5048;</NoWarn>
+    <!-- NU5105: The package version uses SemVer 2.0.0 or components of SemVer 1.0.0 that are not supported on legacy clients -->
+    <NoWarn>$(NoWarn);NU5048;NU5105</NoWarn>
     <WarningsAsErrors>true</WarningsAsErrors>
 
-    <!-- Deterministic -->
-    <Deterministic>false</Deterministic>
+    <!-- SourceLink props: https://github.com/dotnet/sourcelink/issues/159 -->
+    <EnableSourceLink>false</EnableSourceLink>
+    <EnableSourceLink Condition="'$(GitCommitId)' != '' and '$(Configuration)' != 'Debug' and '$(DesignTimeBuild)' != 'true' and '$(BuildingForLiveUnitTesting)' != 'true'">true</EnableSourceLink>
+    <UseSourceLink>$(EnableSourceLink)</UseSourceLink>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <RepositoryType>git</RepositoryType>
+    <PrivateRepositoryUrl>$(RepositoryUrl)</PrivateRepositoryUrl>
+    <ScmRepositoryUrl>$(RepositoryUrl)</ScmRepositoryUrl>
+    <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
+    <RevisionId>$(GitCommitId)</RevisionId>
+    <SourceRevisionId>$(GitCommitId)</SourceRevisionId>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <SourceLinkHasSingleProvider>true</SourceLinkHasSingleProvider>
+    <EnableSourceControlManagerQueries>$(EnableSourceLink)</EnableSourceControlManagerQueries>
+    <GitVersionBaseDirectory>$(RepoRoot)</GitVersionBaseDirectory>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(EnableSourceLink)' == 'true'">
+    <Deterministic>true</Deterministic>
+    <Features>strict;pdb-path-determinism</Features>
+    <DeterministicSourcePaths>true</DeterministicSourcePaths>
     <ContinuousIntegrationBuild>false</ContinuousIntegrationBuild>
-    <PathMap>'$(SolutionDir)'=/_/</PathMap>
+    <PathMap>'$(RepoRoot)'=/_/</PathMap>
   </PropertyGroup>
+  <ItemGroup Condition="'$(DeterministicSourcePaths)' =='true'">
+    <SourceRoot Include="$(RepoRoot)" RepositoryUrl="$(RepositoryUrl)" SourceControl="git" RevisionId="$(GitCommitId)" />
+  </ItemGroup>
 
   <PropertyGroup>
-    <NetFxBuild>false</NetFxBuild>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net480' or '$(TargetFramework)' == 'net471'">
-    <NetFxBuild>true</NetFxBuild>
-  </PropertyGroup>
-
-  <PropertyGroup>
+    <PrereleaseBuild>false</PrereleaseBuild>
     <LegacyBuild>false</LegacyBuild>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0' or '$(NetFxBuild)' == 'true'">
+  <PropertyGroup Condition="$(TargetFramework.StartsWith('net6'))">
+    <PrereleaseBuild>true</PrereleaseBuild>
+  </PropertyGroup>
+  <PropertyGroup Condition="$(TargetFramework.StartsWith('net4')) or $(TargetFramework.StartsWith('netstandard'))">
     <LegacyBuild>true</LegacyBuild>
   </PropertyGroup>
 
   <ItemGroup Condition="$(DeterministicSourcePaths) == 'true'">
-    <SourceRoot Include="$(SolutionDir)" />
+    <SourceRoot Include="$(RepoRoot)" />
   </ItemGroup>
 </Project>

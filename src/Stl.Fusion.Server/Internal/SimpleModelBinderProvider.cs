@@ -1,21 +1,19 @@
-using System;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace Stl.Fusion.Server.Internal
+namespace Stl.Fusion.Server.Internal;
+
+public class SimpleModelBinderProvider<TModel, TBinder>  : IModelBinderProvider
+    where TBinder : class, IModelBinder, new()
 {
-    public class SimpleModelBinderProvider<TModel, TBinder>  : IModelBinderProvider
-        where TBinder : class, IModelBinder, new()
+    public IModelBinder? GetBinder(ModelBinderProviderContext context)
     {
-        public IModelBinder? GetBinder(ModelBinderProviderContext context)
-        {
-            if (context == null)
-                throw new ArgumentNullException(nameof(context));
+        if (context == null)
+            throw new ArgumentNullException(nameof(context));
 
-            var modelType = context.Metadata.ModelType;
-            if (modelType == typeof(TModel))
-                return new TBinder();
+        var modelType = context.Metadata.ModelType;
+        if (modelType == typeof(TModel))
+            return new TBinder();
 
-            return null;
-        }
+        return null;
     }
 }

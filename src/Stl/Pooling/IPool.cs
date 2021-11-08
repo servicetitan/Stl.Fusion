@@ -1,7 +1,6 @@
-namespace Stl.Pooling
+namespace Stl.Pooling;
+
+public interface IPool<T> : IResourceReleaser<T>
 {
-    public interface IPool<T> : IResourceReleaser<T>
-    {
-        ResourceLease<T> Rent();
-    }
+    ResourceLease<T> Rent();
 }

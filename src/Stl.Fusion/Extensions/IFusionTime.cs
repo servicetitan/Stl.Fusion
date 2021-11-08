@@ -1,15 +1,11 @@
-using System;
-using System.Threading.Tasks;
+namespace Stl.Fusion.Extensions;
 
-namespace Stl.Fusion.Extensions
+public interface IFusionTime
 {
-    public interface IFusionTime
-    {
-        [ComputeMethod]
-        Task<DateTime> GetUtcNow();
-        [ComputeMethod]
-        Task<DateTime> GetUtcNow(TimeSpan updatePeriod);
-        [ComputeMethod]
-        Task<string> GetMomentsAgo(DateTime time);
-    }
+    [ComputeMethod]
+    Task<DateTime> GetUtcNow();
+    [ComputeMethod]
+    Task<DateTime> GetUtcNow(TimeSpan updatePeriod);
+    [ComputeMethod]
+    Task<string> GetMomentsAgo(DateTime time);
 }

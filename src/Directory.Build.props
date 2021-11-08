@@ -2,8 +2,9 @@
 <Project ToolsVersion="latest" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
   <PropertyGroup>
-    <BaseIntermediateOutputPath>$(SolutionDir)artifacts\obj\$(MSBuildProjectName)</BaseIntermediateOutputPath>
-    <OutputPath>$(SolutionDir)artifacts\bin\$(MSBuildProjectName)</OutputPath>
+    <!-- Compiler & toolchain -->
+    <BaseIntermediateOutputPath>$(RepoRoot)artifacts\obj\$(MSBuildProjectName)</BaseIntermediateOutputPath>
+    <OutputPath>$(RepoRoot)artifacts\bin\$(MSBuildProjectName)</OutputPath>
     <PublishConfiguration>Release</PublishConfiguration>
     <IsPackable>true</IsPackable>
     <!-- Signing -->
@@ -13,8 +14,8 @@
     <!-- Nerdbank.GitVersioning props -->
     <DefaultPublicRelease>true</DefaultPublicRelease>
     <!-- SourceLink props: https://github.com/dotnet/sourcelink/issues/159 -->
-    <EnableSourceLink>false</EnableSourceLink> <!-- Set later -->
-    <UseSourceLink>false</UseSourceLink> <!-- Set later -->
+    <EnableSourceLink>false</EnableSourceLink>    <!-- Set later -->
+    <UseSourceLink>false</UseSourceLink>    <!-- Set later -->
     <IncludeSymbols>true</IncludeSymbols>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
@@ -25,27 +26,84 @@
     -->
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(MSBuildProjectExtension)' != '.dcproj'">
+  <!-- Suppressed warnings -->
+  <PropertyGroup>
+    <!-- [MA0009] Regular expressions should not be vulnerable to Denial of Service attacks -->
+    <!-- [MA0015] 'command.Key' is not a valid parameter name -->
+    <!-- [MA0016] Prefer return collection abstraction instead of implementation -->
+    <!-- [MA0018] Do not declare static members on generic types -->
+    <!-- [MA0026] To-do : ... -->
+    <!-- [MA0046] The delegate must have 2 parameters -->
+    <!-- [MA0048] File name must match type name -->
+    <!-- [MA0051] Method is too long (71 lines; maximum allowed: 60) -->
+    <!-- [MA0056] Do not call overridable members in constructor -->
+    <!-- [MA0064] Avoid locking on publicly accessible instance -->
+    <!-- [MA0097] A class that implements IComparable<T> or IComparable should override comparison operators -->
+    <NoWarn>$(NoWarn);MA0009;MA0015;MA0016;MA0018;MA0026;MA0046;MA0048;MA0051;MA0056;MA0064;MA0097</NoWarn>
+    <!-- [VSTHRD002] Synchronously waiting on tasks or awaiters may cause deadlocks. Use await or JoinableTaskFactory.Run instead. -->
+    <!-- [VSTHRD003] Avoid awaiting or returning a Task representing work that was not started within your context as that can lead to deadlocks. -->
+    <!-- [VSTHRD110] Observe the awaitable result of this method call by awaiting it, assigning to a variable, or passing it to another method. -->
+    <!-- [VSTHRD200] Use "Async" suffix in names of methods that return an awaitable type. -->
+    <NoWarn>$(NoWarn);VSTHRD003;VSTHRD002;VSTHRD110;VSTHRD200</NoWarn>
+  </PropertyGroup>
+
+  <!--
+  <ItemGroup>
+    <InternalsVisibleTo Include="Stl.Tests" />
+    <InternalsVisibleTo Include="Stl.Fusion.Tests" />
+  </ItemGroup>
+  -->
+
+  <ItemGroup>
     <PackageReference Include="Nerdbank.GitVersioning" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" />
+    <PackageReference Include="Roslynator.Analyzers" />
+    <PackageReference Include="Meziantou.Analyzer" />
+    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" />
   </ItemGroup>
 
-  <Target Name="TryEnableSourceLink" AfterTargets="GetBuildVersion">
-    <CreateProperty Condition="'$(GitCommitId)' != ''" Value="true">
-      <Output PropertyName="EnableSourceLink" TaskParameter="Value" />
-    </CreateProperty>
-    <CreateProperty Value="$(EnableSourceLink)">
-      <Output PropertyName="UseSourceLink" TaskParameter="Value" />
-    </CreateProperty>
-    <CreateItem Condition="$(EnableSourceLink)"
-          Include="$(SolutionDir)"
-          AdditionalMetadata="SourceControl=git;RevisionId=$(GitCommitId);RepositoryUrl=$(RepositoryUrl)">
-      <Output ItemName="SourceRoot" TaskParameter="Include" />
-    </CreateItem>
-    <Message Text="EnableSourceLink: $(EnableSourceLink), GitCommitId: $(GitCommitId)" Importance="low"/>
-  </Target>
+  <!-- Global usings -->
+  <ItemGroup>
+    <Using Include="System.Console" Static="True" />
+    <Using Include="System.Collections" />
+    <Using Include="System.Collections.Immutable" />
+    <Using Include="System.Collections.Concurrent" />
+    <Using Include="System.Linq" />
+    <Using Include="System.Reactive" /> <!-- Mainly for Unit type -->
+    <Using Include="System.Reflection" />
+    <Using Include="System.Runtime.CompilerServices" />
+    <Using Include="System.Runtime.InteropServices" />
+    <Using Include="System.Runtime.Serialization" />
+    <Using Include="System.Threading.Channels" />
+    <Using Include="Stl" />
+    <Using Include="Stl.Async" />
+    <Using Include="Stl.Collections" />
+    <Using Include="Stl.Reflection" />
+    <Using Include="Stl.Serialization" />
+    <Using Include="Stl.Text" />
+    <Using Include="Stl.Time" />
+    <Using Include="Microsoft.Extensions.Logging" />
+  </ItemGroup>
 
-  <Target Name="LogMessages" AfterTargets="Build" >
-  </Target>
+  <!-- Extra global usings for CommandR projects -->
+  <ItemGroup Condition="$(MSBuildProjectFile.StartsWith('Stl.CommandR'))">
+    <Using Include="Stl.CommandR" />
+    <Using Include="Stl.CommandR.Configuration" />
+    <Using Include="Stl.CommandR.Commands" />
+  </ItemGroup>
+
+  <!-- Extra global usings for Fusion projects -->
+  <ItemGroup Condition="$(MSBuildProjectFile.StartsWith('Stl.Fusion'))">
+    <Using Include="Stl.Fusion" />
+    <Using Include="Stl.Fusion.Operations" />
+    <Using Include="Stl.CommandR" />
+    <Using Include="Stl.CommandR.Configuration" />
+    <Using Include="Stl.CommandR.Commands" />
+  </ItemGroup>
+
+  <!-- We disable SetEmbeddedFilesFromSourceControlManagerUntrackedFiles, that's why we embed this file in pdb manually -->
+  <ItemGroup Condition="'$(EnableSourceLink)' =='true'">
+    <EmbeddedFiles Include="$(BaseIntermediateOutputPath)$(Configuration)\**\*.cs" />
+  </ItemGroup>
 
 </Project>

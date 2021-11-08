@@ -1,14 +1,9 @@
-using System.Reactive;
-using System.Runtime.Serialization;
-using Stl.CommandR.Commands;
+namespace Stl.Fusion.Extensions.Commands;
 
-namespace Stl.Fusion.Extensions.Commands
+[DataContract]
+public record RemoveCommand(
+    [property: DataMember] string Key
+    ) : ICommand<Unit>, IBackendCommand
 {
-    [DataContract]
-    public record RemoveCommand(
-        [property: DataMember] string Key
-        ) : ServerSideCommandBase<Unit>
-    {
-        public RemoveCommand() : this("") { }
-    }
+    public RemoveCommand() : this("") { }
 }

@@ -22,7 +22,7 @@
     public RenderFragment ChildContent { get; set; } = _ => { };
     [Parameter]
     public string SessionId {
-        get => SessionProvider.HasSession ? SessionProvider.Session : "";
+        get => SessionProvider.HasSession ? SessionProvider.Session.Id : "";
         set {
             if (string.IsNullOrEmpty(value))
                 return; // Blazor WASM component is created w/ empty SessionId
@@ -61,9 +61,10 @@
             // Current Session is unusable due to forced sign-out.
             // The only way to get an usable one is to reload the page.
             _ = InvokeAsync(() => Navigator.NavigateTo(Navigator.Uri, true));
-        });
+        }, TaskScheduler.Current);
     }
 
     private Task<AuthState> GetAuthState()
-        => AuthStateProvider.GetAuthenticationStateAsync().ContinueWith(t => (AuthState) t.Result);
+        => AuthStateProvider.GetAuthenticationStateAsync()
+            .ContinueWith(t => (AuthState) t.Result, TaskScheduler.Current);
 }

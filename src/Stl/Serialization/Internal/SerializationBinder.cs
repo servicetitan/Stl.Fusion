@@ -1,108 +1,102 @@
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Reflection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Stl.Concurrency;
-using Stl.Reflection;
 
-namespace Stl.Serialization.Internal
+namespace Stl.Serialization.Internal;
+
+public class SerializationBinder : ISerializationBinder
 {
-    public class SerializationBinder : ISerializationBinder
+    public static readonly ISerializationBinder Instance = new SerializationBinder();
+
+    private readonly ConcurrentDictionary<(string? AssemblyName, string TypeName), Type?> _cache;
+    private readonly Func<(string?, string), Type?> _resolveTypeHandler;
+
+    public SerializationBinder()
     {
-        public static readonly ISerializationBinder Instance = new SerializationBinder();
+        _resolveTypeHandler = ResolveType;
+        _cache = new ConcurrentDictionary<(string?, string), Type?>();
+    }
 
-        private readonly ConcurrentDictionary<(string? AssemblyName, string TypeName), Type?> _cache;
-        private readonly Func<(string?, string), Type?> _resolveTypeHandler;
+    public Type BindToType(string? assemblyName, string typeName)
+        => GetType(assemblyName, typeName) ?? throw new KeyNotFoundException();
 
-        public SerializationBinder()
-        {
-            _resolveTypeHandler = ResolveType;
-            _cache = new ConcurrentDictionary<(string?, string), Type?>();
-        }
+    public void BindToName(Type serializedType, out string? assemblyName, out string? typeName)
+    {
+        assemblyName = serializedType.GetTypeInfo().Assembly.FullName;
+        typeName = serializedType.FullName;
+    }
 
-        public Type BindToType(string? assemblyName, string typeName)
-            => GetType(assemblyName, typeName) ?? throw new KeyNotFoundException();
+    // Protected part
 
-        public void BindToName(Type serializedType, out string? assemblyName, out string? typeName)
-        {
-            assemblyName = serializedType.GetTypeInfo().Assembly.FullName;
-            typeName = serializedType.FullName;
-        }
+    protected Type? GetType(string? assemblyName, string typeName)
+        => _cache.GetOrAddChecked((assemblyName, typeName), _resolveTypeHandler);
 
-        // Protected part
+    protected virtual Type? ResolveType((string? AssemblyName, string TypeName) key)
+    {
+        var (assemblyName, typeName) = key;
 
-        protected Type? GetType(string? assemblyName, string typeName)
-            => _cache.GetOrAddChecked((assemblyName, typeName), _resolveTypeHandler);
+        if (assemblyName != null) {
+            var assembly = Assembly.Load(assemblyName);
+            if (assembly == null)
+                throw new JsonSerializationException(
+                    $"Could not load assembly '{assemblyName}'.");
 
-        protected virtual Type? ResolveType((string? AssemblyName, string TypeName) key)
-        {
-            var (assemblyName, typeName) = key;
-
-            if (assemblyName != null) {
-                var assembly = Assembly.Load(assemblyName);
-                if (assembly == null)
-                    throw new JsonSerializationException(
-                        $"Could not load assembly '{assemblyName}'.");
-
-                var type = assembly.GetType(typeName);
-                if (type == null) {
-                    if (typeName.IndexOf('`') >= 0) {
-                        try {
-                            type = ResolveGenericType(typeName, assembly);
-                        }
-                        catch (Exception e) {
-                            throw new JsonSerializationException(
-                                $"Could not find type '{typeName}' in assembly '{assembly.FullName}'.", e);
-                        }
+            var type = assembly.GetType(typeName);
+            if (type == null) {
+                if (typeName.IndexOf('`') >= 0) {
+                    try {
+                        type = ResolveGenericType(typeName, assembly);
                     }
-                    if (type == null)
+                    catch (Exception e) {
                         throw new JsonSerializationException(
-                            $"Could not find type '{typeName}' in assembly '{assembly.FullName}'.");
-                }
-                return type;
-            }
-            return Type.GetType(typeName);
-        }
-
-        protected Type? ResolveGenericType(string typeName, Assembly assembly)
-        {
-            var openBracketIndex = typeName.IndexOf('[');
-            string genericTypeDefName = typeName.Substring(0, openBracketIndex);
-            if (openBracketIndex < 0)
-                return null;
-
-            var genericTypeDef = assembly.GetType(genericTypeDefName);
-            if (genericTypeDef == null)
-                return null;
-
-            var genericTypeArguments = new List<Type>();
-            var scope = 0;
-            var typeArgStartIndex = 0;
-            var endIndex = typeName.Length - 1;
-            for (var i = openBracketIndex + 1; i < endIndex; ++i) {
-                var current = typeName[i];
-                switch (current) {
-                case '[':
-                    if (scope == 0)
-                        typeArgStartIndex = i + 1;
-                    ++scope;
-                    break;
-                case ']':
-                    --scope;
-                    if (scope == 0) {
-                        string typeArgAssemblyQualifiedName = typeName.Substring(
-                            typeArgStartIndex, i - typeArgStartIndex);
-                        TypeNameHelpers.SplitAssemblyQualifiedName(typeArgAssemblyQualifiedName,
-                            out var typeArgAssemblyName, out var typeArgTypeName);
-                        var type = GetType(typeArgAssemblyName, typeArgTypeName) ?? throw new KeyNotFoundException();
-                        genericTypeArguments.Add(type);
+                            $"Could not find type '{typeName}' in assembly '{assembly.FullName}'.", e);
                     }
-                    break;
                 }
+                if (type == null)
+                    throw new JsonSerializationException(
+                        $"Could not find type '{typeName}' in assembly '{assembly.FullName}'.");
             }
-            return genericTypeDef.MakeGenericType(genericTypeArguments.ToArray());
+            return type;
         }
+        return Type.GetType(typeName);
+    }
+
+    protected Type? ResolveGenericType(string typeName, Assembly assembly)
+    {
+        var openBracketIndex = typeName.IndexOf('[');
+        string genericTypeDefName = typeName.Substring(0, openBracketIndex);
+        if (openBracketIndex < 0)
+            return null;
+
+        var genericTypeDef = assembly.GetType(genericTypeDefName);
+        if (genericTypeDef == null)
+            return null;
+
+        var genericTypeArguments = new List<Type>();
+        var scope = 0;
+        var typeArgStartIndex = 0;
+        var endIndex = typeName.Length - 1;
+        for (var i = openBracketIndex + 1; i < endIndex; ++i) {
+            var current = typeName[i];
+            switch (current) {
+            case '[':
+                if (scope == 0)
+                    typeArgStartIndex = i + 1;
+                ++scope;
+                break;
+            case ']':
+                --scope;
+                if (scope == 0) {
+                    string typeArgAssemblyQualifiedName = typeName.Substring(
+                        typeArgStartIndex, i - typeArgStartIndex);
+                    TypeNameHelpers.SplitAssemblyQualifiedName(typeArgAssemblyQualifiedName,
+                        out var typeArgAssemblyName, out var typeArgTypeName);
+                    var type = GetType(typeArgAssemblyName, typeArgTypeName) ?? throw new KeyNotFoundException();
+                    genericTypeArguments.Add(type);
+                }
+                break;
+            }
+        }
+        return genericTypeDef.MakeGenericType(genericTypeArguments.ToArray());
     }
 }

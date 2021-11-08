@@ -23,6 +23,12 @@
     [Parameter]
     public string SessionId { get; set; } = Symbol.Empty;
 
+    protected override void OnInitialized()
+    {
+        if (!_blazorCircuitContext.IsPrerendering)
+            _blazorCircuitContext.RootComponent = this;
+    }
+
     public void Dispose()
         => _blazorCircuitContext.Dispose();
 }

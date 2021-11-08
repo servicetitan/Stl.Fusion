@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net480;net471;net5.0</TargetFrameworks>
+    <TargetFrameworks>net48;net471;net5.0</TargetFrameworks>
     <RootNamespace>Stl.Fusion.Server</RootNamespace>
     <AssemblyName>Stl.Fusion.Server.NetFx</AssemblyName>
     <PackageTags>servicetitan stl stl_fusion server netfx</PackageTags>

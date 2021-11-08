@@ -1,34 +1,29 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Stl.Collections;
 using Stl.DependencyInjection;
 
-namespace Stl.CommandR.Internal
+namespace Stl.CommandR.Internal;
+
+// This interface just lists all the methods CommandContext has;
+// you should always use CommandContext instead of it.
+internal interface ICommandContext : IHasServices
 {
-    // This interface just lists all the methods CommandContext has;
-    // you should always use CommandContext instead of it.
-    internal interface ICommandContext : IHasServices
-    {
-        ICommander Commander { get; }
-        ICommand UntypedCommand { get; }
-        Task UntypedResultTask { get; }
-        Result<object> UntypedResult { get; set; }
-        CommandContext? OuterContext { get; }
-        CommandContext OutermostContext { get; }
-        bool IsOutermost { get; }
-        CommandExecutionState ExecutionState { get; set; }
-        OptionSet Items { get; }
+    ICommander Commander { get; }
+    ICommand UntypedCommand { get; }
 
-        CommandContext<TResult> Cast<TResult>();
-        Task InvokeRemainingHandlers(CancellationToken cancellationToken = default);
+    Task UntypedResultTask { get; } // Set at the very end of the pipeline (via Complete)
+    Result<object> UntypedResult { get; } // May change while the pipeline runs
+    bool IsCompleted { get; }
 
-        // SetXxx & TrySetXxx
-        void SetDefaultResult();
-        void SetException(Exception exception);
-        void SetCancelled();
-        void TrySetDefaultResult();
-        void TrySetException(Exception exception);
-        void TrySetCancelled(CancellationToken cancellationToken);
-    }
+    CommandContext? OuterContext { get; }
+    CommandContext OutermostContext { get; }
+    bool IsOutermost { get; }
+    CommandExecutionState ExecutionState { get; set; }
+    OptionSet Items { get; }
+
+    Task InvokeRemainingHandlers(CancellationToken cancellationToken = default);
+
+    void ResetResult();
+    void SetResult(object value);
+    void SetResult(Exception exception);
+
+    bool TryComplete(CancellationToken candidateToken);
 }

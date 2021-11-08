@@ -1,7 +1,17 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
   <PropertyGroup>
     <EnablePackageVersionOverride>true</EnablePackageVersionOverride>
   </PropertyGroup>
 
   <Sdk Name="Microsoft.Build.CentralPackageVersions" Version="2.0.79" />
+  
+  <!-- Disable interaction with .git folder from Microsoft.Build.Tasks.Git -->
+  <Target Name="InitializeSourceControlInformationFromSourceControlManager" />
+  <Target Name="SetEmbeddedFilesFromSourceControlManagerUntrackedFiles" />
+  <!-- Disable NBGV cloud logic -->
+  <Target Name="GetBuildVersion_CloudBuildVersionVars" />
+  <Target Name="SetCloudBuildVersionVars" />
+  <Target Name="SetCloudBuildNumberWithVersion" />
+
 </Project>

@@ -2,7 +2,7 @@
 @using UAParser
 @inherits ComputedStateComponent<(User User, List<AuthenticationPage.SessionInfoModel> Sessions)>
 @inject Session _session
-@inject IAuthService _auth
+@inject IAuth _auth
 @inject ClientAuthHelper _clientAuthHelper
 @inject IFusionTime _fusionTime
 @inject NavigationManager _nav
@@ -158,7 +158,7 @@
 
     protected override async Task<(User, List<SessionInfoModel>)> ComputeState(CancellationToken cancellationToken)
     {
-        var user = await _auth.GetUser(_session, cancellationToken);
+        var user = await _auth.GetSessionUser(_session, cancellationToken);
         var sessions = await _auth.GetUserSessions(_session, cancellationToken).ConfigureAwait(false);
         var result = new List<SessionInfoModel>();
 

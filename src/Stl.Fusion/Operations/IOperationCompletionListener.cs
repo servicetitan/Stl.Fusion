@@ -1,9 +1,6 @@
-using System.Threading.Tasks;
+namespace Stl.Fusion.Operations;
 
-namespace Stl.Fusion.Operations
+public interface IOperationCompletionListener
 {
-    public interface IOperationCompletionListener
-    {
-        Task OnOperationCompleted(IOperation operation);
-    }
+    Task OnOperationCompleted(IOperation operation);
 }

@@ -1,46 +1,41 @@
-using System;
-using System.Collections.Concurrent;
-using Stl.Reflection;
+namespace Stl.Extensibility;
 
-namespace Stl.Extensibility
+public class HandlerProvider<TArg, TResult>
 {
-    public class HandlerProvider<TArg, TResult>
+    public interface IHandler
     {
-        public interface IHandler
-        {
-            TResult Handle(object target, TArg arg);
-        }
+        TResult Handle(object target, TArg arg);
+    }
 
-        public interface IHandler<T> : IHandler
-        { }
+    public interface IHandler<T> : IHandler
+    { }
 
-        private readonly ConcurrentDictionary<Type, IHandler> _handlers;
-        public Func<Type, IHandler> HandlerFactory { get; }
+    private readonly ConcurrentDictionary<Type, IHandler> _handlers;
+    public Func<Type, IHandler> HandlerFactory { get; }
 
-        public HandlerProvider(Type handlerType) : this(DefaultHandlerFactory(handlerType)) { }
-        public HandlerProvider(Func<Type, IHandler> handlerFactory)
-        {
-            HandlerFactory = handlerFactory;
-            _handlers = new ConcurrentDictionary<Type, IHandler>();
-        }
+    public HandlerProvider(Type handlerType) : this(DefaultHandlerFactory(handlerType)) { }
+    public HandlerProvider(Func<Type, IHandler> handlerFactory)
+    {
+        HandlerFactory = handlerFactory;
+        _handlers = new ConcurrentDictionary<Type, IHandler>();
+    }
 
-        public IHandler this[Type forType]
-            => _handlers.GetOrAdd(
-                forType,
-                (forType1, self) => self.HandlerFactory.Invoke(forType1),
-                this);
+    public IHandler this[Type forType]
+        => _handlers.GetOrAdd(
+            forType,
+            (forType1, self) => self.HandlerFactory.Invoke(forType1),
+            this);
 
-        // Default handler factory
+    // Default handler factory
 
-        private static Func<Type, IHandler> DefaultHandlerFactory(Type handlerType)
-        {
-            if (!handlerType.IsGenericTypeDefinition)
-                throw new ArgumentOutOfRangeException(nameof(handlerType));
+    private static Func<Type, IHandler> DefaultHandlerFactory(Type handlerType)
+    {
+        if (!handlerType.IsGenericTypeDefinition)
+            throw new ArgumentOutOfRangeException(nameof(handlerType));
 
-            IHandler CreateHandler(Type forType)
-                => (IHandler) handlerType.MakeGenericType(forType).CreateInstance();
+        IHandler CreateHandler(Type forType)
+            => (IHandler) handlerType.MakeGenericType(forType).CreateInstance();
 
-            return CreateHandler;
-        }
+        return CreateHandler;
     }
 }

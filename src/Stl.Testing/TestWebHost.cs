@@ -1,11 +1,5 @@
-using System;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Stl.Async;
 using Stl.IO;
 #if NETCOREAPP
 using Microsoft.AspNetCore.Hosting;
@@ -16,125 +10,124 @@ using Owin;
 using System.Web.Http;
 #endif
 
-namespace Stl.Testing
-{
-    public interface ITestWebHost : IDisposable
-    {
-        IHost Host { get; }
-        IServiceProvider Services { get; }
-        IServer Server { get; }
-        Uri ServerUri { get; }
+namespace Stl.Testing;
 
-        Task<IAsyncDisposable> Serve();
-        HttpClient CreateClient();
+public interface ITestWebHost : IDisposable
+{
+    IHost Host { get; }
+    IServiceProvider Services { get; }
+    IServer Server { get; }
+    Uri ServerUri { get; }
+
+    Task<IAsyncDisposable> Serve();
+    HttpClient CreateClient();
+}
+
+public abstract class TestWebHostBase : ITestWebHost
+{
+    protected Lazy<IHost> HostLazy { get; set; }
+    protected Lazy<Uri> ServerUriLazy { get; set; }
+
+    public IHost Host => HostLazy.Value;
+    public IServiceProvider Services => Host.Services;
+    public IServer Server => Services.GetRequiredService<IServer>();
+    public Uri ServerUri => ServerUriLazy.Value;
+
+    protected TestWebHostBase()
+    {
+        HostLazy = new Lazy<IHost>(CreateHost);
+        ServerUriLazy = new Lazy<Uri>(() => {
+            var addresses = Server.Features.Get<IServerAddressesFeature>();
+            return new Uri(addresses!.Addresses.First());
+        });
     }
 
-    public abstract class TestWebHostBase : ITestWebHost
+    public void Dispose()
     {
-        protected Lazy<IHost> HostLazy { get; set; }
-        protected Lazy<Uri> ServerUriLazy { get; set; }
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
 
-        public IHost Host => HostLazy.Value;
-        public IServiceProvider Services => Host.Services;
-        public IServer Server => Services.GetRequiredService<IServer>();
-        public Uri ServerUri => ServerUriLazy.Value;
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposing) return;
 
-        protected TestWebHostBase()
-        {
-            HostLazy = new Lazy<IHost>(CreateHost);
-            ServerUriLazy = new Lazy<Uri>(() => {
-                var addresses = Server.Features.Get<IServerAddressesFeature>();
-                return new Uri(addresses.Addresses.First());
-            });
-        }
+        if (HostLazy.IsValueCreated)
+            Host.Dispose();
+    }
 
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
+    public async Task<IAsyncDisposable> Serve()
+    {
+        var host = Host;
+        await host.StartAsync().ConfigureAwait(false);
+        // ReSharper disable once HeapView.BoxingAllocation
+        return AsyncDisposable.New(async self => {
+            var host1 = self.Host;
+            await host1.StopAsync().SuppressExceptions().ConfigureAwait(false);
+            _ = Task.Run(() => host1.Dispose());
+            self.HostLazy = new Lazy<IHost>(CreateHost);
+        }, this);
+    }
 
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposing)
-                return;
-            if (HostLazy.IsValueCreated)
-                Host.Dispose();
-        }
+    public virtual HttpClient CreateClient()
+        => new() { BaseAddress = ServerUri };
 
-        public async Task<IAsyncDisposable> Serve()
-        {
-            var host = Host;
-            await host.StartAsync().ConfigureAwait(false);
-            // ReSharper disable once HeapView.BoxingAllocation
-            return AsyncDisposable.New(async self => {
-                var host1 = self.Host;
-                await host1.StopAsync().SuppressExceptions().ConfigureAwait(false);
-                _ = Task.Run(() => host1.Dispose());
-                self.HostLazy = new Lazy<IHost>(CreateHost);
-            }, this);
-        }
+    protected virtual IHost CreateHost()
+        => CreateHostBuilder().Build();
 
-        public virtual HttpClient CreateClient()
-            => new() { BaseAddress = ServerUri };
+    protected virtual IHostBuilder CreateHostBuilder()
+    {
+        var emptyDir = FilePath.GetApplicationDirectory() & "Empty";
+        Directory.CreateDirectory(emptyDir);
 
-        protected virtual IHost CreateHost()
-            => CreateHostBuilder().Build();
-
-        protected virtual IHostBuilder CreateHostBuilder()
-        {
-            var emptyDir = FilePath.GetApplicationDirectory() & "Empty";
-            Directory.CreateDirectory(emptyDir);
-
-            var builder = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder();
-            builder.UseDefaultServiceProvider((ctx, options) => {
-                options.ValidateScopes = true;
-                options.ValidateOnBuild = true;
-            });
+        var builder = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder();
+        builder.UseDefaultServiceProvider((ctx, options) => {
+            options.ValidateScopes = true;
+            options.ValidateOnBuild = true;
+        });
 
 #if NETCOREAPP
-            builder.ConfigureWebHost(b => {
+        builder.ConfigureWebHost(b => {
+            var serverUri = ServerUriLazy.IsValueCreated
+                ? ServerUri.ToString()
+                : "http://127.0.0.1:0";
+            b.UseKestrel();
+            b.UseUrls(serverUri);
+            b.UseContentRoot(emptyDir);
+            ConfigureWebHost(b);
+        });
+#endif
+
+#if NETFRAMEWORK
+        builder.ConfigureServices(
+            (ctx, services) => {
                 var serverUri = ServerUriLazy.IsValueCreated
                     ? ServerUri.ToString()
-                    : "http://127.0.0.1:0";
-                b.UseKestrel();
-                b.UseUrls(serverUri);
-                b.UseContentRoot(emptyDir);
-                ConfigureWebHost(b);
-            });
+                    : "http://localhost:9000/"; // TODO: implement dynamic port assignment
+                services.Configure<OwinWebApiServerOptions>(c => {
+                    c.Urls = serverUri;
+                    c.ConfigureBuilder = ConfigureAppBuilder;
+                    c.SetupHttpConfiguration = SetupHttpConfiguration;
+                });
+                services.AddHostedService<GenericWebHostService>();
+                services.AddSingleton<IServer, OwinWebApiServer>();
+            }
+        );
 #endif
 
-#if NETFRAMEWORK
-            builder.ConfigureServices(
-                (ctx, services) => {
-                    var serverUri = ServerUriLazy.IsValueCreated
-                        ? ServerUri.ToString()
-                        : "http://localhost:9000/"; // TODO: implement dynamic port assignment
-                    services.Configure<OwinWebApiServerOptions>(c => {
-                        c.Urls = serverUri;
-                        c.ConfigureBuilder = ConfigureAppBuilder;
-                        c.SetupHttpConfiguration = SetupHttpConfiguration;
-                    });
-                    services.AddHostedService<GenericWebHostService>();
-                    services.AddSingleton<IServer, OwinWebApiServer>();
-                }
-            );
-#endif
+        ConfigureHost(builder);
+        return builder;
+    }
 
-            ConfigureHost(builder);
-            return builder;
-        }
-
-        protected virtual void ConfigureHost(IHostBuilder builder) { }
+    protected virtual void ConfigureHost(IHostBuilder builder) { }
 
 #if NETCOREAPP
-        protected virtual void ConfigureWebHost(IWebHostBuilder builder) { }
+    protected virtual void ConfigureWebHost(IWebHostBuilder builder) { }
 #endif
 
 #if NETFRAMEWORK
-        protected virtual void SetupHttpConfiguration(IServiceProvider svp, HttpConfiguration config) { }
+    protected virtual void SetupHttpConfiguration(IServiceProvider svp, HttpConfiguration config) { }
 
-        protected virtual void ConfigureAppBuilder(IServiceProvider svp, IAppBuilder builder) { }
+    protected virtual void ConfigureAppBuilder(IServiceProvider svp, IAppBuilder builder) { }
 #endif
-    }
 }

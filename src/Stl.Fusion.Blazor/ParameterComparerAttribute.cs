@@ -1,13 +1,10 @@
-using System;
+namespace Stl.Fusion.Blazor;
 
-namespace Stl.Fusion.Blazor
+[AttributeUsage(AttributeTargets.Property)]
+public class ParameterComparerAttribute : Attribute
 {
-    [AttributeUsage(AttributeTargets.Property)]
-    public class ParameterComparerAttribute : Attribute
-    {
-        public Type ComparerType { get; }
+    public Type ComparerType { get; }
 
-        public ParameterComparerAttribute(Type comparerType)
-            => ComparerType = comparerType;
-    }
+    public ParameterComparerAttribute(Type comparerType)
+        => ComparerType = comparerType;
 }

@@ -1,12 +1,11 @@
-using System;
+namespace Stl.Fusion;
 
-namespace Stl.Fusion
+#pragma warning disable MA0062
+[Flags]
+public enum CallOptions
 {
-    [Flags]
-    public enum CallOptions
-    {
-        TryGetExisting = 1,
-        Invalidate = 2 + TryGetExisting,
-        Capture = 4,
-    }
+    GetExisting = 1,
+    Invalidate = 2 + GetExisting,
+    Capture = 4,
 }
+#pragma warning restore MA0062

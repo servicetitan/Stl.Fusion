@@ -1,27 +1,24 @@
-using FluentAssertions;
 using Stl.Reflection;
-using Xunit;
 
-namespace Stl.Tests.Reflection
+namespace Stl.Tests.Reflection;
+
+public class MemberwiseCopierTest
 {
-    public class MemberwiseCopierTest
+    private readonly MemberwiseClonerTest _memberwiseClonerTest = new MemberwiseClonerTest();
+
+    public class Example
     {
-        private readonly MemberwiseClonerTest _memberwiseClonerTest = new MemberwiseClonerTest();
+        public int Property { get; set; }
+        public string Field = "";
+    }
 
-        public class Example
-        {
-            public int Property { get; set; }
-            public string Field = "";
-        }
-
-        [Fact]
-        public void Test()
-        {
-            var e = new Example() { Property = 3, Field = "3" };
-            var c = new Example();
-            MemberwiseCopier.Invoke(e, c, copier => copier.WithFields());
-            c.Property.Should().Be(e.Property);
-            c.Field.Should().Be(e.Field);
-        }
+    [Fact]
+    public void Test()
+    {
+        var e = new Example() { Property = 3, Field = "3" };
+        var c = new Example();
+        MemberwiseCopier.Invoke(e, c, copier => copier.WithFields());
+        c.Property.Should().Be(e.Property);
+        c.Field.Should().Be(e.Field);
     }
 }

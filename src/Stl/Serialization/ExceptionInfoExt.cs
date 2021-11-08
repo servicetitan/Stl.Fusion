@@ -1,11 +1,7 @@
-using System;
-using System.Diagnostics.CodeAnalysis;
+namespace Stl.Serialization;
 
-namespace Stl.Serialization
+public static class ExceptionInfoExt
 {
-    public static class ExceptionInfoExt
-    {
-        public static ExceptionInfo ToExceptionInfo(this Exception? error)
-            => error == null ? default : new ExceptionInfo(error);
-    }
+    public static ExceptionInfo ToExceptionInfo(this Exception? error)
+        => error == null ? default : new ExceptionInfo(error);
 }

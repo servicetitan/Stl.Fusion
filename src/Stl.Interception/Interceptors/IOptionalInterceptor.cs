@@ -1,11 +1,9 @@
-using System;
 using Castle.DynamicProxy;
 
-namespace Stl.Interception.Interceptors
+namespace Stl.Interception.Interceptors;
+
+public interface IOptionalInterceptor : IInterceptor
 {
-    public interface IOptionalInterceptor : IInterceptor
-    {
-        Action<IInvocation>? GetHandler(IInvocation invocation);
-        void ValidateType(Type type);
-    }
+    Action<IInvocation>? GetHandler(IInvocation invocation);
+    void ValidateType(Type type);
 }

@@ -6,7 +6,7 @@
     <NoWarn>$(NoWarn);EF1001;</NoWarn>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(NetFxBuild)' == 'true'">
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
     <Compile Remove="Authentication\**" />
     <Compile Remove="Blazor\**" />
   </ItemGroup>
@@ -17,23 +17,32 @@
     <PackageReference Include="System.Drawing.Common" />
     <PackageReference Include="System.Net.WebSockets.Client" />
   </ItemGroup>
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net5')) or $(TargetFramework.StartsWith('netcore'))">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" VersionOverride="$(EntityFrameworkCoreVersion5)" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" VersionOverride="$(EntityFrameworkCoreVersion5)" />
+    <PackageReference Include="System.Drawing.Common" VersionOverride="$(SystemDrawingVersion5)" />
+  </ItemGroup>
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" VersionOverride="$(EntityFrameworkCoreVersion3)" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" VersionOverride="$(EntityFrameworkCoreVersion3)" />
+    <PackageReference Include="System.Drawing.Common" VersionOverride="$(SystemDrawingVersion5)" />
+  </ItemGroup>
 
-  <ItemGroup Condition="'$(NetFxBuild)' != 'true'">
-    <ProjectReference Include="..\..\src\Stl.Fusion.EntityFramework.Npgsql\Stl.Fusion.EntityFramework.Npgsql.csproj" />
-    <ProjectReference Include="..\..\src\Stl.Fusion.Blazor\Stl.Fusion.Blazor.csproj" />
-    <ProjectReference Include="..\..\src\Stl.Fusion.Server\Stl.Fusion.Server.csproj" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(NetFxBuild)' == 'true'">
-    <ProjectReference Include="..\..\src\Stl.Fusion.Server.NetFx\Stl.Fusion.Server.NetFx.csproj" />
-  </ItemGroup>
   <ItemGroup>
-<!--    <ProjectReference Include="..\Stl.Tests\Stl.Tests.csproj" />-->
     <ProjectReference Include="..\..\src\Stl.Fusion\Stl.Fusion.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.RegisterAttributes\Stl.Fusion.RegisterAttributes.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.Client\Stl.Fusion.Client.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.Client.RegisterAttributes\Stl.Fusion.Client.RegisterAttributes.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.EntityFramework\Stl.Fusion.EntityFramework.csproj" />
     <ProjectReference Include="..\..\src\Stl.Testing\Stl.Testing.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="!$(TargetFramework.StartsWith('net4'))">
+    <ProjectReference Include="..\..\src\Stl.Fusion.EntityFramework.Npgsql\Stl.Fusion.EntityFramework.Npgsql.csproj" />
+    <ProjectReference Include="..\..\src\Stl.Fusion.Blazor\Stl.Fusion.Blazor.csproj" />
+    <ProjectReference Include="..\..\src\Stl.Fusion.Server\Stl.Fusion.Server.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
+    <ProjectReference Include="..\..\src\Stl.Fusion.Server.NetFx\Stl.Fusion.Server.NetFx.csproj" />
   </ItemGroup>
 
   <ItemGroup>

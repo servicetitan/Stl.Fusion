@@ -1,33 +1,28 @@
-using System;
 using System.Reactive.PlatformServices;
-using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
 using Stl.Time.Internal;
 
-namespace Stl.Time
+namespace Stl.Time;
+
+public sealed class CoarseCpuClock : IMomentClock
 {
-    public sealed class CoarseCpuClock : IMomentClock
-    {
-        public static readonly IMomentClock Instance = new CoarseCpuClock();
+    public static readonly IMomentClock Instance = new CoarseCpuClock();
 
-        public static Moment Now {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => CoarseClockHelper.Now;
-        }
-
-        Moment IMomentClock.Now => Now;
-        DateTimeOffset ISystemClock.UtcNow => Now;
-
-        private CoarseCpuClock() { }
-
-        public override string ToString() => $"{GetType().Name}()";
-        public Moment ToRealTime(Moment localTime) => localTime;
-        public Moment ToLocalTime(Moment realTime) => realTime;
-        public TimeSpan ToRealDuration(TimeSpan localDuration) => localDuration;
-        public TimeSpan ToLocalDuration(TimeSpan realDuration) => realDuration;
-
-        public Task Delay(TimeSpan dueIn, CancellationToken cancellationToken = default)
-            => Task.Delay(dueIn, cancellationToken);
+    public static Moment Now {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => CoarseClockHelper.Now;
     }
+
+    Moment IMomentClock.Now => Now;
+    DateTimeOffset ISystemClock.UtcNow => Now;
+
+    private CoarseCpuClock() { }
+
+    public override string ToString() => $"{GetType().Name}()";
+    public Moment ToRealTime(Moment localTime) => localTime;
+    public Moment ToLocalTime(Moment realTime) => realTime;
+    public TimeSpan ToRealDuration(TimeSpan localDuration) => localDuration;
+    public TimeSpan ToLocalDuration(TimeSpan realDuration) => realDuration;
+
+    public Task Delay(TimeSpan dueIn, CancellationToken cancellationToken = default)
+        => Task.Delay(dueIn, cancellationToken);
 }
