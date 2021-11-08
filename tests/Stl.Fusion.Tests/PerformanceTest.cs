@@ -114,7 +114,7 @@ public abstract class PerformanceTestBase : FusionTestBase
         var stopCts = new CancellationTokenSource();
 
         WriteLine($"  {title}:");
-        WriteLine($"    Operations: {operationCount} ({threadCount} readers x {iterationCount}");
+        WriteLine($"    Operations: {operationCount} ({threadCount} readers x {iterationCount})");
 
         var startTime = CpuClock.Now;
         var mutatorTask = Task.Run(() => Mutator("W", stopCts.Token));
