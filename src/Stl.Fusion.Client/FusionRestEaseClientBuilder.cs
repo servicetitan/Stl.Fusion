@@ -40,13 +40,9 @@ public struct FusionRestEaseClientBuilder
             FusionHttpMessageHandlerBuilderFilter>());
         Services.TryAddTransient<FusionHttpMessageHandler>();
 
-        // ResponseDeserializer & ReplicaResponseDeserializer
-        Services.TryAddTransient<ResponseDeserializer>(c => new JsonResponseDeserializer() {
-            JsonSerializerSettings = NewtonsoftJsonSerializer.DefaultSettings
-        });
-        Services.TryAddTransient<RequestBodySerializer>(c => new JsonRequestBodySerializer() {
-            JsonSerializerSettings = NewtonsoftJsonSerializer.DefaultSettings
-        });
+        // ResponseDeserializer & RequestBodySerializer
+        Services.TryAddTransient<ResponseDeserializer, FusionResponseDeserializer>();
+        Services.TryAddTransient<RequestBodySerializer, FusionRequestBodySerializer>();
     }
 
     // ConfigureXxx
