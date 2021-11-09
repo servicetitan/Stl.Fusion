@@ -125,6 +125,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         var sessionB = sessionFactory.CreateSession();
         var bob = new User("", "Bob")
             .WithClaim("id", "bob")
+            .WithClaim("id2", "bob")
             .WithIdentity("g:1");
 
         var session = sessionA;
@@ -132,7 +133,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         var user = await webAuth.GetSessionUser(session);
         user.Name.Should().Be(bob.Name);
         long.TryParse(user.Id, out var _).Should().BeTrue();
-        user.Claims.Count.Should().Be(1);
+        user.Claims.Count.Should().Be(2);
         user.Identities.Single(); // Client-side users shouldn't have them
 
         // Server-side methods to get the same user
@@ -143,12 +144,10 @@ public abstract class AuthServiceTestBase : FusionTestBase
         bob = user;
 
         // Checking if the client is able to see the same user & sessions
-        user = await authClient.GetSessionUser(sessionA);
-        user.Id.Should().Be(bob.Id);
-        user.IsAuthenticated.Should().BeTrue();
         user = await authClient.GetSessionUser(session);
         user.Id.Should().Be(bob.Id);
         user.IsAuthenticated.Should().BeTrue();
+        user.Claims.Count.Should().Be(2);
 
         // Checking if local service is able to see the same user & sessions
         if (!Options.UseInMemoryAuthService) {

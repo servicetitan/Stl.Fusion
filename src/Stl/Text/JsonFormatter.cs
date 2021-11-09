@@ -2,7 +2,7 @@ namespace Stl.Text;
 
 public static class JsonFormatter
 {
-    public static IUtf16Writer Formatter =
+    public static IUtf16Writer Formatter { get; set; } =
         new SystemJsonSerializer(new() {
             WriteIndented = true
         });
