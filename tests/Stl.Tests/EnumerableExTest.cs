@@ -15,16 +15,16 @@ public class EnumerableExTest : TestBase
         source2.DistinctBy(i => i.Length).Should().BeEquivalentTo("A", "AA");
         source3.DistinctBy(i => i.Length).Should().BeEquivalentTo();
 
-        source1.PackBy(1).Select(p => p.Length).Should().BeEquivalentTo(new[] {1, 1, 1});
-        source1.PackBy(2).Select(p => p.Length).Should().BeEquivalentTo(new[] {2, 1});
-        source1.PackBy(3).Select(p => p.Length).Should().BeEquivalentTo(new[] {3});
+        source1.Chunk(1).Select(p => p.Length).Should().BeEquivalentTo(new[] {1, 1, 1});
+        source1.Chunk(2).Select(p => p.Length).Should().BeEquivalentTo(new[] {2, 1});
+        source1.Chunk(3).Select(p => p.Length).Should().BeEquivalentTo(new[] {3});
 
-        source2.PackBy(1).Select(p => p.Length).Should().BeEquivalentTo(new[] {1, 1, 1, 1});
-        source2.PackBy(2).Select(p => p.Length).Should().BeEquivalentTo(new[] {2, 2});
-        source2.PackBy(3).Select(p => p.Length).Should().BeEquivalentTo(new[] {3, 1});
-        source2.PackBy(4).Select(p => p.Length).Should().BeEquivalentTo(new[] {4});
+        source2.Chunk(1).Select(p => p.Length).Should().BeEquivalentTo(new[] {1, 1, 1, 1});
+        source2.Chunk(2).Select(p => p.Length).Should().BeEquivalentTo(new[] {2, 2});
+        source2.Chunk(3).Select(p => p.Length).Should().BeEquivalentTo(new[] {3, 1});
+        source2.Chunk(4).Select(p => p.Length).Should().BeEquivalentTo(new[] {4});
 
-        source3.PackBy(4).Select(p => p.Length).Should().BeEquivalentTo(Array.Empty<int>());
+        source3.Chunk(4).Select(p => p.Length).Should().BeEquivalentTo(Array.Empty<int>());
     }
 
     [Fact]
@@ -41,20 +41,20 @@ public class EnumerableExTest : TestBase
                 .Select(i => (char) ('0' + (c - '0' + i) % 10));
 
 
-        string OBD(string s, Func<char, IEnumerable<char>> depSelector)
+        string OrderByDep(string s, Func<char, IEnumerable<char>> depSelector)
             => s.OrderByDependency(depSelector).ToDelimitedString("");
 
-        Assert.Equal("", OBD("", DepSelector1));
-        Assert.Equal("01", OBD("1", DepSelector1));
-        Assert.Equal("012", OBD("12", DepSelector1));
-        Assert.Equal("012", OBD("21", DepSelector1));
-        Assert.Equal("0123", OBD("231", DepSelector1));
+        Assert.Equal("", OrderByDep("", DepSelector1));
+        Assert.Equal("01", OrderByDep("1", DepSelector1));
+        Assert.Equal("012", OrderByDep("12", DepSelector1));
+        Assert.Equal("012", OrderByDep("21", DepSelector1));
+        Assert.Equal("0123", OrderByDep("231", DepSelector1));
 
         Assert.Throws<InvalidOperationException>(() => {
-            _ = OBD("0", BadDepSelector1);
+            _ = OrderByDep("0", BadDepSelector1);
         });
         Assert.Throws<InvalidOperationException>(() => {
-            _ = OBD("0", BadDepSelector2);
+            _ = OrderByDep("0", BadDepSelector2);
         });
     }
 }

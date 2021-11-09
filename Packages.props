@@ -24,20 +24,13 @@
 
   <PropertyGroup Label="Blazor-related Package Versions">
     <BlazorVersion>$(AspNetCoreVersion)</BlazorVersion>
-    <BlazorVersion5>$(AspNetCoreVersion5)</BlazorVersion5>
-    <BlazorVersion3>$(AspNetCoreVersion3)</BlazorVersion3>
     <BlazoriseVersion>0.9.*</BlazoriseVersion>
-  </PropertyGroup>
-
-  <PropertyGroup Label="System.Drawing Package Versions">
-    <SystemDrawingVersion>$(AspNetCoreVersion)</SystemDrawingVersion>
-    <SystemDrawingVersion5>5.0.*</SystemDrawingVersion5>
   </PropertyGroup>
 
   <PropertyGroup>
     <MessagePackVersion>2.3.*</MessagePackVersion>
     <MicrosoftExtensionsVersion>6.0.0</MicrosoftExtensionsVersion>
-    <StlFusionVersion>1.*</StlFusionVersion>
+    <StlFusionVersion>2.0.*</StlFusionVersion>
   </PropertyGroup>
 
   <ItemGroup Label="Package Versions">
@@ -100,7 +93,7 @@
     <PackageReference Update="System.Configuration.ConfigurationManager" Version="6.0.*" />
     <PackageReference Update="System.CommandLine" Version="2.0.0-beta1.21308.1" />
     <PackageReference Update="System.CommandLine.DragonFruit" Version="0.3.0-alpha.20303.1" />
-    <PackageReference Update="System.Drawing.Common" Version="$(SystemDrawingVersion)" />
+    <PackageReference Update="System.Drawing.Common" Version="6.0.*" />
     <PackageReference Update="System.IO.Abstractions" Version="13.2.47" />
     <PackageReference Update="System.Linq.Async" Version="5.0.*" />
     <PackageReference Update="System.Net.Http.Json" Version="6.0.*" />

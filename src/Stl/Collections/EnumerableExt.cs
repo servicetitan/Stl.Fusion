@@ -29,46 +29,7 @@ public static class EnumerableExt
         return source;
     }
 
-#if !NET6_0
-    public static IEnumerable<T> DistinctBy<T, TKey>(this IEnumerable<T> source, Func<T, TKey> keySelector)
-    {
-        var hashSet = new HashSet<TKey>();
-        foreach (var item in source) {
-            var key = keySelector.Invoke(item);
-            if (hashSet.Add(key))
-                yield return item;
-        }
-    }
-#endif
-
-    public static IEnumerable<T[]> PackBy<T>(this IEnumerable<T> source, int packSize)
-    {
-        if (packSize < 1)
-            throw new ArgumentOutOfRangeException(nameof(packSize));
-
-        var pack = new List<T>();
-        foreach (var item in source) {
-            pack.Add(item);
-            if (pack.Count < packSize)
-                continue;
-            yield return pack.ToArray();
-            pack.Clear();
-        }
-        if (pack.Count > 0)
-            yield return pack.ToArray();
-    }
-
-    // ToXxx
-
-    public static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(
-        this IEnumerable<KeyValuePair<TKey, TValue>> source)
-        where TKey : notnull
-        => source.ToDictionary(p => p.Key, p => p.Value);
-
-    public static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(
-        this IEnumerable<(TKey Key, TValue Value)> source)
-        where TKey : notnull
-        => source.ToDictionary(p => p.Key, p => p.Value);
+    // ToDelimitedString
 
     public static string ToDelimitedString<T>(this IEnumerable<T> source, string? delimiter = null)
         => string.Join(delimiter ?? ", ", source);
