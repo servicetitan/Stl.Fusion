@@ -7,9 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Ulid" />
+  </ItemGroup>
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net6'))">
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
-    <PackageReference Include="Ulid" />
   </ItemGroup>
   <ItemGroup Condition="$(TargetFramework.StartsWith('net5')) or $(TargetFramework.StartsWith('netcore')) or $(TargetFramework.StartsWith('netstandard2.1'))">
     <PackageReference Include="Microsoft.EntityFrameworkCore" VersionOverride="$(EntityFrameworkCoreVersion5)" />

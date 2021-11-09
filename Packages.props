@@ -6,7 +6,7 @@
 
   <PropertyGroup Label="ASP.NET Core Versions">
     <AspNetCoreVersion>6.0.0</AspNetCoreVersion>
-    <AspNetCoreVersion5>5.0.10</AspNetCoreVersion5>
+    <AspNetCoreVersion5>5.*</AspNetCoreVersion5>
     <AspNetCoreVersion3>3.*</AspNetCoreVersion3>
   </PropertyGroup>
 
@@ -15,15 +15,17 @@
     <EntityFrameworkCoreVersion5>$(AspNetCoreVersion5)</EntityFrameworkCoreVersion5>
     <EntityFrameworkCoreVersion3>$(AspNetCoreVersion3)</EntityFrameworkCoreVersion3>
     <NpgsqlVersion>6.0.0-rc.2</NpgsqlVersion>
-    <NpgsqlVersion5>$(EntityFrameworkCoreVersion5)</NpgsqlVersion5>
+    <NpgsqlVersion5>5.*</NpgsqlVersion5>
     <NpgsqlVersion3>$(EntityFrameworkCoreVersion3)</NpgsqlVersion3>
-    <EntityFrameworkCoreNpgsqlVersion>6.0.0-rc.2</EntityFrameworkCoreNpgsqlVersion>
-    <EntityFrameworkCoreNpgsqlVersion5>$(EntityFrameworkCoreVersion5)</EntityFrameworkCoreNpgsqlVersion5>
-    <EntityFrameworkCoreNpgsqlVersion3>$(EntityFrameworkCoreVersion3)</EntityFrameworkCoreNpgsqlVersion3>
+    <EntityFrameworkCoreNpgsqlVersion>$(NpgsqlVersion)</EntityFrameworkCoreNpgsqlVersion>
+    <EntityFrameworkCoreNpgsqlVersion5>$(NpgsqlVersion5)</EntityFrameworkCoreNpgsqlVersion5>
+    <EntityFrameworkCoreNpgsqlVersion3>$(NpgsqlVersion3)</EntityFrameworkCoreNpgsqlVersion3>
   </PropertyGroup>
 
   <PropertyGroup Label="Blazor-related Package Versions">
     <BlazorVersion>$(AspNetCoreVersion)</BlazorVersion>
+    <BlazorVersion5>$(AspNetCoreVersion5)</BlazorVersion5>
+    <BlazorVersion3>$(AspNetCoreVersion3)</BlazorVersion3>
     <BlazoriseVersion>0.9.*</BlazoriseVersion>
   </PropertyGroup>
 
@@ -50,9 +52,9 @@
     <PackageReference Update="Microsoft.AspNetCore.Authentication.Cookies" Version="2.2.*" />
     <PackageReference Update="Microsoft.AspNetCore.Authentication.Google" Version="$(AspNetCoreVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.Authentication.MicrosoftAccount" Version="$(AspNetCoreVersion)" />
-    <PackageReference Update="Microsoft.AspNetCore.Components" Version="$(AspNetCoreVersion)" />
-    <PackageReference Update="Microsoft.AspNetCore.Components.Authorization" Version="$(AspNetCoreVersion)" />
-    <PackageReference Update="Microsoft.AspNetCore.Components.Web" Version="$(AspNetCoreVersion)" />
+    <PackageReference Update="Microsoft.AspNetCore.Components" Version="$(BlazorVersion)" />
+    <PackageReference Update="Microsoft.AspNetCore.Components.Authorization" Version="$(BlazorVersion)" />
+    <PackageReference Update="Microsoft.AspNetCore.Components.Web" Version="$(BlazorVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.Components.WebAssembly" Version="$(BlazorVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="$(BlazorVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="$(AspNetCoreVersion)" />

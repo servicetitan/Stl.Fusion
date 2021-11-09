@@ -7,7 +7,7 @@
     -->Fusion services utilizing EF Core and Npgsql (PostgreSQL EF Core provider).</Description>
   </PropertyGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net6'))">
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
   </ItemGroup>
   <ItemGroup Condition="$(TargetFramework.StartsWith('net5')) or $(TargetFramework.StartsWith('netcore')) or $(TargetFramework.StartsWith('netstandard2.1'))">

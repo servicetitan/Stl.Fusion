@@ -12,10 +12,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="System.Net.WebSockets.Client" />
+  </ItemGroup>
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net6'))">
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
     <PackageReference Include="System.Drawing.Common" />
-    <PackageReference Include="System.Net.WebSockets.Client" />
   </ItemGroup>
   <ItemGroup Condition="$(TargetFramework.StartsWith('net5')) or $(TargetFramework.StartsWith('netcore'))">
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" VersionOverride="$(EntityFrameworkCoreVersion5)" />

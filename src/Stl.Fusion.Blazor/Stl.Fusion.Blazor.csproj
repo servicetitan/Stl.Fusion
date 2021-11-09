@@ -21,23 +21,23 @@
   <Target Name="PrepareProjectReferences"></Target>
   <!-- </workaround for https://github.com/dotnet/aspnetcore/issues/30427 > -->
 
-  <ItemGroup>
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net6'))">
     <PackageReference Include="Microsoft.AspNetCore.Components" />
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
     <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
   </ItemGroup>
   <ItemGroup Condition="$(TargetFramework.StartsWith('net5'))">
-    <PackageReference Include="Microsoft.AspNetCore.Components" VersionOverride="$(AspNetCoreVersion5)" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.Web" VersionOverride="$(AspNetCoreVersion5)" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" VersionOverride="$(AspNetCoreVersion5)" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" VersionOverride="$(AspNetCoreVersion5)" />
+    <PackageReference Include="Microsoft.AspNetCore.Components" VersionOverride="$(BlazorVersion5)" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" VersionOverride="$(BlazorVersion5)" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" VersionOverride="$(BlazorVersion5)" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" VersionOverride="$(BlazorVersion5)" />
   </ItemGroup>
   <ItemGroup Condition="$(TargetFramework.StartsWith('netcore')) or $(TargetFramework.StartsWith('netstandard'))">
-    <PackageReference Include="Microsoft.AspNetCore.Components" VersionOverride="$(AspNetCoreVersion3)" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.Web" VersionOverride="$(AspNetCoreVersion3)" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" VersionOverride="$(AspNetCoreVersion3)" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" VersionOverride="$(AspNetCoreVersion3)" />
+    <PackageReference Include="Microsoft.AspNetCore.Components" VersionOverride="$(BlazorVersion3)" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" VersionOverride="$(BlazorVersion3)" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" VersionOverride="$(BlazorVersion3)" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" VersionOverride="$(BlazorVersion3)" />
   </ItemGroup>
 
   <ItemGroup>
