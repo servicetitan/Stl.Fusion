@@ -12,7 +12,7 @@ using Stl.Interception;
 
 namespace Stl.Fusion.Client;
 
-public struct FusionRestEaseClientBuilder
+public readonly struct FusionRestEaseClientBuilder
 {
     private class AddedTag { }
     private static readonly ServiceDescriptor AddedTagDescriptor =
