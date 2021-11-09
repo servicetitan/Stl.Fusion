@@ -30,7 +30,7 @@ public class ScreenshotServiceClientTest : FusionTestBase
         ScreenshotController.CallCount = 0;
         for (var i = 0; i < 20; i++) {
             var screenshot = await service.GetScreenshot(100);
-            (DateTime.Now - screenshot.CapturedAt).Should().BeLessThan(epsilon);
+            (SystemClock.Now - screenshot.CapturedAt).Should().BeLessThan(epsilon);
             await Task.Delay(TimeSpan.FromSeconds(0.1));
         }
         ScreenshotController.CallCount.Should().BeLessThan(15);

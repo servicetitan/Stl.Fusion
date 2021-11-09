@@ -4,8 +4,5 @@ namespace Stl.Fusion.Bridge.Messages;
 public abstract class BridgeMessage
 {
     public override string ToString()
-    {
-        var json = SystemJsonSerializer.Readable.Write(this, GetType());
-        return $"{GetType().Name} {json}";
-    }
+        => $"{GetType().Name} {JsonFormatter.Format(this)}";
 }

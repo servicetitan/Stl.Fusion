@@ -10,7 +10,7 @@ public record Screenshot
 {
     [DataMember] public int Width { get; init; }
     [DataMember] public int Height { get; init; }
-    [DataMember] public DateTime CapturedAt { get; init; }
+    [DataMember] public Moment CapturedAt { get; init; }
     [DataMember] public Base64Encoded Image { get; init; } = "";
 }
 
@@ -61,7 +61,7 @@ public class ScreenshotService : IScreenshotService
         return new Screenshot {
             Width = ow,
             Height = oh,
-            CapturedAt = DateTime.Now,
+            CapturedAt = SystemClock.Now,
             Image = base64Content
         };
     }
@@ -75,12 +75,12 @@ public class ScreenshotService : IScreenshotService
         using var gScreen = Graphics.FromImage(bScreen);
         gScreen.CopyFromScreen(0, 0, 0, 0, bScreen.Size);
         Computed.GetCurrent()!.Invalidated += c => {
-            Task.Delay(2000).ContinueWith(_ => {
+            Task.Delay(2000, CancellationToken.None).ContinueWith(_ => {
                 // Let's dispose these values in 2 seconds
                 var computed = (IComputed<Bitmap>) c;
                 if (computed.HasValue)
                     computed.Value.Dispose();
-            });
+            }, TaskScheduler.Default);
         };
         return Task.FromResult(bScreen);
     }

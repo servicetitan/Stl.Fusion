@@ -5,10 +5,10 @@ namespace Stl.Serialization;
 
 public class SystemJsonSerializer : Utf16SerializerBase
 {
-    public static JsonSerializerOptions DefaultOptions { get; set; } = new();
-    public static JsonSerializerOptions ReadableOptions { get; set; } = new() { WriteIndented = true };
+    public static JsonSerializerOptions DefaultOptions { get; set; } = new() {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    };
     public static SystemJsonSerializer Default { get; } = new(DefaultOptions);
-    public static SystemJsonSerializer Readable { get; } = new(ReadableOptions);
 
     public JsonSerializerOptions Options { get; }
 
