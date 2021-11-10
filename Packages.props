@@ -14,7 +14,7 @@
     <EntityFrameworkCoreVersion>$(AspNetCoreVersion)</EntityFrameworkCoreVersion>
     <EntityFrameworkCoreVersion5>$(AspNetCoreVersion5)</EntityFrameworkCoreVersion5>
     <EntityFrameworkCoreVersion3>$(AspNetCoreVersion3)</EntityFrameworkCoreVersion3>
-    <NpgsqlVersion>6.0.0-rc.2</NpgsqlVersion>
+    <NpgsqlVersion>6.0.0</NpgsqlVersion>
     <NpgsqlVersion5>5.*</NpgsqlVersion5>
     <NpgsqlVersion3>$(EntityFrameworkCoreVersion3)</NpgsqlVersion3>
     <EntityFrameworkCoreNpgsqlVersion>$(NpgsqlVersion)</EntityFrameworkCoreNpgsqlVersion>
