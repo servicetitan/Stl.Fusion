@@ -37,8 +37,12 @@ public static class Errors
 
     public static Exception PublicationAbsents()
         => new InvalidOperationException("The Publication absents on the server.");
-    public static Exception NoPublicationStateInfoCaptured()
-        => new InvalidOperationException($"No {nameof(PublicationStateInfo)} was captured.");
+    public static Exception NoPublicationStateInfo()
+        => new InvalidOperationException(
+            "No publication state info was found. " +
+            "Typically this indicates you're hitting a wrong endpoint " +
+            "(check your client definition interface)" +
+            "or forgot to add [Publish] attribute to the controller's method.");
 
     public static Exception ReplicaHasNeverBeenUpdated()
         => new InvalidOperationException("The Replica has never been updated.");

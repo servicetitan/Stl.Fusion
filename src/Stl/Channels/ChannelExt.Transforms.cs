@@ -10,7 +10,7 @@ public static partial class ChannelExt
         this ChannelReader<TIn> reader,
         ChannelWriter<TOut> writer,
         Func<TIn, TOut> transformer,
-        ChannelCompletionMode channelCompletionMode = ChannelCompletionMode.CompleteAndPropagateError,
+        ChannelCompletionMode channelCompletionMode,
         CancellationToken cancellationToken = default)
     {
         try {
@@ -19,17 +19,18 @@ public static partial class ChannelExt
                 var newItem = transformer.Invoke(item);
                 await writer.WriteAsync(newItem, cancellationToken).ConfigureAwait(false);
             }
-            if ((channelCompletionMode & ChannelCompletionMode.Complete) != 0)
+            if ((channelCompletionMode & ChannelCompletionMode.PropagateCompletion) != 0)
                 writer.TryComplete();
         }
-        catch (OperationCanceledException) {
+        catch (OperationCanceledException oce) {
+            if ((channelCompletionMode & ChannelCompletionMode.PropagateCancellation) != 0)
+                writer.TryComplete(oce);
             throw;
         }
         catch (Exception e) {
-            if (channelCompletionMode == ChannelCompletionMode.CompleteAndPropagateError)
+            if ((channelCompletionMode & ChannelCompletionMode.PropagateError) != 0)
                 writer.TryComplete(e);
-            else
-                throw;
+            throw;
         }
     }
 
@@ -37,7 +38,7 @@ public static partial class ChannelExt
         this ChannelReader<TIn> reader,
         ChannelWriter<TOut> writer,
         Func<TIn, ValueTask<TOut>> transformer,
-        ChannelCompletionMode channelCompletionMode = ChannelCompletionMode.CompleteAndPropagateError,
+        ChannelCompletionMode channelCompletionMode,
         CancellationToken cancellationToken = default)
     {
         try {
@@ -46,17 +47,18 @@ public static partial class ChannelExt
                 var newItem = await transformer.Invoke(item).ConfigureAwait(false);
                 await writer.WriteAsync(newItem, cancellationToken).ConfigureAwait(false);
             }
-            if ((channelCompletionMode & ChannelCompletionMode.Complete) != 0)
+            if ((channelCompletionMode & ChannelCompletionMode.PropagateCompletion) != 0)
                 writer.TryComplete();
         }
-        catch (OperationCanceledException) {
+        catch (OperationCanceledException oce) {
+            if ((channelCompletionMode & ChannelCompletionMode.PropagateCancellation) != 0)
+                writer.TryComplete(oce);
             throw;
         }
         catch (Exception e) {
-            if (channelCompletionMode == ChannelCompletionMode.CompleteAndPropagateError)
+            if ((channelCompletionMode & ChannelCompletionMode.PropagateError) != 0)
                 writer.TryComplete(e);
-            else
-                throw;
+            throw;
         }
     }
 
@@ -66,11 +68,11 @@ public static partial class ChannelExt
         this ChannelReader<TIn> reader,
         ChannelWriter<TOut> writer,
         Func<TIn, TOut> transformer,
-        int concurrencyLevel = -1,
-        ChannelCompletionMode channelCompletionMode = ChannelCompletionMode.CompleteAndPropagateError,
+        int concurrencyLevel,
+        ChannelCompletionMode channelCompletionMode,
         CancellationToken cancellationToken = default)
     {
-        if (concurrencyLevel < 0)
+        if (concurrencyLevel <= 0)
             concurrencyLevel = HardwareInfo.GetProcessorCountFactor();
         var semaphore = new SemaphoreSlim(concurrencyLevel, concurrencyLevel);
         Exception? error = null;
@@ -93,14 +95,15 @@ public static partial class ChannelExt
                     }
                 }
             }
-            catch (OperationCanceledException) {
+            catch (OperationCanceledException oce) {
+                if ((channelCompletionMode & ChannelCompletionMode.PropagateCancellation) != 0)
+                    writer.TryComplete(oce);
                 throw;
             }
             catch (Exception e) {
-                if (channelCompletionMode == ChannelCompletionMode.CompleteAndPropagateError)
-                    error = e;
-                else
-                    throw;
+                if ((channelCompletionMode & ChannelCompletionMode.PropagateError) != 0)
+                    writer.TryComplete(e);
+                throw;
             }
         }
 
@@ -108,7 +111,7 @@ public static partial class ChannelExt
         for (var i = 0; i < concurrencyLevel; i++)
             workers[i] = Task.Run(Worker, cancellationToken);
         await Task.WhenAll(workers).ConfigureAwait(false);
-        if ((channelCompletionMode & ChannelCompletionMode.Complete) != 0)
+        if ((channelCompletionMode & ChannelCompletionMode.PropagateCompletion) != 0)
             writer.TryComplete(error);
     }
 
@@ -116,8 +119,8 @@ public static partial class ChannelExt
         this ChannelReader<TIn> reader,
         ChannelWriter<TOut> writer,
         Func<TIn, ValueTask<TOut>> transformer,
-        int concurrencyLevel = -1,
-        ChannelCompletionMode channelCompletionMode = ChannelCompletionMode.CompleteAndPropagateError,
+        int concurrencyLevel,
+        ChannelCompletionMode channelCompletionMode,
         CancellationToken cancellationToken = default)
     {
         if (concurrencyLevel < 0)
@@ -143,14 +146,15 @@ public static partial class ChannelExt
                     }
                 }
             }
-            catch (OperationCanceledException) {
+            catch (OperationCanceledException oce) {
+                if ((channelCompletionMode & ChannelCompletionMode.PropagateCancellation) != 0)
+                    writer.TryComplete(oce);
                 throw;
             }
             catch (Exception e) {
-                if (channelCompletionMode == ChannelCompletionMode.CompleteAndPropagateError)
-                    error = e;
-                else
-                    throw;
+                if ((channelCompletionMode & ChannelCompletionMode.PropagateError) != 0)
+                    writer.TryComplete(e);
+                throw;
             }
         }
 
@@ -158,7 +162,7 @@ public static partial class ChannelExt
         for (var i = 0; i < concurrencyLevel; i++)
             workers[i] = Task.Run(Worker, cancellationToken);
         await Task.WhenAll(workers).ConfigureAwait(false);
-        if ((channelCompletionMode & ChannelCompletionMode.Complete) != 0)
+        if ((channelCompletionMode & ChannelCompletionMode.PropagateCompletion) != 0)
             writer.TryComplete(error);
     }
 }

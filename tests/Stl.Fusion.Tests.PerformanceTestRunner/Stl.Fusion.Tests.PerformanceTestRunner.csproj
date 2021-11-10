@@ -10,9 +10,4 @@
     <ProjectReference Include="..\Stl.Fusion.Tests\Stl.Fusion.Tests.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Remove="xunit.runner.visualstudio" />
-    <PackageReference Remove="Microsoft.NET.Test.Sdk" />
-  </ItemGroup>
-
 </Project>

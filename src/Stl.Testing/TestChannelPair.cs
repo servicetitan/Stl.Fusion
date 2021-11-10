@@ -40,7 +40,8 @@ public class TestChannelPair<T> : ChannelPair<T>
                 m => {
                     Out.WriteLine($"{Name}.Channel2 -> {m}");
                     return m;
-                }
+                },
+                ChannelCompletionMode.Full
             );
             Channel1 = cp1.Channel1;
             Channel2 = cp2.Channel2;

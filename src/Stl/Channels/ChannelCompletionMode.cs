@@ -1,8 +1,10 @@
 namespace Stl.Channels;
 
+[Flags]
 public enum ChannelCompletionMode
 {
-    KeepOpen = 0,
-    Complete = 1,
-    CompleteAndPropagateError = 3,
+    PropagateCompletion = 1,
+    PropagateError = 2,
+    PropagateCancellation = 4,
+    Full = PropagateCompletion + PropagateError + PropagateCancellation,
 }

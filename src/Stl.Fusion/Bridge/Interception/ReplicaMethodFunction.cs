@@ -83,7 +83,7 @@ public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>
         }
 
         if (psi == null) {
-            output = new Result<T>(default!, Errors.NoPublicationStateInfoCaptured());
+            output = new Result<T>(default!, Errors.NoPublicationStateInfo());
             // We need a unique LTag here, so we use a range that's supposed to be unused by LTagGenerators.
             var version = new LTag(VersionGenerator.NextVersion().Value ^ (1L << 62));
             result = new (method.Options, input, output.Error!, version);

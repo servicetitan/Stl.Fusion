@@ -36,7 +36,7 @@ public class FusionHttpMessageHandler : DelegatingHandler, IHasServices
         headers.TryGetValues(FusionHeaders.Publication, out var values);
         var psiJson = values?.FirstOrDefault();
         if (string.IsNullOrEmpty(psiJson))
-            throw Fusion.Internal.Errors.NoPublicationStateInfoCaptured();
+            throw Fusion.Internal.Errors.NoPublicationStateInfo();
 
         var psi = JsonConvert.DeserializeObject<PublicationStateInfo>(psiJson!)!;
         if (response.StatusCode == HttpStatusCode.InternalServerError) {

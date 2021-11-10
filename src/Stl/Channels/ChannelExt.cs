@@ -14,31 +14,32 @@ public static partial class ChannelExt
     public static async Task Copy<T>(
         this ChannelReader<T> reader,
         ChannelWriter<T> writer,
-        ChannelCompletionMode channelCompletionMode = ChannelCompletionMode.CompleteAndPropagateError,
+        ChannelCompletionMode channelCompletionMode,
         CancellationToken cancellationToken = default)
     {
         try {
             while (await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
             while (reader.TryRead(out var value))
                 await writer.WriteAsync(value, cancellationToken).ConfigureAwait(false);
-            if ((channelCompletionMode & ChannelCompletionMode.Complete) != 0)
+            if ((channelCompletionMode & ChannelCompletionMode.PropagateCompletion) != 0)
                 writer.TryComplete();
         }
-        catch (OperationCanceledException) {
+        catch (OperationCanceledException oce) {
+            if ((channelCompletionMode & ChannelCompletionMode.PropagateCancellation) != 0)
+                writer.TryComplete(oce);
             throw;
         }
         catch (Exception e) {
-            if (channelCompletionMode == ChannelCompletionMode.CompleteAndPropagateError)
+            if ((channelCompletionMode & ChannelCompletionMode.PropagateError) != 0)
                 writer.TryComplete(e);
-            else
-                throw;
+            throw;
         }
     }
 
     public static Task Connect<T>(
         this Channel<T> channel1,
         Channel<T> channel2,
-        ChannelCompletionMode channelCompletionMode = ChannelCompletionMode.CompleteAndPropagateError,
+        ChannelCompletionMode channelCompletionMode,
         CancellationToken cancellationToken = default)
         => Task.WhenAll(
             Task.Run(() => channel1.Reader.Copy(
@@ -50,7 +51,7 @@ public static partial class ChannelExt
     public static Task Connect<T1, T2>(
         this Channel<T1> channel1, Channel<T2> channel2,
         Func<T1, T2> adapter12, Func<T2, T1> adapter21,
-        ChannelCompletionMode channelCompletionMode = ChannelCompletionMode.CompleteAndPropagateError,
+        ChannelCompletionMode channelCompletionMode,
         CancellationToken cancellationToken = default)
         => Task.WhenAll(
             Task.Run(() => channel1.Reader.Transform(
@@ -103,7 +104,7 @@ public static partial class ChannelExt
         downstreamChannel.Connect(pair.Channel1,
             serializer.Reader.Read,
             serializer.Writer.Write,
-            ChannelCompletionMode.CompleteAndPropagateError,
+            ChannelCompletionMode.Full,
             cancellationToken);
         return pair.Channel2;
     }
@@ -128,7 +129,7 @@ public static partial class ChannelExt
         downstreamChannel.Connect(pair.Channel1,
             serializer.Reader.Read,
             Write,
-            ChannelCompletionMode.CompleteAndPropagateError,
+            ChannelCompletionMode.Full,
             cancellationToken);
         return pair.Channel2;
 
@@ -171,7 +172,7 @@ public static partial class ChannelExt
         channel.Connect(pair.Channel1,
             m => LogMessage(m, true),
             m => LogMessage(m, false),
-            ChannelCompletionMode.CompleteAndPropagateError,
+            ChannelCompletionMode.Full,
             cancellationToken);
         return pair.Channel2;
     }

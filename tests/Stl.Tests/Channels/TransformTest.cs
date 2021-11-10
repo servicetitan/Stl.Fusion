@@ -32,7 +32,7 @@ public class TransformTest
         async Task TestOne(int? roundDuration, Func<Channel<int>, Channel<int>, Task> transform)
         {
             var source = Enumerable.Range(0, itemCount).ToArray();
-            var cSource = await source.ToUnboundedChannel();
+            var cSource = source.ToUnboundedChannel();
             var cTarget = Channel.CreateUnbounded<int>();
 
             var start = Stopwatch.StartNew();
@@ -51,15 +51,23 @@ public class TransformTest
             async i => {
                 await Task.Delay(100).ConfigureAwait(false);
                 return i;
-            }, concurrencyLevel));
+            },
+            concurrencyLevel,
+            ChannelCompletionMode.Full));
         await TestOne(null, (s, t) => s.Reader.ConcurrentTransform(t.Writer,
-            i => i, concurrencyLevel));
-        await TestOne(null, (s, t) => s.Reader.Transform(t.Writer,
+            i => i,
+            concurrencyLevel,
+            ChannelCompletionMode.Full));
+        await TestOne(null,
+            (s, t) => s.Reader.Transform(t.Writer,
             async i => {
                 await Task.Delay(1).ConfigureAwait(false);
                 return i;
-            }));
-        await TestOne(null, (s, t) => s.Reader.Transform(t.Writer,
-            i => i));
+            },
+            ChannelCompletionMode.Full));
+        await TestOne(null, (s, t) => s.Reader.Transform(
+            t.Writer,
+            i => i,
+            ChannelCompletionMode.Full));
     }
 }
