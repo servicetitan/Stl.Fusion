@@ -14,8 +14,8 @@
     <EntityFrameworkCoreVersion>$(AspNetCoreVersion)</EntityFrameworkCoreVersion>
     <EntityFrameworkCoreVersion5>$(AspNetCoreVersion5)</EntityFrameworkCoreVersion5>
     <EntityFrameworkCoreVersion3>$(AspNetCoreVersion3)</EntityFrameworkCoreVersion3>
-    <NpgsqlVersion>6.0.0-rc.2</NpgsqlVersion>
-    <NpgsqlVersion5>5.*</NpgsqlVersion5>
+    <NpgsqlVersion>$(EntityFrameworkCoreVersion)</NpgsqlVersion>
+    <NpgsqlVersion5>$(EntityFrameworkCoreVersion5)</NpgsqlVersion5>
     <NpgsqlVersion3>$(EntityFrameworkCoreVersion3)</NpgsqlVersion3>
     <EntityFrameworkCoreNpgsqlVersion>$(NpgsqlVersion)</EntityFrameworkCoreNpgsqlVersion>
     <EntityFrameworkCoreNpgsqlVersion5>$(NpgsqlVersion5)</EntityFrameworkCoreNpgsqlVersion5>
@@ -126,7 +126,7 @@
     <PackageReference Update="Microsoft.NET.Test.Sdk" Version="17.0.0" />
     <PackageReference Update="Microsoft.AspNetCore.Components.WebAssembly.Build" Version="$(BlazorVersion)" PrivateAssets="all" />
     <PackageReference Update="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="$(BlazorVersion)" PrivateAssets="all" />
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.0-beta-20204-02" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
     <PackageReference Update="Microsoft.EntityFrameworkCore.Design" Version="$(EntityFrameworkCoreVersion)" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers;" />
     <PackageReference Update="Microsoft.EntityFrameworkCore.Tools" Version="$(EntityFrameworkCoreVersion)" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers;" />
     <PackageReference Update="Nerdbank.GitVersioning" Version="3.4.244" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />

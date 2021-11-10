@@ -12,7 +12,7 @@ public static class SerializationTestExt
 
     static SerializationTestExt()
     {
-        SystemJsonOptions = new JsonSerializerOptions() { WriteIndented = true };
+        SystemJsonOptions = MemberwiseCloner.Invoke(SystemJsonSerializer.DefaultOptions);
         NewtonsoftJsonSettings = MemberwiseCloner.Invoke(NewtonsoftJsonSerializer.DefaultSettings);
         NewtonsoftJsonSettings.Formatting = Formatting.Indented;
     }
