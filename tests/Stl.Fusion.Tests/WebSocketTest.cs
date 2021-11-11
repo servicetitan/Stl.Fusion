@@ -84,7 +84,7 @@ public class WebSocketTest : FusionTestBase
         updateTask1.IsCompleted.Should().BeFalse();
         updateTask2.IsCompleted.Should().BeFalse();
         // And state should be the same (shouldn't reset to inconsistent)
-        rep2.Computed.IsConsistent().Should().BeFalse();
+        rep1.Computed.IsConsistent().Should().BeFalse();
         rep2.Computed.IsConsistent().Should().BeTrue();
     }
 
