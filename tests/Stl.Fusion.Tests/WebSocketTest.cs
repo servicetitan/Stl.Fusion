@@ -1,6 +1,7 @@
 using System.Net.WebSockets;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Bridge;
+using Stl.Fusion.Bridge.Interception;
 using Stl.Fusion.Tests.Services;
 using Stl.Testing.Collections;
 
@@ -11,6 +12,13 @@ public class WebSocketTest : FusionTestBase
 {
     public WebSocketTest(ITestOutputHelper @out, FusionTestOptions? options = null)
         : base(@out, options) { }
+
+    protected override void ConfigureServices(IServiceCollection services, bool isClient = false)
+    {
+        // We need the same publisher Id here for DropReconnectTest
+        services.AddSingleton(new Publisher.Options() { Id = "p" });
+        base.ConfigureServices(services, isClient);
+    }
 
     [Fact]
     public async Task ConnectToPublisherTest()
@@ -53,12 +61,31 @@ public class WebSocketTest : FusionTestBase
         await using var serving = await WebHost.Serve();
         var publisher = WebServices.GetRequiredService<IPublisher>();
         var replicator = ClientServices.GetRequiredService<IReplicator>();
-        var tp = WebServices.GetRequiredService<ITimeService>();
+        var time = WebServices.GetRequiredService<ITimeService>();
 
-        var pub = await publisher.Publish(_ => tp.GetTime());
-        var rep = replicator.GetOrAdd<DateTime>(("NoPublisher", pub.Id));
-        await rep.RequestUpdate().AsAsyncFunc()
-            .Should().ThrowAsync<WebSocketException>();
+        var pub = await publisher.Publish(_ => time.GetTime());
+
+        var rep1 = replicator.GetOrAdd<DateTime>(("NoPublisher", pub.Id));
+        rep1.Computed.IsConsistent().Should().BeFalse();
+        var updateTask1 = rep1.RequestUpdate();
+
+        var psi2 = new PublicationStateInfo<DateTime>(
+            ("NoPublisher1", pub.Id),
+            new LTag(123),
+            true,
+            pub.State.Computed.Value);
+        var rep2 = replicator.GetOrAdd(psi2);
+        rep2.Computed.IsConsistent().Should().BeTrue();
+        var updateTask2 = rep2.RequestUpdate();
+
+        await Delay(30);
+
+        // No publisher = no update
+        updateTask1.IsCompleted.Should().BeFalse();
+        updateTask2.IsCompleted.Should().BeFalse();
+        // And state should be the same (shouldn't reset to inconsistent)
+        rep2.Computed.IsConsistent().Should().BeFalse();
+        rep2.Computed.IsConsistent().Should().BeTrue();
     }
 
     [Fact(Timeout = 120_000)]
@@ -68,76 +95,72 @@ public class WebSocketTest : FusionTestBase
             // TODO: Fix intermittent failures on GitHub
             return;
 
-        var serving = await WebHost.Serve();
-        var publisher = WebServices.GetRequiredService<IPublisher>();
+        var serving = await WebHost.Serve(false);
         var replicator = ClientServices.GetRequiredService<IReplicator>();
-        var tp = Services.GetRequiredService<ITimeService>();
+        var kvsClient = ClientServices.GetRequiredService<IKeyValueServiceClient<string>>();
 
         Debug.WriteLine("0");
-        var pub = await publisher.Publish(_ => tp.GetTime());
-        var rep = replicator.GetOrAdd<DateTime>(pub.Ref);
+        var kvs = WebServices.GetRequiredService<IKeyValueService<string>>();
+        await kvs.Set("a", "b");
+        var c = (ReplicaMethodComputed<string>)
+            await Computed.Capture(_ => kvsClient.Get("a"));
+        c.Value.Should().Be("b");
+        c.IsConsistent().Should().BeTrue();
+
         Debug.WriteLine("1");
-        await rep.RequestUpdate().AsAsyncFunc()
-            .Should().CompleteWithinAsync(TimeSpan.FromMinutes(1));
+        await c.Replica!.RequestUpdate().AsAsyncFunc()
+            .Should().CompleteWithinAsync(TimeSpan.FromSeconds(5));
+        c.IsConsistent().Should().BeTrue();
+
         Debug.WriteLine("2");
-        var state = replicator.GetPublisherConnectionState(pub.Publisher.Id);
-        state.Computed.IsConsistent().Should().BeTrue();
+        var cs = replicator.GetPublisherConnectionState(c.Replica.PublicationRef.PublisherId);
+        cs.Value.Should().BeTrue();
+        cs.Computed.IsConsistent().Should().BeTrue();
+        await cs.Recompute();
         Debug.WriteLine("3");
-        await state.Computed.Update();
-        Debug.WriteLine("4");
-        state.Should().Be(replicator.GetPublisherConnectionState(pub.Publisher.Id));
-        state.Value.Should().BeTrue();
+        cs.Value.Should().BeTrue();
+        cs.Computed.IsConsistent().Should().BeTrue();
+        var cs1 = replicator.GetPublisherConnectionState(c.Replica.PublicationRef.PublisherId);
+        cs1.Should().BeSameAs(cs);
 
         Debug.WriteLine("WebServer: stopping.");
         await serving.DisposeAsync();
         Debug.WriteLine("WebServer: stopped.");
 
         // First try -- should fail w/ WebSocketException or ChannelClosedException
+        c.IsConsistent().Should().BeTrue();
+        c.Value.Should().Be("b");
+        Debug.WriteLine("4");
+
+        await cs.Update();
+        cs.Error.Should().BeAssignableTo<Exception>();
+        cs.Computed.IsConsistent().Should().BeTrue();
+        var updateTask = c.Replica.RequestUpdate();
+        updateTask.IsCompleted.Should().BeFalse();
         Debug.WriteLine("5");
-        await rep.RequestUpdate().AsAsyncFunc()
-            .Should().ThrowAsync<Exception>();
+
+        await kvs.Set("a", "c");
+        await Delay(0.1);
+        c.IsConsistent().Should().BeTrue();
+        c.Value.Should().Be("b");
         Debug.WriteLine("6");
-        state.Should().Be(replicator.GetPublisherConnectionState(pub.Publisher.Id));
-        await state.Computed.Update();
-        Debug.WriteLine("7");
-        state.Should().Be(replicator.GetPublisherConnectionState(pub.Publisher.Id));
-        state.Error.Should().BeAssignableTo<Exception>();
 
-        // Second try -- should fail w/ WebSocketException
-        Debug.WriteLine("8");
-        await rep.Computed.Update().AsAsyncFunc()
-            .Should().ThrowAsync<WebSocketException>();
-        Debug.WriteLine("9");
-        rep.UpdateError.Should().BeOfType<WebSocketException>();
-        await state.Computed.Update();
-        Debug.WriteLine("10");
-        state.Error.Should().BeOfType<WebSocketException>();
-
-        // The remaining part of this test shouldn't work:
-        // since the underlying web host is actually re-created on
-        // every Serve call, its endpoints change,
-        // and moreover, IPublisher, etc. dies there,
-        // so reconnect won't happen in this case.
-        //
-        // TODO: Add similar test relying on Replica Services.
-
-        /*
         Debug.WriteLine("WebServer: starting.");
-        serving = await WebHost.ServeAsync();
-        await Task.Delay(1000);
+        serving = await WebHost.Serve();
+        await Delay(1);
         Debug.WriteLine("WebServer: started.");
 
-        Debug.WriteLine("11");
-        await rep.RequestUpdateAsync().AsAsyncFunc()
-            .Should().CompleteWithinAsync(TimeSpan.FromMinutes(1));
-        Debug.WriteLine("12");
-        await state.Computed.UpdateAsync(false);
-        Debug.WriteLine("13");
-        state.Value.Should().BeTrue();
+        await TestExt.WhenMet(
+            () => cs.Error.Should().BeNull(),
+            TimeSpan.FromSeconds(30));
+        Debug.WriteLine("7");
 
-        Debug.WriteLine("100");
+        await Delay(1);
+        updateTask.IsCompleted.Should().BeTrue();
+        c = (ReplicaMethodComputed<string>) await c.Update();
+        c.IsConsistent().Should().BeTrue();
+        c.Value.Should().Be("c");
+
         await serving.DisposeAsync();
-        Debug.WriteLine("101");
-        */
     }
 }

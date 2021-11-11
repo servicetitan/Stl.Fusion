@@ -17,29 +17,28 @@ public interface ITestWebHost : IDisposable
     IHost Host { get; }
     IServiceProvider Services { get; }
     IServer Server { get; }
+    ILoggerFactory LoggerFactory { get; }
     Uri ServerUri { get; }
 
-    Task<IAsyncDisposable> Serve();
+    Task<IAsyncDisposable> Serve(bool disposeOnStop = true);
     HttpClient CreateClient();
 }
 
 public abstract class TestWebHostBase : ITestWebHost
 {
     protected Lazy<IHost> HostLazy { get; set; }
-    protected Lazy<Uri> ServerUriLazy { get; set; }
 
     public IHost Host => HostLazy.Value;
     public IServiceProvider Services => Host.Services;
     public IServer Server => Services.GetRequiredService<IServer>();
-    public Uri ServerUri => ServerUriLazy.Value;
+    public ILoggerFactory LoggerFactory => Services.GetRequiredService<ILoggerFactory>();
+    public Uri ServerUri { get; }
 
     protected TestWebHostBase()
     {
+        var localPort = WebTestExt.GetUnusedTcpPort();
+        ServerUri = WebTestExt.GetLocalUri(localPort);
         HostLazy = new Lazy<IHost>(CreateHost);
-        ServerUriLazy = new Lazy<Uri>(() => {
-            var addresses = Server.Features.Get<IServerAddressesFeature>();
-            return new Uri(addresses!.Addresses.First());
-        });
     }
 
     public void Dispose()
@@ -56,15 +55,21 @@ public abstract class TestWebHostBase : ITestWebHost
             Host.Dispose();
     }
 
-    public async Task<IAsyncDisposable> Serve()
+    public async Task<IAsyncDisposable> Serve(bool disposeOnStop = true)
     {
         var host = Host;
         await host.StartAsync().ConfigureAwait(false);
+        var addresses = Server.Features.Get<IServerAddressesFeature>();
+        var serverUri = addresses?.Addresses?.FirstOrDefault();
+        var log = LoggerFactory.CreateLogger(GetType());
+        log.LogInformation("Serving @ {Uri}", serverUri);
+
         // ReSharper disable once HeapView.BoxingAllocation
         return AsyncDisposable.New(async self => {
             var host1 = self.Host;
             await host1.StopAsync().SuppressExceptions().ConfigureAwait(false);
-            _ = Task.Run(() => host1.Dispose());
+            if (disposeOnStop)
+                _ = Task.Run(() => host1.Dispose());
             self.HostLazy = new Lazy<IHost>(CreateHost);
         }, this);
     }
@@ -88,11 +93,8 @@ public abstract class TestWebHostBase : ITestWebHost
 
 #if NETCOREAPP
         builder.ConfigureWebHost(b => {
-            var serverUri = ServerUriLazy.IsValueCreated
-                ? ServerUri.ToString()
-                : "http://127.0.0.1:0";
             b.UseKestrel();
-            b.UseUrls(serverUri);
+            b.UseUrls(ServerUri.ToString());
             b.UseContentRoot(emptyDir);
             ConfigureWebHost(b);
         });
@@ -101,11 +103,8 @@ public abstract class TestWebHostBase : ITestWebHost
 #if NETFRAMEWORK
         builder.ConfigureServices(
             (ctx, services) => {
-                var serverUri = ServerUriLazy.IsValueCreated
-                    ? ServerUri.ToString()
-                    : "http://localhost:9000/"; // TODO: implement dynamic port assignment
                 services.Configure<OwinWebApiServerOptions>(c => {
-                    c.Urls = serverUri;
+                    c.Urls = ServerUri.ToString();
                     c.ConfigureBuilder = ConfigureAppBuilder;
                     c.SetupHttpConfiguration = SetupHttpConfiguration;
                 });
