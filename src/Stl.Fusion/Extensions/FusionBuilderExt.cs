@@ -19,6 +19,16 @@ public static class FusionBuilderExt
         return fusion;
     }
 
+    public static FusionBuilder AddBackendStatus(this FusionBuilder fusion)
+        => fusion.AddBackendStatus<BackendStatus>();
+    public static FusionBuilder AddBackendStatus<TBackendStatus>(this FusionBuilder fusion)
+        where TBackendStatus : class, IBackendStatus
+    {
+        fusion.AddComputeService<TBackendStatus>();
+        fusion.Services.TryAddSingleton<IBackendStatus>(c => c.GetRequiredService<TBackendStatus>());
+        return fusion;
+    }
+
     public static FusionBuilder AddInMemoryKeyValueStore(this FusionBuilder fusion,
         Action<IServiceProvider, InMemoryKeyValueStore.Options>? optionsBuilder = null)
     {
