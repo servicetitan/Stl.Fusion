@@ -1,42 +1,84 @@
 .NET: 6.0.0
+Database: PostgreSql
+With Stl.Fusion:
+  Standard test:
+    Operations: 192000000 (240 readers x 800000)
+    Duration:   3.992 sec
+    Speed:      48099.308 K Ops/sec
+  Standard test + serialization:
+    Operations: 63999840 (240 readers x 266666)
+    Duration:   2.939 sec
+    Speed:      21773.388 K Ops/sec
+Without Stl.Fusion:
+  Standard test:
+    Operations: 9600 (240 readers x 40)
+    Duration:   0.356 sec
+    Speed:      26.987 K Ops/sec
+  Standard test + serialization:
+    Operations: 9600 (240 readers x 40)
+    Duration:   0.380 sec
+    Speed:      25.258 K Ops/sec
+
+.NET: 6.0.0
+Database: SqlServer
+With Stl.Fusion:
+  Standard test:
+    Operations: 192000000 (240 readers x 800000)
+    Duration:   4.050 sec
+    Speed:      47407.382 K Ops/sec
+  Standard test + serialization:
+    Operations: 63999840 (240 readers x 266666)
+    Duration:   2.685 sec
+    Speed:      23839.577 K Ops/sec
+Without Stl.Fusion:
+  Standard test:
+    Operations: 9600 (240 readers x 40)
+    Duration:   0.454 sec
+    Speed:      21.124 K Ops/sec
+  Standard test + serialization:
+    Operations: 9600 (240 readers x 40)
+    Duration:   0.435 sec
+    Speed:      22.054 K Ops/sec
+
+.NET: 6.0.0
 Database: Sqlite
 With Stl.Fusion:
   Standard test:
-    Operations: 96000000 (192 readers x 500000)
-    Duration:   2.004 sec
-    Speed:      47901.538 K Ops/sec
+    Operations: 192000000 (240 readers x 800000)
+    Duration:   3.799 sec
+    Speed:      50542.306 K Ops/sec
   Standard test + serialization:
-    Operations: 31999872 (192 readers x 166666)
-    Duration:   1.784 sec
-    Speed:      17938.529 K Ops/sec
+    Operations: 63999840 (240 readers x 266666)
+    Duration:   2.675 sec
+    Speed:      23929.456 K Ops/sec
 Without Stl.Fusion:
   Standard test:
-    Operations: 9600 (192 readers x 50)
-    Duration:   0.117 sec
-    Speed:      81.746 K Ops/sec
+    Operations: 9600 (240 readers x 40)
+    Duration:   0.173 sec
+    Speed:      55.577 K Ops/sec
   Standard test + serialization:
-    Operations: 9600 (192 readers x 50)
-    Duration:   0.196 sec
-    Speed:      49.066 K Ops/sec
+    Operations: 9600 (240 readers x 40)
+    Duration:   0.135 sec
+    Speed:      71.089 K Ops/sec
 
 .NET: 6.0.0
-Database: In-memory
+Database: InMemory
 With Stl.Fusion:
   Standard test:
-    Operations: 96000000 (192 readers x 500000)
-    Duration:   2.170 sec
-    Speed:      44247.188 K Ops/sec
+    Operations: 192000000 (240 readers x 800000)
+    Duration:   3.963 sec
+    Speed:      48447.612 K Ops/sec
   Standard test + serialization:
-    Operations: 31999872 (192 readers x 166666)
-    Duration:   1.830 sec
-    Speed:      17488.280 K Ops/sec
+    Operations: 63999840 (240 readers x 266666)
+    Duration:   2.750 sec
+    Speed:      23271.071 K Ops/sec
 Without Stl.Fusion:
   Standard test:
-    Operations: 96000 (192 readers x 500)
-    Duration:   3.301 sec
-    Speed:      29.085 K Ops/sec
+    Operations: 96000 (240 readers x 400)
+    Duration:   3.504 sec
+    Speed:      27.399 K Ops/sec
   Standard test + serialization:
-    Operations: 96000 (192 readers x 500)
-    Duration:   3.374 sec
-    Speed:      28.450 K Ops/sec
+    Operations: 96000 (240 readers x 400)
+    Duration:   3.565 sec
+    Speed:      26.932 K Ops/sec
 
