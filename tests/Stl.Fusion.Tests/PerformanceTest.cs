@@ -49,7 +49,7 @@ public abstract class PerformanceTestBase : FusionTestBase
         var withSerialization = (Action<User>) (u => JsonConvert.SerializeObject(u));
 
         Out.WriteLine($".NET: {RuntimeInfo.DotNetCore.VersionString}");
-        Out.WriteLine($"Database: {(useImdb ? "In-memory" : "Sqlite")}");
+        Out.WriteLine($"Database: {Options.DbType}");
         Out.WriteLine("With Stl.Fusion:");
         await Test("Standard test", users, withoutSerialization,
             readerCount, cachingIterationCount);
@@ -140,17 +140,28 @@ public class PerformanceTest_Sqlite : PerformanceTestBase
 {
     public PerformanceTest_Sqlite(ITestOutputHelper @out)
         : base(@out, new FusionTestOptions() {
+            DbType = FusionTestDbType.Sqlite,
             UseLogging = false,
         })
     { }
 }
 
-public class PerformanceTest_Npgsql : PerformanceTestBase
+public class PerformanceTest_PostgreSql : PerformanceTestBase
 {
-    public PerformanceTest_Npgsql(ITestOutputHelper @out)
+    public PerformanceTest_PostgreSql(ITestOutputHelper @out)
         : base(@out, new FusionTestOptions() {
             UseLogging = false,
             DbType = FusionTestDbType.PostgreSql,
+        })
+    { }
+}
+
+public class PerformanceTest_SqlServer : PerformanceTestBase
+{
+    public PerformanceTest_SqlServer(ITestOutputHelper @out)
+        : base(@out, new FusionTestOptions() {
+            UseLogging = false,
+            DbType = FusionTestDbType.SqlServer,
         })
     { }
 }

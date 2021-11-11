@@ -63,7 +63,7 @@ public class SwappingTest : SimpleFusionTestBase
     }
 
     [Fact]
-    public async void BasicTest()
+    public async Task BasicTest()
     {
         if (TestRunnerInfo.IsBuildAgent())
             // TODO: Fix intermittent failures on GitHub

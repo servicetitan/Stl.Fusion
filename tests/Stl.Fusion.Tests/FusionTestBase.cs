@@ -16,9 +16,8 @@ using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Messages;
 using Stl.Fusion.Client;
 using Stl.Fusion.EntityFramework;
-#if NETCOREAPP
 using Stl.Fusion.EntityFramework.Npgsql;
-#endif
+using Stl.Fusion.EntityFramework.Redis;
 using Stl.Fusion.Extensions;
 using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
@@ -39,13 +38,15 @@ namespace Stl.Fusion.Tests;
 public enum FusionTestDbType
 {
     Sqlite = 0,
-    InMemory = 1,
-    PostgreSql = 2,
+    PostgreSql = 1,
+    SqlServer = 2,
+    InMemory = 3,
 }
 
 public class FusionTestOptions
 {
     public FusionTestDbType DbType { get; set; } = FusionTestDbType.Sqlite;
+    public bool UseRedisOperationLogChangeTracking { get; set; }
     public bool UseInMemoryKeyValueStore { get; set; }
     public bool UseInMemoryAuthService { get; set; }
     public bool UseTestClock { get; set; }
@@ -58,7 +59,9 @@ public class FusionTestBase : TestBase, IAsyncLifetime
     public bool IsLoggingEnabled { get; set; } = true;
     public FilePath SqliteDbPath { get; protected set; }
     public string PostgreSqlConnectionString { get; protected set; } =
-        "Server=localhost;Database=stl_fusion_tests;Port=5432;User Id=postgres;Password=Fusion.0.to.1";
+        "Server=localhost;Database=stl_fusion_tests;Port=5432;User Id=postgres;Password=postgres";
+    public string SqlServerConnectionString { get; protected set; } =
+        "Server=localhost,1433;Database=stl_fusion_tests;MultipleActiveResultSets=True;User Id=sa;Password=SqlServer1";
     public FusionTestWebHost WebHost { get; }
     public IServiceProvider Services { get; }
     public IServiceProvider WebServices { get; }
@@ -94,8 +97,7 @@ public class FusionTestBase : TestBase, IAsyncLifetime
         var dbContext = CreateDbContext();
         await using var _ = dbContext.ConfigureAwait(false);
 
-        if (Options.DbType != FusionTestDbType.Sqlite)
-            await dbContext.Database.EnsureDeletedAsync();
+        await dbContext.Database.EnsureDeletedAsync();
         await dbContext.Database.EnsureCreatedAsync();
         await Services.HostedServices().Start();
     }
@@ -188,12 +190,11 @@ public class FusionTestBase : TestBase, IAsyncLifetime
                         });
                     break;
                 case FusionTestDbType.PostgreSql:
-#if NETCOREAPP
                     builder.UseNpgsql(PostgreSqlConnectionString);
                     break;
-#else
-                    throw new NotSupportedException("PostgreSql is supported only in .NET Core tests.");
-#endif
+                case FusionTestDbType.SqlServer:
+                    builder.UseSqlServer(SqlServerConnectionString);
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException();
                 }
@@ -205,12 +206,12 @@ public class FusionTestBase : TestBase, IAsyncLifetime
                     // Enable this if you debug multi-host invalidation
                     // o.MaxCommitDuration = TimeSpan.FromMinutes(5);
                 });
-                if (Options.DbType == FusionTestDbType.PostgreSql)
-#if NETCOREAPP
+                if (Options.UseRedisOperationLogChangeTracking) {
+                    b.AddRedisDb("localhost", "Fusion.Tests");
+                    b.AddRedisOperationLogChangeTracking();
+                }
+                else if (Options.DbType == FusionTestDbType.PostgreSql)
                     b.AddNpgsqlOperationLogChangeTracking();
-#else
-                    throw new NotSupportedException("PostgreSql is supported only in .NET Core tests.");
-#endif
                 else
                     b.AddFileBasedOperationLogChangeTracking();
                 if (!Options.UseInMemoryAuthService)

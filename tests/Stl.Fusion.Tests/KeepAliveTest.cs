@@ -41,7 +41,7 @@ public class KeepAliveTest : TestBase
     }
 
     [Fact]
-    public async void TestNoKeepAlive()
+    public async Task TestNoKeepAlive()
     {
         if (TestRunnerInfo.IsBuildAgent())
             // TODO: Fix intermittent failures on GitHub
@@ -62,7 +62,7 @@ public class KeepAliveTest : TestBase
     }
 
     [Fact]
-    public async void TestKeepAlive()
+    public async Task TestKeepAlive()
     {
         if (TestRunnerInfo.IsBuildAgent())
             // TODO: Fix intermittent failures on GitHub

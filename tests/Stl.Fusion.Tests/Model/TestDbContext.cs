@@ -27,4 +27,10 @@ public class TestDbContext : DbContextBase
 
     public TestDbContext(DbContextOptions options) : base(options)
         => this.DisableChangeTracking();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Message>().HasOne(m => m.Author).WithMany()
+            .OnDelete(DeleteBehavior.Restrict);
+    }
 }
