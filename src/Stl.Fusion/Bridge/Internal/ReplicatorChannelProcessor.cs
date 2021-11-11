@@ -77,11 +77,18 @@ public class ReplicatorChannelProcessor : AsyncProcessBase
                     break;
                 default:
                     Reconnect(error);
+                    // NOTE(AY): Starting from v2.0.73 Fusion won't
+                    // tag all replicas from failed channel as inconsistent.
+                    // And since Reconnect implies (re)-Subscribe for any
+                    // replica, this ensures the inconsistent ones will
+                    // be anyway updated on reconnect.
+                    /*
                     foreach (var publicationId in GetSubscriptions()) {
                         var publicationRef = new PublicationRef(PublisherId, publicationId);
                         var replicaImpl = (IReplicaImpl?) Replicator.Get(publicationRef);
                         replicaImpl?.ApplyFailedUpdate(error, cancellationToken);
                     }
+                    */
                     break;
                 }
             }
