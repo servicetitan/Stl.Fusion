@@ -1,5 +1,5 @@
+using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json;
 using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
 using Stl.OS;
@@ -39,14 +39,14 @@ public abstract class PerformanceTestBase : FusionTestBase
         var users = Services.GetRequiredService<IUserService>();
         var plainUsers = Services.GetRequiredService<UserService>();
         var useImdb = Options.DbType == FusionTestDbType.InMemory;
-        var opCountPerCore = 2_000_000;
-        var readersPerCore = 4;
+        var opCountPerCore = 4_000_000;
+        var readersPerCore = 5;
         var readerCount = HardwareInfo.GetProcessorCountFactor(readersPerCore);
         var cachingIterationCount = opCountPerCore / readersPerCore;
-        var nonCachingIterationCount = cachingIterationCount / (useImdb ? 1000 : 10_000);
+        var nonCachingIterationCount = cachingIterationCount / (useImdb ? 2000 : 20_000);
 
         var withoutSerialization = (Action<User>) (u => { });
-        var withSerialization = (Action<User>) (u => JsonConvert.SerializeObject(u));
+        var withSerialization = (Action<User>) (u => JsonSerializer.Serialize(u)); // STJ serializer
 
         Out.WriteLine($".NET: {RuntimeInfo.DotNetCore.VersionString}");
         Out.WriteLine($"Database: {Options.DbType}");
