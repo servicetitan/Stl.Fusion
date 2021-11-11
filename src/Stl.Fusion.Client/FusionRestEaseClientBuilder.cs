@@ -43,6 +43,11 @@ public readonly struct FusionRestEaseClientBuilder
         // ResponseDeserializer & RequestBodySerializer
         Services.TryAddTransient<ResponseDeserializer, FusionResponseDeserializer>();
         Services.TryAddTransient<RequestBodySerializer, FusionRequestBodySerializer>();
+
+        // BackendUnreachableCommandHandler - makes "TypeError: Failed to fetch" errors more descriptive
+        var commander = Services.AddCommander();
+        Services.TryAddSingleton<BackendUnreachableCommandHandler>();
+        commander.AddHandlers<BackendUnreachableCommandHandler>();
     }
 
     // ConfigureXxx

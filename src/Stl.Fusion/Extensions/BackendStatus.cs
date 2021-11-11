@@ -8,35 +8,54 @@ namespace Stl.Fusion.Extensions;
 
 public class BackendStatus : IBackendStatus
 {
-    protected static FieldInfo UsedField { get; } = typeof(Computed<ComputeMethodInput, Unit>)
+    private static FieldInfo UsedField { get; } = typeof(Computed<ComputeMethodInput, Unit>)
         .GetField("_used", BindingFlags.Instance | BindingFlags.NonPublic)!;
     protected IAuth Auth { get; }
+
+    public ImmutableArray<string> Backends { get; } = ImmutableArray.Create<string>("Server");
 
     public BackendStatus(IAuth auth)
         => Auth = auth;
 
-    public virtual async Task<Exception?> GetError(
+    public virtual async Task<ImmutableList<(string Backend, Exception Error)>> GetAllErrors(
         Session session,
-        string? backendName = null,
         CancellationToken cancellationToken = default)
     {
-        try {
-            var backendComputed = await Computed.Capture(ct => HitBackend(session, backendName, ct), cancellationToken);
-            // ReSharper disable once HeapView.PossibleBoxingAllocation
-            var usedSet = (IRefHashSetSlim<IComputedImpl>) UsedField.GetValue(backendComputed);
-            var replica = usedSet.Items
-                .OfType<IReplicaMethodComputed>()
-                .Select(c => c.Replica)
-                .FirstOrDefault(r => r != null);
+        var result = ImmutableList<(string Backend, Exception Error)>.Empty;
+        foreach (var backend in Backends) {
+            var error = await GetError(session, backend, cancellationToken).ConfigureAwait(false);
+            if (error != null)
+                result = result.Add((backend, error));
+        }
+        return result;
+    }
+
+    public virtual async Task<Exception?> GetError(
+        Session session,
+        string backend,
+        CancellationToken cancellationToken = default)
+    {
+        var backendComputed = await Computed
+            .Capture(ct => HitBackend(session, backend, ct), cancellationToken)
+            .ConfigureAwait(false);
+        // ReSharper disable once HeapView.PossibleBoxingAllocation
+        var usedSet = (IRefHashSetSlim<IComputedImpl>) UsedField.GetValue(backendComputed);
+        foreach (var usedComputed in usedSet.Items) {
+            if (usedComputed is not IReplicaMethodComputed replicaMethodComputed)
+                continue;
+            var replica = replicaMethodComputed.Replica;
             if (replica == null)
-                return null; // No replica = backend is local
-            var publisherConnectionState = replica.Replicator.GetPublisherConnectionState(replica.PublicationRef.PublisherId);
-            await publisherConnectionState.Use(cancellationToken);
-            return null;
+                continue;
+            try {
+                var publisherId = replica.PublicationRef.PublisherId;
+                var connectionState = replica.Replicator.GetPublisherConnectionState(publisherId);
+                await connectionState.Use(cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception e) {
+                return e;
+            }
         }
-        catch (Exception ex) {
-            return ex;
-        }
+        return null;
     }
 
     // Protected methods
@@ -44,7 +63,7 @@ public class BackendStatus : IBackendStatus
     [ComputeMethod]
     protected virtual async Task<Unit> HitBackend(
         Session session,
-        string? backendName,
+        string backend,
         CancellationToken cancellationToken = default)
     {
         await Auth.GetSessionInfo(session, cancellationToken);

@@ -1,22 +1,24 @@
 @using Stl
-@inherits ComputedStateComponent<string>
+@inherits ComputedStateComponent<ImmutableList<(string Backend, Exception Error)>>
 @inject Session _session
 @inject IBackendStatus _backendStatus
 
 @{
-    var error = State.ValueOrDefault ?? "";
+    var errors = State.ValueOrDefault ?? ImmutableList<(string Backend, Exception Error)>.Empty;
 }
 
-@if (!error.IsNullOrEmpty()) {
+@if (errors.Any()) {
     <BarItem>
         <BarDropdown Class="@CssClass">
             <BarDropdownToggle>
                 <BarIcon IconName="@FontAwesomeIcons.ExclamationTriangle" TextColor="TextColor.Danger"></BarIcon>
             </BarDropdownToggle>
             <BarDropdownMenu RightAligned="true">
-                <BarDropdownItem TextColor="TextColor.Danger">
-                    Backend error: @error
-                </BarDropdownItem>
+                @foreach (var (backend, error) in errors) {
+                    <BarDropdownItem TextColor="TextColor.Danger">
+                        <b>@backend:</b> @(error.Message.NullIfEmpty() ?? "Unknown error")
+                    </BarDropdownItem>
+                }
             </BarDropdownMenu>
         </BarDropdown>
     </BarItem>
@@ -26,11 +28,6 @@
     [Parameter]
     public string CssClass { get; set; } = "";
 
-    protected override async Task<string> ComputeState(CancellationToken cancellationToken)
-    {
-        var error = await _backendStatus.GetError(_session, null, cancellationToken);
-        if (error == null)
-            return "";
-        return error.Message?.NullIfEmpty() ?? "Unknown error.";
-    }
+    protected override Task<ImmutableList<(string Backend, Exception Error)>> ComputeState(CancellationToken cancellationToken)
+        => _backendStatus.GetAllErrors(_session, cancellationToken);
 }

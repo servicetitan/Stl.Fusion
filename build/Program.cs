@@ -200,9 +200,9 @@ internal static class Program
                 Console.ResetColor();
             }
         }
-        catch (Exception ex) {
+        catch (Exception e) {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine($"Unhandled exception: {ex}");
+            Console.WriteLine($"Unhandled exception: {e}");
             Console.ResetColor();
         }
     }
