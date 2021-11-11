@@ -1,3 +1,4 @@
+using System.Globalization;
 using Stl.Fusion.Internal;
 using Stl.Versioning;
 
@@ -59,13 +60,23 @@ public class ComputeMethodInterceptor : ComputeMethodInterceptorBase
 #endif
             if (!attr.IsEnabled)
                 Log.Log(ValidationLogLevel,
-                    "- {Method}: has [{Attribute}(false)]", method.ToString(), attributeName);
-            else
+                    // ReSharper disable once TemplateIsNotCompileTimeConstantProblem
+                    $"- {{Method}}: has [{attributeName}(false)]", method.ToString());
+            else {
+                var properties = new List<string>();
+                if (!double.IsNaN(attr.KeepAliveTime))
+                    properties.Add($"{nameof(attr.KeepAliveTime)} = {Format(attr.KeepAliveTime)}");
+                if (!double.IsNaN(attr.AutoInvalidateTime))
+                    properties.Add($"{nameof(attr.AutoInvalidateTime)} = {Format(attr.AutoInvalidateTime)}");
+                if (!double.IsNaN(attr.ErrorAutoInvalidateTime))
+                    properties.Add($"{nameof(attr.ErrorAutoInvalidateTime)} = {Format(attr.ErrorAutoInvalidateTime)}");
                 Log.Log(ValidationLogLevel,
-                    "+ {Method}: [{Attribute}(" +
-                    "KeepAliveTime = {KeepAliveTime}, " +
-                    "AutoInvalidateTime = {AutoInvalidateTime}" +
-                    ")]", method.ToString(), attributeName, attr.KeepAliveTime, attr.AutoInvalidateTime);
+                    // ReSharper disable once TemplateIsNotCompileTimeConstantProblem
+                    $"+ {{Method}}: [{attributeName}({properties.ToDelimitedString(", ")})]", method.ToString());
+            }
+
+            static string Format(double value)
+                => value.ToString(CultureInfo.InvariantCulture);
         }
     }
 }
