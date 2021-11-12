@@ -60,25 +60,8 @@ So what DREAM means?
     all real-time UI updates on the client side in Fusion samples.
   
 > [Lot traceability](https://en.wikipedia.org/wiki/Traceability) is probably the 
-> best real-world analogy of how this approach works:
-> - For every "product" 🥗 ([computed value]), Fusion keeps track of
->   its "recipe" 📝 (function and its arguments), but more importantly, 
->   all of its "ingredients" 🥬🥦🍅, i.e. intermediate or "basic" products
->   used to produce it.<br/>
->   E.g. 🥗<sub>v1</sub> = `📝salad("weird_mix")` + 
->   (🥬<sub>v1</sub> 🥦<sub>v1</sub> 🍅<sub>v1</sub>)
-> - While all the "ingredients" used to produce 🥗<sub>v1</sub> are "valid", Fusion 
->   ensures that calling a recipe `📝salad("weird_mix")`
->   resolves to the same cached product instance 🥗<sub>v1</sub>
-> - But once one of such ingredients 🍅<sub>v1</sub> gets "contaminated" 
->   ("invalidated" in Fusion terms, i.e. marked as changed),
->   Fusion immediately marks everything that uses this product
->   directly or indirectly as "contaminated" as well, including 🥗<sub>v1</sub>
-> - So next time you call `📝salad("weird_mix")`, it will produce a new
->   🥗<sub>v2</sub> = `📝salad("weird_mix")` + 
->   (🥬<sub>v1</sub> 🥦<sub>v1</sub> 🍅<sub>v2</sub>)
-> 
-> Lot traceability allows to identify every product that uses certain ingredient,
+> best real-world analogy of how this approach works. 
+> It allows to identify every product that uses certain ingredient,
 > and consequently, even every buyer of a product that has certain ingredient. 
 > So if you want every consumer to have the most up-to-date version of every product 
 > they bought &ndash; the most up-to-date 🚗, 🤳, or 👠 &ndash; 
