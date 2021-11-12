@@ -63,10 +63,11 @@ So what DREAM means?
 > best real-world analogy of how this approach works. 
 > It allows to identify every product *([computed value])* 
 > that uses certain ingredient *(another [computed value])*,
-> and consequently, even every buyer of a product *(UI control)* that uses certain ingredient. 
-> So if you want every consumer to have the most up-to-date version of every product *(real-time UI)*
-> they bought &ndash; the most up-to-date 🚗, 🤳, or 👠 &ndash; 
-> lot traceability makes this possible.
+> and consequently, even every buyer of a product *(think UI control)* that uses certain ingredient. 
+> So if you want every consumer to have the most up-to-date version 
+> of every product they bought *(think real-time UI)* &ndash; 
+> the most up-to-date 🚗, 🤳, or 👠 &ndash; lot traceability makes this possible.
+> 
 > And assuming every purchase order triggers the whole build chain and uses
 > the most recent ingredients, merely notifying the consumers they can buy 
 > a newer version of their 📱 is enough. It's up to them to decide when to update -
