@@ -46,19 +46,9 @@ public class RedisOperationLogChangeTracker<TDbContext> : DbWakeSleepProcessBase
     protected override async Task WakeUp(CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested) {
-            try {
-                var value = (string) await RedisPubSub.Read(cancellationToken).ConfigureAwait(false);
-                if (!StringComparer.Ordinal.Equals(AgentInfo.Id.Value, value))
-                    ReleaseWaitForChanges();
-            }
-            catch (ChannelClosedException) {
-                Log.LogWarning("Pub/sub key = '{Key}' is closed; retrying", RedisPubSub.FullKey);
-                await Clocks.CoarseCpuClock.Delay(Options.RetryDelay, cancellationToken).ConfigureAwait(false);
-            }
-            catch (Exception e) {
-                Log.LogError(e, "Failed to read from pub/sub key = '{Key}'; retrying", RedisPubSub.FullKey);
-                await Clocks.CoarseCpuClock.Delay(Options.RetryDelay, cancellationToken).ConfigureAwait(false);
-            }
+            var value = (string) await RedisPubSub.Read(cancellationToken).ConfigureAwait(false);
+            if (!StringComparer.Ordinal.Equals(AgentInfo.Id.Value, value))
+                ReleaseWaitForChanges();
         }
     }
 

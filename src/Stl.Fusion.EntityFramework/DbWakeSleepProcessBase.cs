@@ -29,7 +29,7 @@ public abstract class DbWakeSleepProcessBase<TDbContext> : DbAsyncProcessBase<TD
                     // descendants may flood the log with exceptions till the moment they're stopped.
                     throw;
                 error = e;
-                Log.LogError(e, "WakeAsync error");
+                Log.LogError(e, "WakeUp failed");
             }
             await Sleep(error, cancellationToken).ConfigureAwait(false);
         }
