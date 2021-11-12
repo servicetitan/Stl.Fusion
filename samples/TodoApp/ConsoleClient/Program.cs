@@ -1,8 +1,4 @@
-using System;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Stl.Fusion;
-using Stl.Fusion.Authentication;
 using Stl.Fusion.Client;
 using Stl.Fusion.UI;
 using Templates.TodoApp.Abstractions;

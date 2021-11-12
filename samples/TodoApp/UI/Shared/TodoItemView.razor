@@ -1,9 +1,9 @@
-@inject Session Session
-@inject ILogger<TodoItemView> Log
-@inject UICommandRunner CommandRunner
+@inject Session _session
+@inject UICommandRunner _commandRunner
+@inject ILogger<TodoItemView> _log
 
 @{
-    Log.LogInformation("Rendering, Item = {Item}", Value);
+    _log.LogInformation("Rendering, Item = {Item}", Value);
 }
 
 <Addons Margin="Margin.Is3.OnY">
@@ -33,7 +33,7 @@
     private Task InvertDone()
     {
         var todo = Value with { IsDone = !Value.IsDone };
-        return CommandRunner.Run(new AddOrUpdateTodoCommand(Session, todo));
+        return _commandRunner.Run(new AddOrUpdateTodoCommand(_session, todo));
     }
 
     private Task UpdateTitle(string title)
@@ -42,9 +42,9 @@
         if (Value.Title == title)
             return Task.CompletedTask;
         var todo = Value with { Title = title };
-        return CommandRunner.Run(new AddOrUpdateTodoCommand(Session, todo));
+        return _commandRunner.Run(new AddOrUpdateTodoCommand(_session, todo));
     }
 
     private Task Remove()
-        => CommandRunner.Run(new RemoveTodoCommand(Session, Value.Id));
+        => _commandRunner.Run(new RemoveTodoCommand(_session, Value.Id));
 }

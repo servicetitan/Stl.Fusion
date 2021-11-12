@@ -63,6 +63,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{61E7
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TodoApp", "TodoApp", "{C5CE238B-B8CD-44C3-9BBA-8C29ADC3DDE8}"
+	ProjectSection(SolutionItems) = preProject
+		samples\TodoApp\Directory.Build.props = samples\TodoApp\Directory.Build.props
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Abstractions", "samples\TodoApp\Abstractions\Abstractions.csproj", "{4B93DBF5-4C3D-41DC-B48B-CBD802E9EB24}"
 EndProject

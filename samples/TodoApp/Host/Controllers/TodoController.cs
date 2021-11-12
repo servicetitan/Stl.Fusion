@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Stl.Fusion.Authentication;
 using Stl.Fusion.Extensions;
 using Stl.Fusion.Server;
 using Templates.TodoApp.Abstractions;

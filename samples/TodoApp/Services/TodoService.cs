@@ -1,7 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
-using Stl.Fusion;
-using Stl.Fusion.Authentication;
 using Stl.Fusion.Extensions;
 using Templates.TodoApp.Abstractions;
 

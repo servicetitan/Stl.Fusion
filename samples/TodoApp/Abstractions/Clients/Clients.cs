@@ -1,5 +1,4 @@
 using RestEase;
-using Stl.Fusion.Authentication;
 using Stl.Fusion.Extensions;
 
 namespace Templates.TodoApp.Abstractions.Clients;

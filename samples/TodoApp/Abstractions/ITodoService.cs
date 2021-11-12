@@ -1,7 +1,3 @@
-using System.Reactive;
-using Stl.CommandR.Configuration;
-using Stl.Fusion;
-using Stl.Fusion.Authentication;
 using Stl.Fusion.Extensions;
 
 namespace Templates.TodoApp.Abstractions;
