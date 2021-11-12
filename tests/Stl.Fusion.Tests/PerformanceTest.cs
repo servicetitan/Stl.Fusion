@@ -38,12 +38,11 @@ public abstract class PerformanceTestBase : FusionTestBase
 
         var users = Services.GetRequiredService<IUserService>();
         var plainUsers = Services.GetRequiredService<UserService>();
-        var useImdb = Options.DbType == FusionTestDbType.InMemory;
         var opCountPerCore = 4_000_000;
         var readersPerCore = 5;
         var readerCount = HardwareInfo.GetProcessorCountFactor(readersPerCore);
         var cachingIterationCount = opCountPerCore / readersPerCore;
-        var nonCachingIterationCount = cachingIterationCount / (useImdb ? 2000 : 20_000);
+        var nonCachingIterationCount = cachingIterationCount / 2000;
 
         var withoutSerialization = (Action<User>) (u => { });
         var withSerialization = (Action<User>) (u => JsonSerializer.Serialize(u)); // STJ serializer
