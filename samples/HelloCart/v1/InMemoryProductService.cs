@@ -1,6 +1,3 @@
-using System.Collections.Concurrent;
-using Stl.Fusion;
-
 namespace Samples.HelloCart.V1;
 
 public class InMemoryProductService : IProductService

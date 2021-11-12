@@ -1,5 +1,3 @@
-using System.Collections.Immutable;
-using Stl.Fusion;
 using static System.Console;
 
 namespace Samples.HelloCart;

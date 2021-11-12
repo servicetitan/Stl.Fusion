@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Samples.HelloCart.V2;
-using Stl.Fusion;
 using Stl.Fusion.EntityFramework;
 using Stl.IO;
 

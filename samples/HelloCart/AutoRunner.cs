@@ -1,4 +1,3 @@
-using Stl.CommandR;
 using static System.Console;
 
 namespace Samples.HelloCart;

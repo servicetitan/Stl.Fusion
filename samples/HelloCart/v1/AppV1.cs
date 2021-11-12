@@ -1,5 +1,3 @@
-using Stl.Fusion;
-
 namespace Samples.HelloCart.V1;
 
 public class AppV1 : AppBase

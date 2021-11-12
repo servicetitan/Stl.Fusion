@@ -1,6 +1,4 @@
-using System.Collections.Immutable;
 using Samples.HelloCart.V2;
-using Stl.Fusion;
 using Stl.Fusion.EntityFramework;
 
 namespace Samples.HelloCart.V3;

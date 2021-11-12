@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="latest" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+  <!-- Global usings -->
+  <ItemGroup>
+    <Using Include="System" />
+    <Using Include="System.Collections" />
+    <Using Include="System.Collections.Immutable" />
+    <Using Include="System.Collections.Concurrent" />
+    <Using Include="System.Linq" />
+    <Using Include="System.Reactive" /> <!-- Mainly for Unit type -->
+    <Using Include="System.Text" />
+    <Using Include="System.Threading" />
+    <Using Include="System.Threading.Tasks" />
+    <Using Include="System.Threading.Channels" />
+    <Using Include="Stl" />
+    <Using Include="Stl.Async" />
+    <Using Include="Stl.Channels" />
+    <Using Include="Stl.Collections" />
+    <Using Include="Stl.CommandR" />
+    <Using Include="Stl.CommandR.Configuration" />
+    <Using Include="Stl.CommandR.Commands" />
+    <Using Include="Stl.Fusion" />
+    <Using Include="Stl.Fusion.Authentication" />
+    <Using Include="Stl.Fusion.Operations" />
+    <Using Include="Stl.Reflection" />
+    <Using Include="Stl.Serialization" />
+    <Using Include="Stl.Text" />
+    <Using Include="Stl.Time" />
+    <Using Include="Microsoft.Extensions.Logging" />
+    <Using Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+</Project>

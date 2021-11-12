@@ -1,4 +1,3 @@
-using Stl.Fusion;
 using Stl.Fusion.EntityFramework;
 
 namespace Samples.HelloCart.V2;
