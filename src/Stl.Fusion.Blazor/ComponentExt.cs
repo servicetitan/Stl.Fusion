@@ -50,14 +50,14 @@ public static class ComponentExt
                 var pValue = Expression.Parameter(typeof(object), "value");
                 var getter = Expression.Lambda<Func<IComponent, object>>(
                     Expression.Property(
-                        Expression.ConvertChecked(pComponent, type),
+                        Expression.Convert(pComponent, type),
                         property),
                     pComponent
                 ).Compile();
                 var setter = Expression.Lambda<Action<IComponent, object>>(
                     Expression.Assign(
-                        Expression.Property(Expression.ConvertChecked(pComponent, type), property),
-                        Expression.ConvertChecked(pValue, property.PropertyType)),
+                        Expression.Property(Expression.Convert(pComponent, type), property),
+                        Expression.Convert(pValue, property.PropertyType)),
                     pComponent, pValue
                 ).Compile();
                 var parameter = new ComponentParameterInfo() {

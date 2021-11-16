@@ -72,7 +72,7 @@ public static class PropertyInfoExt
                 return r;
             var pObject = Expression.Parameter(typeof(object), "object");
             var eAccess = Expression.Property(
-                Expression.ConvertChecked(pObject, type),
+                Expression.Convert(pObject, type),
                 propertyInfo);
             var body = isValueUntyped
                 ? (Expression) Expression.Convert(eAccess, typeof(object))
@@ -113,13 +113,13 @@ public static class PropertyInfoExt
                 return r;
             var pObject = Expression.Parameter(typeof(object), "object");
             var lValue = Expression.Property(
-                Expression.ConvertChecked(pObject, type),
+                Expression.Convert(pObject, type),
                 propertyInfo);
             var pValue = Expression.Parameter(lValue.Type, "value");
             var rValue = (Expression) pValue;
             if (isValueUntyped) {
                 pValue = Expression.Parameter(typeof(object), "value");
-                rValue = Expression.ConvertChecked(pValue, lValue.Type);
+                rValue = Expression.Convert(pValue, lValue.Type);
             }
             var eAssign = Expression.Assign(lValue, rValue);
             var eReturnTarget = Expression.Label();
