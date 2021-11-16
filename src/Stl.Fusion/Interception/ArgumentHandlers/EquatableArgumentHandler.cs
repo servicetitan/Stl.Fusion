@@ -32,7 +32,7 @@ public class EquatableArgumentHandler<T> : ArgumentHandler
             Expression.ReferenceEqual(eSrc, eNull),
             Expression.Constant(0),
             Expression.Call(
-                Expression.ConvertChecked(eSrc, tType),
+                Expression.Convert(eSrc, tType),
                 mGetHashCode)
         );
         GetHashCodeFunc = (Func<object?, int>)
@@ -45,9 +45,9 @@ public class EquatableArgumentHandler<T> : ArgumentHandler
             Expression.ReferenceEqual(eSrc, eNull),
             Expression.Condition(Expression.ReferenceEqual(eOther, eNull), eTrue, eFalse),
             Expression.Call(
-                Expression.ConvertChecked(eSrc, tType),
+                Expression.Convert(eSrc, tType),
                 mEquals,
-                Expression.ConvertChecked(eOther, tType))
+                Expression.Convert(eOther, tType))
         );
         EqualsFunc = (Func<object?, object?, bool>)
             Expression.Lambda(equalsBody, eSrc, eOther).Compile();

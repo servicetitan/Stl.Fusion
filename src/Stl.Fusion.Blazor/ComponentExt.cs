@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Linq.Expressions;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.RenderTree;
+using Stl.Internal;
 
 namespace Stl.Fusion.Blazor;
 
@@ -46,24 +47,12 @@ public static class ComponentExt
                 var comparer = comparerType != null
                     ? ParameterComparer.Get(comparerType)
                     : ParameterComparer.Default;
-                var pComponent = Expression.Parameter(typeof(IComponent), "component");
-                var pValue = Expression.Parameter(typeof(object), "value");
-                var getter = Expression.Lambda<Func<IComponent, object>>(
-                    Expression.ConvertChecked(
-                        Expression.Property(
-                            Expression.ConvertChecked(pComponent, type),
-                            property),
-                        typeof(object)),
-                    pComponent
-                ).Compile();
-                var setter = Expression.Lambda<Action<IComponent, object>>(
-                    Expression.Assign(
-                        Expression.Property(
-                            Expression.ConvertChecked(pComponent, type),
-                            property),
-                        Expression.ConvertChecked(pValue, property.PropertyType)),
-                    pComponent, pValue
-                ).Compile();
+                var getter = type.GetGetter(property, true) as Func<IComponent, object>;
+                if (getter == null)
+                    throw Errors.InternalError($"Couldn't build getter delegate for {property}.");
+                var setter = type.GetSetter(property, true) as Action<IComponent, object>;
+                if (setter == null)
+                    throw Errors.InternalError($"Couldn't build setter delegate for {property}.");
                 var parameter = new ComponentParameterInfo() {
                     Property = property,
                     IsCascading = cpa != null,
