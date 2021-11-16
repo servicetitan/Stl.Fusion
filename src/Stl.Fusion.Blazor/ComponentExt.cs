@@ -49,14 +49,18 @@ public static class ComponentExt
                 var pComponent = Expression.Parameter(typeof(IComponent), "component");
                 var pValue = Expression.Parameter(typeof(object), "value");
                 var getter = Expression.Lambda<Func<IComponent, object>>(
-                    Expression.Property(
-                        Expression.ConvertChecked(pComponent, type),
-                        property),
+                    Expression.ConvertChecked(
+                        Expression.Property(
+                            Expression.ConvertChecked(pComponent, type),
+                            property),
+                        typeof(object)),
                     pComponent
                 ).Compile();
                 var setter = Expression.Lambda<Action<IComponent, object>>(
                     Expression.Assign(
-                        Expression.Property(Expression.ConvertChecked(pComponent, type), property),
+                        Expression.Property(
+                            Expression.ConvertChecked(pComponent, type),
+                            property),
                         Expression.ConvertChecked(pValue, property.PropertyType)),
                     pComponent, pValue
                 ).Compile();
