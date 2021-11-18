@@ -44,7 +44,13 @@ public class PluginSetInfo
         {
             result ??= new HashSet<Assembly>();
             foreach (var referenceName in assembly.GetReferencedAssemblies()) {
-                var reference = Assembly.Load(referenceName);
+                Assembly reference;
+                try {
+                    reference = Assembly.Load(referenceName);
+                }
+                catch {
+                    continue; // No assembly -> we simply skip it
+                }
                 if (result.Add(reference))
                     GetAllDependencies(reference, result);
             }
