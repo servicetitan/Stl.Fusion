@@ -98,7 +98,7 @@ public readonly struct FusionRestEaseClientBuilder
             throw Internal.Errors.InterfaceTypeExpected(serviceType, true, nameof(serviceType));
         if (!(clientType.IsInterface && clientType.IsVisible))
             throw Internal.Errors.InterfaceTypeExpected(clientType, true, nameof(clientType));
-        clientName ??= clientType.FullName;
+        clientName ??= clientType.FullName ?? "";
 
         object Factory(IServiceProvider c)
         {
@@ -141,7 +141,7 @@ public readonly struct FusionRestEaseClientBuilder
             throw Internal.Errors.InterfaceTypeExpected(serviceType, true, nameof(serviceType));
         if (!(clientType.IsInterface && clientType.IsVisible))
             throw Internal.Errors.InterfaceTypeExpected(clientType, true, nameof(clientType));
-        clientName ??= clientType.FullName;
+        clientName ??= clientType.FullName ?? "";
         if (Services.Any(d => d.ServiceType == serviceType))
             return this;
         var clientAccessorType = typeof(ClientAccessor<>).MakeGenericType(serviceType);

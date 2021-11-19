@@ -1,5 +1,6 @@
 namespace Stl.Compatibility;
 
+[StructLayout(LayoutKind.Auto)]
 public readonly struct AsyncDisposableAdapter<T> : IAsyncDisposable
 #if !NETSTANDARD2_0
     where T : IAsyncDisposable?
@@ -7,7 +8,7 @@ public readonly struct AsyncDisposableAdapter<T> : IAsyncDisposable
     where T : IDisposable?
 #endif
 {
-    public readonly T Target;
+    public T Target { get; }
 
     public AsyncDisposableAdapter(T target)
         => Target = target;
@@ -23,4 +24,7 @@ public readonly struct AsyncDisposableAdapter<T> : IAsyncDisposable
         return ValueTaskExt.CompletedTask;
 #endif
     }
+
+    public ConfiguredAsyncDisposableAdapter<T> ConfigureAwait(bool continueOnCapturedContext)
+        => new(this, continueOnCapturedContext);
 }

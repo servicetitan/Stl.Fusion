@@ -52,7 +52,7 @@ public class SubscriptionProcessor<T> : SubscriptionProcessor
 
         var currentCts = (CancellationTokenSource?) null;
         await using var registered = cancellationToken.Register(() => currentCts?.Cancel())
-            .ToAsyncDisposableAdapter();
+            .ToAsyncDisposableAdapter().ConfigureAwait(false);
         try {
             var incomingMessageTask = incomingChannelReader.ReadAsync(cancellationToken).AsTask();
             while (true) {

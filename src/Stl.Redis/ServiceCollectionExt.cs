@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using StackExchange.Redis;
 
 namespace Stl.Redis;
 
@@ -11,11 +12,10 @@ public static class ServiceCollectionExt
         Func<IServiceProvider, string> configurationFactory,
         string keyPrefix = "")
     {
-        services.TryAddSingleton<RedisHub>();
         services.AddSingleton(c => {
-            var redisHub = c.GetRequiredService<RedisHub>();
             var configuration = configurationFactory.Invoke(c);
-            return new RedisDb(redisHub.GetMultiplexer(configuration), keyPrefix);
+            var multiplexer = ConnectionMultiplexer.Connect(configuration);
+            return new RedisDb(multiplexer, keyPrefix);
         });
         return services;
     }
@@ -24,11 +24,18 @@ public static class ServiceCollectionExt
         string configuration,
         string keyPrefix = "")
     {
-        services.TryAddSingleton<RedisHub>();
-        services.AddSingleton(c => {
-            var redisHub = c.GetRequiredService<RedisHub>();
-            return new RedisDb(redisHub.GetMultiplexer(configuration), keyPrefix);
+        services.AddSingleton(_ => {
+            var multiplexer = ConnectionMultiplexer.Connect(configuration);
+            return new RedisDb(multiplexer, keyPrefix);
         });
+        return services;
+    }
+
+    public static IServiceCollection AddRedisDb(this IServiceCollection services,
+        IConnectionMultiplexer connectionMultiplexer,
+        string keyPrefix = "")
+    {
+        services.AddSingleton(new RedisDb(connectionMultiplexer, keyPrefix));
         return services;
     }
 
@@ -40,11 +47,10 @@ public static class ServiceCollectionExt
         string? keyPrefix = null)
     {
         keyPrefix ??= typeof(TContext).Name;
-        services.TryAddSingleton<RedisHub>();
         services.AddSingleton(c => {
-            var redisHub = c.GetRequiredService<RedisHub>();
             var configuration = configurationFactory.Invoke(c);
-            return new RedisDb<TContext>(redisHub.GetMultiplexer(configuration), keyPrefix);
+            var multiplexer = ConnectionMultiplexer.Connect(configuration);
+            return new RedisDb(multiplexer, keyPrefix);
         });
         return services;
     }
@@ -55,11 +61,20 @@ public static class ServiceCollectionExt
         string? keyPrefix = null)
     {
         keyPrefix ??= typeof(TContext).Name;
-        services.TryAddSingleton<RedisHub>();
-        services.AddSingleton(c => {
-            var redisHub = c.GetRequiredService<RedisHub>();
-            return new RedisDb<TContext>(redisHub.GetMultiplexer(configuration), keyPrefix);
+        services.AddSingleton(_ => {
+            var multiplexer = ConnectionMultiplexer.Connect(configuration);
+            return new RedisDb(multiplexer, keyPrefix);
         });
+        return services;
+    }
+
+    public static IServiceCollection AddRedisDb<TContext>(
+        this IServiceCollection services,
+        IConnectionMultiplexer connectionMultiplexer,
+        string? keyPrefix = null)
+    {
+        keyPrefix ??= typeof(TContext).Name;
+        services.AddSingleton(new RedisDb(connectionMultiplexer, keyPrefix));
         return services;
     }
 }

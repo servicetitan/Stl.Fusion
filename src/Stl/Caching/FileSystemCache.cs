@@ -18,7 +18,7 @@ public abstract class FileSystemCacheBase<TKey, TValue> : AsyncCacheBase<TKey, T
     {
         try {
             await using var fileStreamWrapper = OpenFile(GetFileName(key), false, cancellationToken)
-                .ToAsyncDisposableAdapter();
+                .ToAsyncDisposableAdapter().ConfigureAwait(false);
             var fileStream = fileStreamWrapper.Target;
             var pairs = Deserialize(await GetText(fileStream, cancellationToken).ConfigureAwait(false));
             return pairs != null && pairs.TryGetValue(key, out var v) ? v : Option<TValue>.None;
@@ -35,7 +35,9 @@ public abstract class FileSystemCacheBase<TKey, TValue> : AsyncCacheBase<TKey, T
             // i.e. the file is locked for modifications between read & write operations.
             var fileName = GetFileName(key);
             var newText = (string?) null;
-            await using (var fileStreamWrapper = OpenFile(fileName, true, cancellationToken).ToAsyncDisposableAdapter()) {
+            var fileStreamWrapper = OpenFile(fileName, true, cancellationToken)
+                .ToAsyncDisposableAdapter().ConfigureAwait(false);
+            await using (var _ = fileStreamWrapper) {
                 var fileStream = fileStreamWrapper.Target;
                 var originalText = await GetText(fileStream, cancellationToken).ConfigureAwait(false);
                 var pairs =
@@ -85,7 +87,7 @@ public abstract class FileSystemCacheBase<TKey, TValue> : AsyncCacheBase<TKey, T
             return;
         fileStream.Seek(0, SeekOrigin.Begin);
         await using var writerWrapper = new StreamWriter(fileStream, Encoding.UTF8, BufferSize, true)
-            .ToAsyncDisposableAdapter();
+            .ToAsyncDisposableAdapter().ConfigureAwait(false);
         var writer = writerWrapper.Target!;
         await writer.WriteAsync(text ?? "").ConfigureAwait(false);
         fileStream.SetLength(fileStream.Position);

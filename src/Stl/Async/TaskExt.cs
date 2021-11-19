@@ -80,7 +80,7 @@ public static class TaskExt
 
         await using var _ = cancellationToken
             .Register(state => ((CancellationTokenSource) state!).Cancel(), cts)
-            .ToAsyncDisposableAdapter();
+            .ToAsyncDisposableAdapter().ConfigureAwait(false);
 
         var delayTask = clock.Delay(timeout, ctsToken);
         completedTask = await Task.WhenAny(task, delayTask).ConfigureAwait(false);
@@ -109,7 +109,7 @@ public static class TaskExt
         var ctsToken = cts.Token;
         await using var _ = cancellationToken
             .Register(state => ((CancellationTokenSource) state!).Cancel(), cts)
-            .ToAsyncDisposableAdapter();
+            .ToAsyncDisposableAdapter().ConfigureAwait(false);
 
         var delayTask = clock.Delay(timeout, ctsToken);
         completedTask = await Task.WhenAny(task, delayTask).ConfigureAwait(false);

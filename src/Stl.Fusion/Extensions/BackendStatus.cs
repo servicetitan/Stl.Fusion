@@ -39,7 +39,7 @@ public class BackendStatus : IBackendStatus
             .Capture(ct => HitBackend(session, backend, ct), cancellationToken)
             .ConfigureAwait(false);
         // ReSharper disable once HeapView.PossibleBoxingAllocation
-        var usedSet = (IRefHashSetSlim<IComputedImpl>) UsedField.GetValue(backendComputed);
+        var usedSet = (IRefHashSetSlim<IComputedImpl>) UsedField.GetValue(backendComputed)!;
         foreach (var usedComputed in usedSet.Items) {
             if (usedComputed is not IReplicaMethodComputed replicaMethodComputed)
                 continue;
@@ -66,7 +66,7 @@ public class BackendStatus : IBackendStatus
         string backend,
         CancellationToken cancellationToken = default)
     {
-        await Auth.GetSessionInfo(session, cancellationToken);
+        await Auth.GetSessionInfo(session, cancellationToken).ConfigureAwait(false);
         return default;
     }
 }
