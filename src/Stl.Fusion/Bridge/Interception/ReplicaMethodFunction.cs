@@ -90,11 +90,13 @@ public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>
             ComputeContext.Current.TryCapture(result);
             return result;
         }
-        if (output.HasError) {
-            // Try to pull the actual error first
-            var errorPsi = (PublicationStateInfo<object>) psi;
-            if (errorPsi.Output.HasError)
+        if (output.Error != null) {
+            // Try to pull the server-side error first
+            if (psi is PublicationStateInfo<object> { Output.HasError: true } errorPsi)
                 output = Result.Error<T>(errorPsi.Output.Error!);
+            else
+                // No server-side error -> it's a client-side error
+                output = Result.Error<T>(output.Error);
             // We need a unique LTag here, so we use a range that's supposed
             // to be unused by LTagGenerators.
             if (psi.Version == default)
