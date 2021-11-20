@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using StackExchange.Redis;
 using Stl.Fusion.EntityFramework.Redis.Operations;
 using Stl.Fusion.EntityFramework.Operations;
 using Stl.Redis;
@@ -9,6 +10,8 @@ namespace Stl.Fusion.EntityFramework.Redis;
 
 public static class DbContextBuilderExt
 {
+    // AddRedisDb
+
     public static IServiceCollection AddRedisDb<TDbContext>(
         this DbContextBuilder<TDbContext> dbContextBuilder,
         Func<IServiceProvider, string> configurationFactory,
@@ -22,6 +25,15 @@ public static class DbContextBuilderExt
         string? keyPrefix = null)
         where TDbContext : DbContext
         => dbContextBuilder.Services.AddRedisDb<TDbContext>(configuration, keyPrefix);
+
+    public static IServiceCollection AddRedisDb<TDbContext>(
+        this DbContextBuilder<TDbContext> dbContextBuilder,
+        IConnectionMultiplexer connectionMultiplexer,
+        string? keyPrefix = null)
+        where TDbContext : DbContext
+        => dbContextBuilder.Services.AddRedisDb<TDbContext>(connectionMultiplexer, keyPrefix);
+
+    // AddRedisOperationLogChangeTracking
 
     public static DbContextBuilder<TDbContext> AddRedisOperationLogChangeTracking<TDbContext>(
         this DbContextBuilder<TDbContext> dbContextBuilder,
