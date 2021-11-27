@@ -39,7 +39,6 @@ public struct ArrayBuffer<T> : IDisposable
 #pragma warning restore MA0012
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private ArrayBuffer(bool mustClean, int capacity)
     {
         MustClean = mustClean;
@@ -50,12 +49,11 @@ public struct ArrayBuffer<T> : IDisposable
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ArrayBuffer<T> Lease(bool mustClean, int capacity = MinCapacity)
-        => new ArrayBuffer<T>(mustClean, capacity);
+        => new(mustClean, capacity);
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ArrayBuffer<T> LeaseAndSetCount(bool mustClean, int count)
-        => new ArrayBuffer<T>(mustClean, count) {Count = count};
+        => new(mustClean, count) { Count = count };
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Dispose()
     {
         // ReSharper disable once ConditionIsAlwaysTrueOrFalse
@@ -64,12 +62,11 @@ public struct ArrayBuffer<T> : IDisposable
         Buffer = null!;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Span<T>.Enumerator GetEnumerator() => Span.GetEnumerator();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T[] ToArray() => Span.ToArray();
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+
     public List<T> ToList()
     {
         var list = new List<T>(Count);
@@ -88,14 +85,12 @@ public struct ArrayBuffer<T> : IDisposable
         Buffer[index] = item;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AddRange(IEnumerable<T> items)
     {
         foreach (var item in items)
             Add(item);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AddRange(IReadOnlyCollection<T> items)
     {
         EnsureCapacity(Count + items.Count);
@@ -103,7 +98,13 @@ public struct ArrayBuffer<T> : IDisposable
             Add(item);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void AddRange(ReadOnlySpan<T> span)
+    {
+        EnsureCapacity(_count + span.Length);
+        span.CopyTo(Buffer.AsSpan()[_count..]);
+        _count += span.Length;
+    }
+
     public void Add(T item)
     {
         if (Count >= Capacity)
@@ -136,14 +137,12 @@ public struct ArrayBuffer<T> : IDisposable
         source.CopyTo(target);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Clear()
     {
         ChangeLease(Pool.Rent(MinCapacity));
         Count = 0;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void CopyTo(T[] array, int arrayIndex)
         => Buffer.CopyTo(array.AsSpan().Slice(arrayIndex));
 
@@ -157,7 +156,6 @@ public struct ArrayBuffer<T> : IDisposable
 
     // Private methods
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int ComputeCapacity(int requestedCapacity, int minCapacity)
     {
         if (requestedCapacity < minCapacity)
@@ -167,7 +165,6 @@ public struct ArrayBuffer<T> : IDisposable
         return (int) Bits.GreaterOrEqualPowerOf2((uint) requestedCapacity);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ChangeLease(T[] newLease)
     {
         Pool.Return(Buffer, MustClean);

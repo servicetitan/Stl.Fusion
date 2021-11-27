@@ -57,7 +57,7 @@ public class ArrayBufferTest
             var capacity = b.Capacity;
             capacity.Should().BeGreaterOrEqualTo(minCapacity);
             var numbers = Enumerable.Range(0, capacity + 1).ToArray();
-            b.AddRange(numbers);
+            b.AddRange(numbers.AsSpan());
             b.Capacity.Should().BeGreaterOrEqualTo(capacity << 1);
         }
 

@@ -10,7 +10,9 @@ public interface IMatchingTypeFinder
 
 public class MatchingTypeFinder : IMatchingTypeFinder
 {
-    private static volatile ImmutableHashSet<Assembly> _assemblies = ImmutableHashSet<Assembly>.Empty;
+    private static volatile ImmutableHashSet<Assembly> _assemblies =
+        ImmutableHashSet<Assembly>.Empty
+            .Add(typeof(MatchingTypeFinder).Assembly);
 
     public static ImmutableHashSet<Assembly> Assemblies {
         get => _assemblies;

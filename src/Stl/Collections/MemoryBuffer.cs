@@ -63,12 +63,11 @@ public ref struct MemoryBuffer<T>
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static MemoryBuffer<T> Lease(bool mustClean, int capacity = MinCapacity)
-        => new MemoryBuffer<T>(mustClean, capacity);
+        => new(mustClean, capacity);
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static MemoryBuffer<T> LeaseAndSetCount(bool mustClean, int count)
-        => new MemoryBuffer<T>(mustClean, count) { Count = count };
+        => new(mustClean, count) { Count = count };
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Release()
     {
         if (MustClean)
@@ -82,7 +81,7 @@ public ref struct MemoryBuffer<T>
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T[] ToArray() => Span.ToArray();
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+
     public List<T> ToList()
     {
         var list = new List<T>(Count);
@@ -91,14 +90,12 @@ public ref struct MemoryBuffer<T>
         return list;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AddRange(IEnumerable<T> items)
     {
         foreach (var item in items)
             Add(item);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AddRange(IReadOnlyCollection<T> items)
     {
         EnsureCapacity(Count + items.Count);
@@ -106,7 +103,13 @@ public ref struct MemoryBuffer<T>
             Add(item);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void AddRange(ReadOnlySpan<T> span)
+    {
+        EnsureCapacity(_count + span.Length);
+        span.CopyTo(BufferSpan[_count..]);
+        _count += span.Length;
+    }
+
     public void Add(T item)
     {
         if (Count >= Capacity)
@@ -139,14 +142,12 @@ public ref struct MemoryBuffer<T>
         source.CopyTo(target);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Clear()
     {
         ChangeLease(Pool.Rent(MinCapacity));
         Count = 0;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void CopyTo(T[] array, int arrayIndex)
         => BufferSpan.CopyTo(array.AsSpan().Slice(arrayIndex));
 
@@ -160,7 +161,6 @@ public ref struct MemoryBuffer<T>
 
     // Private methods
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int ComputeCapacity(int capacity, int minCapacity)
     {
         if (capacity < minCapacity)
@@ -170,7 +170,6 @@ public ref struct MemoryBuffer<T>
         return (int) Bits.GreaterOrEqualPowerOf2((uint) capacity);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ChangeLease(IMemoryOwner<T> newLease)
     {
         if (MustClean)
