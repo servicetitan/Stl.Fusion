@@ -28,7 +28,7 @@ public abstract class Arithmetics<T> : IArithmetics
     public virtual long DivNonNegativeRem(T a, T b, out T reminder)
     {
         var d = DivRem(a, b, out reminder);
-        if (Comparer<T>.Default.Compare(reminder, default) < 0) {
+        if (Comparer<T>.Default.Compare(reminder, default!) < 0) {
             d--;
             reminder = Add(reminder, b);
         }

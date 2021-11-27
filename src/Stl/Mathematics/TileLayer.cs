@@ -29,7 +29,7 @@ public class TileLayer<T>
         var size = a.Subtract(range.End, range.Start);
         if (EqualityComparer<T>.Default.Equals(size, TileSize)) {
             var mod = a.Mod(a.Subtract(range.Start, Zero), TileSize);
-            if (EqualityComparer<T>.Default.Equals(mod, default)) {
+            if (EqualityComparer<T>.Default.Equals(mod, default!)) {
                 tile = new(range, this);
                 return true;
             }
