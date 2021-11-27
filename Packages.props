@@ -103,6 +103,7 @@
     <PackageReference Update="System.Net.WebSockets.Client" Version="4.3.*" />
     <PackageReference Update="System.Reactive" Version="5.0.*" />
     <PackageReference Update="System.Runtime.Loader" Version="4.3.*" />
+    <PackageReference Update="System.Runtime.Experimental" Version="$(AspNetCoreVersion)" />
     <PackageReference Update="System.Text.Json" Version="6.0.*" />
     <PackageReference Update="System.Threading.Channels" Version="6.0.*" />
     <PackageReference Update="UAParser" Version="3.1.*" />

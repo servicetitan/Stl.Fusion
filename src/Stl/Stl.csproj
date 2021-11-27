@@ -6,6 +6,9 @@
     <Description>Stl ("ServiceTitan Library") is a collection of <!--
     -->relatively small abstractions or methods we couldn't find in BCL. <!--
     -->A part of Stl.Fusion.</Description>
+    <!--
+    <EnablePreviewFeatures>true</EnablePreviewFeatures>
+    -->
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,6 +23,9 @@
     <PackageReference Include="System.Collections.Immutable" />
     <PackageReference Include="System.Linq.Async" />
     <PackageReference Include="System.Reactive" />
+    <!--    
+    <PackageReference Include="System.Runtime.Experimental" />
+    -->
     <PackageReference Include="System.Threading.Channels" />
     <PackageReference Include="ZString" />
   </ItemGroup>
