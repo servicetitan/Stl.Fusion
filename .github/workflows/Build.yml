@@ -28,6 +28,9 @@ jobs:
           dotnet-version: "6.0.x"
           include-prerelease: false
 
+      - name: Install WASM tools
+        run: dotnet workload install wasm-tools
+
       - name: Restore NuGet Packages & Tools
         run: dotnet run -p build -c Release --no-launch-profile -- restore restore-tools
 
