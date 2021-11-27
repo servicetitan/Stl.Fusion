@@ -35,10 +35,10 @@ jobs:
         run: dotnet run -p build -c Release --no-launch-profile -- restore restore-tools
 
       - name: Build
-        run: dotnet run -p build -c Release --no-launch-profile -- --configuration Debug --framework net6.0 build
+        run: dotnet run -p build -c Release --no-launch-profile -- --configuration Debug build
 
       - name: Run tests
-        run: dotnet run -p build -c Release --no-launch-profile -- --configuration Debug --framework net6.0 coverage
+        run: dotnet run -p build -c Release --no-launch-profile -- --configuration Debug coverage
 
       - name: Codecov
         uses: codecov/codecov-action@v1.0.13
