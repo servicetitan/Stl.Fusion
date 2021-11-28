@@ -24,6 +24,7 @@ using Stl.Fusion.Tests.Services;
 using Stl.Fusion.Tests.UIModels;
 using Stl.Fusion.Internal;
 using Stl.Fusion.Server;
+using Stl.Locking;
 using Stl.RegisterAttributes;
 using Stl.Testing;
 using Stl.Testing.Collections;
@@ -57,6 +58,8 @@ public class FusionTestOptions
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
 public class FusionTestBase : TestBase, IAsyncLifetime
 {
+    private static readonly AsyncLock InitializeLock = new(ReentryMode.CheckedFail);
+
     public FusionTestOptions Options { get; }
     public bool IsLoggingEnabled { get; set; } = true;
     public FilePath SqliteDbPath { get; protected set; }
@@ -73,6 +76,9 @@ public class FusionTestBase : TestBase, IAsyncLifetime
     public FusionTestBase(ITestOutputHelper @out, FusionTestOptions? options = null) : base(@out)
     {
         Options = options ?? new FusionTestOptions();
+        var appTempDir = FilePath.GetApplicationTempDirectory("", true);
+        SqliteDbPath = appTempDir & FilePath.GetHashedName($"{GetType().Name}_{GetType().Namespace}.db");
+
         // ReSharper disable once VirtualMemberCallInConstructor
         Services = CreateServices();
         WebHost = Services.GetRequiredService<FusionTestWebHost>();
@@ -86,6 +92,8 @@ public class FusionTestBase : TestBase, IAsyncLifetime
 
     public override async Task InitializeAsync()
     {
+        using var __ = await InitializeLock.Lock().ConfigureAwait(false);
+
         for (var i = 0; i < 10 && File.Exists(SqliteDbPath); i++) {
             try {
                 File.Delete(SqliteDbPath);
@@ -178,8 +186,6 @@ public class FusionTestBase : TestBase, IAsyncLifetime
                 .RegisterFrom(testType.Assembly);
 
             // DbContext & related services
-            var appTempDir = FilePath.GetApplicationTempDirectory("", true);
-            SqliteDbPath = appTempDir & FilePath.GetHashedName($"{testType.Name}_{testType.Namespace}.db");
             services.AddPooledDbContextFactory<TestDbContext>(builder => {
                 switch (Options.DbType) {
                 case FusionTestDbType.Sqlite:
