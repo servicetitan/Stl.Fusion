@@ -119,15 +119,22 @@ public class FusionTestBase : TestBase, IAsyncLifetime
 
     public override async Task DisposeAsync()
     {
+        if (ClientServices is IAsyncDisposable adcs)
+            await adcs.DisposeAsync();
         if (ClientServices is IDisposable dcs)
             dcs.Dispose();
+
         try {
             await Services.HostedServices().Stop();
         }
-        finally {
-            if (Services is IDisposable ds)
-                ds.Dispose();
+        catch {
+            // Intended
         }
+
+        if (Services is IAsyncDisposable ads)
+            await ads.DisposeAsync();
+        if (Services is IDisposable ds)
+            ds.Dispose();
     }
 
     protected IServiceProvider CreateServices(bool isClient = false)

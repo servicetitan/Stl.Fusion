@@ -16,7 +16,7 @@ public static class WebTestExt
     }
 
     public static Uri GetLocalUri(int port, string protocol = "http")
-        => new($"{protocol}://localhost:{port}");
+        => new($"{protocol}://127.0.0.1:{port}");
 
     public static int GetUnusedTcpPort()
     {
