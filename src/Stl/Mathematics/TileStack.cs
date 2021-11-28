@@ -73,6 +73,15 @@ public sealed class TileStack<T>
             ? tile
             : throw Errors.InvalidTileBoundaries(nameof(range));
 
+    public bool IsTile(Range<T> range)
+        => TryGetTile(range, out _);
+
+    public void AssertIsTile(Range<T> range)
+    {
+        if (!TryGetTile(range, out _))
+            throw Errors.InvalidTileBoundaries(nameof(range));
+    }
+
     public Tile<T>[] GetAllTiles(T point)
     {
         var result = new Tile<T>[Layers.Length];

@@ -52,6 +52,15 @@ public class TileLayer<T>
         return new(start, end, this);
     }
 
+    public bool IsTile(Range<T> range)
+        => TryGetTile(range, out _);
+
+    public void AssertIsTile(Range<T> range)
+    {
+        if (!TryGetTile(range, out _))
+            throw Errors.InvalidTileBoundaries(nameof(range));
+    }
+
     public Tile<T>[] GetCoveringTiles(Range<T> range)
     {
         var tiles = ArrayBuffer<Tile<T>>.Lease(false);
