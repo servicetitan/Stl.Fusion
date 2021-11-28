@@ -2,11 +2,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Messages;
 using Stl.Fusion.Tests.Services;
-using Stl.Testing.Collections;
 
 namespace Stl.Fusion.Tests;
 
-[Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
 public class PublisherTest : FusionTestBase
 {
     public PublisherTest(ITestOutputHelper @out) : base(@out) { }

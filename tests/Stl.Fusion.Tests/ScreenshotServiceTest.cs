@@ -1,11 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Tests.Services;
 using Stl.OS;
-using Stl.Testing.Collections;
 
 namespace Stl.Fusion.Tests;
 
-[Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
 public class ScreenshotServiceTest : FusionTestBase
 {
     public ScreenshotServiceTest(ITestOutputHelper @out) : base(@out) { }

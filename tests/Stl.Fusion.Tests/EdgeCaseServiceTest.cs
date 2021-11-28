@@ -7,7 +7,6 @@ using Stl.Testing.Collections;
 
 namespace Stl.Fusion.Tests;
 
-[Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
 public class EdgeCaseServiceTest : FusionTestBase
 {
     private Type ThrowIfContainsErrorExceptionType { get; set; } =

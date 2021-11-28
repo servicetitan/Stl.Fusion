@@ -1,10 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Extensions;
-using Stl.Testing.Collections;
 
 namespace Stl.Fusion.Tests.Extensions;
 
-[Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
 public class NestedOperationLoggerTest : FusionTestBase
 {
     public NestedOperationLoggerTest(ITestOutputHelper @out)

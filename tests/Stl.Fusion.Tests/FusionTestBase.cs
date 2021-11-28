@@ -26,6 +26,7 @@ using Stl.Fusion.Internal;
 using Stl.Fusion.Server;
 using Stl.RegisterAttributes;
 using Stl.Testing;
+using Stl.Testing.Collections;
 using Stl.Testing.Output;
 using Stl.Time;
 using Stl.Time.Testing;
@@ -53,6 +54,7 @@ public class FusionTestOptions
     public bool UseLogging { get; set; } = true;
 }
 
+[Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
 public class FusionTestBase : TestBase, IAsyncLifetime
 {
     public FusionTestOptions Options { get; }

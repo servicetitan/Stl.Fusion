@@ -3,11 +3,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
 using Stl.OS;
-using Stl.Testing.Collections;
 
 namespace Stl.Fusion.Tests;
 
-[Collection(nameof(PerformanceTests)), Trait("Category", nameof(PerformanceTests))]
 public abstract class PerformanceTestBase : FusionTestBase
 {
     public int UserCount = 1000;

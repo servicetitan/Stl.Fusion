@@ -2,11 +2,9 @@ using System.Security;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Authentication.Commands;
-using Stl.Testing.Collections;
 
 namespace Stl.Fusion.Tests.Authentication;
 
-[Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
 public class SqliteAuthServiceTest : AuthServiceTestBase
 {
     public SqliteAuthServiceTest(ITestOutputHelper @out)
@@ -14,14 +12,12 @@ public class SqliteAuthServiceTest : AuthServiceTestBase
 }
 
 // Internal = disabled, currently GitHub can't run such tests
-[Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
 internal class PostgreSqlAuthServiceTest : AuthServiceTestBase
 {
     public PostgreSqlAuthServiceTest(ITestOutputHelper @out)
         : base(@out, new FusionTestOptions() { DbType = FusionTestDbType.PostgreSql }) { }
 }
 
-[Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
 public class InMemoryAuthServiceTest : AuthServiceTestBase
 {
     public InMemoryAuthServiceTest(ITestOutputHelper @out)

@@ -1,17 +1,14 @@
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Extensions;
-using Stl.Testing.Collections;
 using Stl.Time.Testing;
 
 namespace Stl.Fusion.Tests.Extensions;
 
-[Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
 public class InMemoryKeyValueStoreTest : KeyValueStoreTestBase
 {
     public InMemoryKeyValueStoreTest(ITestOutputHelper @out) : base(@out, true) { }
 }
 
-[Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
 public class DbKeyValueStoreTest : KeyValueStoreTestBase
 {
     public DbKeyValueStoreTest(ITestOutputHelper @out) : base(@out, false) { }

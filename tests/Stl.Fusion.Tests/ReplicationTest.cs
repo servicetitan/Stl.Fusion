@@ -1,11 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Tests.Services;
-using Stl.Testing.Collections;
 
 namespace Stl.Fusion.Tests;
 
-[Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
 public class ReplicationTest : FusionTestBase, IAsyncLifetime
 {
     public ReplicationTest(ITestOutputHelper @out) : base(@out) { }

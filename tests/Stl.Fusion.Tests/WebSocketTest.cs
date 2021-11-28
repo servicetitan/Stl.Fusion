@@ -3,11 +3,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Interception;
 using Stl.Fusion.Tests.Services;
-using Stl.Testing.Collections;
 
 namespace Stl.Fusion.Tests;
 
-[Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
 public class WebSocketTest : FusionTestBase
 {
     public WebSocketTest(ITestOutputHelper @out, FusionTestOptions? options = null)

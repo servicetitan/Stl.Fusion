@@ -1,10 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Tests.UIModels;
-using Stl.Testing.Collections;
 
 namespace Stl.Fusion.Tests;
 
-[Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
 public class ServerTimeModelTest : FusionTestBase
 {
     public ServerTimeModelTest(ITestOutputHelper @out, FusionTestOptions? options = null) : base(@out, options) { }
