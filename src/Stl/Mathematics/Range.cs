@@ -29,6 +29,8 @@ public readonly struct Range<T> : IEquatable<Range<T>>
     /// </summary>
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public bool IsEmpty => EqualityComparer<T>.Default.Equals(Start, End);
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    public bool IsNegative => Comparer<T>.Default.Compare(Start, End) > 0;
 
     /// <summary>
     /// Creates a new range.
@@ -74,6 +76,11 @@ public readonly struct Range<T> : IEquatable<Range<T>>
     public static implicit operator Range<T>((T Start, T End) source)
         => new(source.Start, source.End);
 
+    // Misc. operations
+
+    public Range<T> Normalize()
+        => IsNegative ? -this : this;
+
     // Equality
 
     public bool Equals(Range<T> other)
@@ -106,4 +113,7 @@ public readonly struct Range<T> : IEquatable<Range<T>>
     /// <returns><code>true</code> if two ranges aren't equal; otherwise, <code>false</code>.</returns>
     public static bool operator !=(Range<T> left, Range<T> right)
         => !left.Equals(right);
+
+    public static Range<T> operator -(Range<T> range)
+            => new(range.End, range.Start);
 }

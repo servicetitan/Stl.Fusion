@@ -18,22 +18,32 @@ internal readonly struct ServiceInfo
 
     public static ServiceInfo For(Type implementationType)
     {
-        using var buffer = ArrayBuffer<RegisterAttribute>.Lease(true);
-        foreach (var attr in implementationType.GetCustomAttributes<RegisterAttribute>(false))
-            buffer.Add(attr);
-        if (buffer.Count == 0)
-            return new ServiceInfo(implementationType);
-        return new ServiceInfo(implementationType, buffer.ToArray());
+        var buffer = ArrayBuffer<RegisterAttribute>.Lease(true);
+        try {
+            foreach (var attr in implementationType.GetCustomAttributes<RegisterAttribute>(false))
+                buffer.Add(attr);
+            if (buffer.Count == 0)
+                return new ServiceInfo(implementationType);
+            return new ServiceInfo(implementationType, buffer.ToArray());
+        }
+        finally {
+            buffer.Release();
+        }
     }
 
     public static ServiceInfo For(Type implementationType, Symbol scope)
     {
-        using var buffer = ArrayBuffer<RegisterAttribute>.Lease(true);
-        foreach (var attr in implementationType.GetCustomAttributes<RegisterAttribute>(false)) {
-            if (StringComparer.Ordinal.Equals(attr.Scope, scope.Value))
-                buffer.Add(attr);
+        var buffer = ArrayBuffer<RegisterAttribute>.Lease(true);
+        try {
+            foreach (var attr in implementationType.GetCustomAttributes<RegisterAttribute>(false)) {
+                if (StringComparer.Ordinal.Equals(attr.Scope, scope.Value))
+                    buffer.Add(attr);
+            }
+            return new ServiceInfo(implementationType, buffer.ToArray());
         }
-        return new ServiceInfo(implementationType, buffer.ToArray());
+        finally {
+            buffer.Release();
+        }
     }
 
     public static ServiceInfo[] ForAll(Assembly assembly)

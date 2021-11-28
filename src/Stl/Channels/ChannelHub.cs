@@ -3,7 +3,7 @@ using Stl.OS;
 namespace Stl.Channels;
 
 public delegate void ChannelAttachedHandler<T>(Channel<T> channel);
-public delegate void ChannelDetachedHandler<T>(Channel<T> channel, ref Collector<ValueTask> taskCollector);
+public delegate void ChannelDetachedHandler<T>(Channel<T> channel, ref ArrayBuffer<ValueTask> taskCollector);
 
 public interface IChannelHub<T> : IAsyncDisposable
 {
@@ -68,7 +68,7 @@ public class ChannelHub<T> : SafeAsyncDisposableBase, IChannelHub<T>
 
     protected virtual async ValueTask OnDetached(Channel<T> channel)
     {
-        var taskCollector = Collector<ValueTask>.New(true);
+        var taskCollector = ArrayBuffer<ValueTask>.Lease(true);
         try {
             Detached?.Invoke(channel, ref taskCollector);
 
@@ -87,7 +87,7 @@ public class ChannelHub<T> : SafeAsyncDisposableBase, IChannelHub<T>
             }
         }
         finally {
-            taskCollector.Dispose();
+            taskCollector.Release();
         }
 
         if (channel is IAsyncDisposable ad)

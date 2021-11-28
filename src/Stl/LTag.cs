@@ -47,8 +47,8 @@ public readonly struct LTag : IEquatable<LTag>
         unsafe {
             Span<char> buffer = stackalloc char[16];
             buffer[0] = '@';
-            var n = MathExt.FormatTo(Value, Base62Digits, buffer.Slice(1));
-            var slice = buffer.Slice(0, n.Length + 1);
+            var n = MathExt.FormatTo(Value, Base62Digits, buffer[1..]);
+            var slice = buffer[..(n.Length + 1)];
 #if !NETSTANDARD2_0
             return new string(slice);
 #else
@@ -81,7 +81,7 @@ public readonly struct LTag : IEquatable<LTag>
             return false;
         if (formattedLTag[0] != '@')
             return false;
-        if (!MathExt.TryParse(formattedLTag.AsSpan().Slice(1), Base62Digits, out var value))
+        if (!MathExt.TryParse(formattedLTag.AsSpan(1), Base62Digits, out var value))
             return false;
         lTag = new LTag(value);
         return true;

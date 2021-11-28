@@ -15,7 +15,7 @@ public static class Combinatorics
             yield break;
         var setSize = source.Length;
         for (var i = setSize - 1; i >= 0; i--)
-            yield return source.Slice(i);
+            yield return source[i..];
     }
 
     public static IEnumerable<List<int>> KOfN(int n, int k, bool exactlyK = true)

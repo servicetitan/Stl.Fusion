@@ -20,7 +20,7 @@ public ref struct MemoryBuffer<T>
 
     public Memory<T> BufferMemory => _lease.Memory;
     public Span<T> BufferSpan { get; private set; }
-    public Span<T> Span => BufferSpan.Slice(0, Count);
+    public Span<T> Span => BufferSpan[..Count];
     public bool MustClean { get; }
     public int Capacity => BufferSpan.Length;
     public int Count {
@@ -103,7 +103,7 @@ public ref struct MemoryBuffer<T>
             Add(item);
     }
 
-    public void AddRange(ReadOnlySpan<T> span)
+    public void AddSpan(ReadOnlySpan<T> span)
     {
         EnsureCapacity(_count + span.Length);
         span.CopyTo(BufferSpan[_count..]);
@@ -124,9 +124,9 @@ public ref struct MemoryBuffer<T>
         var copyLength = Count - index;
         if (copyLength < 0)
             throw new ArgumentOutOfRangeException(nameof(index));
-        var span = BufferSpan.Slice(0, ++Count);
+        var span = BufferSpan[..++Count];
         var source = span.Slice(index, copyLength);
-        var target = span.Slice(index + 1);
+        var target = span[(index + 1)..];
         source.CopyTo(target);
         span[index] = item;
     }
@@ -136,9 +136,9 @@ public ref struct MemoryBuffer<T>
         var copyLength = Count - index - 1;
         if (copyLength < 0)
             throw new ArgumentOutOfRangeException(nameof(index));
-        var span = BufferSpan.Slice(0, Count--);
+        var span = BufferSpan[..Count--];
         var source = span.Slice(index + 1, copyLength);
-        var target = span.Slice(index);
+        var target = span[index..];
         source.CopyTo(target);
     }
 
@@ -149,7 +149,7 @@ public ref struct MemoryBuffer<T>
     }
 
     public void CopyTo(T[] array, int arrayIndex)
-        => BufferSpan.CopyTo(array.AsSpan().Slice(arrayIndex));
+        => BufferSpan.CopyTo(array.AsSpan(arrayIndex));
 
     public void EnsureCapacity(int capacity)
     {

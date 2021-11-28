@@ -9,7 +9,7 @@ namespace Stl.Collections;
 // enumeration scenarios.
 // ArrayBuffer<T> vs MemoryBuffer<T>: they are almost identical, but
 // ArrayBuffer isn't a ref struct, so you can store it in fields.
-public struct ArrayBuffer<T> : IDisposable
+public struct ArrayBuffer<T>
 {
     public const int MinCapacity = 8;
     public const int MaxCapacity = 1 << 30;
@@ -54,7 +54,7 @@ public struct ArrayBuffer<T> : IDisposable
     public static ArrayBuffer<T> LeaseAndSetCount(bool mustClean, int count)
         => new(mustClean, count) { Count = count };
 
-    public void Dispose()
+    public void Release()
     {
         // ReSharper disable once ConditionIsAlwaysTrueOrFalse
         if (Buffer != null)
@@ -98,10 +98,10 @@ public struct ArrayBuffer<T> : IDisposable
             Add(item);
     }
 
-    public void AddRange(ReadOnlySpan<T> span)
+    public void AddSpan(ReadOnlySpan<T> span)
     {
         EnsureCapacity(_count + span.Length);
-        span.CopyTo(Buffer.AsSpan()[_count..]);
+        span.CopyTo(Buffer.AsSpan(_count));
         _count += span.Length;
     }
 
@@ -121,7 +121,7 @@ public struct ArrayBuffer<T> : IDisposable
             throw new ArgumentOutOfRangeException(nameof(index));
         var span = Buffer.AsSpan(0, ++Count);
         var source = span.Slice(index, copyLength);
-        var target = span.Slice(index + 1);
+        var target = span[(index + 1)..];
         source.CopyTo(target);
         span[index] = item;
     }
@@ -133,7 +133,7 @@ public struct ArrayBuffer<T> : IDisposable
             throw new ArgumentOutOfRangeException(nameof(index));
         var span = Buffer.AsSpan(0, Count--);
         var source = span.Slice(index + 1, copyLength);
-        var target = span.Slice(index);
+        var target = span[index..];
         source.CopyTo(target);
     }
 
@@ -144,7 +144,7 @@ public struct ArrayBuffer<T> : IDisposable
     }
 
     public void CopyTo(T[] array, int arrayIndex)
-        => Buffer.CopyTo(array.AsSpan().Slice(arrayIndex));
+        => Buffer.CopyTo(array.AsSpan(arrayIndex));
 
     public void EnsureCapacity(int capacity)
     {

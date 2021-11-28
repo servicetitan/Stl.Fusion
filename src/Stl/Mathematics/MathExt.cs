@@ -84,7 +84,7 @@ public static class MathExt
         var sDigits = digits.AsSpan();
         if (number == 0) {
             buffer[0] = sDigits[0];
-            return buffer.Slice(0, 1);
+            return buffer[..1];
         }
         var index = buffer.Length;
         var n = Math.Abs(number);
@@ -95,9 +95,9 @@ public static class MathExt
         }
         if (number < 0)
             buffer[--index] = '-';
-        var tail = buffer.Slice(index);
+        var tail = buffer[index..];
         tail.CopyTo(buffer);
-        return buffer.Slice(0, tail.Length);
+        return buffer[..tail.Length];
     }
 
     public static long Parse(string number, string digits)
@@ -123,7 +123,7 @@ public static class MathExt
         var sign = 1L;
         if (number[0] == '-') {
             sign = -1;
-            number = number.Slice(1);
+            number = number[1..];
         }
         var multiplier = 1L;
         for (var i = number.Length - 1; i >= 0; i--) {

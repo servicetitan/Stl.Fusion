@@ -21,12 +21,12 @@ public static class TypeNameHelpers
     {
         var assemblyDelimiterIndex = GetAssemblyDelimiterIndex(fullyQualifiedTypeName);
         if (assemblyDelimiterIndex.HasValue) {
-            typeName = fullyQualifiedTypeName.AsSpan()
-                .Slice(0, assemblyDelimiterIndex.GetValueOrDefault())
+            typeName = fullyQualifiedTypeName
+                .AsSpan(0, assemblyDelimiterIndex.GetValueOrDefault())
                 .Trim()
                 .ToString();
-            assemblyName = fullyQualifiedTypeName.AsSpan()
-                .Slice(
+            assemblyName = fullyQualifiedTypeName
+                .AsSpan(
                     assemblyDelimiterIndex.GetValueOrDefault() + 1,
                     fullyQualifiedTypeName.Length - assemblyDelimiterIndex.GetValueOrDefault() - 1)
                 .Trim()

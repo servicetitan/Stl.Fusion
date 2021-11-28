@@ -192,7 +192,7 @@ public class Publisher : SafeAsyncDisposableBase, IPublisherImpl
     }
 
     protected virtual void OnChannelDetachedAsync(
-        Channel<BridgeMessage> channel, ref Collector<ValueTask> taskCollector)
+        Channel<BridgeMessage> channel, ref ArrayBuffer<ValueTask> taskCollector)
     {
         if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
             return;

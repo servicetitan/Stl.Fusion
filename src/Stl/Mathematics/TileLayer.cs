@@ -63,18 +63,26 @@ public class TileLayer<T>
 
     public Tile<T>[] GetCoveringTiles(Range<T> range)
     {
-        var tiles = ArrayBuffer<Tile<T>>.Lease(false);
-        using var _ = tiles;
-        GetCoveringTiles(range, ref tiles);
-        return tiles.ToArray();
+        var tiles = ArrayBuffer<Tile<T>>.Lease(true);
+        try {
+            GetCoveringTiles(range, ref tiles);
+            return tiles.ToArray();
+        }
+        finally {
+            tiles.Release();
+        }
     }
 
     public Tile<T>[] GetOptimalCoveringTiles(Range<T> range)
     {
-        var tiles = ArrayBuffer<Tile<T>>.Lease(false);
-        using var _ = tiles;
-        GetOptimalCoveringTiles(range, ref tiles);
-        return tiles.ToArray();
+        var tiles = ArrayBuffer<Tile<T>>.Lease(true);
+        try {
+            GetOptimalCoveringTiles(range, ref tiles);
+            return tiles.ToArray();
+        }
+        finally {
+            tiles.Release();
+        }
     }
 
     // Private methods
@@ -97,36 +105,40 @@ public class TileLayer<T>
             return;
         }
 
-        var tiles = ArrayBuffer<Tile<T>>.Lease(false);
-        using var _ = tiles;
-        GetCoveringTiles(range, ref tiles);
+        var tiles = ArrayBuffer<Tile<T>>.Lease(true);
+        try {
+            GetCoveringTiles(range, ref tiles);
 
-        if (tiles.Count == 1) {
-            var tile = tiles[0];
-            if (tile.IsLeftSubdivisionUseful(range.Start) || tile.IsRightSubdivisionUseful(range.End))
-                Smaller.GetOptimalCoveringTiles(range, ref appendTo);
-            else
-                appendTo.Add(tile);
+            if (tiles.Count == 1) {
+                var tile = tiles[0];
+                if (tile.IsLeftSubdivisionUseful(range.Start) || tile.IsRightSubdivisionUseful(range.End))
+                    Smaller.GetOptimalCoveringTiles(range, ref appendTo);
+                else
+                    appendTo.Add(tile);
+            }
+            else {
+                var midTiles = tiles.Span;
+                var firstTile = tiles[0];
+                var lastTile = tiles[^1];
+                if (firstTile.IsLeftSubdivisionUseful(range.Start)) {
+                    // Left side can be subdivided
+                    var leftRange = new Range<T>(range.Start, firstTile.End);
+                    Smaller.GetOptimalCoveringTiles(leftRange, ref appendTo);
+                    midTiles = midTiles[1..];
+                }
+                if (lastTile.IsRightSubdivisionUseful(range.End)) {
+                    // Right side can be subdivided
+                    midTiles = midTiles[..^1];
+                    appendTo.AddSpan(midTiles);
+                    var rightRange = new Range<T>(lastTile.Start, range.End);
+                    Smaller.GetOptimalCoveringTiles(rightRange, ref appendTo);
+                }
+                else
+                    appendTo.AddSpan(midTiles);
+            }
         }
-        else {
-            var midTiles = tiles.Span;
-            var firstTile = tiles[0];
-            var lastTile = tiles[^1];
-            if (firstTile.IsLeftSubdivisionUseful(range.Start)) {
-                // Left side can be subdivided
-                var leftRange = new Range<T>(range.Start, firstTile.End);
-                Smaller.GetOptimalCoveringTiles(leftRange, ref appendTo);
-                midTiles = midTiles[1..];
-            }
-            if (lastTile.IsRightSubdivisionUseful(range.End)) {
-                // Right side can be subdivided
-                midTiles = midTiles[..^1];
-                appendTo.AddRange(midTiles);
-                var rightRange = new Range<T>(lastTile.Start, range.End);
-                Smaller.GetOptimalCoveringTiles(rightRange, ref appendTo);
-            }
-            else
-                appendTo.AddRange(midTiles);
+        finally {
+            tiles.Release();
         }
     }
 }

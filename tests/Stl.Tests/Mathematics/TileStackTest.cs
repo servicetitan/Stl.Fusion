@@ -142,4 +142,29 @@ public class TileStackTest : TestBase
         s.MaxTileSize.Should().Be(10);
         s.MaxTileSize.Should().Be(10);
     }
+
+    [Fact]
+    public void RandomTileCoverTest()
+    {
+        var s = LongTileStack;
+        var rnd = new Random(12);
+        for (var i = 0; i < 10_000; i++) {
+            var range = new Range<long>(rnd.Next(20_000), rnd.Next(20_000)).Normalize();
+            // var range = new Range<long>(91, 1247).Normalize();
+            var tiles = s.GetOptimalCoveringTiles(range);
+            var union = tiles.First().Range;
+            foreach (var tile in tiles.Skip(1)) {
+                union.End.Should().Be(tile.Start);
+                union = (union.Start, tile.End);
+            }
+
+            var startGap = range.Start - union.Start;
+            startGap.Should().BeGreaterOrEqualTo(0);
+            startGap.Should().BeLessThan(s.MinTileSize);
+
+            var endGap = union.End - range.End;
+            endGap.Should().BeGreaterOrEqualTo(0);
+            endGap.Should().BeLessThan(s.MinTileSize);
+        }
+    }
 }

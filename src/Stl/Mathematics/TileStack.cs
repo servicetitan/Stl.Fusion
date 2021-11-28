@@ -105,7 +105,7 @@ public sealed class TileStack<T>
     }
 
     public Tile<T>[] GetOptimalCoveringTiles(Range<T> range)
-        => Layers[^1].GetOptimalCoveringTiles(range);
+        => LastLayer.GetOptimalCoveringTiles(range);
 
     // Private methods
 
