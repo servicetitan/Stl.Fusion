@@ -33,11 +33,11 @@ public abstract class AsyncProcessBase : AsyncDisposableBase, IAsyncProcess
 
     protected override void Dispose(bool disposing)
     {
-        if (!disposing) return;
-
+        // We disregard disposing here, since if this method is called
+        // from finalizer, we still want to stop everything "gracefully",
+        // i.e. by cancelling the StopToken.
         if (Interlocked.CompareExchange(ref _isDisposed, 1, 0) == 0)
             Stop();
-        _stopTokenSource.Dispose();
     }
 
     public Task Run(CancellationToken cancellationToken)
@@ -100,12 +100,5 @@ public abstract class AsyncProcessBase : AsyncDisposableBase, IAsyncProcess
     // Private methods
 
     private void StopInternal()
-    {
-        try {
-            _stopTokenSource.Cancel();
-        }
-        catch {
-            // Intended
-        }
-    }
+        => _stopTokenSource.CancelAndDisposeSilently();
 }

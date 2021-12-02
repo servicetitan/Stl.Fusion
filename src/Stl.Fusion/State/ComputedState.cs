@@ -86,15 +86,7 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
         if (DisposeToken.IsCancellationRequested)
             return;
         GC.SuppressFinalize(this);
-        try {
-            _disposeCts.Cancel();
-        }
-        catch {
-            // Intended
-        }
-        finally {
-            _disposeCts.Dispose();
-        }
+        _disposeCts.CancelAndDisposeSilently();
     }
 
     protected virtual async Task Update()

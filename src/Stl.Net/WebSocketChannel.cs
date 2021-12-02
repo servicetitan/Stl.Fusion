@@ -63,12 +63,7 @@ public class WebSocketChannel : Channel<string>, IAsyncDisposable
         if (stopCts == null)
             return;
 
-        try {
-            stopCts.Cancel();
-        }
-        catch {
-            // Dispose shouldn't throw exceptions
-        }
+        stopCts.CancelAndDisposeSilently();
         try {
             await WhenCompleted(default).ConfigureAwait(false);
         }

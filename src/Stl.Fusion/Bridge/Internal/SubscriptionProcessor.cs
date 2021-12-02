@@ -51,6 +51,7 @@ public class SubscriptionProcessor<T> : SubscriptionProcessor
         var incomingChannelReader = IncomingChannel.Reader;
 
         var currentCts = (CancellationTokenSource?) null;
+        // ReSharper disable once AccessToModifiedClosure
         await using var registered = cancellationToken.Register(() => currentCts?.Cancel())
             .ToAsyncDisposableAdapter().ConfigureAwait(false);
         try {

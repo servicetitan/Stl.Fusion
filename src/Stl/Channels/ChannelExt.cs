@@ -70,7 +70,7 @@ public static partial class ChannelExt
         }
     }
 
-    public static async Task ConsumeSilent<T>(
+    public static async Task ConsumeSilently<T>(
         this ChannelReader<T> reader,
         CancellationToken cancellationToken = default)
     {
