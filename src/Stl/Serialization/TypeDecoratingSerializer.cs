@@ -37,7 +37,7 @@ public class TypeDecoratingSerializer : Utf16SerializerBase
 
         TypeNameHelpers.SplitAssemblyQualifiedName(p.Item, out var assemblyName, out var typeName);
         var actualType = _serializationBinder.BindToType(assemblyName, typeName);
-        if (!TypeFilter.Invoke(actualType))
+        if (!TypeFilter(actualType))
             throw Errors.UnsupportedSerializedType(actualType);
         if (!type.IsAssignableFrom(actualType))
             throw Errors.UnsupportedSerializedType(actualType);
@@ -58,7 +58,7 @@ public class TypeDecoratingSerializer : Utf16SerializerBase
             var actualType = value.GetType();
             if (!type.IsAssignableFrom(actualType))
                 throw Stl.Internal.Errors.MustBeAssignableTo(actualType, type, nameof(type));
-            if (!TypeFilter.Invoke(actualType))
+            if (!TypeFilter(actualType))
                 throw Errors.UnsupportedSerializedType(actualType);
             var aqn = actualType.GetAssemblyQualifiedName(false, _serializationBinder);
             var json = Serializer.Writer.Write(value, actualType);

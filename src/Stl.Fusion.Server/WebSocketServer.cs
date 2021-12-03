@@ -58,7 +58,7 @@ public class WebSocketServer
             return;
         }
 
-        var serializers = SerializerFactory.Invoke();
+        var serializers = SerializerFactory();
         var clientId = context.Request.Query[ClientIdQueryParameterName];
         var webSocket = await context.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
 

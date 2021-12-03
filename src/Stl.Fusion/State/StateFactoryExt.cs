@@ -49,7 +49,7 @@ public static class StateFactoryExt
         Result<T> initialOutput)
     {
         var options = new MutableState<T>.Options();
-        optionsBuilder.Invoke(options);
+        optionsBuilder(options);
         return factory.NewMutable(options, initialOutput);
     }
 
@@ -59,7 +59,7 @@ public static class StateFactoryExt
         Option<Result<T>> initialOutput = default)
     {
         var options = new MutableState<T>.Options();
-        optionsBuilder.Invoke(options);
+        optionsBuilder(options);
         return factory.NewMutable(options, initialOutput);
     }
 
@@ -69,7 +69,7 @@ public static class StateFactoryExt
         Func<IComputedState<T>, CancellationToken, Task<T>> computer)
     {
         var options = new ComputedState<T>.Options();
-        optionsBuilder.Invoke(options);
+        optionsBuilder(options);
         return factory.NewComputed(options, computer);
     }
 }

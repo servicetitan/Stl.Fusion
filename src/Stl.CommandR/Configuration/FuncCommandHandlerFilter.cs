@@ -8,5 +8,5 @@ public class FuncCommandHandlerFilter : CommandHandlerFilter
         => Filter = filter;
 
     public override bool IsCommandHandlerUsed(CommandHandler commandHandler, Type commandType)
-        => Filter.Invoke(commandHandler, commandType);
+        => Filter(commandHandler, commandType);
 }

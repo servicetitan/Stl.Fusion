@@ -12,7 +12,7 @@ public record LocalFuncCommand<T> : LocalCommand, ICommand<T>
         if (Handler == null)
             throw Errors.LocalCommandHasNoHandler();
         var context = CommandContext.GetCurrent<T>();
-        var result = await Handler.Invoke(cancellationToken).ConfigureAwait(false);
+        var result = await Handler(cancellationToken).ConfigureAwait(false);
         context.SetResult(result);
     }
 }

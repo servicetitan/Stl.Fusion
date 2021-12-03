@@ -30,7 +30,7 @@ public static class ConcurrentDictionaryExt
 
     public static int GetCapacity<TKey, TValue>(this ConcurrentDictionary<TKey, TValue> source)
         where TKey : notnull
-        => Cache<TKey, TValue>.CapacityReader.Invoke(source);
+        => Cache<TKey, TValue>.CapacityReader(source);
 
     public static bool TryRemove<TKey, TValue>(
         this ConcurrentDictionary<TKey, TValue> dictionary,

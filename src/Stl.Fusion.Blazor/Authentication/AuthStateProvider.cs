@@ -41,7 +41,7 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
         Auth = auth;
         UICommandTracker = uiCommandTracker;
         State = stateFactory.NewComputed<AuthState>(o => {
-            options.AuthStateOptionsBuilder.Invoke(o);
+            options.AuthStateOptionsBuilder(o);
             o.InitialOutputFactory = _ => new AuthState(new User("none"));
             o.EventConfigurator += state => state.AddEventHandler(StateEventKind.Updated, OnStateChanged);
         }, ComputeState);

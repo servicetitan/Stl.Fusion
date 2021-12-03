@@ -20,6 +20,6 @@ public static class MemberwiseCloner
         var oSource = (object?) source;
         if (oSource == null)
             return default!;
-        return (T) MemberwiseCloneFunc!.Invoke(oSource);
+        return (T) MemberwiseCloneFunc(oSource);
     }
 }

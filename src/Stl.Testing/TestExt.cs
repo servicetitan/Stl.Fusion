@@ -33,7 +33,7 @@ public static class TestExt
     {
         foreach (var timeout in checkIntervals ?? DefaultCheckIntervals) {
             using (var scope = new AssertionScope()) {
-                condition.Invoke();
+                condition();
                 if (!scope.HasFailures())
                     return;
                 if (!cancellationToken.IsCancellationRequested)

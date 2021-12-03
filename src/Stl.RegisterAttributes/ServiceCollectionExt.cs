@@ -66,7 +66,7 @@ public static class ServiceCollectionExt
         Action<RegisterAttributeScanner> attributeScannerBuilder)
     {
         var builder = services.UseRegisterAttributeScanner(scope);
-        attributeScannerBuilder.Invoke(builder);
+        attributeScannerBuilder(builder);
         return services;
     }
 }

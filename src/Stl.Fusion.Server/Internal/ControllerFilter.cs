@@ -10,7 +10,7 @@ public class ControllerFilter : ControllerFeatureProvider
         => Filter = filter;
 
     protected override bool IsController(TypeInfo typeInfo) {
-        if (!Filter.Invoke(typeInfo))
+        if (!Filter(typeInfo))
             return false;
         return base.IsController(typeInfo);
     }

@@ -89,7 +89,7 @@ public class WebSocketServer
 
     private async Task HandleWebSocket(WebSocketContext wsContext, string clientId)
     {
-        var serializers = SerializerFactory.Invoke();
+        var serializers = SerializerFactory();
         var webSocket = wsContext.WebSocket;
 
         var wsChannel = new WebSocketChannel(webSocket);

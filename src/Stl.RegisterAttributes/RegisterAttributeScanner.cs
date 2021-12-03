@@ -34,7 +34,7 @@ public record RegisterAttributeScanner
 
     public RegisterAttributeScanner Register(Type implementationType)
     {
-        if (!TypeFilter.Invoke(implementationType))
+        if (!TypeFilter(implementationType))
             return this;
         if (IsDynamicProxy(implementationType))
             return this;
@@ -85,7 +85,7 @@ public record RegisterAttributeScanner
                 var implementationType = service.ImplementationType;
                 if (filterByScope && Scope != attr.Scope)
                     continue;
-                if (filterByType && !TypeFilter.Invoke(implementationType))
+                if (filterByType && !TypeFilter(implementationType))
                     continue;
                 attr.Register(Services, implementationType);
             }

@@ -195,7 +195,7 @@ public readonly struct FusionBuilder
     public FusionBuilder AddAuthentication(Action<FusionAuthenticationBuilder> configureFusionAuthentication)
     {
         var fusionAuth = AddAuthentication();
-        configureFusionAuthentication.Invoke(fusionAuth);
+        configureFusionAuthentication(fusionAuth);
         return this;
     }
 

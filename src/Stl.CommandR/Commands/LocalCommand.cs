@@ -17,7 +17,7 @@ public abstract record LocalCommand : ILocalCommand
     public static LocalActionCommand New(Action handler)
         => new() {
             Handler = _ => {
-                handler.Invoke();
+                handler();
                 return Task.CompletedTask;
             }
         };
@@ -26,7 +26,7 @@ public abstract record LocalCommand : ILocalCommand
         => new() { Handler = handler };
 
     public static LocalFuncCommand<T> New<T>(Func<T> handler)
-        => new() { Handler = _ => Task.FromResult(handler.Invoke()) };
+        => new() { Handler = _ => Task.FromResult(handler()) };
 
     public abstract Task Run(CancellationToken cancellationToken);
 }

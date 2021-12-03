@@ -18,7 +18,7 @@ public abstract class SwapServiceBase : ISwapService
         var data = await Load(serializedKey, cancellationToken).ConfigureAwait(false);
         if (data == null)
             return null;
-        return SerializerFactory.Invoke().Reader.Read(data) as IResult;
+        return SerializerFactory().Reader.Read(data) as IResult;
     }
 
     public async ValueTask Store(
@@ -28,7 +28,7 @@ public abstract class SwapServiceBase : ISwapService
         var serializedKey = SerializeKey(key.Input, key.Version);
         if (await Renew(serializedKey, cancellationToken).ConfigureAwait(false))
             return;
-        var data = SerializerFactory.Invoke().Writer.Write(value);
+        var data = SerializerFactory().Writer.Write(value);
         await Store(serializedKey, data, cancellationToken).ConfigureAwait(false);
     }
 
@@ -42,12 +42,12 @@ public abstract class SwapServiceBase : ISwapService
     {
         using var f = ListFormat.Default.CreateFormatter();
         var method = input.Method;
-        f.Append(method.InvocationTargetHandler.ToStringFunc.Invoke(input.Target));
+        f.Append(method.InvocationTargetHandler.ToStringFunc(input.Target));
         f.Append(version.ToString());
         var arguments = input.Arguments;
         for (var i = 0; i < method.ArgumentHandlers.Length; i++) {
             var handler = method.ArgumentHandlers[i];
-            f.Append(handler.ToStringFunc.Invoke(arguments[i]));
+            f.Append(handler.ToStringFunc(arguments[i]));
         }
         f.AppendEnd();
         return f.Output;

@@ -15,5 +15,5 @@ public sealed class FuncComputedState<T> : ComputedState<T>
     }
 
     protected override Task<T> Compute(CancellationToken cancellationToken)
-        => Computer.Invoke(this, cancellationToken);
+        => Computer(this, cancellationToken);
 }

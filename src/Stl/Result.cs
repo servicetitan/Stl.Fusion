@@ -288,7 +288,7 @@ public static class Result
     public static Result<T> FromFunc<T, TState>(TState state, Func<TState, T> func)
     {
         try {
-            return Value(func.Invoke(state));
+            return Value(func(state));
         }
         catch (Exception e) {
             return Error<T>(e);
@@ -298,7 +298,7 @@ public static class Result
     public static Result<T> FromFunc<T>(Func<T> func)
     {
         try {
-            return Value(func.Invoke());
+            return Value(func());
         }
         catch (Exception e) {
             return Error<T>(e);

@@ -45,7 +45,7 @@ public static class MemberwiseCopier
     {
         var copier = MemberwiseCopier<T>.Default;
         if (configurator != null)
-            copier = configurator.Invoke(MemberwiseCopier<T>.Default);
+            copier = configurator(MemberwiseCopier<T>.Default);
         return copier.Invoke(source, target);
     }
 }

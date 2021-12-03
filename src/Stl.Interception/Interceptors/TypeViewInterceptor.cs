@@ -36,7 +36,7 @@ public class TypeViewInterceptor : IInterceptor
         if (handler == null)
             invocation.Proceed();
         else
-            handler.Invoke(invocation);
+            handler(invocation);
     }
 
     protected virtual Action<IInvocation>? CreateHandler((MethodInfo, Type) key, IInvocation initialInvocation)

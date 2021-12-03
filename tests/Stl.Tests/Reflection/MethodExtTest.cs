@@ -4,7 +4,7 @@ using Stl.Reflection;
 
 namespace Stl.Tests.Reflection;
 
-public class MethodExTest
+public class MethodExtTest
 {
     public interface IMethodA
     {

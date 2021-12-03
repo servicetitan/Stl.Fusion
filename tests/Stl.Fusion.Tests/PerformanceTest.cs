@@ -96,7 +96,7 @@ public abstract class PerformanceTestBase : FusionTestBase
                 // Log.LogDebug($"{name}: R {userId} done");
                 if (user!.Id == userId)
                     count++;
-                extraAction.Invoke(user!);
+                extraAction(user);
             }
             return count;
         }

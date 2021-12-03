@@ -39,7 +39,7 @@ public class DbUserIdHandler<TDbUserId> : IDbUserIdHandler<TDbUserId>
     }
 
     public virtual TDbUserId New()
-        => Generator.Invoke();
+        => Generator();
 
     public virtual bool IsNone(TDbUserId userId)
         => EqualityComparer<TDbUserId>.Default.Equals(userId, None)

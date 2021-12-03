@@ -10,7 +10,7 @@ public static class ServiceCollectionExt
     public static IServiceCollection AddCommander(this IServiceCollection services, Action<CommanderBuilder> configureCommander)
     {
         var commandR = services.AddCommander();
-        configureCommander.Invoke(commandR);
+        configureCommander(commandR);
         return services;
     }
 }

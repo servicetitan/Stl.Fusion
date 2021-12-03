@@ -14,6 +14,6 @@ public sealed class FuncServiceProvider : IServiceProvider
     {
         if (serviceType == typeof(IServiceProvider))
             return this;
-        return ServiceProvider.Invoke(serviceType);
+        return ServiceProvider(serviceType);
     }
 }

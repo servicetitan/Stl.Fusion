@@ -12,13 +12,13 @@ public class PublishAttribute : ActionFilterAttribute
         var headers = httpContext.Request.Headers;
         var mustPublish = headers.TryGetValue(FusionHeaders.RequestPublication, out var _);
         if (!mustPublish) {
-            await next.Invoke().ConfigureAwait(false);
+            await next().ConfigureAwait(false);
             return;
         }
 
         var publisher = httpContext.RequestServices.GetRequiredService<IPublisher>();
         var publication = await publisher
-            .Publish(_ => (Task) next.Invoke(), httpContext.RequestAborted)
+            .Publish(_ => (Task) next(), httpContext.RequestAborted)
             .ConfigureAwait(false);
         httpContext.Publish(publication);
     }

@@ -12,5 +12,5 @@ public sealed class TransformingGenerator<TIn, TOut> : Generator<TOut>
     }
 
     public override TOut Next()
-        => _transformer.Invoke(_source.Next());
+        => _transformer(_source.Next());
 }

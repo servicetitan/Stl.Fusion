@@ -16,7 +16,7 @@ public static partial class ChannelExt
         try {
             while (await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
             while (reader.TryRead(out var item)) {
-                var newItem = transformer.Invoke(item);
+                var newItem = transformer(item);
                 await writer.WriteAsync(newItem, cancellationToken).ConfigureAwait(false);
             }
             if ((channelCompletionMode & ChannelCompletionMode.PropagateCompletion) != 0)
@@ -44,7 +44,7 @@ public static partial class ChannelExt
         try {
             while (await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
             while (reader.TryRead(out var item)) {
-                var newItem = await transformer.Invoke(item).ConfigureAwait(false);
+                var newItem = await transformer(item).ConfigureAwait(false);
                 await writer.WriteAsync(newItem, cancellationToken).ConfigureAwait(false);
             }
             if ((channelCompletionMode & ChannelCompletionMode.PropagateCompletion) != 0)
@@ -86,7 +86,7 @@ public static partial class ChannelExt
                         if (!await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
                             break;
                         while (reader.TryRead(out var item)) {
-                            var newItem = transformer.Invoke(item);
+                            var newItem = transformer(item);
                             await writer.WriteAsync(newItem, cancellationToken).ConfigureAwait(false);
                         }
                     }
@@ -137,7 +137,7 @@ public static partial class ChannelExt
                         if (!await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
                             break;
                         while (reader.TryRead(out var item)) {
-                            var newItem = await transformer.Invoke(item).ConfigureAwait(false);
+                            var newItem = await transformer(item).ConfigureAwait(false);
                             await writer.WriteAsync(newItem, cancellationToken).ConfigureAwait(false);
                         }
                     }

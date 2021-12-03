@@ -30,9 +30,7 @@ public static class ComponentExt
             if (!typeof(IComponent).IsAssignableFrom(type))
                 throw new ArgumentOutOfRangeException(nameof(type));
 
-            var bindingFlags = BindingFlags.FlattenHierarchy
-                | BindingFlags.Instance
-                | BindingFlags.Public | BindingFlags.NonPublic;
+            var bindingFlags = BindingFlags.FlattenHierarchy | BindingFlags.Instance | BindingFlags.Public;
             var parameters = new Dictionary<string, ComponentParameterInfo>(StringComparer.Ordinal);
             foreach (var property in type.GetProperties(bindingFlags)) {
                 var pa = property.GetCustomAttribute<ParameterAttribute>(true);
@@ -47,19 +45,13 @@ public static class ComponentExt
                 var comparer = comparerType != null
                     ? ParameterComparer.Get(comparerType)
                     : ParameterComparer.Default;
-                var getter = type.GetGetter(property, true) as Func<IComponent, object>;
-                if (getter == null)
-                    throw Errors.InternalError($"Couldn't build getter delegate for {property}.");
-                var setter = type.GetSetter(property, true) as Action<IComponent, object>;
-                if (setter == null)
-                    throw Errors.InternalError($"Couldn't build setter delegate for {property}.");
                 var parameter = new ComponentParameterInfo() {
                     Property = property,
                     IsCascading = cpa != null,
                     IsCapturingUnmatchedValues = pa?.CaptureUnmatchedValues ?? false,
                     CascadingParameterName = cpa?.Name,
-                    Getter = getter,
-                    Setter = setter,
+                    Getter = property.GetGetter<IComponent, object>(true),
+                    Setter = property.GetSetter<IComponent, object>(true),
                     Comparer = comparer,
                 };
                 parameters.Add(parameter.Property.Name, parameter);
@@ -113,7 +105,7 @@ public static class ComponentExt
             if (component.IsDisposedOrDisposing())
                 return;
             try {
-                CompiledStateHasChanged.Invoke(component);
+                CompiledStateHasChanged(component);
             }
             catch (ObjectDisposedException) {
                 // Intended: it might still happen
@@ -128,7 +120,7 @@ public static class ComponentExt
         foreach (var parameterValue in parameterView) {
             if (!parameters.TryGetValue(parameterValue.Name, out var parameterInfo))
                 return true;
-            var oldValue = parameterInfo.Getter.Invoke(component);
+            var oldValue = parameterInfo.Getter(component);
             if (!parameterInfo.Comparer.AreEqual(oldValue, parameterValue.Value))
                 return true;
         }
@@ -138,9 +130,9 @@ public static class ComponentExt
     // Internal and private methods
 
     internal static RenderHandle GetRenderHandle(this ComponentBase component)
-        => CompiledGetRenderHandle.Invoke(component);
+        => CompiledGetRenderHandle(component);
     internal static bool IsDisposed(this RenderHandle renderHandle)
-        => CompiledGetOptionalComponentState.Invoke(renderHandle) == null;
+        => CompiledGetOptionalComponentState(renderHandle) == null;
 
     static ComponentExt()
     {

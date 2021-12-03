@@ -11,6 +11,6 @@ public record LocalActionCommand : LocalCommand, ICommand<Unit>
     {
         if (Handler == null)
             throw Errors.LocalCommandHasNoHandler();
-        return Handler.Invoke(cancellationToken);
+        return Handler(cancellationToken);
     }
 }

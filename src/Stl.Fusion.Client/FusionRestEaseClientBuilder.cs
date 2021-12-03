@@ -76,7 +76,7 @@ public readonly struct FusionRestEaseClientBuilder
             typeof(WebSocketChannelProvider.Options),
             c => {
                 var options = new WebSocketChannelProvider.Options();
-                optionsBuilder.Invoke(c, options);
+                optionsBuilder(c, options);
                 return options;
             },
             ServiceLifetime.Singleton);

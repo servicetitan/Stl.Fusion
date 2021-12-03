@@ -49,7 +49,7 @@ public class MutableState<T> : State<T>, IMutableState<T>
         bool initialize = true)
         : base(options, services, false)
     {
-        _output = initialOutput.IsSome(out var o) ? o : options.InitialOutputFactory.Invoke(this);
+        _output = initialOutput.IsSome(out var o) ? o : options.InitialOutputFactory(this);
         // ReSharper disable once VirtualMemberCallInConstructor
         if (initialize) Initialize(options);
     }

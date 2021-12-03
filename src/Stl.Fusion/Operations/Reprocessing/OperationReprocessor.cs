@@ -118,7 +118,7 @@ public class OperationReprocessor : IOperationReprocessor
                     throw;
                 LastError = error;
                 FailedTryCount++;
-                var delay = RetryDelayProvider.Invoke(error);
+                var delay = RetryDelayProvider(error);
                 Log.LogWarning(
                     "Retry #{TryCount}/{MaxTryCount} on {Error}: {Command} with {Delay}ms delay",
                     FailedTryCount + 1, MaxTryCount, new ExceptionInfo(error), command, delay.TotalMilliseconds);

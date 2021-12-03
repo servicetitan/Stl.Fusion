@@ -13,7 +13,7 @@ public static class ServiceCollectionExt
         string keyPrefix = "")
     {
         services.AddSingleton(c => {
-            var configuration = configurationFactory.Invoke(c);
+            var configuration = configurationFactory(c);
             var multiplexer = ConnectionMultiplexer.Connect(configuration);
             return new RedisDb(multiplexer, keyPrefix);
         });
@@ -48,7 +48,7 @@ public static class ServiceCollectionExt
     {
         keyPrefix ??= typeof(TContext).Name;
         services.AddSingleton(c => {
-            var configuration = configurationFactory.Invoke(c);
+            var configuration = configurationFactory(c);
             var multiplexer = ConnectionMultiplexer.Connect(configuration);
             return new RedisDb<TContext>(multiplexer, keyPrefix);
         });

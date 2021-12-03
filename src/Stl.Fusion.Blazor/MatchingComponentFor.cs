@@ -65,7 +65,7 @@ public class MatchingComponentFor : ComponentBase
         if (componentType == null) {
             if (WhenNoMatchFound == null)
                 throw Errors.NoMatchingComponentFound(Source.GetType(), Scope);
-            WhenNoMatchFound.Invoke(Source).Invoke(builder);
+            WhenNoMatchFound(Source)(builder);
             return;
         }
 

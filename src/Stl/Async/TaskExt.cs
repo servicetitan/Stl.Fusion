@@ -199,7 +199,7 @@ public static class TaskExt
     public static async Task WhileRunning(this Task dependency, Func<CancellationToken, Task> dependentTaskFactory)
     {
         using var cts = new CancellationTokenSource();
-        var dependentTask = dependentTaskFactory.Invoke(cts.Token);
+        var dependentTask = dependentTaskFactory(cts.Token);
         try {
             await dependency.ConfigureAwait(false);
         }
@@ -212,7 +212,7 @@ public static class TaskExt
     public static async Task<T> WhileRunning<T>(this Task<T> dependency, Func<CancellationToken, Task> dependentTaskFactory)
     {
         using var cts = new CancellationTokenSource();
-        var dependentTask = dependentTaskFactory.Invoke(cts.Token);
+        var dependentTask = dependentTaskFactory(cts.Token);
         try {
             return await dependency.ConfigureAwait(false);
         }

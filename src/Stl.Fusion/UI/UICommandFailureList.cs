@@ -40,7 +40,7 @@ public class UICommandFailureList : ICollection<UICommandEvent>
     public bool Update(Func<ImmutableList<UICommandEvent>, ImmutableList<UICommandEvent>> updater)
     {
         lock (Lock) {
-            var newItems = updater.Invoke(Items);
+            var newItems = updater(Items);
             if (newItems == Items)
                 return false;
             Items = newItems;

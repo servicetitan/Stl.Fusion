@@ -130,9 +130,9 @@ public sealed class SharedResourcePool<TKey, TResource> : SharedResourcePoolBase
     }
 
     protected override ValueTask<TResource?> CreateResource(TKey key, CancellationToken cancellationToken)
-        => _resourceFactory.Invoke(key, cancellationToken);
+        => _resourceFactory(key, cancellationToken);
     protected override ValueTask DisposeResource(TKey key, TResource resource)
-        => _resourceDisposer.Invoke(key, resource);
+        => _resourceDisposer(key, resource);
     protected override ValueTask DisposeResourceDelay(TKey key, TResource resource, CancellationToken cancellationToken)
-        => _resourceDisposeDelayer.Invoke(key, resource, cancellationToken);
+        => _resourceDisposeDelayer(key, resource, cancellationToken);
 }

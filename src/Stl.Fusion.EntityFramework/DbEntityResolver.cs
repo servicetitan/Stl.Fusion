@@ -58,7 +58,7 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
                 BatchProcessor = self.ProcessBatch,
             });
         _batchProcessorLazy = new Lazy<AsyncBatchProcessor<TKey, TDbEntity>>(
-            () => BatchProcessorFactory.Invoke(this));
+            () => BatchProcessorFactory(this));
 
         using var dbContext = CreateDbContext();
 
@@ -67,7 +67,7 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
         KeyExtractorExpressionBuilder = options.KeyExtractorExpressionBuilder
             ?? (eEntity => Expression.PropertyOrField(eEntity, keyPropertyName));
         var pEntity = Expression.Parameter(typeof(TDbEntity), "e");
-        var eBody = KeyExtractorExpressionBuilder.Invoke(pEntity);
+        var eBody = KeyExtractorExpressionBuilder(pEntity);
         KeyExtractor = (Func<TDbEntity, TKey>) Expression.Lambda(eBody, pEntity).Compile();
 
         QueryTransformer = options.QueryTransformer ?? (q => q);
@@ -98,7 +98,7 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
         var result = new Dictionary<TKey, TDbEntity>();
         foreach (var entity in entities)
             if (entity != null!)
-                result.Add(KeyExtractor.Invoke(entity), entity);
+                result.Add(KeyExtractor(entity), entity);
         return result;
     }
 
@@ -115,14 +115,14 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
                 keys.Add(item.Input);
         }
         var pEntity = Expression.Parameter(typeof(TDbEntity), "e");
-        var eKey = KeyExtractorExpressionBuilder.Invoke(pEntity);
+        var eKey = KeyExtractorExpressionBuilder(pEntity);
         var eBody = Expression.Call(Expression.Constant(keys), ContainsMethod, eKey);
         var eLambda = (Expression<Func<TDbEntity, bool>>) Expression.Lambda(eBody, pEntity);
-        var query = QueryTransformer.Invoke(dbContext.Set<TDbEntity>().Where(eLambda));
+        var query = QueryTransformer(dbContext.Set<TDbEntity>().Where(eLambda));
         var entities = await query
             .ToDictionaryAsync(KeyExtractor, cancellationToken)
             .ConfigureAwait(false);
-        PostProcessor.Invoke(entities);
+        PostProcessor(entities);
 
         foreach (var item in batch) {
             entities.TryGetValue(item.Input, out var entity);

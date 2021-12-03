@@ -7,7 +7,7 @@ public static class Disposable
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Disposable<Action> New(Action disposer)
-        => new(disposer, action => action.Invoke());
+        => new(disposer, action => action());
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Disposable<T> New<T>(T resource, Action<T> disposer)

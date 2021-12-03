@@ -10,7 +10,7 @@ public static class ServiceCollectionExt
     public static IServiceCollection AddFusion(this IServiceCollection services, Action<FusionBuilder> configureFusion)
     {
         var fusion = services.AddFusion();
-        configureFusion.Invoke(fusion);
+        configureFusion(fusion);
         return services;
     }
 }

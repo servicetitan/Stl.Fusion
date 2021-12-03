@@ -27,6 +27,6 @@ public sealed class ConcurrentFuncBasedGenerator<T> : ConcurrentGenerator<T>
     {
         var generator = _generators[random & ConcurrencyLevelMask];
         lock (generator)
-            return generator.Invoke();
+            return generator();
     }
 }

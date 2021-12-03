@@ -24,7 +24,7 @@ public static class EnumerableExt
     {
         // ReSharper disable once PossibleMultipleEnumeration
         foreach (var item in source)
-            action.Invoke(item);
+            action(item);
         // ReSharper disable once PossibleMultipleEnumeration
         return source;
     }

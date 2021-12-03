@@ -10,11 +10,11 @@ public static class AbstractInvocationExt
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int GetCurrentInterceptorIndex(this AbstractInvocation invocation)
-        => GetCurrentInterceptorIndexFunc.Invoke(invocation);
+        => GetCurrentInterceptorIndexFunc(invocation);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void SetCurrentInterceptorIndex(this AbstractInvocation invocation, int value)
-        => SetCurrentInterceptorIndexFunc.Invoke(invocation, value);
+        => SetCurrentInterceptorIndexFunc(invocation, value);
 
     static AbstractInvocationExt()
     {

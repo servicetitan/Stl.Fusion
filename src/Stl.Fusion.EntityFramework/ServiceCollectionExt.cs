@@ -15,7 +15,7 @@ public static class ServiceCollectionExt
         where TDbContext : DbContext
     {
         var dbContextServices = services.AddDbContextServices<TDbContext>();
-        configureDbContext.Invoke(dbContextServices);
+        configureDbContext(dbContextServices);
         return services;
     }
 }

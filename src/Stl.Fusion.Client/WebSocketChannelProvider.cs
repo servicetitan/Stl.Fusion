@@ -111,10 +111,10 @@ public class WebSocketChannelProvider : IChannelProvider, IHasServices
     {
         var clientId = ClientId.Value;
         try {
-            var connectionUri = ConnectionUrlResolver.Invoke(this, publisherId);
+            var connectionUri = ConnectionUrlResolver(this, publisherId);
             if (IsLoggingEnabled)
                 Log.Log(LogLevel, "{ClientId}: connecting to {ConnectionUri}...", clientId, connectionUri);
-            var ws = ClientWebSocketFactory.Invoke(Services);
+            var ws = ClientWebSocketFactory(Services);
             using var cts = new CancellationTokenSource(ConnectTimeout);
             using var lts = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken);
             await ws.ConnectAsync(connectionUri, lts.Token).ConfigureAwait(false);
@@ -125,7 +125,7 @@ public class WebSocketChannelProvider : IChannelProvider, IHasServices
             Channel<string> stringChannel = wsChannel;
             if (IsMessageLoggingEnabled)
                 stringChannel = stringChannel.WithLogger(clientId, Log, MessageLogLevel, MessageMaxLength);
-            var serializers = SerializerFactory.Invoke(Services);
+            var serializers = SerializerFactory(Services);
             var resultChannel = stringChannel.WithUtf16Serializer(serializers);
             _ = wsChannel.WhenCompleted(CancellationToken.None)
                 .ContinueWith(async _ => {

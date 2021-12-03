@@ -231,7 +231,7 @@ public readonly struct CommanderBuilder
     public CommanderBuilder AddHandlerFilter(
         Func<IServiceProvider, Func<CommandHandler, Type, bool>> commandHandlerFilterFactory)
         => AddHandlerFilter(c => {
-            var filter = commandHandlerFilterFactory.Invoke(c);
+            var filter = commandHandlerFilterFactory(c);
             return new FuncCommandHandlerFilter(filter);
         });
 

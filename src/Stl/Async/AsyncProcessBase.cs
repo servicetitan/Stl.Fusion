@@ -5,23 +5,18 @@ namespace Stl.Async;
 
 public abstract class AsyncProcessBase : AsyncDisposableBase, IAsyncProcess
 {
-    private volatile int _isDisposed = 0;
-    private readonly CancellationTokenSource _stopTokenSource;
-    private readonly object _lock;
+    private readonly CancellationTokenSource _stopTokenSource = new();
+    private volatile int _isDisposed;
 
+    protected object Lock => _stopTokenSource;
     protected bool MustFlowExecutionContext { get; init; } = false;
-    protected CancellationToken StopToken { get; }
 
-    public bool IsDisposeStarted => _isDisposed != 0;
     public Task? RunningTask { get; private set; }
-    public Task? DisposeTask => IsDisposeStarted ? RunningTask ?? Task.CompletedTask : null;
+    public CancellationToken StopToken { get; }
+    public bool IsDisposeStarted => _isDisposed != 0;
 
     protected AsyncProcessBase()
-    {
-        _stopTokenSource = new CancellationTokenSource();
-        _lock = _stopTokenSource;
-        StopToken = _stopTokenSource.Token;
-    }
+        => StopToken = _stopTokenSource.Token;
 
     protected override async ValueTask DisposeAsyncCore()
     {
@@ -45,7 +40,9 @@ public abstract class AsyncProcessBase : AsyncDisposableBase, IAsyncProcess
         if (cancellationToken == default)
             return Run();
 
-        var registration = cancellationToken.Register(StopInternal);
+        var registration = cancellationToken.Register(
+            static self => (self as AsyncProcessBase)?.StopInternal(),
+            this);
         var result = Run();
         result.ContinueWith(_ => registration.Dispose(), TaskScheduler.Default);
         return result;
@@ -56,7 +53,7 @@ public abstract class AsyncProcessBase : AsyncDisposableBase, IAsyncProcess
     {
         if (RunningTask != null)
             return RunningTask;
-        lock (_lock) {
+        lock (Lock) {
             if (RunningTask != null)
                 return RunningTask;
             if (StopToken.IsCancellationRequested)
@@ -69,7 +66,7 @@ public abstract class AsyncProcessBase : AsyncDisposableBase, IAsyncProcess
             using (flowSuppressor)
                 RunningTask = Task
                     .Run(() => RunInternal(StopToken), CancellationToken.None)
-                    .SuppressExceptions(); // !!! Important
+                    .ContinueWith(_ => _stopTokenSource.Dispose(), TaskScheduler.Default); // !!! Important
         }
         return RunningTask;
     }

@@ -48,7 +48,7 @@ public readonly struct TaskSource<T> : IEquatable<TaskSource<T>>
             if (oldTcs != null)
                 tcs = oldTcs;
         }
-        SetTask.Invoke(tcs, task);
+        SetTask(tcs, task);
         return tcs;
     }
 

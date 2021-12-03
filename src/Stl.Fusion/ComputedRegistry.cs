@@ -150,7 +150,7 @@ public class ComputedRegistry : IDisposable
     }
 
     public virtual IAsyncLockSet<ComputedInput> GetLocksFor(IFunction function)
-        => _locksProvider.Invoke(function);
+        => _locksProvider(function);
 
     public virtual void InvalidateEverything()
     {

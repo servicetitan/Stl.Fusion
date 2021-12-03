@@ -94,7 +94,7 @@ public sealed class TimerSet<TTimer> : AsyncProcessBase
             if (_fireHandler != null && minSet.Count != 0) {
                 foreach (var (timer, _) in minSet) {
                     try {
-                        _fireHandler!.Invoke(timer);
+                        _fireHandler(timer);
                     }
                     catch {
                         // Intended suppression

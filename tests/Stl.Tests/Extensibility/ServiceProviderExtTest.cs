@@ -3,7 +3,7 @@ using Stl.DependencyInjection;
 
 namespace Stl.Tests.Extensibility;
 
-public class ServiceProviderExTest : TestBase
+public class ServiceProviderExtTest : TestBase
 {
     public class A
     {
@@ -46,7 +46,7 @@ public class ServiceProviderExTest : TestBase
         }
     }
 
-    public ServiceProviderExTest(ITestOutputHelper @out) : base(@out) { }
+    public ServiceProviderExtTest(ITestOutputHelper @out) : base(@out) { }
 
     [Fact]
     public void ActivateTest()

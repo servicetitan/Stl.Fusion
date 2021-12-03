@@ -36,7 +36,7 @@ public class TransformTest
             var cTarget = Channel.CreateUnbounded<int>();
 
             var start = Stopwatch.StartNew();
-            await transform.Invoke(cSource, cTarget).ConfigureAwait(false);
+            await transform(cSource, cTarget).ConfigureAwait(false);
 
             var elapsed = start.ElapsedMilliseconds;
             var target = cTarget.Reader.ToAsyncEnumerable().ToEnumerable().ToArray();

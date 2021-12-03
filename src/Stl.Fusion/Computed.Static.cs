@@ -59,7 +59,7 @@ public static class Computed
         using var ccs = BeginCapture();
         IComputed result;
         try {
-            await producer.Invoke(cancellationToken).ConfigureAwait(false);
+            await producer(cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException) {
             throw;
@@ -79,7 +79,7 @@ public static class Computed
         using var ccs = BeginCapture();
         IComputed<T> result;
         try {
-            await producer.Invoke(cancellationToken).ConfigureAwait(false);
+            await producer(cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException) {
             throw;
@@ -99,7 +99,7 @@ public static class Computed
         using var ccs = BeginCapture();
         IComputed result;
         try {
-            await producer.Invoke(cancellationToken).ConfigureAwait(false);
+            await producer(cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException) {
             throw;
@@ -119,7 +119,7 @@ public static class Computed
         using var ccs = BeginCapture();
         IComputed<T> result;
         try {
-            await producer.Invoke(cancellationToken).ConfigureAwait(false);
+            await producer(cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException) {
             throw;
@@ -138,7 +138,7 @@ public static class Computed
     {
         using var ccs = BeginCapture();
         try {
-            await producer.Invoke(cancellationToken).ConfigureAwait(false);
+            await producer(cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException) {
             throw;
@@ -155,7 +155,7 @@ public static class Computed
     {
         using var ccs = BeginCapture();
         try {
-            await producer.Invoke(cancellationToken).ConfigureAwait(false);
+            await producer(cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException) {
             throw;
@@ -172,7 +172,7 @@ public static class Computed
     {
         using var ccs = BeginCapture();
         try {
-            await producer.Invoke(cancellationToken).ConfigureAwait(false);
+            await producer(cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException) {
             throw;
@@ -189,7 +189,7 @@ public static class Computed
     {
         using var ccs = BeginCapture();
         try {
-            await producer.Invoke(cancellationToken).ConfigureAwait(false);
+            await producer(cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException) {
             throw;
@@ -207,7 +207,7 @@ public static class Computed
     public static IComputed<T>? GetExisting<T>(Func<Task<T>> producer)
     {
         using var ccs = ComputeContext.New(CallOptions.GetExisting | CallOptions.Capture).Activate();
-        var task = producer.Invoke();
+        var task = producer();
         task.AssertCompleted(); // The must be always synchronous in this case
         return ccs.Context.TryGetCaptured<T>(out var result) ? result : default;
     }
@@ -215,7 +215,7 @@ public static class Computed
     public static IComputed<T>? GetExisting<T>(Func<ValueTask<T>> producer)
     {
         using var ccs = ComputeContext.New(CallOptions.GetExisting | CallOptions.Capture).Activate();
-        var task = producer.Invoke();
+        var task = producer();
         task.AssertCompleted(); // The must be always synchronous in this case
         return ccs.Context.TryGetCaptured<T>(out var result) ? result : default;
     }

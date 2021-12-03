@@ -62,5 +62,5 @@ public class FastComputingCache<TKey, TValue> : FastComputingCacheBase<TKey, TVa
         => Computer = computer;
 
     protected override ValueTask<TValue> Compute(TKey key, CancellationToken cancellationToken = default)
-        => Computer.Invoke(key, cancellationToken);
+        => Computer(key, cancellationToken);
 }

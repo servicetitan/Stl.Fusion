@@ -24,7 +24,7 @@
 </Addons>
 
 @code {
-    [Parameter, ParameterComparer(typeof(ByReferenceParameterComparer))]
+    [Parameter, ParameterComparer(typeof(ByValueParameterComparer))]
     public Todo Value { get; set; } = null!;
 
     public override Task SetParametersAsync(ParameterView parameters)

@@ -10,9 +10,9 @@ public class BenchmarkTest : TestBase
 
     void RunOne<T>(string title, int opCount, Func<int, T> action)
     {
-        action.Invoke(Math.Min(1, opCount / 10));
+        action(Math.Min(1, opCount / 10));
         var sw = Stopwatch.StartNew();
-        _ = action.Invoke(opCount);
+        _ = action(opCount);
         sw.Stop();
         var rate = opCount / sw.Elapsed.TotalSeconds;
         Out.WriteLine($"{title} ({opCount}): {rate:N3} ops/s");

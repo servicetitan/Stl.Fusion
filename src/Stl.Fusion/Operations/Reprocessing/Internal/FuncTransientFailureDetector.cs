@@ -8,5 +8,5 @@ internal class FuncTransientFailureDetector : TransientFailureDetector
         => Detector = detector;
 
     public override bool IsTransient(Exception error)
-        => Detector.Invoke(error);
+        => Detector(error);
 }

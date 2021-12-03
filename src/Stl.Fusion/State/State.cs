@@ -168,7 +168,7 @@ public abstract class State<T> : ComputedInput,
     protected virtual void Initialize(Options options)
     {
         var computed = CreateComputed();
-        computed.TrySetOutput(options.InitialOutputFactory.Invoke(this));
+        computed.TrySetOutput(options.InitialOutputFactory(this));
         Computed = computed;
         if (!options.InitialIsConsistent)
             computed.Invalidate();

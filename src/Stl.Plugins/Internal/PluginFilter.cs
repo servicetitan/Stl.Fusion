@@ -11,7 +11,7 @@ public class PredicatePluginFilter : IPluginFilter
 {
     private readonly Func<PluginInfo, bool> _predicate;
 
-    public bool IsEnabled(PluginInfo pluginInfo) => _predicate.Invoke(pluginInfo);
+    public bool IsEnabled(PluginInfo pluginInfo) => _predicate(pluginInfo);
 
     public PredicatePluginFilter(Func<PluginInfo, bool> predicate) => _predicate = predicate;
 }

@@ -59,5 +59,5 @@ public class ComputingCache<TKey, TValue> : ComputingCacheBase<TKey, TValue>
         => Computer = computer;
 
     protected override ValueTask<TValue> Compute(TKey key, CancellationToken cancellationToken = default)
-        => Computer.Invoke(key, cancellationToken);
+        => Computer(key, cancellationToken);
 }

@@ -16,7 +16,7 @@ public static class FusionBuilderExt
         Action<IServiceProvider, WebSocketChannelProvider.Options>? optionsBuilder = null)
     {
         var restEaseClient = fusion.AddRestEaseClient(optionsBuilder);
-        configureClient.Invoke(restEaseClient);
+        configureClient(restEaseClient);
         return fusion;
     }
 

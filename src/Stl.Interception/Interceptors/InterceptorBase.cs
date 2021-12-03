@@ -50,7 +50,7 @@ public abstract class InterceptorBase : IOptionalInterceptor, IHasServices
         if (handler == null)
             invocation.Proceed();
         else
-            handler.Invoke(invocation);
+            handler(invocation);
     }
 
     public Action<IInvocation>? GetHandler(IInvocation invocation)

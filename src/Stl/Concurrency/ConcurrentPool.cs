@@ -32,7 +32,7 @@ public class ConcurrentPool<T> : IPool<T>
             return new ResourceLease<T>(resource, this);
         }
         _count.Reset();
-        return new ResourceLease<T>(_itemFactory.Invoke(), this);
+        return new ResourceLease<T>(_itemFactory(), this);
     }
 
     bool IResourceReleaser<T>.Release(T resource)

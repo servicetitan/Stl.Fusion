@@ -102,12 +102,12 @@ public class Computed<TIn, TOut> : IComputed<TIn, TOut>, IComputedImpl
     public event Action<IComputed> Invalidated {
         add {
             if (ConsistencyState == ConsistencyState.Invalidated) {
-                value?.Invoke(this);
+                value(this);
                 return;
             }
             lock (Lock) {
                 if (ConsistencyState == ConsistencyState.Invalidated) {
-                    value.Invoke(this);
+                    value(this);
                     return;
                 }
                 _invalidated += value;

@@ -11,7 +11,7 @@ public static class FusionBuilderExt
         Action<IServiceProvider, WebSocketServer.Options>? optionsBuilder = null)
     {
         var fusionWebServer = fusion.AddWebServer(optionsBuilder);
-        configureWebServer.Invoke(fusionWebServer);
+        configureWebServer(fusionWebServer);
         return fusion;
     }
 }

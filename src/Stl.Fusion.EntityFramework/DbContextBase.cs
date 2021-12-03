@@ -45,28 +45,28 @@ public abstract class DbContextBase : DbContext
     public override void Dispose()
     {
 #pragma warning disable EF1001
-        var hadActiveLease = LeaseGetter.Invoke(this).IsActive;
+        var hadActiveLease = LeaseGetter(this).IsActive;
         base.Dispose();
         if (!hadActiveLease)
             return;
-        var hasActiveLease = LeaseGetter.Invoke(this).IsActive;
+        var hasActiveLease = LeaseGetter(this).IsActive;
         if (hasActiveLease)
             return;
-        DisposedSetter.Invoke(this, false);
+        DisposedSetter(this, false);
 #pragma warning restore EF1001
     }
 
     public override async ValueTask DisposeAsync()
     {
 #pragma warning disable EF1001
-        var hadActiveLease = LeaseGetter.Invoke(this).IsActive;
+        var hadActiveLease = LeaseGetter(this).IsActive;
         await base.DisposeAsync().ConfigureAwait(false);
         if (!hadActiveLease)
             return;
-        var hasActiveLease = LeaseGetter.Invoke(this).IsActive;
+        var hasActiveLease = LeaseGetter(this).IsActive;
         if (hasActiveLease)
             return;
-        DisposedSetter.Invoke(this, false);
+        DisposedSetter(this, false);
 #pragma warning restore EF1001
     }
 #endif

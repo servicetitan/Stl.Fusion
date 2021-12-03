@@ -134,36 +134,36 @@ public static class ActivatorExt
     public static object CreateInstance(this Type type)
     {
         var ctor = (Func<object>) type.GetConstructorDelegate()!;
-        return ctor.Invoke();
+        return ctor();
     }
 
     public static object CreateInstance<T1>(this Type type, T1 argument1)
     {
         var ctor = (Func<T1, object>) type.GetConstructorDelegate(typeof(T1))!;
-        return ctor.Invoke(argument1);
+        return ctor(argument1);
     }
 
     public static object CreateInstance<T1, T2>(this Type type, T1 argument1, T2 argument2)
     {
         var ctor = (Func<T1, T2, object>) type.GetConstructorDelegate(typeof(T1), typeof(T2))!;
-        return ctor.Invoke(argument1, argument2);
+        return ctor(argument1, argument2);
     }
 
     public static object CreateInstance<T1, T2, T3>(this Type type, T1 argument1, T2 argument2, T3 argument3)
     {
         var ctor = (Func<T1, T2, T3, object>) type.GetConstructorDelegate(typeof(T1), typeof(T2), typeof(T3))!;
-        return ctor.Invoke(argument1, argument2, argument3);
+        return ctor(argument1, argument2, argument3);
     }
 
     public static object CreateInstance<T1, T2, T3, T4>(this Type type, T1 argument1, T2 argument2, T3 argument3, T4 argument4)
     {
         var ctor = (Func<T1, T2, T3, T4, object>) type.GetConstructorDelegate(typeof(T1), typeof(T2), typeof(T3), typeof(T4))!;
-        return ctor.Invoke(argument1, argument2, argument3, argument4);
+        return ctor(argument1, argument2, argument3, argument4);
     }
 
     public static object CreateInstance<T1, T2, T3, T4, T5>(this Type type, T1 argument1, T2 argument2, T3 argument3, T4 argument4, T5 argument5)
     {
         var ctor = (Func<T1, T2, T3, T4, T5, object>) type.GetConstructorDelegate(typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5))!;
-        return ctor.Invoke(argument1, argument2, argument3, argument4, argument5);
+        return ctor(argument1, argument2, argument3, argument4, argument5);
     }
 }

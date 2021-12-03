@@ -11,7 +11,7 @@ public static class PluginHostBuilderExt
         Action<IServiceCollection> configurator)
         where TBuilder : PluginHostBuilder
     {
-        configurator.Invoke(builder.Services);
+        configurator(builder.Services);
         return builder;
     }
 

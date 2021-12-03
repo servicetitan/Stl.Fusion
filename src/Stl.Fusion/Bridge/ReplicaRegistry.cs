@@ -86,7 +86,7 @@ public class ReplicaRegistry : IDisposable
         while (true) {
             // ReSharper disable once HeapView.CanAvoidClosure
             var handle = _handles.GetOrAdd(publicationRef, _ => {
-                newReplica = replicaFactory.Invoke();
+                newReplica = replicaFactory();
                 return _gcHandlePool.Acquire(newReplica, random);
             });
             var target = (IReplica?) handle.Target;

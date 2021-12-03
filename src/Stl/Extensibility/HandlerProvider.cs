@@ -21,9 +21,8 @@ public class HandlerProvider<TArg, TResult>
     }
 
     public IHandler this[Type forType]
-        => _handlers.GetOrAdd(
-            forType,
-            (forType1, self) => self.HandlerFactory.Invoke(forType1),
+        => _handlers.GetOrAdd(forType,
+            static (forType1, self) => self.HandlerFactory(forType1),
             this);
 
     // Default handler factory

@@ -3,9 +3,9 @@ using Stl.Reflection;
 
 namespace Stl.Tests.Reflection;
 
-public class TypeExTest : TestBase
+public class TypeExtTest : TestBase
 {
-    public TypeExTest(ITestOutputHelper @out) : base(@out) { }
+    public TypeExtTest(ITestOutputHelper @out) : base(@out) { }
 
     [Fact]
     public void GetAllBaseTypesTest()

@@ -17,7 +17,7 @@ public static class EnumerableCompatExt
     {
         var hashSet = new HashSet<TKey>();
         foreach (var item in source) {
-            var key = keySelector.Invoke(item);
+            var key = keySelector(item);
             if (hashSet.Add(key))
                 yield return item;
         }
