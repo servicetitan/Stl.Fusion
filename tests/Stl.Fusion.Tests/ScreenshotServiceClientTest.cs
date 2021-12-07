@@ -26,10 +26,11 @@ public class ScreenshotServiceClientTest : FusionTestBase
         var service = ClientServices.GetRequiredService<IScreenshotServiceClient>();
 
         ScreenshotController.CallCount = 0;
-        for (var i = 0; i < 20; i++) {
+        for (var i = 0; i < 50; i++) {
             var screenshot = await service.GetScreenshot(100);
+            screenshot.Should().NotBeNull();
             (SystemClock.Now - screenshot.CapturedAt).Should().BeLessThan(epsilon);
-            await Task.Delay(TimeSpan.FromSeconds(0.1));
+            await Task.Delay(TimeSpan.FromSeconds(0.02));
         }
         ScreenshotController.CallCount.Should().BeLessThan(15);
     }

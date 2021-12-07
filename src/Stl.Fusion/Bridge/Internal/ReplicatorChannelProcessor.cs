@@ -23,8 +23,6 @@ public class ReplicatorChannelProcessor : AsyncProcessBase
     protected volatile Task<Channel<BridgeMessage>> ChannelTask = null!;
     protected volatile Channel<BridgeMessage> SendChannel = null!;
     protected Symbol ClientId => Replicator.Id;
-    // ReSharper disable once InconsistentlySynchronizedField
-    protected object Lock => Subscriptions;
 
     public readonly IReplicator Replicator;
     public readonly Symbol PublisherId;

@@ -11,7 +11,6 @@ public class NpgsqlDbOperationLogChangeTracker<TDbContext> : DbWakeSleepProcessB
     public NpgsqlDbOperationLogChangeTrackingOptions<TDbContext> Options { get; }
     protected AgentInfo AgentInfo { get; }
     protected Task<Unit> NextEventTask { get; set; } = null!;
-    protected object Lock { get; } = new();
 
     public NpgsqlDbOperationLogChangeTracker(
         NpgsqlDbOperationLogChangeTrackingOptions<TDbContext> options,

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
+using Stl.Fusion.EntityFramework.Internal;
 using Stl.Fusion.Operations.Reprocessing;
 
 namespace Stl.Fusion.EntityFramework.Operations;
@@ -8,6 +9,9 @@ namespace Stl.Fusion.EntityFramework.Operations;
 public class DbOperationScopeProvider<TDbContext> : DbServiceBase<TDbContext>, ICommandHandler<ICommand>
     where TDbContext : DbContext
 {
+    protected static MemberInfo ExecutionStrategyShouldRetryOnMethod { get; } = typeof(ExecutionStrategy)
+        .GetMethod("ShouldRetryOn", BindingFlags.Instance | BindingFlags.NonPublic)!;
+
     protected IOperationCompletionNotifier OperationCompletionNotifier { get; }
 
     public DbOperationScopeProvider(IServiceProvider services) : base(services)
@@ -57,8 +61,7 @@ public class DbOperationScopeProvider<TDbContext> : DbServiceBase<TDbContext>, I
                 throw;
 
             // 3. Check if it's a transient failure
-            var executionStrategy = scope.MasterDbContext?.Database.CreateExecutionStrategy();
-            if (!IsTransientFailure(error, executionStrategy))
+            if (!IsTransientFailure(scope, error))
                 throw;
 
             // 4. "Tag" error as transient in operation reprocessor
@@ -72,19 +75,14 @@ public class DbOperationScopeProvider<TDbContext> : DbServiceBase<TDbContext>, I
         }
     }
 
-    protected virtual bool IsTransientFailure(Exception error, IExecutionStrategy? executionStrategy)
+    protected virtual bool IsTransientFailure(
+        DbOperationScope<TDbContext> scope,
+        Exception error)
     {
-        if (executionStrategy is not { RetriesOnFailure: false })
-            return false; // Can't detect failures w/ such execution strategy
-
-        try {
-            executionStrategy.Execute(error, state => throw state); // Simply re-throwing an error
-            return false; // We should never land here
-        }
-        catch (Exception caught) {
-            // Default failure detectors throw InvalidOperationException
-            // if they see the exception they catch can be reprocessed
-            return caught != error;
-        }
+        var executionStrategy = scope.MasterDbContext?.Database.CreateExecutionStrategy();
+        if (executionStrategy is not ExecutionStrategy retryingExecutionStrategy)
+            return false;
+        return retryingExecutionStrategy.RetriesOnFailure
+            && retryingExecutionStrategy.ShouldRetryOn(error);
     }
 }

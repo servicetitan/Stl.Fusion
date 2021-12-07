@@ -210,10 +210,14 @@ public class FusionTestBase : TestBase, IAsyncLifetime
                         });
                     break;
                 case FusionTestDbType.PostgreSql:
-                    builder.UseNpgsql(PostgreSqlConnectionString);
+                    builder.UseNpgsql(PostgreSqlConnectionString, npgsql => {
+                        npgsql.EnableRetryOnFailure();
+                    });
                     break;
                 case FusionTestDbType.SqlServer:
-                    builder.UseSqlServer(SqlServerConnectionString);
+                    builder.UseSqlServer(SqlServerConnectionString, mssql => {
+                        mssql.EnableRetryOnFailure();
+                    });
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();

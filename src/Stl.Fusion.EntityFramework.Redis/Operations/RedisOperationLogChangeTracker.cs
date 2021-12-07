@@ -14,7 +14,6 @@ public class RedisOperationLogChangeTracker<TDbContext> : DbWakeSleepProcessBase
     protected Task<Unit> NextEventTask { get; set; } = null!;
     protected RedisDb RedisDb { get; }
     protected RedisPubSub RedisPubSub { get; }
-    protected object Lock { get; } = new();
 
     public RedisOperationLogChangeTracker(
         RedisOperationLogChangeTrackingOptions<TDbContext> options,

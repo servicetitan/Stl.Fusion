@@ -10,7 +10,6 @@ public class PublisherChannelProcessor : AsyncProcessBase
     protected readonly ILogger Log;
     protected readonly IPublisherImpl PublisherImpl;
     protected readonly ConcurrentDictionary<Symbol, SubscriptionProcessor> Subscriptions;
-    protected object Lock => Subscriptions;
 
     public readonly IPublisher Publisher;
     public readonly Channel<BridgeMessage> Channel;
