@@ -1,6 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
 using Stl.Concurrency;
-using Stl.DependencyInjection;
 using Stl.Fusion.Bridge.Internal;
 using Stl.OS;
 using Stl.Generators;

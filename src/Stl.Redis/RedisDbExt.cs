@@ -1,3 +1,5 @@
+using Stl.Mathematics;
+
 namespace Stl.Redis;
 
 public static class RedisDbExt
@@ -14,9 +16,16 @@ public static class RedisDbExt
         => new(redisDb, hashKey);
 
     public static RedisSequenceSet GetSequenceSet(
-        this RedisDb redisDb, string hashKey, long autoResetDistance = 10)
-        => new(redisDb.GetHash(hashKey), autoResetDistance);
+        this RedisDb redisDb, string hashKey)
+        => new(redisDb.GetHash(hashKey));
     public static RedisSequenceSet<TScope> GetSequenceSet<TScope>(
-        this RedisDb redisDb, string hashKey, long autoResetDistance = 10)
-        => new(redisDb.GetHash(hashKey), autoResetDistance);
+        this RedisDb redisDb, string hashKey)
+        => new(redisDb.GetHash(hashKey));
+
+    public static RedisSequenceSet GetSequenceSet(
+        this RedisDb redisDb, string hashKey, Range<long> resetRange)
+        => new(redisDb.GetHash(hashKey)) { ResetRange = resetRange };
+    public static RedisSequenceSet<TScope> GetSequenceSet<TScope>(
+        this RedisDb redisDb, string hashKey, Range<long> resetRange)
+        => new(redisDb.GetHash(hashKey)) { ResetRange = resetRange };
 }

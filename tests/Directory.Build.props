@@ -66,6 +66,7 @@
     <Using Include="Stl.Async" />
     <Using Include="Stl.Channels" />
     <Using Include="Stl.Collections" />
+    <Using Include="Stl.DependencyInjection" />
     <Using Include="Stl.Serialization" />
     <Using Include="Stl.Text" />
     <Using Include="Stl.Time" />

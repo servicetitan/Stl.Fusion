@@ -1,7 +1,6 @@
 using System.Runtime.ExceptionServices;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.CommandR.Internal;
-using Stl.DependencyInjection;
 
 namespace Stl.CommandR;
 

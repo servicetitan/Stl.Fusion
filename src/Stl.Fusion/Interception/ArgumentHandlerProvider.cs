@@ -1,4 +1,3 @@
-using Stl.DependencyInjection;
 using Stl.Extensibility;
 
 namespace Stl.Fusion.Interception;

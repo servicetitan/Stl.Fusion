@@ -1,5 +1,3 @@
-using Stl.DependencyInjection;
-
 namespace Stl.CommandR.Internal;
 
 // This interface just lists all the methods CommandContext has;

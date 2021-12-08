@@ -1,6 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http;
-using Stl.DependencyInjection;
 
 namespace Stl.Fusion.Client.RestEase.Internal;
 

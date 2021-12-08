@@ -1,4 +1,3 @@
-using Stl.DependencyInjection;
 using Stl.Plugins;
 
 namespace Stl.Tests.Plugins;

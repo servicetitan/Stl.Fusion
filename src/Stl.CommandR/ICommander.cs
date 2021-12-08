@@ -1,5 +1,3 @@
-using Stl.DependencyInjection;
-
 namespace Stl.CommandR;
 
 public interface ICommander : IHasServices

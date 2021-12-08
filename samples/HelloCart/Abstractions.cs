@@ -17,7 +17,7 @@ public record EditCommand<TValue>(string Id, TValue? Value = null) : ICommand<Un
 {
     public EditCommand(TValue value) : this(value.Id, value) { }
     // Needed just to make JSON deserialization work for this type:
-    public EditCommand() : this("", null) { }
+    public EditCommand() : this("") { }
 }
 
 public interface IProductService

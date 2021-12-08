@@ -1,6 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
 using Stl.Conversion;
-using Stl.DependencyInjection;
 using Stl.Fusion.Internal;
 using Stl.Locking;
 using Stl.Versioning;

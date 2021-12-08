@@ -1,4 +1,3 @@
-using Stl.DependencyInjection;
 using Stl.Fusion.Internal;
 
 namespace Stl.Fusion.Bridge;

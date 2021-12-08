@@ -2,7 +2,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.CommandR.Interception;
 using Stl.CommandR.Internal;
-using Stl.DependencyInjection;
 
 namespace Stl.CommandR;
 

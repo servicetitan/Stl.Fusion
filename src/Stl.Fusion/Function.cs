@@ -1,4 +1,3 @@
-using Stl.DependencyInjection;
 using Stl.Fusion.Internal;
 using Stl.Locking;
 

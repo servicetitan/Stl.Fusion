@@ -1,5 +1,4 @@
 using Microsoft.Extensions.DependencyInjection;
-using Stl.DependencyInjection;
 
 namespace Stl.Tests.Extensibility;
 

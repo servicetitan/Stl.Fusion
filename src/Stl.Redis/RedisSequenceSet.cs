@@ -1,24 +1,22 @@
+using Stl.Mathematics;
+
 namespace Stl.Redis;
 
 public class RedisSequenceSet
 {
     public RedisHash Hash { get; }
-    public long AutoResetDistance { get; }
+    public Range<long> ResetRange { get; init; } = (-100, 100);
 
-    public RedisSequenceSet(RedisHash hash, long autoResetDistance = 10)
-    {
-        Hash = hash;
-        AutoResetDistance = autoResetDistance;
-    }
+    public RedisSequenceSet(RedisHash hash)
+        => Hash = hash;
 
     public async Task<long> Next(string key, long maxUsedValue = 0, long increment = 1)
     {
         while (true) {
             var value = await Hash.Increment(key, increment).ConfigureAwait(false);
-            if (maxUsedValue < value)
+            if (ResetRange.Move(maxUsedValue).Contains(value))
                 return value;
-            if (maxUsedValue - value >= AutoResetDistance)
-                await Reset(key, maxUsedValue).ConfigureAwait(false);
+            await Reset(key, maxUsedValue).ConfigureAwait(false);
         }
     }
 
@@ -31,6 +29,5 @@ public class RedisSequenceSet
 
 public class RedisSequenceSet<TScope> : RedisSequenceSet
 {
-    public RedisSequenceSet(RedisHash hash, long autoResetDistance = 10)
-        : base(hash, autoResetDistance) { }
+    public RedisSequenceSet(RedisHash hash) : base(hash) { }
 }

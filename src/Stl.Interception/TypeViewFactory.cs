@@ -1,6 +1,5 @@
 using Castle.DynamicProxy;
 using Microsoft.Extensions.DependencyInjection;
-using Stl.DependencyInjection;
 using Stl.Interception.Interceptors;
 
 namespace Stl.Interception;

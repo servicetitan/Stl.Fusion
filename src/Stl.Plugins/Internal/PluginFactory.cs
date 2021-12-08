@@ -1,5 +1,3 @@
-using Stl.DependencyInjection;
-
 namespace Stl.Plugins.Internal;
 
 public interface IPluginFactory
