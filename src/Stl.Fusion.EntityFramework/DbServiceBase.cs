@@ -20,8 +20,7 @@ public abstract class DbServiceBase<TDbContext>
         ??= Services.Clocks();
     protected VersionGenerator<long> VersionGenerator => _versionGenerator
         ??= Services.VersionGenerator<long>();
-    protected ILogger Log => _log
-        ??= Services.GetService<ILoggerFactory>()?.CreateLogger(GetType()) ?? NullLogger.Instance;
+    protected ILogger Log => _log ??= Services.LogFor(GetType().NonProxyType());
 
     protected DbServiceBase(IServiceProvider services)
         => Services = services;

@@ -4,11 +4,14 @@ namespace Stl.Fusion.Bridge.Internal;
 
 public abstract class SubscriptionProcessor : AsyncProcessBase
 {
-    protected readonly ILogger Log;
+    private ILogger? _log;
+
+    protected readonly IServiceProvider Services;
     protected readonly MomentClockSet Clocks;
     protected readonly TimeSpan ExpirationTime;
     protected long MessageIndex;
     protected (LTag Version, bool IsConsistent) LastSentVersion;
+    protected ILogger Log => _log ??= Services.LogFor(GetType().NonProxyType());
 
     public IPublisher Publisher => Publication.Publisher;
     public readonly IPublication Publication;
@@ -20,9 +23,9 @@ public abstract class SubscriptionProcessor : AsyncProcessBase
         Channel<BridgeMessage> outgoingChannel,
         TimeSpan expirationTime,
         MomentClockSet clocks,
-        ILoggerFactory loggerFactory)
+        IServiceProvider services)
     {
-        Log = loggerFactory.CreateLogger(GetType());
+        Services = services;
         Clocks = clocks;
         Publication = publication;
         OutgoingChannel = outgoingChannel;
@@ -40,8 +43,8 @@ public class SubscriptionProcessor<T> : SubscriptionProcessor
         Channel<BridgeMessage> outgoingChannel,
         TimeSpan expirationTime,
         MomentClockSet clocks,
-        ILoggerFactory loggerFactory)
-        : base(publication, outgoingChannel, expirationTime, clocks, loggerFactory)
+        IServiceProvider services)
+        : base(publication, outgoingChannel, expirationTime, clocks, services)
         => Publication = publication;
 
     protected override async Task RunInternal(CancellationToken cancellationToken)

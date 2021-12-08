@@ -8,6 +8,8 @@ namespace Stl.Fusion.Bridge.Internal;
 
 public class ReplicatorChannelProcessor : AsyncProcessBase
 {
+    private ILogger? _log;
+
     protected static readonly HandlerProvider<(ReplicatorChannelProcessor, CancellationToken), Task> OnPublicationStateReplyHandlers =
         new(typeof(PublicationStateReplyHandler<>));
 
@@ -17,20 +19,21 @@ public class ReplicatorChannelProcessor : AsyncProcessBase
             => arg.Item1.OnPublicationStateReply((PublicationStateReply<T>) target, arg.Item2);
     }
 
-    protected readonly ILogger Log;
+    protected readonly IServiceProvider Services;
     protected readonly IReplicatorImpl ReplicatorImpl;
     protected readonly HashSet<Symbol> Subscriptions;
     protected volatile Task<Channel<BridgeMessage>> ChannelTask = null!;
     protected volatile Channel<BridgeMessage> SendChannel = null!;
     protected Symbol ClientId => Replicator.Id;
+    protected ILogger Log => _log ??= Services.LogFor(GetType().NonProxyType());
 
     public readonly IReplicator Replicator;
     public readonly Symbol PublisherId;
     public readonly IMutableState<bool> IsConnected;
 
-    public ReplicatorChannelProcessor(IReplicator replicator, Symbol publisherId, ILogger? log = null)
+    public ReplicatorChannelProcessor(IReplicator replicator, Symbol publisherId, IServiceProvider services)
     {
-        Log = log ?? NullLogger.Instance;
+        Services = services;
         Replicator = replicator;
         ReplicatorImpl = (IReplicatorImpl) replicator;
         PublisherId = publisherId;

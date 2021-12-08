@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Versioning;
 
 namespace Stl.Fusion.EntityFramework;
@@ -20,8 +19,7 @@ public abstract class DbAsyncProcessBase<TDbContext> : AsyncProcessBase
         ??= Services.Clocks();
     protected VersionGenerator<long> VersionGenerator => _versionGenerator
         ??= Services.VersionGenerator<long>();
-    protected ILogger Log => _log
-        ??= Services.GetService<ILoggerFactory>()?.CreateLogger(GetType()) ?? NullLogger.Instance;
+    protected ILogger Log => _log ??= Services.LogFor(GetType().NonProxyType());
 
     protected DbAsyncProcessBase(IServiceProvider services)
         => Services = services;

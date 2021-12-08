@@ -9,7 +9,7 @@ public interface ISubscriptionProcessorFactory
     public SubscriptionProcessor Create(Type genericType,
         IPublication publication, Channel<BridgeMessage> outgoingMessages,
         TimeSpan subscriptionExpirationTime, MomentClockSet clocks,
-        ILoggerFactory loggerFactory);
+        IServiceProvider services);
 }
 
 public sealed class SubscriptionProcessorFactory : ISubscriptionProcessorFactory
@@ -17,7 +17,7 @@ public sealed class SubscriptionProcessorFactory : ISubscriptionProcessorFactory
     private delegate SubscriptionProcessor Constructor(
         IPublication publication, Channel<BridgeMessage> outgoingMessages,
         TimeSpan subscriptionExpirationTime, MomentClockSet clocks,
-        ILoggerFactory loggerFactory);
+        IServiceProvider services);
 
     private static readonly ConcurrentDictionary<Type, Constructor> ConstructorCache = new();
     private static readonly Func<Type, Constructor> CreateCache = Create;
@@ -28,10 +28,11 @@ public sealed class SubscriptionProcessorFactory : ISubscriptionProcessorFactory
 
     public SubscriptionProcessor Create(Type genericType,
         IPublication publication, Channel<BridgeMessage> outgoingMessages,
-        TimeSpan subscriptionExpirationTime, MomentClockSet clocks, ILoggerFactory loggerFactory)
+        TimeSpan subscriptionExpirationTime, MomentClockSet clocks,
+        IServiceProvider services)
         => ConstructorCache
             .GetOrAddChecked(genericType, CreateCache)
-            .Invoke(publication, outgoingMessages, subscriptionExpirationTime, clocks, loggerFactory);
+            .Invoke(publication, outgoingMessages, subscriptionExpirationTime, clocks, services);
 
     private static Constructor Create(Type genericType)
     {
@@ -42,15 +43,17 @@ public sealed class SubscriptionProcessorFactory : ISubscriptionProcessorFactory
 
         SubscriptionProcessor Factory(
             IPublication publication, Channel<BridgeMessage> outgoingMessages,
-            TimeSpan subscribeTimeout, MomentClockSet clocks, ILoggerFactory loggerFactory)
-            => publication.Apply(handler, (outgoingMessages, subscribeTimeout, clocks, loggerFactory));
+            TimeSpan subscribeTimeout, MomentClockSet clocks, IServiceProvider services)
+            => publication.Apply(handler, (outgoingMessages, subscribeTimeout, clocks, services));
 
         return Factory;
     }
 
     private class FactoryApplyHandler : IPublicationApplyHandler<
-        (Channel<BridgeMessage> OutgoingMessages, TimeSpan SubscriptionExpirationTime,
-        MomentClockSet Clocks, ILoggerFactory loggerFactory),
+        (Channel<BridgeMessage> OutgoingMessages,
+        TimeSpan SubscriptionExpirationTime,
+        MomentClockSet Clocks,
+        IServiceProvider Services),
         SubscriptionProcessor>
     {
         private readonly Type _genericType;
@@ -64,14 +67,18 @@ public sealed class SubscriptionProcessorFactory : ISubscriptionProcessorFactory
             (Channel<BridgeMessage> OutgoingMessages,
                 TimeSpan SubscriptionExpirationTime,
                 MomentClockSet Clocks,
-                ILoggerFactory loggerFactory) arg)
+                IServiceProvider Services) arg)
         {
             var closedType = _closedTypeCache.GetOrAddChecked(
                 typeof(T),
                 (tArg, tGeneric) => tGeneric.MakeGenericType(tArg),
                 _genericType);
             return (SubscriptionProcessor) closedType.CreateInstance(
-                publication, arg.OutgoingMessages, arg.SubscriptionExpirationTime, arg.Clocks, arg.loggerFactory);
+                publication,
+                arg.OutgoingMessages,
+                arg.SubscriptionExpirationTime,
+                arg.Clocks,
+                arg.Services);
         }
     }
 }

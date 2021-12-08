@@ -6,19 +6,22 @@ namespace Stl.Fusion.Bridge.Internal;
 
 public class PublisherChannelProcessor : AsyncProcessBase
 {
-    protected readonly ILoggerFactory LoggerFactory;
-    protected readonly ILogger Log;
+    private ILogger? _log;
+
+    protected readonly IServiceProvider Services;
     protected readonly IPublisherImpl PublisherImpl;
     protected readonly ConcurrentDictionary<Symbol, SubscriptionProcessor> Subscriptions;
+    protected ILogger Log => _log ??= Services.LogFor(GetType().NonProxyType());
 
     public readonly IPublisher Publisher;
     public readonly Channel<BridgeMessage> Channel;
 
-    public PublisherChannelProcessor(IPublisher publisher, Channel<BridgeMessage> channel,
-        ILoggerFactory? loggerFactory = null)
+    public PublisherChannelProcessor(
+        IPublisher publisher,
+        Channel<BridgeMessage> channel,
+        IServiceProvider services)
     {
-        LoggerFactory = loggerFactory ??= NullLoggerFactory.Instance;
-        Log = LoggerFactory.CreateLogger(GetType());
+        Services = services;
         Publisher = publisher;
         PublisherImpl = (IPublisherImpl) publisher;
         Channel = channel;
@@ -84,7 +87,7 @@ public class PublisherChannelProcessor : AsyncProcessBase
             subscriptionProcessor = PublisherImpl.SubscriptionProcessorFactory.Create(
                 PublisherImpl.SubscriptionProcessorGeneric,
                 publication, Channel, PublisherImpl.SubscriptionExpirationTime,
-                PublisherImpl.Clocks, LoggerFactory);
+                PublisherImpl.Clocks, Services);
             Subscriptions[publicationId] = subscriptionProcessor;
         }
         _ = subscriptionProcessor.Run(default)

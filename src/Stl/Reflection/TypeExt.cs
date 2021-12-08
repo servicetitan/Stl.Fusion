@@ -13,6 +13,11 @@ public static class TypeExt
     private static readonly ConcurrentDictionary<Type, Type?> GetTaskOrValueTaskTypeCache = new();
 
     public static readonly string SymbolPrefix = "@";
+    public static Func<Type, bool> ProxyTypeDetector { get; set; } =
+        type => (type.Namespace ?? "").StartsWith("Castle.Proxies.");
+
+    public static Type NonProxyType(this Type type)
+        => ProxyTypeDetector(type) ? NonProxyType(type.BaseType!) : type;
 
     public static IEnumerable<Type> GetAllBaseTypes(this Type type, bool addSelf = false, bool addInterfaces = false)
     {

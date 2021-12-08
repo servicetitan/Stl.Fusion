@@ -77,8 +77,7 @@ public class Replicator : SafeAsyncDisposableBase, IReplicatorImpl
 
     protected virtual ReplicatorChannelProcessor CreateChannelProcessor(Symbol publisherId)
     {
-        var logger = Services.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(ReplicatorChannelProcessor));
-        var channelProcessor = new ReplicatorChannelProcessor(this, publisherId, logger);
+        var channelProcessor = new ReplicatorChannelProcessor(this, publisherId, Services);
         channelProcessor.Run().ContinueWith(_ => {
             // Since ChannelProcessor is AsyncProcessorBase desc.,
             // its disposal will shut down Run as well,

@@ -24,6 +24,7 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
     where TDbContext : DbContext
 {
     private bool _isInMemoryProvider;
+    private ILogger? _log;
 
     DbContext? IDbOperationScope.MasterDbContext => MasterDbContext;
     public TDbContext? MasterDbContext { get; protected set; }
@@ -38,24 +39,22 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
     public bool IsClosed { get; private set; }
     public bool? IsConfirmed { get; private set; }
 
+    protected IServiceProvider Services { get; init; }
     protected IDbContextFactory<TDbContext> DbContextFactory { get; init; }
     protected IDbOperationLog<TDbContext> DbOperationLog { get; init; }
     protected MomentClockSet Clocks { get; init; }
     protected AsyncLock AsyncLock { get; init; }
-    protected IServiceProvider Services { get; init; }
-    protected ILogger Log { get; init; }
+    protected ILogger Log => _log ??= Services.LogFor(GetType().NonProxyType());
 
     public DbOperationScope(IServiceProvider services)
     {
-        var loggerFactory = services.GetService<ILoggerFactory>();
-        Log = loggerFactory?.CreateLogger(GetType()) ?? NullLogger.Instance;
         Services = services;
-        Clocks = services.Clocks();
-        DbContextFactory = services.GetRequiredService<IDbContextFactory<TDbContext>>();
-        DbOperationLog = services.GetRequiredService<IDbOperationLog<TDbContext>>();
+        Clocks = Services.Clocks();
+        DbContextFactory = Services.GetRequiredService<IDbContextFactory<TDbContext>>();
+        DbOperationLog = Services.GetRequiredService<IDbOperationLog<TDbContext>>();
         AsyncLock = new AsyncLock(ReentryMode.CheckedPass);
         Operation = DbOperationLog.New();
-        CommandContext = services.GetRequiredService<CommandContext>();
+        CommandContext = Services.GetRequiredService<CommandContext>();
     }
 
     protected override async Task DisposeAsync(bool disposing)

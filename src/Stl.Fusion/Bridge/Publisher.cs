@@ -8,7 +8,7 @@ using Stl.Generators;
 
 namespace Stl.Fusion.Bridge;
 
-public interface IPublisher : IHasId<Symbol>
+public interface IPublisher : IHasServices, IHasId<Symbol>
 {
     IChannelHub<BridgeMessage> ChannelHub { get; }
     bool OwnsChannelHub { get; }
@@ -64,6 +64,7 @@ public class Publisher : SafeAsyncDisposableBase, IPublisherImpl
     protected ChannelDetachedHandler<BridgeMessage> OnChannelDetachedHandler { get; }
 
     public Symbol Id { get; }
+    public IServiceProvider Services { get; }
     public IChannelHub<BridgeMessage> ChannelHub { get; }
     public bool OwnsChannelHub { get; }
     public IPublicationFactory PublicationFactory { get; }
@@ -75,9 +76,10 @@ public class Publisher : SafeAsyncDisposableBase, IPublisherImpl
     public TimeSpan SubscriptionExpirationTime { get; }
     public MomentClockSet Clocks { get; }
 
-    public Publisher(Options? options = null)
+    public Publisher(Options? options, IServiceProvider services)
     {
         options ??= new();
+        Services = services;
         Id = options.Id;
         ChannelHub = options.ChannelHub;
         OwnsChannelHub = options.OwnsChannelHub;
@@ -89,7 +91,7 @@ public class Publisher : SafeAsyncDisposableBase, IPublisherImpl
         SubscriptionProcessorFactory = options.SubscriptionProcessorFactory;
         SubscriptionProcessorGeneric = options.SubscriptionProcessorGeneric;
         SubscriptionExpirationTime = options.SubscriptionExpirationTime;
-        Clocks = options.Clocks ?? MomentClockSet.Default;
+        Clocks = options.Clocks ?? Services.Clocks();
 
         var concurrencyLevel = HardwareInfo.GetProcessorCountPo2Factor(4);
         var capacity = OSInfo.IsWebAssembly ? 509 : 7919;
@@ -175,7 +177,7 @@ public class Publisher : SafeAsyncDisposableBase, IPublisherImpl
     // Channel-related
 
     protected virtual PublisherChannelProcessor CreateChannelProcessor(Channel<BridgeMessage> channel)
-        => new(this, channel);
+        => new(this, channel, Services);
 
     protected virtual void OnChannelAttached(Channel<BridgeMessage> channel)
     {

@@ -1,10 +1,22 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Stl.DependencyInjection;
 
 public static class ServiceProviderExt
 {
     public static IServiceProvider Empty { get; } = new ServiceCollection().BuildServiceProvider();
+
+    // Logging extensions
+
+    public static ILoggerFactory Logs(this IServiceProvider services)
+        => services.GetService<ILoggerFactory>() ?? NullLoggerFactory.Instance;
+    public static ILogger LogFor<T>(this IServiceProvider services)
+        => services.LogFor(typeof(T));
+    public static ILogger LogFor(this IServiceProvider services, Type type)
+        => services.Logs().CreateLogger(type);
+    public static ILogger LogFor(this IServiceProvider services, string category)
+        => services.Logs().CreateLogger(category);
 
     // Get HostedServiceManager
 
