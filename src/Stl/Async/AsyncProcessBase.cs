@@ -66,7 +66,9 @@ public abstract class AsyncProcessBase : AsyncDisposableBase, IAsyncProcess
             using (flowSuppressor)
                 RunningTask = Task
                     .Run(() => RunInternal(StopToken), CancellationToken.None)
-                    .ContinueWith(_ => _stopTokenSource.Dispose(), TaskScheduler.Default); // !!! Important
+                    .ContinueWith(
+                        _ => _stopTokenSource.CancelAndDisposeSilently(),
+                        TaskScheduler.Default);
         }
         return RunningTask;
     }
