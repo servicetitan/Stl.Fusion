@@ -35,6 +35,121 @@ public static class EnumerableExt
         return buffer.Reader.ReadAllAsync(cancellationToken);
     }
 
+    // WithTimeouts
+
+    public static IAsyncEnumerable<T> WithTimeouts<T>(
+        this IAsyncEnumerable<T> source,
+        TimeSpan itemTimeout,
+        CancellationToken cancellationToken = default)
+        => source.WithTimeouts(itemTimeout, itemTimeout, MomentClockSet.Default.CpuClock, cancellationToken);
+
+    public static IAsyncEnumerable<T> WithTimeouts<T>(
+        this IAsyncEnumerable<T> source,
+        TimeSpan startTimeout,
+        TimeSpan itemTimeout,
+        CancellationToken cancellationToken = default)
+        => source.WithTimeouts(startTimeout, itemTimeout, MomentClockSet.Default.CpuClock, cancellationToken);
+
+    public static IAsyncEnumerable<T> WithTimeouts<T>(
+        this IAsyncEnumerable<T> source,
+        TimeSpan itemTimeout,
+        IMomentClock clock,
+        CancellationToken cancellationToken = default)
+        => source.WithTimeouts(itemTimeout, itemTimeout, clock, cancellationToken);
+
+    public static async IAsyncEnumerable<T> WithTimeouts<T>(
+        this IAsyncEnumerable<T> source,
+        TimeSpan startTimeout,
+        TimeSpan itemTimeout,
+        IMomentClock clock,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var e = source.GetAsyncEnumerator(cancellationToken);
+        await using var _ = e.ConfigureAwait(false);
+
+        var nextTimeout = startTimeout;
+        while (true) {
+            var hasMoreTask = e.MoveNextAsync(cancellationToken);
+            bool hasMore;
+            if (!hasMoreTask.IsCompleted) {
+                var hasMoreOpt = await hasMoreTask.AsTask()
+                    .WithTimeout(clock, nextTimeout, cancellationToken)
+                    .ConfigureAwait(false);
+                if (!hasMoreOpt.IsSome(out hasMore))
+                    throw new TimeoutException();
+            }
+            else
+                hasMore = await hasMoreTask.ConfigureAwait(false);
+            if (hasMore)
+                yield return e.Current;
+            else
+                yield break;
+            nextTimeout = itemTimeout;
+        }
+    }
+
+    // ToResults
+
+    public static async IAsyncEnumerable<Result<T>> ToResults<T>(
+        this IAsyncEnumerable<T> source,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var e = source.GetAsyncEnumerator(cancellationToken);
+        await using var _ = e.ConfigureAwait(false);
+
+        Result<T> item = default;
+        while (true) {
+            var hasMore = false;
+            try {
+                hasMore = await e.MoveNextAsync(cancellationToken).ConfigureAwait(false);
+                if (hasMore)
+                    item = e.Current;
+            }
+            catch (OperationCanceledException) {
+                throw;
+            }
+            catch (Exception ex) {
+                item = new Result<T>(default!, ex);
+            }
+
+            if (item.HasError) {
+                yield return item;
+                yield break;
+            }
+            if (hasMore)
+                yield return item;
+            else
+                yield break;
+        }
+    }
+
+    // ToResults
+
+    public static async IAsyncEnumerable<T> TrimOnCancellation<T>(
+        this IAsyncEnumerable<T> source,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var e = source.GetAsyncEnumerator(cancellationToken);
+        await using var _ = e.ConfigureAwait(false);
+
+        while (true) {
+            bool hasMore;
+            T item = default!;
+            try {
+                hasMore = await e.MoveNextAsync(cancellationToken).ConfigureAwait(false);
+                if (hasMore)
+                    item = e.Current;
+            }
+            catch (OperationCanceledException) {
+                yield break;
+            }
+            if (hasMore)
+                yield return item;
+            else
+                yield break;
+        }
+    }
+
     // CopyTo
 
     public static async Task CopyTo<T>(this IEnumerable<T> source,

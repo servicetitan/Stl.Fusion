@@ -14,7 +14,7 @@ public static class TypeExt
 
     public static readonly string SymbolPrefix = "@";
     public static Func<Type, bool> ProxyTypeDetector { get; set; } =
-        type => (type.Namespace ?? "").StartsWith("Castle.Proxies.");
+        type => (type.Namespace ?? "").StartsWith("Castle.Proxies.", StringComparison.Ordinal);
 
     public static Type NonProxyType(this Type type)
         => ProxyTypeDetector(type) ? NonProxyType(type.BaseType!) : type;

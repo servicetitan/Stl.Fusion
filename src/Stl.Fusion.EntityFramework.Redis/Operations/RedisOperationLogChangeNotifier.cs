@@ -12,7 +12,7 @@ public class RedisOperationLogChangeNotifier<TDbContext> : DbServiceBase<TDbCont
     public RedisOperationLogChangeTrackingOptions<TDbContext> Options { get; }
     protected AgentInfo AgentInfo { get; }
     protected RedisDb RedisDb { get; }
-    protected RedisPubSub RedisPubSub { get; }
+    protected RedisPub RedisPub { get; }
 
     public RedisOperationLogChangeNotifier(
         RedisOperationLogChangeTrackingOptions<TDbContext> options,
@@ -23,8 +23,8 @@ public class RedisOperationLogChangeNotifier<TDbContext> : DbServiceBase<TDbCont
         Options = options;
         AgentInfo = agentInfo;
         RedisDb = Services.GetService<RedisDb<TDbContext>>() ?? Services.GetRequiredService<RedisDb>();
-        RedisPubSub = RedisDb.GetPubSub(options.PubSubKey);
-        Log.LogInformation("Using pub/sub key = '{Key}'", RedisPubSub.FullKey);
+        RedisPub = RedisDb.GetPub(options.PubSubKey);
+        Log.LogInformation("Using pub/sub key = '{Key}'", RedisPub.FullKey);
     }
 
     public Task OnOperationCompleted(IOperation operation)
@@ -49,11 +49,11 @@ public class RedisOperationLogChangeNotifier<TDbContext> : DbServiceBase<TDbCont
     {
         while (true) {
             try {
-                await RedisPubSub.Publish(AgentInfo.Id.Value).ConfigureAwait(false);
+                await RedisPub.Publish(AgentInfo.Id.Value).ConfigureAwait(false);
                 return;
             }
             catch (Exception e) {
-                Log.LogError(e, "Failed to publish to pub/sub key = '{Key}'; retrying", RedisPubSub.FullKey);
+                Log.LogError(e, "Failed to publish to pub/sub key = '{Key}'; retrying", RedisPub.FullKey);
                 await Clocks.CoarseCpuClock.Delay(Options.RetryDelay).ConfigureAwait(false);
             }
         }

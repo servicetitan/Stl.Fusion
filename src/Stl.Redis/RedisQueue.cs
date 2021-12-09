@@ -2,55 +2,107 @@ using StackExchange.Redis;
 
 namespace Stl.Redis;
 
-public class RedisQueue<T> : IAsyncDisposable
+public sealed class RedisQueue : IAsyncDisposable
 {
     public record Options
     {
-        public string EnqueuePubSubKeySuffix { get; init; } = "-updates";
-        public TimeSpan DequeueTimeout { get; init; } = TimeSpan.FromSeconds(0.250);
-        public IByteSerializer<T> Serializer { get; init; } = ByteSerializer<T>.Default;
-        public IMomentClock Clock { get; init; } = CpuClock.Instance;
+        public string EnqueuePubKeySuffix { get; init; } = "-updates";
+        public TimeSpan EnqueueCheckPeriod { get; init; } = TimeSpan.FromSeconds(1);
+        public IMomentClock Clock { get; init; } = MomentClockSet.Default.CpuClock;
     }
+
+    private RedisPub EnqueuePub { get; }
+    private RedisTaskSub EnqueueSub { get; }
 
     public Options Settings { get; }
     public RedisDb RedisDb { get; }
     public string Key { get; }
-    public RedisPubSub EnqueuePubSub { get; }
 
     public RedisQueue(RedisDb redisDb, string key, Options? settings = null)
     {
         Settings = settings ?? new();
         RedisDb = redisDb;
         Key = key;
-        EnqueuePubSub = RedisDb.GetPubSub($"{typeof(T).Name}-{Key}{Settings.EnqueuePubSubKeySuffix}");
+        var enqueuePubKey = $"{Key}{Settings.EnqueuePubKeySuffix}";
+        EnqueuePub = RedisDb.GetPub(enqueuePubKey);
+        EnqueueSub = RedisDb.GetTaskSub(enqueuePubKey);
     }
 
     public ValueTask DisposeAsync()
-        => EnqueuePubSub.DisposeAsync();
+        => EnqueueSub.DisposeAsync();
+
+    public async Task Enqueue(RedisValue redisValue)
+    {
+        if (redisValue.IsNullOrEmpty)
+            throw new ArgumentOutOfRangeException(nameof(redisValue));
+        await RedisDb.Database.ListLeftPushAsync(Key, redisValue).ConfigureAwait(false);
+        await EnqueuePub.Publish(RedisValue.EmptyString).ConfigureAwait(false);
+    }
+
+    public async Task<RedisValue> Dequeue(CancellationToken cancellationToken = default)
+    {
+        while (true) {
+            var nextEnqueueNotificationTask = EnqueueSub.NextMessage();
+            var redisValue = await RedisDb.Database.ListRightPopAsync(Key).ConfigureAwait(false);
+            if (!redisValue.IsNullOrEmpty)
+                return redisValue;
+            await nextEnqueueNotificationTask
+                .WithTimeout(Settings.Clock, Settings.EnqueueCheckPeriod, cancellationToken)
+                .ConfigureAwait(false);
+        }
+    }
+
+    public Task Remove()
+        => RedisDb.Database.KeyDeleteAsync(Key, CommandFlags.FireAndForget);
+}
+
+public sealed class RedisQueue<T> : IAsyncDisposable
+{
+    public record Options
+    {
+        public string EnqueuePubKeySuffix { get; init; } = "-updates";
+        public TimeSpan EnqueueCheckPeriod { get; init; } = TimeSpan.FromSeconds(1);
+        public IByteSerializer<T> Serializer { get; init; } = ByteSerializer<T>.Default;
+        public IMomentClock Clock { get; init; } = MomentClockSet.Default.CpuClock;
+    }
+
+    private RedisPub EnqueuePub { get; }
+    private RedisTaskSub EnqueueSub { get; }
+
+    public Options Settings { get; }
+    public RedisDb RedisDb { get; }
+    public string Key { get; }
+
+    public RedisQueue(RedisDb redisDb, string key, Options? settings = null)
+    {
+        Settings = settings ?? new();
+        RedisDb = redisDb;
+        Key = key;
+        var enqueuePubKey = $"{typeof(T).Name}-{Key}{Settings.EnqueuePubKeySuffix}";
+        EnqueuePub = RedisDb.GetPub(enqueuePubKey);
+        EnqueueSub = RedisDb.GetTaskSub(enqueuePubKey);
+    }
+
+    public ValueTask DisposeAsync()
+        => EnqueueSub.DisposeAsync();
 
     public async Task Enqueue(T item)
     {
         using var bufferWriter = Settings.Serializer.Writer.Write(item);
         await RedisDb.Database.ListLeftPushAsync(Key, bufferWriter.WrittenMemory).ConfigureAwait(false);
-        await EnqueuePubSub.Publish(RedisValue.EmptyString).ConfigureAwait(false);
+        await EnqueuePub.Publish(RedisValue.EmptyString).ConfigureAwait(false);
     }
 
     public async Task<T> Dequeue(CancellationToken cancellationToken = default)
     {
         while (true) {
+            var nextEnqueueNotificationTask = EnqueueSub.NextMessage();
             var value = await RedisDb.Database.ListRightPopAsync(Key).ConfigureAwait(false);
             if (!value.IsNullOrEmpty)
                 return Settings.Serializer.Reader.Read(value);
-            try {
-                await EnqueuePubSub.Read(cancellationToken).AsTask()
-                    .WithTimeout(Settings.Clock, Settings.DequeueTimeout, cancellationToken)
-                    .ConfigureAwait(false);
-            }
-            catch (ChannelClosedException) {
-                // Delay is highly desirable here, otherwise we might end up
-                // getting tons of exceptions thrown & caught
-                await Settings.Clock.Delay(Settings.DequeueTimeout, cancellationToken).ConfigureAwait(false);
-            }
+            await nextEnqueueNotificationTask
+                .WithTimeout(Settings.Clock, Settings.EnqueueCheckPeriod, cancellationToken)
+                .ConfigureAwait(false);
         }
     }
 

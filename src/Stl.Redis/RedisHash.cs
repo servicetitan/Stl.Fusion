@@ -2,7 +2,7 @@ using StackExchange.Redis;
 
 namespace Stl.Redis;
 
-public class RedisHash
+public sealed class RedisHash
 {
     public RedisDb RedisDb { get; }
     public string HashKey { get; }

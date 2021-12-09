@@ -13,7 +13,7 @@ public class RedisOperationLogChangeTracker<TDbContext> : DbWakeSleepProcessBase
     protected AgentInfo AgentInfo { get; }
     protected Task<Unit> NextEventTask { get; set; } = null!;
     protected RedisDb RedisDb { get; }
-    protected RedisPubSub RedisPubSub { get; }
+    protected RedisTaskSub RedisSub { get; }
 
     public RedisOperationLogChangeTracker(
         RedisOperationLogChangeTrackingOptions<TDbContext> options,
@@ -24,8 +24,8 @@ public class RedisOperationLogChangeTracker<TDbContext> : DbWakeSleepProcessBase
         Options = options;
         AgentInfo = agentInfo;
         RedisDb = Services.GetService<RedisDb<TDbContext>>() ?? Services.GetRequiredService<RedisDb>();
-        RedisPubSub = RedisDb.GetPubSub(options.PubSubKey);
-        Log.LogInformation("Using pub/sub key = '{Key}'", RedisPubSub.FullKey);
+        RedisSub = RedisDb.GetTaskSub(options.PubSubKey);
+        Log.LogInformation("Using pub/sub key = '{Key}'", RedisSub.FullKey);
         // ReSharper disable once VirtualMemberCallInConstructor
         ReplaceNextEventTask();
     }
@@ -45,7 +45,9 @@ public class RedisOperationLogChangeTracker<TDbContext> : DbWakeSleepProcessBase
     protected override async Task WakeUp(CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested) {
-            var value = (string) await RedisPubSub.Read(cancellationToken).ConfigureAwait(false);
+            var value = (string) await RedisSub.NextMessage()
+                .WithFakeCancellation(cancellationToken)
+                .ConfigureAwait(false);
             if (!StringComparer.Ordinal.Equals(AgentInfo.Id.Value, value))
                 ReleaseWaitForChanges();
         }
