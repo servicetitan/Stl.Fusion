@@ -8,22 +8,22 @@ public class EnumerableExtTest : TestBase
     public EnumerableExtTest(ITestOutputHelper @out) : base(@out) { }
 
     [Fact]
-    public async Task WithTimeoutsTest()
+    public async Task WithTimeoutTest()
     {
         (await Delays(new [] {0.1d, 0.2, 1})
-            .WithTimeouts(TimeSpan.FromSeconds(0.5))
+            .WithTimeout(TimeSpan.FromSeconds(0.5))
             .ToResults().Select(r => r.ValueOrDefault)
             .ToArrayAsync()
             ).Should().Equal(0, 1, 0);
 
         (await Delays(new [] {0.5d, 0.2, 1})
-            .WithTimeouts(TimeSpan.FromSeconds(0.3))
+            .WithTimeout(TimeSpan.FromSeconds(0.3))
             .ToResults().Select(r => r.ValueOrDefault)
             .ToArrayAsync()
             ).Should().Equal(0);
 
         (await Delays(new [] {0.5d, 0.2, 0.1, 0.5})
-            .WithTimeouts(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(0.3))
+            .WithTimeout(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(0.3))
             .ToResults().Select(r => r.ValueOrDefault)
             .ToArrayAsync()
             ).Should().Equal(0, 1, 2, 0);

@@ -4,15 +4,15 @@ public static class EnumerableExt
 {
     private static readonly UnboundedChannelOptions DefaultUnboundedChannelOptions = new();
 
-    // Buffer
+    // WithBuffer
 
-    public static IAsyncEnumerable<T> Buffer<T>(
+    public static IAsyncEnumerable<T> WithBuffer<T>(
         this IAsyncEnumerable<T> source,
         int bufferSize,
         CancellationToken cancellationToken = default)
-        => source.Buffer(bufferSize, true, cancellationToken);
+        => source.WithBuffer(bufferSize, true, cancellationToken);
 
-    public static IAsyncEnumerable<T> Buffer<T>(
+    public static IAsyncEnumerable<T> WithBuffer<T>(
         this IAsyncEnumerable<T> source,
         int bufferSize,
         bool allowSynchronousContinuations,
@@ -26,7 +26,7 @@ public static class EnumerableExt
         return buffer.Reader.ReadAllAsync(cancellationToken);
     }
 
-    public static IAsyncEnumerable<T> Buffer<T>(
+    public static IAsyncEnumerable<T> WithBuffer<T>(
         this IAsyncEnumerable<T> source,
         BoundedChannelOptions options,
         CancellationToken cancellationToken = default)
@@ -35,31 +35,31 @@ public static class EnumerableExt
         return buffer.Reader.ReadAllAsync(cancellationToken);
     }
 
-    // WithTimeouts
+    // WithTimeout
 
-    public static IAsyncEnumerable<T> WithTimeouts<T>(
+    public static IAsyncEnumerable<T> WithTimeout<T>(
         this IAsyncEnumerable<T> source,
         TimeSpan itemTimeout,
         CancellationToken cancellationToken = default)
-        => source.WithTimeouts(itemTimeout, itemTimeout, MomentClockSet.Default.CpuClock, cancellationToken);
+        => source.WithTimeout(itemTimeout, itemTimeout, MomentClockSet.Default.CpuClock, cancellationToken);
 
-    public static IAsyncEnumerable<T> WithTimeouts<T>(
+    public static IAsyncEnumerable<T> WithTimeout<T>(
         this IAsyncEnumerable<T> source,
-        TimeSpan startTimeout,
+        TimeSpan firstItemTimeout,
         TimeSpan itemTimeout,
         CancellationToken cancellationToken = default)
-        => source.WithTimeouts(startTimeout, itemTimeout, MomentClockSet.Default.CpuClock, cancellationToken);
+        => source.WithTimeout(firstItemTimeout, itemTimeout, MomentClockSet.Default.CpuClock, cancellationToken);
 
-    public static IAsyncEnumerable<T> WithTimeouts<T>(
+    public static IAsyncEnumerable<T> WithTimeout<T>(
         this IAsyncEnumerable<T> source,
         TimeSpan itemTimeout,
         IMomentClock clock,
         CancellationToken cancellationToken = default)
-        => source.WithTimeouts(itemTimeout, itemTimeout, clock, cancellationToken);
+        => source.WithTimeout(itemTimeout, itemTimeout, clock, cancellationToken);
 
-    public static async IAsyncEnumerable<T> WithTimeouts<T>(
+    public static async IAsyncEnumerable<T> WithTimeout<T>(
         this IAsyncEnumerable<T> source,
-        TimeSpan startTimeout,
+        TimeSpan firstItemTimeout,
         TimeSpan itemTimeout,
         IMomentClock clock,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -67,7 +67,7 @@ public static class EnumerableExt
         var e = source.GetAsyncEnumerator(cancellationToken);
         await using var _ = e.ConfigureAwait(false);
 
-        var nextTimeout = startTimeout;
+        var nextTimeout = firstItemTimeout;
         while (true) {
             var hasMoreTask = e.MoveNextAsync(cancellationToken);
             bool hasMore;
@@ -123,7 +123,7 @@ public static class EnumerableExt
         }
     }
 
-    // ToResults
+    // TrimOnCancellation
 
     public static async IAsyncEnumerable<T> TrimOnCancellation<T>(
         this IAsyncEnumerable<T> source,
