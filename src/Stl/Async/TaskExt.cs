@@ -85,10 +85,13 @@ public static class TaskExt
         var delayTask = clock.Delay(timeout, ctsToken);
         completedTask = await Task.WhenAny(task, delayTask).ConfigureAwait(false);
 
-        if (completedTask != task)
+        if (completedTask != task) {
+            ctsToken.ThrowIfCancellationRequested();
             return false;
+        }
 
         cts.Cancel(); // Ensures delayTask is cancelled to avoid memory leak
+        await task.ConfigureAwait(false);
         return true;
     }
 
@@ -114,8 +117,10 @@ public static class TaskExt
         var delayTask = clock.Delay(timeout, ctsToken);
         completedTask = await Task.WhenAny(task, delayTask).ConfigureAwait(false);
 
-        if (completedTask != task)
+        if (completedTask != task) {
+            ctsToken.ThrowIfCancellationRequested();
             return Option<T>.None;
+        }
 
         cts.Cancel(); // Ensures delayTask is cancelled to avoid memory leak
         return await task.ConfigureAwait(false);
