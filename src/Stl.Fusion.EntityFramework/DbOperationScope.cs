@@ -24,7 +24,6 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
     where TDbContext : DbContext
 {
     private bool _isInMemoryProvider;
-    private ILogger? _log;
 
     DbContext? IDbOperationScope.MasterDbContext => MasterDbContext;
     public TDbContext? MasterDbContext { get; protected set; }
@@ -39,16 +38,17 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
     public bool IsClosed { get; private set; }
     public bool? IsConfirmed { get; private set; }
 
-    protected IServiceProvider Services { get; init; }
-    protected IDbContextFactory<TDbContext> DbContextFactory { get; init; }
-    protected IDbOperationLog<TDbContext> DbOperationLog { get; init; }
-    protected MomentClockSet Clocks { get; init; }
-    protected AsyncLock AsyncLock { get; init; }
-    protected ILogger Log => _log ??= Services.LogFor(GetType().NonProxyType());
+    protected IServiceProvider Services { get; }
+    protected IDbContextFactory<TDbContext> DbContextFactory { get; }
+    protected IDbOperationLog<TDbContext> DbOperationLog { get; }
+    protected MomentClockSet Clocks { get; }
+    protected AsyncLock AsyncLock { get; }
+    protected ILogger Log { get; }
 
     public DbOperationScope(IServiceProvider services)
     {
         Services = services;
+        Log = Services.LogFor(GetType().NonProxyType());
         Clocks = Services.Clocks();
         DbContextFactory = Services.GetRequiredService<IDbContextFactory<TDbContext>>();
         DbOperationLog = Services.GetRequiredService<IDbOperationLog<TDbContext>>();

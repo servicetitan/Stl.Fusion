@@ -10,7 +10,17 @@ public static class ServiceProviderExt
     // Logging extensions
 
     public static ILoggerFactory Logs(this IServiceProvider services)
-        => services.GetService<ILoggerFactory>() ?? NullLoggerFactory.Instance;
+    {
+        try {
+            return services.GetService<ILoggerFactory>() ?? NullLoggerFactory.Instance;
+        }
+        catch (ObjectDisposedException) {
+            // ILoggerFactory could be requested during IServiceProvider disposal,
+            // and we don't want to get any exceptions during this process.
+            return NullLoggerFactory.Instance;
+        }
+    }
+
     public static ILogger LogFor<T>(this IServiceProvider services)
         => services.LogFor(typeof(T));
     public static ILogger LogFor(this IServiceProvider services, Type type)
