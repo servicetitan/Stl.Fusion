@@ -36,7 +36,7 @@
   </PropertyGroup>
 
   <ItemGroup Label="Package Versions">
-    <PackageReference Update="AspNet.Security.OAuth.GitHub" Version="6.0.0" />
+    <PackageReference Update="AspNet.Security.OAuth.GitHub" Version="6.0.1" />
     <PackageReference Update="Blazorise" Version="$(BlazoriseVersion)" />
     <PackageReference Update="Blazorise.Bootstrap" Version="$(BlazoriseVersion)" />
     <PackageReference Update="Blazorise.DataGrid" Version="$(BlazoriseVersion)" />
