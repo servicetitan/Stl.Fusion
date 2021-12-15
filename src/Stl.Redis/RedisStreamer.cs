@@ -115,8 +115,10 @@ public sealed class RedisStreamer<T>
                 }
             // No cancellation for AppendEnd - it should propagate it
             await AppendEnd(error, appendPub).ConfigureAwait(false);
-            cancellationToken.ThrowIfCancellationRequested();
         }
+        if (error != null)
+            throw error;
+        cancellationToken.ThrowIfCancellationRequested();
     }
 
     private async Task AppendStart(

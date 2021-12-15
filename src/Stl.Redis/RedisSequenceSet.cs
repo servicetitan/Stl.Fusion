@@ -5,7 +5,7 @@ namespace Stl.Redis;
 public class RedisSequenceSet
 {
     public RedisHash Hash { get; }
-    public Range<long> ResetRange { get; init; } = (-100, 100);
+    public Range<long> ResetRange { get; init; } = (-256, 256);
 
     public RedisSequenceSet(RedisHash hash)
         => Hash = hash;

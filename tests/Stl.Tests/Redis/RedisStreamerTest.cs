@@ -58,7 +58,7 @@ public class RedisStreamerTest : RedisTestBase
     }
 
     [Fact]
-    public async Task ExceptionTest()
+    public async Task ExceptionTest1()
     {
         if (TestRunnerInfo.IsBuildAgent())
             return; // No Redis on build agent for now
@@ -76,7 +76,8 @@ public class RedisStreamerTest : RedisTestBase
         });
         (await streamer.Read().Take(4).CountAsync()).Should().Be(4);
 
-        await writeTask;
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => writeTask);
     }
 
 #pragma warning disable CS1998

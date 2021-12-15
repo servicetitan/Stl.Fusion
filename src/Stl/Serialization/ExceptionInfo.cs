@@ -1,12 +1,17 @@
 using System.Text.Json.Serialization;
-using Stl.Internal;
+using Stl.Serialization.Internal;
 
 namespace Stl.Serialization;
 
 [DataContract]
 public readonly struct ExceptionInfo : IEquatable<ExceptionInfo>
 {
-    public static readonly ExceptionInfo None = default;
+    private static readonly Type[] ExceptionCtorArgumentTypes1 = { typeof(string), typeof(Exception) };
+    private static readonly Type[] ExceptionCtorArgumentTypes2 = { typeof(string) };
+
+    public static ExceptionInfo None { get; } = default;
+    public static Func<ExceptionInfo, Exception?> ToExceptionConverter { get; set; } = DefaultToExceptionConverter;
+
     private readonly string _message;
 
     [DataMember(Order = 0)]
@@ -41,25 +46,54 @@ public readonly struct ExceptionInfo : IEquatable<ExceptionInfo>
     }
 
     public override string ToString()
-    {
-        return TypeRef.AssemblyQualifiedName.IsEmpty
+        => IsNone
             ? $"{GetType().Name}()"
             : $"{GetType().Name}({TypeRef}, {JsonFormatter.Format(Message)})";
-    }
 
     public Exception? ToException()
     {
         if (IsNone) return null;
-        var type = TypeRef.Resolve();
-        if (!typeof(Exception).IsAssignableFrom(type))
-            throw Errors.WrongExceptionType(type);
-        return (Exception) type.CreateInstance(Message);
+
+        try {
+            return ToExceptionConverter.Invoke(this)
+                ?? Errors.RemoteException(this);
+        }
+        catch (Exception) {
+            return Errors.RemoteException(this);
+        }
     }
 
     // Conversion
 
     public static implicit operator ExceptionInfo(Exception exception)
         => new(exception);
+
+    private static Exception? DefaultToExceptionConverter(ExceptionInfo exceptionInfo)
+    {
+        var type = exceptionInfo.TypeRef.Resolve();
+        if (!typeof(Exception).IsAssignableFrom(type))
+            return null;
+
+        var ctor = type.GetConstructor(ExceptionCtorArgumentTypes1);
+        if (ctor != null) {
+            try {
+                return (Exception) type.CreateInstance(exceptionInfo.Message, (Exception?) null);
+            }
+            catch {
+                // Intended
+            }
+        }
+
+        ctor = type.GetConstructor(ExceptionCtorArgumentTypes2);
+        if (ctor == null)
+            return null;
+
+        var parameter = ctor.GetParameters().SingleOrDefault();
+        if (!StringComparer.Ordinal.Equals("message", parameter?.Name ?? ""))
+            return null;
+
+        return (Exception) type.CreateInstance(exceptionInfo.Message);
+    }
 
     // Equality
 
