@@ -10,10 +10,12 @@ public class RedisSequenceSet
     public RedisSequenceSet(RedisHash hash)
         => Hash = hash;
 
-    public async Task<long> Next(string key, long maxUsedValue = 0, long increment = 1)
+    public async Task<long> Next(string key, long maxUsedValue = -1, long increment = 1)
     {
         while (true) {
             var value = await Hash.Increment(key, increment).ConfigureAwait(false);
+            if (maxUsedValue < 0)
+                return value;
             if (ResetRange.Move(maxUsedValue).Contains(value))
                 return value;
             await Reset(key, maxUsedValue).ConfigureAwait(false);
