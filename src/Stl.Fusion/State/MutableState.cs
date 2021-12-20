@@ -71,8 +71,8 @@ public class MutableState<T> : State<T>, IMutableState<T>
             //    non-async, synchronously updates the mutable
             //    state.
             // 3. If all the updates are synchronous, we don't
-            //    need async lock used that's used by regular
-            //    IComputed instances as well.
+            //    need async lock that's used by regular
+            //    IComputed instances.
             snapshot.Computed.Invalidate();
         }
     }
