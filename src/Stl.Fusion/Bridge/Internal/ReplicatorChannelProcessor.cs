@@ -39,7 +39,7 @@ public class ReplicatorChannelProcessor : AsyncProcessBase
         PublisherId = publisherId;
         Subscriptions = new HashSet<Symbol>();
         var stateFactory = ReplicatorImpl.Services.StateFactory();
-        IsConnected = stateFactory.NewMutable(Result.Value(true));
+        IsConnected = stateFactory.NewMutable(true);
         // ReSharper disable once VirtualMemberCallInConstructor
         Reconnect();
     }

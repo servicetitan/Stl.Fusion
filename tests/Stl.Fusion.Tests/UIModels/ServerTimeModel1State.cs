@@ -4,20 +4,6 @@ using Stl.RegisterAttributes;
 
 namespace Stl.Fusion.Tests.UIModels;
 
-public class ServerTimeModel1
-{
-    public DateTime Time { get; }
-
-    public ServerTimeModel1() { }
-    public ServerTimeModel1(DateTime time) => Time = time;
-}
-
-public class ServerTimeModel2 : ServerTimeModel1
-{
-    public ServerTimeModel2() { }
-    public ServerTimeModel2(DateTime time) : base(time) { }
-}
-
 [RegisterService(typeof(IComputedState<ServerTimeModel1>))]
 public class ServerTimeModel1State : ComputedState<ServerTimeModel1>
 {
@@ -25,7 +11,7 @@ public class ServerTimeModel1State : ComputedState<ServerTimeModel1>
         => Services.GetRequiredService<IClientTimeService>();
 
     public ServerTimeModel1State(IServiceProvider services)
-        : base(services) { }
+        : base(new() { InitialOutput = new ServerTimeModel1(default) }, services) { }
 
     protected override async Task<ServerTimeModel1> Compute(CancellationToken cancellationToken)
     {

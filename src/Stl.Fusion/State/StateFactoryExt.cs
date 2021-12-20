@@ -2,33 +2,30 @@ namespace Stl.Fusion;
 
 public static class StateFactoryExt
 {
-    // With default options
+    // NewMutable
 
     public static IMutableState<T> NewMutable<T>(
         this IStateFactory factory,
-        Result<T> initialOutput)
+        T initialOutput = default!)
     {
-        var options = new MutableState<T>.Options();
-        return factory.NewMutable(options, initialOutput);
+        var options = new MutableState<T>.Options() {
+            InitialOutput = initialOutput,
+        };
+        return factory.NewMutable(options);
     }
 
-    public static IMutableState<T> NewMutable<T>(
-        this IStateFactory factory,
-        Option<Result<T>> initialOutput = default)
-    {
-        var options = new MutableState<T>.Options();
-        return factory.NewMutable(options, initialOutput);
-    }
+    // NewComputed
 
     public static IComputedState<T> NewComputed<T>(
         this IStateFactory factory,
+        T initialOutput,
         Func<IComputedState<T>, CancellationToken, Task<T>> computer)
     {
-        var options = new ComputedState<T>.Options();
+        var options = new ComputedState<T>.Options() {
+            InitialOutput = initialOutput,
+        };
         return factory.NewComputed(options, computer);
     }
-
-    // With update delayer
 
     public static IComputedState<T> NewComputed<T>(
         this IStateFactory factory,
@@ -41,35 +38,16 @@ public static class StateFactoryExt
         return factory.NewComputed(options, computer);
     }
 
-    // With builder
-
-    public static IMutableState<T> NewMutable<T>(
-        this IStateFactory factory,
-        Action<MutableState<T>.Options> optionsBuilder,
-        Result<T> initialOutput)
-    {
-        var options = new MutableState<T>.Options();
-        optionsBuilder(options);
-        return factory.NewMutable(options, initialOutput);
-    }
-
-    public static IMutableState<T> NewMutable<T>(
-        this IStateFactory factory,
-        Action<MutableState<T>.Options> optionsBuilder,
-        Option<Result<T>> initialOutput = default)
-    {
-        var options = new MutableState<T>.Options();
-        optionsBuilder(options);
-        return factory.NewMutable(options, initialOutput);
-    }
-
     public static IComputedState<T> NewComputed<T>(
         this IStateFactory factory,
-        Action<ComputedState<T>.Options> optionsBuilder,
+        Result<T> initialOutput,
+        IUpdateDelayer updateDelayer,
         Func<IComputedState<T>, CancellationToken, Task<T>> computer)
     {
-        var options = new ComputedState<T>.Options();
-        optionsBuilder(options);
+        var options = new ComputedState<T>.Options() {
+            InitialOutput = initialOutput,
+            UpdateDelayer = updateDelayer,
+        };
         return factory.NewComputed(options, computer);
     }
 }

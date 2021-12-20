@@ -10,10 +10,9 @@ public interface IState : IResult, IHasServices
 {
     public interface IOptions
     {
-        ComputedOptions ComputedOptions { get; set; }
-        VersionGenerator<LTag>? VersionGenerator { get; set; }
-        Action<IState>? EventConfigurator { get; set; }
-        bool InitialIsConsistent { get; set; }
+        ComputedOptions ComputedOptions { get; init; }
+        VersionGenerator<LTag>? VersionGenerator { get; init; }
+        Action<IState>? EventConfigurator { get; init; }
     }
 
     IStateSnapshot Snapshot { get; }
@@ -41,18 +40,14 @@ public abstract class State<T> : ComputedInput,
     IEquatable<State<T>>,
     IFunction<State<T>, T>
 {
-    public class Options : IState.IOptions
+    public record Options : IState.IOptions
     {
-        public static readonly Func<IState<T>, Result<T>> DefaultInitialOutputFactory =
-            state => Result.Value(ActivatorExt.New<T>(false));
+        public ComputedOptions ComputedOptions { get; init; } = ComputedOptions.Default;
+        public VersionGenerator<LTag>? VersionGenerator { get; init; }
+        public Result<T> InitialOutput { get; init; } = default;
 
-        public ComputedOptions ComputedOptions { get; set; } = ComputedOptions.Default;
-        public VersionGenerator<LTag>? VersionGenerator { get; set; }
-        public Func<IState<T>, Result<T>> InitialOutputFactory { get; set; } = DefaultInitialOutputFactory;
-        public bool InitialIsConsistent { get; set; }
-
-        public Action<IState<T>>? EventConfigurator { get; set; }
-        Action<IState>? IState.IOptions.EventConfigurator { get; set; }
+        public Action<IState<T>>? EventConfigurator { get; init; }
+        Action<IState>? IState.IOptions.EventConfigurator { get; init; }
     }
 
     private volatile StateSnapshot<T>? _snapshot;
@@ -167,9 +162,9 @@ public abstract class State<T> : ComputedInput,
     protected virtual void Initialize(Options options)
     {
         var computed = CreateComputed();
-        computed.TrySetOutput(options.InitialOutputFactory(this));
+        computed.TrySetOutput(options.InitialOutput);
         Computed = computed;
-        if (!options.InitialIsConsistent)
+        if (this is not IMutableState)
             computed.Invalidate();
     }
 

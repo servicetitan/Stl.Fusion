@@ -22,10 +22,12 @@ public class StringKeyValueModelState : ComputedState<KeyValueModel<string>>
 
     public StringKeyValueModelState(IServiceProvider services)
         : base(
-            new Options() { UpdateDelayer = new UpdateDelayer(services.UICommandTracker(), 0.5) },
+            new Options() {
+                UpdateDelayer = new UpdateDelayer(services.UICommandTracker(), 0.5)
+            },
             services)
     {
-        Locals = new MutableState<string>(services);
+        Locals = services.StateFactory().NewMutable("");
         Locals.AddEventHandler(StateEventKind.Updated, (_, _) => this.Recompute());
     }
 

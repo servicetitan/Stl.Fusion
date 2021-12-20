@@ -26,9 +26,7 @@ public class KeyValueModelTest : FusionTestBase
         // First read
         var c = kvm.Computed;
         c.IsConsistent().Should().BeFalse();
-        c.Value.Key.Should().Be("");
-        c.Value.Value.Should().BeNull();
-        c.Value.UpdateCount.Should().Be(0);
+        c.Value.Should().Be(null);
 
         await TestExt.WhenMet(() => {
             var snapshot = kvm.Snapshot;

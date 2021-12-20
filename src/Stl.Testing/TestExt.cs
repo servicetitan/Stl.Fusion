@@ -1,3 +1,4 @@
+using FluentAssertions;
 using FluentAssertions.Execution;
 
 namespace Stl.Testing;
@@ -33,7 +34,12 @@ public static class TestExt
     {
         foreach (var timeout in checkIntervals ?? DefaultCheckIntervals) {
             using (var scope = new AssertionScope()) {
-                condition();
+                try {
+                    condition();
+                }
+                catch (Exception error) {
+                    error.Should().BeNull("An exception other than assertion was thrown.");
+                }
                 if (!scope.HasFailures())
                     return;
                 if (!cancellationToken.IsCancellationRequested)

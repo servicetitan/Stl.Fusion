@@ -7,17 +7,13 @@ namespace Stl.Fusion.Blazor;
 
 public class AuthStateProvider : AuthenticationStateProvider, IDisposable
 {
-    public class Options
+    public record Options
     {
-        public Action<ComputedState<AuthState>.Options> AuthStateOptionsBuilder { get; } =
-            DefaultAuthStateOptionsBuilder;
-
-        public static void DefaultAuthStateOptionsBuilder(ComputedState<AuthState>.Options options)
-            => options.UpdateDelayer =
-                UpdateDelayer.MinDelay with {
-                    MaxRetryDelayDuration = TimeSpan.FromSeconds(10),
-                };
-    }
+        public IUpdateDelayer UpdateDelayer { get; init; } =
+            Fusion.UpdateDelayer.MinDelay with {
+                MaxRetryDelayDuration = TimeSpan.FromSeconds(10),
+            };
+    };
 
     private volatile IStateSnapshot<AuthState>? _cachedStateSnapshot;
     private volatile Task<AuthenticationState>? _cachedStateValueTask;
@@ -40,11 +36,10 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
         SessionResolver = sessionResolver;
         Auth = auth;
         UICommandTracker = uiCommandTracker;
-        State = stateFactory.NewComputed<AuthState>(o => {
-            options.AuthStateOptionsBuilder(o);
-            o.InitialOutputFactory = _ => new AuthState(new User("none"));
-            o.EventConfigurator += state => state.AddEventHandler(StateEventKind.Updated, OnStateChanged);
-        }, ComputeState);
+
+        // ReSharper disable once VirtualMemberCallInConstructor
+        var stateOptions = GetStateOptions(options);
+        State = stateFactory.NewComputed(stateOptions, ComputeState);
     }
 
     public void Dispose()
@@ -71,6 +66,13 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
         }, TaskScheduler.Current);
         return _cachedStateValueTask;
     }
+
+    protected virtual ComputedState<AuthState>.Options GetStateOptions(Options options)
+        => new() {
+            InitialOutput = new AuthState(new User("none")),
+            UpdateDelayer = options.UpdateDelayer,
+            EventConfigurator = state => state.AddEventHandler(StateEventKind.Updated, OnStateChanged),
+        };
 
     protected virtual async Task<AuthState> ComputeState(IComputedState<AuthState> state, CancellationToken cancellationToken)
     {

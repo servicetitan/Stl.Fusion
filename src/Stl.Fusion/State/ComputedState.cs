@@ -7,12 +7,11 @@ public interface IComputedState : IState, IDisposable, IHasDisposeStarted
 {
     public new interface IOptions : IState.IOptions
     {
-        IUpdateDelayer? UpdateDelayer { get; set; }
-        Func<IComputedState, IUpdateDelayer>? UpdateDelayerFactory { get; set; }
-        bool DelayFirstUpdate { get; set; }
+        IUpdateDelayer? UpdateDelayer { get; init; }
+        bool DelayFirstUpdate { get; init; }
     }
 
-    IUpdateDelayer UpdateDelayer { get; set; }
+    IUpdateDelayer UpdateDelayer { get; }
     Task UpdateTask { get; }
     CancellationToken DisposeToken { get; }
 }
@@ -22,50 +21,29 @@ public interface IComputedState<T> : IState<T>, IComputedState
 
 public abstract class ComputedState<T> : State<T>, IComputedState<T>
 {
-    public new class Options : State<T>.Options, IComputedState.IOptions
+    public new record Options : State<T>.Options, IComputedState.IOptions
     {
-        public IUpdateDelayer? UpdateDelayer { get; set; }
-        public Func<IComputedState, IUpdateDelayer>? UpdateDelayerFactory { get; set; }
-        public bool DelayFirstUpdate { get; set; } = false;
+        public IUpdateDelayer? UpdateDelayer { get; init; }
+        public bool DelayFirstUpdate { get; init; } = false;
     }
 
     private readonly CancellationTokenSource _disposeCts;
-    private volatile IUpdateDelayer? _updateDelayer;
 
-    protected Func<IComputedState<T>, IUpdateDelayer>? UpdateDelayerFactory { get; }
     protected bool DelayFirstUpdate { get; }
     protected ILogger Log { get; }
 
-    public IUpdateDelayer UpdateDelayer {
-        get => _updateDelayer!;
-        set {
-            if (value == null!)
-                throw new ArgumentNullException(nameof(value));
-            _updateDelayer = value;
-        }
-    }
-
-    public CancellationToken DisposeToken { get; }
+    public IUpdateDelayer UpdateDelayer { get; }
     public Task UpdateTask { get; private set; } = null!;
+    public CancellationToken DisposeToken { get; }
     public bool IsDisposeStarted => DisposeToken.IsCancellationRequested;
 
-    protected ComputedState(IServiceProvider services, bool initialize = true)
-        : this(new(), services, initialize) { }
     protected ComputedState(Options options, IServiceProvider services, bool initialize = true)
         : base(options, services, false)
     {
         _disposeCts = new CancellationTokenSource();
         DisposeToken = _disposeCts.Token;
         Log = Services.GetService<ILoggerFactory>()?.CreateLogger(GetType()) ?? NullLogger.Instance;
-        if (options.UpdateDelayer != null) {
-            if (options.UpdateDelayerFactory != null)
-                throw new ArgumentOutOfRangeException(nameof(options));
-            UpdateDelayer = options.UpdateDelayer;
-        }
-        else if (options.UpdateDelayerFactory != null)
-            UpdateDelayerFactory = options.UpdateDelayerFactory;
-        else
-            UpdateDelayerFactory = state => state.Services.GetRequiredService<IUpdateDelayer>();
+        UpdateDelayer = options.UpdateDelayer ?? Services.GetRequiredService<IUpdateDelayer>();
         DelayFirstUpdate = options.DelayFirstUpdate;
         // ReSharper disable once VirtualMemberCallInConstructor
         if (initialize) Initialize(options);
@@ -73,8 +51,6 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
 
     protected override void Initialize(State<T>.Options options)
     {
-        // ReSharper disable once NonAtomicCompoundOperator
-        _updateDelayer ??= UpdateDelayerFactory!.Invoke(this);
         base.Initialize(options);
         UpdateTask = Task.Run(Update, CancellationToken.None);
     }

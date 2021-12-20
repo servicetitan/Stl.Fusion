@@ -13,13 +13,10 @@ public interface IMutableState<T> : IState<T>, IMutableResult<T>, IMutableState
 
 public class MutableState<T> : State<T>, IMutableState<T>
 {
-    public new class Options : State<T>.Options, IMutableState.IOptions
+    public new record Options : State<T>.Options, IMutableState.IOptions
     {
         public Options()
-        {
-            ComputedOptions = ComputedOptions.NoAutoInvalidateOnError;
-            InitialIsConsistent = true;
-        }
+            => ComputedOptions = ComputedOptions.NoAutoInvalidateOnError;
     }
 
     private Result<T> _output;
@@ -38,18 +35,15 @@ public class MutableState<T> : State<T>, IMutableState<T>
         set => Set(Result.Value((T) value!));
     }
 
-    // This constructor is used by generic service descriptor for IMutableState<T>
     public MutableState(IServiceProvider services)
-        : this(new Options(), services) { }
-    // This constructor is used by StateFactory
+        : this(new(), services) { }
     public MutableState(
         Options options,
         IServiceProvider services,
-        Option<Result<T>> initialOutput = default,
         bool initialize = true)
         : base(options, services, false)
     {
-        _output = initialOutput.IsSome(out var o) ? o : options.InitialOutputFactory(this);
+        _output = options.InitialOutput;
         // ReSharper disable once VirtualMemberCallInConstructor
         if (initialize) Initialize(options);
     }

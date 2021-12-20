@@ -4,9 +4,7 @@ namespace Stl.Fusion;
 
 public interface IStateFactory : IHasServices
 {
-    IMutableState<T> NewMutable<T>(
-        MutableState<T>.Options options,
-        Option<Result<T>> initialOutput = default);
+    IMutableState<T> NewMutable<T>(MutableState<T>.Options options);
 
     IComputedState<T> NewComputed<T>(
         ComputedState<T>.Options options,
@@ -20,10 +18,8 @@ public class StateFactory : IStateFactory
     public StateFactory(IServiceProvider services)
         => Services = services;
 
-    public IMutableState<T> NewMutable<T>(
-        MutableState<T>.Options options,
-        Option<Result<T>> initialOutput = default)
-        => new MutableState<T>(options, Services, initialOutput);
+    public IMutableState<T> NewMutable<T>(MutableState<T>.Options options)
+        => new MutableState<T>(options, Services);
 
     public IComputedState<T> NewComputed<T>(
         ComputedState<T>.Options options,

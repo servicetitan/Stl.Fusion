@@ -1,6 +1,6 @@
 @page "/authentication"
 @using UAParser
-@inherits ComputedStateComponent<(User User, List<AuthenticationPage.SessionInfoModel> Sessions)>
+@inherits ComputedStateComponent<(User? User, List<AuthenticationPage.SessionInfoModel>? Sessions)>
 @inject Session _session
 @inject IAuth _auth
 @inject ClientAuthHelper _clientAuthHelper
@@ -10,7 +10,8 @@
 @{
     var state = State.LatestNonErrorValue;
     var error = State.Error;
-    var user = state.User;
+    var user = state.User ?? new("");
+    var sessions = state.Sessions ?? new();
     var usedAuthSchemas = user.Identities.Select(kv => kv.Key.Schema).ToHashSet();
     var unusedAuthSchemas = AuthSchemas.Where(p => !usedAuthSchemas.Contains(p.Name)).ToArray();
 }
@@ -64,7 +65,7 @@
                 </ul>
             }
         </CardText>
-        @if (user.IsAuthenticated && state.Sessions.Count > 0) {
+        @if (user.IsAuthenticated && sessions.Count > 0) {
             <CardTitle>Sessions:</CardTitle>
             <CardText>
                 <table class="table table-sm">
@@ -79,7 +80,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                    @foreach (var session in state.Sessions) {
+                    @foreach (var session in sessions) {
                         <tr @key="@session.Id">
                             <td>@session.IPAddress</td>
                             <td>@session.UserAgent</td>
@@ -153,10 +154,7 @@
         }
     }
 
-    protected override void ConfigureState(ComputedState<(User, List<SessionInfoModel>)>.Options options)
-        => options.InitialOutputFactory = _ => (new(""), new List<SessionInfoModel>());
-
-    protected override async Task<(User, List<SessionInfoModel>)> ComputeState(CancellationToken cancellationToken)
+    protected override async Task<(User?, List<SessionInfoModel>?)> ComputeState(CancellationToken cancellationToken)
     {
         var user = await _auth.GetSessionUser(_session, cancellationToken);
         var sessions = await _auth.GetUserSessions(_session, cancellationToken).ConfigureAwait(false);
