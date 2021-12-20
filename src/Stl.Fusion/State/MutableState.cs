@@ -64,8 +64,15 @@ public class MutableState<T> : State<T>, IMutableState<T>
         lock (Lock) {
             var snapshot = Snapshot;
             _output = result;
-            // Better to do this inside the lock, since it will be
-            // re-acquired later - see InvokeAsync and InvokeAndStrip overloads
+            // We do this inside the lock by a few reasons:
+            // 1. Otherwise the lock will be acquired twice -
+            //    see OnInvalidated & Invoke overloads below.
+            // 2. It's quite convenient if Set, while being
+            //    non-async, synchronously updates the mutable
+            //    state.
+            // 3. If all the updates are synchronous, we don't
+            //    need async lock used that's used by regular
+            //    IComputed instances as well.
             snapshot.Computed.Invalidate();
         }
     }
