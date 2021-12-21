@@ -69,7 +69,7 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
 
     protected virtual ComputedState<AuthState>.Options GetStateOptions(Options options)
         => new() {
-            InitialOutput = new AuthState(new User("none")),
+            InitialValue = new(new User("none")),
             UpdateDelayer = options.UpdateDelayer,
             EventConfigurator = state => state.AddEventHandler(StateEventKind.Updated, OnStateChanged),
         };

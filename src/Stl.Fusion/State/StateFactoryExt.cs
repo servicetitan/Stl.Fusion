@@ -6,10 +6,10 @@ public static class StateFactoryExt
 
     public static IMutableState<T> NewMutable<T>(
         this IStateFactory factory,
-        T initialOutput = default!)
+        T initialValue = default!)
     {
         var options = new MutableState<T>.Options() {
-            InitialOutput = initialOutput,
+            InitialValue = initialValue,
         };
         return factory.NewMutable(options);
     }
@@ -18,11 +18,11 @@ public static class StateFactoryExt
 
     public static IComputedState<T> NewComputed<T>(
         this IStateFactory factory,
-        T initialOutput,
+        T initialValue,
         Func<IComputedState<T>, CancellationToken, Task<T>> computer)
     {
         var options = new ComputedState<T>.Options() {
-            InitialOutput = initialOutput,
+            InitialValue = initialValue,
         };
         return factory.NewComputed(options, computer);
     }
@@ -40,12 +40,12 @@ public static class StateFactoryExt
 
     public static IComputedState<T> NewComputed<T>(
         this IStateFactory factory,
-        Result<T> initialOutput,
+        Result<T> initialValue,
         IUpdateDelayer updateDelayer,
         Func<IComputedState<T>, CancellationToken, Task<T>> computer)
     {
         var options = new ComputedState<T>.Options() {
-            InitialOutput = initialOutput,
+            InitialValue = initialValue,
             UpdateDelayer = updateDelayer,
         };
         return factory.NewComputed(options, computer);

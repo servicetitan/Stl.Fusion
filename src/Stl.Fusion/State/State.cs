@@ -46,6 +46,11 @@ public abstract class State<T> : ComputedInput,
         public VersionGenerator<LTag>? VersionGenerator { get; init; }
         public Result<T> InitialOutput { get; init; } = default;
 
+        public T InitialValue {
+            get => InitialOutput.ValueOrDefault!;
+            init => InitialOutput = new Result<T>(value, null);
+        }
+
         public Action<IState<T>>? EventConfigurator { get; init; }
         Action<IState>? IState.IOptions.EventConfigurator { get; init; }
     }

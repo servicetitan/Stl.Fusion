@@ -283,7 +283,7 @@ public class FusionTestBase : TestBase, IAsyncLifetime
 
             // Custom computed state
             services.AddSingleton(c => c.StateFactory().NewComputed<ServerTimeModel2>(
-                new() { InitialOutput = new ServerTimeModel2(default) },
+                new() { InitialValue = new(default) },
                 async (_, cancellationToken) => {
                     var client = c.GetRequiredService<IClientTimeService>();
                     var time = await client.GetTime(cancellationToken).ConfigureAwait(false);

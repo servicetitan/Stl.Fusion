@@ -11,7 +11,7 @@ public class ServerTimeModel1State : ComputedState<ServerTimeModel1>
         => Services.GetRequiredService<IClientTimeService>();
 
     public ServerTimeModel1State(IServiceProvider services)
-        : base(new() { InitialOutput = new ServerTimeModel1(default) }, services) { }
+        : base(new() { InitialValue = new(default) }, services) { }
 
     protected override async Task<ServerTimeModel1> Compute(CancellationToken cancellationToken)
     {
