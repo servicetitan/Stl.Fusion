@@ -8,7 +8,6 @@ public interface IComputedState : IState, IDisposable, IHasDisposeStarted
     public new interface IOptions : IState.IOptions
     {
         IUpdateDelayer? UpdateDelayer { get; init; }
-        bool DelayFirstUpdate { get; init; }
     }
 
     IUpdateDelayer UpdateDelayer { get; }
@@ -24,12 +23,10 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
     public new record Options : State<T>.Options, IComputedState.IOptions
     {
         public IUpdateDelayer? UpdateDelayer { get; init; }
-        public bool DelayFirstUpdate { get; init; } = false;
     }
 
     private readonly CancellationTokenSource _disposeCts;
 
-    protected bool DelayFirstUpdate { get; }
     protected ILogger Log { get; }
 
     public IUpdateDelayer UpdateDelayer { get; }
@@ -44,7 +41,6 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
         DisposeToken = _disposeCts.Token;
         Log = Services.GetService<ILoggerFactory>()?.CreateLogger(GetType()) ?? NullLogger.Instance;
         UpdateDelayer = options.UpdateDelayer ?? Services.GetRequiredService<IUpdateDelayer>();
-        DelayFirstUpdate = options.DelayFirstUpdate;
         // ReSharper disable once VirtualMemberCallInConstructor
         if (initialize) Initialize(options);
     }
@@ -74,7 +70,7 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
                 var computed = snapshot.Computed;
                 if (!computed.IsInvalidated())
                     await computed.WhenInvalidated(cancellationToken).ConfigureAwait(false);
-                if (snapshot.UpdateCount != 0 || DelayFirstUpdate)
+                if (snapshot.UpdateCount != 0)
                     await UpdateDelayer.UpdateDelay(snapshot, cancellationToken).ConfigureAwait(false);
                 if (!snapshot.WhenUpdated().IsCompleted)
                     await computed.Update(cancellationToken).ConfigureAwait(false);
