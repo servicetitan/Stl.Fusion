@@ -93,7 +93,7 @@ public class ReplicaRegistry : IDisposable
             if (target != null) {
                 if (target == newReplica)
                     return (target, true);
-                (newReplica as IReplicaImpl)?.DisposeTemporaryReplica();
+                (newReplica as IReplicaImpl)?.DisposeTemporaryInstance();
                 return (target, false);
             }
             // GCHandle target == null => we have to recycle it

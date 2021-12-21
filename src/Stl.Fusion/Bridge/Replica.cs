@@ -2,7 +2,7 @@ using Stl.Fusion.Internal;
 
 namespace Stl.Fusion.Bridge;
 
-public interface IReplica : IAsyncDisposable
+public interface IReplica : IDisposable
 {
     IReplicator Replicator { get; }
     PublicationRef PublicationRef { get; }
@@ -21,7 +21,7 @@ public interface IReplica<T> : IReplica
 
 public interface IReplicaImpl : IReplica, IFunction
 {
-    void DisposeTemporaryReplica();
+    void DisposeTemporaryInstance();
     bool ApplyFailedUpdate(Exception? error, CancellationToken cancelledToken);
 }
 
@@ -30,7 +30,7 @@ public interface IReplicaImpl<T> : IReplica<T>, IFunction<ReplicaInput, T>, IRep
     bool ApplySuccessfulUpdate(Result<T>? output, LTag version, bool isConsistent);
 }
 
-public class Replica<T> : SafeAsyncDisposableBase, IReplicaImpl<T>
+public class Replica<T> : IReplicaImpl<T>
 {
     private volatile ComputedOptions _computedOptions = ComputedOptions.Default;
 
@@ -39,7 +39,7 @@ public class Replica<T> : SafeAsyncDisposableBase, IReplicaImpl<T>
     protected volatile Exception? UpdateErrorField;
     protected volatile Task<Unit>? UpdateRequestTask;
     protected IReplicatorImpl ReplicatorImpl => (IReplicatorImpl) Replicator;
-    protected object Lock = new();
+    protected readonly object Lock = new();
 
     public IReplicator Replicator { get; }
     public PublicationRef PublicationRef => Input.PublicationRef;
@@ -71,27 +71,31 @@ public class Replica<T> : SafeAsyncDisposableBase, IReplicaImpl<T>
             UpdateRequestTask = CreateUpdateRequestTask();
     }
 
-    // This method is called for temp. replicas that were never attached to anything.
-    void IReplicaImpl.DisposeTemporaryReplica()
-    {
-        if (!MarkDisposed())
-            throw Stl.Internal.Errors.InternalError(
-                "Couldn't dispose temporary Replica!");
-    }
-
     // We want to make sure the replicas are connected to
     // publishers only while they're used.
 #pragma warning disable MA0055
-    ~Replica() => DisposeAsync();
+    ~Replica() => Dispose(false);
 #pragma warning restore MA0055
 
-    protected override Task DisposeAsync(bool disposing)
-    {
-        // Intentionally ignore disposing flag here
+    // Called for temp. replicas that were never exposed by ReplicaRegistry
+    void IReplicaImpl.DisposeTemporaryInstance()
+        => GC.SuppressFinalize(this);
 
-        Input.ReplicatorImpl.OnReplicaDisposed(this);
+    public virtual void Dispose()
+    {
+        GC.SuppressFinalize(this);
+        Dispose(true);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        try {
+            Input.ReplicatorImpl.OnReplicaDisposed(this);
+        }
+        catch {
+            // Intended
+        }
         ReplicaRegistry.Instance.Remove(this);
-        return Task.CompletedTask;
     }
 
     Task IReplica.RequestUpdate(CancellationToken cancellationToken)

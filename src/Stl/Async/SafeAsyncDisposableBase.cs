@@ -14,7 +14,8 @@ public abstract class SafeAsyncDisposableBase : IAsyncDisposable, IDisposable, I
 
     public void Dispose()
     {
-        if (Interlocked.CompareExchange(ref _isDisposing, 1, 0) != 0) return;
+        if (Interlocked.CompareExchange(ref _isDisposing, 1, 0) != 0)
+            return;
 
         var disposeTask = DisposeAsync(true);
         Interlocked.Exchange(ref _disposeTask, disposeTask);
@@ -44,7 +45,8 @@ public abstract class SafeAsyncDisposableBase : IAsyncDisposable, IDisposable, I
 
     protected bool MarkDisposed()
     {
-        if (Interlocked.CompareExchange(ref _isDisposing, 1, 0) != 0) return false;
+        if (Interlocked.CompareExchange(ref _isDisposing, 1, 0) != 0)
+            return false;
 
         Interlocked.Exchange(ref _disposeTask, Task.CompletedTask);
         GC.SuppressFinalize(this);

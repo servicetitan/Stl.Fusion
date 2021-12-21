@@ -97,6 +97,8 @@ public class Replicator : SafeAsyncDisposableBase, IReplicatorImpl
         => OnReplicaDisposed(replica);
     protected virtual void OnReplicaDisposed(IReplica replica)
     {
+        if (IsDisposeStarted)
+            return;
         if (replica.Replicator != this)
             throw new ArgumentOutOfRangeException(nameof(replica));
         GetChannelProcessor(replica.PublicationRef.PublisherId).Unsubscribe(replica);
