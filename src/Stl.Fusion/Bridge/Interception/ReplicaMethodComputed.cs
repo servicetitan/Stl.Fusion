@@ -49,6 +49,6 @@ public class ReplicaMethodComputed<T> : Computed<ComputeMethodInput, T>, IReplic
         // We intentionally suppress ComputedRegistry.Unregister here,
         // otherwise it won't be possible to find IReplica using
         // old IComputed.
-        this.CancelTimeouts();
+        CancelTimeouts();
     }
 }

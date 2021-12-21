@@ -21,6 +21,19 @@ public abstract class AsyncDisposableBase : IAsyncDisposable, IDisposable
 #pragma warning restore CA1816 // Dispose methods should call SuppressFinalize
     }
 
+    /// <summary>
+    /// The async part of the dispose process.
+    /// It's called only when the object is disposed via <see cref="DisposeAsync"/>.
+    /// </summary>
+    /// <returns>Dispose task.</returns>
     protected abstract ValueTask DisposeAsyncCore();
+
+    /// <summary>
+    /// This is the synchronous part of the dispose process.
+    /// It's called in any case; async part runs first.
+    /// </summary>
+    /// <param name="disposing"><code>true</code> if this method
+    /// is called from <see cref="Dispose"/>;
+    /// otherwise, <code>false</code>.</param>
     protected abstract void Dispose(bool disposing);
 }

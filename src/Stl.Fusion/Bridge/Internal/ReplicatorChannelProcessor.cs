@@ -1,5 +1,4 @@
 using System.Runtime.ExceptionServices;
-using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Extensibility;
 using Stl.Fusion.Bridge.Messages;
 using Stl.Fusion.Internal;
@@ -188,7 +187,7 @@ public class ReplicatorChannelProcessor : AsyncProcessBase
             oldSendChannel?.Writer.TryComplete();
         }
         catch {
-            // It's better to suppress all exceptions here
+            // Intended
         }
 
         // Connect task

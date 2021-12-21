@@ -9,7 +9,7 @@ namespace Stl.Fusion.Bridge.Interception;
 public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>
 {
     protected readonly ILogger Log;
-    protected readonly bool IsLogDebugEnabled;
+    protected readonly ILogger? DebugLog;
     protected readonly VersionGenerator<LTag> VersionGenerator;
     protected readonly IReplicator Replicator;
 
@@ -21,7 +21,7 @@ public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>
         : base(method, ((IReplicatorImpl) replicator).Services)
     {
         Log = log ?? NullLogger<ReplicaMethodFunction<T>>.Instance;
-        IsLogDebugEnabled = Log.IsEnabled(LogLevel.Debug);
+        DebugLog = Log.IsEnabled(LogLevel.Debug) ? Log : null;
         VersionGenerator = versionGenerator;
         Replicator = replicator;
     }
@@ -49,8 +49,7 @@ public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>
                 throw;
             }
             catch (Exception e) {
-                if (IsLogDebugEnabled)
-                    Log.LogError(e, "ComputeAsync: error on Replica update");
+                DebugLog?.LogError(e, "ComputeAsync: error on Replica update");
             }
         }
 
@@ -73,8 +72,7 @@ public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>
                 throw;
             }
             catch (Exception e) {
-                if (IsLogDebugEnabled)
-                    Log.LogError(e, "ComputeAsync: error on update");
+                DebugLog?.LogError(e, "ComputeAsync: error on update");
                 if (e is AggregateException ae)
                     e = ae.GetFirstInnerException();
                 output = Result.Error<T>(e);

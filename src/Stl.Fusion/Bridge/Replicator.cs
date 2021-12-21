@@ -65,9 +65,7 @@ public class Replicator : SafeAsyncDisposableBase, IReplicatorImpl
     }
 
     public IState<bool> GetPublisherConnectionState(Symbol publisherId)
-        => ChannelProcessors
-            .GetOrAddChecked(publisherId, CreateChannelProcessorHandler)
-            .IsConnected;
+        => GetChannelProcessor(publisherId).IsConnected;
 
     protected virtual ReplicatorChannelProcessor GetChannelProcessor(Symbol publisherId)
         => ChannelProcessors

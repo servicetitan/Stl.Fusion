@@ -16,30 +16,28 @@ public abstract class SafeAsyncDisposableBase : IAsyncDisposable, IDisposable, I
     {
         if (Interlocked.CompareExchange(ref _isDisposing, 1, 0) != 0) return;
 
-        Interlocked.Exchange(ref _disposeTask, DisposeAsync(true));
+        var disposeTask = DisposeAsync(true);
+        Interlocked.Exchange(ref _disposeTask, disposeTask);
         GC.SuppressFinalize(this);
     }
 
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
+        Task? disposeTask;
         if (Interlocked.CompareExchange(ref _isDisposing, 1, 0) != 0) {
             var spinWait = new SpinWait();
             while (true) {
-                var disposeTask1 = _disposeTask;
-                if (disposeTask1 != null) {
-                    await disposeTask1.ConfigureAwait(false);
-                    return;
-                }
+                disposeTask = _disposeTask;
+                if (disposeTask != null)
+                    return disposeTask.ToValueTask();
                 spinWait.SpinOnce();
             }
         }
 
-        var disposeTask = DisposeAsync(true);
+        disposeTask = DisposeAsync(true);
         _ = Interlocked.Exchange(ref _disposeTask, disposeTask);
-        await disposeTask.ConfigureAwait(false);
-#pragma warning disable CA1816 // Dispose methods should call SuppressFinalize
         GC.SuppressFinalize(this);
-#pragma warning restore CA1816 // Dispose methods should call SuppressFinalize
+        return disposeTask.ToValueTask();
     }
 
     protected abstract Task DisposeAsync(bool disposing);
