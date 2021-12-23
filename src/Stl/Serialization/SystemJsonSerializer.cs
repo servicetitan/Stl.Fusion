@@ -3,7 +3,7 @@ using Stl.Serialization.Internal;
 
 namespace Stl.Serialization;
 
-public class SystemJsonSerializer : Utf16SerializerBase
+public class SystemJsonSerializer : TextSerializerBase
 {
     public static JsonSerializerOptions DefaultOptions { get; set; } = new() {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,

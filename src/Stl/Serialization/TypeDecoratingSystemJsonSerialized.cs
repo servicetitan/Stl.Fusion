@@ -9,13 +9,13 @@ public static class TypeDecoratingSystemJsonSerialized
 
 [DataContract]
 [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
-public class TypeDecoratingSystemJsonSerialized<T> : Utf16Serialized<T>
+public class TypeDecoratingSystemJsonSerialized<T> : TextSerialized<T>
 {
-    [ThreadStatic] private static IUtf16Serializer<T>? _serializer;
+    [ThreadStatic] private static ITextSerializer<T>? _serializer;
 
     public TypeDecoratingSystemJsonSerialized() { }
     public TypeDecoratingSystemJsonSerialized(string data) : base(data) { }
 
-    protected override IUtf16Serializer<T> GetSerializer()
+    protected override ITextSerializer<T> GetSerializer()
         => _serializer ??= new TypeDecoratingSerializer(SystemJsonSerializer.Default).ToTyped<T>();
 }

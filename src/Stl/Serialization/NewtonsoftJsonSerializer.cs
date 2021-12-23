@@ -5,7 +5,7 @@ using Stl.Serialization.Internal;
 
 namespace Stl.Serialization;
 
-public class NewtonsoftJsonSerializer : Utf16SerializerBase
+public class NewtonsoftJsonSerializer : TextSerializerBase
 {
     private readonly JsonSerializer _jsonSerializer;
     private readonly StringBuilder _stringBuilder;

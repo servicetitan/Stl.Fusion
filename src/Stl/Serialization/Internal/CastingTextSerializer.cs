@@ -1,13 +1,13 @@
 namespace Stl.Serialization.Internal;
 
-public class CastingUtf16Serializer<T> : IUtf16Serializer<T>, IUtf16Reader<T>, IUtf16Writer<T>
+public class CastingTextSerializer<T> : ITextSerializer<T>, ITextReader<T>, ITextWriter<T>
 {
-    public IUtf16Serializer Serializer { get; }
+    public ITextSerializer Serializer { get; }
     public Type SerializedType { get; }
-    public IUtf16Reader<T> Reader => this;
-    public IUtf16Writer<T> Writer => this;
+    public ITextReader<T> Reader => this;
+    public ITextWriter<T> Writer => this;
 
-    public CastingUtf16Serializer(IUtf16Serializer serializer, Type serializedType)
+    public CastingTextSerializer(ITextSerializer serializer, Type serializedType)
     {
         Serializer = serializer;
         SerializedType = serializedType;

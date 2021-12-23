@@ -1,13 +1,13 @@
 namespace Stl.Serialization;
 
-public interface IUtf16Reader
+public interface ITextReader
 {
     object? Read(string data, Type type);
-    IUtf16Reader<T> ToTyped<T>(Type? serializedType = null);
+    ITextReader<T> ToTyped<T>(Type? serializedType = null);
 }
 
 // ReSharper disable once TypeParameterCanBeVariant
-public interface IUtf16Reader<T>
+public interface ITextReader<T>
 {
     T Read(string data);
 }

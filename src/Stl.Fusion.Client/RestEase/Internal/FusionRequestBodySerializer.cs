@@ -5,7 +5,7 @@ namespace Stl.Fusion.Client.RestEase.Internal;
 
 public class FusionRequestBodySerializer : RequestBodySerializer
 {
-    public IUtf16Writer Writer { get; init; } = SystemJsonSerializer.Default.Writer;
+    public ITextWriter Writer { get; init; } = SystemJsonSerializer.Default.Writer;
     public string ContentType { get; init; } = "application/json";
 
     public override HttpContent? SerializeBody<T>(T body, RequestBodySerializerInfo info)

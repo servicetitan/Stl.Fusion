@@ -3,17 +3,17 @@ using Stl.Serialization.Internal;
 
 namespace Stl.Serialization;
 
-public class TypeDecoratingSerializer : Utf16SerializerBase
+public class TypeDecoratingSerializer : TextSerializerBase
 {
     public static TypeDecoratingSerializer Default { get; } =
         new(SystemJsonSerializer.Default);
 
     private readonly ISerializationBinder _serializationBinder;
 
-    public IUtf16Serializer Serializer { get; }
+    public ITextSerializer Serializer { get; }
     public Func<Type, bool> TypeFilter { get; }
 
-    public TypeDecoratingSerializer(IUtf16Serializer serializer, Func<Type, bool>? typeFilter = null)
+    public TypeDecoratingSerializer(ITextSerializer serializer, Func<Type, bool>? typeFilter = null)
     {
         Serializer = serializer;
         TypeFilter = typeFilter ?? (_ => true);

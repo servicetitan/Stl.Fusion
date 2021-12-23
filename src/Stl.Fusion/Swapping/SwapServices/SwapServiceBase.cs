@@ -4,10 +4,10 @@ namespace Stl.Fusion.Swapping;
 
 public abstract class SwapServiceBase : ISwapService
 {
-    protected Func<IUtf16Serializer<object>> SerializerFactory { get; set; } = null!;
+    protected Func<ITextSerializer<object>> SerializerFactory { get; set; } = null!;
 
     protected SwapServiceBase() { }
-    protected SwapServiceBase(Func<IUtf16Serializer<object>> serializerFactory)
+    protected SwapServiceBase(Func<ITextSerializer<object>> serializerFactory)
         => SerializerFactory = serializerFactory;
 
     public async ValueTask<IResult?> Load(

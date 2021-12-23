@@ -2,16 +2,16 @@ using System.Text.Json.Serialization;
 
 namespace Stl.Serialization;
 
-public static class Utf16Serialized
+public static class TextSerialized
 {
-    public static Utf16Serialized<TValue> New<TValue>() => new();
-    public static Utf16Serialized<TValue> New<TValue>(TValue value) => new() { Value = value };
-    public static Utf16Serialized<TValue> New<TValue>(string data) => new(data);
+    public static TextSerialized<TValue> New<TValue>() => new();
+    public static TextSerialized<TValue> New<TValue>(TValue value) => new() { Value = value };
+    public static TextSerialized<TValue> New<TValue>(string data) => new(data);
 }
 
 [DataContract]
 [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
-public class Utf16Serialized<T> : IEquatable<Utf16Serialized<T>>
+public class TextSerialized<T> : IEquatable<TextSerialized<T>>
 {
     private Option<T> _valueOption;
     private Option<string> _dataOption;
@@ -36,8 +36,8 @@ public class Utf16Serialized<T> : IEquatable<Utf16Serialized<T>>
 
     // ToString
 
-    public Utf16Serialized() { }
-    public Utf16Serialized(string data)
+    public TextSerialized() { }
+    public TextSerialized(string data)
         => _dataOption = data;
 
     public override string ToString()
@@ -67,12 +67,12 @@ public class Utf16Serialized<T> : IEquatable<Utf16Serialized<T>>
         return value;
     }
 
-    protected virtual IUtf16Serializer<T> GetSerializer()
-        => Utf16Serializer<T>.Default;
+    protected virtual ITextSerializer<T> GetSerializer()
+        => TextSerializer<T>.Default;
 
     // Equality
 
-    public bool Equals(Utf16Serialized<T>? other)
+    public bool Equals(TextSerialized<T>? other)
     {
         if (ReferenceEquals(null, other))
             return false;
@@ -87,13 +87,13 @@ public class Utf16Serialized<T> : IEquatable<Utf16Serialized<T>>
             return false;
         if (ReferenceEquals(this, obj))
             return true;
-        return Equals((Utf16Serialized<T>)obj);
+        return Equals((TextSerialized<T>)obj);
     }
 
     public override int GetHashCode()
         => StringComparer.Ordinal.GetHashCode(Data);
-    public static bool operator ==(Utf16Serialized<T>? left, Utf16Serialized<T>? right)
+    public static bool operator ==(TextSerialized<T>? left, TextSerialized<T>? right)
         => Equals(left, right);
-    public static bool operator !=(Utf16Serialized<T>? left, Utf16Serialized<T>? right)
+    public static bool operator !=(TextSerialized<T>? left, TextSerialized<T>? right)
         => !Equals(left, right);
 }

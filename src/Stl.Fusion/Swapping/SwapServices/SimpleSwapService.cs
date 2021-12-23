@@ -10,7 +10,7 @@ public class SimpleSwapService : SwapServiceBase
         public TimeSpan ExpirationTime { get; set; } = TimeSpan.FromMinutes(1);
         public TimeSpan TimerQuanta { get; set; } = TimeSpan.FromSeconds(1);
         public int ConcurrencyLevel { get; set; } = HardwareInfo.GetProcessorCountPo2Factor();
-        public Func<IUtf16Serializer<object>> SerializerFactory { get; set; } =
+        public Func<ITextSerializer<object>> SerializerFactory { get; set; } =
             () => new NewtonsoftJsonSerializer().ToTyped<object>();
         public IMomentClock? Clock { get; set; }
     }

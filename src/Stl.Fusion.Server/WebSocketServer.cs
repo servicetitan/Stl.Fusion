@@ -14,10 +14,10 @@ public class WebSocketServer
         public string RequestPath { get; set; } = "/fusion/ws";
         public string PublisherIdQueryParameterName { get; set; } = "publisherId";
         public string ClientIdQueryParameterName { get; set; } = "clientId";
-        public Func<IUtf16Serializer<BridgeMessage>> SerializerFactory { get; set; } = DefaultSerializerFactory;
+        public Func<ITextSerializer<BridgeMessage>> SerializerFactory { get; set; } = DefaultSerializerFactory;
 
-        public static IUtf16Serializer<BridgeMessage> DefaultSerializerFactory()
-            => new Utf16Serializer(
+        public static ITextSerializer<BridgeMessage> DefaultSerializerFactory()
+            => new TextSerializer(
                 new TypeDecoratingSerializer(
                     SystemJsonSerializer.Default,
                     t => typeof(ReplicatorRequest).IsAssignableFrom(t)).Reader,
@@ -28,7 +28,7 @@ public class WebSocketServer
     }
 
     protected IPublisher Publisher { get; }
-    protected Func<IUtf16Serializer<BridgeMessage>> SerializerFactory { get; }
+    protected Func<ITextSerializer<BridgeMessage>> SerializerFactory { get; }
     protected ILogger Log { get; }
 
     public string RequestPath { get; }
@@ -66,7 +66,7 @@ public class WebSocketServer
         await using var _ = wsChannel.ConfigureAwait(false);
 
         var channel = wsChannel
-            .WithUtf16Serializer(serializers)
+            .WithTextSerializer(serializers)
             .WithId(clientId);
         Publisher.ChannelHub.Attach(channel);
         try {

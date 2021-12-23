@@ -12,7 +12,7 @@ public sealed class RedisStreamer<T>
         public string AppendPubKeySuffix { get; init; } = "-updates";
         public TimeSpan AppendCheckPeriod { get; init; } = TimeSpan.FromSeconds(1);
         public IByteSerializer<T> Serializer { get; init; } = ByteSerializer<T>.Default;
-        public IUtf16Serializer<ExceptionInfo> ErrorSerializer { get; init; } = Utf16Serializer<ExceptionInfo>.Default;
+        public ITextSerializer<ExceptionInfo> ErrorSerializer { get; init; } = TextSerializer<ExceptionInfo>.Default;
         public IMomentClock Clock { get; init; } = MomentClockSet.Default.CpuClock;
 
         // You normally don't need to modify these

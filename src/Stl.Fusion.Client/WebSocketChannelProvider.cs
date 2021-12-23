@@ -19,7 +19,7 @@ public class WebSocketChannelProvider : IChannelProvider, IHasServices
         public string ClientIdQueryParameterName { get; set; } = "clientId";
         public TimeSpan ConnectTimeout { get; set; } = TimeSpan.FromSeconds(10);
         public int? MessageMaxLength { get; set; } = 2048;
-        public Func<IServiceProvider, IUtf16Serializer<BridgeMessage>> SerializerFactory { get; set; } =
+        public Func<IServiceProvider, ITextSerializer<BridgeMessage>> SerializerFactory { get; set; } =
             DefaultSerializerFactory;
         public Func<IServiceProvider, ClientWebSocket> ClientWebSocketFactory { get; set; } =
             DefaultClientWebSocketFactory;
@@ -28,8 +28,8 @@ public class WebSocketChannelProvider : IChannelProvider, IHasServices
         public bool IsLoggingEnabled { get; set; } = true;
         public bool IsMessageLoggingEnabled { get; set; } = false;
 
-        public static IUtf16Serializer<BridgeMessage> DefaultSerializerFactory(IServiceProvider services)
-            => new Utf16Serializer(
+        public static ITextSerializer<BridgeMessage> DefaultSerializerFactory(IServiceProvider services)
+            => new TextSerializer(
                 new TypeDecoratingSerializer(
                     SystemJsonSerializer.Default,
                     t => typeof(PublisherReply).IsAssignableFrom(t)).Reader,
@@ -63,7 +63,7 @@ public class WebSocketChannelProvider : IChannelProvider, IHasServices
         }
     }
 
-    protected Func<IServiceProvider, IUtf16Serializer<BridgeMessage>> SerializerFactory { get; }
+    protected Func<IServiceProvider, ITextSerializer<BridgeMessage>> SerializerFactory { get; }
     protected Func<IServiceProvider, ClientWebSocket> ClientWebSocketFactory { get; }
     protected int? MessageMaxLength { get; }
     protected Lazy<IReplicator>? ReplicatorLazy { get; }
@@ -125,7 +125,7 @@ public class WebSocketChannelProvider : IChannelProvider, IHasServices
             if (IsMessageLoggingEnabled)
                 stringChannel = stringChannel.WithLogger(clientId, Log, MessageLogLevel, MessageMaxLength);
             var serializers = SerializerFactory(Services);
-            var resultChannel = stringChannel.WithUtf16Serializer(serializers);
+            var resultChannel = stringChannel.WithTextSerializer(serializers);
             _ = wsChannel.WhenCompleted(CancellationToken.None)
                 .ContinueWith(async _ => {
                     await Task.Delay(1000, default).ConfigureAwait(false);

@@ -85,9 +85,9 @@ public static partial class ChannelExt
         }
     }
 
-    public static Channel<T> WithUtf16Serializer<T>(
+    public static Channel<T> WithTextSerializer<T>(
         this Channel<string> downstreamChannel,
-        IUtf16Serializer<T> serializer,
+        ITextSerializer<T> serializer,
         BoundedChannelOptions? channelOptions = null,
         CancellationToken cancellationToken = default)
     {

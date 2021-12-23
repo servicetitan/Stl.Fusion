@@ -1,6 +1,6 @@
 namespace Stl.Serialization;
 
-public class ByteSerializer : IByteSerializer
+public sealed class ByteSerializer : IByteSerializer
 {
     public static IByteSerializer Default { get; set; } = MessagePackByteSerializer.Default;
 
@@ -13,7 +13,7 @@ public class ByteSerializer : IByteSerializer
         Writer = writer;
     }
 
-    public virtual IByteSerializer<T> ToTyped<T>(Type? serializedType = null)
+    public IByteSerializer<T> ToTyped<T>(Type? serializedType = null)
         => new ByteSerializer<T>(
             Reader.ToTyped<T>(serializedType),
             Writer.ToTyped<T>(serializedType));
