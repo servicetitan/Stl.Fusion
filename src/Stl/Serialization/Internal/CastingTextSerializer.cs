@@ -16,13 +16,13 @@ public class CastingTextSerializer<T> : ITextSerializer<T>
 
     public T Read(string data)
         => (T) UntypedSerializer.Read(data, SerializedType)!;
-    public T Read(ReadOnlyMemory<char> data)
+    public T Read(ReadOnlyMemory<byte> data)
         => (T) UntypedSerializer.Read(data, SerializedType)!;
 
     public string Write(T value)
         // ReSharper disable once HeapView.PossibleBoxingAllocation
         => UntypedSerializer.Write(value, SerializedType);
-    public void Write(IBufferWriter<char> bufferWriter, T value)
+    public void Write(IBufferWriter<byte> bufferWriter, T value)
         // ReSharper disable once HeapView.PossibleBoxingAllocation
         => UntypedSerializer.Write(bufferWriter, value, SerializedType);
 }

@@ -41,6 +41,6 @@ public sealed class AsymmetricByteSerializer<T> : IByteSerializer<T>
     public T Read(ReadOnlyMemory<byte> data)
         => Reader.Read(data);
 
-    public void Write(IBufferWriter<byte> bufferWriter, T? value)
+    public void Write(IBufferWriter<byte> bufferWriter, T value)
         => Writer.Write(bufferWriter, value);
 }

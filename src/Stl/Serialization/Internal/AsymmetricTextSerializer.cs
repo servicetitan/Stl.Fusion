@@ -15,6 +15,8 @@ public sealed class AsymmetricTextSerializer : ITextSerializer
         PreferStringApi = preferStringApi ?? Reader.PreferStringApi;
     }
 
+    IByteSerializer<T> IByteSerializer.ToTyped<T>(Type? serializedType)
+        => ToTyped<T>(serializedType);
     public ITextSerializer<T> ToTyped<T>(Type? serializedType = null)
         => new AsymmetricTextSerializer<T>(
             Reader.ToTyped<T>(serializedType),
@@ -23,12 +25,12 @@ public sealed class AsymmetricTextSerializer : ITextSerializer
 
     public object? Read(string data, Type type)
         => Reader.Read(data, type);
-    public object? Read(ReadOnlyMemory<char> data, Type type)
+    public object? Read(ReadOnlyMemory<byte> data, Type type)
         => Reader.Read(data, type);
 
     public string Write(object? value, Type type)
         => Writer.Write(value, type);
-    public void Write(IBufferWriter<char> bufferWriter, object? value, Type type)
+    public void Write(IBufferWriter<byte> bufferWriter, object? value, Type type)
         => Writer.Write(bufferWriter, value, type);
 }
 
@@ -47,11 +49,11 @@ public class AsymmetricTextSerializer<T> : ITextSerializer<T>
 
     public T Read(string data)
         => Reader.Read(data);
-    public T Read(ReadOnlyMemory<char> data)
+    public T Read(ReadOnlyMemory<byte> data)
         => Reader.Read(data);
 
     public string Write(T value)
         => Writer.Write(value);
-    public void Write(IBufferWriter<char> bufferWriter, T value)
+    public void Write(IBufferWriter<byte> bufferWriter, T value)
         => Writer.Write(bufferWriter, value);
 }

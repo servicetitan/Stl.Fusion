@@ -69,12 +69,12 @@ public class MessagePackByteSerializer<T> : MessagePackByteSerializer, IByteSeri
     {
         if (type != SerializedType)
             throw Errors.SerializedTypeMismatch(SerializedType, type);
-        Write(bufferWriter, (T?) value);
+        Write(bufferWriter, (T) value!);
     }
 
     public T Read(ReadOnlyMemory<byte> data)
         => MessagePackSerializer.Deserialize<T>(data, Options);
 
-    public void Write(IBufferWriter<byte> bufferWriter, T? value)
+    public void Write(IBufferWriter<byte> bufferWriter, T value)
         => MessagePackSerializer.Serialize(bufferWriter, value, Options);
 }

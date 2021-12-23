@@ -13,14 +13,16 @@ public sealed class NoneTextSerializer : ITextSerializer
 
     public object? Read(string data, Type type)
         => throw Errors.NoSerializer();
-    public object? Read(ReadOnlyMemory<char> data, Type type)
+    public object? Read(ReadOnlyMemory<byte> data, Type type)
         => throw Errors.NoSerializer();
 
     public string Write(object? value, Type type)
         => throw Errors.NoSerializer();
-    public void Write(IBufferWriter<char> bufferWriter, object? value, Type type)
+    public void Write(IBufferWriter<byte> bufferWriter, object? value, Type type)
         => throw Errors.NoSerializer();
 
+    IByteSerializer<T> IByteSerializer.ToTyped<T>(Type? serializedType)
+        => ToTyped<T>(serializedType);
     public ITextSerializer<T> ToTyped<T>(Type? serializedType = null)
         => NoneTextSerializer<T>.Instance;
 }
@@ -36,11 +38,11 @@ public sealed class NoneTextSerializer<T> : ITextSerializer<T>
 
     public T Read(string data)
         => throw Errors.NoSerializer();
-    public T Read(ReadOnlyMemory<char> data)
+    public T Read(ReadOnlyMemory<byte> data)
         => throw Errors.NoSerializer();
 
     public string Write(T value)
         => throw Errors.NoSerializer();
-    public void Write(IBufferWriter<char> bufferWriter, T value)
+    public void Write(IBufferWriter<byte> bufferWriter, T value)
         => throw Errors.NoSerializer();
 }

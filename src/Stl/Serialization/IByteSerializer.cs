@@ -12,5 +12,5 @@ public interface IByteSerializer
 public interface IByteSerializer<T>
 {
     T Read(ReadOnlyMemory<byte> data);
-    void Write(IBufferWriter<byte> bufferWriter, T? value);
+    void Write(IBufferWriter<byte> bufferWriter, T value);
 }

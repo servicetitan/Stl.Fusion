@@ -29,6 +29,6 @@ public sealed class NullByteSerializer<T> : IByteSerializer<T>
     public T Read(ReadOnlyMemory<byte> data)
         => default!;
 
-    public void Write(IBufferWriter<byte> bufferWriter, T? value)
+    public void Write(IBufferWriter<byte> bufferWriter, T value)
     { }
 }

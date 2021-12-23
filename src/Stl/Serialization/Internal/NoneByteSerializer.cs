@@ -29,6 +29,6 @@ public sealed class NoneByteSerializer<T> : IByteSerializer<T>
     public T Read(ReadOnlyMemory<byte> data)
         => throw Errors.NoSerializer();
 
-    public void Write(IBufferWriter<byte> bufferWriter, T? value)
+    public void Write(IBufferWriter<byte> bufferWriter, T value)
         => throw Errors.NoSerializer();
 }
