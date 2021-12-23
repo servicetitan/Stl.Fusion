@@ -43,7 +43,7 @@ public class TypeDecoratingSerializer : TextSerializerBase
             throw Errors.UnsupportedSerializedType(actualType);
 
         p.ParseNext();
-        return Serializer.Reader.Read(p.Item, actualType);
+        return Serializer.Read(p.Item, actualType);
     }
 
     public override string Write(object? value, Type type)
@@ -61,7 +61,7 @@ public class TypeDecoratingSerializer : TextSerializerBase
             if (!TypeFilter(actualType))
                 throw Errors.UnsupportedSerializedType(actualType);
             var aqn = actualType.GetAssemblyQualifiedName(false, _serializationBinder);
-            var json = Serializer.Writer.Write(value, actualType);
+            var json = Serializer.Write(value, actualType);
             f.Append(aqn);
             f.Append(json);
             f.AppendEnd();

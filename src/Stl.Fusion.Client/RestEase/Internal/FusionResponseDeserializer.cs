@@ -5,10 +5,10 @@ namespace Stl.Fusion.Client.RestEase.Internal;
 
 public class FusionResponseDeserializer : ResponseDeserializer
 {
-    public ITextReader Reader { get; init; } = SystemJsonSerializer.Default.Reader;
+    public ITextSerializer Serializer { get; init; } = SystemJsonSerializer.Default;
 
     public override T Deserialize<T>(string? content, HttpResponseMessage response, ResponseDeserializerInfo info)
         => response.StatusCode == HttpStatusCode.NoContent
             ? default!
-            : Reader.Read<T>(content!);
+            : Serializer.Read<T>(content!);
 }

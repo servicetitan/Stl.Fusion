@@ -102,8 +102,8 @@ public static partial class ChannelExt
             Channel.CreateBounded<T>(channelOptions));
 
         downstreamChannel.Connect(pair.Channel1,
-            serializer.Reader.Read,
-            serializer.Writer.Write,
+            serializer.Read,
+            serializer.Write,
             ChannelCompletionMode.Full,
             cancellationToken);
         return pair.Channel2;

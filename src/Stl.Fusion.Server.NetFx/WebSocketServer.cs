@@ -26,16 +26,14 @@ public class WebSocketServer
             DefaultSerializerFactory;
 
         public static ITextSerializer<BridgeMessage> DefaultSerializerFactory()
-            => new TextSerializer(
+            => TextSerializer.NewAsymmetric(
                 new TypeDecoratingSerializer(
                     SystemJsonSerializer.Default,
-                    t => typeof(ReplicatorRequest).IsAssignableFrom(t)
-                    ).Reader,
+                    t => typeof(ReplicatorRequest).IsAssignableFrom(t)),
                 new TypeDecoratingSerializer(
                     SystemJsonSerializer.Default,
                     t => typeof(PublisherReply).IsAssignableFrom(t)
-                    ).Writer
-            ).ToTyped<BridgeMessage>();
+            )).ToTyped<BridgeMessage>();
     }
 
     protected IPublisher Publisher { get; }

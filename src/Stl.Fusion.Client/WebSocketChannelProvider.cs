@@ -29,16 +29,14 @@ public class WebSocketChannelProvider : IChannelProvider, IHasServices
         public bool IsMessageLoggingEnabled { get; set; } = false;
 
         public static ITextSerializer<BridgeMessage> DefaultSerializerFactory(IServiceProvider services)
-            => new TextSerializer(
+            => TextSerializer.NewAsymmetric(
                 new TypeDecoratingSerializer(
                     SystemJsonSerializer.Default,
-                    t => typeof(PublisherReply).IsAssignableFrom(t)
-                    ).Reader,
+                    t => typeof(PublisherReply).IsAssignableFrom(t)),
                 new TypeDecoratingSerializer(
                     SystemJsonSerializer.Default,
                     t => typeof(ReplicatorRequest).IsAssignableFrom(t)
-                    ).Writer
-                ).ToTyped<BridgeMessage>();
+            )).ToTyped<BridgeMessage>();
 
         public static ClientWebSocket DefaultClientWebSocketFactory(IServiceProvider services)
             => services?.GetService<ClientWebSocket>() ?? new ClientWebSocket();

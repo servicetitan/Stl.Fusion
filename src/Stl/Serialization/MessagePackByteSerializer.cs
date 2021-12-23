@@ -22,18 +22,20 @@ public class MessagePackByteSerializer : IByteSerializer
     public virtual object? Read(ReadOnlyMemory<byte> data, Type type)
     {
         var serializer = _typedSerializers.GetOrAdd(type,
-            type1 => (MessagePackByteSerializer) typeof(MessagePackByteSerializer<>)
+            static (type1, self) => (MessagePackByteSerializer) typeof(MessagePackByteSerializer<>)
                 .MakeGenericType(type1)
-                .CreateInstance(Options));
+                .CreateInstance(self.Options),
+            this);
         return serializer.Read(data, type);
     }
 
     public virtual void Write(IBufferWriter<byte> bufferWriter, object? value, Type type)
     {
         var serializer = _typedSerializers.GetOrAdd(type,
-            type1 => (MessagePackByteSerializer) typeof(MessagePackByteSerializer<>)
+            static (type1, self) => (MessagePackByteSerializer) typeof(MessagePackByteSerializer<>)
                 .MakeGenericType(type1)
-                .CreateInstance(Options));
+                .CreateInstance(self.Options),
+            this);
         serializer.Write(bufferWriter, value, type);
     }
 
@@ -41,7 +43,7 @@ public class MessagePackByteSerializer : IByteSerializer
 
     private MessagePackByteSerializer GetTypedSerializer(Type serializedType)
         => _typedSerializers.GetOrAdd(serializedType,
-            (type1, self) => (MessagePackByteSerializer) typeof(MessagePackByteSerializer<>)
+            static (type1, self) => (MessagePackByteSerializer) typeof(MessagePackByteSerializer<>)
                 .MakeGenericType(type1)
                 .CreateInstance(self.Options, type1),
             this);

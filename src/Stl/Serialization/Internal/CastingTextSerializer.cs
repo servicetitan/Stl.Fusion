@@ -1,22 +1,28 @@
+using System.Buffers;
+
 namespace Stl.Serialization.Internal;
 
-public class CastingTextSerializer<T> : ITextSerializer<T>, ITextReader<T>, ITextWriter<T>
+public class CastingTextSerializer<T> : ITextSerializer<T>
 {
-    public ITextSerializer Serializer { get; }
+    public ITextSerializer UntypedSerializer { get; }
     public Type SerializedType { get; }
-    public ITextReader<T> Reader => this;
-    public ITextWriter<T> Writer => this;
+    public bool PreferStringApi => UntypedSerializer.PreferStringApi;
 
-    public CastingTextSerializer(ITextSerializer serializer, Type serializedType)
+    public CastingTextSerializer(ITextSerializer untypedSerializer, Type serializedType)
     {
-        Serializer = serializer;
+        UntypedSerializer = untypedSerializer;
         SerializedType = serializedType;
     }
 
     public T Read(string data)
-        => (T) Serializer.Reader.Read(data, SerializedType)!;
+        => (T) UntypedSerializer.Read(data, SerializedType)!;
+    public T Read(ReadOnlyMemory<char> data)
+        => (T) UntypedSerializer.Read(data, SerializedType)!;
 
     public string Write(T value)
         // ReSharper disable once HeapView.PossibleBoxingAllocation
-        => Serializer.Writer.Write(value, SerializedType);
+        => UntypedSerializer.Write(value, SerializedType);
+    public void Write(IBufferWriter<char> bufferWriter, T value)
+        // ReSharper disable once HeapView.PossibleBoxingAllocation
+        => UntypedSerializer.Write(bufferWriter, value, SerializedType);
 }

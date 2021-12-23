@@ -31,10 +31,10 @@ public class SerializationTest : TestBase
         var serializer = TypeDecoratingSerializer.Default;
 
         var value = new Tuple<DateTime>(DateTime.Now);
-        var json = serializer.Writer.Write(value);
+        var json = serializer.Write(value);
         Out.WriteLine(json);
 
-        var deserialized = (Tuple<DateTime>) serializer.Reader.Read<object>(json);
+        var deserialized = (Tuple<DateTime>) serializer.Read<object>(json);
         deserialized.Item1.Should().Equals(value.Item1);
     }
 

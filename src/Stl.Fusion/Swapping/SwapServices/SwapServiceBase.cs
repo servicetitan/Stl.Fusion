@@ -28,7 +28,7 @@ public abstract class SwapServiceBase : ISwapService
         var serializedKey = SerializeKey(key.Input, key.Version);
         if (await Renew(serializedKey, cancellationToken).ConfigureAwait(false))
             return;
-        var data = SerializerFactory().Writer.Write(value);
+        var data = SerializerFactory().Write(value);
         await Store(serializedKey, data, cancellationToken).ConfigureAwait(false);
     }
 

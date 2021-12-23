@@ -58,7 +58,7 @@ public sealed class RedisStreamer<T>
                         continue;
                     if (StringComparer.Ordinal.Equals(status, Settings.EndedStatus))
                         yield break;
-                    var errorInfo = Settings.ErrorSerializer.Reader.Read(status);
+                    var errorInfo = Settings.ErrorSerializer.Read(status);
                     throw errorInfo.ToException() ?? Errors.SourceStreamError();
                 }
 
@@ -157,7 +157,7 @@ public sealed class RedisStreamer<T>
     {
         var finalStatus = Settings.EndedStatus;
         if (error != null)
-            finalStatus = Settings.ErrorSerializer.Writer.Write(error);
+            finalStatus = Settings.ErrorSerializer.Write(error);
         await RedisDb.Database.StreamAddAsync(
                 Key, Settings.StatusKey, finalStatus,
                 maxLength: Settings.MaxStreamLength,

@@ -5,7 +5,7 @@ namespace Stl.Fusion.Client.RestEase.Internal;
 
 public class FusionRequestBodySerializer : RequestBodySerializer
 {
-    public ITextWriter Writer { get; init; } = SystemJsonSerializer.Default.Writer;
+    public ITextSerializer Serializer { get; init; } = SystemJsonSerializer.Default;
     public string ContentType { get; init; } = "application/json";
 
     public override HttpContent? SerializeBody<T>(T body, RequestBodySerializerInfo info)
@@ -13,7 +13,7 @@ public class FusionRequestBodySerializer : RequestBodySerializer
         if (body == null)
             return null;
 
-        var content = new StringContent(Writer.Write<T>(body));
+        var content = new StringContent(Serializer.Write<T>(body));
         if (content.Headers.ContentType == null)
             content.Headers.ContentType = new MediaTypeHeaderValue(ContentType);
         else

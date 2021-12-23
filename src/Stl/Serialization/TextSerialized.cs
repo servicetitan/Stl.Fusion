@@ -51,7 +51,7 @@ public class TextSerialized<T> : IEquatable<TextSerialized<T>>
             throw new InvalidOperationException($"{nameof(Value)} isn't set.");
         var serializedValue = !typeof(T).IsValueType && ReferenceEquals(value, null)
             ? ""
-            : GetSerializer().Writer.Write(value);
+            : GetSerializer().Write(value);
         _dataOption = serializedValue;
         return serializedValue;
     }
@@ -62,7 +62,7 @@ public class TextSerialized<T> : IEquatable<TextSerialized<T>>
             throw new InvalidOperationException($"{nameof(Data)} isn't set.");
         var value = serializedValue.IsNullOrEmpty()
             ? default!
-            : GetSerializer().Reader.Read(serializedValue);
+            : GetSerializer().Read(serializedValue);
         _valueOption = value;
         return value;
     }

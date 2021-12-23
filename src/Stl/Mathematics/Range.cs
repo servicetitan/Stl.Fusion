@@ -66,7 +66,7 @@ public readonly struct Range<T> : IEquatable<Range<T>>
     /// <param name="value">The string representation of the range to parse.</param>
     /// <returns>Parsed range.</returns>
     public static Range<T> Parse(string value)
-        => SystemJsonSerializer.Default.Reader.Read<Range<T>>(value);
+        => SystemJsonSerializer.Default.Read<Range<T>>(value);
 
     /// <summary>
     /// Implicit conversion of a 2-item <see cref="ValueTuple"/> to range.

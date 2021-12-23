@@ -56,9 +56,9 @@ public static class SerializationTestExt
     {
         var sInner = new SystemJsonSerializer(SystemJsonOptions);
         var s = new TypeDecoratingSerializer(sInner);
-        var json = s.Writer.Write(value, typeof(object));
+        var json = s.Write(value, typeof(object));
         output?.WriteLine($"TypeWritingUtf16Serializer: {json}");
-        return (T) s.Reader.Read<object>(json);
+        return (T) s.Read<object>(json);
     }
 
     // System.Text.Json serializer
@@ -66,9 +66,9 @@ public static class SerializationTestExt
     public static T PassThroughSystemJsonSerializer<T>(this T value, ITestOutputHelper? output = null)
     {
         var s = new SystemJsonSerializer(SystemJsonOptions).ToTyped<T>();
-        var json = s.Writer.Write(value);
+        var json = s.Write(value);
         output?.WriteLine($"SystemJsonSerializer: {json}");
-        return s.Reader.Read(json);
+        return s.Read(json);
     }
 
     public static T PassThroughSystemJsonSerialized<T>(this T value, ITestOutputHelper? output = null)
@@ -84,9 +84,9 @@ public static class SerializationTestExt
     public static T PassThroughNewtonsoftJsonSerializer<T>(this T value, ITestOutputHelper? output = null)
     {
         var s = new NewtonsoftJsonSerializer(NewtonsoftJsonSettings).ToTyped<T>();
-        var json = s.Writer.Write(value);
+        var json = s.Write(value);
         output?.WriteLine($"NewtonsoftJsonSerializer: {json}");
-        return s.Reader.Read(json);
+        return s.Read(json);
     }
 
     public static T PassThroughNewtonsoftJsonSerialized<T>(this T value, ITestOutputHelper? output = null)
