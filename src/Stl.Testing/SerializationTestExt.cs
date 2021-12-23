@@ -102,10 +102,10 @@ public static class SerializationTestExt
     public static T PassThroughMessagePackByteSerializer<T>(this T value, ITestOutputHelper? output = null)
     {
         var s = new MessagePackByteSerializer().ToTyped<T>();
-        using var bufferWriter = s.Writer.Write(value);
+        using var bufferWriter = s.Write(value);
         var data = bufferWriter.WrittenMemory.ToArray();
         output?.WriteLine($"MessagePackByteSerializer: {JsonFormatter.Format(data)}");
-        var v1 = s.Reader.Read(data);
+        var v1 = s.Read(data);
         return v1;
     }
 

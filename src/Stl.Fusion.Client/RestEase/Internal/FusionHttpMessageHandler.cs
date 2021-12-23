@@ -57,7 +57,7 @@ public class FusionHttpMessageHandler : DelegatingHandler, IHasServices
 
         try {
             var serializer = TypeDecoratingSerializer.Default;
-            return serializer.Reader.Read<ExceptionInfo>(content).ToException()!;
+            return serializer.Read<ExceptionInfo>(content).ToException()!;
         }
         catch (Exception) {
             try {

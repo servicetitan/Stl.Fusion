@@ -112,7 +112,7 @@ public static partial class ChannelExt
 
     public static Channel<T> WithByteSerializer<T>(
         this Channel<ReadOnlyMemory<byte>> downstreamChannel,
-        ByteSerializer<T> serializer,
+        IByteSerializer<T> serializer,
         BoundedChannelOptions? channelOptions = null,
         CancellationToken cancellationToken = default)
     {
@@ -127,14 +127,14 @@ public static partial class ChannelExt
             Channel.CreateBounded<T>(channelOptions));
 
         downstreamChannel.Connect(pair.Channel1,
-            serializer.Reader.Read,
+            serializer.Read,
             Write,
             ChannelCompletionMode.Full,
             cancellationToken);
         return pair.Channel2;
 
         ReadOnlyMemory<byte> Write(T value) {
-            using var bufferWriter = serializer.Writer.Write(value);
+            using var bufferWriter = serializer.Write(value);
             return bufferWriter.WrittenMemory.ToArray();
         }
     }

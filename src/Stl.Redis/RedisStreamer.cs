@@ -63,7 +63,7 @@ public sealed class RedisStreamer<T>
                 }
 
                 var data = (ReadOnlyMemory<byte>)entry[Settings.ItemKey];
-                var item = serializer.Reader.Read(data);
+                var item = serializer.Read(data);
                 yield return item;
 
                 position = entry.Id;
@@ -142,7 +142,7 @@ public sealed class RedisStreamer<T>
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested(); // StackExchange.Redis doesn't support cancellation
-        using var bufferWriter = Settings.Serializer.Writer.Write(item);
+        using var bufferWriter = Settings.Serializer.Write(item);
         await RedisDb.Database.StreamAddAsync(
                 Key, Settings.ItemKey, bufferWriter.WrittenMemory,
                 maxLength: Settings.MaxStreamLength,

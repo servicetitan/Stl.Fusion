@@ -20,10 +20,12 @@ public class WebSocketServer
             => new TextSerializer(
                 new TypeDecoratingSerializer(
                     SystemJsonSerializer.Default,
-                    t => typeof(ReplicatorRequest).IsAssignableFrom(t)).Reader,
+                    t => typeof(ReplicatorRequest).IsAssignableFrom(t)
+                    ).Reader,
                 new TypeDecoratingSerializer(
                     SystemJsonSerializer.Default,
-                    t => typeof(PublisherReply).IsAssignableFrom(t)).Writer
+                    t => typeof(PublisherReply).IsAssignableFrom(t)
+                    ).Writer
                 ).ToTyped<BridgeMessage>();
     }
 

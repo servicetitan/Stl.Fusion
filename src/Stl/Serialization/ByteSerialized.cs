@@ -53,7 +53,7 @@ public class ByteSerialized<T> : IEquatable<ByteSerialized<T>>
         if (!typeof(T).IsValueType && ReferenceEquals(value, null)) {
             serializedValue = Array.Empty<byte>();
         } else {
-            using var bufferWriter = GetSerializer().Writer.Write(value);
+            using var bufferWriter = GetSerializer().Write(value);
             serializedValue = bufferWriter.WrittenSpan.ToArray();
         }
         _dataOption = serializedValue;
@@ -66,7 +66,7 @@ public class ByteSerialized<T> : IEquatable<ByteSerialized<T>>
             throw new InvalidOperationException($"{nameof(Data)} isn't set.");
         var value = serializedValue.Length == 0
             ? default!
-            : GetSerializer().Reader.Read(serializedValue);
+            : GetSerializer().Read(serializedValue);
         _valueOption = value;
         return value;
     }

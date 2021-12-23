@@ -1,34 +1,23 @@
+using Stl.Serialization.Internal;
+
 namespace Stl.Serialization;
 
-public sealed class ByteSerializer : IByteSerializer
+public static class ByteSerializer
 {
     public static IByteSerializer Default { get; set; } = MessagePackByteSerializer.Default;
+    public static IByteSerializer None { get; } = NoneByteSerializer.Instance;
+    public static IByteSerializer Null { get; } = NullByteSerializer.Instance;
 
-    public IByteReader Reader { get; }
-    public IByteWriter Writer { get; }
-
-    public ByteSerializer(IByteReader reader, IByteWriter writer)
-    {
-        Reader = reader;
-        Writer = writer;
-    }
-
-    public IByteSerializer<T> ToTyped<T>(Type? serializedType = null)
-        => new ByteSerializer<T>(
-            Reader.ToTyped<T>(serializedType),
-            Writer.ToTyped<T>(serializedType));
+    public static IByteSerializer NewAsymmetric(IByteSerializer reader, IByteSerializer writer)
+        => new AsymmetricByteSerializer(reader, writer);
 }
 
-public class ByteSerializer<T> : IByteSerializer<T>
+public static class ByteSerializer<T>
 {
-    public static IByteSerializer<T> Default => ByteSerializer.Default.ToTyped<T>();
+    public static IByteSerializer<T> Default { get; } = ByteSerializer.Default.ToTyped<T>();
+    public static IByteSerializer<T> None { get; } = NoneByteSerializer<T>.Instance;
+    public static IByteSerializer<T> Null { get; } = NullByteSerializer<T>.Instance;
 
-    public IByteReader<T> Reader { get; }
-    public IByteWriter<T> Writer { get; }
-
-    public ByteSerializer(IByteReader<T> reader, IByteWriter<T> writer)
-    {
-        Reader = reader;
-        Writer = writer;
-    }
+    public static IByteSerializer<T> NewAsymmetric(IByteSerializer<T> reader, IByteSerializer<T> writer)
+        => new AsymmetricByteSerializer<T>(reader, writer);
 }

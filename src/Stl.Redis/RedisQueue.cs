@@ -88,7 +88,7 @@ public sealed class RedisQueue<T> : IAsyncDisposable
 
     public async Task Enqueue(T item)
     {
-        using var bufferWriter = Settings.Serializer.Writer.Write(item);
+        using var bufferWriter = Settings.Serializer.Write(item);
         await RedisDb.Database.ListLeftPushAsync(Key, bufferWriter.WrittenMemory).ConfigureAwait(false);
         await EnqueuePub.Publish(RedisValue.EmptyString).ConfigureAwait(false);
     }
@@ -99,7 +99,7 @@ public sealed class RedisQueue<T> : IAsyncDisposable
             var nextEnqueueNotificationTask = EnqueueSub.NextMessage();
             var value = await RedisDb.Database.ListRightPopAsync(Key).ConfigureAwait(false);
             if (!value.IsNullOrEmpty)
-                return Settings.Serializer.Reader.Read(value);
+                return Settings.Serializer.Read(value);
             await nextEnqueueNotificationTask
                 .WithTimeout(Settings.Clock, Settings.EnqueueCheckPeriod, cancellationToken)
                 .ConfigureAwait(false);

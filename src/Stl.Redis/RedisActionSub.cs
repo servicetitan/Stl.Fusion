@@ -34,7 +34,7 @@ public sealed class RedisActionSub<T> : RedisSubBase
 
     protected override void OnMessage(RedisChannel redisChannel, RedisValue redisValue)
     {
-        var value = Serializer.Reader.Read(redisValue);
+        var value = Serializer.Read(redisValue);
         MessageHandler(redisChannel, value);
     }
 }

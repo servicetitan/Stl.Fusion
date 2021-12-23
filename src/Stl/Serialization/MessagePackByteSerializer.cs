@@ -4,24 +4,18 @@ using Stl.Serialization.Internal;
 
 namespace Stl.Serialization;
 
-public class MessagePackByteSerializer : IByteSerializer, IByteReader, IByteWriter
+public class MessagePackByteSerializer : IByteSerializer
 {
     private readonly ConcurrentDictionary<Type, MessagePackByteSerializer> _typedSerializers = new();
 
     public static MessagePackSerializerOptions DefaultOptions { get; set; } = MessagePackSerializer.DefaultOptions;
     public static MessagePackByteSerializer Default { get; } = new(DefaultOptions);
-    public IByteReader Reader => this;
-    public IByteWriter Writer => this;
 
     public MessagePackSerializerOptions Options { get; }
 
     public MessagePackByteSerializer(MessagePackSerializerOptions? options = null)
         => Options = options ?? DefaultOptions;
 
-    IByteReader<T> IByteReader.ToTyped<T>(Type? serializedType)
-        => (IByteReader<T>) GetTypedSerializer(serializedType ?? typeof(T));
-    IByteWriter<T> IByteWriter.ToTyped<T>(Type? serializedType)
-        => (IByteWriter<T>) GetTypedSerializer(serializedType ?? typeof(T));
     public IByteSerializer<T> ToTyped<T>(Type? serializedType = null)
         => (IByteSerializer<T>) GetTypedSerializer(serializedType ?? typeof(T));
 
@@ -53,11 +47,9 @@ public class MessagePackByteSerializer : IByteSerializer, IByteReader, IByteWrit
             this);
 }
 
-public class MessagePackByteSerializer<T> : MessagePackByteSerializer, IByteSerializer<T>, IByteReader<T>, IByteWriter<T>
+public class MessagePackByteSerializer<T> : MessagePackByteSerializer, IByteSerializer<T>
 {
     public Type SerializedType { get; }
-    public new IByteReader<T> Reader => this;
-    public new IByteWriter<T> Writer => this;
 
     public MessagePackByteSerializer(MessagePackSerializerOptions options, Type serializedType)
         : base(options)

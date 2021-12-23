@@ -18,7 +18,7 @@ public abstract class SwapServiceBase : ISwapService
         var data = await Load(serializedKey, cancellationToken).ConfigureAwait(false);
         if (data == null)
             return null;
-        return SerializerFactory().Reader.Read(data) as IResult;
+        return SerializerFactory().Read(data) as IResult;
     }
 
     public async ValueTask Store(

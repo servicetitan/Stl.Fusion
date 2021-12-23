@@ -31,7 +31,7 @@ public sealed class RedisPub<T> : RedisPub
 
     public async Task<long> Publish(T item)
     {
-        using var bufferWriter = Serializer.Writer.Write(item);
+        using var bufferWriter = Serializer.Write(item);
         return await base.Publish(bufferWriter.WrittenMemory).ConfigureAwait(false);
     }
 }

@@ -31,5 +31,5 @@ public static class PageRef
     public static PageRef<TKey> Parse<TKey>(string value)
         => int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var count)
             ? new PageRef<TKey>(count)
-            : SystemJsonSerializer.Default.Reader.Read<PageRef<TKey>>(value);
+            : SystemJsonSerializer.Default.Read<PageRef<TKey>>(value);
 }

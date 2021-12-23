@@ -32,10 +32,12 @@ public class WebSocketChannelProvider : IChannelProvider, IHasServices
             => new TextSerializer(
                 new TypeDecoratingSerializer(
                     SystemJsonSerializer.Default,
-                    t => typeof(PublisherReply).IsAssignableFrom(t)).Reader,
+                    t => typeof(PublisherReply).IsAssignableFrom(t)
+                    ).Reader,
                 new TypeDecoratingSerializer(
                     SystemJsonSerializer.Default,
-                    t => typeof(ReplicatorRequest).IsAssignableFrom(t)).Writer
+                    t => typeof(ReplicatorRequest).IsAssignableFrom(t)
+                    ).Writer
                 ).ToTyped<BridgeMessage>();
 
         public static ClientWebSocket DefaultClientWebSocketFactory(IServiceProvider services)

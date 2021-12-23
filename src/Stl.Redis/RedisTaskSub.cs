@@ -67,7 +67,7 @@ public sealed class RedisTaskSub<T> : RedisSubBase
     protected override void OnMessage(RedisChannel redisChannel, RedisValue redisValue)
     {
         try {
-            var value = Serializer.Reader.Read(redisValue);
+            var value = Serializer.Read(redisValue);
             lock (Lock)
                 TaskSource.For(_lastMessageTask).TrySetResult(value);
         }

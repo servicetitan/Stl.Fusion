@@ -1,6 +1,6 @@
 namespace Stl.Serialization.Internal;
 
-public abstract class TextSerializerBase : ITextSerializer, ITextReader, ITextWriter
+public abstract class TextSerializerBase : ITextSerializer
 {
     public ITextReader Reader => this;
     public ITextWriter Writer => this;

@@ -1,13 +1,13 @@
 namespace Stl.Serialization;
 
-public interface ITextSerializer
+public interface ITextSerializer : ITextReader, ITextWriter
 {
     ITextReader Reader { get; }
     ITextWriter Writer { get; }
-    ITextSerializer<T> ToTyped<T>(Type? serializedType = null);
+    new ITextSerializer<T> ToTyped<T>(Type? serializedType = null);
 }
 
-public interface ITextSerializer<T>
+public interface ITextSerializer<T> : ITextReader<T>, ITextWriter<T>
 {
     ITextReader<T> Reader { get; }
     ITextWriter<T> Writer { get; }
