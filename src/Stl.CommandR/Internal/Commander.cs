@@ -22,8 +22,11 @@ public class Commander : ICommander
         CommandContext context, bool isolate,
         CancellationToken cancellationToken = default)
     {
+        // Task.Run is used to call RunInternal to make sure parent
+        // task's ExecutionContext won't be "polluted" by temp.
+        // change of CommandContext.Current (via AsyncLocal).
         if (!isolate)
-            return RunInternal(context, cancellationToken);
+            return Task.Run(() => RunInternal(context, cancellationToken), default);
 
         using var _ = ExecutionContextExt.SuppressFlow();
         return Task.Run(() => RunInternal(context, cancellationToken), default);
@@ -32,8 +35,7 @@ public class Commander : ICommander
     protected virtual async Task RunInternal(
         CommandContext context, CancellationToken cancellationToken = default)
     {
-        using var _1 = context;
-        using var _2 = context.Activate();
+        var activationScope = context.Activate();
         try {
             var command = context.UntypedCommand;
             var handlers = HandlerResolver.GetCommandHandlers(command.GetType());
@@ -47,6 +49,8 @@ public class Commander : ICommander
         }
         finally {
             context.TryComplete(cancellationToken);
+            activationScope.Dispose();
+            await context.DisposeAsync().ConfigureAwait(false);
         }
     }
 

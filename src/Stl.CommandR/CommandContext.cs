@@ -4,7 +4,7 @@ using Stl.CommandR.Internal;
 
 namespace Stl.CommandR;
 
-public abstract class CommandContext : ICommandContext, IHasServices, IDisposable
+public abstract class CommandContext : ICommandContext, IHasServices, IAsyncDisposable
 {
     protected static readonly AsyncLocal<CommandContext?> CurrentLocal = new();
     public static CommandContext? Current => CurrentLocal.Value;
@@ -61,20 +61,17 @@ public abstract class CommandContext : ICommandContext, IHasServices, IDisposabl
     protected CommandContext(ICommander commander)
         => Commander = commander;
 
-    // Disposable
+    // IAsyncDisposable
 
-    public void Dispose()
+    public ValueTask DisposeAsync()
     {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
+        if (!IsOutermost)
+            return ValueTaskExt.CompletedTask;
 
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!disposing) return;
-
-        if (IsOutermost)
-            ServiceScope.Dispose();
+        if (ServiceScope is IAsyncDisposable ad)
+            return ad.DisposeAsync();
+        ServiceScope.Dispose();
+        return ValueTaskExt.CompletedTask;
     }
 
     // Instance methods
