@@ -29,7 +29,7 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
 
     protected ILogger Log { get; }
 
-    public IUpdateDelayer UpdateDelayer { get; }
+    public IUpdateDelayer UpdateDelayer { get; set; }
     public Task UpdateTask { get; private set; } = null!;
     public CancellationToken DisposeToken { get; }
     public bool IsDisposeStarted => DisposeToken.IsCancellationRequested;
