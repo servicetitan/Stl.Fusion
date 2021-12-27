@@ -81,7 +81,7 @@ or [samples], please feel free to grill us with questions on [Discord]!
 
 [<img align="right" width="150" src="./docs/img/FusionSlides.jpg"/>](https://alexyakunin.github.io/Stl.Fusion.Materials/Slides/Fusion_v2/Slides.html)
 If you prefer slides and 🕵 detective stories, check out
-["Jump the F5 ship straight into the real-time hyperspace with Blazor and Fusion" talk](https://alexyakunin.github.io/Stl.Fusion.Materials/Slides/Fusion_v2/Slides.html) -
+["Why real-time web apps need Blazor and Fusion?" talk](https://alexyakunin.github.io/Stl.Fusion.Materials/Slides/Fusion_v2/Slides.html) -
 it explains how all these problems are connected and
 describes how you can code a simplified version of 
 Fusion's key abstraction in C#. 
@@ -104,8 +104,6 @@ Fusion still keeps in sync literally every piece of shared state there,
 including sign-in state:
 
 ![](https://github.com/servicetitan/Stl.Fusion.Samples/raw/master/docs/img/Samples-Blazor-Auth.gif)
-
-<img src="https://img.shields.io/badge/-New!-brightgreen" valign="middle"> If you're looking for more complex example, check out [Board Games] - it's the newest Fusion sample that runs on 3-node GKS cluster and implements 2 games, chat, online presence, OAuth sign-in, user session tracking and a number of other 100% real-time features. All of this is powered by Fusion + **just 35 lines of code related to real-time updates!**
 
 [A small benchmark in Fusion test suite](https://github.com/servicetitan/Stl.Fusion/blob/master/tests/Stl.Fusion.Tests/PerformanceTest.cs) 
 compares "raw" [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/)-based
