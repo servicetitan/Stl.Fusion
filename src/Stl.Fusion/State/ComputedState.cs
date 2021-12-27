@@ -10,7 +10,7 @@ public interface IComputedState : IState, IDisposable, IHasDisposeStarted
         IUpdateDelayer? UpdateDelayer { get; init; }
     }
 
-    IUpdateDelayer UpdateDelayer { get; }
+    IUpdateDelayer UpdateDelayer { get; set; }
     Task UpdateTask { get; }
     CancellationToken DisposeToken { get; }
 }
@@ -25,11 +25,16 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
         public IUpdateDelayer? UpdateDelayer { get; init; }
     }
 
+    private volatile IUpdateDelayer _updateDelayer;
     private readonly CancellationTokenSource _disposeCts;
 
     protected ILogger Log { get; }
 
-    public IUpdateDelayer UpdateDelayer { get; set; }
+    public IUpdateDelayer UpdateDelayer {
+        get => _updateDelayer;
+        set => _updateDelayer = value;
+    }
+
     public Task UpdateTask { get; private set; } = null!;
     public CancellationToken DisposeToken { get; }
     public bool IsDisposeStarted => DisposeToken.IsCancellationRequested;
@@ -37,10 +42,10 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
     protected ComputedState(Options options, IServiceProvider services, bool initialize = true)
         : base(options, services, false)
     {
+        Log = Services.GetService<ILoggerFactory>()?.CreateLogger(GetType()) ?? NullLogger.Instance;
         _disposeCts = new CancellationTokenSource();
         DisposeToken = _disposeCts.Token;
-        Log = Services.GetService<ILoggerFactory>()?.CreateLogger(GetType()) ?? NullLogger.Instance;
-        UpdateDelayer = options.UpdateDelayer ?? Services.GetRequiredService<IUpdateDelayer>();
+        _updateDelayer = options.UpdateDelayer ?? Services.GetRequiredService<IUpdateDelayer>();
         // ReSharper disable once VirtualMemberCallInConstructor
         if (initialize) Initialize(options);
     }
