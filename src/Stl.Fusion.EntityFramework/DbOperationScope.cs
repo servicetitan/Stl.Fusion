@@ -97,6 +97,9 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
             // Creating MasterDbContext
             var masterDbContext = DbContextFactory.CreateDbContext().ReadWrite();
             masterDbContext.Database.AutoTransactionsEnabled = false;
+#if NET6_0_OR_GREATER
+            masterDbContext.Database.AutoSavepointsEnabled = false;
+#endif
             Transaction = await BeginTransaction(cancellationToken, masterDbContext).ConfigureAwait(false);
             _isInMemoryProvider = (masterDbContext.Database.ProviderName ?? "")
                 .EndsWith(".InMemory", StringComparison.Ordinal);
@@ -110,6 +113,9 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
         // Creating requested DbContext, which is going to share MasterDbContext's transaction
         var dbContext = DbContextFactory.CreateDbContext().ReadWrite(readWrite);
         dbContext.Database.AutoTransactionsEnabled = false;
+#if NET6_0_OR_GREATER
+        dbContext.Database.AutoSavepointsEnabled = false;
+#endif
         if (!_isInMemoryProvider) {
             dbContext.StopPooling();
             dbContext.Database.SetDbConnection(Connection);
