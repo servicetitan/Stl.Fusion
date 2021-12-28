@@ -216,7 +216,8 @@ public class FusionTestBase : TestBase, IAsyncLifetime
                     throw new NotSupportedException();
                 }
 #if NET5_0_OR_GREATER
-                builder.UseValidationCheckConstraints(c => c.UseRegex(false));
+                if (Options.DbType != FusionTestDbType.InMemory)
+                    builder.UseValidationCheckConstraints(c => c.UseRegex(false));
 #endif
                 builder.EnableSensitiveDataLogging();
             }, 256);
