@@ -3,7 +3,6 @@ using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Fusion.EntityFramework.Internal;
 using Stl.Fusion.EntityFramework.Operations;
 using Stl.Locking;

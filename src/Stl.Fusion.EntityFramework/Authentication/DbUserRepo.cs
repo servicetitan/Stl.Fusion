@@ -99,6 +99,7 @@ public class DbUserRepo<TDbContext, TDbUser, TDbUserId> : DbServiceBase<TDbConte
             dbUser.Name = command.Name;
             dbUser.Version = VersionGenerator.NextVersion(dbUser.Version);
         }
+        dbContext.Update(dbUser);
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 

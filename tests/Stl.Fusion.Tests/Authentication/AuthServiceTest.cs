@@ -11,11 +11,16 @@ public class SqliteAuthServiceTest : AuthServiceTestBase
         : base(@out, new FusionTestOptions()) { }
 }
 
-// Internal = disabled, currently GitHub can't run such tests
-internal class PostgreSqlAuthServiceTest : AuthServiceTestBase
+public class PostgreSqlAuthServiceTest : AuthServiceTestBase
 {
     public PostgreSqlAuthServiceTest(ITestOutputHelper @out)
         : base(@out, new FusionTestOptions() { DbType = FusionTestDbType.PostgreSql }) { }
+}
+
+public class SqlServerAuthServiceTest : AuthServiceTestBase
+{
+    public SqlServerAuthServiceTest(ITestOutputHelper @out)
+        : base(@out, new FusionTestOptions() { DbType = FusionTestDbType.SqlServer }) { }
 }
 
 public class InMemoryAuthServiceTest : AuthServiceTestBase
@@ -32,6 +37,8 @@ public abstract class AuthServiceTestBase : FusionTestBase
     [Fact]
     public async Task ContainerConfigTest()
     {
+        if (MustSkip()) return;
+
         await using var serving = await WebHost.Serve();
         var agentInfo1 = WebServices.GetRequiredService<AgentInfo>();
         var agentInfo2 = Services.GetRequiredService<AgentInfo>();
@@ -46,6 +53,8 @@ public abstract class AuthServiceTestBase : FusionTestBase
     [Fact]
     public async Task BasicTest1()
     {
+        if (MustSkip()) return;
+
         await using var serving = await WebHost.Serve();
         var auth = Services.GetRequiredService<IAuth>();
         var authBackend = Services.GetRequiredService<IAuthBackend>();
@@ -110,6 +119,8 @@ public abstract class AuthServiceTestBase : FusionTestBase
     [Fact]
     public async Task BasicTest2()
     {
+        if (MustSkip()) return;
+
         await using var serving = await WebHost.Serve();
         var auth = Services.GetRequiredService<IAuth>();
         var authBackend = Services.GetRequiredService<IAuthBackend>();
@@ -174,6 +185,8 @@ public abstract class AuthServiceTestBase : FusionTestBase
     [Fact]
     public async Task GuestTest1()
     {
+        if (MustSkip()) return;
+
         var auth = Services.GetRequiredService<IAuth>();
         var authBackend = Services.GetRequiredService<IAuthBackend>();
         var sessionFactory = ClientServices.GetRequiredService<ISessionFactory>();
@@ -188,6 +201,8 @@ public abstract class AuthServiceTestBase : FusionTestBase
     [Fact]
     public async Task GuestTest2()
     {
+        if (MustSkip()) return;
+
         var auth = Services.GetRequiredService<IAuth>();
         var authBackend = Services.GetRequiredService<IAuthBackend>();
         var sessionFactory = ClientServices.GetRequiredService<ISessionFactory>();
@@ -210,8 +225,38 @@ public abstract class AuthServiceTestBase : FusionTestBase
     }
 
     [Fact]
+    public async Task EditTest()
+    {
+        if (MustSkip()) return;
+
+        var auth = Services.GetRequiredService<IAuth>();
+        var authBackend = Services.GetRequiredService<IAuthBackend>();
+        var sessionFactory = ClientServices.GetRequiredService<ISessionFactory>();
+
+        var session = sessionFactory.CreateSession();
+        var bob = new User("", "Bob").WithIdentity("b:1");
+        await authBackend.SignIn(new SignInCommand(session, bob));
+        var user = await auth.GetUser(session);
+        user.Name.Should().Be("Bob");
+
+        await auth.EditUser(new(session, "John"));
+        user = await auth.GetUser(session);
+        user.Name.Should().Be("John");
+
+#if NET5_0_OR_GREATER
+        await Assert.ThrowsAnyAsync<Exception>(async () => {
+            await auth.EditUser(new(session, "Jo"));
+        });
+#endif
+        user = await auth.GetUser(session);
+        user.Name.Should().Be("John");
+    }
+
+    [Fact]
     public async Task LongFlowTest()
     {
+        if (MustSkip()) return;
+
         var auth = Services.GetRequiredService<IAuth>();
         var authBackend = Services.GetRequiredService<IAuthBackend>();
         var sessionFactory = ClientServices.GetRequiredService<ISessionFactory>();

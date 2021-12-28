@@ -80,10 +80,12 @@ public class DbOperationScopeProvider<TDbContext> : DbServiceBase<TDbContext>, I
         DbOperationScope<TDbContext> scope,
         Exception error)
     {
+        if (error is VersionMismatchException)
+            return true;
         var executionStrategy = scope.MasterDbContext?.Database.CreateExecutionStrategy();
         if (executionStrategy is not ExecutionStrategy retryingExecutionStrategy)
             return false;
-        return retryingExecutionStrategy.RetriesOnFailure
-            && (error is VersionMismatchException || retryingExecutionStrategy.ShouldRetryOn(error));
+        var isTransient = retryingExecutionStrategy.ShouldRetryOn(error);
+        return isTransient;
     }
 }

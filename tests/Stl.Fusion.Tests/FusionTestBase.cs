@@ -1,10 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Channels;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,13 +17,9 @@ using Stl.Fusion.Internal;
 using Stl.Fusion.Server;
 using Stl.Locking;
 using Stl.RegisterAttributes;
-using Stl.Testing;
 using Stl.Testing.Collections;
 using Stl.Testing.Output;
-using Stl.Time;
 using Stl.Time.Testing;
-using Xunit;
-using Xunit.Abstractions;
 using Xunit.DependencyInjection.Logging;
 
 namespace Stl.Fusion.Tests;
@@ -135,6 +124,12 @@ public class FusionTestBase : TestBase, IAsyncLifetime
             ds.Dispose();
     }
 
+    protected bool MustSkip()
+        => TestRunnerInfo.IsBuildAgent()
+            && Options.DbType
+                is FusionTestDbType.PostgreSql
+                or FusionTestDbType.SqlServer;
+
     protected IServiceProvider CreateServices(bool isClient = false)
     {
         var services = (IServiceCollection) new ServiceCollection();
@@ -208,18 +203,21 @@ public class FusionTestBase : TestBase, IAsyncLifetime
                         });
                     break;
                 case FusionTestDbType.PostgreSql:
-                    builder.UseNpgsql(PostgreSqlConnectionString, npgsql => {
-                        npgsql.EnableRetryOnFailure();
+                    builder.UseNpgsql(PostgreSqlConnectionString, npgSql => {
+                        npgSql.EnableRetryOnFailure(0);
                     });
                     break;
                 case FusionTestDbType.SqlServer:
-                    builder.UseSqlServer(SqlServerConnectionString, mssql => {
-                        mssql.EnableRetryOnFailure();
+                    builder.UseSqlServer(SqlServerConnectionString, sqlServer => {
+                        sqlServer.EnableRetryOnFailure(0);
                     });
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    throw new NotSupportedException();
                 }
+#if NET5_0_OR_GREATER
+                builder.UseValidationCheckConstraints(c => c.UseRegex(false));
+#endif
                 builder.EnableSensitiveDataLogging();
             }, 256);
             services.AddDbContextServices<TestDbContext>(b => {
@@ -302,11 +300,11 @@ public class FusionTestBase : TestBase, IAsyncLifetime
         return channelProvider.CreateChannel(publisher.Id, cancellationToken);
     }
 
-    protected virtual TestChannelPair<BridgeMessage> CreateChannelPair(
+    protected TestChannelPair<BridgeMessage> CreateChannelPair(
         string name, bool dump = true)
         => new(name, dump ? Out : null);
 
-    protected virtual Task Delay(double seconds)
+    protected Task Delay(double seconds)
         => Timeouts.Clock.Delay(TimeSpan.FromSeconds(seconds));
 
     protected void GCCollect()

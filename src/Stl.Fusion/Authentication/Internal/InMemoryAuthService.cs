@@ -74,11 +74,14 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
         user = user.MustBeAuthenticated();
 
         context.Operation().Items.Set(sessionInfo);
-        if (command.Name != null)
+        if (command.Name != null) {
+            if (command.Name.Length < 3)
+                throw new ArgumentOutOfRangeException(nameof(command));
             user = user with {
                 Name = command.Name,
                 Version = VersionGenerator.NextVersion(user.Version),
             };
+        }
         Users[user.Id] = user;
     }
 

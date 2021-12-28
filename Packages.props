@@ -46,6 +46,7 @@
     <PackageReference Update="Castle.Core" Version="4.4.*" />
     <PackageReference Update="CliWrap" Version="3.3.*" />
     <PackageReference Update="DataAnnotationsValidatorNetStandard" Version="1.0.*" />
+    <PackageReference Update="EFCore.CheckConstraints" Version="6.0.*" />
     <PackageReference Update="Enums.NET" Version="4.0.*" />
     <PackageReference Update="FluentAssertions" Version="6.2.*" />
     <PackageReference Update="MessagePack" Version="$(MessagePackVersion)" />
