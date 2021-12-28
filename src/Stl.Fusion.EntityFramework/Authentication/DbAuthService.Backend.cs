@@ -70,7 +70,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         };
         context.Operation().Items.Set(sessionInfo);
         context.Operation().Items.Set(isNewUser);
-        await Sessions.Update(dbContext, sessionInfo, cancellationToken).ConfigureAwait(false);
+        await Sessions.Upsert(dbContext, sessionInfo, cancellationToken).ConfigureAwait(false);
     }
 
     // [CommandHandler] inherited
@@ -105,7 +105,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
             IPAddress = string.IsNullOrEmpty(ipAddress) ? sessionInfo.IPAddress : ipAddress,
             UserAgent = string.IsNullOrEmpty(userAgent) ? sessionInfo.UserAgent : userAgent,
         };
-        dbSessionInfo = await Sessions.Update(dbContext, sessionInfo, cancellationToken).ConfigureAwait(false);
+        dbSessionInfo = await Sessions.Upsert(dbContext, sessionInfo, cancellationToken).ConfigureAwait(false);
         sessionInfo = SessionConverter.ToModel(dbSessionInfo);
         context.Operation().Items.Set(sessionInfo); // invSessionInfo
         return sessionInfo!;
@@ -137,7 +137,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
             LastSeenAt = Clocks.SystemClock.Now,
             Options = options,
         };
-        await Sessions.Update(dbContext, sessionInfo, cancellationToken).ConfigureAwait(false);
+        await Sessions.Upsert(dbContext, sessionInfo, cancellationToken).ConfigureAwait(false);
     }
 
     // Compute methods

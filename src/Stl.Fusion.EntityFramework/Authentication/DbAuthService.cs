@@ -71,7 +71,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
             UserId = "",
             IsSignOutForced = force,
         };
-        await Sessions.Update(dbContext, sessionInfo, cancellationToken).ConfigureAwait(false);
+        await Sessions.Upsert(dbContext, sessionInfo, cancellationToken).ConfigureAwait(false);
     }
 
     // [CommandHandler] inherited

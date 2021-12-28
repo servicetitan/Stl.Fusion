@@ -14,7 +14,7 @@ public interface IDbSessionInfoRepo<in TDbContext, TDbSessionInfo, in TDbUserId>
     // Write methods
     Task<TDbSessionInfo> GetOrCreate(
         TDbContext dbContext, string sessionId, CancellationToken cancellationToken = default);
-    Task<TDbSessionInfo> Update(
+    Task<TDbSessionInfo> Upsert(
         TDbContext dbContext, SessionInfo sessionInfo, CancellationToken cancellationToken = default);
     Task<int> Trim(
         DateTime minLastSeenAt, int maxCount, CancellationToken cancellationToken = default);
@@ -68,14 +68,22 @@ public class DbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId>
         return dbSessionInfo;
     }
 
-    public async Task<TDbSessionInfo> Update(
+    public async Task<TDbSessionInfo> Upsert(
         TDbContext dbContext, SessionInfo sessionInfo, CancellationToken cancellationToken = default)
     {
-        var id = sessionInfo.Id.Value;
-        var dbSessionInfo = dbContext.Set<TDbSessionInfo>().Local
-            .Single(e => StringComparer.Ordinal.Equals(e.Id, id));
+        var dbSessionInfo = await dbContext.Set<TDbSessionInfo>()
+            .FindAsync(ComposeKey(sessionInfo.Id.Value), cancellationToken)
+            .ConfigureAwait(false);
+        var isDbSessionInfoFound = dbSessionInfo != null;
+        dbSessionInfo ??= new TDbSessionInfo() {
+            Id = sessionInfo.Id,
+            CreatedAt = sessionInfo.CreatedAt,
+        };
         SessionConverter.UpdateEntity(sessionInfo, dbSessionInfo);
-        dbContext.Update(dbSessionInfo);
+        if (isDbSessionInfoFound)
+            dbContext.Update(dbSessionInfo);
+        else
+            dbContext.Add(dbSessionInfo);
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return dbSessionInfo;
     }
