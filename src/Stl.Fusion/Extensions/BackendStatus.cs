@@ -66,7 +66,7 @@ public class BackendStatus : IBackendStatus
         string backend,
         CancellationToken cancellationToken = default)
     {
-        await Auth.GetSessionInfo(session, cancellationToken).ConfigureAwait(false);
+        await Auth.GetAuthInfo(session, cancellationToken).ConfigureAwait(false);
         return default;
     }
 }

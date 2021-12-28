@@ -77,7 +77,7 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
     protected virtual async Task<AuthState> ComputeState(IComputedState<AuthState> state, CancellationToken cancellationToken)
     {
         var session = await SessionResolver.GetSession(cancellationToken).ConfigureAwait(false);
-        var user = await Auth.GetSessionUser(session, cancellationToken).ConfigureAwait(false);
+        var user = await Auth.GetUser(session, cancellationToken).ConfigureAwait(false);
         // AuthService.GetUser checks for forced sign-out as well, so
         // we should explicitly query its state for unauthenticated users only
         var isSignOutForced = !user.IsAuthenticated

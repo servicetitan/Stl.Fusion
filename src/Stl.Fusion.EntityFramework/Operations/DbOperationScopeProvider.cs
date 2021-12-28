@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.EntityFramework.Internal;
 using Stl.Fusion.Operations.Reprocessing;
+using Stl.Versioning;
 
 namespace Stl.Fusion.EntityFramework.Operations;
 
@@ -83,6 +84,6 @@ public class DbOperationScopeProvider<TDbContext> : DbServiceBase<TDbContext>, I
         if (executionStrategy is not ExecutionStrategy retryingExecutionStrategy)
             return false;
         return retryingExecutionStrategy.RetriesOnFailure
-            && retryingExecutionStrategy.ShouldRetryOn(error);
+            && (error is VersionMismatchException || retryingExecutionStrategy.ShouldRetryOn(error));
     }
 }

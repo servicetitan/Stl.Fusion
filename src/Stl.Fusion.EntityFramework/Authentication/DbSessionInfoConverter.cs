@@ -38,20 +38,24 @@ public class DbSessionInfoConverter<TDbContext, TDbSessionInfo, TDbUserId> : DbE
 
     public override SessionInfo UpdateModel(TDbSessionInfo source, SessionInfo target)
     {
-        target = target with {
-            Id = source.Id,
-            Version = source.Version,
-            CreatedAt = source.CreatedAt,
-            LastSeenAt = source.LastSeenAt,
-            IPAddress = source.IPAddress,
-            UserAgent = source.UserAgent,
-            Options = source.Options,
+        var result = source.IsSignOutForced
+            ? new (source.Id, Clocks.SystemClock.Now) {
+                IsSignOutForced = true,
+            }
+            : target with {
+                Id = source.Id,
+                Version = source.Version,
+                CreatedAt = source.CreatedAt,
+                LastSeenAt = source.LastSeenAt,
+                IPAddress = source.IPAddress,
+                UserAgent = source.UserAgent,
+                Options = source.Options,
 
-            // Authentication
-            AuthenticatedIdentity = source.AuthenticatedIdentity,
-            UserId = DbUserIdHandler.Format(source.UserId),
-            IsSignOutForced = source.IsSignOutForced,
-        };
-        return target.OrDefault(source.Id); // To mask signed out sessions
+                // Authentication
+                AuthenticatedIdentity = source.AuthenticatedIdentity,
+                UserId = DbUserIdHandler.Format(source.UserId),
+                IsSignOutForced = source.IsSignOutForced,
+            };
+        return result;
     }
 }

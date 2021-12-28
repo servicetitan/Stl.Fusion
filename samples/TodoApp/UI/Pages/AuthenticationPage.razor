@@ -156,7 +156,7 @@
 
     protected override async Task<(User?, List<SessionInfoModel>?)> ComputeState(CancellationToken cancellationToken)
     {
-        var user = await _auth.GetSessionUser(_session, cancellationToken);
+        var user = await _auth.GetUser(_session, cancellationToken);
         var sessions = await _auth.GetUserSessions(_session, cancellationToken).ConfigureAwait(false);
         var result = new List<SessionInfoModel>();
 

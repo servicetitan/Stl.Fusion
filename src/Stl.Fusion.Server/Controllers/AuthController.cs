@@ -38,20 +38,22 @@ public class AuthController : ControllerBase, IAuth
         => Auth.IsSignOutForced(session, cancellationToken);
 
     [HttpGet, Publish]
-    public Task<SessionInfo> GetSessionInfo(Session session, CancellationToken cancellationToken = default)
+    public Task<SessionAuthInfo> GetAuthInfo(Session session, CancellationToken cancellationToken = default)
+        => Auth.GetAuthInfo(session, cancellationToken);
+
+    [HttpGet, Publish]
+    public Task<SessionInfo?> GetSessionInfo(Session session, CancellationToken cancellationToken = default)
         => Auth.GetSessionInfo(session, cancellationToken);
 
     [HttpGet, Publish]
-    public Task<User> GetSessionUser(Session session, CancellationToken cancellationToken = default)
-        => Auth.GetSessionUser(session, cancellationToken);
+    public Task<ImmutableOptionSet> GetOptions(Session session, CancellationToken cancellationToken = default)
+        => Auth.GetOptions(session, cancellationToken);
+
+    [HttpGet, Publish]
+    public Task<User> GetUser(Session session, CancellationToken cancellationToken = default)
+        => Auth.GetUser(session, cancellationToken);
 
     [HttpGet, Publish]
     public Task<SessionInfo[]> GetUserSessions(Session session, CancellationToken cancellationToken = default)
         => Auth.GetUserSessions(session, cancellationToken);
-
-    // Non-[ComputeMethod] queries
-
-    [HttpGet, Publish]
-    public Task<Session> GetSession(CancellationToken cancellationToken = default)
-        => Task.FromResult(SessionResolver.Session);
 }

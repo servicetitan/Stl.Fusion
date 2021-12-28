@@ -21,6 +21,7 @@ public static class ComputedExt
             return;
         }
 
+        using var _ = ExecutionContextExt.SuppressFlow();
         var cts = new CancellationTokenSource(delay);
         var registration = cts.Token.Register(() => {
             // No need to schedule this via Task.Run, since this code is

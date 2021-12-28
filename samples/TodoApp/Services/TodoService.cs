@@ -22,7 +22,7 @@ public class TodoService : ITodoService
     {
         if (Computed.IsInvalidating()) return default!;
         var (session, todo) = command;
-        var user = await _auth.GetSessionUser(session, cancellationToken);
+        var user = await _auth.GetUser(session, cancellationToken);
         user.MustBeAuthenticated();
 
         Todo? oldTodo = null;
@@ -56,7 +56,7 @@ public class TodoService : ITodoService
     {
         if (Computed.IsInvalidating()) return;
         var (session, id) = command;
-        var user = await _auth.GetSessionUser(session, cancellationToken);
+        var user = await _auth.GetUser(session, cancellationToken);
         user.MustBeAuthenticated();
 
         var key = GetTodoKey(user, id);
@@ -69,7 +69,7 @@ public class TodoService : ITodoService
 
     public virtual async Task<Todo?> Get(Session session, string id, CancellationToken cancellationToken = default)
     {
-        var user = await _auth.GetSessionUser(session, cancellationToken);
+        var user = await _auth.GetUser(session, cancellationToken);
         user.MustBeAuthenticated();
 
         var key = GetTodoKey(user, id);
@@ -78,7 +78,7 @@ public class TodoService : ITodoService
 
     public virtual async Task<Todo[]> List(Session session, PageRef<string> pageRef, CancellationToken cancellationToken = default)
     {
-        var user = await _auth.GetSessionUser(session, cancellationToken);
+        var user = await _auth.GetUser(session, cancellationToken);
         user.MustBeAuthenticated();
 
         var keyPrefix = GetTodoKeyPrefix(user);
@@ -90,7 +90,7 @@ public class TodoService : ITodoService
 
     public virtual async Task<TodoSummary> GetSummary(Session session, CancellationToken cancellationToken = default)
     {
-        var user = await _auth.GetSessionUser(session, cancellationToken);
+        var user = await _auth.GetUser(session, cancellationToken);
         user.MustBeAuthenticated();
 
         var count = await _store.Count(session, GetTodoKeyPrefix(user), cancellationToken);

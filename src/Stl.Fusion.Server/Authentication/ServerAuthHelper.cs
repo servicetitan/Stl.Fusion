@@ -86,15 +86,16 @@ public class ServerAuthHelper
 
         var sessionInfo = await Auth.GetSessionInfo(session, cancellationToken).ConfigureAwait(false);
         var mustUpdateSessionInfo =
-            !StringComparer.Ordinal.Equals(sessionInfo.IPAddress, ipAddress)
+            sessionInfo == null
+            || !StringComparer.Ordinal.Equals(sessionInfo.IPAddress, ipAddress)
             || !StringComparer.Ordinal.Equals(sessionInfo.UserAgent, userAgent)
-            || sessionInfo.LastSeenAt.ToMoment() + SessionInfoUpdatePeriod < Clocks.SystemClock.Now;
+            || sessionInfo.LastSeenAt + SessionInfoUpdatePeriod < Clocks.SystemClock.Now;
         if (mustUpdateSessionInfo) {
             var setupSessionCommand = new SetupSessionCommand(session, ipAddress, userAgent);
             sessionInfo = await AuthBackend.SetupSession(setupSessionCommand, cancellationToken).ConfigureAwait(false);
         }
 
-        var userId = sessionInfo.UserId;
+        var userId = sessionInfo!.UserId;
         var userIsAuthenticated = sessionInfo.IsAuthenticated && !sessionInfo.IsSignOutForced;
         var user = userIsAuthenticated
             ? await AuthBackend.GetUser(userId, cancellationToken).ConfigureAwait(false)
@@ -105,7 +106,7 @@ public class ServerAuthHelper
             if (isAuthenticated) {
                 if (userIsAuthenticated && IsSameUser(user, httpUser, httpAuthenticationSchema))
                     return;
-                var (newUser, authenticatedIdentity) = CreateOrUpdateUser(user, httpUser, httpAuthenticationSchema);
+                var (newUser, authenticatedIdentity) = UpsertUser(user, httpUser, httpAuthenticationSchema);
                 var signInCommand = new SignInCommand(session, newUser, authenticatedIdentity);
                 await AuthBackend.SignIn(signInCommand, cancellationToken).ConfigureAwait(false);
             }
@@ -141,7 +142,7 @@ public class ServerAuthHelper
         return user.Identities.ContainsKey(identity);
     }
 
-    protected virtual (User User, UserIdentity AuthenticatedIdentity) CreateOrUpdateUser(
+    protected virtual (User User, UserIdentity AuthenticatedIdentity) UpsertUser(
         User user, ClaimsPrincipal httpUser, string schema)
     {
         var httpUserIdentityName = httpUser.Identity?.Name ?? "";
