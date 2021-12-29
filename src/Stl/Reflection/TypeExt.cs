@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Cysharp.Text;
 using Stl.Concurrency;
 
 namespace Stl.Reflection;
@@ -7,7 +8,8 @@ public static class TypeExt
 {
     private static readonly Regex MethodNameRe = new("[^\\w\\d]+", RegexOptions.Compiled);
     private static readonly Regex MethodNameTailRe = new("_+$", RegexOptions.Compiled);
-    private static readonly Regex GenericMethodNameTailRe = new("_\\d+$", RegexOptions.Compiled);
+    private static readonly Regex GenericTypeNameTailRe = new("`.+$", RegexOptions.Compiled);
+    private static readonly ConcurrentDictionary<(Type, bool, bool), Symbol> GetNameCache = new();
     private static readonly ConcurrentDictionary<(Type, bool, bool), Symbol> ToIdentifierNameCache = new();
     private static readonly ConcurrentDictionary<Type, Symbol> ToSymbolCache = new();
     private static readonly ConcurrentDictionary<Type, Type?> GetTaskOrValueTaskTypeCache = new();
@@ -63,29 +65,61 @@ public static class TypeExt
         return castTo.IsAssignableFrom(castFrom) || castFrom.IsAssignableFrom(castTo);
     }
 
+    public static string GetName(this Type type, bool useFullName = false, bool useFullArgumentNames = false)
+    {
+        var key = (type, useFullName, useFullArgumentNames);
+        return GetNameCache.GetOrAddChecked(key,
+            static key1 => {
+                var (type1, useFullName1, useFullArgumentNames1) = key1;
+                var name = type1.Name;
+                if (type1.IsGenericTypeDefinition) {
+                    name = GenericTypeNameTailRe.Replace(name, "");
+                    var argumentNames = type1.GetGenericArguments().Select(t => t.Name);
+                    name = $"{name}<{argumentNames.ToDelimitedString(",")}>";
+                }
+                else if (type1.IsGenericType) {
+                    name = GenericTypeNameTailRe.Replace(name, "");
+                    var argumentNames = type1.GetGenericArguments()
+                        .Select(t => t.GetName(useFullArgumentNames1, useFullArgumentNames1));
+                    name = $"{name}<{argumentNames.ToDelimitedString(",")}>";
+                }
+                if (type1.DeclaringType != null)
+                    name = $"{type1.DeclaringType.GetName(useFullName1)}+{name}";
+                else if (useFullName1)
+                    name = $"{type1.Namespace}.{name}";
+                return name;
+            });
+    }
+
     public static string ToIdentifierName(this Type type, bool useFullName = false, bool useFullArgumentNames = false)
     {
         var key = (type, useFullName, useFullArgumentNames);
-        return ToIdentifierNameCache.GetOrAddChecked(key, key1 => {
-            var (type1, useFullName1, useFullArgumentNames1) = key1;
-            var name = useFullName1 ? type1.FullName : type1.Name;
-            if (type1.IsGenericType && !type1.IsGenericTypeDefinition) {
-                name = type1.GetGenericTypeDefinition().ToIdentifierName(useFullName1);
-                name = GenericMethodNameTailRe.Replace(name, "");
-                var argumentNames = type1.GetGenericArguments()
-                    .Select(t => t.ToIdentifierName(useFullArgumentNames1, useFullArgumentNames1));
-                name = string.Join("_", EnumerableExt.One(name).Concat(argumentNames));
-            }
-            name = MethodNameRe.Replace(name!, "_");
-            name = MethodNameTailRe.Replace(name, "");
-            return name;
-        });
+        return ToIdentifierNameCache.GetOrAddChecked(key,
+            static key1 => {
+                var (type1, useFullName1, useFullArgumentNames1) = key1;
+                var name = type1.Name;
+                if (type1.IsGenericTypeDefinition)
+                    name = $"{GenericTypeNameTailRe.Replace(name, "")}_{type1.GetGenericArguments().Length}";
+                else if (type1.IsGenericType) {
+                    name = GenericTypeNameTailRe.Replace(name, "");
+                    var argumentNames = type1.GetGenericArguments()
+                        .Select(t => t.ToIdentifierName(useFullArgumentNames1, useFullArgumentNames1));
+                    name = string.Join("_", EnumerableExt.One(name).Concat(argumentNames));
+                }
+                if (type1.DeclaringType != null)
+                    name = $"{type1.DeclaringType.ToIdentifierName(useFullName1)}_{name}";
+                else if (useFullName1)
+                    name = $"{type1.Namespace}_{name}";
+                name = MethodNameRe.Replace(name, "_");
+                name = MethodNameTailRe.Replace(name, "");
+                return name;
+            });
     }
 
     public static Symbol ToSymbol(this Type type, bool withPrefix = true)
         => withPrefix
-            ? ToSymbolCache.GetOrAddChecked(type, type1 =>
-                new Symbol(SymbolPrefix + type1.ToIdentifierName(true, true)))
+            ? ToSymbolCache.GetOrAddChecked(type,
+                static type1 => new Symbol(SymbolPrefix + type1.ToIdentifierName(true, true)))
             : (Symbol) type.ToIdentifierName(true, true);
 
     public static bool IsTaskOrValueTask(this Type type)

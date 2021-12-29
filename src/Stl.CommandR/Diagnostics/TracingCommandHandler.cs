@@ -27,11 +27,11 @@ public class TracingCommandHandler : ICommandHandler<ICommand>
     {
         if (!ShouldTrace(command, context)) return null;
 
-        var activityName = $"Run:{command.GetType().ToSymbol()}";
-        var activity = CommanderTrace.StartActivity(activityName);
+        var operationName = command.GetType().GetOperationName("Run");
+        var activity = CommanderTrace.StartActivity(operationName);
         if (activity != null) {
             var tags = new ActivityTagsCollection { { "command", command.ToString() } };
-            var activityEvent = new ActivityEvent(activityName, tags: tags);
+            var activityEvent = new ActivityEvent(operationName, tags: tags);
             activity.AddEvent(activityEvent);
         }
         return activity;

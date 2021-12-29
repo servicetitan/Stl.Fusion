@@ -10,11 +10,11 @@ public abstract class DbWakeSleepProcessBase<TDbContext> : DbAsyncProcessBase<TD
 
     protected override async Task RunInternal(CancellationToken cancellationToken)
     {
-        var activityName = $"{nameof(WakeUp)}:{GetType().ToSymbol()}";
+        var operationName = GetType().GetOperationName(nameof(WakeUp));
         while (!cancellationToken.IsCancellationRequested) {
             var error = default(Exception?);
             try {
-                using var activity = FusionTrace.StartActivity(activityName);
+                using var activity = FusionTrace.StartActivity(operationName);
                 await WakeUp(cancellationToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException) {

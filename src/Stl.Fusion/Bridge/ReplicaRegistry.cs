@@ -157,6 +157,8 @@ public class ReplicaRegistry : IDisposable
 
     protected virtual void PruneInternal()
     {
+        using var activity = FusionTrace.StartActivity(GetType(), nameof(Prune));
+
         foreach (var (key, gcHandle) in _handles) {
             if (gcHandle.Target == null && _handles.TryRemove(key, gcHandle))
                 _gcHandlePool.Release(gcHandle, key.PublicationId.HashCode);

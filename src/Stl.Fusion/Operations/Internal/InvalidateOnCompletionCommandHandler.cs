@@ -84,11 +84,11 @@ public class InvalidateOnCompletionCommandHandler : ICommandHandler<ICompletion>
 
     protected virtual Activity? StartActivity(ICommand originalCommand)
     {
-        var activityName = $"Invalidate:{originalCommand.GetType().ToSymbol()}";
-        var activity = FusionTrace.StartActivity(activityName);
+        var operationName = originalCommand.GetType().GetOperationName("Invalidate");
+        var activity = FusionTrace.StartActivity(operationName);
         if (activity != null) {
             var tags = new ActivityTagsCollection { { "originalCommand", originalCommand.ToString() } };
-            var activityEvent = new ActivityEvent(activityName, tags: tags);
+            var activityEvent = new ActivityEvent(operationName, tags: tags);
             activity.AddEvent(activityEvent);
         }
         return activity;

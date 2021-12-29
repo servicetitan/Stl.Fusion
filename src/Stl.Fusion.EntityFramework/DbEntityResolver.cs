@@ -46,7 +46,7 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
     protected Func<TDbEntity, TKey> KeyExtractor { get; set; }
     protected Func<IQueryable<TDbEntity>, IQueryable<TDbEntity>> QueryTransformer { get; set; }
     protected Action<Dictionary<TKey, TDbEntity>> PostProcessor { get; set; }
-    protected string ActivityName { get; set; }
+    protected string ProcessBatchOperationName { get; set; }
 
     public DbEntityResolver(IServiceProvider services) : this(null, services) { }
     public DbEntityResolver(Options? options, IServiceProvider services) : base(services)
@@ -74,7 +74,7 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
 
         QueryTransformer = options.QueryTransformer ?? (q => q);
         PostProcessor = options.PostProcessor ?? (_ => {});
-        ActivityName = $"{nameof(ProcessBatch)}:{GetType().ToSymbol()}";
+        ProcessBatchOperationName = GetType().GetOperationName(nameof(ProcessBatch));
     }
 
     protected virtual void Dispose(bool disposing)
@@ -109,10 +109,10 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
 
     protected virtual async Task ProcessBatch(List<BatchItem<TKey, TDbEntity>> batch, CancellationToken cancellationToken)
     {
-        using var activity = FusionTrace.StartActivity(ActivityName);
+        using var activity = FusionTrace.StartActivity(ProcessBatchOperationName);
         if (activity != null) {
             var tags = new ActivityTagsCollection { { "batchSize", batch.Count } };
-            var activityEvent = new ActivityEvent(ActivityName, tags: tags);
+            var activityEvent = new ActivityEvent(ProcessBatchOperationName, tags: tags);
             activity.AddEvent(activityEvent);
         }
 

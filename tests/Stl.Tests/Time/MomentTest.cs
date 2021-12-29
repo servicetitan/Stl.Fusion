@@ -12,12 +12,12 @@ public class MomentTest : TestBase
     {
         var m = SystemClock.Now;
         var m1 = (Moment) m.ToDateTimeOffset();
-        m1.Should().Equals(m);
+        m1.Should().Be(m);
         m1 = m.ToDateTime();
-        m1.Should().Equals(m);
+        m1.Should().Be(m);
 
         m1 = m.PassThroughAllSerializers(Out);
-        m1.Should().Equals(m);
+        m1.Should().Be(m);
     }
 
     [Fact]

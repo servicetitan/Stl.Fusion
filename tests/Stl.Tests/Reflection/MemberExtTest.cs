@@ -47,12 +47,12 @@ public class MemberExtTest
             BoolProperty = false;
             BoolField = false;
             getter(this).Should().BeFalse();
-            untypedGetter(this).Should().Equals(false);
+            untypedGetter(this).Should().Be(false);
 
             BoolProperty = true;
             BoolField = true;
             getter(this).Should().BeTrue();
-            untypedGetter(this).Should().Equals(true);
+            untypedGetter(this).Should().Be(true);
 
             setter(this, false);
             (mi is FieldInfo ? BoolField : BoolProperty).Should().BeFalse();

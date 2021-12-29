@@ -1,3 +1,4 @@
+using Cysharp.Text;
 using Stl.Internal;
 
 namespace Stl.Collections;
