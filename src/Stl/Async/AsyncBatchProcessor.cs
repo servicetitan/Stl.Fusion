@@ -19,8 +19,10 @@ public abstract class AsyncBatchProcessorBase<TIn, TOut> : AsyncProcessBase
 
     public async Task<TOut> Process(TIn input, CancellationToken cancellationToken = default)
     {
-        using var __ = ExecutionContextExt.SuppressFlow();
-        _ = Run(CancellationToken.None);
+        if (RunningTask == null) {
+            using (ExecutionContextExt.SuppressFlow())
+                _ = Run(CancellationToken.None);
+        }
         var outputTask = TaskSource.New<TOut>(false).Task;
         var batchItem = new BatchItem<TIn, TOut>(input, cancellationToken, outputTask);
         await Queue.Writer.WriteAsync(batchItem, cancellationToken).ConfigureAwait(false);
