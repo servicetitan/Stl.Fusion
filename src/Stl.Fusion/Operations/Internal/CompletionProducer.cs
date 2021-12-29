@@ -30,7 +30,7 @@ public class CompletionProducer : IOperationCompletionListener
 
     public virtual Task OnOperationCompleted(IOperation operation)
     {
-        if (!(operation.Command is ICommand command))
+        if (operation.Command is not ICommand command)
             return Task.CompletedTask; // We can't complete non-commands
         return Task.Run(async () => {
             var isLocal = StringComparer.Ordinal.Equals(operation.AgentId, AgentInfo.Id.Value);

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework.Internal;
@@ -45,6 +46,7 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
     protected Func<TDbEntity, TKey> KeyExtractor { get; set; }
     protected Func<IQueryable<TDbEntity>, IQueryable<TDbEntity>> QueryTransformer { get; set; }
     protected Action<Dictionary<TKey, TDbEntity>> PostProcessor { get; set; }
+    protected string ActivityName { get; set; }
 
     public DbEntityResolver(IServiceProvider services) : this(null, services) { }
     public DbEntityResolver(Options? options, IServiceProvider services) : base(services)
@@ -72,6 +74,7 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
 
         QueryTransformer = options.QueryTransformer ?? (q => q);
         PostProcessor = options.PostProcessor ?? (_ => {});
+        ActivityName = $"{nameof(ProcessBatch)}:{GetType().ToSymbol()}";
     }
 
     protected virtual void Dispose(bool disposing)
@@ -106,6 +109,13 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
 
     protected virtual async Task ProcessBatch(List<BatchItem<TKey, TDbEntity>> batch, CancellationToken cancellationToken)
     {
+        using var activity = FusionTrace.StartActivity(ActivityName);
+        if (activity != null) {
+            var tags = new ActivityTagsCollection { { "batchSize", batch.Count } };
+            var activityEvent = new ActivityEvent(ActivityName, tags: tags);
+            activity.AddEvent(activityEvent);
+        }
+
         var dbContext = CreateDbContext();
         await using var _ = dbContext.ConfigureAwait(false);
 

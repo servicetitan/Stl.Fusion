@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Stl.Fusion.Operations.Internal;
@@ -42,6 +43,7 @@ public class InvalidateOnCompletionCommandHandler : ICommandHandler<ICompletion>
         context.SetOperation(operation);
         var invalidateScope = Computed.Invalidate();
         try {
+            using var activity = StartActivity(originalCommand);
             var finalHandler = context.ExecutionState.FindFinalHandler();
             var useOriginalCommandHandler = finalHandler == null
                 || finalHandler.GetHandlerService(command, context) is CatchAllCompletionHandler;
@@ -78,6 +80,18 @@ public class InvalidateOnCompletionCommandHandler : ICommandHandler<ICompletion>
             context.SetOperation(oldOperation);
             invalidateScope.Dispose();
         }
+    }
+
+    protected virtual Activity? StartActivity(ICommand originalCommand)
+    {
+        var activityName = $"Invalidate:{originalCommand.GetType().ToSymbol()}";
+        var activity = FusionTrace.StartActivity(activityName);
+        if (activity != null) {
+            var tags = new ActivityTagsCollection { { "originalCommand", originalCommand.ToString() } };
+            var activityEvent = new ActivityEvent(activityName, tags: tags);
+            activity.AddEvent(activityEvent);
+        }
+        return activity;
     }
 
     protected virtual async ValueTask InvokeNestedCommands(

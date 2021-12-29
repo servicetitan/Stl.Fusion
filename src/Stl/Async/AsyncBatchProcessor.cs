@@ -19,7 +19,7 @@ public abstract class AsyncBatchProcessorBase<TIn, TOut> : AsyncProcessBase
 
     public async Task<TOut> Process(TIn input, CancellationToken cancellationToken = default)
     {
-        _ = Run();
+        _ = Run(CancellationToken.None);
         var outputTask = TaskSource.New<TOut>(false).Task;
         var batchItem = new BatchItem<TIn, TOut>(input, cancellationToken, outputTask);
         await Queue.Writer.WriteAsync(batchItem, cancellationToken).ConfigureAwait(false);
@@ -68,7 +68,7 @@ public abstract class AsyncBatchProcessorBase<TIn, TOut> : AsyncProcessBase
 public class AsyncBatchProcessor<TIn, TOut> : AsyncBatchProcessorBase<TIn, TOut>
 {
     public Func<List<BatchItem<TIn, TOut>>, CancellationToken, Task> BatchProcessor { get; set; } =
-        (batch, cancellationToken) => throw new NotSupportedException("Set the delegate property to make it work.");
+        (_, _) => throw new NotSupportedException("Set the delegate property to make it work.");
 
     public AsyncBatchProcessor(int capacity = DefaultCapacity) : base(capacity) { }
     public AsyncBatchProcessor(BoundedChannelOptions options) : base(options) { }
@@ -81,7 +81,7 @@ public class AsyncBatchProcessor<TIn, TOut> : AsyncBatchProcessorBase<TIn, TOut>
         }
         catch (OperationCanceledException) {
             if (!cancellationToken.IsCancellationRequested)
-                cancellationToken = new CancellationToken(true);
+                cancellationToken = new CancellationToken(canceled: true);
             foreach (var item in batch)
                 item.TryCancel(cancellationToken);
             throw;

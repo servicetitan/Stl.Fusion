@@ -91,11 +91,13 @@
     <Using Include="Stl.CommandR" />
     <Using Include="Stl.CommandR.Configuration" />
     <Using Include="Stl.CommandR.Commands" />
+    <Using Include="Stl.CommandR.Diagnostics.CommanderDiagnostics" Static="true" />
   </ItemGroup>
 
   <!-- Extra global usings for Fusion projects -->
   <ItemGroup Condition="$(MSBuildProjectFile.StartsWith('Stl.Fusion'))">
     <Using Include="Stl.Fusion" />
+    <Using Include="Stl.Fusion.Diagnostics.FusionDiagnostics" Static="true" />
     <Using Include="Stl.Fusion.Operations" />
     <Using Include="Stl.CommandR" />
     <Using Include="Stl.CommandR.Configuration" />

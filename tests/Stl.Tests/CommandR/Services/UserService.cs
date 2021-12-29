@@ -15,7 +15,7 @@ public class UserService : DbServiceBase<TestDbContext>
         CancellationToken cancellationToken)
     {
         CommandContext.GetCurrent().Should().Be(context);
-        context.ExecutionState.Handlers.Count.Should().Be(5);
+        context.ExecutionState.Handlers.Count.Should().Be(6);
 
         var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
         await using var _1 = dbContext.ConfigureAwait(false);

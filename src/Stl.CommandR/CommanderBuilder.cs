@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Stl.CommandR.Diagnostics;
 using Stl.CommandR.Interception;
 using Stl.CommandR.Internal;
 
@@ -43,6 +44,8 @@ public readonly struct CommanderBuilder
         // Default handlers
         Services.AddSingleton<PreparedCommandHandler>();
         AddHandlers<PreparedCommandHandler>();
+        Services.AddSingleton<TracingCommandHandler>();
+        AddHandlers<TracingCommandHandler>();
         Services.AddSingleton<LocalCommandHandler>();
         AddHandlers<LocalCommandHandler>();
     }

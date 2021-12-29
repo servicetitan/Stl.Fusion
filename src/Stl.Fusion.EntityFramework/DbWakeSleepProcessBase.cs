@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 
 namespace Stl.Fusion.EntityFramework;
@@ -9,9 +10,11 @@ public abstract class DbWakeSleepProcessBase<TDbContext> : DbAsyncProcessBase<TD
 
     protected override async Task RunInternal(CancellationToken cancellationToken)
     {
+        var activityName = $"{nameof(WakeUp)}:{GetType().ToSymbol()}";
         while (!cancellationToken.IsCancellationRequested) {
             var error = default(Exception?);
             try {
+                using var activity = FusionTrace.StartActivity(activityName);
                 await WakeUp(cancellationToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException) {
