@@ -24,6 +24,7 @@ public readonly struct TaskSource<T> : IEquatable<TaskSource<T>>
     internal static readonly Func<Task<T>> CreateTask0;
     internal static readonly Func<object?, TaskCreationOptions, Task<T>> CreateTask2;
     private static readonly Action<TaskCompletionSource<T>, Task<T>> SetTask;
+    private static readonly Action<TaskCompletionSource<T>> ResetTask;
 
     public static TaskSource<T> Empty => default;
 
@@ -54,31 +55,91 @@ public readonly struct TaskSource<T> : IEquatable<TaskSource<T>>
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TrySetResult(T result)
-        => Wrap(Task).TrySetResult(result);
+    {
+        var tcs = Wrap(Task);
+        try {
+            return tcs.TrySetResult(result);
+        }
+        finally {
+            ResetTask(tcs);
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetResult(T result)
-        => Wrap(Task).SetResult(result);
+    {
+        var tcs = Wrap(Task);
+        try {
+            tcs.SetResult(result);
+        }
+        finally {
+            ResetTask(tcs);
+        }
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TrySetException(Exception exception)
-        => Wrap(Task).TrySetException(exception);
+    {
+        var tcs = Wrap(Task);
+        try {
+            return tcs.TrySetException(exception);
+        }
+        finally {
+            ResetTask(tcs);
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetException(Exception exception)
-        => Wrap(Task).SetException(exception);
+    {
+        var tcs = Wrap(Task);
+        try {
+            tcs.SetException(exception);
+        }
+        finally {
+            ResetTask(tcs);
+        }
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TrySetCanceled(CancellationToken cancellationToken = default)
-        => Wrap(Task).TrySetCanceled(cancellationToken);
+    {
+        var tcs = Wrap(Task);
+        try {
+            return tcs.TrySetCanceled(cancellationToken);
+        }
+        finally {
+            ResetTask(tcs);
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetCanceled()
-        => Wrap(Task).SetCanceled();
+    {
+        var tcs = Wrap(Task);
+        try {
+            tcs.SetCanceled();
+        }
+        finally {
+            ResetTask(tcs);
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetCanceled(CancellationToken cancellationToken)
+    {
+        var tcs = Wrap(Task);
+        try {
 #if NET5_0_OR_GREATER
-        => Wrap(Task).SetCanceled(cancellationToken);
+            tcs.SetCanceled(cancellationToken);
 #else
-        => Wrap(Task).SetCanceled();
+            tcs.SetCanceled();
 #endif
+        }
+        finally {
+            ResetTask(tcs);
+        }
+    }
 
     // Type initializer
 
@@ -106,17 +167,25 @@ public readonly struct TaskSource<T> : IEquatable<TaskSource<T>>
         CreateTask2 = Expression.Lambda<Func<object?, TaskCreationOptions, Task<T>>>(
             Expression.New(taskCtor2!, pState, pTco), pState, pTco).Compile();
 
-#if !NETSTANDARD2_0
+#if false // Other version seem to be more efficient anyway
         // Creating assign expression via reflection b/c otherwise
         // it fails "lvalue must be writeable" check -- well,
         // obviously, because we're assigning a read-only field value here.
         var exampleAssign = Expression.Assign(pTask, pTask);
+
         var realAssign = (Expression) Activator.CreateInstance(
             exampleAssign.GetType(),
             privateCtorBindingFlags, null,
             new object[] {Expression.Field(pTcs, fTask!), pTask}, null)!;
         SetTask = Expression.Lambda<Action<TaskCompletionSource<T>, Task<T>>>(
             realAssign, pTcs, pTask).Compile();
+
+        var realReset = (Expression) Activator.CreateInstance(
+            exampleAssign.GetType(),
+            privateCtorBindingFlags, null,
+            new object[] {Expression.Field(pTcs, fTask!), Expression.Constant(null)}, null)!;
+        ResetTask = Expression.Lambda<Action<TaskCompletionSource<T>>>(
+            realReset, pTcs).Compile();
 #else
         // .NET Standard version fails even on above code,
         // so IL emit is used to generate private field assignment code.
@@ -135,6 +204,20 @@ public readonly struct TaskSource<T> : IEquatable<TaskSource<T>>
         il.Emit(OpCodes.Ret);
         SetTask = (Action<TaskCompletionSource<T>, Task<T>>) setTaskMethod.CreateDelegate(
             typeof(Action<TaskCompletionSource<T>, Task<T>>));
+
+        var resetTaskMethod = new DynamicMethod(
+            string.Concat("_Reset", fTask!.Name, "_"),
+            typeof(void),
+            new [] { typeof(TaskCompletionSource<T>) },
+            fTask.DeclaringType!,
+            true);
+        il = resetTaskMethod.GetILGenerator();
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldnull);
+        il.Emit(OpCodes.Stfld, fTask);
+        il.Emit(OpCodes.Ret);
+        ResetTask = (Action<TaskCompletionSource<T>>) resetTaskMethod.CreateDelegate(
+            typeof(Action<TaskCompletionSource<T>>));
 #endif
     }
 

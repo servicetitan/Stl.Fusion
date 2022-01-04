@@ -1,8 +1,8 @@
 namespace Stl.Tests.Async;
 
-public class TaskCompletionStructTest : TestBase
+public class TaskSourceTest : TestBase
 {
-    public TaskCompletionStructTest(ITestOutputHelper @out) : base(@out) { }
+    public TaskSourceTest(ITestOutputHelper @out) : base(@out) { }
 
     [Fact]
     public void BasicTest()
