@@ -48,7 +48,7 @@
     <PackageReference Update="DataAnnotationsValidatorNetStandard" Version="1.0.*" />
     <PackageReference Update="EFCore.CheckConstraints" Version="6.0.*" />
     <PackageReference Update="Enums.NET" Version="4.0.*" />
-    <PackageReference Update="FluentAssertions" Version="6.2.*" />
+    <PackageReference Update="FluentAssertions" Version="6.3.*" />
     <PackageReference Update="MessagePack" Version="$(MessagePackVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.Authentication.Cookies" Version="2.2.*" />
     <PackageReference Update="Microsoft.AspNetCore.Authentication.Google" Version="$(AspNetCoreVersion)" />
