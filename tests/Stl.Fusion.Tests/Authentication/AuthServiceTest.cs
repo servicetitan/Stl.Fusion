@@ -17,6 +17,12 @@ public class PostgreSqlAuthServiceTest : AuthServiceTestBase
         : base(@out, new FusionTestOptions() { DbType = FusionTestDbType.PostgreSql }) { }
 }
 
+public class MariaDbAuthServiceTest : AuthServiceTestBase
+{
+    public MariaDbAuthServiceTest(ITestOutputHelper @out)
+        : base(@out, new FusionTestOptions() { DbType = FusionTestDbType.MariaDb }) { }
+}
+
 public class SqlServerAuthServiceTest : AuthServiceTestBase
 {
     public SqlServerAuthServiceTest(ITestOutputHelper @out)

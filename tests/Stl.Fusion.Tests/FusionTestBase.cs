@@ -28,8 +28,9 @@ public enum FusionTestDbType
 {
     Sqlite = 0,
     PostgreSql = 1,
-    SqlServer = 2,
-    InMemory = 3,
+    MariaDb = 2,
+    SqlServer = 3,
+    InMemory = 4,
 }
 
 public class FusionTestOptions
@@ -128,6 +129,7 @@ public class FusionTestBase : TestBase, IAsyncLifetime
         => TestRunnerInfo.IsBuildAgent()
             && Options.DbType
                 is FusionTestDbType.PostgreSql
+                or FusionTestDbType.MariaDb
                 or FusionTestDbType.SqlServer;
 
     protected IServiceProvider CreateServices(bool isClient = false)
@@ -203,6 +205,11 @@ public class FusionTestBase : TestBase, IAsyncLifetime
                         });
                     break;
                 case FusionTestDbType.PostgreSql:
+                    builder.UseNpgsql(PostgreSqlConnectionString, npgSql => {
+                        npgSql.EnableRetryOnFailure(0);
+                    });
+                    break;
+                case FusionTestDbType.MariaDb:
                     builder.UseNpgsql(PostgreSqlConnectionString, npgSql => {
                         npgSql.EnableRetryOnFailure(0);
                     });

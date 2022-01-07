@@ -153,6 +153,16 @@ public class PerformanceTest_PostgreSql : PerformanceTestBase
     { }
 }
 
+public class PerformanceTest_MariaDb : PerformanceTestBase
+{
+    public PerformanceTest_MariaDb(ITestOutputHelper @out)
+        : base(@out, new FusionTestOptions() {
+            UseLogging = false,
+            DbType = FusionTestDbType.MariaDb,
+        })
+    { }
+}
+
 public class PerformanceTest_SqlServer : PerformanceTestBase
 {
     public PerformanceTest_SqlServer(ITestOutputHelper @out)

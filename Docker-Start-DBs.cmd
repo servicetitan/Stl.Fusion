@@ -1,5 +1,5 @@
 @echo off
-docker-compose up -d redis postgres sqlserver
+docker-compose up -d redis postgres sqlserver mariadb
 
 
 

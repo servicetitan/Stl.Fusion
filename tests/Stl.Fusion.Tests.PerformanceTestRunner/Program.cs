@@ -4,6 +4,7 @@ using Stl.Fusion.Tests;
 using Stl.Reflection;
 
 await Run<PerformanceTest_PostgreSql>();
+await Run<PerformanceTest_MariaDb>();
 await Run<PerformanceTest_SqlServer>();
 // await Run<PerformanceTest_Sqlite>();
 await Run<PerformanceTest_InMemoryDb>();

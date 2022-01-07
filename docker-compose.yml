@@ -12,6 +12,11 @@ services:
       POSTGRES_HOST_AUTH_METHOD: "password"
     ports:
      - "5432:5432"
+    entrypoint: ["docker-entrypoint.sh", "-c", "shared_buffers=256MB", "-c", "max_connections=1000"]
+  mariadb:
+    image: mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: mariadb
   sqlserver:
     image: "mcr.microsoft.com/mssql/server"
     environment:

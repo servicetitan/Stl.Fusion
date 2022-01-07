@@ -20,6 +20,9 @@
     <EntityFrameworkCoreNpgsqlVersion>$(NpgsqlVersion)</EntityFrameworkCoreNpgsqlVersion>
     <EntityFrameworkCoreNpgsqlVersion5>$(NpgsqlVersion5)</EntityFrameworkCoreNpgsqlVersion5>
     <EntityFrameworkCoreNpgsqlVersion3>$(NpgsqlVersion3)</EntityFrameworkCoreNpgsqlVersion3>
+    <EntityFrameworkCoreMySqlVersion>6.0.0</EntityFrameworkCoreMySqlVersion>
+    <EntityFrameworkCoreMySqlVersion5>5.*</EntityFrameworkCoreMySqlVersion5>
+    <EntityFrameworkCoreMySqlVersion3>3.*</EntityFrameworkCoreMySqlVersion3>
   </PropertyGroup>
 
   <PropertyGroup Label="Blazor-related Package Versions">
@@ -87,6 +90,7 @@
     <PackageReference Update="MsgPack.Cli" Version="1.0.*" />
     <PackageReference Update="Newtonsoft.Json" Version="13.0.*" />
     <PackageReference Update="Pluralize.NET" Version="1.0.*" />
+    <PackageReference Update="Pomelo.EntityFrameworkCore.MySql" Version="$(EntityFrameworkCoreMySqlVersion)" />
     <PackageReference Update="Refit" Version="6.1.*" />
     <PackageReference Update="RestEase" Version="1.5.*" />
     <PackageReference Update="StackExchange.Redis" Version="2.2.*" />
