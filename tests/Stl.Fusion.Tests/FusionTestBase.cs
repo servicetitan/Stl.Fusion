@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
+using Pomelo.EntityFrameworkCore.MySql.Storage;
 using Stl.IO;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Messages;
@@ -53,6 +54,8 @@ public class FusionTestBase : TestBase, IAsyncLifetime
     public FilePath SqliteDbPath { get; protected set; }
     public string PostgreSqlConnectionString { get; protected set; } =
         "Server=localhost;Database=stl_fusion_tests;Port=5432;User Id=postgres;Password=postgres";
+    public string MariaDbConnectionString { get; protected set; } =
+        "Server=localhost;Database=stl_fusion_tests;Port=3306;User=root;Password=mariadb";
     public string SqlServerConnectionString { get; protected set; } =
         "Server=localhost,1433;Database=stl_fusion_tests;MultipleActiveResultSets=True;User Id=sa;Password=SqlServer1";
     public FusionTestWebHost WebHost { get; }
@@ -205,13 +208,18 @@ public class FusionTestBase : TestBase, IAsyncLifetime
                         });
                     break;
                 case FusionTestDbType.PostgreSql:
-                    builder.UseNpgsql(PostgreSqlConnectionString, npgSql => {
-                        npgSql.EnableRetryOnFailure(0);
+                    builder.UseNpgsql(PostgreSqlConnectionString, npgsql => {
+                        npgsql.EnableRetryOnFailure(0);
                     });
                     break;
                 case FusionTestDbType.MariaDb:
-                    builder.UseNpgsql(PostgreSqlConnectionString, npgSql => {
-                        npgSql.EnableRetryOnFailure(0);
+#if NET5_0_OR_GREATER || NETCOREAPP
+                    var serverVersion = ServerVersion.AutoDetect(MariaDbConnectionString);
+                    builder.UseMySql(MariaDbConnectionString, serverVersion, mySql => {
+#else
+                    builder.UseMySql(MariaDbConnectionString, mySql => {
+#endif
+                        mySql.EnableRetryOnFailure(0);
                     });
                     break;
                 case FusionTestDbType.SqlServer:

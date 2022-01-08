@@ -17,6 +17,8 @@ services:
     image: mariadb
     environment:
       MYSQL_ROOT_PASSWORD: mariadb
+    ports:
+     - "3306:3306"
   sqlserver:
     image: "mcr.microsoft.com/mssql/server"
     environment:
