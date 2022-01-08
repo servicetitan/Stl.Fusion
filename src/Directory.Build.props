@@ -11,8 +11,6 @@
     <DefineConstants Condition="'$(PUBLIC_BUILD)' != ''">$(DefineConstants);SIGN_ASSEMBLIES</DefineConstants>
     <!-- Include the PDB in the built .nupkg -->
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
-    <!-- Nerdbank.GitVersioning props -->
-    <DefaultPublicRelease>true</DefaultPublicRelease>
     <!--
     <EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
@@ -100,9 +98,10 @@
 
   <!-- SourceLink props: https://github.com/dotnet/sourcelink/issues/159 -->
   <PropertyGroup>
+    <!-- Nerdbank.GitVersioning props -->
+    <DefaultPublicRelease>true</DefaultPublicRelease>
     <EnableSourceLink>false</EnableSourceLink>
-    <EnableSourceLink Condition="'$(GitCommitId)' != '' and '$(PublicRelease)' == 'true'">true</EnableSourceLink>
-    <EnableSourceLink>true</EnableSourceLink>
+    <EnableSourceLink Condition="'$(PUBLIC_BUILD)' != ''">true</EnableSourceLink>
     <UseSourceLink>$(EnableSourceLink)</UseSourceLink>
     <IncludeSymbols>true</IncludeSymbols>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>

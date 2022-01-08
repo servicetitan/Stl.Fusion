@@ -34,7 +34,6 @@ internal static class Program
     /// <param name="cancellationToken"></param>
     /// <param name="configuration">The configuration for building</param>
     /// <param name="framework">The framework to build for</param>
-    /// <param name="isPublicRelease">You can redefine PublicRelease property for Nerdbank.GitVersioning</param>
     private static async Task Main(
         string[] arguments,
         bool clear,
@@ -51,10 +50,16 @@ internal static class Program
         CancellationToken cancellationToken,
         // Our own options
         string configuration = "",
-        string framework = "",
-        bool isPublicRelease = true)
+        string framework = "")
     {
-        SetDefaults("Stl.Fusion.sln");
+        var publicBuildEnvVar = Environment.GetEnvironmentVariable("PUBLIC_BUILD")?.Trim() ?? "";
+        var isPublicRelease = false;
+        if (bool.TryParse(publicBuildEnvVar, out var v))
+            isPublicRelease = v;
+        if (int.TryParse(publicBuildEnvVar, out var vi))
+            isPublicRelease = vi != 0;
+
+        SetDefaults("Stl.Fusion.sln", isPublicRelease);
         var options = new Options {
             Clear = clear,
             DryRun = dryRun,
@@ -76,8 +81,7 @@ internal static class Program
             "'dotnet' command isn't found. Use DOTNET_ROOT env. var to specify the path to custom 'dotnet' tool.");
 
         // For Nerdbank.GitVersioning: https://github.com/dotnet/Nerdbank.GitVersioning/blob/master/doc/public_vs_stable.md
-        var isPublicReleaseOverride = bool.TryParse(Environment.GetEnvironmentVariable("NBGV_PublicRelease")?.Trim() ?? "", out var v) ? (bool?) v : null;
-        var publicReleaseProperty = $"-p:PublicRelease={isPublicReleaseOverride ?? isPublicRelease} ";
+        var publicReleaseProperty = $"-p:PublicRelease={isPublicRelease} ";
 
         Target("clean", () => {
             DeleteDir(artifactsPath);
@@ -207,7 +211,7 @@ internal static class Program
         }
     }
 
-    private static void SetDefaults(string solutionName)
+    private static void SetDefaults(string solutionName, bool isPublicRelease)
     {
         var slnPath = FindNearest(Environment.CurrentDirectory, solutionName)
             ?? FindNearest(FilePath.New(Assembly.GetExecutingAssembly().Location).DirectoryPath, solutionName)
@@ -221,7 +225,7 @@ internal static class Program
         Environment.SetEnvironmentVariable("POWERSHELL_TELEMETRY_OPTOUT", "1");
         Environment.SetEnvironmentVariable("POWERSHELL_UPDATECHECK_OPTOUT", "1");
         Environment.SetEnvironmentVariable("DOTNET_CLI_UI_LANGUAGE", "en");
-        Environment.SetEnvironmentVariable("PUBLIC_BUILD", "1");
+        Environment.SetEnvironmentVariable("PUBLIC_BUILD", isPublicRelease ? "1" : "");
     }
 
     static void MoveCoverageOutputFiles(FilePath testOutputPath)
