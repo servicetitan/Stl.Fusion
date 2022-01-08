@@ -46,47 +46,17 @@
     <!-- NU5105: The package version uses SemVer 2.0.0 or components of SemVer 1.0.0 that are not supported on legacy clients -->
     <NoWarn>$(NoWarn);NU5048;NU5105</NoWarn>
     <WarningsAsErrors>true</WarningsAsErrors>
-
-    <!-- SourceLink props: https://github.com/dotnet/sourcelink/issues/159 -->
-    <EnableSourceLink>false</EnableSourceLink>
-    <EnableSourceLink Condition="'$(GitCommitId)' != '' and '$(Configuration)' != 'Debug' and '$(DesignTimeBuild)' != 'true' and '$(BuildingForLiveUnitTesting)' != 'true'">true</EnableSourceLink>
-    <UseSourceLink>$(EnableSourceLink)</UseSourceLink>
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <RepositoryType>git</RepositoryType>
-    <PrivateRepositoryUrl>$(RepositoryUrl)</PrivateRepositoryUrl>
-    <ScmRepositoryUrl>$(RepositoryUrl)</ScmRepositoryUrl>
-    <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
-    <RevisionId>$(GitCommitId)</RevisionId>
-    <SourceRevisionId>$(GitCommitId)</SourceRevisionId>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <SourceLinkHasSingleProvider>true</SourceLinkHasSingleProvider>
-    <EnableSourceControlManagerQueries>$(EnableSourceLink)</EnableSourceControlManagerQueries>
-    <GitVersionBaseDirectory>$(RepoRoot)</GitVersionBaseDirectory>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(EnableSourceLink)' == 'true'">
-    <Deterministic>true</Deterministic>
-    <Features>strict;pdb-path-determinism</Features>
-    <DeterministicSourcePaths>true</DeterministicSourcePaths>
-    <ContinuousIntegrationBuild>false</ContinuousIntegrationBuild>
-    <PathMap>'$(RepoRoot)'=/_/</PathMap>
-  </PropertyGroup>
-  <ItemGroup Condition="'$(DeterministicSourcePaths)' =='true'">
-    <SourceRoot Include="$(RepoRoot)" RepositoryUrl="$(RepositoryUrl)" SourceControl="git" RevisionId="$(GitCommitId)" />
-  </ItemGroup>
 
   <PropertyGroup>
     <PrereleaseBuild>false</PrereleaseBuild>
     <LegacyBuild>false</LegacyBuild>
   </PropertyGroup>
   <PropertyGroup Condition="$(TargetFramework.StartsWith('net6'))">
-    <PrereleaseBuild>true</PrereleaseBuild>
+    <PrereleaseBuild>false</PrereleaseBuild>
   </PropertyGroup>
   <PropertyGroup Condition="$(TargetFramework.StartsWith('net4')) or $(TargetFramework.StartsWith('netstandard'))">
     <LegacyBuild>true</LegacyBuild>
   </PropertyGroup>
 
-  <ItemGroup Condition="$(DeterministicSourcePaths) == 'true'">
-    <SourceRoot Include="$(RepoRoot)" />
-  </ItemGroup>
 </Project>

@@ -13,13 +13,6 @@
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
     <!-- Nerdbank.GitVersioning props -->
     <DefaultPublicRelease>true</DefaultPublicRelease>
-    <!-- SourceLink props: https://github.com/dotnet/sourcelink/issues/159 -->
-    <EnableSourceLink>false</EnableSourceLink>    <!-- Set later -->
-    <UseSourceLink>false</UseSourceLink>    <!-- Set later -->
-    <IncludeSymbols>true</IncludeSymbols>
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <!--
     <EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
@@ -105,9 +98,35 @@
     <Using Include="Stl.CommandR.Commands" />
   </ItemGroup>
 
-  <!-- We disable SetEmbeddedFilesFromSourceControlManagerUntrackedFiles, that's why we embed this file in pdb manually -->
-  <ItemGroup Condition="'$(EnableSourceLink)' =='true'">
-    <EmbeddedFiles Include="$(BaseIntermediateOutputPath)$(Configuration)\**\*.cs" />
+  <!-- SourceLink props: https://github.com/dotnet/sourcelink/issues/159 -->
+  <PropertyGroup>
+    <EnableSourceLink>false</EnableSourceLink>
+    <EnableSourceLink Condition="'$(GitCommitId)' != '' and '$(PublicRelease)' == 'true'">true</EnableSourceLink>
+    <EnableSourceLink>true</EnableSourceLink>
+    <UseSourceLink>$(EnableSourceLink)</UseSourceLink>
+    <IncludeSymbols>true</IncludeSymbols>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <RepositoryType>git</RepositoryType>
+    <PrivateRepositoryUrl>$(RepositoryUrl)</PrivateRepositoryUrl>
+    <ScmRepositoryUrl>$(RepositoryUrl)</ScmRepositoryUrl>
+    <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
+    <RevisionId>$(GitCommitId)</RevisionId>
+    <SourceRevisionId>$(GitCommitId)</SourceRevisionId>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <SourceLinkHasSingleProvider>true</SourceLinkHasSingleProvider>
+    <EnableSourceControlManagerQueries>$(EnableSourceLink)</EnableSourceControlManagerQueries>
+    <GitVersionBaseDirectory>$(RepoRoot)</GitVersionBaseDirectory>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(EnableSourceLink)' == 'true'">
+    <Deterministic>true</Deterministic>
+    <Features>strict;pdb-path-determinism</Features>
+    <DeterministicSourcePaths>true</DeterministicSourcePaths>
+    <ContinuousIntegrationBuild>false</ContinuousIntegrationBuild>
+    <PathMap>'$(RepoRoot)'=/_/</PathMap>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(DeterministicSourcePaths)' =='true'">
+    <SourceRoot Include="$(RepoRoot)" RepositoryUrl="$(RepositoryUrl)" SourceControl="git" RevisionId="$(GitCommitId)" />
   </ItemGroup>
 
 </Project>
