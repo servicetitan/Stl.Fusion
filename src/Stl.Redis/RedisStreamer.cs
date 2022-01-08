@@ -37,17 +37,21 @@ public sealed class RedisStreamer<T>
     {
         var appendSub = GetAppendSub();
         await using var _ = appendSub.ConfigureAwait(false);
+        await appendSub.WhenSubscribed.ConfigureAwait(false);
 
         var position = (RedisValue)"0-0";
         var serializer = Settings.Serializer;
+        var appendNotificationTask = appendSub.NextMessage();
         while (true) {
             cancellationToken.ThrowIfCancellationRequested(); // Redis doesn't support cancellation
-            var appendNotificationTask = appendSub.NextMessage();
             var entries = await RedisDb.Database.StreamReadAsync(Key, position, 10).ConfigureAwait(false);
             if (entries == null || entries.Length == 0) {
-                await appendNotificationTask
+                var appendOpt = await appendNotificationTask
                     .WithTimeout(Settings.Clock, Settings.AppendCheckPeriod, cancellationToken)
                     .ConfigureAwait(false);
+                if (appendOpt.HasValue)
+                    appendNotificationTask = null;
+                appendNotificationTask = appendSub.NextMessage(appendNotificationTask);
                 continue;
             }
 

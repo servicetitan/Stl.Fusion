@@ -37,7 +37,7 @@ public enum FusionTestDbType
 public class FusionTestOptions
 {
     public FusionTestDbType DbType { get; set; } = FusionTestDbType.Sqlite;
-    public bool UseRedisOperationLogChangeTracking { get; set; }
+    public bool UseRedisOperationLogChangeTracking { get; set; } = !TestRunnerInfo.IsBuildAgent();
     public bool UseInMemoryKeyValueStore { get; set; }
     public bool UseInMemoryAuthService { get; set; }
     public bool UseTestClock { get; set; }

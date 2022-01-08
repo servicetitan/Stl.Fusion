@@ -4,40 +4,45 @@ namespace Stl.Redis;
 
 public sealed class RedisTaskSub : RedisSubBase
 {
-    private Task<RedisValue> _lastMessageTask = null!;
+    private Task<RedisValue> _nextMessageTask = null!;
 
     public RedisTaskSub(RedisDb redisDb, string key)
         : base(redisDb, key)
         => Reset();
 
-    public Task<RedisValue> NextMessage()
+    public Task<RedisValue> NextMessage(Task<RedisValue>? unresolvedMessageTask = null)
     {
-        // ReSharper disable once InconsistentlySynchronizedField
-        var lastMessageTask = _lastMessageTask;
-        if (!lastMessageTask.IsCompleted)
-            return lastMessageTask;
+        // We assume here that unresolvedMessageTask was unresolved
+        // last time it was awaited, so if it's the case,
+        // we should return it here, because in fact the message
+        // we were waiting for earlier is here now.
+        if (unresolvedMessageTask != null)
+            return unresolvedMessageTask;
+        var nextMessageTask = _nextMessageTask;
+        if (!nextMessageTask.IsCompleted)
+            return nextMessageTask;
         lock (Lock) {
-            lastMessageTask = _lastMessageTask;
-            if (!lastMessageTask.IsCompleted)
-                return lastMessageTask;
+            nextMessageTask = _nextMessageTask;
+            if (!nextMessageTask.IsCompleted)
+                return nextMessageTask;
             Reset();
-            return _lastMessageTask;
+            return _nextMessageTask;
         }
     }
 
     protected override void OnMessage(RedisChannel redisChannel, RedisValue redisValue)
     {
         lock (Lock)
-            TaskSource.For(_lastMessageTask).TrySetResult(redisValue);
+            TaskSource.For(_nextMessageTask).TrySetResult(redisValue);
     }
 
     private void Reset()
-        => _lastMessageTask = TaskSource.New<RedisValue>(true).Task;
+        => _nextMessageTask = TaskSource.New<RedisValue>(true).Task;
 }
 
 public sealed class RedisTaskSub<T> : RedisSubBase
 {
-    private Task<T> _lastMessageTask = null!;
+    private Task<T> _nextMessageTask = null!;
 
     public IByteSerializer<T> Serializer { get; }
 
@@ -49,18 +54,23 @@ public sealed class RedisTaskSub<T> : RedisSubBase
         Reset();
     }
 
-    public Task<T> NextMessage()
+    public Task<T> NextMessage(Task<T>? unresolvedMessageTask = null)
     {
-        // ReSharper disable once InconsistentlySynchronizedField
-        var lastMessageTask = _lastMessageTask;
-        if (!lastMessageTask.IsCompleted)
-            return lastMessageTask;
+        // We assume here that unresolvedMessageTask was unresolved
+        // last time it was awaited, so if it's the case,
+        // we should return it here, because in fact the message
+        // we were waiting for earlier is here now.
+        if (unresolvedMessageTask != null)
+            return unresolvedMessageTask;
+        var nextMessageTask = _nextMessageTask;
+        if (!nextMessageTask.IsCompleted)
+            return nextMessageTask;
         lock (Lock) {
-            lastMessageTask = _lastMessageTask;
-            if (!lastMessageTask.IsCompleted)
-                return lastMessageTask;
+            nextMessageTask = _nextMessageTask;
+            if (!nextMessageTask.IsCompleted)
+                return nextMessageTask;
             Reset();
-            return _lastMessageTask;
+            return _nextMessageTask;
         }
     }
 
@@ -69,15 +79,15 @@ public sealed class RedisTaskSub<T> : RedisSubBase
         try {
             var value = Serializer.Read(redisValue);
             lock (Lock)
-                TaskSource.For(_lastMessageTask).TrySetResult(value);
+                TaskSource.For(_nextMessageTask).TrySetResult(value);
         }
         catch (Exception e) {
             lock (Lock)
-                TaskSource.For(_lastMessageTask).TrySetException(e);
+                TaskSource.For(_nextMessageTask).TrySetException(e);
         }
     }
 
     private void Reset()
-        => _lastMessageTask = TaskSource.New<T>(true).Task;
+        => _nextMessageTask = TaskSource.New<T>(true).Task;
 }
 

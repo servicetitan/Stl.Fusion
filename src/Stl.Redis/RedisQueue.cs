@@ -41,14 +41,18 @@ public sealed class RedisQueue : IAsyncDisposable
 
     public async Task<RedisValue> Dequeue(CancellationToken cancellationToken = default)
     {
+        await EnqueueSub.WhenSubscribed.ConfigureAwait(false);
+        var nextMessageTask = EnqueueSub.NextMessage();
         while (true) {
-            var nextEnqueueNotificationTask = EnqueueSub.NextMessage();
             var redisValue = await RedisDb.Database.ListRightPopAsync(Key).ConfigureAwait(false);
             if (!redisValue.IsNullOrEmpty)
                 return redisValue;
-            await nextEnqueueNotificationTask
+            var notificationOpt = await nextMessageTask
                 .WithTimeout(Settings.Clock, Settings.EnqueueCheckPeriod, cancellationToken)
                 .ConfigureAwait(false);
+            if (notificationOpt.HasValue)
+                nextMessageTask = null;
+            nextMessageTask = EnqueueSub.NextMessage(nextMessageTask);
         }
     }
 
@@ -95,14 +99,18 @@ public sealed class RedisQueue<T> : IAsyncDisposable
 
     public async Task<T> Dequeue(CancellationToken cancellationToken = default)
     {
+        await EnqueueSub.WhenSubscribed.ConfigureAwait(false);
+        var nextMessageTask = EnqueueSub.NextMessage();
         while (true) {
-            var nextEnqueueNotificationTask = EnqueueSub.NextMessage();
             var value = await RedisDb.Database.ListRightPopAsync(Key).ConfigureAwait(false);
             if (!value.IsNullOrEmpty)
                 return Settings.Serializer.Read(value);
-            await nextEnqueueNotificationTask
+            var notificationOpt = await nextMessageTask
                 .WithTimeout(Settings.Clock, Settings.EnqueueCheckPeriod, cancellationToken)
                 .ConfigureAwait(false);
+            if (notificationOpt.HasValue)
+                nextMessageTask = null;
+            nextMessageTask = EnqueueSub.NextMessage(nextMessageTask);
         }
     }
 
