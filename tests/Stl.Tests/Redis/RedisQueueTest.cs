@@ -1,7 +1,9 @@
 using Stl.Redis;
+using Stl.Testing.Collections;
 
 namespace Stl.Tests.Redis;
 
+[Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
 public class RedisQueueTest : RedisTestBase
 {
     public RedisQueueTest(ITestOutputHelper @out) : base(@out) { }
