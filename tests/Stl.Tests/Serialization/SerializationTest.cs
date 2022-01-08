@@ -35,7 +35,7 @@ public class SerializationTest : TestBase
         Out.WriteLine(json);
 
         var deserialized = (Tuple<DateTime>) serializer.Read<object>(json);
-        deserialized.Item1.Should().Equals(value.Item1);
+        deserialized.Item1.Should().Be(value.Item1);
     }
 
     [Fact]
