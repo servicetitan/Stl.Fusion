@@ -3,7 +3,7 @@ using Stl.Internal;
 
 namespace Stl.Redis;
 
-public abstract class RedisSubBase : IAsyncDisposable
+public abstract class RedisSubBase : IAsyncDisposable, IHasDisposeStarted
 {
     private static readonly Task AlreadyDisposedTask = Task.FromException(Errors.AlreadyDisposedOrDisposing());
     private readonly Action<RedisChannel, RedisValue> _onMessage;
@@ -15,6 +15,7 @@ public abstract class RedisSubBase : IAsyncDisposable
     public ISubscriber Subscriber { get; }
     public RedisChannel RedisChannel { get; }
     public Task WhenSubscribed { get; private set; }
+    public bool IsDisposeStarted { get; private set; }
 
     protected RedisSubBase(RedisDb redisDb, string key,
         RedisChannel.PatternMode patternMode = RedisChannel.PatternMode.Auto)
@@ -32,14 +33,16 @@ public abstract class RedisSubBase : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        var whenSubscribed = WhenSubscribed;
-        WhenSubscribed = AlreadyDisposedTask;
-        if (!whenSubscribed.IsCompletedSuccessfully())
+        if (IsDisposeStarted)
             return;
-
+        lock (Lock) {
+            if (IsDisposeStarted)
+                return;
+            IsDisposeStarted = true;
+        }
         try {
-            if (!whenSubscribed.IsCompleted)
-                await whenSubscribed.ConfigureAwait(false);
+            if (!WhenSubscribed.IsCompleted)
+                await WhenSubscribed.ConfigureAwait(false);
         }
         catch {
             // Intended
@@ -52,5 +55,9 @@ public abstract class RedisSubBase : IAsyncDisposable
         catch {
             // Intended
         }
+        await DisposeAsyncInternal().ConfigureAwait(false);
     }
+
+    protected virtual ValueTask DisposeAsyncInternal()
+        => ValueTaskExt.CompletedTask;
 }

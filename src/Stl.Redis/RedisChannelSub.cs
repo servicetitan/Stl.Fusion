@@ -18,6 +18,12 @@ public sealed class RedisChannelSub : RedisSubBase
                 AllowSynchronousContinuations = false,
             });
 
+    protected override ValueTask DisposeAsyncInternal()
+    {
+        _channel.Writer.TryComplete();
+        return ValueTaskExt.CompletedTask;
+    }
+
     protected override void OnMessage(RedisChannel redisChannel, RedisValue redisValue)
         => _channel.Writer.TryWrite(redisValue);
 }
@@ -41,6 +47,12 @@ public sealed class RedisChannelSub<T> : RedisSubBase
                 SingleReader = true,
                 AllowSynchronousContinuations = false,
             });
+    }
+
+    protected override ValueTask DisposeAsyncInternal()
+    {
+        _channel.Writer.TryComplete();
+        return ValueTaskExt.CompletedTask;
     }
 
     protected override void OnMessage(RedisChannel redisChannel, RedisValue redisValue)

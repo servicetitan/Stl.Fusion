@@ -10,6 +10,13 @@ public sealed class RedisTaskSub : RedisSubBase
         : base(redisDb, key)
         => Reset();
 
+    protected override ValueTask DisposeAsyncInternal()
+    {
+        lock (Lock)
+            TaskSource.For(_nextMessageTask).TrySetCanceled();
+        return ValueTaskExt.CompletedTask;
+    }
+
     public Task<RedisValue> NextMessage(Task<RedisValue>? unresolvedMessageTask = null)
     {
         // We assume here that unresolvedMessageTask was unresolved
@@ -37,7 +44,11 @@ public sealed class RedisTaskSub : RedisSubBase
     }
 
     private void Reset()
-        => _nextMessageTask = TaskSource.New<RedisValue>(true).Task;
+    {
+        _nextMessageTask = TaskSource.New<RedisValue>(true).Task;
+        if (IsDisposeStarted)
+            TaskSource.For(_nextMessageTask).TrySetCanceled();
+    }
 }
 
 public sealed class RedisTaskSub<T> : RedisSubBase
@@ -52,6 +63,13 @@ public sealed class RedisTaskSub<T> : RedisSubBase
     {
         Serializer = serializer ?? ByteSerializer<T>.Default;
         Reset();
+    }
+
+    protected override ValueTask DisposeAsyncInternal()
+    {
+        lock (Lock)
+            TaskSource.For(_nextMessageTask).TrySetCanceled();
+        return ValueTaskExt.CompletedTask;
     }
 
     public Task<T> NextMessage(Task<T>? unresolvedMessageTask = null)
@@ -88,6 +106,10 @@ public sealed class RedisTaskSub<T> : RedisSubBase
     }
 
     private void Reset()
-        => _nextMessageTask = TaskSource.New<T>(true).Task;
+    {
+        _nextMessageTask = TaskSource.New<T>(true).Task;
+        if (IsDisposeStarted)
+            TaskSource.For(_nextMessageTask).TrySetCanceled();
+    }
 }
 
