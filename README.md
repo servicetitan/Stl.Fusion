@@ -65,7 +65,7 @@ So what DREAM means?
 > that uses certain ingredient *(another [computed value])*,
 > and consequently, even every buyer of a product *(think UI control)* that uses certain ingredient. 
 > So if you want every consumer to have the most up-to-date version 
-> of every product they bought *(think real-time UI)* &ndash; 
+> of every product they bought *(think real-time UI)*,
 > lot traceability makes this possible.
 > 
 > And assuming every purchase order triggers the whole build chain and uses
