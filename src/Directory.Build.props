@@ -9,12 +9,6 @@
     <IsPackable>true</IsPackable>
     <!-- Signing -->
     <DefineConstants Condition="'$(PUBLIC_BUILD)' != ''">$(DefineConstants);SIGN_ASSEMBLIES</DefineConstants>
-    <!-- Include the PDB in the built .nupkg -->
-    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
-    <!--
-    <EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries>
-    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
-    -->
   </PropertyGroup>
 
   <!-- Suppressed warnings -->
@@ -96,32 +90,35 @@
     <Using Include="Stl.CommandR.Commands" />
   </ItemGroup>
 
-  <!-- SourceLink props: https://github.com/dotnet/sourcelink/issues/159 -->
+  <!-- Packaging & SourceLink -->
   <PropertyGroup>
-    <!-- Nerdbank.GitVersioning props -->
-    <DefaultPublicRelease>true</DefaultPublicRelease>
+    <!-- SourceLink -->
     <EnableSourceLink>false</EnableSourceLink>
     <EnableSourceLink Condition="'$(PUBLIC_BUILD)' != ''">true</EnableSourceLink>
     <UseSourceLink>$(EnableSourceLink)</UseSourceLink>
-    <IncludeSymbols>true</IncludeSymbols>
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <RepositoryType>git</RepositoryType>
     <PrivateRepositoryUrl>$(RepositoryUrl)</PrivateRepositoryUrl>
     <ScmRepositoryUrl>$(RepositoryUrl)</ScmRepositoryUrl>
     <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <!-- Revision info -->
+    <GitVersionBaseDirectory>$(RepoRoot)</GitVersionBaseDirectory>
     <RevisionId>$(GitCommitId)</RevisionId>
     <SourceRevisionId>$(GitCommitId)</SourceRevisionId>
+    <!-- Symbols -->
+    <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <SourceLinkHasSingleProvider>true</SourceLinkHasSingleProvider>
-    <EnableSourceControlManagerQueries>$(EnableSourceLink)</EnableSourceControlManagerQueries>
-    <GitVersionBaseDirectory>$(RepoRoot)</GitVersionBaseDirectory>
+    <!-- Disabled: also include the PDB in the built .nupkg (in addition to .snupkg) -->
+    <!--
+    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+    -->
   </PropertyGroup>
   <PropertyGroup Condition="'$(EnableSourceLink)' == 'true'">
     <Deterministic>true</Deterministic>
     <Features>strict;pdb-path-determinism</Features>
     <DeterministicSourcePaths>true</DeterministicSourcePaths>
-    <ContinuousIntegrationBuild>false</ContinuousIntegrationBuild>
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
     <PathMap>'$(RepoRoot)'=/_/</PathMap>
   </PropertyGroup>
   <ItemGroup Condition="'$(DeterministicSourcePaths)' =='true'">
