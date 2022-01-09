@@ -3,8 +3,8 @@
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
   <PropertyGroup>
     <!-- Compiler & toolchain -->
-    <BaseIntermediateOutputPath>$(RepoRoot)artifacts\obj\$(MSBuildProjectName)</BaseIntermediateOutputPath>
-    <OutputPath>$(RepoRoot)artifacts\bin\$(MSBuildProjectName)</OutputPath>
+    <BaseIntermediateOutputPath>$(SolutionDir)artifacts\obj\$(MSBuildProjectName)</BaseIntermediateOutputPath>
+    <OutputPath>$(SolutionDir)artifacts\bin\$(MSBuildProjectName)</OutputPath>
     <PublishConfiguration>Release</PublishConfiguration>
     <IsPackable>true</IsPackable>
     <!-- Signing -->
@@ -106,23 +106,23 @@
     <GitVersionBaseDirectory>$(RepoRoot)</GitVersionBaseDirectory>
     <RevisionId>$(GitCommitId)</RevisionId>
     <SourceRevisionId>$(GitCommitId)</SourceRevisionId>
-    <!-- Symbols -->
-    <IncludeSymbols>true</IncludeSymbols>
+    <!-- Symbols: we embed .pdb into .nupkg & don't produce .snupkg (no extra value in this case) -->
+    <IncludeSymbols>false</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <!-- Disabled: also include the PDB in the built .nupkg (in addition to .snupkg) -->
-    <!--
+    <!-- Include .pdb right into the .nupkg  -->
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
-    -->
   </PropertyGroup>
   <PropertyGroup Condition="'$(EnableSourceLink)' == 'true'">
-    <Deterministic>true</Deterministic>
-    <Features>strict;pdb-path-determinism</Features>
-    <DeterministicSourcePaths>true</DeterministicSourcePaths>
-    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
-    <PathMap>'$(RepoRoot)'=/_/</PathMap>
+    <!-- Deterministic build is on when SourceLink is on -->
+    <ContinuousIntegrationBuild>$(EnableSourceLink)</ContinuousIntegrationBuild>
   </PropertyGroup>
-  <ItemGroup Condition="'$(DeterministicSourcePaths)' =='true'">
+  <ItemGroup Condition="'$(EnableSourceLink)' =='true'">
     <SourceRoot Include="$(RepoRoot)" RepositoryUrl="$(RepositoryUrl)" SourceControl="git" RevisionId="$(GitCommitId)" />
   </ItemGroup>
+  <!--
+  <ItemGroup Condition="'$(EnableSourceLink)' =='true'">
+    <EmbeddedFiles Include="$(BaseIntermediateOutputPath)$(Configuration)\**\*.cs" />
+  </ItemGroup>
+  -->
 
 </Project>

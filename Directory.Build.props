@@ -37,7 +37,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Features>strict;pdb-path-determinism</Features>
+    <Features>strict</Features>
     <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
     <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
