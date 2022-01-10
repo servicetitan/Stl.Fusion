@@ -50,7 +50,7 @@
     <PackageReference Update="Blazorise.Sidebar" Version="$(BlazoriseVersion)" />
     <PackageReference Update="Bullseye" Version="3.8.*" />
     <PackageReference Update="Castle.Core" Version="4.4.*" />
-    <PackageReference Update="CliWrap" Version="3.3.*" />
+    <PackageReference Update="CliWrap" Version="3.4.*" />
     <PackageReference Update="DataAnnotationsValidatorNetStandard" Version="1.0.*" />
     <PackageReference Update="EFCore.CheckConstraints" Version="6.0.*" />
     <PackageReference Update="Enums.NET" Version="4.0.*" />
