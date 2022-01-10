@@ -82,15 +82,16 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         var context = CommandContext.GetCurrent();
         if (Computed.IsInvalidating()) {
             var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
-            if (invSessionInfo is { IsAuthenticated: true }) {
-                _ = GetSessionInfo(session, default);
-                var invIsNew = context.Operation().Items.GetOrDefault(false);
-                if (invIsNew) {
-                    _ = GetAuthInfo(session, default);
-                    _ = GetOptions(session, default);
-                }
-                _ = GetUserSessions(invSessionInfo.UserId, default);
+            if (invSessionInfo == null)
+                return null!;
+            _ = GetSessionInfo(session, default);
+            var invIsNew = context.Operation().Items.GetOrDefault(false);
+            if (invIsNew) {
+                _ = GetAuthInfo(session, default);
+                _ = GetOptions(session, default);
             }
+            if (invSessionInfo.IsAuthenticated)
+                _ = GetUserSessions(invSessionInfo.UserId, default);
             return null!;
         }
 
