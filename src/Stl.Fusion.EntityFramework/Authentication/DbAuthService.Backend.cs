@@ -115,11 +115,18 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
             return sessionInfo!;
         }
         catch (DbUpdateException) {
-            dbSessionInfo = await Sessions.Get(dbContext, session.Id, false, cancellationToken).ConfigureAwait(false);
+            var scope = context.Items.Get<DbOperationScope<TDbContext>>();
+            await scope!.Rollback().ConfigureAwait(false);
+
+            var readDbContext = CreateDbContext();
+            await using var __ = readDbContext.ConfigureAwait(false);
+
+            dbSessionInfo = await Sessions.Get(readDbContext, session.Id, false, cancellationToken).ConfigureAwait(false);
             if (dbSessionInfo == null)
                 throw; // Something is off: it is supposed to be created concurrently
+
             sessionInfo = SessionConverter.ToModel(dbSessionInfo);
-            return sessionInfo;
+            return sessionInfo!;
         }
     }
 

@@ -42,7 +42,8 @@ public class DbOperationScopeProvider<TDbContext> : DbServiceBase<TDbContext>, I
 
         try {
             await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);
-            await scope.Commit(cancellationToken).ConfigureAwait(false);
+            if (!scope.IsClosed)
+                await scope.Commit(cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException) {
             throw;

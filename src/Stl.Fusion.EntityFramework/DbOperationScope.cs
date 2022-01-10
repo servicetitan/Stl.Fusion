@@ -127,8 +127,11 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
     public virtual async Task Commit(CancellationToken cancellationToken = default)
     {
         using var _ = await AsyncLock.Lock(cancellationToken).ConfigureAwait(false);
-        if (IsClosed)
+        if (IsClosed) {
+            if (IsConfirmed == true)
+                return;
             throw Stl.Fusion.Operations.Internal.Errors.OperationScopeIsAlreadyClosed();
+        }
         try {
             if (!IsUsed) {
                 IsConfirmed = true;
@@ -175,8 +178,11 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
     public virtual async Task Rollback()
     {
         using var _ = await AsyncLock.Lock().ConfigureAwait(false);
-        if (IsClosed)
+        if (IsClosed) {
+            if (IsConfirmed == false)
+                return;
             throw Stl.Fusion.Operations.Internal.Errors.OperationScopeIsAlreadyClosed();
+        }
         try {
             if (!IsUsed)
                 return;

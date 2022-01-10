@@ -51,8 +51,11 @@ public class TransientOperationScope : AsyncDisposableBase, IOperationScope
 
     public virtual Task Commit(CancellationToken cancellationToken = default)
     {
-        if (IsClosed)
+        if (IsClosed) {
+            if (IsConfirmed == true)
+                return Task.CompletedTask;
             throw Errors.OperationScopeIsAlreadyClosed();
+        }
         Operation.CommitTime = Clocks.SystemClock.Now;
         IsConfirmed = true;
         IsClosed = true;
@@ -61,8 +64,11 @@ public class TransientOperationScope : AsyncDisposableBase, IOperationScope
 
     public virtual Task Rollback()
     {
-        if (IsClosed)
+        if (IsClosed) {
+            if (IsConfirmed == false)
+                return Task.CompletedTask;
             throw Errors.OperationScopeIsAlreadyClosed();
+        }
         IsConfirmed = false;
         IsClosed = true;
         return Task.CompletedTask;
