@@ -17,8 +17,8 @@ public class RedisSequenceSet
             return value;
         if (maxUsedValue < value && value <= maxUsedValue + ResetRange)
             return value;
-        value = maxUsedValue + increment;
-        await Reset(key, value).ConfigureAwait(false);
+        await Reset(key, maxUsedValue).ConfigureAwait(false);
+        value = await Hash.Increment(key, increment).ConfigureAwait(false);
         return value;
     }
 
