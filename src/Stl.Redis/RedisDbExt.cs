@@ -49,10 +49,10 @@ public static class RedisDbExt
         => new(redisDb.GetHash(hashKey));
 
     public static RedisSequenceSet GetSequenceSet(
-        this RedisDb redisDb, string hashKey, Range<long> resetRange)
+        this RedisDb redisDb, string hashKey, long resetRange)
         => new(redisDb.GetHash(hashKey)) { ResetRange = resetRange };
     public static RedisSequenceSet<TScope> GetSequenceSet<TScope>(
-        this RedisDb redisDb, string hashKey, Range<long> resetRange)
+        this RedisDb redisDb, string hashKey, long resetRange)
         => new(redisDb.GetHash(hashKey)) { ResetRange = resetRange };
 
     public static RedisStreamer<T> GetStreamer<T>(this RedisDb redisDb, string key, RedisStreamer<T>.Options? settings = null)
