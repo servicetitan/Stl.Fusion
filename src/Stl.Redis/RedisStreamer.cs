@@ -11,6 +11,7 @@ public sealed class RedisStreamer<T>
         public int MaxStreamLength { get; init; } = 2048;
         public string AppendPubKeySuffix { get; init; } = "-updates";
         public TimeSpan AppendCheckPeriod { get; init; } = TimeSpan.FromSeconds(1);
+        public TimeSpan? AppendSubscribeTimeout { get; init; } = TimeSpan.FromSeconds(5);
         public IByteSerializer<T> Serializer { get; init; } = ByteSerializer<T>.Default;
         public ITextSerializer<ExceptionInfo> ErrorSerializer { get; init; } = TextSerializer<ExceptionInfo>.Default;
         public IMomentClock Clock { get; init; } = MomentClockSet.Default.CpuClock;
@@ -179,5 +180,5 @@ public sealed class RedisStreamer<T>
         => RedisDb.GetPub(Key + Settings.AppendPubKeySuffix);
 
     private RedisTaskSub GetAppendSub()
-        => RedisDb.GetTaskSub(Key + Settings.AppendPubKeySuffix);
+        => RedisDb.GetTaskSub(Key + Settings.AppendPubKeySuffix, Settings.AppendSubscribeTimeout);
 }

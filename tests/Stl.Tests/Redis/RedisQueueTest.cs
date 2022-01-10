@@ -1,3 +1,4 @@
+using StackExchange.Redis;
 using Stl.Redis;
 using Stl.Testing.Collections;
 

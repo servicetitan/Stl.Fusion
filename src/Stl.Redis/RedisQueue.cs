@@ -8,6 +8,7 @@ public sealed class RedisQueue : IAsyncDisposable
     {
         public string EnqueuePubKeySuffix { get; init; } = "-updates";
         public TimeSpan EnqueueCheckPeriod { get; init; } = TimeSpan.FromSeconds(1);
+        public TimeSpan? EnqueueSubscribeTimeout { get; init; } = TimeSpan.FromSeconds(5);
         public IMomentClock Clock { get; init; } = MomentClockSet.Default.CpuClock;
     }
 
@@ -25,7 +26,7 @@ public sealed class RedisQueue : IAsyncDisposable
         Key = key;
         var enqueuePubKey = $"{Key}{Settings.EnqueuePubKeySuffix}";
         EnqueuePub = RedisDb.GetPub(enqueuePubKey);
-        EnqueueSub = RedisDb.GetTaskSub(enqueuePubKey);
+        EnqueueSub = RedisDb.GetTaskSub(enqueuePubKey, Settings.EnqueueSubscribeTimeout);
     }
 
     public ValueTask DisposeAsync()
@@ -66,6 +67,7 @@ public sealed class RedisQueue<T> : IAsyncDisposable
     {
         public string EnqueuePubKeySuffix { get; init; } = "-updates";
         public TimeSpan EnqueueCheckPeriod { get; init; } = TimeSpan.FromSeconds(1);
+        public TimeSpan? EnqueueSubscribeTimeout { get; init; } = TimeSpan.FromSeconds(5);
         public IByteSerializer<T> Serializer { get; init; } = ByteSerializer<T>.Default;
         public IMomentClock Clock { get; init; } = MomentClockSet.Default.CpuClock;
     }
@@ -84,7 +86,7 @@ public sealed class RedisQueue<T> : IAsyncDisposable
         Key = key;
         var enqueuePubKey = $"{typeof(T).Name}-{Key}{Settings.EnqueuePubKeySuffix}";
         EnqueuePub = RedisDb.GetPub(enqueuePubKey);
-        EnqueueSub = RedisDb.GetTaskSub(enqueuePubKey);
+        EnqueueSub = RedisDb.GetTaskSub(enqueuePubKey, Settings.EnqueueSubscribeTimeout);
     }
 
     public ValueTask DisposeAsync()

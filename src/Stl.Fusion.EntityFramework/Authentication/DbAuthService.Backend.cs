@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Authentication.Commands;
 using Stl.Fusion.Authentication.Internal;
@@ -80,15 +81,16 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         var (session, ipAddress, userAgent) = command;
         var context = CommandContext.GetCurrent();
         if (Computed.IsInvalidating()) {
-            _ = GetSessionInfo(session, default);
-            var invIsNew = context.Operation().Items.GetOrDefault(false);
-            if (invIsNew) {
-                _ = GetAuthInfo(session, default);
-                _ = GetOptions(session, default);
-            }
             var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
-            if (invSessionInfo is { IsAuthenticated: true })
+            if (invSessionInfo is { IsAuthenticated: true }) {
+                _ = GetSessionInfo(session, default);
+                var invIsNew = context.Operation().Items.GetOrDefault(false);
+                if (invIsNew) {
+                    _ = GetAuthInfo(session, default);
+                    _ = GetOptions(session, default);
+                }
                 _ = GetUserSessions(invSessionInfo.UserId, default);
+            }
             return null!;
         }
 
@@ -96,7 +98,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         await using var _1 = dbContext.ConfigureAwait(false);
 
         var dbSessionInfo = await Sessions.Get(dbContext, session.Id, true, cancellationToken).ConfigureAwait(false);
-        context.Operation().Items.Set(dbSessionInfo == null); // invIsNew
+        var isNew = dbSessionInfo == null;
         var now = Clocks.SystemClock.Now;
         var sessionInfo = SessionConverter.ToModel(dbSessionInfo)
             ?? SessionConverter.NewModel() with { Id = session.Id };
@@ -105,10 +107,20 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
             IPAddress = string.IsNullOrEmpty(ipAddress) ? sessionInfo.IPAddress : ipAddress,
             UserAgent = string.IsNullOrEmpty(userAgent) ? sessionInfo.UserAgent : userAgent,
         };
-        dbSessionInfo = await Sessions.Upsert(dbContext, sessionInfo, cancellationToken).ConfigureAwait(false);
-        sessionInfo = SessionConverter.ToModel(dbSessionInfo);
-        context.Operation().Items.Set(sessionInfo); // invSessionInfo
-        return sessionInfo!;
+        try {
+            dbSessionInfo = await Sessions.Upsert(dbContext, sessionInfo, cancellationToken).ConfigureAwait(false);
+            sessionInfo = SessionConverter.ToModel(dbSessionInfo);
+            context.Operation().Items.Set(sessionInfo); // invSessionInfo
+            context.Operation().Items.Set(isNew); // invIsNew
+            return sessionInfo!;
+        }
+        catch (DbUpdateException) {
+            dbSessionInfo = await Sessions.Get(dbContext, session.Id, false, cancellationToken).ConfigureAwait(false);
+            if (dbSessionInfo == null)
+                throw; // Something is off: it is supposed to be created concurrently
+            sessionInfo = SessionConverter.ToModel(dbSessionInfo);
+            return sessionInfo;
+        }
     }
 
     // [CommandHandler] inherited

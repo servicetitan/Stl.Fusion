@@ -6,10 +6,10 @@ public sealed class RedisActionSub : RedisSubBase
 {
     private Action<RedisChannel, RedisValue> MessageHandler { get; }
 
-    public RedisActionSub(RedisDb redisDb, string key,
+    public RedisActionSub(RedisDb redisDb, RedisSubKey key,
         Action<RedisChannel, RedisValue> messageHandler,
-        RedisChannel.PatternMode patternMode = RedisChannel.PatternMode.Auto)
-        : base(redisDb, key, patternMode)
+        TimeSpan? subscribeTimeout = null)
+        : base(redisDb, key, subscribeTimeout)
         => MessageHandler = messageHandler;
 
     protected override void OnMessage(RedisChannel redisChannel, RedisValue redisValue)
@@ -22,11 +22,12 @@ public sealed class RedisActionSub<T> : RedisSubBase
 
     public IByteSerializer<T> Serializer { get; }
 
-    public RedisActionSub(RedisDb redisDb, string key,
+    public RedisActionSub(RedisDb redisDb,
+        RedisSubKey key,
         Action<RedisChannel, T> messageHandler,
         IByteSerializer<T>? serializer = null,
-        RedisChannel.PatternMode patternMode = RedisChannel.PatternMode.Auto)
-        : base(redisDb, key, patternMode)
+        TimeSpan? subscribeTimeout = null)
+        : base(redisDb, key, subscribeTimeout)
     {
         MessageHandler = messageHandler;
         Serializer = serializer ?? ByteSerializer<T>.Default;

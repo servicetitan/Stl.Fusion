@@ -11,29 +11,33 @@ public static class RedisDbExt
         IByteSerializer<T>? serializer = null)
         => new(redisDb, key, serializer);
 
-    public static RedisActionSub GetActionSub(this RedisDb redisDb, string key,
+    public static RedisActionSub GetActionSub(this RedisDb redisDb, RedisSubKey key,
         Action<RedisChannel, RedisValue> messageHandler,
-        RedisChannel.PatternMode patternMode = RedisChannel.PatternMode.Auto)
-        => new(redisDb, key, messageHandler, patternMode);
-    public static RedisActionSub<T> GetActionSub<T>(this RedisDb redisDb, string key,
+        TimeSpan? subscribeTimeout = null)
+        => new(redisDb, key, messageHandler, subscribeTimeout);
+    public static RedisActionSub<T> GetActionSub<T>(this RedisDb redisDb, RedisSubKey key,
         Action<RedisChannel, T> messageHandler,
         IByteSerializer<T>? serializer = null,
-        RedisChannel.PatternMode patternMode = RedisChannel.PatternMode.Auto)
-        => new(redisDb, key, messageHandler, serializer, patternMode);
+        TimeSpan? subscribeTimeout = null)
+        => new(redisDb, key, messageHandler, serializer, subscribeTimeout);
 
-    public static RedisTaskSub GetTaskSub(this RedisDb redisDb, string key)
-        => new(redisDb, key);
+    public static RedisTaskSub GetTaskSub(this RedisDb redisDb, string key,
+        TimeSpan? subscribeTimeout = null)
+        => new(redisDb, key, subscribeTimeout);
     public static RedisTaskSub<T> GetTaskSub<T>(this RedisDb redisDb, string key,
-        IByteSerializer<T>? serializer = null)
-        => new(redisDb, key, serializer);
+        IByteSerializer<T>? serializer = null,
+        TimeSpan? subscribeTimeout = null)
+        => new(redisDb, key, serializer, subscribeTimeout);
 
     public static RedisChannelSub GetChannelSub(this RedisDb redisDb, string key,
-        Channel<RedisValue>? channel = null)
-        => new(redisDb, key, channel);
+        Channel<RedisValue>? channel = null,
+        TimeSpan? subscribeTimeout = null)
+        => new(redisDb, key, channel, subscribeTimeout);
     public static RedisChannelSub<T> GetChannelSub<T>(this RedisDb redisDb, string key,
         Channel<T>? channel = null,
-        IByteSerializer<T>? serializer = null)
-        => new(redisDb, key, channel, serializer);
+        IByteSerializer<T>? serializer = null,
+        TimeSpan? subscribeTimeout = null)
+        => new(redisDb, key, channel, serializer, subscribeTimeout);
 
     public static RedisQueue<T> GetQueue<T>(this RedisDb redisDb, string key, RedisQueue<T>.Options? settings = null)
         => new(redisDb, key, settings);

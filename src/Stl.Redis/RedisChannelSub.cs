@@ -8,9 +8,10 @@ public sealed class RedisChannelSub : RedisSubBase
 
     public ChannelReader<RedisValue> Messages => _channel.Reader;
 
-    public RedisChannelSub(RedisDb redisDb, string key,
-        Channel<RedisValue>? channel = null)
-        : base(redisDb, key)
+    public RedisChannelSub(RedisDb redisDb, RedisSubKey key,
+        Channel<RedisValue>? channel = null,
+        TimeSpan? subscribeTimeout = null)
+        : base(redisDb, key, subscribeTimeout)
         => _channel = channel ?? Channel.CreateUnbounded<RedisValue>(
             new UnboundedChannelOptions() {
                 SingleWriter = true,
@@ -35,10 +36,11 @@ public sealed class RedisChannelSub<T> : RedisSubBase
     public IByteSerializer<T> Serializer { get; }
     public ChannelReader<T> Messages => _channel.Reader;
 
-    public RedisChannelSub(RedisDb redisDb, string key,
+    public RedisChannelSub(RedisDb redisDb, RedisSubKey key,
         Channel<T>? channel = null,
-        IByteSerializer<T>? serializer = null)
-        : base(redisDb, key)
+        IByteSerializer<T>? serializer = null,
+        TimeSpan? subscribeTimeout = null)
+        : base(redisDb, key, subscribeTimeout)
     {
         Serializer = serializer ?? ByteSerializer<T>.Default;
         _channel = channel ?? Channel.CreateUnbounded<T>(
