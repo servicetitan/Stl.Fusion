@@ -21,19 +21,19 @@ public static class RedisDbExt
         TimeSpan? subscribeTimeout = null)
         => new(redisDb, key, messageHandler, serializer, subscribeTimeout);
 
-    public static RedisTaskSub GetTaskSub(this RedisDb redisDb, string key,
+    public static RedisTaskSub GetTaskSub(this RedisDb redisDb, RedisSubKey key,
         TimeSpan? subscribeTimeout = null)
         => new(redisDb, key, subscribeTimeout);
-    public static RedisTaskSub<T> GetTaskSub<T>(this RedisDb redisDb, string key,
+    public static RedisTaskSub<T> GetTaskSub<T>(this RedisDb redisDb, RedisSubKey key,
         IByteSerializer<T>? serializer = null,
         TimeSpan? subscribeTimeout = null)
         => new(redisDb, key, serializer, subscribeTimeout);
 
-    public static RedisChannelSub GetChannelSub(this RedisDb redisDb, string key,
+    public static RedisChannelSub GetChannelSub(this RedisDb redisDb, RedisSubKey key,
         Channel<RedisValue>? channel = null,
         TimeSpan? subscribeTimeout = null)
         => new(redisDb, key, channel, subscribeTimeout);
-    public static RedisChannelSub<T> GetChannelSub<T>(this RedisDb redisDb, string key,
+    public static RedisChannelSub<T> GetChannelSub<T>(this RedisDb redisDb, RedisSubKey key,
         Channel<T>? channel = null,
         IByteSerializer<T>? serializer = null,
         TimeSpan? subscribeTimeout = null)
