@@ -86,7 +86,9 @@ public sealed class RedisQueue<T> : IAsyncDisposable
         Key = key;
         var enqueuePubKey = $"{typeof(T).Name}-{Key}{Settings.EnqueuePubKeySuffix}";
         EnqueuePub = RedisDb.GetPub(enqueuePubKey);
-        EnqueueSub = RedisDb.GetTaskSub(enqueuePubKey, Settings.EnqueueSubscribeTimeout);
+        EnqueueSub = RedisDb.GetTaskSub(
+            (enqueuePubKey, RedisChannel.PatternMode.Literal),
+            Settings.EnqueueSubscribeTimeout);
     }
 
     public ValueTask DisposeAsync()

@@ -180,5 +180,7 @@ public sealed class RedisStreamer<T>
         => RedisDb.GetPub(Key + Settings.AppendPubKeySuffix);
 
     private RedisTaskSub GetAppendSub()
-        => RedisDb.GetTaskSub(Key + Settings.AppendPubKeySuffix, Settings.AppendSubscribeTimeout);
+        => RedisDb.GetTaskSub(
+            (Key + Settings.AppendPubKeySuffix, RedisChannel.PatternMode.Literal),
+            Settings.AppendSubscribeTimeout);
 }

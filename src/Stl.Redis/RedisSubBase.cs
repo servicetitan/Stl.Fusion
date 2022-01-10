@@ -40,11 +40,13 @@ public abstract class RedisSubBase : IAsyncDisposable, IHasDisposeStarted
                     .ConfigureAwait(false);
             }
             catch (OperationCanceledException) {
+                if (IsDisposeStarted)
+                    throw;
                 if (cancellationToken.IsCancellationRequested)
                     throw new TimeoutException();
                 throw;
             }
-        });
+        }, CancellationToken.None);
     }
 
     protected abstract void OnMessage(RedisChannel redisChannel, RedisValue redisValue);
