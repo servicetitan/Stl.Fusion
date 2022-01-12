@@ -144,7 +144,7 @@
     <PackageReference Update="xunit.runner.visualstudio" Version="2.4.3" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
 
     <!-- Analyzers -->
-    <PackageReference Update="Moq.Analyzers" Version="0.0.8" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers"/>
+    <PackageReference Update="Moq.Analyzers" Version="0.0.9" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers"/>
     <PackageReference Update="xunit.analyzers" Version="0.10.0" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
     <PackageReference Update="Microsoft.VisualStudio.Threading.Analyzers" Version="17.0.64" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
     <PackageReference Update="Roslynator.Analyzers" Version="3.3.0" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers"/>
