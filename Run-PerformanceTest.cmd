@@ -7,7 +7,4 @@ set runtime=%1
 if "%runtime%"=="" (
   set runtime=net6.0
 )
-
-pushd "artifacts/tests/%runtime%"
-"Stl.Fusion.Tests.PerformanceTestRunner.exe"
-popd
+dotnet run --no-launch-profile -c:Release -f:%runtime% --project tests/Stl.Fusion.Tests.PerformanceTestRunner/Stl.Fusion.Tests.PerformanceTestRunner.csproj
