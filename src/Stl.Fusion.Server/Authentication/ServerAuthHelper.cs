@@ -8,14 +8,16 @@ namespace Stl.Fusion.Server.Authentication;
 
 public class ServerAuthHelper
 {
-    public class Options
+    public record Options
     {
-        public string[] IdClaimKeys { get; set; } = { ClaimTypes.NameIdentifier };
-        public string[] NameClaimKeys { get; set; } = { ClaimTypes.Name };
-        public string CloseWindowRequestPath { get; set; } = "/fusion/close";
-        public TimeSpan SessionInfoUpdatePeriod { get; set; } = TimeSpan.FromSeconds(30);
-        public bool KeepSignedIn { get; set; }
+        public string[] IdClaimKeys { get; init; } = { ClaimTypes.NameIdentifier };
+        public string[] NameClaimKeys { get; init; } = { ClaimTypes.Name };
+        public string CloseWindowRequestPath { get; init; } = "/fusion/close";
+        public TimeSpan SessionInfoUpdatePeriod { get; init; } = TimeSpan.FromSeconds(30);
+        public bool KeepSignedIn { get; init; }
     }
+
+    public static Options DefaultSettings { get; set; } = new();
 
     protected IAuth Auth { get; }
     protected IAuthBackend AuthBackend { get; }
@@ -23,28 +25,18 @@ public class ServerAuthHelper
     protected AuthSchemasCache AuthSchemasCache { get; }
     protected MomentClockSet Clocks { get; }
 
-    public string[] IdClaimKeys { get; }
-    public string[] NameClaimKeys { get; }
-    public string CloseWindowRequestPath { get; }
-    public TimeSpan SessionInfoUpdatePeriod { get; }
-    public bool KeepSignedIn { get; }
+    public Options Settings { get; }
     public Session Session => SessionResolver.Session;
 
     public ServerAuthHelper(
-        Options? options,
+        Options? settings,
         IAuth auth,
         IAuthBackend authBackend,
         ISessionResolver sessionResolver,
         AuthSchemasCache authSchemasCache,
         MomentClockSet clocks)
     {
-        options ??= new();
-        IdClaimKeys = options.IdClaimKeys;
-        NameClaimKeys = options.NameClaimKeys;
-        CloseWindowRequestPath = options.CloseWindowRequestPath;
-        SessionInfoUpdatePeriod = options.SessionInfoUpdatePeriod;
-        KeepSignedIn = options.KeepSignedIn;
-
+        Settings = settings ?? DefaultSettings;
         Auth = auth;
         AuthBackend = authBackend;
         SessionResolver = sessionResolver;
@@ -89,7 +81,7 @@ public class ServerAuthHelper
             sessionInfo == null
             || !StringComparer.Ordinal.Equals(sessionInfo.IPAddress, ipAddress)
             || !StringComparer.Ordinal.Equals(sessionInfo.UserAgent, userAgent)
-            || sessionInfo.LastSeenAt + SessionInfoUpdatePeriod < Clocks.SystemClock.Now;
+            || sessionInfo.LastSeenAt + Settings.SessionInfoUpdatePeriod < Clocks.SystemClock.Now;
         if (mustUpdateSessionInfo) {
             var setupSessionCommand = new SetupSessionCommand(session, ipAddress, userAgent);
             sessionInfo = await AuthBackend.SetupSession(setupSessionCommand, cancellationToken).ConfigureAwait(false);
@@ -110,7 +102,7 @@ public class ServerAuthHelper
                 var signInCommand = new SignInCommand(session, newUser, authenticatedIdentity);
                 await AuthBackend.SignIn(signInCommand, cancellationToken).ConfigureAwait(false);
             }
-            else if (userIsAuthenticated && !KeepSignedIn) {
+            else if (userIsAuthenticated && !Settings.KeepSignedIn) {
                 var signOutCommand = new SignOutCommand(session);
                 await Auth.SignOut(signOutCommand, cancellationToken).ConfigureAwait(false);
             }
@@ -124,7 +116,7 @@ public class ServerAuthHelper
     public virtual bool IsCloseWindowRequest(HttpContext httpContext, out string closeWindowFlowName)
     {
         var request = httpContext.Request;
-        var isCloseWindowRequest = StringComparer.Ordinal.Equals(request.Path.Value, CloseWindowRequestPath);
+        var isCloseWindowRequest = StringComparer.Ordinal.Equals(request.Path.Value, Settings.CloseWindowRequestPath);
         closeWindowFlowName = "";
         if (isCloseWindowRequest && request.Query.TryGetValue("flow", out var flows))
             closeWindowFlowName = flows.FirstOrDefault() ?? "";
@@ -137,7 +129,7 @@ public class ServerAuthHelper
     {
         var httpUserIdentityName = httpUser.Identity?.Name ?? "";
         var claims = httpUser.Claims.ToImmutableDictionary(c => c.Type, c => c.Value);
-        var id = FirstClaimOrDefault(claims, IdClaimKeys) ?? httpUserIdentityName;
+        var id = FirstClaimOrDefault(claims, Settings.IdClaimKeys) ?? httpUserIdentityName;
         var identity = new UserIdentity(schema, id);
         return user.Identities.ContainsKey(identity);
     }
@@ -147,8 +139,8 @@ public class ServerAuthHelper
     {
         var httpUserIdentityName = httpUser.Identity?.Name ?? "";
         var claims = httpUser.Claims.ToImmutableDictionary(c => c.Type, c => c.Value);
-        var id = FirstClaimOrDefault(claims, IdClaimKeys) ?? httpUserIdentityName;
-        var name = FirstClaimOrDefault(claims, NameClaimKeys) ?? httpUserIdentityName;
+        var id = FirstClaimOrDefault(claims, Settings.IdClaimKeys) ?? httpUserIdentityName;
+        var name = FirstClaimOrDefault(claims, Settings.NameClaimKeys) ?? httpUserIdentityName;
         var identity = new UserIdentity(schema, id);
         var identities = ImmutableDictionary<UserIdentity, string>.Empty.Add(identity, "");
 

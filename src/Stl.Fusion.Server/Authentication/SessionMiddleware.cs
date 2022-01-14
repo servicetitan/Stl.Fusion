@@ -2,21 +2,20 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Stl.Fusion.Authentication;
-
 namespace Stl.Fusion.Server.Authentication;
 
 public class SessionMiddleware : IMiddleware
 {
-    public class Options
+    public record Options
     {
-        public CookieBuilder Cookie { get; set; } = new() {
+        public CookieBuilder Cookie { get; init; } = new() {
             Name = "FusionAuth.SessionId",
             IsEssential = true,
             HttpOnly = true,
             SameSite = SameSiteMode.Lax,
             Expiration = TimeSpan.FromDays(28),
         };
-        public Func<SessionMiddleware, HttpContext, Task<bool>> ForcedSignOutHandler { get; set; } =
+        public Func<SessionMiddleware, HttpContext, Task<bool>> ForcedSignOutHandler { get; init; } =
             DefaultForcedSignOutHandler;
 
         public static async Task<bool> DefaultForcedSignOutHandler(SessionMiddleware self, HttpContext httpContext)
@@ -30,21 +29,20 @@ public class SessionMiddleware : IMiddleware
         }
     }
 
+    public static Options DefaultSettings { get; set; } = new();
+
+    public Options Settings { get; }
     public ISessionProvider SessionProvider { get; }
     public ISessionFactory SessionFactory { get; }
     public IAuth? Auth { get; }
-    public CookieBuilder Cookie { get; }
-    public Func<SessionMiddleware, HttpContext, Task<bool>> ForcedSignOutHandler { get; }
 
     public SessionMiddleware(
-        Options? options,
+        Options? settings,
         ISessionProvider sessionProvider,
         ISessionFactory sessionFactory,
         IAuth? auth = null)
     {
-        options ??= new();
-        Cookie = options.Cookie;
-        ForcedSignOutHandler = options.ForcedSignOutHandler;
+        Settings = settings ?? DefaultSettings;
         SessionProvider = sessionProvider;
         SessionFactory = sessionFactory;
         Auth = auth;
@@ -54,14 +52,14 @@ public class SessionMiddleware : IMiddleware
     {
         var cancellationToken = httpContext.RequestAborted;
         var cookies = httpContext.Request.Cookies;
-        var cookieName = Cookie.Name ?? "";
+        var cookieName = Settings.Cookie.Name ?? "";
         cookies.TryGetValue(cookieName, out var sessionId);
         var session = string.IsNullOrEmpty(sessionId) ? null : new Session(sessionId);
         if (session != null) {
             if (Auth != null) {
                 var isSignOutForced = await Auth.IsSignOutForced(session, cancellationToken).ConfigureAwait(false);
                 if (isSignOutForced) {
-                    if (await ForcedSignOutHandler(this, httpContext).ConfigureAwait(false)) {
+                    if (await Settings.ForcedSignOutHandler(this, httpContext).ConfigureAwait(false)) {
                         var responseCookies = httpContext.Response.Cookies;
                         responseCookies.Delete(cookieName);
                         return;
@@ -73,7 +71,7 @@ public class SessionMiddleware : IMiddleware
         if (session == null) {
             session = SessionFactory.CreateSession();
             var responseCookies = httpContext.Response.Cookies;
-            responseCookies.Append(cookieName, session.Id, Cookie.Build(httpContext));
+            responseCookies.Append(cookieName, session.Id, Settings.Cookie.Build(httpContext));
         }
         SessionProvider.Session = session;
         await next(httpContext).ConfigureAwait(false);

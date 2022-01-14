@@ -61,13 +61,9 @@ public readonly struct FusionWebServerBuilder
     }
 
     public FusionWebServerBuilder AddControllers(
-        Action<IServiceProvider, SignInController.Options>? signInControllerOptionsBuilder = null)
+        Func<IServiceProvider, SignInController.Options>? signInControllerSettingsFactory = null)
     {
-        Services.TryAddSingleton(c => {
-            var options = new SignInController.Options();
-            signInControllerOptionsBuilder?.Invoke(c, options);
-            return options;
-        });
+        Services.TryAddSingleton(c => signInControllerSettingsFactory?.Invoke(c) ?? SignInController.DefaultSettings);
         Services.AddControllers()
             .AddApplicationPart(typeof(AuthController).Assembly);
         return this;

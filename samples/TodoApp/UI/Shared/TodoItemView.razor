@@ -13,7 +13,7 @@
                             @onclick="InvertDone" />
         </AddonLabel>
     </Addon>
-    <TextEdit TextChanged="BlazorEventHelper.NonRendering<string>(UpdateTitle)"
+    <TextEdit TextChanged="@(new EventCallback<string>(null, UpdateTitle))"
               ChangeTextOnKeyPress="false"
               Text="@Value.Title"/>
     <Addon AddonType="AddonType.End">
