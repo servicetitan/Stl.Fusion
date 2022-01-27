@@ -95,7 +95,7 @@
     <PackageReference Update="Newtonsoft.Json" Version="13.0.*" />
     <PackageReference Update="Pluralize.NET" Version="1.0.*" />
     <PackageReference Update="Pomelo.EntityFrameworkCore.MySql" Version="$(EntityFrameworkCoreMySqlVersion)" />
-    <PackageReference Update="Refit" Version="6.1.*" />
+    <PackageReference Update="Refit" Version="6.2.*" />
     <PackageReference Update="RestEase" Version="1.5.*" />
     <PackageReference Update="StackExchange.Redis" Version="2.2.*" />
     <PackageReference Update="Swashbuckle.AspNetCore" Version="6.2.3" />
