@@ -26,6 +26,19 @@ public static class DbContextBuilderExt
         where TDbContext : DbContext
         => dbContextBuilder.Services.AddRedisDb<TDbContext>(configuration, keyPrefix);
 
+    private static IServiceCollection AddRedisDb<TDbContext>(
+        this DbContextBuilder<TDbContext> dbContextBuilder,
+        ConfigurationOptions configuration,
+        string? keyPrefix = null)
+        where TDbContext : DbContext
+    {
+        keyPrefix ??= typeof(TDbContext).Name;
+        return dbContextBuilder.Services.AddSingleton(_ => {
+            var multiplexer = ConnectionMultiplexer.Connect(configuration);
+            return new RedisDb<TDbContext>(multiplexer, keyPrefix);
+        });
+    }
+
     public static IServiceCollection AddRedisDb<TDbContext>(
         this DbContextBuilder<TDbContext> dbContextBuilder,
         IConnectionMultiplexer connectionMultiplexer,
