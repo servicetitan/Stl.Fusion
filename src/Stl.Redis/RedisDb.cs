@@ -10,10 +10,10 @@ public class RedisDb
     public string KeyPrefix { get; }
     public IDatabase Database { get; }
 
-    public RedisDb(IConnectionMultiplexer redis, string keyPrefix = "")
+    public RedisDb(IConnectionMultiplexer redis, string? keyPrefix = null)
     {
         Redis = redis;
-        KeyPrefix = keyPrefix;
+        KeyPrefix = keyPrefix ?? "";
         Database = Redis.GetDatabase();
         if (!KeyPrefix.IsNullOrEmpty())
             Database = Database.WithKeyPrefix(KeyPrefix);
@@ -37,7 +37,7 @@ public class RedisDb
 
 public class RedisDb<TContext> : RedisDb
 {
-    public RedisDb(IConnectionMultiplexer redis, string keyPrefix = "")
+    public RedisDb(IConnectionMultiplexer redis, string? keyPrefix = null)
         : base(redis, keyPrefix)
     { }
 }
