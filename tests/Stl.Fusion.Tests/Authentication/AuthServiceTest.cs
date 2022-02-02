@@ -147,7 +147,14 @@ public abstract class AuthServiceTestBase : FusionTestBase
         user.Name.Should().Be(bob.Name);
         long.TryParse(user.Id, out var _).Should().BeTrue();
         user.Claims.Count.Should().Be(2);
+        user.Claims["id"].Should().Be("bob");
         user.Identities.Single(); // Client-side users shouldn't have them
+
+        bob = bob.WithClaim("id", "robert");
+        await webAuthBackend.SignIn(new SignInCommand(session, bob));
+        user = await webAuth.GetUser(session);
+        user.Claims.Count.Should().Be(2);
+        user.Claims["id"].Should().Be("robert");
 
         // Server-side methods to get the same user
         var sameUser = await webAuthBackend.GetUser(user.Id);
