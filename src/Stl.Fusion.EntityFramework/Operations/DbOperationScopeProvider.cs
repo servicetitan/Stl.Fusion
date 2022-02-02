@@ -10,6 +10,7 @@ namespace Stl.Fusion.EntityFramework.Operations;
 public class DbOperationScopeProvider<TDbContext> : DbServiceBase<TDbContext>, ICommandHandler<ICommand>
     where TDbContext : DbContext
 {
+    // ReSharper disable once StaticMemberInGenericType
     protected static MemberInfo ExecutionStrategyShouldRetryOnMethod { get; } = typeof(ExecutionStrategy)
         .GetMethod("ShouldRetryOn", BindingFlags.Instance | BindingFlags.NonPublic)!;
 
