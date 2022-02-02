@@ -106,7 +106,7 @@
     <PackageReference Update="System.CommandLine.DragonFruit" Version="0.3.0-alpha.20303.1" />
     <PackageReference Update="System.Drawing.Common" Version="6.0.*" />
     <PackageReference Update="System.IO.Abstractions" Version="16.1.4" />
-    <PackageReference Update="System.Linq.Async" Version="5.1.*" />
+    <PackageReference Update="System.Linq.Async" Version="6.0.*" />
     <PackageReference Update="System.Net.Http.Json" Version="6.0.*" />
     <PackageReference Update="System.Net.WebSockets" Version="4.3.*" />
     <PackageReference Update="System.Net.WebSockets.Client" Version="4.3.*" />
