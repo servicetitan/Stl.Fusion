@@ -1,5 +1,4 @@
 using StackExchange.Redis;
-using Stl.Internal;
 
 namespace Stl.Redis;
 
@@ -7,7 +6,6 @@ public abstract class RedisSubBase : IAsyncDisposable, IHasDisposeStarted
 {
     public static TimeSpan DefaultSubscribeTimeout { get; set; } = TimeSpan.FromSeconds(5);
 
-    private static readonly Task AlreadyDisposedTask = Task.FromException(Errors.AlreadyDisposedOrDisposing());
     private readonly Action<RedisChannel, RedisValue> _onMessage;
     private readonly CancellationTokenSource _subscribeTimeoutCts;
     protected object Lock => _onMessage;
