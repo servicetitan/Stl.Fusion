@@ -16,10 +16,12 @@ public abstract class RedisSubBase : IAsyncDisposable, IHasDisposeStarted
     public string FullKey { get; }
     public ISubscriber Subscriber { get; }
     public RedisChannel RedisChannel { get; }
-    public Task WhenSubscribed { get; private set; }
+    public Task WhenSubscribed { get; private set; } = null!;
     public bool IsDisposeStarted { get; private set; }
 
-    protected RedisSubBase(RedisDb redisDb, RedisSubKey key, TimeSpan? subscribeTimeout = null)
+    protected RedisSubBase(RedisDb redisDb, RedisSubKey key,
+        TimeSpan? subscribeTimeout = null,
+        bool subscribe = true)
     {
         RedisDb = redisDb;
         Key = key.Key;
@@ -29,6 +31,14 @@ public abstract class RedisSubBase : IAsyncDisposable, IHasDisposeStarted
         RedisChannel = new RedisChannel(FullKey, PatternMode);
         _onMessage = OnMessage;
         _subscribeTimeoutCts = new CancellationTokenSource(subscribeTimeout ?? DefaultSubscribeTimeout);
+        if (subscribe)
+            Subscribe();
+    }
+
+    protected abstract void OnMessage(RedisChannel redisChannel, RedisValue redisValue);
+
+    protected void Subscribe()
+    {
         WhenSubscribed = Task.Run(async () => {
             var cancellationToken = _subscribeTimeoutCts.Token;
             try {
@@ -47,7 +57,7 @@ public abstract class RedisSubBase : IAsyncDisposable, IHasDisposeStarted
         }, CancellationToken.None);
     }
 
-    protected abstract void OnMessage(RedisChannel redisChannel, RedisValue redisValue);
+    // DisposeAsync
 
     public async ValueTask DisposeAsync()
     {

@@ -8,10 +8,10 @@ public sealed class RedisTaskSub : RedisSubBase
 
     public RedisTaskSub(RedisDb redisDb, RedisSubKey key,
         TimeSpan? subscribeTimeout = null)
-        : base(redisDb, key, subscribeTimeout)
+        : base(redisDb, key, subscribeTimeout, subscribe: false)
     {
-        lock (Lock)
-            Reset();
+        Reset();
+        Subscribe();
     }
 
     protected override ValueTask DisposeAsyncInternal()
@@ -64,11 +64,11 @@ public sealed class RedisTaskSub<T> : RedisSubBase
     public RedisTaskSub(RedisDb redisDb, RedisSubKey key,
         IByteSerializer<T>? serializer = null,
         TimeSpan? subscribeTimeout = null)
-        : base(redisDb, key, subscribeTimeout)
+        : base(redisDb, key, subscribeTimeout, subscribe: false)
     {
         Serializer = serializer ?? ByteSerializer<T>.Default;
-        lock (Lock)
-            Reset();
+        Reset();
+        Subscribe();
     }
 
     protected override ValueTask DisposeAsyncInternal()
