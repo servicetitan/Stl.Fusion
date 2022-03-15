@@ -23,10 +23,10 @@ public class DbUserConverter<TDbContext, TDbUser, TDbUserId> : DbEntityConverter
             throw new ArgumentOutOfRangeException(nameof(source));
         target.Version = VersionGenerator.NextVersion(target.Version);
 
-        // Adding updating claims
-        target.Claims = target.Claims.ToImmutableDictionary().SetItems(source.Claims);
+        // Add + update claims
+        target.Claims = target.Claims.SetItems(source.Claims);
 
-        // Adding / updating identities
+        // Add + update identities
         var identities = target.Identities.ToDictionary(ui => ui.Id, StringComparer.Ordinal);
         foreach (var (userIdentity, secret) in source.Identities) {
             if (!userIdentity.IsValid)
