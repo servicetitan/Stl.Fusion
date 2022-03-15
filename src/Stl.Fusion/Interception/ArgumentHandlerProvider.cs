@@ -30,12 +30,12 @@ public class ArgumentHandlerProvider : IArgumentHandlerProvider, IHasServices
     }
 
     public ArgumentHandler GetInvocationTargetHandler(MethodInfo methodInfo, Type invocationTargetType)
-        => GetArgumentComparer(invocationTargetType, true);
+        => GetArgumentHandler(invocationTargetType, true);
 
     public virtual ArgumentHandler GetArgumentHandler(MethodInfo methodInfo, ParameterInfo parameterInfo)
-        => GetArgumentComparer(parameterInfo.ParameterType);
+        => GetArgumentHandler(parameterInfo.ParameterType);
 
-    public virtual ArgumentHandler GetArgumentComparer(Type type, bool isInvocationTarget = false)
+    protected virtual ArgumentHandler GetArgumentHandler(Type type, bool isInvocationTarget = false)
     {
         var handlerType = MatchingTypeFinder.TryFind(type, typeof(ArgumentHandlerProvider));
         if (handlerType != null)
@@ -51,20 +51,20 @@ public class ArgumentHandlerProvider : IArgumentHandlerProvider, IHasServices
         return ArgumentHandler.Default;
     }
 
-    protected virtual ArgumentHandler CreateHandler(Type comparerType)
+    protected virtual ArgumentHandler CreateHandler(Type handlerType)
     {
-        var pInstance = comparerType.GetProperty(
+        var pInstance = handlerType.GetProperty(
             nameof(ByRefArgumentHandler.Instance),
             BindingFlags.Static | BindingFlags.Public);
         if (pInstance != null)
             return (ArgumentHandler) pInstance!.GetValue(null)!;
 
-        var fInstance = comparerType.GetField(
+        var fInstance = handlerType.GetField(
             nameof(ByRefArgumentHandler.Instance),
             BindingFlags.Static | BindingFlags.Public);
         if (fInstance != null)
             return (ArgumentHandler) fInstance!.GetValue(null)!;
 
-        return (ArgumentHandler) Services.Activate(comparerType);
+        return (ArgumentHandler) Services.Activate(handlerType);
     }
 }

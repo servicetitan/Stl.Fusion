@@ -39,7 +39,7 @@ public class TestOutputCapture : IStandardStreamWriter, ITestOutputHelper
         }
     }
 
-    public void Write(string value)
+    public void Write(string? value)
     {
         lock (_lock) {
             StringBuilder.Append(value);
