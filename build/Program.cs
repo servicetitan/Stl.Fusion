@@ -195,7 +195,7 @@ internal static class Program
 
         try {
             // RunTargetsAndExitAsync hangs Target on Ctrl+C
-            await RunTargetsWithoutExitingAsync(arguments, options, ex => ex is OperationCanceledException).ConfigureAwait(false);
+            await RunTargetsWithoutExitingAsync(arguments, options, messageOnly: ex => ex is OperationCanceledException).ConfigureAwait(false);
         }
         catch (TargetFailedException tfe) {
             if (tfe.InnerException is OperationCanceledException oce) {
