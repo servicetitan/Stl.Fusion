@@ -201,7 +201,7 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
 
     protected virtual User MergeUsers(User existingUser, User user)
         => existingUser with {
-            Claims = user.Claims.SetItems(existingUser.Claims), // Add new claims
+            Claims = existingUser.Claims.SetItems(user.Claims), // Add + replace claims
             Identities = existingUser.Identities.SetItems(user.Identities), // Add + replace identities
         };
 
