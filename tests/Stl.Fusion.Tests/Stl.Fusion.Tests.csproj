@@ -12,7 +12,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="ILogger.Moq" />
     <PackageReference Include="System.Net.WebSockets.Client" />
+    <PackageReference Include="AutoFixture.AutoMoq" />
   </ItemGroup>
   <ItemGroup Condition="$(TargetFramework.StartsWith('net6'))">
     <PackageReference Include="EFCore.CheckConstraints" />
@@ -29,7 +31,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" VersionOverride="$(EntityFrameworkCoreVersion5)" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" VersionOverride="$(EntityFrameworkCoreVersion5)" />
     <PackageReference Include="MySqlConnector" VersionOverride="$(MySqlVersion5)" />
-    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" VersionOverride="$(EntityFrameworkCoreMySqlVersion5)"/>
+    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" VersionOverride="$(EntityFrameworkCoreMySqlVersion5)" />
     <PackageReference Include="System.Drawing.Common" VersionOverride="$(SystemDrawingVersion5)" />
   </ItemGroup>
   <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
@@ -37,7 +39,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" VersionOverride="$(EntityFrameworkCoreVersion3)" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" VersionOverride="$(EntityFrameworkCoreVersion3)" />
     <PackageReference Include="MySqlConnector" VersionOverride="$(MySqlVersion3)" />
-    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" VersionOverride="$(EntityFrameworkCoreMySqlVersion3)"/>
+    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" VersionOverride="$(EntityFrameworkCoreMySqlVersion3)" />
     <PackageReference Include="System.Drawing.Common" VersionOverride="$(SystemDrawingVersion5)" />
   </ItemGroup>
 

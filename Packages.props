@@ -42,6 +42,8 @@
   </PropertyGroup>
 
   <ItemGroup Label="Package Versions">
+    <PackageReference Update="ILogger.Moq" Version="1.1.10" />
+    <PackageReference Update="AutoFixture.AutoMoq" Version="4.17.0" />
     <PackageReference Update="AspNet.Security.OAuth.GitHub" Version="6.0.4" />
     <PackageReference Update="Blazorise" Version="$(BlazoriseVersion)" />
     <PackageReference Update="Blazorise.Bootstrap" Version="$(BlazoriseVersion)" />

@@ -12,16 +12,21 @@ public class JsonifyErrorsAttribute : ExceptionFilterAttribute
     public override Task OnExceptionAsync(ExceptionContext context)
     {
         var exception = context.Exception;
+
         if (RewriteErrors) {
             var rewriter = context.HttpContext.RequestServices.GetRequiredService<IErrorRewriter>();
             exception = rewriter.Rewrite(context, exception, true);
         }
+
+        var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<JsonifyErrorsAttribute>>();
+        logger.LogError(exception, exception.Message);
+
         var serializer = TypeDecoratingSerializer.Default;
         var content = serializer.Write(exception.ToExceptionInfo());
         var result = new ContentResult() {
             Content = content,
             ContentType = "application/json",
-            StatusCode = (int) HttpStatusCode.InternalServerError,
+            StatusCode = (int)HttpStatusCode.InternalServerError,
         };
         context.ExceptionHandled = true;
         return result.ExecuteResultAsync(context);
