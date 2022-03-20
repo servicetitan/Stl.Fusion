@@ -41,7 +41,7 @@ public static class Errors
         => new InvalidOperationException(
             "No publication state info was found. " +
             "Typically this indicates you're hitting a wrong endpoint " +
-            "(check your client definition interface)" +
+            "(check your client definition interface) " +
             "or forgot to add [Publish] attribute to the controller's method.");
 
     public static Exception ReplicaHasNeverBeenUpdated()
