@@ -42,9 +42,8 @@
   </PropertyGroup>
 
   <ItemGroup Label="Package Versions">
-    <PackageReference Update="ILogger.Moq" Version="1.1.10" />
-    <PackageReference Update="AutoFixture.AutoMoq" Version="4.17.0" />
     <PackageReference Update="AspNet.Security.OAuth.GitHub" Version="6.0.4" />
+    <PackageReference Update="AutoFixture.AutoMoq" Version="4.17.*" />
     <PackageReference Update="Blazorise" Version="$(BlazoriseVersion)" />
     <PackageReference Update="Blazorise.Bootstrap" Version="$(BlazoriseVersion)" />
     <PackageReference Update="Blazorise.DataGrid" Version="$(BlazoriseVersion)" />
@@ -57,6 +56,7 @@
     <PackageReference Update="EFCore.CheckConstraints" Version="6.0.*" />
     <PackageReference Update="Enums.NET" Version="4.0.*" />
     <PackageReference Update="FluentAssertions" Version="6.5.*" />
+    <PackageReference Update="ILogger.Moq" Version="1.1.*" />
     <PackageReference Update="MessagePack" Version="$(MessagePackVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.Authentication.Cookies" Version="2.2.*" />
     <PackageReference Update="Microsoft.AspNetCore.Authentication.Google" Version="$(AspNetCoreVersion)" />

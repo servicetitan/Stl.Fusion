@@ -24,10 +24,10 @@ public class ExceptionContextFixture : BaseFixture<
 #endif
 >
 {
-    private Mock<ILogger<JsonifyErrorsAttribute>> _loggerMock = new();
-    private Mock<IErrorRewriter> _errorRewritterMock = new();
+    private readonly Mock<ILogger<JsonifyErrorsAttribute>> _logMock = new();
+    private readonly Mock<IErrorRewriter> _errorRewriterMock = new();
 #if NETFRAMEWORK
-    private Mock<IDependencyResolver> _serviceProviderMock = new();
+    private readonly Mock<IDependencyResolver> _serviceProviderMock = new();
 #else
     private Mock<IServiceProvider> _serviceProviderMock = new();
     private Mock<IActionResultExecutor<ContentResult>> _actionResultExecutorMock = new();
@@ -35,17 +35,17 @@ public class ExceptionContextFixture : BaseFixture<
 
     public ExceptionContextFixture()
     {
-        _errorRewritterMock.Setup(x =>
+        _errorRewriterMock.Setup(x =>
                 x.Rewrite(It.IsAny<object>(), It.IsAny<Exception>(), It.IsAny<bool>()))
             .Returns((object _, Exception x, bool _) => x);
 
         _serviceProviderMock
             .Setup(x => x.GetService(typeof(IErrorRewriter)))
-            .Returns(_errorRewritterMock.Object);
+            .Returns(_errorRewriterMock.Object);
 
         _serviceProviderMock
             .Setup(x => x.GetService(typeof(ILogger<JsonifyErrorsAttribute>)))
-            .Returns(_loggerMock.Object);
+            .Returns(_logMock.Object);
 
         Fixture.Register(() => _serviceProviderMock);
 
@@ -76,12 +76,13 @@ public class ExceptionContextFixture : BaseFixture<
 
     public void VerifyLogError(string message)
     {
-        _loggerMock.VerifyLog(logger => logger.LogError(It.IsAny<Exception>(), message));
+        _logMock.VerifyLog(log => log.LogError(
+            It.IsAny<Exception>(), "Error message: {Message}", message));
     }
 
     public void VerifyErrorRewrite(bool isExpected)
     {
-        _errorRewritterMock.Verify(x => x.Rewrite(It.IsAny<object>(), It.IsAny<Exception>(), It.IsAny<bool>()),
+        _errorRewriterMock.Verify(x => x.Rewrite(It.IsAny<object>(), It.IsAny<Exception>(), It.IsAny<bool>()),
             Times.Exactly(isExpected ? 1 : 0));
     }
 }

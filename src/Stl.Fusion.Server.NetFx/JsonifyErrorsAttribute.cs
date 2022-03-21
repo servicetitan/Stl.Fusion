@@ -11,18 +11,18 @@ public class JsonifyErrorsAttribute : ExceptionFilterAttribute
     {
         var exception = actionExecutedContext.Exception;
         var actionContext = actionExecutedContext.ActionContext;
-        var appServices = actionContext.GetAppServices();
+        var services = actionContext.GetAppServices();
 
         if (actionExecutedContext.Response != null)
             return; // response already setup, log, do nothing
 
         if (RewriteErrors) {
-            var rewriter = appServices.GetRequiredService<IErrorRewriter>();
+            var rewriter = services.GetRequiredService<IErrorRewriter>();
             exception = rewriter.Rewrite(actionContext, exception, true);
         }
 
-        var logger = appServices.GetRequiredService<ILogger<JsonifyErrorsAttribute>>();
-        logger.LogError(exception, exception.Message);
+        var log = services.GetRequiredService<ILogger<JsonifyErrorsAttribute>>();
+        log.LogError(exception, "Error message: {Message}", exception.Message);
 
         var serializer = TypeDecoratingSerializer.Default;
         var content = serializer.Write(exception.ToExceptionInfo());
