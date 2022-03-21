@@ -13,13 +13,17 @@ public class JsonifyErrorsAttribute : ExceptionFilterAttribute
         var actionContext = actionExecutedContext.ActionContext;
         var appServices = actionContext.GetAppServices();
 
-        if (actionExecutedContext.Response!=null)
+        if (actionExecutedContext.Response != null)
             return; // response already setup, log, do nothing
 
         if (RewriteErrors) {
             var rewriter = appServices.GetRequiredService<IErrorRewriter>();
             exception = rewriter.Rewrite(actionContext, exception, true);
         }
+
+        var logger = appServices.GetRequiredService<ILogger<JsonifyErrorsAttribute>>();
+        logger.LogError(exception, exception.Message);
+
         var serializer = TypeDecoratingSerializer.Default;
         var content = serializer.Write(exception.ToExceptionInfo());
         actionExecutedContext.Exception = null; // mark exception as handled;
@@ -28,7 +32,7 @@ public class JsonifyErrorsAttribute : ExceptionFilterAttribute
             StatusCode = HttpStatusCode.InternalServerError
         };
         var psi = actionContext.GetPublicationStateInfo();
-        if (psi!=null)
+        if (psi != null)
             response.Headers.AddPublicationStateInfoHeader(psi);
 
         actionExecutedContext.Response = response;
