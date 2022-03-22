@@ -10,7 +10,7 @@ public class UseDefaultSessionAttribute : ActionFilterAttribute
         ActionExecutingContext context, 
         ActionExecutionDelegate next)
     {
-        if (context.HttpContext.Request.Method != HttpMethod.Post.Method)
+        if (!StringComparer.Ordinal.Equals(context.HttpContext.Request.Method, HttpMethod.Post.Method))
             return base.OnActionExecutionAsync(context, next);
         foreach (var (_, argument) in context.ActionArguments) {
             if (argument is ISessionCommand command && command.Session.IsDefault()) {

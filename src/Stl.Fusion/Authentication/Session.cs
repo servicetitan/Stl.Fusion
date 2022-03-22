@@ -22,7 +22,8 @@ public sealed class Session : IHasId<Symbol>, IEquatable<Session>,
     {
         // The check is here to prevent use of sessions with empty or other special Ids,
         // which could be a source of security problems later.
-        if (id.Value.Length < 8 && id.Value != "~")
+        var idValue = id.Value;
+        if (idValue.Length < 8 && !(idValue.Length == 1 && idValue[0] == '~'))
             throw Errors.InvalidSessionId(id);
         Id = id;
     }
