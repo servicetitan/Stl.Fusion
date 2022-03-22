@@ -54,6 +54,34 @@ public class MutableStateTest : SimpleFusionTestBase
     }
 
     [Fact]
+    public async Task SkipUpdateWhenEqualTest()
+    {
+        var factory = CreateServiceProvider().StateFactory();
+        var o1 = new object();
+        var o2 = new object();
+        
+        var s = factory.NewMutable<object?>();
+        s.Value.Should().Be(null);
+        var c0 = (await s.Update()).Computed;
+        Out.WriteLine($"Computed: {c0}");
+        c0.Value.Should().Be(null);
+
+        s.Value = o1;
+        s.Value.Should().Be(o1);
+        var c1 = (await s.Update()).Computed;
+        Out.WriteLine($"Computed: {c1}");
+        c1.Value.Should().Be(o1);
+        c1.Should().NotBe(c0);
+
+        s.Value = o2;
+        s.Value.Should().Be(o2);
+        var c2 = (await s.Update()).Computed;
+        Out.WriteLine($"Computed: {c2}");
+        c2.Value.Should().Be(o2);
+        c2.Should().NotBe(c1);
+    }
+
+    [Fact]
     public async Task CounterServiceTest()
     {
         using var stopCts = new CancellationTokenSource();

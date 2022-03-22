@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Stl.Fusion.Internal;
 using Errors = Stl.Internal.Errors;
 
@@ -56,6 +57,8 @@ public class MutableState<T> : State<T>, IMutableState<T>
     public void Set(Result<T> result)
     {
         lock (Lock) {
+            if (_output == result)
+                return;
             var snapshot = Snapshot;
             _output = result;
             // We do this inside the lock by a few reasons:
@@ -76,8 +79,11 @@ public class MutableState<T> : State<T>, IMutableState<T>
     protected internal override void OnInvalidated(IComputed<T> computed)
     {
         base.OnInvalidated(computed);
-        if (Snapshot.Computed == computed)
-            computed.Update();
+        if (Snapshot.Computed != computed)
+            return;
+        var updateTask = computed.Update();
+        if (!updateTask.IsCompleted)
+            throw Errors.InternalError("Update() task must complete synchronously here.");
     }
 
     protected override Task<IComputed<T>> Invoke(
