@@ -26,7 +26,7 @@ public class SessionModelBinder : IModelBinder
 
         try {
             var sValue = bindingContext.ValueProvider.GetValue(bindingContext.ModelName).FirstValue ?? "";
-            if (sValue == "")
+            if (sValue == "" || sValue == Session.Default.Id.Value)
                 return UseDefaultSession();
             bindingContext.Result = ModelBindingResult.Success(new Session(sValue));
             return Task.CompletedTask;

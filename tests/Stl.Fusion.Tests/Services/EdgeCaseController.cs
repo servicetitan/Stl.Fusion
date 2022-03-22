@@ -8,7 +8,7 @@ using Stl.Fusion.Server;
 
 namespace Stl.Fusion.Tests.Services;
 
-[JsonifyErrors]
+[JsonifyErrors, UseDefaultSession]
 public class EdgeCaseController : ControllerBase, IEdgeCaseService
 {
     protected IEdgeCaseService Service { get; }
@@ -42,7 +42,7 @@ public class EdgeCaseController : ControllerBase, IEdgeCaseService
 }
 
 #if NETCOREAPP
-[JsonifyErrors(RewriteErrors = true, Order = 1)]
+[JsonifyErrors(RewriteErrors = true, Order = 1), UseDefaultSession]
 #else
 // It seems there is no concept of filter ordering. Let see what we will get.
 [JsonifyErrors(RewriteErrors = true)]

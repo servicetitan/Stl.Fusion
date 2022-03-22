@@ -2,33 +2,32 @@
 @using Microsoft.JSInterop
 @using Stl.Async
 @using Stl.Fusion.Authentication
+@using Stl.Fusion.Blazor.Internal
 @using Stl.OS
 @using Stl.Text
 @implements IDisposable
-@inject ISessionProvider SessionProvider
-@inject AuthStateProvider AuthStateProvider
-@inject PresenceService PresenceService
-@inject NavigationManager Navigator
-@inject IJSRuntime JSRuntime
+@inject ISessionProvider _sessionProvider
+@inject AuthStateProvider _authStateProvider
+@inject PresenceService _presenceService
+@inject NavigationManager _nav
+@inject IJSRuntime _js
 
 <CascadingAuthenticationState>
     <CascadingValue TValue="Task<AuthState>" Value="@GetAuthState()" ChildContent="@ChildContent"/>
 </CascadingAuthenticationState>
 
 @code {
-    public static string SessionIdJavaScriptExpression { get; set; } = "window.FusionAuth.sessionId";
-
     [Parameter]
     public RenderFragment ChildContent { get; set; } = _ => { };
     [Parameter]
     public string SessionId {
-        get => SessionProvider.HasSession ? SessionProvider.Session.Id : "";
+        get => _sessionProvider.HasSession ? _sessionProvider.Session.Id : "";
         set {
             if (string.IsNullOrEmpty(value))
                 return; // Blazor WASM component is created w/ empty SessionId
-            if (SessionProvider.HasSession)
+            if (_sessionProvider.HasSession)
                 return;
-            SessionProvider.Session = new Session(value);
+            _sessionProvider.Session = new Session(value);
         }
     }
     [Parameter]
@@ -36,18 +35,17 @@
 
     protected override void OnInitialized()
     {
-        if (SessionId == Symbol.Empty && OSInfo.IsWebAssembly) {
-            var inProcessJSRuntime = (IJSInProcessRuntime) JSRuntime;
-            SessionId = inProcessJSRuntime.Invoke<string>("eval", SessionIdJavaScriptExpression);
-        }
-        AuthStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
-        OnAuthenticationStateChanged(AuthStateProvider.GetAuthenticationStateAsync());
+        if (SessionId.IsNullOrEmpty())
+            throw Errors.NoSessionId();
+
+        _authStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
+        OnAuthenticationStateChanged(_authStateProvider.GetAuthenticationStateAsync());
         if (StartPresenceService)
-            PresenceService.Start();
+            _presenceService.Start();
     }
 
     void IDisposable.Dispose()
-        => AuthStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
+        => _authStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
 
 
     private void OnAuthenticationStateChanged(Task<AuthenticationState> newAuthStateTask)
@@ -60,11 +58,11 @@
                 return;
             // Current Session is unusable due to forced sign-out.
             // The only way to get an usable one is to reload the page.
-            _ = InvokeAsync(() => Navigator.NavigateTo(Navigator.Uri, true));
+            _ = InvokeAsync(() => _nav.NavigateTo(_nav.Uri, true));
         }, TaskScheduler.Current);
     }
 
     private Task<AuthState> GetAuthState()
-        => AuthStateProvider.GetAuthenticationStateAsync()
+        => _authStateProvider.GetAuthenticationStateAsync()
             .ContinueWith(t => (AuthState) t.Result, TaskScheduler.Current);
 }

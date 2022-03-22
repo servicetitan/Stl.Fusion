@@ -8,7 +8,7 @@ using Stl.Fusion.Server;
 
 namespace Stl.Fusion.Tests.Services;
 
-[JsonifyErrors]
+[JsonifyErrors, UseDefaultSession]
 public class TimeController : ControllerBase
 {
     protected ITimeService Service { get; }

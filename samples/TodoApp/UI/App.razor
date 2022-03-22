@@ -1,4 +1,5 @@
 @using Stl.Text
+@using Stl.OS
 @implements IDisposable
 @inject BlazorCircuitContext _blazorCircuitContext
 
@@ -25,6 +26,8 @@
 
     protected override void OnInitialized()
     {
+        if (OSInfo.IsWebAssembly)
+            SessionId = Session.Default.Id; // We don't want to store it anywhere in WASM or JS
         if (!_blazorCircuitContext.IsPrerendering)
             _blazorCircuitContext.RootComponent = this;
     }

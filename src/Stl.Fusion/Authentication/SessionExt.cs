@@ -8,17 +8,16 @@ public static class SessionExt
     public static Session AssertNotNull(this Session? session)
         => session ?? throw Errors.NoSessionProvided();
 
-    public static Session OrDefault(this Session? session, ISessionResolver sessionResolver)
-    {
-        if (session != null)
-            return session;
-        return sessionResolver.Session;
-    }
+    public static bool IsDefault(this Session? session)
+        => session == null || session == Session.Default;
 
-    public static Session OrDefault(this Session? session, IServiceProvider services)
+    public static Session ResolveDefault(this Session? session, ISessionResolver sessionResolver) 
+        => session.IsDefault() ? sessionResolver.Session : session!;
+
+    public static Session ResolveDefault(this Session? session, IServiceProvider services)
     {
-        if (session != null)
-            return session;
+        if (!session.IsDefault())
+            return session!;
         var sessionResolver = services.GetRequiredService<ISessionResolver>();
         return sessionResolver.Session;
     }

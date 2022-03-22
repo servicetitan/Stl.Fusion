@@ -6,37 +6,31 @@ using Stl.Fusion.Extensions.Commands;
 namespace Stl.Fusion.Server.Controllers;
 
 [Route("fusion/kvs/[action]")]
-[ApiController, JsonifyErrors(RewriteErrors = true)]
+[ApiController, JsonifyErrors(RewriteErrors = true), UseDefaultSession]
 public class SandboxedKeyValueStoreController : ControllerBase, ISandboxedKeyValueStore
 {
     protected ISandboxedKeyValueStore Store { get; }
-    protected ISessionResolver SessionResolver { get; }
 
-    public SandboxedKeyValueStoreController(
-        ISandboxedKeyValueStore store,
-        ISessionResolver sessionResolver)
-    {
-        Store = store;
-        SessionResolver = sessionResolver;
-    }
+    public SandboxedKeyValueStoreController(ISandboxedKeyValueStore store) 
+        => Store = store;
 
     // Commands
 
     [HttpPost]
     public Task Set([FromBody] SandboxedSetCommand command, CancellationToken cancellationToken = default)
-        => Store.Set(command.UseDefaultSession(SessionResolver), cancellationToken);
+        => Store.Set(command, cancellationToken);
 
     [HttpPost]
     public Task SetMany([FromBody] SandboxedSetManyCommand command, CancellationToken cancellationToken = default)
-        => Store.SetMany(command.UseDefaultSession(SessionResolver), cancellationToken);
+        => Store.SetMany(command, cancellationToken);
 
     [HttpPost]
     public Task Remove([FromBody] SandboxedRemoveCommand command, CancellationToken cancellationToken = default)
-        => Store.Remove(command.UseDefaultSession(SessionResolver), cancellationToken);
+        => Store.Remove(command, cancellationToken);
 
     [HttpPost]
     public Task RemoveMany([FromBody] SandboxedRemoveManyCommand command, CancellationToken cancellationToken = default)
-        => Store.RemoveMany(command.UseDefaultSession(SessionResolver), cancellationToken);
+        => Store.RemoveMany(command, cancellationToken);
 
     // Queries
 

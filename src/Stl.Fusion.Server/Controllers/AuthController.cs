@@ -5,27 +5,23 @@ using Stl.Fusion.Authentication.Commands;
 namespace Stl.Fusion.Server.Controllers;
 
 [Route("fusion/auth/[action]")]
-[ApiController, JsonifyErrors(RewriteErrors = true)]
+[ApiController, JsonifyErrors(RewriteErrors = true), UseDefaultSession]
 public class AuthController : ControllerBase, IAuth
 {
     protected IAuth Auth { get; }
-    protected ISessionResolver SessionResolver { get; }
 
-    public AuthController(IAuth auth, ISessionResolver sessionResolver)
-    {
-        Auth = auth;
-        SessionResolver = sessionResolver;
-    }
+    public AuthController(IAuth auth) 
+        => Auth = auth;
 
     // Commands
 
     [HttpPost]
     public Task SignOut([FromBody] SignOutCommand command, CancellationToken cancellationToken = default)
-        => Auth.SignOut(command.UseDefaultSession(SessionResolver), cancellationToken);
+        => Auth.SignOut(command, cancellationToken);
 
     [HttpPost]
     public Task EditUser(EditUserCommand command, CancellationToken cancellationToken = default)
-        => Auth.EditUser(command.UseDefaultSession(SessionResolver), cancellationToken);
+        => Auth.EditUser(command, cancellationToken);
 
     [HttpPost]
     public Task UpdatePresence([FromBody] Session session, CancellationToken cancellationToken = default)

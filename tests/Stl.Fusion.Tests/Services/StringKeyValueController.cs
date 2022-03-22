@@ -8,7 +8,7 @@ using Stl.Fusion.Server;
 
 namespace Stl.Fusion.Tests.Services;
 
-[JsonifyErrors]
+[JsonifyErrors, UseDefaultSession]
 public class StringKeyValueController : ControllerBase
 {
     protected IKeyValueService<string> Service { get; }

@@ -9,7 +9,7 @@ public static class SessionCommandExt
     public static TCommand UseDefaultSession<TCommand>(this TCommand command, ISessionResolver sessionResolver)
         where TCommand : class, ISessionCommand
     {
-        if (command.Session != null!)
+        if (!command.Session.IsDefault())
             return command;
         // The property has init accessor, so we have to workaround this
         SessionProperty.SetValue(command, sessionResolver.Session);
@@ -19,7 +19,7 @@ public static class SessionCommandExt
     public static TCommand UseDefaultSession<TCommand>(this TCommand command, IServiceProvider services)
         where TCommand : class, ISessionCommand
     {
-        if (command.Session != null!)
+        if (!command.Session.IsDefault())
             return command;
         var sessionResolver = services.GetRequiredService<ISessionResolver>();
         // The property has init accessor, so we have to workaround this
