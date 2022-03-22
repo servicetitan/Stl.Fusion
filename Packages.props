@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <PropertyGroup Label="ASP.NET Core Versions">
-    <AspNetCoreVersion>6.0.2</AspNetCoreVersion>
+    <AspNetCoreVersion>6.0.3</AspNetCoreVersion>
     <AspNetCoreVersion5>5.*</AspNetCoreVersion5>
     <AspNetCoreVersion3>3.*</AspNetCoreVersion3>
   </PropertyGroup>
@@ -32,12 +32,12 @@
     <BlazorVersion>$(AspNetCoreVersion)</BlazorVersion>
     <BlazorVersion5>$(AspNetCoreVersion5)</BlazorVersion5>
     <BlazorVersion3>$(AspNetCoreVersion3)</BlazorVersion3>
-    <BlazoriseVersion>0.9.*</BlazoriseVersion>
+    <BlazoriseVersion>1.0.*</BlazoriseVersion>
   </PropertyGroup>
 
   <PropertyGroup>
     <MessagePackVersion>2.3.*</MessagePackVersion>
-    <MicrosoftExtensionsVersion>6.0.0</MicrosoftExtensionsVersion>
+    <MicrosoftExtensionsVersion>6.0.*</MicrosoftExtensionsVersion>
     <StlFusionVersion>2.3.*</StlFusionVersion>
   </PropertyGroup>
 
