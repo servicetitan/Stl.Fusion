@@ -1,12 +1,12 @@
 @page "/todo"
 @inherits ComputedStateComponent<Todo[]>
-@inject ITodoService Todos
-@inject Session Session
-@inject UICommandRunner CommandRunner
-@inject ILogger<TodoPage> Log
+@inject ITodoService _todos
+@inject Session _session
+@inject UICommandRunner _commandRunner
+@inject ILogger<TodoPage> _log
 
 @{
-    Log.LogInformation("Rendering, State.Computed.Version = {Version}", State.Computed.Version);
+    _log.LogInformation("Rendering, State.Computed.Version = {Version}", State.Computed.Version);
     var error = State.Error;
     var todos = State.ValueOrDefault ?? Array.Empty<Todo>(); // ValueOrDefault returns default if there is an Error
 }
@@ -74,7 +74,7 @@
 
     protected override async Task<Todo[]> ComputeState(CancellationToken cancellationToken)
     {
-        var items = await Todos.List(Session, PageSize + 1, cancellationToken);
+        var items = await _todos.List(_session, PageSize + 1, cancellationToken);
         HasMore = items.Length > PageSize;
         if (HasMore)
             items = items[0..PageSize];
@@ -92,6 +92,6 @@
     {
         var todo = new Todo("", NewTodoTitle);
         NewTodoTitle = "";
-        CommandRunner.Run(new AddOrUpdateTodoCommand(Session, todo));
+        _commandRunner.Run(new AddOrUpdateTodoCommand(_session, todo));
     }
 }

@@ -1,10 +1,10 @@
 ﻿@inherits LayoutComponentBase
 @implements IDisposable
-@inject NavigationManager Navigator
-@inject UICommandFailureList CommandFailureList
+@inject NavigationManager _nav
+@inject UICommandFailureList _commandFailureList
 
 @{
-    var failures = CommandFailureList.Items;
+    var failures = _commandFailureList.Items;
 }
 
 <Layout Sider="true">
@@ -21,7 +21,7 @@
         <LayoutContent Padding="Padding.Is4">
             @foreach (var failure in failures) {
                 <WhenCommandError Exception="failure.Result?.Error"
-                                  Dismissed="@(_ => CommandFailureList.Remove(failure.CommandId))" />
+                                  Dismissed="@(_ => _commandFailureList.Remove(failure.CommandId))" />
             }
 
             @Body
@@ -33,18 +33,18 @@
 
     protected override void OnInitialized()
     {
-        Navigator.LocationChanged += OnLocationChanged;
-        CommandFailureList.Changed += OnCommandFailureListChanged;
+        _nav.LocationChanged += OnLocationChanged;
+        _commandFailureList.Changed += OnCommandFailureListChanged;
     }
 
     public void Dispose()
     {
-        Navigator.LocationChanged -= OnLocationChanged;
-        CommandFailureList.Changed -= OnCommandFailureListChanged;
+        _nav.LocationChanged -= OnLocationChanged;
+        _commandFailureList.Changed -= OnCommandFailureListChanged;
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
-        => CommandFailureList.Clear();
+        => _commandFailureList.Clear();
 
     private void OnCommandFailureListChanged()
         => this.StateHasChangedAsync();
