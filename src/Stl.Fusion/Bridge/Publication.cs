@@ -3,7 +3,7 @@ using Errors = Stl.Internal.Errors;
 
 namespace Stl.Fusion.Bridge;
 
-public interface IPublication : IAsyncProcess
+public interface IPublication : IWorker
 {
     IPublisher Publisher { get; }
     Symbol Id { get; }
@@ -25,7 +25,7 @@ public interface IPublication<T> : IPublication
     new IPublicationState<T> State { get; }
 }
 
-public class Publication<T> : AsyncProcessBase, IPublication<T>
+public class Publication<T> : WorkerBase, IPublication<T>
 {
     private long _lastTouchTime;
     private long _useCount;
@@ -152,16 +152,16 @@ public class Publication<T> : AsyncProcessBase, IPublication<T>
         }
     }
 
-    protected override ValueTask DisposeAsyncCore()
+    protected override Task DisposeAsyncCore()
     {
         // We override this method to make sure State is the first thing
         // to reflect the disposal.
         var state = StateField;
         if (state.IsDisposed)
-            return ValueTaskExt.CompletedTask;
+            return Task.CompletedTask;
         var newState = CreatePublicationState(state.Computed, true);
         if (!ChangeState(newState, state))
-            return ValueTaskExt.CompletedTask;
+            return Task.CompletedTask;
         if (Publisher is IPublisherImpl pi)
             pi.OnPublicationDisposed(this);
         return base.DisposeAsyncCore();

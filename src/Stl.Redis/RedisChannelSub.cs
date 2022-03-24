@@ -19,10 +19,10 @@ public sealed class RedisChannelSub : RedisSubBase
                 AllowSynchronousContinuations = false,
             });
 
-    protected override ValueTask DisposeAsyncInternal()
+    protected override async Task DisposeAsyncCore()
     {
+        await base.DisposeAsyncCore().ConfigureAwait(false);
         _channel.Writer.TryComplete();
-        return ValueTaskExt.CompletedTask;
     }
 
     protected override void OnMessage(RedisChannel redisChannel, RedisValue redisValue)
@@ -51,10 +51,10 @@ public sealed class RedisChannelSub<T> : RedisSubBase
             });
     }
 
-    protected override ValueTask DisposeAsyncInternal()
+    protected override async Task DisposeAsyncCore()
     {
+        await base.DisposeAsyncCore().ConfigureAwait(false);
         _channel.Writer.TryComplete();
-        return ValueTaskExt.CompletedTask;
     }
 
     protected override void OnMessage(RedisChannel redisChannel, RedisValue redisValue)

@@ -97,7 +97,7 @@ public class Replicator : SafeAsyncDisposableBase, IReplicatorImpl
         => OnReplicaDisposed(replica);
     protected virtual void OnReplicaDisposed(IReplica replica)
     {
-        if (IsDisposeStarted)
+        if (WhenDisposed != null)
             return;
         if (replica.Replicator != this)
             throw new ArgumentOutOfRangeException(nameof(replica));

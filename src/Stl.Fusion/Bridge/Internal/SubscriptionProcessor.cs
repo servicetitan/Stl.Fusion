@@ -2,7 +2,7 @@ using Stl.Fusion.Bridge.Messages;
 
 namespace Stl.Fusion.Bridge.Internal;
 
-public abstract class SubscriptionProcessor : AsyncProcessBase
+public abstract class SubscriptionProcessor : WorkerBase
 {
     private ILogger? _log;
 

@@ -5,12 +5,12 @@ namespace Stl.Async;
 /// https://docs.microsoft.com/en-us/dotnet/standard/garbage-collection/implementing-disposeasync
 /// that ensures <see cref="DisposeAsync(bool)"/> is called just once.
 /// </summary>
-public abstract class SafeAsyncDisposableBase : IAsyncDisposable, IDisposable, IHasDisposeStarted
+public abstract class SafeAsyncDisposableBase : IAsyncDisposable, IDisposable, IHasWhenDisposed
 {
     private volatile int _isDisposing;
     private volatile Task? _disposeTask;
 
-    public bool IsDisposeStarted => _isDisposing != 0;
+    public Task? WhenDisposed => _disposeTask;
 
     public void Dispose()
     {
@@ -36,7 +36,7 @@ public abstract class SafeAsyncDisposableBase : IAsyncDisposable, IDisposable, I
         }
 
         disposeTask = DisposeAsync(true);
-        _ = Interlocked.Exchange(ref _disposeTask, disposeTask);
+        Interlocked.Exchange(ref _disposeTask, disposeTask);
         GC.SuppressFinalize(this);
         return disposeTask.ToValueTask();
     }

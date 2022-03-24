@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Stl.Fusion.Authentication;
 
-public class PresenceService : AsyncProcessBase
+public class PresenceService : WorkerBase
 {
     public class Options
     {

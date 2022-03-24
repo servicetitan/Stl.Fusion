@@ -38,7 +38,7 @@ public sealed class RedisStreamer<T>
     {
         var appendSub = GetAppendSub();
         await using var _ = appendSub.ConfigureAwait(false);
-        await appendSub.WhenSubscribed.ConfigureAwait(false);
+        await appendSub.Subscribe().ConfigureAwait(false);
 
         var position = (RedisValue)"0-0";
         var serializer = Settings.Serializer;

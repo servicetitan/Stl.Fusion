@@ -1,6 +1,6 @@
 namespace Stl.Time;
 
-public sealed class TimerSet<TTimer> : AsyncProcessBase
+public sealed class TimerSet<TTimer> : WorkerBase
     where TTimer : notnull
 {
     public record Options

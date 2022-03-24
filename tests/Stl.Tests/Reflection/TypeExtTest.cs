@@ -21,13 +21,13 @@ public class TypeExtTest : TestBase
         var baseTypes = GetType().GetAllBaseTypes().ToArray();
         baseTypes.Should().BeEquivalentTo(new [] {typeof(TestBase), typeof(object)});
 
-        baseTypes = typeof(AsyncProcessBase).GetAllBaseTypes(true, true).ToArray();
+        baseTypes = typeof(WorkerBase).GetAllBaseTypes(true, true).ToArray();
         var adbIndex = Array.IndexOf(baseTypes, typeof(AsyncDisposableBase));
-        var apIndex = Array.IndexOf(baseTypes, typeof(IAsyncProcess));
+        var apIndex = Array.IndexOf(baseTypes, typeof(IWorker));
         var adIndex = Array.IndexOf(baseTypes, typeof(IAsyncDisposable));
         var dIndex = Array.IndexOf(baseTypes, typeof(IDisposable));
         var hsIndex = Array.IndexOf(baseTypes, typeof(IHostedService));
-        var hdsIndex = Array.IndexOf(baseTypes, typeof(IHasDisposeStarted));
+        var hdsIndex = Array.IndexOf(baseTypes, typeof(IHasWhenDisposed));
         var oIndex = Array.IndexOf(baseTypes, typeof(object));
         adbIndex.Should().BeLessThan(adIndex);
         adbIndex.Should().BeLessThan(dIndex);

@@ -42,7 +42,7 @@ public sealed class RedisQueue : IAsyncDisposable
 
     public async Task<RedisValue> Dequeue(CancellationToken cancellationToken = default)
     {
-        await EnqueueSub.WhenSubscribed.ConfigureAwait(false);
+        await EnqueueSub.Subscribe().ConfigureAwait(false);
         var nextMessageTask = EnqueueSub.NextMessage();
         while (true) {
             var redisValue = await RedisDb.Database.ListRightPopAsync(Key).ConfigureAwait(false);
@@ -103,7 +103,7 @@ public sealed class RedisQueue<T> : IAsyncDisposable
 
     public async Task<T> Dequeue(CancellationToken cancellationToken = default)
     {
-        await EnqueueSub.WhenSubscribed.ConfigureAwait(false);
+        await EnqueueSub.Subscribe().ConfigureAwait(false);
         var nextMessageTask = EnqueueSub.NextMessage();
         while (true) {
             var value = await RedisDb.Database.ListRightPopAsync(Key).ConfigureAwait(false);

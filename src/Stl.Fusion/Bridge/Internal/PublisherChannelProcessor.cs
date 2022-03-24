@@ -4,7 +4,7 @@ using Stl.OS;
 
 namespace Stl.Fusion.Bridge.Internal;
 
-public class PublisherChannelProcessor : AsyncProcessBase
+public class PublisherChannelProcessor : WorkerBase
 {
     private ILogger? _log;
 
@@ -90,7 +90,7 @@ public class PublisherChannelProcessor : AsyncProcessBase
                 PublisherImpl.Clocks, Services);
             Subscriptions[publicationId] = subscriptionProcessor;
         }
-        _ = subscriptionProcessor.Run(default)
+        _ = subscriptionProcessor.Run()
             .ContinueWith(_ => Unsubscribe(publication, default), TaskScheduler.Default);
     subscriptionExists:
         await subscriptionProcessor.IncomingChannel.Writer
@@ -131,7 +131,7 @@ public class PublisherChannelProcessor : AsyncProcessBase
         }
     }
 
-    protected override async ValueTask DisposeAsyncCore()
+    protected override async Task DisposeAsyncCore()
     {
         await base.DisposeAsyncCore().ConfigureAwait(false);
         await RemoveSubscriptions().ConfigureAwait(false);

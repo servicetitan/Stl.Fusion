@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Stl.Fusion;
 
-public interface IComputedState : IState, IDisposable, IHasDisposeStarted
+public interface IComputedState : IState, IDisposable, IHasWhenDisposed
 {
     public new interface IOptions : IState.IOptions
     {
@@ -26,7 +26,8 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
     }
 
     private volatile IUpdateDelayer _updateDelayer;
-    private readonly CancellationTokenSource _disposeCts;
+    private volatile Task? _whenDisposed;
+    private readonly CancellationTokenSource _disposeTokenSource;
 
     protected ILogger Log { get; }
 
@@ -35,16 +36,16 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
         set => _updateDelayer = value;
     }
 
-    public Task UpdateTask { get; private set; } = null!;
     public CancellationToken DisposeToken { get; }
-    public bool IsDisposeStarted => DisposeToken.IsCancellationRequested;
+    public Task UpdateTask { get; private set; } = null!;
+    public Task? WhenDisposed => _whenDisposed;
 
     protected ComputedState(Options options, IServiceProvider services, bool initialize = true)
         : base(options, services, false)
     {
         Log = Services.GetService<ILoggerFactory>()?.CreateLogger(GetType()) ?? NullLogger.Instance;
-        _disposeCts = new CancellationTokenSource();
-        DisposeToken = _disposeCts.Token;
+        _disposeTokenSource = new CancellationTokenSource();
+        DisposeToken = _disposeTokenSource.Token;
         _updateDelayer = options.UpdateDelayer ?? Services.GetRequiredService<IUpdateDelayer>();
         // ReSharper disable once VirtualMemberCallInConstructor
         if (initialize) Initialize(options);
@@ -52,18 +53,33 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
 
     protected override void Initialize(State<T>.Options options)
     {
+        if (UpdateTask != null!)
+            return;
         base.Initialize(options);
-        UpdateTask = Task.Run(Update, CancellationToken.None);
+
+        // We must suppress execution context flow here, because
+        // the Update is ~ a worker-style task
+        if (ExecutionContext.IsFlowSuppressed())
+            UpdateTask = Task.Run(Update, CancellationToken.None);
+        else {
+            using var _ = ExecutionContext.SuppressFlow();
+            UpdateTask = Task.Run(Update, CancellationToken.None);
+        }
     }
 
     // ~ComputedState() => Dispose();
 
     public virtual void Dispose()
     {
-        if (DisposeToken.IsCancellationRequested)
+        if (_whenDisposed != null)
             return;
-        GC.SuppressFinalize(this);
-        _disposeCts.CancelAndDisposeSilently();
+        lock (Lock) {
+            if (_whenDisposed != null)
+                return;
+            _whenDisposed = UpdateTask ?? Task.CompletedTask;
+            GC.SuppressFinalize(this);
+            _disposeTokenSource.CancelAndDisposeSilently();
+        }
     }
 
     protected virtual async Task Update()
@@ -84,7 +100,7 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
                 // Will break from "while" loop later if it's due to cancellationToken cancellation
             }
             catch (Exception e) {
-                Log.LogError(e, "Failure inside Run()");
+                Log.LogError(e, "Failure inside Update()");
             }
         }
     }

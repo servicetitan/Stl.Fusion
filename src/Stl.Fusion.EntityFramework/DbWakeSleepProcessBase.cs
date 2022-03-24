@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Stl.Fusion.EntityFramework;
 
-public abstract class DbWakeSleepProcessBase<TDbContext> : DbAsyncProcessBase<TDbContext>
+public abstract class DbWakeSleepProcessBase<TDbContext> : DbWorkerBase<TDbContext>
     where TDbContext : DbContext
 {
     protected DbWakeSleepProcessBase(IServiceProvider services) : base(services) { }

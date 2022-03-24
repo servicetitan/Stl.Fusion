@@ -3,7 +3,7 @@ using Stl.Fusion.Extensions.Commands;
 
 namespace Stl.Fusion.Extensions.Internal;
 
-public class InMemoryKeyValueStore : AsyncProcessBase, IKeyValueStore
+public class InMemoryKeyValueStore : WorkerBase, IKeyValueStore
 {
     public class Options
     {

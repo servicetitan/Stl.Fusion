@@ -4,7 +4,7 @@ using Stl.Versioning;
 
 namespace Stl.Fusion.EntityFramework;
 
-public abstract class DbAsyncProcessBase<TDbContext> : AsyncProcessBase
+public abstract class DbWorkerBase<TDbContext> : WorkerBase
     where TDbContext : DbContext
 {
     private IDbContextFactory<TDbContext>? _dbContextFactory;
@@ -21,7 +21,7 @@ public abstract class DbAsyncProcessBase<TDbContext> : AsyncProcessBase
         ??= Services.VersionGenerator<long>();
     protected ILogger Log => _log ??= Services.LogFor(GetType().NonProxyType());
 
-    protected DbAsyncProcessBase(IServiceProvider services)
+    protected DbWorkerBase(IServiceProvider services)
         => Services = services;
 
     protected TDbContext CreateDbContext(bool readWrite = false)

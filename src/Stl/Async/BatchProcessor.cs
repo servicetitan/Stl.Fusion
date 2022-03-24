@@ -2,7 +2,7 @@ using Stl.OS;
 
 namespace Stl.Async;
 
-public abstract class AsyncBatchProcessorBase<TIn, TOut> : AsyncProcessBase
+public abstract class BatchProcessorBase<TIn, TOut> : WorkerBase
 {
     public const int DefaultCapacity = 4096;
     public int ConcurrencyLevel { get; set; } = HardwareInfo.GetProcessorCountPo2Factor();
@@ -10,19 +10,16 @@ public abstract class AsyncBatchProcessorBase<TIn, TOut> : AsyncProcessBase
     public Func<CancellationToken, Task>? BatchingDelayTaskFactory { get; set; }
     protected Channel<BatchItem<TIn, TOut>> Queue { get; }
 
-    protected AsyncBatchProcessorBase(int capacity = DefaultCapacity)
+    protected BatchProcessorBase(int capacity = DefaultCapacity)
         : this(new BoundedChannelOptions(capacity)) { }
-    protected AsyncBatchProcessorBase(BoundedChannelOptions options)
+    protected BatchProcessorBase(BoundedChannelOptions options)
         : this(Channel.CreateBounded<BatchItem<TIn, TOut>>(options)) { }
-    protected AsyncBatchProcessorBase(Channel<BatchItem<TIn, TOut>> queue)
+    protected BatchProcessorBase(Channel<BatchItem<TIn, TOut>> queue)
         => Queue = queue;
 
     public async Task<TOut> Process(TIn input, CancellationToken cancellationToken = default)
     {
-        if (RunningTask == null) {
-            using (ExecutionContextExt.SuppressFlow())
-                _ = Run(CancellationToken.None);
-        }
+        Start();
         var outputTask = TaskSource.New<TOut>(false).Task;
         var batchItem = new BatchItem<TIn, TOut>(input, cancellationToken, outputTask);
         await Queue.Writer.WriteAsync(batchItem, cancellationToken).ConfigureAwait(false);
@@ -68,19 +65,19 @@ public abstract class AsyncBatchProcessorBase<TIn, TOut> : AsyncProcessBase
     protected abstract Task ProcessBatch(List<BatchItem<TIn, TOut>> batch, CancellationToken cancellationToken);
 }
 
-public class AsyncBatchProcessor<TIn, TOut> : AsyncBatchProcessorBase<TIn, TOut>
+public class BatchProcessor<TIn, TOut> : BatchProcessorBase<TIn, TOut>
 {
-    public Func<List<BatchItem<TIn, TOut>>, CancellationToken, Task> BatchProcessor { get; set; } =
+    public Func<List<BatchItem<TIn, TOut>>, CancellationToken, Task> Implementation { get; set; } =
         (_, _) => throw new NotSupportedException("Set the delegate property to make it work.");
 
-    public AsyncBatchProcessor(int capacity = DefaultCapacity) : base(capacity) { }
-    public AsyncBatchProcessor(BoundedChannelOptions options) : base(options) { }
-    public AsyncBatchProcessor(Channel<BatchItem<TIn, TOut>> queue) : base(queue) { }
+    public BatchProcessor(int capacity = DefaultCapacity) : base(capacity) { }
+    public BatchProcessor(BoundedChannelOptions options) : base(options) { }
+    public BatchProcessor(Channel<BatchItem<TIn, TOut>> queue) : base(queue) { }
 
     protected override async Task ProcessBatch(List<BatchItem<TIn, TOut>> batch, CancellationToken cancellationToken)
     {
         try {
-            await BatchProcessor.Invoke(batch, cancellationToken).ConfigureAwait(false);
+            await Implementation.Invoke(batch, cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException) {
             if (!cancellationToken.IsCancellationRequested)

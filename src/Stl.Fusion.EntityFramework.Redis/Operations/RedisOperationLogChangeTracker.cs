@@ -43,7 +43,7 @@ public class RedisOperationLogChangeTracker<TDbContext> : DbWakeSleepProcessBase
 
     // Protected methods
 
-    protected override async ValueTask DisposeAsyncCore()
+    protected override async Task DisposeAsyncCore()
     {
         await base.DisposeAsyncCore().ConfigureAwait(false);
         await RedisSub.DisposeAsync().ConfigureAwait(false);
@@ -51,7 +51,7 @@ public class RedisOperationLogChangeTracker<TDbContext> : DbWakeSleepProcessBase
 
     protected override async Task WakeUp(CancellationToken cancellationToken)
     {
-        await RedisSub.WhenSubscribed.ConfigureAwait(false);
+        await RedisSub.Subscribe().ConfigureAwait(false);
         while (!cancellationToken.IsCancellationRequested) {
             var value = await RedisSub.Messages
                 .ReadAsync(cancellationToken)

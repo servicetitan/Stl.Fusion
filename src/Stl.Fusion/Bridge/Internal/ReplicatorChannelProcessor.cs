@@ -5,7 +5,7 @@ using Stl.Fusion.Internal;
 
 namespace Stl.Fusion.Bridge.Internal;
 
-public class ReplicatorChannelProcessor : AsyncProcessBase
+public class ReplicatorChannelProcessor : WorkerBase
 {
     private ILogger? _log;
 

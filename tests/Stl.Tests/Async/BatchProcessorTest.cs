@@ -3,16 +3,16 @@ using Stl.Testing.Collections;
 namespace Stl.Tests.Async;
 
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public class AsyncBatchProcessorTest
+public class BatchProcessorTest
 {
     [Fact]
     public async Task BasicTest()
     {
         var batchIndex = 0;
-        await using var processor = new AsyncBatchProcessor<int, (int, int)>() {
+        await using var processor = new BatchProcessor<int, (int, int)>() {
             ConcurrencyLevel = 2,
             MaxBatchSize = 3,
-            BatchProcessor = async (batch, cancellationToken) => {
+            Implementation = async (batch, cancellationToken) => {
                 var bi = Interlocked.Increment(ref batchIndex);
                 await Task.Delay(100).ConfigureAwait(false);
                 foreach (var item in batch) {

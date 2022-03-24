@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
+using Stl.Async;
 using Stl.Fusion.EntityFramework.Internal;
 using Stl.OS;
 
@@ -16,7 +17,7 @@ public interface IDbEntityResolver<TKey, TDbEntity>
 
 /// <summary>
 /// This type queues (when needed) & batches calls to <see cref="Get"/> with
-/// <see cref="AsyncBatchProcessor{TIn,TOut}"/> to reduce the rate of underlying DB queries.
+/// <see cref="BatchProcessor{TIn,TOut}"/> to reduce the rate of underlying DB queries.
 /// </summary>
 /// <typeparam name="TDbContext">The type of <see cref="DbContext"/>.</typeparam>
 /// <typeparam name="TKey">The type of entity key.</typeparam>
@@ -30,7 +31,7 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
 {
     public class Options
     {
-        public Func<DbEntityResolver<TDbContext, TKey, TDbEntity>, AsyncBatchProcessor<TKey, TDbEntity>>? BatchProcessorFactory { get; set; }
+        public Func<DbEntityResolver<TDbContext, TKey, TDbEntity>, BatchProcessor<TKey, TDbEntity>>? BatchProcessorFactory { get; set; }
         public string? KeyPropertyName { get; set; }
         public Func<Expression, Expression>? KeyExtractorExpressionBuilder { get; set; }
         public Func<IQueryable<TDbEntity>, IQueryable<TDbEntity>>? QueryTransformer { get; set; }
@@ -39,9 +40,9 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
 
     protected static MethodInfo ContainsMethod { get; } = typeof(HashSet<TKey>).GetMethod(nameof(HashSet<TKey>.Contains))!;
 
-    private readonly Lazy<AsyncBatchProcessor<TKey, TDbEntity>> _batchProcessorLazy;
-    protected Func<DbEntityResolver<TDbContext, TKey, TDbEntity>, AsyncBatchProcessor<TKey, TDbEntity>> BatchProcessorFactory { get; set; }
-    protected AsyncBatchProcessor<TKey, TDbEntity> BatchProcessor => _batchProcessorLazy.Value;
+    private readonly Lazy<BatchProcessor<TKey, TDbEntity>> _batchProcessorLazy;
+    protected Func<DbEntityResolver<TDbContext, TKey, TDbEntity>, BatchProcessor<TKey, TDbEntity>> BatchProcessorFactory { get; set; }
+    protected BatchProcessor<TKey, TDbEntity> BatchProcessor => _batchProcessorLazy.Value;
     protected Func<Expression, Expression> KeyExtractorExpressionBuilder { get; set; }
     protected Func<TDbEntity, TKey> KeyExtractor { get; set; }
     protected Func<IQueryable<TDbEntity>, IQueryable<TDbEntity>> QueryTransformer { get; set; }
@@ -53,13 +54,13 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
     {
         options ??= new();
         BatchProcessorFactory = options.BatchProcessorFactory ??
-            (self => new AsyncBatchProcessor<TKey, TDbEntity> {
+            (self => new BatchProcessor<TKey, TDbEntity> {
                 MaxBatchSize = 16,
                 ConcurrencyLevel = Math.Min(HardwareInfo.ProcessorCount, 4),
                 BatchingDelayTaskFactory = cancellationToken => Task.Delay(1, cancellationToken),
-                BatchProcessor = self.ProcessBatch,
+                Implementation = self.ProcessBatch,
             });
-        _batchProcessorLazy = new Lazy<AsyncBatchProcessor<TKey, TDbEntity>>(
+        _batchProcessorLazy = new Lazy<BatchProcessor<TKey, TDbEntity>>(
             () => BatchProcessorFactory(this));
 
         using var dbContext = CreateDbContext();
