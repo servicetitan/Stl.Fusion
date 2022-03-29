@@ -34,12 +34,20 @@ public abstract class WorkerBase : ProcessorBase, IWorker
                     ? Disposable.NewClosed(ExecutionContext.SuppressFlow(), d => d.Dispose())
                     : Disposable.NewClosed<AsyncFlowControl>(default, _ => {});
             using (flowSuppressor) {
-                OnStarted();
+                var startingTask = OnStarting(StopToken);
                 _whenRunning = Task
-                    .Run(() => RunInternal(StopToken), CancellationToken.None)
-                    .ContinueWith(_ => {
+                    .Run(async () => {
+                        await startingTask.ConfigureAwait(false);
+                        await RunInternal(StopToken).ConfigureAwait(false);
+                    }, CancellationToken.None)
+                    .ContinueWith(async _ => {
                         StopTokenSource.CancelAndDisposeSilently();
-                        OnStopped();
+                        try {
+                            await OnStopping().ConfigureAwait(false);
+                        }
+                        catch {
+                            // Intended
+                        }
                     }, TaskScheduler.Default);
             }
         }
@@ -47,8 +55,8 @@ public abstract class WorkerBase : ProcessorBase, IWorker
     }
 
     protected abstract Task RunInternal(CancellationToken cancellationToken);
-    protected virtual void OnStarted() { }
-    protected virtual void OnStopped() { }
+    protected virtual Task OnStarting(CancellationToken cancellationToken) => Task.CompletedTask;
+    protected virtual Task OnStopping() => Task.CompletedTask;
 
     public void Start()
         => Run();
