@@ -10,10 +10,6 @@ public abstract class ProcessorBase : IAsyncDisposable, IDisposable, IHasWhenDis
     public CancellationToken StopToken { get; }
     public Task? WhenDisposed => _disposeTask;
 
-    protected ProcessorBase(CancellationToken cancellationToken)
-        : this(CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
-    { }
-
     protected ProcessorBase(CancellationTokenSource? stopTokenSource = null)
     {
         StopTokenSource = stopTokenSource ?? new CancellationTokenSource();

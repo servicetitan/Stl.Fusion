@@ -11,8 +11,8 @@ public abstract class WorkerBase : ProcessorBase, IWorker
 
     public Task? WhenRunning => _whenRunning;
     
-    protected WorkerBase(CancellationToken cancellationToken) : base(cancellationToken) { }
-    protected WorkerBase(CancellationTokenSource? stopTokenSource = null) : base(stopTokenSource) { }
+    protected WorkerBase(CancellationTokenSource? stopTokenSource = null) 
+        : base(stopTokenSource) { }
 
     protected override Task DisposeAsyncCore() 
         => WhenRunning ?? Task.CompletedTask;
@@ -33,15 +33,22 @@ public abstract class WorkerBase : ProcessorBase, IWorker
                 (MustFlowExecutionContext && !ExecutionContext.IsFlowSuppressed())
                     ? Disposable.NewClosed(ExecutionContext.SuppressFlow(), d => d.Dispose())
                     : Disposable.NewClosed<AsyncFlowControl>(default, _ => {});
-            using (flowSuppressor)
+            using (flowSuppressor) {
+                OnStarted();
                 _whenRunning = Task
                     .Run(() => RunInternal(StopToken), CancellationToken.None)
-                    .ContinueWith(_ => Stop(), TaskScheduler.Default);
+                    .ContinueWith(_ => {
+                        StopTokenSource.CancelAndDisposeSilently();
+                        OnStopped();
+                    }, TaskScheduler.Default);
+            }
         }
         return _whenRunning;
     }
 
     protected abstract Task RunInternal(CancellationToken cancellationToken);
+    protected virtual void OnStarted() { }
+    protected virtual void OnStopped() { }
 
     public void Start()
         => Run();
