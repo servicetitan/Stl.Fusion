@@ -17,7 +17,7 @@ public abstract class SharedResourcePoolBase<TKey, TResource> : ISharedResourceP
     protected const string AsyncLockFailureMessage = "AsyncLock doesn't work properly.";
 
     private readonly Func<TKey, TResource, ValueTask> _cachedReleaser;
-    protected AsyncLockSet<TKey> LocksSet { get; }
+    protected AsyncLockSet<TKey> Locks { get; }
     protected ConcurrentDictionary<TKey, (TResource? Resource, int Count)> Resources { get; }
     protected ConcurrentDictionary<TKey, CancellationTokenSource> ResourceDisposeCancellers { get; }
     protected bool UseConcurrentDispose { get; } = false;
@@ -30,12 +30,12 @@ public abstract class SharedResourcePoolBase<TKey, TResource> : ISharedResourceP
         Resources = new ConcurrentDictionary<TKey, (TResource? Resource, int Count)>();
         ResourceDisposeCancellers = new ConcurrentDictionary<TKey, CancellationTokenSource>();
         UseConcurrentDispose = useConcurrentDispose;
-        LocksSet = new AsyncLockSet<TKey>(lockReentryMode);
+        Locks = new AsyncLockSet<TKey>(lockReentryMode);
     }
 
     public async Task<SharedResourceHandle<TKey, TResource>> TryAcquire(TKey key, CancellationToken cancellationToken = default)
     {
-        using var @lock = await LocksSet.Lock(key, cancellationToken).ConfigureAwait(false);
+        using var @lock = await Locks.Lock(key, cancellationToken).ConfigureAwait(false);
         if (!Resources.TryGetValue(key, out var pair)) {
             var resource = await CreateResource(key, cancellationToken).ConfigureAwait(false);
             if (resource == null)
@@ -59,7 +59,7 @@ public abstract class SharedResourcePoolBase<TKey, TResource> : ISharedResourceP
         var delayedDisposeCts = (CancellationTokenSource?) null;
         try {
             // ReSharper disable once MethodSupportsCancellation
-            using (await LocksSet.Lock(key).ConfigureAwait(false)) {
+            using (await Locks.Lock(key).ConfigureAwait(false)) {
                 if (!Resources.TryGetValue(key, out var pair))
                     return;
                 var newPair = (pair.Resource, Count: pair.Count - 1 );
@@ -87,7 +87,7 @@ public abstract class SharedResourcePoolBase<TKey, TResource> : ISharedResourceP
     protected async Task DelayedDisposeResource(TKey key, TResource resource, CancellationToken cancellationToken)
     {
         await DisposeResourceDelay(key, resource, cancellationToken).ConfigureAwait(false);
-        using (await LocksSet.Lock(key, cancellationToken).ConfigureAwait(false)) {
+        using (await Locks.Lock(key, cancellationToken).ConfigureAwait(false)) {
             cancellationToken.ThrowIfCancellationRequested();
             if (!Resources.TryRemove(key, (resource, 0)!))
                 throw Errors.InternalError(AsyncLockFailureMessage);
