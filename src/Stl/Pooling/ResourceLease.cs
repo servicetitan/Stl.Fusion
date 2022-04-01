@@ -1,9 +1,10 @@
 namespace Stl.Pooling;
 
 [StructLayout(LayoutKind.Auto)]
-public readonly struct ResourceLease<T> : IDisposable, IEquatable<ResourceLease<T>>
+public readonly struct ResourceLease<T> : IResourceLease<T>, IEquatable<ResourceLease<T>>
 {
     private readonly IResourceReleaser<T> _releaser;
+
     public T Resource { get; }
 
     public ResourceLease(T resource, IResourceReleaser<T> releaser)
