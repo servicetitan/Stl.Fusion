@@ -77,7 +77,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
             new SignInCommand(session, bob));
         var user = await webAuth.GetUser(session);
         user.Name.Should().Be(bob.Name);
-        long.TryParse(user.Id, out var _).Should().BeTrue();
+        long.TryParse(user.Id, out _).Should().BeTrue();
         user.Claims.Count.Should().Be(0);
         bob = user;
 
@@ -145,7 +145,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         await webAuthBackend.SignIn(new SignInCommand(session, bob));
         var user = await webAuth.GetUser(session);
         user.Name.Should().Be(bob.Name);
-        long.TryParse(user.Id, out var _).Should().BeTrue();
+        long.TryParse(user.Id, out _).Should().BeTrue();
         user.Claims.Count.Should().Be(2);
         user.Claims["id"].Should().Be("bob");
         user.Identities.Single(); // Client-side users shouldn't have them

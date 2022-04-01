@@ -10,7 +10,7 @@ public class PublishAttribute : ActionFilterAttribute
     {
         var httpContext = context.HttpContext;
         var headers = httpContext.Request.Headers;
-        var mustPublish = headers.TryGetValue(FusionHeaders.RequestPublication, out var _);
+        var mustPublish = headers.TryGetValue(FusionHeaders.RequestPublication, out _);
         if (!mustPublish) {
             await next().ConfigureAwait(false);
             return;

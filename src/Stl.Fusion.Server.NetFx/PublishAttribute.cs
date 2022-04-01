@@ -12,7 +12,7 @@ public class PublishAttribute : ActionFilterAttribute
 
         var request = actionContext.Request;
         var headers = request.Headers;
-        var mustPublish = headers.TryGetValues(FusionHeaders.RequestPublication, out var _);
+        var mustPublish = headers.TryGetValues(FusionHeaders.RequestPublication, out _);
         if (!mustPublish)
             return;
 

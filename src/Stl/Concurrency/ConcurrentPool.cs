@@ -28,7 +28,7 @@ public class ConcurrentPool<T> : IPool<T>
     public ResourceLease<T> Rent()
     {
         if (_queue.TryDequeue(out var resource)) {
-            _count.Decrement(resource!.GetHashCode(), out var _);
+            _count.Decrement(resource!.GetHashCode(), out _);
             return new ResourceLease<T>(resource, this);
         }
         _count.Reset();
@@ -39,7 +39,7 @@ public class ConcurrentPool<T> : IPool<T>
     {
         if (_count.ApproximateValue >= Capacity)
             return false;
-        _count.Increment(resource!.GetHashCode(), out var _);
+        _count.Increment(resource!.GetHashCode(), out _);
         _queue.Enqueue(resource);
         return true;
     }

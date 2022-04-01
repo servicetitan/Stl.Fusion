@@ -47,7 +47,7 @@ public class GCHandlePool : IDisposable
         if (_queue.TryDequeue(out var handle)) {
             if (random == 0)
                 random = handle.GetHashCode();
-            _opCounter.Decrement(random, out var _);
+            _opCounter.Decrement(random, out _);
             if (target != null)
                 handle.Target = target;
             return handle;
@@ -68,7 +68,7 @@ public class GCHandlePool : IDisposable
             return false;
         if (random == 0)
             random = handle.GetHashCode();
-        _opCounter.Increment(random, out var _);
+        _opCounter.Increment(random, out _);
         _queue.Enqueue(handle);
         handle.Target = null;
         return true;

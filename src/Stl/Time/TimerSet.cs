@@ -69,7 +69,7 @@ public sealed class TimerSet<TTimer> : WorkerBase
     public bool Remove(TTimer timer)
     {
         lock (_lock)
-            return _timers.Remove(timer, out var _);
+            return _timers.Remove(timer, out _);
     }
 
     // Protected & private methods

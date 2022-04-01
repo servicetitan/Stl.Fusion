@@ -69,7 +69,7 @@ public class InMemoryKeyValueStore : WorkerBase, IKeyValueStore
             return Task.CompletedTask;
         }
 
-        if (!Store.Remove(key, out var _))
+        if (!Store.Remove(key, out _))
             context.Operation().Items.Set(false); // No need to invalidate anything
         return Task.CompletedTask;
     }
@@ -84,7 +84,7 @@ public class InMemoryKeyValueStore : WorkerBase, IKeyValueStore
         }
 
         foreach (var key in keys)
-            Store.Remove(key, out var _);
+            Store.Remove(key, out _);
         return Task.CompletedTask;
     }
 
