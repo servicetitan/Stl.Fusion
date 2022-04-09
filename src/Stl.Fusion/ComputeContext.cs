@@ -7,8 +7,7 @@ public class ComputeContext
 {
     private static readonly ComputeContext[] ContextCache;
     private static readonly AsyncLocal<ComputeContext?> CurrentLocal = new();
-    internal volatile IComputed? CapturedComputed;
-    private volatile int _isUsed;
+    private volatile IComputed? _captured;
 
     internal static readonly ComputeContext Invalidate;
     public static readonly ComputeContext Default;
@@ -21,9 +20,7 @@ public class ComputeContext
         }
     }
 
-    public CallOptions CallOptions { get; }
-    protected bool IsDisposed { get; set; }
-    protected bool IsUsed => _isUsed != 0;
+    public CallOptions CallOptions { get; private set; }
 
     internal static ComputeContext New(CallOptions options)
     {
@@ -60,32 +57,28 @@ public class ComputeContext
     {
         if (computed == null || (CallOptions & CallOptions.Capture) == 0)
             return;
-        Interlocked.CompareExchange(ref CapturedComputed, computed, null);
+        if (null == Interlocked.CompareExchange(ref _captured, computed, null))
+            CallOptions &= ~CallOptions.Capture; 
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public IComputed GetCaptured() => CapturedComputed ?? throw Errors.NoComputedCaptured();
+    public IComputed GetCaptured() => _captured ?? throw Errors.NoComputedCaptured();
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public IComputed<T> GetCaptured<T>() => (IComputed<T>) GetCaptured();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryGetCaptured([MaybeNullWhen(false)] out IComputed computed)
     {
-        computed = CapturedComputed;
+        computed = _captured;
         return computed != null;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryGetCaptured<T>([MaybeNullWhen(false)] out IComputed<T> computed)
     {
-        computed = CapturedComputed as IComputed<T>;
+        computed = _captured as IComputed<T>;
         return computed != null;
     }
-
-    internal bool Acquire()
-        => 0 == Interlocked.CompareExchange(ref _isUsed, 1, 0);
-    internal void Release()
-        => Interlocked.Exchange(ref _isUsed, 0);
 }
 
 internal class CachedComputeContext : ComputeContext
