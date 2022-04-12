@@ -121,7 +121,7 @@
     <PackageReference Update="IndexRange" Version="1.0.*" />
     <PackageReference Update="Microsoft.Bcl.AsyncInterfaces" Version="6.0.0" />
     <PackageReference Update="System.Memory" Version="4.5.4" />
-    <PackageReference Update="Microsoft.AspNet.WebApi.Core" Version="5.2.7" />
+    <PackageReference Update="Microsoft.AspNet.WebApi.Core" Version="5.2.8" />
     <PackageReference Update="Microsoft.AspNet.WebApi.OwinSelfHost" Version="5.2.7" />
     <PackageReference Update="Microsoft.Owin" Version="4.2.1" />
     <PackageReference Update="Owin" Version="1.0.0" />
