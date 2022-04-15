@@ -2,7 +2,6 @@ using Blazorise;
 using Blazorise.Bootstrap;
 using Blazorise.Icons.FontAwesome;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Client;
 using Stl.Fusion.Blazor;
 using Stl.Fusion.Extensions;

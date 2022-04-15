@@ -1,5 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-
 namespace Stl.Conversion;
 
 public static class ServiceProviderExt

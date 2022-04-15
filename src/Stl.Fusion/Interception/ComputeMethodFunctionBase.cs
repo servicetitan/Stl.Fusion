@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Versioning;
 
 namespace Stl.Fusion.Interception;

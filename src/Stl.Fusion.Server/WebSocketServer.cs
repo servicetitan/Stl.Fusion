@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Channels;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Messages;

@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.DependencyInjection;
 using Stl.Internal;
 
 namespace Stl.Fusion.Blazor;

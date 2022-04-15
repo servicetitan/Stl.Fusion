@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Stl.Concurrency;
 
 namespace Stl.Plugins.Internal;

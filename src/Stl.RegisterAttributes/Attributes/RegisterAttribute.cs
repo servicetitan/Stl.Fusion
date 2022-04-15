@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Stl.RegisterAttributes.Internal;
 
 namespace Stl.RegisterAttributes;

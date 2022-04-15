@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Logging.Abstractions;
-
 namespace Stl.Fusion.Tests.Services;
 
 public interface ITimeService

@@ -1,5 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-
 namespace Stl.Plugins;
 
 public static class ServiceProviderExt

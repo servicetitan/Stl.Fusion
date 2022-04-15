@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Stl.Plugins.Metadata;
 using Stl.Plugins.Internal;
 

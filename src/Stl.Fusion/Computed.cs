@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using Microsoft.Extensions.DependencyInjection;
 using Stl.Collections.Slim;
 using Stl.Conversion;
 using Stl.Fusion.Interception;

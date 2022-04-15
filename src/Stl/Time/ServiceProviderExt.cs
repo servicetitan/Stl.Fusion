@@ -1,5 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-
 namespace Stl.Time;
 
 public static class ServiceProviderExt

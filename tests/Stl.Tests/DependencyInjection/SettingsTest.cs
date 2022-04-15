@@ -1,7 +1,6 @@
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Memory;
-using Microsoft.Extensions.DependencyInjection;
 using Stl.RegisterAttributes;
 
 namespace Stl.Tests.DependencyInjection;

@@ -1,5 +1,4 @@
 using System.Web.Http.Dependencies;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Stl.Fusion.Server;
 

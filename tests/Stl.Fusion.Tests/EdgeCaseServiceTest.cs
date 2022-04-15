@@ -1,9 +1,7 @@
-using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Bridge.Interception;
 using Stl.Fusion.Tests.Services;
 using Stl.Interception;
 using Stl.Interception.Interceptors;
-using Stl.Testing.Collections;
 
 namespace Stl.Fusion.Tests;
 

@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Authentication.Internal;
 
 namespace Stl.Fusion.Authentication;

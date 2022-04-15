@@ -1,5 +1,4 @@
 using Castle.DynamicProxy;
-using Microsoft.Extensions.DependencyInjection;
 using Stl.Interception.Interceptors;
 
 namespace Stl.Fusion.Interception;

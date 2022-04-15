@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Client;
 using Stl.Fusion.UI;
 using Templates.TodoApp.Abstractions;

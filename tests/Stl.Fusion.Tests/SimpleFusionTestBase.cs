@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Internal;
 using Stl.Testing.Output;
 using Xunit.DependencyInjection.Logging;

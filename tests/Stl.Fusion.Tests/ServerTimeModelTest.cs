@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Tests.UIModels;
 
 namespace Stl.Fusion.Tests;

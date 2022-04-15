@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.Linq.Expressions;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Stl.Conversion.Internal;
 

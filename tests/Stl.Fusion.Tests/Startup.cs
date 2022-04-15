@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Xunit.DependencyInjection;
 using Xunit.DependencyInjection.Logging;
 

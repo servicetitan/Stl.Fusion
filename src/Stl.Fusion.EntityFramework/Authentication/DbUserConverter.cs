@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Authentication;
 
 namespace Stl.Fusion.EntityFramework.Authentication;

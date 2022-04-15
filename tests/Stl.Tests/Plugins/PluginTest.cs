@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Stl.Caching;
 using Stl.Plugins;
 using Stl.Reflection;

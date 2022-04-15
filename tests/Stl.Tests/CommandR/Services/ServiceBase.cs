@@ -1,6 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging.Abstractions;
-
 namespace Stl.Tests.CommandR.Services;
 
 public abstract class ServiceBase

@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Stl.CommandR.Internal;
 
 namespace Stl.CommandR.Configuration;

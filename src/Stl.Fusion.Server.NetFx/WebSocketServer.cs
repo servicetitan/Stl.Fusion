@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.WebSockets;
-using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Owin;
 using Stl.Channels;
 using Stl.Fusion.Bridge;

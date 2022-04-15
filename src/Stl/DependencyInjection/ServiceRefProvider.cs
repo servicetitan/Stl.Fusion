@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Stl.Comparison;
 using Stl.DependencyInjection.Internal;
 using Errors = Stl.DependencyInjection.Internal.Errors;

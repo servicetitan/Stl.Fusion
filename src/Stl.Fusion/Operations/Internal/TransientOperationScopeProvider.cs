@@ -1,6 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging.Abstractions;
-
 namespace Stl.Fusion.Operations.Internal;
 
 /// <summary>

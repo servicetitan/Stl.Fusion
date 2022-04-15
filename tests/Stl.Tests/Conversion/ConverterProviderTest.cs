@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Stl.Conversion;
 
 namespace Stl.Tests.Conversion;

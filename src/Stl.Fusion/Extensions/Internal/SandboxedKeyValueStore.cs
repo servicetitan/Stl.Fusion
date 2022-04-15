@@ -1,5 +1,4 @@
 using System.Globalization;
-using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Extensions.Commands;
 

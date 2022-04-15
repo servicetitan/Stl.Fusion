@@ -2,7 +2,6 @@ using System.Text.RegularExpressions;
 #if !NETFRAMEWORK
 using System.Runtime.Loader;
 #endif
-using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Caching;
 using Stl.IO;
 using Stl.Plugins.Internal;

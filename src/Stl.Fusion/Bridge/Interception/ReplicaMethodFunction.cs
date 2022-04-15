@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Fusion.Bridge.Internal;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Internal;

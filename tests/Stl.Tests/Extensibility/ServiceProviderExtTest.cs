@@ -1,5 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-
 namespace Stl.Tests.Extensibility;
 
 public class ServiceProviderExtTest : TestBase

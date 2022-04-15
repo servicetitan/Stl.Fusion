@@ -1,6 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using StackExchange.Redis;
 using Stl.Fusion.EntityFramework.Operations;
 using Stl.Redis;
 

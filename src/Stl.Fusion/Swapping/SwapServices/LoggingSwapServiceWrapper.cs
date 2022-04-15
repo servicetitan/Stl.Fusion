@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Fusion.Interception;
 
 namespace Stl.Fusion.Swapping;

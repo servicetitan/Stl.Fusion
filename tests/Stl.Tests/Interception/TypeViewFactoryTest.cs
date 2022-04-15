@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Stl.Interception;
 
 namespace Stl.Tests.Interception;

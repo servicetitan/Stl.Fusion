@@ -1,7 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging.Abstractions;
 using Pomelo.EntityFrameworkCore.MySql.Storage;
 using Stl.IO;
 using Stl.Fusion.Bridge;

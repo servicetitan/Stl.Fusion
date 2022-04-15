@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Internal;
 using Stl.Locking;

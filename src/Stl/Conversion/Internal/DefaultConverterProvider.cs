@@ -1,5 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-
 namespace Stl.Conversion.Internal;
 
 public class DefaultConverterProvider : ConverterProvider

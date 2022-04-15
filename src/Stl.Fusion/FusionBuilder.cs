@@ -1,5 +1,4 @@
 using Castle.DynamicProxy.Generators;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Conversion;
 using Stl.Fusion.Authentication;

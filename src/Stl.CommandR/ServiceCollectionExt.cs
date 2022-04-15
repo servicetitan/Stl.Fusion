@@ -1,5 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-
 namespace Stl.CommandR;
 
 public static class ServiceCollectionExt

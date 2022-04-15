@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Stl.RegisterAttributes;
 
 namespace Stl.Fusion;

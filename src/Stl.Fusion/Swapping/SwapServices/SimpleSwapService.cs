@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Stl.OS;
 
 namespace Stl.Fusion.Swapping;

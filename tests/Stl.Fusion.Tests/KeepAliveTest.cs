@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Stl.Testing.Collections;
 
 namespace Stl.Fusion.Tests;

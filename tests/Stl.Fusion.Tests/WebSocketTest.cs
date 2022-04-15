@@ -1,5 +1,3 @@
-using System.Net.WebSockets;
-using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Interception;
 using Stl.Fusion.Tests.Services;

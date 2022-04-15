@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Stl.Fusion.Tests.Services;
 using Stl.Fusion.UI;
 using Stl.RegisterAttributes;

@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging.Abstractions;
 using Stl.CommandR.Internal;
 
 namespace Stl.CommandR.Configuration;

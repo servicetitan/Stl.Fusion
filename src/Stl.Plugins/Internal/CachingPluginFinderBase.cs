@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Caching;
 using Stl.Plugins.Metadata;
 

@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging.Abstractions;
 using Stl.Fusion.Bridge.Messages;
 using Stl.OS;
 

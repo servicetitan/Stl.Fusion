@@ -69,7 +69,9 @@
     <Using Include="Stl.Serialization" />
     <Using Include="Stl.Text" />
     <Using Include="Stl.Time" />
+    <Using Include="Microsoft.Extensions.DependencyInjection" />
     <Using Include="Microsoft.Extensions.Logging" />
+    <Using Include="Microsoft.Extensions.Logging.Abstractions" />
   </ItemGroup>
 
   <!-- Extra global usings for CommandR projects -->

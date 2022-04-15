@@ -1,5 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-
 namespace Stl.Fusion.EntityFramework;
 
 public static class ServiceProviderExt
