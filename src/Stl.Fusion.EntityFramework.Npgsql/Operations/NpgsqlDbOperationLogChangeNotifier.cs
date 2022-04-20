@@ -8,6 +8,7 @@ public class NpgsqlDbOperationLogChangeNotifier<TDbContext> : DbServiceBase<TDbC
     where TDbContext : DbContext
 {
     public NpgsqlDbOperationLogChangeTrackingOptions<TDbContext> Options { get; }
+
     protected AgentInfo AgentInfo { get; }
     protected TDbContext? DbContext { get; set; }
     protected AsyncLock AsyncLock { get; }
@@ -15,12 +16,11 @@ public class NpgsqlDbOperationLogChangeNotifier<TDbContext> : DbServiceBase<TDbC
 
     public NpgsqlDbOperationLogChangeNotifier(
         NpgsqlDbOperationLogChangeTrackingOptions<TDbContext> options,
-        AgentInfo agentInfo,
         IServiceProvider services)
         : base(services)
     {
         Options = options;
-        AgentInfo = agentInfo;
+        AgentInfo = services.GetRequiredService<AgentInfo>();
         AsyncLock = new AsyncLock(ReentryMode.CheckedFail);
     }
 

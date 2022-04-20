@@ -26,16 +26,16 @@ public interface IDbSessionInfoRepo<in TDbContext, TDbSessionInfo, in TDbUserId>
         TDbContext dbContext, TDbUserId userId, CancellationToken cancellationToken = default);
 }
 
-public class DbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId>
-    : DbServiceBase<TDbContext>, IDbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId>
+public class DbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId> : DbServiceBase<TDbContext>,
+    IDbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId>
     where TDbContext : DbContext
     where TDbSessionInfo : DbSessionInfo<TDbUserId>, new()
     where TDbUserId : notnull
 {
     protected DbAuthService<TDbContext>.Options Options { get; init; }
-    protected IDbUserIdHandler<TDbUserId> DbUserIdHandler { get; init; }
-    protected IDbEntityResolver<string, TDbSessionInfo> SessionResolver { get; init; }
-    protected IDbEntityConverter<TDbSessionInfo, SessionInfo> SessionConverter { get; init; }
+    protected IDbUserIdHandler<TDbUserId> DbUserIdHandler { get; }
+    protected IDbEntityResolver<string, TDbSessionInfo> SessionResolver { get; }
+    protected IDbEntityConverter<TDbSessionInfo, SessionInfo> SessionConverter { get; }
 
     public Type SessionInfoEntityType => typeof(TDbSessionInfo);
 
@@ -71,7 +71,7 @@ public class DbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId>
         TDbContext dbContext, SessionInfo sessionInfo, CancellationToken cancellationToken = default)
     {
         var dbSessionInfo = await dbContext.Set<TDbSessionInfo>()
-            .FindAsync(ComposeKey(sessionInfo.Id.Value), cancellationToken)
+            .FindAsync(DbKey.Compose(sessionInfo.Id.Value), cancellationToken)
             .ConfigureAwait(false);
         var isDbSessionInfoFound = dbSessionInfo != null;
         dbSessionInfo ??= new TDbSessionInfo() {

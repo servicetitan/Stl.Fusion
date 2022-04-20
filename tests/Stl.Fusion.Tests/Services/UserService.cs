@@ -76,7 +76,7 @@ public class UserService : DbServiceBase<TestDbContext>, IUserService
 
         var userId = user.Id;
         if (orUpdate) {
-            existingUser = await dbContext.Users.FindAsync(ComposeKey(userId), cancellationToken);
+            existingUser = await dbContext.Users.FindAsync(DbKey.Compose(userId), cancellationToken);
             context.Operation().Items.Set(existingUser);
             if (existingUser != null!)
                 dbContext.Users.Update(user);

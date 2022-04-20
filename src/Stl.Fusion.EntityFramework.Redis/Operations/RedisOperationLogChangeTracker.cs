@@ -4,27 +4,27 @@ using Stl.Redis;
 
 namespace Stl.Fusion.EntityFramework.Redis.Operations;
 
-public class RedisOperationLogChangeTracker<TDbContext> : DbWakeSleepProcessBase<TDbContext>,
+public class RedisOperationLogChangeTracker<TDbContext> : DbWakeSleepWorkerBase<TDbContext>,
     IDbOperationLogChangeTracker<TDbContext>
     where TDbContext : DbContext
 {
     public RedisOperationLogChangeTrackingOptions<TDbContext> Options { get; }
     protected AgentInfo AgentInfo { get; }
-    protected Task<Unit> NextEventTask { get; set; } = null!;
     protected RedisDb RedisDb { get; }
     protected RedisChannelSub RedisSub { get; }
+    protected Task<Unit> NextEventTask { get; set; } = null!;
 
     public RedisOperationLogChangeTracker(
         RedisOperationLogChangeTrackingOptions<TDbContext> options,
-        AgentInfo agentInfo,
         IServiceProvider services)
         : base(services)
     {
         Options = options;
-        AgentInfo = agentInfo;
-        RedisDb = Services.GetService<RedisDb<TDbContext>>() ?? Services.GetRequiredService<RedisDb>();
+        AgentInfo = services.GetRequiredService<AgentInfo>();
+        RedisDb = services.GetService<RedisDb<TDbContext>>() ?? services.GetRequiredService<RedisDb>();
         RedisSub = RedisDb.GetChannelSub(options.PubSubKey);
         Log.LogInformation("Using pub/sub key = '{Key}'", RedisSub.FullKey);
+
         // ReSharper disable once VirtualMemberCallInConstructor
         ReplaceNextEventTask();
     }

@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Stl.Fusion.EntityFramework.Operations;
 
-public class DbOperationLogReader<TDbContext> : DbWakeSleepProcessBase<TDbContext>
+public class DbOperationLogReader<TDbContext> : DbWakeSleepWorkerBase<TDbContext>
     where TDbContext : DbContext
 {
     public class Options
@@ -18,10 +18,10 @@ public class DbOperationLogReader<TDbContext> : DbWakeSleepProcessBase<TDbContex
     protected int BatchSize { get; init; }
     protected TimeSpan ErrorDelay { get; init; }
 
-    protected AgentInfo AgentInfo { get; init; }
-    protected IOperationCompletionNotifier OperationCompletionNotifier { get; init; }
-    protected IDbOperationLogChangeTracker<TDbContext>? OperationLogChangeMonitor { get; init; }
-    protected IDbOperationLog<TDbContext> DbOperationLog { get; init; }
+    protected AgentInfo AgentInfo { get; }
+    protected IOperationCompletionNotifier OperationCompletionNotifier { get; }
+    protected IDbOperationLogChangeTracker<TDbContext>? OperationLogChangeMonitor { get;  }
+    protected IDbOperationLog<TDbContext> DbOperationLog { get; }
 
     protected Moment MaxKnownCommitTime { get; set; }
     protected int LastCount { get; set; }
@@ -35,11 +35,12 @@ public class DbOperationLogReader<TDbContext> : DbWakeSleepProcessBase<TDbContex
         BatchSize = options.BatchSize;
         ErrorDelay = options.ErrorDelay;
 
-        MaxKnownCommitTime = Clocks.SystemClock.Now;
         AgentInfo = services.GetRequiredService<AgentInfo>();
         OperationLogChangeMonitor = services.GetService<IDbOperationLogChangeTracker<TDbContext>>();
         OperationCompletionNotifier = services.GetRequiredService<IOperationCompletionNotifier>();
         DbOperationLog = services.GetRequiredService<IDbOperationLog<TDbContext>>();
+
+        MaxKnownCommitTime = services.Clocks().SystemClock.Now;
     }
 
     protected override async Task WakeUp(CancellationToken cancellationToken)

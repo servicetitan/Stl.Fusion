@@ -192,7 +192,8 @@ public class ComputedRegistry : IDisposable
 
     protected virtual void PruneInternal()
     {
-        using var activity = FusionTrace.StartActivity(GetType(), nameof(Prune));
+        var type = GetType();
+        using var activity = type.GetActivitySource().StartActivity(type, nameof(Prune));
 
         // Debug.WriteLine(nameof(PruneInternal));
         var randomOffset = Randomize(Thread.CurrentThread.ManagedThreadId);

@@ -41,18 +41,21 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
     protected static MethodInfo ContainsMethod { get; } = typeof(HashSet<TKey>).GetMethod(nameof(HashSet<TKey>.Contains))!;
 
     private readonly Lazy<BatchProcessor<TKey, TDbEntity>> _batchProcessorLazy;
-    protected Func<DbEntityResolver<TDbContext, TKey, TDbEntity>, BatchProcessor<TKey, TDbEntity>> BatchProcessorFactory { get; set; }
+
+    protected ActivitySource ActivitySource { get; init; }
+    protected Func<DbEntityResolver<TDbContext, TKey, TDbEntity>, BatchProcessor<TKey, TDbEntity>> BatchProcessorFactory { get; init; }
     protected BatchProcessor<TKey, TDbEntity> BatchProcessor => _batchProcessorLazy.Value;
-    protected Func<Expression, Expression> KeyExtractorExpressionBuilder { get; set; }
-    protected Func<TDbEntity, TKey> KeyExtractor { get; set; }
-    protected Func<IQueryable<TDbEntity>, IQueryable<TDbEntity>> QueryTransformer { get; set; }
-    protected Action<Dictionary<TKey, TDbEntity>> PostProcessor { get; set; }
-    protected string ProcessBatchOperationName { get; set; }
+    protected Func<Expression, Expression> KeyExtractorExpressionBuilder { get; init; }
+    protected Func<TDbEntity, TKey> KeyExtractor { get; init; }
+    protected Func<IQueryable<TDbEntity>, IQueryable<TDbEntity>> QueryTransformer { get; init; }
+    protected Action<Dictionary<TKey, TDbEntity>> PostProcessor { get; init; }
+    protected string ProcessBatchOperationName { get; init; }
 
     public DbEntityResolver(IServiceProvider services) : this(null, services) { }
     public DbEntityResolver(Options? options, IServiceProvider services) : base(services)
     {
         options ??= new();
+        ActivitySource = GetType().GetActivitySource();
         BatchProcessorFactory = options.BatchProcessorFactory ??
             (self => new BatchProcessor<TKey, TDbEntity> {
                 MaxBatchSize = 16,
@@ -110,7 +113,7 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
 
     protected virtual async Task ProcessBatch(List<BatchItem<TKey, TDbEntity>> batch, CancellationToken cancellationToken)
     {
-        using var activity = FusionTrace.StartActivity(ProcessBatchOperationName);
+        using var activity = ActivitySource.StartActivity(ProcessBatchOperationName);
         if (activity != null) {
             var tags = new ActivityTagsCollection { { "batchSize", batch.Count } };
             var activityEvent = new ActivityEvent(ProcessBatchOperationName, tags: tags);

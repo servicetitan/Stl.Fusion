@@ -4,8 +4,14 @@ namespace Stl.CommandR.Diagnostics;
 
 public class TracingCommandHandler : ICommandHandler<ICommand>
 {
+    private ActivitySource? _activitySource;
+
+    protected ILogger Log { get; init; }
     protected IServiceProvider Services { get; }
-    protected ILogger Log { get; }
+    protected ActivitySource ActivitySource {
+        get => _activitySource ??= GetType().GetActivitySource();
+        init => _activitySource = value;
+    }
 
     public TracingCommandHandler(
         IServiceProvider services,
@@ -27,7 +33,7 @@ public class TracingCommandHandler : ICommandHandler<ICommand>
         if (!ShouldTrace(command, context)) return null;
 
         var operationName = command.GetType().GetOperationName("Run");
-        var activity = CommanderTrace.StartActivity(operationName);
+        var activity = ActivitySource.StartActivity(operationName);
         if (activity != null) {
             var tags = new ActivityTagsCollection { { "command", command.ToString() } };
             var activityEvent = new ActivityEvent(operationName, tags: tags);

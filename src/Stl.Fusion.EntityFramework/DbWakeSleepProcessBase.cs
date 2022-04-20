@@ -1,43 +1,29 @@
-using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
+using Stl.Versioning;
 
 namespace Stl.Fusion.EntityFramework;
 
-public abstract class DbWakeSleepProcessBase<TDbContext> : DbWorkerBase<TDbContext>
+public abstract class DbWakeSleepWorkerBase<TDbContext> : WakeSleepWorkerBase
     where TDbContext : DbContext
 {
-    protected DbWakeSleepProcessBase(IServiceProvider services) : base(services) { }
+    private DbHub<TDbContext>? _dbHub;
 
-    protected override async Task RunInternal(CancellationToken cancellationToken)
+    protected IServiceProvider Services { get; init; }
+    protected DbHub<TDbContext> DbHub => _dbHub ??= Services.DbHub<TDbContext>();
+    protected VersionGenerator<long> VersionGenerator => DbHub.VersionGenerator;
+    protected MomentClockSet Clocks => DbHub.Clocks;
+
+    protected DbWakeSleepWorkerBase(IServiceProvider services, CancellationTokenSource? stopTokenSource = null)
+        : base(stopTokenSource)
     {
-        var operationName = GetType().GetOperationName(nameof(WakeUp));
-        while (!cancellationToken.IsCancellationRequested) {
-            var error = default(Exception?);
-            try {
-                using var activity = FusionTrace.StartActivity(operationName);
-                await WakeUp(cancellationToken).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException) {
-                throw;
-            }
-            catch (Exception e) {
-                if (e is ObjectDisposedException ode
-#if NETSTANDARD2_0
-                    && ode.Message.Contains("'IServiceProvider'"))
-#else
-                    && ode.Message.Contains("'IServiceProvider'", StringComparison.Ordinal))
-#endif
-                    // Special case: this exception can be thrown on IoC container disposal,
-                    // and if we don't handle it in a special way, DbWakeSleepProcessBase
-                    // descendants may flood the log with exceptions till the moment they're stopped.
-                    throw;
-                error = e;
-                Log.LogError(e, "WakeUp failed");
-            }
-            await Sleep(error, cancellationToken).ConfigureAwait(false);
-        }
+        Log = services.LogFor(GetType());
+        Services = services;
     }
 
-    protected abstract Task WakeUp(CancellationToken cancellationToken);
-    protected abstract Task Sleep(Exception? error, CancellationToken cancellationToken);
+    protected TDbContext CreateDbContext(bool readWrite = false)
+        => DbHub.CreateDbContext(readWrite);
+    protected Task<TDbContext> CreateCommandDbContext(CancellationToken cancellationToken = default)
+        => DbHub.CreateCommandDbContext(cancellationToken);
+    protected Task<TDbContext> CreateCommandDbContext(bool readWrite = true, CancellationToken cancellationToken = default)
+        => DbHub.CreateCommandDbContext(readWrite, cancellationToken);
 }

@@ -137,7 +137,7 @@ public class DbUserRepo<TDbContext, TDbUser, TDbUserId> : DbServiceBase<TDbConte
         if (!userIdentity.IsValid)
             return null;
         var dbUserIdentities = await dbContext.Set<DbUserIdentity<TDbUserId>>()
-            .FindAsync(ComposeKey(userIdentity.Id.Value), cancellationToken)
+            .FindAsync(DbKey.Compose(userIdentity.Id.Value), cancellationToken)
             .ConfigureAwait(false);
         if (dbUserIdentities == null)
             return null;

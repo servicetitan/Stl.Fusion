@@ -1,7 +1,13 @@
+using Microsoft.EntityFrameworkCore;
+
 namespace Stl.Fusion.EntityFramework.Internal;
 
 public static class Errors
 {
+    public static Exception CreateCommandDbContextIsCalledFromInvalidationCode()
+        => new InvalidOperationException(
+            $"{nameof(DbHub<DbContext>.CreateCommandDbContext)} is called from the invalidation code. " +
+            $"If you want to read the data there, use {nameof(DbHub<DbContext>.CreateDbContext)} instead.");
     public static Exception DbContextIsReadOnly()
         => new InvalidOperationException("This DbContext is read-only.");
 

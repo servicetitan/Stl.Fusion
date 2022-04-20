@@ -3,7 +3,7 @@ using Stl.Fusion.Extensions;
 
 namespace Stl.Fusion.EntityFramework.Extensions;
 
-public class DbKeyValueTrimmer<TDbContext, TDbKeyValue> : DbWakeSleepProcessBase<TDbContext>
+public class DbKeyValueTrimmer<TDbContext, TDbKeyValue> : DbWakeSleepWorkerBase<TDbContext>
     where TDbContext : DbContext
     where TDbKeyValue : DbKeyValue, new()
 {

@@ -3,19 +3,20 @@ using Stl.Fusion.EntityFramework;
 
 namespace Samples.HelloCart.V3;
 
-public class DbCartService2 : DbServiceBase<AppDbContext>, ICartService
+public class DbCartService2 : ICartService
 {
-    private readonly IProductService _products;
+    private readonly DbHub<AppDbContext> _dbHub;
     private readonly IDbEntityResolver<string, DbCart> _cartResolver;
+    private readonly IProductService _products;
 
     public DbCartService2(
-        IServiceProvider services,
+        DbHub<AppDbContext> dbHub,
         IProductService products,
         IDbEntityResolver<string, DbCart> cartResolver)
-        : base(services)
     {
-        _products = products;
+        _dbHub = dbHub;
         _cartResolver = cartResolver;
+        _products = products;
     }
 
     public virtual async Task Edit(EditCommand<Cart> command, CancellationToken cancellationToken = default)
@@ -28,8 +29,8 @@ public class DbCartService2 : DbServiceBase<AppDbContext>, ICartService
             return;
         }
 
-        await using var dbContext = await CreateCommandDbContext(cancellationToken);
-        var dbCart = await dbContext.Carts.FindAsync(ComposeKey(cartId), cancellationToken);
+        await using var dbContext = await _dbHub.CreateCommandDbContext(cancellationToken);
+        var dbCart = await dbContext.Carts.FindAsync(DbKey.Compose(cartId), cancellationToken);
         if (cart == null) {
             if (dbCart != null)
                 dbContext.Remove(dbCart);

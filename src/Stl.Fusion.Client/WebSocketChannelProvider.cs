@@ -61,12 +61,12 @@ public class WebSocketChannelProvider : IChannelProvider, IHasServices
         }
     }
 
+    protected ILogger Log { get; init; }
     protected Func<IServiceProvider, ITextSerializer<BridgeMessage>> SerializerFactory { get; }
     protected Func<IServiceProvider, ClientWebSocket> ClientWebSocketFactory { get; }
     protected int? MessageMaxLength { get; }
     protected Lazy<IReplicator>? ReplicatorLazy { get; }
     protected Symbol ClientId => ReplicatorLazy?.Value.Id ?? Symbol.Empty;
-    protected ILogger Log { get; }
     protected bool IsLoggingEnabled { get; set; }
     protected bool IsMessageLoggingEnabled { get; set; }
     protected LogLevel LogLevel { get; set; } = LogLevel.Information;

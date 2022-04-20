@@ -4,24 +4,20 @@ namespace Stl.Async;
 
 public abstract class WakeSleepWorkerBase : WorkerBase
 {
-    protected ILogger Log { get; init; } = NullLogger.Instance;
-    protected ActivitySource Trace { get; init; } = UnspecifiedTrace;
+    private ActivitySource? _activitySource;
 
-    protected WakeSleepWorkerBase(ActivitySource trace, IServiceProvider services)
-    {
-        Log = services.LogFor(GetType());
-        Trace = trace;
+    protected ILogger Log { get; init; }
+    protected ActivitySource ActivitySource {
+        get => _activitySource ??= GetType().GetActivitySource();
+        init => _activitySource = value;
     }
 
-    protected WakeSleepWorkerBase(ActivitySource trace, ILogger? log)
-    {
-        Log = log ?? NullLogger.Instance;
-        Trace = trace;
-    }
+    protected WakeSleepWorkerBase(ILogger? log = null) 
+        => Log = log ?? NullLogger.Instance;
 
-    protected WakeSleepWorkerBase(CancellationTokenSource? stopTokenSource = null)
-        : base(stopTokenSource)
-    { }
+    protected WakeSleepWorkerBase(CancellationTokenSource? stopTokenSource, ILogger? log = null)
+        : base(stopTokenSource) 
+        => Log = log ?? NullLogger.Instance;
 
     protected override async Task RunInternal(CancellationToken cancellationToken)
     {
@@ -29,7 +25,7 @@ public abstract class WakeSleepWorkerBase : WorkerBase
         while (!cancellationToken.IsCancellationRequested) {
             var error = default(Exception?);
             try {
-                using var activity = Trace.StartActivity(operationName);
+                using var activity = ActivitySource.StartActivity(operationName);
                 await WakeUp(cancellationToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException) {

@@ -1,16 +1,17 @@
-using System.Collections.Immutable;
-using Stl.Fusion;
 using Stl.Fusion.EntityFramework;
 
 namespace Samples.HelloCart.V2;
 
-public class DbCartService : DbServiceBase<AppDbContext>, ICartService
+public class DbCartService : ICartService
 {
+    private readonly DbHub<AppDbContext> _dbHub;
     private readonly IProductService _products;
 
-    public DbCartService(IServiceProvider services, IProductService products)
-        : base(services)
-        => _products = products;
+    public DbCartService(DbHub<AppDbContext> dbHub, IProductService products)
+    {
+        _dbHub = dbHub;
+        _products = products;
+    }
 
     public virtual async Task Edit(EditCommand<Cart> command, CancellationToken cancellationToken = default)
     {
@@ -22,8 +23,8 @@ public class DbCartService : DbServiceBase<AppDbContext>, ICartService
             return;
         }
 
-        await using var dbContext = await CreateCommandDbContext(cancellationToken);
-        var dbCart = await dbContext.Carts.FindAsync(ComposeKey(cartId), cancellationToken);
+        await using var dbContext = await _dbHub.CreateCommandDbContext(cancellationToken);
+        var dbCart = await dbContext.Carts.FindAsync(DbKey.Compose(cartId), cancellationToken);
         if (cart == null) {
             if (dbCart != null)
                 dbContext.Remove(dbCart);
@@ -62,11 +63,11 @@ public class DbCartService : DbServiceBase<AppDbContext>, ICartService
 
     public virtual async Task<Cart?> Get(string id, CancellationToken cancellationToken = default)
     {
-        var dbContext = CreateDbContext();
+        var dbContext = _dbHub.CreateDbContext();
         await using var _ = dbContext.ConfigureAwait(false);
         dbContext.EnableChangeTracking(); // Otherwise LoadAsync below won't work
 
-        var dbCart = await dbContext.Carts.FindAsync(ComposeKey(id), cancellationToken);
+        var dbCart = await dbContext.Carts.FindAsync(DbKey.Compose(id), cancellationToken);
         if (dbCart == null)
             return null;
         await dbContext.Entry(dbCart).Collection(c => c.Items).LoadAsync(cancellationToken);

@@ -9,20 +9,20 @@ public interface ICommandHandlerResolver
 
 public class CommandHandlerResolver : ICommandHandlerResolver
 {
+    protected ILogger Log { get; init; }
     protected ICommandHandlerRegistry Registry { get; }
     protected Func<CommandHandler, Type, bool> Filter { get; }
     protected ConcurrentDictionary<Type, IReadOnlyList<CommandHandler>> Cache { get; } = new();
-    protected ILogger Log { get; }
 
     public CommandHandlerResolver(
         ICommandHandlerRegistry registry,
         IEnumerable<CommandHandlerFilter>? filters = null,
-        ILogger<CommandHandlerRegistry>? log = null)
+        ILogger<CommandHandlerResolver>? log = null)
     {
+        Log = log ?? new NullLogger<CommandHandlerResolver>();
         Registry = registry;
         var aFilters = filters?.ToArray() ?? Array.Empty<CommandHandlerFilter>();
         Filter = (commandHandler, type) => aFilters.All(f => f.IsCommandHandlerUsed(commandHandler, type));
-        Log = log ?? new NullLogger<CommandHandlerRegistry>();
     }
 
     public IReadOnlyList<CommandHandler> GetCommandHandlers(Type commandType)

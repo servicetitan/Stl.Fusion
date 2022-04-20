@@ -6,36 +6,22 @@ namespace Stl.Fusion.EntityFramework;
 public abstract class DbServiceBase<TDbContext>
     where TDbContext : DbContext
 {
-    private IDbContextFactory<TDbContext>? _dbContextFactory;
-    private MomentClockSet? _clocks;
-    private VersionGenerator<long>? _versionGenerator;
     private ILogger? _log;
+    private DbHub<TDbContext>? _dbHub;
 
     protected IServiceProvider Services { get; init; }
-    protected IDbContextFactory<TDbContext> DbContextFactory => _dbContextFactory
-        ??= Services.GetRequiredService<IDbContextFactory<TDbContext>>();
-    protected MomentClockSet Clocks => _clocks
-        ??= Services.Clocks();
-    protected VersionGenerator<long> VersionGenerator => _versionGenerator
-        ??= Services.VersionGenerator<long>();
-    protected ILogger Log => _log ??= Services.LogFor(GetType().NonProxyType());
+    protected DbHub<TDbContext> DbHub => _dbHub ??= Services.DbHub<TDbContext>();
+    protected VersionGenerator<long> VersionGenerator => DbHub.VersionGenerator;
+    protected MomentClockSet Clocks => DbHub.Clocks;
+    protected ILogger Log => _log ??= Services.LogFor(GetType());
 
     protected DbServiceBase(IServiceProvider services)
         => Services = services;
 
     protected TDbContext CreateDbContext(bool readWrite = false)
-        => DbContextFactory.CreateDbContext().ReadWrite(readWrite);
-
+        => DbHub.CreateDbContext(readWrite);
     protected Task<TDbContext> CreateCommandDbContext(CancellationToken cancellationToken = default)
-        => CreateCommandDbContext(true, cancellationToken);
+        => DbHub.CreateCommandDbContext(cancellationToken);
     protected Task<TDbContext> CreateCommandDbContext(bool readWrite = true, CancellationToken cancellationToken = default)
-    {
-        var commandContext = CommandContext.GetCurrent();
-        var operationScope = commandContext.Items.Get<DbOperationScope<TDbContext>>()
-            ?? throw new KeyNotFoundException();
-        return operationScope.CreateDbContext(readWrite, cancellationToken);
-    }
-
-    protected object[] ComposeKey(params object[] components)
-        => components;
+        => DbHub.CreateCommandDbContext(readWrite, cancellationToken);
 }

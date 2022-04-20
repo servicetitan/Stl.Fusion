@@ -46,7 +46,7 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
     public DbOperationScope(IServiceProvider services)
     {
         Services = services;
-        Log = Services.LogFor(GetType().NonProxyType());
+        Log = Services.LogFor(GetType());
         Clocks = Services.Clocks();
         DbContextFactory = Services.GetRequiredService<IDbContextFactory<TDbContext>>();
         DbOperationLog = Services.GetRequiredService<IDbOperationLog<TDbContext>>();

@@ -9,6 +9,7 @@ public class InvalidateOnCompletionCommandHandler : ICommandHandler<ICompletion>
         public bool IsLoggingEnabled { get; set; } = false;
     }
 
+    protected ActivitySource ActivitySource { get; init; }
     protected InvalidationInfoProvider InvalidationInfoProvider { get; }
     protected ILogger Log { get; }
     protected bool IsLoggingEnabled { get; set; }
@@ -21,6 +22,7 @@ public class InvalidateOnCompletionCommandHandler : ICommandHandler<ICompletion>
         options ??= new();
         Log = log ?? NullLogger<InvalidateOnCompletionCommandHandler>.Instance;
         IsLoggingEnabled = options.IsLoggingEnabled && Log.IsEnabled(LogLevel);
+        ActivitySource = GetType().GetActivitySource();
 
         InvalidationInfoProvider = invalidationInfoProvider;
     }
@@ -84,7 +86,7 @@ public class InvalidateOnCompletionCommandHandler : ICommandHandler<ICompletion>
     protected virtual Activity? StartActivity(ICommand originalCommand)
     {
         var operationName = originalCommand.GetType().GetOperationName("Invalidate");
-        var activity = FusionTrace.StartActivity(operationName);
+        var activity = ActivitySource.StartActivity(operationName);
         if (activity != null) {
             var tags = new ActivityTagsCollection { { "originalCommand", originalCommand.ToString() } };
             var activityEvent = new ActivityEvent(operationName, tags: tags);

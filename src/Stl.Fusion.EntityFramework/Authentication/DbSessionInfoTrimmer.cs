@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Stl.Fusion.EntityFramework.Authentication;
 
-public abstract class DbSessionInfoTrimmer<TDbContext> : DbWakeSleepProcessBase<TDbContext>
+public abstract class DbSessionInfoTrimmer<TDbContext> : DbWakeSleepWorkerBase<TDbContext>
     where TDbContext : DbContext
 {
     public class Options

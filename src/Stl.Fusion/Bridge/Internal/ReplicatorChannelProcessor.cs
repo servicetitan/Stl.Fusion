@@ -24,7 +24,7 @@ public class ReplicatorChannelProcessor : WorkerBase
     protected volatile Task<Channel<BridgeMessage>> ChannelTask = null!;
     protected volatile Channel<BridgeMessage> SendChannel = null!;
     protected Symbol ClientId => Replicator.Id;
-    protected ILogger Log => _log ??= Services.LogFor(GetType().NonProxyType());
+    protected ILogger Log => _log ??= Services.LogFor(GetType());
 
     public readonly IReplicator Replicator;
     public readonly Symbol PublisherId;

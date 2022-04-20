@@ -10,11 +10,11 @@ public abstract class WorkerBase : ProcessorBase, IWorker
     protected bool MustFlowExecutionContext { get; init; } = false;
 
     public Task? WhenRunning => _whenRunning;
-    
-    protected WorkerBase(CancellationTokenSource? stopTokenSource = null) 
+
+    protected WorkerBase(CancellationTokenSource? stopTokenSource = null)
         : base(stopTokenSource) { }
 
-    protected override Task DisposeAsyncCore() 
+    protected override Task DisposeAsyncCore()
         => WhenRunning ?? Task.CompletedTask;
 
     // Returns a task that always succeeds

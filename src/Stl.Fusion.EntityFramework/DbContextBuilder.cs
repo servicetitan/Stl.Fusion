@@ -16,7 +16,10 @@ public readonly struct DbContextBuilder<TDbContext>
     public IServiceCollection Services { get; }
 
     internal DbContextBuilder(IServiceCollection services)
-        => Services = services;
+    {
+        Services = services;
+        Services.TryAddSingleton<DbHub<TDbContext>>();
+    }
 
     // Entity converters
 

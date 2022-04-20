@@ -2,9 +2,12 @@ using Stl.Fusion.EntityFramework;
 
 namespace Samples.HelloCart.V2;
 
-public class DbProductService : DbServiceBase<AppDbContext>, IProductService
+public class DbProductService : IProductService
 {
-    public DbProductService(IServiceProvider services) : base(services) { }
+    private readonly DbHub<AppDbContext> _dbHub;
+
+    public DbProductService(DbHub<AppDbContext> dbHub)
+        => _dbHub = dbHub;
 
     public virtual async Task Edit(EditCommand<Product> command, CancellationToken cancellationToken = default)
     {
@@ -16,8 +19,8 @@ public class DbProductService : DbServiceBase<AppDbContext>, IProductService
             return;
         }
 
-        await using var dbContext = await CreateCommandDbContext(cancellationToken);
-        var dbProduct = await dbContext.Products.FindAsync(ComposeKey(productId), cancellationToken);
+        await using var dbContext = await _dbHub.CreateCommandDbContext(cancellationToken);
+        var dbProduct = await dbContext.Products.FindAsync(DbKey.Compose(productId), cancellationToken);
         if (product == null) {
             if (dbProduct != null)
                 dbContext.Remove(dbProduct);
@@ -33,10 +36,10 @@ public class DbProductService : DbServiceBase<AppDbContext>, IProductService
 
     public virtual async Task<Product?> Get(string id, CancellationToken cancellationToken = default)
     {
-        var dbContext = CreateDbContext();
+        var dbContext = _dbHub.CreateDbContext();
         await using var _ = dbContext.ConfigureAwait(false);
 
-        var dbProduct = await dbContext.Products.FindAsync(ComposeKey(id), cancellationToken);
+        var dbProduct = await dbContext.Products.FindAsync(DbKey.Compose(id), cancellationToken);
         if (dbProduct == null)
             return null;
         return new Product() { Id = dbProduct.Id, Price = dbProduct.Price };

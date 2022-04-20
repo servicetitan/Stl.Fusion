@@ -11,7 +11,7 @@ public abstract class SubscriptionProcessor : WorkerBase
     protected readonly TimeSpan ExpirationTime;
     protected long MessageIndex;
     protected (LTag Version, bool IsConsistent) LastSentVersion;
-    protected ILogger Log => _log ??= Services.LogFor(GetType().NonProxyType());
+    protected ILogger Log => _log ??= Services.LogFor(GetType());
 
     public IPublisher Publisher => Publication.Publisher;
     public readonly IPublication Publication;

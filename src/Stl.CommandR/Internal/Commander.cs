@@ -2,8 +2,9 @@ namespace Stl.CommandR.Internal;
 
 public class Commander : ICommander
 {
+    protected ILogger Log { get; init; }
     protected ICommandHandlerResolver HandlerResolver { get; }
-    protected ILogger Log { get; }
+
     public IServiceProvider Services { get; }
 
     public Commander(

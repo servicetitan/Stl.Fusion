@@ -4,7 +4,7 @@ using Stl.Fusion.EntityFramework.Operations;
 
 namespace Stl.Fusion.EntityFramework.Npgsql.Operations;
 
-public class NpgsqlDbOperationLogChangeTracker<TDbContext> : DbWakeSleepProcessBase<TDbContext>,
+public class NpgsqlDbOperationLogChangeTracker<TDbContext> : DbWakeSleepWorkerBase<TDbContext>,
     IDbOperationLogChangeTracker<TDbContext>
     where TDbContext : DbContext
 {
@@ -14,12 +14,12 @@ public class NpgsqlDbOperationLogChangeTracker<TDbContext> : DbWakeSleepProcessB
 
     public NpgsqlDbOperationLogChangeTracker(
         NpgsqlDbOperationLogChangeTrackingOptions<TDbContext> options,
-        AgentInfo agentInfo,
         IServiceProvider services)
         : base(services)
     {
         Options = options;
-        AgentInfo = agentInfo;
+        AgentInfo = services.GetRequiredService<AgentInfo>();
+
         // ReSharper disable once VirtualMemberCallInConstructor
         ReplaceNextEventTask();
     }

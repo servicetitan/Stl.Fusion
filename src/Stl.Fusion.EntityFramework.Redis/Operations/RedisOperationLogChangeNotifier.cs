@@ -3,24 +3,23 @@ using Stl.Redis;
 
 namespace Stl.Fusion.EntityFramework.Redis.Operations;
 
-public class RedisOperationLogChangeNotifier<TDbContext> : DbServiceBase<TDbContext>,
-    IOperationCompletionListener
+public class RedisOperationLogChangeNotifier<TDbContext> : DbServiceBase<TDbContext>, IOperationCompletionListener
     where TDbContext : DbContext
 {
     public RedisOperationLogChangeTrackingOptions<TDbContext> Options { get; }
+
     protected AgentInfo AgentInfo { get; }
     protected RedisDb RedisDb { get; }
     protected RedisPub RedisPub { get; }
 
     public RedisOperationLogChangeNotifier(
         RedisOperationLogChangeTrackingOptions<TDbContext> options,
-        AgentInfo agentInfo,
         IServiceProvider services)
         : base(services)
     {
         Options = options;
-        AgentInfo = agentInfo;
-        RedisDb = Services.GetService<RedisDb<TDbContext>>() ?? Services.GetRequiredService<RedisDb>();
+        AgentInfo = services.GetRequiredService<AgentInfo>();
+        RedisDb = services.GetService<RedisDb<TDbContext>>() ?? services.GetRequiredService<RedisDb>();
         RedisPub = RedisDb.GetPub(options.PubSubKey);
         Log.LogInformation("Using pub/sub key = '{Key}'", RedisPub.FullKey);
     }

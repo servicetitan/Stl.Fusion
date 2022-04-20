@@ -10,7 +10,7 @@ public class PublisherChannelProcessor : WorkerBase
     protected readonly IServiceProvider Services;
     protected readonly IPublisherImpl PublisherImpl;
     protected readonly ConcurrentDictionary<Symbol, SubscriptionProcessor> Subscriptions;
-    protected ILogger Log => _log ??= Services.LogFor(GetType().NonProxyType());
+    protected ILogger Log => _log ??= Services.LogFor(GetType());
 
     public readonly IPublisher Publisher;
     public readonly Channel<BridgeMessage> Channel;

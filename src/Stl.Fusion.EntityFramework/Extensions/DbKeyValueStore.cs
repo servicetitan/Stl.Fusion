@@ -35,7 +35,7 @@ public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext
         await using var _1 = dbContext.ConfigureAwait(false);
         dbContext.DisableChangeTracking(); // Just to speed up things a bit
 
-        var dbKeyValue = await dbContext.FindAsync<TDbKeyValue>(ComposeKey(key), cancellationToken).ConfigureAwait(false);
+        var dbKeyValue = await dbContext.FindAsync<TDbKeyValue>(DbKey.Compose(key), cancellationToken).ConfigureAwait(false);
         if (dbKeyValue == null) {
             dbKeyValue = CreateDbKeyValue(key, value, expiresAt);
             dbContext.Add(dbKeyValue);
@@ -100,7 +100,7 @@ public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext
         await using var _ = dbContext.ConfigureAwait(false);
         dbContext.DisableChangeTracking(); // Just to speed up things a bit
 
-        var dbKeyValue = await dbContext.FindAsync<TDbKeyValue>(ComposeKey(key), cancellationToken).ConfigureAwait(false);
+        var dbKeyValue = await dbContext.FindAsync<TDbKeyValue>(DbKey.Compose(key), cancellationToken).ConfigureAwait(false);
         if (dbKeyValue == null) {
             context.Operation().Items.Set(false); // No need to invalidate anything
             return;

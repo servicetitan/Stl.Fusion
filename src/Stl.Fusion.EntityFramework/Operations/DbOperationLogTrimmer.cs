@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Stl.Fusion.EntityFramework.Operations;
 
-public class DbOperationLogTrimmer<TDbContext> : DbWakeSleepProcessBase<TDbContext>
+public class DbOperationLogTrimmer<TDbContext> : DbWakeSleepWorkerBase<TDbContext>
     where TDbContext : DbContext
 {
     public class Options
@@ -13,11 +13,12 @@ public class DbOperationLogTrimmer<TDbContext> : DbWakeSleepProcessBase<TDbConte
         public bool IsLoggingEnabled { get; set; } = true;
     }
 
-    protected IDbOperationLog<TDbContext> DbOperationLog { get; init; }
     protected TimeSpan CheckInterval { get; init; }
     protected TimeSpan MaxCommitAge { get; init; }
     protected int BatchSize { get; init; }
     protected Random Random { get; init; }
+
+    protected IDbOperationLog<TDbContext> DbOperationLog { get; init; }
 
     protected int LastTrimCount { get; set; }
     protected bool IsLoggingEnabled { get; set; }
@@ -32,8 +33,9 @@ public class DbOperationLogTrimmer<TDbContext> : DbWakeSleepProcessBase<TDbConte
         CheckInterval = options.CheckInterval;
         MaxCommitAge = options.MaxOperationAge;
         BatchSize = options.BatchSize;
-        DbOperationLog = services.GetRequiredService<IDbOperationLog<TDbContext>>();
         Random = new Random();
+
+        DbOperationLog = services.GetRequiredService<IDbOperationLog<TDbContext>>();
     }
 
     protected override async Task WakeUp(CancellationToken cancellationToken)

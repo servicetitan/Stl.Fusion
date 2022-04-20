@@ -4,6 +4,8 @@ namespace Stl.Diagnostics;
 
 public static class ActivitySourceExt
 {
+    public static ActivitySource Unknown { get; } = new("<Unknown>");
+
     public static Activity? StartActivity(
         this ActivitySource activitySource,
         Type sourceType,

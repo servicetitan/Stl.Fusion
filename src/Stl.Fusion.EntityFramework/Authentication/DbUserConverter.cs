@@ -11,7 +11,7 @@ public class DbUserConverter<TDbContext, TDbUser, TDbUserId> : DbEntityConverter
     protected IDbUserIdHandler<TDbUserId> DbUserIdHandler { get; init; }
 
     public DbUserConverter(IServiceProvider services) : base(services)
-        => DbUserIdHandler = Services.GetRequiredService<IDbUserIdHandler<TDbUserId>>();
+        => DbUserIdHandler = services.GetRequiredService<IDbUserIdHandler<TDbUserId>>();
 
     public override TDbUser NewEntity() => new();
     public override User NewModel() => new(Symbol.Empty, "");
