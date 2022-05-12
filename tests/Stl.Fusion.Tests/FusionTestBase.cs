@@ -209,6 +209,7 @@ public class FusionTestBase : TestBase, IAsyncLifetime
                     builder.UseNpgsql(PostgreSqlConnectionString, npgsql => {
                         npgsql.EnableRetryOnFailure(0);
                     });
+                    builder.UseNpgsqlHintFormatter();
                     break;
                 case FusionTestDbType.MariaDb:
 #if NET5_0_OR_GREATER || NETCOREAPP

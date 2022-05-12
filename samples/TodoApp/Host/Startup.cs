@@ -20,6 +20,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Stl.Fusion.EntityFramework;
+using Stl.Fusion.EntityFramework.Npgsql;
 using Stl.Fusion.Extensions;
 using Stl.Fusion.Operations.Reprocessing;
 using Stl.Fusion.Server.Authentication;
@@ -72,7 +73,7 @@ public class Startup
                 dbContext.UseSqlServer(HostSettings.UseSqlServer);
             else if (!string.IsNullOrEmpty(HostSettings.UsePostgreSql)) {
                 dbContext.UseNpgsql(HostSettings.UsePostgreSql);
-                // dbContext.UseNpgsqlHintFormatter();
+                dbContext.UseNpgsqlHintFormatter();
             }
             else
                 dbContext.UseSqlite($"Data Source={dbPath}");
