@@ -5,9 +5,8 @@ namespace Stl.Fusion.EntityFramework.Npgsql.Internal;
 
 public class NpgsqlDbHintFormatter : DbHintFormatter
 {
-    public NpgsqlDbHintFormatter()
-    {
-        DbHintToSql = new Dictionary<DbHint, string>() {
+    public NpgsqlDbHintFormatter() 
+        => DbHintToSql = new Dictionary<DbHint, string>() {
             {DbLockingHint.KeyShare, "KEY SHARE"},
             {DbLockingHint.Share, "SHARE"},
             {DbLockingHint.NoKeyUpdate, "NO KEY UPDATE"},
@@ -15,7 +14,6 @@ public class NpgsqlDbHintFormatter : DbHintFormatter
             {DbWaitHint.NoWait, "NOWAIT"},
             {DbWaitHint.SkipLocked, "SKIP LOCKED"},
         };
-    }
 
     public override string FormatSelectSql(string tableName, ref MemoryBuffer<DbHint> hints)
     {
