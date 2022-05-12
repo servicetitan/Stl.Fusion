@@ -14,8 +14,8 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
         var (session, user, authenticatedIdentity) = command;
         var context = CommandContext.GetCurrent();
         if (Computed.IsInvalidating()) {
+            _ = GetSessionInfo(session, default); // Must go first!
             _ = GetAuthInfo(session, default);
-            _ = GetSessionInfo(session, default);
             var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
             if (invSessionInfo != null) {
                 _ = GetUser(invSessionInfo.UserId, default);
@@ -79,7 +79,7 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
         var (session, ipAddress, userAgent) = command;
         var context = CommandContext.GetCurrent();
         if (Computed.IsInvalidating()) {
-            _ = GetSessionInfo(session, default);
+            _ = GetSessionInfo(session, default); // Must go first!
             var invIsNew = context.Operation().Items.GetOrDefault(false);
             if (invIsNew) {
                 _ = GetAuthInfo(session, default);
@@ -108,7 +108,7 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
     {
         var (session, options, baseVersion) = command;
         if (Computed.IsInvalidating()) {
-            _ = GetSessionInfo(session, default);
+            _ = GetSessionInfo(session, default); // Must go first!
             _ = GetOptions(session, default);
             return Task.CompletedTask;
         }

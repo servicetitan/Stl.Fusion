@@ -38,6 +38,7 @@ public partial class SandboxedKeyValueStore : ISandboxedKeyValueStore
     public virtual async Task Set(SandboxedSetCommand command, CancellationToken cancellationToken = default)
     {
         if (Computed.IsInvalidating()) return;
+
         var keyChecker = await GetKeyChecker(command.Session, cancellationToken).ConfigureAwait(false);
         var expiresAt = command.ExpiresAt;
         keyChecker.CheckKey(command.Key, ref expiresAt);
@@ -47,6 +48,7 @@ public partial class SandboxedKeyValueStore : ISandboxedKeyValueStore
     public virtual async Task SetMany(SandboxedSetManyCommand command, CancellationToken cancellationToken = default)
     {
         if (Computed.IsInvalidating()) return;
+
         var keyChecker = await GetKeyChecker(command.Session, cancellationToken).ConfigureAwait(false);
         var items = command.Items;
         var newItems = new (string Key, string Value, Moment? ExpiresAt)[items.Length];
@@ -62,6 +64,7 @@ public partial class SandboxedKeyValueStore : ISandboxedKeyValueStore
     public virtual async Task Remove(SandboxedRemoveCommand command, CancellationToken cancellationToken = default)
     {
         if (Computed.IsInvalidating()) return;
+
         var keyChecker = await GetKeyChecker(command.Session, cancellationToken).ConfigureAwait(false);
         keyChecker.CheckKey(command.Key);
         await Store.Remove(command.Key, cancellationToken).ConfigureAwait(false);
@@ -70,6 +73,7 @@ public partial class SandboxedKeyValueStore : ISandboxedKeyValueStore
     public virtual async Task RemoveMany(SandboxedRemoveManyCommand command, CancellationToken cancellationToken = default)
     {
         if (Computed.IsInvalidating()) return;
+
         var keyChecker = await GetKeyChecker(command.Session, cancellationToken).ConfigureAwait(false);
         var keys = command.Keys;
         foreach (var t in keys)

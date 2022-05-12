@@ -27,8 +27,8 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
         var (session, force) = command;
         var context = CommandContext.GetCurrent();
         if (Computed.IsInvalidating()) {
+            _ = GetSessionInfo(session, default); // Must go first!
             _ = GetAuthInfo(session, default);
-            _ = GetSessionInfo(session, default);
             if (force) {
                 _ = IsSignOutForced(session, default);
                 _ = GetOptions(session, default);
