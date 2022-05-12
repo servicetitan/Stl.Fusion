@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <PropertyGroup Label="ASP.NET Core Versions">
-    <AspNetCoreVersion>6.0.3</AspNetCoreVersion>
+    <AspNetCoreVersion>6.0.5</AspNetCoreVersion>
     <AspNetCoreVersion5>5.*</AspNetCoreVersion5>
     <AspNetCoreVersion3>3.*</AspNetCoreVersion3>
   </PropertyGroup>
@@ -49,7 +49,7 @@
     <PackageReference Update="Blazorise.Icons.FontAwesome" Version="$(BlazoriseVersion)" />
     <PackageReference Update="Blazorise.Sidebar" Version="$(BlazoriseVersion)" />
     <PackageReference Update="Bullseye" Version="4.0.*" />
-    <PackageReference Update="Castle.Core" Version="5.0.*" />
+    <PackageReference Update="Castle.Core" Version="4.0.*" />
     <PackageReference Update="CliWrap" Version="3.4.*" />
     <PackageReference Update="DataAnnotationsValidatorNetStandard" Version="1.0.*" />
     <PackageReference Update="EFCore.CheckConstraints" Version="6.0.*" />
@@ -123,7 +123,7 @@
     <PackageReference Update="System.Memory" Version="4.5.4" />
     <PackageReference Update="Microsoft.AspNet.WebApi.Core" Version="5.2.8" />
     <PackageReference Update="Microsoft.AspNet.WebApi.OwinSelfHost" Version="5.2.8" />
-    <PackageReference Update="Microsoft.Owin" Version="4.2.1" />
+    <PackageReference Update="Microsoft.Owin" Version="4.2.2" />
     <PackageReference Update="Owin" Version="1.0.0" />
     <PackageReference Update="System.Reflection.Emit.Lightweight" Version="4.7.0" />
     
