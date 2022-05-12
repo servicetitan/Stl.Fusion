@@ -81,7 +81,7 @@ internal static class Program
             "'dotnet' command isn't found. Use DOTNET_ROOT env. var to specify the path to custom 'dotnet' tool.");
 
         // For Nerdbank.GitVersioning: https://github.com/dotnet/Nerdbank.GitVersioning/blob/master/doc/public_vs_stable.md
-        var publicReleaseProperty = $"-p:PublicRelease={isPublicRelease} ";
+        var publicReleaseProperty = isPublicRelease ? "-p:PublicRelease=true" : "";
 
         Target("clean", () => {
             DeleteDir(artifactsPath);
