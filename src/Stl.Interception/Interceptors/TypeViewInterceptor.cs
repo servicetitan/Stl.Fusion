@@ -46,7 +46,7 @@ public class TypeViewInterceptor : IInterceptor
         var mSource = initialInvocation.Method;
         var mArgTypes = mSource.GetParameters().Select(p => p.ParameterType).ToArray();
         var mTarget = tTarget.GetMethod(mSource.Name, mArgTypes);
-        var fTarget = tProxy.GetField("__target", BindingFlags.Instance | BindingFlags.NonPublic);
+        var fTarget = tProxy.GetField("__target", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
         Type? GetTaskOfTArgument(Type t) {
             if (!t.IsGenericType)
